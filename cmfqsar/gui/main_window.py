@@ -1003,7 +1003,7 @@ class MainWindow(QMainWindow):
         self._site_cache = None
         self.complementarity = None
         self._comp_surface_cache = {}
-        self.controls.set_protein_label(f"{prot.name}: {prot.n_atoms} atoms, {prot.n_residues} residues")
+        self.controls.set_protein_label(f"{prot.name}, {prot.n_atoms} atoms")
         self.controls.chk_protein.setChecked(True)
         msg = (f"Loaded {prot.name} from {source}: {prot.n_atoms} atoms, {prot.n_residues} residues")
         if self.molfields:

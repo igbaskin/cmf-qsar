@@ -12,6 +12,10 @@ A Python/Qt desktop application (plus a library and a command-line tool) that im
 
 ![screenshot](docs/screenshot.png)
 
+*The HIF-2α series of the Merck free-energy benchmark, 38 ligands: a kernel ridge model with q² = 0.62,
+its electrostatic co-field drawn as ± isosurfaces, and the binding site of the reference crystal
+structure, which the data set brings with it and which needs no superposition.*
+
 ## What it does
 
 | Stage | Implementation |
