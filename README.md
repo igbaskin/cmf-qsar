@@ -71,14 +71,24 @@ is. With five conformations per molecule:
 | steroids, rigid | ensemble, uniform | 0.756 | 0.221 |
 | ACE, flexible | single | 0.656 | 0.358 |
 | ACE, flexible | ensemble, uniform | **0.691** | **0.485** |
+| THR, flexible | single | **0.674** | **0.428** |
+| THR, flexible | ensemble, uniform | 0.406 | 0.269 |
 
-So the ensemble earns its cost on the flexible series and not on the rigid one, which is what the idea
-predicts. Boltzmann weighting was worse than uniform on both, because the conformations are generated
+So it is not simply a matter of flexibility. The ensemble helps on ACE and clearly hurts on thrombin,
+whose ligands are no less flexible. The difference is what the extra conformations do to the
+alignment: the generated conformations are superimposed on their own molecule's first pose, not on
+the series, so in a set that was carefully aligned by its authors they blur the very arrangement the
+model depends on, while in a set where that alignment carries less information they add real
+coverage. Treat the mode as something to test against the single-conformation model on each series
+rather than as an improvement to switch on by default, which is why the default is single.
+
+Boltzmann weighting was worse than uniform on all three sets, because the conformations are generated
 from one input pose and their energies then concentrate the weight on a few of them; uniform weighting
 is the safer default and is what the application starts with.
 
 Two things to keep in mind. The alignment tools act on the first conformation, so conformations are
-generated after a series has been aligned, not before. And a seed of exactly zero makes RDKit return
+generated after a series has been aligned, not before, and aligning the ensemble itself to the series
+is the obvious next step for this mode. And a seed of exactly zero makes RDKit return
 the same geometry for every conformation, which would silently collapse an ensemble; the generator
 maps it to a fixed non-zero seed and a test guards that.
 
