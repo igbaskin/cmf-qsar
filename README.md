@@ -1,14 +1,42 @@
 # CMF 3D-QSAR — desktop application for the Continuous Molecular Fields approach
 
 A Python/Qt desktop application (plus a library and a command-line tool) that implements the
-**Continuous Molecular Fields (CMF)** approach to 3D-QSAR described in
+**Continuous Molecular Fields (CMF)** approach to 3D-QSAR. The approach is described in the following
+publications; the three the program follows most closely are the 2013, 2015 and 2019 papers, which the
+text below refers to by year.
 
+**The method**
+
+* Zhokhova N.I., Baskin I.I., Bakhronov D.K., Palyulin V.A., Zefirov N.S. *Method of continuous molecular
+  fields in the search for quantitative structure–activity relationships.* Dokl. Chem. **429** (2009) 273–276.
+  [doi:10.1134/S0012500809110056](https://doi.org/10.1134/S0012500809110056)
 * Baskin I.I., Zhokhova N.I. *The continuous molecular fields approach to building 3D-QSAR models.*
   J. Comput.-Aided Mol. Des. **27** (2013) 427–442.
+  [doi:10.1007/s10822-013-9656-4](https://doi.org/10.1007/s10822-013-9656-4)
+* Baskin I.I., Zhokhova N.I. *Continuous molecular fields approach applied to structure–activity modeling.*
+  In: Gorb L., Kuz'min V., Muratov E. (eds) *Application of Computational Techniques in Pharmacy and
+  Medicine.* Challenges and Advances in Computational Chemistry and Physics, vol. 17. Springer, Dordrecht
+  (2014) 433–459. [doi:10.1007/978-94-017-9257-8_13](https://doi.org/10.1007/978-94-017-9257-8_13)
+  ([arXiv:1311.1495](https://arxiv.org/abs/1311.1495))
 * Sitnikov G.V., Zhokhova N.I., Ustynyuk Y.A., Varnek A., Baskin I.I. *Continuous indicator fields: a novel
   universal type of molecular fields.* J. Comput.-Aided Mol. Des. **29** (2015) 233–247.
+  [doi:10.1007/s10822-014-9818-z](https://doi.org/10.1007/s10822-014-9818-z)
+* Baskin I.I., Zhokhova N.I. *Descriptors based on continuous indicator fields for 3D-QSAR studies.*
+  Proceedings of MOL2NET 2016, International Conference on Multidisciplinary Sciences, 2nd edition (2017).
+  [doi:10.3390/mol2net-02-03854](https://doi.org/10.3390/mol2net-02-03854)
 * Baskin I.I., Zhokhova N.I. *Continuous molecular fields and the concept of molecular co-fields in
-  structure–activity studies.* Future Med. Chem. (2019).
+  structure–activity studies.* Future Med. Chem. **11** (2019) 2701–2713.
+  [doi:10.4155/fmc-2018-0360](https://doi.org/10.4155/fmc-2018-0360)
+
+**One-class classification and virtual screening with CMF**
+
+* Karpov P.V., Baskin I.I., Zhokhova N.I., Zefirov N.S. *Method of continuous molecular fields in the
+  one-class classification task.* Dokl. Chem. **440** (2011) 263–265.
+  [doi:10.1134/S0012500811100016](https://doi.org/10.1134/S0012500811100016)
+* Karpov P.V., Baskin I.I., Zhokhova N.I., Nawrozkij M.B., Zefirov A.N., Yablokov A.S., Novakov I.A.,
+  Zefirov N.S. *One-class approach: models for virtual screening of non-nucleoside HIV-1 reverse
+  transcriptase inhibitors based on the concept of continuous molecular fields.* Russ. Chem. Bull. **60**
+  (2011) 2418–2424. [doi:10.1007/s11172-011-0372-8](https://doi.org/10.1007/s11172-011-0372-8)
 
 ![screenshot](docs/screenshot.png)
 
