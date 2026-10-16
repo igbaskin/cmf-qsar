@@ -158,10 +158,45 @@ The decay is monotone in the number of generated conformations, and `core` only 
 the scaffold on the published pose keeps two or three conformations harmless (q²cv 0.728 and 0.732,
 above the single-conformation 0.696, though R²pred does not follow at 0.150 and -0.221) and then
 collapses at five. So the alignment of the ensemble was worth fixing and is now there to use, but it
-is not what was wrong on thrombin. Treat the mode as something to test against the
-single-conformation model on each series, with the number of conformations as a parameter of its
-own, rather than as an improvement to switch on; which is why the default is a single conformation
-superimposed as before.
+is not what was wrong on thrombin.
+
+#### Keeping only the conformations near the aligned pose
+
+If gas-phase geometries are the problem, the remedy is to use only those close to the pose the
+series was aligned to. `--conformer-window` (the *Keep within* field of the Tools dialog) keeps the
+conformations standing within a given heavy-atom RMSD of the pose the molecule arrived in, measured
+where they are rather than after a best fit, so the ensemble covers the local flexibility around
+that pose instead of the whole conformational surface. The arrival pose is always kept, and a wider
+pool is embedded because most of it is discarded.
+
+It does not work either, and the reason is instructive. On thrombin, five conformations requested:
+
+| window | conformations kept | q²cv | R²pred |
+|---|---|---|---|
+| single conformation | 1.0 | **0.696** | 0.373 |
+| 1.0 Å | 1.0 | 0.696 | 0.373 |
+| 1.5 Å | 1.0 | 0.696 | 0.382 |
+| 2.0 Å | 1.1 | 0.686 | **0.385** |
+| 2.5 Å | 1.9 | 0.590 | 0.313 |
+| 3.0 Å | 3.7 | 0.600 | 0.275 |
+| no window | 5.0 | 0.501 | 0.100 |
+
+ACE behaves the same way: 0.741 for the single conformation, 0.721 at a 1.5 Å window keeping 1.8
+conformations, 0.693 at 2 Å keeping 2.9, and 0.692 for the full ensemble. The quality is monotone in
+how far the ensemble strays from the arrival pose, and the window recovers the baseline only by
+emptying the ensemble: generated conformations of these ligands stand about 3 Å from the aligned
+pose even after being superimposed on it, so any window tight enough to be *local* keeps nothing but
+the pose itself. There is no middle ground in which the ensemble both differs from one conformation
+and predicts better.
+
+**The verdict.** Averaging over generated conformations does not help an aligned 3D-QSAR series, and
+three placements and six windows did not find a case where it does. The mode stays because it is
+exact, costs nothing when unused and is the substrate for anything that selects conformations rather
+than averaging over them, which is where the idea would have to be taken next: a bound-like ensemble
+from docking, or a multi-instance model that learns which conformation represents each molecule.
+Treat the mode as something to test against the single-conformation model on each series, with the
+number of conformations and the window as parameters of their own, rather than as an improvement to
+switch on; which is why the default is a single conformation superimposed as before.
 
 The earlier version of this table reported different numbers for the single-conformation rows, with
 a protocol that was not recorded and could not be reproduced; every row above was measured again
