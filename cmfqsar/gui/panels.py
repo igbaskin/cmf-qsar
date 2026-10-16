@@ -1,0 +1,1446 @@
+"""Dock panels of the CMF application: data set table, model settings, results, viewer controls."""
+from __future__ import annotations
+
+import os
+
+from typing import Dict, List, Optional
+
+import numpy as np
+import pyqtgraph as pg
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout,
+                               QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
+                               QRadioButton, QSlider, QSpinBox, QTableWidget, QTableWidgetItem, QTabWidget,
+                               QTextEdit, QVBoxLayout, QWidget, QSizePolicy)
+
+from ..fields import PHYSCHEM_FIELDS, FIELD_LABELS, FieldSet
+
+
+_CHECK_ICON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check.svg").replace("\\", "/")
+# explicit indicator look, independent of the (possibly dark) application palette
+_SHOW_BOX_STYLE = (
+    "QCheckBox::indicator { width: 14px; height: 14px; border: 1px solid #7a7a7a; border-radius: 3px; "
+    "background: #ffffff; }"
+    "QCheckBox::indicator:hover { border-color: #2d7be5; }"
+    f"QCheckBox::indicator:checked {{ background: #2d7be5; border-color: #2d7be5; image: url({_CHECK_ICON}); }}"
+)
+
+
+def _float_list(text: str, default: List[float]) -> List[float]:
+    try:
+        vals = [float(x) for x in text.replace(";", ",").split(",") if x.strip()]
+        return vals or default
+    except ValueError:
+        return default
+
+
+# --------------------------------------------------------------------------- #
+# Data set panel
+# --------------------------------------------------------------------------- #
+
+class DatasetPanel(QWidget):
+    COLS = ["Show", "Name", "Activity", "Set", "Pred (fit)", "Pred (CV)", "Pred (test)"]
+    selection_changed = Signal(int)          # current row (molecule index) or -1
+    show_changed = Signal()                  # "show" checkboxes toggled
+    subset_changed = Signal()
+    load_requested = Signal(str)             # "train" | "test"
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(4, 4, 4, 4)
+        btns = QHBoxLayout()
+        self.btn_load_train = QPushButton("Open training set…")
+        self.btn_load_test = QPushButton("Add test set…")
+        self.btn_load_decoys = QPushButton("Add decoys…")
+        self.btn_load_decoys.setToolTip("Background molecules, presumed inactive, used only to evaluate "
+                                        "a screening model (AUC and enrichment); never fitted on")
+        btns.addWidget(self.btn_load_train)
+        btns.addWidget(self.btn_load_test)
+        btns.addWidget(self.btn_load_decoys)
+        lay.addLayout(btns)
+        self.btn_load_train.clicked.connect(lambda: self.load_requested.emit("train"))
+        self.btn_load_test.clicked.connect(lambda: self.load_requested.emit("test"))
+        self.btn_load_decoys.clicked.connect(lambda: self.load_requested.emit("decoy"))
+
+        row2 = QHBoxLayout()
+        row2.addWidget(QLabel("Activity:"))
+        self.cmb_activity = QComboBox()
+        self.cmb_activity.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        row2.addWidget(self.cmb_activity)
+        lay.addLayout(row2)
+
+        row3 = QHBoxLayout()
+        self.btn_split = QPushButton("Random split")
+        self.spin_test_frac = QDoubleSpinBox()
+        self.spin_test_frac.setRange(0.0, 0.9)
+        self.spin_test_frac.setSingleStep(0.05)
+        self.spin_test_frac.setValue(0.25)
+        self.spin_test_frac.setPrefix("test ")
+        self.btn_to_train = QPushButton("→ train")
+        self.btn_to_test = QPushButton("→ test")
+        row3.addWidget(self.btn_split)
+        row3.addWidget(self.spin_test_frac)
+        row3.addWidget(self.btn_to_train)
+        row3.addWidget(self.btn_to_test)
+        lay.addLayout(row3)
+
+        row4 = QHBoxLayout()
+        self.btn_show_all = QPushButton("Show all")
+        self.btn_show_none = QPushButton("Show none")
+        self.btn_show_sel = QPushButton("Show selected only")
+        row4.addWidget(self.btn_show_all)
+        row4.addWidget(self.btn_show_none)
+        row4.addWidget(self.btn_show_sel)
+        lay.addLayout(row4)
+
+        self.table = QTableWidget(0, len(self.COLS))
+        self.table.setHorizontalHeaderLabels(self.COLS)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.verticalHeader().setVisible(False)
+        hh = self.table.horizontalHeader()
+        hh.setSectionResizeMode(QHeaderView.ResizeToContents)
+        hh.setSectionResizeMode(1, QHeaderView.Interactive)
+        hh.resizeSection(1, 110)
+        self.table.setSortingEnabled(False)
+        lay.addWidget(self.table)
+        self.lbl_info = QLabel("No data set loaded")
+        lay.addWidget(self.lbl_info)
+
+        self.table.currentCellChanged.connect(lambda r, c, pr, pc: self.selection_changed.emit(self.row_to_index(r)))
+        self.table.itemChanged.connect(self._item_changed)
+        self._show_boxes: List[QCheckBox] = []
+        self.btn_show_all.clicked.connect(lambda: self.set_all_shown(True))
+        self.btn_show_none.clicked.connect(lambda: self.set_all_shown(False))
+        self.btn_show_sel.clicked.connect(self.show_selected_only)
+        self._block = False
+
+    # rows map 1:1 to data set indices
+    def row_to_index(self, row: int) -> int:
+        return row if 0 <= row < self.table.rowCount() else -1
+
+    def populate(self, names, activity, subset) -> None:
+        self._block = True
+        self.table.setRowCount(0)
+        self._show_boxes: List[QCheckBox] = []
+        self.table.setRowCount(len(names))
+        for i, (n, y, s) in enumerate(zip(names, activity, subset)):
+            self.table.setItem(i, 0, QTableWidgetItem(""))
+            self._add_show_box(i, checked=(i == 0))
+            self.table.setItem(i, 1, QTableWidgetItem(str(n)))
+            self.table.setItem(i, 2, QTableWidgetItem("" if not np.isfinite(y) else f"{y:.3f}"))
+            self.table.setItem(i, 3, QTableWidgetItem(str(s)))
+            for c in range(4, len(self.COLS)):
+                self.table.setItem(i, c, QTableWidgetItem(""))
+            self._color_row(i, s)
+        self._block = False
+        n_dec = sum(1 for s in subset if s == "decoy")
+        self.lbl_info.setText(f"{len(names)} molecules  (train {sum(1 for s in subset if s == 'train')}, "
+                              f"test {sum(1 for s in subset if s == 'test')}"
+                              + (f", decoys {n_dec}" if n_dec else "") + ")")
+
+    def _color_row(self, i: int, subset: str) -> None:
+        col = {"train": QColor(225, 238, 255), "test": QColor(255, 232, 215)}.get(
+            subset, QColor(228, 228, 228))        # decoys: neutral grey
+        for c in range(self.table.columnCount()):
+            it = self.table.item(i, c)
+            if it is not None:
+                it.setBackground(col)
+                it.setForeground(QColor(15, 15, 15))
+
+    def update_subsets(self, subset) -> None:
+        self._block = True
+        for i, s in enumerate(subset):
+            self.table.item(i, 3).setText(str(s))
+            self._color_row(i, s)
+        self._block = False
+        n_dec = sum(1 for s in subset if s == "decoy")
+        self.lbl_info.setText(f"{len(subset)} molecules  (train {sum(1 for s in subset if s == 'train')}, "
+                              f"test {sum(1 for s in subset if s == 'test')}"
+                              + (f", decoys {n_dec}" if n_dec else "") + ")")
+
+    def update_activity(self, activity) -> None:
+        self._block = True
+        for i, y in enumerate(activity):
+            self.table.item(i, 2).setText("" if not np.isfinite(y) else f"{y:.3f}")
+        self._block = False
+
+    def set_predictions(self, col: int, values: Dict[int, float]) -> None:
+        self._block = True
+        for i in range(self.table.rowCount()):
+            v = values.get(i)
+            self.table.item(i, col).setText("" if v is None or not np.isfinite(v) else f"{v:.3f}")
+        self._block = False
+
+    def clear_predictions(self) -> None:
+        self._block = True
+        for i in range(self.table.rowCount()):
+            for c in range(4, len(self.COLS)):
+                self.table.item(i, c).setText("")
+        self._block = False
+
+    # -- "Show" column: real check-box widgets (item check states render poorly on coloured rows)
+    def _add_show_box(self, row: int, checked: bool) -> None:
+        box = QCheckBox()
+        box.setChecked(checked)
+        box.setToolTip("Show this molecule in the 3D view")
+        box.setStyleSheet(_SHOW_BOX_STYLE)
+        box.toggled.connect(self._show_box_toggled)
+        holder = QWidget()
+        hl = QHBoxLayout(holder)
+        hl.setContentsMargins(0, 0, 0, 0)
+        hl.setAlignment(Qt.AlignCenter)
+        hl.addWidget(box)
+        holder.setAutoFillBackground(False)
+        self.table.setCellWidget(row, 0, holder)
+        self._show_boxes.append(box)
+
+    def _show_box(self, row: int) -> Optional[QCheckBox]:
+        return self._show_boxes[row] if 0 <= row < len(self._show_boxes) else None
+
+    def _set_box(self, row: int, on: bool) -> None:
+        box = self._show_box(row)
+        if box is not None:
+            box.blockSignals(True)
+            box.setChecked(on)
+            box.blockSignals(False)
+
+    def _show_box_toggled(self, _on: bool) -> None:
+        if not self._block:
+            self.show_changed.emit()
+
+    def shown_indices(self) -> List[int]:
+        return [i for i, b in enumerate(self._show_boxes) if b.isChecked()]
+
+    def selected_indices(self) -> List[int]:
+        return sorted({ix.row() for ix in self.table.selectedIndexes()})
+
+    def current_index(self) -> int:
+        return self.row_to_index(self.table.currentRow())
+
+    def set_all_shown(self, on: bool) -> None:
+        self._block = True
+        for i in range(self.table.rowCount()):
+            self._set_box(i, on)
+        self._block = False
+        self.show_changed.emit()
+
+    def show_selected_only(self) -> None:
+        sel = set(self.selected_indices())
+        self._block = True
+        for i in range(self.table.rowCount()):
+            self._set_box(i, i in sel)
+        self._block = False
+        self.show_changed.emit()
+
+    def set_shown(self, indices, on=True):
+        self._block = True
+        for i in indices:
+            self._set_box(i, on)
+        self._block = False
+        self.show_changed.emit()
+
+    def select_index(self, i: int) -> None:
+        if 0 <= i < self.table.rowCount():
+            self.table.selectRow(i)
+            self.table.setCurrentCell(i, 1)
+
+    def _item_changed(self, item: QTableWidgetItem) -> None:
+        if self._block:
+            return
+        if item.column() == 0:
+            self.show_changed.emit()
+
+
+# --------------------------------------------------------------------------- #
+# Model settings panel
+# --------------------------------------------------------------------------- #
+
+class ModelPanel(QWidget):
+    build_requested = Signal()
+    nested_requested = Signal()
+    predict_requested = Signal()
+    cancel_requested = Signal()
+    fields_changed = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(4, 4, 4, 4)
+
+        # --- fields -------------------------------------------------------
+        gb = QGroupBox("Molecular fields")
+        fl = QVBoxLayout(gb)
+        self.chk_fields: Dict[str, QCheckBox] = {}
+        row = QHBoxLayout()
+        for k, name in enumerate(PHYSCHEM_FIELDS):
+            cb = QCheckBox(FIELD_LABELS[name])
+            cb.setChecked(True)
+            cb.toggled.connect(self.fields_changed)
+            self.chk_fields[name] = cb
+            row.addWidget(cb)
+            if k == 2:
+                fl.addLayout(row)
+                row = QHBoxLayout()
+        fl.addLayout(row)
+        cif_row = QHBoxLayout()
+        self.chk_cif = QCheckBox("Continuous indicator fields (CIF)")
+        self.chk_cif.toggled.connect(self.fields_changed)
+        self.cmb_cif_scheme = QComboBox()
+        self.cmb_cif_scheme.addItems(["sybyl", "element", "element+aromatic"])
+        self.cmb_cif_scheme.currentIndexChanged.connect(self.fields_changed)
+        self.spin_cif_min = QSpinBox()
+        self.spin_cif_min.setRange(1, 999)
+        self.spin_cif_min.setValue(5)
+        self.spin_cif_min.setPrefix("min. mols ")
+        self.spin_cif_min.valueChanged.connect(self.fields_changed)
+        cif_row.addWidget(self.chk_cif)
+        cif_row.addWidget(self.cmb_cif_scheme)
+        cif_row.addWidget(self.spin_cif_min)
+        fl.addLayout(cif_row)
+        prow = QHBoxLayout()
+        prow.addWidget(QLabel("Partial charges:"))
+        self.cmb_charges = QComboBox()
+        self.cmb_charges.addItems(["gasteiger", "mmff", "file"])
+        self.cmb_charges.currentIndexChanged.connect(self.fields_changed)
+        prow.addWidget(self.cmb_charges)
+        prow.addWidget(QLabel("Increments:"))
+        self.cmb_param = QComboBox()
+        self.cmb_param.addItems(["rdkit", "tripos", "tripos-legacy"])
+        self.cmb_param.setToolTip("Parameterisation of the hydrophobic and H-bond fields:\n"
+                                  "rdkit - Wildman-Crippen logP contributions and built-in H-bond rules\n"
+                                  "tripos - Sybyl-type increments of the original CMF scripts (2013 paper)\n"
+                                  "tripos-legacy - as tripos, reproducing the H-count bug of the 2013 scripts")
+        self.cmb_param.currentIndexChanged.connect(self.fields_changed)
+        prow.addWidget(self.cmb_param)
+        self.chk_normalize = QCheckBox("Normalise kernels")
+        self.chk_normalize.setToolTip("Use cosine-normalised field kernels K/sqrt(Kii Kjj)")
+        self.chk_scale = QCheckBox("Scale fields")
+        self.chk_scale.setChecked(True)
+        self.chk_scale.setToolTip("Rescale every field kernel to unit mean diagonal before mixing\n"
+                                  "(uncheck to reproduce the raw-kernel convention of the papers)")
+        prow.addWidget(self.chk_normalize)
+        prow.addWidget(self.chk_scale)
+        fl.addLayout(prow)
+
+        self.tbl_fields = QTableWidget(0, 5)
+        self.tbl_fields.setHorizontalHeaderLabels(["Use", "Field", "alpha", "h (mix)", "scale"])
+        self.tbl_fields.verticalHeader().setVisible(False)
+        self.tbl_fields.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.tbl_fields.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.tbl_fields.setMinimumHeight(140)
+        fl.addWidget(self.tbl_fields)
+        outer.addWidget(gb)
+
+        # --- learner / hyper-parameters ------------------------------------
+        gb2 = QGroupBox("Learning method and hyper-parameters")
+        form = QFormLayout(gb2)
+        self.cmb_task = QComboBox()
+        self.cmb_task.addItems(["Regression", "Binary classification", "One-class (virtual screening)"])
+        self.cmb_task.setToolTip("Binary classification separates active from inactive compounds. "
+                                 "A one-class model is fitted to the actives alone and scores how well "
+                                 "a molecule fits them (similarity-based virtual screening).")
+        self.cmb_task.currentIndexChanged.connect(self._task_changed)
+        form.addRow("Task:", self.cmb_task)
+        crow = QHBoxLayout()
+        self.cmb_class_src = QComboBox()
+        self.cmb_class_src.addItems(["activity threshold", "SD property"])
+        self.cmb_class_src.currentIndexChanged.connect(self._task_changed)
+        crow.addWidget(self.cmb_class_src)
+        self.spin_threshold = QDoubleSpinBox()
+        self.spin_threshold.setRange(-1e6, 1e6)
+        self.spin_threshold.setDecimals(3)
+        self.spin_threshold.setValue(0.0)
+        crow.addWidget(self.spin_threshold)
+        self.chk_active_below = QCheckBox("active below")
+        self.chk_active_below.setToolTip("Tick when a smaller value means more active (IC50 in nM, for example)")
+        crow.addWidget(self.chk_active_below)
+        self.cmb_class_prop = QComboBox()
+        self.cmb_class_prop.setMinimumWidth(110)
+        crow.addWidget(self.cmb_class_prop)
+        self.row_classes = crow
+        form.addRow("Classes:", crow)
+        self.cmb_method = QComboBox()
+        self.cmb_method.addItems(["Kernel ridge regression (KRR)", "Gaussian process (KRR + variance)",
+                                  "epsilon-SVR", "nu-SVR"])
+        form.addRow("Method:", self.cmb_method)
+        self.cmb_kernel = QComboBox()
+        self.cmb_kernel.addItems(["none: linear CMF kernel (overlap integral)",
+                                  "Gaussian layer (RBF on the fields)",
+                                  "arc-cosine layer", "two arc-cosine layers"])
+        self.cmb_kernel.setToolTip("\n".join([
+            "A nonlinear layer on top of the CMF kernel, which makes the model more",
+            "expressive than the overlap integral alone:",
+            "  Gaussian - a radial basis function of the distance between the fields,",
+            "    exp(-gamma d^2) with d^2 = K(i,i) + K(j,j) - 2 K(i,j);",
+            "  arc-cosine - the kernel of an infinitely wide network with one or two",
+            "    hidden layers (Cho & Saul 2009).",
+            "The model is then no longer linear in the molecular field, so co-fields and",
+            "atom contributions are not available; the molecular similarity decomposition",
+            "(rule 2) stays valid and the Shapley tab decomposes the prediction instead."]))
+        self.cmb_kernel.currentIndexChanged.connect(self._kernel_changed)
+        form.addRow("Nonlinear kernel:", self.cmb_kernel)
+        self.ed_gammas = QLineEdit("0.25, 0.5, 1, 2, 4")
+        self.ed_gammas.setToolTip("\n".join([
+            "Bandwidth grid of the Gaussian layer, in units of the inverse median squared",
+            "distance between the training molecules (1 = the median heuristic)"]))
+        self.lbl_gammas = QLabel("γ grid (Gaussian):")
+        form.addRow(self.lbl_gammas, self.ed_gammas)
+        self.cmb_mix = QComboBox()
+        self.cmb_mix.addItems(["fixed (from table, default 1)", "optimise by coordinate descent",
+                               "kernel alignment, per field (MKL)",
+                               "kernel alignment, joint (MKL)"])
+        self.cmb_mix.setToolTip("\n".join([
+            "How the mixing coefficients h_f of the field types are chosen; the values in use are",
+            "shown in the h (mix) column of the field table above.",
+            "Coordinate descent increases q2 but may cause model-selection bias.",
+            "Multiple kernel learning sets them by centred alignment of the field kernels with",
+            "the activities: per field (Cristianini et al. 2001) or jointly (Cortes et al. 2012,",
+            "shrunk towards equal weights). The joint kernel stays linear, so co-fields remain",
+            "valid; the weights are re-derived inside every cross-validation fold, so q2 is honest.",
+            "It pays off when the fields differ in relevance, e.g. together with indicator fields."]))
+        form.addRow("Mixing coeff. h:", self.cmb_mix)
+        arow = QHBoxLayout()
+        self.rad_alpha_grid = QRadioButton("grid search (shared)")
+        self.rad_alpha_grid.setChecked(True)
+        self.rad_alpha_table = QRadioButton("fixed from table")
+        arow.addWidget(self.rad_alpha_grid)
+        arow.addWidget(self.rad_alpha_table)
+        form.addRow("Attenuation α:", arow)
+        self.ed_alphas = QLineEdit("0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0")
+        form.addRow("α grid:", self.ed_alphas)
+        self.ed_lams = QLineEdit("1e-4, 1e-3, 1e-2, 0.1, 1, 10")
+        form.addRow("λ grid (KRR/GP):", self.ed_lams)
+        self.ed_Cs = QLineEdit("0.1, 1, 10, 100")
+        form.addRow("C grid (SVR):", self.ed_Cs)
+        self.ed_eps = QLineEdit("0.05, 0.1, 0.2")
+        form.addRow("ε grid / ν grid:", self.ed_eps)
+        self.ed_nus = QLineEdit("0.3, 0.5, 0.7")
+        form.addRow("ν grid (ν-SVR):", self.ed_nus)
+        cvrow = QHBoxLayout()
+        self.spin_folds = QSpinBox()
+        self.spin_folds.setRange(2, 100)
+        self.spin_folds.setValue(10)
+        self.spin_seed = QSpinBox()
+        self.spin_seed.setRange(0, 99999)
+        self.spin_seed.setValue(0)
+        self.spin_seed.setPrefix("seed ")
+        cvrow.addWidget(self.spin_folds)
+        cvrow.addWidget(QLabel("-fold"))
+        cvrow.addWidget(self.spin_seed)
+        form.addRow("Cross-validation:", cvrow)
+        nrow = QHBoxLayout()
+        self.spin_outer = QSpinBox()
+        self.spin_outer.setRange(2, 50)
+        self.spin_outer.setValue(5)
+        self.spin_outer.setPrefix("outer ")
+        self.spin_repeats = QSpinBox()
+        self.spin_repeats.setRange(1, 1000)
+        self.spin_repeats.setValue(1)
+        self.spin_repeats.setPrefix("repeats ")
+        nrow.addWidget(self.spin_outer)
+        nrow.addWidget(self.spin_repeats)
+        form.addRow("External CV:", nrow)
+        outer.addWidget(gb2)
+
+        # --- buttons ------------------------------------------------------
+        brow = QHBoxLayout()
+        self.btn_build = QPushButton("Build model")
+        self.btn_build.setStyleSheet("font-weight: bold")
+        self.btn_nested = QPushButton("External CV")
+        self.btn_predict = QPushButton("Predict test set")
+        self.btn_cancel = QPushButton("Cancel")
+        self.btn_cancel.setEnabled(False)
+        brow.addWidget(self.btn_build)
+        brow.addWidget(self.btn_nested)
+        brow.addWidget(self.btn_predict)
+        brow.addWidget(self.btn_cancel)
+        outer.addLayout(brow)
+        self.btn_build.clicked.connect(self.build_requested)
+        self.btn_nested.clicked.connect(self.nested_requested)
+        self.btn_predict.clicked.connect(self.predict_requested)
+        self.btn_cancel.clicked.connect(self.cancel_requested)
+        outer.addStretch(1)
+        self._task_changed()      # hide the class controls until a classification task is chosen
+        self._kernel_changed()    # the bandwidth grid belongs to the Gaussian layer only
+
+    # ---------------------------------------------------------------- API
+    def selected_physchem(self) -> List[str]:
+        return [n for n, cb in self.chk_fields.items() if cb.isChecked()]
+
+    REG_METHODS = ["Kernel ridge regression (KRR)", "Gaussian process (KRR + variance)",
+                   "epsilon-SVR", "nu-SVR"]
+    REG_KEYS = ["krr", "gp", "svr", "nusvr"]
+    CLS_METHODS = ["Support vector classification (C-SVC)", "nu-SVC"]
+    CLS_KEYS = ["svc", "nusvc"]
+    OC_METHODS = ["One-class SVM (1-SVM)"]
+    OC_KEYS = ["ocsvm"]
+
+    def task_key(self) -> str:
+        return ["regression", "classification", "oneclass"][self.cmb_task.currentIndex()]
+
+    KERNEL_KEYS = ["linear", "gauss", "arccos1", "arccos2"]
+
+    def kernel_layer(self) -> str:
+        return self.KERNEL_KEYS[self.cmb_kernel.currentIndex()]
+
+    def mkl_mode(self):
+        """False, "align" or "alignf" - the multiple-kernel-learning variant chosen."""
+        return [False, False, "align", "alignf"][self.cmb_mix.currentIndex()]
+
+    def gammas(self) -> List[float]:
+        return _float_list(self.ed_gammas.text(), [1.0])
+
+    def _kernel_changed(self, *_):
+        gauss = self.kernel_layer() == "gauss"
+        self.ed_gammas.setVisible(gauss)
+        self.lbl_gammas.setVisible(gauss)
+
+    def _task_changed(self, *_):
+        """Offer the methods and the class controls that belong to the selected task."""
+        task = self.task_key()
+        methods = {"regression": self.REG_METHODS, "classification": self.CLS_METHODS,
+                   "oneclass": self.OC_METHODS}[task]
+        cur = self.cmb_method.currentText()
+        self.cmb_method.blockSignals(True)
+        self.cmb_method.clear()
+        self.cmb_method.addItems(methods)
+        if cur in methods:
+            self.cmb_method.setCurrentText(cur)
+        self.cmb_method.blockSignals(False)
+        classes = task in ("classification", "oneclass")
+        by_prop = self.cmb_class_src.currentIndex() == 1
+        for w in (self.cmb_class_src,):
+            w.setEnabled(classes)
+        self.spin_threshold.setVisible(classes and not by_prop)
+        self.chk_active_below.setVisible(classes and not by_prop)
+        self.cmb_class_prop.setVisible(classes and by_prop)
+        self.cmb_class_src.setVisible(classes)
+        # one-class has no cross-validated objective: alpha and nu are chosen directly
+        oc = task == "oneclass"
+        if oc and not self.chk_normalize.isChecked():
+            # on raw kernels the one-class score is dominated by molecular size
+            self.chk_normalize.setChecked(True)
+        # a one-class model has no cross-validation objective, so the first value of the alpha
+        # box is used directly as the level of generalisation rather than searched
+        self.ed_alphas.setToolTip("One-class models use the first value as the level of generalisation "
+                                  "(no cross-validated search is possible without negatives)" if oc else "")
+        self.cmb_mix.setEnabled(not oc)
+        self.spin_outer.setEnabled(task == "regression")
+        self.spin_repeats.setEnabled(task == "regression")
+        self.btn_nested.setEnabled(task == "regression")
+        self.fields_changed.emit()
+
+    def set_class_properties(self, props):
+        cur = self.cmb_class_prop.currentText()
+        self.cmb_class_prop.blockSignals(True)
+        self.cmb_class_prop.clear()
+        self.cmb_class_prop.addItems(list(props))
+        if cur in props:
+            self.cmb_class_prop.setCurrentText(cur)
+        self.cmb_class_prop.blockSignals(False)
+
+    def method_key(self) -> str:
+        task = self.task_key()
+        keys = {"regression": self.REG_KEYS, "classification": self.CLS_KEYS,
+                "oneclass": self.OC_KEYS}[task]
+        return keys[min(self.cmb_method.currentIndex(), len(keys) - 1)]
+
+    def alphas(self) -> List[float]:
+        return _float_list(self.ed_alphas.text(), [1.0])
+
+    def lams(self) -> List[float]:
+        return _float_list(self.ed_lams.text(), [1.0])
+
+    def Cs(self) -> List[float]:
+        return _float_list(self.ed_Cs.text(), [1.0])
+
+    def epsilons(self) -> List[float]:
+        return _float_list(self.ed_eps.text(), [0.1])
+
+    def nus(self) -> List[float]:
+        return _float_list(self.ed_nus.text(), [0.5])
+
+    def set_busy(self, busy: bool) -> None:
+        for b in (self.btn_build, self.btn_nested, self.btn_predict):
+            b.setEnabled(not busy)
+        self.btn_cancel.setEnabled(busy)
+
+    def fill_field_table(self, fieldset: FieldSet, scale: Optional[np.ndarray] = None) -> None:
+        """Populate the field table from a FieldSet, keeping user edits for same-named fields."""
+        old = self.table_values()
+        self.tbl_fields.blockSignals(True)
+        self.tbl_fields.setRowCount(0)
+        self.tbl_fields.setRowCount(len(fieldset.specs))
+        for i, s in enumerate(fieldset.specs):
+            chk = QTableWidgetItem()
+            chk.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+            prev = old.get(s.name)
+            chk.setCheckState(Qt.Checked if (prev["enabled"] if prev else s.enabled) else Qt.Unchecked)
+            self.tbl_fields.setItem(i, 0, chk)
+            nm = QTableWidgetItem(s.label)
+            nm.setFlags(Qt.ItemIsEnabled)
+            nm.setData(Qt.UserRole, s.name)
+            self.tbl_fields.setItem(i, 1, nm)
+            self.tbl_fields.setItem(i, 2, QTableWidgetItem(f"{(prev['alpha'] if prev else s.alpha):g}"))
+            self.tbl_fields.setItem(i, 3, QTableWidgetItem(f"{(prev['h'] if prev else s.h):g}"))
+            sc = QTableWidgetItem("" if scale is None else f"{scale[i]:.3g}")
+            sc.setFlags(Qt.ItemIsEnabled)
+            self.tbl_fields.setItem(i, 4, sc)
+        self.tbl_fields.blockSignals(False)
+
+    def show_fitted_values(self, fieldset: FieldSet, scale: Optional[np.ndarray]) -> None:
+        self.tbl_fields.blockSignals(True)
+        for i, s in enumerate(fieldset.specs):
+            if i >= self.tbl_fields.rowCount():
+                break
+            self.tbl_fields.item(i, 2).setText(f"{s.alpha:g}")
+            self.tbl_fields.item(i, 3).setText(f"{s.h:g}")
+            self.tbl_fields.item(i, 4).setText("" if scale is None else f"{scale[i]:.3g}")
+        self.tbl_fields.blockSignals(False)
+
+    def table_values(self) -> Dict[str, dict]:
+        out = {}
+        for i in range(self.tbl_fields.rowCount()):
+            name = self.tbl_fields.item(i, 1).data(Qt.UserRole)
+            try:
+                alpha = float(self.tbl_fields.item(i, 2).text())
+            except (ValueError, AttributeError):
+                alpha = 1.0
+            try:
+                h = float(self.tbl_fields.item(i, 3).text())
+            except (ValueError, AttributeError):
+                h = 1.0
+            out[name] = {"enabled": self.tbl_fields.item(i, 0).checkState() == Qt.Checked, "alpha": alpha, "h": h}
+        return out
+
+
+# --------------------------------------------------------------------------- #
+# Results panel (statistics, search table, scatter plot)
+# --------------------------------------------------------------------------- #
+
+class ResultsPanel(QWidget):
+    point_clicked = Signal(int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(4, 4, 4, 4)
+        self.tabs = QTabWidget()
+        lay.addWidget(self.tabs)
+
+        self.txt_stats = QTextEdit()
+        self.txt_stats.setReadOnly(True)
+        self.txt_stats.setFontFamily("Consolas")
+        self.tabs.addTab(self.txt_stats, "Statistics")
+
+        pg.setConfigOptions(antialias=True, background="w", foreground="k")
+        self.plot = pg.PlotWidget()
+        self.plot.setLabel("bottom", "Experimental")
+        self.plot.setLabel("left", "Predicted")
+        self.plot.showGrid(x=True, y=True, alpha=0.3)
+        self.legend = self.plot.addLegend(offset=(10, 10))
+        self.sc_cv = pg.ScatterPlotItem(size=9, brush=pg.mkBrush(60, 120, 220, 180), pen=pg.mkPen("k", width=0.5),
+                                        name="training (CV)", hoverable=True, tip=self._tip)
+        self.sc_test = pg.ScatterPlotItem(size=10, brush=pg.mkBrush(230, 80, 60, 200), pen=pg.mkPen("k", width=0.5),
+                                          symbol="s", name="test set", hoverable=True, tip=self._tip)
+        self.sc_ex = pg.ScatterPlotItem(size=9, brush=pg.mkBrush(40, 170, 90, 180), pen=pg.mkPen("k", width=0.5),
+                                        symbol="t", name="external CV", hoverable=True, tip=self._tip)
+        self.line = pg.InfiniteLine(angle=45, pen=pg.mkPen((120, 120, 120), style=Qt.DashLine))
+        self.plot.addItem(self.line)
+        # classification: the class threshold on the activity and the decision boundary, whose
+        # quadrants are the true/false positives and negatives
+        self.vline = pg.InfiniteLine(angle=90, pen=pg.mkPen((120, 120, 120), style=Qt.DashLine))
+        self.hline = pg.InfiniteLine(angle=0, pos=0.0, pen=pg.mkPen((120, 120, 120), style=Qt.DashLine))
+        for ln in (self.vline, self.hline):
+            self.plot.addItem(ln)
+            ln.setVisible(False)
+        for sc in (self.sc_cv, self.sc_test, self.sc_ex):
+            self.plot.addItem(sc)
+            sc.sigClicked.connect(self._clicked)
+        self.tab_scatter = self.tabs.addTab(self.plot, "Scatter plot")
+
+        self.roc = pg.PlotWidget()
+        self.roc.setLabel("bottom", "false positive rate")
+        self.roc.setLabel("left", "true positive rate")
+        self.roc.showGrid(x=True, y=True, alpha=0.3)
+        self.roc.addLegend(offset=(-10, 10))
+        self.roc.setXRange(0, 1)
+        self.roc.setYRange(0, 1)
+        self.roc.plot([0, 1], [0, 1], pen=pg.mkPen((140, 140, 140), style=Qt.DashLine))
+        self._roc_items = []
+        self.tab_roc = self.tabs.addTab(self.roc, "ROC")
+        self.tabs.setTabVisible(self.tab_roc, False)
+
+        # --- scores (decision values): the actual output of a classification / screening model
+        self.tab_scores_w = QWidget()
+        sl = QVBoxLayout(self.tab_scores_w)
+        sl.setContentsMargins(0, 0, 0, 0)
+        self.score_hist = pg.PlotWidget()
+        self.score_hist.setLabel("bottom", "decision value")
+        self.score_hist.setLabel("left", "molecules")
+        self.score_hist.showGrid(x=True, y=True, alpha=0.3)
+        self.score_hist.addLegend(offset=(-10, 10))
+        self.score_hist.setMaximumHeight(220)
+        self._score_items = []
+        sl.addWidget(self.score_hist)
+        self.tbl_scores = QTableWidget(0, 5)
+        self.tbl_scores.setHorizontalHeaderLabels(["Rank", "Molecule", "Score", "Set", "Class"])
+        self.tbl_scores.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.tbl_scores.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.tbl_scores.verticalHeader().setVisible(False)
+        sl.addWidget(self.tbl_scores)
+        self.tab_scores = self.tabs.addTab(self.tab_scores_w, "Scores")
+        self.tabs.setTabVisible(self.tab_scores, False)
+
+        self.enrich = pg.PlotWidget()
+        self.enrich.setLabel("bottom", "fraction of the library screened")
+        self.enrich.setLabel("left", "fraction of the actives found")
+        self.enrich.showGrid(x=True, y=True, alpha=0.3)
+        self.enrich.addLegend(offset=(-10, 10))
+        self.enrich.setXRange(0, 1)
+        self.enrich.setYRange(0, 1)
+        self.enrich.plot([0, 1], [0, 1], pen=pg.mkPen((140, 140, 140), style=Qt.DashLine))
+        self._enrich_items = []
+        self.tab_enrich = self.tabs.addTab(self.enrich, "Enrichment")
+        self.tabs.setTabVisible(self.tab_enrich, False)
+
+        # --- chemical space map (GTM)
+        self.map_plot = pg.PlotWidget()
+        self.map_plot.setLabel("bottom", "latent coordinate 1")
+        self.map_plot.setLabel("left", "latent coordinate 2")
+        self.map_plot.setAspectLocked(True)
+        self.map_plot.showGrid(x=True, y=True, alpha=0.2)
+        self.map_img = pg.ImageItem()
+        self.map_plot.addItem(self.map_img)
+        self.map_pts = pg.ScatterPlotItem(size=9, pen=pg.mkPen("k", width=0.5), hoverable=True,
+                                          tip=lambda x, y, data: str(data))
+        self.map_plot.addItem(self.map_pts)
+        self.map_pts.sigClicked.connect(self._clicked)
+        self.map_bar = pg.ColorBarItem(interactive=False, width=12)
+        map_w = QWidget()
+        ml = QVBoxLayout(map_w)
+        ml.setContentsMargins(0, 0, 0, 0)
+        mrow = QHBoxLayout()
+        mrow.addWidget(QLabel("Points:"))
+        self.cmb_map_points = QComboBox()
+        self.cmb_map_points.addItems(["coloured by value", "white with black outline", "hidden"])
+        self.cmb_map_points.setToolTip("How the molecules are drawn over the landscape")
+        self.cmb_map_points.currentIndexChanged.connect(self._draw_map_points)
+        mrow.addWidget(self.cmb_map_points)
+        mrow.addWidget(QLabel("size:"))
+        self.spin_map_size = QSpinBox()
+        self.spin_map_size.setRange(2, 30)
+        self.spin_map_size.setValue(9)
+        self.spin_map_size.valueChanged.connect(self._draw_map_points)
+        mrow.addWidget(self.spin_map_size)
+        mrow.addStretch(1)
+        ml.addLayout(mrow)
+        ml.addWidget(self.map_plot, 1)
+        self._map_data = None
+        self.tab_map = self.tabs.addTab(map_w, "Map")
+        self.tabs.setTabVisible(self.tab_map, False)
+
+        self.tbl_search = QTableWidget(0, 4)
+        self.tbl_search.setHorizontalHeaderLabels(["alpha", "params", "RMSEcv", "q2"])
+        self.tbl_search.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_search.verticalHeader().setVisible(False)
+        self.tabs.addTab(self.tbl_search, "Hyper-parameter search")
+
+        # --- contributions: decomposition rules 2 (training molecules) and 3 (atoms)
+        contrib_w = QWidget()
+        cl = QVBoxLayout(contrib_w)
+        cl.setContentsMargins(4, 4, 4, 4)
+        self.lbl_contrib = QLabel("Select a molecule in the data-set table to decompose its prediction.")
+        self.lbl_contrib.setWordWrap(True)
+        cl.addWidget(self.lbl_contrib)
+        tables = QHBoxLayout()
+        self.tbl_contrib = QTableWidget(0, 3)
+        self.tbl_contrib.setHorizontalHeaderLabels(["Training molecule", "a_j", "a_j K(X, X_j)"])
+        self.tbl_contrib.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_contrib.verticalHeader().setVisible(False)
+        self.tbl_contrib.setToolTip("Decomposition rule 2: the prediction as a sum over training molecules")
+        tables.addWidget(self.tbl_contrib, 1)
+        self.tbl_atoms = QTableWidget(0, 4)
+        self.tbl_atoms.setHorizontalHeaderLabels(["Atom", "Element", "Type", "Contribution"])
+        self.tbl_atoms.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_atoms.verticalHeader().setVisible(False)
+        self.tbl_atoms.setToolTip("Decomposition rule 3: the prediction as a sum over the atoms of this molecule")
+        tables.addWidget(self.tbl_atoms, 1)
+        cl.addLayout(tables)
+        self.tabs.addTab(contrib_w, "Contributions")
+
+        # --- Shapley decomposition: works for any kernel, including a nonlinear layer
+        shap_w = QWidget()
+        sl = QVBoxLayout(shap_w)
+        sl.setContentsMargins(4, 4, 4, 4)
+        srow = QHBoxLayout()
+        srow.addWidget(QLabel("Players:"))
+        self.cmb_shap_players = QComboBox()
+        self.cmb_shap_players.addItems(["atoms", "substituents of the common scaffold", "field types",
+                                        "atoms x field types (Shapley field)"])
+        self.cmb_shap_players.setToolTip("\n".join([
+            "What the prediction is divided between.",
+            "Atoms: one value per atom, estimated by permutation sampling.",
+            "Substituents: the common scaffold of the training set is held fixed and the",
+            "  values explain the difference from it; few enough players to be exact.",
+            "Field types: what each molecular field contributes, which replaces the overlap",
+            "  integral of co-field and molecular field when the kernel is not linear.",
+            "Atoms x field types: one value per atom per field, which the viewer smears over",
+            "  the Gaussians of that field into a Shapley field, one map per field type."]))
+        self.cmb_shap_players.currentIndexChanged.connect(self._shap_players_changed)
+        srow.addWidget(self.cmb_shap_players)
+        self.spin_shap_samples = QSpinBox()
+        self.spin_shap_samples.setRange(20, 100000)
+        self.spin_shap_samples.setValue(300)
+        self.spin_shap_samples.setPrefix("samples ")
+        self.spin_shap_samples.setToolTip("Permutations sampled when the players are too many to "
+                                          "enumerate exactly; the table shows the standard error")
+        srow.addWidget(self.spin_shap_samples)
+        self.chk_shap_inter = QCheckBox("interaction indices")
+        self.chk_shap_inter.setToolTip("Second-order Shapley interaction indices: the part of the "
+                                       "prediction that two players produce only together.\n"
+                                       "They vanish for a linear kernel without normalisation.")
+        srow.addWidget(self.chk_shap_inter)
+        self.btn_shapley = QPushButton("Compute")
+        self.btn_shapley.setStyleSheet("font-weight: bold")
+        srow.addWidget(self.btn_shapley)
+        srow.addStretch(1)
+        sl.addLayout(srow)
+        self.lbl_shapley = QLabel("Select a molecule in the data-set table and press Compute.")
+        self.lbl_shapley.setWordWrap(True)
+        sl.addWidget(self.lbl_shapley)
+        stables = QHBoxLayout()
+        self.tbl_shapley = QTableWidget(0, 3)
+        self.tbl_shapley.setHorizontalHeaderLabels(["Player", "Shapley value", "std. error"])
+        self.tbl_shapley.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_shapley.verticalHeader().setVisible(False)
+        stables.addWidget(self.tbl_shapley, 1)
+        self.tbl_shap_inter = QTableWidget(0, 3)
+        self.tbl_shap_inter.setHorizontalHeaderLabels(["Player", "Player", "Interaction"])
+        self.tbl_shap_inter.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_shap_inter.verticalHeader().setVisible(False)
+        stables.addWidget(self.tbl_shap_inter, 1)
+        sl.addLayout(stables)
+        self.tabs.addTab(shap_w, "Shapley")
+        self._shap_players_changed()
+
+        # --- complementarity with the protein pocket
+        comp_w = QWidget()
+        kl = QVBoxLayout(comp_w)
+        kl.setContentsMargins(4, 4, 4, 4)
+        krow = QHBoxLayout()
+        self.btn_complement = QPushButton("Compute")
+        self.btn_complement.setStyleSheet("font-weight: bold")
+        krow.addWidget(self.btn_complement)
+        self.chk_comp_surface = QCheckBox("surface scores")
+        self.chk_comp_surface.setChecked(True)
+        self.chk_comp_surface.setToolTip("\n".join([
+            "Also evaluate the fields on the surface of every molecule, which gives the",
+            "electrostatic complementarity score of the literature and the colours for the",
+            "surface in the 3D view. Slower on a large series."]))
+        krow.addWidget(self.chk_comp_surface)
+        krow.addWidget(QLabel("statistic:"))
+        self.cmb_comp_stat = QComboBox()
+        self.cmb_comp_stat.addItems(["sign agreement", "cosine", "correlation"])
+        self.cmb_comp_stat.setToolTip("\n".join([
+            "How a co-field is compared with what the pocket offers:",
+            "  sign agreement: do they want the same sign in the same place, weighted by",
+            "    how strongly each wants it; this is how a co-field is read",
+            "  cosine: also demands that the two maps have the same shape",
+            "  correlation: removes the means first, so it asks only whether the variations track"]))
+        krow.addWidget(self.cmb_comp_stat)
+        krow.addStretch(1)
+        kl.addLayout(krow)
+        self.lbl_complement = QLabel("Load a protein structure, then press Compute.")
+        self.lbl_complement.setWordWrap(True)
+        kl.addWidget(self.lbl_complement)
+        ktab = QHBoxLayout()
+        self.tbl_comp_mol = QTableWidget(0, 3)
+        self.tbl_comp_mol.setHorizontalHeaderLabels(["Term", "This molecule", "Series mean"])
+        self.tbl_comp_mol.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_comp_mol.verticalHeader().setVisible(False)
+        self.tbl_comp_mol.setToolTip("Complementarity of the selected molecule with the pocket, "
+                                     "from exact overlap integrals; +1 is perfect, -1 is opposite")
+        ktab.addWidget(self.tbl_comp_mol, 1)
+        self.tbl_comp_series = QTableWidget(0, 2)
+        self.tbl_comp_series.setHorizontalHeaderLabels(["Quantity", "Value"])
+        self.tbl_comp_series.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_comp_series.verticalHeader().setVisible(False)
+        self.tbl_comp_series.setToolTip("How the scores relate to the activity across the series, "
+                                        "and how far the co-fields agree with the pocket")
+        ktab.addWidget(self.tbl_comp_series, 1)
+        kl.addLayout(ktab)
+        self.tabs.addTab(comp_w, "Complementarity")
+
+        self.log = QTextEdit()
+        self.log.setReadOnly(True)
+        self.tabs.addTab(self.log, "Log")
+
+    def complement_statistic(self) -> str:
+        return ["sign", "cosine", "pearson"][self.cmb_comp_stat.currentIndex()]
+
+    def set_complementarity(self, header: str, rows, series) -> None:
+        """Fill the complementarity tab: per-molecule terms and series-level numbers."""
+        self.lbl_complement.setText(header)
+        self.tbl_comp_mol.setRowCount(0)
+        self.tbl_comp_mol.setRowCount(len(rows))
+        for r, (label, here, mean) in enumerate(rows):
+            self.tbl_comp_mol.setItem(r, 0, QTableWidgetItem(str(label)))
+            for c, v in ((1, here), (2, mean)):
+                txt = "" if v is None else (f"{v:+.3f}" if isinstance(v, float) else str(v))
+                self.tbl_comp_mol.setItem(r, c, QTableWidgetItem(txt))
+        self.tbl_comp_series.setRowCount(0)
+        self.tbl_comp_series.setRowCount(len(series))
+        for r, (label, v) in enumerate(series):
+            self.tbl_comp_series.setItem(r, 0, QTableWidgetItem(str(label)))
+            self.tbl_comp_series.setItem(r, 1, QTableWidgetItem(
+                v if isinstance(v, str) else f"{v:+.3f}"))
+
+    def _shap_players_changed(self, *_):
+        """Sampling is used where the players are too many to enumerate."""
+        self.spin_shap_samples.setVisible(self.cmb_shap_players.currentIndex() in (0, 3))
+
+    def shapley_players(self) -> str:
+        return ["atoms", "groups", "fields", "atomfields"][self.cmb_shap_players.currentIndex()]
+
+    def set_shapley(self, res, header: str) -> None:
+        """Fill the Shapley tab from a :class:`cmfqsar.shapley.ShapleyResult`."""
+        self.lbl_shapley.setText(header)
+        rows = res.table() if res is not None else []
+        self.tbl_shapley.setRowCount(0)
+        self.tbl_shapley.setRowCount(len(rows))
+        for r, (label, v, se) in enumerate(rows):
+            self.tbl_shapley.setItem(r, 0, QTableWidgetItem(str(label)))
+            self.tbl_shapley.setItem(r, 1, QTableWidgetItem(f"{v:+.4f}"))
+            self.tbl_shapley.setItem(r, 2, QTableWidgetItem("exact" if np.isnan(se) else f"{se:.4f}"))
+        inter = res.top_interactions(25) if res is not None else []
+        self.tbl_shap_inter.setRowCount(0)
+        self.tbl_shap_inter.setRowCount(len(inter))
+        for r, (a, b, v) in enumerate(inter):
+            self.tbl_shap_inter.setItem(r, 0, QTableWidgetItem(str(a)))
+            self.tbl_shap_inter.setItem(r, 1, QTableWidgetItem(str(b)))
+            self.tbl_shap_inter.setItem(r, 2, QTableWidgetItem(f"{v:+.4f}"))
+
+    @staticmethod
+    def _tip(x, y, data):
+        return f"{data}\nexp {x:.3f}, pred {y:.3f}"
+
+    def _clicked(self, item, points):
+        if len(points):
+            d = points[0].data()
+            try:
+                self.point_clicked.emit(int(str(d).split("#")[-1]))
+            except ValueError:
+                pass
+
+    def set_points(self, which: str, x, y, names, indices):
+        sc = {"cv": self.sc_cv, "test": self.sc_test, "ex": self.sc_ex}[which]
+        pts = [{"pos": (float(a), float(b)), "data": f"{n} #{i}"} for a, b, n, i in zip(x, y, names, indices)
+               if np.isfinite(a) and np.isfinite(b)]
+        sc.setData(pts)
+        self._autorange()
+
+    def clear_points(self, which=None):
+        for k, sc in (("cv", self.sc_cv), ("test", self.sc_test), ("ex", self.sc_ex)):
+            if which is None or which == k:
+                sc.setData([])
+
+    def _autorange(self):
+        xs, ys = [], []
+        for sc in (self.sc_cv, self.sc_test, self.sc_ex):
+            d = sc.getData()
+            if d[0] is not None and len(d[0]):
+                xs.extend(d[0])
+                ys.extend(d[1])
+        if xs:
+            lo = min(min(xs), min(ys))
+            hi = max(max(xs), max(ys))
+            pad = 0.05 * (hi - lo + 1e-9)
+            self.plot.enableAutoRange(enable=False)
+            self.plot.setRange(xRange=(lo - pad, hi + pad), yRange=(lo - pad, hi + pad), padding=0)
+
+    def set_classification_mode(self, on: bool, activity_name: str = "activity",
+                                threshold: Optional[float] = None, have_activity: bool = True) -> None:
+        """Switch the plots between the regression and the classification layout.
+
+        For a classifier the scatter plot only means something when the classes come from a
+        threshold on a continuous activity: it then shows how the decision value tracks that
+        activity, and the two dashed lines cut it into the true and false positives and negatives.
+        Without such an activity the tab is hidden, because the ranking (Scores) and the ROC curve
+        are what a classifier is judged by.
+        """
+        self.plot.setLabel("left", "decision value" if on else "Predicted")
+        self.plot.setLabel("bottom", activity_name if on else "Experimental")
+        self.line.setVisible(not on)
+        self.vline.setVisible(bool(on and threshold is not None))
+        self.hline.setVisible(on)
+        if threshold is not None:
+            self.vline.setPos(float(threshold))
+        if on:
+            self.plot.enableAutoRange(enable=True)
+        if not on:
+            self.tabs.setTabVisible(self.tab_roc, False)
+        self.tabs.setTabVisible(self.tab_scatter, (not on) or have_activity)
+        self._relabel_legend(on)
+
+    def _relabel_legend(self, classification: bool) -> None:
+        try:
+            self.legend.clear()
+        except Exception:                                    # noqa: BLE001
+            return
+        if classification:
+            pairs = ((self.sc_cv, "active (circle = training, square = test)"),
+                     (self.sc_test, "inactive"))
+        else:
+            pairs = ((self.sc_cv, "training (CV)"), (self.sc_test, "test set"),
+                     (self.sc_ex, "external CV"))
+        for item, label in pairs:
+            self.legend.addItem(item, label)
+
+    def set_class_points(self, x, y, classes, is_test, names, indices) -> None:
+        """Scatter of decision value against activity, coloured by true class.
+
+        Training molecules are drawn as circles and test molecules as squares.
+        """
+        x = np.asarray(x, float)
+        y = np.asarray(y, float)
+        c = np.asarray(classes, float)
+        ok = np.isfinite(x) & np.isfinite(y)
+        for item, sel in ((self.sc_cv, ok & (c > 0)), (self.sc_test, ok & ~(c > 0))):
+            pts = [{"pos": (float(x[i]), float(y[i])),
+                    "symbol": "s" if is_test[i] else "o",
+                    "data": f"{names[i]} #{indices[i]}"}
+                   for i in np.where(sel)[0]]
+            item.setData(pts)
+        self.sc_ex.setData([])
+        self._autorange()
+
+    @staticmethod
+    def _roc_curve(y_true, decision):
+        """(false positive rate, true positive rate, AUC) of a binary decision function."""
+        y = np.asarray(y_true, float)
+        d = np.asarray(decision, float)
+        ok = np.isfinite(y) & np.isfinite(d)
+        y, d = y[ok], d[ok]
+        pos, neg = y > 0, y < 0
+        if not pos.any() or not neg.any():
+            return None
+        order = np.argsort(-d)
+        y = y[order]
+        tp = np.cumsum(y > 0) / max(1, int(pos.sum()))
+        fp = np.cumsum(y < 0) / max(1, int(neg.sum()))
+        tp = np.concatenate([[0.0], tp])
+        fp = np.concatenate([[0.0], fp])
+        return fp, tp, float(np.trapezoid(tp, fp)) if hasattr(np, "trapezoid") else float(np.trapz(tp, fp))
+
+    def set_roc(self, curves) -> None:
+        """curves: list of (label, true classes +-1, decision values).
+
+        The tab is hidden when none of them can be drawn, so an empty plot is never shown.
+        """
+        for it in self._roc_items:
+            self.roc.removeItem(it)
+        self._roc_items = []
+        colors = [(60, 120, 220), (230, 80, 60), (40, 170, 90)]
+        for k, (label, y_true, decision) in enumerate(curves):
+            cur = self._roc_curve(y_true, decision)
+            if cur is None:
+                continue
+            fp, tp, auc = cur
+            item = self.roc.plot(fp, tp, pen=pg.mkPen(colors[k % len(colors)], width=2),
+                                 name=f"{label} (AUC {auc:.3f})")
+            self._roc_items.append(item)
+        self.tabs.setTabVisible(self.tab_roc, bool(self._roc_items))
+
+    def set_scores(self, names, scores, classes=None, subsets=None, boundary: float = 0.0) -> None:
+        """Ranked decision values: the output of a classification or one-class model.
+
+        `classes` is +1/-1/NaN where known, `subsets` the train/test membership.
+        """
+        names = list(names)
+        d = np.asarray(scores, dtype=float)
+        ok = np.isfinite(d)
+        self.tabs.setTabVisible(self.tab_scores, bool(ok.any()))
+        for it in self._score_items:
+            self.score_hist.removeItem(it)
+        self._score_items = []
+        if not ok.any():
+            self.tbl_scores.setRowCount(0)
+            return
+        cls = None if classes is None else np.asarray(classes, dtype=float)
+        lo, hi = float(np.min(d[ok])), float(np.max(d[ok]))
+        if hi <= lo:
+            hi = lo + 1.0
+        edges = np.linspace(lo, hi, 26)
+        if cls is not None and np.isfinite(cls).any() and (cls[np.isfinite(cls)] < 0).any():
+            groups = [("active", d[ok & (cls > 0)], (60, 120, 220, 170)),
+                      ("inactive", d[ok & (cls < 0)], (230, 80, 60, 170))]
+        else:
+            groups = [("inside the boundary", d[ok & (d >= boundary)], (40, 170, 90, 170)),
+                      ("outside", d[ok & (d < boundary)], (230, 80, 60, 170))]
+        width = (edges[1] - edges[0]) * 0.45
+        for k, (label, vals, colour) in enumerate(groups):
+            if len(vals) == 0:
+                continue
+            counts, _ = np.histogram(vals, bins=edges)
+            centres = 0.5 * (edges[:-1] + edges[1:]) + (k - 0.5) * width
+            item = pg.BarGraphItem(x=centres, height=counts, width=width,
+                                   brush=pg.mkBrush(colour), pen=pg.mkPen(None), name=label)
+            self.score_hist.addItem(item)
+            self._score_items.append(item)
+        line = pg.InfiniteLine(pos=boundary, angle=90,
+                               pen=pg.mkPen((120, 120, 120), width=2, style=Qt.DashLine))
+        self.score_hist.addItem(line)
+        self._score_items.append(line)
+
+        order = np.argsort(-np.where(ok, d, -np.inf))
+        self.tbl_scores.setRowCount(0)
+        self.tbl_scores.setRowCount(int(ok.sum()))
+        for row, i in enumerate(order[:int(ok.sum())]):
+            lab = ""
+            if cls is not None and np.isfinite(cls[i]):
+                lab = "active" if cls[i] > 0 else "inactive"
+            for col, text in ((0, str(row + 1)), (1, str(names[i])), (2, f"{d[i]:.4f}"),
+                              (3, "" if subsets is None else str(subsets[i])), (4, lab)):
+                self.tbl_scores.setItem(row, col, QTableWidgetItem(text))
+
+    def set_enrichment(self, y_true=None, decision=None, label: str = "screening") -> None:
+        """Accumulation curve: actives found against the fraction of the library screened."""
+        from ..model import enrichment_curve
+        for it in self._enrich_items:
+            self.enrich.removeItem(it)
+        self._enrich_items = []
+        curve = None if y_true is None else enrichment_curve(y_true, decision)
+        self.tabs.setTabVisible(self.tab_enrich, curve is not None)
+        if curve is None:
+            return
+        x, y = curve
+        item = self.enrich.plot(x, y, pen=pg.mkPen((40, 170, 90), width=2), name=label)
+        self._enrich_items.append(item)
+        for f in (0.01, 0.05, 0.10):
+            ln = pg.InfiniteLine(pos=f, angle=90, pen=pg.mkPen((170, 170, 170), style=Qt.DotLine))
+            self.enrich.addItem(ln)
+            self._enrich_items.append(ln)
+
+    def set_map(self, image=None, coords=None, values=None, names=None, indices=None,
+                title: str = "", cmap: str = "viridis") -> None:
+        """Draw a GTM map: `image` is the landscape on the node grid, `coords` the molecules."""
+        if image is None:
+            self.tabs.setTabVisible(self.tab_map, False)
+            return
+        img = np.asarray(image, dtype=float)
+        finite = np.isfinite(img)
+        lo = float(np.nanmin(img)) if finite.any() else 0.0
+        hi = float(np.nanmax(img)) if finite.any() else 1.0
+        if hi <= lo:
+            hi = lo + 1.0
+        shown = np.where(finite, img, lo - (hi - lo))          # unsupported nodes: below the scale
+        self.map_img.setImage(shown.T, levels=(lo - (hi - lo) * 1e-3, hi), autoLevels=False)
+        self.map_img.setRect(pg.QtCore.QRectF(-1.0, -1.0, 2.0, 2.0))
+        try:
+            self.map_img.setColorMap(pg.colormap.get(cmap))
+        except Exception:                                       # noqa: BLE001
+            pass
+        self._map_data = {"coords": None if coords is None else np.asarray(coords, dtype=float),
+                          "values": None if values is None else np.asarray(values, dtype=float),
+                          "names": names, "indices": indices, "cmap": cmap, "lo": lo, "hi": hi}
+        self._draw_map_points()
+        self.map_plot.setTitle(title)
+        self.tabs.setTabVisible(self.tab_map, True)
+
+    def _draw_map_points(self, *_):
+        """Draw the molecules over the landscape in the chosen style."""
+        d = self._map_data
+        if not d or d["coords"] is None or not len(d["coords"]):
+            self.map_pts.setData([])
+            return
+        style = self.cmb_map_points.currentIndex()
+        if style == 2:                                   # hidden: show the landscape alone
+            self.map_pts.setData([])
+            return
+        c, v = d["coords"], d["values"]
+        lo, hi = d["lo"], d["hi"]
+        size = self.spin_map_size.value()
+        pts = []
+        for i in range(len(c)):
+            if style == 1:                               # white marker with a black outline
+                brush, pen = pg.mkBrush(255, 255, 255), pg.mkPen((0, 0, 0), width=1.4)
+            elif v is None or not np.isfinite(v[i]):
+                brush, pen = pg.mkBrush(170, 170, 170, 200), pg.mkPen("k", width=0.5)
+            else:
+                f = float(np.clip((v[i] - lo) / (hi - lo), 0, 1))
+                brush = pg.mkBrush(pg.colormap.get(d["cmap"]).map(f, mode="qcolor"))
+                pen = pg.mkPen((0, 0, 0), width=0.5)
+            pts.append({"pos": (float(c[i, 0]), float(c[i, 1])), "brush": brush, "pen": pen,
+                        "size": size,
+                        "data": f"{d['names'][i]} #{d['indices'][i]}" if d["names"] is not None else ""})
+        self.map_pts.setData(pts)
+
+    def set_search_table(self, rows):
+        self.tbl_search.setRowCount(0)
+        self.tbl_search.setRowCount(len(rows))
+        for i, r in enumerate(rows):
+            params = {k: v for k, v in r.items() if k not in ("alpha", "rmse_cv", "q2", "h")}
+            ptxt = ", ".join(f"{k}={v:g}" for k, v in params.items())
+            if "h" in r:
+                ptxt += "  h=" + ",".join(f"{v:g}" for v in r["h"].values())
+            self.tbl_search.setItem(i, 0, QTableWidgetItem(f"{r['alpha']:g}"))
+            self.tbl_search.setItem(i, 1, QTableWidgetItem(ptxt))
+            self.tbl_search.setItem(i, 2, QTableWidgetItem(f"{r['rmse_cv']:.4f}"))
+            self.tbl_search.setItem(i, 3, QTableWidgetItem(f"{r['q2']:.4f}"))
+
+    def set_contributions(self, names, coef, contrib, header: str = "") -> None:
+        """Decomposition rule 2: the contribution of every training molecule."""
+        if header:
+            self.lbl_contrib.setText(header)
+        order = np.argsort(-np.abs(np.asarray(contrib)))
+        self.tbl_contrib.setRowCount(0)
+        self.tbl_contrib.setRowCount(len(order))
+        for r, j in enumerate(order):
+            self.tbl_contrib.setItem(r, 0, QTableWidgetItem(str(names[j])))
+            self.tbl_contrib.setItem(r, 1, QTableWidgetItem(f"{coef[j]:.4g}"))
+            self.tbl_contrib.setItem(r, 2, QTableWidgetItem(f"{contrib[j]:+.4f}"))
+
+    def set_atom_contributions(self, symbols, types, contrib) -> None:
+        """Decomposition rule 3: the contribution of every atom of the selected molecule."""
+        c = np.asarray(contrib)
+        order = np.argsort(-np.abs(c))
+        self.tbl_atoms.setRowCount(0)
+        self.tbl_atoms.setRowCount(len(order))
+        for r, j in enumerate(order):
+            self.tbl_atoms.setItem(r, 0, QTableWidgetItem(str(j + 1)))
+            self.tbl_atoms.setItem(r, 1, QTableWidgetItem(str(symbols[j])))
+            self.tbl_atoms.setItem(r, 2, QTableWidgetItem(str(types[j])))
+            self.tbl_atoms.setItem(r, 3, QTableWidgetItem(f"{c[j]:+.4f}"))
+
+    def clear_contributions(self, message: str = "") -> None:
+        self.tbl_contrib.setRowCount(0)
+        self.tbl_atoms.setRowCount(0)
+        if message:
+            self.lbl_contrib.setText(message)
+
+    def append_log(self, text: str):
+        self.log.append(text)
+
+
+# --------------------------------------------------------------------------- #
+# Viewer controls (toolbar above the 3D view)
+# --------------------------------------------------------------------------- #
+
+class ViewerControls(QWidget):
+    changed = Signal()                 # any display option changed
+    compute_requested = Signal()       # co-field computation requested
+    style_changed = Signal()
+    reset_view = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(4, 2, 4, 2)
+        row1 = QHBoxLayout()
+        row1.addWidget(QLabel("Style:"))
+        self.cmb_style = QComboBox()
+        self.cmb_style.addItems(["ball & stick", "sticks", "lines", "space fill"])
+        self.cmb_style.currentIndexChanged.connect(self.style_changed)
+        row1.addWidget(self.cmb_style)
+        self.chk_hydrogens = QCheckBox("H atoms")
+        self.chk_hydrogens.setChecked(True)
+        self.chk_hydrogens.toggled.connect(self.style_changed)
+        row1.addWidget(self.chk_hydrogens)
+        row1.addWidget(QLabel("Labels:"))
+        self.cmb_labels = QComboBox()
+        self.cmb_labels.addItems(["none", "element + number", "atom type", "partial charge"])
+        self.cmb_labels.setToolTip("\n".join([
+            "Write a label at every atom of the selected molecule:",
+            "  element + number: C7, N12, as the contribution tables number them",
+            "  atom type: the Sybyl code used by the indicator fields, C.ar, N.am",
+            "  partial charge: the charge that enters the electrostatic field"]))
+        self.cmb_labels.currentIndexChanged.connect(self.changed)
+        row1.addWidget(self.cmb_labels)
+        self.chk_dark = QCheckBox("dark background")
+        self.chk_dark.setChecked(True)
+        self.chk_dark.toggled.connect(self.changed)
+        row1.addWidget(self.chk_dark)
+        self.btn_reset = QPushButton("Reset view")
+        self.btn_reset.clicked.connect(self.reset_view)
+        row1.addWidget(self.btn_reset)
+        row1.addStretch(1)
+        lay.addLayout(row1)
+
+        row2 = QHBoxLayout()
+        row2.addWidget(QLabel("Field type:"))
+        self.cmb_field = QComboBox()
+        self.cmb_field.setMinimumWidth(160)
+        self.cmb_field.setToolTip("Field type shown in the 3D view: used for the co-field C(r), "
+                                  "the molecular field X(r) and their overlap")
+        self.cmb_field.currentIndexChanged.connect(self.changed)
+        row2.addWidget(self.cmb_field)
+        self.spin_spacing = QDoubleSpinBox()
+        self.spin_spacing.setRange(0.2, 2.0)
+        self.spin_spacing.setSingleStep(0.1)
+        self.spin_spacing.setValue(0.5)
+        self.spin_spacing.setPrefix("grid ")
+        self.spin_spacing.setSuffix(" Å")
+        row2.addWidget(self.spin_spacing)
+        self.spin_margin = QDoubleSpinBox()
+        self.spin_margin.setRange(0.0, 10.0)
+        self.spin_margin.setValue(4.0)
+        self.spin_margin.setPrefix("margin ")
+        self.spin_margin.setSuffix(" Å")
+        row2.addWidget(self.spin_margin)
+        self.btn_compute = QPushButton("Compute co-field")
+        self.btn_compute.clicked.connect(self.compute_requested)
+        row2.addWidget(self.btn_compute)
+        row2.addStretch(1)
+        lay.addLayout(row2)
+
+        row3 = QHBoxLayout()
+        self.chk_cofield = QCheckBox("co-field C(r)")
+        self.chk_cofield.setChecked(True)
+        self.cmb_cofield_style = QComboBox()
+        self.cmb_cofield_style.addItems(["solid", "mesh"])
+        self.cmb_cofield_style.setToolTip("Drawing style of the co-field isosurfaces")
+        self.cmb_cofield_style.currentIndexChanged.connect(self.changed)
+        self.chk_molfield = QCheckBox("molecular field X(r)")
+        self.cmb_molfield_style = QComboBox()
+        self.cmb_molfield_style.addItems(["mesh", "solid"])
+        self.cmb_molfield_style.setToolTip("Molecular fields are drawn as solid isosurfaces in the field's colours;\n"
+                                           "choose 'mesh' to tell them apart from a co-field shown at the same time")
+        self.cmb_molfield_style.currentIndexChanged.connect(self.changed)
+        self.chk_overlap = QCheckBox("overlap C·X")
+        self.chk_shapfield = QCheckBox("Shapley field Φ(r)")
+        self.chk_shapfield.setToolTip("\n".join([
+            "The Shapley values of the selected field smeared over the Gaussians of that field.",
+            "Its integral is the part of the prediction attributed to the field, as the integral",
+            "of a charge density is the total charge. Compute it in the Results panel, Shapley",
+            "tab, with the players set to 'atoms x field types'.",
+            "Unlike a co-field the map belongs to one molecule, because a model with a nonlinear",
+            "kernel has no co-field for it to belong to."]))
+        self.cmb_shapfield_style = QComboBox()
+        self.cmb_shapfield_style.addItems(["solid", "mesh"])
+        self.cmb_shapfield_style.currentIndexChanged.connect(self.changed)
+        self.chk_atoms = QCheckBox("atom contributions")
+        for cb in (self.chk_cofield, self.chk_molfield, self.chk_overlap, self.chk_shapfield,
+                   self.chk_atoms):
+            cb.toggled.connect(self.changed)
+            row3.addWidget(cb)
+            if cb is self.chk_cofield:
+                row3.addWidget(self.cmb_cofield_style)
+            if cb is self.chk_molfield:
+                row3.addWidget(self.cmb_molfield_style)
+            if cb is self.chk_shapfield:
+                row3.addWidget(self.cmb_shapfield_style)
+        row3.addWidget(QLabel("iso level:"))
+        self.sld_level = QSlider(Qt.Horizontal)
+        self.sld_level.setRange(1, 99)
+        self.sld_level.setValue(50)
+        self.sld_level.setMinimumWidth(120)
+        self.sld_level.valueChanged.connect(self.changed)
+        row3.addWidget(self.sld_level)
+        self.lbl_level = QLabel("50 %")
+        row3.addWidget(self.lbl_level)
+        self.sld_level.valueChanged.connect(lambda v: self.lbl_level.setText(f"{v} %"))
+        self.sld_alpha = QSlider(Qt.Horizontal)
+        self.sld_alpha.setRange(5, 100)
+        self.sld_alpha.setValue(45)
+        self.sld_alpha.setMaximumWidth(90)
+        self.sld_alpha.valueChanged.connect(self.changed)
+        row3.addWidget(QLabel("opacity:"))
+        row3.addWidget(self.sld_alpha)
+        row3.addStretch(1)
+        lay.addLayout(row3)
+
+        # --- protein binding site (free-energy sets are already in the crystal frame)
+        row4 = QHBoxLayout()
+        self.chk_protein = QCheckBox("protein site")
+        self.chk_protein.setToolTip("\n".join([
+            "Show the residues of a loaded structure around the molecules on screen.",
+            "The benchmark ligands are given in the frame of their reference structure, so",
+            "nothing is superimposed; File -> Fetch protein reads the code from the data set.",
+            "Realigning the molecules afterwards takes them out of that frame."]))
+        self.chk_protein.toggled.connect(self.changed)
+        row4.addWidget(self.chk_protein)
+        self.cmb_protein_style = QComboBox()
+        self.cmb_protein_style.addItems(["lines", "sticks"])
+        self.cmb_protein_style.currentIndexChanged.connect(self.changed)
+        row4.addWidget(self.cmb_protein_style)
+        self.spin_site = QDoubleSpinBox()
+        self.spin_site.setRange(2.0, 30.0)
+        self.spin_site.setSingleStep(1.0)
+        self.spin_site.setValue(6.0)
+        self.spin_site.setPrefix("site ")
+        self.spin_site.setSuffix(" Å")
+        self.spin_site.setToolTip("Residues with any atom within this distance of a displayed "
+                                  "molecule are drawn, as whole residues")
+        self.spin_site.valueChanged.connect(self.changed)
+        row4.addWidget(self.spin_site)
+        self.chk_site_h = QCheckBox("H")
+        self.chk_site_h.setToolTip("Show hydrogens of the structure when it has any")
+        self.chk_site_h.toggled.connect(self.changed)
+        row4.addWidget(self.chk_site_h)
+        self.chk_waters = QCheckBox("waters")
+        self.chk_waters.setToolTip("Keep crystallographic waters inside the site")
+        self.chk_waters.toggled.connect(self.changed)
+        row4.addWidget(self.chk_waters)
+        self.chk_comp_map = QCheckBox("complementarity surface")
+        self.chk_comp_map.setToolTip("\n".join([
+            "Draw the surface of the selected molecule coloured by how well its fields",
+            "complement the pocket: green where they do, red where they fight.",
+            "Compute it first in the Results panel, Complementarity tab."]))
+        self.chk_comp_map.toggled.connect(self.changed)
+        row4.addWidget(self.chk_comp_map)
+        self.chk_site_labels = QCheckBox("residue labels")
+        self.chk_site_labels.setToolTip("\n".join([
+            "Write the name and number of every residue of the site at its alpha carbon,",
+            "and list them in the legend below"]))
+        self.chk_site_labels.toggled.connect(self.changed)
+        row4.addWidget(self.chk_site_labels)
+        self.lbl_protein = QLabel("no structure loaded")
+        self.lbl_protein.setStyleSheet("color: palette(mid)")
+        row4.addWidget(self.lbl_protein)
+        row4.addStretch(1)
+        lay.addLayout(row4)
+        self.lbl_legend = QLabel("")
+        self.lbl_legend.setWordWrap(True)
+        self.lbl_legend.setStyleSheet("color: palette(text); font-size: 9pt")
+        lay.addWidget(self.lbl_legend)
+
+    def label_kind(self) -> str:
+        return ["none", "index", "type", "charge"][self.cmb_labels.currentIndex()]
+
+    def style_key(self) -> str:
+        return ["ballstick", "sticks", "lines", "spacefill"][self.cmb_style.currentIndex()]
+
+    def level_fraction(self) -> float:
+        return self.sld_level.value() / 100.0
+
+    def opacity(self) -> float:
+        return self.sld_alpha.value() / 100.0
+
+    def shapfield_style(self) -> str:
+        return ["solid", "mesh"][self.cmb_shapfield_style.currentIndex()]
+
+    def protein_style(self) -> str:
+        return ["lines", "sticks"][self.cmb_protein_style.currentIndex()]
+
+    def set_protein_label(self, text: str) -> None:
+        self.lbl_protein.setText(text)
+
+    def set_fields(self, names_labels):
+        cur = self.cmb_field.currentData()
+        self.cmb_field.blockSignals(True)
+        self.cmb_field.clear()
+        for name, label in names_labels:
+            self.cmb_field.addItem(label, name)
+        if cur is not None:
+            ix = self.cmb_field.findData(cur)
+            if ix >= 0:
+                self.cmb_field.setCurrentIndex(ix)
+        self.cmb_field.blockSignals(False)
+
+    def current_field(self) -> Optional[str]:
+        return self.cmb_field.currentData()

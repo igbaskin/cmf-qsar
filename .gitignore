@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# published articles: the publisher versions are not ours to redistribute
+*.pdf
+
+# saved models, predictions and run logs
+*.cmf
+*.log
+predictions*.csv
+scores*.csv
+*.cube
+
+# editors and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
