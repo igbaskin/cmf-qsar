@@ -57,40 +57,95 @@ and the complementarity scores all keep working**; contributions arrive per atom
 fold back onto the atoms by summation.
 
 *Tools -> Generate conformations* builds the ensembles with ETKDG and MMFF94s, keeping the pose a
-molecule already has as its first conformation, so an alignment made earlier survives and the rest are
-superimposed on it. A multi-conformer file can be read instead, with `--ensemble-by name` grouping the
-records of each compound. Weights are uniform or Boltzmann from the stored energies, with kT and a cap
-on the number of conformations kept; the viewer draws the ensemble as superimposed conformations.
+molecule already has as its first conformation, so an alignment made earlier survives. A
+multi-conformer file can be read instead, with `--ensemble-by name` grouping the records of each
+compound. Weights are uniform or Boltzmann from the stored energies, with kT and a cap on the number
+of conformations kept; the viewer draws the ensemble as superimposed conformations.
 
-The cost is quadratic in the number of conformations, and the gain depends on how flexible the series
-is. With five conformations per molecule:
+Where the *other* conformations go is a choice of its own, and not a small one. The kernel compares
+molecules with each other, so what matters is not where a conformation sits relative to its own
+molecule but where it sits relative to the rest of the series; a conformation superimposed on its own
+molecule alone is still arbitrarily oriented with respect to every other molecule in the set.
+*Place the conformations* in the dialog (CLI: `--conformer-align`) offers four answers, all of them
+leaving the molecule's own first conformation exactly where it was:
 
-| set | mode | q²cv | R²pred |
+| `--conformer-align` | where each generated conformation is put |
+|---|---|
+| `self` | on the molecule's own pose, over all heavy atoms - all that `rdMolAlign.AlignMolConformers` can do, and the default, so nothing changes silently |
+| `core` | on the molecule's own pose, over the atoms of the maximum common substructure with a reference molecule only, so the scaffold stays where the published alignment put it and only the flexible part moves |
+| `reference` | on a reference molecule of the series, through that same common substructure, which puts every conformation of the series in one frame |
+| `field` | as `reference`, then refined by maximising the normalised CMF kernel with the reference - the alignment criterion of the 2013 paper, applied to each conformation |
+
+The reference is the largest molecule of the set unless `--conformer-align-ref` names another one;
+its common substructure with the others is the most likely to be the scaffold of the series. The
+field set needs no new setting for this: where a conformation is placed is a property of the
+geometry, not of the field.
+
+The cost is quadratic in the number of conformations. With five conformations per molecule, the
+default settings of `cmf_cli.py build` (RDKit parameterisation, field kernels scaled to unit mean
+diagonal, the α grid 0.2–3 and the λ grid 10⁻⁴–10, shuffled 10-fold CV) and the published
+train/test split carried by the SD files:
+
+| set | representation | q²cv | R²pred |
 |---|---|---|---|
-| steroids, rigid | single | 0.791 | 0.044 |
-| steroids, rigid | ensemble, uniform | 0.756 | 0.221 |
-| ACE, flexible | single | 0.656 | 0.358 |
-| ACE, flexible | ensemble, uniform | **0.691** | **0.485** |
-| THR, flexible | single | **0.674** | **0.428** |
-| THR, flexible | ensemble, uniform | 0.406 | 0.269 |
+| steroids, rigid | single conformation | 0.810 | **-0.304** |
+| steroids, rigid | ensemble, on its own pose (`self`) | 0.831 | -0.961 |
+| steroids, rigid | ensemble, own pose, common scaffold (`core`) | 0.839 | -0.937 |
+| steroids, rigid | ensemble, on the reference (`reference`) | 0.779 | -0.441 |
+| steroids, rigid | ensemble, reference + field (`field`) | **0.883** | -2.293 |
+| ACE, flexible | single conformation | **0.741** | **0.604** |
+| ACE, flexible | ensemble, on its own pose (`self`) | 0.697 | 0.564 |
+| ACE, flexible | ensemble, own pose, common scaffold (`core`) | 0.681 | 0.525 |
+| ACE, flexible | ensemble, on the reference (`reference`) | 0.671 | 0.411 |
+| ACE, flexible | ensemble, reference + field (`field`) | 0.697 | 0.385 |
+| THR, flexible | single conformation | **0.696** | **0.373** |
+| THR, flexible | ensemble, on its own pose (`self`) | 0.501 | 0.100 |
+| THR, flexible | ensemble, own pose, common scaffold (`core`) | 0.514 | 0.106 |
+| THR, flexible | ensemble, on the reference (`reference`) | 0.492 | 0.126 |
+| THR, flexible | ensemble, reference + field (`field`) | 0.489 | 0.195 |
 
-So it is not simply a matter of flexibility. The ensemble helps on ACE and clearly hurts on thrombin,
-whose ligands are no less flexible. The difference is what the extra conformations do to the
-alignment: the generated conformations are superimposed on their own molecule's first pose, not on
-the series, so in a set that was carefully aligned by its authors they blur the very arrangement the
-model depends on, while in a set where that alignment carries less information they add real
-coverage. Treat the mode as something to test against the single-conformation model on each series
-rather than as an improvement to switch on by default, which is why the default is single.
+Read the table and not the hope: **none of the three new criteria recovers the loss on thrombin**.
+Anchoring every conformation on the molecule's own published scaffold lifts q²cv from 0.501 to
+0.514 and forcing the whole series into one frame gives 0.492, against 0.696 for the
+single conformation; R²pred stays near 0.1 where the single-conformation model reaches 0.373.
+On ACE every ensemble is worse than the single conformation as well, and on the steroids R²pred is
+negative for every representation, the single-conformation model included, so that column says
+nothing there; the higher q²cv of the ensembles on that set is backed by no test-set gain at all.
+
+That is an answer, just not the expected one. Adding conformations to thrombin hurts however they
+are placed, which points at the conformations rather than at their orientation: the series carries
+poses its authors aligned as bound-like, and ETKDG conformations of an isolated molecule are not
+those poses, so averaging them into the field dilutes exactly the arrangement the model lives on.
+The ensemble size says the same thing - on thrombin, with the placement varied and everything else
+the default:
+
+| conformations per molecule | `self` q²cv | `core` q²cv |
+|---|---|---|
+| 1 (single) | 0.696 | 0.696 |
+| 2 | 0.672 | 0.728 |
+| 3 | 0.570 | 0.732 |
+| 5 | 0.501 | 0.514 |
+
+The decay is monotone in the number of generated conformations, and `core` only delays it: holding
+the scaffold on the published pose keeps two or three conformations harmless (q²cv 0.728 and 0.732,
+above the single-conformation 0.696, though R²pred does not follow at 0.150 and -0.221) and then
+collapses at five. So the alignment of the ensemble was worth fixing and is now there to use, but it
+is not what was wrong on thrombin. Treat the mode as something to test against the
+single-conformation model on each series, with the number of conformations as a parameter of its
+own, rather than as an improvement to switch on; which is why the default is a single conformation
+superimposed as before.
+
+The earlier version of this table reported different numbers for the single-conformation rows, with
+a protocol that was not recorded and could not be reproduced; every row above was measured again
+with the settings stated, so the rows are comparable with each other.
 
 Boltzmann weighting was worse than uniform on all three sets, because the conformations are generated
 from one input pose and their energies then concentrate the weight on a few of them; uniform weighting
 is the safer default and is what the application starts with.
 
-Two things to keep in mind. The alignment tools act on the first conformation, so conformations are
-generated after a series has been aligned, not before, and aligning the ensemble itself to the series
-is the obvious next step for this mode. And a seed of exactly zero makes RDKit return
-the same geometry for every conformation, which would silently collapse an ensemble; the generator
-maps it to a fixed non-zero seed and a test guards that.
+One last trap: a seed of exactly zero makes RDKit return the same geometry for every conformation,
+which would silently collapse an ensemble; the generator maps it to a fixed non-zero seed and a test
+guards that.
 
 ### Nonlinear kernel layers and multiple kernel learning
 

@@ -2,6 +2,7 @@
 3D structure generation and molecular alignment.
 
 * embed_3d          - ETKDG conformer + MMFF optimisation for a SMILES-derived molecule
+* mcs_atom_map      - the atom correspondence of that maximum common substructure
 * mcs_align         - rigid alignment on the maximum common substructure with a reference
 * field_align       - rigid-body refinement maximising the (normalised) CMF kernel
                       between a molecule and the reference (the alignment criterion
@@ -50,11 +51,14 @@ def set_coords(mol: Chem.Mol, coords: np.ndarray) -> None:
         conf.SetAtomPosition(i, [float(v) for v in xyz])
 
 
-def mcs_align(mol: Chem.Mol, ref: Chem.Mol, timeout: int = 10, ring_matches_ring_only: bool = True,
-              complete_rings_only: bool = False, compare_elements: bool = True) -> Tuple[float, int]:
-    """Rigidly superimpose `mol` onto `ref` using their maximum common substructure.
+def mcs_atom_map(mol: Chem.Mol, ref: Chem.Mol, timeout: int = 10,
+                 ring_matches_ring_only: bool = True, complete_rings_only: bool = False,
+                 compare_elements: bool = True) -> List[Tuple[int, int]]:
+    """The atom correspondence of the maximum common substructure of `mol` and `ref`.
 
-    Returns (rmsd, number of matched atoms).  `mol` is modified in place.
+    Returns the pairs (atom of `mol`, atom of `ref`).  Nothing is moved: the map is what
+    :func:`mcs_align` superimposes on, and it is worth computing once when several
+    conformations of the same molecule are to be aligned on the same reference.
     """
     params = rdFMCS.MCSParameters()
     params.Timeout = timeout
@@ -74,9 +78,19 @@ def mcs_align(mol: Chem.Mol, ref: Chem.Mol, timeout: int = 10, ring_matches_ring
     m_mol = mol.GetSubstructMatch(patt)
     if not m_ref or not m_mol:
         raise RuntimeError("MCS substructure match failed")
-    amap = list(zip(m_mol, m_ref))
+    return [(int(a), int(b)) for a, b in zip(m_mol, m_ref)]
+
+
+def mcs_align(mol: Chem.Mol, ref: Chem.Mol, timeout: int = 10, ring_matches_ring_only: bool = True,
+              complete_rings_only: bool = False, compare_elements: bool = True) -> Tuple[float, int]:
+    """Rigidly superimpose `mol` onto `ref` using their maximum common substructure.
+
+    Returns (rmsd, number of matched atoms).  `mol` is modified in place.
+    """
+    amap = mcs_atom_map(mol, ref, timeout=timeout, ring_matches_ring_only=ring_matches_ring_only,
+                        complete_rings_only=complete_rings_only, compare_elements=compare_elements)
     rmsd = rdMolAlign.AlignMol(mol, ref, atomMap=amap)
-    return float(rmsd), int(res.numAtoms)
+    return float(rmsd), len(amap)
 
 
 def _kernel_score(coords: np.ndarray, probe: MoleculeFields, ref_table: AtomTable, specs, ref_self: np.ndarray,

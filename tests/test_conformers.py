@@ -7,9 +7,11 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from cmfqsar.conformers import (align_conformers, ensemble_summary,  # noqa: E402
-                                generate_conformers, get_conformer_energies, group_conformers,
-                                set_conformer_energies)
+from cmfqsar.conformers import (CONFORMER_ALIGNMENTS, align_conformers,  # noqa: E402
+                                align_conformers_to_reference, dataset_reference,
+                                ensemble_summary, generate_conformers, generate_for_dataset,
+                                get_conformer_energies, group_conformers, set_conformer_energies,
+                                single_conformer)
 from cmfqsar.fields import (AtomTable, FieldSet, build_fields, conformer_weights,  # noqa: E402
                             ensemble_fields)
 from cmfqsar.kernels import kernel_matrices  # noqa: E402
@@ -233,6 +235,134 @@ def test_align_conformers_superimposes_them(ensemble_mol):
     assert np.abs(after - before).max() >= 0.0            # coordinates may or may not move
     assert np.allclose(m.GetConformer(0).GetPositions(),
                        ensemble_mol.GetConformer(0).GetPositions())
+
+
+# --------------------------------------------------------------------------- #
+# Aligning the ensemble to the series rather than to each molecule's own pose
+# --------------------------------------------------------------------------- #
+
+@pytest.fixture(scope="module")
+def series():
+    """A little series in one frame, plus its reference molecule, before any generation."""
+    mols = [_mol(s, seed=i + 1, name=f"s{i}") for i, s in enumerate(SMILES)]
+    return mols, dataset_reference(mols)
+
+
+def _rmsd_on(mol, conf, ref, amap):
+    a = np.array(mol.GetConformer(conf).GetPositions())[[i for i, _ in amap]]
+    b = np.array(ref.GetConformer().GetPositions())[[j for _, j in amap]]
+    return float(np.sqrt(((a - b) ** 2).sum(1).mean()))
+
+
+def test_the_reference_is_the_largest_molecule_in_its_original_pose(series):
+    mols, ref = series
+    big = max(range(len(mols)), key=lambda i: mols[i].GetNumHeavyAtoms())
+    assert ref.GetNumConformers() == 1
+    assert np.allclose(ref.GetConformer().GetPositions(), mols[big].GetConformer().GetPositions())
+    # and it can be picked by hand
+    assert np.allclose(dataset_reference(mols, 1).GetConformer().GetPositions(),
+                       mols[1].GetConformer().GetPositions())
+    with pytest.raises(ValueError):
+        dataset_reference(mols, 99)
+
+
+def test_every_alignment_mode_leaves_the_input_pose_alone(series):
+    """Whatever is done with the generated conformations, the published pose must survive."""
+    mols, ref = series
+    fs = FieldSet.create(alpha=0.5)
+    for mode in CONFORMER_ALIGNMENTS:
+        g = generate_conformers(mols[0], n=4, seed=11, prune_rmsd=1.0, align_to=mode,
+                                reference=ref, fieldset=fs)
+        assert g.GetNumConformers() > 1
+        assert np.allclose(g.GetConformer(0).GetPositions(),
+                           mols[0].GetConformer().GetPositions())
+
+
+def test_reference_alignment_puts_the_conformations_in_the_frame_of_the_series(series):
+    """The point of the exercise: the extra conformations stop being arbitrarily oriented."""
+    from cmfqsar.align import mcs_atom_map
+    mols, ref = series
+    probe = mols[3]
+    amap = mcs_atom_map(probe, ref)
+    assert len(amap) >= 3
+    own = generate_conformers(probe, n=4, seed=13, prune_rmsd=1.0, align_to="self")
+    onto = generate_conformers(probe, n=4, seed=13, prune_rmsd=1.0, align_to="reference",
+                               reference=ref)
+    assert own.GetNumConformers() == onto.GetNumConformers() > 1
+    for k in range(1, onto.GetNumConformers()):
+        assert _rmsd_on(onto, k, ref, amap) < _rmsd_on(own, k, ref, amap)
+
+
+def test_core_alignment_holds_the_scaffold_on_the_published_pose(series):
+    """The common scaffold stays where the series put it; only the flexible part moves."""
+    from cmfqsar.align import mcs_atom_map
+    mols, ref = series
+    probe = mols[3]
+    core = [(i, i) for i, _ in mcs_atom_map(probe, ref)]
+    own = generate_conformers(probe, n=4, seed=13, prune_rmsd=1.0, align_to="self")
+    kept = generate_conformers(probe, n=4, seed=13, prune_rmsd=1.0, align_to="core",
+                               reference=ref)
+    anchor = single_conformer(probe, 0)
+    for k in range(1, kept.GetNumConformers()):
+        assert _rmsd_on(kept, k, anchor, core) <= _rmsd_on(own, k, anchor, core) + 1e-9
+
+
+def test_field_refinement_cannot_make_the_field_similarity_worse(series):
+    """The refinement keeps the MCS pose unless the kernel with the reference improves."""
+    from cmfqsar.align import mcs_atom_map
+    from cmfqsar.kernels import kernel_matrices
+    mols, ref = series
+    fs = FieldSet.create(alpha=0.5)
+
+    def similarity(mol, k):
+        pair = AtomTable.from_molecules([build_fields(single_conformer(mol, k), fs, "p"),
+                                         build_fields(ref, fs, "r")])
+        K = kernel_matrices(pair, pair, fs.specs)
+        return float(np.sum(K[:, 0, 1] / np.sqrt(K[:, 0, 0] * K[:, 1, 1])))
+
+    probe = mols[2]
+    amap = mcs_atom_map(probe, ref)
+    base = generate_conformers(probe, n=3, seed=17, prune_rmsd=1.0, align_to="reference",
+                               reference=ref)
+    tuned = generate_conformers(probe, n=3, seed=17, prune_rmsd=1.0, align_to="field",
+                                reference=ref, fieldset=fs)
+    assert base.GetNumConformers() == tuned.GetNumConformers() > 1
+    for k in range(1, tuned.GetNumConformers()):
+        assert similarity(tuned, k) >= similarity(base, k) - 1e-6
+    # the refinement starts from the MCS pose, so it stays in the frame of the series
+    assert max(_rmsd_on(tuned, k, ref, amap) for k in range(1, tuned.GetNumConformers())) < 20.0
+
+
+def test_unknown_alignment_is_refused_and_a_missing_reference_falls_back(series):
+    mols, ref = series
+    g = generate_conformers(mols[0], n=3, seed=19, prune_rmsd=1.0, align_to="self")
+    with pytest.raises(ValueError):
+        align_conformers_to_reference(g, ref, mode="centroid")
+    # without a reference the only thing left is the molecule's own pose, and it is used
+    msg = align_conformers_to_reference(g, None, mode="reference")
+    assert "input pose" in msg
+
+
+def test_the_whole_series_can_be_aligned_to_one_reference(series):
+    mols, _ = series
+    out, failures = generate_for_dataset(mols[:3], n=3, seed=23, prune_rmsd=1.0,
+                                         align_to="core", reference_index=0)
+    assert not failures and len(out) == 3
+    for m, before in zip(out, mols[:3]):
+        assert m.GetNumConformers() > 1
+        assert np.allclose(m.GetConformer(0).GetPositions(), before.GetConformer().GetPositions())
+        assert get_conformer_energies(m) is not None
+
+
+def test_the_default_is_still_the_molecule_s_own_pose(series):
+    """The mode that was benchmarked must stay the default, bit for bit."""
+    mols, ref = series
+    a = generate_conformers(mols[1], n=4, seed=29, prune_rmsd=1.0)
+    b = generate_conformers(mols[1], n=4, seed=29, prune_rmsd=1.0, align_to="self",
+                            reference=ref)
+    assert a.GetNumConformers() == b.GetNumConformers()
+    for k in range(a.GetNumConformers()):
+        assert np.allclose(a.GetConformer(k).GetPositions(), b.GetConformer(k).GetPositions())
 
 
 if __name__ == "__main__":

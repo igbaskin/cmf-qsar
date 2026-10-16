@@ -18,6 +18,7 @@ from .. import __version__
 from ..align import align_dataset
 from ..cofields import (Grid, cofield_volume, export_cube, isosurface, make_grid, molfield_volume,
                         overlap_volume)
+from ..conformers import CONFORMER_ALIGNMENTS
 from ..dataio import Dataset, load_dataset, load_model, numeric_properties, save_model, write_predictions_csv, write_sdf
 from ..fields import AtomTable, FieldSet, MoleculeFields, build_fields, cif_types_in
 from ..model import CMFModel, grid_search, nested_cv
@@ -240,7 +241,7 @@ class GTMDialog(QDialog):
 class ConformerDialog(QDialog):
     """Options for generating a conformational ensemble: the fourth dimension."""
 
-    def __init__(self, n_mol: int, n_have: int, parent=None):
+    def __init__(self, n_mol: int, n_have: int, parent=None, names=None):
         super().__init__(parent)
         self.setWindowTitle("Generate conformations")
         lay = QVBoxLayout(self)
@@ -249,8 +250,11 @@ class ConformerDialog(QDialog):
             "averages over: a molecule is then the weighted mean of the fields of its "
             "conformations, which is the fourth dimension of 4D-QSAR.\n\n"
             "The pose a molecule has now is kept as its first conformation, so an alignment made "
-            "earlier survives and the others are superimposed on it. The kernels cost about the "
-            "square of the number of conformations, so start small.\n\n"
+            "earlier survives. Where the other conformations go is the choice below: the kernel "
+            "compares molecules with each other, so a conformation superimposed on its own "
+            "molecule alone is still in an arbitrary orientation with respect to the rest of the "
+            "series. The kernels cost about the square of the number of conformations, so start "
+            "small.\n\n"
             f"{n_have} of {n_mol} molecules already carry more than one conformation.")
         info.setWordWrap(True)
         info.setMaximumWidth(560)
@@ -268,6 +272,27 @@ class ConformerDialog(QDialog):
         self.spin_prune.setToolTip("Discard a conformation within this heavy-atom RMSD of a "
                                    "better one; 0 keeps them all")
         form.addRow("Prune below:", self.spin_prune)
+        self.cmb_align = QComboBox()
+        for label in ("on the molecule's own pose (all heavy atoms)",
+                      "on the molecule's own pose (common scaffold only)",
+                      "on a reference molecule of the series (common substructure)",
+                      "on a reference molecule, refined on the field similarity"):
+            self.cmb_align.addItem(label)
+        self.cmb_align.setToolTip(
+            "The first keeps every conformation close to its own molecule but leaves it in an "
+            "arbitrary orientation with respect to the others. The second holds the scaffold "
+            "exactly where the alignment of the series put it and lets only the flexible part "
+            "move. The last two put every conformation in the frame of one reference molecule, "
+            "the field variant by maximising the CMF kernel with it.")
+        form.addRow("Place the conformations:", self.cmb_align)
+        self.cmb_ref = QComboBox()
+        self.cmb_ref.addItem("largest molecule", -1)
+        for i, nm in enumerate(names or []):
+            self.cmb_ref.addItem(f"{i + 1}. {nm}", i)
+        self.cmb_ref.setToolTip("The molecule whose pose defines the frame of the series; its "
+                                "common substructure with the others is what the conformations "
+                                "are superimposed on")
+        form.addRow("Reference molecule:", self.cmb_ref)
         self.chk_optimise = QCheckBox("optimise with MMFF94s and store the energies")
         self.chk_optimise.setChecked(True)
         self.chk_optimise.setToolTip("The energies are what Boltzmann weighting needs")
@@ -284,6 +309,14 @@ class ConformerDialog(QDialog):
         box.accepted.connect(self.accept)
         box.rejected.connect(self.reject)
         lay.addWidget(box)
+
+    def alignment(self) -> str:
+        """The conformer placement chosen, as :data:`cmfqsar.conformers.CONFORMER_ALIGNMENTS`."""
+        return CONFORMER_ALIGNMENTS[self.cmb_align.currentIndex()]
+
+    def reference_index(self):
+        i = self.cmb_ref.currentData()
+        return None if i is None or int(i) < 0 else int(i)
 
 
 class UnalignDialog(QDialog):
@@ -1072,18 +1105,23 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "No data", "Load a data set first.")
             return
         counts = self._conformer_counts()
-        dlg = ConformerDialog(len(counts), sum(1 for c in counts if c > 1), self)
+        dlg = ConformerDialog(len(counts), sum(1 for c in counts if c > 1), self,
+                              names=list(self.ds.names))
         if dlg.exec() != QDialog.Accepted:
             return
         n, prune = dlg.spin_n.value(), dlg.spin_prune.value()
         optimise, seed = dlg.chk_optimise.isChecked(), dlg.spin_seed.value()
         switch = dlg.chk_switch.isChecked()
+        align_to, ref_index = dlg.alignment(), dlg.reference_index()
+        fs = self._fieldset_from_panel() if align_to == "field" else None
         mols = list(self.ds.mols)
 
         def task(progress, cancel):
             from ..conformers import generate_for_dataset
             return generate_for_dataset(mols, n=n, seed=seed, prune_rmsd=prune,
-                                        optimise=optimise, progress=progress, cancel=cancel)
+                                        optimise=optimise, align_to=align_to,
+                                        reference_index=ref_index, fieldset=fs,
+                                        progress=progress, cancel=cancel)
 
         def done(out):
             new_mols, failures = out
@@ -1094,8 +1132,13 @@ class MainWindow(QMainWindow):
             if switch:
                 self.model_panel.cmb_conformers.setCurrentIndex(1)
             self._update_conformer_info()
-            self.log(f"Generated conformations: {np.mean(counts2):.1f} per molecule on average, "
-                     f"up to {max(counts2)}; the kernels of the ensemble mode will cost about "
+            where = {"self": "superimposed on each molecule's own pose",
+                     "core": "superimposed on each molecule's own pose over the common scaffold",
+                     "reference": "superimposed on the reference molecule of the series",
+                     "field": "superimposed on the reference molecule and refined on the field"}
+            self.log(f"Generated conformations ({where[align_to]}): {np.mean(counts2):.1f} per "
+                     f"molecule on average, up to {max(counts2)}; the kernels of the ensemble "
+                     f"mode will cost about "
                      f"{np.mean(counts2) ** 2:.0f} times the single-conformation ones"
                      + (f". {len(failures)} molecules failed and kept their pose" if failures else ""))
             for line in failures[:5]:

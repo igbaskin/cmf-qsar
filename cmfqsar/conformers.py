@@ -25,8 +25,32 @@ This module builds the ensembles.  The field set decides whether they are used: 
 ``"single"`` by default, which is the behaviour of the papers and of every earlier version.
 
 What to watch out for: the kernel cost grows with the square of the number of conformations kept,
-and the alignment tools act on the first conformation, so conformations are generated after a
-series has been aligned and are then superimposed on that first one.
+and the conformations have to be put somewhere.  That last point is not a detail.  The CMF kernel
+compares molecules with each other, so what matters is not where a conformation sits relative to
+its own molecule but where it sits relative to the rest of the series.  Superimposing the
+conformations of a molecule on that molecule's own first pose - all that
+``rdMolAlign.AlignMolConformers`` can do - leaves them in arbitrary orientations with respect to
+every other molecule, and in a series that its authors aligned by hand that blurs the very
+arrangement the model lives on.  :data:`CONFORMER_ALIGNMENTS` lists what is offered instead, all
+of it relative to one common reference molecule of the series:
+
+``self``
+    superimpose the conformations on the molecule's own first pose over all heavy atoms (what the
+    first version of this module did, kept as the default so that nothing changes silently).
+``core``
+    superimpose them on the molecule's own first pose over the atoms of the maximum common
+    substructure with the reference only, so the scaffold stays exactly where the published
+    alignment put it and only the flexible part moves.
+``reference``
+    superimpose each conformation on the reference molecule itself through that same maximum
+    common substructure, which forces every conformation of the series into one frame.
+``field``
+    as ``reference``, followed by the rigid-body refinement of :func:`cmfqsar.align.field_align`,
+    which maximises the normalised CMF kernel with the reference - the alignment criterion of
+    Baskin & Zhokhova (2013) applied to each conformation.
+
+In every case the molecule's first conformation is left exactly where it was, so a series that
+arrives aligned keeps its alignment and only the generated conformations are placed.
 """
 from __future__ import annotations
 
@@ -39,6 +63,9 @@ from rdkit.Chem import AllChem, rdMolAlign
 from .fields import FieldSet, conformer_weights
 
 ENERGY_PROP = "conformer_energies"
+
+#: how the generated conformations are placed relative to the rest of the series
+CONFORMER_ALIGNMENTS = ("self", "core", "reference", "field")
 
 
 def set_conformer_energies(mol: Chem.Mol, energies: Sequence[float],
@@ -59,12 +86,17 @@ def get_conformer_energies(mol: Chem.Mol, prop: str = ENERGY_PROP) -> Optional[n
 
 def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: float = 0.5,
                         optimise: bool = True, align: bool = True, max_iters: int = 200,
-                        keep_input: bool = True) -> Chem.Mol:
+                        keep_input: bool = True, align_to: str = "self",
+                        reference: Optional[Chem.Mol] = None,
+                        fieldset: Optional[FieldSet] = None,
+                        atom_map: Optional[Sequence[Tuple[int, int]]] = None) -> Chem.Mol:
     """Return a copy of `mol` carrying up to `n` conformations, with their energies stored.
 
     The input conformation is kept as the first one by default, so a series that has been
-    aligned stays where it was and the ensemble is built around that pose: the other
-    conformations are superimposed on it by heavy-atom root-mean-square fit.  Energies come from
+    aligned stays where it was and the ensemble is built around that pose.  `align_to` decides
+    where the other conformations go - see :data:`CONFORMER_ALIGNMENTS` and
+    :func:`align_conformers_to_reference`; ``"self"``, the default, superimposes them on the
+    molecule's own first pose, which is what the earlier versions did.  Energies come from
     MMFF94s where it can be set up and from UFF otherwise, which is enough for Boltzmann weights.
     """
     work = Chem.Mol(mol)
@@ -103,7 +135,8 @@ def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: f
             keep = [0] + list(np.argsort(energies[1:])[: n - 1] + 1)
             work, energies = _reorder(work, sorted(keep), energies)
     if align and work.GetNumConformers() > 1:
-        align_conformers(work)
+        align_conformers_to_reference(work, reference, mode=align_to, fieldset=fieldset,
+                                      atom_map=atom_map)
     set_conformer_energies(work, energies)
     for prop in mol.GetPropNames():
         if prop != ENERGY_PROP:
@@ -190,11 +223,127 @@ def align_conformers(mol: Chem.Mol, atom_ids: Optional[Sequence[int]] = None) ->
     return [float(r) for r in rms]
 
 
+def single_conformer(mol: Chem.Mol, index: int = 0) -> Chem.Mol:
+    """A copy of `mol` carrying only its conformation number `index`, as conformer 0."""
+    keep = Chem.Conformer(mol.GetConformers()[int(index)])
+    keep.SetId(0)
+    out = Chem.Mol(mol)
+    out.RemoveAllConformers()
+    out.AddConformer(keep, assignId=True)
+    return out
+
+
+def _put_coords(src: Chem.Mol, dst: Chem.Mol, conf_id: int) -> None:
+    """Copy the coordinates of `src`'s only conformation into conformation `conf_id` of `dst`."""
+    pos = src.GetConformer().GetPositions()
+    conf = dst.GetConformer(int(conf_id))
+    for i, xyz in enumerate(pos):
+        conf.SetAtomPosition(i, [float(v) for v in xyz])
+
+
+def align_conformers_to_reference(mol: Chem.Mol, ref: Optional[Chem.Mol] = None,
+                                  mode: str = "self", fieldset: Optional[FieldSet] = None,
+                                  atom_map: Optional[Sequence[Tuple[int, int]]] = None,
+                                  timeout: int = 10, field_restarts: int = 0,
+                                  field_max_iter: int = 150) -> str:
+    """Place the generated conformations of `mol` in the frame of the series, in place.
+
+    `mode` is one of :data:`CONFORMER_ALIGNMENTS` and is explained in the module docstring.  Every
+    mode but ``self`` needs a reference molecule of the series, in the pose the series is aligned
+    to, and ``field`` needs a field set as well.  Conformation 0 is never moved.  `atom_map` is
+    the maximum common substructure correspondence with the reference, computed here when it is
+    not supplied; it depends on the molecule and not on its conformations, so it is worth passing
+    in when the same molecule is aligned more than once.  Returns one line of log.
+    """
+    if mode not in CONFORMER_ALIGNMENTS:
+        raise ValueError(f"unknown conformer alignment {mode!r}; expected one of "
+                         + ", ".join(CONFORMER_ALIGNMENTS))
+    if mol.GetNumConformers() < 2:
+        return "one conformation, nothing to align"
+    if mode == "self" or ref is None:
+        rms = align_conformers(mol)
+        return f"on the input pose, RMSD {np.mean(rms):.2f} A" if rms else "on the input pose"
+    from .align import field_align, mcs_atom_map          # imported late: scipy is heavy
+    if atom_map is None:
+        try:
+            atom_map = mcs_atom_map(mol, ref, timeout=timeout)
+        except Exception as exc:                 # noqa: BLE001 - fall back, never lose the molecule
+            align_conformers(mol)
+            return f"MCS failed ({exc}); superimposed on the input pose"
+    if len(atom_map) < 3:
+        align_conformers(mol)
+        return "MCS below 3 atoms; superimposed on the input pose"
+    ids = [c.GetId() for c in mol.GetConformers()]
+    if mode == "core":
+        anchor = single_conformer(mol, 0)
+        core = [(int(i), int(i)) for i, _ in atom_map]
+        rms = [float(rdMolAlign.AlignMol(mol, anchor, prbCid=int(cid), refCid=0, atomMap=core))
+               for cid in ids[1:]]
+        return f"core of {len(core)} atoms on the input pose, RMSD {np.mean(rms):.2f} A"
+    ref_id = int(ref.GetConformers()[0].GetId())
+    amap = [(int(a), int(b)) for a, b in atom_map]
+    rms = [float(rdMolAlign.AlignMol(mol, ref, prbCid=int(cid), refCid=ref_id, atomMap=amap))
+           for cid in ids[1:]]
+    msg = f"MCS {len(amap)} atoms on the reference, RMSD {np.mean(rms):.2f} A"
+    if mode == "field":
+        if fieldset is None:
+            return msg + "; no field set, no field refinement"
+        fs = fieldset.copy()
+        fs.conformers = "single"                 # one conformation at a time, whatever the model does
+        ref1 = ref if ref.GetNumConformers() == 1 else single_conformer(ref, 0)
+        gains = []
+        for k, cid in enumerate(ids[1:], start=1):
+            probe = single_conformer(mol, k)
+            try:
+                before, after = field_align(probe, ref1, fs, restarts=field_restarts,
+                                            max_iter=field_max_iter)
+            except Exception:                    # noqa: BLE001 - keep the MCS pose
+                continue
+            if after > before:
+                _put_coords(probe, mol, cid)
+                gains.append(after - before)
+        if gains:
+            msg += f"; field similarity +{np.mean(gains):.3f} on {len(gains)} conformations"
+    return msg
+
+
+def dataset_reference(mols: Sequence[Chem.Mol], index: Optional[int] = None) -> Chem.Mol:
+    """The molecule the conformations of a series are aligned to, as a one-conformation copy.
+
+    `index` picks it; without one the largest molecule is taken, its maximum common substructure
+    with the others being the most likely to hold the scaffold of the series.  The copy is made
+    before any conformations are generated, so the reference keeps the pose the series arrived in.
+    """
+    good = [i for i, m in enumerate(mols) if m is not None and m.GetNumConformers()]
+    if not good:
+        raise ValueError("no molecule with a conformation to align the conformations to")
+    if index is None:
+        index = max(good, key=lambda i: mols[i].GetNumHeavyAtoms())
+    elif int(index) not in good:
+        raise ValueError(f"molecule {index} has no conformation to align to")
+    return single_conformer(mols[int(index)], 0)
+
+
 def generate_for_dataset(mols: Sequence[Chem.Mol], n: int = 10, seed: int = 0,
                          prune_rmsd: float = 0.5, optimise: bool = True,
+                         align_to: str = "self", reference_index: Optional[int] = None,
+                         fieldset: Optional[FieldSet] = None,
                          progress=None, cancel=None) -> Tuple[List[Chem.Mol], List[str]]:
-    """Conformations for a whole series; returns the molecules and a line of log per failure."""
+    """Conformations for a whole series; returns the molecules and a line of log per failure.
+
+    `align_to` other than ``"self"`` places the conformations of every molecule relative to one
+    common reference molecule of the series instead of relative to the molecule itself, which is
+    what the kernel actually compares; the reference is taken - in the pose it arrives in, before
+    anything is generated - from `reference_index`, or the largest molecule if that is ``None``.
+    """
     out, failures = [], []
+    reference = None
+    if align_to != "self":
+        try:
+            reference = dataset_reference(mols, reference_index)
+        except Exception as exc:                 # noqa: BLE001 - degrade to the old behaviour
+            failures.append(f"alignment reference: {exc}; conformations aligned on their own pose")
+            align_to = "self"
     for i, m in enumerate(mols):
         if cancel is not None and cancel():
             break
@@ -202,7 +351,8 @@ def generate_for_dataset(mols: Sequence[Chem.Mol], n: int = 10, seed: int = 0,
             progress(f"Conformations {i + 1}/{len(mols)}", i / max(len(mols), 1))
         try:
             out.append(generate_conformers(m, n=n, seed=seed, prune_rmsd=prune_rmsd,
-                                           optimise=optimise))
+                                           optimise=optimise, align_to=align_to,
+                                           reference=reference, fieldset=fieldset))
         except Exception as exc:                 # noqa: BLE001 - reported, molecule kept as it was
             failures.append(f"{_name(m)}: {exc}")
             out.append(Chem.Mol(m))

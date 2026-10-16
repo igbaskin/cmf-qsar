@@ -79,13 +79,20 @@ def cmd_build(args):
                          conformer_kt=args.kt, max_conformers=args.max_conformers)
     if args.conformers:
         from cmfqsar.conformers import generate_for_dataset
+        where = {"self": "superimposed on each molecule's own input pose",
+                 "core": "superimposed on each molecule's own input pose over the common scaffold",
+                 "reference": "superimposed on the reference molecule of the series",
+                 "field": "superimposed on the reference molecule and refined on the field"}
         print(f"Generating up to {args.conformers} conformations per molecule "
-              f"(pruning below {args.prune_rmsd:g} A)")
+              f"(pruning below {args.prune_rmsd:g} A), "
+              f"{where[args.conformer_align]}")
         def conf_progress(msg, fr):
             print("\r  [%5.1f%%] %-44s" % (fr * 100, msg), end="", flush=True)
 
         ds.mols, failures = generate_for_dataset(
             ds.mols, n=args.conformers, seed=args.seed, prune_rmsd=args.prune_rmsd,
+            align_to=args.conformer_align, fieldset=fs,
+            reference_index=(None if args.conformer_align_ref < 0 else args.conformer_align_ref),
             progress=conf_progress)
         print()
         for line in failures[:5]:
@@ -704,6 +711,20 @@ def main(argv=None):
                         "input pose as the first one")
     b.add_argument("--prune-rmsd", type=float, default=0.5, metavar="A",
                    help="discard a generated conformation within this heavy-atom RMSD of a better one")
+    b.add_argument("--conformer-align", default="self",
+                   choices=["self", "core", "reference", "field"],
+                   help="where the generated conformations are put, which is what the kernel "
+                        "compares: 'self' superimposes them on the molecule's own input pose "
+                        "(the default, as before), 'core' does the same but only over the "
+                        "scaffold shared with the reference, so the published pose of the "
+                        "scaffold survives and only the flexible part moves, 'reference' "
+                        "superimposes every conformation on one reference molecule of the series "
+                        "through their common substructure, and 'field' refines that by "
+                        "maximising the CMF kernel with the reference")
+    b.add_argument("--conformer-align-ref", type=int, default=-1, metavar="I",
+                   help="molecule to align the conformations to (0-based index in the data set); "
+                        "the default takes the largest molecule, whose common substructure with "
+                        "the others is the most likely to be the scaffold of the series")
     b.add_argument("--conformer-weighting", default="uniform",
                    choices=["uniform", "boltzmann", "property"],
                    help="weights of the conformations in the mean field")
