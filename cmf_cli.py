@@ -32,7 +32,8 @@ def _floats(s):
 
 
 def _load_dataset(args):
-    ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file)
+    ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file,
+                      ensemble_by=(args.ensemble_by or None))
     if args.decoys:
         dec = load_dataset(args.decoys, activity_prop=args.activity, subset="decoy")
         dec.subset = np.array(["decoy"] * len(dec), dtype=object)
@@ -72,7 +73,31 @@ def cmd_build(args):
             cif = [t for t in args.cif_types.split(",") if t]
         print(f"  CIF atom types ({args.cif_scheme}): {', '.join(cif)}")
     fs = FieldSet.create(physchem=physchem, cif_types=cif, alpha=1.0, charge_model=args.charges,
-                         cif_scheme=args.cif_scheme, param_scheme=args.param)
+                         cif_scheme=args.cif_scheme, param_scheme=args.param,
+                         conformers=args.conformations,
+                         conformer_weighting=args.conformer_weighting,
+                         conformer_kt=args.kt, max_conformers=args.max_conformers)
+    if args.conformers:
+        from cmfqsar.conformers import generate_for_dataset
+        print(f"Generating up to {args.conformers} conformations per molecule "
+              f"(pruning below {args.prune_rmsd:g} A)")
+        def conf_progress(msg, fr):
+            print("\r  [%5.1f%%] %-44s" % (fr * 100, msg), end="", flush=True)
+
+        ds.mols, failures = generate_for_dataset(
+            ds.mols, n=args.conformers, seed=args.seed, prune_rmsd=args.prune_rmsd,
+            progress=conf_progress)
+        print()
+        for line in failures[:5]:
+            print("  " + line)
+    if fs.is_ensemble:
+        from cmfqsar.conformers import ensemble_summary
+        info = ensemble_summary(ds.mols, fs)
+        if info:
+            print(f"  4D mode: {info['conformations_mean']:.1f} conformations per molecule on "
+                  f"average (max {info['conformations_max']:.0f}), effectively "
+                  f"{info['effective_mean']:.1f} after weighting; kernels cost about "
+                  f"{info['kernel_cost_factor']:.0f} times the single-conformation ones")
     mf = [build_fields(ds.mols[i], fs, ds.names[i]) for i in range(len(ds))]
     train = AtomTable.from_molecules([mf[i] for i in tr])
     target = ds.activity
@@ -670,6 +695,25 @@ def main(argv=None):
     b.add_argument("--gammas", default="0.25,0.5,1,2,4",
                    help="bandwidth grid of the Gaussian layer in units of the inverse median "
                         "squared distance between the training molecules")
+    b.add_argument("--conformations", default="single", choices=["single", "ensemble"],
+                   help="how a molecule is represented: by one conformation (the default, as in "
+                        "the papers) or by the weighted mean field of a conformational ensemble, "
+                        "which is the fourth dimension of 4D-QSAR")
+    b.add_argument("--conformers", type=int, default=0, metavar="N",
+                   help="generate up to N conformations per molecule before building, keeping the "
+                        "input pose as the first one")
+    b.add_argument("--prune-rmsd", type=float, default=0.5, metavar="A",
+                   help="discard a generated conformation within this heavy-atom RMSD of a better one")
+    b.add_argument("--conformer-weighting", default="uniform",
+                   choices=["uniform", "boltzmann", "property"],
+                   help="weights of the conformations in the mean field")
+    b.add_argument("--kt", type=float, default=0.6, metavar="KCAL",
+                   help="kT for the Boltzmann weights (default 0.6 kcal/mol, about RT at 300 K)")
+    b.add_argument("--max-conformers", type=int, default=0, metavar="N",
+                   help="use at most the N heaviest conformations of each molecule (0 = all)")
+    b.add_argument("--ensemble-by", default=None, metavar="KEY",
+                   help="group the records of a multi-conformer file into ensembles, by 'name' or "
+                        "by the named property")
     b.add_argument("--folds", type=int, default=10)
     b.add_argument("--cv-no-shuffle", action="store_true",
                    help="interleaved folds in file order (molecule i -> fold i mod k) instead of shuffled folds")

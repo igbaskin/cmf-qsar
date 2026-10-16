@@ -365,15 +365,25 @@ def numeric_properties(mols: Sequence[Chem.Mol], min_fraction: float = 0.5) -> L
 
 def load_dataset(path: str, activity_prop: Optional[str] = None, add_hs: bool = True,
                  subset: str = "train", activity_file: Optional[str] = None,
-                 use_subset_column: bool = True) -> Dataset:
+                 use_subset_column: bool = True, ensemble_by: Optional[str] = None) -> Dataset:
     """Load a structure file; activities come from an SD property or from a separate table.
 
     `activity_file` is a text table (tab/comma/whitespace separated, header optional) with the
     molecule name in the first column, the activity in the column whose header mentions the
     activity (else the second column) and, optionally, a set/subset column (1/"train", 2/"test")
     defining the published train/test split.
+
+    `ensemble_by` collapses a multi-conformer file into one molecule per compound, carrying all
+    of its conformations: "name" groups records that share a title, anything else is read as the
+    name of a property to group by.  The conformations are used only in the ensemble mode of the
+    field set; in the default single mode the first one of each compound is used, as before.
     """
     mols, names, props = read_molecules(path, add_hs=add_hs)
+    if ensemble_by:
+        from .conformers import group_conformers
+        mols, names, counts = group_conformers(mols, names, by=ensemble_by)
+        if counts:
+            props = [p for p in props if any(m.HasProp(p) for m in mols)]
     ds = Dataset(mols=mols, names=names, activity=np.full(len(mols), np.nan),
                  subset=np.array([subset] * len(mols), dtype=object), properties=props, path=path)
     if activity_file:

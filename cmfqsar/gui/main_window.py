@@ -237,6 +237,55 @@ class GTMDialog(QDialog):
         lay.addWidget(bb)
 
 
+class ConformerDialog(QDialog):
+    """Options for generating a conformational ensemble: the fourth dimension."""
+
+    def __init__(self, n_mol: int, n_have: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Generate conformations")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            "Each molecule is given a set of conformations, which the ensemble mode of the model "
+            "averages over: a molecule is then the weighted mean of the fields of its "
+            "conformations, which is the fourth dimension of 4D-QSAR.\n\n"
+            "The pose a molecule has now is kept as its first conformation, so an alignment made "
+            "earlier survives and the others are superimposed on it. The kernels cost about the "
+            "square of the number of conformations, so start small.\n\n"
+            f"{n_have} of {n_mol} molecules already carry more than one conformation.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(560)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.spin_n = QSpinBox()
+        self.spin_n.setRange(2, 200)
+        self.spin_n.setValue(10)
+        form.addRow("Conformations per molecule:", self.spin_n)
+        self.spin_prune = QDoubleSpinBox()
+        self.spin_prune.setRange(0.0, 5.0)
+        self.spin_prune.setSingleStep(0.1)
+        self.spin_prune.setValue(0.5)
+        self.spin_prune.setSuffix(" Å")
+        self.spin_prune.setToolTip("Discard a conformation within this heavy-atom RMSD of a "
+                                   "better one; 0 keeps them all")
+        form.addRow("Prune below:", self.spin_prune)
+        self.chk_optimise = QCheckBox("optimise with MMFF94s and store the energies")
+        self.chk_optimise.setChecked(True)
+        self.chk_optimise.setToolTip("The energies are what Boltzmann weighting needs")
+        form.addRow("", self.chk_optimise)
+        self.spin_seed = QSpinBox()
+        self.spin_seed.setRange(0, 99999)
+        self.spin_seed.setValue(0)
+        form.addRow("Seed:", self.spin_seed)
+        self.chk_switch = QCheckBox("switch the model to the ensemble mode afterwards")
+        self.chk_switch.setChecked(True)
+        form.addRow("", self.chk_switch)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+
 class UnalignDialog(QDialog):
     """Options for destroying the alignment: give every molecule a random pose."""
 
@@ -401,6 +450,7 @@ class MainWindow(QMainWindow):
         self._act(vm, "Restore default layout", self.restore_layout)
         self._default_state = self.saveState()
         tm = mb.addMenu("&Tools")
+        self._act(tm, "Generate conformations (4D)…", self.generate_conformers_dialog)
         self._act(tm, "Align data set to reference…", self.align_dataset_dialog)
         self._act(tm, "Align by prediction confidence (GP variance)…", self.variance_align_dialog)
         self._act(tm, "Align training set by prediction confidence (cross-validated)…",
@@ -553,6 +603,7 @@ class MainWindow(QMainWindow):
                      f"(activity: {ds.activity_prop or 'none'})")
             if kind == "train":
                 self._autoload_pocket(path)
+            self._update_conformer_info()
             if on_loaded:
                 on_loaded()
 
@@ -637,14 +688,29 @@ class MainWindow(QMainWindow):
                 cif_types = cif_types_in(tr, mp.cmb_cif_scheme.currentText(), mp.spin_cif_min.value())
         fs = FieldSet.create(physchem=mp.selected_physchem(), cif_types=cif_types, alpha=1.0,
                              charge_model=mp.cmb_charges.currentText(), cif_scheme=mp.cmb_cif_scheme.currentText(),
-                             param_scheme=mp.cmb_param.currentText())
+                             param_scheme=mp.cmb_param.currentText(),
+                             conformers=mp.conformer_mode(),
+                             conformer_weighting=mp.conformer_weighting(),
+                             conformer_kt=mp.spin_conf_kt.value(),
+                             max_conformers=mp.spin_conf_max.value())
         vals = mp.table_values()
         for s in fs.specs:
             if s.name in vals:
                 s.alpha, s.h, s.enabled = vals[s.name]["alpha"], vals[s.name]["h"], vals[s.name]["enabled"]
+        mode_changed = getattr(self, "_shown_conformer_mode", None) != fs.conformers
         self.fieldset = fs
         mp.fill_field_table(fs)
         self.controls.set_fields([(s.name, s.label) for s in fs.specs])
+        if mode_changed and self.ds is not None and self.molfields:
+            # switching between one conformation and the ensemble changes what is on screen, so
+            # the drawn molecules are rebuilt rather than left half in one mode and half in the other
+            self._shown_conformer_mode = fs.conformers
+            self.molfields = [build_fields(m, FieldSet(specs=[], conformers=fs.conformers), n)
+                              for m, n in zip(self.ds.mols, self.ds.names)]
+            self._mol_volume_cache.clear()
+            self.schedule_display()
+        else:
+            self._shown_conformer_mode = fs.conformers
 
     def _fieldset_from_panel(self) -> FieldSet:
         self.refresh_fieldset()
@@ -983,6 +1049,60 @@ class MainWindow(QMainWindow):
                 self.log("GP predictive variances: " + ", ".join(f"{names[i]}={v:.3g}" for i, v in zip(te, var)))
 
         self.run_task(task, done, "Predicting")
+
+    # ------------------------------------------------------------------ conformations (4D)
+    def _conformer_counts(self) -> List[int]:
+        return [m.GetNumConformers() for m in self.ds.mols] if self.ds else []
+
+    def _update_conformer_info(self) -> None:
+        """Say in the model panel how many conformations the data set carries."""
+        counts = self._conformer_counts()
+        if not counts:
+            self.model_panel.set_conformer_info("")
+            return
+        many = sum(1 for c in counts if c > 1)
+        if many == 0:
+            self.model_panel.set_conformer_info("one conformation each")
+        else:
+            self.model_panel.set_conformer_info(
+                f"{many}/{len(counts)} molecules with up to {max(counts)} conformations")
+
+    def generate_conformers_dialog(self):
+        if self.ds is None:
+            QMessageBox.information(self, "No data", "Load a data set first.")
+            return
+        counts = self._conformer_counts()
+        dlg = ConformerDialog(len(counts), sum(1 for c in counts if c > 1), self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        n, prune = dlg.spin_n.value(), dlg.spin_prune.value()
+        optimise, seed = dlg.chk_optimise.isChecked(), dlg.spin_seed.value()
+        switch = dlg.chk_switch.isChecked()
+        mols = list(self.ds.mols)
+
+        def task(progress, cancel):
+            from ..conformers import generate_for_dataset
+            return generate_for_dataset(mols, n=n, seed=seed, prune_rmsd=prune,
+                                        optimise=optimise, progress=progress, cancel=cancel)
+
+        def done(out):
+            new_mols, failures = out
+            self.ds.mols = new_mols
+            counts2 = [m.GetNumConformers() for m in new_mols]
+            self.molfields = [build_fields(m, FieldSet(specs=[]), nm)
+                              for m, nm in zip(new_mols, self.ds.names)]
+            if switch:
+                self.model_panel.cmb_conformers.setCurrentIndex(1)
+            self._update_conformer_info()
+            self.log(f"Generated conformations: {np.mean(counts2):.1f} per molecule on average, "
+                     f"up to {max(counts2)}; the kernels of the ensemble mode will cost about "
+                     f"{np.mean(counts2) ** 2:.0f} times the single-conformation ones"
+                     + (f". {len(failures)} molecules failed and kept their pose" if failures else ""))
+            for line in failures[:5]:
+                self.results_panel.append_log("  " + line)
+            self.schedule_display()
+
+        self.run_task(task, done, "Generating conformations")
 
     # ------------------------------------------------------------------ protein structures
     def _pdb_codes(self) -> List[str]:

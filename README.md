@@ -20,13 +20,67 @@ structure, which the data set brings with it and which needs no superposition.*
 
 | Stage | Implementation |
 |---|---|
-| Molecular fields | Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
+| Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
 | Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC. **One-class classification** (novelty detection) for similarity-based virtual screening: 1-SVM. |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
 | Interpretation | **Molecular co-fields** `C_f(r) = Σ_j a_j X_fj(r)` (Eq. 9) rendered as ± isosurfaces; molecular field `X_f(r)` of any molecule in the same colours, with or without a model (co-fields are drawn as solid surfaces and molecular fields as a mesh by default; both styles are switchable); overlap `C·X` whose integral is the field's contribution to the prediction (Eq. 7); the three decomposition rules of the 2019 paper: training-molecule contributions `a_j K(X,X_j)` and **atom contributions** (Eq. 14 of the 2015 paper) shown as red/blue spheres; **Shapley values** over atoms, substituents or field types, which replace the co-field when a nonlinear kernel layer is used and reproduce the atom contributions exactly when it is not, with second-order interaction indices. |
 | Tools | **Protein binding sites** fetched from the PDB or read from a local file and drawn behind the molecules and their fields, with atom codes on the molecule and residue names on the alpha carbons; **field complementarity** of the molecules and of the co-fields with the pocket, as numbers and as a coloured surface (see below); MCS-based alignment to a reference molecule, optional pose refinement by maximising the CMF kernel similarity (the alignment criterion proposed in the 2013 paper), **alignment by prediction confidence** (see below), 3D generation from SMILES, model save/load, CSV/SDF/Gaussian-cube export, screenshots. |
+
+### Conformational ensembles: the fourth dimension
+
+A 3D-QSAR model represents a molecule by one conformation, and the answer depends on which one was
+picked. 4D-QSAR (Hopfinger et al., J. Am. Chem. Soc. 119 (1997) 10509) replaces the choice with an
+ensemble and averages over it. *Model -> Conformations* switches between the two (CLI:
+`--conformations single|ensemble`); **single is the default and is untouched**, which the tests
+assert by comparing its fields with those built before conformations existed.
+
+In the CMF framework the averaging needs no new mathematics. A field is a sum of atom-centred
+Gaussians and the kernel is bilinear in the fields, so the mean field of an ensemble
+
+```
+X_f(r) = sum_k w_k X_f^(k)(r)
+```
+
+is itself a field, whose atoms are the atoms of every conformation with their weights multiplied by
+that conformation's weight. The kernel of two ensembles then comes out as
+
+```
+K(A, B) = sum_k sum_l w_k^A w_l^B K(X_A^(k), X_B^(l))
+```
+
+which is the mean-map kernel of the two conformational distributions and is positive definite by
+construction. A test checks that identity against the pairwise kernels of the conformations. The
+model stays linear in that mean field, so **co-fields, the decomposition rules, the Shapley machinery
+and the complementarity scores all keep working**; contributions arrive per atom per conformation and
+fold back onto the atoms by summation.
+
+*Tools -> Generate conformations* builds the ensembles with ETKDG and MMFF94s, keeping the pose a
+molecule already has as its first conformation, so an alignment made earlier survives and the rest are
+superimposed on it. A multi-conformer file can be read instead, with `--ensemble-by name` grouping the
+records of each compound. Weights are uniform or Boltzmann from the stored energies, with kT and a cap
+on the number of conformations kept; the viewer draws the ensemble as superimposed conformations.
+
+The cost is quadratic in the number of conformations, and the gain depends on how flexible the series
+is. With five conformations per molecule:
+
+| set | mode | q²cv | R²pred |
+|---|---|---|---|
+| steroids, rigid | single | 0.791 | 0.044 |
+| steroids, rigid | ensemble, uniform | 0.756 | 0.221 |
+| ACE, flexible | single | 0.656 | 0.358 |
+| ACE, flexible | ensemble, uniform | **0.691** | **0.485** |
+
+So the ensemble earns its cost on the flexible series and not on the rigid one, which is what the idea
+predicts. Boltzmann weighting was worse than uniform on both, because the conformations are generated
+from one input pose and their energies then concentrate the weight on a few of them; uniform weighting
+is the safer default and is what the application starts with.
+
+Two things to keep in mind. The alignment tools act on the first conformation, so conformations are
+generated after a series has been aligned, not before. And a seed of exactly zero makes RDKit return
+the same geometry for every conformation, which would silently collapse an ensemble; the generator
+maps it to a fixed non-zero seed and a test guards that.
 
 ### Nonlinear kernel layers and multiple kernel learning
 
@@ -541,6 +595,7 @@ python cmf_cli.py build examples/sutherland/THR.sdf --charges file --kernel-laye
 python cmf_cli.py build examples/sutherland/THR.sdf --charges file --cif --mkl alignf
 python cmf_cli.py explain model.cmf examples/sutherland/GPB.sdf --players groups --interactions
 python cmf_cli.py complement examples/openff/thrombin.sdf --model thrombin.cmf --out scores.csv
+python cmf_cli.py build examples/sutherland/ACE.sdf --charges file --conformations ensemble        --conformers 5 --prune-rmsd 1.0
 ```
 
 `python cmf_cli.py build -h` lists all options (method, kernel normalisation, mixing-coefficient
@@ -739,7 +794,7 @@ The tests verify the analytic kernels against numerical integration, the symmetr
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition
 rules, that the overlap integral of co-field and molecular field on a grid reproduces the kernel
 prediction (primal = dual form), the Tripos increments, the tolerant MOL2 reader, activity tables,
-the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the kernel
+the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the conformational ensembles they check that the single mode is bit-for-bit what it was, that the ensemble kernel equals the weighted mean of the kernels of the conformation pairs, that one conformation in ensemble mode reproduces the single mode, that the weights behave and fall back to uniform when energies are missing, that contributions still add up to the prediction and fold back onto the atoms, and that a zero seed does not collapse the ensemble. For the kernel
 layers they check positive semi-definiteness, that the linear setting leaves the kernel untouched, that
 the self-kernel used for new molecules agrees with the training diagonal, that co-fields, atom
 contributions and posterior variances are refused while the training-molecule decomposition still adds
@@ -778,6 +833,7 @@ cmfqsar/varalign.py     alignment by prediction confidence (GP posterior varianc
 cmfqsar/decoys.py       posing a background set for virtual-screening evaluation
 cmfqsar/gtm.py          chemical space maps and activity landscapes (kernel PCA + GTM)
 cmfqsar/shapley.py      Shapley decomposition of a prediction (atoms, substituents, field types)
+cmfqsar/conformers.py   conformational ensembles: generation, weighting, grouping (4D)
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)

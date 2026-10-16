@@ -83,19 +83,37 @@ class FieldSet:
     charge_model: str = "gasteiger"     # "gasteiger" | "mmff" | "file"
     cif_scheme: str = "sybyl"           # "sybyl" | "element" | "element+aromatic"
     param_scheme: str = "rdkit"         # "rdkit" | "tripos" | "tripos-legacy"
+    # --- conformations: the fourth dimension (4D-QSAR) --------------------------
+    # "single" uses one conformation per molecule, as the papers do, and is the default.
+    # "ensemble" represents a molecule by the weighted mean of the fields of all of its
+    # conformations, which is the occupancy averaging of 4D-QSAR (Hopfinger et al. 1997).
+    conformers: str = "single"          # "single" | "ensemble"
+    conformer_weighting: str = "uniform"   # "uniform" | "boltzmann" | "property"
+    conformer_kt: float = 0.6           # kcal/mol, about RT at 300 K, for Boltzmann weights
+    max_conformers: int = 0             # 0 = use every conformation present
+    energy_prop: str = "conformer_energies"   # molecule property holding per-conformer energies
+
+    @property
+    def is_ensemble(self) -> bool:
+        return self.conformers == "ensemble"
 
     # ----- construction helpers -------------------------------------------------
     @classmethod
     def create(cls, physchem: Sequence[str] = PHYSCHEM_FIELDS, cif_types: Sequence[str] = (),
                alpha: float = 1.0, charge_model: str = "gasteiger", cif_scheme: str = "sybyl",
-               param_scheme: str = "rdkit") -> "FieldSet":
+               param_scheme: str = "rdkit", conformers: str = "single",
+               conformer_weighting: str = "uniform", conformer_kt: float = 0.6,
+               max_conformers: int = 0) -> "FieldSet":
         specs = []
         for name in physchem:
             kind = "steric" if name == "steric" else "gauss"
             specs.append(FieldSpec(name=name, kind=kind, alpha=alpha))
         for t in cif_types:
             specs.append(FieldSpec(name=f"cif:{t}", kind="gauss", alpha=alpha))
-        return cls(specs=specs, charge_model=charge_model, cif_scheme=cif_scheme, param_scheme=param_scheme)
+        return cls(specs=specs, charge_model=charge_model, cif_scheme=cif_scheme,
+                   param_scheme=param_scheme, conformers=conformers,
+                   conformer_weighting=conformer_weighting, conformer_kt=conformer_kt,
+                   max_conformers=max_conformers)
 
     @property
     def names(self) -> List[str]:
@@ -121,7 +139,12 @@ class FieldSet:
     def copy(self) -> "FieldSet":
         return FieldSet(specs=[FieldSpec(**vars(s)) for s in self.specs],
                         charge_model=self.charge_model, cif_scheme=self.cif_scheme,
-                        param_scheme=getattr(self, "param_scheme", "rdkit"))
+                        param_scheme=getattr(self, "param_scheme", "rdkit"),
+                        conformers=getattr(self, "conformers", "single"),
+                        conformer_weighting=getattr(self, "conformer_weighting", "uniform"),
+                        conformer_kt=getattr(self, "conformer_kt", 0.6),
+                        max_conformers=getattr(self, "max_conformers", 0),
+                        energy_prop=getattr(self, "energy_prop", "conformer_energies"))
 
 
 # --------------------------------------------------------------------------- #
@@ -337,10 +360,30 @@ class MoleculeFields:
     bonds: np.ndarray             # (B, 2) atom indices (for drawing)
     charges: np.ndarray           # (N,) partial charges (kept for information)
     molblock: str = ""            # MOL block for later display / export
+    # set only for an ensemble (4D) field: its atoms are those of n_conformers conformations,
+    # one after another, each already scaled by its weight
+    n_conformers: int = 1
+    conformer_weights: Optional[np.ndarray] = None
+    atoms_per_conformer: int = 0
 
     @property
     def n_atoms(self) -> int:
         return len(self.coords)
+
+    @property
+    def is_ensemble(self) -> bool:
+        return self.n_conformers > 1
+
+    def per_atom(self, values: np.ndarray) -> np.ndarray:
+        """Sum a per-atom quantity of an ensemble field back onto the atoms of the molecule.
+
+        Atom contributions, Shapley values and the like come out per atom *per conformation*;
+        a chemist wants them per atom, which is the sum over the conformations.
+        """
+        v = np.asarray(values, float)
+        if not self.is_ensemble or self.atoms_per_conformer <= 0:
+            return v
+        return v.reshape(self.n_conformers, self.atoms_per_conformer).sum(axis=0)
 
 
 def cif_types_in(mols: Sequence[Chem.Mol], scheme: str = "sybyl", min_molecules: int = 5) -> List[str]:
@@ -360,8 +403,93 @@ def atom_type_counts(mols: Sequence[Chem.Mol], scheme: str = "sybyl") -> Dict[st
     return dict(sorted(counts.items()))
 
 
-def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "") -> MoleculeFields:
-    """Compute atom coordinates and per-field weights for one molecule."""
+def conformer_weights(mol: Chem.Mol, fieldset: FieldSet) -> np.ndarray:
+    """Weights of the conformations of one molecule, summing to one.
+
+    ``uniform`` gives every conformation the same weight.  ``boltzmann`` and ``property`` read
+    relative energies in kcal/mol from the molecule property named by ``energy_prop``, which the
+    conformer generator writes, and turn them into exp(-dE / kT) normalised; if they are missing
+    or unusable the weights fall back to uniform, because a silently wrong weighting would be
+    worse than an even one.
+    """
+    k = mol.GetNumConformers()
+    if k <= 1:
+        return np.ones(max(k, 1))
+    keep = k if not fieldset.max_conformers else min(k, int(fieldset.max_conformers))
+    w = np.ones(k)
+    if fieldset.conformer_weighting in ("boltzmann", "property"):
+        prop = fieldset.energy_prop
+        try:
+            if not mol.HasProp(prop):
+                raise ValueError("no energies")
+            e = np.array([float(x) for x in mol.GetProp(prop).replace(";", ",").split(",")], float)
+            if len(e) != k or not np.isfinite(e).all():
+                raise ValueError("energy count does not match the conformations")
+            kt = max(float(fieldset.conformer_kt), 1e-6)
+            w = np.exp(-(e - e.min()) / kt)
+        except Exception:                        # noqa: BLE001 - documented fallback
+            w = np.ones(k)
+    order = np.argsort(-w)[:keep]                # keep the heaviest conformations
+    out = np.zeros(k)
+    out[order] = w[order]
+    total = out.sum()
+    return out / total if total > 1e-300 else np.full(k, 1.0 / k)
+
+
+def ensemble_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "") -> MoleculeFields:
+    """Fields of a conformational ensemble: the weighted mean of the fields of its conformations.
+
+    The fourth dimension of 4D-QSAR.  Because a CMF field is a sum of atom-centred Gaussians and
+    the kernel is bilinear in the fields, the mean field of an ensemble is itself a field whose
+    atoms are the atoms of every conformation with their weights multiplied by that
+    conformation's weight.  The kernel of two ensembles is then automatically the weighted mean
+    of the kernels of their conformation pairs, which is the mean-map kernel of the two
+    conformational distributions, and it stays positive definite.  Everything downstream, the
+    co-fields and the decomposition rules included, continues to apply unchanged, because the
+    model is still linear in this mean field.
+
+    The cost is quadratic in the number of conformations kept, so ``max_conformers`` is worth
+    setting on large series.
+    """
+    weights = conformer_weights(mol, fieldset)
+    use = [i for i, w in enumerate(weights) if w > 0]
+    if len(use) <= 1:
+        one = Chem.Mol(mol)
+        if use and mol.GetNumConformers() > 1:
+            keep = mol.GetConformer(use[0])
+            one.RemoveAllConformers()
+            one.AddConformer(keep, assignId=True)
+        return build_fields(one, fieldset, name=name, _single=True)
+    base = build_fields(mol, fieldset, name=name, _single=True)      # conformer 0, for the weights
+    n = base.n_atoms
+    coords, W, bonds = [], [], []
+    for j, i in enumerate(use):
+        coords.append(np.array(mol.GetConformer(i).GetPositions(), dtype=float))
+        W.append(base.weights * float(weights[i]))
+        bonds.append(base.bonds + j * n)
+    k = len(use)
+    out = MoleculeFields(
+        name=base.name, coords=np.concatenate(coords, axis=0), weights=np.concatenate(W, axis=0),
+        radii=np.tile(base.radii, k), symbols=list(base.symbols) * k,
+        atom_types=list(base.atom_types) * k,
+        bonds=np.concatenate(bonds, axis=0) if bonds else np.zeros((0, 2), int),
+        charges=np.tile(base.charges, k), molblock=base.molblock)
+    out.n_conformers = k
+    out.conformer_weights = np.array([weights[i] for i in use], float)
+    out.atoms_per_conformer = n
+    return out
+
+
+def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
+                 _single: bool = False) -> MoleculeFields:
+    """Compute atom coordinates and per-field weights for one molecule.
+
+    With ``conformers="ensemble"`` in the field set and a molecule that carries more than one
+    conformation, this returns the ensemble field instead; see :func:`ensemble_fields`.
+    """
+    if (not _single and getattr(fieldset, "conformers", "single") == "ensemble"
+            and mol.GetNumConformers() > 1):
+        return ensemble_fields(mol, fieldset, name=name)
     conf = mol.GetConformer()
     coords = np.array(conf.GetPositions(), dtype=float)
     n = mol.GetNumAtoms()

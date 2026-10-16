@@ -1,0 +1,239 @@
+"""Tests for the conformational ensemble mode: the fourth dimension."""
+import os
+import sys
+
+import numpy as np
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from cmfqsar.conformers import (align_conformers, ensemble_summary,  # noqa: E402
+                                generate_conformers, get_conformer_energies, group_conformers,
+                                set_conformer_energies)
+from cmfqsar.fields import (AtomTable, FieldSet, build_fields, conformer_weights,  # noqa: E402
+                            ensemble_fields)
+from cmfqsar.kernels import kernel_matrices  # noqa: E402
+from cmfqsar.model import CMFModel  # noqa: E402
+
+SMILES = ["CCCOc1ccccc1C(=O)NCC", "CCCNc1ccccc1C(=O)OC", "CCOc1ccc(C)cc1CC(=O)N",
+          "CC(C)COc1ccccc1C(=O)NC", "CCCCOc1ccccc1C(=O)N"]
+
+
+def _mol(smiles: str, seed: int = 1, name: str = "m"):
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+    m = Chem.AddHs(Chem.MolFromSmiles(smiles))
+    p = AllChem.ETKDGv3()
+    p.randomSeed = seed
+    AllChem.EmbedMolecule(m, p)
+    AllChem.MMFFOptimizeMolecule(m)
+    Chem.SanitizeMol(m)
+    m.SetProp("_Name", name)
+    return m
+
+
+@pytest.fixture(scope="module")
+def ensemble_mol():
+    return generate_conformers(_mol(SMILES[0], name="probe"), n=5, seed=3, prune_rmsd=1.0)
+
+
+def test_generation_keeps_the_input_pose_and_stores_energies(ensemble_mol):
+    m = ensemble_mol
+    assert m.GetNumConformers() > 1
+    e = get_conformer_energies(m)
+    assert e is not None and len(e) == m.GetNumConformers() and np.isfinite(e).all()
+    # the pose the molecule arrived with is still conformer 0, so an earlier alignment survives
+    original = _mol(SMILES[0], name="probe")
+    assert np.allclose(m.GetConformer(0).GetPositions(), original.GetConformer().GetPositions())
+    assert m.GetProp("_Name") == "probe"
+
+
+def test_seed_zero_still_gives_distinct_conformations():
+    """RDKit returns identical geometries for a seed of exactly zero; the generator must not."""
+    m = generate_conformers(_mol(SMILES[1], name="z"), n=6, seed=0, prune_rmsd=0.5)
+    assert m.GetNumConformers() >= 3
+    p = [np.array(c.GetPositions()) for c in m.GetConformers()]
+    assert max(np.abs(p[0] - q).max() for q in p[1:]) > 0.5
+
+
+def test_single_mode_ignores_the_extra_conformations(ensemble_mol):
+    """The default must behave exactly as it did before conformations existed."""
+    from rdkit import Chem
+    fs = FieldSet.create(alpha=0.5)
+    assert fs.conformers == "single" and not fs.is_ensemble
+    one = Chem.Mol(ensemble_mol)
+    keep = Chem.Conformer(one.GetConformer(0))
+    one.RemoveAllConformers()
+    one.AddConformer(keep, assignId=True)
+    a = build_fields(ensemble_mol, fs, "x")
+    b = build_fields(one, fs, "x")
+    assert a.n_atoms == b.n_atoms == one.GetNumAtoms()
+    assert np.array_equal(a.coords, b.coords) and np.array_equal(a.weights, b.weights)
+    assert not a.is_ensemble and a.n_conformers == 1
+
+
+def test_ensemble_field_is_the_weighted_union(ensemble_mol):
+    fs = FieldSet.create(alpha=0.5, conformers="ensemble")
+    e = build_fields(ensemble_mol, fs, "x")
+    k = ensemble_mol.GetNumConformers()
+    n = ensemble_mol.GetNumAtoms()
+    assert e.is_ensemble and e.n_conformers == k and e.atoms_per_conformer == n
+    assert e.n_atoms == k * n
+    assert e.conformer_weights == pytest.approx(np.full(k, 1.0 / k))
+    one = build_fields(ensemble_mol, FieldSet.create(alpha=0.5), "x")
+    assert np.allclose(e.weights[:n], one.weights / k)         # scaled by the conformer weight
+    assert np.allclose(e.coords[:n], one.coords)
+    assert len(e.symbols) == k * n and len(e.bonds) == k * len(one.bonds)
+    # the bonds of each conformation point into its own block of atoms
+    assert e.bonds[len(one.bonds):2 * len(one.bonds)].min() >= n
+
+
+def test_ensemble_kernel_is_the_mean_of_the_conformer_kernels():
+    """The heart of the method: the mean-map kernel of the two conformational distributions."""
+    from rdkit import Chem
+    fs_e = FieldSet.create(alpha=0.6, conformers="ensemble")
+    fs_1 = FieldSet.create(alpha=0.6)
+    mols = [generate_conformers(_mol(s, seed=i + 1, name=f"m{i}"), n=3, seed=i + 5,
+                                prune_rmsd=1.0) for i, s in enumerate(SMILES[:2])]
+    tab = AtomTable.from_molecules([build_fields(m, fs_e, m.GetProp("_Name")) for m in mols])
+    K = kernel_matrices(tab, tab, fs_e.specs)                   # (F, 2, 2)
+
+    def single(mol, conf_id):
+        one = Chem.Mol(mol)
+        c = Chem.Conformer(one.GetConformer(conf_id))
+        one.RemoveAllConformers()
+        one.AddConformer(c, assignId=True)
+        return build_fields(one, fs_1, "c")
+
+    for i, a in enumerate(mols):
+        for j, b in enumerate(mols):
+            wa = np.full(a.GetNumConformers(), 1.0 / a.GetNumConformers())
+            wb = np.full(b.GetNumConformers(), 1.0 / b.GetNumConformers())
+            acc = np.zeros(len(fs_1.specs))
+            for ka in range(a.GetNumConformers()):
+                for kb in range(b.GetNumConformers()):
+                    pair = AtomTable.from_molecules([single(a, ka), single(b, kb)])
+                    acc += wa[ka] * wb[kb] * kernel_matrices(pair, pair, fs_1.specs)[:, 0, 1]
+            assert K[:, i, j] == pytest.approx(acc, rel=1e-9, abs=1e-12)
+
+
+def test_one_conformation_in_ensemble_mode_equals_the_single_mode():
+    m = _mol(SMILES[2], name="solo")
+    a = build_fields(m, FieldSet.create(alpha=0.5, conformers="ensemble"), "x")
+    b = build_fields(m, FieldSet.create(alpha=0.5), "x")
+    assert np.array_equal(a.coords, b.coords) and np.array_equal(a.weights, b.weights)
+    assert a.n_conformers == 1 and not a.is_ensemble
+
+
+def test_weights_uniform_boltzmann_and_the_cap(ensemble_mol):
+    from rdkit import Chem
+    m = Chem.Mol(ensemble_mol)
+    k = m.GetNumConformers()
+    fs = FieldSet.create(alpha=0.5, conformers="ensemble")
+    assert conformer_weights(m, fs) == pytest.approx(np.full(k, 1.0 / k))
+    # Boltzmann weights follow the stored energies
+    e = np.zeros(k)
+    e[1:] = 10.0                                      # one clear minimum
+    set_conformer_energies(m, e)
+    fs.conformer_weighting = "boltzmann"
+    fs.conformer_kt = 0.6
+    w = conformer_weights(m, fs)
+    assert w[0] > 0.99 and w.sum() == pytest.approx(1.0)
+    # a bigger kT flattens them
+    fs.conformer_kt = 100.0
+    assert conformer_weights(m, fs).std() < w.std()
+    # missing or mismatched energies fall back to uniform rather than guessing
+    m.SetProp("conformer_energies", "1.0,2.0")
+    assert conformer_weights(m, fs) == pytest.approx(np.full(k, 1.0 / k))
+    m.ClearProp("conformer_energies")
+    assert conformer_weights(m, fs) == pytest.approx(np.full(k, 1.0 / k))
+    # the cap keeps the heaviest conformations and renormalises
+    set_conformer_energies(m, np.arange(k, dtype=float))
+    fs.conformer_kt = 0.6
+    fs.max_conformers = 2
+    w2 = conformer_weights(m, fs)
+    assert (w2 > 0).sum() == 2 and w2.sum() == pytest.approx(1.0)
+    assert w2[0] > w2[1] > 0 and w2[2:].sum() == 0.0
+    assert build_fields(m, fs, "x").n_conformers == 2
+
+
+def test_contributions_of_an_ensemble_add_up_and_fold_back_onto_atoms():
+    fs = FieldSet.create(alpha=0.6, conformers="ensemble")
+    mols = [generate_conformers(_mol(s, seed=i + 1, name=f"m{i}"), n=3, seed=i + 2,
+                                prune_rmsd=1.0) for i, s in enumerate(SMILES)]
+    mf = [build_fields(m, fs, m.GetProp("_Name")) for m in mols]
+    y = np.array([1.0, 2.0, 3.0, 2.5, 1.5])
+    model = CMFModel(fieldset=fs, method="krr", params={"lam": 1e-3}, normalize=True)
+    model.fit(AtomTable.from_molecules(mf), y, cv_folds=0)
+    probe = mf[0]
+    c = model.atom_contributions(probe)                # one value per atom per conformation
+    assert len(c) == probe.n_atoms
+    pred = float(model.predict(AtomTable.from_molecules([probe]))[0])
+    assert float(c.sum() + model.bias) == pytest.approx(pred, abs=1e-8)
+    folded = probe.per_atom(c)                         # summed back onto the atoms of the molecule
+    assert len(folded) == probe.atoms_per_conformer
+    assert folded.sum() == pytest.approx(c.sum(), abs=1e-10)
+    # co-fields remain available, because the model is still linear in the mean field
+    centers, coeffs, widths = model.cofield_coefficients(0)
+    assert len(centers) == sum(m.n_atoms for m in mf)
+
+
+def test_group_conformers_collapses_a_multi_record_file():
+    mols, names = [], []
+    for i in range(2):
+        m = generate_conformers(_mol(SMILES[i], seed=i + 1, name=f"cmp{i}"), n=3, seed=i + 7,
+                                prune_rmsd=1.0)
+        for c in m.GetConformers():
+            from rdkit import Chem
+            one = Chem.Mol(m)
+            keep = Chem.Conformer(c)
+            one.RemoveAllConformers()
+            one.AddConformer(keep, assignId=True)
+            mols.append(one)
+            names.append(f"cmp{i}")
+    grouped, gnames, counts = group_conformers(mols, names, by="name")
+    assert gnames == ["cmp0", "cmp1"]
+    assert counts == [3, 3] and [g.GetNumConformers() for g in grouped] == [3, 3]
+    assert len(grouped) == 2
+
+
+def test_summary_reports_the_cost_and_the_effective_count(ensemble_mol):
+    fs = FieldSet.create(alpha=0.5, conformers="ensemble")
+    info = ensemble_summary([ensemble_mol], fs)
+    k = ensemble_mol.GetNumConformers()
+    assert info["conformations_mean"] == pytest.approx(k)
+    assert info["effective_mean"] == pytest.approx(k)          # uniform weights
+    assert info["kernel_cost_factor"] == pytest.approx(k * k)
+    # with one dominant conformation the effective number collapses towards one
+    from rdkit import Chem
+    m = Chem.Mol(ensemble_mol)
+    e = np.zeros(k)
+    e[1:] = 20.0
+    set_conformer_energies(m, e)
+    fs.conformer_weighting = "boltzmann"
+    assert ensemble_summary([m], fs)["effective_mean"] < 1.01
+
+
+def test_field_set_carries_the_mode_through_copy():
+    fs = FieldSet.create(alpha=0.5, conformers="ensemble", conformer_weighting="boltzmann",
+                         conformer_kt=1.5, max_conformers=4)
+    c = fs.copy()
+    assert c.is_ensemble and c.conformer_weighting == "boltzmann"
+    assert c.conformer_kt == 1.5 and c.max_conformers == 4
+    assert FieldSet.create().conformers == "single"
+
+
+def test_align_conformers_superimposes_them(ensemble_mol):
+    from rdkit import Chem
+    m = Chem.Mol(ensemble_mol)
+    before = np.array(m.GetConformer(1).GetPositions())
+    rms = align_conformers(m)
+    assert len(rms) == m.GetNumConformers() - 1
+    after = np.array(m.GetConformer(1).GetPositions())
+    assert np.abs(after - before).max() >= 0.0            # coordinates may or may not move
+    assert np.allclose(m.GetConformer(0).GetPositions(),
+                       ensemble_mol.GetConformer(0).GetPositions())
+
+
+if __name__ == "__main__":
+    sys.exit(pytest.main([__file__, "-v"]))

@@ -326,6 +326,51 @@ class ModelPanel(QWidget):
         prow.addWidget(self.chk_scale)
         fl.addLayout(prow)
 
+        # --- conformations: the fourth dimension
+        crow2 = QHBoxLayout()
+        crow2.addWidget(QLabel("Conformations:"))
+        self.cmb_conformers = QComboBox()
+        self.cmb_conformers.addItems(["single (one per molecule)",
+                                      "ensemble (4D: mean field over conformations)"])
+        self.cmb_conformers.setToolTip("\n".join([
+            "Single: every molecule is one conformation, as in the papers. This is the default",
+            "  and nothing about it changes.",
+            "Ensemble: a molecule is the weighted mean of the fields of its conformations, which",
+            "  is the occupancy averaging of 4D-QSAR. The kernel of two ensembles becomes the",
+            "  weighted mean of the kernels of their conformation pairs, so co-fields and the",
+            "  decomposition rules still hold, but the kernels cost k^2 times as much.",
+            "Load a multi-conformer file, or generate conformations from Tools."]))
+        self.cmb_conformers.currentIndexChanged.connect(self._conformers_changed)
+        crow2.addWidget(self.cmb_conformers)
+        self.cmb_conf_weight = QComboBox()
+        self.cmb_conf_weight.addItems(["uniform weights", "Boltzmann weights"])
+        self.cmb_conf_weight.setToolTip("Boltzmann weights need per-conformer energies, which the "
+                                        "conformer generator stores;\nwithout them the weights "
+                                        "stay uniform")
+        self.cmb_conf_weight.currentIndexChanged.connect(self.fields_changed)
+        crow2.addWidget(self.cmb_conf_weight)
+        self.spin_conf_kt = QDoubleSpinBox()
+        self.spin_conf_kt.setRange(0.05, 20.0)
+        self.spin_conf_kt.setSingleStep(0.1)
+        self.spin_conf_kt.setValue(0.6)
+        self.spin_conf_kt.setPrefix("kT ")
+        self.spin_conf_kt.setSuffix(" kcal")
+        self.spin_conf_kt.valueChanged.connect(self.fields_changed)
+        crow2.addWidget(self.spin_conf_kt)
+        self.spin_conf_max = QSpinBox()
+        self.spin_conf_max.setRange(0, 999)
+        self.spin_conf_max.setValue(0)
+        self.spin_conf_max.setPrefix("max ")
+        self.spin_conf_max.setToolTip("Use at most this many of the heaviest conformations "
+                                      "per molecule; 0 uses all of them")
+        self.spin_conf_max.valueChanged.connect(self.fields_changed)
+        crow2.addWidget(self.spin_conf_max)
+        self.lbl_conformers = QLabel("")
+        self.lbl_conformers.setStyleSheet("color: palette(mid)")
+        crow2.addWidget(self.lbl_conformers)
+        crow2.addStretch(1)
+        fl.addLayout(crow2)
+
         self.tbl_fields = QTableWidget(0, 5)
         self.tbl_fields.setHorizontalHeaderLabels(["Use", "Field", "alpha", "h (mix)", "scale"])
         self.tbl_fields.verticalHeader().setVisible(False)
@@ -464,10 +509,26 @@ class ModelPanel(QWidget):
         self.btn_predict.clicked.connect(self.predict_requested)
         self.btn_cancel.clicked.connect(self.cancel_requested)
         outer.addStretch(1)
+        self._conformers_changed()  # the weighting controls belong to the ensemble mode only
         self._task_changed()      # hide the class controls until a classification task is chosen
         self._kernel_changed()    # the bandwidth grid belongs to the Gaussian layer only
 
     # ---------------------------------------------------------------- API
+    def conformer_mode(self) -> str:
+        return ["single", "ensemble"][self.cmb_conformers.currentIndex()]
+
+    def conformer_weighting(self) -> str:
+        return ["uniform", "boltzmann"][self.cmb_conf_weight.currentIndex()]
+
+    def _conformers_changed(self, *_):
+        on = self.conformer_mode() == "ensemble"
+        for w in (self.cmb_conf_weight, self.spin_conf_kt, self.spin_conf_max):
+            w.setVisible(on)
+        self.fields_changed.emit()
+
+    def set_conformer_info(self, text: str) -> None:
+        self.lbl_conformers.setText(text)
+
     def selected_physchem(self) -> List[str]:
         return [n for n, cb in self.chk_fields.items() if cb.isChecked()]
 
