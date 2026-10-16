@@ -241,14 +241,57 @@ molecules. Annealing beta upwards from a soft start, which `anneal_weights` does
 method cannot find a bioactive conformation among gas-phase ones; it can only confirm that the pose
 already there is the best of what is offered, which is a useful diagnostic and not a better model.
 
-**The verdict on the fourth dimension.** Neither averaging, nor placement, nor windowing, nor
-selection beats one well-chosen conformation on an aligned series. The mode stays because it is
-exact, costs nothing when unused, and is the substrate for the one route not yet tried: ensembles
-that are bound-like by construction, from docking into the pocket the application can now read,
-rather than generated in the gas phase. Treat it as something to test against the
-single-conformation model on each series, with the number of conformations, the window and beta as
-parameters of their own, rather than as an improvement to switch on; which is why the default
-remains a single conformation.
+#### Placing the conformations in the pocket
+
+The remaining idea was to stop generating ensembles in the gas phase and let the receptor place
+them. `cmfqsar/docking.py` (CLI: `cmf_cli.py mil --dock`) is a small rigid-body docking written
+against what the program already has: the pocket fields, the exact overlap integrals, a soft clash
+term, a burial term and a tether. A pose is scored by
+
+```
+complementarity with the pocket + burial - clash - tether
+```
+
+and the six rigid-body parameters of each conformation are optimised from where it stands, with
+bounded restarts. The internal geometry is never touched, so the conformations stay as generated and
+only their placement changes. It is not a docking program: there is no desolvation, no entropy and
+no torsional search, and the scoring function is not fitted to binding data.
+
+It does what it is asked to. On the thrombin set of the Open Force Field collection the clash
+dropped from 7.8 to zero and the score from -15.1 to +0.54, the poses moving 3.0 Å; on the HIF-2α
+set of the Merck collection, where the ligands were already well placed, the poses moved 1.0 Å and
+the small residual clash vanished. Both took about ten minutes for a hundred to two hundred poses.
+
+It does not help the model, which is the fourth answer of the same kind:
+
+| set | representation | q²cv |
+|---|---|---|
+| HIF-2α, 38 ligands | single conformation | **0.623** |
+| HIF-2α, 38 ligands | gas ensemble | 0.610 |
+| HIF-2α, 38 ligands | docked ensemble | 0.582 |
+| HIF-2α, 38 ligands | selection on the gas ensemble | 0.528 |
+| HIF-2α, 38 ligands | selection on the docked ensemble | 0.537 |
+
+The thrombin set of that collection says nothing either way: with 22 ligands no representation
+models it at all, the single conformation included, at q²cv -0.06 and worse.
+
+Two things temper this. These benchmark ligands arrive in bound-like poses already, so the
+experiment really asks whether *re-docking a good pose* helps, and it does not; a series with no
+trustworthy alignment is a different question. And a proper docking program with a flexible-ligand
+search would place poses better than this one does.
+
+That second point suggests where this code is actually worth using. Placing a molecule in a site by
+optimising a pocket score is an *alignment* method, and for a series whose alignment is a guess from
+a common substructure it may well beat that guess. The ensemble question is closed; docking as an
+alignment criterion is open and the machinery for it is now here.
+
+**The verdict on the fourth dimension.** Averaging, placement, windowing, selection and
+receptor-placed ensembles all fail to beat one well-chosen conformation on an aligned series. Five
+routes, one answer. The mode stays because it is exact and costs nothing when unused, and because
+the pieces it needed, conformer generation, multi-instance weighting and pocket docking, are useful
+on their own. Treat it as something to test against the single-conformation model on each series,
+with the number of conformations, the window and beta as parameters of their own, rather than as an
+improvement to switch on; which is why the default remains a single conformation.
 
 The earlier version of this table reported different numbers for the single-conformation rows, with
 a protocol that was not recorded and could not be reproduced; every row above was measured again
@@ -777,6 +820,7 @@ python cmf_cli.py explain model.cmf examples/sutherland/GPB.sdf --players groups
 python cmf_cli.py complement examples/openff/thrombin.sdf --model thrombin.cmf --out scores.csv
 python cmf_cli.py build examples/sutherland/ACE.sdf --charges file --conformations ensemble        --conformers 5 --prune-rmsd 1.0
 python cmf_cli.py mil examples/sutherland/THR.sdf --charges file --conformers 5 --hard
+python cmf_cli.py mil examples/schindler/hif2a-jmc2023.sdf --conformers 5 --dock
 ```
 
 `python cmf_cli.py build -h` lists all options (method, kernel normalisation, mixing-coefficient
@@ -975,7 +1019,7 @@ The tests verify the analytic kernels against numerical integration, the symmetr
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition
 rules, that the overlap integral of co-field and molecular field on a grid reproduces the kernel
 prediction (primal = dual form), the Tripos increments, the tolerant MOL2 reader, activity tables,
-the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the conformational ensembles they check that the single mode is bit-for-bit what it was, that the ensemble kernel equals the weighted mean of the kernels of the conformation pairs, that one conformation in ensemble mode reproduces the single mode, that the weights behave and fall back to uniform when energies are missing, that contributions still add up to the prediction and fold back onto the atoms, and that a zero seed does not collapse the ensemble. For the multi-instance weighting they check the weighting rules and their limits, that selection recovers a hidden witness where averaging cannot, that beta = 0 is exactly the ensemble kernel, that hard selection is one-hot and settles, that a new molecule is predicted without using its activity, that the folds split molecules and that shuffled activities destroy the fit, and that annealing sharpens the weights. For the kernel
+the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the conformational ensembles they check that the single mode is bit-for-bit what it was, that the ensemble kernel equals the weighted mean of the kernels of the conformation pairs, that one conformation in ensemble mode reproduces the single mode, that the weights behave and fall back to uniform when energies are missing, that contributions still add up to the prediction and fold back onto the atoms, and that a zero seed does not collapse the ensemble. For the multi-instance weighting they check the weighting rules and their limits, that selection recovers a hidden witness where averaging cannot, that beta = 0 is exactly the ensemble kernel, that hard selection is one-hot and settles, that a new molecule is predicted without using its activity, that the folds split molecules and that shuffled activities destroy the fit, and that annealing sharpens the weights. For the pocket docking they check that the score prefers complementary charges and punishes clashes, that burial is what holds a pose in a cavity and the tether what keeps it from wandering, that docking removes a clash, that the internal geometry is preserved to the last decimal because the search is rigid, and that a molecule which cannot be placed is handed back untouched. For the kernel
 layers they check positive semi-definiteness, that the linear setting leaves the kernel untouched, that
 the self-kernel used for new molecules agrees with the training diagonal, that co-fields, atom
 contributions and posterior variances are refused while the training-molecule decomposition still adds
@@ -1016,6 +1060,7 @@ cmfqsar/gtm.py          chemical space maps and activity landscapes (kernel PCA 
 cmfqsar/shapley.py      Shapley decomposition of a prediction (atoms, substituents, field types)
 cmfqsar/conformers.py   conformational ensembles: generation, weighting, grouping (4D)
 cmfqsar/mil.py          multi-instance learning: the model chooses the conformation
+cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)

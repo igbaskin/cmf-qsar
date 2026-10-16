@@ -579,6 +579,38 @@ def cmd_mil(args):
         print()
         for line in failures[:5]:
             print("  " + line)
+    if args.dock:
+        from cmfqsar.complementarity import pocket_fields
+        from cmfqsar.docking import dock_dataset, summarise
+        from cmfqsar.protein import fetch_pdb, find_pocket, read_structure
+        path = args.structure
+        if not path:
+            codes = [m.GetProp("pdb") for m in ds.mols if m is not None and m.HasProp("pdb")]
+            path = find_pocket(args.dataset, codes[0] if codes else None)
+            if not path and codes:
+                path = fetch_pdb(codes[0])
+        if not path:
+            raise SystemExit("docking needs a structure: give --structure, or use a data set "
+                             "that names a PDB entry")
+        prot = read_structure(path, keep_waters=False)
+        fs_dock = FieldSet.create(physchem=[f for f in args.fields.split(",") if f],
+                                  alpha=0.5, charge_model=args.charges)
+        pocket = pocket_fields(prot, fs_dock)
+        print(f"Docking every conformation into {prot.name} ({pocket.n_atoms} atoms with "
+              f"hydrogens), {args.dock_restarts} restart(s)")
+
+        def dock_prog(msg, fr):
+            print("\r  [%5.1f%%] %-44s" % (fr * 100, msg), end="", flush=True)
+
+        mols, dock_res = dock_dataset(mols, pocket, fs_dock, restarts=args.dock_restarts,
+                                      seed=args.seed, keep_best=args.dock_keep,
+                                      progress=dock_prog)
+        print()
+        info = summarise(dock_res)
+        if info:
+            print(f"  score {info['score_before']:+.2f} -> {info['score_after']:+.2f}, "
+                  f"clash {info['clash_before']:.1f} -> {info['clash_after']:.1f}, "
+                  f"poses moved {info['moved']:.1f} A on average")
     counts = [mols[i].GetNumConformers() for i in tr]
     if max(counts) < 2:
         raise SystemExit("every molecule has one conformation; nothing to choose between. "
@@ -948,6 +980,16 @@ def main(argv=None):
                    help="keep only conformations within this distance of the arrival pose")
     i.add_argument("--max-conformers", type=int, default=0, metavar="N",
                    help="use at most the first N conformations of every molecule")
+    i.add_argument("--dock", action="store_true",
+                   help="place every conformation in the pocket by rigid-body optimisation "
+                        "before learning, so that the bag is bound-like rather than gas-phase")
+    i.add_argument("--structure", default=None,
+                   help="PDB or mmCIF file of the protein; by default the pocket stored beside "
+                        "the data set is used, or the entry it names is fetched")
+    i.add_argument("--dock-restarts", type=int, default=1, metavar="N",
+                   help="bounded random restarts per conformation (0 = optimise from where it is)")
+    i.add_argument("--dock-keep", type=int, default=0, metavar="N",
+                   help="keep only the N best-scoring poses of each molecule (0 = all)")
     i.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
     i.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
     i.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
