@@ -189,14 +189,66 @@ pose even after being superimposed on it, so any window tight enough to be *loca
 the pose itself. There is no middle ground in which the ensemble both differs from one conformation
 and predicts better.
 
-**The verdict.** Averaging over generated conformations does not help an aligned 3D-QSAR series, and
-three placements and six windows did not find a case where it does. The mode stays because it is
-exact, costs nothing when unused and is the substrate for anything that selects conformations rather
-than averaging over them, which is where the idea would have to be taken next: a bound-like ensemble
-from docking, or a multi-instance model that learns which conformation represents each molecule.
-Treat the mode as something to test against the single-conformation model on each series, with the
-number of conformations and the window as parameters of their own, rather than as an improvement to
-switch on; which is why the default is a single conformation superimposed as before.
+Averaging over generated conformations therefore does not help an aligned 3D-QSAR series, and three
+placements and six windows did not find a case where it does. What remained was to stop averaging.
+
+#### Letting the model choose the conformation
+
+`cmfqsar/mil.py` (CLI: `cmf_cli.py mil`) treats a molecule as a *bag* of conformations whose label
+belongs to the bag, and gives each conformation a weight driven by the model's own score for it,
+
+```
+w_ik = exp(beta f(x_ik)) / sum_l exp(beta f(x_il))
+```
+
+with two limits that bracket everything: `beta = 0` is the ensemble mode exactly, and a large beta
+puts all the weight on the single highest-scoring conformation, which is the witness assumption of
+mi-SVM and of multi-instance regression. In between the weighting stays soft, which keeps the bag
+kernel a weighted mean of conformation kernels, `W K W^T`, hence positive definite, and keeps the
+model linear in the mean field, so co-fields and the decomposition rules survive. Fitting
+alternates, as multi-instance methods do: fit, score every conformation, re-weight, repeat; the
+conformation kernel is computed once and the rest is matrix algebra. The weights are fitted to the
+activities, so they are relearned inside every cross-validation fold, and the folds split molecules,
+never conformations.
+
+On synthetic bags that obey the assumption, where the label is the best score among five instances,
+the method does what it should: it recovers the hidden instance in 98 % of bags and lifts q²cv from
+0.398 to 0.999, where averaging is helpless. That is the test that proves the machinery, and it is
+in the suite.
+
+On real series it does not pay, and how it fails is the interesting part. Five conformations per
+molecule, the kernels cosine-normalised, α and λ chosen by cross-validation:
+
+| set | representation | q²cv | R²pred | conformations that count |
+|---|---|---|---|---|
+| THR | single conformation | 0.652 | **0.545** | 1.00 |
+| THR | ensemble, `beta = 0` | 0.290 | 0.309 | 5.00 |
+| THR | selection, `beta = 3` | **0.656** | 0.547 | 1.09 |
+| ACE | single conformation | 0.656 | **0.358** | 1.00 |
+| ACE | ensemble, `beta = 0` | **0.717** | 0.284 | 5.00 |
+| ACE | selection, chosen by CV | 0.717 | 0.284 | 5.00 |
+
+On thrombin the selection repairs exactly the damage that averaging did, and it does so by choosing
+the pose the molecules arrived in for 97 % of them, 100 % under hard selection. In other words the
+model, given five conformations and free choice, re-selects the alignment the authors published and
+matches the single-conformation result to three decimals. On ACE cross-validation prefers no
+selection at all, and the gain it reports does not survive on the test set.
+
+The alternation is a local search, and that shows: started from equal weights instead of from the
+arrival pose, the same fit lands at q²cv -0.29 and keeps the published pose for 2 % to 24 % of
+molecules. Annealing beta upwards from a soft start, which `anneal_weights` does, lifts that to
+0.23 but still falls far short, and it *degrades* a run that started at the published pose. So the
+method cannot find a bioactive conformation among gas-phase ones; it can only confirm that the pose
+already there is the best of what is offered, which is a useful diagnostic and not a better model.
+
+**The verdict on the fourth dimension.** Neither averaging, nor placement, nor windowing, nor
+selection beats one well-chosen conformation on an aligned series. The mode stays because it is
+exact, costs nothing when unused, and is the substrate for the one route not yet tried: ensembles
+that are bound-like by construction, from docking into the pocket the application can now read,
+rather than generated in the gas phase. Treat it as something to test against the
+single-conformation model on each series, with the number of conformations, the window and beta as
+parameters of their own, rather than as an improvement to switch on; which is why the default
+remains a single conformation.
 
 The earlier version of this table reported different numbers for the single-conformation rows, with
 a protocol that was not recorded and could not be reproduced; every row above was measured again
@@ -724,6 +776,7 @@ python cmf_cli.py build examples/sutherland/THR.sdf --charges file --cif --mkl a
 python cmf_cli.py explain model.cmf examples/sutherland/GPB.sdf --players groups --interactions
 python cmf_cli.py complement examples/openff/thrombin.sdf --model thrombin.cmf --out scores.csv
 python cmf_cli.py build examples/sutherland/ACE.sdf --charges file --conformations ensemble        --conformers 5 --prune-rmsd 1.0
+python cmf_cli.py mil examples/sutherland/THR.sdf --charges file --conformers 5 --hard
 ```
 
 `python cmf_cli.py build -h` lists all options (method, kernel normalisation, mixing-coefficient
@@ -922,7 +975,7 @@ The tests verify the analytic kernels against numerical integration, the symmetr
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition
 rules, that the overlap integral of co-field and molecular field on a grid reproduces the kernel
 prediction (primal = dual form), the Tripos increments, the tolerant MOL2 reader, activity tables,
-the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the conformational ensembles they check that the single mode is bit-for-bit what it was, that the ensemble kernel equals the weighted mean of the kernels of the conformation pairs, that one conformation in ensemble mode reproduces the single mode, that the weights behave and fall back to uniform when energies are missing, that contributions still add up to the prediction and fold back onto the atoms, and that a zero seed does not collapse the ensemble. For the kernel
+the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the conformational ensembles they check that the single mode is bit-for-bit what it was, that the ensemble kernel equals the weighted mean of the kernels of the conformation pairs, that one conformation in ensemble mode reproduces the single mode, that the weights behave and fall back to uniform when energies are missing, that contributions still add up to the prediction and fold back onto the atoms, and that a zero seed does not collapse the ensemble. For the multi-instance weighting they check the weighting rules and their limits, that selection recovers a hidden witness where averaging cannot, that beta = 0 is exactly the ensemble kernel, that hard selection is one-hot and settles, that a new molecule is predicted without using its activity, that the folds split molecules and that shuffled activities destroy the fit, and that annealing sharpens the weights. For the kernel
 layers they check positive semi-definiteness, that the linear setting leaves the kernel untouched, that
 the self-kernel used for new molecules agrees with the training diagonal, that co-fields, atom
 contributions and posterior variances are refused while the training-molecule decomposition still adds
@@ -962,6 +1015,7 @@ cmfqsar/decoys.py       posing a background set for virtual-screening evaluation
 cmfqsar/gtm.py          chemical space maps and activity landscapes (kernel PCA + GTM)
 cmfqsar/shapley.py      Shapley decomposition of a prediction (atoms, substituents, field types)
 cmfqsar/conformers.py   conformational ensembles: generation, weighting, grouping (4D)
+cmfqsar/mil.py          multi-instance learning: the model chooses the conformation
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)

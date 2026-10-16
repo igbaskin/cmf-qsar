@@ -549,6 +549,101 @@ def cmd_complement(args):
         print(f"\nScores written to {args.out}")
 
 
+def cmd_mil(args):
+    """Multi-instance learning over conformations: let the model choose the pose."""
+    import time
+    from cmfqsar.conformers import generate_for_dataset
+    from cmfqsar.mil import (cv_predict as mil_cv, flatten_conformers, learn_weights,
+                             predict_bags)
+    from cmfqsar.model import r2_score, rmse
+    t0 = time.time()
+    ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file,
+                      ensemble_by=(args.ensemble_by or None))
+    ok = np.isfinite(ds.activity)
+    tr = [int(i) for i in ds.train_indices if ok[i]]
+    te = [int(i) for i in ds.test_indices if ok[i]]
+    if len(tr) < 4:
+        raise SystemExit("the training set needs at least four molecules with activities")
+    print(f"Loaded {len(ds)} molecules: {len(tr)} training, {len(te)} test")
+    mols = list(ds.mols)
+    if args.conformers:
+        print(f"Generating up to {args.conformers} conformations per molecule")
+
+        def prog(msg, fr):
+            print("\r  [%5.1f%%] %-44s" % (fr * 100, msg), end="", flush=True)
+
+        mols, failures = generate_for_dataset(mols, n=args.conformers, seed=args.seed,
+                                              prune_rmsd=args.prune_rmsd,
+                                              align_to=args.conformer_align,
+                                              window_rmsd=args.conformer_window, progress=prog)
+        print()
+        for line in failures[:5]:
+            print("  " + line)
+    counts = [mols[i].GetNumConformers() for i in tr]
+    if max(counts) < 2:
+        raise SystemExit("every molecule has one conformation; nothing to choose between. "
+                         "Use --conformers N, or a multi-conformer file with --ensemble-by name")
+    print(f"  {np.mean(counts):.1f} conformations per molecule on average, up to {max(counts)}")
+    physchem = [f for f in args.fields.split(",") if f]
+    y = ds.activity[tr]
+    rules = [("ensemble (beta = 0)", 0.0, "soft")]
+    rules += [(f"soft, beta = {b:g}", float(b), "soft") for b in _floats(args.betas) if b > 0]
+    if args.hard:
+        rules.append(("hard selection", 0.0, "hard"))
+    best = None
+    for alpha in _floats(args.alphas):
+        fs = FieldSet.create(physchem=physchem, alpha=alpha, charge_model=args.charges,
+                             param_scheme=args.param)
+        flat_tr, bags_tr = flatten_conformers([mols[i] for i in tr], fs, [ds.names[i] for i in tr],
+                                              max_conformers=args.max_conformers)
+        model = CMFModel(fieldset=fs, method="krr", normalize=not args.raw_kernels)
+        K_conf = model.joint_kernel(model.prepare_training_kernels(
+            AtomTable.from_molecules(flat_tr)))
+        for lam in _floats(args.lams):
+            for label, beta, sel in rules:
+                ycv = mil_cv(K_conf, bags_tr, y, beta=beta, lam=lam, folds=args.folds,
+                             seed=args.seed, selection=sel, init=args.init, rounds=args.rounds)
+                q2, err = r2_score(y, ycv), rmse(y, ycv)
+                print(f"  alpha {alpha:<5g} lambda {lam:<6g} {label:22s} q2cv {q2:+.3f}  "
+                      f"RMSEcv {err:.3f}", flush=True)
+                if best is None or err < best[0]:
+                    best = (err, q2, alpha, lam, beta, sel, label, ycv)
+    err, q2, alpha, lam, beta, sel, label, ycv = best
+    print(f"\nBest: alpha {alpha:g}, lambda {lam:g}, {label}: q2cv {q2:.3f}, RMSEcv {err:.3f}")
+    fs = FieldSet.create(physchem=physchem, alpha=alpha, charge_model=args.charges,
+                         param_scheme=args.param)
+    flat_tr, bags_tr = flatten_conformers([mols[i] for i in tr], fs, [ds.names[i] for i in tr],
+                                          max_conformers=args.max_conformers)
+    model = CMFModel(fieldset=fs, method="krr", normalize=not args.raw_kernels)
+    K_conf = model.joint_kernel(model.prepare_training_kernels(AtomTable.from_molecules(flat_tr)))
+    fit = learn_weights(K_conf, bags_tr, y, beta=beta, lam=lam, selection=sel, init=args.init,
+                        rounds=args.rounds)
+    eff = fit.effective_counts()
+    print(f"  conformations that actually count: {eff.mean():.2f} of {np.mean(counts):.1f} "
+          f"on average, {fit.rounds} rounds of re-weighting")
+    if te:
+        flat_te, bags_te = flatten_conformers([mols[i] for i in te], fs, [ds.names[i] for i in te],
+                                              max_conformers=args.max_conformers)
+        K_te = model.joint_kernel(model.test_kernels(AtomTable.from_molecules(flat_te)))
+        pred = predict_bags(K_te, fit, bags_te)
+        print(f"  Test set: R2pred {r2_score(ds.activity[te], pred):.3f}, "
+              f"RMSEpred {rmse(ds.activity[te], pred):.3f}")
+    if args.out:
+        import csv
+        chosen = fit.chosen()
+        with open(args.out, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["molecule", "activity", "predicted_cv", "conformations",
+                        "effective", "chosen_conformation"])
+            for b, i in enumerate(tr):
+                first = int(np.flatnonzero(bags_tr == b)[0])
+                w.writerow([ds.names[i], f"{ds.activity[i]:.4f}", f"{ycv[b]:.4f}",
+                            int(np.sum(bags_tr == b)), f"{eff[b]:.3f}",
+                            int(chosen[b] - first)])
+        print(f"  Chosen conformations written to {args.out}")
+    print(f"Elapsed {time.time() - t0:.1f} s")
+
+
 def cmd_unalign(args):
     """Give every molecule of a structure file a random pose (control for alignment methods)."""
     import numpy as np
@@ -834,6 +929,46 @@ def main(argv=None):
     e.add_argument("--seed", type=int, default=0)
     e.add_argument("--out", default=None, help="CSV with all values")
     e.set_defaults(func=cmd_explain)
+
+    i = sub.add_parser("mil", help="multi-instance learning over conformations (4D, selection)")
+    i.add_argument("dataset")
+    i.add_argument("--activity", default=None)
+    i.add_argument("--activity-file", default=None)
+    i.add_argument("--ensemble-by", default=None, metavar="KEY",
+                   help="group the records of a multi-conformer file into bags, by 'name' or by "
+                        "the named property")
+    i.add_argument("--conformers", type=int, default=0, metavar="N",
+                   help="generate up to N conformations per molecule first, keeping the input "
+                        "pose as the first one")
+    i.add_argument("--prune-rmsd", type=float, default=0.5, metavar="A")
+    i.add_argument("--conformer-align", default="self",
+                   choices=["self", "core", "reference", "field"],
+                   help="where the generated conformations are placed")
+    i.add_argument("--conformer-window", type=float, default=0.0, metavar="A",
+                   help="keep only conformations within this distance of the arrival pose")
+    i.add_argument("--max-conformers", type=int, default=0, metavar="N",
+                   help="use at most the first N conformations of every molecule")
+    i.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    i.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    i.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    i.add_argument("--raw-kernels", action="store_true",
+                   help="do not cosine-normalise the conformation kernels")
+    i.add_argument("--alphas", default="0.3,0.5,1.0")
+    i.add_argument("--lams", default="1e-2,0.1,1")
+    i.add_argument("--betas", default="1,3,10",
+                   help="hardness of the weighting; 0, the plain ensemble, is always included "
+                        "and a large value approaches choosing one conformation")
+    i.add_argument("--hard", action="store_true",
+                   help="also try hard selection: exactly one conformation per molecule")
+    i.add_argument("--init", default="first", choices=["first", "uniform"],
+                   help="where the alternation starts: the arrival pose, or equal weights")
+    i.add_argument("--rounds", type=int, default=10,
+                   help="maximum rounds of fit and re-weight")
+    i.add_argument("--folds", type=int, default=10)
+    i.add_argument("--seed", type=int, default=0)
+    i.add_argument("--out", default=None,
+                   help="CSV with the chosen conformation of every training molecule")
+    i.set_defaults(func=cmd_mil)
 
     k = sub.add_parser("complement", help="field complementarity with a protein pocket")
     k.add_argument("dataset")
