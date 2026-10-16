@@ -8,10 +8,10 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from cmfqsar.conformers import (CONFORMER_ALIGNMENTS, align_conformers,  # noqa: E402
-                                align_conformers_to_reference, dataset_reference,
-                                ensemble_summary, generate_conformers, generate_for_dataset,
-                                get_conformer_energies, group_conformers, set_conformer_energies,
-                                single_conformer)
+                                align_conformers_to_reference, core_atom_indices,
+                                dataset_reference, ensemble_summary, generate_conformers,
+                                generate_for_dataset, get_conformer_energies, group_conformers,
+                                set_conformer_energies, single_conformer)
 from cmfqsar.fields import (AtomTable, FieldSet, build_fields, conformer_weights,  # noqa: E402
                             ensemble_fields)
 from cmfqsar.kernels import kernel_matrices  # noqa: E402
@@ -363,6 +363,99 @@ def test_the_default_is_still_the_molecule_s_own_pose(series):
     assert a.GetNumConformers() == b.GetNumConformers()
     for k in range(a.GetNumConformers()):
         assert np.allclose(a.GetConformer(k).GetPositions(), b.GetConformer(k).GetPositions())
+
+
+# --------------------------------------------------------------------------- #
+# Generating the conformations around the published core, and the energy window
+# --------------------------------------------------------------------------- #
+
+def _core_rmsd(mol, conf, base, core):
+    a = np.array(mol.GetConformer(conf).GetPositions())[core]
+    b = np.array(base.GetConformer(0).GetPositions())[core]
+    return float(np.sqrt(((a - b) ** 2).sum(1).mean()))
+
+
+def test_core_atom_indices_finds_the_scaffold_and_degrades_quietly(series):
+    mols, ref = series
+    core = core_atom_indices(mols[3], ref)
+    assert core is not None and len(core) >= 3
+    assert core == sorted(set(core)) and max(core) < mols[3].GetNumAtoms()
+    # nothing to hold on to: no reference, or a molecule without a conformation
+    assert core_atom_indices(mols[3], None) is None
+    from rdkit import Chem
+    bare = Chem.Mol(mols[3])
+    bare.RemoveAllConformers()
+    assert core_atom_indices(bare, ref) is None
+    # a correspondence can be handed in, and one below three atoms is refused
+    assert core_atom_indices(mols[3], ref, atom_map=[(0, 0), (1, 1), (2, 2)]) == [0, 1, 2]
+    assert core_atom_indices(mols[3], ref, atom_map=[(0, 0), (1, 1)]) is None
+
+
+def test_core_constrained_generation_holds_the_published_scaffold(series):
+    """The hypothesis under test: keep the published core, vary only the flexible part."""
+    mols, ref = series
+    probe = mols[3]
+    core = core_atom_indices(probe, ref)
+    free = generate_conformers(probe, n=5, seed=13, prune_rmsd=1.0, align_to="core",
+                               reference=ref)
+    held = generate_conformers(probe, n=5, seed=13, prune_rmsd=1.0, align_to="core",
+                               reference=ref, constrain_core=True)
+    assert held.GetNumConformers() > 1
+    assert np.allclose(held.GetConformer(0).GetPositions(), probe.GetConformer().GetPositions())
+    held_rms = [_core_rmsd(held, k, probe, core) for k in range(1, held.GetNumConformers())]
+    free_rms = [_core_rmsd(free, k, probe, core) for k in range(1, free.GetNumConformers())]
+    # superimposing a freely generated conformation on the core only brings it so close; holding
+    # the core while the conformation is built keeps it there
+    assert max(held_rms) < 0.3
+    assert np.mean(free_rms) > np.mean(held_rms)
+    # and the ensemble has not collapsed: the conformations still differ from each other
+    pos = [np.array(c.GetPositions()) for c in held.GetConformers()]
+    assert max(np.abs(pos[0] - q).max() for q in pos[1:]) > 0.3
+    assert get_conformer_energies(held) is not None
+
+
+def test_the_energy_window_drops_the_worst_and_keeps_the_input_pose(series):
+    mols, ref = series
+    probe = mols[0]
+    all_of = generate_conformers(probe, n=6, seed=31, prune_rmsd=0.5, align_to="core",
+                                 reference=ref)
+    e = get_conformer_energies(all_of)
+    window = float(np.median(e[1:]) - np.min(e))      # cuts something, whatever the geometry
+    cut = generate_conformers(probe, n=6, seed=31, prune_rmsd=0.5, align_to="core",
+                              reference=ref, energy_window=window)
+    assert 1 <= cut.GetNumConformers() <= all_of.GetNumConformers()
+    ec = get_conformer_energies(cut)
+    assert ec is not None and len(ec) == cut.GetNumConformers()
+    # the published pose survives whatever the force field thinks of it, the rest are inside
+    assert np.allclose(cut.GetConformer(0).GetPositions(), probe.GetConformer().GetPositions())
+    assert (ec[1:] <= np.min(ec) + window + 1e-6).all()
+    # a window wide enough to hold everything changes nothing
+    wide = generate_conformers(probe, n=6, seed=31, prune_rmsd=0.5, align_to="core",
+                               reference=ref, energy_window=1e6)
+    assert wide.GetNumConformers() == all_of.GetNumConformers()
+
+
+def test_the_new_controls_are_off_by_default(series):
+    """Neither control may touch what was measured before them."""
+    mols, ref = series
+    a = generate_conformers(mols[1], n=4, seed=29, prune_rmsd=1.0)
+    b = generate_conformers(mols[1], n=4, seed=29, prune_rmsd=1.0, constrain_core=False,
+                            energy_window=0.0, reference=ref)
+    assert a.GetNumConformers() == b.GetNumConformers()
+    for k in range(a.GetNumConformers()):
+        assert np.allclose(a.GetConformer(k).GetPositions(), b.GetConformer(k).GetPositions())
+
+
+def test_a_whole_series_can_be_generated_around_its_core(series):
+    mols, _ = series
+    out, failures = generate_for_dataset(mols[:3], n=3, seed=23, prune_rmsd=1.0,
+                                         align_to="core", reference_index=0,
+                                         constrain_core=True, energy_window=25.0)
+    assert not failures and len(out) == 3
+    for m, before in zip(out, mols[:3]):
+        assert m.GetNumConformers() >= 1
+        assert np.allclose(m.GetConformer(0).GetPositions(), before.GetConformer().GetPositions())
+        assert get_conformer_energies(m) is not None
 
 
 if __name__ == "__main__":

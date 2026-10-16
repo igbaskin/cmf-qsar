@@ -83,9 +83,15 @@ def cmd_build(args):
                  "core": "superimposed on each molecule's own input pose over the common scaffold",
                  "reference": "superimposed on the reference molecule of the series",
                  "field": "superimposed on the reference molecule and refined on the field"}
+        how = ""
+        if args.conformer_constrain_core:
+            how += ", the common scaffold held on the input pose while they are generated"
+        if args.conformer_energy_window > 0:
+            how += (f", keeping only what lies within {args.conformer_energy_window:g} kcal/mol "
+                    f"of the best conformation")
         print(f"Generating up to {args.conformers} conformations per molecule "
               f"(pruning below {args.prune_rmsd:g} A), "
-              f"{where[args.conformer_align]}")
+              f"{where[args.conformer_align]}{how}")
         def conf_progress(msg, fr):
             print("\r  [%5.1f%%] %-44s" % (fr * 100, msg), end="", flush=True)
 
@@ -93,6 +99,8 @@ def cmd_build(args):
             ds.mols, n=args.conformers, seed=args.seed, prune_rmsd=args.prune_rmsd,
             align_to=args.conformer_align, fieldset=fs,
             reference_index=(None if args.conformer_align_ref < 0 else args.conformer_align_ref),
+            constrain_core=args.conformer_constrain_core,
+            energy_window=args.conformer_energy_window,
             progress=conf_progress)
         print()
         for line in failures[:5]:
@@ -721,6 +729,17 @@ def main(argv=None):
                         "superimposes every conformation on one reference molecule of the series "
                         "through their common substructure, and 'field' refines that by "
                         "maximising the CMF kernel with the reference")
+    b.add_argument("--conformer-constrain-core", action="store_true",
+                   help="generate the conformations with the scaffold shared with the reference "
+                        "restrained to the coordinates it has in the molecule's own input pose, "
+                        "so that only the substituent torsions differ between conformations; "
+                        "this tests whether the ensemble hurts because free conformations leave "
+                        "the published pose rather than because of where they are placed. Goes "
+                        "with --conformer-align core, which keeps that scaffold exactly there")
+    b.add_argument("--conformer-energy-window", type=float, default=0.0, metavar="KCAL",
+                   help="keep only the conformations within this many kcal/mol of the best one "
+                        "(0 = all); the input pose is never dropped, however strained the force "
+                        "field finds it")
     b.add_argument("--conformer-align-ref", type=int, default=-1, metavar="I",
                    help="molecule to align the conformations to (0-based index in the data set); "
                         "the default takes the largest molecule, whose common substructure with "

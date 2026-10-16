@@ -293,6 +293,25 @@ class ConformerDialog(QDialog):
                                 "common substructure with the others is what the conformations "
                                 "are superimposed on")
         form.addRow("Reference molecule:", self.cmb_ref)
+        self.chk_core = QCheckBox("hold the common scaffold on the input pose while generating")
+        self.chk_core.setToolTip(
+            "Where a conformation is placed and how it was generated are two different things. "
+            "With this on, the scaffold shared with the reference is restrained to the "
+            "coordinates it has in the molecule's own pose while the conformation is built, so "
+            "only the substituent torsions differ between conformations and the published pose "
+            "of the scaffold is never left. It needs a reference molecule, and goes with the "
+            "second placement above, which keeps that scaffold exactly where it is.")
+        form.addRow("", self.chk_core)
+        self.spin_window = QDoubleSpinBox()
+        self.spin_window.setRange(0.0, 100.0)
+        self.spin_window.setSingleStep(1.0)
+        self.spin_window.setValue(0.0)
+        self.spin_window.setSuffix(" kcal/mol")
+        self.spin_window.setSpecialValueText("keep them all")
+        self.spin_window.setToolTip("Discard a conformation lying more than this above the best "
+                                    "one; the pose the molecule arrived in is never discarded, "
+                                    "however strained the force field finds it")
+        form.addRow("Energy window:", self.spin_window)
         self.chk_optimise = QCheckBox("optimise with MMFF94s and store the energies")
         self.chk_optimise.setChecked(True)
         self.chk_optimise.setToolTip("The energies are what Boltzmann weighting needs")
@@ -317,6 +336,14 @@ class ConformerDialog(QDialog):
     def reference_index(self):
         i = self.cmb_ref.currentData()
         return None if i is None or int(i) < 0 else int(i)
+
+    def constrain_core(self) -> bool:
+        """Whether the common scaffold is held on the input pose while generating."""
+        return bool(self.chk_core.isChecked())
+
+    def energy_window(self) -> float:
+        """The energy window in kcal/mol, 0 meaning every conformation is kept."""
+        return float(self.spin_window.value())
 
 
 class UnalignDialog(QDialog):
@@ -1113,6 +1140,7 @@ class MainWindow(QMainWindow):
         optimise, seed = dlg.chk_optimise.isChecked(), dlg.spin_seed.value()
         switch = dlg.chk_switch.isChecked()
         align_to, ref_index = dlg.alignment(), dlg.reference_index()
+        hold_core, window = dlg.constrain_core(), dlg.energy_window()
         fs = self._fieldset_from_panel() if align_to == "field" else None
         mols = list(self.ds.mols)
 
@@ -1121,6 +1149,7 @@ class MainWindow(QMainWindow):
             return generate_for_dataset(mols, n=n, seed=seed, prune_rmsd=prune,
                                         optimise=optimise, align_to=align_to,
                                         reference_index=ref_index, fieldset=fs,
+                                        constrain_core=hold_core, energy_window=window,
                                         progress=progress, cancel=cancel)
 
         def done(out):
@@ -1136,7 +1165,12 @@ class MainWindow(QMainWindow):
                      "core": "superimposed on each molecule's own pose over the common scaffold",
                      "reference": "superimposed on the reference molecule of the series",
                      "field": "superimposed on the reference molecule and refined on the field"}
-            self.log(f"Generated conformations ({where[align_to]}): {np.mean(counts2):.1f} per "
+            how = where[align_to]
+            if hold_core:
+                how += ", the common scaffold held on the input pose while generating"
+            if window > 0:
+                how += f", within {window:g} kcal/mol of the best conformation"
+            self.log(f"Generated conformations ({how}): {np.mean(counts2):.1f} per "
                      f"molecule on average, up to {max(counts2)}; the kernels of the ensemble "
                      f"mode will cost about "
                      f"{np.mean(counts2) ** 2:.0f} times the single-conformation ones"

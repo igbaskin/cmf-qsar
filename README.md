@@ -113,7 +113,8 @@ negative for every representation, the single-conformation model included, so th
 nothing there; the higher q²cv of the ensembles on that set is backed by no test-set gain at all.
 
 That is an answer, just not the expected one. Adding conformations to thrombin hurts however they
-are placed, which points at the conformations rather than at their orientation: the series carries
+are placed, which points at the conformations rather than at their orientation - the hypothesis
+tested under *Keeping the published core* below: the series carries
 poses its authors aligned as bound-like, and ETKDG conformations of an isolated molecule are not
 those poses, so averaging them into the field dilutes exactly the arrangement the model lives on.
 The ensemble size says the same thing - on thrombin, with the placement varied and everything else
@@ -136,8 +137,78 @@ own, rather than as an improvement to switch on; which is why the default is a s
 superimposed as before.
 
 The earlier version of this table reported different numbers for the single-conformation rows, with
-a protocol that was not recorded and could not be reproduced; every row above was measured again
-with the settings stated, so the rows are comparable with each other.
+a protocol that was not recorded and could not be reproduced; every row of both tables above was
+measured again with the settings stated, so the rows are comparable with each other.
+
+#### Keeping the published core and varying only the rest
+
+The ensemble-size table says what to test next. If the damage is in the conformations and not in
+their frame, then holding the published scaffold while the conformations are *built* should remove
+it - which is a different thing from superimposing a freely built conformation on that scaffold
+afterwards. *Hold the common scaffold on the input pose while generating* in the dialog (CLI:
+`--conformer-constrain-core`) gives the embedding the atoms of the common substructure with the
+reference as a `coordMap` at the coordinates they have in the molecule's own pose, and holds them
+there through the force-field minimisation with fixed points and zero-length tethers - the device
+of RDKit's `ConstrainedEmbed`, which pulls an atom to a place rather than merely to wherever it
+happened to land. Only the substituent torsions then differ between conformations: on the thrombin
+series the core of a constrained conformation sits 0.01 Å from the published one, against 0.1-0.6 Å
+when a freely generated conformation is superimposed on that same core afterwards. A second control,
+*Energy window* (`--conformer-energy-window KCAL`), keeps only the conformations within so many
+kcal/mol of the best one; the pose a molecule arrived in is never dropped, because a published pose
+is an experimental fact and the force field's opinion of it is not.
+
+Same protocol as above - the plain defaults, the published split, five conformations, `core`
+placement in every ensemble row, 10 kcal/mol for the window:
+
+| set | representation | q²cv | R²pred |
+|---|---|---|---|
+| steroids, rigid | single conformation | 0.810 | **-0.304** |
+| steroids, rigid | ensemble, `core` placement | 0.839 | -0.937 |
+| steroids, rigid | ensemble, core-constrained | 0.818 | -0.333 |
+| steroids, rigid | ensemble, core-constrained + 10 kcal/mol | 0.818 | -0.333 |
+| ACE, flexible | single conformation | **0.741** | **0.604** |
+| ACE, flexible | ensemble, `core` placement | 0.681 | 0.525 |
+| ACE, flexible | ensemble, core-constrained | 0.681 | 0.448 |
+| ACE, flexible | ensemble, core-constrained + 10 kcal/mol | 0.680 | 0.461 |
+| THR, flexible | single conformation | **0.696** | **0.373** |
+| THR, flexible | ensemble, `core` placement | 0.514 | 0.106 |
+| THR, flexible | ensemble, core-constrained | **0.645** | **0.286** |
+| THR, flexible | ensemble, core-constrained + 10 kcal/mol | 0.645 | 0.287 |
+
+and against the number of conformations on thrombin, which is where the free ensemble collapsed:
+
+| conformations per molecule | `self` q²cv | `core` q²cv | core-constrained q²cv | constrained + 10 kcal/mol |
+|---|---|---|---|---|
+| 1 (single) | 0.696 | 0.696 | 0.696 | 0.696 |
+| 2 | 0.672 | 0.728 | 0.684 | 0.684 |
+| 3 | 0.570 | 0.732 | 0.684 | 0.684 |
+| 5 | 0.501 | 0.514 | **0.645** | **0.645** |
+
+The hypothesis is confirmed as a diagnosis and refuted as a cure.
+
+As a diagnosis: on thrombin at five conformations the constrained ensemble recovers most of what the
+free one lost - q²cv 0.514 -> 0.645 and R²pred 0.106 -> 0.286 - and, more telling than the single
+number, the monotone collapse is gone. Two, three and five constrained conformations give 0.684,
+0.684 and 0.645, where the freely generated ones fell 0.728, 0.732, 0.514 and broke down on the
+third conformation added. Adding conformations around the published core is nearly free; adding
+conformations that leave it is expensive. The damage really was in the geometries and not in where
+they were put afterwards.
+
+As a cure it fails, and the table should be read for that too. The constrained ensemble is below
+the single conformation on every set and on both numbers: 0.645 against 0.696 and 0.286 against
+0.373 on thrombin, 0.681 against 0.741 and 0.448 against 0.604 on ACE. On the steroids q²cv goes
+from 0.810 to 0.818 while R²pred is negative for every representation, that set deciding nothing
+either way. **The ensemble mode does not help on these three aligned series**; held on its core it
+stops hurting, which is not the same thing. Eighteen builds say so, and that is why a single
+conformation remains the default.
+
+The energy window is nearly inert here, which is worth recording so that nobody spends a day on it.
+It only bites at five conformations - 4.9 of 5 conformations survive it on thrombin, 4.8 on ACE,
+5 of 5 on the steroids - and it moves the third decimal. The reason is structural: what reaches the
+window has already been chosen as the lowest-energy, RMSD-distinct conformations out of twice as
+many embedded, so a 10 kcal/mol window has little left to remove. It earns its place on ensembles
+that arrive from a file or in bulk, where nothing has pre-selected them, rather than on the output
+of this generator.
 
 Boltzmann weighting was worse than uniform on all three sets, because the conformations are generated
 from one input pose and their energies then concentrate the weight on a few of them; uniform weighting
