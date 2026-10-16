@@ -91,7 +91,7 @@ def cmd_build(args):
 
         ds.mols, failures = generate_for_dataset(
             ds.mols, n=args.conformers, seed=args.seed, prune_rmsd=args.prune_rmsd,
-            align_to=args.conformer_align, fieldset=fs,
+            align_to=args.conformer_align, fieldset=fs, window_rmsd=args.conformer_window,
             reference_index=(None if args.conformer_align_ref < 0 else args.conformer_align_ref),
             progress=conf_progress)
         print()
@@ -709,6 +709,11 @@ def main(argv=None):
     b.add_argument("--conformers", type=int, default=0, metavar="N",
                    help="generate up to N conformations per molecule before building, keeping the "
                         "input pose as the first one")
+    b.add_argument("--conformer-window", type=float, default=0.0, metavar="A",
+                   help="keep only conformations within this heavy-atom RMSD of the pose the "
+                        "molecule arrived in, measured where they stand, so that the ensemble "
+                        "covers the flexibility around an aligned pose rather than the whole "
+                        "conformational surface (0 = no window)")
     b.add_argument("--prune-rmsd", type=float, default=0.5, metavar="A",
                    help="discard a generated conformation within this heavy-atom RMSD of a better one")
     b.add_argument("--conformer-align", default="self",

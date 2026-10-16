@@ -89,7 +89,8 @@ def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: f
                         keep_input: bool = True, align_to: str = "self",
                         reference: Optional[Chem.Mol] = None,
                         fieldset: Optional[FieldSet] = None,
-                        atom_map: Optional[Sequence[Tuple[int, int]]] = None) -> Chem.Mol:
+                        atom_map: Optional[Sequence[Tuple[int, int]]] = None,
+                        window_rmsd: float = 0.0) -> Chem.Mol:
     """Return a copy of `mol` carrying up to `n` conformations, with their energies stored.
 
     The input conformation is kept as the first one by default, so a series that has been
@@ -98,6 +99,12 @@ def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: f
     :func:`align_conformers_to_reference`; ``"self"``, the default, superimposes them on the
     molecule's own first pose, which is what the earlier versions did.  Energies come from
     MMFF94s where it can be set up and from UFF otherwise, which is enough for Boltzmann weights.
+
+    `window_rmsd`, when positive, keeps only the conformations that lie within that heavy-atom
+    root-mean-square distance of the input pose, measured where they stand rather than after a
+    best fit, so the ensemble covers the local flexibility around the pose the series was aligned
+    to instead of the whole conformational surface.  A wider pool is embedded when a window is
+    asked for, since most of it will be discarded.
     """
     work = Chem.Mol(mol)
     first = None
@@ -113,7 +120,9 @@ def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: f
     # ordinary flexible molecule, so it is done afterwards on optimised geometries instead
     params.pruneRmsThresh = -1.0
     work.RemoveAllConformers()
-    AllChem.EmbedMultipleConfs(work, numConfs=int(max(n, 1)) * 2, params=params)
+    window = float(window_rmsd) if window_rmsd and window_rmsd > 0 else 0.0
+    factor, pool = (2, int(max(n, 1))) if not window else (6, int(max(n, 1)) * 4)
+    AllChem.EmbedMultipleConfs(work, numConfs=int(max(n, 1)) * factor, params=params)
     if work.GetNumConformers() == 0:            # embedding can fail on strained inputs
         work = Chem.Mol(mol)
         if work.GetNumConformers() == 0:
@@ -121,9 +130,9 @@ def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: f
         return work
     energies = _optimise(work, max_iters) if optimise else np.zeros(work.GetNumConformers())
     if prune_rmsd and prune_rmsd > 0 and work.GetNumConformers() > 1:
-        work, energies = _prune_by_rmsd(work, energies, float(prune_rmsd), int(max(n, 1)))
-    elif work.GetNumConformers() > n:
-        keep = sorted(np.argsort(energies)[:int(max(n, 1))])
+        work, energies = _prune_by_rmsd(work, energies, float(prune_rmsd), pool)
+    elif work.GetNumConformers() > pool:
+        keep = sorted(np.argsort(energies)[:pool])
         work, energies = _reorder(work, keep, energies)
     if first is not None:
         # put the input conformation back as conformer 0 and drop the worst one if we are over n
@@ -137,6 +146,10 @@ def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: f
     if align and work.GetNumConformers() > 1:
         align_conformers_to_reference(work, reference, mode=align_to, fieldset=fieldset,
                                       atom_map=atom_map)
+    if window and work.GetNumConformers() > 1:
+        # after placement, because what matters is how far a conformation stands from the pose
+        # the series was aligned to, not how similar its shape is
+        work, energies = _window_filter(work, energies, window, int(max(n, 1)))
     set_conformer_energies(work, energies)
     for prop in mol.GetPropNames():
         if prop != ENERGY_PROP:
@@ -192,6 +205,34 @@ def _prune_by_rmsd(mol: Chem.Mol, energies: np.ndarray, threshold: float,
         if len(kept) >= keep_max:
             break
     return _reorder(mol, sorted(kept), energies)
+
+
+def conformer_displacements(mol: Chem.Mol, reference_conf: int = 0) -> np.ndarray:
+    """Heavy-atom RMSD of every conformation from `reference_conf`, measured in place.
+
+    No superposition: two conformations that have the same shape but sit in different places are
+    far apart here, which is the distance that matters once a series has been aligned.
+    """
+    heavy = [a.GetIdx() for a in mol.GetAtoms() if a.GetAtomicNum() > 1]
+    if not heavy or mol.GetNumConformers() == 0:
+        return np.zeros(mol.GetNumConformers())
+    ref = np.array(mol.GetConformer(mol.GetConformers()[reference_conf].GetId()).GetPositions())[heavy]
+    out = []
+    for c in mol.GetConformers():
+        d = np.array(c.GetPositions())[heavy] - ref
+        out.append(float(np.sqrt((d * d).sum(axis=1).mean())))
+    return np.array(out)
+
+
+def _window_filter(mol: Chem.Mol, energies: np.ndarray, window: float,
+                   keep_max: int) -> Tuple[Chem.Mol, np.ndarray]:
+    """Keep the conformations within `window` of the first one, the first one always included."""
+    d = conformer_displacements(mol)
+    inside = [i for i in range(mol.GetNumConformers()) if i == 0 or d[i] <= window]
+    if len(inside) > keep_max:                   # the lowest in energy among those inside
+        rest = sorted(inside[1:], key=lambda i: energies[i])[: max(keep_max - 1, 0)]
+        inside = [0] + sorted(rest)
+    return _reorder(mol, sorted(inside), energies)
 
 
 def _energy_of(mol: Chem.Mol, conf_id: int) -> float:
@@ -327,7 +368,7 @@ def dataset_reference(mols: Sequence[Chem.Mol], index: Optional[int] = None) -> 
 def generate_for_dataset(mols: Sequence[Chem.Mol], n: int = 10, seed: int = 0,
                          prune_rmsd: float = 0.5, optimise: bool = True,
                          align_to: str = "self", reference_index: Optional[int] = None,
-                         fieldset: Optional[FieldSet] = None,
+                         fieldset: Optional[FieldSet] = None, window_rmsd: float = 0.0,
                          progress=None, cancel=None) -> Tuple[List[Chem.Mol], List[str]]:
     """Conformations for a whole series; returns the molecules and a line of log per failure.
 
@@ -352,7 +393,8 @@ def generate_for_dataset(mols: Sequence[Chem.Mol], n: int = 10, seed: int = 0,
         try:
             out.append(generate_conformers(m, n=n, seed=seed, prune_rmsd=prune_rmsd,
                                            optimise=optimise, align_to=align_to,
-                                           reference=reference, fieldset=fieldset))
+                                           reference=reference, fieldset=fieldset,
+                                           window_rmsd=window_rmsd))
         except Exception as exc:                 # noqa: BLE001 - reported, molecule kept as it was
             failures.append(f"{_name(m)}: {exc}")
             out.append(Chem.Mol(m))

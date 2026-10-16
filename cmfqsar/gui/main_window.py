@@ -272,6 +272,18 @@ class ConformerDialog(QDialog):
         self.spin_prune.setToolTip("Discard a conformation within this heavy-atom RMSD of a "
                                    "better one; 0 keeps them all")
         form.addRow("Prune below:", self.spin_prune)
+        self.spin_window = QDoubleSpinBox()
+        self.spin_window.setRange(0.0, 20.0)
+        self.spin_window.setSingleStep(0.25)
+        self.spin_window.setValue(0.0)
+        self.spin_window.setSuffix(" Å")
+        self.spin_window.setSpecialValueText("no window")
+        self.spin_window.setToolTip("\n".join([
+            "Keep only the conformations that stand within this heavy-atom RMSD of the pose the",
+            "molecule arrived in, measured where they are rather than after a best fit.",
+            "The ensemble then covers the flexibility around an aligned pose instead of the",
+            "whole conformational surface, which is what a series aligned by its author needs."]))
+        form.addRow("Keep within:", self.spin_window)
         self.cmb_align = QComboBox()
         for label in ("on the molecule's own pose (all heavy atoms)",
                       "on the molecule's own pose (common scaffold only)",
@@ -1110,6 +1122,7 @@ class MainWindow(QMainWindow):
         if dlg.exec() != QDialog.Accepted:
             return
         n, prune = dlg.spin_n.value(), dlg.spin_prune.value()
+        window = dlg.spin_window.value()
         optimise, seed = dlg.chk_optimise.isChecked(), dlg.spin_seed.value()
         switch = dlg.chk_switch.isChecked()
         align_to, ref_index = dlg.alignment(), dlg.reference_index()
@@ -1121,7 +1134,7 @@ class MainWindow(QMainWindow):
             return generate_for_dataset(mols, n=n, seed=seed, prune_rmsd=prune,
                                         optimise=optimise, align_to=align_to,
                                         reference_index=ref_index, fieldset=fs,
-                                        progress=progress, cancel=cancel)
+                                        window_rmsd=window, progress=progress, cancel=cancel)
 
         def done(out):
             new_mols, failures = out

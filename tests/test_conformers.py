@@ -367,3 +367,39 @@ def test_the_default_is_still_the_molecule_s_own_pose(series):
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
+
+
+def test_displacements_are_measured_in_place_not_after_a_fit():
+    """Two conformations of the same shape in different places are far apart, by design."""
+    from rdkit import Chem
+    from cmfqsar.conformers import conformer_displacements
+    m = _mol(SMILES[0], name="shift")
+    moved = Chem.Conformer(m.GetConformer())
+    pos = np.array(m.GetConformer().GetPositions())
+    for i in range(m.GetNumAtoms()):
+        moved.SetAtomPosition(i, [float(v) for v in pos[i] + np.array([3.0, 0.0, 0.0])])
+    m.AddConformer(moved, assignId=True)
+    d = conformer_displacements(m)
+    assert d[0] == pytest.approx(0.0)
+    assert d[1] == pytest.approx(3.0, abs=1e-6)        # the same shape, three angstrom away
+
+
+def test_window_keeps_the_conformations_near_the_arrival_pose():
+    from cmfqsar.conformers import conformer_displacements
+    base = _mol(SMILES[0], name="win")
+    wide = generate_conformers(base, n=8, seed=0, prune_rmsd=0.5, window_rmsd=0.0)
+    assert wide.GetNumConformers() > 2
+    spread = conformer_displacements(wide)[1:]
+    cut = float(np.median(spread))
+    narrow = generate_conformers(base, n=8, seed=0, prune_rmsd=0.5, window_rmsd=cut)
+    d = conformer_displacements(narrow)
+    assert narrow.GetNumConformers() >= 1
+    assert np.all(d <= cut + 1e-9)                      # nothing outside the window survived
+    assert narrow.GetNumConformers() <= wide.GetNumConformers()
+    # the arrival pose is always kept, even when the window excludes everything else
+    tiny = generate_conformers(base, n=8, seed=0, prune_rmsd=0.5, window_rmsd=1e-6)
+    assert tiny.GetNumConformers() == 1
+    assert np.allclose(tiny.GetConformer(0).GetPositions(), base.GetConformer().GetPositions())
+    # and a window changes nothing when it is not asked for
+    assert generate_conformers(base, n=8, seed=0, prune_rmsd=0.5).GetNumConformers() == \
+        wide.GetNumConformers()
