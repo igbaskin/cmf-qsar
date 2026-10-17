@@ -42,6 +42,8 @@ class DecoyAlignResult:
     similarity_after: float
     best_match: str = ""          # training molecule the decoy ends up most similar to
     n_eval: int = 0
+    conformer: int = 0            # which conformation won, 0 being the one from the file
+    n_conformers: int = 1
 
 
 class DecoyAligner:
@@ -156,3 +158,53 @@ def align_decoys(mols: Sequence[MoleculeFields], reference: AtomTable, fieldset:
         if progress is not None:
             progress(i + 1, len(mols))
     return out
+
+
+def align_decoys_flexible(mols: Sequence["Chem.Mol"], names: Sequence[str],
+                          reference: AtomTable, fieldset: FieldSet, n_conformers: int = 8,
+                          restarts: int = 2, beta: float = 20.0, seed: int = 0,
+                          prune_rmsd: float = 0.5,
+                          progress: Optional[Callable[[int, int], None]] = None,
+                          cancel: Optional[Callable[[], bool]] = None):
+    """Pose every decoy from several conformations and keep the one that scores highest.
+
+    The rigid aligner above can only turn and move the conformation a decoy arrives with, so a
+    molecule that would resemble the actives in some other conformation never gets the chance,
+    and its low score may be an accident of the file it came from.  Here the conformations are
+    generated (the input pose is kept as the first, so this can never do worse than the rigid
+    alignment), each is given its best rigid pose, and the best of those is the decoy's pose.
+
+    The cost is the product: `n_conformers` times `1 + restarts` optimisations per decoy, which
+    is why the restarts default lower here than in :func:`align_decoys`.
+
+    Returns (fields, results): the chosen :class:`MoleculeFields` of every decoy, already in the
+    frame of the reference, and one :class:`DecoyAlignResult` each, saying which conformation won.
+    """
+    from .conformers import generate_conformers, single_conformer
+    aligner = DecoyAligner(reference, fieldset, beta=beta)
+    fields: List[MoleculeFields] = []
+    out: List[DecoyAlignResult] = []
+    for i, (mol, name) in enumerate(zip(mols, names)):
+        if cancel is not None and cancel():
+            break
+        candidates = [mol]
+        if n_conformers > 1:
+            try:
+                multi = generate_conformers(mol, n=int(n_conformers), seed=seed + i + 1,
+                                            prune_rmsd=prune_rmsd, align=False, keep_input=True)
+                candidates = [single_conformer(multi, k)
+                              for k in range(multi.GetNumConformers())]
+            except Exception:                       # noqa: BLE001 - keep the pose from the file
+                candidates = [mol]
+        best_f, best_r = None, None
+        for k, cand in enumerate(candidates):
+            f = build_fields(cand, fieldset, str(name))
+            r = aligner.align(f, restarts=restarts, seed=seed + 17 * i + k)
+            r.conformer, r.n_conformers = k, len(candidates)
+            if best_r is None or r.similarity_after > best_r.similarity_after:
+                best_f, best_r = f, r
+        fields.append(best_f)
+        out.append(best_r)
+        if progress is not None:
+            progress(i + 1, len(mols))
+    return fields, out

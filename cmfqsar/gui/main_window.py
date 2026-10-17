@@ -408,6 +408,45 @@ class ChemotypeValidationDialog(QDialog):
         lay.addWidget(box)
 
 
+class DecoyAlignDialog(QDialog):
+    """Options for giving every background molecule its best pose against the training set."""
+
+    def __init__(self, n_decoys: int, n_train: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Align decoys")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            f"The {n_decoys} background molecules are placed in the frame of the {n_train} "
+            f"training molecules by maximising their field similarity to them, so that no decoy "
+            f"is rejected merely for being posed badly and whatever enrichment survives is not "
+            f"an artefact of sloppy placement.\n\n"
+            f"The alignment is rigid: it turns and moves a conformation but does not change it. "
+            f"Generating conformations lets a decoy be judged on the best one it can adopt "
+            f"rather than the one its file happened to carry; the pose from the file is always "
+            f"among the candidates, and the cost is multiplied by their number.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(560)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.spin_restarts = QSpinBox()
+        self.spin_restarts.setRange(0, 50)
+        self.spin_restarts.setValue(6)
+        self.spin_restarts.setToolTip("A molecule of another chemotype has no reason to start in "
+                                      "the basin of its best pose, so the search is repeated "
+                                      "from this many random orientations")
+        form.addRow("Random starting orientations:", self.spin_restarts)
+        self.spin_conformers = QSpinBox()
+        self.spin_conformers.setRange(1, 50)
+        self.spin_conformers.setValue(1)
+        self.spin_conformers.setSpecialValueText("keep the pose in the file")
+        form.addRow("Conformations per decoy:", self.spin_conformers)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+
 class DockDialog(QDialog):
     """Options for placing molecules, or their conformations, inside the pocket."""
 
@@ -2495,25 +2534,27 @@ class MainWindow(QMainWindow):
         if len(tr) < 2:
             QMessageBox.information(self, "No training set", "Define a training set first.")
             return
-        n, ok_btn = QInputDialog.getInt(
-            self, "Align decoys",
-            f"Place the {len(dec)} background molecules in the frame of the {len(tr)} training "
-            f"molecules by maximising their field similarity to them, so that no decoy is "
-            f"rejected merely for being posed badly."
-            "\n\nRandom starting orientations per decoy:",
-            6, 0, 50)
-        if not ok_btn:
+        dlg = DecoyAlignDialog(len(dec), len(tr), self)
+        if dlg.exec() != QDialog.Accepted:
             return
+        n, n_conf = dlg.spin_restarts.value(), dlg.spin_conformers.value()
         fs = self.model.fieldset if self.model is not None else self._fieldset_from_panel()
         mols, names = self.ds.mols, self.ds.names
 
         def task(progress, cancel):
-            from ..decoys import align_decoys
+            from ..decoys import align_decoys, align_decoys_flexible
             ref = AtomTable.from_molecules([build_fields(mols[i], fs, names[i]) for i in tr])
-            mf = [build_fields(mols[i], fs, names[i]) for i in dec]
-            res = align_decoys(mf, ref, fs, restarts=n,
-                               progress=lambda i, m: progress(f"Aligning decoy {i}/{m}", i / m),
-                               cancel=cancel)
+
+            def report(i, m):
+                progress(f"Aligning decoy {i}/{m}", i / m)
+
+            if n_conf > 1:
+                mf, res = align_decoys_flexible([mols[i] for i in dec], [names[i] for i in dec],
+                                                ref, fs, n_conformers=n_conf, restarts=n,
+                                                progress=report, cancel=cancel)
+            else:
+                mf = [build_fields(mols[i], fs, names[i]) for i in dec]
+                res = align_decoys(mf, ref, fs, restarts=n, progress=report, cancel=cancel)
             return mf, res
 
         def done(out):

@@ -84,7 +84,7 @@ def collect_pool(target: str, wide: bool) -> list:
 
 def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str, seed: int = 0,
           matched: bool = False, max_similarity: float = 0.35, wide: bool = True,
-          align_ref_max: int = 0) -> None:
+          align_ref_max: int = 0, conformers: int = 1) -> None:
     t0 = time.time()
     path = os.path.join(HERE, "sutherland", f"{target}.sdf")
     if not os.path.isfile(path):
@@ -128,9 +128,16 @@ def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str,
         src, m, nm = pool[k]
         mf.append(build_fields(m, fs, f"{src}_{nm}"))
         labels.append((src, m, nm))
-    res = align_decoys(mf, ref, fs, restarts=restarts,
-                       progress=lambda i, n: (print("   %d/%d" % (i, n), flush=True)
-                                              if (i % 25 == 0 or i == n) else None))
+    prog = lambda i, n: (print("   %d/%d" % (i, n), flush=True)
+                         if (i % 25 == 0 or i == n) else None)
+    if conformers > 1:
+        from cmfqsar.decoys import align_decoys_flexible
+        chosen, res = align_decoys_flexible([l[1] for l in labels], [l[2] for l in labels],
+                                            ref, fs, n_conformers=conformers,
+                                            restarts=restarts, progress=prog)
+        mf = chosen
+    else:
+        res = align_decoys(mf, ref, fs, restarts=restarts, progress=prog)
 
     out = os.path.join(out_dir, f"{target}_decoys{'_matched' if matched else ''}.sdf")
     w = Chem.SDWriter(out)
@@ -153,6 +160,9 @@ def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str,
     w.close()
     sim = np.array([r.similarity_after for r in res])
     before = np.array([r.similarity_before for r in res])
+    if conformers > 1:
+        moved = sum(1 for r in res if r.conformer > 0)
+        print(f"{target:5s} a generated conformation won for {moved} of {len(res)} decoys")
     print(f"{target:5s} {len(res):4d} decoys from {len(set(l[0] for l in labels))} other targets, "
           f"aligned to {len(act)} actives: similarity {before.mean():.3f} -> {sim.mean():.3f} "
           f"(max {sim.max():.3f}), {time.time() - t0:.0f} s -> {out}", flush=True)
@@ -170,6 +180,9 @@ def main():
                          "being topologically unlike them, which is what makes a background hard")
     ap.add_argument("--max-similarity", type=float, default=0.35,
                     help="a decoy's ECFP4 Tanimoto to every active must stay below this")
+    ap.add_argument("--conformers", type=int, default=1, metavar="N",
+                    help="generate N conformations of every decoy and keep the one that poses "
+                         "best; the conformation in the file is always among the candidates")
     ap.add_argument("--align-ref-max", type=int, default=0, metavar="N",
                     help="pose the decoys against at most N of the actives, which is what makes "
                          "a large background affordable")
@@ -179,7 +192,8 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     for t in [x.strip() for x in a.targets.split(",") if x.strip()]:
         build(t, a.n_decoys, a.restarts, a.alpha, a.out, matched=a.matched,
-              max_similarity=a.max_similarity, wide=a.wide_pool, align_ref_max=a.align_ref_max)
+              max_similarity=a.max_similarity, wide=a.wide_pool, align_ref_max=a.align_ref_max,
+              conformers=a.conformers)
 
 
 if __name__ == "__main__":

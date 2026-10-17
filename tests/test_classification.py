@@ -212,6 +212,31 @@ def test_decoys_are_a_separate_subset_and_count_as_inactive():
     assert list(c[:3]) == [1.0, -1.0, -1.0] and c[3] == -1.0
 
 
+def test_a_flexible_decoy_is_never_posed_worse_than_a_rigid_one():
+    """The conformation from the file is among the candidates, so the best can only improve."""
+    from cmfqsar.decoys import align_decoys, align_decoys_flexible
+    fs, mf, classes = _set()
+    ref = AtomTable.from_molecules([m for m, c in zip(mf, classes) if c > 0])
+    mol = _mol(INACTIVE[0], 11)
+    rigid = align_decoys([build_fields(mol, fs, "decoy")], ref, fs, restarts=1)[0]
+
+    # one conformation is the rigid alignment itself, to the last digit
+    one_f, one = align_decoys_flexible([mol], ["decoy"], ref, fs, n_conformers=1, restarts=1)
+    assert one[0].similarity_after == pytest.approx(rigid.similarity_after, abs=1e-12)
+    assert one[0].n_conformers == 1 and one[0].conformer == 0
+    assert one_f[0].coords.shape == mf[0].coords.shape[:1] + (3,) or one_f[0].coords.shape[1] == 3
+
+    # several conformations can only do better, and the winner is reported
+    many_f, many = align_decoys_flexible([mol], ["decoy"], ref, fs, n_conformers=5, restarts=1)
+    r = many[0]
+    assert r.similarity_after >= one[0].similarity_after - 1e-12
+    assert 1 <= r.n_conformers <= 5 and 0 <= r.conformer < r.n_conformers
+    assert 0.0 <= r.similarity_after <= 1.0
+    # the molecule keeps its atoms: the chosen conformation is written back atom for atom
+    assert many_f[0].coords.shape[0] == mol.GetNumAtoms()
+    assert np.allclose(many_f[0].coords, r.coords)
+
+
 def test_decoy_aligner_gradient_and_improvement():
     """The decoy aligner must have an exact gradient and give a molecule a better pose."""
     from cmfqsar.decoys import DecoyAligner, align_decoys

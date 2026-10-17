@@ -960,6 +960,16 @@ over the six rigid-body parameters, with analytic gradients and several random s
 artefact of sloppy placement. On the thrombin example the similarity of 25 unrelated ligands rises from
 0.31 to 0.49 on average, and the enrichment is unchanged.
 
+That alignment is **rigid**: it turns and moves a conformation but never changes it, so a decoy is
+judged on whatever conformation its file happened to carry — for the sets here, a pose modelled for a
+different target. `--decoy-conformers N` (GUI: *Conformations per decoy* in the align-decoys dialog)
+generates N conformations of each decoy, poses every one of them and keeps the best; the conformation
+from the file is always among the candidates, so the result can only improve, and the cost is
+multiplied by N. On the hundred matched thrombin decoys, four conformations each raised the mean
+similarity to the nearest active from 0.251 to 0.506 and a generated conformation won for 61 of the
+100 — and the screening numbers did not move, which is one more way of saying that these backgrounds
+are separated by composition rather than by pose.
+
 `examples/decoys/` holds ready-made background sets built this way by `examples/make_decoy_sets.py`:
 for each target the decoys are ligands of the *other* example series, presumed inactive against it and
 already aligned into its frame, tagged `subset = decoy` so they load as a background set directly.

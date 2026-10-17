@@ -137,18 +137,34 @@ def cmd_build(args):
             print("  kernel normalisation switched on (a one-class score on raw kernels is "
                   "dominated by molecular size)")
     if dec_idx and args.align_decoys:
-        from cmfqsar.decoys import align_decoys
+        from cmfqsar.decoys import align_decoys, align_decoys_flexible
         act = [i for i in tr if not np.isfinite(target[i]) or target[i] > 0] or tr
+        ref_tab = AtomTable.from_molecules([mf[i] for i in act])
+        prog = lambda i, n: (print("  %d/%d decoys aligned" % (i, n), flush=True)
+                             if (i % 10 == 0 or i == n) else None)
+        n_conf = max(1, int(args.decoy_conformers))
         print(f"Aligning {len(dec_idx)} decoys to the {len(act)} training molecules "
-              f"({args.decoy_restarts} restarts) ...")
-        res = align_decoys([mf[i] for i in dec_idx], AtomTable.from_molecules([mf[i] for i in act]), fs,
-                           restarts=args.decoy_restarts,
-                           progress=lambda i, n: (print("  %d/%d decoys aligned" % (i, n), flush=True) if (i % 10 == 0 or i == n) else None))
+              f"({args.decoy_restarts} restarts"
+              + (f", {n_conf} conformations each" if n_conf > 1 else "") + ") ...")
+        if n_conf > 1:
+            chosen, res = align_decoys_flexible([ds.mols[i] for i in dec_idx],
+                                                [ds.names[i] for i in dec_idx], ref_tab, fs,
+                                                n_conformers=n_conf,
+                                                restarts=args.decoy_restarts, progress=prog)
+            for k, i in enumerate(dec_idx[:len(chosen)]):
+                mf[i] = chosen[k]
+        else:
+            res = align_decoys([mf[i] for i in dec_idx], ref_tab, fs,
+                               restarts=args.decoy_restarts, progress=prog)
         print()
         before = np.array([r.similarity_before for r in res])
         after = np.array([r.similarity_after for r in res])
         print(f"  field similarity to the nearest training molecule: "
               f"{before.mean():.3f} -> {after.mean():.3f} on average, best {after.max():.3f}")
+        if n_conf > 1:
+            moved = sum(1 for r in res if r.conformer > 0)
+            print(f"  a generated conformation beat the one in the file for {moved} of "
+                  f"{len(res)} decoys")
         for m, mol in zip([ds.mols[i] for i in dec_idx], [mf[i] for i in dec_idx]):
             conf = m.GetConformer()
             for a, xyz in enumerate(mol.coords):
@@ -882,6 +898,11 @@ def main(argv=None):
                         "similarity to it, so that no decoy is rejected merely for being posed badly")
     b.add_argument("--decoy-restarts", type=int, default=6,
                    help="random starting orientations per decoy (default 6)")
+    b.add_argument("--decoy-conformers", type=int, default=1, metavar="N",
+                   help="generate N conformations of every decoy and keep the one that poses "
+                        "best, so that a decoy is not rejected for the conformation its file "
+                        "happened to carry. The pose from the file is always among the "
+                        "candidates, and the cost is N times the alignment")
     b.add_argument("--decoys", default=None,
                    help="structure file with background molecules (presumed inactive) used only to "
                         "evaluate a screening model: reports AUC and enrichment at the top 1/5/10 %%")
