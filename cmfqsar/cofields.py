@@ -112,6 +112,17 @@ def molfield_volume(model: CMFModel, mol: MoleculeFields, f: int, grid: Grid, pr
     return v
 
 
+def difference_volume(candidate: MoleculeFields, reference: MoleculeFields, spec, f: int,
+                      grid: Grid) -> np.ndarray:
+    """X_f(candidate) - X_f(reference) on the grid.
+
+    Positive where the candidate puts field the reference does not have, negative where it fails
+    to reproduce field the reference has.  Both molecules have to be in the same frame already,
+    which is the usual condition of everything here.
+    """
+    return field_volume(candidate, spec, f, grid) - field_volume(reference, spec, f, grid)
+
+
 def shapley_volume(mol: MoleculeFields, spec, values: np.ndarray, grid: Grid,
                    normalized: bool = True) -> np.ndarray:
     """Shapley field: the per-atom values of one field type smeared over its own Gaussians.

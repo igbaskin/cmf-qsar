@@ -408,6 +408,49 @@ class ChemotypeValidationDialog(QDialog):
         lay.addWidget(box)
 
 
+class FieldDifferenceDialog(QDialog):
+    """Choose the molecule a candidate is meant to imitate."""
+
+    def __init__(self, names, current: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Field difference from a reference")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            "The difference between the fields of the molecule selected in the data-set table "
+            "and those of a reference: negative where the selected molecule fails to reproduce "
+            "what the reference presents, positive where it adds something of its own.\n\n"
+            "This is the readout for scaffold hopping and peptidomimetics, where the question "
+            "is not how a candidate scores but what is wrong with it. Both molecules must be in "
+            "the same frame; the map of two molecules that were never aligned measures the "
+            "alignment.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(560)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.cmb_ref = QComboBox()
+        for i, n in enumerate(names):
+            self.cmb_ref.addItem(f"{i + 1}. {n}")
+        if 0 <= current < len(names):
+            self.cmb_ref.setCurrentIndex(current)
+        form.addRow("Reference molecule:", self.cmb_ref)
+        self.spin_level = QDoubleSpinBox()
+        self.spin_level.setRange(0.1, 0.95)
+        self.spin_level.setSingleStep(0.05)
+        self.spin_level.setDecimals(2)
+        self.spin_level.setValue(0.5)
+        self.spin_level.setToolTip("Contour bounding a lobe of the difference map, as a fraction "
+                                   "of its largest value, for the list of where they differ")
+        form.addRow("Contour level:", self.spin_level)
+        self.chk_draw = QCheckBox("show the map in the 3D view")
+        self.chk_draw.setChecked(True)
+        form.addRow("", self.chk_draw)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+
 class PharmacophoreDialog(QDialog):
     """Options for discretising the co-fields into typed features."""
 
@@ -709,6 +752,8 @@ class MainWindow(QMainWindow):
         self.shapley_result = None          # (molecule index, ShapleyResult) of the last run
         self.shapley_fields = None          # (molecule index, (F, N) values) for the Shapley field
         self.pharmacophore = None           # features extracted from the co-field, drawn in 3D
+        self.field_reference = None         # molecule a candidate is compared with
+        self.field_diff_rows = None
         self.protein = None                 # cmfqsar.protein.Protein behind the molecules
         self.complementarity = None         # scores of the series against the pocket
         self.chemotypes = None              # (labels, scaffold names) of a heterogeneous series
@@ -817,6 +862,7 @@ class MainWindow(QMainWindow):
         self._act(tm, "Align training set by prediction confidence (cross-validated)…",
                   self.train_align_dialog)
         tm.addSeparator()
+        self._act(tm, "Field difference from a reference molecule…", self.field_difference_dialog)
         self._act(tm, "Extract pharmacophore from the co-field…", self.pharmacophore_dialog)
         self._act(tm, "Chemical space map (GTM)…", self.gtm_map_dialog)
         tm.addSeparator()
@@ -1616,6 +1662,9 @@ class MainWindow(QMainWindow):
         self._comp_surface_cache = {}
         self.shapley_result = self.shapley_fields = None
         self.clear_pharmacophore()
+        self.field_reference = self.field_diff_rows = None
+        self.controls.chk_diff.setChecked(False)
+        self.controls.chk_diff.setEnabled(False)
         if self.model is not None:
             self.model = None
             self.results_panel.clear_contributions(
@@ -2424,6 +2473,22 @@ class MainWindow(QMainWindow):
                         legend.append(f"Shapley values of {self.ds.names[cur]}: red = positive, "
                                       f"blue = negative; their sum is the prediction minus the "
                                       f"baseline")
+        if vc.chk_diff.isChecked() and self.field_reference is not None and cur >= 0 and f >= 0                 and self.field_reference != cur:
+            # what the selected molecule fails to reproduce, and what it adds, against a reference
+            vol, dgrid = self._difference_volume(cur, fs, f)
+            amax = float(np.abs(vol).max())
+            if amax > 0:
+                pos_c, neg_c = cofield_colors(fname)
+                for sign, col in ((1, pos_c), (-1, neg_c)):
+                    srf = isosurface(vol, sign * frac * amax, dgrid)
+                    if srf is not None:
+                        v.add_isosurface(srf[0], srf[1], col, "fielddiff", alpha=op)
+                legend.append(f"difference {flabel}: {cur_name} minus "
+                              f"{self.ds.names[self.field_reference]}; "
+                              f"{_cname(pos_c)} = added, {_cname(neg_c)} = missing, "
+                              f"iso = ±{frac * amax:.3g}")
+            else:
+                legend.append(f"difference {flabel}: the two molecules agree exactly")
         if self.pharmacophore and vc.chk_pharmacophore.isChecked():
             # the discretised co-field: one translucent sphere per feature, coloured by type
             from ..pharmacophore import colour_of
@@ -2533,6 +2598,75 @@ class MainWindow(QMainWindow):
         box.setEnabled(False)
         box.blockSignals(False)
 
+    def field_difference_dialog(self):
+        """Compare the selected molecule's fields with those of a reference molecule."""
+        cur = self.dataset_panel.current_index()
+        if self.ds is None or cur < 0:
+            QMessageBox.information(self, "No molecule",
+                                    "Select the candidate in the data-set table first.")
+            return
+        dlg = FieldDifferenceDialog(list(self.ds.names), self.field_reference
+                                    if self.field_reference is not None else 0, self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        ref = dlg.cmb_ref.currentIndex()
+        if ref == cur:
+            QMessageBox.information(self, "Same molecule",
+                                    "The candidate and the reference are the same molecule.")
+            return
+        self.field_reference = ref
+        level, draw = dlg.spin_level.value(), dlg.chk_draw.isChecked()
+        fs = self._fieldset_from_panel()
+        mols, names = self.ds.mols, self.ds.names
+
+        def task(progress, cancel):
+            from ..cofields import make_grid
+            from ..fielddiff import difference_features, mismatch, overall_similarity
+            progress("Fields", 0.2)
+            a = build_fields(mols[cur], fs, names[cur])
+            b = build_fields(mols[ref], fs, names[ref])
+            grid = self.grid or make_grid(np.vstack([a.coords, b.coords]),
+                                          margin=self.controls.spin_margin.value(),
+                                          spacing=self.controls.spin_spacing.value())
+            progress("Difference map", 0.6)
+            rows = mismatch(a, b, fs, grid=grid)
+            feats = difference_features(a, b, fs, grid=grid, level=level, max_features=8)
+            return rows, feats, overall_similarity(a, b, fs)
+
+        def done(out):
+            rows, feats, cos = out
+            self.field_diff_rows = rows
+            box = self.controls.chk_diff
+            box.setEnabled(True)
+            box.blockSignals(True)
+            box.setChecked(draw)
+            box.blockSignals(False)
+            self.log(f"{names[cur]} against {names[ref]}: field cosine {cos:+.3f} over all fields")
+            for r in rows:
+                self.results_panel.append_log("    " + r.describe())
+            for f in feats:
+                self.results_panel.append_log("    " + f.describe())
+            self.schedule_display()
+
+        self.run_task(task, done, "Field difference")
+
+    def _difference_volume(self, cur: int, fs: FieldSet, f: int):
+        """X_f of the selected molecule minus X_f of the reference, on a shared grid."""
+        from ..cofields import difference_volume, make_grid
+        ref = self.field_reference
+        sig = self._fieldset_signature(fs)
+        spacing = self.controls.spin_spacing.value()
+        key = ("diff", cur, ref, f, sig, spacing, id(self.grid))
+        if key in self._mol_volume_cache:
+            return self._mol_volume_cache[key]
+        a = build_fields(self.ds.mols[cur], fs, self.ds.names[cur])
+        b = build_fields(self.ds.mols[ref], fs, self.ds.names[ref])
+        grid = self.grid or make_grid(np.vstack([a.coords, b.coords]),
+                                      margin=self.controls.spin_margin.value(), spacing=spacing)
+        out = (difference_volume(a, b, fs.specs[f], f, grid), grid)
+        self._mol_volume_cache[key] = out
+        return out
+
     def pharmacophore_dialog(self):
         """Discretise the co-fields of the fitted model into typed features with tolerances."""
         if self.model is None:

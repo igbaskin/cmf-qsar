@@ -714,6 +714,61 @@ def cmd_mil(args):
     print(f"Elapsed {time.time() - t0:.1f} s")
 
 
+def cmd_difference(args):
+    """What one molecule's fields have that another's do not."""
+    from cmfqsar.cofields import difference_volume, export_cube, make_grid
+    from cmfqsar.fielddiff import difference_features, mismatch, rank_against
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    fs = FieldSet.create(physchem=[f for f in args.fields.split(",") if f], alpha=args.alpha,
+                         charge_model=args.charges, param_scheme=args.param)
+    mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+    names = list(ds.names)
+    if args.reference not in names:
+        raise SystemExit(f"no molecule called {args.reference!r}; the file has "
+                         f"{', '.join(names[:5])}...")
+    ref = mf[names.index(args.reference)]
+    print(f"Reference: {args.reference}  ({len(ds)} molecules, fields "
+          f"{', '.join(s.label for s in fs.specs)})")
+    if not args.candidate:
+        print(f"  the {args.top} molecules whose fields come closest to it:")
+        for i, cos in rank_against(ref, mf, fs)[:args.top]:
+            mark = "  <- the reference itself" if names[i] == args.reference else ""
+            print(f"    {cos:+6.3f}  {names[i]}{mark}")
+        return
+    if args.candidate not in names:
+        raise SystemExit(f"no molecule called {args.candidate!r}")
+    cand = mf[names.index(args.candidate)]
+    grid = make_grid(np.vstack([cand.coords, ref.coords]), margin=args.margin,
+                     spacing=args.spacing)
+    rows = mismatch(cand, ref, fs, grid=grid)
+    print(f"Candidate: {args.candidate}")
+    for r in rows:
+        print("   " + r.describe())
+    feats = difference_features(cand, ref, fs, grid=grid, level=args.level,
+                                max_features=args.top)
+    if feats:
+        print("  where they differ, strongest first:")
+        for f in feats:
+            print("   " + f.describe())
+    if args.out:
+        import csv as _csv
+        with open(args.out, "w", newline="") as fh:
+            w = _csv.writer(fh)
+            w.writerow(["field", "cosine", "distance", "norm_reference", "norm_candidate",
+                        "missing", "added"])
+            for r in rows:
+                w.writerow([r.label, f"{r.cosine:.4f}", f"{r.distance:.4f}",
+                            f"{r.norm_ref:.4f}", f"{r.norm_cand:.4f}",
+                            f"{r.missing:.4f}", f"{r.added:.4f}"])
+        print(f"  table written to {args.out}")
+    if args.cube:
+        for f, spec in enumerate(fs.specs):
+            d = difference_volume(cand, ref, spec, f, grid)
+            path = f"{args.cube}_{spec.name}.cube"
+            export_cube(path, grid, d, cand)
+            print(f"  {spec.label} difference written to {path}")
+
+
 def cmd_pharmacophore(args):
     """Discretise the co-fields of a fitted model into typed features with tolerance spheres."""
     from cmfqsar.pharmacophore import (extract, pocket_exclusions, summary, write_csv,
@@ -1268,6 +1323,30 @@ def main(argv=None):
     ph.add_argument("--out", default=None, help="write the features as CSV")
     ph.add_argument("--pdb", default=None, help="write the features as pseudo-atoms in PDB")
     ph.set_defaults(func=cmd_pharmacophore)
+
+    df = sub.add_parser("difference",
+                        help="what one molecule's fields have that another's do not")
+    df.add_argument("dataset")
+    df.add_argument("--reference", required=True, metavar="NAME",
+                    help="the molecule to be imitated")
+    df.add_argument("--candidate", default=None, metavar="NAME",
+                    help="the molecule to compare with it; without this the whole file is "
+                         "ranked by how closely its fields match the reference")
+    df.add_argument("--activity", default=None)
+    df.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    df.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    df.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    df.add_argument("--alpha", type=float, default=0.5)
+    df.add_argument("--level", type=float, default=0.5,
+                    help="contour bounding a lobe of the difference map, as a fraction of its "
+                         "largest value")
+    df.add_argument("--spacing", type=float, default=0.5)
+    df.add_argument("--margin", type=float, default=3.0)
+    df.add_argument("--top", type=int, default=10)
+    df.add_argument("--out", default=None, help="write the per-field table as CSV")
+    df.add_argument("--cube", default=None, metavar="PREFIX",
+                    help="write the difference map of every field as a Gaussian cube")
+    df.set_defaults(func=cmd_difference)
 
     k = sub.add_parser("complement", help="field complementarity with a protein pocket")
     k.add_argument("dataset")

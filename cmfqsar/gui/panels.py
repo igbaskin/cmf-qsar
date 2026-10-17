@@ -1725,6 +1725,13 @@ class ViewerControls(QWidget):
         self.cmb_shapfield_style.addItems(["solid", "mesh"])
         self.cmb_shapfield_style.currentIndexChanged.connect(self.changed)
         self.chk_atoms = QCheckBox("atom contributions")
+        self.chk_diff = QCheckBox("difference from reference")
+        self.chk_diff.setToolTip(
+            "The field of the selected molecule minus the field of a reference molecule "
+            "(Tools, Field difference from a reference): negative where the selected molecule "
+            "fails to reproduce what the reference presents, positive where it adds something "
+            "of its own. The field type is the one in the 'Field type' box.")
+        self.chk_diff.setEnabled(False)
         self.chk_pharmacophore = QCheckBox("pharmacophore")
         self.chk_pharmacophore.setToolTip(
             "The features extracted from the co-fields (Tools, Extract pharmacophore), drawn as "
@@ -1732,7 +1739,7 @@ class ViewerControls(QWidget):
             "kept until the model is rebuilt or the molecules move.")
         self.chk_pharmacophore.setEnabled(False)
         for cb in (self.chk_cofield, self.chk_molfield, self.chk_overlap, self.chk_shapfield,
-                   self.chk_atoms, self.chk_pharmacophore):
+                   self.chk_atoms, self.chk_diff, self.chk_pharmacophore):
             cb.toggled.connect(self.changed)
             row3.addWidget(cb)
             if cb is self.chk_cofield:

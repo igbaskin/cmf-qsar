@@ -764,6 +764,53 @@ additive under it and the Shapley values then redistribute what rule 3 assigns; 
 prediction. And the result is a per-molecule explanation. A nonlinear model has no global co-field, and
 no attribution method invents one.
 
+### What a candidate is missing: the field difference
+
+A model says how well a candidate scores; it does not say what is wrong with it. For scaffold
+hopping and for peptidomimetics the useful readout is the difference between the fields of the
+molecule being imitated and those of the candidate, and
+[fielddiff.py](cmfqsar/fielddiff.py) reports it in two ways, both exact.
+
+**Per field type, in closed form.** The squared distance between two fields is an overlap
+integral like any other,
+
+```
+‖X_fa − X_fb‖² = K_f(a, a) + K_f(b, b) − 2 K_f(a, b)
+```
+
+so the mismatch of every field needs no grid at all, and the cosine comes from the same three
+numbers. A test checks the identity against the map integrated on a fine grid.
+
+**Where in space**, on the grid: `X_f(candidate) − X_f(reference)`, whose negative lobes are what
+the candidate fails to reproduce and positive lobes what it adds. Those lobes are turned into the
+same typed features with tolerance radii that the pharmacophore section uses, so the report reads
+
+```
+Electrostatic      cosine +0.707  distance 3.143  |ref| 4.368  |cand| 3.655  missing 51.96  added  7.67
+Hydrophobic        cosine +0.643  distance 9.712  |ref| 12.419 |cand| 9.971  missing  9.27  added 118.01
+...
+  extra hydrophobic     at ( 10.24,-11.66, 24.14)  radius 1.77 A  weight +35.215
+  missing electrostatic at ( 10.49,-10.27, 25.06)  radius 2.34 A  weight −17.112
+  missing h-bond donor  at (  9.54,-12.50, 24.00)  radius 1.87 A  weight −15.279
+```
+
+which is a design instruction rather than a score. Without a candidate the command ranks the whole
+file by how closely each molecule's fields match the reference — the field-based scaffold-hopping
+search, with no substructure anywhere in it.
+
+```bash
+python cmf_cli.py difference examples/openff/thrombin.sdf --activity pAffinity --reference lig_4
+python cmf_cli.py difference examples/openff/thrombin.sdf --activity pAffinity        --reference lig_4 --candidate lig_2e --cube diff --out diff.csv
+```
+
+In the application it is *Tools → Field difference from a reference molecule…*: the per-field
+table and the lobes go to the log, and the **difference from reference** tick box draws the map of
+the current field type for the molecule selected in the data-set table, in the co-field colours —
+added in the positive colour, missing in the negative one.
+
+Both molecules must already be in the same frame. A difference map of two molecules that were
+never aligned measures the alignment, which is the same caveat that governs everything else here.
+
 ### A pharmacophore read out of the co-field
 
 A pharmacophore is a handful of typed points with tolerance spheres; a co-field is a continuous
@@ -1614,7 +1661,10 @@ groups are pooled, that no fold ever splits a chemotype and that bundling keeps 
 together, that an activity which is a property of the scaffold is predicted almost perfectly by random
 folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
 without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
-For the pharmacophore they check that a lobe becomes a feature where it is, that a higher contour
+For the field difference they check that a molecule matches itself exactly, that the closed-form
+distance equals the difference map integrated on a fine grid, that moving a molecule makes equal
+amounts of missing and added field, that the ranking puts the reference first and a distant molecule
+at zero, and that the closed form needs no grid. For the pharmacophore they check that a lobe becomes a feature where it is, that a higher contour
 gives a tighter sphere and the minimum size drops what a coarse grid cannot resolve, that a negative
 electrostatic lobe is a feature asking for negative charge while a negative steric lobe is an
 exclusion volume, that extraction is refused for a kernel that has no co-field, that the exported
@@ -1662,6 +1712,7 @@ cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
 cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrelation)
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field
+cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule
 cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence
 cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process, kernel PCA
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
