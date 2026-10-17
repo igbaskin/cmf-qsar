@@ -386,13 +386,17 @@ class ChemotypeValidationDialog(QDialog):
                                    "out one at a time, which is worth doing when there are many "
                                    "small groups")
         form.addRow("Folds:", self.spin_folds)
+        from ..chemotypes import BASELINE_ALPHA
         self.spin_alpha = QDoubleSpinBox()
-        self.spin_alpha.setRange(0.001, 1.0)
-        self.spin_alpha.setDecimals(3)
-        self.spin_alpha.setSingleStep(0.01)
-        self.spin_alpha.setValue(0.02)
-        self.spin_alpha.setToolTip("Attenuation of the alignment-free indicator fields; the "
-                                   "smaller it is, the closer the kernel is to counting fragments")
+        self.spin_alpha.setRange(1e-5, 1.0)
+        self.spin_alpha.setDecimals(5)
+        self.spin_alpha.setSingleStep(1e-4)
+        self.spin_alpha.setValue(BASELINE_ALPHA)
+        self.spin_alpha.setToolTip("Attenuation of the alignment-free indicator fields. The "
+                                   "dependence on the poses dies only linearly in it, so the "
+                                   "default is far smaller than a modelling attenuation: at 0.02 "
+                                   "a rigid motion of every molecule still moves the kernel by "
+                                   "0.7, at the default by 0.013.")
         form.addRow("Baseline α:", self.spin_alpha)
         lay.addLayout(form)
         box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)

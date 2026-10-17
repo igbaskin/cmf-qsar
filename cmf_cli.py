@@ -24,6 +24,7 @@ import numpy as np
 
 from cmfqsar.dataio import load_dataset, save_model, load_model, write_predictions_csv
 from cmfqsar.fields import AtomTable, FieldSet, build_fields, cif_types_in
+from cmfqsar.chemotypes import BASELINE_ALPHA
 from cmfqsar.model import CMFModel, grid_search, nested_cv, screening_scores
 
 
@@ -1123,8 +1124,9 @@ def main(argv=None):
     h.add_argument("--raw-kernels", action="store_true")
     h.add_argument("--alphas", default="0.3,0.5,1.0")
     h.add_argument("--lams", default="1e-2,0.1,1")
-    h.add_argument("--baseline-alpha", type=float, default=0.02, metavar="A",
-                   help="attenuation of the alignment-free indicator fields; small is the point")
+    h.add_argument("--baseline-alpha", type=float, default=BASELINE_ALPHA, metavar="A",
+                   help="attenuation of the alignment-free indicator fields; small is the point, "
+                        "since the dependence on the poses dies only linearly in it")
     h.add_argument("--top", type=int, default=10)
     h.add_argument("--seed", type=int, default=0)
     h.add_argument("--out", default=None, help="CSV with the chemotype of every molecule")

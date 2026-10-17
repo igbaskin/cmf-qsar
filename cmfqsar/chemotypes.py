@@ -21,11 +21,16 @@ This module is the workflow for that case, in the order the problem imposes:
    :func:`grouped_cv_predict`.  Random folds flatter a multi-scaffold set, because the molecules
    that look most like the one being predicted are its own scaffold-mates and they sit in the
    training part; holding out a whole chemotype asks the question that matters.
-5. **Compare against a baseline that needs no alignment at all**, :func:`alignment_free_q2`: with a
-   small attenuation factor a continuous indicator field tends to a count of atoms of its type, so
-   the kernel becomes a fragment-descriptor kernel and the poses stop mattering.  If the aligned
-   model cannot beat that, the alignment is not paying for itself, and on a heterogeneous set that
-   is the first thing worth knowing.
+5. **Compare against a baseline that needs no alignment at all**, :func:`alignment_free_q2` over
+   :func:`count_kernel`: with a small attenuation factor a continuous indicator field tends to a
+   count of atoms of its type, so the kernel becomes a fragment-descriptor kernel and the poses
+   stop mattering.  Two details decide whether that really happens, and both are measured in the
+   tests: the attenuation has to be far smaller than a modelling one, since the pose dependence
+   dies only linearly in it (at alpha = 0.02 a rigid motion of every molecule still moves the
+   kernel by 0.7, at 2e-4 by 0.013), and the cosine normalisation has to be applied to the joint
+   kernel rather than field by field, or the counts cancel against themselves.  If the aligned
+   model cannot beat that baseline, the alignment is not paying for itself, and on a heterogeneous
+   set that is the first thing worth knowing.
 """
 from __future__ import annotations
 
@@ -283,31 +288,68 @@ class HeteroResult:
 # 5. The baseline that needs no alignment
 # --------------------------------------------------------------------------- #
 
+#: attenuation of the alignment-free fields.  Small enough that the poses are gone: a rigid
+#: motion of every molecule changes the kernel by under 0.02, and the kernel is within 0.01 of
+#: the count-vector cosine; see `test_chemotypes.py`.
+BASELINE_ALPHA = 2e-4
+
+
+def count_kernel(mols: Sequence[Chem.Mol], names: Sequence[str], alpha: float = BASELINE_ALPHA,
+                 cif_min: int = 3, scheme: str = "sybyl") -> np.ndarray:
+    """The kernel of the alignment-free baseline: indicator fields with a tiny attenuation.
+
+    The field of Sybyl type *t* is a sum of unit Gaussians on the atoms of that type, so the
+    overlap integral of two such fields is
+
+        K_t(A, B) = (pi/alpha)^{3/2} sum_{l in A} sum_{m in B} exp(-alpha |r_l - r_m|^2 / 4),
+
+    and as alpha tends to zero every exponential tends to one: K_t tends to n_t(A) n_t(B) times a
+    factor common to every pair, which the cosine normalisation then removes.  The joint kernel
+    tends to the dot product of the atom-type count vectors, and nothing of the geometry survives.
+
+    The normalisation has to be applied to the joint kernel, not field by field.  A field
+    normalised on its own tends to n_t(A) n_t(B) / (n_t(A) n_t(B)) = 1, so the counts cancel and
+    what is left is the indicator of "both molecules contain type t": the baseline would lose the
+    very descriptors it is supposed to be built from.
+    """
+    types = cif_types_in(mols, scheme, cif_min) if len(mols) else []
+    if not types:
+        return np.zeros((0, 0))
+    fs = FieldSet.create(physchem=[], cif_types=types, alpha=alpha, cif_scheme=scheme)
+    mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+    model = CMFModel(fieldset=fs, method="krr", normalize=False)     # keep the counts
+    K = model.joint_kernel(model.prepare_training_kernels(AtomTable.from_molecules(mf)))
+    d = np.sqrt(np.clip(np.diag(K), 1e-300, None))
+    return K / np.outer(d, d)
+
+
 def alignment_free_q2(mols: Sequence[Chem.Mol], names: Sequence[str], y: np.ndarray,
-                      labels: np.ndarray, alpha: float = 0.02, lam: float = 1.0,
+                      labels: np.ndarray, alpha: float = BASELINE_ALPHA, lam=1.0,
                       cif_min: int = 3, max_folds: int = 0,
                       scheme: str = "sybyl") -> Tuple[float, float]:
     """Leave-one-chemotype-out q2 of a model that ignores the poses entirely.
 
-    As the attenuation factor tends to zero a continuous indicator field tends to the count of
-    atoms of its type, so the overlap kernel tends to a fragment-count kernel: the same number
-    whatever the alignment.  Returns (q2, rmse).
+    `lam` may be one value or a grid, which is then searched on the same folds the aligned model
+    is tuned on, so that the two representations are compared under one protocol.  Returns
+    (q2, rmse).
     """
     ok = [i for i in range(len(mols)) if mols[i] is not None]
-    types = cif_types_in([mols[i] for i in ok], scheme, cif_min)
-    if not types:
+    K = count_kernel([mols[i] for i in ok], [names[i] for i in ok], alpha=alpha, cif_min=cif_min,
+                     scheme=scheme)
+    if K.size == 0:
         return float("nan"), float("nan")
-    fs = FieldSet.create(physchem=[], cif_types=types, alpha=alpha, cif_scheme=scheme)
-    mf = [build_fields(mols[i], fs, names[i]) for i in ok]
-    model = CMFModel(fieldset=fs, method="krr", normalize=True)
-    K = model.joint_kernel(model.prepare_training_kernels(AtomTable.from_molecules(mf)))
     yy = np.asarray(y, float)[ok]
-    pred = grouped_cv_predict(K, yy, np.asarray(labels)[ok], params={"lam": lam},
-                              max_folds=max_folds)
-    good = np.isfinite(pred)
-    if good.sum() < 3:
-        return float("nan"), float("nan")
-    return r2_score(yy[good], pred[good]), rmse(yy[good], pred[good])
+    lab = np.asarray(labels)[ok]
+    best = (float("nan"), float("nan"))
+    for one in (np.atleast_1d(lam).ravel()):
+        pred = grouped_cv_predict(K, yy, lab, params={"lam": float(one)}, max_folds=max_folds)
+        good = np.isfinite(pred)
+        if good.sum() < 3:
+            continue
+        q2 = r2_score(yy[good], pred[good])
+        if not np.isfinite(best[0]) or q2 > best[0]:
+            best = (q2, rmse(yy[good], pred[good]))
+    return best
 
 
 # --------------------------------------------------------------------------- #
@@ -317,7 +359,7 @@ def alignment_free_q2(mols: Sequence[Chem.Mol], names: Sequence[str], y: np.ndar
 def evaluate(mols: Sequence[Chem.Mol], names: Sequence[str], y: np.ndarray, labels: np.ndarray,
              group_names: Sequence[str], fieldset: FieldSet, alphas: Sequence[float] = (0.3, 0.5, 1.0),
              lams: Sequence[float] = (1e-2, 0.1, 1.0), max_folds: int = 0, normalize: bool = True,
-             baseline_alpha: float = 0.02, progress=None, cancel=None) -> HeteroResult:
+             baseline_alpha: float = BASELINE_ALPHA, progress=None, cancel=None) -> HeteroResult:
     """Build the aligned model, judge it chemotype by chemotype, and compare with the baseline.
 
     The hyper-parameters are chosen on the same grouped folds the model is reported on, which is
@@ -369,5 +411,6 @@ def evaluate(mols: Sequence[Chem.Mol], names: Sequence[str], y: np.ndarray, labe
     if progress is not None:
         progress("Alignment-free baseline", 0.9)
     res.q2_baseline, _ = alignment_free_q2([mols[i] for i in ok], [names[i] for i in ok], yy, lab,
-                                           alpha=baseline_alpha, lam=res.lam, max_folds=max_folds)
+                                           alpha=baseline_alpha, lam=list(lams),
+                                           max_folds=max_folds)
     return res

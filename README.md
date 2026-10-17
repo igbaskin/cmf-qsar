@@ -341,27 +341,47 @@ molecule's own scaffold-mates in the training part, which is the most optimistic
 4. **Judge it by leave-one-chemotype-out.** `grouped_folds` never splits a group, and
    `grouped_cv_predict` holds out a whole chemotype at a time; `max_folds` bundles the groups
    when there are many small ones.
-5. **Compare with a baseline that needs no alignment.** `alignment_free_q2` builds the model from
-   continuous indicator fields with a very small attenuation: as α tends to zero such a field
-   tends to a count of atoms of its type, the overlap kernel tends to a fragment-count kernel, and
-   the poses stop mattering. A test measures exactly that — the gap between the kernel of a set of
-   molecules and the kernel of the same molecules rotated and translated at random shrinks with α,
-   to under 0.01 in q² at α = 2·10⁻⁵. If the aligned model cannot beat that, the alignment is not
-   paying for itself, and on a heterogeneous set that is the first thing worth knowing.
+5. **Compare with a baseline that needs no alignment.** `count_kernel` builds continuous
+   indicator fields with a very small attenuation. Writing the overlap integral of two such
+   fields out,
+
+   ```
+   K_t(A,B) = (π/α)^{3/2} Σ_{l∈A} Σ_{m∈B} exp(−α |r_l − r_m|² / 4)
+            = (π/α)^{3/2} [ n_t(A) n_t(B) − (α/4) Σ_lm d²_lm + O(α²) ],
+   ```
+
+   so as α tends to zero every exponential tends to one, the kernel tends to the dot product of
+   the atom-type count vectors, and nothing of the geometry survives. `alignment_free_q2` then
+   runs that kernel through the same grouped folds. Two details decide whether the limit is
+   actually reached, and both are measured in the tests:
+
+   - **The attenuation has to be far smaller than a modelling one.** The first correction is
+     linear in α and carries the separation of the two molecules' centroids, so the pose
+     dependence dies only as fast as α does. A rigid motion of every molecule still moves the
+     kernel by 0.70 at α = 0.02 and by 0.12 at 2·10⁻³; the default `BASELINE_ALPHA` = 2·10⁻⁴
+     brings that to 0.013 and the kernel to within 0.01 of the count-vector cosine.
+   - **The cosine normalisation has to be applied to the joint kernel, not field by field.** A
+     field normalised on its own tends to `n_t(A) n_t(B) / (n_t(A) n_t(B))` = 1, so the counts
+     cancel against themselves and what is left is the indicator of "both molecules contain type
+     *t*" — the baseline would lose the very descriptors it is built from, and the kernel would
+     collapse towards a matrix of ones.
+
+   If the aligned model cannot beat this baseline, the alignment is not paying for itself, and on
+   a heterogeneous set that is the first thing worth knowing.
 
 `evaluate` runs steps 4 and 5 together and returns the three numbers with a verdict.
 
 **What it shows.** Five sets with more than one scaffold, molecules in their published poses (no
 realignment), all five physico-chemical fields, KRR with α over 0.3/0.5/1.0 and λ over 0.01/0.1/1,
-groups of at least three molecules:
+groups of at least three molecules; the baseline gets the same λ grid on the same folds:
 
 | set | n | chemotypes | random folds | leave-one-chemotype-out | alignment-free |
 |---|---:|---:|---:|---:|---:|
-| sutherland/COX2 | 282 | 14 | +0.537 | **+0.425** | +0.264 |
-| sutherland/DHFR | 361 | 31 | +0.623 | **+0.463** | +0.149 |
-| sutherland/BZR  | 147 | 12 | +0.388 | +0.088 | **+0.130** |
-| sutherland/AChE | 111 |  7 | +0.510 | **+0.275** | −0.223 |
-| mittal/ACHE     | 111 |  7 | +0.168 | −0.304 | **−0.113** |
+| sutherland/COX2 | 282 | 14 | +0.537 | **+0.425** | +0.282 |
+| sutherland/DHFR | 361 | 31 | +0.623 | **+0.463** | +0.250 |
+| sutherland/BZR  | 147 | 12 | +0.388 | +0.088 | **+0.145** |
+| sutherland/AChE | 111 |  7 | +0.510 | **+0.275** | −0.063 |
+| mittal/ACHE     | 111 |  7 | +0.168 | −0.304 | **−0.058** |
 
 Random folds flatter every one of them, by 0.11 to 0.47 in q²; on ACHE they turn a model that
 cannot predict a new scaffold at all into a modestly positive number. That gap is the reason the
@@ -703,7 +723,10 @@ alignment-free option is used: as the attenuation factor tends to zero a continu
 to the count of atoms of that type (Sitnikov et al. 2015), so the kernel becomes a fragment-descriptor
 kernel. With α = 0.02 and indicator fields only, a map of 120 molecules drawn from three different
 targets separates them cleanly (centroid separation 1.56 against a within-target spread of 0.60), with no
-alignment at all.
+alignment at all. At α = 0.02 the kernel is not yet strictly pose-free — the dependence dies only
+linearly in α, see the heterogeneous-series section — but the separation is: rotating and translating
+every molecule at random leaves it at 1.48, and with the strictly pose-free kernel of
+`chemotypes.count_kernel` it is 1.40 before and after, to the last digit.
 
 ### Classification and virtual screening
 
@@ -1140,7 +1163,9 @@ groups are pooled, that no fold ever splits a chemotype and that bundling keeps 
 together, that an activity which is a property of the scaffold is predicted almost perfectly by random
 folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
 without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
-all, and that the alignment-free baseline converges on a kernel the poses cannot touch.
+all, that the alignment-free kernel keeps the atom counts rather than cancelling them and gives 1 for a
+molecule whose geometry has been destroyed but whose atoms have not, and that its dependence on the
+poses dies with the attenuation, to under 0.02 at the default.
 
 ## Project layout
 

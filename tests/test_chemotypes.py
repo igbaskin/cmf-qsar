@@ -7,10 +7,11 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from cmfqsar.chemotypes import (ACYCLIC, apply_transform, align_within_groups,  # noqa: E402
-                                alignment_free_q2, chemotype_labels, evaluate, group_members,
-                                group_reference, grouped_cv_predict, grouped_folds, place_groups,
-                                scaffold_smiles, summarise_groups, _kabsch)
+from cmfqsar.chemotypes import (ACYCLIC, BASELINE_ALPHA, apply_transform,  # noqa: E402
+                                align_within_groups, alignment_free_q2, chemotype_labels,
+                                count_kernel, evaluate, group_members, group_reference,
+                                grouped_cv_predict, grouped_folds, place_groups, scaffold_smiles,
+                                summarise_groups, _kabsch)
 from cmfqsar.fields import FieldSet  # noqa: E402
 
 #: two ring systems and a pair of acyclic molecules: three chemotypes by construction
@@ -222,8 +223,48 @@ def test_placing_moves_a_whole_chemotype_without_disturbing_it(mixed):
 
 # --------------------------------------------------------------------------- 5. the baseline
 
+def test_the_baseline_kernel_keeps_the_counts_and_drops_the_geometry(mixed):
+    """The limit is the cosine of the atom-type count vectors, not an indicator of presence."""
+    from rdkit import Chem
+    mols, names, _, _ = mixed
+    K = count_kernel(mols, names, alpha=BASELINE_ALPHA, cif_min=1)
+    assert K.shape == (len(mols), len(mols))
+    assert np.allclose(np.diag(K), 1.0, atol=1e-8)
+    assert np.allclose(K, K.T, atol=1e-10)
+    # molecules of different composition are told apart: normalising field by field instead of
+    # jointly would cancel the counts and make every entry 1
+    assert K.min() < 0.9
+    # a molecule whose geometry is destroyed but whose atoms are untouched is the same molecule
+    scrambled = Chem.Mol(mols[0])
+    conf = scrambled.GetConformer()
+    rng = np.random.default_rng(29)
+    xyz = np.array(conf.GetPositions()) + rng.normal(scale=1.5, size=(scrambled.GetNumAtoms(), 3))
+    for i in range(scrambled.GetNumAtoms()):
+        conf.SetAtomPosition(i, xyz[i].tolist())
+    pair = count_kernel([mols[0], scrambled], [names[0], "scrambled"], alpha=BASELINE_ALPHA,
+                        cif_min=1)
+    assert pair[0, 1] == pytest.approx(1.0, abs=0.01)
+
+
+def test_the_baseline_kernel_does_not_move_with_the_poses(mixed):
+    """Rigid motions of every molecule leave it where it was, and the gap dies with alpha."""
+    from rdkit import Chem
+    mols, names, _, _ = mixed
+    moved = [Chem.Mol(m) for m in mols]
+    rng = np.random.default_rng(31)
+    for m in moved:
+        _random_motion(m, rng)
+    gaps = []
+    for alpha in (2e-2, 2e-3, BASELINE_ALPHA):
+        a = count_kernel(mols, names, alpha=alpha, cif_min=1)
+        b = count_kernel(moved, names, alpha=alpha, cif_min=1)
+        gaps.append(float(np.abs(a - b).max()))
+    assert gaps[0] > gaps[1] > gaps[2]           # linear in alpha, so a tenth each time
+    assert gaps[-1] < 0.02
+
+
 def test_the_alignment_free_baseline_ignores_the_poses(mixed):
-    """The smaller the attenuation, the less the poses can matter: that is the whole point."""
+    """What the kernel does, the statistic built on it does too."""
     from rdkit import Chem
     mols, names, labels, _ = mixed
     y = np.arange(len(mols), dtype=float) * 0.3
@@ -231,15 +272,13 @@ def test_the_alignment_free_baseline_ignores_the_poses(mixed):
     rng = np.random.default_rng(17)
     for m in moved:
         _random_motion(m, rng)
-    gaps = []
-    for alpha in (2e-3, 2e-4, 2e-5):
-        q2, rms = alignment_free_q2(mols, names, y, labels, alpha=alpha, cif_min=1)
-        q2b, rmsb = alignment_free_q2(moved, names, y, labels, alpha=alpha, cif_min=1)
-        assert np.isfinite(q2) and np.isfinite(q2b)
-        gaps.append(abs(q2 - q2b))
-    assert gaps[0] > gaps[1] > gaps[2]           # it converges on a pose-free kernel
-    assert gaps[2] < 0.01
-    assert q2 == pytest.approx(q2b, abs=0.01) and rms == pytest.approx(rmsb, abs=0.01)
+    q2, rms = alignment_free_q2(mols, names, y, labels, cif_min=1)
+    q2b, rmsb = alignment_free_q2(moved, names, y, labels, cif_min=1)
+    assert np.isfinite(q2) and q2 == pytest.approx(q2b, abs=0.02)
+    assert rms == pytest.approx(rmsb, abs=0.02)
+    # a grid of regularisations is searched on the same folds, so it can only help
+    q2g, _ = alignment_free_q2(mols, names, y, labels, lam=[1e-2, 0.1, 1.0], cif_min=1)
+    assert q2g >= q2 - 1e-9
 
 
 # --------------------------------------------------------------------------- the whole workflow
