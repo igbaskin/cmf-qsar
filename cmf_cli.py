@@ -693,8 +693,11 @@ def cmd_hetero(args):
     if len(folds) < 2:
         raise SystemExit("one chemotype only: this is a congeneric series, use 'build'")
     physchem = [f for f in args.fields.split(",") if f]
-    fs = FieldSet.create(physchem=physchem, alpha=1.0, charge_model=args.charges,
-                         param_scheme=args.param)
+    cif = cif_types_in(ds.mols, args.cif_scheme, args.cif_min) if args.cif else []
+    if cif:
+        print(f"  CIF atom types ({args.cif_scheme}): {', '.join(cif)}")
+    fs = FieldSet.create(physchem=physchem, cif_types=cif, alpha=1.0, charge_model=args.charges,
+                         cif_scheme=args.cif_scheme, param_scheme=args.param)
     if args.align_within or args.place:
         from rdkit import Chem
         ds.mols = [Chem.Mol(m) for m in ds.mols]
@@ -1118,7 +1121,16 @@ def main(argv=None):
                    help="which chemotype stays still when placing by field similarity")
     h.add_argument("--structure", default=None, help="protein structure for --place dock")
     h.add_argument("--restarts", type=int, default=2)
-    h.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    h.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd",
+                   help="physico-chemical fields; the hydrophobic and hydrogen-bond ones are "
+                        "atomic increments fitted to logP and Abraham's constants, so they are "
+                        "property fields. Pass an empty list to compare with --cif alone")
+    h.add_argument("--cif", action="store_true",
+                   help="also use continuous indicator fields, one per atom type")
+    h.add_argument("--cif-min", type=int, default=5, metavar="N",
+                   help="an indicator field needs atoms of its type in at least N molecules")
+    h.add_argument("--cif-scheme", default="sybyl",
+                   choices=["sybyl", "element", "element+aromatic"])
     h.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
     h.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
     h.add_argument("--raw-kernels", action="store_true")

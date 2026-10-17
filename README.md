@@ -433,6 +433,80 @@ table, coloured by group, with the scaffold as its tooltip; steps 2 and 3 move t
 discard a model fitted on where they were; step 4 fills a "Chemotypes" tab with the three q²
 values, the verdict and every chemotype's RMSE and bias while it was the one held out.
 
+### Property fields against indicator fields
+
+Three of the five physico-chemical fields are not read off the molecule but fitted: the
+hydrophobic field and the two hydrogen-bond fields are one-atom fragment increments obtained by
+linear regression of experimental logP and of Abraham's hydrogen-bond acidity and basicity on
+counts of atom types, over large heterogeneous sets, keyed by Sybyl type and the number of
+attached hydrogens ([increments.py](cmfqsar/increments.py), the `tripos` parameterisation; the
+`rdkit` one uses Wildman–Crippen's logP and molar-refractivity contributions, fitted the same
+way). The regression coefficients become the atomic weights, and the field is the usual sum of
+Gaussians on them. The continuous indicator fields are the same atom types left unweighted, one
+field per type.
+
+So a property field is a weighted sum of indicator fields, `Φ_prop(r) = Σ_t c_t Φ_t(r)`, which
+suggests it can add nothing. That is true of the fields and false of the kernels, and the model
+sees only the kernels:
+
+```
+K_prop(A,B) = ⟨Σ_t c_t X_t(A), Σ_u c_u X_u(B)⟩ = Σ_{t,u} c_t c_u ⟨X_t(A), X_u(B)⟩
+```
+
+The indicator representation carries only the diagonal terms `t = u`, each as a separate kernel
+with its own mixing coefficient. The property field carries the whole cross-type overlap matrix —
+the part that says an atom of one type sits where an atom of another type sits in the other
+molecule — with coefficients fixed by the external regression. Neither hypothesis space contains
+the other, so the comparison is a question for measurement.
+
+Leave-one-chemotype-out q² on the five sets of the section above, identical α and λ grids
+throughout, molecules in their published poses:
+
+| representation | fields | COX2 | DHFR | BZR | AChE | ACHE |
+|---|---:|---:|---:|---:|---:|---:|
+| property fields (Wildman–Crippen) | 5 | **+0.425** | +0.463 | +0.088 | **+0.275** | −0.304 |
+| property fields (2013 increments) | 5 | +0.406 | +0.473 | **+0.138** | +0.074 | −0.280 |
+| indicator fields | 9–16 | +0.326 | +0.454 | +0.098 | +0.196 | **−0.242** |
+| property + indicator | 14–21 | +0.351 | **+0.518** | +0.137 | +0.267 | −0.302 |
+| electrostatic and steric only | 2 | +0.305 | +0.401 | +0.103 | +0.180 | −0.244 |
+| alignment-free counts (the floor) | — | +0.174 | +0.159 | +0.144 | −0.060 | −0.058 |
+
+**Fitted weights earn their place.** Five property fields beat the 9 to 16 indicator fields on
+three sets and draw on a fourth: +0.10 on COX2, +0.08 on AChE, +0.01 on DHFR, −0.01 on BZR,
+−0.06 on Mittal's ACHE. The three increment-derived fields are worth +0.05 to +0.12 over
+electrostatic and steric alone on every set. A coefficient fitted on thousands of outside
+molecules is information the hundred molecules of a QSAR set do not have to pay for.
+
+**The gain is the weighting, not the capacity.** Putting both representations in one model helps
+on DHFR (+0.055 over the best single one) and is neutral or slightly worse on the other four,
+which is what the kernel argument predicts: the cross-type overlaps the property field carries
+are most of what the extra fields would have supplied, and twenty fields on a hundred molecules
+is more freedom than the folds can pay for.
+
+**Which increments, matters.** The two parameterisations differ by 0.20 on AChE (+0.275 against
++0.074) and by 0.05 on BZR, in opposite directions. Atomic contributions from a counts regression
+are identified only up to the null space of the count matrix — types that always occur together
+can trade coefficients with no change in the property fit — and that freedom, invisible in the
+property model, moves weight from one place in space to another once the contributions become a
+field. Two fits of equal quality give different 3D models. Regularise the fit, pool the rare
+types, and treat the result as one defensible decomposition rather than the true one.
+
+**No representation rescues a bad frame.** On BZR and Mittal's ACHE, where the aligned model
+already lost to the alignment-free floor, every row is still below it. Representation is not the
+binding constraint there; the alignment is.
+
+One aside. The random-fold numbers would have ranked these differently — on AChE electrostatic
+and steric alone look best of all under random folds (+0.567) and second worst under grouped ones
+(+0.180). Random folds mislead in the choice of a representation, not only in the reporting of
+one.
+
+```bash
+python cmf_cli.py hetero examples/sutherland/COX2.sdf --charges file                  # property fields
+python cmf_cli.py hetero examples/sutherland/COX2.sdf --charges file --param tripos   # 2013 increments
+python cmf_cli.py hetero examples/sutherland/COX2.sdf --charges file --fields "" --cif
+python cmf_cli.py hetero examples/sutherland/COX2.sdf --charges file --cif            # both
+```
+
 ### Nonlinear kernel layers and multiple kernel learning
 
 The CMF kernel is an inner product of molecular fields, and the model is linear in the field. That is
