@@ -408,6 +408,60 @@ class ChemotypeValidationDialog(QDialog):
         lay.addWidget(box)
 
 
+class PharmacophoreDialog(QDialog):
+    """Options for discretising the co-fields into typed features."""
+
+    def __init__(self, n_fields: int, has_protein: bool, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Extract a pharmacophore")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            "Every lobe of a co-field becomes one feature: its centre is the field-weighted "
+            "centroid of the lobe, its tolerance radius the radius of a sphere of the same "
+            "volume, and its weight the integral of the co-field over it.\n\n"
+            "The sign says what the feature asks for. A positive electrostatic lobe wants a "
+            "positive partial charge and a negative one wants a negative charge; a negative "
+            "lobe of any other field is a warning, and a negative steric lobe is the model's "
+            "own exclusion volume.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(560)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.spin_level = QDoubleSpinBox()
+        self.spin_level.setRange(0.1, 0.95)
+        self.spin_level.setSingleStep(0.05)
+        self.spin_level.setDecimals(2)
+        self.spin_level.setValue(0.5)
+        self.spin_level.setToolTip("A feature is a region where the co-field exceeds this "
+                                   "fraction of its largest value: higher gives tighter and "
+                                   "fewer features")
+        form.addRow("Contour level:", self.spin_level)
+        self.spin_max = QSpinBox()
+        self.spin_max.setRange(1, 60)
+        self.spin_max.setValue(10)
+        form.addRow("Features to keep:", self.spin_max)
+        self.spin_spacing = QDoubleSpinBox()
+        self.spin_spacing.setRange(0.2, 2.0)
+        self.spin_spacing.setSingleStep(0.1)
+        self.spin_spacing.setValue(0.6)
+        self.spin_spacing.setSuffix(" A")
+        form.addRow("Grid spacing:", self.spin_spacing)
+        self.chk_pocket = QCheckBox("add exclusion volumes where the receptor is")
+        self.chk_pocket.setEnabled(has_protein)
+        self.chk_pocket.setChecked(has_protein)
+        if not has_protein:
+            self.chk_pocket.setToolTip("Load a protein structure to enable this")
+        form.addRow("Pocket:", self.chk_pocket)
+        self.chk_draw = QCheckBox("show the features in the 3D view")
+        self.chk_draw.setChecked(True)
+        form.addRow("", self.chk_draw)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+
 class DecoyAlignDialog(QDialog):
     """Options for giving every background molecule its best pose against the training set."""
 
@@ -654,6 +708,7 @@ class MainWindow(QMainWindow):
         self.model_test_idx: List[int] = []
         self.shapley_result = None          # (molecule index, ShapleyResult) of the last run
         self.shapley_fields = None          # (molecule index, (F, N) values) for the Shapley field
+        self.pharmacophore = None           # features extracted from the co-field, drawn in 3D
         self.protein = None                 # cmfqsar.protein.Protein behind the molecules
         self.complementarity = None         # scores of the series against the pocket
         self.chemotypes = None              # (labels, scaffold names) of a heterogeneous series
@@ -762,6 +817,7 @@ class MainWindow(QMainWindow):
         self._act(tm, "Align training set by prediction confidence (cross-validated)…",
                   self.train_align_dialog)
         tm.addSeparator()
+        self._act(tm, "Extract pharmacophore from the co-field…", self.pharmacophore_dialog)
         self._act(tm, "Chemical space map (GTM)…", self.gtm_map_dialog)
         tm.addSeparator()
         self._act(tm, "Align decoys to the training set…", self.align_decoys_dialog)
@@ -2365,6 +2421,14 @@ class MainWindow(QMainWindow):
                         legend.append(f"Shapley values of {self.ds.names[cur]}: red = positive, "
                                       f"blue = negative; their sum is the prediction minus the "
                                       f"baseline")
+        if self.pharmacophore:
+            # the discretised co-field: one translucent sphere per feature, coloured by type
+            from ..pharmacophore import colour_of
+            feats = self.pharmacophore
+            v.add_spheres(np.array([f.centre for f in feats]), [f.radius for f in feats],
+                          [colour_of(f) for f in feats], "pharmacophore", alpha=0.35)
+            kinds = sorted({f.kind for f in feats})
+            legend.append(f"pharmacophore ({len(feats)} features): " + ", ".join(kinds))
         if self.complementarity:
             self._show_complementarity()          # the table follows the selected molecule
         vc.lbl_legend.setText("   |   ".join(legend))
@@ -2456,6 +2520,67 @@ class MainWindow(QMainWindow):
             self.schedule_display()
 
         self.run_task(task, done, "Aligning by prediction confidence")
+
+    def pharmacophore_dialog(self):
+        """Discretise the co-fields of the fitted model into typed features with tolerances."""
+        if self.model is None:
+            QMessageBox.information(self, "No model", "Build or load a model first.")
+            return
+        try:
+            self.model._require_linear("pharmacophore features")
+            self.model._require_fields("pharmacophore features")
+        except ValueError as exc:
+            QMessageBox.information(self, "Not available", str(exc))
+            return
+        dlg = PharmacophoreDialog(len(self.model.fieldset.specs), self.protein is not None, self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        level, keep = dlg.spin_level.value(), dlg.spin_max.value()
+        spacing = dlg.spin_spacing.value()
+        use_pocket = dlg.chk_pocket.isChecked() and self.protein is not None
+        draw = dlg.chk_draw.isChecked()
+        model, protein = self.model, self.protein
+
+        def task(progress, cancel):
+            from ..cofields import make_grid
+            from ..pharmacophore import extract, pocket_exclusions
+            grid = make_grid(model.train.coords, margin=3.0, spacing=spacing)
+            feats = extract(model, grid=grid, level=level, max_features=keep, spacing=spacing,
+                            progress=progress)
+            if use_pocket:
+                progress("Exclusion volumes from the receptor", 0.95)
+                feats = feats + pocket_exclusions(protein, grid)
+            return feats
+
+        def done(feats):
+            from ..pharmacophore import summary
+            self.pharmacophore = feats if draw else None
+            self.log(f"Pharmacophore from the co-fields (level {level:g}): {summary(feats)}")
+            for f in feats:
+                self.results_panel.append_log("    " + f.describe())
+            self.schedule_display()
+            if feats:
+                self._offer_pharmacophore_save(feats)
+
+        self.run_task(task, done, "Extracting the pharmacophore")
+
+    def _offer_pharmacophore_save(self, feats):
+        """Write the features out, as a table and as pseudo-atoms, if the user wants them."""
+        if QMessageBox.question(
+                self, "Save the pharmacophore",
+                f"{len(feats)} features extracted. Save them as a CSV table and as pseudo-atoms "
+                f"in a PDB file, which any viewer can draw beside the molecules?") != \
+                QMessageBox.Yes:
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "Save the pharmacophore", "pharmacophore.csv",
+                                              "CSV (*.csv)")
+        if not path:
+            return
+        from ..pharmacophore import write_csv, write_pdb
+        write_csv(path, feats)
+        pdb = os.path.splitext(path)[0] + ".pdb"
+        write_pdb(pdb, feats)
+        self.log(f"Pharmacophore written to {path} and {pdb}")
 
     def gtm_map_dialog(self):
         """Chemical space map and activity landscape from the CMF kernels (kernel PCA + GTM)."""

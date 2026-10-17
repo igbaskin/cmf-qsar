@@ -714,6 +714,37 @@ def cmd_mil(args):
     print(f"Elapsed {time.time() - t0:.1f} s")
 
 
+def cmd_pharmacophore(args):
+    """Discretise the co-fields of a fitted model into typed features with tolerance spheres."""
+    from cmfqsar.pharmacophore import (extract, pocket_exclusions, summary, write_csv,
+                                       write_pdb)
+    from cmfqsar.cofields import make_grid
+    model = load_model(args.model)
+    if isinstance(model, tuple):
+        model = model[0]
+    grid = make_grid(model.train.coords, margin=args.margin, spacing=args.spacing)
+    print(f"Model {args.model}: {model.train.n_mol} training molecules, "
+          f"grid {grid.shape[0]}x{grid.shape[1]}x{grid.shape[2]} at {grid.spacing:.2f} A")
+    feats = extract(model, grid=grid, level=args.level, max_features=args.max_features,
+                    min_radius=args.min_radius, spacing=args.spacing, margin=args.margin,
+                    fields=[f for f in args.fields.split(",") if f] if args.fields else None)
+    if args.structure:
+        from cmfqsar.protein import read_structure
+        prot = read_structure(args.structure, keep_waters=False)
+        pocket = pocket_exclusions(prot, grid, max_spheres=args.pocket_spheres)
+        print(f"  {prot.name}: {len(pocket)} exclusion spheres from the receptor")
+        feats = feats + pocket
+    print("  " + summary(feats))
+    for f in feats:
+        print("   " + f.describe())
+    if args.out:
+        write_csv(args.out, feats)
+        print(f"  features written to {args.out}")
+    if args.pdb:
+        write_pdb(args.pdb, feats)
+        print(f"  pseudo-atoms written to {args.pdb}")
+
+
 def cmd_hetero(args):
     """The workflow for a series of several chemotypes, in the order the problem imposes."""
     import time
@@ -1214,6 +1245,29 @@ def main(argv=None):
     h.add_argument("--out", default=None, help="CSV with the chemotype of every molecule")
     h.add_argument("--out-sdf", default=None, help="write the realigned structures")
     h.set_defaults(func=cmd_hetero)
+
+    ph = sub.add_parser("pharmacophore",
+                        help="read a pharmacophore out of the co-fields of a fitted model")
+    ph.add_argument("model", help="a model saved with 'build --save'")
+    ph.add_argument("--level", type=float, default=0.5, metavar="F",
+                    help="a feature is a region where the co-field exceeds this fraction of its "
+                         "largest value; larger means tighter and fewer features")
+    ph.add_argument("--max-features", type=int, default=12, metavar="N",
+                    help="how many favourable features to keep, strongest first (exclusion "
+                         "volumes are counted separately)")
+    ph.add_argument("--min-radius", type=float, default=0.6, metavar="R",
+                    help="ignore lobes smaller than this tolerance radius")
+    ph.add_argument("--fields", default=None,
+                    help="restrict to these field types (default: every enabled field)")
+    ph.add_argument("--spacing", type=float, default=0.6)
+    ph.add_argument("--margin", type=float, default=3.0)
+    ph.add_argument("--structure", default=None,
+                    help="a protein structure; its atoms inside the box become exclusion volumes "
+                         "of the harder kind, the ones a ligand-only model cannot know")
+    ph.add_argument("--pocket-spheres", type=int, default=30, metavar="N")
+    ph.add_argument("--out", default=None, help="write the features as CSV")
+    ph.add_argument("--pdb", default=None, help="write the features as pseudo-atoms in PDB")
+    ph.set_defaults(func=cmd_pharmacophore)
 
     k = sub.add_parser("complement", help="field complementarity with a protein pocket")
     k.add_argument("dataset")

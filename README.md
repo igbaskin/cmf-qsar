@@ -764,6 +764,53 @@ additive under it and the Shapley values then redistribute what rule 3 assigns; 
 prediction. And the result is a per-molecule explanation. A nonlinear model has no global co-field, and
 no attribution method invents one.
 
+### A pharmacophore read out of the co-field
+
+A pharmacophore is a handful of typed points with tolerance spheres; a co-field is a continuous
+function saying, at every point in space, how much field of one type raises or lowers the
+predicted activity. The two are the same statement at different resolutions, and the fields here
+carry exactly the classical feature types — donor, acceptor, hydrophobic, steric, electrostatic —
+so the discretisation is a matter of finding the lobes.
+[pharmacophore.py](cmfqsar/pharmacophore.py) does that:
+
+* a connected region where a co-field exceeds a fraction of its largest value is one feature; its
+  centre is the field-weighted centroid of the region and its **tolerance radius** the radius of
+  the sphere of the same volume, so a broad lobe gives a loose feature and a tight one a strict
+  feature;
+* the **sign says what the feature asks for**. A positive electrostatic lobe wants a positive
+  partial charge, a negative one wants a negative charge — both are features to satisfy. For
+  every other field a negative lobe is a warning, and a negative steric lobe is an **exclusion
+  volume**: the model's own statement that atoms there lower the activity;
+* each feature carries the integral of the co-field over its region, which is what it is worth
+  for a unit of field density there, and the features are ranked by it;
+* with a protein loaded, `pocket_exclusions` adds exclusion volumes of the harder kind — the
+  positions the receptor already occupies, thinned to one sphere every 2.5 Å — which a model
+  fitted on ligands alone cannot know.
+
+On the thrombin set of the Merck benchmark, at a contour of 0.6, the strongest feature is a
+**positive** one in the S1 pocket (weight +1.6), followed by favourable bulk, a donor, a
+hydrophobic feature, and a warning that an acceptor at one position lowers the activity — a
+readable hypothesis, derived from a fitted model rather than guessed.
+
+```bash
+python cmf_cli.py build examples/openff/thrombin.sdf --activity pAffinity --alphas 0.5 \
+       --lams 0.1 --save thrombin.cmf
+python cmf_cli.py pharmacophore thrombin.cmf --level 0.6 --max-features 8 \
+       --structure examples/pockets/openff/thrombin.pdb --out ph.csv --pdb ph.pdb
+```
+
+In the application it is *Tools → Extract pharmacophore from the co-field…*: the features are
+listed in the log with their weights and meanings, drawn in the 3D view as translucent spheres
+coloured by type, and can be written out. The CSV carries everything; the PDB holds the features
+as pseudo-atoms with the tolerance radius in the B-factor and the weight in the occupancy, so any
+viewer can draw them beside the molecules.
+
+The point of the exercise is what a pharmacophore is good at and a field is not: matching
+molecules of unrelated scaffolds into one frame, filtering a library before the field model
+scores it, and stating a hypothesis compactly enough to argue about. Discretising throws away
+what the continuous description exists for, so the sensible division of labour is to let the
+pharmacophore do the matching and the filtering and leave the scoring to the field.
+
 ### Protein binding sites behind the fields
 
 The free-energy benchmark collections (`examples/openff`, `examples/schindler`) give their ligands in
@@ -1564,7 +1611,12 @@ groups are pooled, that no fold ever splits a chemotype and that bundling keeps 
 together, that an activity which is a property of the scaffold is predicted almost perfectly by random
 folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
 without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
-For the alignment-free geometry-aware kernel they check that a rigid motion leaves the descriptor
+For the pharmacophore they check that a lobe becomes a feature where it is, that a higher contour
+gives a tighter sphere and the minimum size drops what a coarse grid cannot resolve, that a negative
+electrostatic lobe is a feature asking for negative charge while a negative steric lobe is an
+exclusion volume, that extraction is refused for a kernel that has no co-field, that the exported
+files carry the radius and the weight, and that the pocket spheres stay inside the box, keep their
+separation and ignore hydrogens. For the alignment-free geometry-aware kernel they check that a rigid motion leaves the descriptor
 untouched while a change of conformation does not, that its channel at zero distance is the CMF
 overlap integral of the molecule with itself, that the kernel is well formed and tells apart two
 conformations the count kernel calls identical, and that dropping the self-pairs removes exactly the
@@ -1606,6 +1658,7 @@ cmfqsar/mil.py          multi-instance learning: the model chooses the conformat
 cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
 cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrelation)
+cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field
 cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence
 cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process, kernel PCA
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
