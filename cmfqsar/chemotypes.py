@@ -268,6 +268,7 @@ class HeteroResult:
     q2_random: float = float("nan")
     q2_grouped: float = float("nan")
     q2_baseline: float = float("nan")
+    q2_invariant: float = float("nan")      # geometry kept, frame not assumed
     rmse_grouped: float = float("nan")
     alpha: float = float("nan")
     lam: float = float("nan")
@@ -280,9 +281,12 @@ class HeteroResult:
         if self.q2_grouped <= 0:
             return ("the aligned model does not predict a held-out chemotype at all; "
                     "the alignment is not carrying across scaffolds")
-        if self.q2_grouped < self.q2_baseline:
-            return ("the alignment-free fragment model is better: the alignment is not paying "
-                    "for itself on this series")
+        if self.q2_grouped < max(self.q2_baseline,
+                                 self.q2_invariant if np.isfinite(self.q2_invariant) else -9e9):
+            which = ("fragment-count" if self.q2_baseline >= self.q2_invariant
+                     or not np.isfinite(self.q2_invariant) else "geometry-aware alignment-free")
+            return (f"the {which} model is better: the alignment is not paying for itself on "
+                    f"this series")
         return "the aligned model beats the alignment-free baseline across chemotypes"
 
 
@@ -338,6 +342,36 @@ def count_kernel(mols: Sequence[Chem.Mol], names: Sequence[str], alpha: Optional
         K = model.joint_kernel(model.prepare_training_kernels(AtomTable.from_molecules(mf)))
     d = np.sqrt(np.clip(np.diag(K), 1e-300, None))
     return K / np.outer(d, d)
+
+
+def invariant_q2(molfields: Sequence, y: np.ndarray, labels: np.ndarray, lam=1.0,
+                 max_folds: int = 0, d_max: float = 12.0, step: float = 0.75,
+                 sigma: float = 0.75) -> Tuple[float, float]:
+    """Leave-one-chemotype-out q2 of a model that keeps the geometry but needs no alignment.
+
+    The kernel is the field autocorrelation of :mod:`cmfqsar.invariant`: invariant to rotation
+    and translation, so no superposition is involved, but still a function of the conformation.
+    It sits between the aligned model and the count kernel, and says what the geometry is worth
+    once the frame is no longer assumed.
+    """
+    from .invariant import AutocorrelationSpec, autocorrelation_kernel, feature_matrix
+    spec = AutocorrelationSpec(d_max=d_max, step=step, sigma=sigma)
+    X = feature_matrix(molfields, spec)
+    if X.size == 0:
+        return float("nan"), float("nan")
+    K = autocorrelation_kernel(X, n_bins=spec.n_bins)
+    yy = np.asarray(y, float)
+    best = (float("nan"), float("nan"))
+    for one in np.atleast_1d(lam).ravel():
+        pred = grouped_cv_predict(K, yy, np.asarray(labels), params={"lam": float(one)},
+                                  max_folds=max_folds)
+        good = np.isfinite(pred)
+        if good.sum() < 3:
+            continue
+        q2 = r2_score(yy[good], pred[good])
+        if not np.isfinite(best[0]) or q2 > best[0]:
+            best = (q2, rmse(yy[good], pred[good]))
+    return best
 
 
 def alignment_free_q2(mols: Sequence[Chem.Mol], names: Sequence[str], y: np.ndarray,
@@ -431,4 +465,10 @@ def evaluate(mols: Sequence[Chem.Mol], names: Sequence[str], y: np.ndarray, labe
     res.q2_baseline, _ = alignment_free_q2([mols[i] for i in ok], [names[i] for i in ok], yy, lab,
                                            alpha=baseline_alpha, lam=list(lams),
                                            max_folds=max_folds)
+    if progress is not None:
+        progress("Alignment-free but geometry-aware", 0.95)
+    fs = fieldset.copy()
+    fs.set_alpha(float(res.alpha) if np.isfinite(res.alpha) else 1.0)
+    res.q2_invariant, _ = invariant_q2([build_fields(mols[i], fs, names[i]) for i in ok], yy, lab,
+                                       lam=list(lams), max_folds=max_folds)
     return res

@@ -1488,6 +1488,7 @@ class MainWindow(QMainWindow):
                     ("q² leave-one-chemotype-out", res.q2_grouped),
                     ("RMSE leave-one-chemotype-out", res.rmse_grouped),
                     ("q² alignment-free fragment model", res.q2_baseline),
+                    ("q² alignment-free, geometry-aware", res.q2_invariant),
                     ("alpha", res.alpha), ("lambda", res.lam)]
             per = [(f"{g['name'][:48]}", g["n"], g["rmse"], g["bias"]) for g in res.per_group]
             self.results_panel.set_chemotypes(

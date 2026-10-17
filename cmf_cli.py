@@ -758,6 +758,8 @@ def cmd_hetero(args):
     print(f"  q2 leave-one-chemotype-out      {res.q2_grouped:+.3f}   RMSE {res.rmse_grouped:.3f}")
     how = f"alpha {args.baseline_alpha:g}" if args.baseline_alpha else "atom counts, the limit"
     print(f"  alignment-free fragment model   {res.q2_baseline:+.3f}   (indicator fields, {how})")
+    print(f"  alignment-free, geometry-aware  {res.q2_invariant:+.3f}   (field autocorrelation: "
+          f"rotation-invariant, no superposition)")
     print(f"  verdict: {res.verdict()}")
     if res.per_group:
         print("  per chemotype, held out in turn:")

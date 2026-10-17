@@ -376,7 +376,8 @@ molecule's own scaffold-mates in the training part, which is the most optimistic
    If the aligned model cannot beat this baseline, the alignment is not paying for itself, and on
    a heterogeneous set that is the first thing worth knowing.
 
-`evaluate` runs steps 4 and 5 together and returns the three numbers with a verdict.
+`evaluate` runs steps 4 and 5 together and returns the three numbers with a verdict, plus the
+alignment-free *geometry-aware* kernel of the next section as a fourth.
 
 **What it shows.** Five sets with more than one scaffold, molecules in their published poses (no
 realignment), all five physico-chemical fields, KRR with α over 0.3/0.5/1.0 and λ over 0.01/0.1/1,
@@ -432,6 +433,63 @@ chemotypes)*, in the order they have to be taken. Step 1 adds a "Chemotype" colu
 table, coloured by group, with the scaffold as its tooltip; steps 2 and 3 move the molecules and
 discard a model fitted on where they were; step 4 fills a "Chemotypes" tab with the three q²
 values, the verdict and every chemotype's RMSE and bias while it was the one held out.
+
+### Alignment-free, but geometry-aware
+
+The alignment-free baseline above is pose-free because it is two-dimensional: as α → 0 the
+indicator fields become atom counts and the geometry is gone. That leaves a gap in the
+comparison, because "the alignment did not pay for itself" and "three dimensions did not pay for
+themselves" are different statements, and the count kernel cannot tell them apart.
+
+[invariant.py](cmfqsar/invariant.py) fills it. For every pair of field types it takes the
+distance distribution of the field weights inside one molecule,
+
+```
+Φ_fg(d) = Σ_l Σ_m w_lf w_mg exp(−(|r_l − r_m| − d)² / 2σ²)
+```
+
+on a grid of distances. A rigid motion moves every atom and leaves every interatomic distance
+where it was, so the descriptor is invariant to rotation and translation by construction — no
+superposition, no reference molecule, no common frame — while still describing the
+three-dimensional arrangement: where a donor sits relative to an acceptor, how far the charge is
+from the hydrophobic bulk. The kernel is the cosine of those features, normalised jointly rather
+than block by block, for the reason the count kernel has to be.
+
+The connection to the CMF kernel is exact at one point. The overlap integral of two fields of the
+same molecule is `(π/α)^{3/2} Σ_lm w_lf w_mg exp(−α d²_lm/4)`, which is the channel at `d = 0`
+with `σ² = 2/α`, up to the prefactor — a test asserts it. The further channels resolve what that
+single number collapses: the overlap integral says how much the fields of a molecule coincide,
+the autocorrelation says at which distances they do.
+
+**Measured on the five chemotype-split sets**, leave-one-chemotype-out, every column given the
+same nine settings (three attenuations × three regularisations) and the same folds:
+
+| set | aligned CMF | fragment counts | invariant, default grid | invariant, grid searched |
+|---|---:|---:|---:|---:|
+| COX2 | **+0.425** | +0.174 | +0.355 | +0.364 |
+| DHFR | **+0.463** | +0.159 | +0.384 | +0.424 |
+| BZR | +0.088 | +0.144 | +0.130 | **+0.148** |
+| AChE | **+0.275** | −0.060 | +0.128 | +0.174 |
+| mittal/ACHE | −0.304 | **−0.058** | −0.137 | −0.111 |
+| mean | **+0.189** | +0.072 | +0.172 | +0.200 |
+
+Dropping the frame costs 0.017 in mean q² and more than doubles what the pose-free count kernel
+achieves. Per set the aligned model keeps a real lead on COX2, DHFR and Sutherland's AChE, the
+invariant kernel wins on BZR — the set where the alignment had already lost to counts — and
+neither helps on Mittal's ACHE, where nothing does. Allowing it three distance grids instead of
+one (the last column, 27 settings against the aligned model's 9) puts it slightly ahead on
+average, which is worth stating but not worth believing without a wider test.
+
+So for a series of several chemotypes, most of what the three-dimensional fields contribute
+survives without any superposition at all. That is the useful half of the answer. The other half
+is what it costs: there is no co-field, because a map in space needs a space to live in. The
+decomposition that remains is in the descriptor's own currency — which pair of field types at
+which distance carries the weight, which `channel_labels` names — and a distance distribution
+cannot tell a molecule from its mirror image, so enantiomers are identical to it. Chirality would
+need the signed triple product of three displacements, the three-point case of the same idea.
+
+`evaluate` reports it as the fourth number, the `hetero` command prints it, and the Chemotypes
+tab carries it beside the other three.
 
 ### Property fields against indicator fields
 
@@ -1458,7 +1516,11 @@ groups are pooled, that no fold ever splits a chemotype and that bundling keeps 
 together, that an activity which is a property of the scaffold is predicted almost perfectly by random
 folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
 without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
-For the one-class descriptions they check that nu really is the fraction of the training molecules
+For the alignment-free geometry-aware kernel they check that a rigid motion leaves the descriptor
+untouched while a change of conformation does not, that its channel at zero distance is the CMF
+overlap integral of the molecule with itself, that the kernel is well formed and tells apart two
+conformations the count kernel calls identical, and that dropping the self-pairs removes exactly the
+count-like part. For the one-class descriptions they check that nu really is the fraction of the training molecules
 left outside for every one of them, that molecules far from the training cloud land outside and are
 ranked below it, that the score falls monotonically along a ray leaving the cloud, that the subspace
 description is stricter than the centroid one about molecules beside a flat set, that the two linear
@@ -1495,6 +1557,7 @@ cmfqsar/conformers.py   conformational ensembles: generation, weighting, groupin
 cmfqsar/mil.py          multi-instance learning: the model chooses the conformation
 cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
+cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrelation)
 cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence
 cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process, kernel PCA
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
