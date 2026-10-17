@@ -615,6 +615,20 @@ class CMFModel:
             d = np.where(d > 1e-300, 1.0, 0.0)
         return (self.fieldset.mixing_vector() * self.scale) @ d
 
+    def self_after_layer(self, d_linear: np.ndarray) -> np.ndarray:
+        """K(x, x) of the kernel the learner actually sees, from the linear self-kernels.
+
+        The distances of the one-class scores are taken in the Hilbert space of the kernel in
+        use, so they need the self-kernel of that kernel: for the Gaussian layer every molecule
+        sits on the unit sphere, and the arc-cosine layers leave the self-kernel where it was
+        (which is what makes the same diagonals serve both of them).
+        """
+        if self.is_linear:
+            return d_linear
+        if self.kernel_layer == "gauss":
+            return np.ones_like(np.asarray(d_linear, float))
+        return np.asarray(d_linear, float)
+
     def apply_layer(self, K: np.ndarray, diag_p: np.ndarray, diag_q: np.ndarray) -> np.ndarray:
         """Apply the nonlinear layer to a block of the linear kernel.
 
@@ -737,7 +751,7 @@ class CMFModel:
         if not self.is_linear:
             K = self.apply_layer(K, self.joint_self(test), self.base_diag_)
         if oc is not None:
-            yp = self.learner_.predict(K, self.joint_self(test))
+            yp = self.learner_.predict(K, self.self_after_layer(self.joint_self(test)))
         else:
             yp = K @ self.coef + self.bias
         if return_fields:

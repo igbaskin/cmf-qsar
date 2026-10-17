@@ -140,3 +140,35 @@ def test_enrichment_counts_what_it_says():
     assert enrichment_factor(y, perfect, 0.04) == pytest.approx(25.0)
     assert enrichment_factor(y, -perfect, 0.04) == pytest.approx(0.0)
     assert np.isnan(enrichment_factor(-np.ones(10), np.arange(10.0), 0.1))
+
+def test_the_distance_is_the_one_the_kernel_induces(world):
+    """d^2(A,B) = K(A,A) + K(B,B) - 2K(A,B), which for fields is the integrated squared
+    difference of the two molecular fields."""
+    X, far = world
+    K = _kernel(X, X)
+    sc = make("ocknn", nu=0.1, k=3).fit(K)
+    Kt = _kernel(far, X)
+    d_self = np.ones(len(far))
+    d2 = d_self[:, None] + np.diag(K)[None, :] - 2.0 * Kt
+    want = -np.sort(d2, axis=1)[:, 2] + sc.offset_          # the third nearest, negated
+    assert np.allclose(sc.decision(Kt, d_self), want, atol=1e-12)
+    # a training molecule is not its own neighbour: without that, every one of them would sit
+    # at distance zero from itself and k would effectively be k-1
+    on_train = sc.decision(K, np.diag(K), training=True)
+    as_new = sc.decision(K, np.diag(K), training=False)
+    assert np.all(as_new >= on_train - 1e-12) and not np.allclose(as_new, on_train)
+
+
+def test_the_self_kernel_follows_the_layer_in_use():
+    """With a Gaussian layer every molecule sits on the unit sphere, so the distances are
+    taken there and not in the linear kernel's space."""
+    from cmfqsar.model import CMFModel
+    from cmfqsar.fields import FieldSet
+    m = CMFModel(fieldset=FieldSet.create(alpha=0.5), kernel_layer="gauss", params={"gamma": 1.0})
+    d = np.array([3.0, 5.0, 7.0])
+    assert np.allclose(m.self_after_layer(d), 1.0)
+    for layer in ("arccos1", "arccos2"):
+        m2 = CMFModel(fieldset=FieldSet.create(alpha=0.5), kernel_layer=layer)
+        assert np.allclose(m2.self_after_layer(d), d)
+    m3 = CMFModel(fieldset=FieldSet.create(alpha=0.5))
+    assert np.allclose(m3.self_after_layer(d), d)
