@@ -162,6 +162,43 @@ def test_screening_scores_and_enrichment_curve():
     assert enrichment_curve(np.ones(5), np.arange(5.0)) is None
 
 
+def test_early_recognition_sees_what_the_enrichment_factor_cannot():
+    """At a small fraction the enrichment factor saturates; BEDROC keeps ranking the ranking."""
+    from cmfqsar.model import rie_bedroc, screening_scores
+    n_act, n = 30, 2000
+    y = np.r_[np.ones(n_act), -np.ones(n - n_act)]
+    rng = np.random.default_rng(0)
+    rest = rng.normal(size=n - n_act)
+    perfect = np.r_[np.full(n_act, 10.0), rest]
+    s_perfect = screening_scores(y, perfect)
+    assert s_perfect["auc"] == pytest.approx(1.0)
+    assert s_perfect["bedroc_20"] == pytest.approx(1.0, abs=1e-6)
+    assert s_perfect["bedroc_160_9"] == pytest.approx(1.0, abs=1e-6)
+    # the ceiling is reported, and the factor reaches it
+    assert s_perfect["ef_1"] == pytest.approx(s_perfect["max_ef_1"])
+
+    # two rankings that fill the top 1 % equally but differ below it: the factor cannot tell
+    # them apart, the early-recognition metrics can
+    top = int(round(0.01 * n))
+    a = np.zeros(n); b = np.zeros(n)
+    a[:top] = 10.0                      # the first actives on top, the others just below
+    a[top:n_act] = 9.0
+    b[:top] = 10.0
+    b[top:n_act] = -5.0                 # the rest of the actives pushed to the bottom
+    a[n_act:] = rng.uniform(-1, 1, n - n_act)
+    b[n_act:] = rng.uniform(-1, 1, n - n_act)
+    sa, sb = screening_scores(y, a), screening_scores(y, b)
+    assert sa["ef_1"] == pytest.approx(sb["ef_1"])          # identical, and both at the ceiling
+    assert sa["bedroc_20"] > sb["bedroc_20"] + 0.1
+    assert sa["auc"] > sb["auc"]
+
+    # a random ranking scores near zero, a reversed one at zero
+    assert screening_scores(y, rng.normal(size=n))["bedroc_20"] < 0.2
+    assert screening_scores(y, -perfect)["bedroc_20"] == pytest.approx(0.0, abs=1e-6)
+    # and the pieces refuse a degenerate problem rather than inventing a number
+    assert not np.isfinite(rie_bedroc(np.arange(1, 4), 3, 3)[0])
+
+
 def test_decoys_are_a_separate_subset_and_count_as_inactive():
     from cmfqsar.dataio import Dataset, _subset_label
     assert _subset_label("decoy") == "decoy" and _subset_label("background") == "decoy"

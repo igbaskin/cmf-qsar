@@ -74,22 +74,26 @@ def select(actives: Sequence[Chem.Mol], pool: Sequence[Chem.Mol], n: int,
     scale = np.maximum(np.subtract(*np.percentile(np.vstack([P_act, P_pool]), [75, 25], axis=0)),
                        1e-6)
     taken: List[int] = []
-    used = set()
+    used = np.zeros(len(allowed), bool)
     rng = np.random.RandomState(seed)
     order = rng.permutation(len(actives))
-    for _ in range(per_active):
+    cost = np.zeros((len(actives), len(allowed)))
+    for a in range(len(actives)):
+        cost[a] = (np.abs(P_pool[allowed] - P_act[a]) / scale).mean(axis=1)
+    rounds = max(int(per_active), int(np.ceil(n / max(len(actives), 1))) + 1)
+    for _ in range(rounds):
+        progress = False
         for a in order:
-            if len(taken) >= n:
+            if len(taken) >= n or used.all():
                 break
-            d = np.abs(P_pool[allowed] - P_act[a]) / scale
-            cost = d.mean(axis=1)
-            cost[[k for k, j in enumerate(allowed) if j in used]] = np.inf
-            k = int(np.argmin(cost))
-            if not np.isfinite(cost[k]):
+            c = np.where(used, np.inf, cost[a])
+            k = int(np.argmin(c))
+            if not np.isfinite(c[k]):
                 continue
-            used.add(int(allowed[k]))
+            used[k] = True
             taken.append(int(allowed[k]))
-        if len(taken) >= n:
+            progress = True
+        if len(taken) >= n or not progress:
             break
     P_taken = P_pool[taken] if taken else np.zeros((0, len(PROPERTIES)))
     report["selected"] = len(taken)

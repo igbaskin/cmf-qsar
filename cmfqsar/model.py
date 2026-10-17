@@ -126,8 +126,31 @@ def classification_scores(y_true: np.ndarray, decision: np.ndarray) -> Dict[str,
     }
 
 
+def rie_bedroc(ranks: np.ndarray, n: int, n_act: int, alpha: float = 20.0) -> Tuple[float, float]:
+    """Robust initial enhancement and BEDROC of Truchon and Bayly (2007).
+
+    The enrichment factor counts the actives above a cut and throws away where they are; RIE
+    weights every active by exp(-alpha r / N), so a hit at rank 1 is worth more than one at rank
+    50, and BEDROC rescales RIE onto [0, 1] given the active rate.  `alpha` sets how early
+    "early" is: 20 puts 80 % of the weight in the top 8 % of the ranking, 160.9 in the top 1 %.
+    """
+    N, n_act = float(n), float(n_act)
+    if n_act <= 0 or n_act >= N or alpha <= 0:
+        return float("nan"), float("nan")
+    ra = n_act / N
+    x = float(np.sum(np.exp(-alpha * np.asarray(ranks, float) / N)))
+    denom = (n_act / N) * (1.0 - np.exp(-alpha)) / (np.exp(alpha / N) - 1.0)
+    rie = x / denom if denom > 0 else float("nan")
+    if not np.isfinite(rie):
+        return rie, float("nan")
+    scale = ra * np.sinh(alpha / 2.0) / (np.cosh(alpha / 2.0) - np.cosh(alpha / 2.0 - alpha * ra))
+    bedroc = rie * scale + 1.0 / (1.0 - np.exp(alpha * (1.0 - ra)))
+    return float(rie), float(bedroc)
+
+
 def screening_scores(y_true: np.ndarray, decision: np.ndarray,
-                     fractions: Sequence[float] = (0.01, 0.05, 0.10)) -> Dict[str, float]:
+                     fractions: Sequence[float] = (0.005, 0.01, 0.05, 0.10),
+                     alphas: Sequence[float] = (20.0, 160.9)) -> Dict[str, float]:
     """Virtual-screening metrics of a ranking: AUC and enrichment at the top of the list.
 
     `y_true` is +1 for the actives and -1 for the background (decoys), `decision` the score the
@@ -154,8 +177,20 @@ def screening_scores(y_true: np.ndarray, decision: np.ndarray,
     hits = np.cumsum(y[order] > 0)
     for f in fractions:
         k = max(1, int(round(f * n)))
-        out[f"ef_{int(round(f * 100))}"] = float((hits[k - 1] / k) / rate)
-        out[f"hits_{int(round(f * 100))}"] = float(hits[k - 1])
+        tag = f"{f * 100:g}".replace(".", "_")
+        out[f"ef_{tag}"] = float((hits[k - 1] / k) / rate)
+        out[f"hits_{tag}"] = float(hits[k - 1])
+        # the ceiling: at most min(k, n_act) actives can sit in a slice of k molecules, so a
+        # small fraction saturates long before the model is perfect
+        out[f"max_ef_{tag}"] = float(min(k, n_act) / (k * rate))
+    # where in the ranking the actives sit, not merely how many are above a cut: the enrichment
+    # factor at a small fraction saturates as soon as that slice is full
+    ranks = np.flatnonzero(y[order] > 0) + 1
+    for a in alphas:
+        rie, bedroc = rie_bedroc(ranks, n, n_act, alpha=float(a))
+        tag = f"{a:g}".replace(".", "_")
+        out[f"rie_{tag}"] = rie
+        out[f"bedroc_{tag}"] = bedroc
     try:
         from sklearn.metrics import roc_auc_score
         out["auc"] = float(roc_auc_score((y > 0).astype(int), d))
@@ -209,10 +244,20 @@ class ClassStats:
         out = [f"Virtual screening: {int(s['n_actives'])} actives against {int(s['n_decoys'])} decoys",
                f"  AUC {s['auc']:.3f}   (enrichment factor 1.0 = random, "
                f"{s.get('max_ef', float('nan')):.1f} = perfect)"]
-        parts = [f"top {pct} %: EF {s[f'ef_{pct}']:.2f} ({int(s[f'hits_{pct}'])} actives)"
-                 for pct in (1, 5, 10) if f"ef_{pct}" in s]
+        parts = []
+        for tag, pct in (("0_5", "0.5"), ("1", "1"), ("5", "5"), ("10", "10")):
+            if f"ef_{tag}" in s:
+                ceiling = s.get(f"max_ef_{tag}", float("nan"))
+                parts.append(f"top {pct} %: EF {s[f'ef_{tag}']:.2f} of {ceiling:.1f} "
+                             f"({int(s[f'hits_{tag}'])} actives)")
         if parts:
             out.append("  " + ";  ".join(parts))
+        if "bedroc_20" in s:
+            # the enrichment factor stops at its ceiling as soon as the slice is full, and says
+            # nothing about where in the slice the actives are; BEDROC keeps weighting the rank
+            out.append(f"  BEDROC {s['bedroc_20']:.3f} (alpha 20, weight on the top 8 %), "
+                       f"{s.get('bedroc_160_9', float('nan')):.3f} (alpha 160.9, the top 1 %); "
+                       f"0 is the worst ranking, 1 the best")
         out.append("  a screening result depends on the background: decoys unlike the actives in size, "
                    "charge or shape inflate these numbers")
         return out
