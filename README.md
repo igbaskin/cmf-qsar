@@ -933,13 +933,19 @@ same set, which are already in the same frame:
 | THR | 0.651 | 0.751 | 0.792 | 0.775 | 0.735 | **0.794** |
 | mean | 0.637 | 0.683 | **0.727** | 0.720 | 0.724 | 0.719 |
 
-The ball is the weakest of the five. It is beaten on every single set, by 0.02 on COX2 and by
-0.15 to 0.24 on DHFR, BZR, AChE and THR, and the enrichment in the top 1 % says the same more
-bluntly: the molecules the 1-SVM ranks highest are inactives on four of the five sets (EF 0.00),
-while k-NN and kernel PCA reach the ceiling that the roughly equal class sizes allow (EF ≈ 2) on
-all five. Nothing here was tuned, so this is a comparison of the default behaviour of five
-descriptions rather than of their best achievable behaviour — but the default is what a screening
-run uses, since one-class models have no cross-validated criterion to tune against.
+The ball comes last. It is beaten on every single set, by 0.02 on COX2 and by 0.15 to 0.24 on
+DHFR, BZR, AChE and THR, and the enrichment in the top 1 % says the same more bluntly: the
+molecules the 1-SVM ranks highest are inactives on four of the five sets (EF 0.00), while k-NN
+and kernel PCA reach the ceiling that the roughly equal class sizes allow (EF ≈ 2) on all five.
+
+Nothing above was tuned, so it is a comparison of defaults. Sweeping each description over the
+attenuation, over ν and over its own parameter — 15 to 75 settings each — separates two
+questions. At its best setting the 1-SVM reaches 0.727 and is fourth of five, ahead of the
+parameter-free centroid (0.710) and behind kernel PCA (0.781), the Gaussian process (0.767) and
+k-NN (0.824). Taken over all its settings it is last: median AUC 0.672, against 0.685, 0.695,
+0.713 and 0.730. So the ball is not hopeless, it is fragile — and since a one-class model has no
+cross-validated criterion to tune against, the median is the number a screening run should
+expect, not the best. k-NN is first on both counts, and on four of the five sets.
 
 **And a warning the program already gives, now with a number.** The same five methods were also
 scored against 150 molecules drawn from the other four targets and posed into the frame by the
