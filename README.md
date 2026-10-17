@@ -461,10 +461,14 @@ with `σ² = 2/α`, up to the prefactor — a test asserts it. The further chann
 single number collapses: the overlap integral says how much the fields of a molecule coincide,
 the autocorrelation says at which distances they do.
 
-**Measured on the five chemotype-split sets**, leave-one-chemotype-out, every column given the
-same nine settings (three attenuations × three regularisations) and the same folds:
+**Measured on the five chemotype-split sets**, leave-one-chemotype-out, same folds throughout.
+The attenuation α is a parameter of the overlap integral and does not enter this descriptor at
+all — the distance axis has its own width σ — so the invariant columns are searched over the
+regularisation alone (three settings) and, in the last column, over three distance grids as well,
+which is the same nine settings the aligned model gets from its three attenuations and three
+regularisations:
 
-| set | aligned CMF | fragment counts | invariant, default grid | invariant, grid searched |
+| set | aligned CMF (9) | fragment counts (3) | invariant, one grid (3) | invariant, three grids (9) |
 |---|---:|---:|---:|---:|
 | COX2 | **+0.425** | +0.174 | +0.355 | +0.364 |
 | DHFR | **+0.463** | +0.159 | +0.384 | +0.424 |
@@ -473,12 +477,13 @@ same nine settings (three attenuations × three regularisations) and the same fo
 | mittal/ACHE | −0.304 | **−0.058** | −0.137 | −0.111 |
 | mean | **+0.189** | +0.072 | +0.172 | +0.200 |
 
-Dropping the frame costs 0.017 in mean q² and more than doubles what the pose-free count kernel
-achieves. Per set the aligned model keeps a real lead on COX2, DHFR and Sutherland's AChE, the
-invariant kernel wins on BZR — the set where the alignment had already lost to counts — and
-neither helps on Mittal's ACHE, where nothing does. Allowing it three distance grids instead of
-one (the last column, 27 settings against the aligned model's 9) puts it slightly ahead on
-average, which is worth stating but not worth believing without a wider test.
+At equal freedom — nine settings each — the invariant kernel is slightly ahead of the aligned
+model, +0.200 against +0.189; held to a single fixed distance grid, a third of that freedom, it
+is 0.017 behind. Either way it more than doubles what the pose-free count kernel achieves. Per
+set the aligned model keeps a real lead on COX2, DHFR and Sutherland's AChE, the invariant kernel
+wins on BZR — the set where the alignment had already lost to counts — and neither helps on
+Mittal's ACHE, where nothing does. Five sets are not enough to call the draw at the top, but they
+are enough to say that most of what the geometry contributes does not need the frame.
 
 So for a series of several chemotypes, most of what the three-dimensional fields contribute
 survives without any superposition at all. That is the useful half of the answer. The other half
@@ -489,7 +494,9 @@ cannot tell a molecule from its mirror image, so enantiomers are identical to it
 need the signed triple product of three displacements, the three-point case of the same idea.
 
 `evaluate` reports it as the fourth number, the `hetero` command prints it, and the Chemotypes
-tab carries it beside the other three.
+tab carries it beside the other three. It is a comparator there, not yet a modelling method:
+there is no way to *fit* a model on this kernel from the command line or the application, which
+would need the model to accept a kernel that does not come from the fields of an atom table.
 
 ### Property fields against indicator fields
 
