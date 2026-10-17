@@ -83,7 +83,8 @@ def collect_pool(target: str, wide: bool) -> list:
 
 
 def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str, seed: int = 0,
-          matched: bool = False, max_similarity: float = 0.35, wide: bool = True) -> None:
+          matched: bool = False, max_similarity: float = 0.35, wide: bool = True,
+          align_ref_max: int = 0) -> None:
     t0 = time.time()
     path = os.path.join(HERE, "sutherland", f"{target}.sdf")
     if not os.path.isfile(path):
@@ -99,7 +100,14 @@ def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str,
     thr = float(np.median(ds.activity[tr]))
     act = [i for i in tr if ds.activity[i] >= thr]
     fs = FieldSet.create(alpha=alpha, charge_model="file")
-    ref = AtomTable.from_molecules([build_fields(ds.mols[i], fs, ds.names[i]) for i in act])
+    ref_idx = act
+    if align_ref_max and len(act) > align_ref_max:
+        # posing is the expensive part and its cost grows with the reference; a subset of the
+        # actives is enough to define the frame, and the model is still fitted on all of them
+        step = len(act) / float(align_ref_max)
+        ref_idx = [act[int(k * step)] for k in range(align_ref_max)]
+        print(f"{target:5s} posing against {len(ref_idx)} of {len(act)} actives")
+    ref = AtomTable.from_molecules([build_fields(ds.mols[i], fs, ds.names[i]) for i in ref_idx])
 
     pool = collect_pool(target, wide=wide or matched)
     if matched:
@@ -162,13 +170,16 @@ def main():
                          "being topologically unlike them, which is what makes a background hard")
     ap.add_argument("--max-similarity", type=float, default=0.35,
                     help="a decoy's ECFP4 Tanimoto to every active must stay below this")
+    ap.add_argument("--align-ref-max", type=int, default=0, metavar="N",
+                    help="pose the decoys against at most N of the actives, which is what makes "
+                         "a large background affordable")
     ap.add_argument("--wide-pool", action="store_true",
                     help="draw from every example series, not only the Sutherland ones")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     for t in [x.strip() for x in a.targets.split(",") if x.strip()]:
         build(t, a.n_decoys, a.restarts, a.alpha, a.out, matched=a.matched,
-              max_similarity=a.max_similarity, wide=a.wide_pool)
+              max_similarity=a.max_similarity, wide=a.wide_pool, align_ref_max=a.align_ref_max)
 
 
 if __name__ == "__main__":

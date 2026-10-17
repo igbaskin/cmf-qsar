@@ -893,11 +893,30 @@ AChE every method still scores exactly 1.000 on both backgrounds.
 
 The reason is worth stating, because it limits what any decoy set can do here. Matching six scalar
 properties does not match a three-dimensional field: the actives of a congeneric series resemble one
-another far more than anything from another series does, whatever its molecular weight. So for a
-congeneric series, decoy-based screening metrics sit at the ceiling and cannot tell two methods apart
-— the discriminating negatives are the *weaker molecules of the same series* (AUC 0.6–0.8, see the
-one-class section above), or genuinely measured inactives such as LIT-PCBA. The decoy sets here are
-useful for checking that a screening model works at all, not for comparing models.
+another far more than anything from another series does, whatever its molecular weight.
+
+**Nor does early recognition rescue it.** An AUC near 1 is usually a sign that enrichment at a small
+fraction should be looked at instead, and the enrichment factor was useless here for a second reason —
+with 30 actives against 100 decoys the active rate is 23 %, so the top 1 % is a single molecule and
+every method sits at the ceiling of 4.3 immediately. Rebuilding the background at 1000 matched decoys
+brings the active rate to 2.9 % and raises the ceiling to 34, and `screening_scores` now also reports
+EF at 0.5 %, the ceiling beside every factor, and the RIE and BEDROC of Truchon and Bayly (2007),
+which weight an active by `exp(−α r / N)` and keep discriminating after a factor has saturated. On
+THR and AChE, over every one of the 15 to 60 settings of each of the five descriptions, the result is
+the same in all of them: AUC 1.000, BEDROC 1.000 at both α = 20 and α = 160.9, EF at its ceiling.
+The separation is total rather than merely good — on THR the worst held-out active scores −0.50 and
+the best decoy −1.50, a gap of one full unit, with mean kernel similarity 4.65 inside the actives
+against 2.55 to the decoys — and no ranking metric can rank what is already perfectly separated.
+
+So for a congeneric series, decoy-based screening metrics cannot tell two methods apart, whichever
+metric is chosen. The discriminating negatives are the *weaker molecules of the same series*
+(AUC 0.6–0.8, see the one-class section above), or genuinely measured inactives such as LIT-PCBA.
+The decoy sets here are useful for checking that a screening model works at all, not for comparing
+models. A thousand-molecule background takes about three minutes to build, and is not shipped:
+
+```bash
+python examples/make_decoy_sets.py --targets THR --matched --n-decoys 1000 --align-ref-max 10
+```
 
 A one-class model scores how typical a molecule is of the training actives in field space. That is what
 it is for, and it is not the same as activity. Fitted to the 31 thrombin actives (α = 0.5, ν = 0.2) and
