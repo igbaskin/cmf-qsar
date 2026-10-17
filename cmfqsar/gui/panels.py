@@ -1725,8 +1725,14 @@ class ViewerControls(QWidget):
         self.cmb_shapfield_style.addItems(["solid", "mesh"])
         self.cmb_shapfield_style.currentIndexChanged.connect(self.changed)
         self.chk_atoms = QCheckBox("atom contributions")
+        self.chk_pharmacophore = QCheckBox("pharmacophore")
+        self.chk_pharmacophore.setToolTip(
+            "The features extracted from the co-fields (Tools, Extract pharmacophore), drawn as "
+            "translucent spheres coloured by type. Untick to take them off the view; they are "
+            "kept until the model is rebuilt or the molecules move.")
+        self.chk_pharmacophore.setEnabled(False)
         for cb in (self.chk_cofield, self.chk_molfield, self.chk_overlap, self.chk_shapfield,
-                   self.chk_atoms):
+                   self.chk_atoms, self.chk_pharmacophore):
             cb.toggled.connect(self.changed)
             row3.addWidget(cb)
             if cb is self.chk_cofield:

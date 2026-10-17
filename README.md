@@ -801,7 +801,10 @@ python cmf_cli.py pharmacophore thrombin.cmf --level 0.6 --max-features 8 \
 
 In the application it is *Tools → Extract pharmacophore from the co-field…*: the features are
 listed in the log with their weights and meanings, drawn in the 3D view as translucent spheres
-coloured by type, and can be written out. The CSV carries everything; the PDB holds the features
+coloured by type, and can be written out. The **pharmacophore** tick box in the viewer controls
+takes them off the view and puts them back without recomputing; they are dropped for good when
+the model is rebuilt, the molecules move or another data set is loaded, since the features belong
+to one fitted model. The CSV carries everything; the PDB holds the features
 as pseudo-atoms with the tolerance radius in the B-factor and the weight in the occupancy, so any
 viewer can draw them beside the molecules.
 

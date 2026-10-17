@@ -984,6 +984,7 @@ class MainWindow(QMainWindow):
         ds = self.ds
         self.molfields = [build_fields(m, FieldSet(specs=[]), n) for m, n in zip(ds.mols, ds.names)]
         self.chemotypes = self.chemotype_result = None   # another series, another grouping
+        self.clear_pharmacophore()                       # the features belonged to the old model
         self.dataset_panel.populate(ds.names, ds.activity, ds.subset)
         props = numeric_properties(ds.mols)
         cmb = self.dataset_panel.cmb_activity
@@ -1104,6 +1105,7 @@ class MainWindow(QMainWindow):
     def build_model(self):
         if not self._check_ready():
             return
+        self.clear_pharmacophore()          # a new model means new co-fields and new features
         fs = self._fieldset_from_panel()
         if not fs.specs:
             QMessageBox.information(self, "No fields", "Select at least one molecular field.")
@@ -1613,6 +1615,7 @@ class MainWindow(QMainWindow):
         self.complementarity = None
         self._comp_surface_cache = {}
         self.shapley_result = self.shapley_fields = None
+        self.clear_pharmacophore()
         if self.model is not None:
             self.model = None
             self.results_panel.clear_contributions(
@@ -2421,7 +2424,7 @@ class MainWindow(QMainWindow):
                         legend.append(f"Shapley values of {self.ds.names[cur]}: red = positive, "
                                       f"blue = negative; their sum is the prediction minus the "
                                       f"baseline")
-        if self.pharmacophore:
+        if self.pharmacophore and vc.chk_pharmacophore.isChecked():
             # the discretised co-field: one translucent sphere per feature, coloured by type
             from ..pharmacophore import colour_of
             feats = self.pharmacophore
@@ -2521,6 +2524,15 @@ class MainWindow(QMainWindow):
 
         self.run_task(task, done, "Aligning by prediction confidence")
 
+    def clear_pharmacophore(self) -> None:
+        """Take the features off the view and forget them: they belong to one fitted model."""
+        self.pharmacophore = None
+        box = self.controls.chk_pharmacophore
+        box.blockSignals(True)
+        box.setChecked(False)
+        box.setEnabled(False)
+        box.blockSignals(False)
+
     def pharmacophore_dialog(self):
         """Discretise the co-fields of the fitted model into typed features with tolerances."""
         if self.model is None:
@@ -2554,7 +2566,12 @@ class MainWindow(QMainWindow):
 
         def done(feats):
             from ..pharmacophore import summary
-            self.pharmacophore = feats if draw else None
+            self.pharmacophore = feats or None
+            box = self.controls.chk_pharmacophore
+            box.setEnabled(bool(feats))
+            box.blockSignals(True)
+            box.setChecked(bool(feats) and draw)
+            box.blockSignals(False)
             self.log(f"Pharmacophore from the co-fields (level {level:g}): {summary(feats)}")
             for f in feats:
                 self.results_panel.append_log("    " + f.describe())
