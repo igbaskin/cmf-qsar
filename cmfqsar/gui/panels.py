@@ -113,83 +113,141 @@ class DatasetPanel(QWidget):
         hh.setSectionResizeMode(QHeaderView.ResizeToContents)
         hh.setSectionResizeMode(1, QHeaderView.Interactive)
         hh.resizeSection(1, 110)
-        self.table.setSortingEnabled(False)
+        self.table.setSortingEnabled(False)       # the panel sorts itself, see _sort_by
+        hh.setSectionsClickable(True)
+        hh.sectionClicked.connect(self._sort_by)
+        hh.setToolTip("Click a column to sort by it: again to reverse, a third time to go back "
+                      "to the order of the file")
         lay.addWidget(self.table)
         self.lbl_info = QLabel("No data set loaded")
         lay.addWidget(self.lbl_info)
 
         self.table.currentCellChanged.connect(lambda r, c, pr, pc: self.selection_changed.emit(self.row_to_index(r)))
         self.table.itemChanged.connect(self._item_changed)
-        self._show_boxes: List[QCheckBox] = []
+        self._show_boxes: Dict[int, QCheckBox] = {}
         self._group_labels = None
+        self._group_names = None
+        self._names: List[str] = []
+        self._activity = np.zeros(0)
+        self._subset: List[str] = []
+        self._pred: Dict[int, Dict[int, float]] = {c: {} for c in range(4, len(self.COLS))}
+        self._shown: List[bool] = []
+        self._order: List[int] = []
+        self._pos: Dict[int, int] = {}
+        self._sort_col, self._sort_desc = -1, False
         self.btn_show_all.clicked.connect(lambda: self.set_all_shown(True))
         self.btn_show_none.clicked.connect(lambda: self.set_all_shown(False))
         self.btn_show_sel.clicked.connect(self.show_selected_only)
         self._block = False
 
-    # rows map 1:1 to data set indices
+    # The table may be sorted, so a row is not a molecule: `_order` holds the data-set index of
+    # every row and `_pos` the inverse.  Everything the panel is asked about is in data-set
+    # indices; only the rendering knows about rows.
     def row_to_index(self, row: int) -> int:
-        return row if 0 <= row < self.table.rowCount() else -1
+        return int(self._order[row]) if 0 <= row < len(self._order) else -1
+
+    def index_to_row(self, index: int) -> int:
+        return int(self._pos.get(int(index), -1))
 
     def populate(self, names, activity, subset) -> None:
         self.set_group_labels(None)              # a different series needs its own grouping
+        self._names = [str(n) for n in names]
+        self._activity = np.asarray(activity, float)
+        self._subset = [str(s) for s in subset]
+        self._pred = {c: {} for c in range(4, len(self.COLS))}
+        self._shown = [i == 0 for i in range(len(self._names))]
+        self._order = list(range(len(self._names)))
+        self._pos = {i: i for i in self._order}
+        self._sort_col, self._sort_desc = -1, False
+        self.table.horizontalHeader().setSortIndicatorShown(False)
+        self._render()
+        self._update_info()
+
+    def _update_info(self) -> None:
+        n_dec = sum(1 for s in self._subset if s == "decoy")
+        self.lbl_info.setText(
+            f"{len(self._names)} molecules  (train {sum(1 for s in self._subset if s == 'train')}, "
+            f"test {sum(1 for s in self._subset if s == 'test')}"
+            + (f", decoys {n_dec}" if n_dec else "") + ")"
+            + ("" if self._sort_col < 0 else
+               f"   sorted by {self._header_text(self._sort_col)}, "
+               + self._sort_style(self._sort_col)[2 if self._sort_desc else 1]))
+
+    def _header_text(self, col: int) -> str:
+        item = self.table.horizontalHeaderItem(col)
+        return item.text() if item is not None else str(col)
+
+    # ----------------------------------------------------------------- rendering
+    def _render(self) -> None:
+        """Fill every row from the stored data, in the current order."""
         self._block = True
         self.table.setRowCount(0)
-        self._show_boxes: List[QCheckBox] = []
-        self.table.setRowCount(len(names))
-        for i, (n, y, s) in enumerate(zip(names, activity, subset)):
-            self.table.setItem(i, 0, QTableWidgetItem(""))
-            self._add_show_box(i, checked=(i == 0))
-            self.table.setItem(i, 1, QTableWidgetItem(str(n)))
-            self.table.setItem(i, 2, QTableWidgetItem("" if not np.isfinite(y) else f"{y:.3f}"))
-            self.table.setItem(i, 3, QTableWidgetItem(str(s)))
+        self._show_boxes = {}
+        self.table.setRowCount(len(self._order))
+        for row, i in enumerate(self._order):
+            self.table.setItem(row, 0, QTableWidgetItem(""))
+            self._add_show_box(row, i)
+            self.table.setItem(row, 1, QTableWidgetItem(self._names[i]))
+            self.table.setItem(row, 2, QTableWidgetItem(self._activity_text(i)))
+            self.table.setItem(row, 3, QTableWidgetItem(self._subset[i]))
             for c in range(4, len(self.COLS)):
-                self.table.setItem(i, c, QTableWidgetItem(""))
-            self._color_row(i, s)
+                self.table.setItem(row, c, QTableWidgetItem(self._pred_text(c, i)))
+            self._color_row(row, self._subset[i])
+            self._set_group_cell(row, i)
         self._block = False
-        n_dec = sum(1 for s in subset if s == "decoy")
-        self.lbl_info.setText(f"{len(names)} molecules  (train {sum(1 for s in subset if s == 'train')}, "
-                              f"test {sum(1 for s in subset if s == 'test')}"
-                              + (f", decoys {n_dec}" if n_dec else "") + ")")
 
-    def _color_row(self, i: int, subset: str) -> None:
+    def _activity_text(self, i: int) -> str:
+        y = self._activity[i] if i < len(self._activity) else float("nan")
+        return "" if not np.isfinite(y) else f"{y:.3f}"
+
+    def _pred_text(self, col: int, i: int) -> str:
+        v = self._pred.get(col, {}).get(i)
+        return "" if v is None or not np.isfinite(v) else f"{v:.3f}"
+
+    def _color_row(self, row: int, subset: str) -> None:
         col = {"train": QColor(225, 238, 255), "test": QColor(255, 232, 215)}.get(
             subset, QColor(228, 228, 228))        # decoys: neutral grey
         for c in range(min(self.table.columnCount(), len(self.COLS))):
-            it = self.table.item(i, c)
+            it = self.table.item(row, c)
             if it is not None:
                 it.setBackground(col)
                 it.setForeground(QColor(15, 15, 15))
 
     def update_subsets(self, subset) -> None:
+        self._subset = [str(s) for s in subset]
         self._block = True
-        for i, s in enumerate(subset):
-            self.table.item(i, 3).setText(str(s))
-            self._color_row(i, s)
+        for row, i in enumerate(self._order):
+            self.table.item(row, 3).setText(self._subset[i])
+            self._color_row(row, self._subset[i])
         self._block = False
-        n_dec = sum(1 for s in subset if s == "decoy")
-        self.lbl_info.setText(f"{len(subset)} molecules  (train {sum(1 for s in subset if s == 'train')}, "
-                              f"test {sum(1 for s in subset if s == 'test')}"
-                              + (f", decoys {n_dec}" if n_dec else "") + ")")
+        self._update_info()
+        if self._sort_col == 3:
+            self._apply_sort()
 
     def update_activity(self, activity) -> None:
+        self._activity = np.asarray(activity, float)
         self._block = True
-        for i, y in enumerate(activity):
-            self.table.item(i, 2).setText("" if not np.isfinite(y) else f"{y:.3f}")
+        for row, i in enumerate(self._order):
+            self.table.item(row, 2).setText(self._activity_text(i))
         self._block = False
+        if self._sort_col == 2:
+            self._apply_sort()
 
     def set_predictions(self, col: int, values: Dict[int, float]) -> None:
+        self._pred[col] = {int(k): float(v) for k, v in values.items()}
         self._block = True
-        for i in range(self.table.rowCount()):
-            v = values.get(i)
-            self.table.item(i, col).setText("" if v is None or not np.isfinite(v) else f"{v:.3f}")
+        for row, i in enumerate(self._order):
+            self.table.item(row, col).setText(self._pred_text(col, i))
         self._block = False
+        if self._sort_col == col:
+            self._apply_sort()
 
     def clear_predictions(self) -> None:
+        self._pred = {c: {} for c in range(4, len(self.COLS))}
         self._block = True
-        for i in range(self.table.rowCount()):
+        for row in range(self.table.rowCount()):
             for c in range(4, len(self.COLS)):
-                self.table.item(i, c).setText("")
+                self.table.item(row, c).setText("")
         self._block = False
 
     def set_group_labels(self, labels, names=None) -> None:
@@ -199,36 +257,110 @@ class DatasetPanel(QWidget):
         row colours keep meaning the subset, so the group is carried by its own cell.
         """
         if labels is None:
-            self._group_labels = None
+            self._group_labels = self._group_names = None
             self.table.setColumnCount(len(self.COLS))
             self.table.setHorizontalHeaderLabels(self.COLS)
+            if getattr(self, "_sort_col", -1) >= len(self.COLS):
+                self._sort_col = -1
             return
-        labels = np.asarray(labels, dtype=int)
-        self._group_labels = labels
+        self._group_labels = np.asarray(labels, dtype=int)
+        self._group_names = list(names) if names is not None else None
         if self.table.columnCount() <= len(self.COLS):
             self.table.setColumnCount(len(self.COLS) + 1)
             self.table.setHorizontalHeaderLabels(self.COLS + ["Chemotype"])
-        col = len(self.COLS)
         self._block = True
-        for i in range(self.table.rowCount()):
-            g = int(labels[i]) if i < len(labels) else -1
-            it = QTableWidgetItem("" if g < 0 else str(g))
-            it.setTextAlignment(Qt.AlignCenter)
-            if g >= 0:
-                it.setBackground(_group_colour(g))
-                it.setForeground(QColor(15, 15, 15))
-                it.setToolTip(str(names[g]) if names is not None and g < len(names)
-                              else f"chemotype {g}")
-            self.table.setItem(i, col, it)
+        for row, i in enumerate(self._order):
+            self._set_group_cell(row, i)
         self._block = False
 
+    def _set_group_cell(self, row: int, i: int) -> None:
+        labels = getattr(self, "_group_labels", None)
+        if labels is None or self.table.columnCount() <= len(self.COLS):
+            return
+        g = int(labels[i]) if i < len(labels) else -1
+        it = QTableWidgetItem("" if g < 0 else str(g))
+        it.setTextAlignment(Qt.AlignCenter)
+        if g >= 0:
+            it.setBackground(_group_colour(g))
+            it.setForeground(QColor(15, 15, 15))
+            names = getattr(self, "_group_names", None)
+            it.setToolTip(str(names[g]) if names is not None and g < len(names)
+                          else f"chemotype {g}")
+        self.table.setItem(row, len(self.COLS), it)
+
+    # ----------------------------------------------------------------- sorting
+    #: how each column reads best on the first click, and what to call the two directions
+    SORT_STYLE = {0: (True, "shown first", "hidden first"),
+                  1: (False, "A to Z", "Z to A"),
+                  2: (True, "highest first", "lowest first"),
+                  3: (False, "train first", "decoys first")}
+    SORT_NUMERIC = ("highest first", "lowest first")
+
+    def _sort_value(self, col: int, i: int):
+        """The value a column is ordered by, or None when the molecule has none."""
+        if col == 0:
+            return (bool(self._shown[i]), self._names[i].lower())
+        if col == 1:
+            return (self._names[i].lower(),)
+        if col == 2:
+            y = self._activity[i] if i < len(self._activity) else float("nan")
+            return None if not np.isfinite(y) else (float(y),)
+        if col == 3:
+            return ({"train": 0, "test": 1, "decoy": 2}.get(self._subset[i], 3),
+                    self._names[i].lower())
+        if col >= len(self.COLS):
+            labels = getattr(self, "_group_labels", None)
+            if labels is None or i >= len(labels):
+                return None
+            return (int(labels[i]),)
+        v = self._pred.get(col, {}).get(i)
+        return None if v is None or not np.isfinite(v) else (float(v),)
+
+    def _sort_style(self, col: int):
+        if col >= len(self.COLS):                 # the chemotypes are numbered largest group first
+            return (False, "largest group first", "smallest group first")
+        return self.SORT_STYLE.get(col, (True,) + self.SORT_NUMERIC)
+
+    def _sort_by(self, col: int) -> None:
+        """A click on a header sorts by it; a second reverses; a third restores the file order."""
+        if col == self._sort_col:
+            if not self._sort_desc:
+                self._sort_desc = True
+            else:
+                self._sort_col, self._sort_desc = -1, False
+        else:
+            self._sort_col, self._sort_desc = col, False
+        self._apply_sort()
+
+    def _apply_sort(self) -> None:
+        keep = self.current_index()
+        hh = self.table.horizontalHeader()
+        if self._sort_col < 0:
+            self._order = list(range(len(self._names)))
+            hh.setSortIndicatorShown(False)
+        else:
+            col = self._sort_col
+            first_desc, _, _ = self._sort_style(col)
+            reverse = first_desc != self._sort_desc
+            have = [i for i in range(len(self._names)) if self._sort_value(col, i) is not None]
+            missing = [i for i in range(len(self._names)) if self._sort_value(col, i) is None]
+            have.sort(key=lambda i: self._sort_value(col, i), reverse=reverse)
+            self._order = have + missing          # a molecule with no value always sinks
+            hh.setSortIndicatorShown(True)
+            hh.setSortIndicator(col, Qt.DescendingOrder if reverse else Qt.AscendingOrder)
+        self._pos = {int(i): row for row, i in enumerate(self._order)}
+        self._render()
+        self._update_info()
+        if keep >= 0:
+            self.select_index(keep)
+
     # -- "Show" column: real check-box widgets (item check states render poorly on coloured rows)
-    def _add_show_box(self, row: int, checked: bool) -> None:
+    def _add_show_box(self, row: int, index: int) -> None:
         box = QCheckBox()
-        box.setChecked(checked)
+        box.setChecked(bool(self._shown[index]))
         box.setToolTip("Show this molecule in the 3D view")
         box.setStyleSheet(_SHOW_BOX_STYLE)
-        box.toggled.connect(self._show_box_toggled)
+        box.toggled.connect(lambda on, i=index: self._box_toggled(i, on))
         holder = QWidget()
         hl = QHBoxLayout(holder)
         hl.setContentsMargins(0, 0, 0, 0)
@@ -236,34 +368,36 @@ class DatasetPanel(QWidget):
         hl.addWidget(box)
         holder.setAutoFillBackground(False)
         self.table.setCellWidget(row, 0, holder)
-        self._show_boxes.append(box)
+        self._show_boxes[index] = box
 
-    def _show_box(self, row: int) -> Optional[QCheckBox]:
-        return self._show_boxes[row] if 0 <= row < len(self._show_boxes) else None
+    def _box_toggled(self, index: int, on: bool) -> None:
+        self._shown[index] = bool(on)
+        if not self._block:
+            self.show_changed.emit()
 
-    def _set_box(self, row: int, on: bool) -> None:
-        box = self._show_box(row)
+    def _set_box(self, index: int, on: bool) -> None:
+        if not (0 <= index < len(self._shown)):
+            return
+        self._shown[index] = bool(on)
+        box = self._show_boxes.get(index)
         if box is not None:
             box.blockSignals(True)
             box.setChecked(on)
             box.blockSignals(False)
 
-    def _show_box_toggled(self, _on: bool) -> None:
-        if not self._block:
-            self.show_changed.emit()
-
     def shown_indices(self) -> List[int]:
-        return [i for i, b in enumerate(self._show_boxes) if b.isChecked()]
+        return [i for i, on in enumerate(self._shown) if on]
 
     def selected_indices(self) -> List[int]:
-        return sorted({ix.row() for ix in self.table.selectedIndexes()})
+        return sorted({self.row_to_index(ix.row()) for ix in self.table.selectedIndexes()}
+                      - {-1})
 
     def current_index(self) -> int:
         return self.row_to_index(self.table.currentRow())
 
     def set_all_shown(self, on: bool) -> None:
         self._block = True
-        for i in range(self.table.rowCount()):
+        for i in range(len(self._shown)):
             self._set_box(i, on)
         self._block = False
         self.show_changed.emit()
@@ -271,7 +405,7 @@ class DatasetPanel(QWidget):
     def show_selected_only(self) -> None:
         sel = set(self.selected_indices())
         self._block = True
-        for i in range(self.table.rowCount()):
+        for i in range(len(self._shown)):
             self._set_box(i, i in sel)
         self._block = False
         self.show_changed.emit()
@@ -279,14 +413,15 @@ class DatasetPanel(QWidget):
     def set_shown(self, indices, on=True):
         self._block = True
         for i in indices:
-            self._set_box(i, on)
+            self._set_box(int(i), on)
         self._block = False
         self.show_changed.emit()
 
     def select_index(self, i: int) -> None:
-        if 0 <= i < self.table.rowCount():
-            self.table.selectRow(i)
-            self.table.setCurrentCell(i, 1)
+        row = self.index_to_row(i)
+        if row >= 0:
+            self.table.selectRow(row)
+            self.table.setCurrentCell(row, 1)
 
     def _item_changed(self, item: QTableWidgetItem) -> None:
         if self._block:

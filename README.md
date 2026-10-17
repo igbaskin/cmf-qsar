@@ -1270,7 +1270,11 @@ python cmf_app.py examples/benzamides_synthetic.sdf --activity pActivity --test-
 1. **Data set → Open training set…** — SDF/MOL2 with 3D coordinates of *aligned* molecules (hydrogens are
    added with coordinates if absent; SMILES/CSV files are embedded in 3D with ETKDG+MMFF). Choose the
    SD property holding the activity. Use *Random split* or the *→ test* button to define a test set, or
-   *Add test set…* to load a separate file.
+   *Add test set…* to load a separate file. Clicking a column header sorts the table by it — activity,
+   name, set, either column of predictions, or the chemotype — a second click reverses it and a third
+   restores the order of the file; molecules with no value in that column always sink to the bottom,
+   and the selection, the *Show* ticks and everything else keep following the molecule rather than the
+   row.
 2. If the molecules are not aligned: **Tools → Align data set to reference…** (maximum common substructure
    superposition, optional refinement by field similarity).
 3. **Model panel** — choose the fields (tick *Continuous indicator fields* to add one indicator field per
