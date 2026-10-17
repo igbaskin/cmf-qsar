@@ -281,6 +281,126 @@ def _store_weights(mols, idx, bags, weights, fieldset):
             mols[i].SetProp(prop, ",".join(f"{v:.6f}" for v in w))
 
 
+class ChemotypeDialog(QDialog):
+    """Options for grouping a heterogeneous series by scaffold."""
+
+    def __init__(self, n_mol: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Find the chemotypes")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            f"The {n_mol} molecules are grouped by their Bemis-Murcko framework: strip the side "
+            "chains, keep the ring systems and what links them, and group what is left.\n\n"
+            "Everything else in this submenu works from that grouping: aligning inside a group, "
+            "placing the groups in one frame, and holding a whole group out of the validation.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(540)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.chk_generic = QCheckBox("ignore elements and bond orders")
+        self.chk_generic.setToolTip("The generic framework merges scaffolds that differ only in "
+                                    "their heteroatoms, which usually gives fewer, larger groups")
+        form.addRow("Framework:", self.chk_generic)
+        self.spin_min = QSpinBox()
+        self.spin_min.setRange(1, 50)
+        self.spin_min.setValue(3)
+        self.spin_min.setToolTip("Scaffolds with fewer molecules than this are pooled into one "
+                                 "group, so that singletons do not turn the validation into "
+                                 "leave-one-molecule-out")
+        form.addRow("Smallest group:", self.spin_min)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+
+class PlaceChemotypesDialog(QDialog):
+    """Options for moving each chemotype, as a rigid body, into a common frame."""
+
+    def __init__(self, names, has_protein: bool, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Place the chemotypes")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            "Each chemotype is moved as a whole, so the alignment made inside it survives. Only "
+            "the relation between chemotypes changes.\n\n"
+            "By field similarity, one chemotype stays still and the others are superimposed on it "
+            "by maximising the CMF kernel between their reference molecules, which needs no common "
+            "substructure. By docking, each chemotype's reference is placed in the binding site "
+            "instead, which needs a structure but no reference chemotype.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(560)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.cmb_mode = QComboBox()
+        self.cmb_mode.addItems(["field similarity to a reference chemotype",
+                                "docking into the binding site"])
+        if not has_protein:
+            self.cmb_mode.model().item(1).setEnabled(False)
+            self.cmb_mode.setToolTip("Load a protein structure to enable docking")
+        form.addRow("Place by:", self.cmb_mode)
+        self.cmb_ref = QComboBox()
+        for g, nm in enumerate(names):
+            self.cmb_ref.addItem(f"{g}: {nm[:56]}")
+        form.addRow("Reference chemotype:", self.cmb_ref)
+        self.spin_restarts = QSpinBox()
+        self.spin_restarts.setRange(0, 20)
+        self.spin_restarts.setValue(2)
+        form.addRow("Restarts:", self.spin_restarts)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+    def mode(self) -> str:
+        return ["field", "dock"][self.cmb_mode.currentIndex()]
+
+
+class ChemotypeValidationDialog(QDialog):
+    """Options for leave-one-chemotype-out validation and the alignment-free baseline."""
+
+    def __init__(self, n_groups: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Leave one chemotype out")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            f"Each of the {n_groups} chemotypes is held out in turn, so a molecule is never "
+            "predicted from its own scaffold-mates. Random folds flatter a mixed series badly, "
+            "and both numbers are reported side by side.\n\n"
+            "The comparison that matters is the last one: a model built on continuous indicator "
+            "fields with a very small attenuation ignores the poses entirely, since such a field "
+            "tends to a count of atoms of its type. If the aligned model cannot beat it across "
+            "chemotypes, the alignment is not paying for itself.\n\n"
+            "The attenuation and regularisation grids come from the Model panel.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(560)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.spin_folds = QSpinBox()
+        self.spin_folds.setRange(0, 50)
+        self.spin_folds.setValue(0)
+        self.spin_folds.setSpecialValueText("one per chemotype")
+        self.spin_folds.setToolTip("Bundle the chemotypes into this many folds instead of holding "
+                                   "out one at a time, which is worth doing when there are many "
+                                   "small groups")
+        form.addRow("Folds:", self.spin_folds)
+        self.spin_alpha = QDoubleSpinBox()
+        self.spin_alpha.setRange(0.001, 1.0)
+        self.spin_alpha.setDecimals(3)
+        self.spin_alpha.setSingleStep(0.01)
+        self.spin_alpha.setValue(0.02)
+        self.spin_alpha.setToolTip("Attenuation of the alignment-free indicator fields; the "
+                                   "smaller it is, the closer the kernel is to counting fragments")
+        form.addRow("Baseline α:", self.spin_alpha)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+
 class DockDialog(QDialog):
     """Options for placing molecules, or their conformations, inside the pocket."""
 
@@ -490,6 +610,8 @@ class MainWindow(QMainWindow):
         self.shapley_fields = None          # (molecule index, (F, N) values) for the Shapley field
         self.protein = None                 # cmfqsar.protein.Protein behind the molecules
         self.complementarity = None         # scores of the series against the pocket
+        self.chemotypes = None              # (labels, scaffold names) of a heterogeneous series
+        self.chemotype_result = None
         self._comp_surface_cache = {}
         self._site_cache = None             # (key, Protein) of the last binding site drawn
         self.search_rows = []
@@ -599,6 +721,15 @@ class MainWindow(QMainWindow):
         self._act(tm, "Align decoys to the training set…", self.align_decoys_dialog)
         self._act(tm, "Unalign (randomise poses)…", self.unalign_dialog)
         self._act(tm, "Center view on current molecule", self.center_current)
+        tm.addSeparator()
+        hm = tm.addMenu("Heterogeneous sets (several chemotypes)")
+        hm.setToolTip("A series of several scaffolds has no single common substructure, so the "
+                      "usual recipe quietly stops meaning what it says")
+        self._act(hm, "1. Find the chemotypes (Murcko scaffolds)…", self.chemotypes_dialog)
+        self._act(hm, "2. Align within each chemotype", self.align_within_chemotypes)
+        self._act(hm, "3. Place the chemotypes in one frame…", self.place_chemotypes_dialog)
+        self._act(hm, "4. Leave one chemotype out, with the alignment-free baseline…",
+                  self.chemotype_validation_dialog)
         hm = mb.addMenu("&Help")
         self._act(hm, "About CMF 3D-QSAR / method summary", self.show_about)
 
@@ -750,6 +881,7 @@ class MainWindow(QMainWindow):
     def _after_dataset_change(self):
         ds = self.ds
         self.molfields = [build_fields(m, FieldSet(specs=[]), n) for m, n in zip(ds.mols, ds.names)]
+        self.chemotypes = self.chemotype_result = None   # another series, another grouping
         self.dataset_panel.populate(ds.names, ds.activity, ds.subset)
         props = numeric_properties(ds.mols)
         cmb = self.dataset_panel.cmb_activity
@@ -1197,6 +1329,166 @@ class MainWindow(QMainWindow):
                 self.log("GP predictive variances: " + ", ".join(f"{names[i]}={v:.3g}" for i, v in zip(te, var)))
 
         self.run_task(task, done, "Predicting")
+
+    # ------------------------------------------------- heterogeneous series (several chemotypes)
+    def _need_chemotypes(self) -> bool:
+        if self.ds is None or not self.molfields:
+            QMessageBox.information(self, "No data", "Load a data set first.")
+            return False
+        if self.chemotypes is None:
+            QMessageBox.information(self, "No chemotypes",
+                                    "Find the chemotypes first: Tools, Heterogeneous sets, "
+                                    "step 1. Everything else in this submenu works from that "
+                                    "grouping.")
+            return False
+        return True
+
+    def chemotypes_dialog(self):
+        """Step 1: group the molecules by their Bemis-Murcko framework."""
+        from ..chemotypes import chemotype_labels, grouped_folds, summarise_groups
+        if self.ds is None or not self.ds.mols:
+            QMessageBox.information(self, "No data", "Load a data set first.")
+            return
+        dlg = ChemotypeDialog(len(self.ds.mols), self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        generic, min_size = dlg.chk_generic.isChecked(), dlg.spin_min.value()
+        labels, names = chemotype_labels(self.ds.mols, generic=generic, min_size=min_size)
+        self.chemotypes = (labels, names)
+        folds = grouped_folds(labels)
+        self.log(summarise_groups(labels, names)
+                 + f"; leave-one-chemotype-out would use {len(folds)} folds of "
+                   f"{[len(f) for f in folds][:8]}{' …' if len(folds) > 8 else ''}")
+        for g, nm in enumerate(names):
+            n = int(np.sum(labels == g))
+            if n:
+                self.results_panel.append_log(f"    chemotype {g}: {n:4d} molecules  {nm[:70]}")
+        self.dataset_panel.set_group_labels(labels, names)
+        self.schedule_display()
+
+    def align_within_chemotypes(self):
+        """Step 2: superimpose the molecules of each chemotype on its largest member."""
+        from ..chemotypes import align_within_groups
+        if not self._need_chemotypes():
+            return
+        labels = self.chemotypes[0]
+        if QMessageBox.question(
+                self, "Align within chemotypes",
+                "Every molecule is superimposed on the largest molecule of its own chemotype, "
+                "where a common substructure exists and does the job well. The molecules move, "
+                "so a model built on their present poses is discarded.\n\nContinue?") != \
+                QMessageBox.Yes:
+            return
+        mols = self.ds.mols
+
+        def task(progress, cancel):
+            return align_within_groups(mols, labels, progress=progress, cancel=cancel)
+
+        def done(log):
+            bad = [l for l in log if "FAILED" in l]
+            self._after_poses_changed()
+            self.log(f"Aligned inside {int(labels.max()) + 1} chemotypes: {len(log) - len(bad)} "
+                     f"molecules placed, {len(bad)} failed")
+            for line in bad[:5]:
+                self.results_panel.append_log("    " + line)
+
+        self.run_task(task, done, "Aligning within chemotypes")
+
+    def place_chemotypes_dialog(self):
+        """Step 3: move each chemotype, as a rigid body, into one frame."""
+        from ..chemotypes import place_groups
+        if not self._need_chemotypes():
+            return
+        labels, names = self.chemotypes
+        dlg = PlaceChemotypesDialog(names, self.protein is not None, self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        mode = dlg.mode()
+        if mode == "dock" and self.protein is None:
+            QMessageBox.information(self, "No structure", "Placing by docking needs a protein.")
+            return
+        ref_group, restarts = dlg.cmb_ref.currentIndex(), dlg.spin_restarts.value()
+        fs = self._fieldset_from_panel()
+        fs.conformers = "single"
+        mols, protein = self.ds.mols, self.protein
+
+        def task(progress, cancel):
+            pocket = None
+            if mode == "dock":
+                from ..complementarity import pocket_fields
+                progress("Parameterising the pocket", 0.05)
+                pocket = pocket_fields(protein, fs)
+            return place_groups(mols, labels, fs, mode=mode, reference_group=ref_group,
+                                pocket=pocket, restarts=restarts, progress=progress, cancel=cancel)
+
+        def done(log):
+            self._after_poses_changed()
+            self.log(f"Placed {int(labels.max()) + 1} chemotypes in one frame by "
+                     f"{'docking' if mode == 'dock' else 'field similarity'}")
+            for line in log:
+                self.results_panel.append_log("    " + line[:140])
+
+        self.run_task(task, done, "Placing chemotypes")
+
+    def chemotype_validation_dialog(self):
+        """Step 4: hold out a whole chemotype, and compare with a model that ignores the poses."""
+        from ..chemotypes import evaluate
+        if not self._need_chemotypes():
+            return
+        if self.ds is None or not np.isfinite(self.ds.activity).any():
+            QMessageBox.information(self, "No activities", "The molecules need activities.")
+            return
+        labels, names = self.chemotypes
+        dlg = ChemotypeValidationDialog(len(names), self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        mp = self.model_panel
+        fs = self._fieldset_from_panel()
+        alphas = mp.alphas() or [1.0]
+        lams = mp.lams() or [1.0]
+        max_folds, base_alpha = dlg.spin_folds.value(), dlg.spin_alpha.value()
+        normalize = mp.chk_normalize.isChecked()
+        ds = self.ds
+
+        def task(progress, cancel):
+            return evaluate(ds.mols, ds.names, ds.activity, labels, names, fs, alphas=alphas,
+                            lams=lams, max_folds=max_folds, normalize=normalize,
+                            baseline_alpha=base_alpha, progress=progress, cancel=cancel)
+
+        def done(res):
+            self.chemotype_result = res
+            rows = [("q² with random folds", res.q2_random),
+                    ("q² leave-one-chemotype-out", res.q2_grouped),
+                    ("RMSE leave-one-chemotype-out", res.rmse_grouped),
+                    ("q² alignment-free fragment model", res.q2_baseline),
+                    ("alpha", res.alpha), ("lambda", res.lam)]
+            per = [(f"{g['name'][:48]}", g["n"], g["rmse"], g["bias"]) for g in res.per_group]
+            self.results_panel.set_chemotypes(
+                f"{len(res.per_group)} chemotypes held out in turn. Random folds flatter a mixed "
+                f"series, because a molecule is then predicted from its own scaffold-mates. "
+                f"Verdict: {res.verdict()}.", rows, per)
+            for i in range(self.results_panel.tabs.count()):
+                if self.results_panel.tabs.tabText(i) == "Chemotypes":
+                    self.results_panel.tabs.setCurrentIndex(i)
+            self.log(f"Leave-one-chemotype-out q² {res.q2_grouped:+.3f} against {res.q2_random:+.3f} "
+                     f"with random folds and {res.q2_baseline:+.3f} for the alignment-free model: "
+                     f"{res.verdict()}")
+
+        self.run_task(task, done, "Leave one chemotype out")
+
+    def _after_poses_changed(self) -> None:
+        """Molecules have moved: rebuild what was drawn and drop what no longer applies."""
+        self.molfields = [build_fields(m, FieldSet(specs=[], conformers=self.fieldset.conformers), n)
+                          for m, n in zip(self.ds.mols, self.ds.names)]
+        self._mol_volume_cache.clear()
+        self.complementarity = None
+        self._comp_surface_cache = {}
+        self.shapley_result = self.shapley_fields = None
+        if self.model is not None:
+            self.model = None
+            self.results_panel.clear_contributions(
+                "The model was discarded: the molecules it was fitted on have moved.")
+        self.schedule_display()
 
     # ------------------------------------------------------------------ conformations (4D)
     def _conformer_counts(self) -> List[int]:

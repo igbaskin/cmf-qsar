@@ -51,6 +51,7 @@ structure, which the data set brings with it and which needs no superposition.*
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
 | Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC. **One-class classification** (novelty detection) for similarity-based virtual screening: 1-SVM. |
+| Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
 | Interpretation | **Molecular co-fields** `C_f(r) = Σ_j a_j X_fj(r)` (Eq. 9) rendered as ± isosurfaces; molecular field `X_f(r)` of any molecule in the same colours, with or without a model (co-fields are drawn as solid surfaces and molecular fields as a mesh by default; both styles are switchable); overlap `C·X` whose integral is the field's contribution to the prediction (Eq. 7); the three decomposition rules of the 2019 paper: training-molecule contributions `a_j K(X,X_j)` and **atom contributions** (Eq. 14 of the 2015 paper) shown as red/blue spheres; **Shapley values** over atoms, substituents or field types, which replace the co-field when a nonlinear kernel layer is used and reproduce the atom contributions exactly when it is not, with second-order interaction indices. |
@@ -314,6 +315,88 @@ is the safer default and is what the application starts with.
 One last trap: a seed of exactly zero makes RDKit return the same geometry for every conformation,
 which would silently collapse an ensemble; the generator maps it to a fixed non-zero seed and a test
 guards that.
+
+### Heterogeneous series: several chemotypes, no one common substructure
+
+Everything above rests on the molecules sharing a frame, and a congeneric series supplies one:
+superimpose on the common substructure and the fields become comparable. A series of several
+scaffolds has no such substructure, and the usual recipe quietly stops meaning anything — one
+reference molecule, one maximum common substructure, and a random cross-validation that puts a
+molecule's own scaffold-mates in the training part, which is the most optimistic split available.
+
+`cmfqsar/chemotypes.py` is the workflow for that case, in the order the problem imposes.
+
+1. **Cluster by scaffold.** `chemotype_labels` groups the molecules by their Bemis-Murcko
+   framework, either as drawn or made generic so that elements and bond orders stop mattering.
+   Groups below a minimum size are pooled into one "other" group, so that a handful of singletons
+   does not turn the validation into leave-one-molecule-out.
+2. **Align within each cluster**, where a common substructure does exist and does the job well:
+   `align_within_groups` superimposes every molecule on the largest member of its own group.
+3. **Place the clusters relative to one another**, the step a congeneric series never needs.
+   `place_groups` moves each cluster as a rigid body, so step 2 survives intact: either by
+   maximising the CMF kernel between its reference and the reference of a chosen cluster (their
+   centroids are brought together first, since the kernel is flat where two molecules do not
+   overlap and there is nothing to climb), or by docking that reference into the binding site,
+   which needs a structure but no reference cluster at all.
+4. **Judge it by leave-one-chemotype-out.** `grouped_folds` never splits a group, and
+   `grouped_cv_predict` holds out a whole chemotype at a time; `max_folds` bundles the groups
+   when there are many small ones.
+5. **Compare with a baseline that needs no alignment.** `alignment_free_q2` builds the model from
+   continuous indicator fields with a very small attenuation: as α tends to zero such a field
+   tends to a count of atoms of its type, the overlap kernel tends to a fragment-count kernel, and
+   the poses stop mattering. A test measures exactly that — the gap between the kernel of a set of
+   molecules and the kernel of the same molecules rotated and translated at random shrinks with α,
+   to under 0.01 in q² at α = 2·10⁻⁵. If the aligned model cannot beat that, the alignment is not
+   paying for itself, and on a heterogeneous set that is the first thing worth knowing.
+
+`evaluate` runs steps 4 and 5 together and returns the three numbers with a verdict.
+
+**What it shows.** Five sets with more than one scaffold, molecules in their published poses (no
+realignment), all five physico-chemical fields, KRR with α over 0.3/0.5/1.0 and λ over 0.01/0.1/1,
+groups of at least three molecules:
+
+| set | n | chemotypes | random folds | leave-one-chemotype-out | alignment-free |
+|---|---:|---:|---:|---:|---:|
+| sutherland/COX2 | 282 | 14 | +0.537 | **+0.425** | +0.264 |
+| sutherland/DHFR | 361 | 31 | +0.623 | **+0.463** | +0.149 |
+| sutherland/BZR  | 147 | 12 | +0.388 | +0.088 | **+0.130** |
+| sutherland/AChE | 111 |  7 | +0.510 | **+0.275** | −0.223 |
+| mittal/ACHE     | 111 |  7 | +0.168 | −0.304 | **−0.113** |
+
+Random folds flatter every one of them, by 0.11 to 0.47 in q²; on ACHE they turn a model that
+cannot predict a new scaffold at all into a modestly positive number. That gap is the reason the
+grouped folds are here. Across scaffolds the aligned model still earns its keep on COX2, DHFR and
+Sutherland's AChE, and does not on BZR or on Mittal's ACHE, where a fragment-count model that
+ignores the geometry entirely does as well or better. Which it is cannot be guessed from the
+random-fold number, and the per-chemotype table says where the failure is: on DHFR one group of
+five molecules is predicted 2.07 log units too low whatever is done with it.
+
+Realigning first did not rescue the sets that fail. Under the same protocol, Mittal's ACHE goes
+from −0.304 in its published poses to −0.392 after step 2 and −0.390 after step 3, and BZR from
++0.088 to +0.097 and then +0.050: the same answer the conformational ensembles gave, from the
+other direction. A placement chosen to maximise field overlap is not a bioactive-pose hypothesis,
+and the model can tell. What the workflow is for is the question in step 4, not the realignment in
+steps 2 and 3, which are there for a set that arrives with no usable poses at all.
+
+The hyper-parameters are chosen on the same grouped folds the model is reported on, which is
+optimistic in the usual way of any selection on the reported statistic; what matters here is the
+comparison between representations, which share the protocol. The Murcko framework is one grouping
+among several reasonable ones — a different clustering gives different folds, and the workflow
+takes any labelling, not only the one it computes.
+
+```bash
+python cmf_cli.py hetero examples/sutherland/COX2.sdf --charges file --min-group 3 --out cox2_groups.csv
+```
+
+`--align-within` and `--place field|dock` add steps 2 and 3, `--generic-scaffolds` merges
+chemotypes that differ only in their heteroatoms, `--max-folds` bundles the groups, and
+`--baseline-alpha` sets the attenuation of the alignment-free fields.
+
+In the application the same five steps are a submenu, *Tools -> Heterogeneous sets (several
+chemotypes)*, in the order they have to be taken. Step 1 adds a "Chemotype" column to the data-set
+table, coloured by group, with the scaffold as its tooltip; steps 2 and 3 move the molecules and
+discard a model fitted on where they were; step 4 fills a "Chemotypes" tab with the three q²
+values, the verdict and every chemotype's RMSE and bias while it was the one held out.
 
 ### Nonlinear kernel layers and multiple kernel learning
 
@@ -831,6 +914,8 @@ python cmf_cli.py complement examples/openff/thrombin.sdf --model thrombin.cmf -
 python cmf_cli.py build examples/sutherland/ACE.sdf --charges file --conformations ensemble        --conformers 5 --prune-rmsd 1.0
 python cmf_cli.py mil examples/sutherland/THR.sdf --charges file --conformers 5 --hard
 python cmf_cli.py mil examples/schindler/hif2a-jmc2023.sdf --conformers 5 --dock
+python cmf_cli.py hetero examples/sutherland/COX2.sdf --charges file --min-group 3 --out groups.csv
+python cmf_cli.py hetero examples/mittal/ACHE.sdf --align-within --place field --out-sdf placed.sdf
 ```
 
 `python cmf_cli.py build -h` lists all options (method, kernel normalisation, mixing-coefficient
@@ -1049,7 +1134,13 @@ reproduces the published atom contributions, the per-field contributions and the
 contributions exactly when the kernel is linear, that all interaction indices then vanish, that the
 values stay efficient for the nonlinear kernels and under a fixed scaffold, that sampling agrees with
 exhaustive enumeration, that pooling atoms into one player sums their contributions, and that a Shapley
-field integrates over space to the value it was built from.
+field integrates over space to the value it was built from. For the heterogeneous series they check that the
+framework strips the side chains and that the generic one merges benzene with pyridine, that small
+groups are pooled, that no fold ever splits a chemotype and that bundling keeps whole chemotypes
+together, that an activity which is a property of the scaffold is predicted almost perfectly by random
+folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
+without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
+all, and that the alignment-free baseline converges on a kernel the poses cannot touch.
 
 ## Project layout
 
@@ -1071,6 +1162,7 @@ cmfqsar/shapley.py      Shapley decomposition of a prediction (atoms, substituen
 cmfqsar/conformers.py   conformational ensembles: generation, weighting, grouping (4D)
 cmfqsar/mil.py          multi-instance learning: the model chooses the conformation
 cmfqsar/docking.py      rigid-body placement of conformations in the pocket
+cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)

@@ -676,6 +676,90 @@ def cmd_mil(args):
     print(f"Elapsed {time.time() - t0:.1f} s")
 
 
+def cmd_hetero(args):
+    """The workflow for a series of several chemotypes, in the order the problem imposes."""
+    import time
+    from cmfqsar.chemotypes import (align_within_groups, chemotype_labels, evaluate,
+                                    grouped_folds, place_groups, summarise_groups)
+    t0 = time.time()
+    ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file)
+    labels, group_names = chemotype_labels(ds.mols, generic=args.generic_scaffolds,
+                                           min_size=args.min_group)
+    folds = grouped_folds(labels, max_folds=args.max_folds)
+    print(f"Loaded {len(ds)} molecules from {args.dataset}")
+    print("  " + summarise_groups(labels, group_names))
+    print(f"  leave-one-chemotype-out folds: {[len(f) for f in folds]}")
+    if len(folds) < 2:
+        raise SystemExit("one chemotype only: this is a congeneric series, use 'build'")
+    physchem = [f for f in args.fields.split(",") if f]
+    fs = FieldSet.create(physchem=physchem, alpha=1.0, charge_model=args.charges,
+                         param_scheme=args.param)
+    if args.align_within or args.place:
+        from rdkit import Chem
+        ds.mols = [Chem.Mol(m) for m in ds.mols]
+    if args.align_within:
+        print("Aligning inside every chemotype on its largest molecule")
+        log = align_within_groups(ds.mols, labels)
+        bad = [l for l in log if "FAILED" in l]
+        print(f"  {len(log) - len(bad)} aligned, {len(bad)} failed")
+        for line in bad[:3]:
+            print("   " + line)
+    if args.place:
+        pocket = None
+        if args.place == "dock":
+            from cmfqsar.complementarity import pocket_fields
+            from cmfqsar.protein import fetch_pdb, find_pocket, read_structure
+            path = args.structure
+            if not path:
+                codes = [m.GetProp("pdb") for m in ds.mols if m is not None and m.HasProp("pdb")]
+                path = find_pocket(args.dataset, codes[0] if codes else None)
+                if not path and codes:
+                    path = fetch_pdb(codes[0])
+            if not path:
+                raise SystemExit("placing by docking needs a structure: give --structure")
+            pocket = pocket_fields(read_structure(path, keep_waters=False), fs)
+            print(f"  pocket {pocket.n_atoms} atoms from {path}")
+        print(f"Placing the chemotypes relative to one another ({args.place})")
+        for line in place_groups(ds.mols, labels, fs, mode=args.place,
+                                 reference_group=args.reference_group, pocket=pocket,
+                                 restarts=args.restarts, seed=args.seed):
+            print("   " + line[:120])
+    if args.out_sdf:
+        write_sdf(args.out_sdf, ds.mols, ds.names, ds.activity, ds.activity_prop or "activity")
+        print(f"  realigned structures written to {args.out_sdf}")
+
+    def prog(msg, fr):
+        print("\r  [%5.1f%%] %-48s" % (fr * 100, msg), end="", flush=True)
+
+    res = evaluate(ds.mols, ds.names, ds.activity, labels, group_names, fs,
+                   alphas=_floats(args.alphas), lams=_floats(args.lams),
+                   max_folds=args.max_folds, normalize=not args.raw_kernels,
+                   baseline_alpha=args.baseline_alpha, progress=prog)
+    print()
+    print(f"Aligned model (alpha {res.alpha:g}, lambda {res.lam:g}):")
+    print(f"  q2 with random folds            {res.q2_random:+.3f}   <- flatters a mixed series")
+    print(f"  q2 leave-one-chemotype-out      {res.q2_grouped:+.3f}   RMSE {res.rmse_grouped:.3f}")
+    print(f"  alignment-free fragment model   {res.q2_baseline:+.3f}   (indicator fields, "
+          f"alpha {args.baseline_alpha:g})")
+    print(f"  verdict: {res.verdict()}")
+    if res.per_group:
+        print("  per chemotype, held out in turn:")
+        for g in sorted(res.per_group, key=lambda d: -d["n"])[:args.top]:
+            print(f"    {g['n']:4d} molecules  RMSE {g['rmse']:5.2f}  bias {g['bias']:+6.2f}  "
+                  f"{g['name'][:60]}")
+    if args.out:
+        import csv
+        with open(args.out, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["molecule", "activity", "chemotype", "scaffold"])
+            for i, nm in enumerate(ds.names):
+                g = int(labels[i])
+                w.writerow([nm, f"{ds.activity[i]:.4f}", g,
+                            group_names[g] if g < len(group_names) else ""])
+        print(f"  chemotype assignment written to {args.out}")
+    print(f"Elapsed {time.time() - t0:.1f} s")
+
+
 def cmd_unalign(args):
     """Give every molecule of a structure file a random pose (control for alignment methods)."""
     import numpy as np
@@ -1011,6 +1095,41 @@ def main(argv=None):
     i.add_argument("--out", default=None,
                    help="CSV with the chosen conformation of every training molecule")
     i.set_defaults(func=cmd_mil)
+
+    h = sub.add_parser("hetero", help="series of several chemotypes: cluster, align, place, judge")
+    h.add_argument("dataset")
+    h.add_argument("--activity", default=None)
+    h.add_argument("--activity-file", default=None)
+    h.add_argument("--generic-scaffolds", action="store_true",
+                   help="group by the generic framework, ignoring elements and bond orders, "
+                        "which merges chemotypes that differ only in heteroatoms")
+    h.add_argument("--min-group", type=int, default=3, metavar="N",
+                   help="scaffolds with fewer than N molecules are pooled into one group")
+    h.add_argument("--max-folds", type=int, default=0, metavar="N",
+                   help="bundle the chemotypes into N folds instead of holding out one at a time")
+    h.add_argument("--align-within", action="store_true",
+                   help="superimpose the molecules of each chemotype on its largest member")
+    h.add_argument("--place", default=None, choices=["field", "dock"],
+                   help="place the chemotypes relative to one another, each moved as a rigid "
+                        "body: by field similarity with the reference chemotype, or by docking "
+                        "its reference into the binding site")
+    h.add_argument("--reference-group", type=int, default=0, metavar="G",
+                   help="which chemotype stays still when placing by field similarity")
+    h.add_argument("--structure", default=None, help="protein structure for --place dock")
+    h.add_argument("--restarts", type=int, default=2)
+    h.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    h.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    h.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    h.add_argument("--raw-kernels", action="store_true")
+    h.add_argument("--alphas", default="0.3,0.5,1.0")
+    h.add_argument("--lams", default="1e-2,0.1,1")
+    h.add_argument("--baseline-alpha", type=float, default=0.02, metavar="A",
+                   help="attenuation of the alignment-free indicator fields; small is the point")
+    h.add_argument("--top", type=int, default=10)
+    h.add_argument("--seed", type=int, default=0)
+    h.add_argument("--out", default=None, help="CSV with the chemotype of every molecule")
+    h.add_argument("--out-sdf", default=None, help="write the realigned structures")
+    h.set_defaults(func=cmd_hetero)
 
     k = sub.add_parser("complement", help="field complementarity with a protein pocket")
     k.add_argument("dataset")

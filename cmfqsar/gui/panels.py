@@ -27,6 +27,14 @@ _SHOW_BOX_STYLE = (
 )
 
 
+def _group_colour(g: int) -> QColor:
+    """A pale, repeating colour per chemotype, so the groups can be told apart at a glance."""
+    hues = [205, 25, 120, 290, 55, 170, 330, 240, 85, 10]
+    col = QColor()
+    col.setHsv(hues[g % len(hues)], 72, 255 - 12 * ((g // len(hues)) % 4))
+    return col
+
+
 def _float_list(text: str, default: List[float]) -> List[float]:
     try:
         vals = [float(x) for x in text.replace(";", ",").split(",") if x.strip()]
@@ -113,6 +121,7 @@ class DatasetPanel(QWidget):
         self.table.currentCellChanged.connect(lambda r, c, pr, pc: self.selection_changed.emit(self.row_to_index(r)))
         self.table.itemChanged.connect(self._item_changed)
         self._show_boxes: List[QCheckBox] = []
+        self._group_labels = None
         self.btn_show_all.clicked.connect(lambda: self.set_all_shown(True))
         self.btn_show_none.clicked.connect(lambda: self.set_all_shown(False))
         self.btn_show_sel.clicked.connect(self.show_selected_only)
@@ -123,6 +132,7 @@ class DatasetPanel(QWidget):
         return row if 0 <= row < self.table.rowCount() else -1
 
     def populate(self, names, activity, subset) -> None:
+        self.set_group_labels(None)              # a different series needs its own grouping
         self._block = True
         self.table.setRowCount(0)
         self._show_boxes: List[QCheckBox] = []
@@ -145,7 +155,7 @@ class DatasetPanel(QWidget):
     def _color_row(self, i: int, subset: str) -> None:
         col = {"train": QColor(225, 238, 255), "test": QColor(255, 232, 215)}.get(
             subset, QColor(228, 228, 228))        # decoys: neutral grey
-        for c in range(self.table.columnCount()):
+        for c in range(min(self.table.columnCount(), len(self.COLS))):
             it = self.table.item(i, c)
             if it is not None:
                 it.setBackground(col)
@@ -180,6 +190,36 @@ class DatasetPanel(QWidget):
         for i in range(self.table.rowCount()):
             for c in range(4, len(self.COLS)):
                 self.table.item(i, c).setText("")
+        self._block = False
+
+    def set_group_labels(self, labels, names=None) -> None:
+        """Show which chemotype each molecule belongs to, in a column added for the purpose.
+
+        The column appears only once a grouping exists, and ``None`` takes it away again; the
+        row colours keep meaning the subset, so the group is carried by its own cell.
+        """
+        if labels is None:
+            self._group_labels = None
+            self.table.setColumnCount(len(self.COLS))
+            self.table.setHorizontalHeaderLabels(self.COLS)
+            return
+        labels = np.asarray(labels, dtype=int)
+        self._group_labels = labels
+        if self.table.columnCount() <= len(self.COLS):
+            self.table.setColumnCount(len(self.COLS) + 1)
+            self.table.setHorizontalHeaderLabels(self.COLS + ["Chemotype"])
+        col = len(self.COLS)
+        self._block = True
+        for i in range(self.table.rowCount()):
+            g = int(labels[i]) if i < len(labels) else -1
+            it = QTableWidgetItem("" if g < 0 else str(g))
+            it.setTextAlignment(Qt.AlignCenter)
+            if g >= 0:
+                it.setBackground(_group_colour(g))
+                it.setForeground(QColor(15, 15, 15))
+                it.setToolTip(str(names[g]) if names is not None and g < len(names)
+                              else f"chemotype {g}")
+            self.table.setItem(i, col, it)
         self._block = False
 
     # -- "Show" column: real check-box widgets (item check states render poorly on coloured rows)
@@ -968,6 +1008,37 @@ class ResultsPanel(QWidget):
         kl.addLayout(ktab)
         self.tabs.addTab(comp_w, "Complementarity")
 
+        # ----- chemotypes: one held out at a time, against the model that ignores the poses
+        chem_w = QWidget()
+        cml = QVBoxLayout(chem_w)
+        cml.setContentsMargins(4, 4, 4, 4)
+        self.lbl_chemo = QLabel("Tools, Heterogeneous sets: find the chemotypes, then hold each "
+                                "one out in turn.")
+        self.lbl_chemo.setWordWrap(True)
+        cml.addWidget(self.lbl_chemo)
+        crow = QHBoxLayout()
+        self.tbl_chemo = QTableWidget(0, 2)
+        self.tbl_chemo.setHorizontalHeaderLabels(["Quantity", "Value"])
+        self.tbl_chemo.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_chemo.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.tbl_chemo.verticalHeader().setVisible(False)
+        self.tbl_chemo.setToolTip("\n".join([
+            "Random folds predict a molecule from its own scaffold-mates and flatter a",
+            "mixed series. The honest number is the grouped one, and it has to beat the",
+            "alignment-free model, which uses no poses at all."]))
+        crow.addWidget(self.tbl_chemo, 1)
+        self.tbl_chemo_group = QTableWidget(0, 4)
+        self.tbl_chemo_group.setHorizontalHeaderLabels(["Chemotype", "N", "RMSE", "Bias"])
+        chh = self.tbl_chemo_group.horizontalHeader()
+        chh.setSectionResizeMode(QHeaderView.ResizeToContents)
+        chh.setSectionResizeMode(0, QHeaderView.Stretch)
+        self.tbl_chemo_group.verticalHeader().setVisible(False)
+        self.tbl_chemo_group.setToolTip("Every chemotype while it was the one held out; a large "
+                                        "bias means the model cannot reach that scaffold at all")
+        crow.addWidget(self.tbl_chemo_group, 2)
+        cml.addLayout(crow)
+        self.tabs.addTab(chem_w, "Chemotypes")
+
         self.log = QTextEdit()
         self.log.setReadOnly(True)
         self.tabs.addTab(self.log, "Log")
@@ -991,6 +1062,36 @@ class ResultsPanel(QWidget):
             self.tbl_comp_series.setItem(r, 0, QTableWidgetItem(str(label)))
             self.tbl_comp_series.setItem(r, 1, QTableWidgetItem(
                 v if isinstance(v, str) else f"{v:+.3f}"))
+
+    def set_chemotypes(self, header: str, rows, per_group) -> None:
+        """Fill the Chemotypes tab: the three q² values, then every held-out chemotype."""
+        self.lbl_chemo.setText(header)
+        self.tbl_chemo.setRowCount(0)
+        self.tbl_chemo.setRowCount(len(rows))
+        for r, (label, v) in enumerate(rows):
+            self.tbl_chemo.setItem(r, 0, QTableWidgetItem(str(label)))
+            if isinstance(v, str):
+                txt = v
+            elif v is None or not np.isfinite(v):
+                txt = ""
+            elif str(label).startswith("q²"):
+                txt = f"{v:+.3f}"
+            elif str(label).startswith("RMSE"):
+                txt = f"{v:.3f}"
+            else:
+                txt = f"{v:g}"
+            self.tbl_chemo.setItem(r, 1, QTableWidgetItem(txt))
+        self.tbl_chemo_group.setRowCount(0)
+        self.tbl_chemo_group.setRowCount(len(per_group))
+        for r, (name, n, rmse, bias) in enumerate(per_group):
+            self.tbl_chemo_group.setItem(r, 0, QTableWidgetItem(str(name)))
+            it = QTableWidgetItem(str(int(n)))
+            it.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.tbl_chemo_group.setItem(r, 1, it)
+            for c, v, fmt in ((2, rmse, "{:.3f}"), (3, bias, "{:+.3f}")):
+                it = QTableWidgetItem("" if v is None or not np.isfinite(v) else fmt.format(v))
+                it.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.tbl_chemo_group.setItem(r, c, it)
 
     def _shap_players_changed(self, *_):
         """Sampling is used where the players are too many to enumerate."""
