@@ -956,6 +956,39 @@ same series are the harder and more honest negatives, and the decoy numbers in t
 say more about the background than about the model — which is exactly what the section above
 warns of.
 
+**Against fingerprints.** The Tanimoto coefficient of binary fingerprints is itself a positive
+semi-definite kernel, so the same five descriptions run on it unchanged and only the meaning of
+"similar" changes: an overlap integral of molecular fields in a common frame, or a count of
+shared substructures with no geometry at all. Under the same sweep and the same protocol, mean
+AUC of the best description (k-NN, on every one of the six similarities):
+
+| similarity | k-NN, best setting | k-NN, median over settings |
+|---|---:|---:|
+| CMF fields, α = 1 | **0.807** | **0.730** |
+| CMF fields, α = 0.5 | 0.798 | 0.728 |
+| ECFP4, 2048 bits | 0.802 | 0.718 |
+| ECFP6, 2048 bits | 0.791 | 0.717 |
+| MACCS, 166 keys | 0.764 | 0.654 |
+
+On average the three-dimensional fields buy 0.005 over ECFP4 at their best setting and 0.012 at
+the median — nothing. The averages hide a real disagreement, though: per target the gap is large
+and changes sign. Fields win on COX2 (0.826 against 0.713) and THR (0.816 against 0.763),
+fingerprints win on AChE (0.836 against 0.738) and BZR (0.790 against 0.732), and DHFR is a draw.
+The two representations see different things, and neither dominates; what the mean says is only
+that no one of them is a safe default. MACCS is clearly behind both, so the measurement does
+discriminate between representations when there is something to discriminate.
+
+Two further things fall out of that run. k-NN is the best description on *all six* similarities,
+so its advantage is a property of the geometry rather than of the fields. And the ball recovers
+on fingerprints — the 1-SVM is last on every field kernel (median 0.656 to 0.676) but competitive
+on ECFP6, where its median of 0.724 is the best of the five. Its weakness above is specific to
+the kernel it was asked to enclose.
+
+This is a screening task judged on same-series inactives, not a QSAR regression, so it says
+nothing about what the fields are for — co-fields, atom contributions and complementarity with a
+pocket have no fingerprint counterpart. It does say that for *ranking by similarity to a set of
+actives*, the alignment and the overlap integrals are not buying what one might hope.
+
 ```bash
 python cmf_cli.py build examples/sutherland/THR.sdf --charges file --task oneclass \
        --threshold 6.7 --method ockpca --alphas 0.5 --nus 0.1 --oc-components 5
