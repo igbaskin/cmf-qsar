@@ -172,6 +172,11 @@ def cmd_build(args):
         a0, nu0 = alphas[0], _floats(args.nus)[0]
         model.fieldset.set_alpha(a0)
         model.params["nu"] = nu0
+        model.params.update({"k": args.oc_k, "components": args.oc_components,
+                             "oc_lam": args.oc_lam, "oc_score": args.oc_score})
+        if args.method != "ocsvm":
+            from cmfqsar.oneclass import LABELS
+            print(f"  description of the actives: {LABELS[args.method]}")
         print(f"One-class model: alpha = {a0:g}, nu = {nu0:g} (not selected by cross-validation; "
               f"alpha sets the level of generalisation, nu the expected fraction of outliers)")
         model.fit(train, y, cv_folds=0)
@@ -882,10 +887,20 @@ def main(argv=None):
                         "or the Sybyl-type increments of the original CMF scripts (tripos; -legacy reproduces "
                         "the hydrogen-counting bug of the 2013 scripts)")
     b.add_argument("--method", default="krr",
-                   choices=["krr", "gp", "svr", "nusvr", "svc", "nusvc", "gpc", "ocsvm"],
+                   choices=["krr", "gp", "svr", "nusvr", "svc", "nusvc", "gpc",
+                            "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca"],
                    help="gpc is the Gaussian-process classifier (Laplace approximation): it "
                         "gives calibrated probabilities, a posterior variance per molecule and "
                         "the marginal likelihood, and takes its amplitude from the C grid")
+    b.add_argument("--oc-k", type=int, default=5, metavar="K",
+                   help="ocknn: how many nearest actives the distance is taken to")
+    b.add_argument("--oc-components", type=int, default=5, metavar="Q",
+                   help="ockpca: dimension of the principal subspace of the actives")
+    b.add_argument("--oc-lam", type=float, default=0.1, metavar="L",
+                   help="ocgp: ridge on the constant target")
+    b.add_argument("--oc-score", default="mean", choices=["mean", "mean_over_sd"],
+                   help="ocgp: the predictive mean, or the mean divided by its standard "
+                        "deviation, which also punishes a molecule the model knows nothing about")
     b.add_argument("--task", default="regression",
                    choices=["regression", "classification", "oneclass"],
                    help="regression (default), binary classification, or one-class / novelty detection "

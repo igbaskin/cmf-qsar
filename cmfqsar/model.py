@@ -298,6 +298,7 @@ class _Learner:
         self.support_: Optional[np.ndarray] = None   # indices of training molecules with a != 0
         self.K_train_: Optional[np.ndarray] = None
         self.gpc_ = None                             # the Laplace fit, for method "gpc"
+        self.oc_ = None                              # the scorer, for the one-class methods
 
     def fit(self, K: np.ndarray, y: np.ndarray) -> "_Learner":
         n = len(y)
@@ -348,6 +349,18 @@ class _Learner:
             self.alpha_, self.b_ = g.coef, 0.0
             self.support_ = np.arange(n)
             self.K_train_ = K
+        elif self.method in ("ocmean", "ocknn", "ocgp", "ockpca"):
+            # the other one-class geometries: centroid, nearest neighbours, GP, principal
+            # subspace.  Two of them are kernel expansions and keep the decomposition rules.
+            from .oneclass import make
+            sc = make(self.method, nu=float(self.params.get("nu", 0.1)),
+                      k=int(self.params.get("k", 5)), lam=float(self.params.get("oc_lam", 0.1)),
+                      components=int(self.params.get("components", 5)),
+                      score=str(self.params.get("oc_score", "mean"))).fit(K)
+            self.oc_ = sc
+            self.support_ = np.arange(n)
+            self.alpha_ = sc.coef if sc.is_linear else None
+            self.b_ = sc.bias if sc.is_linear else 0.0
         elif self.method == "ocsvm":
             # one-class (novelty detection): no labels are used, every training molecule
             # belongs to the target class
@@ -362,7 +375,19 @@ class _Learner:
             raise ValueError(f"unknown method {self.method}")
         return self
 
-    def predict(self, K_test_train: np.ndarray) -> np.ndarray:
+    def predict(self, K_test_train: np.ndarray,
+                k_test_self: Optional[np.ndarray] = None) -> np.ndarray:
+        oc = getattr(self, "oc_", None)
+        if oc is not None:
+            training = False
+            if k_test_self is None:
+                K = np.atleast_2d(K_test_train)
+                if K.shape[0] == K.shape[1] == len(oc.diag_):
+                    k_test_self, training = oc.diag_, True
+                else:
+                    raise ValueError("this one-class score needs the self-kernels of the "
+                                     "molecules being scored")
+            return oc.decision(K_test_train, k_test_self, training=training)
         return K_test_train @ self.alpha_ + self.b_
 
     def predict_variance(self, K_test_train: np.ndarray, k_test_self: np.ndarray) -> np.ndarray:
@@ -704,13 +729,17 @@ class CMFModel:
         return self._field_kernels(test, self.train, dQ, self.self_diag, progress=progress, cancel=cancel)
 
     def predict(self, test: AtomTable, return_fields: bool = False, progress=None, cancel=None):
-        if self.coef is None:
+        oc = getattr(self.learner_, "oc_", None) if self.learner_ is not None else None
+        if self.coef is None and oc is None:
             raise RuntimeError("model is not fitted")
         Kf = self.test_kernels(test, progress=progress, cancel=cancel)
         K = self.joint_kernel(Kf)
         if not self.is_linear:
             K = self.apply_layer(K, self.joint_self(test), self.base_diag_)
-        yp = K @ self.coef + self.bias
+        if oc is not None:
+            yp = self.learner_.predict(K, self.joint_self(test))
+        else:
+            yp = K @ self.coef + self.bias
         if return_fields:
             return yp, Kf
         return yp
@@ -801,6 +830,14 @@ class CMFModel:
 
         Valid for any kernel, including a nonlinear layer.
         """
+        oc = getattr(self.learner_, "oc_", None) if self.learner_ is not None else None
+        if oc is not None and not oc.is_linear:
+            from .oneclass import LABELS
+            raise ValueError(
+                f"the contributions of the training molecules are defined for a score that sums "
+                f"over them; '{LABELS.get(oc.kind, oc.kind)}' does not (it is a minimum over "
+                f"neighbours or a quadratic form). The one-class SVM, the centroid distance and "
+                f"the one-class Gaussian process all do.")
         t = AtomTable.from_molecules([mol])
         K = self.joint_kernel(self.test_kernels(t))
         if not self.is_linear:
@@ -829,6 +866,14 @@ class CMFModel:
         return contrib if per_field else contrib.sum(axis=0)
 
     def _require_linear(self, what: str) -> None:
+        oc = getattr(self.learner_, "oc_", None) if self.learner_ is not None else None
+        if oc is not None and not oc.is_linear:
+            from .oneclass import LABELS
+            raise ValueError(
+                f"{what} are defined for a score that is a sum over the training molecules; "
+                f"'{LABELS.get(oc.kind, oc.kind)}' is not one (it is a minimum over neighbours "
+                f"or a quadratic form), so no co-field exists for it. The one-class SVM, the "
+                f"centroid distance and the one-class Gaussian process all keep it.")
         if not self.is_linear:
             raise ValueError(
                 f"{what} are defined only for the linear kernel: with the '{self.kernel_layer}' layer "
@@ -888,6 +933,7 @@ class CMFModel:
             "self_diag": self.self_diag,
             "scale": self.scale,
             "stats": self.stats,
+            "oneclass": getattr(self.learner_, "oc_", None) if self.learner_ is not None else None,
         }
 
     @classmethod
@@ -901,6 +947,10 @@ class CMFModel:
         m.gamma_scale_ = st.get("gamma_scale")
         m.train, m.y, m.coef, m.bias = st["train"], st["y"], st["coef"], st["bias"]
         m.self_diag, m.scale, m.stats = st["self_diag"], st["scale"], st["stats"]
+        if st.get("oneclass") is not None:
+            m.learner_ = _Learner(st["method"], st["params"])
+            m.learner_.oc_ = st["oneclass"]
+            m.learner_.alpha_, m.learner_.b_ = m.coef, m.bias
         return m
 
 

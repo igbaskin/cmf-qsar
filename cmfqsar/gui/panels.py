@@ -526,6 +526,11 @@ class ModelPanel(QWidget):
         form.addRow("ε grid / ν grid:", self.ed_eps)
         self.ed_nus = QLineEdit("0.3, 0.5, 0.7")
         form.addRow("ν grid (ν-SVR):", self.ed_nus)
+        self.spin_oc_param = QSpinBox()
+        self.spin_oc_param.setRange(1, 200)
+        self.spin_oc_param.setValue(5)
+        self.lbl_oc_param = QLabel("Neighbours k:")
+        form.addRow(self.lbl_oc_param, self.spin_oc_param)
         cvrow = QHBoxLayout()
         self.spin_folds = QSpinBox()
         self.spin_folds.setRange(2, 100)
@@ -571,6 +576,8 @@ class ModelPanel(QWidget):
         self.btn_cancel.clicked.connect(self.cancel_requested)
         outer.addStretch(1)
         self._conformers_changed()  # the weighting controls belong to the ensemble mode only
+        # the one-class parameter box depends on which description is chosen
+        self.cmb_method.currentIndexChanged.connect(self._task_changed)
         self._task_changed()      # hide the class controls until a classification task is chosen
         self._kernel_changed()    # the bandwidth grid belongs to the Gaussian layer only
 
@@ -613,8 +620,12 @@ class ModelPanel(QWidget):
     CLS_METHODS = ["Support vector classification (C-SVC)", "nu-SVC",
                    "Gaussian process classifier (Laplace)"]
     CLS_KEYS = ["svc", "nusvc", "gpc"]
-    OC_METHODS = ["One-class SVM (1-SVM)"]
-    OC_KEYS = ["ocsvm"]
+    OC_METHODS = ["One-class SVM (1-SVM)",
+                  "Distance to the centre of the actives",
+                  "Distance to the k-th nearest active",
+                  "One-class Gaussian process",
+                  "Distance from the principal subspace (kernel PCA)"]
+    OC_KEYS = ["ocsvm", "ocmean", "ocknn", "ocgp", "ockpca"]
 
     def task_key(self) -> str:
         return ["regression", "classification", "oneclass"][self.cmb_task.currentIndex()]
@@ -665,6 +676,22 @@ class ModelPanel(QWidget):
         # box is used directly as the level of generalisation rather than searched
         self.ed_alphas.setToolTip("One-class models use the first value as the level of generalisation "
                                   "(no cross-validated search is possible without negatives)" if oc else "")
+        # the extra parameter of the one-class descriptions, which means something different
+        # for each of them and nothing for two of them
+        key = self.method_key() if oc else ""
+        labels = {"ocknn": ("Neighbours k:", 1, 200, 5),
+                  "ockpca": ("Subspace dimension:", 1, 200, 5)}
+        show = key in labels
+        self.lbl_oc_param.setVisible(show)
+        self.spin_oc_param.setVisible(show)
+        if show:
+            text, lo, hi, default = labels[key]
+            self.lbl_oc_param.setText(text)
+            self.spin_oc_param.setRange(lo, hi)
+            if self.spin_oc_param.value() not in range(lo, hi + 1):
+                self.spin_oc_param.setValue(default)
+        self.ed_lams.setToolTip("The one-class Gaussian process takes the first value as its "
+                                "ridge on the constant target" if key == "ocgp" else "")
         self.cmb_mix.setEnabled(not oc)
         self.spin_outer.setEnabled(task == "regression")
         self.spin_repeats.setEnabled(task == "regression")
@@ -685,6 +712,13 @@ class ModelPanel(QWidget):
         keys = {"regression": self.REG_KEYS, "classification": self.CLS_KEYS,
                 "oneclass": self.OC_KEYS}[task]
         return keys[min(self.cmb_method.currentIndex(), len(keys) - 1)]
+
+    def oneclass_params(self) -> dict:
+        """The extra parameters of the one-class descriptions, by method."""
+        key = self.method_key()
+        return {"k": int(self.spin_oc_param.value()),
+                "components": int(self.spin_oc_param.value()),
+                "oc_lam": float(self.lams()[0]) if key == "ocgp" else 0.1}
 
     def alphas(self) -> List[float]:
         return _float_list(self.ed_alphas.text(), [1.0])

@@ -50,7 +50,7 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: 1-SVM. |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class (see below). |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
@@ -830,8 +830,9 @@ the Task selector of the Model panel (CLI: `--task classification` / `--task one
   Classes come either from a threshold on the activity
   (`--threshold`, with `--active-below` when a smaller value means more active) or from an SD property
   (`--class-property`). The hyper-parameters are selected by cross-validation, minimising 1 − AUC.
-* **One-class classification** (1-SVM), fitted to the actives alone, which is the similarity-based
-  virtual screening of the 2019 paper. No cross-validated objective exists without negatives, so α (the
+* **One-class classification**, fitted to the actives alone, which is the similarity-based
+  virtual screening of the 2019 paper: the 1-SVM, or one of the four other descriptions of the
+  active class described just below, which beat it on every set tested. No cross-validated objective exists without negatives, so α (the
   level of generalisation, Fig. 5 of that paper) and ν (the expected fraction of outliers) are set
   directly rather than searched, and the program says so.
 
@@ -895,6 +896,68 @@ structurally different background.
 kernels the decision value scales with the self-kernel, so the ranking follows molecular size rather than
 similarity to the target class: the same thrombin model scores AUC 0.34 on raw kernels against 0.69 on
 normalised ones.
+
+#### Four other descriptions of the actives
+
+A one-class SVM encloses the actives in a ball in the field Hilbert space. That is one geometry
+among several, and the others are cheap here because the kernel is already computed, so
+[oneclass.py](cmfqsar/oneclass.py) adds four more, all with the same meaning of ν (the fraction
+of the training actives left outside) so that they can be compared without re-tuning:
+
+| key | description |
+|---|---|
+| `ocmean` | distance to the centroid of the actives — with a normalised kernel this is one minus the mean field similarity, the similarity ensemble of the screening literature, with nothing fitted |
+| `ocknn` | distance to the k-th nearest active, the classical similarity search |
+| `ocgp` | a Gaussian process regressed on a constant target of one (Kemmler et al. 2013); `mean_over_sd` divides by the posterior standard deviation, so a molecule the model knows nothing about is punished as well as one that is unlike the actives |
+| `ockpca` | distance from the principal subspace of the actives (Hoffmann 2007) — a congeneric series lies on something much flatter than a ball |
+
+*SVDD*, the usual alternative, is deliberately absent: for a kernel with a constant diagonal the
+minimum enclosing hypersphere and the ν-SVM solve the same problem, and a one-class model here
+always normalises its kernels, because an unnormalised one-class score ranks by molecular size.
+
+`ocmean` and `ocgp` are linear in the kernel row, `score(x) = Σ_j a_j K(x, x_j) + b`, so the
+co-field and the atom contributions carry over unchanged; `ocknn` and `ockpca` are a minimum and
+a quadratic form, and the program says so rather than drawing a co-field that does not exist.
+
+**Measured.** The actives of each set (activity above the median) are the training class, scored
+by five-fold cross-validation so that no active is ever scored by a model that saw it; α = 0.5,
+ν = 0.1, k = 5, five components, nothing tuned for any method. AUC against the inactives of the
+same set, which are already in the same frame:
+
+| set | 1-SVM | centroid | k-NN | GP | GP/sd | kernel PCA |
+|---|---:|---:|---:|---:|---:|---:|
+| COX2 | 0.776 | **0.800** | 0.726 | 0.685 | 0.772 | 0.756 |
+| DHFR | 0.685 | 0.785 | 0.789 | 0.748 | **0.833** | 0.799 |
+| BZR | 0.569 | 0.557 | **0.717** | 0.652 | 0.634 | 0.641 |
+| AChE | 0.505 | 0.522 | 0.609 | **0.740** | 0.647 | 0.605 |
+| THR | 0.651 | 0.751 | 0.792 | 0.775 | 0.735 | **0.794** |
+| mean | 0.637 | 0.683 | **0.727** | 0.720 | 0.724 | 0.719 |
+
+The ball is the weakest of the five. It is beaten on every single set, by 0.02 on COX2 and by
+0.15 to 0.24 on DHFR, BZR, AChE and THR, and the enrichment in the top 1 % says the same more
+bluntly: the molecules the 1-SVM ranks highest are inactives on four of the five sets (EF 0.00),
+while k-NN and kernel PCA reach the ceiling that the roughly equal class sizes allow (EF ≈ 2) on
+all five. Nothing here was tuned, so this is a comparison of the default behaviour of five
+descriptions rather than of their best achievable behaviour — but the default is what a screening
+run uses, since one-class models have no cross-validated criterion to tune against.
+
+**And a warning the program already gives, now with a number.** The same five methods were also
+scored against 150 molecules drawn from the other four targets and posed into the frame by the
+decoy aligner. Every method scored AUC between 0.965 and 1.000 there, and the enrichment factors
+were identical across methods to the last digit. A background that unlike the actives measures
+nothing: it separates on size and shape before any field model is involved. The inactives of the
+same series are the harder and more honest negatives, and the decoy numbers in that experiment
+say more about the background than about the model — which is exactly what the section above
+warns of.
+
+```bash
+python cmf_cli.py build examples/sutherland/THR.sdf --charges file --task oneclass \
+       --threshold 6.7 --method ockpca --alphas 0.5 --nus 0.1 --oc-components 5
+```
+
+In the application the five descriptions are the method list of the one-class task, with the
+neighbours or the subspace dimension beside them; the one-class Gaussian process takes its ridge
+from the first value of the λ grid.
 
 ### A Gaussian-process classifier, for the posterior rather than the accuracy
 
@@ -1321,7 +1384,12 @@ groups are pooled, that no fold ever splits a chemotype and that bundling keeps 
 together, that an activity which is a property of the scaffold is predicted almost perfectly by random
 folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
 without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
-For the Gaussian-process classifier they check that the Newton iteration reaches a point where f = K grad
+For the one-class descriptions they check that nu really is the fraction of the training molecules
+left outside for every one of them, that molecules far from the training cloud land outside and are
+ranked below it, that the score falls monotonically along a ray leaving the cloud, that the subspace
+description is stricter than the centroid one about molecules beside a flat set, that the two linear
+ones reproduce their own kernel expansion while the other two refuse to pretend they have one, and
+that the enrichment factor counts what it says. For the Gaussian-process classifier they check that the Newton iteration reaches a point where f = K grad
 and that nothing near it scores higher on the objective, that the marginal likelihood equals its textbook
 definition computed the slow way, that the latent mean is the same kernel expansion the rest of the
 program assumes, that the probabilities are bounded and pulled towards one half by the variance, that the
@@ -1354,6 +1422,7 @@ cmfqsar/mil.py          multi-instance learning: the model chooses the conformat
 cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
 cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence
+cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process, kernel PCA
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)

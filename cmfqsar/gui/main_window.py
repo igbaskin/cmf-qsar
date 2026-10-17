@@ -1022,6 +1022,7 @@ class MainWindow(QMainWindow):
         method = mp.method_key()
         alphas = mp.alphas() if mp.rad_alpha_grid.isChecked() else None
         lams, Cs, eps, nus = mp.lams(), mp.Cs(), mp.epsilons(), mp.nus()
+        oc_params = mp.oneclass_params()
         folds, seed = mp.spin_folds.value(), mp.spin_seed.value()
         optimize_h = mp.cmb_mix.currentIndex() == 1
         mkl = mp.mkl_mode()
@@ -1089,6 +1090,7 @@ class MainWindow(QMainWindow):
                 if alphas:
                     model.fieldset.set_alpha(alphas[0])
                 model.params["nu"] = nus[0]
+                model.params.update(oc_params)
                 progress("Fitting the one-class model", 0.9)
                 model.fit(train, y_all[tr], cv_folds=0)
                 res = None
@@ -2278,7 +2280,13 @@ class MainWindow(QMainWindow):
                 mol = build_fields(self.ds.mols[cur], model.fieldset, self.ds.names[cur])
                 self.molfields[cur] = mol
             kind = "decision value" if model.task in ("classification", "oneclass") else "predicted activity"
-            tc = model.training_contributions(mol)
+            try:
+                tc = model.training_contributions(mol)
+            except ValueError as exc:
+                # a one-class score that is not a sum over the training molecules
+                self.results_panel.clear_contributions(str(exc))
+                self.results_panel.set_atom_contributions([], [], np.zeros(0))
+                return
             c = model.atom_contributions(mol) if model.is_linear else None
             value = float((c.sum() if c is not None else tc.sum()) + model.bias)
             if c is None:
