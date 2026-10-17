@@ -42,7 +42,48 @@ SOURCE = ("background set for virtual-screening evaluation: ligands of other tar
           "actives of this target (examples/make_decoy_sets.py)")
 
 
-def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str, seed: int = 0) -> None:
+#: targets that appear under more than one name, so that the same protein is never its own decoy
+ALIASES = {"ache": {"ache"}, "thr": {"thr", "thrombin"}, "ace": {"ace"}, "gpb": {"gpb"},
+           "cox2": {"cox2"}, "bzr": {"bzr"}, "dhfr": {"dhfr"}}
+
+
+def _same_target(a: str, b: str) -> bool:
+    a, b = a.lower(), b.lower()
+    if a == b:
+        return True
+    for names in ALIASES.values():
+        if a in names and b in names:
+            return True
+    return False
+
+
+def collect_pool(target: str, wide: bool) -> list:
+    """Candidate decoys: every other series shipped here, or only the Sutherland ones."""
+    pats = ["sutherland/*.sdf"] if not wide else ["*/*.sdf", "*.sdf"]
+    pool = []
+    seen = set()
+    for pat in pats:
+        for other in sorted(glob.glob(os.path.join(HERE, pat))):
+            name = os.path.basename(other)[:-4]
+            if _same_target(name, target) or "decoy" in other.replace("\\", "/"):
+                continue
+            try:
+                od = load_dataset(other)
+            except Exception:                            # noqa: BLE001 - not a data set
+                continue
+            for m, nm in zip(od.mols, od.names):
+                if m is None:
+                    continue
+                key = Chem.MolToSmiles(m)
+                if key in seen:
+                    continue
+                seen.add(key)
+                pool.append((name, m, nm))
+    return pool
+
+
+def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str, seed: int = 0,
+          matched: bool = False, max_similarity: float = 0.35, wide: bool = True) -> None:
     t0 = time.time()
     path = os.path.join(HERE, "sutherland", f"{target}.sdf")
     if not os.path.isfile(path):
@@ -60,15 +101,19 @@ def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str,
     fs = FieldSet.create(alpha=alpha, charge_model="file")
     ref = AtomTable.from_molecules([build_fields(ds.mols[i], fs, ds.names[i]) for i in act])
 
-    pool = []
-    for other in sorted(glob.glob(os.path.join(HERE, "sutherland", "*.sdf"))):
-        name = os.path.basename(other)[:-4]
-        if name == target:
-            continue
-        od = load_dataset(other)
-        pool += [(name, m, nm) for m, nm in zip(od.mols, od.names)]
-    rng = np.random.RandomState(seed)
-    pick = rng.choice(len(pool), size=min(n_decoys, len(pool)), replace=False)
+    pool = collect_pool(target, wide=wide or matched)
+    if matched:
+        from _matched_decoys import select
+        pick, report = select([ds.mols[i] for i in act], [p[1] for p in pool], n_decoys,
+                              max_similarity=max_similarity, seed=seed)
+        print(f"{target:5s} property matching: {report['dissimilar']}/{report['pool']} pool "
+              f"molecules below Tanimoto {max_similarity:g} to every active, {report['selected']} "
+              f"selected")
+        for name, (a, d) in report["property_gap"].items():
+            print(f"        {name:18s} actives {a:8.2f}   decoys {d:8.2f}")
+    else:
+        rng = np.random.RandomState(seed)
+        pick = rng.choice(len(pool), size=min(n_decoys, len(pool)), replace=False)
 
     mf, labels = [], []
     for k in pick:
@@ -79,7 +124,7 @@ def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str,
                        progress=lambda i, n: (print("   %d/%d" % (i, n), flush=True)
                                               if (i % 25 == 0 or i == n) else None))
 
-    out = os.path.join(out_dir, f"{target}_decoys.sdf")
+    out = os.path.join(out_dir, f"{target}_decoys{'_matched' if matched else ''}.sdf")
     w = Chem.SDWriter(out)
     for (src, m, nm), mol, r in zip(labels, mf, res):
         mm = Chem.Mol(m)
@@ -112,10 +157,18 @@ def main():
     ap.add_argument("--restarts", type=int, default=4)
     ap.add_argument("--alpha", type=float, default=0.5)
     ap.add_argument("--out", default=os.path.join(HERE, "decoys"))
+    ap.add_argument("--matched", action="store_true",
+                    help="choose decoys that match the physical properties of the actives while "
+                         "being topologically unlike them, which is what makes a background hard")
+    ap.add_argument("--max-similarity", type=float, default=0.35,
+                    help="a decoy's ECFP4 Tanimoto to every active must stay below this")
+    ap.add_argument("--wide-pool", action="store_true",
+                    help="draw from every example series, not only the Sutherland ones")
     a = ap.parse_args()
     os.makedirs(a.out, exist_ok=True)
     for t in [x.strip() for x in a.targets.split(",") if x.strip()]:
-        build(t, a.n_decoys, a.restarts, a.alpha, a.out)
+        build(t, a.n_decoys, a.restarts, a.alpha, a.out, matched=a.matched,
+              max_similarity=a.max_similarity, wide=a.wide_pool)
 
 
 if __name__ == "__main__":

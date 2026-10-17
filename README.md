@@ -883,6 +883,22 @@ artefact of sloppy placement. On the thrombin example the similarity of 25 unrel
 for each target the decoys are ligands of the *other* example series, presumed inactive against it and
 already aligned into its frame, tagged `subset = decoy` so they load as a background set directly.
 
+**`--matched` builds the harder kind, and it turns out hardly to be harder.** The DUD-E recipe is to
+pick, for every active, molecules that match its molecular weight, logP, donors, acceptors, rotatable
+bonds and net charge while staying topologically unlike it (here: ECFP4 Tanimoto below 0.35 to every
+active), drawn from the 3805 unique molecules of the other example series. Those files are shipped too,
+as `*_decoys_matched.sdf`. Measured against them, with the five one-class descriptions swept over their
+parameters on THR, GPB, ACE and AChE, the mean AUC falls only from 0.986–1.000 to 0.978–0.998, and on
+AChE every method still scores exactly 1.000 on both backgrounds.
+
+The reason is worth stating, because it limits what any decoy set can do here. Matching six scalar
+properties does not match a three-dimensional field: the actives of a congeneric series resemble one
+another far more than anything from another series does, whatever its molecular weight. So for a
+congeneric series, decoy-based screening metrics sit at the ceiling and cannot tell two methods apart
+— the discriminating negatives are the *weaker molecules of the same series* (AUC 0.6–0.8, see the
+one-class section above), or genuinely measured inactives such as LIT-PCBA. The decoy sets here are
+useful for checking that a screening model works at all, not for comparing models.
+
 A one-class model scores how typical a molecule is of the training actives in field space. That is what
 it is for, and it is not the same as activity. Fitted to the 31 thrombin actives (α = 0.5, ν = 0.2) and
 used to rank the 13 test actives against 30 COX-2 molecules placed in the thrombin frame by maximising
