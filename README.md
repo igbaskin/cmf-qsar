@@ -965,10 +965,21 @@ judged on whatever conformation its file happened to carry — for the sets here
 different target. `--decoy-conformers N` (GUI: *Conformations per decoy* in the align-decoys dialog)
 generates N conformations of each decoy, poses every one of them and keeps the best; the conformation
 from the file is always among the candidates, so the result can only improve, and the cost is
-multiplied by N. On the hundred matched thrombin decoys, four conformations each raised the mean
-similarity to the nearest active from 0.251 to 0.506 and a generated conformation won for 61 of the
-100 — and the screening numbers did not move, which is one more way of saying that these backgrounds
-are separated by composition rather than by pose.
+multiplied by N. Measured against the rigid alignment under identical settings, on the hundred
+matched decoys of each target:
+
+| background | mean similarity to the nearest active | a generated conformation won | time |
+|---|---:|---:|---:|
+| THR, rigid | 0.639 | — | 82 s |
+| THR, 4 conformations | 0.680 | 66 / 100 | 439 s |
+| THR, 12 conformations | 0.691 | 87 / 100 | 1304 s |
+| AChE, rigid | 0.722 | — | 68 s |
+| AChE, 4 conformations | 0.741 | 63 / 100 | 373 s |
+
+So the decoys do look better: a generated conformation beats the one in the file for most of them,
+and twelve conformations buy about twice what four do, at four times the cost. The screening
+numbers do not move at all — AUC 1.000 and BEDROC 1.000 in every row — which is one more way of
+saying that these backgrounds are separated by composition rather than by pose.
 
 `examples/decoys/` holds ready-made background sets built this way by `examples/make_decoy_sets.py`:
 for each target the decoys are ligands of the *other* example series, presumed inactive against it and
