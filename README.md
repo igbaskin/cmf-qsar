@@ -50,7 +50,7 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC. **One-class classification** (novelty detection) for similarity-based virtual screening: 1-SVM. |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: 1-SVM. |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
@@ -826,7 +826,8 @@ the case of SVM models they describe the angular orientation of the hyperplane s
 inactive compounds in the infinite-dimensional feature space". Both classification modes are available in
 the Task selector of the Model panel (CLI: `--task classification` / `--task oneclass`):
 
-* **Binary classification** (C-SVC or ν-SVC). Classes come either from a threshold on the activity
+* **Binary classification** (C-SVC, ν-SVC, or the Gaussian-process classifier described below).
+  Classes come either from a threshold on the activity
   (`--threshold`, with `--active-below` when a smaller value means more active) or from an SD property
   (`--class-property`). The hyper-parameters are selected by cross-validation, minimising 1 − AUC.
 * **One-class classification** (1-SVM), fitted to the actives alone, which is the similarity-based
@@ -894,6 +895,74 @@ structurally different background.
 kernels the decision value scales with the self-kernel, so the ranking follows molecular size rather than
 similarity to the target class: the same thrombin model scores AUC 0.34 on raw kernels against 0.69 on
 normalised ones.
+
+### A Gaussian-process classifier, for the posterior rather than the accuracy
+
+A support-vector classifier returns a decision value and nothing else: a probability has to be
+obtained by fitting a sigmoid to it afterwards, and there is no posterior at all. The third
+classification method, `gpc` ([gpc.py](cmfqsar/gpc.py)), is a Gaussian process with a Bernoulli
+likelihood, fitted at the posterior mode by the Laplace approximation (Rasmussen and Williams,
+chapter 3: the Newton iteration of Algorithm 3.1, the predictions of 3.2 and the marginal
+likelihood of 3.3). It works from the same precomputed kernels, and it was added for three
+things the hinge loss cannot give.
+
+**Calibrated probabilities.** `p(active)` comes from the likelihood, averaged over the latent
+posterior — exactly for the probit link, by MacKay's approximation for the logistic one — so a
+molecule the model knows nothing about is reported near one half instead of confidently. The
+cross-validated probabilities are close to honest; predicted against observed, in bins, on COX2
+(Brier 0.128) and DHFR (0.137):
+
+| predicted | 0.0–0.2 | 0.2–0.4 | 0.4–0.6 | 0.6–0.8 | 0.8–1.0 |
+|---|---:|---:|---:|---:|---:|
+| COX2 observed | 0.05 | 0.19 | 0.45 | 0.77 | 0.91 |
+| DHFR observed | 0.03 | 0.18 | 0.47 | 0.80 | 0.93 |
+
+The deviation that remains is the known conservatism of the Laplace approximation at the ends,
+and it is in the safe direction: the model is slightly less sure than it turns out to be.
+
+**A posterior variance per molecule.** The latent variance returns to the prior for a molecule
+unlike anything in the training set, which is what makes "active" and "no idea" different
+answers, and it is what the confidence-based alignment of [varalign.py](cmfqsar/varalign.py)
+needs in order to work on a classification set at all.
+
+**The marginal likelihood.** It scores a kernel without holding anything out, so the attenuation
+and the amplitude can be chosen from the training molecules alone — one fit per candidate instead
+of ten. Measured against the usual cross-validated search on the six sets, it picks a different
+pair on five of them and loses nothing in ranking: mean AUC 0.789 by evidence against 0.788 by
+cross-validation. By Matthews correlation it is 0.033 behind on average, which is what one should
+expect, since the cross-validated search is choosing on exactly that statistic and the evidence
+has never seen it.
+
+Accuracy itself is a draw, which is why this method is not the default. Best cross-validated MCC
+over the same α grid, ten folds:
+
+| set | GP classifier | C-SVC | Brier (GPC) |
+|---|---:|---:|---:|
+| THR (cut 6.7) | +0.389 | **+0.411** | 0.201 |
+| COX2 | **+0.704** | +0.646 | 0.128 |
+| DHFR | +0.662 | **+0.673** | 0.137 |
+| BZR | +0.485 | **+0.497** | 0.173 |
+| AChE | +0.534 | **+0.576** | 0.195 |
+| mittal/ACHE | **+0.243** | +0.207 | 0.242 |
+
+The mean difference is +0.001 in MCC and −0.009 in AUC: the two are the same classifier as far as
+these sets can tell. That was the expected answer — a plain ridge on ±1 labels, which is what
+`method="gp"` already was, reaches within 0.02 MCC of the SVMs once its decision threshold is
+chosen on the training folds rather than left at zero, so most of the apparent gap between the
+squared loss and the hinge loss was never about the loss. What the Bernoulli likelihood adds is
+the principled way of placing that boundary, and the three things above.
+
+The latent mean stays a kernel expansion, `f(x) = Σ_j a_j K(x, x_j)`, so unlike a nonlinear
+kernel layer this classifier leaves the interpretation intact: the co-field, the training-molecule
+contributions and the atom contributions are computed exactly as for kernel ridge regression. In
+the application the method sits in the Model panel's classification list, takes its amplitude from
+the C grid, prints its evidence and Brier score in the Statistics tab, and fills the Scores tab
+with probabilities rather than decision values.
+
+```bash
+python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task classification \
+       --threshold 6.84 --method gpc --Cs 1,10,100
+```
 
 ### Alignment by prediction confidence
 
@@ -1252,6 +1321,12 @@ groups are pooled, that no fold ever splits a chemotype and that bundling keeps 
 together, that an activity which is a property of the scaffold is predicted almost perfectly by random
 folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
 without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
+For the Gaussian-process classifier they check that the Newton iteration reaches a point where f = K grad
+and that nothing near it scores higher on the objective, that the marginal likelihood equals its textbook
+definition computed the slow way, that the latent mean is the same kernel expansion the rest of the
+program assumes, that the probabilities are bounded and pulled towards one half by the variance, that the
+variance returns to the prior far from the training molecules, that the evidence prefers an informative
+kernel over a noise one and agrees there with cross-validation, and that one class alone is refused.
 all, that the alignment-free kernel keeps the atom counts rather than cancelling them and gives 1 for a
 molecule whose geometry has been destroyed but whose atoms have not, that the attenuated kernel
 converges on the limit the default writes down directly, and that the limit does not move at all when
@@ -1278,6 +1353,7 @@ cmfqsar/conformers.py   conformational ensembles: generation, weighting, groupin
 cmfqsar/mil.py          multi-instance learning: the model chooses the conformation
 cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
+cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)

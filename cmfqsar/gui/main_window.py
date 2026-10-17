@@ -1176,6 +1176,15 @@ class MainWindow(QMainWindow):
                f"Kernel: {kern}",
                f"Method: {m.method}   params: {m.params}   normalised kernels: {m.normalize}   field scaling: {m.scale_fields}",
                "Fields: " + ", ".join(f"{s.label} (alpha={s.alpha:g}, h={s.h:g})" for s in m.fieldset.specs)]
+        if m.method == "gpc":
+            from ..gpc import brier_score
+            try:
+                txt.insert(2, f"Gaussian process: log marginal likelihood "
+                              f"{m.log_marginal_likelihood:.2f}, Brier score of the fitted "
+                              f"probabilities {brier_score(m.y, m.predict_proba(m.train)):.3f} "
+                              f"(0.25 is a coin). The Scores tab carries p(active) from the latent mean.")
+            except Exception as exc:                   # noqa: BLE001
+                txt.insert(2, f"Gaussian process: probabilities unavailable ({exc})")
         rp.txt_stats.setPlainText("\n".join(txt))
         rp.set_search_table(self.search_rows)
         dp = self.dataset_panel
@@ -1240,7 +1249,15 @@ class MainWindow(QMainWindow):
             for k, i in enumerate(getattr(self, "model_decoy_idx", [])):
                 if d_scores is not None:
                     scores[i] = d_scores[k]
-            rp.set_scores(ds.names, scores, target, ds.subset)
+            if m.method == "gpc":
+                # the classifier's own output is a probability; the latent value behind it is
+                # what the ROC and the statistics above are computed from, as for any classifier
+                from ..gpc import squash
+                scores = squash(scores, np.zeros_like(scores),
+                                str(m.params.get("likelihood", "probit")))
+                rp.set_scores(ds.names, scores, target, ds.subset, boundary=0.5)
+            else:
+                rp.set_scores(ds.names, scores, target, ds.subset)
             if "screening_truth" in st.extra:
                 rp.set_enrichment(st.extra["screening_truth"], st.extra["screening_scores"],
                                   label="actives vs decoys")

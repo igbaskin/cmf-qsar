@@ -297,6 +297,7 @@ class _Learner:
         self.b_: float = 0.0
         self.support_: Optional[np.ndarray] = None   # indices of training molecules with a != 0
         self.K_train_: Optional[np.ndarray] = None
+        self.gpc_ = None                             # the Laplace fit, for method "gpc"
 
     def fit(self, K: np.ndarray, y: np.ndarray) -> "_Learner":
         n = len(y)
@@ -337,6 +338,16 @@ class _Learner:
             self.alpha_, self.b_ = a, float(est.intercept_[0])
             self.support_ = np.array(est.support_)
             self.classes_ = est.classes_
+        elif self.method == "gpc":
+            # Gaussian-process classification at the posterior mode: the latent mean is a kernel
+            # expansion like every other method here, so the decomposition rules still apply
+            from .gpc import LaplaceGPC
+            g = LaplaceGPC(likelihood=str(self.params.get("likelihood", "probit")),
+                           amplitude=float(self.params.get("amplitude", 1.0)))
+            self.gpc_ = g.fit(K, y)
+            self.alpha_, self.b_ = g.coef, 0.0
+            self.support_ = np.arange(n)
+            self.K_train_ = K
         elif self.method == "ocsvm":
             # one-class (novelty detection): no labels are used, every training molecule
             # belongs to the target class
@@ -355,7 +366,13 @@ class _Learner:
         return K_test_train @ self.alpha_ + self.b_
 
     def predict_variance(self, K_test_train: np.ndarray, k_test_self: np.ndarray) -> np.ndarray:
-        """GP posterior variance (in units of the kernel) with lambda playing the role of noise."""
+        """GP posterior variance (in units of the kernel) with lambda playing the role of noise.
+
+        For the classifier it is the variance of the latent function, which is what the
+        probability is averaged over.
+        """
+        if getattr(self, "gpc_", None) is not None:
+            return self.gpc_.latent_variance(K_test_train, k_test_self)
         if self.K_train_ is None:
             return np.full(len(K_test_train), np.nan)
         lam = float(self.params.get("lam", 1.0))
@@ -727,6 +744,33 @@ class CMFModel:
         var = learner.predict_variance(K, k_self)
         return yp, var
 
+    def predict_proba(self, test: AtomTable) -> np.ndarray:
+        """p(active) for new molecules; only the Gaussian-process classifier provides it.
+
+        The latent posterior variance is averaged over, so a molecule the model has nothing to
+        say about is reported near one half rather than confidently.
+        """
+        learner = self.learner_
+        if learner is None or getattr(learner, "gpc_", None) is None:
+            raise ValueError("probabilities come from the Gaussian-process classifier; "
+                             "fit with method='gpc' (the support-vector classifiers return a "
+                             "decision value, which is not a probability)")
+        self._require_linear("class probabilities")
+        K = self.joint_kernel(self.test_kernels(test))
+        d_test = self._self_kernels(test)
+        if self.normalize:
+            d_test = np.ones_like(d_test)
+        k_self = (self.fieldset.mixing_vector() * self.scale) @ d_test
+        return learner.gpc_.predict_proba(K, k_self)
+
+    @property
+    def log_marginal_likelihood(self) -> float:
+        """Approximate evidence of the fitted classifier; nan for every other method."""
+        learner = self.learner_
+        if learner is None or getattr(learner, "gpc_", None) is None:
+            return float("nan")
+        return float(learner.gpc_.log_marginal_likelihood)
+
     def evaluate_test(self, test: AtomTable, y_test: np.ndarray, progress=None, cancel=None) -> np.ndarray:
         yp = self.predict(test, progress=progress, cancel=cancel)
         y_test = np.asarray(y_test, float)
@@ -996,6 +1040,9 @@ def _param_grid(method: str, lams, Cs, epsilons, nus):
         return [{"C": float(C), "nu": float(nu)} for C in Cs for nu in nus]
     if method == "svc":
         return [{"C": float(C)} for C in Cs]
+    if method == "gpc":
+        # the amplitude of the kernel plays the part C plays for a support-vector classifier
+        return [{"amplitude": float(C)} for C in Cs]
     if method == "nusvc":
         return [{"nu": float(nu)} for nu in nus]
     if method == "ocsvm":

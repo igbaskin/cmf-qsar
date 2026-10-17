@@ -517,7 +517,11 @@ class ModelPanel(QWidget):
         self.ed_lams = QLineEdit("1e-4, 1e-3, 1e-2, 0.1, 1, 10")
         form.addRow("λ grid (KRR/GP):", self.ed_lams)
         self.ed_Cs = QLineEdit("0.1, 1, 10, 100")
-        form.addRow("C grid (SVR):", self.ed_Cs)
+        self.ed_Cs.setToolTip("C of the support-vector methods; for the Gaussian-process "
+                              "classifier the same grid is the amplitude of the kernel, which "
+                              "plays the same part and can also be read off the marginal "
+                              "likelihood printed in the Statistics tab")
+        form.addRow("C grid (SVR/SVC, amplitude of the GP classifier):", self.ed_Cs)
         self.ed_eps = QLineEdit("0.05, 0.1, 0.2")
         form.addRow("ε grid / ν grid:", self.ed_eps)
         self.ed_nus = QLineEdit("0.3, 0.5, 0.7")
@@ -606,8 +610,9 @@ class ModelPanel(QWidget):
     REG_METHODS = ["Kernel ridge regression (KRR)", "Gaussian process (KRR + variance)",
                    "epsilon-SVR", "nu-SVR"]
     REG_KEYS = ["krr", "gp", "svr", "nusvr"]
-    CLS_METHODS = ["Support vector classification (C-SVC)", "nu-SVC"]
-    CLS_KEYS = ["svc", "nusvc"]
+    CLS_METHODS = ["Support vector classification (C-SVC)", "nu-SVC",
+                   "Gaussian process classifier (Laplace)"]
+    CLS_KEYS = ["svc", "nusvc", "gpc"]
     OC_METHODS = ["One-class SVM (1-SVM)"]
     OC_KEYS = ["ocsvm"]
 

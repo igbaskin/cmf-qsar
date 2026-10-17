@@ -128,6 +128,8 @@ def cmd_build(args):
         if args.method in ("krr", "gp", "svr", "nusvr"):
             args.method = "ocsvm" if args.task == "oneclass" else "svc"
             print(f"  method set to {args.method} for this task")
+        if args.method == "gpc" and args.task == "oneclass":
+            raise SystemExit("the Gaussian-process classifier needs both classes; use ocsvm")
         if args.task == "oneclass" and not args.normalize:
             # without cosine normalisation the decision value scales with the size of the molecule,
             # so the ranking measures molecular size rather than similarity to the target class
@@ -240,6 +242,12 @@ def cmd_build(args):
     if args.optimize_h or args.mkl:
         print("  mixing coefficients:", {k: round(v, 3) for k, v in res.best_h.items()})
     model.fit(train, y, cv_folds=args.folds, cv_seed=seed, reuse_kernels=True)
+    if args.method == "gpc":
+        from cmfqsar.gpc import brier_score
+        p_fit = model.predict_proba(train)
+        print(f"  log marginal likelihood {model.log_marginal_likelihood:.2f}, "
+              f"Brier score of the fitted probabilities {brier_score(y, p_fit):.3f} "
+              f"(0.25 is a coin)")
     if args.align_train_variance is not None:
         from cmfqsar.varalign import cv_align_training_set
         guard = None if args.align_train_variance <= 0 else args.align_train_variance
@@ -874,7 +882,10 @@ def main(argv=None):
                         "or the Sybyl-type increments of the original CMF scripts (tripos; -legacy reproduces "
                         "the hydrogen-counting bug of the 2013 scripts)")
     b.add_argument("--method", default="krr",
-                   choices=["krr", "gp", "svr", "nusvr", "svc", "nusvc", "ocsvm"])
+                   choices=["krr", "gp", "svr", "nusvr", "svc", "nusvc", "gpc", "ocsvm"],
+                   help="gpc is the Gaussian-process classifier (Laplace approximation): it "
+                        "gives calibrated probabilities, a posterior variance per molecule and "
+                        "the marginal likelihood, and takes its amplitude from the C grid")
     b.add_argument("--task", default="regression",
                    choices=["regression", "classification", "oneclass"],
                    help="regression (default), binary classification, or one-class / novelty detection "
