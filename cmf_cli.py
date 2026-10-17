@@ -740,8 +740,8 @@ def cmd_hetero(args):
     print(f"Aligned model (alpha {res.alpha:g}, lambda {res.lam:g}):")
     print(f"  q2 with random folds            {res.q2_random:+.3f}   <- flatters a mixed series")
     print(f"  q2 leave-one-chemotype-out      {res.q2_grouped:+.3f}   RMSE {res.rmse_grouped:.3f}")
-    print(f"  alignment-free fragment model   {res.q2_baseline:+.3f}   (indicator fields, "
-          f"alpha {args.baseline_alpha:g})")
+    how = f"alpha {args.baseline_alpha:g}" if args.baseline_alpha else "atom counts, the limit"
+    print(f"  alignment-free fragment model   {res.q2_baseline:+.3f}   (indicator fields, {how})")
     print(f"  verdict: {res.verdict()}")
     if res.per_group:
         print("  per chemotype, held out in turn:")
@@ -1124,9 +1124,13 @@ def main(argv=None):
     h.add_argument("--raw-kernels", action="store_true")
     h.add_argument("--alphas", default="0.3,0.5,1.0")
     h.add_argument("--lams", default="1e-2,0.1,1")
-    h.add_argument("--baseline-alpha", type=float, default=BASELINE_ALPHA, metavar="A",
-                   help="attenuation of the alignment-free indicator fields; small is the point, "
-                        "since the dependence on the poses dies only linearly in it")
+    h.add_argument("--baseline-alpha", type=float, default=None, metavar="A",
+                   help="attenuation of the alignment-free indicator fields; omitted, the "
+                        "baseline is the limit these fields tend to, taken from the atom counts "
+                        "themselves, which is exactly pose-free and much faster. A value takes "
+                        "the Gaussian route at that attenuation instead, which has to be far "
+                        "smaller than a modelling one, since the dependence on the poses dies "
+                        f"only linearly in it ({BASELINE_ALPHA:g} is close enough)")
     h.add_argument("--top", type=int, default=10)
     h.add_argument("--seed", type=int, default=0)
     h.add_argument("--out", default=None, help="CSV with the chemotype of every molecule")

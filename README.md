@@ -341,9 +341,9 @@ molecule's own scaffold-mates in the training part, which is the most optimistic
 4. **Judge it by leave-one-chemotype-out.** `grouped_folds` never splits a group, and
    `grouped_cv_predict` holds out a whole chemotype at a time; `max_folds` bundles the groups
    when there are many small ones.
-5. **Compare with a baseline that needs no alignment.** `count_kernel` builds continuous
-   indicator fields with a very small attenuation. Writing the overlap integral of two such
-   fields out,
+5. **Compare with a baseline that needs no alignment.** `count_kernel` is the continuous
+   indicator fields at vanishing attenuation. Writing the overlap integral of two such fields
+   out,
 
    ```
    K_t(A,B) = (π/α)^{3/2} Σ_{l∈A} Σ_{m∈B} exp(−α |r_l − r_m|² / 4)
@@ -351,15 +351,22 @@ molecule's own scaffold-mates in the training part, which is the most optimistic
    ```
 
    so as α tends to zero every exponential tends to one, the kernel tends to the dot product of
-   the atom-type count vectors, and nothing of the geometry survives. `alignment_free_q2` then
-   runs that kernel through the same grouped folds. Two details decide whether the limit is
-   actually reached, and both are measured in the tests:
+   the atom-type count vectors, and nothing of the geometry survives. By default the baseline is
+   that limit, written down from the counts themselves: each field scaled to unit mean diagonal,
+   which in the limit is a division by the mean of n_t², and the cosine of what is left. It is
+   exactly pose-free rather than nearly so — it never reads a coordinate — and it costs one pass
+   over the atoms instead of a kernel over every pair of them, which is 10 to 34 times faster on
+   the sets in `examples/`. `alignment_free_q2` then runs that kernel through the same grouped
+   folds, with its own λ.
+
+   An explicit attenuation takes the Gaussian route instead, which is the thing the limit is a
+   limit of. Two details decide whether that route arrives, and both are measured in the tests:
 
    - **The attenuation has to be far smaller than a modelling one.** The first correction is
      linear in α and carries the separation of the two molecules' centroids, so the pose
      dependence dies only as fast as α does. A rigid motion of every molecule still moves the
-     kernel by 0.70 at α = 0.02 and by 0.12 at 2·10⁻³; the default `BASELINE_ALPHA` = 2·10⁻⁴
-     brings that to 0.013 and the kernel to within 0.01 of the count-vector cosine.
+     kernel by 0.70 at α = 0.02 and by 0.12 at 2·10⁻³; at `BASELINE_ALPHA` = 2·10⁻⁴ it is 0.013,
+     and the two routes agree to 4·10⁻⁵ by α = 2·10⁻⁶.
    - **The cosine normalisation has to be applied to the joint kernel, not field by field.** A
      field normalised on its own tends to `n_t(A) n_t(B) / (n_t(A) n_t(B))` = 1, so the counts
      cancel against themselves and what is left is the indicator of "both molecules contain type
@@ -377,10 +384,10 @@ groups of at least three molecules; the baseline gets the same λ grid on the sa
 
 | set | n | chemotypes | random folds | leave-one-chemotype-out | alignment-free |
 |---|---:|---:|---:|---:|---:|
-| sutherland/COX2 | 282 | 14 | +0.537 | **+0.425** | +0.282 |
-| sutherland/DHFR | 361 | 31 | +0.623 | **+0.463** | +0.250 |
-| sutherland/BZR  | 147 | 12 | +0.388 | +0.088 | **+0.145** |
-| sutherland/AChE | 111 |  7 | +0.510 | **+0.275** | −0.063 |
+| sutherland/COX2 | 282 | 14 | +0.537 | **+0.425** | +0.174 |
+| sutherland/DHFR | 361 | 31 | +0.623 | **+0.463** | +0.159 |
+| sutherland/BZR  | 147 | 12 | +0.388 | +0.088 | **+0.144** |
+| sutherland/AChE | 111 |  7 | +0.510 | **+0.275** | −0.060 |
 | mittal/ACHE     | 111 |  7 | +0.168 | −0.304 | **−0.058** |
 
 Random folds flatter every one of them, by 0.11 to 0.47 in q²; on ACHE they turn a model that
@@ -390,6 +397,12 @@ Sutherland's AChE, and does not on BZR or on Mittal's ACHE, where a fragment-cou
 ignores the geometry entirely does as well or better. Which it is cannot be guessed from the
 random-fold number, and the per-chemotype table says where the failure is: on DHFR one group of
 five molecules is predicted 2.07 log units too low whatever is done with it.
+
+How strict the baseline is matters, and shows how little attenuation it takes to smuggle the
+geometry back in. The same column taken by the Gaussian route at α = 2·10⁻⁴ instead of at the
+limit reads +0.282 on COX2 and +0.250 on DHFR, against +0.174 and +0.159 here — the residual pose
+dependence at that attenuation is worth around 0.1 in q² on the two large sets. It does not
+change any verdict, but a baseline is only as honest as its limit.
 
 Realigning first did not rescue the sets that fail. Under the same protocol, Mittal's ACHE goes
 from −0.304 in its published poses to −0.392 after step 2 and −0.390 after step 3, and BZR from
@@ -410,7 +423,9 @@ python cmf_cli.py hetero examples/sutherland/COX2.sdf --charges file --min-group
 
 `--align-within` and `--place field|dock` add steps 2 and 3, `--generic-scaffolds` merges
 chemotypes that differ only in their heteroatoms, `--max-folds` bundles the groups, and
-`--baseline-alpha` sets the attenuation of the alignment-free fields.
+`--baseline-alpha` takes the baseline by the Gaussian route at that attenuation instead of at its
+limit. In the application the same choice is the "Baseline α" box of step 4, which reads "the
+limit (atom counts)" at zero.
 
 In the application the same five steps are a submenu, *Tools -> Heterogeneous sets (several
 chemotypes)*, in the order they have to be taken. Step 1 adds a "Chemotype" column to the data-set
@@ -1164,8 +1179,9 @@ together, that an activity which is a property of the scaffold is predicted almo
 folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
 without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
 all, that the alignment-free kernel keeps the atom counts rather than cancelling them and gives 1 for a
-molecule whose geometry has been destroyed but whose atoms have not, and that its dependence on the
-poses dies with the attenuation, to under 0.02 at the default.
+molecule whose geometry has been destroyed but whose atoms have not, that the attenuated kernel
+converges on the limit the default writes down directly, and that the limit does not move at all when
+every molecule is rotated and translated.
 
 ## Project layout
 

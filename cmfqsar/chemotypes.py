@@ -24,11 +24,13 @@ This module is the workflow for that case, in the order the problem imposes:
 5. **Compare against a baseline that needs no alignment at all**, :func:`alignment_free_q2` over
    :func:`count_kernel`: with a small attenuation factor a continuous indicator field tends to a
    count of atoms of its type, so the kernel becomes a fragment-descriptor kernel and the poses
-   stop mattering.  Two details decide whether that really happens, and both are measured in the
-   tests: the attenuation has to be far smaller than a modelling one, since the pose dependence
-   dies only linearly in it (at alpha = 0.02 a rigid motion of every molecule still moves the
-   kernel by 0.7, at 2e-4 by 0.013), and the cosine normalisation has to be applied to the joint
-   kernel rather than field by field, or the counts cancel against themselves.  If the aligned
+   stop mattering.  By default the baseline is that limit, written down from the counts
+   themselves, so no attenuation has to be chosen and the poses are gone exactly rather than
+   nearly.  Two details decide whether an attenuated kernel reaches the same place, and both are
+   measured in the tests: the attenuation has to be far smaller than a modelling one, since the
+   pose dependence dies only linearly in it (at alpha = 0.02 a rigid motion of every molecule
+   still moves the kernel by 0.7, at 2e-4 by 0.013), and the cosine normalisation has to be
+   applied to the joint kernel rather than field by field, or the counts cancel.  If the aligned
    model cannot beat that baseline, the alignment is not paying for itself, and on a heterogeneous
    set that is the first thing worth knowing.
 """
@@ -288,26 +290,36 @@ class HeteroResult:
 # 5. The baseline that needs no alignment
 # --------------------------------------------------------------------------- #
 
-#: attenuation of the alignment-free fields.  Small enough that the poses are gone: a rigid
-#: motion of every molecule changes the kernel by under 0.02, and the kernel is within 0.01 of
-#: the count-vector cosine; see `test_chemotypes.py`.
+#: attenuation to use when the alignment-free baseline is taken by the Gaussian route rather
+#: than at its limit.  Small enough that the poses are gone: a rigid motion of every molecule
+#: changes the kernel by under 0.02, and the kernel is within 0.01 of the count-vector cosine.
+#: The default route is the limit itself, which needs no attenuation; see :func:`count_kernel`.
 BASELINE_ALPHA = 2e-4
 
 
-def count_kernel(mols: Sequence[Chem.Mol], names: Sequence[str], alpha: float = BASELINE_ALPHA,
+def count_kernel(mols: Sequence[Chem.Mol], names: Sequence[str], alpha: Optional[float] = None,
                  cif_min: int = 3, scheme: str = "sybyl") -> np.ndarray:
-    """The kernel of the alignment-free baseline: indicator fields with a tiny attenuation.
+    """The kernel of the alignment-free baseline: indicator fields at vanishing attenuation.
 
     The field of Sybyl type *t* is a sum of unit Gaussians on the atoms of that type, so the
     overlap integral of two such fields is
 
-        K_t(A, B) = (pi/alpha)^{3/2} sum_{l in A} sum_{m in B} exp(-alpha |r_l - r_m|^2 / 4),
+        K_t(A, B) = (pi/alpha)^{3/2} sum_{l in A} sum_{m in B} exp(-alpha |r_l - r_m|^2 / 4)
+                  = (pi/alpha)^{3/2} [ n_t(A) n_t(B) - (alpha/4) sum_lm d_lm^2 + O(alpha^2) ],
 
-    and as alpha tends to zero every exponential tends to one: K_t tends to n_t(A) n_t(B) times a
-    factor common to every pair, which the cosine normalisation then removes.  The joint kernel
-    tends to the dot product of the atom-type count vectors, and nothing of the geometry survives.
+    so as alpha tends to zero K_t tends to n_t(A) n_t(B) times a factor common to every pair,
+    which the cosine normalisation then removes.  The joint kernel tends to the dot product of
+    the atom-type count vectors and nothing of the geometry survives.
 
-    The normalisation has to be applied to the joint kernel, not field by field.  A field
+    `alpha = None`, the default, writes that limit down directly: each field is scaled to unit
+    mean diagonal, which in the limit is a division by the mean of n_t^2, and the result is the
+    cosine of the count vectors.  It is the exact limit rather than an approach to it, so there
+    is no attenuation left to choose badly, and it costs one pass over the atoms instead of a
+    kernel over every pair of them (10 to 34 times faster on the sets in `examples/`).  Passing
+    an explicit `alpha` takes the Gaussian route instead, which is the thing the limit is a limit
+    of; the two agree to 4e-5 by alpha = 2e-6.
+
+    Either way the normalisation goes on the joint kernel, not field by field.  A field
     normalised on its own tends to n_t(A) n_t(B) / (n_t(A) n_t(B)) = 1, so the counts cancel and
     what is left is the indicator of "both molecules contain type t": the baseline would lose the
     very descriptors it is supposed to be built from.
@@ -315,23 +327,29 @@ def count_kernel(mols: Sequence[Chem.Mol], names: Sequence[str], alpha: float = 
     types = cif_types_in(mols, scheme, cif_min) if len(mols) else []
     if not types:
         return np.zeros((0, 0))
-    fs = FieldSet.create(physchem=[], cif_types=types, alpha=alpha, cif_scheme=scheme)
+    fs = FieldSet.create(physchem=[], cif_types=types, alpha=alpha or 1.0, cif_scheme=scheme)
     mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
-    model = CMFModel(fieldset=fs, method="krr", normalize=False)     # keep the counts
-    K = model.joint_kernel(model.prepare_training_kernels(AtomTable.from_molecules(mf)))
+    if alpha is None:
+        N = np.array([m.weights.sum(axis=0) for m in mf])            # counts per type
+        w = fs.mixing_vector() / np.maximum((N ** 2).mean(axis=0), 1e-300)
+        K = (N * w) @ N.T
+    else:
+        model = CMFModel(fieldset=fs, method="krr", normalize=False)  # keep the counts
+        K = model.joint_kernel(model.prepare_training_kernels(AtomTable.from_molecules(mf)))
     d = np.sqrt(np.clip(np.diag(K), 1e-300, None))
     return K / np.outer(d, d)
 
 
 def alignment_free_q2(mols: Sequence[Chem.Mol], names: Sequence[str], y: np.ndarray,
-                      labels: np.ndarray, alpha: float = BASELINE_ALPHA, lam=1.0,
+                      labels: np.ndarray, alpha: Optional[float] = None, lam=1.0,
                       cif_min: int = 3, max_folds: int = 0,
                       scheme: str = "sybyl") -> Tuple[float, float]:
     """Leave-one-chemotype-out q2 of a model that ignores the poses entirely.
 
-    `lam` may be one value or a grid, which is then searched on the same folds the aligned model
-    is tuned on, so that the two representations are compared under one protocol.  Returns
-    (q2, rmse).
+    `alpha` is the attenuation of the indicator fields, or `None` for the limit they tend to,
+    which is the default and what makes the baseline alignment-free.  `lam` may be one value or a
+    grid, which is then searched on the same folds the aligned model is tuned on, so that the two
+    representations are compared under one protocol.  Returns (q2, rmse).
     """
     ok = [i for i in range(len(mols)) if mols[i] is not None]
     K = count_kernel([mols[i] for i in ok], [names[i] for i in ok], alpha=alpha, cif_min=cif_min,
@@ -359,7 +377,7 @@ def alignment_free_q2(mols: Sequence[Chem.Mol], names: Sequence[str], y: np.ndar
 def evaluate(mols: Sequence[Chem.Mol], names: Sequence[str], y: np.ndarray, labels: np.ndarray,
              group_names: Sequence[str], fieldset: FieldSet, alphas: Sequence[float] = (0.3, 0.5, 1.0),
              lams: Sequence[float] = (1e-2, 0.1, 1.0), max_folds: int = 0, normalize: bool = True,
-             baseline_alpha: float = BASELINE_ALPHA, progress=None, cancel=None) -> HeteroResult:
+             baseline_alpha: Optional[float] = None, progress=None, cancel=None) -> HeteroResult:
     """Build the aligned model, judge it chemotype by chemotype, and compare with the baseline.
 
     The hyper-parameters are chosen on the same grouped folds the model is reported on, which is

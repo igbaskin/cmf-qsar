@@ -369,9 +369,9 @@ class ChemotypeValidationDialog(QDialog):
             f"Each of the {n_groups} chemotypes is held out in turn, so a molecule is never "
             "predicted from its own scaffold-mates. Random folds flatter a mixed series badly, "
             "and both numbers are reported side by side.\n\n"
-            "The comparison that matters is the last one: a model built on continuous indicator "
-            "fields with a very small attenuation ignores the poses entirely, since such a field "
-            "tends to a count of atoms of its type. If the aligned model cannot beat it across "
+            "The comparison that matters is the last one: a continuous indicator field tends to "
+            "a count of atoms of its type as its attenuation vanishes, and the baseline is that "
+            "limit, so it ignores the poses entirely. If the aligned model cannot beat it across "
             "chemotypes, the alignment is not paying for itself.\n\n"
             "The attenuation and regularisation grids come from the Model panel.")
         info.setWordWrap(True)
@@ -386,17 +386,20 @@ class ChemotypeValidationDialog(QDialog):
                                    "out one at a time, which is worth doing when there are many "
                                    "small groups")
         form.addRow("Folds:", self.spin_folds)
-        from ..chemotypes import BASELINE_ALPHA
         self.spin_alpha = QDoubleSpinBox()
-        self.spin_alpha.setRange(1e-5, 1.0)
+        self.spin_alpha.setRange(0.0, 1.0)
         self.spin_alpha.setDecimals(5)
         self.spin_alpha.setSingleStep(1e-4)
-        self.spin_alpha.setValue(BASELINE_ALPHA)
-        self.spin_alpha.setToolTip("Attenuation of the alignment-free indicator fields. The "
-                                   "dependence on the poses dies only linearly in it, so the "
-                                   "default is far smaller than a modelling attenuation: at 0.02 "
-                                   "a rigid motion of every molecule still moves the kernel by "
-                                   "0.7, at the default by 0.013.")
+        self.spin_alpha.setValue(0.0)
+        self.spin_alpha.setSpecialValueText("the limit (atom counts)")
+        self.spin_alpha.setToolTip("Attenuation of the alignment-free indicator fields. At zero "
+                                   "the baseline is the limit they tend to, taken from the atom "
+                                   "counts directly: exactly pose-free, and much faster. With an "
+                                   "attenuation it is the Gaussian kernel at that value, which "
+                                   "has to be far smaller than a modelling one, since the "
+                                   "dependence on the poses dies only linearly in it: at 0.02 a "
+                                   "rigid motion of every molecule still moves the kernel by "
+                                   "0.7, at 0.0002 by 0.013.")
         form.addRow("Baseline α:", self.spin_alpha)
         lay.addLayout(form)
         box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -1450,7 +1453,8 @@ class MainWindow(QMainWindow):
         fs = self._fieldset_from_panel()
         alphas = mp.alphas() or [1.0]
         lams = mp.lams() or [1.0]
-        max_folds, base_alpha = dlg.spin_folds.value(), dlg.spin_alpha.value()
+        max_folds = dlg.spin_folds.value()
+        base_alpha = dlg.spin_alpha.value() or None      # zero: the limit itself
         normalize = mp.chk_normalize.isChecked()
         ds = self.ds
 

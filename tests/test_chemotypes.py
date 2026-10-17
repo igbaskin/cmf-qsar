@@ -246,6 +246,23 @@ def test_the_baseline_kernel_keeps_the_counts_and_drops_the_geometry(mixed):
     assert pair[0, 1] == pytest.approx(1.0, abs=0.01)
 
 
+def test_the_limit_is_what_the_gaussian_route_converges_on(mixed):
+    """The default writes the limit down; the attenuated kernel has to arrive at the same place."""
+    mols, names, _, _ = mixed
+    exact = count_kernel(mols, names, cif_min=1)             # alpha=None: the counts themselves
+    gaps = [float(np.abs(count_kernel(mols, names, alpha=a, cif_min=1) - exact).max())
+            for a in (2e-2, 2e-3, 2e-4, 2e-6)]
+    assert gaps[0] > gaps[1] > gaps[2] > gaps[3]             # linear in alpha
+    assert gaps[-2] < 0.02 and gaps[-1] < 1e-3
+    # the limit is exactly pose-free, not nearly: it never looks at a coordinate
+    from rdkit import Chem
+    rng = np.random.default_rng(37)
+    moved = [Chem.Mol(m) for m in mols]
+    for m in moved:
+        _random_motion(m, rng)
+    assert np.array_equal(count_kernel(moved, names, cif_min=1), exact)
+
+
 def test_the_baseline_kernel_does_not_move_with_the_poses(mixed):
     """Rigid motions of every molecule leave it where it was, and the gap dies with alpha."""
     from rdkit import Chem
