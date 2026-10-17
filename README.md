@@ -280,10 +280,10 @@ experiment really asks whether *re-docking a good pose* helps, and it does not; 
 trustworthy alignment is a different question. And a proper docking program with a flexible-ligand
 search would place poses better than this one does.
 
-That second point suggests where this code is actually worth using. Placing a molecule in a site by
-optimising a pocket score is an *alignment* method, and for a series whose alignment is a guess from
-a common substructure it may well beat that guess. The ensemble question is closed; docking as an
-alignment criterion is open and the machinery for it is now here.
+That second point suggested where this code might actually be worth using. Placing a molecule in a
+site by optimising a pocket score is an *alignment* method, and it was worth asking whether it beats
+a guess from a common substructure. It does not: see
+[Docking as an alignment method](#docking-as-an-alignment-method) below.
 
 **The verdict on the fourth dimension.** Averaging, placement, windowing, selection and
 receptor-placed ensembles all fail to beat one well-chosen conformation on an aligned series. Five
@@ -750,6 +750,94 @@ in *opposite* directions. Judge the result on a test set that was not realigned.
 Three rounds each, no displacement limit. One set improved, one degraded badly, two were neutral, and
 rounds after the first consistently made the external prediction worse. The defaults are therefore a
 single round with a 1 Å displacement guard, and the hyper-parameters are refitted on the new geometry.
+
+### Docking as an alignment method
+
+The pocket docking of `cmfqsar/docking.py` was built to generate bound-like conformational
+ensembles and failed at that. But placing a molecule in a site by optimising a pocket score is an
+alignment method in its own right, and that is a different question: when a series has no
+trustworthy alignment, is it better to put every molecule where the protein wants it than to
+superimpose the molecules on each other?
+
+The experiment. Ten free-energy sets that have a stored pocket in `examples/pockets` and a
+single-conformation model worth degrading, 22 to 44 ligands each. For every set the published
+alignment was destroyed with `cmfqsar.align.unalign` — a uniformly random orientation for each
+molecule and a translation of up to 2 Å, 6.4 Å mean displacement — and then rebuilt four ways from
+the same scrambled poses:
+
+* **mcs** — `align.mcs_align` onto one reference molecule of the series, the one of median size,
+  held at its published pose. That is the one crystal ligand a real study starts from.
+* **mcs+field** — the same, then `align.field_align`, the rigid-body refinement that maximises the
+  normalised CMF kernel with the reference.
+* **dock** — `docking.dock_coords` from the scrambled pose, 12 restarts with full 180° orientation
+  perturbations and the 3 Å tether the module was built with.
+* **dock-centre** — the same, but every molecule is first moved to the centroid of the pocket atoms,
+  so no molecule keeps any memory of where it sat, with the tether widened to 8 Å.
+
+Each alignment was then given to `cmf_cli.py build --test-fraction 0.25 --seed 0` with its
+defaults, so the five field types, the α and λ grids, the 10-fold cross-validation and the split
+are identical everywhere and only the geometry differs. The published poses are the ceiling, the
+scrambled ones the floor.
+
+q²cv by set:
+
+| set | n | published | unaligned | mcs | mcs+field | dock | dock-centre |
+|---|---|---|---|---|---|---|---|
+| openff/cdk8 | 31 | 0.521 | −0.128 | 0.549 | 0.411 | 0.032 | 0.359 |
+| openff/mcl1 | 25 | 0.536 | −0.182 | 0.558 | 0.532 | 0.232 | 0.084 |
+| openff/pde10 | 35 | 0.332 | 0.114 | 0.308 | 0.326 | 0.237 | 0.151 |
+| openff/pfkfb3 | 32 | 0.785 | 0.100 | 0.765 | 0.736 | −0.039 | 0.129 |
+| openff/ptp1b | 22 | 0.441 | −0.038 | 0.237 | 0.402 | 0.299 | 0.370 |
+| openff/syk | 44 | 0.501 | 0.125 | 0.488 | 0.557 | 0.368 | 0.320 |
+| schindler/cdk8 | 33 | 0.579 | 0.065 | 0.552 | 0.655 | 0.173 | 0.205 |
+| schindler/hif2a-jmc2023 | 38 | 0.506 | 0.014 | 0.544 | 0.567 | 0.219 | 0.277 |
+| schindler/pfkfb3 | 40 | 0.008 | −0.028 | −0.020 | −0.013 | −0.083 | −0.090 |
+| schindler/syk | 44 | 0.456 | −0.052 | 0.471 | 0.210 | −0.075 | 0.052 |
+| **mean** | | **0.467** | **−0.001** | **0.445** | **0.438** | **0.136** | **0.186** |
+
+and the same runs measured against the published poses:
+
+| | published | unaligned | mcs | mcs+field | dock | dock-centre |
+|---|---|---|---|---|---|---|
+| mean q²cv | 0.467 | −0.001 | 0.445 | 0.438 | 0.136 | 0.186 |
+| mean R²pred | 0.199 | −0.325 | 0.230 | 0.296 | −0.171 | −0.413 |
+| mean heavy-atom RMSD from the published pose | 0 | 6.00 Å | 0.20 Å | 0.45 Å | 2.81 Å | 3.18 Å |
+| median RMSD | 0 | 6.17 Å | 0.06 Å | 0.43 Å | 1.72 Å | 1.90 Å |
+| poses within 2 Å | 100 % | 0 % | 99 % | 100 % | 64 % | 59 % |
+
+**Docking loses, and not narrowly.** The common-substructure alignment puts the median molecule
+back within 0.06 Å of the crystal pose and 99 % of all molecules within 2 Å, and the model it
+rebuilds from scrambled poses is the published model: mean q²cv 0.445 against 0.467, mean R²pred
+0.230 against 0.199. Docking recovers the median molecule to 1.7 Å and loses a fifth of them
+completely — 21 % of the docked poses end more than 5 Å from where the crystal has them — and the
+models follow: mean q²cv 0.136, a third of the ceiling, and an external R²pred that is negative on
+average. It beats the scrambled floor on seven sets of ten, so the pocket score is carrying real
+information, but it beats the common-substructure alignment on exactly one set (openff/ptp1b, where
+MCS itself had an off day at q² 0.237 against the published 0.441) and on one other by R²pred.
+Starting every molecule at the pocket centre instead of at its scrambled pose changes nothing:
+mean q²cv 0.186, mean RMSD 3.18 Å.
+
+The failures are not random, which is the one encouraging part. Pooled over all 297 docked poses
+the score correlates with the distance from the crystal pose at r = −0.32, and the better-scoring
+half of the poses averages 1.49 Å against 4.24 Å for the worse half. The score knows something; it
+is just not sharp enough to pick the right placement reliably, and a wrong placement is more
+damaging to a 3D-QSAR model than no placement is informative.
+
+Three things bound what this measures. These benchmark series are congeneric, 72 % to 95 % of the
+heavy atoms of each molecule being in the common substructure with the reference, which is the best
+case for a superposition and the regime where an alignment is least of a guess; the hope was that
+docking would win where the common substructure is small, but openff/pde10, the set with the
+weakest MCS here, is also the set docking places worst. The alignment produced is rigid-body only,
+so neither method can fix a wrong conformation. And this is not a docking program: no desolvation,
+no entropy, no torsional search, and a scoring function that was never fitted to binding data. A
+real docking program would place poses better, and the question would be worth asking again of one.
+
+Until then: **align the series, do not dock it.** Where a common substructure exists, use it; the
+field refinement on top is free and on average slightly improves the external prediction
+(R²pred 0.296 against 0.230) while drifting 0.45 Å from the crystal pose, so it is worth trying and
+worth judging on a test set. The docking code keeps its place as what it is good at — measuring and
+improving the fit of a pose that is already roughly right — and `dock_coords` now takes a
+`tether_radius` so that the search can be opened past the 3 Å it was built with.
 
 ## Installation
 

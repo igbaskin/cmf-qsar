@@ -65,6 +65,21 @@ def test_the_tether_keeps_a_pose_from_wandering_off():
     assert drift < 12.0                                   # it stays in the neighbourhood
 
 
+def test_dock_coords_passes_the_tether_radius_on():
+    """A wider tether is what lets a pose travel when docking is used to align a series."""
+    pocket = _fields([[0.0, 0, 0], [5.0, 0, 0], [10.0, 0, 0], [15.0, 0, 0]],
+                     [-0.5, -0.5, -0.5, -0.5], name="pocket")
+    probe = _fields([[0.0, 6.0, 0.0]], [+1.0])            # off to one side of the groove
+    start = probe.coords.mean(axis=0)
+    tight, _ = dock_coords(probe, pocket, FS, restarts=6, seed=0, max_shift=4.0,
+                           max_rotation_deg=180.0, tether_radius=0.5)
+    wide, _ = dock_coords(probe, pocket, FS, restarts=6, seed=0, max_shift=4.0,
+                          max_rotation_deg=180.0, tether_radius=12.0)
+    d_tight = np.linalg.norm(tight.mean(axis=0) - start)
+    d_wide = np.linalg.norm(wide.mean(axis=0) - start)
+    assert d_wide > d_tight
+
+
 def test_burial_pulls_a_pose_into_the_site():
     """Without the burial term the field terms alone do not hold a ligand in a cavity."""
     ring = _fields([[np.cos(a) * 5.0, np.sin(a) * 5.0, 0.0] for a in np.linspace(0, 2 * np.pi, 9)],

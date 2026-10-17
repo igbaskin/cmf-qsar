@@ -185,14 +185,18 @@ def _transform(coords: np.ndarray, p: np.ndarray, center: np.ndarray) -> np.ndar
 def dock_coords(mol: MoleculeFields, pocket: MoleculeFields, fieldset: FieldSet,
                 restarts: int = 0, seed: int = 0, max_iter: int = 200,
                 max_shift: float = 2.0, max_rotation_deg: float = 30.0,
-                clash_weight: float = CLASH_WEIGHT) -> Tuple[np.ndarray, DockResult]:
+                clash_weight: float = CLASH_WEIGHT,
+                tether_radius: float = TETHER_RADIUS) -> Tuple[np.ndarray, DockResult]:
     """Optimise the rigid-body placement of one conformation inside the pocket.
 
-    The search starts from the pose the conformation arrives in and stays near it: restarts are
-    bounded perturbations rather than a global search, because the series is already in the site
-    and the question is where in the site each conformation belongs, not whether it binds.
+    By default the search starts from the pose the conformation arrives in and stays near it:
+    restarts are bounded perturbations rather than a global search, because the series is already
+    in the site and the question is where in the site each conformation belongs, not whether it
+    binds.  Used as an alignment method the arrival pose carries no information, and the search is
+    opened up by raising `max_rotation_deg` to 180 and `tether_radius` to the size of the site.
     """
-    scorer = PocketScorer(mol, pocket, fieldset, clash_weight=clash_weight)
+    scorer = PocketScorer(mol, pocket, fieldset, clash_weight=clash_weight,
+                          tether_radius=tether_radius)
     center = mol.coords.mean(axis=0)
 
     def objective(p):
