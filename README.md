@@ -494,9 +494,25 @@ cannot tell a molecule from its mirror image, so enantiomers are identical to it
 need the signed triple product of three displacements, the three-point case of the same idea.
 
 `evaluate` reports it as the fourth number, the `hetero` command prints it, and the Chemotypes
-tab carries it beside the other three. It is a comparator there, not yet a modelling method:
-there is no way to *fit* a model on this kernel from the command line or the application, which
-would need the model to accept a kernel that does not come from the fields of an atom table.
+tab carries it beside the other three.
+
+**It is also a kernel to model with, not only to compare against.** `CMFModel` takes a
+`kernel_source`, so every learner, the grid search, the cross-validation, the external CV, the
+posterior variance, the screening scores and model save/load work on it unchanged:
+
+```bash
+python cmf_cli.py build examples/sutherland/BZR.sdf --charges file --kernel autocorrelation        --lams 1e-2,0.1,1 --test-fraction 0.25 --save bzr-invariant.cmf
+```
+
+In the application it is the *Kernel from* box of the Model panel; choosing it reveals the
+distance resolution σ and greys out the α grid, which this kernel does not use. A test asserts
+what the box promises: a model fitted on one set of poses and asked about a molecule moved
+fifteen ångström away and turned at random returns the same number to nine decimals, and a model
+fitted on randomly re-posed copies of the same training molecules is the same model.
+
+What the model loses with the frame, it says so: `cofield_coefficients` and `atom_contributions`
+raise rather than return something meaningless, while the contributions of the training molecules
+— the dual form, which needs no frame — still add up to the prediction.
 
 ### Property fields against indicator fields
 

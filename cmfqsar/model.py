@@ -522,6 +522,11 @@ class CMFModel:
     params: Dict[str, float] = field(default_factory=lambda: {"lam": 1.0, "C": 1.0, "epsilon": 0.1, "nu": 0.5})
     normalize: bool = False                 # cosine-normalise each field kernel
     scale_fields: bool = True               # scale each field kernel to unit mean diagonal
+    # where the kernel comes from: the overlap integrals of the fields, which needs the molecules
+    # to share a frame, or the rotation-invariant autocorrelation of those fields, which does not
+    kernel_source: str = "fields"           # "fields" | "autocorrelation"
+    ac_sigma: float = 0.75                  # autocorrelation: width along the distance axis (A)
+    ac_d_max: float = 12.0                  # autocorrelation: longest distance resolved (A)
     # optional nonlinear layer on top of the CMF kernel: "linear" keeps the model linear in the
     # molecular field, which is what makes the co-field and the atom contributions valid; the other
     # layers predict better on several sets but destroy that interpretation (see the README)
@@ -642,6 +647,62 @@ class CMFModel:
                 scale[f] = 1.0 / d if d > 1e-300 else 0.0
         return scale
 
+    @property
+    def uses_fields(self) -> bool:
+        """True when the kernel is the overlap integral, which is what needs a common frame."""
+        return self.kernel_source in (None, "", "fields")
+
+    def _ac_spec(self):
+        from .invariant import AutocorrelationSpec
+        return AutocorrelationSpec(d_max=float(self.ac_d_max), step=float(self.ac_sigma),
+                                   sigma=float(self.ac_sigma))
+
+    def _ac_features(self, table: AtomTable) -> np.ndarray:
+        from .invariant import feature_matrix
+        return feature_matrix(table.molecules, self._ac_spec(),
+                              n_fields=table.weights.shape[1])
+
+    def training_kernel(self, train: AtomTable, progress=None, cancel=None) -> np.ndarray:
+        """The joint training kernel, whichever source it comes from."""
+        if self.uses_fields:
+            return self.joint_kernel(self.prepare_training_kernels(train, progress=progress,
+                                                                   cancel=cancel))
+        from .invariant import autocorrelation_kernel, channel_scale
+        if progress:
+            progress("Field autocorrelation", 0.2)
+        self.train = train
+        self.self_diag = None
+        self.K_fields_train = None
+        self.scale = np.ones(1)
+        spec = self._ac_spec()
+        self.ac_train_ = self._ac_features(train)
+        self.ac_scale_ = channel_scale(self.ac_train_, spec.n_bins)
+        return autocorrelation_kernel(self.ac_train_, scale=self.ac_scale_, n_bins=spec.n_bins)
+
+    def test_kernel(self, test: AtomTable, progress=None, cancel=None) -> np.ndarray:
+        """The (n_test, n_train) joint kernel block, whichever source it comes from."""
+        if self.uses_fields:
+            return self.joint_kernel(self.test_kernels(test, progress=progress, cancel=cancel))
+        from .invariant import autocorrelation_kernel
+        if getattr(self, "ac_train_", None) is None:
+            raise RuntimeError("model is not fitted")
+        return autocorrelation_kernel(self.ac_train_, self._ac_features(test),
+                                      scale=self.ac_scale_, n_bins=self._ac_spec().n_bins)
+
+    def _require_fields_if_atoms(self, what: str) -> None:
+        """Atom-level interpretation needs the overlap kernel; the dual form does not."""
+        if not self.uses_fields and what in ("co-fields", "atom contributions",
+                                             "Shapley values over atoms"):
+            self._require_fields(what)
+
+    def _require_fields(self, what: str) -> None:
+        if not self.uses_fields:
+            raise ValueError(
+                f"{what} are defined for the overlap-integral kernel, which is a function of the "
+                f"fields in a common frame; this model uses the '{self.kernel_source}' kernel, "
+                f"which is invariant to rotation and so has no field in a fixed frame to show. "
+                f"The contributions of the training molecules remain valid.")
+
     def joint_kernel(self, K_fields: np.ndarray) -> np.ndarray:
         """Linear (overlap-integral) joint kernel: the sum over field types."""
         return combine_kernels(K_fields, self.fieldset.mixing_vector(), self.scale)
@@ -653,6 +714,8 @@ class CMFModel:
 
     def joint_self(self, table: AtomTable) -> np.ndarray:
         """Diagonal of the linear joint kernel, i.e. K(x, x) for every molecule of `table`."""
+        if not self.uses_fields:
+            return np.ones(table.n_mol)          # the autocorrelation kernel is cosine-normalised
         d = self_kernels(table, self.fieldset.specs)
         if self.normalize:
             # the cosine-normalised self-kernel is 1, except for a field that is identically
@@ -736,13 +799,16 @@ class CMFModel:
             progress: Optional[ProgressFn] = None, cancel: Optional[CancelFn] = None,
             reuse_kernels: bool = False) -> "CMFModel":
         y = np.asarray(y, dtype=float)
-        if not (reuse_kernels and self.K_fields_train is not None and self.train is train):
-            self.prepare_training_kernels(
-                train,
-                progress=(lambda i, n: progress(f"Kernel matrix {i}/{n}", 0.8 * i / n)) if progress else None,
-                cancel=cancel)
+        if self.uses_fields:
+            if not (reuse_kernels and self.K_fields_train is not None and self.train is train):
+                self.prepare_training_kernels(
+                    train,
+                    progress=(lambda i, n: progress(f"Kernel matrix {i}/{n}", 0.8 * i / n)) if progress else None,
+                    cancel=cancel)
+            K_lin = self.joint_kernel(self.K_fields_train)
+        else:
+            K_lin = self.training_kernel(train, progress=progress, cancel=cancel)
         self.y = y
-        K_lin = self.joint_kernel(self.K_fields_train)
         self.base_diag_ = np.diag(K_lin).copy()
         self.gamma_scale_ = median_gamma_scale(K_lin) if self.kernel_layer == "gauss" else None
         K = self.apply_layer(K_lin, self.base_diag_, self.base_diag_)
@@ -791,8 +857,8 @@ class CMFModel:
         oc = getattr(self.learner_, "oc_", None) if self.learner_ is not None else None
         if self.coef is None and oc is None:
             raise RuntimeError("model is not fitted")
-        Kf = self.test_kernels(test, progress=progress, cancel=cancel)
-        K = self.joint_kernel(Kf)
+        Kf = self.test_kernels(test, progress=progress, cancel=cancel) if self.uses_fields else None
+        K = self.joint_kernel(Kf) if self.uses_fields else self.test_kernel(test, progress=progress)
         if not self.is_linear:
             K = self.apply_layer(K, self.joint_self(test), self.base_diag_)
         if oc is not None:
@@ -807,6 +873,7 @@ class CMFModel:
         """Prediction from precomputed per-field kernels (F, n_test, n_train) with the training set."""
         if self.coef is None:
             raise RuntimeError("model is not fitted")
+        self._require_fields("predictions from precomputed field kernels")
         self._require_linear("predictions from precomputed field kernels")
         return self.joint_kernel(K_fields_test) @ self.coef + self.bias
 
@@ -817,19 +884,15 @@ class CMFModel:
                 f"the posterior variance is implemented for the linear CMF kernel; this model uses "
                 f"the '{self.kernel_layer}' layer. Fit a linear model (the same fields and alpha) to "
                 f"obtain variances, for example for alignment by prediction confidence.")
-        Kf = self.test_kernels(test)
-        K = self.joint_kernel(Kf)
+        K = self.test_kernel(test)
         yp = K @ self.coef + self.bias
         if self.learner_ is None or self.learner_.K_train_ is None:
             learner = _Learner("gp", self.params)
-            learner.K_train_ = self.joint_kernel(self.K_fields_train)
+            learner.K_train_ = (self.joint_kernel(self.K_fields_train) if self.uses_fields
+                                else self.training_kernel(self.train))
         else:
             learner = self.learner_
-        d_test = self._self_kernels(test)
-        if self.normalize:
-            d_test = np.ones_like(d_test)
-        k_self = (self.fieldset.mixing_vector() * self.scale) @ d_test
-        var = learner.predict_variance(K, k_self)
+        var = learner.predict_variance(K, self.joint_self(test))
         return yp, var
 
     def predict_proba(self, test: AtomTable) -> np.ndarray:
@@ -844,12 +907,8 @@ class CMFModel:
                              "fit with method='gpc' (the support-vector classifiers return a "
                              "decision value, which is not a probability)")
         self._require_linear("class probabilities")
-        K = self.joint_kernel(self.test_kernels(test))
-        d_test = self._self_kernels(test)
-        if self.normalize:
-            d_test = np.ones_like(d_test)
-        k_self = (self.fieldset.mixing_vector() * self.scale) @ d_test
-        return learner.gpc_.predict_proba(K, k_self)
+        K = self.test_kernel(test)
+        return learner.gpc_.predict_proba(K, self.joint_self(test))
 
     @property
     def log_marginal_likelihood(self) -> float:
@@ -898,7 +957,7 @@ class CMFModel:
                 f"neighbours or a quadratic form). The one-class SVM, the centroid distance and "
                 f"the one-class Gaussian process all do.")
         t = AtomTable.from_molecules([mol])
-        K = self.joint_kernel(self.test_kernels(t))
+        K = self.test_kernel(t)
         if not self.is_linear:
             K = self.apply_layer(K, self.joint_self(t), self.base_diag_)
         return K[0] * self.coef
@@ -925,6 +984,7 @@ class CMFModel:
         return contrib if per_field else contrib.sum(axis=0)
 
     def _require_linear(self, what: str) -> None:
+        self._require_fields_if_atoms(what)
         oc = getattr(self.learner_, "oc_", None) if self.learner_ is not None else None
         if oc is not None and not oc.is_linear:
             from .oneclass import LABELS
@@ -950,6 +1010,7 @@ class CMFModel:
         kernels) the co-field is evaluated with the nominal alpha, an approximation.
         """
         self._require_linear("co-fields")
+        self._require_fields("co-fields")
         spec = self.fieldset.specs[f]
         tr = self.train
         n = tr.n_mol
@@ -993,6 +1054,11 @@ class CMFModel:
             "scale": self.scale,
             "stats": self.stats,
             "oneclass": getattr(self.learner_, "oc_", None) if self.learner_ is not None else None,
+            "kernel_source": self.kernel_source,
+            "ac_sigma": self.ac_sigma,
+            "ac_d_max": self.ac_d_max,
+            "ac_train": getattr(self, "ac_train_", None),
+            "ac_scale": getattr(self, "ac_scale_", None),
         }
 
     @classmethod
@@ -1002,6 +1068,11 @@ class CMFModel:
                 fit_bias=st.get("fit_bias", True), alpha_grid=st.get("alpha_grid"),
                 kernel_layer=st.get("kernel_layer", "linear"),
                 mkl=st.get("mkl"), mkl_rho=float(st.get("mkl_rho", 1.0)))
+        m.kernel_source = st.get("kernel_source", "fields")
+        m.ac_sigma = float(st.get("ac_sigma", 0.75))
+        m.ac_d_max = float(st.get("ac_d_max", 12.0))
+        m.ac_train_ = st.get("ac_train")
+        m.ac_scale_ = st.get("ac_scale")
         m.base_diag_ = st.get("base_diag")
         m.gamma_scale_ = st.get("gamma_scale")
         m.train, m.y, m.coef, m.bias = st["train"], st["y"], st["coef"], st["bias"]
@@ -1229,6 +1300,8 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
     best = None
     # alphas=None/empty: keep the per-field alphas already stored in the FieldSet
     alpha_list = list(alphas) if alphas else [None]
+    if not model.uses_fields:
+        alpha_list = alpha_list[:1]          # the attenuation does not enter this kernel
     n_alpha = len(alpha_list)
     cache = {}
     nelder_mead = alpha_search == "nelder-mead"
@@ -1248,15 +1321,24 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
         atxt = "table alphas" if alpha is None else f"alpha = {alpha:g}"
         if progress:
             progress(f"{atxt}: computing kernels", ia / n_alpha)
-        if precomputed is not None and alpha in precomputed:
+        if not model.uses_fields:
+            # the attenuation belongs to the overlap integral; this kernel has its own width
+            # along the distance axis, so there is one kernel and the alpha loop runs once
+            Kf = None
+            K_lin = model.training_kernel(train, cancel=cancel)
+            use_mkl = False
+            fold_h = None
+        elif precomputed is not None and alpha in precomputed:
             Kf_pre, sd_pre = precomputed[alpha]
             Kf = model.set_training_kernels(train, Kf_pre, sd_pre)
         else:
             Kf = model.prepare_training_kernels(
                 train, cancel=cancel,
                 progress=(lambda i, n, ia=ia, atxt=atxt: progress(f"{atxt}: kernels {i}/{n}", (ia + 0.8 * i / n) / n_alpha)) if progress else None)
-        cache[alpha] = (Kf.copy(), model.scale.copy(), None if model.self_diag is None else model.self_diag.copy())
-        use_mkl = bool(mkl) and len(model.fieldset.specs) > 1
+        if Kf is not None:
+            cache[alpha] = (Kf.copy(), model.scale.copy(),
+                            None if model.self_diag is None else model.self_diag.copy())
+        use_mkl = Kf is not None and bool(mkl) and len(model.fieldset.specs) > 1
         mkl_mode = mkl if isinstance(mkl, str) else "align"
         model.mkl, model.mkl_rho = (mkl_mode if use_mkl else None), mkl_rho
         if use_mkl:
@@ -1267,7 +1349,7 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
                                   mode=mkl_mode, rho=mkl_rho)
             h_cache[alpha] = {sp.name: float(hv) for sp, hv in zip(model.fieldset.specs, h_full)}
             K_lin = combine_kernels(Kf, h_full, model.scale)
-        else:
+        elif Kf is not None:
             fold_h = None
             K_lin = model.joint_kernel(Kf)
         dg = np.diag(K_lin).copy()
@@ -1406,12 +1488,15 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
                      "h": dict(h_best)})
 
     # leave the model in the best configuration
-    Kf, scale, sd = cache[alpha]
-    if alpha is not None:
-        model.fieldset.set_alpha(alpha, alpha_fields)
-    model.fieldset.set_mixing(h_best)
     model.params.update(params)
-    model.K_fields_train, model.scale, model.self_diag, model.train = Kf, scale, sd, train
+    if cache:
+        Kf, scale, sd = cache[alpha]
+        if alpha is not None:
+            model.fieldset.set_alpha(alpha, alpha_fields)
+        model.fieldset.set_mixing(h_best)
+        model.K_fields_train, model.scale, model.self_diag, model.train = Kf, scale, sd, train
+    else:
+        model.train = train                  # a kernel source with nothing to cache per alpha
     if progress:
         progress("Search finished", 1.0)
     return SearchResult(best_alpha=float("nan") if alpha is None else alpha, best_params=params, best_h=h_best,

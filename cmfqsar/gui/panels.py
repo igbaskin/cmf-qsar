@@ -512,6 +512,27 @@ class ModelPanel(QWidget):
         arow.addWidget(self.rad_alpha_grid)
         arow.addWidget(self.rad_alpha_table)
         form.addRow("Attenuation α:", arow)
+        self.cmb_kernel_src = QComboBox()
+        self.cmb_kernel_src.addItems(["Overlap integrals of the fields (needs one frame)",
+                                      "Field autocorrelation (alignment-free, rotation-invariant)"])
+        self.cmb_kernel_src.setToolTip("\n".join([
+            "Where the kernel comes from.",
+            "  Overlap integrals: the CMF kernel; co-fields and atom contributions are defined,",
+            "    and the molecules must share a frame.",
+            "  Field autocorrelation: the distance distribution of the field weights inside each",
+            "    molecule, which no rigid motion changes. No alignment, no reference molecule;",
+            "    the attenuation grid is not used and there are no co-fields."]))
+        form.addRow("Kernel from:", self.cmb_kernel_src)
+        self.spin_ac_sigma = QDoubleSpinBox()
+        self.spin_ac_sigma.setRange(0.1, 3.0)
+        self.spin_ac_sigma.setSingleStep(0.05)
+        self.spin_ac_sigma.setDecimals(2)
+        self.spin_ac_sigma.setValue(0.75)
+        self.spin_ac_sigma.setSuffix(" A")
+        self.spin_ac_sigma.setToolTip("Width along the distance axis of the autocorrelation, "
+                                      "which also sets the spacing of its channels")
+        self.lbl_ac_sigma = QLabel("Distance resolution σ:")
+        form.addRow(self.lbl_ac_sigma, self.spin_ac_sigma)
         self.ed_alphas = QLineEdit("0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0")
         form.addRow("α grid:", self.ed_alphas)
         self.ed_lams = QLineEdit("1e-4, 1e-3, 1e-2, 0.1, 1, 10")
@@ -578,6 +599,7 @@ class ModelPanel(QWidget):
         self._conformers_changed()  # the weighting controls belong to the ensemble mode only
         # the one-class parameter box depends on which description is chosen
         self.cmb_method.currentIndexChanged.connect(self._task_changed)
+        self.cmb_kernel_src.currentIndexChanged.connect(self._task_changed)
         self._task_changed()      # hide the class controls until a classification task is chosen
         self._kernel_changed()    # the bandwidth grid belongs to the Gaussian layer only
 
@@ -626,6 +648,12 @@ class ModelPanel(QWidget):
                   "One-class Gaussian process",
                   "Distance from the principal subspace (kernel PCA)"]
     OC_KEYS = ["ocsvm", "ocmean", "ocknn", "ocgp", "ockpca"]
+
+    def kernel_source(self) -> str:
+        return ["fields", "autocorrelation"][self.cmb_kernel_src.currentIndex()]
+
+    def ac_sigma(self) -> float:
+        return float(self.spin_ac_sigma.value())
 
     def task_key(self) -> str:
         return ["regression", "classification", "oneclass"][self.cmb_task.currentIndex()]
@@ -692,6 +720,11 @@ class ModelPanel(QWidget):
                 self.spin_oc_param.setValue(default)
         self.ed_lams.setToolTip("The one-class Gaussian process takes the first value as its "
                                 "ridge on the constant target" if key == "ocgp" else "")
+        # the autocorrelation kernel has its own width instead of the attenuation
+        invariant = self.kernel_source() != "fields"
+        self.lbl_ac_sigma.setVisible(invariant)
+        self.spin_ac_sigma.setVisible(invariant)
+        self.ed_alphas.setEnabled(not invariant)
         self.cmb_mix.setEnabled(not oc)
         self.spin_outer.setEnabled(task == "regression")
         self.spin_repeats.setEnabled(task == "regression")
@@ -770,7 +803,8 @@ class ModelPanel(QWidget):
                 break
             self.tbl_fields.item(i, 2).setText(f"{s.alpha:g}")
             self.tbl_fields.item(i, 3).setText(f"{s.h:g}")
-            self.tbl_fields.item(i, 4).setText("" if scale is None else f"{scale[i]:.3g}")
+            scaled = scale is not None and i < len(np.atleast_1d(scale))
+            self.tbl_fields.item(i, 4).setText(f"{np.atleast_1d(scale)[i]:.3g}" if scaled else "")
         self.tbl_fields.blockSignals(False)
 
     def table_values(self) -> Dict[str, dict]:

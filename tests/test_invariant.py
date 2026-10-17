@@ -144,3 +144,86 @@ def test_the_self_pairs_carry_the_counts(world):
         w = mol.weights
         expected = float(np.sum(w[:, f] * w[:, g])) * (2.0 if f != g else 1.0)
         assert with_self[i, 0] - without[i, 0] == pytest.approx(expected, rel=1e-9, abs=1e-9)
+
+
+# --------------------------------------------------------- the kernel as a modelling method
+
+def _moved(mol, rng, shift=15.0):
+    from rdkit import Chem
+    m = Chem.Mol(mol)
+    conf = m.GetConformer()
+    x = np.array(conf.GetPositions())
+    R = _rotation(rng)
+    y = (x - x.mean(axis=0)) @ R.T + x.mean(axis=0) + rng.normal(scale=shift, size=3)
+    for i in range(m.GetNumAtoms()):
+        conf.SetAtomPosition(i, y[i].tolist())
+    return m
+
+
+def test_a_model_on_this_kernel_ignores_the_poses(world):
+    """The point of the whole exercise: no alignment, and none needed."""
+    from cmfqsar.model import CMFModel
+    fs, mols, mf = world
+    y = np.array([5.0, 5.6, 6.1, 6.4, 7.0, 7.3])
+    train = AtomTable.from_molecules(mf[:5])
+    model = CMFModel(fieldset=fs, method="krr", normalize=True,
+                     kernel_source="autocorrelation", params={"lam": 0.1})
+    model.fit(train, y[:5], cv_folds=0)
+    here = model.predict(AtomTable.from_molecules([mf[5]]))
+
+    rng = np.random.default_rng(13)
+    far = build_fields(_moved(mols[5], rng), fs, "far")
+    assert np.allclose(model.predict(AtomTable.from_molecules([far])), here, atol=1e-9)
+
+    # and the model itself does not care how the training molecules were posed
+    shaken = [build_fields(_moved(m, rng), fs, f"s{i}") for i, m in enumerate(mols[:5])]
+    other = CMFModel(fieldset=fs, method="krr", normalize=True,
+                     kernel_source="autocorrelation", params={"lam": 0.1})
+    other.fit(AtomTable.from_molecules(shaken), y[:5], cv_folds=0)
+    assert np.allclose(other.predict(AtomTable.from_molecules([mf[5]])), here, atol=1e-9)
+
+
+def test_what_the_invariant_model_can_and_cannot_explain(world):
+    from cmfqsar.model import CMFModel
+    fs, _, mf = world
+    y = np.linspace(5.0, 7.0, 5)
+    model = CMFModel(fieldset=fs, method="krr", normalize=True,
+                     kernel_source="autocorrelation", params={"lam": 0.1})
+    model.fit(AtomTable.from_molecules(mf[:5]), y, cv_folds=0)
+    # the dual form survives: a prediction is still a sum over the training molecules
+    tc = model.training_contributions(mf[5])
+    assert tc.shape == (5,)
+    assert float(tc.sum() + model.bias) == pytest.approx(
+        float(model.predict(AtomTable.from_molecules([mf[5]]))[0]), abs=1e-8)
+    # the primal form does not: there is no field in a fixed frame to draw
+    for call in (lambda: model.cofield_coefficients(0), lambda: model.atom_contributions(mf[0])):
+        with pytest.raises(ValueError, match="overlap-integral kernel"):
+            call()
+
+
+def test_the_invariant_model_survives_a_round_trip(tmp_path, world):
+    from cmfqsar.dataio import load_model, save_model
+    from cmfqsar.model import CMFModel
+    fs, _, mf = world
+    y = np.linspace(5.0, 7.0, 5)
+    model = CMFModel(fieldset=fs, method="krr", normalize=True,
+                     kernel_source="autocorrelation", ac_sigma=0.6, params={"lam": 0.1})
+    model.fit(AtomTable.from_molecules(mf[:5]), y, cv_folds=0)
+    want = model.predict(AtomTable.from_molecules(mf[5:]))
+    path = str(tmp_path / "ac.cmf")
+    save_model(path, model)
+    back = load_model(path)
+    back = back[0] if isinstance(back, tuple) else back
+    assert back.kernel_source == "autocorrelation" and back.ac_sigma == pytest.approx(0.6)
+    assert np.allclose(back.predict(AtomTable.from_molecules(mf[5:])), want)
+
+
+def test_the_search_does_not_loop_over_an_attenuation_it_ignores(world):
+    from cmfqsar.model import CMFModel, grid_search
+    fs, _, mf = world
+    y = np.linspace(5.0, 7.0, 6)
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="autocorrelation")
+    res = grid_search(AtomTable.from_molecules(mf), y, model, [0.3, 0.5, 1.0],
+                      lams=[1e-2, 0.1], folds=3, seed=0)
+    assert len(res.table) == 2                     # two regularisations, one kernel
+    assert np.isfinite(res.best_q2) and "lam" in res.best_params

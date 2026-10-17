@@ -156,7 +156,13 @@ def cmd_build(args):
     y = target[tr]
     model = CMFModel(fieldset=fs, task=args.task, method=args.method, normalize=args.normalize,
                      scale_fields=not args.raw_scale, fit_bias=not args.no_bias,
-                     kernel_layer=args.kernel_layer)
+                     kernel_layer=args.kernel_layer, kernel_source=args.kernel,
+                     ac_sigma=args.ac_sigma, ac_d_max=args.ac_dmax)
+    if args.kernel == "autocorrelation":
+        print(f"Kernel: field autocorrelation up to {args.ac_dmax:g} A in steps of "
+              f"{args.ac_sigma:g} A, invariant to rotation and translation. No alignment is "
+              f"assumed; the attenuation grid is not used, and there are no co-fields or atom "
+              f"contributions, only the contributions of the training molecules.")
     if args.kernel_layer != "linear":
         print(f"Nonlinear kernel layer '{args.kernel_layer}': co-fields and atom contributions "
               "are not available for this model (the model is no longer linear in the field).")
@@ -238,11 +244,13 @@ def cmd_build(args):
                       lam_search=args.lam_search,
                       alpha_search=args.alpha_search, nm_start=nm_start)
     print()
+    knob = (f"sigma = {args.ac_sigma:g} A" if args.kernel == "autocorrelation"
+            else f"alpha = {res.best_alpha:g}")
     if args.task == "classification":
-        print(f"Best: alpha = {res.best_alpha:g}, {res.best_params}, "
+        print(f"Best: {knob}, {res.best_params}, "
               f"1-AUCcv = {res.best_rmse:.3f}, balanced accuracy = {res.best_q2:.3f}")
     else:
-        print(f"Best: alpha = {res.best_alpha:g}, {res.best_params}, "
+        print(f"Best: {knob}, {res.best_params}, "
               f"RMSEcv = {res.best_rmse:.3f}, q2 = {res.best_q2:.3f}")
     if args.optimize_h or args.mkl:
         print("  mixing coefficients:", {k: round(v, 3) for k, v in res.best_h.items()})
@@ -894,6 +902,15 @@ def main(argv=None):
                    help="gpc is the Gaussian-process classifier (Laplace approximation): it "
                         "gives calibrated probabilities, a posterior variance per molecule and "
                         "the marginal likelihood, and takes its amplitude from the C grid")
+    b.add_argument("--kernel", default="fields", choices=["fields", "autocorrelation"],
+                   help="where the kernel comes from: the overlap integrals of the fields, which "
+                        "needs the molecules to share a frame, or the rotation-invariant "
+                        "autocorrelation of those fields, which needs no alignment at all")
+    b.add_argument("--ac-sigma", type=float, default=0.75, metavar="S",
+                   help="autocorrelation: width in angstrom along the distance axis, which also "
+                        "sets the spacing of the channels")
+    b.add_argument("--ac-dmax", type=float, default=12.0, metavar="D",
+                   help="autocorrelation: longest interatomic distance resolved")
     b.add_argument("--oc-k", type=int, default=5, metavar="K",
                    help="ocknn: how many nearest actives the distance is taken to")
     b.add_argument("--oc-components", type=int, default=5, metavar="Q",

@@ -1023,6 +1023,7 @@ class MainWindow(QMainWindow):
         alphas = mp.alphas() if mp.rad_alpha_grid.isChecked() else None
         lams, Cs, eps, nus = mp.lams(), mp.Cs(), mp.epsilons(), mp.nus()
         oc_params = mp.oneclass_params()
+        kernel_src, ac_sigma = mp.kernel_source(), mp.ac_sigma()
         folds, seed = mp.spin_folds.value(), mp.spin_seed.value()
         optimize_h = mp.cmb_mix.currentIndex() == 1
         mkl = mp.mkl_mode()
@@ -1083,7 +1084,8 @@ class MainWindow(QMainWindow):
                     progress(f"Computing molecular fields {k + 1}/{len(mols)}", 0.05 * k / len(mols))
             train = AtomTable.from_molecules([mf[i] for i in tr])
             model = CMFModel(fieldset=fs, task=task_name, method=method, normalize=normalize,
-                             scale_fields=scale, kernel_layer=layer)
+                             scale_fields=scale, kernel_layer=layer, kernel_source=kernel_src,
+                             ac_sigma=ac_sigma)
             if task_name == "oneclass":
                 # no cross-validation objective exists without negatives: alpha sets the level of
                 # generalisation and nu the expected fraction of outliers, both chosen by the user
@@ -1177,6 +1179,10 @@ class MainWindow(QMainWindow):
         txt = [st.summary(), "",
                f"Kernel: {kern}",
                f"Method: {m.method}   params: {m.params}   normalised kernels: {m.normalize}   field scaling: {m.scale_fields}",
+               ("Kernel source: overlap integrals of the fields" if m.uses_fields else
+                f"Kernel source: field autocorrelation, sigma {m.ac_sigma:g} A up to "
+                f"{m.ac_d_max:g} A - invariant to rotation and translation, so no alignment is "
+                f"assumed and no co-field exists"),
                "Fields: " + ", ".join(f"{s.label} (alpha={s.alpha:g}, h={s.h:g})" for s in m.fieldset.specs)]
         if m.method == "gpc":
             from ..gpc import brier_score
