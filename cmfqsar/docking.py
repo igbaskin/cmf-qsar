@@ -185,14 +185,16 @@ def _transform(coords: np.ndarray, p: np.ndarray, center: np.ndarray) -> np.ndar
 def dock_coords(mol: MoleculeFields, pocket: MoleculeFields, fieldset: FieldSet,
                 restarts: int = 0, seed: int = 0, max_iter: int = 200,
                 max_shift: float = 2.0, max_rotation_deg: float = 30.0,
-                clash_weight: float = CLASH_WEIGHT) -> Tuple[np.ndarray, DockResult]:
+                clash_weight: float = CLASH_WEIGHT,
+                tether_radius: float = TETHER_RADIUS) -> Tuple[np.ndarray, DockResult]:
     """Optimise the rigid-body placement of one conformation inside the pocket.
 
     The search starts from the pose the conformation arrives in and stays near it: restarts are
     bounded perturbations rather than a global search, because the series is already in the site
     and the question is where in the site each conformation belongs, not whether it binds.
     """
-    scorer = PocketScorer(mol, pocket, fieldset, clash_weight=clash_weight)
+    scorer = PocketScorer(mol, pocket, fieldset, clash_weight=clash_weight,
+                          tether_radius=tether_radius)
     center = mol.coords.mean(axis=0)
 
     def objective(p):
@@ -224,7 +226,8 @@ def dock_coords(mol: MoleculeFields, pocket: MoleculeFields, fieldset: FieldSet,
 def dock_conformers(mol: Chem.Mol, pocket: MoleculeFields, fieldset: FieldSet,
                     restarts: int = 0, seed: int = 0, max_shift: float = 2.0,
                     max_rotation_deg: float = 30.0, keep_best: int = 0,
-                    clash_weight: float = CLASH_WEIGHT) -> Tuple[Chem.Mol, List[DockResult]]:
+                    clash_weight: float = CLASH_WEIGHT,
+                    tether_radius: float = TETHER_RADIUS) -> Tuple[Chem.Mol, List[DockResult]]:
     """Dock every conformation of a molecule into the pocket, in place in a copy.
 
     With `keep_best` the conformations are ordered by their docked score and only that many are
@@ -243,7 +246,7 @@ def dock_conformers(mol: Chem.Mol, pocket: MoleculeFields, fieldset: FieldSet,
         mf = build_fields(one, single, "")
         coords, res = dock_coords(mf, pocket, single, restarts=restarts, seed=seed,
                                   max_shift=max_shift, max_rotation_deg=max_rotation_deg,
-                                  clash_weight=clash_weight)
+                                  clash_weight=clash_weight, tether_radius=tether_radius)
         coords_all.append(coords)
         results.append(res)
     order = list(range(len(coords_all)))
@@ -265,8 +268,8 @@ def dock_conformers(mol: Chem.Mol, pocket: MoleculeFields, fieldset: FieldSet,
 
 def dock_dataset(mols: Sequence[Chem.Mol], pocket: MoleculeFields, fieldset: FieldSet,
                  restarts: int = 0, seed: int = 0, keep_best: int = 0, max_shift: float = 2.0,
-                 max_rotation_deg: float = 30.0, progress=None,
-                 cancel=None) -> Tuple[List[Chem.Mol], List[DockResult]]:
+                 max_rotation_deg: float = 30.0, tether_radius: float = TETHER_RADIUS,
+                 progress=None, cancel=None) -> Tuple[List[Chem.Mol], List[DockResult]]:
     """Dock the conformations of a whole series; returns the molecules and every pose result."""
     out, all_res = [], []
     for i, m in enumerate(mols):
@@ -277,7 +280,8 @@ def dock_dataset(mols: Sequence[Chem.Mol], pocket: MoleculeFields, fieldset: Fie
         try:
             dm, res = dock_conformers(m, pocket, fieldset, restarts=restarts, seed=seed,
                                       keep_best=keep_best, max_shift=max_shift,
-                                      max_rotation_deg=max_rotation_deg)
+                                      max_rotation_deg=max_rotation_deg,
+                                      tether_radius=tether_radius)
         except Exception:                        # noqa: BLE001 - a molecule that fails keeps its pose
             dm, res = Chem.Mol(m), []
         out.append(dm)

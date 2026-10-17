@@ -130,3 +130,15 @@ def test_dock_dataset_survives_a_molecule_it_cannot_place():
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
+
+
+def test_the_tether_radius_can_be_widened():
+    """A molecule that does not start in the site needs a longer leash to reach it."""
+    pocket = _fields([[0.0, 0, 0], [3.0, 0, 0]], [-0.4, -0.4], name="pocket")
+    probe = _fields([[12.0, 0, 0]], [+1.0])                 # far outside, attracted to the site
+    tight, _ = dock_coords(probe, pocket, FS, restarts=1, seed=0, tether_radius=0.5)
+    wide, _ = dock_coords(probe, pocket, FS, restarts=1, seed=0, tether_radius=12.0)
+    start = probe.coords.mean(axis=0)
+    assert np.linalg.norm(tight.mean(axis=0) - start) < np.linalg.norm(wide.mean(axis=0) - start)
+    assert np.linalg.norm(wide.mean(axis=0) - pocket.coords.mean(axis=0)) < \
+        np.linalg.norm(start - pocket.coords.mean(axis=0))

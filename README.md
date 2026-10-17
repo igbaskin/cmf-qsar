@@ -194,7 +194,8 @@ placements and six windows did not find a case where it does. What remained was 
 
 #### Letting the model choose the conformation
 
-`cmfqsar/mil.py` (CLI: `cmf_cli.py mil`) treats a molecule as a *bag* of conformations whose label
+`cmfqsar/mil.py` (CLI: `cmf_cli.py mil`; in the application, the third entry of
+*Model -> Conformations*) treats a molecule as a *bag* of conformations whose label
 belongs to the bag, and gives each conformation a weight driven by the model's own score for it,
 
 ```
@@ -244,7 +245,8 @@ already there is the best of what is offered, which is a useful diagnostic and n
 #### Placing the conformations in the pocket
 
 The remaining idea was to stop generating ensembles in the gas phase and let the receptor place
-them. `cmfqsar/docking.py` (CLI: `cmf_cli.py mil --dock`) is a small rigid-body docking written
+them. `cmfqsar/docking.py` (CLI: `cmf_cli.py mil --dock`; in the application, *Tools -> Dock into the
+pocket*) is a small rigid-body docking written
 against what the program already has: the pocket fields, the exact overlap integrals, a soft clash
 term, a burial term and a tether. A pose is scored by
 
@@ -284,6 +286,14 @@ That second point suggests where this code is actually worth using. Placing a mo
 optimising a pocket score is an *alignment* method, and for a series whose alignment is a guess from
 a common substructure it may well beat that guess. The ensemble question is closed; docking as an
 alignment criterion is open and the machinery for it is now here.
+
+Both are in the application as well as on the command line. *Model -> Conformations* has a third
+entry, "ensemble, weights learned", with the hardness beside it and a box for choosing exactly one
+conformation; the fit learns the weights, writes them onto the molecules and then proceeds as an
+ordinary ensemble model, so co-fields, the decomposition rules and the Shapley machinery stay
+available and report the weighting the model was actually fitted with. *Tools -> Dock into the
+pocket* places every conformation of every molecule in a loaded structure, reports what the score
+and the clash did, and discards the current model, since the molecules it was fitted on have moved.
 
 **The verdict on the fourth dimension.** Averaging, placement, windowing, selection and
 receptor-placed ensembles all fail to beat one well-chosen conformation on an aligned series. Five
@@ -1019,7 +1029,7 @@ The tests verify the analytic kernels against numerical integration, the symmetr
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition
 rules, that the overlap integral of co-field and molecular field on a grid reproduces the kernel
 prediction (primal = dual form), the Tripos increments, the tolerant MOL2 reader, activity tables,
-the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the conformational ensembles they check that the single mode is bit-for-bit what it was, that the ensemble kernel equals the weighted mean of the kernels of the conformation pairs, that one conformation in ensemble mode reproduces the single mode, that the weights behave and fall back to uniform when energies are missing, that contributions still add up to the prediction and fold back onto the atoms, and that a zero seed does not collapse the ensemble. For the multi-instance weighting they check the weighting rules and their limits, that selection recovers a hidden witness where averaging cannot, that beta = 0 is exactly the ensemble kernel, that hard selection is one-hot and settles, that a new molecule is predicted without using its activity, that the folds split molecules and that shuffled activities destroy the fit, and that annealing sharpens the weights. For the pocket docking they check that the score prefers complementary charges and punishes clashes, that burial is what holds a pose in a cavity and the tether what keeps it from wandering, that docking removes a clash, that the internal geometry is preserved to the last decimal because the search is rigid, and that a molecule which cannot be placed is handed back untouched. For the kernel
+the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the conformational ensembles they check that the single mode is bit-for-bit what it was, that the ensemble kernel equals the weighted mean of the kernels of the conformation pairs, that one conformation in ensemble mode reproduces the single mode, that the weights behave and fall back to uniform when energies are missing, that contributions still add up to the prediction and fold back onto the atoms, and that a zero seed does not collapse the ensemble. For the multi-instance weighting they check the weighting rules and their limits, that selection recovers a hidden witness where averaging cannot, that beta = 0 is exactly the ensemble kernel, that hard selection is one-hot and settles, that a new molecule is predicted without using its activity, that the folds split molecules and that shuffled activities destroy the fit, and that annealing sharpens the weights. For the pocket docking they check that the score prefers complementary charges and punishes clashes, that burial is what holds a pose in a cavity and the tether what keeps it from wandering, that docking removes a clash, that the internal geometry is preserved to the last decimal because the search is rigid, and that a molecule which cannot be placed is handed back untouched. They also check that weights given on a molecule are read and normalised, that nonsense falls back to uniform, and that the tether can be widened for a molecule that does not start in the site. For the kernel
 layers they check positive semi-definiteness, that the linear setting leaves the kernel untouched, that
 the self-kernel used for new molecules agrees with the training diagonal, that co-fields, atom
 contributions and posterior variances are refused while the training-molecule decomposition still adds

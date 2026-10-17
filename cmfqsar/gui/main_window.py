@@ -238,6 +238,98 @@ class GTMDialog(QDialog):
         lay.addWidget(bb)
 
 
+def _learn_conformer_weights(mols, names, train_idx, test_idx, y_all, fieldset, beta, selection,
+                             lams, normalize, progress=None):
+    """Fit multi-instance weights for the conformations and store them on the molecules.
+
+    The weights are written to the molecules as a property, and the field set is switched to read
+    them, so from here on everything behaves as an ordinary ensemble model: the same fit, the same
+    co-fields, the same decomposition. Test molecules are weighted by the rule the model was
+    fitted with, which uses their conformation scores and never their activity.
+    """
+    from ..mil import flatten_conformers, learn_weights, predict_bags, softmax_weights, argmax_weights
+    single = fieldset.copy()
+    single.conformers = "single"
+    flat_tr, bags_tr = flatten_conformers([mols[i] for i in train_idx], single,
+                                          [names[i] for i in train_idx],
+                                          max_conformers=fieldset.max_conformers)
+    probe = CMFModel(fieldset=single, method="krr", normalize=normalize)
+    K_conf = probe.joint_kernel(probe.prepare_training_kernels(AtomTable.from_molecules(flat_tr)))
+    y = np.asarray(y_all, float)[train_idx]
+    lam = float(sorted(lams)[len(lams) // 2]) if lams else 1.0
+    fit = learn_weights(K_conf, bags_tr, y, beta=float(beta), lam=lam, selection=selection,
+                        init="first")
+    _store_weights(mols, train_idx, bags_tr, fit.weights, fieldset)
+    if test_idx:
+        flat_te, bags_te = flatten_conformers([mols[i] for i in test_idx], single,
+                                              [names[i] for i in test_idx],
+                                              max_conformers=fieldset.max_conformers)
+        K_te = probe.joint_kernel(probe.test_kernels(AtomTable.from_molecules(flat_te)))
+        scores = (K_te @ fit.W().T) @ fit.coef + fit.bias
+        w_te = (argmax_weights(scores, bags_te) if selection == "hard"
+                else softmax_weights(scores, bags_te, float(beta)))
+        _store_weights(mols, test_idx, bags_te, w_te, fieldset)
+    fieldset.conformer_weighting = "given"
+    return fit
+
+
+def _store_weights(mols, idx, bags, weights, fieldset):
+    prop = getattr(fieldset, "weight_prop", "conformer_weights")
+    for b, i in enumerate(idx):
+        w = np.asarray(weights, float)[bags == b]
+        if len(w) == mols[i].GetNumConformers():
+            mols[i].SetProp(prop, ",".join(f"{v:.6f}" for v in w))
+
+
+class DockDialog(QDialog):
+    """Options for placing molecules, or their conformations, inside the pocket."""
+
+    def __init__(self, n_mol: int, n_conf: int, pocket_name: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Dock into the pocket")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            f"Every conformation of every molecule is placed in {pocket_name} by optimising its "
+            "six rigid-body parameters against a score made of field complementarity, burial, a "
+            "clash term and a tether. The internal geometry is not touched, so only the placement "
+            "changes.\n\n"
+            f"{n_mol} molecules, {n_conf} conformations in all. It takes a few seconds per "
+            "conformation.\n\n"
+            "This moves the molecules, so a model built on their present poses is discarded. "
+            "Measured against the alternatives, docking is a worse alignment than superposition "
+            "on a common substructure, so treat the result as a hypothesis to inspect rather "
+            "than as an improvement.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(580)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.spin_restarts = QSpinBox()
+        self.spin_restarts.setRange(0, 20)
+        self.spin_restarts.setValue(1)
+        self.spin_restarts.setToolTip("Bounded random restarts per conformation; 0 optimises from "
+                                      "where it stands")
+        form.addRow("Restarts:", self.spin_restarts)
+        self.spin_tether = QDoubleSpinBox()
+        self.spin_tether.setRange(0.0, 30.0)
+        self.spin_tether.setSingleStep(0.5)
+        self.spin_tether.setValue(3.0)
+        self.spin_tether.setSuffix(" Å")
+        self.spin_tether.setToolTip("How far the centroid may travel before it is penalised; "
+                                    "widen it when the molecules do not start in the site")
+        form.addRow("Tether radius:", self.spin_tether)
+        self.spin_keep = QSpinBox()
+        self.spin_keep.setRange(0, 999)
+        self.spin_keep.setValue(0)
+        self.spin_keep.setSpecialValueText("keep all")
+        self.spin_keep.setToolTip("Keep only this many best-scoring poses of each molecule")
+        form.addRow("Keep per molecule:", self.spin_keep)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+
 class ConformerDialog(QDialog):
     """Options for generating a conformational ensemble: the fourth dimension."""
 
@@ -496,6 +588,7 @@ class MainWindow(QMainWindow):
         self._default_state = self.saveState()
         tm = mb.addMenu("&Tools")
         self._act(tm, "Generate conformations (4D)…", self.generate_conformers_dialog)
+        self._act(tm, "Dock into the pocket…", self.dock_dialog)
         self._act(tm, "Align data set to reference…", self.align_dataset_dialog)
         self._act(tm, "Align by prediction confidence (GP variance)…", self.variance_align_dialog)
         self._act(tm, "Align training set by prediction confidence (cross-validated)…",
@@ -795,10 +888,16 @@ class MainWindow(QMainWindow):
         mkl = mp.mkl_mode()
         layer, gammas = mp.kernel_layer(), mp.gammas()
         normalize, scale = mp.chk_normalize.isChecked(), mp.chk_scale.isChecked()
+        learn_weights_first = mp.learns_weights() and fs.is_ensemble
+        mil_beta, mil_selection = mp.mil_beta(), mp.mil_selection()
         if layer != "linear":
             self.log(f"Nonlinear kernel layer '{layer}': the model is no longer linear in the "
                      "molecular field, so co-fields and atom contributions are not available for it; "
                      "the decomposition of a prediction into training-set similarities stays valid.")
+        if learn_weights_first:
+            self.log(f"Multi-instance mode: the weights of the conformations are fitted "
+                     f"({mil_selection}, beta {mil_beta:g}) and then used as an ordinary ensemble, "
+                     f"so co-fields and the decompositions stay available.")
         mols, names = ds.mols, ds.names
         task_name = mp.task_key()
         y_all = ds.activity.copy()
@@ -833,6 +932,10 @@ class MainWindow(QMainWindow):
                      + (f"; one-class model fitted on the {len(tr)} actives" if task_name == "oneclass" else ""))
 
         def task(progress, cancel):
+            if learn_weights_first:
+                progress("Learning the conformation weights", 0.02)
+                _learn_conformer_weights(mols, names, tr, te, y_all, fs, mil_beta, mil_selection,
+                                         lams, normalize, progress)
             mf = []
             for k, (m, n) in enumerate(zip(mols, names)):
                 mf.append(build_fields(m, fs, n))
@@ -1159,6 +1262,63 @@ class MainWindow(QMainWindow):
             self.schedule_display()
 
         self.run_task(task, done, "Generating conformations")
+
+    def dock_dialog(self):
+        """Place every conformation of every molecule in the loaded pocket."""
+        from ..complementarity import pocket_fields
+        from ..docking import dock_dataset, summarise
+        if self.ds is None or not self.molfields:
+            QMessageBox.information(self, "No data", "Load a data set first.")
+            return
+        if self.protein is None:
+            QMessageBox.information(self, "No structure",
+                                    "Load a protein structure or fetch one by its PDB code "
+                                    "first; the free-energy example sets bring their pocket "
+                                    "with them.")
+            return
+        counts = self._conformer_counts()
+        dlg = DockDialog(len(counts), int(sum(counts)), self.protein.name, self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        restarts, tether = dlg.spin_restarts.value(), dlg.spin_tether.value()
+        keep = dlg.spin_keep.value()
+        fs = self._fieldset_from_panel()
+        fs.conformers = "single"          # the docking scores one placement at a time
+        mols, protein = list(self.ds.mols), self.protein
+
+        def task(progress, cancel):
+            progress("Parameterising the pocket", 0.02)
+            pocket = pocket_fields(protein, fs)
+            out, res = dock_dataset(mols, pocket, fs, restarts=restarts, seed=0, keep_best=keep,
+                                    progress=lambda m_, f_: progress(m_, 0.05 + 0.9 * f_),
+                                    cancel=cancel, tether_radius=tether)
+            return out, res
+
+        def done(out):
+            docked, res = out
+            self.ds.mols = docked
+            self.molfields = [build_fields(m, FieldSet(specs=[], conformers=self.fieldset.conformers), n)
+                              for m, n in zip(docked, self.ds.names)]
+            self._mol_volume_cache.clear()
+            self.complementarity = None
+            self._comp_surface_cache = {}
+            self.shapley_result = self.shapley_fields = None
+            info = summarise(res)
+            if self.model is not None:
+                self.model = None
+                self.results_panel.clear_contributions(
+                    "The model was discarded: docking moved the molecules it was fitted on.")
+            self._update_conformer_info()
+            if info:
+                self.log(f"Docked {int(info['poses'])} poses into {protein.name}: score "
+                         f"{info['score_before']:+.2f} -> {info['score_after']:+.2f}, clash "
+                         f"{info['clash_before']:.1f} -> {info['clash_after']:.1f}, moved "
+                         f"{info['moved']:.1f} Å on average. Docking is a worse alignment than "
+                         f"superposition on a common substructure; inspect the poses before "
+                         f"building on them.")
+            self.schedule_display()
+
+        self.run_task(task, done, "Docking")
 
     # ------------------------------------------------------------------ protein structures
     def _pdb_codes(self) -> List[str]:

@@ -403,3 +403,20 @@ def test_window_keeps_the_conformations_near_the_arrival_pose():
     # and a window changes nothing when it is not asked for
     assert generate_conformers(base, n=8, seed=0, prune_rmsd=0.5).GetNumConformers() == \
         wide.GetNumConformers()
+
+
+def test_given_weights_travel_with_the_molecule(ensemble_mol):
+    """Learned weights are stored on the molecule, so every later field uses the same ones."""
+    from rdkit import Chem
+    m = Chem.Mol(ensemble_mol)
+    k = m.GetNumConformers()
+    fs = FieldSet.create(alpha=0.5, conformers="ensemble", conformer_weighting="given")
+    assert conformer_weights(m, fs) == pytest.approx(np.full(k, 1.0 / k))   # nothing stored yet
+    w = np.arange(1, k + 1, dtype=float)
+    m.SetProp("conformer_weights", ",".join(str(v) for v in w))
+    got = conformer_weights(m, fs)
+    assert got == pytest.approx(w / w.sum())                                 # normalised as given
+    assert build_fields(m, fs, "x").conformer_weights == pytest.approx(w / w.sum())
+    for bad in (",".join(["1"] * (k + 1)), "nonsense", ",".join(["-1"] * k)):
+        m.SetProp("conformer_weights", bad)
+        assert conformer_weights(m, fs) == pytest.approx(np.full(k, 1.0 / k))

@@ -331,7 +331,8 @@ class ModelPanel(QWidget):
         crow2.addWidget(QLabel("Conformations:"))
         self.cmb_conformers = QComboBox()
         self.cmb_conformers.addItems(["single (one per molecule)",
-                                      "ensemble (4D: mean field over conformations)"])
+                                      "ensemble (4D: mean field over conformations)",
+                                      "ensemble, weights learned (multi-instance)"])
         self.cmb_conformers.setToolTip("\n".join([
             "Single: every molecule is one conformation, as in the papers. This is the default",
             "  and nothing about it changes.",
@@ -365,6 +366,22 @@ class ModelPanel(QWidget):
                                       "per molecule; 0 uses all of them")
         self.spin_conf_max.valueChanged.connect(self.fields_changed)
         crow2.addWidget(self.spin_conf_max)
+        self.spin_mil_beta = QDoubleSpinBox()
+        self.spin_mil_beta.setRange(0.0, 100.0)
+        self.spin_mil_beta.setSingleStep(1.0)
+        self.spin_mil_beta.setValue(3.0)
+        self.spin_mil_beta.setPrefix("β ")
+        self.spin_mil_beta.setToolTip("\n".join([
+            "How sharply the model prefers the conformations it scores highest.",
+            "Zero is the plain ensemble; a large value puts nearly all the weight on one",
+            "conformation, which is the witness assumption of multi-instance learning."]))
+        self.spin_mil_beta.valueChanged.connect(self.fields_changed)
+        crow2.addWidget(self.spin_mil_beta)
+        self.chk_mil_hard = QCheckBox("one conformation")
+        self.chk_mil_hard.setToolTip("Choose exactly one conformation per molecule instead of "
+                                     "weighting them")
+        self.chk_mil_hard.toggled.connect(self.fields_changed)
+        crow2.addWidget(self.chk_mil_hard)
         self.lbl_conformers = QLabel("")
         self.lbl_conformers.setStyleSheet("color: palette(mid)")
         crow2.addWidget(self.lbl_conformers)
@@ -515,15 +532,29 @@ class ModelPanel(QWidget):
 
     # ---------------------------------------------------------------- API
     def conformer_mode(self) -> str:
-        return ["single", "ensemble"][self.cmb_conformers.currentIndex()]
+        """The field-set mode; the learned variant is an ensemble whose weights are fitted."""
+        return ["single", "ensemble", "ensemble"][self.cmb_conformers.currentIndex()]
+
+    def learns_weights(self) -> bool:
+        return self.cmb_conformers.currentIndex() == 2
+
+    def mil_beta(self) -> float:
+        return float(self.spin_mil_beta.value())
+
+    def mil_selection(self) -> str:
+        return "hard" if self.chk_mil_hard.isChecked() else "soft"
 
     def conformer_weighting(self) -> str:
         return ["uniform", "boltzmann"][self.cmb_conf_weight.currentIndex()]
 
     def _conformers_changed(self, *_):
+        learned = self.learns_weights()
         on = self.conformer_mode() == "ensemble"
-        for w in (self.cmb_conf_weight, self.spin_conf_kt, self.spin_conf_max):
-            w.setVisible(on)
+        for w in (self.cmb_conf_weight, self.spin_conf_kt):
+            w.setVisible(on and not learned)     # the fit decides the weights in the learned mode
+        self.spin_conf_max.setVisible(on)
+        for w in (self.spin_mil_beta, self.chk_mil_hard):
+            w.setVisible(learned)
         self.fields_changed.emit()
 
     def set_conformer_info(self, text: str) -> None:

@@ -92,6 +92,7 @@ class FieldSet:
     conformer_kt: float = 0.6           # kcal/mol, about RT at 300 K, for Boltzmann weights
     max_conformers: int = 0             # 0 = use every conformation present
     energy_prop: str = "conformer_energies"   # molecule property holding per-conformer energies
+    weight_prop: str = "conformer_weights"    # molecule property holding weights, for "given"
 
     @property
     def is_ensemble(self) -> bool:
@@ -144,7 +145,8 @@ class FieldSet:
                         conformer_weighting=getattr(self, "conformer_weighting", "uniform"),
                         conformer_kt=getattr(self, "conformer_kt", 0.6),
                         max_conformers=getattr(self, "max_conformers", 0),
-                        energy_prop=getattr(self, "energy_prop", "conformer_energies"))
+                        energy_prop=getattr(self, "energy_prop", "conformer_energies"),
+                        weight_prop=getattr(self, "weight_prop", "conformer_weights"))
 
 
 # --------------------------------------------------------------------------- #
@@ -408,16 +410,30 @@ def conformer_weights(mol: Chem.Mol, fieldset: FieldSet) -> np.ndarray:
 
     ``uniform`` gives every conformation the same weight.  ``boltzmann`` and ``property`` read
     relative energies in kcal/mol from the molecule property named by ``energy_prop``, which the
-    conformer generator writes, and turn them into exp(-dE / kT) normalised; if they are missing
-    or unusable the weights fall back to uniform, because a silently wrong weighting would be
-    worse than an even one.
+    conformer generator writes, and turn them into exp(-dE / kT) normalised.  ``given`` reads the
+    weights themselves from the property named by ``weight_prop``, which is how learned weights
+    travel with a molecule: the multi-instance fit writes them there and everything downstream,
+    the display and the co-fields included, then uses exactly the weighting the model was fitted
+    with.  If anything is missing or unusable the weights fall back to uniform, because a silently
+    wrong weighting would be worse than an even one.
     """
     k = mol.GetNumConformers()
     if k <= 1:
         return np.ones(max(k, 1))
     keep = k if not fieldset.max_conformers else min(k, int(fieldset.max_conformers))
     w = np.ones(k)
-    if fieldset.conformer_weighting in ("boltzmann", "property"):
+    if fieldset.conformer_weighting == "given":
+        prop = getattr(fieldset, "weight_prop", "conformer_weights")
+        try:
+            if not mol.HasProp(prop):
+                raise ValueError("no weights")
+            g = np.array([float(x) for x in mol.GetProp(prop).replace(";", ",").split(",")], float)
+            if len(g) != k or not np.isfinite(g).all() or g.min() < 0 or g.sum() <= 0:
+                raise ValueError("the stored weights do not match the conformations")
+            w = g
+        except Exception:                        # noqa: BLE001 - documented fallback
+            w = np.ones(k)
+    elif fieldset.conformer_weighting in ("boltzmann", "property"):
         prop = fieldset.energy_prop
         try:
             if not mol.HasProp(prop):
