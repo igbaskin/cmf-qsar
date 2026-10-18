@@ -1757,7 +1757,7 @@ class ViewerControls(QWidget):
         self.cmb_shapfield_style.addItems(["solid", "mesh"])
         self.cmb_shapfield_style.currentIndexChanged.connect(self.changed)
         self.chk_atoms = QCheckBox("atom contributions")
-        self.chk_diff = QCheckBox("difference from reference")
+        self.chk_diff = QCheckBox("difference map")
         self.chk_diff.setToolTip(
             "The field of the selected molecule minus the field of a reference molecule "
             "(Tools, Field difference from a reference): negative where the selected molecule "
@@ -1770,16 +1770,30 @@ class ViewerControls(QWidget):
             "translucent spheres coloured by type. Untick to take them off the view; they are "
             "kept until the model is rebuilt or the molecules move.")
         self.chk_pharmacophore.setEnabled(False)
-        for cb in (self.chk_cofield, self.chk_molfield, self.chk_overlap, self.chk_shapfield,
-                   self.chk_atoms, self.chk_diff, self.chk_pharmacophore):
+        # the maps go on two rows of their own: on one line the labels were clipped to a few
+        # letters and the tick boxes ran into each other
+        row3.addWidget(QLabel("Maps:"))
+        row3b = QHBoxLayout()
+        row3b.addWidget(QLabel("    "))              # indent, so the two rows read as one group
+        for cb in (self.chk_cofield, self.chk_molfield, self.chk_overlap):
             cb.toggled.connect(self.changed)
             row3.addWidget(cb)
             if cb is self.chk_cofield:
                 row3.addWidget(self.cmb_cofield_style)
             if cb is self.chk_molfield:
                 row3.addWidget(self.cmb_molfield_style)
+        for cb in (self.chk_shapfield, self.chk_atoms, self.chk_diff, self.chk_pharmacophore):
+            cb.toggled.connect(self.changed)
+            row3b.addWidget(cb)
             if cb is self.chk_shapfield:
-                row3.addWidget(self.cmb_shapfield_style)
+                row3b.addWidget(self.cmb_shapfield_style)
+        row3.addStretch(1)
+        lay.addLayout(row3)
+        row3b.addStretch(1)
+        lay.addLayout(row3b)
+
+        row3c = QHBoxLayout()
+        row3 = row3c                                 # the sliders now have a row to themselves
         row3.addWidget(QLabel("iso level:"))
         self.sld_level = QSlider(Qt.Horizontal)
         self.sld_level.setRange(1, 99)
@@ -1837,6 +1851,12 @@ class ViewerControls(QWidget):
             "Draw the surface of the selected molecule coloured by how well its fields",
             "complement the pocket: green where they do, red where they fight.",
             "Compute it first in the Results panel, Complementarity tab."]))
+        row4.addStretch(1)
+        lay.addLayout(row4)
+        # what is drawn on top of the site goes on its own row, for the same reason as the maps
+        row4b = QHBoxLayout()
+        row4b.addWidget(QLabel("    "))
+        row4 = row4b
         self.chk_comp_map.toggled.connect(self.changed)
         row4.addWidget(self.chk_comp_map)
         self.chk_site_labels = QCheckBox("residue labels")
