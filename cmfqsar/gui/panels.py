@@ -476,6 +476,17 @@ class ModelPanel(QWidget):
         cif_row.addWidget(self.cmb_cif_scheme)
         cif_row.addWidget(self.spin_cif_min)
         fl.addLayout(cif_row)
+        # per-atom property fields: one tick box per property the loaded file carries, so a
+        # quantity the program cannot compute itself becomes a field like any other
+        self.row_props = QWidget()
+        self.lay_props = QHBoxLayout(self.row_props)
+        self.lay_props.setContentsMargins(0, 0, 0, 0)
+        self.lbl_props = QLabel("Per-atom property fields:")
+        self.lay_props.addWidget(self.lbl_props)
+        self.lay_props.addStretch(1)
+        self.row_props.setVisible(False)
+        self._prop_boxes: Dict[str, QCheckBox] = {}
+        fl.addWidget(self.row_props)
         prow = QHBoxLayout()
         prow.addWidget(QLabel("Partial charges:"))
         self.cmb_charges = QComboBox()
@@ -865,6 +876,27 @@ class ModelPanel(QWidget):
         self.spin_repeats.setEnabled(task == "regression")
         self.btn_nested.setEnabled(task == "regression")
         self.fields_changed.emit()
+
+    def set_atom_properties(self, props) -> None:
+        """Offer one field per per-atom property the data set carries (none: hide the row)."""
+        keep = {n for n, b in self._prop_boxes.items() if b.isChecked()}
+        for b in self._prop_boxes.values():
+            self.lay_props.removeWidget(b)
+            b.setParent(None)
+            b.deleteLater()
+        self._prop_boxes = {}
+        for i, name in enumerate(list(props)):
+            box = QCheckBox(str(name))
+            box.setToolTip(f"A field whose atomic weights are the values of {name!r} carried by "
+                           f"the file, one per atom")
+            box.setChecked(name in keep)
+            box.toggled.connect(self.fields_changed)
+            self.lay_props.insertWidget(i + 1, box)
+            self._prop_boxes[str(name)] = box
+        self.row_props.setVisible(bool(self._prop_boxes))
+
+    def atom_properties(self) -> List[str]:
+        return [n for n, b in self._prop_boxes.items() if b.isChecked()]
 
     def set_class_properties(self, props):
         cur = self.cmb_class_prop.currentText()

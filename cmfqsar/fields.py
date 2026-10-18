@@ -31,6 +31,8 @@ cif:<type>      continuous indicator field: w = 1 for atoms of Sybyl type <type>
 """
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence
 
@@ -65,6 +67,8 @@ class FieldSpec:
     def label(self) -> str:
         if self.name.startswith("cif:"):
             return "CIF " + self.name[4:]
+        if self.name.startswith("prop:"):
+            return self.name[5:]
         return FIELD_LABELS.get(self.name, self.name)
 
     @property
@@ -75,6 +79,15 @@ class FieldSpec:
     def cif_type(self) -> Optional[str]:
         return self.name[4:] if self.is_cif else None
 
+    @property
+    def is_prop(self) -> bool:
+        """A field whose atomic weights are read from a property of the molecule."""
+        return self.name.startswith("prop:")
+
+    @property
+    def prop(self) -> Optional[str]:
+        return self.name[5:] if self.is_prop else None
+
 
 @dataclass
 class FieldSet:
@@ -83,6 +96,9 @@ class FieldSet:
     charge_model: str = "gasteiger"     # "gasteiger" | "mmff" | "file"
     cif_scheme: str = "sybyl"           # "sybyl" | "element" | "element+aromatic"
     param_scheme: str = "rdkit"         # "rdkit" | "tripos" | "tripos-legacy"
+    # what to do when a molecule does not carry a per-atom property a field asks for:
+    # "error" says so and names it, "zero" treats the molecule as having none of that quantity
+    prop_missing: str = "error"         # "error" | "zero"
     # --- conformations: the fourth dimension (4D-QSAR) --------------------------
     # "single" uses one conformation per molecule, as the papers do, and is the default.
     # "ensemble" represents a molecule by the weighted mean of the fields of all of its
@@ -104,17 +120,22 @@ class FieldSet:
                alpha: float = 1.0, charge_model: str = "gasteiger", cif_scheme: str = "sybyl",
                param_scheme: str = "rdkit", conformers: str = "single",
                conformer_weighting: str = "uniform", conformer_kt: float = 0.6,
-               max_conformers: int = 0) -> "FieldSet":
+               max_conformers: int = 0, atom_properties: Sequence[str] = (),
+               prop_missing: str = "error") -> "FieldSet":
         specs = []
         for name in physchem:
             kind = "steric" if name == "steric" else "gauss"
             specs.append(FieldSpec(name=name, kind=kind, alpha=alpha))
         for t in cif_types:
             specs.append(FieldSpec(name=f"cif:{t}", kind="gauss", alpha=alpha))
+        for q in atom_properties:
+            # a field of whatever the file says about every atom: QM charges, a Fukui index,
+            # a local softness, anything with one number per atom
+            specs.append(FieldSpec(name=f"prop:{q}", kind="gauss", alpha=alpha))
         return cls(specs=specs, charge_model=charge_model, cif_scheme=cif_scheme,
                    param_scheme=param_scheme, conformers=conformers,
                    conformer_weighting=conformer_weighting, conformer_kt=conformer_kt,
-                   max_conformers=max_conformers)
+                   max_conformers=max_conformers, prop_missing=prop_missing)
 
     @property
     def names(self) -> List[str]:
@@ -152,6 +173,106 @@ class FieldSet:
 # --------------------------------------------------------------------------- #
 # Atom-level parameterisation
 # --------------------------------------------------------------------------- #
+
+class MissingAtomProperty(ValueError):
+    """A molecule does not carry a per-atom property that a field asks for."""
+
+
+def atom_property_names(mol: Chem.Mol, min_atoms: int = 2) -> List[str]:
+    """Names of the per-atom properties a molecule carries, in either convention.
+
+    An atom property is one that every atom has (RDKit keeps these and writes them to SDF as
+    ``atom.dprop.<name>``), or a molecule property holding one number per atom, which is how
+    most quantum-chemistry packages dump a Mulliken charge or a Fukui index.
+    """
+    out: List[str] = []
+    n = mol.GetNumAtoms()
+    if n:
+        first = mol.GetAtomWithIdx(0)
+        for key in first.GetPropNames():
+            if key.startswith("_"):
+                continue
+            try:
+                if all(mol.GetAtomWithIdx(i).HasProp(key) for i in range(n)):
+                    float(first.GetProp(key))
+                    out.append(key)
+            except (ValueError, TypeError):
+                continue
+    for key in mol.GetPropNames():
+        # RDKit decodes "atom.dprop.<name>" into atom properties on reading, so the raw tag is
+        # the same numbers again under a second name
+        if key.startswith("_") or key in out or key.startswith(("atom.", "bond.")):
+            continue
+        vals = _as_numbers(mol.GetProp(key))
+        if vals is not None and len(vals) >= min_atoms and len(vals) in (n, _n_heavy(mol)):
+            out.append(key)
+    return out
+
+
+def _n_heavy(mol: Chem.Mol) -> int:
+    return sum(1 for a in mol.GetAtoms() if a.GetAtomicNum() > 1)
+
+
+def _as_numbers(text: str) -> Optional[np.ndarray]:
+    """A whitespace-, comma- or newline-separated list of numbers, or None."""
+    parts = [p for p in re.split(r"[\s,;]+", str(text).strip()) if p]
+    if not parts:
+        return None
+    try:
+        return np.array([float(p) for p in parts], dtype=float)
+    except ValueError:
+        return None
+
+
+def atom_property(mol: Chem.Mol, name: str, n_atoms: Optional[int] = None,
+                  policy: str = "error", mol_name: str = "") -> np.ndarray:
+    """One number per atom, read from the molecule.
+
+    Two conventions are understood, in this order: a property set on every atom (RDKit's own,
+    which survives a round trip through SDF as ``atom.dprop.<name>``), and a molecule property
+    holding the numbers in atom order, separated by whitespace, commas or semicolons.
+
+    The hydrogens are the trap.  A structure file without 3D coordinates is embedded on loading
+    and hydrogens are added, so a list written for the heavy atoms is shorter than the molecule
+    is now.  A list as long as the molecule is taken atom for atom; a list as long as the heavy
+    atoms is spread over them in order, leaving the hydrogens at zero; anything else is an error
+    naming the molecule and both counts, because the alternative is to guess which atom a number
+    belongs to.
+    """
+    n = int(n_atoms if n_atoms is not None else mol.GetNumAtoms())
+    label = mol_name or (mol.GetProp("_Name") if mol.HasProp("_Name") else "a molecule")
+    vals: Optional[np.ndarray] = None
+    if n and all(mol.GetAtomWithIdx(i).HasProp(name) for i in range(n)):
+        try:
+            vals = np.array([float(mol.GetAtomWithIdx(i).GetProp(name)) for i in range(n)])
+        except ValueError as exc:
+            raise MissingAtomProperty(
+                f"the atom property {name!r} of {label} is not numeric ({exc})") from None
+    elif mol.HasProp(name):
+        vals = _as_numbers(mol.GetProp(name))
+        if vals is None:
+            raise MissingAtomProperty(
+                f"the property {name!r} of {label} is not a list of numbers; a per-atom field "
+                f"needs one number per atom, separated by spaces, commas or newlines")
+    if vals is None:
+        if policy == "zero":
+            return np.zeros(n)
+        raise MissingAtomProperty(
+            f"{label} carries no per-atom property called {name!r}. Set it on every atom (RDKit "
+            f"writes those to SDF as 'atom.dprop.{name}') or give the molecule a property with "
+            f"one number per atom; pass prop_missing='zero' to treat it as absent instead.")
+    if len(vals) == n:
+        return vals.astype(float)
+    heavy = [i for i in range(n) if mol.GetAtomWithIdx(i).GetAtomicNum() > 1]
+    if len(vals) == len(heavy):
+        out = np.zeros(n)
+        out[heavy] = vals
+        return out
+    raise MissingAtomProperty(
+        f"{label} has {n} atoms ({len(heavy)} of them heavy) but the property {name!r} holds "
+        f"{len(vals)} numbers; a per-atom field needs one for every atom, or one for every heavy "
+        f"atom with the hydrogens left out")
+
 
 def _partial_charges(mol: Chem.Mol, model: str) -> np.ndarray:
     n = mol.GetNumAtoms()
@@ -547,6 +668,10 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
         elif spec.is_cif:
             t = spec.cif_type
             W[:, k] = np.array([1.0 if x == t else 0.0 for x in types])
+        elif spec.is_prop:
+            W[:, k] = atom_property(mol, spec.prop, n,
+                                    policy=getattr(fieldset, "prop_missing", "error"),
+                                    mol_name=name)
         else:
             raise ValueError(f"Unknown field type {spec.name}")
 

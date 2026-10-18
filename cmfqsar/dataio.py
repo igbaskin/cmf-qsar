@@ -155,6 +155,7 @@ class Dataset:
     activity: np.ndarray = field(default_factory=lambda: np.zeros(0))
     subset: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=object))   # "train" / "test"
     properties: List[str] = field(default_factory=list)
+    atom_properties: List[str] = field(default_factory=list)   # one value per atom, for prop: fields
     path: str = ""
     activity_prop: str = ""
 
@@ -267,6 +268,22 @@ def _ensure_3d_with_hs(mol: Chem.Mol, add_hs: bool, seed: int = 42) -> Chem.Mol:
 def _mol2_blocks(text: str) -> List[str]:
     parts = text.split(MOL2_HEADER)
     return [MOL2_HEADER + p for p in parts[1:] if p.strip()]
+
+
+def common_atom_properties(mols, limit: int = 25) -> List[str]:
+    """Per-atom properties that every one of the first `limit` molecules carries.
+
+    These are what a ``prop:`` field can be built from; only the properties present throughout
+    are offered, since a field that exists for half a data set is not a field.
+    """
+    from .fields import atom_property_names
+    shared = None
+    for m in [x for x in mols if x is not None][:limit]:
+        here = set(atom_property_names(m))
+        shared = here if shared is None else (shared & here)
+        if not shared:
+            break
+    return sorted(shared or [])
 
 
 def read_molecules(path: str, add_hs: bool = True):
@@ -385,7 +402,8 @@ def load_dataset(path: str, activity_prop: Optional[str] = None, add_hs: bool = 
         if counts:
             props = [p for p in props if any(m.HasProp(p) for m in mols)]
     ds = Dataset(mols=mols, names=names, activity=np.full(len(mols), np.nan),
-                 subset=np.array([subset] * len(mols), dtype=object), properties=props, path=path)
+                 subset=np.array([subset] * len(mols), dtype=object), properties=props, path=path,
+                 atom_properties=common_atom_properties(mols))
     if activity_file:
         apply_activity_table(ds, read_activity_table(activity_file), use_subset=use_subset_column)
         ds.activity_prop = os.path.basename(activity_file)

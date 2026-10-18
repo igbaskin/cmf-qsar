@@ -1616,6 +1616,40 @@ panel, `--param` on the command line):
 | hydrophobic | Wildman–Crippen atomic logP contribution | in-house one-atom fragment increments keyed by Sybyl type and number of attached H (regression on logP) |
 | H-bond acceptor / donor | approximate Abraham-type increments; donor weight on the polar H | in-house increments (regression on Abraham's B and A constants), donor weight on the heavy atom |
 | CIF | 1 for atoms of the given type | same |
+| `prop:<name>` | the value of a per-atom property carried by the file | same |
+
+**Fields from a per-atom property.** Everything above is a quantity the program computes itself,
+which limits it to what its own parameterisation knows. `prop:<name>` lifts that: the atomic
+weights are read from a property of the molecule, one number per atom, so a quantum charge, a
+Fukui index, a local softness, an atomic polarisability or a per-atom embedding becomes a field
+like any other — with its own α and mixing coefficient, its own co-field, its own atom
+contributions and Shapley values, and no change anywhere in the kernels.
+
+Two conventions are read, in this order: a property set on **every atom**, which RDKit writes to
+SDF as `atom.dprop.<name>` and reads back automatically, and a **molecule property holding one
+number per atom**, separated by spaces, commas or newlines, which is how most quantum-chemistry
+packages dump such a table. The hydrogens are the trap: a structure file without 3D coordinates
+is embedded on loading and hydrogens are added, so a list written for the heavy atoms is shorter
+than the molecule has become. A list as long as the molecule is taken atom for atom, a list as
+long as the heavy atoms is spread over them with the hydrogens left at zero, and anything else is
+an error naming the molecule and both counts — never a guess about which atom a number belongs
+to. `--prop-missing zero` treats a molecule that lacks the property as having none of that
+quantity instead of failing.
+
+`examples/make_property_example.py` writes a data set carrying both conventions — the Gasteiger
+charges as an atom property and the Wildman–Crippen atomic logP contributions as a molecule
+property — which doubles as a test: a field built from those charges reproduces the electrostatic
+field exactly, kernel matrix included, to the last bit.
+
+```bash
+python examples/make_property_example.py
+python cmf_cli.py build examples/thrombin_atom_properties.sdf --alphas 0.5 --lams 0.1        --fields steric,prop:qgasteiger,prop:crippen_logp
+```
+
+In the application the properties the loaded file carries appear as tick boxes in a *Per-atom
+property fields* row of the Model panel, beside the continuous indicator fields; the row is
+hidden when a file carries none. The Sutherland sets carry `partial_charge`, the MOL2 charges of
+the published files, so they can be used as a field without any preparation.
 
 `tripos` reproduces the parameterisation used for the models of the 2013 paper (`cmfqsar/increments.py`
 is a transcription of the original `cmf-params.R`).  `tripos-legacy` additionally reproduces a bug of
@@ -1661,7 +1695,12 @@ groups are pooled, that no fold ever splits a chemotype and that bundling keeps 
 together, that an activity which is a property of the scaffold is predicted almost perfectly by random
 folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
 without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
-For the field difference they check that a molecule matches itself exactly, that the closed-form
+For the fields read from a per-atom property they check that both conventions are read and survive
+an SDF round trip, that values given for the heavy atoms alone land on them with the hydrogens at
+zero, that a wrong length is an error naming the molecule, that a property field of the Gasteiger
+charges reproduces the electrostatic field and its kernel exactly, that a model on such fields fits,
+saves, reloads and still decomposes into atom contributions, and that a molecule without the
+property is refused or zeroed as asked. For the field difference they check that a molecule matches itself exactly, that the closed-form
 distance equals the difference map integrated on a fine grid, that moving a molecule makes equal
 amounts of missing and added field, that the ranking puts the reference first and a distant molecule
 at zero, and that the closed form needs no grid. For the pharmacophore they check that a lobe becomes a feature where it is, that a higher contour

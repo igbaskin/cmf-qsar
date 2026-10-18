@@ -28,6 +28,23 @@ from cmfqsar.chemotypes import BASELINE_ALPHA
 from cmfqsar.model import CMFModel, grid_search, nested_cv, screening_scores
 
 
+def _split_fields(text):
+    """Split a --fields list into the built-in fields and the per-atom property fields.
+
+    "prop:NAME" asks for a field whose atomic weights are read from a property called NAME that
+    the structure file carries, one number per atom: quantum charges, a Fukui index, a local
+    softness, anything of that shape.
+    """
+    physchem, props = [], []
+    for item in str(text).split(","):
+        item = item.strip()
+        if not item:
+            continue
+        (props if item.startswith("prop:") else physchem).append(
+            item[5:] if item.startswith("prop:") else item)
+    return physchem, props
+
+
 def _floats(s):
     return [float(x) for x in s.split(",") if x.strip()]
 
@@ -66,14 +83,15 @@ def cmd_build(args):
           + (f", decoys: {len(dec_idx)}" if dec_idx else ""))
     seed = None if args.cv_no_shuffle else args.seed
 
-    physchem = [f for f in args.fields.split(",") if f]
+    physchem, atom_props = _split_fields(args.fields)
     cif = []
     if args.cif:
         cif = cif_types_in([ds.mols[i] for i in tr], args.cif_scheme, args.cif_min)
         if args.cif_types:
             cif = [t for t in args.cif_types.split(",") if t]
         print(f"  CIF atom types ({args.cif_scheme}): {', '.join(cif)}")
-    fs = FieldSet.create(physchem=physchem, cif_types=cif, alpha=1.0, charge_model=args.charges,
+    fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, cif_types=cif, alpha=1.0, charge_model=args.charges,
+                         prop_missing=args.prop_missing,
                          cif_scheme=args.cif_scheme, param_scheme=args.param,
                          conformers=args.conformations,
                          conformer_weighting=args.conformer_weighting,
@@ -537,8 +555,8 @@ def cmd_complement(args):
                          "PDB entry")
     prot = read_structure(path, keep_waters=False)
     print(f"Structure {prot.name}: {prot.n_atoms} atoms, {prot.n_residues} residues, from {path}")
-    physchem = [f for f in args.fields.split(",") if f]
-    fs = FieldSet.create(physchem=physchem, alpha=args.alpha, charge_model=args.charges)
+    physchem, atom_props = _split_fields(args.fields)
+    fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, alpha=args.alpha, charge_model=args.charges)
     mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
     pocket = pocket_fields(prot, fs)
     print(f"Pocket fields: {pocket.n_atoms} atoms after adding hydrogens and ionising the "
@@ -654,7 +672,7 @@ def cmd_mil(args):
         raise SystemExit("every molecule has one conformation; nothing to choose between. "
                          "Use --conformers N, or a multi-conformer file with --ensemble-by name")
     print(f"  {np.mean(counts):.1f} conformations per molecule on average, up to {max(counts)}")
-    physchem = [f for f in args.fields.split(",") if f]
+    physchem, atom_props = _split_fields(args.fields)
     y = ds.activity[tr]
     rules = [("ensemble (beta = 0)", 0.0, "soft")]
     rules += [(f"soft, beta = {b:g}", float(b), "soft") for b in _floats(args.betas) if b > 0]
@@ -662,7 +680,7 @@ def cmd_mil(args):
         rules.append(("hard selection", 0.0, "hard"))
     best = None
     for alpha in _floats(args.alphas):
-        fs = FieldSet.create(physchem=physchem, alpha=alpha, charge_model=args.charges,
+        fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, alpha=alpha, charge_model=args.charges,
                              param_scheme=args.param)
         flat_tr, bags_tr = flatten_conformers([mols[i] for i in tr], fs, [ds.names[i] for i in tr],
                                               max_conformers=args.max_conformers)
@@ -680,7 +698,7 @@ def cmd_mil(args):
                     best = (err, q2, alpha, lam, beta, sel, label, ycv)
     err, q2, alpha, lam, beta, sel, label, ycv = best
     print(f"\nBest: alpha {alpha:g}, lambda {lam:g}, {label}: q2cv {q2:.3f}, RMSEcv {err:.3f}")
-    fs = FieldSet.create(physchem=physchem, alpha=alpha, charge_model=args.charges,
+    fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, alpha=alpha, charge_model=args.charges,
                          param_scheme=args.param)
     flat_tr, bags_tr = flatten_conformers([mols[i] for i in tr], fs, [ds.names[i] for i in tr],
                                           max_conformers=args.max_conformers)
@@ -815,11 +833,11 @@ def cmd_hetero(args):
     print(f"  leave-one-chemotype-out folds: {[len(f) for f in folds]}")
     if len(folds) < 2:
         raise SystemExit("one chemotype only: this is a congeneric series, use 'build'")
-    physchem = [f for f in args.fields.split(",") if f]
+    physchem, atom_props = _split_fields(args.fields)
     cif = cif_types_in(ds.mols, args.cif_scheme, args.cif_min) if args.cif else []
     if cif:
         print(f"  CIF atom types ({args.cif_scheme}): {', '.join(cif)}")
-    fs = FieldSet.create(physchem=physchem, cif_types=cif, alpha=1.0, charge_model=args.charges,
+    fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, cif_types=cif, alpha=1.0, charge_model=args.charges,
                          cif_scheme=args.cif_scheme, param_scheme=args.param)
     if args.align_within or args.place:
         from rdkit import Chem
@@ -928,9 +946,9 @@ def cmd_map(args):
     idx = [i for i in range(len(ds)) if ok[i]] if args.all else [i for i in ds.train_indices if ok[i]]
     if len(idx) < 8:
         raise SystemExit("a map needs at least eight molecules with activity values")
-    physchem = [f for f in args.fields.split(",") if f]
+    physchem, atom_props = _split_fields(args.fields)
     cif = cif_types_in([ds.mols[i] for i in idx], args.cif_scheme, args.cif_min) if args.cif else []
-    fs = FieldSet.create(physchem=physchem, cif_types=cif, alpha=args.alpha, charge_model=args.charges,
+    fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, cif_types=cif, alpha=args.alpha, charge_model=args.charges,
                          cif_scheme=args.cif_scheme, param_scheme=args.param)
     print(f"{len(idx)} molecules, fields: {', '.join(s.label for s in fs.specs)}, alpha = {args.alpha:g}")
     mf = [build_fields(ds.mols[i], fs, ds.names[i]) for i in idx]
@@ -1009,6 +1027,9 @@ def main(argv=None):
                    help="gpc is the Gaussian-process classifier (Laplace approximation): it "
                         "gives calibrated probabilities, a posterior variance per molecule and "
                         "the marginal likelihood, and takes its amplitude from the C grid")
+    b.add_argument("--prop-missing", default="error", choices=["error", "zero"],
+                   help="what to do when a molecule carries no value for a prop: field; "
+                        "'error' names the molecule, 'zero' treats it as having none")
     b.add_argument("--kernel", default="fields", choices=["fields", "autocorrelation"],
                    help="where the kernel comes from: the overlap integrals of the fields, which "
                         "needs the molecules to share a frame, or the rotation-invariant "

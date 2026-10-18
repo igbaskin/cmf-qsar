@@ -1041,6 +1041,7 @@ class MainWindow(QMainWindow):
             cmb.setCurrentIndex(props.index(ds.activity_prop))
         cmb.blockSignals(False)
         self.model_panel.set_class_properties(list(ds.properties))
+        self.model_panel.set_atom_properties(ds.atom_properties)
         if np.isfinite(ds.activity).any():
             self.model_panel.spin_threshold.setValue(float(np.nanmedian(ds.activity)))
         self.model = None
@@ -1106,6 +1107,7 @@ class MainWindow(QMainWindow):
             if tr:
                 cif_types = cif_types_in(tr, mp.cmb_cif_scheme.currentText(), mp.spin_cif_min.value())
         fs = FieldSet.create(physchem=mp.selected_physchem(), cif_types=cif_types, alpha=1.0,
+                             atom_properties=mp.atom_properties(),
                              charge_model=mp.cmb_charges.currentText(), cif_scheme=mp.cmb_cif_scheme.currentText(),
                              param_scheme=mp.cmb_param.currentText(),
                              conformers=mp.conformer_mode(),
