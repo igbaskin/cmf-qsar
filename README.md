@@ -514,6 +514,55 @@ What the model loses with the frame, it says so: `cofield_coefficients` and `ato
 raise rather than return something meaningless, while the contributions of the training molecules
 — the dual form, which needs no frame — still add up to the prediction.
 
+### Topomer fields: a frame that comes from the topology
+
+The alignment-free kernel above throws the frame away. The topomer construction of
+[topomer.py](cmfqsar/topomer.py) takes the other road, Cramer's (topomer CoMFA, 2003): cut the
+molecule at the bond that attaches a substituent and build that fragment into a pose that is a
+*deterministic function of its topology* — canonical atom numbering, one embedding with a fixed
+seed, every rotatable torsion set to 180°, the attachment atom at the origin with its open
+valence along −x, and the remaining roll fixed by the principal axis of the heavy atoms. The same
+R-group then always lands in the same place, whatever molecule it was cut from and however its
+atoms were numbered — a test asserts the coordinates are identical, not merely close.
+
+Two things make this fit CMF better than it fits CoMFA. There is no grid: a fragment's field is
+its atoms and weights, and a fragment–fragment kernel is an analytic number, so the fragment
+library can be tabulated once and reused. And each attachment point keeps its **own region of
+space** — the substituent of position *k* is placed at *x* = 100 k Å, far enough that no Gaussian
+of one site reaches another — so the overlap integral of two molecules is exactly the sum of
+their per-position overlaps, which is what topomer CoMFA obtains by giving every position its own
+block of columns. A test checks that identity to 1e-9.
+
+**Measured against the alignment it replaces**, same sets, same folds, same α and λ grids:
+
+| set | core | attachment points | aligned q² | topomer q² |
+|---|---|---:|---:|---:|
+| benzamides (synthetic) | `NC(=O)c1ccccc1` | 6 | **+0.846** | +0.655 |
+| sutherland/COX2 | MCS (benzene) | 6 | **+0.537** | +0.359 |
+| sutherland/AChE | MCS (benzene) | 6 | **+0.564** | +0.238 |
+| sutherland/BZR | MCS (benzene) | — | +0.388 | not applicable |
+
+On a series that is already aligned the published superposition wins by 0.2 to 0.3 in q², which
+is the honest result: those molecules were superimposed by someone who knew what they were doing,
+and a canonical anti-torsion pose discards the conformational truth that superposition kept. What
+the topomer construction offers instead is reproducibility and speed — the same substituent gives
+the same field for ever, so a virtual library is scored from a fragment table rather than a
+superposition search — and a frame where no superposition is possible at all.
+
+BZR is the instructive failure: its molecules are benzodiazepines, so the common substructure is
+a ring *fused* to the rest and cannot be cut off without opening a ring. The program measures
+that (`cuttable_fraction`, 6 % there against 94–98 % on the others) and says so in the log rather
+than quietly dropping nine molecules out of ten.
+
+```bash
+python cmf_cli.py topomer examples/benzamides_synthetic.sdf --activity pActivity        --core "c1ccccc1C(=O)N" --alphas 0.3,0.5,1 --lams 1e-2,0.1,1
+```
+
+Without `--core` the maximum common substructure is used, found on hydrogen-suppressed copies so
+that it matches molecules whose hydrogen counts differ. Substituents that attach at two points,
+such as a fused biphenyl bridge, are reported and skipped: the construction is defined for one
+open valence.
+
 ### Property fields against indicator fields
 
 Three of the five physico-chemical fields are not read off the molecule but fitted: the
@@ -1695,7 +1744,11 @@ groups are pooled, that no fold ever splits a chemotype and that bundling keeps 
 together, that an activity which is a property of the scaffold is predicted almost perfectly by random
 folds and not at all when the chemotype is held out, that the grouped predictions are exactly a fit
 without the held-out group, that a cluster is moved as one rigid body and the reference cluster not at
-For the fields read from a per-atom property they check that both conventions are read and survive
+For the topomer construction they check that the same substituent cut from different molecules and
+numbered differently gives identical coordinates, that the attachment atom sits at the origin with
+its open valence along the axis, that every attachment point keeps its own region of space and the
+kernel is the sum over them, and that a core fused to the rest of the molecule is reported rather
+than silently dropped. For the fields read from a per-atom property they check that both conventions are read and survive
 an SDF round trip, that values given for the heavy atoms alone land on them with the hydrogens at
 zero, that a wrong length is an error naming the molecule, that a property field of the Gasteiger
 charges reproduces the electrostatic field and its kernel exactly, that a model on such fields fits,
@@ -1750,6 +1803,7 @@ cmfqsar/mil.py          multi-instance learning: the model chooses the conformat
 cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
 cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrelation)
+cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule
 cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence

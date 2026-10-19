@@ -25,7 +25,8 @@ import numpy as np
 from cmfqsar.dataio import load_dataset, save_model, load_model, write_predictions_csv
 from cmfqsar.fields import AtomTable, FieldSet, build_fields, cif_types_in
 from cmfqsar.chemotypes import BASELINE_ALPHA
-from cmfqsar.model import CMFModel, grid_search, nested_cv, screening_scores
+from cmfqsar.model import (CMFModel, cv_predict, grid_search, nested_cv,
+                           r2_score, rmse, screening_scores)
 
 
 def _split_fields(text):
@@ -732,6 +733,57 @@ def cmd_mil(args):
     print(f"Elapsed {time.time() - t0:.1f} s")
 
 
+def cmd_topomer(args):
+    """Model a series by its substituents, each posed by rule instead of superimposed."""
+    from rdkit import Chem
+    from cmfqsar.topomer import (TopomerSpec, common_core, cuttable_fraction, series_labels,
+                                 topomer_fields, unique_substituents)
+    ds = load_dataset(args.dataset, activity_prop=args.activity,
+                      activity_file=args.activity_file)
+    y = np.asarray(ds.activity, float)
+    ok = np.isfinite(y)
+    mols = [m for m, g in zip(ds.mols, ok) if g]
+    names = [n for n, g in zip(ds.names, ok) if g]
+    yy = y[ok]
+    core = Chem.MolFromSmiles(args.core) if args.core else None
+    if core is None and args.core_smarts:
+        core = Chem.MolFromSmarts(args.core_smarts)
+    core = core if core is not None else common_core(mols)
+    if core is None:
+        raise SystemExit("no common substructure: give one with --core")
+    labels = series_labels(mols, core)
+    print(f"Loaded {len(mols)} molecules with activities from {args.dataset}")
+    print(f"  core {Chem.MolToSmiles(core)}  ({len(labels)} attachment points, "
+          f"{len(unique_substituents(mols, core))} distinct substituents)")
+    print(f"  the core comes off cleanly in {cuttable_fraction(mols, core):.0%} of them")
+    physchem, atom_props = _split_fields(args.fields)
+    best = None
+    for alpha in _floats(args.alphas):
+        fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, alpha=alpha,
+                             charge_model=args.charges, param_scheme=args.param)
+        mf, log = topomer_fields(mols, names, fs, core=core, labels=labels,
+                                 spec=TopomerSpec(torsion=args.torsion, seed=args.seed))
+        for line in log[:4]:
+            print("   " + line[:150])
+        keep = [i for i, f in enumerate(mf) if f is not None]
+        if len(keep) < 5:
+            raise SystemExit("too few molecules could be cut into substituents")
+        model = CMFModel(fieldset=fs, method="krr", normalize=not args.raw_kernels)
+        K = model.joint_kernel(model.prepare_training_kernels(
+            AtomTable.from_molecules([mf[i] for i in keep])))
+        for lam in _floats(args.lams):
+            pred = cv_predict(K, yy[keep], "krr", {"lam": float(lam)}, folds=args.folds, seed=0)
+            q2 = r2_score(yy[keep], pred)
+            if best is None or q2 > best[0]:
+                best = (q2, alpha, lam, len(keep), rmse(yy[keep], pred))
+    q2, alpha, lam, kept, err = best
+    print(f"Topomer model: alpha {alpha:g}, lambda {lam:g}")
+    print(f"  q2 ({args.folds}-fold CV) {q2:+.3f}   RMSEcv {err:.3f}   on {kept}/{len(mols)} "
+          f"molecules")
+    print("  the poses are a convention, not conformations: the same substituent always lands "
+          "the same way, which is what makes this comparable without any alignment")
+
+
 def cmd_difference(args):
     """What one molecule's fields have that another's do not."""
     from cmfqsar.cofields import difference_volume, export_cube, make_grid
@@ -1368,6 +1420,28 @@ def main(argv=None):
     df.add_argument("--cube", default=None, metavar="PREFIX",
                     help="write the difference map of every field as a Gaussian cube")
     df.set_defaults(func=cmd_difference)
+
+    tp = sub.add_parser("topomer",
+                        help="model a series by its substituents, each posed by rule "
+                             "(topomer CMF, after Cramer's topomer CoMFA)")
+    tp.add_argument("dataset")
+    tp.add_argument("--activity", default=None)
+    tp.add_argument("--activity-file", default=None)
+    tp.add_argument("--core", default=None, metavar="SMILES",
+                    help="the scaffold to cut the substituents from; without it the maximum "
+                         "common substructure of the series is used")
+    tp.add_argument("--core-smarts", default=None, metavar="SMARTS")
+    tp.add_argument("--torsion", type=float, default=180.0,
+                    help="the angle every rotatable torsion is set to (Cramer's anti rule)")
+    tp.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    tp.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    tp.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    tp.add_argument("--alphas", default="0.3,0.5,1.0")
+    tp.add_argument("--lams", default="1e-2,0.1,1")
+    tp.add_argument("--folds", type=int, default=10)
+    tp.add_argument("--raw-kernels", action="store_true")
+    tp.add_argument("--seed", type=int, default=0xC0FFEE)
+    tp.set_defaults(func=cmd_topomer)
 
     k = sub.add_parser("complement", help="field complementarity with a protein pocket")
     k.add_argument("dataset")
