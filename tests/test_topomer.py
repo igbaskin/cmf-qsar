@@ -117,3 +117,18 @@ def test_the_helpers_do_what_their_names_say():
     assert {attachment_label(f) for f in subs} <= set(series_labels([mol], CORE))
     assert Chem.MolToSmiles(canonical(subs[0])) == Chem.MolToSmiles(subs[0])
     assert common_core([Chem.MolFromSmiles(s) for s in SERIES]) is not None
+
+
+def test_the_sites_can_be_brought_closer_together():
+    """The spacing is a parameter: far enough to decouple the kernels, near enough to look at."""
+    mols = [Chem.MolFromSmiles(s) for s in SERIES]
+    labels = series_labels(mols, CORE)
+    far = topomer_molecule(mols[0], CORE, labels, TopomerSpec())
+    near = topomer_molecule(mols[0], CORE, labels, TopomerSpec(spacing=25.0))
+    xf = np.array(far.GetConformer().GetPositions())
+    xn = np.array(near.GetConformer().GetPositions())
+    assert xf.shape == xn.shape
+    # the same substituents, the same geometry, only the site offsets differ
+    assert xf[:, 0].max() - xn[:, 0].max() == pytest.approx(SITE_SPACING - 25.0, abs=1e-6)
+    assert np.allclose(xf[:, 1:], xn[:, 1:])            # and nothing else moves
+    assert TopomerSpec().spacing == SITE_SPACING

@@ -11,7 +11,7 @@ from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (QApplication, QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout,
                                QInputDialog, QLabel, QMainWindow, QMessageBox, QProgressBar, QCheckBox,
                                QSpinBox, QDoubleSpinBox, QTextBrowser, QVBoxLayout, QHBoxLayout,
-                               QWidget, QComboBox, QScrollArea)
+                               QWidget, QComboBox, QLineEdit, QScrollArea)
 from rdkit import Chem
 
 from .. import __version__
@@ -408,49 +408,121 @@ class ChemotypeValidationDialog(QDialog):
         lay.addWidget(box)
 
 
-class FieldDifferenceDialog(QDialog):
-    """Choose the molecule a candidate is meant to imitate."""
-
-    def __init__(self, names, current: int, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Field difference from a reference")
-        lay = QVBoxLayout(self)
-        info = QLabel(
-            "The difference between the fields of the molecule selected in the data-set table "
-            "and those of a reference: negative where the selected molecule fails to reproduce "
-            "what the reference presents, positive where it adds something of its own.\n\n"
-            "This is the readout for scaffold hopping and peptidomimetics, where the question "
-            "is not how a candidate scores but what is wrong with it. Both molecules must be in "
-            "the same frame; the map of two molecules that were never aligned measures the "
-            "alignment.")
-        info.setWordWrap(True)
-        info.setMaximumWidth(560)
-        lay.addWidget(info)
-        form = QFormLayout()
-        self.cmb_ref = QComboBox()
-        for i, n in enumerate(names):
-            self.cmb_ref.addItem(f"{i + 1}. {n}")
-        if 0 <= current < len(names):
-            self.cmb_ref.setCurrentIndex(current)
-        form.addRow("Reference molecule:", self.cmb_ref)
-        self.spin_level = QDoubleSpinBox()
-        self.spin_level.setRange(0.1, 0.95)
-        self.spin_level.setSingleStep(0.05)
-        self.spin_level.setDecimals(2)
-        self.spin_level.setValue(0.5)
-        self.spin_level.setToolTip("Contour bounding a lobe of the difference map, as a fraction "
-                                   "of its largest value, for the list of where they differ")
-        form.addRow("Contour level:", self.spin_level)
-        self.chk_draw = QCheckBox("show the map in the 3D view")
-        self.chk_draw.setChecked(True)
-        form.addRow("", self.chk_draw)
-        lay.addLayout(form)
-        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        box.accepted.connect(self.accept)
-        box.rejected.connect(self.reject)
-        lay.addWidget(box)
-
-
+class TopomerDialog(QDialog):
+    """Options for replacing the molecules by their substituents, posed by rule."""
+
+    def __init__(self, n_mol: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Topomer substituents")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            f"Each of the {n_mol} molecules is cut at the bonds holding its substituents to a "
+            f"common core, and every substituent is built into a pose that depends on its "
+            f"topology alone: canonical numbering, one embedding, every rotatable torsion at the "
+            f"angle below, the attachment atom at the origin and its open valence along one "
+            f"axis. The same substituent then always lands in the same place, so the fields can "
+            f"be compared with no alignment at all (Cramer's topomer CoMFA, 1997-2003).\n\n"
+            f"The molecules on screen are replaced by those substituents, each attachment point "
+            f"in its own region of space, because that is the frame a topomer model lives in: "
+            f"its co-fields and contributions belong there and not around the original ligands. "
+            f"Names, activities and the train/test split are kept; reload the file to get the "
+            f"molecules back.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(580)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.cmb_core = QComboBox()
+        self.cmb_core.addItems(["maximum common substructure of the series", "this SMILES",
+                                "this SMARTS"])
+        form.addRow("Core:", self.cmb_core)
+        self.ed_core = QLineEdit("")
+        self.ed_core.setPlaceholderText("c1ccccc1C(=O)N")
+        self.ed_core.setEnabled(False)
+        self.cmb_core.currentIndexChanged.connect(
+            lambda i: self.ed_core.setEnabled(i > 0))
+        form.addRow("", self.ed_core)
+        self.spin_torsion = QDoubleSpinBox()
+        self.spin_torsion.setRange(-180.0, 180.0)
+        self.spin_torsion.setSingleStep(10.0)
+        self.spin_torsion.setDecimals(1)
+        self.spin_torsion.setValue(180.0)
+        self.spin_torsion.setSuffix(" °")
+        self.spin_torsion.setToolTip("Every rotatable torsion of every substituent is set to "
+                                     "this; 180° is the anti convention of the original method")
+        form.addRow("Torsions:", self.spin_torsion)
+        self.spin_spacing = QDoubleSpinBox()
+        self.spin_spacing.setRange(10.0, 500.0)
+        self.spin_spacing.setSingleStep(10.0)
+        self.spin_spacing.setDecimals(0)
+        self.spin_spacing.setValue(100.0)
+        self.spin_spacing.setSuffix(" Å")
+        self.spin_spacing.setToolTip(
+            "How far apart the attachment sites are placed. Far enough and the kernel is exactly "
+            "the sum over the positions, which is the point of the construction; closer makes "
+            "the series easier to look at, but lets the sites see one another when the "
+            "attenuation is very small: at 30 Å two of them still overlap at alpha = 0.01.")
+        form.addRow("Sites apart:", self.spin_spacing)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+    def core(self):
+        """(mol, description) of the core to cut from, or (None, 'mcs')."""
+        from rdkit import Chem
+        text = self.ed_core.text().strip()
+        mode = self.cmb_core.currentIndex()
+        if mode == 1 and text:
+            return Chem.MolFromSmiles(text), text
+        if mode == 2 and text:
+            return Chem.MolFromSmarts(text), text
+        return None, "the maximum common substructure"
+
+
+class FieldDifferenceDialog(QDialog):
+    """Choose the molecule a candidate is meant to imitate."""
+
+    def __init__(self, names, current: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Field difference from a reference")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            "The difference between the fields of the molecule selected in the data-set table "
+            "and those of a reference: negative where the selected molecule fails to reproduce "
+            "what the reference presents, positive where it adds something of its own.\n\n"
+            "This is the readout for scaffold hopping and peptidomimetics, where the question "
+            "is not how a candidate scores but what is wrong with it. Both molecules must be in "
+            "the same frame; the map of two molecules that were never aligned measures the "
+            "alignment.")
+        info.setWordWrap(True)
+        info.setMaximumWidth(560)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.cmb_ref = QComboBox()
+        for i, n in enumerate(names):
+            self.cmb_ref.addItem(f"{i + 1}. {n}")
+        if 0 <= current < len(names):
+            self.cmb_ref.setCurrentIndex(current)
+        form.addRow("Reference molecule:", self.cmb_ref)
+        self.spin_level = QDoubleSpinBox()
+        self.spin_level.setRange(0.1, 0.95)
+        self.spin_level.setSingleStep(0.05)
+        self.spin_level.setDecimals(2)
+        self.spin_level.setValue(0.5)
+        self.spin_level.setToolTip("Contour bounding a lobe of the difference map, as a fraction "
+                                   "of its largest value, for the list of where they differ")
+        form.addRow("Contour level:", self.spin_level)
+        self.chk_draw = QCheckBox("show the map in the 3D view")
+        self.chk_draw.setChecked(True)
+        form.addRow("", self.chk_draw)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+
 class PharmacophoreDialog(QDialog):
     """Options for discretising the co-fields into typed features."""
 
@@ -752,6 +824,7 @@ class MainWindow(QMainWindow):
         self.shapley_result = None          # (molecule index, ShapleyResult) of the last run
         self.shapley_fields = None          # (molecule index, (F, N) values) for the Shapley field
         self.pharmacophore = None           # features extracted from the co-field, drawn in 3D
+        self.topomer_core = None            # set once the molecules are topomer substituents
         self.field_reference = None         # molecule a candidate is compared with
         self.field_diff_rows = None
         self.protein = None                 # cmfqsar.protein.Protein behind the molecules
@@ -862,6 +935,7 @@ class MainWindow(QMainWindow):
         self._act(tm, "Align training set by prediction confidence (cross-validated)…",
                   self.train_align_dialog)
         tm.addSeparator()
+        self._act(tm, "Replace molecules by their topomer substituents…", self.topomer_dialog)
         self._act(tm, "Field difference from a reference molecule…", self.field_difference_dialog)
         self._act(tm, "Extract pharmacophore from the co-field…", self.pharmacophore_dialog)
         self._act(tm, "Chemical space map (GTM)…", self.gtm_map_dialog)
@@ -2600,75 +2674,175 @@ class MainWindow(QMainWindow):
         box.setEnabled(False)
         box.blockSignals(False)
 
-    def field_difference_dialog(self):
-        """Compare the selected molecule's fields with those of a reference molecule."""
-        cur = self.dataset_panel.current_index()
-        if self.ds is None or cur < 0:
-            QMessageBox.information(self, "No molecule",
-                                    "Select the candidate in the data-set table first.")
-            return
-        dlg = FieldDifferenceDialog(list(self.ds.names), self.field_reference
-                                    if self.field_reference is not None else 0, self)
-        if dlg.exec() != QDialog.Accepted:
-            return
-        ref = dlg.cmb_ref.currentIndex()
-        if ref == cur:
-            QMessageBox.information(self, "Same molecule",
-                                    "The candidate and the reference are the same molecule.")
-            return
-        self.field_reference = ref
-        level, draw = dlg.spin_level.value(), dlg.chk_draw.isChecked()
-        fs = self._fieldset_from_panel()
-        mols, names = self.ds.mols, self.ds.names
-
-        def task(progress, cancel):
-            from ..cofields import make_grid
-            from ..fielddiff import difference_features, mismatch, overall_similarity
-            progress("Fields", 0.2)
-            a = build_fields(mols[cur], fs, names[cur])
-            b = build_fields(mols[ref], fs, names[ref])
-            grid = self.grid or make_grid(np.vstack([a.coords, b.coords]),
-                                          margin=self.controls.spin_margin.value(),
-                                          spacing=self.controls.spin_spacing.value())
-            progress("Difference map", 0.6)
-            rows = mismatch(a, b, fs, grid=grid)
-            feats = difference_features(a, b, fs, grid=grid, level=level, max_features=8)
-            return rows, feats, overall_similarity(a, b, fs)
-
-        def done(out):
-            rows, feats, cos = out
-            self.field_diff_rows = rows
-            box = self.controls.chk_diff
-            box.setEnabled(True)
-            box.blockSignals(True)
-            box.setChecked(draw)
-            box.blockSignals(False)
-            self.log(f"{names[cur]} against {names[ref]}: field cosine {cos:+.3f} over all fields")
-            for r in rows:
-                self.results_panel.append_log("    " + r.describe())
-            for f in feats:
-                self.results_panel.append_log("    " + f.describe())
-            self.schedule_display()
-
-        self.run_task(task, done, "Field difference")
-
-    def _difference_volume(self, cur: int, fs: FieldSet, f: int):
-        """X_f of the selected molecule minus X_f of the reference, on a shared grid."""
-        from ..cofields import difference_volume, make_grid
-        ref = self.field_reference
-        sig = self._fieldset_signature(fs)
-        spacing = self.controls.spin_spacing.value()
-        key = ("diff", cur, ref, f, sig, spacing, id(self.grid))
-        if key in self._mol_volume_cache:
-            return self._mol_volume_cache[key]
-        a = build_fields(self.ds.mols[cur], fs, self.ds.names[cur])
-        b = build_fields(self.ds.mols[ref], fs, self.ds.names[ref])
-        grid = self.grid or make_grid(np.vstack([a.coords, b.coords]),
-                                      margin=self.controls.spin_margin.value(), spacing=spacing)
-        out = (difference_volume(a, b, fs.specs[f], f, grid), grid)
-        self._mol_volume_cache[key] = out
-        return out
-
+    def topomer_dialog(self):
+        """Replace the molecules by their substituents, each posed by the topomer rule."""
+        if self.ds is None or len(self.ds.mols) < 2:
+            QMessageBox.information(self, "No data", "Load a data set of at least two molecules.")
+            return
+        dlg = TopomerDialog(len(self.ds.mols), self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        core, core_text = dlg.core()
+        if core is None and dlg.cmb_core.currentIndex() > 0:
+            QMessageBox.information(self, "Bad core", "That core could not be read as a molecule.")
+            return
+        torsion = float(dlg.spin_torsion.value())
+        spacing = float(dlg.spin_spacing.value())
+        ds, mols, names = self.ds, list(self.ds.mols), list(self.ds.names)
+
+        def task(progress, cancel):
+            from rdkit import Chem
+            from ..topomer import (TopomerSpec, common_core, cuttable_fraction, series_labels,
+                                   topomer_molecule, unique_substituents)
+            use = core
+            if use is None:
+                progress("Common substructure", 0.05)
+                use = common_core(mols)
+                if use is None:
+                    raise ValueError("no common substructure: give a core yourself")
+            labels = series_labels(mols, use)
+            if not labels:
+                raise ValueError("the core covers the whole series: nothing to cut off it")
+            spec = TopomerSpec(torsion=torsion, spacing=spacing)
+            cache, built, kept, lost = {}, [], [], []
+            for i, mol in enumerate(mols):
+                if cancel is not None and cancel():
+                    break
+                if i % 5 == 0:
+                    progress(f"Posing substituents {i + 1}/{len(mols)}", 0.1 + 0.85 * i / len(mols))
+                try:
+                    one = topomer_molecule(mol, use, labels, spec, cache)
+                except Exception as exc:                  # noqa: BLE001 - one molecule, not the set
+                    one, reason = None, str(exc)
+                else:
+                    reason = "nothing outside the core"
+                if one is None:
+                    lost.append(f"{names[i]}: {reason}")
+                    continue
+                one.SetProp("_Name", names[i])
+                built.append(one)
+                kept.append(i)
+            return {"mols": built, "keep": kept, "lost": lost, "core": use, "labels": labels,
+                    "share": cuttable_fraction(mols, use),
+                    "unique": len(unique_substituents(mols, use))}
+
+        def done(out):
+            from rdkit import Chem
+            keep, built = out["keep"], out["mols"]
+            if len(built) < 2:
+                QMessageBox.information(
+                    self, "Nothing to pose",
+                    "Fewer than two molecules could be cut into substituents. "
+                    + ("The core comes off cleanly in only %.0f%% of them: it is fused to the "
+                       "rest or attached by something other than a single bond."
+                       % (100 * out["share"])))
+                return
+            smi = Chem.MolToSmiles(out["core"])
+            self.ds.mols = built
+            self.ds.names = [self.ds.names[i] for i in keep]
+            self.ds.activity = self.ds.activity[keep]
+            self.ds.subset = self.ds.subset[keep]
+            self.topomer_core = smi
+            self._after_dataset_change()
+            self.dataset_panel.set_note(f"topomer substituents of {smi[:40]}")
+            # the sites stand far apart, so the whole series at once is a row of specks: start
+            # on one molecule, with the camera on it
+            self.dataset_panel.set_all_shown(False)
+            self.dataset_panel.set_shown([0], True)
+            self.dataset_panel.select_index(0)
+            if self.molfields:
+                # and the camera on the first attachment site, not on the row as a whole:
+                # centred on all of it, a substituent is a speck
+                xyz = self.molfields[0].coords
+                first = xyz[xyz[:, 0] < 0.5 * spacing]
+                self.viewer.center_on(first if len(first) else xyz)
+            self.log(f"Topomer substituents of {smi}: {len(out['labels'])} attachment points, "
+                     f"{out['unique']} distinct substituents, {len(built)}/{len(keep) + len(out['lost'])} "
+                     f"molecules kept; the core comes off cleanly in {out['share']:.0%} of them")
+            for line in out["lost"][:5]:
+                self.results_panel.append_log("    " + line[:150])
+            if out["share"] < 0.9:
+                self.results_panel.append_log(
+                    "    the core is fused to the rest of many molecules, so what is left of "
+                    "them is not a substituent; choose a core joined by single acyclic bonds")
+            self.results_panel.append_log(
+                f"    the molecules shown are the posed substituents, one region of space per "
+                f"attachment point and {spacing:.0f} A between them: a model built now is a "
+                f"topomer model, and its co-field lives in that frame. Only the first molecule "
+                f"is displayed, since the whole series at once is a row of specks. Reload the "
+                f"file for the molecules themselves.")
+
+        self.run_task(task, done, "Building the topomer substituents")
+
+    def field_difference_dialog(self):
+        """Compare the selected molecule's fields with those of a reference molecule."""
+        cur = self.dataset_panel.current_index()
+        if self.ds is None or cur < 0:
+            QMessageBox.information(self, "No molecule",
+                                    "Select the candidate in the data-set table first.")
+            return
+        dlg = FieldDifferenceDialog(list(self.ds.names), self.field_reference
+                                    if self.field_reference is not None else 0, self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        ref = dlg.cmb_ref.currentIndex()
+        if ref == cur:
+            QMessageBox.information(self, "Same molecule",
+                                    "The candidate and the reference are the same molecule.")
+            return
+        self.field_reference = ref
+        level, draw = dlg.spin_level.value(), dlg.chk_draw.isChecked()
+        fs = self._fieldset_from_panel()
+        mols, names = self.ds.mols, self.ds.names
+
+        def task(progress, cancel):
+            from ..cofields import make_grid
+            from ..fielddiff import difference_features, mismatch, overall_similarity
+            progress("Fields", 0.2)
+            a = build_fields(mols[cur], fs, names[cur])
+            b = build_fields(mols[ref], fs, names[ref])
+            grid = self.grid or make_grid(np.vstack([a.coords, b.coords]),
+                                          margin=self.controls.spin_margin.value(),
+                                          spacing=self.controls.spin_spacing.value())
+            progress("Difference map", 0.6)
+            rows = mismatch(a, b, fs, grid=grid)
+            feats = difference_features(a, b, fs, grid=grid, level=level, max_features=8)
+            return rows, feats, overall_similarity(a, b, fs)
+
+        def done(out):
+            rows, feats, cos = out
+            self.field_diff_rows = rows
+            box = self.controls.chk_diff
+            box.setEnabled(True)
+            box.blockSignals(True)
+            box.setChecked(draw)
+            box.blockSignals(False)
+            self.log(f"{names[cur]} against {names[ref]}: field cosine {cos:+.3f} over all fields")
+            for r in rows:
+                self.results_panel.append_log("    " + r.describe())
+            for f in feats:
+                self.results_panel.append_log("    " + f.describe())
+            self.schedule_display()
+
+        self.run_task(task, done, "Field difference")
+
+    def _difference_volume(self, cur: int, fs: FieldSet, f: int):
+        """X_f of the selected molecule minus X_f of the reference, on a shared grid."""
+        from ..cofields import difference_volume, make_grid
+        ref = self.field_reference
+        sig = self._fieldset_signature(fs)
+        spacing = self.controls.spin_spacing.value()
+        key = ("diff", cur, ref, f, sig, spacing, id(self.grid))
+        if key in self._mol_volume_cache:
+            return self._mol_volume_cache[key]
+        a = build_fields(self.ds.mols[cur], fs, self.ds.names[cur])
+        b = build_fields(self.ds.mols[ref], fs, self.ds.names[ref])
+        grid = self.grid or make_grid(np.vstack([a.coords, b.coords]),
+                                      margin=self.controls.spin_margin.value(), spacing=spacing)
+        out = (difference_volume(a, b, fs.specs[f], f, grid), grid)
+        self._mol_volume_cache[key] = out
+        return out
+
     def pharmacophore_dialog(self):
         """Discretise the co-fields of the fitted model into typed features with tolerances."""
         if self.model is None:

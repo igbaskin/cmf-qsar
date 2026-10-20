@@ -135,6 +135,7 @@ class DatasetPanel(QWidget):
         self._order: List[int] = []
         self._pos: Dict[int, int] = {}
         self._sort_col, self._sort_desc = -1, False
+        self._note = ""
         self.btn_show_all.clicked.connect(lambda: self.set_all_shown(True))
         self.btn_show_none.clicked.connect(lambda: self.set_all_shown(False))
         self.btn_show_sel.clicked.connect(self.show_selected_only)
@@ -151,6 +152,7 @@ class DatasetPanel(QWidget):
 
     def populate(self, names, activity, subset) -> None:
         self.set_group_labels(None)              # a different series needs its own grouping
+        self._note = ""
         self._names = [str(n) for n in names]
         self._activity = np.asarray(activity, float)
         self._subset = [str(s) for s in subset]
@@ -163,12 +165,18 @@ class DatasetPanel(QWidget):
         self._render()
         self._update_info()
 
+    def set_note(self, text: str) -> None:
+        """A line beside the counts saying what these molecules now are."""
+        self._note = str(text or "")
+        self._update_info()
+
     def _update_info(self) -> None:
         n_dec = sum(1 for s in self._subset if s == "decoy")
         self.lbl_info.setText(
             f"{len(self._names)} molecules  (train {sum(1 for s in self._subset if s == 'train')}, "
             f"test {sum(1 for s in self._subset if s == 'test')}"
             + (f", decoys {n_dec}" if n_dec else "") + ")"
+            + (f"   [{self._note}]" if getattr(self, "_note", "") else "")
             + ("" if self._sort_col < 0 else
                f"   sorted by {self._header_text(self._sort_col)}, "
                + self._sort_style(self._sort_col)[2 if self._sort_desc else 1]))

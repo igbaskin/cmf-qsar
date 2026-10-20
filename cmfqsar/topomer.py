@@ -56,6 +56,7 @@ class TopomerSpec:
     seed: int = 0xC0FFEE         # the embedding seed; fixed, so the geometry is reproducible
     optimise: bool = False       # relax after setting the torsions (off: the rule stays the rule)
     roll: bool = True            # fix the rotation about the attachment axis
+    spacing: float = 100.0       # how far apart the attachment sites are placed, in angstrom
 
 
 def canonical(frag: Chem.Mol) -> Chem.Mol:
@@ -262,7 +263,7 @@ def series_labels(mols: Sequence[Chem.Mol], core: Chem.Mol) -> List[int]:
 # Fields
 # --------------------------------------------------------------------------- #
 
-#: how far apart the attachment points are placed, in angstrom.  Each substituent keeps its own
+#: default distance between attachment sites, in angstrom.  Each substituent keeps its own
 #: topomer frame, and the frames are set so far from one another that no Gaussian of one reaches
 #: the other: the overlap integral of two molecules is then the sum of the overlaps of their
 #: substituents, attachment point by attachment point, which is what topomer CoMFA gets by
@@ -293,7 +294,7 @@ def topomer_molecule(mol: Chem.Mol, core: Chem.Mol, labels: Sequence[int],
             cache[key] = posed
         here = Chem.Mol(posed)
         conf = here.GetConformer()
-        shift = SITE_SPACING * float(list(labels).index(label))
+        shift = float(spec.spacing) * float(list(labels).index(label))
         for i in range(here.GetNumAtoms()):
             p = conf.GetAtomPosition(i)
             conf.SetAtomPosition(i, [p.x + shift, p.y, p.z])

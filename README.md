@@ -563,6 +563,16 @@ that it matches molecules whose hydrogen counts differ. Substituents that attach
 such as a fused biphenyl bridge, are reported and skipped: the construction is defined for one
 open valence.
 
+In the application it is *Tools → Replace molecules by their topomer substituents…*, and it is a
+**transformation of the data set** rather than a switch: the molecules are replaced by their
+posed substituents, keeping names, activities and the train/test split, and the data-set line
+says *[topomer substituents of …]* so the change is never silent. That is the honest shape for
+it, because a topomer model's co-field, contributions and Shapley values live in the substituent
+frames and not around the original ligands — a hidden switch would produce maps that cannot be
+drawn next to anything. The sites stand 100 Å apart by default, adjustable in the dialog, and the
+view opens on the first of them, since the whole row at once is a line of specks. Reloading the
+file brings the molecules back.
+
 ### Property fields against indicator fields
 
 Three of the five physico-chemical fields are not read off the molecule but fitted: the
