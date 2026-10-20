@@ -8,6 +8,8 @@ venv/
 
 # published articles: the publisher versions are not ours to redistribute
 *.pdf
+# ...but the manual is ours, and is meant to be shipped with the program
+!docs/CMF_manual.pdf
 
 # saved models, predictions and run logs
 *.cmf
