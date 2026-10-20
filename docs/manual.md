@@ -1088,33 +1088,84 @@ match the published numbers exactly and should not be used for new work.
 | Gaussian cube | the export format for co-fields, molecular fields, Shapley fields and difference maps |
 | `REMARK 400` in a pocket PDB | the provenance of a trimmed binding site |
 
-# Appendix C — The papers
+# Appendix C — Bibliography
 
-**The method.** Zhokhova, Baskin, Bakhronov, Palyulin & Zefirov, *Method of continuous molecular
-fields in the search for quantitative structure–activity relationships*, Dokl. Chem. **429** (2009)
-273. · Baskin & Zhokhova, *The continuous molecular fields approach to building 3D-QSAR models*,
-J. Comput.-Aided Mol. Des. **27** (2013) 427. · Baskin & Zhokhova, in *Application of Computational
-Techniques in Pharmacy and Medicine*, Springer (2014) 433. · Sitnikov, Zhokhova, Ustynyuk, Varnek &
-Baskin, *Continuous indicator fields: a novel universal type of molecular fields*, J. Comput.-Aided
-Mol. Des. **29** (2015) 233. · Baskin & Zhokhova, *Descriptors based on continuous indicator fields
-for 3D-QSAR studies*, MOL2NET (2017). · Baskin & Zhokhova, *Continuous molecular fields and the
-concept of molecular co-fields in structure–activity studies*, Future Med. Chem. **11** (2019) 2701.
+References are grouped by what they are to this program: the papers that define the method it
+implements, those that apply it to one-class classification and virtual screening, and the work it
+borrows machinery or benchmark data from. Journal names follow the ACS abbreviations; a DOI is
+given wherever the work has one.
 
-**One-class classification and virtual screening.** Karpov, Baskin, Zhokhova & Zefirov, *Method of
-continuous molecular fields in the one-class classification task*, Dokl. Chem. **440** (2011) 263. ·
-Karpov, Baskin, Zhokhova, Nawrozkij, Zefirov, Yablokov, Novakov & Zefirov, *One-class approach:
-models for virtual screening of non-nucleoside HIV-1 reverse transcriptase inhibitors based on the
-concept of continuous molecular fields*, Russ. Chem. Bull. **60** (2011) 2418.
+## The method
 
-**Methods the program borrows.** Cramer, Patterson & Bunce, *Comparative molecular field analysis
-(CoMFA)*, J. Am. Chem. Soc. **110** (1988) 5959. · Cramer, *Topomer CoMFA*, J. Med. Chem. **46**
-(2003) 374. · Bemis & Murcko, *The properties of known drugs: molecular frameworks*, J. Med. Chem.
-**39** (1996) 2887. · Hopfinger, Wang, Tokarski, Jin, Albuquerque, Madhav & Duraiswami, *4D-QSAR*,
-J. Am. Chem. Soc. **119** (1997) 10509. · Bishop, Svensén & Williams, *GTM: the generative
-topographic mapping*, Neural Comput. **10** (1998) 215. · Cho & Saul, *Kernel methods for deep
-learning*, NIPS (2009). · Rasmussen & Williams, *Gaussian Processes for Machine Learning*, MIT
-Press (2006). · Truchon & Bayly, *Evaluating virtual screening methods*, J. Chem. Inf. Model. **47**
-(2007) 488. · Sutherland, O'Brien & Weaver, *A comparison of methods for modeling quantitative
-structure–activity relationships*, J. Med. Chem. **47** (2004) 5541. · Mittal, McKinnon & Sorich,
-*Comparison data sets for benchmarking QSAR methodologies in lead optimization*, J. Chem. Inf.
-Model. **49** (2009) 1810.
+[1] Zhokhova, N. I.; Baskin, I. I.; Bakhronov, D. K.; Palyulin, V. A.; Zefirov, N. S. Method of
+continuous molecular fields in the search for quantitative structure–activity relationships.
+*Dokl. Chem.* **2009**, *429*, 273–276. doi:10.1134/S0012500809110056
+
+[2] Baskin, I. I.; Zhokhova, N. I. The continuous molecular fields approach to building 3D-QSAR
+models. *J. Comput.-Aided Mol. Des.* **2013**, *27*, 427–442. doi:10.1007/s10822-013-9656-4
+
+[3] Baskin, I. I.; Zhokhova, N. I. Continuous molecular fields approach applied to
+structure–activity modeling. In *Application of Computational Techniques in Pharmacy and
+Medicine*; Gorb, L., Kuz'min, V., Muratov, E., Eds.; Challenges and Advances in Computational
+Chemistry and Physics, Vol. 17; Springer: Dordrecht, 2014; pp 433–459.
+doi:10.1007/978-94-017-9257-8_13
+
+[4] Sitnikov, G. V.; Zhokhova, N. I.; Ustynyuk, Y. A.; Varnek, A.; Baskin, I. I. Continuous
+indicator fields: a novel universal type of molecular fields. *J. Comput.-Aided Mol. Des.*
+**2015**, *29*, 233–247. doi:10.1007/s10822-014-9818-z
+
+[5] Baskin, I. I.; Zhokhova, N. I. Descriptors based on continuous indicator fields for 3D-QSAR
+studies. In *Proceedings of MOL2NET 2016, International Conference on Multidisciplinary Sciences*,
+2nd ed.; MDPI: Basel, 2017. doi:10.3390/mol2net-02-03854
+
+[6] Baskin, I. I.; Zhokhova, N. I. Continuous molecular fields and the concept of molecular
+co-fields in structure–activity studies. *Future Med. Chem.* **2019**, *11*, 2701–2713.
+doi:10.4155/fmc-2018-0360
+
+## One-class classification and virtual screening
+
+[7] Karpov, P. V.; Baskin, I. I.; Zhokhova, N. I.; Zefirov, N. S. Method of continuous molecular
+fields in the one-class classification task. *Dokl. Chem.* **2011**, *440*, 263–265.
+doi:10.1134/S0012500811100016
+
+[8] Karpov, P. V.; Baskin, I. I.; Zhokhova, N. I.; Nawrozkij, M. B.; Zefirov, A. N.; Yablokov,
+A. S.; Novakov, I. A.; Zefirov, N. S. One-class approach: models for virtual screening of
+non-nucleoside HIV-1 reverse transcriptase inhibitors based on the concept of continuous molecular
+fields. *Russ. Chem. Bull.* **2011**, *60*, 2418–2424. doi:10.1007/s11172-011-0372-8
+
+## Methods and data the program borrows
+
+[9] Cramer, R. D.; Patterson, D. E.; Bunce, J. D. Comparative molecular field analysis (CoMFA).
+1. Effect of shape on binding of steroids to carrier proteins. *J. Am. Chem. Soc.* **1988**,
+*110*, 5959–5967. doi:10.1021/ja00226a005
+
+[10] Cramer, R. D. Topomer CoMFA: a design methodology for rapid lead optimization.
+*J. Med. Chem.* **2003**, *46*, 374–388. doi:10.1021/jm020194o
+
+[11] Bemis, G. W.; Murcko, M. A. The properties of known drugs. 1. Molecular frameworks.
+*J. Med. Chem.* **1996**, *39*, 2887–2893. doi:10.1021/jm9602928
+
+[12] Hopfinger, A. J.; Wang, S.; Tokarski, J. S.; Jin, B.; Albuquerque, M.; Madhav, P. J.;
+Duraiswami, C. Construction of 3D-QSAR models using the 4D-QSAR analysis formalism.
+*J. Am. Chem. Soc.* **1997**, *119*, 10509–10524. doi:10.1021/ja9718937
+
+[13] Bishop, C. M.; Svensén, M.; Williams, C. K. I. GTM: the generative topographic mapping.
+*Neural Comput.* **1998**, *10*, 215–234. doi:10.1162/089976698300017953
+
+[14] Cho, Y.; Saul, L. K. Kernel methods for deep learning. In *Advances in Neural Information
+Processing Systems 22 (NIPS 2009)*; Curran Associates: Red Hook, NY, 2009; pp 342–350.
+
+[15] Rasmussen, C. E.; Williams, C. K. I. *Gaussian Processes for Machine Learning*; MIT Press:
+Cambridge, MA, 2006. doi:10.7551/mitpress/3206.001.0001
+
+[16] Truchon, J.-F.; Bayly, C. I. Evaluating virtual screening methods: good and bad metrics for
+the "early recognition" problem. *J. Chem. Inf. Model.* **2007**, *47*, 488–508.
+doi:10.1021/ci600426e
+
+[17] Sutherland, J. J.; O'Brien, L. A.; Weaver, D. F. A comparison of methods for modeling
+quantitative structure–activity relationships. *J. Med. Chem.* **2004**, *47*, 5541–5554.
+doi:10.1021/jm0497141
+
+[18] Mittal, R. R.; McKinnon, R. A.; Sorich, M. J. Comparison data sets for benchmarking QSAR
+methodologies in lead optimization. *J. Chem. Inf. Model.* **2009**, *49*, 1810–1820.
+doi:10.1021/ci900117m

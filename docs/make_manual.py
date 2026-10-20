@@ -111,6 +111,9 @@ def styles(have_dejavu: bool):
         "toc0": ParagraphStyle("toc0", fontName=bold, fontSize=10.2, leading=16, textColor=INK),
         "toc1": ParagraphStyle("toc1", fontName=body, fontSize=9.3, leading=13.4,
                                leftIndent=14, textColor=INK),
+        "ref": ParagraphStyle("ref", parent=ss["BodyText"], fontName=body, fontSize=8.9,
+                              leading=12.4, textColor=INK, leftIndent=17, firstLineIndent=-17,
+                              spaceAfter=5.5, alignment=TA_JUSTIFY),
         "caption": ParagraphStyle("caption", parent=ss["BodyText"], fontName=italic,
                                   fontSize=8.6, leading=12, textColor=MUTED, alignment=TA_CENTER,
                                   spaceAfter=0),
@@ -143,6 +146,9 @@ def inline(text: str, mono: str) -> str:
     out = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", out)
     out = re.sub(r"(?<![\w*])\*([^*\n]+)\*(?![\w*])", r"<i>\1</i>", out)
     out = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<link href="\2" color="#1f4e79">\1</link>', out)
+    # a DOI is a reference the reader will want to follow, so make it one
+    out = re.sub(r"doi:(10\.\S+?)(?=[\s,;)]|$)",
+                 r'<link href="https://doi.org/\1" color="#1f4e79">doi:\1</link>', out)
     for key in order:
         out = out.replace(key, maths[key])
     return out
@@ -384,6 +390,17 @@ def parse(source: str, st, frame_width):
             story.append(PageBreak())
             i += 1
             continue
+        if re.match(r"^\[\d+\]\s", stripped):
+            # a bibliography entry: it runs until the next one or a blank line, and is set with a
+            # hanging indent so that the numbers line up down the margin
+            block = [stripped]
+            i += 1
+            while (i < len(lines) and lines[i].strip()
+                   and not re.match(r"^\[\d+\]\s", lines[i].strip())):
+                block.append(lines[i].strip())
+                i += 1
+            story.append(Paragraph(inline(" ".join(block), mono), st["ref"]))
+            continue
         m_img = re.match(r"^!\[([^\]]*)\]\(([^)]+)\)\s*$", stripped)
         if m_img:
             story.append(figure(m_img.group(2), m_img.group(1), st, frame_width))
@@ -475,7 +492,7 @@ def parse(source: str, st, frame_width):
             continue
         block = []
         while i < len(lines) and lines[i].strip() and not lines[i].strip().startswith(
-                ("#", "|", "```", ">", "- ", "* ", "---", "<!--", "$$", "![")) and \
+                ("#", "|", "```", ">", "- ", "* ", "---", "<!--", "$$", "![", "[")) and \
                 not re.match(r"^\d+\.\s+", lines[i].strip()):
             block.append(lines[i].strip())
             i += 1
