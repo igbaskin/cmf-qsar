@@ -16,33 +16,33 @@ those papers closely enough that their published statistics can be reproduced fr
 A molecule is represented not by a table of descriptors and not by values on a lattice, but by
 **continuous functions of space**. Each field is a sum of Gaussians centred on the atoms,
 
-```
-X_f(r) = Σ_l w_lf exp(−α_f |r − r_l|² / 2)
-```
+$$
+X_f(\mathbf{r}) = \sum_l w_{lf}\, \exp\!\left(-\frac{\alpha_f}{2}\,|\mathbf{r}-\mathbf{r}_l|^2\right)
+$$
 
-where `w_lf` is the weight of atom *l* in field *f* — its partial charge for the electrostatic
+where $w_{lf}$ is the weight of atom $l$ in field $f$ — its partial charge for the electrostatic
 field, its Crippen logP contribution for the hydrophobic field, 1 for an indicator field of a
-given atom type, or any number the file carries per atom — and `α_f` is the attenuation factor
+given atom type, or any number the file carries per atom — and $\alpha_f$ is the attenuation factor
 that sets how far the field reaches.
 
 Two molecules are compared by the **overlap integral** of their fields, which for Gaussians has a
 closed form:
 
-```
-K_f(A, B) = ∫ X_fA(r) X_fB(r) dr = (π/α)^{3/2} Σ_l Σ_m w_lf w_mf exp(−α |r_l − r_m|² / 4)
-```
+$$
+K_f(A,B) = \int X_{fA}(\mathbf{r})\, X_{fB}(\mathbf{r})\, d\mathbf{r} = \left(\frac{\pi}{\alpha}\right)^{3/2} \sum_l \sum_m w_{lf} w_{mf}\, \exp\!\left(-\frac{\alpha}{4}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
+$$
 
 No grid is ever evaluated for this: the kernel is a sum over atom pairs, computed exactly. The
-kernels of the individual fields are mixed with coefficients `h_f` into one kernel, and that
+kernels of the individual fields are mixed with coefficients $h_f$ into one kernel, and that
 kernel goes into a kernel method — ridge regression, a support vector machine, a Gaussian process.
 Three consequences follow, and they are what distinguishes the approach from CoMFA:
 
 - **Nothing is discretised.** There is no lattice spacing to choose, no alignment of grids, no
   variable selection among tens of thousands of columns, and no truncation at a cut-off distance.
 - **The model is a function of space again.** A kernel ridge model predicts
-  `y(X) = Σ_j a_j K(X, X_j) + b`, and because the kernel is an integral of a product, the whole
+  $y(X) = \sum_j a_j K(X, X_j) + b$, and because the kernel is an integral of a product, the whole
   sum can be rewritten as the overlap of the molecule's field with one function, the **co-field**
-  `C_f(r) = Σ_j a_j X_fj(r)`. The co-field is the program's map: it plays the role of CoMFA's
+  $C_f(\mathbf{r}) = \sum_j a_j X_{fj}(\mathbf{r})$. The co-field is the program's map: it plays the role of CoMFA's
   coefficient contour, but it is the model rather than a projection of it.
 - **The decomposition is exact.** Because the prediction is bilinear in the fields, it can be
   split without approximation into contributions of training molecules, of field types, of regions
@@ -258,8 +258,8 @@ The tools, in increasing order of sophistication:
 - *Tools → Align data set to reference…* — rigid superposition on the maximum common substructure
   with a reference molecule, optionally refined by maximising the CMF kernel similarity, which is
   the alignment criterion proposed in the 2013 paper.
-- *Tools → Align by prediction confidence…* — minimises the Gaussian-process posterior variance of
-  a molecule under an existing model, which moves it into the model's applicability domain. It uses
+- *Tools → Align by prediction confidence…* — minimises the Gaussian-process posterior variance
+  $\sigma^2(x) = K(x,x) - k(x)^T(K + \lambda I)^{-1}k(x)$ of a molecule under an existing model, which moves it into the model's applicability domain. It uses
   no activity value, so it is valid for prospective prediction. The program refuses to move
   training molecules, because the optimum there is degenerate: superimposing everything maximises
   mutual similarity and destroys the signal.
@@ -301,7 +301,8 @@ shows the whole route from an ORCA run to an SDF the program reads.
 
 The five physico-chemical fields — electrostatic, steric, hydrophobic, H-bond acceptor, H-bond
 donor — are the default and reproduce the published CMF models. The steric field is special: its
-width is scaled by the van der Waals radius of each atom (`α/R²_vdW`, Eq. 10–11 of the 2013 paper)
+width is scaled by the van der Waals radius of each atom ($\alpha/R^2_{vdW}$, Eq. 10–11 of the
+2013 paper)
 rather than being shared.
 
 **Continuous indicator fields** (CIF, 2015 paper) add one field per atom type, with weight 1 on
@@ -317,9 +318,9 @@ in `--fields`.
 
 ## Attenuation, regularisation and the grids
 
-Two hyper-parameters matter. **α** sets how far each field reaches: large α makes the fields
-sharp, so molecules must match closely, while small α makes them diffuse. **λ** (or *C*, *ε*, *ν*
-for the SVM learners) sets the regularisation. Both are chosen by cross-validated grid search, and
+Two hyper-parameters matter. $\alpha$ sets how far each field reaches: large $\alpha$ makes the
+fields sharp, so molecules must match closely, while small $\alpha$ makes them diffuse. $\lambda$
+(or $C$, $\epsilon$, $\nu$ for the SVM learners) sets the regularisation. Both are chosen by cross-validated grid search, and
 the whole grid is shown in the *Hyper-parameter search* tab — look at it, because an optimum at the
 edge of the grid means the grid was too small.
 
@@ -355,13 +356,14 @@ probabilities are honest and its evidence picks hyper-parameters without holding
 ## Nonlinear kernel layers and multiple kernel learning
 
 A layer on top of the CMF kernel makes the model more expressive than an overlap integral: a
-Gaussian layer, `exp(−γd²)` with `d² = K(i,i) + K(j,j) − 2K(i,j)`, or one or two arc-cosine layers,
+Gaussian layer, $\exp(-\gamma d^2)$ with $d^2 = K(i,i) + K(j,j) - 2K(i,j)$, or one or two
+arc-cosine layers,
 the kernel of an infinitely wide neural network (Cho & Saul 2009). The price is interpretation: the
 model is then no longer linear in the field, so co-fields and atom contributions are unavailable.
 The similarity decomposition stays valid, and the **Shapley tab** decomposes the prediction
 instead, which is why it exists.
 
-Multiple kernel learning chooses the mixing coefficients `h_f` rather than leaving them at 1,
+Multiple kernel learning chooses the mixing coefficients $h_f$ rather than leaving them at 1,
 either by coordinate descent on the cross-validated error or by centred kernel alignment
 (`--mkl align|alignf`), which is a closed-form, training-only criterion.
 
@@ -405,9 +407,9 @@ exactly. The 2019 paper states three decomposition rules, and the program implem
 
 The co-field is the model as a function of space:
 
-```
-C_f(r) = Σ_j a_j X_fj(r)
-```
+$$
+C_f(\mathbf{r}) = \sum_j a_j X_{fj}(\mathbf{r})
+$$
 
 a weighted sum of the training molecules' fields with the fitted dual coefficients as weights. The
 prediction of any molecule is then the overlap of its own field with the co-field, field type by
@@ -423,9 +425,9 @@ an atom of that type is welcome at that position.
 
 Two further maps use the same grid, for the molecule currently shown:
 
-- the **molecular field** `X_f(r)` of that molecule, in the same colours, drawn as a mesh by
+- the **molecular field** $X_f(\mathbf{r})$ of that molecule, in the same colours, drawn as a mesh by
   default so that it can be seen together with the co-field;
-- the **overlap** `C_f(r) X_f(r)`, whose integral *is* that field's contribution to the prediction
+- the **overlap** $C_f(\mathbf{r})\,X_f(\mathbf{r})$, whose integral *is* that field's contribution to the prediction
   (Eq. 7), so the map shows where the prediction comes from.
 
 *File → Export current co-field (Gaussian cube)* writes a cube file readable by PyMOL, VMD or
@@ -435,7 +437,7 @@ Jmol, which is the way to put a co-field into a publication figure.
 
 The *Contributions* tab answers two questions about the selected molecule:
 
-- **Which training molecules** make its prediction, as `a_j K(X, X_j)` — the similarity
+- **Which training molecules** make its prediction, as $a_j K(X, X_j)$ — the similarity
   decomposition, rule 2. A prediction resting on one or two training molecules is a warning.
 - **Which of its atoms**, as the atom contributions of Eq. 14 of the 2015 paper, drawn in the 3D
   view as red and blue spheres whose size is the magnitude. This is the most directly actionable
@@ -558,9 +560,9 @@ kernel is bilinear in the fields, so the mean field of an ensemble is itself a f
 are the atoms of every conformation with their weights multiplied by that conformation's weight —
 and the kernel of two ensembles comes out as
 
-```
-K(A, B) = Σ_k Σ_l w_k^A w_l^B K(X_A^(k), X_B^(l))
-```
+$$
+K(A,B) = \sum_k \sum_l w_k^A w_l^B\, K\!\left(X_A^{(k)}, X_B^{(l)}\right)
+$$
 
 the mean-map kernel of the two conformational distributions, positive definite by construction. A
 test checks that identity against the pairwise kernels of the conformations. The model stays linear
@@ -607,7 +609,7 @@ counts. An alignment that is not trustworthy is not merely imperfect, it is acti
 
 ## The pose-free count kernel
 
-As α → 0 an indicator field tends to the count of atoms of that type, so the kernel tends to the
+As $\alpha \to 0$ an indicator field tends to the count of atoms of that type, so the kernel tends to the
 dot product of the atom-type count vectors and nothing of the geometry survives. The program
 implements that limit in closed form (`chemotypes.count_kernel`), which is exact rather than
 approached, costs one pass over the atoms, and is 10 to 34 times faster than the Gaussian route. It
@@ -624,13 +626,13 @@ built from.
 Geometry without a frame. For each pair of field types the program computes the smoothed field
 autocorrelation
 
-```
-Φ_fg(d) = Σ_l Σ_m w_lf w_mg exp(−(|r_l − r_m| − d)² / 2σ²)
-```
+$$
+\Phi_{fg}(d) = \sum_l \sum_m w_{lf} w_{mg}\, \exp\!\left(-\frac{(|\mathbf{r}_l-\mathbf{r}_m| - d)^2}{2\sigma^2}\right)
+$$
 
-as a function of interatomic distance *d*, which is invariant under rotation and translation by
-construction, and takes the linear kernel on those channels. The d = 0 channel reproduces the CMF
-self-overlap exactly when σ² = 2/α, so the descriptor contains the ordinary kernel's diagonal
+as a function of interatomic distance $d$, which is invariant under rotation and translation by
+construction, and takes the linear kernel on those channels. The $d = 0$ channel reproduces the
+CMF self-overlap exactly when $\sigma^2 = 2/\alpha$, so the descriptor contains the ordinary kernel's diagonal
 information and adds the distance profile. Select *Autocorrelation* as the kernel source in the
 model panel (`--kernel autocorrelation`, with `--ac-sigma` and `--ac-dmax`), and the model fits,
 cross-validates, saves and predicts exactly as any other — only the co-field, which needs a frame,
@@ -654,7 +656,7 @@ coordinates are identical, not merely close.
 Two things make this fit CMF better than it fits CoMFA. There is no grid, so a fragment's field is
 just its atoms and a fragment–fragment kernel is an analytic number, which means the fragment
 library can be tabulated once and reused. And each attachment point keeps **its own region of
-space** (the substituent of position *k* is placed at *x* = 100 k Å, far enough that no Gaussian
+space** (the substituent of position $k$ is placed at $x = 100k$ Å, far enough that no Gaussian
 reaches the next site), so a molecule's kernel is exactly the sum of its per-position overlaps —
 which is what topomer CoMFA obtains by giving every position its own block of columns. A test
 checks that identity to 1e-9.
@@ -738,7 +740,7 @@ protein's, and the overlap of two Gaussian fields has the same closed form on ei
 *Complementarity* tab (CLI: `cmf_cli.py complement`) turns that into three answers:
 
 - **How complementary a molecule is to the pocket** — overlap integrals between ligand and pocket
-  fields, exact and without a grid, each divided by the two norms so that it is a cosine in [−1, 1]
+  fields, exact and without a grid, each divided by the two norms so that it is a cosine in $[-1, 1]$
   and does not grow with molecular size. Complementarity is not similarity: the electrostatic term
   carries a minus sign, because a positive ligand region should meet a negative protein region; the
   hydrophobic term carries a plus; the hydrogen-bond terms pair the donors of one side with the

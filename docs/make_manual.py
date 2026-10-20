@@ -122,12 +122,24 @@ def styles(have_dejavu: bool):
 
 def inline(text: str, mono: str) -> str:
     """Markdown inline markup to reportlab's mini-HTML, escaping what must be escaped."""
-    out = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    # maths first, so that its backslashes and braces never meet the escaping below
+    maths, order = {}, []
+
+    def stash(m):
+        key = f"\x00M{len(order)}\x00"
+        order.append(key)
+        maths[key] = inline_math(m.group(1), mono)
+        return key
+
+    out = re.sub(r"(?<!\\)\$([^$]+)\$", stash, text)
+    out = out.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     out = re.sub(r"`([^`]+)`",
                  lambda m: f'<font name="{mono}" size="8.6">{m.group(1)}</font>', out)
     out = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", out)
     out = re.sub(r"(?<![\w*])\*([^*\n]+)\*(?![\w*])", r"<i>\1</i>", out)
     out = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<link href="\2" color="#1f4e79">\1</link>', out)
+    for key in order:
+        out = out.replace(key, maths[key])
     return out
 
 
@@ -155,6 +167,141 @@ class Rule(Flowable):
 
 def split_row(line: str):
     return [c.strip() for c in line.strip().strip("|").split("|")]
+
+
+#: rendered equations, keyed by (latex, size); typesetting one costs about 40 ms
+_MATH_CACHE = {}
+
+
+#: LaTeX commands that inline maths may use, as the characters DejaVu actually carries
+GREEK = {
+    "alpha": "α", "beta": "β", "gamma": "γ", "delta": "δ", "epsilon": "ε", "lambda": "λ",
+    "mu": "μ", "nu": "ν", "pi": "π", "rho": "ρ", "sigma": "σ", "tau": "τ", "phi": "φ",
+    "chi": "χ", "psi": "ψ", "omega": "ω", "Sigma": "Σ", "Phi": "Φ", "Delta": "Δ",
+    "Omega": "Ω", "Lambda": "Λ",
+}
+SYMBOL = {
+    "sum": "Σ", "int": "∫", "infty": "∞", "to": "→", "approx": "≈", "neq": "≠", "le": "≤",
+    "ge": "≥", "times": "×", "cdot": "·", "pm": "±", "ldots": "…", "langle": "⟨",
+    "rangle": "⟩", "partial": "∂", "nabla": "∇", "in": "∈", "propto": "∝", "sqrt": "√",
+}
+#: upright in mathematics, however italic the surrounding letters are
+UPRIGHT = {"exp", "log", "ln", "max", "min", "arg", "det", "tr", "const"}
+
+
+def inline_math(expr: str, mono: str) -> str:
+    """A short formula as reportlab markup: italic variables, real sub- and superscripts.
+
+    Display equations go through matplotlib, but a symbol sitting inside a sentence has to share
+    the paragraph's baseline and line breaking, which an image cannot do.  This covers what such
+    symbols need -- Greek letters, indices, powers, upright function names -- and anything more
+    elaborate belongs on a line of its own anyway.
+    """
+    out, i, n = [], 0, len(expr)
+
+    def emit_group(text):
+        return inline_math(text, mono)
+
+    while i < n:
+        ch = expr[i]
+        if ch == "\\":
+            m = re.match(r"\\([A-Za-z]+)", expr[i:])
+            if m:
+                name = m.group(1)
+                i += len(m.group(0))
+                if name == "mathbf":
+                    m2 = re.match(r"\s*\{([^}]*)\}", expr[i:])
+                    if m2:
+                        out.append(f"<b>{m2.group(1)}</b>")
+                        i += len(m2.group(0))
+                    continue
+                if name in ("text", "mathrm", "operatorname"):
+                    m2 = re.match(r"\s*\{([^}]*)\}", expr[i:])
+                    if m2:
+                        out.append(m2.group(1))
+                        i += len(m2.group(0))
+                    continue
+                out.append(GREEK.get(name, SYMBOL.get(name, name)))
+                continue
+            if expr[i:i + 2] in ("\\,", "\\;", "\\!", "\\ "):
+                out.append("" if expr[i + 1] == "!" else " ")
+                i += 2
+                continue
+            i += 1
+            continue
+        if ch in "_^":
+            tag = "sub" if ch == "_" else "super"
+            i += 1
+            m = re.match(r"\{([^}]*)\}", expr[i:])
+            if m:
+                body, i = m.group(1), i + len(m.group(0))
+            else:
+                body, i = expr[i:i + 1], i + 1
+            out.append(f"<{tag}>{emit_group(body)}</{tag}>")
+            continue
+        m = re.match(r"[A-Za-z]+", expr[i:])
+        if m:
+            word = m.group(0)
+            i += len(word)
+            out.append(word if word in UPRIGHT else
+                       "".join(f"<i>{c}</i>" if c.isalpha() else c for c in word))
+            continue
+        # a proper minus sign, not the hyphen the keyboard offers
+        out.append({"-": "−", "&": "&amp;", "<": "&lt;", ">": "&gt;"}.get(ch, ch))
+        i += 1
+    return "".join(out)
+
+
+def math_drawing(latex: str, fontsize: float = 13.0, colour: str = "#1a1a1a"):
+    """One display equation as a vector drawing, or None if it cannot be typeset.
+
+    matplotlib's mathtext understands enough LaTeX for everything in this manual and needs no TeX
+    installation; the formula is written to SVG with the glyphs converted to paths, so the result
+    carries no font dependency, and svglib turns that into reportlab's own vector primitives.
+    Nothing is rasterised anywhere along the way.
+    """
+    key = (latex, fontsize, colour)
+    if key in _MATH_CACHE:
+        return _MATH_CACHE[key]
+    try:
+        import io
+        import matplotlib
+        matplotlib.use("Agg")
+        matplotlib.rcParams["mathtext.fontset"] = "stix"
+        matplotlib.rcParams["mathtext.default"] = "it"
+        matplotlib.rcParams["svg.fonttype"] = "path"
+        from matplotlib.figure import Figure
+        from svglib.svglib import svg2rlg
+    except Exception as exc:                      # noqa: BLE001 - fall back to the plain text
+        print(f"[warn] equations stay unformatted ({exc})", file=sys.stderr)
+        _MATH_CACHE[key] = None
+        return None
+    try:
+        fig = Figure(figsize=(0.01, 0.01))
+        fig.text(0, 0, f"${latex}$", fontsize=fontsize, color=colour)
+        buf = io.BytesIO()
+        fig.savefig(buf, format="svg", bbox_inches="tight", pad_inches=0.012, transparent=True)
+        buf.seek(0)
+        drawing = svg2rlg(buf)
+    except Exception as exc:                      # noqa: BLE001 - one bad formula, not the book
+        print(f"[warn] cannot typeset {latex[:40]!r}: {exc}", file=sys.stderr)
+        drawing = None
+    _MATH_CACHE[key] = drawing
+    return drawing
+
+
+def math_block(lines, st, frame_width):
+    """A display equation, centred, with the source kept as a fallback."""
+    latex = " ".join(l.strip() for l in lines if l.strip())
+    drawing = math_drawing(latex)
+    if drawing is None:
+        return code_block(lines, st, frame_width)
+    if drawing.width > frame_width:               # a long equation is scaled, never clipped
+        scale = frame_width / drawing.width
+        drawing.scale(scale, scale)
+        drawing.width, drawing.height = frame_width, drawing.height * scale
+    drawing.hAlign = "CENTER"
+    return KeepTogether([Spacer(1, 5), drawing, Spacer(1, 9)])
 
 
 def make_table(rows, st, frame_width):
@@ -211,6 +358,18 @@ def parse(source: str, st, frame_width):
         if stripped == "<!-- pagebreak -->":
             story.append(PageBreak())
             i += 1
+            continue
+        if stripped.startswith("$$"):
+            if stripped.endswith("$$") and len(stripped) > 4:      # a one-line equation
+                story.append(math_block([stripped[2:-2]], st, frame_width))
+                i += 1
+                continue
+            j, block = i + 1, []
+            while j < len(lines) and not lines[j].strip().startswith("$$"):
+                block.append(lines[j])
+                j += 1
+            story.append(math_block(block, st, frame_width))
+            i = j + 1
             continue
         if stripped.startswith("```"):
             j = i + 1
@@ -286,7 +445,7 @@ def parse(source: str, st, frame_width):
             continue
         block = []
         while i < len(lines) and lines[i].strip() and not lines[i].strip().startswith(
-                ("#", "|", "```", ">", "- ", "* ", "---", "<!--")) and \
+                ("#", "|", "```", ">", "- ", "* ", "---", "<!--", "$$")) and \
                 not re.match(r"^\d+\.\s+", lines[i].strip()):
             block.append(lines[i].strip())
             i += 1
