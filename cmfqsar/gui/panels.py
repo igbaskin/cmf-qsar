@@ -48,7 +48,10 @@ def _float_list(text: str, default: List[float]) -> List[float]:
 # --------------------------------------------------------------------------- #
 
 class DatasetPanel(QWidget):
-    COLS = ["Show", "Name", "Activity", "Set", "Pred (fit)", "Pred (CV)", "Pred (test)"]
+    #: the last column holds the applicability-domain similarity, which is filled only when
+    #: the domain was asked for; like the prediction columns it sorts and blanks sink
+    COLS = ["Show", "Name", "Activity", "Set", "Pred (fit)", "Pred (CV)", "Pred (test)",
+            "AD"]
     selection_changed = Signal(int)          # current row (molecule index) or -1
     show_changed = Signal()                  # "show" checkboxes toggled
     subset_changed = Signal()
@@ -737,11 +740,19 @@ class ModelPanel(QWidget):
         self.spin_scramble.setToolTip("\n".join([
             "y-randomisation: refit the model on this many shuffles of the activities and",
             "report where the real q2 falls among them. 0 = off; 20 is enough to recognise a",
-            "chance model, 100 gives a p-value worth quoting. The hyper-parameters are kept,",
-            "so it asks whether the fit can be reached by chance, not whether the whole",
-            "search can."]))
+            "chance model, 100 gives a p-value worth quoting. Unless the box beside it is",
+            "ticked the hyper-parameters are kept, so it asks whether the fit can be reached",
+            "by chance, not whether the whole search can."]))
         vrow.addWidget(QLabel("shuffles"))
         vrow.addWidget(self.spin_scramble)
+        self.chk_scramble_select = QCheckBox("redo the search")
+        self.chk_scramble_select.setToolTip("\n".join([
+            "Repeat the whole alpha/lambda search inside every shuffle, so that the test covers",
+            "the model selection as well as the fit. This is the stricter and more honest",
+            "question, and it raises the scrambled baseline noticeably, because a search over a",
+            "grid can pick the luckiest point on noise. Costs one cross-validation per grid",
+            "point per shuffle; the kernels are computed once."]))
+        vrow.addWidget(self.chk_scramble_select)
         self.spin_boot = QSpinBox()
         self.spin_boot.setRange(0, 10000)
         self.spin_boot.setSingleStep(100)

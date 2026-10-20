@@ -169,6 +169,57 @@ def topomer_pose(frag: Chem.Mol, spec: TopomerSpec = TopomerSpec()) -> Chem.Mol:
 # Cutting a series into a core and its substituents
 # --------------------------------------------------------------------------- #
 
+def framework_core(mols: Sequence[Chem.Mol], min_atoms: int = 3) -> Optional[Chem.Mol]:
+    """The scaffold to cut a topomer series from: the framework of its largest chemotype.
+
+    :func:`common_core` takes the maximum common substructure of everything handed to it, which is
+    the right answer for a congeneric series and the wrong one for anything else.  A data set that
+    mixes chemotypes has an MCS that is some small fragment -- ``CCO`` on the GPB set -- fused into
+    every ring system, so it cuts nothing off and the topomer route loses every molecule.  The
+    measurements in ``benchmarks/run_topomer.py`` are what made this the default.
+
+    What a topomer model actually needs is the scaffold of *one* series, so this takes the
+    Bemis-Murcko framework shared by the largest group of molecules.  Combine it with
+    :func:`series_indices`, which collects every molecule that framework comes cleanly off --
+    including molecules whose own framework is larger, because an extra ring on a substituent is
+    part of the R-group and not of the scaffold.
+    """
+    from .chemotypes import chemotype_labels      # local: chemotypes is the heavier module
+    good = [m for m in mols if m is not None]
+    if len(good) < 2:
+        return None
+    labels, scaffolds = chemotype_labels(good)
+    sizes = np.bincount(labels, minlength=len(scaffolds) + 1)
+    for g in np.argsort(-sizes):
+        smiles = scaffolds[g] if g < len(scaffolds) else ""
+        if not smiles or smiles == "(acyclic)":
+            continue                                # a chain is not a scaffold to cut from
+        core = Chem.MolFromSmiles(smiles)
+        if core is not None and core.GetNumAtoms() >= min_atoms:
+            return core
+    return None
+
+
+def series_indices(mols: Sequence[Chem.Mol], core: Chem.Mol) -> List[int]:
+    """Which molecules of a set this core can be cut off cleanly, i.e. which form the series."""
+    return [i for i, m in enumerate(mols) if m is not None and cuttable(m, core)]
+
+
+def choose_core(mols: Sequence[Chem.Mol], mode: str = "framework",
+                timeout: int = 20) -> Tuple[Optional[Chem.Mol], str]:
+    """(core, how it was found) for `mode` in {"framework", "mcs"}, with a fallback either way."""
+    if mode == "mcs":
+        core = common_core(mols, timeout=timeout)
+        if core is not None:
+            return core, "maximum common substructure"
+        core = framework_core(mols)
+        return core, "framework of the largest chemotype (no common substructure)"
+    core = framework_core(mols)
+    if core is not None:
+        return core, "framework of the largest chemotype"
+    core = common_core(mols, timeout=timeout)
+    return core, "maximum common substructure (no ring framework)"
+
 def common_core(mols: Sequence[Chem.Mol], timeout: int = 20,
                 threshold: float = 1.0) -> Optional[Chem.Mol]:
     """The maximum common substructure of a series, which is what the R-groups hang off."""

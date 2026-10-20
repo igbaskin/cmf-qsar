@@ -82,9 +82,34 @@ def _report_validation(args, model, ds, mf, tr, te, target):
     if args.y_scramble:
         print()
         print(f"y-randomisation: {args.y_scramble} shuffles of the activities ...")
-        res = scramble_kernel(K, y[tr], method=model.method, params=model.params,
-                              folds=args.folds, cv_seed=args.seed, runs=int(args.y_scramble),
-                              seed=args.seed)
+        if args.y_scramble_select:
+            # the strict form: every shuffle gets the whole search, so the test covers the
+            # selection and not only the fit. The kernels do not depend on the activities, so
+            # they are built once here and reused by every shuffle.
+            from cmfqsar.validation import scramble_selection
+            train = model.train
+            # the loop below walks the alpha grid, which moves the field set off the alpha the
+            # search chose; remember it and put it back afterwards, or everything downstream
+            # (the domain, the saved model, the predictions) would use the last grid point
+            chosen_alphas = [s.alpha for s in model.fieldset.specs]
+            grids, alphas = [], _floats(args.alphas)
+            for a in (alphas or [None]):
+                if a is not None:
+                    model.fieldset.set_alpha(a)
+                grids.append(model.training_kernel(train))
+            params = [{"lam": float(l)} for l in _floats(args.lams)] or [dict(model.params)]
+            print(f"  the search is repeated inside every shuffle: {len(grids)} alphas x "
+                  f"{len(params)} lambdas")
+            res = scramble_selection(grids, y[tr], method=model.method, param_grid=params,
+                                     folds=args.folds, cv_seed=args.seed,
+                                     runs=int(args.y_scramble), seed=args.seed)
+            for spec, a in zip(model.fieldset.specs, chosen_alphas):
+                spec.alpha = float(a)
+            model.training_kernel(train)        # back on the kernel the search chose
+        else:
+            res = scramble_kernel(K, y[tr], method=model.method, params=model.params,
+                                  folds=args.folds, cv_seed=args.seed,
+                                  runs=int(args.y_scramble), seed=args.seed)
         print("  " + res.describe())
         note = res.caution()
         if note:
@@ -439,7 +464,15 @@ def cmd_build(args):
         ycv = np.full(len(ds), np.nan)
         if "y_cv" in model.stats.extra:
             ycv[tr] = model.stats.extra["y_cv"]
-        write_predictions_csv(args.predictions, ds.names, ds.activity, yp, ds.subset, y_cv=ycv)
+        dom = model.stats.extra.get("domain")
+        ad = None
+        if dom:
+            # carry the domain into the file, so that an extrapolation stays marked as one
+            by_name = dict(zip(dom["names"], dom["similarity"]))
+            ad = np.array([by_name.get(nm, np.nan) for nm in ds.names], dtype=float)
+        write_predictions_csv(args.predictions, ds.names, ds.activity, yp, ds.subset, y_cv=ycv,
+                              domain=ad,
+                              domain_threshold=dom["threshold"] if dom else None)
         print(f"Predictions written to {args.predictions}")
     if args.json:
         st = model.stats
@@ -811,7 +844,7 @@ def cmd_mil(args):
 def cmd_topomer(args):
     """Model a series by its substituents, each posed by rule instead of superimposed."""
     from rdkit import Chem
-    from cmfqsar.topomer import (TopomerSpec, common_core, cuttable_fraction, series_labels,
+    from cmfqsar.topomer import (TopomerSpec, choose_core, cuttable_fraction, series_labels,
                                  topomer_fields, unique_substituents)
     ds = load_dataset(args.dataset, activity_prop=args.activity,
                       activity_file=args.activity_file)
@@ -823,12 +856,14 @@ def cmd_topomer(args):
     core = Chem.MolFromSmiles(args.core) if args.core else None
     if core is None and args.core_smarts:
         core = Chem.MolFromSmarts(args.core_smarts)
-    core = core if core is not None else common_core(mols)
+    how = "given"
     if core is None:
-        raise SystemExit("no common substructure: give one with --core")
+        core, how = choose_core(mols, mode=args.core_mode)
+    if core is None:
+        raise SystemExit("no scaffold found: give one with --core or --core-smarts")
     labels = series_labels(mols, core)
     print(f"Loaded {len(mols)} molecules with activities from {args.dataset}")
-    print(f"  core {Chem.MolToSmiles(core)}  ({len(labels)} attachment points, "
+    print(f"  core {Chem.MolToSmiles(core)} ({how})  ({len(labels)} attachment points, "
           f"{len(unique_substituents(mols, core))} distinct substituents)")
     print(f"  the core comes off cleanly in {cuttable_fraction(mols, core):.0%} of them")
     physchem, atom_props = _split_fields(args.fields)
@@ -1271,6 +1306,12 @@ def main(argv=None):
                    help="y-randomisation: refit the model on N shuffles of the activities and "
                         "report where the real q2 falls among them. 20 is enough to see a "
                         "chance model, 100 for a p-value worth quoting")
+    b.add_argument("--y-scramble-select", action="store_true",
+                   help="repeat the whole search inside every shuffle instead of keeping the "
+                        "chosen hyper-parameters, so that y-randomisation tests the procedure "
+                        "and not only the fit. One cross-validation per grid point per shuffle; "
+                        "the kernels are computed once because they do not depend on the "
+                        "activities")
     b.add_argument("--bootstrap", type=int, default=0, metavar="N",
                    help="percentile confidence intervals for q2 and R2pred from N bootstrap "
                         "resamples of the (observed, predicted) pairs")
@@ -1525,6 +1566,12 @@ def main(argv=None):
                     help="the scaffold to cut the substituents from; without it the maximum "
                          "common substructure of the series is used")
     tp.add_argument("--core-smarts", default=None, metavar="SMARTS")
+    tp.add_argument("--core-mode", default="framework", choices=["framework", "mcs"],
+                    help="how to find the core when none is given: 'framework' (the default) "
+                         "takes the Bemis-Murcko framework of the largest chemotype, which is "
+                         "the scaffold of one series; 'mcs' takes the maximum common "
+                         "substructure of everything, which suits a congeneric set and fails on "
+                         "a mixture of chemotypes - on GPB it is CCO and cuts nothing off")
     tp.add_argument("--torsion", type=float, default=180.0,
                     help="the angle every rotatable torsion is set to (Cramer's anti rule)")
     tp.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")

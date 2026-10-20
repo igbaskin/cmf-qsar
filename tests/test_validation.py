@@ -124,3 +124,19 @@ def test_caution_does_not_cry_chance_when_there_were_too_few_shuffles():
     noise = np.random.RandomState(3).randn(len(y))
     bad = scramble_kernel(K, noise, params={"lam": 0.1}, folds=5, runs=25)
     assert bad.caution().startswith("WARNING")
+
+
+def test_scramble_with_the_search_redone_raises_the_scrambled_baseline():
+    """Letting the search pick the best of several kernels flatters noise, which is the point."""
+    from cmfqsar.validation import scramble_selection
+    rng = np.random.RandomState(0)
+    X = rng.randn(40, 3)
+    kernels = [X @ X.T + c * np.eye(40) for c in (0.01, 0.1, 1.0)]
+    y = 2.0 * X[:, 0] + 0.3 * rng.randn(40)
+    strict = scramble_selection(kernels, y, param_grid=[{"lam": 0.01}, {"lam": 0.1}, {"lam": 1.0}],
+                                folds=5, runs=15, seed=0)
+    fixed = scramble_kernel(kernels[1], y, params={"lam": 0.1}, folds=5, runs=15, seed=0)
+    assert strict.reselected and not fixed.reselected
+    assert "redone" in strict.describe()
+    assert strict.mean >= fixed.mean - 1e-9, "a search over a grid cannot do worse on noise"
+    assert strict.observed >= fixed.observed - 1e-9

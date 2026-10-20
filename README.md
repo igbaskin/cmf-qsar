@@ -660,8 +660,13 @@ python cmf_cli.py topomer examples/benzamides_synthetic.sdf --activity pActivity
 python benchmarks/run_topomer.py --sets BZR,COX2        # the comparison above, set by set
 ```
 
-Without `--core` the maximum common substructure is used, found on hydrogen-suppressed copies so
-that it matches molecules whose hydrogen counts differ. Substituents that attach at two points,
+Without `--core` the **Bemis-Murcko framework of the largest chemotype** is used (the first
+entry of the dialog's *Core* list, `--core-mode framework`): that is the scaffold of one
+series, and the series is every molecule it comes cleanly off. The maximum common
+substructure is still there for a set known to be congeneric (`--core-mode mcs`), found on
+hydrogen-suppressed copies so that it matches molecules whose hydrogen counts differ - but on
+a mixture of chemotypes it is a fragment fused into every ring system: `CCO` on GPB, which
+cuts nothing off any of the 66 molecules, where the framework keeps 60 of them. Substituents that attach at two points,
 such as a fused biphenyl bridge, are reported and skipped: the construction is defined for one
 open valence.
 
@@ -1173,8 +1178,9 @@ whatever the model is worth; rather than printing a chance-correlation warning t
 support, the program says *"no shuffle came close, but 10 of them cannot support a p below
 0.091"* and names the number of shuffles that would. And the hyper-parameters are held fixed while
 the activities are shuffled, so the test asks whether the *fit* can be reached by chance; the
-stricter question needs the grid search repeated inside every shuffle, which `y_scramble` supports
-by taking any scoring function.
+stricter question is one tick away (*redo the search*, `--y-scramble-select`), and it matters:
+on the steroid set with a 3 x 3 grid the best scrambled q2 rises from -0.08 to **+0.32** once the
+search may pick the luckiest grid point on noise, against +0.78 for the real activities.
 
 **The applicability domain** (`--domain`) measures each non-training molecule's similarity to the
 training set in the model's own kernel, averaged over the three nearest training molecules, and
@@ -1185,6 +1191,10 @@ diverse set a loose one. On the steroid benchmark nine of the ten test compounds
 all 20 molecules of the training chemotype are inside and 29 of 40 from other chemotypes are
 outside. The field-space distance is reported beside the similarity, since a scaled-up analogue
 points the same way but sits far off.
+
+The similarity also fills an **AD** column in the data-set table, which sorts like any other, and
+the exported predictions carry it with a yes/no verdict, so an extrapolation stays marked after
+it leaves the program.
 
 **Bootstrap intervals** (`--bootstrap N`) resample the (observed, predicted) pairs and give a
 percentile interval for q² and R²pred — the uncertainty of the statistic given these predictions,

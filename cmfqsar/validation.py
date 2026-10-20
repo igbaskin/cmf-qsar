@@ -329,3 +329,35 @@ def bootstrap_refit(K: np.ndarray, y: Sequence[float], method: str = "krr",
     lo, hi = _interval(arr, level)
     return BootstrapResult(statistic="q2 (out of bag)", value=float(np.mean(arr)), lo=lo, hi=hi,
                            level=level, runs=len(arr), refit=True, samples=arr)
+
+
+def scramble_selection(kernels: Sequence, y: Sequence[float], method: str = "krr",
+                       param_grid: Sequence[Dict[str, float]] = ({"lam": 1.0},),
+                       folds: int = 10, cv_seed: Optional[int] = 0, runs: int = 20,
+                       seed: int = 0, progress: Optional[ProgressFn] = None,
+                       cancel: Optional[CancelFn] = None) -> ScrambleResult:
+    """y-randomisation with the model selection repeated inside every shuffle.
+
+    `kernels` is a sequence of precomputed joint kernels -- one per attenuation, say -- and
+    `param_grid` the regularisations tried with each.  Every shuffle is scored by the *best* q2
+    over that grid, exactly as the real activities were, so the test asks whether the whole
+    procedure can reach the reported number by chance rather than whether a single fit can.  That
+    is the stricter and more honest question; it costs one cross-validation per grid point per
+    shuffle, which is affordable only because the kernels do not depend on the activities and are
+    therefore computed once.
+    """
+    mats = [np.asarray(K, float) for K in kernels]
+    grid = [dict(p) for p in param_grid] or [{"lam": 1.0}]
+
+    def score(yy: np.ndarray) -> float:
+        best = -np.inf
+        for K in mats:
+            for params in grid:
+                pred = cv_predict(K, yy, method, params, folds=folds, seed=cv_seed)
+                best = max(best, r2_score(yy, pred))
+        return float(best)
+
+    res = y_scramble(score, y, runs=runs, seed=seed,
+                     statistic=f"best q2 over the grid ({folds}-fold)", reselected=True,
+                     progress=progress, cancel=cancel)
+    return res

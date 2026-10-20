@@ -132,3 +132,30 @@ def test_the_sites_can_be_brought_closer_together():
     assert xf[:, 0].max() - xn[:, 0].max() == pytest.approx(SITE_SPACING - 25.0, abs=1e-6)
     assert np.allclose(xf[:, 1:], xn[:, 1:])            # and nothing else moves
     assert TopomerSpec().spacing == SITE_SPACING
+
+
+def test_framework_core_finds_a_scaffold_where_the_mcs_finds_a_fragment():
+    """The measured failure that made the framework the default: GPB's MCS cuts nothing off."""
+    import os
+    from rdkit import Chem
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.topomer import choose_core, common_core, framework_core, series_indices
+
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "examples", "sutherland", "GPB.sdf")
+    if not os.path.exists(path):
+        import pytest
+        pytest.skip("the Sutherland examples are not present")
+    mols = load_dataset(path).mols
+    mcs = common_core(mols)
+    assert mcs is not None and len(series_indices(mols, mcs)) == 0
+
+    core = framework_core(mols)
+    assert core is not None
+    assert Chem.MolToSmiles(core) == "C1CCOCC1"
+    assert len(series_indices(mols, core)) > 50
+
+    chosen, how = choose_core(mols)
+    assert Chem.MolToSmiles(chosen) == "C1CCOCC1" and "framework" in how
+    chosen_mcs, how_mcs = choose_core(mols, mode="mcs")
+    assert Chem.MolToSmiles(chosen_mcs) == Chem.MolToSmiles(mcs) and "common substructure" in how_mcs

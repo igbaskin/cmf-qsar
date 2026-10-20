@@ -49,7 +49,7 @@ from cmfqsar.chemotypes import chemotype_labels, count_kernel  # noqa: E402
 from cmfqsar.dataio import load_dataset  # noqa: E402
 from cmfqsar.fields import FieldSet, build_fields  # noqa: E402
 from cmfqsar.model import AtomTable, CMFModel, cv_predict, r2_score, rmse  # noqa: E402
-from cmfqsar.topomer import (TopomerSpec, attachment_label, cuttable,  # noqa: E402
+from cmfqsar.topomer import (TopomerSpec, attachment_label, cuttable, framework_core,  # noqa: E402
                              series_labels, substituents, topomer_fields, unique_substituents)
 
 RESULTS = os.path.join(HERE, "results", "topomer")
@@ -117,22 +117,21 @@ def posed_as_found(mol, core, labels, spacing=100.0):
 def pick_core(mols):
     """The scaffold a topomer model is built on: the framework of the largest ring chemotype.
 
-    Taking the maximum common substructure of a whole Sutherland set gives nothing usable -- the
-    sets are chemotype mixtures, and the MCS of all of them is a fragment like ``CCO`` that is
-    fused to every ring system and cuts off nothing.  A topomer model is a congeneric-series
-    method, so the series has to be picked out first: the Bemis-Murcko framework shared by the
-    largest group of molecules is the scaffold, and the series is every molecule of the set that
-    framework can be cut off cleanly, at acyclic single bonds (so a molecule carrying an extra
-    ring on a substituent joins the series, with that ring inside the R-group where it belongs).
+    This lives in the library now (:func:`cmfqsar.topomer.framework_core`, reached through
+    ``choose_core``), because the measurement below is what made it the program's default: the
+    maximum common substructure of a whole Sutherland set is a fragment like ``CCO`` that is fused
+    into every ring system and cuts nothing off.  The size of the group is reported here as well,
+    which the library has no use for.
     """
+    from cmfqsar.chemotypes import chemotype_labels
+    core = framework_core(mols)
+    if core is None:
+        return None, "", 0
+    smiles = Chem.MolToSmiles(core)
     labels, scaffolds = chemotype_labels(mols)
-    sizes = [int((labels == g).sum()) for g in range(int(labels.max()) + 1)]
-    for g in np.argsort([-s for s in sizes]):
-        smi = scaffolds[g] if g < len(scaffolds) else ""
-        core = Chem.MolFromSmiles(smi) if smi and smi != "(acyclic)" else None
-        if core is not None and core.GetNumAtoms() > 2:
-            return core, smi, sizes[g]
-    return None, "", 0
+    group = max((int((labels == g).sum()) for g, s in enumerate(scaffolds) if s == smiles),
+                default=0)
+    return core, smiles, group
 
 
 def run_set(name, force=False, data=DATA, results=RESULTS):

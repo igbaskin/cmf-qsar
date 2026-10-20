@@ -413,6 +413,7 @@ The table has one row per molecule and seven columns:
 | Pred (fit) | the model's prediction for the molecule it was fitted on |
 | Pred (CV) | its prediction when it was in the held-out fold |
 | Pred (test) | its prediction as a test molecule |
+| AD | its similarity to the training set, when the applicability domain was computed |
 
 An eighth column, **Chemotype**, appears once the chemotypes have been found. Rows are selected
 singly or in blocks, and the selection drives everything else: the co-field overlap, the atom
@@ -753,10 +754,13 @@ number mislead:
   "no shuffle came close, but 10 of them cannot support a p below 0.091" — instead of reporting a
   chance-correlation warning that the data do not support. Use 19 shuffles for p < 0.05 and 99
   for p < 0.01.
-- **The hyper-parameters are held fixed** while the activities are shuffled, so the test asks
-  whether the *fit* can be reached by chance. The stricter question — whether the whole procedure,
-  model selection included, can be — needs the grid search repeated inside every shuffle, which
-  the library supports (`y_scramble` takes any scoring function) at N times the cost.
+- **The hyper-parameters are held fixed** by default, so the test asks whether the *fit* can be
+  reached by chance. Tick **redo the search** beside the shuffles box (`--y-scramble-select`)
+  for the stricter question — whether the whole procedure, model selection included, can be.
+  It matters: on the steroid set with a 3 x 3 grid, the best scrambled q² rises from −0.08 to
+  **+0.32** once the search is allowed to pick the luckiest grid point on noise, while the real
+  value stays at +0.78. The kernels do not depend on the activities, so they are computed once
+  and the extra cost is one cross-validation per grid point per shuffle.
 
 ## Where does the model apply?
 
@@ -768,8 +772,10 @@ training set is to it, **in the kernel the model itself uses**: the cosine simil
 fields, averaged over the *k* nearest training molecules (3 by default). The threshold is not a
 number chosen out of the air — it is taken from the training set's own spread, the 5th percentile
 of the same quantity computed among the training molecules, so a series of close analogues gets a
-tight domain and a diverse set a loose one. Molecules below it are listed by name in the log, and
-their predictions should be read as extrapolations.
+tight domain and a diverse set a loose one. Molecules below it are listed by name in the log, their
+similarity appears in the data-set table's **AD** column — which sorts like any other, so the
+extrapolations can be brought to the top — and the exported predictions carry both the value and
+a yes/no verdict, so that an extrapolation stays marked after it leaves the program.
 
 On the steroid benchmark, nine of the ten test compounds fall inside and one — 4-pregnene-3,11,20-
 trione — falls outside. On BZR, training on the largest chemotype and scoring the others, every
@@ -1106,11 +1112,16 @@ substituents of …]*. That is the honest shape for it, because a topomer model'
 contributions live in the substituent frames and not around the original ligands. Reload the file
 to get the molecules back.
 
-**Choosing the core matters more than anything else.** The maximum common substructure of a
-chemotype mixture is not a scaffold — on one benchmark set it came out as `CCO`, fused into every
-ring system, and cut nothing off at all. Give the core yourself as SMILES or SMARTS when you know
-it, and check the cuttable fraction the program reports: a core fused to the rest of the molecule
-cannot be removed without opening a ring, and what is left is not a substituent.
+**Choosing the core matters more than anything else**, which is why the program now chooses it
+differently. The maximum common substructure of a chemotype mixture is not a scaffold — on GPB it
+comes out as `CCO`, fused into every ring system, and cuts nothing off at all, losing every
+molecule. The default is therefore the **Bemis–Murcko framework of the largest chemotype**, the
+scaffold of one series, with every molecule that framework comes cleanly off forming the series;
+on GPB that is `C1CCOCC1` and 60 of the 66 molecules. The common substructure is still available
+for a set you know is congeneric (*maximum common substructure of the series* in the dialog,
+`--core-mode mcs`), and you can always give the core yourself as SMILES or SMARTS. Check the
+cuttable fraction the program reports either way: a core fused to the rest of the molecule cannot
+be removed without opening a ring, and what is left is not a substituent.
 
 ## What the three routes are worth, measured
 

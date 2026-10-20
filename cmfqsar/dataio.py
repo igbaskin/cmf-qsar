@@ -568,6 +568,8 @@ def load_model(path: str):
 def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], yp: Sequence[float],
                           subset: Sequence[str], y_cv: Optional[Sequence[float]] = None,
                           var: Optional[Sequence[float]] = None, value_header: str = "predicted",
+                          domain: Optional[Sequence[float]] = None,
+                          domain_threshold: Optional[float] = None,
                           truth_header: str = "experimental") -> None:
     with open(path, "w", newline="") as fh:
         w = csv.writer(fh)
@@ -576,6 +578,10 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
             header.append("predicted_cv")
         if var is not None:
             header.append("gp_variance")
+        if domain is not None:
+            # the similarity itself and the verdict, so that an extrapolation stays marked
+            # after the predictions leave the program
+            header += ["ad_similarity", "in_domain"]
         w.writerow(header)
         for i, nm in enumerate(names):
             row = [nm, subset[i], "" if not np.isfinite(y[i]) else f"{y[i]:.4f}",
@@ -584,6 +590,11 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
                 row.append("" if y_cv[i] is None or not np.isfinite(y_cv[i]) else f"{y_cv[i]:.4f}")
             if var is not None:
                 row.append("" if var[i] is None or not np.isfinite(var[i]) else f"{var[i]:.4g}")
+            if domain is not None:
+                d = domain[i]
+                row.append("" if d is None or not np.isfinite(d) else f"{d:.4f}")
+                row.append("" if d is None or not np.isfinite(d) or domain_threshold is None
+                           else ("yes" if d >= domain_threshold else "no"))
             w.writerow(row)
 
 

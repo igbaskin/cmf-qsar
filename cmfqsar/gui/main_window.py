@@ -432,14 +432,23 @@ class TopomerDialog(QDialog):
         lay.addWidget(info)
         form = QFormLayout()
         self.cmb_core = QComboBox()
-        self.cmb_core.addItems(["maximum common substructure of the series", "this SMILES",
+        self.cmb_core.addItems(["framework of the largest chemotype",
+                                "maximum common substructure of the series", "this SMILES",
                                 "this SMARTS"])
+        self.cmb_core.setToolTip(
+            "<p>Which scaffold the substituents are cut from.</p>"
+            "<p>The framework of the largest chemotype is the scaffold of one series, and "
+            "is the default: the maximum common substructure of a set that mixes chemotypes "
+            "is a fragment fused into every ring system, and on the GPB set it is CCO, which "
+            "cuts nothing off any molecule.</p>"
+            "<p>Use the common substructure for a set you know is congeneric, and type the "
+            "core yourself when you know it.</p>")
         form.addRow("Core:", self.cmb_core)
         self.ed_core = QLineEdit("")
         self.ed_core.setPlaceholderText("c1ccccc1C(=O)N")
         self.ed_core.setEnabled(False)
         self.cmb_core.currentIndexChanged.connect(
-            lambda i: self.ed_core.setEnabled(i > 0))
+            lambda i: self.ed_core.setEnabled(i > 1))
         form.addRow("", self.ed_core)
         self.spin_torsion = QDoubleSpinBox()
         self.spin_torsion.setRange(-180.0, 180.0)
@@ -473,11 +482,12 @@ class TopomerDialog(QDialog):
         from rdkit import Chem
         text = self.ed_core.text().strip()
         mode = self.cmb_core.currentIndex()
-        if mode == 1 and text:
-            return Chem.MolFromSmiles(text), text
         if mode == 2 and text:
+            return Chem.MolFromSmiles(text), text
+        if mode == 3 and text:
             return Chem.MolFromSmarts(text), text
-        return None, "the maximum common substructure"
+        return None, ("the framework of the largest chemotype" if mode == 0
+                      else "the maximum common substructure")
 
 
 class FieldDifferenceDialog(QDialog):
@@ -810,7 +820,8 @@ class UnalignDialog(QDialog):
 
 
 def _run_validation(model, mf, tr, te, y_all, names, task_name, n_scramble, n_boot, want_domain,
-                    folds, seed, progress, cancel):
+                    folds, seed, progress, cancel, scramble_select=False, alphas=None,
+                    lams=None):
     """y-randomisation, bootstrap intervals and the applicability domain, if they were asked for.
 
     Runs inside the build worker, because all three are loops over fits and the window must stay
@@ -827,10 +838,28 @@ def _run_validation(model, mf, tr, te, y_all, names, task_name, n_scramble, n_bo
         progress("y-randomisation", 0.95)
         K = model.joint_kernel(model.K_fields_train) if model.uses_fields else \
             model.training_kernel(model.train)
-        res = scramble_kernel(K, y[tr], method=model.method, params=model.params, folds=folds,
-                              cv_seed=seed, runs=int(n_scramble), seed=seed,
-                              progress=lambda m_, f_: progress(m_, 0.95 + 0.02 * f_),
-                              cancel=cancel)
+        if scramble_select and alphas:
+            from ..validation import scramble_selection
+            # walking the alpha grid moves the field set off the alpha the search chose, so put
+            # it back before anything downstream uses the model again
+            chosen = [s.alpha for s in model.fieldset.specs]
+            grids = []
+            for a in alphas:
+                model.fieldset.set_alpha(a)
+                grids.append(model.training_kernel(model.train))
+            params = [{"lam": float(l)} for l in (lams or [])] or [dict(model.params)]
+            res = scramble_selection(grids, y[tr], method=model.method, param_grid=params,
+                                     folds=folds, cv_seed=seed, runs=int(n_scramble), seed=seed,
+                                     progress=lambda m_, f_: progress(m_, 0.95 + 0.02 * f_),
+                                     cancel=cancel)
+            for spec, a in zip(model.fieldset.specs, chosen):
+                spec.alpha = float(a)
+            model.training_kernel(model.train)
+        else:
+            res = scramble_kernel(K, y[tr], method=model.method, params=model.params, folds=folds,
+                                  cv_seed=seed, runs=int(n_scramble), seed=seed,
+                                  progress=lambda m_, f_: progress(m_, 0.95 + 0.02 * f_),
+                                  cancel=cancel)
         lines.append(res.describe())
         note = res.caution()
         if note:
@@ -1308,6 +1337,7 @@ class MainWindow(QMainWindow):
         folds, seed = mp.spin_folds.value(), mp.spin_seed.value()
         n_scramble, n_boot = mp.spin_scramble.value(), mp.spin_boot.value()
         want_domain = mp.chk_domain.isChecked()
+        scramble_select = mp.chk_scramble_select.isChecked()
         optimize_h = mp.cmb_mix.currentIndex() == 1
         mkl = mp.mkl_mode()
         layer, gammas = mp.kernel_layer(), mp.gammas()
@@ -1406,7 +1436,8 @@ class MainWindow(QMainWindow):
                     model.stats.extra["screening_scores"] = np.concatenate([s_act, d_scores])
             validation = _run_validation(model, mf, tr, te, y_all, names, task_name,
                                          n_scramble, n_boot, want_domain, folds, seed,
-                                         progress, cancel)
+                                         progress, cancel, scramble_select=scramble_select,
+                                         alphas=alphas, lams=lams)
             return {"model": model, "mf": mf, "res": res, "tr": tr, "te": te, "dec": dec,
                     "d_scores": d_scores, "target": y_all, "validation": validation}
 
@@ -1506,6 +1537,10 @@ class MainWindow(QMainWindow):
             dp.set_predictions(5, dict(zip(tr, st.extra["y_cv"])))
         if "y_test_pred" in st.extra and te:
             dp.set_predictions(6, dict(zip(te, st.extra["y_test_pred"])))
+        val = getattr(self, "validation", None)
+        dom = (val or {}).get("domain")
+        if dom:
+            dp.set_predictions(7, dict(zip(dom["index"], dom["similarity"])))
         if is_class:
             # one scatter of decision value against activity, coloured by the true class; it only
             # carries information when the classes came from a threshold on a continuous activity
@@ -2764,23 +2799,25 @@ class MainWindow(QMainWindow):
         if dlg.exec() != QDialog.Accepted:
             return
         core, core_text = dlg.core()
-        if core is None and dlg.cmb_core.currentIndex() > 0:
+        if core is None and dlg.cmb_core.currentIndex() > 1:
             QMessageBox.information(self, "Bad core", "That core could not be read as a molecule.")
             return
+        core_mode = "mcs" if dlg.cmb_core.currentIndex() == 1 else "framework"
         torsion = float(dlg.spin_torsion.value())
         spacing = float(dlg.spin_spacing.value())
         ds, mols, names = self.ds, list(self.ds.mols), list(self.ds.names)
 
         def task(progress, cancel):
             from rdkit import Chem
-            from ..topomer import (TopomerSpec, common_core, cuttable_fraction, series_labels,
+            from ..topomer import (TopomerSpec, choose_core, cuttable_fraction, series_labels,
                                    topomer_molecule, unique_substituents)
             use = core
             if use is None:
-                progress("Common substructure", 0.05)
-                use = common_core(mols)
+                progress("Looking for the core", 0.05)
+                use, how = choose_core(mols, mode=core_mode)
                 if use is None:
-                    raise ValueError("no common substructure: give a core yourself")
+                    raise ValueError("no scaffold found: give a core yourself")
+                progress(f"Core: {how}", 0.08)
             labels = series_labels(mols, use)
             if not labels:
                 raise ValueError("the core covers the whole series: nothing to cut off it")
