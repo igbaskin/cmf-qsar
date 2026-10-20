@@ -196,6 +196,9 @@ SYMBOL = {
     "ge": "≥", "times": "×", "cdot": "·", "pm": "±", "ldots": "…", "langle": "⟨",
     "rangle": "⟩", "partial": "∂", "nabla": "∇", "in": "∈", "propto": "∝", "sqrt": "√",
 }
+#: accents, as the combining marks that follow the letter they sit on
+MATH_ACCENT = {"hat": "̂", "bar": "̄", "tilde": "̃", "dot": "̇",
+               "vec": "⃗"}
 #: upright in mathematics, however italic the surrounding letters are
 UPRIGHT = {"exp", "log", "ln", "max", "min", "arg", "det", "tr", "const"}
 
@@ -224,6 +227,13 @@ def inline_math(expr: str, mono: str) -> str:
                     m2 = re.match(r"\s*\{([^}]*)\}", expr[i:])
                     if m2:
                         out.append(f"<b>{m2.group(1)}</b>")
+                        i += len(m2.group(0))
+                    continue
+                if name in MATH_ACCENT:
+                    m2 = re.match(r"\s*\{([^}]*)\}|\s*(\w)", expr[i:])
+                    if m2:
+                        body = m2.group(1) if m2.group(1) is not None else m2.group(2)
+                        out.append(emit_group(body) + MATH_ACCENT[name])
                         i += len(m2.group(0))
                     continue
                 if name in ("text", "mathrm", "operatorname"):

@@ -64,15 +64,267 @@ Three consequences follow, and they are what distinguishes the approach from CoM
 
 ## How this manual is arranged
 
-Chapters 2 and 3 get you running and name every part of the window. Chapters 4 to 6 are the
-working cycle: prepare the data, fit a model, read it. Chapters 7 to 10 are the specialised
-routes — screening, conformations, alignment-free modelling, protein pockets. Chapter 11 is the
-complete command-line reference, chapter 12 the library, chapter 13 the example data, and
-chapter 14 collects the things that go wrong. The appendices hold the field parameterisation, the file
+Chapter 2 follows one prediction from the atoms to the number, which is the method in full.
+Chapters 3 and 4 get you running and name every part of the window. Chapters 5 to 7 are the
+working cycle: prepare the data, fit a model, read it. Chapters 8 to 11 are the specialised
+routes — screening, conformations, alignment-free modelling, protein pockets. Chapter 12 is
+the complete command-line reference, chapter 13 the library, chapter 14 the example data, and
+chapter 15 collects the things that go wrong. The appendices hold the field parameterisation, the file
 conventions and the bibliography.
 
 Conventions: *Menu → Item* names a menu command, `monospace` names a file, an option or a piece of
 code. Equations are quoted in the notation of the papers, with their equation numbers.
+
+# How a prediction is made
+
+This chapter follows one number — the activity predicted for one molecule — from the atoms it
+starts in to the value that appears in the table. Nothing here is a sketch: every formula is the
+one the program evaluates, and the worked example at the end was computed by running it.
+
+The chain has six links:
+
+1. each molecule becomes a set of **fields**, one per field type, each a sum of Gaussians on its
+   atoms;
+2. every pair of molecules gets a **field kernel** per field type, the overlap integral of those
+   two fields, computed in closed form;
+3. each field kernel is **normalised** and **scaled**;
+4. the field kernels are **mixed** into one kernel matrix;
+5. the learner turns that matrix and the activities into **dual coefficients**;
+6. a new molecule is pushed through steps 1 to 4 against the training set, and its prediction is
+   the **weighted sum of its kernel values** with those coefficients.
+
+## 1. The fields
+
+Atom *l* of a molecule carries a weight $w_{lf}$ in field *f* — its partial charge in the
+electrostatic field, its Crippen logP contribution in the hydrophobic field, an Abraham-type
+increment in the hydrogen-bond fields, the Tripos van der Waals well depth in the steric field, 1
+in an indicator field for atoms of that type and 0 elsewhere, or a number read from the file in a
+`prop:` field. Appendix A lists them.
+
+The field itself is the sum of Gaussians those weights define,
+
+$$
+X_f(\mathbf{r}) = \sum_l w_{lf}\,\exp\!\left(-\frac{b_{lf}}{2}|\mathbf{r}-\mathbf{r}_l|^2\right)
+$$
+
+with width $b_{lf} = \alpha_f$ for every field except the steric one, where it is scaled by the
+atom's van der Waals radius, $b_{lf} = \alpha_f/R_{l}^2$, so that a large atom spreads its bulk
+over a correspondingly larger region.
+
+There is no grid. The field is never evaluated anywhere in order to make a prediction; it is
+evaluated only when a map has to be *drawn*.
+
+## 2. The overlap integral
+
+Two Gaussians have an overlap integral in closed form, so the inner product of two whole fields is
+a double sum over atom pairs:
+
+$$
+K_f(A,B) = \int X_{fA}(\mathbf{r})X_{fB}(\mathbf{r})\,d\mathbf{r} = \sum_{l \in A}\sum_{m \in B} w_{lf}w_{mf}\left(\frac{2\pi}{b_{lf}+b_{mf}}\right)^{3/2}\exp\!\left(-\frac{b_{lf}b_{mf}}{2(b_{lf}+b_{mf})}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
+$$
+
+When every atom shares one width, $b_{lf} = b_{mf} = \alpha$, this collapses to the form the
+papers quote,
+
+$$
+K_f(A,B) = \left(\frac{\pi}{\alpha}\right)^{3/2}\sum_l \sum_m w_{lf}w_{mf}\,\exp\!\left(-\frac{\alpha}{4}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
+$$
+
+and the general form is what the steric field needs, since its widths differ atom by atom. A unit
+test checks both against numerical quadrature of the fields on a fine grid.
+
+Two things follow immediately. The cost of a kernel is the number of atom pairs, not the number of
+grid points, which is why a 300-molecule set takes seconds. And the attenuation $\alpha$ is the
+only thing that decides how far apart two atoms may be and still contribute: large $\alpha$
+demands close matching, small $\alpha$ lets distant atoms see each other, and in the limit
+$\alpha \to 0$ the geometry drops out altogether and the kernel becomes a product of atom counts —
+which is the alignment-free baseline of *Working without an alignment*.
+
+## 3. Normalisation and scaling
+
+Two corrections stand between the raw integrals and a usable kernel, and they do different jobs.
+
+**Cosine normalisation** (*Normalise kernels*) divides each field kernel by the norms of the two
+fields,
+
+$$
+\hat{K}_f(A,B) = \frac{K_f(A,B)}{\sqrt{K_f(A,A)\,K_f(B,B)}}
+$$
+
+so that every molecule has unit self-similarity in every field and a large molecule cannot look
+important merely for being large. $\hat{K}_f(A,A) = 1$ by construction.
+
+**Field scaling** (*Scale fields*) then multiplies each field kernel by a constant $c_f$ chosen so
+that its mean diagonal over the training set is 1. It equalises the fields' contributions before
+they are mixed, which matters when one field's raw magnitudes dwarf another's — an electrostatic
+kernel built from partial charges and a steric kernel built from well depths are not naturally on
+the same scale. With cosine normalisation on, every diagonal is already 1 and $c_f = 1$; the two
+options are therefore alternatives in practice, and unticking both gives the raw-kernel convention
+of the papers.
+
+The scaling constants are computed **on the training set and then stored**: a prediction must not
+rescale anything according to the molecules being predicted, or two test molecules would be scored
+on different scales.
+
+## 4. Mixing the fields
+
+The joint kernel is a weighted sum over field types,
+
+$$
+K(A,B) = \sum_f h_f\,c_f\,\hat{K}_f(A,B)
+$$
+
+with the mixing coefficients $h_f$ left at 1 by default, edited by hand in the field table, chosen
+by coordinate descent on the cross-validated error, or set by centred kernel alignment. Since each
+normalised field kernel has unit diagonal, the joint self-kernel of any molecule is $\sum_f h_f
+c_f$ — five, for the five default fields with unit coefficients, which is the 5 on the diagonal of
+the matrix in the worked example below.
+
+## 5. Fitting: what the training set buys
+
+Kernel ridge regression with a bias term solves one linear system (Eq. 12 of the 2013 paper):
+
+$$
+(\mathbf{K} + \lambda\mathbf{I})\,\mathbf{a} + b\,\mathbf{1} = \mathbf{y}, \qquad \mathbf{1}^{T}\mathbf{a} = 0
+$$
+
+The outcome is one **dual coefficient** $a_j$ per training molecule and one bias $b$. The last row
+of the system is the constraint $\sum_j a_j = 0$, which is what makes the bias meaningful: the
+coefficients describe only *departures* from a constant level, and $b$ carries the level itself.
+The ridge parameter $\lambda$ adds to the diagonal, which keeps the system solvable when molecules
+are nearly identical — as they are in a congeneric series, where the off-diagonal kernel values
+run above 0.97 — and controls how hard the model chases the training activities.
+
+The other learners differ only in how $\mathbf{a}$ and $b$ are obtained, never in what they are:
+ε-SVR and ν-SVR get them from a quadratic program in which most $a_j$ come out exactly zero,
+C-SVC and ν-SVC the same for class labels, and the Laplace Gaussian-process classifier from the
+posterior mode of a latent function. In every case the fitted model is the pair $(\mathbf{a}, b)$
+over the training molecules.
+
+## 6. Predicting a new molecule
+
+For a molecule the model has never seen, the program:
+
+1. builds its fields **with the same field set** — the same α, the same charge model, the same
+   parameterisation, the same atom typing;
+2. computes the per-field overlap integrals between its atoms and the atoms of every training
+   molecule, giving one row $K_f(x, j)$ per field;
+3. normalises that row with the molecule's own self-kernels and the **stored** training
+   self-kernels, and multiplies by the **stored** scales $c_f$;
+4. mixes the fields into one row $k(x)_j = \sum_f h_f c_f \hat{K}_f(x, j)$;
+5. returns
+
+$$
+\hat{y}(x) = \sum_j a_j\, k(x)_j + b = \mathbf{k}(x)^{T}\mathbf{a} + b
+$$
+
+That is the whole prediction: a similarity-weighted combination of the training activities, where
+"similarity" is the overlap of molecular fields and the weights were fixed when the model was
+fitted. Molecules with $a_j = 0$ — most of them, after an SVM fit — contribute nothing, which is
+why the *Contributions* tab can list the handful that actually make a given prediction.
+
+## The same prediction, as a field
+
+Because the kernel is an integral of a product and the prediction is linear in it, the sum over
+training molecules can be moved inside the integral. Writing $s_j = 1/\sqrt{K_f(j,j)}$ for the
+normalisation of training molecule *j*, define the **co-field**
+
+$$
+C_f(\mathbf{r}) = \sum_j a_j\, s_j X_{fj}(\mathbf{r})
+$$
+
+and the prediction becomes
+
+$$
+\hat{y}(x) = \sum_f \frac{h_f c_f}{\sqrt{K_f(x,x)}}\int X_{fx}(\mathbf{r})\,C_f(\mathbf{r})\,d\mathbf{r} + b
+$$
+
+The model is therefore a *function of space*, one per field type, and a molecule is scored by how
+much of its own field lies in the positive regions of that function and how much in the negative
+ones. This is the identity that makes the pictures of *Reading the model* the model rather than an
+illustration of it, and the division by the molecule's own field norm is the only thing the
+normalisation adds to the picture. It also explains what co-fields cannot survive: a nonlinear
+kernel layer, which is not an integral of a product, and the autocorrelation kernel source, which
+has no frame to draw in.
+
+## A worked example
+
+Four molecules from `examples/benzamides_synthetic.sdf` as the training set, the five default
+fields, α = 0.5, cosine normalisation, λ = 0.1, and the fifth molecule as the one to predict. The
+numbers below are the program's own, printed from the objects it fits.
+
+The joint kernel of the training set, $K = \sum_f \hat{K}_f$ over five fields, so the diagonal is 5:
+
+```
+            parent     4F      4'F     4Cl          y
+parent      5.0000  2.8362  3.2195  2.5368       5.585
+4F          2.8362  5.0000  2.3310  3.9647       5.230
+4'F         3.2195  2.3310  5.0000  2.8882       6.471
+4Cl         2.5368  3.9647  2.8882  5.0000       5.355
+```
+
+Solving the bordered system gives
+
+```
+a = [-0.1358, -0.0581, +0.3487, -0.1549]      sum(a) = 0      b = 5.7124
+```
+
+The test molecule 4'Cl is then compared with each training molecule, field by field:
+
+```
+                      parent      4F      4'F     4Cl
+electrostatic         0.0878  0.6028  0.1009  0.3915
+steric                0.9793  0.9824  0.9863  0.9579
+hydrophobic           0.8936  0.9412  0.9443  0.8437
+H-bond acceptor       0.2600  0.9895  0.1927  0.6539
+H-bond donor          0.5815  1.0000  0.4424  0.7379
+                      ------  ------  ------  ------
+k(x)  (their sum)     2.8022  4.5159  2.6667  3.5849
+```
+
+and the prediction is that row times the coefficients, plus the bias:
+
+```
+y(x) = 2.8022(-0.1358) + 4.5159(-0.0581) + 2.6667(0.3487) + 3.5849(-0.1549) + 5.7124
+     = 5.4444
+```
+
+which is exactly what *Pred (test)* shows for that molecule. Two things are worth reading off this
+example rather than taking on trust. The steric and hydrophobic rows are nearly constant across
+the training set — these molecules differ by one halogen — so almost all the discrimination comes
+from the electrostatic and hydrogen-bond fields, which is visible in the spread of their rows.
+And the prediction, 5.44 against an observed 7.21, is poor, because four training molecules and no
+hyper-parameter search is not a model: the arithmetic is the lesson here, not the accuracy.
+
+## What changes for the other tasks
+
+| Model | What the prediction is |
+|---|---|
+| Kernel ridge | $\hat{y} = \mathbf{k}^{T}\mathbf{a} + b$, as above |
+| Gaussian process | the same mean, plus the variance $\sigma^2(x) = K(x,x) - \mathbf{k}^{T}(\mathbf{K}+\lambda \mathbf{I})^{-1}\mathbf{k}$, which the *Align by prediction confidence* tool minimises |
+| ε-SVR, ν-SVR | the same formula; most $a_j$ are zero |
+| C-SVC, ν-SVC | the same formula, read as a decision value: its sign is the class, its magnitude the margin |
+| Laplace GP classifier | the same formula gives the latent mean, which is squashed to a probability and averaged over the latent variance |
+| One-class methods | a score built from the same kernel row, but also from the molecule's own self-kernel: distance to the centroid, to the k-th nearest active, to the principal subspace, or the 1-SVM decision value |
+| Nonlinear kernel layer | the joint kernel is passed through $\exp(-\gamma d^2)$ or an arc-cosine function first; the prediction formula is unchanged, the co-field identity is lost |
+| Autocorrelation source | the kernel row comes from the rotation-invariant distance profiles instead of the overlap integrals; everything downstream is identical |
+
+## What has to match between fitting and predicting
+
+Because the kernel row is computed against the stored training atoms with the stored constants, a
+prediction is only meaningful if the new molecule was prepared the way the training molecules
+were. The saved `.cmf` model therefore carries the field set, the α values, the charge model, the
+parameterisation, the normalisation and scaling flags, the mixing coefficients, the training
+atoms and the coefficients — everything in steps 1 to 5 — and reuses them. Two things it cannot
+enforce, and which are yours to get right:
+
+- **The frame.** The overlap integral is not invariant to rotation or translation, so a molecule
+  predicted in a different frame from the training set will score low on every field and be
+  predicted towards the mean. If the new molecules are not already in that frame, align them
+  (*Preparing the data*) or use a frame-free kernel source
+  (*Working without an alignment*).
+- **The chemistry behind the weights.** Charges read from a file for the training set and
+  Gasteiger charges for the new molecules are two different electrostatic fields wearing one name.
 
 # Installation and first run
 
