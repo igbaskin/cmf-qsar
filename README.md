@@ -533,29 +533,79 @@ of one site reaches another — so the overlap integral of two molecules is exac
 their per-position overlaps, which is what topomer CoMFA obtains by giving every position its own
 block of columns. A test checks that identity to 1e-9.
 
-**Measured against the alignment it replaces**, same sets, same folds, same α and λ grids:
+**Measured against the alignment it replaces**, on all eight Sutherland sets
+([benchmarks/run_topomer.py](benchmarks/run_topomer.py), table in
+[benchmarks/results/topomer](benchmarks/results/topomer)). A topomer model is a congeneric-series
+method, so the series has to be found before it can be measured: the maximum common substructure
+of a whole Sutherland set is useless for this — those sets are chemotype mixtures, and their MCS
+is a fragment like `CCO` or a bare benzene that is fused into every ring system and cuts nothing
+off (on GPB it loses all 66 molecules). The core here is instead the **Bemis–Murcko framework of
+the set's largest chemotype**, and the series is every molecule of the set that framework comes
+cleanly off, at acyclic single bonds. Both models then see exactly the same molecules, the same
+five fields, the same α grid (0.1–5), the same λ grid and the same 10-fold CV, and both choose
+(α, λ) on the CV they are scored on, so both are optimistic to the same degree.
 
-| set | core | attachment points | aligned q² | topomer q² |
-|---|---|---:|---:|---:|
-| benzamides (synthetic) | `NC(=O)c1ccccc1` | 6 | **+0.846** | +0.655 |
-| sutherland/COX2 | MCS (benzene) | 6 | **+0.537** | +0.359 |
-| sutherland/AChE | MCS (benzene) | 6 | **+0.564** | +0.238 |
-| sutherland/BZR | MCS (benzene) | — | +0.388 | not applicable |
+| set | series | core | aligned q² | topomer q² | counts q² |
+|---|---|---|---:|---:|---:|
+| ACE | 50/114 | `C1CCNC1` | +0.645 | +0.530 | **+0.722** |
+| AChE | 29/111 | `O=C(NCCC1CC[NH+](Cc2ccccc2)CC1)c1ccccc1` | +0.499 | **+0.514** | +0.376 |
+| BZR | 62/147 | `O=C1CN=C(c2ccccc2)c2ccccc2N1` | +0.612 | **+0.681** | +0.293 |
+| COX2 | 62/282 | `c1ccc(-c2ccnn2-c2ccccc2)cc1` | **+0.416** | +0.157 | +0.108 |
+| DHFR | 42/361 | `c1ccc(NCc2cnc3ncncc3c2)cc1` | +0.260 | **+0.277** | −0.029 |
+| GPB | 60/66 | `C1CCOCC1` | **+0.590** | +0.553 | +0.258 |
+| THER | 63/76 | `c1ccccc1` | **+0.458** | +0.179 | +0.144 |
+| THR | 22/88 | `O=C(C(Cc1ccccc1)NS(=O)(=O)c1ccc2ccccc2c1)N1CCCCC1` | +0.076 | +0.080 | +0.105 |
 
-On a series that is already aligned the published superposition wins by 0.2 to 0.3 in q², which
-is the honest result: those molecules were superimposed by someone who knew what they were doing,
-and a canonical anti-torsion pose discards the conformational truth that superposition kept. What
-the topomer construction offers instead is reproducibility and speed — the same substituent gives
-the same field for ever, so a virtual library is scored from a fragment table rather than a
-superposition search — and a frame where no superposition is possible at all.
+Mean 0.073 q² in favour of the alignment — but the mean is the least informative number in the
+table. On four sets the rule-built poses match the published superposition or beat it (AChE, BZR,
+DHFR, THR); on three the alignment wins by 0.04 to 0.28; on ACE neither field model beats atom-type
+counts, which is the heterogeneity of that series speaking rather than anything about poses. THR
+is no evidence either way: 22 molecules and q² below 0.1 everywhere means there is no model there
+to compare.
 
-BZR is the instructive failure: its molecules are benzodiazepines, so the common substructure is
-a ring *fused* to the rest and cannot be cut off without opening a ring. The program measures
-that (`cuttable_fraction`, 6 % there against 94–98 % on the others) and says so in the log rather
-than quietly dropping nine molecules out of ten.
+**Which half of the construction costs that?** The topomer route does two separable things — it
+cuts the molecule up and parks the pieces at separate sites, and it rebuilds each piece by rule.
+A third column separates them: the same cut substituents at the same separated sites, each left
+exactly where the published superposition put it. Identical atoms and identical weights to the
+topomer column, only the coordinates differ.
+
+| set | whole molecules | substituents, as aligned | substituents, posed by rule | the cut costs | the pose costs |
+|---|---:|---:|---:|---:|---:|
+| ACE | +0.645 | +0.597 | +0.530 | +0.048 | +0.067 |
+| AChE | +0.499 | +0.522 | +0.514 | −0.023 | +0.009 |
+| BZR | +0.612 | +0.735 | +0.681 | −0.123 | +0.055 |
+| COX2 | +0.416 | +0.238 | +0.157 | +0.177 | +0.082 |
+| DHFR | +0.260 | +0.332 | +0.277 | −0.071 | +0.055 |
+| GPB | +0.590 | +0.593 | +0.553 | −0.003 | +0.040 |
+| THER | +0.458 | +0.199 | +0.179 | +0.259 | +0.020 |
+| THR | +0.076 | −0.125 | +0.080 | +0.201 | −0.205 |
+
+**The pose rule is nearly free: 0.015 q² on average, and at most 0.082.** What costs something is
+the cut, 0.058 on average — and it is a cost only where the scaffold is doing work. Separate sites
+throw away the scaffold's own field *and* the geometry between one substituent and another, so
+THER (+0.259, a benzene core with 21-heavy-atom peptide arms whose relative placement is the
+molecule) and COX2 (+0.177, diaryl pyrazoles whose core carries the electronic effect of its own
+small substituents) lose most of their accuracy at the knife, not at the pose. Where the scaffold
+is constant and the decorations small, cutting it away *helps* — BZR gains 0.123 q², DHFR 0.071 —
+because a core identical in every molecule adds the same large term to every kernel entry and
+dilutes the contrast between the parts that actually differ.
+
+That is a more useful result than the mean: the topomer convention is not where the accuracy goes.
+A canonical anti-torsion pose reproduces a careful superposition to within a few hundredths of q²
+on these series, and what you pay for it is reproducibility and speed in return — the same
+substituent gives the same field for ever, so a virtual library is scored from a fragment table
+rather than a superposition search, and the frame exists where no superposition is possible at all.
+Choose the core so that the scaffold really is the invariant part of the series, and keep the
+substituents small enough that their mutual geometry is not the pharmacophore.
+
+The cuttability number is reported, not hidden: `cuttable_fraction` says what share of a series a
+core comes cleanly off, and a core that is fused to the rest — the whole-set MCS of the
+benzodiazepines, say, which is a benzene ring inside a fused system — is refused with that number
+in the log rather than quietly dropping nine molecules out of ten.
 
 ```bash
 python cmf_cli.py topomer examples/benzamides_synthetic.sdf --activity pActivity        --core "c1ccccc1C(=O)N" --alphas 0.3,0.5,1 --lams 1e-2,0.1,1
+python benchmarks/run_topomer.py --sets BZR,COX2        # the comparison above, set by set
 ```
 
 Without `--core` the maximum common substructure is used, found on hydrogen-suppressed copies so
@@ -1661,7 +1711,9 @@ in both the GUI and the CLI. Other literature data sets
 MOL2 Sybyl atom types and partial charges are used when present (choose *Partial charges: file*).
 MOL2 blocks that RDKit's reader rejects (unusual valences) are parsed by a tolerant fallback reader.
 `docs/benchmark.md` compares the program with Table 2 of the 2013 paper on the eight literature sets
-(`benchmarks/run_sutherland.py` reruns the comparison when the data sets are available locally).
+(`benchmarks/run_sutherland.py` reruns the comparison when the data sets are available locally);
+`benchmarks/run_topomer.py` measures the alignment against the topomer rule on the same eight sets,
+from the SDF files in `examples/sutherland` alone.
 
 ## Field parameterisation
 
