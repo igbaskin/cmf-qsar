@@ -128,95 +128,185 @@ Nothing in that sequence is specific to the example: it is the working cycle of 
 
 # The application window
 
-The window has four regions: the **data-set panel** on the left, the **model panel** below or
-beside it, the **3D view** in the middle with its controls above it, and the **results panel** with
-its tabs on the right. *View → Restore default layout* puts everything back if a panel gets lost,
-and *View → Results panel spans full width* gives the tables and plots the whole width when you are
-reading rather than building.
+![The HIF-2α series of the Merck free-energy benchmark, 38 ligands: a kernel ridge model with q² = 0.62, its electrostatic co-field drawn as ± isosurfaces, and the binding site of the reference crystal structure, which the data set brings with it and which needs no superposition.](docs/screenshot.png)
 
-## The data-set panel
+The window is a 3D view with three dockable panels around it. The **3D view** and its control strip
+occupy the centre and are always there; the **Data set** panel docks on the left, the **Model**
+panel on the right inside a scroll area, and the **Results** panel across the bottom under the
+view. All three are ordinary dock widgets: drag one by its title bar to another edge, drop it on
+another to stack them as tabs, or pull it off entirely to float it on a second monitor. The layout
+is remembered between sessions, and *View → Restore default layout* puts it back when an
+experiment goes wrong.
 
-One row per molecule: name, activity, subset (train, test or decoy), the fitted and
-cross-validated predictions once a model exists, and the chemotype once the chemotypes have been
-found. The panel is where molecules are selected, shown and hidden.
+At the bottom, the **status bar** shows what the program is doing, with a progress bar on the right
+during a long task. Every long task — a grid search, a co-field, an alignment, a conformer
+generation — runs in a worker thread, so the window stays responsive and the *Cancel* button in the
+model panel stops the work rather than the application.
 
-- **Clicking a column header sorts by it** — activity, name, subset, either prediction column or
-  the chemotype. A second click reverses the order and a third restores the order of the file.
-  Molecules with no value in that column always sink to the bottom. The selection, the *Show*
-  ticks and everything else follow the molecule rather than the row, so sorting never shuffles
-  what is on screen.
-- The *Show* tick controls what the 3D view draws. *Show all* and *Show none* are the shortcuts;
-  with one molecule shown, the co-field and the atom contributions refer to it.
-- *Random split* and the *→ test* button define a test set; a `subset` tag in the file is honoured
-  automatically, so published splits arrive with the data.
-- A note under the table records a transformation that has been applied to the data set, for
-  instance *[topomer substituents of …]*, so that a changed data set never looks like the original.
+## The Data set panel
 
-## The model panel
+Three buttons at the top load structures: **Open training set…**, **Add test set…** and **Add
+decoys…**, the same actions as the first three entries of the *File* menu. Beside them the
+*Activity* selector names the SD property the activities are read from; changing it re-reads the
+column without reloading the file.
 
-Everything that defines a model: the fields and their parameterisation, the task, the learner, the
-hyper-parameter grids, the validation scheme. Chapter 5 goes through it control by control. Two
-buttons act: **Build model** runs the grid search, the final fit, the internal cross-validation
-and the test prediction; **External CV** runs the nested procedure that reports q²ex.
+The table has one row per molecule and seven columns:
 
-## The 3D view and its controls
-
-Mouse: drag to rotate, wheel to zoom, middle-drag (or shift-drag) to pan. The controls above the
-view are arranged in rows — molecule display, maps, iso level, protein site — and all of them
-redraw immediately:
-
-| Control | Effect |
+| Column | Contents |
 |---|---|
-| Style | ball & stick, sticks, lines, space fill |
-| Labels | none, element + number, atom type, partial charge |
-| Maps | co-field, molecular field, overlap, atom contributions, Shapley field, difference map, pharmacophore |
-| Field | which field type the maps refer to |
-| Iso level | the isosurface threshold, as a percentage of the largest absolute value |
-| Style per map | solid or mesh, chosen separately for co-fields, molecular fields and Shapley fields |
-| Protein site | distance cut-off, wire or sticks, hydrogens, waters, residue labels |
+| Show | the tick that decides whether this molecule is drawn in the 3D view |
+| Name | the molecule's title from the file |
+| Activity | the experimental value, from the chosen property |
+| Set | train, test or decoy |
+| Pred (fit) | the model's prediction for the molecule it was fitted on |
+| Pred (CV) | its prediction when it was in the held-out fold |
+| Pred (test) | its prediction as a test molecule |
 
-Co-field colours are fixed so that maps from different sessions can be compared: electrostatic
-red (+) / blue (−), steric green (+) / yellow (−), hydrophobic orange (+) / light blue (−),
-H-bond acceptor magenta (+) / dark red (−), H-bond donor cyan (+) / purple (−), and indicator
-fields red (preferable position of that atom type) / blue (undesirable).
+An eighth column, **Chemotype**, appears once the chemotypes have been found. Rows are selected
+singly or in blocks, and the selection drives everything else: the co-field overlap, the atom
+contributions, the Shapley decomposition and the complementarity numbers all refer to the molecule
+currently selected.
 
-*Tools → Center view on current molecule* recentres the camera, and *File → Save 3D view as
-image…* writes what you see as a PNG.
+**Sorting.** Clicking a column header sorts by it, a second click reverses the order, and a third
+restores the order of the file. Molecules with no value in that column always sink to the bottom,
+whichever direction is in force, so an unpredicted molecule never hides among the predictions. The
+*Show* ticks, the selection and the 3D view follow the molecule and not the row, so sorting never
+disturbs what is on screen.
 
-## The results panel
+**Splitting.** *Random split* assigns a fraction to the test set; the *→ train* and *→ test*
+buttons move the selected rows by hand. A `subset`, `set` or `split` tag in the file is honoured on
+loading, which is how the published splits of the example sets arrive without any clicking.
+
+**Showing.** *Show all*, *Show none* and *Show selected only* control the view in bulk. With one
+molecule shown, the maps in the viewer refer to it; with all of them shown, the co-field sits in
+the middle of the series as it should.
+
+A line under the table reports the state of the data set — how many molecules, how many in each
+subset, which activity property — and a note in brackets records any transformation that has been
+applied, for instance *[topomer substituents of …]*, so that a changed data set never passes for
+the original.
+
+## The Model panel
+
+Everything that defines a model, in the order one normally works down it. The panel scrolls; on a
+small screen nothing is hidden, it is merely below.
+
+**Molecular fields.** Five tick boxes for the physico-chemical fields — Electrostatic, Steric,
+Hydrophobic, H-bond acceptor, H-bond donor — then *Continuous indicator fields (CIF)* with its
+typing scheme (`sybyl`, `element`, `element+aromatic`) and the minimum number of training molecules
+an atom type must occur in to earn a field. Below them, *Per-atom property fields* lists the
+per-atom properties the loaded file carries, each of which can be turned into a field of its own.
+
+*Partial charges* chooses between Gasteiger, MMFF94 and the charges stored in the file;
+*Increments* chooses the parameterisation (`rdkit`, `tripos`, `tripos-legacy`). Two tick boxes set
+the kernel conventions: *Normalise kernels* for cosine-normalised field kernels, *Scale fields* to
+rescale every field kernel to unit mean diagonal before mixing — untick it for the raw-kernel
+convention of the papers.
+
+*Conformations* switches between one conformation per molecule and an ensemble, with the weighting
+(uniform or Boltzmann), kT, a cap on the number of conformations, and the multi-instance settings
+(the softness β, and *one conformation* for the hard selection). A label beside them reports how
+many conformations the data set currently holds.
+
+A table at the foot of the group lists the fields that will actually be built, with the columns
+**Use**, **Field**, **alpha**, **h (mix)** and **scale**: per-field attenuation and mixing
+coefficients are editable there, which is how a field is given more or less weight than the others
+without leaving the panel.
+
+**Learning method and hyper-parameters.** A form, row by row:
+
+| Row | What it sets |
+|---|---|
+| Task | regression, binary classification, or one-class (virtual screening) |
+| Classes | for classification: a threshold on the activity, with *active below* for data where small is potent, or a class property from the file |
+| Method | the learner; the list changes with the task — KRR, GP, ε-SVR, ν-SVR for regression; C-SVC, ν-SVC, Laplace GP for classification; 1-SVM, centroid, k-NN, one-class GP and kernel PCA for one-class work |
+| Nonlinear kernel | none (the linear CMF kernel), a Gaussian layer, or one or two arc-cosine layers |
+| Mixing coeff. h | fixed from the table, optimised by coordinate descent, or set by centred kernel alignment |
+| Attenuation α | a single value, or the grid below |
+| Kernel from | overlap integrals of the fields, which need one frame, or the rotation-invariant autocorrelation, which does not |
+| α grid, λ grid, C grid, ε/ν grids | the search ranges, as comma-separated lists |
+| Cross-validation | the number of folds and the shuffling seed |
+| External CV | the outer folds and the number of repeats for the nested procedure |
+
+Four buttons close the panel: **Build model** runs the grid search, the final fit, the internal
+cross-validation and the test prediction; **External CV** runs the nested procedure and reports
+q²ex; **Predict test set** applies the current model to the test molecules; **Cancel** stops
+whatever is running.
+
+## The 3D view
+
+The view itself is an OpenGL scene: drag to orbit, the wheel to zoom, middle-drag (or shift-drag)
+to pan. *Reset view* reframes the whole scene, *Tools → Center view on current molecule* reframes
+the selected one, and *File → Save 3D view as image…* writes what you see to PNG.
+
+The control strip above the view is four rows, and everything on it redraws immediately:
+
+- **Molecules.** Drawing style (ball & stick, sticks, lines, space fill), *H atoms*, *Labels*
+  (none, element + number, atom type, partial charge), *dark background*, *Reset view*.
+- **Maps.** *Field type* chooses which field the maps refer to; **Compute co-field** evaluates the
+  co-fields on a grid around the training set; then the maps themselves — *co-field C(r)*,
+  *molecular field X(r)*, *overlap C·X*, *Shapley field Φ(r)*, *atom contributions*, *difference
+  map*, *pharmacophore* — each with its own solid-or-mesh style where that applies.
+- **Levels.** *iso level*, the isosurface threshold as a percentage of the largest absolute value
+  rather than an absolute number, so the surfaces stay comparable when the field changes; and
+  *opacity*.
+- **Protein site.** *protein site* draws the residues within the chosen distance of the molecules
+  on screen, as lines or sticks, with *H*, *waters* and residue labels optional, and
+  *complementarity surface* paints the molecule's surface by how well it complements the pocket.
+
+Co-field colours are fixed, so that maps made in different sessions can be compared at a glance:
+
+| Field | Positive lobe | Negative lobe |
+|---|---|---|
+| Electrostatic | red | blue |
+| Steric | green | yellow |
+| Hydrophobic | orange | light blue |
+| H-bond acceptor | magenta | dark red |
+| H-bond donor | cyan | purple |
+| Indicator field | red: the atom type is welcome here | blue: it is not |
+
+## The Results panel
+
+Twelve tabs, each filled by the work that produces it:
 
 | Tab | What it holds |
 |---|---|
-| Statistics | every figure of merit for the fit, the cross-validation, the test set and the external CV |
-| Scatter plot | observed against predicted, by subset, with the molecule under the cursor identified |
-| ROC | receiver-operating curves for a classification model, per subset |
-| Scores | decision values or calibrated probabilities, sortable, for a classification or screening model |
+| Statistics | every figure of merit, for the fit, the cross-validation, the test set and the external CV |
+| Scatter plot | observed against predicted, by subset, with the molecule under the cursor named |
+| ROC | the receiver-operating curves of a classification model, per subset |
+| Scores | the ranked decision values or calibrated probabilities: rank, molecule, score, set, class |
 | Enrichment | the enrichment curve against a decoy set, with EF at 0.5, 1, 5 and 10 %, BEDROC and RIE |
-| Map | the kernel-GTM chemical-space map with its activity, class and density landscapes |
-| Hyper-parameter search | the whole grid, so you can see whether the optimum is interior or at an edge |
-| Contributions | which training molecules drive the selected molecule's prediction, and the atom contributions |
-| Shapley | Shapley values over atoms, substituents or field types, with second-order interactions |
-| Complementarity | field complementarity of molecules and co-fields with the protein pocket |
-| Chemotypes | the Murcko scaffolds found in the set and the leave-one-chemotype-out result |
-| Log | everything the program did, with timings; the first place to look when a result surprises you |
+| Map | the kernel-GTM chemical-space map, with the activity, class and density landscapes, and a control for how the molecules themselves are drawn over it |
+| Hyper-parameter search | the whole grid — α, the other parameters, RMSEcv and q² — so that an optimum at the edge of the grid is visible rather than hidden |
+| Contributions | two tables for the selected molecule: the training molecules that make its prediction, with `a_j` and `a_j K(X, X_j)`, and its own atoms with their contributions |
+| Shapley | the Shapley decomposition, over atoms, substituents of the common scaffold or field types, with second-order interactions |
+| Complementarity | the field complementarity of the molecules and of the co-field with the pocket, by sign agreement, cosine or correlation |
+| Chemotypes | the Murcko scaffolds found in the set, their sizes, and the leave-one-chemotype-out result beside the alignment-free baseline |
+| Log | everything the program did, with timings and warnings — the first place to look when a result surprises you |
 
 ## The menus
 
-**File** — open a training set, add a test set, add decoys, import activities from CSV; load or
-fetch a protein structure, or forget it; load and save models; export predictions (CSV), the
-aligned data set (SDF), the current co-field or Shapley field (Gaussian cube) and the 3D view
-(PNG).
+**File** — *Open training set…* (Ctrl+O), *Add test set…*, *Add decoys (background set)…*, *Import
+activities from CSV…*; *Load protein structure (PDB/mmCIF)…*, *Fetch protein from the PDB…*,
+*Forget protein structure*; *Load model…* (Ctrl+L), *Save model…* (Ctrl+S); *Export predictions
+(CSV)…*, *Export aligned data set (SDF)…*, *Export current co-field (Gaussian cube)…*, *Export
+current Shapley field (Gaussian cube)…*, *Save 3D view as image…*; *Quit* (Ctrl+Q).
 
-**View** — show or hide the panels, let the results panel span the full width, restore the default
-layout.
+**View** — show or hide each panel, *Results panel spans full width* for when the tables and plots
+matter more than the view, and *Restore default layout*.
 
-**Tools** — generate conformations (4D); dock into the pocket; align the data set to a reference;
-align by prediction confidence, for a test set or cross-validated for the training set; replace the
-molecules by their topomer substituents; field difference from a reference molecule; extract a
-pharmacophore from the co-field; chemical-space map (GTM); align decoys to the training set;
-unalign (randomise poses); centre the view; and the four-step *Heterogeneous sets* submenu.
+**Tools** — *Generate conformations (4D)…*; *Dock into the pocket…*; *Align data set to
+reference…*; *Align by prediction confidence (GP variance)…* and its cross-validated form for the
+training set; *Replace molecules by their topomer substituents…*; *Field difference from a
+reference molecule…*; *Extract pharmacophore from the co-field…*; *Chemical space map (GTM)…*;
+*Align decoys to the training set…*; *Unalign (randomise poses)…*; *Center view on current
+molecule*; and the submenu *Heterogeneous sets (several chemotypes)* with its four numbered steps.
 
-**Help** — a method summary with the equation numbers of the papers.
+**Help** — *About CMF 3D-QSAR / method summary*, which names the equations of the papers that each
+part of the program implements.
+
+Every *Tools* entry opens a dialog that states what it is about to do and on which molecules, and
+each one runs in the background with the progress bar and the *Cancel* button live.
 
 # Preparing the data
 

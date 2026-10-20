@@ -27,9 +27,11 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import (BaseDocTemplate, Flowable, Frame, HRFlowable, KeepTogether,
+from reportlab.platypus import (BaseDocTemplate, Flowable, Frame, HRFlowable, Image,
+                                KeepTogether,
                                 ListFlowable, ListItem, NextPageTemplate, PageBreak, PageTemplate,
                                 Paragraph, Preformatted, Spacer, Table, TableStyle)
 
@@ -109,6 +111,9 @@ def styles(have_dejavu: bool):
         "toc0": ParagraphStyle("toc0", fontName=bold, fontSize=10.2, leading=16, textColor=INK),
         "toc1": ParagraphStyle("toc1", fontName=body, fontSize=9.3, leading=13.4,
                                leftIndent=14, textColor=INK),
+        "caption": ParagraphStyle("caption", parent=ss["BodyText"], fontName=italic,
+                                  fontSize=8.6, leading=12, textColor=MUTED, alignment=TA_CENTER,
+                                  spaceAfter=0),
         "footer": ParagraphStyle("footer", fontName=body, fontSize=7.8, leading=10,
                                  textColor=MUTED),
     }
@@ -304,6 +309,26 @@ def math_block(lines, st, frame_width):
     return KeepTogether([Spacer(1, 5), drawing, Spacer(1, 9)])
 
 
+def figure(path, caption, st, frame_width):
+    """A screenshot or diagram, scaled to the text width, with its caption under it."""
+    full = path if os.path.isabs(path) else os.path.join(HERE, path)
+    if not os.path.exists(full):
+        full = os.path.join(ROOT, path)
+    if not os.path.exists(full):
+        print(f"[warn] no such figure: {path}", file=sys.stderr)
+        return Spacer(1, 1)
+    reader = ImageReader(full)
+    iw, ih = reader.getSize()
+    width = min(frame_width, float(iw))
+    img = Image(full, width=width, height=width * ih / iw)
+    img.hAlign = "CENTER"
+    parts = [Spacer(1, 4), img]
+    if caption:
+        parts += [Spacer(1, 3), Paragraph(inline(caption, st["_fonts"][3]), st["caption"])]
+    parts.append(Spacer(1, 9))
+    return KeepTogether(parts)
+
+
 def make_table(rows, st, frame_width):
     mono = st["_fonts"][3]
     head, body = rows[0], rows[1:]
@@ -357,6 +382,11 @@ def parse(source: str, st, frame_width):
             continue
         if stripped == "<!-- pagebreak -->":
             story.append(PageBreak())
+            i += 1
+            continue
+        m_img = re.match(r"^!\[([^\]]*)\]\(([^)]+)\)\s*$", stripped)
+        if m_img:
+            story.append(figure(m_img.group(2), m_img.group(1), st, frame_width))
             i += 1
             continue
         if stripped.startswith("$$"):
@@ -445,7 +475,7 @@ def parse(source: str, st, frame_width):
             continue
         block = []
         while i < len(lines) and lines[i].strip() and not lines[i].strip().startswith(
-                ("#", "|", "```", ">", "- ", "* ", "---", "<!--", "$$")) and \
+                ("#", "|", "```", ">", "- ", "* ", "---", "<!--", "$$", "![")) and \
                 not re.match(r"^\d+\.\s+", lines[i].strip()):
             block.append(lines[i].strip())
             i += 1
