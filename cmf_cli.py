@@ -66,6 +66,80 @@ def _load_dataset(args):
     return ds
 
 
+def _report_validation(args, model, ds, mf, tr, te, target):
+    """y-randomisation, the applicability domain and bootstrap intervals, when asked for.
+
+    All three work on kernels the fit has already computed, so nothing here rebuilds a field.
+    The results are printed and stashed in ``model.stats.extra`` so that --json carries them.
+    """
+    from cmfqsar.validation import bootstrap_ci, bootstrap_refit, domain, scramble_kernel
+    st = model.stats
+    y = np.asarray(target, float)
+    K = None
+    if args.y_scramble or args.bootstrap_refit:
+        K = model.joint_kernel(model.K_fields_train) if model.uses_fields else \
+            model.training_kernel(model.train)
+    if args.y_scramble:
+        print()
+        print(f"y-randomisation: {args.y_scramble} shuffles of the activities ...")
+        res = scramble_kernel(K, y[tr], method=model.method, params=model.params,
+                              folds=args.folds, cv_seed=args.seed, runs=int(args.y_scramble),
+                              seed=args.seed)
+        print("  " + res.describe())
+        note = res.caution()
+        if note:
+            print("  " + note)
+        st.extra["scramble"] = {"statistic": res.statistic, "observed": res.observed,
+                                "mean": res.mean, "sd": res.sd, "max": float(max(res.scrambled))
+                                if len(res.scrambled) else float("nan"),
+                                "z": res.z_score, "p": res.p_value, "runs": res.runs,
+                                "values": [float(v) for v in res.scrambled]}
+    if args.bootstrap:
+        print()
+        rows = []
+        if "y_cv" in st.extra:
+            rows.append(("q2 (cross-validation)", y[tr], np.asarray(st.extra["y_cv"], float), None))
+        if te and "y_test_pred" in st.extra:
+            rows.append(("R2pred (test set, deviations from the training mean)", y[te], np.asarray(st.extra["y_test_pred"], float),
+                         float(np.mean(y[tr]))))
+        for label, obs, pred, ref in rows:
+            b = bootstrap_ci(obs, pred, statistic=label, runs=int(args.bootstrap),
+                             seed=args.seed, y_ref_mean=ref)
+            print("  " + b.describe())
+            st.extra.setdefault("bootstrap", {})[label] = {"value": b.value, "lo": b.lo,
+                                                           "hi": b.hi, "runs": b.runs}
+        if args.bootstrap_refit:
+            b = bootstrap_refit(K, y[tr], method=model.method, params=model.params,
+                                runs=int(args.bootstrap_refit), seed=args.seed)
+            print("  " + b.describe())
+            st.extra.setdefault("bootstrap", {})["q2_oob"] = {"value": b.value, "lo": b.lo,
+                                                              "hi": b.hi, "runs": b.runs}
+    if args.domain and model.uses_fields:
+        print()
+        scored = [i for i in range(len(ds)) if i not in set(tr)]
+        if not scored:
+            scored = list(tr)
+            where = "the training molecules themselves (no test set)"
+        else:
+            where = f"{len(scored)} molecules outside the training set"
+        table = AtomTable.from_molecules([mf[i] for i in scored])
+        K_xt = model.test_kernel(table)
+        dom = domain(K_xt, model.joint_self(table), model.training_kernel(model.train),
+                     k=args.domain_k, quantile=args.domain_quantile)
+        print(f"Applicability domain, {where}:")
+        print("  " + dom.describe())
+        outside = [(ds.names[i], float(s)) for i, s in zip(scored, dom.mean_top)
+                   if s < dom.threshold]
+        for name, s in sorted(outside, key=lambda kv: kv[1])[:10]:
+            print(f"    outside: {name[:40]:40s} similarity {s:.3f}")
+        st.extra["domain"] = {"threshold": dom.threshold, "k": dom.k,
+                              "names": [ds.names[i] for i in scored],
+                              "similarity": [float(v) for v in dom.mean_top],
+                              "nearest": [float(v) for v in dom.similarity],
+                              "distance": [float(v) for v in dom.distance],
+                              "inside": [bool(v) for v in dom.inside]}
+
+
 def cmd_build(args):
     t0 = time.time()
     ds = _load_dataset(args)
@@ -352,6 +426,7 @@ def cmd_build(args):
         if args.repeats > 1:
             model.stats.q2_ex_aggr, model.stats.rmse_ex_aggr = ncv.q2_ex_aggr, ncv.rmse_ex_aggr
     print(model.stats.summary())
+    _report_validation(args, model, ds, mf, tr, te, target)
     if args.save:
         save_model(args.save, model, extra={"dataset": args.dataset, "activity": ds.activity_prop,
                                             "train_names": [ds.names[i] for i in tr]})
@@ -1192,6 +1267,25 @@ def main(argv=None):
                         "The gain is not reliable - judge it on a test set, not on q2")
     b.add_argument("--align-train-rounds", type=int, default=1)
     b.add_argument("--align-train-folds", type=int, default=5)
+    b.add_argument("--y-scramble", type=int, default=0, metavar="N",
+                   help="y-randomisation: refit the model on N shuffles of the activities and "
+                        "report where the real q2 falls among them. 20 is enough to see a "
+                        "chance model, 100 for a p-value worth quoting")
+    b.add_argument("--bootstrap", type=int, default=0, metavar="N",
+                   help="percentile confidence intervals for q2 and R2pred from N bootstrap "
+                        "resamples of the (observed, predicted) pairs")
+    b.add_argument("--bootstrap-refit", type=int, default=0, metavar="N",
+                   help="Cramer's bootstrap as well: N resamples of the training set, each "
+                        "refitted and scored on the molecules left out of the bag")
+    b.add_argument("--domain", action="store_true",
+                   help="report the applicability domain of the molecules outside the training "
+                        "set: their similarity to it, against a threshold taken from the "
+                        "training set's own spread")
+    b.add_argument("--domain-k", type=int, default=3, metavar="K",
+                   help="how many nearest training molecules the similarity is averaged over")
+    b.add_argument("--domain-quantile", type=float, default=0.05, metavar="Q",
+                   help="the quantile of the training set's own similarities that becomes the "
+                        "threshold (default 0.05)")
     b.add_argument("--nested", action="store_true", help="external (nested) cross-validation")
     b.add_argument("--nested-on", default="train", choices=["train", "all"],
                    help="run the external CV on the training set or on all molecules (train + test)")

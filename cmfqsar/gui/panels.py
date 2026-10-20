@@ -730,6 +730,38 @@ class ModelPanel(QWidget):
         nrow.addWidget(self.spin_outer)
         nrow.addWidget(self.spin_repeats)
         form.addRow("External CV:", nrow)
+        vrow = QHBoxLayout()
+        self.spin_scramble = QSpinBox()
+        self.spin_scramble.setRange(0, 1000)
+        self.spin_scramble.setValue(0)
+        self.spin_scramble.setToolTip("\n".join([
+            "y-randomisation: refit the model on this many shuffles of the activities and",
+            "report where the real q2 falls among them. 0 = off; 20 is enough to recognise a",
+            "chance model, 100 gives a p-value worth quoting. The hyper-parameters are kept,",
+            "so it asks whether the fit can be reached by chance, not whether the whole",
+            "search can."]))
+        vrow.addWidget(QLabel("shuffles"))
+        vrow.addWidget(self.spin_scramble)
+        self.spin_boot = QSpinBox()
+        self.spin_boot.setRange(0, 10000)
+        self.spin_boot.setSingleStep(100)
+        self.spin_boot.setValue(0)
+        self.spin_boot.setToolTip("\n".join([
+            "Bootstrap confidence intervals for q2 and R2pred, by resampling the (observed,",
+            "predicted) pairs. 0 = off; 500 to 1000 is usual. It says how much of the",
+            "statistic is the particular molecules it was computed over, which is what decides",
+            "whether two settings differing by 0.02 differ at all."]))
+        vrow.addWidget(QLabel("   bootstrap"))
+        vrow.addWidget(self.spin_boot)
+        self.chk_domain = QCheckBox("applicability domain")
+        self.chk_domain.setToolTip("\n".join([
+            "Measure how close every molecule outside the training set is to it, in the kernel",
+            "the model itself uses, against a threshold taken from the training set's own",
+            "spread. Molecules below it are listed in the log: their predictions are",
+            "extrapolations, however confident they look."]))
+        vrow.addWidget(self.chk_domain)
+        vrow.addStretch(1)
+        form.addRow("Validation:", vrow)
         outer.addWidget(gb2)
 
         # --- buttons ------------------------------------------------------

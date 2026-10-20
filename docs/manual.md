@@ -720,10 +720,80 @@ either by coordinate descent on the cross-validated error or by centred kernel a
 - **External (nested) cross-validation** (`--nested`, *External CV*) wraps the whole model
   selection in an outer loop and reports q²ex and RMSEcvex. This is the number to quote: the
   ordinary q² has seen the hyper-parameter choice.
+- **y-randomisation**, a **bootstrap** interval and the **applicability domain** are the
+  three sections below.
 - **Leave-one-chemotype-out** folds, for a set of several scaffolds, never leave a molecule's own
   scaffold-mates in the training part. Random folds flatter such sets badly — by 0.11 to 0.47 q²
   on the five chemotype benchmarks here — and the program reports both, together with an
   alignment-free fragment baseline that the aligned model has to beat.
+
+## Is it chance? y-randomisation
+
+A cross-validated q² says how well the model predicts; it does not say whether a model of the same
+shape could have reached that number from activities that mean nothing. In a congeneric series,
+where kernel values above 0.97 are normal, that is a real possibility, and it is the first thing a
+referee asks about a 3D-QSAR model.
+
+*Validation → shuffles* in the model panel (`--y-scramble N`) shuffles the activities N times,
+refits and cross-validates each time, and reports where the real q² falls among the scrambled
+ones — the mean and spread of the shuffled values, the largest of them, how many standard
+deviations above them the real one lies, and the permutation p-value.
+
+```bash
+python cmf_cli.py build data.sdf --alphas 0.5 --lams 0.1 --y-scramble 100
+```
+
+Two properties of the test are worth knowing, and the program states both rather than letting the
+number mislead:
+
+- **A permutation test cannot report a p below 1/(N+1).** Ten shuffles bottom out at p = 0.091,
+  which is above every conventional threshold *however good the model is*. The program says so —
+  "no shuffle came close, but 10 of them cannot support a p below 0.091" — instead of reporting a
+  chance-correlation warning that the data do not support. Use 19 shuffles for p < 0.05 and 99
+  for p < 0.01.
+- **The hyper-parameters are held fixed** while the activities are shuffled, so the test asks
+  whether the *fit* can be reached by chance. The stricter question — whether the whole procedure,
+  model selection included, can be — needs the grid search repeated inside every shuffle, which
+  the library supports (`y_scramble` takes any scoring function) at N times the cost.
+
+## Where does the model apply?
+
+A kernel method always returns a number. For a molecule unlike anything in the training set, that
+number is the training mean in disguise, and nothing in q² or R²pred reveals it.
+
+*Validation → applicability domain* (`--domain`) measures how close each molecule outside the
+training set is to it, **in the kernel the model itself uses**: the cosine similarity of their
+fields, averaged over the *k* nearest training molecules (3 by default). The threshold is not a
+number chosen out of the air — it is taken from the training set's own spread, the 5th percentile
+of the same quantity computed among the training molecules, so a series of close analogues gets a
+tight domain and a diverse set a loose one. Molecules below it are listed by name in the log, and
+their predictions should be read as extrapolations.
+
+On the steroid benchmark, nine of the ten test compounds fall inside and one — 4-pregnene-3,11,20-
+trione — falls outside. On BZR, training on the largest chemotype and scoring the others, every
+molecule of the training chemotype is inside and 29 of 40 molecules from other chemotypes are
+outside, which is the behaviour one wants from a domain estimate.
+
+The field-space distance is reported alongside the similarity, because the two can disagree: a
+molecule that is a scaled-up version of a training molecule points the same way (high cosine) but
+sits far away (large distance).
+
+## How certain is that number?
+
+A difference of 0.02 in q² is quoted all over the benchmarks in this repository. Some of those
+differences are real and some are the particular molecules they were computed over.
+
+*Validation → bootstrap* (`--bootstrap N`) resamples the (observed, predicted) pairs N times and
+reports a percentile confidence interval for q² and for R²pred. It is the uncertainty of the
+*statistic* given these predictions, which is exactly what decides whether two settings differ.
+On the 21 training steroids, q² = 0.768 carries a 95 % interval of [0.47, 0.89] — wide enough to
+settle any argument about a hundredth.
+
+`--bootstrap-refit N` adds Cramer's bootstrap as well: resample the training set with replacement,
+refit, and score the molecules that were left out of the bag. That one measures the variability of
+the fit rather than of the statistic, and it is the more pessimistic of the two. The kernel is
+never recomputed — a resample is an index into the matrix — so a hundred refits cost about as much
+as one cross-validation.
 
 ## Statistics reported
 

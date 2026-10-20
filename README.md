@@ -1156,6 +1156,49 @@ linearly in α, see the heterogeneous-series section — but the separation is: 
 every molecule at random leaves it at 1.48, and with the strictly pose-free kernel of
 `chemotypes.count_kernel` it is 1.40 before and after, to the last digit.
 
+### Chance, domain and uncertainty: the three checks around a q²
+
+A cross-validated q² answers one question and three others go with it, none of which the program
+could answer before: whether the same number could have come from meaningless activities, whether
+a given molecule is close enough to the training set for its prediction to mean anything, and how
+much of the number is the particular molecules it was computed over. All three live in
+[validation.py](cmfqsar/validation.py), all three work on kernels the fit has already computed,
+and all three appear in the model panel's *Validation* row and as `build` options.
+
+**y-randomisation** (`--y-scramble N`, *shuffles*) refits and cross-validates on N shuffles of the
+activities and reports where the real q² falls among them: the scrambled mean and spread, the
+largest of them, the z-score and the permutation p-value. Two honest details the program insists
+on. A permutation test cannot report a p below 1/(N+1), so ten shuffles bottom out at 0.091
+whatever the model is worth; rather than printing a chance-correlation warning the data cannot
+support, the program says *"no shuffle came close, but 10 of them cannot support a p below
+0.091"* and names the number of shuffles that would. And the hyper-parameters are held fixed while
+the activities are shuffled, so the test asks whether the *fit* can be reached by chance; the
+stricter question needs the grid search repeated inside every shuffle, which `y_scramble` supports
+by taking any scoring function.
+
+**The applicability domain** (`--domain`) measures each non-training molecule's similarity to the
+training set in the model's own kernel, averaged over the three nearest training molecules, and
+compares it with a threshold taken from the training set's own spread — the 5th percentile of the
+same quantity computed among the training molecules, so close analogues get a tight domain and a
+diverse set a loose one. On the steroid benchmark nine of the ten test compounds are inside and
+4-pregnene-3,11,20-trione is outside. Training on BZR's largest chemotype and scoring the rest,
+all 20 molecules of the training chemotype are inside and 29 of 40 from other chemotypes are
+outside. The field-space distance is reported beside the similarity, since a scaled-up analogue
+points the same way but sits far off.
+
+**Bootstrap intervals** (`--bootstrap N`) resample the (observed, predicted) pairs and give a
+percentile interval for q² and R²pred — the uncertainty of the statistic given these predictions,
+which is what decides whether two settings that differ by 0.02 differ at all. On the 21 training
+steroids, q² = 0.768 has a 95 % interval of [0.47, 0.89]. `--bootstrap-refit N` adds Cramer's
+bootstrap: resample the training set, refit, score the out-of-bag molecules. The kernel is never
+recomputed — a resample is an index into the matrix — so a hundred refits cost about one
+cross-validation.
+
+```bash
+python cmf_cli.py build examples/steroids_cbg.sdf --alphas 0.5 --lams 0.1 --folds 5 \
+       --y-scramble 100 --bootstrap 1000 --domain
+```
+
 ### Classification and virtual screening
 
 The continuous molecular fields enter only through the kernel, so any kernel method can be used with
@@ -1913,6 +1956,7 @@ cmfqsar/align.py        3D embedding, MCS alignment, field-similarity refinement
 cmfqsar/varalign.py     alignment by prediction confidence (GP posterior variance)
 cmfqsar/decoys.py       posing a background set for virtual-screening evaluation
 cmfqsar/gtm.py          chemical space maps and activity landscapes (kernel PCA + GTM)
+cmfqsar/validation.py   y-randomisation, applicability domain, bootstrap intervals
 cmfqsar/shapley.py      Shapley decomposition of a prediction (atoms, substituents, field types)
 cmfqsar/conformers.py   conformational ensembles: generation, weighting, grouping (4D)
 cmfqsar/mil.py          multi-instance learning: the model chooses the conformation

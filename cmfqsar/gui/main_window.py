@@ -809,6 +809,67 @@ class UnalignDialog(QDialog):
         return None if self.cmb_rot.currentIndex() == 0 else float(self.spin_angle.value())
 
 
+def _run_validation(model, mf, tr, te, y_all, names, task_name, n_scramble, n_boot, want_domain,
+                    folds, seed, progress, cancel):
+    """y-randomisation, bootstrap intervals and the applicability domain, if they were asked for.
+
+    Runs inside the build worker, because all three are loops over fits and the window must stay
+    responsive. Returns the lines to print under the statistics and the per-molecule domain
+    result, or None when nothing was requested.
+    """
+    if not (n_scramble or n_boot or want_domain):
+        return None
+    from ..validation import bootstrap_ci, domain, scramble_kernel
+    lines, outside = [], []
+    regression = task_name == "regression"
+    y = np.asarray(y_all, float)
+    if n_scramble and regression:
+        progress("y-randomisation", 0.95)
+        K = model.joint_kernel(model.K_fields_train) if model.uses_fields else \
+            model.training_kernel(model.train)
+        res = scramble_kernel(K, y[tr], method=model.method, params=model.params, folds=folds,
+                              cv_seed=seed, runs=int(n_scramble), seed=seed,
+                              progress=lambda m_, f_: progress(m_, 0.95 + 0.02 * f_),
+                              cancel=cancel)
+        lines.append(res.describe())
+        note = res.caution()
+        if note:
+            lines.append("  " + note)
+    elif n_scramble:
+        lines.append("y-randomisation is implemented for regression models only; skipped.")
+    if n_boot and regression:
+        progress("Bootstrap", 0.97)
+        st = model.stats
+        if "y_cv" in st.extra:
+            lines.append(bootstrap_ci(y[tr], np.asarray(st.extra["y_cv"], float),
+                                      statistic="q2 (cross-validation)", runs=int(n_boot),
+                                      seed=seed).describe())
+        if te and "y_test_pred" in st.extra:
+            lines.append(bootstrap_ci(y[te], np.asarray(st.extra["y_test_pred"], float),
+                                      statistic="R2pred (test set, deviations from the training "
+                                                "mean)", runs=int(n_boot), seed=seed,
+                                      y_ref_mean=float(np.mean(y[tr]))).describe())
+    elif n_boot:
+        lines.append("Bootstrap intervals are implemented for regression models only; skipped.")
+    dom_rows = None
+    if want_domain and model.uses_fields:
+        progress("Applicability domain", 0.99)
+        scored = [i for i in range(len(mf)) if i not in set(tr)] or list(tr)
+        table = AtomTable.from_molecules([mf[i] for i in scored])
+        dom = domain(model.test_kernel(table), model.joint_self(table),
+                     model.training_kernel(model.train))
+        lines.append(dom.describe())
+        outside = [(names[i], float(s)) for i, s in zip(scored, dom.mean_top)
+                   if s < dom.threshold]
+        dom_rows = {"index": scored, "similarity": [float(v) for v in dom.mean_top],
+                    "threshold": float(dom.threshold),
+                    "inside": [bool(v) for v in dom.inside]}
+    elif want_domain:
+        lines.append("The applicability domain needs the field kernel; it is not defined for the "
+                     "autocorrelation kernel source.")
+    return {"lines": lines, "outside": outside, "domain": dom_rows}
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -822,6 +883,7 @@ class MainWindow(QMainWindow):
         self.model_train_idx: List[int] = []
         self.model_test_idx: List[int] = []
         self.shapley_result = None          # (molecule index, ShapleyResult) of the last run
+        self.validation = None          # y-randomisation / bootstrap / domain of the last fit
         self.shapley_fields = None          # (molecule index, (F, N) values) for the Shapley field
         self.pharmacophore = None           # features extracted from the co-field, drawn in 3D
         self.topomer_core = None            # set once the molecules are topomer substituents
@@ -1244,6 +1306,8 @@ class MainWindow(QMainWindow):
         oc_params = mp.oneclass_params()
         kernel_src, ac_sigma = mp.kernel_source(), mp.ac_sigma()
         folds, seed = mp.spin_folds.value(), mp.spin_seed.value()
+        n_scramble, n_boot = mp.spin_scramble.value(), mp.spin_boot.value()
+        want_domain = mp.chk_domain.isChecked()
         optimize_h = mp.cmb_mix.currentIndex() == 1
         mkl = mp.mkl_mode()
         layer, gammas = mp.kernel_layer(), mp.gammas()
@@ -1340,8 +1404,11 @@ class MainWindow(QMainWindow):
                     model.stats.screening = screening_scores(y_scr, np.concatenate([s_act, d_scores]))
                     model.stats.extra["screening_truth"] = y_scr
                     model.stats.extra["screening_scores"] = np.concatenate([s_act, d_scores])
+            validation = _run_validation(model, mf, tr, te, y_all, names, task_name,
+                                         n_scramble, n_boot, want_domain, folds, seed,
+                                         progress, cancel)
             return {"model": model, "mf": mf, "res": res, "tr": tr, "te": te, "dec": dec,
-                    "d_scores": d_scores, "target": y_all}
+                    "d_scores": d_scores, "target": y_all, "validation": validation}
 
         self.run_task(task, self._model_built, "Building model")
 
@@ -1354,6 +1421,7 @@ class MainWindow(QMainWindow):
         self.model_decoy_idx, self.model_decoy_scores = out.get("dec", []), out.get("d_scores")
         res = out["res"]
         self.model_target = out.get("target")
+        self.validation = out.get("validation")
         self.search_rows = res.table if res is not None else []
         self.volumes.clear()
         self._mol_volume_cache.clear()
@@ -1412,7 +1480,20 @@ class MainWindow(QMainWindow):
                               f"(0.25 is a coin). The Scores tab carries p(active) from the latent mean.")
             except Exception as exc:                   # noqa: BLE001
                 txt.insert(2, f"Gaussian process: probabilities unavailable ({exc})")
+        val = getattr(self, "validation", None)
+        if val and val.get("lines"):
+            txt += ["", "Validation:"] + ["  " + line for line in val["lines"]]
         rp.txt_stats.setPlainText("\n".join(txt))
+        if val:
+            for line in val.get("lines", []):
+                self.log(line)
+            outside = val.get("outside") or []
+            if outside:
+                self.log(f"{len(outside)} molecules lie outside the applicability "
+                         f"domain; their predictions are extrapolations:")
+                for name, sim in sorted(outside, key=lambda kv: kv[1])[:10]:
+                    self.results_panel.append_log(
+                        f"    {name[:46]:46s} similarity {sim:.3f}")
         rp.set_search_table(self.search_rows)
         dp = self.dataset_panel
         dp.clear_predictions()
