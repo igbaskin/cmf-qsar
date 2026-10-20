@@ -1207,6 +1207,9 @@ class MainWindow(QMainWindow):
         cmb.blockSignals(False)
         self.model_panel.set_class_properties(list(ds.properties))
         self.model_panel.set_atom_properties(ds.atom_properties)
+        from ..descriptors import available as _numeric_props
+        self.model_panel.set_descriptor_properties(
+            [p for p in _numeric_props(ds.mols) if p != ds.activity_prop])
         if np.isfinite(ds.activity).any():
             self.model_panel.spin_threshold.setValue(float(np.nanmedian(ds.activity)))
         self.model = None
@@ -1278,7 +1281,9 @@ class MainWindow(QMainWindow):
                              conformers=mp.conformer_mode(),
                              conformer_weighting=mp.conformer_weighting(),
                              conformer_kt=mp.spin_conf_kt.value(),
-                             max_conformers=mp.spin_conf_max.value())
+                             max_conformers=mp.spin_conf_max.value(),
+                             descriptors=mp.descriptors(),
+                             descriptor_h=mp.descriptor_h())
         vals = mp.table_values()
         for s in fs.specs:
             if s.name in vals:

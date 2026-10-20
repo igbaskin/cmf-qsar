@@ -195,7 +195,15 @@ def cmd_build(args):
                          cif_scheme=args.cif_scheme, param_scheme=args.param,
                          conformers=args.conformations,
                          conformer_weighting=args.conformer_weighting,
-                         conformer_kt=args.kt, max_conformers=args.max_conformers)
+                         conformer_kt=args.kt, max_conformers=args.max_conformers,
+                         descriptors=[d for d in (args.descriptors or "").split(",") if d],
+                         descriptor_h=args.descriptor_h)
+    if fs.descriptors:
+        from cmfqsar.descriptors import available
+        have = available(ds.mols)
+        unknown = [d for d in fs.descriptors if d not in have]
+        print(f"  non-field descriptors: {', '.join(fs.descriptors)} (h = {fs.descriptor_h:g})"
+              + (f"; NOT numeric on any molecule: {', '.join(unknown)}" if unknown else ""))
     if args.conformers:
         from cmfqsar.conformers import generate_for_dataset
         where = {"self": "superimposed on each molecule's own input pose",
@@ -451,6 +459,20 @@ def cmd_build(args):
         if args.repeats > 1:
             model.stats.q2_ex_aggr, model.stats.rmse_ex_aggr = ncv.q2_ex_aggr, ncv.rmse_ex_aggr
     print(model.stats.summary())
+    if model.desc_train_ is not None:
+        # how much of the model rests on the descriptors rather than on the geometry: the mean
+        # absolute contribution of each, over the training molecules
+        import collections
+        totals = collections.Counter()
+        for i in tr:
+            for name, v in model.descriptor_contributions(mf[i]):
+                totals[name] += abs(v) / len(tr)
+        print("Non-field descriptors (mean |contribution| per training molecule):")
+        for name, v in totals.most_common():
+            print(f"  {name:28s} {v:.4f}")
+        if model.desc_scaler_.constant:
+            print(f"  constant over the training set, so inert: "
+                  f"{', '.join(model.desc_scaler_.constant)}")
     _report_validation(args, model, ds, mf, tr, te, target)
     if args.save:
         save_model(args.save, model, extra={"dataset": args.dataset, "activity": ds.activity_prop,
@@ -1192,6 +1214,15 @@ def main(argv=None):
     b.add_argument("--prop-missing", default="error", choices=["error", "zero"],
                    help="what to do when a molecule carries no value for a prop: field; "
                         "'error' names the molecule, 'zero' treats it as having none")
+    b.add_argument("--descriptors", default=None, metavar="A,B",
+                   help="molecule properties to use as non-field descriptors, beside the fields: "
+                        "one number per molecule, standardised on the training set and added to "
+                        "the kernel as a block of its own. For what a field cannot represent - a "
+                        "measured logP, a medium, a temperature, an energy from a quantum "
+                        "calculation. Do not pass anything derived from the activity")
+    b.add_argument("--descriptor-h", type=float, default=1.0, metavar="H",
+                   help="mixing coefficient of the descriptor block (default 1, like a field); "
+                        "0 switches it off without removing it from the model")
     b.add_argument("--kernel", default="fields", choices=["fields", "autocorrelation"],
                    help="where the kernel comes from: the overlap integrals of the fields, which "
                         "needs the molecules to share a frame, or the rotation-invariant "

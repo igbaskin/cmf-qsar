@@ -1161,6 +1161,32 @@ linearly in α, see the heterogeneous-series section — but the separation is: 
 every molecule at random leaves it at 1.48, and with the strictly pose-free kernel of
 `chemotypes.count_kernel` it is 1.40 before and after, to the last digit.
 
+### Descriptors that are not fields
+
+Some things a molecule's activity depends on are not functions of space: a measured logP, the
+medium a series was recorded in, a temperature, an energy from a quantum calculation. The
+*Descriptors (per molecule)* row of the model panel (`--descriptors A,B`) adds them to the kernel
+as a block of its own, `h_d c_d z(A).z(B)`, with `z` standardised on the **training set** so that
+kilojoules cannot outvote log units, and `h_d` a mixing coefficient like a field's
+([descriptors.py](cmfqsar/descriptors.py)).
+
+The block is *scaled* to unit mean diagonal rather than cosine-normalised, because dividing by
+the norms would send a molecule sitting at the training mean in every descriptor - an
+unremarkable molecule - to a zero row and out of the model. The statistics are stored with the
+model, so a test set is never standardised by itself. And because the block is a dot product the
+model stays linear in its inputs: a prediction splits into a field part and a descriptor part,
+and the descriptor part into one number per descriptor, which the program prints beside the
+statistics as the mean absolute contribution of each.
+
+That last number is there for one reason. A descriptor derived from the activity will dominate
+the model and make the geometry look worthless while q2 rises; the program cannot detect it, so
+it shows how much of the prediction each descriptor is carrying and leaves the judgement where it
+belongs.
+
+```bash
+python cmf_cli.py build series.sdf --activity pIC50 --descriptors clogp,mw,tpsa
+```
+
 ### Chance, domain and uncertainty: the three checks around a q²
 
 A cross-validated q² answers one question and three others go with it, none of which the program
@@ -1967,6 +1993,7 @@ cmfqsar/varalign.py     alignment by prediction confidence (GP posterior varianc
 cmfqsar/decoys.py       posing a background set for virtual-screening evaluation
 cmfqsar/gtm.py          chemical space maps and activity landscapes (kernel PCA + GTM)
 cmfqsar/validation.py   y-randomisation, applicability domain, bootstrap intervals
+cmfqsar/descriptors.py  non-field descriptors: one number per molecule, as a kernel block
 cmfqsar/shapley.py      Shapley decomposition of a prediction (atoms, substituents, field types)
 cmfqsar/conformers.py   conformational ensembles: generation, weighting, grouping (4D)
 cmfqsar/mil.py          multi-instance learning: the model chooses the conformation

@@ -498,6 +498,27 @@ class ModelPanel(QWidget):
         self.row_props.setVisible(False)
         self._prop_boxes: Dict[str, QCheckBox] = {}
         fl.addWidget(self.row_props)
+        # non-field descriptors: one number per molecule, added to the kernel as its own block
+        self.row_desc = QWidget()
+        self.lay_desc = QHBoxLayout(self.row_desc)
+        self.lay_desc.setContentsMargins(0, 0, 0, 0)
+        self.lbl_desc = QLabel("Descriptors (per molecule):")
+        self.lay_desc.addWidget(self.lbl_desc)
+        self.lay_desc.addStretch(1)
+        self.spin_desc_h = QDoubleSpinBox()
+        self.spin_desc_h.setRange(0.0, 100.0)
+        self.spin_desc_h.setSingleStep(0.25)
+        self.spin_desc_h.setDecimals(2)
+        self.spin_desc_h.setValue(1.0)
+        self.spin_desc_h.setPrefix("h = ")
+        self.spin_desc_h.setToolTip(
+            "<p>Mixing coefficient of the descriptor block, the counterpart of a field's h. The "
+            "block is standardised on the training set and scaled to unit mean diagonal, so "
+            "h = 1 puts it on the same footing as one field; 0 switches it off.</p>")
+        self.lay_desc.addWidget(self.spin_desc_h)
+        self.row_desc.setVisible(False)
+        self._desc_boxes: Dict[str, QCheckBox] = {}
+        fl.addWidget(self.row_desc)
         prow = QHBoxLayout()
         prow.addWidget(QLabel("Partial charges:"))
         self.cmb_charges = QComboBox()
@@ -948,6 +969,34 @@ class ModelPanel(QWidget):
 
     def atom_properties(self) -> List[str]:
         return [n for n, b in self._prop_boxes.items() if b.isChecked()]
+
+    def set_descriptor_properties(self, props) -> None:
+        """Offer every numeric molecule property as a non-field descriptor (none: hide the row)."""
+        keep = {n for n, b in self._desc_boxes.items() if b.isChecked()}
+        for b in self._desc_boxes.values():
+            self.lay_desc.removeWidget(b)
+            b.setParent(None)
+            b.deleteLater()
+        self._desc_boxes = {}
+        for i, name in enumerate(list(props)):
+            box = QCheckBox(str(name))
+            box.setToolTip(
+                f"<p>Use {name!r} as a descriptor: one number per molecule, standardised on the "
+                f"training set and added to the kernel beside the fields.</p>"
+                f"<p>For what no field can represent - a measured property, a medium, a "
+                f"temperature. Never something derived from the activity: it would dominate the "
+                f"model and the geometry would look worthless.</p>")
+            box.setChecked(name in keep)
+            box.toggled.connect(self.fields_changed)
+            self.lay_desc.insertWidget(i + 1, box)
+            self._desc_boxes[str(name)] = box
+        self.row_desc.setVisible(bool(self._desc_boxes))
+
+    def descriptors(self) -> List[str]:
+        return [n for n, b in self._desc_boxes.items() if b.isChecked()]
+
+    def descriptor_h(self) -> float:
+        return float(self.spin_desc_h.value())
 
     def set_class_properties(self, props):
         cur = self.cmb_class_prop.currentText()

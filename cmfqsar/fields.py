@@ -34,7 +34,7 @@ from __future__ import annotations
 import re
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 from rdkit import Chem
@@ -99,6 +99,10 @@ class FieldSet:
     # what to do when a molecule does not carry a per-atom property a field asks for:
     # "error" says so and names it, "zero" treats the molecule as having none of that quantity
     prop_missing: str = "error"         # "error" | "zero"
+    # molecule properties used as non-field descriptors: one number per molecule, which
+    # enters the kernel as a block of its own (see cmfqsar/descriptors.py)
+    descriptors: Tuple[str, ...] = ()
+    descriptor_h: float = 1.0           # the block's mixing coefficient
     # --- conformations: the fourth dimension (4D-QSAR) --------------------------
     # "single" uses one conformation per molecule, as the papers do, and is the default.
     # "ensemble" represents a molecule by the weighted mean of the fields of all of its
@@ -121,7 +125,8 @@ class FieldSet:
                param_scheme: str = "rdkit", conformers: str = "single",
                conformer_weighting: str = "uniform", conformer_kt: float = 0.6,
                max_conformers: int = 0, atom_properties: Sequence[str] = (),
-               prop_missing: str = "error") -> "FieldSet":
+               prop_missing: str = "error", descriptors: Sequence[str] = (),
+               descriptor_h: float = 1.0) -> "FieldSet":
         specs = []
         for name in physchem:
             kind = "steric" if name == "steric" else "gauss"
@@ -135,7 +140,8 @@ class FieldSet:
         return cls(specs=specs, charge_model=charge_model, cif_scheme=cif_scheme,
                    param_scheme=param_scheme, conformers=conformers,
                    conformer_weighting=conformer_weighting, conformer_kt=conformer_kt,
-                   max_conformers=max_conformers, prop_missing=prop_missing)
+                   max_conformers=max_conformers, prop_missing=prop_missing,
+                   descriptors=tuple(descriptors), descriptor_h=float(descriptor_h))
 
     @property
     def names(self) -> List[str]:
@@ -488,6 +494,8 @@ class MoleculeFields:
     n_conformers: int = 1
     conformer_weights: Optional[np.ndarray] = None
     atoms_per_conformer: int = 0
+    #: raw (unstandardised) non-field descriptors, in the order of FieldSet.descriptors
+    descriptors: Optional[np.ndarray] = None
 
     @property
     def n_atoms(self) -> int:
@@ -680,9 +688,14 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
         molblock = Chem.MolToMolBlock(mol)
     except Exception:
         molblock = ""
+    desc = None
+    if getattr(fieldset, "descriptors", ()):
+        from .descriptors import read_values
+        desc = read_values(mol, fieldset.descriptors)
     return MoleculeFields(name=name or (mol.GetProp("_Name") if mol.HasProp("_Name") else ""),
                           coords=coords, weights=W, radii=radii, symbols=symbols,
-                          atom_types=types, bonds=bonds, charges=charges, molblock=molblock)
+                          atom_types=types, bonds=bonds, charges=charges, molblock=molblock,
+                          descriptors=desc)
 
 
 # --------------------------------------------------------------------------- #
@@ -704,6 +717,13 @@ class AtomTable:
 
     def slice(self, i: int) -> slice:
         return slice(int(self.offsets[i]), int(self.offsets[i + 1]))
+
+    @property
+    def descriptors(self) -> Optional[np.ndarray]:
+        """(n_mol, n_desc) of raw descriptor values, or None when the field set has none."""
+        if not self.molecules or self.molecules[0].descriptors is None:
+            return None
+        return np.vstack([m.descriptors for m in self.molecules])
 
     def subset(self, idx: Sequence[int]) -> "AtomTable":
         return AtomTable.from_molecules([self.molecules[i] for i in idx])

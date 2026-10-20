@@ -480,6 +480,7 @@ without leaving the panel.
 | α grid, λ grid, C grid, ε/ν grids | the search ranges, as comma-separated lists |
 | Cross-validation | the number of folds and the shuffling seed |
 | External CV | the outer folds and the number of repeats for the nested procedure |
+| Descriptors (per molecule) | which numeric molecule properties enter as non-field descriptors, and the block's mixing coefficient |
 | Validation | *shuffles* for y-randomisation, *bootstrap* for confidence intervals, and the *applicability domain* tick — all three off by default, all three run as part of **Build model** rather than from a button of their own |
 
 Four buttons close the panel: **Build model** runs the grid search, the final fit, the internal
@@ -659,6 +660,65 @@ own.
 
 `prop:<name>` fields are added by naming them in the per-atom property row of the model panel, or
 in `--fields`.
+
+## Descriptors that are not fields
+
+Everything above describes a molecule as a function of space. Some things are not functions of
+space and never will be: a measured logP, a molecular weight, the medium or temperature a series
+was recorded in, a count of rotatable bonds, an energy from a quantum calculation. A model that
+cannot see them has to pretend the activity depends on geometry alone, which for an adsorption
+potency or a permeability is simply false.
+
+The *Descriptors (per molecule)* row of the model panel (`--descriptors A,B`) offers every numeric
+molecule property the file carries. Ticking some adds one more block to the kernel:
+
+$$
+K(A,B) = \sum_f h_f c_f \hat{K}_f(A,B) + h_d c_d\, \mathbf{z}(A)\cdot\mathbf{z}(B)
+$$
+
+where $\mathbf{z}$ holds the descriptors of a molecule, standardised with the **training set's**
+mean and standard deviation so that a quantity in kilojoules cannot outvote one in log units, and
+$h_d$ is a mixing coefficient like a field's (the *h* box beside the row, `--descriptor-h`; zero
+switches the block off without removing it).
+
+Three properties of the block are deliberate:
+
+- **It is scaled, not cosine-normalised.** Dividing by the two norms, as the fields are divided,
+  would send a molecule sitting at the training mean in every descriptor — an unremarkable
+  molecule — to a zero row and a zero diagonal, out of the model altogether. Instead the whole
+  block is multiplied by a constant that puts its mean diagonal at 1, so ten descriptors do not
+  outweigh the geometry merely by being ten.
+- **The statistics belong to the training set** and are stored in the saved model. Standardising
+  a test molecule by its own set would score two test sets on two different scales, which is the
+  mistake the field scaling avoids as well.
+- **The model stays linear in its inputs**, so the decomposition rules survive. A prediction
+  splits into a field part and a descriptor part, and the descriptor part splits further into one
+  number per descriptor, which is what the program reports.
+
+A molecule missing a descriptor is refused by default (`prop_missing`), because a model that
+silently substitutes the mean is telling you nothing about that molecule while looking as
+confident as ever; with the `mean` policy it is substituted and the molecule simply contributes
+nothing through that descriptor. A descriptor that is constant over the training set is reported
+as inert rather than dividing by a spread of zero.
+
+**The obvious trap, stated plainly.** A descriptor derived from the activity — the activity itself,
+a transform of it, a value fitted to it — will dominate the model and make the geometry look
+worthless, while q² goes up. The program cannot detect this, so it reports the mean absolute
+contribution of every descriptor beside the model statistics:
+
+```
+Non-field descriptors (mean |contribution| per training molecule):
+  clogp                        0.0779
+  mw                           0.0176
+  tpsa                         0.0123
+```
+
+If one descriptor carries most of the prediction, the model is a descriptor model wearing a 3D
+coat, and the honest response is to report it as one.
+
+```bash
+python cmf_cli.py build series.sdf --activity pIC50 --descriptors clogp,mw,tpsa
+```
 
 ## Attenuation, regularisation and the grids
 

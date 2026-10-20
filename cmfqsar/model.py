@@ -550,6 +550,11 @@ class CMFModel:
     K_fields_train: Optional[np.ndarray] = None
     stats: ModelStats = field(default_factory=ModelStats)
     learner_: Optional[_Learner] = None
+    # the non-field descriptor block: the training statistics it is standardised with, the
+    # standardised training matrix itself, and the constant that puts its mean diagonal at 1
+    desc_scaler_: Optional[object] = None
+    desc_train_: Optional[np.ndarray] = None
+    desc_scale_: float = 1.0
 
     # ------------------------------------------------------------------ kernels
     def _interp_specs(self):
@@ -666,7 +671,8 @@ class CMFModel:
         """The joint training kernel, whichever source it comes from."""
         if self.uses_fields:
             return self.joint_kernel(self.prepare_training_kernels(train, progress=progress,
-                                                                   cancel=cancel))
+                                                                   cancel=cancel),
+                                     train.descriptors)
         from .invariant import autocorrelation_kernel, channel_scale
         if progress:
             progress("Field autocorrelation", 0.2)
@@ -682,7 +688,8 @@ class CMFModel:
     def test_kernel(self, test: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """The (n_test, n_train) joint kernel block, whichever source it comes from."""
         if self.uses_fields:
-            return self.joint_kernel(self.test_kernels(test, progress=progress, cancel=cancel))
+            return self.joint_kernel(self.test_kernels(test, progress=progress, cancel=cancel),
+                                     test.descriptors)
         from .invariant import autocorrelation_kernel
         if getattr(self, "ac_train_", None) is None:
             raise RuntimeError("model is not fitted")
@@ -703,9 +710,50 @@ class CMFModel:
                 f"which is invariant to rotation and so has no field in a fixed frame to show. "
                 f"The contributions of the training molecules remain valid.")
 
-    def joint_kernel(self, K_fields: np.ndarray) -> np.ndarray:
-        """Linear (overlap-integral) joint kernel: the sum over field types."""
-        return combine_kernels(K_fields, self.fieldset.mixing_vector(), self.scale)
+    def joint_kernel(self, K_fields: np.ndarray, desc: Optional[np.ndarray] = None) -> np.ndarray:
+        """Linear (overlap-integral) joint kernel: the sum over field types.
+
+        `desc` holds the raw descriptor values of the molecules the *rows* belong to, when the
+        field set names non-field descriptors.  They enter as one more block, standardised with
+        the training set's statistics and scaled like a field; passing None leaves the kernel as
+        the fields alone, which is what the callers that only want a field kernel do.
+        """
+        K = combine_kernels(K_fields, self.fieldset.mixing_vector(), self.scale)
+        return K + self.descriptor_block(desc)
+
+    def descriptor_block(self, desc: Optional[np.ndarray]) -> float:
+        """h_d c_d z(rows) . z(training), or 0.0 when there are no descriptors to add."""
+        if desc is None or self.desc_train_ is None:
+            return 0.0
+        from .descriptors import descriptor_kernel
+        Z = self.desc_scaler_.transform(desc)
+        return (self.fieldset.descriptor_h * self.desc_scale_
+                * descriptor_kernel(Z, self.desc_train_))
+
+    def descriptor_contributions(self, mol: "MoleculeFields") -> List[Tuple[str, float]]:
+        """What each non-field descriptor contributed to one molecule's prediction.
+
+        The block is a dot product, so its share of the prediction splits exactly into one term
+        per descriptor, and the terms sum to the block's whole contribution.  Reported beside the
+        atom contributions, this is what shows at a glance whether a model is standing on its
+        geometry or on a descriptor that happens to track the activity.
+        """
+        if self.desc_train_ is None or self.coef is None:
+            return []
+        from .descriptors import contributions
+        values = np.asarray(mol.descriptors, float).reshape(1, -1)
+        z = self.desc_scaler_.transform(values)[0]
+        parts = contributions(z, self.desc_train_, self.coef,
+                              h=self.fieldset.descriptor_h, scale=self.desc_scale_)
+        return list(zip(self.desc_scaler_.names, [float(v) for v in parts]))
+
+    def descriptor_self(self, desc: Optional[np.ndarray]) -> float:
+        """The descriptor block's own diagonal, which the variance and one-class scores need."""
+        if desc is None or self.desc_train_ is None:
+            return 0.0
+        from .descriptors import descriptor_self as _self
+        Z = self.desc_scaler_.transform(desc)
+        return self.fieldset.descriptor_h * self.desc_scale_ * _self(Z)
 
     @property
     def is_linear(self) -> bool:
@@ -721,7 +769,8 @@ class CMFModel:
             # the cosine-normalised self-kernel is 1, except for a field that is identically
             # zero for that molecule (no donor, no charge, ...), which normalisation leaves at 0
             d = np.where(d > 1e-300, 1.0, 0.0)
-        return (self.fieldset.mixing_vector() * self.scale) @ d
+        return ((self.fieldset.mixing_vector() * self.scale) @ d
+                + self.descriptor_self(table.descriptors))
 
     def self_after_layer(self, d_linear: np.ndarray) -> np.ndarray:
         """K(x, x) of the kernel the learner actually sees, from the linear self-kernels.
@@ -784,7 +833,32 @@ class CMFModel:
         self.K_fields_train = self._field_kernels(train, train, self.self_diag, self.self_diag,
                                                   progress=progress, cancel=cancel)
         self.scale = self._compute_scale(self.K_fields_train)
+        self.prepare_descriptors(train)
         return self.K_fields_train
+
+    def prepare_descriptors(self, train: AtomTable) -> None:
+        """Fit the descriptor statistics on the training molecules and scale the block.
+
+        Both belong to the training set and are stored with the model: standardising or rescaling
+        according to the molecules being predicted would score two test sets on two scales. The
+        scale puts the block's mean diagonal at 1, which is what ``scale_fields`` does to a field,
+        so that a descriptor block with ten descriptors does not outweigh the geometry merely by
+        being longer.
+        """
+        from .descriptors import DescriptorScaler, descriptor_self
+        names = tuple(getattr(self.fieldset, "descriptors", ()) or ())
+        if not names:
+            self.desc_scaler_, self.desc_train_, self.desc_scale_ = None, None, 1.0
+            return
+        values = train.descriptors
+        if values is None:
+            raise ValueError("the field set names descriptors but the molecules carry none; "
+                             "rebuild the fields with the same field set")
+        self.desc_scaler_ = DescriptorScaler.fit(
+            values, names, missing=getattr(self.fieldset, "prop_missing", "error"))
+        self.desc_train_ = self.desc_scaler_.transform(values)
+        d = float(np.mean(descriptor_self(self.desc_train_)))
+        self.desc_scale_ = 1.0 / d if d > 1e-12 else 0.0
 
     def set_training_kernels(self, train: AtomTable, K_fields: np.ndarray,
                              self_diag: Optional[np.ndarray] = None) -> np.ndarray:
@@ -793,6 +867,7 @@ class CMFModel:
         self.self_diag = self_diag
         self.K_fields_train = K_fields
         self.scale = self._compute_scale(K_fields)
+        self.prepare_descriptors(train)
         return K_fields
 
     def fit(self, train: AtomTable, y: np.ndarray, cv_folds: int = 10, cv_seed: Optional[int] = 0,
@@ -805,7 +880,7 @@ class CMFModel:
                     train,
                     progress=(lambda i, n: progress(f"Kernel matrix {i}/{n}", 0.8 * i / n)) if progress else None,
                     cancel=cancel)
-            K_lin = self.joint_kernel(self.K_fields_train)
+            K_lin = self.joint_kernel(self.K_fields_train, train.descriptors)
         else:
             K_lin = self.training_kernel(train, progress=progress, cancel=cancel)
         self.y = y
@@ -858,7 +933,8 @@ class CMFModel:
         if self.coef is None and oc is None:
             raise RuntimeError("model is not fitted")
         Kf = self.test_kernels(test, progress=progress, cancel=cancel) if self.uses_fields else None
-        K = self.joint_kernel(Kf) if self.uses_fields else self.test_kernel(test, progress=progress)
+        K = (self.joint_kernel(Kf, test.descriptors) if self.uses_fields
+             else self.test_kernel(test, progress=progress))
         if not self.is_linear:
             K = self.apply_layer(K, self.joint_self(test), self.base_diag_)
         if oc is not None:
@@ -875,6 +951,11 @@ class CMFModel:
             raise RuntimeError("model is not fitted")
         self._require_fields("predictions from precomputed field kernels")
         self._require_linear("predictions from precomputed field kernels")
+        if self.desc_train_ is not None:
+            # the per-field kernels carry no descriptors, and a prediction that quietly left
+            # the descriptor block out would be wrong rather than approximate
+            raise ValueError("this model has non-field descriptors; predict from the atom "
+                             "table instead of precomputed field kernels")
         return self.joint_kernel(K_fields_test) @ self.coef + self.bias
 
     def predict_with_variance(self, test: AtomTable) -> Tuple[np.ndarray, np.ndarray]:
@@ -888,7 +969,8 @@ class CMFModel:
         yp = K @ self.coef + self.bias
         if self.learner_ is None or self.learner_.K_train_ is None:
             learner = _Learner("gp", self.params)
-            learner.K_train_ = (self.joint_kernel(self.K_fields_train) if self.uses_fields
+            learner.K_train_ = (self.joint_kernel(self.K_fields_train,
+                                                  self.train.descriptors) if self.uses_fields
                                 else self.training_kernel(self.train))
         else:
             learner = self.learner_
@@ -1351,7 +1433,7 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
             K_lin = combine_kernels(Kf, h_full, model.scale)
         elif Kf is not None:
             fold_h = None
-            K_lin = model.joint_kernel(Kf)
+            K_lin = model.joint_kernel(Kf, train.descriptors)
         dg = np.diag(K_lin).copy()
         if model.kernel_layer == "gauss":
             model.gamma_scale_ = median_gamma_scale(K_lin)
@@ -1474,7 +1556,7 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
                     if all(v == 0 for v in trial.values()):
                         continue
                     model.fieldset.set_mixing(trial)
-                    K_lin_t = model.joint_kernel(Kf)
+                    K_lin_t = model.joint_kernel(Kf, train.descriptors)
                     K = model.apply_layer(K_lin_t, np.diag(K_lin_t), np.diag(K_lin_t))
                     ycv_t = cv_predict(K, y, model.method, params, folds=folds, seed=seed, fit_bias=model.fit_bias)
                     rt, q2_t = cv_loss(model, y, ycv_t)
