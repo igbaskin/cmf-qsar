@@ -479,6 +479,7 @@ without leaving the panel.
 | α grid, λ grid, C grid, ε/ν grids | the search ranges, as comma-separated lists |
 | Cross-validation | the number of folds and the shuffling seed |
 | External CV | the outer folds and the number of repeats for the nested procedure |
+| Validation | *shuffles* for y-randomisation, *bootstrap* for confidence intervals, and the *applicability domain* tick — all three off by default, all three run as part of **Build model** rather than from a button of their own |
 
 Four buttons close the panel: **Build model** runs the grid search, the final fit, the internal
 cross-validation and the test prediction; **External CV** runs the nested procedure and reports
@@ -523,7 +524,7 @@ Twelve tabs, each filled by the work that produces it:
 
 | Tab | What it holds |
 |---|---|
-| Statistics | every figure of merit, for the fit, the cross-validation, the test set and the external CV |
+| Statistics | every figure of merit, for the fit, the cross-validation, the test set and the external CV; the y-randomisation, bootstrap and applicability-domain results follow at the bottom, under a *Validation* heading, when they were asked for |
 | Scatter plot | observed against predicted, by subset, with the molecule under the cursor named |
 | ROC | the receiver-operating curves of a classification model, per subset |
 | Scores | the ranked decision values or calibrated probabilities: rank, molecule, score, set, class |
@@ -534,7 +535,7 @@ Twelve tabs, each filled by the work that produces it:
 | Shapley | the Shapley decomposition, over atoms, substituents of the common scaffold or field types, with second-order interactions |
 | Complementarity | the field complementarity of the molecules and of the co-field with the pocket, by sign agreement, cosine or correlation |
 | Chemotypes | the Murcko scaffolds found in the set, their sizes, and the leave-one-chemotype-out result beside the alignment-free baseline |
-| Log | everything the program did, with timings and warnings — the first place to look when a result surprises you |
+| Log | everything the program did, with timings and warnings — including the names of the molecules that fell outside the applicability domain — the first place to look when a result surprises you |
 
 ## The menus
 
@@ -734,7 +735,8 @@ shape could have reached that number from activities that mean nothing. In a con
 where kernel values above 0.97 are normal, that is a real possibility, and it is the first thing a
 referee asks about a 3D-QSAR model.
 
-*Validation → shuffles* in the model panel (`--y-scramble N`) shuffles the activities N times,
+The **shuffles** box of the model panel's *Validation* row (`--y-scramble N`) shuffles the
+activities N times,
 refits and cross-validates each time, and reports where the real q² falls among the scrambled
 ones — the mean and spread of the shuffled values, the largest of them, how many standard
 deviations above them the real one lies, and the permutation p-value.
@@ -761,7 +763,7 @@ number mislead:
 A kernel method always returns a number. For a molecule unlike anything in the training set, that
 number is the training mean in disguise, and nothing in q² or R²pred reveals it.
 
-*Validation → applicability domain* (`--domain`) measures how close each molecule outside the
+The **applicability domain** tick of that row (`--domain`) measures how close each molecule outside the
 training set is to it, **in the kernel the model itself uses**: the cosine similarity of their
 fields, averaged over the *k* nearest training molecules (3 by default). The threshold is not a
 number chosen out of the air — it is taken from the training set's own spread, the 5th percentile
@@ -783,7 +785,7 @@ sits far away (large distance).
 A difference of 0.02 in q² is quoted all over the benchmarks in this repository. Some of those
 differences are real and some are the particular molecules they were computed over.
 
-*Validation → bootstrap* (`--bootstrap N`) resamples the (observed, predicted) pairs N times and
+The **bootstrap** box of that row (`--bootstrap N`) resamples the (observed, predicted) pairs N times and
 reports a percentile confidence interval for q² and for R²pred. It is the uncertainty of the
 *statistic* given these predictions, which is exactly what decides whether two settings differ.
 On the 21 training steroids, q² = 0.768 carries a 95 % interval of [0.47, 0.89] — wide enough to
@@ -794,6 +796,30 @@ refit, and score the molecules that were left out of the bag. That one measures 
 the fit rather than of the statistic, and it is the more pessimistic of the two. The kernel is
 never recomputed — a resample is an index into the matrix — so a hundred refits cost about as much
 as one cross-validation.
+
+## Where the validation appears
+
+The three checks of *Building a model* — y-randomisation, the bootstrap intervals and the
+applicability domain — are set in one place and reported in another, which is worth stating
+plainly because there is no button and no separate window for them.
+
+**Setting them**: the *Validation* row at the foot of the model panel's second group, directly
+under *External CV*. Three controls: **shuffles** (0 = off), **bootstrap** (0 = off), and the
+**applicability domain** tick. They are settings, not actions — choose them before pressing
+**Build model**, and they run as part of that build, after the fit and the test prediction.
+
+**Reading them**: the *Statistics* tab of the results panel, where they are appended below the
+usual figures under a heading *Validation*. The names of the molecules that fell outside the
+applicability domain go to the *Log* tab instead, with their similarity values, so that the
+statistics stay a summary and the list of offenders sits with the rest of the commentary.
+
+Three cases produce no validation block at all, and each says why rather than leaving a blank:
+
+- all three controls at their defaults — nothing was asked for;
+- a classification or one-class model — y-randomisation and the bootstrap are implemented for
+  regression only, and the block says so;
+- the autocorrelation kernel source — the applicability domain is measured in the field kernel,
+  which that source does not provide.
 
 ## Statistics reported
 
