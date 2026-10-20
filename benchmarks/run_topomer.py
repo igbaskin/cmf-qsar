@@ -55,6 +55,9 @@ from cmfqsar.topomer import (TopomerSpec, attachment_label, cuttable,  # noqa: E
 RESULTS = os.path.join(HERE, "results", "topomer")
 DATA = os.path.join(ROOT, "examples", "sutherland")
 SETS = ("ACE", "AChE", "BZR", "COX2", "DHFR", "GPB", "THER", "THR")
+#: the Mittal collection: the same measurement where the alignment is automatic rather than
+#: curated, so that what the topomer rule gives up is a worse frame than Sutherland's
+MITTAL = os.path.join(ROOT, "examples", "mittal")
 FIELDS = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
 ALPHAS = (0.1, 0.3, 0.5, 1.0, 2.0, 5.0)
 LAMS = (1e-3, 1e-2, 0.1, 1.0, 10.0)
@@ -132,13 +135,13 @@ def pick_core(mols):
     return None, "", 0
 
 
-def run_set(name, force=False):
-    out = os.path.join(RESULTS, f"{name}.json")
+def run_set(name, force=False, data=DATA, results=RESULTS):
+    out = os.path.join(results, f"{name}.json")
     if os.path.exists(out) and not force:
         print(f"[skip] {out} exists")
         return json.load(open(out))
     t0 = time.time()
-    ds = load_dataset(os.path.join(DATA, f"{name}.sdf"))
+    ds = load_dataset(os.path.join(data, f"{name}.sdf"))
     y_all = np.asarray(ds.activity, float)
     ok = np.isfinite(y_all)
     mols = [m for m, g in zip(ds.mols, ok) if g]
@@ -205,23 +208,23 @@ def run_set(name, force=False):
     print(f"    {'counts':13s} q2 {best[0]:+.3f}  RMSEcv {best[1]:.3f}  (lam {best[2]:g})",
           flush=True)
     res["seconds"] = time.time() - t0
-    os.makedirs(RESULTS, exist_ok=True)
+    os.makedirs(results, exist_ok=True)
     with open(out, "w") as fh:
         json.dump(res, fh, indent=1)
     print(f"    written to {out}  ({res['seconds']:.0f} s)", flush=True)
     return res
 
 
-def report(path):
+def report(path, results=RESULTS, title="on the Sutherland sets"):
     rows = []
-    for name in SETS:
-        p = os.path.join(RESULTS, f"{name}.json")
-        if os.path.exists(p):
-            rows.append(json.load(open(p)))
+    for fn in sorted(os.listdir(results)) if os.path.isdir(results) else []:
+        if fn.endswith(".json"):
+            rows.append(json.load(open(os.path.join(results, fn))))
+    rows.sort(key=lambda r: r["set"])
     if not rows:
         raise SystemExit("no results yet")
-    out = ["# The alignment against the topomer rule, on the Sutherland sets", "",
-           "Aligned CMF (the published superposition), topomer CMF (substituents posed by rule,",
+    out = [f"# The alignment against the topomer rule, {title}", "",
+           "Aligned CMF (the frame the file comes with), topomer CMF (substituents posed by rule,",
            "no superposition) and the alignment-free count baseline, all on the same molecules:",
            "the congeneric series each set contains, found as the Bemis-Murcko framework of its",
            "largest chemotype plus every molecule that framework cuts cleanly off. Same fields "
@@ -242,7 +245,7 @@ def report(path):
     out += ["", f"Mean loss from giving up the alignment: {mean:+.3f} q2 over {len(rows)} sets.",
             "",
             "Splitting that loss in two. The middle column keeps the same cut substituents at the",
-            "same separated sites but leaves each one exactly where the published superposition",
+            "same separated sites but leaves each one exactly where the file's own alignment",
             "put it, so the step to its left is the price of the cut itself -- the scaffold's own",
             "field and the geometry between one substituent and another, both of which separated",
             "sites destroy -- and the step to its right is the price of the pose rule alone, with",
@@ -279,16 +282,39 @@ def report(path):
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--sets", default=",".join(SETS))
+    ap.add_argument("--sets", default=None,
+                    help="which sets to run; by default every SDF in the data folder")
+    ap.add_argument("--mittal", action="store_true",
+                    help="run on examples/mittal (automatic alignments) instead of "
+                         "examples/sutherland, into results/topomer_mittal")
+    ap.add_argument("--data", default=None, metavar="DIR")
+    ap.add_argument("--results", default=None, metavar="DIR")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--report", default=None, metavar="PATH")
     args = ap.parse_args()
     RDLogger.DisableLog("rdApp.*")
+    data = args.data or (MITTAL if args.mittal else DATA)
+    results = args.results or (RESULTS + "_mittal" if args.mittal else RESULTS)
+    title = ("on the Mittal sets, whose alignments are automatic" if args.mittal
+             else "on the Sutherland sets")
     if args.report:
-        report(args.report)
+        report(args.report, results=results, title=title)
         return
-    for name in [s for s in args.sets.split(",") if s]:
-        run_set(name, force=args.force)
+    if args.sets:
+        names = [s for s in args.sets.split(",") if s]
+    elif args.mittal or args.data:
+        names = sorted(f[:-4] for f in os.listdir(data) if f.endswith(".sdf"))
+    else:
+        names = list(SETS)
+    failed = []
+    for name in names:
+        try:
+            run_set(name, force=args.force, data=data, results=results)
+        except (SystemExit, Exception) as exc:       # noqa: BLE001 - one set, not the run
+            failed.append(f"{name}: {exc}")
+            print(f"    [failed] {name}: {exc}", flush=True)
+    for line in failed:
+        print("    not measured -- " + line[:160])
 
 
 if __name__ == "__main__":

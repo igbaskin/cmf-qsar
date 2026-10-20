@@ -1,0 +1,71 @@
+{
+ "set": "DHFR",
+ "published": {
+  "file": "sutherland/DHFR.sdf",
+  "n": 361,
+  "align_rmsd_median": null,
+  "aligned": {
+   "q2": 0.6514228621964308,
+   "rmse_cv": 0.7695271261835426,
+   "alpha": 5.0,
+   "lam": 1.0
+  },
+  "invariant": {
+   "q2": 0.6511169669551962,
+   "rmse_cv": 0.7698647029207134,
+   "alpha": 0.1,
+   "lam": 0.01
+  },
+  "counts": {
+   "q2": 0.3789810671514283,
+   "rmse_cv": 1.0271335237958337,
+   "lam": 0.01
+  }
+ },
+ "automatic": {
+  "file": "mittal/DHFR.sdf",
+  "n": 397,
+  "align_rmsd_median": 0.5,
+  "aligned": {
+   "q2": 0.49049157843441304,
+   "rmse_cv": 1.0606507959091207,
+   "alpha": 0.3,
+   "lam": 1.0
+  },
+  "invariant": {
+   "q2": 0.5710370279637834,
+   "rmse_cv": 0.9732101766793821,
+   "alpha": 0.1,
+   "lam": 0.1
+  },
+  "counts": {
+   "q2": 0.2655177355292462,
+   "rmse_cv": 1.2734661207099094,
+   "lam": 0.01
+  }
+ },
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "seconds": 284.82764530181885
+}

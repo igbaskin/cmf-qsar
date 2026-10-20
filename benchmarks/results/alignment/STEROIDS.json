@@ -1,0 +1,71 @@
+{
+ "set": "STEROIDS",
+ "published": {
+  "file": "steroids_cbg.sdf",
+  "n": 31,
+  "align_rmsd_median": null,
+  "aligned": {
+   "q2": 0.7185923792349038,
+   "rmse_cv": 0.5637763277455675,
+   "alpha": 5.0,
+   "lam": 1.0
+  },
+  "invariant": {
+   "q2": 0.6939438537625537,
+   "rmse_cv": 0.5879487373049734,
+   "alpha": 0.1,
+   "lam": 0.01
+  },
+  "counts": {
+   "q2": 0.49983965543274833,
+   "rmse_cv": 0.7516117088162618,
+   "lam": 0.1
+  }
+ },
+ "automatic": {
+  "file": "mittal/STEROIDS.sdf",
+  "n": 21,
+  "align_rmsd_median": 1.4,
+  "aligned": {
+   "q2": 0.5154393161811507,
+   "rmse_cv": 0.7970607658072891,
+   "alpha": 0.5,
+   "lam": 1.0
+  },
+  "invariant": {
+   "q2": 0.30199973595276863,
+   "rmse_cv": 0.9566325167177662,
+   "alpha": 0.1,
+   "lam": 0.1
+  },
+  "counts": {
+   "q2": 0.45087058105290934,
+   "rmse_cv": 0.8485055765252173,
+   "lam": 0.1
+  }
+ },
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "seconds": 4.633853912353516
+}

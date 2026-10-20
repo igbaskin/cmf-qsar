@@ -598,6 +598,58 @@ rather than a superposition search, and the frame exists where no superposition 
 Choose the core so that the scaffold really is the invariant part of the series, and keep the
 substituents small enough that their mutual geometry is not the pharmacophore.
 
+**The same measurement where the alignment is automatic reverses the verdict**
+([benchmarks/run_topomer.py --mittal](benchmarks/run_topomer.py)). `examples/mittal` holds 38 of
+the 40 benchmark sets of Mittal, McKinnon & Sorich (*J. Chem. Inf. Model.* 49 (2009) 1810), whose
+supplementary data are two-dimensional: the conformers here are RDKit ETKDG, and the frame is a
+maximum-common-substructure superposition onto a reference molecule chosen by rule. The fit is on
+record per molecule in the `align_rmsd` tag — median 1.29 Å across the collection, above 1 Å in
+25 of 38 sets, 2.5–3.2 Å in the flexible ones (HIVPR, AMPH1, GHS, THR). Thirty-one of the sets
+have a scaffold with enough cuttable molecules to carry a topomer model, and on those:
+
+| | sets | topomer wins | mean q² aligned | mean q² topomer | the cut costs | the pose costs |
+|---|---:|---:|---:|---:|---:|---:|
+| Sutherland, curated frame | 8 | 4 | **+0.445** | +0.371 | +0.058 | +0.015 |
+| Mittal, automatic frame | 31 | 23 | +0.200 | **+0.256** | −0.047 | −0.009 |
+
+The pose rule costs 0.015 q² against a careful superposition and *gains* 0.009 against an
+automatic one, and the whole picture flips with the quality of the frame it replaces: the rule
+wins 23 of 31 sets here, by up to 0.51 (AI, aromatase inhibitors: +0.007 aligned against +0.521
+posed) and 0.43 (HPTP). Where it loses, it loses for a readable reason — VATP (−0.63) is 13
+macrolactone molecules whose ring is the pharmacophore and whose substituents are decoration.
+
+How much the frame itself is worth is measurable directly, because nine targets occur in both
+collections — the same compounds, curated superposition against automatic
+([benchmarks/run_alignment.py](benchmarks/run_alignment.py)):
+
+| target | q² curated | q² automatic | median fit | geometry buys, curated | geometry buys, automatic |
+|---|---:|---:|---:|---:|---:|
+| ACE | +0.651 | +0.470 | 1.27 Å | −0.003 | −0.142 |
+| AChE | +0.547 | +0.243 | 1.61 Å | +0.337 | +0.078 |
+| BZR | +0.424 | +0.361 | 1.29 Å | +0.162 | +0.039 |
+| COX2 | +0.552 | +0.248 | 1.01 Å | +0.244 | −0.095 |
+| DHFR | +0.651 | +0.490 | 0.50 Å | +0.272 | +0.225 |
+| GPB | +0.593 | +0.260 | 1.12 Å | +0.285 | −0.063 |
+| THER | +0.538 | +0.043 | 1.60 Å | +0.292 | −0.236 |
+| THR | +0.701 | +0.021 | 2.71 Å | +0.691 | −0.163 |
+| STEROIDS | +0.719 | +0.515 | 1.40 Å | +0.219 | +0.065 |
+
+Mean +0.597 against +0.295: an automatic alignment costs half the model. "Geometry buys" is the
+aligned model minus its own count baseline — +0.25 on average with the curated frame, −0.06 with
+the automatic one, so on five of the nine targets the fields in an automatic frame predict *worse
+than atom-type counts*. And on the automatic files the rotation-invariant autocorrelation kernel,
+which uses the same coordinates with no superposition at all, beats the aligned model on six of
+nine (THR +0.452 against +0.021, THER +0.264 against +0.043): the conformers are usable, the
+superposition is not. Two caveats — the molecule sets are not identical (147/282/361 here against
+Mittal's 163/322/397, and 31 against 21 steroids), so a few hundredths are composition rather
+than alignment, and every model picks (α, λ) on the CV it reports.
+
+Taken together the three measurements say one thing: **CMF needs geometry, not a superposition.**
+Where a curated frame exists it is worth about 0.25 q² over counts and the topomer rule gives up
+a little of it; where the frame has to be produced automatically it is worth nothing, and both
+frameless routes in this program — the topomer poses and the invariant kernel — are the better
+choice.
+
 The cuttability number is reported, not hidden: `cuttable_fraction` says what share of a series a
 core comes cleanly off, and a core that is fused to the rest — the whole-set MCS of the
 benzodiazepines, say, which is a benzene ring inside a fused system — is refused with that number
@@ -1712,8 +1764,10 @@ MOL2 Sybyl atom types and partial charges are used when present (choose *Partial
 MOL2 blocks that RDKit's reader rejects (unusual valences) are parsed by a tolerant fallback reader.
 `docs/benchmark.md` compares the program with Table 2 of the 2013 paper on the eight literature sets
 (`benchmarks/run_sutherland.py` reruns the comparison when the data sets are available locally);
-`benchmarks/run_topomer.py` measures the alignment against the topomer rule on the same eight sets,
-from the SDF files in `examples/sutherland` alone.
+`benchmarks/run_topomer.py` measures the alignment against the topomer rule on the same eight sets
+(`--mittal` repeats it on the 38 automatically aligned sets of `examples/mittal`), and
+`benchmarks/run_alignment.py` measures a curated alignment against an automatic one on the nine
+targets the two collections share — all from the SDF files in `examples/` alone.
 
 ## Field parameterisation
 

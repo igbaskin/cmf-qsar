@@ -1,6 +1,6 @@
 # The alignment against the topomer rule, on the Sutherland sets
 
-Aligned CMF (the published superposition), topomer CMF (substituents posed by rule,
+Aligned CMF (the frame the file comes with), topomer CMF (substituents posed by rule,
 no superposition) and the alignment-free count baseline, all on the same molecules:
 the congeneric series each set contains, found as the Bemis-Murcko framework of its
 largest chemotype plus every molecule that framework cuts cleanly off. Same fields (electrostatic, steric, hydrophobic, hba, hbd),
@@ -22,7 +22,7 @@ the same degree.
 Mean loss from giving up the alignment: +0.073 q2 over 8 sets.
 
 Splitting that loss in two. The middle column keeps the same cut substituents at the
-same separated sites but leaves each one exactly where the published superposition
+same separated sites but leaves each one exactly where the file's own alignment
 put it, so the step to its left is the price of the cut itself -- the scaffold's own
 field and the geometry between one substituent and another, both of which separated
 sites destroy -- and the step to its right is the price of the pose rule alone, with

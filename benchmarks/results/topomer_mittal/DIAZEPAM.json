@@ -1,0 +1,69 @@
+{
+ "set": "DIAZEPAM",
+ "n_all": 42,
+ "n_kept": 22,
+ "core": "O=C1NCc2cncn2-c2ccccc21",
+ "core_atoms": 15,
+ "core_group": 16,
+ "sites": 8,
+ "cuttable": 0.5238095238095238,
+ "unique_substituents": 9,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned_kept": {
+  "q2": 0.5876549749248953,
+  "rmse_cv": 0.5981794880783298,
+  "alpha": 1.0,
+  "lam": 0.01,
+  "n": 22
+ },
+ "topomer": {
+  "q2": 0.6801814874012617,
+  "rmse_cv": 0.5268086978161344,
+  "alpha": 0.1,
+  "lam": 0.1,
+  "n": 22
+ },
+ "aligned_frag": {
+  "q2": 0.7731134772445305,
+  "rmse_cv": 0.44371640610555857,
+  "alpha": 0.1,
+  "lam": 0.01,
+  "n": 22
+ },
+ "aligned_all": {
+  "q2": 0.7089628657495542,
+  "rmse_cv": 0.5776323883653379,
+  "alpha": 1.0,
+  "lam": 0.001,
+  "n": 42
+ },
+ "counts": {
+  "q2": 0.21373895073657323,
+  "rmse_cv": 0.8260085028890196,
+  "lam": 1.0,
+  "n": 22
+ },
+ "seconds": 5.570481061935425
+}

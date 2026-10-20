@@ -1,0 +1,69 @@
+{
+ "set": "PTC",
+ "n_all": 40,
+ "n_kept": 10,
+ "core": "c1ccc(-c2cccc3c2C[N+]2(CCCC2)Cc2c(-c4ccccc4)cccc2-3)cc1",
+ "core_atoms": 31,
+ "core_group": 8,
+ "sites": 22,
+ "cuttable": 0.25,
+ "unique_substituents": 3,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned_kept": {
+  "q2": -0.13500147904632098,
+  "rmse_cv": 9.157797731263377,
+  "alpha": 2.0,
+  "lam": 1.0,
+  "n": 10
+ },
+ "topomer": {
+  "q2": -0.17377695638486435,
+  "rmse_cv": 9.31291465156197,
+  "alpha": 5.0,
+  "lam": 1.0,
+  "n": 10
+ },
+ "aligned_frag": {
+  "q2": 0.06985611027814542,
+  "rmse_cv": 8.290255244052974,
+  "alpha": 1.0,
+  "lam": 0.001,
+  "n": 10
+ },
+ "aligned_all": {
+  "q2": 0.4489453497592272,
+  "rmse_cv": 19.90545744329222,
+  "alpha": 5.0,
+  "lam": 0.001,
+  "n": 40
+ },
+ "counts": {
+  "q2": -0.23587654569882033,
+  "rmse_cv": 9.556093237389735,
+  "lam": 10.0,
+  "n": 10
+ },
+ "seconds": 16.293806314468384
+}
