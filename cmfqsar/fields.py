@@ -88,6 +88,15 @@ class FieldSpec:
     def prop(self) -> Optional[str]:
         return self.name[5:] if self.is_prop else None
 
+    @property
+    def is_probe(self) -> bool:
+        """A GRID-like probe field: every atom carries several Gaussians, not one."""
+        return self.name.startswith("probe:")
+
+    @property
+    def probe(self) -> Optional[str]:
+        return self.name[6:] if self.is_probe else None
+
 
 @dataclass
 class FieldSet:
@@ -103,6 +112,8 @@ class FieldSet:
     # enters the kernel as a block of its own (see cmfqsar/descriptors.py)
     descriptors: Tuple[str, ...] = ()
     descriptor_h: float = 1.0           # the block's mixing coefficient
+    #: Gaussians per atom in a probe field; the kernel costs the square of this
+    probe_terms: int = 4
     # --- conformations: the fourth dimension (4D-QSAR) --------------------------
     # "single" uses one conformation per molecule, as the papers do, and is the default.
     # "ensemble" represents a molecule by the weighted mean of the fields of all of its
@@ -126,13 +137,18 @@ class FieldSet:
                conformer_weighting: str = "uniform", conformer_kt: float = 0.6,
                max_conformers: int = 0, atom_properties: Sequence[str] = (),
                prop_missing: str = "error", descriptors: Sequence[str] = (),
-               descriptor_h: float = 1.0) -> "FieldSet":
+               descriptor_h: float = 1.0, probes: Sequence[str] = (),
+               probe_terms: int = 4) -> "FieldSet":
         specs = []
         for name in physchem:
             kind = "steric" if name == "steric" else "gauss"
             specs.append(FieldSpec(name=name, kind=kind, alpha=alpha))
         for t in cif_types:
             specs.append(FieldSpec(name=f"cif:{t}", kind="gauss", alpha=alpha))
+        for pr in probes:
+            # a GRID-like field: what a probe would gain by sitting at each point. Its alpha
+            # is unused -- the widths come from the expansion in cmfqsar/probes.py
+            specs.append(FieldSpec(name=f"probe:{pr}", kind="probe", alpha=alpha))
         for q in atom_properties:
             # a field of whatever the file says about every atom: QM charges, a Fukui index,
             # a local softness, anything with one number per atom
@@ -141,7 +157,8 @@ class FieldSet:
                    param_scheme=param_scheme, conformers=conformers,
                    conformer_weighting=conformer_weighting, conformer_kt=conformer_kt,
                    max_conformers=max_conformers, prop_missing=prop_missing,
-                   descriptors=tuple(descriptors), descriptor_h=float(descriptor_h))
+                   descriptors=tuple(descriptors), descriptor_h=float(descriptor_h),
+                   probe_terms=int(probe_terms))
 
     @property
     def names(self) -> List[str]:
@@ -496,6 +513,8 @@ class MoleculeFields:
     atoms_per_conformer: int = 0
     #: raw (unstandardised) non-field descriptors, in the order of FieldSet.descriptors
     descriptors: Optional[np.ndarray] = None
+    #: per-atom Gaussian expansion coefficients of every probe field, (N, n_terms)
+    probe_coeffs: Dict[str, np.ndarray] = field(default_factory=dict)
 
     @property
     def n_atoms(self) -> int:
@@ -650,15 +669,20 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
         evdw = np.array([vdw_params(s)[1] for s in symbols])
 
     need = set(s.name for s in fieldset.specs)
-    charges = _partial_charges(mol, fieldset.charge_model) if "electrostatic" in need else np.zeros(n)
+    probes = [s for s in fieldset.specs if s.is_probe]
+    # a probe field weighs dispersion, electrostatics and hydrogen bonding together, so it
+    # needs the charges and the donor/acceptor character whether or not those fields are on
+    charges = (_partial_charges(mol, fieldset.charge_model)
+               if ("electrostatic" in need or probes) else np.zeros(n))
     hydro = acc = don = None
+    want_hb = bool(need & {"hydrophobic", "hba", "hbd"}) or bool(probes)
     if scheme.startswith("tripos"):
-        if need & {"hydrophobic", "hba", "hbd"}:
+        if want_hb:
             hydro, acc, don = _tripos_weights(syb, _hydrogen_counts(mol, legacy=(scheme == "tripos-legacy")))
     else:
-        if "hydrophobic" in need:
+        if "hydrophobic" in need or probes:
             hydro = _hydrophobic_weights(mol)
-        if "hba" in need or "hbd" in need:
+        if want_hb:
             acc, don = _hbond_weights(mol)
 
     W = np.zeros((n, fieldset.n_fields))
@@ -680,6 +704,10 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
             W[:, k] = atom_property(mol, spec.prop, n,
                                     policy=getattr(fieldset, "prop_missing", "error"),
                                     mol_name=name)
+        elif spec.is_probe:
+            # the weight column is unused for a probe field: its atoms carry several
+            # Gaussians each, which are kept in probe_coeffs below
+            W[:, k] = 0.0
         else:
             raise ValueError(f"Unknown field type {spec.name}")
 
@@ -688,6 +716,19 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
         molblock = Chem.MolToMolBlock(mol)
     except Exception:
         molblock = ""
+    probe_coeffs = {}
+    if probes:
+        from .probes import coefficients as _probe_coeffs, probe as _probe
+        hb_char = np.zeros(n)
+        if don is not None:
+            hb_char = hb_char + np.asarray(don, float)        # donors count positive
+        if acc is not None:
+            hb_char = hb_char - np.asarray(acc, float)        # acceptors negative
+        hb_char = np.clip(hb_char, -1.0, 1.0)
+        for spec in probes:
+            probe_coeffs[spec.name] = _probe_coeffs(
+                symbols, charges, hb_char, _probe(spec.probe),
+                n_terms=getattr(fieldset, "probe_terms", 4))
     desc = None
     if getattr(fieldset, "descriptors", ()):
         from .descriptors import read_values
@@ -695,7 +736,7 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
     return MoleculeFields(name=name or (mol.GetProp("_Name") if mol.HasProp("_Name") else ""),
                           coords=coords, weights=W, radii=radii, symbols=symbols,
                           atom_types=types, bonds=bonds, charges=charges, molblock=molblock,
-                          descriptors=desc)
+                          descriptors=desc, probe_coeffs=probe_coeffs)
 
 
 # --------------------------------------------------------------------------- #
@@ -717,6 +758,15 @@ class AtomTable:
 
     def slice(self, i: int) -> slice:
         return slice(int(self.offsets[i]), int(self.offsets[i + 1]))
+
+    @property
+    def probe_coeffs(self) -> Dict[str, np.ndarray]:
+        """(A, n_terms) expansion coefficients of every probe field, over all atoms."""
+        if not self.molecules or not self.molecules[0].probe_coeffs:
+            return {}
+        names = list(self.molecules[0].probe_coeffs)
+        return {k: np.concatenate([m.probe_coeffs[k] for m in self.molecules], axis=0)
+                for k in names}
 
     @property
     def descriptors(self) -> Optional[np.ndarray]:

@@ -1283,7 +1283,8 @@ class MainWindow(QMainWindow):
                              conformer_kt=mp.spin_conf_kt.value(),
                              max_conformers=mp.spin_conf_max.value(),
                              descriptors=mp.descriptors(),
-                             descriptor_h=mp.descriptor_h())
+                             descriptor_h=mp.descriptor_h(),
+                             probes=mp.probes(), probe_terms=mp.probe_terms())
         vals = mp.table_values()
         for s in fs.specs:
             if s.name in vals:

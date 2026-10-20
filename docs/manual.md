@@ -480,6 +480,7 @@ without leaving the panel.
 | α grid, λ grid, C grid, ε/ν grids | the search ranges, as comma-separated lists |
 | Cross-validation | the number of folds and the shuffling seed |
 | External CV | the outer folds and the number of repeats for the nested procedure |
+| Probe fields | GRID-like fields for the water, methyl, carbonyl, amine and cation probes, and the number of Gaussians per atom |
 | Descriptors (per molecule) | which numeric molecule properties enter as non-field descriptors, and the block's mixing coefficient |
 | Validation | *shuffles* for y-randomisation, *bootstrap* for confidence intervals, and the *applicability domain* tick — all three off by default, all three run as part of **Build model** rather than from a button of their own |
 
@@ -660,6 +661,61 @@ own.
 
 `prop:<name>` fields are added by naming them in the per-atom property row of the model panel, or
 in `--fields`.
+
+## GRID-like probe fields
+
+Goodford's GRID describes a molecule by the energy a small probe — a water, a methyl, a carbonyl
+oxygen — would feel at every point around it. That is a field in exactly this program's sense, and
+it says something the built-in fields do not: not "there is hydrophobic character here" but "a
+probe placed here would be bound". *Probe fields* in the model panel (`--probes water,carbonyl`)
+adds one such field per probe, from the five defined: `water`, `methyl`, `carbonyl` (an acceptor),
+`amine` (a donor) and `cation`.
+
+The obstacle is arithmetic, not conceptual: a Lennard-Jones term is not a Gaussian, has no
+closed-form overlap, and diverges at the atom, so the integral of its square does not exist. The
+way through is to fit each atom's contribution by a few Gaussians, which keeps every kernel in the
+program a closed form over atom pairs. Three things had to be measured before that worked, and
+each one shaped what is implemented:
+
+- **The repulsive wall cannot be carried.** Fitting a curve that is +30 kcal/mol at 2.5 Å and
+  −0.13 at 3.5 Å with a handful of Gaussians produces coefficients of ±10⁷ that cancel, and a
+  worst-case error larger than the well it is meant to represent. The wall is a truncation
+  artefact in every grid implementation anyway, and this program already carries it — the steric
+  field *is* a Gaussian van der Waals envelope — so a probe field carries the **attraction** only.
+- **A well at a radius is a shell**, and a shell is not a sum of Gaussians centred on the atom.
+  Each term is therefore capped at its own optimum, which makes it monotone in *r*, and those a
+  sum of Gaussians represents naturally.
+- **The r⁻⁶ tail is not Gaussian either**, and is negligible beyond 6 Å, so the energy is tapered
+  to zero between 5 and 7 Å exactly as GRID's own cut-off does.
+
+What comes out reproduces the attraction to about 15 % in the volume-weighted norm the kernel sees
+(23 % on a realistic worst case), and the kernel it implies agrees with numerical integration of
+the fields themselves to 4·10⁻⁷ — a test asserts both. Each atom carries *K* Gaussians (four by
+default), so a probe field costs K² passes over the distance matrix where an ordinary field costs
+one; three is the cheap setting and five the careful one.
+
+**Measured against the fields it would join**, same molecules, same α and λ grids, 10-fold CV:
+
+| set | n | the five fields | + water probe | probes only |
+|---|---|---:|---:|---:|
+| GPB | 66 | +0.539 | +0.539 | +0.406 |
+| THER | 76 | +0.538 | +0.543 | +0.428 |
+| THR | 88 | +0.672 | **+0.699** | +0.665 |
+| ACE | 114 | +0.647 | +0.648 | +0.607 |
+
+So: adding a water probe to the five fields is worth between nothing and 0.027 q², and probe
+fields on their own are worse than the fields they would replace. That is the honest result and it
+was the expected one — CoMSIA replaced GRID-like energies with Gaussian similarity indices for
+much the same reason, and this program's fields are closer to CoMSIA than to GRID by design. What
+a probe field is actually *for* is interpretation: its co-field is drawn, exported and decomposed
+like any other, and it says where a water or a carbonyl oxygen would be bound, which is a more
+directly actionable statement than "more acceptor character here".
+
+Two limitations are worth stating plainly. The directional part of GRID's hydrogen-bond term — the
+angles at the donor and at the acceptor's lone pairs — is **not** represented; the radial part is,
+broadened to 0.6 Å because a sharper shoulder is not representable by the shared basis. And
+alignment by field similarity refuses to run on a probe field rather than silently ignoring it,
+because the gradient of the expansion is not implemented.
 
 ## Descriptors that are not fields
 

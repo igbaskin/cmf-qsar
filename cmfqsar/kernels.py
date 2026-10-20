@@ -29,18 +29,22 @@ class Cancelled(Exception):
 
 
 def _group_fields(specs: Sequence[FieldSpec]):
+    """Fields by the shape of their Gaussians: shared width, per-atom width, or an expansion."""
     gauss = {}
     steric = []
+    probe = []
     for f, s in enumerate(specs):
-        if s.kind == "gauss":
+        if getattr(s, "is_probe", False):
+            probe.append((f, s.name))
+        elif s.kind == "gauss":
             gauss.setdefault(float(s.alpha), []).append(f)
         else:
             steric.append((f, float(s.alpha)))
-    return gauss, steric
+    return gauss, steric, probe
 
 
 def atom_kernel_block(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable,
-                      specs: Sequence[FieldSpec]) -> np.ndarray:
+                      specs: Sequence[FieldSpec], ci=None, cq=None) -> np.ndarray:
     """Kernels between the atoms of one molecule and every molecule of table Q.
 
     Returns an array of shape (F, Ni, nQ): the contribution of every atom of
@@ -51,7 +55,7 @@ def atom_kernel_block(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTab
     out = np.zeros((F, Ni, Q.n_mol))
     D2 = cdist(xi, Q.coords, "sqeuclidean")           # (Ni, AQ)
     starts = Q.offsets[:-1]
-    gauss, steric = _group_fields(specs)
+    gauss, steric, probe = _group_fields(specs)
     for alpha, fids in gauss.items():
         E = np.exp(-0.25 * alpha * D2)
         E *= (np.pi / alpha) ** 1.5
@@ -66,6 +70,26 @@ def atom_kernel_block(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTab
         E *= (2.0 * np.pi / bs) ** 1.5
         M = (wi[:, f][:, None] * E) * Q.weights[:, f][None, :]
         out[f] = np.add.reduceat(M, starts, axis=1)
+    if probe:
+        # Every atom of a probe field carries several Gaussians, so the overlap runs over
+        # pairs of terms as well as pairs of atoms.  The widths are shared, so each pair of
+        # terms is one pass over the distance matrix under the Gaussian-product rule --
+        # the same formula as the steric field, with the two widths constant.
+        from .probes import basis_widths
+        cq = cq if cq is not None else Q.probe_coeffs
+        for f, name in probe:
+            Ci = None if ci is None else ci.get(name)
+            Cq = cq.get(name)
+            if Ci is None or Cq is None:
+                continue
+            widths = basis_widths(Ci.shape[1])
+            M = np.zeros_like(D2)
+            for k1, b1 in enumerate(widths):
+                for k2, b2 in enumerate(widths):
+                    bs = b1 + b2
+                    E = np.exp(-(b1 * b2) / (2.0 * bs) * D2) * (2.0 * np.pi / bs) ** 1.5
+                    M += (Ci[:, k1][:, None] * E) * Cq[:, k2][None, :]
+            out[f] = np.add.reduceat(M, starts, axis=1)
     return out
 
 
@@ -78,11 +102,16 @@ def kernel_matrices(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec],
     """
     F = len(specs)
     K = np.zeros((F, P.n_mol, Q.n_mol))
+    # concatenated once rather than per molecule: the property rebuilds them every call
+    cq = Q.probe_coeffs
+    cp = P.probe_coeffs if cq else {}
     for i in range(P.n_mol):
         if cancel is not None and cancel():
             raise Cancelled()
         sl = P.slice(i)
-        blk = atom_kernel_block(P.coords[sl], P.weights[sl], P.radii[sl], Q, specs)
+        ci = {k: v[sl] for k, v in cp.items()} if cp else None
+        blk = atom_kernel_block(P.coords[sl], P.weights[sl], P.radii[sl], Q, specs,
+                                ci=ci, cq=cq)
         K[:, i, :] = blk.sum(axis=1)
         if progress is not None and (i % 10 == 0 or i == P.n_mol - 1):
             progress(i + 1, P.n_mol)
@@ -95,7 +124,9 @@ def self_kernels(P: AtomTable, specs: Sequence[FieldSpec]) -> np.ndarray:
     d = np.zeros((F, P.n_mol))
     for i in range(P.n_mol):
         sub = P.subset([i])
-        blk = atom_kernel_block(sub.coords, sub.weights, sub.radii, sub, specs)
+        cs = sub.probe_coeffs
+        blk = atom_kernel_block(sub.coords, sub.weights, sub.radii, sub, specs,
+                                ci=cs or None, cq=cs or None)
         d[:, i] = blk.sum(axis=1)[:, 0]
     return d
 
@@ -158,7 +189,12 @@ def kernel_gradient(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable
     """
     grad = np.zeros((len(xi), 3))
     u_atom = np.repeat(np.asarray(u, dtype=float), np.diff(Q.offsets), axis=1)   # (F, AQ)
-    gauss, steric = _group_fields(specs)
+    gauss, steric, probe = _group_fields(specs)
+    if probe:
+        # the gradient of a probe field is a sum over pairs of expansion terms as well; it is
+        # not implemented, so alignment by field similarity refuses rather than aligning on a
+        # kernel that silently ignores the probe
+        raise NotImplementedError("gradients of probe fields are not implemented; align without them")
     for s0 in range(0, len(Q.coords), chunk):
         sl = slice(s0, min(s0 + chunk, len(Q.coords)))
         diff = xi[:, None, :] - Q.coords[None, sl, :]            # (Ni, M, 3)

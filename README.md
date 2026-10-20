@@ -1161,6 +1161,38 @@ linearly in α, see the heterogeneous-series section — but the separation is: 
 every molecule at random leaves it at 1.48, and with the strictly pose-free kernel of
 `chemotypes.count_kernel` it is 1.40 before and after, to the last digit.
 
+### GRID-like probe fields
+
+*Probe fields* (`--probes water,carbonyl`) add a field per probe: what a water, methyl, carbonyl
+oxygen, amine nitrogen or cation would gain by sitting at each point, after Goodford's GRID. A
+Lennard-Jones term is not a Gaussian and has no closed-form overlap, so each atom's contribution
+is fitted by a few Gaussians ([probes.py](cmfqsar/probes.py)) and every kernel stays a closed form
+over atom pairs - the analytic kernel agrees with numerical integration of the fields to 4e-7.
+
+Three measurements shaped the construction. The repulsive wall cannot be carried (fitting it gives
+coefficients of +/- 1e7 that cancel), it is a truncation artefact anyway, and the steric field
+already is a van der Waals envelope - so a probe field carries the attraction only. A well at a
+radius is a shell, which atom-centred Gaussians cannot represent, so each term is capped at its
+own optimum and becomes monotone. And the r^-6 tail is tapered to zero by 7 A, as GRID's own
+cut-off does. What remains reproduces the attraction to about 15% in the norm the kernel sees.
+
+**Measured against the fields it would join** (same molecules, same grids, 10-fold CV):
+
+| set | n | the five fields | + water probe | probes only |
+|---|---|---:|---:|---:|
+| GPB | 66 | +0.539 | +0.539 | +0.406 |
+| THER | 76 | +0.538 | +0.543 | +0.428 |
+| THR | 88 | +0.672 | **+0.699** | +0.665 |
+| ACE | 114 | +0.647 | +0.648 | +0.607 |
+
+A water probe is worth between nothing and 0.027 q2 beside the five fields, and probe fields alone
+are worse than the fields they would replace. That is the expected result - CoMSIA replaced
+GRID-like energies with Gaussian similarity indices for much the same reason - and it is why these
+fields are offered for *interpretation*: a probe co-field says where a water would be bound, which
+is more actionable than "more acceptor character here". The directional part of GRID's
+hydrogen-bond term is not represented, and alignment by field similarity refuses to run on a probe
+field rather than quietly ignoring it.
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the
@@ -1994,6 +2026,7 @@ cmfqsar/decoys.py       posing a background set for virtual-screening evaluation
 cmfqsar/gtm.py          chemical space maps and activity landscapes (kernel PCA + GTM)
 cmfqsar/validation.py   y-randomisation, applicability domain, bootstrap intervals
 cmfqsar/descriptors.py  non-field descriptors: one number per molecule, as a kernel block
+cmfqsar/probes.py       GRID-like probe fields, expanded in Gaussians so the kernel stays exact
 cmfqsar/shapley.py      Shapley decomposition of a prediction (atoms, substituents, field types)
 cmfqsar/conformers.py   conformational ensembles: generation, weighting, grouping (4D)
 cmfqsar/mil.py          multi-instance learning: the model chooses the conformation

@@ -1100,7 +1100,18 @@ class CMFModel:
         if self.normalize:
             d = self.self_diag[f]
             s = np.where(d > 1e-300, 1.0 / np.sqrt(np.maximum(d, 1e-300)), 0.0)
-        per_atom_coef = np.repeat(self.coef * s, np.diff(tr.offsets)) * tr.weights[:, f]
+        per_mol = np.repeat(self.coef * s, np.diff(tr.offsets))
+        if spec.is_probe:
+            # a probe field puts several Gaussians on every atom, so its co-field is the same sum
+            # with every atom repeated once per term of the expansion
+            from .probes import basis_widths
+            C = tr.probe_coeffs.get(spec.name)
+            if C is None:
+                return tr.coords, np.zeros(len(per_mol)), np.ones(len(per_mol))
+            k = C.shape[1]
+            return (np.repeat(tr.coords, k, axis=0), (C * per_mol[:, None]).reshape(-1),
+                    np.tile(basis_widths(k), tr.coords.shape[0]))
+        per_atom_coef = per_mol * tr.weights[:, f]
         b = np.full(len(per_atom_coef), spec.alpha) if spec.kind == "gauss" else spec.alpha / tr.radii ** 2
         return tr.coords, per_atom_coef, b
 

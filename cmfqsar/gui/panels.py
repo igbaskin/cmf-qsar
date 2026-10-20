@@ -498,6 +498,34 @@ class ModelPanel(QWidget):
         self.row_props.setVisible(False)
         self._prop_boxes: Dict[str, QCheckBox] = {}
         fl.addWidget(self.row_props)
+        # GRID-like probe fields: what a probe would gain by sitting at each point
+        prow = QHBoxLayout()
+        prow.addWidget(QLabel("Probe fields:"))
+        self._probe_boxes: Dict[str, QCheckBox] = {}
+        from ..probes import PROBES as _PROBES
+        for name, pr in _PROBES.items():
+            box = QCheckBox(name)
+            box.setToolTip(
+                f"<p>{pr.label}: a field of what that probe would gain by sitting at each point, "
+                f"after Goodford's GRID.</p>"
+                f"<p>Every atom carries several Gaussians fitted to that attraction, so the "
+                f"kernel stays analytic and the co-field can still be drawn. The repulsive wall "
+                f"is not in it -- no sum of Gaussians can carry one -- and is left to the steric "
+                f"field, which already is a van der Waals envelope.</p>")
+            box.toggled.connect(self.fields_changed)
+            prow.addWidget(box)
+            self._probe_boxes[name] = box
+        self.spin_probe_terms = QSpinBox()
+        self.spin_probe_terms.setRange(2, 6)
+        self.spin_probe_terms.setValue(4)
+        self.spin_probe_terms.setPrefix("terms ")
+        self.spin_probe_terms.setToolTip(
+            "<p>Gaussians per atom in a probe field. The kernel costs the square of this: 3 is "
+            "the cheap setting, 5 the careful one.</p>")
+        self.spin_probe_terms.valueChanged.connect(lambda _: self.fields_changed.emit())
+        prow.addWidget(self.spin_probe_terms)
+        prow.addStretch(1)
+        fl.addLayout(prow)
         # non-field descriptors: one number per molecule, added to the kernel as its own block
         self.row_desc = QWidget()
         self.lay_desc = QHBoxLayout(self.row_desc)
@@ -991,6 +1019,12 @@ class ModelPanel(QWidget):
             self.lay_desc.insertWidget(i + 1, box)
             self._desc_boxes[str(name)] = box
         self.row_desc.setVisible(bool(self._desc_boxes))
+
+    def probes(self) -> List[str]:
+        return [n for n, b in self._probe_boxes.items() if b.isChecked()]
+
+    def probe_terms(self) -> int:
+        return int(self.spin_probe_terms.value())
 
     def descriptors(self) -> List[str]:
         return [n for n, b in self._desc_boxes.items() if b.isChecked()]

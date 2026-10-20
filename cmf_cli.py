@@ -197,7 +197,17 @@ def cmd_build(args):
                          conformer_weighting=args.conformer_weighting,
                          conformer_kt=args.kt, max_conformers=args.max_conformers,
                          descriptors=[d for d in (args.descriptors or "").split(",") if d],
-                         descriptor_h=args.descriptor_h)
+                         descriptor_h=args.descriptor_h,
+                         probes=[p for p in (args.probes or "").split(",") if p],
+                         probe_terms=args.probe_terms)
+    if args.probes:
+        from cmfqsar.probes import fit_report, probe_names
+        unknown = [p for p in args.probes.split(",") if p and p not in probe_names()]
+        if unknown:
+            raise SystemExit(f"unknown probe(s) {', '.join(unknown)}; the ones defined are "
+                             f"{', '.join(probe_names())}")
+        for name in [p for p in args.probes.split(",") if p]:
+            print("  " + fit_report(name, n_terms=args.probe_terms).replace("\n", "\n  "))
     if fs.descriptors:
         from cmfqsar.descriptors import available
         have = available(ds.mols)
@@ -1214,6 +1224,14 @@ def main(argv=None):
     b.add_argument("--prop-missing", default="error", choices=["error", "zero"],
                    help="what to do when a molecule carries no value for a prop: field; "
                         "'error' names the molecule, 'zero' treats it as having none")
+    b.add_argument("--probes", default=None, metavar="P,Q",
+                   help="GRID-like probe fields: what a water, methyl, carbonyl, amine or cation "
+                        "probe would gain by sitting at each point. Each atom carries several "
+                        "Gaussians fitted to that attraction, so the kernel stays analytic; the "
+                        "repulsive wall is left to the steric field, which already is one")
+    b.add_argument("--probe-terms", type=int, default=4, metavar="K",
+                   help="Gaussians per atom in a probe field (default 4). The kernel costs the "
+                        "square of this, so 3 is the cheap setting and 5 the careful one")
     b.add_argument("--descriptors", default=None, metavar="A,B",
                    help="molecule properties to use as non-field descriptors, beside the fields: "
                         "one number per molecule, standardised on the training set and added to "

@@ -97,10 +97,38 @@ def cofield_volume(model: CMFModel, f: int, grid: Grid, include_scale: bool = Fa
     return v.reshape(grid.shape)
 
 
+def _centres_and_widths(mol: MoleculeFields, spec, f: int, coeff=None):
+    """(centres, coefficients, widths) of the Gaussians one field of one molecule is made of.
+
+    An ordinary field has one Gaussian per atom; a probe field has several, so its atoms are
+    repeated once per term of the expansion.  Everything that draws a field goes through
+    here, which is why a probe field can be drawn, exported as a cube and subtracted from
+    another molecule exactly like any other.
+    """
+    if getattr(spec, "is_probe", False):
+        from .probes import basis_widths
+        C = mol.probe_coeffs.get(spec.name)
+        if C is None:
+            return mol.coords, np.zeros(mol.n_atoms), np.full(mol.n_atoms, 1.0)
+        b = basis_widths(C.shape[1])
+        n_terms = C.shape[1]
+        centres = np.repeat(mol.coords, n_terms, axis=0)
+        widths = np.tile(b, mol.n_atoms)
+        weights = C.reshape(-1)
+        if coeff is not None:
+            # a per-atom coefficient (an atom contribution, say) multiplies all of its terms
+            weights = weights * np.repeat(np.asarray(coeff, float), n_terms)
+        return centres, weights, widths
+    widths = (np.full(mol.n_atoms, spec.alpha) if spec.kind == "gauss"
+              else spec.alpha / mol.radii ** 2)
+    weights = mol.weights[:, f] if coeff is None else np.asarray(coeff, float)
+    return mol.coords, weights, widths
+
+
 def field_volume(mol: MoleculeFields, spec, f: int, grid: Grid) -> np.ndarray:
     """Molecular field X_f(r) of `mol` (field f described by FieldSpec `spec`) on the grid; no model needed."""
-    widths = np.full(mol.n_atoms, spec.alpha) if spec.kind == "gauss" else spec.alpha / mol.radii ** 2
-    v = evaluate_gaussians(grid.points(), mol.coords, mol.weights[:, f], widths)
+    centres, weights, widths = _centres_and_widths(mol, spec, f)
+    v = evaluate_gaussians(grid.points(), centres, weights, widths)
     return v.reshape(grid.shape)
 
 
@@ -135,11 +163,10 @@ def shapley_volume(mol: MoleculeFields, spec, values: np.ndarray, grid: Grid,
     co-field this map belongs to one molecule, because a model with a nonlinear kernel has no
     co-field to belong to.
     """
-    widths = np.full(mol.n_atoms, spec.alpha) if spec.kind == "gauss" else spec.alpha / mol.radii ** 2
-    coeffs = np.asarray(values, float)
+    centres, coeffs, widths = _centres_and_widths(mol, spec, 0, coeff=values)
     if normalized:
         coeffs = coeffs * (widths / (2.0 * np.pi)) ** 1.5
-    v = evaluate_gaussians(grid.points(), mol.coords, coeffs, widths)
+    v = evaluate_gaussians(grid.points(), centres, coeffs, widths)
     return v.reshape(grid.shape)
 
 
