@@ -958,8 +958,11 @@ class MainWindow(QMainWindow):
         scroll.setWidget(self.model_panel)
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QScrollArea.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        scroll.setMinimumWidth(self.model_panel.minimumSizeHint().width() + 20)
+        # The panel is tall and wide; forcing the dock to its full natural width squeezed the
+        # 3D view, and with horizontal scrolling off the right-hand columns of the field table
+        # simply could not be reached. Ask for a workable width and let the dock scroll.
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll.setMinimumWidth(min(self.model_panel.minimumSizeHint().width() + 20, 520))
         self._dock(scroll, "Model", Qt.RightDockWidgetArea)
         d = self._dock(self.results_panel, "Results", Qt.BottomDockWidgetArea)
         d.setMinimumHeight(160)

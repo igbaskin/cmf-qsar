@@ -473,7 +473,7 @@ class ModelPanel(QWidget):
                 row = QHBoxLayout()
         fl.addLayout(row)
         cif_row = QHBoxLayout()
-        self.chk_cif = QCheckBox("Continuous indicator fields (CIF)")
+        self.chk_cif = QCheckBox("Indicator fields (CIF)")
         self.chk_cif.toggled.connect(self.fields_changed)
         self.cmb_cif_scheme = QComboBox()
         self.cmb_cif_scheme.addItems(["sybyl", "element", "element+aromatic"])
@@ -500,7 +500,7 @@ class ModelPanel(QWidget):
         fl.addWidget(self.row_props)
         # GRID-like probe fields: what a probe would gain by sitting at each point
         prow = QHBoxLayout()
-        prow.addWidget(QLabel("Probe fields:"))
+        prow.addWidget(QLabel("Probes:"))
         self._probe_boxes: Dict[str, QCheckBox] = {}
         from ..probes import PROBES as _PROBES
         for name, pr in _PROBES.items():
@@ -529,7 +529,7 @@ class ModelPanel(QWidget):
         # descriptors the program computes itself, so that a file with no numeric tags still has
         # something to offer; all off by default, because a 3D model should stand on its geometry
         crow3 = QHBoxLayout()
-        crow3.addWidget(QLabel("Computed descriptors:"))
+        crow3.addWidget(QLabel("Computed:"))
         self._calc_boxes: Dict[str, QCheckBox] = {}
         from ..descriptors import COMPUTED as _COMPUTED
         for key, (what, _fn) in _COMPUTED.items():
@@ -588,14 +588,23 @@ class ModelPanel(QWidget):
         self.chk_scale.setChecked(True)
         self.chk_scale.setToolTip("Rescale every field kernel to unit mean diagonal before mixing\n"
                                   "(uncheck to reproduce the raw-kernel convention of the papers)")
-        prow.addWidget(self.chk_normalize)
-        prow.addWidget(self.chk_scale)
+        # the two kernel conventions sit under the parameterisation rather than beside it,
+        # so that the row does not dictate how wide the whole dock has to be
+
+        prow2 = QHBoxLayout()
+        prow2.addWidget(QLabel("Kernel conventions:"))
+        prow2.addWidget(self.chk_normalize)
+        prow2.addWidget(self.chk_scale)
+        prow2.addStretch(1)
+        fl.addLayout(prow2)
         fl.addLayout(prow)
 
         # --- conformations: the fourth dimension
         crow2 = QHBoxLayout()
         crow2.addWidget(QLabel("Conformations:"))
         self.cmb_conformers = QComboBox()
+        self.cmb_conformers.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+        self.cmb_conformers.setMinimumContentsLength(18)
         self.cmb_conformers.addItems(["single (one per molecule)",
                                       "ensemble (4D: mean field over conformations)",
                                       "ensemble, weights learned (multi-instance)"])
@@ -642,17 +651,23 @@ class ModelPanel(QWidget):
             "Zero is the plain ensemble; a large value puts nearly all the weight on one",
             "conformation, which is the witness assumption of multi-instance learning."]))
         self.spin_mil_beta.valueChanged.connect(self.fields_changed)
-        crow2.addWidget(self.spin_mil_beta)
+        # the conformation settings do not fit one line without forcing the whole dock wide,
+        # so the multi-instance half sits on its own
+        crow2.addStretch(1)
+        fl.addLayout(crow2)
+        crow2b = QHBoxLayout()
+        crow2b.addWidget(QLabel("Multi-instance:"))
+        crow2b.addWidget(self.spin_mil_beta)
         self.chk_mil_hard = QCheckBox("one conformation")
         self.chk_mil_hard.setToolTip("Choose exactly one conformation per molecule instead of "
                                      "weighting them")
         self.chk_mil_hard.toggled.connect(self.fields_changed)
-        crow2.addWidget(self.chk_mil_hard)
+        crow2b.addWidget(self.chk_mil_hard)
         self.lbl_conformers = QLabel("")
         self.lbl_conformers.setStyleSheet("color: palette(mid)")
-        crow2.addWidget(self.lbl_conformers)
-        crow2.addStretch(1)
-        fl.addLayout(crow2)
+        crow2b.addWidget(self.lbl_conformers)
+        crow2b.addStretch(1)
+        fl.addLayout(crow2b)
 
         self.tbl_fields = QTableWidget(0, 5)
         self.tbl_fields.setHorizontalHeaderLabels(["Use", "Field", "alpha", "h (mix)", "scale"])
@@ -666,6 +681,9 @@ class ModelPanel(QWidget):
         # --- learner / hyper-parameters ------------------------------------
         gb2 = QGroupBox("Learning method and hyper-parameters")
         form = QFormLayout(gb2)
+        # a long label must not force the whole dock wide: let it sit above its editor
+        form.setRowWrapPolicy(QFormLayout.WrapLongRows)
+        form.setFieldGrowthPolicy(QFormLayout.AllNonFixedFieldsGrow)
         self.cmb_task = QComboBox()
         self.cmb_task.addItems(["Regression", "Binary classification", "One-class (virtual screening)"])
         self.cmb_task.setToolTip("Binary classification separates active from inactive compounds. "
@@ -768,7 +786,9 @@ class ModelPanel(QWidget):
                               "classifier the same grid is the amplitude of the kernel, which "
                               "plays the same part and can also be read off the marginal "
                               "likelihood printed in the Statistics tab")
-        form.addRow("C grid (SVR/SVC, amplitude of the GP classifier):", self.ed_Cs)
+        self.ed_Cs.setToolTip("C for the support vector machines, and the amplitude of the "
+                              "Gaussian-process classifier")
+        form.addRow("C grid:", self.ed_Cs)
         self.ed_eps = QLineEdit("0.05, 0.1, 0.2")
         form.addRow("ε grid / ν grid:", self.ed_eps)
         self.ed_nus = QLineEdit("0.3, 0.5, 0.7")
@@ -831,7 +851,7 @@ class ModelPanel(QWidget):
             "predicted) pairs. 0 = off; 500 to 1000 is usual. It says how much of the",
             "statistic is the particular molecules it was computed over, which is what decides",
             "whether two settings differing by 0.02 differ at all."]))
-        vrow.addWidget(QLabel("   bootstrap"))
+        vrow.addWidget(QLabel(" bootstrap"))
         vrow.addWidget(self.spin_boot)
         self.chk_domain = QCheckBox("applicability domain")
         self.chk_domain.setToolTip("\n".join([
