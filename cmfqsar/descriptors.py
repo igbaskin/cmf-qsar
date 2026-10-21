@@ -42,6 +42,37 @@ import numpy as np
 MISSING_POLICIES = ("error", "mean")
 
 
+#: descriptors the program can compute itself, so that a file carrying no numeric tags still has
+#: something to offer.  They are named with a ``calc:`` prefix, which keeps them distinct from a
+#: property of the same name that a file might carry and makes a command line unambiguous.
+COMPUTED: Dict[str, Tuple[str, str]] = {
+    "mw": ("molecular weight", "MolWt"),
+    "clogp": ("Wildman-Crippen logP", "MolLogP"),
+    "tpsa": ("topological polar surface area", "TPSA"),
+    "rotatable": ("rotatable bonds", "NumRotatableBonds"),
+}
+
+
+def computed_names() -> List[str]:
+    """The computed descriptors, as they are written in a field set: ``calc:mw`` and so on."""
+    return [f"calc:{k}" for k in COMPUTED]
+
+
+def compute(mol, name: str) -> float:
+    """One computed descriptor of one molecule; NaN if RDKit cannot produce it."""
+    key = name[5:] if name.startswith("calc:") else name
+    if key not in COMPUTED:
+        raise KeyError(f"unknown computed descriptor {name!r}; the ones defined are "
+                       f"{', '.join(computed_names())}")
+    from rdkit.Chem import Crippen, Descriptors, Lipinski
+    fn = {"mw": Descriptors.MolWt, "clogp": Crippen.MolLogP, "tpsa": Descriptors.TPSA,
+          "rotatable": Lipinski.NumRotatableBonds}[key]
+    try:
+        return float(fn(mol))
+    except Exception:                                 # noqa: BLE001 - one descriptor, not the set
+        return float("nan")
+
+
 def available(mols: Sequence) -> List[str]:
     """The molecule properties that are numeric on at least one molecule, in file order."""
     out: List[str] = []
@@ -65,6 +96,9 @@ def read_values(mol, names: Sequence[str]) -> np.ndarray:
     if mol is None:
         return out
     for k, name in enumerate(names):
+        if name.startswith("calc:"):
+            out[k] = compute(mol, name)
+            continue
         if not mol.HasProp(name):
             continue
         try:

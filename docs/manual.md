@@ -328,6 +328,21 @@ enforce, and which are yours to get right:
 
 # Installation and first run
 
+## Where the program lives
+
+The repository is [github.com/igbaskin/cmf-qsar](https://github.com/igbaskin/cmf-qsar) — private,
+so the link asks for a GitHub account with access:
+
+```
+git clone https://github.com/igbaskin/cmf-qsar.git
+cd cmf-qsar
+```
+
+Everything this manual describes is in that checkout: the `cmfqsar` package, the application
+(`cmf_app.py`), the command-line tool (`cmf_cli.py`), the example data under `examples/`, the
+benchmark scripts under `benchmarks/` with their recorded results, the tests, and this manual with
+the script that typesets it.
+
 ## Requirements
 
 Python 3.10 or newer, and the packages in `requirements.txt`:
@@ -481,6 +496,7 @@ without leaving the panel.
 | Cross-validation | the number of folds and the shuffling seed |
 | External CV | the outer folds and the number of repeats for the nested procedure |
 | Probe fields | GRID-like fields for the water, methyl, carbonyl, amine and cation probes, and the number of Gaussians per atom |
+| Computed descriptors | molecular weight, clogP, TPSA and rotatable bonds, computed by RDKit; all off by default |
 | Descriptors (per molecule) | which numeric molecule properties enter as non-field descriptors, and the block's mixing coefficient |
 | Validation | *shuffles* for y-randomisation, *bootstrap* for confidence intervals, and the *applicability domain* tick — all three off by default, all three run as part of **Build model** rather than from a button of their own |
 
@@ -742,7 +758,9 @@ cannot see them has to pretend the activity depends on geometry alone, which for
 potency or a permeability is simply false.
 
 The *Descriptors (per molecule)* row of the model panel (`--descriptors A,B`) offers every numeric
-molecule property the file carries. Ticking some adds one more block to the kernel:
+molecule property the file carries — and hides itself when the file carries none besides the
+activity, which is why it is invisible on most of the example sets; the computed descriptors of
+the next section are always there. Ticking some adds one more block to the kernel:
 
 $$
 K(A,B) = \sum_f h_f c_f \hat{K}_f(A,B) + h_d c_d\, \mathbf{z}(A)\cdot\mathbf{z}(B)
@@ -791,6 +809,35 @@ coat, and the honest response is to report it as one.
 ```bash
 python cmf_cli.py build series.sdf --activity pIC50 --descriptors clogp,mw,tpsa
 ```
+
+### Descriptors the program computes itself
+
+A file that carries no numeric tags has nothing to offer the row above, so four descriptors are
+always available, computed by RDKit from the structure: `calc:mw` (molecular weight), `calc:clogp`
+(Wildman–Crippen logP), `calc:tpsa` (topological polar surface area) and `calc:rotatable`
+(rotatable bonds). They have a row of their own in the model panel, *Computed descriptors*, and
+**all four are off by default**.
+
+The default is deliberate, and so is the warning that belongs with it. These are two-dimensional
+quantities: they can lift a model that has a size or lipophilicity trend in it, and they can also
+carry a model that then owes nothing at all to its geometry. Measured on four Sutherland sets,
+same α and λ grids, 10-fold CV:
+
+| set | n | five fields | + the four computed | the four alone |
+|---|---|---:|---:|---:|
+| THR | 88 | **+0.671** | +0.634 | +0.620 |
+| GPB | 66 | **+0.534** | +0.525 | +0.494 |
+| ACE | 114 | +0.657 | +0.707 | **+0.712** |
+| THER | 76 | **+0.509** | +0.496 | +0.480 |
+
+Read ACE carefully: four numbers that know nothing of the geometry predict better than the whole
+3D model. That is not an argument for using them — it is a warning about that data set, and it
+agrees with what the alignment-free baseline already said about ACE elsewhere in this manual. On
+the other three sets they cost a little.
+
+So use them to *test* a model rather than to improve it: if adding them changes nothing, the
+geometry is carrying the model; if they take it over, the 3D part was decoration. The contribution
+table printed beside the statistics is what tells you which happened.
 
 ## Attenuation, regularisation and the grids
 

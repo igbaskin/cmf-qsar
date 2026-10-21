@@ -634,7 +634,8 @@ def build(source_path, out_path):
     sub, rest = rest.split("\n", 1) if "\n" in rest else (rest, "")
     title, subtitle = head.lstrip("# ").strip(), sub.strip()
     lines = ["Desktop application, library and command-line tool",
-             "for the Continuous Molecular Fields approach to 3D-QSAR", "", "User manual"]
+             "for the Continuous Molecular Fields approach to 3D-QSAR", "", "User manual", "",
+             '<font name="%s" size="9">github.com/igbaskin/cmf-qsar</font>' % st["_fonts"][3]]
 
     width = Manual(os.devnull, st, title).width
 

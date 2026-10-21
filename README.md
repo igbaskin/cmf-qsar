@@ -1161,6 +1161,25 @@ linearly in α, see the heterogeneous-series section — but the separation is: 
 every molecule at random leaves it at 1.48, and with the strictly pose-free kernel of
 `chemotypes.count_kernel` it is 1.40 before and after, to the last digit.
 
+#### Descriptors the program computes itself
+
+A file with no numeric tags has nothing to offer the row above, so four descriptors are always
+available, computed by RDKit: `calc:mw`, `calc:clogp`, `calc:tpsa` and `calc:rotatable`. They have
+their own row in the model panel and are **off by default**, for a reason the measurement makes
+plain (four Sutherland sets, same grids, 10-fold CV):
+
+| set | n | five fields | + the four computed | the four alone |
+|---|---|---:|---:|---:|
+| THR | 88 | **+0.671** | +0.634 | +0.620 |
+| GPB | 66 | **+0.534** | +0.525 | +0.494 |
+| ACE | 114 | +0.657 | +0.707 | **+0.712** |
+| THER | 76 | **+0.509** | +0.496 | +0.480 |
+
+On ACE four numbers that know nothing of the geometry predict better than the whole 3D model -
+which is a warning about that data set, and agrees with what the alignment-free baseline says
+about it elsewhere. Use them to *test* a model rather than to improve it: if adding them changes
+nothing, the geometry is carrying the model; if they take it over, the 3D part was decoration.
+
 ### GRID-like probe fields
 
 *Probe fields* (`--probes water,carbonyl`) add a field per probe: what a water, methyl, carbonyl

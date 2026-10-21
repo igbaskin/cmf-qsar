@@ -526,6 +526,26 @@ class ModelPanel(QWidget):
         prow.addWidget(self.spin_probe_terms)
         prow.addStretch(1)
         fl.addLayout(prow)
+        # descriptors the program computes itself, so that a file with no numeric tags still has
+        # something to offer; all off by default, because a 3D model should stand on its geometry
+        crow3 = QHBoxLayout()
+        crow3.addWidget(QLabel("Computed descriptors:"))
+        self._calc_boxes: Dict[str, QCheckBox] = {}
+        from ..descriptors import COMPUTED as _COMPUTED
+        for key, (what, _fn) in _COMPUTED.items():
+            box = QCheckBox(key)
+            box.setChecked(False)
+            box.setToolTip(
+                f"<p>Use the {what} as a descriptor: one number per molecule, computed by RDKit "
+                f"and standardised on the training set, beside the fields.</p>"
+                f"<p>Off by default. These are 2D quantities: they can lift a model that has a "
+                f"size or lipophilicity trend in it, and they can also carry a model that then "
+                f"owes nothing to its geometry, which the contribution table will show.</p>")
+            box.toggled.connect(self.fields_changed)
+            crow3.addWidget(box)
+            self._calc_boxes[key] = box
+        crow3.addStretch(1)
+        fl.addLayout(crow3)
         # non-field descriptors: one number per molecule, added to the kernel as its own block
         self.row_desc = QWidget()
         self.lay_desc = QHBoxLayout(self.row_desc)
@@ -1027,7 +1047,10 @@ class ModelPanel(QWidget):
         return int(self.spin_probe_terms.value())
 
     def descriptors(self) -> List[str]:
-        return [n for n, b in self._desc_boxes.items() if b.isChecked()]
+        """Both kinds: the properties the file carries and the ones the program computes."""
+        out = [n for n, b in self._desc_boxes.items() if b.isChecked()]
+        out += [f"calc:{n}" for n, b in self._calc_boxes.items() if b.isChecked()]
+        return out
 
     def descriptor_h(self) -> float:
         return float(self.spin_desc_h.value())

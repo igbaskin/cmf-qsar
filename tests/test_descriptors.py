@@ -139,3 +139,40 @@ def test_field_kernels_alone_refuse_to_predict_a_descriptor_model():
     model.fit(table, y, cv_folds=0)
     with pytest.raises(ValueError, match="non-field descriptors"):
         model.predict_from_field_kernels(model.K_fields_train)
+
+
+def test_computed_descriptors_match_rdkit():
+    from rdkit.Chem import Crippen, Descriptors, Lipinski
+    from cmfqsar.descriptors import compute, computed_names
+
+    m = _mol("CCOc1ccc(CCN)cc1", "x")
+    assert computed_names() == ["calc:mw", "calc:clogp", "calc:tpsa", "calc:rotatable"]
+    assert compute(m, "calc:mw") == pytest.approx(Descriptors.MolWt(m))
+    assert compute(m, "calc:clogp") == pytest.approx(Crippen.MolLogP(m))
+    assert compute(m, "calc:tpsa") == pytest.approx(Descriptors.TPSA(m))
+    assert compute(m, "calc:rotatable") == pytest.approx(Lipinski.NumRotatableBonds(m))
+
+
+def test_an_unknown_computed_descriptor_is_named_rather_than_guessed():
+    from cmfqsar.descriptors import compute
+    with pytest.raises(KeyError, match="unknown computed descriptor"):
+        compute(_mol("CC", "x"), "calc:enthalpy")
+
+
+def test_computed_descriptors_need_nothing_from_the_file():
+    """The point of them: a file carrying no numeric tags still has something to offer."""
+    mols, y = _series()
+    for m in mols:
+        for prop in list(m.GetPropNames()):
+            m.ClearProp(prop)                     # strip the file clean
+    names = [f"m{i}" for i in range(len(mols))]
+    fs = FieldSet.create(physchem=["steric"], alpha=0.5,
+                         descriptors=("calc:mw", "calc:clogp"))
+    mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+    table = AtomTable.from_molecules(mf)
+    assert table.descriptors.shape == (len(mols), 2)
+    assert np.isfinite(table.descriptors).all()
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": 0.01})
+    model.fit(table, y, cv_folds=0)
+    parts = dict(model.descriptor_contributions(mf[0]))
+    assert set(parts) == {"calc:mw", "calc:clogp"}
