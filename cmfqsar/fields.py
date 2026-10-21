@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import re
 
+import dataclasses
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -182,15 +183,14 @@ class FieldSet:
         return np.array([s.h if s.enabled else 0.0 for s in self.specs], dtype=float)
 
     def copy(self) -> "FieldSet":
-        return FieldSet(specs=[FieldSpec(**vars(s)) for s in self.specs],
-                        charge_model=self.charge_model, cif_scheme=self.cif_scheme,
-                        param_scheme=getattr(self, "param_scheme", "rdkit"),
-                        conformers=getattr(self, "conformers", "single"),
-                        conformer_weighting=getattr(self, "conformer_weighting", "uniform"),
-                        conformer_kt=getattr(self, "conformer_kt", 0.6),
-                        max_conformers=getattr(self, "max_conformers", 0),
-                        energy_prop=getattr(self, "energy_prop", "conformer_energies"),
-                        weight_prop=getattr(self, "weight_prop", "conformer_weights"))
+        """The whole set, with the specs themselves copied so they can be retuned separately.
+
+        Every field of the dataclass is carried over by asking the dataclass what its fields are,
+        not by listing them here: a copy written by hand quietly drops whatever is added to the
+        class afterwards, and a setting lost on the way to the model -- a descriptor, a probe
+        width -- shows up as nothing at all, only as a model that is not the one that was asked for.
+        """
+        return dataclasses.replace(self, specs=[FieldSpec(**vars(s)) for s in self.specs])
 
 
 # --------------------------------------------------------------------------- #

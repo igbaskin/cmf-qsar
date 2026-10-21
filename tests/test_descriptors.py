@@ -208,3 +208,36 @@ def test_registry_descriptors_reach_a_model():
     model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": 0.01})
     model.fit(table, y, cv_folds=0)
     assert len(model.descriptor_contributions(mf[0])) == 2
+
+
+
+def test_copying_a_field_set_keeps_the_descriptors():
+    """The window copies the field set on its way to the model; a copy that dropped the
+    descriptors built a model without them and said nothing about it."""
+    import dataclasses
+
+    fs = FieldSet.create(physchem=["steric"], descriptors=["logP", "calc:mw"], descriptor_h=0.3,
+                         probes=["water"], probe_terms=5)
+    fs.prop_missing = "zero"
+    copy = fs.copy()
+    for f in dataclasses.fields(FieldSet):
+        if f.name == "specs":
+            continue
+        assert getattr(copy, f.name) == getattr(fs, f.name), f"copy() lost {f.name}"
+    assert [s.name for s in copy.specs] == [s.name for s in fs.specs]
+    assert copy.specs[0] is not fs.specs[0]      # retuning the copy must not retune the original
+    copy.specs[0].alpha = 0.123
+    assert fs.specs[0].alpha != 0.123
+
+
+def test_descriptors_survive_the_copy_into_a_model(tmp_path):
+    """The whole path a descriptor takes in the window: chosen, copied, read, fitted."""
+    mols = [_mol("CCO", "a", logP=-0.3), _mol("CCCO", "b", logP=0.2), _mol("CCCCO", "c", logP=0.8)]
+    y = np.array([1.0, 2.0, 3.0])
+    fs = FieldSet.create(physchem=["steric"], descriptors=["logP"]).copy()
+    mf = [build_fields(m, fs, m.GetProp("_Name")) for m in mols]
+    assert all(m.descriptors is not None for m in mf)
+    table = AtomTable.from_molecules(mf)
+    model = CMFModel(fieldset=fs, method="krr", params={"lam": 1e-6})
+    model.fit(table, y, cv_folds=0)
+    assert [n for n, _ in model.descriptor_contributions(mf[0])] == ["logP"]

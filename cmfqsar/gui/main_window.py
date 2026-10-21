@@ -11,7 +11,7 @@ from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import (QApplication, QDialog, QDialogButtonBox, QDockWidget, QFileDialog, QFormLayout,
                                QInputDialog, QLabel, QMainWindow, QMessageBox, QProgressBar, QCheckBox,
                                QSpinBox, QDoubleSpinBox, QTextBrowser, QVBoxLayout, QHBoxLayout,
-                               QWidget, QComboBox, QLineEdit, QScrollArea)
+                               QWidget, QComboBox, QLineEdit, QScrollArea, QPushButton)
 from rdkit import Chem
 
 from .. import __version__
@@ -899,6 +899,236 @@ def _run_validation(model, mf, tr, te, y_all, names, task_name, n_scramble, n_bo
     return {"lines": lines, "outside": outside, "domain": dom_rows}
 
 
+class OrcaDialog(QDialog):
+    """Options for a quantum-chemical run: what ORCA computes, and for which molecules.
+
+    The two kinds of result go to the two places the model keeps them: a per-atom quantity (a
+    charge, a Fukui index) becomes the weights of a field, and a per-molecule quantity (the gap,
+    the hardness) becomes a descriptor beside the fields.
+    """
+
+    LEVELS = [
+        ("r2SCAN-3c TightSCF", "fast composite method, its own basis; the one to start with"),
+        ("B3LYP D3BJ def2-SVP RIJCOSX def2/J TightSCF", "the usual hybrid, small basis"),
+        ("B3LYP D3BJ def2-TZVP RIJCOSX def2/J TightSCF", "the same with a triple-zeta basis: slower"),
+        ("PBE0 D3BJ def2-SVP RIJCOSX def2/J TightSCF", "a different hybrid"),
+        ("wB97X-D3 def2-SVP RIJCOSX def2/J TightSCF", "range-separated, better for charge transfer"),
+    ]
+
+    def __init__(self, exe, groups, charges, mults, parent=None, workdir="orca_work",
+                 has_mpi=False):
+        super().__init__(parent)
+        self.setWindowTitle("Quantum-chemical properties (ORCA)")
+        self._groups = list(groups)
+        self._charges, self._mults = list(charges), list(mults)
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            "ORCA computes two kinds of quantity, and they enter the model in two different "
+            "places. <b>Per-atom</b> values &mdash; Mulliken, L&ouml;wdin, Hirshfeld and CHELPG "
+            "charges, HOMO and LUMO populations, Fukui indices, the dual descriptor, local "
+            "softness &mdash; appear as tick boxes in the <i>Per-atom property fields</i> row: "
+            "each becomes a field whose atomic weights are those values. <b>Per-molecule</b> "
+            "values &mdash; total energy, HOMO and LUMO energies, the gap, the dipole, the "
+            "ionisation potential, electron affinity, hardness, softness, electrophilicity "
+            "&mdash; appear in the <i>Descriptors</i> row: one number per molecule, standardised "
+            "and added to the kernel beside the fields."
+            "<p>The geometry each molecule has now is what ORCA is given, so an alignment "
+            "survives. Every job is cached in the working directory: a run stopped half way "
+            "continues where it left off rather than starting again.</p>")
+        info.setWordWrap(True)
+        info.setTextFormat(Qt.RichText)
+        info.setMaximumWidth(620)
+        lay.addWidget(info)
+        form = QFormLayout()
+
+        row = QHBoxLayout()
+        self.ed_exe = QLineEdit(exe or "")
+        self.ed_exe.setPlaceholderText("path to orca.exe")
+        self.ed_exe.textChanged.connect(self._refresh)
+        btn = QPushButton("Browse...")
+        btn.clicked.connect(self._browse_exe)
+        row.addWidget(self.ed_exe)
+        row.addWidget(btn)
+        w = QWidget()
+        w.setLayout(row)
+        form.addRow("ORCA program:", w)
+
+        self.cmb_level = QComboBox()
+        self.cmb_level.setEditable(True)
+        for level, why in self.LEVELS:
+            self.cmb_level.addItem(level)
+            self.cmb_level.setItemData(self.cmb_level.count() - 1, why, Qt.ToolTipRole)
+        self.cmb_level.setToolTip("The ORCA keyword line, which may be edited: anything ORCA "
+                                  "accepts as a single-point method will do")
+        form.addRow("Level of theory:", self.cmb_level)
+
+        self.cmb_which = QComboBox()
+        for label, idx in self._groups:
+            self.cmb_which.addItem(f"{label} ({len(idx)})")
+        self.cmb_which.currentIndexChanged.connect(self._refresh)
+        form.addRow("Molecules:", self.cmb_which)
+
+        self.chk_fukui = QCheckBox("Fukui indices and the global reactivity numbers")
+        self.chk_fukui.setChecked(True)
+        self.chk_fukui.setToolTip(
+            "<p>The N+1 and N&minus;1 states as well, so three calculations per molecule instead "
+            "of one. They are what the Fukui indices, the dual descriptor, the local softness, "
+            "the ionisation potential, the electron affinity, the hardness and the "
+            "electrophilicity are made of &mdash; the quantities a reactivity model wants.</p>")
+        self.chk_fukui.toggled.connect(self._refresh)
+        form.addRow("", self.chk_fukui)
+
+        self.chk_opt = QCheckBox("optimise the geometry first")
+        self.chk_opt.setChecked(False)
+        self.chk_opt.toggled.connect(self._refresh)
+        form.addRow("", self.chk_opt)
+
+        self.spin_jobs = QSpinBox()
+        self.spin_jobs.setRange(1, 64)
+        self.spin_jobs.setValue(min(4, max(1, (os.cpu_count() or 4) // 2)))
+        self.spin_jobs.valueChanged.connect(self._refresh)
+        self.spin_jobs.setToolTip(
+            "Molecules computed at the same time. This build of ORCA is "
+            + ("parallel, so a job may use several cores as well (below)."
+               if has_mpi else
+               "the serial one: it has no MPI, so one job uses one core and the way to use the "
+               "machine is to run several molecules at once."))
+        form.addRow("Molecules at a time:", self.spin_jobs)
+
+        self.spin_nprocs = QSpinBox()
+        self.spin_nprocs.setRange(1, 64)
+        self.spin_nprocs.setValue(1)
+        self.spin_nprocs.setEnabled(has_mpi)
+        self.spin_nprocs.setToolTip("Cores per job (%pal). Needs an ORCA built with MPI; the "
+                                    "serial build fails outright when asked for more than one.")
+        form.addRow("Cores per job:", self.spin_nprocs)
+
+        self.spin_mem = QSpinBox()
+        self.spin_mem.setRange(200, 64000)
+        self.spin_mem.setSingleStep(500)
+        self.spin_mem.setValue(2000)
+        self.spin_mem.setSuffix(" MB")
+        self.spin_mem.setToolTip("%maxcore: memory per core. Times the number of molecules at a "
+                                 "time is what the run may ask of the machine.")
+        form.addRow("Memory per core:", self.spin_mem)
+
+        self.spin_timeout = QSpinBox()
+        self.spin_timeout.setRange(0, 600)
+        self.spin_timeout.setValue(30)
+        self.spin_timeout.setSuffix(" min")
+        self.spin_timeout.setSpecialValueText("no limit")
+        self.spin_timeout.setToolTip("A job that runs longer than this is killed and its molecule "
+                                     "reported as failed, so one pathological case cannot hold up "
+                                     "the set")
+        form.addRow("Give up on a job after:", self.spin_timeout)
+
+        row = QHBoxLayout()
+        self.ed_dir = QLineEdit(workdir)
+        self.ed_dir.textChanged.connect(self._refresh)
+        btn = QPushButton("Browse...")
+        btn.clicked.connect(self._browse_dir)
+        row.addWidget(self.ed_dir)
+        row.addWidget(btn)
+        w = QWidget()
+        w.setLayout(row)
+        w.setToolTip("Where the inputs, the outputs and the cache live. Keep it: it is both the "
+                     "record of what was computed and what makes a second run cheap.")
+        form.addRow("Working directory:", w)
+        lay.addLayout(form)
+
+        self.lbl_cost = QLabel()
+        self.lbl_cost.setWordWrap(True)
+        self.lbl_cost.setTextFormat(Qt.RichText)
+        self.lbl_cost.setMaximumWidth(620)
+        lay.addWidget(self.lbl_cost)
+        self.lbl_warn = QLabel()
+        self.lbl_warn.setWordWrap(True)
+        self.lbl_warn.setTextFormat(Qt.RichText)
+        self.lbl_warn.setMaximumWidth(620)
+        self.lbl_warn.setStyleSheet("color: #a33;")
+        lay.addWidget(self.lbl_warn)
+
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.button(QDialogButtonBox.Ok).setText("Run")
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+        self._refresh()
+
+    # ---------------------------------------------------------------- the choices
+    def indices(self) -> List[int]:
+        return list(self._groups[max(0, self.cmb_which.currentIndex())][1])
+
+    def level(self) -> str:
+        return self.cmb_level.currentText().strip()
+
+    def workdir(self) -> str:
+        return self.ed_dir.text().strip() or "orca_work"
+
+    def timeout(self):
+        v = self.spin_timeout.value()
+        return None if v <= 0 else float(v) * 60.0
+
+    def _browse_exe(self):
+        path, _ = QFileDialog.getOpenFileName(self, "ORCA program", self.ed_exe.text(),
+                                              "Programs (*.exe);;All files (*)")
+        if path:
+            self.ed_exe.setText(path)
+
+    def _browse_dir(self):
+        path = QFileDialog.getExistingDirectory(self, "Working directory", self.ed_dir.text())
+        if path:
+            self.ed_dir.setText(path)
+
+    # ------------------------------------------------- what the run will cost, and what it will move
+    def _refresh(self, *_):
+        from ..orca import estimate_seconds, measured_seconds_per_job
+        idx = self.indices()
+        fukui = self.chk_fukui.isChecked()
+        per_job = measured_seconds_per_job(self.workdir(), fukui)
+        source = "measured in this working directory" if per_job else "assumed for this machine"
+        seconds = estimate_seconds(len(idx), fukui, self.spin_jobs.value(), per_job or 150.0)
+        n_jobs = (3 if fukui else 1)
+        if self.chk_opt.isChecked():
+            # an optimisation is a series of single points; three is a modest guess at how many
+            seconds += 3.0 * estimate_seconds(len(idx), False, self.spin_jobs.value(),
+                                              per_job or 150.0)
+            n_jobs += 1
+        charges = [self._charges[i] for i in idx] or [0]
+        mults = [self._mults[i] for i in idx] or [1]
+        open_shell = sum(1 for m in mults if m != 1)
+        chem = (f"all {len(idx)} neutral" if set(charges) == {0}
+                else "formal charges from %s to %s" % (f"{min(charges):+d}".replace("+0", "0"),
+                                                       f"{max(charges):+d}".replace("+0", "0")))
+        shells = ("every one a closed-shell singlet" if not open_shell
+                  else f"{open_shell} with an odd electron count, run as doublets")
+        self.lbl_cost.setText(
+            f"{len(idx)} molecules &times; {n_jobs} ORCA job(s) each: about "
+            f"<b>{_hms(seconds)}</b> at {self.spin_jobs.value()} molecule(s) at a time "
+            f"({_hms(per_job or 150.0)} a job, {source}). Molecules whose jobs are already in the "
+            f"working directory are reused and cost nothing.<br>"
+            f"Charge and multiplicity are read off the structure: {chem}, {shells}.")
+        warn = []
+        if self.chk_opt.isChecked():
+            warn.append("<b>Optimising the geometry moves every atom.</b> The alignment the "
+                        "fields are built on does not survive it, and neither does a model "
+                        "trained on the present poses: align the set again afterwards. Leave "
+                        "this off to compute the properties where the molecules stand.")
+        if not self.ed_exe.text().strip():
+            warn.append("<b>No ORCA program found.</b> Give the path to orca.exe above.")
+        self.lbl_warn.setText("<br>".join(warn))
+
+
+def _hms(seconds: float) -> str:
+    """A duration a person can read; the dialogs quote their estimates in these."""
+    s = int(round(max(0.0, float(seconds))))
+    if s < 90:
+        return f"{s} s"
+    if s < 5400:
+        return f"{s // 60} min"
+    return f"{s // 3600} h {(s % 3600) // 60:02d} min"
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -1037,6 +1267,10 @@ class MainWindow(QMainWindow):
         self._act(tm, "Align decoys to the training set…", self.align_decoys_dialog)
         self._act(tm, "Unalign (randomise poses)…", self.unalign_dialog)
         self._act(tm, "Center view on current molecule", self.center_current)
+        tm.addSeparator()
+        self._act(tm, "Quantum-chemical properties with ORCA…", self.orca_dialog)
+        self._act(tm, "Save the data set with its properties (SDF)…",
+                  self.save_annotated_sdf)
         tm.addSeparator()
         hm = tm.addMenu("Heterogeneous sets (several chemotypes)")
         hm.setToolTip("A series of several scaffolds has no single common substructure, so the "
@@ -3157,6 +3391,131 @@ class MainWindow(QMainWindow):
             self.schedule_display()
 
         self.run_task(task, done, "Aligning decoys")
+
+    def orca_dialog(self):
+        """Compute quantum-chemical properties with ORCA: per-atom into fields, per-molecule into descriptors."""
+        if self.ds is None:
+            QMessageBox.information(self, "No data", "Load a data set first.")
+            return
+        from .. import orca as qm
+        ds = self.ds
+        try:
+            exe = qm.find_orca()
+        except Exception:        # noqa: BLE001  -- not installed is a message, not a crash
+            exe = ""
+        charges, mults = [], []
+        for m in ds.mols:
+            q = int(Chem.GetFormalCharge(m))
+            # implicit hydrogens count too, so the parity is right whether or not they are drawn
+            n_el = sum(a.GetAtomicNum() + a.GetTotalNumHs() for a in m.GetAtoms()) - q
+            charges.append(q)
+            mults.append(1 if n_el % 2 == 0 else 2)
+        groups = [("all molecules", list(range(len(ds.mols)))),
+                  ("only those without the properties", qm.missing_properties(ds.mols)),
+                  ("selected", self.dataset_panel.selected_indices()),
+                  ("training set", [int(i) for i in ds.train_indices])]
+        groups = [(lab, idx) for lab, idx in groups if idx]
+        base = os.path.dirname(os.path.abspath(ds.path)) if ds.path else os.getcwd()
+        dlg = OrcaDialog(exe, groups, charges, mults, self,
+                         workdir=os.path.join(base, "orca_work"),
+                         has_mpi=bool(exe) and qm.orca_has_mpi(exe))
+        for i, (label, _) in enumerate(groups):     # the molecules still to do are the usual wish
+            if label.startswith("only those"):
+                dlg.cmb_which.setCurrentIndex(i)
+                break
+        if dlg.exec() != QDialog.Accepted:
+            return
+        exe = dlg.ed_exe.text().strip()
+        if not exe or not os.path.isfile(exe):
+            self.error(f"No ORCA program at {exe or '(nothing given)'}. Install ORCA and give the "
+                       f"path to orca.exe in the dialog.")
+            return
+        idx = dlg.indices()
+        if not idx:
+            return
+        cfg = qm.Config(orca=exe, level=dlg.level(), opt=dlg.chk_opt.isChecked(),
+                        fukui=dlg.chk_fukui.isChecked(), nprocs=dlg.spin_nprocs.value(),
+                        maxcore=dlg.spin_mem.value(), timeout=dlg.timeout(),
+                        workdir=dlg.workdir())
+        jobs = dlg.spin_jobs.value()
+        mols, names = list(ds.mols), list(ds.names)
+        self.log(f"ORCA: {len(idx)} molecules at '{cfg.level}', "
+                 f"{'optimised' if cfg.opt else 'input'} geometry, "
+                 f"Fukui {'on' if cfg.fukui else 'off'}, {jobs} at a time, work in {cfg.workdir}")
+
+        def task(progress, cancel):
+            return qm.annotate_molecules(mols, names, cfg, jobs=jobs, indices=idx,
+                                         progress=progress, cancel=cancel)
+
+        def done(outcomes):
+            good = [oc for oc in outcomes if oc.mol is not None]
+            for oc in good:
+                ds.mols[oc.index - 1] = oc.mol
+            fresh = [oc for oc in good if not oc.reused]
+            failed = [oc for oc in outcomes if oc.mol is None and oc.error != "cancelled"]
+            stopped = [oc for oc in outcomes if oc.error == "cancelled"]
+            from ..dataio import common_atom_properties
+            from ..descriptors import available as numeric_desc
+            ds.atom_properties = common_atom_properties(ds.mols)
+            ds.properties = sorted({k for m in ds.mols for k in m.GetPropNames()})
+            self.model_panel.set_class_properties(list(ds.properties))
+            self.model_panel.set_atom_properties(ds.atom_properties)
+            self.model_panel.set_descriptor_properties(
+                [p for p in numeric_desc(ds.mols) if p != ds.activity_prop])
+            props = numeric_properties(ds.mols)
+            cmb = self.dataset_panel.cmb_activity
+            cmb.blockSignals(True)
+            cmb.clear()
+            cmb.addItems(props)
+            if ds.activity_prop in props:
+                cmb.setCurrentIndex(props.index(ds.activity_prop))
+            cmb.blockSignals(False)
+            self.molfields = [build_fields(m, FieldSet(specs=[]), n)
+                              for m, n in zip(ds.mols, ds.names)]
+            self._mol_volume_cache.clear()
+            self.refresh_fieldset()
+            self.schedule_display()
+            parts = [f"{len(fresh)} computed in {_hms(sum(oc.seconds for oc in fresh))} of job time"]
+            if len(good) > len(fresh):
+                parts.append(f"{len(good) - len(fresh)} reused from {cfg.workdir}")
+            if failed:
+                parts.append(f"{len(failed)} failed and were left as they were")
+            if stopped:
+                parts.append(f"{len(stopped)} not started (cancelled)")
+            self.log("ORCA: " + ", ".join(parts))
+            for oc in failed[:5]:
+                self.results_panel.append_log(f"  {oc.name}: {oc.error}")
+            if ds.atom_properties:
+                self.log("Per-atom property fields now on offer: " + ", ".join(ds.atom_properties))
+                self.log("Per-molecule quantities now on offer as descriptors: "
+                         + ", ".join(p for p in (qm.MOL_PROPS_N + qm.MOL_PROPS_FUKUI)
+                                     if p in ds.properties))
+            if cfg.opt and good:
+                self.log("The geometries were optimised, so the poses have moved: align the set "
+                         "again before building a model.")
+            if good and QMessageBox.question(
+                    self, "Save the annotated data set?",
+                    f"{len(good)} molecules now carry the quantum-chemical properties. Written to "
+                    f"an SDF they keep them: opening that file later brings the fields and the "
+                    f"descriptors back without running ORCA again.",
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes) == QMessageBox.Yes:
+                self.save_annotated_sdf()
+
+        self.run_task(task, done, "Running ORCA")
+
+    def save_annotated_sdf(self):
+        """Write the molecules with every property they carry, atom property lists included."""
+        if self.ds is None:
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "Save annotated data set", "dataset_qm.sdf",
+                                              "SDF (*.sdf)")
+        if not path:
+            return
+        w = Chem.SDWriter(path)
+        for m in self.ds.mols:
+            w.write(m)
+        w.close()
+        self.log(f"Annotated data set written to {path}")
 
     def unalign_dialog(self):
         """Give the chosen molecules a random pose (control experiment for alignment methods)."""

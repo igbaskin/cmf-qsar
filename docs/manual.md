@@ -572,7 +572,8 @@ reference…*; *Align by prediction confidence (GP variance)…* and its cross-v
 training set; *Replace molecules by their topomer substituents…*; *Field difference from a
 reference molecule…*; *Extract pharmacophore from the co-field…*; *Chemical space map (GTM)…*;
 *Align decoys to the training set…*; *Unalign (randomise poses)…*; *Center view on current
-molecule*; and the submenu *Heterogeneous sets (several chemotypes)* with its four numbered steps.
+molecule*; *Quantum-chemical properties with ORCA…* and *Save the data set with its
+properties (SDF)…*; and the submenu *Heterogeneous sets (several chemotypes)* with its four numbered steps.
 
 **Help** — *About CMF 3D-QSAR / method summary*, which names the equations of the papers that each
 part of the program implements.
@@ -654,8 +655,82 @@ Two conventions are read, in this order:
 The hydrogens are the trap. A file without 3D coordinates is embedded on loading and hydrogens are
 added, so a list written for the heavy atoms alone no longer matches the atom count. The program
 says so rather than silently mis-assigning: `--prop-missing error` (the default) stops,
-`--prop-missing zero` gives the unlisted atoms zero weight. `examples/orca_atom_properties.py`
-shows the whole route from an ORCA run to an SDF the program reads.
+`--prop-missing zero` gives the unlisted atoms zero weight. The next section shows the
+whole route from an ORCA run to fields and descriptors, from inside the program or from the
+command line.
+
+## Quantum-chemical properties with ORCA
+
+*Tools → Quantum-chemical properties with ORCA…* runs ORCA over the loaded molecules and brings
+two kinds of number back, to the two places the model keeps them.
+
+**Per atom**, and so available as `prop:` fields: Mulliken, Löwdin, Hirshfeld and CHELPG charges,
+the HOMO and LUMO population of every atom, and — when the N+1 and N−1 states are computed as well
+— the condensed Fukui indices $f^+$, $f^-$, $f^0$, the dual descriptor $f^+ - f^-$, the local
+softnesses and the local electrophilicity. **Per molecule**, and so available as descriptors: the
+total energy, the HOMO and LUMO energies and their gap, the dipole moment, and from the ionised
+states the ionisation potential, the electron affinity, the chemical hardness, the softness, the
+chemical potential and the electrophilicity index.
+
+That split is the whole point of the feature. A Fukui index is a statement about one atom, so it
+belongs in a field, where a co-field can then say *where* a nucleophilic centre helps; the gap is a
+statement about the molecule, so it belongs in the descriptor block, where it cannot pretend to
+have a position.
+
+The dialog asks for
+
+- **the ORCA program** — found by itself at the standard location, in `$ORCA_EXE` or on the PATH,
+  and otherwise given here;
+- **the level of theory** — the ORCA keyword line, which may be edited: `r2SCAN-3c` (fast,
+  with its own basis) is the one to start with, B3LYP-D3/def2-SVP the usual hybrid, and anything
+  else ORCA accepts as a single point will do;
+- **which molecules** — all of them; only those that do not carry the properties yet, which is the
+  default, so a set extended with new compounds costs only the new ones; the selected ones; or the
+  training set;
+- **the Fukui indices and the global reactivity numbers**, which need the N+1 and N−1 states and
+  so cost three calculations per molecule instead of one;
+- **optimising the geometry first**, off by default — see the warning below;
+- **how many molecules at a time**, and, where the ORCA build has MPI, how many cores per job. The
+  Windows build is the serial one: it has no MPI helpers, `%pal` fails outright, and the way to
+  use a many-core machine is to run several molecules at once, which is what the first box is for.
+  The dialog disables *cores per job* when it sees a serial build;
+- **memory per core**, a **time limit** per job, after which that molecule is given up on rather
+  than holding up the set, and the **working directory**.
+
+Before you press *Run* the dialog says what the run will cost: the number of molecules times the
+number of ORCA jobs each, and the wall time that comes to at the chosen parallelism. After the
+first run that estimate is no longer a guess — the time every job took is recorded in the working
+directory, and the dialog quotes the measured mean. For scale: a molecule the size of methanol at
+`r2SCAN-3c` takes a few seconds per job, a drug-sized one at B3LYP-D3/def2-SVP a couple of minutes,
+so a hundred of the latter with their Fukui indices is a few hours with four running at a time.
+
+The dialog also states the charge and multiplicity it read off the structures — the formal charge
+of the molecule, and the lowest spin state its electron count allows — so an unintended anion or
+an odd electron is visible before the hours are spent, not afterwards in a column of nonsense.
+
+Three things make a long run survivable. Every job is **cached** under a key over the molecule, its
+charge, the level of theory and the geometry, so *Cancel* — which kills the ORCA processes
+themselves, not merely the bookkeeping — loses only the jobs in flight, and starting again
+continues from where it stopped. A molecule that **fails** is named in the log and skipped, never
+fatal to the set. And the working directory keeps every input and output, so any number can be
+traced back to the calculation that produced it.
+
+When the run finishes, the new quantities appear as tick boxes — the per-atom ones in *Per-atom
+property fields*, the per-molecule ones in *Descriptors (per molecule)* — and the program offers to
+write the annotated set as an SDF. Write it: the file carries the properties with it, as atom
+property lists and molecule properties, so opening it later brings them all back without running
+ORCA again. *Tools → Save the data set with its properties (SDF)…* does the same at any time.
+
+> **About the geometry.** *Optimise the geometry first* is off by default and should normally stay
+> off. ORCA optimises each molecule on its own, which moves every atom: a series that was
+> superimposed is not superimposed afterwards, and a model trained on the old poses no longer
+> refers to the molecules in memory. With the box off, the properties are computed exactly where
+> the molecules stand, which is what a field model needs. If you do optimise, align the set again
+> before building anything.
+
+The same computation runs from the command line as `examples/orca_atom_properties.py` (`--help`
+lists its options), which reads an SDF and writes the annotated one. The script and the dialog
+share the module `cmfqsar/orca.py`, so the numbers are the same either way.
 
 # Building a model
 
