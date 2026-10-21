@@ -58,15 +58,42 @@ def computed_names() -> List[str]:
     return [f"calc:{k}" for k in COMPUTED]
 
 
-def compute(mol, name: str) -> float:
-    """One computed descriptor of one molecule; NaN if RDKit cannot produce it."""
-    key = name[5:] if name.startswith("calc:") else name
-    if key not in COMPUTED:
-        raise KeyError(f"unknown computed descriptor {name!r}; the ones defined are "
-                       f"{', '.join(computed_names())}")
+def rdkit_descriptors() -> Dict[str, object]:
+    """Every descriptor RDKit exposes, by its own name: 200-odd of them, as a lookup table."""
+    from rdkit.Chem import Descriptors
+    return {name: fn for name, fn in Descriptors._descList}
+
+
+def _resolve(key: str):
+    """The function behind a `calc:` name: one of the four short names, or any RDKit descriptor."""
     from rdkit.Chem import Crippen, Descriptors, Lipinski
-    fn = {"mw": Descriptors.MolWt, "clogp": Crippen.MolLogP, "tpsa": Descriptors.TPSA,
-          "rotatable": Lipinski.NumRotatableBonds}[key]
+    short = {"mw": Descriptors.MolWt, "clogp": Crippen.MolLogP, "tpsa": Descriptors.TPSA,
+             "rotatable": Lipinski.NumRotatableBonds}
+    if key in short:
+        return short[key]
+    table = rdkit_descriptors()
+    if key in table:
+        return table[key]
+    lowered = {k.lower(): v for k, v in table.items()}
+    if key.lower() in lowered:                       # RDKit's names are CamelCase; be forgiving
+        return lowered[key.lower()]
+    import difflib
+    near = difflib.get_close_matches(key, list(table) + list(short), n=4)
+    raise KeyError(f"unknown computed descriptor {key!r}"
+                   + (f"; did you mean {', '.join(near)}?" if near else
+                      f"; the short names are {', '.join(COMPUTED)} and any of the "
+                      f"{len(table)} RDKit descriptors may be named directly"))
+
+
+def compute(mol, name: str) -> float:
+    """One computed descriptor of one molecule; NaN if RDKit cannot produce it.
+
+    The four short names are shortcuts; beyond them any of RDKit's own descriptors may be asked
+    for by its RDKit name -- ``calc:NumHAcceptors``, ``calc:FractionCSP3``, ``calc:BalabanJ`` --
+    which is why there is no list here to keep up to date.
+    """
+    key = name[5:] if name.startswith("calc:") else name
+    fn = _resolve(key)
     try:
         return float(fn(mol))
     except Exception:                                 # noqa: BLE001 - one descriptor, not the set

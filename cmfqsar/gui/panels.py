@@ -9,7 +9,7 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout,
+from PySide6.QtWidgets import (QCompleter, QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout,
                                QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QPushButton,
                                QRadioButton, QSlider, QSpinBox, QTableWidget, QTableWidgetItem, QTabWidget,
                                QTextEdit, QVBoxLayout, QWidget, QSizePolicy)
@@ -544,7 +544,25 @@ class ModelPanel(QWidget):
             box.toggled.connect(self.fields_changed)
             crow3.addWidget(box)
             self._calc_boxes[key] = box
-        crow3.addStretch(1)
+        # the four above are shortcuts; any of RDKit's 200-odd descriptors can be named here
+        self.ed_calc_more = QLineEdit()
+        self.ed_calc_more.setPlaceholderText("more, by RDKit name: NumHAcceptors, FractionCSP3…")
+        self.ed_calc_more.setToolTip(
+            "<p>Any other RDKit descriptor, by its own name, comma separated — "
+            "<i>NumHDonors</i>, <i>NumAromaticRings</i>, <i>FractionCSP3</i>, <i>BalabanJ</i>, "
+            "<i>LabuteASA</i>, <i>qed</i>, and some two hundred more.</p>"
+            "<p>A name that does not exist is reported with the nearest ones that do, when the "
+            "model is built.</p>")
+        self.ed_calc_more.editingFinished.connect(self.fields_changed)
+        try:
+            from ..descriptors import rdkit_descriptors
+            comp = QCompleter(sorted(rdkit_descriptors()))
+            comp.setCaseSensitivity(Qt.CaseInsensitive)
+            comp.setFilterMode(Qt.MatchContains)
+            self.ed_calc_more.setCompleter(comp)
+        except Exception:                            # noqa: BLE001 - completion is a convenience
+            pass
+        crow3.addWidget(self.ed_calc_more, 1)
         fl.addLayout(crow3)
         # non-field descriptors: one number per molecule, added to the kernel as its own block
         self.row_desc = QWidget()
@@ -1070,6 +1088,10 @@ class ModelPanel(QWidget):
         """Both kinds: the properties the file carries and the ones the program computes."""
         out = [n for n, b in self._desc_boxes.items() if b.isChecked()]
         out += [f"calc:{n}" for n, b in self._calc_boxes.items() if b.isChecked()]
+        for name in self.ed_calc_more.text().replace(";", ",").split(","):
+            name = name.strip()
+            if name and f"calc:{name}" not in out:
+                out.append(f"calc:{name}")
         return out
 
     def descriptor_h(self) -> float:

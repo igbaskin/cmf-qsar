@@ -818,6 +818,13 @@ always available, computed by RDKit from the structure: `calc:mw` (molecular wei
 (rotatable bonds). They have a row of their own in the model panel, *Computed descriptors*, and
 **all four are off by default**.
 
+Those four are shortcuts, not the whole list. **Any** of RDKit's descriptors — some two hundred of
+them — can be asked for by its own RDKit name, typed into the box at the end of that row
+(with completion) or passed on the command line: `calc:NumHAcceptors`, `calc:FractionCSP3`,
+`calc:BalabanJ`, `calc:LabuteASA`, `calc:qed`. Names are matched case-insensitively, and a name
+that does not exist is refused before the fit with the nearest ones that do — `calc:NumHDonor`
+answers *did you mean NumHDonors?*.
+
 The default is deliberate, and so is the warning that belongs with it. These are two-dimensional
 quantities: they can lift a model that has a size or lipophilicity trend in it, and they can also
 carry a model that then owes nothing at all to its geometry. Measured on four Sutherland sets,

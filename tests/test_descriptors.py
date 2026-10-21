@@ -176,3 +176,35 @@ def test_computed_descriptors_need_nothing_from_the_file():
     model.fit(table, y, cv_folds=0)
     parts = dict(model.descriptor_contributions(mf[0]))
     assert set(parts) == {"calc:mw", "calc:clogp"}
+
+
+def test_any_rdkit_descriptor_can_be_named():
+    from rdkit.Chem import Descriptors
+    from cmfqsar.descriptors import compute, rdkit_descriptors
+
+    table = rdkit_descriptors()
+    assert len(table) > 150, "RDKit should expose a couple of hundred descriptors"
+    m = _mol("CCOc1ccc(CCN)cc1", "x")
+    for name in ("NumHAcceptors", "FractionCSP3", "BalabanJ", "RingCount"):
+        assert compute(m, f"calc:{name}") == pytest.approx(float(table[name](m)))
+    # RDKit's names are CamelCase; asking in another case still works
+    assert compute(m, "calc:numhacceptors") == compute(m, "calc:NumHAcceptors")
+
+
+def test_a_mistyped_descriptor_suggests_the_right_one():
+    from cmfqsar.descriptors import compute
+    with pytest.raises(KeyError, match="did you mean NumHDonors"):
+        compute(_mol("CC", "x"), "calc:NumHDonor")
+
+
+def test_registry_descriptors_reach_a_model():
+    mols, y = _series()
+    names = [f"m{i}" for i in range(len(mols))]
+    fs = FieldSet.create(physchem=["steric"], alpha=0.5,
+                         descriptors=("calc:NumHAcceptors", "calc:FractionCSP3"))
+    mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+    table = AtomTable.from_molecules(mf)
+    assert np.isfinite(table.descriptors).all()
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": 0.01})
+    model.fit(table, y, cv_folds=0)
+    assert len(model.descriptor_contributions(mf[0])) == 2

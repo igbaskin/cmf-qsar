@@ -209,7 +209,13 @@ def cmd_build(args):
         for name in [p for p in args.probes.split(",") if p]:
             print("  " + fit_report(name, n_terms=args.probe_terms).replace("\n", "\n  "))
     if fs.descriptors:
-        from cmfqsar.descriptors import available
+        from cmfqsar.descriptors import _resolve, available
+        for name in fs.descriptors:
+            if name.startswith("calc:"):
+                try:                       # a mistyped descriptor should stop here, not mid-fit
+                    _resolve(name[5:])
+                except KeyError as exc:
+                    raise SystemExit(str(exc).strip('"'))
         have = available(ds.mols)
         unknown = [d for d in fs.descriptors if d not in have]
         print(f"  non-field descriptors: {', '.join(fs.descriptors)} (h = {fs.descriptor_h:g})"
@@ -1237,9 +1243,10 @@ def main(argv=None):
                         "one number per molecule, standardised on the training set and added to "
                         "the kernel as a block of its own. For what a field cannot represent - a "
                         "measured logP, a medium, a temperature, an energy from a quantum "
-                        "calculation. calc:mw, calc:clogp, calc:tpsa and calc:rotatable are "
-                        "computed by the program instead of read from the file. Do not pass "
-                        "anything derived from the activity")
+                        "calculation. A name beginning with calc: is computed instead of read: "
+                        "calc:mw, calc:clogp, calc:tpsa, calc:rotatable, or any of RDKit's own "
+                        "descriptors by its RDKit name (calc:NumHAcceptors, calc:FractionCSP3, "
+                        "calc:BalabanJ, ...). Do not pass anything derived from the activity")
     b.add_argument("--descriptor-h", type=float, default=1.0, metavar="H",
                    help="mixing coefficient of the descriptor block (default 1, like a field); "
                         "0 switches it off without removing it from the model")

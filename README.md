@@ -1165,8 +1165,13 @@ every molecule at random leaves it at 1.48, and with the strictly pose-free kern
 
 A file with no numeric tags has nothing to offer the row above, so four descriptors are always
 available, computed by RDKit: `calc:mw`, `calc:clogp`, `calc:tpsa` and `calc:rotatable`. They have
-their own row in the model panel and are **off by default**, for a reason the measurement makes
-plain (four Sutherland sets, same grids, 10-fold CV):
+their own row in the model panel and are **off by default**. Those four are shortcuts: any of
+RDKit's ~200 descriptors can be named directly (`calc:NumHAcceptors`, `calc:FractionCSP3`,
+`calc:BalabanJ`), typed into the box at the end of that row or passed to `--descriptors`; a name
+that does not exist is refused before the fit with the nearest ones that do.
+
+They are off by default for a reason the measurement makes plain (four Sutherland sets, same
+grids, 10-fold CV):
 
 | set | n | five fields | + the four computed | the four alone |
 |---|---|---:|---:|---:|
