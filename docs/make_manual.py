@@ -385,6 +385,18 @@ def code_block(lines, st, frame_width):
     return t
 
 
+def _starts_block(line: str) -> bool:
+    """True when a line opens a block of its own rather than continuing a paragraph.
+
+    A bibliography entry starts with "[1] ", so the test has to be that and not merely "[":
+    an ordinary paragraph may wrap onto a line that begins with a Markdown link, and treating
+    that as a block start leaves the line to no branch at all.
+    """
+    return (line.startswith(("#", "|", "```", ">", "- ", "* ", "---", "<!--", "$$", "!["))
+            or bool(re.match(r"^\[\d+\]\s", line))
+            or bool(re.match(r"^\d+\.\s+", line)))
+
+
 def parse(source: str, st, frame_width):
     """Markdown subset to a list of flowables."""
     mono = st["_fonts"][3]
@@ -501,10 +513,16 @@ def parse(source: str, st, frame_width):
                                       leftIndent=16, spaceBefore=1, spaceAfter=7, **kw))
             continue
         block = []
-        while i < len(lines) and lines[i].strip() and not lines[i].strip().startswith(
-                ("#", "|", "```", ">", "- ", "* ", "---", "<!--", "$$", "![", "[")) and \
-                not re.match(r"^\d+\.\s+", lines[i].strip()):
+        while i < len(lines) and lines[i].strip() and not _starts_block(lines[i].strip()):
             block.append(lines[i].strip())
+            i += 1
+        if not block:
+            # Nothing consumed the line and the paragraph scanner would not take it either, so
+            # the loop would spin here for ever -- which it did, on a wrapped line that began
+            # with a Markdown link, because "[" marks a bibliography entry. Take the line as
+            # ordinary text and move on: a surprise in the source should cost a line of odd
+            # typesetting, not a hung build.
+            block = [lines[i].strip()]
             i += 1
         story.append(Paragraph(inline(" ".join(block), mono), st["body"]))
     return story

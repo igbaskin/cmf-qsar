@@ -668,8 +668,24 @@ Goodford's GRID describes a molecule by the energy a small probe — a water, a 
 oxygen — would feel at every point around it. That is a field in exactly this program's sense, and
 it says something the built-in fields do not: not "there is hydrophobic character here" but "a
 probe placed here would be bound". *Probe fields* in the model panel (`--probes water,carbonyl`)
-adds one such field per probe, from the five defined: `water`, `methyl`, `carbonyl` (an acceptor),
-`amine` (a donor) and `cation`.
+adds one such field per probe. Five are defined:
+
+| name | what it stands for | R (Å) | well (kcal/mol) | charge | hydrogen bonding |
+|---|---|---:|---:|---:|---|
+| `water` | water, OH₂ | 1.70 | 0.15 | 0 | both, weakly |
+| `methyl` | a methyl group | 2.00 | 0.10 | 0 | neither |
+| `carbonyl` | a carbonyl oxygen | 1.60 | 0.20 | −0.40 | accepts |
+| `amine` | an amine nitrogen | 1.75 | 0.16 | +0.40 | donates |
+| `cation` | a generic +1 cation | 1.50 | 0.10 | +1.00 | neither |
+
+Those four numbers are the whole definition of a probe: the radius and well depth enter the
+dispersion term through the usual combining rules, the charge the electrostatic term, and the
+hydrogen-bond character decides which atoms it is complementary to — a donor probe feels acceptor
+atoms and not other donors. The parameters sit in the usual GRID and Tripos ranges rather than
+being taken from a published GRID table, which matters if you ever want to compare numbers with
+GRID itself rather than shapes. Adding a probe is one entry in `PROBES` in
+[probes.py](cmfqsar/probes.py); the fitting, the kernel, the drawing and both interfaces read that
+dictionary, so a new one appears everywhere at once.
 
 The obstacle is arithmetic, not conceptual: a Lennard-Jones term is not a Gaussian, has no
 closed-form overlap, and diverges at the atom, so the integral of its square does not exist. The
