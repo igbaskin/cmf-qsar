@@ -51,6 +51,7 @@ sys.path.insert(0, HERE)
 
 from rdkit import Chem, RDLogger  # noqa: E402
 
+import kernel_cache as KC  # noqa: E402
 import run_corrosion as C  # noqa: E402
 import run_topomer as T  # noqa: E402
 
@@ -125,8 +126,7 @@ def kernels(mols, names, alphas=T.ALPHAS):
                              param_scheme="rdkit")
         mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
         model = CMFModel(fieldset=fs, method="krr", normalize=True)
-        out[alpha] = model.joint_kernel(model.prepare_training_kernels(
-            AtomTable.from_molecules(mf)))
+        out[alpha] = KC.joint_training_kernel(model, AtomTable.from_molecules(mf))
     return out
 
 
@@ -244,6 +244,37 @@ def report(results=RESULTS):
         fh.write("\n".join(lines) + "\n")
     print("\n".join(lines))
     print(f"\nwritten {out}")
+
+
+#: how the README names the series and the pairs
+SERIES_NAMES = {"0_c1ccccc1": "benzene", "2_c1c_nH_cn1": "imidazole",
+                "11_c1c_nH_c_nH_1": "imidazolium", "12_c1ccoc1": "furan",
+                "13_c1c_nH_nn1": "triazole", "161_c1ccc2scnc2c1": "benzothiazole"}
+PAIR_NAMES = {("mwila_hcl_adj", "mwila_h2so4_adj"): "HCl / H₂SO₄ potency",
+              ("activity", "dG_ads"): "potency / ΔG_ads"}
+
+
+def readme_table(results=RESULTS):
+    """The table of the README section "Two endpoints on one kernel", from the result files."""
+    rows = []
+    for f in sorted(os.listdir(results)):
+        if f.endswith(".json"):
+            rows.append(json.load(open(os.path.join(results, f))))
+    # the two-media pair first, then by the number of molecules
+    rows.sort(key=lambda r: (r["tasks"][0] != "mwila_hcl_adj", -r["n"]))
+    lines = ["| series | endpoints | n | r | q² separate | ρ | q² shared | difference q² |",
+             "|---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        sep, sh, d = r["separate"], r["shared"], r.get("difference")
+        q = lambda tasks: " / ".join(f"{p['q2']:.2f}" for p in tasks)  # noqa: E731
+        rho = "0" if sh["rho"] == 0 else f"{sh['rho']:+g}"
+        diff = f"{d['q2_separate']:.2f} → {d['q2']:.2f} (n {d['n']})" if d else "–"
+        rb = f"{r['r_both']:+.2f}" if r.get("r_both") is not None else "–"
+        lines.append(f"| {SERIES_NAMES.get(r['set'], r['set'])} | "
+                     f"{PAIR_NAMES.get(tuple(r['tasks']), ' / '.join(r['tasks']))} | "
+                     f"{r['counts'][0]} / {r['counts'][1]} | {rb} | {q(sep['tasks'])} | {rho} | "
+                     f"{q(sh['tasks'])} | {diff} |")
+    return "\n".join(lines) + "\n"
 
 
 def main(argv=None):

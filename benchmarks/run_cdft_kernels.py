@@ -44,6 +44,7 @@ sys.path.insert(0, HERE)
 from rdkit import Chem, RDLogger  # noqa: E402
 from scipy.ndimage import map_coordinates  # noqa: E402
 
+import kernel_cache as KC  # noqa: E402
 import run_corrosion_qm as Q  # noqa: E402
 import run_topomer as T  # noqa: E402
 
@@ -125,7 +126,7 @@ def base_kernels(mols, names, alphas=T.ALPHAS):
                              param_scheme="rdkit")
         mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
         model = CMFModel(fieldset=fs, method="krr", normalize=True)
-        out[alpha] = model.joint_kernel(model.prepare_training_kernels(AtomTable.from_molecules(mf)))
+        out[alpha] = KC.joint_training_kernel(model, AtomTable.from_molecules(mf))
     return out
 
 
@@ -137,7 +138,7 @@ def condensed_kernels(mols, names, prop, alphas=T.ALPHAS):
                              param_scheme="rdkit", atom_properties=[prop])
         mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
         model = CMFModel(fieldset=fs, method="krr", normalize=True)
-        out[alpha] = model.joint_kernel(model.prepare_training_kernels(AtomTable.from_molecules(mf)))
+        out[alpha] = KC.joint_training_kernel(model, AtomTable.from_molecules(mf))
     return out
 
 
@@ -231,6 +232,39 @@ def run(set_name, results=RESULTS, qm_results=None, intervals=100, jobs=8, field
     return res
 
 
+def report(results=RESULTS, path=None):
+    """The three readings of each conceptual-DFT field, per series, from the result files."""
+    files = sorted(f for f in os.listdir(results) if f.endswith(".json"))
+    lines = ["# Conceptual-DFT fields: on a grid, fitted to Gaussians, condensed on atoms", "",
+             "Per series and field, the relative error of the Gaussian fit, the correlation of the "
+             "grid kernel with the fitted one, and the cross-validated q² of the field alone and "
+             "added to the five classical fields (`base`), for the field kept on the grid, fitted "
+             "to atom-centred Gaussians, and condensed to one index per atom.", ""]
+    for f in files:
+        r = json.load(open(os.path.join(results, f)))
+        b = r["base"]
+        lines += [f"## {r['set']} ({r['n']} molecules, {r['intervals']}³ cubes)", "",
+                  f"Five classical fields alone: q² {b['q2']:.2f} (RMSEcv {b['rmse_cv']:.2f}, "
+                  f"α {b['alpha']:g}, λ {b['lam']:g}).", "",
+                  "| field | fit error | r(grid, fitted) | grid | base + grid | fitted | "
+                  "base + fitted | condensed | base + condensed |",
+                  "|---|---|---|---|---|---|---|---|---|"]
+        for name in ("fukui_plus", "dual"):
+            d = r.get(name)
+            if not d:
+                continue
+            q = lambda k: f"{d[k]['q2']:.2f}" if k in d else "–"  # noqa: E731
+            lines.append(f"| {name} | {d['fit_rel_error']:.2f} | {d['r_grid_fitted']:+.2f} | "
+                         f"{q('grid')} | {q('base+grid')} | {q('fitted')} | {q('base+fitted')} | "
+                         f"{q('condensed')} | {q('base+condensed')} |")
+        lines.append("")
+    text = "\n".join(lines)
+    path = path or os.path.join(results, "table.md")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+    return text
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -241,7 +275,11 @@ def main(argv=None):
     ap.add_argument("--keep-cubes", action="store_true", help="do not delete the cubes (GB)")
     ap.add_argument("--limit", type=int, default=0, help="only the first N molecules (a probe)")
     ap.add_argument("--qm-results", default=None)
+    ap.add_argument("--report", action="store_true", help="only rebuild results/cdft_kernels/table.md")
     args = ap.parse_args(argv)
+    if args.report:
+        report()
+        return
     run(args.set, intervals=args.intervals, jobs=args.jobs, fields=args.fields,
         keep_cubes=args.keep_cubes, qm_results=args.qm_results, limit=args.limit)
 

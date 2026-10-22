@@ -185,6 +185,39 @@ def plot_scatter(results: Dict[str, Tuple[np.ndarray, np.ndarray, List[str]]], p
     plt.close(fig)
 
 
+def report(out_dir: str = OUT_DIR, path: Optional[str] = None) -> str:
+    """One table per summary file: every target and field combination with its q² and RMSEcv.
+
+    The summary files are ``summary<tag>.csv``, one per run of this script, the tag naming the
+    data file and the weighting (``_ens``, ``_qm_q_hirshfeld``, ...); the table carries the tag
+    so that the runs can be told apart.
+    """
+    import csv
+    files = sorted(f for f in os.listdir(out_dir) if f.startswith("summary") and f.endswith(".csv"))
+    lines = ["# A field-based Hammett equation", "",
+             "One table per run of `benchmarks/run_hammett.py`, named by the tag of its summary "
+             "file: no tag is `hammett.sdf` with one conformer and Gasteiger charges; `_ens` the "
+             "conformer ensemble; `_q_hirshfeld` the Hirshfeld charges of the quantum stage; "
+             "`_sym` the four symmetry images; `_boltzmann` Boltzmann instead of uniform weights. "
+             "q² and RMSEcv by 10-fold cross-validation, α and λ chosen on it.", ""]
+    for f in files:
+        tag = f[len("summary"):-4] or "(single conformer, Gasteiger charges)"
+        lines += [f"## `{tag}`", "",
+                  "| target | fields | n | α | λ | q² | RMSEcv | r² fit | sd(y) |",
+                  "|---|---|---|---|---|---|---|---|---|"]
+        for r in csv.DictReader(open(os.path.join(out_dir, f), encoding="utf-8")):
+            lines.append(f"| {r['target']} | {r['fields']} | {r['n']} | {float(r['alpha']):g} | "
+                         f"{float(r['lambda']):g} | {float(r['q2']):.2f} | "
+                         f"{float(r['rmse_cv']):.2f} | {float(r['r2_fit']):.2f} | "
+                         f"{float(r['sd_y']):.2f} |")
+        lines.append("")
+    text = "\n".join(lines)
+    path = path or os.path.join(out_dir, "table.md")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+    return text
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--sdf", default=None, help=f"data set (default {os.path.relpath(DEFAULT_SDF, ROOT)})")
@@ -201,7 +234,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     help="how the conformers of an ensemble are weighed (default uniform)")
     ap.add_argument("--kt", type=float, default=0.6, help="kT of the Boltzmann weights, kcal/mol")
     ap.add_argument("--out-dir", default=OUT_DIR)
+    ap.add_argument("--report", action="store_true",
+                    help="only rebuild results/hammett/table.md from the summary files")
     a = ap.parse_args(argv)
+    if a.report:
+        report(a.out_dir)
+        return 0
 
     ensemble = not a.single
     path = a.sdf or (SINGLE_SDF if a.single else DEFAULT_SDF)

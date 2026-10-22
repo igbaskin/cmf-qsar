@@ -60,6 +60,7 @@ sys.path.insert(0, HERE)
 
 from rdkit import Chem, RDLogger  # noqa: E402
 
+import kernel_cache as KC  # noqa: E402
 import run_topomer as T  # noqa: E402
 
 from cmfqsar.chemotypes import count_kernel  # noqa: E402
@@ -129,9 +130,7 @@ def kernels(mols, names, physchem, cif_types=(), props=(), descriptors=(), charg
         mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
         table = AtomTable.from_molecules(mf)
         model = CMFModel(fieldset=fs, method="krr", normalize=True)
-        K = model.prepare_training_kernels(table)
-        model.prepare_descriptors(table)
-        out[alpha] = model.joint_kernel(K, table.descriptors)
+        out[alpha] = KC.joint_training_kernel(model, table)
     return out
 
 

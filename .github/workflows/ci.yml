@@ -115,3 +115,8 @@ jobs:
 
       - name: The manual typesets
         run: python docs/make_manual.py --out /tmp/CMF_manual.pdf
+
+      # every result table and the tables the documents carry are what the result files give,
+      # and the data files are the ones the manifest was made from
+      - name: The tables and the manifest agree with the repository
+        run: python benchmarks/run_all.py --check

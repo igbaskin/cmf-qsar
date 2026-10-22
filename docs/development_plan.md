@@ -88,10 +88,17 @@ This is what the software paper needs, and nothing in the later parts should wai
   cost, and the decision to remove them before the repository is public is the author's, not
   taken here. Two further gaps it names: the corrosion exports lack per-compound references, and
   the Hammett constants were transcribed from memory and must be checked against the table.
-* **A4. One entry point for the tables.** `benchmarks/run_all.py` rebuilds every table in
-  `docs/benchmark.md` and the README from the result files, and a manifest records the package
-  versions and the data hashes each result was produced from. Kernels computed per α are cached on
-  disk and reused across scripts that share a set.
+* **A4. One entry point for the tables.** Done 22 October 2026. `benchmarks/run_all.py` lists
+  the eleven benchmarks with their inputs, runs them (`--compute`), rebuilds every
+  `results/*/table.md` from the result files (`--tables`; the two scripts that had no table
+  builder got one), splices the two tables of `docs/benchmark.md` and the two-endpoint table of
+  the README between markers, writes `benchmarks/manifest.json` with the package versions, platform,
+  commit and the hash of every data and result file, and `--check` fails when a rebuilt table or
+  spliced document differs from what is on disk or a data file from the manifest; the locked CI
+  job runs it. `benchmarks/kernel_cache.py` caches the training kernels on disk, keyed exactly by
+  the atom table, the field set and the model settings, and the six scripts that build kernels go
+  through it. Not done: the other result tables of the README stay written by hand, since each is
+  a summary in its own words of a result file the registry names.
 * **A5. A versioned model file.** The manual's list "What has to match between fitting and
   predicting" becomes a checked contract: the model file carries its parameterisation, charge model,
   scaling convention, field list and version, and `predict` refuses or warns on a mismatch rather

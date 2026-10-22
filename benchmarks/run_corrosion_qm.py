@@ -54,6 +54,7 @@ sys.path.insert(0, HERE)
 
 from rdkit import Chem, RDLogger  # noqa: E402
 
+import kernel_cache as KC  # noqa: E402
 import run_corrosion as C  # noqa: E402
 import run_topomer as T  # noqa: E402
 
@@ -135,9 +136,7 @@ def kernel_for(mols, names, physchem, props, descriptors, alpha):
     mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
     table = AtomTable.from_molecules(mf)
     model = CMFModel(fieldset=fs, method="krr", normalize=True)
-    K_fields = model.prepare_training_kernels(table)
-    model.prepare_descriptors(table)
-    return model.joint_kernel(K_fields, table.descriptors)
+    return KC.joint_training_kernel(model, table)
 
 
 def best_over_grid(kernels, y, lams=T.LAMS, folds=T.FOLDS, seed=T.SEED):

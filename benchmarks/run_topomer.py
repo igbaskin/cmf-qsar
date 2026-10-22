@@ -52,6 +52,9 @@ from cmfqsar.model import AtomTable, CMFModel, cv_predict, r2_score, rmse  # noq
 from cmfqsar.topomer import (TopomerSpec, attachment_label, cuttable, framework_core,  # noqa: E402
                              series_labels, substituents, topomer_fields, unique_substituents)
 
+sys.path.insert(0, HERE)
+import kernel_cache as KC  # noqa: E402
+
 RESULTS = os.path.join(HERE, "results", "topomer")
 DATA = os.path.join(ROOT, "examples", "sutherland")
 SETS = ("ACE", "AChE", "BZR", "COX2", "DHFR", "GPB", "THER", "THR")
@@ -70,8 +73,7 @@ def best_q2(mf, y, alphas, lams, folds=FOLDS, seed=SEED):
     best = None
     for alpha, fields in zip(alphas, mf):
         model = CMFModel(fieldset=fields[0], method="krr", normalize=True)
-        K = model.joint_kernel(model.prepare_training_kernels(
-            AtomTable.from_molecules(fields[1])))
+        K = KC.joint_training_kernel(model, AtomTable.from_molecules(fields[1]))
         for lam in lams:
             pred = cv_predict(K, y, "krr", {"lam": float(lam)}, folds=folds, seed=seed)
             q2 = r2_score(y, pred)

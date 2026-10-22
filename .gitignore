@@ -33,3 +33,6 @@ benchmarks/results/am_eu/orca/
 build/
 dist/
 *.whl
+
+# kernels cached by benchmarks/kernel_cache.py
+benchmarks/cache/

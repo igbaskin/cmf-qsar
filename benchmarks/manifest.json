@@ -1,0 +1,1425 @@
+{
+ "commit": "429efa395117e846710a0e54db2b8eb32dea47cf",
+ "created": "2026-10-22T16:19:57",
+ "data": {
+  "examples/_matched_decoys.py": {
+   "bytes": 4854,
+   "sha256": "723cffee1328619f6f991e890ee03c837845bc7c5a0f17c7d7e95316d8aeb4bf"
+  },
+  "examples/am-eu/AmEu1-all.mol2": {
+   "bytes": 140316,
+   "sha256": "2e42e2d6cb5871381e0ffda9c1073b49d7038af33e3ba0602e2d280a55f76087"
+  },
+  "examples/am-eu/AmEu1-all.txt": {
+   "bytes": 628,
+   "sha256": "0a1ad21385edea4963dccc2700edd4f9f01899b065dcb100ce735e1f3d00a561"
+  },
+  "examples/benzamides_synthetic.sdf": {
+   "bytes": 371416,
+   "sha256": "92f5f6c7601d7c97f2b6ca01d359065208b13c894955dcf523e2e8bc2a37b865"
+  },
+  "examples/corrosion/0_c1ccccc1.csv": {
+   "bytes": 41685,
+   "sha256": "d93a6a0f8f1573cbf2114ad45abc36e660dad5ed3652f27a7a05ae530d50e063"
+  },
+  "examples/corrosion/11_c1c_nH_c_nH_1.csv": {
+   "bytes": 4112,
+   "sha256": "6d81da791a9823b9a2de87cd32dd6e21d571a7bb4c1706ca8419c357491fbc9d"
+  },
+  "examples/corrosion/12_c1ccoc1.csv": {
+   "bytes": 3543,
+   "sha256": "227228b8c0681dfda9bddce61f93fe63ce1de32e4897498defb0f5ce2c7e9b35"
+  },
+  "examples/corrosion/13_c1c_nH_nn1.csv": {
+   "bytes": 5558,
+   "sha256": "9f7eb78349e84ab7fc0b7c8d0d6b72e8fc2c6ea2c4a386cc1011f7cebf0fc23e"
+  },
+  "examples/corrosion/14_O_c1cc_nH_c_O_nH_1.csv": {
+   "bytes": 6629,
+   "sha256": "c9185fda90820db79b65c16ae44621f858a8696d0845d0d7e96e73984fda200a"
+  },
+  "examples/corrosion/157_c1ccc2_nH_cnc2c1.csv": {
+   "bytes": 12061,
+   "sha256": "cfb023c508411592a5658a795e1e9476d0e9db7b2f4751bd4ce149380e9d222a"
+  },
+  "examples/corrosion/158_c1ccc2ncccc2c1.csv": {
+   "bytes": 12106,
+   "sha256": "60062dd36474f80666a8ead15910d6a2a9de68d6838188f2596f08ac5f89953e"
+  },
+  "examples/corrosion/159_C_Nc1ccccc1_c1ccccc1.csv": {
+   "bytes": 5741,
+   "sha256": "ea880e6d08a63f5fcf5b0ffd004fa9c7065e00e06cf9a98a8849ad412f2df45b"
+  },
+  "examples/corrosion/160_c1ccc2ccccc2c1.csv": {
+   "bytes": 3049,
+   "sha256": "68e591ee4fad9986117ff4dbf8205a652f94665e572de476772919d359ddaa95"
+  },
+  "examples/corrosion/161_c1ccc2scnc2c1.csv": {
+   "bytes": 3417,
+   "sha256": "0bbed63e731d48780d348ea8b894368ee06840ba501c79ab81df41bc59f709bd"
+  },
+  "examples/corrosion/165_O_c1cc_nH_n1_c1ccccc1.csv": {
+   "bytes": 3800,
+   "sha256": "79c7cba911f0fe50da54adc6069c20778bb93cf9037f859f1139f6f1808fda63"
+  },
+  "examples/corrosion/17_c1nnco1.csv": {
+   "bytes": 2927,
+   "sha256": "b785bd8dbd087d6b543dd630e30710fbb62cfa30f340d57bba75fc7279219a84"
+  },
+  "examples/corrosion/1_c1ccncc1.csv": {
+   "bytes": 18136,
+   "sha256": "b3d6eabed5ef1fdccefbda50cfca46d004a2d91ba1499c98b34441a02e087cad"
+  },
+  "examples/corrosion/20_O_c1cc_nH_nH_1.csv": {
+   "bytes": 3710,
+   "sha256": "5b3cc00532d17eee5f2dad96aff88c8709a83d74037b8aa712639c27a4f12e9c"
+  },
+  "examples/corrosion/21_O_C1CCN1.csv": {
+   "bytes": 3957,
+   "sha256": "54625b58b08fac1470c0ecfcae1135ecf9dd72419c0f96e14e5205268050bea4"
+  },
+  "examples/corrosion/22_C1CNOC1.csv": {
+   "bytes": 2848,
+   "sha256": "796e8addffbf07f8ea49c5a242e819b779aa6d72fa15783d37f6d3f2d395263b"
+  },
+  "examples/corrosion/2_c1c_nH_cn1.csv": {
+   "bytes": 14774,
+   "sha256": "60c40c7462683cee864ae89252d5dbbafc079c3b4e51cfd0ea3400916d99817e"
+  },
+  "examples/corrosion/3_c1cscn1.csv": {
+   "bytes": 4342,
+   "sha256": "27d08de800a0cc3789b9482121881257778bf1ccad371e0132a711908cad4350"
+  },
+  "examples/corrosion/4_c1nnc_nH_1.csv": {
+   "bytes": 7125,
+   "sha256": "88ae5549450fa0454b23213ca2eb62dda21f028b9d8083566351cbc79d2acfe8"
+  },
+  "examples/corrosion/5_c1cncnc1.csv": {
+   "bytes": 2474,
+   "sha256": "81579b05d8b50e39ffbe0dec4799e9ec8fc56f9cb0c4e92c2cf23e10b4253b78"
+  },
+  "examples/corrosion/7_c1nncs1.csv": {
+   "bytes": 5154,
+   "sha256": "11e8a3a7c0946934150760c381b1cb002ca4df3f183cbf467ac1c2335ddfe195"
+  },
+  "examples/corrosion/8_c1cn_nH_c1.csv": {
+   "bytes": 5210,
+   "sha256": "cb737673138dabeaa4bbdac9043e5146c7bd463ec3bd7a0227f49d658c9a7187"
+  },
+  "examples/corrosion/9_c1nc_nH_n1.csv": {
+   "bytes": 4241,
+   "sha256": "97dd41c2eb7db5b5ea48e7b922fae7adfb897dfdf12dfe2fbdd061e852504727"
+  },
+  "examples/corrosion_hcl/0_c1ccccc1.csv": {
+   "bytes": 51892,
+   "sha256": "69c606e6fee849b7c778debf88b3141aec5536b92504333c17acb001421bf38f"
+  },
+  "examples/corrosion_hcl/11_c1c_nH_c_nH_1.csv": {
+   "bytes": 4863,
+   "sha256": "6fd4c4c174e2ac4642c88f67fc959671c4927e2698bf6bb483d6fbb419d30abe"
+  },
+  "examples/corrosion_hcl/12_c1ccoc1.csv": {
+   "bytes": 4278,
+   "sha256": "1c9d83087c4a3fe3ba418569298188794579f5c5b76ed4ef47b686c43ab31a59"
+  },
+  "examples/corrosion_hcl/13_c1c_nH_nn1.csv": {
+   "bytes": 6871,
+   "sha256": "d28b3c274dec9818b5bb272eae5edbecf05b2710798d94476ce75eff62835ca7"
+  },
+  "examples/corrosion_hcl/14_O_c1cc_nH_c_O_nH_1.csv": {
+   "bytes": 8268,
+   "sha256": "f6f27a42eddafc84bea72caa57fd2955dc2eda5a4584f17150bcbde15ecea8f1"
+  },
+  "examples/corrosion_hcl/157_c1ccc2_nH_cnc2c1.csv": {
+   "bytes": 14863,
+   "sha256": "a1297e156d66ddd83b7659247791bbef1432df50e054922c2a206aa1a44073d1"
+  },
+  "examples/corrosion_hcl/158_c1ccc2ncccc2c1.csv": {
+   "bytes": 14920,
+   "sha256": "fc31d22d1fb7175b7da306e6d274c8602046ae898e61c3dd4f28a83700a191e8"
+  },
+  "examples/corrosion_hcl/159_C_Nc1ccccc1_c1ccccc1.csv": {
+   "bytes": 6957,
+   "sha256": "a87ff15e2f11ce04ea865c37782c469b0e483367294c3679078c18a0c209cd2f"
+  },
+  "examples/corrosion_hcl/160_c1ccc2ccccc2c1.csv": {
+   "bytes": 3717,
+   "sha256": "93289ce2d958b8f46de80322048615df1e3cc702135dc40d35459dfe06e104e2"
+  },
+  "examples/corrosion_hcl/161_c1ccc2scnc2c1.csv": {
+   "bytes": 4128,
+   "sha256": "2650815c24953d2d233d237d79687aa4ede77edd0ff829305ab237fc27d5b9eb"
+  },
+  "examples/corrosion_hcl/165_O_c1cc_nH_n1_c1ccccc1.csv": {
+   "bytes": 4562,
+   "sha256": "94713224a325a9e92f28db1e41ca2ce6f453c8c8a36e3c7a09d309a775e850e4"
+  },
+  "examples/corrosion_hcl/17_c1nnco1.csv": {
+   "bytes": 3580,
+   "sha256": "2a1b96abbf4e113fb78672b3d131d4538f66a86b53345109c9bb18168ef78258"
+  },
+  "examples/corrosion_hcl/1_c1ccncc1.csv": {
+   "bytes": 22330,
+   "sha256": "7a734a6d3eae871b4d631a976a1192f7539c95be54952da722bdba67fab35a28"
+  },
+  "examples/corrosion_hcl/20_O_c1cc_nH_nH_1.csv": {
+   "bytes": 4472,
+   "sha256": "1fe647a1c7e92e122c8137edc961a02ef79473eef576434f99d5a0c1fe8e3282"
+  },
+  "examples/corrosion_hcl/21_O_C1CCN1.csv": {
+   "bytes": 5275,
+   "sha256": "6189adb7f151b860ec26736c3b07aadb409d420c9dd817bb8c05fc02a83a0da5"
+  },
+  "examples/corrosion_hcl/22_C1CNOC1.csv": {
+   "bytes": 3493,
+   "sha256": "38aa3a8e00342d73be019eeb645bbeecdf737e73c67f0e83a204dbde53e3b4e6"
+  },
+  "examples/corrosion_hcl/2_c1c_nH_cn1.csv": {
+   "bytes": 18277,
+   "sha256": "e2fb105cd641364f24fee17f6862c73417ddde7688709c2ccfb1ebffa71f0b2d"
+  },
+  "examples/corrosion_hcl/3_c1cscn1.csv": {
+   "bytes": 5286,
+   "sha256": "ed5243d31721f50d6e30b1b6e8ed1e73c87965944e2392baea61c995a11bab2f"
+  },
+  "examples/corrosion_hcl/4_c1nnc_nH_1.csv": {
+   "bytes": 8558,
+   "sha256": "6a5c2d6af89997d093062b6b12cd5a2c039e0ed811f215217e6b869371c8ec3f"
+  },
+  "examples/corrosion_hcl/5_c1cncnc1.csv": {
+   "bytes": 3042,
+   "sha256": "0150eb7f12a47e8f5fdb7836617ea92645cba9ce473b45fcc1acc53c86d7ed0f"
+  },
+  "examples/corrosion_hcl/7_c1nncs1.csv": {
+   "bytes": 6260,
+   "sha256": "0dffa6fedfbfc2e7c85e5fc73699c246a9c6e38b686dde65f3ea9c6b4e56bbd1"
+  },
+  "examples/corrosion_hcl/8_c1cn_nH_c1.csv": {
+   "bytes": 6386,
+   "sha256": "b16465c5e00075ce4dd960c93467c025a9da30604129a377fd9dc9b204aa5859"
+  },
+  "examples/corrosion_hcl/9_c1nc_nH_n1.csv": {
+   "bytes": 5194,
+   "sha256": "c8af77063335aa9bbc9e65e86087cb88988cad20284de221eddbbaeae3c412ef"
+  },
+  "examples/decoys/ACE_decoys.sdf": {
+   "bytes": 436760,
+   "sha256": "4cc20c7619a331fa5488cfe24d39a96f79a19135465acd29e2d19c92b64d18b8"
+  },
+  "examples/decoys/ACE_decoys_matched.sdf": {
+   "bytes": 383486,
+   "sha256": "f72ed3afdeea22039b4a2b3bd8034a8bc40b79c45db1acdc3a3c5391439d205a"
+  },
+  "examples/decoys/AChE_decoys.sdf": {
+   "bytes": 423491,
+   "sha256": "88e75341c6e80549a4c142c0915157aaba4b11fd1080f48da708daa06be1df53"
+  },
+  "examples/decoys/AChE_decoys_matched.sdf": {
+   "bytes": 490847,
+   "sha256": "893152c9e21a0da61cf188cb1f5c6aae204bd4021bae2745f5caf4176594e9e3"
+  },
+  "examples/decoys/GPB_decoys.sdf": {
+   "bytes": 437188,
+   "sha256": "69d79bda20db2a9e68966f79bbe7cbffb86cf310c5f3df870a18943ffdef7e87"
+  },
+  "examples/decoys/GPB_decoys_matched.sdf": {
+   "bytes": 400457,
+   "sha256": "c870d75e1966aecba66a3c422a4d6b0fb608e933331ec677f5bae7bf2d162800"
+  },
+  "examples/decoys/THR_decoys.sdf": {
+   "bytes": 424842,
+   "sha256": "90740e7183c887b1751c6324b88531fe615e4a6ff4d70bfe9202c520680c2c06"
+  },
+  "examples/decoys/THR_decoys_matched.sdf": {
+   "bytes": 557544,
+   "sha256": "bb0844ef4ec636ca0d7683e405c640e905e33d9609e2cfd9e2d56848cdf11f20"
+  },
+  "examples/hammett/hammett.sdf": {
+   "bytes": 204326,
+   "sha256": "5762fa3621599fc7f5891ed7dc9e670d0d62be8a8522750bcd0c715ff2ae570e"
+  },
+  "examples/hammett/hammett_ens.sdf": {
+   "bytes": 1112443,
+   "sha256": "03a297e9a3fb9a2b799fe49909d77426252f9199a8e19846f4e829f293e0ec28"
+  },
+  "examples/hammett/hammett_ens_qm.sdf": {
+   "bytes": 2030683,
+   "sha256": "5d9290fe6e28a4ff0532387a044c6ffc26770c901288282ce13eec6879ed9172"
+  },
+  "examples/hammett/hammett_qm.sdf": {
+   "bytes": 415420,
+   "sha256": "e278479434dfb092575d739025d1c530ca74dc540dd6b24f1b7c6807934c201a"
+  },
+  "examples/hammett/hammett_qm_sym.sdf": {
+   "bytes": 1683783,
+   "sha256": "76aaea4df7a02d03d368eb663cd0bf57f295343608c0b9d72c3009015ba45f1a"
+  },
+  "examples/hammett/hammett_sym.sdf": {
+   "bytes": 834479,
+   "sha256": "a1b0006eaf861fba545b5e6e2e3c86ffde17e4b20e1c348ef98c8e2d197d3e89"
+  },
+  "examples/make_decoy_sets.py": {
+   "bytes": 9324,
+   "sha256": "1fe193e26063f000bbfd7273b9bcf6475da0217fc468d6ba4db211c30d0e4cf7"
+  },
+  "examples/make_example_dataset.py": {
+   "bytes": 6046,
+   "sha256": "181cab5b1ebf227d1bef421bd8ea8a3227d2cda81db4d78fecf4aebe7ea26d11"
+  },
+  "examples/make_fep_examples.py": {
+   "bytes": 9636,
+   "sha256": "51ec8d504370e84642b6779c72097f93a7fa77f0b925a96846abc705e67d478c"
+  },
+  "examples/make_hammett_examples.py": {
+   "bytes": 24283,
+   "sha256": "d1d7b673f0c93912a0e3712db3769acf4f2fd7e1b52ceb24d93f282eb882b9de"
+  },
+  "examples/make_mittal_examples.py": {
+   "bytes": 10426,
+   "sha256": "e30b1a903f580db5895c853edd8cc899d404fd9dc600bb22a03f448e537e33b4"
+  },
+  "examples/make_pocket_examples.py": {
+   "bytes": 6806,
+   "sha256": "49351c49b86796264a8a79de5704409fe0b25936a55c9c3c31ab6988425ba97a"
+  },
+  "examples/make_property_example.py": {
+   "bytes": 3367,
+   "sha256": "a75fd427f8cef59186ef6e2ae769d7b65278f311f37d91f435f5f09cc48ce166"
+  },
+  "examples/make_ross_examples.py": {
+   "bytes": 6877,
+   "sha256": "ce516a84135f1c9d8a8791ccd1028b12a7c8f8a7e9fff6bb720f90dc58b98c02"
+  },
+  "examples/make_schindler_examples.py": {
+   "bytes": 6269,
+   "sha256": "8426f5e21c6c223a8d1e6b8a2c523e672d84820f5ab42fc045e48b41bc3bf944"
+  },
+  "examples/make_sutherland_examples.py": {
+   "bytes": 7074,
+   "sha256": "011f5473298f7d9503a90ae6449903a068d65480da5cccf801854420bf4c1644"
+  },
+  "examples/mittal/ACE.sdf": {
+   "bytes": 491549,
+   "sha256": "9334dacdf5c973459036cc8eb0499c3fc6d8081fced3c7a8c14d3ed46d41ef27"
+  },
+  "examples/mittal/ACHE.sdf": {
+   "bytes": 611806,
+   "sha256": "9fa74294b41be24e93c7ec819f7243eccd63dbdb22eb315b2cebb4028bd7b465"
+  },
+  "examples/mittal/ACHE_TOX.sdf": {
+   "bytes": 98815,
+   "sha256": "1efc475b8f1bacb425e55cb3f029f22eb81018ba959f337ef7f20b3f237cfd21"
+  },
+  "examples/mittal/AI.sdf": {
+   "bytes": 396392,
+   "sha256": "69460794cde1d490fc1c88f392995a1ea582572f8f7cc5830bd87889ebe0873f"
+  },
+  "examples/mittal/AMPH1.sdf": {
+   "bytes": 1987341,
+   "sha256": "242ca8ca4fb400622b759ddcf36247f38764562a8fe8db72c54c62cf76489754"
+  },
+  "examples/mittal/APZ.sdf": {
+   "bytes": 78345,
+   "sha256": "c0a417dcab085386e5cd7f0a965e23859f4e313b09cec7a829f9281a29488bde"
+  },
+  "examples/mittal/ARB.sdf": {
+   "bytes": 146249,
+   "sha256": "448290d3b47d57b65feb5841c7a8305475237ec50630a49564a52882a6c7432b"
+  },
+  "examples/mittal/ATA.sdf": {
+   "bytes": 416360,
+   "sha256": "b491e33fd0c3302bc5d4e092f49babf75c6a168f9a8f743cafe9433f34f48043"
+  },
+  "examples/mittal/BZR.sdf": {
+   "bytes": 617238,
+   "sha256": "c3b577d33f33e042575d1d5eae4c5bc88c0129b72d55cb87a77a4633c87f200d"
+  },
+  "examples/mittal/CBRA.sdf": {
+   "bytes": 190241,
+   "sha256": "ed17af89d8da7c91807dc9dfe6e2e03bc2566d95c1847f2baf8a0857e0492925"
+  },
+  "examples/mittal/COMT.sdf": {
+   "bytes": 308026,
+   "sha256": "b5afc18facc2f49e08d4b9199f6627d9bbfe870e4fffea584aed34a93c6d528b"
+  },
+  "examples/mittal/COX2.sdf": {
+   "bytes": 1335687,
+   "sha256": "c79a1527ebab41ab3b85e5fd635fff9f9632fe5da856c0b88907637386fb9aa4"
+  },
+  "examples/mittal/D2A.sdf": {
+   "bytes": 94879,
+   "sha256": "cee2e1791b37e067cc9aea03b5120bedb05f7288b3192806841d533ca2682f94"
+  },
+  "examples/mittal/DAT.sdf": {
+   "bytes": 193495,
+   "sha256": "22f9a0306eb759863116f5941db5b53131025e760c5cc82e5f2c42de7dad83de"
+  },
+  "examples/mittal/DHFR.sdf": {
+   "bytes": 1647489,
+   "sha256": "ae938c8001d3985a93acdfe193c3c257bf3667654ae22fb1f40e997719d16cd4"
+  },
+  "examples/mittal/DIAZEPAM.sdf": {
+   "bytes": 176937,
+   "sha256": "12c2b6e7127a1ad24c08ae7994ae45cd8b55c4b8abb212fd0ec87f032acd6c42"
+  },
+  "examples/mittal/DR.sdf": {
+   "bytes": 185460,
+   "sha256": "bb22d06756bf9e29a7fb39b255ef6b52f3cbe03d095d25b99cbb26a82f5c9c7b"
+  },
+  "examples/mittal/ECR.sdf": {
+   "bytes": 243156,
+   "sha256": "11e157e76ad08b4b4fb547c6e7e530a0687dec97f82e28e35b8597b98d0bca23"
+  },
+  "examples/mittal/EDC.sdf": {
+   "bytes": 461745,
+   "sha256": "927bcecf9040f1807c16abc5353b6345d68a21d1da09cd904cd060e6a59cf5ac"
+  },
+  "examples/mittal/EV71.sdf": {
+   "bytes": 217388,
+   "sha256": "e98eb072fe305948f95f924970c1aa9c3bf5836d198e84bfe2dc7c1ed4209d74"
+  },
+  "examples/mittal/GHS.sdf": {
+   "bytes": 221599,
+   "sha256": "99c7ad716675919b53540ef06e0c25fc75a9ac63dee803ec3b1926aa24536616"
+  },
+  "examples/mittal/GPB.sdf": {
+   "bytes": 220616,
+   "sha256": "404005a4553b27b2cb645e90405b4e0f9502642a15950936cd35dd546d02fc91"
+  },
+  "examples/mittal/GSK3B.sdf": {
+   "bytes": 147886,
+   "sha256": "8fc868c4eb213ba503a59e4073abfa0f3f060f89646ffa51dfa6b8fb66f76aa4"
+  },
+  "examples/mittal/HIVPR.sdf": {
+   "bytes": 886329,
+   "sha256": "9c325b88cf98b7a21a843131bfcbaa47949b86c75ecd5935fe1b150804e4c3fc"
+  },
+  "examples/mittal/HIVRT.sdf": {
+   "bytes": 429900,
+   "sha256": "5343cf2d4ec641da1b05100805b6cc7389e52ea06355c029bd2f49d220c4d173"
+  },
+  "examples/mittal/HPTP.sdf": {
+   "bytes": 839512,
+   "sha256": "0fe8fc753936129df522005ce5e1a49793022ebda87cb83d3cfeecbc179b342d"
+  },
+  "examples/mittal/KOA.sdf": {
+   "bytes": 298411,
+   "sha256": "5a1b83c1936aae6d354048fc79ea2418eb9ddb41e804b6faec1fc89b82dad3ab"
+  },
+  "examples/mittal/MX.sdf": {
+   "bytes": 53949,
+   "sha256": "f2eb06bb9a145cd43ff4ead0fbf2107a642426125eeee44c1d09d5a369a84b25"
+  },
+  "examples/mittal/PDE.sdf": {
+   "bytes": 182916,
+   "sha256": "2ef5387190da7ba84deddc5bedd8566642855bd4b8de4db2a290ed46b53239e2"
+  },
+  "examples/mittal/PTC.sdf": {
+   "bytes": 392595,
+   "sha256": "3be5c24db943f83a6176d118efb7e9e4daa3e1232c4716ccfdeb2a27f9dba99d"
+  },
+  "examples/mittal/RYR.sdf": {
+   "bytes": 115908,
+   "sha256": "16bec66793d2d589ac97a2ac5582162f40e969536365593eea998fe396d8efb1"
+  },
+  "examples/mittal/STEROIDS.sdf": {
+   "bytes": 106896,
+   "sha256": "809227a52314dc5fb3c2b4a1d9a65f9225c1f88ef2380485da524c2ea0d36256"
+  },
+  "examples/mittal/TCHK.sdf": {
+   "bytes": 157278,
+   "sha256": "51613a065a53b0c3765c8fa5461a4459fd2ffc023d93b17c45a52a0dae2ca4b5"
+  },
+  "examples/mittal/THERM.sdf": {
+   "bytes": 385745,
+   "sha256": "5aa9de7b4df37f1d47daee8f1e0493f8239e9db88d6038cfeb16d5026f4e5861"
+  },
+  "examples/mittal/THR.sdf": {
+   "bytes": 574274,
+   "sha256": "9d70c67f4313625b4775cbb0159f4e045f58f3354253ddef6dacbfe00c2176e8"
+  },
+  "examples/mittal/TP2A.sdf": {
+   "bytes": 88452,
+   "sha256": "fecd30fea653054dbb45593b21a9af2950aa287704c37e63b9cec56e4e07d85c"
+  },
+  "examples/mittal/VATP.sdf": {
+   "bytes": 157802,
+   "sha256": "1ebc5423744c4a25aa42229045a551b89173cad491b5a97696bebcb671e57d55"
+  },
+  "examples/mittal/YOPH.sdf": {
+   "bytes": 126347,
+   "sha256": "faebb0aab51503ab30039a80b6705b28bf88898809b059414eadc69fb8a77c7d"
+  },
+  "examples/openff/LICENSE_openff_protein-ligand-benchmark.txt": {
+   "bytes": 1071,
+   "sha256": "a3f839e097a8211ee164d02160e54f73b063b7368534ec77ebf5b6dd01dea250"
+  },
+  "examples/openff/bace.sdf": {
+   "bytes": 164898,
+   "sha256": "8e496fe6500cf316c001db3dee088a3a2b660ae8d3331281f54ead284ef6f69a"
+  },
+  "examples/openff/bace_hunt.sdf": {
+   "bytes": 154985,
+   "sha256": "9ca7e4c3dadf6ebdfaddb2cf7e2ac7c75e32b46fdf4fec2d50cff194383e1448"
+  },
+  "examples/openff/bace_p2.sdf": {
+   "bytes": 65180,
+   "sha256": "fcf67bd911034a1dd77d6d61df75455f08446459323e94c01b832dc2b38e60d7"
+  },
+  "examples/openff/cdk2.sdf": {
+   "bytes": 47413,
+   "sha256": "c7a8a6867a497cba812f4ad977abba9295238a7a11e4170ec5fe88cc8f9c95d3"
+  },
+  "examples/openff/cdk8.sdf": {
+   "bytes": 149406,
+   "sha256": "37e6d298b90b7d578c4cb392b221c708a79c490c397cea3435f0ae17c4143656"
+  },
+  "examples/openff/cmet.sdf": {
+   "bytes": 23592,
+   "sha256": "d4c914e5550dbfffb27fcad2cc24b502249ec9f654974b13849e6875858c5eca"
+  },
+  "examples/openff/eg5.sdf": {
+   "bytes": 151639,
+   "sha256": "982932355a649ce3fc7a1605b0fe976fac1f0ad46d355afc0b2cd0ba3c550020"
+  },
+  "examples/openff/galectin.sdf": {
+   "bytes": 44532,
+   "sha256": "e88ef8f50102367580aa1cf93a9305639b5e01ea44a3e7230b7b1ad346f336ad"
+  },
+  "examples/openff/hif2a.sdf": {
+   "bytes": 142218,
+   "sha256": "e24551ffa3057ff65165da8f1dfbba8c5ad403ffcc207a85fb2cf059742c8bc2"
+  },
+  "examples/openff/jnk1.sdf": {
+   "bytes": 94115,
+   "sha256": "68d44e8cd87a526c7b2f63d210bb05ac7901f1e2d0e18e8293a91edb7df2b15f"
+  },
+  "examples/openff/mcl1.sdf": {
+   "bytes": 109974,
+   "sha256": "d6f41a03de4a91a2cc04ea08a7d5ffc63322e2b1fe26c9ad6aeb90891f697bc9"
+  },
+  "examples/openff/p38.sdf": {
+   "bytes": 140518,
+   "sha256": "65c71ecbae784884bdcfe76d48fc6c5e501338ca65a1a5726143378a49bc3d67"
+  },
+  "examples/openff/pde10.sdf": {
+   "bytes": 193409,
+   "sha256": "6272b29ecaad54e9fe65d5ecb26662e35737c10d9a1aa2af86b3353bb939e786"
+  },
+  "examples/openff/pde2.sdf": {
+   "bytes": 115339,
+   "sha256": "3ab7bde33294fd5533948330627822553645895eb0b35d260e391676ec4d47b6"
+  },
+  "examples/openff/pfkfb3.sdf": {
+   "bytes": 152914,
+   "sha256": "a2d19d8ca079e0a474ed9d2567afa97c106795889a8688c182f3507ba9e29275"
+  },
+  "examples/openff/ptp1b.sdf": {
+   "bytes": 105311,
+   "sha256": "f509227c60bff4531d722115733c4e4d93aefc0b5da81ac919f6ed3e02758ef9"
+  },
+  "examples/openff/shp2.sdf": {
+   "bytes": 108665,
+   "sha256": "b00ca4292440bcb4eafdd24e394cf5ba9b1ce6bef626795fe555efe7e84efaa3"
+  },
+  "examples/openff/syk.sdf": {
+   "bytes": 235812,
+   "sha256": "f6de7c7f8888e54185086035cd6d218b78f20683a61dfb2eade9758ea64aa27d"
+  },
+  "examples/openff/thrombin.sdf": {
+   "bytes": 121285,
+   "sha256": "ec7199132773016bb8b0a9c89fc40673d29e5b2c2e2ba24e02025061f0ce0073"
+  },
+  "examples/openff/tnks2.sdf": {
+   "bytes": 112316,
+   "sha256": "9b1a0e7efae7118fe92b8f5a55b7697ee302db07e737a3ee168862af3536d082"
+  },
+  "examples/openff/tyk2.sdf": {
+   "bytes": 49424,
+   "sha256": "81afdb5a24e86c8febf73115f4992a624ded9ced3af2d85d72c678711f915b5b"
+  },
+  "examples/orca_atom_properties.py": {
+   "bytes": 7083,
+   "sha256": "0be3d0a882972b36525eab4434be80645e3fb3bdc7dd2d07bb8448fdd6c322b2"
+  },
+  "examples/pockets/README.md": {
+   "bytes": 1784,
+   "sha256": "71a39d326743e78df84a1def97959c7ff2cb0c2ec35f8fe3c72bfbbd80c629ed"
+  },
+  "examples/pockets/openff/bace.pdb": {
+   "bytes": 23291,
+   "sha256": "de7f07baf836c0f7c24c848820b308b350ab8aa5c88305a616814e68557fd1c1"
+  },
+  "examples/pockets/openff/bace_hunt.pdb": {
+   "bytes": 42019,
+   "sha256": "7d25fff0a85f86465eeaf9699bab0ab260570b0e13f8797b351c2b78ba23a042"
+  },
+  "examples/pockets/openff/bace_p2.pdb": {
+   "bytes": 37277,
+   "sha256": "712f85d22d6cd58eaaf51030b43478c1e2b4e2f86f32fc68346009327e03e449"
+  },
+  "examples/pockets/openff/cdk2.pdb": {
+   "bytes": 34746,
+   "sha256": "77dd4f957e8b216a9b12290e5d7f5b8511580d6425110e16874b48801a09ee47"
+  },
+  "examples/pockets/openff/cdk8.pdb": {
+   "bytes": 40750,
+   "sha256": "0d096680d8757c10d001c5967d1b5f00297dbccb7e988fa7678a6ddcb008128c"
+  },
+  "examples/pockets/openff/cmet.pdb": {
+   "bytes": 38933,
+   "sha256": "3190b5df7060ee56109c1471689ce96011878bdd0a4f12f416da9b4c41f43913"
+  },
+  "examples/pockets/openff/eg5.pdb": {
+   "bytes": 52204,
+   "sha256": "d8360dd08fcb5a16c5b69510d003153d9e79389df854b31d881fa0084bc0a51c"
+  },
+  "examples/pockets/openff/galectin.pdb": {
+   "bytes": 26850,
+   "sha256": "7d73353ef1b9cba7976363fa67cc7e44a5ae8f37039e2af9212e02c4d4beb73b"
+  },
+  "examples/pockets/openff/hif2a.pdb": {
+   "bytes": 46123,
+   "sha256": "64d581a6eb800b29cb9196630e95b9c0cde733b97797d70989c84df5aa7c26f6"
+  },
+  "examples/pockets/openff/mcl1.pdb": {
+   "bytes": 37748,
+   "sha256": "731d17622b4a7b28f5d0b3d44ab65c9316aaf16fd11d05eee75c815c0ea851d0"
+  },
+  "examples/pockets/openff/p38.pdb": {
+   "bytes": 40196,
+   "sha256": "6b1ca2cf6fd34c721736313c5c2bf724cc461ecf50ba00d10bdefc984c3e7ed4"
+  },
+  "examples/pockets/openff/pde10.pdb": {
+   "bytes": 52759,
+   "sha256": "62fe1adc8381b0f127480615ce9119fef6347fe8ebdb0a45863901cd1e17517e"
+  },
+  "examples/pockets/openff/pfkfb3.pdb": {
+   "bytes": 41621,
+   "sha256": "978a9dc77c602785c3b8bf44495f2d597d27783fcc6837e5649a44673ed99882"
+  },
+  "examples/pockets/openff/ptp1b.pdb": {
+   "bytes": 37433,
+   "sha256": "cee79108006bad368b644341e862ee39df0c2646ba40a05cc84a1bd031c88928"
+  },
+  "examples/pockets/openff/shp2.pdb": {
+   "bytes": 40829,
+   "sha256": "9a35d1908271e3039a10fcaeae9873d24625308482b6c01feb516186016fd34b"
+  },
+  "examples/pockets/openff/syk.pdb": {
+   "bytes": 39248,
+   "sha256": "da8eb9667937534ee56229aa444f711fc2f8d9bcc680ba79f05b7042127948ce"
+  },
+  "examples/pockets/openff/thrombin.pdb": {
+   "bytes": 41860,
+   "sha256": "9ec210e22c8d5fefe70efe7b6d220c36b7e1d33a17a3688b37448391757e4077"
+  },
+  "examples/pockets/openff/tnks2.pdb": {
+   "bytes": 37275,
+   "sha256": "cd64220a42e701ab074a72cfe48166864a22e5a3afe3cb10612e3737f85e07e0"
+  },
+  "examples/pockets/openff/tyk2.pdb": {
+   "bytes": 31586,
+   "sha256": "98a3588243d7d30ea3fa346353163382e15bf104a478a5e46ac2cc025ad2f8e3"
+  },
+  "examples/pockets/ross/bayer_macrocycles/ftase_extraligs_custcore_stereo.pdb": {
+   "bytes": 42701,
+   "sha256": "56b90bf06698bc0ffe80debeef7728f2046f505b67813633c52977a9f55ec7e5"
+  },
+  "examples/pockets/ross/charge_annhil/ephx2.pdb": {
+   "bytes": 43528,
+   "sha256": "2933e15803391d00d7c3b92c2331453ae47140aadfa13171fbc0a858384c034b"
+  },
+  "examples/pockets/ross/charge_annhil/irak4_s2.pdb": {
+   "bytes": 40213,
+   "sha256": "5481a0f70d5db992163fc2ad7a6d769f2d3699c5cf807358cbc5c24ba6067e70"
+  },
+  "examples/pockets/ross/charge_annhil/irak4_s3.pdb": {
+   "bytes": 35789,
+   "sha256": "d8b8e3b22876dde227ab270ed255f159e9578fd639beb8cacdf8623177340df2"
+  },
+  "examples/pockets/ross/charge_annhil/thrombin_whole_map.pdb": {
+   "bytes": 39050,
+   "sha256": "caef1cea9aee4f4ac3d308cc0858efd5d0e743da4b513e8b5044029f312a0be1"
+  },
+  "examples/pockets/ross/charge_annhil/tyk2.pdb": {
+   "bytes": 14929,
+   "sha256": "11e0b4280224c6994e7f5b50f9a27c2b871a7f58e270aa32be98dd7fedbb796b"
+  },
+  "examples/pockets/ross/fragments/frag_liga_auto.pdb": {
+   "bytes": 36660,
+   "sha256": "435146cb00b34c86c66714891c8d179337cde80557a8b42640d5d4886617e366"
+  },
+  "examples/pockets/ross/fragments/frag_mup1.pdb": {
+   "bytes": 35944,
+   "sha256": "a1f4d8bc39c91df5532c25b3effc103cb9d5ef9b66841892dc4096545232cc64"
+  },
+  "examples/pockets/ross/fragments/frag_p38.pdb": {
+   "bytes": 17773,
+   "sha256": "6afbf4abeaf7fd78c9a74547dc84d2f29c5f7ea473221fea1222e5daa963f780"
+  },
+  "examples/pockets/ross/fragments/hsp90_frag_2rings.pdb": {
+   "bytes": 43220,
+   "sha256": "7a14b130436de9c20bc4cffca56fa3190e9b6d3b2595eb57c7309a3ff2586c88"
+  },
+  "examples/pockets/ross/fragments/hsp90_frag_single_ring.pdb": {
+   "bytes": 33915,
+   "sha256": "0016321ddb2f9647c3a0b481e34f5910676e5f5978b2eb7a7c40d37282c53e5c"
+  },
+  "examples/pockets/ross/fragments/jak2_set1.pdb": {
+   "bytes": 36023,
+   "sha256": "449a36a98f35414e367de0c6cc1ed3d987331d15f1582952950bbf7963e05686"
+  },
+  "examples/pockets/ross/fragments/jak2_set2_extra.pdb": {
+   "bytes": 37214,
+   "sha256": "0e599f56087ea75ddb98b639d24eb4418631aa316fae2c84a23786680498f1ea"
+  },
+  "examples/pockets/ross/gpcrs/a2a_hip278.pdb": {
+   "bytes": 10187,
+   "sha256": "e7ec8705f6be88e2abfcaf08b02371fe95537cf38ae6b0bee18d5e5d011c1032"
+  },
+  "examples/pockets/ross/jacs_set/bace.pdb": {
+   "bytes": 23298,
+   "sha256": "d1e445acf401586f0a027f881d58b324d6de80f509323a33cd73d0b5a26f4aef"
+  },
+  "examples/pockets/ross/jacs_set/p38.pdb": {
+   "bytes": 37833,
+   "sha256": "948c819dea4a675cfb57deb9640580544591734009a84adf9235b7031d8d4516"
+  },
+  "examples/pockets/ross/jacs_set/ptp1b.pdb": {
+   "bytes": 57585,
+   "sha256": "83cc5034df47aa6eecb4c83a6be4aa3b9d984f1440fb7e2619a353b097be451c"
+  },
+  "examples/pockets/ross/jacs_set/thrombin_core.pdb": {
+   "bytes": 40924,
+   "sha256": "086ca75e7f89c9f7a0c75e982f12ba68b8209e5e3af1d505b81c5edfe3cc99f6"
+  },
+  "examples/pockets/ross/jacs_set/tyk2.pdb": {
+   "bytes": 14371,
+   "sha256": "a47520f760d1da22ae94799fa5fe1d2e7e60da218556070ce24b6eeb71d09c12"
+  },
+  "examples/pockets/ross/janssen_bace/bace_ciordia_prospective.pdb": {
+   "bytes": 41504,
+   "sha256": "c212ab0d512ca272f966d9a283c0b928533d75fb1931521d6e586832188c3b97"
+  },
+  "examples/pockets/ross/janssen_bace/bace_ciordia_retro.pdb": {
+   "bytes": 42051,
+   "sha256": "f49da4b7415b268b02100c13b9382127e3afea7ee27538672bbb49d58b230ef6"
+  },
+  "examples/pockets/ross/janssen_bace/bace_keranen_p2.pdb": {
+   "bytes": 43142,
+   "sha256": "827cfaf86c5fc31e82f387d0593d62208e34e5d48fca309d3f8aba6fad0ce3a3"
+  },
+  "examples/pockets/ross/janssen_bace/bace_p3_arg368_in.pdb": {
+   "bytes": 43630,
+   "sha256": "9d21b2f4e3b9f26b2f437f139a7f6309b07de073b16910cc1b793699ff598a55"
+  },
+  "examples/pockets/ross/macrocycles/3RKZ_lig62to70_alpha05.pdb": {
+   "bytes": 5082,
+   "sha256": "cec9f800b5e52f917640d7631210846086dc6a31bd85179f75a488aa29645079"
+  },
+  "examples/pockets/ross/mcs_docking/hne.pdb": {
+   "bytes": 31358,
+   "sha256": "cef32de7ee0530ad857399fc9e8c2aaa68bd383d6f041fc32774f68c43530333"
+  },
+  "examples/pockets/ross/mcs_docking/renin_customcore.pdb": {
+   "bytes": 11779,
+   "sha256": "9e7c402778684bbfe5d9c9adc9d7b4372cd05bad3e01830927d726b86fdd84bd"
+  },
+  "examples/pockets/ross/merck/eg5_extraprotomers.pdb": {
+   "bytes": 64073,
+   "sha256": "21d8fa939d50dee70f4c75782d40c4a91d4dfcb9d285050b24d2eb24b8f615bc"
+  },
+  "examples/pockets/ross/merck/hif2a_automap.pdb": {
+   "bytes": 46135,
+   "sha256": "aa19cf0b682031e7cbe184237e8d822a013ef8e77a10af442aa7d77f86b0b40f"
+  },
+  "examples/pockets/ross/merck/pfkfb3_automap.pdb": {
+   "bytes": 50876,
+   "sha256": "8211a3e5a632e0645ac5bf4ece71a855ba8b1e073350f8514c6ee1879fffd5e0"
+  },
+  "examples/pockets/ross/merck/shp2.pdb": {
+   "bytes": 42018,
+   "sha256": "774e777114b82bfa2479c6b2c215be051c5c8953b310f7782a867018c8f05695"
+  },
+  "examples/pockets/ross/merck/syk_4puz_fullmap.pdb": {
+   "bytes": 16197,
+   "sha256": "f098c3d36832478221f7e434bd542b6fa6ccc017a68a5110df08035b6a54f163"
+  },
+  "examples/pockets/ross/misc/btk_extra_flip.pdb": {
+   "bytes": 36655,
+   "sha256": "a5facbeeacaf7c23a0418b8dae7f55d84272cbd59c5f0c1ac9261892a787e4b7"
+  },
+  "examples/pockets/ross/misc/galectin3_extra.pdb": {
+   "bytes": 27650,
+   "sha256": "6ffe5c79918f8567f58023f031631571feed3a47d52d6326f1298a94b435b403"
+  },
+  "examples/pockets/ross/misc/hfaah.pdb": {
+   "bytes": 47548,
+   "sha256": "d2f6a696310181b36cd5674587f2a7638904784b0a0263e48de8ea7feed06233"
+  },
+  "examples/pockets/ross/misc/hiv_prot_ekegren.pdb": {
+   "bytes": 43767,
+   "sha256": "820674ae24125ea9fda32230c65fbc79809fa7972f320b3342ff558e8aa1ee26"
+  },
+  "examples/pockets/ross/opls_stress/fxa_set4.pdb": {
+   "bytes": 32311,
+   "sha256": "455fc97c1a28f35d3d25d4046ed86e35ce2d66f97b2db4882a8bd32b4bb4f947"
+  },
+  "examples/pockets/ross/opls_stress/fxa_set6.pdb": {
+   "bytes": 32864,
+   "sha256": "30c57bade14ccf1519dd814a5fa2791f8d3fed6334b2de1c8d25bde44c21504f"
+  },
+  "examples/pockets/ross/opls_stress/fxa_yoshikawa_set.pdb": {
+   "bytes": 38810,
+   "sha256": "2cbda5cbaa4ef7f1cf5440e734b247824d1987ea46d651cb70315073efb2e976"
+  },
+  "examples/pockets/ross/opls_stress/hc_bace1.pdb": {
+   "bytes": 45662,
+   "sha256": "4283e6a73a8255724306781dfd9c2fbc9db5694eb4c6cc3e740d435477439ea1"
+  },
+  "examples/pockets/ross/opls_stress/hc_bace2.pdb": {
+   "bytes": 46452,
+   "sha256": "ec7b70f98c0dc5c99994f59fca2008bad2962f98adf4cd45f1595e890a8edc2f"
+  },
+  "examples/pockets/ross/scaffold_hopping/CHK1_3u9n_corehop.pdb": {
+   "bytes": 42133,
+   "sha256": "a265f66ed65ae8ec75687379589b2b45f9db922694754a944ad676555567d5a9"
+  },
+  "examples/pockets/ross/waterset/brd41_ASH106.pdb": {
+   "bytes": 29231,
+   "sha256": "501bca0e2a21ae64a4fd4418a874167ffe416ca61037318cb4b403f049981a47"
+  },
+  "examples/pockets/ross/waterset/chk1.pdb": {
+   "bytes": 31909,
+   "sha256": "37edd130a0ac707c21d6bf3a993658f1230eb219dfc3a13f662e564958564a99"
+  },
+  "examples/pockets/ross/waterset/hsp90_kung.pdb": {
+   "bytes": 38867,
+   "sha256": "13715a5885772b2f748dcac3cf2755f5302dccad74a0897e5c144cc8a01a4545"
+  },
+  "examples/pockets/ross/waterset/scyt_dehyd.pdb": {
+   "bytes": 45977,
+   "sha256": "b8b228ef519f3933b58a1c0df5c4fb1a202e4d440d272433220a6b2d57f8894f"
+  },
+  "examples/pockets/ross/waterset/throm_nozob_hip75.pdb": {
+   "bytes": 41955,
+   "sha256": "a80f70439d30422872b8fdf5de246e49fa8e84247c1ec7eb65beb411d1193cb7"
+  },
+  "examples/pockets/schindler/cdk8.pdb": {
+   "bytes": 40753,
+   "sha256": "943128f5c0e3c1a7e01a3666185328c73173ae13c281fb73db2d580b167e01d9"
+  },
+  "examples/pockets/schindler/eg5.pdb": {
+   "bytes": 62714,
+   "sha256": "d10a2fde2f09e9a8e66735668cf408e9ad04b8972a21e50befdf8529c976f185"
+  },
+  "examples/pockets/schindler/eg5_alternativeloop.pdb": {
+   "bytes": 62730,
+   "sha256": "73b5679f12d1d5ed328d69433be1541675559facfa3aedc73eb80e1ff9b3a038"
+  },
+  "examples/pockets/schindler/hif2a-jmc2023.pdb": {
+   "bytes": 43211,
+   "sha256": "c95e5ba3eee764213e9139d85a85f2ffb9d5c374c24e01d1e11397967a8a122c"
+  },
+  "examples/pockets/schindler/hif2a.pdb": {
+   "bytes": 46126,
+   "sha256": "8939f26915a0acd5936b63f8cfb22e683782452a704b02f3693c7d4f3d2225fd"
+  },
+  "examples/pockets/schindler/pfkfb3.pdb": {
+   "bytes": 45890,
+   "sha256": "32779ce235c45cf302369dc14d9700dcb4d2ace8ffde39021f5b67f27a5d802c"
+  },
+  "examples/pockets/schindler/shp2.pdb": {
+   "bytes": 42017,
+   "sha256": "d65744ea3d893901c1222109bf0f1d6f409171469db655721ecb90e2e45d3a00"
+  },
+  "examples/pockets/schindler/syk.pdb": {
+   "bytes": 40831,
+   "sha256": "3405b34c2b38dead2a61e8a2d83e4eed230d1df74d2f0159e456791928548e22"
+  },
+  "examples/ross/LICENSE_schrodinger_benchmark.txt": {
+   "bytes": 1072,
+   "sha256": "5711cdb7ab7a4b3889514af93f16bd81ba61519e0eb2cc7c94813c6bb40bd0cf"
+  },
+  "examples/ross/bayer_macrocycles/ftase_extraligs_custcore_stereo.sdf": {
+   "bytes": 26979,
+   "sha256": "0e3c25ee9c1d4639251cd0f5857db395590ec0cd278d378d51618ddae3b0bd01"
+  },
+  "examples/ross/benchmark_metadata.csv": {
+   "bytes": 8065,
+   "sha256": "cdad4307424417583e8f1e27e195d56e8e5c88cae7354e52f713b16a1f07c07d"
+  },
+  "examples/ross/charge_annhil/dlk.sdf": {
+   "bytes": 33877,
+   "sha256": "c21a664376fbcc80578bfa15f3b982d899d35c9595275bd427db2323f550ccde"
+  },
+  "examples/ross/charge_annhil/ephx2.sdf": {
+   "bytes": 24972,
+   "sha256": "10e5172e09162200e81e8ad2a3046a262c15112bae943d4dc27dbcfea6dc9565"
+  },
+  "examples/ross/charge_annhil/irak4_s2.sdf": {
+   "bytes": 39447,
+   "sha256": "807bc8a8fa7733bc6fc03a355e5ec9936486c3d5232546ba8899a059653e85d1"
+  },
+  "examples/ross/charge_annhil/irak4_s3.sdf": {
+   "bytes": 31319,
+   "sha256": "df30335d329a420372327c19ded15a1de259f412abfdb053468da8435ccaf238"
+  },
+  "examples/ross/charge_annhil/itk.sdf": {
+   "bytes": 29689,
+   "sha256": "efae6725a4ab23f7d8adccb60ee91089f0dc5d604b093525f95c599c7f715f67"
+  },
+  "examples/ross/charge_annhil/jak1.sdf": {
+   "bytes": 32851,
+   "sha256": "a7d67cd497c3f8d76674e33b7aa9e1680cc2a12bc24cd939ddd019035a4fd4f2"
+  },
+  "examples/ross/charge_annhil/jnk1.sdf": {
+   "bytes": 16842,
+   "sha256": "9268fa2204c1f691d69da1b96b30a9c32e6c13b9bb28e0c5d71050ca54d28ea9"
+  },
+  "examples/ross/charge_annhil/thrombin_whole_map.sdf": {
+   "bytes": 31401,
+   "sha256": "81c1d882fdee2ab1d309d8583b3b741be599f8664b0c7b7a5072e2c267d2cd92"
+  },
+  "examples/ross/charge_annhil/tyk2.sdf": {
+   "bytes": 27361,
+   "sha256": "756095133ae3a5edceccea54fe67136b0fce6349e2f81b0c755a3de837143dc0"
+  },
+  "examples/ross/fragments/frag_liga_auto.sdf": {
+   "bytes": 28494,
+   "sha256": "baa2809b864908e1cc0032e8c8108d2c00c3a17994dc6ac4f55747ac919f213f"
+  },
+  "examples/ross/fragments/frag_mcl1_noweak.sdf": {
+   "bytes": 28816,
+   "sha256": "2a47684e5dba7c760f3e537b00463abc2eb67647cacb85d2f2b8c30235e7b2b9"
+  },
+  "examples/ross/fragments/frag_mup1.sdf": {
+   "bytes": 15429,
+   "sha256": "bdedb435c1d0f77549f4efb76046e2e009bc396778b2ad37408b611b9dc25469"
+  },
+  "examples/ross/fragments/frag_p38.sdf": {
+   "bytes": 19422,
+   "sha256": "bfd2a238d38b789921f09ce46bfff5539d679e0fe655d185a5199c96ae131e9f"
+  },
+  "examples/ross/fragments/hsp90_frag_2rings.sdf": {
+   "bytes": 26779,
+   "sha256": "7f059f01a759dbf73c0e196af86d76b60b4ca1d04d1c5c5802993ef61677f73f"
+  },
+  "examples/ross/fragments/hsp90_frag_single_ring.sdf": {
+   "bytes": 24119,
+   "sha256": "ed0acb40bedb03b9af76f68a65fd0c12b4889baacba45a6490f481b1f10f139f"
+  },
+  "examples/ross/fragments/jak2_set1.sdf": {
+   "bytes": 33756,
+   "sha256": "2cf1a7035fd8ba8e37fdcd258495659b2b546870867b089cef41887a17cf9821"
+  },
+  "examples/ross/fragments/jak2_set2_extra.sdf": {
+   "bytes": 38836,
+   "sha256": "3aecd394a36e4ffcba44ae3a93756b58755ecb1055d2ac42e9defb30e7a4d37d"
+  },
+  "examples/ross/fragments/t4lysozyme_uvt.sdf": {
+   "bytes": 27003,
+   "sha256": "28a9e54cf26df07495938865c29f864641e89de795d7b8391f1d185624d2906f"
+  },
+  "examples/ross/gpcrs/a2a_hip278.sdf": {
+   "bytes": 100222,
+   "sha256": "b03bd67261ad052019c61e4f8599098d24fbf6debd108d5ea1a5097c66128526"
+  },
+  "examples/ross/gpcrs/ox2_hip_custcore.sdf": {
+   "bytes": 267120,
+   "sha256": "43d97a93b111fda1b2fc015a3579c9b6f5139927b7923101419851df73635bee"
+  },
+  "examples/ross/gpcrs/p2y1_meta_sub.sdf": {
+   "bytes": 87835,
+   "sha256": "f97441358848c32d1099d4e2e18a90c7dd6ebace7f804a2fa09cce3088a36be3"
+  },
+  "examples/ross/gpcrs/p2y1_ortho_sub.sdf": {
+   "bytes": 58954,
+   "sha256": "e0b4738588eca04dd57307f8c5a5415fa7e9bf27f52e5d0552fc17b32888b58e"
+  },
+  "examples/ross/jacs_set/bace.sdf": {
+   "bytes": 162662,
+   "sha256": "36cb1b2d3b1c6bc046290a734cc7e31fa01c6df5933878930dee641d80777a0e"
+  },
+  "examples/ross/jacs_set/cdk2.sdf": {
+   "bytes": 77419,
+   "sha256": "21b2ca6b60bbc9d66d3b6d8bac383a12ccab2d161853583208d4b7f0c0a05fe6"
+  },
+  "examples/ross/jacs_set/jnk1_manual_flips.sdf": {
+   "bytes": 169157,
+   "sha256": "8a39debd494fa0650d52c1701e5b34e29d426164056c1d7db1b1191e341ded44"
+  },
+  "examples/ross/jacs_set/mcl1_extra_flips.sdf": {
+   "bytes": 301942,
+   "sha256": "68c847af85a1553d30e309f4629a116417a58d4e5c45e9eefc16c63583d3d0aa"
+  },
+  "examples/ross/jacs_set/p38.sdf": {
+   "bytes": 161020,
+   "sha256": "8ac98d48fa95c2021eaab33dc2afb0b26e5c347288a2ad647e3b01d1d61d7d61"
+  },
+  "examples/ross/jacs_set/ptp1b.sdf": {
+   "bytes": 106316,
+   "sha256": "a2d083c7f9c74720e65d72781b049e3b2ba8808361ac72678e1812352dfe58fc"
+  },
+  "examples/ross/jacs_set/thrombin_core.sdf": {
+   "bytes": 57372,
+   "sha256": "c7d1dcdd1ae1877c2211b71b9aff62217ee9071cd6a44670826ee88b3dd6cec0"
+  },
+  "examples/ross/jacs_set/tyk2.sdf": {
+   "bytes": 60323,
+   "sha256": "fd965b9105e42cfd014f50284e0cacbd564b296b4a82d2c7e0529aa9789bd9d6"
+  },
+  "examples/ross/janssen_bace/bace_ciordia_prospective.sdf": {
+   "bytes": 38521,
+   "sha256": "92ed2462cd1b62a38a63dbaed77b81149b7be2b1d1350029c55bdfc7ea398b50"
+  },
+  "examples/ross/janssen_bace/bace_ciordia_retro.sdf": {
+   "bytes": 158740,
+   "sha256": "86aa3584c1ff316a56898f27bbfba4e64c600cdaec830a43db81a4790bb358c4"
+  },
+  "examples/ross/janssen_bace/bace_keranen_p2.sdf": {
+   "bytes": 94557,
+   "sha256": "2da46bec453a2937d7fd86d9f9b1fe76e621f0d2a6192d51e12582764592f7d9"
+  },
+  "examples/ross/janssen_bace/bace_p3_arg368_in.sdf": {
+   "bytes": 101184,
+   "sha256": "334852339f874c2893bb0a3e2b303b475702617909a5e9b91527fa510f1579d9"
+  },
+  "examples/ross/macrocycles/2Q15_lig17to21_alpha05.sdf": {
+   "bytes": 36512,
+   "sha256": "39ae7f4e3b448f68e56b7334270bb1d02e0d417997d550bcafef3c4966cb2480"
+  },
+  "examples/ross/macrocycles/3RKZ_lig62to70_alpha05.sdf": {
+   "bytes": 45570,
+   "sha256": "a3c493802f5f379f70d0324f144ddbf3d5e16431bf6b84894f9ea3ad0ca95d9e"
+  },
+  "examples/ross/macrocycles/hsp90_3hvd_custcore.sdf": {
+   "bytes": 48002,
+   "sha256": "f17e20f706d92e17d3262076c68d9fcdcd4b1a2b64f7bd53c09c748a5f621fab"
+  },
+  "examples/ross/mcs_docking/hne.sdf": {
+   "bytes": 98461,
+   "sha256": "16e74633ceab456c47d04a9e6e78b7a76ff42295d42ac4e712b21d3419416815"
+  },
+  "examples/ross/mcs_docking/renin_customcore.sdf": {
+   "bytes": 165549,
+   "sha256": "945cb55e193e796fde658df0c20f974555c27bbe85fc7b0fdca543475b36762b"
+  },
+  "examples/ross/merck/cdk8_5cei_new_helix_loop_extra.sdf": {
+   "bytes": 193918,
+   "sha256": "a889a149b4a8d2dc0767e2c7cf18b84fd26b619582cc5634eff3c2d793fa5057"
+  },
+  "examples/ross/merck/cmet.sdf": {
+   "bytes": 125574,
+   "sha256": "cfd5d6746a0046bbd2881e9f6f4364a4ad04cd5ca28983aab15c638899b260d8"
+  },
+  "examples/ross/merck/eg5_extraprotomers.sdf": {
+   "bytes": 190861,
+   "sha256": "258bafb0bc5a10479d98a78803b6e068a5025271630d11fabd1ace72c611e91e"
+  },
+  "examples/ross/merck/hif2a_automap.sdf": {
+   "bytes": 192409,
+   "sha256": "b94821e316e3070a7ae7130dee0219f57432efedfb0397815020ac75ba47b224"
+  },
+  "examples/ross/merck/pfkfb3_automap.sdf": {
+   "bytes": 417024,
+   "sha256": "837a6cb2fbd8fb6c58e59d5d0890ad24b0cb505c2dcc6f9cdeb149dcc3e79078"
+  },
+  "examples/ross/merck/shp2.sdf": {
+   "bytes": 114088,
+   "sha256": "ac6359aa0499dce7fdde76fd9dd226dd4451aeb4f137758ac81a0561222207c8"
+  },
+  "examples/ross/merck/syk_4puz_fullmap.sdf": {
+   "bytes": 267150,
+   "sha256": "aa58dee20ddd101291a85fe0bc736748957a9e0305c9811e4dc486d443589b66"
+  },
+  "examples/ross/merck/tnks2_fullmap.sdf": {
+   "bytes": 136501,
+   "sha256": "2dde62a8cac1be7087b2e365ab82b99615145096e214e52ed04929060f830ec2"
+  },
+  "examples/ross/misc/btk_extra_flip.sdf": {
+   "bytes": 27767,
+   "sha256": "ac0353ecaaaac9dd675ab8e5104723868d5006976bd358ec7d73de8a77a0edb9"
+  },
+  "examples/ross/misc/cdk8_koehler.sdf": {
+   "bytes": 34129,
+   "sha256": "1306afa0317d5087a32af4e799b7d29863bfef964dbc011911c53e1071f1e676"
+  },
+  "examples/ross/misc/galectin3_extra.sdf": {
+   "bytes": 134256,
+   "sha256": "dc8f234a6c1bd31d00696b82eabea5869b0f1a8feb47848dcc9b86bc03e09148"
+  },
+  "examples/ross/misc/hfaah.sdf": {
+   "bytes": 104389,
+   "sha256": "f918028df03674ba40f147ab0c5fe8bfbf7cde1a019ed5b1a85a638a1e2f9f85"
+  },
+  "examples/ross/misc/hiv_prot_ekegren.sdf": {
+   "bytes": 114774,
+   "sha256": "9f0fa9cab30487d2db29c992fbfc2dd085e0e678eae0500a00f8c8d5023ee7c9"
+  },
+  "examples/ross/opls_stress/cr_bace1.sdf": {
+   "bytes": 51021,
+   "sha256": "613872a96d158c8261f12bc1f5b65d07811d2fed201e4a079c9c24202cd7c167"
+  },
+  "examples/ross/opls_stress/cr_bace2.sdf": {
+   "bytes": 58347,
+   "sha256": "55cd02cdf588195a554a581afed56228706db62d74a4a675739ac601df87b353"
+  },
+  "examples/ross/opls_stress/fxa_set4.sdf": {
+   "bytes": 55555,
+   "sha256": "646bbe607218dab16ccfd4038181af7471abd197bb640b9691fea948fce60027"
+  },
+  "examples/ross/opls_stress/fxa_set6.sdf": {
+   "bytes": 30517,
+   "sha256": "78d8a4c14b132e307de56bcf1fc40a8564a00f5cbcd8c4a68a887fb3edf394a0"
+  },
+  "examples/ross/opls_stress/fxa_yoshikawa_set.sdf": {
+   "bytes": 175778,
+   "sha256": "3642827a6346c7880d9ca45736f0b4afc5f5235abd96a1a0242bd19e8227bed8"
+  },
+  "examples/ross/opls_stress/hc_bace1.sdf": {
+   "bytes": 45030,
+   "sha256": "9bfccd9e05b08de1d9b059211cc347782611e4853f45da73e25382c29ceda208"
+  },
+  "examples/ross/opls_stress/hc_bace2.sdf": {
+   "bytes": 69534,
+   "sha256": "546984eff54952b811f1c8bc18668b9b1295a8cf294f7ea3cf98d7cba8077ba8"
+  },
+  "examples/ross/scaffold_hopping/CHK1_3u9n_corehop.sdf": {
+   "bytes": 25851,
+   "sha256": "b5c97eb4a6f95aa93fa3d8fc34c9759baf93f0e1f2e59ad47ded3a11ecfd8850"
+  },
+  "examples/ross/waterset/brd41_ASH106.sdf": {
+   "bytes": 35257,
+   "sha256": "8cfbae0755d82d9fb36013b09da2251e6e6982843d54b6bb1d287ec42a6a5dd0"
+  },
+  "examples/ross/waterset/chk1.sdf": {
+   "bytes": 70851,
+   "sha256": "f5cf461da22cffca907b596bd0e01607241410eb8990038a55e558e17b4d1611"
+  },
+  "examples/ross/waterset/hsp90_kung.sdf": {
+   "bytes": 37550,
+   "sha256": "ac1a0000ba91fdd8d6f13f758fc71a260352c95992702ac366f5f4bbefeece75"
+  },
+  "examples/ross/waterset/scyt_dehyd.sdf": {
+   "bytes": 32777,
+   "sha256": "8b2518eb7794eb89358311e772209a0067c5e861f03591dc2d73222edc980342"
+  },
+  "examples/ross/waterset/taf12.sdf": {
+   "bytes": 35226,
+   "sha256": "c4ea29d404374e23828f31a3724732547638537777feab6f382bd8c14a1bcf6e"
+  },
+  "examples/ross/waterset/throm_nozob_hip75.sdf": {
+   "bytes": 204851,
+   "sha256": "56b2f5e4303c685b60ad6c2169ca6c0e7f2d5a918717f4c59d83e871d7e612bd"
+  },
+  "examples/scaffold_tree_export.py": {
+   "bytes": 26500,
+   "sha256": "bd8bb69d05b8b975bbd0479e49713ea07ac6671a79792ca11bd5ccc8e67299ed"
+  },
+  "examples/schindler/LICENSE_MCompChem_fep-benchmark.txt": {
+   "bytes": 1066,
+   "sha256": "b4a437bab3429e0b175e0d9665a22400fe016f826a6ff4a75788fab23594fff2"
+  },
+  "examples/schindler/cdk8.sdf": {
+   "bytes": 157543,
+   "sha256": "04a41c79155ba266df123173e292055f765a396e9a2566683945d84e770eaaff"
+  },
+  "examples/schindler/cmet.sdf": {
+   "bytes": 125449,
+   "sha256": "c49b142fe8f9e97ad55720cadf5ec337aba66c88ad8ccd21778afac65eb9a0a8"
+  },
+  "examples/schindler/eg5.sdf": {
+   "bytes": 156486,
+   "sha256": "39f6dd4fc0122f4775793881380fe18e329b24bad78b9521da4ab8ad3b4b16a9"
+  },
+  "examples/schindler/eg5_alternativeloop.sdf": {
+   "bytes": 157073,
+   "sha256": "64d165ae0ca42a547fb645af9a3c31fd2da1f1e825bee610c4f80aa6bd9f47c1"
+  },
+  "examples/schindler/hif2a-jmc2023.sdf": {
+   "bytes": 135850,
+   "sha256": "f49992d9de99cf456cb18d9fbb47df2728f272d056ff9985e666f6023878e2f3"
+  },
+  "examples/schindler/hif2a.sdf": {
+   "bytes": 155378,
+   "sha256": "490dc436a5d8db74adcf313ff79d4fe536f5b194782e37eafcdcac83f5279d84"
+  },
+  "examples/schindler/pfkfb3.sdf": {
+   "bytes": 190327,
+   "sha256": "2e69aa4c4976291c379d45cb36e082746e34fa3e2659890d581e7d36c9817804"
+  },
+  "examples/schindler/shp2.sdf": {
+   "bytes": 113683,
+   "sha256": "69627c0ac255032fd3ecbc444b99d296338a492ad139cf171f6577b645a3419e"
+  },
+  "examples/schindler/syk.sdf": {
+   "bytes": 229417,
+   "sha256": "dd9494b8295d1a1623f1ab1ee76b3173902a49d9f829bfa480b2b4d37d02928c"
+  },
+  "examples/schindler/tnks2.sdf": {
+   "bytes": 109210,
+   "sha256": "3c1ba015eafcd156620ed7cd9482d235b0ea7a62bfcda68f6fd77c87e72e5299"
+  },
+  "examples/steroids_cbg.sdf": {
+   "bytes": 152464,
+   "sha256": "e094d9ffd325b8adef98afba2a66265d41f666e4fbed71034b90b5b297e9a2fe"
+  },
+  "examples/sutherland/ACE.sdf": {
+   "bytes": 579444,
+   "sha256": "214f18a2858403b139ab63b6c447b6fcf78cd61aee8c23c1bc387d038ef0b7ea"
+  },
+  "examples/sutherland/AChE.sdf": {
+   "bytes": 722968,
+   "sha256": "2bfbf18b2dc4ba2782a202f221271464d4304c9e055b3f30c9bc762f9f8b5ee0"
+  },
+  "examples/sutherland/BZR.sdf": {
+   "bytes": 652892,
+   "sha256": "bb8bab176bd8ca7fbc8f8f3487bf15b84f1108aca224294e756e979ff6635469"
+  },
+  "examples/sutherland/COX2.sdf": {
+   "bytes": 1380529,
+   "sha256": "122c4bdea7a00e0c6f2dbd7d30724875405918364bab32c2bfe2fe08d83732bb"
+  },
+  "examples/sutherland/DHFR.sdf": {
+   "bytes": 1773267,
+   "sha256": "4c1358a99e5e76aeab1e1a68ae4a2cfaddf910b166bdee13774be91ee833b15f"
+  },
+  "examples/sutherland/GPB.sdf": {
+   "bytes": 257401,
+   "sha256": "e0e364c381a5c9f28afb636ec5feef3937b1364f8562b63a28ab3a073b31347e"
+  },
+  "examples/sutherland/THER.sdf": {
+   "bytes": 465330,
+   "sha256": "6a31ec372409c5619b34196038016c0f6b93f75603aff8466e501ff4d58c5a55"
+  },
+  "examples/sutherland/THR.sdf": {
+   "bytes": 685014,
+   "sha256": "9f4130246dc47d86b2ade3431fb22b2dddf91e7a46a12db540e97d8c158157eb"
+  },
+  "examples/thrombin_atom_properties.sdf": {
+   "bytes": 395281,
+   "sha256": "a37021d6ac07da3247fa156d0335cc3c27d29b754d037ac01ccfbfa0b7f66d33"
+  }
+ },
+ "dirty": true,
+ "packages": {
+  "PyOpenGL": "3.1.10",
+  "PySide6": "6.11.1",
+  "cmfqsar": "1.0.0",
+  "joblib": "1.5.3",
+  "matplotlib": "3.10.8",
+  "numpy": "2.4.1",
+  "pyqtgraph": "0.14.0",
+  "pytest": "9.0.2",
+  "rdkit": "2026.3.5",
+  "reportlab": "5.0.1",
+  "scikit-image": "0.26.0",
+  "scikit-learn": "1.9.0",
+  "scipy": "1.17.0"
+ },
+ "platform": "Windows-11-10.0.26300-SP0",
+ "python": "3.13.14",
+ "results": {
+  "benchmarks/results/ACE_default.json": "56c4fbcab825fbfdc3780d12b124a70ed122433e5a597495ef56834a46f8d945",
+  "benchmarks/results/ACE_paper-nobias.json": "e6bee68879b3b49db21bc956aac981eef2bfb1f8db4fca0ed81ce959c2c41ce5",
+  "benchmarks/results/ACE_paper.json": "dafab0d00fe209c6e5a4422c5fe772134bae9a0f6a2d3718f531daf7b99ba4ca",
+  "benchmarks/results/ACE_rdkit-scaled.json": "e92d520c365179ae6086c2eab34b4516fd108cc4a8ce8a12f6817c802e86fc1b",
+  "benchmarks/results/ACE_rdkit.json": "d28c886134e2312025fce701aa11562b0fa14e08996df0d705c450a1ab59f06a",
+  "benchmarks/results/ACE_tripos.json": "ab371b4421d767eaad139bb3dbc11b7d53c7eb221dd50ace1320e1b18763a434",
+  "benchmarks/results/AChE_default.json": "71008271c754e00a0b352429b0d32335968ef8b5c58c9b2c19a362b7b1829620",
+  "benchmarks/results/AChE_paper.json": "b9592fbe04cf550ef502b95ce69d3a589dca058595d49c7882ed4916d2bccc27",
+  "benchmarks/results/AChE_rdkit-scaled.json": "03a66c43e226230f4e8c98ce930ed669a91071e00b5684bf8479690bee141934",
+  "benchmarks/results/AChE_rdkit.json": "563ed5ba079b3230012053405eeea6750a6d42272635cfa76b99b303109fe760",
+  "benchmarks/results/AChE_tripos.json": "debd1bc58d438d53202be1726a1b8bd17f9a9e434e8828606c7dfbc7fdd6a8aa",
+  "benchmarks/results/BZR_default.json": "dd6cb29fc2ca7615ad93756a2cd50e6107b38c89b19a18eb665a2a2191ca64ee",
+  "benchmarks/results/BZR_paper.json": "9a4a5d669ead2881545b8072099721ab2f22ff2b01d659483aa86b384c4e19c0",
+  "benchmarks/results/BZR_rdkit-scaled.json": "cf66037aef2431e3eeda6e4e80d4ac3331cccd1f3c3473c098a639d35b800ce9",
+  "benchmarks/results/BZR_rdkit.json": "014f0facbdc97b38f109ee8ae718bdf75e2f7055a36d7cf967dd41c3b7a7ee46",
+  "benchmarks/results/BZR_tripos.json": "4c43742b39da175bc68880a0c7221974e1612c5355c75fa94a82156ab5c19a46",
+  "benchmarks/results/COX2_default.json": "6a7927100ccfc860342ae375e2bc33695686a9f44d75e023c51ed3b7f052ba69",
+  "benchmarks/results/COX2_paper.json": "a9d64fb9df0b8c3c72e7dec1c56660e7b2a3ae95297b1b1a39495930d57caf74",
+  "benchmarks/results/COX2_rdkit-scaled.json": "01346b652e90818df8439bcb3de5aa3babf2ed012439b5e510e96cfbd3f64181",
+  "benchmarks/results/COX2_rdkit.json": "69c911d443bf85351f005f08a5129727124be5df78944fddf1cc6447ea556593",
+  "benchmarks/results/COX2_tripos.json": "a7d533053ec009d65771d607bdd20033aae28855a80eba79ceb4f87704607439",
+  "benchmarks/results/DHFR_default.json": "51e8a9a5440280397f32106af520b53bee1fd1cc554b1310ea46fb00fefbea36",
+  "benchmarks/results/DHFR_paper.json": "baf0422edd871306d85e0901db10e8b0e40a85cf7121dfaeecd129447317479e",
+  "benchmarks/results/DHFR_rdkit-scaled.json": "2b85c64cfdaab12b73c2ee81d60cf1cf8899ccfcdad0bbbff890c1d546ec44bb",
+  "benchmarks/results/DHFR_rdkit.json": "7daf1163e3d527268e4aa1284086b767caeb7900123122010289d2305a41cbbd",
+  "benchmarks/results/DHFR_tripos.json": "c01c4bf5d734e9215a1aba92a5ad24fa7fad0cbf85af79c882d635703824ba98",
+  "benchmarks/results/GPB_default.json": "bdabd18d251795e8a86849c76f1ba77b49c11d9b601e743e1e2c2b9a3c5b46b5",
+  "benchmarks/results/GPB_paper.json": "17b30e1772249e7e6b2d67eff434637a9e4b72dd55ca24034ef7e85da1521471",
+  "benchmarks/results/GPB_rdkit-scaled.json": "86f30fb0f56bf779458625886680ccc5b747343234b29d21483aa5bf8282a648",
+  "benchmarks/results/GPB_rdkit.json": "9958ede82145041198aae58a40d53f1e5c8361ca66ee98dc673424cb0e38c6bc",
+  "benchmarks/results/GPB_tripos.json": "45d62c2294649d47f70c3529d934443027a42a923d1b2673d8e32274c03a594c",
+  "benchmarks/results/THER_default.json": "807b7159f50d49daec1af67ac667516e406d7cbf2cd44f457d6276458e635226",
+  "benchmarks/results/THER_paper.json": "cd4564128ebf29468be2d4ca39c9d2b57f3d60ce3d1bf1a55cbac610dfbe0839",
+  "benchmarks/results/THER_rdkit-scaled.json": "5d240c73a7ffeeb4c3305012bdf7405f823516c017dae49dbac12f62040e20ff",
+  "benchmarks/results/THER_rdkit.json": "3e14bda7bdcad1ff6dcaa8aad172e73b1f2272fc80ea809a42e4f05aed3f42db",
+  "benchmarks/results/THER_tripos.json": "1d327b947e3581bf4d6de38a2fd58be0f95e21fd3b78112581cac0a11974665a",
+  "benchmarks/results/THR_default.json": "0de22ee2ec37daff689ac4d34bc938388af2b8f29c6e8999d0a6374e22ca56fa",
+  "benchmarks/results/THR_paper.json": "5fca5860347d68946ddec5b9b30a02c66e19e130812ce8dc45767e803bed02a3",
+  "benchmarks/results/THR_rdkit-scaled.json": "bc32b1ae5fd90691fd9f8849ab0c6a3522b8256eebc886997ba86703edf24b7d",
+  "benchmarks/results/THR_rdkit.json": "c996007e9488a2d21233c5df0cc312e4e5e377ad974da01af99faadf5a41592e",
+  "benchmarks/results/THR_tripos.json": "f81b4151978adf3e25c5790c44bc7cdcfab63bb9b407326372156b5795800fb8",
+  "benchmarks/results/alignment/ACE.json": "b8760d115361cc48bf177530a366523597132dfdf39111b47232d086a9724403",
+  "benchmarks/results/alignment/AChE.json": "04ef6853d3891628e131ef82453285ada91f5fa0bc0cc9abec8d734816ebd639",
+  "benchmarks/results/alignment/BZR.json": "78ce56c03f92ca7186e2a2220c1996a6c231d860a6a06914bcbe97094f6852eb",
+  "benchmarks/results/alignment/COX2.json": "a82f639f114233a8e0f7aec56a2c6d14be0f491bcd3a95dc5b449d866148445a",
+  "benchmarks/results/alignment/DHFR.json": "90e7651522dbf6ecff7e10beb355b0059f058509a5a4e20634d8c1113048888d",
+  "benchmarks/results/alignment/GPB.json": "9efd30f377ed5db406919458709761be00d9edfc7e9674c49cd7a4b8dac9943b",
+  "benchmarks/results/alignment/STEROIDS.json": "63594286cfa2166136582f0f8078a290fc26d5990bb198b193d2f805bbfb7d59",
+  "benchmarks/results/alignment/THER.json": "d1031a74e4b945420068f1f24f3b896d7e4b165cab43764bda6284af063618fe",
+  "benchmarks/results/alignment/THR.json": "eef8aba37aecc1a1628fedd77216eac09bc1d50f65e9846a65f737eeb43fd6c2",
+  "benchmarks/results/alignment/table.md": "8b733684405e1ed8404aa21c85d60d31685990f02b19272c475743763efc58eb",
+  "benchmarks/results/am_eu/am_eu.json": "d673b26a054547f78872bccdfc600e320ee807054e39583c7268f7e507ed68e0",
+  "benchmarks/results/am_eu/am_eu_qm.sdf": "d888408b8f52883faefe4ef2348bb5a4de998783f24a8ff5ccfa219e48b61d48",
+  "benchmarks/results/am_eu/table.md": "5d299413cc2751b97e6d6e877c5b5224ee6a0a4a5571ced88299c0bf2b4211de",
+  "benchmarks/results/cdft_kernels/161_c1ccc2scnc2c1.json": "b0a442c3e76186629d1516398a8adde9a6c2724fc5665f669b8f74defc96b3e7",
+  "benchmarks/results/cif/AmEu_cif-grid.json": "2d1b0a3624d819eddcd08d129dbf272f646d08face58af802d6d98deed45099d",
+  "benchmarks/results/cif/AmEu_cif-nobias.json": "4d2379ac02c54180886d3165161d3e4cb0da72d2e4464782c0f2231b29af6b0e",
+  "benchmarks/results/cif/AmEu_cif.json": "8faa15d81859b5db478895d2798be26e0469ce2ca216b25303e8c2113906c2a4",
+  "benchmarks/results/cif/DYES_cif-grid.json": "5a0cfef521cbede5a3e8e002349949f560754f2b08e4c78e6246d82a7bcc568e",
+  "benchmarks/results/cif/DYES_cif-h-nm11.json": "020fc6f258ce866611217e1654493a3124e0472b6209b77807c9866c939cf946",
+  "benchmarks/results/cif/DYES_cif-h.json": "f82ca33387170b96c5ea90121e9459e5daa90088f953b482967c474ec961e700",
+  "benchmarks/results/cif/DYES_cif-nm11.json": "0abf997d63554e64efa5657e1fe41ed0800d1d327c274a82349b2b821585c831",
+  "benchmarks/results/cif/DYES_cif.json": "299f7f4b4b44009739f15e06b91731327b676fed86e0cb5c306e8cb8f9d21c7d",
+  "benchmarks/results/cif/THR_cif-grid.json": "e64de76a3ea8d14b8029752619b12be0b7fe2221b976855dee306342e5500709",
+  "benchmarks/results/cif/THR_cif.json": "1901745fb9f65ae8417f5b8b80603d72daffe816a3a6fbae82ff121ec290d6e8",
+  "benchmarks/results/cif/THR_pc-grid.json": "2afc3dc1472b4425743c5e5d9601829183722a84e6b5b5f8a243ddc943382ce8",
+  "benchmarks/results/cif/THR_pc.json": "8a7ac84911f35ad6ee70c3f7771821a8d3f4fe8cc5a17872bc52b7a374bd9f17",
+  "benchmarks/results/cif/table.md": "479e2eab44edf6148d025a83baaa0bddfe61b07627ad77fbc64950923f479f08",
+  "benchmarks/results/cif_data/ameu-activity.txt": "c3bf26f7f6d6d9bdf5d301d3f969b0de451c451c086e251d8f89ad8c92572c4e",
+  "benchmarks/results/cif_data/dyes-activity.txt": "7a99dd1a1e8f5621122bf63aa62fd1488ae071a802779e0353e3c340e9a3bf2e",
+  "benchmarks/results/cif_data/thrombin-activity.txt": "f9d4d412ab4cfe9befde0f58daa0bb9da86f15340a28b6eda48ff0a42d224cf6",
+  "benchmarks/results/corrosion/0_c1ccccc1.json": "0a9e52765ead46b8e286eeae6074d860a6d721149840b76272c3f82276c1d25e",
+  "benchmarks/results/corrosion/11_c1c_nH_c_nH_1.json": "29c01de358306e993a647cb59a5adf1e1c57a4ae483551535ad4952256d66d07",
+  "benchmarks/results/corrosion/12_c1ccoc1.json": "2027b2910feae8d9816112173c7f4c828d926e805238fb0cb64f875b21f2a209",
+  "benchmarks/results/corrosion/13_c1c_nH_nn1.json": "800bef053b6d1e35e51ae5cf4d2f24d7d77247cefbf84c625d3171295ad45a59",
+  "benchmarks/results/corrosion/14_O_c1cc_nH_c_O_nH_1.json": "d4bedc6f94cddf3bbde6c16f1fcf85ed6e5b5a20410aec735f4e4ff4f0860f7f",
+  "benchmarks/results/corrosion/157_c1ccc2_nH_cnc2c1.json": "a385e041e04ef9d22189166c26c7874e7ed560f1904521683332eab3dcedc151",
+  "benchmarks/results/corrosion/158_c1ccc2ncccc2c1.json": "f28c618f4f926f2357a236a9c21c1c420bb7e9b4d086395dc0fbb32e95d9cc61",
+  "benchmarks/results/corrosion/159_C_Nc1ccccc1_c1ccccc1.json": "5decf0fdf99e8d7801c1838c2459309883406c5ee0c7c2c0c5b6876b9cb5cbb7",
+  "benchmarks/results/corrosion/160_c1ccc2ccccc2c1.json": "fd2803721151cbc9af2a9a68d3a807b10ce1bc5eea54ee70585826a13d0f760d",
+  "benchmarks/results/corrosion/161_c1ccc2scnc2c1.json": "ee9b52c018abe1cced1376116cb6c08562665be1d9a2f225a13f53f2eab396aa",
+  "benchmarks/results/corrosion/165_O_c1cc_nH_n1_c1ccccc1.json": "1b3c0c9fb143e494eeaf69826513872e5133081d81188aa514c4b2f75c6f76e9",
+  "benchmarks/results/corrosion/17_c1nnco1.json": "992cc1ad89d74e8d8c343a334d62088dd1ffea43a036444130defea36d0ae185",
+  "benchmarks/results/corrosion/1_c1ccncc1.json": "c2aa8c2433c8e60b757d9e5bc15577a8ee2f69c58739983ecfc649ce6dd1e967",
+  "benchmarks/results/corrosion/20_O_c1cc_nH_nH_1.json": "b159101484af16de42284320b9b69749dd459cf19c310d64b81c372ab20c8bd7",
+  "benchmarks/results/corrosion/21_O_C1CCN1.json": "69b0870c51d4f187690c0687cd28b988c0610e6dc62fba25eee97d71bb545ca8",
+  "benchmarks/results/corrosion/22_C1CNOC1.json": "8beef13f462fe620501e7ad8777697928900b3d87af9261e8a3a4d622f23c209",
+  "benchmarks/results/corrosion/2_c1c_nH_cn1.json": "206cee6dc01100ff77e7b048b4bdc8e8b964a3215acf22e3bec824bc293fa517",
+  "benchmarks/results/corrosion/3_c1cscn1.json": "cd85e243048a95f4cda40146c54a002d7735c924d5512ae36bab3be8f0284895",
+  "benchmarks/results/corrosion/4_c1nnc_nH_1.json": "11ec1c7be06243aa78367320eabc4a56bffedc1a94f1dbb9240340a333e189ce",
+  "benchmarks/results/corrosion/5_c1cncnc1.json": "b53d2989f141e919b67536b4c3de3b6b1e547f30e37a3e6001001a10b6378307",
+  "benchmarks/results/corrosion/7_c1nncs1.json": "8eb66a9eaa87b8f4d67c94ede6d19754371c12ccbecd55d113b0c2c58ff8c8f6",
+  "benchmarks/results/corrosion/8_c1cn_nH_c1.json": "1aff01d0b7de78886e9fe948143406c740fe3cf39875bbd5bb18d6420a270daa",
+  "benchmarks/results/corrosion/9_c1nc_nH_n1.json": "9fdd3b0d341d87ac597bb4bfcba5dcf2f2265ca2f0813d83e71d707184946de1",
+  "benchmarks/results/corrosion/table.md": "ad94924fe5192d058c64d16f2be80b4782930ccd6889cbc41c52f0584c476069",
+  "benchmarks/results/corrosion_hcl/0_c1ccccc1.json": "3cb2b1baa6cb3292612935fe285ff231ef604d7ea70be1a662909f784dca4c0e",
+  "benchmarks/results/corrosion_hcl/11_c1c_nH_c_nH_1.json": "1113670773c3c2450ace8d6f3e0da3468f5516a69acd0a9d55a20a75bfc8c491",
+  "benchmarks/results/corrosion_hcl/12_c1ccoc1.json": "339607df5556d64444a2b2155cdb42f660cff7043f300f159d92aa5acf02f271",
+  "benchmarks/results/corrosion_hcl/13_c1c_nH_nn1.json": "2de07bd8c68d4069c7875e2e392b31916f64facda5beffc7046aa6c594547cb9",
+  "benchmarks/results/corrosion_hcl/14_O_c1cc_nH_c_O_nH_1.json": "31044138b8f372ac991ab3423be0a64c472ccf99f48b8238e897e43027cc85fb",
+  "benchmarks/results/corrosion_hcl/157_c1ccc2_nH_cnc2c1.json": "bec8b7810ab79306e3b654cca6fc73d9b443d9970cf04341b5d7366d8541fb71",
+  "benchmarks/results/corrosion_hcl/158_c1ccc2ncccc2c1.json": "6735fc809096bcbc50175da881d5aba4fca6b6ba2fa1da6d2e3e866b5c11b0d5",
+  "benchmarks/results/corrosion_hcl/159_C_Nc1ccccc1_c1ccccc1.json": "104647656d81545fe6df11cf42d72df1e4b6cf352e4a9a04c0cd37d86644aeaa",
+  "benchmarks/results/corrosion_hcl/160_c1ccc2ccccc2c1.json": "8013acf331a6dfac08b697ee7ab7e28e1aaae76afb40a6eba0c4c8540dc1d490",
+  "benchmarks/results/corrosion_hcl/161_c1ccc2scnc2c1.json": "77b24e1abd20301358ebe6c4314f6e5238656c276af7af99fd868f0312a1bf01",
+  "benchmarks/results/corrosion_hcl/165_O_c1cc_nH_n1_c1ccccc1.json": "b9515bc687598b5577c787b6c3972d21ad48a2f3d494d52ed0c856b1f2181b4e",
+  "benchmarks/results/corrosion_hcl/17_c1nnco1.json": "9e679ec439d2503cbece8938b3e46029bc7bf8a729234cc48ffdf3e27b093b57",
+  "benchmarks/results/corrosion_hcl/1_c1ccncc1.json": "fae7cf036b7d9563c4328a3a4c8428cce432d0c52476fee87aa01f65653f2757",
+  "benchmarks/results/corrosion_hcl/20_O_c1cc_nH_nH_1.json": "1a179347bf4f2cc66779717721ba095ea488dbb7c6b10f067afe3002dc84c3c9",
+  "benchmarks/results/corrosion_hcl/21_O_C1CCN1.json": "ef0a6f6aabeeaddd0131939696b3fcf4e1df75fff8fcb3a58db9d909bd4f9a32",
+  "benchmarks/results/corrosion_hcl/22_C1CNOC1.json": "108c3a5e2ab08828f741bc8ec2a3995c795a0bd913096bb491c383aaa966495e",
+  "benchmarks/results/corrosion_hcl/2_c1c_nH_cn1.json": "431ef6e73bda850e3f2ff41b38b62e4d4ef59e86ba4fe4fe678e12e59b22bc36",
+  "benchmarks/results/corrosion_hcl/3_c1cscn1.json": "dd4b96bf94d892cf79513fb8d2ef4bdc1bde97ed7987483b70bc98519051c544",
+  "benchmarks/results/corrosion_hcl/4_c1nnc_nH_1.json": "92b264a8bb0072f17a3c9eea7de720176f704821724efb1bfa816d6cc86cd1d2",
+  "benchmarks/results/corrosion_hcl/5_c1cncnc1.json": "2a8ec63ce9ef0f496603de88ab547d71239c71ca56815f31c5d1b4ce424c65f9",
+  "benchmarks/results/corrosion_hcl/7_c1nncs1.json": "4d01e6f3f535f4cd35cedbf8fa8ac02464895c7f70df7a1ad3098a45e391afaf",
+  "benchmarks/results/corrosion_hcl/8_c1cn_nH_c1.json": "7a74b482663277dffed64277a97d3b7673cb52ca479aab25f722e6802cd1c6bc",
+  "benchmarks/results/corrosion_hcl/9_c1nc_nH_n1.json": "d822493168f57fa5e74e36338e5b6b49c2044998df86ba5875f55c8428c21397",
+  "benchmarks/results/corrosion_hcl/table.md": "f9cf083a1b995249021b0a74586217c69a16e9924df81f2997cb3543f629ae69",
+  "benchmarks/results/corrosion_qm/12_c1ccoc1.json": "b4874c71d585fcd229d812f0b2e92294211af4c27d3459a634c96d88ac307553",
+  "benchmarks/results/corrosion_qm/12_c1ccoc1/12_c1ccoc1_qm.sdf": "0a5c7af46ed7fe92b4ed54073fe81c5cde725296c2557e32fd37a0e185ce4a5c",
+  "benchmarks/results/corrosion_qm/13_c1c_nH_nn1.json": "6f81cef126364696f004b7c5e1ab5f5044bd9f3417400a39fae43869aaa0f157",
+  "benchmarks/results/corrosion_qm/13_c1c_nH_nn1/13_c1c_nH_nn1_qm.sdf": "cec9d17d169239cdfc48382aac38c6c126141d7e72143b0bcf703d7c1d757c3d",
+  "benchmarks/results/corrosion_qm/161_c1ccc2scnc2c1.json": "012acea173d3865382840f4ea4ee5b86f3527ebf4e2fd8625ba94940e80416ac",
+  "benchmarks/results/corrosion_qm/161_c1ccc2scnc2c1/161_c1ccc2scnc2c1_qm.sdf": "c4d3b87c420729d2ae95363537c9d14fe9bbdd051e5563899edd4625f728df96",
+  "benchmarks/results/corrosion_qm/7_c1nncs1.json": "fd51b430857aaf2b1d7e9b96de4ea427a2e974b3d88766fee70023e98af13bb6",
+  "benchmarks/results/corrosion_qm/7_c1nncs1/7_c1nncs1_qm.sdf": "3cc640686e95930a015bec5248f2a6d93c196ca615b3800c89bc834aaa96c852",
+  "benchmarks/results/corrosion_qm/table.md": "ce1ec51e01f500e2b8e7acdb76f4b0a78dca96049f792ff2ed75d973c1dc8140",
+  "benchmarks/results/hammett/cofields.png": "2920fa68ba83a49b9766ba7c6e268165eaf9a6bbe434f833cec22e270bd9354d",
+  "benchmarks/results/hammett/cofields_ens.png": "e91936e44fdf5e9a1854309e648b76ad0a19471d9a53921e06ac8e70ce75f5d4",
+  "benchmarks/results/hammett/cofields_ens_boltzmann.png": "f53e86a7db76975f03a7457801573b4f027db984e937acb74cf0668bf4114148",
+  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld.png": "0b8cc09a71dfa04f1e0232a83d5b9a3bc65f700e217432c4f4c990640289bfb4",
+  "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld_boltzmann.png": "610a7e5a42639a872ce5d23cc110fb05a7d502f60659c0ed70d4c058e5e9be15",
+  "benchmarks/results/hammett/cofields_q_hirshfeld.png": "56d88d0bf87dc56a6c817db5b93634e48f714c324c5432c977f2e18e06f98f01",
+  "benchmarks/results/hammett/cofields_qm_sym_q_hirshfeld.png": "5c9ea60092c61166688be8b9e5dbc6a074838b27ad846032f3ee4b3df3b4d0a6",
+  "benchmarks/results/hammett/cv_scatter.png": "46d8bb7bbe1f533a41cdb569314974b169695ee4a5b88ff14987c19567870de1",
+  "benchmarks/results/hammett/cv_scatter_ens.png": "38415bd902892df7355696bcfc50639c3b6121af8b82340058019a0fa7a5d74d",
+  "benchmarks/results/hammett/cv_scatter_ens_boltzmann.png": "359bb3f0413452402fc6c83a9d3d18ddba69206845faa2db0db2269382651660",
+  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld.png": "13bcf72823fff7393e195b57279f2bffcec9ef862013e049b79116b4a8d42cce",
+  "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld_boltzmann.png": "07373adac25f4af606870a3f3affa2123294550ed001a72ae46510d2d5d268df",
+  "benchmarks/results/hammett/cv_scatter_q_hirshfeld.png": "45a31b4b2167d0256d60b8fcd99687cb28912555d3d41506666b880b48b638e5",
+  "benchmarks/results/hammett/cv_scatter_qm_sym_q_hirshfeld.png": "535b83b83f5848bd0eba4c637e3c2fe24918fb6918ec80cd94c260c595a6a113",
+  "benchmarks/results/hammett/summary.csv": "c65f8c7e583d9fd4072adaa2a75fb44851698bdbf12f0fd172b9cd3f8f5d072b",
+  "benchmarks/results/hammett/summary_ens.csv": "601ce600822081a11f49ac0f119c86baa962d0f639492a3b448ed74e957ad810",
+  "benchmarks/results/hammett/summary_ens_boltzmann.csv": "d367f9d195deec0394de74751e9b8b99a0c3352cad078cf70b3da5095ede5fab",
+  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld.csv": "a091ada9518103641f64d22924bcd8e643810e781f440a675e41a28b499cb21e",
+  "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld_boltzmann.csv": "b7b07bdf8f64be5f40dab806e1a0fe1cc7a83079830b2fb50adf38917463ea65",
+  "benchmarks/results/hammett/summary_q_hirshfeld.csv": "dd08a34ceb995c97b21232db241b7ba098243307645e4643351345bac0689034",
+  "benchmarks/results/hammett/summary_qm_sym_q_hirshfeld.csv": "4439ee3f4331fc614865ae14913ebba4f4c9b1dd2e5331cfebb4aadd5dcaa1b1",
+  "benchmarks/results/multitask/0_c1ccccc1__activity__dG_ads.json": "8b394b6d29331a5f7ee6c43ffb4069d16404f706befd5f105ded07cb4d79da0b",
+  "benchmarks/results/multitask/0_c1ccccc1__mwila_hcl_adj__mwila_h2so4_adj.json": "213ac40175e7dac10c2c436ee888f4bfde9d0ff6af5d3eb552b1d27fe2ae16b0",
+  "benchmarks/results/multitask/11_c1c_nH_c_nH_1__activity__dG_ads.json": "84b50ef987c38456e861550b41ebc25ee6c2bc517d4c9334f9c02b60457ea395",
+  "benchmarks/results/multitask/12_c1ccoc1__activity__dG_ads.json": "e100c36eb3785204924fcfa71fb4a87193af51b677b6a1e348d45dc358c7705b",
+  "benchmarks/results/multitask/13_c1c_nH_nn1__activity__dG_ads.json": "9ea917a25e907b84221f26fdb0b4273a93aa081efaf6fef95e4713604c6894ff",
+  "benchmarks/results/multitask/161_c1ccc2scnc2c1__activity__dG_ads.json": "54d8162d2e97f47d30fb3cceeb4975ff745435b005e67cc407352abe3a0632b5",
+  "benchmarks/results/multitask/2_c1c_nH_cn1__activity__dG_ads.json": "353822b8979eae1480db976419164244a1ea0ff4987a80b44bae3da49cbbdbec",
+  "benchmarks/results/multitask/table.md": "5f4ec2333e0519319f88f9ffa0b431e32b9f0b2a776591044e12c1ed44348063",
+  "benchmarks/results/table.md": "54832c22da043c94778908e32ef4efe24961f72b60a7d886ae7a7cc8dbe00301",
+  "benchmarks/results/topomer/ACE.json": "b641e256a8aa82b30e97dff9d3195e7f1d9c9fe5ab708bd32d0ad625c4871f1d",
+  "benchmarks/results/topomer/AChE.json": "95ce9c0f9b9c0976b28ae07bf7be167f692c00423216828bde1465ff9bea8790",
+  "benchmarks/results/topomer/BZR.json": "af0dc6e9916f8f9f78989a1cde04485acb0bc98ec3f37d276dd7128b5a0c82e0",
+  "benchmarks/results/topomer/COX2.json": "81b4366d61fc9f73d01edfee0c9328b100146c985a9943f657b92e9ebeae0d39",
+  "benchmarks/results/topomer/DHFR.json": "fd353aa69ce6604c73537bb395cfeb3be19f9972ad208ce971e6dca76d4162e1",
+  "benchmarks/results/topomer/GPB.json": "9dee26bee7a43f93214040445b0adea23e2a65c8464a73b55b21769d6d5b8730",
+  "benchmarks/results/topomer/THER.json": "653cc2b7b49413d28493e7f3f39d6c5de8ffce2830e784169724ea4a708fa7ae",
+  "benchmarks/results/topomer/THR.json": "4b9309b2fe145d11913f8078d033f5bfd50c674b04e08699bc7c56e2ad108e44",
+  "benchmarks/results/topomer/table.md": "41edfc59621b505fb7531695254d4104e3900a8deb80a429c374f6e2c903183a",
+  "benchmarks/results/topomer_mittal/ACE.json": "77092d525a6e4189a99607db77b79798e7656cc77c06e49f4ba35f3dce3e1844",
+  "benchmarks/results/topomer_mittal/ACHE.json": "b47b47339c4ac51a1891be00bbb1399c0f4d496f425bc0abe7eb4e794a28652a",
+  "benchmarks/results/topomer_mittal/ACHE_TOX.json": "b4f1ce47e6aef85e25c40dd99cce915fa804bbee97134a13fdb5e9e31602ce0b",
+  "benchmarks/results/topomer_mittal/AI.json": "35bb801f28fa0d50f2ebe6e4e84154095c2949703f7b2ebf170eaea8c272a6be",
+  "benchmarks/results/topomer_mittal/AMPH1.json": "cce05ce8ab653d20840370a8ae54210c545d5993a7d45e0965c78ca18b1c2865",
+  "benchmarks/results/topomer_mittal/APZ.json": "b4ac1aa7903a641ed1afd1b685e7277346bc62c1cd45eef12f71c29eefae66de",
+  "benchmarks/results/topomer_mittal/ATA.json": "6c54bc9366aab9b2ae9c826b5ffd4ec729eb55451004212d35ae35a98c51ea9f",
+  "benchmarks/results/topomer_mittal/BZR.json": "8df621d1052319db5caaafa8af1b1db26bb0fb0062130372555466029a874b94",
+  "benchmarks/results/topomer_mittal/COMT.json": "a6f827b80dd9037189442f628d4842008c733f661e98010fb25410ba0b8c04bb",
+  "benchmarks/results/topomer_mittal/COX2.json": "8d86a4ebd12d4e1bdaf0b92e05410742a89e6171d855e3a4fe61b546727b33ef",
+  "benchmarks/results/topomer_mittal/DAT.json": "fc9047862bc9dc456258e40a41892bad75ddfd622a9c699119a1c925bb9534b9",
+  "benchmarks/results/topomer_mittal/DHFR.json": "9368430ee16ef1825d42a0f3cc150eecb1beec07b0dd0bb6e8b5b26cdc2e010f",
+  "benchmarks/results/topomer_mittal/DIAZEPAM.json": "b1efca0d23ab5c3917df7fc123f9b60db0b802c94deb3df206c5caff5193be81",
+  "benchmarks/results/topomer_mittal/ECR.json": "568e09de71a4b23cd8d22e35f3757b14ce6ca96426804f29adb7316023b95639",
+  "benchmarks/results/topomer_mittal/EDC.json": "332e9d0ceaf9a74e671e04cbca9a6265a7ec7919fd639dc5d0490d62630099de",
+  "benchmarks/results/topomer_mittal/EV71.json": "c0a3599530dd8e826f85a78a89b312d2ae093fbd64f61008f3a8a4117bea2fb4",
+  "benchmarks/results/topomer_mittal/GHS.json": "a4699e54262b96a885fc9ef4715f1d513104e9677050a2728849c58ea24fc891",
+  "benchmarks/results/topomer_mittal/GPB.json": "c07d55b371d25a31e2f56172af166160e2fee452cc5c8044d2fca3332aaa6297",
+  "benchmarks/results/topomer_mittal/GSK3B.json": "c86be32a75bef89f876b9b3f9a076500149d5ed12e46d53ac9e374be51208316",
+  "benchmarks/results/topomer_mittal/HIVPR.json": "5742f89854e95ddb820a8caba5c99957b7de6ac947cdc46e482fdcb28b10df0f",
+  "benchmarks/results/topomer_mittal/HIVRT.json": "3474ee1ed1b3de62d15e3ff0b0d1f80874d3d61efe24786cd9eebe84548edf8c",
+  "benchmarks/results/topomer_mittal/HPTP.json": "b29dbf440bbfeb505b2ff51494d8564e9c1d43aee39c4ea35456ca416adfefef",
+  "benchmarks/results/topomer_mittal/KOA.json": "cbc1fbffbab695e1decce768185887456dabf7308f37282e0ad35fe164580643",
+  "benchmarks/results/topomer_mittal/MX.json": "cee74ffb50ad5be11df55a2fcabec13aab95439b8ee27d488b328424bea02fc6",
+  "benchmarks/results/topomer_mittal/PDE.json": "5e51661b9d764412ff1c8a411d79765db3b5c0292443694ad0e69d052ebc2b2e",
+  "benchmarks/results/topomer_mittal/PTC.json": "ff510908912ca6d8321793ce35ad74f891a049c6481cd5b80ae8b0dd4b16be94",
+  "benchmarks/results/topomer_mittal/TCHK.json": "1c50d08efd5941b457b1dd4f177828d752bba7c0f5174119ad7f48ad281476b9",
+  "benchmarks/results/topomer_mittal/THERM.json": "511e7f6d49f14eac13a1601a8ed651e9ce3d656e3111813c2df9a3a449bdb82c",
+  "benchmarks/results/topomer_mittal/THR.json": "7c5c4fff64ef1bd61c6394ffa8a6dcf9a23e2be61143cb610fcb0a53617db053",
+  "benchmarks/results/topomer_mittal/VATP.json": "31a2622c0203f92edf387a89713f063899252c8baac7f78ac00ee1c1b9fba8fa",
+  "benchmarks/results/topomer_mittal/YOPH.json": "2410ffd76ee7a57cd13716b95401e76a49099259719a82c5b690e3cf8c136261",
+  "benchmarks/results/topomer_mittal/table.md": "68be1896e56e4b188863034fde9fe49ebc52a6587303255b805abcce261cffa7"
+ }
+}

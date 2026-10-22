@@ -49,6 +49,9 @@ from cmfqsar.invariant import (AutocorrelationSpec, autocorrelation_kernel,  # n
                                feature_matrix)
 from cmfqsar.model import AtomTable, CMFModel, cv_predict, r2_score, rmse  # noqa: E402
 
+sys.path.insert(0, HERE)
+import kernel_cache as KC  # noqa: E402
+
 RESULTS = os.path.join(HERE, "results", "alignment")
 FIELDS = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
 ALPHAS = (0.1, 0.3, 0.5, 1.0, 2.0, 5.0)
@@ -100,8 +103,7 @@ def measure(path, tag):
                              param_scheme="rdkit")
         mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
         model = CMFModel(fieldset=fs, method="krr", normalize=True)
-        aligned[alpha] = model.joint_kernel(
-            model.prepare_training_kernels(AtomTable.from_molecules(mf)))
+        aligned[alpha] = KC.joint_training_kernel(model, AtomTable.from_molecules(mf))
         spec = AutocorrelationSpec()
         invariant[alpha] = autocorrelation_kernel(feature_matrix(mf, spec), n_bins=spec.n_bins)
         print(f"      alpha {alpha:g} done", flush=True)

@@ -1784,18 +1784,20 @@ most compounds, is a second view of the same adsorption, anticorrelated with the
 difference is in mixed units: only the sharing is of interest there. Same alignment, five fields,
 α and λ grids and 10-fold cross-validation over molecules throughout; ρ from −0.95 to 0.95:
 
+<!-- MULTITASK-TABLE -->
 | series | endpoints | n | r | q² separate | ρ | q² shared | difference q² |
 |---|---|---|---|---|---|---|---|
-| benzene | HCl / H₂SO₄ potency | 244 / 40 | +0.93 | 0.06 / 0.44 | 0 | 0.06 / 0.44 | −1.32 (n 40) |
-| benzene | potency / ΔG_ads | 244 / 207 | −0.59 | 0.39 / 0.35 | 0 | 0.39 / 0.35 | 0.38 |
-| benzimidazole | potency / ΔG_ads | 96 / 72 | −0.78 | 0.49 / 0.33 | −0.6 | 0.53 / 0.33 | 0.41 → 0.42 |
-| imidazolium | potency / ΔG_ads | 23 / 22 | −0.94 | 0.25 / 0.30 | +0.9 | 0.34 / 0.26 | 0.29 |
-| furan | potency / ΔG_ads | 28 / 12 | −0.98 | 0.06 / −0.03 | −0.4 | 0.07 / −0.03 | −0.05 |
-| triazole | potency / ΔG_ads | 25 / 23 | +0.44 | 0.63 / 0.61 | +0.6 | 0.65 / 0.61 | 0.49 |
-| benzothiazole | potency / ΔG_ads | 20 / 16 | −0.99 | 0.69 / 0.74 | −0.95 | 0.73 / 0.76 | 0.76 → 0.77 |
+| benzene | HCl / H₂SO₄ potency | 244 / 40 | +0.93 | 0.06 / 0.44 | 0 | 0.06 / 0.44 | -1.32 → -1.32 (n 40) |
+| benzene | potency / ΔG_ads | 244 / 207 | -0.59 | 0.39 / 0.35 | 0 | 0.39 / 0.35 | 0.38 → 0.38 (n 207) |
+| imidazole | potency / ΔG_ads | 96 / 72 | -0.78 | 0.49 / 0.33 | -0.6 | 0.53 / 0.33 | 0.41 → 0.42 (n 72) |
+| furan | potency / ΔG_ads | 28 / 12 | -0.98 | 0.06 / -0.03 | -0.4 | 0.07 / -0.03 | -0.05 → -0.07 (n 12) |
+| triazole | potency / ΔG_ads | 25 / 23 | +0.44 | 0.63 / 0.61 | +0.6 | 0.65 / 0.61 | 0.50 → 0.49 (n 23) |
+| imidazolium | potency / ΔG_ads | 23 / 22 | -0.94 | 0.25 / 0.30 | +0.9 | 0.34 / 0.26 | 0.29 → 0.28 (n 22) |
+| benzothiazole | potency / ΔG_ads | 20 / 16 | -0.99 | 0.69 / 0.74 | -0.95 | 0.73 / 0.76 | 0.76 → 0.77 (n 16) |
+<!-- /MULTITASK-TABLE -->
 
 **The sharing buys nothing that the intervals can see.** The two series large enough to decide,
-benzene with both pairs and benzimidazole on the adsorption energy for its sparse endpoint, chose
+benzene with both pairs and the imidazole series on the adsorption energy for its sparse endpoint, chose
 ρ = 0 or gained 0.04 on the rich endpoint and nothing on the sparse one; the small series chose a
 ρ of either sign, once against the sign of the correlation, and gained at most 0.09, on 23
 molecules, which is inside the resolution a set of that size has. A sparse endpoint with forty
@@ -2165,6 +2167,30 @@ the co-fields and saves the window screenshot (the autotest of `cmf-app`), and f
 run reports success; the screenshots are kept as artifacts. Offscreen, the OpenGL view has no
 surface to read back, so the 3D screenshot is not produced there and only the window one is kept.
 
+### Rebuilding the tables
+
+Every benchmark under `benchmarks/` keeps its measurements as JSON under `benchmarks/results/`
+and rebuilds its Markdown table from them; `benchmarks/run_all.py` is the one entry point:
+
+```bash
+python benchmarks/run_all.py                # list every benchmark, its inputs and its state
+python benchmarks/run_all.py --tables       # every results/*/table.md, and the tables the documents carry
+python benchmarks/run_all.py --manifest     # benchmarks/manifest.json: versions, platform, commit, data and result hashes
+python benchmarks/run_all.py --check        # fail if a table, a document or a data file is not what the files give
+python benchmarks/run_all.py --compute all --data-root <Sutherland MOL2 folder> --orca
+```
+
+The two tables of `docs/benchmark.md` and the two-endpoint table above are spliced into the
+documents between HTML comment markers and are never edited by hand; the other result tables of
+this README are written from the result files that `--list` names for each section. The manifest
+records the hash of every file under `examples/` and under `benchmarks/results/` with the package
+versions, so that a number that moves can be traced to a changed data file, a changed dependency
+or a changed program. `--compute` runs the scripts themselves, skipping those whose inputs are
+not in the repository unless they are given (`--data-root`, `--cif-root`, `--orca`); the kernels
+every script builds are cached on disk by `benchmarks/kernel_cache.py`, keyed by the atoms and
+the field set exactly, so scripts that build the same set share them. The locked CI job runs
+`--check`.
+
 The tests verify the analytic kernels against numerical integration, the symmetry/positive
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition
 rules, that the overlap integral of co-field and molecular field on a grid reproduces the kernel
@@ -2275,7 +2301,11 @@ cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, f
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)
 examples/               synthetic benchmark and its generator
-benchmarks/             literature benchmark runner (Sutherland data sets) and its results
+benchmarks/run_all.py   one entry point: list, compute, rebuild every table, write and check the manifest
+benchmarks/kernel_cache.py  per-alpha training kernels cached on disk, shared by the benchmark scripts
+benchmarks/run_*.py     the benchmark scripts, one per study, each with --report
+benchmarks/results/     their results (JSON) and tables (table.md)
+benchmarks/manifest.json  versions, platform, commit and the hash of every data and result file
 docs/benchmark.md       comparison with Table 2 of the 2013 paper
 docs/public_3dqsar_datasets.md  the data statement: origin, terms and script of every example set
 docs/publication_plan.md  the papers planned from this work, what each takes and still needs
