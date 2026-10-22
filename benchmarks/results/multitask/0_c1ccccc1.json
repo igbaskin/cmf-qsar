@@ -1,0 +1,106 @@
+{
+ "set": "0_c1ccccc1",
+ "tasks": [
+  "activity",
+  "dG_ads"
+ ],
+ "n": 244,
+ "counts": [
+  244,
+  207
+ ],
+ "n_both": 207,
+ "core": "c1ccccc1",
+ "reference": "Vanillin-glycine Schiff base PEG(1500) octadecanoate ester",
+ "align_rmsd_median": 0.0171100235532902,
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "rhos": [
+  0.0,
+  0.2,
+  0.4,
+  0.6,
+  0.8,
+  0.9,
+  0.95
+ ],
+ "folds": 10,
+ "separate": {
+  "mean_q2": 0.3693855320552042,
+  "alpha": 5.0,
+  "lam": 1.0,
+  "tasks": [
+   {
+    "task": "activity",
+    "n": 244,
+    "q2": 0.39080664386964215,
+    "rmse_cv": 1.8798947865758313
+   },
+   {
+    "task": "dG_ads",
+    "n": 207,
+    "q2": 0.34796442024076624,
+    "rmse_cv": 5.337085914300666
+   }
+  ]
+ },
+ "shared": {
+  "mean_q2": 0.3693855320552042,
+  "alpha": 5.0,
+  "rho": 0.0,
+  "lam": 1.0,
+  "tasks": [
+   {
+    "task": "activity",
+    "n": 244,
+    "q2": 0.39080664386964215,
+    "rmse_cv": 1.8798947865758313
+   },
+   {
+    "task": "dG_ads",
+    "n": 207,
+    "q2": 0.34796442024076624,
+    "rmse_cv": 5.337085914300666
+   }
+  ]
+ },
+ "difference": {
+  "q2": 0.37602645994177875,
+  "rmse_cv": 6.197997568432874,
+  "n": 207,
+  "q2_separate": 0.37602645994177875,
+  "rmse_cv_separate": 6.197997568432874,
+  "sd_observed": 7.846361527652098
+ },
+ "selectivity_coefficients": {
+  "max_abs": 9.365984886099353,
+  "top_molecules": [
+   "Metol (N-methyl-p-aminophenol sulphate)",
+   "2-Hydroxybenzohydrazide",
+   "Benzophenone",
+   "4-Methoxy-N-methylaniline",
+   "Isophthalic dihydrazide"
+  ],
+  "top_values": [
+   -9.365984886099353,
+   -8.950557226658216,
+   -6.546784759475823,
+   6.222970552915383,
+   5.5004018342395025
+  ]
+ },
+ "seconds": 86.15078139305115
+}

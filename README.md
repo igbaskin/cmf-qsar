@@ -2168,5 +2168,6 @@ examples/               synthetic benchmark and its generator
 benchmarks/             literature benchmark runner (Sutherland data sets) and its results
 docs/benchmark.md       comparison with Table 2 of the 2013 paper
 docs/publication_plan.md  the papers planned from this work, what each takes and still needs
+docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 tests/                  unit tests
 ```

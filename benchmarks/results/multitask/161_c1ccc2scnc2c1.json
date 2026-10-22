@@ -1,0 +1,106 @@
+{
+ "set": "161_c1ccc2scnc2c1",
+ "tasks": [
+  "activity",
+  "dG_ads"
+ ],
+ "n": 20,
+ "counts": [
+  20,
+  16
+ ],
+ "n_both": 16,
+ "core": "c1ccc2scnc2c1",
+ "reference": "2,2' benzothiazolyl disulfide",
+ "align_rmsd_median": 0.00803154208076147,
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "rhos": [
+  0.0,
+  0.2,
+  0.4,
+  0.6,
+  0.8,
+  0.9,
+  0.95
+ ],
+ "folds": 10,
+ "separate": {
+  "mean_q2": 0.7170219318591526,
+  "alpha": 0.3,
+  "lam": 0.001,
+  "tasks": [
+   {
+    "task": "activity",
+    "n": 20,
+    "q2": 0.6924441378836662,
+    "rmse_cv": 1.0589322930504654
+   },
+   {
+    "task": "dG_ads",
+    "n": 16,
+    "q2": 0.7415997258346392,
+    "rmse_cv": 2.09653507480265
+   }
+  ]
+ },
+ "shared": {
+  "mean_q2": 0.7170219318591526,
+  "alpha": 0.3,
+  "rho": 0.0,
+  "lam": 0.001,
+  "tasks": [
+   {
+    "task": "activity",
+    "n": 20,
+    "q2": 0.6924441378836662,
+    "rmse_cv": 1.0589322930504654
+   },
+   {
+    "task": "dG_ads",
+    "n": 16,
+    "q2": 0.7415997258346392,
+    "rmse_cv": 2.09653507480265
+   }
+  ]
+ },
+ "difference": {
+  "q2": 0.7584038147255814,
+  "rmse_cv": 2.846227444932705,
+  "n": 16,
+  "q2_separate": 0.7584038147255814,
+  "rmse_cv_separate": 2.846227444932705,
+  "sd_observed": 5.790613329723804
+ },
+ "selectivity_coefficients": {
+  "max_abs": 18.39028369512355,
+  "top_molecules": [
+   "N-(6-Methyl-1,3-benzothiazol-2-yl)-1-phenylmethanimine",
+   "[N-(benzo-[d]thiazole-2-yl)-1-phenylethan-1-imine",
+   "2,2' benzothiazolyl disulfide",
+   "1,3-Benzothiazole",
+   "N-(4-(dimethylamino)benzylidene)benzothiazol-2-amine (Schiff base, compound 3)"
+  ],
+  "top_values": [
+   -18.39028369512355,
+   18.096278822284194,
+   8.629296725407587,
+   -8.50670042809141,
+   -5.805604107003387
+  ]
+ },
+ "seconds": 0.5666038990020752
+}

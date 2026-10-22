@@ -285,13 +285,85 @@ def stage_quantum(out_path, cdft_intervals=100, jobs=6):
     return res
 
 
+def stage_cdft(out_path, intervals=100, jobs=8, fields=("fukui_plus", "dual"), keep_cubes=False):
+    """The conceptual-DFT fields themselves: plotted on a grid, fitted, and used as CMF fields.
+
+    Reuses the quantum jobs already in ``orca/``: only the ``orca_plot`` calls are new.  Both
+    readings are scored -- the field kept exactly on a common grid with the kernel done by
+    quadrature, and the field fitted to atom-centred Gaussians with the kernel in closed form --
+    because ``cmfqsar/cdft.py`` reports those two to agree as predictors while differing by half
+    the field, and this is a second series on which to check that.
+    """
+    import run_cdft_kernels as K
+    from cmfqsar.cdft import cdft_fields, fit_field, overlap_kernel, valence_window
+    from concurrent.futures import ThreadPoolExecutor
+
+    heavy, withh, names, y = prepare()
+    dirs = K.job_dirs(WORKDIR)
+    keep = [i for i, n in enumerate(names) if n in dirs]
+    mols = [withh[i] for i in keep]
+    use = [names[i] for i in keep]
+    yq = y[keep]
+    res = load(out_path)
+    t0 = time.time()
+    print(f"=== conceptual-DFT fields on {len(mols)}/{len(names)} molecules, "
+          f"{intervals}^3 cubes", flush=True)
+
+    def work(k):
+        c = K.cubes_for(dirs[use[k]], intervals, keep=keep_cubes)
+        F = cdft_fields(c["n"], c["np1"], c["nm1"])
+        win = valence_window(c["n"].values)
+        return k, c["n"], {f: F[f] * win for f in fields}
+
+    got = {}
+    with ThreadPoolExecutor(max_workers=jobs) as ex:
+        for k, cube, F in ex.map(work, range(len(mols))):
+            got[k] = (cube, F)
+            if len(got) % 5 == 0 or len(got) == len(mols):
+                print(f"    cubes {len(got)}/{len(mols)}  ({time.time() - t0:.0f} s)", flush=True)
+
+    lo, n, points = K.common_grid([got[k][0].positions for k in got])
+    print(f"    common grid {tuple(int(v) for v in n)} at {K.SPACING} A "
+          f"= {len(points)} points", flush=True)
+    base = kernels(mols, use, CLASSIC)
+    for fname in fields:
+        order = sorted(got)
+        X = np.vstack([K.resample(got[k][0], got[k][1][fname], points) for k in order])
+        Kg = K.unit_diagonal((X @ X.T) * K.SPACING ** 3)
+        fits = [fit_field(got[k][1][fname], got[k][0], widths=K.WIDTHS, ridge=1e-3)
+                for k in order]
+        Kf = K.unit_diagonal(overlap_kernel([f.coeffs for f in fits],
+                                            [got[k][0].positions for k in order], K.WIDTHS))
+        off = ~np.eye(len(order), dtype=bool)
+        rel = float(np.mean([f.rel_error for f in fits]))
+        r_gf = float(np.corrcoef(Kg[off], Kf[off])[0, 1])
+        print(f"    --- {fname}: mean fit error {rel:.1%}, grid vs fitted kernel r {r_gf:+.3f}",
+              flush=True)
+        res[f"cdft_{fname}_fit_error"] = rel
+        res[f"cdft_{fname}_r_grid_fitted"] = r_gf
+        for tag, Kq in (("grid", Kg), ("fitted", Kf)):
+            alone = best({float("nan"): Kq}, yq)
+            report_row(f"cdft_{fname}_{tag}", alone, res)
+            with_base = best({a: K.unit_diagonal(base[a] + Kq) for a in T.ALPHAS}, yq)
+            report_row(f"classic+cdft_{fname}_{tag}", with_base, res)
+    res["cdft_n"] = len(mols)
+    res["cdft_intervals"] = intervals
+    res["cdft_seconds"] = time.time() - t0
+    save(res, out_path)
+    return res
+
+
 def report(out_path):
     res = load(out_path)
     if not res:
         raise SystemExit(f"nothing in {out_path}")
     order = ["counts", "classic", "classic_rdkit_params", "indicator", "classic+indicator",
              "classic_with_H", "indicator_with_H", "classic_matched", "indicator_matched",
-             "quantum_charges", "quantum_fukui", "quantum_desc", "quantum_all", "cdft_fitted"]
+             "quantum_charges", "quantum_fukui", "quantum_desc", "quantum_all",
+             "cdft_fukui_plus_grid", "cdft_fukui_plus_fitted",
+             "classic+cdft_fukui_plus_grid", "classic+cdft_fukui_plus_fitted",
+             "cdft_dual_grid", "cdft_dual_fitted",
+             "classic+cdft_dual_grid", "classic+cdft_dual_fitted"]
     lines = ["# Am/Eu separation: classic, indicator and quantum-chemical fields", "",
              f"{res.get('n', '?')} extractants (Sitnikov et al. 2015), lg SF(Am/Eu) from "
              f"{res['activity']['min']:+.2f} to {res['activity']['max']:+.2f} "
@@ -324,12 +396,15 @@ def report(out_path):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--stage", choices=["fields", "orca", "quantum", "report"], default="fields")
+    ap.add_argument("--stage", choices=["fields", "orca", "quantum", "cdft", "report"],
+                    default="fields")
     ap.add_argument("--jobs", type=int, default=8)
     ap.add_argument("--maxcore", type=int, default=1800)
     ap.add_argument("--level", default=None)
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--scramble", type=int, default=200)
+    ap.add_argument("--intervals", type=int, default=100)
+    ap.add_argument("--keep-cubes", action="store_true")
     args = ap.parse_args(argv)
     out_path = os.path.join(RESULTS, "am_eu.json")
     if args.stage == "fields":
@@ -338,6 +413,9 @@ def main(argv=None):
         stage_orca(jobs=args.jobs, level=args.level, maxcore=args.maxcore, limit=args.limit)
     elif args.stage == "quantum":
         stage_quantum(out_path)
+    elif args.stage == "cdft":
+        stage_cdft(out_path, intervals=args.intervals, jobs=args.jobs,
+                   keep_cubes=args.keep_cubes)
     else:
         report(out_path)
 

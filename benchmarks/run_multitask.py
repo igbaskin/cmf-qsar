@@ -1,0 +1,195 @@
+#!/usr/bin/env python
+"""
+Two endpoints on one CMF kernel: does the sparse one gain, and is the difference predictable?
+
+``cmfqsar/multitask.py`` fits several endpoints on a shared kernel so that selectivity comes out
+as a difference of co-fields.  The claim worth testing is the practical one: that an endpoint with
+few measurements predicts better when it borrows strength from a related endpoint with many, and
+that the *difference* of the two is itself modellable.
+
+The corrosion database carries the case.  Its compounds were measured in two media, and the
+columns are in the series files: ``mwila_hcl_adj`` (hydrochloric acid) and ``mwila_h2so4_adj``
+(sulfuric acid).  On the benzene series that is 244 compounds in HCl of which 40 were also run in
+H2SO4, the two agreeing at r = +0.93 -- one rich endpoint, one sparse, strongly related, which is
+the structure an Am/Eu separation problem has.
+
+Reported, all on the same alignment, fields, alpha grid and 10-fold cross-validation **over
+molecules** (never over measurements, or the task correlation hands the answer over):
+
+    rho = 0      the two endpoints modelled separately, sharing only the kernel
+    best rho     the sharing chosen by cross-validation
+    difference   the cross-validated q2 of the predicted endpoint difference, on the molecules
+                 that carry both measurements
+
+Usage
+-----
+    python benchmarks/run_multitask.py [--set 0_c1ccccc1] [--tasks mwila_hcl_adj mwila_h2so4_adj]
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import os
+import sys
+import time
+
+import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+sys.path.insert(0, ROOT)
+sys.path.insert(0, HERE)
+
+from rdkit import Chem, RDLogger  # noqa: E402
+
+import run_corrosion as C  # noqa: E402
+import run_topomer as T  # noqa: E402
+
+from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.fields import AtomTable, FieldSet, build_fields  # noqa: E402
+from cmfqsar.model import CMFModel  # noqa: E402
+from cmfqsar.multitask import (Observations, cv_predict, fit, score_by_task,  # noqa: E402
+                               score_selectivity, search)
+
+RDLogger.DisableLog("rdApp.*")
+
+RESULTS = os.path.join(HERE, "results", "multitask")
+RHOS = (0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95)
+TASKS = ("mwila_hcl_adj", "mwila_h2so4_adj")
+
+
+def columns(path, names):
+    """The named activity columns of a series file, NaN where the measurement is missing."""
+    rows = list(csv.DictReader(open(path)))
+    out = np.full((len(rows), len(names)), np.nan)
+    for i, r in enumerate(rows):
+        for t, c in enumerate(names):
+            v = r.get(c)
+            if v not in (None, ""):
+                out[i, t] = float(v)
+    return out
+
+
+def prepare(set_name, tasks=TASKS, data=None):
+    """Molecules of one series, aligned as the corrosion benchmark aligns them, plus the columns."""
+    data = data or C.DATA
+    path = os.path.join(data, set_name + ".csv")
+    ds = load_dataset(path)
+    Y = columns(path, tasks)
+    core = C.core_of(ds.mols, path)
+    keep = [i for i, m in enumerate(ds.mols) if m.GetSubstructMatch(core)
+            and np.isfinite(Y[i]).any()]
+    mols = [ds.mols[i] for i in keep]
+    names = [ds.names[i] for i in keep]
+    Y = Y[keep]
+    # the alignment reference is the most active large member on the first (richer) endpoint
+    anchor = np.where(np.isfinite(Y[:, 0]), Y[:, 0], np.nanmin(Y[:, 0]) - 1.0)
+    ref_i, rmsds = C.align_on_core(mols, anchor, core)
+    finite = [r for r in rmsds if np.isfinite(r)]
+    return mols, names, Y, core, names[ref_i], float(np.median(finite)) if finite else None
+
+
+def kernels(mols, names, alphas=T.ALPHAS):
+    out = {}
+    for alpha in alphas:
+        fs = FieldSet.create(physchem=T.FIELDS, alpha=alpha, charge_model="gasteiger",
+                             param_scheme="rdkit")
+        mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+        model = CMFModel(fieldset=fs, method="krr", normalize=True)
+        out[alpha] = model.joint_kernel(model.prepare_training_kernels(
+            AtomTable.from_molecules(mf)))
+    return out
+
+
+def run(set_name="0_c1ccccc1", tasks=TASKS, results=RESULTS, folds=T.FOLDS):
+    t0 = time.time()
+    mols, names, Y, core, ref, rmsd = prepare(set_name, tasks)
+    obs = Observations.from_columns(Y, names=tasks)
+    print(f"=== {set_name}: {len(mols)} molecules on the scaffold {Chem.MolToSmiles(core)}, "
+          f"aligned on {ref} (median RMSD {rmsd:.2f} A)", flush=True)
+    both = np.isfinite(Y).all(axis=1)
+    print(f"    {tasks[0]}: {obs.counts()[0]} measured; {tasks[1]}: {obs.counts()[1]}; "
+          f"both: {both.sum()}"
+          + (f"; the two agree at r = {np.corrcoef(Y[both, 0], Y[both, 1])[0, 1]:+.2f}"
+             if both.sum() > 4 else ""), flush=True)
+    Ks = kernels(mols, names)
+    print(f"    kernels built ({time.time() - t0:.0f} s)", flush=True)
+
+    res = {"set": set_name, "tasks": list(tasks), "n": len(mols), "counts": obs.counts(),
+           "n_both": int(both.sum()), "core": Chem.MolToSmiles(core), "reference": ref,
+           "align_rmsd_median": rmsd, "alphas": list(T.ALPHAS), "lams": list(T.LAMS),
+           "rhos": list(RHOS), "folds": folds}
+
+    # separate models: rho = 0, each endpoint on its own, sharing only the kernel
+    best_sep = None
+    for alpha, K in Ks.items():
+        for lam in T.LAMS:
+            per = score_by_task(obs, cv_predict(K, obs, rho=0.0, lam=lam, folds=folds, seed=0))
+            s = float(np.nanmean([p["q2"] for p in per]))
+            if best_sep is None or s > best_sep[0]:
+                best_sep = (s, alpha, lam, per)
+    res["separate"] = {"mean_q2": best_sep[0], "alpha": best_sep[1], "lam": best_sep[2],
+                       "tasks": best_sep[3]}
+    print(f"    rho = 0   (separate)  mean q2 {best_sep[0]:+.3f}  "
+          f"(alpha {best_sep[1]:g}, lam {best_sep[2]:g})", flush=True)
+    for p in best_sep[3]:
+        print(f"        {p['task']:18s} n {p['n']:4d}  q2 {p['q2']:+.3f}  "
+              f"RMSEcv {p['rmse_cv']:.3f}", flush=True)
+
+    # shared models: rho chosen by cross-validation
+    best_sh = None
+    for alpha, K in Ks.items():
+        rho, lam, s, per = search(K, obs, rhos=RHOS, lams=T.LAMS, folds=folds, seed=0)
+        if best_sh is None or s > best_sh[0]:
+            best_sh = (s, alpha, rho, lam, per)
+    res["shared"] = {"mean_q2": best_sh[0], "alpha": best_sh[1], "rho": best_sh[2],
+                     "lam": best_sh[3], "tasks": best_sh[4]}
+    print(f"    best rho = {best_sh[2]:g}  (shared)   mean q2 {best_sh[0]:+.3f}  "
+          f"(alpha {best_sh[1]:g}, lam {best_sh[3]:g})", flush=True)
+    for p in best_sh[4]:
+        print(f"        {p['task']:18s} n {p['n']:4d}  q2 {p['q2']:+.3f}  "
+              f"RMSEcv {p['rmse_cv']:.3f}", flush=True)
+
+    # the difference: what a selectivity model predicts, on the molecules that carry both
+    if both.sum() >= 8:
+        K = Ks[best_sh[1]]
+        sel = score_selectivity(K, obs, 0, 1, rho=best_sh[2], lam=best_sh[3], folds=folds, seed=0)
+        sel0 = score_selectivity(K, obs, 0, 1, rho=0.0, lam=best_sep[2], folds=folds, seed=0)
+        res["difference"] = {"q2": sel["q2"], "rmse_cv": sel["rmse_cv"], "n": sel["n"],
+                             "q2_separate": sel0["q2"], "rmse_cv_separate": sel0["rmse_cv"],
+                             "sd_observed": float(np.std(sel["observed"]))}
+        print(f"    difference ({tasks[0]} - {tasks[1]}) on {sel['n']} molecules: "
+              f"q2 {sel['q2']:+.3f} shared, {sel0['q2']:+.3f} separate "
+              f"(observed sd {np.std(sel['observed']):.2f})", flush=True)
+
+    # the selectivity co-field is a coefficient vector: report its spread, as a handle for the GUI
+    f = fit(Ks[best_sh[1]], obs, rho=best_sh[2], lam=best_sh[3])
+    c = f.selectivity_coefficients(0, 1)
+    top = np.argsort(-np.abs(c))[:5]
+    res["selectivity_coefficients"] = {"max_abs": float(np.abs(c).max()),
+                                       "top_molecules": [names[i] for i in top],
+                                       "top_values": [float(c[i]) for i in top]}
+    print("    the selectivity co-field leans hardest on: "
+          + ", ".join(f"{names[i]} ({c[i]:+.3f})" for i in top[:3]), flush=True)
+    res["seconds"] = time.time() - t0
+    os.makedirs(results, exist_ok=True)
+    out = os.path.join(results, f"{set_name}.json")
+    with open(out, "w") as fh:
+        json.dump(res, fh, indent=1)
+    print(f"    written to {out}  ({res['seconds']:.0f} s)", flush=True)
+    return res
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--set", default="0_c1ccccc1")
+    ap.add_argument("--tasks", nargs=2, default=list(TASKS))
+    ap.add_argument("--folds", type=int, default=T.FOLDS)
+    args = ap.parse_args(argv)
+    run(args.set, tuple(args.tasks), folds=args.folds)
+
+
+if __name__ == "__main__":
+    main()

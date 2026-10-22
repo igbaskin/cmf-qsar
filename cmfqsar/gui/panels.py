@@ -1866,6 +1866,7 @@ class ResultsPanel(QWidget):
 class ViewerControls(QWidget):
     changed = Signal()                 # any display option changed
     compute_requested = Signal()       # co-field computation requested
+    endpoint_changed = Signal()        # which endpoint's co-field to show
     style_changed = Signal()
     reset_view = Signal()
 
@@ -1911,6 +1912,20 @@ class ViewerControls(QWidget):
                                   "the molecular field X(r) and their overlap")
         self.cmb_field.currentIndexChanged.connect(self.changed)
         row2.addWidget(self.cmb_field)
+        # a model of two endpoints has a co-field per endpoint and one for their
+        # difference; the row appears only once such a model exists
+        self.lbl_endpoint = QLabel("Endpoint:")
+        self.cmb_endpoint = QComboBox()
+        self.cmb_endpoint.setMinimumWidth(170)
+        self.cmb_endpoint.setToolTip(
+            "<p>Which endpoint's co-field is shown. The difference is the "
+            "<b>selectivity co-field</b>: where more of this field raises one endpoint "
+            "more than the other, which is what a separation factor is made of.</p>")
+        self.cmb_endpoint.currentIndexChanged.connect(self.endpoint_changed)
+        row2.addWidget(self.lbl_endpoint)
+        row2.addWidget(self.cmb_endpoint)
+        self.lbl_endpoint.setVisible(False)
+        self.cmb_endpoint.setVisible(False)
         self.spin_spacing = QDoubleSpinBox()
         self.spin_spacing.setRange(0.2, 2.0)
         self.spin_spacing.setSingleStep(0.1)
@@ -2109,3 +2124,19 @@ class ViewerControls(QWidget):
 
     def current_field(self) -> Optional[str]:
         return self.cmb_field.currentData()
+
+    def set_endpoints(self, items) -> None:
+        """Offer one entry per endpoint of a two-endpoint model, plus their difference."""
+        self.cmb_endpoint.blockSignals(True)
+        self.cmb_endpoint.clear()
+        for label, key in list(items):
+            self.cmb_endpoint.addItem(str(label), key)
+        self.cmb_endpoint.blockSignals(False)
+        on = self.cmb_endpoint.count() > 0
+        self.lbl_endpoint.setVisible(on)
+        self.cmb_endpoint.setVisible(on)
+
+    def current_endpoint(self):
+        # count, not visibility: a populated combo whose dock is hidden still holds the
+        # user's choice, and gating on isVisible() would silently ignore it
+        return self.cmb_endpoint.currentData() if self.cmb_endpoint.count() else None

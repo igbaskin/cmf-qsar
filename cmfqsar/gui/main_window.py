@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import time
 from typing import Dict, List, Optional
 
@@ -1129,6 +1130,96 @@ def _hms(seconds: float) -> str:
     return f"{s // 3600} h {(s % 3600) // 60:02d} min"
 
 
+class SelectivityDialog(QDialog):
+    """Refit the current model as two endpoints, so that selectivity becomes a co-field.
+
+    A separation problem is two properties, and what matters is their difference.  Because a CMF
+    model is linear in the molecular field, the difference of two such models is itself a model
+    linear in the field -- so the difference has a co-field of its own, and it can be read, drawn
+    and exported exactly like any other.
+    """
+
+    def __init__(self, props, current, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Model two endpoints (selectivity co-field)")
+        lay = QVBoxLayout(self)
+        info = QLabel(
+            "Both endpoints are fitted on the <b>fields, attenuation and kernel of the model you "
+            "have already built</b>; only the task correlation and the ridge are searched here. "
+            "Each endpoint then has its own co-field, and so does their difference &mdash; the "
+            "<b>selectivity co-field</b>, whose positive zones are where more of a field raises "
+            "the first endpoint more than the second."
+            "<p>Molecules missing one of the two measurements are kept: they still inform the "
+            "endpoint they do carry, and through the correlation they inform the other. "
+            "Cross-validation holds out whole molecules, never single measurements, because a "
+            "molecule with one endpoint in the training set and the other in the test set would "
+            "have its answer handed over by the correlation.</p>")
+        info.setWordWrap(True)
+        info.setTextFormat(Qt.RichText)
+        info.setMaximumWidth(600)
+        lay.addWidget(info)
+        form = QFormLayout()
+        self.cmb_a = QComboBox()
+        self.cmb_b = QComboBox()
+        for c in (self.cmb_a, self.cmb_b):
+            c.addItems(list(props))
+        if current in props:
+            self.cmb_a.setCurrentText(current)
+        if len(props) > 1:
+            self.cmb_b.setCurrentIndex(1 if self.cmb_a.currentIndex() == 0 else 0)
+        self.cmb_a.setToolTip("The endpoint whose increase the selectivity co-field shows as "
+                              "positive, e.g. the affinity for americium")
+        self.cmb_b.setToolTip("The endpoint subtracted, e.g. the affinity for europium")
+        form.addRow("First endpoint:", self.cmb_a)
+        form.addRow("Second endpoint:", self.cmb_b)
+        self.ed_rhos = QLineEdit("0, 0.2, 0.4, 0.6, 0.8, 0.9")
+        self.ed_rhos.setToolTip("\n".join([
+            "Task correlations to try; the cross-validation chooses one.",
+            "0 fits the two endpoints separately, sharing only the kernel.",
+            "Towards 1 they borrow strength from each other, and at 1 exactly the",
+            "model could only predict a constant selectivity, so 1 is excluded."]))
+        form.addRow("Task correlation:", self.ed_rhos)
+        self.ed_lams = QLineEdit("0.001, 0.01, 0.1, 1, 10")
+        form.addRow("Ridge (lambda):", self.ed_lams)
+        self.spin_folds = QSpinBox()
+        self.spin_folds.setRange(2, 50)
+        self.spin_folds.setValue(10)
+        form.addRow("Cross-validation folds:", self.spin_folds)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        box.button(QDialogButtonBox.Ok).setText("Fit")
+        box.accepted.connect(self.accept)
+        box.rejected.connect(self.reject)
+        lay.addWidget(box)
+
+    def endpoints(self):
+        return self.cmb_a.currentText(), self.cmb_b.currentText()
+
+    def rhos(self):
+        out = []
+        for part in self.ed_rhos.text().replace(";", ",").split(","):
+            part = part.strip()
+            if part:
+                try:
+                    v = float(part)
+                except ValueError:
+                    continue
+                if -0.99 < v < 1.0:
+                    out.append(v)
+        return tuple(out) or (0.0,)
+
+    def lams(self):
+        out = []
+        for part in self.ed_lams.text().replace(";", ",").split(","):
+            part = part.strip()
+            if part:
+                try:
+                    out.append(float(part))
+                except ValueError:
+                    pass
+        return tuple(out) or (1.0,)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -1140,6 +1231,10 @@ class MainWindow(QMainWindow):
         self.fieldset: FieldSet = FieldSet.create()
         self.model: Optional[CMFModel] = None
         self.model_train_idx: List[int] = []
+        #: a two-endpoint fit, when one has been made: its coefficients
+        #: stand in for the model's own so that every co-field reader works
+        self.multitask = None
+        self.endpoint_label = ""
         self.model_test_idx: List[int] = []
         self.shapley_result = None          # (molecule index, ShapleyResult) of the last run
         self.validation = None          # y-randomisation / bootstrap / domain of the last fit
@@ -1262,6 +1357,8 @@ class MainWindow(QMainWindow):
         self._act(tm, "Replace molecules by their topomer substituents…", self.topomer_dialog)
         self._act(tm, "Field difference from a reference molecule…", self.field_difference_dialog)
         self._act(tm, "Extract pharmacophore from the co-field…", self.pharmacophore_dialog)
+        self._act(tm, "Model two endpoints (selectivity co-field)…",
+                  self.selectivity_dialog)
         self._act(tm, "Chemical space map (GTM)…", self.gtm_map_dialog)
         tm.addSeparator()
         self._act(tm, "Align decoys to the training set…", self.align_decoys_dialog)
@@ -1325,6 +1422,7 @@ class MainWindow(QMainWindow):
         vc.changed.connect(self.schedule_display)
         vc.style_changed.connect(self.schedule_display)
         vc.compute_requested.connect(self.compute_cofields)
+        vc.endpoint_changed.connect(self.endpoint_changed)
         vc.reset_view.connect(self.viewer.reset_view)
         rp.btn_shapley.clicked.connect(self.compute_shapley)
         rp.btn_complement.clicked.connect(self.compute_complementarity)
@@ -3517,6 +3615,129 @@ class MainWindow(QMainWindow):
         w.close()
         self.log(f"Annotated data set written to {path}")
 
+    def selectivity_dialog(self):
+        """Refit the current model as two endpoints and offer their difference as a co-field."""
+        if self.model is None or not self.model.uses_fields:
+            QMessageBox.information(self, "No model",
+                                    "Build a field model first: the two endpoints are fitted on "
+                                    "its fields, attenuation and kernel.")
+            return
+        if not self.model.is_linear:
+            QMessageBox.information(
+                self, "Nonlinear kernel",
+                f"This model uses the '{self.model.kernel_layer}' kernel layer, so it is not "
+                "linear in the molecular field. A difference of two such models has no co-field; "
+                "rebuild with the linear kernel.")
+            return
+        from ..descriptors import available as numeric_props
+        from ..multitask import Observations, fit as mt_fit, score_by_task, search
+        ds = self.ds
+        props = [p for p in numeric_props(ds.mols)]
+        if len(props) < 2:
+            QMessageBox.information(
+                self, "Only one endpoint",
+                "Two numeric molecule properties are needed, one per endpoint. Import the second "
+                "with File / Import activities from CSV, or add it to the file.\n\n"
+                "For a separation factor the two endpoints are the two affinities, not the ratio: "
+                "a model of the ratio is already the difference, but it cannot say which of the "
+                "two affinities a substituent moved.")
+            return
+        dlg = SelectivityDialog(props, self.ds.activity_prop or props[0], self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        name_a, name_b = dlg.endpoints()
+        if name_a == name_b:
+            QMessageBox.information(self, "Same endpoint twice",
+                                    "Choose two different properties.")
+            return
+        idx = [int(i) for i in self.model_train_idx]
+        Y = np.full((len(idx), 2), np.nan)
+        for row, i in enumerate(idx):
+            for col, prop in enumerate((name_a, name_b)):
+                m = ds.mols[i]
+                if m is not None and m.HasProp(prop):
+                    try:
+                        Y[row, col] = float(m.GetProp(prop))
+                    except ValueError:
+                        pass
+        obs = Observations.from_columns(Y, names=(name_a, name_b))
+        if min(obs.counts()) < 5:
+            QMessageBox.information(self, "Too few measurements",
+                                    f"{name_a}: {obs.counts()[0]} molecules, {name_b}: "
+                                    f"{obs.counts()[1]}. Each endpoint needs at least five.")
+            return
+        model = self.model
+        K = model.joint_kernel(model.K_fields_train,
+                               model.train.descriptors if model.desc_train_ is not None else None)
+        rhos, lams, folds = dlg.rhos(), dlg.lams(), dlg.spin_folds.value()
+        self.log(f"Two endpoints on the current kernel: {name_a} ({obs.counts()[0]} molecules), "
+                 f"{name_b} ({obs.counts()[1]}); searching {len(rhos)} correlations x "
+                 f"{len(lams)} ridges")
+
+        def task(progress, cancel):
+            progress("Searching the task correlation", 0.2)
+            rho, lam, score, per = search(K, obs, rhos=rhos, lams=lams, folds=folds, seed=0)
+            if cancel():
+                return None
+            progress("Fitting both endpoints", 0.8)
+            return rho, lam, score, per, mt_fit(K, obs, rho=rho, lam=lam)
+
+        def done(out):
+            if out is None:
+                return
+            rho, lam, score, per, f = out
+            self.multitask = {"fit": f, "names": (name_a, name_b),
+                              "base_coef": np.array(model.coef, copy=True),
+                              "base_bias": float(model.bias), "rho": rho, "lam": lam}
+            self.log(f"Two-endpoint model: task correlation {rho:g}, lambda {lam:g}, "
+                     f"mean q2 {score:+.3f}")
+            for p in per:
+                self.log(f"    {p['task']}: n {p['n']}, q2 {p['q2']:+.3f}, "
+                         f"RMSEcv {p['rmse_cv']:.3f}")
+            if rho == 0:
+                self.log("    the correlation chosen is 0, so the endpoints were modelled "
+                         "separately; the difference co-field is still exact")
+            self.controls.set_endpoints([
+                (f"{name_a}", ("task", 0)),
+                (f"{name_b}", ("task", 1)),
+                (f"{name_a} − {name_b} (selectivity)", ("difference", 0)),
+            ])
+            self.controls.cmb_endpoint.setCurrentIndex(2)      # the selectivity, which is the point
+            self.endpoint_changed()
+
+        self.run_task(task, done, "Fitting two endpoints")
+
+    def endpoint_changed(self):
+        """Point the co-field machinery at one endpoint, or at the difference of the two."""
+        mt = getattr(self, "multitask", None)
+        if not mt or self.model is None:
+            return
+        kind = self.controls.current_endpoint()
+        f, (name_a, name_b) = mt["fit"], mt["names"]
+        if kind is None:
+            self.model.coef, self.model.bias = mt["base_coef"], mt["base_bias"]
+            label = "the single-endpoint model"
+        elif kind[0] == "task":
+            t = int(kind[1])
+            self.model.coef = f.task_coefficients(t)
+            self.model.bias = float(f.bias[t])
+            label = (name_a, name_b)[t]
+        else:
+            self.model.coef = f.selectivity_coefficients(0, 1)
+            self.model.bias = float(f.bias[0] - f.bias[1])
+            label = f"{name_a} - {name_b} (selectivity)"
+        self.endpoint_label = label
+        if self.worker is not None and self.worker.isRunning():
+            # the coefficients are already swapped, so the volumes on screen would be
+            # the previous endpoint's; say so rather than clearing them and computing
+            # nothing, which would leave an empty view and no explanation
+            self.log(f"Co-field set to {label}; a computation is running, so press "
+                     f"'Compute co-field' when it finishes")
+            return
+        self.volumes.clear()
+        self._mol_volume_cache.clear()
+        self.log(f"Co-field now shows: {label}")
+        self.compute_cofields()
     def unalign_dialog(self):
         """Give the chosen molecules a random pose (control experiment for alignment methods)."""
         if self.ds is None:
@@ -3738,14 +3959,21 @@ class MainWindow(QMainWindow):
         if self.model is None or fname not in self.volumes:
             QMessageBox.information(self, "No co-field", "Compute the co-fields first.")
             return
-        path, _ = QFileDialog.getSaveFileName(self, "Export co-field", f"cofield_{fname.replace(':', '_')}.cube",
+        tag = ""
+        if self.multitask is not None and self.endpoint_label:
+            # the file must say which endpoint it holds: a selectivity co-field and an
+            # activity co-field of the same field type are otherwise indistinguishable
+            tag = "_" + re.sub(r"[^A-Za-z0-9]+", "_", self.endpoint_label).strip("_")
+        path, _ = QFileDialog.getSaveFileName(self, "Export co-field",
+                                              f"cofield_{fname.replace(':', '_')}{tag}.cube",
                                               "Gaussian cube (*.cube)")
         if not path:
             return
         cur = self.dataset_panel.current_index()
         mol = self.molfields[cur] if cur >= 0 else None
-        export_cube(path, self.grid, self.volumes[fname], mol, title=f"CMF co-field {fname}")
-        self.log(f"Co-field {fname} exported to {path}")
+        title = f"CMF co-field {fname}" + (f" [{self.endpoint_label}]" if tag else "")
+        export_cube(path, self.grid, self.volumes[fname], mol, title=title)
+        self.log(f"Co-field {fname}{tag} exported to {path}")
 
     def export_shapley_cube(self):
         """Write the Shapley field of the selected molecule, so it can be opened with the protein."""

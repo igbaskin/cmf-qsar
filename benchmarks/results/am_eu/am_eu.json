@@ -81,5 +81,97 @@
   "max_q2": 0.2268506995509414,
   "p": 0.004975124378109453,
   "reselected": true
- }
+ },
+ "quantum_n": 46,
+ "classic_matched": {
+  "q2": 0.7746843449748182,
+  "rmse_cv": 0.2040508343404111,
+  "alpha": 1.0,
+  "lam": 0.01
+ },
+ "indicator_matched": {
+  "q2": 0.7596299543474615,
+  "rmse_cv": 0.21075741539516007,
+  "alpha": 0.5,
+  "lam": 0.1
+ },
+ "quantum_charges": {
+  "q2": 0.8033567837255982,
+  "rmse_cv": 0.19062601778196142,
+  "alpha": 0.3,
+  "lam": 0.01
+ },
+ "quantum_fukui": {
+  "q2": 0.7877573942579007,
+  "rmse_cv": 0.1980427624127538,
+  "alpha": 0.3,
+  "lam": 0.1
+ },
+ "quantum_desc": {
+  "q2": 0.7861290499358791,
+  "rmse_cv": 0.1988010117769789,
+  "alpha": 2.0,
+  "lam": 0.01
+ },
+ "quantum_all": {
+  "q2": 0.761543736030522,
+  "rmse_cv": 0.20991673300283809,
+  "alpha": 5.0,
+  "lam": 0.01
+ },
+ "cdft_fukui_plus_fit_error": 0.8232276573316177,
+ "cdft_fukui_plus_r_grid_fitted": 0.9548688060642161,
+ "cdft_fukui_plus_grid": {
+  "q2": 0.6447611611786419,
+  "rmse_cv": 0.25621403258220077,
+  "alpha": NaN,
+  "lam": 0.1
+ },
+ "classic+cdft_fukui_plus_grid": {
+  "q2": 0.7644154401809762,
+  "rmse_cv": 0.20864890158639834,
+  "alpha": 0.3,
+  "lam": 0.01
+ },
+ "cdft_fukui_plus_fitted": {
+  "q2": 0.6731721307948026,
+  "rmse_cv": 0.24575492630527784,
+  "alpha": NaN,
+  "lam": 0.1
+ },
+ "classic+cdft_fukui_plus_fitted": {
+  "q2": 0.7832427708614769,
+  "rmse_cv": 0.200137968132024,
+  "alpha": 0.1,
+  "lam": 0.01
+ },
+ "cdft_dual_fit_error": 0.9400165433548237,
+ "cdft_dual_r_grid_fitted": 0.980871101890671,
+ "cdft_dual_grid": {
+  "q2": 0.6700314012487363,
+  "rmse_cv": 0.24693292299586636,
+  "alpha": NaN,
+  "lam": 0.1
+ },
+ "classic+cdft_dual_grid": {
+  "q2": 0.7681471150620307,
+  "rmse_cv": 0.20698979914391633,
+  "alpha": 0.3,
+  "lam": 0.01
+ },
+ "cdft_dual_fitted": {
+  "q2": 0.675256896237086,
+  "rmse_cv": 0.24496986317050942,
+  "alpha": NaN,
+  "lam": 0.1
+ },
+ "classic+cdft_dual_fitted": {
+  "q2": 0.7688424630445454,
+  "rmse_cv": 0.20667917541335434,
+  "alpha": 0.3,
+  "lam": 0.01
+ },
+ "cdft_n": 46,
+ "cdft_intervals": 100,
+ "cdft_seconds": 1424.741550207138
 }
