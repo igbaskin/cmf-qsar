@@ -81,9 +81,13 @@ This is what the software paper needs, and nothing in the later parts should wai
   slowest tests are numerical integrations, not embeddings, so the shared fixture this item
   foresaw was not needed. Verified locally on Windows step by step; the Linux and macOS legs run
   for the first time on the first push.
-* **A3. The data statement.** `docs/public_3dqsar_datasets.md` becomes the record of where every
-  public set came from, with the conversion scripts in `examples/make_*_examples.py` as the way to
-  obtain it, and copies only where redistribution is clear.
+* **A3. The data statement.** Done 22 October 2026 as the record: `docs/public_3dqsar_datasets.md`
+  gives every set under `examples/` its origin, terms, script, size, users and a status (free,
+  derived, unclear). Four items are of unclear status, `sutherland/`, `steroids_cbg.sdf` and the
+  two derived from the first; the document says what replacing each copy by its script would
+  cost, and the decision to remove them before the repository is public is the author's, not
+  taken here. Two further gaps it names: the corrosion exports lack per-compound references, and
+  the Hammett constants were transcribed from memory and must be checked against the table.
 * **A4. One entry point for the tables.** `benchmarks/run_all.py` rebuilds every table in
   `docs/benchmark.md` and the README from the result files, and a manifest records the package
   versions and the data hashes each result was produced from. Kernels computed per α are cached on
