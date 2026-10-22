@@ -1,0 +1,23 @@
+# The versions every number in docs/benchmark.md and benchmarks/results/ was produced with,
+# on Python 3.13.14 under Windows 11 (22 October 2026).  pyproject.toml states the minimum
+# versions; this file states the exact ones, so that a reviewer can reproduce the tables:
+#
+#     pip install -r requirements-lock.txt
+#     pip install --no-deps -e .
+#
+# Only the packages the program imports are pinned; pip resolves the rest.
+numpy==2.4.1
+scipy==1.17.0
+scikit-learn==1.9.0
+scikit-image==0.26.0
+rdkit==2026.3.5
+joblib==1.5.3
+# [gui]
+PySide6==6.11.1
+pyqtgraph==0.14.0
+PyOpenGL==3.1.10
+# [docs]
+reportlab==5.0.1
+matplotlib==3.10.8
+# [dev]
+pytest==9.0.2

@@ -1817,19 +1817,37 @@ python benchmarks/run_multitask.py --set 0_c1ccccc1 --tasks mwila_hcl_adj mwila_
 
 ## Installation
 
-Python ≥ 3.10 with the packages in `requirements.txt`:
+Python ≥ 3.10. The package is declared in `pyproject.toml`; from a checkout:
 
 ```bash
-pip install -r requirements.txt
+pip install -e .[gui]
 ```
 
-(RDKit, PySide6, pyqtgraph + PyOpenGL for the 3D view, scikit-image for marching cubes, scikit-learn for SVR.)
+installs the library (NumPy, SciPy, scikit-learn, scikit-image for marching cubes, RDKit, joblib)
+and, with the `gui` extra, the application (PySide6, pyqtgraph + PyOpenGL for the 3D view), and
+puts two commands on the path: `cmf`, the command-line tool, and `cmf-app`, the application. The
+library alone, `pip install -e .`, needs no Qt and is what a server or a notebook wants. Further
+extras: `docs` (reportlab and matplotlib, to typeset the manual), `dev` (pytest), `examples`
+(dimorphite_dl, for protonation states), and `all`. `pip install -r requirements.txt` is the
+working checkout, `.[gui,docs,dev]`. ORCA, for the quantum-chemical properties, is a program
+rather than a package and is found through the dialog, `ORCA_EXE`, its standard location or the path.
+
+`requirements-lock.txt` pins the exact versions every table in this README and in
+`docs/benchmark.md` was produced with, for reproducing them on another machine:
+
+```bash
+pip install -r requirements-lock.txt && pip install --no-deps -e .
+```
+
+`CITATION.cff` carries the citation of the software and of the papers.
 
 ## Running the application
 
 ```bash
-python cmf_app.py
+cmf-app
 ```
+
+or, from a checkout without installing, `python cmf_app.py`, which takes the same arguments:
 
 or directly with a data set:
 
@@ -1869,6 +1887,9 @@ blue(−); H-bond acceptor magenta(+)/dark red(−); H-bond donor cyan(+)/purple
 (preferable / undesirable positions of the atom type).
 
 ## Command line
+
+The tool is `cmf` once the package is installed and `python cmf_cli.py` from a checkout; the two
+are the same program, and the examples below use the latter.
 
 ```bash
 python cmf_cli.py build examples/benzamides_synthetic.sdf --activity pActivity --cif \
@@ -2205,8 +2226,12 @@ with a co-field that is symmetric in y and z.
 ## Project layout
 
 ```
-cmf_app.py              GUI launcher
-cmf_cli.py              command-line tool
+pyproject.toml          the package: dependencies, extras, the commands cmf and cmf-app
+requirements-lock.txt   the exact versions the benchmark tables were produced with
+CITATION.cff            how to cite the software and the papers
+cmf_app.py              GUI launcher for a checkout (installed: cmf-app)
+cmf_cli.py              command-line launcher for a checkout (installed: cmf)
+cmfqsar/cli.py          the command-line tool itself
 cmfqsar/atomtypes.py    Sybyl atom typing, vdW parameters
 cmfqsar/increments.py   hydrophobic / H-bond increments of the original CMF scripts
 cmfqsar/fields.py       field parameterisation, FieldSet / MoleculeFields / AtomTable

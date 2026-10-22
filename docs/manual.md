@@ -339,42 +339,53 @@ git clone https://github.com/igbaskin/cmf-qsar.git
 cd cmf-qsar
 ```
 
-Everything this manual describes is in that checkout: the `cmfqsar` package, the application
-(`cmf_app.py`), the command-line tool (`cmf_cli.py`), the example data under `examples/`, the
-benchmark scripts under `benchmarks/` with their recorded results, the tests, and this manual with
-the script that typesets it.
+Everything this manual describes is in that checkout: the `cmfqsar` package with the
+command-line tool inside it (`cmfqsar/cli.py`), the two launchers (`cmf_app.py`, `cmf_cli.py`),
+the example data under `examples/`, the benchmark scripts under `benchmarks/` with their recorded
+results, the tests, and this manual with the script that typesets it.
 
 ## Requirements
 
-Python 3.10 or newer, and the packages in `requirements.txt`:
+Python 3.10 or newer. The package is declared in `pyproject.toml`, so from the checkout
 
 ```
-pip install -r requirements.txt
+pip install -e .[gui]
 ```
 
-That brings RDKit (chemistry), PySide6 (the interface), pyqtgraph with PyOpenGL (the 3D view),
-scikit-image (marching cubes for the isosurfaces), scikit-learn (the SVM solvers), NumPy, SciPy
-and joblib. The program is pure Python and needs no compilation step; it has been used on Windows,
-Linux and macOS.
+installs the library with RDKit (chemistry), scikit-image (marching cubes for the isosurfaces),
+scikit-learn (the SVM solvers), NumPy, SciPy and joblib, and with the `gui` extra PySide6 (the
+interface) and pyqtgraph with PyOpenGL (the 3D view); it also puts the commands `cmf-app` and
+`cmf` on the path. The library alone, `pip install -e .`, needs no Qt. The program is pure Python
+and needs no compilation step; it has been used on Windows, Linux and macOS.
 
-Optional extras, only needed for particular features:
+Further extras, only needed for particular work:
 
-- `dimorphite_dl` — protonation states when importing SMILES for a given pH;
-- `matplotlib` — supplies the DejaVu fonts used to typeset this manual;
+- `docs` — reportlab and matplotlib (which supplies the DejaVu fonts) to typeset this manual;
+- `dev` — pytest, for the test suite;
+- `examples` — `dimorphite_dl`, protonation states when importing SMILES for a given pH;
 - a local ORCA or VASP installation if you intend to compute per-atom quantum properties to use as
-  fields (see *Preparing the data* and appendix A).
+  fields (see *Preparing the data* and appendix A); these are programs, not packages.
+
+`pip install -r requirements.txt` installs the working checkout, `.[gui,docs,dev]`.
+`requirements-lock.txt` pins the exact versions the benchmark tables were produced with:
+`pip install -r requirements-lock.txt` and then `pip install --no-deps -e .` reproduces that
+environment. `CITATION.cff` says how to cite the software and the papers.
 
 ## Starting the application
 
 ```
-python cmf_app.py
+cmf-app
 ```
 
-or straight onto a data set, which saves two dialogs:
+or `python cmf_app.py` from the checkout, which takes the same arguments; straight onto a data set,
+which saves two dialogs:
 
 ```
-python cmf_app.py examples/benzamides_synthetic.sdf --activity pActivity --test-fraction 0.25
+cmf-app examples/benzamides_synthetic.sdf --activity pActivity --test-fraction 0.25
 ```
+
+The command-line tool is `cmf` once installed and `python cmf_cli.py` from the checkout; the
+rest of this manual writes the latter, and the two are the same program.
 
 If the 3D view stays black, the OpenGL driver is the usual cause; see *When something goes wrong*.
 

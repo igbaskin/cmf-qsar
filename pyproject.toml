@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cmfqsar"
+dynamic = ["version"]
+description = "Continuous Molecular Fields (CMF): 3D-QSAR with analytic field kernels, co-fields and a desktop application"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Igor Baskin", email = "igbaskin@gmail.com" }]
+keywords = ["3D-QSAR", "molecular fields", "kernel methods", "cheminformatics", "co-fields"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Operating System :: OS Independent",
+]
+
+# The library: fields, kernels, learners, validation, interpretation, the command-line tool.
+# Nothing here needs Qt, so a server or a notebook installs without it.
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "scikit-learn>=1.3",
+    "scikit-image>=0.21",
+    "rdkit>=2023.3",
+    "joblib>=1.3",
+]
+
+[project.optional-dependencies]
+# the desktop application and its OpenGL view
+gui = ["PySide6>=6.5", "pyqtgraph>=0.13", "PyOpenGL>=3.1"]
+# typesetting docs/manual.md (matplotlib only supplies the DejaVu fonts)
+docs = ["reportlab>=4", "matplotlib>=3.7"]
+# the test suite
+dev = ["pytest>=7"]
+# examples/scaffold_tree_export.py: protonation states at a given pH
+examples = ["dimorphite_dl"]
+# everything, for a working checkout
+all = ["cmfqsar[gui,docs,dev,examples]"]
+
+[project.scripts]
+cmf = "cmfqsar.cli:main"
+cmf-app = "cmfqsar.gui.app:main"
+
+[project.urls]
+Repository = "https://github.com/igbaskin/cmf-qsar"
+"Method (2013)" = "https://doi.org/10.1007/s10822-013-9656-4"
+"Indicator fields (2015)" = "https://doi.org/10.1007/s10822-014-9818-z"
+"Co-fields (2019)" = "https://doi.org/10.4155/fmc-2018-0360"
+
+[tool.setuptools]
+packages = ["cmfqsar", "cmfqsar.gui"]
+
+[tool.setuptools.dynamic]
+version = { attr = "cmfqsar.__version__" }
+
+[tool.setuptools.package-data]
+"cmfqsar.gui" = ["*.svg"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

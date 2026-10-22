@@ -67,10 +67,13 @@ fit in memory.
 
 This is what the software paper needs, and nothing in the later parts should wait for it.
 
-* **A1. Packaging.** A `pyproject.toml` with the version read from `cmfqsar/__init__.py`,
-  entry points `cmf` (the CLI) and `cmf-app` (the GUI), extras `[gui]` and `[orca]` so the library
-  installs without Qt, and a lock file with the versions the benchmarks were run under. Release
-  tag v1.0, `CITATION.cff`, Zenodo DOI.
+* **A1. Packaging.** Done 22 October 2026 for the part that lives in the repository:
+  `pyproject.toml` with the version read from `cmfqsar/__init__.py`, the commands `cmf` and
+  `cmf-app`, extras `gui`, `docs`, `dev`, `examples` and `all` so the library installs without Qt
+  (there is no `orca` extra, since ORCA is a program and not a package), the command-line tool
+  moved into the package as `cmfqsar/cli.py` with `cmf_cli.py` left as a launcher,
+  `requirements-lock.txt` with the versions the benchmarks were run under, and `CITATION.cff`.
+  Still to do, once the repository is public: the v1.0 tag and the Zenodo DOI.
 * **A2. Continuous integration.** The test suite on Windows, Linux and macOS; the GUI autotest
   (`cmf_app.py ... --autotest`) under the offscreen Qt platform so the window is exercised headless.
   The suite takes several minutes already; tests that embed molecules get a shared fixture.

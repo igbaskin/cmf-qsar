@@ -28,3 +28,8 @@ Thumbs.db
 orca_work/
 benchmarks/results/corrosion_qm/*/orca/
 benchmarks/results/am_eu/orca/
+
+# build artefacts of the package
+build/
+dist/
+*.whl

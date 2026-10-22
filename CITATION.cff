@@ -1,0 +1,71 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite it as below, together with the paper
+  describing the method (preferred-citation).
+type: software
+title: "cmfqsar: Continuous Molecular Fields for 3D-QSAR"
+abstract: >-
+  An implementation of the Continuous Molecular Fields (CMF) approach to 3D-QSAR:
+  molecular fields as sums of atom-centred Gaussians, kernels as analytic overlap
+  integrals, kernel ridge regression, support-vector and Gaussian-process learners,
+  molecular co-fields and their decompositions, with a desktop application, a
+  command-line tool and a library.
+authors:
+  - family-names: Baskin
+    given-names: Igor
+    email: igbaskin@gmail.com
+version: 1.0.0
+date-released: "2026-10-22"
+license: MIT
+repository-code: "https://github.com/igbaskin/cmf-qsar"
+keywords:
+  - 3D-QSAR
+  - continuous molecular fields
+  - molecular co-fields
+  - kernel methods
+  - cheminformatics
+preferred-citation:
+  type: article
+  title: "The continuous molecular fields approach to building 3D-QSAR models"
+  authors:
+    - family-names: Baskin
+      given-names: Igor I.
+    - family-names: Zhokhova
+      given-names: Nelly I.
+  journal: "Journal of Computer-Aided Molecular Design"
+  volume: 27
+  start: 427
+  end: 442
+  year: 2013
+  doi: 10.1007/s10822-013-9656-4
+references:
+  - type: article
+    title: "Continuous indicator fields: a novel universal type of molecular fields"
+    authors:
+      - family-names: Sitnikov
+        given-names: Gleb V.
+      - family-names: Zhokhova
+        given-names: Nelly I.
+      - family-names: Ustynyuk
+        given-names: Yuri A.
+      - family-names: Varnek
+        given-names: Alexandre
+      - family-names: Baskin
+        given-names: Igor I.
+    journal: "Journal of Computer-Aided Molecular Design"
+    volume: 29
+    start: 233
+    end: 247
+    year: 2015
+    doi: 10.1007/s10822-014-9818-z
+  - type: article
+    title: "Continuous molecular fields and the concept of molecular co-fields in structure-activity studies"
+    authors:
+      - family-names: Baskin
+        given-names: Igor I.
+      - family-names: Zhokhova
+        given-names: Nelly I.
+    journal: "Future Medicinal Chemistry"
+    volume: 11
+    year: 2019
+    doi: 10.4155/fmc-2018-0360
