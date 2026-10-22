@@ -90,6 +90,59 @@ def test_symmetry_images_are_reflections_that_keep_properties(tmp_path):
     assert all(abs(m.GetAtomWithIdx(3).GetDoubleProp("q_test") - 0.03) < 1e-9 for m in out)
 
 
+def test_conformers_are_distinct_in_frame_and_the_lowest_is_build():
+    mol, kept = mh.build_conformers("CCCC", keep=6)          # n-butyl: several rotamers
+    assert len(kept) >= 2
+    energies = [e for _, e in kept]
+    assert energies == sorted(energies)
+    atoms = mh._shape_atoms(mol)
+    for i, (c, _) in enumerate(kept):
+        _ring_frame_ok(c)
+        assert mh._distinct_in_frame(c, [k for k, _ in kept[:i]], atoms, 0.3)
+    one = mh.build("CCCC")
+    assert np.allclose(np.array(one.GetConformer().GetPositions()), kept[0][0], atol=1e-6)
+    assert abs(one.GetDoubleProp("mmff_energy") - kept[0][1]) < 1e-9
+    # benzamide has one conformer in MMFF: the twisted amide and its mirror image are images here
+    _, amide = mh.build_conformers("C(N)=O", keep=6)
+    assert len(amide) == 1
+    # a molecule without MMFF parameters is still optimised (UFF), not left as embedded
+    _, sf5 = mh.build_conformers("S(F)(F)(F)(F)F", keep=6)
+    assert all(np.isfinite(e) and e != -1.0 for _, e in sf5)
+
+
+def test_ensemble_file_round_trip_gives_boltzmann_weights(tmp_path):
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.fields import FieldSet, conformer_weights
+    rows = [r for r in mh.SUBSTITUENTS if r[0] in ("C2H5", "n-C4H9")]
+    # a file with atom properties to copy, as the ORCA run would leave it
+    src = tmp_path / "qm.sdf"
+    singles = []
+    for label, frag, sm, sp, pi in rows:
+        m = mh.build(frag)
+        mh._set_constants(m, label, sm, sp, pi)
+        for a in m.GetAtoms():
+            a.SetDoubleProp("q_test", 0.001 * a.GetIdx())
+        singles.append(m)
+    mh.write_sdf(str(src), singles, atom_props=["q_test"])
+    records, counts, props = mh.make_ensemble(keep=4, rows=rows, atom_props_from=str(src))
+    assert props == ["q_test"] and len(records) == 4 * sum(counts) and max(counts) >= 2
+    ens = tmp_path / "ens.sdf"
+    mh.write_sdf(str(ens), records, atom_props=props)
+    ds = load_dataset(str(ens), activity_prop="sigma_p", ensemble_by="name")
+    assert len(ds) == 2
+    fs = FieldSet.create(physchem=["electrostatic"], atom_properties=["q_test"],
+                         conformers="ensemble", conformer_weighting="boltzmann", conformer_kt=0.6)
+    for m, n in zip(ds.mols, counts):
+        assert m.GetNumConformers() == 4 * n
+        assert len(m.GetProp("conformer_energies").split(",")) == 4 * n
+        assert all(a.HasProp("q_test") for a in m.GetAtoms())
+        w = conformer_weights(m, fs)
+        assert abs(w.sum() - 1.0) < 1e-12
+        if n > 1:
+            assert w.max() > 1.0 / (4 * n) + 1e-6          # not uniform
+            assert np.allclose(w[:4], w[0])                  # the four images weigh the same
+
+
 def test_small_model_runs_end_to_end(tmp_path):
     """A dozen substituents through the benchmark script: the files it promises appear."""
     import run_hammett as rh
@@ -110,9 +163,10 @@ def test_small_model_runs_end_to_end(tmp_path):
     rc = rh.main(["--sdf", str(sdf), "--targets", "sigma_p", "--alphas", "1.0", "--lams", "0.1,1",
                   "--folds", "4", "--no-ablation", "--out-dir", str(out)])
     assert rc == 0
-    assert (out / "summary.csv").exists() and (out / "predictions_sigma_p.csv").exists()
-    assert (out / "cofields.png").exists() and (out / "cv_scatter.png").exists()
-    lines = (out / "predictions_sigma_p.csv").read_text().strip().splitlines()
+    # a data set other than the shipped ones names the outputs after its file
+    assert (out / "summary_small_sym.csv").exists() and (out / "predictions_sigma_p_small_sym.csv").exists()
+    assert (out / "cofields_small_sym.png").exists() and (out / "cv_scatter_small_sym.png").exists()
+    lines = (out / "predictions_sigma_p_small_sym.csv").read_text().strip().splitlines()
     assert len(lines) == 1 + len(keep)
     # the ensemble of four images gives a co-field symmetric in y and z
     mols_, names, y = rh.load(str(sdf), "sigma_p", ensemble=True)

@@ -221,34 +221,126 @@ def place_in_frame(coords: np.ndarray, lean_positive: bool = True) -> np.ndarray
     return out
 
 
-def build(fragment: str, n_conformers: int = 30, seed: int = 2026) -> Chem.Mol:
-    """X-C6H5 with hydrogens, MMFF-optimised, lowest-energy conformer, placed in the frame."""
+def _shape_atoms(mol: Chem.Mol) -> np.ndarray:
+    """Atoms that tell conformers apart: heavy atoms and the hydrogens on N, O and S.
+
+    A methyl rotation is not a conformer worth a field of its own; where a hydroxyl or an amino
+    hydrogen points is, for the donor field and the charges.
+    """
+    idx = []
+    for a in mol.GetAtoms():
+        if a.GetAtomicNum() > 1:
+            idx.append(a.GetIdx())
+        elif any(n.GetAtomicNum() in (7, 8, 16) for n in a.GetNeighbors()):
+            idx.append(a.GetIdx())
+    return np.array(idx, int)
+
+
+def _distance_key(coords: np.ndarray, atoms: np.ndarray) -> np.ndarray:
+    """The sorted distances between the shape atoms: the same for any relabelling of the atoms.
+
+    Two ethoxy groups swapped, the five fluorines of SF5 permuted, the methyls of a dimethylamino
+    group exchanged all give an MMFF conformer that differs from another only in which atom carries
+    which index; in frame these are the same shape and must count once.  Equal internal geometry in
+    the ring frame means equal placement up to the images, so this key, with the image comparison
+    below, is what distinguishes conformers.
+    """
+    c = coords[atoms]
+    d = np.sqrt(((c[:, None, :] - c[None, :, :]) ** 2).sum(axis=2))
+    return np.sort(d[np.triu_indices(len(c), 1)])
+
+
+def _distinct_in_frame(coords: np.ndarray, kept: Sequence[np.ndarray], atoms: np.ndarray,
+                       prune: float) -> bool:
+    """Is a conformer a new shape: further than `prune` (RMSD) from every image of every kept
+    conformer, and not a relabelling of one (sorted shape-atom distances differing by more)?"""
+    c = coords[atoms]
+    key = _distance_key(coords, atoms)
+    for k in kept:
+        if np.abs(_distance_key(k, atoms) - key).max() < prune:
+            return False
+        for sy, sz in ((1, 1), (-1, 1), (1, -1), (-1, -1)):
+            d = c - k[atoms] * np.array([1.0, sy, sz])
+            if np.sqrt((d * d).sum(axis=1).mean()) < prune:
+                return False
+    return True
+
+
+def build_conformers(fragment: str, n_embed: int = 30, seed: int = 2026, keep: int = 8,
+                     window: float = 6.0, prune: float = 0.3) -> Tuple[Chem.Mol, List[Tuple[np.ndarray, float]]]:
+    """X-C6H5 with hydrogens: the molecule (no conformer) and its distinct MMFF conformers in frame.
+
+    `n_embed` ETKDG conformers are MMFF-optimised; the converged ones are taken from the lowest
+    energy up, placed in the frame, and kept when they are within `window` kcal/mol of the minimum
+    and further than `prune` A (RMSD over the shape atoms) from every symmetry image of every
+    conformer already kept, until `keep` of them are found.  The first of the list is the lowest.
+    """
     mol = Chem.AddHs(Chem.MolFromSmiles(smiles_for(fragment)))
     params = AllChem.ETKDGv3()
     params.randomSeed = seed
     params.pruneRmsThresh = 0.3
-    ids = list(AllChem.EmbedMultipleConfs(mol, numConfs=n_conformers, params=params))
+    ids = list(AllChem.EmbedMultipleConfs(mol, numConfs=n_embed, params=params))
     if not ids:
         params.useRandomCoords = True
-        ids = list(AllChem.EmbedMultipleConfs(mol, numConfs=n_conformers, params=params))
+        ids = list(AllChem.EmbedMultipleConfs(mol, numConfs=n_embed, params=params))
     if not ids:
         raise RuntimeError(f"embedding failed for {smiles_for(fragment)}")
-    # MMFF on a copy: its set-up re-perceives aromaticity in place
+    # MMFF on a copy: its set-up re-perceives aromaticity in place. SF5, SeCH3 and B(OH)2 have no
+    # MMFF parameters (the optimiser then returns every conformer unchanged with energy -1), so
+    # those are optimised with UFF; the energies are then UFF's, which only matter within the molecule
     work = Chem.Mol(mol)
-    results = AllChem.MMFFOptimizeMoleculeConfs(work, maxIters=2000)
+    if AllChem.MMFFHasAllMoleculeParams(Chem.Mol(mol)):
+        results = AllChem.MMFFOptimizeMoleculeConfs(work, maxIters=2000)
+    else:
+        results = AllChem.UFFOptimizeMoleculeConfs(work, maxIters=2000)
     energies = np.array([e if conv == 0 or e == e else np.inf for conv, e in results], float)
+    # UFF has no idea of a hypervalent sulfur and folds two fluorines of SF5 onto one point; a
+    # conformer with any two atoms closer than 0.7 A is discarded, and if none is left the ETKDG
+    # geometries are used as they are, with no energies to rank them (the first one is kept)
+    for j, cid in enumerate(ids):
+        c = np.array(work.GetConformer(cid).GetPositions(), float)
+        d = np.sqrt(((c[:, None, :] - c[None, :, :]) ** 2).sum(axis=2))
+        if d[np.triu_indices(len(c), 1)].min() < 0.7:
+            energies[j] = np.inf
     if not np.isfinite(energies).any():
-        energies = np.array([e for _, e in results], float)
-    best = ids[int(np.argmin(energies))]
-    coords = np.array(work.GetConformer(best).GetPositions(), float)
+        work = Chem.Mol(mol)
+        energies = np.zeros(len(ids))
+        keep = 1
+    atoms = _shape_atoms(mol)
+    kept: List[Tuple[np.ndarray, float]] = []
+    e_min = float(energies.min())
+    for j in np.argsort(energies, kind="stable"):
+        e = float(energies[j])
+        if not np.isfinite(e) or e - e_min > window:
+            break
+        coords = place_in_frame(np.array(work.GetConformer(ids[j]).GetPositions(), float))
+        if _distinct_in_frame(coords, [c for c, _ in kept], atoms, prune):
+            kept.append((coords, e))
+        if len(kept) >= keep:
+            break
+    out = Chem.Mol(mol)
+    out.RemoveAllConformers()
+    Chem.SanitizeMol(out)
+    return out, kept
+
+
+def with_coords(mol: Chem.Mol, coords: np.ndarray) -> Chem.Mol:
+    """A copy of `mol` with this one conformer."""
     out = Chem.Mol(mol)
     out.RemoveAllConformers()
     conf = Chem.Conformer(mol.GetNumAtoms())
-    for i, p in enumerate(place_in_frame(coords)):
+    for i, p in enumerate(coords):
         conf.SetAtomPosition(i, p.tolist())
     out.AddConformer(conf, assignId=True)
-    Chem.SanitizeMol(out)
-    out.SetDoubleProp("mmff_energy", float(energies.min()))
+    return out
+
+
+def build(fragment: str, n_conformers: int = 30, seed: int = 2026) -> Chem.Mol:
+    """X-C6H5 with hydrogens, MMFF-optimised, lowest-energy conformer, placed in the frame."""
+    mol, kept = build_conformers(fragment, n_embed=n_conformers, seed=seed, keep=1)
+    coords, energy = kept[0]
+    out = with_coords(mol, coords)
+    out.SetDoubleProp("mmff_energy", energy)
     return out
 
 
@@ -256,16 +348,64 @@ def make_dataset(n_conformers: int = 30, seed: int = 2026) -> List[Chem.Mol]:
     mols = []
     for label, frag, sm, sp, pi in SUBSTITUENTS:
         m = build(frag, n_conformers=n_conformers, seed=seed)
-        m.SetProp("_Name", label)
-        m.SetProp("substituent", label)
-        m.SetProp("smiles", Chem.MolToSmiles(Chem.RemoveHs(m)))
-        m.SetDoubleProp("sigma_m", sm)
-        m.SetDoubleProp("sigma_p", sp)
-        if pi is not None:
-            m.SetDoubleProp("pi", pi)
-        m.SetProp("source", SOURCE)
+        _set_constants(m, label, sm, sp, pi)
         mols.append(m)
     return mols
+
+
+def _set_constants(m: Chem.Mol, label: str, sm: float, sp: float, pi: Optional[float]) -> None:
+    m.SetProp("_Name", label)
+    m.SetProp("substituent", label)
+    m.SetProp("smiles", Chem.MolToSmiles(Chem.RemoveHs(m)))
+    m.SetDoubleProp("sigma_m", sm)
+    m.SetDoubleProp("sigma_p", sp)
+    if pi is not None:
+        m.SetDoubleProp("pi", pi)
+    m.SetProp("source", SOURCE)
+
+
+def _atom_props_by_title(path: str) -> Tuple[dict, List[str]]:
+    mols = [m for m in Chem.SDMolSupplier(path, removeHs=False) if m is not None]
+    return {m.GetProp("_Name"): m for m in mols}, atom_property_names(mols)
+
+
+def make_ensemble(keep: int = 8, n_embed: int = 30, seed: int = 2026, window: float = 6.0,
+                  prune: float = 0.3, atom_props_from: Optional[str] = None,
+                  rows: Optional[Sequence] = None) -> Tuple[List[Chem.Mol], List[int], List[str]]:
+    """One record per conformer and symmetry image, titled by the substituent.
+
+    Every record of a compound carries ``conformer_energies``, the MMFF energies of all of its
+    records in order (each conformer's energy four times, once per image), which is what the
+    Boltzmann weighting of the ensemble mode reads from the first record after grouping by name.
+    With `atom_props_from`, every numeric atom property of the molecule of the same title in that
+    file is copied onto all records: the ensemble field takes its atomic weights from its first
+    conformer, so charges computed on the lowest conformer are the ones it would use anyway.
+    Returns the records, the number of conformers per compound, and the atom properties copied.
+    """
+    source, props = _atom_props_by_title(atom_props_from) if atom_props_from else ({}, [])
+    records, counts = [], []
+    for label, frag, sm, sp, pi in (rows if rows is not None else SUBSTITUENTS):
+        mol, kept = build_conformers(frag, n_embed=n_embed, seed=seed, keep=keep,
+                                     window=window, prune=prune)
+        counts.append(len(kept))
+        full = ",".join(f"{e:.4f}" for _, e in kept for _ in range(4))
+        if atom_props_from:
+            src = source[label]
+            if src.GetNumAtoms() != mol.GetNumAtoms() or \
+                    [a.GetSymbol() for a in src.GetAtoms()] != [a.GetSymbol() for a in mol.GetAtoms()]:
+                raise ValueError(f"{label}: the atoms of {atom_props_from} do not match the rebuilt molecule")
+        for k, (coords, e) in enumerate(kept):
+            m = with_coords(mol, coords)
+            _set_constants(m, label, sm, sp, pi)
+            m.SetIntProp("conformer_index", k)
+            m.SetDoubleProp("mmff_energy", e)
+            m.SetProp("conformer_energies", full)
+            if atom_props_from:
+                for a, b in zip(m.GetAtoms(), source[label].GetAtoms()):
+                    for p in props:
+                        a.SetDoubleProp(p, float(b.GetProp(p)))
+            records.extend(symmetry_images(m))
+    return records, counts, props
 
 
 def symmetry_images(mol: Chem.Mol) -> List[Chem.Mol]:
@@ -334,12 +474,32 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--seed", type=int, default=2026)
     ap.add_argument("--symmetrize", metavar="SDF",
                     help="instead of building: symmetrise this SDF (already in frame) into -o")
-    ap.add_argument("-o", "--out", help="output of --symmetrize (default: <stem>_sym.sdf)")
+    ap.add_argument("--ensemble", type=int, default=0, metavar="N",
+                    help="instead of one conformer: keep up to N distinct MMFF conformers per "
+                         "substituent, each with its four images, for the ensemble mode")
+    ap.add_argument("--window", type=float, default=6.0, help="energy window of --ensemble, kcal/mol")
+    ap.add_argument("--prune", type=float, default=0.3, help="RMSD below which two conformers are one, A")
+    ap.add_argument("--atom-props-from", metavar="SDF",
+                    help="with --ensemble: copy the atom properties (quantum charges) of the molecule "
+                         "of the same title in this file onto every record")
+    ap.add_argument("-o", "--out", help="output of --symmetrize or --ensemble")
     a = ap.parse_args(argv)
     if a.symmetrize:
         dst = a.out or os.path.splitext(a.symmetrize)[0] + "_sym.sdf"
         n = symmetrize_file(a.symmetrize, dst)
         print(f"{n} molecules x 4 images written to {dst}")
+        return 0
+    if a.ensemble:
+        dst = a.out or os.path.join(a.out_dir, "hammett_ens_qm.sdf" if a.atom_props_from
+                                    else "hammett_ens.sdf")
+        records, counts, props = make_ensemble(keep=a.ensemble, n_embed=a.conformers, seed=a.seed,
+                                               window=a.window, prune=a.prune,
+                                               atom_props_from=a.atom_props_from)
+        write_sdf(dst, records, atom_props=props)
+        hist = {k: counts.count(k) for k in sorted(set(counts))}
+        print(f"{len(counts)} substituents, {sum(counts)} conformers ({np.mean(counts):.2f} per "
+              f"substituent; conformers: substituents {hist}), x 4 images = {len(records)} records "
+              f"written to {dst}" + (f" with atom properties {props}" if props else ""))
         return 0
     mols = make_dataset(n_conformers=a.conformers, seed=a.seed)
     single = os.path.join(a.out_dir, "hammett.sdf")

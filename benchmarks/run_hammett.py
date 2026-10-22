@@ -69,13 +69,18 @@ RING_XY = np.array([[RING_R * np.cos(t), RING_R * np.sin(t)]
 RING_LABELS = ["ipso", "ortho", "meta", "para", "meta", "ortho"]
 
 
-def field_set(fields: Sequence[str], ensemble: bool, charges_prop: Optional[str] = None) -> FieldSet:
-    """The field set for one fit; a charges property replaces the electrostatic field."""
+def field_set(fields: Sequence[str], ensemble: bool, charges_prop: Optional[str] = None,
+              weighting: str = "uniform", kt: float = 0.6) -> FieldSet:
+    """The field set for one fit; a charges property replaces the electrostatic field.
+
+    `weighting` is how the conformers of an ensemble are weighed: "uniform", or "boltzmann" from
+    the ``conformer_energies`` property (kcal/mol) at temperature `kt`.
+    """
     physchem = [f for f in fields if f != "electrostatic" or not charges_prop]
     props = [charges_prop] if (charges_prop and "electrostatic" in fields) else []
     return FieldSet.create(physchem=physchem, atom_properties=props,
                            conformers="ensemble" if ensemble else "single",
-                           conformer_weighting="uniform")
+                           conformer_weighting=weighting, conformer_kt=kt)
 
 
 def load(path: str, target: str, ensemble: bool):
@@ -192,6 +197,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--lams", default=",".join(f"{l:g}" for l in LAMS))
     ap.add_argument("--folds", type=int, default=10)
     ap.add_argument("--no-ablation", action="store_true", help="skip the single-field fits")
+    ap.add_argument("--weighting", default="uniform", choices=["uniform", "boltzmann"],
+                    help="how the conformers of an ensemble are weighed (default uniform)")
+    ap.add_argument("--kt", type=float, default=0.6, help="kT of the Boltzmann weights, kcal/mol")
     ap.add_argument("--out-dir", default=OUT_DIR)
     a = ap.parse_args(argv)
 
@@ -201,8 +209,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     lams = [float(x) for x in a.lams.split(",") if x.strip()]
     targets = [t.strip() for t in a.targets.split(",") if t.strip()]
     os.makedirs(a.out_dir, exist_ok=True)
-    tag = f"_{a.charges_prop}" if a.charges_prop else ""
+    tag = ""
+    if a.sdf and os.path.abspath(a.sdf) not in (os.path.abspath(DEFAULT_SDF), os.path.abspath(SINGLE_SDF)):
+        stem = os.path.splitext(os.path.basename(a.sdf))[0]
+        tag += "_" + (stem[len("hammett_"):] if stem.startswith("hammett_") else stem)
+    tag += f"_{a.charges_prop}" if a.charges_prop else ""
     tag += "_single" if a.single else ""
+    if a.weighting != "uniform":
+        tag += f"_{a.weighting}" + (f"_kt{a.kt:g}" if a.kt != 0.6 else "")
 
     combos: List[List[str]] = [PHYSCHEM]
     if not a.no_ablation:
@@ -215,13 +229,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(f"data set {os.path.relpath(path, ROOT)}, "
           f"{'symmetrised ensembles' if ensemble else 'single conformers'}, "
           f"charges {'prop:' + a.charges_prop if a.charges_prop else 'Gasteiger'}, "
-          f"{a.folds}-fold CV")
+          f"{a.weighting + ' weights, ' if ensemble else ''}{a.folds}-fold CV")
     for target in targets:
         mols, names, y = load(path, target, ensemble)
         print(f"\n== {target}: {len(y)} substituents, range {y.min():.2f} .. {y.max():.2f}")
+        if ensemble:
+            from cmfqsar.conformers import ensemble_summary
+            info = ensemble_summary(mols, field_set(PHYSCHEM, True, a.charges_prop, a.weighting, a.kt))
+            print(f"  {info['conformations_mean']:.1f} records per substituent (max "
+                  f"{info['conformations_max']:.0f}), {info['effective_mean']:.1f} effective under "
+                  f"the weights, kernel cost x{info['kernel_cost_factor']:.0f}")
         print(f"  {'fields':38s} {'alpha':>6s} {'lambda':>8s} {'q2':>6s} {'RMSEcv':>7s} {'r2 fit':>7s}")
         for fields in combos:
-            fs = field_set(fields, ensemble, a.charges_prop)
+            fs = field_set(fields, ensemble, a.charges_prop, a.weighting, a.kt)
             model, res = fit(mols, names, y, fs, alphas, lams, a.folds)
             lab = field_label(fields, a.charges_prop)
             st = model.stats
