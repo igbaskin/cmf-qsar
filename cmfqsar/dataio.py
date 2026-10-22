@@ -554,6 +554,11 @@ def read_activities_csv(path: str) -> Dict[str, float]:
 # --------------------------------------------------------------------------- #
 
 def save_model(path: str, model: CMFModel, extra: Optional[dict] = None) -> None:
+    """Write the model with its provenance: how its training set was prepared, and by what.
+
+    The file is a joblib dump of :meth:`CMFModel.state`, version 2: everything a prediction
+    needs, plus the record that :mod:`cmfqsar.contract` checks new molecules against.
+    """
     st = model.state()
     if extra:
         st["extra"] = extra
@@ -561,7 +566,10 @@ def save_model(path: str, model: CMFModel, extra: Optional[dict] = None) -> None
 
 
 def load_model(path: str):
+    """Read a model file; refuses one written by a newer version of the program."""
     st = joblib.load(path)
+    if not isinstance(st, dict) or "fieldset" not in st:
+        raise ValueError(f"{path} is not a CMF model file")
     return CMFModel.from_state(st), st.get("extra", {})
 
 

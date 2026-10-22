@@ -297,7 +297,13 @@ def atom_property(mol: Chem.Mol, name: str, n_atoms: Optional[int] = None,
         f"atom with the hydrogens left out")
 
 
-def _partial_charges(mol: Chem.Mol, model: str) -> np.ndarray:
+def _partial_charges(mol: Chem.Mol, model: str) -> Tuple[np.ndarray, str]:
+    """The partial charges and where they came from: "file", "mmff" or "gasteiger".
+
+    The source is what was *used*, not what was asked for: a molecule without charges in its
+    file gets Gasteiger charges, and the source says so, which is how the contract check of
+    ``cmfqsar.contract`` tells a model fitted on file charges that a new molecule has none.
+    """
     n = mol.GetNumAtoms()
     if model == "file":
         q = np.zeros(n)
@@ -311,14 +317,15 @@ def _partial_charges(mol: Chem.Mol, model: str) -> np.ndarray:
                 ok = False
                 break
         if ok:
-            return q
+            return q, "file"
         model = "gasteiger"  # fall back
     if model == "mmff":
         try:
             # work on a copy: MMFF set-up changes the aromaticity flags of the molecule in place
             props = AllChem.MMFFGetMoleculeProperties(Chem.Mol(mol))
             if props is not None:
-                return np.array([props.GetMMFFPartialCharge(i) for i in range(n)], dtype=float)
+                return (np.array([props.GetMMFFPartialCharge(i) for i in range(n)], dtype=float),
+                        "mmff")
         except Exception:
             pass
         model = "gasteiger"
@@ -326,7 +333,7 @@ def _partial_charges(mol: Chem.Mol, model: str) -> np.ndarray:
     q = np.array([float(a.GetProp("_GasteigerCharge")) if a.HasProp("_GasteigerCharge") else 0.0
                   for a in mol.GetAtoms()])
     q[~np.isfinite(q)] = 0.0
-    return q
+    return q, "gasteiger"
 
 
 def _hydrophobic_weights(mol: Chem.Mol) -> np.ndarray:
@@ -515,6 +522,9 @@ class MoleculeFields:
     descriptors: Optional[np.ndarray] = None
     #: per-atom Gaussian expansion coefficients of every probe field, (N, n_terms)
     probe_coeffs: Dict[str, np.ndarray] = field(default_factory=dict)
+    #: where the partial charges came from: "file", "mmff", "gasteiger", or "" when no field
+    #: needed them; recorded so that a model can tell how its molecules were prepared
+    charge_source: str = ""
 
     @property
     def n_atoms(self) -> int:
@@ -637,7 +647,8 @@ def ensemble_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "") -> Molecu
         radii=np.tile(base.radii, k), symbols=list(base.symbols) * k,
         atom_types=list(base.atom_types) * k,
         bonds=np.concatenate(bonds, axis=0) if bonds else np.zeros((0, 2), int),
-        charges=np.tile(base.charges, k), molblock=base.molblock)
+        charges=np.tile(base.charges, k), molblock=base.molblock,
+        charge_source=base.charge_source)
     out.n_conformers = k
     out.conformer_weights = np.array([weights[i] for i in use], float)
     out.atoms_per_conformer = n
@@ -672,8 +683,8 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
     probes = [s for s in fieldset.specs if s.is_probe]
     # a probe field weighs dispersion, electrostatics and hydrogen bonding together, so it
     # needs the charges and the donor/acceptor character whether or not those fields are on
-    charges = (_partial_charges(mol, fieldset.charge_model)
-               if ("electrostatic" in need or probes) else np.zeros(n))
+    charges, charge_source = (_partial_charges(mol, fieldset.charge_model)
+                              if ("electrostatic" in need or probes) else (np.zeros(n), ""))
     hydro = acc = don = None
     want_hb = bool(need & {"hydrophobic", "hba", "hbd"}) or bool(probes)
     if scheme.startswith("tripos"):
@@ -736,7 +747,8 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
     return MoleculeFields(name=name or (mol.GetProp("_Name") if mol.HasProp("_Name") else ""),
                           coords=coords, weights=W, radii=radii, symbols=symbols,
                           atom_types=types, bonds=bonds, charges=charges, molblock=molblock,
-                          descriptors=desc, probe_coeffs=probe_coeffs)
+                          descriptors=desc, probe_coeffs=probe_coeffs,
+                          charge_source=charge_source)
 
 
 # --------------------------------------------------------------------------- #

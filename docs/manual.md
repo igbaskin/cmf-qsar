@@ -316,16 +316,35 @@ Because the kernel row is computed against the stored training atoms with the st
 prediction is only meaningful if the new molecule was prepared the way the training molecules
 were. The saved `.cmf` model therefore carries the field set, the α values, the charge model, the
 parameterisation, the normalisation and scaling flags, the mixing coefficients, the training
-atoms and the coefficients — everything in steps 1 to 5 — and reuses them. Two things it cannot
-enforce, and which are yours to get right:
+atoms and the coefficients — everything in steps 1 to 5 — and reuses them. It also carries a
+record of how the training molecules were prepared: the version of the program that wrote it,
+the date, how many molecules, where their partial charges came from (the file, or computed),
+whether they carried explicit hydrogens, and the box their atoms occupy. Before any prediction
+the program compares the new molecules with that record and reports what does not match:
 
-- **The frame.** The overlap integral is not invariant to rotation or translation, so a molecule
-  predicted in a different frame from the training set will score low on every field and be
-  predicted towards the mean. If the new molecules are not already in that frame, align them
-  (*Preparing the data*) or use a frame-free kernel source
-  (*Working without an alignment*).
 - **The chemistry behind the weights.** Charges read from a file for the training set and
-  Gasteiger charges for the new molecules are two different electrostatic fields wearing one name.
+  Gasteiger charges for the new molecules are two different electrostatic fields wearing one
+  name. A model fitted on file charges therefore **refuses** a molecule that carries none, rather
+  than falling back to Gasteiger charges silently; `cmf_cli.py predict --allow-mismatch`
+  overrides the refusal, and the application asks. Supply the charges (a MOL2 charge column or a
+  `partial_charge` atom property) or build the model with computed charges.
+- **Explicit hydrogens.** The donor field sits on the hydrogens and the steric field counts
+  them, so a set with hydrogens and a set without are two different sets of fields. A mismatch
+  is a **warning**.
+- **The frame.** The overlap integral is not invariant to rotation or translation, so a molecule
+  predicted in a different frame from the training set scores low on every field and is predicted
+  towards the mean. A molecule whose centroid lies more than 4 Å outside the box of the training
+  atoms is reported as a **warning**; a molecule inside the box but wrongly oriented is not
+  caught by this check, only by the applicability domain. If the new molecules are not in the
+  frame, align them (*Preparing the data*) or use a frame-free kernel source (*Working without
+  an alignment*).
+- **Per-atom property fields** that are zero on a molecule, because it carries no value of that
+  property, are a warning; a file written by another version of the program, or by a version
+  that recorded no provenance, is a note.
+
+The findings appear in the log of the application and on the console of the command-line tool,
+each marked `[refuse]`, `[warn]` or `[note]`. A model file written by a newer version of the
+program than the one reading it is not opened.
 
 # Installation and first run
 
@@ -1115,9 +1134,11 @@ fractions, BEDROC and RIE.
 ## Saving and reusing
 
 *File → Save model…* writes a `.cmf` file (joblib) holding the field set, the kernels' definition,
-the fitted coefficients, the training molecules and every setting needed to predict later.
-`cmf_cli.py predict model.cmf new.sdf --out predictions.csv` applies it; the GUI loads it with
-*File → Load model…*.
+the fitted coefficients, the training molecules, every setting needed to predict later, and the
+record of how the training set was prepared that *What has to match between fitting and
+predicting* describes. `cmf_cli.py predict model.cmf new.sdf --out predictions.csv` applies it,
+after checking the new molecules against that record; the GUI loads it with *File → Load model…*
+and writes the record's summary to the log.
 # Reading the model
 
 A CMF model is readable in a way a grid model is not, because the prediction can be taken apart

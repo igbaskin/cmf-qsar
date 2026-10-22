@@ -565,10 +565,25 @@ def cmd_build(args):
     print(f"Elapsed {time.time() - t0:.1f} s")
 
 
+def _check_contract(model, mf, allow=False):
+    """Say how the model's training set was prepared, and stop if these molecules were not."""
+    from cmfqsar.contract import check_molecules, summary
+    print("Model: " + summary(model))
+    findings = check_molecules(model, mf)
+    for f in findings:
+        print(f"  {f}")
+    refused = [f for f in findings if f.level == "refuse"]
+    if refused and not allow:
+        raise SystemExit("prediction refused (" + ", ".join(f.code for f in refused)
+                         + "); --allow-mismatch predicts anyway")
+    return findings
+
+
 def cmd_predict(args):
     model, extra = load_model(args.model)
     ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file)
     mf = [build_fields(m, model.fieldset, n) for m, n in zip(ds.mols, ds.names)]
+    _check_contract(model, mf, allow=args.allow_mismatch)
     if args.align_variance is not None:
         from cmfqsar.varalign import variance_align
         guard = None if args.align_variance <= 0 else args.align_variance
@@ -614,6 +629,7 @@ def cmd_explain(args):
     model, extra = load_model(args.model)
     ds = load_dataset(args.dataset, activity_prop=args.activity)
     mf = [build_fields(m, model.fieldset, n) for m, n in zip(ds.mols, ds.names)]
+    _check_contract(model, mf, allow=args.allow_mismatch)
     if args.molecule is None:
         idx = list(range(len(ds)))
     else:
@@ -1411,6 +1427,9 @@ def main(argv=None):
     q.add_argument("--align-restarts", type=int, default=2,
                    help="random restarts of the alignment search (default 2)")
     q.add_argument("--aligned-out", default=None, help="write the aligned structures to this SDF")
+    q.add_argument("--allow-mismatch", action="store_true",
+                   help="predict even when the molecules were not prepared the way the model's "
+                        "training set was (the check that otherwise refuses is printed either way)")
     q.set_defaults(func=cmd_predict)
     u = sub.add_parser("unalign", help="give every molecule a random pose (control experiment)")
     u.add_argument("dataset")
@@ -1447,6 +1466,8 @@ def main(argv=None):
     g.set_defaults(func=cmd_map)
 
     e = sub.add_parser("explain", help="Shapley decomposition of a prediction (any kernel)")
+    e.add_argument("--allow-mismatch", action="store_true",
+                   help="go on when the molecules were not prepared the way the model's training set was")
     e.add_argument("model")
     e.add_argument("dataset")
     e.add_argument("--activity", default=None)

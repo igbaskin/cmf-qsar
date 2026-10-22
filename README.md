@@ -1880,7 +1880,12 @@ python cmf_app.py examples/benzamides_synthetic.sdf --activity pActivity --test-
    Select the field type, move the *iso level* slider (percent of the maximum absolute value), and tick
    *molecular field*, *overlap* or *atom contributions* to analyse the molecule currently selected in the
    data-set table. The *Contributions* tab lists the training molecules contributing most to its prediction.
-6. **File → Save model…** stores everything needed for later predictions (`.cmf`, joblib); **Export …**
+6. **File → Save model…** stores everything needed for later predictions (`.cmf`, joblib), with a
+   record of how the training set was prepared: version, date, where the charges came from,
+   explicit hydrogens, the box of the training atoms. Predicting checks new molecules against it
+   (`cmfqsar/contract.py`): a model fitted on charges read from the file refuses a molecule that
+   carries none, instead of falling back to Gasteiger charges silently; missing hydrogens, a
+   molecule outside the training frame or an empty property field are warnings. **Export …**
    writes predictions (CSV), the aligned data set (SDF) or the current co-field (Gaussian cube, readable
    by PyMOL/VMD/Jmol).
 
@@ -1897,6 +1902,7 @@ are the same program, and the examples below use the latter.
 python cmf_cli.py build examples/benzamides_synthetic.sdf --activity pActivity --cif \
        --alphas 0.3,0.5,0.8,1.2 --lams 1e-3,1e-2,0.1,1 --test-fraction 0.25 --nested --save model.cmf
 python cmf_cli.py predict model.cmf new_molecules.sdf --out predictions.csv
+python cmf_cli.py predict model.cmf new_molecules.sdf --allow-mismatch     # past a refused contract check
 python cmf_cli.py predict model.cmf new_molecules.sdf --align-variance 2.0 --aligned-out aligned.sdf
 python cmf_cli.py build aligned_set.sdf --align-train-variance 1.0 --test-fraction 0.25
 python cmf_cli.py unalign aligned.sdf scrambled.sdf --max-rotation 40 --max-translation 2

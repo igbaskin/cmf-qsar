@@ -555,6 +555,10 @@ class CMFModel:
     desc_scaler_: Optional[object] = None
     desc_train_: Optional[np.ndarray] = None
     desc_scale_: float = 1.0
+    #: how the training set was prepared, as read from a model file (empty for a model fitted
+    #: in this session, whose provenance is written when it is saved); see cmfqsar/contract.py
+    provenance: Dict[str, object] = field(default_factory=dict)
+    file_version: int = 0
 
     # ------------------------------------------------------------------ kernels
     def _interp_specs(self):
@@ -969,9 +973,15 @@ class CMFModel:
         yp = K @ self.coef + self.bias
         if self.learner_ is None or self.learner_.K_train_ is None:
             learner = _Learner("gp", self.params)
-            learner.K_train_ = (self.joint_kernel(self.K_fields_train,
-                                                  self.train.descriptors) if self.uses_fields
-                                else self.training_kernel(self.train))
+            if self.uses_fields:
+                if self.K_fields_train is None:
+                    # a model read from a file stores its training atoms, not their kernels:
+                    # compute them again, with the stored self-kernels and scale untouched
+                    self.K_fields_train = self._field_kernels(self.train, self.train,
+                                                              self.self_diag, self.self_diag)
+                learner.K_train_ = self.joint_kernel(self.K_fields_train, self.train.descriptors)
+            else:
+                learner.K_train_ = self.training_kernel(self.train)
         else:
             learner = self.learner_
         var = learner.predict_variance(K, self.joint_self(test))
@@ -1123,9 +1133,58 @@ class CMFModel:
         return 1.0 / np.sqrt(d) if d > 1e-300 else 0.0
 
     # ------------------------------------------------------------ persistence
+    #: the newest model-file version this program writes and reads
+    FILE_VERSION = 2
+
+    @staticmethod
+    def describe_training(model: "CMFModel") -> dict:
+        """How the training set was prepared, read off the stored training molecules.
+
+        This is what the model file records as its provenance (version 2 files), and what the
+        contract check falls back to for a file that recorded nothing.
+        """
+        mols = list(model.train.molecules) if model.train is not None else []
+        n = len(mols)
+        sources: Dict[str, int] = {}
+        for m in mols:
+            s = getattr(m, "charge_source", "") or "unknown"
+            sources[s] = sources.get(s, 0) + 1
+        with_h = sum(1 for m in mols if "H" in m.symbols)
+        out = {
+            "n_train": n,
+            "charge_model": model.fieldset.charge_model,
+            "param_scheme": model.fieldset.param_scheme,
+            "fields": [s.name for s in model.fieldset.specs if s.enabled],
+            "charge_sources": sources,
+            "charge_source": max(sources, key=sources.get) if sources else None,
+            "explicit_hydrogens": (with_h / n) if n else None,
+            "conformers": model.fieldset.conformers,
+        }
+        if model.train is not None and len(model.train.coords):
+            out["box_min"] = [float(v) for v in model.train.coords.min(axis=0)]
+            out["box_max"] = [float(v) for v in model.train.coords.max(axis=0)]
+        if model.y is not None and len(model.y):
+            y = np.asarray(model.y, float)
+            out["activity"] = {"min": float(np.nanmin(y)), "max": float(np.nanmax(y)),
+                               "mean": float(np.nanmean(y))}
+        return out
+
+    def _provenance(self) -> dict:
+        """The record a model file carries: versions, date and how the training set was made."""
+        import platform
+        import time
+        from . import __version__
+        from rdkit import rdBase
+        p = dict(self.describe_training(self))
+        p.update({"cmfqsar": __version__, "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                  "python": platform.python_version(), "numpy": np.__version__,
+                  "rdkit": rdBase.rdkitVersion})
+        return p
+
     def state(self) -> dict:
         return {
-            "version": 1,
+            "version": self.FILE_VERSION,
+            "provenance": self._provenance(),
             "fieldset": self.fieldset,
             "task": self.task,
             "method": self.method,
@@ -1152,10 +1211,18 @@ class CMFModel:
             "ac_d_max": self.ac_d_max,
             "ac_train": getattr(self, "ac_train_", None),
             "ac_scale": getattr(self, "ac_scale_", None),
+            # the descriptor block: its standardisation and scale belong to the training set
+            "desc_scaler": self.desc_scaler_,
+            "desc_train": self.desc_train_,
+            "desc_scale": self.desc_scale_,
         }
 
     @classmethod
     def from_state(cls, st: dict) -> "CMFModel":
+        version = int(st.get("version", 1))
+        if version > cls.FILE_VERSION:
+            raise ValueError(f"this model file is version {version}, written by a newer cmfqsar "
+                             f"than this one, which reads up to version {cls.FILE_VERSION}")
         m = cls(fieldset=st["fieldset"], task=st.get("task", "regression"), method=st["method"],
                 params=st["params"], normalize=st["normalize"], scale_fields=st["scale_fields"],
                 fit_bias=st.get("fit_bias", True), alpha_grid=st.get("alpha_grid"),
@@ -1170,6 +1237,15 @@ class CMFModel:
         m.gamma_scale_ = st.get("gamma_scale")
         m.train, m.y, m.coef, m.bias = st["train"], st["y"], st["coef"], st["bias"]
         m.self_diag, m.scale, m.stats = st["self_diag"], st["scale"], st["stats"]
+        m.provenance = dict(st.get("provenance") or {})
+        m.file_version = version
+        if "desc_train" in st:
+            m.desc_scaler_, m.desc_train_ = st["desc_scaler"], st["desc_train"]
+            m.desc_scale_ = float(st.get("desc_scale", 1.0))
+        elif getattr(m.fieldset, "descriptors", ()) and m.train is not None:
+            # a version-1 file with a descriptor block stored the training molecules and their
+            # raw descriptor values but not the standardisation; fit it again on them
+            m.prepare_descriptors(m.train)
         if st.get("oneclass") is not None:
             m.learner_ = _Learner(st["method"], st["params"])
             m.learner_.oc_ = st["oneclass"]

@@ -20,6 +20,7 @@ from ..align import align_dataset
 from ..cofields import (Grid, cofield_volume, export_cube, isosurface, make_grid, molfield_volume,
                         overlap_volume)
 from ..conformers import CONFORMER_ALIGNMENTS
+from ..contract import check_molecules, summary as model_summary
 from ..dataio import Dataset, load_dataset, load_model, numeric_properties, save_model, write_predictions_csv, write_sdf
 from ..fields import AtomTable, FieldSet, MoleculeFields, build_fields, cif_types_in
 from ..model import CMFModel, grid_search, nested_cv
@@ -2012,6 +2013,10 @@ class MainWindow(QMainWindow):
 
         def task(progress, cancel):
             mf = [build_fields(mols[i], fs, names[i]) for i in te]
+            # were these molecules prepared the way the training set was? (cmfqsar/contract.py)
+            findings = check_molecules(model, mf)
+            if any(f.level == "refuse" for f in findings):
+                return None, None, None, findings
             table = AtomTable.from_molecules(mf)
             progress("Predicting", 0.3)
             yp = model.evaluate_test(table, y[te], cancel=cancel)
@@ -2021,10 +2026,19 @@ class MainWindow(QMainWindow):
                     _, var = model.predict_with_variance(table)
                 except Exception:
                     var = None
-            return mf, yp, var
+            return mf, yp, var, findings
 
         def done(out):
-            mf, yp, var = out
+            mf, yp, var, findings = out
+            for f in findings:
+                self.log(f"Contract: {f}")
+            if mf is None:
+                QMessageBox.warning(
+                    self, "Prediction refused",
+                    "\n\n".join(f.message for f in findings if f.level == "refuse")
+                    + "\n\nThe molecules were not predicted. Prepare them as the training set "
+                      "was, or build the model again with computed charges.")
+                return
             for k, i in enumerate(te):
                 self.molfields[i] = mf[k]
             self.model_test_idx = te
@@ -3922,6 +3936,7 @@ class MainWindow(QMainWindow):
         self.controls.set_fields([(s.name, s.label) for s in model.fieldset.specs])
         self._show_results()
         self.log(f"Model loaded from {path} ({model.train.n_mol} training molecules)")
+        self.log("    " + model_summary(model))
         self.schedule_display()
 
     def export_predictions(self):

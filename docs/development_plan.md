@@ -99,10 +99,21 @@ This is what the software paper needs, and nothing in the later parts should wai
   the atom table, the field set and the model settings, and the six scripts that build kernels go
   through it. Not done: the other result tables of the README stay written by hand, since each is
   a summary in its own words of a result file the registry names.
-* **A5. A versioned model file.** The manual's list "What has to match between fitting and
-  predicting" becomes a checked contract: the model file carries its parameterisation, charge model,
-  scaling convention, field list and version, and `predict` refuses or warns on a mismatch rather
-  than predicting silently with the wrong increments.
+* **A5. A versioned model file.** Done 22 October 2026. The model file is version 2 and carries
+  its provenance (program, Python, NumPy and RDKit versions, date, the field list, parameterisation
+  and charge model, where every training molecule's charges actually came from, the fraction with
+  explicit hydrogens, the box of the training atoms, the activity range); a file from a newer
+  program is not opened, a version-1 file loads with a note. `cmfqsar/contract.py` checks
+  molecules about to be predicted against the record: file charges missing is a refusal (the
+  silent fall-back to Gasteiger charges, found on the way, is now reported by `MoleculeFields.
+  charge_source`), hydrogens, frame and empty property fields are warnings. `cmf predict` and
+  `cmf explain` stop on a refusal unless `--allow-mismatch`; the application logs the findings
+  and refuses in a dialog. Two faults of the file were found on the way and fixed: a loaded
+  model could not give predictive variances (its training kernels are not stored and were not
+  recomputed), and a loaded model with a descriptor block dropped the block silently, since the
+  descriptor statistics were not written; they are now, and a version-1 file refits them. Not
+  checked: a molecule inside the training box but wrongly oriented, which only the applicability
+  domain sees.
 * **A6. Land the multi-task model.** Done 22 October 2026: `cmfqsar/multitask.py`, its test, the
   selectivity dialog and `benchmarks/run_multitask.py` are committed with the result on the
   corrosion series (README, "Two endpoints on one kernel"; `benchmarks/results/multitask/table.md`).
