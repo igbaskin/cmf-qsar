@@ -308,6 +308,7 @@ hyper-parameter search is not a model: the arithmetic is the lesson here, not th
 | One-class methods | a score built from the same kernel row, but also from the molecule's own self-kernel: distance to the centroid, to the k-th nearest active, to the principal subspace, or the 1-SVM decision value |
 | Nonlinear kernel layer | the joint kernel is passed through $\exp(-\gamma d^2)$ or an arc-cosine function first; the prediction formula is unchanged, the co-field identity is lost |
 | Autocorrelation source | the kernel row comes from the rotation-invariant distance profiles instead of the overlap integrals; everything downstream is identical |
+| Two endpoints | the same formula once per endpoint, with coefficients tied through a task correlation; the difference of the two coefficient vectors gives the selectivity co-field |
 
 ## What has to match between fitting and predicting
 
@@ -518,7 +519,9 @@ The control strip above the view is four rows, and everything on it redraws imme
 - **Maps.** *Field type* chooses which field the maps refer to; **Compute co-field** evaluates the
   co-fields on a grid around the training set; then the maps themselves — *co-field C(r)*,
   *molecular field X(r)*, *overlap C·X*, *Shapley field Φ(r)*, *atom contributions*, *difference
-  map*, *pharmacophore* — each with its own solid-or-mesh style where that applies.
+  map*, *pharmacophore* — each with its own solid-or-mesh style where that applies. After a
+  two-endpoint fit an *Endpoint* box joins the row and chooses whose co-field the maps show:
+  either endpoint, or their difference, the selectivity co-field.
 - **Levels.** *iso level*, the isosurface threshold as a percentage of the largest absolute value
   rather than an absolute number, so the surfaces stay comparable when the field changes; and
   *opacity*.
@@ -570,7 +573,8 @@ matter more than the view, and *Restore default layout*.
 **Tools** — *Generate conformations (4D)…*; *Dock into the pocket…*; *Align data set to
 reference…*; *Align by prediction confidence (GP variance)…* and its cross-validated form for the
 training set; *Replace molecules by their topomer substituents…*; *Field difference from a
-reference molecule…*; *Extract pharmacophore from the co-field…*; *Chemical space map (GTM)…*;
+reference molecule…*; *Extract pharmacophore from the co-field…*; *Model two endpoints (selectivity co-field)…*;
+*Chemical space map (GTM)…*;
 *Align decoys to the training set…*; *Unalign (randomise poses)…*; *Center view on current
 molecule*; *Quantum-chemical properties with ORCA…* and *Save the data set with its
 properties (SDF)…*; and the submenu *Heterogeneous sets (several chemotypes)* with its four numbered steps.
@@ -1178,6 +1182,57 @@ the reference's field the candidate **fails to reproduce** against how much it *
 difference map draws as its own isosurface, and the table ranks the whole data set by field
 similarity to the reference. In a lead-optimisation reading: the "missing" column is what to put
 back, the "added" column is what may be causing trouble.
+
+## Two endpoints at once: the selectivity co-field
+
+A separation problem, or any selectivity, is not one property but two: an extractant has an
+affinity for americium and an affinity for europium, and what matters is the difference. A model
+of the ratio works, but it throws information away. Each affinity has its own measurements, often
+on partly different compounds; a ligand that binds both metals strongly looks, to a model of the
+ratio, exactly like one that binds neither; and the ratio cannot say *which* of the two affinities
+a substituent moved.
+
+*Tools → Model two endpoints (selectivity co-field)…* fits both endpoints on the kernel of the
+model you have already built, with one bias per endpoint and a task covariance that lets them
+borrow strength from each other:
+
+$$
+y_t(X) = \sum_j c_{jt}\,K(X, X_j) + b_t ,
+$$
+
+where the coefficients of the two endpoints are tied through a single correlation $\rho$. At
+$\rho = 0$ the endpoints are modelled separately and share only the kernel; as $\rho$ rises they
+borrow from each other; at $\rho = 1$ the two sets of coefficients coincide and the model could
+only predict a *constant* selectivity, so 1 is excluded (and $\rho$ may be negative, for endpoints
+that move in opposite directions). The dialog searches $\rho$ and the ridge by cross-validation,
+and the cross-validation holds out whole **molecules**, never single measurements: with a
+molecule's first endpoint in the training set and its second in the test set, the correlation would
+hand the answer over.
+
+Because each endpoint's prediction is linear in the field with its own coefficients, each endpoint
+has a co-field, and so does their difference — the **selectivity co-field**
+
+$$
+C_A(\mathbf{r}) - C_B(\mathbf{r}) = \sum_j (c_{jA} - c_{jB})\, X_j(\mathbf{r}) ,
+$$
+
+a map of where more of a field raises the first endpoint more than the second. Only a model
+linear in the field can produce it; it is available here for the same reason co-fields are
+available at all, and it is refused for a model with a nonlinear kernel layer.
+
+Once the fit is made, an **Endpoint** box appears in the *Maps* row of the control strip with
+three entries — the first endpoint, the second, and their difference — and every map, export and
+contribution table then refers to the chosen one; a cube exported while the selectivity is chosen
+carries it in its file name. The two endpoints are two numeric properties of the data set, so the
+second is imported with *File → Import activities from CSV…* or read from a column of the file.
+Molecules that carry only one of the two are kept: they inform the endpoint they have, and
+through the correlation the other. Each endpoint needs at least five molecules.
+
+What the chosen $\rho$ means is itself a result. On the corrosion-inhibitor series of the
+benchmark (`benchmarks/results/multitask/table.md`) the cross-validation chose $\rho = 0$ on the
+two largest series and a non-zero $\rho$ of either sign on the small ones, where it gained at
+most 0.04 in q²: an endpoint that already has its own molecules borrows little from another, and
+the $\rho$ the dialog reports in the log is the measurement that says how much.
 
 ## Chemical space maps
 

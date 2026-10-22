@@ -1,0 +1,117 @@
+{
+ "set": "12_c1ccoc1",
+ "tasks": [
+  "activity",
+  "dG_ads"
+ ],
+ "n": 28,
+ "counts": [
+  28,
+  12
+ ],
+ "n_both": 12,
+ "r_both": -0.9791749254850765,
+ "sd": [
+  2.098895087119576,
+  6.149448258900052
+ ],
+ "core": "c1ccoc1",
+ "reference": "(E)-N-(2-(2-((2-((furan-2-ylmethylene)amino)ethyl)dimethylammonio)acetoxy)ethyl)-N,N-dimethyldodecan-1-aminium bromide chloride (CSI)",
+ "align_rmsd_median": 0.003879600538885134,
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "rhos": [
+  -0.95,
+  -0.9,
+  -0.8,
+  -0.6,
+  -0.4,
+  -0.2,
+  0.0,
+  0.2,
+  0.4,
+  0.6,
+  0.8,
+  0.9,
+  0.95
+ ],
+ "folds": 10,
+ "separate": {
+  "mean_q2": 0.012524274612656372,
+  "alpha": 5.0,
+  "lam": 1.0,
+  "tasks": [
+   {
+    "task": "activity",
+    "n": 28,
+    "q2": 0.05947001868213175,
+    "rmse_cv": 2.035527870194868
+   },
+   {
+    "task": "dG_ads",
+    "n": 12,
+    "q2": -0.03442146945681901,
+    "rmse_cv": 6.254389365038212
+   }
+  ]
+ },
+ "shared": {
+  "mean_q2": 0.018500296799840166,
+  "alpha": 5.0,
+  "rho": -0.4,
+  "lam": 1.0,
+  "tasks": [
+   {
+    "task": "activity",
+    "n": 28,
+    "q2": 0.07020830978897175,
+    "rmse_cv": 2.023874419505592
+   },
+   {
+    "task": "dG_ads",
+    "n": 12,
+    "q2": -0.033207716189291414,
+    "rmse_cv": 6.250718949305476
+   }
+  ]
+ },
+ "difference": {
+  "q2": -0.065212448014216,
+  "rmse_cv": 8.883809908802938,
+  "n": 12,
+  "q2_separate": -0.05350481781313143,
+  "rmse_cv_separate": 8.834854543689428,
+  "sd_observed": 8.607581445059543
+ },
+ "selectivity_coefficients": {
+  "max_abs": 2.7927251045622827,
+  "top_molecules": [
+   "N'-[(E)-Phenylmethylidene]furan-2-carbohydrazide",
+   "N-[(5-bromofuran-2-yl)methyl]-4-methylaniline",
+   "5-[5-(4-Chlorophenyl)furan-2-yl]furan-2-carboximidamide",
+   "N-(furfurilidine) - 4-methylaniline (SB2)",
+   "4-methyl-N-[(5-nitrofuran-2-yl)methyl]aniline"
+  ],
+  "top_values": [
+   2.7927251045622827,
+   -2.783526524402006,
+   2.628053185059081,
+   2.35266554254917,
+   -2.2272366475182133
+  ]
+ },
+ "seconds": 0.7870407104492188
+}

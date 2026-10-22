@@ -1,0 +1,117 @@
+{
+ "set": "11_c1c_nH_c_nH_1",
+ "tasks": [
+  "activity",
+  "dG_ads"
+ ],
+ "n": 23,
+ "counts": [
+  23,
+  22
+ ],
+ "n_both": 22,
+ "r_both": -0.9366252787403248,
+ "sd": [
+  1.3987461303753714,
+  4.578527588213601
+ ],
+ "core": "c1c[nH+]c[nH]1",
+ "reference": "1,3-Bis-decyl-2-(2-phenyl-propyl)-3H-benzoimidazol-1-ium chloride",
+ "align_rmsd_median": 0.02627548234162852,
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "rhos": [
+  -0.95,
+  -0.9,
+  -0.8,
+  -0.6,
+  -0.4,
+  -0.2,
+  0.0,
+  0.2,
+  0.4,
+  0.6,
+  0.8,
+  0.9,
+  0.95
+ ],
+ "folds": 10,
+ "separate": {
+  "mean_q2": 0.2783303880307333,
+  "alpha": 5.0,
+  "lam": 0.1,
+  "tasks": [
+   {
+    "task": "activity",
+    "n": 23,
+    "q2": 0.2527470409493118,
+    "rmse_cv": 1.2091292291388498
+   },
+   {
+    "task": "dG_ads",
+    "n": 22,
+    "q2": 0.3039137351121548,
+    "rmse_cv": 3.819947266287808
+   }
+  ]
+ },
+ "shared": {
+  "mean_q2": 0.30377074499812634,
+  "alpha": 5.0,
+  "rho": 0.9,
+  "lam": 0.01,
+  "tasks": [
+   {
+    "task": "activity",
+    "n": 23,
+    "q2": 0.3446632104736749,
+    "rmse_cv": 1.1323251999672639
+   },
+   {
+    "task": "dG_ads",
+    "n": 22,
+    "q2": 0.2628782795225778,
+    "rmse_cv": 3.930931172081652
+   }
+  ]
+ },
+ "difference": {
+  "q2": 0.28454220144676334,
+  "rmse_cv": 5.014493343621304,
+  "n": 22,
+  "q2_separate": 0.2861529590892343,
+  "rmse_cv_separate": 5.008845432057445,
+  "sd_observed": 5.928366550634135
+ },
+ "selectivity_coefficients": {
+  "max_abs": 36.84251380103498,
+  "top_molecules": [
+   "1-butyl-3-methylimidazolium chloride",
+   "1-Hexyl-3-methylimidazolium iodide",
+   "1-butyl-3-methylimidazolium bromide, [BMIm]Br",
+   "1-Methyl-3-propylimidazolium iodide",
+   "3-benzyl-1-phenethyl-1H-imidazol-3-ium bromide [Met-IM+, Br-]"
+  ],
+  "top_values": [
+   -36.84251380103498,
+   17.290539987673526,
+   -15.930439820313808,
+   15.38370552525845,
+   7.990789489099448
+  ]
+ },
+ "seconds": 1.3925397396087646
+}

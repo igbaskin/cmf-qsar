@@ -7,11 +7,17 @@ as a difference of co-fields.  The claim worth testing is the practical one: tha
 few measurements predicts better when it borrows strength from a related endpoint with many, and
 that the *difference* of the two is itself modellable.
 
-The corrosion database carries the case.  Its compounds were measured in two media, and the
+The corrosion database carries two cases.  Its compounds were measured in two media, and the
 columns are in the series files: ``mwila_hcl_adj`` (hydrochloric acid) and ``mwila_h2so4_adj``
 (sulfuric acid).  On the benzene series that is 244 compounds in HCl of which 40 were also run in
 H2SO4, the two agreeing at r = +0.93 -- one rich endpoint, one sparse, strongly related, which is
-the structure an Am/Eu separation problem has.
+the structure an Am/Eu separation problem has, and the one series with enough of the sparse
+endpoint to test it.  The second case is the potency against the Langmuir adsorption free energy
+``dG_ads`` (kJ/mol), which most series carry for most of their compounds: a different measurement
+of the same adsorption, *anti*-correlated with the potency (a more negative free energy is a
+stronger inhibitor), so the task correlation has to be allowed to go negative.  The difference
+of the two is a selectivity only in the first case; in the second the two endpoints are in
+different units and only the sharing is of interest.
 
 Reported, all on the same alignment, fields, alpha grid and 10-fold cross-validation **over
 molecules** (never over measurements, or the task correlation hands the answer over):
@@ -23,7 +29,9 @@ molecules** (never over measurements, or the task correlation hands the answer o
 
 Usage
 -----
-    python benchmarks/run_multitask.py [--set 0_c1ccccc1] [--tasks mwila_hcl_adj mwila_h2so4_adj]
+    python benchmarks/run_multitask.py                 # every pair in PAIRS, then the table
+    python benchmarks/run_multitask.py --set 0_c1ccccc1 --tasks mwila_hcl_adj mwila_h2so4_adj
+    python benchmarks/run_multitask.py --report        # only rebuild results/multitask/table.md
 """
 from __future__ import annotations
 
@@ -55,12 +63,28 @@ from cmfqsar.multitask import (Observations, cv_predict, fit, score_by_task,  # 
 RDLogger.DisableLog("rdApp.*")
 
 RESULTS = os.path.join(HERE, "results", "multitask")
-RHOS = (0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95)
+# the task covariance of two tasks is positive definite for -1 < rho < 1, and the grid has to
+# cover both signs: the potency and the adsorption free energy of the same compounds are
+# *anti*-correlated, and a grid of non-negative rho could never use that relation
+RHOS = (-0.95, -0.9, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95)
 TASKS = ("mwila_hcl_adj", "mwila_h2so4_adj")
+# the pairings reported: the same potency in two media (only the benzene series has enough
+# sulfuric-acid measurements), and the potency against the Langmuir adsorption free energy
+PAIRS = (("0_c1ccccc1", ("mwila_hcl_adj", "mwila_h2so4_adj")),
+         ("0_c1ccccc1", ("activity", "dG_ads")),
+         ("2_c1c_nH_cn1", ("activity", "dG_ads")),
+         ("11_c1c_nH_c_nH_1", ("activity", "dG_ads")),
+         ("12_c1ccoc1", ("activity", "dG_ads")),
+         ("13_c1c_nH_nn1", ("activity", "dG_ads")),
+         ("161_c1ccc2scnc2c1", ("activity", "dG_ads")))
 
 
 def columns(path, names):
-    """The named activity columns of a series file, NaN where the measurement is missing."""
+    """The named activity columns of a series file, NaN where the measurement is missing.
+
+    A column the file does not have at all counts as missing everywhere: the sulfuric-acid
+    columns exist only in the series that have such measurements.
+    """
     rows = list(csv.DictReader(open(path)))
     out = np.full((len(rows), len(names)), np.nan)
     for i, r in enumerate(rows):
@@ -69,6 +93,10 @@ def columns(path, names):
             if v not in (None, ""):
                 out[i, t] = float(v)
     return out
+
+
+def result_path(set_name, tasks, results=RESULTS):
+    return os.path.join(results, f"{set_name}__{tasks[0]}__{tasks[1]}.json")
 
 
 def prepare(set_name, tasks=TASKS, data=None):
@@ -109,15 +137,21 @@ def run(set_name="0_c1ccccc1", tasks=TASKS, results=RESULTS, folds=T.FOLDS):
     print(f"=== {set_name}: {len(mols)} molecules on the scaffold {Chem.MolToSmiles(core)}, "
           f"aligned on {ref} (median RMSD {rmsd:.2f} A)", flush=True)
     both = np.isfinite(Y).all(axis=1)
+    if min(obs.counts()) < 8:
+        print(f"    {tasks[1]} has {obs.counts()[1]} measurements here; nothing to share",
+              flush=True)
+        return None
+    r_both = float(np.corrcoef(Y[both, 0], Y[both, 1])[0, 1]) if both.sum() > 4 else None
     print(f"    {tasks[0]}: {obs.counts()[0]} measured; {tasks[1]}: {obs.counts()[1]}; "
           f"both: {both.sum()}"
-          + (f"; the two agree at r = {np.corrcoef(Y[both, 0], Y[both, 1])[0, 1]:+.2f}"
-             if both.sum() > 4 else ""), flush=True)
+          + (f"; the two agree at r = {r_both:+.2f}" if r_both is not None else ""), flush=True)
     Ks = kernels(mols, names)
     print(f"    kernels built ({time.time() - t0:.0f} s)", flush=True)
 
     res = {"set": set_name, "tasks": list(tasks), "n": len(mols), "counts": obs.counts(),
-           "n_both": int(both.sum()), "core": Chem.MolToSmiles(core), "reference": ref,
+           "n_both": int(both.sum()), "r_both": r_both, "sd": [float(np.nanstd(Y[:, t]))
+                                                             for t in range(Y.shape[1])],
+           "core": Chem.MolToSmiles(core), "reference": ref,
            "align_rmsd_median": rmsd, "alphas": list(T.ALPHAS), "lams": list(T.LAMS),
            "rhos": list(RHOS), "folds": folds}
 
@@ -174,21 +208,63 @@ def run(set_name="0_c1ccccc1", tasks=TASKS, results=RESULTS, folds=T.FOLDS):
           + ", ".join(f"{names[i]} ({c[i]:+.3f})" for i in top[:3]), flush=True)
     res["seconds"] = time.time() - t0
     os.makedirs(results, exist_ok=True)
-    out = os.path.join(results, f"{set_name}.json")
+    out = result_path(set_name, tasks, results)
     with open(out, "w") as fh:
         json.dump(res, fh, indent=1)
     print(f"    written to {out}  ({res['seconds']:.0f} s)", flush=True)
     return res
 
 
+def report(results=RESULTS):
+    """One table over every result file: separate against shared, and the difference."""
+    files = sorted(f for f in os.listdir(results) if f.endswith(".json"))
+    if not files:
+        raise SystemExit(f"nothing in {results}")
+    lines = ["# Two endpoints on one kernel", "",
+             "One row per series and pair of endpoints. *n* is molecules with the first / the "
+             "second measurement, *r* their agreement where both exist; q² per endpoint with the "
+             "endpoints fitted separately (ρ = 0) and with the task correlation ρ chosen by "
+             "cross-validation over molecules; and the q² of the predicted difference on the "
+             "molecules that carry both, separate and shared.", "",
+             "| series | endpoints | n | r | q² separate | ρ | q² shared | difference q² "
+             "(separate → shared) |", "|---|---|---|---|---|---|---|---|"]
+    for f in files:
+        r = json.load(open(os.path.join(results, f)))
+        sep = r["separate"]
+        sh = r["shared"]
+        q = lambda tasks: " / ".join(f"{p['q2']:+.2f}" for p in tasks)  # noqa: E731
+        d = r.get("difference")
+        diff = (f"{d['q2_separate']:+.2f} → {d['q2']:+.2f} (n {d['n']})" if d else "–")
+        rb = f"{r['r_both']:+.2f}" if r.get("r_both") is not None else "–"
+        lines.append(f"| {r['set']} | {r['tasks'][0]} / {r['tasks'][1]} | "
+                     f"{r['counts'][0]} / {r['counts'][1]} | {rb} | {q(sep['tasks'])} | "
+                     f"{sh['rho']:+g} | {q(sh['tasks'])} | {diff} |")
+    out = os.path.join(results, "table.md")
+    with open(out, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines) + "\n")
+    print("\n".join(lines))
+    print(f"\nwritten {out}")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--set", default="0_c1ccccc1")
-    ap.add_argument("--tasks", nargs=2, default=list(TASKS))
+    ap.add_argument("--set", default=None, help="one series (default: every pair in PAIRS)")
+    ap.add_argument("--tasks", nargs=2, default=None)
     ap.add_argument("--folds", type=int, default=T.FOLDS)
+    ap.add_argument("--report", action="store_true", help="only rebuild table.md")
     args = ap.parse_args(argv)
-    run(args.set, tuple(args.tasks), folds=args.folds)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")      # the table carries rho and q2; a cp1252 console must not stop it
+    if args.report:
+        report()
+        return
+    if args.set is None and args.tasks is None:
+        for set_name, tasks in PAIRS:
+            run(set_name, tasks, folds=args.folds)
+    else:
+        run(args.set or "0_c1ccccc1", tuple(args.tasks or TASKS), folds=args.folds)
+    report()
 
 
 if __name__ == "__main__":

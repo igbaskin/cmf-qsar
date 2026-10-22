@@ -17,9 +17,9 @@ The repository holds, as of 22 October 2026:
   rotation-invariant autocorrelation kernel and topomer fields; a Gaussian or arc-cosine layer on
   top, and multiple kernel learning for the mixing coefficients.
 * Learners: kernel ridge regression, SVR, Gaussian-process regression with variances, SVC, a Laplace
-  Gaussian-process classifier, five one-class descriptions, and (uncommitted, in flight) a
-  multi-task model on a shared kernel whose selectivity is a difference of co-fields
-  (`cmfqsar/multitask.py`).
+  Gaussian-process classifier, five one-class descriptions, and a multi-task model on a shared
+  kernel whose selectivity is a difference of co-fields (`cmfqsar/multitask.py`, measured on the
+  corrosion series in `benchmarks/results/multitask/`).
 * Interpretation: co-fields, contributions, exact Shapley values under nonlinear kernels, field
   differences, pharmacophores read out of a co-field, pocket complementarity, kernel GTM maps.
 * Validation: nested cross-validation, leave-one-chemotype-out, y-randomisation, applicability
@@ -40,7 +40,7 @@ The measurements already in hand settle several questions, and the plan treats t
 
 What is implemented but has no measurement behind it: Shapley attribution, field differences,
 pharmacophore extraction, complementarity, the GP classifier, the one-class descriptions on a real
-screening benchmark, kernel GTM, and the multi-task model. What is missing as software: packaging,
+screening benchmark, and kernel GTM. What is missing as software: packaging,
 continuous integration, a release, a versioned model file, gradients of probe fields
 (`cmfqsar/kernels.py` raises `NotImplementedError` there), the marginal likelihood for regression
 (it exists for the classifier only, in `cmfqsar/gpc.py`), and a way to screen more molecules than
@@ -85,10 +85,11 @@ This is what the software paper needs, and nothing in the later parts should wai
   predicting" becomes a checked contract: the model file carries its parameterisation, charge model,
   scaling convention, field list and version, and `predict` refuses or warns on a mismatch rather
   than predicting silently with the wrong increments.
-* **A6. Land the multi-task model.** `cmfqsar/multitask.py` and its test are uncommitted; the
-  benchmark on the corrosion HCl/H₂SO₄ pair (`benchmarks/run_multitask.py`) decides whether the
-  sparse endpoint gains and whether the difference is predictable. Commit with the result, whichever
-  way it goes.
+* **A6. Land the multi-task model.** Done 22 October 2026: `cmfqsar/multitask.py`, its test, the
+  selectivity dialog and `benchmarks/run_multitask.py` are committed with the result on the
+  corrosion series (README, "Two endpoints on one kernel"; `benchmarks/results/multitask/table.md`).
+  The first run of the benchmark had a correlation grid of non-negative values against a pair of
+  anti-correlated endpoints and could not have found the sharing; the grid now covers both signs.
 
 ## B. Scale and speed (months 2 to 6)
 

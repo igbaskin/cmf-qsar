@@ -10,6 +10,11 @@
   16
  ],
  "n_both": 16,
+ "r_both": -0.9864578605662475,
+ "sd": [
+  1.9094407558235473,
+  4.124351274746127
+ ],
  "core": "c1ccc2scnc2c1",
  "reference": "2,2' benzothiazolyl disulfide",
  "align_rmsd_median": 0.00803154208076147,
@@ -29,6 +34,12 @@
   10.0
  ],
  "rhos": [
+  -0.95,
+  -0.9,
+  -0.8,
+  -0.6,
+  -0.4,
+  -0.2,
   0.0,
   0.2,
   0.4,
@@ -58,49 +69,49 @@
   ]
  },
  "shared": {
-  "mean_q2": 0.7170219318591526,
+  "mean_q2": 0.7463935677494715,
   "alpha": 0.3,
-  "rho": 0.0,
-  "lam": 0.001,
+  "rho": -0.95,
+  "lam": 0.01,
   "tasks": [
    {
     "task": "activity",
     "n": 20,
-    "q2": 0.6924441378836662,
-    "rmse_cv": 1.0589322930504654
+    "q2": 0.7309076353309815,
+    "rmse_cv": 0.9905054640223412
    },
    {
     "task": "dG_ads",
     "n": 16,
-    "q2": 0.7415997258346392,
-    "rmse_cv": 2.09653507480265
+    "q2": 0.7618795001679617,
+    "rmse_cv": 2.012584113327228
    }
   ]
  },
  "difference": {
-  "q2": 0.7584038147255814,
-  "rmse_cv": 2.846227444932705,
+  "q2": 0.7655010325946482,
+  "rmse_cv": 2.804109915297624,
   "n": 16,
   "q2_separate": 0.7584038147255814,
   "rmse_cv_separate": 2.846227444932705,
   "sd_observed": 5.790613329723804
  },
  "selectivity_coefficients": {
-  "max_abs": 18.39028369512355,
+  "max_abs": 23.455010759830735,
   "top_molecules": [
    "N-(6-Methyl-1,3-benzothiazol-2-yl)-1-phenylmethanimine",
    "[N-(benzo-[d]thiazole-2-yl)-1-phenylethan-1-imine",
-   "2,2' benzothiazolyl disulfide",
-   "1,3-Benzothiazole",
+   "2-Benzothiazolamine, N-(phenylmethylene)-",
+   "2-Aminobenzothiazole",
    "N-(4-(dimethylamino)benzylidene)benzothiazol-2-amine (Schiff base, compound 3)"
   ],
   "top_values": [
-   -18.39028369512355,
-   18.096278822284194,
-   8.629296725407587,
-   -8.50670042809141,
-   -5.805604107003387
+   -23.455010759830735,
+   12.638511102260352,
+   12.187661280563807,
+   -10.175001873862934,
+   -9.14632695061085
   ]
  },
- "seconds": 0.5666038990020752
+ "seconds": 0.6798183917999268
 }

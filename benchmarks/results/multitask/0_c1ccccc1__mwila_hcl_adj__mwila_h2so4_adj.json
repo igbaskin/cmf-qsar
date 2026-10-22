@@ -1,0 +1,117 @@
+{
+ "set": "0_c1ccccc1",
+ "tasks": [
+  "mwila_hcl_adj",
+  "mwila_h2so4_adj"
+ ],
+ "n": 244,
+ "counts": [
+  244,
+  40
+ ],
+ "n_both": 40,
+ "r_both": 0.9336505413823781,
+ "sd": [
+  2.0842499405703565,
+  2.6413174269670807
+ ],
+ "core": "c1ccccc1",
+ "reference": "P-benzylidene benzyldodecyl iminium chloride",
+ "align_rmsd_median": 0.014089843041803008,
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "rhos": [
+  -0.95,
+  -0.9,
+  -0.8,
+  -0.6,
+  -0.4,
+  -0.2,
+  0.0,
+  0.2,
+  0.4,
+  0.6,
+  0.8,
+  0.9,
+  0.95
+ ],
+ "folds": 10,
+ "separate": {
+  "mean_q2": 0.2494993767977426,
+  "alpha": 5.0,
+  "lam": 1.0,
+  "tasks": [
+   {
+    "task": "mwila_hcl_adj",
+    "n": 244,
+    "q2": 0.05626443110648416,
+    "rmse_cv": 2.024766560013455
+   },
+   {
+    "task": "mwila_h2so4_adj",
+    "n": 40,
+    "q2": 0.442734322489001,
+    "rmse_cv": 1.9717495229486834
+   }
+  ]
+ },
+ "shared": {
+  "mean_q2": 0.2494993767977426,
+  "alpha": 5.0,
+  "rho": 0.0,
+  "lam": 1.0,
+  "tasks": [
+   {
+    "task": "mwila_hcl_adj",
+    "n": 244,
+    "q2": 0.05626443110648416,
+    "rmse_cv": 2.024766560013455
+   },
+   {
+    "task": "mwila_h2so4_adj",
+    "n": 40,
+    "q2": 0.442734322489001,
+    "rmse_cv": 1.9717495229486834
+   }
+  ]
+ },
+ "difference": {
+  "q2": -1.3235691728388832,
+  "rmse_cv": 1.4473278903250455,
+  "n": 40,
+  "q2_separate": -1.3235691728388832,
+  "rmse_cv_separate": 1.4473278903250455,
+  "sd_observed": 0.9494872300352438
+ },
+ "selectivity_coefficients": {
+  "max_abs": 2.6435900576943907,
+  "top_molecules": [
+   "N-Methylaniline",
+   "N-Dimethylaniline",
+   "Aniline",
+   "N-Diethylaniline",
+   "N-Di-n-propylaniline"
+  ],
+  "top_values": [
+   -2.6435900576943907,
+   -2.179506532611914,
+   -1.9892285223849424,
+   -1.923976168787749,
+   -1.8658647526573324
+  ]
+ },
+ "seconds": 85.24069857597351
+}

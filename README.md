@@ -50,7 +50,7 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class (see below). |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class (see below). **Two endpoints on one kernel**, tied by a task correlation, so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
@@ -1744,6 +1744,77 @@ python examples/make_hammett_examples.py --symmetrize examples/hammett/hammett_q
 python benchmarks/run_hammett.py --sdf examples/hammett/hammett_qm_sym.sdf --charges-prop q_hirshfeld
 ```
 
+### Two endpoints on one kernel: the selectivity co-field
+
+A separation problem is not one property but two. An extractant has an affinity for americium
+and an affinity for europium, and what matters is the difference; a model of the ratio works
+(`benchmarks/run_am_eu.py` gets q² 0.81 on lg SF) but throws information away, since each
+affinity has its own measurements on partly different compounds, a ligand that binds both metals
+strongly looks to a model of the ratio exactly like one that binds neither, and the ratio cannot
+say *which* affinity a substituent moved. `cmfqsar/multitask.py` fits several endpoints on one
+CMF kernel,
+
+```
+y_t(X) = sum_j c_jt K(X, X_j) + b_t,        c_jt = sum_s a_js T(t, s),
+```
+
+with a task covariance `T = (1 − ρ) I + ρ 11ᵀ` and one bias per endpoint, over the observed
+(molecule, endpoint) pairs rather than a full grid, so missing measurements are the normal case.
+Each endpoint's prediction is linear in the field with its own coefficients, which is the point:
+hand `c[:, Am]` to the co-field code and you have that endpoint's co-field, hand it
+`c[:, Am] − c[:, Eu]` and you have the **selectivity co-field**, a map of where more of a field
+raises one affinity more than the other. Only a model linear in the field can produce it, so it
+is refused under a nonlinear kernel layer. At ρ = 0 the endpoints are fitted separately and share
+only the kernel; towards 1 they borrow strength from each other; at 1 the two coefficient vectors
+coincide and the model could only predict a constant selectivity, so 1 is excluded, and ρ may be
+negative for endpoints that move in opposite directions. Cross-validation holds out whole
+**molecules**, never single measurements, because a molecule with one endpoint in the training set
+and the other in the test set would have its answer handed over by the correlation. In the
+application, *Tools → Model two endpoints* refits the model already built, and an *Endpoint* box
+in the viewer controls then swaps every map, export and table between either endpoint and their
+difference.
+
+**Measured** on the corrosion-inhibitor series (`benchmarks/run_multitask.py`), the practical claim:
+that a sparse endpoint predicts better when it borrows from a rich related one, and that the
+difference is itself modellable. Two kinds of pair are available. The same potency measured in
+hydrochloric and in sulfuric acid, which only the benzene series has enough of (244 against 40,
+r = +0.93), is the structure a separation problem has and the only pair whose difference is a
+selectivity. The potency against the Langmuir adsorption free energy, which most series carry for
+most compounds, is a second view of the same adsorption, anticorrelated with the first, and its
+difference is in mixed units: only the sharing is of interest there. Same alignment, five fields,
+α and λ grids and 10-fold cross-validation over molecules throughout; ρ from −0.95 to 0.95:
+
+| series | endpoints | n | r | q² separate | ρ | q² shared | difference q² |
+|---|---|---|---|---|---|---|---|
+| benzene | HCl / H₂SO₄ potency | 244 / 40 | +0.93 | 0.06 / 0.44 | 0 | 0.06 / 0.44 | −1.32 (n 40) |
+| benzene | potency / ΔG_ads | 244 / 207 | −0.59 | 0.39 / 0.35 | 0 | 0.39 / 0.35 | 0.38 |
+| benzimidazole | potency / ΔG_ads | 96 / 72 | −0.78 | 0.49 / 0.33 | −0.6 | 0.53 / 0.33 | 0.41 → 0.42 |
+| imidazolium | potency / ΔG_ads | 23 / 22 | −0.94 | 0.25 / 0.30 | +0.9 | 0.34 / 0.26 | 0.29 |
+| furan | potency / ΔG_ads | 28 / 12 | −0.98 | 0.06 / −0.03 | −0.4 | 0.07 / −0.03 | −0.05 |
+| triazole | potency / ΔG_ads | 25 / 23 | +0.44 | 0.63 / 0.61 | +0.6 | 0.65 / 0.61 | 0.49 |
+| benzothiazole | potency / ΔG_ads | 20 / 16 | −0.99 | 0.69 / 0.74 | −0.95 | 0.73 / 0.76 | 0.76 → 0.77 |
+
+**The sharing buys nothing that the intervals can see.** The two series large enough to decide,
+benzene with both pairs and benzimidazole on the adsorption energy for its sparse endpoint, chose
+ρ = 0 or gained 0.04 on the rich endpoint and nothing on the sparse one; the small series chose a
+ρ of either sign, once against the sign of the correlation, and gained at most 0.09, on 23
+molecules, which is inside the resolution a set of that size has. A sparse endpoint with forty
+molecules of its own already has what it needs, and the correlation between endpoints is carried
+by the kernel they share before any ρ is fitted. **The medium difference is not predictable.** The
+HCl − H₂SO₄ difference of the forty benzene inhibitors has a standard deviation of 0.95 in the
+MWILA units and q² of −1.32: what distinguishes the two acids for the same molecule is not in its
+fields. The potency − ΔG differences are reproduced only as well as the better endpoint, which is
+all a difference in mixed units can mean. The module stays for the Am/Eu problem it was written
+for, where the two affinities are the same measurement on two ions and the selectivity co-field is
+the object of interest; on these series it shows what it has to show, that ρ = 0 reproduces the
+separate models exactly and that the sharing can be measured against them, and the measurement
+says there was nothing to share.
+
+```bash
+python benchmarks/run_multitask.py            # every pair in the table; results/multitask/table.md
+python benchmarks/run_multitask.py --set 0_c1ccccc1 --tasks mwila_hcl_adj mwila_h2so4_adj
+```
+
 ## Installation
 
 Python ≥ 3.10 with the packages in `requirements.txt`:
@@ -2064,7 +2135,7 @@ The tests verify the analytic kernels against numerical integration, the symmetr
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition
 rules, that the overlap integral of co-field and molecular field on a grid reproduces the kernel
 prediction (primal = dual form), the Tripos increments, the tolerant MOL2 reader, activity tables,
-the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the conformational ensembles they check that the single mode is bit-for-bit what it was, that the ensemble kernel equals the weighted mean of the kernels of the conformation pairs, that one conformation in ensemble mode reproduces the single mode, that the weights behave and fall back to uniform when energies are missing, that contributions still add up to the prediction and fold back onto the atoms, and that a zero seed does not collapse the ensemble. For the multi-instance weighting they check the weighting rules and their limits, that selection recovers a hidden witness where averaging cannot, that beta = 0 is exactly the ensemble kernel, that hard selection is one-hot and settles, that a new molecule is predicted without using its activity, that the folds split molecules and that shuffled activities destroy the fit, and that annealing sharpens the weights. For the pocket docking they check that the score prefers complementary charges and punishes clashes, that burial is what holds a pose in a cavity and the tether what keeps it from wandering, that docking removes a clash, that the internal geometry is preserved to the last decimal because the search is rigid, and that a molecule which cannot be placed is handed back untouched. They also check that weights given on a molecule are read and normalised, that nonsense falls back to uniform, and that the tether can be widened for a molecule that does not start in the site. For the kernel
+the Brent λ search and that the precomputed-kernel nested CV equals the direct one. For the conformational ensembles they check that the single mode is bit-for-bit what it was, that the ensemble kernel equals the weighted mean of the kernels of the conformation pairs, that one conformation in ensemble mode reproduces the single mode, that the weights behave and fall back to uniform when energies are missing, that contributions still add up to the prediction and fold back onto the atoms, and that a zero seed does not collapse the ensemble. For the multi-instance weighting they check the weighting rules and their limits, that selection recovers a hidden witness where averaging cannot, that beta = 0 is exactly the ensemble kernel, that hard selection is one-hot and settles, that a new molecule is predicted without using its activity, that the folds split molecules and that shuffled activities destroy the fit, and that annealing sharpens the weights. For the pocket docking they check that the score prefers complementary charges and punishes clashes, that burial is what holds a pose in a cavity and the tether what keeps it from wandering, that docking removes a clash, that the internal geometry is preserved to the last decimal because the search is rigid, and that a molecule which cannot be placed is handed back untouched. They also check that weights given on a molecule are read and normalised, that nonsense falls back to uniform, and that the tether can be widened for a molecule that does not start in the site. For the two-endpoint model they check that the task covariance is positive definite exactly where it claims to be, that ρ = 0 reproduces two independent single-task models to the last digit, that the effective coefficients regroup the pair-kernel solution exactly, that missing measurements are allowed and counted, that the cross-validation holds out whole molecules, that sharing helps on two noisy views of one signal, that the selectivity is scored on the molecules that carry both endpoints, and that the selectivity co-field is the difference of the two co-fields through the program's own co-field code. For the kernel
 layers they check positive semi-definiteness, that the linear setting leaves the kernel untouched, that
 the self-kernel used for new molecules agrees with the training diagonal, that co-fields, atom
 contributions and posterior variances are refused while the training-molecule decomposition still adds
@@ -2161,6 +2232,7 @@ cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule
 cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence
 cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process, kernel PCA
+cmfqsar/multitask.py    two endpoints on one kernel; the selectivity co-field as their difference
 cmfqsar/protein.py      PDB/mmCIF reading and writing, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
 cmfqsar/gui/            PySide6 application (main window, panels, OpenGL viewer, workers)
