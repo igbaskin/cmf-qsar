@@ -1,0 +1,90 @@
+{
+ "host": "gamma",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "max_guests": 0,
+ "neutral": {
+  "file": "examples/cyclodextrin/gamma_cyclodextrin.csv",
+  "n": 292,
+  "reference": "beclomethasone dipropionate",
+  "reference_heavy_atoms": 36,
+  "mcs_atoms_median": 9.0,
+  "mcs_atoms_min": 0,
+  "mcs_atoms_max": 36,
+  "heavy_atoms_median": 19.0,
+  "mcs_failed": 1,
+  "charged": 34,
+  "align_seconds": 11.91865587234497,
+  "aligned": {
+   "q2": 0.4507546612150036,
+   "rmse_cv": 0.66290985474206,
+   "alpha": 0.5,
+   "lam": 1.0
+  },
+  "invariant": {
+   "q2": 0.4853762910013061,
+   "rmse_cv": 0.6416765680194116,
+   "alpha": 0.1,
+   "lam": 0.1
+  },
+  "counts": {
+   "q2": 0.36273129465561027,
+   "rmse_cv": 0.7140565071752807,
+   "lam": 0.01
+  },
+  "seconds": 37.167006731033325
+ },
+ "ph7": {
+  "file": "examples/cyclodextrin/ph7/gamma_cyclodextrin.csv",
+  "n": 292,
+  "reference": "beclomethasone dipropionate",
+  "reference_heavy_atoms": 36,
+  "mcs_atoms_median": 9.0,
+  "mcs_atoms_min": 0,
+  "mcs_atoms_max": 36,
+  "heavy_atoms_median": 19.0,
+  "mcs_failed": 1,
+  "charged": 122,
+  "align_seconds": 12.920856952667236,
+  "aligned": {
+   "q2": 0.44098177479583744,
+   "rmse_cv": 0.6687815273561245,
+   "alpha": 5.0,
+   "lam": 1.0
+  },
+  "invariant": {
+   "q2": 0.43745092971396593,
+   "rmse_cv": 0.6708902663069439,
+   "alpha": 0.1,
+   "lam": 1.0
+  },
+  "counts": {
+   "q2": 0.3819022701911282,
+   "rmse_cv": 0.7032339994271494,
+   "lam": 0.001
+  },
+  "seconds": 39.35934782028198
+ },
+ "seconds": 93.1848087310791
+}

@@ -97,6 +97,11 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_alignment").report(_r("alignment/table.md")),
                   tables=["alignment/table.md"],
                   readme=["Topomer fields: the same measurement where the alignment is automatic"]),
+        Benchmark("cyclodextrin", "the three kernels where no frame exists: cyclodextrin guest "
+                  "sets, neutral and at pH 7",
+                  "run_cyclodextrin.py", "cyclodextrin", compute=[[]], minutes="20",
+                  report=lambda: _mod("run_cyclodextrin").report(_r("cyclodextrin/table.md")),
+                  tables=["cyclodextrin/table.md"]),
         Benchmark("topomer", "aligned CMF against topomer CMF on the Sutherland sets",
                   "run_topomer.py", "topomer", compute=[[]], minutes="20",
                   report=lambda: _mod("run_topomer").report(

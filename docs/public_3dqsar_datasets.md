@@ -13,8 +13,9 @@ column says.
 
 ## Status, in three words
 
-* **free** — an explicit open licence (MIT, CC0) or produced by this work, so the copy may be
-  redistributed with the program.
+* **free** — an explicit open licence (MIT, CC0, ODbL) or produced by this work, so the copy may be
+  redistributed with the program. Where the licence is share-alike, as ODbL is, the obligation is
+  named in the set's own row and README.
 * **derived** — the structures or properties were produced by this work, but from a published
   table of SMILES, constants or activities whose distributor states no licence; the facts are
   the paper's, the files are ours.
@@ -38,8 +39,9 @@ column says.
 | `thrombin_atom_properties.sdf` | 40 THR molecules carrying per-atom Gasteiger and Crippen properties | `sutherland/THR.sdf` | inherits `sutherland/` | `make_property_example.py` | manual (`prop:` fields) |
 | `am-eu/` (MOL2 + table) | 46 Am/Eu extractants of the 2015 paper with lg SF, superimposed, heavy atoms | the authors' own data (Sitnikov et al. 2015); the author of this program is one of them | free | none (as prepared for that paper) | `run_am_eu.py` |
 | `corrosion/`, `corrosion_hcl/` (23 CSV each, 997 rows each) | congeneric series of iron corrosion inhibitors with the MWILA potency, per medium, and the Langmuir ΔG; the `_hcl` folder protonated at pH 0 | the author's own database of literature measurements, exported from its scaffold tree | free (the author's compilation); the underlying values are published, see below | `scaffold_tree_export.py` | `run_corrosion.py`, `run_corrosion_qm.py`, `run_multitask.py`, `run_cdft_kernels.py` |
+| `cyclodextrin/` (7 tables, 2671 guests, 0.7 MB; `ph7/` the same protonated, 0.8 MB; `upstream/` 4.1 MB) | association constants with a fixed cyclodextrin host, one table per host, activity = log K; the host-guest case, with no frame | Tahıl et al., Chemical Data Collections 45 (2023) 101022, Zenodo 10.5281/zenodo.7575539 | free (ODbL 1.0, share-alike; licence file in `upstream/`) | `make_cyclodextrin_examples.py --fetch --protonate` | `run_cyclodextrin.py` |
 
-Sizes are of the tracked files. The whole of `examples/` is 45 MB, of which the two items of
+Sizes are of the tracked files. The whole of `examples/` is 51 MB, of which the two items of
 unclear status and the two that inherit it are 10 MB, and `mittal/`, derived, is 15 MB.
 
 ## Each set in detail
@@ -154,6 +156,54 @@ them is the author's decision alone. What they lack for a data statement is the 
 measurement: the rows carry the number of papers (`n_papers`) and a database id (`db_id`), not
 the papers. Before the corrosion paper, the export should add a column with the DOIs of the
 sources of every compound, or the database should be deposited and cited.
+
+### The cyclodextrin guest sets
+
+`examples/cyclodextrin/` is the only host-guest collection here and the only one with no frame at
+all. `examples/make_cyclodextrin_examples.py --fetch` downloads the archive deposited by Tahıl,
+Delorme, Le Berre, Monflier, Sayede and Tilloy (Chemical Data Collections 45 (2023) 101022,
+<https://doi.org/10.5281/zenodo.7575539>, 488 965 bytes, MD5 `9260a9a8a86db1da967d91a22ece8cb4`),
+checks that digest, unpacks it into `upstream/`, and reduces their curated table of 3459
+measurements over 15 hosts to one activity table per host: 1162 β-CD guests, 827 α-CD, 292 γ-CD,
+135 HP-β-CD, 135 SBE-β-CD, 77 methyl-β-CD and 43 2,6-di-O-methyl-β-CD. `hosts.csv` keeps the eight
+hosts that fell below the twenty-guest threshold visible. The selection is one window of
+conditions, 298 ± 2 K and pH 7 ± 0.5, and the median of log₁₀ K per guest inside it, with the count
+and the spread of the pooled measurements in their own columns.
+
+The licence is ODbL 1.0, which permits the copy kept here and asks for attribution, that the
+licence travel with the data, and that a publicly used derived database be offered under the same
+terms. The per-host tables are such a derived database and `examples/cyclodextrin/README.md` offers
+them under ODbL 1.0 accordingly. This is the first set in the repository with a share-alike
+condition, and anything built from these tables and then published inherits it.
+
+Three things about these files are approximations rather than data, and the README says so at
+length: the guest SMILES at the top level are the neutral forms as deposited in PubChem, so an acid
+measured at pH 7 is written protonated; repeated measurements are reduced to their median,
+excellent agreement in general but 3.2 log units apart for one α-CD guest; and 1:1 stoichiometry is
+assumed throughout.
+
+The first of those has the remedy that `examples/corrosion_hcl/` uses for 1 M HCl.
+`--protonate` writes `cyclodextrin/ph7/`, the same seven tables with the same activities and the
+structures in their state at pH 7 from Dimorphite-DL, the neutral form kept in `smiles_neutral`
+and the net charge in `charge`. 882 of the 2671 guests change: 793 anions, 342 cations, 1536
+unchanged. There is deliberately no cap on added protons, unlike the corrosion export, because the
+reason for that cap is specific to pH 0, where the rules charge every ring nitrogen although the
+first protonation makes the next site far less basic; at pH 7 only sites with a rule pKa above 7
+are charged. It is worth having both copies: the neutral tables are what the published models of
+this endpoint were built on and so the comparable ones, while the protonated tables are the honest
+structures. Which predicts better is not settled: on a single split of the three natural hosts the
+protonated copies were ahead on all three, but `run_cyclodextrin.py`, over all seven hosts with a
+grid and ten-fold cross-validation, has the invariant kernel improving on four and losing on three,
+the two largest sets among those that improve.
+
+They are here for the alignment question. The host is fixed and the guests share no scaffold, so no
+superposition exists to be curated, which is the regime where `run_alignment.py` finds the
+rotation-invariant autocorrelation kernel of `cmfqsar/invariant.py` ahead of the aligned one. The
+published field-based models of this endpoint are the benchmark to beat: CoMFA with COSMOsar3D
+fields on 60 α-CD guests, GRIND on 126 and on 233 β-CD guests, all an order of magnitude smaller
+than the tables here. `benchmarks/run_cyclodextrin.py` measures the aligned, invariant and count
+kernels on every host, in both variants, with the grids of `run_alignment.py` so that the two
+tables can be read beside each other.
 
 ## What is not in the repository
 

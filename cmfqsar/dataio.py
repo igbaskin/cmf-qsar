@@ -338,7 +338,7 @@ def _read_smiles_table(path: str):
     """Rows of (smiles, name, {other columns}). CSV with header or whitespace-separated .smi."""
     ext = os.path.splitext(path)[1].lower()
     rows = []
-    with open(path, newline="") as fh:
+    with open(path, newline="", encoding="utf-8", errors="replace") as fh:
         if ext in (".csv", ".tsv"):
             dialect = csv.excel_tab if ext == ".tsv" else csv.excel
             reader = csv.reader(fh, dialect)
@@ -538,7 +538,7 @@ def apply_activity_table(ds: Dataset, rows, use_subset: bool = True) -> int:
 def read_activities_csv(path: str) -> Dict[str, float]:
     """name,value CSV (header optional) -> dict."""
     out: Dict[str, float] = {}
-    with open(path, newline="") as fh:
+    with open(path, newline="", encoding="utf-8", errors="replace") as fh:
         for row in csv.reader(fh):
             if len(row) < 2:
                 continue

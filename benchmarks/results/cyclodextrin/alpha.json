@@ -1,0 +1,90 @@
+{
+ "host": "alpha",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "max_guests": 0,
+ "neutral": {
+  "file": "examples/cyclodextrin/alpha_cyclodextrin.csv",
+  "n": 827,
+  "reference": "C1=NC=CC(C2=CC=[N+](CCCCCCCCCCCC[N+]3=CC=C(C4=CC=NC=C4)C=C3)C=C2)=C1",
+  "reference_heavy_atoms": 36,
+  "mcs_atoms_median": 5.0,
+  "mcs_atoms_min": 0,
+  "mcs_atoms_max": 36,
+  "heavy_atoms_median": 12.0,
+  "mcs_failed": 25,
+  "charged": 230,
+  "align_seconds": 1.0952706336975098,
+  "aligned": {
+   "q2": 0.3355768034048402,
+   "rmse_cv": 0.6561505794088439,
+   "alpha": 2.0,
+   "lam": 1.0
+  },
+  "invariant": {
+   "q2": 0.3230012802083976,
+   "rmse_cv": 0.6623309463488108,
+   "alpha": 0.1,
+   "lam": 0.1
+  },
+  "counts": {
+   "q2": 0.17840430609547142,
+   "rmse_cv": 0.7296426310484632,
+   "lam": 1.0
+  },
+  "seconds": 116.49400115013123
+ },
+ "ph7": {
+  "file": "examples/cyclodextrin/ph7/alpha_cyclodextrin.csv",
+  "n": 827,
+  "reference": "C1=NC=CC(C2=CC=[N+](CCCCCCCCCCCC[N+]3=CC=C(C4=CC=NC=C4)C=C3)C=C2)=C1",
+  "reference_heavy_atoms": 36,
+  "mcs_atoms_median": 5.0,
+  "mcs_atoms_min": 0,
+  "mcs_atoms_max": 36,
+  "heavy_atoms_median": 12.0,
+  "mcs_failed": 25,
+  "charged": 444,
+  "align_seconds": 1.0707499980926514,
+  "aligned": {
+   "q2": 0.30297446424918284,
+   "rmse_cv": 0.6720560080715583,
+   "alpha": 5.0,
+   "lam": 1.0
+  },
+  "invariant": {
+   "q2": 0.34043461001724007,
+   "rmse_cv": 0.6537475175104974,
+   "alpha": 0.1,
+   "lam": 0.1
+  },
+  "counts": {
+   "q2": 0.18629347457143508,
+   "rmse_cv": 0.7261310749829808,
+   "lam": 1.0
+  },
+  "seconds": 112.77397871017456
+ },
+ "seconds": 253.88187456130981
+}
