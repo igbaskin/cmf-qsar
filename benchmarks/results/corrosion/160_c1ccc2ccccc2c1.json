@@ -1,0 +1,53 @@
+{
+ "set": "160_c1ccc2ccccc2c1",
+ "file": "examples\\corrosion\\160_c1ccc2ccccc2c1.csv",
+ "n": 15,
+ "core": "c1ccc2ccccc2c1",
+ "reference": "Bis-(2-hydroxy-1-naphthaldehyde) 1,6-hexadiamine (A1)",
+ "align_rmsd_median": 0.020360353050733207,
+ "sites": 8,
+ "n_cuttable": 13,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": -0.16306644507593626,
+  "rmse_cv": 1.6919767101792007,
+  "alpha": 0.5,
+  "lam": 0.1,
+  "n": 15
+ },
+ "invariant": {
+  "q2": -0.21493185911716628,
+  "rmse_cv": 1.7292909868624158,
+  "lam": 10.0,
+  "n": 15
+ },
+ "counts": {
+  "q2": -0.21745405783668947,
+  "rmse_cv": 1.7310850603934025,
+  "lam": 10.0,
+  "n": 15
+ },
+ "seconds": 4.027202367782593
+}

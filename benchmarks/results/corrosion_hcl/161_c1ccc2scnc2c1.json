@@ -1,0 +1,74 @@
+{
+ "set": "161_c1ccc2scnc2c1",
+ "file": "examples\\corrosion_hcl\\161_c1ccc2scnc2c1.csv",
+ "n": 20,
+ "core": "c1ccc2scnc2c1",
+ "reference": "2,2' benzothiazolyl disulfide",
+ "align_rmsd_median": 0.02860855518292875,
+ "sites": 6,
+ "n_cuttable": 20,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.4099856676787753,
+  "rmse_cv": 1.466687088348166,
+  "alpha": 5.0,
+  "lam": 0.1,
+  "n": 20
+ },
+ "aligned_kept": {
+  "q2": 0.4099856676787753,
+  "rmse_cv": 1.466687088348166,
+  "alpha": 5.0,
+  "lam": 0.1,
+  "n": 20
+ },
+ "topomer": {
+  "q2": 0.507145623183962,
+  "rmse_cv": 1.3404959213342311,
+  "alpha": 1.0,
+  "lam": 0.1,
+  "n": 20
+ },
+ "aligned_frag": {
+  "q2": 0.2632733288686965,
+  "rmse_cv": 1.6389261486670386,
+  "alpha": 0.1,
+  "lam": 1.0,
+  "n": 20
+ },
+ "invariant": {
+  "q2": 0.3810614277203682,
+  "rmse_cv": 1.5022076263762394,
+  "lam": 0.01,
+  "n": 20
+ },
+ "counts": {
+  "q2": 0.025578565801937736,
+  "rmse_cv": 1.8848621885736112,
+  "lam": 1.0,
+  "n": 20
+ },
+ "seconds": 11.078101873397827
+}

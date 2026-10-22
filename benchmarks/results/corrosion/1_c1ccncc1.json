@@ -1,0 +1,74 @@
+{
+ "set": "1_c1ccncc1",
+ "file": "examples\\corrosion\\1_c1ccncc1.csv",
+ "n": 109,
+ "core": "c1ccncc1",
+ "reference": "1,3-bis((8-hydroxy-quinolin-5-yl)methyl)-1H-benzimidazol-2(3H)-one",
+ "align_rmsd_median": 0.01837058186475031,
+ "sites": 5,
+ "n_cuttable": 42,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.3633453029805517,
+  "rmse_cv": 1.5122000875969581,
+  "alpha": 0.5,
+  "lam": 1.0,
+  "n": 109
+ },
+ "aligned_kept": {
+  "q2": -0.05101522602327013,
+  "rmse_cv": 1.2727666992072373,
+  "alpha": 0.3,
+  "lam": 10.0,
+  "n": 42
+ },
+ "topomer": {
+  "q2": -0.02687215536324139,
+  "rmse_cv": 1.2580632869582937,
+  "alpha": 0.1,
+  "lam": 10.0,
+  "n": 42
+ },
+ "aligned_frag": {
+  "q2": 0.18251039805598746,
+  "rmse_cv": 1.1224975937607502,
+  "alpha": 0.1,
+  "lam": 0.001,
+  "n": 42
+ },
+ "invariant": {
+  "q2": 0.3524739096885654,
+  "rmse_cv": 1.5250564557789272,
+  "lam": 0.1,
+  "n": 109
+ },
+ "counts": {
+  "q2": 0.07217293157765792,
+  "rmse_cv": 1.8255376923511821,
+  "lam": 1.0,
+  "n": 109
+ },
+ "seconds": 32.623206615448
+}

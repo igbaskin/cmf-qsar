@@ -1657,6 +1657,93 @@ Three rounds each, no displacement limit. One set improved, one degraded badly, 
 rounds after the first consistently made the external prediction worse. The defaults are therefore a
 single round with a 1 Å displacement guard, and the hyper-parameters are refitted on the new geometry.
 
+### A field-based Hammett equation: substituent constants
+
+A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed
+position, so the one hard requirement of the method, a shared frame, is met by construction: put the
+benzene ring of every X–C6H5 in the same place and every substituent sits where the reaction centre of
+benzoic acid would see it. With a linear kernel the CMF prediction is a linear functional of the
+molecular field, so a Hammett constant becomes the integral of the substituent's field against a
+learned weight function, the co-field, which is then the sensitivity map of benzoic acid ionisation
+to charge and bulk around the ring. Hammett's equation appears as a special case of CMF on a
+congeneric series with trivial alignment, and σ_m and σ_p, being the same measurement at two
+positions, should give co-fields that differ in where they sit.
+
+`examples/make_hammett_examples.py` builds 95 monosubstituted benzenes with σ_m and σ_p (and the
+Hansch π for 69 of them) from the compilation of Hansch, Leo and Taft (Chem. Rev. 91 (1991) 165),
+ETKDG + MMFF94, lowest conformer, ring centroid at the origin, ipso carbon on +x, ring in the xy
+plane; charged substituents are left out. The ring frame has two reflections (y → −y, z → −z) that
+map it onto itself while turning a substituent conformer into an equally valid one, so the file
+`hammett_sym.sdf` carries the four images of every molecule as conformers and the ensemble mode
+averages them, giving every field the symmetry of the problem. Modelling the field of the whole
+molecule rather than its difference from benzene changes nothing here: with a free intercept the two
+linear models are the same model, so the co-field is the same.
+
+`benchmarks/run_hammett.py` fits each constant with the five physico-chemical fields and with each
+field alone, α and λ by 10-fold cross-validation (there is no held-out set; with 95 substituents the
+folds are the honest measurement). Gasteiger charges, q²:
+
+| constant (sd) | all five | electrostatic | steric | hydrophobic | HBA | HBD |
+|---|---|---|---|---|---|---|
+| σ_m (0.26) | **0.74** (RMSEcv 0.13) | 0.66 | 0.19 | −0.03 | 0.19 | −0.02 |
+| σ_p (0.38) | **0.70** (RMSEcv 0.21) | 0.68 | 0.14 | −0.01 | 0.24 | 0.01 |
+| π (1.09) | **0.78** (RMSEcv 0.51) | 0.40 | 0.29 | 0.72 | 0.28 | 0.28 |
+
+The electrostatic field carries the Hammett constants, as it should, and the hydrophobic field
+carries π; that π is recovered only to q² 0.72 from a field whose weights are the Crippen increments
+that π is nearly the sum of is a reminder that the model sees the increments only through the
+overlap of their Gaussians, not as a sum. The two electrostatic co-fields
+(`benchmarks/results/hammett/cofields.png`) have the same shape: positive weight over the ring on the
+substituted side and negative lobes 3–5 Å out along the substituent, so a group that leaves the ring
+carbons electron-poor and carries negative charge at its periphery (NO2, CF3, SO2R) raises the
+constant and a donor that does the opposite lowers it. This is the learned form of Topsom's
+electrostatic model of the field effect. The para co-field has the larger weight over the ring and
+the deeper lobes at the substituent; it also has the larger errors, and they are the resonance
+cases that fragment charges cannot see: the strong π donors N(CH3)2, NHCH3 and NHNH2 are predicted
+far too high (N(CH3)2: −0.34 for a tabulated −0.83) and the nitroso group far too low (0.31 for
+0.91). For σ_m the worst cases are the extreme acceptors SO2Cl and NO2, which the kernel treats as
+more of the same. The steric field alone sees a little of σ_m (0.19) and nothing of σ_p: it acts as
+a heavy-atom count, not as anything Hammett measured.
+
+```bash
+python examples/make_hammett_examples.py
+python benchmarks/run_hammett.py
+```
+
+Charges computed on the whole substituted molecule carry the polarisation of the ring by the
+substituent, which is where the resonance information lives, and the pipeline for them already
+exists: `examples/orca_atom_properties.py --fast --no-fukui` on `hammett.sdf` writes Hirshfeld,
+Mulliken, Löwdin and CHELPG charges per atom, `make_hammett_examples.py --symmetrize` carries them to
+the four images, and `run_hammett.py --charges-prop q_hirshfeld` replaces the Gasteiger field with
+them. With Hirshfeld charges from r2SCAN-3c single points on the MMFF geometries (36 s per molecule,
+ten minutes for the set six at a time), q²:
+
+| constant | all five, Hirshfeld | Hirshfeld alone | all five, Gasteiger |
+|---|---|---|---|
+| σ_m | 0.74 (RMSEcv 0.13) | 0.66 | 0.74 |
+| σ_p | **0.80** (RMSEcv 0.17) | 0.71 | 0.70 |
+| π | 0.75 | 0.38 | 0.78 |
+
+σ_m does not move and σ_p does, which is the division of labour the two constants are supposed to
+express: the field effect was already in the fragment charges, the resonance effect was not. The
+donors that the Gasteiger model missed are now right (N(CH3)2 −0.72 for −0.83, NH2 −0.67 for −0.66,
+nitroso 0.68 for 0.91), and the co-fields
+(`benchmarks/results/hammett/cofields_q_hirshfeld.png`) now separate: the σ_m co-field puts its
+positive weight on the two meta carbons and the first atom of the substituent, the σ_p co-field
+spreads it over the whole ring with the para carbon included, and both keep the negative lobes at the
+periphery of the substituent. The selected λ is small (10⁻³) and the fitted r² is 0.998, so the
+cross-validated numbers are the ones to trust and the fine structure of the co-fields beyond the ring
+should be read as the kernel's, not the chemistry's. The remaining σ_p errors are of another kind:
+CONH2 is predicted 1.14 for 0.36 and N(CH3)COCH3 −0.20 for 0.26, both amides whose single MMFF
+conformer puts the carbonyl where the lowest-energy one may not, which is the conformer question the
+ensemble mode is there to answer.
+
+```bash
+python examples/orca_atom_properties.py examples/hammett/hammett.sdf --fast --no-fukui --jobs 6 -o examples/hammett/hammett_qm.sdf
+python examples/make_hammett_examples.py --symmetrize examples/hammett/hammett_qm.sdf
+python benchmarks/run_hammett.py --sdf examples/hammett/hammett_qm_sym.sdf --charges-prop q_hirshfeld
+```
+
 ## Installation
 
 Python ≥ 3.10 with the packages in `requirements.txt`:
@@ -1803,6 +1890,14 @@ activity generated by `examples/make_example_dataset.py`: the activity is the ov
 fields with a hidden pseudo-receptor co-field (steric, electrostatic, hydrophobic and H-bond acceptor
 zones) plus noise (σ = 0.25). A CMF model therefore has to recover those zones; with the default settings
 one obtains q² ≈ 0.87 and R²pred ≈ 0.84 (noise ceiling ≈ 0.94).
+
+`examples/hammett/hammett.sdf`, `hammett_sym.sdf` — 95 monosubstituted benzenes with the Hammett
+constants `sigma_m` and `sigma_p` (and the Hansch `pi` for 69) of Hansch, Leo & Taft, Chem. Rev. 91
+(1991) 165, transcribed from memory of that table (check a single number against it before quoting),
+placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane by
+`examples/make_hammett_examples.py`; the `_sym` file carries the four symmetry images of every
+molecule as conformers for the ensemble mode (`--ensemble-by name --conformations ensemble`). See
+*A field-based Hammett equation* above and `benchmarks/run_hammett.py`.
 
 `examples/steroids_cbg.sdf` — the classic CoMFA benchmark: the 31 steroids of Cramer, Patterson & Bunce
 (J. Am. Chem. Soc. 110 (1988) 5959) with their affinities to corticosteroid-binding globulin
@@ -2030,7 +2125,11 @@ kernel over a noise one and agrees there with cross-validation, and that one cla
 all, that the alignment-free kernel keeps the atom counts rather than cancelling them and gives 1 for a
 molecule whose geometry has been destroyed but whose atoms have not, that the attenuated kernel
 converges on the limit the default writes down directly, and that the limit does not move at all when
-every molecule is rotated and translated.
+every molecule is rotated and translated. For the Hammett example they check the table, that the ring
+frame undoes an arbitrary rigid motion, that a built molecule sits in it with its substituent leaning
+the agreed way, that the four symmetry images are the reflections they should be and keep every atom
+property through the file, and that a dozen substituents run through the benchmark script end to end
+with a co-field that is symmetric in y and z.
 
 ## Project layout
 

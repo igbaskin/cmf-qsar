@@ -1,0 +1,53 @@
+{
+ "set": "3_c1cscn1",
+ "file": "examples\\corrosion_hcl\\3_c1cscn1.csv",
+ "n": 27,
+ "core": "c1cscn1",
+ "reference": "1-(4-methoxyphenyl)-3-(4-phenylthiazol-2-yl)thiourea (compound 1)",
+ "align_rmsd_median": 0.015801859945875817,
+ "sites": 4,
+ "n_cuttable": 7,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.4648885803603112,
+  "rmse_cv": 1.4532745664951676,
+  "alpha": 2.0,
+  "lam": 0.001,
+  "n": 27
+ },
+ "invariant": {
+  "q2": 0.46217990211796467,
+  "rmse_cv": 1.4569480858252328,
+  "lam": 0.1,
+  "n": 27
+ },
+ "counts": {
+  "q2": 0.1642566188588407,
+  "rmse_cv": 1.8161931627386705,
+  "lam": 0.001,
+  "n": 27
+ },
+ "seconds": 6.276134729385376
+}

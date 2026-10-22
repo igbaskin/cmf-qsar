@@ -1,0 +1,24 @@
+smiles,name,activity,mw,n_papers,dG_ads,scaffold,depth,mwila_hcl_adj,mwila_h2so4_raw,mwila_h2so4_adj,mwila_pooled_raw,mwila_pooled_adj,leaf_scaffold,n_rows,db_id,smiles_neutral,charge
+CCCCCCn1cc[n+](C)c1,1-Hexyl-3-methylimidazolium iodide,9.34,294.2,1,-35.2,c1c[nH+]c[nH]1,1,-0.21,,,9.34,-0.21,c1c[nH+]c[nH]1,15,808,CCCCCCn1cc[n+](C)c1,1
+CCCCn1cc[n+](C)c1,1-Butyl-3-methylimidazolium iodide,8.45,266.1,1,-33.41,c1c[nH+]c[nH]1,1,-0.85,,,8.45,-0.85,c1c[nH+]c[nH]1,15,809,CCCCn1cc[n+](C)c1,1
+CCCn1cc[n+](C)c1,1-Methyl-3-propylimidazolium iodide,8.14,252.1,1,-32.77,c1c[nH+]c[nH]1,1,-1.03,,,8.14,-1.03,c1c[nH+]c[nH]1,15,810,CCCn1cc[n+](C)c1,1
+CCCCCCCCCC[n+]1ccn(C)c1,3-Decyl-1-methyl-1H-imidazol-3-ium tetrafluoroborate,8.28,310.2,1,,c1c[nH+]c[nH]1,1,-1.4,,,8.28,-1.4,c1c[nH+]c[nH]1,8,876,CCCCCCCCCC[n+]1ccn(C)c1,1
+CCCCCCCCCCCC[n+]1ccn(C)c1,3-Dodecyl-1-methyl-1H-imidazol-3-ium tetrafluoroborate,8.6,338.2,1,-32.62,c1c[nH+]c[nH]1,1,-1.3,,,8.6,-1.3,c1c[nH+]c[nH]1,8,877,CCCCCCCCCCCC[n+]1ccn(C)c1,1
+CCCCCCCCCC[n+]1ccn(C)c1C,"3-Decyl-1,2-dimethyl-1H-imidazol-3-ium tetrafluoroborate",9.1,324.2,1,-34.34,c1c[nH+]c[nH]1,1,-0.69,,,9.1,-0.69,c1c[nH+]c[nH]1,8,878,CCCCCCCCCC[n+]1ccn(C)c1C,1
+CCCCCCCCCCCC[n+]1ccn(C)c1C,"3-Dodecyl-1,2-dimethyl-1H-imidazol-3-ium tetrafluoroborate",9.88,352.3,1,-34.8,c1c[nH+]c[nH]1,1,-0.12,,,9.88,-0.12,c1c[nH+]c[nH]1,8,879,CCCCCCCCCCCC[n+]1ccn(C)c1C,1
+c1ccc(Cn2cc[n+](Cc3ccccc3)c2)cc1,"1,3-Dibenzylimidazolium acetate",9.71,308.4,1,-32.5,c1c[nH+]c[nH]1,1,0.05,6.67,-3,7.8,-1.87,c1ccc(Cn2cc[n+](Cc3ccccc3)c2)cc1,8,880,c1ccc(Cn2cc[n+](Cc3ccccc3)c2)cc1,1
+c1ccc(Cn2cc[n+](Cc3ccccc3)c2)cc1,"1,3-Dibenzylimidazolium dodecanoate",9.21,448.6,1,-32.5,c1c[nH+]c[nH]1,1,-1.39,8.08,-2.52,9.12,-1.48,c1ccc(Cn2cc[n+](Cc3ccccc3)c2)cc1,15,881,c1ccc(Cn2cc[n+](Cc3ccccc3)c2)cc1,1
+Cn1c[n+](CC(=O)c2ccc(Cl)cc2)c2ccccc21,3-(4-Chlorobenzoylmethyl)-1-methylbenzimidazolium bromide,8.88,365.7,1,-33.7,c1c[nH+]c[nH]1,1,-1.21,,,8.88,-1.21,O=C(C[n+]1c[nH]c2ccccc21)c1ccccc1,18,882,Cn1c[n+](CC(=O)c2ccc(Cl)cc2)c2ccccc21,1
+OCCCC[n+]1ccn(CCc2ccccc2)c1,3-(4-Hydroxybutyl)-1-phenethyl-1H-imidazol-3-ium chloride,10.21,280.8,1,-40.22,c1c[nH+]c[nH]1,1,0.78,,,10.21,0.78,c1ccc(CCn2cc[nH+]c2)cc1,18,1101,OCCCC[n+]1ccn(CCc2ccccc2)c1,1
+Clc1ccccc1C[n+]1ccn(CCc2ccccc2)c1,3-(2-Chlorobenzyl)-1-phenethyl-1H-imidazol-3-ium chloride,9.94,333.3,1,-39.78,c1c[nH+]c[nH]1,1,0.08,,,9.94,0.08,c1ccc(CCn2cc[n+](Cc3ccccc3)c2)cc1,18,1102,Clc1ccccc1C[n+]1ccn(CCc2ccccc2)c1,1
+Cn1cc[n+](CCO)c1,1-(2-Hydroxyethyl)-3-methylimidazolium hexafluorophosphate,6.07,272.1,1,-26.46,c1c[nH+]c[nH]1,1,-3.29,,,6.07,-3.29,c1c[nH+]c[nH]1,10,1127,Cn1cc[n+](CCO)c1,1
+CCCCCCCn1c(CC(C)c2ccccc2)[n+](CCCCCCC)c2ccccc21,"1,3-Diheptyl-2-(2-phenyl-propyl)-3H-benzimidazol-1-ium chloride",9.05,469.2,1,-34.7,c1c[nH+]c[nH]1,1,-1.66,,,9.05,-1.66,c1ccc(CCc2[nH]c3ccccc3[nH+]2)cc1,35,1192,CCCCCCCn1c(CC(C)c2ccccc2)[n+](CCCCCCC)c2ccccc21,1
+CCCCCCCCn1c(CC(C)c2ccccc2)[n+](CCCCCCCC)c2ccccc21,"1,3-Dioctyl-2-(2-phenyl-propyl)-3H-benzimidazol-1-ium chloride",10.21,497.2,1,-35.8,c1c[nH+]c[nH]1,1,-0.65,,,10.21,-0.65,c1ccc(CCc2[nH]c3ccccc3[nH+]2)cc1,35,1193,CCCCCCCCn1c(CC(C)c2ccccc2)[n+](CCCCCCCC)c2ccccc21,1
+CCCCCCCCCCn1c(CC(C)c2ccccc2)[n+](CCCCCCCCCC)c2ccccc21,"1,3-Bis-decyl-2-(2-phenyl-propyl)-3H-benzoimidazol-1-ium chloride",10.87,553.3,1,-38.6,c1c[nH+]c[nH]1,1,-0.25,,,10.87,-0.25,c1ccc(CCc2[nH]c3ccccc3[nH+]2)cc1,35,1194,CCCCCCCCCCn1c(CC(C)c2ccccc2)[n+](CCCCCCCCCC)c2ccccc21,1
+c1ccc(CCn2cc[n+](Cc3ccccc3)c2)cc1,"3-benzyl-1-phenethyl-1H-imidazol-3-ium bromide [Met-IM+, Br-]",10.14,343.3,1,-39.5,c1c[nH+]c[nH]1,1,0.21,,,10.14,0.21,c1ccc(CCn2cc[n+](Cc3ccccc3)c2)cc1,19,1320,c1ccc(CCn2cc[n+](Cc3ccccc3)c2)cc1,1
+c1ccc(CCn2cc[n+](CCc3ccccc3)c2)cc1,"1,3-diphenethyl-1H-imidazol-3-ium bromide [Eth-IM+, Br-]",10.01,357.3,1,-38.64,c1c[nH+]c[nH]1,1,-0.02,,,10.01,-0.02,c1ccc(CCn2cc[n+](CCc3ccccc3)c2)cc1,19,1321,c1ccc(CCn2cc[n+](CCc3ccccc3)c2)cc1,1
+c1ccc(CCC[n+]2ccn(CCc3ccccc3)c2)cc1,"1-phenethyl-3-(3-phenylpropyl)-1H-imidazol-3-ium bromide [Prop-IM+, Br-]",10.46,371.3,1,-40.25,c1c[nH+]c[nH]1,1,0.34,,,10.46,0.34,c1ccc(CCC[n+]2ccn(CCc3ccccc3)c2)cc1,19,1322,c1ccc(CCC[n+]2ccn(CCc3ccccc3)c2)cc1,1
+O=C(Cn1c[nH+]c2ccccc21)c1ccccc1,3-Benzoylmethyl benzimidazolium hexafluoroantimonate,11.92,473,1,-43.01,c1c[nH+]c[nH]1,1,1.19,,,11.92,1.19,O=C(C[n+]1c[nH]c2ccccc21)c1ccccc1,24,1639,O=C(C[n+]1c[nH]c2ccccc21)c1ccccc1,1
+CCCCn1cc[n+](C)c1,1-butyl-3-methylimidazolium chloride,6.93,174.7,1,-27.3,c1c[nH+]c[nH]1,1,-1.32,,,6.93,-1.32,c1c[nH+]c[nH]1,24,1674,CCCCn1cc[n+](C)c1,1
+CCCCn1cc[n+](C)c1,1-butyl-3-methylimidazolium hydrogen sulfate ([BMIM]HSO4),7.61,236.3,1,-28.95,c1c[nH+]c[nH]1,1,-1.39,,,7.61,-1.39,c1c[nH+]c[nH]1,24,1675,CCCCn1cc[n+](C)c1,1
+CCCC[n+]1ccn(C)c1,"1-butyl-3-methylimidazolium bromide, [BMIm]Br",6.36,219.1,1,-26.11,c1c[nH+]c[nH]1,1,-2.46,,,6.36,-2.46,c1c[nH+]c[nH]1,14,2125,CCCC[n+]1ccn(C)c1,1

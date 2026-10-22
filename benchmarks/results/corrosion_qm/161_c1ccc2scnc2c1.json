@@ -1,0 +1,81 @@
+{
+ "set": "161_c1ccc2scnc2c1",
+ "n_series": 20,
+ "n": 20,
+ "core": "c1ccc2scnc2c1",
+ "reference": "2,2' benzothiazolyl disulfide",
+ "align_rmsd_median": 0.00803154208076147,
+ "level": "r2SCAN-3c TightSCF",
+ "descriptors": [
+  "E_homo",
+  "E_lumo",
+  "gap",
+  "dipole",
+  "hardness",
+  "electrophilicity"
+ ],
+ "fukui_fields": [
+  "fukui_plus",
+  "fukui_minus",
+  "dual"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "failed": [],
+ "base": {
+  "q2": 0.6892259501327207,
+  "rmse_cv": 1.0644580771220185,
+  "alpha": 0.3,
+  "lam": 0.001,
+  "n": 20
+ },
+ "qm_charges": {
+  "q2": 0.5255938367692354,
+  "rmse_cv": 1.3151683513974517,
+  "alpha": 1.0,
+  "lam": 0.001,
+  "n": 20
+ },
+ "base+fukui": {
+  "q2": 0.5476838336375123,
+  "rmse_cv": 1.284183966250802,
+  "alpha": 0.3,
+  "lam": 0.001,
+  "n": 20
+ },
+ "base+desc": {
+  "q2": 0.5853286800069675,
+  "rmse_cv": 1.2295839558676245,
+  "alpha": 0.5,
+  "lam": 0.001,
+  "n": 20
+ },
+ "base+both": {
+  "q2": 0.4501621294345288,
+  "rmse_cv": 1.415870432602633,
+  "alpha": 0.5,
+  "lam": 0.001,
+  "n": 20
+ },
+ "desc_only": {
+  "q2": 0.10713366745491615,
+  "rmse_cv": 1.804261207605873,
+  "lam": 10.0,
+  "n": 20
+ },
+ "seconds": 1032.6807940006256
+}

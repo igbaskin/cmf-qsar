@@ -1,0 +1,18 @@
+smiles,name,activity,mw,n_papers,dG_ads,scaffold,depth,mwila_hcl_adj,mwila_h2so4_raw,mwila_h2so4_adj,mwila_pooled_raw,mwila_pooled_adj,leaf_scaffold,n_rows,db_id
+CN(C)c1ccc(-c2nnc(-c3ccc(N(C)C)cc3)o2)cc1,"2,5-Bis(p-(dimethylamino)phenyl)-1,3,4-oxadiazole",12.25,308.4,2,-42.28,c1nnco1,1,2.58,10.7,1.03,11.39,1.72,c1ccc(-c2nnc(-c3ccccc3)o2)cc1,13,1
+O=[N+]([O-])c1ccc(-c2nnc(-c3ccc([N+](=O)[O-])cc3)o2)cc1,"2,5-Bis(4-nitrophenyl)-1,3,4-oxadiazole",6.68,312.2,2,,c1nnco1,1,-3.02,,,6.68,-3.02,c1ccc(-c2nnc(-c3ccccc3)o2)cc1,13,9
+Nc1ccc(-c2nnc(-c3ccc(N)cc3)o2)cc1,"4,4'-(1,3,4-Oxadiazole-2,5-diyl)dianiline",11.08,252.3,2,-38.07,c1nnco1,1,1.92,,,11.08,1.92,c1ccc(-c2nnc(-c3ccccc3)o2)cc1,13,10
+c1ccc(-c2nnc(-c3ccccn3)o2)nc1,"Pyridine, 2,2'-(1,3,4-oxadiazol-2,5-ylene)di-",11.58,224.2,2,-36.97,c1nnco1,1,2.71,8.95,0.07,9.41,0.54,c1ccc(-c2nnc(-c3ccccn3)o2)nc1,28,13
+Oc1ccccc1-c1nnc(-c2ccccc2O)o1,"1,3,4-Oxadiazole, 2,5-(o-hydroxyphenyl)-",12.27,254.2,1,-39.5,c1nnco1,1,3.08,9.09,-0.1,10.41,1.23,c1ccc(-c2nnc(-c3ccccc3)o2)cc1,16,342
+COc1ccccc1-c1nnc(-c2ccccc2OC)o1,"2,5-Bis(2-methoxyphenyl)-1,3,4-oxadiazole",12.19,282.3,1,-39.8,c1nnco1,1,2.74,10.55,1.1,11.93,2.48,c1ccc(-c2nnc(-c3ccccc3)o2)cc1,39,343
+COc1cccc(-c2nnc(-c3cccc(OC)c3)o2)c1,"2,5-Bis(3-methoxyphenyl)-1,3,4-oxadiazole",12.07,282.3,1,-41.16,c1nnco1,1,2.62,,,12.07,2.62,c1ccc(-c2nnc(-c3ccccc3)o2)cc1,8,344
+COc1ccc(-c2nnc(-c3ccc(OC)cc3)o2)cc1,"2,5-Bis(4-methoxyphenyl)-1,3,4-oxadiazole",12.15,282.3,2,-40.03,c1nnco1,1,2.7,9.94,0.49,10.24,0.79,c1ccc(-c2nnc(-c3ccccc3)o2)cc1,44,345
+O=C(CCc1nnc(Nc2ccccc2)o1)c1ccccc1,"1-Propanone, 1-phenyl-3-[5-(phenylamino)-1,3,4-oxadiazol-2-yl]-",8.43,293.3,1,-32.81,c1nnco1,1,-1.12,,,8.43,-1.12,O=C(CCc1nnc(Nc2ccccc2)o1)c1ccccc1,55,441
+Nc1nnc(-c2ccc([N+](=O)[O-])o2)o1,"2-Amino-5-(5-nitro-2-furyl)-1,3,4-oxadiazole",6.14,196.1,1,-39,c1nnco1,1,-2.4,,,6.14,-2.4,c1coc(-c2nnco2)c1,40,448
+Oc1ccccc1-c1nnc(S)o1,"2-Hydroxyphenyl-5-mercapto-1-oxa-3,4-diazole (HMO)",6.67,194.2,1,,c1nnco1,1,-1.84,7.12,-1.4,6.89,-1.63,c1ccc(-c2nnco2)cc1,34,1751
+Sc1nnc(-c2ccccc2)o1,"2-Phenyl-5-mercapto-1-oxa-3,4-diazole (PMO)",7.25,178.2,1,-31.05,c1nnco1,1,-1.05,8.84,0.54,8.08,-0.23,c1ccc(-c2nnco2)cc1,34,1752
+Sc1nnc(C=Cc2ccccc2)o1,"2-Cinnamyl-5-mercapto-1-oxa-3,4-diazole (CMO)",8.34,204.2,1,-33.39,c1nnco1,1,-0.3,9.36,0.71,9.04,0.4,C(=Cc1nnco1)c1ccccc1,34,1753
+CCCCCCCCCCCc1nnc(S)o1,"2-undecane-5-mercapto-1-oxa-3,4-diazole",10.4,256.4,2,-39.33,c1nnco1,1,1.19,10.69,1.48,10.19,0.98,c1nnco1,26,1771
+CCCCCCCCC=CCCCCCCCc1nnc(S)o1,"2-heptadecene-5-mercapto-1-oxa-3,4-diazole",10.8,338.6,2,-39.58,c1nnco1,1,0.9,11.35,1.45,10.8,0.9,c1nnco1,22,1772
+C=CCCCCCCCCc1nnc(S)o1,"2-decene-5-mercapto-1-oxa-3,4-diazole",10.89,240.4,2,-40.06,c1nnco1,1,1.85,11.58,2.53,10.89,1.85,c1nnco1,22,1773
+Nc1ccccc1-c1nnc(-c2ccccc2N)o1,"2,5-bis(2-aminophenyl)-1,3,4-oxadiazole (2-APOX)",10.81,252.3,1,-39.61,c1nnco1,1,1.65,,,10.81,1.65,c1ccc(-c2nnc(-c3ccccc3)o2)cc1,18,1884

@@ -1,0 +1,74 @@
+{
+ "set": "13_c1c_nH_nn1",
+ "file": "examples\\corrosion_hcl\\13_c1c_nH_nn1.csv",
+ "n": 25,
+ "core": "c1c[nH]nn1",
+ "reference": "1,3-Bis[[1-[(4-chlorophenyl)methyl]triazol-4-yl]methyl]-5-methylpyrimidine-2,4-dione",
+ "align_rmsd_median": 0.09407228139094218,
+ "sites": 5,
+ "n_cuttable": 20,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.5187499917880602,
+  "rmse_cv": 1.3743912289565263,
+  "alpha": 0.5,
+  "lam": 0.1,
+  "n": 25
+ },
+ "aligned_kept": {
+  "q2": 0.4710934395167258,
+  "rmse_cv": 0.9776551826716745,
+  "alpha": 0.5,
+  "lam": 0.1,
+  "n": 20
+ },
+ "topomer": {
+  "q2": 0.6171034897936651,
+  "rmse_cv": 0.8318345102360678,
+  "alpha": 0.1,
+  "lam": 1.0,
+  "n": 20
+ },
+ "aligned_frag": {
+  "q2": 0.42098013774776244,
+  "rmse_cv": 1.0229230402015244,
+  "alpha": 0.1,
+  "lam": 0.001,
+  "n": 20
+ },
+ "invariant": {
+  "q2": 0.7809557794698458,
+  "rmse_cv": 0.9272373121659963,
+  "lam": 0.1,
+  "n": 25
+ },
+ "counts": {
+  "q2": 0.3396285071101448,
+  "rmse_cv": 1.6099750975418774,
+  "lam": 0.001,
+  "n": 25
+ },
+ "seconds": 23.068849086761475
+}

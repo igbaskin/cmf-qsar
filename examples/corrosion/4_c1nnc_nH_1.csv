@@ -1,0 +1,41 @@
+smiles,name,activity,mw,n_papers,dG_ads,scaffold,depth,mwila_hcl_adj,mwila_h2so4_raw,mwila_h2so4_adj,mwila_pooled_raw,mwila_pooled_adj,leaf_scaffold,n_rows,db_id
+S=C1c2ccccc2-n2c(-c3ccccc3)nnc2C2CCCN12,"9H-Pyrrolo[2,1-c]-1,2,4-triazolo[4,3-a][1,4]benzodiazepine-9-thione, 11,12,13,13a-tetrahydro-3-phenyl-",10.74,332.4,1,-41.6,c1nnc[nH]1,1,0.88,,,10.74,0.88,S=C1c2ccccc2-n2c(-c3ccccc3)nnc2C2CCCN12,34,231
+Nn1cnnc1,"4-Amino-1,2,4-triazole",6.66,84.1,1,-28.7,c1nnc[nH]1,1,0.23,,,6.66,0.23,c1nnc[nH]1,6,283
+Oc1ccc(C2=Nn3c(S)nnc3NN2)cc1,"4-(3-mercapto-5,6,7,8-tetrahydro-[1,2,4]triazolo[4,3-b][1,2,4,5]tetrazin-6-yl)phenol",7.32,248.3,1,-29.46,c1nnc[nH]1,1,-1.81,,,7.32,-1.81,c1ccc(C2=Nn3cnnc3NN2)cc1,12,449
+COc1ccc(/C=N/n2c(CO)nnc2CO)cc1,"(E)-(4-(4-methoxybenzylideneamino)-4H-1,2,4-triazole-3,5-diyl) Dimethanol",8.69,262.3,1,-37.22,c1nnc[nH]1,1,-0.57,,,8.69,-0.57,C(=Nn1cnnc1)c1ccccc1,24,583
+Cc1cccc(-c2nnc(-c3cccc(C)c3)n2N)c1,"3,5-Bis(3-methylphenyl)-1,2,4-triazol-4-amine",10.06,264.3,2,-36.14,c1nnc[nH]1,1,0.77,7.91,-1.38,9.62,0.34,c1ccc(-c2nnc(-c3ccccc3)[nH]2)cc1,23,612
+COc1ccc(-c2nnc(-c3ccc(OC)cc3)n2N)cc1,"4H-1,2,4-Triazol-4-amine, 3,5-bis(4-methoxyphenyl)-",11.94,296.3,2,-40.76,c1nnc[nH]1,1,2.38,,,11.4,1.84,c1ccc(-c2nnc(-c3ccccc3)[nH]2)cc1,30,620
+CCN1C(=O)CC(C)=Nn2cnnc21,"9-Ethyl-6-methyl-7H-[1,2,4]triazolo[4,3-b][1,2,4]triazepin-8(9H)-one",11.77,193.2,1,-44.31,c1nnc[nH]1,1,3.26,,,11.77,3.26,O=C1CC=Nn2cnnc2N1,11,817
+CCCCCCCCCCC1C(=O)N(CCCCCCCCCC)c2nncn2N=C1C,"7,9-Didecyl-6-methyl-7H-[1,2,4]triazolo[4,3-b][1,2,4]triazepin-8(9H)-one",11.93,445.7,1,-45.15,c1nnc[nH]1,1,1.34,,,11.93,1.34,O=C1CC=Nn2cnnc2N1,11,818
+CCCCCCCCCCCCCCC1C(=O)N(CCCCCCCCCCCCCC)c2nncn2N=C1C,"7,9-Ditetradecyl-6-methyl-7H-[1,2,4]triazolo[4,3-b][1,2,4]triazepin-8(9H)-one",11.75,557.9,1,-45.2,c1nnc[nH]1,1,0.61,,,11.75,0.61,O=C1CC=Nn2cnnc2N1,11,819
+Sc1nnc(N=Cc2ccco2)[nH]1,"5-((Furan-2-yl)methyleneamino)-2H-1,2,4-triazole-3-thiol",8.64,194.2,1,-33.75,c1nnc[nH]1,1,0.13,,,8.64,0.13,C(=Nc1nnc[nH]1)c1ccco1,8,960
+Sc1nnc(N=Cc2cccs2)[nH]1,"5-((Thiophen-2-yl)methyleneamino)-2H-1,2,4-triazole-3-thiol",9.01,210.3,1,-35.39,c1nnc[nH]1,1,0.29,,,9.01,0.29,C(=Nc1nnc[nH]1)c1cccs1,8,961
+Oc1ccccc1-n1cnnc1,"2-(4H-1,2,4-Triazol-4-yl)phenol",10.11,161.2,1,-35.07,c1nnc[nH]1,1,2.05,,,10.11,2.05,c1ccc(-n2cnnc2)cc1,6,1005
+c1ccc(CSc2nnc[nH]2)cc1,"5-(Benzylsulfanyl)-4H-1,2,4-triazole",10.25,191.3,1,-39.3,c1nnc[nH]1,1,1.77,,,10.25,1.77,c1ccc(CSc2nnc[nH]2)cc1,16,1085
+Nn1c(Cc2cccs2)nnc1Cc1cccs1,"3,5-Bis(2-thienylmethyl)-4-amino-1,2,4-triazole",12.88,276.4,1,-45.33,c1nnc[nH]1,1,3.48,,,12.88,3.48,c1csc(Cc2nnc(Cc3cccs3)[nH]2)c1,12,1131
+CCCCCCCC(=O)Nn1cnnc1,"N-(4H-1,2,4-triazol-4-yl)octanamide",12.65,210.3,1,-43.37,c1nnc[nH]1,1,3.94,,,12.65,3.93,c1nnc[nH]1,28,1317
+Sc1nnc(-c2ccncc2)n1N=CC=Cc1ccccc1,"(3-Phenylallylidene)amino-5-(pyridine-4-yl)-4H-1,2,4-triazole-3-thiol (SB-1)",10.57,307.4,1,-35.3,c1nnc[nH]1,1,0.91,,,10.57,0.91,C(=Cc1ccccc1)C=Nn1cnnc1-c1ccncc1,9,1363
+Oc1ccccc1C=Nn1c(S)nnc1-c1ccncc1,"3-Mercapto-5-(pyridine-4-yl)-4H-1,2,4-triazole-4-yl)imino)methyl)phenol (SB-2) [i.e. 2-(((3-mercapto-5-(pyridin-4-yl)-4H-1,2,4-triazol-4-yl)imino)methyl)phenol]",10.1,297.3,1,-33.45,c1nnc[nH]1,1,0.52,,,10.1,0.52,C(=Nn1cnnc1-c1ccncc1)c1ccccc1,9,1364
+O=[N+]([O-])c1ccc(C=Nn2c(S)nnc2-c2ccncc2)cc1,"(4-Nitrobenzylidene)amino)-5-(pyridine-4-yl)-4H-1,2,4-triazole-3-thiol (SB-3)",9.48,326.3,1,-32.3,c1nnc[nH]1,1,-0.32,,,9.48,-0.32,C(=Nn1cnnc1-c1ccncc1)c1ccccc1,9,1365
+Sc1nnc(-c2cccc(-c3nnc(S)n3-c3ccccc3)n2)n1-c1ccccc1,"5,5'-(Pyridine-2,6-diyl)bis(4-phenyl-4H-1,2,4-triazole-3-thiol)",8.3,429.5,1,-33.61,c1nnc[nH]1,1,-2.19,,,8.3,-2.19,c1ccc(-n2cnnc2-c2cccc(-c3nncn3-c3ccccc3)n2)cc1,18,1617
+Nn1c(S)nnc1-c1ccncc1,"4-amino-5-(pyridin-4-yl)-4H-1,2,4-triazol-3-thiol (APTT)",9.31,193.2,2,-33.84,c1nnc[nH]1,1,0.81,,,9.31,0.81,c1cc(-c2nnc[nH]2)ccn1,30,1634
+Nn1c(-c2ccccn2)nnc1-c1ccccn1,"3,5-bis(2-pyridyl)-4-amino-1,2,4-triazole",10.22,238.2,5,-36.32,c1nnc[nH]1,1,1.19,8.38,-0.65,9.58,0.55,c1ccc(-c2nnc(-c3ccccn3)[nH]2)nc1,76,1697
+Nn1c(-c2cccnc2)nnc1-c1cccnc1,"3,5-bis(3-pyridyl)-4-amino-1,2,4-triazole",10.08,238.2,3,-33.94,c1nnc[nH]1,1,1.05,,,9.58,0.55,c1cncc(-c2nnc(-c3cccnc3)[nH]2)c1,11,1698
+Nn1c(-c2ccncc2)nnc1-c1ccncc1,"3,5-bis(4-pyridyl)-4-amino-1,2,4-triazole",9.38,238.2,3,-33.55,c1nnc[nH]1,1,0.35,,,9.11,0.09,c1cc(-c2nnc(-c3ccncc3)[nH]2)ccn1,11,1699
+CC(=NOCn1cnnc1)c1ccc(Cl)cc1,"4-chloro-acetophenone-O-1'-(1',3',4'-triazolyl)-metheneoxime",9.45,250.7,1,-34.15,c1nnc[nH]1,1,0.3,,,9.45,0.3,C(=NOCn1cnnc1)c1ccccc1,15,1700
+COc1ccc(C(C)=NOCn2cnnc2)cc1,"4-methoxyl-acetophenone-O-1'-(1',3',4'-triazolyl)-metheneoxime",9.62,246.3,1,-34.91,c1nnc[nH]1,1,0.52,,,9.62,0.52,C(=NOCn1cnnc1)c1ccccc1,15,1701
+CC(=NOCn1cnnc1)c1ccc(F)cc1,"4-fluoro-acetophenone-O-1'-(1',3',4'-triazolyl)-metheneoxime",9.96,234.2,1,-34.66,c1nnc[nH]1,1,0.98,,,9.96,0.98,C(=NOCn1cnnc1)c1ccccc1,15,1702
+Sc1nncn1N=Cc1ccccc1,"Compound 1 (4-benzylideneamino-3-mercapto-1,2,4-triazole)",8.6,204.3,1,,c1nnc[nH]1,1,-0.04,,,8.6,-0.04,C(=Nn1cnnc1)c1ccccc1,3,1719
+Cc1nnc(S)n1N=Cc1ccccc1,Compound 2 (5-methyl),8.83,218.3,1,,c1nnc[nH]1,1,0.03,,,8.83,0.03,C(=Nn1cnnc1)c1ccccc1,3,1720
+CCc1nnc(S)n1N=Cc1ccccc1,Compound 3 (5-ethyl),9.43,232.3,1,,c1nnc[nH]1,1,0.46,,,9.43,0.46,C(=Nn1cnnc1)c1ccccc1,3,1721
+Sc1nnc(-c2ccccc2)n1N=Cc1ccccc1,Compound 4 (5-phenyl),10.5,280.4,1,-37.62,c1nnc[nH]1,1,1.07,,,10.5,1.07,C(=Nn1cnnc1-c1ccccc1)c1ccccc1,12,1722
+Nn1cnnc1S,"4-amino-5-mercapto-1,2,4-triazole (AMT)",6.44,116.2,2,,c1nnc[nH]1,1,-0.8,,,6.44,-0.8,c1nnc[nH]1,2,1724
+CCCCCCCCCCCc1nnc(S)n1-c1ccccc1,"4-Phenyl-5-undecyl-4H-[1,2,4]-triazole-3-thiol (PUTT)",10.76,331.5,3,-40.54,c1nnc[nH]1,1,0.91,11.32,1.47,10.86,1.01,c1ccc(-n2cnnc2)cc1,41,1748
+CCCCCCCCC=CCCCCCCCc1nnc(S)n1-c1ccccc1,"5-Heptadec-8-enyl-4-phenyl-4H-[1,2,4]-triazole-3-thiol (HPTT)",11.11,413.7,3,-40.54,c1nnc[nH]1,1,0.71,11.83,1.43,11.03,0.63,c1ccc(-n2cnnc2)cc1,41,1749
+C=CCCCCCCCCc1nnc(S)n1-c1ccccc1,"5-Dec-9-enyl-4-phenyl-4H-[1,2,4]-triazole-3-thiol (DPTT)",11.18,315.5,3,-40.52,c1nnc[nH]1,1,1.46,11.75,2.03,10.94,1.21,c1ccc(-n2cnnc2)cc1,52,1750
+Oc1ccccc1C=Nn1c(S)nnc1-c1ccccc1,"4-salicylideneamino-3-phenyl-5-mercapto-1,2,4-triazole (SAPMT)",9.41,296.4,1,-36.08,c1nnc[nH]1,1,-0.15,,,9.41,-0.15,C(=Nn1cnnc1-c1ccccc1)c1ccccc1,15,1763
+c1ccc(-c2nnc(-c3ccccn3)[nH]2)nc1,"3,5-bis(2-pyridyl)-1,2,4-triazole (drawn as the 4H tautomer)",9.57,223.2,1,-36.49,c1nnc[nH]1,1,0.71,6.84,-2.02,7.65,-1.22,c1ccc(-c2nnc(-c3ccccn3)[nH]2)nc1,28,1769
+Nn1c(-c2cccs2)nnc1-c1cccs1,"3,5-bis(2-thienyl)-4-amino-1,2,4-triazole (2-TAT)",12.25,248.3,1,-38.7,c1nnc[nH]1,1,3.12,10.84,1.71,11.38,2.25,c1csc(-c2nnc(-c3cccs3)[nH]2)c1,20,1789
+Cc1ccccc1-c1nnc(-c2ccccc2C)n1N,"3,5-di(ortho-tolyl)-4-amino-1,2,4-triazole (2-DTAT)",8.81,264.3,1,,c1nnc[nH]1,1,-0.47,7.46,-1.82,8.01,-1.27,c1ccc(-c2nnc(-c3ccccc3)[nH]2)cc1,8,1885
+Cc1ccc(-c2nnc(-c3ccc(C)cc3)n2N)cc1,"3,5-di(para-tolyl)-4-amino-1,2,4-triazole (4-DTAT)",10.39,264.3,1,-36.2,c1nnc[nH]1,1,1.1,8.12,-1.17,9.87,0.59,c1ccc(-c2nnc(-c3ccccc3)[nH]2)cc1,27,1886
+CCCc1nnc(S)n1N,"4-amino-5-mercapto-3-n-propyl-1,2,4-triazole (AMPT)",5.87,158.2,1,,c1nnc[nH]1,1,-2.13,6.8,-1.21,6.32,-1.69,c1nnc[nH]1,22,1906

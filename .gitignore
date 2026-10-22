@@ -23,3 +23,7 @@ scores*.csv
 .idea/
 .DS_Store
 Thumbs.db
+
+# ORCA scratch (inputs, outputs, wavefunctions) written by the quantum-property runs
+orca_work/
+benchmarks/results/corrosion_qm/*/orca/

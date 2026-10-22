@@ -1,0 +1,53 @@
+{
+ "set": "22_C1CNOC1",
+ "file": "examples\\corrosion\\22_C1CNOC1.csv",
+ "n": 16,
+ "core": "C1CNOC1",
+ "reference": "2,7-di{9-(hexahydropyrrolo[1,2-b]isoxazole-2-yl)nonyloxy}naphthalene",
+ "align_rmsd_median": 0.11538577772785644,
+ "sites": 4,
+ "n_cuttable": 4,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.0007092322649068228,
+  "rmse_cv": 1.8352882190935735,
+  "alpha": 0.1,
+  "lam": 0.1,
+  "n": 16
+ },
+ "invariant": {
+  "q2": 0.6100557978711638,
+  "rmse_cv": 1.1464617587267354,
+  "lam": 0.1,
+  "n": 16
+ },
+ "counts": {
+  "q2": -0.003898231909111871,
+  "rmse_cv": 1.8395143664155653,
+  "lam": 0.001,
+  "n": 16
+ },
+ "seconds": 7.999417066574097
+}

@@ -1,0 +1,28 @@
+smiles,name,activity,mw,n_papers,dG_ads,scaffold,depth,mwila_hcl_adj,mwila_h2so4_raw,mwila_h2so4_adj,mwila_pooled_raw,mwila_pooled_adj,leaf_scaffold,n_rows,db_id
+Nc1nc2ccccc2s1,2-Aminobenzothiazole,6.8,150.2,3,,c1cscn1,1,-1.08,8.42,0.55,6.92,-0.96,c1ccc2scnc2c1,7,151
+Nc1nc(-c2ccccc2)cs1,2-Amino-4-phenylthiazole,7.11,176.2,1,-32.79,c1cscn1,1,-1.17,,,7.11,-1.17,c1ccc(-c2cscn2)cc1,48,456
+C(=Nc1nc2ccccc2s1)c1ccccc1,"2-Benzothiazolamine, N-(phenylmethylene)-",9.97,238.3,1,-36.41,c1cscn1,1,0.94,,,9.97,0.94,C(=Nc1nc2ccccc2s1)c1ccccc1,12,545
+Cc1ccc2nc(N=Cc3ccccc3)sc2c1,"N-(6-Methyl-1,3-benzothiazol-2-yl)-1-phenylmethanimine",10.18,252.3,1,-35.55,c1cscn1,1,1.01,,,10.18,1.01,C(=Nc1nc2ccccc2s1)c1ccccc1,12,546
+Sc1ccc2nc(/N=C/c3ccccc3)sc2c1,(E)-2-(benzylideneamino)benzo[d]thiazole-6-thiol,10.59,270.4,1,,c1cscn1,1,1.25,,,10.59,1.25,C(=Nc1nc2ccccc2s1)c1ccccc1,12,547
+CCOC(=O)c1sc(N)nc1C,Ethyl 2-amino-4-methylthiazole-5-carboxylate,6.83,186.2,1,,c1cscn1,1,-1.58,,,6.83,-1.58,c1cscn1,60,580
+Nc1ccc(S(=O)(=O)Nc2nccs2)cc1,Sulfathiazole,8.77,255.3,2,-31.71,c1cscn1,1,-0.42,,,8.47,-0.73,O=S(=O)(Nc1nccs1)c1ccccc1,58,634
+C/C(=N\c1nc2ccccc2s1)c1ccccc1,[N-(benzo-[d]thiazole-2-yl)-1-phenylethan-1-imine,12.37,252.3,1,-42.22,c1cscn1,1,3.2,,,12.37,3.2,C(=Nc1nc2ccccc2s1)c1ccccc1,8,726
+C/C(=N\c1nc2ccccc2s1)c1cccc(Cl)c1,N-(benzo[d]thiazole-2-yl)-1-(3-chlorophenyl) ethan-1-imine,12.15,286.8,1,-41.2,c1cscn1,1,2.67,,,12.15,2.67,C(=Nc1nc2ccccc2s1)c1ccccc1,8,727
+C/C(=N\c1nc2ccccc2s1)c1cccc(C)c1,N-(benzo[d]thiazole-2-yl)-1-(m-tolyl) ethan-1-imine,12.54,266.4,1,-42.46,c1cscn1,1,3.24,,,12.54,3.24,C(=Nc1nc2ccccc2s1)c1ccccc1,8,728
+C/C(=N\c1nc2ccccc2s1)c1cccc(N)c1,N-(benzo[d]thiazole-2-ylimino) ethyl) aniline,12.77,267.4,1,-42.73,c1cscn1,1,3.46,,,12.77,3.46,C(=Nc1nc2ccccc2s1)c1ccccc1,8,729
+Cc1ccc(-c2ccc3nc(N)sc3c2)cc1,"6-(4-Methylphenyl)-1,3-benzothiazol-2-amine",9.84,240.3,1,-35.16,c1cscn1,1,0.79,,,9.84,0.79,c1ccc(-c2ccc3ncsc3c2)cc1,8,739
+Nc1nc2ccc(-c3ccc(Cl)cc3)cc2s1,"6-(4-Chlorophenyl)-1,3-benzothiazol-2-amine",9.48,260.7,1,-34.76,c1cscn1,1,0.23,,,9.48,0.23,c1ccc(-c2ccc3ncsc3c2)cc1,8,740
+COc1ccc(-c2ccc3nc(N)sc3c2)cc1,"6-(4-Methoxyphenyl)-1,3-benzothiazol-2-amine",10.41,256.3,1,-35.31,c1cscn1,1,1.2,,,10.41,1.2,c1ccc(-c2ccc3ncsc3c2)cc1,8,741
+c1cc(-c2nc3ccccc3s2)nc(-c2nc3ccccc3s2)c1,"2,6-Bis(2-benzothiazolyl)pyridine",10.62,345.4,1,-37.67,c1cscn1,1,0.67,,,10.62,0.67,c1cc(-c2nc3ccccc3s2)nc(-c2nc3ccccc3s2)c1,30,947
+c1ccc2sc(CSCc3nc4ccccc4s3)nc2c1,Bis(2-benzothiazolylmethyl) sulfide,10.14,328.5,1,-37.2,c1cscn1,1,0.32,,,10.14,0.32,c1ccc2sc(CSCc3nc4ccccc4s3)nc2c1,30,948
+c1ccc2sc(CCc3nc4ccccc4s3)nc2c1,"1,2-Bis(2-benzothiazolyl)ethane",9.73,296.4,1,-35.45,c1cscn1,1,0.16,,,9.73,0.16,c1ccc2sc(CCc3nc4ccccc4s3)nc2c1,30,949
+Oc1ccccc1C=Nc1nccs1,2-[(Thiazol-2-ylimino)methyl]phenol,9.59,204.2,1,-15.3,c1cscn1,1,0.94,,,9.59,0.94,C(=Nc1nccs1)c1ccccc1,14,1001
+c1ccc2scnc2c1,"1,3-Benzothiazole",7.46,135.2,5,-28.99,c1cscn1,1,-0.15,7.64,0.02,7.56,-0.06,c1ccc2scnc2c1,67,1352
+CN(C)c1ccc(C=Nc2nc3ccccc3s2)cc1,"N-(4-(dimethylamino)benzylidene)benzothiazol-2-amine (Schiff base, compound 3)",6.68,281.4,1,,c1cscn1,1,-2.76,,,6.68,-2.76,C(=Nc1nc2ccccc2s1)c1ccccc1,1,1370
+CN(C)c1ccc(CNc2nc3ccccc3s2)cc1,"N-(4-(dimethylamino)benzyl)benzothiazol-2-amine (reduced Schiff base, compound 4)",7.98,283.4,1,,c1cscn1,1,-1.47,,,7.98,-1.47,c1ccc(CNc2nc3ccccc3s2)cc1,1,1371
+c1ccc2sc(SSc3nc4ccccc4s3)nc2c1,"2,2' benzothiazolyl disulfide",12.47,332.5,1,-41.83,c1cscn1,1,2.61,13.06,3.21,12.57,2.72,c1ccc2sc(SSc3nc4ccccc4s3)nc2c1,46,1672
+N#CCc1nc2ccccc2s1,2-cyanomethyl benzothiazole (2-cyanomethyl benzthiazol),7.38,174.2,1,-30.3,c1cscn1,1,-0.87,,,7.38,-0.87,c1ccc2scnc2c1,48,1765
+Cc1ccc2nc(NN)sc2c1,2-hydrazino-6-methyl-benzothiazole,8.36,179.2,1,-33.02,c1cscn1,1,0.04,8.35,0.03,8.35,0.03,c1ccc2scnc2c1,12,1787
+COc1ccc(NC(=S)Nc2nc(-c3ccccc3)cs2)cc1,1-(4-methoxyphenyl)-3-(4-phenylthiazol-2-yl)thiourea (compound 1),12.8,341.5,1,-43.68,c1cscn1,1,2.88,,,12.8,2.88,S=C(Nc1ccccc1)Nc1nc(-c2ccccc2)cs1,24,1793
+S=C(NCc1ccccc1)Nc1nc(-c2ccccc2)cs1,1-benzyl-3-(4-phenylthiazol-2-yl)thiourea (compound 2),12.36,325.5,1,-43.72,c1cscn1,1,2.56,,,12.36,2.56,S=C(NCc1ccccc1)Nc1nc(-c2ccccc2)cs1,24,1794
+OCCNC(=S)Nc1nc(-c2ccccc2)cs1,1-(2-hydroxyethyl)-3-(4-phenylthiazol-2-yl)thiourea (compound 3),10.71,279.4,1,,c1cscn1,1,1.29,,,10.71,1.29,c1ccc(-c2cscn2)cc1,24,1795

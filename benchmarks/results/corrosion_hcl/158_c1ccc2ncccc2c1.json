@@ -1,0 +1,74 @@
+{
+ "set": "158_c1ccc2ncccc2c1",
+ "file": "examples\\corrosion_hcl\\158_c1ccc2ncccc2c1.csv",
+ "n": 65,
+ "core": "c1ccc2ncccc2c1",
+ "reference": "5-{[2-(4-Bromophenyl)-5,6-dimethyl-1H-benzimidazol-1-yl]methyl}quinolin-8-ol",
+ "align_rmsd_median": 0.034313213778880254,
+ "sites": 8,
+ "n_cuttable": 60,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.14934900580377997,
+  "rmse_cv": 1.6925686734529515,
+  "alpha": 0.3,
+  "lam": 1.0,
+  "n": 65
+ },
+ "aligned_kept": {
+  "q2": 0.1590838830707494,
+  "rmse_cv": 1.7314162711995296,
+  "alpha": 1.0,
+  "lam": 1.0,
+  "n": 60
+ },
+ "topomer": {
+  "q2": 0.32317644746146856,
+  "rmse_cv": 1.553326988440318,
+  "alpha": 0.1,
+  "lam": 1.0,
+  "n": 60
+ },
+ "aligned_frag": {
+  "q2": 0.3330964970627891,
+  "rmse_cv": 1.5419015880013236,
+  "alpha": 0.1,
+  "lam": 1.0,
+  "n": 60
+ },
+ "invariant": {
+  "q2": 0.03420717440187393,
+  "rmse_cv": 1.803485184879647,
+  "lam": 1.0,
+  "n": 65
+ },
+ "counts": {
+  "q2": 0.019259752419948595,
+  "rmse_cv": 1.8173877262694345,
+  "lam": 10.0,
+  "n": 65
+ },
+ "seconds": 45.50983715057373
+}

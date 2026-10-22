@@ -1,0 +1,53 @@
+{
+ "set": "21_O_C1CCN1",
+ "file": "examples\\corrosion\\21_O_C1CCN1.csv",
+ "n": 17,
+ "core": "O=C1CCN1",
+ "reference": "Cefpodoxime proxetil",
+ "align_rmsd_median": 0.10548028577544767,
+ "sites": 3,
+ "n_cuttable": 0,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.39761705650284296,
+  "rmse_cv": 0.9032194331640335,
+  "alpha": 1.0,
+  "lam": 0.001,
+  "n": 17
+ },
+ "invariant": {
+  "q2": 0.06970659532207335,
+  "rmse_cv": 1.1224497587187712,
+  "lam": 1.0,
+  "n": 17
+ },
+ "counts": {
+  "q2": 0.030388767797847716,
+  "rmse_cv": 1.1459238509695246,
+  "lam": 1.0,
+  "n": 17
+ },
+ "seconds": 6.226874113082886
+}

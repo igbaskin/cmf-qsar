@@ -1,0 +1,74 @@
+{
+ "set": "157_c1ccc2_nH_cnc2c1",
+ "file": "examples\\corrosion_hcl\\157_c1ccc2_nH_cnc2c1.csv",
+ "n": 73,
+ "core": "c1ccc2[nH]cnc2c1",
+ "reference": "1,8-bis(1-chlorobenzyl-benzimidazolyl)-octane",
+ "align_rmsd_median": 0.014504560917714565,
+ "sites": 7,
+ "n_cuttable": 73,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.3463498025226689,
+  "rmse_cv": 1.5004967552827555,
+  "alpha": 0.5,
+  "lam": 1.0,
+  "n": 73
+ },
+ "aligned_kept": {
+  "q2": 0.3463498025226689,
+  "rmse_cv": 1.5004967552827555,
+  "alpha": 0.5,
+  "lam": 1.0,
+  "n": 73
+ },
+ "topomer": {
+  "q2": 0.42891161119727084,
+  "rmse_cv": 1.4025360322097256,
+  "alpha": 1.0,
+  "lam": 0.1,
+  "n": 73
+ },
+ "aligned_frag": {
+  "q2": 0.3181937873381204,
+  "rmse_cv": 1.532473027451307,
+  "alpha": 0.1,
+  "lam": 1.0,
+  "n": 73
+ },
+ "invariant": {
+  "q2": 0.35951254732203186,
+  "rmse_cv": 1.4853119507520989,
+  "lam": 1.0,
+  "n": 73
+ },
+ "counts": {
+  "q2": 0.2629106816749369,
+  "rmse_cv": 1.593391224769145,
+  "lam": 0.001,
+  "n": 73
+ },
+ "seconds": 47.640005588531494
+}

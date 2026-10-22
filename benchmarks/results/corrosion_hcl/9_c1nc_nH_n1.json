@@ -1,0 +1,74 @@
+{
+ "set": "9_c1nc_nH_n1",
+ "file": "examples\\corrosion_hcl\\9_c1nc_nH_n1.csv",
+ "n": 25,
+ "core": "c1nc[nH]n1",
+ "reference": "3,5-Bis(methylene octadecyl dimethylammonium chloride)-1,2,4-triazole",
+ "align_rmsd_median": 0.06953083912382858,
+ "sites": 5,
+ "n_cuttable": 22,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.08950752901908754,
+  "rmse_cv": 1.7852317215968125,
+  "alpha": 5.0,
+  "lam": 1.0,
+  "n": 25
+ },
+ "aligned_kept": {
+  "q2": -0.04219489474737137,
+  "rmse_cv": 1.911045888211954,
+  "alpha": 0.1,
+  "lam": 10.0,
+  "n": 22
+ },
+ "topomer": {
+  "q2": 0.051159007110529675,
+  "rmse_cv": 1.8234479225977374,
+  "alpha": 0.1,
+  "lam": 10.0,
+  "n": 22
+ },
+ "aligned_frag": {
+  "q2": -0.0384356206349008,
+  "rmse_cv": 1.9075961325482023,
+  "alpha": 0.1,
+  "lam": 10.0,
+  "n": 22
+ },
+ "invariant": {
+  "q2": 0.04170330473490502,
+  "rmse_cv": 1.8314978406219746,
+  "lam": 1.0,
+  "n": 25
+ },
+ "counts": {
+  "q2": 0.2888678023480298,
+  "rmse_cv": 1.577726016157419,
+  "lam": 1.0,
+  "n": 25
+ },
+ "seconds": 28.61032271385193
+}

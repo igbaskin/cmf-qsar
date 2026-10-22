@@ -1,0 +1,74 @@
+smiles,name,activity,mw,n_papers,dG_ads,scaffold,depth,mwila_hcl_adj,mwila_h2so4_raw,mwila_h2so4_adj,mwila_pooled_raw,mwila_pooled_adj,leaf_scaffold,n_rows,db_id,smiles_neutral,charge
+c1ccc2[nH+]c[nH]c2c1,Benzimidazole,5.61,118.1,20,-26.62,c1ccc2[nH]cnc2c1,2,-1.68,5.6,-1.68,5.61,-1.67,c1ccc2[nH]cnc2c1,167,106,c1ccc2[nH]cnc2c1,1
+Cc1[nH]c2ccccc2[nH+]1,2-Methylbenzimidazole,6.7,132.2,8,-29.16,c1ccc2[nH]cnc2c1,2,-0.86,4.28,-3.28,6.24,-1.32,c1ccc2[nH]cnc2c1,73,107,Cc1nc2ccccc2[nH]1,1
+O=[N+]([O-])c1ccc2[nH+]c[nH]c2c1,5-Nitrobenzimidazole,6.61,163.1,3,,c1ccc2[nH]cnc2c1,2,-1.48,,,6.61,-1.48,c1ccc2[nH]cnc2c1,12,108,O=[N+]([O-])c1ccc2nc[nH]c2c1,1
+O=C(O)c1ccc2[nH+]c[nH]c2c1,1H-Benzimidazole-5-carboxylic acid,7.14,162.2,2,-28.04,c1ccc2[nH]cnc2c1,2,-0.93,,,7.14,-0.93,c1ccc2[nH]cnc2c1,14,109,O=C(O)c1ccc2nc[nH]c2c1,1
+Nc1[nH]c2ccccc2[nH+]1,2-Aminobenzimidazole,6.24,133.2,8,-29.96,c1ccc2[nH]cnc2c1,2,-1.34,8.17,0.59,6.34,-1.24,c1ccc2[nH]cnc2c1,86,110,Nc1nc2ccccc2[nH]1,1
+c1ccc2[nH+]c(-c3ccncc3)[nH]c2c1,2-(4-Pyridyl)benzimidazole,8.33,195.2,4,-35.54,c1ccc2[nH]cnc2c1,2,-0.2,,,8.25,-0.28,c1ccc2[nH]c(-c3ccncc3)nc2c1,63,111,c1ccc2[nH]c(-c3ccncc3)nc2c1,1
+c1ccc(Cc2[nH]c3ccccc3[nH+]2)cc1,Bendazol,8.56,208.3,2,-30.89,c1ccc2[nH]cnc2c1,2,-0.14,,,8.56,-0.14,c1ccc(Cc2nc3ccccc3[nH]2)cc1,13,112,c1ccc(Cc2nc3ccccc3[nH]2)cc1,1
+Nc1ccccc1-c1[nH]c2ccccc2[nH+]1,2-(1H-Benzimidazol-2-yl)aniline,9.69,209.2,5,-35.25,c1ccc2[nH]cnc2c1,2,0.98,,,9.69,0.98,c1ccc(-c2nc3ccccc3[nH]2)cc1,38,113,Nc1ccccc1-c1nc2ccccc2[nH]1,1
+c1ccc(-c2[nH]c3ccccc3[nH+]2)cc1,2-Phenylbenzimidazole,9.79,194.2,4,-35.94,c1ccc2[nH]cnc2c1,2,1.28,,,9.79,1.28,c1ccc(-c2nc3ccccc3[nH]2)cc1,22,114,c1ccc(-c2nc3ccccc3[nH]2)cc1,1
+ClCc1[nH]c2ccccc2[nH+]1,2-Chloromethylbenzimidazole,8.22,166.6,4,-37.03,c1ccc2[nH]cnc2c1,2,0.09,,,10.53,2.39,c1ccc2[nH]cnc2c1,19,116,ClCc1nc2ccccc2[nH]1,1
+OCc1[nH]c2ccccc2[nH+]1,1H-Benzimidazole-2-methanol,7.97,148.2,3,-30.32,c1ccc2[nH]cnc2c1,2,0.12,,,7.97,0.12,c1ccc2[nH]cnc2c1,14,144,OCc1nc2ccccc2[nH]1,1
+c1ccc(Cn2c[nH+]c3ccccc32)cc1,1-Benzyl-1H-benzimidazole,10.22,208.3,4,-39.6,c1ccc2[nH]cnc2c1,2,1.53,10.51,1.82,10.27,1.58,c1ccc(Cn2cnc3ccccc32)cc1,33,145,c1ccc(Cn2cnc3ccccc32)cc1,1
+c1ccc(Cc2[nH+]c3ccccc3n2Cc2ccccc2)cc1,"1,2-Dibenzyl-1H-benzo[d]imidazole",12.09,298.4,4,-43.33,c1ccc2[nH]cnc2c1,2,2.51,10.28,0.69,11.64,2.05,c1ccc(Cc2nc3ccccc3n2Cc2ccccc2)cc1,30,146,c1ccc(Cc2nc3ccccc3n2Cc2ccccc2)cc1,1
+Brc1ccc2[nH+]c[nH]c2c1,5-Bromo-1H-benzimidazole,7.34,197,1,-29.13,c1ccc2[nH]cnc2c1,2,-1.21,,,7.34,-1.21,c1ccc2[nH]cnc2c1,5,178,Brc1ccc2nc[nH]c2c1,1
+Nc1ccc2[nH+]c[nH]c2c1,5-Aminobenzimidazole,7.42,133.2,1,,c1ccc2[nH]cnc2c1,2,-0.16,,,7.42,-0.16,c1ccc2[nH]cnc2c1,5,179,Nc1ccc2nc[nH]c2c1,1
+[NH3+]Cc1nc2ccccc2[nH]1,(1H-benzo[d]imidazol-2-yl)methanamine,7.28,147.2,5,-36.95,c1ccc2[nH]cnc2c1,2,-0.55,,,7.78,-0.04,c1ccc2[nH]cnc2c1,45,180,NCc1nc2ccccc2[nH]1,1
+OCc1ccc2[nH+]c[nH]c2c1,1H-benzimidazol-5-ylmethanol,7.02,148.2,1,,c1ccc2[nH]cnc2c1,2,-0.83,,,7.02,-0.83,c1ccc2[nH]cnc2c1,5,181,OCc1ccc2nc[nH]c2c1,1
+c1ccc(-c2[nH]c3ccccc3[nH+]2)nc1,2-(2-Pyridyl)benzimidazole,5.7,195.2,4,,c1ccc2[nH]cnc2c1,2,-2.83,,,6.9,-1.63,c1ccc(-c2nc3ccccc3[nH]2)nc1,67,224,c1ccc(-c2nc3ccccc3[nH]2)nc1,1
+COc1ccc(Cn2c(-c3ccc(OC)cc3)[nH+]c3ccccc32)cc1,1-(4-methoxybenzyl)-2-(4-methoxyphenyl)-1H-benzo(d)imidazole,12.39,344.4,2,-42.02,c1ccc2[nH]cnc2c1,2,2.45,12.09,2.14,12.21,2.27,c1ccc(Cn2c(-c3ccccc3)nc3ccccc32)cc1,34,747,COc1ccc(Cn2c(-c3ccc(OC)cc3)nc3ccccc32)cc1,1
+c1ccc2[nH]c(SCCCCCCSc3[nH]c4ccccc4[nH+]3)nc2c1,"1,6-Bis((1H-benzimidazol-2-yl)thio)hexane",11.3,382.6,1,-42.39,c1ccc2[nH]cnc2c1,2,1.1,,,11.3,1.1,c1ccc2[nH]c(SCCCCCCSc3nc4ccccc4[nH]3)nc2c1,13,781,c1ccc2[nH]c(SCCCCCCSc3nc4ccccc4[nH]3)nc2c1,1
+c1ccc2[nH]c(SCCCCCCCCCCCCSc3[nH]c4ccccc4[nH+]3)nc2c1,"1,12-Bis((1H-benzimidazol-2-yl)thio)dodecane",12.39,466.7,1,-35.23,c1ccc2[nH]cnc2c1,2,1.69,,,12.39,1.69,c1ccc2[nH]c(SCCCCCCCCCCCCSc3nc4ccccc4[nH]3)nc2c1,28,782,c1ccc2[nH]c(SCCCCCCCCCCCCSc3nc4ccccc4[nH]3)nc2c1,1
+CCCCCCNc1nc(NCCC[NH+](C)C)nc(Nc2nc3ccccc3[nH]2)n1,"2-(n-Hexylamino)-4-(3-(N,N-dimethylamino)propylamino)-6-(1H-benzimidazol-2-ylamino)-1,3,5-triazine",10.12,411.6,1,-36.29,c1ccc2[nH]cnc2c1,2,-0.26,,,10.12,-0.26,c1ccc2[nH]c(Nc3ncncn3)nc2c1,36,865,CCCCCCNc1nc(NCCCN(C)C)nc(Nc2nc3ccccc3[nH]2)n1,1
+Cc1ccc(NC(=O)Cn2c(-c3ccc(Cl)cc3)[nH+]c3ccccc32)cc1,2-(2-(4-Chlorophenyl)-1H-benzo[d]imidazol-1-yl)-N-(p-tolyl)acetamide,11.12,375.9,1,-41.36,c1ccc2[nH]cnc2c1,2,0.96,,,11.12,0.96,O=C(Cn1c(-c2ccccc2)nc2ccccc21)Nc1ccccc1,15,920,Cc1ccc(NC(=O)Cn2c(-c3ccc(Cl)cc3)nc3ccccc32)cc1,1
+Cc1cc(C)cc(NC(=O)Cn2c(-c3ccc(Cl)cc3)[nH+]c3ccccc32)c1,"2-(2-(4-Chlorophenyl)-1H-benzo[d]imidazol-1-yl)-N-(3,5-dimethylphenyl)acetamide",11.38,389.9,1,-42.21,c1ccc2[nH]cnc2c1,2,1.12,,,11.38,1.12,O=C(Cn1c(-c2ccccc2)nc2ccccc21)Nc1ccccc1,15,921,Cc1cc(C)cc(NC(=O)Cn2c(-c3ccc(Cl)cc3)nc3ccccc32)c1,1
+O=C(Cn1c(-c2ccc(Cl)cc2)[nH+]c2ccccc21)Nc1ccccc1,2-(2-(4-Chlorophenyl)-1H-benzo[d]imidazol-1-yl)-N-phenylacetamide,10.97,361.8,1,-41.43,c1ccc2[nH]cnc2c1,2,0.9,,,10.97,0.9,O=C(Cn1c(-c2ccccc2)nc2ccccc21)Nc1ccccc1,15,922,O=C(Cn1c(-c2ccc(Cl)cc2)nc2ccccc21)Nc1ccccc1,1
+c1ccc2[nH]c(C[NH2+]Cc3nc4ccccc4[nH]3)nc2c1,Bis((1H-benzimidazol-2-yl)methyl)amine,9.39,277.3,2,-36.38,c1ccc2[nH]cnc2c1,2,-0.01,,,9.14,-0.27,c1ccc2[nH]c(CNCc3nc4ccccc4[nH]3)nc2c1,23,962,c1ccc2[nH]c(CNCc3nc4ccccc4[nH]3)nc2c1,1
+c1ccc2[nH]c(C[NH+](Cc3nc4ccccc4[nH]3)Cc3nc4ccccc4[nH]3)nc2c1,Tris((1H-benzimidazol-2-yl)methyl)amine,9.36,407.5,2,-36.95,c1ccc2[nH]cnc2c1,2,-1,,,9.93,-0.43,c1ccc2[nH]c(CN(Cc3nc4ccccc4[nH]3)Cc3nc4ccccc4[nH]3)nc2c1,29,963,c1ccc2[nH]c(CN(Cc3nc4ccccc4[nH]3)Cc3nc4ccccc4[nH]3)nc2c1,1
+c1cc(-c2nc3ccccc3[nH]2)nc(-c2[nH]c3ccccc3[nH+]2)c1,"2,6-Bis(1H-benzimidazol-2-yl)pyridine",9.96,311.4,1,-36.89,c1ccc2[nH]cnc2c1,2,0.27,,,9.96,0.27,c1cc(-c2nc3ccccc3[nH]2)nc(-c2nc3ccccc3[nH]2)c1,8,970,c1cc(-c2nc3ccccc3[nH]2)nc(-c2nc3ccccc3[nH]2)c1,1
+c1ccc2[nH]c(CSCc3[nH]c4ccccc4[nH+]3)nc2c1,"2,2'-(Thiobis(methylene))bis(1H-benzimidazole)",9.64,294.4,1,-36.18,c1ccc2[nH]cnc2c1,2,0.09,,,9.64,0.09,c1ccc2[nH]c(CSCc3nc4ccccc4[nH]3)nc2c1,8,971,c1ccc2[nH]c(CSCc3nc4ccccc4[nH]3)nc2c1,1
+c1ccc2[nH]c(COCc3[nH]c4ccccc4[nH+]3)nc2c1,2-(1H-Benzimidazol-2-ylmethoxymethyl)-1H-benzimidazole,9.47,278.3,1,-35.19,c1ccc2[nH]cnc2c1,2,0.06,,,9.47,0.06,c1ccc2[nH]c(COCc3nc4ccccc4[nH]3)nc2c1,8,972,c1ccc2[nH]c(COCc3nc4ccccc4[nH]3)nc2c1,1
+c1ccc2[nH]c(CCc3[nH]c4ccccc4[nH+]3)nc2c1,"2,2'-(Ethane-1,2-diyl)bis(1H-benzimidazole)",9.1,262.3,1,-33.89,c1ccc2[nH]cnc2c1,2,-0.17,,,9.1,-0.17,c1ccc2[nH]c(CCc3nc4ccccc4[nH]3)nc2c1,8,973,c1ccc2[nH]c(CCc3nc4ccccc4[nH]3)nc2c1,1
+O=[N+]([O-])c1ccc(-c2[nH]c3ccccc3[nH+]2)cc1,2-(4-Nitrophenyl)-1H-benzimidazole,10.05,239.2,1,-39.11,c1ccc2[nH]cnc2c1,2,1.01,,,10.05,1.01,c1ccc(-c2nc3ccccc3[nH]2)cc1,8,974,O=[N+]([O-])c1ccc(-c2nc3ccccc3[nH]2)cc1,1
+Nc1ccc(-c2[nH]c3ccccc3[nH+]2)cc1,4-(1H-Benzimidazol-2-yl)aniline,9.69,209.2,1,-37.92,c1ccc2[nH]cnc2c1,2,0.99,,,9.69,0.99,c1ccc(-c2nc3ccccc3[nH]2)cc1,8,975,Nc1ccc(-c2nc3ccccc3[nH]2)cc1,1
+O=[N+]([O-])c1ccccc1-c1[nH]c2ccccc2[nH+]1,2-(2-Nitrophenyl)-1H-benzimidazole,9.19,239.2,1,-37.3,c1ccc2[nH]cnc2c1,2,0.16,,,9.19,0.16,c1ccc(-c2nc3ccccc3[nH]2)cc1,8,976,O=[N+]([O-])c1ccccc1-c1nc2ccccc2[nH]1,1
+c1ccc(Cn2c(-c3ccccc3)[nH+]c3ccccc32)cc1,1-Benzyl-2-phenyl-1H-benzimidazole,11.06,284.4,1,-37.73,c1ccc2[nH]cnc2c1,2,1.59,,,11.06,1.59,c1ccc(Cn2c(-c3ccccc3)nc3ccccc32)cc1,12,1011,c1ccc(Cn2c(-c3ccccc3)nc3ccccc32)cc1,1
+O=[N+]([O-])c1ccc(Cn2c(-c3ccc([N+](=O)[O-])cc3)[nH+]c3ccccc32)cc1,1-(4-Nitrobenzyl)-2-(4-nitrophenyl)-1H-benzimidazole,10.12,374.4,1,-34.37,c1ccc2[nH]cnc2c1,2,-0.02,,,10.12,-0.02,c1ccc(Cn2c(-c3ccccc3)nc3ccccc32)cc1,12,1012,O=[N+]([O-])c1ccc(Cn2c(-c3ccc([N+](=O)[O-])cc3)nc3ccccc32)cc1,1
+C=CCSc1[nH]c2ccccc2[nH+]1,2-(Allylthio)-1H-benzimidazole,11.69,190.3,1,-45.2,c1ccc2[nH]cnc2c1,2,3.23,,,11.69,3.23,c1ccc2[nH]cnc2c1,15,1098,C=CCSc1nc2ccccc2[nH]1,1
+c1ccc2[nH]c(SCSc3[nH]c4ccccc4[nH+]3)nc2c1,Bis((1H-benzimidazol-2-yl)thio)methane,12.53,312.4,1,-45.93,c1ccc2[nH]cnc2c1,2,2.83,,,12.53,2.83,c1ccc2[nH]c(SCSc3nc4ccccc4[nH]3)nc2c1,15,1099,c1ccc2[nH]c(SCSc3nc4ccccc4[nH]3)nc2c1,1
+Cc1cc(Cc2[nH]c3ccccc3[nH+]2)n[nH]1,2-[(5-Methylpyrazol-3-yl)methyl]benzimidazole,9.02,212.3,1,-34.31,c1ccc2[nH]cnc2c1,2,0.28,,,9.02,0.28,c1ccc2[nH]c(Cc3cc[nH]n3)nc2c1,15,1108,Cc1cc(Cc2nc3ccccc3[nH]2)n[nH]1,1
+Clc1ccc(-c2nc3ccccc3n2CCCCn2c(-c3ccc(Cl)cc3)[nH+]c3ccccc32)cc1,"1,4-Bis[2-(4-chlorophenyl)-1H-benzimidazol-1-yl]butane",8.9,511.5,1,-35.21,c1ccc2[nH]cnc2c1,2,-2.02,,,8.9,-2.02,c1ccc(-c2nc3ccccc3n2CCCCn2c(-c3ccccc3)nc3ccccc32)cc1,11,1125,Clc1ccc(-c2nc3ccccc3n2CCCCn2c(-c3ccc(Cl)cc3)nc3ccccc32)cc1,1
+c1ccc(-c2nc3ccccc3n2CCCCn2c(-c3ccccc3)[nH+]c3ccccc32)cc1,"1,4-Bis(2-phenyl-1H-benzimidazol-1-yl)butane",8.5,442.6,1,-33.7,c1ccc2[nH]cnc2c1,2,-2.06,,,8.5,-2.06,c1ccc(-c2nc3ccccc3n2CCCCn2c(-c3ccccc3)nc3ccccc32)cc1,8,1126,c1ccc(-c2nc3ccccc3n2CCCCn2c(-c3ccccc3)nc3ccccc32)cc1,1
+CCCCCCSc1[nH]c2ccccc2[nH+]1,2-(Hexylthio)-1H-benzimidazole,9.11,234.4,1,-35.64,c1ccc2[nH]cnc2c1,2,0.12,,,9.11,0.12,c1ccc2[nH]cnc2c1,9,1152,CCCCCCSc1nc2ccccc2[nH]1,1
+CCCCCCCCCCCCSc1[nH]c2ccccc2[nH+]1,2-(Dodecylthio)-1H-benzimidazole,9.85,318.5,1,-36.9,c1ccc2[nH]cnc2c1,2,0.1,,,9.85,0.1,c1ccc2[nH]cnc2c1,9,1153,CCCCCCCCCCCCSc1nc2ccccc2[nH]1,1
+SCc1[nH]c2ccccc2[nH+]1,(1H-Benzimidazol-2-yl)methanethiol,9.65,164.2,2,-40.31,c1ccc2[nH]cnc2c1,2,1.55,,,9.65,1.55,c1ccc2[nH]cnc2c1,12,1186,SCc1nc2ccccc2[nH]1,1
+CCCCCCCCCCCCSCc1[nH+]c2ccccc2n1CCCCCCCCCCCC,1-Dodecyl-2-((dodecylthio)methyl)-1H-benzimidazole,11.54,500.9,1,-43.16,c1ccc2[nH]cnc2c1,2,0.66,,,11.54,0.66,c1ccc2[nH]cnc2c1,11,1187,CCCCCCCCCCCCSCc1nc2ccccc2n1CCCCCCCCCCCC,1
+c1ccc2[nH]c(-c3[nH]c4ccccc4[nH+]3)nc2c1,"2,2'-bis(benzimidazole)",12.4,234.3,1,-37.13,c1ccc2[nH]cnc2c1,2,3.42,,,12.4,3.42,c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1,12,1266,c1ccc2[nH]c(-c3nc4ccccc4[nH]3)nc2c1,1
+O=C(NCCc1[nH]c2ccccc2[nH+]1)c1ccccc1,2-(benzamido)ethylbenzimidazole,10,265.3,1,-34.64,c1ccc2[nH]cnc2c1,2,0.7,,,10,0.7,O=C(NCCc1nc2ccccc2[nH]1)c1ccccc1,8,1268,O=C(NCCc1nc2ccccc2[nH]1)c1ccccc1,1
+O=S(=O)(NCCc1[nH]c2ccccc2[nH+]1)c1ccccc1,2-(beta-benzenesulphonamido)ethylbenzimidazole,9.43,301.4,1,-33.59,c1ccc2[nH]cnc2c1,2,-0.18,,,9.43,-0.18,O=S(=O)(NCCc1nc2ccccc2[nH]1)c1ccccc1,8,1269,O=S(=O)(NCCc1nc2ccccc2[nH]1)c1ccccc1,1
+O=C(NCc1[nH]c2ccccc2[nH+]1)c1ccccc1,2-(benzamido)methylbenzimidazole,9.15,251.3,1,-33.65,c1ccc2[nH]cnc2c1,2,-0.01,,,9.15,-0.01,O=C(NCc1nc2ccccc2[nH]1)c1ccccc1,8,1270,O=C(NCc1nc2ccccc2[nH]1)c1ccccc1,1
+O=S(=O)(NCc1[nH]c2ccccc2[nH+]1)c1ccccc1,2-(beta-benzenesulphonamido)methylbenzimidazole,8.65,287.3,1,-32.08,c1ccc2[nH]cnc2c1,2,-0.84,,,8.65,-0.84,O=S(=O)(NCc1nc2ccccc2[nH]1)c1ccccc1,8,1271,O=S(=O)(NCc1nc2ccccc2[nH]1)c1ccccc1,1
+CCCc1[nH]c2ccccc2[nH+]1,"2-propylbenzimidazole (propyl benzimidazole, PBI)",8.71,160.2,3,-34.1,c1ccc2[nH]cnc2c1,2,0.67,,,9.02,0.98,c1ccc2[nH]cnc2c1,85,1272,CCCc1nc2ccccc2[nH]1,1
+N#CCc1[nH]c2ccccc2[nH+]1,2-Benzimidazolylacetonitrile,9.14,157.2,1,-35.35,c1ccc2[nH]cnc2c1,2,1.14,,,9.14,1.14,c1ccc2[nH]cnc2c1,10,1274,N#CCc1nc2ccccc2[nH]1,1
+c1ccc(Cn2c(CCCCCCCCc3[nH+]c4ccccc4n3Cc3ccccc3)nc3ccccc32)cc1,"1,8-bis(1-chlorobenzyl-benzimidazolyl)-octane",14.49,599.6,1,-46.64,c1ccc2[nH]cnc2c1,2,3.17,,,13.8,2.48,c1ccc(Cn2c(CCCCCCCCc3nc4ccccc4n3Cc3ccccc3)nc3ccccc32)cc1,60,1276,c1ccc(Cn2c(CCCCCCCCc3nc4ccccc4n3Cc3ccccc3)nc3ccccc32)cc1,1
+CCCCn1c(-c2ccc(C)cc2)[nH+]c2ccccc21,1-Butyl-2-(4-methylphenyl)benzimidazole,9.37,264.4,1,-35.1,c1ccc2[nH]cnc2c1,2,0.09,,,9.37,0.09,c1ccc(-c2nc3ccccc3[nH]2)cc1,7,1277,CCCCn1c(-c2ccc(C)cc2)nc2ccccc21,1
+CCCCCCCCCCCCOc1ccc2[nH+]c[nH]c2c1,6-(dodecyloxy)-1H-benzo[d]imidazole,14.11,302.5,1,-47.29,c1ccc2[nH]cnc2c1,2,4.49,,,14.11,4.49,c1ccc2[nH]cnc2c1,6,1284,CCCCCCCCCCCCOc1ccc2nc[nH]c2c1,1
+c1ccc(CSc2[nH]c3ccccc3[nH+]2)cc1,2-thiobenzylbenzimidazole,11.34,240.3,2,-38.22,c1ccc2[nH]cnc2c1,2,2.29,,,11.29,2.24,c1ccc(CSc2nc3ccccc3[nH]2)cc1,52,1285,c1ccc(CSc2nc3ccccc3[nH]2)cc1,1
+CCCCn1c(SCc2ccccc2)[nH+]c2ccccc21,1-butyl-2-thiobenzylbenzimidazole,13.1,296.4,1,-45.83,c1ccc2[nH]cnc2c1,2,3.53,,,13.1,3.53,c1ccc(CSc2nc3ccccc3[nH]2)cc1,68,1286,CCCCn1c(SCc2ccccc2)nc2ccccc21,1
+COC(=O)Nc1[nH]c2cc(C(=O)c3ccccc3)ccc2[nH+]1,Methyl-5-benzoyl-2-benzimidazole carbamate (mebendazole),11.25,295.3,2,-20.41,c1ccc2[nH]cnc2c1,2,1.69,8.54,-1.02,9.43,-0.13,O=C(c1ccccc1)c1ccc2nc[nH]c2c1,44,1315,COC(=O)Nc1nc2ccc(C(=O)c3ccccc3)cc2[nH]1,1
+Oc1ccccc1-c1[nH]c2ccccc2[nH+]1,2-(o-Hydroxyphenyl)benzimidazole,11.64,210.2,1,-41.48,c1ccc2[nH]cnc2c1,2,2.92,,,11.64,2.92,c1ccc(-c2nc3ccccc3[nH]2)cc1,12,1632,Oc1ccccc1-c1nc2ccccc2[nH]1,1
+CCCSc1ccc2[nH]c(NC(=O)OC)[nH+]c2c1,Methyl [6-(propylthio)-1H-benzoimidazol-2-yl]carbamate (Albendazole),10.19,265.3,1,-36.67,c1ccc2[nH]cnc2c1,2,0.89,,,10.19,0.89,c1ccc2[nH]cnc2c1,18,1633,CCCSc1ccc2[nH]c(NC(=O)OC)nc2c1,1
+c1ccc2[nH]c(SSc3[nH]c4ccccc4[nH+]3)nc2c1,Bis (benzimidazol-2-yl) disulphide,11.23,298.4,1,-43.45,c1ccc2[nH]cnc2c1,2,1.65,12.34,2.76,11.66,2.08,c1ccc2[nH]c(SSc3nc4ccccc4[nH]3)nc2c1,31,1658,c1ccc2[nH]c(SSc3nc4ccccc4[nH]3)nc2c1,1
+CCc1[nH]c2ccccc2[nH+]1,2-ethyl benzimidazole,8.17,146.2,2,-31.72,c1ccc2[nH]cnc2c1,2,0.35,,,8.17,0.35,c1ccc2[nH]cnc2c1,13,1954,CCc1nc2ccccc2[nH]1,1
+Clc1[nH]c2ccccc2[nH+]1,2-chlorobenzimidazole,7.83,152.6,1,,c1ccc2[nH]cnc2c1,2,-0.09,,,7.83,-0.09,c1ccc2[nH]cnc2c1,1,2092,Clc1nc2ccccc2[nH]1,1
+Cn1c(N)[nH+]c2ccccc21,2-amino-1-methylbenzimidazole,9.26,147.2,1,,c1ccc2[nH]cnc2c1,2,1.43,,,9.26,1.43,c1ccc2[nH]cnc2c1,1,2093,Cn1c(N)nc2ccccc21,1
+CSc1[nH+]c2ccccc2n1C,1-methyl-2-(methylthio)benzimidazole,8.91,178.3,1,,c1ccc2[nH]cnc2c1,2,0.61,,,8.91,0.61,c1ccc2[nH]cnc2c1,1,2094,CSc1nc2ccccc2n1C,1
+Nc1[nH]c2cccc([N+](=O)[O-])c2[nH+]1,2-amino-4-nitrobenzimidazole,9.01,178.2,1,,c1ccc2[nH]cnc2c1,2,0.7,,,9.01,0.7,c1ccc2[nH]cnc2c1,1,2095,Nc1nc2c([N+](=O)[O-])cccc2[nH]1,1
+CN(C)c1cccc2[nH]c(N)[nH+]c12,2-amino-4-(dimethylamino)benzimidazole,12.05,176.2,1,,c1ccc2[nH]cnc2c1,2,3.78,,,12.05,3.78,c1ccc2[nH]cnc2c1,1,2096,CN(C)c1cccc2[nH]c(N)nc12,1
+CN(C)c1ccc2[nH]c(N)[nH+]c2c1,2-amino-5-(dimethylamino)benzimidazole,11.96,176.2,1,,c1ccc2[nH]cnc2c1,2,3.68,,,11.96,3.68,c1ccc2[nH]cnc2c1,1,2097,CN(C)c1ccc2[nH]c(N)nc2c1,1
+O=[N+]([O-])c1cccc2[nH]c[nH+]c12,4-nitrobenzimidazole,8.12,163.1,1,,c1ccc2[nH]cnc2c1,2,0.04,,,8.12,0.04,c1ccc2[nH]cnc2c1,1,2098,O=[N+]([O-])c1cccc2[nH]cnc12,1
+Nc1[nH]c2ccc([N+](=O)[O-])cc2[nH+]1,2-amino-5-nitrobenzimidazole,9.61,178.2,1,,c1ccc2[nH]cnc2c1,2,1.31,,,9.61,1.31,c1ccc2[nH]cnc2c1,1,2099,Nc1nc2cc([N+](=O)[O-])ccc2[nH]1,1
+N[NH2+]c1nc2ccccc2[nH]1,2-hydrazinobenzimidazole,10.06,148.2,1,,c1ccc2[nH]cnc2c1,2,2.21,,,10.06,2.21,c1ccc2[nH]cnc2c1,1,2100,NNc1nc2ccccc2[nH]1,1
+CN(C)c1cccc2[nH]c[nH+]c12,4-(dimethylamino)benzimidazole,9.91,161.2,1,,c1ccc2[nH]cnc2c1,2,1.85,,,9.91,1.85,c1ccc2[nH]cnc2c1,1,2101,CN(C)c1cccc2[nH]cnc12,1
+CCCc1nc2c(C)cc(-c3[nH+]c4ccccc4n3C)cc2[nH]1,"1,7'-dimethyl-2'-propyl-1H,3'H-2,5'-bibenzo[d]imidazole (DPBI)",11.25,304.4,1,-41.18,c1ccc2[nH]cnc2c1,2,1.62,,,11.25,1.62,c1ccc2[nH]c(-c3ccc4nc[nH]c4c3)nc2c1,20,2133,CCCc1nc2c(C)cc(-c3nc4ccccc4n3C)cc2[nH]1,1

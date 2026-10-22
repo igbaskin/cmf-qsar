@@ -1,0 +1,81 @@
+{
+ "set": "7_c1nncs1",
+ "n_series": 29,
+ "n": 29,
+ "core": "c1nncs1",
+ "reference": "2,5-Bis[4-(dimethylamino)phenyl]-1,3,4-thiadiazole",
+ "align_rmsd_median": 0.009491216955206664,
+ "level": "r2SCAN-3c TightSCF",
+ "descriptors": [
+  "E_homo",
+  "E_lumo",
+  "gap",
+  "dipole",
+  "hardness",
+  "electrophilicity"
+ ],
+ "fukui_fields": [
+  "fukui_plus",
+  "fukui_minus",
+  "dual"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "failed": [],
+ "base": {
+  "q2": -0.03739864139927174,
+  "rmse_cv": 1.6362346688974343,
+  "alpha": 5.0,
+  "lam": 10.0,
+  "n": 29
+ },
+ "qm_charges": {
+  "q2": -0.021797882083586906,
+  "rmse_cv": 1.6238849318781727,
+  "alpha": 2.0,
+  "lam": 10.0,
+  "n": 29
+ },
+ "base+fukui": {
+  "q2": 0.02595849609749945,
+  "rmse_cv": 1.5854826145620087,
+  "alpha": 0.3,
+  "lam": 10.0,
+  "n": 29
+ },
+ "base+desc": {
+  "q2": 0.07515527924647092,
+  "rmse_cv": 1.5449241563058316,
+  "alpha": 5.0,
+  "lam": 10.0,
+  "n": 29
+ },
+ "base+both": {
+  "q2": 0.07237400340094513,
+  "rmse_cv": 1.5472454295506415,
+  "alpha": 2.0,
+  "lam": 10.0,
+  "n": 29
+ },
+ "desc_only": {
+  "q2": 0.01565879993506103,
+  "rmse_cv": 1.5938431653141485,
+  "lam": 1.0,
+  "n": 29
+ },
+ "seconds": 1361.8218002319336
+}

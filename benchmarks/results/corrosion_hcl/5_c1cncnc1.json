@@ -1,0 +1,53 @@
+{
+ "set": "5_c1cncnc1",
+ "file": "examples\\corrosion_hcl\\5_c1cncnc1.csv",
+ "n": 16,
+ "core": "c1cncnc1",
+ "reference": "2-(bis((1H-pyrazol-1-yl)methyl)amino)pyrimidine-4,6-diol",
+ "align_rmsd_median": 0.02407769706507732,
+ "sites": 6,
+ "n_cuttable": 14,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": -0.02349532841270907,
+  "rmse_cv": 1.4024309578499354,
+  "alpha": 5.0,
+  "lam": 10.0,
+  "n": 16
+ },
+ "invariant": {
+  "q2": -0.043913622063217694,
+  "rmse_cv": 1.4163508254518222,
+  "lam": 10.0,
+  "n": 16
+ },
+ "counts": {
+  "q2": -0.07716119210745354,
+  "rmse_cv": 1.43872869900068,
+  "lam": 10.0,
+  "n": 16
+ },
+ "seconds": 3.7456939220428467
+}

@@ -1,0 +1,74 @@
+{
+ "set": "4_c1nnc_nH_1",
+ "file": "examples\\corrosion_hcl\\4_c1nnc_nH_1.csv",
+ "n": 40,
+ "core": "c1nnc[nH]1",
+ "reference": "7,9-Ditetradecyl-6-methyl-7H-[1,2,4]triazolo[4,3-b][1,2,4]triazepin-8(9H)-one",
+ "align_rmsd_median": 0.0693284672391275,
+ "sites": 5,
+ "n_cuttable": 35,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.18836313058058263,
+  "rmse_cv": 1.4278453463231664,
+  "alpha": 0.3,
+  "lam": 0.01,
+  "n": 40
+ },
+ "aligned_kept": {
+  "q2": 0.365518945209669,
+  "rmse_cv": 1.2128561045656883,
+  "alpha": 0.1,
+  "lam": 0.001,
+  "n": 35
+ },
+ "topomer": {
+  "q2": -0.008564115361609614,
+  "rmse_cv": 1.5291556896551781,
+  "alpha": 1.0,
+  "lam": 1.0,
+  "n": 35
+ },
+ "aligned_frag": {
+  "q2": -0.07593251165130988,
+  "rmse_cv": 1.5794012029108941,
+  "alpha": 2.0,
+  "lam": 10.0,
+  "n": 35
+ },
+ "invariant": {
+  "q2": 0.482458133804058,
+  "rmse_cv": 1.1401789810786103,
+  "lam": 0.001,
+  "n": 40
+ },
+ "counts": {
+  "q2": 0.48308967912627343,
+  "rmse_cv": 1.1394831006521882,
+  "lam": 0.1,
+  "n": 40
+ },
+ "seconds": 30.644315004348755
+}

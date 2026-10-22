@@ -1,0 +1,74 @@
+{
+ "set": "11_c1c_nH_c_nH_1",
+ "file": "examples\\corrosion\\11_c1c_nH_c_nH_1.csv",
+ "n": 23,
+ "core": "c1c[nH+]c[nH]1",
+ "reference": "1,3-Bis-decyl-2-(2-phenyl-propyl)-3H-benzoimidazol-1-ium chloride",
+ "align_rmsd_median": 0.02627548234162852,
+ "sites": 5,
+ "n_cuttable": 18,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.2563360654306168,
+  "rmse_cv": 1.2062220357813516,
+  "alpha": 5.0,
+  "lam": 0.1,
+  "n": 23
+ },
+ "aligned_kept": {
+  "q2": 0.21414523702942523,
+  "rmse_cv": 1.1640229542884568,
+  "alpha": 5.0,
+  "lam": 0.1,
+  "n": 18
+ },
+ "topomer": {
+  "q2": 0.5466052745360345,
+  "rmse_cv": 0.8841554564782866,
+  "alpha": 5.0,
+  "lam": 0.001,
+  "n": 18
+ },
+ "aligned_frag": {
+  "q2": 0.2056855360565606,
+  "rmse_cv": 1.1702715175369278,
+  "alpha": 5.0,
+  "lam": 0.1,
+  "n": 18
+ },
+ "invariant": {
+  "q2": -0.03431829030347111,
+  "rmse_cv": 1.4225449568771922,
+  "lam": 1.0,
+  "n": 23
+ },
+ "counts": {
+  "q2": 0.447586192628996,
+  "rmse_cv": 1.0396117050345735,
+  "lam": 0.1,
+  "n": 23
+ },
+ "seconds": 10.610904455184937
+}

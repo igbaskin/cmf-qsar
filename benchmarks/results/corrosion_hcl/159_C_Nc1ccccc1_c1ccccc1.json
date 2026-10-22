@@ -1,0 +1,74 @@
+{
+ "set": "159_C_Nc1ccccc1_c1ccccc1",
+ "file": "examples\\corrosion_hcl\\159_C_Nc1ccccc1_c1ccccc1.csv",
+ "n": 28,
+ "core": "C(=Nc1ccccc1)c1ccccc1",
+ "reference": "Bis(17-hydroxy-3,6,9,12,15-pentaoxaheptadecyl) 4,4'-(3,3'-(1,4-phenylenebis(azan-1-yl-1-ylidene))bis(methan-1-yl-1-ylidene)bis(4-hydroxy-3,1-phenylene))bis(diazene-2,1-diyl)dibenzenesulfonate (S III)",
+ "align_rmsd_median": 1.6643433525877391,
+ "sites": 11,
+ "n_cuttable": 28,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": 0.26131616587563866,
+  "rmse_cv": 0.7812243077627445,
+  "alpha": 1.0,
+  "lam": 1.0,
+  "n": 28
+ },
+ "aligned_kept": {
+  "q2": 0.26131616587563866,
+  "rmse_cv": 0.7812243077627445,
+  "alpha": 1.0,
+  "lam": 1.0,
+  "n": 28
+ },
+ "topomer": {
+  "q2": 0.2895169408192487,
+  "rmse_cv": 0.7661667736998534,
+  "alpha": 5.0,
+  "lam": 1.0,
+  "n": 28
+ },
+ "aligned_frag": {
+  "q2": 0.39916243946230756,
+  "rmse_cv": 0.7045713631863668,
+  "alpha": 0.1,
+  "lam": 0.01,
+  "n": 28
+ },
+ "invariant": {
+  "q2": 0.2201864969415912,
+  "rmse_cv": 0.8026788615740309,
+  "lam": 0.01,
+  "n": 28
+ },
+ "counts": {
+  "q2": -0.013034978670479536,
+  "rmse_cv": 0.9148684927063302,
+  "lam": 0.01,
+  "n": 28
+ },
+ "seconds": 35.4985466003418
+}

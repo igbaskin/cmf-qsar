@@ -1,0 +1,17 @@
+smiles,name,activity,mw,n_papers,dG_ads,scaffold,depth,mwila_hcl_adj,mwila_pooled_raw,mwila_pooled_adj,leaf_scaffold,n_rows,db_id
+C(=Nc1ncccn1)c1ccccc1,2-Benzylideneaminopyrimidine,8.53,183.2,1,,c1cncnc1,1,0.16,8.53,0.16,C(=Nc1ncccn1)c1ccccc1,4,216
+Cc1ccc(C=Nc2ncccn2)cc1,"2-Pyrimidinamine, N-[(4-methylphenyl)methylene]-",8.64,197.2,1,,c1cncnc1,1,0.08,8.64,0.08,C(=Nc1ncccn1)c1ccccc1,4,217
+Clc1ccc(C=Nc2ncccn2)cc1,1-(4-Chlorophenyl)-N-(pyrimidin-2-yl)methanimine,9.07,217.7,1,,c1cncnc1,1,0.27,9.07,0.27,C(=Nc1ncccn1)c1ccccc1,4,218
+c1ccc(-c2ccncn2)cc1,4-Phenylpyrimidine,8.12,156.2,1,-29.43,c1cncnc1,1,0.15,8.07,0.09,c1ccc(-c2ccncn2)cc1,33,352
+c1ccc(-c2cncnc2)cc1,5-Phenylpyrimidine,7.67,156.2,1,-28.29,c1cncnc1,1,-0.31,7.64,-0.33,c1ccc(-c2cncnc2)cc1,33,353
+Cn1ncc2c(-c3ccccc3)ncnc21,"1-Methyl-4-phenyl-1H-pyrazolo[3,4-d]pyrimidine",9.69,210.2,1,-42.3,c1cncnc1,1,0.98,9.69,0.98,c1ccc(-c2ncnc3[nH]ncc23)cc1,11,364
+Cc1nn(-c2ccccc2)c2ncnc(OCCC(=O)O)c12,"3-(3-Methyl-1-phenyl-1h-pyrazolo[3,4-d]pyrimidin-4-yloxy)-propionic acid",7.01,298.3,1,-30.62,c1cncnc1,1,-2.57,7.01,-2.57,c1ccc(-n2ncc3cncnc32)cc1,13,367
+COc1cc(Cc2cnc(N)nc2N)cc(OC)c1OC,Trimethoprim,8.45,290.3,1,-32.78,c1cncnc1,1,-1.06,8.45,-1.06,c1ccc(Cc2cncnc2)cc1,20,368
+CC(=O)CC(C)=Nc1ncccn1,4-(Pyrimidin-2-ylimino) pentan-2-one,10.87,177.2,1,-40.51,c1cncnc1,1,2.58,10.87,2.58,c1cncnc1,15,385
+Oc1cc(O)nc(NCN2C=CCN2)n1,"2-(((2,3-dihydro-1H-pyrazol-1yl)methyl)amino)pyrimidine-4,6-diol",10.15,209.2,1,-39.23,c1cncnc1,1,1.45,10.15,1.45,C1=CN(CNc2ncccn2)NC1,15,417
+Oc1cc(O)nc(N(Cn2cccn2)Cn2cccn2)n1,"2-(bis((1H-pyrazol-1-yl)methyl)amino)pyrimidine-4,6-diol",10.8,287.3,1,-40.15,c1cncnc1,1,1.3,10.8,1.3,c1cnc(N(Cn2cccn2)Cn2cccn2)nc1,15,418
+Cc1cc(C)n(CNc2ncccn2)n1,"N-[(3,5-dimethyl-1H-pyrazol-1-yl)methyl]pyrimidin-2-amine",9.76,203.2,1,-36.56,c1cncnc1,1,1.13,9.76,1.13,c1cnc(NCn2cccn2)nc1,15,473
+Cc1cc(C)n(CNc2nc(O)cc(O)n2)n1,"2-{[(3,5-dimethyl-1H-pyrazol-1-yl)methyl]amino}pyrimidine-4,6-diol",11.08,235.2,1,-39.41,c1cncnc1,1,2.08,11.08,2.08,c1cnc(NCn2cccn2)nc1,15,474
+Cc1cc(O)nc(NCn2nc(C)cc2C)n1,"2-{[(3,5-dimethyl-1H-pyrazol-1-yl)methyl]amino}-6-methylpyrimidin-4-ol",10.48,233.3,1,-39.24,c1cncnc1,1,1.51,10.48,1.51,c1cnc(NCn2cccn2)nc1,15,475
+Cc1ccnc(NS(=O)(=O)c2ccc(N)cc2)n1,Sulfamerazine,9.23,264.3,1,,c1cncnc1,1,-0.06,9.23,-0.06,O=S(=O)(Nc1ncccn1)c1ccccc1,42,632
+COc1cc(NS(=O)(=O)c2ccc(N)cc2)nc(OC)n1,Sulfadimethoxine,12.45,310.3,1,-12.64,c1cncnc1,1,2.76,12.45,2.76,O=S(=O)(Nc1ccncn1)c1ccccc1,15,986

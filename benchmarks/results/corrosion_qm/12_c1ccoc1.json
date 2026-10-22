@@ -1,0 +1,86 @@
+{
+ "set": "12_c1ccoc1",
+ "n_series": 28,
+ "n": 27,
+ "core": "c1ccoc1",
+ "reference": "(E)-N-(2-(2-((2-((furan-2-ylmethylene)amino)ethyl)dimethylammonio)acetoxy)ethyl)-N,N-dimethyldodecan-1-aminium bromide chloride (CSI)",
+ "align_rmsd_median": 0.003879600538885134,
+ "level": "r2SCAN-3c TightSCF",
+ "descriptors": [
+  "E_homo",
+  "E_lumo",
+  "gap",
+  "dipole",
+  "hardness",
+  "electrophilicity"
+ ],
+ "fukui_fields": [
+  "fukui_plus",
+  "fukui_minus",
+  "dual"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "failed": [
+  {
+   "name": "5-(2-Furyl)cyclohexane-1,3-dione",
+   "error": "OrcaError: sp_nm1: ORCA did not terminate normally: [file orca_tools/qcmat1.cpp, line 2763]: Unable to open file sp_nm1.FAO1.tmp in TMatrix<T>::Store(const char *fname)! | ORCA finished by error termination in LEANSCF | Calling Command: C:\\ORCA_6.1.0\\orca_leanscf sp_nm1.gbw | [file orca_tools/qcmsg.cpp, line 394]: | .... aborting the run | [file orca_tools/qcmsg.cpp, line 394]: | .... aborting the run"
+  }
+ ],
+ "base": {
+  "q2": 0.22046018312323312,
+  "rmse_cv": 1.8868341064754008,
+  "alpha": 5.0,
+  "lam": 0.01,
+  "n": 27
+ },
+ "qm_charges": {
+  "q2": 0.2966840508102654,
+  "rmse_cv": 1.7922137281275339,
+  "alpha": 1.0,
+  "lam": 0.1,
+  "n": 27
+ },
+ "base+fukui": {
+  "q2": 0.1827459004982197,
+  "rmse_cv": 1.931937713575098,
+  "alpha": 5.0,
+  "lam": 0.001,
+  "n": 27
+ },
+ "base+desc": {
+  "q2": 0.1524861357801004,
+  "rmse_cv": 1.9673787324451995,
+  "alpha": 5.0,
+  "lam": 0.001,
+  "n": 27
+ },
+ "base+both": {
+  "q2": 0.17960274590741865,
+  "rmse_cv": 1.9356492590505545,
+  "alpha": 5.0,
+  "lam": 0.001,
+  "n": 27
+ },
+ "desc_only": {
+  "q2": 0.11377078823672404,
+  "rmse_cv": 2.0118129397040554,
+  "lam": 0.1,
+  "n": 27
+ },
+ "seconds": 1680.9488127231598
+}

@@ -1,0 +1,74 @@
+{
+ "set": "7_c1nncs1",
+ "file": "examples\\corrosion\\7_c1nncs1.csv",
+ "n": 29,
+ "core": "c1nncs1",
+ "reference": "2,5-Bis[4-(dimethylamino)phenyl]-1,3,4-thiadiazole",
+ "align_rmsd_median": 0.009491216955206664,
+ "sites": 2,
+ "n_cuttable": 29,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "aligned": {
+  "q2": -0.03739864139927174,
+  "rmse_cv": 1.6362346688974343,
+  "alpha": 5.0,
+  "lam": 10.0,
+  "n": 29
+ },
+ "aligned_kept": {
+  "q2": -0.03739864139927174,
+  "rmse_cv": 1.6362346688974343,
+  "alpha": 5.0,
+  "lam": 10.0,
+  "n": 29
+ },
+ "topomer": {
+  "q2": 0.1099431160793315,
+  "rmse_cv": 1.5155896633869286,
+  "alpha": 5.0,
+  "lam": 1.0,
+  "n": 29
+ },
+ "aligned_frag": {
+  "q2": 0.11517135430749992,
+  "rmse_cv": 1.5111317829110227,
+  "alpha": 2.0,
+  "lam": 1.0,
+  "n": 29
+ },
+ "invariant": {
+  "q2": -0.01416992551012708,
+  "rmse_cv": 1.6178122395861463,
+  "lam": 1.0,
+  "n": 29
+ },
+ "counts": {
+  "q2": -0.04403576577464752,
+  "rmse_cv": 1.6414605183999915,
+  "lam": 1.0,
+  "n": 29
+ },
+ "seconds": 10.874779462814331
+}

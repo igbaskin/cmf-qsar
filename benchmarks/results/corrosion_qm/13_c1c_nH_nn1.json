@@ -1,0 +1,81 @@
+{
+ "set": "13_c1c_nH_nn1",
+ "n_series": 25,
+ "n": 25,
+ "core": "c1c[nH]nn1",
+ "reference": "1,3-Bis[[1-[(4-chlorophenyl)methyl]triazol-4-yl]methyl]-5-methylpyrimidine-2,4-dione",
+ "align_rmsd_median": 0.01526347469710379,
+ "level": "r2SCAN-3c TightSCF",
+ "descriptors": [
+  "E_homo",
+  "E_lumo",
+  "gap",
+  "dipole",
+  "hardness",
+  "electrophilicity"
+ ],
+ "fukui_fields": [
+  "fukui_plus",
+  "fukui_minus",
+  "dual"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "failed": [],
+ "base": {
+  "q2": 0.6542354069631775,
+  "rmse_cv": 1.164971388452567,
+  "alpha": 0.3,
+  "lam": 1.0,
+  "n": 25
+ },
+ "qm_charges": {
+  "q2": 0.7242634743773846,
+  "rmse_cv": 1.0403324602691775,
+  "alpha": 0.1,
+  "lam": 1.0,
+  "n": 25
+ },
+ "base+fukui": {
+  "q2": 0.6811999115957864,
+  "rmse_cv": 1.1186242155732187,
+  "alpha": 0.5,
+  "lam": 1.0,
+  "n": 25
+ },
+ "base+desc": {
+  "q2": 0.6728947175858807,
+  "rmse_cv": 1.1331014068445096,
+  "alpha": 2.0,
+  "lam": 0.001,
+  "n": 25
+ },
+ "base+both": {
+  "q2": 0.6899448261743492,
+  "rmse_cv": 1.1031752031391577,
+  "alpha": 1.0,
+  "lam": 0.1,
+  "n": 25
+ },
+ "desc_only": {
+  "q2": 0.6361568938924866,
+  "rmse_cv": 1.1950389905655063,
+  "lam": 0.01,
+  "n": 25
+ },
+ "seconds": 5517.769783258438
+}

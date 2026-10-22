@@ -1,0 +1,16 @@
+smiles,name,activity,mw,n_papers,dG_ads,scaffold,depth,mwila_hcl_adj,mwila_h2so4_raw,mwila_h2so4_adj,mwila_pooled_raw,mwila_pooled_adj,leaf_scaffold,n_rows,db_id
+Nc1nnc(Cc2ccc3ccccc3c2)s1,"2-Amino-5-(2-naphthylmethyl)-1,3,4-thiadiazole",7.84,241.3,1,-36.69,c1ccc2ccccc2c1,2,-1.22,,,7.84,-1.22,c1ccc2cc(Cc3nncs3)ccc2c1,48,446
+COc1ccc2cc(-c3ccc(-c4ccc(C(=N)N)s4)s3)ccc2c1,5-[5-(6-Methoxynaphthalen-2-yl)thiophen-2-yl]thiophene-2-carboximidamide,12.72,364.5,1,-43.92,c1ccc2ccccc2c1,2,2.64,,,12.72,2.64,c1csc(-c2ccc(-c3ccc4ccccc4c3)s2)c1,36,559
+C(=Nc1cccc2ccccc12)c1ccncc1,N-(1-naphthyl)-N-(4-pyridinylmethylene)amine,6.01,232.3,1,,c1ccc2ccccc2c1,2,-2.95,,,6.01,-2.95,C(=Nc1cccc2ccccc12)c1ccncc1,35,567
+COc1ccc(/C=N/NC(=O)C(C)c2ccc3cc(OC)ccc3c2)c(OC)c1,"(E)-N0-(2,4-dimethoxybenzylidene)-2-(6-methoxynaphthalen-2-yl)propanehydrazide",9.34,392.4,1,-37.82,c1ccc2ccccc2c1,2,-0.93,,,9.34,-0.93,O=C(Cc1ccc2ccccc2c1)NN=Cc1ccccc1,27,602
+COc1ccc2cc(C(C)C(=O)NN=C3CCCCC3)ccc2c1,N-(cyclohexylideneamino)-2-(6-methoxynaphthalen-2-yl)propanamide,8.34,324.4,1,-33.82,c1ccc2ccccc2c1,2,-1.45,,,8.34,-1.45,O=C(Cc1ccc2ccccc2c1)NN=C1CCCCC1,8,603
+O=C(O)c1cccc(/N=C/c2c(O)ccc3ccccc23)c1,3-[(2-Hydroxynaphthalen-1-ylmethylene)amino]benzoic acid,9.43,291.3,1,-37.52,c1ccc2ccccc2c1,2,-0.09,,,9.43,-0.09,C(=Nc1ccccc1)c1cccc2ccccc12,10,831
+COc1ccc2cc(C(C)C(=O)NN=C(C)c3ccccc3)ccc2c1,(E)-2-(6-Methoxynaphthalen-2-yl)-N'-(1-phenylethylidene)propanehydrazide,8.93,346.4,1,-35.34,c1ccc2ccccc2c1,2,-1.03,,,8.93,-1.03,O=C(Cc1ccc2ccccc2c1)NN=Cc1ccccc1,16,925
+COc1ccc2cc(C(C)C(=O)NN=C(C)c3ccc(Br)cc3)ccc2c1,(E)-N'-(1-(4-Bromophenyl)ethylidene)-2-(6-methoxynaphthalen-2-yl)propanehydrazide,9.12,425.3,1,-36.02,c1ccc2ccccc2c1,2,-1.35,,,9.12,-1.35,O=C(Cc1ccc2ccccc2c1)NN=Cc1ccccc1,31,926
+CCCCC/C=C\C/C=C\CCCCCCCC(=O)Nc1cccc2ccccc12,"(9Z,12Z)-N-(Naphthalen-1-yl)octadeca-9,12-dienamide",10.79,405.6,1,-32.45,c1ccc2ccccc2c1,2,0.44,,,10.79,0.44,c1ccc2ccccc2c1,16,1159
+CCCCCCCC/C=C\CCCCCCCCCCCC(=O)Nc1cccc2ccccc12,Docos-13-enoic acid naphthalen-1-yl amide,9.43,463.8,1,-26.4,c1ccc2ccccc2c1,2,-1.25,,,9.43,-1.25,c1ccc2ccccc2c1,15,1221
+Cc1ccc(N=Cc2c(O)ccc3ccccc23)cc1N=Cc1c(O)ccc2ccccc12,"2,4-Bis(2-hydroxy naphthaldehyde) diiminotholuene (Schiff base of 2,4-diaminotoluene with 2 equiv. 2-hydroxy-1-naphthaldehyde)",9.24,430.5,1,-32.91,c1ccc2ccccc2c1,2,-1.26,,,9.24,-1.26,C(=Nc1cccc(N=Cc2cccc3ccccc23)c1)c1cccc2ccccc12,17,1305
+C1=Nc2cccc3cccc(c23)N1,1H-perimidine,10.57,168.2,1,-36.4,c1ccc2ccccc2c1,2,2.41,,,10.57,2.41,C1=Nc2cccc3cccc(c23)N1,9,1306
+NC1=Nc2cccc3cccc(c23)N1,1H-perimidin-2-amine (2-aminoperimidine),11.15,183.2,1,-37.32,c1ccc2ccccc2c1,2,2.77,,,11.15,2.77,C1=Nc2cccc3cccc(c23)N1,9,1307
+Oc1ccc2ccccc2c1C=NCCCCCCN=Cc1c(O)ccc2ccccc12,"Bis-(2-hydroxy-1-naphthaldehyde) 1,6-hexadiamine (A1)",11.46,424.5,1,-36.39,c1ccc2ccccc2c1,2,1,11.32,0.86,11.35,0.89,C(=NCCCCCCN=Cc1cccc2ccccc12)c1cccc2ccccc12,24,1916
+COC(=O)C(CCC(=O)CC(=O)c1ccc2ccccc2c1)C(=O)OC,"1,3-diketone malonate L2 (R = naphthyl)",10.3,356.4,1,-23.45,c1ccc2ccccc2c1,2,0.28,,,10.3,0.28,c1ccc2ccccc2c1,40,2038
