@@ -93,7 +93,8 @@ def split(n, fraction=TEST_FRACTION, seed=0):
 
 
 def run_set(name, methods=METHODS, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM,
-            restarts=2, max_rmsd=None, force=False, reconform=False, suffix=""):
+            restarts=2, max_rmsd=None, force=False, reconform=False, suffix="",
+            conformers=0):
     out_path = os.path.join(results, f"{name}{suffix}.json")
     if os.path.exists(out_path) and not force:
         print(f"[skip] {out_path} exists")
@@ -108,10 +109,12 @@ def run_set(name, methods=METHODS, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM
                          param_scheme="rdkit")
     scores = judge(mols, names, y, tr, te, fs, methods=methods, lam=lam, seed=seed,
                    restarts=restarts, max_rmsd=max_rmsd, reconform=reconform,
+                   conformers=conformers,
                    progress=lambda msg: print(f"    {msg}", flush=True))
     res = {"set": name, "n": len(mols), "n_train": len(tr), "n_test": len(te),
            "fields": FIELDS, "alpha": alpha, "lam": lam, "seed": seed,
            "restarts": restarts, "max_rmsd": max_rmsd, "reconform": reconform,
+           "conformers": conformers,
            "activity": {"min": float(y.min()), "max": float(y.max()), "sd": float(y.std())},
            "methods": {k: s.row() for k, s in scores.items()},
            "rmsd": {k: [float(v) for v in s.rmsd] for k, s in scores.items()},
@@ -124,55 +127,91 @@ def run_set(name, methods=METHODS, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM
     return res
 
 
+def variant(row):
+    """What a result file is a run of, as a key and as a sentence."""
+    recon = bool(row.get("reconform"))
+    confs = int(row.get("conformers") or 0)
+    guard = row.get("max_rmsd")
+    key = (recon, confs, -1.0 if guard is None else float(guard))
+    what = ("regenerated conformations" if recon else "crystal conformations, pose scrambled")
+    if recon:
+        what += (f", {confs} generated starting conformations" if confs
+                 else ", the generated conformation alone")
+    what += (f", displacement guard {guard:g} A" if guard else ", no displacement guard")
+    return key, what
+
+
+def _table(group, methods, label):
+    lines = [f"## {label}", "",
+             "### Median RMSD to the crystal pose, angstrom", "",
+             "| set | n | " + " | ".join(methods) + " |",
+             "|---|---:|" + "---:|" * len(methods)]
+    for r in group:
+        cells = [("-" if m not in r["methods"] else f"{r['methods'][m]['median_rmsd']:.2f}")
+                 for m in methods]
+        lines.append(f"| {r['set']} | {r['n']} | " + " | ".join(cells) + " |")
+    lines += ["", "### External R2pred of the held-out molecules in those poses", "",
+              "| set | n | " + " | ".join(methods) + " |",
+              "|---|---:|" + "---:|" * len(methods)]
+    for r in group:
+        cells = [("-" if m not in r["methods"] else f"{r['methods'][m]['r2_pred']:+.3f}")
+                 for m in methods]
+        lines.append(f"| {r['set']} | {r['n']} | " + " | ".join(cells) + " |")
+    if len(group) > 1:
+        lines += ["", "### Mean over the sets", "",
+                  "| method | median RMSD | within 1 A | within 2 A | recovery | R2pred | "
+                  "conformer limit |", "|---|---:|---:|---:|---:|---:|---:|"]
+        for m in methods:
+            got = [r["methods"][m] for r in group if m in r["methods"]]
+            if not got:
+                continue
+            rec = np.nanmean([g["recovery"] for g in got])
+            lim = np.mean([g.get("conformer_limit", 0.0) for g in got])
+            lines.append(f"| {m} | {np.mean([g['median_rmsd'] for g in got]):.2f} A | "
+                         f"{np.mean([g['within_1A'] for g in got]):.0%} | "
+                         f"{np.mean([g['within_2A'] for g in got]):.0%} | "
+                         + ("-" if not np.isfinite(rec) else f"{rec:+.0%}") + " | "
+                         f"{np.mean([g['r2_pred'] for g in got]):+.3f} | {lim:.2f} A |")
+    return lines + [""]
+
+
 def report(results=RESULTS, out=None):
+    """Every variant in the results folder, each as its own labelled table.
+
+    The folder holds several protocols -- crystal conformations or regenerated ones, with and
+    without the conformer ensemble, at several guard settings -- and they are not comparable row
+    by row.  Mixing them into one table, which an earlier version did, produces three unlabelled
+    rows per set and a mean over runs that answer different questions.
+    """
     rows = []
     for fn in sorted(os.listdir(results)) if os.path.isdir(results) else []:
         if fn.endswith(".json"):
             rows.append(json.load(open(os.path.join(results, fn))))
     if not rows:
         raise SystemExit(f"no results in {results}")
-    rows.sort(key=lambda r: -r["n"])
-    order = ["crystal"] + [m for m in METHODS]
+    groups = {}
+    for r in rows:
+        key, what = variant(r)
+        groups.setdefault((key, what), []).append(r)
+    known = ["crystal"] + [m for m in list(METHODS) + list(FLEX_METHODS)]
+    seen = []
+    for m in known:
+        if m not in seen:
+            seen.append(m)
     lines = ["# Judging an alignment against crystal poses", "",
              "Every ligand of these FEP sets is co-crystallised in one frame, so the pose a",
              "method should have found is known. A model is fitted on the training molecules in",
              "their crystal poses; the held-out molecules then have their poses destroyed, and",
              "each method recovers them without seeing a held-out activity. `crystal` is the",
-             "ceiling, `scrambled` the floor, and `recovery` the fraction of the pose error a",
-             "method removed.", "",
+             "ceiling, `scrambled` the floor, `recovery` the fraction of the pose error a method",
+             "removed, and the conformer limit the RMSD the best possible *rigid* placement of",
+             "the starting conformation would still leave.", "",
              f"Fields: {', '.join('`%s`' % f for f in FIELDS)}; alpha {rows[0]['alpha']}, "
-             f"lambda {rows[0]['lam']}, {int(100 * TEST_FRACTION)}% held out.", "",
-             "## Median RMSD to the crystal pose, angstrom", "",
-             "| set | n | " + " | ".join(order) + " |",
-             "|---|---:|" + "---:|" * len(order)]
-    for r in rows:
-        cells = []
-        for m in order:
-            v = r["methods"].get(m)
-            cells.append("-" if v is None else f"{v['median_rmsd']:.2f}")
-        lines.append(f"| {r['set']} | {r['n']} | " + " | ".join(cells) + " |")
-    lines += ["", "## External R2pred of the held-out molecules in those poses", "",
-              "| set | n | " + " | ".join(order) + " |",
-              "|---|---:|" + "---:|" * len(order)]
-    for r in rows:
-        cells = []
-        for m in order:
-            v = r["methods"].get(m)
-            cells.append("-" if v is None else f"{v['r2_pred']:+.3f}")
-        lines.append(f"| {r['set']} | {r['n']} | " + " | ".join(cells) + " |")
-    if len(rows) > 1:
-        lines += ["", "## Mean over the sets", "",
-                  "| method | median RMSD | within 2 A | recovery | R2pred |",
-                  "|---|---:|---:|---:|---:|"]
-        for m in order:
-            got = [r["methods"][m] for r in rows if m in r["methods"]]
-            if not got:
-                continue
-            rec = np.nanmean([g["recovery"] for g in got])
-            lines.append(f"| {m} | {np.mean([g['median_rmsd'] for g in got]):.2f} A | "
-                         f"{np.mean([g['within_2A'] for g in got]):.0%} | "
-                         + ("-" if not np.isfinite(rec) else f"{rec:+.0%}") + " | "
-                         f"{np.mean([g['r2_pred'] for g in got]):+.3f} |")
+             f"lambda {rows[0]['lam']}, {int(100 * TEST_FRACTION)}% held out.", ""]
+    for (key, what), group in sorted(groups.items(), key=lambda kv: kv[0][0]):
+        group.sort(key=lambda r: -r["n"])
+        methods = [m for m in seen if any(m in r["methods"] for r in group)]
+        lines += _table(group, methods, what)
     text = "\n".join(lines) + "\n"
     path = out or os.path.join(results, "table.md")
     with open(path, "w") as fh:
@@ -197,6 +236,9 @@ def main(argv=None):
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--reconform", action="store_true",
                     help="generate the held-out conformations instead of using the crystal ones")
+    ap.add_argument("--conformers", type=int, default=0,
+                    help="starting configurations from the conformer generator")
+    ap.add_argument("--suffix", default=None, help="tag for the result files")
     ap.add_argument("--flex", action="store_true",
                     help="shorthand for --reconform with the flexible methods")
     ap.add_argument("--report", action="store_true")
@@ -207,10 +249,15 @@ def main(argv=None):
     methods = tuple(FLEX_METHODS) if args.flex else tuple(args.methods)
     reconform = args.reconform or args.flex
     for name in sets:
+        default_suffix = ("_flex" if reconform else "")
+        if reconform and args.conformers:
+            default_suffix += f"_c{args.conformers}"
+        if args.max_rmsd is not None:
+            default_suffix += f"_g{args.max_rmsd:g}"
         run_set(name, methods=methods, seed=args.seed, alpha=args.alpha,
                 lam=args.lam, restarts=args.restarts, max_rmsd=args.max_rmsd,
-                force=args.force, reconform=reconform,
-                suffix="_flex" if reconform else "")
+                force=args.force, reconform=reconform, conformers=args.conformers,
+                suffix=args.suffix if args.suffix is not None else default_suffix)
     if len(sets) > 1:
         report()
 

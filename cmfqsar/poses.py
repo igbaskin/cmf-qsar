@@ -182,7 +182,9 @@ def pose_flexible(mols: Sequence[Chem.Mol], ctx: dict) -> None:
                    energy_slack=ctx.get("energy_slack", 10.0),
                    energy_weight=ctx.get("energy_weight", 1.0),
                    restarts=ctx.get("restarts", 2), seed=ctx.get("seed", 0),
-                   max_torsions=ctx.get("max_torsions", 12))
+                   max_torsions=ctx.get("max_torsions", 12),
+                   conformers=ctx.get("conformers", 0),
+                   prune_rmsd=ctx.get("prune_rmsd", 0.5))
     for m, f in zip(mols, mf):
         set_coords(m, f.coords)
 
@@ -279,7 +281,7 @@ def judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
           lam: float = 0.1, seed: int = 0, max_translation: float = 2.0,
           restarts: int = 2, max_rmsd: Optional[float] = None,
           posers: Optional[Dict[str, Callable]] = None,
-          reconform: bool = False,
+          reconform: bool = False, conformers: int = 0,
           progress: Optional[Callable[[str], None]] = None) -> Dict[str, PoseScore]:
     """Judge posing methods against the crystal poses of a set.
 
@@ -325,7 +327,8 @@ def judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
         # a method that does nothing a recovery of +19% on a twelve-molecule series
         floor = float(np.median([pose_rmsd(p, crystal[i]) for p, i in zip(probe, test)]))
         ctx = {"reference": mols[train[int(np.argmax(y[train]))]], "fieldset": fieldset,
-               "model": model, "restarts": restarts, "seed": seed, "max_rmsd": max_rmsd}
+               "model": model, "restarts": restarts, "seed": seed, "max_rmsd": max_rmsd,
+               "conformers": int(conformers)}
         poser(probe, ctx)                                       # ... and scrambled, every time
         rmsds = np.array([pose_rmsd(p, crystal[i]) for p, i in zip(probe, test)])
         pred = _predict(model, probe, [names[i] for i in test], fieldset)

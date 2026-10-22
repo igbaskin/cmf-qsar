@@ -148,20 +148,43 @@ def test_the_strain_prior_is_one_sided_and_bites_when_the_geometry_is_broken():
     assert pen2 > 0.0 and np.abs(grad2).max() > 0.0
 
 
-def test_the_flexible_search_lowers_the_variance_and_keeps_the_molecule_whole():
+def test_the_flexible_search_lowers_the_variance_and_turns_only_the_bonds():
+    """With the input conformation alone, nothing but the torsions may move: bond lengths exactly."""
+    model, fs, mols, names = _fitted()
+    rd = _mol("CCCCCCOc1ccccc1", seed=7)
+    mf = build_fields(rd, fs, "probe")
+    before = np.asarray(mf.coords, float).copy()
+    out = flexible_align([mf], [rd], model, max_rmsd=None, restarts=1, seed=0, conformers=0)[0]
+    assert out.variance_after <= out.variance_before + 1e-9
+    assert out.n_eval > 0
+    moved = np.asarray(mf.coords, float)
+    assert not np.allclose(moved, before)
+    for b in rd.GetBonds():
+        i, j = b.GetBeginAtomIdx(), b.GetEndAtomIdx()
+        assert np.linalg.norm(moved[i] - moved[j]) == pytest.approx(
+            float(np.linalg.norm(before[i] - before[j])), abs=1e-6)
+
+
+def test_with_ensemble_starts_the_result_is_still_a_conformation_of_the_same_molecule():
+    """The default path may return a *generated* conformation, whose internal geometry is its own.
+
+    So the invariant is no longer that bond lengths are unchanged -- it is that what comes back
+    is a sane conformation of the same molecule, which is what the strain prior is there to keep.
+    """
     model, fs, mols, names = _fitted()
     rd = _mol("CCCCCCOc1ccccc1", seed=7)
     mf = build_fields(rd, fs, "probe")
     before = np.asarray(mf.coords, float).copy()
     out = flexible_align([mf], [rd], model, max_rmsd=None, restarts=1, seed=0)[0]
     assert out.variance_after <= out.variance_before + 1e-9
-    assert out.n_eval > 0
     moved = np.asarray(mf.coords, float)
-    assert not np.allclose(moved, before)
-    for b in rd.GetBonds():                  # the conformation changed, the molecule did not
+    for b in rd.GetBonds():
         i, j = b.GetBeginAtomIdx(), b.GetEndAtomIdx()
-        assert np.linalg.norm(moved[i] - moved[j]) == pytest.approx(
-            float(np.linalg.norm(before[i] - before[j])), abs=1e-6)
+        d0 = float(np.linalg.norm(before[i] - before[j]))
+        assert np.linalg.norm(moved[i] - moved[j]) == pytest.approx(d0, rel=0.1)
+    # no two atoms driven into each other
+    from scipy.spatial.distance import pdist
+    assert float(pdist(moved).min()) > 0.7
 
 
 def test_a_rigid_molecule_reduces_to_the_rigid_body_search():
@@ -175,3 +198,89 @@ def test_a_rigid_molecule_reduces_to_the_rigid_body_search():
     flex_out = flex.align_flexible(mf_b, rd, restarts=1, seed=0)
     assert flex_out.variance_after == pytest.approx(rigid_out.variance_after, rel=1e-6)
     np.testing.assert_allclose(mf_a.coords, mf_b.coords, atol=1e-6)
+
+
+def test_the_guard_limits_the_pose_and_not_the_conformation():
+    """A torsional correction must not be charged to the displacement guard.
+
+    Measured on the final coordinates, the guard would treat a turning bond as though the whole
+    molecule had been translated, and so suppress the one thing the flexible search adds.
+    """
+    model, fs, mols, names = _fitted()
+    rd = _mol("CCCCCCOc1ccccc1", seed=7)
+    mf = build_fields(rd, fs, "probe")
+    ts = rotatable_torsions(rd)
+    aligner = FlexibleAligner(model, max_rmsd=0.1, penalty=50.0, energy_weight=0.0)
+    strain = _Strain(rd, slack=10.0, weight=0.0)
+    X0 = np.asarray(mf.coords, float)
+    c = X0.mean(axis=0)
+    sp, kself = aligner._self_terms(mf)
+
+    # turning every bond hard, with no rigid motion at all, must not trip the guard
+    p_turn = np.concatenate([np.zeros(6), np.full(len(ts), 1.2)])
+    turned = apply_torsions(X0, ts, p_turn[6:])
+    assert np.sqrt(((turned - X0) ** 2).sum(1).mean()) > 0.5, "the torsions moved the atoms"
+    free = FlexibleAligner(model, max_rmsd=None, energy_weight=0.0)
+    with_guard = aligner.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, p_turn)[0]
+    without = free.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, p_turn)[0]
+    assert with_guard == pytest.approx(without, abs=1e-9)
+
+    # a translation of the same size must trip it
+    p_move = np.concatenate([np.zeros(3), [1.0, 0.0, 0.0], np.zeros(len(ts))])
+    moved = aligner.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, p_move)[0]
+    moved_free = free.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, p_move)[0]
+    assert moved > moved_free + 1.0
+
+
+def test_the_objective_gradient_is_right_with_the_guard_active():
+    model, fs, mols, names = _fitted()
+    rd = _mol("CCCCCCOc1ccccc1", seed=7)
+    mf = build_fields(rd, fs, "probe")
+    aligner = FlexibleAligner(model, max_rmsd=0.05, penalty=20.0, energy_weight=0.0)
+    ts = rotatable_torsions(rd)
+    strain = _Strain(rd, slack=10.0, weight=0.0)
+    X0 = np.asarray(mf.coords, float)
+    c = X0.mean(axis=0)
+    sp, kself = aligner._self_terms(mf)
+    rng = np.random.default_rng(1)
+    p = np.concatenate([rng.normal(scale=0.2, size=3), rng.normal(scale=0.4, size=3),
+                        rng.normal(scale=0.3, size=len(ts))])
+    val, grad = aligner.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, p)
+    h = 1e-6
+    numeric = np.zeros_like(grad)
+    for k in range(len(p)):
+        pp, pm = p.copy(), p.copy()
+        pp[k] += h
+        pm[k] -= h
+        numeric[k] = (aligner.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, pp)[0]
+                      - aligner.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, pm)[0]) / (2 * h)
+    assert np.abs(grad - numeric).max() / max(np.abs(numeric).max(), 1e-12) < 1e-3
+
+
+def test_conformer_starts_are_real_conformations_placed_on_the_current_pose():
+    from cmfqsar.flexalign import conformer_starts
+
+    rd = _mol("CCCCCCOc1ccccc1", seed=7)
+    X0 = np.asarray(rd.GetConformer().GetPositions(), float)
+    starts = conformer_starts(rd, 6, seed=0, prune_rmsd=0.5, reference=X0)
+    assert 2 <= len(starts) <= 6
+    for X in starts:
+        assert X.shape == X0.shape
+        for b in rd.GetBonds():            # a conformation, not a distortion
+            i, j = b.GetBeginAtomIdx(), b.GetEndAtomIdx()
+            assert np.linalg.norm(X[i] - X[j]) == pytest.approx(
+                float(np.linalg.norm(X0[i] - X0[j])), rel=0.1)
+        assert np.linalg.norm(X.mean(axis=0) - X0.mean(axis=0)) < 1.5
+    assert max(float(np.sqrt(((X - X0) ** 2).sum(1).mean())) for X in starts) > 0.3
+
+
+def test_an_ensemble_start_reaches_at_least_what_one_start_reaches():
+    """More starting points cannot make the best objective worse -- the search keeps the best."""
+    model, fs, mols, names = _fitted()
+    rd = _mol("CCCCCCOc1ccccc1", seed=7)
+    one, many = build_fields(rd, fs, "a"), build_fields(rd, fs, "b")
+    aligner = FlexibleAligner(model, max_rmsd=None, energy_weight=1.0)
+    r1 = aligner.align_flexible(one, rd, restarts=1, seed=0, conformers=0)
+    r2 = aligner.align_flexible(many, rd, restarts=1, seed=0, conformers=5)
+    assert r2.variance_after <= r1.variance_after + 1e-9
+    assert r2.n_eval > r1.n_eval

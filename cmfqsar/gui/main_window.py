@@ -117,7 +117,36 @@ class VarianceAlignDialog(QDialog):
         self.spin_restarts.setRange(0, 20)
         self.spin_restarts.setValue(2)
         form.addRow("Random restarts:", self.spin_restarts)
+        self.chk_flexible = QCheckBox("turn the rotatable bonds as well")
+        self.chk_flexible.setToolTip(
+            "<p>Search the conformation together with the pose, which is the 2019 proposal in "
+            "full. The force field acts as a prior: the conformation may rise a little above "
+            "the one it started in and is penalised beyond that, so the search cannot fold the "
+            "molecule into whatever shape the training set finds familiar.</p>"
+            "<p>The displacement limit above then applies to the rigid motion only &mdash; a "
+            "turning bond is not a translation, and charging it as one would suppress the very "
+            "thing this adds.</p>")
+        self.chk_flexible.toggled.connect(self._flex_toggled)
+        form.addRow("", self.chk_flexible)
+        self.spin_conformers = QSpinBox()
+        self.spin_conformers.setRange(0, 50)
+        self.spin_conformers.setValue(5)
+        self.spin_conformers.setSpecialValueText("the current one only")
+        self.spin_conformers.setToolTip(
+            "Starting conformations from the generator, besides the one the molecule is in. A "
+            "torsion search is local, so what it can reach is decided by where it starts; on "
+            "the FEP benchmark these are what remove the conformational part of the error.")
+        form.addRow("Starting conformations:", self.spin_conformers)
+        self.spin_slack = QDoubleSpinBox()
+        self.spin_slack.setRange(0.0, 100.0)
+        self.spin_slack.setSingleStep(1.0)
+        self.spin_slack.setValue(10.0)
+        self.spin_slack.setSuffix(" kcal/mol")
+        self.spin_slack.setToolTip("How far the conformation may rise above the one it started "
+                                   "in before the strain prior penalises it")
+        form.addRow("Strain allowance:", self.spin_slack)
         lay.addLayout(form)
+        self._flex_toggled(False)
         bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         bb.accepted.connect(self.accept)
         bb.rejected.connect(self.reject)
@@ -126,6 +155,19 @@ class VarianceAlignDialog(QDialog):
     def max_rmsd(self):
         v = self.spin_max.value()
         return None if v <= 0 else float(v)
+
+    def _flex_toggled(self, on: bool) -> None:
+        for w in (self.spin_conformers, self.spin_slack):
+            w.setEnabled(bool(on))
+
+    def flexible(self) -> bool:
+        return bool(self.chk_flexible.isChecked())
+
+    def conformers(self) -> int:
+        return int(self.spin_conformers.value()) if self.flexible() else 0
+
+    def energy_slack(self) -> float:
+        return float(self.spin_slack.value())
 
 
 class TrainAlignDialog(QDialog):
@@ -3092,15 +3134,27 @@ class MainWindow(QMainWindow):
                                     "Select molecules outside the training set, or define a test set.")
             return
         max_rmsd, restarts = dlg.max_rmsd(), dlg.spin_restarts.value()
+        flexible, conformers = dlg.flexible(), dlg.conformers()
+        slack = dlg.energy_slack()
         model, fs = self.model, self.model.fieldset
         mols, names = self.ds.mols, self.ds.names
+        if flexible:
+            self.log(f"Aligning by confidence over rigid motion and the rotatable bonds"
+                     + (f", from {conformers} generated conformations" if conformers else "")
+                     + f"; strain allowance {slack:g} kcal/mol")
 
         def task(progress, cancel):
-            from ..varalign import variance_align
             mf = [build_fields(mols[i], fs, names[i]) for i in idx]
-            res = variance_align(mf, model, max_rmsd=max_rmsd, restarts=restarts,
-                                 progress=lambda i, n: progress(f"Aligning {i}/{n}", i / n),
-                                 cancel=cancel)
+            report = lambda i, n: progress(f"Aligning {i}/{n}", i / n)   # noqa: E731
+            if flexible:
+                from ..flexalign import flexible_align
+                res = flexible_align(mf, [mols[i] for i in idx], model, max_rmsd=max_rmsd,
+                                     restarts=restarts, energy_slack=slack,
+                                     conformers=conformers, progress=report, cancel=cancel)
+            else:
+                from ..varalign import variance_align
+                res = variance_align(mf, model, max_rmsd=max_rmsd, restarts=restarts,
+                                     progress=report, cancel=cancel)
             return mf, res
 
         def done(out):
