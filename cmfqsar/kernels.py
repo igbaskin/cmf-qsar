@@ -168,7 +168,8 @@ def numerical_overlap(x1, w1, b1, x2, w2, b2, spacing=0.1, extent=6.0) -> float:
 # --------------------------------------------------------------------------- #
 
 def kernel_gradient(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable,
-                    specs: Sequence[FieldSpec], u: np.ndarray, chunk: int = 4000) -> np.ndarray:
+                    specs: Sequence[FieldSpec], u: np.ndarray, chunk: int = 4000,
+                    ci=None) -> np.ndarray:
     """Gradient of ``sum_f sum_j u[f, j] K_f(i, j)`` with respect to the atom positions of i.
 
     The kernels are sums of Gaussians in the squared interatomic distances, so the
@@ -182,6 +183,8 @@ def kernel_gradient(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable
     Parameters
     ----------
     u : array of shape (F, nQ), the multiplier of every field/molecule pair.
+    ci : the moving molecule's probe-field expansion coefficients, ``{name: (Ni, n_terms)}``,
+        needed only when the field set contains probe fields.
 
     Returns
     -------
@@ -191,10 +194,13 @@ def kernel_gradient(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable
     u_atom = np.repeat(np.asarray(u, dtype=float), np.diff(Q.offsets), axis=1)   # (F, AQ)
     gauss, steric, probe = _group_fields(specs)
     if probe:
-        # the gradient of a probe field is a sum over pairs of expansion terms as well; it is
-        # not implemented, so alignment by field similarity refuses rather than aligning on a
-        # kernel that silently ignores the probe
-        raise NotImplementedError("gradients of probe fields are not implemented; align without them")
+        from .probes import basis_widths
+        cq_all = Q.probe_coeffs
+        missing = [name for _f, name in probe
+                   if (ci or {}).get(name) is None or cq_all.get(name) is None]
+        if missing:
+            raise ValueError(f"probe-field coefficients missing for {missing}; pass ci= from the "
+                             f"moving molecule and build the table with probe fields")
     for s0 in range(0, len(Q.coords), chunk):
         sl = slice(s0, min(s0 + chunk, len(Q.coords)))
         diff = xi[:, None, :] - Q.coords[None, sl, :]            # (Ni, M, 3)
@@ -212,6 +218,19 @@ def kernel_gradient(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable
             E = np.exp(-0.5 * fac * D2) * (2.0 * np.pi / bs) ** 1.5
             M = (wi[:, f][:, None] * E) * (Q.weights[sl, f] * u_atom[f, sl])[None, :]
             grad += -np.einsum("lm,lmk->lk", M * fac, diff)
+        for f, name in probe:
+            # every atom of a probe field carries several Gaussians, so the gradient runs over
+            # pairs of terms as well as pairs of atoms -- the steric formula with both widths
+            # constant, summed over the term pairs
+            Ci, Cq = ci[name], cq_all[name]
+            widths = basis_widths(Ci.shape[1])
+            for k1, b1 in enumerate(widths):
+                for k2, b2 in enumerate(widths):
+                    bs = b1 + b2
+                    fac = (b1 * b2) / bs
+                    E = np.exp(-0.5 * fac * D2) * (2.0 * np.pi / bs) ** 1.5
+                    M = (Ci[:, k1][:, None] * E) * (Cq[sl, k2] * u_atom[f, sl])[None, :]
+                    grad += -fac * np.einsum("lm,lmk->lk", M, diff)
     return grad
 
 

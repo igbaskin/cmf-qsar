@@ -104,7 +104,8 @@ class VarianceAligner:
     def _self_terms(self, mol: MoleculeFields):
         """Per-field 1/sqrt(K_f(x,x)) (or ones) and the joint K(x,x); both pose-invariant."""
         one = AtomTable.from_molecules([mol])
-        d_self = atom_kernel_block(mol.coords, mol.weights, mol.radii, one, self.specs).sum(axis=1)[:, 0]
+        d_self = atom_kernel_block(mol.coords, mol.weights, mol.radii, one, self.specs,
+                                   ci=mol.probe_coeffs).sum(axis=1)[:, 0]
         if self.sq is None:
             return np.ones(len(self.specs)), float(self.coef @ d_self)
         sp = 1.0 / np.sqrt(np.maximum(d_self, 1e-300))
@@ -112,7 +113,11 @@ class VarianceAligner:
 
     def _kvec(self, mol: MoleculeFields, coords: np.ndarray, sp: np.ndarray):
         """Joint kernel row k(x) and the per-field scaling (needed for the gradient)."""
-        kraw = atom_kernel_block(coords, mol.weights, mol.radii, self.model.train, self.specs).sum(axis=1)
+        # the probe coefficients travel with the molecule: without them the probe fields would
+        # be dropped from the kernel row without a word, and the pose chosen for a model that
+        # is not the fitted one
+        kraw = atom_kernel_block(coords, mol.weights, mol.radii, self.model.train, self.specs,
+                                 ci=mol.probe_coeffs).sum(axis=1)
         scale = np.ones_like(kraw) if self.sq is None else sp[:, None] / np.maximum(self.sq, 1e-300)
         return self.coef @ (kraw * scale), scale
 
@@ -138,7 +143,8 @@ class VarianceAligner:
         Ak = self.A @ k
         val = kself - float(k @ Ak)
         u = -2.0 * self.coef[:, None] * scale * Ak[None, :]
-        g = kernel_gradient(X, mol.weights, mol.radii, self.model.train, self.specs, u)
+        g = kernel_gradient(X, mol.weights, mol.radii, self.model.train, self.specs, u,
+                            ci=mol.probe_coeffs)
         if self.max_rmsd is not None:
             d = X - X0
             msd = float((d * d).sum() / len(X0))
