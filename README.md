@@ -2152,6 +2152,15 @@ Atom-typing scheme for CIFs can be Sybyl, element, or element+aromatic; Sybyl ty
 python -m pytest tests
 ```
 
+The suite takes about half a minute. `.github/workflows/ci.yml` runs it on every push and pull
+request on Ubuntu, Windows and macOS with the oldest and the newest Python the package supports,
+installed from `pyproject.toml`, and once more on Ubuntu from `requirements-lock.txt`, the versions
+the benchmark tables were produced with, where it also typesets the manual. Each job then starts
+the application under Qt's offscreen platform on the synthetic example, builds a model, computes
+the co-fields and saves the window screenshot (the autotest of `cmf-app`), and fails unless that
+run reports success; the screenshots are kept as artifacts. Offscreen, the OpenGL view has no
+surface to read back, so the 3D screenshot is not produced there and only the window one is kept.
+
 The tests verify the analytic kernels against numerical integration, the symmetry/positive
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition
 rules, that the overlap integral of co-field and molecular field on a grid reproduces the kernel

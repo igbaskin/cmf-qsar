@@ -74,9 +74,13 @@ This is what the software paper needs, and nothing in the later parts should wai
   moved into the package as `cmfqsar/cli.py` with `cmf_cli.py` left as a launcher,
   `requirements-lock.txt` with the versions the benchmarks were run under, and `CITATION.cff`.
   Still to do, once the repository is public: the v1.0 tag and the Zenodo DOI.
-* **A2. Continuous integration.** The test suite on Windows, Linux and macOS; the GUI autotest
-  (`cmf_app.py ... --autotest`) under the offscreen Qt platform so the window is exercised headless.
-  The suite takes several minutes already; tests that embed molecules get a shared fixture.
+* **A2. Continuous integration.** Done 22 October 2026: `.github/workflows/ci.yml` runs the
+  suite on Ubuntu, Windows and macOS with Python 3.10 and 3.13 from `pyproject.toml`, once more
+  from `requirements-lock.txt` with the manual typeset, and the GUI autotest under the offscreen
+  Qt platform on every job, failing unless it reports success. The suite takes 23 s and its
+  slowest tests are numerical integrations, not embeddings, so the shared fixture this item
+  foresaw was not needed. Verified locally on Windows step by step; the Linux and macOS legs run
+  for the first time on the first push.
 * **A3. The data statement.** `docs/public_3dqsar_datasets.md` becomes the record of where every
   public set came from, with the conversion scripts in `examples/make_*_examples.py` as the way to
   obtain it, and copies only where redistribution is clear.
