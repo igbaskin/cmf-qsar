@@ -1,0 +1,37 @@
+target,frame,model,n,q2,q2_sd,rmse,sd_y,rho_median
+potency,mcs,fields,72,0.177,0.056,1.683,1.856,
+potency,mcs,fields+E_ads (h_d=1),72,0.176,0.057,1.684,1.856,
+potency,mcs,fields+E_ads (h_d=4),72,0.179,0.055,1.681,1.856,
+potency,mcs,E_ads only (ridge),72,-0.047,0.023,1.9,1.856,
+potency,mcs,multitask rho=0 (single),72,0.193,0.072,1.666,1.856,
+potency,mcs,multitask rho searched,72,0.193,0.072,1.666,1.856,0.0
+mwila_adj,mcs,fields,72,-0.119,0.088,1.582,1.496,
+mwila_adj,mcs,fields+E_ads (h_d=1),72,-0.117,0.06,1.581,1.496,
+mwila_adj,mcs,fields+E_ads (h_d=4),72,-0.116,0.059,1.58,1.496,
+mwila_adj,mcs,E_ads only (ridge),72,-0.056,0.03,1.537,1.496,
+mwila_adj,mcs,multitask rho=0 (single),72,-0.094,0.051,1.565,1.496,
+mwila_adj,mcs,multitask rho searched,72,-0.094,0.051,1.565,1.496,0.0
+dG_ads,mcs,fields,58,-0.018,0.074,5.212,5.168,
+dG_ads,mcs,fields+E_ads (h_d=1),58,-0.038,0.053,5.263,5.168,
+dG_ads,mcs,fields+E_ads (h_d=4),58,-0.036,0.062,5.258,5.168,
+dG_ads,mcs,E_ads only (ridge),58,-0.071,0.041,5.347,5.168,
+dG_ads,mcs,multitask rho=0 (single),58,-0.015,0.073,5.203,5.168,
+dG_ads,mcs,multitask rho searched,58,-0.02,0.07,5.215,5.168,0.0
+potency,pose+mcs,fields,72,0.152,0.061,1.708,1.856,
+potency,pose+mcs,fields+E_ads (h_d=1),72,0.128,0.055,1.733,1.856,
+potency,pose+mcs,fields+E_ads (h_d=4),72,0.123,0.056,1.738,1.856,
+potency,pose+mcs,E_ads only (ridge),72,-0.047,0.023,1.9,1.856,
+potency,pose+mcs,multitask rho=0 (single),72,0.165,0.052,1.695,1.856,
+potency,pose+mcs,multitask rho searched,72,0.165,0.052,1.695,1.856,0.0
+mwila_adj,pose+mcs,fields,72,-0.029,0.048,1.517,1.496,
+mwila_adj,pose+mcs,fields+E_ads (h_d=1),72,-0.046,0.045,1.53,1.496,
+mwila_adj,pose+mcs,fields+E_ads (h_d=4),72,-0.056,0.047,1.538,1.496,
+mwila_adj,pose+mcs,E_ads only (ridge),72,-0.056,0.03,1.537,1.496,
+mwila_adj,pose+mcs,multitask rho=0 (single),72,-0.021,0.041,1.511,1.496,
+mwila_adj,pose+mcs,multitask rho searched,72,-0.021,0.041,1.511,1.496,0.0
+dG_ads,pose+mcs,fields,58,0.09,0.063,4.928,5.168,
+dG_ads,pose+mcs,fields+E_ads (h_d=1),58,0.043,0.079,5.053,5.168,
+dG_ads,pose+mcs,fields+E_ads (h_d=4),58,0.037,0.085,5.068,5.168,
+dG_ads,pose+mcs,E_ads only (ridge),58,-0.071,0.041,5.347,5.168,
+dG_ads,pose+mcs,multitask rho=0 (single),58,0.099,0.079,4.902,5.168,
+dG_ads,pose+mcs,multitask rho searched,58,0.076,0.09,4.963,5.168,0.0

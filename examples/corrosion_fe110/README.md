@@ -153,6 +153,86 @@ Output: `157_benzimidazole_uma.sdf` (the adsorbed poses, loads with
   (all molecules are neutral here, but the medium is 1 M HCl) and the dispersion contribution.
   The modelling use is as a second training target and as the alignment, not as a predictor.
 
+## CMF models: the adsorbed-pose frame against the MCS alignment (2026-10-23)
+
+`compare_alignments.py` fits the same KRR model (five physicochemical fields, Gasteiger
+charges, alpha and lambda by 10-fold inner cross-validation) in three frames and reports the
+external 5-fold cross-validation, 10 repeats, identical folds everywhere; results in
+`alignment_comparison.csv`.
+
+- `mcs`: gas-phase conformers superimposed on benzimidazole by their maximum common
+  substructure, in 3D (the conventional frame, as the exporter checks it).
+- `pose`: the UMA poses as written: the surface normal and height are physical, the in-plane
+  rotation and position are wherever the relaxation left them.
+- `pose+mcs`: the UMA poses registered in the surface plane only (MCS atoms superimposed on
+  the reference pose by a rotation about z and an x, y shift; median in-plane rmsd 0.95 A).
+
+| target | frame | n | q2 (external CV, mean +- sd over repeats) | RMSE | sd of y | y-scrambled q2, max of 5 |
+|---|---|---|---|---|---|---|
+| potency (1 M HCl) | mcs | 73 | 0.19 +- 0.07 | 1.67 | 1.86 | -0.01 |
+| potency | pose | 73 | 0.09 +- 0.05 | 1.77 | 1.86 | 0.00 |
+| potency | pose+mcs | 73 | 0.16 +- 0.05 | 1.71 | 1.86 | -0.02 |
+| E_ads, kJ/mol | mcs | 72 | 0.13 +- 0.06 | 49.7 | 53.2 | 0.01 |
+| E_ads | pose | 72 | 0.51 +- 0.04 | 37.4 | 53.2 | -0.01 |
+| E_ads | pose+mcs | 72 | 0.52 +- 0.04 | 36.9 | 53.2 | 0.04 |
+
+On the 54 chemisorbed molecules alone (the unbound ones all sit near E_ads = 0 and their
+geometry is arbitrary): potency q2 0.13 (mcs) and 0.11 (pose+mcs); E_ads q2 0.07 (mcs) and
+0.26 (pose+mcs).
+
+What this says:
+
+- **The adsorbed frame carries the adsorption energy.** A field model in the surface frame
+  recovers the UMA E_ads with q2 = 0.5 (0.26 within the chemisorbed subset, where the easy
+  bound/unbound distinction is gone), while the same model in the MCS frame does not (0.13 and
+  0.07).  The vertical placement and the registration against the surface are the signal; the
+  in-plane MCS registration adds little (0.51 -> 0.52).  So the frame is informative, and the
+  E_ads target is learnable by CMF.
+- **It does not help the potency.** The electrochemical potency in 1 M HCl is weakly
+  modelled in every frame (q2 0.09-0.19; scrambled models give 0, so the small values are
+  real), and the MCS frame is, if anything, slightly better.  Consistent with r = 0.14
+  between potency and E_ads: the neutral-molecule, dispersion-free adsorption energy on a bare
+  Fe(110) terrace is not what sets inhibition in acid, where protonation, the chloride-covered
+  surface, solvation and the molecule's hydrophobic footprint all enter.
+- **Where to go.** Use E_ads as a second task or co-field beside the potency rather than as the
+  frame of the potency model; add dispersion and the protonated forms before expecting the
+  adsorption tier to rank inhibitors; and treat the 18 unbound molecules separately, since
+  their poses are not adsorption geometries.
+
+## E_ads as a second input to the potency model (2026-10-23)
+
+`eads_as_second_target.py` (results in `eads_second_target.csv`) lets the UMA energy into the
+potency model in the two ways the package offers, in both frames, same external 5x10 repeated
+cross-validation; the artefact molecule is excluded (n = 72; 58 for dG_ads).
+
+| target | frame | fields alone | + E_ads descriptor (h_d = 1 / 4) | two tasks, rho = 0 | two tasks, rho searched | E_ads alone |
+|---|---|---|---|---|---|---|
+| potency (raw MWILA, 1 M HCl) | mcs | 0.18 | 0.18 / 0.18 | 0.19 | 0.19 (rho 0) | -0.05 |
+| potency | pose+mcs | 0.15 | 0.13 / 0.12 | 0.17 | 0.17 (rho 0) | -0.05 |
+| MW-adjusted MWILA | mcs | -0.12 | -0.12 / -0.12 | -0.09 | -0.09 (rho 0) | -0.06 |
+| MW-adjusted MWILA | pose+mcs | -0.03 | -0.05 / -0.06 | -0.02 | -0.02 (rho 0) | -0.06 |
+| literature dG_ads | mcs | -0.02 | -0.04 / -0.04 | -0.02 | -0.02 (rho 0) | -0.07 |
+| literature dG_ads | pose+mcs | 0.09 | 0.04 / 0.04 | 0.10 | 0.08 (rho 0) | -0.07 |
+
+(q2 of the external cross-validation, mean over 10 repeats; the standard deviations are
+0.04-0.09.)
+
+- **E_ads adds nothing to the potency.**  As a descriptor block it changes q2 by at most
+  +-0.03, within the repeat scatter, in both frames and at both mixing weights.  As a second
+  task the inner cross-validation picks rho = 0, i.e. no sharing, in every one of the 50 outer
+  folds for every target; the rho-searched and single-task numbers coincide.  Alone it
+  predicts nothing (q2 < 0).
+- **The alternative targets are worse, not better.**  The molecular-weight-adjusted MWILA
+  removes the size trend that the fields partly see, and what is left is not predictable
+  (q2 < 0 everywhere).  The papers' Langmuir dG_ads is predicted at q2 0.1 at best (pose frame)
+  and not at all from the MCS frame.
+- **Conclusion for the study.**  The neutral-molecule, dispersion-free adsorption energy on a
+  bare Fe(110) terrace carries no information about inhibition in 1 M HCl beyond what the
+  molecular fields already hold.  Before more molecules are run, the tier has to model the
+  medium: the protonated inhibitor, the chloride-covered surface, and dispersion.  The frame
+  result stands on its own: the UMA poses are a self-consistent, learnable geometry (q2 0.5 for
+  E_ads), so the pipeline is sound; it is the physics of the target that is missing.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
