@@ -537,6 +537,8 @@ class CMFModel:
     kernel_source: str = "fields"           # "fields" | "autocorrelation"
     ac_sigma: float = 0.75                  # autocorrelation: width along the distance axis (A)
     ac_d_max: float = 12.0                  # autocorrelation: longest distance resolved (A)
+    ac_chirality: bool = False              # autocorrelation: add the three-point signed block
+    ac_chirality_shells: int = 4            # autocorrelation: radial shells of that block
     # optional nonlinear layer on top of the CMF kernel: "linear" keeps the model linear in the
     # molecular field, which is what makes the co-field and the atom contributions valid; the other
     # layers predict better on several sets but destroy that interpretation (see the README)
@@ -674,7 +676,9 @@ class CMFModel:
     def _ac_spec(self):
         from .invariant import AutocorrelationSpec
         return AutocorrelationSpec(d_max=float(self.ac_d_max), step=float(self.ac_sigma),
-                                   sigma=float(self.ac_sigma))
+                                   sigma=float(self.ac_sigma),
+                                   chirality=bool(self.ac_chirality),
+                                   chirality_shells=int(self.ac_chirality_shells))
 
     def _ac_features(self, table: AtomTable) -> np.ndarray:
         from .invariant import feature_matrix
@@ -687,7 +691,7 @@ class CMFModel:
             return self.joint_kernel(self.prepare_training_kernels(train, progress=progress,
                                                                    cancel=cancel),
                                      train.descriptors)
-        from .invariant import autocorrelation_kernel, channel_scale
+        from .invariant import autocorrelation_kernel, block_sizes, channel_scale
         if progress:
             progress("Field autocorrelation", 0.2)
         self.train = train
@@ -696,8 +700,10 @@ class CMFModel:
         self.scale = np.ones(1)
         spec = self._ac_spec()
         self.ac_train_ = self._ac_features(train)
-        self.ac_scale_ = channel_scale(self.ac_train_, spec.n_bins)
-        return autocorrelation_kernel(self.ac_train_, scale=self.ac_scale_, n_bins=spec.n_bins)
+        self.ac_blocks_ = block_sizes(spec, train.weights.shape[1])
+        self.ac_scale_ = channel_scale(self.ac_train_, spec.n_bins, blocks=self.ac_blocks_)
+        return autocorrelation_kernel(self.ac_train_, scale=self.ac_scale_, n_bins=spec.n_bins,
+                                      blocks=self.ac_blocks_)
 
     def test_kernel(self, test: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """The (n_test, n_train) joint kernel block, whichever source it comes from."""
@@ -708,7 +714,8 @@ class CMFModel:
         if getattr(self, "ac_train_", None) is None:
             raise RuntimeError("model is not fitted")
         return autocorrelation_kernel(self.ac_train_, self._ac_features(test),
-                                      scale=self.ac_scale_, n_bins=self._ac_spec().n_bins)
+                                      scale=self.ac_scale_, n_bins=self._ac_spec().n_bins,
+                                      blocks=getattr(self, "ac_blocks_", None))
 
     def _require_fields_if_atoms(self, what: str) -> None:
         """Atom-level interpretation needs the overlap kernel; the dual form does not."""
@@ -997,6 +1004,33 @@ class CMFModel:
         var = learner.predict_variance(K, self.joint_self(test))
         return yp, var
 
+    def rank_score(self, test: AtomTable, beta: float = 0.0,
+                   larger_is_better: bool = True) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """(score to rank by, prediction, posterior standard deviation) for new molecules.
+
+        With `beta` at zero the score is the prediction itself, which is what ranking a library
+        by a regression model has always meant here.  Above zero it is a confidence bound,
+
+            score = mean - beta * sd        (or mean + beta * sd when smaller is better)
+
+        so a molecule is promoted only if the model is both optimistic *and* sure about it.  The
+        point is not caution for its own sake: a screening library is by construction dominated
+        by molecules unlike the training set, a kernel method returns the training mean dressed
+        up for those, and a point estimate cannot tell that answer from a real one.  Subtracting
+        the spread puts the molecules the model knows nothing about where they belong.
+
+        This is the same quantity the applicability domain reports and the one-class Gaussian
+        process already divides by; `beta` is the only choice, and one standard deviation is the
+        conventional starting point.  It needs the linear kernel, since that is where a
+        posterior exists.
+        """
+        yp, var = self.predict_with_variance(test)
+        sd = np.sqrt(np.maximum(np.asarray(var, float), 0.0))
+        b = float(beta)
+        if b == 0.0:
+            return yp, yp, sd
+        return (yp - b * sd if larger_is_better else yp + b * sd), yp, sd
+
     def predict_proba(self, test: AtomTable) -> np.ndarray:
         """p(active) for new molecules; only the Gaussian-process classifier provides it.
 
@@ -1215,6 +1249,8 @@ class CMFModel:
             "oneclass": getattr(self.learner_, "oc_", None) if self.learner_ is not None else None,
             "kernel_source": self.kernel_source,
             "ac_sigma": self.ac_sigma,
+            "ac_chirality": self.ac_chirality,
+            "ac_chirality_shells": self.ac_chirality_shells,
             "ac_d_max": self.ac_d_max,
             "ac_train": getattr(self, "ac_train_", None),
             "ac_scale": getattr(self, "ac_scale_", None),
@@ -1237,6 +1273,8 @@ class CMFModel:
                 mkl=st.get("mkl"), mkl_rho=float(st.get("mkl_rho", 1.0)))
         m.kernel_source = st.get("kernel_source", "fields")
         m.ac_sigma = float(st.get("ac_sigma", 0.75))
+        m.ac_chirality = bool(st.get("ac_chirality", False))
+        m.ac_chirality_shells = int(st.get("ac_chirality_shells", 4))
         m.ac_d_max = float(st.get("ac_d_max", 12.0))
         m.ac_train_ = st.get("ac_train")
         m.ac_scale_ = st.get("ac_scale")

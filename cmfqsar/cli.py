@@ -318,10 +318,15 @@ def cmd_build(args):
     model = CMFModel(fieldset=fs, task=args.task, method=args.method, normalize=args.normalize,
                      scale_fields=not args.raw_scale, fit_bias=not args.no_bias,
                      kernel_layer=args.kernel_layer, kernel_source=args.kernel,
-                     ac_sigma=args.ac_sigma, ac_d_max=args.ac_dmax)
+                     ac_sigma=args.ac_sigma, ac_d_max=args.ac_dmax,
+                     ac_chirality=args.ac_chirality,
+                     ac_chirality_shells=args.ac_chirality_shells)
     if args.kernel == "autocorrelation":
         print(f"Kernel: field autocorrelation up to {args.ac_dmax:g} A in steps of "
-              f"{args.ac_sigma:g} A, invariant to rotation and translation. No alignment is "
+              f"{args.ac_sigma:g} A"
+              + (f", with the signed three-point channels over {args.ac_chirality_shells} radial "
+                 f"shells, so enantiomers are distinguishable" if args.ac_chirality else "")
+              + ", invariant to rotation and translation. No alignment is "
               f"assumed; the attenuation grid is not used, and there are no co-fields or atom "
               f"contributions, only the contributions of the training molecules.")
     if args.kernel_layer != "linear":
@@ -628,11 +633,29 @@ def cmd_predict(args):
             print(f"Aligned structures written to {args.aligned_out}")
     table = AtomTable.from_molecules(mf)
     if model.is_linear and model.method in ("krr", "gp"):
-        yp, var = model.predict_with_variance(table)
-        for n, v, s in zip(ds.names, yp, var):
-            print(f"{n:30s} {v:8.3f}   (GP var {s:.3g})")
+        if args.rank_bound:
+            # rank by a confidence bound rather than by the point estimate: a library is mostly
+            # unlike the training set, and for those molecules a point estimate is the training
+            # mean dressed up
+            score, yp, sd = model.rank_score(table, beta=float(args.rank_bound),
+                                             larger_is_better=not args.smaller_is_better)
+            var = sd ** 2
+            order = np.argsort(-score if not args.smaller_is_better else score)
+            print(f"Ranked by prediction {'-' if not args.smaller_is_better else '+'} "
+                  f"{args.rank_bound:g} sd:")
+            for i in order:
+                print(f"{ds.names[i]:30s} {score[i]:8.3f}   = {yp[i]:7.3f} "
+                      f"{'-' if not args.smaller_is_better else '+'} "
+                      f"{args.rank_bound:g} x {sd[i]:.3f}")
+        else:
+            yp, var = model.predict_with_variance(table)
+            for n, v, s in zip(ds.names, yp, var):
+                print(f"{n:30s} {v:8.3f}   (GP var {s:.3g})")
     else:
         # the posterior variance is defined for the linear kernel only
+        if args.rank_bound:
+            raise SystemExit("--rank-bound needs a posterior, so it needs the linear kernel and "
+                             "the krr or gp method; this model has neither")
         yp, var = model.predict(table), None
         for n, v in zip(ds.names, yp):
             print(f"{n:30s} {v:8.3f}")
@@ -1382,6 +1405,15 @@ def main(argv=None):
                         "sets the spacing of the channels")
     b.add_argument("--ac-dmax", type=float, default=12.0, metavar="D",
                    help="autocorrelation: longest interatomic distance resolved")
+    b.add_argument("--ac-chirality", action="store_true",
+                   help="autocorrelation: add the three-point signed channels, which are what "
+                        "makes enantiomers distinguishable. A distance distribution is the same "
+                        "for a molecule and its mirror image; the signed volume spanned by three "
+                        "field-weighted moments is not. Off by default, so a model built without "
+                        "it is unchanged")
+    b.add_argument("--ac-chirality-shells", type=int, default=4, metavar="S",
+                   help="autocorrelation: radial shells the signed volume is resolved over; "
+                        "1 gives the single global invariant per field triple")
     b.add_argument("--oc-k", type=int, default=5, metavar="K",
                    help="ocknn: how many nearest actives the distance is taken to")
     b.add_argument("--oc-components", type=int, default=5, metavar="Q",
@@ -1560,6 +1592,16 @@ def main(argv=None):
     q.add_argument("--allow-mismatch", action="store_true",
                    help="predict even when the molecules were not prepared the way the model's "
                         "training set was (the check that otherwise refuses is printed either way)")
+    q.add_argument("--rank-bound", type=float, default=0.0, metavar="BETA",
+                   help="rank the molecules by a confidence bound, prediction minus BETA "
+                        "posterior standard deviations, instead of by the prediction itself. A "
+                        "screening library is mostly unlike the training set, and a kernel "
+                        "method returns the training mean dressed up for those molecules; "
+                        "subtracting the spread demotes them. One standard deviation is the "
+                        "conventional starting point")
+    q.add_argument("--smaller-is-better", action="store_true",
+                   help="with --rank-bound, the activity is one where a smaller value is more "
+                        "active, so the bound is added rather than subtracted")
     q.set_defaults(func=cmd_predict)
     u = sub.add_parser("unalign", help="give every molecule a random pose (control experiment)")
     u.add_argument("dataset")

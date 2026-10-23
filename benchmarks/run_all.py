@@ -156,6 +156,11 @@ def registry() -> List[Benchmark]:
                   minutes="20",   # examples/sutherland and examples/openff, both in the repo
                   report=lambda: _mod("run_exposure").report(_r("exposure")),
                   tables=["exposure/table.md"]),
+        Benchmark("bound", "ranking by a confidence bound against ranking by the prediction",
+                  "run_bound.py", "bound", compute=[[]], minutes="15",
+                  report=lambda: _mod("run_bound").report(_r("bound/table.md")),
+                  tables=["bound/table.md"],
+                  readme=["Ranking by a bound rather than by the prediction"]),
         Benchmark("fusion", "data-fusion rules against the one-class descriptions, both "
                             "representations",
                   "run_fusion.py", "fusion", compute=[[]], minutes="2",

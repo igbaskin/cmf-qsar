@@ -26,10 +26,13 @@ which is this descriptor's channel at d = 0 with sigma^2 = 2/alpha, up to the pr
 further channels resolve what that single number collapses: the overlap integral reports how much
 the fields of a molecule coincide, the autocorrelation reports at which distances they do.
 
-One thing the descriptor cannot see: a distance distribution is the same for a molecule and its
-mirror image, so enantiomers are indistinguishable here.  Chirality needs a signed quantity, the
-triple product of three displacement vectors, which is what three-point pharmacophores add; the
-distance form below is the two-point case.
+A distance distribution is the same for a molecule and its mirror image, so the two-point form
+above is blind to chirality.  The signed quantity that is not is the triple product of three
+displacement vectors, and :func:`chirality` adds it as a second block of channels.  Summing the
+signed volume over every triple of atoms would cost O(N^3), but the determinant is trilinear, so
+the sum factorises into the triple product of three field-weighted first moments and costs one
+pass over the atoms instead.  It is off by default, so a model built before it existed is
+unchanged; a test asserts that.
 
 What is lost with the frame is the co-field: a map in space needs a space to live in.  The
 decomposition that survives is the one in the descriptor's own currency -- which pair of field
@@ -53,6 +56,10 @@ class AutocorrelationSpec:
     step: float = 0.75
     sigma: float = 0.75              # width of the smoothing along the distance axis
     include_self: bool = True        # the l = m terms, which carry the plain count of each type
+    chirality: bool = False          # append the three-point signed channels; off by default,
+    #                                  so a model built before they existed is unchanged
+    chirality_shells: int = 4        # radial shells the signed volume is resolved over; 1 is
+    #                                  the single global invariant per field triple
 
     @property
     def centres(self) -> np.ndarray:
@@ -63,6 +70,27 @@ class AutocorrelationSpec:
     def n_bins(self) -> int:
         return len(self.centres)
 
+    @property
+    def shell_centres(self) -> np.ndarray:
+        """Where the radial windows of the chirality channels sit, measured from the centroid.
+
+        Radii from the centroid reach about half the longest interatomic distance, so the shells
+        span `d_max / 2` rather than `d_max`; one shell means no window at all.
+        """
+        s = max(int(self.chirality_shells), 1)
+        if s == 1:
+            return np.zeros(1)
+        return np.linspace(0.0, 0.5 * self.d_max, s)
+
+    @property
+    def shell_sigma(self) -> float:
+        s = self.shell_centres
+        return float(s[1] - s[0]) if len(s) > 1 else 0.0
+
+    @property
+    def n_shells(self) -> int:
+        return len(self.shell_centres)
+
 
 def field_pairs(n_fields: int) -> List[Tuple[int, int]]:
     """The unordered pairs of field types, diagonal first: (0,0), (1,1), ..., then (0,1), ..."""
@@ -70,15 +98,99 @@ def field_pairs(n_fields: int) -> List[Tuple[int, int]]:
             + [(f, g) for f in range(n_fields) for g in range(f + 1, n_fields)])
 
 
+def chirality_triples(n_fields: int) -> List[Tuple[int, int, int]]:
+    """The ordered triples f < g < h of distinct field types.
+
+    The signed volume is antisymmetric in its three arguments, so it vanishes whenever two of
+    them are the same field and merely changes sign when two are swapped: the triples with
+    f < g < h are all the independent ones there are.
+    """
+    return [(f, g, h) for f in range(n_fields)
+            for g in range(f + 1, n_fields) for h in range(g + 1, n_fields)]
+
+
+def block_sizes(spec: AutocorrelationSpec, n_fields: int) -> List[int]:
+    """How many columns each channel block occupies, in the order the features are laid out.
+
+    The pair blocks all have `n_bins` columns and the chirality blocks `n_shells`, so the blocks
+    are no longer of one size once chirality is on and the scaling has to be told where they are.
+    """
+    out = [spec.n_bins] * len(field_pairs(n_fields))
+    if spec.chirality:
+        out += [spec.n_shells] * len(chirality_triples(n_fields))
+    return out
+
+
 def channel_labels(fieldset: FieldSet, spec: AutocorrelationSpec) -> List[str]:
-    """One label per feature: which two field types, at which distance."""
+    """One label per feature: which field types, and at which distance or radius."""
     names = [s.label for s in fieldset.specs]
     out = []
     for f, g in field_pairs(len(names)):
         pair = names[f] if f == g else f"{names[f]} x {names[g]}"
         for d in spec.centres:
             out.append(f"{pair} @ {d:.2f} A")
+    if spec.chirality:
+        out += chirality_labels(fieldset, spec)
     return out
+
+
+def chirality_labels(fieldset: FieldSet, spec: AutocorrelationSpec) -> List[str]:
+    """One label per chirality feature: which three field types, in which radial shell."""
+    names = [s.label for s in fieldset.specs]
+    out = []
+    for f, g, h in chirality_triples(len(names)):
+        trio = f"{names[f]} x {names[g]} x {names[h]}"
+        for r in spec.shell_centres:
+            out.append(f"{trio} (signed)" if spec.n_shells == 1
+                       else f"{trio} (signed) at r {r:.2f} A")
+    return out
+
+
+def chirality(mol: MoleculeFields, spec: AutocorrelationSpec = AutocorrelationSpec(),
+              triples: Optional[Sequence[Tuple[int, int, int]]] = None) -> np.ndarray:
+    """The three-point signed channels of one molecule, flattened: (n_triples * n_shells,).
+
+    A distance distribution is the same for a molecule and its mirror image, so everything above
+    is blind to chirality.  The signed quantity that is not is the triple product of three
+    displacement vectors, and the obvious way to use it -- summing the signed volume over every
+    triple of atoms -- would cost O(N^3) per field triple.  It does not have to.  The determinant
+    is trilinear, so the sum over triples factorises exactly:
+
+        sum_{l,m,n} w_lf w_mg w_nh  det[r_l - c, r_m - c, r_n - c]
+            =  det[ A_f, A_g, A_h ],        A_f = sum_l w_lf (r_l - c)
+
+    with `c` the centroid of the atoms.  So the whole block costs one pass over the atoms, and
+    each channel is the signed volume spanned by three field-weighted vectors -- the first moment
+    of each field about the centroid.  Under a proper rotation all three are rotated and the
+    determinant is unchanged; under a reflection the determinant changes sign; a translation
+    moves the centroid with the atoms and cancels.  That is exactly the behaviour chirality
+    needs, and it is why a planar molecule gives zero in every channel: three vectors in a plane
+    span no volume, and a planar molecule is achiral.
+
+    `chirality_shells` resolves the invariant over radial windows about the centroid, since one
+    number per field triple describes the handedness of the molecule as a whole and cannot say
+    at which radius it lives.  The windows depend on `|r_l - c|`, which is itself reflection-
+    invariant, so every channel keeps the sign behaviour above.
+    """
+    W = np.asarray(mol.weights, float)
+    n_atoms, n_fields = W.shape
+    trips = list(triples) if triples is not None else chirality_triples(n_fields)
+    shells = spec.shell_centres
+    if n_atoms == 0 or not trips:
+        return np.zeros(len(trips) * len(shells))
+    X = np.asarray(mol.coords, float)
+    X = X - X.mean(axis=0)
+    if spec.n_shells <= 1:
+        G = np.ones((n_atoms, 1))
+    else:
+        r = np.linalg.norm(X, axis=1)
+        G = np.exp(-((r[:, None] - shells[None, :]) ** 2) / (2.0 * spec.shell_sigma ** 2))
+    # A[f, s, :] = sum_l W[l, f] G[l, s] (r_l - c)
+    A = np.einsum("lf,ls,ld->fsd", W, G, X, optimize=True)
+    out = np.empty((len(trips), len(shells)))
+    for i, (f, g, h) in enumerate(trips):
+        out[i] = np.einsum("sd,sd->s", A[f], np.cross(A[g], A[h]))
+    return out.ravel()
 
 
 def autocorrelation(mol: MoleculeFields, spec: AutocorrelationSpec = AutocorrelationSpec(),
@@ -104,7 +216,10 @@ def autocorrelation(mol: MoleculeFields, spec: AutocorrelationSpec = Autocorrela
         out[i] = np.einsum("a,abk,b->k", W[:, f], B, W[:, g], optimize=True)
         if f != g:
             out[i] *= 2.0                                    # the pair counts both ways round
-    return out.ravel()
+    flat = out.ravel()
+    if spec.chirality:
+        flat = np.concatenate([flat, chirality(mol, spec)])
+    return flat
 
 
 def feature_matrix(mols: Sequence[MoleculeFields],
@@ -116,34 +231,54 @@ def feature_matrix(mols: Sequence[MoleculeFields],
         return np.zeros((0, 0))
     n_fields = n_fields if n_fields is not None else mols[0].weights.shape[1]
     pairs = field_pairs(n_fields)
-    out = np.zeros((len(mols), len(pairs) * spec.n_bins))
+    width = sum(block_sizes(spec, n_fields))
+    out = np.zeros((len(mols), width))
     for i, m in enumerate(mols):
-        out[i] = autocorrelation(m, spec, pairs)
+        row = autocorrelation(m, spec, pairs)
+        if len(row) != width:
+            # padding or truncating here would quietly put one molecule's channels in another's
+            # columns, which is worse than refusing: every molecule must carry the same fields
+            raise ValueError(
+                f"{m.name or f'molecule {i}'} gives {len(row)} channels where the set gives "
+                f"{width}: it carries {m.weights.shape[1]} fields and the others carry "
+                f"{n_fields}. Build the fields of every molecule from one field set.")
+        out[i] = row
         if progress is not None and i % 25 == 0:
             progress(f"Field autocorrelation {i + 1}/{len(mols)}", i / max(len(mols), 1))
     return out
 
 
-def channel_scale(train: np.ndarray, n_bins: int) -> np.ndarray:
-    """One scale per field-type pair, so that no pair dominates by its units alone.
+def channel_scale(train: np.ndarray, n_bins: int,
+                  blocks: Optional[Sequence[int]] = None) -> np.ndarray:
+    """One scale per channel block, so that no block dominates by its units alone.
 
     The electrostatic field carries charges and the steric one carries ones, so their
     autocorrelations differ by orders of magnitude; each block is divided by its root mean square
-    over the training molecules, which is what `scale_fields` does for the kernels.
+    over the training molecules, which is what `scale_fields` does for the kernels.  The signed
+    chirality channels need this more than anything else does, since a volume carries the cube of
+    a length.  `blocks` gives the column counts explicitly, which is required once they are not
+    all `n_bins` wide; without it the blocks are taken to be uniform, as they were before the
+    chirality channels existed.
     """
     X = np.asarray(train, float)
-    blocks = X.shape[1] // n_bins
+    sizes = ([int(n_bins)] * (X.shape[1] // max(int(n_bins), 1)) if blocks is None
+             else [int(b) for b in blocks])
     s = np.ones(X.shape[1])
-    for b in range(blocks):
-        sl = slice(b * n_bins, (b + 1) * n_bins)
+    start = 0
+    for width in sizes:
+        if width <= 0 or start >= X.shape[1]:
+            continue
+        sl = slice(start, min(start + width, X.shape[1]))
         rms = float(np.sqrt(np.mean(X[:, sl] ** 2)))
         s[sl] = 1.0 / rms if rms > 1e-300 else 0.0
+        start = sl.stop
     return s
 
 
 def autocorrelation_kernel(train: np.ndarray, test: Optional[np.ndarray] = None,
                            scale: Optional[np.ndarray] = None, n_bins: int = 1,
-                           normalize: bool = True) -> np.ndarray:
+                           normalize: bool = True,
+                           blocks: Optional[Sequence[int]] = None) -> np.ndarray:
     """Cosine-normalised linear kernel on the autocorrelation features.
 
     The normalisation is applied to the joint kernel, not block by block: normalising each pair
@@ -154,7 +289,7 @@ def autocorrelation_kernel(train: np.ndarray, test: Optional[np.ndarray] = None,
     A = np.asarray(train, float)
     B = A if test is None else np.asarray(test, float)
     if scale is None:
-        scale = channel_scale(A, n_bins)
+        scale = channel_scale(A, n_bins, blocks=blocks)
     A, B = A * scale, B * scale
     K = B @ A.T
     if not normalize:

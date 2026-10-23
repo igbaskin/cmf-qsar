@@ -9,8 +9,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from cmfqsar.fields import AtomTable, FieldSet, build_fields  # noqa: E402
 from cmfqsar.invariant import (AutocorrelationSpec, autocorrelation,  # noqa: E402
-                               autocorrelation_kernel, channel_labels, channel_scale,
-                               feature_matrix, field_pairs)
+                               autocorrelation_kernel, block_sizes, channel_labels,
+                               channel_scale, chirality, chirality_triples, feature_matrix,
+                               field_pairs)
 from cmfqsar.kernels import self_kernels  # noqa: E402
 
 SMILES = ["CCCOc1ccccc1C(=O)NCC", "CCCNc1ccccc1C(=O)OC", "CCOc1ccc(C)cc1CC(=O)N",
@@ -227,3 +228,166 @@ def test_the_search_does_not_loop_over_an_attenuation_it_ignores(world):
                       lams=[1e-2, 0.1], folds=3, seed=0)
     assert len(res.table) == 2                     # two regularisations, one kernel
     assert np.isfinite(res.best_q2) and "lam" in res.best_params
+
+
+# ----------------------------------------------------------------------------------------------
+# the three-point signed channels, which are what makes enantiomers distinguishable
+# ----------------------------------------------------------------------------------------------
+
+CHIRAL = AutocorrelationSpec(chirality=True)
+
+
+def _mirrored(mol):
+    """The true enantiomer of a conformation: every coordinate reflected, the fields unchanged."""
+    from cmfqsar.fields import MoleculeFields
+    return MoleculeFields(name=mol.name + "_mirror",
+                          coords=np.asarray(mol.coords, float) * np.array([1.0, 1.0, -1.0]),
+                          weights=mol.weights, radii=mol.radii, symbols=mol.symbols,
+                          atom_types=mol.atom_types, bonds=mol.bonds, charges=mol.charges)
+
+
+def _rigidly_moved(mol, R, t):
+    from cmfqsar.fields import MoleculeFields
+    return MoleculeFields(name=mol.name + "_moved",
+                          coords=np.asarray(mol.coords, float) @ np.asarray(R, float).T + t,
+                          weights=mol.weights, radii=mol.radii, symbols=mol.symbols,
+                          atom_types=mol.atom_types, bonds=mol.bonds, charges=mol.charges)
+
+
+def test_the_default_is_untouched(world):
+    """Chirality is off unless asked for, so a model built before it existed is unchanged."""
+    fs, _, mf = world
+    spec = AutocorrelationSpec()
+    assert spec.chirality is False
+    n_pairs = len(field_pairs(len(fs.specs)))
+    plain = autocorrelation(mf[0], spec)
+    assert plain.shape == (n_pairs * spec.n_bins,)
+    assert block_sizes(spec, len(fs.specs)) == [spec.n_bins] * n_pairs
+    assert len(channel_labels(fs, spec)) == len(plain)
+    # and the chirality block is appended, not mixed in: the pair part is bit-identical
+    with_chi = autocorrelation(mf[0], CHIRAL)
+    assert np.array_equal(with_chi[:len(plain)], plain)
+    assert len(with_chi) == len(plain) + len(chirality_triples(len(fs.specs))) * CHIRAL.n_shells
+    assert len(channel_labels(fs, CHIRAL)) == len(with_chi)
+
+
+def test_the_triples_are_the_independent_ones():
+    assert chirality_triples(3) == [(0, 1, 2)]
+    assert len(chirality_triples(5)) == 10                  # C(5, 3)
+    assert all(f < g < h for f, g, h in chirality_triples(5))
+    assert chirality_triples(2) == [] and chirality_triples(0) == []
+
+
+def test_the_two_point_form_cannot_tell_a_molecule_from_its_mirror(world):
+    """The gap this block exists to close, stated as a measurement."""
+    fs, _, mf = world
+    for m in mf[:3]:
+        plain = AutocorrelationSpec()
+        assert np.allclose(autocorrelation(m, plain), autocorrelation(_mirrored(m), plain),
+                           atol=1e-12)
+
+
+def test_the_signed_channels_negate_under_reflection(world):
+    fs, _, mf = world
+    for m in mf[:3]:
+        c = chirality(m, CHIRAL)
+        assert np.linalg.norm(c) > 0, m.name
+        assert np.allclose(c, -chirality(_mirrored(m), CHIRAL), rtol=1e-10, atol=1e-12)
+
+
+def test_the_signed_channels_survive_a_rigid_motion(world):
+    """Rotation and translation leave every channel exactly where it was."""
+    fs, _, mf = world
+    rng = np.random.default_rng(0)
+    for m in mf[:3]:
+        R = np.linalg.qr(rng.normal(size=(3, 3)))[0]
+        if np.linalg.det(R) < 0:
+            R[:, 0] *= -1.0
+        moved = _rigidly_moved(m, R, rng.normal(scale=6.0, size=3))
+        assert np.allclose(chirality(m, CHIRAL), chirality(moved, CHIRAL), atol=1e-9)
+
+
+def test_the_factorisation_is_the_triple_sum_it_claims_to_be(world):
+    """The whole point of the block: det[A_f, A_g, A_h] IS the sum over every atom triple."""
+    import itertools
+    fs, _, mf = world
+    mol = mf[0]
+    X = np.asarray(mol.coords, float)
+    X = X - X.mean(axis=0)
+    W = np.asarray(mol.weights, float)
+    spec = AutocorrelationSpec(chirality=True, chirality_shells=1)
+    got = chirality(mol, spec).reshape(len(chirality_triples(W.shape[1])), 1)[:, 0]
+    trips = chirality_triples(W.shape[1])
+    # the explicit O(N^3) sum, over a molecule small enough to afford it
+    idx = range(len(X))
+    for i, (f, g, h) in enumerate(trips):
+        total = 0.0
+        for l, m, n in itertools.product(idx, idx, idx):
+            total += W[l, f] * W[m, g] * W[n, h] * float(np.dot(X[l], np.cross(X[m], X[n])))
+        assert total == pytest.approx(got[i], rel=1e-7, abs=1e-9)
+
+
+def test_a_planar_molecule_has_no_handedness():
+    """Three vectors in a plane span no volume, and a planar molecule is achiral."""
+    from cmfqsar.fields import MoleculeFields
+    rng = np.random.default_rng(1)
+    n = 9
+    xy = rng.normal(size=(n, 2)) * 2.0
+    coords = np.column_stack([xy, np.zeros(n)])
+    mol = MoleculeFields(name="flat", coords=coords, weights=rng.normal(size=(n, 5)),
+                         radii=np.full(n, 1.7), symbols=["C"] * n, atom_types=["C.3"] * n,
+                         bonds=np.zeros((0, 2), int), charges=np.zeros(n))
+    assert np.allclose(chirality(mol, CHIRAL), 0.0, atol=1e-10)
+
+
+def test_the_kernel_separates_enantiomers_that_it_could_not_before(world):
+    """One number for the whole claim: the kernel between a molecule and its mirror image."""
+    fs, _, mf = world
+    pairs = [mf[0], _mirrored(mf[0])]
+    plain = AutocorrelationSpec()
+    Kp = autocorrelation_kernel(feature_matrix(pairs, plain), n_bins=plain.n_bins)
+    assert Kp[0, 1] == pytest.approx(1.0, abs=1e-12)        # indistinguishable, exactly
+    X = feature_matrix(pairs, CHIRAL)
+    Kc = autocorrelation_kernel(X, n_bins=CHIRAL.n_bins,
+                                blocks=block_sizes(CHIRAL, len(fs.specs)))
+    assert Kc[0, 1] < 0.95
+    # on the signed block alone they are exact antipodes
+    n_pair_cols = len(field_pairs(len(fs.specs))) * CHIRAL.n_bins
+    trips = len(chirality_triples(len(fs.specs)))
+    Konly = autocorrelation_kernel(X[:, n_pair_cols:], n_bins=CHIRAL.n_shells,
+                                   blocks=[CHIRAL.n_shells] * trips)
+    assert Konly[0, 1] == pytest.approx(-1.0, abs=1e-9)
+
+
+def test_the_scaling_honours_blocks_of_different_widths(world):
+    """A volume carries the cube of a length, so the block needs its own scale or it drowns."""
+    fs, _, mf = world
+    X = feature_matrix(mf, CHIRAL)
+    blocks = block_sizes(CHIRAL, len(fs.specs))
+    assert sum(blocks) == X.shape[1]
+    s = channel_scale(X, CHIRAL.n_bins, blocks=blocks)
+    Xs = X * s
+    start = 0
+    for width in blocks:
+        block = Xs[:, start:start + width]
+        if np.abs(block).max() > 0:
+            assert float(np.sqrt(np.mean(block ** 2))) == pytest.approx(1.0, rel=1e-9)
+        start += width
+    # without the explicit blocks the uniform assumption mis-slices, which is why it is passed
+    assert len(channel_scale(X, CHIRAL.n_bins)) == X.shape[1]
+
+
+def test_a_model_can_be_fitted_on_the_kernel_with_chirality(world):
+    """It is a kernel like any other: the learner, cross-validation and save/load all work."""
+    from cmfqsar.model import CMFModel
+    fs, _, mf = world
+    table = AtomTable.from_molecules(mf)
+    y = np.array([5.0, 5.4, 6.1, 6.6, 7.0, 7.4])
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": 0.1},
+                     kernel_source="autocorrelation", ac_chirality=True)
+    model.fit(table, y, cv_folds=0)
+    pred = model.predict(table)
+    assert pred.shape == (len(y),) and np.isfinite(pred).all()
+    # the chirality setting is part of what the model is, so it must survive a round trip
+    assert model._ac_spec().chirality is True
+    assert sum(model.ac_blocks_) == model.ac_train_.shape[1]

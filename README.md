@@ -50,7 +50,7 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Two endpoints on one kernel**, tied by a task correlation, so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Two endpoints on one kernel**, tied by a task correlation, so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
@@ -489,12 +489,71 @@ So for a series of several chemotypes, most of what the three-dimensional fields
 survives without any superposition at all. That is the useful half of the answer. The other half
 is what it costs: there is no co-field, because a map in space needs a space to live in. The
 decomposition that remains is in the descriptor's own currency — which pair of field types at
-which distance carries the weight, which `channel_labels` names — and a distance distribution
-cannot tell a molecule from its mirror image, so enantiomers are identical to it. Chirality would
-need the signed triple product of three displacements, the three-point case of the same idea.
+which distance carries the weight, which `channel_labels` names.
 
 `evaluate` reports it as the fourth number, the `hetero` command prints it, and the Chemotypes
 tab carries it beside the other three.
+
+#### The three-point signed channels: what a distance distribution cannot see
+
+A distance distribution is the same for a molecule and its mirror image, so everything above is
+blind to chirality: a test asserts that the two-point descriptor of an enantiomer pair is
+identical to the last bit. The signed quantity that is not blind is the triple product of three
+displacement vectors, and `--ac-chirality` adds it as a second block of channels.
+
+Summing the signed volume over every triple of atoms would cost O(N³). It does not have to,
+because the determinant is trilinear and the sum factorises exactly:
+
+```
+Σ_lmn w_lf w_mg w_nh · det[r_l − c, r_m − c, r_n − c]  =  det[A_f, A_g, A_h],
+      A_f = Σ_l w_lf (r_l − c),   c the centroid of the atoms
+```
+
+So each channel is the signed volume spanned by three field-weighted first moments, and the whole
+block costs one pass over the atoms. Under a proper rotation all three vectors turn together and
+the determinant is unchanged; under a reflection it changes sign; a translation moves the centroid
+with the atoms and cancels. A test checks the factorisation against the explicit triple sum, and
+another checks that a planar molecule gives zero in every channel, which it must, since three
+vectors in a plane span no volume and a planar molecule is achiral. The signed volume is
+antisymmetric in its three arguments, so only the field triples f < g < h are independent: ten
+channels for five fields, times the radial shells they are resolved over.
+
+**The invariance gap is closed exactly, and the practical gain is small.** Both halves of that
+are measured. The kernel between a molecule and its mirror image was exactly 1.000000, meaning
+indistinguishable; on the signed block alone it is **−1.000000**, an exact antipode, and in the
+combined kernel it is 0.808. On the four Sutherland sets with several chemotypes, leave-one-
+chemotype-out q² moves by +0.042 on COX2, +0.010 on DHFR, −0.035 on BZR and +0.062 on AChE: a
+small positive on three of four, mean +0.020.
+
+What it does **not** do is make a hand effect predictable for an unseen substituent. On a
+congeneric chiral series built for the purpose — one scaffold, ten substituents, both
+enantiomers of each, activity set to the substituent effect plus a fixed ±0.75 for handedness,
+leave-one-enantiomer-pair-out — the plain kernel predicts the two hands identically and recovers
+exactly none of the ±0.75 gap, as it must. With the signed block it recovers 0.108 of a true
+1.500 and calls the hand right 60 % of the time. Up-weighting the block until it carries 98 % of
+the squared norm raises that to 0.311 and 70–80 %, while the overall q² falls from +0.223 to
++0.025 as the substituent signal is crowded out. A per-atom-triple version binned by the
+triangle's size, which does not factorise and costs O(N³), recovers 0.496 and is the direction to
+take if more is needed; it is not implemented, because three times a small number is still a
+small number.
+
+The reason is worth stating, because it is a property of the descriptor and not a bug. The signed
+volume is built from three field-weighted moments of the whole molecule, so changing a substituent
+changes all three; the sign flips within an enantiomer pair, exactly, but the direction and
+magnitude in channel space vary between substituents, and a kernel method has no consistent
+handedness coordinate to generalise along. Enantiomers are no longer identical, which is what was
+claimed; a transferable chirality model is a different and harder thing.
+
+```bash
+python cmf_cli.py build examples/sutherland/BZR.sdf --charges file --kernel autocorrelation \
+       --ac-chirality --lams 1e-2,0.1,1 --test-fraction 0.25
+```
+
+It is off by default, so a model built before the block existed is unchanged, and a test asserts
+that the pair part of the feature vector is bit-identical with the block switched on.
+`--ac-chirality-shells` sets how many radial shells about the centroid the volume is resolved
+over, one being the single global invariant per field triple. In the application it is the
+*Signed three-point channels (chirality)* box beside the distance resolution.
 
 **It is also a kernel to model with, not only to compare against.** `CMFModel` takes a
 `kernel_source`, so every learner, the grid search, the cross-validation, the external CV, the
@@ -1401,6 +1460,65 @@ cross-validation.
 python cmf_cli.py build examples/steroids_cbg.sdf --alphas 0.5 --lams 0.1 --folds 5 \
        --y-scramble 100 --bootstrap 1000 --domain
 ```
+
+#### Ranking by a bound rather than by the prediction
+
+A regression model used to prioritise a library has always been read here as a point estimate:
+predict, sort, take the top. The objection is that a screening library is by construction
+dominated by molecules unlike the training set, that a kernel method returns the training mean
+dressed up for exactly those, and that a point estimate cannot tell that answer from a real one.
+`CMFModel.rank_score` ranks by a lower bound instead,
+
+```
+score = prediction − beta × posterior standard deviation
+```
+
+so a molecule is promoted only when the model is both optimistic and sure. The quantity is the
+one the applicability domain reports and the one-class Gaussian process already divides by; the
+only choice is `beta`, and one standard deviation is the conventional starting point. On the
+thrombin set the effect is visible molecule by molecule: compound 84 is predicted at 7.917, which
+would place it fourth, and its posterior deviation of 0.456 is the largest in the set, so at one
+deviation it falls to eighth.
+
+**Measured** by `benchmarks/run_bound.py` on the eight Sutherland sets, in two regimes that differ
+in how much the uncertainty varies across the library: random folds, and one Bemis-Murcko
+chemotype held out at a time. A molecule counts as active when its activity is above the median
+of the *training* part, so no label depends on anything held out.
+
+| beta | random: AUC | random: EF 10 % | random: BEDROC | chemotype: AUC | chemotype: EF 10 % | chemotype: BEDROC |
+|---|---:|---:|---:|---:|---:|---:|
+| 0 (the prediction) | 0.857 | 1.874 | 0.917 | 0.732 | 1.578 | 0.741 |
+| 0.25 | 0.861 | 1.874 | 0.927 | 0.735 | 1.651 | 0.754 |
+| 0.5 | 0.864 | 1.888 | 0.935 | 0.735 | 1.655 | 0.745 |
+| **1** | 0.868 | 1.913 | 0.951 | 0.739 | **1.779** | **0.770** |
+| 2 | 0.868 | 1.940 | **0.959** | 0.744 | 1.769 | 0.767 |
+
+The bound helps, consistently and modestly, and it helps in the way it should. BEDROC rises by
+0.042 across random folds and by 0.029 across chemotype folds while the AUC moves by about 0.01:
+the bound reorders the top of the list without changing how well the model separates overall,
+which is exactly the difference between an early-recognition metric and an average-recognition
+one. One standard deviation is the best setting on the harder regime and two on the easier, so the
+conventional choice is also the safe one. The enrichment factors are near their ceiling
+throughout, 2.05 at both fractions in the random regime, because about half of a held-out part is
+active by this definition; that is why BEDROC is the column to read.
+
+One expectation was wrong and the measurement says so. The chemotype regime was supposed to be
+where a bound has most room, since a held-out chemotype has no scaffold-mate in the training set.
+Its relative spread of the posterior deviation is **0.330**, *below* the 0.486 of a random split.
+Holding out a whole chemotype raises the uncertainty of every molecule in it together, and a bound
+acts on the differences within a ranked list rather than on their level, so a uniformly distant
+part gives it less to work with, not more. The gain is real in both regimes and larger where the
+spread is larger, which is the rule the numbers actually support.
+
+```bash
+python cmf_cli.py predict thrombin.cmf library.sdf --rank-bound 1
+python cmf_cli.py predict ic50.cmf library.sdf --rank-bound 1 --smaller-is-better
+```
+
+`--rank-bound BETA` sorts the output by the bound and prints the arithmetic behind each row;
+`--smaller-is-better` adds the deviation instead of subtracting it, for an activity where a
+smaller value is more active. It needs the linear kernel and the `krr` or `gp` method, since that
+is where a posterior exists, and says so rather than silently ranking by the mean.
 
 ### Classification and virtual screening
 

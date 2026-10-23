@@ -795,6 +795,12 @@ class ModelPanel(QWidget):
                                       "which also sets the spacing of its channels")
         self.lbl_ac_sigma = QLabel("Distance resolution σ:")
         form.addRow(self.lbl_ac_sigma, self.spin_ac_sigma)
+        self.chk_ac_chirality = QCheckBox("Signed three-point channels (chirality)")
+        self.chk_ac_chirality.setToolTip(
+            "A distance distribution is the same for a molecule and its mirror image, so the "
+            "plain autocorrelation cannot tell enantiomers apart. This adds the signed volume "
+            "spanned by three field-weighted moments, which changes sign under reflection.")
+        form.addRow("", self.chk_ac_chirality)
         self.ed_alphas = QLineEdit("0.2, 0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0")
         form.addRow("α grid:", self.ed_alphas)
         self.ed_lams = QLineEdit("1e-4, 1e-3, 1e-2, 0.1, 1, 10")
@@ -983,6 +989,9 @@ class ModelPanel(QWidget):
     def ac_sigma(self) -> float:
         return float(self.spin_ac_sigma.value())
 
+    def ac_chirality(self) -> bool:
+        return bool(self.chk_ac_chirality.isChecked())
+
     def task_key(self) -> str:
         return ["regression", "classification", "oneclass"][self.cmb_task.currentIndex()]
 
@@ -1055,6 +1064,7 @@ class ModelPanel(QWidget):
         invariant = self.kernel_source() != "fields"
         self.lbl_ac_sigma.setVisible(invariant)
         self.spin_ac_sigma.setVisible(invariant)
+        self.chk_ac_chirality.setVisible(invariant)
         self.ed_alphas.setEnabled(not invariant)
         self.cmb_mix.setEnabled(not oc)
         self.spin_outer.setEnabled(task == "regression")

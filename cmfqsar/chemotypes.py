@@ -364,7 +364,8 @@ def count_kernel(mols: Sequence[Chem.Mol], names: Sequence[str], alpha: Optional
 
 def invariant_q2(molfields: Sequence, y: np.ndarray, labels: np.ndarray, lam=1.0,
                  max_folds: int = 0, d_max: float = 12.0, step: float = 0.75,
-                 sigma: float = 0.75) -> Tuple[float, float]:
+                 sigma: float = 0.75, chirality: bool = False,
+                 chirality_shells: int = 4) -> Tuple[float, float]:
     """Leave-one-chemotype-out q2 of a model that keeps the geometry but needs no alignment.
 
     The kernel is the field autocorrelation of :mod:`cmfqsar.invariant`: invariant to rotation
@@ -372,12 +373,15 @@ def invariant_q2(molfields: Sequence, y: np.ndarray, labels: np.ndarray, lam=1.0
     It sits between the aligned model and the count kernel, and says what the geometry is worth
     once the frame is no longer assumed.
     """
-    from .invariant import AutocorrelationSpec, autocorrelation_kernel, feature_matrix
-    spec = AutocorrelationSpec(d_max=d_max, step=step, sigma=sigma)
+    from .invariant import (AutocorrelationSpec, autocorrelation_kernel, block_sizes,
+                            feature_matrix)
+    spec = AutocorrelationSpec(d_max=d_max, step=step, sigma=sigma, chirality=chirality,
+                               chirality_shells=chirality_shells)
     X = feature_matrix(molfields, spec)
     if X.size == 0:
         return float("nan"), float("nan")
-    K = autocorrelation_kernel(X, n_bins=spec.n_bins)
+    n_fields = int(molfields[0].weights.shape[1]) if len(molfields) else 0
+    K = autocorrelation_kernel(X, n_bins=spec.n_bins, blocks=block_sizes(spec, n_fields))
     yy = np.asarray(y, float)
     best = (float("nan"), float("nan"))
     for one in np.atleast_1d(lam).ravel():
