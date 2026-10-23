@@ -8,9 +8,11 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from cmfqsar.complementarity import (clash_count, cofield_agreement, complementarity,  # noqa: E402
-                                     coulomb_potential, field_overlap, ionise, occupancy,
-                                     pocket_fields, pocket_molecule, series_scores,
-                                     shape_surface, surface_complementarity)
+                                     consensus_profile, coulomb_potential, field_overlap,
+                                     field_overlap_by_atom, interaction_profile, ionise,
+                                     occupancy, pocket_fields, pocket_molecule,
+                                     pocket_residues, profile_matrix, profile_similarity,
+                                     series_scores, shape_surface, surface_complementarity)
 from cmfqsar.fields import FieldSet, FieldSpec, MoleculeFields  # noqa: E402
 from cmfqsar.protein import read_pdb  # noqa: E402
 
@@ -215,3 +217,109 @@ def test_cofield_agreement_sees_a_model_that_matches_the_protein():
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))
+
+
+def test_the_per_atom_split_sums_to_the_whole_integral():
+    a = _point([[0.0, 0, 0], [1.1, 0.3, 0]], [+1.0, +0.4], "lig")
+    b = _point([[4.0, 0, 0], [4.2, 1.6, 0], [7.0, 0, 0]], [-1.0, -0.5, -0.3], "pocket")
+    spec = ONE_FIELD.specs[0]
+    per_atom = field_overlap_by_atom(a, spec, 0, b, spec, 0)
+    assert per_atom.shape == (b.n_atoms,)
+    assert per_atom.sum() == pytest.approx(field_overlap(a, spec, 0, b, spec, 0), rel=1e-12)
+    # the nearest pocket atom carries the most of it
+    assert abs(per_atom[0]) > abs(per_atom[2])
+    # an empty field splits into zeros rather than failing
+    assert field_overlap_by_atom(_point([[0, 0, 0]], [0.0]), spec, 0, b, spec, 0).tolist() == \
+        [0.0, 0.0, 0.0]
+
+
+def test_profile_columns_sum_to_the_global_complementarity_terms():
+    """The decomposition rule: residue by residue, the profile adds up to the global score."""
+    lig = _point([[0.0, 0, 0], [1.2, 0, 0]], [+1.0, +0.4], "lig")
+    pocket = _point([[4.0, 0, 0], [4.0, 1.5, 0], [7.5, 0, 0], [7.5, 1.5, 0]],
+                    [-1.0, -0.5, -0.3, -0.2], "pocket")
+    labels = ["ASP1.A", "ASP1.A", "LYS2.A", "LYS2.A"]
+    prof = interaction_profile(lig, pocket, ONE_FIELD, labels)
+    glob = complementarity(lig, pocket, ONE_FIELD)
+    assert prof.residues == ["ASP1.A", "LYS2.A"]
+    assert prof.labels == ["electrostatic"]
+    assert prof.terms.shape == (2, 1)
+    for lab, total in prof.total().items():
+        assert total == pytest.approx(glob.terms[lab], rel=1e-10)
+    # the near residue carries more of the score than the far one, and both are complementary
+    per = prof.per_residue()
+    assert per["ASP1.A"] > per["LYS2.A"] > 0
+    assert prof.contacts[0] < prof.contacts[1]
+    assert prof.top(1) == [("ASP1.A", "electrostatic", pytest.approx(per["ASP1.A"]))]
+    assert "ASP1.A" in prof.describe()
+
+
+def test_a_ligand_out_of_reach_has_an_empty_profile():
+    pocket = _point([[0.0, 0, 0], [3.0, 0, 0]], [-1.0, -1.0], "pocket")
+    far = _point([[60.0, 0, 0]], [+1.0], "far")
+    prof = interaction_profile(far, pocket, ONE_FIELD, ["A1", "B2"], ["A1", "B2"])
+    assert np.allclose(prof.terms, 0.0, atol=1e-12)
+    assert prof.bits().sum() == 0.0
+    assert "no favourable interaction" in prof.describe()
+
+
+def test_profiles_compare_and_a_consensus_marks_the_conserved_contact():
+    pocket = _point([[0.0, 0, 0], [12.0, 0, 0]], [-1.0, -1.0], "pocket")
+    order = ["A1", "B2"]
+    at_a = interaction_profile(_point([[3.0, 0, 0]], [+1.0], "a"), pocket, ONE_FIELD, order, order)
+    also_a = interaction_profile(_point([[3.0, 1.0, 0]], [+1.0], "a2"), pocket, ONE_FIELD,
+                                 order, order)
+    at_b = interaction_profile(_point([[9.0, 0, 0]], [+1.0], "b"), pocket, ONE_FIELD, order, order)
+    assert profile_similarity(at_a, at_a) == pytest.approx(1.0)
+    assert profile_similarity(at_a, at_a, binary=True) == pytest.approx(1.0)
+    # two ligands at opposite ends of the pocket touch different residues
+    assert profile_similarity(at_a, also_a) > profile_similarity(at_a, at_b)
+    assert profile_similarity(at_a, at_b, binary=True) == pytest.approx(0.0)
+    # the contact two of the three complexes share is the one the consensus keeps
+    freq, strength = consensus_profile([at_a, also_a, at_b])
+    assert freq.tolist() == pytest.approx([2.0 / 3.0, 1.0 / 3.0])
+    assert strength[0] > strength[1]
+    with pytest.raises(ValueError):
+        profile_similarity(at_a, interaction_profile(_point([[3.0, 0, 0]], [+1.0], "c"), pocket,
+                                                     ONE_FIELD, ["X9", "Y8"], ["X9", "Y8"]))
+
+
+def _point2(coords, charges, steric, name="probe", radius=1.7):
+    """A probe carrying both fields of TWO_FIELDS, so it can meet a real pocket."""
+    n = len(coords)
+    w = np.zeros((n, 2))
+    w[:, 0] = charges
+    w[:, 1] = steric
+    return MoleculeFields(name=name, coords=np.array(coords, float), weights=w,
+                          radii=np.full(n, radius), symbols=["C"] * n, atom_types=["C.3"] * n,
+                          bonds=np.zeros((0, 2), int), charges=np.array(charges, float))
+
+
+TWO_FIELDS = FieldSet(specs=[FieldSpec(name="electrostatic", kind="gauss", alpha=0.5),
+                             FieldSpec(name="steric", kind="steric", alpha=0.5)])
+
+
+def test_pocket_residues_places_every_field_atom_in_a_residue(tmp_path):
+    """The hydrogens pocket_fields adds get the residue of the atom they were added to."""
+    path = tmp_path / "site.pdb"
+    path.write_text(PDB)
+    prot = read_pdb(str(path))
+    fs = TWO_FIELDS
+    pf = pocket_fields(prot, fs)
+    labels, order = pocket_residues(prot, pf)
+    assert len(labels) == pf.n_atoms
+    assert pf.n_atoms > prot.n_atoms                      # hydrogens were added
+    assert len(order) == prot.n_residues == 3
+    assert [o.split(".")[0][:3] for o in order] == ["ASP", "LYS", "ARG"]
+    assert all(lab in order for lab in labels)            # nothing fell outside a residue
+    assert all(labels.count(o) > 0 for o in order)
+    # and the profile of a real pocket decomposes the real score, burial included
+    lig = _point2([[4.5, 1.0, 1.0]], [+1.0], [1.0], "cation")
+    prof = interaction_profile(lig, pf, fs, labels, order)
+    assert prof.labels == ["electrostatic", "burial"]
+    glob = complementarity(lig, pf, fs)
+    assert prof.residues == order
+    for lab, total in prof.total().items():
+        want = glob.burial if lab == "burial" else glob.terms[lab]
+        assert total == pytest.approx(want, rel=1e-9)
+    assert profile_matrix([prof, prof]).shape == (2, len(order) * len(prof.labels))

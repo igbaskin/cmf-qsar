@@ -55,7 +55,7 @@ structure, which the data set brings with it and which needs no superposition.*
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
 | Interpretation | **Molecular co-fields** `C_f(r) = Σ_j a_j X_fj(r)` (Eq. 9) rendered as ± isosurfaces; molecular field `X_f(r)` of any molecule in the same colours, with or without a model (co-fields are drawn as solid surfaces and molecular fields as a mesh by default; both styles are switchable); overlap `C·X` whose integral is the field's contribution to the prediction (Eq. 7); the three decomposition rules of the 2019 paper: training-molecule contributions `a_j K(X,X_j)` and **atom contributions** (Eq. 14 of the 2015 paper) shown as red/blue spheres; **Shapley values** over atoms, substituents or field types, which replace the co-field when a nonlinear kernel layer is used and reproduce the atom contributions exactly when it is not, with second-order interaction indices. |
-| Tools | **Protein binding sites** fetched from the PDB or read from a local file and drawn behind the molecules and their fields, with atom codes on the molecule and residue names on the alpha carbons; **field complementarity** of the molecules and of the co-fields with the pocket, as numbers and as a coloured surface (see below); MCS-based alignment to a reference molecule, optional pose refinement by maximising the CMF kernel similarity (the alignment criterion proposed in the 2013 paper), **alignment by prediction confidence** (see below), 3D generation from SMILES, model save/load, CSV/SDF/Gaussian-cube export, screenshots. |
+| Tools | **Protein binding sites** fetched from the PDB or read from a local file and drawn behind the molecules and their fields, with atom codes on the molecule and residue names on the alpha carbons; **field complementarity** of the molecules and of the co-fields with the pocket, as numbers, as a coloured surface and **resolved by receptor residue** into an interaction profile that can be compared with a reference ligand's or with the pattern a series conserves (see below); the **field difference** from a reference molecule, by the cosine or by Tversky's asymmetric index, which is what a fragment of that reference needs (see below); MCS-based alignment to a reference molecule, optional pose refinement by maximising the CMF kernel similarity (the alignment criterion proposed in the 2013 paper), **alignment by prediction confidence** (see below), 3D generation from SMILES, model save/load, CSV/SDF/Gaussian-cube export, screenshots. |
 
 ### Conformational ensembles: the fourth dimension
 
@@ -977,6 +977,53 @@ added in the positive colour, missing in the negative one.
 Both molecules must already be in the same frame. A difference map of two molecules that were
 never aligned measures the alignment, which is the same caveat that governs everything else here.
 
+#### Asymmetric similarity: Tversky's index
+
+The cosine weighs the two molecules alike, which is the wrong question for half of what this
+section is for. A fragment cut from a lead reproduces part of its fields and nothing else, so the
+cosine divides what it does reproduce by the norm of the whole lead and reports a poor match for a
+perfect sub-structure. Tversky's index weights the two one-sided parts separately,
+
+```
+T = O_cr / (O_cr + α (O_rr − O_cr) + β (O_cc − O_cr))
+```
+
+where `O_cr` is the overlap integral of the two fields and `O_cc`, `O_rr` their self-overlaps —
+the same three numbers the table above already prints as the cosine and the two norms. So `α`
+charges the candidate for what the reference presents and it fails to reproduce, and `β` for what
+it adds, which is exactly the `missing` and `added` vocabulary of that table. Four settings matter:
+
+| `--tversky` | what it asks |
+|---|---|
+| `1,1` | the Tanimoto index of the two fields |
+| `0.5,0.5` | the Dice index |
+| `0,1` | `O_cr/O_cc`: how much of the **candidate** the reference accounts for — the setting for growing a fragment, or screening a library of smaller molecules against a lead |
+| `1,0` | `O_cr/O_rr`: how much of the **reference** the candidate covers, which rewards leaving nothing out |
+
+The cosine is the geometric mean of those last two, since their product is `O_cr²/(O_cc O_rr)`, so
+it splits the difference between the two questions and answers neither. A test asserts that
+identity, and the other two.
+
+**A one-sided index can exceed one, and that is the containment signal rather than a bug.** An
+overlap integral is an inner product, not the measure of an intersection, so the set identity
+`|A − B| ≥ 0` has no counterpart: where the reference field exceeds the candidate's everywhere,
+`O_cr` exceeds `O_cc` and `O_cr/O_cc` passes one. A fragment of the reference, in the frame it was
+cut from, therefore scores exactly one or a little above, and the amount above measures how much
+reference field surrounds it. Nothing is clamped, because clamping would buy a tidier range at the
+price of the two identities above; the shape literature reports Tversky scores the same way. On the
+thrombin set of the Merck benchmark, ranking the 22 ligands against `lig_4` at `0,1` puts `lig_7f`
+first at **1.003** — a molecule whose fields the reference more than covers.
+
+```bash
+python cmf_cli.py difference examples/openff/thrombin.sdf --activity pAffinity \
+       --reference lig_4 --tversky 0,1 --top 6
+python cmf_cli.py difference examples/openff/thrombin.sdf --activity pAffinity \
+       --reference lig_4 --candidate lig_2e --tversky 0.5,0.5
+```
+
+`--tversky` adds the per-field table and ranks the file by the index instead of by the cosine;
+`rank_against` takes the same two weights in the library.
+
 ### A pharmacophore read out of the co-field
 
 A pharmacophore is a handful of typed points with tolerance spheres; a co-field is a continuous
@@ -1127,6 +1174,70 @@ three HIF-2α sets, whose cavity is a buried hydrophobic one.
 What this is not is a binding energy. Desolvation, entropy, bridging waters and side-chain motion are
 all absent, charges on a truncated pocket are approximate at the cut ends, and the structure is one
 rigid snapshot.
+
+#### Which residues say so: the interaction profile
+
+A score for the whole pocket does not say where it came from, and neither does the ligand RMSD: a
+pose can move very little and still lose the one interaction that mattered. The overlap integral is
+a double sum over atom pairs, so keeping the per-atom column sums instead of the grand total costs
+nothing, and grouping them by receptor residue resolves every number above residue by residue.
+`field_overlap_by_atom` does the splitting and `interaction_profile` the grouping, with the same
+normalisation the global score uses, so **each column of a profile sums over the residues to exactly
+the global term** — the decomposition rule of this program applied to a pocket instead of to a
+prediction. A test asserts it, and on the thrombin set the five columns reproduce the printed
+`+0.091`, `+0.063`, `+0.119`, `+0.072` and `0.265` to four decimals.
+
+The pocket fields go through RDKit and gain hydrogens, so their atom order is not the structure's
+and the residue information cannot be carried across directly. `pocket_residues` assigns every
+field atom to the nearest atom of the structure, which is exact for a heavy atom and right for an
+added hydrogen, since a hydrogen sits about one ångström from its parent and no atom of another
+residue can be that close. It also returns the residues in the order the structure lists them,
+which is the fixed order a comparison needs; a whole series shares one pocket, so every profile is
+automatically commensurable.
+
+What the profile is then for:
+
+* **Compare a candidate with a reference ligand.** `profile_similarity` is the cosine of the two
+  flat profiles, which keeps the strength of every interaction, or with `binary=True` the Tanimoto
+  coefficient of the interactions above a threshold, which is the cruder form the
+  interaction-fingerprint literature reports and does not care about the scale of the terms.
+* **Find what the target conserves.** `consensus_profile` gives the frequency of every interaction
+  over a set of complexes and its mean strength. An interaction seen in most of them is a property
+  of the target; one seen in a single complex is more likely a property of that ligand. The
+  frequencies are the weights with which a candidate should be rewarded, and a threshold on them
+  gives the conservative query. Requiring the union of every complex's contacts, the other obvious
+  choice, makes a query only close analogues of one reference can satisfy.
+
+On the 22 thrombin ligands of the Merck benchmark against their own crystal pocket, 67 residues and
+five interaction types, the strongest interaction of `lig_4` is **Asp189 electrostatic, +0.082**,
+followed by Trp215 burial and the Gly216 hydrogen bonds — the S1 aspartate and the canonical
+thrombin contacts, recovered from the fields alone by a program that was told nothing about them.
+Three interactions are conserved across all 22: Trp215 burial and the two Gly216 hydrogen-bond
+directions.
+
+The same run also shows what a consensus is worth, and the answer is not flattering. Twenty-one of
+the 22 ligands match the consensus at a cosine of 0.99 and a Tanimoto of 1.000; `lig_4`, the one
+molecule that reaches Asp189, matches it at **0.644**. Similarity to the consensus therefore
+correlates **−0.51** with the activity on this set, while similarity to `lig_4`'s own profile
+correlates **+0.39** by the cosine and **+0.59** by the Tanimoto. A consensus built from a series
+dominated by one interaction pattern describes that pattern, not the pattern of the best ligand, and
+on this set the two answers have opposite signs. Which reference a profile is compared against is
+therefore a decision about the chemistry and not a default to be left alone.
+
+```bash
+python cmf_cli.py complement examples/openff/thrombin.sdf --activity pAffinity \
+       --structure examples/pockets/openff/thrombin.pdb --residues --no-surface \
+       --profile-out thrombin_profiles.csv
+```
+
+`--residues` prints each molecule's strongest interactions, the pattern conserved across the series,
+and every molecule's similarity to it; `--reference NAME` compares against one ligand's profile
+instead of the consensus, `--residue-threshold` sets what counts as an interaction when a profile is
+reduced to bits, and `--profile-out` writes one row per molecule and residue.
+
+A profile is still made of the same overlap integrals, so the caveat of the section above is
+unchanged: it is a geometric and electrostatic compatibility resolved by residue, not a set of
+measured interactions and not a binding energy.
 
 ### Chemical space and activity landscapes (kernel GTM)
 

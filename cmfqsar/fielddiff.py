@@ -20,6 +20,13 @@ Two views of the same quantity, both exact:
   :mod:`cmfqsar.pharmacophore` reads out of a co-field, so the report says "missing acceptor at
   (x, y, z), radius 1.4 A" rather than only "cosine 0.71".
 
+The cosine weighs the two molecules alike, which is the wrong question for half of this module's
+purpose.  A fragment cut from a lead reproduces part of its fields and nothing else, so the
+cosine divides what it does reproduce by the norm of the whole lead and reports a poor match for
+a perfect sub-structure.  :func:`tversky` weights the missing part and the added part separately
+and so can be asked "how much of the candidate does the reference account for" instead, which is
+the measure for growing a fragment or screening smaller molecules against a lead.
+
 Both molecules must already be in the same frame: a difference map of two molecules that were
 never aligned measures the alignment.
 """
@@ -138,8 +145,122 @@ def difference_features(candidate: MoleculeFields, reference: MoleculeFields, fi
 
 
 def rank_against(reference: MoleculeFields, candidates: Sequence[MoleculeFields],
-                 fieldset: FieldSet) -> List[Tuple[int, float]]:
-    """(index, overall cosine) of every candidate against the reference, best first."""
-    out = [(i, overall_similarity(c, reference, fieldset)) for i, c in enumerate(candidates)]
+                 fieldset: FieldSet, alpha: Optional[float] = None,
+                 beta: Optional[float] = None) -> List[Tuple[int, float]]:
+    """(index, similarity) of every candidate against the reference, best first.
+
+    The similarity is the overall cosine by default.  Give `alpha` and `beta` to rank by
+    Tversky's index instead, which is what a library of molecules smaller than the reference
+    needs; see :func:`tversky` for what the two weights mean.
+    """
+    if alpha is None and beta is None:
+        score = lambda c: overall_similarity(c, reference, fieldset)       # noqa: E731
+    else:
+        a = 1.0 if alpha is None else float(alpha)
+        b = 1.0 if beta is None else float(beta)
+        score = lambda c: tversky_similarity(c, reference, fieldset, a, b)  # noqa: E731
+    out = [(i, score(c)) for i, c in enumerate(candidates)]
     out.sort(key=lambda t: -(t[1] if np.isfinite(t[1]) else -np.inf))
     return out
+
+
+# --------------------------------------------------------------------------- #
+# Asymmetric similarity: Tversky's index on the overlap integrals
+# --------------------------------------------------------------------------- #
+
+@dataclass
+class TverskyScore:
+    """Tversky's index of one field type, with the two one-sided parts it is built from."""
+    field: str
+    label: str
+    index: float                   # the index itself; see the note on values above one
+    overlap: float                 # O_cr, the shared part
+    missing: float                 # O_rr - O_cr, what the reference has and the candidate lacks
+    added: float                   # O_cc - O_cr, what the candidate has and the reference lacks
+
+    def describe(self) -> str:
+        return (f"{self.label:18s} T {self.index:+6.3f}  shared {self.overlap:9.3f}"
+                f"  missing {self.missing:9.3f}  added {self.added:9.3f}")
+
+
+def _tversky_ratio(overlap: float, self_candidate: float, self_reference: float,
+                   alpha: float, beta: float) -> float:
+    """O / (O + alpha * (O_rr - O) + beta * (O_cc - O)), the overlap form of Eq. 8.44.
+
+    The two differences are taken as they come, without clamping them at zero.  That is what
+    makes the identities exact: the expression is Tanimoto at alpha = beta = 1 and Dice at
+    alpha = beta = 1/2 whatever the signs of the three integrals.  It is also why a one-sided
+    index can exceed one, which the containment note in :func:`tversky` explains.
+    """
+    missing = float(self_reference) - float(overlap)
+    added = float(self_candidate) - float(overlap)
+    den = float(overlap) + float(alpha) * missing + float(beta) * added
+    return float(overlap) / den if abs(den) > 1e-300 else float("nan")
+
+
+def tversky(candidate: MoleculeFields, reference: MoleculeFields, fieldset: FieldSet,
+            alpha: float = 1.0, beta: float = 1.0) -> List[TverskyScore]:
+    """Asymmetric field similarity per field type: Tversky's index on the overlap integrals.
+
+    The cosine of :func:`mismatch` treats the two molecules alike, so a fragment can never
+    resemble the lead it was cut from: whatever the fragment does reproduce is divided by the
+    norm of the whole reference.  Tversky's index weights the two one-sided parts separately,
+
+        T = O_cr / (O_cr + alpha * (O_rr - O_cr) + beta * (O_cc - O_cr))
+
+    where `O_cr` is the overlap integral of the two fields and `O_cc`, `O_rr` the self-overlaps.
+    `alpha` therefore weights what the **reference** presents and the candidate fails to
+    reproduce, and `beta` what the **candidate** adds, which is the vocabulary
+    :func:`mismatch` already reports as `missing` and `added`.  Four settings are worth knowing:
+
+    ``alpha = beta = 1``
+        the Tanimoto index of the two fields, and the default.
+    ``alpha = beta = 0.5``
+        the Dice index.
+    ``alpha = 0, beta = 1``
+        `O_cr / O_cc`: how much of the candidate the reference accounts for.  This is the
+        setting for growing a fragment or screening a library of smaller molecules against a
+        lead, because it charges the candidate for nothing that is merely absent from it.
+    ``alpha = 1, beta = 0``
+        `O_cr / O_rr`: how much of the reference the candidate covers, which asks the opposite
+        question and rewards a candidate for leaving nothing out.
+
+    The cosine of :func:`mismatch` is exactly the geometric mean of those last two, since their
+    product is `O_cr^2 / (O_cc O_rr)`.  That is the precise sense in which it splits the
+    difference between the two questions and answers neither.
+
+    **A one-sided index can exceed one, and that is the containment signal rather than a bug.**
+    An overlap integral is an inner product, not the measure of an intersection, so the
+    set identity `|A - B| >= 0` has no counterpart here: where the reference field exceeds the
+    candidate's everywhere, `O_cr` exceeds `O_cc` and `O_cr / O_cc` passes one.  A fragment of
+    the reference, in the frame it was cut from, therefore scores one or a little above, and the
+    amount above measures how much reference field surrounds it.  The shape literature reports
+    Tversky scores the same way.  Nothing is clamped, because clamping would buy a tidier range
+    at the price of the Tanimoto and Dice identities above.
+
+    One further honesty note.  Tversky's index was defined on sets, and a field with signed
+    weights is not one: the electrostatic overlap of two molecules can be negative while both
+    self-overlaps are positive, and the index is then a formal ratio rather than a shared
+    fraction.  The reading above holds for the non-negative fields, which is the steric,
+    hydrophobic and hydrogen-bond ones and every continuous indicator field.
+    """
+    k_ab, d_a, d_b = _pair_kernels(candidate, reference, fieldset)
+    out: List[TverskyScore] = []
+    for f, spec in enumerate(fieldset.specs):
+        o, occ, orr = float(k_ab[f]), float(d_a[f]), float(d_b[f])
+        out.append(TverskyScore(field=spec.name, label=spec.label,
+                                index=_tversky_ratio(o, occ, orr, alpha, beta),
+                                overlap=o, missing=orr - o, added=occ - o))
+    return out
+
+
+def tversky_similarity(candidate: MoleculeFields, reference: MoleculeFields, fieldset: FieldSet,
+                       alpha: float = 1.0, beta: float = 1.0) -> float:
+    """Tversky's index over all fields together, with the mixing coefficients applied.
+
+    The counterpart of :func:`overall_similarity`, which is the cosine of the same three
+    quantities; `alpha = beta = 1` gives the Tanimoto index of the mixed fields.
+    """
+    k_ab, d_a, d_b = _pair_kernels(candidate, reference, fieldset)
+    h = np.asarray(fieldset.mixing_vector(), float)
+    return _tversky_ratio(float(h @ k_ab), float(h @ d_a), float(h @ d_b), alpha, beta)

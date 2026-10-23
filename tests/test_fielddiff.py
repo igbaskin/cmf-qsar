@@ -9,7 +9,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from cmfqsar.cofields import Grid, difference_volume, field_volume, make_grid  # noqa: E402
 from cmfqsar.fielddiff import (difference_features, mismatch,  # noqa: E402
-                               overall_similarity, rank_against)
+                               overall_similarity, rank_against, tversky,
+                               tversky_similarity)
 from cmfqsar.fields import FieldSet, MoleculeFields, build_fields  # noqa: E402
 
 SMILES = ["CCCOc1ccccc1C(=O)NCC", "CCCNc1ccccc1C(=O)OC", "NCCc1ccc(O)cc1"]
@@ -108,3 +109,68 @@ def test_the_closed_form_needs_no_grid(world):
     for a, b in zip(rows, on_grid):
         assert a.cosine == pytest.approx(b.cosine, abs=1e-12)
         assert a.distance == pytest.approx(b.distance, abs=1e-12)
+
+
+def _fragment(mol: MoleculeFields, keep) -> MoleculeFields:
+    """A sub-molecule in the same frame: some atoms of `mol`, with nothing moved."""
+    idx = list(keep)
+    return MoleculeFields(name=mol.name + "_frag", coords=mol.coords[idx],
+                          weights=mol.weights[idx], radii=mol.radii[idx],
+                          symbols=[mol.symbols[i] for i in idx],
+                          atom_types=[mol.atom_types[i] for i in idx],
+                          bonds=np.zeros((0, 2), int), charges=mol.charges[idx])
+
+
+def test_tversky_reduces_to_the_indices_it_generalises(world):
+    """alpha = beta = 1 is Tanimoto, alpha = beta = 0.5 is Dice, on the same three integrals."""
+    fs, mf = world
+    for r in tversky(mf[0], mf[0], fs):
+        assert r.index == pytest.approx(1.0, abs=1e-12)
+        assert r.missing == pytest.approx(0.0, abs=1e-6)
+        assert r.added == pytest.approx(0.0, abs=1e-6)
+    assert tversky_similarity(mf[0], mf[0], fs) == pytest.approx(1.0, abs=1e-12)
+    rows = mismatch(mf[1], mf[0], fs, grid=False)
+    tan = tversky(mf[1], mf[0], fs, 1.0, 1.0)
+    dice = tversky(mf[1], mf[0], fs, 0.5, 0.5)
+    for m, t, d in zip(rows, tan, dice):
+        occ, orr = m.norm_cand ** 2, m.norm_ref ** 2
+        o = m.cosine * m.norm_cand * m.norm_ref
+        assert t.overlap == pytest.approx(o, rel=1e-9)
+        assert t.index == pytest.approx(o / (occ + orr - o), rel=1e-9)
+        assert d.index == pytest.approx(2.0 * o / (occ + orr), rel=1e-9)
+        assert t.describe().startswith(m.label[:8])
+
+
+def test_tversky_sees_a_fragment_that_the_cosine_rejects(world):
+    """A sub-structure in the same frame is wholly accounted for by the molecule it came from."""
+    fs, mf = world
+    whole = mf[0]
+    s = [sp.name for sp in fs.specs].index("steric")
+    assert whole.weights[:, s].min() >= 0.0          # why the set reading below is the right one
+    frag = _fragment(whole, range(8))
+    cos = mismatch(frag, whole, fs, grid=False)[s].cosine
+    contained = tversky(frag, whole, fs, alpha=0.0, beta=1.0)[s].index
+    covers = tversky(frag, whole, fs, alpha=1.0, beta=0.0)[s].index
+    # the reference field exceeds the fragment's everywhere, so it more than accounts for it
+    assert contained >= 1.0
+    # the fragment covers only part of the reference, which is the question alpha asks
+    assert covers < 0.9
+    # and the cosine is the geometric mean of the two, so it answers neither question
+    assert covers < cos < contained
+    assert cos == pytest.approx(float(np.sqrt(contained * covers)), rel=1e-9)
+
+
+def test_rank_against_can_rank_by_tversky(world):
+    fs, mf = world
+    frag = _fragment(mf[0], range(8))
+    cands = list(mf) + [frag]
+    last = len(cands) - 1
+    by_cos = dict(rank_against(mf[0], cands, fs))
+    by_tv = dict(rank_against(mf[0], cands, fs, alpha=0.0, beta=1.0))
+    assert by_cos[0] == pytest.approx(1.0, abs=1e-9)
+    assert by_tv[0] == pytest.approx(1.0, abs=1e-9)
+    # the fragment is penalised by the cosine for what it leaves out and not by this Tversky
+    assert by_tv[last] > by_cos[last]
+    # ranking by one of them is not ranking by the other: the order really does change
+    assert ([i for i, _ in rank_against(mf[0], cands, fs, alpha=0.0, beta=1.0)]
+            != [i for i, _ in rank_against(mf[0], cands, fs)])

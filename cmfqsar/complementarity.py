@@ -2,7 +2,7 @@
 
 A pocket is a set of atoms, so the parameterisation that builds the fields of a ligand builds the
 fields of the protein without any new physics, and the overlap of two Gaussian fields has the same
-closed form whichever side it comes from.  Three questions can then be answered with numbers rather
+closed form whichever side it comes from.  Four questions can then be answered with numbers rather
 than with a glance at a picture:
 
 1. **How complementary is a molecule to the pocket?**  Overlap integrals between the ligand fields
@@ -20,6 +20,13 @@ than with a glance at a picture:
    test of a model that never saw the protein.  A strong co-field lobe where the pocket offers
    nothing is a sign that the model is fitting the alignment or a correlated substituent instead of
    an interaction.
+4. **Which residues say so?**  The overlap integral is a double sum over atom pairs, so keeping
+   the per-atom column sums instead of the grand total costs nothing and resolves every score of
+   question 1 by receptor residue.  That turns one cosine into an interaction profile, which can
+   be compared with the profile of a reference ligand, averaged over several complexes into a
+   consensus pattern, and used to require the conserved contacts of a target rather than every
+   contact of one ligand.  A global score cannot say any of this, and neither can the ligand
+   RMSD: a pose can move very little and still lose the interaction that mattered.
 
 What this is not: a binding energy.  Desolvation, entropy, bridging waters and side-chain motion are
 all absent, and the co-field is unconstrained wherever no molecule of the series reaches, which is
@@ -532,3 +539,239 @@ def series_scores(mols: Sequence[MoleculeFields], pocket: MoleculeFields, fields
                     v = np.array([c.surface.get(key, np.nan) for c in res])
                     stats["r_surface_" + key] = _pearson(v[ok], y[ok])
     return res, stats
+
+
+# --------------------------------------------------------------------------- #
+# Residue by residue: the complementarity score as an interaction profile
+# --------------------------------------------------------------------------- #
+
+def field_overlap_by_atom(a: MoleculeFields, spec_a, fa: int,
+                          b: MoleculeFields, spec_b, fb: int) -> np.ndarray:
+    """:func:`field_overlap`, split over the atoms of `b`; the sum is the whole integral.
+
+    The overlap of two sums of Gaussians is a double sum over atom pairs, so keeping the column
+    sums instead of the grand total costs nothing and is exact.  It is what turns one number for
+    the whole pocket into a number per receptor residue.
+    """
+    out = np.zeros(b.n_atoms)
+    wa, wb = a.weights[:, fa], b.weights[:, fb]
+    ia, ib = np.flatnonzero(np.abs(wa) > 1e-12), np.flatnonzero(np.abs(wb) > 1e-12)
+    if len(ia) == 0 or len(ib) == 0:
+        return out
+    ba, bb = _widths(a, spec_a)[ia], _widths(b, spec_b)[ib]
+    s = ba[:, None] + bb[None, :]
+    d2 = cdist(a.coords[ia], b.coords[ib], "sqeuclidean")
+    g = (2.0 * np.pi / s) ** 1.5 * np.exp(-(ba[:, None] * bb[None, :]) / (2.0 * s) * d2)
+    out[ib] = (wa[ia] @ g) * wb[ib]
+    return out
+
+
+def pocket_residues(protein: Protein, pocket: MoleculeFields,
+                    max_distance: float = 2.5) -> Tuple[List[str], List[str]]:
+    """Which residue each atom of the pocket fields belongs to.
+
+    :func:`pocket_fields` goes through RDKit and adds hydrogens, so its atom order is not the
+    atom order of the structure and the residue information cannot simply be carried across.
+    Every field atom is therefore assigned to the nearest atom of the structure, which is exact
+    for a heavy atom and right for an added hydrogen, since a hydrogen sits about one angstrom
+    from the atom it was added to and no atom of another residue can be that close.
+
+    Returns (label of every pocket atom, the distinct labels in the order the structure lists
+    them).  The second list is the fixed residue order a profile needs: the requirement that the
+    residue identities and their ordering be identical for every complex compared is met by
+    taking that order from the pocket, which a whole series shares.
+    """
+    from scipy.spatial import cKDTree
+    labels = [protein.residue_label(i) for i in range(protein.n_atoms)]
+    order: List[str] = []
+    for lab in labels:
+        if lab not in order:
+            order.append(lab)
+    if pocket.n_atoms == 0 or protein.n_atoms == 0:
+        return [], order
+    d, j = cKDTree(protein.coords).query(pocket.coords, k=1)
+    assigned = [labels[int(k)] if dd <= max_distance else "" for dd, k in zip(d, j)]
+    return assigned, order
+
+
+@dataclass
+class InteractionProfile:
+    """The complementarity of one molecule with one pocket, resolved by receptor residue.
+
+    `terms` is (residues, interactions) and carries the same normalised, signed quantities as
+    :class:`Complementarity`, so each column sums over the residues to exactly the matching
+    entry of ``Complementarity.terms``.  A global cosine says how well a molecule suits the
+    pocket; this says which residues say so, and it disagrees usefully with the ligand RMSD,
+    since a pose can move very little and still lose the one interaction that mattered.
+    """
+    name: str
+    residues: List[str] = _field(default_factory=list)
+    labels: List[str] = _field(default_factory=list)
+    terms: np.ndarray = _field(default_factory=lambda: np.zeros((0, 0)))
+    contacts: np.ndarray = _field(default_factory=lambda: np.zeros(0))
+
+    def vector(self) -> np.ndarray:
+        """The profile as one flat vector, residue by residue; the order is `residues`."""
+        return np.asarray(self.terms, float).reshape(-1)
+
+    def total(self) -> Dict[str, float]:
+        """Column sums: the whole-pocket term each interaction contributes."""
+        t = np.asarray(self.terms, float)
+        if t.size == 0:
+            return {}
+        return {lab: float(t[:, k].sum()) for k, lab in enumerate(self.labels)}
+
+    def per_residue(self) -> Dict[str, float]:
+        """Row sums: how much each residue contributes, over all interaction types."""
+        t = np.asarray(self.terms, float)
+        if t.size == 0:
+            return {}
+        return {res: float(t[i].sum()) for i, res in enumerate(self.residues)}
+
+    def top(self, n: int = 8, favourable: bool = True, minimum: float = 1e-6
+            ) -> List[Tuple[str, str, float]]:
+        """The `n` strongest (residue, interaction, value) entries, largest magnitude first.
+
+        A term is reported only above `minimum`.  The entries are fractions of a cosine, so a
+        Gaussian overlap that has decayed to 1e-100 is not a weak interaction but no interaction
+        at all, and listing it as the strongest one of a distant molecule is simply wrong.
+        """
+        t = np.asarray(self.terms, float)
+        if t.size == 0:
+            return []
+        rows = [(self.residues[i], self.labels[k], float(t[i, k]))
+                for i in range(t.shape[0]) for k in range(t.shape[1])
+                if np.isfinite(t[i, k]) and abs(t[i, k]) >= float(minimum)
+                and (not favourable or t[i, k] > 0.0)]
+        rows.sort(key=lambda r: -abs(r[2]))
+        return rows[:n]
+
+    def bits(self, threshold: float = 0.02) -> np.ndarray:
+        """The profile as a binary interaction fingerprint: one bit per favourable term."""
+        return (self.vector() > float(threshold)).astype(float)
+
+    def describe(self, n: int = 5) -> str:
+        best = ", ".join(f"{r} {lab} {v:+.3f}" for r, lab, v in self.top(n))
+        contact = np.asarray(self.contacts, float)
+        near = int(np.sum(np.isfinite(contact) & (contact < 4.5)))
+        if not best:
+            return f"{self.name}: no favourable interaction"
+        return f"{self.name}: {near} residues within 4.5 A; strongest {best}"
+
+
+def interaction_profile(mol: MoleculeFields, pocket: MoleculeFields, fieldset: FieldSet,
+                        residues: Sequence[str], order: Optional[Sequence[str]] = None
+                        ) -> InteractionProfile:
+    """Decompose the field complementarity of one molecule over the residues of the pocket.
+
+    `residues` labels every atom of `pocket` and `order` fixes the rows; both come from
+    :func:`pocket_residues`.  The normalisation is the one :func:`complementarity` uses, the
+    product of the two whole-field norms, which is what makes the columns sum to the global
+    terms rather than to something merely proportional to them.
+    """
+    names = [s.name for s in fieldset.specs]
+    specs = fieldset.specs
+    res_order = list(order) if order is not None else []
+    if not res_order:
+        for lab in residues:
+            if lab and lab not in res_order:
+                res_order.append(lab)
+    index = {lab: i for i, lab in enumerate(res_order)}
+    at_res = (np.array([index.get(lab, -1) for lab in residues], dtype=int)
+              if len(residues) else np.zeros(0, dtype=int))
+
+    norm_l, norm_p = {}, {}
+    for f, s in enumerate(specs):
+        norm_l[s.name] = np.sqrt(max(field_overlap(mol, s, f, mol, s, f), 0.0))
+        norm_p[s.name] = np.sqrt(max(field_overlap(pocket, s, f, pocket, s, f), 0.0))
+
+    jobs = [(lig, poc, sign, label) for lig, poc, sign, label in COMPLEMENTARY_PAIRS
+            if lig in names and poc in names]
+    if "steric" in names:
+        jobs.append(("steric", "steric", +1.0, "burial"))
+    columns: List[str] = []
+    data: List[np.ndarray] = []
+    for lig, poc, sign, label in jobs:
+        fa, fb = names.index(lig), names.index(poc)
+        per_atom = field_overlap_by_atom(mol, specs[fa], fa, pocket, specs[fb], fb)
+        denom = norm_l[lig] * norm_p[poc]
+        per_atom = sign * per_atom / denom if denom > 1e-30 else per_atom * float("nan")
+        col = np.zeros(len(res_order))
+        if len(at_res):
+            keep = at_res >= 0
+            np.add.at(col, at_res[keep], per_atom[keep])
+        columns.append(label)
+        data.append(col)
+
+    terms = np.column_stack(data) if data else np.zeros((len(res_order), 0))
+    heavy_l = [i for i, s in enumerate(mol.symbols) if s != "H"]
+    heavy_p = [i for i, s in enumerate(pocket.symbols) if s != "H"]
+    contacts = np.full(len(res_order), np.inf)
+    if heavy_l and heavy_p:
+        d = cdist(mol.coords[heavy_l], pocket.coords[heavy_p]).min(axis=0)
+        for k, j in enumerate(heavy_p):
+            i = int(at_res[j]) if j < len(at_res) else -1
+            if i >= 0:
+                contacts[i] = min(contacts[i], float(d[k]))
+    return InteractionProfile(name=mol.name, residues=res_order, labels=columns,
+                              terms=terms, contacts=contacts)
+
+
+def profile_matrix(profiles: Sequence[InteractionProfile]) -> np.ndarray:
+    """One row per profile, flattened; every profile must share the residue order."""
+    if not profiles:
+        return np.zeros((0, 0))
+    ref = profiles[0]
+    for p in profiles[1:]:
+        if list(p.residues) != list(ref.residues) or list(p.labels) != list(ref.labels):
+            raise ValueError("the profiles do not share a residue order; build them from one "
+                             "pocket and one call to pocket_residues")
+    return np.vstack([p.vector() for p in profiles])
+
+
+def _vector_cosine(a: np.ndarray, b: np.ndarray) -> float:
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    ok = np.isfinite(a) & np.isfinite(b)
+    if ok.sum() == 0:
+        return float("nan")
+    a, b = a[ok], b[ok]
+    den = float(np.linalg.norm(a) * np.linalg.norm(b))
+    return float(a @ b) / den if den > 1e-300 else float("nan")
+
+
+def profile_similarity(a: InteractionProfile, b: InteractionProfile, binary: bool = False,
+                       threshold: float = 0.02) -> float:
+    """How far two complexes reproduce the same interaction pattern.
+
+    The continuous comparison is the cosine of the two flat profiles, which keeps the strength
+    of every interaction.  ``binary=True`` reduces each profile to the interactions above
+    `threshold` and takes the Tanimoto coefficient instead: cruder, but it is the form the
+    interaction-fingerprint literature reports and it does not care about the scale of the
+    terms.
+    """
+    if list(a.residues) != list(b.residues) or list(a.labels) != list(b.labels):
+        raise ValueError("the two profiles do not share a residue order")
+    if not binary:
+        return _vector_cosine(a.vector(), b.vector())
+    x, y = a.bits(threshold) > 0, b.bits(threshold) > 0
+    union = int(np.sum(x | y))
+    return float(np.sum(x & y)) / union if union else float("nan")
+
+
+def consensus_profile(profiles: Sequence[InteractionProfile], threshold: float = 0.02
+                      ) -> Tuple[np.ndarray, np.ndarray]:
+    """(frequency of every interaction over the profiles, its mean strength).
+
+    An interaction seen in most of the reference complexes is a property of the target; one seen
+    in a single complex is more likely a property of that ligand.  The frequencies are therefore
+    the weights with which a candidate should be rewarded for reproducing each interaction, and
+    a threshold on them gives the conservative query: require the conserved contacts and let the
+    rest vary.  Requiring the union of every complex's contacts, which is the other obvious
+    choice, makes a query that only close analogues of one reference can satisfy.
+    """
+    if not profiles:
+        return np.zeros(0), np.zeros(0)
+    m = profile_matrix(profiles)
+    freq = np.mean(m > float(threshold), axis=0)
+    strength = np.nanmean(np.where(np.isfinite(m), m, np.nan), axis=0)
+    return freq, strength

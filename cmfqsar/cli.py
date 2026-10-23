@@ -756,6 +756,50 @@ def cmd_complement(args):
         print("\nAgainst the activity:")
         for k, v in sorted(stats.items()):
             print(f"  {k:30s} {v:+.3f}")
+    profiles = None
+    if args.residues:
+        from cmfqsar.complementarity import (InteractionProfile, _pearson, consensus_profile,
+                                             interaction_profile, pocket_residues,
+                                             profile_similarity)
+        labels, order = pocket_residues(prot, pocket)
+        profiles = [interaction_profile(m, pocket, fs, labels, order) for m in mf]
+        cols = list(profiles[0].labels)
+        print(f"\nBy residue: {len(order)} residues, {len(cols)} interaction types "
+              f"({', '.join(cols)})")
+        for p in profiles[:args.top]:
+            print("  " + p.describe())
+        if len(profiles) > args.top:
+            print(f"  ... {len(profiles) - args.top} more")
+        names_ds = list(ds.names)
+        if args.reference:
+            if args.reference not in names_ds:
+                raise SystemExit(f"no molecule called {args.reference!r}; the file has "
+                                 f"{', '.join(names_ds[:5])}...")
+            query = profiles[names_ds.index(args.reference)]
+            what = f"the profile of {args.reference}"
+        else:
+            freq, strength = consensus_profile(profiles, threshold=args.residue_threshold)
+            query = InteractionProfile(
+                name="consensus", residues=order, labels=cols,
+                terms=np.nan_to_num(strength).reshape(len(order), len(cols)),
+                contacts=profiles[0].contacts)
+            what = f"the consensus of the {len(profiles)} molecules"
+            shared = [(float(freq[k]), order[k // len(cols)], cols[k % len(cols)])
+                      for k in range(len(freq)) if freq[k] > 0.5]
+            shared.sort(key=lambda t: -t[0])
+            print("  conserved in more than half of them: "
+                  + (", ".join(f"{r} {c} ({f:.0%})" for f, r, c in shared[:10]) or "none"))
+        sim = np.array([profile_similarity(p, query) for p in profiles])
+        tani = np.array([profile_similarity(p, query, binary=True,
+                                            threshold=args.residue_threshold)
+                         for p in profiles])
+        print(f"\nAgainst {what}:")
+        for nm, s, t in list(zip(names_ds, sim, tani))[:args.top]:
+            print(f"  {nm:30s} cosine {s:+.3f}   Tanimoto {t:.3f}")
+        ok = np.isfinite(ds.activity)
+        if ok.sum() >= 3:
+            print(f"  against the activity: cosine r {_pearson(sim[ok], ds.activity[ok]):+.3f}, "
+                  f"Tanimoto r {_pearson(tani[ok], ds.activity[ok]):+.3f}")
     if args.model:
         model, _ = load_model(args.model)
         if not model.is_linear:
@@ -783,6 +827,19 @@ def cmd_complement(args):
                                 + [f"{c.terms.get(k, float('nan')):.4f}" for k in keys]
                                 + [f"{c.surface.get(k, float('nan')):.4f}" for k in surf])
         print(f"\nScores written to {args.out}")
+    if args.profile_out:
+        if not profiles:
+            raise SystemExit("--profile-out needs --residues")
+        import csv
+        with open(args.profile_out, "w", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(["molecule", "residue", "contact"] + list(profiles[0].labels))
+            for p in profiles:
+                t = np.asarray(p.terms, float)
+                for i, res in enumerate(p.residues):
+                    writer.writerow([p.name, res, f"{p.contacts[i]:.2f}"]
+                                    + [f"{v:.5f}" for v in t[i]])
+        print(f"Interaction profiles written to {args.profile_out}")
 
 
 def cmd_mil(args):
@@ -968,7 +1025,14 @@ def cmd_topomer(args):
 def cmd_difference(args):
     """What one molecule's fields have that another's do not."""
     from cmfqsar.cofields import difference_volume, export_cube, make_grid
-    from cmfqsar.fielddiff import difference_features, mismatch, rank_against
+    from cmfqsar.fielddiff import (difference_features, mismatch, rank_against, tversky,
+                                   tversky_similarity)
+    tv = None
+    if args.tversky:
+        parts = [p for p in str(args.tversky).replace(" ", "").split(",") if p]
+        if len(parts) != 2:
+            raise SystemExit("--tversky takes two numbers, as in --tversky 0,1")
+        tv = (float(parts[0]), float(parts[1]))
     ds = load_dataset(args.dataset, activity_prop=args.activity)
     fs = FieldSet.create(physchem=[f for f in args.fields.split(",") if f], alpha=args.alpha,
                          charge_model=args.charges, param_scheme=args.param)
@@ -981,8 +1045,10 @@ def cmd_difference(args):
     print(f"Reference: {args.reference}  ({len(ds)} molecules, fields "
           f"{', '.join(s.label for s in fs.specs)})")
     if not args.candidate:
-        print(f"  the {args.top} molecules whose fields come closest to it:")
-        for i, cos in rank_against(ref, mf, fs)[:args.top]:
+        how = f"Tversky alpha={tv[0]:g}, beta={tv[1]:g}" if tv else "field cosine"
+        print(f"  the {args.top} molecules whose fields come closest to it ({how}):")
+        ranked = rank_against(ref, mf, fs, tv[0], tv[1]) if tv else rank_against(ref, mf, fs)
+        for i, cos in ranked[:args.top]:
             mark = "  <- the reference itself" if names[i] == args.reference else ""
             print(f"    {cos:+6.3f}  {names[i]}{mark}")
         return
@@ -995,6 +1061,14 @@ def cmd_difference(args):
     print(f"Candidate: {args.candidate}")
     for r in rows:
         print("   " + r.describe())
+    tvrows = None
+    if tv:
+        tvrows = tversky(cand, ref, fs, tv[0], tv[1])
+        overall = tversky_similarity(cand, ref, fs, tv[0], tv[1])
+        print(f"  Tversky's index at alpha={tv[0]:g}, beta={tv[1]:g} "
+              f"(all fields together: {overall:+.3f}):")
+        for t in tvrows:
+            print("   " + t.describe())
     feats = difference_features(cand, ref, fs, grid=grid, level=args.level,
                                 max_features=args.top)
     if feats:
@@ -1005,12 +1079,14 @@ def cmd_difference(args):
         import csv as _csv
         with open(args.out, "w", newline="") as fh:
             w = _csv.writer(fh)
-            w.writerow(["field", "cosine", "distance", "norm_reference", "norm_candidate",
-                        "missing", "added"])
-            for r in rows:
+            head = ["field", "cosine", "distance", "norm_reference", "norm_candidate",
+                    "missing", "added"]
+            w.writerow(head + (["tversky"] if tvrows else []))
+            for j, r in enumerate(rows):
                 w.writerow([r.label, f"{r.cosine:.4f}", f"{r.distance:.4f}",
                             f"{r.norm_ref:.4f}", f"{r.norm_cand:.4f}",
-                            f"{r.missing:.4f}", f"{r.added:.4f}"])
+                            f"{r.missing:.4f}", f"{r.added:.4f}"]
+                           + ([f"{tvrows[j].index:.4f}"] if tvrows else []))
         print(f"  table written to {args.out}")
     if args.cube:
         for f, spec in enumerate(fs.specs):
@@ -1665,6 +1741,12 @@ def main(argv=None):
     df.add_argument("--spacing", type=float, default=0.5)
     df.add_argument("--margin", type=float, default=3.0)
     df.add_argument("--top", type=int, default=10)
+    df.add_argument("--tversky", default=None, metavar="ALPHA,BETA",
+                    help="also report Tversky's index with these weights, and rank by it: "
+                         "ALPHA charges the candidate for what the reference has and it lacks, "
+                         "BETA for what it adds.  1,1 is Tanimoto, 0.5,0.5 Dice, and 0,1 asks "
+                         "how much of the candidate the reference accounts for, which is the "
+                         "setting for a library of molecules smaller than the reference")
     df.add_argument("--out", default=None, help="write the per-field table as CSV")
     df.add_argument("--cube", default=None, metavar="PREFIX",
                     help="write the difference map of every field as a Gaussian cube")
@@ -1716,7 +1798,19 @@ def main(argv=None):
     k.add_argument("--no-surface", action="store_true",
                    help="skip the surface scores, which are the slow part")
     k.add_argument("--top", type=int, default=15, help="molecules printed")
+    k.add_argument("--residues", action="store_true",
+                   help="resolve every score by receptor residue: the interaction profile of "
+                        "each molecule, the pattern conserved across the series, and the "
+                        "similarity of each molecule to that pattern")
+    k.add_argument("--reference", default=None, metavar="NAME",
+                   help="with --residues, compare every profile with this molecule's instead "
+                        "of with the consensus of the series")
+    k.add_argument("--residue-threshold", type=float, default=0.02, metavar="X",
+                   help="a term above this counts as an interaction when a profile is reduced "
+                        "to bits for the consensus and the Tanimoto comparison")
     k.add_argument("--out", default=None, help="CSV with every score")
+    k.add_argument("--profile-out", default=None, metavar="FILE",
+                   help="CSV of the interaction profiles: one row per molecule and residue")
     k.set_defaults(func=cmd_complement)
     args = p.parse_args(argv)
     args.func(args)
