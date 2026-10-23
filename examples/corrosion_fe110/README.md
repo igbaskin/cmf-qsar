@@ -233,6 +233,57 @@ cross-validation; the artefact molecule is excluded (n = 72; 58 for dG_ads).
   result stands on its own: the UMA poses are a self-consistent, learnable geometry (q2 0.5 for
   E_ads), so the pipeline is sound; it is the physics of the target that is missing.
 
+## What the potency can support: reproducibility and single-laboratory series (2026-10-23)
+
+`potency_series.py` works from `node157_experiments.csv`, the per-experiment rows behind the
+node (1600 rows, 73 compounds, 62 articles, exported read-only from the database by the parent
+session; 1210 rows in 1 M HCl with a MWILA).  Results in `potency_noise.csv` and
+`potency_series.csv`.
+
+**Reproducibility of the target.**
+
+| quantity | value |
+|---|---|
+| sd of the 73 compound medians | 1.87 |
+| within-paper sd of a compound's MWILA over concentrations and methods (98 compound-paper pairs) | 1.23 |
+| between-paper sd of the same compound (20 compounds in 2-16 papers) | 1.20 |
+| split-half correlation of a compound's value across papers | 0.64 |
+| implied ceiling q2 for a model of the medians | 0.57 |
+| PDP vs EIS on the same compound, paper and concentration (190 pairs) | r 0.98, PDP lower by 0.22 |
+| PDP vs weight loss (137 pairs) | r 0.95, PDP lower by 0.33 |
+| slope of MWILA vs ln C within a compound-paper series (80 series) | -0.60 (IQR -0.71 to -0.39; Langmuir would give 0) |
+
+So the pooled potency is reproducible to r 0.64 between laboratories, and a perfect model of
+the medians would reach q2 about 0.6: the 0.19 of the pooled models is far below what the data
+allow, i.e. the fields are missing information rather than fighting noise.  The methods agree
+with each other; the concentration dependence is the systematic part: efficiencies saturate
+less than Langmuir predicts, so MWILA falls by 0.6 per e-fold of concentration and a compound
+measured at high concentrations gets a low median.  Correcting every compound to 1 mM with a
+common slope (57 compounds with molar concentrations) did not help the models (q2 0.13 in both
+frames): the concentration choice is not what separates the laboratories.
+
+**Single-laboratory series** (the series' own medians; leave-one-out outer, 10-fold inner).
+
+| series | compounds | MCS frame q2 | adsorbed-pose frame q2 | r(E_ads, potency) |
+|---|---|---|---|---|
+| Hu 2011 (weight loss, 298 K, 2-/4-/5-substituted benzimidazoles) | 18 | **0.66** (scrambled max -0.13) | 0.26 (scrambled max -0.23) | 0.15 |
+| Raicheva 1993 (weight loss, 293 K) | 12 | 0.04 | 0.20 | 0.27 |
+| Popova laboratory, 4 papers pooled | 13 | -0.14 | 0.28 | 0.08 |
+| Dutta laboratory, 3 papers pooled (sd of y only 0.42) | 13 | -0.23 | -0.69 | -0.22 |
+| Gutierrez 2016 | 6 | -0.58 | -0.48 | 0.46 |
+
+- On a clean series measured under one protocol, CMF in the conventional MCS frame works:
+  q2 0.66 on Hu 2011's 18 compounds, above the pooled node's ceiling.  The twelve-compound
+  series are too small and too narrow to decide anything (q2 within +-0.3 of zero in both
+  frames), and the Dutta set has almost no spread to model.
+- The adsorbed-pose frame does not beat the MCS frame on the one series that can tell
+  (0.26 against 0.66), and E_ads correlates with the potency at r 0.1-0.3 everywhere.
+- The loss from 0.66 on one laboratory to 0.19 on the node is therefore the heterogeneity
+  between laboratories (different alloys, times, concentrations and ways of reading the
+  efficiency), not a limit of the fields.  Pooling needs a laboratory offset: compounds
+  measured in several papers (20 here) are the only link between papers, and a mixed model
+  with compound and paper effects is the next thing to try on the target side.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
@@ -243,3 +294,6 @@ cross-validation; the artefact molecule is excluded (n = 72; 58 for dG_ads).
   reason to reconstruct Fe(110).
 - Protonated forms (examples/corrosion_hcl) need the omol head for the gas-phase reference
   (charge in `atoms.info`) and a counter-ion or a charged-slab scheme; not attempted.
+- On the target side: a mixed model of MWILA with compound and paper effects, fitted on the
+  per-experiment rows, to pool the laboratories without their offsets; and single-laboratory
+  series as the test beds for the alignment question (Hu 2011 is the one that works).

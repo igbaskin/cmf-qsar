@@ -1,0 +1,15 @@
+target,frame,n,q2,q2_sd,rmse,sd_y,r_E_ads,cv
+series hu2011,mcs,18,0.662,nan,0.691,1.189,0.15,LOO
+series hu2011,pose+mcs,18,0.257,nan,1.024,1.189,0.15,LOO
+series raicheva1993,mcs,12,0.038,nan,1.42,1.448,0.27,LOO
+series raicheva1993,pose+mcs,12,0.199,nan,1.296,1.448,0.27,LOO
+series popova lab,mcs,13,-0.14,nan,2.295,2.149,0.08,LOO
+series popova lab,pose+mcs,13,0.281,nan,1.822,2.149,0.08,LOO
+series dutta lab,mcs,13,-0.23,nan,0.469,0.423,-0.22,LOO
+series dutta lab,pose+mcs,13,-0.688,nan,0.55,0.423,-0.22,LOO
+series gutierrez2016,mcs,6,-0.582,nan,1.226,0.975,0.46,LOO
+series gutierrez2016,pose+mcs,6,-0.481,nan,1.186,0.975,0.46,LOO
+node median (as before),mcs,73,0.189,0.069,1.671,1.857,0.15,5x10
+node median (as before),pose+mcs,73,0.155,0.046,1.706,1.857,0.15,5x10
+node at 1 mM (corrected),mcs,57,0.13,0.094,1.145,1.229,0.12,5x10
+node at 1 mM (corrected),pose+mcs,57,0.135,0.027,1.144,1.229,0.12,5x10
