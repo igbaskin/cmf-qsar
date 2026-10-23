@@ -284,6 +284,56 @@ frames): the concentration choice is not what separates the laboratories.
   measured in several papers (20 here) are the only link between papers, and a mixed model
   with compound and paper effects is the next thing to try on the target side.
 
+## A pooled potency without the laboratory offsets (2026-10-23)
+
+`potency_mixed.py` fits, by REML on the 1210 rows in 1 M HCl,
+
+    MWILA = mu + a_compound + b ln(C / 1 mM) + u_paper + e,   u_paper ~ N(0, s_p^2),
+
+compound effects fixed, one random intercept per paper, one concentration slope (ppm converted
+with the molecular weight; all 1210 rows have a concentration then).  `potency_mixed.csv` holds
+mu + a_i per compound, its potency at 1 mM in an average laboratory.
+
+| component | value |
+|---|---|
+| concentration slope b | -0.60 per ln C |
+| sd of the paper offsets (random effect) | 1.05 |
+| residual sd within paper and compound, after concentration | 0.77 |
+| sd of the pooled potency over the 73 compounds (raw medians: 1.87) | 1.38 |
+| correlation with the raw medians | 0.87 |
+
+Only one component of the compound-paper graph is connected: 39 compounds in 27 papers that
+share compounds.  The other 34 compounds sit in 20 single-paper islands (Hu 2011's 18 among
+them), whose offsets the random effect shrinks to zero, so those compounds keep their own means.
+The paper offsets of the linked papers span -2.4 to +2.1, i.e. the laboratories disagree by as
+much as the compounds differ.
+
+Frame comparison with the pooled potency (5-fold external CV x 10, as before):
+
+| target | compounds | MCS frame q2 | adsorbed-pose frame q2 |
+|---|---|---|---|
+| raw medians | 73 | 0.19 | 0.16 |
+| mixed model | 73 | 0.21 | 0.17 |
+| raw medians | linked 39 | -0.08 | 0.01 |
+| mixed model | linked 39 | 0.00 | -0.04 |
+
+- Removing the laboratory offsets changes the target (r 0.87 with the medians, a third less
+  spread) but not its predictability: q2 0.21 against 0.19.  The between-laboratory
+  disagreement was not what hid the structure-potency relation.
+- The 39 compounds measured in several laboratories are the ones no model predicts, in either
+  target and either frame (q2 about 0 with a scatter of 0.15-0.2 between repeats).  They are
+  the much-studied, chemically diverse members of the node (benzimidazole and its 2-amino,
+  2-mercapto, 2-phenyl, bis- and N-substituted relatives), one or two per chemotype.  What the
+  pooled models predict comes from the single-paper islands, which are congeneric series
+  measured under one protocol, Hu 2011 above all (q2 0.66 on its own).
+- So the node behaves as a set of within-series trends that do not share one potency scale,
+  rather than as one series with noisy labels.  A CMF model of inhibition at this level needs
+  either a consistent measurement across chemotypes (one laboratory, one protocol, matched
+  concentrations, the Hu 2011 design extended) or a target that is explicitly relative within a
+  paper (paper-centred potencies, which the mixed model provides as the residual structure).
+  Neither the adsorbed-pose frame nor E_ads changes this conclusion; they were tested at every
+  step.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
