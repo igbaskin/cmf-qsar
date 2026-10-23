@@ -406,6 +406,16 @@ class _Learner:
             self.support_ = np.arange(n)
             self.alpha_ = sc.coef if sc.is_linear else None
             self.b_ = sc.bias if sc.is_linear else 0.0
+        elif self.method.startswith("fuse-"):
+            # data fusion over the actives: a rule on the kernel row, nothing fitted
+            from .fusion import make as make_fusion
+            sc = make_fusion(self.method[len("fuse-"):],
+                             nu=float(self.params.get("nu", 0.1)),
+                             threshold=float(self.params.get("fusion_threshold", 0.0)),
+                             rrf_k=float(self.params.get("rrf_k", 60.0))).fit(K)
+            self.oc_ = sc
+            self.support_ = np.arange(n)
+            self.alpha_, self.b_ = None, 0.0
         elif self.method == "ocsvm":
             # one-class (novelty detection): no labels are used, every training molecule
             # belongs to the target class
@@ -1042,12 +1052,10 @@ class CMFModel:
         """
         oc = getattr(self.learner_, "oc_", None) if self.learner_ is not None else None
         if oc is not None and not oc.is_linear:
-            from .oneclass import LABELS
             raise ValueError(
                 f"the contributions of the training molecules are defined for a score that sums "
-                f"over them; '{LABELS.get(oc.kind, oc.kind)}' does not (it is a minimum over "
-                f"neighbours or a quadratic form). The one-class SVM, the centroid distance and "
-                f"the one-class Gaussian process all do.")
+                f"over them; '{oc.label}' does not ({oc.why_not_linear}). The one-class SVM, the "
+                f"centroid distance and the one-class Gaussian process all do.")
         t = AtomTable.from_molecules([mol])
         K = self.test_kernel(t)
         if not self.is_linear:
@@ -1079,12 +1087,11 @@ class CMFModel:
         self._require_fields_if_atoms(what)
         oc = getattr(self.learner_, "oc_", None) if self.learner_ is not None else None
         if oc is not None and not oc.is_linear:
-            from .oneclass import LABELS
             raise ValueError(
                 f"{what} are defined for a score that is a sum over the training molecules; "
-                f"'{LABELS.get(oc.kind, oc.kind)}' is not one (it is a minimum over neighbours "
-                f"or a quadratic form), so no co-field exists for it. The one-class SVM, the "
-                f"centroid distance and the one-class Gaussian process all keep it.")
+                f"'{oc.label}' is not one ({oc.why_not_linear}), so no co-field exists for it. "
+                f"The one-class SVM, the centroid distance and the one-class Gaussian process "
+                f"all keep it.")
         if not self.is_linear:
             raise ValueError(
                 f"{what} are defined only for the linear kernel: with the '{self.kernel_layer}' layer "

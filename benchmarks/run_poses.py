@@ -59,6 +59,10 @@ METHODS = ("scrambled", "mcs", "field", "variance", "mcs+variance")
 #: the flexible search of C2 has a conformation to fix as well as a pose, so it is
 #: judged with --reconform, where the held-out conformation is generated rather than read
 FLEX_METHODS = ("scrambled", "mcs", "mcs+variance", "flex", "mcs+flex")
+#: the field-point graph of fieldgraph.py, judged beside the substructure alignment it is meant
+#: to do without, and in series with the kernel and confidence refinements
+GRAPH_METHODS = ("scrambled", "mcs", "field", "fieldgraph", "fieldgraph+field",
+                 "fieldgraph+variance")
 FIELDS = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
 ALPHA = 0.5
 LAM = 0.1
@@ -132,12 +136,17 @@ def variant(row):
     recon = bool(row.get("reconform"))
     confs = int(row.get("conformers") or 0)
     guard = row.get("max_rmsd")
-    key = (recon, confs, -1.0 if guard is None else float(guard))
+    # the set of methods is part of what a run is: two runs of the same protocol over different
+    # posers are not rows of one table, and merging them gives a set two rows with holes in both
+    posers = tuple(sorted(m for m in row.get("methods", {}) if m != "crystal"))
+    key = (recon, confs, -1.0 if guard is None else float(guard), posers)
     what = ("regenerated conformations" if recon else "crystal conformations, pose scrambled")
     if recon:
         what += (f", {confs} generated starting conformations" if confs
                  else ", the generated conformation alone")
     what += (f", displacement guard {guard:g} A" if guard else ", no displacement guard")
+    if any(p.startswith("fieldgraph") for p in posers):
+        what += "; field-point graph alignment"
     return key, what
 
 
@@ -193,7 +202,7 @@ def report(results=RESULTS, out=None):
     for r in rows:
         key, what = variant(r)
         groups.setdefault((key, what), []).append(r)
-    known = ["crystal"] + [m for m in list(METHODS) + list(FLEX_METHODS)]
+    known = ["crystal"] + [m for m in list(METHODS) + list(FLEX_METHODS) + list(GRAPH_METHODS)]
     seen = []
     for m in known:
         if m not in seen:

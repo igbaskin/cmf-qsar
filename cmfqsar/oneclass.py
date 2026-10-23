@@ -79,6 +79,18 @@ class OneClassScorer:
         """True when the score is a kernel expansion, so the decomposition rules still apply."""
         return self.kind in ("ocmean", "ocgp")
 
+    @property
+    def label(self) -> str:
+        """How this description is named in a message to the user."""
+        return LABELS.get(self.kind, self.kind)
+
+    @property
+    def why_not_linear(self) -> str:
+        """Why no co-field exists, in a clause that can be dropped into an error message."""
+        return ("it is a minimum over neighbours" if self.kind == "ocknn"
+                else "it is a quadratic form" if self.kind == "ockpca"
+                else "it is not a sum over the training molecules")
+
     def fit(self, K: np.ndarray) -> "OneClassScorer":
         K = np.asarray(K, float)
         n = K.shape[0]

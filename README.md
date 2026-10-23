@@ -50,12 +50,12 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class (see below). **Two endpoints on one kernel**, tied by a task correlation, so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances. **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Two endpoints on one kernel**, tied by a task correlation, so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
 | Interpretation | **Molecular co-fields** `C_f(r) = Σ_j a_j X_fj(r)` (Eq. 9) rendered as ± isosurfaces; molecular field `X_f(r)` of any molecule in the same colours, with or without a model (co-fields are drawn as solid surfaces and molecular fields as a mesh by default; both styles are switchable); overlap `C·X` whose integral is the field's contribution to the prediction (Eq. 7); the three decomposition rules of the 2019 paper: training-molecule contributions `a_j K(X,X_j)` and **atom contributions** (Eq. 14 of the 2015 paper) shown as red/blue spheres; **Shapley values** over atoms, substituents or field types, which replace the co-field when a nonlinear kernel layer is used and reproduce the atom contributions exactly when it is not, with second-order interaction indices. |
-| Tools | **Protein binding sites** fetched from the PDB or read from a local file and drawn behind the molecules and their fields, with atom codes on the molecule and residue names on the alpha carbons; **field complementarity** of the molecules and of the co-fields with the pocket, as numbers, as a coloured surface and **resolved by receptor residue** into an interaction profile that can be compared with a reference ligand's or with the pattern a series conserves (see below); the **field difference** from a reference molecule, by the cosine or by Tversky's asymmetric index, which is what a fragment of that reference needs (see below); MCS-based alignment to a reference molecule, optional pose refinement by maximising the CMF kernel similarity (the alignment criterion proposed in the 2013 paper), **alignment by prediction confidence** (see below), 3D generation from SMILES, model save/load, CSV/SDF/Gaussian-cube export, screenshots. |
+| Tools | **Protein binding sites** fetched from the PDB or read from a local file and drawn behind the molecules and their fields, with atom codes on the molecule and residue names on the alpha carbons; **field complementarity** of the molecules and of the co-fields with the pocket, as numbers, as a coloured surface and **resolved by receptor residue** into an interaction profile that can be compared with a reference ligand's or with the pattern a series conserves (see below); the **field difference** from a reference molecule, by the cosine or by Tversky's asymmetric index, which is what a fragment of that reference needs (see below); MCS-based alignment to a reference molecule, optional pose refinement by maximising the CMF kernel similarity (the alignment criterion proposed in the 2013 paper), **alignment by prediction confidence** (see below), **alignment by matching the typed extrema of the fields themselves**, which needs no common substructure, no overlapping starting pose and no model (see below), 3D generation from SMILES, model save/load, CSV/SDF/Gaussian-cube export, screenshots. |
 
 ### Conformational ensembles: the fourth dimension
 
@@ -1639,6 +1639,71 @@ In the application the five descriptions are the method list of the one-class ta
 neighbours or the subspace dimension beside them; the one-class Gaussian process takes its ridge
 from the first value of the λ grid.
 
+#### Several actives and no inactives: data fusion
+
+A one-class description fits *something* to the actives, even if only a radius. The screening
+literature's older answer fits nothing at all: compute the similarity of each library molecule to
+every known active and combine the results by a fixed rule. That is data fusion (Willett 2013,
+through the group-fusion rules of Fox & Shaw 1994), and [fusion.py](cmfqsar/fusion.py) adds the
+eight rules of the standard table. The input is one matrix, the similarity of each molecule to
+each active, so the rules run unchanged on a CMF field kernel and on a fingerprint Tanimoto, and
+that is what makes the two representations comparable on one task.
+
+Two of the rules the program already had under other names. **SUM** is the centroid description:
+for a normalised kernel the distance to the centroid of the actives is one minus their mean
+similarity. **MAX**, the similarity to the single best-matching active, is the one-nearest-neighbour
+description, and a test asserts that the two rank a library identically. The remaining six are
+new here: MIN, the median, Fox and Shaw's ANZ and MNZ, the Euclidean norm of the row, and
+reciprocal rank fusion, the only one that uses ranks rather than similarity values and so the only
+one indifferent to whether two actives' similarity scales agree.
+
+**Measured on the same sets and the same folds as the one-class table above**, by
+`benchmarks/run_fusion.py`: AUC of the held-out actives against the inactives of the same set,
+five folds over the actives, nothing tuned. The best attenuation per set, and beside it the median
+over the three tried, because a screening run has no criterion to pick the attenuation with:
+
+| | CMF fields, best α | CMF fields, median over α | ECFP4 |
+|---|---:|---:|---:|
+| fusion MAX | 0.696 | 0.686 | 0.738 |
+| fusion MIN | 0.669 | 0.627 | 0.537 |
+| fusion SUM = centroid | 0.652 | 0.643 | 0.686 |
+| fusion MED | 0.629 | 0.622 | 0.586 |
+| fusion EUC | 0.653 | 0.643 | 0.709 |
+| fusion RRF | 0.692 | 0.679 | 0.654 |
+| fusion ANZ, threshold swept | **0.729** | 0.666 | **0.765** |
+| fusion MNZ, threshold swept | 0.721 | 0.644 | 0.745 |
+| one-class k-NN = MAX, refitted | 0.703 | 0.695 | 0.707 |
+| one-class GP | **0.736** | **0.721** | 0.750 |
+| one-class GP/sd | 0.720 | 0.715 | **0.792** |
+| one-class kernel PCA | 0.725 | 0.713 | 0.752 |
+
+Three things worth taking from it. **MAX does beat the rule the program had**, by 0.044 on fields
+and 0.052 on ECFP4, which is the literature's finding reproduced on both representations and the
+reason the rule was worth adding. **It does not beat a fitted description**: the Gaussian process
+leads on fields at both the best and the median setting, and on fingerprints the GP divided by its
+own standard deviation leads by a wide margin. So fusion's value here is not that it wins but that
+it needs nothing fitted and has nothing to overfit. And **ANZ and MNZ are vacuous as the
+literature states them.** Both divide or multiply the total by the number of actives a molecule
+matches, which presupposes that some it does not match; on these sets no normalised field
+similarity is below 0.6, so at the usual threshold of zero that count is a constant and both rules
+collapse onto SUM *exactly*. Given a threshold drawn from the similarity distribution they become
+the strongest fusion rules by best-of-settings — and the median column shows how much of that is
+the extra freedom of a swept parameter rather than a better rule.
+
+```bash
+python cmf_cli.py build examples/sutherland/THR.sdf --charges file --task oneclass \
+       --threshold 6.7 --method fuse-max --alphas 0.5 --nus 0.1
+python benchmarks/run_fusion.py
+```
+
+The rules are the `fuse-*` methods of the one-class task, with `--fusion-threshold` for the two
+that need one and `--rrf-k` for reciprocal rank fusion. The program warns when ANZ or MNZ is asked
+for at a threshold of zero, because silently computing SUM under another name is worse than
+refusing. None of the rules is a kernel expansion with fixed weights, so none has a co-field, an
+atom contribution or a Shapley value; SUM is linear in the row and is the exception in principle,
+but it is the centroid description, which the program already offers as `ocmean` *with* its
+co-field, and a second linear path to the same map would only be a way of getting it wrong twice.
+
 ### A Gaussian-process classifier, for the posterior rather than the accuracy
 
 A support-vector classifier returns a decision value and nothing else: a probability has to be
@@ -1767,6 +1832,101 @@ in *opposite* directions. Judge the result on a test set that was not realigned.
 Three rounds each, no displacement limit. One set improved, one degraded badly, two were neutral, and
 rounds after the first consistently made the external prediction worse. The defaults are therefore a
 single round with a 1 Å displacement guard, and the hyper-parameters are refitted on the new geometry.
+
+### An alignment out of the field points themselves
+
+Every alignment above is a superposition on something shared, and each needs something the hard
+cases do not have. The substructure alignment needs a common substructure, which a series of
+several scaffolds has not got. The kernel refinement needs a pose that already roughly overlaps,
+because the CMF kernel is flat where two molecules do not touch and there is nothing to climb,
+which is exactly the position two chemotypes are in. The confidence alignment needs a fitted
+model, so it cannot align the training set the model is fitted on.
+
+[fieldgraph.py](cmfqsar/fieldgraph.py) is the third road, and an old one: field graphs
+(Thorner, Willett, Wright & Taylor 1997), the field points of Cresset's methodology, and
+maximum-common-subgraph matching. Reduce each molecule's **own** fields to a handful of typed
+extrema, treat those as the vertices of a graph whose edges carry the distances between them, and
+superimpose two molecules on the largest set of extrema whose mutual distances agree. Nothing is
+shared in advance: no substructure, no frame, no model. What is matched is what the molecule
+presents to a binding partner, which is what the fields are a description of in the first place.
+
+In the order the code does it: a connected region where one field exceeds a fraction of its own
+peak is one point, with the position, tolerance radius and integrated weight that the pharmacophore
+section already reads out of a co-field lobe, applied here to a molecule's own field; one vertex
+per pair of points **of the same type**, joined when they reuse no point and the distance between
+two points of one molecule agrees with the distance between their partners in the other; the
+cliques of that graph by Bron-Kerbosch with pivoting, budgeted, since the count of maximal cliques
+is exponential in the worst case and a screening run may not hang; then Kabsch on each candidate,
+with the proper-rotation correction, so a mirror-image arrangement is never accepted as a match.
+A graph can have several maximum cliques and they are *alternative hypotheses* about which features
+correspond, not interchangeable descriptions, so each is superimposed and then scored by the
+quantity the program actually cares about — the cosine of the two molecules' fields. That is the
+only step that uses the kernel, and it ranks finished hypotheses rather than searching with it,
+which is what keeps it out of the flat region that defeats the kernel refinement.
+
+**The steric field is left out, and that is measured rather than assumed.** At every contour from
+0.2 to 0.8 of its peak the steric field of a drug-sized molecule has exactly one connected region:
+it is a single blob covering the molecule, its one extremum sits near the centroid, and it would
+contribute a vertex that matches everything and constrains nothing. A test asserts that
+single-region behaviour. What is left — electrostatic with both signs, hydrophobic with both signs
+because the Crippen contributions are signed, and the two hydrogen-bond fields — gives nine to
+thirteen points for a ligand of thirty to sixty atoms, which is the regime the field-point
+literature works in.
+
+**Judged by the pose protocol**, which is the only honest judge the program has, on all sixteen
+FEP sets with crystal poses, 30 % held out, poses destroyed and recovered without any held-out
+activity:
+
+| method | median RMSD | within 1 Å | within 2 Å | R²pred | needs |
+|---|---:|---:|---:|---:|---|
+| crystal (ceiling) | 0.00 Å | 100 % | 100 % | +0.334 | — |
+| scrambled (floor) | 5.29 Å | 0 % | 0 % | −0.683 | — |
+| substructure (`mcs`) | **0.25 Å** | **94 %** | **98 %** | **+0.329** | a common substructure |
+| kernel refinement (`field`) | 0.48 Å | 89 % | 97 % | +0.293 | a substructure first |
+| field points (`fieldgraph`) | 0.67 Å | 79 % | 94 % | +0.206 | **nothing** |
+| field points, then kernel | 0.57 Å | 85 % | 93 % | +0.273 | **nothing** |
+| field points, then confidence | **0.12 Å** | **96 %** | 96 % | +0.299 | a fitted model |
+| substructure, then confidence | 0.11 Å | 99 % | 99 % | +0.313 | both |
+
+Read the table and not the hope. On congeneric series the substructure alignment wins, as it
+should: a shared scaffold with a known atom mapping is the strongest information available, and
+field points do not beat it on any count. What they do is reach 0.67 Å and 79 % within one
+ångström **with no substructure at all**, against a floor of 5.29 Å and 0 %, and when they supply
+the starting frame for the confidence search the combination comes within 0.01 Å of the median and
+three points of the within-one-ångström of the substructure route that it was meant to do without.
+The failure case is named rather than averaged away: on eg5 the field points give 3.54 Å where the
+substructure gives 0.10, and that one set accounts for most of the gap in the mean.
+
+**On a heterogeneous series**, which is what the construction is actually for, it becomes the third
+option of the cluster-placement step of the chemotype workflow (`--place fieldgraph` beside
+`field` and `dock`). Leave-one-chemotype-out q², molecules in their published poses against the
+two re-placement routes:
+
+| set | published poses | placed by field similarity | placed by field points |
+|---|---:|---:|---:|
+| COX2 | **+0.425** | +0.341 | +0.385 |
+| DHFR | +0.463 | **+0.506** | +0.464 |
+| AChE | +0.275 | +0.523 | **+0.529** |
+| BZR | +0.088 | **+0.094** | −0.128 |
+
+Best on AChE, where re-placing the chemotypes is worth a quarter of a q² whichever route does it;
+a draw on DHFR; better than the kernel route but worse than the published poses on COX2; and
+clearly worse on BZR, the set where the alignment had already lost to a fragment-count baseline.
+So it is a third route that is sometimes the best one and is not a cure, which is the same answer
+every other re-placement experiment in this repository has given.
+
+```bash
+python cmf_cli.py hetero examples/sutherland/AChE.sdf --charges file --min-group 3 \
+       --align-within --place fieldgraph
+python benchmarks/run_poses.py --sets all --methods scrambled mcs field fieldgraph \
+       fieldgraph+field fieldgraph+variance --suffix _fg --force
+```
+
+What it does not do: it never changes a conformation, so a molecule is placed only as well as the
+conformation it arrives in allows, and it does not know which of its own points matter, because a
+molecule's field says what it presents and not what the target wants. A fitted model knows the
+second thing, which is why the two are worth running in series and why that series is the row that
+does best.
 
 ### A field-based Hammett equation: substituent constants
 

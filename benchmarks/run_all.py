@@ -156,6 +156,12 @@ def registry() -> List[Benchmark]:
                   minutes="20",   # examples/sutherland and examples/openff, both in the repo
                   report=lambda: _mod("run_exposure").report(_r("exposure")),
                   tables=["exposure/table.md"]),
+        Benchmark("fusion", "data-fusion rules against the one-class descriptions, both "
+                            "representations",
+                  "run_fusion.py", "fusion", compute=[[]], minutes="2",
+                  report=lambda: _mod("run_fusion").report(_r("fusion/table.md")),
+                  tables=["fusion/table.md"],
+                  readme=["Several actives and no inactives: data fusion"]),
         Benchmark("poses", "alignment methods judged against the crystal poses of sixteen FEP sets",
                   "run_poses.py", "poses",
                   compute=[["--sets", "all", "--force"],

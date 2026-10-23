@@ -816,6 +816,19 @@ class ModelPanel(QWidget):
         self.spin_oc_param.setValue(5)
         self.lbl_oc_param = QLabel("Neighbours k:")
         form.addRow(self.lbl_oc_param, self.spin_oc_param)
+        # the two fusion rules that count matches need a threshold, and on a field similarity
+        # the literature's default of zero makes that count a constant: see the README
+        self.spin_fusion_thr = QDoubleSpinBox()
+        self.spin_fusion_thr.setRange(-1.0, 1.0)
+        self.spin_fusion_thr.setDecimals(3)
+        self.spin_fusion_thr.setSingleStep(0.05)
+        self.spin_fusion_thr.setValue(0.0)
+        self.spin_fusion_thr.setToolTip(
+            "A similarity above this counts as a match. At 0 every active matches every molecule "
+            "on a field kernel, the count is constant, and ANZ and MNZ become SUM exactly; take a "
+            "value from inside the range the similarities actually span.")
+        self.lbl_fusion_thr = QLabel("Match threshold:")
+        form.addRow(self.lbl_fusion_thr, self.spin_fusion_thr)
         cvrow = QHBoxLayout()
         self.spin_folds = QSpinBox()
         self.spin_folds.setRange(2, 100)
@@ -951,7 +964,18 @@ class ModelPanel(QWidget):
                   "Distance to the k-th nearest active",
                   "One-class Gaussian process",
                   "Distance from the principal subspace (kernel PCA)"]
-    OC_KEYS = ["ocsvm", "ocmean", "ocknn", "ocgp", "ockpca"]
+    OC_METHODS = OC_METHODS + [
+        "Fusion: best-matching active (MAX)",
+        "Fusion: worst-matching active (MIN)",
+        "Fusion: sum of the similarities (SUM)",
+        "Fusion: median of the similarities (MED)",
+        "Fusion: sum over the actives that match (ANZ)",
+        "Fusion: sum times the number that match (MNZ)",
+        "Fusion: Euclidean norm of the row (EUC)",
+        "Fusion: reciprocal rank fusion (RRF)"]
+    OC_KEYS = ["ocsvm", "ocmean", "ocknn", "ocgp", "ockpca",
+               "fuse-max", "fuse-min", "fuse-sum", "fuse-med",
+               "fuse-anz", "fuse-mnz", "fuse-euc", "fuse-rrf"]
 
     def kernel_source(self) -> str:
         return ["fields", "autocorrelation"][self.cmb_kernel_src.currentIndex()]
@@ -1022,6 +1046,9 @@ class ModelPanel(QWidget):
             self.spin_oc_param.setRange(lo, hi)
             if self.spin_oc_param.value() not in range(lo, hi + 1):
                 self.spin_oc_param.setValue(default)
+        fusion_thr = key in ("fuse-anz", "fuse-mnz")
+        self.lbl_fusion_thr.setVisible(fusion_thr)
+        self.spin_fusion_thr.setVisible(fusion_thr)
         self.ed_lams.setToolTip("The one-class Gaussian process takes the first value as its "
                                 "ridge on the constant target" if key == "ocgp" else "")
         # the autocorrelation kernel has its own width instead of the attenuation
@@ -1117,7 +1144,9 @@ class ModelPanel(QWidget):
         key = self.method_key()
         return {"k": int(self.spin_oc_param.value()),
                 "components": int(self.spin_oc_param.value()),
-                "oc_lam": float(self.lams()[0]) if key == "ocgp" else 0.1}
+                "oc_lam": float(self.lams()[0]) if key == "ocgp" else 0.1,
+                "fusion_threshold": float(self.spin_fusion_thr.value()),
+                "rrf_k": 60.0}
 
     def alphas(self) -> List[float]:
         return _float_list(self.ed_alphas.text(), [1.0])

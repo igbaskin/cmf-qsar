@@ -195,6 +195,44 @@ def pose_mcs_then_flexible(mols: Sequence[Chem.Mol], ctx: dict) -> None:
     pose_flexible(mols, ctx)
 
 
+def pose_fieldgraph(mols: Sequence[Chem.Mol], ctx: dict) -> None:
+    """Match each molecule's own field extrema to the reference's (:mod:`cmfqsar.fieldgraph`).
+
+    The only poser here that needs neither a common substructure nor a fitted model: what is
+    superimposed is what the two molecules present, so a molecule sharing no scaffold with the
+    reference can still be placed, and a molecule sharing nothing at all is left where it was.
+    """
+    from .fieldgraph import align_dataset
+    ref, fs = ctx["reference"], ctx["fieldset"]
+    ref_fields = build_fields(ref, fs, "reference")
+    mf = [build_fields(m, fs, f"probe{i}") for i, m in enumerate(mols)]
+    matches = align_dataset(mf, ref_fields, fs,
+                            tolerance=ctx.get("fg_tolerance", 1.0),
+                            min_size=ctx.get("fg_min_size", 3),
+                            level=ctx.get("fg_level", 0.3),
+                            max_points=ctx.get("fg_max_points", 16))
+    for m, f, res in zip(mols, mf, matches):
+        if res is not None and res.R is not None:
+            set_coords(m, np.asarray(f.coords, float) @ np.asarray(res.R, float).T + res.t)
+
+
+def pose_fieldgraph_then_field(mols: Sequence[Chem.Mol], ctx: dict) -> None:
+    """Field points for the frame, then the kernel refinement that needs one to start from."""
+    pose_fieldgraph(mols, ctx)
+    ref, fs = ctx["reference"], ctx["fieldset"]
+    for m in mols:
+        try:
+            field_align(m, ref, fs)
+        except Exception:                   # noqa: BLE001
+            pass
+
+
+def pose_fieldgraph_then_variance(mols: Sequence[Chem.Mol], ctx: dict) -> None:
+    """Field points for the frame, then the model's confidence from there."""
+    pose_fieldgraph(mols, ctx)
+    pose_variance(mols, ctx)
+
+
 #: name -> poser.  Every one is handed the molecules to pose and a context holding the reference
 #: molecule, the field set and the fitted model; none of them may look at the activity.
 POSERS: Dict[str, Callable[[Sequence[Chem.Mol], dict], None]] = {
@@ -205,6 +243,9 @@ POSERS: Dict[str, Callable[[Sequence[Chem.Mol], dict], None]] = {
     "mcs+variance": pose_mcs_then_variance,
     "flex": pose_flexible,
     "mcs+flex": pose_mcs_then_flexible,
+    "fieldgraph": pose_fieldgraph,
+    "fieldgraph+field": pose_fieldgraph_then_field,
+    "fieldgraph+variance": pose_fieldgraph_then_variance,
 }
 
 

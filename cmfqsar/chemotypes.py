@@ -163,17 +163,21 @@ def place_groups(mols: Sequence[Chem.Mol], labels: np.ndarray, fieldset: FieldSe
     """Move every cluster, as a rigid body, into a common frame.
 
     ``field`` superimposes each cluster's reference on the reference of `reference_group` by
-    maximising the CMF kernel between them, which needs no common substructure.  ``dock`` places
-    each cluster's reference in the binding site instead, which needs a pocket but no reference
-    cluster at all.  Either way the transform found for the reference is applied to every molecule
-    of its cluster, so the within-cluster alignment of step 2 survives untouched.
+    maximising the CMF kernel between them, which needs no common substructure.  ``fieldgraph``
+    superimposes them on the largest consistent set of their typed field extrema instead
+    (:mod:`cmfqsar.fieldgraph`), which needs no common substructure either and, unlike ``field``,
+    does not have to start from a pose that already roughly overlaps: a kernel maximisation is
+    blind where two molecules do not touch, which is exactly the position two chemotypes are in.
+    ``dock`` places each cluster's reference in the binding site instead, which needs a pocket but
+    no reference cluster at all.  Either way the transform found for the reference is applied to
+    every molecule of its cluster, so the within-cluster alignment of step 2 survives untouched.
     """
     log: List[str] = []
     members = group_members(labels)
     if mode == "dock" and pocket is None:
         raise ValueError("docking needs the fields of a pocket")
     anchor = None
-    if mode == "field":
+    if mode in ("field", "fieldgraph"):
         if reference_group >= len(members) or len(members[reference_group]) == 0:
             raise ValueError("the reference chemotype is empty")
         anchor = group_reference(mols, members[reference_group])
@@ -183,12 +187,26 @@ def place_groups(mols: Sequence[Chem.Mol], labels: np.ndarray, fieldset: FieldSe
         if progress is not None:
             progress(f"Placing chemotype {g + 1}/{len(members)}", g / max(len(members), 1))
         ref = group_reference(mols, idx)
-        if mode == "field" and g == reference_group:
+        if mode in ("field", "fieldgraph") and g == reference_group:
             log.append(f"group {g}: the reference chemotype, left where it is")
             continue
         before = np.array(mols[ref].GetConformer().GetPositions())
         try:
-            if mode == "field":
+            if mode == "fieldgraph":
+                from .fieldgraph import align as fg_align
+                single = fieldset.copy()
+                single.conformers = "single"
+                mf = build_fields(mols[ref], single, "")
+                target = build_fields(mols[anchor], single, "")
+                res = fg_align(mf, target, single)
+                if res is None or res.R is None:
+                    raise ValueError("the two chemotypes share no consistent set of field "
+                                     "extrema, so there is nothing to superimpose them on")
+                set_coords(mols[ref], np.asarray(mf.coords, float) @ res.R.T + res.t)
+                log.append(f"group {g}: reference {ref} placed on {res.size} field points, "
+                           f"point RMSD {res.point_rmsd:.2f} A, field cosine "
+                           f"{res.similarity:+.3f}")
+            elif mode == "field":
                 # the kernel is flat where the two molecules do not overlap at all, and Powell
                 # has nothing to climb; put their centroids together first
                 here = np.array(mols[ref].GetConformer().GetPositions())

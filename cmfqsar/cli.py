@@ -340,8 +340,16 @@ def cmd_build(args):
         model.fieldset.set_alpha(a0)
         model.params["nu"] = nu0
         model.params.update({"k": args.oc_k, "components": args.oc_components,
-                             "oc_lam": args.oc_lam, "oc_score": args.oc_score})
-        if args.method != "ocsvm":
+                             "oc_lam": args.oc_lam, "oc_score": args.oc_score,
+                             "fusion_threshold": args.fusion_threshold, "rrf_k": args.rrf_k})
+        if args.method.startswith("fuse-"):
+            from cmfqsar.fusion import LABELS as FUSION_LABELS
+            rule = args.method[len("fuse-"):]
+            print(f"  description of the actives: {FUSION_LABELS[rule]}")
+            if rule in ("anz", "mnz") and args.fusion_threshold == 0.0:
+                print("  warning: at a threshold of 0 this rule counts every active for every "
+                      "molecule, so it collapses onto fuse-sum; set --fusion-threshold")
+        elif args.method != "ocsvm":
             from cmfqsar.oneclass import LABELS
             print(f"  description of the actives: {LABELS[args.method]}")
         print(f"One-class model: alpha = {a0:g}, nu = {nu0:g} (not selected by cross-validation; "
@@ -1332,10 +1340,16 @@ def main(argv=None):
                         "the hydrogen-counting bug of the 2013 scripts)")
     b.add_argument("--method", default="krr",
                    choices=["krr", "gp", "svr", "nusvr", "svc", "nusvc", "gpc",
-                            "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca"],
+                            "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca",
+                            "fuse-max", "fuse-min", "fuse-sum", "fuse-med",
+                            "fuse-anz", "fuse-mnz", "fuse-euc", "fuse-rrf"],
                    help="gpc is the Gaussian-process classifier (Laplace approximation): it "
                         "gives calibrated probabilities, a posterior variance per molecule and "
-                        "the marginal likelihood, and takes its amplitude from the C grid")
+                        "the marginal likelihood, and takes its amplitude from the C grid. The "
+                        "fuse-* methods are the data-fusion rules for the one-class task: one "
+                        "score from the similarities to the individual actives, with nothing "
+                        "fitted; fuse-max is the similarity to the best-matching active and "
+                        "fuse-sum is the centroid description under another name")
     b.add_argument("--prop-missing", default="error", choices=["error", "zero"],
                    help="what to do when a molecule carries no value for a prop: field; "
                         "'error' names the molecule, 'zero' treats it as having none")
@@ -1377,6 +1391,14 @@ def main(argv=None):
     b.add_argument("--oc-score", default="mean", choices=["mean", "mean_over_sd"],
                    help="ocgp: the predictive mean, or the mean divided by its standard "
                         "deviation, which also punishes a molecule the model knows nothing about")
+    b.add_argument("--fusion-threshold", type=float, default=0.0, metavar="S",
+                   help="fuse-anz / fuse-mnz: what counts as a match. These two rules divide and "
+                        "multiply by the number of actives a molecule matches, so on a field "
+                        "similarity, where nothing is near zero, the default of 0 makes that "
+                        "count a constant and both rules collapse onto fuse-sum exactly; give a "
+                        "threshold inside the range the similarities actually span")
+    b.add_argument("--rrf-k", type=float, default=60.0, metavar="K",
+                   help="fuse-rrf: the constant of reciprocal rank fusion")
     b.add_argument("--task", default="regression",
                    choices=["regression", "classification", "oneclass"],
                    help="regression (default), binary classification, or one-class / novelty detection "
@@ -1663,10 +1685,11 @@ def main(argv=None):
                    help="bundle the chemotypes into N folds instead of holding out one at a time")
     h.add_argument("--align-within", action="store_true",
                    help="superimpose the molecules of each chemotype on its largest member")
-    h.add_argument("--place", default=None, choices=["field", "dock"],
+    h.add_argument("--place", default=None, choices=["field", "fieldgraph", "dock"],
                    help="place the chemotypes relative to one another, each moved as a rigid "
-                        "body: by field similarity with the reference chemotype, or by docking "
-                        "its reference into the binding site")
+                        "body: by field similarity with the reference chemotype, by matching "
+                        "their typed field extrema, which needs no overlap to start from, or by "
+                        "docking its reference into the binding site")
     h.add_argument("--reference-group", type=int, default=0, metavar="G",
                    help="which chemotype stays still when placing by field similarity")
     h.add_argument("--structure", default=None, help="protein structure for --place dock")
