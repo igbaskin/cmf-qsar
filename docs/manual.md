@@ -1637,7 +1637,26 @@ $$
 $$
 
 as a function of interatomic distance $d$, which is invariant under rotation and translation by
-construction, and takes the linear kernel on those channels. The $d = 0$ channel reproduces the
+construction.
+
+**Where the two molecules are.** That equation describes *one* molecule: both sums run over its own
+atoms, which is what makes it an autocorrelation. It is a descriptor, not a kernel — one number per
+channel $c$, a channel being one pair of field types at one distance — and the kernel is the
+cosine-normalised dot product of two such vectors:
+
+$$
+K(A,B) = \frac{\sum_c s_c^2\, \Phi_c(A)\, \Phi_c(B)}{\|s\,\Phi(A)\|\; \|s\,\Phi(B)\|}
+$$
+
+with $s_c$ the scale channel $c$ inherits from its block: the reciprocal root mean square of that
+block over the training molecules, times the block's mixing weight. This is the opposite
+construction to the overlap kernel of chapter 2, which is defined on two molecules from the start
+and has no finite feature vector at all — its feature map is the field itself. That reversal is
+also what decides how each model can be read afterwards: a dual expansion over a feature map that
+is a function of space is itself a function of space, which is the co-field, while a dual expansion
+over channels is a vector of channel weights, which is the co-pattern.
+
+The $d = 0$ channel reproduces the
 CMF self-overlap exactly when $\sigma^2 = 2/\alpha$, so the descriptor contains the ordinary kernel's diagonal
 information and adds the distance profile. Select *Autocorrelation* as the kernel source in the
 model panel (`--kernel autocorrelation`, with `--ac-sigma` and `--ac-dmax`), and the model fits,
@@ -1702,7 +1721,14 @@ channel being also its width on both axes. That is 17 × 6 × 6 = 612 channels f
 field types, 9,180 features on the five physico-chemical fields, which is why the blocks are
 scaled and may be weighted exactly as in the preceding section. Pairs of different field types
 are summed both ways round, as the three-dimensional descriptor counts them, and the $l = m$
-terms are kept. The command is `--kernel surface`; the model panel does not offer it.
+terms are kept. Those channels are again a descriptor of one molecule, and the kernel of two of
+them is the dot product of the preceding section, over this section's channels:
+
+$$
+K(A,B) = \frac{\sum_c s_c^2\, \Phi_c(A)\, \Phi_c(B)}{\|s\,\Phi(A)\|\; \|s\,\Phi(B)\|}, \qquad c = (f, g, \rho_k, z_i, z_j)
+$$
+
+The command is `--kernel surface`; the model panel does not offer it.
 
 ### What it is worth
 
@@ -1765,9 +1791,16 @@ $S_f = \sum_l w_{lf}$ the total weight of field $f$ over the cell, $V$ its volum
 width of the distance smearing (`--sigma`) and $\omega$ a half-cosine taper over the last
 `--taper` ångström. Both sums run over ordered pairs, so a pair of two different field types is
 counted both ways round, as the molecular descriptor counts it, and its background with it; the
-$l = m$ terms are kept, which makes the $d = 0$ channel the composition of the cell. It is
-invariant to the choice of cell, origin
-and orientation, so a supercell is the same material. Averaged over orientations it is the sine
+$l = m$ terms are kept, which makes the $d = 0$ channel the composition of the cell. As in the two
+preceding sections $\Phi$ describes one structure, and the kernel of two of them is the same
+cosine-normalised dot product over the channels:
+
+$$
+K(A,B) = \frac{\sum_c s_c^2\, \Phi_c(A)\, \Phi_c(B)}{\|s\,\Phi(A)\|\; \|s\,\Phi(B)\|}, \qquad c = (f, g, d_k)
+$$
+
+It is invariant to the choice of cell, origin and orientation, so a supercell is the same
+material. Averaged over orientations it is the sine
 transform of the product of the typed structure factors, which makes the pair products of the
 element indicator fields the partial structure factors a diffraction experiment measures.
 
