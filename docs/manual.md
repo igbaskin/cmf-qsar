@@ -1253,7 +1253,7 @@ fitting the values — on the eight Sutherland sets with five random 70/30 split
 choosing its own hyper-parameters on its own criterion inside the training part.
 
 **On clean data it does not.** Where the activities are one assay's numbers and mean what they
-say, Spearman's ρ on held-out molecules is **+0.709 for kernel ridge and +0.679 for the ranking
+say, Spearman's ρ on held-out molecules is **+0.713 for kernel ridge and +0.689 for the ranking
 SVM**, ridge ahead on five of the eight sets. That is the expected answer and worth stating
 plainly: a regression model is already a ranking model, since the order of its predictions is all
 a ranking model ever produces, and it had the magnitudes to learn from as well. Fitting the order
@@ -1267,12 +1267,12 @@ asks for the order of the true activity, which no model ever saw:
 
 | | KRR | ranking | ranking by source |
 |---|---:|---:|---:|
-| same-source pairs ordered correctly | 72.3 % | 71.2 % | **74.1 %** |
-| Spearman ρ over all held-out pairs | +0.570 | +0.556 | **+0.656** |
+| same-source pairs ordered correctly | 72.5 % | 71.6 % | **74.3 %** |
+| Spearman ρ over all held-out pairs | +0.574 | +0.565 | **+0.663** |
 
 A ranking model that is not told about the sources does no better than ridge: it is handed the
 same corrupted comparisons and dutifully learns them. Told which molecules share a source, it
-beats ridge by **0.086 in ρ**, on seven of the eight sets, because the cross-source pairs — the
+beats ridge by **0.089 in ρ**, on six of the eight sets, because the cross-source pairs — the
 only ones the offsets corrupt — are never formed. Note that it wins on the *global* order too,
 although it was never shown a cross-source comparison: it does not need one, since it fits a
 single scoring function over the fields and all that grouping did was stop it fitting an offset.
