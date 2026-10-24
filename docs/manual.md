@@ -70,7 +70,8 @@ working cycle: prepare the data, fit a model, read it. Chapters 8 to 11 are the 
 routes — screening, conformations, alignment-free modelling, protein pockets. Chapter 12 is
 the complete command-line reference, chapter 13 the library, chapter 14 the example data, and
 chapter 15 collects the things that go wrong. The appendices hold the field parameterisation, the file
-conventions and the bibliography.
+conventions, a glossary of the terms this manual uses in a particular sense, and the
+bibliography.
 
 Conventions: *Menu → Item* names a menu command, `monospace` names a file, an option or a piece of
 code. Equations are quoted in the notation of the papers, with their equation numbers.
@@ -2139,7 +2140,57 @@ match the published numbers exactly and should not be used for new work.
 | Gaussian cube | the export format for co-fields, molecular fields, Shapley fields and difference maps |
 | `REMARK 400` in a pocket PDB | the provenance of a trimmed binding site |
 
-# Appendix C — Bibliography
+# Appendix C — Glossary
+
+The terms this manual uses in a particular sense, with the chapter that treats each one.
+
+| term | what it means here |
+|---|---|
+| **alignment**, or **frame** | the common coordinate system the molecules are placed in before their fields are compared. The overlap kernel needs one and is only as good as it is; the count, autocorrelation, surface and periodic kernels do not. *Preparing the data*; *Working without an alignment* |
+| **applicability domain** | how close a molecule outside the training set is to it, measured in the kernel the model itself uses, with a threshold taken from the training set's own spread. Reported per molecule as the **AD** column and carried into the exported predictions. *Where does the model apply?* |
+| **attenuation**, $\alpha$ | the width parameter of a field's Gaussians: $\alpha$ large makes a field that falls away within an atom's own volume, $\alpha$ small one that reaches across the molecule. The single most consequential setting after the alignment. *1. The fields*; *Attenuation, regularisation and the grids* |
+| **autocorrelation kernel** | geometry without a frame: the smoothed distribution of field-weight products over interatomic distance, invariant to rotation and translation by construction. *The rotation-invariant autocorrelation kernel* |
+| **BEDROC, RIE** | screening figures that weight the top of a ranked list, where AUC saturates. *Decoys and the figures that matter* |
+| **Bemis–Murcko framework** | the ring systems of a molecule together with the bonds that join them. `cmf diagnose` measures the common framework to ask whether one frame could exist at all. *Before you model* |
+| **block weights** | one coefficient per block of channels — a block being one pair of field types — applied before the invariant kernels are normalised, so a weight of zero removes a block exactly. *Mixing coefficients over the channel blocks* |
+| **chemotype** | a group of molecules sharing a scaffold. Splitting a benchmark by chemotype rather than at random is the test of whether a model carries beyond the series it was fitted on. *The example data sets* |
+| **co-field**, $C_f(\mathbf{r})$ | the model as a function of space: the training molecules' fields summed with the fitted coefficients, one per field type. Every prediction is the overlap of a molecule's own field with it. *The same prediction, as a field*; *Co-fields* |
+| **co-pattern** | what the invariant kernels offer in place of a co-field — the weight of every channel of the fitted linear model, named by its field pair and distance, ranked by `top_channels`. *Crystals*; *Molecules on a surface* |
+| **contributions** | the decomposition of one prediction over the training molecules, and of a training molecule's share over its atoms. *Contributions* |
+| **count kernel** | the pose-free baseline: a kernel on atom-type counts, with no geometry at all. Worth running before any aligned model, because it sometimes wins. *The pose-free count kernel* |
+| **decoys** | presumed-inactive molecules used **only** to evaluate a screening model, never to fit it; property-matched decoys are the honest kind. *Decoys and the figures that matter* |
+| **`cmf diagnose`** | the command that runs the five baselines — aligned, counts, autocorrelation, topomer, descriptors — on a data set before any model is built, and says which road to take. *Before you model* |
+| **dual coefficients**, $\mathbf{a}$, and **bias** $b$ | what fitting produces: one coefficient per training molecule and one constant, from which every later prediction is a weighted sum of kernel values. *5. Fitting: what the training set buys* |
+| **external cross-validation**, $q^2_{ex}$ | the whole model-building procedure, hyper-parameter search included, repeated inside each outer fold; the only figure that is not optimistic about the search. *Validation* |
+| **field**, $X_f(\mathbf{r})$ | a continuous function of space: one Gaussian per atom, weighted by that atom's charge, bulk, lipophilicity, H-bond strength, indicator value or file-borne property. The object CMF models. *1. The fields* |
+| **field scaling**, $c_f$ | the factor that puts a normalised field kernel's mean diagonal at 1 over the training set, so the fields enter the mixture on equal terms. Fixed on the training set and stored. *3. Normalisation and scaling* |
+| **field set** | the list of field types a model uses, with their attenuations, charge model and parameterisation. It must match exactly between fitting and predicting. *What has to match between fitting and predicting* |
+| **flexible alignment** | alignment that turns the rotatable bonds as well as moving the molecule, with the force field as a prior on the conformation and several generated starting conformations. The best pose method measured here: 0.86 Å median against the crystal poses. *Judging an alignment, and aligning flexibly* |
+| **Fukui index**, $f^+$, $f^-$, $f^0$ | a per-atom measure of where a molecule gives or takes electron density, computed from the N+1 and N−1 states by ORCA and used as a `prop:` field. The **dual descriptor** is $f^+ - f^-$. *Quantum-chemical properties with ORCA* |
+| **h**, the **mixing coefficient** $h_f$ | the weight of one field's normalised kernel in the joint kernel. Set by hand, optimised, or derived by kernel alignment. *4. Mixing the fields* |
+| **increments** | the table of per-atom parameters a field is built from — the `rdkit` default or the `tripos` tables of the original CMF scripts. Not a setting of the method but of the chemistry it reads. *Appendix A* |
+| **indicator field** | a field whose weight is 1 for atoms of a given type and 0 elsewhere, so that its co-field says where atoms of that type help. *Choosing the fields* |
+| **joint kernel**, $K(A,B)$ | the sum of the normalised, scaled field kernels with their mixing coefficients: the single similarity the learner sees. *4. Mixing the fields* |
+| **kernel layer** | a nonlinear function applied to the joint kernel — Gaussian or arc-cosine — after which there is no co-field, because the prediction is no longer linear in the fields. *Nonlinear kernel layers and multiple kernel learning* |
+| **MCS alignment** | superimposing molecules on their maximum common substructure. The conventional frame, and the baseline every pose method here is measured against. *Alignment* |
+| **MKL** | multiple kernel learning: deriving the mixing coefficients from the kernels and the activities by centred kernel alignment rather than setting them. *Nonlinear kernel layers and multiple kernel learning* |
+| **nested cross-validation** | choosing the hyper-parameters inside each training fold and scoring outside it, so that the reported figure has not seen the molecules the choice was made for. *Validation* |
+| **normalisation** | dividing a field kernel by the geometric mean of the two self-kernels, so every molecule has unit self-similarity and a large molecule cannot look important merely for being large. *3. Normalisation and scaling* |
+| **one-class model** | a model fitted on actives alone, which asks whether a molecule resembles them rather than how active it is. *One-class models: screening with actives alone* |
+| **overlap integral**, $K_f(A,B)$ | the integral over all space of the product of two molecules' fields, which for Gaussians is a closed-form double sum over atom pairs. The kernel CMF is built on. *2. The overlap integral* |
+| **periodic kernel** | the autocorrelation descriptor for a crystal: the pair histogram of one cell with its periodic images, per atom, with the uniform background removed and the cutoff tapered. *Crystals: the periodic autocorrelation kernel* |
+| **pharmacophore** | a set of typed spheres extracted from the lobes of a co-field, which is the model's own statement of what a molecule should carry and where. *A pharmacophore out of the co-field* |
+| **probe field** | a GRID-like interaction energy with a chosen probe, expanded in Gaussians so that it keeps the closed-form kernel and the co-field. *GRID-like probe fields* |
+| **`prop:` field** | a field whose per-atom weights are read from the file or computed by ORCA rather than from a parameter table. *Charges and per-atom properties* |
+| **$q^2$, $R^2_{pred}$, RMSE** | the cross-validated, test-set and fit figures of merit. $q^2$ is not a test: it is what the search optimises, and a model can be chosen for it. *Validation*; *Statistics reported* |
+| **selectivity co-field** | the difference of two endpoints' co-fields in a multi-task model, which draws where a molecule should differ to be selective rather than merely potent. *Two endpoints at once* |
+| **Shapley value** | the share of a prediction attributed to each field or atom by averaging over all subsets, with the pairwise interaction indices beside it. *Shapley values* |
+| **solvent exposure weighting** | multiplying each atomic weight by its relative solvent accessibility. Measured here and found not to help: ligands of this size have no interior. *Weighting the fields by solvent exposure* |
+| **surface kernel** | the in-plane invariant kernel for molecules on a surface: distances in the plane, resolved by the heights of both atoms, invariant to lateral position and rotation about the normal and to nothing else. *Molecules on a surface* |
+| **topomer field** | a field built from substituents rebuilt in a pose that is a deterministic function of their topology, so the same R-group always lands in the same place and no alignment is needed. *Topomer fields* |
+| **y-randomisation** | refitting the whole procedure on shuffled activities many times; if the shuffled models score as well as the real one, the real one is chance. *Is it chance? y-randomisation* |
+
+# Appendix D — Bibliography
 
 References are grouped by what they are to this program: the papers that define the method it
 implements, those that apply it to one-class classification and virtual screening, and the work it
