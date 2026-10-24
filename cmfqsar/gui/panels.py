@@ -960,8 +960,8 @@ class ModelPanel(QWidget):
         return [n for n, cb in self.chk_fields.items() if cb.isChecked()]
 
     REG_METHODS = ["Kernel ridge regression (KRR)", "Gaussian process (KRR + variance)",
-                   "epsilon-SVR", "nu-SVR"]
-    REG_KEYS = ["krr", "gp", "svr", "nusvr"]
+                   "epsilon-SVR", "nu-SVR", "Ranking SVM (order only)"]
+    REG_KEYS = ["krr", "gp", "svr", "nusvr", "ranksvm"]
     CLS_METHODS = ["Support vector classification (C-SVC)", "nu-SVC",
                    "Gaussian process classifier (Laplace)"]
     CLS_KEYS = ["svc", "nusvc", "gpc"]

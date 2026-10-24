@@ -1919,6 +1919,12 @@ class MainWindow(QMainWindow):
                 f"{m.ac_d_max:g} A - invariant to rotation and translation, so no alignment is "
                 f"assumed and no co-field exists"),
                "Fields: " + ", ".join(f"{s.label} (alpha={s.alpha:g}, h={s.h:g})" for s in m.fieldset.specs)]
+        if m.method == "ranksvm":
+            txt.insert(2, "Ranking SVM: fitted to the order of the activities and not to their "
+                          "values, so the score has no units and the scatter below is a cloud that "
+                          "rises rather than a line to lie on. Co-fields and contributions work as "
+                          "usual, and say where more field promotes a molecule rather than what it "
+                          "adds to the activity.")
         if m.method == "gpc":
             from ..gpc import brier_score
             try:

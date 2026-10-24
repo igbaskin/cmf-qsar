@@ -61,20 +61,33 @@ class ModelStats:
     q2_ex_aggr: float = float("nan")  # external CV with reshuffles: statistics of the mean prediction
     rmse_ex_aggr: float = float("nan")
     cv_folds: int = 0
+    #: Spearman, Kendall and the share of pairs ordered correctly; a ranking model has no r2,
+    #: because its score has no units and the squared error of one would mean nothing
+    rank_fit: Dict[str, float] = field(default_factory=dict)
+    rank_cv: Dict[str, float] = field(default_factory=dict)
+    rank_test: Dict[str, float] = field(default_factory=dict)
     extra: Dict[str, object] = field(default_factory=dict)
 
     def summary(self) -> str:
         lines = []
         if self.n_train:
             lines.append(f"Training set: n = {self.n_train}")
-            lines.append(f"  r2 (fit)        = {self.r2:.3f}    RMSE (fit)  = {self.rmse_fit:.3f}")
+            if np.isfinite(self.r2):
+                lines.append(f"  r2 (fit)        = {self.r2:.3f}    RMSE (fit)  = {self.rmse_fit:.3f}")
+            if self.rank_fit:
+                lines.append("  " + _rank_line("fit", self.rank_fit))
         if np.isfinite(self.q2):
             lines.append(f"  q2 ({self.cv_folds}-fold CV)  = {self.q2:.3f}    RMSEcv      = {self.rmse_cv:.3f}")
+        if self.rank_cv:
+            lines.append(f"  " + _rank_line(f"{self.cv_folds}-fold CV", self.rank_cv))
         if self.n_test:
             lines.append(f"Test set: m = {self.n_test}")
-            lines.append(f"  R2pred          = {self.r2_pred:.3f}    RMSEpred    = {self.rmse_pred:.3f}")
-            lines.append(f"  R2pred (train mean) = {self.r2_pred_train_mean:.3f}    "
-                         f"R2pred (train variance) = {self.r2_pred_train_var:.3f}")
+            if np.isfinite(self.r2_pred):
+                lines.append(f"  R2pred          = {self.r2_pred:.3f}    RMSEpred    = {self.rmse_pred:.3f}")
+                lines.append(f"  R2pred (train mean) = {self.r2_pred_train_mean:.3f}    "
+                             f"R2pred (train variance) = {self.r2_pred_train_var:.3f}")
+            if self.rank_test:
+                lines.append("  " + _rank_line("test", self.rank_test))
         if np.isfinite(self.q2_ex):
             sd = f" +/- {self.q2_ex_sd:.3f}" if np.isfinite(self.q2_ex_sd) else ""
             sd2 = f" +/- {self.rmse_ex_sd:.3f}" if np.isfinite(self.rmse_ex_sd) else ""
@@ -83,6 +96,12 @@ class ModelStats:
                 lines.append(f"  mean prediction over reshuffles: q2ex = {self.q2_ex_aggr:.3f}    "
                              f"RMSEcvex = {self.rmse_ex_aggr:.3f}")
         return "\n".join(lines)
+
+
+def _rank_line(what: str, r: Dict[str, float]) -> str:
+    return (f"{what:14s} rho = {r.get('spearman', float('nan')):+.3f}   "
+            f"tau = {r.get('kendall', float('nan')):+.3f}   "
+            f"pairs right = {r.get('pairs', float('nan')):.1%}")
 
 
 # --------------------------------------------------------------------------- #
@@ -394,6 +413,17 @@ class _Learner:
             self.alpha_, self.b_ = g.coef, 0.0
             self.support_ = np.arange(n)
             self.K_train_ = K
+        elif self.method == "ranksvm":
+            from .ranking import fit_rank
+            fit = fit_rank(K, y, C=float(self.params.get("C", 1.0)),
+                           gap=float(self.params.get("gap", 0.0)),
+                           groups=getattr(self, "groups_", None),
+                           max_pairs=int(self.params.get("max_pairs", 20000)),
+                           seed=int(self.params.get("seed", 0)))
+            # one coefficient per molecule, no bias: a constant changes no order
+            self.alpha_, self.b_ = fit.coef, 0.0
+            self.support_ = np.flatnonzero(np.abs(fit.coef) > 0)
+            self.rank_ = fit
         elif self.method in ("ocmean", "ocknn", "ocgp", "ockpca"):
             # the other one-class geometries: centroid, nearest neighbours, GP, principal
             # subspace.  Two of them are kernel expansions and keep the decomposition rules.
@@ -476,7 +506,8 @@ def _kfold_indices(n: int, folds: int, seed: Optional[int]) -> List[np.ndarray]:
 
 
 def cv_predict(K: np.ndarray, y: np.ndarray, method: str, params: Dict[str, float],
-               folds: int = 10, seed: Optional[int] = 0, fit_bias: bool = True) -> np.ndarray:
+               folds: int = 10, seed: Optional[int] = 0, fit_bias: bool = True,
+               groups: Optional[Sequence] = None) -> np.ndarray:
     """k-fold cross-validated predictions on a precomputed joint kernel matrix.
 
     ``seed=None`` uses the deterministic interleaved folds (molecule i goes to fold i mod k)
@@ -485,9 +516,13 @@ def cv_predict(K: np.ndarray, y: np.ndarray, method: str, params: Dict[str, floa
     n = len(y)
     folds = max(2, min(folds, n))
     yp = np.zeros(n)
+    g = None if groups is None else np.asarray(groups)
     for te in _kfold_indices(n, folds, seed):
         tr = np.setdiff1d(np.arange(n), te)
-        learner = _Learner(method, params, fit_bias).fit(K[np.ix_(tr, tr)], y[tr])
+        learner = _Learner(method, params, fit_bias)
+        if g is not None:
+            learner.groups_ = g[tr]            # the pairs of a fold stay inside their groups
+        learner = learner.fit(K[np.ix_(tr, tr)], y[tr])
         yp[te] = learner.predict(K[np.ix_(te, tr)])
     return yp
 
@@ -984,7 +1019,7 @@ class CMFModel:
             return block_cv_predict(self, y, self.params,
                                     block_fold_kernels(self, y, folds=folds, seed=seed))
         return cv_predict(K, y, self.method, self.params, folds=folds, seed=seed,
-                          fit_bias=self.fit_bias)
+                          fit_bias=self.fit_bias, groups=getattr(self, "rank_groups", None))
 
     def layered_kernel(self, K_fields: np.ndarray, diag_p: np.ndarray, diag_q: np.ndarray) -> np.ndarray:
         return self.apply_layer(self.joint_kernel(K_fields), diag_p, diag_q)
@@ -1052,7 +1087,9 @@ class CMFModel:
         self.base_diag_ = np.diag(K_lin).copy()
         self.gamma_scale_ = median_gamma_scale(K_lin) if self.kernel_layer == "gauss" else None
         K = self.apply_layer(K_lin, self.base_diag_, self.base_diag_)
-        self.learner_ = _Learner(self.method, self.params, self.fit_bias).fit(K, y)
+        learner = _Learner(self.method, self.params, self.fit_bias)
+        learner.groups_ = getattr(self, "rank_groups", None)
+        self.learner_ = learner.fit(K, y)
         self.coef = self.learner_.alpha_
         self.bias = self.learner_.b_
         yfit = self.learner_.predict(K)
@@ -1069,6 +1106,22 @@ class CMFModel:
                     progress("Cross-validation", 0.9)
                 ycv = self._cv_predictions(K, y, cv_folds, cv_seed)
                 st.cv = classification_scores(y, ycv)
+                st.cv_folds = min(cv_folds, len(y))
+                st.extra["y_cv"] = ycv
+            st.extra["y_fit"] = yfit
+        elif self.method == "ranksvm":
+            # a ranking score has no units, so r2 and RMSE are arithmetic on nothing; what it
+            # has are the order statistics, for the fit and for the molecules left out
+            from .ranking import rank_scores
+            gap = float(self.params.get("gap", 0.0))
+            groups = getattr(self, "rank_groups", None)
+            st = ModelStats(n_train=len(y))
+            st.rank_fit = rank_scores(y, yfit, gap=gap, groups=groups)
+            if cv_folds and cv_folds >= 2 and len(y) >= 3:
+                if progress:
+                    progress("Cross-validation", 0.9)
+                ycv = self._cv_predictions(K, y, cv_folds, cv_seed)
+                st.rank_cv = rank_scores(y, ycv, gap=gap, groups=groups)
                 st.cv_folds = min(cv_folds, len(y))
                 st.extra["y_cv"] = ycv
             st.extra["y_fit"] = yfit
@@ -1265,6 +1318,14 @@ class CMFModel:
             signs = np.unique(np.sign(y_test[ok])) if ok.any() else np.zeros(0)
             if ok.sum() >= 2 and len(signs) >= 2:
                 self.stats.test = classification_scores(y_test[ok], yp[ok])
+            self.stats.extra["y_test_pred"] = yp
+            return yp
+        if self.method == "ranksvm":
+            from .ranking import rank_scores
+            if ok.sum() >= 3:
+                self.stats.n_test = int(ok.sum())
+                self.stats.rank_test = rank_scores(y_test[ok], yp[ok],
+                                                   gap=float(self.params.get("gap", 0.0)))
             self.stats.extra["y_test_pred"] = yp
             return yp
         if ok.sum() >= 2:
@@ -1701,6 +1762,8 @@ def _param_grid(method: str, lams, Cs, epsilons, nus):
         return [{"C": float(C), "epsilon": float(e)} for C in Cs for e in epsilons]
     if method == "nusvr":
         return [{"C": float(C), "nu": float(nu)} for C in Cs for nu in nus]
+    if method == "ranksvm":
+        return [{"C": float(C)} for C in Cs]
     if method == "svc":
         return [{"C": float(C)} for C in Cs]
     if method == "gpc":
@@ -1717,8 +1780,17 @@ def cv_loss(model: "CMFModel", y: np.ndarray, ycv: np.ndarray) -> Tuple[float, f
     """(loss to minimise, quality metric to report) of cross-validated predictions.
 
     Regression: RMSEcv and q2.  Classification: 1 - AUC (falling back to 1 - balanced
-    accuracy when only one class is present in a fold) and the balanced accuracy.
+    accuracy when only one class is present in a fold) and the balanced accuracy.  Ranking:
+    1 - rho and Spearman's rho, because the score of a ranking model has no units and
+    minimising its squared error would be selecting on a quantity that does not exist.
     """
+    if model.method == "ranksvm":
+        from .ranking import rank_scores
+        rho = rank_scores(y, ycv, gap=float(model.params.get("gap", 0.0)),
+                          groups=getattr(model, "rank_groups", None))["spearman"]
+        if not np.isfinite(rho):
+            return 1.0, float("nan")
+        return 1.0 - float(rho), float(rho)
     if model.task == "classification":
         sc = classification_scores(y, ycv)
         quality = sc["auc"] if np.isfinite(sc["auc"]) else sc["balanced_accuracy"]

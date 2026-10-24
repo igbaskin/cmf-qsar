@@ -1179,7 +1179,7 @@ unit mean diagonal before mixing. Untick the second to get the raw-kernel conven
 
 | Task | Methods | Key |
 |---|---|---|
-| Regression | kernel ridge regression with bias; Gaussian process (the same fit plus predictive variances); ε-SVR; ν-SVR | `krr`, `gp`, `svr`, `nusvr` |
+| Regression | kernel ridge regression with bias; Gaussian process (the same fit plus predictive variances); ε-SVR; ν-SVR; the ranking SVM, which fits the order and not the values | `krr`, `gp`, `svr`, `nusvr`, `ranksvm` |
 | Binary classification | C-SVC; ν-SVC; Gaussian-process classifier by the Laplace approximation | `svc`, `nusvc`, `gpc` |
 | One-class / screening | 1-SVM; distance to the centre of the actives; distance to the k-th nearest active; one-class Gaussian process; distance from the principal subspace (kernel PCA) | `ocsvm`, `ocmean`, `ocknn`, `ocgp`, `ockpca` |
 
@@ -1189,6 +1189,97 @@ of *Preparing the data* minimises. The Laplace GP classifier adds calibrated pro
 variance and model selection by marginal likelihood — it scores no better than C-SVC on the
 benchmark sets (mean difference 0.001 in Matthews correlation), so it is not the default, but its
 probabilities are honest and its evidence picks hyper-parameters without holding anything out.
+
+## Fitting the order instead of the values: the ranking SVM
+
+A regression model is asked for the activity and judged on the squared error, which takes the
+numbers at their word. Often they do not deserve it. Potencies pooled from several papers carry
+an offset per source that no descriptor explains, a series measured in two assays carries two
+scales, and an IC50 read off the end of a dose–response curve carries a bound rather than a
+value. In all three the *order* survives what the values do not, and a model fitted to the values
+spends its capacity on the part that is noise.
+
+`--method ranksvm` fits the order. For every pair of molecules whose activities differ it asks
+that the more active one score higher by a margin, and pays for every pair where that fails:
+
+$$
+\mathrm{min}\;\; \frac{1}{2}\|w\|^2 + C \sum_p \xi_p \;\;\mathrm{with}\;\; w \cdot (X_i - X_j) \geq 1 - \xi_p
+$$
+
+over the pairs $p = (i, j)$ with $y_i > y_j$ — an ordinary support-vector classification on the
+*difference* of two molecules' fields. The kernel of two such differences is a sum of four
+ordinary kernel entries,
+
+$$
+K_{\mathrm{pair}}((i,j), (k,l)) = K(i,k) - K(i,l) - K(j,k) + K(j,l)
+$$
+
+so the whole thing is built from the kernel matrix the program already has, with no new fields and
+no new parameterisation.
+
+**The fitted model is still a dual expansion over molecules.** The weight vector is
+$w = \sum_p a_p (X_{i_p} - X_{j_p})$, so collecting the terms gives one coefficient per *molecule*
+and the score of a new one is $K(x, \mathrm{train})\,\mathbf{a}$, exactly as for every other learner
+here, with no bias. Everything that reads a linear CMF model — co-fields, atom contributions,
+Shapley values, the pharmacophore — keeps working. What changes is what they mean: the co-field of
+a ranking model says where more field *promotes* a molecule, not what it adds to the activity.
+
+What is given up is the scale. A ranking score has no units and cannot be compared with an
+activity; only its order means anything. The program therefore reports Spearman's $\rho$, Kendall's
+$\tau$ and the share of pairs ordered correctly, and reports no $r^2$ or RMSE, which would be
+arithmetic on a quantity that does not exist. The hyper-parameter search selects on $\rho$ for the
+same reason.
+
+```bash
+python cmf_cli.py build data.sdf --charges file --method ranksvm --Cs 0.1,1,10 \
+    --rank-gap 0.5 --rank-groups paper
+```
+
+Three options shape the pairs. **`--rank-gap`** drops the pairs whose activities differ by less
+than it: a pair separated by less than the experimental error is a coin toss, and asking a model
+to call it is how a ranking model learns noise. Half a log unit suits pooled literature potencies
+and zero suits one careful assay. **`--rank-groups PROP`** forms pairs only inside a group — the
+same paper, assay or series — which is what makes the method worth having on pooled data, because
+an offset between two sources then cancels instead of being compared across. **`--rank-pairs`**
+caps the number of pairs: the solver works on the kernel *between pairs*, so the cost is quadratic
+in that number, and the default of 4,000 already asks for 128 MB. The order of a set is heavily
+over-determined and a few thousand comparisons fix it, so the cap is a bound on cost rather than a
+loss of information.
+
+### When it is worth it, measured
+
+`benchmarks/run_ranking.py` asks the only question that matters — does fitting the order beat
+fitting the values — on the eight Sutherland sets with five random 70/30 splits each, every model
+choosing its own hyper-parameters on its own criterion inside the training part.
+
+**On clean data it does not.** Where the activities are one assay's numbers and mean what they
+say, Spearman's ρ on held-out molecules is **+0.709 for kernel ridge and +0.679 for the ranking
+SVM**, ridge ahead on five of the eight sets. That is the expected answer and worth stating
+plainly: a regression model is already a ranking model, since the order of its predictions is all
+a ranking model ever produces, and it had the magnitudes to learn from as well. Fitting the order
+discards how far apart two molecules are, which on honest data is information.
+
+**On pooled data it does, but only with the groups.** The second experiment gives the same
+molecules to three synthetic sources — assigned *by scaffold*, because an offset that travels with
+the chemistry is what a model will learn as if it were an effect of the chemistry, while an offset
+assigned at random is simply averaged away — shifts each source by 1.5 standard deviations, and
+asks for the order of the true activity, which no model ever saw:
+
+| | KRR | ranking | ranking by source |
+|---|---:|---:|---:|
+| same-source pairs ordered correctly | 72.3 % | 71.2 % | **74.1 %** |
+| Spearman ρ over all held-out pairs | +0.570 | +0.556 | **+0.656** |
+
+A ranking model that is not told about the sources does no better than ridge: it is handed the
+same corrupted comparisons and dutifully learns them. Told which molecules share a source, it
+beats ridge by **0.086 in ρ**, on seven of the eight sets, because the cross-source pairs — the
+only ones the offsets corrupt — are never formed. Note that it wins on the *global* order too,
+although it was never shown a cross-source comparison: it does not need one, since it fits a
+single scoring function over the fields and all that grouping did was stop it fitting an offset.
+
+So the honest summary is narrow and useful: **the ranking SVM is for data whose numbers are not
+comparable across their sources, and its value is `--rank-groups`.** On a single clean assay, use
+kernel ridge.
 
 ## Nonlinear kernel layers and multiple kernel learning
 

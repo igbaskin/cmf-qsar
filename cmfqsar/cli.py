@@ -28,6 +28,7 @@ import numpy as np
 from cmfqsar.dataio import load_dataset, save_model, load_model, write_predictions_csv
 from cmfqsar.fields import AtomTable, FieldSet, build_fields, cif_types_in
 from cmfqsar.chemotypes import BASELINE_ALPHA
+from cmfqsar.ranking import make_pairs
 from cmfqsar.model import (CMFModel, cv_predict, grid_search, nested_cv,
                            r2_score, rmse, screening_scores)
 
@@ -380,6 +381,25 @@ def cmd_build(args):
                      ac_block_weights=_block_weights(args.block_weights),
                      ac_block_groups=_block_groups(args.block_groups, fs),
                      ac_block_rho=args.block_rho)
+    if args.method == "ranksvm":
+        model.params["gap"] = float(args.rank_gap)
+        model.params["max_pairs"] = int(args.rank_pairs)
+        if args.rank_groups:
+            g = [m.GetProp(args.rank_groups) if m.HasProp(args.rank_groups) else ""
+                 for m in ds.mols]
+            if len(set(g)) < 2:
+                raise SystemExit(f"--rank-groups {args.rank_groups!r}: every molecule has the "
+                                 f"same value, so grouping changes nothing")
+            model.rank_groups = np.asarray(g, dtype=object)[tr]
+            print(f"Ranking: pairs formed inside each of {len(set(g))} groups of "
+                  f"{args.rank_groups!r}, never across them")
+        n_pairs = len(make_pairs(target[tr], gap=float(args.rank_gap),
+                                 groups=getattr(model, "rank_groups", None),
+                                 max_pairs=int(args.rank_pairs)))
+        print(f"Ranking SVM: {n_pairs} pairs"
+              + (f" after dropping those closer than {args.rank_gap:g}" if args.rank_gap else "")
+              + ". The score has no units, so the model is judged by rho, tau and the share of "
+                "pairs it orders correctly, and r2 is not reported.")
     if model.ac_block_weights is not None and model.uses_fields:
         raise SystemExit("--block-weights belongs to the invariant kernels (--kernel "
                          "autocorrelation or surface); the overlap kernel mixes its fields with "
@@ -491,6 +511,9 @@ def cmd_build(args):
     if args.task == "classification":
         print(f"Best: {knob}, {res.best_params}, "
               f"1-AUCcv = {res.best_rmse:.3f}, balanced accuracy = {res.best_q2:.3f}")
+    elif args.method == "ranksvm":
+        # the search minimises 1 - rho for a ranking model, so that is what to call it
+        print(f"Best: {knob}, {res.best_params}, rho(cv) = {res.best_q2:+.3f}")
     else:
         print(f"Best: {knob}, {res.best_params}, "
               f"RMSEcv = {res.best_rmse:.3f}, q2 = {res.best_q2:.3f}")
@@ -656,6 +679,8 @@ def cmd_build(args):
             "settings": {k: v for k, v in vars(args).items() if k not in ("func",)},
             "best_alpha": res.best_alpha, "best_params": res.best_params, "best_h": res.best_h,
             "r2": st.r2, "rmse_fit": st.rmse_fit, "q2": st.q2, "rmse_cv": st.rmse_cv,
+            # a ranking model has these instead, and nan for everything above
+            "rank_fit": st.rank_fit, "rank_cv": st.rank_cv, "rank_test": st.rank_test,
             "r2_pred": st.r2_pred, "r2_pred_train_mean": st.r2_pred_train_mean,
             "r2_pred_train_var": st.r2_pred_train_var, "rmse_pred": st.rmse_pred,
             "q2_ex": st.q2_ex, "rmse_ex": st.rmse_ex, "q2_ex_sd": st.q2_ex_sd, "rmse_ex_sd": st.rmse_ex_sd,
@@ -1602,7 +1627,7 @@ def main(argv=None):
                         "or the Sybyl-type increments of the original CMF scripts (tripos; -legacy reproduces "
                         "the hydrogen-counting bug of the 2013 scripts)")
     b.add_argument("--method", default="krr",
-                   choices=["krr", "gp", "svr", "nusvr", "svc", "nusvc", "gpc",
+                   choices=["krr", "gp", "svr", "nusvr", "ranksvm", "svc", "nusvc", "gpc",
                             "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca",
                             "fuse-max", "fuse-min", "fuse-sum", "fuse-med",
                             "fuse-anz", "fuse-mnz", "fuse-euc", "fuse-rrf"],
@@ -1801,6 +1826,19 @@ def main(argv=None):
     b.add_argument("--bootstrap-refit", type=int, default=0, metavar="N",
                    help="Cramer's bootstrap as well: N resamples of the training set, each "
                         "refitted and scored on the molecules left out of the bag")
+    b.add_argument("--rank-gap", type=float, default=0.0, metavar="D",
+                   help="ranksvm: ignore pairs whose activities differ by less than this. A pair "
+                        "closer than the experimental error is a coin toss, and learning it is "
+                        "learning noise; half a log unit suits pooled literature data")
+    b.add_argument("--rank-pairs", type=int, default=4000, metavar="N",
+                   help="ranksvm: the largest number of pairs used. The solver works on the "
+                        "kernel between pairs, so the cost is quadratic in this number and the "
+                        "default already asks for 128 MB; a larger set is subsampled once, "
+                        "reproducibly")
+    b.add_argument("--rank-groups", default=None, metavar="PROP",
+                   help="ranksvm: a molecule property naming the assay, paper or series. Pairs "
+                        "are then formed only inside a group, so an offset between two sources "
+                        "cancels instead of being learnt")
     b.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
                    help="calibrate a prediction interval at this level (0.9) on the errors of "
                         "the cross-validation, and store it with the model")

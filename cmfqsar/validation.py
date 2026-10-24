@@ -143,14 +143,23 @@ def scramble_kernel(K: np.ndarray, y: Sequence[float], method: str = "krr",
                     cv_seed: Optional[int] = 0, runs: int = 20, seed: int = 0,
                     progress: Optional[ProgressFn] = None,
                     cancel: Optional[CancelFn] = None) -> ScrambleResult:
-    """y-randomisation of a cross-validated model on a precomputed kernel."""
+    """y-randomisation of a cross-validated model on a precomputed kernel.
+
+    A ranking model is scrambled on Spearman's rho, since its score has no units and the q2 of
+    one would be a statistic about nothing -- shuffled or not.
+    """
     params = dict(params or {"lam": 1.0})
+    ranking = method == "ranksvm"
 
     def score(yy: np.ndarray) -> float:
         pred = cv_predict(K, yy, method, params, folds=folds, seed=cv_seed)
+        if ranking:
+            from .ranking import rank_scores
+            return rank_scores(yy, pred)["spearman"]
         return r2_score(yy, pred)
 
-    return y_scramble(score, y, runs=runs, seed=seed, statistic=f"q2 ({folds}-fold)",
+    return y_scramble(score, y, runs=runs, seed=seed,
+                      statistic=(f"rho ({folds}-fold)" if ranking else f"q2 ({folds}-fold)"),
                       progress=progress, cancel=cancel)
 
 
