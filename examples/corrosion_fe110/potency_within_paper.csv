@@ -1,0 +1,6 @@
+model,frame,strict,n_rows,n_papers,q2_within,spearman_mean,spearman_by_paper
+"E_ads centred (one slope, no CV)",,,88,15,0.047,0.071,dutta2017-256(5):-0.20; gutierrez2016-23(6):0.26; hu2011-2402(18):0.21; popova1996-benzimidazoles-ei(6):0.09; popova2003-756(6):-0.09; popova2004-1333(7):0.04; raicheva1993-343(12):0.20
+"fields, mcs, lenient",mcs,0,88,15,0.279,0.246,dutta2017-256(5):-0.80; gutierrez2016-23(6):0.14; hu2011-2402(18):0.06; popova1996-benzimidazoles-ei(6):0.83; popova2003-756(6):0.26; popova2004-1333(7):0.43; raicheva1993-343(12):0.80
+"fields, mcs, strict",mcs,1,88,15,-0.133,0.081,dutta2017-256(5):0.60; gutierrez2016-23(6):0.14; hu2011-2402(18):-0.17; popova1996-benzimidazoles-ei(6):-0.09; popova2003-756(6):0.26; popova2004-1333(7):-0.21; raicheva1993-343(12):0.04
+"fields, pose+mcs, lenient",pose+mcs,0,88,15,0.185,0.266,dutta2017-256(5):-0.90; gutierrez2016-23(6):0.20; hu2011-2402(18):0.03; popova1996-benzimidazoles-ei(6):0.60; popova2003-756(6):0.20; popova2004-1333(7):0.79; raicheva1993-343(12):0.95
+"fields, pose+mcs, strict",pose+mcs,1,88,15,-0.116,-0.26,dutta2017-256(5):-0.70; gutierrez2016-23(6):-0.20; hu2011-2402(18):-0.15; popova1996-benzimidazoles-ei(6):0.26; popova2003-756(6):-0.26; popova2004-1333(7):-0.32; raicheva1993-343(12):-0.44

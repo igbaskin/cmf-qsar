@@ -334,6 +334,43 @@ Frame comparison with the pooled potency (5-fold external CV x 10, as before):
   Neither the adsorbed-pose frame nor E_ads changes this conclusion; they were tested at every
   step.
 
+## Ranking analogues within a series: leave-paper-out on centred potencies (2026-10-24)
+
+`potency_within_paper.py` (table in `potency_within_paper.csv`): every (compound, paper) pair
+in 1 M HCl from a paper with at least three of the node's compounds is one observation, the
+paper-wise median MWILA minus the paper's mean (88 observations, 15 papers, 48 compounds, sd
+1.31).  The laboratory offsets are gone by construction and the target is "how much better
+than its paper's average is this compound".  One paper is held out at a time; lenient keeps
+every other row for training, strict also removes the held-out paper's compounds from the
+training rows, so the model must rank analogues it has never seen.  KRR on the five fields,
+alpha and lambda by a grouped inner cross-validation.
+
+| model | q2 of the within-paper variance | mean Spearman within the 7 papers of 5+ compounds |
+|---|---|---|
+| E_ads centred within the paper (one slope, no CV) | 0.05 | 0.07 |
+| fields, MCS frame, lenient | 0.28 | 0.25 |
+| fields, MCS frame, strict (unseen compounds) | -0.13 | 0.08 |
+| fields, adsorbed-pose frame, lenient | 0.19 | 0.27 |
+| fields, adsorbed-pose frame, strict | -0.12 | -0.26 |
+
+Per paper (lenient, MCS): Raicheva 1993 rho 0.80, Popova 1996 0.83, Popova 2004 0.43, Hu 2011
+0.06, Dutta 2017 -0.80; strict: all within +-0.3 of zero except Dutta 2017 (0.60, five
+compounds).
+
+- The within-series order is predicted only for compounds that appear in other papers'
+  series as well: the lenient models carry a compound's relative standing from one laboratory
+  to another (which is real information, and consistent with the between-paper reliability of
+  0.64), but with the compounds removed nothing transfers.  Hu 2011's 18 compounds, which the
+  fields model at q2 0.66 from inside the series, are ranked at rho 0.06 (lenient) and -0.17
+  (strict) from the other fourteen papers: the structure-potency trend of one series does not
+  carry to another.
+- E_ads does not rank analogues within a series either (rho 0.07 pooled, within +-0.3 in every
+  paper).  This is the most direct test the adsorption tier can be put to, and it fails it.
+- Taken with the mixed-model result: the node holds series-specific trends, each learnable on
+  its own, that neither share a potency scale nor share a structure-potency relation.  A
+  cross-chemotype CMF model of inhibition in 1 M HCl needs measurements made to be compared,
+  not a better alignment or a computed adsorption energy.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
