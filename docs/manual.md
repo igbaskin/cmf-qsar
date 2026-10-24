@@ -669,6 +669,68 @@ The tools, in increasing order of sophistication:
   mutual arrangement. Randomise, realign, and see how much comes back; the program remembers the
   poses from before and reports the recovery.
 
+## Judging an alignment, and aligning flexibly
+
+Everything in this manual says the alignment decides more than the kernel, the learner or the
+fields. What it could not say until recently is whether one alignment method is better than
+another, because the obvious measure cannot tell you: realigning changes the geometry q² is
+computed on, so a method is rewarded for making the data look like the model, and q² and the
+external R²pred have been seen to move in opposite directions under exactly that operation.
+
+The judge has to come from outside the model, and the FEP benchmark sets supply one: every
+ligand of `examples/openff` is co-crystallised in the same frame, so the pose a method *should*
+have found is known. `benchmarks/run_poses.py` fits a model on training molecules in their
+crystal poses, destroys the poses of the held-out ones, and asks each method to recover them
+without ever seeing a held-out activity. Two numbers come back for every method — how near the
+crystal pose it got, measured over heavy atoms, symmetry-aware and **without superposition**, and
+what the model then predicts — and both are reported between two fixed references: the crystal
+poses as the ceiling and the scrambled poses as the floor.
+
+That last detail is the whole protocol. Superposing before measuring would report 0.00 Å for a
+molecule placed in the wrong site: on a ligand displaced by 1 Å, `CalcRMS` returns 1.0 and
+`GetBestRMS` returns 0.0.
+
+### What the methods are worth
+
+Measured this way over sixteen FEP sets, with the held-out **conformations regenerated** rather
+than read from the crystal — which is the case a new molecule actually presents:
+
+| method | median RMSD | within 2 Å | R²pred | conformer limit |
+|---|---:|---:|---:|---:|
+| crystal poses (the ceiling) | 0.00 Å | 100 % | +0.334 | 0.00 Å |
+| scrambled (the floor) | 6.12 Å | 1 % | −0.696 | 1.73 Å |
+| substructure (MCS) | 1.94 Å | 54 % | −0.391 | 1.73 Å |
+| MCS + rigid confidence | 2.27 Å | 45 % | −0.396 | 1.73 Å |
+| MCS + flexible confidence | 1.41 Å | 74 % | +0.065 | 1.20 Å |
+| MCS + flexible, 5 conformer starts | **0.86 Å** | **88 %** | **+0.264** | **0.71 Å** |
+
+Three things follow. The **torsions rescue the confidence criterion**: with a conformation to fix,
+the rigid search of the 2019 paper is worse than not refining at all, which is the failure the
+protocol was built to expose; the same objective with the rotatable bonds free is the best method
+available. The **conformer generator is what makes it work** — five generated starting
+conformations are worth 0.55 Å on the median pose, better on 15 of 16 sets, and the combination
+beats plain substructure alignment on 16 of 16. And the **displacement guard has little left to
+prevent**: with these starts no set is worse than 1.52 Å, a 1 Å guard costs 0.6 Å, and 2 Å is
+indistinguishable from none.
+
+What none of it does is replace knowing the conformation: +0.264 against the crystal poses'
++0.334. The conformational residue is 0.71 Å, and that is where the remaining error lives.
+
+### Using it
+
+In the application, *Tools → Align by prediction confidence…* gained a **turn the rotatable bonds
+as well** tick box, with the number of starting conformations and the strain allowance beside it.
+From the command line:
+
+```bash
+cmf predict model.cmf new.sdf --align-variance --align-flexible --align-conformers 5
+```
+
+The force field acts as a prior on the conformation — it may rise ten kcal/mol above where it
+started before being penalised, one-sided so that the aligner does not quietly become a conformer
+optimiser — and the displacement limit now applies to the **rigid motion only**, since a turning
+bond is not a translation and charging it as one would suppress the very thing this adds.
+
 ## Charges and per-atom properties
 
 The electrostatic field needs charges: Gasteiger (the default), MMFF94, or **read from the file**,
@@ -768,6 +830,114 @@ The same computation runs from the command line as `examples/orca_atom_propertie
 lists its options), which reads an SDF and writes the annotated one. The script and the dialog
 share the module `cmfqsar/orca.py`, so the numbers are the same either way.
 
+# Before you model: `cmf diagnose`
+
+Every expensive mistake recorded in this manual was visible before the model was built, in a
+number that takes seconds to compute. The corrosion benzenes were modelled with five fields and
+an automatic frame, and atom-type counts — no geometry at all — beat them. The ACE set is
+predicted as well by a handful of two-dimensional descriptors as by the whole 3D model. A
+thrombin model in the exposure study scored +0.059 with its attenuation pinned to the top of the
+grid, which is what a mis-specified model looks like from outside. None of these is subtle; they
+are simply never asked, because asking means running four baselines by hand.
+
+```bash
+cmf diagnose data.sdf --charges file
+```
+
+The command answers five questions and prints the numbers behind each.
+
+**Is there anything to model?** The size of the set and the spread of the activity. Twenty
+molecules across half a log unit cannot support a conclusion, whatever q² comes out, and the
+command says so and stops.
+
+**Can a frame exist at all?** The number of chemotypes, the size of the common Bemis–Murcko
+framework, and whether the molecules are actually superimposed. That last test is asked of the
+shared framework atoms rather than of the centroids, because `EmbedMolecule` leaves every
+molecule centred on the origin: a set of independently generated conformations has a centroid
+spread of 0.02 Å and looks perfectly aligned while every molecule points a different way. The
+test is also allowed to decline. A framework that is a small symmetric ring matches a dozen ways
+and two rings near the origin may coincide by luck, while a framework that is a small part of the
+molecule may match a *different* copy in each one — measured that way an author-aligned
+Sutherland set read as 9 Å apart. So a coincidence within half an ångström is a verdict on its
+own, a large deviation is a verdict only when the framework is a fair share of the molecule, and
+otherwise the answer is "this cannot tell — look at it".
+
+**Does the frame carry signal?** The aligned model against the two routes that need no frame: the
+atom-type count kernel, which has thrown the geometry away entirely, and the rotation-invariant
+field autocorrelation, which keeps it without a pose. If neither is beaten, the alignment is
+decoration and the cheaper route is also the honest one.
+
+**Is the geometry decoration?** The same comparison against descriptors alone — what the file
+carries plus the handful the program computes.
+
+**Was the model specified sensibly?** Whether the chosen attenuation sits on the edge of its grid,
+which means the search wanted a value it was not offered.
+
+A fifth route, the topomer rule, is scored where the molecules can be cut at their framework. It
+covers only those molecules, so the aligned model is refitted on the same ones for the comparison:
+a subset against the whole set is not a comparison, and it flatters whichever route happens to
+drop the hard compounds.
+
+## Two things the command protects you from
+
+**The activity as a descriptor.** Most files store the activity as a molecule property, so the
+descriptors available usually include the quantity being predicted. Handed it, the descriptor
+baseline returns q² = 1.000 and the advice becomes "use descriptors" for every set in the world.
+Columns named as the activity are dropped, and so is anything correlating with it above 0.95 —
+but the leak is rarely a copy. The corrosion files carry the potency as `activity`, again as
+`mwila_pooled_raw`, and again as two laboratory-adjusted variants; excluding the first two still
+left a descriptor baseline at q² = 0.99, because the remainder reconstruct it between them. No
+per-column test can see that, so the outcome is judged as well: a descriptor baseline reaching
+q² ≥ 0.95 on a set of this size is not chemistry but the measurement itself, and the command says
+so, names the nearest columns with their correlations, and refuses to recommend descriptors.
+
+**Searching harder and calling it a better model.** The five routes do not carry the same number
+of hyper-parameters — the field routes search six attenuations and five ridges, the others search
+ridges only — so scoring each at the best point of its own grid tilts the comparison toward
+whichever searched hardest. Every route therefore chooses its hyper-parameters inside each
+training fold and is scored outside it. On ACE this costs the aligned model 0.05 and the topomer
+route 0.07 while leaving counts, descriptors and the invariant kernel where they were, which is
+the size and the shape of the bias it removes.
+
+## Reading the answer
+
+Each comparison is reported with a paired bootstrap interval over the molecules, because on
+twenty to thirty molecules a difference below about 0.1 in q² is not a difference. The last line
+recommends a route, and it should be read as a prompt rather than a verdict: it says which road to
+take and which question the set has not answered, never that a model is good.
+
+One wording deserves care. When the command recommends `invariant` it often means *the frame is
+not worth the trouble* rather than *the invariant kernel predicts better* — on DHFR the aligned
+model is nominally ahead, +0.659 against +0.641, and the recommendation follows the interval
+rather than the point estimate. And `aligned, with the frame checked` means the frame carries
+signal and the molecules really are superimposed, so a frame exists whoever made it; several
+Murcko scaffolds only mean the program could not have built it, not that it is wrong.
+
+## Does the advice work?
+
+A tool that reports five baselines is useful whatever its last line says, but advice that has
+never been followed is only a rule its author liked. `benchmarks/run_diagnose.py --validate`
+measures it the only way that counts: hold out 30 % of a set, run the diagnosis on the remaining
+70 % alone, build the model it recommends, and score that model on the held-out molecules
+against every other route — thirteen sets, three splits each.
+
+The advice named the best of the five routes on **21 of 39 splits**, and averaged over all of
+them the route it chose fell **0.096** in q² short of the best available. Always taking the
+aligned model — the default this command exists to question — names the best route on 12 splits
+and costs 0.201.
+Aggregated per set, which is the honest unit because three splits of one set are not three
+measurements, following the advice costs **0.105 less in q² than always aligning** (95 %
+bootstrap interval −0.259 to +0.019), better on six sets, worse on four, indistinguishable on
+three.
+
+The shape of that distribution matters more than its mean. The advice is a **hedge, not an
+edge**: where it loses it loses a little — 0.02 to 0.17 on AChE, BZR, THR and the thermolysin
+set, all of them well-aligned series where the aligned model was always going to be right — and
+where it wins it wins a lot, 0.44 to 0.70 on the three corrosion sets, where the automatic frame
+is meaningless and the aligned model collapses. The interval crosses zero, so on thirteen sets
+this is not a proven improvement in the average case. What it is, is insurance against the
+failure the chapter opened with, bought at a price of a few hundredths.
+
 # Building a model
 
 ## Choosing the fields
@@ -859,6 +1029,29 @@ angles at the donor and at the acceptor's lone pairs — is **not** represented;
 broadened to 0.6 Å because a sharper shoulder is not representable by the shared basis. And
 alignment by field similarity refuses to run on a probe field rather than silently ignoring it,
 because the gradient of the expansion is not implemented.
+
+## Weighting the fields by solvent exposure
+
+A kernel that integrates over all space weights an atom buried inside a molecule as heavily as
+one on the outside, although a binding partner can only touch the second. That is the claim the
+surface methods are built on, and `cmfqsar/exposure.py` tests it the cheap way: every atomic
+weight multiplied by its atom's relative solvent accessibility, which keeps the kernel in closed
+form and keeps the co-field.
+
+**It does not help, and on the larger sets it mildly hurts.** Across sixteen FEP sets the median
+paired gain is −0.002 in q² and the weighting wins on eight of sixteen — a coin flip — while the
+one large win is a model whose attenuation was pinned to the grid edge. On the eight Sutherland
+sets every variant is worse, and the softened one that looked best on the FEP sets has an
+interval entirely below zero. The effect also shrinks as the sets grow: on DHFR (361) and COX2
+(282) the change is −0.004 and +0.003, and the movers are the two smallest sets. An effect that
+vanishes with more data is noise.
+
+The reason is geometric and settles the general question. Measured by group — a heavy atom and
+its hydrogens counted as one, because atom by atom a methyl carbon is 93 % occluded by its own
+hydrogens and ethanol reads as two-thirds buried — the median group exposure is 0.37 to 0.42 and
+**0 to 3 % of groups are buried** in either family. A ligand of thirty heavy atoms has no
+interior. Surface-based representations are solving a problem that molecules of this size do not
+have.
 
 ## Descriptors that are not fields
 

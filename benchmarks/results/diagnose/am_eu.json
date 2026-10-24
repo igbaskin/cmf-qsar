@@ -1,0 +1,124 @@
+{
+ "n": 46,
+ "activity_sd": 0.42987549708642797,
+ "activity_range": [
+  -0.2218487496,
+  1.5682017241
+ ],
+ "routes": {
+  "aligned": {
+   "route": "aligned",
+   "q2": 0.6656824165430115,
+   "rmse_cv": 0.24855488356114613,
+   "alpha": 1.0,
+   "lam": 0.01,
+   "note": ""
+  },
+  "counts": {
+   "route": "counts",
+   "q2": -0.0925133468417405,
+   "rmse_cv": 0.44932032741078387,
+   "alpha": NaN,
+   "lam": 10.0,
+   "note": ""
+  },
+  "invariant": {
+   "route": "invariant",
+   "q2": 0.42269008409224207,
+   "rmse_cv": 0.3266233279803599,
+   "alpha": 0.1,
+   "lam": 0.01,
+   "note": ""
+  },
+  "topomer": {
+   "route": "topomer",
+   "q2": NaN,
+   "rmse_cv": NaN,
+   "alpha": NaN,
+   "lam": NaN,
+   "note": "the substituents could not be built consistently"
+  },
+  "descriptors": {
+   "route": "descriptors",
+   "q2": 0.1026406555186613,
+   "rmse_cv": 0.40721698661898054,
+   "alpha": NaN,
+   "lam": 10.0,
+   "note": "4 descriptors"
+  }
+ },
+ "findings": [
+  {
+   "code": "spread",
+   "level": "warn",
+   "text": "the activity spans only 1.79 log units (sd 0.43); a good q2 on this range still means little",
+   "numbers": {
+    "sd": 0.42987549708642797
+   }
+  },
+  {
+   "code": "chemotypes",
+   "level": "warn",
+   "text": "27 chemotype(s); the largest holds 5 of 46 molecules -- a series of several scaffolds has no common frame, and an alignment will invent one",
+   "numbers": {
+    "chemotypes": 27,
+    "largest": 5
+   }
+  },
+  {
+   "code": "core",
+   "level": "note",
+   "text": "the common framework (framework of the largest chemotype) has 30 heavy atoms, about 107% of a typical molecule, and 22% of the set can be cut at it",
+   "numbers": {
+    "core_atoms": 30,
+    "cuttable_fraction": 0.21739130434782608
+   }
+  },
+  {
+   "code": "superimposed",
+   "level": "ok",
+   "text": "the 30 shared framework atoms sit 0.1 A apart between molecules, over the best of their matches (10 of 46 carry them)",
+   "numbers": {
+    "core_rmsd": 0.06047709759349679,
+    "coverage": 1.0714285714285714,
+    "matches": 4.0,
+    "extent": 11.915
+   }
+  },
+  {
+   "code": "frame-vs-counts",
+   "level": "ok",
+   "text": "the aligned model is +0.758 in q2 against counts (95% interval +0.565 to +0.928) -- the frame beats counts",
+   "numbers": {
+    "difference": 0.758195763384752,
+    "low": 0.5645085558923761,
+    "high": 0.9278990399970225
+   }
+  },
+  {
+   "code": "frame-vs-invariant",
+   "level": "warn",
+   "text": "the aligned model is +0.243 in q2 against invariant (95% interval -0.010 to +0.541) -- the frame buys nothing over invariant",
+   "numbers": {
+    "difference": 0.24299233245076945,
+    "low": -0.009713583540632521,
+    "high": 0.5407146480862111
+   }
+  },
+  {
+   "code": "decoration",
+   "level": "ok",
+   "text": "the aligned model is +0.563 in q2 against descriptors (95% interval +0.340 to +0.758) -- the geometry earns its place",
+   "numbers": {
+    "difference": 0.5630417610243502,
+    "low": 0.34037293403989666,
+    "high": 0.7582767274915889
+   }
+  }
+ ],
+ "recommended": "aligned, with the frame checked",
+ "why": "the frame carries signal and the molecules are superimposed, so a frame exists whoever made it; the several Murcko scaffolds only mean the program could not have built it, not that it is wrong",
+ "nested": true,
+ "set": "am_eu",
+ "seconds": 1.3416111469268799
+}

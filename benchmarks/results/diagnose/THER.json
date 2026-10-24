@@ -1,0 +1,135 @@
+{
+ "n": 76,
+ "activity_sd": 2.0141662894142436,
+ "activity_range": [
+  0.52,
+  10.17
+ ],
+ "routes": {
+  "aligned": {
+   "route": "aligned",
+   "q2": 0.43721683560135516,
+   "rmse_cv": 1.5110048960116027,
+   "alpha": 1.0,
+   "lam": 0.1,
+   "note": ""
+  },
+  "counts": {
+   "route": "counts",
+   "q2": 0.229319254172059,
+   "rmse_cv": 1.768204850231972,
+   "alpha": NaN,
+   "lam": 0.001,
+   "note": ""
+  },
+  "invariant": {
+   "route": "invariant",
+   "q2": 0.3541818880888924,
+   "rmse_cv": 1.6186406142123844,
+   "alpha": 0.1,
+   "lam": 0.1,
+   "note": ""
+  },
+  "topomer": {
+   "route": "topomer",
+   "q2": 0.2488753175756423,
+   "rmse_cv": 1.6806448142924564,
+   "alpha": 1.5,
+   "lam": 0.1,
+   "note": "63 of 76 molecules can be cut at the framework"
+  },
+  "descriptors": {
+   "route": "descriptors",
+   "q2": 0.23261742869440283,
+   "rmse_cv": 1.7644172241352543,
+   "alpha": NaN,
+   "lam": 10.0,
+   "note": "4 descriptors"
+  },
+  "aligned on the 63 cuttable": {
+   "route": "aligned (same molecules)",
+   "q2": 0.1765328981584342,
+   "rmse_cv": 1.7597178922262184,
+   "alpha": 1.0,
+   "lam": 0.1,
+   "note": ""
+  }
+ },
+ "findings": [
+  {
+   "code": "chemotypes",
+   "level": "warn",
+   "text": "15 chemotype(s); the largest holds 44 of 76 molecules -- a series of several scaffolds has no common frame, and an alignment will invent one",
+   "numbers": {
+    "chemotypes": 15,
+    "largest": 44
+   }
+  },
+  {
+   "code": "core",
+   "level": "ok",
+   "text": "the common framework (framework of the largest chemotype) has 6 heavy atoms, about 24% of a typical molecule, and 83% of the set can be cut at it",
+   "numbers": {
+    "core_atoms": 6,
+    "cuttable_fraction": 0.8289473684210527
+   }
+  },
+  {
+   "code": "superimposed",
+   "level": "note",
+   "text": "the 6 shared framework atoms sit 9.0 A apart between molecules, over the best of their matches (67 of 76 carry them); but that framework is only 24% of a typical molecule and matches it 12 ways on average, so this cannot say whether the set shares a frame -- look at it",
+   "numbers": {
+    "core_rmsd": 8.954894374659013,
+    "coverage": 0.23529411764705882,
+    "matches": 12.0,
+    "extent": 13.235500000000002
+   }
+  },
+  {
+   "code": "frame-vs-counts",
+   "level": "warn",
+   "text": "the aligned model is +0.208 in q2 against counts (95% interval -0.040 to +0.543) -- the frame buys nothing over counts",
+   "numbers": {
+    "difference": 0.20789758142929615,
+    "low": -0.04042147111766333,
+    "high": 0.5434290607930377
+   }
+  },
+  {
+   "code": "frame-vs-invariant",
+   "level": "warn",
+   "text": "the aligned model is +0.083 in q2 against invariant (95% interval -0.122 to +0.347) -- the frame buys nothing over invariant",
+   "numbers": {
+    "difference": 0.08303494751246276,
+    "low": -0.12213318245767914,
+    "high": 0.3465402048046371
+   }
+  },
+  {
+   "code": "frame-vs-topomer",
+   "level": "warn",
+   "text": "the aligned model is -0.072 in q2 against topomer (95% interval -0.466 to +0.211) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
+   "numbers": {
+    "difference": -0.07234241941720809,
+    "low": -0.46564603054611137,
+    "high": 0.21131155575209182,
+    "n": 63
+   }
+  },
+  {
+   "code": "decoration",
+   "level": "ok",
+   "text": "the aligned model is +0.205 in q2 against descriptors (95% interval +0.056 to +0.373) -- the geometry earns its place",
+   "numbers": {
+    "difference": 0.20459940690695233,
+    "low": 0.056143700541303784,
+    "high": 0.373013093812456
+   }
+  }
+ ],
+ "recommended": "aligned, with the frame checked",
+ "why": "the frame carries signal and the molecules are superimposed, so a frame exists whoever made it; the several Murcko scaffolds only mean the program could not have built it, not that it is wrong",
+ "nested": true,
+ "set": "THER",
+ "seconds": 18.75719976425171
+}

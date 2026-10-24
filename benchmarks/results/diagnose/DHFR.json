@@ -1,0 +1,143 @@
+{
+ "n": 361,
+ "activity_sd": 1.3033902974348488,
+ "activity_range": [
+  3.3,
+  9.81
+ ],
+ "routes": {
+  "aligned": {
+   "route": "aligned",
+   "q2": 0.6315401949166308,
+   "rmse_cv": 0.7911695111505125,
+   "alpha": 5.0,
+   "lam": 1.0,
+   "note": ""
+  },
+  "counts": {
+   "route": "counts",
+   "q2": 0.35108649895660704,
+   "rmse_cv": 1.049948237235393,
+   "alpha": NaN,
+   "lam": 0.0055,
+   "note": ""
+  },
+  "invariant": {
+   "route": "invariant",
+   "q2": 0.6414221745556143,
+   "rmse_cv": 0.7804879427570015,
+   "alpha": 0.1,
+   "lam": 0.01,
+   "note": ""
+  },
+  "topomer": {
+   "route": "topomer",
+   "q2": 0.10573498527768732,
+   "rmse_cv": 0.672515815589679,
+   "alpha": 0.1,
+   "lam": 1.0,
+   "note": "42 of 361 molecules can be cut at the framework"
+  },
+  "descriptors": {
+   "route": "descriptors",
+   "q2": 0.1626920939090205,
+   "rmse_cv": 1.1926611693220568,
+   "alpha": NaN,
+   "lam": 0.1,
+   "note": "4 descriptors"
+  },
+  "aligned on the 42 cuttable": {
+   "route": "aligned (same molecules)",
+   "q2": -0.0795333633805233,
+   "rmse_cv": 0.7389029768608673,
+   "alpha": 0.1,
+   "lam": 0.1,
+   "note": ""
+  }
+ },
+ "findings": [
+  {
+   "code": "chemotypes",
+   "level": "warn",
+   "text": "98 chemotype(s); the largest holds 38 of 361 molecules -- a series of several scaffolds has no common frame, and an alignment will invent one",
+   "numbers": {
+    "chemotypes": 98,
+    "largest": 38
+   }
+  },
+  {
+   "code": "core",
+   "level": "note",
+   "text": "the common framework (framework of the largest chemotype) has 18 heavy atoms, about 75% of a typical molecule, and 12% of the set can be cut at it",
+   "numbers": {
+    "core_atoms": 18,
+    "cuttable_fraction": 0.11634349030470914
+   }
+  },
+  {
+   "code": "superimposed",
+   "level": "ok",
+   "text": "the 18 shared framework atoms sit 0.1 A apart between molecules, over the best of their matches (50 of 361 carry them)",
+   "numbers": {
+    "core_rmsd": 0.06663499247559249,
+    "coverage": 0.75,
+    "matches": 2.0,
+    "extent": 10.551
+   }
+  },
+  {
+   "code": "alpha-edge",
+   "level": "warn",
+   "text": "the chosen attenuation 5 is at the top of the grid: the search wanted a value it was not offered, so widen it before believing the model",
+   "numbers": {
+    "alpha": 5.0
+   }
+  },
+  {
+   "code": "frame-vs-counts",
+   "level": "ok",
+   "text": "the aligned model is +0.280 in q2 against counts (95% interval +0.177 to +0.374) -- the frame beats counts",
+   "numbers": {
+    "difference": 0.2804536959600238,
+    "low": 0.17727145002242495,
+    "high": 0.37398667648778694
+   }
+  },
+  {
+   "code": "frame-vs-invariant",
+   "level": "warn",
+   "text": "the aligned model is -0.010 in q2 against invariant (95% interval -0.077 to +0.049) -- the frame buys nothing over invariant",
+   "numbers": {
+    "difference": -0.009881979638983518,
+    "low": -0.0766617285964141,
+    "high": 0.0491755468721784
+   }
+  },
+  {
+   "code": "frame-vs-topomer",
+   "level": "warn",
+   "text": "the aligned model is -0.185 in q2 against topomer (95% interval -0.479 to +0.002) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
+   "numbers": {
+    "difference": -0.18526834865821062,
+    "low": -0.4792258976784427,
+    "high": 0.0017592652963339386,
+    "n": 42
+   }
+  },
+  {
+   "code": "decoration",
+   "level": "ok",
+   "text": "the aligned model is +0.469 in q2 against descriptors (95% interval +0.367 to +0.567) -- the geometry earns its place",
+   "numbers": {
+    "difference": 0.4688481010076103,
+    "low": 0.3673588827485577,
+    "high": 0.5666497205166674
+   }
+  }
+ ],
+ "recommended": "invariant",
+ "why": "the frame buys nothing over invariant, which needs no alignment to curate and cannot be got wrong",
+ "nested": true,
+ "set": "DHFR",
+ "seconds": 47.49287676811218
+}

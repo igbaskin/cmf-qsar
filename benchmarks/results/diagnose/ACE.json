@@ -1,0 +1,135 @@
+{
+ "n": 114,
+ "activity_sd": 2.269287810486048,
+ "activity_range": [
+  2.14,
+  9.94
+ ],
+ "routes": {
+  "aligned": {
+   "route": "aligned",
+   "q2": 0.6046310578803369,
+   "rmse_cv": 1.4268911871667747,
+   "alpha": 1.0,
+   "lam": 1.0,
+   "note": ""
+  },
+  "counts": {
+   "route": "counts",
+   "q2": 0.6603994852655457,
+   "rmse_cv": 1.322433219698969,
+   "alpha": NaN,
+   "lam": 0.001,
+   "note": ""
+  },
+  "invariant": {
+   "route": "invariant",
+   "q2": 0.6769795869944235,
+   "rmse_cv": 1.289747112835549,
+   "alpha": 0.1,
+   "lam": 0.1,
+   "note": ""
+  },
+  "topomer": {
+   "route": "topomer",
+   "q2": 0.4585922772681279,
+   "rmse_cv": 1.5369765097187902,
+   "alpha": 0.1,
+   "lam": 1.0,
+   "note": "50 of 114 molecules can be cut at the framework"
+  },
+  "descriptors": {
+   "route": "descriptors",
+   "q2": 0.6442306215880098,
+   "rmse_cv": 1.3535486274856865,
+   "alpha": NaN,
+   "lam": 0.01,
+   "note": "4 descriptors"
+  },
+  "aligned on the 50 cuttable": {
+   "route": "aligned (same molecules)",
+   "q2": 0.4181908798706485,
+   "rmse_cv": 1.593291610059104,
+   "alpha": 1.0,
+   "lam": 0.1,
+   "note": ""
+  }
+ },
+ "findings": [
+  {
+   "code": "chemotypes",
+   "level": "warn",
+   "text": "47 chemotype(s); the largest holds 19 of 114 molecules -- a series of several scaffolds has no common frame, and an alignment will invent one",
+   "numbers": {
+    "chemotypes": 47,
+    "largest": 19
+   }
+  },
+  {
+   "code": "core",
+   "level": "note",
+   "text": "the common framework (framework of the largest chemotype) has 5 heavy atoms, about 26% of a typical molecule, and 44% of the set can be cut at it",
+   "numbers": {
+    "core_atoms": 5,
+    "cuttable_fraction": 0.43859649122807015
+   }
+  },
+  {
+   "code": "superimposed",
+   "level": "ok",
+   "text": "the 5 shared framework atoms sit 0.1 A apart between molecules, over the best of their matches (59 of 114 carry them)",
+   "numbers": {
+    "core_rmsd": 0.09719790344006629,
+    "coverage": 0.2631578947368421,
+    "matches": 2.0,
+    "extent": 10.008500000000002
+   }
+  },
+  {
+   "code": "frame-vs-counts",
+   "level": "warn",
+   "text": "the aligned model is -0.056 in q2 against counts (95% interval -0.179 to +0.052) -- the frame buys nothing over counts",
+   "numbers": {
+    "difference": -0.05576842738520882,
+    "low": -0.17889359932530632,
+    "high": 0.05191102176700925
+   }
+  },
+  {
+   "code": "frame-vs-invariant",
+   "level": "warn",
+   "text": "the aligned model is -0.072 in q2 against invariant (95% interval -0.202 to +0.020) -- the frame buys nothing over invariant",
+   "numbers": {
+    "difference": -0.07234852911408662,
+    "low": -0.20208785462465503,
+    "high": 0.020276619241742216
+   }
+  },
+  {
+   "code": "frame-vs-topomer",
+   "level": "warn",
+   "text": "the aligned model is -0.040 in q2 against topomer (95% interval -0.260 to +0.155) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
+   "numbers": {
+    "difference": -0.04040139739747939,
+    "low": -0.25992981344908145,
+    "high": 0.15506181926579485,
+    "n": 50
+   }
+  },
+  {
+   "code": "decoration",
+   "level": "warn",
+   "text": "the aligned model is -0.040 in q2 against descriptors (95% interval -0.170 to +0.065) -- descriptors alone do as well, so the geometry is decoration on this set",
+   "numbers": {
+    "difference": -0.039599563707672925,
+    "low": -0.17046630466968907,
+    "high": 0.06503203103552982
+   }
+  }
+ ],
+ "recommended": "descriptors",
+ "why": "descriptors alone match the 3D model, so a field model here is an expensive way to count atoms; use the fields only if the co-field is the point",
+ "nested": true,
+ "set": "ACE",
+ "seconds": 12.441379070281982
+}

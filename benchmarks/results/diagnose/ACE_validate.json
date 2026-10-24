@@ -1,0 +1,49 @@
+{
+ "splits": [
+  {
+   "seed": 0,
+   "advice": "descriptors",
+   "n_train": 80,
+   "n_test": 34,
+   "held_out": {
+    "aligned": 0.6677778660391653,
+    "counts": 0.6026170731601042,
+    "invariant": 0.6424933164244377,
+    "topomer": 0.22075216782000429,
+    "descriptors": 0.7116159331924254
+   },
+   "unusable": []
+  },
+  {
+   "seed": 1,
+   "advice": "invariant",
+   "n_train": 80,
+   "n_test": 34,
+   "held_out": {
+    "aligned": 0.5635160145536995,
+    "counts": 0.6775644986397978,
+    "invariant": 0.5947205165478928,
+    "topomer": 0.3488598413658862,
+    "descriptors": 0.7259838829458787
+   },
+   "unusable": []
+  },
+  {
+   "seed": 2,
+   "advice": "descriptors",
+   "n_train": 80,
+   "n_test": 34,
+   "held_out": {
+    "aligned": 0.5148769320891587,
+    "counts": 0.6309420690555871,
+    "invariant": 0.6282647878592196,
+    "topomer": 0.07009838067854424,
+    "descriptors": 0.6460996436072108
+   },
+   "unusable": []
+  }
+ ],
+ "test_fraction": 0.3,
+ "set": "ACE",
+ "seconds": 32.06443929672241
+}

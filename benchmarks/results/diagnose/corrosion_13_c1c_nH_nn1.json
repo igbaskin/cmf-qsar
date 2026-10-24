@@ -1,0 +1,164 @@
+{
+ "n": 25,
+ "activity_sd": 1.981184857604156,
+ "activity_range": [
+  5.04,
+  13.29
+ ],
+ "routes": {
+  "aligned": {
+   "route": "aligned",
+   "q2": 0.26724624294159616,
+   "rmse_cv": 1.6959147870589768,
+   "alpha": 0.1,
+   "lam": 1.0,
+   "note": ""
+  },
+  "counts": {
+   "route": "counts",
+   "q2": 0.06564835518251277,
+   "rmse_cv": 1.915050263498671,
+   "alpha": NaN,
+   "lam": 0.1,
+   "note": ""
+  },
+  "invariant": {
+   "route": "invariant",
+   "q2": 0.4655926950285201,
+   "rmse_cv": 1.4483088783238316,
+   "alpha": 0.1,
+   "lam": 0.55,
+   "note": ""
+  },
+  "topomer": {
+   "route": "topomer",
+   "q2": NaN,
+   "rmse_cv": NaN,
+   "alpha": NaN,
+   "lam": NaN,
+   "note": "only 6 of 25 molecules can be cut at the framework"
+  },
+  "descriptors": {
+   "route": "descriptors",
+   "q2": 0.9835739697819197,
+   "rmse_cv": 0.25391672543223415,
+   "alpha": NaN,
+   "lam": 0.0055,
+   "note": "10 descriptors; dropped as the activity under another name: mwila_pooled_raw; not usable as a baseline (see the warning)"
+  }
+ },
+ "findings": [
+  {
+   "code": "chemotypes",
+   "level": "warn",
+   "text": "12 chemotype(s); the largest holds 6 of 25 molecules -- a series of several scaffolds has no common frame, and an alignment will invent one",
+   "numbers": {
+    "chemotypes": 12,
+    "largest": 6
+   }
+  },
+  {
+   "code": "core",
+   "level": "note",
+   "text": "the common framework (framework of the largest chemotype) has 34 heavy atoms, about 162% of a typical molecule, and 24% of the set can be cut at it",
+   "numbers": {
+    "core_atoms": 34,
+    "cuttable_fraction": 0.24
+   }
+  },
+  {
+   "code": "superimposed",
+   "level": "warn",
+   "text": "the 34 shared framework atoms sit 11.3 A apart between molecules, over the best of their matches (6 of 25 carry them) -- the molecules are not in a common frame",
+   "numbers": {
+    "core_rmsd": 11.264612934665495,
+    "coverage": 1.619047619047619,
+    "matches": 4.0,
+    "extent": 12.843228730912063
+   }
+  },
+  {
+   "code": "alpha-edge",
+   "level": "warn",
+   "text": "the chosen attenuation 0.1 is at the bottom of the grid: the search wanted a value it was not offered, so widen it before believing the model",
+   "numbers": {
+    "alpha": 0.1
+   }
+  },
+  {
+   "code": "descriptor-leak",
+   "level": "warn",
+   "text": "the descriptor baseline reproduces the activity almost exactly (q2 +0.984); on a set this size that is not chemistry but the measurement itself, reached through the file's own columns -- the nearest are mwila_hcl_adj (r 0.71), mw (r 0.67), calc:mw (r 0.67), mwila_pooled_adj (r 0.66). No descriptor conclusion can be drawn until they are excluded.",
+   "numbers": {
+    "q2": 0.9835739697819197,
+    "nearest": [
+     [
+      "mwila_hcl_adj",
+      0.7142197907121235
+     ],
+     [
+      "mw",
+      0.6725320694166035
+     ],
+     [
+      "calc:mw",
+      0.6725175642128464
+     ],
+     [
+      "mwila_pooled_adj",
+      0.658945413354457
+     ],
+     [
+      "calc:tpsa",
+      0.6553195749884161
+     ]
+    ]
+   }
+  },
+  {
+   "code": "activity-as-descriptor",
+   "level": "warn",
+   "text": "dropped from the descriptor baseline because they reproduce the activity rather than describe the molecule: mwila_pooled_raw -- if one of these is a real descriptor, name it and run again",
+   "numbers": {
+    "dropped": [
+     "mwila_pooled_raw"
+    ]
+   }
+  },
+  {
+   "code": "frame-vs-counts",
+   "level": "warn",
+   "text": "the aligned model is +0.202 in q2 against counts (95% interval -0.400 to +1.096) -- the frame buys nothing over counts",
+   "numbers": {
+    "difference": 0.20159788775908338,
+    "low": -0.4000396797172698,
+    "high": 1.0961844060201102
+   }
+  },
+  {
+   "code": "frame-vs-invariant",
+   "level": "warn",
+   "text": "the aligned model is -0.198 in q2 against invariant (95% interval -0.611 to +0.106) -- the frame buys nothing over invariant",
+   "numbers": {
+    "difference": -0.19834645208692392,
+    "low": -0.6109204344587159,
+    "high": 0.10582581993912091
+   }
+  },
+  {
+   "code": "decoration",
+   "level": "warn",
+   "text": "the aligned model is -0.716 in q2 against descriptors (95% interval -1.260 to -0.451) -- descriptors alone do as well, so the geometry is decoration on this set",
+   "numbers": {
+    "difference": -0.7163277268403235,
+    "low": -1.2598661601532701,
+    "high": -0.45104147194600336
+   }
+  }
+ ],
+ "recommended": "invariant",
+ "why": "the frame buys nothing over invariant, which needs no alignment to curate and cannot be got wrong",
+ "nested": true,
+ "set": "corrosion/13_c1c_nH_nn1",
+ "seconds": 1.1590139865875244
+}
