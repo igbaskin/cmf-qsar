@@ -1655,12 +1655,31 @@ periodic images out to a cutoff $r_{\max}$, per atom of the cell, with the unifo
 each field pair removed and the cutoff tapered:
 
 $$
-\Phi_{fg}(d) = \frac{1}{N}\Big[\sum_{l \in \text{cell}} \sum_{m:\, r_{lm} < r_{\max}} w_{lf} w_{mg}\,
-e^{-(r_{lm}-d)^2/2\sigma^2}\, \omega(r_{lm}) \;-\; \frac{S_f S_g}{V} \int_0^{r_{\max}} 4\pi r^2 e^{-(r-d)^2/2\sigma^2}\,\omega(r)\,dr\Big]
+\Phi_{fg}(d) = \frac{1}{N}\left[\, P_{fg}(d) \;-\; \frac{S_f S_g}{V}\, B(d) \,\right]
 $$
 
-with $S_f$ the sum of the weights of field $f$ over the cell, $V$ its volume and $\omega$ a
-half-cosine taper over the last `--taper` ångström. It is invariant to the choice of cell, origin
+The first term is the tapered pair histogram of the two fields, over every atom $l$ of the cell
+and every neighbour $m$ inside the cutoff, periodic images included:
+
+$$
+P_{fg}(d) = \sum_{l \,\in\, \mathrm{cell}} \;\, \sum_{m\,:\; r_{lm} < r_{\max}} w_{lf} w_{mg}\, \omega(r_{lm})\, \exp\!\left(-\frac{(r_{lm} - d)^2}{2\sigma^2}\right)
+$$
+
+The second is what that histogram would be if the same total weight of each field were spread
+uniformly through the cell, which is the part of $P_{fg}$ that reports only how dense the crystal
+is:
+
+$$
+B(d) = \int_{0}^{r_{\max}} 4\pi r^2\, \omega(r)\, \exp\!\left(-\frac{(r - d)^2}{2\sigma^2}\right) \mathrm{d}r
+$$
+
+Here $N$ is the number of atoms in the cell, $r_{lm}$ the distance from atom $l$ to image $m$,
+$S_f = \sum_l w_{lf}$ the total weight of field $f$ over the cell, $V$ its volume, $\sigma$ the
+width of the distance smearing (`--sigma`) and $\omega$ a half-cosine taper over the last
+`--taper` ångström. Both sums run over ordered pairs, so a pair of two different field types is
+counted both ways round, as the molecular descriptor counts it, and its background with it; the
+$l = m$ terms are kept, which makes the $d = 0$ channel the composition of the cell. It is
+invariant to the choice of cell, origin
 and orientation, so a supercell is the same material. Averaged over orientations it is the sine
 transform of the product of the typed structure factors, which makes the pair products of the
 element indicator fields the partial structure factors a diffraction experiment measures.
