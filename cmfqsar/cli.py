@@ -575,6 +575,29 @@ def cmd_build(args):
             print(f"  constant over the training set, so inert: "
                   f"{', '.join(model.desc_scaler_.constant)}")
     _report_validation(args, model, ds, mf, tr, te, target)
+    conf = None
+    if args.conformal is not None:
+        from cmfqsar.conformal import coverage as _coverage
+        try:
+            conf = model.calibrate_conformal(level=float(args.conformal),
+                                             normalise=bool(args.conformal_normalise))
+        except ValueError as exc:
+            raise SystemExit(f"--conformal: {exc}")
+        print(conf.describe())
+        if te and "y_test_pred" in model.stats.extra:
+            # the test set was never part of the calibration, so this is the honest check
+            yp_te = np.asarray(model.stats.extra["y_test_pred"], float)
+            d_te = None
+            if conf.difficulty is not None:
+                from cmfqsar.conformal import difficulty_from_kernel
+                K_train = model._linear_train_kernel()
+                table_te = AtomTable.from_molecules([mf[i] for i in te])
+                d_te = difficulty_from_kernel(model.test_kernel(table_te),
+                                              model.joint_self(table_te), K_train)
+            lo, hi = conf.interval(yp_te, d_te)
+            got = _coverage(ds.activity[te], lo, hi)
+            print(f"  on the {got['n']} test molecules it covered {got['coverage']:.0%}, "
+                  f"mean width {got['mean_width']:.3f}")
     if args.save:
         save_model(args.save, model, extra={"dataset": args.dataset, "activity": ds.activity_prop,
                                             "train_names": [ds.names[i] for i in tr]})
@@ -593,8 +616,16 @@ def cmd_build(args):
             # carry the domain into the file, so that an extrapolation stays marked as one
             by_name = dict(zip(dom["names"], dom["similarity"]))
             ad = np.array([by_name.get(nm, np.nan) for nm in ds.names], dtype=float)
+        bounds = None
+        if conf is not None and conf.usable:
+            # one width everywhere unless the rule was normalised, in which case the molecules
+            # outside the training set get a wider one; nan where there is no prediction
+            lo, hi = conf.interval(np.nan_to_num(yp, nan=0.0))
+            lo = np.where(np.isfinite(yp), lo, np.nan)
+            hi = np.where(np.isfinite(yp), hi, np.nan)
+            bounds = (lo, hi)
         write_predictions_csv(args.predictions, ds.names, ds.activity, yp, ds.subset, y_cv=ycv,
-                              domain=ad,
+                              domain=ad, interval=bounds,
                               domain_threshold=dom["threshold"] if dom else None)
         print(f"Predictions written to {args.predictions}")
     if args.json:
@@ -855,8 +886,24 @@ def cmd_predict(args):
     if np.isfinite(ds.activity).sum() >= 2:
         model.evaluate_test(table, ds.activity)
         print(model.stats.summary())
+    bounds = None
+    conf = getattr(model, "conformal_", None)
+    if conf is not None and args.conformal is not None:
+        from cmfqsar.conformal import Conformal
+        conf = Conformal(level=float(args.conformal), residuals=conf.residuals, kind=conf.kind,
+                         difficulty=conf.difficulty, beta=conf.beta)
+    if conf is not None:
+        if not conf.usable:
+            print(f"Conformal: {conf.describe()}")
+        else:
+            _yp, lo, hi = model.predict_interval(table)
+            bounds = (lo, hi)
+            print(f"Conformal: {conf.describe()}")
+            for n, v, a, b in zip(ds.names, yp, lo, hi):
+                print(f"{n:30s} {v:8.3f}   [{a:7.3f}, {b:7.3f}]")
     if args.out:
-        write_predictions_csv(args.out, ds.names, ds.activity, yp, ["test"] * len(ds), var=var)
+        write_predictions_csv(args.out, ds.names, ds.activity, yp, ["test"] * len(ds), var=var,
+                              interval=bounds)
         print(f"Predictions written to {args.out}")
 
 
@@ -1754,6 +1801,12 @@ def main(argv=None):
     b.add_argument("--bootstrap-refit", type=int, default=0, metavar="N",
                    help="Cramer's bootstrap as well: N resamples of the training set, each "
                         "refitted and scored on the molecules left out of the bag")
+    b.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
+                   help="calibrate a prediction interval at this level (0.9) on the errors of "
+                        "the cross-validation, and store it with the model")
+    b.add_argument("--conformal-normalise", action="store_true",
+                   help="with --conformal: widen the interval for molecules far from the "
+                        "training set, instead of one width everywhere")
     b.add_argument("--domain", action="store_true",
                    help="report the applicability domain of the molecules outside the training "
                         "set: their similarity to it, against a threshold taken from the "
@@ -1885,6 +1938,9 @@ def main(argv=None):
     q.add_argument("--allow-mismatch", action="store_true",
                    help="predict even when the molecules were not prepared the way the model's "
                         "training set was (the check that otherwise refuses is printed either way)")
+    q.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
+                   help="report the model's calibrated interval at this level instead of the "
+                        "one it was calibrated at; the model must carry a calibration")
     q.add_argument("--rank-bound", type=float, default=0.0, metavar="BETA",
                    help="rank the molecules by a confidence bound, prediction minus BETA "
                         "posterior standard deviations, instead of by the prediction itself. A "

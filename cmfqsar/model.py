@@ -1088,6 +1088,64 @@ class CMFModel:
             progress("Done", 1.0)
         return self
 
+    # --------------------------------------------------------- conformal intervals
+    def _linear_train_kernel(self) -> np.ndarray:
+        """The joint training kernel before any nonlinear layer, recomputed if it was not kept."""
+        if self.uses_fields:
+            if self.K_fields_train is None:
+                self.K_fields_train = self._field_kernels(self.train, self.train,
+                                                          self.self_diag, self.self_diag)
+            return self.joint_kernel(self.K_fields_train, self.train.descriptors)
+        return self.training_kernel(self.train)
+
+    def calibrate_conformal(self, level: float = 0.9, normalise: bool = False,
+                            beta: float = 1.0):
+        """Calibrate a prediction interval on the errors of the cross-validation already run.
+
+        Nothing is recomputed: :meth:`fit` leaves the out-of-fold predictions on the statistics,
+        and their absolute errors are exactly the nonconformity scores conformal prediction asks
+        for.  The guarantee that comes with them is approximate rather than exact, because those
+        errors come from models fitted on a fraction of the training set while the predictions
+        will come from the model fitted on all of it; `benchmarks/run_conformal.py` measures how
+        much that costs, and on the Sutherland sets the answer is nothing measurable.
+
+        With `normalise` the errors are divided by the distance of their molecule from the rest
+        of the training set, so that the interval widens where the model is extrapolating.  It
+        is off by default because, measured, it buys no sharpness on these sets.
+        """
+        from .conformal import calibrate, difficulty_from_kernel
+
+        if self.task != "regression":
+            raise ValueError("conformal intervals are implemented for regression; a classifier "
+                             "needs prediction sets, which this program does not build")
+        ycv = None if self.stats is None else self.stats.extra.get("y_cv")
+        if ycv is None:
+            raise ValueError("no cross-validated predictions to calibrate on; fit the model with "
+                             "cv_folds >= 2")
+        difficulty = None
+        if normalise:
+            K = self._linear_train_kernel()
+            difficulty = difficulty_from_kernel(K, np.diag(K), K)
+        self.conformal_ = calibrate(self.y, ycv, level=float(level), difficulty=difficulty,
+                                    beta=float(beta), kind="cv")
+        return self.conformal_
+
+    def predict_interval(self, test: AtomTable, progress=None, cancel=None):
+        """(prediction, lower, upper) for new molecules, using the stored calibration."""
+        from .conformal import difficulty_from_kernel
+
+        c = getattr(self, "conformal_", None)
+        if c is None:
+            raise ValueError("the model carries no calibration; call calibrate_conformal first")
+        yp = self.predict(test, progress=progress, cancel=cancel)
+        d = None
+        if c.difficulty is not None:
+            K_train = self._linear_train_kernel()
+            K_xt = self.test_kernel(test)
+            d = difficulty_from_kernel(K_xt, self.joint_self(test), K_train)
+        lo, hi = c.interval(yp, d)
+        return yp, lo, hi
+
     # ------------------------------------------------------------- prediction
     def test_kernels(self, test: AtomTable, progress=None, cancel=None) -> np.ndarray:
         dQ = self._self_kernels(test) if self.normalize else None
@@ -1413,6 +1471,8 @@ class CMFModel:
             "desc_scaler": self.desc_scaler_,
             "desc_train": self.desc_train_,
             "desc_scale": self.desc_scale_,
+            # the calibrated interval: a handful of numbers, and useless to recompute later
+            "conformal": getattr(self, "conformal_", None),
         }
 
     @classmethod
@@ -1447,6 +1507,7 @@ class CMFModel:
         m.base_diag_ = st.get("base_diag")
         m.gamma_scale_ = st.get("gamma_scale")
         m.train, m.y, m.coef, m.bias = st["train"], st["y"], st["coef"], st["bias"]
+        m.conformal_ = st.get("conformal")
         m.self_diag, m.scale, m.stats = st["self_diag"], st["scale"], st["stats"]
         m.provenance = dict(st.get("provenance") or {})
         m.file_version = version

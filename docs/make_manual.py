@@ -196,6 +196,7 @@ SYMBOL = {
     "sum": "Σ", "int": "∫", "infty": "∞", "to": "→", "approx": "≈", "neq": "≠", "le": "≤",
     "ge": "≥", "times": "×", "cdot": "·", "pm": "±", "ldots": "…", "langle": "⟨",
     "rangle": "⟩", "partial": "∂", "nabla": "∇", "in": "∈", "propto": "∝", "sqrt": "√",
+    "lceil": "⌈", "rceil": "⌉", "lfloor": "⌊", "rfloor": "⌋",
 }
 #: accents, as the combining marks that follow the letter they sit on
 MATH_ACCENT = {"hat": "̂", "bar": "̄", "tilde": "̃", "dot": "̇",

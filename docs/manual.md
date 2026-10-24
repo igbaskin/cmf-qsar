@@ -1296,6 +1296,71 @@ the fit rather than of the statistic, and it is the more pessimistic of the two.
 never recomputed — a resample is an index into the matrix — so a hundred refits cost about as much
 as one cross-validation.
 
+## How certain is *one* prediction? Conformal intervals
+
+The bootstrap says how firm a figure of merit is. It says nothing about the molecule in front of
+you, and neither does anything else the program has offered so far: the Gaussian-process posterior
+spread is the spread of a model that believes its own kernel, which for molecular fields it should
+not.
+
+Conformal prediction supplies the missing guarantee and asks almost nothing in return. Take the
+absolute errors the model makes on molecules it did not fit, let $q$ be their $(1-\alpha)$ quantile
+— the $\lceil (n+1)(1-\alpha) \rceil$-th smallest, the $+1$ being what makes the result
+finite-sample rather than asymptotic — and report $\hat{y} \pm q$. Then, as long as the
+calibration molecules and the new one are exchangeable, the truth lies inside at least
+$(1-\alpha)$ of the time, **whatever the learner, whatever the kernel, however wrong the model
+is**. A badly specified model does not lose its coverage; it pays in width, which is the honest
+currency.
+
+```bash
+python cmf_cli.py build data.sdf --charges file --conformal 0.9 --save model.cmf
+python cmf_cli.py predict model.cmf new.sdf --out predictions.csv
+```
+
+`--conformal` calibrates on the errors of the cross-validation the program is running anyway, so
+it costs nothing and adds no step, prints the half width, and — when there is a test set — the
+coverage it actually achieved on molecules that were never part of the calibration. The rule is
+stored in the `.cmf` file, so `predict` prints an interval beside every number and writes `lower`
+and `upper` columns into the CSV. `--conformal LEVEL` on `predict` re-reads the stored errors at a
+different level; the errors are kept, not just the width.
+
+### What it costs, measured
+
+Calibrating on out-of-fold errors and then predicting with the model refitted on everything is
+not exactly exchangeable — the errors come from models fitted on nine tenths of the training set
+and the predictions from a model fitted on all of it — so the guarantee becomes an approximation,
+and the size of the gap is an empirical question. `benchmarks/run_conformal.py` answers it on the
+eight Sutherland sets, ten random 70/30 splits each, with the width in units of the activity
+(whose standard deviation averages 1.36):
+
+| nominal | out-of-fold (`cv`) | held-out third (`split`) | GP posterior |
+|---|---:|---:|---:|
+| 80 % | **80.3 %**, width 2.28 | 80.1 %, width 2.59 | 77.7 %, width 3.00 |
+| 90 % | **89.9 %**, width 3.10 | 90.1 %, width 3.61 | 83.1 %, width 3.85 |
+| 95 % | **95.1 %**, width 4.09 | 94.9 %, width 4.04 | 86.9 %, width 4.59 |
+
+The cheap variant holds its level to a few tenths of a per cent at every level, and is **narrower**
+than the exact split version, which pays for its held-out third by fitting on less data. The
+Gaussian-process interval, which is what one would otherwise reach for, misses its level at all
+three — and misses it unpredictably: across the eight sets its 90 % coverage ranges from 63 % to
+99 %, while every conformal rule stays between 89 and 96 %.
+
+**Normalised conformal** — dividing each error by the distance of its molecule from the training
+set, so that the interval widens where the model extrapolates — is available as
+`--conformal-normalise`, and on these sets it buys nothing: it over-covers (93.4 % at a nominal
+90 %) and is a third wider. Softening it until it stops over-covering turns it back into the plain
+rule. The error on these series simply does not grow with distance from the training set strongly
+enough for the normalisation to pay, which is itself worth knowing about one's data.
+
+Two limits worth stating. The guarantee is **marginal**, not conditional: 90 % of molecules are
+covered, not 90 % of *every kind* of molecule, so a subclass the model handles badly can be
+covered less often than that while the overall figure holds. And a level needs molecules to support
+it — 19 calibration errors for 95 %, 9 for 90 % — below which the program says the level is not
+reachable rather than returning its widest error and calling it an interval.
+
+Regression only: conformal classification produces prediction *sets* rather than intervals, and is
+not implemented.
+
 ## Where the validation appears
 
 The three checks of *Building a model* — y-randomisation, the bootstrap intervals and the

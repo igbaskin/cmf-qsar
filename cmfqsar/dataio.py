@@ -578,6 +578,7 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
                           var: Optional[Sequence[float]] = None, value_header: str = "predicted",
                           domain: Optional[Sequence[float]] = None,
                           domain_threshold: Optional[float] = None,
+                          interval: Optional[Sequence[Sequence[float]]] = None,
                           truth_header: str = "experimental") -> None:
     with open(path, "w", newline="") as fh:
         w = csv.writer(fh)
@@ -590,6 +591,8 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
             # the similarity itself and the verdict, so that an extrapolation stays marked
             # after the predictions leave the program
             header += ["ad_similarity", "in_domain"]
+        if interval is not None:
+            header += ["lower", "upper"]
         w.writerow(header)
         for i, nm in enumerate(names):
             row = [nm, subset[i], "" if not np.isfinite(y[i]) else f"{y[i]:.4f}",
@@ -603,6 +606,10 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
                 row.append("" if d is None or not np.isfinite(d) else f"{d:.4f}")
                 row.append("" if d is None or not np.isfinite(d) or domain_threshold is None
                            else ("yes" if d >= domain_threshold else "no"))
+            if interval is not None:
+                for bound in interval:
+                    v = bound[i]
+                    row.append("" if v is None or not np.isfinite(v) else f"{v:.4f}")
             w.writerow(row)
 
 
