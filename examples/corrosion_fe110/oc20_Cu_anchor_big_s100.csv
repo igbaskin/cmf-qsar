@@ -1,0 +1,3 @@
+folds,model,n,q2,q2_sd,rmse_eV
+random,"surface kernel (sigma 1, z 0.5-5 step 1.5)",192,0.763,0.021,0.493
+leave-adsorbate-out,"surface kernel (sigma 1, z 0.5-5 step 1.5)",192,0.527,0.026,0.697

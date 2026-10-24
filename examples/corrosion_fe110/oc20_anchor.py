@@ -125,8 +125,15 @@ def main(argv=None):
     ap.add_argument("--outer", type=int, default=5)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max", type=int, default=0)
+    ap.add_argument("--min-atoms", type=int, default=0, help="keep adsorbates with at least this many atoms")
+    ap.add_argument("--tag", default="", help="suffix of the output table")
+    ap.add_argument("--surf-sigma", type=float, default=0.5, help="surface kernel: in-plane width and step, A")
+    ap.add_argument("--surf-z", type=float, nargs=3, default=(0.5, 4.5, 0.5), metavar=("ZMIN", "ZMAX", "ZSTEP"))
+    ap.add_argument("--only-surface", action="store_true", help="run the surface kernel rows only")
     a = ap.parse_args(argv)
     systems = load(a.npz)
+    if a.min_atoms:
+        systems = [s for s in systems if len(s["numbers"]) >= a.min_atoms]
     if a.max:
         systems = systems[:a.max]
     y = np.array([s["y"] for s in systems])
@@ -152,19 +159,22 @@ def main(argv=None):
             q2, sd, rm = fn()
             rows.append({"folds": scheme, "model": label, "n": len(y), "q2": round(q2, 3), "q2_sd": round(sd, 3), "rmse_eV": round(rm, 3)})
             print(f"[{scheme:19s}] {label:46s} q2 = {q2:6.3f} +- {sd:.3f}  rmse {rm:.3f} eV  {time.time() - t0:.0f} s", flush=True)
-        run("element counts (ridge)", lambda: ridge_cv(counts, y, folds_fn, a.repeats, a.seed))
-        if scheme == "random":
-            run("adsorbate identity (one-hot ridge)", lambda: ridge_cv(onehot, y, folds_fn, a.repeats, a.seed))
-        run("overlap fields, poses as written", lambda: nested_kernel(
-            table, y, CMFModel(fieldset=fs, method="krr", fit_bias=True), ALPHAS, folds_fn, a.repeats, a.seed))
-        run("3D autocorrelation (height thrown away)", lambda: nested_kernel(
-            table, y, CMFModel(fieldset=fs, method="krr", fit_bias=True, kernel_source="autocorrelation"), [1.0], folds_fn, a.repeats, a.seed))
+        if not a.only_surface:
+            run("element counts (ridge)", lambda: ridge_cv(counts, y, folds_fn, a.repeats, a.seed))
+            if scheme == "random":
+                run("adsorbate identity (one-hot ridge)", lambda: ridge_cv(onehot, y, folds_fn, a.repeats, a.seed))
+            run("overlap fields, poses as written", lambda: nested_kernel(
+                table, y, CMFModel(fieldset=fs, method="krr", fit_bias=True), ALPHAS, folds_fn, a.repeats, a.seed))
+            run("3D autocorrelation (height thrown away)", lambda: nested_kernel(
+                table, y, CMFModel(fieldset=fs, method="krr", fit_bias=True, kernel_source="autocorrelation"), [1.0], folds_fn, a.repeats, a.seed))
+        z0, z1, dz = a.surf_z
         surf = CMFModel(fieldset=fs, method="krr", fit_bias=True, kernel_source="surface",
-                        surf_z_min=0.5, surf_z_max=4.5, surf_z_step=0.5, ac_sigma=0.5, ac_d_max=6.0)
-        run("surface kernel (z 0.5-4.5 step 0.5, rho to 6 A)", lambda: nested_kernel(table, y, surf, [1.0], folds_fn, a.repeats, a.seed))
-        if scheme == "random":
+                        surf_z_min=z0, surf_z_max=z1, surf_z_step=dz, ac_sigma=a.surf_sigma, ac_d_max=6.0)
+        label = f"surface kernel (sigma {a.surf_sigma:g}, z {z0:g}-{z1:g} step {dz:g})"
+        run(label, lambda: nested_kernel(table, y, surf, [1.0], folds_fn, a.repeats, a.seed))
+        if scheme == "random" and not a.only_surface:
             run("surface kernel, poses shuffled in the plane", lambda: nested_kernel(table_sh, y, surf, [1.0], folds_fn, a.repeats, a.seed))
-    out = os.path.splitext(a.npz)[0] + "_anchor.csv"
+    out = os.path.splitext(a.npz)[0] + "_anchor" + (f"_{a.tag}" if a.tag else "") + ".csv"
     with open(out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
         w.writeheader(); w.writerows(rows)

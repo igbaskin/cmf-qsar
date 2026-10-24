@@ -579,6 +579,55 @@ the adsorbed geometry); for the pooled potency dN at 0.40; for Hu 2011 dN at 0.9
 - **Pooled potency: unchanged.**  The quantum indices alone predict nothing pooled in any form;
   with the RDKit descriptors the forest stays at 0.37-0.40, the size-and-lipophilicity trend.
 
+## A DFT anchor from OC20 (2026-10-24)
+
+To see whether the surface kernel learns a DFT quantity and not a quirk of UMA, the OC20
+IS2RE data (8.1 GB tarball from dl.fbaipublicfiles.com, kept in WSL under ~/data/oc20) were
+read for every system on a pure-metal surface: `oc20_extract.py` walks the train and
+validation LMDBs (old-format PyG records) and writes the DFT-relaxed adsorbate atoms in the
+surface frame with OC20's relaxed adsorption energy (`oc20_Fe.npz`: 288 systems, 64
+adsorbates, 12 facets, sd 2.5 eV; `oc20_Cu.npz`: 591 systems, 72 adsorbates, sd 1.8 eV).
+`oc20_anchor.py` describes each adsorbate by indicator fields of C, H, N, O plus a steric
+field and runs the same models under random 5-fold cross-validation (3 repeats) and under
+leave-adsorbate-out folds; tables `oc20_*_anchor*.csv`.
+
+Copper, adsorbates of six or more atoms (192 systems, 27 adsorbates):
+
+| model | random folds q2 | leave-adsorbate-out q2 |
+|---|---|---|
+| adsorbate identity (one-hot) | 0.92 | (undefined) |
+| element counts (ridge) | 0.67 | 0.48 |
+| overlap fields, poses as written | 0.71 | 0.60 |
+| 3D autocorrelation (height thrown away) | 0.82 | 0.54 |
+| surface kernel, sigma 0.5, z step 0.5 (the first setting) | 0.56 | 0.42 |
+| surface kernel, sigma 0.75, z step 1.0 | 0.70 | 0.53 |
+| surface kernel, sigma 1.0, z step 1.5 | 0.76 | 0.53 |
+
+All 591 copper systems: identity 0.90, counts 0.81, overlap 0.80, 3D autocorrelation 0.88,
+surface kernel 0.76; leave-adsorbate-out: counts 0.78, overlap 0.76, 3D autocorrelation 0.40,
+surface kernel 0.65.  Iron (288 systems, energies from -9.9 to +4.9 eV): every model between
+0.13 and 0.25 under random folds and at or below 0.2 with adsorbates held out; the set is
+small, spans twelve facets and the magnetic iron energies of OC20 are noisy.
+
+- **The kernel learns DFT energies at the level of the other representations, not above
+  it.**  On copper the surface kernel reaches 0.76 with a coarse grid, level with the overlap
+  model and the element counts, below the 3D autocorrelation (0.82-0.88) and far below the
+  adsorbate's identity (0.90-0.92).  Its invariance holds (identical numbers on shuffled
+  poses) and its DFT target is real, which is what the anchor was for; but OC20's fragments
+  are one to twelve atoms whose energy is set by what they are, not how they lie, so there
+  is little pose variance for a pose-sensitive kernel to win on, and the height resolution
+  costs it against the plain distance profile.
+- **The grid matters on small fragments** (0.56 to 0.76 between the finest and the coarsest
+  setting) where it did not on the benzimidazoles (0.65-0.66): with few atoms the fine
+  channels are mostly empty.
+- **So the advantage measured on the benzimidazole node (0.66 against 0.52) is specific to
+  molecules of that size and family**, where the composition hardly varies and the pose over
+  the surface does.  That is the claim a paper can make, with this table as its honest
+  boundary; the claim that the surface kernel is generally the better representation of an
+  adsorbate cannot be made.
+- The iron set is too poor for any model to anchor anything; a VASP anchor on our own
+  structures remains the way to tie the benzimidazole numbers to DFT.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,

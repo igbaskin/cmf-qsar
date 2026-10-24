@@ -1,0 +1,11 @@
+folds,model,n,q2,q2_sd,rmse_eV
+random,element counts (ridge),288,0.252,0.015,2.136
+random,adsorbate identity (one-hot ridge),288,0.201,0.035,2.207
+random,"overlap fields, poses as written",288,0.208,0.013,2.197
+random,3D autocorrelation (height thrown away),288,0.216,0.023,2.187
+random,"surface kernel (z 0.5-4.5 step 0.5, rho to 6 A)",288,0.134,0.013,2.298
+random,"surface kernel, poses shuffled in the plane",288,0.134,0.013,2.298
+leave-adsorbate-out,element counts (ridge),288,0.234,0.01,2.162
+leave-adsorbate-out,"overlap fields, poses as written",288,0.182,0.023,2.234
+leave-adsorbate-out,3D autocorrelation (height thrown away),288,-0.02,0.228,2.48
+leave-adsorbate-out,"surface kernel (z 0.5-4.5 step 0.5, rho to 6 A)",288,0.036,0.034,2.425
