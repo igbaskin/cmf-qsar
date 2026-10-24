@@ -53,6 +53,60 @@ def _floats(s):
     return [float(x) for x in s.split(",") if x.strip()]
 
 
+def _block_weights(text):
+    """--block-weights: None, 'balanced', 'align', 'alignf', or 'KIND=W,KIND=W' with a kind a
+    group name ('physchem', 'indicator', or a group of --block-groups) or two joined by '*'."""
+    if text is None or not str(text).strip():
+        return None
+    text = str(text).strip()
+    if text in ("balanced", "align", "alignf"):
+        return text
+    out = {}
+    for item in text.split(","):
+        if not item.strip():
+            continue
+        if "=" not in item:
+            raise SystemExit(f"--block-weights: expected KIND=W, got {item!r}")
+        k, v = item.split("=", 1)
+        out[k.strip()] = float(v)
+    return out
+
+
+def _block_groups(text, fieldset):
+    """--block-groups 'GROUP=field,field;GROUP=cif:*': field name -> group, patterns allowed;
+    fields not named keep the default grouping (indicator fields against the rest)."""
+    if text is None or not str(text).strip():
+        return None
+    import fnmatch
+    names = [sp.name for sp in fieldset.specs]
+    out = {}
+    for part in str(text).split(";"):
+        if not part.strip():
+            continue
+        if "=" not in part:
+            raise SystemExit(f"--block-groups: expected GROUP=field,field, got {part!r}")
+        group, pats = part.split("=", 1)
+        for pat in pats.split(","):
+            pat = pat.strip()
+            hits = [n for n in names if fnmatch.fnmatchcase(n, pat)]
+            if not hits:
+                raise SystemExit(f"--block-groups: no field matches {pat!r} (fields: "
+                                 f"{', '.join(names)})")
+            for n in hits:
+                out[n] = group.strip()
+    return out
+
+
+def _print_block_weights(model):
+    rows = model.block_weight_report()
+    if not rows:
+        return
+    print("Block weights (mixing coefficients of the channel blocks, by kind of block):")
+    for r in rows:
+        print(f"  {r['kind']:28s} {r['n_blocks']:5d} blocks  weight {r['mean']:.3f} "
+              f"[{r['min']:.3f}, {r['max']:.3f}]  share of the kernel {r['share']:.2f}")
+
+
 def _load_dataset(args):
     ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file,
                       ensemble_by=(args.ensemble_by or None))
@@ -322,7 +376,14 @@ def cmd_build(args):
                      ac_chirality=args.ac_chirality,
                      ac_chirality_shells=args.ac_chirality_shells,
                      surf_z_min=args.surface_z[0], surf_z_max=args.surface_z[1],
-                     surf_z_step=args.surface_z[2])
+                     surf_z_step=args.surface_z[2],
+                     ac_block_weights=_block_weights(args.block_weights),
+                     ac_block_groups=_block_groups(args.block_groups, fs),
+                     ac_block_rho=args.block_rho)
+    if model.ac_block_weights is not None and model.uses_fields:
+        raise SystemExit("--block-weights belongs to the invariant kernels (--kernel "
+                         "autocorrelation or surface); the overlap kernel mixes its fields with "
+                         "--mkl or --optimize-h")
     if args.kernel == "surface":
         print(f"Kernel: surface autocorrelation, in-plane distances up to {args.ac_dmax:g} A in "
               f"steps of {args.ac_sigma:g} A, heights {args.surface_z[0]:g}-{args.surface_z[1]:g} A "
@@ -498,6 +559,7 @@ def cmd_build(args):
         if args.repeats > 1:
             model.stats.q2_ex_aggr, model.stats.rmse_ex_aggr = ncv.q2_ex_aggr, ncv.rmse_ex_aggr
     print(model.stats.summary())
+    _print_block_weights(model)
     if model.desc_train_ is not None:
         # how much of the model rests on the descriptors rather than on the geometry: the mean
         # absolute contribution of each, over the training molecules
@@ -641,7 +703,10 @@ def cmd_build_crystals(args):
         print(f"  electrostatic weights from: {', '.join(sources)}")
     model = CMFModel(fieldset=fs, method=args.method, normalize=True, kernel_source="periodic",
                      ac_sigma=args.sigma, ac_d_max=args.cutoff, pbc_taper=args.taper,
-                     pbc_background=not args.no_background, kernel_layer=args.kernel_layer)
+                     pbc_background=not args.no_background, kernel_layer=args.kernel_layer,
+                     ac_block_weights=_block_weights(args.block_weights),
+                     ac_block_groups=_block_groups(args.block_groups, fs),
+                     ac_block_rho=args.block_rho)
     taper = "no taper" if args.taper <= 0 else f"{args.taper:g} A taper"
     print(f"Kernel: periodic field autocorrelation, neighbours to {args.cutoff:g} A, channels every "
           f"{args.sigma:g} A, {taper}, background {'kept' if args.no_background else 'removed'}; "
@@ -659,6 +724,7 @@ def cmd_build_crystals(args):
     print(f"Best: {res.best_params}, RMSEcv = {res.best_rmse:.4g}, q2 = {res.best_q2:.3f}")
     model.fit(train, y[idx], cv_folds=args.folds, cv_seed=seed)
     print(model.stats.summary())
+    _print_block_weights(model)
     if args.external_cv:
         ncv = nested_cv(train, y[idx], model, [1.0], lams=_floats(args.lams),
                         epsilons=_floats(args.epsilons), nus=_floats(args.nus),
@@ -1547,6 +1613,22 @@ def main(argv=None):
     b.add_argument("--ac-chirality-shells", type=int, default=4, metavar="S",
                    help="autocorrelation: radial shells the signed volume is resolved over; "
                         "1 gives the single global invariant per field triple")
+    b.add_argument("--block-weights", default=None, metavar="W",
+                   help="autocorrelation / surface: mixing coefficients of the channel blocks "
+                        "(one block per pair of field types), the analogue of the h_f of the "
+                        "overlap kernel. 'balanced' gives every kind of block -- within a group "
+                        "of fields, across two groups -- the same share of the kernel; 'align' "
+                        "or 'alignf' set them by centred kernel alignment of the per-block "
+                        "kernels, re-derived inside every cross-validation fold; KIND=W,... "
+                        "names them (e.g. indicator=0.3,indicator*physchem=0.5; unnamed kinds "
+                        "weigh 1, 0 removes a kind). Default: every block weighs 1")
+    b.add_argument("--block-groups", default=None, metavar="G",
+                   help="the groups of fields the kinds of block are made of, as "
+                        "'GROUP=field,field;GROUP=cif:*' (patterns allowed); fields not named "
+                        "fall into the default grouping: the continuous indicator fields "
+                        "('indicator') against the rest ('physchem')")
+    b.add_argument("--block-rho", type=float, default=1.0, metavar="R",
+                   help="--block-weights alignf: shrinkage towards equal block weights (0 = none)")
     b.add_argument("--oc-k", type=int, default=5, metavar="K",
                    help="ocknn: how many nearest actives the distance is taken to")
     b.add_argument("--oc-components", type=int, default=5, metavar="Q",
@@ -1720,6 +1802,22 @@ def main(argv=None):
                     help="width of the cosine taper below the cutoff; 0 for a hard cutoff")
     bc.add_argument("--no-background", action="store_true",
                     help="keep the uniform-density term instead of subtracting it")
+    bc.add_argument("--block-weights", default=None, metavar="W",
+                    help="mixing coefficients of the channel blocks (one per pair of field "
+                         "types): 'balanced' gives the physico-chemical pairs, the indicator "
+                         "pairs and the pairs across the two the same share of the kernel "
+                         "however many blocks each kind has; 'align' / 'alignf' set every "
+                         "block's weight by centred kernel alignment, re-derived inside every "
+                         "cross-validation fold; KIND=W,... names them "
+                         "(indicator=0.3,indicator*physchem=0.5; 0 removes a kind). "
+                         "Default: every block weighs 1")
+    bc.add_argument("--block-groups", default=None, metavar="G",
+                    help="the groups the kinds of block are made of, 'GROUP=field,field;"
+                         "GROUP=cif:*' (patterns allowed); unnamed fields fall into the default "
+                         "grouping, the indicator fields ('indicator') against the rest "
+                         "('physchem')")
+    bc.add_argument("--block-rho", type=float, default=1.0, metavar="R",
+                    help="--block-weights alignf: shrinkage towards equal block weights")
     bc.add_argument("--method", default="krr", choices=["krr", "gp", "svr", "nusvr"])
     bc.add_argument("--kernel-layer", default="linear", choices=["linear", "gauss", "arccos1", "arccos2"])
     bc.add_argument("--lams", default="1e-4,1e-3,1e-2,0.1,1")

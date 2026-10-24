@@ -174,3 +174,22 @@ def test_the_nested_cross_validation_keeps_the_kernel(world):
     d = nested_cv(AtomTable.from_molecules(mf), y, over, **kw)
     assert not np.allclose(a.y_pred, d.y_pred, atol=1e-6)             # nor the overlap kernel
     assert surf.fresh_copy().kernel_source == "surface" and surf.fresh_copy().surf_z_step == surf.surf_z_step
+
+
+def test_the_surface_kernel_takes_block_weights_too(world):
+    from cmfqsar.model import CMFModel
+    fs, _, mf = world
+    table = AtomTable.from_molecules(mf)
+    y = np.array([5.0, 5.6, 6.1, 6.4, 7.0, 7.3])
+    plain = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="surface")
+    ones = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="surface",
+                    ac_block_weights={"physchem": 1.0})
+    assert np.allclose(plain.training_kernel(table), ones.training_kernel(table), atol=1e-12)
+    assert len(ones.ac_block_weights_) == len(field_pairs(len(fs.specs)))   # pair blocks only
+    aligned = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="surface",
+                       params={"lam": 0.1}, ac_block_weights="align",
+                       ac_block_groups={"hba": "polar", "hbd": "polar"})
+    aligned.fit(AtomTable.from_molecules(mf[:5]), y[:5], cv_folds=2)
+    assert np.isfinite(aligned.predict(AtomTable.from_molecules(mf[5:]))).all()
+    assert {r["kind"] for r in aligned.block_weight_report()} == {"polar", "physchem",
+                                                                    "physchem*polar"}

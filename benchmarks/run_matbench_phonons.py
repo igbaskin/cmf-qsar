@@ -34,6 +34,15 @@ Variants
     all-log    as "all" on the logarithm of the target, predictions back-transformed
     all-gauss  as "all" with a Gaussian kernel layer on top (nonlinear headroom; no co-pattern)
     physchem+mass-gauss, all+mass-gauss  the same layer on the sets with the mass field
+    all-balanced, all+mass-balanced  mixing coefficients over the channel blocks: the physico-
+               chemical pairs, the indicator pairs and the pairs across the two get the same
+               share of the kernel however many blocks each kind has (invariant.group_block_weights)
+    all-align, all+mass-align  one weight per block by centred kernel alignment of the per-block
+               kernels, derived from the training fold (invariant.align_block_weights)
+    all+mass-alignf  the joint alignment (non-negative least squares over all the blocks,
+               shrunk towards equal weights)
+    all+mass-nobg-align  the aligned weights with the background kept; all+mass-nobg,
+               all+mass-nobg-balanced and physchem+mass-nobg are its controls
 
 The data file is downloaded once to ``benchmarks/cache/matbench`` (not part of the repository);
 results go to ``benchmarks/results/matbench_phonons``.
@@ -59,7 +68,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
-from cmfqsar.invariant import autocorrelation_kernel, channel_scale, field_pairs  # noqa: E402
+from cmfqsar.invariant import (align_block_weights, autocorrelation_kernel,  # noqa: E402
+                               block_group_keys, block_weight_summary, channel_scale,
+                               expand_block_weights, field_pairs, group_block_weights)
 from cmfqsar.model import _Learner, cv_predict, r2_score, rmse  # noqa: E402
 from cmfqsar.periodic import (INORGANIC_FIELDS, PeriodicSpec, crystal_fields,  # noqa: E402
                               elements_in, inorganic_fieldset, periodic_block_sizes,
@@ -89,7 +100,37 @@ VARIANTS = {
     "all-gauss": dict(physchem=INORGANIC_FIELDS, elements=True, gauss=True),
     "physchem+mass-gauss": dict(physchem=MASS, elements=False, gauss=True),
     "all+mass-gauss": dict(physchem=MASS, elements=True, gauss=True),
+    "all-balanced": dict(physchem=INORGANIC_FIELDS, elements=True, blocks="balanced"),
+    "all-align": dict(physchem=INORGANIC_FIELDS, elements=True, blocks="align"),
+    "all+mass-balanced": dict(physchem=MASS, elements=True, blocks="balanced"),
+    "all+mass-align": dict(physchem=MASS, elements=True, blocks="align"),
+    "all+mass-alignf": dict(physchem=MASS, elements=True, blocks="alignf"),
+    "all+mass-nobg-align": dict(physchem=MASS, elements=True, background=False, blocks="align"),
+    "all+mass-nobg": dict(physchem=MASS, elements=True, background=False),
+    "all+mass-nobg-balanced": dict(physchem=MASS, elements=True, background=False, blocks="balanced"),
+    "physchem+mass-nobg": dict(physchem=MASS, elements=False, background=False),
 }
+BLOCK_RHO = 1.0                          # alignf: shrinkage towards equal block weights
+
+
+def block_weights_for(cfg, fs, F_scaled, t, blocks):
+    """The block weights of a variant on the (scaled) training features, or None for ones."""
+    mode = cfg.get("blocks")
+    if mode is None:
+        return None
+    if mode in ("align", "alignf"):
+        return align_block_weights(F_scaled, t, blocks, mode=mode, rho=BLOCK_RHO)
+    return group_block_weights(block_group_keys([sp.name for sp in fs.specs]), mode)
+
+
+def column_scale(cfg, fs, F_tr, t_tr, spec, blocks):
+    """Channel scale times block weights, and the weights by kind (None without weights)."""
+    sc = channel_scale(F_tr, spec.n_bins, blocks=blocks)
+    w = block_weights_for(cfg, fs, F_tr * sc, t_tr, blocks)
+    if w is None:
+        return sc, None
+    keys = block_group_keys([sp.name for sp in fs.specs])
+    return sc * expand_block_weights(w, blocks), block_weight_summary(keys, w)
 
 
 def fetch():
@@ -151,7 +192,8 @@ def run_variant(tag, y, names, elements, args, fs_full, feats_full, specs):
                             charge_model=args.charges)
     log, gauss = cfg.get("log", False), cfg.get("gauss", False)
     print(f"\n=== {tag}: {fs.n_fields} fields" + (", log target" if log else "")
-          + (", Gaussian layer" if gauss else ""))
+          + (", Gaussian layer" if gauss else "")
+          + (f", block weights {cfg['blocks']}" if cfg.get("blocks") else ""))
     feats = {s: feats_full[s][:, columns_for(fs_full, fs, specs[s].n_bins)] for s in specs}
     t = np.log(y) if log else y.copy()
     folds = matbench_folds(len(y))
@@ -162,7 +204,7 @@ def run_variant(tag, y, names, elements, args, fs_full, feats_full, specs):
         best = None
         for s, F in feats.items():
             blocks = periodic_block_sizes(specs[s], fs.n_fields)
-            sc = channel_scale(F[tr], specs[s].n_bins, blocks=blocks)
+            sc, _ = column_scale(cfg, fs, F[tr], t[tr], specs[s], blocks)
             K_tr = autocorrelation_kernel(F[tr], scale=sc, n_bins=specs[s].n_bins, blocks=blocks)
             gammas = GAMMAS if gauss else (None,)
             med = median_d2(K_tr) if gauss else None
@@ -184,7 +226,8 @@ def run_variant(tag, y, names, elements, args, fs_full, feats_full, specs):
         pred[te] = np.exp(p) if log else p
         mae = float(np.mean(np.abs(pred[te] - y[te])))
         per_fold.append({"fold": k, "sigma": s, "gamma": g, "lam": lam, "inner_rmse": float(err),
-                         "mae": mae, "rmse": float(rmse(y[te], pred[te])), "n_test": int(len(te))})
+                         "mae": mae, "rmse": float(rmse(y[te], pred[te])), "n_test": int(len(te)),
+                         "block_weights": column_scale(cfg, fs, F[tr], t[tr], specs[s], blocks)[1]})
         chosen.append((s, g, lam))
         print(f"  fold {k}: sigma {s:g}, lam {lam:g}" + (f", gamma {g:g}" if gauss else "")
               + f"  ->  MAE {mae:.1f} cm-1  ({time.time() - t0:.0f} s)")
@@ -192,6 +235,7 @@ def run_variant(tag, y, names, elements, args, fs_full, feats_full, specs):
     out = {
         "variant": tag, "n": int(len(y)), "fields": [sp.label for sp in fs.specs],
         "n_fields": fs.n_fields, "log_target": log, "gauss_layer": gauss,
+        "block_weights": cfg.get("blocks"), "block_rho": BLOCK_RHO if cfg.get("blocks") else None,
         "r_max": R_MAX, "taper": cfg.get("taper", TAPER), "background": cfg.get("background", True),
         "sigmas": list(SIGMAS), "lams": list(LAMS), "gammas": list(GAMMAS) if gauss else [],
         "mae_mean": float(maes.mean()), "mae_sd": float(maes.std(ddof=0)),
@@ -207,9 +251,15 @@ def run_variant(tag, y, names, elements, args, fs_full, feats_full, specs):
         s, _, lam = max(set(chosen), key=chosen.count)
         F, spec = feats[s], specs[s]
         blocks = periodic_block_sizes(spec, fs.n_fields)
-        sc = channel_scale(F, spec.n_bins, blocks=blocks)
+        sc, kinds = column_scale(cfg, fs, F, t, spec, blocks)
         K = autocorrelation_kernel(F, scale=sc, n_bins=spec.n_bins, blocks=blocks)
         learner = _Learner("krr", {"lam": lam}, True).fit(K, t)
+        if kinds is not None:
+            out["block_weights_by_kind"] = kinds
+            print("  block weights by kind of block (whole set):")
+            for r in kinds:
+                print(f"    {r['kind']:22s} {r['n_blocks']:5d} blocks  mean weight {r['mean']:.3f}"
+                      f"  share of the kernel {r['share']:.2f}")
         Z = F * sc
         Z = Z / np.sqrt(np.maximum(np.sum(Z * Z, axis=1, keepdims=True), 1e-300))
         w = Z.T @ learner.alpha_
@@ -235,15 +285,29 @@ def report(path):
              "Last peak of the phonon density of states (cm^-1), 1,265 structures, the five Matbench "
              "folds; MAE mean +/- sd over the folds, RMSE and R2 on the pooled held-out predictions. "
              "Hyper-parameters (sigma, lambda, gamma) chosen by 10-fold CV inside every training fold.",
-             "", "| variant | fields | MAE (cm^-1) | RMSE | R2 | sigma chosen | time (s) |",
-             "|---|---|---|---|---|---|---|"]
+             "", "| variant | fields | block weights | MAE (cm^-1) | RMSE | R2 | sigma chosen | time (s) |",
+             "|---|---|---|---|---|---|---|---|"]
     for r in rows:
         sig = ", ".join(f"{f['sigma']:g}" for f in r["per_fold"])
-        lines.append(f"| {r['variant']} | {r['n_fields']} | {r['mae_mean']:.1f} +/- {r['mae_sd']:.1f} | "
+        lines.append(f"| {r['variant']} | {r['n_fields']} | {r.get('block_weights') or 'ones'} | "
+                     f"{r['mae_mean']:.1f} +/- {r['mae_sd']:.1f} | "
                      f"{r['rmse_pooled']:.1f} | {r['r2_pooled']:.3f} | {sig} | {r['elapsed_s']:.0f} |")
     lines += ["", "Leaderboard reference (matbench v0.1, MAE in cm^-1, from the Matbench site at the "
               "time of writing, October 2026): dummy 324.0; RF-SCM/Magpie 67.6; CGCNN 57.8; CrabNet 55.1; "
               "SchNet 39.0; MODNet 34.3; coGN 29.7; ALIGNN 29.5; coNGN 28.9; MegNet 28.8.", ""]
+    weighted = [r for r in rows if r.get("block_weights_by_kind")]
+    if weighted:
+        lines += ["## Block weights by kind of block", "",
+                  "The mixing coefficients of the channel blocks (one block per pair of field types), "
+                  "fitted on the whole set with the settings the folds chose: the mean weight over the "
+                  "blocks of each kind and the kind's share of the squared norm of a channel vector. "
+                  "With every block at one the shares are proportional to the numbers of blocks.", "",
+                  "| variant | kind of block | blocks | mean weight | share |", "|---|---|---|---|---|"]
+        for r in weighted:
+            for k in r["block_weights_by_kind"]:
+                lines.append(f"| {r['variant']} | {k['kind']} | {k['n_blocks']} | {k['mean']:.3f} | "
+                             f"{k['share']:.2f} |")
+        lines.append("")
     for r in rows:
         if "co_pattern" in r:
             lines += [f"## Co-pattern of `{r['variant']}` (sigma {r['co_pattern']['sigma']:g} A, "

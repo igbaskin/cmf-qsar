@@ -18,6 +18,9 @@ corrosion-QSAR paper would describe -- and it is measured against
   substituents  the control: the same cut pieces at the same sites, left where the alignment put
                 them, which separates the cut from the pose
   invariant     the rotation-invariant field autocorrelation: the conformer, no frame
+  invariant, aligned blocks  the same kernel with a mixing coefficient per channel block (one
+                block per pair of field types) set by centred kernel alignment inside every
+                cross-validation fold, the h_f of the overlap kernel carried over
   counts        atom-type counts: no geometry at all
 
 Same fields, alpha and lambda grids and 10-fold CV for everything, each model choosing (alpha,
@@ -51,9 +54,11 @@ import run_topomer as T  # noqa: E402  - the Sutherland/Mittal benchmark, reused
 from cmfqsar.chemotypes import count_kernel  # noqa: E402
 from cmfqsar.dataio import load_dataset  # noqa: E402
 from cmfqsar.fields import FieldSet, build_fields  # noqa: E402
+from cmfqsar.fields import AtomTable  # noqa: E402
 from cmfqsar.invariant import (AutocorrelationSpec, autocorrelation_kernel,  # noqa: E402
                                feature_matrix)
-from cmfqsar.model import cv_predict, r2_score, rmse  # noqa: E402
+from cmfqsar.model import (CMFModel, block_cv_predict, block_fold_kernels,  # noqa: E402
+                           cv_predict, r2_score, rmse)
 from cmfqsar.topomer import (TopomerSpec, cuttable, series_labels,  # noqa: E402
                              topomer_fields, unique_substituents)
 
@@ -137,6 +142,7 @@ def run_set(path, results=RESULTS, force=False, min_molecules=15):
           f"{len(sel)}/{len(mols)} molecules cuttable", flush=True)
 
     aligned, topo, frag, invariant, keep = [], [], [], {}, None
+    weighted = None          # the invariant kernel with aligned block weights, per fold
     for alpha in T.ALPHAS:
         fs = FieldSet.create(physchem=T.FIELDS, alpha=alpha, charge_model="gasteiger",
                              param_scheme="rdkit")
@@ -144,6 +150,13 @@ def run_set(path, results=RESULTS, force=False, min_molecules=15):
         aligned.append((fs, mf))
         acs = AutocorrelationSpec()
         invariant[alpha] = autocorrelation_kernel(feature_matrix(mf, acs), n_bins=acs.n_bins)
+        if weighted is None:
+            # the channel features do not depend on alpha, so once is enough: the scale and the
+            # block weights are re-derived from the training part of every fold
+            wm = CMFModel(fieldset=fs, method="krr", normalize=True,
+                          kernel_source="autocorrelation", ac_block_weights="align")
+            wm.training_kernel(AtomTable.from_molecules(mf), y=y_all)
+            weighted = (wm, block_fold_kernels(wm, y_all, folds=T.FOLDS, seed=T.SEED))
         if len(sel) >= min_molecules:
             tf, _log = topomer_fields([mols[i] for i in sel], [names[i] for i in sel], fs,
                                       core=core, labels=labels, spec=spec)
@@ -183,6 +196,16 @@ def run_set(path, results=RESULTS, force=False, min_molecules=15):
                 best = (q2, rmse(y_all, pred), float(lam))
     res["invariant"] = {"q2": best[0], "rmse_cv": best[1], "lam": best[2], "n": len(y_all)}
     print(f"    {'invariant':12s} q2 {best[0]:+.3f}  RMSEcv {best[1]:.3f}", flush=True)
+    wm, fold_kernels = weighted
+    best = None
+    for lam in T.LAMS:
+        pred = block_cv_predict(wm, y_all, {"lam": float(lam)}, fold_kernels)
+        q2 = r2_score(y_all, pred)
+        if best is None or q2 > best[0]:
+            best = (q2, rmse(y_all, pred), float(lam))
+    res["invariant_aligned"] = {"q2": best[0], "rmse_cv": best[1], "lam": best[2],
+                                "n": len(y_all), "block_weights": wm.block_weight_report()}
+    print(f"    {'inv.aligned':12s} q2 {best[0]:+.3f}  RMSEcv {best[1]:.3f}", flush=True)
     Kc = count_kernel(mols, names)
     best = None
     for lam in T.LAMS:
@@ -216,12 +239,14 @@ def report(path, results=RESULTS, title="on the corrosion-inhibitor series"):
            "same alpha and lambda grids, same 10-fold CV, each model choosing its own (alpha,",
            "lambda) on the CV it reports.", "",
            "| series | n | scaffold | fit RMSD | q2 aligned | q2 topomer | q2 invariant | "
-           "q2 counts | cuttable |", "|---|---|---|---|---|---|---|---|---|"]
+           "q2 invariant, aligned blocks | q2 counts | cuttable |",
+           "|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         topo = "%+.3f" % r["topomer"]["q2"] if "topomer" in r else "-"
+        inva = "%+.3f" % r["invariant_aligned"]["q2"] if "invariant_aligned" in r else "-"
         out.append(f"| {r['set']} | {r['n']} | `{r['core']}` | "
                    f"{r['align_rmsd_median']:.2f} A | {r['aligned']['q2']:+.3f} | {topo} | "
-                   f"{r['invariant']['q2']:+.3f} | {r['counts']['q2']:+.3f} | "
+                   f"{r['invariant']['q2']:+.3f} | {inva} | {r['counts']['q2']:+.3f} | "
                    f"{r['n_cuttable']}/{r['n']} |")
     have = [r for r in rows if "topomer" in r]
     if have:

@@ -455,6 +455,25 @@ three-dimensional arrangement: where a donor sits relative to an acceptor, how f
 from the hydrophobic bulk. The kernel is the cosine of those features, normalised jointly rather
 than block by block, for the reason the count kernel has to be.
 
+The channels come in blocks, one per pair of field types, each scaled to unit root mean square
+before the blocks are taken together; what the overlap kernel does with its mixing coefficients
+h_f the three invariant sources (autocorrelation, surface, periodic) do with **block weights**, one
+coefficient per block applied to the scaled features before the normalisation
+(`ac_block_weights` on `CMFModel`, `--block-weights` on `build` and `build-crystals`). A block's
+share of the kernel goes as the square of its weight and a weight of zero removes the block
+exactly — a test checks that the eight-field model with the indicator blocks at zero *is* the
+three-field model. They are set in three ways: `balanced` gives every kind of block — within a
+group of fields, across two groups — the same share of the kernel however many blocks the kind
+has; a mapping names the kinds' weights (`{"indicator": 0.3, "indicator*physchem": 0.5}`,
+`--block-weights indicator=0.3,indicator*physchem=0.5`); `align` or `alignf` derive one weight per
+block by centred kernel alignment of the per-block kernels, `align_mixing` carried over to the
+blocks and computed in feature space so the seventeen hundred block kernels of a crystal set are
+never formed. The aligned weights are re-derived from the training part of every cross-validation
+fold, inside the grid search and the nested validation alike, so no reported q² has seen the
+left-out activities. The groups default to the continuous indicator fields against the rest;
+`ac_block_groups` / `--block-groups` names others, and the fitted weights are reported by kind
+(`block_weight_report`) and saved with the model.
+
 The connection to the CMF kernel is exact at one point. The overlap integral of two fields of the
 same molecule is `(π/α)^{3/2} Σ_lm w_lf w_mg exp(−α d²_lm/4)`, which is the channel at `d = 0`
 with `σ² = 2/α`, up to the prefactor — a test asserts it. The further channels resolve what that
@@ -652,15 +671,21 @@ cross-validation inside every training fold
 [benchmarks/results/matbench_phonons/table.md](benchmarks/results/matbench_phonons/table.md)).
 Mean absolute error in cm⁻¹, mean ± sd over the folds:
 
-| fields | n | MAE |
-|---|---|---|
-| element indicators only (typed partial pair distributions) | 55 | 196 ± 7 |
-| electrostatic, steric, electronegativity | 3 | 150 ± 11 |
-| the three plus 1/√m | 4 | 117 ± 10 |
-| the four with a Gaussian kernel layer | 4 | 106 ± 5 |
-| all of the above, background removed (the default) | 58 | 181 ± 9 |
-| all of the above, background kept | 58 | 119 ± 13 |
-| all of the above, hard cutoff | 58 | 205 ± 10 |
+| fields | n | block weights | MAE |
+|---|---|---|---|
+| element indicators only (typed partial pair distributions) | 55 | ones | 196 ± 7 |
+| electrostatic, steric, electronegativity | 3 | ones | 150 ± 11 |
+| the three plus 1/√m | 4 | ones | 117 ± 10 |
+| the four with a Gaussian kernel layer | 4 | ones | 106 ± 5 |
+| the four, background kept | 4 | ones | 92 ± 5 |
+| the four and the indicators, background removed (the default) | 59 | ones | 179 ± 9 |
+| | 59 | balanced | 148 ± 9 |
+| | 59 | aligned | 152 ± 10 |
+| | 59 | jointly aligned | 157 ± 10 |
+| the four and the indicators, background kept | 59 | ones | 119 ± 13 |
+| | 59 | balanced | 112 ± 10 |
+| | 59 | aligned | 97 ± 18 |
+| the three and the indicators, hard cutoff | 58 | ones | 205 ± 10 |
 
 The leaderboard runs from 324 for the dummy predictor through 67.6 for a random forest on
 Coulomb-matrix and composition features to 28.8 for the best graph network, so the linear kernel
@@ -675,10 +700,20 @@ from 181 to 119, and its co-pattern becomes the one a spectroscopist would write
 H × N and H × S channels with positive weight, because the top of the spectrum in a hydrogen-
 containing solid is the O–H or N–H stretch. The uniform term carries the composition times the
 density, which this property wants and the subtraction removes; `background=False` in the
-library and `--no-background` on the command line keep it. The 55 indicator fields hurt more
-than they help in the joint cosine kernel, where seventeen hundred equally scaled element-pair
-blocks drown the four that matter: mixing coefficients for the channel blocks, which the overlap
-kernel has and the autocorrelation kernels do not yet, are the obvious next step.
+library and `--no-background` on the command line keep it, and the four-field model kept it too
+goes from 117 to 92. The 55 indicator fields hurt in the joint cosine kernel, where seventeen
+hundred equally scaled element-pair blocks drown the ten that matter, and the block weights of
+the section above are the remedy, measured: with the background removed they take the 59-field
+model from 179 to 148 (balanced) and 152 (aligned); with the background kept, from 119 to 112
+(balanced) and 97 (aligned), the aligned weights giving the physico-chemical blocks eight times
+the share of the kernel they had at equal weights and a co-pattern led by the H × O and H × N
+channels. What they do not do is make the indicator fields pay for themselves: the four
+physico-chemical fields alone, background kept, reach 92 ± 5 cm⁻¹ — the best linear model on
+this task, better than the four with the Gaussian layer — and no weighting of the 59 fields beats
+it. On a property set by the stiffest bond in the cell the element identity adds nothing the
+electronegativity, the volume and the mass do not already say, and the weights can at most stop
+it from hurting. The joint alignment (`alignf`) is no better than the per-block one here and
+three times slower; the weights cost nothing otherwise, a few seconds per fold.
 
 
 ASE is needed for the neighbour list and to read structure files, pymatgen for the oxidation

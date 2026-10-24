@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -549,6 +549,19 @@ class CMFModel:
     # (ac_d_max is the cutoff radius, ac_sigma the width and spacing; see periodic.py)
     pbc_background: bool = True             # periodic: subtract the uniform-density term
     pbc_taper: float = 2.0                  # periodic: width of the cosine taper below the cutoff
+    # mixing coefficients over the channel blocks of the three invariant sources, the analogue of
+    # the per-field h_f of the overlap kernel (invariant.py, "Mixing coefficients over the channel
+    # blocks"): None keeps every block at one; "balanced" gives every kind of block -- within a
+    # group of fields, across two groups -- the same share of the kernel; a mapping names the
+    # kinds' weights ({"indicator": 0.3, "indicator*physchem": 0.5}); "align" / "alignf" derive
+    # them by centred kernel alignment of the per-block kernels, re-derived inside every
+    # cross-validation fold as the field mixing is.  The weights multiply the scaled features
+    # before the cosine normalisation, so a weight of zero removes the block exactly.
+    ac_block_weights: Union[None, str, Dict[str, float]] = None
+    # field name -> group; a field not named falls into the default grouping: the continuous
+    # indicator fields (cif:<type>) in one group, every other field in the other
+    ac_block_groups: Optional[Dict[str, str]] = None
+    ac_block_rho: float = 1.0               # alignf: shrinkage towards equal block weights
     # optional nonlinear layer on top of the CMF kernel: "linear" keeps the model linear in the
     # molecular field, which is what makes the co-field and the atom contributions valid; the other
     # layers predict better on several sets but destroy that interpretation (see the README)
@@ -685,9 +698,9 @@ class CMFModel:
 
     def fresh_copy(self) -> "CMFModel":
         """An unfitted model with every setting of this one: the field set (copied), learner,
-        parameters, normalisation, bias, kernel layer and kernel source with its widths and
-        heights.  The nested cross-validation builds its fold models from this, so that a model
-        on the autocorrelation or surface kernel is validated as the kernel it is."""
+        parameters, normalisation, bias, kernel layer and kernel source with its widths,
+        heights and block weights.  The nested cross-validation builds its fold models from
+        this, so that a model on an invariant kernel is validated as the kernel it is."""
         return CMFModel(fieldset=self.fieldset.copy(), task=self.task, method=self.method,
                         params=dict(self.params), normalize=self.normalize,
                         scale_fields=self.scale_fields, fit_bias=self.fit_bias,
@@ -696,7 +709,13 @@ class CMFModel:
                         ac_chirality=self.ac_chirality, ac_chirality_shells=self.ac_chirality_shells,
                         surf_z_min=self.surf_z_min, surf_z_max=self.surf_z_max,
                         surf_z_step=self.surf_z_step, pbc_background=self.pbc_background,
-                        pbc_taper=self.pbc_taper)
+                        pbc_taper=self.pbc_taper,
+                        ac_block_weights=(dict(self.ac_block_weights)
+                                          if isinstance(self.ac_block_weights, dict)
+                                          else self.ac_block_weights),
+                        ac_block_groups=(dict(self.ac_block_groups)
+                                         if self.ac_block_groups else None),
+                        ac_block_rho=self.ac_block_rho)
 
     @property
     def on_surface(self) -> bool:
@@ -739,8 +758,64 @@ class CMFModel:
             fn = surface_feature_matrix if self.on_surface else feature_matrix
         return fn(table.molecules, self._ac_spec(), n_fields=table.weights.shape[1])
 
-    def training_kernel(self, train: AtomTable, progress=None, cancel=None) -> np.ndarray:
-        """The joint training kernel, whichever source it comes from."""
+    # ----------------------------------------------- mixing coefficients of the channel blocks
+    @property
+    def block_weights_aligned(self) -> bool:
+        """True when the block weights come from the activities by kernel alignment, and so
+        have to be re-derived inside every cross-validation fold."""
+        from .invariant import ALIGN_MODES
+        return isinstance(self.ac_block_weights, str) and self.ac_block_weights in ALIGN_MODES
+
+    def _ac_block_keys(self, n_fields: int) -> List[str]:
+        """The kind of every channel block (which groups of fields it joins), in layout order."""
+        from .invariant import block_group_keys
+        names = [sp.name for sp in self.fieldset.specs]
+        if len(names) != n_fields:
+            names = [f"field{i}" for i in range(n_fields)]
+        chir = bool(self.ac_chirality) and not (self.on_surface or self.is_periodic)
+        return block_group_keys(names, self.ac_block_groups, chirality=chir)
+
+    def _derive_block_weights(self, X_scaled: np.ndarray, y: Optional[np.ndarray],
+                              blocks: Sequence[int], keys: Sequence[str]) -> Optional[np.ndarray]:
+        """The block weights of this model on these (scaled) training features, or None when
+        every block keeps the weight one."""
+        from .invariant import align_block_weights, group_block_weights
+        if self.ac_block_weights is None:
+            return None
+        if self.block_weights_aligned:
+            if y is None:
+                raise ValueError("the aligned block weights are derived from the activities, "
+                                 "which this kernel was asked for without them")
+            return align_block_weights(X_scaled, y, blocks, mode=self.ac_block_weights,
+                                       rho=self.ac_block_rho)
+        return group_block_weights(keys, self.ac_block_weights)
+
+    @property
+    def ac_column_scale(self) -> np.ndarray:
+        """What every channel column is multiplied by before the kernel is taken: the
+        root-mean-square scale of its block times the block's mixing coefficient."""
+        from .invariant import expand_block_weights
+        sc = np.asarray(self.ac_scale_, float)
+        w = getattr(self, "ac_block_weights_", None)
+        return sc if w is None else sc * expand_block_weights(w, self.ac_blocks_)
+
+    def block_weight_report(self) -> List[Dict[str, float]]:
+        """The fitted block weights by kind of block (see :func:`invariant.block_weight_summary`);
+        empty for a model whose blocks all weigh one."""
+        from .invariant import block_weight_summary
+        w = getattr(self, "ac_block_weights_", None)
+        keys = getattr(self, "ac_block_keys_", None)
+        if w is None or keys is None:
+            return []
+        return block_weight_summary(keys, w)
+
+    def training_kernel(self, train: AtomTable, y: Optional[np.ndarray] = None, progress=None,
+                        cancel=None, reuse: bool = False) -> np.ndarray:
+        """The joint training kernel, whichever source it comes from.
+
+        ``y`` is needed by the invariant sources when the block weights are set by kernel
+        alignment.  With ``reuse`` the channel features of a table this model has already
+        featurised are kept; the scale and the block weights are always derived afresh."""
         if self.uses_fields:
             return self.joint_kernel(self.prepare_training_kernels(train, progress=progress,
                                                                    cancel=cancel),
@@ -749,16 +824,23 @@ class CMFModel:
         if progress:
             progress("Periodic autocorrelation" if self.is_periodic else
                      "Surface autocorrelation" if self.on_surface else "Field autocorrelation", 0.2)
+        n_fields = train.weights.shape[1]
+        if not (reuse and self.train is train and getattr(self, "ac_train_", None) is not None
+                and getattr(self, "ac_blocks_", None) is not None):
+            self.ac_train_ = self._ac_features(train)
+            self.ac_blocks_ = self._ac_blocks(n_fields)
         self.train = train
         self.self_diag = None
         self.K_fields_train = None
         self.scale = np.ones(1)
         spec = self._ac_spec()
-        self.ac_train_ = self._ac_features(train)
-        self.ac_blocks_ = self._ac_blocks(train.weights.shape[1])
         self.ac_scale_ = channel_scale(self.ac_train_, spec.n_bins, blocks=self.ac_blocks_)
-        return autocorrelation_kernel(self.ac_train_, scale=self.ac_scale_, n_bins=spec.n_bins,
-                                      blocks=self.ac_blocks_)
+        self.ac_block_keys_ = self._ac_block_keys(n_fields)
+        self.ac_block_weights_ = self._derive_block_weights(
+            self.ac_train_ * self.ac_scale_, None if y is None else np.asarray(y, float),
+            self.ac_blocks_, self.ac_block_keys_)
+        return autocorrelation_kernel(self.ac_train_, scale=self.ac_column_scale,
+                                      n_bins=spec.n_bins, blocks=self.ac_blocks_)
 
     def test_kernel(self, test: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """The (n_test, n_train) joint kernel block, whichever source it comes from."""
@@ -769,7 +851,7 @@ class CMFModel:
         if getattr(self, "ac_train_", None) is None:
             raise RuntimeError("model is not fitted")
         return autocorrelation_kernel(self.ac_train_, self._ac_features(test),
-                                      scale=self.ac_scale_, n_bins=self._ac_spec().n_bins,
+                                      scale=self.ac_column_scale, n_bins=self._ac_spec().n_bins,
                                       blocks=getattr(self, "ac_blocks_", None))
 
     def _require_fields_if_atoms(self, what: str) -> None:
@@ -897,6 +979,10 @@ class CMFModel:
             yp, _ = mkl_cv_predict(self.K_fields_train, y, self, self.params, folds=folds,
                                    seed=seed, mode=self.mkl, rho=self.mkl_rho)
             return yp
+        if (not self.uses_fields and self.block_weights_aligned
+                and getattr(self, "ac_train_", None) is not None):
+            return block_cv_predict(self, y, self.params,
+                                    block_fold_kernels(self, y, folds=folds, seed=seed))
         return cv_predict(K, y, self.method, self.params, folds=folds, seed=seed,
                           fit_bias=self.fit_bias)
 
@@ -960,7 +1046,8 @@ class CMFModel:
                     cancel=cancel)
             K_lin = self.joint_kernel(self.K_fields_train, train.descriptors)
         else:
-            K_lin = self.training_kernel(train, progress=progress, cancel=cancel)
+            K_lin = self.training_kernel(train, y=y, progress=progress, cancel=cancel,
+                                         reuse=reuse_kernels)
         self.y = y
         self.base_diag_ = np.diag(K_lin).copy()
         self.gamma_scale_ = median_gamma_scale(K_lin) if self.kernel_layer == "gauss" else None
@@ -1316,6 +1403,12 @@ class CMFModel:
             "pbc_taper": self.pbc_taper,
             "ac_train": getattr(self, "ac_train_", None),
             "ac_scale": getattr(self, "ac_scale_", None),
+            "ac_blocks": getattr(self, "ac_blocks_", None),
+            "ac_block_weights": self.ac_block_weights,
+            "ac_block_groups": self.ac_block_groups,
+            "ac_block_rho": self.ac_block_rho,
+            "ac_block_weights_fitted": getattr(self, "ac_block_weights_", None),
+            "ac_block_keys": getattr(self, "ac_block_keys_", None),
             # the descriptor block: its standardisation and scale belong to the training set
             "desc_scaler": self.desc_scaler_,
             "desc_train": self.desc_train_,
@@ -1345,6 +1438,12 @@ class CMFModel:
         m.pbc_taper = float(st.get("pbc_taper", 2.0))
         m.ac_train_ = st.get("ac_train")
         m.ac_scale_ = st.get("ac_scale")
+        m.ac_blocks_ = st.get("ac_blocks")
+        m.ac_block_weights = st.get("ac_block_weights")
+        m.ac_block_groups = st.get("ac_block_groups")
+        m.ac_block_rho = float(st.get("ac_block_rho", 1.0))
+        m.ac_block_weights_ = st.get("ac_block_weights_fitted")
+        m.ac_block_keys_ = st.get("ac_block_keys")
         m.base_diag_ = st.get("base_diag")
         m.gamma_scale_ = st.get("gamma_scale")
         m.train, m.y, m.coef, m.bias = st["train"], st["y"], st["coef"], st["bias"]
@@ -1481,6 +1580,48 @@ def mkl_cv_predict(K_fields: np.ndarray, y: np.ndarray, model: "CMFModel", param
                             mode=mode, rho=rho)
 
 
+def block_fold_kernels(model: "CMFModel", y: np.ndarray, folds: int = 10,
+                       seed: Optional[int] = 0) -> List[Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+    """Per-fold kernels of an invariant source whose block weights come from the activities.
+
+    Deriving the weights from every activity and then cross-validating would leak the left-out
+    activities into the kernel, exactly as for the field mixing; so the channel scale and the
+    block weights are derived from the training part of each fold alone, and the whole
+    (n, n) kernel is formed under them.  A list of (test indices, training indices, K).
+    """
+    from .invariant import (align_block_weights, autocorrelation_kernel, channel_scale,
+                            expand_block_weights)
+    X = np.asarray(model.ac_train_, float)
+    blocks = model.ac_blocks_
+    n_bins = model._ac_spec().n_bins
+    y = np.asarray(y, float)
+    n = len(y)
+    folds = max(2, min(folds, n))
+    out = []
+    for te in _kfold_indices(n, folds, seed):
+        tr = np.setdiff1d(np.arange(n), te)
+        sc = channel_scale(X[tr], n_bins, blocks=blocks)
+        w = align_block_weights(X[tr] * sc, y[tr], blocks, mode=model.ac_block_weights,
+                                rho=model.ac_block_rho)
+        K = autocorrelation_kernel(X, scale=sc * expand_block_weights(w, blocks), n_bins=n_bins,
+                                   blocks=blocks)
+        out.append((te, tr, K))
+    return out
+
+
+def block_cv_predict(model: "CMFModel", y: np.ndarray, params: Dict[str, float],
+                     fold_kernels: List[Tuple[np.ndarray, np.ndarray, np.ndarray]]) -> np.ndarray:
+    """Cross-validated predictions over the per-fold kernels of :func:`block_fold_kernels`."""
+    y = np.asarray(y, float)
+    yp = np.zeros(len(y))
+    for te, tr, K in fold_kernels:
+        dg = np.diag(K).copy()
+        Kl = model.apply_layer(K, dg, dg)
+        learner = _Learner(model.method, params, model.fit_bias).fit(Kl[np.ix_(tr, tr)], y[tr])
+        yp[te] = learner.predict(Kl[np.ix_(te, tr)])
+    return yp
+
+
 @dataclass
 class SearchResult:
     best_alpha: float
@@ -1597,6 +1738,7 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
     for ia, alpha in enumerate(alpha_list):
         if cancel and cancel():
             raise Cancelled()
+        fold_blocks = None           # per-fold kernels of the aligned block weights, if any
         if alpha is not None:
             model.fieldset.set_alpha(alpha, alpha_fields)
         atxt = "table alphas" if alpha is None else f"alpha = {alpha:g}"
@@ -1606,9 +1748,13 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
             # the attenuation belongs to the overlap integral; this kernel has its own width
             # along the distance axis, so there is one kernel and the alpha loop runs once
             Kf = None
-            K_lin = model.training_kernel(train, cancel=cancel)
+            K_lin = model.training_kernel(train, y=y, cancel=cancel)
             use_mkl = False
             fold_h = None
+            if model.block_weights_aligned:
+                if progress:
+                    progress(f"{atxt}: block alignment", (ia + 0.9) / n_alpha)
+                fold_blocks = block_fold_kernels(model, y, folds=folds, seed=seed)
         elif precomputed is not None and alpha in precomputed:
             Kf_pre, sd_pre = precomputed[alpha]
             Kf = model.set_training_kernels(train, Kf_pre, sd_pre)
@@ -1644,6 +1790,8 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
                 if use_mkl:
                     ycv, _ = mkl_cv_predict(Kf, y, model, params, folds=folds, seed=seed,
                                             fold_h=fold_h)
+                elif fold_blocks is not None:
+                    ycv = block_cv_predict(model, y, params, fold_blocks)
                 else:
                     ycv = cv_predict(K, y, model.method, params, folds=folds, seed=seed,
                                      fit_bias=model.fit_bias)

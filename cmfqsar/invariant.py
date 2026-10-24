@@ -38,11 +38,21 @@ What is lost with the frame is the co-field: a map in space needs a space to liv
 decomposition that survives is the one in the descriptor's own currency -- which pair of field
 types at which distance carries the weight -- and :func:`channel_labels` names those channels so
 a fitted model can be read that way.
+
+The channels come in blocks, one per pair of field types, and every block is scaled to unit root
+mean square before the blocks are taken together in one cosine-normalised dot product.  That is
+the right default for a handful of fields and the wrong one for sixty: with one indicator field
+per element the pairs across the elements outnumber the physico-chemical pairs a hundred to one
+and, equally scaled, drown them.  The overlap kernel has its mixing coefficients h_f for this;
+the functions under "Mixing coefficients over the channel blocks" below give the invariant
+kernels theirs -- one weight per block, set by the kind of block (within a group of fields, across
+two groups) or by centred kernel alignment of the per-block kernels, as :func:`model.align_mixing`
+sets the h_f.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -418,3 +428,215 @@ def autocorrelation_kernel(train: np.ndarray, test: Optional[np.ndarray] = None,
     da = np.sqrt(np.maximum(np.sum(A * A, axis=1), 1e-300))
     db = np.sqrt(np.maximum(np.sum(B * B, axis=1), 1e-300))
     return K / np.outer(db, da)
+
+
+# --------------------------------------------------------------------------- #
+# Mixing coefficients over the channel blocks
+# --------------------------------------------------------------------------- #
+PHYSCHEM_GROUP = "physchem"
+INDICATOR_GROUP = "indicator"
+BALANCED = "balanced"
+ALIGN_MODES = ("align", "alignf")
+
+
+def block_fields(n_fields: int, chirality: bool = False) -> List[Tuple[int, ...]]:
+    """The field types of every channel block, in the order the features are laid out: the pairs
+    of :func:`field_pairs`, then, with chirality, the triples of :func:`chirality_triples`.  The
+    surface and periodic descriptors have the pair blocks only."""
+    out: List[Tuple[int, ...]] = [tuple(p) for p in field_pairs(n_fields)]
+    if chirality:
+        out += [tuple(t) for t in chirality_triples(n_fields)]
+    return out
+
+
+def default_block_groups(names: Iterable[str]) -> Dict[str, str]:
+    """The grouping of the fields the block weights use unless told otherwise: the continuous
+    indicator fields (``cif:<type>``, one per element or atom type) in one group, every other
+    field -- the physico-chemical and property fields -- in the other."""
+    return {n: (INDICATOR_GROUP if n.startswith("cif:") else PHYSCHEM_GROUP) for n in names}
+
+
+def group_key(groups: Iterable[str]) -> str:
+    """The name of a kind of block from the groups of its fields: the group's name for a block
+    within one group, the names joined by ``*`` in alphabetical order for a block across groups,
+    so that ``"a*b"`` and ``"b*a"`` are the same key."""
+    return "*".join(sorted({str(g) for g in groups}))
+
+
+def block_group_keys(names: Sequence[str], groups: Optional[Mapping[str, str]] = None,
+                     chirality: bool = False) -> List[str]:
+    """The kind of every block of a field set with these field names, in layout order.
+
+    ``groups`` maps field names to group names; a field it does not name falls back to the
+    default grouping of :func:`default_block_groups`.
+    """
+    names = list(names)
+    g = default_block_groups(names)
+    if groups:
+        g.update({k: str(v) for k, v in groups.items() if k in g})
+    return [group_key(g[names[f]] for f in blk) for blk in block_fields(len(names), chirality)]
+
+
+def group_block_weights(keys: Sequence[str],
+                        weights: Union[str, Mapping[str, float]]) -> np.ndarray:
+    """One weight per block, by the kind of block.
+
+    ``weights`` is either a mapping from kinds (keys as :func:`group_key` writes them; either
+    order of the groups of a cross key is accepted) to weights, with 1 for every kind it does not
+    name, or the word ``"balanced"``: every kind present gets ``1 / sqrt(its number of blocks)``,
+    so that the kinds contribute equally to the squared norm of a molecule's channel vector --
+    the pairs within the four physico-chemical fields as much as the fifteen hundred pairs across
+    the element indicators -- however many blocks each kind has.  The weights multiply the scaled
+    features, so a block's share of the kernel goes as the square of its weight, and a weight of
+    zero removes the block exactly: it enters neither the dot products nor the norms.
+    """
+    keys = [str(k) for k in keys]
+    if isinstance(weights, str):
+        if weights != BALANCED:
+            raise ValueError(f"unknown block weighting {weights!r}: give a mapping from kinds of "
+                             f"block to weights, '{BALANCED}', or one of {ALIGN_MODES}")
+        counts: Dict[str, int] = {}
+        for k in keys:
+            counts[k] = counts.get(k, 0) + 1
+        return np.array([1.0 / np.sqrt(counts[k]) for k in keys])
+    table = {group_key(str(k).split("*")): float(v) for k, v in dict(weights).items()}
+    w = np.array([table.get(k, 1.0) for k in keys], float)
+    if (w < 0).any():
+        raise ValueError("block weights cannot be negative")
+    return w
+
+
+def expand_block_weights(w: Sequence[float], blocks: Sequence[int]) -> np.ndarray:
+    """The per-block weights spread over the columns of their blocks: one multiplier per feature,
+    to be applied with (or folded into) the channel scale."""
+    w = np.asarray(w, float)
+    sizes = np.asarray([int(b) for b in blocks], int)
+    if len(w) != len(sizes):
+        raise ValueError(f"{len(w)} block weights for {len(sizes)} blocks")
+    return np.repeat(w, sizes)
+
+
+def _block_starts(blocks: Sequence[int], n_cols: int) -> np.ndarray:
+    starts = np.concatenate([[0], np.cumsum([int(b) for b in blocks])]).astype(int)
+    if starts[-1] != n_cols:
+        raise ValueError(f"the blocks cover {starts[-1]} columns, the features have {n_cols}")
+    return starts
+
+
+def _block_gram_frobenius(Z: np.ndarray, starts: np.ndarray, max_chunk_cols: int) -> np.ndarray:
+    """``M[a, b] = <K_a, K_b>_F`` for the linear kernels ``K_b = Z_b Z_b^T`` of the column
+    blocks of ``Z``, which is ``||Z_a^T Z_b||_F^2``: computed from the Gram matrix of the columns
+    in chunks of rows, so that the (D, D) Gram matrix never exists in full."""
+    B = len(starts) - 1
+    widths = np.diff(starts)
+    M = np.empty((B, B))
+    i = 0
+    while i < B:
+        j, ncol = i, 0
+        while j < B and (j == i or ncol + widths[j] <= max_chunk_cols):
+            ncol += widths[j]
+            j += 1
+        P = Z[:, starts[i]:starts[j]].T @ Z                 # (ncol, D)
+        P *= P
+        S = np.add.reduceat(P, starts[:-1], axis=1)         # (ncol, B): summed over block b
+        M[i:j] = np.add.reduceat(S, starts[i:j] - starts[i], axis=0)
+        i = j
+    return M
+
+
+def align_block_weights(X: np.ndarray, y: np.ndarray, blocks: Sequence[int], mode: str = "align",
+                        rho: float = 1.0, max_chunk_cols: int = 2048) -> np.ndarray:
+    """Block weights by centred kernel alignment: :func:`model.align_mixing` for the channel
+    blocks of an invariant kernel.
+
+    ``X`` holds the scaled channel features of the training molecules (after
+    :func:`channel_scale`), ``blocks`` the column count of every block.  Every block carries a
+    linear kernel ``K_b = X_b X_b^T``; its centred form is ``K_b^c = X_b^c X_b^c^T`` with the
+    columns centred over the molecules, so everything the alignment needs lives in the feature
+    space and the kernels themselves are never formed: ``<K_b^c, y^c y^c^T>_F = ||X_b^c^T y^c||^2``
+    and ``||K_b^c||_F = ||X_b^c^T X_b^c||_F``.
+
+      ``mode="align"``  weights every block by its own alignment,
+        ``h_b ~ <K_b^c, y^c y^c^T> / ||K_b^c||_F`` (Cristianini et al. 2001);
+      ``mode="alignf"`` maximises the alignment of the combination,
+        ``min_{h >= 0} || sum_b h_b K_b^c - y^c y^c^T ||_F`` (Cortes et al. 2012), with the
+        Frobenius Gram matrix of the block kernels formed block pair by block pair and the
+        solution shrunk towards equal weights with strength ``rho``, as for the fields.
+
+    The kernel weights ``h_b`` are rescaled so that the mean diagonal of the joint kernel is
+    what it was with every ``h_b = 1``, and the returned weights are their square roots, since
+    they multiply the features and the kernel sees them squared.  A block that is constant over
+    the training molecules -- a zero block, or one that does not vary -- gets no weight.
+    """
+    X = np.asarray(X, float)
+    n, D = X.shape
+    starts = _block_starts(blocks, D)
+    B = len(starts) - 1
+    yc = np.asarray(y, float)
+    if len(yc) != n:
+        raise ValueError(f"{len(yc)} activities for {n} molecules")
+    yc = yc - yc.mean()
+    Xc = X - X.mean(axis=0)
+    proj = Xc.T @ yc
+    v = np.empty(B)                                  # <K_b^c, y^c y^c^T>
+    nrm = np.empty(B)                                # ||K_b^c||_F
+    md = np.empty(B)                                 # mean diagonal of K_b
+    for b in range(B):
+        sl = slice(starts[b], starts[b + 1])
+        v[b] = float(proj[sl] @ proj[sl])
+        G = Xc[:, sl].T @ Xc[:, sl]
+        nrm[b] = float(np.sqrt(np.sum(G * G)))
+        md[b] = float(np.mean(np.sum(X[:, sl] ** 2, axis=1)))
+    floor = max(1e-300, float(nrm.max()) * 1e-12) if B else 1e-300
+    live = np.flatnonzero(nrm > floor)
+    h = np.zeros(B)
+    if live.size:
+        if mode == "align":
+            h[live] = np.maximum(v[live], 0.0) / nrm[live]
+        elif mode == "alignf":
+            from scipy.linalg import cholesky, solve_triangular
+            from scipy.optimize import nnls
+            cols = np.concatenate([np.arange(starts[b], starts[b + 1]) for b in live])
+            lstarts = np.concatenate([[0], np.cumsum([starts[b + 1] - starts[b] for b in live])])
+            M = _block_gram_frobenius(Xc[:, cols], lstarts.astype(int), max_chunk_cols)
+            vv = v[live].copy()
+            sc = float(np.mean(nrm[live]))
+            if rho > 0:
+                denom = float(M.sum())
+                h0 = float(vv.sum()) / denom if denom > 1e-300 else 1.0
+                M = M + rho * sc * sc * np.eye(live.size)
+                vv = vv + rho * sc * sc * h0
+            else:
+                M = M + 1e-10 * sc * sc * np.eye(live.size)
+            # min_h>=0 ||A h - b||^2 with A^T A = M and A^T b = vv is min ||R h - R^-T vv||^2
+            # for the Cholesky factor R of M, which is all the NNLS solver needs
+            R = cholesky(M, lower=False)
+            rhs = solve_triangular(R, vv, trans="T", lower=False)
+            h[live], _ = nnls(R, rhs)
+        else:
+            raise ValueError(f"unknown alignment mode {mode!r}; use one of {ALIGN_MODES}")
+    if not np.isfinite(h).all() or h.sum() <= 1e-300:
+        h = np.zeros(B)
+        h[live] = 1.0                                # degenerate: fall back to equal weights
+    ref, cur = float(md[live].sum()), float((h * md).sum())
+    if cur > 1e-300 and ref > 1e-300:
+        h = h * (ref / cur)
+    return np.sqrt(h)
+
+
+def block_weight_summary(keys: Sequence[str], w: Sequence[float]) -> List[Dict[str, float]]:
+    """The weights by kind of block: how many blocks of each kind there are and the mean,
+    smallest and largest weight among them, plus the kind's share of the squared norm of a
+    channel vector whose blocks all have unit root mean square (``sum w^2`` over the kind,
+    normalised over the kinds)."""
+    keys = [str(k) for k in keys]
+    w = np.asarray(w, float)
+    kinds = sorted(set(keys), key=lambda k: (k.count("*"), k))
+    total = float(np.sum(w ** 2)) or 1.0
+    out = []
+    for k in kinds:
+        ws = w[[i for i, kk in enumerate(keys) if kk == k]]
+        out.append({"kind": k, "n_blocks": int(len(ws)), "mean": float(ws.mean()),
+                    "min": float(ws.min()), "max": float(ws.max()),
+                    "share": float(np.sum(ws ** 2) / total)})
+    return out
