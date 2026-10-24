@@ -471,7 +471,7 @@ def channel_weights(model) -> np.ndarray:
         raise RuntimeError("the model is not fitted on an invariant kernel")
     if not model.is_linear:
         raise ValueError("channel weights are defined for the linear kernel layer only")
-    Z = np.asarray(F, float) * np.asarray(model.ac_scale_, float)
+    Z = np.asarray(F, float) * np.asarray(model.ac_column_scale, float)
     Z = Z / np.sqrt(np.maximum(np.sum(Z * Z, axis=1, keepdims=True), 1e-300))
     return Z.T @ np.asarray(model.coef, float)
 
@@ -484,7 +484,7 @@ def top_channels(model, labels: Sequence[str], n: int = 10) -> List[Tuple[str, f
     ``|weight| * spread`` and both are reported.
     """
     w = channel_weights(model)
-    Z = np.asarray(model.ac_train_, float) * np.asarray(model.ac_scale_, float)
+    Z = np.asarray(model.ac_train_, float) * np.asarray(model.ac_column_scale, float)
     Z = Z / np.sqrt(np.maximum(np.sum(Z * Z, axis=1, keepdims=True), 1e-300))
     sd = Z.std(axis=0)
     order = np.argsort(-np.abs(w) * sd)[:n]

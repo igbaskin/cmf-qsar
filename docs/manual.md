@@ -1437,6 +1437,24 @@ a frame (0.172 against 0.189 for the aligned model and 0.072 for counts), and on
 aligned files it frequently beats the aligned model outright — on six of the nine shared targets,
 including thrombin at +0.452 against +0.021.
 
+**Mixing coefficients over the channel blocks.** The channels come in blocks, one per pair of
+field types, each scaled to unit root mean square before all of them enter one cosine-normalised
+dot product. The overlap kernel weights its fields with $h_f$; the three invariant sources
+(autocorrelation, surface, periodic) weight their blocks with `--block-weights` (library:
+`ac_block_weights` on `CMFModel`), one coefficient per block applied to the scaled features before
+the normalisation, so that a block's share of the kernel goes as the square of its weight and a
+weight of zero removes the block exactly. Three ways to set them: `balanced` gives every *kind* of
+block — the pairs within a group of fields, the pairs across two groups — the same share of the
+kernel however many blocks each kind has; `KIND=W,...` names the kinds' weights
+(`indicator=0.3,indicator*physchem=0.5`; unnamed kinds weigh 1); `align` or `alignf` derive one
+weight per block by centred kernel alignment of the per-block kernels (`align_block_weights`, the
+`align_mixing` of the fields carried over, with `--block-rho` the shrinkage of the joint
+solution), re-derived from the training part of every cross-validation fold, so the reported
+$q^2$ never sees the left-out activities. The groups default to the continuous indicator fields
+(`indicator`) against the rest (`physchem`); `--block-groups 'GROUP=field,field;GROUP=cif:*'`
+names others. The fitted weights are printed by kind and stored with the model
+(`block_weight_report`).
+
 ## Crystals: the periodic autocorrelation kernel
 
 The same descriptor for a periodic structure, summed over the neighbour list of one cell with its
@@ -1469,7 +1487,11 @@ linear kernel on four fields -- electrostatic, steric, electronegativity and the
 root of the mass -- reaches a mean absolute error of 117 cm$^{-1}$ on the Matbench folds, 106 with
 a Gaussian layer, against 324 for the dummy predictor and 29 for the best graph network; keeping
 the uniform background improves the 58-field model from 181 to 119 on this task, so the switch is
-worth trying on a property that depends on composition and density. The full table and the
+worth trying on a property that depends on composition and density (the four-field model kept it
+too reaches 92). The element indicator fields dilute the joint kernel — seventeen hundred equally
+scaled element-pair blocks against the ten physico-chemical ones — and `--block-weights` is the
+remedy: with the background kept, the aligned weights take the 59-field model from 119 to 97; they
+do not make it better than the four physico-chemical fields alone. The full table and the
 co-patterns are in `benchmarks/results/matbench_phonons/table.md`.
 
 ## Topomer fields

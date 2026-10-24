@@ -391,3 +391,168 @@ def test_a_model_can_be_fitted_on_the_kernel_with_chirality(world):
     # the chirality setting is part of what the model is, so it must survive a round trip
     assert model._ac_spec().chirality is True
     assert sum(model.ac_blocks_) == model.ac_train_.shape[1]
+
+
+# ----------------------------------------------------------------------------------------------
+# mixing coefficients over the channel blocks: the h_f of the invariant kernels
+# ----------------------------------------------------------------------------------------------
+
+def test_block_weights_of_one_are_the_kernel_as_it_was(world):
+    from cmfqsar.invariant import block_group_keys, group_block_weights
+    from cmfqsar.model import CMFModel
+    fs, _, mf = world
+    table = AtomTable.from_molecules(mf)
+    y = np.array([5.0, 5.4, 6.1, 6.6, 7.0, 7.4])
+    plain = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="autocorrelation",
+                     params={"lam": 0.1})
+    ones = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="autocorrelation",
+                    params={"lam": 0.1}, ac_block_weights={"physchem": 1.0, "x*physchem": 1.0})
+    assert np.allclose(plain.training_kernel(table), ones.training_kernel(table), atol=1e-12)
+    assert ones.ac_block_weights_.shape == (len(ones.ac_blocks_),)
+    assert np.all(ones.ac_block_weights_ == 1.0)
+    plain.fit(AtomTable.from_molecules(mf[:5]), y[:5], cv_folds=0)
+    ones.fit(AtomTable.from_molecules(mf[:5]), y[:5], cv_folds=0)
+    assert np.allclose(plain.predict(table), ones.predict(table), atol=1e-12)
+    # the default grouping puts every field of this set in one group, and an empty mapping
+    # weighs every block one
+    keys = block_group_keys([sp.name for sp in fs.specs])
+    assert set(keys) == {"physchem"} and len(keys) == len(field_pairs(len(fs.specs)))
+    assert np.all(group_block_weights(keys, {}) == 1.0)
+    assert plain.block_weight_report() == []
+
+
+def test_a_zero_weight_removes_a_block_exactly(world):
+    """Two fields kept, every block touching the others weighed zero: the kernel of a field set
+    that holds the two fields alone, to the last digit, since a zero block enters neither the
+    dot products nor the norms."""
+    from cmfqsar.model import CMFModel
+    fs, mols, mf = world
+    table = AtomTable.from_molecules(mf)
+    groups = {"electrostatic": "kept", "steric": "kept"}
+    full = CMFModel(fieldset=fs, normalize=True, kernel_source="autocorrelation",
+                    ac_block_weights={"physchem": 0.0, "physchem*kept": 0.0},
+                    ac_block_groups=groups)
+    K_full = full.training_kernel(table)
+    fs2 = FieldSet.create(physchem=["electrostatic", "steric"], alpha=0.5)
+    table2 = AtomTable.from_molecules([build_fields(m, fs2, f"m{i}") for i, m in enumerate(mols)])
+    small = CMFModel(fieldset=fs2, normalize=True, kernel_source="autocorrelation")
+    assert np.allclose(K_full, small.training_kernel(table2), atol=1e-10)
+    kinds = {r["kind"]: r for r in full.block_weight_report()}
+    assert set(kinds) == {"kept", "physchem", "kept*physchem"}
+    assert kinds["kept"]["n_blocks"] == 3 and kinds["kept"]["min"] == 1.0
+    assert kinds["physchem"]["max"] == 0.0 and kinds["kept*physchem"]["max"] == 0.0
+    assert kinds["kept"]["share"] == pytest.approx(1.0)
+    # either order of the groups names the same kind of block
+    other = CMFModel(fieldset=fs, normalize=True, kernel_source="autocorrelation",
+                     ac_block_weights={"physchem": 0.0, "kept*physchem": 0.0},
+                     ac_block_groups=groups)
+    assert np.allclose(other.training_kernel(table), K_full, atol=1e-12)
+
+
+def test_balanced_weights_give_every_kind_of_block_the_same_share(world):
+    from cmfqsar.invariant import block_sizes
+    from cmfqsar.model import CMFModel
+    fs, _, mf = world
+    table = AtomTable.from_molecules(mf)
+    model = CMFModel(fieldset=fs, normalize=True, kernel_source="autocorrelation",
+                     ac_block_weights="balanced", ac_block_groups={"electrostatic": "q"})
+    model.training_kernel(table)
+    rows = model.block_weight_report()
+    assert {r["kind"] for r in rows} == {"q", "physchem", "physchem*q"}
+    for r in rows:
+        assert r["share"] == pytest.approx(1.0 / 3)
+        assert r["min"] == pytest.approx(1.0 / np.sqrt(r["n_blocks"]))
+    # with the signed three-point block on, the triples are blocks of their own kind too
+    chiral = CMFModel(fieldset=fs, normalize=True, kernel_source="autocorrelation",
+                      ac_chirality=True, ac_block_weights="balanced",
+                      ac_block_groups={"electrostatic": "q"})
+    chiral.training_kernel(table)
+    assert len(chiral.ac_block_weights_) == len(block_sizes(CHIRAL, len(fs.specs)))
+    assert len(chiral.ac_block_keys_) == len(chiral.ac_block_weights_)
+
+
+def test_aligned_weights_follow_the_activity_and_vanish_on_a_dead_block():
+    from scipy.optimize import nnls
+    from cmfqsar.invariant import align_block_weights
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(60, 12))
+    X[:, 9:] = 0.0                                             # a block that is zero throughout
+    y = X[:, :3].sum(axis=1) + 0.1 * rng.normal(size=60)       # the activity lives in block 0
+    w = align_block_weights(X, y, [3, 3, 3, 3])
+    assert w.shape == (4,) and np.isfinite(w).all() and (w >= 0).all()
+    assert w[3] == 0.0 and w[0] > w[1] and w[0] > w[2]
+    # the joint alignment is the non-negative least-squares fit of the centred block kernels to
+    # the ideal kernel, computed here in feature space; check it against the kernels themselves
+    Xc, yc = X - X.mean(axis=0), y - y.mean()
+    A = np.stack([(Xc[:, 3 * b:3 * b + 3] @ Xc[:, 3 * b:3 * b + 3].T).ravel() for b in range(3)],
+                 axis=1)
+    h, _ = nnls(A, np.outer(yc, yc).ravel())
+    md = np.array([np.mean(np.sum(X[:, 3 * b:3 * b + 3] ** 2, axis=1)) for b in range(3)])
+    h *= md.sum() / (h * md).sum()
+    wf = align_block_weights(X, y, [3, 3, 3, 3], mode="alignf", rho=0.0)
+    assert np.allclose(wf[:3], np.sqrt(h), atol=1e-6) and wf[3] == 0.0
+    # the shrinkage pulls the joint solution towards equal weights
+    ws = align_block_weights(X, y, [3, 3, 3, 3], mode="alignf", rho=1.0)
+    assert ws[1] > wf[1] and ws[2] > wf[2] and ws[0] < wf[0]
+    with pytest.raises(ValueError, match="alignment mode"):
+        align_block_weights(X, y, [3, 3, 3, 3], mode="nonsense")
+
+
+def test_the_aligned_model_round_trips_and_re_derives_its_weights_per_fold(tmp_path, world):
+    from cmfqsar.dataio import load_model, save_model
+    from cmfqsar.model import CMFModel, cv_predict
+    fs, _, mf = world
+    y = np.array([5.0, 5.4, 6.1, 6.6, 7.0, 7.4])
+    train = AtomTable.from_molecules(mf[:5])
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="autocorrelation",
+                     params={"lam": 0.1}, ac_block_weights="align",
+                     ac_block_groups={"electrostatic": "q"})
+    model.fit(train, y[:5], cv_folds=3)
+    assert np.isfinite(model.stats.q2)
+    assert model.ac_block_weights_.shape == (len(model.ac_blocks_),)
+    assert (model.ac_block_weights_ >= 0).all() and model.ac_block_weights_.max() > 0
+    want = model.predict(AtomTable.from_molecules(mf[5:]))
+    # the cross-validated predictions were made with weights from the training part of each
+    # fold, not with the weights of the whole set, which would have seen the left-out activities
+    K = model.training_kernel(train, y=y[:5])
+    leaky = cv_predict(K, y[:5], "krr", {"lam": 0.1}, folds=3, seed=0)
+    assert not np.allclose(model.stats.extra["y_cv"], leaky, atol=1e-6)
+    path = str(tmp_path / "aligned.cmf")
+    save_model(path, model)
+    back = load_model(path)[0]
+    assert back.ac_block_weights == "align" and back.ac_block_groups == {"electrostatic": "q"}
+    assert np.allclose(back.ac_block_weights_, model.ac_block_weights_)
+    assert back.block_weight_report() == model.block_weight_report()
+    assert np.allclose(back.predict(AtomTable.from_molecules(mf[5:])), want, atol=1e-12)
+    # asked for the kernel without the activities the weights come from, it says so
+    with pytest.raises(ValueError, match="activities"):
+        CMFModel(fieldset=fs, normalize=True, kernel_source="autocorrelation",
+                 ac_block_weights="align").training_kernel(train)
+
+
+def test_the_search_and_the_nested_cross_validation_keep_the_block_weights(world):
+    from cmfqsar.model import CMFModel, grid_search, nested_cv
+    fs, mols, mf = world
+    table = AtomTable.from_molecules(mf)
+    y = np.array([5.0, 5.4, 6.1, 6.6, 7.0, 7.4])
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="autocorrelation",
+                     ac_block_weights="alignf", ac_block_rho=0.5,
+                     ac_block_groups={"electrostatic": "q"})
+    fresh = model.fresh_copy()
+    assert fresh.ac_block_weights == "alignf" and fresh.ac_block_rho == 0.5
+    assert fresh.ac_block_groups == {"electrostatic": "q"}
+    res = grid_search(table, y, model, [1.0], lams=[0.01, 0.1], folds=3, seed=0)
+    assert len(res.table) == 2 and np.isfinite(res.best_rmse)
+    kw = dict(alphas=[1.0], lams=[0.01, 0.1], outer_folds=3, inner_folds=2, repeats=1, seed=0,
+              precompute=False)
+    ncv = nested_cv(table, y, model, **kw)
+    assert ncv.y_pred.shape == (6,) and np.isfinite(ncv.y_pred).all()
+    # a mapping that weighs everything but one group zero validates as that group's field set
+    only = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="autocorrelation",
+                    ac_block_weights={"physchem": 0.0, "physchem*q": 0.0},
+                    ac_block_groups={"electrostatic": "q"})
+    fs_q = FieldSet.create(physchem=["electrostatic"], alpha=0.5)
+    table_q = AtomTable.from_molecules([build_fields(m, fs_q, f"m{i}") for i, m in enumerate(mols)])
+    alone = CMFModel(fieldset=fs_q, method="krr", normalize=True, kernel_source="autocorrelation")
+    assert np.allclose(nested_cv(table, y, only, **kw).y_pred,
+                       nested_cv(table_q, y, alone, **kw).y_pred, atol=1e-8)

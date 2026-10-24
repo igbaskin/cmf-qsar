@@ -271,3 +271,124 @@ def test_the_matbench_parser():
     assert names == ["mb-1", "mb-2"] and np.allclose(y, [150.0, 300.0])
     assert atoms[0].get_chemical_symbols() == ["Na", "Cl"] and atoms[0].cell[0, 0] == 4.0
     assert atoms[1].pbc.all() and len(atoms[1]) == 1
+
+
+# ----------------------------------------------------------------------------------------------
+# mixing coefficients over the channel blocks: the indicator pairs against the rest
+# ----------------------------------------------------------------------------------------------
+
+def test_zero_weights_on_the_indicator_blocks_are_the_physico_chemical_model(world):
+    """With the indicator pairs and the cross pairs weighed zero, the 8-field model is the
+    3-field model exactly: that is what removing a block means."""
+    from cmfqsar.model import CMFModel
+    fs, _, _ = world
+    crys, y = _series(fs)
+    fs_pc = inorganic_fieldset([])
+    crys_pc, _ = _series(fs_pc)
+    full = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="periodic",
+                    params={"lam": 0.01},
+                    ac_block_weights={"indicator": 0.0, "indicator*physchem": 0.0})
+    small = CMFModel(fieldset=fs_pc, method="krr", normalize=True, kernel_source="periodic",
+                     params={"lam": 0.01})
+    assert np.allclose(full.training_kernel(AtomTable.from_molecules(crys)),
+                       small.training_kernel(AtomTable.from_molecules(crys_pc)), atol=1e-10)
+    full.fit(AtomTable.from_molecules(crys[:7]), y[:7], cv_folds=0)
+    small.fit(AtomTable.from_molecules(crys_pc[:7]), y[:7], cv_folds=0)
+    assert np.allclose(full.predict(AtomTable.from_molecules(crys[7:])),
+                       small.predict(AtomTable.from_molecules(crys_pc[7:])), atol=1e-9)
+    kinds = {r["kind"]: r["n_blocks"] for r in full.block_weight_report()}
+    assert kinds == {"physchem": 6, "indicator": 15, "indicator*physchem": 15}
+    # the co-pattern sees the weights: the removed channels carry no weight
+    w = channel_weights(full)
+    labels = periodic_channel_labels(fs, full._ac_spec())
+    assert all(w[i] == 0.0 for i, lab in enumerate(labels) if "CIF" in lab)
+    assert np.abs(w).max() > 0
+
+
+@pytest.mark.parametrize("mode", ["balanced", "align", "alignf"])
+def test_weighted_models_fit_predict_and_round_trip(tmp_path, world, mode):
+    from cmfqsar.dataio import load_model, save_model
+    from cmfqsar.model import CMFModel
+    fs, _, _ = world
+    crys, y = _series(fs)
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="periodic",
+                     params={"lam": 0.01}, ac_block_weights=mode, ac_block_rho=0.5)
+    model.fit(AtomTable.from_molecules(crys[:7]), y[:7], cv_folds=3)
+    assert np.isfinite(model.stats.q2)
+    here = model.predict(AtomTable.from_molecules(crys[7:]))
+    assert np.isfinite(here).all()
+    sup = crystal_fields(bulk("KBr", "rocksalt", a=6.9).repeat((2, 2, 1)), fs, "sup")
+    assert np.allclose(model.predict(AtomTable.from_molecules([sup])), here, atol=1e-9)
+    rows = model.block_weight_report()
+    assert {r["kind"] for r in rows} == {"physchem", "indicator", "indicator*physchem"}
+    if mode == "balanced":
+        assert all(r["share"] == pytest.approx(1.0 / 3) for r in rows)
+    else:
+        assert np.isfinite(model.ac_block_weights_).all() and (model.ac_block_weights_ >= 0).all()
+    path = str(tmp_path / f"{mode}.cmf")
+    save_model(path, model)
+    back = load_model(path)[0]
+    assert back.ac_block_weights == mode and back.ac_block_rho == 0.5
+    assert back.block_weight_report() == rows
+    assert np.allclose(back.predict(AtomTable.from_molecules(crys[7:])), here, atol=1e-9)
+    assert back.fresh_copy().ac_block_weights == mode
+
+
+def test_the_nested_cross_validation_carries_the_block_weights_into_every_fold(world):
+    from cmfqsar.model import CMFModel, nested_cv
+    fs, _, _ = world
+    crys, y = _series(fs)
+    fs_pc = inorganic_fieldset([])
+    crys_pc, _ = _series(fs_pc)
+    kw = dict(alphas=[1.0], lams=[0.01, 0.1, 1.0], outer_folds=4, inner_folds=2, repeats=1,
+              seed=0, precompute=False)
+    full = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="periodic",
+                    ac_block_weights={"indicator": 0.0, "indicator*physchem": 0.0})
+    small = CMFModel(fieldset=fs_pc, method="krr", normalize=True, kernel_source="periodic")
+    a = nested_cv(AtomTable.from_molecules(crys), y, full, **kw)
+    b = nested_cv(AtomTable.from_molecules(crys_pc), y, small, **kw)
+    assert np.allclose(a.y_pred, b.y_pred, atol=1e-8)
+    plain = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="periodic")
+    c = nested_cv(AtomTable.from_molecules(crys), y, plain, **kw)
+    assert not np.allclose(a.y_pred, c.y_pred, atol=1e-6)      # the weights were not dropped
+    aligned = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="periodic",
+                       ac_block_weights="align")
+    d = nested_cv(AtomTable.from_molecules(crys), y, aligned, **kw)
+    assert d.y_pred.shape == (len(y),) and np.isfinite(d.y_pred).all()
+
+
+def test_the_command_line_takes_the_block_weights(tmp_path, capsys):
+    from ase.io import write
+    from cmfqsar.cli import main
+    from cmfqsar.dataio import load_model
+    rows = [("NaCl", 5.64, 1.0), ("NaCl", 5.9, 1.3), ("NaCl", 5.4, 0.8), ("MgO", 4.21, 2.0),
+            ("MgO", 4.4, 2.3), ("MgO", 4.0, 1.8), ("KBr", 6.6, 0.5), ("KBr", 6.9, 0.7),
+            ("LiF", 4.0, 3.1), ("LiF", 4.2, 2.8)]
+    atoms = []
+    for s, a, v in rows:
+        at = bulk(s, "rocksalt", a=a)
+        at.info["name"], at.info["y"] = f"{s}-{a}", v
+        atoms.append(at)
+    path = str(tmp_path / "rocksalts.extxyz")
+    write(path, atoms, format="extxyz")
+    saved = str(tmp_path / "balanced.cmf")
+    main(["build-crystals", path, "--target", "y", "--elements", "Na,Cl,Mg,O,K,Br",
+          "--block-weights", "balanced", "--folds", "3", "--lams", "0.01,0.1", "--save", saved])
+    out = capsys.readouterr().out
+    assert "Block weights" in out and "indicator*physchem" in out
+    back = load_model(saved)[0]
+    assert back.ac_block_weights == "balanced" and back.ac_block_weights_ is not None
+    # named kinds over named groups, with a pattern; the alignment with the fold-wise re-derivation
+    main(["build-crystals", path, "--target", "y", "--elements", "Na,Cl,Mg,O,K,Br",
+          "--block-weights", "alkali=2,alkali*physchem=0", "--block-groups", "alkali=cif:Na,cif:K",
+          "--folds", "3", "--lams", "0.01"])
+    out = capsys.readouterr().out
+    assert "alkali" in out and "alkali*physchem" in out and "alkali*indicator" in out
+    main(["build-crystals", path, "--target", "y", "--elements", "Na,Cl,Mg,O,K,Br",
+          "--block-weights", "align", "--block-groups", "halide=cif:*l,cif:Br",
+          "--folds", "3", "--lams", "0.01,0.1", "--external-cv", "3"])
+    out = capsys.readouterr().out
+    assert "halide" in out and "External 3-fold CV" in out
+    with pytest.raises(SystemExit, match="no field matches"):
+        main(["build-crystals", path, "--target", "y", "--block-weights", "balanced",
+              "--block-groups", "x=cif:Xe"])

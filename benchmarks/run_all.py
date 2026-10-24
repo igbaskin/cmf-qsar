@@ -182,7 +182,7 @@ def registry() -> List[Benchmark]:
         Benchmark("matbench_phonons", "continuous molecular fields of crystals: the periodic "
                   "autocorrelation kernel on the Matbench phonons task (downloads the 460 kB task "
                   "file into benchmarks/cache on the first run)",
-                  "run_matbench_phonons.py", "matbench_phonons", compute=[["--force"]], minutes="15",
+                  "run_matbench_phonons.py", "matbench_phonons", compute=[["--force"]], minutes="25",
                   report=lambda: _mod("run_matbench_phonons").report(_r("matbench_phonons/table.md")),
                   tables=["matbench_phonons/table.md"],
                   readme=["Crystals: the periodic autocorrelation"]),
