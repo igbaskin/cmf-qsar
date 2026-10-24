@@ -609,7 +609,7 @@ matter more than the view, and *Restore default layout*.
 reference…*; *Align by prediction confidence (GP variance)…* and its cross-validated form for the
 training set; *Replace molecules by their topomer substituents…*; *Field difference from a
 reference molecule…*; *Extract pharmacophore from the co-field…*; *Model two endpoints (selectivity co-field)…*;
-*Chemical space map (GTM)…*;
+*Chemical space map…*;
 *Align decoys to the training set…*; *Unalign (randomise poses)…*; *Center view on current
 molecule*; *Quantum-chemical properties with ORCA…* and *Save the data set with its
 properties (SDF)…*; and the submenu *Heterogeneous sets (several chemotypes)* with its four numbered steps.
@@ -1470,12 +1470,24 @@ the $\rho$ the dialog reports in the log is the measurement that says how much.
 
 ## Chemical space maps
 
-*Tools → Chemical space map (GTM)…* builds a two-dimensional map of the set from the CMF kernels.
+*Tools → Chemical space map…* builds a two-dimensional map of the set from the CMF kernels.
 Fields are not vectors, so Generative Topographic Mapping cannot be applied to them directly; the
 program performs kernel PCA on the CMF kernel — which is functional PCA, and reproduces
 feature-space distances exactly — and runs the ordinary EM fit of GTM in those coordinates. The
 out-of-sample projection stays a single kernel row, so new molecules can be placed on an existing
 map.
+
+**Two projections, and they answer different questions.** The *Projection* box chooses between the
+GTM landscape and the **kernel PCA score plot**, which draws the functional principal components
+themselves — by default the first two, with any other pair available. The GTM spreads the set over
+a square grid, which is what makes a landscape possible, but it is a nonlinear mapping: a tight
+cluster is pushed apart to fill the grid and no distance on the map can be read as a distance
+between molecules. The score plot is the linear projection the GTM is fitted on, so its distances
+are the kernel's own as far as the two eigenvalues reach, and each axis is labelled with the share
+of the kernel variance its component explains — on the steroid set, 32.9 % and 15.1 %. Ask the map
+*where the activity lives*; ask the score plot *whether this series is one cluster or three*, and
+how much of the kernel a flat picture of it can honestly show. The score plot needs no EM fit, so
+it also costs a fraction of the time.
 
 From the responsibilities follow the **activity landscape** (responsibility-weighted mean activity
 per node), the **class landscape** (the fraction of actives) and the **data density**, which is a

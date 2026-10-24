@@ -229,7 +229,7 @@ class GTMDialog(QDialog):
 
     def __init__(self, n_mol: int, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Chemical space map (GTM)")
+        self.setWindowTitle("Chemical space map")
         lay = QVBoxLayout(self)
         info = QLabel(
             "The molecules are described by their CMF kernels, whose leading functional principal "
@@ -247,6 +247,13 @@ class GTMDialog(QDialog):
         self.cmb_which = QComboBox()
         self.cmb_which.addItems(["training molecules", f"all molecules ({n_mol})"])
         form.addRow("Map:", self.cmb_which)
+        self.cmb_projection = QComboBox()
+        self.cmb_projection.addItems(["GTM landscape", "kernel PCA score plot"])
+        self.cmb_projection.setToolTip(
+            "The GTM spreads the set over a square grid, which makes a landscape possible but\n"
+            "distorts distances; the score plot is the linear projection the GTM is fitted on,\n"
+            "where distances are the kernel's own and the axes carry their share of its variance.")
+        form.addRow("Projection:", self.cmb_projection)
         self.cmb_colour = QComboBox()
         self.cmb_colour.addItems(["activity landscape", "class landscape", "data density"])
         form.addRow("Landscape:", self.cmb_colour)
@@ -264,6 +271,29 @@ class GTMDialog(QDialog):
         self.spin_comp.setValue(15)
         self.spin_comp.setToolTip("Functional principal components of the kernel kept before mapping")
         form.addRow("Components:", self.spin_comp)
+        prow = QHBoxLayout()
+        self.spin_pc_x = QSpinBox()
+        self.spin_pc_x.setRange(1, 200)
+        self.spin_pc_x.setValue(1)
+        self.spin_pc_y = QSpinBox()
+        self.spin_pc_y.setRange(1, 200)
+        self.spin_pc_y.setValue(2)
+        for w in (self.spin_pc_x, self.spin_pc_y):
+            w.setToolTip("Which two components the score plot draws")
+            w.setEnabled(False)
+        prow.addWidget(self.spin_pc_x)
+        prow.addWidget(self.spin_pc_y)
+        prow.addStretch(1)
+        form.addRow("Components plotted:", prow)
+
+        def _projection_changed(i):
+            score = i == 1
+            for w in (self.spin_pc_x, self.spin_pc_y):
+                w.setEnabled(score)
+            for w in (self.spin_grid, self.spin_rbf):
+                w.setEnabled(not score)       # the grid and its bases belong to the GTM alone
+
+        self.cmb_projection.currentIndexChanged.connect(_projection_changed)
         row = QHBoxLayout()
         self.chk_small_alpha = QCheckBox("alignment-free (small attenuation)")
         self.spin_alpha = QDoubleSpinBox()
@@ -1402,7 +1432,7 @@ class MainWindow(QMainWindow):
         self._act(tm, "Extract pharmacophore from the co-field…", self.pharmacophore_dialog)
         self._act(tm, "Model two endpoints (selectivity co-field)…",
                   self.selectivity_dialog)
-        self._act(tm, "Chemical space map (GTM)…", self.gtm_map_dialog)
+        self._act(tm, "Chemical space map…", self.gtm_map_dialog)
         tm.addSeparator()
         self._act(tm, "Align decoys to the training set…", self.align_decoys_dialog)
         self._act(tm, "Unalign (randomise poses)…", self.unalign_dialog)
@@ -3442,6 +3472,35 @@ class MainWindow(QMainWindow):
         write_pdb(pdb, feats)
         self.log(f"Pharmacophore written to {path} and {pdb}")
 
+    def _show_score_plot(self, cmap, idx, act, colour_by, target, pc_x, pc_y) -> None:
+        """Draw the functional principal components themselves, with no landscape behind them."""
+        ds = self.ds
+        kept = cmap.scores_.shape[1]
+        if pc_x >= kept or pc_y >= kept:
+            self.log(f"Chemical space map: only {kept} components have non-zero variance; "
+                     f"plotting the first two instead.")
+            pc_x, pc_y = 0, min(1, kept - 1)
+        ratio = cmap.kpca.explained_variance_ratio
+        if colour_by == 1 and target is not None:
+            values = np.asarray([target[i] for i in idx], dtype=float)
+            what, cm = "class", "inferno"
+        elif colour_by == 1:
+            values, what, cm = None, "no class set", "viridis"
+        elif colour_by == 2:
+            values, what, cm = None, "uncoloured", "viridis"
+        else:
+            values, what, cm = act, (ds.activity_prop or "activity"), "viridis"
+        self.results_panel.set_scatter(
+            cmap.scores(pc_x, pc_y), values, [ds.names[i] for i in idx], idx,
+            title=f"kernel PCA score plot ({what})", cmap=cm,
+            xlabel=f"PC{pc_x + 1} ({100 * ratio[pc_x]:.1f} % of the kernel variance)",
+            ylabel=f"PC{pc_y + 1} ({100 * ratio[pc_y]:.1f} %)")
+        self.results_panel.tabs.setCurrentIndex(self.results_panel.tab_map)
+        self.log(f"Kernel PCA score plot: {len(idx)} molecules, PC{pc_x + 1} vs PC{pc_y + 1} "
+                 f"({100 * (ratio[pc_x] + ratio[pc_y]):.0f} % of the kernel variance between them; "
+                 f"{kept} components kept explain {100 * ratio.sum():.0f} %). "
+                 f"The projection is linear, so the distances in the plot are the kernel's own.")
+
     def gtm_map_dialog(self):
         """Chemical space map and activity landscape from the CMF kernels (kernel PCA + GTM)."""
         if self.ds is None:
@@ -3468,12 +3527,23 @@ class MainWindow(QMainWindow):
         mols, names = ds.mols, ds.names
         colour_by = dlg.cmb_colour.currentIndex()
         target = getattr(self, "model_target", None)
+        scores_only = dlg.cmb_projection.currentIndex() == 1
+        pc_x, pc_y = dlg.spin_pc_x.value() - 1, dlg.spin_pc_y.value() - 1
+        if scores_only and pc_x == pc_y:
+            QMessageBox.information(self, "Same component twice",
+                                    "Choose two different components to plot.")
+            return
+        if scores_only:
+            comps = max(comps, pc_x + 1, pc_y + 1)
 
         def task(progress, cancel):
             from ..gtm import CMFMap
             mf = [build_fields(mols[i], fs, names[i]) for i in idx]
             cmap = CMFMap(n_components=comps, grid=grid, rbf=rbf, normalize=True)
-            cmap.fit(AtomTable.from_molecules(mf), fs, progress=progress)
+            if scores_only:
+                cmap.fit_pca(AtomTable.from_molecules(mf), fs, progress=progress)
+            else:
+                cmap.fit(AtomTable.from_molecules(mf), fs, progress=progress)
             return cmap, mf
 
         def done(out):
@@ -3481,6 +3551,9 @@ class MainWindow(QMainWindow):
             self.gtm_map = cmap
             self.gtm_map_idx = idx
             act = ds.activity[idx]
+            if scores_only:
+                self._show_score_plot(cmap, idx, act, colour_by, target, pc_x, pc_y)
+                return
             if colour_by == 0:                       # activity
                 land = cmap.activity_landscape(act)
                 values, title = act, f"activity landscape ({ds.activity_prop or 'activity'})"

@@ -112,5 +112,42 @@ def test_cmf_map_on_molecules_and_projection():
     assert np.linalg.norm(back[0] - cmap.coords_[0]) < 0.2
 
 
+def test_fit_pca_gives_the_scores_without_the_map():
+    """The score plot needs the components only, and must not look like a fitted map."""
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+
+    from cmfqsar.fields import AtomTable, FieldSet, build_fields
+
+    smis = ["c1ccccc1C", "c1ccccc1CC", "c1ccccc1CCC", "c1ccccc1O", "c1ccccc1N",
+            "c1ccccc1Cl", "c1ccccc1F", "c1ccc(C)cc1C", "c1ccc(O)cc1C"]
+    mols = []
+    for smi in smis:
+        m = Chem.AddHs(Chem.MolFromSmiles(smi))
+        AllChem.EmbedMolecule(m, randomSeed=0xC0FFEE)
+        Chem.SanitizeMol(m)
+        mols.append(m)
+    fs = FieldSet.create(alpha=0.6)
+    table = AtomTable.from_molecules([build_fields(m, fs, f"m{i}") for i, m in enumerate(mols)])
+
+    cmap = CMFMap(n_components=5).fit_pca(table, fs)
+    assert cmap.gtm is None and cmap.R_ is None and cmap.coords_ is None
+    assert cmap.scores_.shape[0] == len(smis)
+    xy = cmap.scores(0, 1)
+    assert xy.shape == (len(smis), 2)
+    assert np.allclose(xy[:, 0], cmap.scores_[:, 0])
+    assert np.allclose(xy[:, 1], cmap.scores_[:, 1])
+    # the components come out in order, so the first explains at least as much as the second
+    r = cmap.kpca.explained_variance_ratio
+    assert r[0] >= r[1] and abs(r.sum() - 1.0) < 1e-9
+    with pytest.raises(IndexError):
+        cmap.scores(0, cmap.scores_.shape[1])
+
+    # the full fit keeps the same scores and adds the map on top of them
+    full = CMFMap(n_components=5, grid=8, rbf=3, n_iter=20).fit(table, fs)
+    assert full.scores_ is not None and full.gtm is not None
+    assert np.allclose(np.abs(full.scores_), np.abs(cmap.scores_))
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-v"]))

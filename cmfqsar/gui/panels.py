@@ -1816,11 +1816,48 @@ class ResultsPanel(QWidget):
             self.map_img.setColorMap(pg.colormap.get(cmap))
         except Exception:                                       # noqa: BLE001
             pass
+        for side, text in (("bottom", "latent coordinate 1"),
+                           ("left", "latent coordinate 2")):
+            self.map_plot.getAxis(side).enableAutoSIPrefix(True)
+            self.map_plot.setLabel(side, text)
         self._map_data = {"coords": None if coords is None else np.asarray(coords, dtype=float),
                           "values": None if values is None else np.asarray(values, dtype=float),
                           "names": names, "indices": indices, "cmap": cmap, "lo": lo, "hi": hi}
         self._draw_map_points()
         self.map_plot.setTitle(title)
+        self.tabs.setTabVisible(self.tab_map, True)
+
+    def set_scatter(self, coords, values=None, names=None, indices=None, title: str = "",
+                    cmap: str = "viridis", xlabel: str = "", ylabel: str = "") -> None:
+        """Molecules as points with nothing behind them: the kernel-PCA score plot.
+
+        The landscape of a GTM fills the square it is drawn on, so the eye has somewhere to put
+        every molecule.  A score plot has no such backdrop and must not pretend to one -- what
+        it shows is the spacing of the points themselves, which is why the axes carry the share
+        of the kernel variance each component explains and the aspect ratio stays locked.
+        """
+        coords = None if coords is None else np.asarray(coords, dtype=float)
+        if coords is None or not len(coords):
+            self.tabs.setTabVisible(self.tab_map, False)
+            return
+        self.map_img.clear()
+        v = None if values is None else np.asarray(values, dtype=float)
+        lo, hi = 0.0, 1.0
+        if v is not None and np.isfinite(v).any():
+            lo, hi = float(np.nanmin(v)), float(np.nanmax(v))
+        if hi <= lo:
+            hi = lo + 1.0
+        self._map_data = {"coords": coords, "values": v, "names": names, "indices": indices,
+                          "cmap": cmap, "lo": lo, "hi": hi}
+        self._draw_map_points()
+        for side, text in (("bottom", xlabel or "component 1"),
+                           ("left", ylabel or "component 2")):
+            # the label already carries a figure in brackets, and pyqtgraph's own
+            # "(x0.001)" beside it reads as if that figure had been scaled
+            self.map_plot.getAxis(side).enableAutoSIPrefix(False)
+            self.map_plot.setLabel(side, text)
+        self.map_plot.setTitle(title)
+        self.map_plot.enableAutoRange()
         self.tabs.setTabVisible(self.tab_map, True)
 
     def _draw_map_points(self, *_):

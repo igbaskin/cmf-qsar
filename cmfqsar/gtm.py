@@ -268,6 +268,7 @@ class CMFMap:
     fieldset_: Optional[object] = None
     coords_: Optional[np.ndarray] = None      # latent coordinates of the fitted molecules
     R_: Optional[np.ndarray] = None           # their responsibilities
+    scores_: Optional[np.ndarray] = None      # their functional principal component scores
 
     # ------------------------------------------------------------------ kernels
     def _kernel(self, P, Q=None):
@@ -280,15 +281,42 @@ class CMFMap:
         h = self.fieldset_.mixing_vector()
         return np.tensordot(h / max(h.sum(), 1e-12), K, axes=(0, 0))
 
-    def fit(self, table, fieldset, progress: Optional[Callable[[str, float], None]] = None) -> "CMFMap":
+    def fit_pca(self, table, fieldset,
+                progress: Optional[Callable[[str, float], None]] = None) -> "CMFMap":
+        """The kernel and its functional principal components, without the map.
+
+        The score plot needs no GTM, and the GTM is the slow half -- a hundred EM iterations
+        against one eigendecomposition.  It also leaves ``gtm`` and ``R_`` as None, so a map
+        fitted this far cannot be mistaken for one that can carry a landscape.
+        """
         self.train_, self.fieldset_ = table, fieldset
         if progress:
-            progress("Computing the kernel matrix", 0.1)
+            progress("Computing the kernel matrix", 0.2)
         K = self._kernel(table)
         if progress:
-            progress("Functional principal components", 0.5)
+            progress("Functional principal components", 0.7)
         self.kpca = KernelPCA(n_components=self.n_components).fit(K)
-        T = self.kpca.transform()
+        self.scores_ = self.kpca.transform()
+        return self
+
+    def scores(self, i: int = 0, j: int = 1) -> np.ndarray:
+        """The fitted molecules on two principal components, as an (N, 2) array.
+
+        Unlike the latent coordinates of the map, these are distances one may read: the
+        projection is linear and orthogonal, so the plane is a faithful shadow of the kernel
+        geometry as far as its two eigenvalues reach.
+        """
+        if self.scores_ is None:
+            raise RuntimeError("fit the map first")
+        d = self.scores_.shape[1]
+        if not (0 <= i < d and 0 <= j < d):
+            raise IndexError(f"only {d} components were kept")
+        return np.column_stack([self.scores_[:, i], self.scores_[:, j]])
+
+    def fit(self, table, fieldset, progress: Optional[Callable[[str, float], None]] = None) -> "CMFMap":
+        self.fit_pca(table, fieldset,
+                     progress=(lambda m, f: progress(m, 0.6 * f)) if progress else None)
+        T = self.scores_
         if progress:
             progress("Fitting the map", 0.6)
         self.gtm = GTM(grid=self.grid, rbf=self.rbf, rbf_width=self.rbf_width, reg=self.reg,
