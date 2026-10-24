@@ -92,6 +92,119 @@ class AutocorrelationSpec:
         return len(self.shell_centres)
 
 
+@dataclass(frozen=True)
+class SurfaceSpec:
+    """The in-plane distance grid and the height grid of the surface autocorrelation.
+
+    A molecule on a surface has one direction that is not like the others: the normal.  Heights
+    above the surface are physical and stay as they are; what is arbitrary is where the molecule
+    sits in the plane and how it is turned about the normal.  The descriptor is the two-point
+    distribution of the field weights over the *in-plane* distance rho, resolved by the heights
+    of both atoms,
+
+        Phi_fg(rho_k, z_i, z_j) = sum_l sum_m w_lf w_mg exp(-(rho_lm - rho_k)^2 / 2 sigma^2)
+                                              exp(-(z_l - z_i)^2 / 2 sigma_z^2)
+                                              exp(-(z_m - z_j)^2 / 2 sigma_z^2),
+
+    which is invariant to translations in the plane and rotations about the normal, and to
+    nothing else.  Averaged over the direction of rho it is, by the Wiener-Khinchin theorem,
+    the same information as the in-plane power spectrum |F_f(k, z_i) F_g(k, z_j)| of the fields:
+    a description of the molecule over the surface in reciprocal space in the plane and in
+    real space along the normal.  The surface is at z = 0 and the normal is +z, which is how
+    examples/uma_fe110_adsorption.py writes its poses.
+    """
+    d_max: float = 12.0
+    step: float = 0.75
+    sigma: float = 0.75              # width along the in-plane distance axis
+    z_min: float = 1.0
+    z_max: float = 6.0
+    z_step: float = 1.0
+    z_sigma: float = 1.0             # width along the height axis
+    include_self: bool = True
+
+    @property
+    def centres(self) -> np.ndarray:
+        n = max(int(round(self.d_max / self.step)) + 1, 1)
+        return np.arange(n, dtype=float) * self.step
+
+    @property
+    def heights(self) -> np.ndarray:
+        n = max(int(round((self.z_max - self.z_min) / self.z_step)) + 1, 1)
+        return self.z_min + np.arange(n, dtype=float) * self.z_step
+
+    @property
+    def n_bins(self) -> int:
+        """Channels per pair of field types: distances times heights squared."""
+        return len(self.centres) * len(self.heights) ** 2
+
+
+def surface_autocorrelation(mol: MoleculeFields, spec: SurfaceSpec = SurfaceSpec(),
+                            pairs: Optional[Sequence[Tuple[int, int]]] = None) -> np.ndarray:
+    """Surface autocorrelation of one molecule, flattened: (n_pairs * n_rho * n_z * n_z,).
+
+    For a pair of different field types both orders are summed (f at z_i with g at z_j, and
+    g at z_i with f at z_j), as the three-dimensional descriptor counts a pair both ways round.
+    """
+    W = np.asarray(mol.weights, float)
+    n_atoms, n_fields = W.shape
+    pairs = list(pairs) if pairs is not None else field_pairs(n_fields)
+    centres, heights = spec.centres, spec.heights
+    if n_atoms == 0:
+        return np.zeros(len(pairs) * spec.n_bins)
+    xy = np.asarray(mol.coords, float)[:, :2]
+    z = np.asarray(mol.coords, float)[:, 2]
+    rho = np.linalg.norm(xy[:, None, :] - xy[None, :, :], axis=-1)
+    if not spec.include_self:
+        np.fill_diagonal(rho, np.inf)
+    B = np.exp(-((rho[:, :, None] - centres[None, None, :]) ** 2) / (2.0 * spec.sigma ** 2))
+    Z = np.exp(-((z[:, None] - heights[None, :]) ** 2) / (2.0 * spec.z_sigma ** 2))
+    out = np.empty((len(pairs), len(centres), len(heights), len(heights)))
+    for i, (f, g) in enumerate(pairs):
+        t = np.einsum("a,b,abk,ai,bj->kij", W[:, f], W[:, g], B, Z, Z, optimize=True)
+        if f != g:
+            t = t + np.einsum("a,b,abk,ai,bj->kij", W[:, g], W[:, f], B, Z, Z, optimize=True)
+        out[i] = t
+    return out.ravel()
+
+
+def surface_block_sizes(spec: SurfaceSpec, n_fields: int) -> List[int]:
+    return [spec.n_bins] * len(field_pairs(n_fields))
+
+
+def surface_channel_labels(fieldset: FieldSet, spec: SurfaceSpec) -> List[str]:
+    """One label per feature: the field types, the in-plane distance and the two heights."""
+    names = [s.label for s in fieldset.specs]
+    out = []
+    for f, g in field_pairs(len(names)):
+        pair = names[f] if f == g else f"{names[f]} x {names[g]}"
+        for d in spec.centres:
+            for zi in spec.heights:
+                for zj in spec.heights:
+                    out.append(f"{pair} @ rho {d:.2f} A, z {zi:.1f} / {zj:.1f} A")
+    return out
+
+
+def surface_feature_matrix(mols: Sequence[MoleculeFields], spec: SurfaceSpec = SurfaceSpec(),
+                           n_fields: Optional[int] = None, progress=None) -> np.ndarray:
+    """Surface autocorrelation features of a set of molecules, one row each."""
+    if not len(mols):
+        return np.zeros((0, 0))
+    n_fields = n_fields if n_fields is not None else mols[0].weights.shape[1]
+    pairs = field_pairs(n_fields)
+    width = sum(surface_block_sizes(spec, n_fields))
+    out = np.zeros((len(mols), width))
+    for i, m in enumerate(mols):
+        if m.weights.shape[1] != n_fields:
+            raise ValueError(
+                f"{m.name or f'molecule {i}'} carries {m.weights.shape[1]} fields where the set "
+                f"carries {n_fields}: build the fields of every molecule from one field set.")
+        row = surface_autocorrelation(m, spec, pairs)
+        out[i] = row
+        if progress is not None and i % 25 == 0:
+            progress(f"Surface autocorrelation {i + 1}/{len(mols)}", i / max(len(mols), 1))
+    return out
+
+
 def field_pairs(n_fields: int) -> List[Tuple[int, int]]:
     """The unordered pairs of field types, diagonal first: (0,0), (1,1), ..., then (0,1), ..."""
     return ([(f, f) for f in range(n_fields)]

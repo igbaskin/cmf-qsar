@@ -437,6 +437,55 @@ with them (same molecules, registration and nested cross-validation as before; t
   number; they would matter for a target that is electronic rather than geometric, which E_ads
   from this tier is not.
 
+## The surface kernel: no in-plane alignment (2026-10-24)
+
+A new kernel source in the package, `kernel_source="surface"` (`cmfqsar/invariant.py`,
+`SurfaceSpec`; `cmf build --kernel surface`): the two-point distribution of the field weights
+over the *in-plane* distance, resolved by the heights of both atoms above a surface at z = 0,
+
+    Phi_fg(rho, z, z') = sum_lm w_lf w_mg exp(-(rho_lm - rho)^2 / 2 s^2) exp(-(z_l - z)^2 / 2 s_z^2) exp(-(z_m - z')^2 / 2 s_z^2),
+
+on a grid of in-plane distances (0-12 A in steps of 0.75) and heights (1-6 A in steps of 1).
+It is invariant to translation in the plane and rotation about the normal and to nothing
+else; averaged over the direction of rho it is, by Wiener-Khinchin, the in-plane power spectrum
+of the fields at each height: reciprocal space in the plane, real space along the normal.  The
+kernel is the cosine-normalised inner product of the channels, scaled per field pair, exactly
+as the three-dimensional autocorrelation kernel is built.  Tests in
+`tests/test_surface_invariant.py`; the fix that went with it: `nested_cv` rebuilt its fold
+models from a short list of settings that dropped the kernel source, so any invariant kernel
+validated through it had silently been the overlap kernel at one alpha (`CMFModel.fresh_copy`
+now carries every setting, with a regression test).
+
+`surface_kernel_eads.py` on the UMA poses exactly as written (`surface_kernel_eads.csv`):
+
+| model | alignment | q2 (external CV, 10 repeats) | RMSE, kJ/mol |
+|---|---|---|---|
+| overlap fields | poses registered in the plane by MCS | 0.52 +- 0.04 | 36.9 |
+| overlap fields | poses as written | 0.51 +- 0.04 | 37.4 |
+| overlap fields | poses shuffled in the plane | 0.48 +- 0.04 | 38.3 |
+| **surface kernel** (s 0.75, z 1-6 step 1) | none; poses as written | **0.66 +- 0.03** | 31.2 |
+| surface kernel (s 0.5, z step 0.5) | none | 0.65 +- 0.02 | 31.5 |
+| surface kernel (s 1.0, z 1-7 step 1.5) | none | 0.66 +- 0.03 | 31.2 |
+| surface kernel | poses shuffled in the plane | 0.66 +- 0.03 (identical predictions) | 31.2 |
+| 3D autocorrelation (height thrown away) | none | 0.11 +- 0.08 | 50.2 |
+
+- With no alignment step at all the surface kernel beats the registered overlap model, 0.66
+  against 0.52, and its numbers do not change when every pose is turned and shifted at random
+  in the plane.  The grids hardly matter (0.65-0.66 over three settings).
+- The height is the information: the same descriptor with the height axis removed (the
+  three-dimensional autocorrelation, invariant to every rigid motion) falls to 0.11.  Which
+  field is at which height above the surface, and how far apart in the plane, is what the UMA
+  energies depend on; where the molecule sits over the lattice is not.
+- This answers the alignment question for the adsorption tier in the cleanest way available:
+  the surface frame needs only the normal, and the in-plane registration that MCS provided
+  was never doing anything.  It also raises the ceiling of the E_ads target from about 0.5 to
+  about 0.65, which is the number to quote for "can CMF learn an ML adsorption energy".
+- What is lost is the co-field: a model on this kernel has no field in a fixed frame to draw.
+  The decomposition that survives is per channel (which pair of fields, at which in-plane
+  distance and heights), as for the three-dimensional kernel.  The lattice-registry variant
+  (projection on the Fe(110) reciprocal lattice) was not built; the result above says the
+  registry carries little for this target.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,

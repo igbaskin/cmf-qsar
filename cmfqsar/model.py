@@ -534,11 +534,16 @@ class CMFModel:
     scale_fields: bool = True               # scale each field kernel to unit mean diagonal
     # where the kernel comes from: the overlap integrals of the fields, which needs the molecules
     # to share a frame, or the rotation-invariant autocorrelation of those fields, which does not
-    kernel_source: str = "fields"           # "fields" | "autocorrelation"
+    kernel_source: str = "fields"           # "fields" | "autocorrelation" | "surface"
     ac_sigma: float = 0.75                  # autocorrelation: width along the distance axis (A)
     ac_d_max: float = 12.0                  # autocorrelation: longest distance resolved (A)
     ac_chirality: bool = False              # autocorrelation: add the three-point signed block
     ac_chirality_shells: int = 4            # autocorrelation: radial shells of that block
+    # "surface": the in-plane autocorrelation resolved by height above a surface at z = 0
+    # (invariant to translation in the plane and rotation about the normal; see invariant.py)
+    surf_z_min: float = 1.0                 # surface: lowest height channel (A)
+    surf_z_max: float = 6.0                 # surface: highest height channel (A)
+    surf_z_step: float = 1.0                # surface: spacing and width of the height channels
     # optional nonlinear layer on top of the CMF kernel: "linear" keeps the model linear in the
     # molecular field, which is what makes the co-field and the atom contributions valid; the other
     # layers predict better on several sets but destroy that interpretation (see the README)
@@ -673,17 +678,46 @@ class CMFModel:
         """True when the kernel is the overlap integral, which is what needs a common frame."""
         return self.kernel_source in (None, "", "fields")
 
+    def fresh_copy(self) -> "CMFModel":
+        """An unfitted model with every setting of this one: the field set (copied), learner,
+        parameters, normalisation, bias, kernel layer and kernel source with its widths and
+        heights.  The nested cross-validation builds its fold models from this, so that a model
+        on the autocorrelation or surface kernel is validated as the kernel it is."""
+        return CMFModel(fieldset=self.fieldset.copy(), task=self.task, method=self.method,
+                        params=dict(self.params), normalize=self.normalize,
+                        scale_fields=self.scale_fields, fit_bias=self.fit_bias,
+                        kernel_layer=self.kernel_layer, kernel_source=self.kernel_source,
+                        ac_sigma=self.ac_sigma, ac_d_max=self.ac_d_max,
+                        ac_chirality=self.ac_chirality, ac_chirality_shells=self.ac_chirality_shells,
+                        surf_z_min=self.surf_z_min, surf_z_max=self.surf_z_max,
+                        surf_z_step=self.surf_z_step)
+
+    @property
+    def on_surface(self) -> bool:
+        """True for the surface kernel: in-plane invariant, height kept."""
+        return self.kernel_source == "surface"
+
     def _ac_spec(self):
-        from .invariant import AutocorrelationSpec
+        from .invariant import AutocorrelationSpec, SurfaceSpec
+        if self.on_surface:
+            return SurfaceSpec(d_max=float(self.ac_d_max), step=float(self.ac_sigma),
+                               sigma=float(self.ac_sigma), z_min=float(self.surf_z_min),
+                               z_max=float(self.surf_z_max), z_step=float(self.surf_z_step),
+                               z_sigma=float(self.surf_z_step))
         return AutocorrelationSpec(d_max=float(self.ac_d_max), step=float(self.ac_sigma),
                                    sigma=float(self.ac_sigma),
                                    chirality=bool(self.ac_chirality),
                                    chirality_shells=int(self.ac_chirality_shells))
 
+    def _ac_blocks(self, n_fields: int):
+        from .invariant import block_sizes, surface_block_sizes
+        spec = self._ac_spec()
+        return surface_block_sizes(spec, n_fields) if self.on_surface else block_sizes(spec, n_fields)
+
     def _ac_features(self, table: AtomTable) -> np.ndarray:
-        from .invariant import feature_matrix
-        return feature_matrix(table.molecules, self._ac_spec(),
-                              n_fields=table.weights.shape[1])
+        from .invariant import feature_matrix, surface_feature_matrix
+        fn = surface_feature_matrix if self.on_surface else feature_matrix
+        return fn(table.molecules, self._ac_spec(), n_fields=table.weights.shape[1])
 
     def training_kernel(self, train: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """The joint training kernel, whichever source it comes from."""
@@ -691,16 +725,16 @@ class CMFModel:
             return self.joint_kernel(self.prepare_training_kernels(train, progress=progress,
                                                                    cancel=cancel),
                                      train.descriptors)
-        from .invariant import autocorrelation_kernel, block_sizes, channel_scale
+        from .invariant import autocorrelation_kernel, channel_scale
         if progress:
-            progress("Field autocorrelation", 0.2)
+            progress("Surface autocorrelation" if self.on_surface else "Field autocorrelation", 0.2)
         self.train = train
         self.self_diag = None
         self.K_fields_train = None
         self.scale = np.ones(1)
         spec = self._ac_spec()
         self.ac_train_ = self._ac_features(train)
-        self.ac_blocks_ = block_sizes(spec, train.weights.shape[1])
+        self.ac_blocks_ = self._ac_blocks(train.weights.shape[1])
         self.ac_scale_ = channel_scale(self.ac_train_, spec.n_bins, blocks=self.ac_blocks_)
         return autocorrelation_kernel(self.ac_train_, scale=self.ac_scale_, n_bins=spec.n_bins,
                                       blocks=self.ac_blocks_)
@@ -728,7 +762,9 @@ class CMFModel:
             raise ValueError(
                 f"{what} are defined for the overlap-integral kernel, which is a function of the "
                 f"fields in a common frame; this model uses the '{self.kernel_source}' kernel, "
-                f"which is invariant to rotation and so has no field in a fixed frame to show. "
+                f"which is invariant to rotation"
+                f"{' about the surface normal' if self.on_surface else ''} and so has no field "
+                f"in a fixed frame to show. "
                 f"The contributions of the training molecules remain valid.")
 
     def joint_kernel(self, K_fields: np.ndarray, desc: Optional[np.ndarray] = None) -> np.ndarray:
@@ -1252,6 +1288,9 @@ class CMFModel:
             "ac_chirality": self.ac_chirality,
             "ac_chirality_shells": self.ac_chirality_shells,
             "ac_d_max": self.ac_d_max,
+            "surf_z_min": self.surf_z_min,
+            "surf_z_max": self.surf_z_max,
+            "surf_z_step": self.surf_z_step,
             "ac_train": getattr(self, "ac_train_", None),
             "ac_scale": getattr(self, "ac_scale_", None),
             # the descriptor block: its standardisation and scale belong to the training set
@@ -1276,6 +1315,9 @@ class CMFModel:
         m.ac_chirality = bool(st.get("ac_chirality", False))
         m.ac_chirality_shells = int(st.get("ac_chirality_shells", 4))
         m.ac_d_max = float(st.get("ac_d_max", 12.0))
+        m.surf_z_min = float(st.get("surf_z_min", 1.0))
+        m.surf_z_max = float(st.get("surf_z_max", 6.0))
+        m.surf_z_step = float(st.get("surf_z_step", 1.0))
         m.ac_train_ = st.get("ac_train")
         m.ac_scale_ = st.get("ac_scale")
         m.base_diag_ = st.get("base_diag")
@@ -1791,10 +1833,7 @@ def nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel,
                 raise Cancelled()
             tr = np.setdiff1d(np.arange(n), te)
             sub_train = train.subset(tr)
-            model = CMFModel(fieldset=model_template.fieldset.copy(), method=model_template.method,
-                             params=dict(model_template.params), normalize=model_template.normalize,
-                             scale_fields=model_template.scale_fields, fit_bias=model_template.fit_bias,
-                             kernel_layer=model_template.kernel_layer)
+            model = model_template.fresh_copy()
             base = pre_frac + (1.0 - pre_frac) * step / total_steps
             span = (1.0 - pre_frac) / total_steps
             pre = None

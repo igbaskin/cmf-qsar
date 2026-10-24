@@ -320,7 +320,14 @@ def cmd_build(args):
                      kernel_layer=args.kernel_layer, kernel_source=args.kernel,
                      ac_sigma=args.ac_sigma, ac_d_max=args.ac_dmax,
                      ac_chirality=args.ac_chirality,
-                     ac_chirality_shells=args.ac_chirality_shells)
+                     ac_chirality_shells=args.ac_chirality_shells,
+                     surf_z_min=args.surface_z[0], surf_z_max=args.surface_z[1],
+                     surf_z_step=args.surface_z[2])
+    if args.kernel == "surface":
+        print(f"Kernel: surface autocorrelation, in-plane distances up to {args.ac_dmax:g} A in "
+              f"steps of {args.ac_sigma:g} A, heights {args.surface_z[0]:g}-{args.surface_z[1]:g} A "
+              f"in steps of {args.surface_z[2]:g} A. The surface is z = 0 with the normal along "
+              f"+z; no in-plane alignment is assumed, and there are no co-fields.")
     if args.kernel == "autocorrelation":
         print(f"Kernel: field autocorrelation up to {args.ac_dmax:g} A in steps of "
               f"{args.ac_sigma:g} A"
@@ -1396,10 +1403,16 @@ def main(argv=None):
     b.add_argument("--descriptor-h", type=float, default=1.0, metavar="H",
                    help="mixing coefficient of the descriptor block (default 1, like a field); "
                         "0 switches it off without removing it from the model")
-    b.add_argument("--kernel", default="fields", choices=["fields", "autocorrelation"],
+    b.add_argument("--kernel", default="fields", choices=["fields", "autocorrelation", "surface"],
                    help="where the kernel comes from: the overlap integrals of the fields, which "
-                        "needs the molecules to share a frame, or the rotation-invariant "
-                        "autocorrelation of those fields, which needs no alignment at all")
+                        "needs the molecules to share a frame; the rotation-invariant "
+                        "autocorrelation of those fields, which needs no alignment at all; or "
+                        "the surface autocorrelation, for molecules over a surface at z = 0 "
+                        "(normal +z): invariant in the plane, heights kept, no in-plane alignment")
+    b.add_argument("--surface-z", type=float, nargs=3, default=(1.0, 6.0, 1.0),
+                   metavar=("ZMIN", "ZMAX", "ZSTEP"),
+                   help="surface kernel: the height channels, from ZMIN to ZMAX in steps of "
+                        "ZSTEP angstrom (default 1 6 1)")
     b.add_argument("--ac-sigma", type=float, default=0.75, metavar="S",
                    help="autocorrelation: width in angstrom along the distance axis, which also "
                         "sets the spacing of the channels")

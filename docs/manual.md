@@ -308,6 +308,7 @@ hyper-parameter search is not a model: the arithmetic is the lesson here, not th
 | One-class methods | a score built from the same kernel row, but also from the molecule's own self-kernel: distance to the centroid, to the k-th nearest active, to the principal subspace, or the 1-SVM decision value |
 | Nonlinear kernel layer | the joint kernel is passed through $\exp(-\gamma d^2)$ or an arc-cosine function first; the prediction formula is unchanged, the co-field identity is lost |
 | Autocorrelation source | the kernel row comes from the rotation-invariant distance profiles instead of the overlap integrals; everything downstream is identical |
+| Surface source | for molecules over a surface at $z = 0$: the in-plane distance profiles resolved by the heights of both atoms, invariant in the plane and to rotation about the normal only; heights and tilts are kept, no in-plane alignment is needed (command line: `--kernel surface --surface-z ZMIN ZMAX ZSTEP`) |
 | Two endpoints | the same formula once per endpoint, with coefficients tied through a task correlation; the difference of the two coefficient vectors gives the selectivity co-field |
 
 ## What has to match between fitting and predicting
@@ -522,7 +523,7 @@ without leaving the panel.
 | Nonlinear kernel | none (the linear CMF kernel), a Gaussian layer, or one or two arc-cosine layers |
 | Mixing coeff. h | fixed from the table, optimised by coordinate descent, or set by centred kernel alignment |
 | Attenuation α | a single value, or the grid below |
-| Kernel from | overlap integrals of the fields, which need one frame, or the rotation-invariant autocorrelation, which does not |
+| Kernel from | overlap integrals of the fields, which need one frame; the rotation-invariant autocorrelation, which does not; or the surface autocorrelation for poses over a surface at $z = 0$, which needs only the normal (command line) |
 | α grid, λ grid, C grid, ε/ν grids | the search ranges, as comma-separated lists |
 | Cross-validation | the number of folds and the shuffling seed |
 | External CV | the outer folds and the number of repeats for the nested procedure |
