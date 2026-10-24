@@ -486,6 +486,62 @@ now carries every setting, with a regression test).
   (projection on the Fe(110) reciprocal lattice) was not built; the result above says the
   registry carries little for this target.
 
+## Baselines on global descriptors (2026-10-24)
+
+`descriptor_baselines.py` (table in `descriptor_baselines.csv`): the QSPR the corrosion
+literature builds, on the same molecules and folds as the field models.  Descriptors: the
+eleven global quantum indices of the ORCA run (E_HOMO, E_LUMO, gap, dipole, IP, EA, hardness,
+softness, electrophilicity, chemical potential, dN towards iron) and 21 RDKit descriptors (size,
+logP, polar surface, counts, topological indices).  Learners: ridge, kernel ridge (RBF), random
+forest; the first two tuned in an inner cross-validation.  5-fold external CV x 10 repeats on
+the node, leave-one-out on Hu 2011.
+
+| target | descriptors | ridge | kernel ridge | random forest | best field model |
+|---|---|---|---|---|---|
+| E_ads (72) | quantum (11) | 0.33 | 0.35 | 0.31 | surface kernel 0.66; overlap 0.52 |
+| E_ads | RDKit (21) | -0.07 | -0.04 | 0.25 | |
+| E_ads | both (32) | 0.38 | 0.39 | 0.37 | |
+| potency, pooled (73) | quantum | -0.54 | -0.33 | 0.06 | overlap, MCS frame 0.19 |
+| potency, pooled | RDKit | 0.10 | 0.25 | **0.38** | |
+| potency, pooled | both | 0.29 | -0.25 | 0.34 | |
+| potency, Hu 2011 (18) | quantum | **0.75** | 0.74 | 0.53 | overlap, MCS frame 0.66 |
+| potency, Hu 2011 | RDKit | 0.47 | 0.75 | 0.34 | |
+| potency, Hu 2011 | both | **0.80** | 0.63 | 0.61 | |
+
+Single indices: for E_ads the gap (r 0.61); for the pooled potency ln MW (0.60), logP (0.54)
+and IP (-0.48); for Hu 2011 the ionisation potential (r 0.89).
+
+- **E_ads: the fields win, but not for the reason given above.**  The global quantum indices
+  alone explain a third of the energy (q2 0.35), the gap being the carrier: a small gap means
+  a soft molecule that chemisorbs.  The fields explain more (0.52 in the aligned frame, 0.66
+  with the surface kernel), so the geometry over the surface adds to the electronic structure
+  rather than replacing it; the earlier reading "the model learns only the registration" was
+  too strong.  One caveat cuts the other way: the indices were computed at the *adsorbed*
+  geometries, and a chemisorbed ring has a smaller gap than a free one (mean gap 2.8 eV for
+  the bound molecules, 3.8 eV for the unbound), so part of r = 0.61 is the adsorption showing
+  in the descriptor rather than predicting it (within the bound set r = 0.48).  A fair
+  baseline needs the indices at the gas-phase geometries: a neutral-state ORCA run of about an
+  hour.
+- **Pooled potency: simple descriptors beat the fields.**  A random forest on RDKit
+  descriptors reaches q2 0.38, and ln MW with logP alone, as a quadratic, 0.28: the pooled
+  potency has a size-and-lipophilicity trend (r 0.60 with ln MW, which the scaffold tree's
+  "MW-adjusted MWILA" was made to remove) that the field models at 0.19 capture only partly.
+  The quantum indices alone predict nothing pooled.  So on heterogeneous literature data the
+  honest ranking is: coarse physical descriptors with a non-linear learner first, fields
+  second, frontier orbitals last.
+- **Hu 2011: the frontier orbitals win.**  On the one clean series the ionisation potential
+  alone correlates at 0.89 with the potency and ridge on the quantum indices gives q2 0.75
+  (0.80 with the RDKit descriptors added), against 0.66 for the fields.  That is the
+  corrosion literature's claim, reproduced where it should hold: within one protocol and one
+  chemotype, a substituent's effect on E_HOMO tracks its effect on inhibition.  Eighteen
+  molecules and eleven descriptors in a leave-one-out loop leave room for optimism even with
+  the inner tuning, so the margin over the fields is not to be over-read.
+- **What this does to the conclusions.**  The alignment results stand (the surface kernel is
+  the best E_ads model by a margin over every descriptor model).  The claim that the fields
+  are the right tool for the potency does not: on the pooled node a forest on size and logP
+  does better, and on the clean series the global quantum indices do better.  A paper has to
+  show these columns beside the field ones.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
