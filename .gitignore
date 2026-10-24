@@ -39,3 +39,6 @@ benchmarks/cache/
 
 # UMA adsorption runs: per-pose relaxation logs, geometries and records (the SDF and CSV are kept)
 examples/corrosion_fe110/*_work/
+
+# ORCA scratch of the quantum-property runs on the UMA poses
+examples/corrosion_fe110/*_orca/

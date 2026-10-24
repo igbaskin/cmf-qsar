@@ -397,6 +397,46 @@ fields, so the panels are read for shape rather than compared in magnitude.
 The picture is chemically sensible for a flat-lying azole on iron, and it is the kind of
 output the method is for; it describes the UMA potential, not inhibition.
 
+## Quantum-chemical fields for the E_ads model (2026-10-24)
+
+`examples/orca_atom_properties.py` was run on the adsorbed-pose SDF (r2SCAN-3c, the N, N+1 and
+N-1 states at the UMA geometries, so every property sits in the surface frame): 73 molecules,
+six at a time in the serial ORCA build, 3.6 h in all, mean 12 min per molecule (2 min for
+benzimidazole, 2.6 h for the 91-atom bis-dodecyl compound).  Output
+`157_benzimidazole_uma_qm.sdf` with per-atom Hirshfeld, Mulliken, Loewdin and CHELPG charges,
+HOMO/LUMO populations, Fukui f+, f-, f0, the dual descriptor, local softness and
+electrophilicity, plus the global indices.  `quantum_fields_eads.py` rebuilds the E_ads model
+with them (same molecules, registration and nested cross-validation as before; table in
+`quantum_fields_eads.csv`).
+
+| fields | q2 (external CV, 10 repeats) | RMSE, kJ/mol |
+|---|---|---|
+| classical five (Gasteiger electrostatics, steric, hydrophobic, hba, hbd) | 0.52 +- 0.04 | 36.9 |
+| Hirshfeld charges in place of Gasteiger | 0.51 +- 0.03 | 37.2 |
+| classical + f- | 0.53 +- 0.03 | 36.6 |
+| classical + f- + HOMO population | 0.50 +- 0.03 | 37.5 |
+| reactivity only: f-, f+, HOMO population, local softness s- | 0.53 +- 0.02 | 36.5 |
+| Hirshfeld + f- + HOMO population | 0.50 +- 0.02 | 37.6 |
+
+- **The quantum fields neither help nor hurt**: every set sits at q2 0.50-0.53, inside the
+  scatter between repeats.  Four reactivity fields with no classical field at all reach the
+  same 0.53, which says what the model is learning: the registration of atoms against the
+  surface in this frame, carried by whichever field type marks the atoms, not the chemistry of
+  the field.  That is consistent with the rigid-slab, dispersion-free UMA energies being
+  largely a geometric quantity, and it sets the useful ceiling of this target at about 0.5.
+- **The co-fields agree with the classical ones** (`cofields_eads_qm.png`, reactivity set;
+  `cofields_eads_qm_hirshfeld.png`, Hirshfeld + f- + HOMO; blue = stronger adsorption).  The
+  Hirshfeld co-field repeats the Gasteiger picture: positive charge at the benzo 5/6 positions
+  and beyond C2 weakens adsorption, i.e. electron-rich substituents there strengthen it.  f-
+  and the HOMO population add that donor density at the 2-substituent and on the benzo
+  carbons strengthens adsorption.  In the reactivity set the local softness s- carries nearly
+  everything (it is f- times the molecule's global softness, so it encodes "a soft molecule
+  with donor density at the periphery"), with blue lobes at the benzo periphery and at the
+  2-substituent position at 2.0 A.
+- So the quantum properties confirm the reading, cost 3.6 h of ORCA, and do not change the
+  number; they would matter for a target that is electronic rather than geometric, which E_ads
+  from this tier is not.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
