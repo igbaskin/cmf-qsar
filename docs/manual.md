@@ -1925,7 +1925,7 @@ distance as wire frame or sticks, with hydrogens, waters and residue labels opti
 
 A pocket is a set of atoms, so the same parameterisation that builds a ligand's fields builds the
 protein's, and the overlap of two Gaussian fields has the same closed form on either side. The
-*Complementarity* tab (CLI: `cmf_cli.py complement`) turns that into three answers:
+*Complementarity* tab (CLI: `cmf_cli.py complement`) turns that into four answers:
 
 - **How complementary a molecule is to the pocket** — overlap integrals between ligand and pocket
   fields, exact and without a grid, each divided by the two norms so that it is a cosine in $[-1, 1]$
@@ -1941,6 +1941,45 @@ protein's, and the overlap of two Gaussian fields has the same closed form on ei
 - **Whether the co-field agrees with the pocket** — the model's own map against the protein, by sign
   agreement, cosine or correlation. This is the strongest external check a CMF model can be given:
   the co-field was fitted to activities and never saw the protein.
+- **Which residues say so** — the same scores, resolved by receptor residue.
+
+### Which residues say so
+
+An overlap integral is a double sum over atom pairs, so keeping the per-atom column sums instead
+of the grand total costs nothing and is exact: every term of the score above splits over the
+residues of the pocket and adds back to it. One cosine becomes an **interaction profile**, a table
+of residues against interaction types.
+
+This is worth having because a global score cannot say which contact a pose has lost, and neither
+can the ligand RMSD — a pose can move very little and still give up the one interaction that
+mattered. Across a series the profiles also average into a **consensus**: an interaction seen in
+most of the complexes is a property of the target, while one seen in a single complex is more
+likely a property of that ligand, which is the distinction a pharmacophore query needs.
+
+On the ten CDK2 ligands of `examples/openff/cdk2.sdf` against their pocket, every molecule reaches
+18 of the 53 residues, and the contacts conserved across the whole series are Glu81 donating to an
+acceptor, Leu83 accepting from a donor, and Ile10 and Leu134 by burial — the hinge and the
+hydrophobic floor, recovered without being told that either exists.
+
+In the application, tick **by residue** beside *surface scores* before pressing *Compute*. The
+table under the Complementarity tab then lists every residue within 4.5 Å of the selected molecule,
+one column per interaction type, sortable by any of them, with the share of the series that shows
+each residue's interactions in the last column; the header says how much of the whole score those
+residues carry, the rest being the tail of the Gaussians over the residues behind them. Tick
+**contributions** beside *residue labels* in the protein-site controls and the 3D view writes each
+residue's total on its alpha carbon, green where it helps and red where it does not.
+
+From the command line:
+
+```bash
+python cmf_cli.py complement data.sdf --structure pocket.pdb --residues --profile-out profiles.csv
+```
+
+`--residues` prints the strongest contacts of each molecule and the conserved pattern of the
+series, and scores every molecule against that consensus by cosine and by Tanimoto over the
+thresholded bits; `--reference NAME` compares against one molecule's profile instead of the
+consensus, `--residue-threshold` sets what counts as present, and `--profile-out` writes one row
+per molecule and residue.
 
 ## Docking
 

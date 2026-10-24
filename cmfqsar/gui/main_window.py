@@ -2543,6 +2543,7 @@ class MainWindow(QMainWindow):
         rp = self.results_panel
         fs = self._display_fieldset().copy()
         want_surface = rp.chk_comp_surface.isChecked()
+        want_residues = rp.chk_comp_residues.isChecked()
         stat = rp.complement_statistic()
         ds, model = self.ds, self.model
         idx = [i for i in range(len(ds)) if np.isfinite(ds.activity[i])] or list(range(len(ds)))
@@ -2565,13 +2566,24 @@ class MainWindow(QMainWindow):
                                                             spacing=0.6)
                 w = occupancy(model.train.molecules, g).reshape(-1)
                 agree = cofield_agreement(model, pocket, g, w, statistic=stat)
-            return pocket, mf, res, stats, agree
+            profiles, order, conserved = [], [], None
+            if want_residues:
+                from ..complementarity import (consensus_profile, interaction_profile,
+                                               pocket_residues)
+                progress("Resolving the scores by residue", 0.97)
+                labels, order = pocket_residues(protein, pocket)
+                profiles = [interaction_profile(m, pocket, fs, labels, order) for m in mf]
+                if profiles:
+                    freq, _strength = consensus_profile(profiles)
+                    conserved = freq.reshape(len(order), len(profiles[0].labels))
+            return pocket, mf, res, stats, agree, profiles, order, conserved
 
         def done(out):
-            pocket, mf, res, stats, agree = out
+            pocket, mf, res, stats, agree, profiles, order, conserved = out
             self.complementarity = {"pocket": pocket, "fields": fs, "by_index": dict(zip(idx, res)),
                                     "mols": dict(zip(idx, mf)), "stats": stats, "agreement": agree,
-                                    "surface": {}}
+                                    "surface": {}, "profiles": dict(zip(idx, profiles)),
+                                    "residues": list(order), "conserved": conserved}
             self._comp_surface_cache = {}
             self._show_complementarity()
             if want_surface:
@@ -2582,6 +2594,13 @@ class MainWindow(QMainWindow):
                      + (f", {n_clash} of them clashing with the structure" if n_clash else "")
                      + (f"; score against activity r = {stats['r_score']:+.3f}"
                         if "r_score" in stats and np.isfinite(stats["r_score"]) else ""))
+            if profiles and conserved is not None:
+                cols = list(profiles[0].labels)
+                top = sorted(((float(conserved[i, k]), order[i], cols[k])
+                              for i in range(len(order)) for k in range(len(cols))
+                              if conserved[i, k] > 0.5), reverse=True)[:8]
+                self.log("  conserved in more than half of the series: "
+                         + (", ".join(f"{r} {c} ({f:.0%})" for f, r, c in top) or "none"))
             self.schedule_display()
 
         self.run_task(task, done, "Complementarity")
@@ -2627,6 +2646,65 @@ class MainWindow(QMainWindow):
             head += (f" This molecule clashes with the structure at {here.clashes} atom pairs, "
                      f"worst overlap {here.worst_clash:.2f} Å, so read its scores with that in mind.")
         rp.set_complementarity(head, rows, series)
+        self._show_residue_profile(cur)
+
+    def _show_residue_profile(self, cur: int) -> None:
+        """The selected molecule's score, residue by residue, with what the series shares."""
+        comp = self.complementarity
+        rp = self.results_panel
+        prof = (comp.get("profiles") or {}).get(cur)
+        if prof is None:
+            rp.set_residue_profile(
+                "By residue: tick 'by residue' and press Compute, then select a molecule."
+                if not (comp.get("profiles") or {}) else
+                "By residue: this molecule was not scored (no activity).", [], [])
+            return
+        cols = list(prof.labels)
+        conserved = comp.get("conserved")
+        order = comp.get("residues") or prof.residues
+        terms = np.asarray(prof.terms, float)
+        # every Gaussian reaches everywhere, so a non-zero term is not a contact; the distance
+        # from the molecule to the residue is, and it is what the command line reports too
+        near = np.asarray(prof.contacts, float)
+        rows = []
+        for i, res in enumerate(prof.residues):
+            if not (i < len(near) and np.isfinite(near[i]) and near[i] < CONTACT_DISTANCE):
+                continue
+            values = [terms[i, k] for k in range(len(cols))]
+            share = None
+            if conserved is not None and i < conserved.shape[0]:
+                share = float(np.max(conserved[i]))
+            rows.append((res, values, share))
+        rows.sort(key=lambda r: -max(abs(v) for v in r[1]))
+        kept = float(sum(sum(abs(v) for v in r[1]) for r in rows))
+        whole = float(np.abs(terms).sum())
+        rp.set_residue_profile(
+            f"{prof.name}: {len(rows)} residues within {CONTACT_DISTANCE:g} Å, of {len(order)} in "
+            f"the pocket, carrying {100 * kept / whole:.0f} % of the score; the rest is the tail "
+            f"of the Gaussians over the residues behind them. Each column sums over all the "
+            f"residues to the matching term above. 'conserved' is the largest share of the series "
+            f"that shows any of this residue's interactions.",
+            ["Residue"] + cols + ["conserved %"], rows)
+
+    def _residue_contributions(self):
+        """{residue: what it contributes to the selected molecule's score}, or {}."""
+        comp = self.complementarity
+        if not comp:
+            return {}
+        prof = (comp.get("profiles") or {}).get(self.dataset_panel.current_index())
+        if prof is None:
+            return {}
+        near = np.asarray(prof.contacts, float)
+        out = {}
+        for i, (res, value) in enumerate(prof.per_residue().items()):
+            if not (i < len(near) and np.isfinite(near[i]) and near[i] < CONTACT_DISTANCE):
+                continue                  # labelling every residue of the pocket is not a picture
+            # the profile always carries the chain, while the labels of a single-chain site drop
+            # it; both spellings are offered, and they can only collide when there are two chains,
+            # in which case the site keeps the chain and the stripped key is never consulted
+            out[res] = value
+            out.setdefault(res.split(".")[0], value)
+        return out
 
     def _comp_surface(self, cur: int):
         """Per-vertex complementarity surface of one molecule, computed once."""
@@ -2905,7 +2983,28 @@ class MainWindow(QMainWindow):
                     anchors, res = residue_anchors(site)
                     txt = (f"{self.protein.name}: {len(res)} residues within "
                            f"{vc.spin_site.value():g} Å")
-                    if vc.chk_site_labels.isChecked():
+                    contrib = self._residue_contributions()
+                    if contrib and vc.chk_site_contrib.isChecked():
+                        pos, neg, lp, ln, drawn = [], [], [], [], []
+                        for anchor, name in zip(anchors, res):
+                            val = contrib.get(name)
+                            if val is None or not np.isfinite(val) or val == 0.0:
+                                continue
+                            (pos if val > 0 else neg).append(anchor)
+                            (lp if val > 0 else ln).append(f"{name} {val:+.3f}")
+                            drawn.append((name, val))
+                        if pos:
+                            v.add_labels(np.asarray(pos), lp, "sitecontrib",
+                                         color=(0.45, 0.95, 0.55), size=8, offset=0.15)
+                        if neg:
+                            v.add_labels(np.asarray(neg), ln, "sitecontrib",
+                                         color=(1.00, 0.55, 0.55), size=8, offset=0.15)
+                        # from what was drawn, not from the dictionary, which carries every
+                        # residue under both spellings of its name
+                        best = sorted(drawn, key=lambda kv: -abs(kv[1]))[:6]
+                        txt += ("; contributions " + ", ".join(f"{k} {x:+.3f}" for k, x in best)
+                                if best else "; no residue contributes")
+                    elif vc.chk_site_labels.isChecked():
                         # the name sits on the alpha carbon, which is where a chemist looks for it
                         v.add_labels(anchors, res, "sitelabels", color=(0.80, 0.85, 0.95),
                                      size=8, offset=0.15)
@@ -4210,6 +4309,10 @@ def molfield_wireframe(choice: str, cofield_drawn: bool) -> bool:
     wants the opposite picture -- lobes as a cage around a solid field -- names the style.
     """
     return choice == "mesh" or (choice == "auto" and bool(cofield_drawn))
+
+
+#: a residue is listed as being in contact within this distance, as `complement --residues` has it
+CONTACT_DISTANCE = 4.5
 
 
 def _cname(c) -> str:

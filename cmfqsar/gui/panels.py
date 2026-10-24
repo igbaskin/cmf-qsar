@@ -1232,6 +1232,21 @@ class ModelPanel(QWidget):
 # Results panel (statistics, search table, scatter plot)
 # --------------------------------------------------------------------------- #
 
+class _NumItem(QTableWidgetItem):
+    """A table cell that reads as a number and sorts as one.
+
+    Qt formats a stored double with %g, which turns a small complementarity term into "3e-04";
+    the text is therefore written out and the value kept beside it for the comparison.
+    """
+
+    def __init__(self, value: float, text: str):
+        super().__init__(text)
+        self._value = float(value)
+
+    def __lt__(self, other):
+        return self._value < getattr(other, "_value", float("inf"))
+
+
 class ResultsPanel(QWidget):
     point_clicked = Signal(int)
 
@@ -1453,6 +1468,13 @@ class ResultsPanel(QWidget):
             "electrostatic complementarity score of the literature and the colours for the",
             "surface in the 3D view. Slower on a large series."]))
         krow.addWidget(self.chk_comp_surface)
+        self.chk_comp_residues = QCheckBox("by residue")
+        self.chk_comp_residues.setChecked(True)
+        self.chk_comp_residues.setToolTip("\n".join([
+            "Resolve every score by receptor residue: the overlap integral is a double sum over",
+            "atom pairs, so keeping the column sums instead of the total is exact and costs",
+            "almost nothing. A global cosine cannot say which contact a pose has lost."]))
+        krow.addWidget(self.chk_comp_residues)
         krow.addWidget(QLabel("statistic:"))
         self.cmb_comp_stat = QComboBox()
         self.cmb_comp_stat.addItems(["sign agreement", "cosine", "correlation"])
@@ -1484,6 +1506,15 @@ class ResultsPanel(QWidget):
                                         "and how far the co-fields agree with the pocket")
         ktab.addWidget(self.tbl_comp_series, 1)
         kl.addLayout(ktab)
+        self.lbl_comp_res = QLabel("")
+        self.lbl_comp_res.setWordWrap(True)
+        kl.addWidget(self.lbl_comp_res)
+        self.tbl_comp_res = QTableWidget(0, 0)
+        self.tbl_comp_res.verticalHeader().setVisible(False)
+        self.tbl_comp_res.setSortingEnabled(True)
+        self.tbl_comp_res.setToolTip("Every term of the selected molecule's score, resolved by "
+                                     "receptor residue; the columns sum to the terms above")
+        kl.addWidget(self.tbl_comp_res, 1)
         self.tabs.addTab(comp_w, "Complementarity")
 
         # ----- chemotypes: one held out at a time, against the model that ignores the poses
@@ -1540,6 +1571,31 @@ class ResultsPanel(QWidget):
             self.tbl_comp_series.setItem(r, 0, QTableWidgetItem(str(label)))
             self.tbl_comp_series.setItem(r, 1, QTableWidgetItem(
                 v if isinstance(v, str) else f"{v:+.3f}"))
+
+    def set_residue_profile(self, header: str, columns, rows) -> None:
+        """Fill the by-residue table: one row per residue, one column per interaction type.
+
+        `rows` is (residue, [values], conserved fraction or None); a value that is exactly zero
+        is left blank, because a residue that does not touch this molecule has no interaction
+        rather than a weak one.
+        """
+        self.lbl_comp_res.setText(header)
+        t = self.tbl_comp_res
+        t.setSortingEnabled(False)
+        t.setRowCount(0)
+        t.setColumnCount(len(columns))
+        t.setHorizontalHeaderLabels(list(columns))
+        t.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        t.setRowCount(len(rows))
+        for r, (res, values, conserved) in enumerate(rows):
+            t.setItem(r, 0, QTableWidgetItem(str(res)))
+            for c, v in enumerate(values, start=1):
+                blank = v is None or not np.isfinite(v) or abs(v) < 5e-5
+                t.setItem(r, c, _NumItem(0.0 if blank else v, "" if blank else f"{v:+.4f}"))
+            t.setItem(r, len(columns) - 1,
+                      _NumItem(-1.0, "") if conserved is None
+                      else _NumItem(conserved, f"{100 * conserved:.0f}"))
+        t.setSortingEnabled(True)
 
     def set_chemotypes(self, header: str, rows, per_group) -> None:
         """Fill the Chemotypes tab: the three q² values, then every held-out chemotype."""
@@ -2157,6 +2213,13 @@ class ViewerControls(QWidget):
             "and list them in the legend below"]))
         self.chk_site_labels.toggled.connect(self.changed)
         row4.addWidget(self.chk_site_labels)
+        self.chk_site_contrib = QCheckBox("contributions")
+        self.chk_site_contrib.setToolTip("\n".join([
+            "Label each residue of the site with what it contributes to the selected molecule's",
+            "complementarity, green where it helps and red where it does not.",
+            "Needs Compute on the Complementarity tab, with 'by residue' ticked."]))
+        self.chk_site_contrib.toggled.connect(self.changed)
+        row4.addWidget(self.chk_site_contrib)
         self.lbl_protein = QLabel("no structure loaded")
         self.lbl_protein.setStyleSheet("color: palette(mid)")
         row4.addWidget(self.lbl_protein)
