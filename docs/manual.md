@@ -29,7 +29,7 @@ Two molecules are compared by the **overlap integral** of their fields, which fo
 closed form:
 
 $$
-K_f(A,B) = \int X_{fA}(\mathbf{r})\, X_{fB}(\mathbf{r})\, d\mathbf{r} = \left(\frac{\pi}{\alpha}\right)^{3/2} \sum_l \sum_m w_{lf} w_{mf}\, \exp\!\left(-\frac{\alpha}{4}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
+K_f(A,B) = \int X_{fA}(\mathbf{r})\, X_{fB}(\mathbf{r})\, \mathrm{d}\mathbf{r} = \left(\frac{\pi}{\alpha}\right)^{3/2} \sum_l \sum_m w_{lf} w_{mf}\, \exp\!\left(-\frac{\alpha}{4}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
 $$
 
 No grid is ever evaluated for this: the kernel is a sum over atom pairs, computed exactly. The
@@ -120,7 +120,7 @@ Two Gaussians have an overlap integral in closed form, so the inner product of t
 a double sum over atom pairs:
 
 $$
-K_f(A,B) = \int X_{fA}(\mathbf{r})X_{fB}(\mathbf{r})\,d\mathbf{r} = \sum_{l \in A}\sum_{m \in B} w_{lf}w_{mf}\left(\frac{2\pi}{b_{lf}+b_{mf}}\right)^{3/2}\exp\!\left(-\frac{b_{lf}b_{mf}}{2(b_{lf}+b_{mf})}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
+K_f(A,B) = \int X_{fA}(\mathbf{r})X_{fB}(\mathbf{r})\,\mathrm{d}\mathbf{r} = \sum_{l \in A}\sum_{m \in B} w_{lf}w_{mf}\left(\frac{2\pi}{b_{lf}+b_{mf}}\right)^{3/2}\exp\!\left(-\frac{b_{lf}b_{mf}}{2(b_{lf}+b_{mf})}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
 $$
 
 When every atom shares one width, $b_{lf} = b_{mf} = \alpha$, this collapses to the form the
@@ -151,8 +151,9 @@ $$
 \hat{K}_f(A,B) = \frac{K_f(A,B)}{\sqrt{K_f(A,A)\,K_f(B,B)}}
 $$
 
-so that every molecule has unit self-similarity in every field and a large molecule cannot look
-important merely for being large. $\hat{K}_f(A,A) = 1$ by construction.
+so that every molecule has unit self-similarity in every field -- the normalised kernel of a
+molecule with itself is 1 by construction -- and a large molecule cannot look important merely
+for being large.
 
 **Field scaling** (*Scale fields*) then multiplies each field kernel by a constant $c_f$ chosen so
 that its mean diagonal over the training set is 1. It equalises the fields' contributions before
@@ -185,7 +186,7 @@ the matrix in the worked example below.
 Kernel ridge regression with a bias term solves one linear system (Eq. 12 of the 2013 paper):
 
 $$
-(\mathbf{K} + \lambda\mathbf{I})\,\mathbf{a} + b\,\mathbf{1} = \mathbf{y}, \qquad \mathbf{1}^{T}\mathbf{a} = 0
+(\mathbf{K} + \lambda\mathbf{I})\,\mathbf{a} + b\,\mathbf{1} = \mathbf{y}, \qquad \mathbf{1}^{\mathrm{T}}\mathbf{a} = 0
 $$
 
 The outcome is one **dual coefficient** $a_j$ per training molecule and one bias $b$. The last row
@@ -211,11 +212,12 @@ For a molecule the model has never seen, the program:
    molecule, giving one row $K_f(x, j)$ per field;
 3. normalises that row with the molecule's own self-kernels and the **stored** training
    self-kernels, and multiplies by the **stored** scales $c_f$;
-4. mixes the fields into one row $k(x)_j = \sum_f h_f c_f \hat{K}_f(x, j)$;
+4. mixes those normalised, scaled fields into one row $k(x)_j$ with the mixing coefficients
+   $h_f$, which is the joint kernel $K(x, j)$ of *Mixing the fields* above;
 5. returns
 
 $$
-\hat{y}(x) = \sum_j a_j\, k(x)_j + b = \mathbf{k}(x)^{T}\mathbf{a} + b
+\hat{y}(x) = \sum_j a_j\, k(x)_j + b = \mathbf{k}(x)^{\mathrm{T}}\mathbf{a} + b
 $$
 
 That is the whole prediction: a similarity-weighted combination of the training activities, where
@@ -236,7 +238,7 @@ $$
 and the prediction becomes
 
 $$
-\hat{y}(x) = \sum_f \frac{h_f c_f}{\sqrt{K_f(x,x)}}\int X_{fx}(\mathbf{r})\,C_f(\mathbf{r})\,d\mathbf{r} + b
+\hat{y}(x) = \sum_f \frac{h_f c_f}{\sqrt{K_f(x,x)}}\int X_{fx}(\mathbf{r})\,C_f(\mathbf{r})\,\mathrm{d}\mathbf{r} + b
 $$
 
 The model is therefore a *function of space*, one per field type, and a molecule is scored by how
@@ -253,7 +255,7 @@ Four molecules from `examples/benzamides_synthetic.sdf` as the training set, the
 fields, α = 0.5, cosine normalisation, λ = 0.1, and the fifth molecule as the one to predict. The
 numbers below are the program's own, printed from the objects it fits.
 
-The joint kernel of the training set, $K = \sum_f \hat{K}_f$ over five fields, so the diagonal is 5:
+The joint kernel of the training set, the sum of the five normalised field kernels, so the diagonal is 5:
 
 ```
             parent     4F      4'F     4Cl          y
@@ -300,8 +302,8 @@ hyper-parameter search is not a model: the arithmetic is the lesson here, not th
 
 | Model | What the prediction is |
 |---|---|
-| Kernel ridge | $\hat{y} = \mathbf{k}^{T}\mathbf{a} + b$, as above |
-| Gaussian process | the same mean, plus the variance $\sigma^2(x) = K(x,x) - \mathbf{k}^{T}(\mathbf{K}+\lambda \mathbf{I})^{-1}\mathbf{k}$, which the *Align by prediction confidence* tool minimises |
+| Kernel ridge | $\hat{y} = \mathbf{k}^{\mathrm{T}}\mathbf{a} + b$, as above |
+| Gaussian process | the same mean, plus the variance $\sigma^2(x) = K(x,x) - \mathbf{k}^{\mathrm{T}}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{k}$, which the *Align by prediction confidence* tool minimises |
 | ε-SVR, ν-SVR | the same formula; most $a_j$ are zero |
 | C-SVC, ν-SVC | the same formula, read as a decision value: its sign is the class, its magnitude the margin |
 | Laplace GP classifier | the same formula gives the latent mean, which is squashed to a probability and averaged over the latent variance |
@@ -658,7 +660,7 @@ The tools, in increasing order of sophistication:
   with a reference molecule, optionally refined by maximising the CMF kernel similarity, which is
   the alignment criterion proposed in the 2013 paper.
 - *Tools → Align by prediction confidence…* — minimises the Gaussian-process posterior variance
-  $\sigma^2(x) = K(x,x) - k(x)^T(K + \lambda I)^{-1}k(x)$ of a molecule under an existing model, which moves it into the model's applicability domain. It uses
+  $\sigma^2(x) = K(x,x) - \mathbf{k}(x)^{\mathrm{T}}(\mathbf{K} + \lambda\mathbf{I})^{-1}\mathbf{k}(x)$ of a molecule under an existing model, which moves it into the model's applicability domain. It uses
   no activity value, so it is valid for prospective prediction. The program refuses to move
   training molecules, because the optimum there is degenerate: superimposing everything maximises
   mutual similarity and destroys the signal.
@@ -1344,10 +1346,12 @@ exactly. The 2019 paper states three decomposition rules, and the program implem
 The co-field is the model as a function of space:
 
 $$
-C_f(\mathbf{r}) = \sum_j a_j X_{fj}(\mathbf{r})
+C_f(\mathbf{r}) = \sum_j a_j\, s_j\, X_{fj}(\mathbf{r})
 $$
 
-a weighted sum of the training molecules' fields with the fitted dual coefficients as weights. The
+a weighted sum of the training molecules' fields with the fitted dual coefficients as weights,
+each divided by the norm $s_j = K_f(j,j)^{-1/2}$ of its own field when the kernels are
+normalised, which they are by default. The
 prediction of any molecule is then the overlap of its own field with the co-field, field type by
 field type. Press **Compute co-field** and the program evaluates it on a grid around the training
 set; choose the field with the *Field* selector and set the *iso level* slider, which is a

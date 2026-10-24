@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import unicodedata
 import sys
 
 from reportlab.lib import colors
@@ -203,6 +204,26 @@ MATH_ACCENT = {"hat": "̂", "bar": "̄", "tilde": "̃", "dot": "̇",
 UPRIGHT = {"exp", "log", "ln", "max", "min", "arg", "det", "tr", "const"}
 
 
+def read_group(expr: str, i: int):
+    """The argument at `expr[i]` and the index after it: a balanced {...} or one character.
+
+    The braces nest -- a transpose is written ^{\\mathrm{T}} -- so the group cannot be matched
+    with a regular expression that stops at the first closing brace.
+    """
+    if i >= len(expr) or expr[i] != "{":
+        return expr[i:i + 1], i + 1
+    depth, j = 0, i
+    while j < len(expr):
+        if expr[j] == "{":
+            depth += 1
+        elif expr[j] == "}":
+            depth -= 1
+            if depth == 0:
+                return expr[i + 1:j], j + 1
+        j += 1
+    return expr[i + 1:], len(expr)
+
+
 def inline_math(expr: str, mono: str) -> str:
     """A short formula as reportlab markup: italic variables, real sub- and superscripts.
 
@@ -233,8 +254,34 @@ def inline_math(expr: str, mono: str) -> str:
                     m2 = re.match(r"\s*\{([^}]*)\}|\s*(\w)", expr[i:])
                     if m2:
                         body = m2.group(1) if m2.group(1) is not None else m2.group(2)
-                        out.append(emit_group(body) + MATH_ACCENT[name])
+                        # a combining mark is drawn where the pen stands, so it lands correctly
+                        # only when Unicode has one character for the pair -- which it has for
+                        # the lower-case letters and for no capital, and that is why a hatted
+                        # capital belongs in a display equation rather than in a sentence
+                        composed = unicodedata.normalize("NFC", body + MATH_ACCENT[name])
+                        if len(composed) == len(body):
+                            out.append(f"<i>{composed}</i>" if composed.isalpha()
+                                       else emit_group(composed))
+                        else:
+                            out.append(emit_group(body) + MATH_ACCENT[name])
                         i += len(m2.group(0))
+                    continue
+                if name in ("sqrt", "frac"):
+                    # the only commands inline maths may use that take arguments; without this
+                    # the braces of their groups reach the page as braces
+                    pat = (r"\s*\{([^}]*)\}\s*\{([^}]*)\}" if name == "frac"
+                           else r"\s*\{([^}]*)\}|\s*(\w)")
+                    m2 = re.match(pat, expr[i:])
+                    if not m2:
+                        out.append("\u221a" if name == "sqrt" else "/")
+                        continue
+                    i += len(m2.group(0))
+                    if name == "frac":
+                        out.append(f"{emit_group(m2.group(1))}/{emit_group(m2.group(2))}")
+                    else:
+                        body = m2.group(1) if m2.group(1) is not None else m2.group(2)
+                        inner = emit_group(body)
+                        out.append("\u221a" + (inner if len(body) < 2 else f"({inner})"))
                     continue
                 if name in ("text", "mathrm", "operatorname"):
                     m2 = re.match(r"\s*\{([^}]*)\}", expr[i:])
@@ -253,11 +300,7 @@ def inline_math(expr: str, mono: str) -> str:
         if ch in "_^":
             tag = "sub" if ch == "_" else "super"
             i += 1
-            m = re.match(r"\{([^}]*)\}", expr[i:])
-            if m:
-                body, i = m.group(1), i + len(m.group(0))
-            else:
-                body, i = expr[i:i + 1], i + 1
+            body, i = read_group(expr, i)
             out.append(f"<{tag}>{emit_group(body)}</{tag}>")
             continue
         m = re.match(r"[A-Za-z]+", expr[i:])
