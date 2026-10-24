@@ -1652,6 +1652,74 @@ $q^2$ never sees the left-out activities. The groups default to the continuous i
 names others. The fitted weights are printed by kind and stored with the model
 (`block_weight_report`).
 
+## Molecules on a surface: the in-plane invariant kernel
+
+A molecule adsorbed on a surface has one direction that is not like the others. Its height above
+the metal and its tilt are physics — they are what the relaxation computed, and they are most of
+what decides the adsorption energy. Where it sits in the plane and how it is turned about the
+normal are not: the slab is periodic and its origin is wherever the cell was cut. The overlap
+kernel cannot tell the two apart, so it demands a frame for a degree of freedom that has no
+preferred value, and the invariant kernel of the last section throws the height away along with
+the rest.
+
+This kernel keeps exactly what is physical. It is the two-point distribution of the field weights
+over the **in-plane** distance $\rho$, resolved by the heights of both atoms:
+
+$$
+\Phi_{fg}(\rho_k, z_i, z_j) = \sum_l \sum_m w_{lf} w_{mg}\, G_{\sigma}(\rho_{lm} - \rho_k)\, G_{\sigma_z}(z_l - z_i)\, G_{\sigma_z}(z_m - z_j)
+$$
+
+$$
+G_s(u) = \exp\!\left(-\frac{u^2}{2s^2}\right), \qquad \rho_{lm} = |\mathbf{r}_l^{\,xy} - \mathbf{r}_m^{\,xy}|
+$$
+
+It is therefore invariant to translation in the plane and to rotation about the normal, and to
+nothing else: tilt, height and the vertical order of the atoms all survive. Averaged over the
+direction of $\rho$ it is, by the Wiener–Khinchin theorem, the in-plane power spectrum of the
+fields resolved by height — the molecule described in reciprocal space across the surface and in
+real space along the normal. The surface is at $z = 0$ with the normal along $+z$, which is how
+the adsorption scripts of `examples/corrosion_fe110` write their poses; nothing checks that
+convention, so a set of poses in some other frame will be described faithfully and uselessly.
+
+The channels run over in-plane distances to 12 Å in steps of 0.75 Å (`--ac-dmax`, `--ac-sigma`)
+and heights from 1 to 6 Å in steps of 1 Å (`--surface-z ZMIN ZMAX ZSTEP`), the spacing of a
+channel being also its width on both axes. That is 17 × 6 × 6 = 612 channels for each pair of
+field types, 9,180 features on the five physico-chemical fields, which is why the blocks are
+scaled and may be weighted exactly as in the preceding section. Pairs of different field types
+are summed both ways round, as the three-dimensional descriptor counts them, and the $l = m$
+terms are kept. The command is `--kernel surface`; the model panel does not offer it.
+
+### What it is worth
+
+On the benzimidazole corrosion node — 72 molecules relaxed on Fe(110) with the UMA
+machine-learned potential, the target their adsorption energy, five physico-chemical fields, KRR
+with $\alpha$ and $\lambda$ chosen in a 10-fold inner cross-validation, 5 outer folds, 10 repeats:
+
+| model | $q^2$ | RMSE (kJ/mol) |
+|---|---:|---:|
+| **surface kernel**, poses as the relaxation wrote them | **0.655** | 31.2 |
+| **surface kernel**, the same poses shuffled in the plane | **0.655** | 31.2 |
+| overlap fields, poses as written | 0.505 | 37.4 |
+| overlap fields, poses registered in the plane by their common substructure | 0.517 | 36.9 |
+| overlap fields, poses shuffled in the plane | 0.480 | 38.3 |
+| rotation-invariant autocorrelation, which discards the height | 0.109 | 50.2 |
+
+Three things follow. The **invariance is demonstrated rather than asserted**: turning every pose
+by a random angle about the normal and sliding it up to 6 Å in the plane changes the model by
+nothing at all, the second row reproducing the first to three decimals. **The height is what
+earns the score** — the fully invariant kernel differs from this one only in discarding $z$, and
+it falls from 0.655 to 0.109. And **the frame the overlap kernel wants is not worth building**:
+registering the poses laterally on the common substructure moves it from 0.505 to 0.517, a
+difference of nothing, while the kernel that was never given a frame stands 0.14 above the better of them.
+
+There is no co-field, for the reason every invariant source has none: the kernel is not an
+integral of a product of fields, so the prediction cannot be turned back into a function of
+space. What it offers instead is the co-pattern — the weight of every channel of the fitted
+linear model, which names the pair of field types, the in-plane distance and the two heights that
+carry the signal, which `top_channels` ranks against the labels of
+`surface_channel_labels`. The measurements above come from `surface_kernel_eads.py`, in
+`examples/corrosion_fe110`, which writes its table beside itself.
+
 ## Crystals: the periodic autocorrelation kernel
 
 The same descriptor for a periodic structure, summed over the neighbour list of one cell with its
@@ -1868,6 +1936,7 @@ not every option.
 `--charges gasteiger|mmff|file`, `--param rdkit|tripos|tripos-legacy`, `--prop-missing error|zero`.
 
 **Kernel.** `--kernel fields|autocorrelation|surface`, `--ac-sigma S`, `--ac-dmax D`,
+`--surface-z ZMIN ZMAX ZSTEP`, `--block-weights W`, `--block-groups G`, `--block-rho R`,
 `--kernel-layer linear|gauss|arccos1|arccos2`, `--gammas LIST`, `--normalize`, `--raw-scale`,
 `--optimize-h`, `--mkl [align|alignf]`, `--mkl-rho R`.
 
