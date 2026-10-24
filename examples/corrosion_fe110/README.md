@@ -371,6 +371,32 @@ compounds).
   cross-chemotype CMF model of inhibition in 1 M HCl needs measurements made to be compared,
   not a better alignment or a computed adsorption energy.
 
+## The co-fields of the E_ads model (2026-10-24)
+
+`cofields_eads.py` fits the E_ads model once in the adsorbed-pose frame (72 molecules, five
+fields, alpha 0.8 and lambda 1 by 10-fold cross-validation: q2 0.58, RMSEcv 34.6 kJ/mol, fitted
+r2 0.96) and draws h_f c_f C_f(x, y, z), the regression coefficient of each field, on the
+planes z = 2.0 A (the height of a chemisorbed ring) and 3.5 A above the top Fe layer, with
+benzimidazole, the reference of the frame, drawn in (`cofields_eads.png`; the ranges are in
+`cofields_eads.txt`).  Blue: field density there makes E_ads more negative, i.e. stronger
+adsorption; red: weaker.  The scale is kJ/mol per unit of field density, which differs between
+fields, so the panels are read for shape rather than compared in magnitude.
+
+- **Electrostatic** carries the model (range +-12 at 2.0 A, the largest by far): at 2.0 A a
+  strong blue lobe at the C2 position between the two ring nitrogens and red lobes at the far
+  side of the benzo ring (positions 5 and 6) and beyond C2; at 3.5 A blue over the whole ring
+  system.  So positive electrostatic field at C2 and above the rings, and negative field at
+  the benzo positions, strengthen adsorption on the model's own terms: an electron-poor C2
+  with electron-rich benzo substituents is what the UMA energies reward.
+- **Hydrogen-bond donors** (range +-7): blue around N1/C2 at both heights, the position of an
+  N-H or a 2-amino group; a donor there means a nitrogen lone pair that the surface can bind.
+- **Steric** is flat (+-0.3): size and shape as such do not change the energy, which agrees
+  with the descriptor check (five size descriptors predict E_ads at q2 -0.12).  Hydrophobic
+  (+-1.4) and acceptor (+-3) fields contribute little and without a clear pattern.
+
+The picture is chemically sensible for a flat-lying azole on iron, and it is the kind of
+output the method is for; it describes the UMA potential, not inhibition.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
