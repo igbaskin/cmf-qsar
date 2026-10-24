@@ -309,6 +309,7 @@ hyper-parameter search is not a model: the arithmetic is the lesson here, not th
 | Nonlinear kernel layer | the joint kernel is passed through $\exp(-\gamma d^2)$ or an arc-cosine function first; the prediction formula is unchanged, the co-field identity is lost |
 | Autocorrelation source | the kernel row comes from the rotation-invariant distance profiles instead of the overlap integrals; everything downstream is identical |
 | Surface source | for molecules over a surface at $z = 0$: the in-plane distance profiles resolved by the heights of both atoms, invariant in the plane and to rotation about the normal only; heights and tilts are kept, no in-plane alignment is needed (command line: `--kernel surface --surface-z ZMIN ZMAX ZSTEP`) |
+| Periodic source | for crystals: the distance profiles summed over the neighbour list of the cell with its images, per atom, background removed, cutoff tapered; invariant to the choice of cell, origin and orientation (command line: `build-crystals`) |
 | Two endpoints | the same formula once per endpoint, with coefficients tied through a task correlation; the difference of the two coefficient vectors gives the selectivity co-field |
 
 ## What has to match between fitting and predicting
@@ -1436,6 +1437,41 @@ a frame (0.172 against 0.189 for the aligned model and 0.072 for counts), and on
 aligned files it frequently beats the aligned model outright — on six of the nine shared targets,
 including thrombin at +0.452 against +0.021.
 
+## Crystals: the periodic autocorrelation kernel
+
+The same descriptor for a periodic structure, summed over the neighbour list of one cell with its
+periodic images out to a cutoff $r_{\max}$, per atom of the cell, with the uniform background of
+each field pair removed and the cutoff tapered:
+
+$$
+\Phi_{fg}(d) = \frac{1}{N}\Big[\sum_{l \in \text{cell}} \sum_{m:\, r_{lm} < r_{\max}} w_{lf} w_{mg}\,
+e^{-(r_{lm}-d)^2/2\sigma^2}\, \omega(r_{lm}) \;-\; \frac{S_f S_g}{V} \int_0^{r_{\max}} 4\pi r^2 e^{-(r-d)^2/2\sigma^2}\,\omega(r)\,dr\Big]
+$$
+
+with $S_f$ the sum of the weights of field $f$ over the cell, $V$ its volume and $\omega$ a
+half-cosine taper over the last `--taper` ångström. It is invariant to the choice of cell, origin
+and orientation, so a supercell is the same material. Averaged over orientations it is the sine
+transform of the product of the typed structure factors, which makes the pair products of the
+element indicator fields the partial structure factors a diffraction experiment measures.
+
+The fields of a solid are built by `inorganic_fieldset`: electrostatic (oxidation states guessed
+from the composition, or the `oxi_states`/`charges` array of the file), steric (atomic volume),
+electronegativity, one indicator field per element and one for the rest, and any per-atom array as
+`prop:<name>`. The command is `build-crystals` (an ASE-readable structure file, `--target KEY` or
+`--target-file CSV`, `--cutoff`, `--sigma`, `--taper`, `--no-background`, `--elements`,
+`--charges`, `--external-cv`, `--save`); in the library, `kernel_source="periodic"` on a
+`CMFModel` with a table from `crystal_table`. There is no co-field, but there is a co-pattern: the
+weight of every channel in the fitted linear model, which `top_channels` ranks by weight times
+spread, with the sign that says whether the pair at that distance raises or lowers the property.
+
+On the Matbench `phonons` task (1,265 crystals, the top of the phonon density of states) the
+linear kernel on four fields -- electrostatic, steric, electronegativity and the inverse square
+root of the mass -- reaches a mean absolute error of 117 cm$^{-1}$ on the Matbench folds, 106 with
+a Gaussian layer, against 324 for the dummy predictor and 29 for the best graph network; keeping
+the uniform background improves the 58-field model from 181 to 119 on this task, so the switch is
+worth trying on a property that depends on composition and density. The full table and the
+co-patterns are in `benchmarks/results/matbench_phonons/table.md`.
+
 ## Topomer fields
 
 Cramer's topomer idea (topomer CoMFA, 2003), applied to fields. Cut the molecule at the bonds that
@@ -1593,7 +1629,7 @@ not every option.
 `--cif-scheme sybyl|element|element+aromatic`, `--cif-min N`, `--cif-types LIST`,
 `--charges gasteiger|mmff|file`, `--param rdkit|tripos|tripos-legacy`, `--prop-missing error|zero`.
 
-**Kernel.** `--kernel fields|autocorrelation`, `--ac-sigma S`, `--ac-dmax D`,
+**Kernel.** `--kernel fields|autocorrelation|surface`, `--ac-sigma S`, `--ac-dmax D`,
 `--kernel-layer linear|gauss|arccos1|arccos2`, `--gammas LIST`, `--normalize`, `--raw-scale`,
 `--optimize-h`, `--mkl [align|alignf]`, `--mkl-rho R`.
 

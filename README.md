@@ -573,6 +573,118 @@ What the model loses with the frame, it says so: `cofield_coefficients` and `ato
 raise rather than return something meaningless, while the contributions of the training molecules
 — the dual form, which needs no frame — still add up to the prediction.
 
+### Crystals: the periodic autocorrelation
+
+The autocorrelation above is the real-space face of a reciprocal-space object. Averaged over
+orientations, the product of two typed structure factors is the sine transform of the typed
+pair-distance distribution (the Debye scattering equation), so the kernel compares two molecules
+by what a powder diffraction experiment on each would see, field type by field type. Nothing in
+that needs a finite molecule, and [periodic.py](cmfqsar/periodic.py) takes it to crystals, where
+three things change:
+
+* **The pair sum runs over a neighbour list.** One atom per cell times every neighbour out to a
+  cutoff radius, periodic images included, divided by the number of atoms in the cell so that the
+  descriptor is intensive. A supercell, a different choice of cell, origin or orientation all give
+  the same channels — tests assert it to twelve digits.
+* **The uniform background is removed.** In an infinite solid the number of pairs at a distance r
+  grows as r², the same for every structure, and swamps everything else at long range. What the
+  Faber–Ziman partial structure factors keep is the deviation of each field pair from a uniform
+  distribution over the cell, and that is what is subtracted, with the shell integral of the
+  Gaussian channels computed once per grid. The self term stays, as it does for molecules: it
+  carries the composition.
+* **The cutoff is tapered.** The last two ångström before the cutoff are weighted by a half-cosine,
+  so that a pair walking out of the sphere leaves the descriptor continuously instead of ringing.
+
+A molecule placed in a box larger than the cutoff, with the background and the taper off, gives
+exactly the molecular autocorrelation per atom; a box of randomly placed atoms, with them on,
+gives channels that are nothing but noise about zero. Both are tests.
+
+**Fields for solids.** Hydrophobicity and hydrogen bonding mean nothing in an oxide.
+`inorganic_fieldset` builds what does: the electrostatic field with oxidation states as weights
+(guessed from the composition with pymatgen, or read from an `oxi_states`/`charges` array of the
+structure file — Bader charges, for instance), the steric field with the atomic volume, the Pauling
+electronegativity and the atomic mass or its inverse square root as property fields, and one
+**continuous indicator field per element**, whose
+pair products are the partial structure factors of each element pair — the quantity a diffraction
+experiment measures. Elements rarer than a threshold share one `other` field, and any per-atom
+array of the file can be a field as `prop:<name>`.
+
+```python
+from cmfqsar.model import CMFModel
+from cmfqsar.periodic import (crystal_table, elements_in, inorganic_fieldset,
+                              periodic_channel_labels, read_structures, top_channels)
+
+atoms = read_structures("structures.extxyz")                  # anything ASE reads: CIF, POSCAR, ...
+fs = inorganic_fieldset(elements_in(atoms, min_structures=5))
+model = CMFModel(fieldset=fs, kernel_source="periodic", normalize=True,
+                 ac_sigma=0.5, ac_d_max=10.0, params={"lam": 1e-2})
+model.fit(crystal_table(atoms, fs), y)
+for label, weight, spread in top_channels(model, periodic_channel_labels(fs, model._ac_spec())):
+    print(f"{weight * spread:+.3f}  {label}")
+```
+
+```bash
+python cmf_cli.py build-crystals structures.extxyz --target band_gap --external-cv 5 --save gaps.cmf
+```
+
+`CMFModel` takes `kernel_source="periodic"` like the other two invariant sources: the grid search,
+the nested cross-validation, every learner, the nonlinear layers and save/load work unchanged, and
+`build-crystals` is the command line for it (`--cutoff`, `--sigma`, `--taper`, `--no-background`,
+`--elements`, `--charges`). What the model loses with the frame is the co-field; what it keeps is
+the **co-pattern**: the kernel is a dot product of scaled, normalised channels, so the fitted model
+is a weight per channel — which pair of field types at which distance raises the property and
+which lowers it — and `top_channels` ranks them by weight times spread over the training set.
+Enantiomorphs and homometric structures look the same to a pair-distance kernel, and so does
+anything beyond the cutoff: a property set by local bonding is the right target, a property set by
+long-range periodicity is not.
+
+With the indicator fields alone the real-space side of this kernel is the partial radial
+distribution function of Schütt et al. (2014) and the Valle–Oganov fingerprint of USPEX; with the
+molecular transform of Soltzberg and Wilkins (1977) and 3D-MoRSE on the molecular side, the idea has
+ancestors. What is added is the kernel formulation with typed weights beyond element identity, the
+cross terms between field types, and the co-pattern.
+
+**Measured on a Matbench task.** `matbench_phonons`: 1,265 inorganic crystals from the Materials
+Project with the frequency of the highest peak of the phonon density of states, computed by DFPT,
+on the five Matbench folds, the channel width and the regularisation chosen by 10-fold
+cross-validation inside every training fold
+([benchmarks/run_matbench_phonons.py](benchmarks/run_matbench_phonons.py), results in
+[benchmarks/results/matbench_phonons/table.md](benchmarks/results/matbench_phonons/table.md)).
+Mean absolute error in cm⁻¹, mean ± sd over the folds:
+
+| fields | n | MAE |
+|---|---|---|
+| element indicators only (typed partial pair distributions) | 55 | 196 ± 7 |
+| electrostatic, steric, electronegativity | 3 | 150 ± 11 |
+| the three plus 1/√m | 4 | 117 ± 10 |
+| the four with a Gaussian kernel layer | 4 | 106 ± 5 |
+| all of the above, background removed (the default) | 58 | 181 ± 9 |
+| all of the above, background kept | 58 | 119 ± 13 |
+| all of the above, hard cutoff | 58 | 205 ± 10 |
+
+The leaderboard runs from 324 for the dummy predictor through 67.6 for a random forest on
+Coulomb-matrix and composition features to 28.8 for the best graph network, so the linear kernel
+sits in the lower middle of that range, and three things it says are worth more than the number.
+The single most useful field is the inverse square root of the atomic mass, added because the top
+of a phonon spectrum goes as 1/√m: it takes the three physico-chemical fields from 150 to 117,
+and its co-pattern is the steric × 1/√m and electronegativity × 1/√m channels at the
+bond distances — a light atom on a stiff bond to an electronegative one. The taper earns its
+place: the hard cutoff is the worst row. And the background subtraction, argued for above on
+physical grounds, costs accuracy here: with the uniform term kept the 58-field model improves
+from 181 to 119, and its co-pattern becomes the one a spectroscopist would write down, the H × O,
+H × N and H × S channels with positive weight, because the top of the spectrum in a hydrogen-
+containing solid is the O–H or N–H stretch. The uniform term carries the composition times the
+density, which this property wants and the subtraction removes; `background=False` in the
+library and `--no-background` on the command line keep it. The 55 indicator fields hurt more
+than they help in the joint cosine kernel, where seventeen hundred equally scaled element-pair
+blocks drown the four that matter: mixing coefficients for the channel blocks, which the overlap
+kernel has and the autocorrelation kernels do not yet, are the obvious next step.
+
+
+ASE is needed for the neighbour list and to read structure files, pymatgen for the oxidation
+states and electronegativities (`pip install cmfqsar[crystals]`); both are imported lazily, and the
+tests that need them skip where they are missing.
+
 ### Topomer fields: a frame that comes from the topology
 
 The alignment-free kernel above throws the frame away. The topomer construction of
@@ -2296,6 +2408,7 @@ python cmf_cli.py predict model.cmf new_molecules.sdf --align-variance 2.0 --ali
 python cmf_cli.py build aligned_set.sdf --align-train-variance 1.0 --test-fraction 0.25
 python cmf_cli.py unalign aligned.sdf scrambled.sdf --max-rotation 40 --max-translation 2
 python cmf_cli.py map examples/sutherland/THR.sdf --charges file --out coords.csv --landscape-out land.csv
+python cmf_cli.py build-crystals structures.extxyz --target band_gap --external-cv 5 --save gaps.cmf
 python cmf_cli.py build examples/sutherland/THR.sdf --charges file --task classification --threshold 6.7
 python cmf_cli.py build examples/sutherland/THR.sdf --charges file --task oneclass --threshold 6.7 \
        --alphas 0.5 --nus 0.2 --decoys background_library.sdf
@@ -2686,6 +2799,7 @@ cmfqsar/mil.py          multi-instance learning: the model chooses the conformat
 cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
 cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrelation)
+cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solids, the co-pattern
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule

@@ -599,6 +599,126 @@ def _check_contract(model, mf, allow=False):
     return findings
 
 
+def cmd_build_crystals(args):
+    """A model on periodic structures: the periodic field autocorrelation of cmfqsar/periodic.py."""
+    from cmfqsar.dataio import read_activities_csv
+    from cmfqsar.periodic import (crystal_table, elements_in, inorganic_fieldset,
+                                  periodic_channel_labels, read_structures, top_channels)
+    t0 = time.time()
+    atoms = read_structures(args.dataset)
+    names = [str(a.info.get("name", f"{a.get_chemical_formula()}_{i}")) for i, a in enumerate(atoms)]
+    if args.target_file:
+        tab = read_activities_csv(args.target_file)
+        y = np.array([tab.get(nm, np.nan) for nm in names], float)
+    elif args.target:
+        y = np.array([float(a.info.get(args.target, np.nan)) for a in atoms])
+    else:
+        raise SystemExit("build-crystals needs --target KEY or --target-file CSV")
+    ok = np.isfinite(y)
+    print(f"Loaded {len(atoms)} structures from {args.dataset}; target: {args.target or args.target_file}")
+    if ok.sum() < len(atoms):
+        print(f"  {len(atoms) - ok.sum()} structures without a target are ignored")
+    idx = np.flatnonzero(ok)
+    rng = np.random.default_rng(args.seed)
+    te = np.array([], int)
+    if args.test_fraction > 0:
+        perm = rng.permutation(idx)
+        n_te = int(round(args.test_fraction * len(idx)))
+        te, idx = np.sort(perm[:n_te]), np.sort(perm[n_te:])
+    physchem = [f for f in args.fields.split(",") if f]
+    if args.elements == "auto":
+        elements = elements_in([atoms[i] for i in idx], args.min_structures)
+    elif args.elements == "none":
+        elements = []
+    else:
+        elements = [e for e in args.elements.split(",") if e]
+    fs = inorganic_fieldset(elements, physchem=physchem, charge_model=args.charges)
+    print(f"  fields: {', '.join(sp.label for sp in fs.specs)}")
+    print(f"  training set: {len(idx)} structures" + (f", test set: {len(te)}" if len(te) else ""))
+    train = crystal_table([atoms[i] for i in idx], fs, [names[i] for i in idx])
+    sources = sorted({m.charge_source for m in train.molecules if m.charge_source})
+    if sources:
+        print(f"  electrostatic weights from: {', '.join(sources)}")
+    model = CMFModel(fieldset=fs, method=args.method, normalize=True, kernel_source="periodic",
+                     ac_sigma=args.sigma, ac_d_max=args.cutoff, pbc_taper=args.taper,
+                     pbc_background=not args.no_background, kernel_layer=args.kernel_layer)
+    taper = "no taper" if args.taper <= 0 else f"{args.taper:g} A taper"
+    print(f"Kernel: periodic field autocorrelation, neighbours to {args.cutoff:g} A, channels every "
+          f"{args.sigma:g} A, {taper}, background {'kept' if args.no_background else 'removed'}; "
+          f"per atom of the cell. Invariant to the choice of cell, origin and orientation; no "
+          f"co-fields, but a co-pattern over the channels.")
+    seed = None if args.cv_no_shuffle else args.seed
+
+    def prog(msg, fr):
+        print(f"\r  [{fr * 100:5.1f}%] {msg:<70}", end="", flush=True)
+
+    res = grid_search(train, y[idx], model, [1.0], lams=_floats(args.lams),
+                      epsilons=_floats(args.epsilons), nus=_floats(args.nus),
+                      gammas=_floats(args.gammas), folds=args.folds, seed=seed, progress=prog)
+    print()
+    print(f"Best: {res.best_params}, RMSEcv = {res.best_rmse:.4g}, q2 = {res.best_q2:.3f}")
+    model.fit(train, y[idx], cv_folds=args.folds, cv_seed=seed)
+    print(model.stats.summary())
+    if args.external_cv:
+        ncv = nested_cv(train, y[idx], model, [1.0], lams=_floats(args.lams),
+                        epsilons=_floats(args.epsilons), nus=_floats(args.nus),
+                        outer_folds=args.external_cv, inner_folds=args.folds,
+                        repeats=args.external_repeats, seed=seed, precompute=False, progress=prog)
+        print()
+        print(f"External {args.external_cv}-fold CV x {args.external_repeats}: q2ex = {ncv.q2_ex:.3f} "
+              f"+/- {ncv.q2_ex_sd:.3f}, RMSEcvex = {ncv.rmse_ex:.4g} +/- {ncv.rmse_ex_sd:.4g}")
+        model.stats.extra["external_cv"] = {"q2_ex": ncv.q2_ex, "rmse_ex": ncv.rmse_ex,
+                                            "q2_ex_sd": ncv.q2_ex_sd, "rmse_ex_sd": ncv.rmse_ex_sd}
+    if len(te):
+        test = crystal_table([atoms[i] for i in te], fs, [names[i] for i in te])
+        model.evaluate_test(test, y[te])
+        print(model.stats.summary())
+    if model.is_linear:
+        labels = periodic_channel_labels(fs, model._ac_spec())
+        print(f"Co-pattern: the {args.top} channels that move the prediction most "
+              f"(weight x spread over the training set):")
+        for lab, w, sd in top_channels(model, labels, n=args.top):
+            print(f"  {w * sd:+9.3f}  {lab}")
+    if args.predictions:
+        pred = np.full(len(atoms), np.nan)
+        pred[idx] = model.stats.extra["y_fit"]
+        if len(te) and "y_test_pred" in model.stats.extra:
+            pred[te] = model.stats.extra["y_test_pred"]
+        subset = np.array(["train"] * len(atoms), dtype=object)
+        subset[te] = "test"
+        write_predictions_csv(args.predictions, names, y, pred, subset)
+        print(f"Predictions written to {args.predictions}")
+    if args.save:
+        save_model(args.save, model, extra={"dataset": args.dataset, "task": "regression",
+                                            "activity": args.target or args.target_file})
+        print(f"Model saved to {args.save}")
+    print(f"Elapsed {time.time() - t0:.1f} s")
+
+
+def cmd_diagnose(args):
+    """Ask a data set the questions that should precede modelling it (item C6)."""
+    import json as _json
+
+    from cmfqsar.diagnose import ALPHAS, diagnose
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity,
+                      activity_file=args.activity_file)
+    y = np.asarray(ds.activity, float)
+    alphas = tuple(float(a) for a in args.alphas.split(",")) if args.alphas else ALPHAS
+    routes = tuple(args.routes) if args.routes else ("aligned", "counts", "invariant",
+                                                     "descriptors")
+    d = diagnose(ds.mols, ds.names, y, alphas=alphas, folds=args.folds, seed=args.seed,
+                 charge_model=args.charges, param_scheme=args.params, routes=routes,
+                 activity_prop=ds.activity_prop,
+                 progress=(lambda m: print(f"  ... {m}", flush=True)) if args.verbose else None)
+    print(d.report())
+    if args.json:
+        with open(args.json, "w") as fh:
+            _json.dump(d.to_dict(), fh, indent=1)
+        print(f"\nwritten to {args.json}")
+    return 0
+
+
 def cmd_predict(args):
     model, extra = load_model(args.model)
     ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file)
@@ -1571,6 +1691,68 @@ def main(argv=None):
     b.add_argument("--predictions", default=None)
     b.add_argument("--json", default=None, help="write all statistics and predictions to a JSON file")
     b.set_defaults(func=cmd_build)
+    bc = sub.add_parser("build-crystals",
+                        help="build a model on periodic structures (CIF, POSCAR, extended XYZ, "
+                             "ASE JSON): the periodic field autocorrelation of cmfqsar/periodic.py")
+    bc.add_argument("dataset", help="an ASE-readable file with one or more structures")
+    bc.add_argument("--target", default=None, metavar="KEY",
+                    help="per-structure info key with the property (extended XYZ / ASE JSON)")
+    bc.add_argument("--target-file", default=None, metavar="CSV",
+                    help="CSV 'name,value' with the property, matched on the structures' 'name' "
+                         "info key (default name: <formula>_<index>)")
+    bc.add_argument("--fields", default="electrostatic,steric,prop:electronegativity",
+                    help="physico-chemical fields: electrostatic (oxidation states), steric (atomic "
+                         "volume), prop:electronegativity, prop:mass, prop:inverse_sqrt_mass (the "
+                         "field of the light atoms), or prop:<array> for any per-atom array of the "
+                         "file (Bader charges, magnetic moments, ...)")
+    bc.add_argument("--elements", default="auto",
+                    help="indicator fields: 'auto' (one per element in at least --min-structures "
+                         "training structures, plus one for the rest), 'none', or a list Na,Cl,O")
+    bc.add_argument("--min-structures", type=int, default=5, metavar="N")
+    bc.add_argument("--charges", default="oxidation", choices=["oxidation", "electronegativity", "file"],
+                    help="electrostatic weights: oxidation states guessed from the composition, the "
+                         "electronegativity proxy, or the 'oxi_states'/'charges' array of the file")
+    bc.add_argument("--cutoff", type=float, default=10.0, metavar="R",
+                    help="neighbours are summed out to this radius (angstrom)")
+    bc.add_argument("--sigma", type=float, default=0.5, metavar="S",
+                    help="width and spacing of the distance channels (angstrom)")
+    bc.add_argument("--taper", type=float, default=2.0, metavar="T",
+                    help="width of the cosine taper below the cutoff; 0 for a hard cutoff")
+    bc.add_argument("--no-background", action="store_true",
+                    help="keep the uniform-density term instead of subtracting it")
+    bc.add_argument("--method", default="krr", choices=["krr", "gp", "svr", "nusvr"])
+    bc.add_argument("--kernel-layer", default="linear", choices=["linear", "gauss", "arccos1", "arccos2"])
+    bc.add_argument("--lams", default="1e-4,1e-3,1e-2,0.1,1")
+    bc.add_argument("--epsilons", default="0.1")
+    bc.add_argument("--nus", default="0.5")
+    bc.add_argument("--gammas", default="0.25,0.5,1,2,4")
+    bc.add_argument("--folds", type=int, default=10)
+    bc.add_argument("--external-cv", type=int, default=0, metavar="K",
+                    help="external K-fold cross-validation with the regularisation chosen inside")
+    bc.add_argument("--external-repeats", type=int, default=1)
+    bc.add_argument("--test-fraction", type=float, default=0.0)
+    bc.add_argument("--seed", type=int, default=0)
+    bc.add_argument("--cv-no-shuffle", action="store_true")
+    bc.add_argument("--top", type=int, default=15, help="channels of the co-pattern to print")
+    bc.add_argument("--predictions", default=None, help="CSV with the fitted/test predictions")
+    bc.add_argument("--save", default=None)
+    bc.set_defaults(func=cmd_build_crystals)
+    dg = sub.add_parser("diagnose", help="ask a data set what it can support, before modelling it")
+    dg.add_argument("dataset")
+    dg.add_argument("--activity", default=None, help="the activity property to use")
+    dg.add_argument("--activity-file", default=None, help="a table of activities")
+    dg.add_argument("--routes", nargs="*", default=None,
+                    choices=["aligned", "counts", "invariant", "descriptors"],
+                    help="which comparisons to run (all four by default)")
+    dg.add_argument("--alphas", default=None, help="comma-separated attenuations to search")
+    dg.add_argument("--folds", type=int, default=10)
+    dg.add_argument("--seed", type=int, default=0)
+    dg.add_argument("--charges", default="gasteiger", help="gasteiger | mmff | file")
+    dg.add_argument("--params", default="rdkit", help="rdkit | tripos | tripos-legacy")
+    dg.add_argument("--json", default=None, help="write the diagnosis to this file as well")
+    dg.add_argument("--verbose", action="store_true")
+    dg.set_defaults(func=cmd_diagnose)
+
     q = sub.add_parser("predict", help="predict with a saved model")
     q.add_argument("model")
     q.add_argument("dataset")

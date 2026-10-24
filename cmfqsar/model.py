@@ -534,7 +534,7 @@ class CMFModel:
     scale_fields: bool = True               # scale each field kernel to unit mean diagonal
     # where the kernel comes from: the overlap integrals of the fields, which needs the molecules
     # to share a frame, or the rotation-invariant autocorrelation of those fields, which does not
-    kernel_source: str = "fields"           # "fields" | "autocorrelation" | "surface"
+    kernel_source: str = "fields"           # "fields" | "autocorrelation" | "surface" | "periodic"
     ac_sigma: float = 0.75                  # autocorrelation: width along the distance axis (A)
     ac_d_max: float = 12.0                  # autocorrelation: longest distance resolved (A)
     ac_chirality: bool = False              # autocorrelation: add the three-point signed block
@@ -544,6 +544,11 @@ class CMFModel:
     surf_z_min: float = 1.0                 # surface: lowest height channel (A)
     surf_z_max: float = 6.0                 # surface: highest height channel (A)
     surf_z_step: float = 1.0                # surface: spacing and width of the height channels
+    # "periodic": the autocorrelation of a crystal, summed over a neighbour list with periodic
+    # images, per atom of the cell, with the uniform background removed and a tapered cutoff
+    # (ac_d_max is the cutoff radius, ac_sigma the width and spacing; see periodic.py)
+    pbc_background: bool = True             # periodic: subtract the uniform-density term
+    pbc_taper: float = 2.0                  # periodic: width of the cosine taper below the cutoff
     # optional nonlinear layer on top of the CMF kernel: "linear" keeps the model linear in the
     # molecular field, which is what makes the co-field and the atom contributions valid; the other
     # layers predict better on several sets but destroy that interpretation (see the README)
@@ -690,15 +695,26 @@ class CMFModel:
                         ac_sigma=self.ac_sigma, ac_d_max=self.ac_d_max,
                         ac_chirality=self.ac_chirality, ac_chirality_shells=self.ac_chirality_shells,
                         surf_z_min=self.surf_z_min, surf_z_max=self.surf_z_max,
-                        surf_z_step=self.surf_z_step)
+                        surf_z_step=self.surf_z_step, pbc_background=self.pbc_background,
+                        pbc_taper=self.pbc_taper)
 
     @property
     def on_surface(self) -> bool:
         """True for the surface kernel: in-plane invariant, height kept."""
         return self.kernel_source == "surface"
 
+    @property
+    def is_periodic(self) -> bool:
+        """True for the periodic kernel: crystals, summed over the neighbour list of the cell."""
+        return self.kernel_source == "periodic"
+
     def _ac_spec(self):
         from .invariant import AutocorrelationSpec, SurfaceSpec
+        if self.is_periodic:
+            from .periodic import PeriodicSpec
+            return PeriodicSpec(r_max=float(self.ac_d_max), step=float(self.ac_sigma),
+                                sigma=float(self.ac_sigma), background=bool(self.pbc_background),
+                                taper=float(self.pbc_taper))
         if self.on_surface:
             return SurfaceSpec(d_max=float(self.ac_d_max), step=float(self.ac_sigma),
                                sigma=float(self.ac_sigma), z_min=float(self.surf_z_min),
@@ -716,7 +732,11 @@ class CMFModel:
 
     def _ac_features(self, table: AtomTable) -> np.ndarray:
         from .invariant import feature_matrix, surface_feature_matrix
-        fn = surface_feature_matrix if self.on_surface else feature_matrix
+        if self.is_periodic:
+            from .periodic import periodic_feature_matrix
+            fn = periodic_feature_matrix
+        else:
+            fn = surface_feature_matrix if self.on_surface else feature_matrix
         return fn(table.molecules, self._ac_spec(), n_fields=table.weights.shape[1])
 
     def training_kernel(self, train: AtomTable, progress=None, cancel=None) -> np.ndarray:
@@ -727,7 +747,8 @@ class CMFModel:
                                      train.descriptors)
         from .invariant import autocorrelation_kernel, channel_scale
         if progress:
-            progress("Surface autocorrelation" if self.on_surface else "Field autocorrelation", 0.2)
+            progress("Periodic autocorrelation" if self.is_periodic else
+                     "Surface autocorrelation" if self.on_surface else "Field autocorrelation", 0.2)
         self.train = train
         self.self_diag = None
         self.K_fields_train = None
@@ -1291,6 +1312,8 @@ class CMFModel:
             "surf_z_min": self.surf_z_min,
             "surf_z_max": self.surf_z_max,
             "surf_z_step": self.surf_z_step,
+            "pbc_background": self.pbc_background,
+            "pbc_taper": self.pbc_taper,
             "ac_train": getattr(self, "ac_train_", None),
             "ac_scale": getattr(self, "ac_scale_", None),
             # the descriptor block: its standardisation and scale belong to the training set
@@ -1318,6 +1341,8 @@ class CMFModel:
         m.surf_z_min = float(st.get("surf_z_min", 1.0))
         m.surf_z_max = float(st.get("surf_z_max", 6.0))
         m.surf_z_step = float(st.get("surf_z_step", 1.0))
+        m.pbc_background = bool(st.get("pbc_background", True))
+        m.pbc_taper = float(st.get("pbc_taper", 2.0))
         m.ac_train_ = st.get("ac_train")
         m.ac_scale_ = st.get("ac_scale")
         m.base_diag_ = st.get("base_diag")

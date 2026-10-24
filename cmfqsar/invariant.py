@@ -376,15 +376,23 @@ def channel_scale(train: np.ndarray, n_bins: int,
     X = np.asarray(train, float)
     sizes = ([int(n_bins)] * (X.shape[1] // max(int(n_bins), 1)) if blocks is None
              else [int(b) for b in blocks])
-    s = np.ones(X.shape[1])
+    slices, rms = [], []
     start = 0
     for width in sizes:
         if width <= 0 or start >= X.shape[1]:
             continue
         sl = slice(start, min(start + width, X.shape[1]))
-        rms = float(np.sqrt(np.mean(X[:, sl] ** 2)))
-        s[sl] = 1.0 / rms if rms > 1e-300 else 0.0
+        slices.append(sl)
+        rms.append(float(np.sqrt(np.mean(X[:, sl] ** 2))))
         start = sl.stop
+    # A block that is zero for every training molecule gets no scale.  "Zero" has to allow for
+    # round-off: a channel that cancels exactly in theory -- the charge-weighted count of a
+    # neighbour shell in a crystal whose atoms all see the same shells -- comes out at 1e-14, and
+    # dividing by its root mean square would turn that noise into the largest feature there is.
+    floor = max(1e-300, (max(rms) if rms else 0.0) * 1e-9)
+    s = np.ones(X.shape[1])
+    for sl, r in zip(slices, rms):
+        s[sl] = 1.0 / r if r > floor else 0.0
     return s
 
 

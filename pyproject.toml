@@ -41,8 +41,10 @@ docs = ["reportlab>=4", "matplotlib>=3.7"]
 dev = ["pytest>=7"]
 # examples/scaffold_tree_export.py: protonation states at a given pH
 examples = ["dimorphite_dl"]
+# cmfqsar/periodic.py: crystals (neighbour lists and structure files; oxidation states)
+crystals = ["ase>=3.22", "pymatgen>=2023.1"]
 # everything, for a working checkout
-all = ["cmfqsar[gui,docs,dev,examples]"]
+all = ["cmfqsar[gui,docs,dev,examples,crystals]"]
 
 [project.scripts]
 cmf = "cmfqsar.cli:main"
