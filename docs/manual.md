@@ -1366,8 +1366,10 @@ an atom of that type is welcome at that position.
 
 Two further maps use the same grid, for the molecule currently shown:
 
-- the **molecular field** $X_f(\mathbf{r})$ of that molecule, in the same colours, drawn as a mesh by
-  default so that it can be seen together with the co-field;
+- the **molecular field** $X_f(\mathbf{r})$ of that molecule, in the same colours. The two share a
+  colour scale, so only the drawing style tells them apart: the style box is `auto` by default,
+  which draws this one as a mesh while a co-field is on screen and solid when it is the only
+  surface shown;
 - the **overlap** $C_f(\mathbf{r})\,X_f(\mathbf{r})$, whose integral *is* that field's contribution to the prediction
   (Eq. 7), so the map shows where the prediction comes from.
 

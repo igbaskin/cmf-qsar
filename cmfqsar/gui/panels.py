@@ -1993,9 +1993,11 @@ class ViewerControls(QWidget):
         self.cmb_cofield_style.currentIndexChanged.connect(self.changed)
         self.chk_molfield = QCheckBox("molecular field X(r)")
         self.cmb_molfield_style = QComboBox()
-        self.cmb_molfield_style.addItems(["mesh", "solid"])
-        self.cmb_molfield_style.setToolTip("Molecular fields are drawn as solid isosurfaces in the field's colours;\n"
-                                           "choose 'mesh' to tell them apart from a co-field shown at the same time")
+        self.cmb_molfield_style.addItems(["auto", "mesh", "solid"])
+        self.cmb_molfield_style.setToolTip(
+            "Drawing style of the molecular-field isosurfaces.\n"
+            "'auto' draws a mesh while a co-field is on screen, so that the two can be told\n"
+            "apart, and a solid surface when the molecular field is the only one shown.")
         self.cmb_molfield_style.currentIndexChanged.connect(self.changed)
         self.chk_overlap = QCheckBox("overlap C·X")
         self.chk_shapfield = QCheckBox("Shapley field Φ(r)")

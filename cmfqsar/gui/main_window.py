@@ -2915,6 +2915,7 @@ class MainWindow(QMainWindow):
         cur_name = self.ds.names[cur] if cur >= 0 else ""
 
         # --- co-field (needs a model and computed co-field grids)
+        cofield_drawn = False
         if vc.chk_cofield.isChecked():
             if model is None:
                 legend.append("co-field: build a model, then click 'Compute co-field'")
@@ -2931,6 +2932,7 @@ class MainWindow(QMainWindow):
                         if s is not None:
                             v.add_isosurface(s[0], s[1], col, "cofield", alpha=0.75 if mesh else op,
                                              wireframe=mesh)
+                            cofield_drawn = True
                     legend.append(f"co-field {flabel} ({'mesh' if mesh else 'solid'}): positive = {_cname(pos_c)}, "
                                   f"negative = {_cname(neg_c)}, iso = ±{frac * amax:.3g}")
                 else:
@@ -2947,7 +2949,8 @@ class MainWindow(QMainWindow):
                 amax = float(np.abs(vol).max())
                 if amax > 0:
                     pos_c, neg_c = cofield_colors(fname)
-                    mesh = vc.cmb_molfield_style.currentText() == "mesh"
+                    mesh = molfield_wireframe(vc.cmb_molfield_style.currentText(),
+                                              cofield_drawn)
                     for sign, col in ((1, pos_c), (-1, neg_c)):
                         s = isosurface(vol, sign * frac * amax, grid)
                         if s is not None:
@@ -4121,6 +4124,19 @@ class MainWindow(QMainWindow):
                 self.restoreState(s.value("state"))
         except Exception:
             pass
+
+
+def molfield_wireframe(choice: str, cofield_drawn: bool) -> bool:
+    """Whether the molecular field is drawn as a mesh rather than a solid surface.
+
+    The two maps share a colour scale -- positive and negative in the field's own two colours --
+    so when both are on screen only the drawing style tells them apart, and the mesh has to be
+    the molecular field: it is one connected envelope around the whole molecule, and drawn solid
+    it would hide the molecule and the co-field lobes alike.  Alone on screen it has nothing to
+    hide and nothing to be confused with, so it is drawn solid.  That is `auto`; a reader who
+    wants the opposite picture -- lobes as a cage around a solid field -- names the style.
+    """
+    return choice == "mesh" or (choice == "auto" and bool(cofield_drawn))
 
 
 def _cname(c) -> str:
