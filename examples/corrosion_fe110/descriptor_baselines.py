@@ -13,9 +13,12 @@ Hu 2011).
 Targets: the UMA adsorption energy (72 reliable molecules), the pooled potency (73) and the
 potency of Hu 2011's series (18).
 
-    python examples/corrosion_fe110/descriptor_baselines.py
+    python examples/corrosion_fe110/descriptor_baselines.py [--indices OTHER.sdf --tag gas]
 
-Writes descriptor_baselines.csv next to this script and prints the table.
+With ``--indices`` the global quantum indices are read from another SDF of the same compounds
+(matched by db_id), e.g. 157_benzimidazole_gas_qm.sdf with the indices computed at gas-phase
+geometries, which removes the adsorbed geometry from the descriptors; the targets still come
+from the UMA SDF.  Writes descriptor_baselines[_TAG].csv next to this script and prints the table.
 """
 from __future__ import annotations
 
@@ -39,10 +42,21 @@ QM_SDF = os.path.join(HERE, "157_benzimidazole_uma_qm.sdf")
 QM = ["E_homo", "E_lumo", "gap", "dipole", "IP", "EA", "hardness", "softness", "electrophilicity", "chemical_potential"]
 
 
-def quantum(m):
-    v = [float(m.GetProp(p)) for p in QM]
-    chi, eta = -float(m.GetProp("chemical_potential")), float(m.GetProp("hardness"))
-    v.append((7.0 - chi) / (2.0 * eta))                      # dN towards iron
+def quantum(m, koopmans=False):
+    """The eleven indices; with `koopmans` (or when the N+1/N-1 states were not computed) the
+    reactivity indices come from the orbital energies, IP = -E_HOMO and EA = -E_LUMO, as the
+    corrosion literature computes them."""
+    if koopmans or not m.HasProp("IP"):
+        homo, lumo = float(m.GetProp("E_homo")), float(m.GetProp("E_lumo"))
+        ip, ea = -homo, -lumo
+        eta = (ip - ea) / 2.0
+        mu = -(ip + ea) / 2.0
+        v = [homo, lumo, lumo - homo, float(m.GetProp("dipole")), ip, ea, eta,
+             1.0 / (2.0 * eta), mu * mu / (2.0 * eta), mu]
+    else:
+        v = [float(m.GetProp(p)) for p in QM]
+        mu, eta = float(m.GetProp("chemical_potential")), float(m.GetProp("hardness"))
+    v.append((7.0 + mu) / (2.0 * eta))                      # dN towards iron, chi = -mu
     return v
 
 
@@ -106,10 +120,24 @@ def nested(X, y, make, outer, repeats, seed):
     return float(np.mean(q2)), float(np.std(q2)) if repeats > 1 else float("nan"), float(np.mean([rmse(y, p) for p in preds]))
 
 
-def main():
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.split(chr(10) * 2)[0])
+    ap.add_argument("--indices", default=None, help="SDF whose global quantum indices replace the UMA SDF's")
+    ap.add_argument("--tag", default="", help="suffix of the output table")
+    ap.add_argument("--koopmans", action="store_true", help="reactivity indices from the orbital energies even when the Delta-SCF ones exist")
+    a = ap.parse_args(argv)
     mols = [m for m in Chem.SDMolSupplier(QM_SDF, removeHs=False)]
     ids = np.array([int(m.GetProp("db_id")) for m in mols])
-    Xq = np.array([quantum(m) for m in mols])
+    if a.indices:
+        other = {int(m.GetProp("db_id")): m for m in Chem.SDMolSupplier(a.indices, removeHs=False) if m.HasProp("gap")}
+        missing = [i for i in ids if i not in other]
+        print(f"indices from {a.indices}: {len(other)} molecules, {len(missing)} of the UMA set missing")
+        Xq = np.array([quantum(other[i], a.koopmans) if i in other else [np.nan] * len(QM_NAMES) for i in ids])
+        if not all(m.HasProp("IP") for m in other.values()):
+            print("  no Delta-SCF states in that file: IP, EA, hardness, softness, electrophilicity and the chemical potential from the orbital energies (Koopmans)")
+    else:
+        Xq = np.array([quantum(m, a.koopmans) for m in mols])
     Xr = np.array([rdkit_desc(m) for m in mols])
     gas_ok = np.array([m.GetProp("gas_intact") == "1" for m in mols])
     e_ads = np.array([float(m.GetProp("E_ads_kJmol")) for m in mols])
@@ -122,7 +150,7 @@ def main():
     sets = {"quantum indices (11)": Xq, "RDKit descriptors (21)": Xr, "both (32)": np.hstack([Xq, Xr])}
     rows = []
     for tname, (y, keep, outer, repeats) in targets.items():
-        idx = np.flatnonzero(keep & np.isfinite(y))
+        idx = np.flatnonzero(keep & np.isfinite(y) & np.isfinite(Xq).all(axis=1))
         for sname, X in sets.items():
             for lname, make in learners().items():
                 n_out = len(idx) if outer is None else outer
@@ -133,7 +161,7 @@ def main():
         # the single best-correlated index, the literature's favourite plot
         r = [(abs(np.corrcoef(Xq[idx, k], y[idx])[0, 1]), QM_NAMES[k]) for k in range(Xq.shape[1])]
         print(f"   strongest single quantum index for {tname}: {max(r)[1]} |r| = {max(r)[0]:.2f}")
-    out = os.path.join(HERE, "descriptor_baselines.csv")
+    out = os.path.join(HERE, "descriptor_baselines" + (f"_{a.tag}" if a.tag else "") + ".csv")
     with open(out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
         w.writeheader(); w.writerows(rows)

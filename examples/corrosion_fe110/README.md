@@ -542,6 +542,43 @@ and IP (-0.48); for Hu 2011 the ionisation potential (r 0.89).
   does better, and on the clean series the global quantum indices do better.  A paper has to
   show these columns beside the field ones.
 
+## The same baselines with gas-phase indices (2026-10-24)
+
+The quantum indices above were computed at the adsorbed geometries.  `157_benzimidazole_gas_qm.sdf`
+holds a neutral-state r2SCAN-3c run on the script's own ETKDG+MMFF conformers (73 molecules,
+45 min, no N+-1 states), so its reactivity indices are Koopmans ones, IP = -E_HOMO and
+EA = -E_LUMO, as the corrosion literature computes them; for a like-for-like pair the adsorbed
+set was rerun in the same form (`--koopmans`).  Tables: `descriptor_baselines_gas.csv`,
+`descriptor_baselines_koopmans.csv`.
+
+| target | descriptors | learner | adsorbed, Delta-SCF | adsorbed, Koopmans | gas phase, Koopmans |
+|---|---|---|---|---|---|
+| E_ads | quantum (11) | ridge / kernel ridge / forest | 0.33 / 0.35 / 0.31 | 0.28 / 0.31 / 0.23 | -0.03 / -0.09 / -0.08 |
+| E_ads | both (32) | ridge / kernel ridge / forest | 0.38 / 0.39 / 0.37 | 0.39 / 0.33 / 0.29 | -0.04 / 0.04 / 0.21 |
+| potency, pooled | quantum | ridge / kernel ridge / forest | -0.54 / -0.33 / 0.06 | 0.04 / 0.00 / -0.11 | 0.03 / -0.13 / 0.24 |
+| potency, pooled | both | ridge / kernel ridge / forest | 0.29 / -0.25 / 0.34 | 0.27 / 0.32 / 0.37 | 0.35 / 0.30 / 0.40 |
+| potency, Hu 2011 | quantum | ridge / kernel ridge / forest | 0.75 / 0.74 / 0.53 | 0.22 / 0.66 / 0.56 | 0.65 / 0.58 / 0.59 |
+| potency, Hu 2011 | both | ridge / kernel ridge / forest | 0.80 / 0.63 / 0.61 | 0.80 / 0.66 / 0.62 | 0.80 / 0.74 / 0.61 |
+
+Strongest single index at the gas-phase geometry: for E_ads the hardness at r 0.24 (0.61 at
+the adsorbed geometry); for the pooled potency dN at 0.40; for Hu 2011 dN at 0.90.
+
+- **E_ads: the caveat was the whole effect.**  At the free-molecule geometry the global quantum
+  indices predict nothing of the adsorption energy (q2 about 0 by every learner); the 0.35 at
+  the adsorbed geometry was the chemisorbed ring's smaller gap reporting that it had
+  chemisorbed.  So the fields' margin is larger than the previous section said, and the reading
+  that the E_ads model learns the arrangement over the surface rather than the molecule's
+  electronic structure is restored: no global index of the free molecule anticipates the UMA
+  energy, the surface kernel reaches 0.66.
+- **Hu 2011: the frontier-orbital model stands in gas phase.**  Ridge on the eleven Koopmans
+  indices gives 0.65 (0.58-0.59 for the other learners), 0.80 with the RDKit descriptors added,
+  and dN, the fraction of electrons transferred to iron, alone correlates at 0.90 with the
+  potency of the series.  That is the literature's claim, and it holds where the literature
+  tests it, within one series under one protocol; the field model's 0.66 is on a par with the
+  quantum indices alone and below the combined descriptors.
+- **Pooled potency: unchanged.**  The quantum indices alone predict nothing pooled in any form;
+  with the RDKit descriptors the forest stays at 0.37-0.40, the size-and-lipophilicity trend.
+
 ## Follow-ups
 
 - Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,

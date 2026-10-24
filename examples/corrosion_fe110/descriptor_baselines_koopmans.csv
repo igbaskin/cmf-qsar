@@ -1,0 +1,28 @@
+target,descriptors,learner,n,q2,q2_sd,rmse,sd_y
+E_ads (kJ/mol),quantum indices (11),ridge,72,0.277,0.162,44.98,53.18
+E_ads (kJ/mol),quantum indices (11),kernel ridge (RBF),72,0.306,0.056,44.26,53.18
+E_ads (kJ/mol),quantum indices (11),random forest,72,0.23,0.053,46.64,53.18
+E_ads (kJ/mol),RDKit descriptors (21),ridge,72,-0.069,0.105,54.91,53.18
+E_ads (kJ/mol),RDKit descriptors (21),kernel ridge (RBF),72,-0.038,0.083,54.14,53.18
+E_ads (kJ/mol),RDKit descriptors (21),random forest,72,0.248,0.056,46.09,53.18
+E_ads (kJ/mol),both (32),ridge,72,0.391,0.055,41.46,53.18
+E_ads (kJ/mol),both (32),kernel ridge (RBF),72,0.333,0.072,43.36,53.18
+E_ads (kJ/mol),both (32),random forest,72,0.291,0.051,44.74,53.18
+"potency, pooled node",quantum indices (11),ridge,73,0.041,0.04,1.82,1.86
+"potency, pooled node",quantum indices (11),kernel ridge (RBF),73,-0.0,0.045,1.86,1.86
+"potency, pooled node",quantum indices (11),random forest,73,-0.114,0.051,1.96,1.86
+"potency, pooled node",RDKit descriptors (21),ridge,73,0.1,0.146,1.76,1.86
+"potency, pooled node",RDKit descriptors (21),kernel ridge (RBF),73,0.246,0.05,1.61,1.86
+"potency, pooled node",RDKit descriptors (21),random forest,73,0.382,0.032,1.46,1.86
+"potency, pooled node",both (32),ridge,73,0.267,0.033,1.59,1.86
+"potency, pooled node",both (32),kernel ridge (RBF),73,0.323,0.054,1.53,1.86
+"potency, pooled node",both (32),random forest,73,0.371,0.037,1.47,1.86
+"potency, Hu 2011",quantum indices (11),ridge,18,0.22,nan,1.05,1.19
+"potency, Hu 2011",quantum indices (11),kernel ridge (RBF),18,0.661,nan,0.69,1.19
+"potency, Hu 2011",quantum indices (11),random forest,18,0.56,nan,0.79,1.19
+"potency, Hu 2011",RDKit descriptors (21),ridge,18,0.474,nan,0.86,1.19
+"potency, Hu 2011",RDKit descriptors (21),kernel ridge (RBF),18,0.75,nan,0.59,1.19
+"potency, Hu 2011",RDKit descriptors (21),random forest,18,0.343,nan,0.96,1.19
+"potency, Hu 2011",both (32),ridge,18,0.796,nan,0.54,1.19
+"potency, Hu 2011",both (32),kernel ridge (RBF),18,0.661,nan,0.69,1.19
+"potency, Hu 2011",both (32),random forest,18,0.621,nan,0.73,1.19
