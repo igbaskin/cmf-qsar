@@ -169,3 +169,40 @@ def test_a_regenerated_conformation_can_still_be_matched_by_substructure():
     centre_ref = np.asarray(ref.GetConformer().GetPositions(), float).mean(axis=0)
     centre_new = np.asarray(fresh.GetConformer().GetPositions(), float).mean(axis=0)
     assert float(np.linalg.norm(centre_ref - centre_new)) < 3.0
+
+
+def test_a_training_frame_is_judged_up_to_a_global_rigid_motion():
+    """Rotating the whole set changes no kernel entry, so it must not count as pose error.
+
+    Measured per molecule without this, a perfectly recovered mutual arrangement would score as
+    badly as a destroyed one, and the C4 measurement would be meaningless.
+    """
+    from scipy.spatial.transform import Rotation
+
+    from cmfqsar.poses import frame_rmsds, global_superpose
+
+    mols, names, y = _series(10)
+    ref = [Chem.Mol(m) for m in mols]
+    turned = []
+    R = Rotation.from_rotvec([0.4, -0.2, 0.7]).as_matrix()
+    shift = np.array([3.0, -1.0, 2.0])
+    for m in mols:                                  # one motion applied to the whole set
+        p = Chem.Mol(m)
+        X = np.asarray(p.GetConformer().GetPositions(), float)
+        MW_set_coords(p, X @ R.T + shift)
+        turned.append(p)
+    assert pose_rmsd(turned[0], ref[0]) > 2.0, "the molecules did move"
+    after = frame_rmsds(turned, ref)
+    assert float(np.max(after)) < 1e-6, "a global motion is not pose error"
+
+    # a single molecule displaced within the set is pose error, and survives the fit
+    broken = [Chem.Mol(m) for m in mols]
+    X = np.asarray(broken[3].GetConformer().GetPositions(), float)
+    MW_set_coords(broken[3], X + np.array([2.5, 0.0, 0.0]))
+    rms = frame_rmsds(broken, ref)
+    assert float(np.median(rms)) < 0.5 and float(np.max(rms)) > 1.5
+
+
+def MW_set_coords(mol, X):
+    from cmfqsar.align import set_coords
+    set_coords(mol, np.asarray(X, float))

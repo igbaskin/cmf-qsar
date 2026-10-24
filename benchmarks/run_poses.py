@@ -44,7 +44,7 @@ sys.path.insert(0, HERE)
 from rdkit import Chem, RDLogger  # noqa: E402
 
 from cmfqsar.fields import FieldSet  # noqa: E402
-from cmfqsar.poses import POSERS, judge, table  # noqa: E402
+from cmfqsar.poses import POSERS, judge, judge_training_frame, table  # noqa: E402
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -133,6 +133,15 @@ def run_set(name, methods=METHODS, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM
 
 def variant(row):
     """What a result file is a run of, as a key and as a sentence."""
+    if row.get("frame"):
+        # a training-frame run answers a different question from a pose run, so it never shares
+        # a table with one
+        co = row.get("coalign", {})
+        posers = tuple(sorted(m for m in row.get("methods", {}) if m != "crystal"))
+        what = (f"the training frame destroyed and recovered: {co.get('rounds', '?')} rounds, "
+                f"guard {co.get('max_rmsd')} A"
+                + (", flexible E-step" if co.get("flexible") else ", rigid E-step"))
+        return (2, int(bool(co.get("flexible"))), 0.0, posers), what
     recon = bool(row.get("reconform"))
     confs = int(row.get("conformers") or 0)
     guard = row.get("max_rmsd")
@@ -184,6 +193,43 @@ def _table(group, methods, label):
     return lines + [""]
 
 
+def run_frame_set(name, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM, force=False,
+                  rounds=4, folds=4, max_rmsd=1.0, max_similarity=0.98, flexible=False,
+                  conformers=0, suffix="_frame"):
+    """Item C4: destroy the *training* frame and ask a method to recover it."""
+    out_path = os.path.join(results, f"{name}{suffix}.json")
+    if os.path.exists(out_path) and not force:
+        print(f"[skip] {out_path} exists")
+        return json.load(open(out_path))
+    t0 = time.time()
+    mols, names, y = load(name)
+    tr, te = split(len(mols), seed=seed)
+    print(f"\n=== {name}: training frame of {len(tr)} ligands destroyed and recovered, "
+          f"{len(te)} held out in their crystal poses", flush=True)
+    fs = FieldSet.create(physchem=FIELDS, alpha=alpha, charge_model="gasteiger",
+                         param_scheme="rdkit")
+    kw = {"rounds": rounds, "folds": folds, "max_rmsd": max_rmsd,
+          "max_similarity": max_similarity, "flexible": flexible, "conformers": conformers,
+          "seed": seed}
+    if flexible:
+        kw["rdmols"] = [mols[i] for i in tr]
+    scores = judge_training_frame(mols, names, y, tr, te, fs, lam=lam, seed=seed,
+                                  coalign_kwargs=kw,
+                                  progress=lambda m: print(f"    {m}", flush=True))
+    res = {"set": name, "n": len(mols), "n_train": len(tr), "n_test": len(te),
+           "fields": FIELDS, "alpha": alpha, "lam": lam, "seed": seed, "frame": True,
+           "coalign": {k: v for k, v in kw.items() if k != "rdmols"},
+           "methods": {k: v.row() for k, v in scores.items()},
+           "rmsd": {k: [float(x) for x in v.rmsd] for k, v in scores.items()},
+           "seconds": time.time() - t0}
+    os.makedirs(results, exist_ok=True)
+    with open(out_path, "w") as fh:
+        json.dump(res, fh, indent=1)
+    print(table(scores, title=f"{name}: the training frame"), flush=True)
+    print(f"    written to {out_path}  ({res['seconds']:.0f} s)", flush=True)
+    return res
+
+
 def report(results=RESULTS, out=None):
     """Every variant in the results folder, each as its own labelled table.
 
@@ -202,7 +248,8 @@ def report(results=RESULTS, out=None):
     for r in rows:
         key, what = variant(r)
         groups.setdefault((key, what), []).append(r)
-    known = ["crystal"] + [m for m in list(METHODS) + list(FLEX_METHODS) + list(GRAPH_METHODS)]
+    known = (["crystal"] + [m for m in list(METHODS) + list(FLEX_METHODS)
+                                   + list(GRAPH_METHODS)] + ["coalign", "mcs+coalign"])
     seen = []
     for m in known:
         if m not in seen:
@@ -248,6 +295,11 @@ def main(argv=None):
     ap.add_argument("--conformers", type=int, default=0,
                     help="starting configurations from the conformer generator")
     ap.add_argument("--suffix", default=None, help="tag for the result files")
+    ap.add_argument("--coalign", action="store_true",
+                    help="item C4: destroy the training frame and recover it (cmfqsar/coalign.py)")
+    ap.add_argument("--coalign-rounds", type=int, default=4)
+    ap.add_argument("--coalign-flexible", action="store_true",
+                    help="use the flexible E-step, which needs the molecules")
     ap.add_argument("--flex", action="store_true",
                     help="shorthand for --reconform with the flexible methods")
     ap.add_argument("--report", action="store_true")
@@ -255,6 +307,14 @@ def main(argv=None):
     if args.report:
         return report()
     sets = SETS if args.sets == ["all"] else args.sets
+    if args.coalign:
+        for name in sets:
+            run_frame_set(name, seed=args.seed, alpha=args.alpha, lam=args.lam,
+                          force=args.force, rounds=args.coalign_rounds,
+                          max_rmsd=args.max_rmsd if args.max_rmsd is not None else 1.0,
+                          flexible=args.coalign_flexible,
+                          suffix="_frame_flex" if args.coalign_flexible else "_frame")
+        return report()
     methods = tuple(FLEX_METHODS) if args.flex else tuple(args.methods)
     reconform = args.reconform or args.flex
     for name in sets:

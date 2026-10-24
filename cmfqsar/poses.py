@@ -386,6 +386,128 @@ def judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
     return out
 
 
+def global_superpose(probe: Sequence[Chem.Mol], ref: Sequence[Chem.Mol]) -> float:
+    """Apply the single rigid motion that best maps the whole `probe` set onto `ref`.
+
+    A training frame is only defined up to a global rigid motion: the CMF kernel depends on where
+    the molecules are *relative to each other*, so rotating the entire set changes no kernel entry
+    and no prediction.  Judging a recovered frame therefore means removing that freedom first --
+    one transform for all molecules, never one per molecule, which would measure conformations
+    instead of the frame.  Returns the RMSD of the concatenated coordinates after the fit.
+    """
+    A = np.vstack([np.asarray(m.GetConformer().GetPositions(), float) for m in probe])
+    B = np.vstack([np.asarray(m.GetConformer().GetPositions(), float) for m in ref])
+    if A.shape != B.shape:
+        return float("nan")
+    ca, cb = A.mean(axis=0), B.mean(axis=0)
+    U, _s, Vt = np.linalg.svd((A - ca).T @ (B - cb))
+    d = np.sign(np.linalg.det(U @ Vt))
+    R = U @ np.diag([1.0, 1.0, d]) @ Vt
+    for m in probe:
+        X = np.asarray(m.GetConformer().GetPositions(), float)
+        set_coords(m, (X - ca) @ R + cb)
+    A2 = np.vstack([np.asarray(m.GetConformer().GetPositions(), float) for m in probe])
+    return float(np.sqrt(np.mean(np.sum((A2 - B) ** 2, axis=1))))
+
+
+def frame_rmsds(probe: Sequence[Chem.Mol], ref: Sequence[Chem.Mol]) -> np.ndarray:
+    """Per-molecule RMSD to the reference frame, after one global superposition of the set."""
+    global_superpose(probe, ref)
+    return np.array([pose_rmsd(p, r) for p, r in zip(probe, ref)])
+
+
+def judge_training_frame(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
+                         train: Sequence[int], test: Sequence[int], fieldset: FieldSet,
+                         methods: Sequence[str] = ("scrambled", "mcs", "coalign",
+                                                   "mcs+coalign"),
+                         lam: float = 0.1, seed: int = 0, max_translation: float = 2.0,
+                         coalign_kwargs: Optional[dict] = None,
+                         progress: Optional[Callable[[str], None]] = None
+                         ) -> Dict[str, PoseScore]:
+    """Judge a method that re-aligns the **training set** itself (item C4).
+
+    The training poses are destroyed and recovered; the held-out molecules keep their crystal
+    poses throughout, so what is measured is the frame and nothing else.  Two numbers per method:
+    the per-molecule RMSD of the recovered frame to the crystal one, after the global
+    superposition that the kernel is blind to, and the external R2pred of the held-out molecules
+    posed onto the recovered frame by substructure alignment -- the operational route, since in a
+    real application there is no crystal frame to align them to.
+
+    Two questions, and they are not the same.  ``coalign`` starts from the scrambled frame and
+    asks whether the iteration can *build* one; it cannot, and the reason is structural -- a model
+    fitted on scrambled poses is meaningless, so the confidence it offers is flat, which is what
+    C1 found for the rigid search and what the field-graph module was written for.
+    ``mcs+coalign`` starts from the substructure frame and asks whether the iteration can
+    *improve* a usable one, which is the question C4 is actually about.
+    """
+    import time
+
+    from .coalign import coalign
+
+    y = np.asarray(y, float)
+    train, test = [int(i) for i in train], [int(i) for i in test]
+    crystal_train = [Chem.Mol(mols[i]) for i in train]
+    crystal_test = [Chem.Mol(mols[i]) for i in test]
+    train_mean = float(np.mean(y[train]))
+    out: Dict[str, PoseScore] = {}
+
+    def score(probe_train, label, seconds=0.0, floor=float("nan")):
+        rmsds = frame_rmsds(probe_train, crystal_train)
+        model = CMFModel(fieldset=fieldset, method="gp", normalize=True,
+                         params={"lam": float(lam)})
+        model.fit(AtomTable.from_molecules(
+            [build_fields(m, fieldset, names[i]) for m, i in zip(probe_train, train)]),
+            y[train], cv_folds=0)
+        ref = probe_train[int(np.argmax(y[train]))]
+        posed = []
+        for m in crystal_test:
+            p = Chem.Mol(m)
+            try:
+                mcs_align(p, ref)
+            except Exception:                   # noqa: BLE001
+                pass
+            posed.append(p)
+        pred = _predict(model, posed, [names[i] for i in test], fieldset)
+        return PoseScore(method=label, n=len(train), rmsd=rmsds,
+                         r2_pred=float(r2_score(y[test], pred, train_mean)),
+                         rmse_pred=float(rmse(y[test], pred)), predicted=pred,
+                         observed=y[test], seconds=seconds, floor_rmsd=floor)
+
+    out["crystal"] = score([Chem.Mol(m) for m in crystal_train], "crystal")
+    if progress:
+        progress(f"crystal training frame: R2pred {out['crystal'].r2_pred:+.3f}")
+
+    for name in methods:
+        t0 = time.time()
+        probe = [Chem.Mol(m) for m in crystal_train]
+        _scramble(probe, fieldset, seed=seed, max_translation=max_translation)
+        floor = float(np.median(frame_rmsds([Chem.Mol(p) for p in probe], crystal_train)))
+        if name in ("mcs", "mcs+coalign"):
+            ref = probe[int(np.argmax(y[train]))]
+            for p in probe:
+                try:
+                    mcs_align(p, ref)
+                except Exception:               # noqa: BLE001
+                    pass
+        if name in ("coalign", "mcs+coalign"):
+            mf = [build_fields(p, fieldset, names[i]) for p, i in zip(probe, train)]
+            template = CMFModel(fieldset=fieldset, method="gp", normalize=True,
+                                params={"lam": float(lam)})
+            res = coalign(mf, y[train], template, **(coalign_kwargs or {}))
+            for p, f in zip(probe, mf):
+                set_coords(p, f.coords)
+            if progress:
+                progress(f"coalign: {res.stopped}, objective {res.improved:+.3f}")
+        elif name not in ("scrambled", "mcs"):
+            raise ValueError(f"unknown training-frame method {name!r}")
+        s = score(probe, name, seconds=time.time() - t0, floor=floor)
+        out[name] = s
+        if progress:
+            progress(f"{name}: frame RMSD {s.median_rmsd:.2f} A (from {floor:.2f}), "
+                     f"recovery {s.recovery:+.0%}, R2pred {s.r2_pred:+.3f}")
+    return out
+
+
 def table(scores: Dict[str, PoseScore], title: str = "") -> str:
     """The protocol's answer as a table: where the poses went and what they predict."""
     lines = []
