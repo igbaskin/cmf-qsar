@@ -1370,6 +1370,55 @@ The field-space distance is reported alongside the similarity, because the two c
 molecule that is a scaled-up version of a training molecule points the same way (high cosine) but
 sits far away (large distance).
 
+## Is the whole library inside? The two-sample test
+
+The applicability domain answers the question one molecule at a time. A screening run asks a
+different one — is this library drawn from the same population as the training set, or is the whole
+exercise an extrapolation? — and averaging a per-molecule verdict does not answer it: two sets can
+have identical nearest-neighbour similarities and still occupy different regions.
+
+Every set of molecules has a **mean field**, the mean of its feature maps, which for CMF is itself
+a function of space. The maximum mean discrepancy (Gretton *et al.*, JMLR **13** (2012) 723) is the
+distance between two of them:
+
+$$
+\mathrm{MMD}^2(X, Y) = \overline{K(x, x')} - 2\,\overline{K(x, y)} + \overline{K(y, y')}
+$$
+
+— three averages over blocks of the kernel matrix and nothing else. The unbiased estimator leaves
+the self-similarities out of the two within-set terms, which is why it can come out slightly
+negative: that is how "no difference at all" looks once the bias has been removed, not a defect.
+The null distribution comes from permuting the labels, which costs three block means per shuffle
+because the kernel is computed once.
+
+```bash
+python cmf_cli.py compare library.sdf --model model.cmf --permutations 999
+python cmf_cli.py compare seriesA.sdf seriesB.sdf --charges file
+```
+
+With `--model` the library is compared with that model's training set, in that model's own fields,
+reusing the cross-kernel the prediction computes anyway. The p-value is never zero: it is one
+plus the number of shuffles that matched or beat the observed value, over one plus the number of
+shuffles, because a finite number of them cannot support a claim of impossibility.
+
+**The witness says where the difference lies**, which is the actionable form of a p-value. It is
+the function whose expectation separates the two sets — a molecule's mean kernel value against
+the first set minus its mean against the second — evaluated at every molecule: most negative for
+the compounds that make the
+library unlike the training set, most positive for those most typical of it. The command prints
+both ends and `--out` writes the whole column. On the Sutherland benzodiazepine set against the
+COX2 one, the witness names nordazepam and delorazepam as the most typical benzodiazepines and the
+COX2 sulphonamides as the least — without being told that there are two targets.
+
+### Is the test any good?
+
+A test is worth nothing unless it is calibrated as well as powerful, and `benchmarks/run_structure.py`
+measures both halves. Twenty random half-splits of each of the eight Sutherland sets, where there
+is nothing to find: **5.6 % are called significant at the 5 % level**, which is what a correctly
+calibrated test does and the permutation construction guarantees. All twenty-eight pairs of
+*different* targets, where there is everything to find: **100 % are called significant, median
+z = +171**. The test is calibrated where there is nothing and saturated where there is.
+
 ## How certain is that number?
 
 A difference of 0.02 in q² is quoted all over the benchmarks in this repository. Some of those
@@ -1451,6 +1500,54 @@ reachable rather than returning its widest error and calling it an interval.
 
 Regression only: conformal classification produces prediction *sets* rather than intervals, and is
 not implemented.
+
+## What the model thinks the groups are: clustering the kernel
+
+Every grouped validation in this manual splits the molecules by their Bemis–Murcko scaffold, and
+the reasoning is sound: random folds put a molecule's own scaffold-mates in the training part and
+flatter a mixed series badly. But it rests on an assumption nobody checks — that a scaffold is
+what makes two molecules alike *to the model*. The model does not see scaffolds. It sees fields,
+and its notion of similarity is the kernel.
+
+*Spectral clustering* partitions that similarity directly. The kernel is already a similarity
+matrix, so there is nothing to build: form the normalised Laplacian, take the eigenvectors
+belonging to its smallest eigenvalues, put the rows on the unit sphere and run k-means there (Ng,
+Jordan & Weiss 2002). Groups that are not linearly separable in field space are separable in those
+coordinates, which is the point of the construction. How many groups is decided by the **eigengap**
+unless it is given, and the gap is reported beside the answer so that a weak one can be seen for
+what it is.
+
+```bash
+python cmf_cli.py cluster data.sdf --charges file
+python cmf_cli.py cluster data.sdf --clusters 5 --out clusters.csv
+```
+
+The command prints the clusters, the spectrum they came from, the activity of each, and the
+**adjusted Rand index** between them and the scaffold groups — the number that says whether the
+usual grouping groups what the model actually keys on.
+
+### The two partitions do not agree, and it matters
+
+Measured on the eight Sutherland sets, with both partitions cut into the same number of groups —
+holding out one of two clusters removes half the training set and holding out one of nine does
+not, so a difference in granularity would be read as a difference in difficulty:
+
+| | q² |
+|---|---:|
+| random 10-fold | +0.508 |
+| leave one **scaffold group** out | +0.271 |
+| leave one **field cluster** out | +0.057 |
+
+and the adjusted Rand index between the two partitions averages **+0.140**, which is weak
+agreement: what the chemist calls a series and what the kernel finds similar are largely different
+things. On BZR they are different enough that holding out a field cluster takes q² to −0.740.
+
+The consequence is uncomfortable and worth stating. This manual recommends the
+leave-one-chemotype-out figure as the honest one, and against random folds it is — 0.271 against
+0.508. But it is not the hardest honest test available: holding out a group of the model's own
+similarity costs another 0.214, because a scaffold group leaves molecules the kernel still
+considers close in the training part. Quote the scaffold figure, by all means; just do not read it
+as the worst case.
 
 ## Where the validation appears
 

@@ -1541,6 +1541,118 @@ def cmd_unalign(args):
     print(f"Written to {args.out}")
 
 
+def _fieldset_from(args, mols):
+    """The field set a comparison or a clustering uses, built exactly as a model's would be."""
+    physchem, atom_props = _split_fields(args.fields)
+    cif = cif_types_in(mols, args.cif_scheme, args.cif_min) if args.cif else []
+    return FieldSet.create(atom_properties=atom_props, physchem=physchem, cif_types=cif,
+                           alpha=args.alpha, charge_model=args.charges,
+                           cif_scheme=args.cif_scheme, param_scheme=args.param)
+
+
+def cmd_compare(args):
+    """Are two sets of molecules drawn from the same population?  A kernel two-sample test."""
+    from cmfqsar.mmd import assemble, kernel_over, mmd_test, witness
+
+    ds_a = load_dataset(args.dataset)
+    if args.model:
+        model, extra = load_model(args.model)
+        fs = model.fieldset
+        print(f"Model {args.model}: {model.train.n_mol} training molecules, "
+              f"fields {', '.join(s_.label for s_ in fs.specs)}")
+        mf = [build_fields(m, fs, n) for m, n in zip(ds_a.mols, ds_a.names)]
+        table = AtomTable.from_molecules(mf)
+        probe = CMFModel(fieldset=fs, method="krr", normalize=model.normalize)
+        Kyy = probe.joint_kernel(probe.prepare_training_kernels(table))
+        K, mask = assemble(model._linear_train_kernel(), model.test_kernel(table), Kyy)
+        train_names = list(extra.get("train_names")
+                           or getattr(model.train, "names", None) or [])
+        if len(train_names) != model.train.n_mol:
+            train_names = [str(i) for i in range(model.train.n_mol)]
+        names = [f"train:{n}" for n in train_names] + list(ds_a.names)
+        label_a, label_b = "the training set", args.dataset
+    else:
+        if not args.other:
+            raise SystemExit("give a second data set, or --model to compare with a model's "
+                             "training set")
+        ds_b = load_dataset(args.other)
+        fs = _fieldset_from(args, list(ds_a.mols) + list(ds_b.mols))
+        K, mask = kernel_over(ds_a.mols, ds_a.names, ds_b.mols, ds_b.names, fs)
+        names = list(ds_a.names) + list(ds_b.names)
+        label_a, label_b = args.dataset, args.other
+        print(f"Fields: {', '.join(s_.label for s_ in fs.specs)}, alpha = {args.alpha:g}")
+
+    res = mmd_test(K, mask, permutations=args.permutations, seed=args.seed)
+    print(f"\n{label_a} against {label_b}")
+    print("  " + res.describe())
+    if np.isfinite(res.null_sd):
+        print(f"  the shuffled labels gave {res.null_mean:+.5f} +/- {res.null_sd:.5f}")
+    w = witness(K, mask)
+    order = np.argsort(w)
+    print(f"\nMost unlike {label_a} (the witness, most negative first):")
+    for i in order[:args.top]:
+        print(f"  {names[i]:34s} {w[i]:+.4f}")
+    print(f"Most typical of it:")
+    for i in order[::-1][:args.top]:
+        print(f"  {names[i]:34s} {w[i]:+.4f}")
+    if args.out:
+        import csv as _csv
+        with open(args.out, "w", newline="") as fh:
+            wr = _csv.writer(fh)
+            wr.writerow(["name", "set", "witness"])
+            for i, nm in enumerate(names):
+                wr.writerow([nm, label_a if mask[i] else label_b, f"{w[i]:.6f}"])
+        print(f"Witness written to {args.out}")
+
+
+def cmd_cluster(args):
+    """Cluster a set by the field kernel itself, and compare that with its scaffolds."""
+    from cmfqsar.chemotypes import chemotype_labels
+    from cmfqsar.spectral import adjusted_rand, spectral_clusters
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    fs = _fieldset_from(args, list(ds.mols))
+    print(f"{len(ds)} molecules, fields: {', '.join(s_.label for s_ in fs.specs)}, "
+          f"alpha = {args.alpha:g}")
+    mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+    probe = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = probe.joint_kernel(probe.prepare_training_kernels(AtomTable.from_molecules(mf)))
+    fit = spectral_clusters(K, k=args.clusters, k_max=args.max_clusters, seed=args.seed)
+    print(fit.describe())
+    print(f"  eigenvalues {np.round(fit.eigenvalues[:min(8, len(fit.eigenvalues))], 4)}")
+
+    scaffolds, scaffold_smiles = chemotype_labels(ds.mols, min_size=args.min_scaffold)
+    ari = adjusted_rand(fit.labels, scaffolds)
+    print(f"\n{len(set(scaffolds.tolist()))} scaffold groups; agreement with the field clusters: "
+          f"adjusted Rand index {ari:+.3f}")
+    if ari > 0.5:
+        print("  the two partitions largely agree, so grouping by scaffold groups the kernel too")
+    elif ari > 0.2:
+        print("  the two partitions agree in part: the scaffold split is not the kernel's split")
+    else:
+        print("  the two partitions disagree: what the chemist calls a series and what the model "
+              "finds similar are different things here, and a leave-one-scaffold-out figure is "
+              "not testing what it appears to")
+    if np.isfinite(ds.activity).sum() >= 3:
+        for c in sorted(fit.sizes):
+            sel = fit.labels == c
+            y = ds.activity[sel]
+            y = y[np.isfinite(y)]
+            if len(y):
+                print(f"  cluster {c}: {int(sel.sum()):4d} molecules, activity "
+                      f"{y.mean():+.2f} +/- {y.std():.2f}")
+    if args.out:
+        import csv as _csv
+        with open(args.out, "w", newline="") as fh:
+            wr = _csv.writer(fh)
+            wr.writerow(["name", "field_cluster", "scaffold_group", "scaffold"])
+            for i, nm in enumerate(ds.names):
+                g = int(scaffolds[i])
+                wr.writerow([nm, int(fit.labels[i]), g,
+                             scaffold_smiles[g] if g < len(scaffold_smiles) else ""])
+        print(f"Clusters written to {args.out}")
+
+
 def cmd_map(args):
     """Chemical space map and activity landscape (kernel PCA + GTM) from the CMF kernels."""
     import csv as _csv
@@ -2023,6 +2135,49 @@ def main(argv=None):
     g.add_argument("--out", default=None, help="CSV with the map coordinates of every molecule")
     g.add_argument("--landscape-out", default=None, help="CSV with the landscape on the node grid")
     g.set_defaults(func=cmd_map)
+
+    cp = sub.add_parser("compare", help="are two sets of molecules the same population? (MMD)")
+    cp.add_argument("dataset")
+    cp.add_argument("other", nargs="?", default=None,
+                    help="the second data set; omit it and give --model instead")
+    cp.add_argument("--model", default=None,
+                    help="compare the data set with a saved model's training set, using that "
+                         "model's own fields")
+    cp.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    cp.add_argument("--cif", action="store_true")
+    cp.add_argument("--cif-scheme", default="sybyl",
+                    choices=["sybyl", "element", "element+aromatic"])
+    cp.add_argument("--cif-min", type=int, default=5)
+    cp.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    cp.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    cp.add_argument("--alpha", type=float, default=0.5)
+    cp.add_argument("--permutations", type=int, default=999,
+                    help="shuffles of the labels that make the null distribution")
+    cp.add_argument("--seed", type=int, default=0)
+    cp.add_argument("--top", type=int, default=8, help="molecules listed at each end")
+    cp.add_argument("--out", default=None, help="CSV of the witness value of every molecule")
+    cp.set_defaults(func=cmd_compare)
+
+    cl = sub.add_parser("cluster", help="cluster a set by its field kernel (spectral clustering)")
+    cl.add_argument("dataset")
+    cl.add_argument("--activity", default=None)
+    cl.add_argument("--clusters", type=int, default=None,
+                    help="how many; by default the eigengap decides")
+    cl.add_argument("--max-clusters", type=int, default=10,
+                    help="the largest number the eigengap may choose")
+    cl.add_argument("--min-scaffold", type=int, default=3,
+                    help="scaffold groups smaller than this are merged before the comparison")
+    cl.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    cl.add_argument("--cif", action="store_true")
+    cl.add_argument("--cif-scheme", default="sybyl",
+                    choices=["sybyl", "element", "element+aromatic"])
+    cl.add_argument("--cif-min", type=int, default=5)
+    cl.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    cl.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    cl.add_argument("--alpha", type=float, default=0.5)
+    cl.add_argument("--seed", type=int, default=0)
+    cl.add_argument("--out", default=None, help="CSV of the cluster of every molecule")
+    cl.set_defaults(func=cmd_cluster)
 
     e = sub.add_parser("explain", help="Shapley decomposition of a prediction (any kernel)")
     e.add_argument("--allow-mismatch", action="store_true",
