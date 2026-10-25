@@ -357,6 +357,56 @@ can judge it.
 * **D6. Per-field widths.** Follows from B4: once the evidence selects hyper-parameters, α per field
   is five numbers instead of one, and the co-fields become sharper for the field that wants it.
 
+**Molecular dynamics as the source of the ensemble (D7 to D10).** The fourth-dimension study used
+conformations generated from one input pose, and its verdict is that none of five routes beats one
+well-chosen conformation. A trajectory is a different kind of ensemble: its frames are already
+Boltzmann-sampled, it holds induced-fit poses when the ligand was simulated in the receptor, and
+it carries solvent. Nothing in the formalism needs a single conformation: the kernel is bilinear in
+the fields, so a time-averaged field enters it as exactly as a minimised one, and the ensemble
+mode, the multi-instance weighting (`cmfqsar/mil.py`) and `charge_model="file"` already accept
+frames, weights and force-field charges. What is missing is the reader, and the measurement that
+says whether a trajectory does what a generated ensemble could not.
+
+* **D7. A trajectory reader.** One function that takes a topology and a trajectory (XTC, DCD,
+  NetCDF, through `mdtraj` or `MDAnalysis` as an optional dependency, in the same way as ORCA and
+  xTB), strips solvent and ions, superimposes the frames on the binding-site backbone when there is
+  a receptor and on a common core otherwise, subsamples by RMSD clustering to a few dozen
+  representatives, and returns one RDKit molecule with the frames as conformers, the frame
+  population as `conformer_weights` and the force-field charges as a per-atom property. Weights
+  are the cluster populations, never Boltzmann factors of the frame energies: an equilibrated
+  trajectory has sampled the distribution once, and weighting it again squares it. The kernel
+  costs k² atom-pair integrals for k frames per molecule, which is why the subsampling is part of
+  the reader and not left to the user. `max_conformers` and the RMSD pruning in
+  `cmfqsar/conformers.py` do the rest once the frames are loaded.
+* **D8. The measurement.** Short ligand-in-pocket simulations (a few nanoseconds each, GAFF or
+  OpenFF through OpenMM) on one FEP set with a crystal pose for every ligand, so that the
+  curated frame is known. Three comparisons on the same folds, with intervals: the crystal pose
+  alone; the trajectory mean field, uniform over clusters; the multi-instance fit over the
+  clusters. The first is the ceiling the fourth-dimension study never had, because its ensembles
+  were built from one pose. The second question is whether the receptor frame removes the
+  alignment problem for a flexible series: `mittal/AMPH1` (H) is the test case if the first set
+  shows anything, since its 3.2 Å superposition error is what a shared receptor frame would
+  remove. If the trajectory mean does not beat the crystal pose, the result joins the verdict in
+  the README and D9 and D10 are not built.
+* **D9. Solvent as a field.** The 2015 indicator-field formalism accepts any continuous density,
+  and a water occupancy map from the trajectory is one. Fit the occupancy by Gaussians on a grid
+  of hydration sites (the fitting machinery of `cmfqsar/probes.py` does this for probe fields) and
+  add it as a sixth field with its own mixing coefficient, so that the co-field says where
+  displacing or keeping a water pays. It is the first CMF field that is not centred on an atom of
+  the molecule, which is why it waits for D4's builder with members of their own atoms.
+* **D10. Fluctuation as information.** The ensemble mode uses the mean field only. The variance of
+  the field across frames is a flexibility map, and the kernel of two variance fields is in closed
+  form by the same algebra as the mean (a product of Gaussians is a Gaussian). Add it as a block
+  with its own coefficient under multiple kernel learning, and let the mixing coefficient say
+  whether it is worth anything; rule 1 applies, and the expectation is that it is a display tool.
+
+Two uses of the kernel on a trajectory need no new field and can be built alongside D7 as
+analysis tools: the kernel similarity between frames, with the invariant kernel of
+`cmfqsar/invariant.py` when the frames are not superimposed, as a chemically weighted alternative
+to RMSD for clustering conformations; and the per-residue complementarity profile of
+`cmfqsar/complementarity.py` evaluated frame by frame, which is a field-based interaction
+fingerprint along the trajectory. Both are reported, not measured, under rule 5.
+
 ## E. Learning (months 4 to 10)
 
 * **E1. Multi-task beyond two tasks.** After A6: a free-form low-rank task covariance for several
@@ -455,12 +505,13 @@ and counts predict nothing, is the first case.
 | Months 2 to 6 | B4 (evidence), D6, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1 to E6; G1 and G2 alongside |
-| Months 6 to 12 | F3 to F5; H begins with separations |
+| Months 6 to 12 | F3 to F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
-F2 wants the GP view that B4 makes the default.
+F2 wants the GP view that B4 makes the default; D9 waits for D4 and, with D10, for the
+verdict of D8.
 
 ## What is not planned
 
@@ -486,3 +537,9 @@ F2 wants the GP view that B4 makes the default.
 * **Dependencies.** ORCA is the serial build and xTB is not yet in the tool chain; RDKit's MMFF set-up
   alters aromaticity flags in place, so every new module that optimises geometry must re-sanitise, as
   the conformer generator does.
+* **Trajectories cost more than they may return.** D8 needs simulations that take longer than
+  every benchmark in the repository together, and the fourth-dimension verdict says that ensembles
+  have not paid so far. The control is the order: the reader first, the measurement on one set
+  second, and the two new fields only after the measurement; an unconverged trajectory gives a mean
+  field with sampling error that would pass for chemistry, so D8 reports the block-averaged error of
+  the mean field next to the q² interval.
