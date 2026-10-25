@@ -2152,6 +2152,70 @@ answer. These sets are series of analogues, where nothing is far enough away for
 bite; on a library of diverse candidates the protection is gone, and `ei`, which at least pays for
 its optimism with a posterior, is the rule to use.
 
+## Designing the next compound
+
+`suggest` ranks candidates somebody has already drawn. The design loop makes the suggestion
+itself: take a parent compound of a series, take one of its attachment points, put every fragment
+of a library there in turn, and rank what comes out.
+
+```bash
+python cmf_cli.py design series.sdf --parent 45 --position 2 --acquire ei --top 15
+```
+
+The command does the whole thing: it finds the scaffold, builds a **topomer model** of the series,
+chooses α and λ by the evidence, reports the q² that the suggestions rest on, enumerates, scores
+and ranks. There is no model file to pass, because the model has to be a topomer model and the
+core and the attachment points come from the series anyway.
+
+**Why a topomer model and not an aligned one.** A substituent nobody has made has no crystal
+structure and no alignment, and superimposing it on anything would be a guess. The topomer rule
+builds a fragment into a pose that is a deterministic function of its own topology, so a candidate
+is posed by exactly the rule that posed the molecules the model was fitted on, and the comparison
+is like with like at one attachment point. A model fitted on superimposed whole molecules has no
+way to place a group that was never synthesised, which is why the command builds the topomer model
+itself instead of taking a model file: there is no aligned model that could answer the question.
+
+Three numbers come back for each candidate, and they answer different questions: the **prediction**,
+the **posterior standard deviation** (a fragment unlike anything in the series gets the training
+mean and a wide spread, which is what stops the loop proposing its own ignorance), and the
+**acquisition score** that combines them — the same rules as `suggest`, expected improvement by
+default. Then the annotations: whether the series already uses that group at that position, whether
+the whole molecule has been made and what it measured — the only free check there is on a
+suggestion — and, for the top few, what the candidate's fields have that the parent's do not.
+
+The library is `--fragments common` (a built-in list of about forty ordinary medicinal-chemistry
+substituents), `series` (what this series already puts there), `both`, or a file of SMILES with
+one attachment point each.
+
+### Would it have suggested the right group, measured
+
+Leave one substituent out: every molecule carrying a given R-group at the varied position is removed, the model is refitted on what is left, and the whole library is enumerated and ranked from one fixed parent. The group's measured activity is the mean over the molecules that carry it.
+
+| set | groups held out | position | q² of the models | ρ of the ranking with the measurements | the group it puts first | library mean | library best |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| THER | 46 of 46 | 0 | +0.251 | **+0.279** | 6.53 | 5.24 | 10.17 |
+| GPB | 41 of 47 | 2 | +0.566 | **+0.516** | 4.40 | 2.94 | 6.80 |
+
+Over 87 held-out groups the ranking agrees with the measurements at a mean Spearman ρ of **+0.397**, and the group the loop puts first is worth **+1.37** log units more than the library average — it lands in the best 20 % of the library **48 %** of the time. The sharper question is where the groups that really are good end up: of the five best held out on each set, the median rank is 7 of 42 on GPB and 12 of 46 on THER, and the single best lands at 13 and at 32. A loop run twice over would have found most of them and missed one.
+
+Only 2 of the eight sets can be reached at all: ACE (the core comes off cleanly in only 44% of the series), AChE (the core comes off cleanly in only 26% of the series), BZR (the core comes off cleanly in only 42% of the series), COX2 (the core comes off cleanly in only 22% of the series), DHFR (the core comes off cleanly in only 12% of the series), THR (the core comes off cleanly in only 25% of the series).
+
+### What it cannot do
+
+The loop varies **one position of one parent**, and it is honest about the three things that
+limits.
+
+It needs a series with a scaffold that comes off at acyclic single bonds. Of the eight Sutherland
+sets only two are that; on the rest the Bemis–Murcko framework is fused into the molecules and
+what comes off is not a substituent. The command says so instead of ranking the pieces anyway.
+
+It ranks groups, not conformations. The topomer pose is a convention, and a suggestion is a
+statement about which group belongs at a position, not about how it will sit when it is there.
+
+And it cannot tell you about a position the series never varied. A model learns from contrast; a
+site that is the same in every training molecule carries no information about what else might go
+there, and the posterior standard deviation is the only thing that will say so.
+
 # Conformations: the fourth dimension
 
 A 3D-QSAR model represents each molecule by one conformation, and the answer depends on which one.
@@ -2543,20 +2607,22 @@ Every column below uses the same molecules, fields, α and λ grids and folds.
 
 | Collection | Series | Aligned q² | Topomer q² | The cut costs | The pose costs |
 |---|---|---|---|---|---|
-| Sutherland, curated frame | 8 | **+0.445** | +0.371 | +0.058 | +0.015 |
-| Mittal, automatic frame | 31 | +0.200 | **+0.256** | −0.047 | −0.009 |
-| Corrosion inhibitors, neutral | 17 | +0.248 | +0.249 | +0.061 | −0.061 |
-| Corrosion inhibitors, 1 M HCl | 17 | +0.303 | +0.292 | +0.056 | −0.045 |
+| Sutherland, curated frame | 8 | **+0.445** | +0.343 | +0.035 | +0.066 |
+| Mittal, automatic frame | 31 | +0.200 | **+0.261** | -0.027 | -0.033 |
+| Corrosion inhibitors, neutral | 17 | +0.248 | **+0.307** | +0.024 | -0.083 |
+| Corrosion inhibitors, 1 M HCl | 17 | +0.303 | **+0.358** | +0.037 | -0.092 |
 
 The last two columns separate the two things the topomer construction does at once, by way of a
 control that keeps the same cut substituents at the same separated sites but leaves each one exactly
-where the alignment put it. The **pose rule is nearly free** — 0.015 q² against a careful
-superposition, and a *gain* of 0.045 to 0.061 where the frame is automatic, because a canonical pose
-is more consistent than an arbitrary embedded conformation. What costs something is the **cut**:
-separate sites discard the scaffold's own field and the geometry between one substituent and
-another, which is expensive when the arms' mutual placement is the pharmacophore (0.26 on
-thermolysin, 0.18 on COX-2) and free or better than free when the scaffold is constant and the
-decorations small (BZR gains 0.123, DHFR 0.071).
+where the alignment put it. **What the pose rule costs depends entirely on the alignment it
+replaces.** Against the curated Sutherland frame it costs 0.066 q²; against an automatic
+superposition, or against the frames of the corrosion series, it *gains* 0.033 to 0.092, because a
+canonical pose is more consistent than an arbitrary embedded conformation. The **cut** costs 0.02
+to 0.04 on average and is the expensive half only where the scaffold is doing work — separate
+sites discard the scaffold's own field and the geometry between one substituent and another, which
+matters when the arms' mutual placement is the pharmacophore (0.21 on thrombin, 0.14 on
+thermolysin) and is free or better than free when the scaffold is constant and the decorations
+small (BZR gains 0.102 q², DHFR 0.054).
 
 **Practical guidance.** With a trustworthy curated alignment, keep it: the geometry is worth about
 0.25 q² over counts. With an automatic alignment or none, prefer the frame-free routes — topomer for
@@ -2682,6 +2748,7 @@ not every option.
 | `predict` | predict with a saved model, optionally aligning by confidence first |
 | `report` | one self-contained HTML page describing a saved model |
 | `suggest` | which posed candidate to make next (expected improvement and the rest) |
+| `design` | what to put at a position of a parent, ranked by the model |
 | `hetero` | the heterogeneous-series workflow: cluster, align, place, leave-one-chemotype-out |
 | `topomer` | model a series by its substituents, posed by rule |
 | `map` | chemical-space map and activity landscape (kernel PCA + GTM) |

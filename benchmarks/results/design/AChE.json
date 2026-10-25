@@ -1,0 +1,8 @@
+{
+ "set": "AChE",
+ "usable": false,
+ "why": "the core comes off cleanly in only 26% of the series",
+ "cuttable": 0.26126126126126126,
+ "core": "O=C(NCCC1CC[NH+](Cc2ccccc2)CC1)c1ccccc1",
+ "groups": 14
+}

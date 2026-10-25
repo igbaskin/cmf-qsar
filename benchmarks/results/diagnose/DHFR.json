@@ -32,9 +32,9 @@
   },
   "topomer": {
    "route": "topomer",
-   "q2": 0.10573498527768732,
-   "rmse_cv": 0.672515815589679,
-   "alpha": 0.1,
+   "q2": 0.008634802881779313,
+   "rmse_cv": 0.7080863395329452,
+   "alpha": 1.5,
    "lam": 1.0,
    "note": "42 of 361 molecules can be cut at the framework"
   },
@@ -116,11 +116,11 @@
   {
    "code": "frame-vs-topomer",
    "level": "warn",
-   "text": "the aligned model is -0.185 in q2 against topomer (95% interval -0.479 to +0.002) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
+   "text": "the aligned model is -0.088 in q2 against topomer (95% interval -0.412 to +0.223) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
    "numbers": {
-    "difference": -0.18526834865821062,
-    "low": -0.4792258976784427,
-    "high": 0.0017592652963339386,
+    "difference": -0.08816816626230262,
+    "low": -0.41200673848496394,
+    "high": 0.22286352499575524,
     "n": 42
    }
   },
@@ -139,5 +139,5 @@
  "why": "the frame buys nothing over invariant, which needs no alignment to curate and cannot be got wrong",
  "nested": true,
  "set": "DHFR",
- "seconds": 47.49287676811218
+ "seconds": 49.08483672142029
 }

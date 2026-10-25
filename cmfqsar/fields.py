@@ -297,6 +297,34 @@ def atom_property(mol: Chem.Mol, name: str, n_atoms: Optional[int] = None,
         f"atom with the hydrogens left out")
 
 
+def _cap_dummies(mol: Chem.Mol) -> Chem.Mol:
+    """A copy with every attachment point turned into a hydrogen, or the molecule itself.
+
+    A fragment cut off a molecule carries a dummy atom where the bond was, and neither Gasteiger
+    nor MMFF can type one: Gasteiger returns nan for *every* atom of such a molecule, which the
+    caller then reads as zero, so a fragment-based model -- a topomer model, or the design loop
+    of cmfqsar/design.py -- silently loses its whole electrostatic field. Capping the open
+    valence with hydrogen is what the charges of a fragment mean anyway: those it would have if
+    what it was cut from were a hydrogen.
+    """
+    if not any(a.GetAtomicNum() == 0 for a in mol.GetAtoms()):
+        return mol
+    work = Chem.RWMol(Chem.Mol(mol))
+    for a in work.GetAtoms():
+        if a.GetAtomicNum() == 0:
+            a.SetAtomicNum(1)
+            a.SetIsotope(0)
+            a.SetNoImplicit(True)
+            a.SetNumExplicitHs(0)
+            a.SetFormalCharge(0)
+    out = work.GetMol()
+    try:
+        Chem.SanitizeMol(out)
+    except Exception:                            # noqa: BLE001 - keep the original rather than
+        return mol                               # a copy that will not stand up
+    return out
+
+
 def _partial_charges(mol: Chem.Mol, model: str) -> Tuple[np.ndarray, str]:
     """The partial charges and where they came from: "file", "mmff" or "gasteiger".
 
@@ -319,19 +347,20 @@ def _partial_charges(mol: Chem.Mol, model: str) -> Tuple[np.ndarray, str]:
         if ok:
             return q, "file"
         model = "gasteiger"  # fall back
+    capped = _cap_dummies(mol)
     if model == "mmff":
         try:
             # work on a copy: MMFF set-up changes the aromaticity flags of the molecule in place
-            props = AllChem.MMFFGetMoleculeProperties(Chem.Mol(mol))
+            props = AllChem.MMFFGetMoleculeProperties(Chem.Mol(capped))
             if props is not None:
                 return (np.array([props.GetMMFFPartialCharge(i) for i in range(n)], dtype=float),
                         "mmff")
         except Exception:
             pass
         model = "gasteiger"
-    AllChem.ComputeGasteigerCharges(mol)
+    AllChem.ComputeGasteigerCharges(capped)
     q = np.array([float(a.GetProp("_GasteigerCharge")) if a.HasProp("_GasteigerCharge") else 0.0
-                  for a in mol.GetAtoms()])
+                  for a in capped.GetAtoms()])
     q[~np.isfinite(q)] = 0.0
     return q, "gasteiger"
 

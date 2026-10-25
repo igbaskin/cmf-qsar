@@ -32,10 +32,10 @@
   },
   "topomer": {
    "route": "topomer",
-   "q2": -0.8248793114433357,
-   "rmse_cv": 0.9878775713742015,
-   "alpha": 1.25,
-   "lam": 0.1,
+   "q2": -0.5072950987624039,
+   "rmse_cv": 0.8978115642986049,
+   "alpha": 0.75,
+   "lam": 10.0,
    "note": "22 of 88 molecules can be cut at the framework"
   },
   "descriptors": {
@@ -107,12 +107,12 @@
   },
   {
    "code": "frame-vs-topomer",
-   "level": "ok",
-   "text": "the aligned model is +0.605 in q2 against topomer (95% interval +0.046 to +1.454) -- the frame beats the topomer rule",
+   "level": "warn",
+   "text": "the aligned model is +0.287 in q2 against topomer (95% interval -0.280 to +0.925) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
    "numbers": {
-    "difference": 0.6050238857860775,
-    "low": 0.04602435382080979,
-    "high": 1.4538637565386097,
+    "difference": 0.2874396731051456,
+    "low": -0.27970343899080957,
+    "high": 0.9247865965861622,
     "n": 22
    }
   },
@@ -131,5 +131,5 @@
  "why": "the frame carries signal and the molecules are superimposed, so a frame exists whoever made it; the several Murcko scaffolds only mean the program could not have built it, not that it is wrong",
  "nested": true,
  "set": "THR",
- "seconds": 10.697937726974487
+ "seconds": 10.81721544265747
 }

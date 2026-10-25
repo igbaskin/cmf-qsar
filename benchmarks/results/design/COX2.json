@@ -1,0 +1,8 @@
+{
+ "set": "COX2",
+ "usable": false,
+ "why": "the core comes off cleanly in only 22% of the series",
+ "cuttable": 0.2198581560283688,
+ "core": "c1ccc(-c2ccnn2-c2ccccc2)cc1",
+ "groups": 16
+}

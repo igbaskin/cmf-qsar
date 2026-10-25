@@ -753,21 +753,21 @@ five fields, the same α grid (0.1–5), the same λ grid and the same 10-fold C
 
 | set | series | core | aligned q² | topomer q² | counts q² |
 |---|---|---|---:|---:|---:|
-| ACE | 50/114 | `C1CCNC1` | +0.645 | +0.530 | **+0.722** |
-| AChE | 29/111 | `O=C(NCCC1CC[NH+](Cc2ccccc2)CC1)c1ccccc1` | +0.499 | **+0.514** | +0.376 |
-| BZR | 62/147 | `O=C1CN=C(c2ccccc2)c2ccccc2N1` | +0.612 | **+0.681** | +0.293 |
-| COX2 | 62/282 | `c1ccc(-c2ccnn2-c2ccccc2)cc1` | **+0.416** | +0.157 | +0.108 |
-| DHFR | 42/361 | `c1ccc(NCc2cnc3ncncc3c2)cc1` | +0.260 | **+0.277** | −0.029 |
-| GPB | 60/66 | `C1CCOCC1` | **+0.590** | +0.553 | +0.258 |
-| THER | 63/76 | `c1ccccc1` | **+0.458** | +0.179 | +0.144 |
-| THR | 22/88 | `O=C(C(Cc1ccccc1)NS(=O)(=O)c1ccc2ccccc2c1)N1CCCCC1` | +0.076 | +0.080 | +0.105 |
+| ACE | 50/114 | `C1CCNC1` | +0.645 | +0.545 | **+0.722** |
+| AChE | 29/111 | `O=C(NCCC1CC[NH+](Cc2ccccc2)CC1)c1ccccc1` | +0.499 | **+0.506** | +0.376 |
+| BZR | 62/147 | `O=C1CN=C(c2ccccc2)c2ccccc2N1` | +0.612 | **+0.678** | +0.293 |
+| COX2 | 62/282 | `c1ccc(-c2ccnn2-c2ccccc2)cc1` | **+0.416** | +0.148 | +0.108 |
+| DHFR | 42/361 | `c1ccc(NCc2cnc3ncncc3c2)cc1` | **+0.260** | +0.199 | −0.029 |
+| GPB | 60/66 | `C1CCOCC1` | **+0.590** | +0.544 | +0.258 |
+| THER | 63/76 | `c1ccccc1` | **+0.458** | +0.264 | +0.144 |
+| THR | 22/88 | `O=C(C(Cc1ccccc1)NS(=O)(=O)c1ccc2ccccc2c1)N1CCCCC1` | **+0.076** | −0.137 | +0.105 |
 
-Mean 0.073 q² in favour of the alignment — but the mean is the least informative number in the
-table. On four sets the rule-built poses match the published superposition or beat it (AChE, BZR,
-DHFR, THR); on three the alignment wins by 0.04 to 0.28; on ACE neither field model beats atom-type
-counts, which is the heterogeneity of that series speaking rather than anything about poses. THR
-is no evidence either way: 22 molecules and q² below 0.1 everywhere means there is no model there
-to compare.
+Mean 0.101 q² in favour of the alignment — but the mean is the least informative number in the
+table. On two sets the rule-built poses beat the published superposition (AChE by 0.007, BZR by
+0.066); on the rest the alignment wins, by 0.05 to 0.27. On ACE neither field model beats
+atom-type counts, which is the heterogeneity of that series speaking rather than anything about
+poses, and THR is no evidence either way: 22 molecules and q² below 0.1 everywhere means there is
+no model there to compare.
 
 **Which half of the construction costs that?** The topomer route does two separable things — it
 cuts the molecule up and parks the pieces at separate sites, and it rebuilds each piece by rule.
@@ -777,32 +777,41 @@ topomer column, only the coordinates differ.
 
 | set | whole molecules | substituents, as aligned | substituents, posed by rule | the cut costs | the pose costs |
 |---|---:|---:|---:|---:|---:|
-| ACE | +0.645 | +0.597 | +0.530 | +0.048 | +0.067 |
-| AChE | +0.499 | +0.522 | +0.514 | −0.023 | +0.009 |
-| BZR | +0.612 | +0.735 | +0.681 | −0.123 | +0.055 |
-| COX2 | +0.416 | +0.238 | +0.157 | +0.177 | +0.082 |
-| DHFR | +0.260 | +0.332 | +0.277 | −0.071 | +0.055 |
-| GPB | +0.590 | +0.593 | +0.553 | −0.003 | +0.040 |
-| THER | +0.458 | +0.199 | +0.179 | +0.259 | +0.020 |
-| THR | +0.076 | −0.125 | +0.080 | +0.201 | −0.205 |
+| ACE | +0.645 | +0.604 | +0.545 | +0.041 | +0.059 |
+| AChE | +0.499 | +0.531 | +0.506 | −0.032 | +0.025 |
+| BZR | +0.612 | +0.714 | +0.678 | −0.102 | +0.036 |
+| COX2 | +0.416 | +0.312 | +0.148 | +0.103 | +0.165 |
+| DHFR | +0.260 | +0.315 | +0.199 | −0.054 | +0.116 |
+| GPB | +0.590 | +0.611 | +0.544 | −0.021 | +0.067 |
+| THER | +0.458 | +0.321 | +0.264 | +0.137 | +0.056 |
+| THR | +0.076 | −0.131 | −0.137 | +0.207 | +0.006 |
 
-**The pose rule is nearly free: 0.015 q² on average, and at most 0.082.** What costs something is
-the cut, 0.058 on average — and it is a cost only where the scaffold is doing work. Separate sites
+**The pose rule costs 0.066 q² on average, and at most 0.165.** The cut costs less, 0.035 on
+average — and it is a cost only where the scaffold is doing work. Separate sites
 throw away the scaffold's own field *and* the geometry between one substituent and another, so
-THER (+0.259, a benzene core with 21-heavy-atom peptide arms whose relative placement is the
-molecule) and COX2 (+0.177, diaryl pyrazoles whose core carries the electronic effect of its own
-small substituents) lose most of their accuracy at the knife, not at the pose. Where the scaffold
-is constant and the decorations small, cutting it away *helps* — BZR gains 0.123 q², DHFR 0.071 —
-because a core identical in every molecule adds the same large term to every kernel entry and
-dilutes the contrast between the parts that actually differ.
+THR (+0.207, where the core is most of the molecule) and THER (+0.137, a benzene core with
+21-heavy-atom peptide arms whose relative placement *is* the molecule) lose their accuracy at the
+knife. Where the scaffold is constant and the decorations small, cutting it away *helps* — BZR
+gains 0.102 q², DHFR 0.054 — because a core identical in every molecule adds the same large term
+to every kernel entry and dilutes the contrast between the parts that actually differ.
 
-That is a more useful result than the mean: the topomer convention is not where the accuracy goes.
-A canonical anti-torsion pose reproduces a careful superposition to within a few hundredths of q²
-on these series, and what you pay for it is reproducibility and speed in return — the same
-substituent gives the same field for ever, so a virtual library is scored from a fragment table
-rather than a superposition search, and the frame exists where no superposition is possible at all.
-Choose the core so that the scaffold really is the invariant part of the series, and keep the
-substituents small enough that their mutual geometry is not the pharmacophore.
+Both costs are real and neither dominates. The pose rule is cheap on five of the eight sets
+(0.006 to 0.067 q²) and expensive on two, COX2 at 0.165 and DHFR at 0.116, where the substituents
+are large enough that a canonical anti torsion is a different molecule from the one the
+superposition shows. What is bought for that is reproducibility and speed: the same substituent
+gives the same field for ever, so a virtual library is scored from a fragment table rather than a
+superposition search, and the frame exists where no superposition is possible at all. Choose the
+core so that the scaffold really is the invariant part of the series, and keep the substituents
+small enough that their mutual geometry — and their own flexibility — is not the pharmacophore.
+
+*(These numbers are the second measurement of this. The first was made while a defect hid the
+electrostatic field of every fragment: Gasteiger charges come back as nan for a molecule carrying
+an attachment point, and a nan field is read as no field, so the topomer models were fitted on
+four fields instead of five. Capping the open valence with hydrogen before the charges are
+computed fixed it, and the whole benchmark was re-run. It moved the mean loss from 0.073 to 0.101
+q² and, more usefully, it made the pose rule's cost visible: electrostatics is the field most
+sensitive to where an atom sits, and a model with no charges could not pay for misplacing
+them.)*
 
 **The same measurement where the alignment is automatic reverses the verdict**
 ([benchmarks/run_topomer.py --mittal](benchmarks/run_topomer.py)). `examples/mittal` holds 38 of
@@ -815,14 +824,14 @@ have a scaffold with enough cuttable molecules to carry a topomer model, and on 
 
 | | sets | topomer wins | mean q² aligned | mean q² topomer | the cut costs | the pose costs |
 |---|---:|---:|---:|---:|---:|---:|
-| Sutherland, curated frame | 8 | 4 | **+0.445** | +0.371 | +0.058 | +0.015 |
-| Mittal, automatic frame | 31 | 23 | +0.200 | **+0.256** | −0.047 | −0.009 |
+| Sutherland, curated frame | 8 | 2 | **+0.445** | +0.343 | +0.035 | +0.066 |
+| Mittal, automatic frame | 31 | 23 | +0.200 | **+0.261** | -0.027 | -0.033 |
 
-The pose rule costs 0.015 q² against a careful superposition and *gains* 0.009 against an
+The pose rule costs 0.066 q² against a careful superposition and *gains* 0.033 against an
 automatic one, and the whole picture flips with the quality of the frame it replaces: the rule
-wins 23 of 31 sets here, by up to 0.51 (AI, aromatase inhibitors: +0.007 aligned against +0.521
-posed) and 0.43 (HPTP). Where it loses, it loses for a readable reason — VATP (−0.63) is 13
-macrolactone molecules whose ring is the pharmacophore and whose substituents are decoration.
+wins 23 of 31 sets there. Where it loses, it loses for a readable reason — the sets it
+loses on are the ones whose ring system is the pharmacophore and whose substituents are
+decoration.
 
 How much the frame itself is worth is measurable directly, because nine targets occur in both
 collections — the same compounds, curated superposition against automatic
@@ -852,7 +861,7 @@ than alignment, and every model picks (α, λ) on the CV it reports.
 
 Taken together the three measurements say one thing: **CMF needs geometry, not a superposition.**
 Where a curated frame exists it is worth about 0.25 q² over counts and the topomer rule gives up
-a little of it; where the frame has to be produced automatically it is worth nothing, and both
+0.10 of it; where the frame has to be produced automatically it is worth nothing, and both
 frameless routes in this program — the topomer poses and the invariant kernel — are the better
 choice.
 
@@ -2838,6 +2847,12 @@ cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solid
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule
+cmfqsar/active.py       which molecule to make next: expected improvement and the rest
+cmfqsar/design.py       what to put at a position: enumerate, pose by rule, rank
+cmfqsar/errorpred.py    scoring the things that claim to know when a prediction is bad
+cmfqsar/evidence.py     the marginal likelihood, for choosing alpha and lambda
+cmfqsar/perfield.py     one attenuation per field, by coordinate descent on the evidence
+cmfqsar/report.py       one self-contained HTML page describing a model
 cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence
 cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process, kernel PCA
 cmfqsar/multitask.py    two endpoints on one kernel; the selectivity co-field as their difference

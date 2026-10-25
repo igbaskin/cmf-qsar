@@ -1,0 +1,8 @@
+{
+ "set": "THR",
+ "usable": false,
+ "why": "the core comes off cleanly in only 25% of the series",
+ "cuttable": 0.25,
+ "core": "O=C(C(Cc1ccccc1)NS(=O)(=O)c1ccc2ccccc2c1)N1CCCCC1",
+ "groups": 10
+}

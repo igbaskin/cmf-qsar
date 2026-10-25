@@ -1024,6 +1024,137 @@ def cmd_suggest(args):
               "tell that answer from a real one.")
 
 
+def cmd_design(args):
+    """What to put at a position of a parent compound, ranked by the model: item E3.
+
+    The model is a topomer model built here from the series, because the suggestion has to be
+    posed by the same rule as the molecules it is being compared with, and because a model
+    fitted on superimposed whole molecules has no way to place a group nobody has made.
+    """
+    from rdkit import Chem
+    from cmfqsar.design import design, fragment_smiles, read_fragments
+    from cmfqsar.evidence import log_evidence
+    from cmfqsar.topomer import (TopomerSpec, attachment_label, choose_core, cuttable_fraction,
+                                 series_labels, substituents, topomer_fields)
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file)
+    y = np.asarray(ds.activity, float)
+    ok = np.isfinite(y)
+    mols = [m for m, g in zip(ds.mols, ok) if g]
+    names = [n for n, g in zip(ds.names, ok) if g]
+    yy = y[ok]
+    core = Chem.MolFromSmiles(args.core) if args.core else None
+    if core is None and args.core_smarts:
+        core = Chem.MolFromSmarts(args.core_smarts)
+    how = "given"
+    if core is None:
+        core, how = choose_core(mols, mode=args.core_mode)
+    if core is None:
+        raise SystemExit("no scaffold found: give one with --core or --core-smarts")
+    labels = series_labels(mols, core)
+    share = cuttable_fraction(mols, core)
+    print(f"{len(mols)} molecules; core {Chem.MolToSmiles(core)} ({how}), "
+          f"{len(labels)} attachment points, cut cleanly in {share:.0%} of them")
+    if share < 0.6:
+        print("  warning: this core is fused to the rest of most of these molecules, so what "
+              "comes off is not a substituent and the suggestions will not mean much")
+
+    # what the series puts where, which decides the default position and names the known groups
+    at_site = {}
+    for mol in mols:
+        for frag in substituents(mol, core):
+            at_site.setdefault(attachment_label(frag), set()).add(Chem.MolToSmiles(frag))
+    if args.position is not None:
+        label = int(args.position)
+        if label not in labels:
+            raise SystemExit(f"position {label} is not one this series substitutes: "
+                             f"{', '.join(str(k) + ' (' + str(len(v)) + ' groups)' for k, v in sorted(at_site.items()))}")
+    else:
+        label = max(at_site, key=lambda k: len(at_site[k]))
+        print(f"  position {label} varies most ({len(at_site[label])} distinct groups); "
+              f"--position picks another")
+
+    spec = TopomerSpec(torsion=args.torsion, seed=args.seed)
+    physchem, atom_props = _split_fields(args.fields)
+    best = None
+    for alpha in _floats(args.alphas):
+        fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, alpha=alpha,
+                             charge_model=args.charges, param_scheme=args.param)
+        mf, log = topomer_fields(mols, names, fs, core=core, labels=labels, spec=spec)
+        keep = [i for i, f in enumerate(mf) if f is not None]
+        if len(keep) < 5:
+            continue
+        model = CMFModel(fieldset=fs, method="krr", normalize=True)
+        table = AtomTable.from_molecules([mf[i] for i in keep])
+        K = model.joint_kernel(model.prepare_training_kernels(table))
+        for lam in _floats(args.lams):
+            ev = log_evidence(K, yy[keep], float(lam), fit_bias=True)
+            if np.isfinite(ev) and (best is None or ev > best[0]):
+                best = (ev, float(alpha), float(lam), fs, table, keep, log)
+    if best is None:
+        raise SystemExit("too few molecules could be cut into substituents to fit anything")
+    ev, alpha, lam, fs, table, keep, log = best
+    for line in log[:3]:
+        print("   " + line[:150])
+    model = CMFModel(fieldset=fs, method="krr", params={"lam": lam}, normalize=True)
+    model.fit(table, yy[keep], cv_folds=args.folds, cv_seed=0)
+    print(f"Topomer model on {len(keep)} molecules: alpha {alpha:g}, lambda {lam:g} (by the "
+          f"evidence), q2 {model.stats.q2:+.3f}, RMSEcv {model.stats.rmse_cv:.3f}")
+
+    # only a molecule the rule can take apart can be a parent: the candidates are built by
+    # replacing one of its groups, so the others have to be poseable as they stand
+    if args.parent:
+        if args.parent not in names:
+            raise SystemExit(f"no molecule called {args.parent!r} in {args.dataset}")
+        p = names.index(args.parent)
+        if p not in set(keep):
+            raise SystemExit(f"{args.parent} cannot be cut into substituents by this core "
+                             f"(it is one of the {len(mols) - len(keep)} that could not be "
+                             f"posed), so it cannot be a parent; name another or give a core "
+                             f"that comes off it at single acyclic bonds")
+    else:
+        p = int(keep[int(np.argmax(yy[keep]))])
+        print(f"  parent: {names[p]}, the most active of those that can be posed "
+              f"({yy[p]:.2f}); --parent picks another")
+    frags = []
+    if args.fragments in ("series", "both"):
+        frags += sorted(at_site.get(label, []))
+    if args.fragments in ("common", "both"):
+        frags += read_fragments("common")
+    if args.fragments not in ("series", "common", "both"):
+        frags = read_fragments(args.fragments)
+    seen = {fragment_smiles(f) for f in at_site.get(label, [])}
+
+    res = design(model, mols[p], core, label, fragments=frags, labels=labels,
+                 acquire=args.acquire, beta=args.beta, xi=args.xi, spec=spec,
+                 parent_name=names[p], series=mols, series_names=names, series_y=yy,
+                 known=seen, with_fields=args.fields_for)
+    print()
+    print(f"Parent {res.parent}: measured {res.parent_measured:.3f}, "
+          f"predicted {res.parent_mean:.3f} +- {res.parent_sd:.3f}")
+    print("  " + res.describe())
+    for k, c in enumerate(res.top(args.top), start=1):
+        print(f"  {k:3d}. " + c.describe())
+        for row in c.fields:
+            print("        " + row.describe())
+    if res.failed:
+        print(f"  could not be posed: {', '.join(res.failed[:6])}"
+              + (" ..." if len(res.failed) > 6 else ""))
+    print("  the poses are the topomer convention, not conformations: a suggestion is a "
+          "statement about which group belongs here, not about how it will sit")
+    if args.out:
+        import csv
+        with open(args.out, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["rank", "fragment", "position", "predicted", "sd", args.acquire,
+                        "delta", "known", "made", "measured"])
+            for k, c in enumerate(res.candidates, start=1):
+                w.writerow([k, c.smiles, c.label, f"{c.mean:.4f}", f"{c.sd:.4f}",
+                            f"{c.score:.6f}", f"{c.delta:+.4f}", int(c.known), c.made or "",
+                            "" if not np.isfinite(c.measured) else f"{c.measured:.4f}"])
+        print(f"  written to {args.out}")
+
+
 def cmd_explain(args):
     """Shapley decomposition of a prediction: works for linear and nonlinear kernels alike."""
     from cmfqsar.shapley import (atom_field_shapley, atom_shapley, common_core, field_shapley,
@@ -2581,6 +2712,44 @@ def main(argv=None):
     sg.add_argument("--seed", type=int, default=0)
     sg.add_argument("--out", default=None, metavar="FILE", help="CSV of the ranked candidates")
     sg.set_defaults(func=cmd_suggest)
+
+    dg = sub.add_parser("design",
+                        help="what to put at a position of a parent compound, ranked by the "
+                             "model (co-field-guided design)")
+    dg.add_argument("dataset", help="the series, with activities")
+    dg.add_argument("--parent", default=None,
+                    help="the compound to modify (default: the most active)")
+    dg.add_argument("--position", type=int, default=None, metavar="LABEL",
+                    help="which attachment point to vary (default: the one the series varies "
+                         "most); the numbers are core atom indices and are printed above")
+    dg.add_argument("--fragments", default="both",
+                    help="'common' (a built-in list of medicinal-chemistry substituents), "
+                         "'series' (the groups this series already uses at that position), "
+                         "'both' (the default), or a file of one SMILES per line")
+    dg.add_argument("--acquire", default="ei",
+                    choices=["ei", "ucb", "greedy", "variance", "random"],
+                    help="how to rank: expected improvement by default (see 'suggest')")
+    dg.add_argument("--beta", type=float, default=1.0)
+    dg.add_argument("--xi", type=float, default=0.0)
+    dg.add_argument("--top", type=int, default=15, help="how many to print")
+    dg.add_argument("--fields-for", type=int, default=3, metavar="N",
+                    help="print the field-by-field difference from the parent for the top N")
+    dg.add_argument("--core", default=None, help="the scaffold as SMILES")
+    dg.add_argument("--core-smarts", default=None, help="the scaffold as SMARTS")
+    dg.add_argument("--core-mode", default="framework", choices=["framework", "mcs"])
+    dg.add_argument("--torsion", type=float, default=180.0,
+                    help="the convention angle every rotatable torsion is set to")
+    dg.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    dg.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    dg.add_argument("--param", default="rdkit", choices=["rdkit", "tripos"])
+    dg.add_argument("--alphas", default="0.3,0.5,1.0,2.0")
+    dg.add_argument("--lams", default="1e-3,1e-2,0.1,1")
+    dg.add_argument("--folds", type=int, default=10)
+    dg.add_argument("--activity", default=None)
+    dg.add_argument("--activity-file", default=None)
+    dg.add_argument("--seed", type=int, default=0)
+    dg.add_argument("--out", default=None, metavar="FILE", help="CSV of every candidate")
+    dg.set_defaults(func=cmd_design)
 
     args = p.parse_args(argv)
     args.func(args)

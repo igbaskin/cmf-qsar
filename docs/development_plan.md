@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 52 modules and about 22,100 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with seventeen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
+* A library of 53 modules and about 22,600 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with eighteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`, `suggest`), 590 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`), 602 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -493,6 +493,43 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   needed, score by predicted activity and posterior variance, and present the ranked list with the
   field difference of the top candidates. This is the first feature that makes a prediction the
   user did not ask for, and the GUI needs a panel for it.
+  **Done 25 October 2026**: `cmfqsar/design.py`, the `design` subcommand and
+  `benchmarks/run_design.py`. The command does the whole loop from the series: it finds the
+  scaffold, builds a topomer model, chooses alpha and lambda by the evidence, reports the q2 the
+  suggestions rest on, enumerates one position against a library (a built-in list of about forty
+  ordinary substituents, the groups the series already uses, both, or a file), scores by
+  prediction and posterior standard deviation through the acquisition rules of E2, and annotates
+  each suggestion: whether the series already uses that group there, whether the whole molecule
+  has been made and what it measured, and what its fields have that the parent's do not.
+  **Measured by leaving one substituent out** -- every molecule carrying a group at the varied
+  position removed, the model refitted, the whole library ranked from one fixed parent: over
+  87 held-out groups on 2 sets (GPB, THER) the ranking agrees with the
+  measurements at a mean Spearman rho of **+0.397**, and the group the
+  loop puts first is worth **+1.37** log units more than the library
+  average, landing in the best 20 % of the library
+  **48 %** of the time. Of the five best groups held out on each set, the median
+  rank is 7 of 42 on GPB and 12 of 46 on THER: the loop finds most of what is worth finding and
+  misses one.
+  **How far it reaches is the other half of the answer.** Only 2 of the eight
+  Sutherland sets have a scaffold that comes off at acyclic single bonds; on the rest the
+  Bemis-Murcko framework is fused into the molecules and what comes off is not a substituent.
+  The benchmark reports those by name rather than ranking the pieces anyway. A design loop over
+  substituents needs a congeneric series, and most public QSAR sets are not one.
+  **A defect it turned up, and the numbers that moved.** Gasteiger charges come back as nan for
+  every atom of a molecule that carries an attachment point, and the field builder read nan as
+  zero -- so every topomer model in the program, and every benchmark built on one, was fitted
+  **without its electrostatic field**. `_cap_dummies` in `cmfqsar/fields.py` now caps the open
+  valence with hydrogen before the charges are computed, which is what a fragment's charges mean
+  anyway, and `benchmarks/run_topomer.py` (both collections), `run_corrosion.py` and
+  `run_diagnose.py` were re-run. On the Sutherland sets the mean loss from giving up the
+  alignment moved from +0.073 to +0.101 q2, and more usefully the pose rule's cost became
+  visible: it was 0.015 q2 on four fields and is 0.066 on five, because electrostatics is the
+  field most sensitive to where an atom sits and a model with no charges could not pay for
+  misplacing them.
+  **Not done:** the GUI panel the item asks for, growing candidates at more than one position at
+  a time, and any library beyond substituent replacement -- scaffold hopping needs a different
+  construction, since the topomer frame is defined relative to a scaffold that is being held
+  fixed.
 * **E4. Screening done on a public benchmark.** The one-class, GP-classifier and decoy machinery has
   been measured on the actives of the Sutherland sets against generated decoys only. Paper 8 needs
   DUD-E or LIT-PCBA subsets with posed decoys, the comparison with fingerprint similarity on the
@@ -992,7 +1029,7 @@ after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
-| Months 4 to 10 | E1, ~~E2~~ **done**, E3, E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
+| Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
 | Months 6 to 12 | F3, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; the review that ties the series together |
 

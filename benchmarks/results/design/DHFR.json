@@ -1,0 +1,8 @@
+{
+ "set": "DHFR",
+ "usable": false,
+ "why": "the core comes off cleanly in only 12% of the series",
+ "cuttable": 0.11634349030470914,
+ "core": "c1ccc(NCc2cnc3ncncc3c2)cc1",
+ "groups": 7
+}

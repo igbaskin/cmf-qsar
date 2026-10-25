@@ -32,8 +32,8 @@
   },
   "topomer": {
    "route": "topomer",
-   "q2": 0.4585922772681279,
-   "rmse_cv": 1.5369765097187902,
+   "q2": 0.46018597837013764,
+   "rmse_cv": 1.5347127015935975,
    "alpha": 0.1,
    "lam": 1.0,
    "note": "50 of 114 molecules can be cut at the framework"
@@ -108,11 +108,11 @@
   {
    "code": "frame-vs-topomer",
    "level": "warn",
-   "text": "the aligned model is -0.040 in q2 against topomer (95% interval -0.260 to +0.155) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
+   "text": "the aligned model is -0.042 in q2 against topomer (95% interval -0.286 to +0.162) -- cutting the molecules and posing the pieces by rule does as well as the frame, on the molecules that can be cut",
    "numbers": {
-    "difference": -0.04040139739747939,
-    "low": -0.25992981344908145,
-    "high": 0.15506181926579485,
+    "difference": -0.041995098499489125,
+    "low": -0.28631596859364383,
+    "high": 0.16222027813531356,
     "n": 50
    }
   },
@@ -131,5 +131,5 @@
  "why": "descriptors alone match the 3D model, so a field model here is an expensive way to count atoms; use the fields only if the co-field is the point",
  "nested": true,
  "set": "ACE",
- "seconds": 12.441379070281982
+ "seconds": 12.782376050949097
 }

@@ -40,7 +40,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem import AllChem, rdFMCS, rdMolTransforms
 
 from .fields import FieldSet, MoleculeFields, build_fields
@@ -145,16 +145,20 @@ def topomer_pose(frag: Chem.Mol, spec: TopomerSpec = TopomerSpec()) -> Chem.Mol:
     work = Chem.AddHs(work)
     params = AllChem.ETKDGv3()
     params.randomSeed = int(spec.seed)
-    if AllChem.EmbedMolecule(work, params) != 0:
-        params.useRandomCoords = True
+    # the open valence is a dummy atom and no force field has a type for one, so embedding and
+    # optimising a fragment prints a warning per atom; it says nothing a caller can act on, and
+    # a design loop poses thousands of fragments
+    with rdBase.BlockLogs():
         if AllChem.EmbedMolecule(work, params) != 0:
-            raise ValueError(f"cannot embed the fragment {Chem.MolToSmiles(frag)}")
-    if spec.optimise:
-        try:
-            AllChem.MMFFOptimizeMolecule(work, maxIters=500)
-            Chem.SanitizeMol(work)
-        except Exception:                        # noqa: BLE001
-            pass
+            params.useRandomCoords = True
+            if AllChem.EmbedMolecule(work, params) != 0:
+                raise ValueError(f"cannot embed the fragment {Chem.MolToSmiles(frag)}")
+        if spec.optimise:
+            try:
+                AllChem.MMFFOptimizeMolecule(work, maxIters=500)
+                Chem.SanitizeMol(work)
+            except Exception:                    # noqa: BLE001
+                pass
     _set_torsions(work, spec)
     dummy, root = _attachment(work)
     xyz = _frame(work, dummy, root, spec)
@@ -332,9 +336,21 @@ def topomer_molecule(mol: Chem.Mol, core: Chem.Mol, labels: Sequence[int],
     region of space reserved for its attachment point.  A position a molecule does not substitute
     simply contributes nothing there.
     """
+    return topomer_assembly(substituents(mol, core), labels, spec, cache)
+
+
+def topomer_assembly(frags: Sequence[Chem.Mol], labels: Sequence[int],
+                     spec: TopomerSpec = TopomerSpec(),
+                     cache: Optional[Dict[str, Chem.Mol]] = None) -> Optional[Chem.Mol]:
+    """The same construction from fragments that were not cut off anything.
+
+    :func:`topomer_molecule` cuts a molecule up and calls this; a design loop builds its
+    candidates by replacing one fragment of that list and calls it directly, so that a molecule
+    nobody has made is posed by exactly the rule that posed the ones that were.
+    """
     cache = {} if cache is None else cache
     pieces = []
-    for frag in substituents(mol, core):
+    for frag in frags:
         label = attachment_label(frag)
         if label not in labels:
             continue
