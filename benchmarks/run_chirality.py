@@ -50,7 +50,7 @@ from cmfqsar.chemotypes import chemotype_labels  # noqa: E402
 from cmfqsar.dataio import load_dataset  # noqa: E402
 from cmfqsar.fields import FieldSet, build_fields  # noqa: E402
 from cmfqsar.invariant import (AutocorrelationSpec, autocorrelation_kernel,  # noqa: E402
-                               block_sizes, channel_scale, feature_matrix)
+                               block_sizes, channel_scale, feature_matrix, field_pairs)
 from cmfqsar.model import cv_predict, krr_fit, r2_score  # noqa: E402
 
 RDLogger.DisableLog("rdApp.*")
@@ -74,7 +74,12 @@ GRIDS = ((0.5, 0.5, 10.0), (0.75, 0.75, 12.0), (1.0, 1.0, 14.0))
 #: the variants compared: the two-point kernel, and the same with the signed channels over 1, 2
 #: and 4 radial shells
 VARIANTS = (("two-point", 0), ("signed, 1 shell", 1), ("signed, 2 shells", 2),
-            ("signed, 4 shells", 4))
+            ("signed, 4 shells", 4), ("signed, 4 shells, balanced", -4))
+
+#: a negative shell count in VARIANTS means: scale the signed block up until it carries half the
+#: squared norm of a molecule's channel vector.  Left alone it carries 40 columns against the
+#: pairs' 255, so a null result would be a statement about that ratio and not about the
+#: information in the channels
 
 
 def _specs(shells):
@@ -88,11 +93,21 @@ def _specs(shells):
 
 def _kernels(mf, n_fields, shells):
     """One cosine-normalised kernel over every molecule, per distance grid."""
+    balance = shells < 0
+    shells = abs(shells)
     out = []
     for spec in _specs(shells):
         X = feature_matrix(mf, spec, n_fields=n_fields)
         blocks = block_sizes(spec, n_fields)
         scale = channel_scale(X, spec.n_bins, blocks=blocks)
+        if balance and shells:
+            n_pair = len(field_pairs(n_fields)) * spec.n_bins
+            n_chi = int(sum(blocks)) - n_pair
+            if n_chi > 0:
+                # every block already has unit root mean square, so a block's share of the
+                # squared norm is its number of columns; this makes the two parts equal
+                scale = np.asarray(scale, float).copy()
+                scale[n_pair:] *= float(np.sqrt(n_pair / n_chi))
         out.append(autocorrelation_kernel(X, scale=scale, n_bins=spec.n_bins, blocks=blocks))
     return out
 
@@ -111,6 +126,178 @@ def _grouped_nested(kernels, y, labels, inner_folds=10, seed=0):
             for lam in LAMS:
                 p = cv_predict(Ktr, y[tr], "krr", {"lam": float(lam)},
                                folds=min(inner_folds, len(tr)), seed=seed)
+                q = r2_score(y[tr], p)
+                if best is None or q > best[0]:
+                    best = (q, K, float(lam))
+        _q, K, lam = best
+        a, b = krr_fit(K[np.ix_(tr, tr)], y[tr], lam, True)
+        pred[te] = K[np.ix_(te, tr)] @ a + b
+    return pred
+
+
+# --------------------------------------------------------------------------- #
+# The experiment the five sets cannot do
+# --------------------------------------------------------------------------- #
+#: how much of the activity's variance is carried by handedness rather than by composition
+MIXTURES = (0.0, 0.25, 0.5, 0.75, 1.0)
+
+#: a chiral centre with four different substituents, varied over a small library
+SCAFFOLDS = [
+    "N[C@@H](C)C(=O)O", "N[C@@H](CC)C(=O)O", "N[C@@H](CO)C(=O)O", "N[C@@H](CS)C(=O)O",
+    "N[C@@H](CCl)C(=O)O", "N[C@@H](CF)C(=O)O", "N[C@@H](CN)C(=O)O", "N[C@@H](CCC)C(=O)O",
+    "O[C@@H](C)C(=O)N", "O[C@@H](CC)C(=O)N", "O[C@@H](CO)C(=O)N", "O[C@@H](CCl)C(=O)N",
+    "S[C@@H](C)C(=O)O", "S[C@@H](CC)C(=O)O", "F[C@@H](C)C(=O)O", "F[C@@H](CC)C(=O)O",
+    "Cl[C@@H](C)C(=O)N", "Cl[C@@H](CC)C(=O)N", "N[C@@H](C)C(=O)OC", "N[C@@H](CC)C(=O)OC",
+]
+
+
+def _mirrored(mol):
+    """The exact enantiomer: the same conformation reflected, not a new embedding.
+
+    Two separately generated conformations of R and S differ in their torsions as much as in
+    their handedness, and the two-point descriptor sees that difference -- which would let it
+    appear to solve a problem it is blind to.  Reflecting one conformation leaves the internal
+    geometry alone, so the pair differs in handedness and in nothing else, and the two-point
+    channels of the two are identical to the last bit.
+    """
+    from rdkit import Chem
+
+    m = Chem.Mol(mol)
+    conf = m.GetConformer()
+    for i, p in enumerate(np.array(conf.GetPositions()) * np.array([1.0, 1.0, -1.0])):
+        conf.SetAtomPosition(i, [float(v) for v in p])
+    return m
+
+
+def _pairs(seed=0):
+    """Each scaffold as one conformation and its exact mirror image."""
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+
+    mols, names, hand = [], [], []
+    for i, smi in enumerate(SCAFFOLDS):
+        m = Chem.AddHs(Chem.MolFromSmiles(smi))
+        p = AllChem.ETKDGv3()
+        p.randomSeed = seed + i
+        if AllChem.EmbedMolecule(m, p) != 0:
+            continue
+        Chem.SanitizeMol(m)
+        for mm in (m, _mirrored(m)):
+            # the handedness has to be the CIP descriptor and not the @@ of the SMILES: the same
+            # tag is R on one scaffold and S on the next, since the priorities depend on the
+            # substituents, and a model asked to learn that label would be asked to learn noise
+            probe = Chem.Mol(mm)
+            Chem.AssignStereochemistryFrom3D(probe)
+            codes = [a.GetProp("_CIPCode") for a in probe.GetAtoms() if a.HasProp("_CIPCode")]
+            if len(codes) != 1:
+                continue
+            mols.append(mm)
+            names.append(f"s{i}-{codes[0]}")
+            hand.append(+1.0 if codes[0] == "R" else -1.0)
+    return mols, names, np.asarray(hand)
+
+
+def synthetic(force=False, results=RESULTS, seed=0):
+    """Can the signed channels learn an activity that depends on handedness?
+
+    The five real sets cannot answer it: none of them contains an enantiomeric pair, so the
+    blindness of the two-point kernel costs it nothing there and the measurement is about
+    something else.  Here the activity is built as
+
+        y = (1 - w) * composition + w * handedness
+
+    over pairs that differ in handedness alone.  At w = 0 the signed channels have nothing to
+    find and must not appear to find it; at w = 1 the two-point kernel is being asked to tell
+    apart two molecules whose every channel is identical, which it cannot do at any lambda, and
+    the signed kernel should.
+    """
+    os.makedirs(results, exist_ok=True)
+    out_path = os.path.join(results, "synthetic.json")
+    if os.path.exists(out_path) and not force:
+        print("synthetic: already done")
+        return json.load(open(out_path))
+    t0 = time.time()
+    mols, names, hand = _pairs(seed=seed)
+    fs = FieldSet.create(physchem=FIELDS, alpha=ALPHA, charge_model="gasteiger")
+    mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+    n_fields = len(fs.specs)
+    # the achiral half of the activity: a property of the composition, identical within a pair
+    comp = np.array([float(m.GetNumHeavyAtoms()) for m in mols])
+    comp = (comp - comp.mean()) / max(comp.std(), 1e-9)
+    print(f"=== synthetic: {len(mols)} molecules, {len(mols) // 2} enantiomeric pairs", flush=True)
+
+    kernels = {label: _kernels(mf, n_fields, shells) for label, shells in VARIANTS}
+    # the claim the whole block rests on, checked rather than assumed
+    K2 = kernels["two-point"][1]
+    same = float(np.max(np.abs(np.diag(K2, 1)[::2] - 1.0)))
+    print(f"    two-point kernel between the members of a pair: 1 - {same:.2e}", flush=True)
+
+    # why it comes out as it does: is "R-ness" a direction two molecules can share?
+    direction = _shared_direction(mf, names, hand, n_fields)
+    print(f"    signed-block cosine between different molecules: same handedness "
+          f"{direction['same']:+.3f}, opposite {direction['opposite']:+.3f} "
+          f"(difference {direction['difference']:+.3f}, sd {direction['sd']:.3f})", flush=True)
+
+    rows = []
+    for w in MIXTURES:
+        y = (1.0 - w) * comp + w * hand
+        y = (y - y.mean()) / max(y.std(), 1e-9)
+        row = {"w": float(w), "q2": {}}
+        for label, _shells in VARIANTS:
+            pred = _random_nested(kernels[label], y, folds=10, seed=seed)
+            ok = np.isfinite(pred)
+            row["q2"][label] = float(r2_score(y[ok], pred[ok])) if ok.any() else float("nan")
+        rows.append(row)
+        print("    w = {:.2f}  ".format(w)
+              + "  ".join(f"{k} {row['q2'][k]:+.3f}" for k, _ in VARIANTS), flush=True)
+    out = {"n": len(mols), "pairs": len(mols) // 2, "identical_to": same, "rows": rows,
+           "direction": direction, "seconds": round(time.time() - t0, 1)}
+    json.dump(out, open(out_path, "w"), indent=1)
+    return out
+
+
+def _shared_direction(mf, names, hand, n_fields, shells=4):
+    """Do two molecules of the same handedness point the same way in the signed channels?
+
+    A model transfers what it has learnt from one molecule to another along a direction in
+    feature space.  The signed channels of a molecule and its own mirror image are exact
+    negatives, which is what the block is for; whether the channels of two *different* molecules
+    of the same handedness have anything in common is a different question, and the one that
+    decides whether a kernel method can carry handedness from a training molecule to a new one.
+    """
+    from cmfqsar.invariant import chirality
+
+    spec = AutocorrelationSpec(chirality=True, chirality_shells=shells)
+    V = np.array([chirality(m, spec) for m in mf])
+    V = V / np.maximum(np.linalg.norm(V, axis=1, keepdims=True), 1e-12)
+    scaffold = [n.split("-")[0] for n in names]
+    same, opposite = [], []
+    for i in range(len(V)):
+        for j in range(i + 1, len(V)):
+            if scaffold[i] == scaffold[j]:
+                continue                       # a molecule against its own mirror image
+            (same if hand[i] == hand[j] else opposite).append(float(V[i] @ V[j]))
+    if not same or not opposite:
+        return {"same": float("nan"), "opposite": float("nan"), "difference": float("nan"),
+                "sd": float("nan"), "n": 0}
+    return {"same": float(np.mean(same)), "opposite": float(np.mean(opposite)),
+            "difference": float(np.mean(same) - np.mean(opposite)),
+            "sd": float(np.std(same + opposite)), "n": len(same) + len(opposite)}
+
+
+def _random_nested(kernels, y, folds=10, seed=0):
+    """Random folds, with the grid and lambda chosen inside the training part of each."""
+    from cmfqsar.model import _kfold_indices
+
+    pred = np.full(len(y), np.nan)
+    for te in _kfold_indices(len(y), folds, seed):
+        tr = np.setdiff1d(np.arange(len(y)), te)
+        best = None
+        for K in kernels:
+            Ktr = K[np.ix_(tr, tr)]
+            for lam in LAMS:
+                p = cv_predict(Ktr, y[tr], "krr", {"lam": float(lam)},
+                               folds=min(folds, len(tr)), seed=seed)
                 q = r2_score(y[tr], p)
                 if best is None or q > best[0]:
                     best = (q, K, float(lam))
@@ -149,7 +336,7 @@ def run_set(name, force=False, results=RESULTS):
         ok = np.isfinite(pred)
         row["q2"][label] = float(r2_score(y[ok], pred[ok])) if ok.any() else float("nan")
         row["columns"][label] = int(ks[1].shape[0] and feature_matrix(
-            mf[:1], _specs(shells)[1], n_fields=n_fields).shape[1])
+            mf[:1], _specs(abs(shells))[1], n_fields=n_fields).shape[1])
         print(f"  {label:17s} q2 {row['q2'][label]:+.3f}  ({row['columns'][label]} channels)",
               flush=True)
     row["seconds"] = round(time.time() - t0, 1)
@@ -160,7 +347,8 @@ def run_set(name, force=False, results=RESULTS):
 def report(results=RESULTS):
     import glob
 
-    files = sorted(glob.glob(os.path.join(results, "*.json")))
+    files = sorted(f for f in glob.glob(os.path.join(results, "*.json"))
+                   if os.path.basename(f) != "synthetic.json")
     if not files:
         return "No chirality results yet; run `python benchmarks/run_chirality.py`."
     data = [json.load(open(f)) for f in files]
@@ -214,6 +402,36 @@ def report(results=RESULTS):
                   f"{float(np.nanmean(list(diff.values()))):+.3f}, of which **{name} supplies "
                   f"{value:+.3f}**; over the other four sets it is "
                   f"{float(np.mean(rest)):+.3f}."]
+    syn_path = os.path.join(results, "synthetic.json")
+    if os.path.exists(syn_path):
+        syn = json.load(open(syn_path))
+        order2 = [name for name, _ in VARIANTS]
+        lines += ["", "## The experiment the five sets cannot do", "",
+                  f"{syn['pairs']} pairs of molecules that differ in handedness and in nothing "
+                  "else -- one conformation and its exact mirror image, so the two-point channels "
+                  f"of a pair are identical (their kernel entry is 1 - "
+                  f"{syn['identical_to']:.0e}). The activity is "
+                  "`(1 - w) * composition + w * handedness`, so `w` is the share of it that no "
+                  "two-point descriptor can reach. Random 10-fold folds, the grid and lambda "
+                  "chosen inside each training part.", "",
+                  "| w | " + " | ".join(order2) + " |",
+                  "|---:|" + "---:|" * len(order2)]
+        for r in syn["rows"]:
+            best = max(r["q2"].values())
+            cells = [(f"**{r['q2'][k]:+.3f}**" if abs(r["q2"][k] - best) < 1e-9
+                      else f"{r['q2'][k]:+.3f}") for k in order2]
+            lines.append(f"| {r['w']:.2f} | " + " | ".join(cells) + " |")
+        d = syn.get("direction") or {}
+        if d and np.isfinite(d.get("difference", float("nan"))):
+            lines += ["", "**Why.** A kernel method carries what it learnt from one molecule to "
+                      "another along a direction in feature space. The signed channels of a "
+                      "molecule and its own mirror image are exact negatives -- that is what the "
+                      "block is for -- but between *different* molecules they share nothing: the "
+                      f"cosine of the signed block is {d['same']:+.3f} for two molecules of the "
+                      f"same handedness and {d['opposite']:+.3f} for two of opposite handedness, "
+                      f"a difference of {d['difference']:+.3f} against a spread of {d['sd']:.3f} "
+                      f"over {d['n']} pairs. Handedness is not a direction in this space, so "
+                      "there is nothing for a linear model to transfer."]
     text = "\n".join(lines) + "\n"
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:
         fh.write(text)
@@ -226,12 +444,16 @@ def main():
     ap.add_argument("--sets", nargs="*", default=list(SETS))
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--report", action="store_true")
+    ap.add_argument("--synthetic-only", action="store_true",
+                    help="only the handedness experiment, not the five real sets")
     a = ap.parse_args()
     if a.report:
         print(report())
         return
-    for name in a.sets:
-        run_set(name, force=a.force)
+    if not a.synthetic_only:
+        for name in a.sets:
+            run_set(name, force=a.force)
+    synthetic(force=a.force)
     print()
     print(report())
 

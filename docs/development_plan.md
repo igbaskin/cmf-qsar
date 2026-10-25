@@ -251,10 +251,22 @@ can judge it.
   paired interval over the five sets contains zero ([-0.028, +0.121] at four shells, better on
   three of five), and **COX2 supplies +0.187 of the +0.045 mean difference while the other four
   average +0.009**; AChE and BZR are made worse. One set out of five is not a result.
-  The channels therefore stay available and off by default, and the manual now describes them
-  with this table. The experiment that would settle it is a series containing enantiomeric pairs
-  that differ in activity: none of these five sets has one, which is why the kernel's blindness
-  costs it nothing here.
+  **And the experiment those sets cannot do was then run on synthetic data**, which is what
+  settles it. Twenty molecules with their exact mirror images -- one conformation reflected, so a
+  pair differs in handedness and in nothing else and their two-point channels agree to one part
+  in 1e15 -- with the activity mixed between composition and the CIP handedness. At w = 0 the
+  model reaches q2 +0.97; at w = 1 **no variant learns it**, two-point -0.391 and the signed
+  channels -0.34 to -0.37 whatever the shells and even scaled up to half the kernel.
+  The reason is measurable and is the real result of C5: the signed channels of a molecule and
+  its own mirror image are exact negatives, but between *different* molecules they share nothing
+  -- cosine -0.016 for two molecules of the same handedness against +0.016 for opposite, a
+  difference of 0.03 against a spread of 0.55, and 0.10 against 0.48 within one scaffold family.
+  Handedness is not a direction in this space, so a linear model has nothing to transfer, and the
+  two nulls are one null seen twice.
+  **Closed, negatively.** The block is correct about a molecule and its mirror image and useless
+  for carrying handedness between molecules. Making it useful needs a construction anchored on
+  the stereocentre rather than summed over the whole molecule, which is a new item and not a
+  parameter of this one.
 * **C6. A diagnosis of the data set.** Three diagnostics exist in pieces: α at the grid edge, the
   descriptor-only baseline that beat the 3D model on ACE, and the alignment-free baseline. Package
   them as `cmf diagnose`, which says before any modelling whether the frame carries signal, whether

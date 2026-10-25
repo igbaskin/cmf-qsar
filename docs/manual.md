@@ -1957,11 +1957,33 @@ The mean moves the right way and the interval contains zero at every setting. Mo
 average +0.009 between them, with AChE and BZR made worse. On five sets that is not a result, and
 the channels cost 16 % more columns.
 
-So the signed channels are available and off by default, which is the honest resting place for a
-measurement like this: the extension is correct, it is not harmful, and it has not been shown to
-help. If you work on a series where chirality is the point — where the enantiomers are in the set
-and differ in activity — it is the first thing to try, and that series is the experiment this
-table could not do, because none of these five sets contains an enantiomeric pair.
+**The experiment those sets cannot do.** None of the five contains an enantiomeric pair, so the
+kernel's blindness costs it nothing there and the table above is about something else. The same
+script therefore builds a set where handedness *is* the activity: twenty molecules, each with its
+exact mirror image — one conformation reflected, not a second embedding, so a pair differs in
+handedness and in nothing else and their two-point channels agree to one part in 10¹⁵ — with the
+activity `(1 − w)·composition + w·handedness`, the handedness read as the CIP descriptor rather
+than the SMILES tag, which is not the same label from one scaffold to the next.
+
+At `w = 0` the model works: q² +0.97. At `w = 1`, where the answer is the handedness and nothing
+else, **no variant learns it** — two-point −0.391, and the signed channels −0.34 to −0.37 however
+many shells they are given and even when scaled up to carry half the kernel.
+
+**And the reason is measurable.** A kernel method carries what it learnt from one molecule to
+another along a direction in feature space. The signed channels of a molecule and its own mirror
+image are exact negatives — that is what the block is for, and a test asserts it — but between
+*different* molecules they share nothing: the cosine of the signed block is **−0.016 for two
+molecules of the same handedness and +0.016 for two of opposite handedness**, a difference of
+0.03 against a spread of 0.55. Even within one scaffold family, amino acids differing only in the
+side chain, the difference is 0.10 against a spread of 0.48. Handedness is not a direction in this
+space, so there is nothing for a linear model to transfer, and the two null results above are one
+null result seen twice.
+
+That is the verdict: the block is correct and does what it says about a molecule and its mirror
+image; it does not put the handedness of two different molecules on a common axis, which is what
+a QSAR model needs. The channels stay available and off by default. Making them useful would mean
+a different construction — one anchored on the stereocentre rather than summed over the whole
+molecule — and that is a new item, not a parameter of this one.
 
 **Mixing coefficients over the channel blocks.** The channels come in blocks, one per pair of
 field types, each scaled to unit root mean square before all of them enter one cosine-normalised

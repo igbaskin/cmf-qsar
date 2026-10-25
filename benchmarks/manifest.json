@@ -1,6 +1,6 @@
 {
- "commit": "5a45da7708dc27175cfb984b7b881c2a13ed5f56",
- "created": "2026-10-25T19:55:00",
+ "commit": "6934dbc50fd530f53f0968a6e363fe8073224c00",
+ "created": "2026-10-25T20:20:05",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4854,
@@ -1536,7 +1536,8 @@
   "benchmarks/results/chirality/COX2.json": "21a0b1d8669e4d9f62ff1a3129f3f4a90de115dcd5ea40fc12ba3a2eec3a64f4",
   "benchmarks/results/chirality/DHFR.json": "f1a70816f93555a0224c21b6ca7cafb7e527e66bb9edef33706228f96659ba00",
   "benchmarks/results/chirality/mittal_ACHE.json": "36529241cebab3c4b7dc68420d6bfb90a57af6bc4772650ebb058f22d07b1cc8",
-  "benchmarks/results/chirality/table.md": "2ffe0a1ce00f03ee9219b90560f9bbc4eaddfc8e9a7a8aed0b72dc4221afcaca",
+  "benchmarks/results/chirality/synthetic.json": "66d77ad40261818c80bf190180678cb003c49ebec1e191c3434e47f3355ccdfd",
+  "benchmarks/results/chirality/table.md": "b8f5c02113ecf1b6e6b181612c9d6d7adf61b0c4276426ebf6b9628ca65f4c6c",
   "benchmarks/results/cif/AmEu_cif-grid.json": "2d1b0a3624d819eddcd08d129dbf272f646d08face58af802d6d98deed45099d",
   "benchmarks/results/cif/AmEu_cif-nobias.json": "4d2379ac02c54180886d3165161d3e4cb0da72d2e4464782c0f2231b29af6b0e",
   "benchmarks/results/cif/AmEu_cif.json": "8faa15d81859b5db478895d2798be26e0469ce2ca216b25303e8c2113906c2a4",
