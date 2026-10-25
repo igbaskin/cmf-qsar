@@ -1,6 +1,6 @@
 {
- "commit": "b63fd3a999f571e8dbb4bc5fdc1eb0e626ce5ccb",
- "created": "2026-10-25T03:45:32",
+ "commit": "a626a1472c05f10bb4f08ecdda96555807225c79",
+ "created": "2026-10-25T04:09:47",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4854,
@@ -471,28 +471,28 @@
    "sha256": "bb0844ef4ec636ca0d7683e405c640e905e33d9609e2cfd9e2d56848cdf11f20"
   },
   "examples/hammett/hammett.sdf": {
-   "bytes": 204326,
-   "sha256": "5762fa3621599fc7f5891ed7dc9e670d0d62be8a8522750bcd0c715ff2ae570e"
+   "bytes": 214396,
+   "sha256": "b13591410be3472f9e9a9edcf87fed426dfb5edb4ba3b07ac8af2e5f8e965c1f"
   },
   "examples/hammett/hammett_ens.sdf": {
-   "bytes": 1112443,
-   "sha256": "03a297e9a3fb9a2b799fe49909d77426252f9199a8e19846f4e829f293e0ec28"
+   "bytes": 1112427,
+   "sha256": "b0614b44c012b2da41441fa3c854026f583156279a7885b38c3c189561ba22b6"
   },
   "examples/hammett/hammett_ens_qm.sdf": {
-   "bytes": 2030683,
-   "sha256": "5d9290fe6e28a4ff0532387a044c6ffc26770c901288282ce13eec6879ed9172"
+   "bytes": 2030667,
+   "sha256": "1ce8be158d5de4319b74da6bb78dfef1fb724d9139aebd078315c361e2bfa52e"
   },
   "examples/hammett/hammett_qm.sdf": {
-   "bytes": 415420,
-   "sha256": "e278479434dfb092575d739025d1c530ca74dc540dd6b24f1b7c6807934c201a"
+   "bytes": 415418,
+   "sha256": "3ed30a00f415aecab1454a27d30113137abaf8822b470beec2a5e26a3078c594"
   },
   "examples/hammett/hammett_qm_sym.sdf": {
    "bytes": 1683783,
    "sha256": "76aaea4df7a02d03d368eb663cd0bf57f295343608c0b9d72c3009015ba45f1a"
   },
   "examples/hammett/hammett_sym.sdf": {
-   "bytes": 834479,
-   "sha256": "a1b0006eaf861fba545b5e6e2e3c86ffde17e4b20e1c348ef98c8e2d197d3e89"
+   "bytes": 874759,
+   "sha256": "35dd1fa383fa1c204b299ca6ed9b5b338258c5d574f6d7f8d0dfaac9fc15b457"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -511,8 +511,8 @@
    "sha256": "51ec8d504370e84642b6779c72097f93a7fa77f0b925a96846abc705e67d478c"
   },
   "examples/make_hammett_examples.py": {
-   "bytes": 24283,
-   "sha256": "d1d7b673f0c93912a0e3712db3769acf4f2fd7e1b52ceb24d93f282eb882b9de"
+   "bytes": 25116,
+   "sha256": "0ef69e5e4f0143143772298006f7f6745824a39fe8c493c7189286fdb5fded94"
   },
   "examples/make_mittal_examples.py": {
    "bytes": 10426,
@@ -1658,28 +1658,28 @@
   "benchmarks/results/fusion/DHFR.json": "7c65667dae1c84819161727e825b16ebef35082c3ccfceaf39bb48a381ca4150",
   "benchmarks/results/fusion/THR.json": "26185e1804ab3161f1643507df5c0c1e0f9bc02c74f13eabc72eca2618a4e970",
   "benchmarks/results/fusion/table.md": "958da5023b32e2ff89d351b2fd7214bd5a7b0b330e86dd386bd95906d8ed6ec2",
-  "benchmarks/results/hammett/cofields.png": "2920fa68ba83a49b9766ba7c6e268165eaf9a6bbe434f833cec22e270bd9354d",
+  "benchmarks/results/hammett/cofields.png": "04c3e4be5a421d95e5e9007997023bf8bbee5e6770532bbfd4812b7493d01c6e",
   "benchmarks/results/hammett/cofields_ens.png": "e91936e44fdf5e9a1854309e648b76ad0a19471d9a53921e06ac8e70ce75f5d4",
   "benchmarks/results/hammett/cofields_ens_boltzmann.png": "f53e86a7db76975f03a7457801573b4f027db984e937acb74cf0668bf4114148",
   "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld.png": "0b8cc09a71dfa04f1e0232a83d5b9a3bc65f700e217432c4f4c990640289bfb4",
   "benchmarks/results/hammett/cofields_ens_qm_q_hirshfeld_boltzmann.png": "610a7e5a42639a872ce5d23cc110fb05a7d502f60659c0ed70d4c058e5e9be15",
   "benchmarks/results/hammett/cofields_q_hirshfeld.png": "56d88d0bf87dc56a6c817db5b93634e48f714c324c5432c977f2e18e06f98f01",
   "benchmarks/results/hammett/cofields_qm_sym_q_hirshfeld.png": "5c9ea60092c61166688be8b9e5dbc6a074838b27ad846032f3ee4b3df3b4d0a6",
-  "benchmarks/results/hammett/cv_scatter.png": "46d8bb7bbe1f533a41cdb569314974b169695ee4a5b88ff14987c19567870de1",
+  "benchmarks/results/hammett/cv_scatter.png": "12c8e73802778479ea8ce4ccf859d9d3667a2c258c8b7a53d1b36cffa0e68fde",
   "benchmarks/results/hammett/cv_scatter_ens.png": "38415bd902892df7355696bcfc50639c3b6121af8b82340058019a0fa7a5d74d",
   "benchmarks/results/hammett/cv_scatter_ens_boltzmann.png": "359bb3f0413452402fc6c83a9d3d18ddba69206845faa2db0db2269382651660",
   "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld.png": "13bcf72823fff7393e195b57279f2bffcec9ef862013e049b79116b4a8d42cce",
   "benchmarks/results/hammett/cv_scatter_ens_qm_q_hirshfeld_boltzmann.png": "07373adac25f4af606870a3f3affa2123294550ed001a72ae46510d2d5d268df",
   "benchmarks/results/hammett/cv_scatter_q_hirshfeld.png": "45a31b4b2167d0256d60b8fcd99687cb28912555d3d41506666b880b48b638e5",
   "benchmarks/results/hammett/cv_scatter_qm_sym_q_hirshfeld.png": "535b83b83f5848bd0eba4c637e3c2fe24918fb6918ec80cd94c260c595a6a113",
-  "benchmarks/results/hammett/summary.csv": "c65f8c7e583d9fd4072adaa2a75fb44851698bdbf12f0fd172b9cd3f8f5d072b",
+  "benchmarks/results/hammett/summary.csv": "0d335ce8fa94bec05585955469175b9d6596f431c7c46376c2cc52a3aa783ac8",
   "benchmarks/results/hammett/summary_ens.csv": "601ce600822081a11f49ac0f119c86baa962d0f639492a3b448ed74e957ad810",
   "benchmarks/results/hammett/summary_ens_boltzmann.csv": "d367f9d195deec0394de74751e9b8b99a0c3352cad078cf70b3da5095ede5fab",
   "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld.csv": "a091ada9518103641f64d22924bcd8e643810e781f440a675e41a28b499cb21e",
   "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld_boltzmann.csv": "b7b07bdf8f64be5f40dab806e1a0fe1cc7a83079830b2fb50adf38917463ea65",
   "benchmarks/results/hammett/summary_q_hirshfeld.csv": "dd08a34ceb995c97b21232db241b7ba098243307645e4643351345bac0689034",
   "benchmarks/results/hammett/summary_qm_sym_q_hirshfeld.csv": "4439ee3f4331fc614865ae14913ebba4f4c9b1dd2e5331cfebb4aadd5dcaa1b1",
-  "benchmarks/results/hammett/table.md": "57a06991727b0aa78930d7aa1ca9ea6c22838e7235e27611cbcf81708b0fd00b",
+  "benchmarks/results/hammett/table.md": "075c74f8a67b535ab70eb51fa21f686c8548276035a1b6655cbb0715491a08ee",
   "benchmarks/results/matbench_phonons/all+mass-align.json": "520553990efc6c20c853d2fa54a875596bcac511b33012ef16f5996841e557f7",
   "benchmarks/results/matbench_phonons/all+mass-alignf.json": "bdb5718ad6b8390d253d373ceb5b1b4382a81e408e3874fc320ff17f360fefd1",
   "benchmarks/results/matbench_phonons/all+mass-balanced.json": "2f22168dd45f00701229381084e689d63dad35584a0c1a47bac77d14b46893d1",

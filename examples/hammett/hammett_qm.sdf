@@ -3221,10 +3221,10 @@ CH2OCH3
 COCc1ccccc1
 
 >  <sigma_m>  (28) 
-0.02
+0.080000000000000002
 
 >  <sigma_p>  (28) 
-0.029999999999999999
+0.01
 
 >  <source>  (28) 
 Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)

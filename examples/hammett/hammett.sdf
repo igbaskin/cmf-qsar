@@ -46,7 +46,7 @@ c1ccccc1
 0
 
 >  <source>  (1) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH3
@@ -103,7 +103,7 @@ Cc1ccccc1
 0.56000000000000005
 
 >  <source>  (2) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 C2H5
@@ -166,7 +166,7 @@ CCc1ccccc1
 1.02
 
 >  <source>  (3) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 n-C3H7
@@ -235,7 +235,7 @@ CCCc1ccccc1
 1.55
 
 >  <source>  (4) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 i-C3H7
@@ -304,7 +304,7 @@ CC(C)c1ccccc1
 1.53
 
 >  <source>  (5) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 n-C4H9
@@ -379,7 +379,7 @@ CCCCc1ccccc1
 2.1299999999999999
 
 >  <source>  (6) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 t-C4H9
@@ -454,7 +454,7 @@ CC(C)(C)c1ccccc1
 1.98
 
 >  <source>  (7) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 cyclopropyl
@@ -520,7 +520,7 @@ c1ccc(C2CC2)cc1
 1.1399999999999999
 
 >  <source>  (8) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 cyclohexyl
@@ -604,7 +604,7 @@ c1ccc(C2CCCCC2)cc1
 2.5099999999999998
 
 >  <source>  (9) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2Ph
@@ -682,7 +682,7 @@ c1ccc(Cc2ccccc2)cc1
 2.0099999999999998
 
 >  <source>  (10) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 allyl
@@ -747,7 +747,7 @@ C=CCc1ccccc1
 1.1000000000000001
 
 >  <source>  (11) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2SiMe3
@@ -825,7 +825,7 @@ C[Si](C)(C)Cc1ccccc1
 -0.20999999999999999
 
 >  <source>  (12) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 vinyl
@@ -884,7 +884,7 @@ C=Cc1ccccc1
 0.81999999999999995
 
 >  <source>  (13) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 ethynyl
@@ -939,7 +939,7 @@ C#Cc1ccccc1
 0.40000000000000002
 
 >  <source>  (14) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 Ph
@@ -1011,7 +1011,7 @@ c1ccc(-c2ccccc2)cc1
 1.96
 
 >  <source>  (15) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CF3
@@ -1068,7 +1068,7 @@ FC(F)(F)c1ccccc1
 0.88
 
 >  <source>  (16) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CHF2
@@ -1122,7 +1122,7 @@ FC(F)c1ccccc1
 0.32000000000000001
 
 >  <source>  (17) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2F
@@ -1176,7 +1176,7 @@ FCc1ccccc1
 0.11
 
 >  <source>  (18) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CCl3
@@ -1230,7 +1230,7 @@ ClC(Cl)(Cl)c1ccccc1
 0.46000000000000002
 
 >  <source>  (19) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CHCl2
@@ -1284,7 +1284,7 @@ ClC(Cl)c1ccccc1
 0.32000000000000001
 
 >  <source>  (20) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CBr3
@@ -1338,7 +1338,7 @@ BrC(Br)(Br)c1ccccc1
 0.28999999999999998
 
 >  <source>  (21) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2Cl
@@ -1395,7 +1395,7 @@ ClCc1ccccc1
 0.17000000000000001
 
 >  <source>  (22) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2Br
@@ -1452,7 +1452,7 @@ BrCc1ccccc1
 0.79000000000000004
 
 >  <source>  (23) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2I
@@ -1506,7 +1506,7 @@ ICc1ccccc1
 0.11
 
 >  <source>  (24) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 C2F5
@@ -1566,7 +1566,7 @@ FC(F)(F)C(F)(F)c1ccccc1
 0.52000000000000002
 
 >  <source>  (25) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 C(CF3)3
@@ -1638,7 +1638,7 @@ FC(F)(F)C(c1ccccc1)(C(F)(F)F)C(F)(F)F
 0.55000000000000004
 
 >  <source>  (26) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2OH
@@ -1697,7 +1697,7 @@ OCc1ccccc1
 -1.03
 
 >  <source>  (27) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2OCH3
@@ -1753,13 +1753,13 @@ CH2OCH3
 COCc1ccccc1
 
 >  <sigma_m>  (28) 
-0.02
+0.080000000000000002
 
 >  <sigma_p>  (28) 
-0.029999999999999999
+0.01
 
 >  <source>  (28) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2CN
@@ -1815,7 +1815,7 @@ N#CCc1ccccc1
 0.17999999999999999
 
 >  <source>  (29) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CH2NH2
@@ -1873,7 +1873,7 @@ NCc1ccccc1
 -0.11
 
 >  <source>  (30) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 F
@@ -1924,7 +1924,7 @@ Fc1ccccc1
 0.14000000000000001
 
 >  <source>  (31) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 Cl
@@ -1975,7 +1975,7 @@ Clc1ccccc1
 0.70999999999999996
 
 >  <source>  (32) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 Br
@@ -2026,7 +2026,7 @@ Brc1ccccc1
 0.85999999999999999
 
 >  <source>  (33) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 I
@@ -2077,7 +2077,7 @@ Ic1ccccc1
 1.1200000000000001
 
 >  <source>  (34) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 OH
@@ -2130,7 +2130,7 @@ Oc1ccccc1
 -0.67000000000000004
 
 >  <source>  (35) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 OCH3
@@ -2189,7 +2189,7 @@ COc1ccccc1
 -0.02
 
 >  <source>  (36) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 OC2H5
@@ -2254,7 +2254,7 @@ CCOc1ccccc1
 0.38
 
 >  <source>  (37) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 O-i-C3H7
@@ -2322,7 +2322,7 @@ CC(C)Oc1ccccc1
 -0.45000000000000001
 
 >  <source>  (38) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 OPh
@@ -2396,7 +2396,7 @@ c1ccc(Oc2ccccc2)cc1
 2.0800000000000001
 
 >  <source>  (39) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 OCF3
@@ -2455,7 +2455,7 @@ FC(F)(F)Oc1ccccc1
 1.04
 
 >  <source>  (40) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 OCOCH3
@@ -2518,7 +2518,7 @@ CC(=O)Oc1ccccc1
 -0.64000000000000001
 
 >  <source>  (41) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 OCOPh
@@ -2596,7 +2596,7 @@ O=C(Oc1ccccc1)c1ccccc1
 1.46
 
 >  <source>  (42) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 OSO2CH3
@@ -2661,7 +2661,7 @@ CS(=O)(=O)Oc1ccccc1
 -0.88
 
 >  <source>  (43) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SH
@@ -2714,7 +2714,7 @@ Sc1ccccc1
 0.39000000000000001
 
 >  <source>  (44) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SCH3
@@ -2773,7 +2773,7 @@ CSc1ccccc1
 0.60999999999999999
 
 >  <source>  (45) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SC2H5
@@ -2838,7 +2838,7 @@ CCSc1ccccc1
 1.0700000000000001
 
 >  <source>  (46) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SPh
@@ -2912,7 +2912,7 @@ c1ccc(Sc2ccccc2)cc1
 2.3199999999999998
 
 >  <source>  (47) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SCF3
@@ -2971,7 +2971,7 @@ FC(F)(F)Sc1ccccc1
 1.4399999999999999
 
 >  <source>  (48) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SCN
@@ -3026,7 +3026,7 @@ N#CSc1ccccc1
 0.40999999999999998
 
 >  <source>  (49) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SCOCH3
@@ -3086,7 +3086,7 @@ CC(=O)Sc1ccccc1
 0.44
 
 >  <source>  (50) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SOCH3
@@ -3147,7 +3147,7 @@ CS(=O)c1ccccc1
 -1.5800000000000001
 
 >  <source>  (51) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SO2CH3
@@ -3210,7 +3210,7 @@ CS(=O)(=O)c1ccccc1
 -1.6299999999999999
 
 >  <source>  (52) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SO2CF3
@@ -3273,7 +3273,7 @@ O=S(=O)(c1ccccc1)C(F)(F)F
 0.55000000000000004
 
 >  <source>  (53) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SO2Ph
@@ -3351,7 +3351,7 @@ O=S(=O)(c1ccccc1)c1ccccc1
 0.27000000000000002
 
 >  <source>  (54) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SO2NH2
@@ -3412,7 +3412,7 @@ NS(=O)(=O)c1ccccc1
 -1.8200000000000001
 
 >  <source>  (55) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SO2F
@@ -3469,7 +3469,7 @@ O=S(=O)(F)c1ccccc1
 0.050000000000000003
 
 >  <source>  (56) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SO2Cl
@@ -3523,7 +3523,7 @@ O=S(=O)(Cl)c1ccccc1
 1.1100000000000001
 
 >  <source>  (57) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SF5
@@ -3584,7 +3584,7 @@ FS(F)(F)(F)(F)c1ccccc1
 1.23
 
 >  <source>  (58) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 SeCH3
@@ -3643,7 +3643,7 @@ C[Se]c1ccccc1
 0.73999999999999999
 
 >  <source>  (59) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NH2
@@ -3698,7 +3698,7 @@ Nc1ccccc1
 -1.23
 
 >  <source>  (60) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NHCH3
@@ -3759,7 +3759,7 @@ CNc1ccccc1
 -0.46999999999999997
 
 >  <source>  (61) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 N(CH3)2
@@ -3826,7 +3826,7 @@ CN(C)c1ccccc1
 0.17999999999999999
 
 >  <source>  (62) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 N(C2H5)2
@@ -3905,7 +3905,7 @@ CCN(CC)c1ccccc1
 1.1799999999999999
 
 >  <source>  (63) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NHNH2
@@ -3964,7 +3964,7 @@ NNc1ccccc1
 -0.88
 
 >  <source>  (64) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NHCHO
@@ -4023,7 +4023,7 @@ O=CNc1ccccc1
 -0.97999999999999998
 
 >  <source>  (65) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NHCOCH3
@@ -4088,7 +4088,7 @@ CC(=O)Nc1ccccc1
 -0.96999999999999997
 
 >  <source>  (66) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NHCOCF3
@@ -4153,7 +4153,7 @@ O=C(Nc1ccccc1)C(F)(F)F
 0.080000000000000002
 
 >  <source>  (67) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NHCONH2
@@ -4216,7 +4216,7 @@ NC(=O)Nc1ccccc1
 -1.3
 
 >  <source>  (68) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NHSO2CH3
@@ -4283,7 +4283,7 @@ CS(=O)(=O)Nc1ccccc1
 -1.1799999999999999
 
 >  <source>  (69) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 N(CH3)COCH3
@@ -4351,7 +4351,7 @@ CC(=O)N(C)c1ccccc1
 0.26000000000000001
 
 >  <source>  (70) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 N(CF3)2
@@ -4415,7 +4415,7 @@ FC(F)(F)N(c1ccccc1)C(F)(F)F
 0.53000000000000003
 
 >  <source>  (71) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NO2
@@ -4471,7 +4471,7 @@ O=[N+]([O-])c1ccccc1
 -0.28000000000000003
 
 >  <source>  (72) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NO
@@ -4521,7 +4521,7 @@ O=Nc1ccccc1
 0.91000000000000003
 
 >  <source>  (73) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 N3
@@ -4577,7 +4577,7 @@ N3
 0.46000000000000002
 
 >  <source>  (74) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NCO
@@ -4629,7 +4629,7 @@ O=C=Nc1ccccc1
 0.19
 
 >  <source>  (75) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NCS
@@ -4684,7 +4684,7 @@ S=C=Nc1ccccc1
 1.1499999999999999
 
 >  <source>  (76) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 NC
@@ -4735,7 +4735,7 @@ NC
 0.48999999999999999
 
 >  <source>  (77) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 N=NPh
@@ -4811,7 +4811,7 @@ c1ccc(N=Nc2ccccc2)cc1
 1.6899999999999999
 
 >  <source>  (78) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CN
@@ -4864,7 +4864,7 @@ N#Cc1ccccc1
 -0.56999999999999995
 
 >  <source>  (79) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CHO
@@ -4919,7 +4919,7 @@ O=Cc1ccccc1
 -0.65000000000000002
 
 >  <source>  (80) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 COCH3
@@ -4980,7 +4980,7 @@ CC(=O)c1ccccc1
 -0.55000000000000004
 
 >  <source>  (81) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 COPh
@@ -5056,7 +5056,7 @@ O=C(c1ccccc1)c1ccccc1
 1.05
 
 >  <source>  (82) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 COCF3
@@ -5117,7 +5117,7 @@ O=C(c1ccccc1)C(F)(F)F
 0.02
 
 >  <source>  (83) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 COOH
@@ -5174,7 +5174,7 @@ O=C(O)c1ccccc1
 -0.32000000000000001
 
 >  <source>  (84) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 COOCH3
@@ -5237,7 +5237,7 @@ COC(=O)c1ccccc1
 -0.01
 
 >  <source>  (85) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 COOC2H5
@@ -5306,7 +5306,7 @@ CCOC(=O)c1ccccc1
 0.51000000000000001
 
 >  <source>  (86) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 CONH2
@@ -5365,7 +5365,7 @@ NC(=O)c1ccccc1
 -1.49
 
 >  <source>  (87) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 COCl
@@ -5417,7 +5417,7 @@ O=C(Cl)c1ccccc1
 0.60999999999999999
 
 >  <source>  (88) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 COF
@@ -5469,7 +5469,7 @@ O=C(F)c1ccccc1
 0.69999999999999996
 
 >  <source>  (89) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 Si(CH3)3
@@ -5544,7 +5544,7 @@ C[Si](C)(C)c1ccccc1
 2.5899999999999999
 
 >  <source>  (90) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 B(OH)2
@@ -5603,7 +5603,7 @@ OB(O)c1ccccc1
 -0.55000000000000004
 
 >  <source>  (91) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 P(O)(OEt)2
@@ -5685,7 +5685,7 @@ CCOP(=O)(OCC)c1ccccc1
 0.59999999999999998
 
 >  <source>  (92) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 P(CH3)2
@@ -5749,7 +5749,7 @@ CP(C)c1ccccc1
 0.059999999999999998
 
 >  <source>  (93) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 P(O)(CH3)2
@@ -5815,7 +5815,7 @@ CP(C)(=O)c1ccccc1
 0.5
 
 >  <source>  (94) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$
 PPh2
@@ -5909,6 +5909,6 @@ c1ccc(P(c2ccccc2)c2ccccc2)cc1
 0.19
 
 >  <source>  (95) 
-Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
+Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I (39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane (examples/make_hammett_examples.py)
 
 $$$$

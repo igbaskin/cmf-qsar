@@ -22,12 +22,22 @@ and the field has the symmetry of the problem.
 
 The constants
 -------------
-sigma_m, sigma_p and the Hansch hydrophobic constant pi are transcribed from the compilation of
-Hansch, Leo and Taft, Chem. Rev. 1991, 91, 165 (Table I), from memory of that table rather than
-from a machine-readable copy; the values are the familiar ones for the familiar substituents, but
-check any single number against the table before quoting it.  Charged substituents (NMe3+, COO-,
-O-) are left out: their electrostatic field would dominate the kernel.  pi is given where it is
-well established and omitted otherwise.
+sigma_m and sigma_p are those of Hansch, Leo and Taft, Chem. Rev. 1991, 91, 165, Table I.  They
+were first written down here from memory of that table; **39 of the 95 have since been checked
+against the paper itself** -- the rows were recovered from the scan by the coordinates of its
+words, since its text layer comes out column by column -- and 38 agreed to the last digit.  The
+one that did not was CH2OCH3, written as 0.02 / 0.03 and given by Table I (row 223) as
+0.08 / 0.01, confirmed on the page image before it was changed.  The remaining 56 could not be
+matched to a row automatically, because the scan's optical character recognition mangles the
+substituent names (Cl comes out as "c1", SO2Me as "SOIMe"), and they are still only as good as
+the memory they came from.
+
+The hydrophobic constant pi is **not** from that paper.  The 1991 review tabulates sigma, F and R
+and mentions pi only in its introduction; the pi values here come from the Hansch and Leo
+compilations of substituent constants and have not been checked against any of them.
+
+Charged substituents (NMe3+, COO-, O-) are left out: their electrostatic field would dominate the
+kernel.  pi is given where it is well established and omitted otherwise.
 
 Outputs
 -------
@@ -61,8 +71,10 @@ sys.path.insert(0, os.path.join(HERE, ".."))
 RDLogger.DisableLog("rdApp.*")
 
 OUT_DIR = os.path.join(HERE, "hammett")
-SOURCE = ("Hammett sigma_m / sigma_p and Hansch pi after Hansch, Leo & Taft, Chem. Rev. 1991, 91, "
-          "165, Table I; structures X-C6H5 built with RDKit ETKDG + MMFF94 and placed with the ring "
+SOURCE = ("Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I "
+          "(39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo "
+          "substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + "
+          "MMFF94 and placed with the ring "
           "centroid at the origin, the ipso carbon on +x and the ring in the xy plane "
           "(examples/make_hammett_examples.py)")
 
@@ -98,7 +110,7 @@ SUBSTITUENTS: List[Tuple[str, str, float, float, Optional[float]]] = [
     ("C(CF3)3", "C(C(F)(F)F)(C(F)(F)F)C(F)(F)F", 0.55, 0.55, None),
     # functionalised methyl
     ("CH2OH", "CO", 0.00, 0.00, -1.03),
-    ("CH2OCH3", "COC", 0.02, 0.03, None),
+    ("CH2OCH3", "COC", 0.08, 0.01, None),
     ("CH2CN", "CC#N", 0.16, 0.18, None),
     ("CH2NH2", "CN", -0.03, -0.11, None),
     # halogens

@@ -166,3 +166,88 @@ def test_a_descriptor_block_survives_the_file_and_an_old_file_refits_it(tmp_path
         del st[k]
     old = CMFModel.from_state(st)
     np.testing.assert_allclose(old.predict(table), before)
+
+
+# --------------------------------------------------------------------------- #
+# Inside the box, but turned the wrong way
+# --------------------------------------------------------------------------- #
+
+def _turned(mol, axis=2, degrees=90.0):
+    """The same molecule rotated about its own centroid: the right place, the wrong way."""
+    m = Chem.Mol(mol)
+    conf = m.GetConformer()
+    xyz = np.array(conf.GetPositions())
+    c = xyz.mean(axis=0)
+    t = np.radians(degrees)
+    R = {0: np.array([[1, 0, 0], [0, np.cos(t), -np.sin(t)], [0, np.sin(t), np.cos(t)]]),
+         1: np.array([[np.cos(t), 0, np.sin(t)], [0, 1, 0], [-np.sin(t), 0, np.cos(t)]]),
+         2: np.array([[np.cos(t), -np.sin(t), 0], [np.sin(t), np.cos(t), 0], [0, 0, 1]])}[axis]
+    for i, p in enumerate((xyz - c) @ R.T + c):
+        conf.SetAtomPosition(i, [float(v) for v in p])
+    return m
+
+
+def _aligned_set(n=14, seed=3):
+    """A congeneric series in one frame: benzenes superimposed on their ring."""
+    from rdkit.Chem import rdMolAlign
+
+    subs = ["O", "N", "C", "Cl", "F", "Br", "CC", "OC", "NC", "C=O", "S", "I", "CCC", "C#N"]
+    fs = FieldSet.create(alpha=0.6, charge_model="gasteiger")
+    mols = []
+    ref = None
+    for i, s in enumerate(subs[:n]):
+        m = _mol(f"c1ccccc1{s}", seed + i, charges=False)
+        if ref is None:
+            ref = m
+        else:
+            rdMolAlign.AlignMol(m, ref, atomMap=[(j, j) for j in range(6)])
+        mols.append(m)
+    return fs, mols
+
+
+def _fitted_aligned(tmp_path, n=14):
+    fs, mols = _aligned_set(n=n)
+    mf = [build_fields(m, fs, f"m{i}") for i, m in enumerate(mols)]
+    y = np.linspace(4.0, 7.0, len(mf))
+    model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": 0.1})
+    model.fit(AtomTable.from_molecules(mf), y)
+    path = str(tmp_path / "aligned.cmf")
+    save_model(path, model)                 # the provenance is written on the way out
+    return load_model(path)[0], fs, mols
+
+
+def test_a_molecule_of_the_series_raises_no_complaint(tmp_path):
+    model, fs, mols = _fitted_aligned(tmp_path)
+    mf = [build_fields(m, fs, f"ok{i}") for i, m in enumerate(mols)]
+    assert "orientation" not in _codes(check_molecules(model, mf))
+
+
+def test_a_molecule_turned_about_its_own_centre_is_caught(tmp_path):
+    """The box test cannot see this: a rotation about the centroid moves no centroid."""
+    model, fs, mols = _fitted_aligned(tmp_path)
+    turned = [build_fields(_turned(m, axis=1), fs, f"turned{i}") for i, m in enumerate(mols)]
+    findings = check_molecules(model, turned)
+    assert "orientation" in _codes(findings, level="warn")
+    assert "frame" not in _codes(findings)       # the centroids are exactly where they were
+    msg = [f.message for f in findings if f.code == "orientation"][0]
+    assert "turned the wrong way" in msg and "% of their atoms" in msg
+
+
+def test_the_threshold_comes_from_the_training_set_itself(tmp_path):
+    from cmfqsar.contract import _occupancy, _occupancy_threshold
+
+    model, fs, mols = _fitted_aligned(tmp_path)
+    thr = _occupancy_threshold(model)
+    assert 0.5 <= thr <= 1.0
+    # every training molecule passes its own set's rule, and a turned one does not
+    good = [_occupancy(model, build_fields(m, fs, "x").coords) for m in mols]
+    bad = [_occupancy(model, build_fields(_turned(m, axis=1), fs, "x").coords) for m in mols]
+    assert float(np.mean(good)) > thr > float(np.mean(bad))
+
+
+def test_a_model_with_no_training_coordinates_says_nothing(tmp_path):
+    """The check needs the cloud; without it there is no verdict to give, not a false one."""
+    model, fs, mols = _fitted_aligned(tmp_path)
+    model.train = None
+    mf = [build_fields(_turned(m), fs, f"t{i}") for i, m in enumerate(mols)]
+    assert "orientation" not in _codes(check_molecules(model, mf))

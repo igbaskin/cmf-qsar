@@ -86,8 +86,16 @@ This is what the software paper needs, and nothing in the later parts should wai
   derived, unclear). Four items are of unclear status, `sutherland/`, `steroids_cbg.sdf` and the
   two derived from the first; the document says what replacing each copy by its script would
   cost, and the decision to remove them before the repository is public is the author's, not
-  taken here. Two further gaps it names: the corrosion exports lack per-compound references, and
-  the Hammett constants were transcribed from memory and must be checked against the table.
+  taken here. Two further gaps it named: the corrosion exports lack per-compound references, which stands;
+  and the Hammett constants were transcribed from memory, **checked 25 October 2026**. The rows
+  of Table I were recovered from the scan by the coordinates of its words, since its text layer
+  comes out column by column; 39 of the 95 substituents were matched to a row and 38 agreed to
+  the last digit. CH2OCH3 did not -- written as 0.02 / 0.03, given by row 223 as 0.08 / 0.01,
+  confirmed on the page image -- and is corrected in the script and in all five SDF files, with
+  the benchmark re-run. The remaining 56 could not be matched automatically, because the scan's
+  character recognition mangles the names. The hydrophobic constant pi turned out not to be in
+  that paper at all: it tabulates sigma, F and R, so the attribution is corrected and pi remains
+  unchecked.
 * **A4. One entry point for the tables.** Done 22 October 2026. `benchmarks/run_all.py` lists
   the eleven benchmarks with their inputs, runs them (`--compute`), rebuilds every
   `results/*/table.md` from the result files (`--tables`; the two scripts that had no table
@@ -111,9 +119,14 @@ This is what the software paper needs, and nothing in the later parts should wai
   and refuses in a dialog. Two faults of the file were found on the way and fixed: a loaded
   model could not give predictive variances (its training kernels are not stored and were not
   recomputed), and a loaded model with a descriptor block dropped the block silently, since the
-  descriptor statistics were not written; they are now, and a version-1 file refits them. Not
-  checked: a molecule inside the training box but wrongly oriented, which only the applicability
-  domain sees.
+  descriptor statistics were not written; they are now, and a version-1 file refits them. **Done 25 October 2026**: a molecule inside
+  the training box but wrongly oriented, which the box test cannot see because a rotation about a
+  molecule's own centre moves no centroid. The check compares the molecule with the *shape* the
+  training set occupies instead of its box -- the share of its atoms within 1.5 A of some training
+  atom, against the fifth percentile of the same quantity measured on each training molecule
+  against the others, less a slack, so the rule comes from the set as the applicability domain's
+  threshold does. On the eight Sutherland sets it catches 95.5 % of held-out molecules turned 90
+  degrees about their own centre, for a false-positive rate of 2.6 % on the molecules left alone.
 * **A6. Land the multi-task model.** Done 22 October 2026: `cmfqsar/multitask.py`, its test, the
   selectivity dialog and `benchmarks/run_multitask.py` are committed with the result on the
   corrosion series (README, "Two endpoints on one kernel"; `benchmarks/results/multitask/table.md`).

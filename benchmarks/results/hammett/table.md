@@ -8,11 +8,11 @@ One table per run of `benchmarks/run_hammett.py`, named by the tag of its summar
 |---|---|---|---|---|---|---|---|---|
 | sigma_m | electrostatic+steric+hydrophobic+hba+hbd | 95 | 0.5 | 1 | 0.70 | 0.14 | 0.82 | 0.26 |
 | sigma_m | electrostatic | 95 | 1.2 | 1 | 0.66 | 0.15 | 0.73 | 0.26 |
-| sigma_m | steric | 95 | 1.2 | 0.01 | 0.19 | 0.24 | 0.32 | 0.26 |
+| sigma_m | steric | 95 | 1.2 | 0.01 | 0.19 | 0.24 | 0.33 | 0.26 |
 | sigma_m | hydrophobic | 95 | 3 | 10 | -0.03 | 0.27 | 0.06 | 0.26 |
 | sigma_m | hba | 95 | 0.3 | 1 | 0.18 | 0.24 | 0.24 | 0.26 |
 | sigma_m | hbd | 95 | 0.3 | 10 | -0.02 | 0.26 | 0.03 | 0.26 |
-| sigma_m | electrostatic+steric | 95 | 2 | 1 | 0.67 | 0.15 | 0.77 | 0.26 |
+| sigma_m | electrostatic+steric | 95 | 2 | 1 | 0.68 | 0.15 | 0.77 | 0.26 |
 | sigma_p | electrostatic+steric+hydrophobic+hba+hbd | 95 | 0.5 | 1 | 0.69 | 0.21 | 0.82 | 0.38 |
 | sigma_p | electrostatic | 95 | 0.8 | 1 | 0.68 | 0.22 | 0.74 | 0.38 |
 | sigma_p | steric | 95 | 1.2 | 0.01 | 0.14 | 0.36 | 0.30 | 0.38 |

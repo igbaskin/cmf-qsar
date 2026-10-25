@@ -339,10 +339,18 @@ the program compares the new molecules with that record and reports what does no
 - **The frame.** The overlap integral is not invariant to rotation or translation, so a molecule
   predicted in a different frame from the training set scores low on every field and is predicted
   towards the mean. A molecule whose centroid lies more than 4 Å outside the box of the training
-  atoms is reported as a **warning**; a molecule inside the box but wrongly oriented is not
-  caught by this check, only by the applicability domain. If the new molecules are not in the
-  frame, align them (*Preparing the data*) or use a frame-free kernel source (*Working without
-  an alignment*).
+  atoms is reported as a **warning**.
+- **The pose inside the frame.** A molecule can be in the right place and still be turned the
+  wrong way, and a rotation about its own centre moves no centroid, so the box test above sees
+  nothing. The check that does see it compares the molecule with the *shape* the training set
+  occupies rather than with its box: the share of its atoms that come within 1.5 Å of some
+  training atom, against the share this training set asks of its own molecules — the fifth
+  percentile of the same quantity measured on each training molecule against the others, less a
+  small slack, so that a tight series earns a tight rule exactly as the applicability domain's
+  threshold does. Measured on the eight Sutherland sets, turning every held-out molecule 90° about
+  its own centre is caught **95 % of the time, for a false-positive rate of 2.6 %** on the
+  molecules left as they were. If the new molecules are not in the frame, align them (*Preparing
+  the data*) or use a frame-free kernel source (*Working without an alignment*).
 - **Per-atom property fields** that are zero on a molecule, because it carries no value of that
   property, are a warning; a file written by another version of the program, or by a version
   that recorded no provenance, is a note.
