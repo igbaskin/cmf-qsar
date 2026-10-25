@@ -88,6 +88,7 @@ class ReportSpec:
     level: float = 0.5            # fraction of the peak that bounds a pharmacophore lobe
     max_features: int = 12
     top_atoms: int = 8            # atom contributions listed for each extreme molecule
+    cofield_z: float = 2.0        # draw only what stands this far from zero; 0 draws everything
     cofields: bool = True
     pharmacophore: bool = True
     dpi: int = 110
@@ -411,7 +412,7 @@ def _section_cofields(model, spec: ReportSpec) -> str:
     if not (model.is_linear and model.uses_fields) or model.train is None:
         return "\n".join(out + [_missing(
             "co-fields are defined for the linear overlap kernel; this model uses another")])
-    from .cofields import cofield_volume, make_grid
+    from .cofields import cofield_volume, cofield_with_error, make_grid
 
     grid = make_grid(model.train.coords, margin=spec.margin, spacing=spec.spacing)
     out.append("<p>Where the model wants something and where it wants it absent: the co-field is "
@@ -419,15 +420,36 @@ def _section_cofields(model, spec: ReportSpec) -> str:
                "that field raises the predicted activity and a blue one where it lowers it. Each "
                "field is shown from three fixed viewpoints, as the strongest signed value along "
                "the viewing axis, with the training atoms as grey dots for scale.</p>")
+    masked, probe = spec.cofield_z > 0, None
+    if masked:
+        try:
+            probe = cofield_with_error(model, 0, grid, include_scale=True, z=spec.cofield_z)
+            out.append(f'<p class="note">Only what stands more than {spec.cofield_z:g} standard '
+                       f'deviations from zero is drawn. The error bar propagates a noise level '
+                       f'of {probe.sigma:.3f} in the activities ({_e(probe.sigma_from)}) through '
+                       f'the fit, with the molecules and the kernel held fixed; the rest of each '
+                       f'lobe is shape that the measurement error alone could have produced, and '
+                       f'is cut away. How much survived is given under each picture.</p>')
+        except (ValueError, RuntimeError) as exc:
+            masked = False
+            out.append(_missing(f"drawn whole: this model has no error bar to cut them by ({exc})"))
     for f, s in enumerate(model.fieldset.specs):
         if not s.enabled:
             continue
-        vol = cofield_volume(model, f, grid, include_scale=True)
+        kept = ""
+        if masked:
+            ce = cofield_with_error(model, f, grid, sigma=probe.sigma, include_scale=True,
+                                    z=spec.cofield_z)
+            vol = ce.masked
+            kept = f" {100 * ce.surviving:.0f} % of what would have been drawn survived."
+        else:
+            vol = cofield_volume(model, f, grid, include_scale=True)
         if not np.any(np.isfinite(vol)) or float(np.max(np.abs(vol))) <= 0:
+            out.append(_missing(f"nothing in the {s.label} co-field stands above its error bar"))
             continue
         out.append(_figure(cofield_png(model, f, grid, vol, spec),
                            f"Co-field of the {_e(s.label)} field. Red: more of this field raises "
-                           f"the prediction; blue: it lowers it."))
+                           f"the prediction; blue: it lowers it.{kept}"))
     return "\n".join(out)
 
 
@@ -478,7 +500,7 @@ def _section_pharmacophore(model, spec: ReportSpec) -> str:
 
     try:
         feats = extract(model, level=spec.level, max_features=spec.max_features,
-                        spacing=spec.spacing, margin=spec.margin)
+                        spacing=spec.spacing, margin=spec.margin, min_z=spec.cofield_z)
     except (ValueError, RuntimeError) as exc:
         return "\n".join(out + [_missing(f"not available: {exc}")])
     if not feats:
@@ -487,9 +509,12 @@ def _section_pharmacophore(model, spec: ReportSpec) -> str:
     rows = [(_e(ft.kind), _e(ft.field), f"{ft.centre[0]:.2f}, {ft.centre[1]:.2f}, "
              f"{ft.centre[2]:.2f}", _num(ft.radius, "{:.2f}"), _num(ft.importance, "{:+.3f}"),
              _e(ft.meaning)) for ft in feats]
+    cut = (f" Read off the co-fields after they were cut at {spec.cofield_z:g} standard "
+           "deviations, so no feature here is one the noise in the activities could have "
+           "produced." if spec.cofield_z > 0 else "")
     out.append("<p>The lobes of the co-fields, read as typed features with tolerance radii: what "
                "a molecule should put where to be predicted active, and what it should keep "
-               "out.</p>")
+               "out." + cut + "</p>")
     out.append(_table(["feature", "field", "centre / Å", "radius / Å", "weight",
                        "meaning"], rows, numeric=(3, 4)))
     return "\n".join(out)

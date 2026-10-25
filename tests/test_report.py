@@ -91,10 +91,20 @@ def test_the_validation_that_was_run_is_reported(fitted):
 
 
 def test_the_co_fields_and_the_pharmacophore_are_drawn_when_asked(fitted):
-    html = build_html(fitted, spec=ReportSpec(spacing=1.2, margin=2.0))
-    assert ">The co-fields</h2>" in html and ">The pharmacophore</h2>" in html
+    n_fields = len([s for s in fitted.fieldset.specs if s.enabled])
+    whole = build_html(fitted, spec=ReportSpec(spacing=1.2, margin=2.0, cofield_z=0.0))
+    assert ">The co-fields</h2>" in whole and ">The pharmacophore</h2>" in whole
     # one figure for the statistics, one for the field contributions, one per field
-    assert len(_figures(html)) >= 2 + len([s for s in fitted.fieldset.specs if s.enabled])
+    assert len(_figures(whole)) >= 2 + n_fields
+
+
+def test_the_co_fields_are_cut_at_their_error_bar_by_default(fitted):
+    """A field with nothing above its error bar is said to have nothing, not left out."""
+    html = build_html(fitted, spec=ReportSpec(spacing=1.2, margin=2.0))
+    assert "standard deviations from zero is drawn" in html
+    assert "survived the error bar" in html or "stands above its error bar" in html
+    whole = build_html(fitted, spec=ReportSpec(spacing=1.2, margin=2.0, cofield_z=0.0))
+    assert len(_figures(html)) <= len(_figures(whole))
 
 
 def test_a_kernel_without_co_fields_loses_them_and_keeps_the_rest(fitted):

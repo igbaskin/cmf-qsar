@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 51 modules and about 21,500 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 51 modules and about 21,800 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with sixteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`), 567 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`), 578 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -517,6 +517,37 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   point in closed form. Render only the regions where the co-field exceeds twice its standard
   deviation; the rest of the isosurface is noise and should not be shown. This is cheap, new, and
   changes what every co-field picture means.
+  **Done 25 October 2026**, with one correction to the item's own wording. `cofield_variance`,
+  `cofield_with_error` and `mask_noise` in `cmfqsar/cofields.py`; the **hide noise** tick in the
+  3D view, `pharmacophore --min-z`, and the report masking its pictures and its pharmacophore by
+  default (`report --cofield-z`, 2 by default, 0 to draw everything).
+  **The correction.** What is computed is not a posterior variance. Under the Gaussian process
+  whose kernel this is, the prior on the field weight function is white noise on L2: the value at
+  a point is not a random variable, and the pointwise posterior variance is infinite everywhere.
+  The finite Bayesian quantity is the variance of the overlap with a probe field of non-zero
+  width, which is the GP variance of a prediction for a one-atom molecule placed there and is
+  already implemented. What is computed instead is the other half of the question: the molecules
+  and the kernel held fixed, the noise in the activities propagated through the fit, which is the
+  question a co-field picture actually provokes. The item's own formula -- the dual coefficients
+  carry a covariance, so the co-field carries a variance -- is right; only the word "posterior"
+  was wrong. A unit test checks the closed form against three hundred refits on noisy activities
+  and the two agree to a few per cent.
+  **Measured on the eight Sutherland sets** (`benchmarks/run_cofield_error.py`), co-fields on a
+  0.8 A grid, the training set then resampled with replacement thirty times and refitted -- a
+  harder perturbation than the formula models, since it moves the molecules too: the mask keeps
+  **30 %** of what would have been drawn, and what it keeps holds its sign under resampling
+  **97.8 %** of the time against **90.6 %** for what it cuts, a difference of **+0.072** with a
+  95 % interval of [+0.064, +0.083], in the same direction on **8 of 8** sets.
+  Two things the measurement adds. The bar is **conservative**: the bootstrap moves the co-field
+  only 0.6 times as far as the closed form allows for, so cutting at two standard deviations is
+  really cutting at about 3.2 of the bootstrap's, which follows from taking sigma to be the
+  out-of-fold error rather than the assay's noise alone (`--sigma` sets it directly). And the
+  thing it gets right is *where* the uncertainty is, the two orderings agreeing across the grid
+  at a rank correlation of **+0.82** -- which is what a mask needs, a mask being an ordering with
+  a line drawn through it.
+  So the item's claim stands: it is cheap, it is new, and it changes what every co-field picture
+  in the program means, the report's included. Between a half and five sixths of a drawn co-field,
+  depending on the field, is shape the measurement error could have produced.
 * **F3. Co-fields compared.** The overlap of two co-fields is a closed-form similarity between two
   models: two targets (selectivity, again), two series on one target, or one series across rounds
   of active learning. A table of co-field overlaps is a map of SAR transfer.
@@ -589,7 +620,7 @@ and counts predict nothing, is the first case.
 | When | What |
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
-| Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
+| Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1 to E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
 | Months 6 to 12 | F3, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |

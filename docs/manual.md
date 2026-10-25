@@ -1822,6 +1822,59 @@ Two further maps use the same grid, for the molecule currently shown:
 *File → Export current co-field (Gaussian cube)* writes a cube file readable by PyMOL, VMD or
 Jmol, which is the way to put a co-field into a publication figure.
 
+### How much of it is noise
+
+A co-field is read as a fact about the chemistry. It is a linear map of the measured activities, so
+part of its shape is a fact about the measurement error instead, and the program can say which part
+in closed form.
+
+The dual coefficients are a linear map of the activities — with a bias, the bordered system of the
+2013 paper, whose inverse's top-left block is the matrix below — so activities carrying independent
+noise of variance $\sigma^2$ give coefficients carrying covariance $\sigma^2 G G^{\mathrm{T}}$, and
+the co-field, being linear in them, carries
+
+$$
+\mathrm{Var}\,[C_f(\mathbf{r})] = \sigma^2 \left\| G^{\mathrm{T}} \mathbf{x}_f(\mathbf{r}) \right\|^2,
+\qquad x_{fj}(\mathbf{r}) = s_{fj} X_{fj}(\mathbf{r})
+$$
+
+— one matrix product per block of grid points, no resampling and no refitting. The **hide noise**
+tick of the 3D view then draws only what stands more than two standard deviations from zero, and
+`pharmacophore --min-z 2` reads features off the same masked map, so that a lobe the noise could
+have produced never becomes a feature. The report (`report`) does both by default.
+
+The noise level $\sigma$ is the model's own out-of-fold error, RMSEcv, which is the assay's noise
+and the model's error together; `--sigma` sets it directly.
+
+**What this is, precisely.** It is not the Bayesian posterior variance of the co-field, and the
+difference is worth stating. Under the Gaussian process whose kernel this is, the prior on the
+field weight function is white noise on $L^2$: its value at a point is not a random variable at
+all, and the pointwise posterior variance is infinite everywhere. What the prior does allow is the
+variance of $\langle w, g\rangle$ for a probe field $g$ of non-zero width — which is exactly the
+GP variance of a prediction for a one-atom molecule placed there, and the program already computes
+that. The quantity above is the other half of the question: the molecules and the kernel are held
+fixed, and the noise in the activities is propagated. It answers *how much of this lobe would
+survive the error in the measurements*, which is the question a co-field picture provokes.
+
+**Measured, the mask keeps about a third of the picture, and that third is the part that holds.**
+Eight Sutherland sets, co-fields on a 0.8 Å grid; the training set is then resampled with
+replacement thirty times and refitted, and a voxel counts as stable when the sign of its co-field
+survives that — a harder perturbation than the formula models, since it moves the molecules too:
+
+| | |
+|---|---|
+| kept by the mask, of what would have been drawn | **30 %** |
+| of the kept part, holds its sign under resampling | **97.8 %** |
+| of the cut part | **90.6 %** |
+| difference | **+0.072**, 95 % interval [+0.064, +0.083], in the same direction on 8 of 8 sets |
+
+The last line of the honest accounting: the bootstrap moves the co-field only about 0.6 times as
+far as the closed form allows for, so cutting at two standard deviations is really cutting at
+about 3.2 of the bootstrap's — the bar is conservative, which follows from taking σ to be the
+out-of-fold error. What it gets right is *where* the uncertainty is, and the two orderings agree
+across the grid at a rank correlation of +0.82. That is what a mask needs, since a mask is an
+ordering with a line drawn through it.
+
 ## Contributions
 
 The *Contributions* tab answers two questions about the selected molecule:

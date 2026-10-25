@@ -979,6 +979,7 @@ def cmd_report(args):
     out = args.out or (os.path.splitext(args.model)[0] + ".html")
     spec = ReportSpec(spacing=args.spacing, margin=args.margin, level=args.level,
                       max_features=args.max_features, top_atoms=args.top_atoms,
+                      cofield_z=args.cofield_z,
                       cofields=not args.no_cofields,
                       pharmacophore=not args.no_pharmacophore)
     t0 = time.time()
@@ -1462,8 +1463,12 @@ def cmd_pharmacophore(args):
     grid = make_grid(model.train.coords, margin=args.margin, spacing=args.spacing)
     print(f"Model {args.model}: {model.train.n_mol} training molecules, "
           f"grid {grid.shape[0]}x{grid.shape[1]}x{grid.shape[2]} at {grid.spacing:.2f} A")
+    if args.min_z > 0:
+        print(f"  lobes below {args.min_z:g} standard deviations of the activities' noise are "
+              f"masked out before the features are read")
     feats = extract(model, grid=grid, level=args.level, max_features=args.max_features,
                     min_radius=args.min_radius, spacing=args.spacing, margin=args.margin,
+                    min_z=args.min_z, sigma=args.sigma,
                     fields=[f for f in args.fields.split(",") if f] if args.fields else None)
     if args.structure:
         from cmfqsar.protein import read_structure
@@ -2385,6 +2390,13 @@ def main(argv=None):
                          "volumes are counted separately)")
     ph.add_argument("--min-radius", type=float, default=0.6, metavar="R",
                     help="ignore lobes smaller than this tolerance radius")
+    ph.add_argument("--min-z", type=float, default=0.0, metavar="Z",
+                    help="mask the co-field where it stands less than Z standard deviations "
+                         "from zero before reading features off it, so that a lobe the noise in "
+                         "the activities could have produced never becomes a feature (try 2)")
+    ph.add_argument("--sigma", type=float, default=None, metavar="S",
+                    help="with --min-z: the noise level of the activities (default: the "
+                         "model's own out-of-fold RMSE)")
     ph.add_argument("--fields", default=None,
                     help="restrict to these field types (default: every enabled field)")
     ph.add_argument("--spacing", type=float, default=0.6)
@@ -2501,6 +2513,10 @@ def main(argv=None):
     rp.add_argument("--level", type=float, default=0.5, metavar="F",
                     help="fraction of a co-field's peak that bounds a pharmacophore feature")
     rp.add_argument("--max-features", type=int, default=12)
+    rp.add_argument("--cofield-z", type=float, default=2.0, metavar="Z",
+                    help="draw only the part of each co-field that stands this far from zero "
+                         "once the noise in the activities is propagated through the fit, and "
+                         "read the pharmacophore off what is left; 0 draws everything")
     rp.add_argument("--top-atoms", type=int, default=8,
                     help="atom contributions listed for each of the two extreme molecules")
     rp.add_argument("--no-cofields", action="store_true",

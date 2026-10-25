@@ -1,0 +1,60 @@
+{
+ "set": "DHFR",
+ "n": 361,
+ "alpha": 2.0,
+ "lam": 0.1,
+ "q2": 0.6370389087575408,
+ "sigma": 0.7852438066384395,
+ "boots": 30,
+ "z": 2.0,
+ "spacing": 0.8,
+ "points": 13225,
+ "fields": [
+  {
+   "field": "electrostatic",
+   "drawn": 738,
+   "kept_share": 0.16395663956639567,
+   "stability_kept": 0.9625344352617081,
+   "stability_cut": 0.8555915721231768,
+   "sd_ratio": 0.591687747564893,
+   "sd_rank_corr": 0.8551447939590892
+  },
+  {
+   "field": "steric",
+   "drawn": 1215,
+   "kept_share": 0.2946502057613169,
+   "stability_kept": 0.9931098696461824,
+   "stability_cut": 0.9071178529754961,
+   "sd_ratio": 0.6075648304385763,
+   "sd_rank_corr": 0.8141439607545925
+  },
+  {
+   "field": "hydrophobic",
+   "drawn": 696,
+   "kept_share": 0.1968390804597701,
+   "stability_kept": 0.9785888077858881,
+   "stability_cut": 0.8927251043530112,
+   "sd_ratio": 0.5934703985866041,
+   "sd_rank_corr": 0.8247132428129629
+  },
+  {
+   "field": "hba",
+   "drawn": 427,
+   "kept_share": 0.27634660421545665,
+   "stability_kept": 0.9714689265536723,
+   "stability_cut": 0.8695792880258901,
+   "sd_ratio": 0.6412823922781441,
+   "sd_rank_corr": 0.903421910349796
+  },
+  {
+   "field": "hbd",
+   "drawn": 260,
+   "kept_share": 0.36538461538461536,
+   "stability_kept": 0.8789473684210528,
+   "stability_cut": 0.8767676767676769,
+   "sd_ratio": 0.7454193537157405,
+   "sd_rank_corr": 0.7830771279047141
+  }
+ ],
+ "seconds": 31.0
+}

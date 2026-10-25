@@ -1399,14 +1399,14 @@ class CMFModel:
                 f"field, so the primal form does not exist. Use the linear kernel to interpret the "
                 f"model (the contributions of the training molecules remain valid for any kernel).")
 
-    def cofield_coefficients(self, f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Centres, coefficients and widths of the Gaussians composing co-field C_f(r).
+    def cofield_basis(self, f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """The Gaussians of every training molecule's field f, before the dual coefficients.
 
-        C_f(r) = sum_j a_j s_fj sum_m w_fjm exp(-b_jm/2 |r - r_jm|^2),  (Eq. 9)
-        with s_fj = 1/sqrt(K_f(j,j)) when kernels are normalised, else 1.
-        The field-scaling constant c_f and mixing coefficient h_f are *not* included.
-        For a model whose alpha lies between the points of ``alpha_grid`` (interpolated
-        kernels) the co-field is evaluated with the nominal alpha, an approximation.
+        Returns (centres, coefficients, widths, molecule index): the j-th training molecule
+        contributes ``x_j(r) = s_fj sum_m w_fjm exp(-b_jm/2 |r - r_jm|^2)``, so that the co-field
+        is ``C_f(r) = sum_j a_j x_j(r)`` and anything else linear in the same basis -- the
+        variance of the co-field under noise in the activities, say (:mod:`cmfqsar.cofields`) --
+        is built from the same numbers rather than from a second copy of them.
         """
         self._require_linear("co-fields")
         self._require_fields("co-fields")
@@ -1417,20 +1417,33 @@ class CMFModel:
         if self.normalize:
             d = self.self_diag[f]
             s = np.where(d > 1e-300, 1.0 / np.sqrt(np.maximum(d, 1e-300)), 0.0)
-        per_mol = np.repeat(self.coef * s, np.diff(tr.offsets))
+        counts = np.diff(tr.offsets)
+        per_mol = np.repeat(s, counts)
+        index = np.repeat(np.arange(n), counts)
         if spec.is_probe:
             # a probe field puts several Gaussians on every atom, so its co-field is the same sum
             # with every atom repeated once per term of the expansion
             from .probes import basis_widths
             C = tr.probe_coeffs.get(spec.name)
             if C is None:
-                return tr.coords, np.zeros(len(per_mol)), np.ones(len(per_mol))
+                return tr.coords, np.zeros(len(per_mol)), np.ones(len(per_mol)), index
             k = C.shape[1]
             return (np.repeat(tr.coords, k, axis=0), (C * per_mol[:, None]).reshape(-1),
-                    np.tile(basis_widths(k), tr.coords.shape[0]))
-        per_atom_coef = per_mol * tr.weights[:, f]
-        b = np.full(len(per_atom_coef), spec.alpha) if spec.kind == "gauss" else spec.alpha / tr.radii ** 2
-        return tr.coords, per_atom_coef, b
+                    np.tile(basis_widths(k), tr.coords.shape[0]), np.repeat(index, k))
+        b = np.full(len(per_mol), spec.alpha) if spec.kind == "gauss" else spec.alpha / tr.radii ** 2
+        return tr.coords, per_mol * tr.weights[:, f], b, index
+
+    def cofield_coefficients(self, f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Centres, coefficients and widths of the Gaussians composing co-field C_f(r).
+
+        C_f(r) = sum_j a_j s_fj sum_m w_fjm exp(-b_jm/2 |r - r_jm|^2),  (Eq. 9)
+        with s_fj = 1/sqrt(K_f(j,j)) when kernels are normalised, else 1.
+        The field-scaling constant c_f and mixing coefficient h_f are *not* included.
+        For a model whose alpha lies between the points of ``alpha_grid`` (interpolated
+        kernels) the co-field is evaluated with the nominal alpha, an approximation.
+        """
+        centres, coeffs, widths, index = self.cofield_basis(f)
+        return centres, coeffs * np.asarray(self.coef, float)[index], widths
 
     def field_scale_for(self, f: int, mol: Optional[MoleculeFields] = None) -> float:
         """Factor multiplying the raw molecular field X_f of `mol` in the primal form (Eq. 7)."""

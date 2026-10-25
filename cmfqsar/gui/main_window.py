@@ -17,8 +17,8 @@ from rdkit import Chem
 
 from .. import __version__
 from ..align import align_dataset
-from ..cofields import (Grid, cofield_volume, export_cube, isosurface, make_grid, molfield_volume,
-                        overlap_volume)
+from ..cofields import (Grid, cofield_variance, cofield_volume, export_cube, isosurface,
+                        make_grid, mask_noise, molfield_volume, noise_level, overlap_volume)
 from ..conformers import CONFORMER_ALIGNMENTS
 from ..contract import check_molecules, summary as model_summary
 from ..dataio import Dataset, load_dataset, load_model, numeric_properties, save_model, write_predictions_csv, write_sdf
@@ -1325,6 +1325,7 @@ class MainWindow(QMainWindow):
         self.search_rows = []
         self.grid: Optional[Grid] = None
         self.volumes: Dict[str, np.ndarray] = {}
+        self.cofield_sd: Dict[str, np.ndarray] = {}      # standard deviation of each co-field
         self._mol_volume_cache: Dict[tuple, np.ndarray] = {}
         self.worker: Optional[TaskWorker] = None
         self._pose_reference: Optional[Dict[int, np.ndarray]] = None   # poses before "Unalign"
@@ -1495,6 +1496,7 @@ class MainWindow(QMainWindow):
         vc.changed.connect(self.schedule_display)
         vc.style_changed.connect(self.schedule_display)
         vc.compute_requested.connect(self.compute_cofields)
+        vc.cofield_noise_requested.connect(self.cofield_noise_toggled)
         vc.endpoint_changed.connect(self.endpoint_changed)
         vc.reset_view.connect(self.viewer.reset_view)
         rp.btn_shapley.clicked.connect(self.compute_shapley)
@@ -2850,13 +2852,55 @@ class MainWindow(QMainWindow):
 
         def done(out):
             self.grid, self.volumes = out
+            self.cofield_sd = {}                 # the error bars belong to the old grid
             self._mol_volume_cache.clear()
             self.log(f"Co-fields computed on a {'x'.join(map(str, self.grid.shape))} grid "
                      f"(spacing {self.grid.spacing:.2f} Å)")
             self.controls.chk_cofield.setChecked(True)
+            if self.controls.chk_cofield_noise.isChecked():
+                self.cofield_noise_toggled(True)
             self.schedule_display()
 
         self.run_task(task, done, "Computing co-fields")
+
+    def cofield_noise_toggled(self, on: bool):
+        """Compute the error bar of every co-field, once, when the user asks to hide the noise.
+
+        It costs about what the co-fields themselves cost, so it is not computed until it is
+        wanted; unticking the box keeps what was computed, so the two pictures can be compared
+        by clicking back and forth.
+        """
+        if not on or self.grid is None or not self.volumes or self.cofield_sd:
+            self.schedule_display()
+            return
+        model = self.model
+        if model is None:
+            return
+        try:
+            sigma, how = noise_level(model)
+        except ValueError as exc:
+            QMessageBox.information(self, "No error bar", str(exc))
+            self.controls.chk_cofield_noise.setChecked(False)
+            return
+        grid, names = self.grid, [s.name for s in model.fieldset.specs]
+
+        def task(progress, cancel):
+            out = {}
+            for k, name in enumerate(names):
+                progress(f"Error bar of the {name} co-field", k / len(names))
+                out[name] = np.sqrt(np.maximum(
+                    cofield_variance(model, k, grid, sigma=sigma), 0.0))
+                if cancel():
+                    break
+            return out
+
+        def done(out):
+            self.cofield_sd = out
+            self.log(f"Co-field error bars from sigma = {sigma:.3f} ({how}); "
+                     f"only what stands more than 2 standard deviations from zero is drawn")
+            self.schedule_display()
+
+        self.run_task(task, done, "Co-field error bars")
 
     def _mol_volume(self, mol_index: int, field_index: int, kind: str) -> Optional[np.ndarray]:
         key = (mol_index, field_index, kind)
@@ -3059,6 +3103,19 @@ class MainWindow(QMainWindow):
             else:
                 pos_c, neg_c = cofield_colors(fname)
                 vol = self.volumes[fname]
+                hiding = vc.chk_cofield_noise.isChecked()
+                if hiding and fname in self.cofield_sd:
+                    # only what stands more than two standard deviations from zero, the rest
+                    # being shape the noise in the activities could have produced on its own
+                    sd = self.cofield_sd[fname]
+                    kept = np.abs(vol) >= 2.0 * sd
+                    drawn = np.abs(vol) >= 0.1 * float(np.abs(vol).max() or 1.0)
+                    vol = mask_noise(vol, sd, 2.0)
+                    share = float(np.mean(kept[drawn])) if drawn.any() else 0.0
+                    legend.append(f"noise hidden: {share:.0%} of the {flabel} co-field stands "
+                                  f"more than 2 standard deviations from zero")
+                elif hiding:
+                    legend.append("noise hidden: the error bars are still being computed")
                 amax = float(np.abs(vol).max())
                 if amax > 0:
                     mesh = vc.cmb_cofield_style.currentText() == "mesh"

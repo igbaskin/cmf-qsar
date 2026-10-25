@@ -1998,6 +1998,7 @@ class ResultsPanel(QWidget):
 class ViewerControls(QWidget):
     changed = Signal()                 # any display option changed
     compute_requested = Signal()       # co-field computation requested
+    cofield_noise_requested = Signal(bool)   # "hide noise" ticked or unticked
     endpoint_changed = Signal()        # which endpoint's co-field to show
     style_changed = Signal()
     reset_view = Signal()
@@ -2078,12 +2079,25 @@ class ViewerControls(QWidget):
         lay.addLayout(row2)
 
         row3 = QHBoxLayout()
-        self.chk_cofield = QCheckBox("co-field C(r)")
+        self.chk_cofield = QCheckBox("co-field C(r)")   # its error bar: chk_cofield_noise
         self.chk_cofield.setChecked(True)
         self.cmb_cofield_style = QComboBox()
         self.cmb_cofield_style.addItems(["solid", "mesh"])
         self.cmb_cofield_style.setToolTip("Drawing style of the co-field isosurfaces")
         self.cmb_cofield_style.currentIndexChanged.connect(self.changed)
+        self.chk_cofield_noise = QCheckBox("hide noise")
+        self.chk_cofield_noise.setToolTip(chr(10).join([
+            "Draw only the part of the co-field that stands more than two standard deviations",
+            "from zero once the noise in the activities is propagated through the fit.",
+            "",
+            "The co-field is a linear map of the measured activities, so a noise level in them",
+            "gives every point of it a standard deviation in closed form. What is cut away is",
+            "shape that the measurement error alone could have produced: it is in the picture",
+            "because of the numbers the assay returned, not because of the chemistry.",
+            "",
+            "The noise level is the model's own out-of-fold error (RMSEcv). Computing the error",
+            "bars takes about as long as the co-fields themselves."]))
+        self.chk_cofield_noise.toggled.connect(self.cofield_noise_requested)
         self.chk_molfield = QCheckBox("molecular field X(r)")
         self.cmb_molfield_style = QComboBox()
         self.cmb_molfield_style.addItems(["auto", "mesh", "solid"])
@@ -2128,6 +2142,7 @@ class ViewerControls(QWidget):
             row3.addWidget(cb)
             if cb is self.chk_cofield:
                 row3.addWidget(self.cmb_cofield_style)
+                row3.addWidget(self.chk_cofield_noise)
             if cb is self.chk_molfield:
                 row3.addWidget(self.cmb_molfield_style)
         for cb in (self.chk_shapfield, self.chk_atoms, self.chk_diff, self.chk_pharmacophore):

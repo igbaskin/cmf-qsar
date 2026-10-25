@@ -141,13 +141,20 @@ def features_from_volume(volume: np.ndarray, grid: Grid, field: str, sign: int,
 
 def extract(model, grid: Optional[Grid] = None, level: float = 0.5, max_features: int = 12,
             min_radius: float = 0.6, fields: Optional[Sequence[str]] = None,
-            spacing: float = 0.6, margin: float = 3.0, progress=None) -> List[Feature]:
+            spacing: float = 0.6, margin: float = 3.0, progress=None,
+            min_z: float = 0.0, sigma: Optional[float] = None) -> List[Feature]:
     """Read a pharmacophore out of the co-fields of a fitted model.
 
     `level` is the fraction of each co-field's largest value that bounds a lobe: 0.5 gives the
     half-height regions, a larger value tighter and fewer features.  Features are ranked by the
     integral of the co-field over them and the strongest `max_features` are kept, exclusion
     volumes counted separately so that they never crowd out the favourable ones.
+
+    With `min_z` above zero the co-field is first masked where it stands less than that many
+    standard deviations from zero (:func:`cmfqsar.cofields.cofield_with_error`), so that a lobe
+    the activities' noise could have produced never becomes a feature.  Two is the usual value.
+    A feature that survives is still a feature of this training set, but it is at least not a
+    feature of its measurement error.
     """
     model._require_linear("pharmacophore features")
     model._require_fields("pharmacophore features")
@@ -163,7 +170,12 @@ def extract(model, grid: Optional[Grid] = None, level: float = 0.5, max_features
             continue
         if progress is not None:
             progress(f"Co-field of {spec.label}", f / max(len(specs), 1))
-        vol = cofield_volume(model, f, grid, include_scale=True)
+        if min_z > 0:
+            from .cofields import cofield_with_error
+            ce = cofield_with_error(model, f, grid, sigma=sigma, include_scale=True, z=min_z)
+            vol = ce.masked
+        else:
+            vol = cofield_volume(model, f, grid, include_scale=True)
         for sign in (+1, -1):
             for feat in features_from_volume(vol, grid, spec.name, sign, level=level,
                                              min_radius=min_radius):
