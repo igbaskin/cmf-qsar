@@ -636,7 +636,8 @@ and counts predict nothing, is the first case.
   selectivity co-field as the design tool.
 * **Catalysis and physical organic chemistry.** The Hammett paper is the entry: ligand libraries
   with a shared frame (phosphines, N-heterocyclic carbenes) and rate or selectivity as the
-  activity. Sybyl typing has to be extended for metal centres before the indicator fields apply.
+  activity. Sybyl typing has to be extended for metal centres before the indicator fields apply;
+  that extension is EC4 below, and electrocatalysis is where the series with a free frame are.
 * **Peptides.** `mittal/AMPH1` is 130 decapeptides that no configuration models, and the reason is
   a 3.2 Å superposition error over a flexible chain. It is the test case for C2 and C3 together, and
   the plan expects it to stay hard.
@@ -750,6 +751,240 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
 by those three. M9 and M12 only after M6 has reported.
 
+### Electrochemistry: the extensions the surface frame and the metal centre ask for (25 October 2026)
+
+Electrochemistry is already in the repository under other names. The corrosion-inhibitor series
+(`examples/corrosion`, `examples/corrosion_hcl`; `benchmarks/results/corrosion/`, `corrosion_hcl/`,
+`corrosion_qm/`, `multitask/`) are adsorption potencies on a metal in acid; the Fe(110) set
+(`examples/corrosion_fe110`) holds UMA adsorption energies and relaxed poses in the surface frame,
+normal along z, top layer at z = 0; the surface autocorrelation kernel (`SurfaceSpec` in
+`cmfqsar/invariant.py`, `--kernel surface`) models molecules on a plane without alignment and
+without co-fields; and the quantum stage (`cmfqsar/orca.py`, `cmfqsar/cdft.py`) brings Hirshfeld
+and CHELPG charges, Fukui indices and Fukui grids into the kernel. What that work settled: on the
+HCl series the quantum fields and descriptors do not beat the five fields (mean q² 0.38 against
+0.38, `corrosion_qm/table.md`), the aligned overlap kernel and the frameless kernels trade places
+series by series, and two endpoints on one kernel give a selectivity co-field.
+
+What electrochemistry asks for next is decided by who the partner is. A redox potential of an
+isolated molecule is an electronic-structure quantity, and the program already carries what a
+congeneric series needs for it: Fukui and charge fields, the ionisation potential and electron
+affinity as descriptors, the applied potential and the pH as descriptors, the GP variance for a
+series of twenty. Nothing below is required for that; it is a benchmark to run, not code to write.
+Three partners the program cannot describe yet are an electrode surface met face-on, a metal centre
+with its ligand periphery, and a cation as the receptor. The items are ordered by the code each
+needs. Rule 1 holds with two references: the surface autocorrelation kernel on the Fe(110)
+adsorption energies for anything on a surface, and the five-field model plus the ORCA descriptors
+for anything molecular.
+
+**Small (days each)**
+
+* **EC1. Oxidation state, spin state and solvent in the quantum stage.** `make_input` in
+  `cmfqsar/orca.py` takes the charge from RDKit's formal charges and the lowest multiplicity, in
+  the gas phase. A catalyst is Fe(II) or Fe(I), triplet or quintet, in acetonitrile or water; a
+  radical electrolyte is a doublet. Read `charge` and `multiplicity` from SD properties when they
+  are given, add a continuum-solvent keyword and a def2 basis with effective core potentials for
+  the heavy elements, parse the Mulliken spin populations that stand next to the charges into
+  `prop:spin`, and let `cdft.py` read the potential cube as it reads the density and spin cubes.
+  The module's own measurement says Gaussian fits carry long-range tails badly, so the CHELPG
+  field, already there, stays the first choice for the potential. Measure on a quinone or
+  phenazine redox-potential series with Hirshfeld, Fukui and spin fields against the five fields
+  and against the IP/EA descriptors alone; the conceptual-DFT result on corrosion says where not
+  to expect a gain, and the Hammett result where to.
+* **EC2. Planar alignment.** Nothing aligns a molecule onto a plane. The Fe(110) script places its
+  starting poses by rule (flat: the plane of the two longest principal axes parallel to the
+  surface; upright: the lone pair of the most basic nitrogen down) and UMA relaxes them. A
+  principal-axes aligner in `cmfqsar/align.py` that lays a molecule on z = 0 with a chosen face
+  down, followed by `field_align` restricted to in-plane translation, rotation about the normal
+  and tilt, gives the aligned overlap kernel a surface frame and therefore the first **surface
+  co-field**. Gate: on `examples/corrosion_fe110` the aligner reproduces the UMA-relaxed poses
+  to the RMSD of C3's pocket placement, and the overlap kernel in that frame is measured against
+  the surface kernel on `E_ads_kJmol` with the interval of rule 4. If it does not beat the
+  surface kernel, the co-field is still the thing the surface kernel cannot draw, and the item
+  stays as a display tool under rule 5 with that said.
+* **EC3. Fields at anchored points.** The potential and its gradient at fixed points of the
+  shared frame as descriptors: the positions of the atoms of a bound intermediate, the metal
+  site, the reaction centre of a Hammett series. `_gauss_field_at` and `coulomb_potential` in
+  `cmfqsar/complementarity.py` already evaluate fields at points; a descriptor source in
+  `cmfqsar/descriptors.py` that takes a list of points in the frame and reports value and
+  gradient per field makes them inputs. The gradient at the reaction centre is the oriented
+  electric field of the electrostatic-catalysis literature, so it arrives with a physical unit.
+  Measure first on the Hammett sets, where the through-space component of σ has a literature,
+  against the field model alone; the catalyst use waits for EC4.
+
+**Medium (one to two weeks each)**
+
+* **EC4. Transition-metal complexes.** The steric table in `cmfqsar/atomtypes.py` stops at the
+  main group, the Sybyl typing knows no metal, and RDKit will not sanitise most coordination
+  complexes without dative bonds. Every molecular-electrocatalyst study rests on this, and the
+  catalysis bullet of H already names it. Needed: van der Waals parameters and types for Fe, Co,
+  Ni, Cu, Mn, Zn, Ru, Rh, Pd, Pt and Ir, zero hydrophobic and hydrogen-bond increments for them,
+  a loader that reads complexes from XYZ or MOL files with dative bonds and the charge and spin
+  of EC1, and the metal identity as a descriptor or a task. The frame is free: the metal and its
+  first coordination sphere align every member of a series. Gate: a five-field model on a
+  tabulated series with a shared frame (iron porphyrins for CO₂ reduction with the turnover
+  frequency and overpotential of the catalytic Tafel-plot benchmarking; nickel diphosphines with
+  their hydricities) measured against the ORCA descriptors alone, with the co-field read for the
+  known second-sphere effects: the pendant proton relay, the through-space cation, the steric
+  shield. The data are dozens of compounds per reaction, so this is GP territory with intervals,
+  never SVR, and leave-one-chemotype-out applies.
+* **EC5. The electric-field kernel.** Every field in the program is a scalar; the quantity a
+  reaction centre feels is the vector ∇φ. The integral of ∇φ_A·∇φ_B over space, for φ the sum of
+  atom-centred Gaussians, is the second derivative of the overlap of `cmfqsar/kernels.py` with
+  respect to the pair distance and stays in closed form, so rule 3 is kept. A field type `efield`
+  with that kernel, a vector co-field (coefficients on the same atoms, drawn as arrows), and the
+  Shapley decomposition unchanged. Measure on the Hammett sets and on the EC4 series against the
+  scalar electrostatic kernel; the item is justified only where the vector kernel beats the
+  scalar one by more than the interval, which the through-space catalysis literature says it
+  should on the cationic porphyrins.
+* **EC6. A slab as the receptor.** `cmfqsar/protein.py` reads a PDB or mmCIF protein by residue;
+  an electrode is a POSCAR or CIF slab with periodic images. A reader that builds the fields of
+  the top layers as a `MoleculeFields` with the images inside the cutoff (the inorganic field set
+  of `cmfqsar/periodic.py` supplies the parameters), the docking of `cmfqsar/docking.py`
+  constrained to the surface (height, tilt, rotation about the normal, in-plane translation),
+  and the complementarity scores with the surface in place of the pocket, residue profiles
+  becoming surface-site profiles. The Fe(110) poses are the ground truth no protein set has:
+  gate, the constrained docking recovers the UMA-relaxed poses and the complementarity score
+  tracks `E_ads_kJmol` across the set. Shares the slab reader with M1 and the site resolution
+  with M5; M7 is the same item for a pore.
+* **EC7. A cation probe.** The probe module (`cmfqsar/probes.py`) carries water, methyl and
+  carbonyl probes fitted as Gaussians. A Li⁺, Na⁺ or K⁺ probe, Coulomb plus repulsion with the
+  module's own caveat about the wall, makes the field of an ionophore or an electrolyte solvent
+  the energy a cation would feel. Measure on a crown-ether or calixarene binding-constant series
+  and on Li⁺ solvation energies of carbonate and ether solvents (computable here with ORCA, so
+  the set can be made rather than found), against the electrostatic field; selectivity between
+  cations is a multi-task problem and the first electrochemical application of E1's task
+  descriptors.
+
+**Large (a month or more each)**
+
+* **EC8. Clusters cut from periodic sites.** A single-atom or metal–nitrogen–carbon site is a
+  molecular active site inside a solid. A cut-and-terminate step from a periodic cell to a finite
+  cluster with atom types the field builder accepts, then the EC4 path, gives adsorbate binding
+  free energies (H, OH, CO: the volcano-plot descriptors) as a cheap surrogate inside a family of
+  sites, with the GP variance to choose the next DFT calculation as E2 does for molecules. Gate:
+  on a public single-atom-catalyst set, beat the periodic autocorrelation kernel and M5's
+  site-resolved model on the same cells. Waits for M5, which decides whether the site resolution
+  of the periodic kernel already does the job.
+* **EC9. Potential-dependent targets.** A catalyst is a curve, turnover frequency against
+  overpotential, not a number. The descriptor block already admits the applied potential as a
+  condition, which covers a fixed set of overpotentials; a product kernel over catalysts and
+  over potential, fitted on the whole catalytic Tafel plot, is the model of the curve. Exploratory
+  in the sense of the reactions bullet of H: no commitment until EC4 has shown that the catalyst
+  kernel carries signal at one potential.
+* **EC10. The application.** None of this is visible in the GUI: no slab behind the molecules
+  (the protein viewer is the model), no vector co-field, no surface frame. It belongs to G and
+  waits for EC2, EC5 and EC6, which decide what there is to draw.
+
+**Order.** EC2 and EC1 first: days each, both run on data and modules already in the repository,
+and EC2 delivers the first surface co-field, which is the picture the corrosion and modifier
+work has been missing. EC4 next, since EC3, EC5, EC8 and EC9 are empty without a catalyst series
+that loads. EC6 after M1, EC7 on its own, EC8 after M5, EC9 and EC10 last.
+
+### Battery science: the extensions the cell and the solvation shell ask for (25 October 2026)
+
+Battery science is the one application area where the repository already holds a piece of the
+work rather than a plan: the periodic autocorrelation kernel (`cmfqsar/periodic.py`, measured on
+Matbench phonons) is a model of a crystal, and the vacancy energies of the
+Li₃PO₄/Li₃BP₂O₈/LiBO₂ interface are the stated target of M4. A cell has three phases and CMF
+meets each differently. In the liquid electrolyte the partner is Li⁺ and the electrode, and the
+right molecule is the cation with its first solvation shell. In organic electrodes and redox-flow
+actives the molecule is a congeneric series with a shared frame, and the program already models
+its redox potential with Fukui and charge fields and its trade-offs with the two-task kernel. In
+the solid, the cell is the molecule, and transport is a property of the path between two sites
+rather than of either site. Most of what batteries ask for lands on items that exist: EC7 (Li⁺ as a
+probe), EC1 (charge and spin state), E1 (potential, solubility and stability on one kernel), M4
+and M5 (the co-field in the cell and the site resolution), M3 (Bader charges as fields), M1
+(polymer electrolytes as 1D-periodic chains), EC2 and EC6 (electrolyte molecules on lithium and
+on cathode surfaces), and D4 (ensembles whose members have their own atoms), on which every
+solvation-shell idea below depends. The items here are what none of those covers, ordered by the
+code each needs. Rule 1 holds with the periodic autocorrelation kernel as the reference for every
+property of a cell and the five-field model on the complex as the reference for every property of a
+shell. Two limits stand over the whole section and are not to be argued away by a q²: transport
+properties (conductivity, transference, diffusion) are collective, so CMF models them only as a
+surrogate on bulk values that a simulation or a measurement supplies; and the electrochemical
+window as measured is kinetic, set by passivation, so models of stability are trained on measured
+values and a computed oxidation potential is a descriptor, not a target.
+
+**Small (days each)**
+
+* **BT1. Fractional compositions in the crystal charge model.** `crystal_charges` in
+  `cmfqsar/periodic.py` takes pymatgen's first oxidation-state guess on the reduced composition,
+  which fails for a partially delithiated cathode (Li₀.₅CoO₂ has no integer assignment). A
+  fallback that spreads the charge over the mixed-valence species, and Bader charges taken in
+  preference once M3 lands, are needed before any cathode series builds. Test: the charges of
+  Li_xCoO₂ for x in {1, 0.75, 0.5} sum to zero and vary monotonically on Co.
+* **BT2. Battery descriptors.** The descriptor block has no computed sources for crystals. The
+  theoretical capacity from the formula, the Li content, the volume per formula unit and the
+  density as per-structure descriptors; the coordination number and the mean Li–O distance as
+  per-complex descriptors for the shells of BT4. Trivial once the computed-descriptor registry of
+  `cmfqsar/descriptors.py` accepts an ASE `Atoms` as well as an RDKit molecule.
+* **BT3. A battery data loader.** `read_structures` reads files through ASE and
+  `structures_from_matbench` reads one table. Electrode data from the Materials Project battery
+  explorer come as charged and discharged structure pairs with the average voltage, the volume
+  change and the stability per pair, and the OPTIMADE route works from this machine without a key. A loader that fetches the pairs,
+  keeps both frames and writes them in the form `crystal_table` takes gives the periodic kernel a
+  battery benchmark of thousands of entries, which no molecular series has. Measure the
+  autocorrelation kernel on the average voltage against a composition baseline, by chemistry
+  (oxides, phosphates, sulfides) as the Sutherland sets are measured by size.
+
+**Medium (one to two weeks each)**
+
+* **BT4. A solvation-complex builder.** Li⁺ with its first shell is the molecule for every
+  electrolyte property, and nothing builds one. A module that places one to four solvent
+  molecules, optionally an anion for a contact ion pair, around a cation, optimises the complex
+  (GFN2-xTB through `tblite` when D3 lands, ORCA otherwise, cached as the quantum stage caches),
+  and aligns every complex on the cation with the coordination polyhedron fixing the orientation,
+  so that the frame comes for free as the metal centre does in EC4. RDKit holds disconnected
+  fragments and the field builder needs no change. Targets: Li⁺ binding energy, desolvation energy
+  and coordination number on a carbonate, ether and fluorinated-ether series computed here, and
+  measured low-temperature or rate data where a series has them. Gate: the model on the complex
+  beats the five-field model on the free solvent, which is the test of whether the shell carries
+  what the solvent alone does not; the co-field names the donor oxygens.
+* **BT5. Solvation shells from a bulk trajectory.** D7 reads a ligand trajectory in a pocket. An
+  electrolyte simulation is a periodic box with many cations, so a shell extractor that cuts the
+  molecules within a cutoff of each Li⁺, unwraps the periodic boundary, and hands the shells to
+  the ensemble builder as members with their own atoms (D4) is new code on top of both. The
+  ensemble of shells is the only route from a field model to conductivity, transference and
+  diffusion, and the fourth-dimension verdict applies: measure once, on a series with simulated
+  or measured transport data, against BT4's single optimised complex, and keep the route only if
+  the sampled shells beat the optimised one by more than the interval. The block-averaged error of
+  the mean field is reported next to the q², as D8 requires.
+* **BT6. Difference kernels on the cell.** The intercalation voltage is the energy difference
+  between the lithiated and delithiated cells, and the field-difference module
+  (`cmfqsar/fielddiff.py`) has no periodic counterpart. Once M4 gives the periodic overlap kernel
+  in a fixed frame, the difference of the two cells' fields is a field in the cell like any
+  other, its kernel is the same closed form, and its co-field shows the coordination environment
+  the inserted lithium wants. Small once M4 exists; listed here because BT3 supplies the pairs it
+  runs on. Measure on the BT3 voltages against the autocorrelation kernel on the discharged cell
+  alone.
+
+**Large (a month or more)**
+
+* **BT7. Migration paths as objects.** Ionic conductivity in a solid electrolyte is set by the
+  bottleneck between two Li sites, not by either site, and M5 resolves single sites. A path module
+  that enumerates neighbouring Li-site pairs, finds the bottleneck on the way between them (the
+  `free_space` test of `cmfqsar/complementarity.py` is the seed: the point of least free space on
+  the straight or relaxed path), evaluates the fields along the path as a one-dimensional profile,
+  and builds a kernel over site pairs from those profiles. Per-pair targets are the migration
+  barriers from nudged-elastic-band or bond-valence calculations, and the LLZO, NASICON and
+  argyrodite families have public sets. Gate: beat M5's site-resolved model on the same cells, and
+  read the co-profile as the bottleneck chemistry (which anions, at what distance) the path
+  wants. Waits for M5, which decides whether the site resolution alone already carries the
+  barrier.
+
+**Outside the library**
+
+* **BT8. A slab generator for the adsorption benchmarks.** `examples/uma_fe110_adsorption.py` is
+  written for one slab. A version under `benchmarks/` that takes any slab (Li(100), a layered
+  oxide facet, graphite) and the pose rules of the Fe(110) script is the generator for the EC6
+  benchmark on battery surfaces and for the SEI question (which solvent reduces first on lithium).
+  Script code under rule 6, not a module.
+
+**Order.** BT1 and BT3 first: days each, and together they give the periodic kernel a battery
+benchmark on the voltages before any new kernel is written. BT4 next, since BT5 is empty without a
+complex that builds and aligns, and BT2 as BT3 and BT4 need it. BT6 with M4, BT7 after M5, BT5 only
+after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
+
 ## Sequence
 
 | When | What |
@@ -759,7 +994,7 @@ by those three. M9 and M12 only after M6 has reported.
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1, ~~E2~~ **done**, E3, E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
 | Months 6 to 12 | F3, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
-| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; the review that ties the series together |
+| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
@@ -790,6 +1025,13 @@ verdict of D8.
 * **Dependencies.** ORCA is the serial build and xTB is not yet in the tool chain; RDKit's MMFF set-up
   alters aromaticity flags in place, so every new module that optimises geometry must re-sanitise, as
   the conformer generator does.
+* **Metals and small series.** EC4 asks RDKit to hold coordination complexes it was not built
+  for, and the catalyst series behind it are dozens of compounds with turnover frequencies that
+  differ between laboratories by the factor the model is meant to explain. The control is the
+  order: the loader and the parameters first, measured on the geometry alone (does the series
+  load, align and give a steric kernel that separates the known chemotypes), then one tabulated
+  series with GP intervals, and the vector kernel and anchored points only if that series shows
+  signal. A q² on twenty catalysts without its interval is not reported.
 * **Trajectories cost more than they may return.** D8 needs simulations that take longer than
   every benchmark in the repository together, and the fourth-dimension verdict says that ensembles
   have not paid so far. The control is the order: the reader first, the measurement on one set
