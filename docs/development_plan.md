@@ -265,8 +265,9 @@ can judge it.
   two nulls are one null seen twice.
   **Closed, negatively.** The block is correct about a molecule and its mirror image and useless
   for carrying handedness between molecules. Making it useful needs a construction anchored on
-  the stereocentre rather than summed over the whole molecule, which is a new item and not a
-  parameter of this one.
+  the stereocentre rather than summed over the whole molecule: that is **C7**, opened out of this
+  result, and it inherits this item's two measurements as the gate it has to pass before it goes
+  near a real set.
 * **C6. A diagnosis of the data set.** Three diagnostics exist in pieces: α at the grid edge, the
   descriptor-only baseline that beat the 3D model on ACE, and the alignment-free baseline. Package
   them as `cmf diagnose`, which says before any modelling whether the frame carries signal, whether
@@ -288,6 +289,31 @@ can judge it.
   sets and worse on four: a hedge against the frame being meaningless, not an edge.
   **Still hand-chosen:** the q2 < 0.1 cutoff below which the command recommends no route at all.
   It never fired on these 39 splits, so the validation cannot set it.
+* **C7. A chirality descriptor anchored on the stereocentre.** Opened 25 October 2026, out of
+  C5's failure. The question C5 was asked -- can a field kernel see handedness -- is still a real
+  one: a series in which both enantiomers are measured and differ in potency is an ordinary
+  situation in medicinal chemistry, and nothing in this program can model it. What C5 settled is
+  only that *its* construction cannot, and why: the signed triple products are summed over every
+  triple of atoms in the molecule, so the sign pattern is a property of the whole shape, and two
+  molecules of the same CIP handedness are no more aligned in that block than two of opposite
+  handedness (cosine -0.016 against +0.016, spread 0.55).
+  The construction that could work is local. Around a chiral atom, take the three or four
+  substituent directions in a fixed order -- by CIP priority, or by the field weights themselves
+  so that the descriptor stays a property of the fields and not of a chemist's convention -- and
+  form the signed volume of that small frame, one number per centre per field triple, carried as
+  a channel attached to the centre's atom type rather than smeared over radial shells. Two
+  molecules with the same configuration at a comparable centre then produce the same sign, which
+  is the thing C5's block does not do.
+  **The acceptance criterion comes first, and it is cheap.** Before any real set, the candidate
+  has to pass the two measurements `benchmarks/run_chirality.py` already makes: the cosine of
+  its signed part must separate same-handedness from opposite-handedness molecules by much more
+  than its spread, and on the synthetic set at `w = 1`, where the activity is handedness and
+  nothing else, it has to reach a positive q2 where every variant of C5 reaches -0.35. A
+  descriptor that fails those two is not worth taking to the Sutherland sets, and C5 was taken
+  there first.
+  **Then the real question**, which neither C5 nor this item can answer with the data in the
+  repository: a series containing enantiomeric pairs that differ in activity. There is none in
+  `examples/`, and finding or building one is part of the item.
 
 ## D. Fields and kernels (months 3 to 9)
 
@@ -418,7 +444,7 @@ and counts predict nothing, is the first case.
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | B4 (evidence), D6, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
-| Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, C5 (built, unmeasured), ~~C6~~ **done**; F1 (case studies) |
+| Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, C7 (opened out of C5); F1 (case studies) |
 | Months 4 to 10 | E1 to E6; G1 and G2 alongside |
 | Months 6 to 12 | F3 to F5; H begins with separations |
 | Year 2 | H; the review that ties the series together |
