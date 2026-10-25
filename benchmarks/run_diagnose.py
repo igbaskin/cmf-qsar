@@ -165,7 +165,8 @@ def report_validation(rows, results=RESULTS, out=None):
 def report(results=RESULTS, out=None):
     rows = []
     for fn in sorted(os.listdir(results)) if os.path.isdir(results) else []:
-        if fn.endswith(".json"):
+        # the validation writes <set>_validate.json beside <set>.json; it is a different table
+        if fn.endswith(".json") and not fn.endswith("_validate.json"):
             rows.append(json.load(open(os.path.join(results, fn))))
     if not rows:
         raise SystemExit(f"no results in {results}")
