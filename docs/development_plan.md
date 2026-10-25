@@ -289,8 +289,8 @@ can judge it.
   sets and worse on four: a hedge against the frame being meaningless, not an edge.
   **Still hand-chosen:** the q2 < 0.1 cutoff below which the command recommends no route at all.
   It never fired on these 39 splits, so the validation cannot set it.
-* **C7. A chirality descriptor anchored on the stereocentre.** Opened 25 October 2026, out of
-  C5's failure. The question C5 was asked -- can a field kernel see handedness -- is still a real
+* **C7. A chirality descriptor anchored on the stereocentre.** Opened and built 25 October
+  2026, out of C5's failure. The question C5 was asked -- can a field kernel see handedness -- is still a real
   one: a series in which both enantiomers are measured and differ in potency is an ordinary
   situation in medicinal chemistry, and nothing in this program can model it. What C5 settled is
   only that *its* construction cannot, and why: the signed triple products are summed over every
@@ -304,16 +304,25 @@ can judge it.
   a channel attached to the centre's atom type rather than smeared over radial shells. Two
   molecules with the same configuration at a comparable centre then produce the same sign, which
   is the thing C5's block does not do.
-  **The acceptance criterion comes first, and it is cheap.** Before any real set, the candidate
-  has to pass the two measurements `benchmarks/run_chirality.py` already makes: the cosine of
-  its signed part must separate same-handedness from opposite-handedness molecules by much more
-  than its spread, and on the synthetic set at `w = 1`, where the activity is handedness and
-  nothing else, it has to reach a positive q2 where every variant of C5 reaches -0.35. A
-  descriptor that fails those two is not worth taking to the Sutherland sets, and C5 was taken
-  there first.
-  **Then the real question**, which neither C5 nor this item can answer with the data in the
-  repository: a series containing enantiomeric pairs that differ in activity. There is none in
-  `examples/`, and finding or building one is part of the item.
+  **Built and gated, 25 October 2026**: `cmfqsar/stereo.py`. Every atom with at least three
+  neighbours, the neighbours ordered by their weight in a field, the signed volume of that
+  ordered frame; one channel per (ordering field, weighting field), 25 for the five
+  physico-chemical fields. A centre whose top three priorities lie within `min_separation` of
+  each other contributes nothing rather than a guessed sign, and that guard is not a formality:
+  it takes the same-handedness separation from 0.18 to 0.86.
+  **It passes both gates, and by a margin.** The cosine between molecules of the same handedness
+  is +0.468 against -0.468 for opposite, a difference of **0.935** against a spread of 0.702,
+  where C5 manages -0.033. On the synthetic set where the activity is handedness and nothing
+  else it reaches **q2 +0.721** where every variant of C5 sits at -0.35; at every mixture from a
+  quarter handedness upward it is ahead of the two-point kernel, and at none of it costs little
+  (+0.924 against +0.970).
+  **On the five real sets it adds nothing**, +0.039 against the two-point kernel's +0.063, which
+  is the expected answer and not a disappointment: no set has an enantiomeric pair, so the
+  channels carry no signal and their 25 columns dilute the kernel. Off by default, on for a
+  series whose stereochemistry varies.
+  **What is still open** is the thing neither item can settle from this repository: a real series
+  containing enantiomeric pairs that differ in activity. Finding or building one remains part of
+  this item, and it is now the only part left.
 
 ## D. Fields and kernels (months 3 to 9)
 
@@ -444,7 +453,7 @@ and counts predict nothing, is the first case.
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | B4 (evidence), D6, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
-| Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, C7 (opened out of C5); F1 (case studies) |
+| Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1 to E6; G1 and G2 alongside |
 | Months 6 to 12 | F3 to F5; H begins with separations |
 | Year 2 | H; the review that ties the series together |

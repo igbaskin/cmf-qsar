@@ -10,7 +10,8 @@
     "signed, 1 shell": 0.9263252171705938,
     "signed, 2 shells": 0.9054747050773259,
     "signed, 4 shells": 0.8178631985466613,
-    "signed, 4 shells, balanced": 0.5656111286143254
+    "signed, 4 shells, balanced": 0.5656111286143254,
+    "stereo centres (C7)": 0.9237110486330977
    }
   },
   {
@@ -20,7 +21,8 @@
     "signed, 1 shell": 0.6023234470860205,
     "signed, 2 shells": 0.590346313896698,
     "signed, 4 shells": 0.38115178716869846,
-    "signed, 4 shells, balanced": 0.10490636189429137
+    "signed, 4 shells, balanced": 0.10490636189429137,
+    "stereo centres (C7)": 0.7895637337148314
    }
   },
   {
@@ -30,7 +32,8 @@
     "signed, 1 shell": -0.09248539062762773,
     "signed, 2 shells": -0.0400327760607051,
     "signed, 4 shells": -0.05931620699144213,
-    "signed, 4 shells, balanced": -0.18368091312933044
+    "signed, 4 shells, balanced": -0.18368091312933044,
+    "stereo centres (C7)": 0.5042845867011169
    }
   },
   {
@@ -40,7 +43,8 @@
     "signed, 1 shell": -0.2921561888954505,
     "signed, 2 shells": -0.2810990598999652,
     "signed, 4 shells": -0.30854495098942825,
-    "signed, 4 shells, balanced": -0.345763184589827
+    "signed, 4 shells, balanced": -0.345763184589827,
+    "stereo centres (C7)": 0.5975187376613078
    }
   },
   {
@@ -50,7 +54,8 @@
     "signed, 1 shell": -0.3629383909922155,
     "signed, 2 shells": -0.33901034170229294,
     "signed, 4 shells": -0.3664115796622398,
-    "signed, 4 shells, balanced": -0.35259955410924815
+    "signed, 4 shells, balanced": -0.35259955410924815,
+    "stereo centres (C7)": 0.721431420503056
    }
   }
  ],
@@ -61,5 +66,12 @@
   "sd": 0.5519643792273718,
   "n": 760
  },
- "seconds": 1.9
+ "direction_c7": {
+  "same": 0.46758875890328067,
+  "opposite": -0.46758875890328067,
+  "difference": 0.9351775178065613,
+  "sd": 0.7022024233132179,
+  "n": 760
+ },
+ "seconds": 2.5
 }

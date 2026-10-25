@@ -6,13 +6,17 @@
   "two-point": 0.38058987748095285,
   "signed, 1 shell": 0.41274023324985387,
   "signed, 2 shells": 0.4017709922362275,
-  "signed, 4 shells": 0.42855953411916636
+  "signed, 4 shells": 0.42855953411916636,
+  "signed, 4 shells, balanced": 0.3309375153590831,
+  "stereo centres (C7)": 0.36170946201995613
  },
  "columns": {
   "two-point": 255,
   "signed, 1 shell": 265,
   "signed, 2 shells": 275,
-  "signed, 4 shells": 295
+  "signed, 4 shells": 295,
+  "signed, 4 shells, balanced": 295,
+  "stereo centres (C7)": 280
  },
- "seconds": 13.9
+ "seconds": 24.2
 }

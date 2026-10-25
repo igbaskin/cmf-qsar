@@ -1981,9 +1981,30 @@ null result seen twice.
 
 That is the verdict: the block is correct and does what it says about a molecule and its mirror
 image; it does not put the handedness of two different molecules on a common axis, which is what
-a QSAR model needs. The channels stay available and off by default. Making them useful would mean
-a different construction — one anchored on the stereocentre rather than summed over the whole
-molecule — and that is a new item, not a parameter of this one.
+a QSAR model needs. The channels stay available and off by default.
+
+**The construction that does work reads one centre at a time.** `cmfqsar/stereo.py` takes every
+atom with at least three neighbours, orders those neighbours by their weight in a field — the
+field weights playing the part the CIP rules play for a chemist, so that the descriptor stays a
+property of the fields — and takes the signed volume of the ordered frame. It negates under
+reflection and survives any rotation, like the three-point block, and unlike it two *different*
+molecules of the same configuration agree: the cosine between same-handedness molecules is
+**+0.468 against −0.468 for opposite**, a difference of 0.935, where the three-point block
+manages 0.03.
+
+That difference is the whole story, and the synthetic set shows what it buys. Where the activity
+is handedness and nothing else, the stereo centres reach **q² +0.721** while every variant of the
+three-point block sits at −0.35; at every mixture from a quarter handedness upward they are ahead
+of the two-point kernel, and where there is no handedness in the activity at all they cost little
+(+0.924 against +0.970).
+
+On the five real sets they add nothing — mean +0.039 against the two-point kernel's +0.063 —
+which is the expected answer rather than a disappointment: those sets contain no enantiomeric
+pair, so the channels carry no signal and 25 extra columns dilute the kernel. **Turn them on for
+a series whose stereochemistry varies, and leave them off otherwise.** An order that rests on
+two nearly equal weights is not an order, so a centre whose top three priorities are within
+`min_separation` of each other contributes nothing rather than a guessed sign; that guard is what
+takes the same-handedness separation from 0.18 to 0.86.
 
 **Mixing coefficients over the channel blocks.** The channels come in blocks, one per pair of
 field types, each scaled to unit root mean square before all of them enter one cosine-normalised

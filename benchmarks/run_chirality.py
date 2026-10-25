@@ -74,7 +74,8 @@ GRIDS = ((0.5, 0.5, 10.0), (0.75, 0.75, 12.0), (1.0, 1.0, 14.0))
 #: the variants compared: the two-point kernel, and the same with the signed channels over 1, 2
 #: and 4 radial shells
 VARIANTS = (("two-point", 0), ("signed, 1 shell", 1), ("signed, 2 shells", 2),
-            ("signed, 4 shells", 4), ("signed, 4 shells, balanced", -4))
+            ("signed, 4 shells", 4), ("signed, 4 shells, balanced", -4),
+            ("stereo centres (C7)", "stereo"))
 
 #: a negative shell count in VARIANTS means: scale the signed block up until it carries half the
 #: squared norm of a molecule's channel vector.  Left alone it carries 40 columns against the
@@ -91,8 +92,37 @@ def _specs(shells):
     return out
 
 
+def _stereo_kernels(mf, n_fields):
+    """The two-point channels with C7's signed centres beside them, carrying half the norm.
+
+    The pair blocks are left exactly as they are, so this is the two-point kernel plus a block,
+    and the block is scaled to the same squared norm as the rest -- the same balance the signed
+    three-point variant is given, so the two are compared on equal terms.
+    """
+    from cmfqsar.stereo import StereoSpec, stereo_matrix
+
+    S, _info = stereo_matrix(mf, StereoSpec(), n_fields=n_fields)
+    sd = np.std(S, axis=0)
+    S = S / np.where(sd > 1e-12, sd, 1.0)
+    keep = sd > 1e-12
+    S = S[:, keep]
+    out = []
+    for spec in _specs(0):
+        X = feature_matrix(mf, spec, n_fields=n_fields)
+        blocks = block_sizes(spec, n_fields)
+        scale = channel_scale(X, spec.n_bins, blocks=blocks)
+        Xs = X * scale
+        if S.shape[1]:
+            Xs = np.hstack([Xs, S * float(np.sqrt(Xs.shape[1] / S.shape[1]))])
+        out.append(autocorrelation_kernel(Xs, scale=np.ones(Xs.shape[1]),
+                                          n_bins=Xs.shape[1], blocks=[Xs.shape[1]]))
+    return out
+
+
 def _kernels(mf, n_fields, shells):
     """One cosine-normalised kernel over every molecule, per distance grid."""
+    if shells == "stereo":
+        return _stereo_kernels(mf, n_fields)
     balance = shells < 0
     shells = abs(shells)
     out = []
@@ -234,9 +264,10 @@ def synthetic(force=False, results=RESULTS, seed=0):
 
     # why it comes out as it does: is "R-ness" a direction two molecules can share?
     direction = _shared_direction(mf, names, hand, n_fields)
-    print(f"    signed-block cosine between different molecules: same handedness "
-          f"{direction['same']:+.3f}, opposite {direction['opposite']:+.3f} "
-          f"(difference {direction['difference']:+.3f}, sd {direction['sd']:.3f})", flush=True)
+    direction_c7 = _shared_direction(mf, names, hand, n_fields, stereo=True)
+    for what, d in (("C5, signed three-point", direction), ("C7, stereo centres", direction_c7)):
+        print(f"    {what:24s} same handedness {d['same']:+.3f}, opposite {d['opposite']:+.3f}, "
+              f"difference {d['difference']:+.3f} against a spread of {d['sd']:.3f}", flush=True)
 
     rows = []
     for w in MIXTURES:
@@ -251,12 +282,13 @@ def synthetic(force=False, results=RESULTS, seed=0):
         print("    w = {:.2f}  ".format(w)
               + "  ".join(f"{k} {row['q2'][k]:+.3f}" for k, _ in VARIANTS), flush=True)
     out = {"n": len(mols), "pairs": len(mols) // 2, "identical_to": same, "rows": rows,
-           "direction": direction, "seconds": round(time.time() - t0, 1)}
+           "direction": direction, "direction_c7": direction_c7,
+           "seconds": round(time.time() - t0, 1)}
     json.dump(out, open(out_path, "w"), indent=1)
     return out
 
 
-def _shared_direction(mf, names, hand, n_fields, shells=4):
+def _shared_direction(mf, names, hand, n_fields, shells=4, stereo=False):
     """Do two molecules of the same handedness point the same way in the signed channels?
 
     A model transfers what it has learnt from one molecule to another along a direction in
@@ -267,8 +299,12 @@ def _shared_direction(mf, names, hand, n_fields, shells=4):
     """
     from cmfqsar.invariant import chirality
 
-    spec = AutocorrelationSpec(chirality=True, chirality_shells=shells)
-    V = np.array([chirality(m, spec) for m in mf])
+    if stereo:
+        from cmfqsar.stereo import StereoSpec, stereo_matrix
+        V = stereo_matrix(mf, StereoSpec(), n_fields=n_fields)[0]
+    else:
+        spec = AutocorrelationSpec(chirality=True, chirality_shells=shells)
+        V = np.array([chirality(m, spec) for m in mf])
     V = V / np.maximum(np.linalg.norm(V, axis=1, keepdims=True), 1e-12)
     scaffold = [n.split("-")[0] for n in names]
     same, opposite = [], []
@@ -335,8 +371,14 @@ def run_set(name, force=False, results=RESULTS):
         pred = _grouped_nested(ks, y, labels)
         ok = np.isfinite(pred)
         row["q2"][label] = float(r2_score(y[ok], pred[ok])) if ok.any() else float("nan")
-        row["columns"][label] = int(ks[1].shape[0] and feature_matrix(
-            mf[:1], _specs(abs(shells))[1], n_fields=n_fields).shape[1])
+        if shells == "stereo":
+            from cmfqsar.stereo import StereoSpec, stereo_matrix
+            row["columns"][label] = int(
+                feature_matrix(mf[:1], _specs(0)[1], n_fields=n_fields).shape[1]
+                + stereo_matrix(mf[:1], StereoSpec(), n_fields=n_fields)[0].shape[1])
+        else:
+            row["columns"][label] = int(ks[1].shape[0] and feature_matrix(
+                mf[:1], _specs(abs(shells))[1], n_fields=n_fields).shape[1])
         print(f"  {label:17s} q2 {row['q2'][label]:+.3f}  ({row['columns'][label]} channels)",
               flush=True)
     row["seconds"] = round(time.time() - t0, 1)
@@ -353,7 +395,11 @@ def report(results=RESULTS):
         return "No chirality results yet; run `python benchmarks/run_chirality.py`."
     data = [json.load(open(f)) for f in files]
     order = [name for name, _ in VARIANTS]
-    lines = ["# Do the signed three-point channels buy anything?", "",
+    lines = ["# Can a field kernel see handedness?", "",
+             "Two constructions: C5's signed three-point channels, summed over every triple of "
+             "atoms in the molecule, and C7's stereo centres, read at one atom at a time. The "
+             "five real sets below cannot separate them, because none of them contains an "
+             "enantiomeric pair; the synthetic experiment at the bottom is what does.", "",
              "Leave-one-chemotype-out on the five chemotype-split sets, the regime the "
              "alignment-free kernel exists for. Three regularisations by three distance grids for "
              "every variant, chosen inside the training part of each fold; the number of radial "
@@ -421,6 +467,13 @@ def report(results=RESULTS):
             cells = [(f"**{r['q2'][k]:+.3f}**" if abs(r["q2"][k] - best) < 1e-9
                       else f"{r['q2'][k]:+.3f}") for k in order2]
             lines.append(f"| {r['w']:.2f} | " + " | ".join(cells) + " |")
+        for key, what in (("direction", "C5's signed three-point channels"),
+                          ("direction_c7", "C7's stereo centres")):
+            dd = syn.get(key) or {}
+            if dd and np.isfinite(dd.get("difference", float("nan"))):
+                lines += ["", f"**{what}:** same handedness {dd['same']:+.3f}, opposite "
+                          f"{dd['opposite']:+.3f}, a difference of {dd['difference']:+.3f} "
+                          f"against a spread of {dd['sd']:.3f} over {dd['n']} pairs."]
         d = syn.get("direction") or {}
         if d and np.isfinite(d.get("difference", float("nan"))):
             lines += ["", "**Why.** A kernel method carries what it learnt from one molecule to "
@@ -431,7 +484,9 @@ def report(results=RESULTS):
                       f"same handedness and {d['opposite']:+.3f} for two of opposite handedness, "
                       f"a difference of {d['difference']:+.3f} against a spread of {d['sd']:.3f} "
                       f"over {d['n']} pairs. Handedness is not a direction in this space, so "
-                      "there is nothing for a linear model to transfer."]
+                      "there is nothing for a linear model to transfer -- which is the whole of "
+                      "C5's failure, and what C7 was built to fix by reading the configuration "
+                      "at one centre instead of summing over the molecule."]
     text = "\n".join(lines) + "\n"
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:
         fh.write(text)
