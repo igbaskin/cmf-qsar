@@ -173,6 +173,42 @@ def pose_mcs_then_variance(mols: Sequence[Chem.Mol], ctx: dict) -> None:
     pose_variance(mols, ctx)
 
 
+def pose_pocket(mols: Sequence[Chem.Mol], ctx: dict) -> None:
+    """Place every molecule where the *pocket* likes it: complementarity less clash.
+
+    The receptor alone, with no model: this is the prior half of item C3's objective, and it is
+    here on its own so that the joint pose can be read against it.
+    """
+    from .docking import dock_coords
+    fs, pocket = ctx["fieldset"], ctx["pocket"]
+    mf = [build_fields(m, fs, f"probe{i}") for i, m in enumerate(mols)]
+    for i, (m, f) in enumerate(zip(mols, mf)):
+        try:
+            coords, _res = dock_coords(f, pocket, fs, restarts=ctx.get("restarts", 2),
+                                       seed=ctx.get("seed", 0) + i)
+        except Exception:                   # noqa: BLE001 - one molecule, not the set
+            continue
+        set_coords(m, coords)
+
+
+def pose_pocket_variance(mols: Sequence[Chem.Mol], ctx: dict) -> None:
+    """The pocket as the prior and the model's confidence as the likelihood, together (C3)."""
+    from .pocketalign import pocket_align
+    fs, model, pocket = ctx["fieldset"], ctx["model"], ctx["pocket"]
+    mf = [build_fields(m, fs, f"probe{i}") for i, m in enumerate(mols)]
+    pocket_align(mf, model, pocket, pocket_weight=ctx.get("pocket_weight", 1.0),
+                 max_rmsd=ctx.get("max_rmsd"), restarts=ctx.get("restarts", 2),
+                 seed=ctx.get("seed", 0), fieldset=fs)
+    for m, f in zip(mols, mf):
+        set_coords(m, f.coords)
+
+
+def pose_mcs_then_pocket_variance(mols: Sequence[Chem.Mol], ctx: dict) -> None:
+    """A substructure frame first, then the pocket and the confidence together."""
+    pose_mcs(mols, ctx)
+    pose_pocket_variance(mols, ctx)
+
+
 def pose_flexible(mols: Sequence[Chem.Mol], ctx: dict) -> None:
     """Confidence over rigid motion *and* the rotatable bonds (:mod:`cmfqsar.flexalign`)."""
     from .flexalign import flexible_align
@@ -246,6 +282,10 @@ POSERS: Dict[str, Callable[[Sequence[Chem.Mol], dict], None]] = {
     "fieldgraph": pose_fieldgraph,
     "fieldgraph+field": pose_fieldgraph_then_field,
     "fieldgraph+variance": pose_fieldgraph_then_variance,
+    # item C3: the receptor alone, and the receptor with the model's confidence
+    "pocket": pose_pocket,
+    "pocket+variance": pose_pocket_variance,
+    "mcs+pocket+variance": pose_mcs_then_pocket_variance,
 }
 
 
@@ -323,6 +363,7 @@ def judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
           restarts: int = 2, max_rmsd: Optional[float] = None,
           posers: Optional[Dict[str, Callable]] = None,
           reconform: bool = False, conformers: int = 0,
+          pocket: Optional[MoleculeFields] = None, pocket_weight: float = 1.0,
           progress: Optional[Callable[[str], None]] = None) -> Dict[str, PoseScore]:
     """Judge posing methods against the crystal poses of a set.
 
@@ -369,7 +410,8 @@ def judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
         floor = float(np.median([pose_rmsd(p, crystal[i]) for p, i in zip(probe, test)]))
         ctx = {"reference": mols[train[int(np.argmax(y[train]))]], "fieldset": fieldset,
                "model": model, "restarts": restarts, "seed": seed, "max_rmsd": max_rmsd,
-               "conformers": int(conformers)}
+               "conformers": int(conformers), "pocket": pocket,
+               "pocket_weight": float(pocket_weight)}
         poser(probe, ctx)                                       # ... and scrambled, every time
         rmsds = np.array([pose_rmsd(p, crystal[i]) for p, i in zip(probe, test)])
         pred = _predict(model, probe, [names[i] for i in test], fieldset)

@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 55 modules and about 23,400 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 56 modules and about 23,700 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 631 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 638 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -230,10 +230,36 @@ can judge it.
   prior and confidence as the likelihood: the pose must fit the pocket and sit inside the model's
   domain. Measure against the curated frames on the FEP sets, where the curated frame is the
   crystal pose and the ceiling is known.
-  **Not done.** `cmfqsar/docking.py` scores `complementarity - clash` by rigid-body optimisation,
-  which is the prior half of the objective; the confidence likelihood is not combined with it,
-  and nothing has been measured against the curated frames. The module says of itself that it is
-  a convenience for getting a pose into the right frame, not a scoring function.
+  **Done 26 October 2026, and the combination does not pay.** `cmfqsar/pocketalign.py` joins the
+  two halves -- `sigma^2(pose) - w [complementarity - clash]` over the six rigid-body parameters,
+  with the displacement guard of the confidence aligner -- `predict --align-variance
+  --align-pocket STRUCTURE` runs it, and three posers (`pocket`, `pocket+variance`,
+  `mcs+pocket+variance`) join `cmfqsar/poses.py` so that the joint objective is judged by the C1
+  protocol that judges everything else (`run_poses.py --pocket`).
+  **Measured on 4 FEP sets with a receptor structure** (mcl1, p38, thrombin, tnks2), held-out poses
+  scrambled and recovered. From a scrambled start: confidence alone
+  0.30 A median, the receptor alone 3.93 A, the
+  two together 2.50 A -- **adding the receptor makes the
+  confidence criterion worse on two of the four sets and better on none.** After a substructure
+  frame: 0.10 A against
+  0.13 A, R2pred +0.286 against
+  +0.265 -- indistinguishable, at about ten times the cost,
+  since the pocket term has no analytic gradient and the search falls back on Powell.
+  **The control that makes this a result rather than a bug report**: at weight zero the joint
+  aligner is the confidence objective optimised by a different method, and it recovers the pose
+  as well as the gradient search does (0.29 A on p38 against 0.32 A). Turning
+  the weight up is what breaks it -- on p38, 0.25, 1 and 4 all give 3.5 to 3.7 A -- so what fails
+  is the term and not the search.
+  **Why.** Complementarity is a weak prior over six dimensions: a ligand that fits a site fits it
+  in many placements, so the term adds a broad multi-modal surface to an objective that was
+  already multi-modal, and its optimum is not the crystal pose -- not with a scoring function
+  that has no desolvation, no entropy and no torsional search.
+  So the item is built as it was specified and the specification was optimistic. What is left is
+  a narrow use -- a pose that must be defensible to the receptor as well as to the model -- and a
+  measurement that says the prior is too weak to improve the likelihood.
+  **Not done:** the flexible version (the torsions rescued the confidence criterion in C2 and
+  might rescue this), an analytic gradient for the pocket term, and the sets without a receptor,
+  which is most of them.
 * **C4. Training-set co-alignment done properly.** The present iteration (fit, realign, refit)
   contracts the ensemble and degrades one set in four. Treat it as what it is, an expectation-
   maximisation over poses, and regularise it: the displacement guard, a leave-one-out variance so no
@@ -1174,7 +1200,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
-| Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
+| Months 3 to 9 | D1 to D5; ~~C3~~ **done (null)**, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, E4, ~~E5~~ **done**, ~~E6~~ **done (null for accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; the review that ties the series together |

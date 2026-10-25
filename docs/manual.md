@@ -727,6 +727,84 @@ indistinguishable from none.
 What none of it does is replace knowing the conformation: +0.264 against the crystal poses'
 +0.334. The conformational residue is 0.71 Å, and that is where the remaining error lives.
 
+### Inside the pocket
+
+Both criteria above know only half of the problem. The confidence criterion knows the series and
+not the receptor, so nothing stops it putting a molecule where no molecule could go; the docking
+score of `cmfqsar/docking.py` knows the receptor and not the series, so nothing makes the pose it
+finds comparable with the poses the model was fitted on. The item that joins them reads the
+complementarity as a **prior** over poses and the confidence as the **likelihood**, and takes the
+pose that maximises the product:
+
+$$
+\min_{p}\ \sigma^2(p) - w\,[\,\mathrm{complementarity}(p) - \mathrm{clash}(p)\,]
+$$
+
+over the six rigid-body parameters $p$, with the same displacement guard. At $w = 0$ this is the
+confidence alignment exactly; as $w$ grows the receptor takes over.
+
+```bash
+cmf predict model.cmf new.sdf --align-variance --align-pocket complex.pdb --pocket-weight 1
+```
+
+Judged by the protocol above on 4 FEP sets with a receptor structure
+(mcl1, p38, thrombin, tnks2), the held-out poses scrambled and recovered:
+
+| method | median RMSD | within 2 Å | R²pred |
+|---|---:|---:|---:|
+| crystal poses (the ceiling) | 0.00 Å | 100% | +0.335 |
+| scrambled (the floor) | 5.03 Å | 0% | -0.965 |
+| substructure (MCS) | 0.16 Å | 100% | +0.229 |
+| confidence alone | 0.30 Å | 59% | -1.166 |
+| MCS + confidence | 0.10 Å | 100% | +0.286 |
+| pocket alone | 3.93 Å | 31% | -0.805 |
+| pocket + confidence | 2.50 Å | 46% | -0.831 |
+| MCS + pocket + confidence | 0.13 Å | 100% | +0.265 |
+
+Per set, the comparison that carries the answer — the receptor added to the confidence criterion,
+with and without a substructure frame to start from:
+
+| set | confidence alone | pocket + confidence | MCS + confidence | MCS + pocket + confidence |
+|---|---:|---:|---:|---:|
+| mcl1 | 0.29 Å | 0.31 Å | 0.17 Å | 0.22 Å |
+| p38 | 0.32 Å | 3.73 Å | 0.09 Å | 0.13 Å |
+| thrombin | 5.00 Å | 7.58 Å | 0.10 Å | 0.14 Å |
+| tnks2 | 0.21 Å | 1.26 Å | 0.07 Å | 0.09 Å |
+
+**The receptor does not pay for itself.** From a scrambled start the confidence criterion alone
+finds the pose on three of the four sets, and adding the complementarity makes it worse on two of
+them and better on none. After a substructure frame every refinement lands within a tenth of an
+ångström of the others, and the predictions differ by less than the sets differ among themselves.
+The joint objective also costs about ten times as much, because the pocket term has no analytic
+gradient and the search falls back on Powell.
+
+**It is the term and not the search.** At weight zero the joint aligner is the confidence
+objective optimised by a different method, and it recovers the pose as well as the gradient
+search does (0.29 Å on p38 against 0.32 Å).
+Turning the weight up from there is what breaks it:
+
+| pocket weight | p38 | tnks2 |
+|---|---:|---:|
+| 0  (the confidence criterion alone) | 0.29 Å | 0.07 Å |
+| 0.25 | 3.52 Å | 0.11 Å |
+| 1 | 3.73 Å | 1.26 Å |
+| 4 | 3.63 Å | 1.32 Å |
+
+On p38 any amount of the receptor ruins the recovery; on tnks2 it degrades it gently. The reason
+is visible in what complementarity is: a weak prior over six dimensions. A ligand that fits a
+site fits it in many placements, so the term adds a broad, multi-modal surface to an objective
+that was already multi-modal, and its optimum is not where the crystal pose is — not with a
+scoring function that has no desolvation, no entropy and no torsional search.
+
+The honest use for what is implemented is therefore narrow. `--align-pocket` is for a pose that
+must be defensible **to the receptor** as well as to the model: it will not improve on the
+confidence criterion, and it will tell you when the confident pose is one the protein would not
+allow.
+
+Nothing here is a docking program: there is no desolvation, no entropy and no torsional search,
+and the internal geometry is never touched. What the receptor adds is a term that knows where the
+walls are, and the measurement says where that helps and where it does not.
+
 ### Using it
 
 In the application, *Tools → Align by prediction confidence…* gained a **turn the rotatable bonds

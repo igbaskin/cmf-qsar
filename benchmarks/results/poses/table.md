@@ -121,6 +121,84 @@ Fields: `electrostatic`, `steric`, `hydrophobic`, `hba`, `hbd`; alpha 0.5, lambd
 | variance | 1.35 A | 64% | 64% | +74% | -0.219 | 0.00 A |
 | mcs+variance | 0.11 A | 99% | 99% | +98% | +0.313 | 0.00 A |
 
+## crystal conformations, pose scrambled, no displacement guard
+
+### Median RMSD to the crystal pose, angstrom
+
+| set | n | crystal | scrambled | mcs | variance | mcs+variance |
+|---|---:|---:|---:|---:|---:|---:|
+| p38 | 29 | 0.00 | 5.03 | 0.62 | 0.32 | 0.09 |
+| tnks2 | 27 | 0.00 | 5.45 | 0.11 | 0.21 | 0.07 |
+| mcl1 | 25 | 0.00 | 5.03 | 0.21 | 0.29 | 0.17 |
+| thrombin | 22 | 0.00 | 4.49 | 0.04 | 5.00 | 0.10 |
+
+### External R2pred of the held-out molecules in those poses
+
+| set | n | crystal | scrambled | mcs | variance | mcs+variance |
+|---|---:|---:|---:|---:|---:|---:|
+| p38 | 29 | +0.105 | -0.646 | -0.001 | -0.813 | +0.105 |
+| tnks2 | 27 | +0.291 | -0.862 | +0.216 | -1.255 | +0.212 |
+| mcl1 | 25 | +0.544 | -0.491 | +0.298 | +0.207 | +0.387 |
+| thrombin | 22 | +0.401 | -1.861 | +0.401 | -2.804 | +0.440 |
+
+### Mean over the sets
+
+| method | median RMSD | within 1 A | within 2 A | recovery | R2pred | conformer limit |
+|---|---:|---:|---:|---:|---:|---:|
+| crystal | 0.00 A | 100% | 100% | - | +0.335 | 0.00 A |
+| scrambled | 5.00 A | 0% | 0% | +0% | -0.965 | 0.00 A |
+| mcs | 0.24 A | 97% | 100% | +95% | +0.229 | 0.00 A |
+| variance | 1.46 A | 59% | 59% | +68% | -1.166 | 0.00 A |
+| mcs+variance | 0.11 A | 100% | 100% | +98% | +0.286 | 0.00 A |
+
+## crystal conformations, pose scrambled, no displacement guard
+
+### Median RMSD to the crystal pose, angstrom
+
+| set | n | crystal |
+|---|---:|---:|
+| p38 | 29 | 0.00 |
+| p38 | 29 | 0.00 |
+| tnks2 | 27 | 0.00 |
+| tnks2 | 27 | 0.00 |
+
+### External R2pred of the held-out molecules in those poses
+
+| set | n | crystal |
+|---|---:|---:|
+| p38 | 29 | +0.105 |
+| p38 | 29 | +0.105 |
+| tnks2 | 27 | +0.291 |
+| tnks2 | 27 | +0.291 |
+
+### Mean over the sets
+
+| method | median RMSD | within 1 A | within 2 A | recovery | R2pred | conformer limit |
+|---|---:|---:|---:|---:|---:|---:|
+| crystal | 0.00 A | 100% | 100% | - | +0.198 | 0.00 A |
+
+## crystal conformations, pose scrambled, no displacement guard
+
+### Median RMSD to the crystal pose, angstrom
+
+| set | n | crystal |
+|---|---:|---:|
+| p38 | 29 | 0.00 |
+| tnks2 | 27 | 0.00 |
+
+### External R2pred of the held-out molecules in those poses
+
+| set | n | crystal |
+|---|---:|---:|
+| p38 | 29 | +0.105 |
+| tnks2 | 27 | +0.291 |
+
+### Mean over the sets
+
+| method | median RMSD | within 1 A | within 2 A | recovery | R2pred | conformer limit |
+|---|---:|---:|---:|---:|---:|---:|
+| crystal | 0.00 A | 100% | 100% | - | +0.198 | 0.00 A |
+
 ## regenerated conformations, the generated conformation alone, no displacement guard
 
 ### Median RMSD to the crystal pose, angstrom

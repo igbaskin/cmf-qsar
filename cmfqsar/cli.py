@@ -897,6 +897,24 @@ def cmd_predict(args):
                                  energy_weight=args.align_energy_weight,
                                  max_torsions=args.align_max_torsions,
                                  conformers=args.align_conformers)
+        elif args.align_pocket:
+            from cmfqsar.complementarity import pocket_fields
+            from cmfqsar.pocketalign import pocket_align, summarise
+            from cmfqsar.protein import read_structure
+            prot = read_structure(args.align_pocket, keep_waters=False)
+            pocket = pocket_fields(prot, model.fieldset)
+            print(f"  inside the pocket of {prot.name or args.align_pocket}: "
+                  f"{pocket.n_atoms} atoms, complementarity weighted {args.pocket_weight:g} "
+                  f"against the confidence")
+            res = pocket_align(mf, model, pocket, pocket_weight=args.pocket_weight,
+                               max_rmsd=guard, restarts=args.align_restarts)
+            for r in res:
+                print("  " + r.describe())
+            s = summarise(res)
+            print(f"  median: variance {s['variance_before']:.4f} -> {s['variance']:.4f}, "
+                  f"pocket {s['pocket_before']:+.3f} -> {s['pocket']:+.3f}, "
+                  f"moved {s['moved']:.2f} A, {s['at_the_guard']} of {s['n']} at the guard")
+            res = []
         else:
             from cmfqsar.varalign import variance_align
             res = variance_align(mf, model, max_rmsd=guard, restarts=args.align_restarts)
@@ -2462,6 +2480,13 @@ def main(argv=None):
     q.add_argument("--allow-mismatch", action="store_true",
                    help="predict even when the molecules were not prepared the way the model's "
                         "training set was (the check that otherwise refuses is printed either way)")
+    q.add_argument("--align-pocket", default=None, metavar="STRUCTURE",
+                   help="with --align-variance: put the receptor in the objective as well, so a "
+                        "pose must both fit the pocket and sit inside the model's domain (PDB "
+                        "or mmCIF of the complex or the site)")
+    q.add_argument("--pocket-weight", type=float, default=1.0, metavar="W",
+                   help="how much a unit of pocket complementarity is worth against a unit of "
+                        "posterior variance; 0 is the confidence alignment alone")
     q.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
                    help="report the model's calibrated interval at this level instead of the "
                         "one it was calibrated at; the model must carry a calibration")

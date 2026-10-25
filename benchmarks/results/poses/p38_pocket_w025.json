@@ -1,0 +1,101 @@
+{
+ "set": "p38",
+ "n": 29,
+ "n_train": 20,
+ "n_test": 9,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alpha": 0.5,
+ "lam": 0.1,
+ "seed": 0,
+ "restarts": 2,
+ "max_rmsd": null,
+ "reconform": false,
+ "conformers": 0,
+ "pocket": 1039,
+ "pocket_weight": 0.25,
+ "activity": {
+  "min": 6.226,
+  "max": 9.0,
+  "sd": 0.6973632964115091
+ },
+ "methods": {
+  "crystal": {
+   "method": "crystal",
+   "n": 9,
+   "median_rmsd": 0.0,
+   "conformer_limit": 0.0,
+   "within_1A": 1.0,
+   "within_2A": 1.0,
+   "recovery": NaN,
+   "r2_pred": 0.10507202036389018,
+   "rmse_pred": 0.729816670461066,
+   "seconds": 0.0
+  },
+  "pocket+variance": {
+   "method": "pocket+variance",
+   "n": 9,
+   "median_rmsd": 3.51994226573972,
+   "conformer_limit": 0.0,
+   "within_1A": 0.4444444444444444,
+   "within_2A": 0.4444444444444444,
+   "recovery": 0.3007324316336688,
+   "r2_pred": -2.1725749283566396,
+   "rmse_pred": 1.3741232251329725,
+   "seconds": 59.178433656692505
+  },
+  "mcs+pocket+variance": {
+   "method": "mcs+pocket+variance",
+   "n": 9,
+   "median_rmsd": 0.10258766216745689,
+   "conformer_limit": 0.0,
+   "within_1A": 1.0,
+   "within_2A": 1.0,
+   "recovery": 0.9796200563382966,
+   "r2_pred": 0.1090834683849502,
+   "rmse_pred": 0.7281791589573038,
+   "seconds": 48.90429639816284
+  }
+ },
+ "rmsd": {
+  "crystal": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "pocket+variance": [
+   5.247771803586658,
+   6.456323010812746,
+   0.054346205601360484,
+   0.06831824054143479,
+   0.11464939366286366,
+   9.567612537827051,
+   3.51994226573972,
+   0.3172636669557941,
+   8.872623297085045
+  ],
+  "mcs+pocket+variance": [
+   0.3698765799849003,
+   0.08787282718960282,
+   0.054174455089968584,
+   0.06825876502264337,
+   0.11490604673428707,
+   0.06452442134987756,
+   0.10258766216745689,
+   0.31755886229440233,
+   0.2951085797105359
+  ]
+ },
+ "seconds": 108.22916102409363
+}

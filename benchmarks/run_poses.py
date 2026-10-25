@@ -63,6 +63,11 @@ FLEX_METHODS = ("scrambled", "mcs", "mcs+variance", "flex", "mcs+flex")
 #: to do without, and in series with the kernel and confidence refinements
 GRAPH_METHODS = ("scrambled", "mcs", "field", "fieldgraph", "fieldgraph+field",
                  "fieldgraph+variance")
+#: item C3: the receptor as the prior and the model's confidence as the likelihood. These need
+#: the pocket, so they are judged with --pocket and only on the sets a structure exists for
+POCKET_METHODS = ("scrambled", "mcs", "variance", "mcs+variance", "pocket",
+                  "pocket+variance", "mcs+pocket+variance")
+POCKETS = os.path.join(ROOT, "examples", "pockets", "openff")
 FIELDS = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
 ALPHA = 0.5
 LAM = 0.1
@@ -88,6 +93,17 @@ def load(name, data=DATA):
     return mols, names, np.asarray(y, float)
 
 
+def load_pocket(name, fieldset, pockets=POCKETS):
+    """The fields of the receptor's binding site, in the same parameterisation as the ligands."""
+    from cmfqsar.complementarity import pocket_fields
+    from cmfqsar.protein import read_structure
+
+    path = os.path.join(pockets, name + ".pdb")
+    if not os.path.exists(path):
+        return None
+    return pocket_fields(read_structure(path, keep_waters=False), fieldset)
+
+
 def split(n, fraction=TEST_FRACTION, seed=0):
     """A random split; the held-out molecules are the ones whose poses are destroyed."""
     idx = np.arange(n)
@@ -98,7 +114,7 @@ def split(n, fraction=TEST_FRACTION, seed=0):
 
 def run_set(name, methods=METHODS, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM,
             restarts=2, max_rmsd=None, force=False, reconform=False, suffix="",
-            conformers=0):
+            conformers=0, pocket_weight=1.0):
     out_path = os.path.join(results, f"{name}{suffix}.json")
     if os.path.exists(out_path) and not force:
         print(f"[skip] {out_path} exists")
@@ -111,14 +127,24 @@ def run_set(name, methods=METHODS, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM
           f"{y.min():.1f} to {y.max():.1f} (sd {y.std():.2f})", flush=True)
     fs = FieldSet.create(physchem=FIELDS, alpha=alpha, charge_model="gasteiger",
                          param_scheme="rdkit")
+    pocket = None
+    if any("pocket" in m for m in methods):
+        pocket = load_pocket(name, fs)
+        if pocket is None:
+            print(f"    no pocket structure for {name}: the pocket methods are skipped")
+            methods = tuple(m for m in methods if "pocket" not in m)
+        else:
+            print(f"    pocket: {pocket.n_atoms} atoms of the binding site", flush=True)
     scores = judge(mols, names, y, tr, te, fs, methods=methods, lam=lam, seed=seed,
                    restarts=restarts, max_rmsd=max_rmsd, reconform=reconform,
-                   conformers=conformers,
+                   conformers=conformers, pocket=pocket, pocket_weight=pocket_weight,
                    progress=lambda msg: print(f"    {msg}", flush=True))
     res = {"set": name, "n": len(mols), "n_train": len(tr), "n_test": len(te),
            "fields": FIELDS, "alpha": alpha, "lam": lam, "seed": seed,
            "restarts": restarts, "max_rmsd": max_rmsd, "reconform": reconform,
            "conformers": conformers,
+           "pocket": None if pocket is None else int(pocket.n_atoms),
+           "pocket_weight": float(pocket_weight) if pocket is not None else None,
            "activity": {"min": float(y.min()), "max": float(y.max()), "sd": float(y.std())},
            "methods": {k: s.row() for k, s in scores.items()},
            "rmsd": {k: [float(v) for v in s.rmsd] for k, s in scores.items()},
@@ -282,7 +308,13 @@ def main(argv=None):
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--sets", nargs="*", default=DEFAULT_SETS,
                     help=f"openff sets; 'all' runs {len(SETS)} of them")
-    ap.add_argument("--methods", nargs="*", default=list(METHODS))
+    ap.add_argument("--methods", nargs="*", default=None,
+                    help="which posers to judge; the default depends on --flex and --pocket")
+    ap.add_argument("--pocket", action="store_true",
+                    help="judge the pocket methods of item C3 (needs examples/pockets/openff)")
+    ap.add_argument("--pocket-weight", type=float, default=1.0, metavar="W",
+                    help="how much a unit of pocket complementarity is worth against a unit of "
+                         "posterior variance in the joint objective")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--alpha", type=float, default=ALPHA)
     ap.add_argument("--lam", type=float, default=LAM)
@@ -315,7 +347,9 @@ def main(argv=None):
                           flexible=args.coalign_flexible,
                           suffix="_frame_flex" if args.coalign_flexible else "_frame")
         return report()
-    methods = tuple(FLEX_METHODS) if args.flex else tuple(args.methods)
+    methods = (tuple(args.methods) if args.methods else
+               tuple(POCKET_METHODS) if args.pocket else
+               tuple(FLEX_METHODS) if args.flex else tuple(METHODS))
     reconform = args.reconform or args.flex
     for name in sets:
         default_suffix = ("_flex" if reconform else "")
@@ -323,9 +357,16 @@ def main(argv=None):
             default_suffix += f"_c{args.conformers}"
         if args.max_rmsd is not None:
             default_suffix += f"_g{args.max_rmsd:g}"
+        if args.pocket:
+            # a pocket run answers a different question from a pose run over the same sets, so
+            # it keeps its own files and its own table; the weight is part of what the run is
+            default_suffix += "_pocket"
+            if abs(args.pocket_weight - 1.0) > 1e-9:
+                default_suffix += f"_w{args.pocket_weight:g}".replace(".", "")
         run_set(name, methods=methods, seed=args.seed, alpha=args.alpha,
                 lam=args.lam, restarts=args.restarts, max_rmsd=args.max_rmsd,
                 force=args.force, reconform=reconform, conformers=args.conformers,
+                pocket_weight=args.pocket_weight,
                 suffix=args.suffix if args.suffix is not None else default_suffix)
     if len(sets) > 1:
         report()
