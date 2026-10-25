@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 49 modules and about 20,600 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 50 modules and about 20,900 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with fifteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`), 549 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`), 559 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -473,6 +473,34 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   the GP variance, the kernel applicability-domain measure, and (to be added) a conformal interval
   on top of KRR. Compare them on the 86 sets as predictors of the actual external error, which is
   the measurement paper 8 is missing.
+  **Done 25 October 2026**: `cmfqsar/errorpred.py`, `build --error-predictors` and
+  `benchmarks/run_errorpred.py`. The conformal interval the item said was still to be added
+  arrived with the conformal work earlier in the session, so all three were available to compare.
+  Each estimate is scored against the absolute error on held-out molecules three ways: Spearman ρ
+  for the order, the risk–coverage efficiency (1 = the ordering the errors themselves give, 0 = no
+  better than ignoring the estimate) for what acting on it buys, and the RMSE of the trusted half
+  against the doubted half for what a two-bin rule would do.
+  **Measured on the eight Sutherland sets**, five 70/30 splits each, α and λ by the evidence:
+  efficiency **+0.198** for the GP variance, **+0.186** for the distance to the training set,
+  **+0.181** for the domain dissimilarity and the normalised conformal width. The GP variance
+  leads by +0.011 with a 95 % interval of [−0.021, +0.044], so **the three are indistinguishable
+  as orderings** and the choice between them does not matter.
+  Two findings outrank that. The normalised conformal width and the domain measure **score
+  identically and must**: the normalisation divides the interval by the difficulty, which is the
+  distance to the training set, so the width is a monotone function of the domain. There are three
+  estimates here, not four, and the conformal rule's contribution is calibration, not ordering.
+  The remaining two are barely two either: the estimates agree with each other at a mean Spearman
+  ρ of +0.80 to +0.86 (the conformal width against the domain measure at exactly +1.000), so what
+  is being measured three times is one geometric fact — how far the molecule sits from the
+  training set — in three sets of units. That is why no ranking between them could be found.
+  And all of them are weak: the best captures about a fifth of what the oracle would, the trusted
+  half's RMSE is 0.84 against 1.02 for the doubted half (a ratio of 1.4, which is genuinely useful
+  for deciding what to measure first), and on THER every estimate is negative. An estimate of
+  error is a model and can be wrong about a series.
+  **Not done:** the 86 sets of the item's text, and the classification analogue (a probability's
+  reliability is a different measurement). This is the measurement paper 8 was missing; what it
+  says is that paper 8 should quote the conformal interval for a number and any one of the three
+  for an ordering.
 * **E6. Bayesian mixing.** Multiple kernel learning picks one set of mixing coefficients. A
   hierarchical prior over `h_f` with the evidence as the objective gives a posterior over the field
   weights, and with it an answer to "does this series care about the steric field at all" with an
@@ -542,7 +570,7 @@ and counts predict nothing, is the first case.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
-| Months 4 to 10 | E1 to E6; G1 and G2 alongside |
+| Months 4 to 10 | E1 to E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
 | Months 6 to 12 | F3 to F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; the review that ties the series together |
 

@@ -635,6 +635,25 @@ def cmd_build(args):
             got = _coverage(ds.activity[te], lo, hi)
             print(f"  on the {got['n']} test molecules it covered {got['coverage']:.0%}, "
                   f"mean width {got['mean_width']:.3f}")
+    if args.error_predictors:
+        from cmfqsar.errorpred import compare as _ep_compare, estimates_for, table as _ep_table
+        if not te or "y_test_pred" not in model.stats.extra:
+            print("--error-predictors needs a test set: what the estimates are scored against is "
+                  "the error on molecules the model never saw")
+        else:
+            table_te = AtomTable.from_molecules([mf[i] for i in te])
+            est = estimates_for(model, table_te)
+            print()
+            print(f"Error predictors on the {len(te)} test molecules. Efficiency is 1 for the "
+                  f"ordering the errors themselves give and 0 for no better than ignoring it:")
+            scores = _ep_compare(est, ds.activity[te],
+                                 np.asarray(model.stats.extra["y_test_pred"], float))
+            print(_ep_table(scores))
+            if "conformal width" not in est:
+                print("  (the conformal width is missing: it needs --conformal, and only "
+                      "--conformal-normalise gives it a width that varies)")
+            model.stats.extra["error_predictors"] = [dict(vars(sc), ratio=sc.ratio)
+                                                     for sc in scores]
     if args.save:
         save_model(args.save, model, extra={"dataset": args.dataset, "activity": ds.activity_prop,
                                             "train_names": [ds.names[i] for i in tr]})
@@ -1972,6 +1991,11 @@ def main(argv=None):
     b.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
                    help="calibrate a prediction interval at this level (0.9) on the errors of "
                         "the cross-validation, and store it with the model")
+    b.add_argument("--error-predictors", action="store_true",
+                   help="score the GP variance, the applicability domain and the conformal width "
+                        "against the errors actually made on the test set, by rank correlation, "
+                        "risk-coverage efficiency and the RMSE of the trusted against the "
+                        "doubted half")
     b.add_argument("--conformal-normalise", action="store_true",
                    help="with --conformal: widen the interval for molecules far from the "
                         "training set, instead of one width everywhere")

@@ -1595,6 +1595,66 @@ reachable rather than returning its widest error and calling it an interval.
 Regression only: conformal classification produces prediction *sets* rather than intervals, and is
 not implemented.
 
+## Three estimates of the error, compared
+
+The program now offers three answers to *should I believe this number*, and they come from three
+different places: the **Gaussian-process posterior variance**, which is the kernel's own statement
+about how much of this molecule lies in the span of the training set; the **applicability domain**,
+which is a geometric statement about how far it is from its nearest training neighbours; and the
+**conformal interval**, whose normalised form widens where the model is extrapolating. They are in
+three different units — a variance, a distance in field space, a width in log units of activity —
+so they cannot be compared by their numbers. What can be compared is the order they put the
+molecules in, because that is what they are used for: which prediction do I act on, which do I
+measure first.
+
+```bash
+python cmf_cli.py build data.sdf --test-file test.sdf --domain \
+       --conformal 0.8 --conformal-normalise --error-predictors
+```
+
+Each estimate is scored against the absolute error actually made on the test molecules, three ways.
+**Spearman's ρ** asks whether the order is right at all. The **risk–coverage efficiency** asks what
+acting on it buys: trust the most confident fraction, measure the RMSE of that fraction, and compare
+the area under that curve with two references — the *oracle*, which orders the molecules by the
+error they really made, and the flat curve of ignoring the estimate. One means the oracle, zero
+means no better than ignoring it, and a negative number means actively misleading. The **halves**
+are the crudest and most practical: the RMSE of the half it trusts against the half it doubts.
+
+**Measured, the three are indistinguishable.** Eight Sutherland sets, five 70/30 splits each,
+α and λ chosen by the evidence on the training part, the conformal rule calibrated on that part's
+own out-of-fold errors:
+
+| estimate | ρ | efficiency | RMSE trusted | RMSE doubted | ratio |
+|---|---:|---:|---:|---:|---:|
+| GP variance | +0.142 | **+0.198** | 0.835 | 1.024 | 1.38 |
+| distance to the training set | +0.125 | +0.186 | 0.853 | 1.009 | 1.31 |
+| domain dissimilarity | +0.133 | +0.181 | 0.841 | 1.022 | 1.36 |
+| normalised conformal width | +0.133 | +0.181 | 0.841 | 1.022 | 1.36 |
+
+The GP variance comes first by +0.011 in efficiency over the distance, with a 95 % interval of
+[−0.021, +0.044] — zero is inside it, and the choice between the three does not matter.
+
+Two things in that table deserve more attention than the ranking. The first is that the **normalised
+conformal width and the domain measure score identically, and must**: the normalisation divides the
+interval by the molecule's difficulty, which *is* its distance from the training set, so the width
+is a monotone function of the domain and cannot order the molecules differently. The conformal rule
+earns its place by being calibrated — it covers what it says it covers, which neither of the others
+claims — and not by ordering. There are three estimates here, not four.
+
+And the remaining two are barely two. Over the same splits the estimates agree with each other at a
+mean Spearman ρ of **+0.80 to +0.86** — the GP variance against the distance to the training set at
++0.799, against the domain dissimilarity at +0.853 — while the conformal width against the domain
+measure is **+1.000**, exactly as the algebra says it must be. That is why the efficiencies in the
+table are indistinguishable: these are not three independent opinions about a molecule but one
+geometric fact, how far it sits from the training set, expressed in three sets of units.
+
+The second is the size of all of them. The best captures about a fifth of what the oracle would,
+and the half it trusts has an RMSE of 0.84 against 1.02 for the half it doubts. That ratio of about
+1.4 is real and useful — it is exactly what *measure the confident half first* is worth — and it is
+nothing like a per-molecule error bar. On one of the eight sets (THER) every estimate comes out
+negative: an estimate of error is itself a model, and it can be wrong about a series. Use them to
+order molecules, and quote the conformal interval when a number has to be attached to one.
+
 ## What the model thinks the groups are: clustering the kernel
 
 Every grouped validation in this manual splits the molecules by their Bemis–Murcko scaffold, and

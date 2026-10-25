@@ -1,0 +1,284 @@
+{
+ "set": "COX2",
+ "n": 282,
+ "rows": [
+  {
+   "repeat": 0,
+   "alpha": 2.0,
+   "lam": 1.0,
+   "r2": 0.5623367496270514,
+   "rmse": 0.8037686976043159,
+   "scores": {
+    "distance to training set": {
+     "spearman": 0.06111002540551104,
+     "kendall": 0.04425770308123249,
+     "efficiency": 0.2344878306312491,
+     "ratio": 1.2644964100362026,
+     "rmse_trusted": 0.7092447554605249,
+     "rmse_doubted": 0.8968374471168381,
+     "constant": false
+    },
+    "conformal width": {
+     "spearman": -0.037639241743208915,
+     "kendall": -0.0257703081232493,
+     "efficiency": 0.17743383852727415,
+     "ratio": 1.3123320904639835,
+     "rmse_trusted": 0.6723229651875022,
+     "rmse_doubted": 0.8823110023714588,
+     "constant": false
+    },
+    "domain dissimilarity": {
+     "spearman": -0.037639241743208915,
+     "kendall": -0.0257703081232493,
+     "efficiency": 0.17743383852727415,
+     "ratio": 1.3123320904639835,
+     "rmse_trusted": 0.6723229651875022,
+     "rmse_doubted": 0.8823110023714588,
+     "constant": false
+    },
+    "GP variance": {
+     "spearman": -0.017138948602696893,
+     "kendall": -0.01792717086834734,
+     "efficiency": 0.10039209845901655,
+     "ratio": 1.1363657633512303,
+     "rmse_trusted": 0.752427743727851,
+     "rmse_doubted": 0.8550331273679433,
+     "constant": false
+    }
+   },
+   "agreement": {
+    "GP variance vs distance to training set": 0.6625366425640024,
+    "GP variance vs domain dissimilarity": 0.7694352159468438,
+    "GP variance vs conformal width": 0.7694352159468438,
+    "distance to training set vs domain dissimilarity": 0.8531170607777995,
+    "distance to training set vs conformal width": 0.8531170607777995,
+    "domain dissimilarity vs conformal width": 1.0
+   },
+   "aurc_oracle": 0.34151598919107684,
+   "aurc_random": 0.8037686976043159
+  },
+  {
+   "repeat": 1,
+   "alpha": 4.0,
+   "lam": 1.0,
+   "r2": 0.4421028473083356,
+   "rmse": 0.9395444355261129,
+   "scores": {
+    "distance to training set": {
+     "spearman": 0.1598983779558335,
+     "kendall": 0.10476190476190476,
+     "efficiency": 0.2576941546401097,
+     "ratio": 1.348726694431088,
+     "rmse_trusted": 0.7902764309366397,
+     "rmse_doubted": 1.0658669183839722,
+     "constant": false
+    },
+    "GP variance": {
+     "spearman": 0.14655071330857924,
+     "kendall": 0.10644257703081234,
+     "efficiency": 0.23579301022469007,
+     "ratio": 1.229383194239387,
+     "rmse_trusted": 0.8408150194978118,
+     "rmse_doubted": 1.0336838544346723,
+     "constant": false
+    },
+    "conformal width": {
+     "spearman": 0.18561657221027947,
+     "kendall": 0.1226890756302521,
+     "efficiency": 0.21438346414320253,
+     "ratio": 1.2583967634010453,
+     "rmse_trusted": 0.8312085094752254,
+     "rmse_doubted": 1.0459900980350307,
+     "constant": false
+    },
+    "domain dissimilarity": {
+     "spearman": 0.18561657221027947,
+     "kendall": 0.1226890756302521,
+     "efficiency": 0.21438346414320253,
+     "ratio": 1.2583967634010453,
+     "rmse_trusted": 0.8312085094752254,
+     "rmse_doubted": 1.0459900980350307,
+     "constant": false
+    }
+   },
+   "agreement": {
+    "GP variance vs distance to training set": 0.8221809654094197,
+    "GP variance vs domain dissimilarity": 0.8592730115301934,
+    "GP variance vs conformal width": 0.8592730115301934,
+    "distance to training set vs domain dissimilarity": 0.8842876685557944,
+    "distance to training set vs conformal width": 0.8842876685557944,
+    "domain dissimilarity vs conformal width": 1.0
+   },
+   "aurc_oracle": 0.3677035279000274,
+   "aurc_random": 0.9395444355261129
+  },
+  {
+   "repeat": 2,
+   "alpha": 2.0,
+   "lam": 1.0,
+   "r2": 0.5841528186212213,
+   "rmse": 0.784416742475664,
+   "scores": {
+    "distance to training set": {
+     "spearman": 0.07736955247215165,
+     "kendall": 0.0515406162464986,
+     "efficiency": 0.1799792796450183,
+     "ratio": 1.2362137121300882,
+     "rmse_trusted": 0.6999657276442822,
+     "rmse_doubted": 0.8653072305349764,
+     "constant": false
+    },
+    "conformal width": {
+     "spearman": 0.08993550908735587,
+     "kendall": 0.06610644257703081,
+     "efficiency": 0.14100699057200738,
+     "ratio": 1.2490239988674896,
+     "rmse_trusted": 0.6940535247448663,
+     "rmse_doubted": 0.866889508904909,
+     "constant": false
+    },
+    "domain dissimilarity": {
+     "spearman": 0.08993550908735587,
+     "kendall": 0.06610644257703081,
+     "efficiency": 0.14100699057200738,
+     "ratio": 1.2490239988674896,
+     "rmse_trusted": 0.6940535247448663,
+     "rmse_doubted": 0.866889508904909,
+     "constant": false
+    },
+    "GP variance": {
+     "spearman": 0.045944889583740475,
+     "kendall": 0.03697478991596639,
+     "efficiency": 0.06294436371190143,
+     "ratio": 1.0315598049639882,
+     "rmse_trusted": 0.7756892586839336,
+     "rmse_doubted": 0.8001698604006591,
+     "constant": false
+    }
+   },
+   "agreement": {
+    "GP variance vs distance to training set": 0.7822356849716632,
+    "GP variance vs domain dissimilarity": 0.8894273988665232,
+    "GP variance vs conformal width": 0.8894273988665232,
+    "distance to training set vs domain dissimilarity": 0.8463357435997654,
+    "distance to training set vs conformal width": 0.8463357435997654,
+    "domain dissimilarity vs conformal width": 1.0
+   },
+   "aurc_oracle": 0.34221586820817695,
+   "aurc_random": 0.784416742475664
+  },
+  {
+   "repeat": 3,
+   "alpha": 4.0,
+   "lam": 1.0,
+   "r2": 0.41094404783387983,
+   "rmse": 0.7837079900106169,
+   "scores": {
+    "GP variance": {
+     "spearman": 0.007856165722102796,
+     "kendall": 0.0005602240896358544,
+     "efficiency": 0.16353357621889655,
+     "ratio": 0.9948197724007295,
+     "rmse_trusted": 0.7886130493826634,
+     "rmse_doubted": 0.7845278542991064,
+     "constant": false
+    },
+    "distance to training set": {
+     "spearman": -0.05798319327731093,
+     "kendall": -0.0380952380952381,
+     "efficiency": 0.14904771892840307,
+     "ratio": 0.8453873604794113,
+     "rmse_trusted": 0.8512260949274842,
+     "rmse_doubted": 0.7196157815619427,
+     "constant": false
+    },
+    "conformal width": {
+     "spearman": 0.030447527848348643,
+     "kendall": 0.02072829131652661,
+     "efficiency": 0.11354040428266128,
+     "ratio": 1.0060658472362725,
+     "rmse_trusted": 0.7857856692664196,
+     "rmse_doubted": 0.7905521250966419,
+     "constant": false
+    },
+    "domain dissimilarity": {
+     "spearman": 0.030447527848348643,
+     "kendall": 0.02072829131652661,
+     "efficiency": 0.11354040428266128,
+     "ratio": 1.0060658472362725,
+     "rmse_trusted": 0.7857856692664196,
+     "rmse_doubted": 0.7905521250966419,
+     "constant": false
+    }
+   },
+   "agreement": {
+    "GP variance vs distance to training set": 0.847938245065468,
+    "GP variance vs domain dissimilarity": 0.8842094977525894,
+    "GP variance vs conformal width": 0.8842094977525894,
+    "distance to training set vs domain dissimilarity": 0.8159273011530194,
+    "distance to training set vs conformal width": 0.8159273011530194,
+    "domain dissimilarity vs conformal width": 1.0
+   },
+   "aurc_oracle": 0.30785480526069314,
+   "aurc_random": 0.7837079900106169
+  },
+  {
+   "repeat": 4,
+   "alpha": 2.0,
+   "lam": 1.0,
+   "r2": 0.5410855271030764,
+   "rmse": 0.7443054830279365,
+   "scores": {
+    "distance to training set": {
+     "spearman": 0.03443423881180379,
+     "kendall": 0.020168067226890754,
+     "efficiency": 0.15440718321431635,
+     "ratio": 0.9893743141070162,
+     "rmse_trusted": 0.7523162995202707,
+     "rmse_doubted": 0.7443224228293963,
+     "constant": false
+    },
+    "conformal width": {
+     "spearman": 0.05483681844830956,
+     "kendall": 0.0319327731092437,
+     "efficiency": 0.07952537423927693,
+     "ratio": 1.2372947093162283,
+     "rmse_trusted": 0.665022262153385,
+     "rmse_doubted": 0.8228285265398931,
+     "constant": false
+    },
+    "domain dissimilarity": {
+     "spearman": 0.05483681844830956,
+     "kendall": 0.0319327731092437,
+     "efficiency": 0.07952537423927693,
+     "ratio": 1.2372947093162283,
+     "rmse_trusted": 0.665022262153385,
+     "rmse_doubted": 0.8228285265398931,
+     "constant": false
+    },
+    "GP variance": {
+     "spearman": 0.036036740277506356,
+     "kendall": 0.023529411764705882,
+     "efficiency": 0.06010710338396669,
+     "ratio": 0.982128684936469,
+     "rmse_trusted": 0.7550464570482116,
+     "rmse_doubted": 0.7415527839267002,
+     "constant": false
+    }
+   },
+   "agreement": {
+    "GP variance vs distance to training set": 0.826812585499316,
+    "GP variance vs domain dissimilarity": 0.8461598592925543,
+    "GP variance vs conformal width": 0.8461598592925543,
+    "distance to training set vs domain dissimilarity": 0.8398475669337503,
+    "distance to training set vs conformal width": 0.8398475669337503,
+    "domain dissimilarity vs conformal width": 1.0
+   },
+   "aurc_oracle": 0.3258811399116668,
+   "aurc_random": 0.7443054830279365
+  }
+ ],
+ "repeats": 5,
+ "level": 0.8,
+ "seconds": 47.8
+}
