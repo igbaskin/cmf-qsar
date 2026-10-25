@@ -1,0 +1,18 @@
+{
+ "set": "BZR",
+ "n": 147,
+ "n_groups": 12,
+ "q2": {
+  "two-point": -0.11894357130208433,
+  "signed, 1 shell": -0.14019342013875002,
+  "signed, 2 shells": -0.12199808810632828,
+  "signed, 4 shells": -0.15878207791047383
+ },
+ "columns": {
+  "two-point": 255,
+  "signed, 1 shell": 265,
+  "signed, 2 shells": 275,
+  "signed, 4 shells": 295
+ },
+ "seconds": 2.3
+}

@@ -243,10 +243,18 @@ can judge it.
   signed triple product resolved over radial shells, with tests and the block scaling that the
   signed channels need more than anything else does (a volume carries the cube of a length). It
   is reachable as `--ac-chirality` and `--ac-chirality-shells`.
-  **What is missing is the measurement C5 is for:** the five chemotype-split sets under
-  leave-one-chemotype-out against the alignment-free baseline. No benchmark uses the channels,
-  no result file mentions them, and the manual does not describe them. Until that is run, the
-  item has an implementation and no answer.
+  **Measured 25 October 2026**, and the answer is no. `benchmarks/run_chirality.py` runs the five
+  chemotype-split sets under leave-one-chemotype-out, three regularisations by three distance
+  grids chosen inside the training part of every fold, with the number of shells held out of the
+  search so the signed channels never get more freedom than the kernel they extend. Mean q2 over
+  the sets: two-point +0.063, signed +0.082 / +0.095 / +0.108 at one, two and four shells. Every
+  paired interval over the five sets contains zero ([-0.028, +0.121] at four shells, better on
+  three of five), and **COX2 supplies +0.187 of the +0.045 mean difference while the other four
+  average +0.009**; AChE and BZR are made worse. One set out of five is not a result.
+  The channels therefore stay available and off by default, and the manual now describes them
+  with this table. The experiment that would settle it is a series containing enantiomeric pairs
+  that differ in activity: none of these five sets has one, which is why the kernel's blindness
+  costs it nothing here.
 * **C6. A diagnosis of the data set.** Three diagnostics exist in pieces: α at the grid edge, the
   descriptor-only baseline that beat the 3D model on ACE, and the alignment-free baseline. Package
   them as `cmf diagnose`, which says before any modelling whether the frame carries signal, whether

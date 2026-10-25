@@ -1,0 +1,18 @@
+{
+ "set": "mittal/ACHE",
+ "n": 111,
+ "n_groups": 7,
+ "q2": {
+  "two-point": -0.2993590545993501,
+  "signed, 1 shell": -0.36416919034234385,
+  "signed, 2 shells": -0.2884555340269528,
+  "signed, 4 shells": -0.21722530359002534
+ },
+ "columns": {
+  "two-point": 255,
+  "signed, 1 shell": 265,
+  "signed, 2 shells": 275,
+  "signed, 4 shells": 295
+ },
+ "seconds": 1.8
+}

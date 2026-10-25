@@ -1,0 +1,18 @@
+{
+ "set": "DHFR",
+ "n": 361,
+ "n_groups": 31,
+ "q2": {
+  "two-point": 0.38058987748095285,
+  "signed, 1 shell": 0.41274023324985387,
+  "signed, 2 shells": 0.4017709922362275,
+  "signed, 4 shells": 0.42855953411916636
+ },
+ "columns": {
+  "two-point": 255,
+  "signed, 1 shell": 265,
+  "signed, 2 shells": 275,
+  "signed, 4 shells": 295
+ },
+ "seconds": 13.9
+}

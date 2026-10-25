@@ -1,0 +1,18 @@
+{
+ "set": "AChE",
+ "n": 111,
+ "n_groups": 7,
+ "q2": {
+  "two-point": 0.15396431500516294,
+  "signed, 1 shell": 0.1028160944842641,
+  "signed, 2 shells": 0.09192116903622483,
+  "signed, 4 shells": 0.10004225415792989
+ },
+ "columns": {
+  "two-point": 255,
+  "signed, 1 shell": 265,
+  "signed, 2 shells": 275,
+  "signed, 4 shells": 295
+ },
+ "seconds": 1.8
+}

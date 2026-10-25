@@ -1,0 +1,18 @@
+{
+ "set": "COX2",
+ "n": 282,
+ "n_groups": 14,
+ "q2": {
+  "two-point": 0.1985047571309133,
+  "signed, 1 shell": 0.3972318315906762,
+  "signed, 2 shells": 0.3940926070982741,
+  "signed, 4 shells": 0.3859797391430623
+ },
+ "columns": {
+  "two-point": 255,
+  "signed, 1 shell": 265,
+  "signed, 2 shells": 275,
+  "signed, 4 shells": 295
+ },
+ "seconds": 5.5
+}

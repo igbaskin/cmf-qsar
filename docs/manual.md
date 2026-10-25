@@ -1929,6 +1929,40 @@ a frame (0.172 against 0.189 for the aligned model and 0.072 for counts), and on
 aligned files it frequently beats the aligned model outright — on six of the nine shared targets,
 including thrombin at +0.452 against +0.021.
 
+**Two points, and what that misses.** The descriptor counts pairs of atoms at a distance, and a
+mirror image has every pair at exactly the same distance, so this kernel cannot tell a molecule
+from its enantiomer. It is blind for the same reason to the orientation of one field with respect
+to another — whether the donor sits clockwise or anticlockwise from the bulk, going round the
+ring. The quantity that is not blind is the signed volume of three displacement vectors, and
+`--ac-chirality` adds it as a second block of channels, the signed triple products of three field
+types resolved over `--ac-chirality-shells` radial shells (four by default). The block is
+appended rather than mixed in, so the two-point part is unchanged to the last bit, and it is
+scaled separately because a volume carries the cube of a length.
+
+**Measured, it does not pay for itself.** `benchmarks/run_chirality.py` asks the question in the
+regime the alignment-free kernel exists for — leave-one-chemotype-out on the five chemotype-split
+sets, with three regularisations by three distance grids chosen inside the training part of every
+fold, and the number of shells kept out of the search so the signed channels never get more
+freedom than the kernel they extend:
+
+| | two-point | signed, 1 shell | signed, 2 shells | signed, 4 shells |
+|---|---:|---:|---:|---:|
+| mean q² over the five sets | +0.063 | +0.082 | +0.095 | +0.108 |
+| paired difference | — | +0.019 | +0.033 | +0.045 |
+| 95 % interval over the sets | — | [−0.051, +0.113] | [−0.031, +0.121] | [−0.028, +0.121] |
+| better on | — | 2 of 5 | 3 of 5 | 3 of 5 |
+
+The mean moves the right way and the interval contains zero at every setting. More to the point,
+**one set supplies the whole of it**: at four shells COX2 gains +0.187 and the other four sets
+average +0.009 between them, with AChE and BZR made worse. On five sets that is not a result, and
+the channels cost 16 % more columns.
+
+So the signed channels are available and off by default, which is the honest resting place for a
+measurement like this: the extension is correct, it is not harmful, and it has not been shown to
+help. If you work on a series where chirality is the point — where the enantiomers are in the set
+and differ in activity — it is the first thing to try, and that series is the experiment this
+table could not do, because none of these five sets contains an enantiomeric pair.
+
 **Mixing coefficients over the channel blocks.** The channels come in blocks, one per pair of
 field types, each scaled to unit root mean square before all of them enter one cosine-normalised
 dot product. The overlap kernel weights its fields with $h_f$; the three invariant sources
@@ -2284,7 +2318,8 @@ not every option.
 `--charges gasteiger|mmff|file`, `--param rdkit|tripos|tripos-legacy`, `--prop-missing error|zero`.
 
 **Kernel.** `--kernel fields|autocorrelation|surface`, `--ac-sigma S`, `--ac-dmax D`,
-`--surface-z ZMIN ZMAX ZSTEP`, `--block-weights W`, `--block-groups G`, `--block-rho R`,
+`--surface-z ZMIN ZMAX ZSTEP`, `--ac-chirality`, `--ac-chirality-shells S`,
+`--block-weights W`, `--block-groups G`, `--block-rho R`,
 `--kernel-layer linear|gauss|arccos1|arccos2`, `--gammas LIST`, `--normalize`, `--raw-scale`,
 `--optimize-h`, `--mkl [align|alignf]`, `--mkl-rho R`.
 
