@@ -2230,9 +2230,9 @@ folds are the honest measurement). Gasteiger charges, q²:
 
 | constant (sd) | all five | electrostatic | steric | hydrophobic | HBA | HBD |
 |---|---|---|---|---|---|---|
-| σ_m (0.26) | **0.74** (RMSEcv 0.13) | 0.66 | 0.19 | −0.03 | 0.19 | −0.02 |
-| σ_p (0.38) | **0.70** (RMSEcv 0.21) | 0.68 | 0.14 | −0.01 | 0.24 | 0.01 |
-| π (1.09) | **0.78** (RMSEcv 0.51) | 0.40 | 0.29 | 0.72 | 0.28 | 0.28 |
+| σ_m (0.26) | **0.70** (RMSEcv 0.14) | 0.66 | 0.19 | −0.03 | 0.18 | −0.02 |
+| σ_p (0.38) | **0.69** (RMSEcv 0.21) | 0.68 | 0.14 | −0.01 | 0.23 | 0.02 |
+| π (1.09) | **0.71** (RMSEcv 0.59) | 0.38 | 0.30 | 0.72 | 0.27 | 0.28 |
 
 The electrostatic field carries the Hammett constants, as it should, and the hydrophobic field
 carries π; that π is recovered only to q² 0.72 from a field whose weights are the Crippen increments
@@ -2245,9 +2245,9 @@ constant and a donor that does the opposite lowers it. This is the learned form 
 electrostatic model of the field effect. The para co-field has the larger weight over the ring and
 the deeper lobes at the substituent; it also has the larger errors, and they are the resonance
 cases that fragment charges cannot see: the strong π donors N(CH3)2, NHCH3 and NHNH2 are predicted
-far too high (N(CH3)2: −0.34 for a tabulated −0.83) and the nitroso group far too low (0.31 for
-0.91). For σ_m the worst cases are the extreme acceptors SO2Cl and NO2, which the kernel treats as
-more of the same. The steric field alone sees a little of σ_m (0.19) and nothing of σ_p: it acts as
+far too high (N(CH3)2: −0.32 for a tabulated −0.83) and the nitroso group far too low (0.34 for
+0.91). For σ_m the worst cases are the extreme acceptors SO2Cl and NO2 (0.61 for 1.20, 1.10 for
+0.71), which the kernel treats as more of the same. The steric field alone sees a little of σ_m (0.19) and nothing of σ_p: it acts as
 a heavy-atom count, not as anything Hammett measured.
 
 ```bash
@@ -2265,28 +2265,60 @@ ten minutes for the set six at a time), q²:
 
 | constant | all five, Hirshfeld | Hirshfeld alone | all five, Gasteiger |
 |---|---|---|---|
-| σ_m | 0.74 (RMSEcv 0.13) | 0.66 | 0.74 |
-| σ_p | **0.80** (RMSEcv 0.17) | 0.71 | 0.70 |
-| π | 0.75 | 0.38 | 0.78 |
+| σ_m | **0.79** (RMSEcv 0.12) | 0.66 | 0.70 |
+| σ_p | **0.78** (RMSEcv 0.18) | 0.71 | 0.69 |
+| π | 0.74 | 0.33 | 0.71 |
 
-σ_m does not move and σ_p does, which is the division of labour the two constants are supposed to
-express: the field effect was already in the fragment charges, the resonance effect was not. The
-donors that the Gasteiger model missed are now right (N(CH3)2 −0.72 for −0.83, NH2 −0.67 for −0.66,
-nitroso 0.68 for 0.91), and the co-fields
-(`benchmarks/results/hammett/cofields_q_hirshfeld.png`) now separate: the σ_m co-field puts its
-positive weight on the two meta carbons and the first atom of the substituent, the σ_p co-field
-spreads it over the whole ring with the para carbon included, and both keep the negative lobes at the
-periphery of the substituent. The selected λ is small (10⁻³) and the fitted r² is 0.998, so the
+Both constants gain about 0.09 in q², and the gain is where it was predicted to be. The donors that
+the Gasteiger model missed are now close (N(CH3)2 −0.62 for −0.83, NH2 −0.69 for −0.66, nitroso 0.60
+for 0.91), and the co-fields (`benchmarks/results/hammett/cofields_qm_sym_q_hirshfeld.png`) separate:
+the σ_m co-field puts its positive weight on the two meta carbons and a negative lobe on the ipso
+carbon and the first atom of the substituent, the σ_p co-field spreads the positive weight over the
+whole ring with the para carbon included and puts the deeper negative lobes at the periphery of the
+substituent. The selected λ is small (10⁻³ to 10⁻²) and the fitted r² is 0.99, so the
 cross-validated numbers are the ones to trust and the fine structure of the co-fields beyond the ring
-should be read as the kernel's, not the chemistry's. The remaining σ_p errors are of another kind:
-CONH2 is predicted 1.14 for 0.36 and N(CH3)COCH3 −0.20 for 0.26, both amides whose single MMFF
-conformer puts the carbonyl where the lowest-energy one may not, which is the conformer question the
-ensemble mode is there to answer.
+should be read as the kernel's, not the chemistry's. The largest σ_p errors left are the two amides,
+CONH2 (0.61 for 0.36) and N(CH3)COCH3 (0.06 for 0.26).
 
 ```bash
 python examples/orca_atom_properties.py examples/hammett/hammett.sdf --fast --no-fukui --jobs 6 -o examples/hammett/hammett_qm.sdf
 python examples/make_hammett_examples.py --symmetrize examples/hammett/hammett_qm.sdf
 python benchmarks/run_hammett.py --sdf examples/hammett/hammett_qm_sym.sdf --charges-prop q_hirshfeld
+```
+
+**Conformer ensembles change nothing here, and the measurement says why.** `make_hammett_examples.py
+--ensemble 8` keeps up to eight distinct MMFF conformers per substituent within 6 kcal/mol, distinct
+meaning further than 0.3 Å (RMSD over the heavy atoms and the polar hydrogens) from every symmetry
+image of every conformer already kept and not a relabelling of one (the sorted shape-atom distances
+differ by more), since swapping two ethoxy groups or permuting the fluorines of SF5 gives the force
+field a new conformer and the field the same shape. Each conformer is written with its four images
+and the full energy list, so the Boltzmann weights of the ensemble mode read it; `--atom-props-from`
+copies the Hirshfeld charges of the lowest conformer onto all of them, which is what the ensemble
+field uses in any case, since it takes its atomic weights from its first member. The set is thin:
+77 of the 95 substituents have one conformer, 14 have two, the largest (n-butyl, diethylamino,
+diethyl phosphonate) have three to five, 1.3 on average, and both amides have exactly one, because
+the twisted amide and its mirror image are symmetry images in this frame. q²:
+
+| constant | single conformer | ensemble, uniform | ensemble, Boltzmann (kT 0.6) |
+|---|---|---|---|
+| σ_m, Gasteiger | 0.70 | 0.70 | 0.70 |
+| σ_p, Gasteiger | 0.69 | 0.69 | 0.69 |
+| σ_m, Hirshfeld | 0.79 | 0.75 | 0.79 |
+| σ_p, Hirshfeld | 0.78 | 0.80 | 0.79 |
+| π, Gasteiger | 0.71 | 0.71 | 0.70 |
+
+Every difference is within the interval of a 95-compound q², the co-fields are the same pictures,
+and the amides move by a few hundredths (CONH2 0.58, N(CH3)COCH3 0.15 under Boltzmann weights). So
+the amide errors are not a conformer problem that MMFF can see; whether they are a charge problem
+(Hirshfeld charges of a conjugated amide on an MMFF geometry) or a tabulation problem is left open.
+This is the same verdict the fourth dimension received on the binding sets, reached on a series
+where the frame is beyond doubt, which removes the one excuse those sets had.
+
+```bash
+python examples/make_hammett_examples.py --ensemble 8
+python examples/make_hammett_examples.py --ensemble 8 --atom-props-from examples/hammett/hammett_qm.sdf
+python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens.sdf --weighting boltzmann
+python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens_qm.sdf --charges-prop q_hirshfeld --weighting boltzmann
 ```
 
 ### Two endpoints on one kernel: the selectivity co-field
