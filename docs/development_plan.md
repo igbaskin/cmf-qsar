@@ -644,6 +644,112 @@ and counts predict nothing, is the first case.
   difference field as the description of the transformation. Exploratory; no commitment until C is
   done.
 
+### Materials science: the extensions the crystal kernel asks for (25 October 2026)
+
+The periodic autocorrelation kernel (`cmfqsar/periodic.py`, kernel source `periodic`, command
+`build-crystals`, measured in `benchmarks/results/matbench_phonons/`) is the first CMF model of a
+crystal, and the block mixing coefficients of the invariant kernels came with it. What it settled:
+a typed pair-distance kernel per atom of the cell is invariant to cell, origin and orientation and
+reads as chemistry through its co-pattern; the inverse square root of the mass is the field that
+matters for the top of a phonon spectrum; the taper is needed; the background subtraction, right
+for structure comparison, costs accuracy on a property that wants composition times density; and
+fifty element-indicator fields dilute the kernel in a way the block weights halve but do not remove.
+What it cannot do is the list below, ordered by the code each item needs. Rule 1 applies unchanged
+with the four-field periodic model (electrostatic, steric, electronegativity, 1/√m, background
+kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to beat on the same folds.
+
+**Small (days each)**
+
+* **M1. Lower-dimensional periodicity.** Polymers as 1D-periodic repeat units and slabs as
+  2D-periodic surfaces already pass through the ASE neighbour list with mixed boundary conditions,
+  but the background term of `periodic_autocorrelation` divides by the cell volume. It needs the
+  repeat length or the surface area, and the slab case wants the height channels of the surface
+  kernel (`SurfaceSpec` in `cmfqsar/invariant.py`). Opens surface energies, work functions and
+  facet-dependent adsorption. Measure on a slab set against the surface kernel alone.
+* **M2. Partial occupancy and configurational ensembles.** Solid solutions and disordered sites
+  need the field weights multiplied by the site occupancy; `structures_from_matbench` takes the
+  majority species today. Special quasirandom structures and MD snapshots are the periodic
+  analogue of the conformer ensemble and reuse the mean-map averaging of `ensemble_fields`,
+  generalised as D4 asks for members with their own atoms. The fourth-dimension verdict says to
+  expect little; measure once, on a solid-solution set, and keep the mode only if it is exact and
+  costs nothing when unused.
+* **M3. DFT arrays as fields without hand-made files.** Bader charges and magnetic moments enter
+  as per-atom arrays (`prop:<name>`); a reader for VASP outputs (ACF.dat, OUTCAR magmoms,
+  OSZICAR energies) feeds the kernel from the Li interface and Fe(110) runs directly. No new
+  science; it removes the step every materials study has had to script by hand.
+
+**Medium (one to two weeks each)**
+
+* **M4. The periodic overlap kernel with co-fields in the cell.** For a fixed parent lattice,
+  dopant and vacancy series, the real-space overlap integral with periodic images (a minimum-image
+  or Ewald-like sum of the Gaussian pair overlaps of `cmfqsar/kernels.py`) gives the full CMF
+  treatment, including a co-field drawn inside the cell, which the grid code of
+  `cmfqsar/cofields.py` cannot do with open boundaries. This is the tool for the vacancy formation
+  energies of the Li3PO4/Li3BP2O8/LiBO2 interface study, where the reciprocal form is a change of
+  basis and the co-field is what the grant paragraph wants to show. Gate: the co-field of the
+  vacancy energy must name the coordinating oxygens and the Li neighbours, and the model must beat
+  the periodic autocorrelation on the same cells.
+* **M5. Site-resolved models.** The periodic channel sum is a sum over the atoms of the cell, so it
+  splits exactly into one contribution per site, as the atom contributions split the overlap
+  kernel. That gives a local co-pattern (which site carries the property) and a route to per-site
+  targets: adsorption energies on different surface atoms, defect energies by site, NMR shifts,
+  Bader charges. Needs site-centred features (the row of `T` for one atom), per-site targets in the
+  data model and the decomposition in `top_channels`. Measured first on the Fe(110) adsorption
+  energies resolved by site and on vacancy energies by site from M4's cells.
+* **M6. Explicit reciprocal-space channels.** Order beyond the cutoff is invisible to a pair kernel.
+  The low-|G| part of the typed structure factors, with the Gaussian form factor as the resolution
+  cutoff, added as extra channels in the manner of the reciprocal half of an Ewald sum, restores
+  long-range electrostatic and superstructure information; the same module gives the s-space
+  co-pattern, the α-as-resolution reading and the Parseval test that the publication plan's theory
+  section needs. Measure on the elastic moduli and formation-energy tasks, where long-range order
+  should matter, against the real-space kernel with the same cutoff.
+* **M7. Rigid hosts as pockets.** `cmfqsar/protein.py` and `cmfqsar/complementarity.py` read a PDB
+  protein; zeolite and MOF frameworks come as CIF files with periodic images and want a
+  pore-centred frame. Once in, guest uptake and selectivity follow the ligand path, residue
+  profiles becoming framework-atom profiles. The cyclodextrin example (`examples/cyclodextrin`)
+  is the finite host that the periodic one must reproduce as a limit.
+* **M8. Molecules inside crystals.** Molecular crystals, co-crystals and MOF linkers want the five
+  classical fields for the molecule and the periodic kernel for the packing. The missing piece is
+  bond and charge perception for molecules extracted from a periodic cell (connectivity across the
+  boundary, then RDKit sanitisation), so that `build_fields` can run on a CIF. Measure on a
+  sublimation-enthalpy or melting-point set against the inorganic field set.
+
+**Large (a month or more each)**
+
+* **M9. Grid fields from DFT.** Charge density, electron localisation function and electrostatic
+  potential on a grid as the fields themselves rather than atom-centred Gaussians: a grid-field
+  representation, CHGCAR and cube readers (the cube writer in `cmfqsar/cofields.py` is the model),
+  an overlap kernel on grids for a shared frame and the radial autocorrelation for the frame-free
+  case. It makes CMF an interpretable kernel directly on the DFT output. Rule 3 says grids are for
+  display; this item is the one place the plan allows an exception, and only if the grid kernel
+  beats the fitted atom-centred one by more than the interval, which the conceptual-DFT study
+  says it may not.
+* **M10. Three-body and chirality for solids.** The two-body kernel cannot separate homometric
+  structures or enantiomorphs. Typed angle channels, or a periodic analogue of the signed-volume
+  block of `chirality` in `cmfqsar/invariant.py`, close the gap at the cost of a cubic sum per
+  structure; the factorisation trick of the molecular block does not survive the lattice sum.
+  Measure on structure-type classification first, where the deficiency is visible, before any
+  property.
+* **M11. Inverse design on prototypes.** The co-pattern says which pair at which distance to add.
+  Making that actionable needs a candidate generator over prototype structures with substitutions,
+  ranking by the lower confidence bound of the GP view (`benchmarks/run_bound.py` measures it), and a
+  loop that proposes, computes with VASP or UMA, and refits. The GP exists; the enumerator and the
+  loop do not. Gate: the loop must find, on a held-out Matbench task, a structure better than the
+  training maximum within a fixed budget of calculations.
+* **M12. Learning from scattering data.** Because the kernel is the Debye transform, a measured pair
+  distribution function or structure factor is a total, untyped version of the same object. A
+  reader for experimental G(r) and S(Q) and a kernel that compares measured curves with computed
+  typed ones would allow models on amorphous and nanocrystalline materials where no atomic
+  structure exists. Exploratory; no commitment until M6 has shown that the reciprocal channels
+  carry signal.
+* **M13. The application.** None of this is visible in the GUI: no cell viewer, no co-pattern
+  plot, no site colouring. It belongs to G, and it is what makes the materials side usable by
+  someone other than the author. It waits for M4 and M5, which decide what there is to draw.
+
+**Order.** M4, M5 and M6 first: together they give the most science per line and supply the theory
+section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
+by those three. M9 and M12 only after M6 has reported.
+
 ## Sequence
 
 | When | What |
@@ -653,7 +759,7 @@ and counts predict nothing, is the first case.
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1, ~~E2~~ **done**, E3, E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
 | Months 6 to 12 | F3, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
-| Year 2 | H; the review that ties the series together |
+| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
