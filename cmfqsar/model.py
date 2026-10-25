@@ -1313,6 +1313,9 @@ class CMFModel:
         yp = self.predict(test, progress=progress, cancel=cancel)
         y_test = np.asarray(y_test, float)
         ok = np.isfinite(y_test)
+        # the activities of the test set are kept beside its predictions, so that a model file
+        # alone is enough to draw observed against predicted (cmfqsar/report.py)
+        self.stats.extra["y_test"] = y_test
         if self.task in ("classification", "oneclass"):
             self.stats.n_test = int(ok.sum()) if ok.any() else int(len(yp))
             signs = np.unique(np.sign(y_test[ok])) if ok.any() else np.zeros(0)

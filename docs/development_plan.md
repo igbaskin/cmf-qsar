@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 50 modules and about 20,900 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with fifteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
+* A library of 51 modules and about 21,500 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with sixteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`), 559 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`), 567 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -524,6 +524,27 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   the three validation checks, the co-field pictures from fixed viewpoints, the Shapley table for
   the extremes of the series, and the pharmacophore. This is what a user hands to a colleague who
   will never start the application.
+  **Done 25 October 2026**: `cmfqsar/report.py` and `cmf_cli.py report model.cmf`. One
+  self-contained HTML page — every picture a base64 PNG inside it, so it survives being emailed or
+  attached, and it prints to PDF from any browser. Seven sections: what the model is; the
+  statistics with the observed-against-predicted plots beside them; the validation that was
+  actually run; the mean absolute contribution of each field; the co-fields projected onto the
+  three coordinate planes (the signed extremum along each viewing axis, with the training atoms
+  for scale — a projection rather than an isosurface, since a report has no camera); the two
+  extreme molecules with their exact field Shapley values and largest atom contributions; the
+  pharmacophore and the provenance.
+  Two rules it keeps and that are the point of it. Everything is read from the model file, so a
+  report costs no refitting and **cannot disagree with the model it describes** (`evaluate_test`
+  now keeps the test activities beside their predictions so that the file alone is enough to draw
+  the scatter). And **a check that was not run is reported as not run**, never silently omitted,
+  which is the difference between a report and an advertisement. Everything else degrades rather
+  than fails: a nonlinear kernel loses the co-fields, the contributions and the pharmacophore and
+  keeps the rest.
+  About three seconds for a 50-molecule model with the co-field pictures, under one with
+  `--no-cofields`.
+  **Not done:** the PDF writer of the item's text (a browser prints the page, which is enough),
+  the 3D isosurface renders a GUI screenshot would give, and F1's case studies, which are what
+  would make a report tell a story rather than state facts.
 * **F5. Pharmacophore export.** The typed features with tolerance spheres of
   `cmfqsar/pharmacophore.py` in a format a pharmacophore-screening program can read, so the
   co-field can be used as a query outside CMF.
@@ -532,8 +553,8 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
 
 * **G1. Subcommands.** Alignment is spread over flags of `build` and `predict` and the `hetero`
   subcommand; give it a subcommand of its own, `align` (by confidence, by MCS, in the pocket), and
-  add `diagnose` (C6), `screen` (B3), `cofield` (grids and cube export without the GUI), `report`
-  (F4) and `benchmark` (A4).
+  add `diagnose` (C6), `screen` (B3), `cofield` (grids and cube export without the GUI), ~~`report`
+  (F4)~~ **done** and `benchmark` (A4).
 * **G2. Projects.** A project file that holds the data set, its poses before and after each
   alignment, the settings, the model and the results, so a session can be reopened; undo of an
   alignment step; a panel that compares two models on the same molecules.
@@ -571,7 +592,7 @@ and counts predict nothing, is the first case.
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1 to E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
-| Months 6 to 12 | F3 to F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
+| Months 6 to 12 | F3, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol

@@ -1744,6 +1744,45 @@ record of how the training set was prepared that *What has to match between fitt
 predicting* describes. `cmf_cli.py predict model.cmf new.sdf --out predictions.csv` applies it,
 after checking the new molecules against that record; the GUI loads it with *File → Load model…*
 and writes the record's summary to the log.
+## A report to hand to a colleague
+
+A `.cmf` file is for the program. The person who has to judge the model — a colleague, a reviewer,
+a supervisor — will never start the application, and what they need is one file they can open.
+
+```bash
+python cmf_cli.py report model.cmf --out model.html
+```
+
+That writes a single self-contained HTML page: every picture is inside it, so it survives being
+emailed, attached or put on a share, and it opens in any browser and prints to PDF. It has seven
+sections, in the order a sceptical reader asks for them.
+
+- **What this model is** — fields, α, learner, kernel, how the charges were made.
+- **How well it fits and predicts** — the statistics with the observed-against-predicted plots
+  beside them, because a q² is a summary of that picture and not a substitute for it.
+- **Whether to believe that** — the validation that was actually run: y-randomisation, the
+  bootstrap intervals, the applicability domain, the conformal level, the comparison of error
+  predictors. **A check that was not run is reported as not run**, never silently omitted, which
+  is the difference between a report and an advertisement.
+- **What the model rests on** — the mean absolute contribution of each field, which is what
+  separates a model standing on its geometry from one standing on a single field.
+- **The co-fields**, projected onto the three coordinate planes from fixed viewpoints: the
+  strongest signed value along each viewing axis, with the training atoms as grey dots for scale.
+  A projection rather than an isosurface, because a report has no camera and its reader has no
+  mouse.
+- **The extremes of the series** — the most and least active training molecules, each decomposed
+  over the fields by exact Shapley values and over its own atoms by the contribution rule.
+- **The pharmacophore** read out of the co-fields, and the provenance of the model file.
+
+Everything comes out of the model file, so a report costs no refitting and **cannot disagree with
+the model it describes**. Everything degrades rather than fails: a nonlinear kernel has no
+co-fields, no atom contributions and no pharmacophore, and the report says so in place of each and
+keeps the rest; a model fitted without a test set reports no R²pred.
+
+`--no-cofields` leaves out the pictures, which are the slow part — a report of a 50-molecule model
+takes about three seconds with them and under one without — and `--spacing` sets how finely they
+and the pharmacophore are computed. `--open` shows it in the browser straight away.
+
 # Reading the model
 
 A CMF model is readable in a way a grid model is not, because the prediction can be taken apart
@@ -2486,7 +2525,10 @@ not every option.
 | Subcommand | What it does |
 |---|---|
 | `build` | build, cross-validate, test and save a model |
+| `build-crystals` | the same on periodic structures (CIF, POSCAR, extended XYZ) |
+| `diagnose` | ask a data set what it can support, before modelling it |
 | `predict` | predict with a saved model, optionally aligning by confidence first |
+| `report` | one self-contained HTML page describing a saved model |
 | `hetero` | the heterogeneous-series workflow: cluster, align, place, leave-one-chemotype-out |
 | `topomer` | model a series by its substituents, posed by rule |
 | `map` | chemical-space map and activity landscape (kernel PCA + GTM) |
@@ -2495,6 +2537,8 @@ not every option.
 | `pharmacophore` | read a pharmacophore out of a fitted model's co-fields |
 | `difference` | what one molecule's fields have that another's do not |
 | `complement` | field complementarity with a protein pocket |
+| `compare` | are two sets the same population? (MMD, with a witness) |
+| `cluster` | cluster a set by its field kernel (spectral clustering) |
 | `unalign` | give every molecule a random pose, the control experiment |
 
 ## The options of `build`, by group

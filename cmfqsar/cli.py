@@ -20,6 +20,7 @@ Examples
 """
 import argparse
 import json
+import os
 import sys
 import time
 
@@ -963,6 +964,31 @@ def cmd_predict(args):
         write_predictions_csv(args.out, ds.names, ds.activity, yp, ["test"] * len(ds), var=var,
                               interval=bounds)
         print(f"Predictions written to {args.out}")
+
+
+def cmd_report(args):
+    """One self-contained HTML file describing a saved model: item F4 of the plan.
+
+    Everything comes out of the model file, so the report cannot disagree with the model and
+    costs no refitting; what the file does not carry (a validation that was never run) is
+    reported as missing rather than quietly left out.
+    """
+    from cmfqsar.report import ReportSpec, write_report
+
+    model, extra = load_model(args.model)
+    out = args.out or (os.path.splitext(args.model)[0] + ".html")
+    spec = ReportSpec(spacing=args.spacing, margin=args.margin, level=args.level,
+                      max_features=args.max_features, top_atoms=args.top_atoms,
+                      cofields=not args.no_cofields,
+                      pharmacophore=not args.no_pharmacophore)
+    t0 = time.time()
+    write_report(out, model, extra=extra, title=args.title, spec=spec, source=args.model,
+                 progress=lambda msg, frac: print(f"  {msg}", flush=True))
+    size = os.path.getsize(out) / 1024.0
+    print(f"Report written to {out} ({size:.0f} kB, self-contained) in {time.time() - t0:.1f} s")
+    if args.open:
+        import webbrowser
+        webbrowser.open(f"file://{os.path.abspath(out)}")
 
 
 def cmd_explain(args):
@@ -2461,6 +2487,28 @@ def main(argv=None):
     k.add_argument("--profile-out", default=None, metavar="FILE",
                    help="CSV of the interaction profiles: one row per molecule and residue")
     k.set_defaults(func=cmd_complement)
+
+    rp = sub.add_parser("report", help="one HTML file describing a saved model, for a colleague "
+                                       "who will never start the application")
+    rp.add_argument("model", help="a model file written by build --save")
+    rp.add_argument("--out", default=None, metavar="FILE",
+                    help="where to write it (default: the model's name with .html)")
+    rp.add_argument("--title", default=None, help="the heading of the report")
+    rp.add_argument("--spacing", type=float, default=0.6, metavar="A",
+                    help="grid spacing for the co-field projections and the pharmacophore")
+    rp.add_argument("--margin", type=float, default=3.0, metavar="A",
+                    help="margin around the training molecules for the same grid")
+    rp.add_argument("--level", type=float, default=0.5, metavar="F",
+                    help="fraction of a co-field's peak that bounds a pharmacophore feature")
+    rp.add_argument("--max-features", type=int, default=12)
+    rp.add_argument("--top-atoms", type=int, default=8,
+                    help="atom contributions listed for each of the two extreme molecules")
+    rp.add_argument("--no-cofields", action="store_true",
+                    help="leave out the co-field pictures, which are the slow part")
+    rp.add_argument("--no-pharmacophore", action="store_true")
+    rp.add_argument("--open", action="store_true", help="open it in the default browser")
+    rp.set_defaults(func=cmd_report)
+
     args = p.parse_args(argv)
     args.func(args)
 
