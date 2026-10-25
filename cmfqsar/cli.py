@@ -1155,6 +1155,64 @@ def cmd_design(args):
         print(f"  written to {args.out}")
 
 
+def cmd_transfer(args):
+    """How much two models ask the same thing of the chemistry: item F3 of the plan."""
+    from cmfqsar.transfer import cofield_overlap, describe_matrix, overlap_matrix
+
+    models, names = [], []
+    for path in args.models:
+        model, extra = load_model(path)
+        models.append(model)
+        names.append(os.path.splitext(os.path.basename(path))[0])
+    for name, model in zip(names, models):
+        print(f"{name:20s} {model.train.n_mol:4d} molecules, "
+              f"{', '.join(s.label for s in model.fieldset.specs if s.enabled)}, "
+              f"alpha {', '.join('%g' % s.alpha for s in model.fieldset.specs if s.enabled)}")
+    print()
+    if len(models) == 2:
+        res = cofield_overlap(models[0], models[1], names[0], names[1], strict=False)
+        if res.notes and not np.isfinite(res.cosine):
+            raise SystemExit("these two models cannot be compared: " + res.notes[0])
+        print(res.describe())
+        for row in res.fields:
+            print("  " + row.describe())
+        for note in res.notes:
+            print("  note: " + note)
+    else:
+        M, pairs = overlap_matrix(models, names)
+        print("Cosine of the co-fields, model against model:")
+        print(describe_matrix(M, names))
+        bad = [p for p in pairs if p.notes]
+        for p in bad[:5]:
+            print(f"  {p.name_a} / {p.name_b}: {p.notes[0]}")
+        if args.fields:
+            for f, spec in enumerate(models[0].fieldset.specs):
+                if not spec.enabled:
+                    continue
+                Mf = np.full((len(models), len(models)), np.nan)
+                for p in pairs:
+                    i, j = names.index(p.name_a), names.index(p.name_b)
+                    Mf[i, j] = Mf[j, i] = p.by_field().get(spec.name, float("nan"))
+                np.fill_diagonal(Mf, 1.0)
+                print()
+                print(f"{spec.label}:")
+                print(describe_matrix(Mf, names))
+    print()
+    print("  A cosine compares the shapes of two demands, not their sizes: it does not move "
+          "when either activity is rescaled. It says nothing about whether either model is "
+          "right, and it means anything at all only if the two training sets were posed in one "
+          "frame.")
+    if args.out and len(models) > 2:
+        import csv
+        M, _pairs = overlap_matrix(models, names)
+        with open(args.out, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow([""] + names)
+            for i, n in enumerate(names):
+                w.writerow([n] + [f"{v:.4f}" if np.isfinite(v) else "" for v in M[i]])
+        print(f"  matrix written to {args.out}")
+
+
 def cmd_explain(args):
     """Shapley decomposition of a prediction: works for linear and nonlinear kernels alike."""
     from cmfqsar.shapley import (atom_field_shapley, atom_shapley, common_core, field_shapley,
@@ -2750,6 +2808,15 @@ def main(argv=None):
     dg.add_argument("--seed", type=int, default=0)
     dg.add_argument("--out", default=None, metavar="FILE", help="CSV of every candidate")
     dg.set_defaults(func=cmd_design)
+
+    tr = sub.add_parser("transfer",
+                        help="compare models by their co-fields: do they ask the same thing of "
+                             "the chemistry?")
+    tr.add_argument("models", nargs="+", help="two or more model files written by build --save")
+    tr.add_argument("--fields", action="store_true",
+                    help="with more than two models, print one matrix per field as well")
+    tr.add_argument("--out", default=None, metavar="FILE", help="CSV of the matrix")
+    tr.set_defaults(func=cmd_transfer)
 
     args = p.parse_args(argv)
     args.func(args)

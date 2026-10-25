@@ -2853,6 +2853,7 @@ cmfqsar/errorpred.py    scoring the things that claim to know when a prediction 
 cmfqsar/evidence.py     the marginal likelihood, for choosing alpha and lambda
 cmfqsar/perfield.py     one attenuation per field, by coordinate descent on the evidence
 cmfqsar/report.py       one self-contained HTML page describing a model
+cmfqsar/transfer.py     comparing two models by the overlap of their co-fields
 cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence
 cmfqsar/oneclass.py     one-class descriptions: centroid, k-NN, Gaussian process, kernel PCA
 cmfqsar/multitask.py    two endpoints on one kernel; the selectivity co-field as their difference

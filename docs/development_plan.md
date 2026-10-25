@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 53 modules and about 22,600 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with eighteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
+* A library of 54 modules and about 22,900 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with nineteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`), 602 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`), 612 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -617,6 +617,30 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
 * **F3. Co-fields compared.** The overlap of two co-fields is a closed-form similarity between two
   models: two targets (selectivity, again), two series on one target, or one series across rounds
   of active learning. A table of co-field overlaps is a map of SAR transfer.
+  **Done 25 October 2026**: `cmfqsar/transfer.py` and the `transfer` subcommand, which takes two
+  model files and prints the per-field cosines, or several and prints the matrix. The overlap is
+  `a^T K_f(A,B) b` -- one matrix product on the kernel block between the two training sets -- and
+  the cosine is the number to read, since it is invariant to the units of either activity, to the
+  mixing coefficients and to the field scaling, and so compares the shapes of two demands rather
+  than their sizes. A test checks the closed form against the same integral on a 175 000-point
+  grid; they agree to four decimals.
+  **Measured** (`benchmarks/run_transfer.py`): every Sutherland set split into its chemotypes, a
+  model on each group of fifteen or more with the attenuation shared across the set, every
+  ordered pair scored by the cosine and by how well one model orders the other group's molecules.
+  Two halves of one chemotype -- the control, where the SAR is the same by construction -- agree
+  at a mean cosine of **+0.401** and transfer at rho **+0.673**; two different chemotypes of one
+  target agree at **+0.178** and transfer at **+0.334**. The cosine separates the two cases by
+  **0.22**, and within the chemotype pairs the cosine and the transfer correlate at rho
+  **+0.667** over 64 pairs. The item's claim holds: a table of co-field overlaps is a map of SAR
+  transfer.
+  **What it rests on.** Two co-fields are functions on one space only if their molecules were
+  posed in one frame. `incompatible` checks what the model files allow -- both linear, both on
+  the overlap kernel, the same fields with the same attenuations, overlapping training boxes --
+  and refuses with the reason; it cannot check whether two alignments mean the same thing, and
+  nothing in the cosine would reveal that they did not.
+  **Not done:** the same comparison for models in different frames, which needs the two training
+  sets aligned to each other first and is really the alignment problem again; and the GUI, where
+  a matrix of co-field cosines would belong beside the chemical-space map.
 * **F4. A model report.** One command that writes an HTML or PDF report of a model: statistics,
   the three validation checks, the co-field pictures from fixed viewpoints, the Shapley table for
   the extremes of the series, and the pharmacophore. This is what a user hands to a colleague who
@@ -1030,7 +1054,7 @@ after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
-| Months 6 to 12 | F3, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
+| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol

@@ -1967,6 +1967,64 @@ two largest series and a non-zero $\rho$ of either sign on the small ones, where
 most 0.04 in q²: an endpoint that already has its own molecules borrows little from another, and
 the $\rho$ the dialog reports in the log is the measurement that says how much.
 
+## Comparing two models by their co-fields
+
+The selectivity co-field above is the *difference* of two co-fields. Their *inner product* is the
+other half of the same algebra, and it answers a different question: how far do two models ask the
+same thing of the chemistry?
+
+```bash
+python cmf_cli.py transfer targetA.cmf targetB.cmf
+python cmf_cli.py transfer round1.cmf round2.cmf round3.cmf --fields --out map.csv
+```
+
+It needs no grid. With $C_f^A(\mathbf{r}) = \sum_j a_j s_{fj} X_{fj}(\mathbf{r})$ and the same
+for B, the overlap is a sum of overlap integrals of atom-centred Gaussians — which is the field
+kernel between the two training sets:
+
+$$
+\langle C_f^A, C_f^B\rangle = \sum_{j,k} a_j b_k s_{fj} s_{fk} K_f^{\mathrm{raw}}(j,k)
+= \mathbf{a}^{\mathrm{T}} \mathbf{K}_f(A,B)\, \mathbf{b}
+$$
+
+one matrix product on a block the program computes for a prediction anyway. The number to read is
+the **cosine**, because it does not move when either activity is rescaled, when the mixing
+coefficients change, or when the field scaling does: it compares the *shapes* of two demands
+rather than their sizes. A unit test checks it against the same integral taken on a 175 000-point
+grid; they agree to four decimals.
+
+What it is for, in the order the question arises. **Two targets**: a positive cosine says both
+want the same thing in the same place, which is why selectivity is hard, and a negative one says
+they want opposite things, which is where selectivity comes from. **Two series on one target**:
+agreement means the SAR transfers, disagreement means two chemotypes are being fitted by two
+different stories and a model pooled over both will be an average of them. **One series across
+rounds**: the cosine with the previous round says how much the new compounds changed the model's
+mind, and the per-field cosines say in which field.
+
+### Is it a map of SAR transfer, measured
+
+Every Sutherland set split into its chemotypes, a model on each group of fifteen molecules or
+more, the attenuation shared across the set, and every ordered pair scored twice: by the co-field
+cosine, and by how well one model orders the other group's molecules (Spearman's ρ — not R², since
+two chemotypes often sit at different activity levels and an offset is not a failure of the SAR).
+
+| | mean cosine | mean transfer ρ |
+|---|---:|---:|
+| two halves of one chemotype (the control, 16 pairs) | **+0.401** | **+0.673** |
+| two different chemotypes of one target (64 pairs) | +0.178 | +0.334 |
+
+**The cosine separates the two cases by 0.22**, which is what it is for: two models of one SAR
+look alike and two models of two SARs do not. And within the chemotype pairs the cosine and the
+transfer **correlate at ρ +0.667** over the 64 pairs, which is the item's claim measured — a table
+of co-field overlaps is a map of SAR transfer.
+
+**One assumption carries all of it.** Two co-fields are functions on one space only if their
+molecules were posed in one frame. The program checks what it can from the model files — the same
+fields, the same attenuations, training boxes that overlap — and refuses with a reason when they
+fail. What it cannot check is whether two alignments *mean* the same thing, and nothing in the
+cosine would reveal that they did not. A cosine is also not a prediction: that two models want the
+same thing does not mean either is right.
+
 ## Chemical space maps
 
 *Tools → Chemical space map…* builds a two-dimensional map of the set from the CMF kernels.
@@ -2749,6 +2807,7 @@ not every option.
 | `report` | one self-contained HTML page describing a saved model |
 | `suggest` | which posed candidate to make next (expected improvement and the rest) |
 | `design` | what to put at a position of a parent, ranked by the model |
+| `transfer` | compare models by their co-fields: do they ask the same thing? |
 | `hetero` | the heterogeneous-series workflow: cluster, align, place, leave-one-chemotype-out |
 | `topomer` | model a series by its substituents, posed by rule |
 | `map` | chemical-space map and activity landscape (kernel PCA + GTM) |
