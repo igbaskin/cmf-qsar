@@ -2053,6 +2053,105 @@ A measured caution from the benchmarks in this repository: field similarity on t
 about as well as ECFP4 fingerprint similarity, and cross-target decoys are trivially separable by
 either. If a screening result looks spectacular, check what the decoys were.
 
+## Which molecule to make next
+
+The model predicts an activity and, through the Gaussian-process view, a standard deviation beside
+it. Those two numbers answer a question the 2019 paper poses and leaves as a statement — that
+maximising the overlap tells one how to modify the molecule — as an operation with a number:
+
+```bash
+python cmf_cli.py suggest model.cmf candidates.sdf --acquire ei --top 10
+```
+
+The candidates have to be posed in the training set's frame, as for `predict`. What comes back is
+the ranked list with the prediction, the standard deviation, and the distance to the nearest
+molecule already made.
+
+**The rule depends on what the asking is for**, and the program keeps the two apart rather than
+pretending one serves both.
+
+| `--acquire` | what it maximises | what it is for |
+|---|---|---|
+| `ei` | expected improvement over the best made so far | finding an active |
+| `ucb` | prediction + β standard deviations | the same, more crudely |
+| `greedy` | the prediction | the same, with no allowance for being wrong |
+| `variance` | the posterior standard deviation | improving the model |
+| `maxmin` | distance in field space to everything made | the same, with no model at all |
+| `random` | nothing | the baseline the others have to beat |
+
+Expected improvement counts only the upside, which is why it is the usual choice:
+
+$$
+\mathrm{EI}(x) = (\mu - y^{*} - \xi)\,\Phi(z) + \sigma\,\varphi(z), \qquad
+z = \frac{\mu - y^{*} - \xi}{\sigma}
+$$
+
+Note that this is the **opposite** of how the same two numbers are used to rank a screening
+library, where `rank_score` subtracts the standard deviation instead of adding it. The difference
+is not a matter of taste. A screening library is dominated by molecules unlike anything in the
+training set, a kernel method hands back the training mean dressed up as a prediction for exactly
+those, and a bet placed on one of them is lost. A molecule *made* to answer a question is not a
+bet: being wrong about it is cheap, and being wrong is informative. Optimism is right for one and
+wrong for the other.
+
+### What it buys, measured
+
+Eight Sutherland sets, ten runs each, starting from twenty molecules drawn at random that hold no
+hit and acquiring a quarter of what is left one at a time. α and λ are reselected by the evidence
+at every step from what has been acquired and nothing else — which is what the evidence was built
+for. A **hit** is a molecule in the top 5 % of its set.
+
+**Finding an active:**
+
+| rule | best found, of the best in the set | runs that found a hit | median acquisitions to the first hit |
+|---|---:|---:|---:|
+| random | 92.2 % | 79 % | 6 |
+| maxmin | 90.9 % | 64 % | 9 |
+| variance | 90.6 % | 71 % | 9 |
+| greedy | 95.0 % | 100 % | 4 |
+| **ucb** | **96.6 %** | 95 % | 4 |
+| ei | 95.2 % | 89 % | **3** |
+
+**Improving the model**, as the RMSE on everything not yet acquired (against the variance of the
+whole set, so that a rule which acquires the extremes is not rewarded for making the rest look
+alike):
+
+| rule | mean RMSE over the run | RMSE at the end | q² at the end | against random, paired |
+|---|---:|---:|---:|---:|
+| random | 1.122 | 1.064 | +0.366 | — |
+| maxmin | **1.108** | 1.047 | +0.384 | −0.014 [−0.034, +0.006] |
+| variance | **1.108** | 1.042 | +0.386 | −0.014 [−0.034, +0.006] |
+| greedy | 1.179 | 1.195 | +0.158 | **+0.057 [+0.038, +0.078]** |
+| ucb | 1.144 | 1.127 | +0.279 | +0.022 [+0.001, +0.044] |
+| ei | 1.121 | 1.086 | +0.331 | −0.001 [−0.022, +0.021] |
+
+**The optimistic rules work and the exploring rules do not.** For finding actives, `ucb` reaches
+96.6 % of the best activity in the set against 92.2 % for picking at random, hits in a median of
+four acquisitions against six, and the paired gain in hit rate is +0.163 [+0.062, +0.275]; `ei`
+hits soonest of all, in three. For improving the model, the best exploration rule gains −0.014
+RMSE over random with an interval of [−0.034, +0.006] — zero is inside it, so on these sets
+**exploring buys nothing measurable**, while `greedy` costs a clear +0.057 [+0.038, +0.078].
+
+The two tables are kept apart because an acquisition rule cannot be judged without saying what the
+acquiring is for, and three things in the numbers are worth more than the ranking.
+
+**The uncertainty rule and the diversity rule are the same rule.** `variance` and `maxmin` land on
+each other, which is the error-prediction finding from the other side: the posterior standard
+deviation of a CMF model is very nearly the distance to the training set in other units. Acquiring
+by what the model does not know and acquiring by what the series does not cover are the same
+experiment with two names.
+
+**Exploring buys nothing measurable.** The molecule the model is least sure of is the
+molecule least like the series, and what is learned from an outlier does not transfer to the
+molecules anyone will ask about next. Uncertainty sampling is a good rule for a space one intends
+to cover and a poor one for a series one intends to understand.
+
+**`greedy` does better here than it deserves to.** It ignores the posterior entirely, so a
+candidate unlike anything made is predicted at the training mean and cannot be told from a real
+answer. These sets are series of analogues, where nothing is far enough away for that failure to
+bite; on a library of diverse candidates the protection is gone, and `ei`, which at least pays for
+its optimism with a posterior, is the rule to use.
+
 # Conformations: the fourth dimension
 
 A 3D-QSAR model represents each molecule by one conformation, and the answer depends on which one.
@@ -2582,6 +2681,7 @@ not every option.
 | `diagnose` | ask a data set what it can support, before modelling it |
 | `predict` | predict with a saved model, optionally aligning by confidence first |
 | `report` | one self-contained HTML page describing a saved model |
+| `suggest` | which posed candidate to make next (expected improvement and the rest) |
 | `hetero` | the heterogeneous-series workflow: cluster, align, place, leave-one-chemotype-out |
 | `topomer` | model a series by its substituents, posed by rule |
 | `map` | chemical-space map and activity landscape (kernel PCA + GTM) |

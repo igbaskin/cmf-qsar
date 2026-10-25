@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 51 modules and about 21,800 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with sixteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
+* A library of 52 modules and about 22,100 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with seventeen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`), 578 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`, `suggest`), 590 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -458,6 +458,35 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   operation with a number. Retrospective benchmark on the Sutherland sets: start from twenty
   molecules, add one at a time by acquisition or at random, and plot the learning curves with
   their intervals.
+  **Done 25 October 2026**: `cmfqsar/active.py`, the `suggest` subcommand, and
+  `benchmarks/run_active.py`. Six rules — expected improvement, the upper confidence bound,
+  the prediction alone, the posterior standard deviation, furthest-first in field space, and
+  random — with the expected improvement in closed form and a cosine filter so that a batch is
+  not one molecule several times over.
+  **The framing that the measurement forced.** An acquisition rule cannot be judged without
+  saying what the acquiring is for, so the benchmark reports two things and keeps them apart:
+  how good the best molecule acquired is (finding an active) and the RMSE on everything not yet
+  acquired (improving the model). The q² of the pool is taken against the variance of the whole
+  set, since a rule that acquires the extremes shrinks the pool's variance and would otherwise be
+  rewarded for making the remaining molecules harder to tell apart.
+  **Measured on the eight Sutherland sets**, ten runs each, starting from twenty molecules that
+  hold no hit and acquiring a quarter of what is left, with α and λ reselected by the evidence at
+  every step from what has been acquired and nothing else (item B4 is what makes that affordable):
+  for **finding an active**, `ucb` reaches **96.6 %** of the best activity in the set against
+  **92.2 %** for random, hits in a median of **4** acquisitions against 6, and gains
+  **+0.163 [+0.062, +0.275]** in hit rate; `ei` hits soonest, in 3. For **improving the model**,
+  the best exploration rule gains **−0.014 RMSE [−0.034, +0.006]** over random — zero is inside
+  it, so **exploring buys nothing measurable** — while `greedy` costs **+0.057 [+0.038, +0.078]**.
+  **Two findings worth more than the ranking.** `variance` and `maxmin` land within **0.000 RMSE**
+  of each other and within 0.3 % of the same activity found: the posterior standard deviation of a
+  CMF model is the distance to the training set in other units, which is item E5 from the other
+  side, so there is no separate "uncertainty sampling" here to speak of. And `greedy` does better
+  than it deserves to, because a series of analogues never puts a candidate far enough away for
+  the training mean to be returned in place of a prediction; on a diverse library that protection
+  is gone, and `ei` is the rule to use.
+  **Not done:** a batch rule that refits between picks (the cosine filter is the cheap stand-in),
+  the loop closed over generated candidates rather than a given file (that is E3), and any
+  prospective test, which only a laboratory can give.
 * **E3. Co-field-guided design.** The field difference says what a candidate is missing and the
   pharmacophore says where. Close the loop: enumerate replacements of a substituent at a position
   from a fragment library, pose them by the topomer rule (`cmfqsar/topomer.py`) so no alignment is
@@ -622,7 +651,7 @@ and counts predict nothing, is the first case.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
-| Months 4 to 10 | E1 to E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
+| Months 4 to 10 | E1, ~~E2~~ **done**, E3, E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
 | Months 6 to 12 | F3, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; the review that ties the series together |
 

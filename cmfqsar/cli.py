@@ -992,6 +992,38 @@ def cmd_report(args):
         webbrowser.open(f"file://{os.path.abspath(out)}")
 
 
+def cmd_suggest(args):
+    """Rank posed candidates by an acquisition rule: item E2 of the plan."""
+    from cmfqsar.active import ACQUISITIONS, PURPOSE, suggest
+
+    model, extra = load_model(args.model)
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    mf = [build_fields(m, model.fieldset, n) for m, n in zip(ds.mols, ds.names)]
+    _check_contract(model, mf, allow=args.allow_mismatch)
+    table = AtomTable.from_molecules(mf)
+    best = float(np.max(np.asarray(model.y, float)))
+    print(f"Model {args.model}: {model.train.n_mol} molecules made so far, best activity "
+          f"{best:.3f}")
+    print(f"{len(ds)} candidates, ranked by {args.acquire}: {PURPOSE[args.acquire]}")
+    picks = suggest(model, table, kind=args.acquire, n=args.top, beta=args.beta, xi=args.xi,
+                    names=list(ds.names), max_similarity=args.max_similarity, seed=args.seed)
+    for k, p in enumerate(picks, start=1):
+        print(f"  {k:3d}. " + p.describe(args.acquire))
+    if args.out:
+        import csv
+        with open(args.out, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["rank", "name", "predicted", "sd", args.acquire, "nearest_made"])
+            for k, p in enumerate(picks, start=1):
+                w.writerow([k, p.name, f"{p.mean:.4f}", f"{p.sd:.4f}", f"{p.score:.6f}",
+                            f"{p.distance:.4f}"])
+        print(f"  written to {args.out}")
+    if args.acquire in ("greedy",):
+        print("  note: this rule ignores the posterior entirely. A candidate unlike anything "
+              "made so far is predicted at the training mean, and greedy acquisition cannot "
+              "tell that answer from a real one.")
+
+
 def cmd_explain(args):
     """Shapley decomposition of a prediction: works for linear and nonlinear kernels alike."""
     from cmfqsar.shapley import (atom_field_shapley, atom_shapley, common_core, field_shapley,
@@ -2524,6 +2556,31 @@ def main(argv=None):
     rp.add_argument("--no-pharmacophore", action="store_true")
     rp.add_argument("--open", action="store_true", help="open it in the default browser")
     rp.set_defaults(func=cmd_report)
+
+    sg = sub.add_parser("suggest", help="which posed candidate to make next (active learning)")
+    sg.add_argument("model", help="a model saved with 'build --save'")
+    sg.add_argument("dataset", help="posed candidates, in the training set's own frame")
+    sg.add_argument("--acquire", default="ei",
+                    choices=["ei", "ucb", "greedy", "variance", "maxmin", "random"],
+                    help="ei: expected improvement over the best made so far (the usual choice "
+                         "for finding actives); ucb: prediction plus beta standard deviations; "
+                         "greedy: the prediction alone; variance: what most improves the model; "
+                         "maxmin: furthest in field space from everything made, no model needed; "
+                         "random: the baseline")
+    sg.add_argument("--top", type=int, default=10, help="how many to print")
+    sg.add_argument("--beta", type=float, default=1.0, metavar="B",
+                    help="with --acquire ucb: how many standard deviations of optimism")
+    sg.add_argument("--xi", type=float, default=0.0, metavar="X",
+                    help="with --acquire ei: how much a candidate must beat the best made by "
+                         "before the improvement counts")
+    sg.add_argument("--max-similarity", type=float, default=0.98, metavar="C",
+                    help="a candidate more similar than this to one already picked is skipped, "
+                         "so that a batch is not one molecule several times")
+    sg.add_argument("--activity", default=None)
+    sg.add_argument("--allow-mismatch", action="store_true")
+    sg.add_argument("--seed", type=int, default=0)
+    sg.add_argument("--out", default=None, metavar="FILE", help="CSV of the ranked candidates")
+    sg.set_defaults(func=cmd_suggest)
 
     args = p.parse_args(argv)
     args.func(args)
