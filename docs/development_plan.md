@@ -6,12 +6,14 @@ to prove before it is allowed to stay. File references point at the code the wor
 
 ## Where the program stands
 
-The repository holds, as of 22 October 2026:
+The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
+kept current; the counts are the ones the repository gives today):
 
-* A library of 29 modules and about 12,000 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with eleven subcommands (`build`, `predict`, `unalign`, `map`, `explain`,
-  `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`, `complement`), 279 tests, a typeset
-  manual and a README that doubles as the record of every measurement made so far.
+* A library of 46 modules and about 20,000 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with fifteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
+  `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
+  `difference`, `topomer`, `complement`), 524 tests, a typeset manual and a README that doubles
+  as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
   rotation-invariant autocorrelation kernel and topomer fields; a Gaussian or arc-cosine layer on
@@ -175,32 +177,97 @@ can judge it.
   `schindler`, `ross`) have one for every ligand. Metrics: RMSD of the recovered pose to the crystal
   pose, and prediction error on held-out molecules posed without their activity. Both, always, and the
   unalign control (`cmf_cli.py unalign`) before every run.
+  **Done 22 October 2026** (`e44b271`): `cmfqsar/poses.py` -- `pose_rmsd`, `POSERS`, `judge`,
+  `judge_training_frame` -- and `benchmarks/run_poses.py`, with 88 result files and
+  `benchmarks/results/poses/table.md`. A model is fitted on the training molecules in their
+  crystal poses, the held-out poses are destroyed, and each method recovers them without ever
+  seeing a held-out activity; the table carries the RMSD and the external R2pred of the same run
+  in one row, and `scrambled` is the first method of every run, so the floor is always there.
+  The RMSD is symmetry-aware and taken **without superposition**: `GetBestRMS` would report
+  0.00 A for a ligand placed in the wrong site, and `CalcRMS` reports the 1.0 A it has moved.
+  **Still to do:** the protocol has been exercised on `examples/openff` only, 16 of its sets.
+  `schindler` and `ross` are in the repository with their pockets, and `run_poses.py` hard-codes
+  `DATA = examples/openff`; extending it to them is a data path and a run, not new work.
 * **C2. Flexible alignment by confidence.** The present search is rigid-body with analytic
   gradients. Add the torsions, with the conformer generator supplying starting points and the
   kernel gradient already in `kernel_gradient` extended by the chain rule over rotatable bonds. The
   objective becomes posterior confidence times a prior on the conformer energy, which is the
   proposal of the 2019 paper in full. Probe-field gradients, now `NotImplementedError`, are filled in
   on the way so every field can take part.
+  **Done 22 October 2026** (`e44b271`): `cmfqsar/flexalign.py` turns the rotatable bonds with the
+  torsion chain rule `dx_i/dtheta_j = a_j x (x_i - p_j)`, under a one-sided MMFF strain prior and
+  from several generated starting conformations; the probe-field branch of `kernel_gradient` is
+  filled in and agrees with finite differences to 7e-10. `--align-flexible`,
+  `--align-conformers`, `--align-energy-slack`, `--align-energy-weight`, and a tick box in
+  *Align by prediction confidence...*. The displacement guard now applies to the rigid motion
+  only, since a turning bond is not a translation.
+  Judged under C1, with the held-out **conformations regenerated**: median 0.86 A and R2pred
+  +0.264, against 1.94 A / -0.391 for substructure alignment and **2.27 A / -0.396 for the rigid
+  confidence search**, which is worse than not refining at all. That failure is what the protocol
+  was built to expose, and the torsions are what rescue the criterion. The five conformer starts
+  are worth 0.55 A of it, better on 15 of 16 sets.
+  **What remains is the conformation, not the pose:** +0.264 against the crystal poses' +0.334,
+  with a conformational residue of 0.71 A.
 * **C3. Alignment inside the pocket.** `cmfqsar/docking.py` places conformations rigidly and
   `cmfqsar/complementarity.py` scores them against the pocket fields. Use complementarity as the
   prior and confidence as the likelihood: the pose must fit the pocket and sit inside the model's
   domain. Measure against the curated frames on the FEP sets, where the curated frame is the
   crystal pose and the ceiling is known.
+  **Not done.** `cmfqsar/docking.py` scores `complementarity - clash` by rigid-body optimisation,
+  which is the prior half of the objective; the confidence likelihood is not combined with it,
+  and nothing has been measured against the curated frames. The module says of itself that it is
+  a convenience for getting a pose into the right frame, not a scoring function.
 * **C4. Training-set co-alignment done properly.** The present iteration (fit, realign, refit)
   contracts the ensemble and degrades one set in four. Treat it as what it is, an expectation-
   maximisation over poses, and regularise it: the displacement guard, a leave-one-out variance so no
   molecule is aligned against itself, and an annealed λ. Judge under C1 only.
+  **Done 24 October 2026** (`6d85fd2`), and the answer is null. `cmfqsar/coalign.py` is the
+  expectation-maximisation with all three regularisers -- a leave-fold-out error so no molecule
+  is aligned against itself, an annealed lambda, and an acceptance test that keeps a round only
+  when it improves that error by 1 % relative, with exact rollback otherwise. Judged under C1 on
+  16 FEP sets (`*_frame.json`, four rounds, guard 1.0 A): starting from scrambled training poses
+  it recovers **nothing** -- 5.56 A against the 5.55 A floor, recovery -0 %, R2pred -2.325 -- and
+  on top of a substructure alignment it is marginally **worse** than leaving it alone, 0.15 A
+  against 0.14 A and R2pred +0.267 against +0.305.
+  So the regularisation does what it was asked to do, which was to stop the iteration degrading
+  one set in four, and the method still does not find a frame. The remaining value of the item is
+  the negative result and the acceptance test, which any later co-alignment should keep.
 * **C5. A richer invariant kernel.** The field autocorrelation kernel (`cmfqsar/invariant.py`) is
   alignment-free and geometry-aware but two-point, so it is blind to chirality and to the
   orientation of one field with respect to another. A three-point extension (field triples, or the
   cross-correlation of two field types) keeps the closed form and is the natural next term. Measure
   on the five chemotype-split sets under leave-one-chemotype-out, where the alignment-free baseline
   already sets the bar.
+  **Built, not measured.** The three-point extension is in `cmfqsar/invariant.py` -- `chirality`,
+  `chirality_triples`, the `chirality` and `chirality_shells` fields of `AutocorrelationSpec`, the
+  signed triple product resolved over radial shells, with tests and the block scaling that the
+  signed channels need more than anything else does (a volume carries the cube of a length). It
+  is reachable as `--ac-chirality` and `--ac-chirality-shells`.
+  **What is missing is the measurement C5 is for:** the five chemotype-split sets under
+  leave-one-chemotype-out against the alignment-free baseline. No benchmark uses the channels,
+  no result file mentions them, and the manual does not describe them. Until that is run, the
+  item has an implementation and no answer.
 * **C6. A diagnosis of the data set.** Three diagnostics exist in pieces: α at the grid edge, the
   descriptor-only baseline that beat the 3D model on ACE, and the alignment-free baseline. Package
   them as `cmf diagnose`, which says before any modelling whether the frame carries signal, whether
   the series is congeneric enough for a frame to exist, and which of the three routes (aligned,
   topomer, invariant) the set should take. This is also the measurement that papers 3 and 4 share.
+  **Done 24 October 2026** (`a980194`): `cmfqsar/diagnose.py`, the `cmf diagnose` command,
+  `benchmarks/run_diagnose.py` and a chapter of the manual. Five routes -- aligned, counts,
+  autocorrelation, topomer, descriptors -- each choosing its hyper-parameters inside the training
+  fold and scored outside it, which costs the aligned model 0.05 on ACE and the topomer route
+  0.07 and is the size of the bias that scoring at each route's own best point would hide. Two
+  guards it needed: the activity is usually a molecule property, so the descriptor baseline is
+  handed the answer, and on the corrosion files two laboratory-adjusted columns reconstruct the
+  potency between them, which no per-column test can see -- so the outcome is judged as well.
+  **Validated by following the advice**, which is the only check that matters for a
+  recommendation: diagnose 70 % of a set, build what it recommends, score it on the rest. The
+  advice names the best of the five routes on 21 of 39 splits and falls 0.096 short of the best
+  on average; always taking the aligned model names it on 12 and costs 0.201. Per set, the honest
+  unit, the advice costs 0.105 less (95 % interval -0.259 to +0.019), better on six of thirteen
+  sets and worse on four: a hedge against the frame being meaningless, not an edge.
+  **Still hand-chosen:** the q2 < 0.1 cutoff below which the command recommends no route at all.
+  It never fired on these 39 splits, so the validation cannot set it.
 
 ## D. Fields and kernels (months 3 to 9)
 
@@ -330,8 +397,8 @@ and counts predict nothing, is the first case.
 | When | What |
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
-| Months 2 to 6 | B4 (evidence), D6, C1 (the protocol) and C2 (flexible alignment); F2 (co-field uncertainty) |
-| Months 3 to 9 | D1 to D5; C3 to C6; F1 (case studies) |
+| Months 2 to 6 | B4 (evidence), D6, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
+| Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, C5 (built, unmeasured), ~~C6~~ **done**; F1 (case studies) |
 | Months 4 to 10 | E1 to E6; G1 and G2 alongside |
 | Months 6 to 12 | F3 to F5; H begins with separations |
 | Year 2 | H; the review that ties the series together |
