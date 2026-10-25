@@ -699,6 +699,8 @@ and counts predict nothing, is the first case.
   with a shared frame (phosphines, N-heterocyclic carbenes) and rate or selectivity as the
   activity. Sybyl typing has to be extended for metal centres before the indicator fields apply;
   that extension is EC4 below, and electrocatalysis is where the series with a free frame are.
+  Properties of an atom rather than a molecule (pKa, NMR shifts, site reactivity) are the LP
+  items below: the same kernels on a sample the program does not yet have.
 * **Peptides.** `mittal/AMPH1` is 130 decapeptides that no configuration models, and the reason is
   a 3.2 Å superposition error over a flexible chain. It is the test case for C2 and C3 together, and
   the plan expects it to stay hard.
@@ -1046,6 +1048,76 @@ benchmark on the voltages before any new kernel is written. BT4 next, since BT5 
 complex that builds and aligns, and BT2 as BT3 and BT4 need it. BT6 with M4, BT7 after M5, BT5 only
 after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
 
+### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
+
+The Hammett study (`examples/hammett`, `benchmarks/results/hammett/`) needed no new code because
+its sample was still a molecule: a substituent constant is a molecular label in a frame the ring
+fixes, and the co-field came out of the ordinary machinery. A pKa, an NMR shift, an atomic charge
+or a site reactivity is a label on an atom in its environment, and that changes the sample. The
+program has no object for an atom-in-molecule, no loader for a target with one value per atom, no
+fold rule that keeps the atoms of one molecule together, and no co-field drawn around an atom.
+Everything else carries over: the kernels in `cmfqsar/kernels.py` are bilinear sums over Gaussians
+and do not ask what the Gaussians belong to; the regression, the GP variance, the `prop:` fields
+for quantum inputs, the conformer averaging, the Shapley and difference-field tools all apply to
+an environment as they apply to a molecule. M5 (site-resolved models) asks for the same three
+missing pieces on the periodic side, site-centred features, per-site targets and a per-site
+decomposition; the data model and the fold rule are to be designed once and shared. The reference
+under rule 1 is an atom-centred count kernel (counts of atom types in distance shells about the
+centre), which is what a per-atom increment scheme is, and every item below is measured against it
+on the same folds.
+
+**Small (days)**
+
+* **LP1. Per-atom targets in the data model.** A target that is an atom property (one number per
+  atom, blank where the atom has none), a sample index (molecule, atom) carried through loading,
+  fitting and prediction, and cross-validation folds grouped by molecule, since atoms of one
+  molecule are not independent samples; the grouped folds of `cmfqsar/chemotypes.py` are the
+  pattern. Output as atom properties on the written SDF, so that a predicted shift or pKa sits
+  on the atom it belongs to. No model yet; LP2 and M5 both need it first.
+
+**Medium (one to two weeks each)**
+
+* **LP2. Atom-centred environments and the invariant local kernel.** A builder that turns one
+  molecule into N samples: the molecule's fields in a frame with the origin on atom a, multiplied
+  by a Gaussian envelope of width ρ about a. The product of two Gaussians is a Gaussian, so the
+  envelope keeps the closed-form overlap and the atom decomposition; ρ is a hyper-parameter like
+  α, short for a shielding (a few Å), longer for an acidity. The frame-free kernel is the
+  autocorrelation of `cmfqsar/invariant.py` taken from the centre instead of over all pairs,
+  which is the site-centred feature row that M5 names, and it is the first thing to measure
+  because it needs no alignment: carbon shifts on a subset of nmrshiftdb2 of a few thousand
+  atoms, and carboxylic acid pKa with the difference field of acid and anion (`cmfqsar/fielddiff.py`)
+  as the sample, since the free energy of deprotonation is a response to that change. Gate: beats
+  the count kernel by more than the interval of rule 4 on both.
+* **LP3. Local alignment and the co-field around an atom.** For a congeneric site (the carboxyl
+  group, an aromatic carbon with its two neighbours) a superposition on the centre and its first
+  shell is well posed, and the overlap kernel in that frame gives what the invariant kernel
+  cannot: a co-field around the atom that says where in its surroundings, and in which field, a
+  feature raises or lowers the property, the local analogue of the Hammett co-fields. Needs the
+  local superposition, `cofields.py` on an environment, and a panel in the application that shows
+  the environment with its co-field instead of the molecule. Gate: the pKa co-field of the
+  substituted benzoic acids reproduces the meta/para picture of `benchmarks/results/hammett/`
+  from per-atom data alone.
+* **LP4. Conformers, tautomers and states for a local target.** A shift is a conformer average
+  and a pKa is a property of a site in one protonation state. The ensemble builder gives the
+  first for free once an environment is a field; the second waits for D4 (members with their own
+  atoms), since acid and anion differ by an atom. The site assignment (which atom carries the
+  macroscopic pKa, which tautomer is in solution) is data preparation under rule 6, scripted per
+  set, not a module.
+
+**Large (a month or more)**
+
+* **LP5. Scale.** nmrshiftdb2 and the DFT shift sets hold hundreds of thousands of carbons, past
+  what an exact kernel handles; a Nyström or inducing-point GP over environments (part B's scale
+  work applied to the local kernel) is the route, and it waits until LP2 and LP3 have shown on the
+  small sets that the co-field says something a chemist recognises. The ShiftML precedent (SOAP
+  with Gaussian-process regression, about 0.5 ppm on protons in molecular crystals) is the number
+  to reach, and the co-field is what CMF would add to it.
+
+**Order.** LP1 first and shared with M5. LP2 next, invariant kernel and pKa by difference field,
+because it needs no alignment and settles whether the environment field carries the property.
+LP3 after LP2 has reported, since its co-field is the point of the exercise but costs the alignment
+step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
+
 ## Sequence
 
 | When | What |
@@ -1055,7 +1127,7 @@ after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
-| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; the review that ties the series together |
+| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
