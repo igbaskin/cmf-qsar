@@ -1753,6 +1753,9 @@ class SearchResult:
     best_q2: float
     table: List[dict]          # rows: alpha, params, rmse_cv, q2
     y_cv: Optional[np.ndarray] = None
+    # one attenuation per field, when the per-field descent of cmfqsar/perfield.py ran
+    best_alphas: Optional[Dict[str, float]] = None
+    per_field: Optional[object] = None       # the PerFieldResult, with its trace
 
 
 def _param_grid(method: str, lams, Cs, epsilons, nus):
@@ -1849,6 +1852,21 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
             "there are no negatives to score against. nu is the expected fraction of outliers and "
             "alpha sets the level of generalisation; choose them directly (see Fig. 5 of Baskin & "
             "Zhokhova 2019) and fit the model.")
+    if alpha_search == "per-field":
+        # the descent reuses the shared grid's kernels and scores with the evidence; both are
+        # what make one width per field affordable at all (see cmfqsar/perfield.py)
+        if select != "evidence":
+            raise ValueError("one attenuation per field is searched by the evidence: a coordinate "
+                             "descent over the widths costs ten times more on a cross-validated "
+                             "score, and the full grid 5^5 times more; pass --select evidence")
+        if not model.uses_fields:
+            raise ValueError("this kernel has no per-field attenuation to search")
+        if len(list(alphas)) < 2:
+            raise ValueError("the per-field search needs an alpha grid with at least two widths")
+        if alpha_fields:
+            raise ValueError("--alpha-fields restricts one shared width to some of the fields; "
+                             "the per-field search gives every field its own and the two "
+                             "restrictions cannot both hold")
     if not model.is_linear:
         if alpha_search == "nelder-mead" or lam_search == "brent":
             raise ValueError("the continuous alpha/lambda searches of the original scripts are "
@@ -2075,10 +2093,20 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
         model.K_fields_train, model.scale, model.self_diag, model.train = Kf, scale, sd, train
     else:
         model.train = train                  # a kernel source with nothing to cache per alpha
+    pf = None
+    if alpha_search == "per-field" and cache and len(model.fieldset.specs) > 1:
+        # from the best shared width, one field at a time; the model is left holding the result
+        from .perfield import descend
+        pf = descend(train, y, model, cache, alpha_list, grid, alpha, params,
+                     start_evidence=q2, progress=progress, cancel=cancel)
+        params, q2, r = dict(pf.params), pf.log_evidence, -pf.log_evidence
+        rows.append({"alpha": float("nan"), **params, "rmse_cv": r, "q2": q2,
+                     "per_field": dict(pf.alphas)})
     if progress:
         progress("Search finished", 1.0)
     return SearchResult(best_alpha=float("nan") if alpha is None else alpha, best_params=params, best_h=h_best,
-                        best_rmse=r, best_q2=q2, table=rows, y_cv=ycv)
+                        best_rmse=r, best_q2=q2, table=rows, y_cv=ycv,
+                        best_alphas=None if pf is None else dict(pf.alphas), per_field=pf)
 
 
 # --------------------------------------------------------------------------- #

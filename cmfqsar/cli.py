@@ -508,6 +508,8 @@ def cmd_build(args):
     print()
     knob = (f"sigma = {args.ac_sigma:g} A" if args.kernel == "autocorrelation"
             else f"alpha = {res.best_alpha:g}")
+    if res.best_alphas is not None:
+        knob = "alpha = " + ", ".join(f"{n} {a:g}" for n, a in res.best_alphas.items())
     if args.task == "classification":
         print(f"Best: {knob}, {res.best_params}, "
               f"1-AUCcv = {res.best_rmse:.3f}, balanced accuracy = {res.best_q2:.3f}")
@@ -515,6 +517,14 @@ def cmd_build(args):
         # the search minimised the negative log evidence, so that is what to report
         print(f"Best: {knob}, {res.best_params}, log evidence = {res.best_q2:.1f} "
               f"(chosen without holding anything out)")
+        pf = res.per_field
+        if pf is not None:
+            # what the extra freedom bought, in the units the descent was scored in
+            print(f"Per-field widths: {pf.gain:+.1f} in log evidence over the shared "
+                  f"alpha = {pf.shared_alpha:g}, in {pf.n_eval} factorisations"
+                  + (" (the descent came back to one shared width)" if pf.is_shared else "")
+                  + (f"; {', '.join(pf.skipped)} left alone, no width to search"
+                     if pf.skipped else ""))
     elif args.method == "ranksvm":
         # the search minimises 1 - rho for a ranking model, so that is what to call it
         print(f"Best: {knob}, {res.best_params}, rho(cv) = {res.best_q2:+.3f}")
@@ -1851,10 +1861,12 @@ def main(argv=None):
     b.add_argument("--lams", default="1e-4,1e-3,1e-2,0.1,1,10")
     b.add_argument("--lam-search", default="grid", choices=["grid", "brent"],
                    help="brent: continuous minimisation of RMSEcv over lambda within [min, max] of --lams")
-    b.add_argument("--alpha-search", default="grid", choices=["grid", "nelder-mead"],
+    b.add_argument("--alpha-search", default="grid", choices=["grid", "nelder-mead", "per-field"],
                    help="nelder-mead: simultaneous minimisation of RMSEcv over (alpha, lambda) with R's "
                         "Nelder-Mead simplex on kernels interpolated between the --alphas grid points "
-                        "(protocol of the 2015 CIF paper); --lams is then ignored")
+                        "(protocol of the 2015 CIF paper); --lams is then ignored. "
+                        "per-field: one attenuation per field by coordinate descent on the evidence, "
+                        "starting from the best shared width (needs --select evidence)")
     b.add_argument("--nm-start", default="0.25,5",
                    help="starting point alpha,lambda of the Nelder-Mead search (default: that of the R scripts)")
     b.add_argument("--Cs", default="0.1,1,10,100")

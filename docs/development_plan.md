@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 48 modules and about 20,400 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 49 modules and about 20,600 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with fifteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`), 540 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`), 549 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -172,8 +172,10 @@ larger searches in parts C and E.
   The finding worth keeping is next to it: the two criteria land on the **same point of the grid
   in 0 to 60 % of splits** and predict equally well regardless, so the surface is flat near its
   optimum and the cost of the search matters more than the point it picks.
-  **Not done:** the 86-set measurement of the item's own text, and the per-field α (D6) that this
-  makes affordable. The second is the reason the first was worth doing.
+  **Not done:** the 86-set measurement of the item's own text. The per-field α this makes
+  affordable was the reason the item was worth doing, and it was spent at once: D6 below, where
+  the saving buys five widths instead of one, the evidence improves on every split and external
+  prediction does not move. The second finding is the more useful of the two.
 * **B5. Optional compiled kernels.** Only if B1 and B2 leave screening too slow: a Numba path for the
   atom-pair block, behind the same function signature, with the NumPy path as the reference.
 
@@ -371,6 +373,27 @@ can judge it.
   the increments are a per-set nuisance parameter and the plan says so.
 * **D6. Per-field widths.** Follows from B4: once the evidence selects hyper-parameters, α per field
   is five numbers instead of one, and the co-fields become sharper for the field that wants it.
+  **Done 25 October 2026, and the answer is no**: `cmfqsar/perfield.py` and
+  `--alpha-search per-field`, a coordinate descent on the evidence over one α per field, starting
+  from the best shared width. It is affordable for the two reasons B4 promised — the per-field
+  kernels are independent, so every one of the 5⁵ assignments is assembled from the matrices the
+  shared grid already built, and a candidate costs one factorisation — and it costs a few hundred
+  factorisations in practice.
+  **Measured on the eight Sutherland sets**, five 70/30 splits each: the descent gains **+2.6 in
+  log evidence on every one of the 40 splits**, moves **3.5 of the 5 widths** on average, settles
+  on widths that read correctly (steric sharpest at mean α 2.33, donor widest at 1.16) — and
+  changes external prediction by **−0.001 R²pred**, 95 % interval [−0.020, +0.018], ahead on four
+  of eight sets and on **20 of 40 splits**. The correlation between what a split gained in
+  evidence and what it gained in R²pred is **−0.07**.
+  So the item is implemented and the hypothesis behind it is refuted: the extra freedom is real,
+  the criterion likes it, and the molecules held out cannot tell. Read together with B4 — where
+  two criteria disagreed about the shared width and predicted equally well — this says the
+  attenuation surface is flat around its optimum, and that the search is not where a CMF model's
+  accuracy is won. The flag stays for asking the question of a new series; it is not a default,
+  and nothing else in the plan should be built on the assumption that a finer α grid pays.
+  The co-field half of the item is untouched: whether a per-field width makes a co-field easier to
+  read is a question about interpretation, not accuracy, and it needs an eye rather than a
+  benchmark.
 
 **Molecular dynamics as the source of the ensemble (D7 to D10).** The fourth-dimension study used
 conformations generated from one input pose, and its verdict is that none of five routes beats one
@@ -517,7 +540,7 @@ and counts predict nothing, is the first case.
 | When | What |
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
-| Months 2 to 6 | ~~B4 (evidence)~~ **done**, D6, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
+| Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1 to E6; G1 and G2 alongside |
 | Months 6 to 12 | F3 to F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |

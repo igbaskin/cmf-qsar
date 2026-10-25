@@ -1337,7 +1337,8 @@ The two are indistinguishable in quality and the evidence is four times faster a
 The detail worth more than either number is that **they agree on the point of the grid in 0 to
 60 % of splits** and reach the same predictive quality anyway: the surface is flat near its
 optimum, so what a search costs matters more than which point it lands on. That is also what
-makes a finer grid — a separate α per field, say — affordable for the first time.
+makes a finer grid — a separate α per field, say — affordable for the first time, and the next
+section spends the saving on exactly that and reports what it bought, which was nothing.
 
 The evidence is not a cross-validated score and does not pretend to be. It answers *how probable
 are these activities under this model*, not *how well would this model predict a molecule it has
@@ -1345,6 +1346,48 @@ not seen*, and the two can part company when the kernel is misspecified, which f
 fields is the normal case. On these sets they do not. It is available for regression with `krr`
 or `gp`; the support-vector methods and the classifiers have no such quantity and are refused
 rather than silently cross-validated.
+
+### One width per field
+
+One α for five fields is a convention, not a result. Electrostatics is long-ranged and a
+hydrogen-bond donor is nearly a point; there is no reason the same attenuation suits both. The
+protocol of the papers shared it because the arithmetic said so — a grid over one width is five
+kernels, a grid over one width per field is 5⁵ of them — and the evidence removes that objection
+twice over. The per-field kernels are independent, so every combination is assembled from the
+matrices the shared grid already built, and each candidate costs one factorisation. A coordinate
+descent over the widths, starting from the best shared one, then costs a few hundred:
+
+```bash
+python cmf_cli.py build data.sdf --select evidence --alpha-search per-field
+```
+
+It reports the width of each field and what the freedom bought in the units it was selected in.
+Fields whose kernel does not depend on α at all — the probe fields, whose widths come from their
+own expansion — are left alone rather than searched in vain.
+
+**Measured, the freedom is real and worthless.** Eight Sutherland sets, five 70/30 splits each,
+the shared width chosen by the evidence on the training part and the descent started from it:
+
+| | |
+|---|---|
+| log evidence gained by the per-field widths | **+2.6**, on every one of the 40 splits |
+| widths moved away from the shared one | 3.5 of 5 on average, and at least one on every split |
+| R²pred against the shared width | **−0.001**, 95 % interval [−0.020, +0.018], better on 4 of 8 sets |
+| the same count per split | ahead on **20 of 40** |
+| correlation of the evidence gained with the R²pred gained | **−0.07** |
+
+The descent does what it was asked: it moves most of the widths, improves its criterion every
+time, and settles on widths a chemist would not argue with — the steric field sharpest (mean α
+2.33), the donor field widest (1.16). The molecules held out cannot tell the difference, and the
+gain in evidence carries no information about whether a split improved.
+
+This is the same flat surface the previous section found from the other side. There, two different
+criteria picked different shared widths and predicted equally well; here, one criterion is given
+five widths instead of one, moves them, and predicts equally well. Around its optimum the
+attenuation does not decide much, and five of them decide no more than one — which is worth
+knowing, because it says the search is not where the accuracy of a CMF model is won. The alignment
+is (see *Alignment*, and the third part of `docs/benchmark.md`). Use `--alpha-search per-field` to
+ask the question of a new series, not as a default.
 
 ## Validation
 

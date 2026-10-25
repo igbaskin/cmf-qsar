@@ -1,0 +1,158 @@
+{
+ "set": "COX2",
+ "n": 282,
+ "rows": [
+  {
+   "repeat": 0,
+   "shared": {
+    "alpha": 2.0,
+    "lam": 1.0,
+    "evidence": -252.07794241719796,
+    "r2": 0.5623367496270514,
+    "rmse": 0.8037686976043159,
+    "seconds": 0.0384669303894043
+   },
+   "perfield": {
+    "alphas": {
+     "electrostatic": 0.2,
+     "steric": 2.0,
+     "hydrophobic": 2.0,
+     "hba": 4.0,
+     "hbd": 0.2
+    },
+    "lam": 1.0,
+    "evidence": -249.12946208381956,
+    "r2": 0.5876699804150283,
+    "rmse": 0.7801597230379794,
+    "seconds": 0.34987831115722656,
+    "n_eval": 200,
+    "moved": 3
+   }
+  },
+  {
+   "repeat": 1,
+   "shared": {
+    "alpha": 4.0,
+    "lam": 1.0,
+    "evidence": -238.98208364466893,
+    "r2": 0.4421028473083356,
+    "rmse": 0.9395444355261129,
+    "seconds": 0.03567647933959961
+   },
+   "perfield": {
+    "alphas": {
+     "electrostatic": 1.0,
+     "steric": 4.0,
+     "hydrophobic": 4.0,
+     "hba": 4.0,
+     "hbd": 0.2
+    },
+    "lam": 1.0,
+    "evidence": -237.3449328418355,
+    "r2": 0.4448585967845965,
+    "rmse": 0.9372211091842803,
+    "seconds": 0.34839534759521484,
+    "n_eval": 200,
+    "moved": 2
+   }
+  },
+  {
+   "repeat": 2,
+   "shared": {
+    "alpha": 2.0,
+    "lam": 1.0,
+    "evidence": -254.9456104127565,
+    "r2": 0.5841528186212213,
+    "rmse": 0.784416742475664,
+    "seconds": 0.03582620620727539
+   },
+   "perfield": {
+    "alphas": {
+     "electrostatic": 0.5,
+     "steric": 4.0,
+     "hydrophobic": 2.0,
+     "hba": 4.0,
+     "hbd": 0.2
+    },
+    "lam": 1.0,
+    "evidence": -251.6694794754674,
+    "r2": 0.5823501742301499,
+    "rmse": 0.7861150771199011,
+    "seconds": 0.3769528865814209,
+    "n_eval": 200,
+    "moved": 4
+   }
+  },
+  {
+   "repeat": 3,
+   "shared": {
+    "alpha": 4.0,
+    "lam": 1.0,
+    "evidence": -254.82559396621156,
+    "r2": 0.41094404783387983,
+    "rmse": 0.7837079900106169,
+    "seconds": 0.03827190399169922
+   },
+   "perfield": {
+    "alphas": {
+     "electrostatic": 4.0,
+     "steric": 4.0,
+     "hydrophobic": 0.2,
+     "hba": 4.0,
+     "hbd": 0.2
+    },
+    "lam": 0.1,
+    "evidence": -253.16369801090295,
+    "r2": 0.3165494043763336,
+    "rmse": 0.8441693179249278,
+    "seconds": 0.35958003997802734,
+    "n_eval": 200,
+    "moved": 2
+   }
+  },
+  {
+   "repeat": 4,
+   "shared": {
+    "alpha": 2.0,
+    "lam": 1.0,
+    "evidence": -257.6515529919436,
+    "r2": 0.5410855271030764,
+    "rmse": 0.7443054830279365,
+    "seconds": 0.04438519477844238
+   },
+   "perfield": {
+    "alphas": {
+     "electrostatic": 1.0,
+     "steric": 4.0,
+     "hydrophobic": 0.5,
+     "hba": 4.0,
+     "hbd": 0.2
+    },
+    "lam": 0.1,
+    "evidence": -252.33787463246998,
+    "r2": 0.5305084241801135,
+    "rmse": 0.7528340318414856,
+    "seconds": 0.38330650329589844,
+    "n_eval": 200,
+    "moved": 5
+   }
+  }
+ ],
+ "repeats": 5,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.2,
+  0.5,
+  1.0,
+  2.0,
+  4.0
+ ],
+ "passes": 2,
+ "seconds": 23.4
+}
