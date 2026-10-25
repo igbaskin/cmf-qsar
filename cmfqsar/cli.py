@@ -503,7 +503,7 @@ def cmd_build(args):
                       epsilons=_floats(args.epsilons), nus=_floats(args.nus),
                       gammas=_floats(args.gammas), folds=args.folds, seed=seed,
                       optimize_h=args.optimize_h, mkl=args.mkl or False, mkl_rho=args.mkl_rho, progress=prog,
-                      lam_search=args.lam_search,
+                      lam_search=args.lam_search, select=args.select,
                       alpha_search=args.alpha_search, nm_start=nm_start)
     print()
     knob = (f"sigma = {args.ac_sigma:g} A" if args.kernel == "autocorrelation"
@@ -511,6 +511,10 @@ def cmd_build(args):
     if args.task == "classification":
         print(f"Best: {knob}, {res.best_params}, "
               f"1-AUCcv = {res.best_rmse:.3f}, balanced accuracy = {res.best_q2:.3f}")
+    elif args.select == "evidence":
+        # the search minimised the negative log evidence, so that is what to report
+        print(f"Best: {knob}, {res.best_params}, log evidence = {res.best_q2:.1f} "
+              f"(chosen without holding anything out)")
     elif args.method == "ranksvm":
         # the search minimises 1 - rho for a ranking model, so that is what to call it
         print(f"Best: {knob}, {res.best_params}, rho(cv) = {res.best_q2:+.3f}")
@@ -1938,6 +1942,8 @@ def main(argv=None):
     b.add_argument("--bootstrap-refit", type=int, default=0, metavar="N",
                    help="Cramer's bootstrap as well: N resamples of the training set, each "
                         "refitted and scored on the molecules left out of the bag")
+    b.add_argument("--select", default="cv", choices=["cv", "evidence"],
+                   help="how alpha and lambda are chosen: by cross-validation, or by the Gaussian-process marginal likelihood, which costs one factorisation per candidate instead of one per fold and holds nothing out (regression with krr or gp only)")
     b.add_argument("--rank-gap", type=float, default=0.0, metavar="D",
                    help="ranksvm: ignore pairs whose activities differ by less than this. A pair "
                         "closer than the experimental error is a coin toss, and learning it is "

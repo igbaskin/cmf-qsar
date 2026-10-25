@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 46 modules and about 20,000 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 48 modules and about 20,400 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with fifteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`), 524 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`), 540 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -159,6 +159,21 @@ larger searches in parts C and E.
   per-field α, which the 2013 protocol shared across fields because a grid over five widths was
   unaffordable. Measure on the 86 sets: evidence against cross-validation, shared α against per-field
   α, with the usual intervals.
+  **Done 25 October 2026**: `cmfqsar/evidence.py` and `--select evidence` on `build`. The bias is
+  marginalised under a flat prior rather than fitted, since the matching Gaussian process has an
+  unknown constant mean and fitting it before scoring would count it twice; the kernel amplitude
+  is profiled out at its closed-form optimum, so the criterion depends on α and λ alone and its
+  ranking is unmoved by the units of the activity. Both forms are checked against the textbook
+  expression in the tests.
+  **Measured on the eight Sutherland sets**, five 70/30 splits each, both criteria searching the
+  same grid on the training part: R²pred +0.471 chosen by cross-validation against +0.479 chosen
+  by the evidence, a paired difference of **+0.007** with a 95 % interval of [−0.013, +0.028],
+  better on six of eight sets. Indistinguishable in quality, four times faster at selecting.
+  The finding worth keeping is next to it: the two criteria land on the **same point of the grid
+  in 0 to 60 % of splits** and predict equally well regardless, so the surface is flat near its
+  optimum and the cost of the search matters more than the point it picks.
+  **Not done:** the 86-set measurement of the item's own text, and the per-field α (D6) that this
+  makes affordable. The second is the reason the first was worth doing.
 * **B5. Optional compiled kernels.** Only if B1 and B2 leave screening too slow: a Numba path for the
   atom-pair block, behind the same function signature, with the NumPy path as the reference.
 
@@ -502,7 +517,7 @@ and counts predict nothing, is the first case.
 | When | What |
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
-| Months 2 to 6 | B4 (evidence), D6, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
+| Months 2 to 6 | ~~B4 (evidence)~~ **done**, D6, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; F2 (co-field uncertainty) |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1 to E6; G1 and G2 alongside |
 | Months 6 to 12 | F3 to F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |

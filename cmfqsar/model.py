@@ -1811,7 +1811,7 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
                 progress: Optional[ProgressFn] = None, cancel: Optional[CancelFn] = None,
                 lam_search: str = "grid", precomputed: Optional[Dict] = None,
                 alpha_search: str = "grid", nm_start: Sequence[float] = (0.25, 5.0),
-                nm_maxit: int = 500) -> SearchResult:
+                nm_maxit: int = 500, select: str = "cv") -> SearchResult:
     """Minimise RMSEcv over alpha (shared by all fields unless `alpha_fields` restricts it)
     and the learner's regularisation parameters.  Optionally refine the mixing
     coefficients h_f by coordinate descent (beware of model-selection bias), or set them by
@@ -1836,6 +1836,13 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
     (used by :func:`nested_cv` to avoid recomputing kernels for every outer fold).
     ``seed=None`` selects the deterministic interleaved folds of the original scripts."""
     y = np.asarray(y, float)
+    if select not in ("cv", "evidence"):
+        raise ValueError(f"unknown selection criterion {select!r}: 'cv' or 'evidence'")
+    if select == "evidence" and (model.task != "regression" or model.method not in ("krr", "gp")):
+        raise ValueError("the evidence is the marginal likelihood of a Gaussian process, so it "
+                         "selects for regression with krr or gp; the support-vector methods and "
+                         "the classifiers have no such quantity and are selected by "
+                         "cross-validation")
     if model.task == "oneclass":
         raise ValueError(
             "hyper-parameters of a one-class model cannot be selected by cross-validation: "
@@ -1920,15 +1927,24 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
                 model.params["gamma"] = float(gamma)
             K = model.apply_layer(K_lin, dg, dg)
             for params in grid:
-                if use_mkl:
+                if select == "evidence":
+                    # one factorisation per candidate instead of one per fold, and nothing is
+                    # held out; the loss is the negative log evidence so that smaller still wins
+                    from .evidence import log_evidence
+                    ev = log_evidence(K, y, float(params.get("lam", 1.0)),
+                                      fit_bias=model.fit_bias)
+                    r, q2, ycv = -ev, ev, None
+                elif use_mkl:
                     ycv, _ = mkl_cv_predict(Kf, y, model, params, folds=folds, seed=seed,
                                             fold_h=fold_h)
+                    r, q2 = cv_loss(model, y, ycv)
                 elif fold_blocks is not None:
                     ycv = block_cv_predict(model, y, params, fold_blocks)
+                    r, q2 = cv_loss(model, y, ycv)
                 else:
                     ycv = cv_predict(K, y, model.method, params, folds=folds, seed=seed,
                                      fit_bias=model.fit_bias)
-                r, q2 = cv_loss(model, y, ycv)
+                    r, q2 = cv_loss(model, y, ycv)
                 row = {"alpha": float("nan") if alpha is None else alpha, **params,
                        "rmse_cv": r, "q2": q2}
                 if gamma is not None:

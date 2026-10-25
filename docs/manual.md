@@ -1303,6 +1303,49 @@ Multiple kernel learning chooses the mixing coefficients $h_f$ rather than leavi
 either by coordinate descent on the cross-validated error or by centred kernel alignment
 (`--mkl align|alignf`), which is a closed-form, training-only criterion.
 
+## Choosing α and λ without holding anything out
+
+Everything above chooses hyper-parameters by cross-validation: ten fits and ten predictions per
+candidate, and the best held-out score wins. A kernel ridge model is the posterior mean of a
+Gaussian process, and a Gaussian process scores its own hyper-parameters without holding anything
+out. The marginal likelihood — the probability of the training activities with the weights
+integrated away — is one determinant and one quadratic form on the factorisation the fit needs
+anyway, so a candidate costs **one factorisation instead of ten**:
+
+```bash
+python cmf_cli.py build data.sdf --charges file --select evidence
+```
+
+Two things are done to it on the way, and both matter. The bias of the program's KRR is a
+constant mean in the Gaussian process, so it is **marginalised under a flat prior** rather than
+fitted and then scored, which would count it twice. And the amplitude of the kernel — unknowable,
+since the kernels are cosine-normalised and the activities arrive in whatever units the assay
+used — is **profiled out** at its closed-form optimum, so the criterion depends on α and λ alone
+and its ranking does not move when the activity is rescaled.
+
+**Measured, it chooses as well and costs a quarter as much.** Over the eight Sutherland sets,
+five random 70/30 splits each, with both criteria searching the same grid on the training part
+and both choices scored on the held-out molecules:
+
+| | R²pred |
+|---|---:|
+| chosen by cross-validation | +0.471 |
+| chosen by the evidence | +0.479 |
+| paired difference | **+0.007**, 95 % interval [−0.013, +0.028], better on 6 of 8 sets |
+
+The two are indistinguishable in quality and the evidence is four times faster at selecting.
+The detail worth more than either number is that **they agree on the point of the grid in 0 to
+60 % of splits** and reach the same predictive quality anyway: the surface is flat near its
+optimum, so what a search costs matters more than which point it lands on. That is also what
+makes a finer grid — a separate α per field, say — affordable for the first time.
+
+The evidence is not a cross-validated score and does not pretend to be. It answers *how probable
+are these activities under this model*, not *how well would this model predict a molecule it has
+not seen*, and the two can part company when the kernel is misspecified, which for molecular
+fields is the normal case. On these sets they do not. It is available for regression with `krr`
+or `gp`; the support-vector methods and the classifiers have no such quantity and are refused
+rather than silently cross-validated.
+
 ## Validation
 
 - **k-fold cross-validation** (10 by default) gives q² and RMSEcv. Folds are shuffled unless you
