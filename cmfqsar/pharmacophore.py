@@ -29,8 +29,9 @@ replacement for the co-field: discretising throws away what the continuous descr
 from __future__ import annotations
 
 import csv
+import os
 from dataclasses import dataclass
-from typing import List, Optional, Sequence
+from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -267,3 +268,122 @@ def write_pdb(path: str, features: Sequence[Feature]) -> None:
                      f"{f.centre[0]:8.3f}{f.centre[1]:8.3f}{f.centre[2]:8.3f}"
                      f"{min(abs(f.importance), 99.99):6.2f}{f.radius:6.2f}          {el:>2s}\n")
         fh.write("END\n")
+
+
+# --------------------------------------------------------------------------- #
+# Exporting the query (plan item F5)
+# --------------------------------------------------------------------------- #
+
+#: what each of this program's feature types is called in a pharmacophore query.  Three of them
+#: have no counterpart: "bulk" asks for atoms of any kind, which no query language expresses,
+#: and the disfavoured "polar", "acceptor_bad" and "donor_bad" say that a *particular* kind of
+#: group is unwelcome, which an exclusion sphere -- the only negative a query has -- overstates
+#: by excluding every atom.
+PHARMIT_TYPE = {
+    "donor": "HydrogenDonor", "acceptor": "HydrogenAcceptor", "hydrophobic": "Hydrophobic",
+    "positive": "PositiveIon", "negative": "NegativeIon",
+    "exclusion": "ExclusionSphere", "pocket": "ExclusionSphere",
+}
+#: the same, in the names the LigandScout-style PML uses
+PML_TYPE = {"donor": "HBD", "acceptor": "HBA", "hydrophobic": "H", "positive": "PI",
+            "negative": "NI"}
+#: feature types that become an exclusion volume rather than a feature
+PML_EXCLUSION = ("exclusion", "pocket")
+
+
+def exportable(features: Sequence[Feature]) -> Tuple[List[Feature], List[Feature]]:
+    """(what a query can say, what it cannot) -- so that the caller can report the remainder."""
+    keep = [f for f in features if f.kind in PHARMIT_TYPE]
+    drop = [f for f in features if f.kind not in PHARMIT_TYPE]
+    return keep, drop
+
+
+def _query_order(features: Sequence[Feature], enable_top: int) -> List[bool]:
+    """Which features a screening run should start with: the strongest, and every exclusion.
+
+    A query is a conjunction, so a dozen features at once retrieves nothing; the strongest few
+    are enabled and the rest are written disabled, for the user to switch on in their own
+    program.  Exclusion spheres are not conjunctive in the same way -- they only forbid -- so
+    they are all enabled.
+    """
+    order = sorted(range(len(features)), key=lambda i: -abs(features[i].importance))
+    on = [False] * len(features)
+    taken = 0
+    for i in order:
+        if features[i].kind in ("exclusion", "pocket"):
+            on[i] = True
+            continue
+        if taken < max(0, int(enable_top)):
+            on[i] = True
+            taken += 1
+    return on
+
+
+def write_pharmit(path: str, features: Sequence[Feature], enable_top: int = 4) -> List[Feature]:
+    """Write a Pharmit session (JSON).  Returns the features that could not be expressed.
+
+    Pharmit (pharmit.csb.pitt.edu) reads this file as a query over its own screening libraries.
+    The hydrogen-bond features are written without a direction, because a co-field has none: it
+    says that a donor *here* raises the activity and nothing about where its hydrogen points.
+    """
+    import json as _json
+
+    keep, drop = exportable(features)
+    on = _query_order(keep, enable_top)
+    points = []
+    for f, enabled in zip(keep, on):
+        points.append({"name": PHARMIT_TYPE[f.kind],
+                       "x": round(float(f.centre[0]), 4), "y": round(float(f.centre[1]), 4),
+                       "z": round(float(f.centre[2]), 4),
+                       "radius": round(float(f.radius), 4),
+                       "enabled": bool(enabled), "vector_on": 0, "minsize": "", "maxsize": "",
+                       "svector": {"x": 0, "y": 0, "z": 0}, "hasvec": False})
+    with open(path, "w", encoding="utf-8") as fh:
+        _json.dump({"points": points}, fh, indent=1)
+    return drop
+
+
+def write_pml(path: str, features: Sequence[Feature], name: str = "CMF co-field",
+              enable_top: int = 4) -> List[Feature]:
+    """Write a LigandScout-style pharmacophore (PML, XML).  Returns what it could not express.
+
+    Hydrogen-bond features are written as points rather than as the vectors that format usually
+    carries, for the same reason: the co-field gives a place, not a direction.
+    """
+    import xml.etree.ElementTree as ET
+
+    keep, drop = exportable(features)
+    on = _query_order(keep, enable_top)
+    root = ET.Element("pharmacophore", {"name": name, "pharmacophoreType": "LIGAND_SCOUT"})
+    for i, (f, enabled) in enumerate(zip(keep, on), start=1):
+        attrs = {"featureId": f"{f.kind}_{i}", "optional": "false",
+                 "disabled": "false" if enabled else "true",
+                 "weight": f"{abs(float(f.importance)):.4f}"}
+        pos = {"x3": f"{float(f.centre[0]):.4f}", "y3": f"{float(f.centre[1]):.4f}",
+               "z3": f"{float(f.centre[2]):.4f}", "tolerance": f"{float(f.radius):.4f}"}
+        if f.kind in PML_EXCLUSION:
+            el = ET.SubElement(root, "volume", dict(attrs, type="exclusion"))
+        else:
+            el = ET.SubElement(root, "point", dict(attrs, name=PML_TYPE[f.kind]))
+        ET.SubElement(el, "position", pos)
+    tree = ET.ElementTree(root)
+    ET.indent(tree, space=" ")
+    tree.write(path, encoding="utf-8", xml_declaration=True)
+    return drop
+
+
+#: the query formats, by the extension that selects them
+QUERY_FORMATS = {".json": write_pharmit, ".pml": write_pml, ".xml": write_pml}
+
+
+def write_query(path: str, features: Sequence[Feature], enable_top: int = 4,
+                name: str = "CMF co-field") -> List[Feature]:
+    """Write the query in the format the file extension names; returns what was left out."""
+    ext = os.path.splitext(path)[1].lower()
+    writer = QUERY_FORMATS.get(ext)
+    if writer is None:
+        raise ValueError(f"no query format for '{ext}': write .json (Pharmit) or .pml "
+                         "(LigandScout-style XML)")
+    if writer is write_pml:
+        return writer(path, features, name=name, enable_top=enable_top)
+    return writer(path, features, enable_top=enable_top)

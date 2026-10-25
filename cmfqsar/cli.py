@@ -1737,7 +1737,7 @@ def cmd_difference(args):
 def cmd_pharmacophore(args):
     """Discretise the co-fields of a fitted model into typed features with tolerance spheres."""
     from cmfqsar.pharmacophore import (extract, pocket_exclusions, summary, write_csv,
-                                       write_pdb)
+                                       write_pdb, write_query)
     from cmfqsar.cofields import make_grid
     model = load_model(args.model)
     if isinstance(model, tuple):
@@ -1767,6 +1767,23 @@ def cmd_pharmacophore(args):
     if args.pdb:
         write_pdb(args.pdb, feats)
         print(f"  pseudo-atoms written to {args.pdb}")
+    if args.query:
+        try:
+            left = write_query(args.query, feats, enable_top=args.enable_top)
+        except ValueError as exc:
+            raise SystemExit(str(exc))
+        on = min(args.enable_top, sum(1 for f in feats
+                                      if f.kind not in ("exclusion", "pocket")))
+        print(f"  query written to {args.query}: {len(feats) - len(left)} features, "
+              f"{on} of them switched on, the rest disabled for you to choose from")
+        if left:
+            kinds = sorted({f.kind for f in left})
+            print(f"  left out, because a query has no way to say them: {', '.join(kinds)}. "
+                  f"'bulk' asks for atoms of any kind, and the disfavoured features name a "
+                  f"group that is unwelcome, which only an exclusion sphere could carry and it "
+                  f"would exclude everything else with it.")
+        print("  a hydrogen-bond feature is written without a direction: a co-field says that a "
+              "donor here raises the activity, not where its hydrogen points")
 
 
 def cmd_hetero(args):
@@ -2674,6 +2691,13 @@ def main(argv=None):
                          "volumes are counted separately)")
     ph.add_argument("--min-radius", type=float, default=0.6, metavar="R",
                     help="ignore lobes smaller than this tolerance radius")
+    ph.add_argument("--query", default=None, metavar="FILE",
+                    help="write the features as a pharmacophore query a screening program can "
+                         "read: .json for a Pharmit session, .pml for the LigandScout-style XML")
+    ph.add_argument("--enable-top", type=int, default=4, metavar="N",
+                    help="with --query: how many features to switch on in the written query. A "
+                         "query is a conjunction, so a dozen at once matches nothing; the rest "
+                         "are written disabled, to be switched on in the other program")
     ph.add_argument("--min-z", type=float, default=0.0, metavar="Z",
                     help="mask the co-field where it stands less than Z standard deviations "
                          "from zero before reading features off it, so that a lobe the noise in "

@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 55 modules and about 23,300 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 55 modules and about 23,400 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 624 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 631 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -698,6 +698,27 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
 * **F5. Pharmacophore export.** The typed features with tolerance spheres of
   `cmfqsar/pharmacophore.py` in a format a pharmacophore-screening program can read, so the
   co-field can be used as a query outside CMF.
+  **Done 26 October 2026**: `write_pharmit`, `write_pml` and `write_query` in
+  `cmfqsar/pharmacophore.py`, reached from `pharmacophore --query FILE` (the extension picks the
+  format: `.json` a Pharmit session, `.pml` the LigandScout-style XML). Three things the export
+  is explicit about rather than silent on. A query is a conjunction, so only the strongest
+  `--enable-top` features are written switched on and the rest are written disabled. A
+  hydrogen-bond feature is written without a direction, because a co-field has none. And three of
+  this program's feature types cannot be expressed at all -- `bulk`, which asks for atoms of any
+  kind, and the disfavoured `polar`, `acceptor_bad` and `donor_bad`, which name one kind of group
+  as unwelcome where a query has only the exclusion sphere, which forbids every atom -- so they
+  are reported as left out.
+  **Measured** (`benchmarks/run_query.py`): the query, matched by the rule a screening program
+  uses, separates the most active quarter of the held-out molecules at an AUC of
+  **0.665** against **0.495** for the same features moved to
+  random places in the same box -- a paired difference of +0.170, 95 %
+  interval [+0.102, +0.238], ahead on 36 of 40 splits. The model
+  it was read from reaches **0.861** on the same molecules.
+  So the places the co-field picks are better than chance and much worse than the model: the
+  export is a lossy summary whose value is that it leaves the program. That is what the item
+  asked for, and the measurement says what it costs.
+  **Not done:** a conformer-generating matcher (the benchmark matches molecules already posed in
+  the training frame, which flatters any query), and the MOE and Phase formats.
 
 ## G. The application and the tool (continuous)
 
@@ -1155,7 +1176,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, E4, ~~E5~~ **done**, ~~E6~~ **done (null for accuracy)**; G1 and G2 alongside |
-| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
+| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol

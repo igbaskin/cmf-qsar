@@ -2877,7 +2877,7 @@ cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grou
 cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrelation)
 cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solids, the co-pattern
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
-cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field
+cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field, and the query formats that carry them out of the program
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule
 cmfqsar/active.py       which molecule to make next: expected improvement and the rest
 cmfqsar/design.py       what to put at a position: enumerate, pose by rule, rank

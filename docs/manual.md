@@ -1980,6 +1980,66 @@ controls to clear it.
 This is the bridge from a CMF model to a screening query: the model is continuous and needs an
 alignment, the pharmacophore is discrete and does not.
 
+### Taking the query out of the program
+
+```bash
+python cmf_cli.py pharmacophore model.cmf --min-z 2 --query query.json
+python cmf_cli.py pharmacophore model.cmf --min-z 2 --query query.pml --enable-top 3
+```
+
+`.json` writes a **Pharmit** session and `.pml` the **LigandScout-style XML**; both are written
+to the documented shape of those formats, which is as far as this program can go — it cannot
+test any particular viewer. Three things about the file are worth knowing before it is opened
+somewhere else.
+
+**A query is a conjunction**, so a dozen features at once matches nothing. The strongest
+`--enable-top` features are written switched on and the rest switched off, for the user to choose
+among in their own program; exclusion spheres are always on, since they only forbid.
+
+**Hydrogen-bond features have no direction.** A co-field says that a donor *here* raises the
+activity; it says nothing about where the hydrogen points, so the features are written as
+isotropic points rather than as the vectors those formats usually carry.
+
+**Three of this program's feature types cannot be said at all** and are reported rather than
+quietly dropped. `bulk` asks for atoms of any kind, which no query language expresses. The
+disfavoured `polar`, `acceptor_bad` and `donor_bad` say that one *particular* kind of group is
+unwelcome; the only negative a query has is an exclusion sphere, and that would forbid every
+atom, which is a much stronger claim than the co-field makes.
+
+### Is the query any good, measured
+
+Eight Sutherland sets, five 70/30 splits each. The pharmacophore is read out of the
+training model's co-fields — masked at two standard deviations first, so that a lobe the
+measurement error could have produced never becomes a feature — and its strongest four features
+are matched against the molecules held out, by the simple rule a screening program uses: an atom
+of the right kind inside the sphere. The actives are the most active quarter.
+
+| set | n | features | AUC query | AUC random centres | AUC the model |
+|---|---:|---:|---:|---:|---:|
+| DHFR | 361 | 7.4 | 0.573 | 0.498 | 0.901 |
+| COX2 | 282 | 8.4 | 0.662 | 0.478 | 0.867 |
+| BZR | 147 | 7.8 | 0.518 | 0.514 | 0.797 |
+| ACE | 114 | 7.0 | 0.789 | 0.552 | 0.927 |
+| AChE | 111 | 7.8 | 0.631 | 0.484 | 0.903 |
+| THR | 88 | 8.4 | 0.595 | 0.468 | 0.780 |
+| THER | 76 | 7.2 | 0.711 | 0.482 | 0.812 |
+| GPB | 66 | 6.8 | 0.838 | 0.484 | 0.902 |
+| **mean** |  |  | **0.665** | **0.495** | **0.861** |
+
+The query separates the active quarter at an AUC of 0.665, against
+0.495 for the same features moved to random places in the same box — a paired
+difference of +0.170 with a 95 % interval of [+0.102, +0.238], so the places the co-field picked are doing the work, and
+ahead on 36 of 40 splits. Over every split together the top tenth by the
+query holds 1.77 times as many actives as chance would put there.
+
+**The model it was read from reaches 0.861 on the same molecules**, and that gap
+is the price of the summary: a pharmacophore is four spheres and a rule for counting them, while
+the model is every training molecule's field weighed by a fitted coefficient. What the query buys
+is that it leaves this program — it goes into a screening tool and runs over libraries no kernel
+method here could hold.
+
+
+
 ## What a candidate is missing
 
 *Tools → Field difference from a reference molecule…* subtracts two molecules' fields on the
