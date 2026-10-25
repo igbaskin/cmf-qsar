@@ -1213,6 +1213,67 @@ def cmd_transfer(args):
         print(f"  matrix written to {args.out}")
 
 
+def cmd_mixing(args):
+    """The posterior over the field weights: item E6 of the plan."""
+    from cmfqsar.mixing import drop_one, evidence_mixing, sample_mixing
+    from cmfqsar.model import align_mixing
+
+    model, extra = load_model(args.model)
+    if not (model.is_linear and model.uses_fields):
+        raise SystemExit("the mixing coefficients weigh the per-field overlap kernels; this "
+                         "model uses another kernel and has none to weigh")
+    if model.K_fields_train is None:
+        model.K_fields_train = model._field_kernels(model.train, model.train, model.self_diag,
+                                                    model.self_diag)
+    Kf = np.asarray(model.K_fields_train, float)
+    y = np.asarray(model.y, float)
+    labels = [s.label for s in model.fieldset.specs]
+    on = [s.enabled for s in model.fieldset.specs]
+    print(f"Model {args.model}: {model.train.n_mol} molecules, {int(sum(on))} fields")
+    print(f"  as fitted      {', '.join(f'{l} {s.h:g}' for l, s in zip(labels, model.fieldset.specs))}")
+    print(f"  by alignment   {', '.join(f'{l} {h:.2f}' for l, h in zip(labels, align_mixing(Kf, y, model.scale, on)))}")
+    print(f"  by the evidence {', '.join(f'{l} {h:.2f}' for l, h in zip(labels, evidence_mixing(Kf, y, model.scale, on)))}")
+    print()
+    print(f"Posterior over each field's share of the kernel ({args.draws} draws after "
+          f"{args.burn} discarded):")
+    post = sample_mixing(Kf, y, labels, model.scale, on, draws=args.draws, burn=args.burn,
+                         seed=args.seed,
+                         progress=(lambda m, f: None) if args.quiet else
+                         (lambda m, f: print(f"  {m}", end="\r", flush=True)))
+    if not args.quiet:
+        print(" " * 60, end="\r")
+    print(post.describe(level=args.level))
+    small = post.carries_less_than_its_share(level=args.level)
+    if small:
+        print(f"  carrying less than an equal share, with {int(100 * args.level)} % confidence: "
+              + ", ".join(small))
+    print()
+    print("How much log evidence the model loses without each field (the Bayes factor against "
+          "'this field does nothing'):")
+    for name, loss in sorted(drop_one(Kf, y, labels, model.scale, on).items(),
+                             key=lambda kv: -kv[1]):
+        verdict = ("it is carrying something no other field carries" if loss > 3 else
+                   "worth keeping" if loss > 1 else
+                   "the others already carry whatever it carries" if loss > -1 else
+                   "the model is better off without it")
+        print(f"  {name:18s} {loss:+7.1f}   {verdict}")
+    print()
+    print("  The shares are what the evidence can see, and on a congeneric series the field "
+          "kernels are strongly correlated, so wide intervals are the usual answer rather than "
+          "a failure: several mixtures explain the activities about equally well. A narrow "
+          "interval is the informative case.")
+    if args.out:
+        import csv
+        iv = post.interval(level=args.level)
+        with open(args.out, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["field", "share_mean", "share_lo", "share_hi", "share_map"])
+            for f, name in enumerate(labels):
+                w.writerow([name, f"{post.mean[f]:.4f}", f"{iv[f, 0]:.4f}", f"{iv[f, 1]:.4f}",
+                            f"{post.map_shares[f]:.4f}"])
+        print(f"  written to {args.out}")
+
+
 def cmd_explain(args):
     """Shapley decomposition of a prediction: works for linear and nonlinear kernels alike."""
     from cmfqsar.shapley import (atom_field_shapley, atom_shapley, common_core, field_shapley,
@@ -2144,10 +2205,12 @@ def main(argv=None):
     b.add_argument("--epsilons", default="0.05,0.1,0.2")
     b.add_argument("--nus", default="0.3,0.5,0.7")
     b.add_argument("--optimize-h", action="store_true", help="optimise mixing coefficients (model-selection bias!)")
-    b.add_argument("--mkl", nargs="?", const="align", default=None, choices=["align", "alignf"],
+    b.add_argument("--mkl", nargs="?", const="align", default=None,
+                   choices=["align", "alignf", "evidence"],
                    help="multiple kernel learning: set the mixing coefficients h_f by centred "
                         "kernel alignment, either per field ('align', default) or jointly "
-                        "('alignf'); the kernel stays linear, so co-fields remain valid")
+                        "('alignf'), or by maximising the marginal likelihood of the mixture "
+                        "('evidence'); the kernel stays linear, so co-fields remain valid")
     b.add_argument("--mkl-rho", type=float, default=1.0,
                    help="shrinkage of the joint alignment towards equal weights (0 = none)")
     b.add_argument("--kernel-layer", default="linear",
@@ -2817,6 +2880,18 @@ def main(argv=None):
                     help="with more than two models, print one matrix per field as well")
     tr.add_argument("--out", default=None, metavar="FILE", help="CSV of the matrix")
     tr.set_defaults(func=cmd_transfer)
+
+    mx = sub.add_parser("mixing",
+                        help="the posterior over the field weights: which fields this series "
+                             "needs, with an interval")
+    mx.add_argument("model", help="a model saved with 'build --save'")
+    mx.add_argument("--draws", type=int, default=400, help="posterior draws to keep")
+    mx.add_argument("--burn", type=int, default=100, help="draws to discard first")
+    mx.add_argument("--level", type=float, default=0.9, help="credible level of the intervals")
+    mx.add_argument("--seed", type=int, default=0)
+    mx.add_argument("--quiet", action="store_true", help="no progress line")
+    mx.add_argument("--out", default=None, metavar="FILE", help="CSV of the shares")
+    mx.set_defaults(func=cmd_mixing)
 
     args = p.parse_args(argv)
     args.func(args)

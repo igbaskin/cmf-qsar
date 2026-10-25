@@ -1632,7 +1632,12 @@ def align_mixing(K_fields: np.ndarray, y: np.ndarray, scale: Optional[np.ndarray
       ``mode="alignf"`` (Cortes et al. 2012) maximises the alignment of the *combination*,
         i.e. solves min_{h >= 0} || sum_f h_f K_f^c - y^c y^c^T ||_F.  On congeneric series the
         field kernels are strongly correlated and this solution is nearly sparse, so it is
-        shrunk towards equal weights with strength `rho` (rho = 0 is the plain alignf).
+        shrunk towards equal weights with strength `rho` (rho = 0 is the plain alignf);
+      ``mode="evidence"`` instead maximises the marginal likelihood of the mixture under the
+        prior of :mod:`cmfqsar.mixing`, which is the Bayesian reading of the same problem: h_f is
+        the prior variance of the part of the model that field f carries.  It costs an
+        optimisation rather than a least-squares solve, and the same module will give the
+        posterior over those weights rather than this point.
 
     The weights are rescaled so that the mean diagonal of the joint kernel is the same as with
     h_f = 1, which keeps the regularisation grid comparable.  The combination stays linear, so
@@ -1652,6 +1657,9 @@ def align_mixing(K_fields: np.ndarray, y: np.ndarray, scale: Optional[np.ndarray
     yv = yv - yv.mean()
     A = np.stack([_centre_kernel(K_fields[f] * scale[f]).reshape(-1) for f in idx], axis=1)
     b = np.outer(yv, yv).reshape(-1)
+    if mode == "evidence":
+        from .mixing import evidence_mixing
+        return evidence_mixing(K_fields, yv, scale, on)
     if mode == "align":
         nrm = np.linalg.norm(A, axis=0)
         w = np.where(nrm > 1e-300, np.maximum(A.T @ b, 0.0) / np.maximum(nrm, 1e-300), 0.0)

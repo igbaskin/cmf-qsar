@@ -1300,8 +1300,81 @@ The similarity decomposition stays valid, and the **Shapley tab** decomposes the
 instead, which is why it exists.
 
 Multiple kernel learning chooses the mixing coefficients $h_f$ rather than leaving them at 1,
-either by coordinate descent on the cross-validated error or by centred kernel alignment
-(`--mkl align|alignf`), which is a closed-form, training-only criterion.
+either by coordinate descent on the cross-validated error, by centred kernel alignment
+(`--mkl align|alignf`), which is a closed-form, training-only criterion, or by the marginal
+likelihood of the mixture (`--mkl evidence`), which is the next section.
+
+## Which fields does this series need?
+
+A sum of kernels is the kernel of a sum of independent processes,
+
+$$
+f(x) = \sum_f f_f(x), \qquad f_f \sim \mathcal{GP}(0,\ h_f c_f K_f),
+$$
+
+so $h_f$ is not a tuning knob but the **prior variance of the part of the model that field $f$
+carries** — how much of the activity that field is allowed to explain. Put a prior on it and
+integrate, and the answer to *does this series care about the steric field at all* comes with an
+interval instead of a number:
+
+```bash
+python cmf_cli.py mixing model.cmf
+```
+
+What is sampled is each field's **share** of the kernel, written $h = F\,\mathrm{softmax}(u)$ so
+that the shares sum to one and can be compared with $1/F$, the share a field would have if all
+fields mattered equally. The prior is $u_f \sim \mathcal{N}(0, 1.5^2)$, independent and the same
+for every field, so it prefers no field over any other and only limits how far apart their shares
+can be drawn before the data speak; the regularisation is sampled with them. The sampler is a
+slice sampler, which has no step size to tune.
+
+Three readings come out, in increasing order of sharpness. The **shares with their intervals**
+say how much of the kernel each field carries. The list of fields **carrying less than an equal
+share** names those whose whole interval lies below $1/F$. And the **Bayes factor** against *this
+field does nothing* — the log evidence lost when the field is removed outright and the others are
+re-weighted — is the sharpest and the cheapest form of the question.
+
+### What it is good for, measured
+
+Eight Sutherland sets, five 70/30 splits each. First, whether weighing the fields
+predicts better at all — the weights set four ways on the training part, each scored on the
+molecules held out:
+
+| weights | R²pred |
+|---|---:|
+| equal (h = 1) | +0.481 |
+| centred kernel alignment, per field | +0.487 |
+| centred kernel alignment, jointly | +0.485 |
+| the evidence optimum | +0.485 |
+
+The evidence optimum is +0.003 in R²pred against equal weights, 95 % interval
+[-0.026, +0.035], which contains zero — the same lesson as the
+per-field attenuation: **the evidence takes whatever freedom it is given over the shape of the
+kernel, improves its own number, and leaves prediction where it was.** Choosing the weights is
+not how a CMF model is made better.
+
+What the posterior is *for* is the other question, and that one can be checked. Each field's
+Bayes factor against *this field does nothing*, beside what actually happens to the held-out
+molecules when that field is removed outright:
+
+| field | mean share | 90 % interval | Bayes factor | ΔR²pred without it |
+|---|---:|---:|---:|---:|
+| Electrostatic | 0.179 | [0.024, 0.432] | +1.4 | -0.032 |
+| Steric | 0.337 | [0.091, 0.663] | +2.2 | -0.012 |
+| Hydrophobic | 0.184 | [0.021, 0.460] | +0.7 | -0.006 |
+| H-bond acceptor | 0.159 | [0.032, 0.385] | +1.6 | -0.018 |
+| H-bond donor | 0.142 | [0.025, 0.349] | +1.5 | -0.003 |
+
+Over all 200 (set, split, field) cases the Bayes factor and the cost of removing the
+field correlate at Spearman ρ **+0.121** (positive means the evidence was right). The two orderings barely agree: the Bayes factor says what the training activities can see, which is not the same as what the held-out molecules need, and it should be read as the first and not the second.
+
+**The intervals are wide, and that is the answer rather than a failure of the sampler.** On a
+congeneric series the field kernels are strongly correlated: several quite different mixtures
+explain the activities about equally well, and a point estimate — the alignment's, the evidence
+optimum, or any other — is claiming a precision the data do not support. That is the whole case
+for integrating rather than optimising here, and it is the reason `--mkl evidence` exists as an
+option rather than as a default.
+
 
 ## Choosing α and λ without holding anything out
 
@@ -2808,6 +2881,7 @@ not every option.
 | `suggest` | which posed candidate to make next (expected improvement and the rest) |
 | `design` | what to put at a position of a parent, ranked by the model |
 | `transfer` | compare models by their co-fields: do they ask the same thing? |
+| `mixing` | the posterior over the field weights: which fields the series needs |
 | `hetero` | the heterogeneous-series workflow: cluster, align, place, leave-one-chemotype-out |
 | `topomer` | model a series by its substituents, posed by rule |
 | `map` | chemical-space map and activity landscape (kernel PCA + GTM) |

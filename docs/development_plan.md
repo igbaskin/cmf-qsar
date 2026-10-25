@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 54 modules and about 22,900 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with nineteen subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
+* A library of 55 modules and about 23,300 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with twenty subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`), 612 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 624 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -571,6 +571,35 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   hierarchical prior over `h_f` with the evidence as the objective gives a posterior over the field
   weights, and with it an answer to "does this series care about the steric field at all" with an
   interval rather than a point.
+  **Done 26 October 2026**: `cmfqsar/mixing.py`, the `mixing` subcommand and `--mkl evidence`.
+  A sum of kernels is the kernel of a sum of independent processes, so h_f is the prior variance
+  of the part of the model that field f carries. What is sampled is each field's *share* of the
+  kernel, h = F softmax(u), with an exchangeable N(0, 1.5^2) prior on u and log lambda sampled
+  beside it; the sampler is a slice sampler, which has no step size for a user to get wrong.
+  Three readings: the shares with their intervals, the fields whose whole interval lies below
+  1/F, and the drop-one Bayes factor against *this field does nothing*.
+  **Measured on the eight Sutherland sets**, five 70/30 splits each
+  (`benchmarks/run_mixing.py`). R2pred by equal weights +0.481, by
+  per-field alignment +0.487, by joint alignment
+  +0.485, by the evidence optimum +0.485: the
+  evidence optimum is **+0.003** against equal weights with a 95 % interval of
+  [-0.026, +0.035]. That is item D6 again, on the other axis of the kernel: **the evidence
+  takes whatever freedom it is given over the shape of the kernel, improves its own number and
+  leaves prediction where it was.** Choosing the weights is not how a CMF model is made better,
+  and the item's premise -- that MKL picking one set of coefficients is a limitation worth
+  fixing -- is wrong about accuracy.
+  **The interpretation claim is the one that stands, in a qualified form.** Over the
+  200 (set, split, field) cases the drop-one Bayes factor and the cost of actually
+  removing the field correlate at Spearman rho **+0.121**: the Bayes factor orders the fields by what the training activities can see, which is not the same as what the held-out molecules need.
+  **The useful finding is the width of the intervals.** A field's 90 % interval spans
+  0.42 of the unit simplex on average, where an equal share is 0.20:
+  on a congeneric series the field kernels are strongly correlated, several quite different
+  mixtures explain the activities about equally well, and every point estimate of h -- the
+  alignment's included -- is claiming a precision the data do not support. That is what the
+  posterior adds, and it is an argument against trusting any of the point estimates rather than
+  for replacing them.
+  **Not done:** the same treatment of the attenuations (D6 settled that by measurement), and a
+  GUI reading of the intervals.
 
 ## F. Interpretation (months 4 to 9)
 
@@ -1125,7 +1154,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; C3, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
-| Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, E4, ~~E5~~ **done**, E6; G1 and G2 alongside |
+| Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, E4, ~~E5~~ **done**, ~~E6~~ **done (null for accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, F5; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; the review that ties the series together |
 

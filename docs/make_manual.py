@@ -197,6 +197,7 @@ SYMBOL = {
     "ge": "≥", "times": "×", "cdot": "·", "pm": "±", "ldots": "…", "langle": "⟨",
     "rangle": "⟩", "partial": "∂", "nabla": "∇", "in": "∈", "propto": "∝", "sqrt": "√",
     "lceil": "⌈", "rceil": "⌉", "lfloor": "⌊", "rfloor": "⌋",
+    "sim": "~", "mid": "|", "perp": "⊥", "equiv": "≡", "subset": "⊂",
 }
 #: accents, as the combining marks that follow the letter they sit on
 MATH_ACCENT = {"hat": "̂", "bar": "̄", "tilde": "̃", "dot": "̇",
@@ -284,7 +285,7 @@ def inline_math(expr: str, mono: str) -> str:
                         inner = emit_group(body)
                         out.append("\u221a" + (inner if len(body) < 2 else f"({inner})"))
                     continue
-                if name in ("text", "mathrm", "operatorname"):
+                if name in ("text", "mathrm", "operatorname", "mathcal", "mathbb"):
                     m2 = re.match(r"\s*\{([^}]*)\}", expr[i:])
                     if m2:
                         out.append(m2.group(1))
