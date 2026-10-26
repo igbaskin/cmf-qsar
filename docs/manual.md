@@ -4216,32 +4216,116 @@ res = scaffold_decomposition(model, mf[0], ds.mols[0], ds.mols[1:20])   # per su
 print(res.prediction, res.baseline, res.table(), res.top_interactions(5))
 ```
 
-The modules, one line each:
+The modules, one line each. The package has more modules than the application has panels: many of
+them exist only for the command-line tool and for use as a library.
+
+Data, fields and kernels:
 
 ```
-cmfqsar/fields.py       field parameterisation; FieldSet / MoleculeFields / AtomTable
-cmfqsar/kernels.py      analytic field kernels, vectorised
-cmfqsar/model.py        KRR / SVR / GP, cross-validation, grid search, nested CV, statistics
-cmfqsar/cofields.py     co-fields and molecular fields on grids, isosurfaces, cube export
-cmfqsar/dataio.py       reading SDF / MOL2 / SMILES, model persistence, exports
-cmfqsar/align.py        3D embedding, MCS alignment, field-similarity refinement, unalign
-cmfqsar/varalign.py     alignment by prediction confidence (GP posterior variance)
-cmfqsar/invariant.py    rotation-invariant field autocorrelation kernels
-cmfqsar/topomer.py      topomer fields: substituents posed by rule
-cmfqsar/chemotypes.py   scaffold clusters, placement, grouped folds, the count kernel
-cmfqsar/pharmacophore.py  typed features with tolerance spheres, from the co-field
-cmfqsar/fielddiff.py    field differences against a reference molecule
-cmfqsar/shapley.py      Shapley decomposition over atoms, substituents, field types
-cmfqsar/gpc.py          Laplace Gaussian-process classification
-cmfqsar/oneclass.py     centroid, k-NN, GP and kernel-PCA one-class descriptions
-cmfqsar/conformers.py   conformational ensembles: generation, weighting, grouping
-cmfqsar/mil.py          multi-instance learning over conformations
-cmfqsar/decoys.py       posing a background set for screening evaluation
-cmfqsar/gtm.py          chemical-space maps and activity landscapes
-cmfqsar/protein.py      PDB / mmCIF reading, binding-site selection, frame check
+cmfqsar/dataio.py        reading SDF / MOL2 / SMILES, model persistence, exports
+cmfqsar/fields.py        field parameterisation; FieldSet / MoleculeFields / AtomTable
+cmfqsar/atomtypes.py     Sybyl-like atom typing and van der Waals parameters
+cmfqsar/increments.py    atomic increments of the original CMF implementation (2013)
+cmfqsar/learnincrements.py  increments fitted to the data instead of taken from the table
+cmfqsar/pharmtypes.py    six pharmacophore features as indicator fields
+cmfqsar/probes.py        GRID-like probe fields written as sums of Gaussians
+cmfqsar/anisotropic.py   atom functions with a direction (Gaussian times a linear factor)
+cmfqsar/exposure.py      solvent exposure as a weight on the fields
+cmfqsar/descriptors.py   descriptors that are not fields: one number per molecule
+cmfqsar/orca.py          quantum-chemical properties from ORCA, as fields or descriptors
+cmfqsar/cdft.py          conceptual-DFT fields on a grid, and their Gaussian fits
+cmfqsar/kernels.py       analytic field kernels, vectorised
+cmfqsar/fastkernel.py    a compiled, threaded atom-pair loop for the kernels
+cmfqsar/mixing.py        a posterior distribution over the field weights
+cmfqsar/perfield.py      a separate attenuation for every field, chosen by the evidence
+```
+
+Models, their parameters and their validation:
+
+```
+cmfqsar/model.py         KRR / SVR / GP, cross-validation, grid search, nested CV, statistics
+cmfqsar/evidence.py      choosing α and λ by the marginal likelihood instead of by cross-validation
+cmfqsar/neldermead.py    the Nelder-Mead minimiser of the original R scripts
+cmfqsar/ranking.py       the ranking SVM: learning the order of the molecules
+cmfqsar/multitask.py     two endpoints at once; selectivity as a co-field
+cmfqsar/gpc.py           Laplace Gaussian-process classification
+cmfqsar/oneclass.py      centroid, k-NN, GP and kernel-PCA one-class descriptions
+cmfqsar/pu.py            learning from positives and unlabelled molecules
+cmfqsar/fusion.py        one score from the similarities to several known actives
+cmfqsar/validation.py    y-randomisation, applicability domain and the error of q²
+cmfqsar/conformal.py     prediction intervals with a coverage guarantee
+cmfqsar/errorpred.py     which error estimate knows when a prediction is bad
+cmfqsar/mmd.py           the two-sample test: is this library like the training set?
+cmfqsar/contract.py      what has to match between fitting and predicting, checked
+cmfqsar/diagnose.py      what to ask of a data set before modelling it (`cmf diagnose`)
+```
+
+Reading a model:
+
+```
+cmfqsar/cofields.py      co-fields and molecular fields on grids, isosurfaces, cube export
+cmfqsar/shapley.py       Shapley decomposition over atoms, substituents, field types
+cmfqsar/pharmacophore.py typed features with tolerance spheres, from the co-field
+cmfqsar/fielddiff.py     field differences against a reference molecule
+cmfqsar/transfer.py      comparing two models by their co-fields
+cmfqsar/spectral.py      clustering a set by its kernel rather than by its scaffolds
+cmfqsar/gtm.py           chemical-space maps and activity landscapes
+cmfqsar/report.py        the HTML report of a model
+```
+
+Alignment and poses:
+
+```
+cmfqsar/align.py         3D embedding, MCS alignment, field-similarity refinement, unalign
+cmfqsar/coalign.py       co-alignment of a training set by expectation-maximisation over poses
+cmfqsar/varalign.py      alignment by prediction confidence (GP posterior variance)
+cmfqsar/flexalign.py     the same search with the torsions free
+cmfqsar/fieldgraph.py    field-point graphs: alignment without a common substructure
+cmfqsar/poses.py         a protocol that judges an alignment against reference poses
+cmfqsar/stereo.py        handedness as a property of a stereocentre
+```
+
+Working without an alignment:
+
+```
+cmfqsar/invariant.py     rotation-invariant field autocorrelation kernels
+cmfqsar/periodic.py      the periodic autocorrelation kernel for crystals
+cmfqsar/topomer.py       topomer fields: substituents posed by rule
+cmfqsar/chemotypes.py    scaffold clusters, placement, grouped folds, the count kernel
+```
+
+Conformations and ionisation states:
+
+```
+cmfqsar/conformers.py    conformational ensembles: generation, weighting, grouping
+cmfqsar/mil.py           multi-instance learning over conformations
+cmfqsar/protonation.py   protonation ensembles: a molecule as a weighted mean of its states
+cmfqsar/tautomers.py     tautomer ensembles
+```
+
+Screening and design:
+
+```
+cmfqsar/decoys.py        posing a background set for screening evaluation
+cmfqsar/screen.py        screening a library that does not fit in memory
+cmfqsar/active.py        which molecule to make next
+cmfqsar/design.py        what to put at a position, ranked by the model
+```
+
+Protein pockets:
+
+```
+cmfqsar/protein.py       PDB / mmCIF reading, binding-site selection, frame check
 cmfqsar/complementarity.py  pocket fields, complementarity scores, co-field agreement
-cmfqsar/docking.py      rigid-body placement of conformations in the pocket
-cmfqsar/gui/            the PySide6 application
+cmfqsar/pocketalign.py   aligning a molecule inside the pocket
+cmfqsar/docking.py       rigid-body placement of conformations in the pocket
+```
+
+The two front ends:
+
+```
+cmfqsar/cli.py           the `cmf` command-line tool
+cmfqsar/gui/             the PySide6 application
 ```
 
 # The example data sets
