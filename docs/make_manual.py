@@ -446,7 +446,9 @@ def parse(source: str, st, frame_width):
     """Markdown subset to a list of flowables."""
     mono = st["_fonts"][3]
     story, lines, i = [], source.replace("\r\n", "\n").split("\n"), 0
-    chapter = 0
+    # chapters and sections are numbered here, never in the source, so the numbers cannot go
+    # stale; an appendix keeps the letter its title already carries, and its sections take it
+    chapter, section, number, heads = 0, 0, "0", 0
     while i < len(lines):
         line = lines[i]
         stripped = line.strip()
@@ -509,18 +511,30 @@ def parse(source: str, st, frame_width):
             i = j
             continue
         if stripped.startswith("# "):
-            chapter += 1
-            if chapter > 1:
+            heads += 1
+            if heads > 1:
                 story.append(PageBreak())
-            text = inline(stripped[2:], mono)
-            para = Paragraph(f'<a name="ch{chapter}"/>{text}', st["h1"])
-            para._toc = (0, stripped[2:], f"ch{chapter}")
+            title = stripped[2:]
+            m = re.match(r"^Appendix ([A-Z])(?![A-Za-z])", title)
+            if m:
+                number = m.group(1)
+            else:
+                chapter += 1
+                number = str(chapter)
+                title = f"{number}  {title}"
+            section = 0
+            text = inline(title, mono)
+            para = Paragraph(f'<a name="ch{heads}"/>{text}', st["h1"])
+            para._toc = (0, title, f"ch{heads}")
             story += [para, Rule(1.1, ACCENT, 5), Spacer(1, 6)]
             i += 1
             continue
         if stripped.startswith("## ") or stripped.startswith("### "):
             level = 1 if stripped.startswith("## ") else 2
             text = stripped[3:] if level == 1 else stripped[4:]
+            if level == 1:
+                section += 1
+                text = f"{number}.{section}  {text}"
             para = Paragraph(inline(text, mono), st["h2" if level == 1 else "h3"])
             if level == 1:
                 para._toc = (1, text, None)
