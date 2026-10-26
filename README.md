@@ -1543,6 +1543,61 @@ is easier to act on than "more acceptor character here". The directional part of
 hydrogen-bond term is not represented, and alignment by field similarity refuses to run on a probe
 field rather than quietly ignoring it.
 
+### Atoms with a direction, and why they are not the default
+
+Every field in this program is a sum of isotropic Gaussians on the nuclei, and there is one thing
+that shape cannot be: a lobe. `cmfqsar/cdft.py` established the problem — a conceptual-DFT field
+is a frontier-orbital density with a node in the molecular plane, and a function that is positive
+everywhere and centred on a nucleus cannot make a node, so an isotropic fit loses 84% of the
+field. `cmfqsar/anisotropic.py` implements the smallest extension that can make one: multiply each
+Gaussian by a linear factor, giving every atom three p functions, which are odd about their own
+centre and so have the node and the two lobes. The overlaps stay closed-form —
+
+```
+<s_A|s_B>     = S                        S = (2 pi/p)^{3/2} exp(-ab|d|^2/2p),  p = a+b, d = B-A
+<p_A^u|s_B>   = (b/p) d_u S
+<s_A|p_B^v>   = -(a/p) d_v S
+<p_A^u|p_B^v> = [delta_uv/p - (ab/p^2) d_u d_v] S
+```
+
+— all four checked against numerical quadrature in `tests/test_anisotropic.py`, which is how they
+were derived. A kernel between two such fields is still a double sum over atom pairs, sixteen
+terms per pair of widths instead of one.
+
+The plan set two conditions for keeping it: the fit error has to drop, and the model has to
+notice. On 4 corrosion series with finished ORCA runs (101 molecules,
+`benchmarks/run_anisotropic.py`):
+
+<!-- ANISOTROPIC-TABLE -->
+| series | n | field | error, s only | error, s and p | coefficients per atom |
+|---|---:|---|---:|---:|---|
+| `12_c1ccoc1` | 27 | fukui_plus | 78% | **61%** | 4 → 16 |
+| `12_c1ccoc1` | 27 | dual | 87% | **66%** | 4 → 16 |
+| `13_c1c_nH_nn1` | 25 | fukui_plus | 79% | **61%** | 4 → 16 |
+| `13_c1c_nH_nn1` | 25 | dual | 87% | **67%** | 4 → 16 |
+| `161_c1ccc2scnc2c1` | 20 | fukui_plus | 81% | **61%** | 4 → 16 |
+| `161_c1ccc2scnc2c1` | 20 | dual | 91% | **68%** | 4 → 16 |
+| `7_c1nncs1` | 29 | fukui_plus | 80% | **63%** | 4 → 16 |
+| `7_c1nncs1` | 29 | dual | 91% | **69%** | 4 → 16 |
+<!-- /ANISOTROPIC-TABLE -->
+
+**The fit improves decisively** — 84% to 64% relative error, and the fitted kernel
+agrees with the exact one +0.920 → +0.977 — **and the model does not notice**: the p
+functions change q² of the field alone by -0.017 and of the field added to the five
+ordinary ones by -0.004, over 8 series-field pairs.
+
+The two findings are consistent, and the explanation is the one the isotropic measurement already
+gave: a kernel is an inner product between molecules, and an error that falls the same way for
+every molecule cancels in it. The p functions recover the π lobes above and below a ring, every
+molecule of a congeneric series has a ring in the same place, so every field gets better by about
+the same amount and the distances between molecules do not move. A model needs a field that
+differs between molecules in a way activity follows, not a more faithful field.
+
+So the extension is implemented and tested and is **not** wired into the ordinary field
+machinery, which keeps one isotropic Gaussian per atom. It is there for the case that would earn
+its four-fold cost: a series whose members differ in the shape of a frontier orbital rather than
+in where their atoms are.
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the

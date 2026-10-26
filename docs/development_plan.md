@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 59 modules and about 25,200 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 60 modules and about 25,500 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-one subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `screen`, `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
   `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`),
-  738 tests, a typeset manual and a README that doubles as the record of every measurement made
+  754 tests, a typeset manual and a README that doubles as the record of every measurement made
   so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -37,6 +37,7 @@ The measurements already in hand settle several questions, and the plan treats t
 | Do probe fields improve accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
 | Do quantum-chemical fields help? | Not on the corrosion series or on Am/Eu; yes on Hammett, where resonance needs whole-molecule charges | `benchmarks/results/corrosion_qm/`, `am_eu/`, `hammett/` |
 | Can a Fukui function be a sum of atom Gaussians? | No (relative fit error 0.8 to 0.9), and the model does not care | `cmfqsar/cdft.py`, `benchmarks/results/cdft_kernels/` |
+| Does giving every atom a direction fix that? | The fit, yes (84% -> 64%); the model, no (-0.004 q2) | `cmfqsar/anisotropic.py`, `benchmarks/results/anisotropic/` |
 | When do indicator fields help? | Above about forty molecules | `docs/benchmark.md` |
 | Is the one-class ball a good description of the actives? | It comes last of five | README, "One-class models" |
 | Does realigning the training set by confidence help? | Not reliably; one round with a 1 Å guard is the safe default | README, "Alignment by prediction confidence" |
@@ -555,6 +556,37 @@ can judge it.
   still have closed-form overlaps; one set per atom along the bond directions is the smallest
   extension that can represent a lobe. Repeat the fit-error measurement on the four corrosion series
   with ORCA results, and keep the extension only if the fit error drops and the model notices.
+  **Done 26 October 2026: the first condition passes, the second fails, so the extension is
+  implemented and not adopted.** `cmfqsar/anisotropic.py` carries the basis (one s and three
+  Cartesian p functions per atom per width), the four closed-form overlap blocks, the fitter and
+  the kernel; `tests/test_anisotropic.py` holds every overlap against numerical quadrature, which
+  is how the formulas were derived, and checks that the s block reproduces the isotropic overlap
+  the program already uses to twelve digits. Cartesian p rather than one p along each bond:
+  three components span every direction, so the fit chooses the orientation and a bond direction
+  is a special case, at the same cost.
+  **The fit improves decisively.** On 4 corrosion series with finished ORCA runs
+  (101 molecules, valence part of the field, `benchmarks/run_anisotropic.py`): relative error
+  **84% -> 64%**, best case 61%
+  (fukui_plus on 13_c1c_nH_nn1), and the correlation between the fitted kernel and the exact
+  grid kernel +0.920 -> +0.977. The diagnosis the item was built on was right: what
+  the isotropic basis lacked is a direction.
+  **The model does not notice.** Over 8 series-field pairs the p functions change q2
+  of the field alone by **-0.017** (2 of 8 better) and of the field
+  added to the five ordinary fields by **-0.004**, for four times the coefficients per
+  atom and sixteen times the terms per atom pair.
+  **Why, and it is the same reason as for the isotropic fit:** a kernel is an inner product
+  between molecules, so an error that falls the same way for every molecule cancels in it. The p
+  functions recover the pi lobes above and below a ring; every molecule of a congeneric series has
+  a ring in the same place; every field improves by about the same amount and the distances
+  between the molecules do not move.
+  So by the item's own test the extension is not adopted: the ordinary field machinery still puts
+  one isotropic Gaussian on each atom, and the module is there for the case that would earn its
+  cost -- a series whose members differ in the shape of a frontier orbital rather than in where
+  their atoms are.
+  **Not done:** d functions (the next shell, and the first that could represent a quadrupolar
+  lobe without a direction); the p-type basis in the ordinary physico-chemical fields, which is
+  what adoption would mean; and a series chosen because its SAR *is* orbital shape, which is the
+  experiment that could still overturn this.
 * **D2. Pharmacophoric indicator fields.** Sybyl-type indicator fields help only above about forty
   molecules because there are many types and each is rare. A vocabulary of six pharmacophore
   features (donor, acceptor, aromatic, hydrophobe, cation, anion) is learnable on small series and

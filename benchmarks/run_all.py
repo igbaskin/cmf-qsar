@@ -160,6 +160,11 @@ def registry() -> List[Benchmark]:
                   minutes="20",
                   report=lambda: _mod("run_query").report(_r("query")),
                   tables=["query/table.md"]),
+        Benchmark("anisotropic", "can a direction on every atom represent a Fukui function",
+                  "run_anisotropic.py", "anisotropic", compute=[[]],
+                  needs="orca", minutes="90",
+                  report=lambda: _mod("run_anisotropic").report(_r("anisotropic")),
+                  tables=["anisotropic/table.md"]),
         Benchmark("cases", "three series worked through with the interpretation tools",
                   "run_cases.py", "cases", compute=[[]],
                   minutes="3",
@@ -479,7 +484,7 @@ def compute(names, data_root=None, cif_root=None, orca=False):
                     a = cif_root or ""
                 args.append(a)
             if b.needs == "orca" and not orca and any(x in ("orca", "quantum", "cdft") for x in argv) \
-                    or (b.needs == "orca" and not orca and b.name in ("corrosion_qm", "cdft_kernels")):
+                    or (b.needs == "orca" and not orca and b.name in ("corrosion_qm", "cdft_kernels", "anisotropic")):
                 skip = "needs ORCA (--orca)"
             if skip:
                 print(f"--- {b.name} {' '.join(argv)}: skipped, {skip}", flush=True)

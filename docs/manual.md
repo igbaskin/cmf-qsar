@@ -919,6 +919,104 @@ The same computation runs from the command line as `examples/orca_atom_propertie
 lists its options), which reads an SDF and writes the annotated one. The script and the dialog
 share the module `cmfqsar/orca.py`, so the numbers are the same either way.
 
+## Can a Fukui function be a field?
+
+A `prop:` field puts one isotropic Gaussian on each atom, weighted by a number: a charge, a
+condensed Fukui index. That is a statement about *how much* and says nothing about *where*. The
+quantity a condensed Fukui index is condensed from is a function of position,
+$f(\mathbf{r}) = \rho_{N+1}(\mathbf{r}) - \rho_N(\mathbf{r})$, ORCA will write it on a
+grid, and `cmfqsar/cdft.py` asks whether that function can be brought into the program's algebra
+the way the probe fields were — by fitting several Gaussians per atom, which keeps the overlap of
+two fields a closed-form sum over atom pairs and so keeps the co-field and the atom
+contributions.
+
+**It cannot, and the reason is a node.** Fitted against the valence part of the map on the four
+corrosion series with finished quantum runs, the relative error of an isotropic fit is
+84%. A Fukui function is essentially a frontier-orbital density: on acrolein it is $\pi^*$,
+three quarters of its squared magnitude lies more than 0.5 Å off the molecular plane, and there is
+a node *in* the plane. A function that is positive everywhere and centred on a nucleus cannot make
+a node.
+
+### Giving every atom a direction
+
+The smallest extension that can make one is to multiply the Gaussian by a linear factor. With the
+width convention this program uses, atom $l$ then carries
+
+$$
+s_l(\mathbf{r}) = e^{-b |\mathbf{r} - \mathbf{R}_l|^2 / 2}, \qquad
+p_l^u(\mathbf{r}) = (r_u - R_{l,u})\, e^{-b |\mathbf{r} - \mathbf{R}_l|^2 / 2}
+$$
+
+for $u = x, y, z$: one s and three p functions per atom per width. A p function is odd about its
+own centre, so it has a node through the nucleus and a lobe on either side, and three Cartesian
+components span every direction — a lobe along a bond, along a lone pair or perpendicular to a
+ring plane are the same three numbers in different proportions, and nothing has to be oriented by
+hand.
+
+The overlaps stay closed-form, which is the only reason this is the extension worth trying. With
+$p = a + b$, $\mathbf{d} = \mathbf{B} - \mathbf{A}$ and
+$S = (2\pi/p)^{3/2} e^{-ab|\mathbf{d}|^2 / 2p}$ the four blocks are
+
+$$
+\langle s_A | s_B\rangle = S, \qquad
+\langle p_A^u | s_B\rangle = \frac{b}{p} d_u S, \qquad
+\langle s_A | p_B^v\rangle = -\frac{a}{p} d_v S, \qquad
+\langle p_A^u | p_B^v\rangle = \left[\frac{\delta_{uv}}{p}
+- \frac{ab}{p^2} d_u d_v\right] S
+$$
+
+and `cmfqsar/anisotropic.py` evaluates them. A kernel between two such fields is still a double
+sum over pairs of atoms, with sixteen terms per pair of widths instead of one.
+
+### What it is worth, measured
+
+The plan sets two conditions for keeping the extension: the fit error has to drop, and the model
+has to notice. Measured on 4 series, 101 molecules in all
+(`benchmarks/run_anisotropic.py`):
+
+| series | n | field | error, s only | error, s and p | coefficients per atom |
+|---|---:|---|---:|---:|---|
+| `12_c1ccoc1` | 27 | fukui_plus | 78% | **61%** | 4 → 16 |
+| `12_c1ccoc1` | 27 | dual | 87% | **66%** | 4 → 16 |
+| `13_c1c_nH_nn1` | 25 | fukui_plus | 79% | **61%** | 4 → 16 |
+| `13_c1c_nH_nn1` | 25 | dual | 87% | **67%** | 4 → 16 |
+| `161_c1ccc2scnc2c1` | 20 | fukui_plus | 81% | **61%** | 4 → 16 |
+| `161_c1ccc2scnc2c1` | 20 | dual | 91% | **68%** | 4 → 16 |
+| `7_c1nncs1` | 29 | fukui_plus | 80% | **63%** | 4 → 16 |
+| `7_c1nncs1` | 29 | dual | 91% | **69%** | 4 → 16 |
+
+**The fit improves, and by a lot**: 84% to 64% on average, the best case reaching
+61% (fukui_plus on `13_c1c_nH_nn1`). The kernel the fit
+produces also agrees better with the one the exact field produces, +0.920 to +0.977
+in correlation. The diagnosis was right: what the isotropic basis was missing is a direction.
+
+| series | field | five fields | exact grid | s alone | s and p alone | five + s | five + s and p |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `12_c1ccoc1` | fukui_plus | +0.220 | +0.052 | +0.103 | +0.072 | +0.250 | +0.235 |
+| `12_c1ccoc1` | dual | +0.220 | +0.028 | +0.057 | +0.012 | +0.272 | +0.241 |
+| `13_c1c_nH_nn1` | fukui_plus | +0.654 | +0.636 | +0.685 | +0.684 | +0.672 | +0.681 |
+| `13_c1c_nH_nn1` | dual | +0.654 | +0.575 | +0.505 | +0.567 | +0.649 | +0.664 |
+| `161_c1ccc2scnc2c1` | fukui_plus | +0.689 | +0.638 | +0.636 | +0.627 | +0.658 | +0.655 |
+| `161_c1ccc2scnc2c1` | dual | +0.689 | +0.522 | +0.556 | +0.573 | +0.596 | +0.624 |
+| `7_c1nncs1` | fukui_plus | -0.037 | +0.121 | +0.090 | +0.027 | -0.012 | -0.024 |
+| `7_c1nncs1` | dual | -0.037 | -0.031 | +0.045 | -0.021 | -0.001 | -0.022 |
+
+**And the model does not notice.** Averaged over the 8 series-field pairs the p
+functions change q² of the field alone by **-0.017** (2 of 8 better),
+and of the field added to the five ordinary fields by **-0.004**.
+
+The two measurements disagree for the reason the isotropic fit disagreed with itself: a kernel is
+an inner product between molecules, and an error that falls the same way for every molecule
+cancels in it. The p functions recover the $\pi$ lobes above and below a ring — and every
+molecule of a congeneric series has a ring in the same place, so every field improves by about the
+same amount and the distances between the molecules stay where they were. What a model needs is
+not a better field but a field that differs between molecules in a way activity follows.
+
+So the extension is implemented, tested against quadrature, and **not wired into the ordinary
+field machinery**, because by the plan's own test it has not earned its four-fold cost. It is
+there for the case that would earn it: a series whose members differ in the *shape* of a frontier
+orbital rather than in where their atoms are.
+
 # Before you model: `cmf diagnose`
 
 Every expensive mistake recorded in this manual was visible before the model was built, in a
