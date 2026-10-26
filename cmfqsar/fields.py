@@ -119,6 +119,9 @@ class FieldSet:
     charge_model: str = "gasteiger"     # "gasteiger" | "mmff" | "file"
     cif_scheme: str = "sybyl"           # "sybyl" | "element" | "element+aromatic"
     param_scheme: str = "rdkit"         # "rdkit" | "tripos" | "tripos-legacy"
+    #: increments fitted to the data instead of taken from the published table (plan item D5),
+    #: keyed by "<Sybyl type>/<hydrogen count>"; used only with a "tripos" parameterisation
+    increments: Optional[Dict[str, Dict[str, float]]] = None
     # what to do when a molecule does not carry a per-atom property a field asks for:
     # "error" says so and names it, "zero" treats the molecule as having none of that quantity
     prop_missing: str = "error"         # "error" | "zero"
@@ -436,15 +439,29 @@ def _hydrogen_counts(mol: Chem.Mol, legacy: bool = False) -> np.ndarray:
     return nh
 
 
-def _tripos_weights(syb_types: Sequence[str], n_h: np.ndarray):
-    """Hydrophobic, acceptor (B) and donor (A) increments of the original CMF scripts."""
+def _tripos_weights(syb_types: Sequence[str], n_h: np.ndarray,
+                    table: Optional[Dict[str, Dict[str, float]]] = None):
+    """Hydrophobic, acceptor (B) and donor (A) increments of the original CMF scripts.
+
+    `table` replaces them with increments fitted to the data (plan item D5,
+    :mod:`cmfqsar.learnincrements`).  It is keyed by "<Sybyl type>/<hydrogen count>"; an atom
+    whose key the table does not carry falls back to the table's "other" entry, and to zero when
+    there is none, so a fitted table is used as what it is and never mixed with the published
+    numbers without being asked.
+    """
     n = len(syb_types)
     hydro, acc, don = np.zeros(n), np.zeros(n), np.zeros(n)
+    other = table.get("other") if table else None
     for i, (t, k) in enumerate(zip(syb_types, n_h)):
         if t == "H":
             continue
-        inc = tripos_increments(t, int(k))
-        hydro[i], acc[i], don[i] = inc["hydrophobic"], inc["hba"], inc["hbd"]
+        if table is None:
+            inc = tripos_increments(t, int(k))
+        else:
+            inc = table.get(f"{t}/{int(k)}", other) or {}
+        hydro[i] = inc.get("hydrophobic", 0.0)
+        acc[i] = inc.get("hba", 0.0)
+        don[i] = inc.get("hbd", 0.0)
     return hydro, acc, don
 
 
@@ -914,7 +931,9 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
     want_hb = bool(need & {"hydrophobic", "hba", "hbd"}) or bool(probes)
     if scheme.startswith("tripos"):
         if want_hb:
-            hydro, acc, don = _tripos_weights(syb, _hydrogen_counts(mol, legacy=(scheme == "tripos-legacy")))
+            hydro, acc, don = _tripos_weights(
+                syb, _hydrogen_counts(mol, legacy=(scheme == "tripos-legacy")),
+                table=getattr(fieldset, "increments", None))
     else:
         if "hydrophobic" in need or probes:
             hydro = _hydrophobic_weights(mol)

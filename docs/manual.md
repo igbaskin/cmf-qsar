@@ -3945,7 +3945,9 @@ not every option.
 **Fields.** `--fields electrostatic,steric,hydrophobic,hba,hbd[,prop:name]`, `--cif`,
 `--cif-scheme sybyl|element|element+aromatic`, `--cif-min N`, `--cif-types LIST`,
 `--pharm`, `--pharm-min N`, `--pharm-features LIST`,
-`--charges gasteiger|mmff|file`, `--param rdkit|tripos|tripos-legacy`, `--prop-missing error|zero`.
+`--charges gasteiger|mmff|file`, `--param rdkit|tripos|tripos-legacy`, `--prop-missing error|zero`,
+`--increments FILE`, `--learn-increments`, `--learn-increments-alpha A`,
+`--learn-increments-lam L`, `--learn-increments-rho R`, `--save-increments FILE`.
 
 **Kernel.** `--kernel fields|autocorrelation|surface`, `--ac-sigma S`, `--ac-dmax D`,
 `--surface-z ZMIN ZMAX ZSTEP`, `--ac-chirality`, `--ac-chirality-shells S`,
@@ -4141,6 +4143,87 @@ Two parameterisations are available (*Increments* in the model panel, `--param`)
 
 `tripos-legacy` reproduces the hydrogen-counting bug of the original R scripts, which is needed to
 match the published numbers exactly and should not be used for new work.
+
+## Increments fitted to the data
+
+The hydrophobic field and the two hydrogen-bond fields are built from one number per atom type:
+the increment of a Sybyl type carrying a given number of hydrogens. Those numbers come from
+regressions of logP and of Abraham's solute constants, not from the activity being modelled, and
+the two parameterisations in the table above differ by 0.20 in q2 on one Sutherland set. That
+difference says the increments are not settled, so the program can fit them instead
+(`cmfqsar/learnincrements.py`, `build --learn-increments`).
+
+**Fitting them is cheap, because the kernel is a quadratic form in the increments.** Every atom of
+a type carries the same weight, so
+
+$$
+K(A, B) = \sum_{t,u} c_t c_u M_{tu}(A, B)
+$$
+
+where `M` sums the Gaussian overlap integral over the atom pairs whose types are `t` and `u` and
+does not depend on the increments at all. `M` is built once per attenuation, every candidate
+kernel is one contraction, and the derivative of the cross-validated error can be carried back to
+the increments exactly, through the cosine normalisation and the fold solves. The program
+minimises the same cross-validated squared error it selects models on, with the published values
+as the starting point and a penalty on the distance from them. Tests compare every link of that
+chain with finite differences, and compare the quadratic form with the kernel the program builds
+the ordinary way.
+
+Two properties of the parameterisation are worth knowing. A cosine-normalised kernel does not
+change when all the increments of a field are multiplied by the same number, so only their
+relative sizes can be learned; the fitted values are reported at the length of the published ones,
+which changes no kernel. And the penalty cannot be chosen on the cross-validation being minimised,
+which always prefers the freest fit, so it is chosen on training molecules that the fitting does
+not see.
+
+### What it is worth, measured
+
+`benchmarks/run_increments.py` measures four models on the eight Sutherland sets, on their
+published training and test split, with the same five fields, the same attenuation and ridge
+grids and the same ten-fold cross-validation: the published increments; increments fitted on this
+set's own training molecules; increments fitted on each of the other seven sets and applied here;
+and the best of those seven.
+
+| Model | mean q2 (training cross-validation) | mean R2 on the test set |
+|---|---|---|
+| published increments | +0.596 | **+0.383** |
+| fitted on this set | **+0.816** | +0.310 |
+| fitted on another set (mean of seven) | +0.593 | +0.363 |
+| the best of those seven | +0.646 | +0.449 |
+
+**Fitting the increments improves the number it is fitted on and does not improve prediction.**
+The cross-validated q2 rises from +0.596 to +0.816, which is what
+minimising it must do. On the test set, which the fitting never saw, R2 goes from
++0.383 to +0.310; fitted increments predict better than the
+published ones on 2 of the 8 sets. The gap between the two movements is the
+selection bias of reading a q2 off the cross-validation that chose the parameters.
+
+**What is learned does not transfer.** Increments fitted on one set and applied to another give
++0.363 against +0.383 for the published table; transferred increments beat the published ones on
+3 of the 8 sets. The best of the seven donors reaches +0.449, which is above the table, but that
+donor is picked with the test set already in hand. The fitted vectors do not agree with each
+other either: the mean cosine between the increments fitted on two different sets is
++0.89 for the hydrophobic field, +0.72 for the acceptor field
+and +0.54 for the donor field, where every fit started from the same table.
+
+The "best of seven" column is the most generous reading there is, and it is not a rule anyone
+could follow: the best donor is picked with the test set already in hand. Read it as an upper
+bound on what choosing a donor set could ever give.
+
+**So the increments are a per-set nuisance parameter**, which is the answer the plan asked for.
+The published table is a reasonable prior and should stay the default; fitting the increments is
+worth doing to see how much a set wants to move them, not to make a model that predicts better.
+The fit moves the two hydrogen-bond fields much further than the hydrophobic one
+(+0.99, +0.86 and +0.70 mean cosine with the published
+values), which is also where the two parameterisations of Appendix A differ most: they put the
+donor weight on different atoms. How far a set moves its increments does not say how much it will
+lose, though -- over the eight sets the correlation between the two is -0.25,
+which is nothing.
+
+`--learn-increments` is therefore not a default. It prints a warning that the q2 of the same
+cross-validation is optimistic, and `--save-increments` writes the table so that it can be read
+back with `--increments FILE` and used on another series -- which is how the transfer above was
+measured.
 
 # Appendix B — Files and tags the program understands
 

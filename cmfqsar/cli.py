@@ -312,6 +312,41 @@ def cmd_build(args):
         print()
         for line in failures[:5]:
             print("  " + line)
+    if args.increments or args.learn_increments:
+        from cmfqsar.learnincrements import (coverage, fit_increments, read_increments,
+                                             types_in)
+        if not fs.param_scheme.startswith("tripos"):
+            raise SystemExit("fitted increments only apply to the Tripos parameterisation: "
+                             "add --param tripos")
+        legacy = fs.param_scheme == "tripos-legacy"
+        if args.increments:
+            fs.increments = read_increments(args.increments)
+            cov = coverage(fs.increments, ds.mols, legacy=legacy)
+            print(f"  increments read from {args.increments}: {len(fs.increments)} types, "
+                  f"{cov['exact']:.0%} of the atoms matched by their own type, "
+                  f"{cov['other']:.0%} by the 'other' group, {cov['missing']:.0%} not covered")
+        else:
+            keys, counts = types_in([ds.mols[i] for i in tr], legacy=legacy)
+            print(f"  fitting the increments of {len(keys)} atom types on the training set "
+                  f"(alpha {args.learn_increments_alpha:g}, lambda "
+                  f"{args.learn_increments_lam:g}, penalty {args.learn_increments_rho:g})")
+            fit = fit_increments([ds.mols[i] for i in tr], [ds.names[i] for i in tr],
+                                 ds.activity[tr], alpha=args.learn_increments_alpha,
+                                 lam=args.learn_increments_lam, rho=args.learn_increments_rho,
+                                 folds=args.folds, seed=args.seed, keys=keys, fieldset=fs,
+                                 legacy=legacy)
+            fs.increments = fit.increments
+            cos = fit.cosine()
+            print(f"    cross-validated squared error {fit.loss_published:.3f} -> {fit.loss:.3f} "
+                  f"in {fit.iterations} iterations; the fitted increments still point the same "
+                  "way as the published ones for "
+                  + ", ".join(f"{k} {v:+.2f}" for k, v in cos.items()))
+            print("    WARNING: the increments were fitted on the same cross-validation that "
+                  "reports q2 below, so that q2 is optimistic. Use a test set, or --nested, or "
+                  "the numbers in the manual for how large the difference is.")
+            if args.save_increments:
+                fit.to_json(args.save_increments)
+                print(f"    written to {args.save_increments}")
     if fs.is_tautomer_ensemble:
         from cmfqsar.tautomers import ambiguous_share, available, forms_table
         if not available():
@@ -2633,6 +2668,22 @@ def main(argv=None):
                    help="weights of the conformations in the mean field")
     b.add_argument("--kt", type=float, default=0.6, metavar="KCAL",
                    help="kT for the Boltzmann weights (default 0.6 kcal/mol, about RT at 300 K)")
+    b.add_argument("--increments", default=None, metavar="FILE",
+                   help="read the atomic increments of the hydrophobic and hydrogen-bond fields "
+                        "from a JSON table instead of the published one (plan item D5). Needs "
+                        "--param tripos")
+    b.add_argument("--learn-increments", action="store_true",
+                   help="fit those increments on the training set instead of taking them from "
+                        "the table. The q2 of the same cross-validation is then optimistic; "
+                        "measure on a test set or with --nested")
+    b.add_argument("--learn-increments-alpha", type=float, default=0.5, metavar="A",
+                   help="the attenuation the increments are fitted at (default 0.5)")
+    b.add_argument("--learn-increments-lam", type=float, default=0.1, metavar="L",
+                   help="the ridge the increments are fitted at (default 0.1)")
+    b.add_argument("--learn-increments-rho", type=float, default=1.0, metavar="R",
+                   help="how strongly the fit is held near the published increments (default 1)")
+    b.add_argument("--save-increments", default=None, metavar="FILE",
+                   help="write the fitted increments to this JSON file")
     b.add_argument("--tautomers", default=None, choices=["score", "uniform", "given"],
                    help="represent every molecule by the mean field of its tautomers instead of "
                         "by the form the file gives (plan item D4). 'score' keeps the forms "

@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 26 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 63 modules and about 26,900 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 64 modules and about 27,600 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-four subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`), 831 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`), 853 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -36,6 +36,7 @@ The measurements already in hand settle several questions, and the plan treats t
 | Do conformational ensembles help? | Five routes, none beats one well-chosen conformation on an aligned series | README, "The verdict on the fourth dimension" |
 | Do probe fields improve accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
 | Do quantum-chemical fields help? | Not on the corrosion series or on Am/Eu; yes on Hammett, where resonance needs whole-molecule charges | `benchmarks/results/corrosion_qm/`, `am_eu/`, `hammett/` |
+| Do increments fitted on one series transfer to another? | No (+0.363 on the test set against +0.383 for the published table; the vectors fitted on two sets agree to +0.89 at best) | `cmfqsar/learnincrements.py`, `benchmarks/results/increments/` |
 | Does a pKa-weighted protonation ensemble beat one chosen state? | No on the corrosion series in HCl (+0.261 against +0.324): at pH 0 only 1% of the molecules are mixtures, and independent-site pKa picks the state badly | `cmfqsar/protonation.py`, `benchmarks/results/protonation/` |
 | Do six pharmacophore features beat twenty Sybyl indicators? | Below 40 molecules yes (+0.027 against +0.002 added to the five fields), above it no | `cmfqsar/pharmtypes.py`, `benchmarks/results/pharmfields_mittal/` |
 | Can a Fukui function be a sum of atom Gaussians? | No (relative fit error 0.8 to 0.9), and the model does not care | `cmfqsar/cdft.py`, `benchmarks/results/cdft_kernels/` |
@@ -681,6 +682,40 @@ can judge it.
   increments as the prior and a penalty on the distance from them), and ask the only question that
   matters: do increments learned on one set transfer to another? If they do not, the result is that
   the increments are a per-set nuisance parameter and the plan says so.
+  **Done 26 October 2026, and they do not transfer: the increments are a per-set nuisance
+  parameter.** `cmfqsar/learnincrements.py` uses the one property that makes this affordable: an
+  increment gives every atom of a type the same weight, so the kernel is a quadratic form in the
+  increments and the tensor of overlap integrals summed over type pairs does not depend on them.
+  It is built once per attenuation (25 types on these sets, the largest tensor 380 MB),
+  every candidate kernel is one contraction, and the gradient of the cross-validated squared
+  error -- the number the model is selected on, with the bias term of Eq. 12 -- is exact through
+  the fold solves and the cosine normalisation. Tests compare each link with finite differences
+  and the quadratic form with the kernel the program builds the ordinary way. `build
+  --learn-increments`, `--increments FILE`, `--save-increments FILE`.
+  **Measured on the eight Sutherland sets, on their published train/test split:** published
+  increments q2 +0.596 and R2pred **+0.383**; fitted on the set
+  itself q2 **+0.816** and R2pred +0.310; fitted on another set and
+  transferred here +0.363, the best of the seven donors
+  +0.449. Fitted increments predict better than the table on 2
+  of the 8 sets, transferred ones on 3. The best-of-seven column is picked
+  with the test set in hand, so it is an upper bound rather than a rule.
+  **The fitted vectors do not agree with one another**, although every fit starts from the same
+  table: the mean cosine between two sets' fitted increments is +0.89
+  (hydrophobic), +0.72 (acceptor), +0.54 (donor), and those figures
+  are generous because every fit starts from the same table. The fit moves the two hydrogen-bond
+  fields much further than the hydrophobic one (+0.99, +0.86,
+  +0.70 mean cosine with the published values), which is where the two published
+  parameterisations differ most. How far a set moves them does not predict what it loses:
+  the correlation between the two over the eight sets is -0.25.
+  **Two things the measurement needed.** Only the relative increments of a field are identifiable,
+  because a cosine-normalised kernel does not change when they are all multiplied by the same
+  number; the fitted values are reported at the published length, which changes no kernel. And the
+  penalty cannot be chosen on the cross-validation being minimised, which always prefers the
+  freest fit, so it is chosen on training molecules the fitting does not see (the chosen values
+  range over 0.3, 30, 300 across the sets).
+  **Not done:** the fit is at one attenuation and ridge, the ones the published model selects, not
+  jointly with them; the increments of the steric and electrostatic fields are not fitted; and
+  nothing in the GUI fits them.
 * **D6. Per-field widths.** Follows from B4: once the evidence selects hyper-parameters, α per field
   is five numbers instead of one, and the co-fields become sharper for the field that needs it.
   **Done 25 October 2026, and the answer is no**: `cmfqsar/perfield.py` and

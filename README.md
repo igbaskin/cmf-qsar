@@ -1691,6 +1691,46 @@ beside the ensemble says when the independent-site assumption has added protons 
 would not carry. The pKa values are Dimorphite-DL's and cannot yet be replaced from the command
 line.
 
+### Increments fitted to the data
+
+The hydrophobic field and the two hydrogen-bond fields are built from one increment per (Sybyl
+atom type, hydrogen count), taken from regressions of logP and of Abraham's solute constants. An
+increment gives every atom of a type the same weight, so the kernel is a quadratic form in the
+increments: the overlap integral summed over the atom pairs of each pair of types does not depend
+on them at all. `cmfqsar/learnincrements.py` builds that tensor once per attenuation and minimises
+the model's own cross-validated squared error in the increments, with an exact gradient through
+the fold solves and the cosine normalisation, the published values as the starting point and a
+penalty on the distance from them (`build --learn-increments`, `--increments FILE`).
+
+Measured on the eight Sutherland sets, on their published training and test split, with the same
+five fields, grids and ten-fold cross-validation:
+
+<!-- INCREMENTS-TABLE -->
+| model | mean q2 (training CV) | mean R2 on the test set | better than the table on |
+|---|---:|---:|---:|
+| published increments | +0.596 | **+0.383** | — |
+| fitted on this set | **+0.816** | +0.310 | 2 of 8 sets |
+| fitted on another set (mean of seven) | +0.593 | +0.363 | 3 of 8 sets |
+| the best of those seven | +0.646 | +0.449 | |
+<!-- /INCREMENTS-TABLE -->
+
+**Fitting improves the number it is fitted on and nothing else.** The cross-validated q2 rises
+from +0.596 to +0.816 — it must, that is what is minimised — while
+R2 on the held-out test set goes from +0.383 to +0.310. The
+difference between those two movements is the selection bias of reading a q2 off the
+cross-validation that chose the parameters, measured here rather than assumed.
+
+**And what one set learns does not carry to another.** Increments fitted elsewhere give
++0.363 against +0.383 for the published table, and beat it on
+3 of the 8 sets. Picking the best of the seven donor sets would reach
++0.449, but that pick is made with the test set in hand, so it is an upper bound
+and not a rule. The fitted
+vectors do not even agree with each other: the mean cosine between two sets' fitted increments is
++0.89 (hydrophobic), +0.72 (acceptor) and +0.54
+(donor), although every fit started from the same table. The increments are a per-set nuisance
+parameter, so the published table stays the default and `--learn-increments` is a diagnostic, not
+a setting to turn on.
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the
