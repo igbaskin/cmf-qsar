@@ -10,11 +10,11 @@ The repository holds, as of 25 October 2026 (the lists below were written on 22 
 kept current; the counts are the ones the repository gives today):
 
 * A library of 60 modules and about 25,500 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with twenty-one subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
-  `screen`, `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`),
-  754 tests, a typeset manual and a README that doubles as the record of every measurement made
-  so far.
+  command-line tool with twenty-four subcommands (`build`, `build-crystals`, `diagnose`,
+  `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
+  `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
+  `complement`, `suggest`, `design`, `transfer`, `mixing`), 771 tests, a typeset manual and a
+  README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
   rotation-invariant autocorrelation kernel and topomer fields; a Gaussian or arc-cosine layer on
@@ -1081,6 +1081,28 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   subcommand; give it a subcommand of its own, `align` (by confidence, by MCS, in the pocket), and
   add `diagnose` (C6), `screen` (B3), `cofield` (grids and cube export without the GUI), ~~`report`
   (F4)~~ **done** and `benchmark` (A4).
+  **Done 26 October 2026.** All six exist: `diagnose` arrived with C6, `screen` with B3, `report`
+  with F4, and this item added the other three.
+  **`align`** takes the four criteria the program has and puts them behind one `--by`: `mcs` (the
+  common substructure with a reference molecule), `field` (maximum field similarity to a
+  reference, to a model's training set or to the set itself), `variance` (the confidence criterion
+  of the 2019 paper, with `--flexible` for the torsions) and `pocket` (that confidence with the
+  complementarity term). It prints what it did per molecule, then how far the set moved, and
+  writes nothing without `--out`, because an alignment that is not kept is a measurement and a
+  command that silently rewrites a file is a trap. `--max-rmsd` is the displacement guard, and
+  `--judge` adds the mean field similarity within the set afterwards.
+  **`cofield`** writes the co-fields as Gaussian cube files, which any viewer opens, and prints
+  the peak of each field and the share of the covered grid that stands more than `--z` standard
+  deviations from zero -- the quickest way to see how much of a map is worth looking at.
+  `--kind molecule` and `--kind overlap` give one molecule's field in the model's frame and that
+  field weighted by the co-field, which is the picture that explains a prediction.
+  **`benchmark`** runs `benchmarks/run_all.py` through the tool, with `--list`, `--check`,
+  `--tables`, `--manifest`, `--readme`, `--data-root` and `--orca` passed straight through. It
+  needs the source checkout and says so rather than failing obscurely.
+  `tests/test_cli_subcommands.py` drives all three through `cmfqsar.cli.main`, including the four
+  alignment criteria and the four ways each command refuses what it cannot do.
+  **Not done:** the alignment flags on `build` and `predict` still exist, because scripts and the
+  benchmarks use them; `align` is the new way in, not a removal.
 * **G2. Projects.** A project file that holds the data set, its poses before and after each
   alignment, the settings, the model and the results, so a session can be reopened; undo of an
   alignment step; a panel that compares two models on the same molecules.

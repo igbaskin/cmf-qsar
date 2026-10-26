@@ -3659,6 +3659,73 @@ trimmed at 8 Å around a shallow, solvent-exposed hinge leaves most of a ligand 
 - **The check comes first.** One of the three does not beat a shuffle of its own activities, and
   no amount of interpretation would have revealed that; only the shuffle did.
 
+## One command for the alignment: `cmf align`
+
+Alignment was spread over flags of `build` and `predict` and the `hetero` workflow, which made the
+four criteria the program has look like four unrelated features. They are one question — where do
+these molecules go — asked four ways, and `align` asks it:
+
+```bash
+cmf align data.sdf --by mcs    --out aligned.sdf          # on the common substructure
+cmf align data.sdf --by field  --reference 0 --out aligned.sdf
+cmf align data.sdf --by variance --model m.cmf --max-rmsd 2 --out aligned.sdf
+cmf align data.sdf --by pocket --model m.cmf --pocket site.pdb --out aligned.sdf
+```
+
+| `--by` | what it maximises | what it needs |
+|---|---|---|
+| `mcs` | the overlap of the maximum common substructure with a reference molecule | a reference, or it takes the first of the most active quarter |
+| `field` | the CMF field similarity to a reference molecule, a model's training set, or the set itself | nothing, but `--restarts` decides how hard it tries |
+| `variance` | the confidence of the model's own prediction — the criterion of *Alignment by prediction confidence* | a model (`--model`), and `--flexible` adds the torsions |
+| `pocket` | that confidence with a complementarity term, $\sigma^2 - w\,[\text{fit} - \text{clash}]$ | a model and a structure; see the warning in *Alignment inside the pocket* |
+
+Every mode prints what it did per molecule and then how far the set moved, and writes nothing
+unless `--out` is given — an alignment that is not kept is a measurement, and saying so avoids the
+surprise of a command that silently rewrote a file. `--max-rmsd` limits how far a molecule may
+travel from the pose it arrived in, which is the guard the confidence criterion needs: without it
+a molecule is free to leave the series entirely and sit wherever the variance happens to be
+lowest. `--judge` adds the mean field similarity within the set afterwards, which is the one
+number that says whether the set now shares a frame.
+
+What `align` does **not** do is tell you whether the result is better. Only *A protocol that can
+judge an alignment* can, and `benchmarks/run_poses.py` is where that protocol lives.
+
+## Co-fields without the application: `cmf cofield`
+
+The co-fields were readable only from the 3D view. `cofield` writes them as Gaussian cube files,
+which any molecular viewer opens, and prints the numbers that go with them:
+
+```bash
+cmf cofield model.cmf --out-prefix maps --spacing 0.5 --z 2
+cmf cofield model.cmf --kind overlap --molecule candidate.sdf --csv agreement.csv
+```
+
+`--kind cofield` is the model's own map, one cube per field. `--kind molecule` is one molecule's
+field in the model's frame, and `--kind overlap` is that field weighted by the co-field — where the
+molecule and the model agree, which is the picture that explains a prediction. `--z` masks the map
+where it lies closer than that many standard deviations to zero (*The uncertainty of a co-field*),
+and the printed share of the covered grid that survives is the quickest way to see how much of a
+map is worth looking at:
+
+```
+electrostatic    peak     0.6146 (signed    -0.6146)   7% of the covered grid above 2 sd
+hydrophobic      peak     0.8206 (signed    +0.8206)   18% of the covered grid above 2 sd
+```
+
+## The benchmarks from the tool: `cmf benchmark`
+
+`benchmarks/run_all.py` is the one entry point for every measurement in this manual, and
+`cmf benchmark` is the same program reached through the tool:
+
+```bash
+cmf benchmark --list            # what there is, what it needs, how long it takes
+cmf benchmark --check           # do the tables and the documents match the stored results?
+cmf benchmark alignment poses   # run these two
+```
+
+It needs the source checkout, because the benchmarks and their data are not installed with the
+package; the command says so rather than failing obscurely if they are missing.
+
 # Command-line reference
 
 Everything the application does is available without it, which is what makes the program scriptable
@@ -3676,9 +3743,12 @@ not every option.
 | `build` | build, cross-validate, test and save a model |
 | `build-crystals` | the same on periodic structures (CIF, POSCAR, extended XYZ) |
 | `diagnose` | ask a data set what it can support, before modelling it |
+| `align` | put a set in one frame: by substructure, by field similarity, by prediction confidence or in a pocket |
 | `predict` | predict with a saved model, optionally aligning by confidence first |
 | `screen` | score a library against a saved model, reading it in blocks, so its size does not matter |
 | `report` | one self-contained HTML page describing a saved model |
+| `cofield` | the co-fields of a saved model as cube files and as numbers |
+| `benchmark` | run, list or check the benchmarks of the checkout |
 | `suggest` | which posed candidate to make next (expected improvement and the rest) |
 | `design` | what to put at a position of a parent, ranked by the model |
 | `transfer` | compare models by their co-fields: do they ask the same thing? |

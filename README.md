@@ -2773,6 +2773,10 @@ python cmf_cli.py predict model.cmf new_molecules.sdf --out predictions.csv
 python cmf_cli.py predict model.cmf new_molecules.sdf --allow-mismatch     # past a refused contract check
 python cmf_cli.py predict model.cmf new_molecules.sdf --align-variance 2.0 --aligned-out aligned.sdf
 python cmf_cli.py screen model.cmf library.sdf --out scores.csv --beta 1.0 --top 25   # in blocks
+python cmf_cli.py align data.sdf --by mcs --out aligned.sdf            # or field, variance, pocket
+python cmf_cli.py align data.sdf --by variance --model model.cmf --max-rmsd 2 --out aligned.sdf
+python cmf_cli.py cofield model.cmf --out-prefix maps --z 2            # co-fields as cube files
+python cmf_cli.py benchmark --list                                     # and --check, --tables
 python cmf_cli.py build aligned_set.sdf --align-train-variance 1.0 --test-fraction 0.25
 python cmf_cli.py unalign aligned.sdf scrambled.sdf --max-rotation 40 --max-translation 2
 python cmf_cli.py map examples/sutherland/THR.sdf --charges file --out coords.csv --landscape-out land.csv

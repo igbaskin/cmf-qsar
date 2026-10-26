@@ -930,6 +930,244 @@ def cmd_screen(args):
         print(f"written {rep.out_path}")
 
 
+ALIGN_WAYS = ("mcs", "field", "variance", "pocket")
+
+
+def _write_sdf(path, rdmols, fields, names):
+    """Write the molecules with the coordinates their fields now carry."""
+    from rdkit import Chem
+    with Chem.SDWriter(path) as w:
+        for m, mol, nm in zip(rdmols, fields, names):
+            mm = Chem.Mol(m)
+            conf = mm.GetConformer()
+            for i, xyz in enumerate(mol.coords):
+                conf.SetAtomPosition(i, [float(v) for v in xyz])
+            mm.SetProp("_Name", nm)
+            w.write(mm)
+
+
+def _reference_index(names, spec, y=None):
+    """Which molecule the others are aligned onto: an index, a name, or the default rule."""
+    if spec is None:
+        import numpy as _np
+        if y is not None and _np.isfinite(y).sum() >= 2:
+            # the largest molecule of the most active quarter, the rule make_mittal_examples uses
+            thr = float(_np.nanpercentile(y, 75))
+            cand = [i for i in range(len(names)) if _np.isfinite(y[i]) and y[i] >= thr]
+            return cand[0] if cand else 0
+        return 0
+    try:
+        return int(spec)
+    except (TypeError, ValueError):
+        pass
+    for i, n in enumerate(names):
+        if n == spec:
+            return i
+    raise SystemExit(f"no molecule called {spec!r}; give an index or one of: "
+                     + ", ".join(names[:6]) + (" ..." if len(names) > 6 else ""))
+
+
+def cmd_align(args):
+    """Put a set of molecules in one frame, by whichever of the four criteria is asked for."""
+    import numpy as np
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity,
+                      activity_file=args.activity_file)
+    y = np.asarray(ds.activity, float)
+    model = None
+    if args.model:
+        model, _extra = load_model(args.model)
+        fieldset = model.fieldset
+    else:
+        physchem, props = _split_fields(args.fields) if args.fields else (["electrostatic", "steric", "hydrophobic", "hba", "hbd"], [])
+        fieldset = FieldSet.create(physchem=physchem, alpha=args.alpha,
+                                   atom_properties=props)
+    mf = [build_fields(m, fieldset, n) for m, n in zip(ds.mols, ds.names)]
+    before = [np.array(f.coords, copy=True) for f in mf]
+    way = args.by
+    if way in ("variance", "pocket") and model is None:
+        raise SystemExit(f"--by {way} aligns by what a model says, so it needs --model")
+    if way == "pocket" and not args.pocket:
+        raise SystemExit("--by pocket needs --pocket STRUCTURE")
+    guard = None if args.max_rmsd is not None and args.max_rmsd <= 0 else args.max_rmsd
+
+    if way == "mcs":
+        from cmfqsar.align import align_dataset
+        ref = _reference_index(list(ds.names), args.reference, y)
+        print(f"Aligning {len(mf)} molecules onto {ds.names[ref]} by maximum common substructure"
+              + (", then refining on the field similarity" if args.field_refine else ""))
+        log = align_dataset(list(ds.mols), ref, use_mcs=True, field_refine=args.field_refine,
+                            fieldset=fieldset)
+        mf = [build_fields(m, fieldset, n) for m, n in zip(ds.mols, ds.names)]
+        for nm, line in zip(ds.names, log):
+            print(f"  {nm:30s} {line}")
+    elif way == "field":
+        from cmfqsar.decoys import align_decoys
+        ref = _reference_index(list(ds.names), args.reference, y)
+        keep = [i for i in range(len(mf)) if i != ref] if args.reference is not None else None
+        reference = AtomTable.from_molecules([mf[ref]]) if args.reference is not None \
+            else (model.train if model is not None else AtomTable.from_molecules(mf))
+        what = (f"the pose of {ds.names[ref]}" if args.reference is not None
+                else ("the model's training set" if model is not None else "the set itself"))
+        print(f"Aligning {len(mf)} molecules by maximum field similarity to {what} "
+              f"({args.restarts} restarts)")
+        res = align_decoys(mf, reference, fieldset, restarts=args.restarts, seed=args.seed)
+        for nm, r in zip(ds.names, res):
+            print(f"  {nm:30s} similarity {r.similarity_before:.3f} -> "
+                  f"{r.similarity_after:.3f}")
+    elif way == "variance":
+        if args.flexible:
+            from cmfqsar.flexalign import flexible_align
+            print(f"Aligning {len(mf)} molecules by prediction confidence, rigid motion and the "
+                  f"rotatable bonds, from {args.conformers} conformations")
+            res = flexible_align(mf, list(ds.mols), model, max_rmsd=guard,
+                                 restarts=args.restarts, conformers=args.conformers)
+        else:
+            from cmfqsar.varalign import variance_align
+            print(f"Aligning {len(mf)} molecules by prediction confidence (rigid)"
+                  + (f", at most {guard} A from the input pose" if guard else ""))
+            res = variance_align(mf, model, max_rmsd=guard, restarts=args.restarts)
+        for r in res:
+            print(f"  {r.name:28s} variance {r.variance_before:8.4f} -> "
+                  f"{r.variance_after:8.4f}   moved {r.rmsd:5.2f} A"
+                  + ("   [at the displacement limit]" if r.limited else ""))
+    else:
+        from cmfqsar.complementarity import pocket_fields
+        from cmfqsar.pocketalign import pocket_align, summarise
+        from cmfqsar.protein import read_structure
+        prot = read_structure(args.pocket, keep_waters=False)
+        pocket = pocket_fields(prot, fieldset)
+        print(f"Aligning {len(mf)} molecules inside the pocket of "
+              f"{prot.name or args.pocket} ({pocket.n_atoms} atoms), complementarity weighted "
+              f"{args.pocket_weight:g} against the confidence")
+        res = pocket_align(mf, model, pocket, pocket_weight=args.pocket_weight,
+                           max_rmsd=guard, restarts=args.restarts)
+        for r in res:
+            print("  " + r.describe())
+        st = summarise(res)
+        print(f"  median: variance {st['variance_before']:.4f} -> {st['variance']:.4f}, "
+              f"pocket {st['pocket_before']:+.3f} -> {st['pocket']:+.3f}, "
+              f"moved {st['moved']:.2f} A, {st['at_the_guard']} of {st['n']} at the guard")
+
+    moved = [float(np.sqrt(np.mean(np.sum((f.coords - b) ** 2, axis=1))))
+             for f, b in zip(mf, before)]
+    print(f"Moved: median {float(np.median(moved)):.2f} A, largest "
+          f"{float(np.max(moved)):.2f} A")
+    if args.judge and model is not None:
+        from cmfqsar.varalign import ensemble_similarity
+        print(f"Mean field similarity within the set: "
+              f"{ensemble_similarity(mf, fieldset.specs):.3f}")
+    if args.out:
+        _write_sdf(args.out, list(ds.mols), mf, list(ds.names))
+        print(f"Aligned structures written to {args.out}")
+    else:
+        print("Nothing written: give --out to keep the result.")
+
+
+def cmd_cofield(args):
+    """The co-fields of a saved model on a grid, as cube files and as numbers."""
+    import numpy as np
+    from cmfqsar.cofields import (cofield_volume, cofield_with_error, export_cube, make_grid,
+                                  molfield_volume, noise_level, overlap_volume)
+
+    model, _extra = load_model(args.model)
+    model._require_linear("co-fields")
+    if model.train is None:
+        raise SystemExit("the model file carries no training molecules, so it has no grid")
+    names = [sp.name for sp in model.fieldset.specs]
+    asked = set(_split_fields(args.fields)[0]) if args.fields else None
+    wanted = names if asked is None else [n for n in names if n in asked]
+    if not wanted:
+        raise SystemExit(f"none of those fields is in the model; it has {', '.join(names)}")
+    grid = make_grid(model.train.coords, margin=args.margin, spacing=args.spacing)
+    print(f"{os.path.basename(args.model)}: {model.train.n_mol} training molecules, "
+          f"grid {grid.shape} at {args.spacing} A = {int(np.prod(grid.shape))} points")
+    mol = None
+    if args.molecule is not None:
+        ds = load_dataset(args.molecule)
+        mol = build_fields(ds.mols[0], model.fieldset, ds.names[0])
+        print(f"  against {ds.names[0]} from {args.molecule}")
+    sigma = None
+    if args.z > 0:
+        sigma, src = noise_level(model)
+        print(f"  masking below {args.z:g} standard deviations, noise level {sigma:.3f} ({src})")
+    rows = []
+    for f, name in enumerate(names):
+        if name not in wanted:
+            continue
+        if args.kind == "molecule":
+            if mol is None:
+                raise SystemExit("--kind molecule needs --molecule FILE")
+            vol = molfield_volume(model, mol, f, grid)
+        elif args.kind == "overlap":
+            if mol is None:
+                raise SystemExit("--kind overlap needs --molecule FILE")
+            vol = overlap_volume(model, mol, f, grid)
+        else:
+            vol = cofield_volume(model, f, grid)
+        kept = float("nan")
+        if args.z > 0 and args.kind == "cofield":
+            ce = cofield_with_error(model, f, grid, sigma=sigma, z=args.z)
+            covered = ce.sd > 0
+            kept = float(np.mean(np.abs(ce.mean[covered]) > args.z * ce.sd[covered])) \
+                if covered.any() else 0.0
+            vol = ce.masked
+        peak = float(np.max(np.abs(vol))) if vol.size else 0.0
+        signed = float(vol.flat[int(np.argmax(np.abs(vol)))]) if vol.size else 0.0
+        rows.append((name, peak, signed, kept))
+        print(f"  {name:16s} peak {peak:10.4f} (signed {signed:+10.4f})"
+              + (f"   {kept:.0%} of the covered grid above {args.z:g} sd"
+                 if kept == kept else ""))
+        if args.out_prefix:
+            path = f"{args.out_prefix}_{args.kind}_{name.replace(':', '_')}.cube"
+            export_cube(path, grid, vol, mol,
+                        title=f"CMF {args.kind} {name} of {os.path.basename(args.model)}")
+            print(f"    written {path}")
+    if args.csv:
+        import csv as _csv
+        with open(args.csv, "w", encoding="utf-8", newline="") as fh:
+            w = _csv.writer(fh)
+            w.writerow(["field", "peak", "signed_peak", "share_above_z"])
+            for r in rows:
+                w.writerow([r[0], f"{r[1]:.6g}", f"{r[2]:.6g}",
+                            "" if r[3] != r[3] else f"{r[3]:.4f}"])
+        print(f"written {args.csv}")
+    if not args.out_prefix and not args.csv:
+        print("Nothing written: give --out-prefix for cube files or --csv for the table.")
+
+
+def cmd_benchmark(args):
+    """Run, list or check the benchmarks, which live in benchmarks/run_all.py."""
+    import runpy
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    path = os.path.join(root, "benchmarks", "run_all.py")
+    if not os.path.isfile(path):
+        raise SystemExit("the benchmarks are part of the source checkout and are not installed "
+                         f"with the package; {path} is missing")
+    argv = [path]
+    for flag in ("list", "check", "tables", "manifest", "readme"):
+        if getattr(args, flag, False):
+            argv.append("--" + flag)
+    if args.data_root:
+        argv += ["--data-root", args.data_root]
+    if args.orca:
+        argv.append("--orca")
+    argv += list(args.name or [])
+    saved = list(sys.argv)
+    sys.argv = argv
+    sys.path.insert(0, os.path.join(root, "benchmarks"))
+    try:
+        runpy.run_path(path, run_name="__main__")
+    except SystemExit as exc:
+        # run_all.py ends with sys.exit(main()); a zero is how it says it finished, and a
+        # subcommand that raised SystemExit(0) would look like a failure to a caller
+        code = exc.code if exc.code is not None else 0
+        if code:
+            raise
+    finally:
+        sys.argv = saved
+
+
 def cmd_predict(args):
     model, extra = load_model(args.model)
     ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file)
@@ -2890,6 +3128,81 @@ def main(argv=None):
     k.add_argument("--profile-out", default=None, metavar="FILE",
                    help="CSV of the interaction profiles: one row per molecule and residue")
     k.set_defaults(func=cmd_complement)
+
+    al = sub.add_parser("align", help="put a set of molecules in one frame, by substructure, "
+                                      "by field similarity, by prediction confidence or in a "
+                                      "pocket")
+    al.add_argument("dataset")
+    al.add_argument("--by", default="mcs", choices=list(ALIGN_WAYS),
+                    help="mcs: superimpose on the maximum common substructure with a reference "
+                         "molecule. field: maximise the CMF field similarity to a reference. "
+                         "variance: minimise the posterior variance of the prediction, which "
+                         "needs a model. pocket: the confidence criterion with a complementarity "
+                         "term, which needs a model and a structure")
+    al.add_argument("--out", default=None, metavar="SDF",
+                    help="where to write the aligned structures; without it nothing is kept")
+    al.add_argument("--model", default=None, metavar="FILE",
+                    help="a saved model: its field set is used, and --by variance and pocket "
+                         "align by what it predicts")
+    al.add_argument("--reference", default=None, metavar="INDEX|NAME",
+                    help="the molecule the others are aligned onto (default: the first of the "
+                         "most active quarter, or the first molecule)")
+    al.add_argument("--pocket", default=None, metavar="STRUCTURE",
+                    help="a PDB or mmCIF file, for --by pocket")
+    al.add_argument("--pocket-weight", type=float, default=1.0, metavar="W")
+    al.add_argument("--max-rmsd", type=float, default=2.0, metavar="A",
+                    help="how far a molecule may move from its input pose; <=0 for no limit")
+    al.add_argument("--restarts", type=int, default=2)
+    al.add_argument("--flexible", action="store_true",
+                    help="with --by variance, also turn the rotatable bonds")
+    al.add_argument("--conformers", type=int, default=5, metavar="N",
+                    help="with --flexible, how many conformations to start from")
+    al.add_argument("--field-refine", action="store_true",
+                    help="with --by mcs, refine the substructure fit on the field similarity")
+    al.add_argument("--fields", default=None,
+                    help="field set to measure with when no model is given (default: the five)")
+    al.add_argument("--alpha", type=float, default=0.5)
+    al.add_argument("--activity", default=None)
+    al.add_argument("--activity-file", default=None)
+    al.add_argument("--judge", action="store_true",
+                    help="also report the mean field similarity within the set afterwards")
+    al.add_argument("--seed", type=int, default=0)
+    al.set_defaults(func=cmd_align)
+
+    cf = sub.add_parser("cofield", help="the co-fields of a saved model on a grid, as cube files "
+                                       "and as numbers, without the application")
+    cf.add_argument("model", help="a model file written by build --save")
+    cf.add_argument("--out-prefix", default=None, metavar="PREFIX",
+                    help="write <prefix>_<kind>_<field>.cube for every field")
+    cf.add_argument("--csv", default=None, metavar="FILE",
+                    help="write the peak of every field as a table")
+    cf.add_argument("--kind", default="cofield", choices=["cofield", "molecule", "overlap"],
+                    help="cofield: the model's own map. molecule: one molecule's field in the "
+                         "model's frame. overlap: that molecule's field weighted by the co-field, "
+                         "which is where it agrees with the model")
+    cf.add_argument("--molecule", default=None, metavar="FILE",
+                    help="a structure file whose first molecule --kind molecule and overlap use")
+    cf.add_argument("--fields", default=None, help="only these fields (default: all of them)")
+    cf.add_argument("--spacing", type=float, default=0.5, metavar="A")
+    cf.add_argument("--margin", type=float, default=3.0, metavar="A")
+    cf.add_argument("--z", type=float, default=2.0, metavar="Z",
+                    help="zero the co-field where it lies closer than this many standard "
+                         "deviations to zero; 0 draws the unmasked map")
+    cf.set_defaults(func=cmd_cofield)
+
+    bm = sub.add_parser("benchmark", help="run, list or check the benchmarks of the checkout")
+    bm.add_argument("name", nargs="*", help="which benchmarks to run (default: all of them)")
+    bm.add_argument("--list", action="store_true", help="what there is and what it needs")
+    bm.add_argument("--check", action="store_true",
+                    help="do the tables and the documents match the stored results?")
+    bm.add_argument("--tables", action="store_true", help="rebuild every table from its results")
+    bm.add_argument("--manifest", action="store_true",
+                    help="record the hashes of the data and result files")
+    bm.add_argument("--readme", action="store_true", help="refresh the spliced README blocks")
+    bm.add_argument("--data-root", default=None, metavar="DIR",
+                    help="where the data a benchmark needs but the repository does not ship is")
+    bm.add_argument("--orca", action="store_true", help="also run the benchmarks that need ORCA")
+    bm.set_defaults(func=cmd_benchmark)
 
     sc = sub.add_parser("screen", help="score a library against a saved model, reading it in "
                                        "blocks so that its size does not matter")
