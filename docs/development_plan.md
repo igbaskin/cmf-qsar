@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 58 modules and about 25,000 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 59 modules and about 25,200 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-one subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `screen`, `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
   `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`),
-  703 tests, a typeset manual and a README that doubles as the record of every measurement made
+  728 tests, a typeset manual and a README that doubles as the record of every measurement made
   so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -250,6 +250,40 @@ larger searches in parts C and E.
   prediction does not move. The second finding is the more useful of the two.
 * **B5. Optional compiled kernels.** Only if B1 and B2 leave screening too slow: a Numba path for the
   atom-pair block, behind the same function signature, with the NumPy path as the reference.
+  **Done 26 October 2026, and what it adds is threads, not speed per core.**
+  `cmfqsar/fastkernel.py` is one fused loop over the atom pairs -- every field accumulated while
+  the pair's distance is still in a register, so no temporaries and one pass over memory instead
+  of ten -- compiled with Numba and threaded over the molecules of the first table, which is safe
+  because each iteration writes its own row. `kernels.ENGINE`, `kernel_matrices(engine=...)`,
+  `CMFModel.engine` and `screen --engine` select it; `plan()` declines probe fields and small
+  problems and the call falls back to NumPy by itself.
+  **The first finding is negative and worth recording.** Written serially the compiled loop is
+  *slower* than NumPy: 0.90 s against 0.67 s on 200 molecules. NumPy's `np.exp` over an array is
+  vectorised and the same calls one at a time in a compiled loop are not, unless Intel's SVML is
+  installed, which it is not here. The exponentials are about half the kernel, so no amount of
+  loop-level cleverness wins on one core. What the fused loop does remove is the memory traffic,
+  and `fastmath` recovers the rest: serial with fastmath, 0.55 s against 0.67 s.
+  **The threads are the result.** On 32 cores: one kernel of
+  200 congeneric molecules 0.50 s ->
+  0.09 s (**5.6x**), of 60 decapeptides
+  1.99 s -> 0.12 s (**16.6x**, more because
+  each thread then has more work to amortise its own start-up); a whole grid search
+  2.9 s -> 0.7 s (4.0x) with the
+  same attenuation and the same q2cv to six decimals; a screening run over
+  4166 molecules 46 s ->
+  12 s (3.8x, 91 ->
+  347 molecules a second).
+  **NumPy stays the default** everywhere except `screen`, which has no published numbers to
+  reproduce. The two paths differ by 2e-14 relative, which is the order of the round-off
+  between two orderings of the NumPy sum itself; that is not a reason to let a table depend on
+  whether an optional package is installed. `tests/test_fastkernel.py` holds the two to agreeing
+  and skips itself without Numba.
+  **A side benefit**: inside the loop the cutoff of B2 is one comparison per pair and needs no
+  neighbour list, so the compiled path gets B2 on exactly the sets where the NumPy neighbour list
+  is not worth building.
+  **Not done:** SVML (which would make the serial loop competitive and is a packaging question,
+  not a code one), a GPU path, and threading the field construction, which is now the larger half
+  of a screening run.
 
 ## C. The alignment problem (months 3 to 12)
 
@@ -1349,7 +1383,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 | When | What |
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
-| Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~ and ~~B4 (evidence)~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
+| Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |

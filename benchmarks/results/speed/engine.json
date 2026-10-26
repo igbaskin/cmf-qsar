@@ -1,0 +1,51 @@
+{
+ "threads": 32,
+ "kernels": [
+  {
+   "set": "COX2",
+   "n_mol": 200,
+   "atoms_per_molecule": 40.8,
+   "numpy_seconds": 0.501,
+   "numba_seconds": 0.09,
+   "rel_error": 3.813055785866292e-15
+  },
+  {
+   "set": "AMPH1",
+   "n_mol": 60,
+   "atoms_per_molecule": 168.2,
+   "numpy_seconds": 1.987,
+   "numba_seconds": 0.12,
+   "rel_error": 2.0796454152154035e-14
+  }
+ ],
+ "grid": [
+  {
+   "engine": "numpy",
+   "seconds": 2.91,
+   "alpha": 0.1,
+   "q2_cv": 0.504174646927775
+  },
+  {
+   "engine": "numba",
+   "seconds": 0.73,
+   "alpha": 0.1,
+   "q2_cv": 0.5041746469278028
+  }
+ ],
+ "screen": [
+  {
+   "engine": "numpy",
+   "library": 4166,
+   "seconds": 45.9,
+   "per_second": 90.9,
+   "kernel_seconds": 38.7
+  },
+  {
+   "engine": "numba",
+   "library": 4166,
+   "seconds": 12.0,
+   "per_second": 347.4,
+   "kernel_seconds": 4.7
+  }
+ ]
+}

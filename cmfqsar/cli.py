@@ -879,6 +879,16 @@ def cmd_diagnose(args):
 SCREEN_CHUNK = 500
 
 
+def _engine_note(engine) -> str:
+    """What to print about the kernel implementation a run will use."""
+    from cmfqsar import fastkernel
+    from cmfqsar.kernels import use_compiled
+
+    if not use_compiled(engine):
+        return ", NumPy kernels"
+    return f", compiled kernels on {fastkernel.threads()} threads"
+
+
 def cmd_screen(args):
     """Score a library block by block, never holding more than one block of it."""
     from cmfqsar.screen import ScreenSpec, screen
@@ -895,12 +905,14 @@ def cmd_screen(args):
     spec = ScreenSpec(chunk=max(1, int(args.chunk)), top=max(0, int(args.top)),
                       beta=float(args.beta), larger_is_better=not args.smaller_is_better,
                       pose=bool(args.pose), restarts=int(args.pose_restarts),
-                      conformers=int(args.pose_conformers), cutoff=cutoff)
+                      conformers=int(args.pose_conformers), cutoff=cutoff,
+                      engine=args.engine)
     print(f"Screening {args.library} against {os.path.basename(args.model)}: "
           f"{model.train.n_mol} training molecules, blocks of {spec.chunk}"
           + (", posing every molecule first" if spec.pose else "")
           + (f", ranking by mean - {spec.beta:g} sd" if spec.beta else "")
-          + (f", cutoff {spec.cutoff}" if spec.cutoff is not None else ""))
+          + (f", cutoff {spec.cutoff}" if spec.cutoff is not None else "")
+          + _engine_note(spec.engine))
 
     last = [0.0]
 
@@ -2912,6 +2924,11 @@ def main(argv=None):
                          "per field whether a neighbour list is faster. The kernel is then an "
                          "approximation whose dropped pairs were each below 1e-6 of a peak "
                          "overlap; without this the sum is exact")
+    sc.add_argument("--engine", default="auto", choices=["numpy", "numba", "auto"],
+                    help="which atom-pair sum to use: 'numpy' (the reference, single-threaded), "
+                         "'numba' (a compiled threaded loop, six to ten times faster on a "
+                         "many-core machine, differing by about 4e-15), or 'auto', the default "
+                         "here, which uses the compiled one where Numba is installed")
     sc.add_argument("--allow-mismatch", action="store_true",
                     help="score molecules the model's contract would reject")
     sc.set_defaults(func=cmd_screen)

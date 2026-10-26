@@ -67,3 +67,18 @@ The same library scored against a 200-molecule model, once in blocks and once lo
 
 Between the two library sizes (4166 and 16664 molecules) the whole-file path grows from 571 to 1706 MB and the streamed one from 232 to 237 MB. The streamed figure is what makes a library of any length possible on a desktop.
 
+## The compiled kernel (item B5)
+
+The same arithmetic as the NumPy path, written as one fused loop over the atom pairs and compiled with Numba, threaded over the molecules on 32 cores. It is **not** faster per core -- NumPy's exponential is vectorised and a compiled scalar loop is not, so serially the compiled loop loses -- and all of its advantage is the other cores.
+
+| set | atoms per molecule | NumPy | compiled | speed-up | differs by |
+|---|---:|---:|---:|---:|---:|
+| COX2 | 40.8 | 0.50 s | 0.09 s | 5.57x | 4e-15 |
+| AMPH1 | 168.2 | 1.99 s | 0.12 s | 16.56x | 2e-14 |
+
+A whole grid search: 2.9 s against 0.7 s (3.99x), choosing the same attenuation (0.1) and the same q² to six decimals.
+
+A screening run over 4166 molecules: 46 s against 12 s (3.82x, 91 against 347 molecules per second). The factor is smaller than on the kernel alone because reading the file and building the fields are now the larger half of the work.
+
+NumPy stays the default everywhere except `screen`, which has no published numbers to reproduce. The two paths differ by about 4e-15 relative, which is the order of the round-off between two orderings of the NumPy sum itself, but a default that depends on whether an optional package is installed is not something a table should rest on.
+

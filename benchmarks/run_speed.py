@@ -29,6 +29,11 @@ Stages
             attenuation with the share of atom pairs that survive the cutoff, because that share
             is what decides whether a neighbour list is worth building.
 
+``engine``  item B5: the NumPy atom-pair sum against the compiled, threaded one of
+            ``cmfqsar/fastkernel.py``, on one kernel, on a whole grid search and on a screening
+            run, with the relative difference between the two.  Skipped when Numba is not
+            installed.
+
 ``screen``  item B3: a library scored in blocks against the same library loaded whole, in wall
             clock and in peak process memory, at two library sizes.  The library is made by
             concatenating the example sets and is written to a temporary file.  Each
@@ -226,6 +231,71 @@ def stage_cutoff(force=False):
     return out
 
 
+def stage_engine(force=False):
+    path = os.path.join(RESULTS, "engine.json")
+    if os.path.exists(path) and not force:
+        print("engine: already done")
+        return json.load(open(path))
+    from cmfqsar import fastkernel as FK
+    from cmfqsar.screen import ScreenSpec, screen
+
+    if not FK.available():
+        print("engine: Numba is not installed, nothing to measure")
+        return None
+    FK.warm_up()
+    out = {"threads": FK.threads(), "kernels": [], "grid": [], "screen": []}
+    print(f"  compiled kernels on {out['threads']} threads", flush=True)
+
+    for name, p, n in SETS:
+        fs, T, _y = table_of(p, n)
+        row = {"set": name, "n_mol": int(T.n_mol),
+               "atoms_per_molecule": round(T.coords.shape[0] / T.n_mol, 1)}
+        for engine in ("numpy", "numba"):
+            t0 = time.time()
+            K = KN.kernel_matrices(T, T, fs.specs, engine=engine)
+            row[f"{engine}_seconds"] = round(time.time() - t0, 3)
+            if engine == "numpy":
+                ref = K
+            else:
+                row["rel_error"] = float(np.max(np.abs(K - ref)) / np.max(np.abs(ref)))
+        out["kernels"].append(row)
+        print(f"  {name:6s} one kernel: numpy {row['numpy_seconds']:6.2f} s  "
+              f"numba {row['numba_seconds']:6.2f} s "
+              f"({row['numpy_seconds'] / row['numba_seconds']:5.2f}x, "
+              f"rel err {row['rel_error']:.0e})", flush=True)
+
+    fs, T, y = table_of(*SETS[0][1:], alpha=0.5)
+    for engine in ("numpy", "numba"):
+        m = CMFModel(fieldset=fs.copy(), method="krr", normalize=True, engine=engine)
+        t0 = time.time()
+        res = grid_search(T, y, m, alphas=ALPHAS, lams=(0.1,), folds=5, seed=0)
+        out["grid"].append({"engine": engine, "seconds": round(time.time() - t0, 2),
+                            "alpha": float(res.best_alpha), "q2_cv": float(res.best_q2)})
+        print(f"  grid search, {engine:5s}: {out['grid'][-1]['seconds']:6.2f} s   "
+              f"alpha {res.best_alpha:g}   q2cv {res.best_q2:+.6f}", flush=True)
+
+    model = CMFModel(fieldset=fs, method="gp", normalize=True, params={"lam": 0.1})
+    model.fit(T, y, cv_folds=0)
+    tmp = tempfile.mkdtemp(prefix="cmf_engine_")
+    try:
+        lib = os.path.join(tmp, "library.sdf")
+        n_lib = _build_library(lib, 1)
+        for engine in ("numpy", "numba"):
+            r = screen(model, lib, ScreenSpec(chunk=500, top=5, beta=1.0, engine=engine))
+            out["screen"].append({"engine": engine, "library": n_lib,
+                                  "seconds": round(r.seconds, 1),
+                                  "per_second": round(r.per_second, 1),
+                                  "kernel_seconds": round(r.kernel_seconds, 1)})
+            print(f"  screening {n_lib} molecules, {engine:5s}: {r.seconds:6.1f} s "
+                  f"({r.per_second:5.0f}/s, {r.kernel_seconds:.0f} s of it in the kernel)",
+                  flush=True)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    os.makedirs(RESULTS, exist_ok=True)
+    json.dump(out, open(path, "w"), indent=1)
+    return out
+
+
 def _build_library(dest: str, repeats: int = 1) -> int:
     """Concatenate the example SD files into one library file; returns the molecule count."""
     import glob
@@ -319,7 +389,7 @@ def stage_screen(force=False, repeats=(1, 4)):
 
 def report(results=RESULTS):
     parts = {}
-    for name in ("kernel", "grid", "cutoff", "screen"):
+    for name in ("kernel", "grid", "cutoff", "screen", "engine"):
         p = os.path.join(results, f"{name}.json")
         if os.path.exists(p):
             parts[name] = json.load(open(p))
@@ -421,6 +491,48 @@ def report(results=RESULTS):
                       f"whole-file path grows from {w_small:.0f} to {w_big:.0f} MB and the "
                       f"streamed one from {s_small:.0f} to {s_big:.0f} MB. The streamed figure "
                       "is what makes a library of any length possible on a desktop.", ""]
+    if "engine" in parts and parts["engine"]:
+        e = parts["engine"]
+        lines += ["## The compiled kernel (item B5)", "",
+                  "The same arithmetic as the NumPy path, written as one fused loop over the atom "
+                  f"pairs and compiled with Numba, threaded over the molecules on "
+                  f"{e['threads']} cores. It is **not** faster per core -- NumPy's exponential is "
+                  "vectorised and a compiled scalar loop is not, so serially the compiled loop "
+                  "loses -- and all of its advantage is the other cores.", "",
+                  "| set | atoms per molecule | NumPy | compiled | speed-up | differs by |",
+                  "|---|---:|---:|---:|---:|---:|"]
+        for r in e["kernels"]:
+            lines.append(f"| {r['set']} | {r['atoms_per_molecule']:g} | "
+                         f"{r['numpy_seconds']:.2f} s | {r['numba_seconds']:.2f} s | "
+                         f"{r['numpy_seconds'] / r['numba_seconds']:.2f}x | "
+                         f"{r['rel_error']:.0e} |")
+        if e["grid"]:
+            gn = {r["engine"]: r for r in e["grid"]}
+            same = abs(gn["numpy"]["q2_cv"] - gn["numba"]["q2_cv"]) < 1e-6
+            lines += ["",
+                      f"A whole grid search: {gn['numpy']['seconds']:.1f} s against "
+                      f"{gn['numba']['seconds']:.1f} s "
+                      f"({gn['numpy']['seconds'] / gn['numba']['seconds']:.2f}x), choosing the "
+                      f"same attenuation ({gn['numpy']['alpha']:g}) and "
+                      + ("the same q² to six decimals" if same else
+                         f"q² {gn['numpy']['q2_cv']:+.6f} against {gn['numba']['q2_cv']:+.6f}")
+                      + "."]
+        if e["screen"]:
+            sn = {r["engine"]: r for r in e["screen"]}
+            lines += ["",
+                      f"A screening run over {sn['numpy']['library']} molecules: "
+                      f"{sn['numpy']['seconds']:.0f} s against {sn['numba']['seconds']:.0f} s "
+                      f"({sn['numpy']['seconds'] / sn['numba']['seconds']:.2f}x, "
+                      f"{sn['numpy']['per_second']:.0f} against "
+                      f"{sn['numba']['per_second']:.0f} molecules per second). The factor is "
+                      "smaller than on the kernel alone because reading the file and building "
+                      "the fields are now the larger half of the work."]
+        lines += ["",
+                  "NumPy stays the default everywhere except `screen`, which has no published "
+                  "numbers to reproduce. The two paths differ by about 4e-15 relative, which is "
+                  "the order of the round-off between two orderings of the NumPy sum itself, but "
+                  "a default that depends on whether an optional package is installed is not "
+                  "something a table should rest on.", ""]
     text = "\n".join(lines) + "\n"
     os.makedirs(results, exist_ok=True)
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:
@@ -435,8 +547,9 @@ def main():
         pass
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--stage", nargs="*", default=["kernel", "grid", "cutoff", "screen"],
-                    choices=["kernel", "grid", "cutoff", "screen"])
+    ap.add_argument("--stage", nargs="*",
+                    default=["kernel", "grid", "cutoff", "screen", "engine"],
+                    choices=["kernel", "grid", "cutoff", "screen", "engine"])
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--screen-worker", nargs=2, metavar=("LIBRARY", "CHUNK"), default=None,
@@ -456,6 +569,8 @@ def main():
         stage_cutoff(a.force)
     if "screen" in a.stage:
         stage_screen(a.force)
+    if "engine" in a.stage:
+        stage_engine(a.force)
     print()
     print(report())
 

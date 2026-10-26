@@ -43,8 +43,11 @@ dev = ["pytest>=7"]
 examples = ["dimorphite_dl"]
 # cmfqsar/periodic.py: crystals (neighbour lists and structure files; oxidation states)
 crystals = ["ase>=3.22", "pymatgen>=2023.1"]
+# cmfqsar/fastkernel.py: the compiled, threaded atom-pair loop.  Optional in the strict sense:
+# without it the NumPy path is used, which is the reference every table was produced with.
+fast = ["numba>=0.59"]
 # everything, for a working checkout
-all = ["cmfqsar[gui,docs,dev,examples,crystals]"]
+all = ["cmfqsar[gui,docs,dev,examples,crystals,fast]"]
 
 [project.scripts]
 cmf = "cmfqsar.cli:main"

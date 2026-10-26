@@ -594,6 +594,10 @@ class CMFModel:
     # at a strong attenuation; a number is a radius in angstroms.  A cutoff makes the kernel an
     # approximation whose dropped pairs were below 1e-6 of a peak overlap each.
     cutoff: Optional[object] = None
+    # which implementation of the atom-pair sum to use (plan item B5): None for the library
+    # default, which is NumPy and is what every table was produced with, "numba" for the compiled
+    # threaded loop, "auto" for that where Numba is installed.  The two differ by about 4e-15.
+    engine: Optional[str] = None
     # where the kernel comes from: the overlap integrals of the fields, which needs the molecules
     # to share a frame, or the rotation-invariant autocorrelation of those fields, which does not
     kernel_source: str = "fields"           # "fields" | "autocorrelation" | "surface" | "periodic"
@@ -684,16 +688,16 @@ class CMFModel:
     def _raw_kernels(self, P: AtomTable, Q: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """Per-field kernels at the current alphas (interpolated between grid alphas if needed)."""
         it = self._interp_specs()
-        cut = self.cutoff
+        cut, eng = self.cutoff, self.engine
         if it is None:
             return kernel_matrices(P, Q, self.fieldset.specs, progress=progress, cancel=cancel,
-                                   cutoff=cut)
+                                   cutoff=cut, engine=eng)
         (c_lo, lo), (c_hi, hi) = it
         K = c_lo[:, None, None] * kernel_matrices(P, Q, lo, progress=progress, cancel=cancel,
-                                                  cutoff=cut)
+                                                  cutoff=cut, engine=eng)
         if hi is not None:
             K += c_hi[:, None, None] * kernel_matrices(P, Q, hi, progress=progress, cancel=cancel,
-                                                       cutoff=cut)
+                                                       cutoff=cut, engine=eng)
         return K
 
     def _self_kernels(self, P: AtomTable) -> np.ndarray:
@@ -1099,7 +1103,8 @@ class CMFModel:
         finally:
             for sp, a in zip(self.fieldset.specs, original):
                 sp.alpha = a
-        Ks = kernel_matrices_multi(train, train, spec_sets, progress=progress, cancel=cancel)
+        Ks = kernel_matrices_multi(train, train, spec_sets, progress=progress, cancel=cancel,
+                                   engine=self.engine)
         diags = self_kernels_multi(train, spec_sets) if self.normalize else [None] * len(Ks)
         out = {}
         for alpha, K, d in zip(keys, Ks, diags):

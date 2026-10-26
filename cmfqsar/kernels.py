@@ -63,6 +63,45 @@ class Cancelled(Exception):
     pass
 
 
+def use_compiled(engine=None) -> bool:
+    """Whether this call should use the compiled loop.
+
+    `engine` of None means the module default :data:`ENGINE`.  "numba" asks for it explicitly and
+    raises when Numba is not installed, which is what a benchmark wants; "auto" falls back.
+    """
+    from . import fastkernel
+
+    e = ENGINE if engine is None else str(engine)
+    if e not in ENGINES:
+        raise ValueError(f"unknown kernel engine {e!r}; use one of {ENGINES}")
+    if e == "numpy":
+        return False
+    if e == "numba" and not fastkernel.available():
+        raise ValueError("the 'numba' kernel engine needs Numba installed: pip install numba "
+                         "(or pip install -e .[fast]); the default 'numpy' engine needs nothing")
+    return fastkernel.available()
+
+
+def _compiled_cutoff(specs: Sequence[FieldSpec], cutoff, radii_max: float):
+    """The cutoff radius to give the compiled loop, which has no use for "auto".
+
+    Inside the loop a cutoff is one comparison per atom pair and needs no neighbour list, so
+    there is nothing to decide; "auto" and True become the largest radius any field group would
+    have used, which can only drop pairs that every group agrees are negligible.
+    """
+    if cutoff is None or cutoff is False:
+        return None
+    if isinstance(cutoff, (int, float)) and cutoff is not True:
+        return float(cutoff)
+    gauss, steric, _probe = _group_fields(specs)
+    radii = []
+    for alpha in gauss:
+        radii.append(cutoff_radius(0.25 * alpha))
+    for _f, alpha in steric:
+        radii.append(cutoff_radius(0.25 * alpha / max(radii_max, 1e-6) ** 2))
+    return max(radii) if radii else None
+
+
 def _group_fields(specs: Sequence[FieldSpec]):
     """Fields by the shape of their Gaussians: shared width, per-atom width, or an expansion."""
     gauss = {}
@@ -77,6 +116,14 @@ def _group_fields(specs: Sequence[FieldSpec]):
             steric.append((f, float(s.alpha)))
     return gauss, steric, probe
 
+
+#: which implementation of the atom-pair sum to use (plan item B5).  "numpy" is the default and
+#: the reference: every table in this repository was produced with it.  "numba" is a compiled,
+#: threaded loop (:mod:`cmfqsar.fastkernel`) which is six to ten times faster on a many-core
+#: machine and differs from the NumPy path by about 4e-15 relative, from summing in another order.
+#: "auto" uses it when Numba is installed and falls back silently when it is not.
+ENGINE = "numpy"
+ENGINES = ("numpy", "numba", "auto")
 
 #: how far below its peak a Gaussian overlap has to fall before the pair is dropped (item B2)
 CUTOFF_TOL = 1e-6
@@ -298,7 +345,7 @@ def _mirror(K: np.ndarray) -> np.ndarray:
 def kernel_matrices(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec],
                     progress: Optional[Callable[[int, int], None]] = None,
                     cancel: Optional[Callable[[], bool]] = None,
-                    symmetric: Optional[bool] = None, cutoff=None) -> np.ndarray:
+                    symmetric: Optional[bool] = None, cutoff=None, engine=None) -> np.ndarray:
     """Per-field kernel matrices K_f(i, j) for molecules i in P and j in Q.
 
     Returns an array of shape (F, nP, nQ).
@@ -309,11 +356,24 @@ def kernel_matrices(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec],
 
     `cutoff` is passed to :func:`atom_kernel_block`: ``"auto"`` for the neighbour list of item B2
     where the geometry makes it worth using, None for the exact dense sum.
+
+    `engine` chooses the implementation (item B5): None for the module default, "numba" for the
+    compiled threaded loop, "auto" for that where it is installed.  The compiled loop cannot take
+    probe fields and declines small problems, and the call then falls back to NumPy by itself.
     """
     sym = (Q is P) if symmetric is None else bool(symmetric)
     if sym and (P.n_mol != Q.n_mol or P.coords.shape != Q.coords.shape):
         raise ValueError("a symmetric kernel needs one table against itself")
     F = len(specs)
+    if use_compiled(engine):
+        from . import fastkernel
+        got = fastkernel.kernel_matrices(
+            P, Q, specs, symmetric=sym,
+            cutoff=_compiled_cutoff(specs, cutoff, float(np.max(Q.radii)) if len(Q.radii) else 1.0))
+        if got is not None:
+            if progress is not None:
+                progress(P.n_mol, P.n_mol)
+            return _mirror(got) if sym else got
     K = np.zeros((F, P.n_mol, Q.n_mol))
     # concatenated once rather than per molecule: the property rebuilds them every call
     cq = Q.probe_coeffs
@@ -335,7 +395,7 @@ def kernel_matrices(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec],
 def kernel_matrices_multi(P: AtomTable, Q: AtomTable, spec_sets: Sequence[Sequence[FieldSpec]],
                           progress: Optional[Callable[[int, int], None]] = None,
                           cancel: Optional[Callable[[], bool]] = None,
-                          symmetric: Optional[bool] = None) -> List[np.ndarray]:
+                          symmetric: Optional[bool] = None, engine=None) -> List[np.ndarray]:
     """The kernels of several field sets, sharing each molecule's distance block (plan item B1).
 
     A grid search over the attenuation computes one kernel per alpha, and the squared interatomic
@@ -348,6 +408,12 @@ def kernel_matrices_multi(P: AtomTable, Q: AtomTable, spec_sets: Sequence[Sequen
     sym = (Q is P) if symmetric is None else bool(symmetric)
     if sym and (P.n_mol != Q.n_mol or P.coords.shape != Q.coords.shape):
         raise ValueError("a symmetric kernel needs one table against itself")
+    if use_compiled(engine):
+        # the compiled loop computes each distance per attenuation rather than sharing it, which
+        # costs 3 % and buys the threads: on a many-core machine that trade is worth taking
+        got = [kernel_matrices(P, Q, sp, symmetric=sym, engine=engine) for sp in spec_sets]
+        if all(g is not None for g in got):
+            return got
     outs = [np.zeros((len(specs), P.n_mol, Q.n_mol)) for specs in spec_sets]
     cq = Q.probe_coeffs
     cp = P.probe_coeffs if cq else {}

@@ -1343,6 +1343,49 @@ factor at a strong attenuation. A cutoff makes the kernel an approximation — e
 contributed less than a millionth of a peak overlap, and the measured error is about $10^{-7}$
 relative — so it is off by default and every table in this manual was produced without it.
 
+### The compiled kernel, if Numba is installed
+
+The kernel above is NumPy, and NumPy is single-threaded. The same arithmetic written as one fused
+loop over the atom pairs and compiled with [Numba](https://numba.pydata.org/) can use the other
+cores: `cmfqsar/fastkernel.py` does that, threaded over the molecules, which is safe because every
+molecule writes its own row of the kernel and nothing is shared.
+
+Two things are worth knowing before reaching for it.
+
+**Per core it is slower, not faster.** `np.exp` on an array is vectorised; the same calls written
+one at a time in a compiled loop are not, unless Intel's SVML is installed. Measured serially on
+200 molecules, the NumPy path takes 0.67 s and the compiled loop 0.90 s. All of the advantage
+below is the threads, and on a machine with two cores there will be almost none.
+
+**It is not the default.** Install it with `pip install numba` or `pip install -e .[fast]`, and
+ask for it with `--engine numba` (or `--engine auto`, which uses it where it is installed and
+falls back silently where it is not). The default everywhere except `screen` is `numpy`, because
+the two paths differ by about 2e-14 relative — the compiled loop is built with `fastmath` and
+may add the pairs in another order — and every table in this manual was produced with NumPy. That
+difference is the same order as the round-off between two orderings of the NumPy sum itself, but a
+default that depends on whether an optional package is installed is not something a table should
+rest on.
+
+What it is worth, on 32 cores:
+
+| set | atoms per molecule | NumPy | compiled | speed-up | differs by |
+|---|---:|---:|---:|---:|---:|
+| COX2 | 40.8 | 0.50 s | 0.09 s | 5.6x | 4e-15 |
+| AMPH1 | 168.2 | 1.99 s | 0.12 s | 16.6x | 2e-14 |
+
+The long molecules gain more because each thread then has more work to amortise the cost of being
+started. End to end it is less, because the kernel stops being all of the time: a whole grid
+search over six attenuations falls from 2.9 s to
+0.7 s (4.0 times), choosing the same attenuation and the same
+cross-validated q² to six decimals, and a screening run over 4166 molecules
+from 46 s to 12 s (3.8 times,
+91 to 347 molecules a second) — where
+reading the file and building the fields are now the larger half of the work.
+
+The compiled loop also takes a cutoff without a neighbour list, since inside the loop a cutoff is
+one comparison per pair; `screen --cutoff R --engine numba` is therefore worth trying on long
+molecules, where the NumPy neighbour list of the previous section is also worth building.
+
 ## The learners
 
 | Task | Methods | Key |

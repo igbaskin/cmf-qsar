@@ -2528,6 +2528,28 @@ On molecules five times longer at a strong attenuation it is worth
 when it is used is 3e-07 relative, every dropped pair having contributed less than a
 millionth of a peak overlap. Every table in this file was produced with the exact sum.
 
+**And a compiled kernel, whose whole advantage is the other cores** (`pip install -e .[fast]`,
+then `--engine numba`). The same arithmetic as one fused loop over the atom pairs, compiled with
+Numba and threaded over the molecules. Per core it is *slower* — NumPy's exponential is vectorised
+and a compiled scalar loop is not, so serially the loop takes 0.90 s where NumPy takes 0.67 s — so
+everything below is the other cores, of which this machine has 32:
+
+<!-- ENGINE-TABLE -->
+| set | atoms per molecule | NumPy | compiled | speed-up | differs by |
+|---|---:|---:|---:|---:|---:|
+| COX2 | 40.8 | 0.50 s | 0.09 s | 5.6x | 4e-15 |
+| AMPH1 | 168.2 | 1.99 s | 0.12 s | 16.6x | 2e-14 |
+<!-- /ENGINE-TABLE -->
+
+A whole grid search falls from 2.9 s to
+0.7 s (4.0x) with the same attenuation chosen and the same q²
+to six decimals, and a screening run over 4166 molecules from
+46 s to 12 s (3.8x,
+91 to 347 molecules a second). NumPy
+remains the default everywhere except `screen`: the two differ by 2e-14 relative, which is the
+order of the round-off between two orderings of the NumPy sum, and every table in this file was
+produced with NumPy.
+
 ### Screening a library in blocks
 
 Predicting needs only the rows K(X, X_train) — one row per new molecule, as wide as the training
@@ -2922,6 +2944,10 @@ the application under Qt's offscreen platform on the synthetic example, builds a
 the co-fields and saves the window screenshot (the autotest of `cmf-app`), and fails unless that
 run reports success; the screenshots are kept as artifacts. Offscreen, the OpenGL view has no
 surface to read back, so the 3D screenshot is not produced there and only the window one is kept.
+
+`tests/test_fastkernel.py` skips itself where Numba is not installed, which is a supported way to
+run the program: without it the NumPy kernel is used, which is the one every table here was
+produced with. Where Numba is present those tests hold the two paths to agreeing.
 
 ### Rebuilding the tables
 

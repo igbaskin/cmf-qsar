@@ -63,6 +63,10 @@ class ScreenSpec:
     restarts: int = 4                   # posing restarts per molecule
     conformers: int = 0                 # posing: generate this many conformations and keep the best
     cutoff: Optional[object] = None     # passed to the model for the duration of the run (item B2)
+    #: which kernel implementation to use (item B5).  "auto" by default here, unlike the rest of
+    #: the library: a screening run has no published numbers to reproduce and is the case the
+    #: compiled loop was written for, so it takes the threads where they are available.
+    engine: Optional[str] = "auto"
     seed: int = 0
 
 
@@ -71,6 +75,7 @@ class ScreenReport:
     """What a screening run did, and the best of what it found."""
     n_read: int = 0
     n_scored: int = 0
+    engine: str = ""
     n_failed: int = 0
     blocks: int = 0
     seconds: float = 0.0
@@ -182,8 +187,11 @@ def screen(model, path: str, spec: Optional[ScreenSpec] = None, out: Optional[st
     best: List[Tuple[float, str, float, float]] = []       # a heap, smallest score first
     fh = open(out, "w", encoding="utf-8", newline="") if out else None
     old_cutoff = getattr(model, "cutoff", None)
+    old_engine = getattr(model, "engine", None)
     if spec.cutoff is not None:
         model.cutoff = spec.cutoff
+    if spec.engine is not None:
+        model.engine = spec.engine
     try:
         if fh is not None:
             fh.write("name,score,prediction,sd\n")
@@ -242,7 +250,7 @@ def screen(model, path: str, spec: Optional[ScreenSpec] = None, out: Optional[st
     finally:
         if fh is not None:
             fh.close()
-        model.cutoff = old_cutoff
+        model.cutoff, model.engine = old_cutoff, old_engine
     rep.seconds = time.time() - t0
     rep.best = sorted(best, key=lambda r: -r[0])
     return rep
