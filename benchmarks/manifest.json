@@ -1,6 +1,6 @@
 {
- "commit": "c8d96597346bf943f9489619b508bd14cc1124fa",
- "created": "2026-10-26T07:15:53",
+ "commit": "7e51b3ef30f28c76afe5eefe9450c6320e3e33e1",
+ "created": "2026-10-26T10:04:33",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1471,7 +1471,7 @@
    "sha256": "ae21e57833b6eef2a99dc8562e02a462dc79f5b44122063068c2e674b4ae6eb4"
   }
  },
- "dirty": true,
+ "dirty": false,
  "packages": {
   "PyOpenGL": "3.1.10",
   "PySide6": "6.11.1",
