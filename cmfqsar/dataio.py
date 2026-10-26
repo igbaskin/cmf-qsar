@@ -579,7 +579,13 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
                           domain: Optional[Sequence[float]] = None,
                           domain_threshold: Optional[float] = None,
                           interval: Optional[Sequence[Sequence[float]]] = None,
-                          truth_header: str = "experimental") -> None:
+                          truth_header: str = "experimental",
+                          extra_columns: Optional[Dict[str, Sequence[float]]] = None) -> None:
+    """Write the predictions table.
+
+    `extra_columns` adds one column per entry at the end, in order; a two-endpoint model writes
+    the second endpoint and the difference of the two there (plan item SC1).
+    """
     with open(path, "w", newline="") as fh:
         w = csv.writer(fh)
         header = ["name", "subset", truth_header, value_header]
@@ -593,6 +599,8 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
             header += ["ad_similarity", "in_domain"]
         if interval is not None:
             header += ["lower", "upper"]
+        if extra_columns:
+            header += list(extra_columns)
         w.writerow(header)
         for i, nm in enumerate(names):
             row = [nm, subset[i], "" if not np.isfinite(y[i]) else f"{y[i]:.4f}",
@@ -610,6 +618,9 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
                 for bound in interval:
                     v = bound[i]
                     row.append("" if v is None or not np.isfinite(v) else f"{v:.4f}")
+            for col in (extra_columns or {}).values():
+                v = col[i]
+                row.append("" if v is None or not np.isfinite(v) else f"{v:.4f}")
             w.writerow(row)
 
 

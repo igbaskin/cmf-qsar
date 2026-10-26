@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 26 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 64 modules and about 27,750 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 64 modules and about 27,900 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-four subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`), 867 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`), 880 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -36,6 +36,7 @@ The measurements already in hand settle several questions, and the plan treats t
 | Do conformational ensembles help? | Five routes, none beats one well-chosen conformation on an aligned series | README, "The verdict on the fourth dimension" |
 | Do probe fields improve accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
 | Do quantum-chemical fields help? | Not on the corrosion series or on Am/Eu; yes on Hammett, where resonance needs whole-molecule charges | `benchmarks/results/corrosion_qm/`, `am_eu/`, `hammett/` |
+| Does a second endpoint help, and is the selectivity predictable? | Sharing gains nothing on three cyclodextrin pairs (every interval contains zero), but the selectivity is predictable (q2 +0.273 to +0.389) and follows the size of the guest | `cmfqsar/multitask.py`, `benchmarks/results/two_endpoints/` |
 | Does an alignment-free model know which group of a guest binds? | On beta-cyclodextrin yes (the three cavity groups +0.0394 per atom against the rest of their molecule, the three polar ones -0.0723), on alpha and gamma no | `cmfqsar/invariant.py`, `benchmarks/results/guest_atoms/` |
 | Do increments fitted on one series transfer to another? | No (+0.363 on the test set against +0.383 for the published table; the vectors fitted on two sets agree to +0.89 at best) | `cmfqsar/learnincrements.py`, `benchmarks/results/increments/` |
 | Does a pKa-weighted protonation ensemble beat one chosen state? | No on the corrosion series in HCl (+0.261 against +0.324): at pH 0 only 1% of the molecules are mixtures, and independent-site pKa picks the state badly | `cmfqsar/protonation.py`, `benchmarks/results/protonation/` |
@@ -1794,6 +1795,35 @@ the numbers above; on a series of hosts, the five-field aligned model.
   guests the two-task fit is not worse than the two single fits by more than the interval of
   rule 4, and the selectivity channels name the size of the guest, which is the known difference
   between the two cavities.
+  **Done 26 October 2026. The gate passes on both halves, and sharing gains nothing.**
+  `build --second-endpoint COLUMN` reads the second endpoint from a property of the same file,
+  chooses the correlation by the marginal likelihood (or takes `--task-rho`), reports the
+  ten-fold cross-validation of both endpoints and of their difference with whole molecules held
+  out, and installs the two-task coefficients in the model it saves. `predict` prints both
+  endpoints and their difference and writes them as two more columns; `cofield --endpoint
+  second|selectivity` draws the other endpoint's maps or the selectivity ones, which for the
+  aligned kernel is the selectivity co-field and for the invariant one the channel weights.
+  `examples/make_two_endpoint_example.py` joins two shipped tables into such a file
+  (`beta_with_alpha.csv`, 1162 guests of the beta table, 496 of them also measured
+  against alpha).
+  **Measured by `benchmarks/run_two_endpoints.py`** on three pairs of cavities, one invariant
+  kernel, the correlation by the evidence, the intervals bootstrapped over the molecules.
+  Sharing: beta -0.004 [-0.011, +0.004], alpha +0.005 [-0.008, +0.019] for that pair; beta -0.001 [-0.006, +0.004], gamma +0.032 [-0.011, +0.082]; alpha -0.002 [-0.009, +0.004], gamma
+  -0.008 [-0.029, +0.016]. Every interval contains zero, so the first half of the gate passes in the form it was
+  written -- not worse -- and the fair reading is that an endpoint with a few hundred molecules
+  of its own gains nothing from another.
+  **The selectivity is predictable and it names the size of the guest**, which is the second half
+  of the gate: q2 +0.273 (beta - alpha, 496 guests), +0.223 (beta - gamma) and
+  +0.389 (alpha - gamma); the correlation of the predicted selectivity with the heavy-atom
+  count is +0.468, -0.739 and -0.676, against +0.382,
+  -0.480 and -0.613 for the measured values. The sign follows the ordering of the
+  three cavities exactly: a big guest prefers the wider cavity, and nothing told the model that a
+  cavity has a size.
+  **Not done:** the primary endpoint must be present on every row, since a molecule without it is
+  dropped before any model is built, so a guest measured against the second cavity only is not a
+  training molecule on the command line (the benchmark, which works at library level, does use
+  them); more than two endpoints are still reached from the application or from Python; and the
+  channel reading of the selectivity is printed as numbers, not drawn.
 * **SC2. Delivery quantities from the constant.** The three formulas above are not printed by the
   program. Needed: a post-processing option of `predict` that takes the host concentration and,
   where given, the intrinsic solubility, and reports the solubility gain, the fraction bound at a

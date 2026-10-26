@@ -2636,6 +2636,28 @@ the object of interest; on these series it shows what it has to show, that ρ = 
 separate models exactly and that the sharing can be measured against them, and the measurement
 says there was nothing to share.
 
+**Two cavities, and the selectivity between them.** `benchmarks/run_two_endpoints.py`
+is the supramolecular form of the same question, on data that needs no preparation: the guests of
+two cyclodextrin tables joined on the structure of the guest, 496 of them measured against both
+the alpha and the beta cavity. `build --second-endpoint COLUMN` fits such a pair from the command
+line, `predict` reports both endpoints and their difference, and `cofield --endpoint selectivity`
+draws the map of what separates them (plan item SC1).
+
+<!-- TWOENDPOINTS-TABLE -->
+| pair | guests (both) | correlation | first endpoint, shared - alone | second endpoint | selectivity q² | selectivity against the guest's size |
+|---|---|---:|---|---|---:|---:|
+| beta, alpha | 1493 (496) | +0.788 | -0.004 [-0.011, +0.004] | +0.005 [-0.008, +0.019] | +0.273 | +0.468 (measured +0.382) |
+| beta, gamma | 1253 (201) | +0.869 | -0.001 [-0.006, +0.004] | +0.032 [-0.011, +0.082] | +0.223 | -0.739 (measured -0.480) |
+| alpha, gamma | 938 (181) | +0.706 | -0.002 [-0.009, +0.004] | -0.008 [-0.029, +0.016] | +0.389 | -0.676 (measured -0.613) |
+<!-- /TWOENDPOINTS-TABLE -->
+
+**Sharing gains nothing that the intervals can see**, here as on the corrosion series: every
+interval contains zero. **The selectivity is predictable, and it rests on the size of the guest** —
+the correlation between the predicted selectivity and the number of heavy atoms follows the
+ordering of the three cavities exactly, rising with size for beta over alpha and falling for both
+pairs that involve the widest cavity. A big guest prefers the bigger cavity and a small one the
+narrower, and the model says so without being told that a cavity has a size.
+
 **Seven endpoints, and one that nobody measured.** `benchmarks/run_tasks.py` takes the
 generalisation to a set that has seven real endpoints and descriptors for them:
 `examples/cyclodextrin/`, 1669 guest molecules and 2671 association constants

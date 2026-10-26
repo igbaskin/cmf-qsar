@@ -613,6 +613,9 @@ def cmd_build(args):
     if args.optimize_h or args.mkl:
         print("  mixing coefficients:", {k: round(v, 3) for k, v in res.best_h.items()})
     model.fit(train, y, cv_folds=args.folds, cv_seed=seed, reuse_kernels=True)
+    second = None
+    if args.second_endpoint:
+        second = _fit_second_endpoint(model, ds, tr, train, y, args)
     if args.method == "gpc":
         from cmfqsar.gpc import brier_score
         p_fit = model.predict_proba(train)
@@ -734,8 +737,11 @@ def cmd_build(args):
             model.stats.extra["error_predictors"] = [dict(vars(sc), ratio=sc.ratio)
                                                      for sc in scores]
     if args.save:
-        save_model(args.save, model, extra={"dataset": args.dataset, "activity": ds.activity_prop,
-                                            "train_names": [ds.names[i] for i in tr]})
+        bundle = {"dataset": args.dataset, "activity": ds.activity_prop,
+                  "train_names": [ds.names[i] for i in tr]}
+        if second is not None:
+            bundle["second_endpoint"] = second
+        save_model(args.save, model, extra=bundle)
         print(f"Model saved to {args.save}")
     if args.predictions:
         yp = np.full(len(ds), np.nan)
@@ -827,6 +833,80 @@ def _check_contract(model, mf, allow=False):
         raise SystemExit("prediction refused (" + ", ".join(f.code for f in refused)
                          + "); --allow-mismatch predicts anyway")
     return findings
+
+
+def _second_endpoint_values(ds, column):
+    """The second endpoint, read from a molecule property of the same file."""
+    vals = []
+    for m in ds.mols:
+        v = float("nan")
+        if m.HasProp(column):
+            try:
+                v = float(str(m.GetProp(column)).strip().split()[0])
+            except (ValueError, IndexError):
+                v = float("nan")
+        vals.append(v)
+    return np.array(vals, float)
+
+
+def _fit_second_endpoint(model, ds, tr, train, y, args):
+    """Fit both endpoints on one kernel and install the first one's coefficients (item SC1).
+
+    The two endpoints share the molecules' kernel and are tied by one correlation, so a molecule
+    measured against one of them informs the other.  The fitted model keeps predicting the
+    primary endpoint, with the coefficients the two-task fit gives it; the second endpoint and
+    the selectivity travel with the model file.
+    """
+    from cmfqsar import multitask as MT
+
+    y2_all = _second_endpoint_values(ds, args.second_endpoint)
+    y2 = y2_all[tr]
+    if np.isfinite(y2).sum() < 5:
+        raise SystemExit(f"--second-endpoint {args.second_endpoint}: only "
+                         f"{int(np.isfinite(y2).sum())} training molecules carry it; the "
+                         f"properties this file has are "
+                         f"{', '.join(ds.properties[:12]) or 'none'}")
+    names = (ds.activity_prop or "primary", args.second_endpoint)
+    obs = MT.Observations.from_columns(np.column_stack([y, y2]), names=names)
+    both = int(np.sum(np.isfinite(y) & np.isfinite(y2)))
+    print(f"Second endpoint '{args.second_endpoint}': {int(np.isfinite(y2).sum())} of "
+          f"{len(tr)} training molecules carry it, {both} carry both")
+    K = model._linear_train_kernel()
+    lam = float(model.params.get("lam", 1.0))
+    if args.task_rho is not None:
+        rho = float(args.task_rho)
+        how = "given"
+    else:
+        rhos = _floats(args.task_rhos) if args.task_rhos else ()
+        fit_rho = MT.evidence_rho(K, obs, rhos=rhos, lams=[lam])
+        rho = float(fit_rho.correlations[0, 1])
+        how = f"chosen by the evidence ({fit_rho.note})"
+    print(f"  task correlation {rho:+.3f}, {how}")
+    T = MT.task_covariance(2, rho)
+    fit = MT.fit(K, obs, lam=lam, T=T)
+    joint = MT.score_by_task(obs, MT.cv_predict(K, obs, lam=lam, T=T, folds=args.folds,
+                                                seed=args.seed))
+    alone = MT.score_by_task(obs, MT.cv_predict(K, obs, rho=0.0, lam=lam, folds=args.folds,
+                                                seed=args.seed))
+    print("  ten-fold cross-validation, whole molecules held out:")
+    for j, t in enumerate(joint):
+        print(f"    {t['task']:28s} n {t['n']:5d}  q2 {t['q2']:+.3f} with the second endpoint, "
+              f"{alone[j]['q2']:+.3f} on its own  ({t['q2'] - alone[j]['q2']:+.3f})")
+    sel = MT.score_selectivity(K, obs, 0, 1, rho=rho, lam=lam, folds=args.folds, seed=args.seed)
+    if sel.get("n", 0):
+        print(f"    selectivity ({names[0]} - {names[1]}) on the {sel['n']} molecules measured "
+              f"against both: q2 {sel['q2']:+.3f}, RMSE {sel['rmse_cv']:.3f}")
+    model.coef = fit.task_coefficients(0)
+    model.bias = float(fit.bias[0])
+    print("  the model now predicts the primary endpoint with the two-task coefficients")
+    return {"column": args.second_endpoint, "names": list(names), "rho": rho, "lam": lam,
+            "coef": fit.task_coefficients(1).tolist(), "bias": float(fit.bias[1]),
+            "selectivity_coef": fit.selectivity_coefficients(0, 1).tolist(),
+            "selectivity_bias": float(fit.bias[0] - fit.bias[1]),
+            "scores": joint, "scores_alone": alone,
+            "selectivity": {k: v for k, v in sel.items()
+                            if k in ("n", "q2", "rmse_cv")},
+            "n_both": both}
 
 
 def cmd_build_crystals(args):
@@ -1152,6 +1232,21 @@ def cmd_cofield(args):
     model._require_linear("co-fields")
     if model.train is None:
         raise SystemExit("the model file carries no training molecules, so it has no grid")
+    endpoint = getattr(args, "endpoint", "primary") or "primary"
+    if endpoint != "primary":
+        # a two-endpoint model carries the other endpoint's dual coefficients and their
+        # difference; swapping them in turns every co-field into that endpoint's (item SC1)
+        second = _extra.get("second_endpoint") if isinstance(_extra, dict) else None
+        if second is None:
+            raise SystemExit(f"--endpoint {endpoint} needs a model built with "
+                             "--second-endpoint; this one has a single endpoint")
+        key = "coef" if endpoint == "second" else "selectivity_coef"
+        bias = "bias" if endpoint == "second" else "selectivity_bias"
+        model.coef = np.asarray(second[key], float)
+        model.bias = float(second[bias])
+        which = (second["names"][1] if endpoint == "second"
+                 else f"{second['names'][0]} - {second['names'][1]}")
+        print(f"  co-fields of '{which}' (correlation {second['rho']:+.3f})")
     names = [sp.name for sp in model.fieldset.specs]
     asked = set(_split_fields(args.fields)[0]) if args.fields else None
     wanted = names if asked is None else [n for n in names if n in asked]
@@ -1331,6 +1426,23 @@ def cmd_predict(args):
         yp, var = model.predict(table), None
         for n, v in zip(ds.names, yp):
             print(f"{n:30s} {v:8.3f}")
+    second = extra.get("second_endpoint") if isinstance(extra, dict) else None
+    yp2 = sel = None
+    if second is not None:
+        # the second endpoint rides on the same kernel: only its dual coefficients differ
+        if not model.is_linear:
+            raise SystemExit("a two-endpoint model is fitted on the linear kernel; this one has "
+                             f"the '{model.kernel_layer}' layer")
+        K_cross = model.test_kernel(table)
+        yp2 = K_cross @ np.asarray(second["coef"], float) + float(second["bias"])
+        sel = (K_cross @ np.asarray(second["selectivity_coef"], float)
+               + float(second["selectivity_bias"]))
+        a, b = second["names"]
+        print()
+        print(f"Both endpoints (correlation {second['rho']:+.3f}):")
+        print(f"{'molecule':30s} {a[:12]:>12s} {b[:12]:>12s} {'difference':>12s}")
+        for n, v1, v2, d in zip(ds.names, yp, yp2, sel):
+            print(f"{n:30s} {v1:12.3f} {v2:12.3f} {d:+12.3f}")
     if np.isfinite(ds.activity).sum() >= 2:
         model.evaluate_test(table, ds.activity)
         print(model.stats.summary())
@@ -1351,7 +1463,9 @@ def cmd_predict(args):
                 print(f"{n:30s} {v:8.3f}   [{a:7.3f}, {b:7.3f}]")
     if args.out:
         write_predictions_csv(args.out, ds.names, ds.activity, yp, ["test"] * len(ds), var=var,
-                              interval=bounds)
+                              interval=bounds,
+                              extra_columns=(None if yp2 is None else
+                                             {second["names"][1]: yp2, "difference": sel}))
         print(f"Predictions written to {args.out}")
 
 
@@ -2671,6 +2785,18 @@ def main(argv=None):
                    help="weights of the conformations in the mean field")
     b.add_argument("--kt", type=float, default=0.6, metavar="KCAL",
                    help="kT for the Boltzmann weights (default 0.6 kcal/mol, about RT at 300 K)")
+    b.add_argument("--second-endpoint", default=None, metavar="COLUMN",
+                   help="model a second endpoint from this property of the same file together "
+                        "with the activity (plan item SC1). The two share the molecules' kernel "
+                        "and are tied by one correlation, so a molecule measured against one of "
+                        "them informs the other; `predict` then reports both and their "
+                        "difference, and `cofield --endpoint` draws either or the selectivity")
+    b.add_argument("--task-rho", type=float, default=None, metavar="R",
+                   help="the correlation between the two endpoints; the default chooses it by "
+                        "the marginal likelihood")
+    b.add_argument("--task-rhos", default=None, metavar="LIST",
+                   help="the correlations the evidence chooses among (default: 25 values from "
+                        "nearly -1 to 0.95)")
     b.add_argument("--increments", default=None, metavar="FILE",
                    help="read the atomic increments of the hydrophobic and hydrogen-bond fields "
                         "from a JSON table instead of the published one (plan item D5). Needs "
@@ -3309,6 +3435,11 @@ def main(argv=None):
     cf.add_argument("--z", type=float, default=2.0, metavar="Z",
                     help="zero the co-field where it lies closer than this many standard "
                          "deviations to zero; 0 draws the unmasked map")
+    cf.add_argument("--endpoint", default="primary",
+                    choices=["primary", "second", "selectivity"],
+                    help="for a model built with --second-endpoint: whose co-field to draw. "
+                         "'selectivity' is the difference of the two, which is the map of what "
+                         "separates them (plan item SC1)")
     cf.set_defaults(func=cmd_cofield)
 
     bm = sub.add_parser("benchmark", help="run, list or check the benchmarks of the checkout")

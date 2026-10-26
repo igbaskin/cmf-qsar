@@ -2470,6 +2470,57 @@ two largest series and a non-zero $\rho$ of either sign on the small ones, where
 most 0.04 in q²: an endpoint that already has its own molecules gains little from another, and
 the $\rho$ the dialog reports in the log is the measurement that says how much.
 
+### The same model from the command line
+
+`build --second-endpoint COLUMN` fits the pair without the application. The second endpoint is a
+numeric property of the same file, the correlation is chosen by the marginal likelihood unless
+`--task-rho` gives it, and the cross-validation that is reported holds out whole molecules. The
+fitted model then predicts the primary endpoint with the coefficients the two-task fit gives it,
+and carries the other endpoint with it:
+
+```
+cmf build guests.csv --second-endpoint alpha_logK --save model.cmf
+cmf predict model.cmf new_guests.csv --out predictions.csv
+cmf cofield model.cmf --endpoint selectivity --out-prefix maps
+```
+
+`predict` prints both endpoints and their difference and writes them as two more columns;
+`cofield --endpoint second|selectivity` draws the other endpoint's maps or the selectivity ones.
+A molecule with no primary activity is dropped before any model is built, as always, so the
+primary endpoint has to be the one every row carries; the second may be missing anywhere, which
+is the case the model exists for. `examples/make_two_endpoint_example.py` joins two of the
+cyclodextrin tables into such a file.
+
+**Two cavities, measured.** `benchmarks/run_two_endpoints.py` takes the pairs of cyclodextrin
+hosts: the guests of two tables joined on the structure of the guest, one rotation-invariant
+kernel, the correlation chosen by the evidence, ten-fold cross-validation over whole molecules,
+and `alone` the same code at a correlation of zero, which is exactly the two separate fits.
+
+| pair | guests (both) | correlation | first endpoint, shared - alone | second endpoint |
+|---|---|---:|---|---|
+| beta, alpha | 1493 (496) | +0.788 | -0.004 [-0.011, +0.004] | +0.005 [-0.008, +0.019] |
+| beta, gamma | 1253 (201) | +0.869 | -0.001 [-0.006, +0.004] | +0.032 [-0.011, +0.082] |
+| alpha, gamma | 938 (181) | +0.706 | -0.002 [-0.009, +0.004] | -0.008 [-0.029, +0.016] |
+
+**Sharing changes nothing here**, which is the same answer the corrosion series gave: every
+interval contains zero, the largest movement being +0.032 for the gamma
+endpoint when it borrows from beta's 1162 guests. An endpoint with a few hundred
+molecules of its own already has what it needs, and what the two endpoints have in common is
+carried by the kernel they share before any correlation is fitted.
+
+**The selectivity is a different matter.** It is predictable --
+q2 +0.273 for beta against alpha on the 496 guests
+measured against both, +0.223 for beta against gamma and
++0.389 for alpha against gamma -- and **what it rests on is the size of
+the guest**, which is the known difference between these cavities. The correlation between the
+predicted selectivity and the number of heavy atoms follows the ordering of the three cavities
+exactly: beta over alpha rises with size (+0.468, the measured values
++0.382), while beta over gamma falls (-0.739
+against -0.480) and alpha over gamma falls further
+(-0.676 against -0.613). A big guest prefers the
+bigger cavity, a small one the narrower, and the model says so without being told that a cavity
+has a size.
+
 ### Beyond one correlation
 
 One $\rho$ says that every pair of endpoints is related to the same degree. For two endpoints
