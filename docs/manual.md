@@ -4394,6 +4394,11 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
+Four notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
+that say how far a prediction can be trusted, and two endpoints with their selectivity. Each runs
+on the example data of the repository, locally or in Google Colab from the link at its top.
+
 The function-by-function reference is a separate file, `docs/api.md`. It is generated from the
 docstrings of the source by `python docs/make_api.py`, so it lists every public class, method and
 function with its signature, and it is as current as the last time that command was run. This

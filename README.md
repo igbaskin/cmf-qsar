@@ -3143,6 +3143,22 @@ res = scaffold_decomposition(model, mf[0], ds.mols[0], ds.mols[1:20])   # per su
 print(res.prediction, res.baseline, res.table(), res.top_interactions(5))
 ```
 
+### Tutorials
+
+Four notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+example data in the repository. Each opens in Google Colab from the badge at its top and runs there
+without any installation; locally they need `pip install cmfqsar[tutorials]`.
+
+| Notebook | What it shows |
+|---|---|
+| `01_first_model.ipynb` | an aligned series: fields, fitting, cross-validation, the co-field in 3D, the atoms behind one prediction |
+| `02_no_alignment.ipynb` | a SMILES table with no common frame: the rotation-invariant kernel, per-atom contributions, predicting new molecules |
+| `03_trusting_a_prediction.ipynb` | y-randomisation, the confidence interval of q², conformal intervals, the applicability domain, the two-sample test |
+| `04_two_endpoints.ipynb` | two activities on one kernel, how much sharing helps, selectivity |
+
+`python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
+current code; `--check` only verifies that they run.
+
 ## Example data
 
 `docs/public_3dqsar_datasets.md` is the data statement: for every set below, where it came from,
@@ -3350,6 +3366,7 @@ python benchmarks/run_all.py --check        # fail if a table, a document or a d
 python docs/make_api.py                     # docs/api.md: the function-by-function reference, from the docstrings
 python docs/make_api.py --check             # fail if docs/api.md is not what the source gives
 python -m sphinx -b html docs/sphinx docs/sphinx/_build/html   # the same reference as an HTML site with links and search
+python docs/tutorials/run_tutorials.py --check   # fail if a tutorial notebook no longer runs
 python benchmarks/run_all.py --compute all --data-root <Sutherland MOL2 folder> --orca
 ```
 
@@ -3493,5 +3510,8 @@ docs/benchmark.md       comparison with Table 2 of the 2013 paper
 docs/public_3dqsar_datasets.md  the data statement: origin, terms and script of every example set
 docs/publication_plan.md  the papers planned from this work, what each takes and still needs
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
+docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
+docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
+docs/tutorials/         four notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 tests/                  unit tests
 ```

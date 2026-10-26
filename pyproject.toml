@@ -38,6 +38,8 @@ gui = ["PySide6>=6.5", "pyqtgraph>=0.13", "PyOpenGL>=3.1"]
 # typesetting docs/manual.md (matplotlib only supplies the DejaVu fonts) and building the HTML
 # API reference under docs/sphinx
 docs = ["reportlab>=4", "matplotlib>=3.7", "sphinx>=7", "furo"]
+# running the notebooks of docs/tutorials (the 3D views need py3Dmol)
+tutorials = ["jupyter", "matplotlib>=3.7", "py3Dmol"]
 # the test suite
 dev = ["pytest>=7"]
 # examples/scaffold_tree_export.py: protonation states at a given pH
@@ -48,7 +50,7 @@ crystals = ["ase>=3.22", "pymatgen>=2023.1"]
 # without it the NumPy path is used, which is the reference every table was produced with.
 fast = ["numba>=0.59"]
 # everything, for a working checkout
-all = ["cmfqsar[gui,docs,dev,examples,crystals,fast]"]
+all = ["cmfqsar[gui,docs,tutorials,dev,examples,crystals,fast]"]
 
 [project.scripts]
 cmf = "cmfqsar.cli:main"

@@ -52,3 +52,6 @@ examples/case_studies/
 # the HTML API reference is built, not committed (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
 docs/sphinx/_build/
 docs/sphinx/_autosummary/
+
+# Jupyter's autosaves next to the tutorial notebooks
+.ipynb_checkpoints/
