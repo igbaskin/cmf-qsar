@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 56 modules and about 23,700 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 57 modules and about 23,800 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 638 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 647 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -561,6 +561,40 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   DUD-E or LIT-PCBA subsets with posed decoys, the comparison with fingerprint similarity on the
   same task, and positive-unlabelled learning, since the inactives of a screening set are unlabelled
   rather than inactive.
+  **Done 26 October 2026, and it is the most unflattering measurement in the repository.**
+  DUD-E is unreachable (`dude.docking.org` does not answer), so LIT-PCBA supplied the negatives:
+  `examples/make_litpcba_examples.py` reads the AVE-unbiased archive, embeds the molecules with
+  ETKDG and MMFF and poses **both classes by one rule** -- maximum field similarity to the
+  target's crystal ligand, which knows nothing about which of them is active. `cmfqsar/pu.py`
+  adds bagging PU (Mordelet & Vert 2014) on the precomputed kernel, and
+  `benchmarks/run_screening.py` scores seven methods on the same split.
+  **Measured on two targets** (ESR1_ant, TP53), 152 measured actives and 2999 measured
+  inactives, the one-class methods and the fingerprint seeing the training actives alone:
+  the best one-class field description reaches **0.544 AUC** against
+  **0.685** for the maximum ECFP4 Tanimoto to the same actives.
+  **The sweep that makes this a result.** Every setting that can reorder the ranking was tried --
+  the attenuation over 0.3, 0.5, 1 and each description's own parameter, 45 fits per set -- and
+  the best kept *on the test set*, a bound no protocol could reach. It lifts the best description
+  only to 0.574, still short of the fingerprint at its one default
+  setting. nu is absent from the sweep on purpose: it places the threshold, shifting every
+  decision value by a constant, so no ranking metric can depend on it.
+  Some descriptions are **worse than chance** (distance to the centre of the actives at 0.365 on TP53),
+  which is what the AVE embedding was built to produce: it removes the analogue bias, and a method
+  whose whole content is "this molecule resembles the actives" then has nothing left.
+  **The kernel is not what fails.** The same CMF kernel used discriminatively, with the inactives
+  treated as unlabelled, reaches **0.689 AUC** --
+  +0.110 against calling them negative, and level
+  with the fingerprint. What fails against measured inactives is the one-class *description* of
+  the active class, not the field similarity it is built from.
+  **And the posing is half of any such number.** The same 1500 TP53 inactives posed to maximise
+  their similarity to the actives instead -- the generous placement the background sets elsewhere
+  in this repository are given -- move the one-class AUCs by +0.141 on average while leaving the
+  fingerprint at +0.000, because it never looks at a coordinate. A screening figure measured
+  against a similarity-posed background is a statement about the posing.
+  **Not done:** the other thirteen LIT-PCBA targets (the two kept are the ones whose inactive
+  pools can be posed without a token sample), DUD-E if the site returns, and the follow-up this
+  measurement argues for -- a screening score that is discriminative rather than one-class, since
+  that is the only use of the kernel which survived.
 * **E5. Error prediction compared.** Three quantities claim to predict the error of a prediction:
   the GP variance, the kernel applicability-domain measure, and (to be added) a conformal interval
   on top of KRR. Compare them on the 86 sets as predictors of the actual external error, which is
@@ -1201,7 +1235,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (null)**, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
-| Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, E4, ~~E5~~ **done**, ~~E6~~ **done (null for accuracy)**; G1 and G2 alongside |
+| Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (null for accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; the review that ties the series together |
 

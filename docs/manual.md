@@ -2322,6 +2322,109 @@ A measured caution from the benchmarks in this repository: field similarity on t
 about as well as ECFP4 fingerprint similarity, and cross-target decoys are trivially separable by
 either. If a screening result looks spectacular, check what the decoys were.
 
+## Measured inactives, and learning from positives alone
+
+Every background in the previous section is *presumed* inactive, and a presumed inactive is an
+easier opponent than a measured one. A compound that was tested and did nothing is the kind of
+molecule a screen actually has to reject, and there is a public collection of them: **LIT-PCBA**
+(Tran-Nguyen, Jacquemard & Rognan 2020), assembled from high-confidence PubChem dose-response
+assays — 15 targets, 7761 actives and 382674 inactives, every one with an experimental verdict.
+The AVE-unbiased subsets are the form the authors recommend, since the asymmetric validation
+embedding of Wallach & Heifets removes the analogue bias that otherwise lets a screen score well
+by recognising that actives resemble actives.
+
+What LIT-PCBA does not have is the thing a field method needs: a conformation and a pose.
+`examples/make_litpcba_examples.py` supplies them. For each target it embeds the actives and a
+seeded sample of the measured inactives with ETKDG and MMFF, then poses **both classes by one
+rule** — maximum field similarity to the target's crystal ligand, which the archive ships, so the
+frame is the one the receptor defines and the placement knows nothing about which molecule is
+active. The 57 MB archive is downloaded on demand and is not redistributed here; what is kept are
+the derived structures, `examples/litpcba/<target>.sdf` and `<target>_decoys.sdf`.
+
+### Why the posing rule is half the measurement
+
+`--pose-against actives` poses the inactives to maximise their similarity to the posed actives
+instead, which is what `cmfqsar/decoys.py` does for the background sets of the previous section:
+no decoy is then rejected for having been posed badly. That sounds like the fair choice and is the
+generous one, for a reason that is not the obvious one. Posing a decoy where it most resembles the
+actives does make it harder to reject — but the pose search also *fails* on a molecule whose field
+cannot be made to match, and the similarity it settles at is then a shape-matching score in its own
+right. Optimising every candidate's pose against the actives quietly promotes the alignment into
+part of the scoring function, which is what shape-based screening does on purpose and what a field
+model measured this way gets for free. The same molecules posed both ways say what it is worth, and
+the figure below says it is most of the result.
+
+### Unlabelled is not inactive
+
+The compounds that came back negative in one assay at one concentration are **unlabelled** rather
+than inactive: some are inert, some were mis-measured, some would have worked at another
+concentration, and a few are actives nobody has recognised. Training a classifier on that mixture
+as a negative class teaches it to reject the very molecules a screen is looking for, and the damage
+is worst at the top of the ranking, which is the only part anyone reads.
+
+`cmfqsar/pu.py` implements **bagging PU** (Mordelet & Vert 2014), the method that needs neither an
+estimate of the class prior nor an assumption about how the positives were sampled:
+
+1. draw a small random sample of the unlabelled set and call it negative;
+2. fit on the positives against that sample;
+3. score the unlabelled molecules that were *not* in the sample — out of bag, so a molecule's score
+   never comes from a model that was told it was negative;
+4. repeat, and average each molecule's out-of-bag scores.
+
+An unlabelled molecule that looks like the positives is called negative in only a few bags and
+scores high in the ones that leave it out; one that is genuinely unlike them scores low wherever it
+appears. Everything works on a precomputed kernel, so the CMF kernel enters unchanged:
+
+```python
+from cmfqsar.pu import pu_scores
+scores = pu_scores(K, positives=train_actives, unlabelled=library, test=held_out, bags=30)
+```
+
+### What it measures
+
+Measured on two LIT-PCBA targets (ESR1_ant, TP53), 152 measured actives against
+2999 measured inactives, 70/30 on the actives and half the inactives offered to the methods
+that can use them. AUC on the held-out actives against the held-out inactives:
+
+| method | ESR1_ant | TP53 | what it sees |
+|---|---:|---:|---|
+| distance to the centre of the actives | 0.536 | 0.365 | the training actives |
+| distance to the k-th active | 0.515 | 0.382 | the training actives |
+| one-class Gaussian process | 0.542 | 0.546 | the training actives |
+| distance from the kernel-PCA subspace | 0.537 | 0.444 | the training actives |
+| ECFP4 Tanimoto to the actives | 0.668 | 0.701 | the training actives |
+| classifier, inactives = negative | 0.544 | 0.613 | + half the inactives, as negative |
+| classifier, inactives = unlabelled (bagging PU) | 0.662 | 0.715 | + half the inactives, as unlabelled |
+
+Three things in that table are worth saying plainly.
+
+**The one-class field descriptions do not work here.** The best of them reaches
+0.544 against 0.685 for the maximum ECFP4 Tanimoto to the
+same actives, and some are below chance (distance to the centre of the actives at 0.365 on TP53: the
+held-out actives look *less* typical of the training actives than the measured inactives do). Nor
+is that a badly chosen setting. Every parameter that can reorder the ranking was swept — the field
+attenuation over 0.3, 0.5, 1 and each description's own knob, 45 fits per set — and keeping
+whichever scored best *on the test set*, a bound no honest protocol could reach, lifts the best
+description only to 0.574. (ν is not in that sweep, and cannot be: it
+places the threshold so that a fraction ν of the training actives falls outside the description,
+which shifts every decision value by the same constant and leaves every ranking metric unchanged.)
+What the gap reflects is the benchmark's design: the AVE debiasing removes the analogue bias on
+purpose, and a method whose entire content is "this molecule resembles the actives" then has
+nothing left to say.
+
+**The kernel is not what fails.** The same CMF kernel used discriminatively, with the inactives
+treated as unlabelled, reaches 0.689 — level with the fingerprint, and
++0.110 above the same learner told that the inactives
+are negatives. For screening against measured inactives, use the kernel discriminatively; the
+one-class descriptions are for the case the earlier sections describe, a congeneric series against
+a structurally different background.
+
+**The posing is half of any screening number.** Posed instead to maximise their similarity to the
+actives, the same inactives move the one-class AUCs by +0.141 on average while the fingerprint
+shifts by +0.000, because it never looks at a coordinate. That is the generous placement
+the background sets of the previous section are given, and the difference is a measurement of how
+much a field-based screening figure owes to how its decoys were placed.
+
 ## Which molecule to make next
 
 The model predicts an activity and, through the Gaussian-process view, a standard deviation beside
@@ -3382,3 +3485,14 @@ doi:10.1021/jm0497141
 [18] Mittal, R. R.; McKinnon, R. A.; Sorich, M. J. Comparison data sets for benchmarking QSAR
 methodologies in lead optimization. *J. Chem. Inf. Model.* **2009**, *49*, 1810–1820.
 doi:10.1021/ci900117m
+
+[19] Tran-Nguyen, V.-K.; Jacquemard, C.; Rognan, D. LIT-PCBA: an unbiased data set for machine
+learning and virtual screening. *J. Chem. Inf. Model.* **2020**, *60*, 4263–4273.
+doi:10.1021/acs.jcim.0c00155
+
+[20] Wallach, I.; Heifets, A. Most ligand-based classification benchmarks reward memorization
+rather than generalization. *J. Chem. Inf. Model.* **2018**, *58*, 916–932.
+doi:10.1021/acs.jcim.7b00403
+
+[21] Mordelet, F.; Vert, J.-P. A bagging SVM to learn from positive and unlabeled examples.
+*Pattern Recognit. Lett.* **2014**, *37*, 201–209. doi:10.1016/j.patrec.2013.06.010

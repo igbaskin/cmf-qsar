@@ -1,6 +1,6 @@
 {
- "commit": "d4280cfc514686071c54e3da22d2375b3c9ef30a",
- "created": "2026-10-26T00:13:29",
+ "commit": "0794673e03caa4d4f5fa5ba6134b49e8ebb8761f",
+ "created": "2026-10-26T03:19:16",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4854,
@@ -494,6 +494,26 @@
    "bytes": 874759,
    "sha256": "35dd1fa383fa1c204b299ca6ed9b5b338258c5d574f6d7f8d0dfaac9fc15b457"
   },
+  "examples/litpcba/ESR1_ant.sdf": {
+   "bytes": 331763,
+   "sha256": "3a414b44c2dadedb74b3ebd55137ceec8d0f6be4773ca44060b45afef5d6181d"
+  },
+  "examples/litpcba/ESR1_ant_decoys.sdf": {
+   "bytes": 4854191,
+   "sha256": "f8e0c554700d2306d446cc88a938f19f0ea2c58cb1c744ceddfdc408a98b3040"
+  },
+  "examples/litpcba/TP53.sdf": {
+   "bytes": 207433,
+   "sha256": "03c46913ac271fa21fc73c4ae2cd2d89d46a341463843207913ce3549ee512b8"
+  },
+  "examples/litpcba/TP53_decoys.sdf": {
+   "bytes": 4865304,
+   "sha256": "9a43ba203d054de60f2f938818bcafccafefd4ce58612e80afa9e15bd50627a6"
+  },
+  "examples/litpcba/TP53_decoys_similar.sdf": {
+   "bytes": 4865304,
+   "sha256": "ad6b33311456cd656aa6ad77f4d9eaf89299af67d4258e25d8dbead160213391"
+  },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
    "sha256": "36fa6108231e3621960b547f706dab0f0618b5ccad2ec32e23f2d19e012fe42d"
@@ -513,6 +533,10 @@
   "examples/make_hammett_examples.py": {
    "bytes": 25116,
    "sha256": "0ef69e5e4f0143143772298006f7f6745824a39fe8c493c7189286fdb5fded94"
+  },
+  "examples/make_litpcba_examples.py": {
+   "bytes": 12870,
+   "sha256": "c4acb52d1bd62d601e978dabff31cb9e18dc7fa47ae1814d87ee4270ed3c6329"
   },
   "examples/make_mittal_examples.py": {
    "bytes": 10426,
@@ -1817,11 +1841,16 @@
   "benchmarks/results/poses/mcl1_flex_c5_g2.json": "026597770e75860701b649aceace1961e68cdc919ffe07453b079c9c1464c04b",
   "benchmarks/results/poses/mcl1_flex_c5_g3.json": "e1a2cc1eaff0c62e098f78e2373e7ecdac5572fdd1f5d7ace538db35c42c4c3e",
   "benchmarks/results/poses/mcl1_frame.json": "83060718fa6c72c0da6f67abcc3fa564895c3491d59ed5cf3a03c4ba2aea4900",
+  "benchmarks/results/poses/mcl1_pocket.json": "d244dcce10df69800a105227fa45f604d24daa860ea1f732ce086f30f3e16b91",
   "benchmarks/results/poses/p38.json": "4985c6db9a730261e7b0cb5b16503eea1cda18182f0b369c695b5780179d56cf",
   "benchmarks/results/poses/p38_fg.json": "ae4e91b658a31bee85131dfcd1782224416c67d52d2485aaf2151e5bf7be19d8",
   "benchmarks/results/poses/p38_flex.json": "2ce251180265eb9c87cd1ea2501d5012887a0dd4c5bbb23e40fd3eae7ad918cd",
   "benchmarks/results/poses/p38_flex_c5.json": "5b35d214cebe9f70409cf188d24fdc1db59c74f5f26ac4b0d5c160f39a41232e",
   "benchmarks/results/poses/p38_frame.json": "5d0d0eec59352dbf4bf1d1afbf02872bd8e9d9fe01edab654985bd34cbe99778",
+  "benchmarks/results/poses/p38_pocket.json": "2c3964d23e5ea269e2329078ba5b75ae9e37bf221eed35bb11fb9cbcf34c96dd",
+  "benchmarks/results/poses/p38_pocket_w0.json": "c3cae46ced900a9cd9c3b742869b766b147527744798bb5acb621449e39df1b5",
+  "benchmarks/results/poses/p38_pocket_w025.json": "c6942c5a75ff02960780bec4028343e54331473652786ad09dec2846edb6d36a",
+  "benchmarks/results/poses/p38_pocket_w4.json": "fc31acbcc8901e9d42df07125771df5244c8c6411a211b90a1877f6b3d9d7337",
   "benchmarks/results/poses/pde10.json": "1c61161d62bb4e37f91f39602b6f45fd01941b5100cae3431be2600ff4f4ce10",
   "benchmarks/results/poses/pde10_fg.json": "3b36960ea4f33d167004d41075465ab015dc18ec4d0a53516843247af6181307",
   "benchmarks/results/poses/pde10_flex.json": "fa0e8d2be8c886b7ea75f75ccb318a0ef068d18fe0e3cf3832d411083c8dd1fe",
@@ -1853,18 +1882,32 @@
   "benchmarks/results/poses/syk_flex.json": "80abcfd084eaf74b0e58b38dbe0d4df5c5bde72d2789331e0efdf5039c52a5fb",
   "benchmarks/results/poses/syk_flex_c5.json": "a3d14484afa8cf917b448d5dea64b2b5044e944a3b1e08edd51feda1b26c512f",
   "benchmarks/results/poses/syk_frame.json": "75f37597f5a4c47fefa45d29f0436e97587eaf191346796e3386884699b0f613",
-  "benchmarks/results/poses/table.md": "57494087ce36413df84422fcf2c54a16090bfddf78df436e3ea9b839c84b0229",
+  "benchmarks/results/poses/table.md": "29b40c330f546fd1207dca168a1039457a2a4414d6a825178838814237ef8eac",
   "benchmarks/results/poses/thrombin.json": "9e07dbaa8667b4066d66f56ea6acc5ef82359c3151abfce5ca9b9b5027d2bc8f",
   "benchmarks/results/poses/thrombin_fg.json": "d9896df17148d00a1a33cb4378137408641925a5243637e7ca9f312807047270",
   "benchmarks/results/poses/thrombin_flex.json": "7486650a52b54b45190d617c2735fa328b8f8362fe29c3d6bc14776915ed1760",
   "benchmarks/results/poses/thrombin_flex_c5.json": "6ac06a05576f3b50485bc4b7be8ad58aac127baa0fafc0cfb8252fb666ed80c5",
   "benchmarks/results/poses/thrombin_flex_c5_g2.json": "a04d9af4174df47770f95478439e70cb19410e122b7a98a5349619df55143bf8",
   "benchmarks/results/poses/thrombin_frame.json": "4c9192e30a5426db6a80ad56b037786d67f1b1252e839d0885928542c81c7418",
+  "benchmarks/results/poses/thrombin_pocket.json": "2219e6900737b6212845963e4b79020b7ae8ccd21d53f918d18ab3930b8bdaa4",
   "benchmarks/results/poses/tnks2.json": "10b429f955de1d934f90637569b1895eefd0df501f3fadf093a19a1d33dd779c",
   "benchmarks/results/poses/tnks2_fg.json": "812b49b4aa93ce1ed0522c417011fad39015fac4c4853450bd001edc1e2f8d4e",
   "benchmarks/results/poses/tnks2_flex.json": "7b4f38ee1537d0430cdec7532fb21edd7ad95773a095414d2197d9569e632cbb",
   "benchmarks/results/poses/tnks2_flex_c5.json": "19eb16db351e234b488bfd06ea523c2f0fe697132417f30c516b4998cb270a0b",
   "benchmarks/results/poses/tnks2_frame.json": "b13aa371bcb11ef824ea3da617cbdc833814df8c12a52682cc400e07bfb74ff7",
+  "benchmarks/results/poses/tnks2_pocket.json": "47db468d6b601f863e53704529cf88ff310bf0a23b688b33c715416bd0bef979",
+  "benchmarks/results/poses/tnks2_pocket_w0.json": "aba52fd3b144a6c34530ae35de4bc6781f7dc090a5b17ecbefdbe326bc69e561",
+  "benchmarks/results/poses/tnks2_pocket_w025.json": "a134bf468bbabdc46dd5cb4261cff08f7bbf258627f86d2c5b13db66a37e96db",
+  "benchmarks/results/poses/tnks2_pocket_w4.json": "cd14b9f657e53af848018b6756cc75381d64bb5a43d3031e7249ec425883f376",
+  "benchmarks/results/query/ACE.json": "82bb11d3bee07b7d11d3e988689fa3dc5b08c22ed7628ffcef0ce8d19b3400a4",
+  "benchmarks/results/query/AChE.json": "a8f27141dee8043c70bd46153ab708b923fbf22917b76824549f5b3bde32d7e4",
+  "benchmarks/results/query/BZR.json": "4f20e06567c26f5bc3761f4d4b8462a201c7f47f308faede459f6b3727332e13",
+  "benchmarks/results/query/COX2.json": "08b84285a1667b73e87df3c996f5fa3fbc0af2e8348c81dde4301ad9cdc6ed36",
+  "benchmarks/results/query/DHFR.json": "07291abba1132893e89fc626a9c1be530d30052dc2c54d005cf1c8d603cff4de",
+  "benchmarks/results/query/GPB.json": "d0c05c1edbd86a612240ea687f79ee5a1be4495e982ec0a18a7a29da680a1711",
+  "benchmarks/results/query/THER.json": "d29e03b989826003ee78bdc6273b4db7841dc7740a1b2eeca7a6a4ee2cc3b140",
+  "benchmarks/results/query/THR.json": "2887eab22fb796b0fa745017ec4facb8c64eca4aa1ed1b197eefaf359442bc39",
+  "benchmarks/results/query/table.md": "e597653b384edd7ec2a169c9b18ea60847741cddea1119e1a906dd2cd2975d45",
   "benchmarks/results/ranking/ACE.json": "abb3389bd915ec61541b2c5447e03709cf3f8c49b5e50dee253571a0fd8c7077",
   "benchmarks/results/ranking/AChE.json": "6fa9bbc6293bec5f2691d8e6e86033c05425e41dee659260786edd69378a48a9",
   "benchmarks/results/ranking/BZR.json": "266db3117160792fb8fa4d6f01d2762d8abc4a2ffa4f388dde07aaa28b776dea",
@@ -1874,6 +1917,10 @@
   "benchmarks/results/ranking/THER.json": "a0f9dfb34ad9226f50a27c3a2a9d7b4a71df78102d29160878c6ded01a7052ef",
   "benchmarks/results/ranking/THR.json": "d9fb8f463e5678920c4cde583dd7e7404628098dc8d7e07d74a56c51d379569d",
   "benchmarks/results/ranking/table.md": "0878ad8549f178b4da905860b66c94dae0a2ce242fcd51b786a4309bb4865f3f",
+  "benchmarks/results/screening/ESR1_ant.json": "7aa3723b49ea5b1bb242bac49d54cc09ee31f22aa8305a1f01d823b86333a88a",
+  "benchmarks/results/screening/TP53.json": "07c2e41df74c98853924f02d0d42030b89a90e6773c0a046e9ed62b902cfd468",
+  "benchmarks/results/screening/TP53_similar.json": "0490e2b39f264e936551e721979150c463f9d642b44990e3027a8061636cde61",
+  "benchmarks/results/screening/table.md": "99bdd4295afd67cadbc28e626fb71302fec30a87015b4123a46cee0d42431b18",
   "benchmarks/results/structure/ACE.json": "2c94a648dd03e5fa07721188e862f7d1b1729f87f237f5764278378e3deeba1e",
   "benchmarks/results/structure/AChE.json": "c7eafb4b955240be700a2a1f13edc46058688938bc99790285ac5a1d5b37e7b3",
   "benchmarks/results/structure/BZR.json": "d8d520cd90207584384b887e5a5e64fab591228b21026083b236f30856c59601",

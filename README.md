@@ -1790,7 +1790,24 @@ against 2.55 to the decoys — and no ranking metric can rank what is already pe
 
 So for a congeneric series, decoy-based screening metrics cannot tell two methods apart, whichever
 metric is chosen. The discriminating negatives are the *weaker molecules of the same series*
-(AUC 0.6–0.8, see the one-class section above), or genuinely measured inactives such as LIT-PCBA.
+(AUC 0.6–0.8, see the one-class section above), or genuinely measured inactives — and those have
+now been used: **ESR1_ant, TP53** from LIT-PCBA, 152 measured actives against 2999 measured
+inactives, posed here by one rule that knows nothing about which class a molecule belongs to
+(`examples/make_litpcba_examples.py`, `benchmarks/run_screening.py`). The result is the most
+unflattering in this file. The best one-class field description reaches
+**0.544 AUC** against **0.685** for the maximum ECFP4
+Tanimoto to the same actives; sweeping the attenuation and every description's own parameter
+(45 fits per set) and keeping the best *on the test set* lifts it only to
+0.574; and on TP53 the distance to the centre of the actives scores 0.365,
+below chance, because the AVE debiasing of this benchmark exists precisely to remove the
+resemblance those methods live on. What survives is the kernel used *discriminatively*: with the
+inactives treated as unlabelled rather than negative (bagging PU, `cmfqsar/pu.py`) the same kernel
+reaches **0.689**, level with the fingerprint and
++0.110 above the same learner told the inactives were
+negatives. And the posing is half of any such figure: the same inactives posed to maximise their
+similarity to the actives — the generous placement the decoy sets above are given — move the
+one-class AUCs by +0.141 while the fingerprint shifts by +0.000.
+
 The decoy sets here are useful for checking that a screening model works at all, not for comparing
 models. A thousand-molecule background takes about three minutes to build, and is not shipped:
 

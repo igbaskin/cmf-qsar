@@ -42,3 +42,6 @@ examples/corrosion_fe110/*_work/
 
 # ORCA scratch of the quantum-property runs on the UMA poses
 examples/corrosion_fe110/*_orca/
+
+# the LIT-PCBA archive is 57 MB and is not ours to redistribute: the maker downloads it
+examples/litpcba/*.tgz
