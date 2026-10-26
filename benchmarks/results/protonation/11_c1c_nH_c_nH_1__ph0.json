@@ -1,0 +1,67 @@
+{
+ "set": "11_c1c_nH_c_nH_1",
+ "file": "examples\\corrosion_hcl\\11_c1c_nH_c_nH_1.csv",
+ "n": 23,
+ "ph": 0.0,
+ "core": "c1c[nH+]c[nH]1",
+ "reference": "1,3-Bis-decyl-2-(2-phenyl-propyl)-3H-benzoimidazol-1-ium chloride",
+ "align_rmsd_median": 0.02627548234162852,
+ "mixture_share": 0.0,
+ "states_mean": 1.0,
+ "charge_agrees": 1.0,
+ "mean_charge_file": 1.0,
+ "mean_charge_pka": 1.0,
+ "tautomer_share": 0.0,
+ "tautomer_forms_mean": 1.0,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": 0.31952536943561016,
+   "rmse_cv": 1.1538380785994589,
+   "alpha": 5.0,
+   "lam": 0.1
+  },
+  "dominant": {
+   "q2": 0.3115393808810806,
+   "rmse_cv": 1.1605889988539155,
+   "alpha": 5.0,
+   "lam": 0.1
+  },
+  "ensemble": {
+   "q2": 0.3115393808810806,
+   "rmse_cv": 1.1605889988539155,
+   "alpha": 5.0,
+   "lam": 0.1
+  },
+  "tautomer": {
+   "q2": 0.3161822848081778,
+   "rmse_cv": 1.156668935233186,
+   "alpha": 5.0,
+   "lam": 0.1
+  }
+ },
+ "seconds": 2.2619731426239014
+}

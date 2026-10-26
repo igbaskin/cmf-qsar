@@ -1,0 +1,67 @@
+{
+ "set": "1_c1ccncc1",
+ "file": "examples\\corrosion_hcl\\1_c1ccncc1.csv",
+ "n": 109,
+ "ph": 0.0,
+ "core": "c1ccncc1",
+ "reference": "1,3-bis((8-hydroxy-quinolin-5-yl)methyl)-1H-benzimidazol-2(3H)-one",
+ "align_rmsd_median": 0.027494870561586164,
+ "mixture_share": 0.01834862385321101,
+ "states_mean": 1.0642201834862386,
+ "charge_agrees": 0.6146788990825688,
+ "mean_charge_file": 0.9357798165137615,
+ "mean_charge_pka": 1.4131883216141017,
+ "tautomer_share": 0.009174311926605505,
+ "tautomer_forms_mean": 1.0091743119266054,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": 0.3411655894272543,
+   "rmse_cv": 1.538315521843945,
+   "alpha": 2.0,
+   "lam": 1.0
+  },
+  "dominant": {
+   "q2": 0.2945221177734756,
+   "rmse_cv": 1.5918384344456882,
+   "alpha": 2.0,
+   "lam": 1.0
+  },
+  "ensemble": {
+   "q2": 0.2945128950201753,
+   "rmse_cv": 1.5918488395098036,
+   "alpha": 2.0,
+   "lam": 1.0
+  },
+  "tautomer": {
+   "q2": 0.32583009217217085,
+   "rmse_cv": 1.556115995433953,
+   "alpha": 2.0,
+   "lam": 1.0
+  }
+ },
+ "seconds": 11.586302757263184
+}

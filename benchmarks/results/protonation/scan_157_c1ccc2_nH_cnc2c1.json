@@ -1,0 +1,62 @@
+{
+ "set": "157_c1ccc2_nH_cnc2c1",
+ "n": 73,
+ "ph": {
+  "0": {
+   "mixture_share": 0.0,
+   "states_mean": 1.0,
+   "charge_agrees": 0.5753424657534246,
+   "mean_charge_file": 1.0,
+   "mean_charge_pka": 1.5890410958904109,
+   "sites_mean": 3.1095890410958904
+  },
+  "1": {
+   "mixture_share": 0.0,
+   "states_mean": 1.0,
+   "charge_agrees": 0.5753424657534246,
+   "mean_charge_file": 1.0,
+   "mean_charge_pka": 1.5890410958904109,
+   "sites_mean": 3.1095890410958904
+  },
+  "2": {
+   "mixture_share": 0.136986301369863,
+   "states_mean": 1.1369863013698631,
+   "charge_agrees": 0.5753424657534246,
+   "mean_charge_file": 1.0,
+   "mean_charge_pka": 1.5870502853507296,
+   "sites_mean": 3.1095890410958904
+  },
+  "3": {
+   "mixture_share": 1.0,
+   "states_mean": 2.808219178082192,
+   "charge_agrees": 0.5753424657534246,
+   "mean_charge_file": 1.0,
+   "mean_charge_pka": 1.5158822382987438,
+   "sites_mean": 3.1095890410958904
+  },
+  "4": {
+   "mixture_share": 1.0,
+   "states_mean": 3.7260273972602738,
+   "charge_agrees": 0.6575342465753424,
+   "mean_charge_file": 1.0,
+   "mean_charge_pka": 1.0998801817630617,
+   "sites_mean": 3.1095890410958904
+  },
+  "5": {
+   "mixture_share": 1.0,
+   "states_mean": 3.6027397260273974,
+   "charge_agrees": 0.0547945205479452,
+   "mean_charge_file": 1.0,
+   "mean_charge_pka": 0.3005346930183685,
+   "sites_mean": 3.1095890410958904
+  },
+  "7.4": {
+   "mixture_share": 0.1095890410958904,
+   "states_mean": 1.1095890410958904,
+   "charge_agrees": 0.0547945205479452,
+   "mean_charge_file": 1.0,
+   "mean_charge_pka": 0.016951372597805353,
+   "sites_mean": 3.1095890410958904
+  }
+ }
+}

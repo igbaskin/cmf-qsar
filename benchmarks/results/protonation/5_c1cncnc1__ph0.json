@@ -1,0 +1,67 @@
+{
+ "set": "5_c1cncnc1",
+ "file": "examples\\corrosion_hcl\\5_c1cncnc1.csv",
+ "n": 16,
+ "ph": 0.0,
+ "core": "c1cncnc1",
+ "reference": "2-(bis((1H-pyrazol-1-yl)methyl)amino)pyrimidine-4,6-diol",
+ "align_rmsd_median": 0.02407769706507732,
+ "mixture_share": 0.1875,
+ "states_mean": 1.375,
+ "charge_agrees": 0.0,
+ "mean_charge_file": 0.8125,
+ "mean_charge_pka": 3.0563014733613194,
+ "tautomer_share": 0.0625,
+ "tautomer_forms_mean": 1.0625,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": -0.023495328412708627,
+   "rmse_cv": 1.4024309578499352,
+   "alpha": 5.0,
+   "lam": 10.0
+  },
+  "dominant": {
+   "q2": 0.14517393527759703,
+   "rmse_cv": 1.2816735905056382,
+   "alpha": 0.1,
+   "lam": 1.0
+  },
+  "ensemble": {
+   "q2": 0.16920168563674776,
+   "rmse_cv": 1.263532336655882,
+   "alpha": 0.1,
+   "lam": 1.0
+  },
+  "tautomer": {
+   "q2": -0.025101064568072706,
+   "rmse_cv": 1.4035306460817105,
+   "alpha": 5.0,
+   "lam": 10.0
+  }
+ },
+ "seconds": 1.366999626159668
+}

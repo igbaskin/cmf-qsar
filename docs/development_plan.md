@@ -6,17 +6,17 @@ to prove before it is allowed to stay. File references point at the code the wor
 
 ## Where the program stands
 
-The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
+The repository holds, as of 26 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 61 modules and about 26,100 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 63 modules and about 26,900 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-four subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`), 788 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`), 831 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
-  per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
+  per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
   rotation-invariant autocorrelation kernel and topomer fields; a Gaussian or arc-cosine layer on
   top, and multiple kernel learning for the mixing coefficients.
 * Learners: kernel ridge regression, SVR, Gaussian-process regression with variances, SVC, a Laplace
@@ -36,6 +36,7 @@ The measurements already in hand settle several questions, and the plan treats t
 | Do conformational ensembles help? | Five routes, none beats one well-chosen conformation on an aligned series | README, "The verdict on the fourth dimension" |
 | Do probe fields improve accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
 | Do quantum-chemical fields help? | Not on the corrosion series or on Am/Eu; yes on Hammett, where resonance needs whole-molecule charges | `benchmarks/results/corrosion_qm/`, `am_eu/`, `hammett/` |
+| Does a pKa-weighted protonation ensemble beat one chosen state? | No on the corrosion series in HCl (+0.261 against +0.324): at pH 0 only 1% of the molecules are mixtures, and independent-site pKa picks the state badly | `cmfqsar/protonation.py`, `benchmarks/results/protonation/` |
 | Do six pharmacophore features beat twenty Sybyl indicators? | Below 40 molecules yes (+0.027 against +0.002 added to the five fields), above it no | `cmfqsar/pharmtypes.py`, `benchmarks/results/pharmfields_mittal/` |
 | Can a Fukui function be a sum of atom Gaussians? | No (relative fit error 0.8 to 0.9), and the model does not care | `cmfqsar/cdft.py`, `benchmarks/results/cdft_kernels/` |
 | Does giving every atom a direction fix that? | The fit, yes (84% -> 64%); the model, no (-0.004 q2) | `cmfqsar/anisotropic.py`, `benchmarks/results/anisotropic/` |
@@ -641,6 +642,39 @@ can judge it.
   contributions and the GUI read it that way. Generalise the builder to members with their own
   atoms, with a conformer ensemble as the special case that must reproduce the present numbers
   exactly, then measure on `examples/corrosion_hcl` against the single state.
+  **Done 26 October 2026. The builder works, the ensemble does not pay here, and the reason is the
+  pKa model rather than the ensemble.** `combine_members` in `cmfqsar/fields.py` builds one field
+  from members that have their own atoms, with `member_sizes`, `member_atom_map` and `member_kind`
+  beside the `atoms_per_conformer` the conformational case keeps; `per_atom` follows the map and
+  `unmapped_share` reports what it could not place, so nothing is lost silently. A test asserts
+  the gate the item sets: a conformational ensemble built through the general builder reproduces
+  the tiled one atom for atom and kernel for kernel. `cmfqsar/protonation.py` enumerates the
+  states with Dimorphite-DL's patterns and weighs them by the Henderson-Hasselbalch fraction at
+  each site's regression pKa, on the molecule's own heavy-atom geometry, so an aligned series stays
+  aligned; `cmfqsar/tautomers.py` does the same for tautomers. `build --ph 0`, `--tautomers score`.
+  **Measured on all 23 series of `examples/corrosion_hcl` (997 molecules), same fields,
+  grids, folds and scaffold alignment as `run_corrosion.py`:** the state the file gives
+  +0.324, the likeliest state by pKa +0.260, the pKa-weighted
+  ensemble +0.261, the tautomer mean +0.314. The file's
+  state is best on 13 of the 23 series.
+  **Two numbers explain that.** At pH 0 only 1% of the molecules
+  are a real mixture -- a pKa two units from the pH settles the question -- so the averaging itself
+  is worth +0.001 and the whole difference is the choice of state.
+  And that choice is wrong more often than the curator's: the likeliest state by pKa carries the
+  file's charge for 52% of the molecules, with a mean charge of
+  +1.57 against +0.77, because
+  independent sites protonate a second and a third basic nitrogen that would not both carry a
+  proton. **Nor is it the lack of mixtures.** The same measurement at pH 3, where
+  83% of the molecules are mixtures with 3.0 states on average, gives
+  +0.324 for the file's state, +0.255 for the likeliest and +0.246 for the ensemble --
+  -0.009 for the averaging itself. The ensemble mathematics is sound and cheap; the pKa input
+  is what fails.
+  **Not done:** the two kinds of ensemble cannot be combined with a conformational one (the program
+  refuses rather than build the product); site-site interaction is ignored, which is exactly the
+  error the mean charge shows; the pKa values cannot be replaced from the command line, so a set
+  with measured pKa values cannot yet be modelled with them (the tautomer path does accept given
+  energies); the tautomer weights are an assumption, not populations, and would need the energies
+  D3 would give; and neither option is in the GUI, only on the command line.
 * **D5. Learned increments.** The two parameterisations differ by 0.20 in q² on AChE, which says
   the hydrophobic and hydrogen-bond increments are not settled. Fit the per-type increments jointly
   with the model (gradient of the cross-validation loss through the kernel, with the published
@@ -707,7 +741,7 @@ says whether a trajectory does what a generated ensemble could not.
   of hydration sites (the fitting machinery of `cmfqsar/probes.py` does this for probe fields) and
   add it as a sixth field with its own mixing coefficient, so that the co-field says where
   displacing or keeping a water helps. It is the first CMF field that is not centred on an atom of
-  the molecule, which is why it waits for D4's builder with members of their own atoms.
+  the molecule, which is what D4's `combine_members` builder, now in place, allows.
 * **D10. Fluctuation as information.** The ensemble mode uses the mean field only. The variance of
   the field across frames is a flexibility map, and the kernel of two variance fields is in closed
   form by the same algebra as the mean (a product of Gaussians is a Gaussian). Add it as a block
@@ -1198,7 +1232,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   need the field weights multiplied by the site occupancy; `structures_from_matbench` takes the
   majority species today. Special quasirandom structures and MD snapshots are the periodic
   analogue of the conformer ensemble and reuse the mean-map averaging of `ensemble_fields`,
-  generalised as D4 asks for members with their own atoms. The fourth-dimension verdict says to
+  generalised by D4's `combine_members` to members with their own atoms. The fourth-dimension verdict says to
   expect little; measure once, on a solid-solution set, and keep the mode only if it is exact and
   costs nothing when unused.
 * **M3. DFT arrays as fields without hand-made files.** Bader charges and magnetic moments enter
@@ -1277,6 +1311,104 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
 by those three. M9 and M12 only after M6 has reported.
+
+### Nanotechnology: the extensions a particle, a tube, a sheet and a coated surface ask for (26 October 2026)
+
+The application is built around one object: an RDKit molecule with one conformation, loaded by
+`load_dataset` in `cmfqsar/dataio.py`, given fields by `build_fields`, drawn by `Viewer3D`. Every
+nanotechnology use breaks one of those three assumptions. A metal cluster or a quantum dot has no
+lattice and no shared frame between particles of different sizes; a nanotube is periodic in one
+direction and a sheet in two; a coated particle is an adsorbate problem on a curved surface; a
+porous framework is a host. The periodic kernel (M-items above) supplies the kernel for all of
+them. What is missing is listed here, grouped by the layer of the program each item touches, with
+the module it starts from. The same rule 1 applies: every item is measured against the four-field
+periodic model on the same folds before it becomes a default.
+
+Two cautions are recorded before the items. First, the per-atom normalisation of the periodic
+kernel removes the particle size, which is often the main variable in nanoscience; size must enter
+as a separate descriptor (NT3). Second, the published nano-QSAR sets describe particles by size,
+coating, zeta potential and composition rather than by atomic structure, and they come from
+different laboratories. The corrosion study showed what that costs. The first study on such a set
+tests whether the target is reproducible between sources before any kernel is compared.
+
+**Data model and input**
+
+* **NT1. A structure type that is not a molecule.** `CrystalFields` in `cmfqsar/periodic.py` stands in
+  for a molecule inside the model, but `Dataset` in `cmfqsar/dataio.py` holds RDKit molecules only,
+  and the Dataset panel reads SDF, MOL2 and SMILES. Needed: a `Dataset` that can hold ASE structures
+  with a cell and boundary conditions, readers for CIF, POSCAR, extended XYZ and ASE databases, and
+  the name and the target taken from the structure's info fields. Every other NT item depends on
+  this one. About a week.
+* **NT2. Particles of thousands of atoms.** The overlap kernel is quadratic in the number of atoms,
+  and `AtomTable` concatenates every structure's atoms. For a particle the neighbour-list path of
+  `periodic_autocorrelation` is the only one that scales. Needed: open boundaries in that function
+  (no background term, no cell volume) and a guard in the model that refuses the overlap kernel
+  above an atom count. Two days.
+* **NT3. Size and shape as descriptors.** `cmfqsar/descriptors.py` computes RDKit descriptors for
+  molecules. Structures need their own: atom count, diameter, surface fraction, aspect ratio; and
+  the measured values of a nano-QSAR set (hydrodynamic size, zeta potential) read from a table and
+  added through the descriptor block that the model already has. Two days.
+
+**Fields and kernels**
+
+* **NT4. Tubes and sheets.** Nanotubes and nanowires are periodic in one direction, sheets in two.
+  M1 covers this (the background term with the repeat length or the area, and `PeriodicSpec` told
+  which directions repeat). Nanotube handedness is invisible to a pair kernel (M10); the diameter
+  and the metallic or semiconducting character are visible in the distances. No new item; NT4 is
+  M1 measured on a nanotube set.
+* **NT5. Curved surfaces for ligand shells.** The surface kernel (`SurfaceSpec` in
+  `cmfqsar/invariant.py`) resolves the in-plane distance by the height above z = 0. For a coated
+  particle the height becomes the distance from the particle surface, and the in-plane distance
+  becomes the distance between anchor points along the surface. A `ParticleSurfaceSpec` beside
+  `SurfaceSpec`, with the core given as a set of atoms, and a test that a flat core reproduces the
+  surface kernel exactly. One week.
+* **NT6. Fields for the core.** `inorganic_fieldset` gives oxidation states, atomic volume,
+  electronegativity, mass and element indicators. A particle core adds the coordination number and
+  the surface exposure of each atom, which `cmfqsar/exposure.py` computes for molecules and can be
+  reused. Two days.
+* **NT7. Site-resolved models on particles.** Catalytic activity and binding belong to sites, not to
+  the whole particle. This is M5 applied to particles: per-site rows of the channel tensor,
+  per-site targets, and the decomposition that names which site carries the property. Measured
+  first on adsorption energies by site on a cluster set. One to two weeks beyond M5.
+
+**Interpretation and display**
+
+* **NT8. A viewer for large structures and cells.** `Viewer3D` in `cmfqsar/gui/viewer3d.py` draws a
+  molecule as spheres and bonds with a co-field as isosurfaces. It needs instanced drawing for ten
+  thousand atoms, a unit cell outline with periodic images, and no bond perception for metals.
+  One to two weeks of Qt and OpenGL work. M13 is the same item seen from the crystal side.
+* **NT9. The co-pattern as a plot.** The invariant kernels have no co-field. `top_channels` returns
+  the ranked channels; the Results panel needs a chart of weight against distance for the chosen
+  pair of field types, and the viewer needs site colouring by contribution (NT7). Three days.
+* **NT10. Complementarity with a porous host.** `cmfqsar/protein.py` and
+  `cmfqsar/complementarity.py` read a PDB protein and resolve scores by residue. A framework read
+  from CIF with periodic images, and scores resolved by framework atom type, extend the same dialog
+  to MOFs and zeolites. This is M7; NT10 is its measurement on a gas-uptake set.
+
+**Application panels, command line and proof**
+
+* **NT11. Model panel and command line.** A kernel source entry for "periodic" and "particle
+  surface" in the Model panel, with the cutoff, width, taper and background controls that
+  `build-crystals` exposes, and the descriptor block shown next to the fields. On the command line,
+  `build-crystals` needs the open-boundary and lower-dimensional options and the descriptor table,
+  and `predict` needs a path that accepts structure files, since `cmd_predict` reads molecules
+  only. Four days.
+* **NT12. Benchmarks and tests.** Rule 5 requires a benchmark per module. Candidate sets with public
+  atomic structures: metal clusters from the Cambridge Cluster Database for energies, a nanotube
+  set for band gaps, and a MOF uptake set such as CoRE MOF with simulated loadings. Each needs a
+  script under `benchmarks/`, a results folder, and tests of the invariances (a rotated or
+  re-centred particle gives the same channels; a supercell of a tube gives the same channels per
+  atom). One week per set.
+
+**What this does not cover.** Properties that depend on long-range shape, such as the plasmon
+resonance of a particle above a few nanometres, are set by continuum electrodynamics and not by pair
+distances. Self-assembly of DNA structures and of block copolymers is a mesoscale problem where the
+atomistic field is the wrong level of description. Neither is planned.
+
+**Order.** NT1, NT2 and NT4 (that is, M1) first, then NT8: nothing can be shown or checked in the
+application before structures load and draw. NT5 and NT7 are the two items that carry new
+results; the rest is the plumbing the molecular side already had. NT12 runs alongside each item it
+measures.
 
 ### Electrochemistry: the extensions the surface frame and the metal centre ask for (25 October 2026)
 
@@ -1563,8 +1695,8 @@ on the same folds.
   from per-atom data alone.
 * **LP4. Conformers, tautomers and states for a local target.** A shift is a conformer average
   and a pKa is a property of a site in one protonation state. The ensemble builder gives the
-  first with no extra work once an environment is a field; the second waits for D4 (members with their own
-  atoms), since acid and anion differ by an atom. The site assignment (which atom carries the
+  first with no extra work once an environment is a field; the second needs members with their
+  own atoms, since acid and anion differ by an atom, which D4 has built. The site assignment (which atom carries the
   macroscopic pKa, which tautomer is in solution) is data preparation under rule 6, scripted per
   set, not a module.
 
@@ -1591,7 +1723,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
-| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; the review that ties the series together |
+| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;

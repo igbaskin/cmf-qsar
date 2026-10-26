@@ -1,0 +1,62 @@
+{
+ "set": "160_c1ccc2ccccc2c1",
+ "n": 15,
+ "ph": {
+  "0": {
+   "mixture_share": 0.0,
+   "states_mean": 1.0,
+   "charge_agrees": 0.9333333333333333,
+   "mean_charge_file": 0.3333333333333333,
+   "mean_charge_pka": 0.4666666666666667,
+   "sites_mean": 1.2666666666666666
+  },
+  "1": {
+   "mixture_share": 0.0,
+   "states_mean": 1.0,
+   "charge_agrees": 0.9333333333333333,
+   "mean_charge_file": 0.3333333333333333,
+   "mean_charge_pka": 0.4666666666666667,
+   "sites_mean": 1.2666666666666666
+  },
+  "2": {
+   "mixture_share": 0.4,
+   "states_mean": 1.4,
+   "charge_agrees": 0.9333333333333333,
+   "mean_charge_file": 0.3333333333333333,
+   "mean_charge_pka": 0.45525328748647187,
+   "sites_mean": 1.2666666666666666
+  },
+  "3": {
+   "mixture_share": 0.4666666666666667,
+   "states_mean": 1.6,
+   "charge_agrees": 0.9333333333333333,
+   "mean_charge_file": 0.3333333333333333,
+   "mean_charge_pka": 0.3697507378249457,
+   "sites_mean": 1.2666666666666666
+  },
+  "4": {
+   "mixture_share": 0.4666666666666667,
+   "states_mean": 1.8666666666666667,
+   "charge_agrees": 0.6,
+   "mean_charge_file": 0.3333333333333333,
+   "mean_charge_pka": 0.11267185146681197,
+   "sites_mean": 1.2666666666666666
+  },
+  "5": {
+   "mixture_share": 0.4666666666666667,
+   "states_mean": 1.8,
+   "charge_agrees": 0.5333333333333333,
+   "mean_charge_file": 0.3333333333333333,
+   "mean_charge_pka": -0.08216215974387175,
+   "sites_mean": 1.2666666666666666
+  },
+  "7.4": {
+   "mixture_share": 0.2,
+   "states_mean": 1.4666666666666666,
+   "charge_agrees": 0.4,
+   "mean_charge_file": 0.3333333333333333,
+   "mean_charge_pka": -0.3612123762605889,
+   "sites_mean": 1.2666666666666666
+  }
+ }
+}

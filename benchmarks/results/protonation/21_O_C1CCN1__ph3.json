@@ -1,0 +1,67 @@
+{
+ "set": "21_O_C1CCN1",
+ "file": "examples\\corrosion_hcl\\21_O_C1CCN1.csv",
+ "n": 17,
+ "ph": 3.0,
+ "core": "O=C1CCN1",
+ "reference": "Cefpodoxime proxetil",
+ "align_rmsd_median": 0.0585476554142062,
+ "mixture_share": 1.0,
+ "states_mean": 3.764705882352941,
+ "charge_agrees": 0.5882352941176471,
+ "mean_charge_file": 0.35294117647058826,
+ "mean_charge_pka": 1.0122837984212552,
+ "tautomer_share": 0.35294117647058826,
+ "tautomer_forms_mean": 1.3529411764705883,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": 0.39882324953612525,
+   "rmse_cv": 0.9023146906575855,
+   "alpha": 0.3,
+   "lam": 0.001
+  },
+  "dominant": {
+   "q2": 0.3054387147597625,
+   "rmse_cv": 0.9698670968783466,
+   "alpha": 0.1,
+   "lam": 0.1
+  },
+  "ensemble": {
+   "q2": 0.2872176251134809,
+   "rmse_cv": 0.9825064633738109,
+   "alpha": 1.0,
+   "lam": 0.01
+  },
+  "tautomer": {
+   "q2": 0.33566549185146677,
+   "rmse_cv": 0.9485284157703283,
+   "alpha": 1.0,
+   "lam": 0.001
+  }
+ },
+ "seconds": 5.976317882537842
+}

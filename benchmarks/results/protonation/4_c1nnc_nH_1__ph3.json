@@ -1,0 +1,67 @@
+{
+ "set": "4_c1nnc_nH_1",
+ "file": "examples\\corrosion_hcl\\4_c1nnc_nH_1.csv",
+ "n": 40,
+ "ph": 3.0,
+ "core": "c1nnc[nH]1",
+ "reference": "7,9-Ditetradecyl-6-methyl-7H-[1,2,4]triazolo[4,3-b][1,2,4]triazepin-8(9H)-one",
+ "align_rmsd_median": 0.0693284672391275,
+ "mixture_share": 1.0,
+ "states_mean": 4.275,
+ "charge_agrees": 0.0,
+ "mean_charge_file": 1.0,
+ "mean_charge_pka": 2.308834435547409,
+ "tautomer_share": 0.05,
+ "tautomer_forms_mean": 1.075,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": 0.1883631305805833,
+   "rmse_cv": 1.4278453463231657,
+   "alpha": 0.3,
+   "lam": 0.01
+  },
+  "dominant": {
+   "q2": 0.2284469980968531,
+   "rmse_cv": 1.392140825154641,
+   "alpha": 5.0,
+   "lam": 0.1
+  },
+  "ensemble": {
+   "q2": 0.2049560250220761,
+   "rmse_cv": 1.4131747278897622,
+   "alpha": 5.0,
+   "lam": 0.1
+  },
+  "tautomer": {
+   "q2": 0.19127317218260043,
+   "rmse_cv": 1.4252833505463187,
+   "alpha": 2.0,
+   "lam": 0.1
+  }
+ },
+ "seconds": 8.59933614730835
+}

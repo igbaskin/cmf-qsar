@@ -268,7 +268,10 @@ def cmd_build(args):
                          descriptors=[d for d in (args.descriptors or "").split(",") if d],
                          descriptor_h=args.descriptor_h,
                          probes=[p for p in (args.probes or "").split(",") if p],
-                         probe_terms=args.probe_terms)
+                         probe_terms=args.probe_terms,
+                         protonation_ph=args.ph, protonation_states=args.ph_states,
+                         protonation_min=args.ph_min_population,
+                         tautomers=(args.tautomers or ""), tautomer_forms=args.tautomer_forms)
     if args.probes:
         from cmfqsar.probes import fit_report, probe_names
         unknown = [p for p in args.probes.split(",") if p and p not in probe_names()]
@@ -309,6 +312,33 @@ def cmd_build(args):
         print()
         for line in failures[:5]:
             print("  " + line)
+    if fs.is_tautomer_ensemble:
+        from cmfqsar.tautomers import ambiguous_share, available, forms_table
+        if not available():
+            raise SystemExit("--tautomers needs RDKit's tautomer enumerator, which this RDKit "
+                             "build does not have")
+        forms = forms_table([ds.mols[i] for i in tr], weighting=args.tautomers,
+                            max_forms=args.tautomer_forms)
+        print(f"  tautomer ensembles weighted '{args.tautomers}': "
+              f"{np.mean([len(e) for e in forms]):.1f} forms per molecule on average, "
+              f"{ambiguous_share(forms):.0%} of the training molecules with more than one form")
+        print("    the weights are not populations: a tautomer has one only if the free energies "
+              "are known, and none are computed here")
+    if fs.is_protonation_ensemble:
+        from cmfqsar.protonation import available, ensemble_table, mixture_share
+        if not available():
+            raise SystemExit("--ph needs Dimorphite-DL for the pKa values and the sites: "
+                             "pip install dimorphite-dl")
+        ens = ensemble_table([ds.mols[i] for i in tr], [ds.names[i] for i in tr], ph=args.ph,
+                             min_population=args.ph_min_population, max_states=args.ph_states)
+        share = mixture_share(ens)
+        print(f"  protonation ensembles at pH {args.ph:g}: "
+              f"{np.mean([len(e) for e in ens]):.1f} states per molecule on average, "
+              f"{share:.0%} of the training molecules a real mixture, mean charge "
+              f"{np.mean([e.mean_charge for e in ens]):+.2f}")
+        if share == 0.0:
+            print("    every molecule is in one state at this pH, so this is the single-state "
+                  "model with the states chosen by pKa")
     if fs.is_ensemble:
         from cmfqsar.conformers import ensemble_summary
         info = ensemble_summary(ds.mols, fs)
@@ -2603,6 +2633,24 @@ def main(argv=None):
                    help="weights of the conformations in the mean field")
     b.add_argument("--kt", type=float, default=0.6, metavar="KCAL",
                    help="kT for the Boltzmann weights (default 0.6 kcal/mol, about RT at 300 K)")
+    b.add_argument("--tautomers", default=None, choices=["score", "uniform", "given"],
+                   help="represent every molecule by the mean field of its tautomers instead of "
+                        "by the form the file gives (plan item D4). 'score' keeps the forms "
+                        "RDKit scores highest, 'uniform' keeps all of them, 'given' reads "
+                        "relative energies in kcal/mol from the molecule property "
+                        "'tautomer_energies'. The first two are assumptions, not populations")
+    b.add_argument("--tautomer-forms", type=int, default=8, metavar="N",
+                   help="forms kept per molecule at most (default 8)")
+    b.add_argument("--ph", type=float, default=None, metavar="PH",
+                   help="represent every molecule by the pKa-weighted mean field of its "
+                        "protonation states at this pH instead of by the state the file gives "
+                        "(plan item D4). Needs Dimorphite-DL, whose patterns find the ionisable "
+                        "sites and whose regression pKa values set the weights")
+    b.add_argument("--ph-states", type=int, default=8, metavar="N",
+                   help="states kept per molecule at most, the likeliest ones (default 8)")
+    b.add_argument("--ph-min-population", type=float, default=0.01, metavar="F",
+                   help="drop a state that holds less than this share of the molecule "
+                        "(default 0.01)")
     b.add_argument("--max-conformers", type=int, default=0, metavar="N",
                    help="use at most the N conformations of each molecule with the largest weights "
                         "(0 = all)")

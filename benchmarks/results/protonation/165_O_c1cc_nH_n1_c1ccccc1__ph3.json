@@ -1,0 +1,67 @@
+{
+ "set": "165_O_c1cc_nH_n1_c1ccccc1",
+ "file": "examples\\corrosion_hcl\\165_O_c1cc_nH_n1_c1ccccc1.csv",
+ "n": 15,
+ "ph": 3.0,
+ "core": "O=c1cc[nH]n1-c1ccccc1",
+ "reference": "N,N-Dimethyl-4-(((1,5-dimethyl-3-oxo-2-phenyl-2,3-dihydro-1H-pyrazol-4-yl)imino)methyl)-N-hexadecylbenzenaminium bromide",
+ "align_rmsd_median": 0.4268561405746335,
+ "mixture_share": 1.0,
+ "states_mean": 3.2666666666666666,
+ "charge_agrees": 1.0,
+ "mean_charge_file": 0.3333333333333333,
+ "mean_charge_pka": 0.32248835052167846,
+ "tautomer_share": 0.0,
+ "tautomer_forms_mean": 1.0,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": -0.028143424451909205,
+   "rmse_cv": 1.5273760296656609,
+   "alpha": 0.1,
+   "lam": 1.0
+  },
+  "dominant": {
+   "q2": -0.0307395004055262,
+   "rmse_cv": 1.5293031364329643,
+   "alpha": 0.1,
+   "lam": 1.0
+  },
+  "ensemble": {
+   "q2": -0.029716818309434068,
+   "rmse_cv": 1.5285442739510533,
+   "alpha": 0.1,
+   "lam": 1.0
+  },
+  "tautomer": {
+   "q2": -0.03249367018176019,
+   "rmse_cv": 1.530603909778667,
+   "alpha": 0.1,
+   "lam": 1.0
+  }
+ },
+ "seconds": 2.855037212371826
+}

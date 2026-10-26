@@ -138,10 +138,29 @@ class FieldSet:
     max_conformers: int = 0             # 0 = use every conformation present
     energy_prop: str = "conformer_energies"   # molecule property holding per-conformer energies
     weight_prop: str = "conformer_weights"    # molecule property holding weights, for "given"
+    # --- protonation states: an ensemble of different molecules (plan item D4) ---------
+    #: the pH at which the protonation states are weighed by their pKa values.  None, the
+    #: default, uses every molecule in the state the file gives it, as the papers do.
+    protonation_ph: Optional[float] = None
+    protonation_states: int = 8          # states kept per molecule at most, the likeliest
+    protonation_min: float = 0.01        # states lighter than this share are dropped
+    # --- tautomers: the other ensemble of different molecules (plan item D4) ----------
+    #: "" uses the form the file gives, as the papers do; otherwise how the forms are weighed:
+    #: "score" (the ones RDKit scores highest), "uniform", or "given" (energies from a property)
+    tautomers: str = ""
+    tautomer_forms: int = 8              # forms kept per molecule at most
 
     @property
     def is_ensemble(self) -> bool:
         return self.conformers == "ensemble"
+
+    @property
+    def is_protonation_ensemble(self) -> bool:
+        return self.protonation_ph is not None
+
+    @property
+    def is_tautomer_ensemble(self) -> bool:
+        return bool(self.tautomers)
 
     # ----- construction helpers -------------------------------------------------
     @classmethod
@@ -153,7 +172,10 @@ class FieldSet:
                prop_missing: str = "error", descriptors: Sequence[str] = (),
                descriptor_h: float = 1.0, probes: Sequence[str] = (),
                probe_terms: int = 4,
-               pharm_features: Sequence[str] = ()) -> "FieldSet":
+               pharm_features: Sequence[str] = (),
+               protonation_ph: Optional[float] = None, protonation_states: int = 8,
+               protonation_min: float = 0.01, tautomers: str = "",
+               tautomer_forms: int = 8) -> "FieldSet":
         specs = []
         for name in physchem:
             kind = "steric" if name == "steric" else "gauss"
@@ -177,7 +199,11 @@ class FieldSet:
                    conformer_weighting=conformer_weighting, conformer_kt=conformer_kt,
                    max_conformers=max_conformers, prop_missing=prop_missing,
                    descriptors=tuple(descriptors), descriptor_h=float(descriptor_h),
-                   probe_terms=int(probe_terms))
+                   probe_terms=int(probe_terms),
+                   protonation_ph=(None if protonation_ph is None else float(protonation_ph)),
+                   protonation_states=int(protonation_states),
+                   protonation_min=float(protonation_min), tautomers=str(tautomers or ""),
+                   tautomer_forms=int(tautomer_forms))
 
     @property
     def names(self) -> List[str]:
@@ -560,11 +586,21 @@ class MoleculeFields:
     bonds: np.ndarray             # (B, 2) atom indices (for drawing)
     charges: np.ndarray           # (N,) partial charges (kept for information)
     molblock: str = ""            # MOL block for later display / export
-    # set only for an ensemble (4D) field: its atoms are those of n_conformers conformations,
-    # one after another, each already scaled by its weight
+    # set only for an ensemble field: its atoms are those of every member of the ensemble, one
+    # after another, each already scaled by that member's weight.  The members are conformations
+    # of one molecule in the 4D case and may be different molecules -- protonation states,
+    # tautomers -- in the general one (plan item D4), which is why the sizes are a vector.
     n_conformers: int = 1
     conformer_weights: Optional[np.ndarray] = None
+    #: atoms in every member, when they all have the same number; 0 for a plain molecule
     atoms_per_conformer: int = 0
+    #: atoms of each member, when they differ; None when they do not
+    member_sizes: Optional[np.ndarray] = None
+    #: for every atom of every member, the atom of the first member it corresponds to, or -1
+    #: where it has no counterpart (an added proton).  None when the members share an atom list.
+    member_atom_map: Optional[np.ndarray] = None
+    #: what the members are: "conformers", "protonation", "tautomers", or ""
+    member_kind: str = ""
     #: raw (unstandardised) non-field descriptors, in the order of FieldSet.descriptors
     descriptors: Optional[np.ndarray] = None
     #: per-atom Gaussian expansion coefficients of every probe field, (N, n_terms)
@@ -581,16 +617,63 @@ class MoleculeFields:
     def is_ensemble(self) -> bool:
         return self.n_conformers > 1
 
+    @property
+    def sizes(self) -> np.ndarray:
+        """Atoms in every member of the ensemble, whether or not they are all the same."""
+        if self.member_sizes is not None:
+            return np.asarray(self.member_sizes, int)
+        if self.is_ensemble and self.atoms_per_conformer > 0:
+            return np.full(self.n_conformers, int(self.atoms_per_conformer), int)
+        return np.array([self.n_atoms], int)
+
+    @property
+    def same_atoms(self) -> bool:
+        """True when every member has the same atoms, which is the conformational case."""
+        return self.member_sizes is None or len(set(self.sizes.tolist())) <= 1
+
+    def member_slice(self, i: int) -> slice:
+        """Where member `i` sits in the concatenated atom list."""
+        sizes = self.sizes
+        start = int(np.sum(sizes[:i]))
+        return slice(start, start + int(sizes[i]))
+
     def per_atom(self, values: np.ndarray) -> np.ndarray:
         """Sum a per-atom quantity of an ensemble field back onto the atoms of the molecule.
 
-        Atom contributions, Shapley values and the like come out per atom *per conformation*;
-        a chemist wants them per atom, which is the sum over the conformations.
+        Atom contributions, Shapley values and the like come out per atom *per member*; a chemist
+        wants them per atom of the molecule, which is the sum over the members.
+
+        With members that have their own atoms -- protonation states, tautomers -- "the atoms of
+        the molecule" are the atoms of the first member, and `member_atom_map`, which the builder
+        of the ensemble supplies, says which atom of it every other member's atom corresponds to.
+        A proton that exists in one state only has no counterpart there; the builders in
+        :mod:`cmfqsar.protonation` and :mod:`cmfqsar.tautomers` point it at the heavy atom it sits
+        on, which is the atom a chemist would read it on.  An atom the map leaves at -1 has
+        nowhere to go and its share is dropped, which :meth:`unmapped_share` reports, so that a
+        caller can say how much was lost instead of losing it quietly.
         """
         v = np.asarray(values, float)
-        if not self.is_ensemble or self.atoms_per_conformer <= 0:
+        if not self.is_ensemble:
             return v
-        return v.reshape(self.n_conformers, self.atoms_per_conformer).sum(axis=0)
+        if self.same_atoms and self.member_atom_map is None:
+            n = int(self.sizes[0])
+            return v.reshape(self.n_conformers, n).sum(axis=0)
+        amap = np.asarray(self.member_atom_map, int)
+        n = int(self.sizes[0])
+        out = np.zeros(n)
+        ok = amap >= 0
+        np.add.at(out, amap[ok], v[:len(amap)][ok])
+        return out
+
+    def unmapped_share(self, values: np.ndarray) -> float:
+        """The share of a per-atom quantity that :meth:`per_atom` could not place, in [0, 1]."""
+        v = np.abs(np.asarray(values, float))
+        total = float(v.sum())
+        if not self.is_ensemble or self.member_atom_map is None or total <= 0:
+            return 0.0
+        amap = np.asarray(self.member_atom_map, int)
+        lost = float(v[:len(amap)][amap < 0].sum())
+        return lost / total
 
 
 def cif_types_in(mols: Sequence[Chem.Mol], scheme: str = "sybyl", min_molecules: int = 5) -> List[str]:
@@ -657,6 +740,80 @@ def conformer_weights(mol: Chem.Mol, fieldset: FieldSet) -> np.ndarray:
     return out / total if total > 1e-300 else np.full(k, 1.0 / k)
 
 
+def combine_members(members: Sequence[MoleculeFields], weights: Sequence[float],
+                    kind: str = "", atom_maps: Optional[Sequence[Sequence[int]]] = None,
+                    name: str = "") -> MoleculeFields:
+    """One field that is the weighted mean of several molecules' fields (plan item D4).
+
+    The mean-map kernel needs only bilinearity: a CMF field is a sum of atom-centred Gaussians
+    and the kernel is bilinear in the fields, so the mean field of an ensemble is itself a field
+    whose atoms are the atoms of every member with their weights multiplied by that member's
+    weight.  Nothing in that argument requires the members to be the same molecule, which is what
+    this function and :func:`ensemble_fields` now exploit: the members may be conformations, or
+    protonation states, or tautomers.
+
+    `weights` need not be normalised; they are.  `atom_maps` gives, for each member, the atom of
+    the first member that each of its atoms corresponds to, with -1 where there is none; without
+    it the members are assumed to share an atom list, which is checked.
+    """
+    if not members:
+        raise ValueError("an ensemble needs at least one member")
+    w = np.asarray(weights, float)
+    if len(w) != len(members):
+        raise ValueError(f"{len(members)} members and {len(w)} weights")
+    if not np.isfinite(w).all() or w.min() < 0 or w.sum() <= 0:
+        raise ValueError("the member weights have to be finite, non-negative and not all zero")
+    w = w / w.sum()
+    keep = [i for i in range(len(members)) if w[i] > 0]
+    if len(keep) == 1:
+        return members[keep[0]]
+    first = members[keep[0]]
+    sizes = np.array([members[i].n_atoms for i in keep], int)
+    same = len(set(sizes.tolist())) == 1
+    if atom_maps is None and not same:
+        raise ValueError("members with different numbers of atoms need atom_maps saying which "
+                         "atom of the first member each atom corresponds to")
+    coords, W, radii, symbols, types, charges, bonds, maps = [], [], [], [], [], [], [], []
+    offset = 0
+    for j, i in enumerate(keep):
+        m = members[i]
+        if m.weights.shape[1] != first.weights.shape[1]:
+            raise ValueError("every member has to be built with the same field set")
+        coords.append(np.asarray(m.coords, float))
+        W.append(np.asarray(m.weights, float) * float(w[i]))
+        radii.append(np.asarray(m.radii, float))
+        symbols.extend(list(m.symbols))
+        types.extend(list(m.atom_types))
+        charges.append(np.asarray(m.charges, float))
+        bonds.append(np.asarray(m.bonds, int) + offset)
+        if atom_maps is not None:
+            mp = np.asarray(atom_maps[i], int)
+            if len(mp) != m.n_atoms:
+                raise ValueError(f"the atom map of member {i} has {len(mp)} entries for "
+                                 f"{m.n_atoms} atoms")
+            maps.append(mp)
+        else:
+            maps.append(np.arange(m.n_atoms, dtype=int))
+        offset += m.n_atoms
+    out = MoleculeFields(
+        name=name or first.name, coords=np.concatenate(coords, axis=0),
+        weights=np.concatenate(W, axis=0), radii=np.concatenate(radii),
+        symbols=symbols, atom_types=types,
+        bonds=np.concatenate(bonds, axis=0) if bonds else np.zeros((0, 2), int),
+        charges=np.concatenate(charges), molblock=first.molblock,
+        charge_source=first.charge_source)
+    out.n_conformers = len(keep)
+    out.conformer_weights = np.array([w[i] for i in keep], float)
+    out.member_kind = kind
+    if same:
+        out.atoms_per_conformer = int(sizes[0])
+    out.member_sizes = None if same else sizes
+    # the map is kept only when it says something a reshape would not
+    joined = np.concatenate(maps)
+    out.member_atom_map = None if (same and atom_maps is None) else joined
+    return out
+
+
 def ensemble_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "") -> MoleculeFields:
     """Fields of a conformational ensemble: the weighted mean of the fields of its conformations.
 
@@ -699,6 +856,7 @@ def ensemble_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "") -> Molecu
     out.n_conformers = k
     out.conformer_weights = np.array([weights[i] for i in use], float)
     out.atoms_per_conformer = n
+    out.member_kind = "conformers"
     return out
 
 
@@ -709,6 +867,25 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
     With ``conformers="ensemble"`` in the field set and a molecule that carries more than one
     conformation, this returns the ensemble field instead; see :func:`ensemble_fields`.
     """
+    if not _single and (getattr(fieldset, "protonation_ph", None) is not None
+                        or getattr(fieldset, "tautomers", "")):
+        if (getattr(fieldset, "conformers", "single") == "ensemble"
+                and mol.GetNumConformers() > 1):
+            raise ValueError("a conformational ensemble and a protonation or tautomer ensemble "
+                             "cannot be combined yet: the product of the two sets of members is "
+                             "not built")
+        if (getattr(fieldset, "protonation_ph", None) is not None
+                and getattr(fieldset, "tautomers", "")):
+            raise ValueError("a protonation ensemble and a tautomer ensemble cannot be combined "
+                             "yet: the product of the two sets of members is not built")
+        if getattr(fieldset, "tautomers", ""):
+            from .tautomers import tautomer_fields
+            return tautomer_fields(mol, fieldset, weighting=str(fieldset.tautomers),
+                                   max_forms=int(fieldset.tautomer_forms), name=name)
+        from .protonation import protonation_fields
+        return protonation_fields(mol, fieldset, ph=float(fieldset.protonation_ph), name=name,
+                                  min_population=float(fieldset.protonation_min),
+                                  max_states=int(fieldset.protonation_states))
     if (not _single and getattr(fieldset, "conformers", "single") == "ensemble"
             and mol.GetNumConformers() > 1):
         return ensemble_fields(mol, fieldset, name=name)

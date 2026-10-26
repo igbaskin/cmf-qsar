@@ -1,0 +1,67 @@
+{
+ "set": "0_c1ccccc1",
+ "file": "examples\\corrosion_hcl\\0_c1ccccc1.csv",
+ "n": 244,
+ "ph": 3.0,
+ "core": "c1ccccc1",
+ "reference": "Vanillin-glycine Schiff base PEG(1500) octadecanoate ester",
+ "align_rmsd_median": 0.014998289861490183,
+ "mixture_share": 0.4139344262295082,
+ "states_mean": 1.6352459016393444,
+ "charge_agrees": 0.9098360655737705,
+ "mean_charge_file": 0.430327868852459,
+ "mean_charge_pka": 0.47952641601724694,
+ "tautomer_share": 0.00819672131147541,
+ "tautomer_forms_mean": 1.0081967213114753,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": 0.4133380164167897,
+   "rmse_cv": 1.844802750641336,
+   "alpha": 5.0,
+   "lam": 1.0
+  },
+  "dominant": {
+   "q2": 0.3930210937169851,
+   "rmse_cv": 1.8764749177504567,
+   "alpha": 5.0,
+   "lam": 1.0
+  },
+  "ensemble": {
+   "q2": 0.45163501301989684,
+   "rmse_cv": 1.7835727277570137,
+   "alpha": 5.0,
+   "lam": 1.0
+  },
+  "tautomer": {
+   "q2": 0.38310715727209654,
+   "rmse_cv": 1.8917373132801738,
+   "alpha": 5.0,
+   "lam": 1.0
+  }
+ },
+ "seconds": 114.55287551879883
+}

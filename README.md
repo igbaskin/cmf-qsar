@@ -1640,6 +1640,57 @@ estimated however common each of its members is; at nine the more descriptive on
 is more descriptive. The rule is about size: `--pharm` below about forty molecules, `--cif` above,
 and the six features whenever the model will be read as a pharmacophore.
 
+### Protonation and tautomer ensembles
+
+A series measured in acid is modelled in one protonation state, chosen when the data was prepared,
+and an azole is written with its proton on one of its nitrogens. Both choices are guesses. The
+mean-map kernel of the previous sections needs only bilinearity, and nothing in that argument
+requires the members of an ensemble to be conformations of one molecule: they can be protonation
+states or tautomers, which are different molecules with different numbers of atoms
+(`cmfqsar/protonation.py`, `cmfqsar/tautomers.py`, `build --ph 0`, `build --tautomers score`). The
+states are built on the molecule's own heavy-atom geometry, so an aligned series stays aligned, and
+the weights of the protonation states are Henderson-Hasselbalch populations at each site's pKa.
+
+Measured on all 23 corrosion-inhibitor series in 1 M HCl (997 molecules), same five
+fields, same grids, same ten-fold cross-validation and same scaffold alignment as the corrosion
+tables above:
+
+<!-- PROTONATION-TABLE -->
+| model at pH 0 | mean q² | best on | difference from `file` |
+|---|---:|---:|---:|
+| `file`, the state the data file gives | **+0.324** | 13 of 23 | — |
+| `dominant`, the likeliest state by pKa | +0.260 | 3 of 23 | -0.064 |
+| `ensemble`, the pKa-weighted mean | +0.261 | 1 of 23 | -0.063 |
+| `tautomer`, the mean over the forms | +0.314 | 6 of 23 | -0.010 |
+<!-- /PROTONATION-TABLE -->
+
+**The ensemble has almost nothing to average over at this pH.** A pKa two units from the pH
+settles the question, so only 1% of the molecules are a real
+mixture in 1 M HCl and the averaging itself is worth +0.001. The
+whole difference between the columns is which state is chosen — and the pKa choice is the worse one
+here, -0.064 against the prepared state. The likeliest state by pKa
+carries the charge the file gives it for only 52% of the molecules,
+and its mean charge is +1.57 against
++0.77 in the file, because treating the sites as independent
+protonates a second and a third basic nitrogen that would not both carry a proton. **So what fails
+is the pKa model, not the ensemble**, whose mean-map identity is checked against the pairwise
+kernels of the members in the tests, and whose conformational case reproduces the 4D numbers atom
+for atom.
+
+Averaging the tautomers is a draw: -0.010 on average, best on
+6 of the 23 series, over the 5% of molecules with more than
+one form worth keeping. Its weights are the weakest part of the construction — a tautomer has a
+population only if the free energies are known, and none are computed here.
+
+Mixtures are rare in strong acid and common in between: 1% of the
+molecules at pH 0, 18% at pH 2, 83%
+at pH 3, 27% at pH 7.4. Repeating the measurement at pH 3 keeps the order -- `file` +0.324, `dominant` +0.255, `ensemble` +0.246 -- so the averaging does not rescue the pKa choice even where there is something to average. Use the ensemble as a
+check rather than as a default: where it disagrees with your chosen state, that molecule's pKa is
+near the pH of the assay and the state is worth looking at. The mean charge the program prints
+beside the ensemble says when the independent-site assumption has added protons a real molecule
+would not carry. The pKa values are Dimorphite-DL's and cannot yet be replaced from the command
+line.
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the

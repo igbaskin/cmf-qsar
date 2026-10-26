@@ -1,0 +1,67 @@
+{
+ "set": "157_c1ccc2_nH_cnc2c1",
+ "file": "examples\\corrosion_hcl\\157_c1ccc2_nH_cnc2c1.csv",
+ "n": 73,
+ "ph": 3.0,
+ "core": "c1ccc2[nH]cnc2c1",
+ "reference": "1,8-bis(1-chlorobenzyl-benzimidazolyl)-octane",
+ "align_rmsd_median": 0.014504560917714565,
+ "mixture_share": 1.0,
+ "states_mean": 2.808219178082192,
+ "charge_agrees": 0.5753424657534246,
+ "mean_charge_file": 1.0,
+ "mean_charge_pka": 1.5158822382987438,
+ "tautomer_share": 0.0273972602739726,
+ "tautomer_forms_mean": 1.0273972602739727,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": 0.346349802522669,
+   "rmse_cv": 1.5004967552827553,
+   "alpha": 0.5,
+   "lam": 1.0
+  },
+  "dominant": {
+   "q2": 0.42394306568174345,
+   "rmse_cv": 1.408623945189688,
+   "alpha": 0.3,
+   "lam": 1.0
+  },
+  "ensemble": {
+   "q2": 0.42238973075949793,
+   "rmse_cv": 1.4105218406881839,
+   "alpha": 0.3,
+   "lam": 1.0
+  },
+  "tautomer": {
+   "q2": 0.3414585414825063,
+   "rmse_cv": 1.5061003965378792,
+   "alpha": 0.3,
+   "lam": 1.0
+  }
+ },
+ "seconds": 12.714258432388306
+}

@@ -3126,6 +3126,109 @@ which conformation of each molecule to use, alternating between fitting and sele
 you believe one conformation is the bioactive one and the others are noise; use the ensemble when
 you believe the molecule is genuinely flexible.
 
+## Protonation and tautomers: ensembles of different molecules
+
+A series measured in acid is modelled in one protonation state, chosen when the data was prepared.
+That choice is a guess wherever a pKa falls near the pH of the experiment: an azole with a pKa of 1
+in 1 M HCl is about half protonated, and neither the neutral form nor the cation is the molecule
+that was measured. The same applies to a tautomer: an azole can be written with its proton on
+either nitrogen, and the two forms have different fields.
+
+**The averaging needs no new mathematics, and the members need not be one molecule.** The argument
+of the previous section used only bilinearity: the mean field of an ensemble is itself a field
+whose atoms are the atoms of every member with their weights multiplied by that member's weight.
+Nothing in it requires the members to be conformations. They can be protonation states, or
+tautomers, which are different molecules with different numbers of atoms
+(`cmfqsar/protonation.py`, `cmfqsar/tautomers.py`). The kernel is still the mean-map kernel, still
+positive definite, and the model is still linear in the mean field, so the co-fields and the
+decomposition rules keep working. Tests check that identity against the pairwise kernels of the
+members for both kinds of ensemble, and that a conformational ensemble built through the general
+builder reproduces the tiled one atom for atom.
+
+| Option of `build` | What it does |
+|---|---|
+| `--ph 0` | represent every molecule by the pKa-weighted mean field of its protonation states at this pH |
+| `--ph-states N`, `--ph-min-population F` | how many states to keep, and how light a state may be |
+| `--tautomers score` | the mean field over the tautomers of the state the file gives |
+| `--tautomers uniform`, `--tautomers given` | keep every enumerated form, or weigh the forms by energies in the molecule property `tautomer_energies` |
+| `--tautomer-forms N` | forms kept at most |
+
+**The weights of the protonation states are populations.** Each ionisable site is found by
+Dimorphite-DL's patterns, given its regression pKa, and weighted by the Henderson-Hasselbalch
+fraction
+
+$$
+f = 1 / (1 + 10^{\mathrm{pH} - \mathrm{p}K_{\mathrm{a}}})
+$$
+
+for the protonated form and its complement for the deprotonated one; a state's weight is the
+product over the sites. **The weights of the tautomers are not populations.** A tautomer has one
+only if the free energies are known, and none are computed here, so `score` keeps the forms RDKit
+scores highest and counts them the same. Energies from a semiempirical calculation would replace
+that assumption with a Boltzmann weight.
+
+The states are built on the geometry the molecule arrives with: the heavy atoms keep their
+coordinates and only hydrogens are added, removed or moved, so **an aligned series stays aligned**
+and the ensemble costs no further superposition. Atom contributions come back on the atoms of the
+molecule as usual; a proton that only one state carries is reported on the heavy atom it sits on,
+which is the atom a chemist would read it on.
+
+### What it is worth, measured
+
+`benchmarks/run_protonation.py` measures four models on the 23 corrosion-inhibitor series in
+1 M HCl (997 molecules, `examples/corrosion_hcl`), with the same five fields, the same
+attenuation and ridge grids, the same ten-fold cross-validation and the same scaffold alignment as
+`run_corrosion.py`: `file`, the state the data file gives; `dominant`, the likeliest state by pKa;
+`ensemble`, the pKa-weighted mean over the states; and `tautomer`, the mean over the tautomers of
+the file's state.
+
+| Model at pH 0 | mean q² | best on |
+|---|---|---|
+| `file` (the state the data file gives) | **+0.324** | 13 of 23 series |
+| `dominant` (the likeliest state by pKa) | +0.260 | 3 of 23 |
+| `ensemble` (the pKa-weighted mean) | +0.261 | 1 of 23 |
+| `tautomer` (the mean over the forms) | +0.314 | 6 of 23 |
+
+**At pH 0 the ensemble has almost nothing to average over.** Only 1%
+of the molecules are a real mixture in 1 M HCl, because a pKa two units away from the pH already
+settles the question, so `ensemble` differs from `dominant` by +0.001.
+Where the two differ is in which state is chosen, and the pKa choice is the worse one here:
+-0.064 against the state the data file gives, with `file` best on
+13 of the 23 series. The likeliest state by pKa carries the charge the file
+gives it for only 52% of the molecules, and its mean charge is
++1.57 against +0.77 in the file:
+treating the sites as independent protonates a second and a third basic nitrogen that would not
+both be protonated in reality. **So the limit is the pKa model, not the ensemble.** Averaging the
+tautomers moves the result by -0.010, on the 5% of
+molecules that have more than one form worth keeping.
+
+Where a mixture does exist, the ensemble has something to do: the share of molecules that are a
+real mixture is 1% at pH 0, 18% at
+pH 2, 83% at pH 3 and 27% at pH 7.4.
+
+**And it is not the lack of mixtures that holds the ensemble back.** Repeating the
+measurement at pH 3, where 83% of the molecules are mixtures and a
+molecule has 3.0 states on average, gives the same order and no gain
+from the averaging: `file` +0.324, `dominant` +0.255,
+`ensemble` +0.246, which is -0.009 for the
+averaging itself. The endpoint was measured in 1 M HCl, so a pH-3 model is not the chemistry of the
+experiment; it is there to show what the averaging does when there is something to average, and
+the answer is nothing measurable.
+
+**When to use it.** On this evidence, not as a default: the state prepared by hand gave the
+higher mean q2 at both pH values measured and was the best of the four models on 13 of the 23
+series. Use it as a check -- if the ensemble and your chosen state disagree, the
+pKa of that molecule is near the pH and the state is worth looking at -- and use it as the model
+only where no one has chosen the states by hand. Read the mean charge the program prints beside
+the ensemble: where it is far above the charge of your file, the independent-site assumption is
+adding protons that a real molecule would not carry, and the ensemble is then worse than the
+single state, not better. The pKa values are Dimorphite-DL's and cannot be replaced from the
+command line yet; tautomer energies can be, through the molecule property `tautomer_energies`. Use
+the tautomer ensemble where the series contains azoles or other groups whose form the file decided
+arbitrarily, and read its numbers as the weaker claim they are. A conformational ensemble and a
+protonation or tautomer ensemble cannot be combined yet: the program refuses rather than build a
+product of members it cannot describe.
+
 # Working without an alignment
 
 This chapter is the one to read if your molecules came from SMILES, if your series has several
@@ -3861,6 +3964,9 @@ not every option.
 **Conformations.** `--conformations single|ensemble`, `--conformers N`, `--conformer-window A`,
 `--prune-rmsd A`, `--conformer-align self|core|reference|field`, `--conformer-align-ref I`,
 `--conformer-weighting uniform|boltzmann|property`, `--kt KCAL`, `--max-conformers N`.
+
+**Protonation and tautomers.** `--ph PH`, `--ph-states N`, `--ph-min-population F`,
+`--tautomers score|uniform|given`, `--tautomer-forms N`.
 
 **Validation.** `--folds K`, `--cv-no-shuffle`, `--nested`, `--nested-on train|all`,
 `--outer-folds K`, `--repeats R`, `--seed S`.

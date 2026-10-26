@@ -1,0 +1,67 @@
+{
+ "set": "17_c1nnco1",
+ "file": "examples\\corrosion_hcl\\17_c1nnco1.csv",
+ "n": 17,
+ "ph": 3.0,
+ "core": "c1nnco1",
+ "reference": "2,5-Bis(p-(dimethylamino)phenyl)-1,3,4-oxadiazole",
+ "align_rmsd_median": 0.010063022981296264,
+ "mixture_share": 1.0,
+ "states_mean": 3.7058823529411766,
+ "charge_agrees": 0.0,
+ "mean_charge_file": 1.0,
+ "mean_charge_pka": 2.46621882548197,
+ "tautomer_share": 0.0,
+ "tautomer_forms_mean": 1.0,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": 0.4970654950213522,
+   "rmse_cv": 1.5348032339400624,
+   "alpha": 0.1,
+   "lam": 0.01
+  },
+  "dominant": {
+   "q2": -0.06201287756541496,
+   "rmse_cv": 2.2302927921831923,
+   "alpha": 1.0,
+   "lam": 10.0
+  },
+  "ensemble": {
+   "q2": -0.06011663261472644,
+   "rmse_cv": 2.228300786698089,
+   "alpha": 5.0,
+   "lam": 10.0
+  },
+  "tautomer": {
+   "q2": 0.4474106991763296,
+   "rmse_cv": 1.6087858039513887,
+   "alpha": 0.1,
+   "lam": 0.01
+  }
+ },
+ "seconds": 2.1761152744293213
+}

@@ -1,0 +1,67 @@
+{
+ "set": "8_c1cn_nH_c1",
+ "file": "examples\\corrosion_hcl\\8_c1cn_nH_c1.csv",
+ "n": 30,
+ "ph": 3.0,
+ "core": "c1cn[nH]c1",
+ "reference": "4,4'-(1,4-Phenylene)bis(6-amino-3-methyl-1-phenyl-1,4-dihydropyrano[2,3-c]pyrazole-5-carbonitrile)",
+ "align_rmsd_median": 0.0633353860420944,
+ "mixture_share": 1.0,
+ "states_mean": 4.233333333333333,
+ "charge_agrees": 0.23333333333333334,
+ "mean_charge_file": 0.9666666666666667,
+ "mean_charge_pka": 1.9059725138714494,
+ "tautomer_share": 0.1,
+ "tautomer_forms_mean": 1.1666666666666667,
+ "tautomer_weighting": "score",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "lams": [
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "folds": 10,
+ "models": {
+  "file": {
+   "q2": 0.7227161845171317,
+   "rmse_cv": 1.1192821748332378,
+   "alpha": 5.0,
+   "lam": 0.001
+  },
+  "dominant": {
+   "q2": 0.6488424719018149,
+   "rmse_cv": 1.2595874311684616,
+   "alpha": 5.0,
+   "lam": 0.1
+  },
+  "ensemble": {
+   "q2": 0.6487782054590663,
+   "rmse_cv": 1.2597026864224459,
+   "alpha": 5.0,
+   "lam": 0.001
+  },
+  "tautomer": {
+   "q2": 0.7389387498675373,
+   "rmse_cv": 1.0860467828174167,
+   "alpha": 5.0,
+   "lam": 0.001
+  }
+ },
+ "seconds": 6.214609384536743
+}
