@@ -1960,6 +1960,20 @@ def cmd_explain(args):
         print(f"\nShapley values written to {args.out}")
 
 
+def _thread(coords, centre, axis):
+    """A guest in a channel: centroid on the centre, longest axis along it (plan item SC3)."""
+    pos = np.asarray(coords, float)
+    pos = pos - pos.mean(axis=0)
+    if len(pos) > 2:
+        _u, _s, vt = np.linalg.svd(pos, full_matrices=False)
+        v = np.cross(vt[0], axis)
+        c = float(np.dot(vt[0], axis))
+        if np.linalg.norm(v) > 1e-8 and c > -1 + 1e-8:
+            k = np.array([[0.0, -v[2], v[1]], [v[2], 0.0, -v[0]], [-v[1], v[0], 0.0]])
+            pos = pos @ (np.eye(3) + k + k @ k / (1.0 + c)).T
+    return pos + centre
+
+
 def cmd_complement(args):
     """Field complementarity of a data set with a protein pocket."""
     from cmfqsar.complementarity import (cofield_agreement, occupancy, pocket_fields,
@@ -1984,6 +1998,24 @@ def cmd_complement(args):
     pocket = pocket_fields(prot, fs)
     print(f"Pocket fields: {pocket.n_atoms} atoms after adding hydrogens and ionising the "
           f"side chains")
+    if args.place_in_cavity:
+        from cmfqsar.docking import dock_coords
+        from cmfqsar.protein import cavity_frame
+        centre, axis = cavity_frame(prot)
+        print(f"Placing {len(mf)} molecules in the cavity at "
+              f"({centre[0]:.1f}, {centre[1]:.1f}, {centre[2]:.1f}), axis "
+              f"({axis[0]:+.2f}, {axis[1]:+.2f}, {axis[2]:+.2f}): each one's centroid on the "
+              f"centre and its longest axis along the channel, then refined in the site")
+        moved = []
+        for k, mol in enumerate(mf):
+            mol.coords = _thread(mol.coords, centre, axis)
+            coords, res = dock_coords(mol, pocket, fs, restarts=args.place_restarts, seed=0)
+            mol.coords = coords
+            moved.append(res.moved)
+            if (k + 1) % 50 == 0:
+                print("  [%5.1f%%] placed %d/%d" % (100.0 * (k + 1) / len(mf), k + 1,
+                                                      len(mf)), flush=True)
+        print(f"  the refinement moved a molecule by {np.median(moved):.2f} A (median)")
 
     def prog(msg, fr):
         print("\r  [%5.1f%%] %-48s" % (fr * 100, msg), end="", flush=True)
@@ -3460,6 +3492,13 @@ def main(argv=None):
                    help="grid spacing for the co-field comparison")
     k.add_argument("--statistic", default="sign", choices=["sign", "cosine", "pearson"],
                    help="how a co-field is compared with the pocket (default: sign agreement)")
+    k.add_argument("--place-in-cavity", action="store_true",
+                   help="put every molecule in the cavity before scoring: centroid on the "
+                        "centre of the ring of units, longest axis along the channel, then the "
+                        "local rigid-body refinement. For a macrocyclic host read from a "
+                        "molecule file, whose guests are not already in the site (plan item SC3)")
+    k.add_argument("--place-restarts", type=int, default=2, metavar="N",
+                   help="perturbed restarts of that refinement (default 2)")
     k.add_argument("--no-surface", action="store_true",
                    help="skip the surface scores, which are the slow part")
     k.add_argument("--top", type=int, default=15, help="molecules printed")

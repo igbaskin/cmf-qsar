@@ -225,9 +225,149 @@ def _finish(path, coords, elements, names, resnames, resids, icodes, chains, het
     return p
 
 
+#: a ring larger than this is not a monomer unit but the macrocycle that joins them
+MAX_MONOMER_RING = 9
+#: what a monomer unit is called when the file does not say
+MONOMER_RESNAME = "MON"
+
+
+def monomer_units(mol, max_ring: int = MAX_MONOMER_RING) -> List[int]:
+    """Split a molecule into its monomer units, one number per atom (plan item SC3).
+
+    A host that comes as a molecule file has no residues, and the profiles that make a
+    complementarity score readable are per residue.  A macrocyclic host does have repeating
+    units -- a glucose of a cyclodextrin, a glycoluril of a cucurbituril, a phenol of a
+    calixarene -- and they are its small ring systems: rings that share an atom belong to the
+    same unit, and a ring larger than `max_ring` is the macrocycle that joins the units rather
+    than a unit itself, so it is left out of the grouping.
+
+    Every atom that is in no ring is given to the unit it is bonded to, following the bonds
+    outwards, so a hydroxyl goes with its own sugar.  An atom bridging two units -- the
+    glycosidic oxygen -- goes to the one reached first, which makes the split deterministic.  A
+    molecule with no rings at all comes back as one unit.
+    """
+    n = mol.GetNumAtoms()
+    rings = [r for r in mol.GetRingInfo().AtomRings() if len(r) <= int(max_ring)]
+    unit = [-1] * n
+    groups: List[set] = []
+    for ring in rings:
+        here = set(ring)
+        merged = [g for g in groups if g & here]
+        for g in merged:
+            here |= g
+            groups.remove(g)
+        groups.append(here)
+    groups.sort(key=lambda g: min(g))
+    for k, g in enumerate(groups):
+        for i in g:
+            unit[i] = k
+    if not groups:
+        return [0] * n
+    # the atoms outside every unit join the first one they can reach
+    frontier = [i for i in range(n) if unit[i] >= 0]
+    while frontier:
+        nxt = []
+        for i in frontier:
+            for nb in mol.GetAtomWithIdx(i).GetNeighbors():
+                j = nb.GetIdx()
+                if unit[j] < 0:
+                    unit[j] = unit[i]
+                    nxt.append(j)
+        frontier = nxt
+    for i in range(n):                       # a disconnected piece: its own unit
+        if unit[i] < 0:
+            unit[i] = len(groups)
+            groups.append({i})
+    return unit
+
+
+def read_molecule_host(path: str, add_hydrogens: bool = True, resname: str = MONOMER_RESNAME,
+                       max_ring: int = MAX_MONOMER_RING, name: str = "",
+                       keep_hydrogens: bool = True, keep_waters: bool = False,
+                       with_bonds: bool = True) -> Protein:
+    """A host given as a molecule file, with its monomer units as the residues (plan item SC3).
+
+    `complement` was written for proteins, and a cyclodextrin, cucurbituril or calixarene comes
+    as an SDF or a MOL file with no residues at all.  This reads one and names its repeating
+    units, so that everything the pocket machinery does per residue -- the interaction profile,
+    the contacts, the residue table -- is done per unit instead.
+
+    `keep_hydrogens`, `keep_waters` and `with_bonds` are the arguments the PDB reader takes, so
+    that :func:`read_structure` can pass whatever it was given: hydrogens are dropped when asked,
+    a molecule file has no waters to drop, and the bonds come from the file rather than from the
+    distances.
+    """
+    from rdkit import Chem
+    ext = os.path.splitext(path)[1].lower()
+    if ext in (".sdf", ".mol"):
+        mol = next(iter(Chem.SDMolSupplier(path, removeHs=False)), None)
+    elif ext == ".mol2":
+        mol = Chem.MolFromMol2File(path, removeHs=False)
+    elif ext in (".pdb", ".ent"):
+        mol = Chem.MolFromPDBFile(path, removeHs=False)
+    else:
+        raise ValueError(f"{path}: a host molecule is read from .sdf, .mol, .mol2 or .pdb")
+    if mol is None:
+        raise ValueError(f"{path}: the molecule could not be read")
+    if not keep_hydrogens:
+        from rdkit import Chem as _Chem
+        mol = _Chem.RemoveHs(mol)
+    return host_from_molecule(mol, add_hydrogens=add_hydrogens and keep_hydrogens,
+                              resname=resname, max_ring=max_ring,
+                              name=name or os.path.splitext(os.path.basename(path))[0],
+                              path=path)
+
+
+def host_from_molecule(mol, add_hydrogens: bool = True, resname: str = MONOMER_RESNAME,
+                       max_ring: int = MAX_MONOMER_RING, name: str = "",
+                       path: str = "") -> Protein:
+    """The same from a molecule already in hand, which is what a script or a test has."""
+    from rdkit import Chem
+    m = Chem.Mol(mol)
+    if m.GetNumConformers() == 0:
+        raise ValueError("a host needs a conformation: the pocket is its geometry")
+    if add_hydrogens and not any(a.GetAtomicNum() == 1 for a in m.GetAtoms()):
+        m = Chem.AddHs(m, addCoords=True)
+    unit = monomer_units(m, max_ring=max_ring)
+    pos = np.array(m.GetConformer().GetPositions(), float)
+    elements = [a.GetSymbol() for a in m.GetAtoms()]
+    counts: Dict[int, int] = {}
+    names = []
+    for i, a in enumerate(m.GetAtoms()):
+        counts[unit[i]] = counts.get(unit[i], 0) + 1
+        names.append(f"{a.GetSymbol()}{counts[unit[i]]}")
+    p = Protein(name=name or (m.GetProp("_Name") if m.HasProp("_Name") else "host"),
+                coords=pos, elements=elements, atom_names=names,
+                resnames=[resname] * m.GetNumAtoms(),
+                resids=np.array([u + 1 for u in unit], dtype=int),
+                icodes=[""] * m.GetNumAtoms(), chains=["A"] * m.GetNumAtoms(),
+                hetatm=np.zeros(m.GetNumAtoms(), bool), path=path)
+    p.bonds = np.array([[b.GetBeginAtomIdx(), b.GetEndAtomIdx()] for b in m.GetBonds()],
+                       dtype=int).reshape(-1, 2)
+    return p
+
+
+def cavity_frame(protein: Protein, max_ring: int = MAX_MONOMER_RING) -> Tuple[np.ndarray, np.ndarray]:
+    """(centre, axis) of a macrocyclic host: where a guest goes and which way the cavity points.
+
+    The centre is the centroid of the monomer units' own centroids, which for a ring of units is
+    the middle of the ring whether or not the units are the same size; the axis is the direction
+    in which the units vary least, that is the smallest principal axis of those centroids.
+    """
+    keys = sorted(set(int(r) for r in protein.resids))
+    middles = np.array([protein.coords[protein.resids == k].mean(axis=0) for k in keys])
+    centre = middles.mean(axis=0)
+    if len(middles) < 3:
+        return centre, np.array([0.0, 0.0, 1.0])
+    u, sv, vt = np.linalg.svd(middles - centre, full_matrices=False)
+    return centre, vt[-1] / max(float(np.linalg.norm(vt[-1])), 1e-12)
+
+
 def read_structure(path: str, **kw) -> Protein:
     """Read a structure, choosing the parser by extension."""
     ext = os.path.splitext(path)[1].lower()
+    if ext in (".sdf", ".mol", ".mol2"):
+        return read_molecule_host(path, **kw)
     if ext in (".cif", ".mmcif"):
         return read_mmcif(path, **kw)
     return read_pdb(path, **kw)

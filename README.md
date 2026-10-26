@@ -1812,6 +1812,36 @@ all, comes first of the 11 with all six of its guests removed; cyclohexylmethyl 
 second. The list is worth reading at the top and not in the middle, which is what a design loop
 can fairly claim.
 
+### A macrocyclic host as a pocket
+
+`complement` read proteins. A cyclodextrin is a pocket too, and arrives as a molecule file with no
+residues: `cmfqsar.protein.read_molecule_host` reads one and names the host's repeating units by
+its small ring systems — one glucose, one glycoluril — so every per-residue tool becomes a
+per-unit tool, and `cavity_frame` gives the middle of the ring and the axis of the channel.
+`complement --place-in-cavity` threads each guest into the cavity and refines it there (plan item
+SC3). `examples/make_host_structures.py` builds the hosts from their SMILES, keeping the most
+symmetric of forty conformations; the three cyclodextrins come out with cavity radii of 2.6, 3.0
+and 3.9 Å against published values near 2.4, 3.1 and 4.0.
+
+That makes the largest test a complementarity score has had: one cavity and 1162 guests with
+a measured constant, where no protein set here offers more than a few dozen ligands per pocket.
+
+<!-- HOSTPOCKET-TABLE -->
+| host | units | guests | score vs log K | burial vs log K | heavy atoms vs log K | score, size held constant |
+|---|---:|---:|---:|---:|---:|---:|
+| beta | 7 | 1162 | -0.348 | -0.077 | +0.348 | -0.285 |
+| alpha | 6 | 827 | -0.206 | -0.102 | +0.184 | -0.160 |
+| gamma | 8 | 292 | +0.025 | -0.022 | +0.383 | -0.072 |
+<!-- /HOSTPOCKET-TABLE -->
+
+**The score does not predict the constant and on the largest table it points the wrong way**:
+-0.348 on beta-cyclodextrin, against +0.348 for the guest's
+heavy-atom count alone, and -0.285 once the size is held constant. **That is the
+limit of a one-body score rather than a fault in the structures.** Binding to a cyclodextrin is
+driven by the water that leaves the cavity, and an overlap between the guest's fields and the
+host's has no term for the solvent it displaces. The score is a check on a pose — does this
+molecule fit, does it clash — and not an affinity.
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the

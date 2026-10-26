@@ -6,14 +6,14 @@ to prove before it is allowed to stay. File references point at the code the wor
 
 ## Where the program stands
 
-The repository holds, as of 26 October 2026 (the lists below were written on 22 October and are
+The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 64 modules and about 28,150 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 64 modules and about 28,350 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-four subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`), 893 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`), 907 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -36,6 +36,7 @@ The measurements already in hand settle several questions, and the plan treats t
 | Do conformational ensembles help? | Five routes, none beats one well-chosen conformation on an aligned series | README, "The verdict on the fourth dimension" |
 | Do probe fields improve accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
 | Do quantum-chemical fields help? | Not on the corrosion series or on Am/Eu; yes on Hammett, where resonance needs whole-molecule charges | `benchmarks/results/corrosion_qm/`, `am_eu/`, `hammett/` |
+| Does complementarity with a cyclodextrin cavity predict the constant? | No: -0.348 on 1162 beta-CD guests, against +0.348 for the guest's size alone; a one-body score has no term for the water that leaves the cavity | `cmfqsar/protein.py`, `benchmarks/results/host_pocket/` |
 | Can a model with no frame say what to make next? | On the beta-cyclodextrin guests, at the top of the list: with every guest carrying it removed, adamantyl comes first of 11 and Spearman is +0.709, but a held-out group is pulled towards the mean (-0.73) | `cmfqsar/design.py`, `benchmarks/results/guest_design/` |
 | Does a second endpoint help, and is the selectivity predictable? | Sharing gains nothing on three cyclodextrin pairs (every interval contains zero), but the selectivity is predictable (q2 +0.273 to +0.389) and follows the size of the guest | `cmfqsar/multitask.py`, `benchmarks/results/two_endpoints/` |
 | Does an alignment-free model know which group of a guest binds? | On beta-cyclodextrin yes (the three cavity groups +0.0394 per atom against the rest of their molecule, the three polar ones -0.0723), on alpha and gamma no | `cmfqsar/invariant.py`, `benchmarks/results/guest_atoms/` |
@@ -1842,6 +1843,39 @@ the numbers above; on a series of hosts, the five-field aligned model.
   pocket, where no protein set in the repository offers more than a few dozen ligands per pocket.
   Gate: the complementarity score correlates with log K. If it does not, the result stands as the
   limit of a one-body score on an endpoint that the solvent drives.
+  **Done 27 October 2026, and the answer is the one the item allowed for: it does not
+  correlate.** `cmfqsar/protein.py` gained `read_molecule_host`, `host_from_molecule`,
+  `monomer_units` and `cavity_frame`: a host given as an SDF, MOL, MOL2 or PDB file is read with
+  its repeating units as the residues, the units being its small ring systems with every atom
+  outside a ring given to the unit it hangs on and the macrocycle that joins them left out, so
+  every per-residue tool of the pocket machinery becomes a per-unit tool. `read_structure`
+  dispatches on the extension, so `complement --structure host.sdf` works; `--place-in-cavity`
+  threads each guest into the channel -- centroid on the centre of the ring of units, longest
+  axis along it -- and refines it there with `cmfqsar/docking.py`, which takes the clashes of a
+  guest from dozens to about one. `examples/make_host_structures.py` builds the hosts from the
+  SMILES in `hosts.csv`, keeping the most symmetric of forty conformations, a rule that uses the
+  symmetry of the molecule and nothing about the guests; the three cyclodextrins come out with
+  cavity radii of 2.6, 3.0 and 3.9 A for six, seven and eight sugars, against published values
+  near 2.4, 3.1 and 4.0.
+  **Measured by `benchmarks/run_host_pocket.py`**, the largest set a complementarity score has
+  had: 1162 beta-cyclodextrin guests in one cavity, where no protein set here offers more
+  than a few dozen ligands per pocket. The score against log K is -0.348 on beta,
+  -0.206 on alpha and
+  +0.025 on gamma; the burial gives
+  -0.077 on beta. The guest's heavy-atom count alone gives
+  +0.348, and with the size held constant the score adds -0.285.
+  On beta the hydrophobic term, which a hydrophobic cavity should reward, is the most
+  negative of the four (-0.405); on gamma, whose cavity is too wide for these guests to
+  touch its walls, every correlation is near zero.
+  **The result stands as the limit of a one-body score**, which is what the item said it would
+  if it came out this way. Binding to a cyclodextrin is driven by the water that leaves the
+  cavity, and an overlap between the guest's fields and the host's has no term for the solvent it
+  displaces. The score is a check on a pose, not an affinity, and this is the clearest statement
+  of that the repository has, because nothing else here has a thousand ligands in one pocket.
+  **Not done:** the host structures are embedded conformations, not crystal ones, so a reader
+  with a CSD entry should use it instead; the guest gets one conformation and one pose; and the
+  monomer split is by ring system, which is right for the hosts tried and would need a rule of
+  its own for a host whose unit is not a ring.
 * **SC4. Host–guest sets curated by conditions.** `make_cyclodextrin_examples.py` keeps one window
   of temperature and pH and the median of repeated measurements, and the spread between
   laboratories reaches 3.2 log units for one guest. A second host family should be prepared by

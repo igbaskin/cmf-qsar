@@ -3865,6 +3865,70 @@ thresholded bits; `--reference NAME` compares against one molecule's profile ins
 consensus, `--residue-threshold` sets what counts as present, and `--profile-out` writes one row
 per molecule and residue.
 
+## A macrocyclic host as a pocket
+
+`complement` was written for proteins: a structure with residues, and a score read residue by
+residue. A cyclodextrin, a cucurbituril or a calixarene is a pocket too, and comes as a molecule
+file with no residues at all. The program now reads one (plan item SC3): `read_molecule_host`
+takes an SDF, MOL, MOL2 or PDB file and **names the host's repeating units**, which are its small
+ring systems -- one glucose of a cyclodextrin, one glycoluril of a cucurbituril -- with every atom
+outside a ring given to the unit it hangs on, and the macrocycle that joins them left out of the
+grouping, since it is not a unit. Everything the pocket machinery does per residue is then done
+per unit.
+
+`cavity_frame` gives the middle of the ring of units and the direction in which they vary least,
+which is the axis of the channel. `complement --place-in-cavity` uses it: every molecule is put
+in the cavity, its centroid on the centre and its longest axis along the channel, which is how a
+guest threads a cyclodextrin, and is then refined there by the local rigid-body placement of
+`cmfqsar.docking`. Without it the guests are scored where they happen to sit, which for a host
+read from a file is nowhere near the site.
+
+```bash
+python examples/make_host_structures.py
+cmf complement examples/cyclodextrin/beta_cyclodextrin.csv \
+    --structure examples/cyclodextrin/hosts/beta_cyclodextrin.sdf --place-in-cavity
+```
+
+**The structures.** `examples/make_host_structures.py` embeds a host from its SMILES and keeps
+the most symmetric of forty conformations -- a cyclodextrin is a ring of identical sugars, so
+symmetry is the rule, and it uses nothing about the guests. The three it builds have cavity radii
+of 2.6, 3.0 and 3.9 Å for the six-, seven- and eight-sugar rings, against published values near
+2.4, 3.1 and 4.0, so the cavity it offers is the right size before any guest is scored.
+
+### What it is worth, measured
+
+This is the largest set a complementarity score has been given: one host, one cavity, and
+1162 guests with a measured constant, where no protein set in the repository offers more than
+a few dozen ligands per pocket. `benchmarks/run_host_pocket.py` places every guest and correlates
+the score with log K.
+
+| host | units | guests | score vs log K | burial vs log K | heavy atoms vs log K | score, size held constant |
+|---|---:|---:|---:|---:|---:|---:|
+| beta | 7 | 1162 | -0.348 | -0.077 | +0.348 | -0.285 |
+| alpha | 6 | 827 | -0.206 | -0.102 | +0.184 | -0.160 |
+| gamma | 8 | 292 | +0.025 | -0.022 | +0.383 | -0.072 |
+
+| host | acceptor to donor | donor to acceptor | electrostatic | hydrophobic |
+| --- | ---: | ---: | ---: | ---: |
+| beta | -0.285 | -0.281 | -0.104 | -0.405 |
+| alpha | -0.217 | -0.188 | -0.028 | -0.277 |
+| gamma | +0.037 | -0.073 | -0.174 | +0.064 |
+
+**The score does not predict the constant, and on the largest table it points the wrong way.**
+On beta-cyclodextrin the correlation is -0.348; the guest's heavy-atom count alone
+gives +0.348, and with the size held constant what the score adds is
+-0.285. On beta and alpha the hydrophobic term, which is the one a hydrophobic cavity
+should reward, is the most negative of the four; on gamma, whose cavity is wide enough
+that a guest of this size need not touch its walls, every correlation is near zero.
+
+**That is the limit of a one-body score, not a fault in the structures.** Binding to a
+cyclodextrin is driven by what leaves the cavity: the water inside it is poorly coordinated, and
+a guest that displaces it gains free energy that no overlap between the guest's fields and the
+host's can contain. A score computed from the two molecules alone has no term for the solvent it
+displaces, and this measurement is the clearest statement of that the repository has, because
+nothing else here has a thousand ligands in one pocket to say it with. Read the score as a check
+on a pose -- does this molecule fit, does it clash -- and not as an affinity.
+
 ## Docking
 
 *Tools → Dock into the pocket…* places the conformations of a molecule in the site by rigid-body

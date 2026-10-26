@@ -1,0 +1,32 @@
+{
+ "host": "beta",
+ "units": 7,
+ "n": 1162,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alpha": 1.0,
+ "restarts": 2,
+ "moved_median": 3.3075105186566707,
+ "clash_median": 0.003212778842672428,
+ "r_score": -0.3484827039819049,
+ "r_burial": -0.07678818953802848,
+ "terms": {
+  "electrostatic": -0.1039605035611429,
+  "hydrophobic": -0.40496559857540004,
+  "donor to acceptor": -0.2806935399479569,
+  "acceptor to donor": -0.2849852518353344
+ },
+ "r_heavy_atoms": 0.3483531228389784,
+ "r_score_heavy": -0.2603421338529911,
+ "r_burial_heavy": -0.25530296913557504,
+ "score_mean": 0.029890852132949973,
+ "burial_mean": 0.2704138461745602,
+ "seconds": 3056.9807436466217,
+ "partial": -0.28484020880787997,
+ "partial_burial": 0.013403282008559208
+}

@@ -1,6 +1,6 @@
 {
- "commit": "b8d7ba3f3eae17f61a919fcb67a30c162469861b",
- "created": "2026-10-26T22:27:45",
+ "commit": "457486a7f3485e023c9c6b4a6d6b1e026d513599",
+ "created": "2026-10-27T00:35:10",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -131,8 +131,8 @@
    "sha256": "ae8f0c80a1f0c6cec59e7212c0d5d6c86e101334e19fe018ae4b96f2281eb3d9"
   },
   "examples/corrosion_fe110/README.md": {
-   "bytes": 44622,
-   "sha256": "cb8f57670f401ee2c2633a338c6ba75f2f3b2a422f3f5eb2d2a3acd08824a4a0"
+   "bytes": 46702,
+   "sha256": "ac0f4479f48629a72164243c4cfcb0c9d63d2db31860960f76b5a336bdc4e0c9"
   },
   "examples/corrosion_fe110/alignment_comparison.csv": {
    "bytes": 452,
@@ -159,8 +159,8 @@
    "sha256": "261fe88f6fdc370a813cdb83b8946b6970a50d60afc8a7310c7cdb20f1240c15"
   },
   "examples/corrosion_fe110/compare_alignments.py": {
-   "bytes": 8112,
-   "sha256": "770f9fa1ceaeb1e5d84db6f73fe474a95a3afd9cc15fa2161a927428747796d5"
+   "bytes": 8234,
+   "sha256": "dd77bb856ed827f72aa8ec9853e7f0851402627b876ce18cb0683d35e616a963"
   },
   "examples/corrosion_fe110/descriptor_baselines.csv": {
    "bytes": 2097,
@@ -266,13 +266,25 @@
    "bytes": 7339,
    "sha256": "f8fedc4c86dfc7f3963b4aa091b357d0e477b78c402c21723e9072e0ab4df6ac"
   },
+  "examples/corrosion_fe110/surface_channels_eads.png": {
+   "bytes": 92636,
+   "sha256": "6c745bd0b0c37d9a1e395b8a3261362d9228cd713a0bd48b3ea666cac0b7bd8c"
+  },
+  "examples/corrosion_fe110/surface_channels_eads.py": {
+   "bytes": 5912,
+   "sha256": "a4709b47dc2e52d89d10e8b676bf1301b1fbc71af558e5d6f3fbd57327e78194"
+  },
+  "examples/corrosion_fe110/surface_channels_eads.txt": {
+   "bytes": 2586,
+   "sha256": "791ed9a01139ff4434ebc992c0b384d71e7c392483cd0e8c4dba8e2f6c5a11cc"
+  },
   "examples/corrosion_fe110/surface_kernel_eads.csv": {
    "bytes": 703,
    "sha256": "2921751bf2b7877aadcd4c30b58ffe2b2bbe02eee548760628d4138cff327b55"
   },
   "examples/corrosion_fe110/surface_kernel_eads.py": {
-   "bytes": 5163,
-   "sha256": "79dec1b96777f0754c556d455277b7b28b3d50079605b4941bb1945448ea86c5"
+   "bytes": 6419,
+   "sha256": "ab5c385c865579776c888be12ded7c67d918066d7ce853e4ab230fa79fbcfac5"
   },
   "examples/corrosion_hcl/0_c1ccccc1.csv": {
    "bytes": 51892,
@@ -393,6 +405,18 @@
   "examples/cyclodextrin/hosts.csv": {
    "bytes": 5416,
    "sha256": "c909830bb9de82ba37b0c3b9b220479b055cb9f267d662fc8c7d11947fede9c9"
+  },
+  "examples/cyclodextrin/hosts/alpha_cyclodextrin.sdf": {
+   "bytes": 11081,
+   "sha256": "216300c6f7657169ac8d4dc18e61ed5c065a1d6f99656f7bcb5dda1f5f3f7927"
+  },
+  "examples/cyclodextrin/hosts/beta_cyclodextrin.sdf": {
+   "bytes": 12878,
+   "sha256": "717b48d956f343ef546810eaae0fd1ef7a50810df58eff6aecc145fd848a5d05"
+  },
+  "examples/cyclodextrin/hosts/gamma_cyclodextrin.sdf": {
+   "bytes": 14679,
+   "sha256": "5ac9ada5b591a91a2d38f2faf5b95d0c4d3bfadaa37874d5a3f6021a0dac1e63"
   },
   "examples/cyclodextrin/hydroxypropyl_beta_cyclodextrin.csv": {
    "bytes": 45209,
@@ -541,6 +565,10 @@
   "examples/make_hammett_examples.py": {
    "bytes": 25144,
    "sha256": "2b718344b9388bdf455f557a50125f360b7d54130383ecd9fe3c0d664863ef10"
+  },
+  "examples/make_host_structures.py": {
+   "bytes": 4978,
+   "sha256": "c2d8e3d8b1541f0e354cd426ad415b58f536a820c2f47e92ca1064922addfc2f"
   },
   "examples/make_litpcba_examples.py": {
    "bytes": 12863,
@@ -1786,6 +1814,10 @@
   "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld_boltzmann.csv": "f9af77a66cca718eb69d76b8cdae976107f85c795031fbd7c48719ce7bf0b90d",
   "benchmarks/results/hammett/summary_qm_sym_q_hirshfeld.csv": "92f478c416c9bbb248aff861f9ca7753058da86320d08977803fb448736da13e",
   "benchmarks/results/hammett/table.md": "551f9505ec6519fd6ce3b331cc378799a36a1cb7f0217a7e6c12271465a8d145",
+  "benchmarks/results/host_pocket/alpha.json": "f38a43d1db67a5c74b1c8b3c1faf8a838562b51304989bb58b83a85c8100c18b",
+  "benchmarks/results/host_pocket/beta.json": "d6d702a8e58f7d69c6bcc8907ab875634ff8e11194ef7e9c5be4910838b90e75",
+  "benchmarks/results/host_pocket/gamma.json": "dccd5645c076ff58d0cb781dc556b07cb723980df894fd5fb7a59bb52517821c",
+  "benchmarks/results/host_pocket/table.md": "ab00c2fe2e3e1b0e8e15095992ccf2c438fab3b3b157945cb3ac874701e19059",
   "benchmarks/results/increments/ACE.json": "a2bcb46913c1db327e0ffa3cc8b3c670c0ba3946d25028b905a66389b4a39054",
   "benchmarks/results/increments/AChE.json": "7b0cb434e1a7e79e8de677419b2059e14e5e1fe713e6cc7da590fb58da0d5205",
   "benchmarks/results/increments/BZR.json": "d21ca94c01fa733eb8d2bee599c6d6cbd5e878d256ea44543d8bcfd304d0bec1",
