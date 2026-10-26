@@ -1203,34 +1203,67 @@ def _hms(seconds: float) -> str:
     return f"{s // 3600} h {(s % 3600) // 60:02d} min"
 
 
+#: how the task covariance may be chosen in the selectivity dialog
+COVARIANCES = (("one correlation, cross-validated", "cv"),
+               ("one correlation, by the evidence", "evidence"),
+               ("free-form rank 1, by the evidence", "free1"),
+               ("free-form rank 2, by the evidence", "free2"))
+
+
 class SelectivityDialog(QDialog):
-    """Refit the current model as two endpoints, so that selectivity becomes a co-field.
+    """Refit the current model as several endpoints, so that selectivity becomes a co-field.
 
     A separation problem is two properties, and what matters is their difference.  Because a CMF
     model is linear in the molecular field, the difference of two such models is itself a model
     linear in the field -- so the difference has a co-field of its own, and it can be read, drawn
     and exported exactly like any other.
+
+    Any number of endpoints can be fitted together.  With more than two, one shared correlation
+    assumes that every pair is related to the same degree, which is rarely true, so the covariance
+    can instead be a free-form low-rank matrix selected by the marginal likelihood.
     """
 
     def __init__(self, props, current, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Model two endpoints (selectivity co-field)")
+        self.setWindowTitle("Model several endpoints (selectivity co-field)")
         lay = QVBoxLayout(self)
         info = QLabel(
-            "Both endpoints are fitted on the <b>fields, attenuation and kernel of the model you "
-            "have already built</b>; only the task correlation and the ridge are searched here. "
-            "Each endpoint then has its own co-field, and so does their difference &mdash; the "
-            "<b>selectivity co-field</b>, whose positive zones are where more of a field raises "
-            "the first endpoint more than the second."
-            "<p>Molecules missing one of the two measurements are kept: they still inform the "
-            "endpoint they do carry, and through the correlation they inform the other. "
+            "Every endpoint is fitted on the <b>fields, attenuation and kernel of the model you "
+            "have already built</b>; only the task covariance and the ridge are searched here. "
+            "Each endpoint then has its own co-field, and so does the difference of the pair you "
+            "name below &mdash; the <b>selectivity co-field</b>, whose positive zones are where "
+            "more of a field raises the first endpoint more than the second."
+            "<p>Molecules missing some of the measurements are kept: they still inform the "
+            "endpoints they do carry, and through the covariance they inform the others. "
             "Cross-validation holds out whole molecules, never single measurements, because a "
-            "molecule with one endpoint in the training set and the other in the test set would "
-            "have its answer handed over by the correlation.</p>")
+            "molecule with one endpoint in the training set and another in the test set would "
+            "have its answer handed over by the covariance.</p>"
+            "<p>With three or more endpoints, a <b>free-form</b> covariance is usually better: "
+            "one shared correlation forces every pair of endpoints to be related to the same "
+            "degree. The free-form matrix is selected by the marginal likelihood, which needs one "
+            "matrix factorisation per candidate instead of a full cross-validation, and its "
+            "diagonal is free, so endpoints measured in different units get separate "
+            "variances.</p>")
         info.setWordWrap(True)
         info.setTextFormat(Qt.RichText)
-        info.setMaximumWidth(600)
+        info.setMaximumWidth(620)
         lay.addWidget(info)
+
+        lay.addWidget(QLabel("Endpoints to fit together:"))
+        holder = QWidget()
+        inner = QVBoxLayout(holder)
+        inner.setContentsMargins(4, 0, 4, 0)
+        self.checks = []
+        for name in props:
+            c = QCheckBox(str(name))
+            inner.addWidget(c)
+            self.checks.append(c)
+        area = QScrollArea()
+        area.setWidget(holder)
+        area.setWidgetResizable(True)
+        area.setMaximumHeight(160)
+        lay.addWidget(area)
+
         form = QFormLayout()
         self.cmb_a = QComboBox()
         self.cmb_b = QComboBox()
@@ -1240,15 +1273,27 @@ class SelectivityDialog(QDialog):
             self.cmb_a.setCurrentText(current)
         if len(props) > 1:
             self.cmb_b.setCurrentIndex(1 if self.cmb_a.currentIndex() == 0 else 0)
+        for c in self.checks:                       # the named pair starts out checked
+            if c.text() in (self.cmb_a.currentText(), self.cmb_b.currentText()):
+                c.setChecked(True)
         self.cmb_a.setToolTip("The endpoint whose increase the selectivity co-field shows as "
                               "positive, e.g. the affinity for americium")
         self.cmb_b.setToolTip("The endpoint subtracted, e.g. the affinity for europium")
-        form.addRow("First endpoint:", self.cmb_a)
-        form.addRow("Second endpoint:", self.cmb_b)
+        form.addRow("Difference, first endpoint:", self.cmb_a)
+        form.addRow("Difference, second endpoint:", self.cmb_b)
+        self.cmb_cov = QComboBox()
+        for label, key in COVARIANCES:
+            self.cmb_cov.addItem(label, key)
+        self.cmb_cov.setToolTip("\n".join([
+            "How the task covariance is chosen.",
+            "One correlation: the matrix (1-rho) I + rho 11', one number for every pair.",
+            "Free-form: L L' + diag(d), always positive definite, with a separate",
+            "variance per endpoint; selected by the marginal likelihood."]))
+        form.addRow("Task covariance:", self.cmb_cov)
         self.ed_rhos = QLineEdit("0, 0.2, 0.4, 0.6, 0.8, 0.9")
         self.ed_rhos.setToolTip("\n".join([
             "Task correlations to try; the cross-validation chooses one.",
-            "0 fits the two endpoints separately, sharing only the kernel.",
+            "0 fits the endpoints separately, sharing only the kernel.",
             "Towards 1 they borrow strength from each other, and at 1 exactly the",
             "model could only predict a constant selectivity, so 1 is excluded."]))
         form.addRow("Task correlation:", self.ed_rhos)
@@ -1266,7 +1311,15 @@ class SelectivityDialog(QDialog):
         lay.addWidget(box)
 
     def endpoints(self):
-        return self.cmb_a.currentText(), self.cmb_b.currentText()
+        """Every endpoint to fit, with the named pair first and second."""
+        a, b = self.cmb_a.currentText(), self.cmb_b.currentText()
+        chosen = [c.text() for c in self.checks if c.isChecked()]
+        out = [a] + ([b] if b != a else [])
+        out += [n for n in chosen if n not in out]
+        return tuple(out)
+
+    def covariance(self):
+        return self.cmb_cov.currentData() or "cv"
 
     def rhos(self):
         out = []
@@ -3939,7 +3992,8 @@ class MainWindow(QMainWindow):
                 "rebuild with the linear kernel.")
             return
         from ..descriptors import available as numeric_props
-        from ..multitask import Observations, fit as mt_fit, score_by_task, search
+        from ..multitask import (Observations, cv_predict, evidence_rho, fit as mt_fit,
+                                 fit_covariance, score_by_task, search)
         ds = self.ds
         props = [p for p in numeric_props(ds.mols)]
         if len(props) < 2:
@@ -3954,67 +4008,90 @@ class MainWindow(QMainWindow):
         dlg = SelectivityDialog(props, self.ds.activity_prop or props[0], self)
         if dlg.exec() != QDialog.Accepted:
             return
-        name_a, name_b = dlg.endpoints()
-        if name_a == name_b:
-            QMessageBox.information(self, "Same endpoint twice",
-                                    "Choose two different properties.")
+        names = dlg.endpoints()
+        if len(names) < 2:
+            QMessageBox.information(self, "Two endpoints at least",
+                                    "Name two different properties for the difference, and tick "
+                                    "any further endpoints to fit alongside them.")
             return
+        name_a, name_b = names[0], names[1]
         idx = [int(i) for i in self.model_train_idx]
-        Y = np.full((len(idx), 2), np.nan)
+        Y = np.full((len(idx), len(names)), np.nan)
         for row, i in enumerate(idx):
-            for col, prop in enumerate((name_a, name_b)):
+            for col, prop in enumerate(names):
                 m = ds.mols[i]
                 if m is not None and m.HasProp(prop):
                     try:
                         Y[row, col] = float(m.GetProp(prop))
                     except ValueError:
                         pass
-        obs = Observations.from_columns(Y, names=(name_a, name_b))
-        if min(obs.counts()) < 5:
+        obs = Observations.from_columns(Y, names=names)
+        counts = obs.counts()
+        if min(counts) < 5:
+            thin = ", ".join(f"{n}: {c}" for n, c in zip(names, counts) if c < 5)
             QMessageBox.information(self, "Too few measurements",
-                                    f"{name_a}: {obs.counts()[0]} molecules, {name_b}: "
-                                    f"{obs.counts()[1]}. Each endpoint needs at least five.")
+                                    f"{thin}. Each endpoint needs at least five molecules.")
             return
         model = self.model
         K = model.joint_kernel(model.K_fields_train,
                                model.train.descriptors if model.desc_train_ is not None else None)
         rhos, lams, folds = dlg.rhos(), dlg.lams(), dlg.spin_folds.value()
-        self.log(f"Two endpoints on the current kernel: {name_a} ({obs.counts()[0]} molecules), "
-                 f"{name_b} ({obs.counts()[1]}); searching {len(rhos)} correlations x "
-                 f"{len(lams)} ridges")
+        how = dlg.covariance()
+        self.log("Endpoints on the current kernel: "
+                 + ", ".join(f"{n} ({c} molecules)" for n, c in zip(names, counts))
+                 + f"; task covariance by '{how}'")
 
         def task(progress, cancel):
-            progress("Searching the task correlation", 0.2)
-            rho, lam, score, per = search(K, obs, rhos=rhos, lams=lams, folds=folds, seed=0)
+            if how == "cv":
+                progress("Searching the task correlation", 0.2)
+                rho, lam, _score, _per = search(K, obs, rhos=rhos, lams=lams, folds=folds, seed=0)
+                cov = None
+            else:
+                progress("Choosing the task covariance by the evidence", 0.2)
+                if how == "evidence":
+                    cov = evidence_rho(K, obs, lams=lams)
+                else:
+                    cov = fit_covariance(K, obs, rank=1 if how == "free1" else 2, lams=(0.1,))
+                rho, lam = float("nan"), cov.lam
             if cancel():
                 return None
-            progress("Fitting both endpoints", 0.8)
-            return rho, lam, score, per, mt_fit(K, obs, rho=rho, lam=lam)
+            progress("Scoring every endpoint out of fold", 0.5)
+            T = None if cov is None else cov.T
+            pred = cv_predict(K, obs, rho=0.0 if cov is not None else rho, lam=lam,
+                              folds=folds, seed=0, T=T)
+            per = score_by_task(obs, pred)
+            progress("Fitting every endpoint", 0.9)
+            f = mt_fit(K, obs, rho=0.0 if cov is not None else rho, lam=lam, T=T)
+            return rho, lam, per, f, cov
 
         def done(out):
             if out is None:
                 return
-            rho, lam, score, per, f = out
-            self.multitask = {"fit": f, "names": (name_a, name_b),
+            rho, lam, per, f, cov = out
+            self.multitask = {"fit": f, "names": tuple(names), "pair": (0, 1),
                               "base_coef": np.array(model.coef, copy=True),
                               "base_bias": float(model.bias), "rho": rho, "lam": lam}
-            self.log(f"Two-endpoint model: task correlation {rho:g}, lambda {lam:g}, "
-                     f"mean q2 {score:+.3f}")
+            if cov is None:
+                self.log(f"{len(names)}-endpoint model: task correlation {rho:g}, "
+                         f"lambda {lam:g}")
+                if rho == 0:
+                    self.log("    the correlation chosen is 0, so the endpoints were modelled "
+                             "separately; the difference co-field is still exact")
+            else:
+                for line in cov.describe(names).splitlines():
+                    self.log("    " + line)
+            self.log(f"    mean q2 over the endpoints "
+                     f"{float(np.nanmean([p['q2'] for p in per])):+.3f}")
             for p in per:
                 self.log(f"    {p['task']}: n {p['n']}, q2 {p['q2']:+.3f}, "
                          f"RMSEcv {p['rmse_cv']:.3f}")
-            if rho == 0:
-                self.log("    the correlation chosen is 0, so the endpoints were modelled "
-                         "separately; the difference co-field is still exact")
-            self.controls.set_endpoints([
-                (f"{name_a}", ("task", 0)),
-                (f"{name_b}", ("task", 1)),
-                (f"{name_a} − {name_b} (selectivity)", ("difference", 0)),
-            ])
-            self.controls.cmb_endpoint.setCurrentIndex(2)      # the selectivity, which is the point
+            items = [(str(n), ("task", t)) for t, n in enumerate(names)]
+            items.append((f"{name_a} − {name_b} (selectivity)", ("difference", (0, 1))))
+            self.controls.set_endpoints(items)
+            self.controls.cmb_endpoint.setCurrentIndex(len(items) - 1)   # the selectivity
             self.endpoint_changed()
 
-        self.run_task(task, done, "Fitting two endpoints")
+        self.run_task(task, done, f"Fitting {len(names)} endpoints")
 
     def endpoint_changed(self):
         """Point the co-field machinery at one endpoint, or at the difference of the two."""
@@ -4022,7 +4099,7 @@ class MainWindow(QMainWindow):
         if not mt or self.model is None:
             return
         kind = self.controls.current_endpoint()
-        f, (name_a, name_b) = mt["fit"], mt["names"]
+        f, names = mt["fit"], tuple(mt["names"])
         if kind is None:
             self.model.coef, self.model.bias = mt["base_coef"], mt["base_bias"]
             label = "the single-endpoint model"
@@ -4030,11 +4107,13 @@ class MainWindow(QMainWindow):
             t = int(kind[1])
             self.model.coef = f.task_coefficients(t)
             self.model.bias = float(f.bias[t])
-            label = (name_a, name_b)[t]
+            label = names[t] if t < len(names) else f"task{t}"
         else:
-            self.model.coef = f.selectivity_coefficients(0, 1)
-            self.model.bias = float(f.bias[0] - f.bias[1])
-            label = f"{name_a} - {name_b} (selectivity)"
+            pair = kind[1]
+            i, j = (int(pair[0]), int(pair[1])) if isinstance(pair, (tuple, list)) else (0, 1)
+            self.model.coef = f.selectivity_coefficients(i, j)
+            self.model.bias = float(f.bias[i] - f.bias[j])
+            label = f"{names[i]} - {names[j]} (selectivity)"
         self.endpoint_label = label
         if self.worker is not None and self.worker.isRunning():
             # the coefficients are already swapped, so the volumes on screen would be
