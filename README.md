@@ -1598,6 +1598,48 @@ machinery, which keeps one isotropic Gaussian per atom. It is there for the case
 its four-fold cost: a series whose members differ in the shape of a frontier orbital rather than
 in where their atoms are.
 
+### Pharmacophore features as indicator fields
+
+An indicator field puts a Gaussian of weight one on every atom of one kind and nothing elsewhere,
+so its co-field is a map of where that kind of atom helps. Keyed by Sybyl atom type — the 2015
+paper's continuous indicator fields — there are twenty-odd of them in a series.
+`cmfqsar/pharmtypes.py` offers six instead, from RDKit's own feature definitions: **donor,
+acceptor, aromatic, hydrophobe, cation, anion** (`build --pharm`). Each is carried by
+70% of the molecules of a set on average, and each reads as a pharmacophore feature
+with no translation, so a pharmacophore extracted from such a model comes out typed as donors and
+acceptors rather than as field names.
+
+Measured on both collections, each set on its own alignment, same grids, same ten-fold
+cross-validation. The Sutherland sets cannot answer the question — the smallest of the eight has
+66 molecules and the claim is about series below forty — so the 38 Mittal sets carry
+it, 15 of them being smaller than that:
+
+<!-- PHARMFIELDS-TABLE -->
+| sets | how many | median n | five | five + pharm | pharm | five + cif | cif |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Mittal, below 40 molecules | 15 | 29 | +0.342 | **+0.368** | +0.358 | +0.344 | +0.335 |
+| Mittal, 40 and above | 23 | 92 | +0.299 | +0.305 | +0.228 | **+0.345** | +0.321 |
+| Sutherland (none below 66) | 8 | 112 | +0.574 | +0.586 | +0.538 | **+0.597** | +0.580 |
+<!-- /PHARMFIELDS-TABLE -->
+
+**Below forty molecules the claim holds.** The six features add
++0.027 q² to the five physico-chemical fields where the Sybyl
+indicators add +0.002, and alone they reach
++0.358 — above the five fields themselves and above the Sybyl indicators.
+**Above forty it reverses**: Sybyl +0.047 against
++0.006, with the six alone collapsing to +0.228.
+The eight Sutherland sets, all large, agree with the second half.
+
+The reason is not the one the item gave. Rarity was already being filtered out: `--cif-min` keeps
+only the types in five molecules or more, 11 of 14 on these sets, median
+coverage 88%. What changes with set size is the number of molecules per field —
+3.4 per Sybyl field below forty against
+6.4 per pharmacophore field, and 8.9 against
+20.9 above it. At three molecules per field a vocabulary cannot be
+estimated however common each of its members is; at nine the more descriptive one wins because it
+is more descriptive. The rule is about size: `--pharm` below about forty molecules, `--cif` above,
+and the six features whenever the model will be read as a pharmacophore.
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the

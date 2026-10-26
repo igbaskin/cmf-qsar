@@ -1143,6 +1143,71 @@ assigned), `element`, and `element+aromatic`. CIFs are the most descriptive fiel
 has, and on several of the benchmark sets they match or beat the physico-chemical fields on their
 own.
 
+**Six pharmacophore features instead of twenty atom types** (plan item D2). A Sybyl
+vocabulary describes what an atom *is*; a pharmacophore describes what it is *for*. `--pharm` adds
+one indicator field per feature — `donor`, `acceptor`, `aromatic`, `hydrophobe`, `cation`, `anion`
+— taken from RDKit's own feature definitions rather than from SMARTS written here, with weight one
+on every atom of a matching group: six atoms for a benzene ring, three for a carboxylate, because
+the character of a carboxylate is not on one of its atoms.
+
+Two things follow. The fields are **dense** — a pharmacophore feature is carried by
+70% of the molecules of a set on average, so each has something to say about almost
+every molecule, where a Sybyl field keyed to `N.am` is silent on whatever lacks an amide. And they
+**read as a pharmacophore with no translation step**: the co-field of `pharm:donor` is already a
+map of where a donor is wanted, so *A pharmacophore read out of the co-field* types its features
+as donors and acceptors rather than as field names.
+
+`--pharm-min N` decides which features are used — one carried by fewer than N training molecules
+is left out, the rule `--cif-min` applies to atom types — and `--pharm-features donor,anion` names
+them explicitly. `--fields pharm:donor,steric` works too, for a field set assembled by hand.
+
+### What they are worth, and where
+
+Measured on two collections (`benchmarks/run_pharmfields.py`, with and without
+`--mittal`), each set on its own alignment with the same attenuation and ridge grids and the same
+ten-fold cross-validation as *Does an alignment help?*. The Sutherland sets cannot answer the
+question, because the smallest of the eight has 66 molecules and the claim is about series
+below forty; the 38 Mittal sets can, 15 of them being smaller than that.
+
+| sets | how many | median n | five | five + pharm | pharm | five + cif | cif |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Mittal, below 40 molecules | 15 | 29 | +0.342 | **+0.368** | +0.358 | +0.344 | +0.335 |
+| Mittal, 40 and above | 23 | 92 | +0.299 | +0.305 | +0.228 | **+0.345** | +0.321 |
+| Sutherland (none below 66) | 8 | 112 | +0.574 | +0.586 | +0.538 | **+0.597** | +0.580 |
+
+**Below forty molecules the smaller vocabulary wins.** The six features add +0.027
+to the five physico-chemical fields where the Sybyl indicators add
++0.002, and on their own they reach +0.358 —
+better than the five fields themselves (+0.342) and than the Sybyl indicators
+(+0.335). **Above forty the order reverses**: the Sybyl indicators add
++0.047 against +0.006, and the six features
+alone fall to +0.228. The Sutherland sets, all of them large, agree with the
+second half: +0.023 for the Sybyl indicators against
++0.012 for the features.
+
+### Why, which is not the usual explanation
+
+The explanation usually given is the rarity of individual Sybyl types, and that is not what is happening, because
+the rare types were already being dropped: a pharmacophore feature is carried by 70% of
+the molecules and the median Sybyl type by 47%, but `--cif-min` keeps only the types in
+five molecules or more — 11 of 14 on these sets — and the median coverage of
+what is kept is 88%.
+
+What does change with set size is how many molecules there are per field to estimate it from:
+
+| sets | molecules per Sybyl field | molecules per pharmacophore field |
+|---|---:|---:|
+| Mittal, below 40 | 3.4 | 6.4 |
+| Mittal, 40 and above | 8.9 | 20.9 |
+| Sutherland | 11.8 | 28.5 |
+
+At three or four molecules per field a vocabulary cannot be estimated, whatever each of its fields
+covers; at nine or twenty it can, and then the more descriptive vocabulary wins because it is more
+descriptive. So the rule to take away is about size, not about chemistry: **`--pharm` below about
+forty molecules, `--cif` above it**, and the six features whenever the model is going to be read
+as a pharmacophore, where they cost 0.040
+q² on a large set and save the translation.
+
 `prop:<name>` fields are added by naming them in the per-atom property row of the model panel, or
 in `--fields`.
 
@@ -3772,6 +3837,7 @@ not every option.
 
 **Fields.** `--fields electrostatic,steric,hydrophobic,hba,hbd[,prop:name]`, `--cif`,
 `--cif-scheme sybyl|element|element+aromatic`, `--cif-min N`, `--cif-types LIST`,
+`--pharm`, `--pharm-min N`, `--pharm-features LIST`,
 `--charges gasteiger|mmff|file`, `--param rdkit|tripos|tripos-legacy`, `--prop-missing error|zero`.
 
 **Kernel.** `--kernel fields|autocorrelation|surface`, `--ac-sigma S`, `--ac-dmax D`,

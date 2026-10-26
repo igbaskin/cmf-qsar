@@ -1,0 +1,98 @@
+{
+ "set": "STEROIDS",
+ "n": 21,
+ "n_cif_types": 5,
+ "cif_types": [
+  "C.2",
+  "C.3",
+  "H",
+  "O.2",
+  "O.3"
+ ],
+ "n_cif_types_all": 6,
+ "pharm_features": [
+  "donor",
+  "acceptor",
+  "hydrophobe"
+ ],
+ "definitions": "RDKit BaseFeatures.fdef",
+ "coverage": {
+  "donor": {
+   "molecules": 0.9047619047619048,
+   "atoms_per_molecule": 1.4761904761904763
+  },
+  "acceptor": {
+   "molecules": 1.0,
+   "atoms_per_molecule": 2.8095238095238093
+  },
+  "aromatic": {
+   "molecules": 0.14285714285714285,
+   "atoms_per_molecule": 0.8571428571428571
+  },
+  "hydrophobe": {
+   "molecules": 1.0,
+   "atoms_per_molecule": 17.142857142857142
+  },
+  "cation": {
+   "molecules": 0.0,
+   "atoms_per_molecule": 0.0
+  },
+  "anion": {
+   "molecules": 0.0,
+   "atoms_per_molecule": 0.0
+  }
+ },
+ "cif_coverage": {
+  "C.2": 0.8571428571428571,
+  "C.3": 1.0,
+  "H": 1.0,
+  "O.2": 0.8095238095238095,
+  "O.3": 0.9047619047619048
+ },
+ "cif_coverage_all": {
+  "C.2": 0.8571428571428571,
+  "C.3": 1.0,
+  "C.ar": 0.14285714285714285,
+  "H": 1.0,
+  "O.2": 0.8095238095238095,
+  "O.3": 0.9047619047619048
+ },
+ "models": {
+  "five": {
+   "q2": 0.515439316181151,
+   "rmse_cv": 0.7970607658072889,
+   "alpha": 0.5,
+   "lam": 1.0,
+   "n_fields": 5
+  },
+  "five + pharm": {
+   "q2": 0.557064155719142,
+   "rmse_cv": 0.7620575298834915,
+   "alpha": 0.5,
+   "lam": 1.0,
+   "n_fields": 8
+  },
+  "pharm": {
+   "q2": 0.6541143205632511,
+   "rmse_cv": 0.6734163183556058,
+   "alpha": 0.3,
+   "lam": 0.1,
+   "n_fields": 3
+  },
+  "five + cif": {
+   "q2": 0.562466691491164,
+   "rmse_cv": 0.7573958229204876,
+   "alpha": 0.1,
+   "lam": 1.0,
+   "n_fields": 10
+  },
+  "cif": {
+   "q2": 0.6042890868779762,
+   "rmse_cv": 0.7202882980021253,
+   "alpha": 0.3,
+   "lam": 1.0,
+   "n_fields": 5
+  }
+ },
+ "seconds": 4.0
+}

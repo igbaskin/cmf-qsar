@@ -1,0 +1,116 @@
+{
+ "set": "ATA",
+ "n": 94,
+ "n_cif_types": 10,
+ "cif_types": [
+  "C.2",
+  "C.3",
+  "C.ar",
+  "H",
+  "N.am",
+  "N.ar",
+  "N.pl3",
+  "O.2",
+  "O.3",
+  "O.co2"
+ ],
+ "n_cif_types_all": 12,
+ "pharm_features": [
+  "donor",
+  "acceptor",
+  "aromatic",
+  "hydrophobe",
+  "anion"
+ ],
+ "definitions": "RDKit BaseFeatures.fdef",
+ "coverage": {
+  "donor": {
+   "molecules": 0.43617021276595747,
+   "atoms_per_molecule": 0.6170212765957447
+  },
+  "acceptor": {
+   "molecules": 1.0,
+   "atoms_per_molecule": 2.24468085106383
+  },
+  "aromatic": {
+   "molecules": 1.0,
+   "atoms_per_molecule": 10.425531914893616
+  },
+  "hydrophobe": {
+   "molecules": 1.0,
+   "atoms_per_molecule": 17.085106382978722
+  },
+  "cation": {
+   "molecules": 0.0,
+   "atoms_per_molecule": 0.0
+  },
+  "anion": {
+   "molecules": 0.10638297872340426,
+   "atoms_per_molecule": 0.3191489361702128
+  }
+ },
+ "cif_coverage": {
+  "C.2": 0.7127659574468085,
+  "C.3": 0.9680851063829787,
+  "C.ar": 1.0,
+  "H": 1.0,
+  "N.am": 0.2978723404255319,
+  "N.ar": 1.0,
+  "N.pl3": 0.35106382978723405,
+  "O.2": 0.6063829787234043,
+  "O.3": 0.5,
+  "O.co2": 0.24468085106382978
+ },
+ "cif_coverage_all": {
+  "C.2": 0.7127659574468085,
+  "C.3": 0.9680851063829787,
+  "C.ar": 1.0,
+  "Cl": 0.010638297872340425,
+  "F": 0.02127659574468085,
+  "H": 1.0,
+  "N.am": 0.2978723404255319,
+  "N.ar": 1.0,
+  "N.pl3": 0.35106382978723405,
+  "O.2": 0.6063829787234043,
+  "O.3": 0.5,
+  "O.co2": 0.24468085106382978
+ },
+ "models": {
+  "five": {
+   "q2": 0.20583298735049804,
+   "rmse_cv": 1.1084862890379936,
+   "alpha": 5.0,
+   "lam": 1.0,
+   "n_fields": 5
+  },
+  "five + pharm": {
+   "q2": 0.21216898248125848,
+   "rmse_cv": 1.1040555911076337,
+   "alpha": 0.1,
+   "lam": 1.0,
+   "n_fields": 10
+  },
+  "pharm": {
+   "q2": 0.19161932305133678,
+   "rmse_cv": 1.1183619062834314,
+   "alpha": 5.0,
+   "lam": 1.0,
+   "n_fields": 5
+  },
+  "five + cif": {
+   "q2": 0.15804435966535169,
+   "rmse_cv": 1.1413504360893394,
+   "alpha": 2.0,
+   "lam": 10.0,
+   "n_fields": 15
+  },
+  "cif": {
+   "q2": 0.13319685055080754,
+   "rmse_cv": 1.158069554110209,
+   "alpha": 5.0,
+   "lam": 10.0,
+   "n_fields": 10
+  }
+ },
+ "seconds": 20.2
+}

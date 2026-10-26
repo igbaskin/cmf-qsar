@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 60 modules and about 25,500 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 61 modules and about 26,100 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-four subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`), 771 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`), 788 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -36,6 +36,7 @@ The measurements already in hand settle several questions, and the plan treats t
 | Do conformational ensembles help? | Five routes, none beats one well-chosen conformation on an aligned series | README, "The verdict on the fourth dimension" |
 | Do probe fields improve accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
 | Do quantum-chemical fields help? | Not on the corrosion series or on Am/Eu; yes on Hammett, where resonance needs whole-molecule charges | `benchmarks/results/corrosion_qm/`, `am_eu/`, `hammett/` |
+| Do six pharmacophore features beat twenty Sybyl indicators? | Below 40 molecules yes (+0.027 against +0.002 added to the five fields), above it no | `cmfqsar/pharmtypes.py`, `benchmarks/results/pharmfields_mittal/` |
 | Can a Fukui function be a sum of atom Gaussians? | No (relative fit error 0.8 to 0.9), and the model does not care | `cmfqsar/cdft.py`, `benchmarks/results/cdft_kernels/` |
 | Does giving every atom a direction fix that? | The fit, yes (84% -> 64%); the model, no (-0.004 q2) | `cmfqsar/anisotropic.py`, `benchmarks/results/anisotropic/` |
 | When do indicator fields help? | Above about forty molecules | `docs/benchmark.md` |
@@ -592,6 +593,42 @@ can judge it.
   features (donor, acceptor, aromatic, hydrophobe, cation, anion) is learnable on small series and
   reads directly as a pharmacophore. Measure on the Sutherland sets against the five fields and
   against the Sybyl indicators, split by set size as before.
+  **Done 26 October 2026, and the item is right -- below forty molecules.** `cmfqsar/pharmtypes.py`
+  carries the vocabulary, taken from RDKit's `BaseFeatures.fdef` rather than from SMARTS written
+  here, and `pharm:<feature>` is a field like `cif:<type>`:
+  `FieldSet.create(pharm_features=...)`, `build --pharm` with `--pharm-min` and
+  `--pharm-features`, or `--fields pharm:donor,steric`. The weight is an indicator on every atom
+  of a matching group -- six for a benzene ring, three for a carboxylate -- and
+  `cmfqsar/pharmacophore.py` knows the six names, so the second half of the item is literal: a
+  lobe of the `pharm:donor` co-field comes out as a donor feature with its own meaning.
+  **The Sutherland sets cannot answer the question the item asks**, which is worth recording
+  because the item asks for them: the smallest of the eight has 66 molecules and the
+  claim is about series below forty. So the measurement was repeated on the 38 Mittal
+  sets, 15 of which are smaller than that (`run_pharmfields.py --mittal`).
+  **Below 40 molecules (15 sets):** five +0.342, five + pharm
+  **+0.368** (+0.027), pharm alone
+  +0.358, five + cif +0.344
+  (+0.002), cif alone +0.335. The six features beat
+  the Sybyl indicators, and on their own they beat the five physico-chemical fields.
+  **At or above 40 (23 sets):** five +0.299, five + pharm
+  +0.305 (+0.006), pharm alone
+  +0.228, five + cif **+0.345**
+  (+0.047), cif alone +0.321. The order reverses, and
+  the eight Sutherland sets agree with this half (+0.023 for cif against
+  +0.012 for pharm).
+  **The mechanism is not the one the item gave.** It blamed the rarity of individual Sybyl types,
+  but `--cif-min` was already dropping those: 11 of 14 types are kept on these
+  sets and the median coverage of what is kept is 88%, against 70% for a
+  pharmacophore feature. What changes with set size is molecules per field --
+  3.4 per Sybyl field below forty against
+  6.4 per pharmacophore field, 8.9 against
+  20.9 above. At three molecules per field no vocabulary can be
+  estimated however common its members are; at nine the more descriptive one wins because it is
+  more descriptive.
+  **Not done:** the definitions are RDKit's and have not been compared with another program's;
+  features are assigned on the molecule as it stands, so a cation or anion depends on how the file
+  was protonated; and nothing uses the features' *centres*, which is what a pharmacophore search
+  would match -- here they are atom weights like any other field.
 * **D3. A cheap quantum stage.** ORCA takes two to three minutes per molecule serially, so the
   quantum fields have been tried on a few series only. GFN2-xTB through `tblite` gives charges and
   Fukui indices in seconds, which makes a quantum stage on all 86 sets feasible. The Hammett

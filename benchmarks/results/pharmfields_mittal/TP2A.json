@@ -1,0 +1,117 @@
+{
+ "set": "TP2A",
+ "n": 25,
+ "n_cif_types": 8,
+ "cif_types": [
+  "C.3",
+  "C.ar",
+  "H",
+  "N.ar",
+  "N.pl3",
+  "O.3",
+  "O.co2",
+  "S.3"
+ ],
+ "n_cif_types_all": 17,
+ "pharm_features": [
+  "donor",
+  "acceptor",
+  "aromatic",
+  "hydrophobe",
+  "cation"
+ ],
+ "definitions": "RDKit BaseFeatures.fdef",
+ "coverage": {
+  "donor": {
+   "molecules": 1.0,
+   "atoms_per_molecule": 3.8
+  },
+  "acceptor": {
+   "molecules": 1.0,
+   "atoms_per_molecule": 4.84
+  },
+  "aromatic": {
+   "molecules": 1.0,
+   "atoms_per_molecule": 15.04
+  },
+  "hydrophobe": {
+   "molecules": 0.96,
+   "atoms_per_molecule": 6.0
+  },
+  "cation": {
+   "molecules": 1.0,
+   "atoms_per_molecule": 5.84
+  },
+  "anion": {
+   "molecules": 0.0,
+   "atoms_per_molecule": 0.0
+  }
+ },
+ "cif_coverage": {
+  "C.3": 0.88,
+  "C.ar": 1.0,
+  "H": 1.0,
+  "N.ar": 1.0,
+  "N.pl3": 0.76,
+  "O.3": 0.32,
+  "O.co2": 0.32,
+  "S.3": 0.96
+ },
+ "cif_coverage_all": {
+  "Br": 0.08,
+  "C.1": 0.04,
+  "C.2": 0.12,
+  "C.3": 0.88,
+  "C.ar": 1.0,
+  "Cl": 0.04,
+  "F": 0.04,
+  "H": 1.0,
+  "N.1": 0.04,
+  "N.4": 0.04,
+  "N.ar": 1.0,
+  "N.pl3": 0.76,
+  "O.2": 0.12,
+  "O.3": 0.32,
+  "O.co2": 0.32,
+  "S.2": 0.04,
+  "S.3": 0.96
+ },
+ "models": {
+  "five": {
+   "q2": 0.06833599686110148,
+   "rmse_cv": 0.8208328620208672,
+   "alpha": 0.1,
+   "lam": 1.0,
+   "n_fields": 5
+  },
+  "five + pharm": {
+   "q2": 0.0806742572278295,
+   "rmse_cv": 0.8153794989148384,
+   "alpha": 5.0,
+   "lam": 1.0,
+   "n_fields": 10
+  },
+  "pharm": {
+   "q2": 0.052409591263624766,
+   "rmse_cv": 0.8278190289876902,
+   "alpha": 5.0,
+   "lam": 1.0,
+   "n_fields": 5
+  },
+  "five + cif": {
+   "q2": 0.13630073370348972,
+   "rmse_cv": 0.7903261509552445,
+   "alpha": 2.0,
+   "lam": 1.0,
+   "n_fields": 13
+  },
+  "cif": {
+   "q2": 0.16891738746516638,
+   "rmse_cv": 0.7752596401776911,
+   "alpha": 2.0,
+   "lam": 1.0,
+   "n_fields": 8
+  }
+ },
+ "seconds": 3.4
+}

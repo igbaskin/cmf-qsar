@@ -27,6 +27,8 @@ including their hydrogen-counting bug (attached hydrogens are only counted when
 the hydrogen is the first atom of the bond record, which practically never
 happens in Sybyl MOL2 files).
 cif:<type>      continuous indicator field: w = 1 for atoms of Sybyl type <type>
+pharm:<feature> the same for one of six pharmacophore features (donor, acceptor, aromatic,
+                hydrophobe, cation, anion); see cmfqsar/pharmtypes.py
                 (Sitnikov et al. 2015, Eq. 6)
 """
 from __future__ import annotations
@@ -68,6 +70,8 @@ class FieldSpec:
     def label(self) -> str:
         if self.name.startswith("cif:"):
             return "CIF " + self.name[4:]
+        if self.name.startswith("pharm:"):
+            return self.name[6:].capitalize()
         if self.name.startswith("prop:"):
             return self.name[5:]
         return FIELD_LABELS.get(self.name, self.name)
@@ -79,6 +83,15 @@ class FieldSpec:
     @property
     def cif_type(self) -> Optional[str]:
         return self.name[4:] if self.is_cif else None
+
+    @property
+    def is_pharm(self) -> bool:
+        """An indicator field of one of the six pharmacophore features (plan item D2)."""
+        return self.name.startswith("pharm:")
+
+    @property
+    def pharm_feature(self) -> Optional[str]:
+        return self.name[6:] if self.is_pharm else None
 
     @property
     def is_prop(self) -> bool:
@@ -139,13 +152,18 @@ class FieldSet:
                max_conformers: int = 0, atom_properties: Sequence[str] = (),
                prop_missing: str = "error", descriptors: Sequence[str] = (),
                descriptor_h: float = 1.0, probes: Sequence[str] = (),
-               probe_terms: int = 4) -> "FieldSet":
+               probe_terms: int = 4,
+               pharm_features: Sequence[str] = ()) -> "FieldSet":
         specs = []
         for name in physchem:
             kind = "steric" if name == "steric" else "gauss"
             specs.append(FieldSpec(name=name, kind=kind, alpha=alpha))
         for t in cif_types:
             specs.append(FieldSpec(name=f"cif:{t}", kind="gauss", alpha=alpha))
+        for p in pharm_features:
+            # an indicator field of a pharmacophore feature rather than of an atom type: six
+            # of them instead of twenty-odd, each carried by most molecules of a series
+            specs.append(FieldSpec(name=f"pharm:{p}", kind="gauss", alpha=alpha))
         for pr in probes:
             # a GRID-like field: what a probe would gain by sitting at each point. Its alpha
             # is unused -- the widths come from the expansion in cmfqsar/probes.py
@@ -715,6 +733,7 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
     charges, charge_source = (_partial_charges(mol, fieldset.charge_model)
                               if ("electrostatic" in need or probes) else (np.zeros(n), ""))
     hydro = acc = don = None
+    pharm = None            # the six pharmacophore features, assigned once if any field asks
     want_hb = bool(need & {"hydrophobic", "hba", "hbd"}) or bool(probes)
     if scheme.startswith("tripos"):
         if want_hb:
@@ -740,6 +759,16 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
         elif spec.is_cif:
             t = spec.cif_type
             W[:, k] = np.array([1.0 if x == t else 0.0 for x in types])
+        elif spec.is_pharm:
+            if pharm is None:
+                from .pharmtypes import feature_atoms
+                pharm = feature_atoms(mol)
+            got = pharm.get(spec.pharm_feature)
+            if got is None:
+                from .pharmtypes import PHARM_FEATURES
+                raise ValueError(f"unknown pharmacophore feature {spec.pharm_feature!r} in "
+                                 f"field {spec.name!r}; use one of {PHARM_FEATURES}")
+            W[:, k] = got.astype(float)
         elif spec.is_prop:
             W[:, k] = atom_property(mol, spec.prop, n,
                                     policy=getattr(fieldset, "prop_missing", "error"),

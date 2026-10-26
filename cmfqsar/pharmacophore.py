@@ -53,10 +53,23 @@ FEATURE_TYPES = {
     ("steric", -1): ("exclusion", "atoms here lower the activity", False),
 }
 
+#: the indicator fields of the six pharmacophore features (plan item D2) read directly as
+#: features: the co-field of pharm:donor is already a statement about where a donor is wanted,
+#: so a lobe of it needs no translation, only a sign
+for _name, _label in (("donor", "donor"), ("acceptor", "acceptor"), ("aromatic", "aromatic"),
+                      ("hydrophobe", "hydrophobic"), ("cation", "cation"), ("anion", "anion")):
+    FEATURE_TYPES[(f"pharm:{_name}", +1)] = (
+        _label, f"a {_name} here raises the activity", True)
+    FEATURE_TYPES[(f"pharm:{_name}", -1)] = (
+        f"{_label}_bad", f"a {_name} here lowers the activity", False)
+del _name, _label
+
 #: element written for every feature type in the PDB export, so that a viewer colours them apart
 PDB_ELEMENT = {"positive": "N", "negative": "O", "hydrophobic": "C", "polar": "S",
                "acceptor": "O", "acceptor_bad": "S", "donor": "N", "donor_bad": "S",
-               "bulk": "C", "exclusion": "Fe", "pocket": "Fe"}
+               "bulk": "C", "exclusion": "Fe", "pocket": "Fe",
+               "aromatic": "C", "aromatic_bad": "S", "cation": "N", "cation_bad": "S",
+               "anion": "O", "anion_bad": "S", "hydrophobic_bad": "S"}
 
 
 @dataclass

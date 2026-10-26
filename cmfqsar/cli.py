@@ -249,7 +249,17 @@ def cmd_build(args):
         if args.cif_types:
             cif = [t for t in args.cif_types.split(",") if t]
         print(f"  CIF atom types ({args.cif_scheme}): {', '.join(cif)}")
-    fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, cif_types=cif, alpha=1.0, charge_model=args.charges,
+    pharm = []
+    if getattr(args, "pharm", False):
+        from cmfqsar.pharmtypes import coverage, definitions_used, features_in
+        pharm = features_in([ds.mols[i] for i in tr], args.pharm_min)
+        if args.pharm_features:
+            pharm = [p for p in args.pharm_features.split(",") if p]
+        cov = coverage([ds.mols[i] for i in tr])
+        print(f"  pharmacophore features ({definitions_used()}): "
+              + ", ".join(f"{p} ({cov[p]['molecules']:.0%} of the molecules)" for p in pharm))
+    fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, cif_types=cif,
+                         pharm_features=pharm, alpha=1.0, charge_model=args.charges,
                          prop_missing=args.prop_missing,
                          cif_scheme=args.cif_scheme, param_scheme=args.param,
                          conformers=args.conformations,
@@ -2407,6 +2417,15 @@ def main(argv=None):
     b.add_argument("--cif-min", type=int, default=5, help="min. number of molecules containing an atom type")
     b.add_argument("--cif-types", default=None,
                    help="explicit comma-separated list of CIF atom types (overrides the --cif-min selection)")
+    b.add_argument("--pharm", action="store_true",
+                   help="add indicator fields of the six pharmacophore features (donor, "
+                        "acceptor, aromatic, hydrophobe, cation, anion), which unlike the Sybyl "
+                        "indicators are each carried by most molecules of a series and read "
+                        "directly as a pharmacophore")
+    b.add_argument("--pharm-min", type=int, default=5, metavar="N",
+                   help="a feature is used when at least this many training molecules carry it")
+    b.add_argument("--pharm-features", default=None,
+                   help="explicit comma-separated list of features (overrides --pharm-min)")
     b.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
     b.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"],
                    help="parameterisation of the hydrophobic/H-bond fields: RDKit (Crippen + built-in rules) "
