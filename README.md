@@ -3297,6 +3297,8 @@ python benchmarks/run_all.py                # list every benchmark, its inputs a
 python benchmarks/run_all.py --tables       # every results/*/table.md, and the tables the documents carry
 python benchmarks/run_all.py --manifest     # benchmarks/manifest.json: versions, platform, commit, data and result hashes
 python benchmarks/run_all.py --check        # fail if a table, a document or a data file is not what the files give
+python docs/make_api.py                     # docs/api.md: the function-by-function reference, from the docstrings
+python docs/make_api.py --check             # fail if docs/api.md is not what the source gives
 python benchmarks/run_all.py --compute all --data-root <Sutherland MOL2 folder> --orca
 ```
 

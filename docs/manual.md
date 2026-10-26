@@ -4287,6 +4287,11 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
+The function-by-function reference is a separate file, `docs/api.md`. It is generated from the
+docstrings of the source by `python docs/make_api.py`, so it lists every public class, method and
+function with its signature, and it is as current as the last time that command was run. This
+chapter says what the modules are for; that file says what each function takes and returns.
+
 The modules, one line each. The package has more modules than the application has panels: many of
 them exist only for the command-line tool and for use as a library.
 
