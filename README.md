@@ -2587,6 +2587,49 @@ spread four times the residual error, which is the model saying it has nothing t
 about half a second each — far more than the scoring, and optimistic, since a real library has to
 choose a pose without knowing the actives.
 
+### Three series, worked through
+
+The interpretation tools above — Shapley decompositions, field differences, pharmacophores,
+pocket complementarity — had tests and no worked example, so a reader could see that they run but
+not what they say about a real series. `examples/case_studies.py` runs three series end to end and
+`benchmarks/run_cases.py` keeps the numbers; the manual has a section on each. The three come from
+the free-energy collections because those ship the crystal structure their ligands were posed in,
+and were chosen by measuring every set with a pocket and keeping the best models among different
+target families.
+
+<!-- CASES-TABLE -->
+| case | target | n | range | α | q²cv | R²pred | worst of 30 shuffles |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `openff/ptp1b` | phosphatase | 22 | 3.77 | 3 | +0.499 | +0.147 | **+0.539** |
+| `openff/mcl1` | protein-protein groove | 25 | 3.05 | 0.2 | +0.548 | +0.581 | +0.098 |
+| `schindler/cdk8` | kinase | 33 | 4.18 | 3 | +0.496 | +0.180 | +0.026 |
+<!-- /CASES-TABLE -->
+
+Four things came out of them.
+
+**One of the three does not survive its own check.** On `ptp1b` the best of thirty shuffles of the
+activities reaches +0.539 against a real q²cv of
++0.499 (p = 0.065). It is kept as the case
+that stops there: twenty-two molecules and five fields produce a q² of one half by chance, and no
+amount of reading the maps would have shown it.
+
+**Every one of the three loses a field without losing accuracy.** Removing each field and
+refitting: `ptp1b` electrostatic -0.009, steric +0.113, hydrophobic -0.016, hba +0.043, hbd +0.025; `mcl1` electrostatic +0.032, steric +0.062, hydrophobic +0.071, hba +0.037, hbd -0.077; `cdk8` electrostatic +0.043, steric -0.015, hydrophobic -0.024, hba +0.099, hbd -0.061. A phosphatase site is
+charged and the electrostatic field is the one `ptp1b` does not need; `mcl1` is worse *with* the
+donor field; `cdk8` needs the acceptor field and nothing else.
+
+**A composite score can be worse than one of its parts.** On `mcl1` the complementarity score
+averaged over five terms correlates with activity at
++0.254, while the steric overlap alone — how deep in the
+groove the ligand sits — correlates at **+0.698**.
+
+**Most of a co-field does not survive its own error bar.** The share standing more than two
+standard deviations from zero is 23 % at best (`mcl1`, steric) and 6 % on `cdk8`. Drawing an
+unmasked co-field from twenty-five molecules mostly draws noise.
+
+What is *not* here is a chemist's verdict on any of it. The development plan asks for these cases
+to be judged by a medicinal chemist; what exists is the material for that judgement.
+
 ## Installation
 
 Python ≥ 3.10. The package is declared in `pyproject.toml`; from a checkout:

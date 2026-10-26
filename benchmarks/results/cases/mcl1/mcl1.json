@@ -1,0 +1,358 @@
+{
+ "summary": {
+  "case": "mcl1",
+  "target": "Mcl-1, a Bcl-2 family protein",
+  "why": "a protein-protein interaction groove, where shape and lipophilicity should carry it",
+  "dataset": "examples/openff/mcl1.sdf",
+  "pocket": "examples/pockets/openff/mcl1.pdb",
+  "n": 25,
+  "n_train": 16,
+  "n_test": 9,
+  "activity_range": 3.0519999999999996,
+  "activity_sd": 0.8316903404513003,
+  "alpha": 0.2,
+  "lam": 0.01,
+  "q2_cv_train_part": 0.40048374155191124,
+  "rmse_cv_train_part": 0.5949065634458977,
+  "r2_pred": 0.5814203147873089,
+  "rmse_pred": 0.6038837576872316,
+  "q2_cv": 0.5484137629241452,
+  "rmse_cv": 0.5588972931226154,
+  "r2_fit": 0.9334928279428911,
+  "y_random_mean_q2": -0.916393168668556,
+  "y_random_max_q2": 0.09825072890460163,
+  "y_random_p": 0.03225806451612903,
+  "test_mean_similarity": 0.9950563418732263,
+  "test_inside_domain": 1.0,
+  "conformal_width": 1.8046202728623442,
+  "conformal_covers": 1.0
+ },
+ "fields": {
+  "all": 0.5484137629241452,
+  "without": {
+   "electrostatic": {
+    "q2_cv": 0.5166882188711073,
+    "drop": 0.03172554405303796
+   },
+   "steric": {
+    "q2_cv": 0.4864018472667634,
+    "drop": 0.062011915657381844
+   },
+   "hydrophobic": {
+    "q2_cv": 0.4776398989986298,
+    "drop": 0.07077386392551543
+   },
+   "hba": {
+    "q2_cv": 0.5117525532478021,
+    "drop": 0.03666120967634312
+   },
+   "hbd": {
+    "q2_cv": 0.6258961379127512,
+    "drop": -0.077482374988606
+   }
+  },
+  "most_needed": "hydrophobic"
+ },
+ "cofields": {
+  "noise_level": 0.5588972931226154,
+  "noise_from": "RMSEcv, the out-of-fold error",
+  "per_field": {
+   "electrostatic": {
+    "share_above_2sd": 0.017382655236110454,
+    "peak": 0.49042742537721956,
+    "signed_peak": -0.49042742537721956,
+    "peak_z": 2.2349634796090005
+   },
+   "steric": {
+    "share_above_2sd": 0.22894761769442076,
+    "peak": 0.2156702792899894,
+    "signed_peak": 0.2156702792899894,
+    "peak_z": 3.272543351060323
+   },
+   "hydrophobic": {
+    "share_above_2sd": 0.042864585800217875,
+    "peak": 0.7605572038981424,
+    "signed_peak": 0.7605572038981424,
+    "peak_z": 3.395905599773589
+   },
+   "hba": {
+    "share_above_2sd": 0.0,
+    "peak": 0.20819796386111633,
+    "signed_peak": 0.20819796386111633,
+    "peak_z": 1.8352763177394449
+   },
+   "hbd": {
+    "share_above_2sd": 0.0,
+    "peak": 0.1816387402056936,
+    "signed_peak": -0.1816387402056936,
+    "peak_z": 1.226960888533232
+   }
+  },
+  "n_features": 5,
+  "features": [
+   {
+    "field": "steric",
+    "kind": "bulk",
+    "sign": 1,
+    "importance": 44.636934728402636,
+    "radius": 4.15891249885162,
+    "meaning": "atoms here raise the activity",
+    "centre": [
+     63.62,
+     -30.36,
+     32.22
+    ]
+   },
+   {
+    "field": "hydrophobic",
+    "kind": "hydrophobic",
+    "sign": 1,
+    "importance": 29.17831026884591,
+    "radius": 2.37867559294307,
+    "meaning": "hydrophobic bulk raises the activity",
+    "centre": [
+     64.28,
+     -30.68,
+     31.89
+    ]
+   },
+   {
+    "field": "electrostatic",
+    "kind": "positive",
+    "sign": 1,
+    "importance": 4.246852391638756,
+    "radius": 1.5766171439134673,
+    "meaning": "positive partial charge raises the activity",
+    "centre": [
+     73.49,
+     -30.68,
+     27.01
+    ]
+   },
+   {
+    "field": "hydrophobic",
+    "kind": "polar",
+    "sign": -1,
+    "importance": -0.7051231645613979,
+    "radius": 0.993206563620856,
+    "meaning": "hydrophobic bulk lowers the activity",
+    "centre": [
+     64.86,
+     -31.7,
+     26.13
+    ]
+   },
+   {
+    "field": "steric",
+    "kind": "exclusion",
+    "sign": -1,
+    "importance": -33.210211299697306,
+    "radius": 3.949823436348984,
+    "meaning": "atoms here lower the activity",
+    "centre": [
+     68.61,
+     -32.41,
+     24.51
+    ]
+   }
+  ]
+ },
+ "shapley": {
+  "best predicted": {
+   "molecule": "lig_28",
+   "activity": 4.824,
+   "prediction": 4.824376285666593,
+   "baseline": 4.788560618319811,
+   "players": 14,
+   "exact": true,
+   "efficiency_error": 1.1962653090336062e-14,
+   "top": [
+    {
+     "group": "ring 3",
+     "value": 2.2172656484142306,
+     "share": 0.2108624323728736
+    },
+    {
+     "group": "CO3 at 13",
+     "value": -1.9520301424898683,
+     "share": 0.18563847963141472
+    },
+    {
+     "group": "ring 2",
+     "value": -1.5212936919660893,
+     "share": 0.14467535203591889
+    },
+    {
+     "group": "CH4 at 32",
+     "value": 0.9486880750487635,
+     "share": 0.09022043669462446
+    },
+    {
+     "group": "H1 at 8",
+     "value": -0.8290296008783995,
+     "share": 0.07884089047938635
+    }
+   ]
+  },
+  "worst predicted": {
+   "molecule": "lig_37",
+   "activity": 6.523,
+   "prediction": 6.268754657222151,
+   "baseline": 4.788560618319811,
+   "players": 14,
+   "exact": true,
+   "efficiency_error": 3.5083047578154947e-14,
+   "top": [
+    {
+     "group": "CH4 at 33",
+     "value": 2.1577378179997266,
+     "share": 0.19523063823731526
+    },
+    {
+     "group": "Cl1 at 37",
+     "value": 1.702562457404765,
+     "share": 0.15404668371904406
+    },
+    {
+     "group": "ring 2",
+     "value": -1.4956784615354837,
+     "share": 0.1353279616307004
+    },
+    {
+     "group": "CO3 at 13",
+     "value": -1.397135477773684,
+     "share": 0.12641186002969118
+    },
+    {
+     "group": "H1 at 8",
+     "value": -0.7642990314635226,
+     "share": 0.06915325229601381
+    }
+   ]
+  },
+  "most active": {
+   "molecule": "lig_53",
+   "activity": 7.26,
+   "prediction": 7.150198844183369,
+   "baseline": 4.788560618319811,
+   "players": 14,
+   "exact": true,
+   "efficiency_error": 5.3290705182007514e-14,
+   "top": [
+    {
+     "group": "CH4 at 37",
+     "value": 2.0120998416074616,
+     "share": 0.1810040866196586
+    },
+    {
+     "group": "Cl1 at 36",
+     "value": 1.6335633312946394,
+     "share": 0.14695177277094443
+    },
+    {
+     "group": "ring 2",
+     "value": -1.5591417511654373,
+     "share": 0.1402569707250796
+    },
+    {
+     "group": "CO3 at 12",
+     "value": -1.0663497464421496,
+     "share": 0.09592648330893347
+    },
+    {
+     "group": "H1 at 1",
+     "value": -0.7711443375933051,
+     "share": 0.0693704524952835
+    }
+   ]
+  }
+ },
+ "difference": {
+  "strong": "lig_53",
+  "weak": "lig_47",
+  "gap": 3.0519999999999996,
+  "n_features": 10,
+  "features": [
+   {
+    "field": "steric",
+    "kind": "missing steric",
+    "sign": -1,
+    "importance": -164.21181181943524,
+    "radius": 5.812314412933837,
+    "meaning": "the candidate fails to reproduce the reference here"
+   },
+   {
+    "field": "hydrophobic",
+    "kind": "missing hydrophobic",
+    "sign": -1,
+    "importance": -42.84238655848728,
+    "radius": 2.6533746704257872,
+    "meaning": "the candidate fails to reproduce the reference here"
+   },
+   {
+    "field": "hydrophobic",
+    "kind": "missing hydrophobic",
+    "sign": -1,
+    "importance": -24.7526207668501,
+    "radius": 2.2796629282919536,
+    "meaning": "the candidate fails to reproduce the reference here"
+   },
+   {
+    "field": "hba",
+    "kind": "extra h-bond acceptor",
+    "sign": 1,
+    "importance": 22.729654226688087,
+    "radius": 2.6405973873348616,
+    "meaning": "the candidate puts field here that the reference does not have"
+   },
+   {
+    "field": "hydrophobic",
+    "kind": "extra hydrophobic",
+    "sign": 1,
+    "importance": 7.0865935634456,
+    "radius": 2.3429672853456296,
+    "meaning": "the candidate puts field here that the reference does not have"
+   },
+   {
+    "field": "electrostatic",
+    "kind": "missing electrostatic",
+    "sign": -1,
+    "importance": -6.8260583115145534,
+    "radius": 2.8355561659225597,
+    "meaning": "the candidate fails to reproduce the reference here"
+   },
+   {
+    "field": "electrostatic",
+    "kind": "extra electrostatic",
+    "sign": 1,
+    "importance": 4.127198262891435,
+    "radius": 2.413315507591526,
+    "meaning": "the candidate puts field here that the reference does not have"
+   },
+   {
+    "field": "hba",
+    "kind": "missing h-bond acceptor",
+    "sign": -1,
+    "importance": -3.6267689833147334,
+    "radius": 2.421825153135949,
+    "meaning": "the candidate fails to reproduce the reference here"
+   }
+  ]
+ },
+ "pocket": {
+  "pocket_atoms": 1007,
+  "residues": 61,
+  "mean_score": 0.20115040674596799,
+  "mean_burial": 0.5876575465129382,
+  "mean_clashes": 0.68,
+  "spearman_with_activity": 0.2538461538461539,
+  "spearman_burial_activity": 0.6984615384615384,
+  "terms": {
+   "electrostatic": 0.3141426127380661,
+   "hydrophobic": 0.1748808337203459,
+   "donor to acceptor": NaN,
+   "acceptor to donor": 0.20969710447508538
+  }
+ },
+ "seconds": 17.5
+}

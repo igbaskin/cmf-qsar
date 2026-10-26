@@ -3428,6 +3428,139 @@ per molecule and residue.
 optimisation. It is a convenience for getting a pose into the right frame, not a scoring function;
 the program's purpose is what happens after the poses exist.
 
+# Three series, worked through
+
+Everything above is a tool. This part uses them, on three series taken from the free-energy
+benchmark collections because those come with the crystal structure their ligands were posed in,
+which is what makes the complementarity step possible at all. They were chosen by measuring every
+set in `examples/openff` and `examples/schindler` that has a pocket and keeping the three best
+models among different target families; `examples/case_studies.py` reproduces every number below
+and `benchmarks/results/cases/table.md` records them.
+
+| case | target | n | activity range | α | q²cv | R²pred | worst of 30 shuffles |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `ptp1b` | protein tyrosine phosphatase 1B | 22 | 3.77 | 3 | +0.499 | +0.147 | **+0.539** |
+| `mcl1` | Mcl-1, a Bcl-2 family protein | 25 | 3.05 | 0.2 | +0.548 | +0.581 | +0.098 |
+| `cdk8` | cyclin-dependent kinase 8 | 33 | 4.18 | 3 | +0.496 | +0.180 | +0.026 |
+
+The protocol is the same for all three. The attenuation and the ridge are chosen by
+cross-validated grid search on two thirds of the series, and the other third — every third
+molecule by activity rank, so that it spans the range instead of sampling one end of it — is held
+out. The model whose co-fields are then read is refitted on the whole series with those
+hyper-parameters, because a co-field read from two thirds of a series is a co-field of two thirds
+of a series.
+
+**One thing to say before any of the three.** What follows is not a chemist's reading of these
+series. The development plan asks for these cases to be judged by a medicinal chemist, and that
+judgement has not been made; what is here is every number such a judgement would need, with the
+places where the program contradicts itself left in rather than tidied away.
+
+## The case that does not survive its own check: `ptp1b`
+
+Twenty-two ligands of a phosphatase, spanning 3.77 log units.
+The model looks good: q²cv +0.499, and on the two thirds it was selected
+on, +0.824. Then the activities are shuffled thirty times and
+refitted, and **the best shuffle reaches +0.539** against the
+real +0.499, for p = 0.065. On twenty-two
+molecules with five fields, a q² of one half is what chance produces.
+
+So this case is not interpreted, and it is kept for exactly that reason: it is what
+*Is it chance? y-randomisation* is for, and it is the first thing to run on a series of this size.
+Everything the program would have said is still computed, and two parts of it are worth noting as
+warnings rather than findings:
+
+- the fit is R² +0.975 against a cross-validated
+  +0.499. A model that reproduces its own training set almost exactly and half the
+  variance of a molecule it has not seen is memorising;
+- the external third gives R²pred +0.147 while the selection fold gave
+  +0.824. The gap between those two numbers is the clearest
+  single sign of a hyper-parameter chosen on too little data.
+
+One measured result does survive, because it needs no model: of the five fields, the one this
+series does **not** need is the electrostatic one. Removing each field in turn and refitting costs
+electrostatic -0.009, steric +0.113, hydrophobic -0.016, hba +0.043, hbd +0.025 in q²cv — the steric field carries what there is, and the electrostatic field can go
+without loss. A phosphatase site is charged; the series does not care.
+
+## Shape and lipophilicity in a groove: `mcl1`
+
+Twenty-five ligands of a protein-protein interaction groove. q²cv +0.548,
+R²pred +0.581 on the 9 held out, and the best
+of thirty shuffles reaches only +0.098
+(p = 0.032). This one can be read.
+
+**Which fields.** Removing each in turn: electrostatic +0.032, steric +0.062, hydrophobic +0.071, hba +0.037, hbd -0.077. The hydrophobic and steric fields carry it
+and the hydrogen-bond donor field is worse than useless — removing it *improves* the model by
+0.077. For a groove that binds a helix face, shape
+and lipophilicity being the answer is the expected answer, and it is also the measured one.
+
+**What the co-fields say.** At the noise level the activities imply
+(0.559 log units), the share of each co-field that stands more than
+two standard deviations from zero is electrostatic 2%, steric 23%, hydrophobic 4%, hba 0%, hbd 0%. Only the steric map has a substantial part
+that the measurement error could not have produced; the electrostatic map, at 2 %, is almost
+entirely noise and should not be drawn. The pharmacophore read from what survives has
+5 features: bulk +44.64; hydrophobic +29.18; positive +4.25; polar -0.71. A large favourable bulk region, a
+hydrophobic region inside it, and an exclusion volume of almost the same weight
+(-33.21) — which is
+the series saying that the groove has a size and that exceeding it costs as much as filling it
+earns.
+
+**Where one prediction comes from.** The most active ligand (lig_53,
+measured +7.26, predicted
++7.15) decomposes by rings and the pieces between
+them into CH4 at 37 +2.01, Cl1 at 36 +1.63, ring 2 -1.56. The two largest positive contributions are a small aliphatic piece and a
+chlorine, and one of the rings contributes *negatively*: against the scaffold baseline, that ring
+is not what makes this molecule good.
+
+**What the pocket knows.** Scoring all twenty-five ligands against the crystal site
+(1007 atoms of 61 residues) gives a mean
+complementarity of +0.201, and its correlation with the measured
+activity is Spearman +0.254. But the steric overlap alone
+— burial, how deep in the groove the ligand sits — correlates at
+**+0.698**. The score that averages five complementarity
+terms is three times worse than one of its terms. On this target, how far the ligand reaches into
+the groove is most of the structure-activity relationship, and a composite score hides it.
+
+## An acceptor-driven kinase: `cdk8`
+
+Thirty-three ligands spanning 4.18 log units, the widest range
+of the three. q²cv +0.496, best shuffle
++0.026, so the model is real; but R²pred
++0.180 on the 11 held out, and a training fit of
+R² +0.998 at λ = 0.01, which is a model
+interpolating its training set.
+
+**Which fields.** electrostatic +0.043, steric -0.015, hydrophobic -0.024, hba +0.099, hbd -0.061. The hydrogen-bond acceptor field is the one that matters, and
+three of the five can be removed with no loss. For a kinase, an acceptor-driven model is the
+expected shape of the answer — the hinge donates — and this is the only one of the three cases
+where the dominant field is a polar one.
+
+**What survives the noise.** electrostatic 4%, steric 6%, hydrophobic 4%, hba 7%, hbd 0%, at a noise level of
+0.697. These are the smallest shares of the three cases: the model
+predicts, and almost none of its map is distinguishable from what the measurement error could have
+produced. The pharmacophore has 10 features
+(bulk +1.34; acceptor_bad -1.18; positive +1.09; positive +1.00), and the second and fifth of them are *unfavourable* acceptor regions — places
+where an acceptor lowers the activity. A pharmacophore from this series would consist mostly of
+places to avoid.
+
+**The pocket says nothing.** Complementarity +0.002 with burial
+0.014: these ligands barely overlap the trimmed site at all, and the
+correlation of the score with activity, +0.326, is on a
+quantity that is almost zero for every ligand. Compare `mcl1`, where burial is
+0.588. The difference is not the method but the pocket file: a site
+trimmed at 8 Å around a shallow, solvent-exposed hinge leaves most of a ligand outside it.
+
+## What the three have in common
+
+- **Every one of them loses at least one field without losing accuracy**, and in two of the three
+  the field a chemist would expect to matter is not the one that does.
+- **The share of a co-field that survives its own error bar is small**: 23 % at best, 6 % on
+  `cdk8`. Drawing an unmasked co-field from twenty-five molecules shows mostly noise, which is
+  what *The uncertainty of a co-field* exists to prevent.
+- **A composite score can be worse than one of its parts** (`mcl1`: +0.254
+  against +0.698).
+- **The check comes first.** One of the three does not beat a shuffle of its own activities, and
+  no amount of interpretation would have revealed that; only the shuffle did.
+
 # Command-line reference
 
 Everything the application does is available without it, which is what makes the program scriptable

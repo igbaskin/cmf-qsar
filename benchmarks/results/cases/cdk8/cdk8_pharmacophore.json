@@ -1,0 +1,89 @@
+{
+ "points": [
+  {
+   "name": "PositiveIon",
+   "x": -4.4302,
+   "y": 13.5248,
+   "z": -6.345,
+   "radius": 0.6764,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "PositiveIon",
+   "x": -3.5905,
+   "y": 15.2212,
+   "z": -13.062,
+   "radius": 0.6764,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "Hydrophobic",
+   "x": -4.5015,
+   "y": 13.0871,
+   "z": -6.4294,
+   "radius": 0.6365,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "NegativeIon",
+   "x": -4.7662,
+   "y": 14.8731,
+   "z": -14.5499,
+   "radius": 0.7742,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "ExclusionSphere",
+   "x": -4.7482,
+   "y": 14.5697,
+   "z": -13.9218,
+   "radius": 1.229,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  }
+ ]
+}

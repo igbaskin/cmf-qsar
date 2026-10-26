@@ -1,0 +1,13 @@
+type,x,y,z,radius,field,sign,peak,weight,meaning
+bulk,52.744,2.904,4.806,1.969,steric,1,0.44971,9.47402,atoms here raise the activity
+hydrophobic,53.383,1.666,5.926,1.218,hydrophobic,1,0.42825,2.14140,hydrophobic bulk raises the activity
+polar,48.653,1.407,4.589,1.157,hydrophobic,-1,-0.31205,-1.52285,hydrophobic bulk lowers the activity
+acceptor,53.157,5.697,3.818,0.712,hba,1,0.83533,0.86221,a hydrogen-bond acceptor raises the activity
+acceptor,52.997,5.673,1.328,0.636,hba,1,0.60192,0.56886,a hydrogen-bond acceptor raises the activity
+negative,53.285,5.780,3.878,0.636,electrostatic,-1,-0.48698,0.37834,negative partial charge raises the activity
+positive,52.196,5.204,2.465,0.712,electrostatic,1,0.35371,0.35945,positive partial charge raises the activity
+negative,51.552,1.728,6.367,0.636,electrostatic,-1,-0.36795,0.33261,negative partial charge raises the activity
+negative,53.002,5.679,1.217,0.636,electrostatic,-1,-0.33536,0.32515,negative partial charge raises the activity
+polar,53.296,5.647,3.747,0.636,hydrophobic,-1,-0.38324,-0.27037,hydrophobic bulk lowers the activity
+polar,52.999,5.672,1.325,0.636,hydrophobic,-1,-0.27335,-0.25574,hydrophobic bulk lowers the activity
+exclusion,48.712,1.318,4.639,1.617,steric,-1,-0.30604,-3.88532,atoms here lower the activity

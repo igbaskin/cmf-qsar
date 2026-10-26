@@ -1,0 +1,140 @@
+{
+ "points": [
+  {
+   "name": "Hydrophobic",
+   "x": 53.3834,
+   "y": 1.6656,
+   "z": 5.9263,
+   "radius": 1.2175,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "HydrogenAcceptor",
+   "x": 53.1568,
+   "y": 5.697,
+   "z": 3.8183,
+   "radius": 0.712,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "HydrogenAcceptor",
+   "x": 52.9969,
+   "y": 5.6735,
+   "z": 1.3281,
+   "radius": 0.6365,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "NegativeIon",
+   "x": 53.2849,
+   "y": 5.7805,
+   "z": 3.8783,
+   "radius": 0.6365,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "PositiveIon",
+   "x": 52.1964,
+   "y": 5.2045,
+   "z": 2.4654,
+   "radius": 0.712,
+   "enabled": false,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "NegativeIon",
+   "x": 51.552,
+   "y": 1.7277,
+   "z": 6.3667,
+   "radius": 0.6365,
+   "enabled": false,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "NegativeIon",
+   "x": 53.0019,
+   "y": 5.6789,
+   "z": 1.2168,
+   "radius": 0.6365,
+   "enabled": false,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  },
+  {
+   "name": "ExclusionSphere",
+   "x": 48.7119,
+   "y": 1.3179,
+   "z": 4.6395,
+   "radius": 1.6171,
+   "enabled": true,
+   "vector_on": 0,
+   "minsize": "",
+   "maxsize": "",
+   "svector": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+   },
+   "hasvec": false
+  }
+ ]
+}

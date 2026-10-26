@@ -1,6 +1,6 @@
 {
- "commit": "252e6c7925d723e88c4c82b45bbe682341ae46d2",
- "created": "2026-10-26T13:25:20",
+ "commit": "dcfacf4bda701eb74c12dba135b558f43287ed5e",
+ "created": "2026-10-26T14:51:37",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -17,6 +17,10 @@
   "examples/benzamides_synthetic.sdf": {
    "bytes": 371416,
    "sha256": "92f5f6c7601d7c97f2b6ca01d359065208b13c894955dcf523e2e8bc2a37b865"
+  },
+  "examples/case_studies.py": {
+   "bytes": 22633,
+   "sha256": "cd5e0742a3b6fc97f915bc078bae6f4f005aa6c5c0b34ead93c10e309665b98b"
   },
   "examples/corrosion/0_c1ccccc1.csv": {
    "bytes": 41685,
@@ -1562,6 +1566,16 @@
   "benchmarks/results/bound/THER.json": "1e0ee91209eceb327cecce688af8f9b4642a542c11769d6e834fbce774f825c2",
   "benchmarks/results/bound/THR.json": "95a627ca191071d248b3daac6281c3678722a828459d0d945a34b7922d024575",
   "benchmarks/results/bound/table.md": "ac501c507ac5fe68036d9d98785163a93a0cb2d06dcfb1d4d8684e2d6523603e",
+  "benchmarks/results/cases/cdk8/cdk8.json": "7a4e8180623dd232364f17f688482ad96fe0d0796c74d84ec37453504202313d",
+  "benchmarks/results/cases/cdk8/cdk8_pharmacophore.csv": "15f1e93463a40c734a36e28ce3945b771e2211e7d2acf05dec4a90254e51e512",
+  "benchmarks/results/cases/cdk8/cdk8_pharmacophore.json": "feef9c408be51aea887c86c43a011704a8b8c2a901e8d2e4a1df1bf8938d872c",
+  "benchmarks/results/cases/mcl1/mcl1.json": "0b22cea40d48dd2fcdc13aae2f08b28edd9c9cfaa58476f98636e76d21326479",
+  "benchmarks/results/cases/mcl1/mcl1_pharmacophore.csv": "c51977bf7badb560bcf04e6e6307641a226e84d3fb9cc428e2d058265d2880a0",
+  "benchmarks/results/cases/mcl1/mcl1_pharmacophore.json": "2da1ca12e5827792f50b704a874587ae6b27138b580d42dff35a50a123c5b679",
+  "benchmarks/results/cases/ptp1b/ptp1b.json": "a597b92de68ec45742e039aedfa0f593ec6d54619a132df088603eb2a05d8dae",
+  "benchmarks/results/cases/ptp1b/ptp1b_pharmacophore.csv": "a5e71c2d9ac2b7809d6a388b49922e12204274648f12747af2044dd319f61fd6",
+  "benchmarks/results/cases/ptp1b/ptp1b_pharmacophore.json": "2599e6b3524a62371e9852214846877b81c27f3e1704dce129bab0462996b483",
+  "benchmarks/results/cases/table.md": "6426662ed011423923762bcb35927c7ab93f3048883302e2bcb1042228b99bda",
   "benchmarks/results/cdft_kernels/161_c1ccc2scnc2c1.json": "b0a442c3e76186629d1516398a8adde9a6c2724fc5665f669b8f74defc96b3e7",
   "benchmarks/results/cdft_kernels/table.md": "01a71b3f36267fc9f7000243421a911adf4f7773fc60bab023c94bafa55232fe",
   "benchmarks/results/chirality/AChE.json": "ddaac19213a54c7711e51139c0469f71739204df74d3e9ccffeaf80fa0a07150",

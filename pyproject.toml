@@ -70,3 +70,6 @@ version = { attr = "cmfqsar.__version__" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+  "slow: a test that builds a real model and takes seconds rather than milliseconds",
+]

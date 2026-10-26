@@ -45,3 +45,6 @@ examples/corrosion_fe110/*_orca/
 
 # the LIT-PCBA archive is 57 MB and is not ours to redistribute: the maker downloads it
 examples/litpcba/*.tgz
+
+# the artefacts of a reader's own run of the case studies (the benchmark keeps the numbers)
+examples/case_studies/

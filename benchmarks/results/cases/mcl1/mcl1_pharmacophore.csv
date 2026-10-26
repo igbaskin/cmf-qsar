@@ -1,0 +1,6 @@
+type,x,y,z,radius,field,sign,peak,weight,meaning
+bulk,63.621,-30.355,32.218,4.159,steric,1,0.21567,44.63693,atoms here raise the activity
+hydrophobic,64.278,-30.677,31.895,2.379,hydrophobic,1,0.76056,29.17831,hydrophobic bulk raises the activity
+positive,73.485,-30.683,27.008,1.577,electrostatic,1,0.35755,4.24685,positive partial charge raises the activity
+polar,64.856,-31.698,26.127,0.993,hydrophobic,-1,-0.24168,-0.70512,hydrophobic bulk lowers the activity
+exclusion,68.614,-32.411,24.508,3.950,steric,-1,-0.18784,-33.21021,atoms here lower the activity

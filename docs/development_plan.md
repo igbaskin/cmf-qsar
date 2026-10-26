@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with twenty-one subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `screen`, `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
   `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`),
-  728 tests, a typeset manual and a README that doubles as the record of every measurement made
+  738 tests, a typeset manual and a README that doubles as the record of every measurement made
   so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -817,6 +817,44 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   tests but no worked example. Three FEP series with crystal pockets, each worked through end to end in a
   script under `examples/` and a section of the manual, judged by a medicinal chemist. Paper 7 is
   written from these.
+  **Done 26 October 2026, except the part that needs a chemist.** `examples/case_studies.py` runs
+  one of three series from end to end -- model, the three checks, co-fields masked at two standard
+  deviations, pharmacophore, Shapley decomposition by rings and the pieces between them, field
+  difference between the weakest and the strongest molecule, complementarity with the crystal
+  pocket, and the HTML report -- and `benchmarks/run_cases.py` keeps the numbers so the manual's
+  three sections can be rebuilt from them (`docs/manual.md`, "Three series, worked through").
+  **The three cases** were chosen by measuring every set in `examples/openff` and
+  `examples/schindler` that ships a pocket and keeping the best models among different target
+  families: `openff/ptp1b` (a phosphatase, 22 ligands),
+  `openff/mcl1` (a protein-protein interaction groove, 25) and
+  `schindler/cdk8` (a kinase, 33, the widest activity range at
+  4.18 log units).
+  **What they produced**, and the first one is the most useful:
+  - `ptp1b` **does not survive its own y-randomisation**: q2cv +0.499
+    against a best-of-thirty shuffle of +0.539, p =
+    0.065. It is kept as the case that stops at the check, with the
+    two warning signs named: a training fit of R2 +0.975, and
+    R2pred +0.147 on the held-out third where the selection fold gave
+    +0.824.
+  - `mcl1` reads cleanly: q2cv +0.548, R2pred
+    +0.581, best shuffle +0.098. The
+    hydrophobic and steric fields carry it and the donor field is *worse* than useless
+    (electrostatic +0.032, steric +0.062, hydrophobic +0.071, hba +0.037, hbd -0.077). **Burial alone correlates with activity at
+    +0.698 while the full complementarity score reaches
+    +0.254**: a score that averages five terms is three
+    times worse than one of them.
+  - `cdk8` is acceptor-driven (electrostatic +0.043, steric -0.015, hydrophobic -0.024, hba +0.099, hbd -0.061), and almost none of its map survives its own error
+    bar (electrostatic 4%, steric 6%, hydrophobic 4%, hba 7%, hbd 0%). Its pocket file says nothing, because a site trimmed at 8 A around a
+    shallow hinge leaves most of a ligand outside it (burial 0.014
+    against 0.588 on `mcl1`).
+  **One method fix came out of it.** "Which fields does this series need" was being answered by a
+  kernel norm, which cannot answer it: the field kernels are scaled to unit mean diagonal before
+  they are mixed, so all five come out at about 20 % whatever they contribute. The script removes
+  each field and refits instead, and that is the number quoted above.
+  **Not done, and it is the half the item cares about:** no medicinal chemist has judged any of
+  this. Paper 7 is written from a chemist's reading of these maps, and what exists now is the
+  material for that reading, not the reading. Also not done: the other 70 sets that have a pocket,
+  and a case where the pharmacophore is tested by screening rather than by inspection.
 * **F2. The uncertainty of a co-field.** The co-field is `Σ a_j X_j(r)`; under the GP the dual
   coefficients have a posterior covariance, so the co-field has a posterior variance at every grid
   point in closed form. Render only the regions where the co-field exceeds twice its standard
@@ -1384,7 +1422,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
-| Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
+| Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; the review that ties the series together |
