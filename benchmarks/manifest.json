@@ -1,6 +1,6 @@
 {
- "commit": "dcfacf4bda701eb74c12dba135b558f43287ed5e",
- "created": "2026-10-26T14:51:37",
+ "commit": "3222317511394fbb05a87e498c1bc2514d87749f",
+ "created": "2026-10-26T15:45:40",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1805,6 +1805,10 @@
   "benchmarks/results/multitask/161_c1ccc2scnc2c1__activity__dG_ads.json": "54d8162d2e97f47d30fb3cceeb4975ff745435b005e67cc407352abe3a0632b5",
   "benchmarks/results/multitask/2_c1c_nH_cn1__activity__dG_ads.json": "353822b8979eae1480db976419164244a1ea0ff4987a80b44bae3da49cbbdbec",
   "benchmarks/results/multitask/table.md": "5f4ec2333e0519319f88f9ffa0b431e32b9f0b2a776591044e12c1ed44348063",
+  "benchmarks/results/nystrom/rank.json": "6173fd82fb8dd995c3484bc137aebe7bafa6cc4aab4efa53cd665ff8681325e3",
+  "benchmarks/results/nystrom/select.json": "8e3a77a9aedd06ea792d0bee7ae9866307ba23cf4b9836732c8658288c593159",
+  "benchmarks/results/nystrom/table.md": "a79a6bbe54f3f94da6359808bea9b9847106e2f2eead9335c87091c4ba73e61c",
+  "benchmarks/results/nystrom/width.json": "cc4e558421b5722e8c67ac70295c855b1fc678cb4c786aa6be1302c753e52fcb",
   "benchmarks/results/perfield/ACE.json": "8d46487c550143ad251f56d1cf752ec5a05bc1b041b497b23cc7845dfa6c449e",
   "benchmarks/results/perfield/AChE.json": "83118d61a0ca9635926f79003a79930be1c55f9aff99c04f9fa9cfba5af9b668",
   "benchmarks/results/perfield/BZR.json": "1b31426078a6fdc5b4277cb553972e2ab456bcee7ee3ba17f97b60fa6fd2ecf9",

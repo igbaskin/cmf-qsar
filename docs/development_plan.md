@@ -284,6 +284,81 @@ larger searches in parts C and E.
   **Not done:** SVML (which would make the serial loop competitive and is a packaging question,
   not a code one), a GPU path, and threading the field construction, which is now the larger half
   of a screening run.
+* **B6. Low-rank kernels for large training sets.** The exact model holds one n × n matrix per
+  field and factorises the n × n joint kernel. On a 32 GB machine that stops at ten to twenty
+  thousand molecules: five field kernels of 10 000 molecules take 4 GB, and the alpha grid of B1
+  keeps six of them. Memory is the limit, not time: extrapolating from the 0.09 s of B5 for 200
+  molecules, the compiled kernel of 10 000 molecules takes about four minutes and that of
+  100 000 about six hours.
+  **Assessed and measured 26 October 2026; not implemented.** Of the methods for kernel models
+  on large sets, one fits this kernel and the others do not.
+  *The Nyström approximation (inducing points) fits.* It replaces every field kernel by
+  `K(X, Z) K(Z, Z)^+ K(Z, X)`, a matrix of rank m built from the kernels against m landmarks Z.
+  The blocks `K(X, Z)` are what `kernel_matrices(P, Q)` computes and what `screen.py` streams,
+  so no new kernel code is needed. The landmarks can be a subset of the training molecules, or
+  Gaussians in space: the molecule kernel is the Gram matrix of a Gaussian kernel on R³
+  contracted with the atom weights, so a basis of Gaussian centres in the common frame spans the
+  field of every molecule that fits in the frame, and the rank it needs depends on the frame and
+  the width, not on the number of molecules. Everything downstream has a standard low-rank
+  form: the ridge fit in O(n m²), the variance and the evidence through the Woodbury identity
+  (in the variational form of Titsias 2009, because the plain Nyström variance goes to zero far
+  from the data, which is the opposite of what a lower confidence bound needs), LinearSVR and
+  LinearSVC on the features instead of libsvm, the kernel alignment of the mixing coefficients
+  from m × m Gram matrices, Nyström kernel PCA for the maps. The interpretation survives: with
+  landmark molecules the co-field is a sum over their fields, with Gaussian centres it is
+  directly a sum over the basis, so the contributions, the Shapley values, the pharmacophore and
+  the co-field error bars keep their form with the index set changed from training molecules to
+  landmarks.
+  *Random Fourier features do not fit.* They need a shift-invariant kernel on vectors, and the
+  CMF kernel has no vector input. The only analogue is sampling the fields on a grid as explicit
+  features, which is the grid dependence the 2013 paper removed and breaks rule 3.
+  *Matrix-free iterative solvers do not fit.* Every matrix-vector product is a full kernel pass,
+  about six hours at 100 000 molecules, and conjugate gradient needs tens of them. Falkon, which
+  is Nyström with a preconditioned conjugate gradient, is worth it only when m must exceed about
+  10 000, and it needs PyTorch and a GPU.
+  **Measured** (`benchmarks/run_nystrom.py`, `benchmarks/results/nystrom/table.md`) on the eight
+  Sutherland sets, at the attenuation and ridge the exact grid search chose, on the same ten
+  folds:
+  - Gaussian centres 2 Å apart (170 to 350 of them) reproduce the exact q²cv to within 0.002 on
+    the five sets whose attenuation is 1 or below (BZR, COX2, DHFR, THR, THER), with a relative
+    error of the joint kernel between 2e-7 and 2e-2. On the three sets that chose alpha 2 or 5
+    (ACE, AChE, GPB) the same grid loses 0.01 to 0.04 of q², and centres 1.5 Å apart (430 to
+    630) bring it back to within 0.005 or above the exact value.
+  - The reason is the width. A fixed 2 Å grid on COX2 has a kernel error of 2e-6 at alpha 0.1
+    (Gaussian width 3.2 Å) and 1e-1 at alpha 5 (width 0.45 Å). A grid of centres spans the field
+    only while its spacing is not much larger than the width, so at alpha 5 the frame of a
+    Sutherland set would need about 0.5 Å spacing, some 27 000 centres. The rank argument holds
+    for broad fields only, and three of the eight sets chose a narrow one.
+  - Landmark molecules need no grid and have no width problem: 20 to 80 of them put every one
+    of three random draws within 0.02 of the exact q² on seven sets; THER needed all 76. The
+    joint kernel is still 1 to 10 % wrong there, so the model needs far less of the kernel than
+    the kernel error suggests.
+  - The whole grid search on the 2 Å kernels chooses the same attenuation and ridge on five of
+    eight sets with the same q² to 0.006. The three it misses are the two alpha ≥ 2 sets (ACE
+    chose 5 instead of 2, AChE 2 instead of 5) and THER's ridge (0.01 instead of 0.03, q² equal
+    to 0.002). It is faster already at these sizes: DHFR's search 22.5 s → 3.3 s, COX2's
+    13.5 s → 1.3 s.
+  **What this settles.** For the attenuations most sets choose, 1 and below, a few hundred
+  Gaussian centres give the exact model for every practical purpose whatever the number of
+  molecules, and the item is safe to implement. At alpha 2 and above the inducing set must be
+  finer or must follow the atoms; the atoms of a subset of molecules used as centres, which is
+  between the two kinds measured, is the candidate. The implementation is two to four weeks: a
+  feature module (the Nyström map per field, streamed over blocks of molecules), a primal path
+  in `_Learner` with the Woodbury variance and evidence, the kernel alignment on features, the
+  interpretation tools indexed by landmarks, and a model state that stores the landmarks and
+  their coefficients instead of the whole training table, which also makes the model files
+  smaller.
+  **Two limits of the whole question.** A training set of 100 000 molecules needs all of them
+  in one frame, so the alignment problem of part C, not the solver, is what stands between CMF
+  and large training sets; posed libraries of that size are already handled by `screen.py`. And
+  the one kernel built for many molecules without a frame, the autocorrelation kernel of
+  `invariant.py`, already has explicit features of a few hundred columns: for it no
+  approximation is needed, only a learner that accepts a feature matrix, which is the cheaper
+  route for LP5.
+  **Not done:** the implementation; a width for the inducing Gaussians other than the field's
+  own, since a broader basis may need fewer centres; landmark atoms; the variance of the
+  approximate Gaussian process; and any set larger than 361 molecules, which is where the point
+  of the item lies and where nothing in the repository is aligned.
 
 ## C. The alignment problem (months 3 to 12)
 
