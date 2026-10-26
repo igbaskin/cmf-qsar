@@ -4216,6 +4216,77 @@ res = scaffold_decomposition(model, mf[0], ds.mols[0], ds.mols[1:20])   # per su
 print(res.prediction, res.baseline, res.table(), res.top_interactions(5))
 ```
 
+Three more tasks that a notebook user is likely to want outside the application. Each script runs
+as written on a file from `examples/`.
+
+A prediction interval with a coverage guarantee. The calibration uses the cross-validated errors
+that `fit` has already computed, so nothing is recomputed; see *How certain is one prediction?
+Conformal intervals* for what the guarantee means.
+
+```python
+from cmfqsar import FieldSet, CMFModel, load_dataset
+from cmfqsar.fields import AtomTable, build_fields
+from cmfqsar.conformal import coverage
+
+ds = load_dataset("examples/steroids_cbg.sdf", activity_prop="CBG_pK")   # 21 train, 10 test
+fs = FieldSet.create()
+mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+tr, te = ds.train_indices, ds.test_indices
+model = CMFModel(fieldset=fs, method="krr", params={"lam": 0.01})
+model.fit(AtomTable.from_molecules([mf[i] for i in tr]), ds.activity[tr], cv_folds=10)
+model.calibrate_conformal(level=0.9)     # from the cross-validated errors fit() has already made
+print(model.conformal_.describe())
+yp, lo, hi = model.predict_interval(AtomTable.from_molecules([mf[i] for i in te]))
+print(coverage(ds.activity[te], lo, hi))
+```
+
+A model on a series that has no alignment. A SMILES table is enough: `load_dataset` gives every
+molecule its own 3D structure, in no common frame, and the rotation-invariant autocorrelation
+kernel of *Working without an alignment* does not need one. The last line shows which atoms the
+prediction for one molecule came from.
+
+```python
+from cmfqsar import FieldSet, CMFModel, load_dataset
+from cmfqsar.fields import AtomTable, build_fields
+from cmfqsar.model import grid_search
+
+ds = load_dataset("examples/cyclodextrin/gamma_cyclodextrin.csv", activity_prop="activity")
+fs = FieldSet.create(alpha=1.0)
+mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+train = AtomTable.from_molecules(mf)
+model = CMFModel(fieldset=fs, method="krr", normalize=True,
+                 kernel_source="autocorrelation", ac_sigma=0.75, ac_d_max=12.0)
+grid_search(train, ds.activity, model, alphas=[1.0], lams=[1e-3, 1e-2, 0.1, 1])
+model.fit(train, ds.activity, cv_folds=10)
+print(model.stats.summary())
+print(model.atom_contributions(mf[0]))      # one value per atom of the first molecule
+```
+
+Two endpoints on one kernel. The multi-task model of *Several endpoints at once* is a function of
+the kernel matrix, so it takes the kernel of any model, aligned or not. Here every guest carries
+its binding constant to beta-cyclodextrin and some guests carry the alpha-cyclodextrin constant as
+well; the two are fitted together, tied by one correlation chosen by cross-validation.
+
+```python
+import numpy as np
+from cmfqsar import FieldSet, CMFModel, load_dataset
+from cmfqsar.fields import AtomTable, build_fields
+from cmfqsar import multitask as MT
+
+ds = load_dataset("examples/cyclodextrin/beta_with_alpha.csv", activity_prop="activity")
+alpha = np.array([float(m.GetProp("alpha_logK")) if m.HasProp("alpha_logK") and
+                  m.GetProp("alpha_logK").strip() else np.nan for m in ds.mols])
+fs = FieldSet.create(alpha=1.0)
+mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+model = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="autocorrelation")
+K = model.training_kernel(AtomTable.from_molecules(mf))    # one kernel for both endpoints
+obs = MT.Observations.from_columns(np.column_stack([ds.activity, alpha]), names=("beta", "alpha"))
+rho, lam, score, per_task = MT.search(K, obs, rhos=[0.0, 0.5, 0.9], lams=[0.01, 0.1, 1.0])
+print(rho, lam, per_task)                    # cross-validated q2 of each endpoint
+fit = MT.fit(K, obs, rho=rho, lam=lam)
+print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
+```
+
 The modules, one line each. The package has more modules than the application has panels: many of
 them exist only for the command-line tool and for use as a library.
 
