@@ -4,7 +4,7 @@ their overlap evaluated on a rectangular grid for visualisation (isosurfaces)
 and export.  Also: Gaussian-cube export.
 
 Co-field of field type f (Baskin & Zhokhova 2013, Eq. 9; "molecular co-field"
-in Baskin & Zhokhova 2019):
+in Baskin & Zhokhova 2019)::
 
     C_f(r) = sum_j a_j sum_m w_fjm exp(-b_jm/2 |r - r_jm|^2)
 
@@ -62,7 +62,7 @@ def make_grid(coords: np.ndarray, margin: float = 3.0, spacing: float = 0.5, max
 
 def evaluate_gaussians(points: np.ndarray, centers: np.ndarray, coeffs: np.ndarray, widths: np.ndarray,
                        eps: float = 1e-5, chunk: int = 20000) -> np.ndarray:
-    """sum_m coeffs[m] exp(-widths[m]/2 |p - centers[m]|^2) for every point p (sparse evaluation)."""
+    """``sum_m coeffs[m] exp(-widths[m]/2 |p - centers[m]|^2)`` for every point p (sparse evaluation)."""
     centers = np.asarray(centers, float)
     coeffs = np.asarray(coeffs, float)
     widths = np.asarray(widths, float)
@@ -153,9 +153,9 @@ def difference_volume(candidate: MoleculeFields, reference: MoleculeFields, spec
 
 def shapley_volume(mol: MoleculeFields, spec, values: np.ndarray, grid: Grid,
                    normalized: bool = True) -> np.ndarray:
-    """Shapley field: the per-atom values of one field type smeared over its own Gaussians.
+    """Shapley field: the per-atom values of one field type smeared over its own Gaussians::
 
-    Phi(r) = sum_l phi_l (b_l / 2 pi)^(3/2) exp(-b_l/2 |r - r_l|^2)
+        Phi(r) = sum_l phi_l (b_l / 2 pi)^(3/2) exp(-b_l/2 |r - r_l|^2)
 
     With `normalized` each Gaussian integrates to one, so the integral of the map over space is
     the sum of the values, which is the part of the prediction attributed to this field: the same

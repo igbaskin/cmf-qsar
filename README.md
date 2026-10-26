@@ -3329,6 +3329,7 @@ python benchmarks/run_all.py --manifest     # benchmarks/manifest.json: versions
 python benchmarks/run_all.py --check        # fail if a table, a document or a data file is not what the files give
 python docs/make_api.py                     # docs/api.md: the function-by-function reference, from the docstrings
 python docs/make_api.py --check             # fail if docs/api.md is not what the source gives
+python -m sphinx -b html docs/sphinx docs/sphinx/_build/html   # the same reference as an HTML site with links and search
 python benchmarks/run_all.py --compute all --data-root <Sutherland MOL2 folder> --orca
 ```
 

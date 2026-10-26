@@ -170,7 +170,7 @@ def field_overlap(a: MoleculeFields, spec_a, fa: int, b: MoleculeFields, spec_b,
     """Integral over space of field `fa` of `a` times field `fb` of `b`.
 
     Both fields are sums of Gaussians, so the integral is a sum over atom pairs of
-    (2 pi / (b1 + b2))^(3/2) exp(-b1 b2 / (2 (b1 + b2)) |x1 - x2|^2), the same closed form the
+    ``(2 pi / (b1 + b2))^(3/2) exp(-b1 b2 / (2 (b1 + b2)) |x1 - x2|^2)``, the same closed form the
     CMF kernel uses; no grid is involved and the result is exact.
     """
     wa, wb = a.weights[:, fa], b.weights[:, fb]

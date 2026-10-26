@@ -72,7 +72,7 @@ class Conformal:
     """A calibrated interval rule: absolute errors on molecules the model did not fit.
 
     `difficulty` and `beta` turn it into the normalised form, where the nonconformity score is
-    |y - y_hat| / (beta + difficulty) and the half width grows with the difficulty of the molecule
+    ``|y - y_hat| / (beta + difficulty)`` and the half width grows with the difficulty of the molecule
     being predicted.  `beta` keeps the denominator away from zero and sets how much of the width
     is fixed: with beta large the rule tends back to the plain one.
     """

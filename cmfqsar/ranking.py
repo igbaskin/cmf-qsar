@@ -9,7 +9,7 @@ on the part that is noise.
 
 The ranking support-vector machine (Herbrich et al. 2000; Joachims, KDD 2002) fits the order.
 For every pair of molecules whose activities differ it asks that the more active one score higher
-by a margin, and it is penalised for every pair where that fails:
+by a margin, and it is penalised for every pair where that fails::
 
     minimise  |w|^2 / 2 + C sum_p xi_p
     subject to  <w, X_i - X_j> >= 1 - xi_p  for every pair p = (i, j) with y_i > y_j

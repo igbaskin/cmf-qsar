@@ -35,8 +35,9 @@ dependencies = [
 [project.optional-dependencies]
 # the desktop application and its OpenGL view
 gui = ["PySide6>=6.5", "pyqtgraph>=0.13", "PyOpenGL>=3.1"]
-# typesetting docs/manual.md (matplotlib only supplies the DejaVu fonts)
-docs = ["reportlab>=4", "matplotlib>=3.7"]
+# typesetting docs/manual.md (matplotlib only supplies the DejaVu fonts) and building the HTML
+# API reference under docs/sphinx
+docs = ["reportlab>=4", "matplotlib>=3.7", "sphinx>=7", "furo"]
 # the test suite
 dev = ["pytest>=7"]
 # examples/scaffold_tree_export.py: protonation states at a given pH

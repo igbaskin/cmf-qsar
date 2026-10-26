@@ -2,7 +2,7 @@
 Parameterisation of continuous molecular fields.
 
 Every molecular field of type *f* is approximated by a sum of atom-centred
-isotropic Gaussian functions (Baskin & Zhokhova 2013, Eq. 4 and Eq. 10):
+isotropic Gaussian functions (Baskin & Zhokhova 2013, Eq. 4 and Eq. 10)::
 
     rho_f,il(r) = w_f,il * exp(-1/2 * b_f,il * |r - r_il|^2)
 
@@ -11,12 +11,14 @@ steric field (whose width scales with the van der Waals radius of the atom).
 
 Field types implemented
 -----------------------
-electrostatic   w = partial atomic charge (Gasteiger, MMFF94 or from file)
-steric          w = Tripos vdW well depth E_vdw, width scaled by R_vdw
-hydrophobic     w = Wildman-Crippen atomic logP contribution
-hba             w = approximate hydrogen-bond acceptor increment (Abraham-B-like)
-hbd             w = approximate hydrogen-bond donor increment (Abraham-A-like),
-                placed on the polar hydrogen atoms
+::
+
+    electrostatic   w = partial atomic charge (Gasteiger, MMFF94 or from file)
+    steric          w = Tripos vdW well depth E_vdw, width scaled by R_vdw
+    hydrophobic     w = Wildman-Crippen atomic logP contribution
+    hba             w = approximate hydrogen-bond acceptor increment (Abraham-B-like)
+    hbd             w = approximate hydrogen-bond donor increment (Abraham-A-like),
+                    placed on the polar hydrogen atoms
 
 With ``FieldSet.param_scheme == "tripos"`` the hydrophobic, hba and hbd weights
 are instead the in-house increments of the original CMF R scripts (keyed by
@@ -25,11 +27,12 @@ atom; see :mod:`cmfqsar.increments`), and the steric parameters are looked up
 by Sybyl atom type.  ``"tripos-legacy"`` reproduces the 2013 scripts exactly,
 including their hydrogen-counting bug (attached hydrogens are only counted when
 the hydrogen is the first atom of the bond record, which practically never
-happens in Sybyl MOL2 files).
-cif:<type>      continuous indicator field: w = 1 for atoms of Sybyl type <type>
-pharm:<feature> the same for one of six pharmacophore features (donor, acceptor, aromatic,
-                hydrophobe, cation, anion); see cmfqsar/pharmtypes.py
-                (Sitnikov et al. 2015, Eq. 6)
+happens in Sybyl MOL2 files). ::
+
+    cif:<type>      continuous indicator field: w = 1 for atoms of Sybyl type <type>
+    pharm:<feature> the same for one of six pharmacophore features (donor, acceptor, aromatic,
+                    hydrophobe, cation, anion); see cmfqsar/pharmtypes.py
+                    (Sitnikov et al. 2015, Eq. 6)
 """
 from __future__ import annotations
 

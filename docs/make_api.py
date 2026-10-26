@@ -42,9 +42,11 @@ def docstring_to_markdown(doc: str | None) -> str:
     text = inspect.cleandoc(doc)
     text = _ROLE.sub(lambda m: f"`{m.group(1)}`", text)
     text = _DOUBLE.sub(lambda m: f"`{m.group(1)}`", text)
-    # a literal block introduced by "::" keeps its indentation, which Markdown reads as code
-    text = re.sub(r"(\S)::$", r"\1:", text, flags=re.M)
+    # a literal block introduced by "::" keeps its indentation, which Markdown reads as code;
+    # reStructuredText turns "text::" into "text:" and drops " ::" and a bare "::" entirely
     text = re.sub(r"^::$", "", text, flags=re.M)
+    text = re.sub(r"\s+::$", "", text, flags=re.M)
+    text = re.sub(r"(\S)::$", r"\1:", text, flags=re.M)
     return text.strip()
 
 

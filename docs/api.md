@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 70 modules, 123 classes with 463 public methods, and 510 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 70 modules, 123 classes with 463 public methods, and 514 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1086,7 +1086,7 @@ Rectangular grid enclosing `coords` with a margin; the spacing is coarsened if n
 
 ### `evaluate_gaussians(points: np.ndarray, centers: np.ndarray, coeffs: np.ndarray, widths: np.ndarray, eps: float=1e-05, chunk: int=20000) -> np.ndarray`
 
-sum_m coeffs[m] exp(-widths[m]/2 |p - centers[m]|^2) for every point p (sparse evaluation).
+`sum_m coeffs[m] exp(-widths[m]/2 |p - centers[m]|^2)` for every point p (sparse evaluation).
 
 ### `cofield_volume(model: CMFModel, f: int, grid: Grid, include_scale: bool=False) -> np.ndarray`
 
@@ -1110,9 +1110,9 @@ which is the usual condition of everything here.
 
 ### `shapley_volume(mol: MoleculeFields, spec, values: np.ndarray, grid: Grid, normalized: bool=True) -> np.ndarray`
 
-Shapley field: the per-atom values of one field type smeared over its own Gaussians.
+Shapley field: the per-atom values of one field type smeared over its own Gaussians:
 
-Phi(r) = sum_l phi_l (b_l / 2 pi)^(3/2) exp(-b_l/2 |r - r_l|^2)
+    Phi(r) = sum_l phi_l (b_l / 2 pi)^(3/2) exp(-b_l/2 |r - r_l|^2)
 
 With `normalized` each Gaussian integrates to one, so the integral of the map over space is
 the sum of the values, which is the part of the prediction attributed to this field: the same
@@ -1325,7 +1325,7 @@ Fields of the pocket, in the same parameterisation as the molecules of the data 
 Integral over space of field `fa` of `a` times field `fb` of `b`.
 
 Both fields are sums of Gaussians, so the integral is a sum over atom pairs of
-(2 pi / (b1 + b2))^(3/2) exp(-b1 b2 / (2 (b1 + b2)) |x1 - x2|^2), the same closed form the
+`(2 pi / (b1 + b2))^(3/2) exp(-b1 b2 / (2 (b1 + b2)) |x1 - x2|^2)`, the same closed form the
 CMF kernel uses; no grid is involved and the result is exact.
 
 ### `clash_count(mol: MoleculeFields, pocket: MoleculeFields, tolerance: float=0.5) -> Tuple[int, float]`
@@ -1510,7 +1510,7 @@ needs its own vocabulary; it is not implemented here.
 A calibrated interval rule: absolute errors on molecules the model did not fit.
 
 `difficulty` and `beta` turn it into the normalised form, where the nonconformity score is
-|y - y_hat| / (beta + difficulty) and the half width grows with the difficulty of the molecule
+`|y - y_hat| / (beta + difficulty)` and the half width grows with the difficulty of the molecule
 being predicted.  `beta` keeps the denominator away from zero and sets how much of the width
 is fixed: with beta large the rule tends back to the plain one.
 
@@ -2505,13 +2505,14 @@ I act on, which do I measure first.  So every estimate is scored against the abs
 supposed to anticipate, by three measures that answer three different questions.
 
 **Does it order the molecules correctly?**  Spearman's rho and Kendall's tau between the estimate
-and |y - yhat|.  Scale-free, and unaware of how big the errors are.
+and `|y - yhat|`.  Scale-free, and unaware of how big the errors are.
 
 **What is gained by acting on it?**  The risk--coverage curve: trust the most confident fraction of
 the molecules and measure the RMSE of that fraction.  A useful estimate makes the curve rise with
 coverage; a useless one leaves it flat at the overall RMSE.  The area under it (AURC) is one
 number, and it is read against two references -- the *oracle*, which orders the molecules by the
 error they actually made, and *random*, which is the flat curve.  The efficiency
+
     (AURC_random - AURC) / (AURC_random - AURC_oracle)
 
 is then 1 for the oracle, 0 for an estimate that is no better than ignoring it, and negative for one
@@ -3130,12 +3131,14 @@ steric field (whose width scales with the van der Waals radius of the atom).
 
 Field types implemented
 -----------------------
-electrostatic   w = partial atomic charge (Gasteiger, MMFF94 or from file)
-steric          w = Tripos vdW well depth E_vdw, width scaled by R_vdw
-hydrophobic     w = Wildman-Crippen atomic logP contribution
-hba             w = approximate hydrogen-bond acceptor increment (Abraham-B-like)
-hbd             w = approximate hydrogen-bond donor increment (Abraham-A-like),
-                placed on the polar hydrogen atoms
+
+
+    electrostatic   w = partial atomic charge (Gasteiger, MMFF94 or from file)
+    steric          w = Tripos vdW well depth E_vdw, width scaled by R_vdw
+    hydrophobic     w = Wildman-Crippen atomic logP contribution
+    hba             w = approximate hydrogen-bond acceptor increment (Abraham-B-like)
+    hbd             w = approximate hydrogen-bond donor increment (Abraham-A-like),
+                    placed on the polar hydrogen atoms
 
 With `FieldSet.param_scheme == "tripos"` the hydrophobic, hba and hbd weights
 are instead the in-house increments of the original CMF R scripts (keyed by
@@ -3145,10 +3148,11 @@ by Sybyl atom type.  `"tripos-legacy"` reproduces the 2013 scripts exactly,
 including their hydrogen-counting bug (attached hydrogens are only counted when
 the hydrogen is the first atom of the bond record, which practically never
 happens in Sybyl MOL2 files).
-cif:<type>      continuous indicator field: w = 1 for atoms of Sybyl type <type>
-pharm:<feature> the same for one of six pharmacophore features (donor, acceptor, aromatic,
-                hydrophobe, cation, anion); see cmfqsar/pharmtypes.py
-                (Sitnikov et al. 2015, Eq. 6)
+
+    cif:<type>      continuous indicator field: w = 1 for atoms of Sybyl type <type>
+    pharm:<feature> the same for one of six pharmacophore features (donor, acceptor, aromatic,
+                    hydrophobe, cation, anion); see cmfqsar/pharmtypes.py
+                    (Sitnikov et al. 2015, Eq. 6)
 
 ### `class FieldSpec  (dataclass)`
 
@@ -3448,16 +3452,16 @@ field supplies Cartesian gradients for the strain term, and they go through the 
 sets whose held-out conformations are *regenerated* rather than read from the crystal -- the case
 a flexible method actually faces -- with the pose scrambled first every time:
 
-=================================  ==========  =======  =======  ==========  ===============
-method                             median RMSD  < 1 A    < 2 A    R2pred      conformer limit
-=================================  ==========  =======  =======  ==========  ===============
-crystal poses (upper limit)        0.00 A      100%     100%     +0.334      0.00 A
-scrambled (lower limit)            6.12 A        0%       1%     -0.696      1.73 A
-substructure (MCS)                 1.94 A       15%      54%     -0.391      1.73 A
-MCS + rigid confidence             2.27 A       12%      45%     -0.396      1.73 A
-MCS + flexible confidence          1.41 A       35%      74%     +0.065      1.20 A
-MCS + flexible, 5 conformer starts 0.86 A       59%      88%     +0.264      0.71 A
-=================================  ==========  =======  =======  ==========  ===============
+==================================  ===========  =======  =======  ==========  ===============
+method                              median RMSD  < 1 A    < 2 A    R2pred      conformer limit
+==================================  ===========  =======  =======  ==========  ===============
+crystal poses (upper limit)         0.00 A       100%     100%     +0.334      0.00 A
+scrambled (lower limit)             6.12 A         0%       1%     -0.696      1.73 A
+substructure (MCS)                  1.94 A        15%      54%     -0.391      1.73 A
+MCS + rigid confidence              2.27 A        12%      45%     -0.396      1.73 A
+MCS + flexible confidence           1.41 A        35%      74%     +0.065      1.20 A
+MCS + flexible, 5 conformer starts  0.86 A        59%      88%     +0.264      0.71 A
+==================================  ===========  =======  =======  ==========  ===============
 
 Three things follow, and they set the defaults.  **The torsions make the criterion work**: with a
 conformation to fix, the *rigid* confidence search is worse than not refining at all (2.27 against
@@ -4052,7 +4056,7 @@ of both atoms,
 
 which is invariant to translations in the plane and rotations about the normal, and to
 nothing else.  Averaged over the direction of rho it is, by the Wiener-Khinchin theorem,
-the same information as the in-plane power spectrum |F_f(k, z_i) F_g(k, z_j)| of the fields:
+the same information as the in-plane power spectrum `|F_f(k, z_i) F_g(k, z_j)|` of the fields:
 a description of the molecule over the surface in reciprocal space in the plane and in
 real space along the normal.  The surface is at z = 0 and the normal is +z, which is how
 examples/uma_fe110_adsorption.py writes its poses.
@@ -4306,13 +4310,17 @@ Source: `cmfqsar/kernels.py`
 Molecular-field kernels.
 
 For two atoms with Gaussian field contributions
+
     rho_l(r) = w_l exp(-b_l/2 |r - r_l|^2),   rho_m(r) = w_m exp(-b_m/2 |r - r_m|^2)
+
 the overlap integral over R^3 is analytic:
 
     k(l, m) = w_l w_m (2 pi / (b_l + b_m))^{3/2} exp(-(b_l b_m) / (2 (b_l + b_m)) |r_l - r_m|^2)
 
 For b_l = b_m = alpha this reduces to Eq. 5 of Baskin & Zhokhova (2013):
+
     k = w_l w_m (pi/alpha)^{3/2} exp(-alpha/4 |r_l - r_m|^2)
+
 and for the radius-scaled steric field (b = alpha / R_vdw^2) to Eq. 11.
 
 The kernel of molecules i, j for field f is the sum over all atom pairs
@@ -5266,10 +5274,12 @@ sits on the unit sphere, and the arc-cosine layers leave the self-kernel where i
 
 Apply the nonlinear layer to a block of the linear kernel.
 
-gauss    : exp(-gamma d^2), a radial basis function in the Hilbert space of the fields.
-arccos1/2: the degree-1 arc-cosine kernel of Cho & Saul (2009), the kernel of an infinitely
-           wide one- (or two-) hidden-layer network; its self-kernel equals the base one,
-           so the same diagonals serve both layers.
+
+
+    gauss    : exp(-gamma d^2), a radial basis function in the Hilbert space of the fields.
+    arccos1/2: the degree-1 arc-cosine kernel of Cho & Saul (2009), the kernel of an infinitely
+               wide one- (or two-) hidden-layer network; its self-kernel equals the base one,
+               so the same diagonals serve both layers.
 
 #### `CMFModel.layered_kernel(K_fields: np.ndarray, diag_p: np.ndarray, diag_q: np.ndarray) -> np.ndarray`
 
@@ -5405,9 +5415,10 @@ is built from the same numbers rather than from a second copy of them.
 
 #### `CMFModel.cofield_coefficients(f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
 
-Centres, coefficients and widths of the Gaussians composing co-field C_f(r).
+Centres, coefficients and widths of the Gaussians composing co-field C_f(r):
 
-C_f(r) = sum_j a_j s_fj sum_m w_fjm exp(-b_jm/2 |r - r_jm|^2),  (Eq. 9)
+    C_f(r) = sum_j a_j s_fj sum_m w_fjm exp(-b_jm/2 |r - r_jm|^2),  (Eq. 9)
+
 with s_fj = 1/sqrt(K_f(j,j)) when kernels are normalised, else 1.
 The field-scaling constant c_f and mixing coefficient h_f are *not* included.
 For a model whose alpha lies between the points of `alpha_grid` (interpolated
@@ -6491,7 +6502,7 @@ Attributes:
 
 Periodic field autocorrelation of one structure, flattened: (n_pairs * n_bins,).
 
-For a pair of field types (f, g) and a channel at distance d_k,
+For a pair of field types (f, g) and a channel at distance d_k,     ::
 
     Phi_fg(d_k) = (1/N) [ sum_{l in cell} sum_{m: r_lm < r_max} w_lf w_mg
                                  exp(-(r_lm - d_k)^2 / 2 sigma^2) w(r_lm)
@@ -6709,14 +6720,14 @@ a field whose weights are zero on most molecules contributes a kernel column of 
 
 The vocabulary here is six features instead of twenty-odd:
 
-===========  ==========================================================================
-`donor`      an N-H, O-H or S-H that can donate a hydrogen bond
-`acceptor`   an acceptor lone pair
-`aromatic`   an aromatic ring, every atom of it
-`hydrophobe` a hydrophobic atom or a lumped hydrophobic group, such as a ring face
-`cation`     an ionisable basic group, protonated at physiological pH
-`anion`      an ionisable acidic group
-===========  ==========================================================================
+============  ==========================================================================
+`donor`       an N-H, O-H or S-H that can donate a hydrogen bond
+`acceptor`    an acceptor lone pair
+`aromatic`    an aromatic ring, every atom of it
+`hydrophobe`  a hydrophobic atom or a lumped hydrophobic group, such as a ring face
+`cation`      an ionisable basic group, protonated at physiological pH
+`anion`       an ionisable acidic group
+============  ==========================================================================
 
 Each is common enough to appear in most molecules of a series, so each field has something to say
 about every molecule; and the vocabulary is the one a medicinal chemist already uses, so the
@@ -7225,6 +7236,48 @@ Read a PDB file.  Alternate locations other than the first are dropped.
 
 Read the atom_site loop of an mmCIF file, which is what large entries are served as.
 
+### `monomer_units(mol, max_ring: int=MAX_MONOMER_RING) -> List[int]`
+
+Split a molecule into its monomer units, one number per atom (plan item SC3).
+
+A host that comes as a molecule file has no residues, and the profiles that make a
+complementarity score readable are per residue.  A macrocyclic host does have repeating
+units -- a glucose of a cyclodextrin, a glycoluril of a cucurbituril, a phenol of a
+calixarene -- and they are its small ring systems: rings that share an atom belong to the
+same unit, and a ring larger than `max_ring` is the macrocycle that joins the units rather
+than a unit itself, so it is left out of the grouping.
+
+Every atom that is in no ring is given to the unit it is bonded to, following the bonds
+outwards, so a hydroxyl goes with its own sugar.  An atom bridging two units -- the
+glycosidic oxygen -- goes to the one reached first, which makes the split deterministic.  A
+molecule with no rings at all comes back as one unit.
+
+### `read_molecule_host(path: str, add_hydrogens: bool=True, resname: str=MONOMER_RESNAME, max_ring: int=MAX_MONOMER_RING, name: str='', keep_hydrogens: bool=True, keep_waters: bool=False, with_bonds: bool=True) -> Protein`
+
+A host given as a molecule file, with its monomer units as the residues (plan item SC3).
+
+`complement` was written for proteins, and a cyclodextrin, cucurbituril or calixarene comes
+as an SDF or a MOL file with no residues at all.  This reads one and names its repeating
+units, so that everything the pocket machinery does per residue -- the interaction profile,
+the contacts, the residue table -- is done per unit instead.
+
+`keep_hydrogens`, `keep_waters` and `with_bonds` are the arguments the PDB reader takes, so
+that `read_structure` can pass whatever it was given: hydrogens are dropped when asked,
+a molecule file has no waters to drop, and the bonds come from the file rather than from the
+distances.
+
+### `host_from_molecule(mol, add_hydrogens: bool=True, resname: str=MONOMER_RESNAME, max_ring: int=MAX_MONOMER_RING, name: str='', path: str='') -> Protein`
+
+The same from a molecule already in hand, which is what a script or a test has.
+
+### `cavity_frame(protein: Protein, max_ring: int=MAX_MONOMER_RING) -> Tuple[np.ndarray, np.ndarray]`
+
+(centre, axis) of a macrocyclic host: where a guest goes and which way the cavity points.
+
+The centre is the centroid of the monomer units' own centroids, which for a ring of units is
+the middle of the ring whether or not the units are the same size; the axis is the direction
+in which the units vary least, that is the smallest principal axis of those centroids.
+
 ### `read_structure(path: str, **kw) -> Protein`
 
 Read a structure, choosing the parser by extension.
@@ -7255,7 +7308,7 @@ distributed in the PDB format at all.
 
 ### `covalent_bonds(coords: np.ndarray, elements: Sequence[str], tolerance: float=0.45, max_bond: float=2.2) -> np.ndarray`
 
-Bonds from interatomic distances: |r_ij| < R_i + R_j + tolerance.
+Bonds from interatomic distances: `|r_ij| < R_i + R_j + tolerance`.
 
 ### `residue_anchors(protein: Protein) -> Tuple[np.ndarray, List[str]]`
 

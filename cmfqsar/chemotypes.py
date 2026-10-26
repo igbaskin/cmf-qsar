@@ -325,7 +325,7 @@ def count_kernel(mols: Sequence[Chem.Mol], names: Sequence[str], alpha: Optional
     """The kernel of the alignment-free baseline: indicator fields at vanishing attenuation.
 
     The field of Sybyl type *t* is a sum of unit Gaussians on the atoms of that type, so the
-    overlap integral of two such fields is
+    overlap integral of two such fields is ::
 
         K_t(A, B) = (pi/alpha)^{3/2} sum_{l in A} sum_{m in B} exp(-alpha |r_l - r_m|^2 / 4)
                   = (pi/alpha)^{3/2} [ n_t(A) n_t(B) - (alpha/4) sum_lm d_lm^2 + O(alpha^2) ],

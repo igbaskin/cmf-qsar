@@ -9,14 +9,14 @@ a field whose weights are zero on most molecules contributes a kernel column of 
 
 The vocabulary here is six features instead of twenty-odd:
 
-===========  ==========================================================================
-`donor`      an N-H, O-H or S-H that can donate a hydrogen bond
-`acceptor`   an acceptor lone pair
-`aromatic`   an aromatic ring, every atom of it
-`hydrophobe` a hydrophobic atom or a lumped hydrophobic group, such as a ring face
-`cation`     an ionisable basic group, protonated at physiological pH
-`anion`      an ionisable acidic group
-===========  ==========================================================================
+============  ==========================================================================
+`donor`       an N-H, O-H or S-H that can donate a hydrogen bond
+`acceptor`    an acceptor lone pair
+`aromatic`    an aromatic ring, every atom of it
+`hydrophobe`  a hydrophobic atom or a lumped hydrophobic group, such as a ring face
+`cation`      an ionisable basic group, protonated at physiological pH
+`anion`       an ionisable acidic group
+============  ==========================================================================
 
 Each is common enough to appear in most molecules of a series, so each field has something to say
 about every molecule; and the vocabulary is the one a medicinal chemist already uses, so the

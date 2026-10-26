@@ -10,7 +10,7 @@ f(r) = rho_{N+1}(r) - rho_N(r), and ORCA will write it on a grid.
 
 This module reads those grids (:func:`read_cube`, :func:`cdft_fields`, :func:`run_orca_plot`) and
 tries to bring them into CMF's algebra the way the probe fields were brought in -- by fitting
-several Gaussians per atom,
+several Gaussians per atom, ::
 
     F(r)  ~  sum_l sum_t  c_{l,t} exp(-beta_t |r - R_l|^2 / 2),
 

@@ -17,13 +17,14 @@ I act on, which do I measure first.  So every estimate is scored against the abs
 supposed to anticipate, by three measures that answer three different questions.
 
 **Does it order the molecules correctly?**  Spearman's rho and Kendall's tau between the estimate
-and |y - yhat|.  Scale-free, and unaware of how big the errors are.
+and ``|y - yhat|``.  Scale-free, and unaware of how big the errors are.
 
 **What is gained by acting on it?**  The risk--coverage curve: trust the most confident fraction of
 the molecules and measure the RMSE of that fraction.  A useful estimate makes the curve rise with
 coverage; a useless one leaves it flat at the overall RMSE.  The area under it (AURC) is one
 number, and it is read against two references -- the *oracle*, which orders the molecules by the
-error they actually made, and *random*, which is the flat curve.  The efficiency
+error they actually made, and *random*, which is the flat curve.  The efficiency ::
+
     (AURC_random - AURC) / (AURC_random - AURC_oracle)
 
 is then 1 for the oracle, 0 for an estimate that is no better than ignoring it, and negative for one

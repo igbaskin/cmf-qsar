@@ -1,14 +1,18 @@
 """
 Molecular-field kernels.
 
-For two atoms with Gaussian field contributions
+For two atoms with Gaussian field contributions ::
+
     rho_l(r) = w_l exp(-b_l/2 |r - r_l|^2),   rho_m(r) = w_m exp(-b_m/2 |r - r_m|^2)
-the overlap integral over R^3 is analytic:
+
+the overlap integral over R^3 is analytic::
 
     k(l, m) = w_l w_m (2 pi / (b_l + b_m))^{3/2} exp(-(b_l b_m) / (2 (b_l + b_m)) |r_l - r_m|^2)
 
-For b_l = b_m = alpha this reduces to Eq. 5 of Baskin & Zhokhova (2013):
+For b_l = b_m = alpha this reduces to Eq. 5 of Baskin & Zhokhova (2013)::
+
     k = w_l w_m (pi/alpha)^{3/2} exp(-alpha/4 |r_l - r_m|^2)
+
 and for the radius-scaled steric field (b = alpha / R_vdw^2) to Eq. 11.
 
 The kernel of molecules i, j for field f is the sum over all atom pairs
@@ -494,7 +498,7 @@ def kernel_gradient(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable
     """Gradient of ``sum_f sum_j u[f, j] K_f(i, j)`` with respect to the atom positions of i.
 
     The kernels are sums of Gaussians in the squared interatomic distances, so the
-    derivative is a weighted sum of the same Gaussians times the interatomic vectors:
+    derivative is a weighted sum of the same Gaussians times the interatomic vectors::
 
         d/dr_il  w_fil w_fjm g(|r_il - r_jm|^2)  =  2 g'(d^2) w_fil w_fjm (r_il - r_jm)
 

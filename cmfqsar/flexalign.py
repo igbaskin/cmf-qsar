@@ -31,16 +31,16 @@ field supplies Cartesian gradients for the strain term, and they go through the 
 sets whose held-out conformations are *regenerated* rather than read from the crystal -- the case
 a flexible method actually faces -- with the pose scrambled first every time:
 
-=================================  ==========  =======  =======  ==========  ===============
-method                             median RMSD  < 1 A    < 2 A    R2pred      conformer limit
-=================================  ==========  =======  =======  ==========  ===============
-crystal poses (upper limit)        0.00 A      100%     100%     +0.334      0.00 A
-scrambled (lower limit)            6.12 A        0%       1%     -0.696      1.73 A
-substructure (MCS)                 1.94 A       15%      54%     -0.391      1.73 A
-MCS + rigid confidence             2.27 A       12%      45%     -0.396      1.73 A
-MCS + flexible confidence          1.41 A       35%      74%     +0.065      1.20 A
-MCS + flexible, 5 conformer starts 0.86 A       59%      88%     +0.264      0.71 A
-=================================  ==========  =======  =======  ==========  ===============
+==================================  ===========  =======  =======  ==========  ===============
+method                              median RMSD  < 1 A    < 2 A    R2pred      conformer limit
+==================================  ===========  =======  =======  ==========  ===============
+crystal poses (upper limit)         0.00 A       100%     100%     +0.334      0.00 A
+scrambled (lower limit)             6.12 A         0%       1%     -0.696      1.73 A
+substructure (MCS)                  1.94 A        15%      54%     -0.391      1.73 A
+MCS + rigid confidence              2.27 A        12%      45%     -0.396      1.73 A
+MCS + flexible confidence           1.41 A        35%      74%     +0.065      1.20 A
+MCS + flexible, 5 conformer starts  0.86 A        59%      88%     +0.264      0.71 A
+==================================  ===========  =======  =======  ==========  ===============
 
 Three things follow, and they set the defaults.  **The torsions make the criterion work**: with a
 conformation to fix, the *rigid* confidence search is worse than not refining at all (2.27 against

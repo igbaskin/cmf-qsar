@@ -1019,10 +1019,12 @@ class CMFModel:
     def apply_layer(self, K: np.ndarray, diag_p: np.ndarray, diag_q: np.ndarray) -> np.ndarray:
         """Apply the nonlinear layer to a block of the linear kernel.
 
-        gauss    : exp(-gamma d^2), a radial basis function in the Hilbert space of the fields.
-        arccos1/2: the degree-1 arc-cosine kernel of Cho & Saul (2009), the kernel of an infinitely
-                   wide one- (or two-) hidden-layer network; its self-kernel equals the base one,
-                   so the same diagonals serve both layers.
+        ::
+
+            gauss    : exp(-gamma d^2), a radial basis function in the Hilbert space of the fields.
+            arccos1/2: the degree-1 arc-cosine kernel of Cho & Saul (2009), the kernel of an infinitely
+                       wide one- (or two-) hidden-layer network; its self-kernel equals the base one,
+                       so the same diagonals serve both layers.
         """
         if self.is_linear:
             return K
@@ -1561,9 +1563,10 @@ class CMFModel:
         return tr.coords, per_mol * tr.weights[:, f], b, index
 
     def cofield_coefficients(self, f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Centres, coefficients and widths of the Gaussians composing co-field C_f(r).
+        """Centres, coefficients and widths of the Gaussians composing co-field C_f(r)::
 
-        C_f(r) = sum_j a_j s_fj sum_m w_fjm exp(-b_jm/2 |r - r_jm|^2),  (Eq. 9)
+            C_f(r) = sum_j a_j s_fj sum_m w_fjm exp(-b_jm/2 |r - r_jm|^2),  (Eq. 9)
+
         with s_fj = 1/sqrt(K_f(j,j)) when kernels are normalised, else 1.
         The field-scaling constant c_f and mixing coefficient h_f are *not* included.
         For a model whose alpha lies between the points of ``alpha_grid`` (interpolated

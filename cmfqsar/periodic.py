@@ -175,7 +175,7 @@ def periodic_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec = Period
                              pairs: Optional[Sequence[Tuple[int, int]]] = None) -> np.ndarray:
     """Periodic field autocorrelation of one structure, flattened: (n_pairs * n_bins,).
 
-    For a pair of field types (f, g) and a channel at distance d_k,
+    For a pair of field types (f, g) and a channel at distance d_k,     ::     ::
 
         Phi_fg(d_k) = (1/N) [ sum_{l in cell} sum_{m: r_lm < r_max} w_lf w_mg
                                      exp(-(r_lm - d_k)^2 / 2 sigma^2) w(r_lm)

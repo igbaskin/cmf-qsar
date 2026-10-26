@@ -8,7 +8,7 @@ positive everywhere and centred on a nucleus cannot make a node, and the fit los
 (relative error 77 % on f+, 89 % on the dual descriptor).
 
 The smallest extension that can make a lobe is to multiply the Gaussian by a linear factor.  With
-the width convention this program uses, ``exp(-b |r - R|^2 / 2)``, the basis on atom `l` becomes
+the width convention this program uses, ``exp(-b |r - R|^2 / 2)``, the basis on atom `l` becomes ::
 
     s_l(r)   = exp(-b |r - R_l|^2 / 2)
     p_l^u(r) = (r_u - R_l,u) exp(-b |r - R_l|^2 / 2),      u = x, y, z

@@ -48,3 +48,7 @@ examples/litpcba/*.tgz
 
 # the artefacts of a reader's own run of the case studies (the benchmark keeps the numbers)
 examples/case_studies/
+
+# the HTML API reference is built, not committed (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
+docs/sphinx/_build/
+docs/sphinx/_autosummary/

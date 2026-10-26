@@ -478,7 +478,7 @@ def fetch_pdb(code: str, dest_dir: Optional[str] = None, timeout: float = 30.0,
 
 def covalent_bonds(coords: np.ndarray, elements: Sequence[str], tolerance: float = 0.45,
                    max_bond: float = 2.2) -> np.ndarray:
-    """Bonds from interatomic distances: |r_ij| < R_i + R_j + tolerance."""
+    """Bonds from interatomic distances: ``|r_ij| < R_i + R_j + tolerance``."""
     n = len(coords)
     if n < 2:
         return np.zeros((0, 2), dtype=int)

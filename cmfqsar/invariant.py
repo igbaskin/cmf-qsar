@@ -7,7 +7,7 @@ the alignment-free comparator there is the count kernel, which is pose-free only
 thrown the geometry away entirely.
 
 This module fills the gap between those two.  For every pair of field types it takes the distance
-distribution of the field weights inside one molecule,
+distribution of the field weights inside one molecule, ::
 
     Phi_fg(d) = sum_l sum_m w_lf w_mg exp(-(|r_l - r_m| - d)^2 / 2 sigma^2),
 
@@ -18,7 +18,7 @@ still describing the three-dimensional arrangement: where a donor sits relative 
 how far the positive charge is from the hydrophobic bulk.
 
 The connection to the CMF kernel is exact at one point.  The overlap integral of two Gaussian
-fields of the same molecule is
+fields of the same molecule is ::
 
     K_fg(A, A) = (pi/alpha)^{3/2} sum_lm w_lf w_mg exp(-alpha |r_l - r_m|^2 / 4),
 
@@ -110,7 +110,7 @@ class SurfaceSpec:
     above the surface are physical and stay as they are; what is arbitrary is where the molecule
     sits in the plane and how it is turned about the normal.  The descriptor is the two-point
     distribution of the field weights over the *in-plane* distance rho, resolved by the heights
-    of both atoms,
+    of both atoms, ::
 
         Phi_fg(rho_k, z_i, z_j) = sum_l sum_m w_lf w_mg exp(-(rho_lm - rho_k)^2 / 2 sigma^2)
                                               exp(-(z_l - z_i)^2 / 2 sigma_z^2)
@@ -118,7 +118,7 @@ class SurfaceSpec:
 
     which is invariant to translations in the plane and rotations about the normal, and to
     nothing else.  Averaged over the direction of rho it is, by the Wiener-Khinchin theorem,
-    the same information as the in-plane power spectrum |F_f(k, z_i) F_g(k, z_j)| of the fields:
+    the same information as the in-plane power spectrum ``|F_f(k, z_i) F_g(k, z_j)|`` of the fields:
     a description of the molecule over the surface in reciprocal space in the plane and in
     real space along the normal.  The surface is at z = 0 and the normal is +z, which is how
     examples/uma_fe110_adsorption.py writes its poses.
