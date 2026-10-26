@@ -850,6 +850,48 @@ says so rather than silently mis-assigning: `--prop-missing error` (the default)
 whole route from an ORCA run to fields and descriptors, from inside the program or from the
 command line.
 
+### A number that belongs to an atom, not to the molecule
+
+A field is built from a property every atom has. A **target** of that shape is a different
+object, and the program now carries one (plan item LP1): a carbon shift, an acidity, a local
+reactivity or a site's energy is a number per atom, and a table of them differs from a per-atom
+field in the way that decides everything downstream -- **most atoms have no value at all**, and
+the atoms that do are not independent samples of each other, because they share a molecule.
+
+`cmfqsar/atomtargets.py` holds that data model, and nothing more: there is no model over atoms
+yet, and the item that adds one needs this first.
+
+* **Reading keeps the blanks.** `read_atom_target` gives one number per atom and *not a number*
+  where the atom has none. The two conventions of the previous section are read, with a value on
+  the atoms themselves taking precedence, and in a molecule property a blank field between two
+  commas is an atom that was not measured -- `1.2, , 3.4` is three atoms of which the middle one
+  has nothing. `n/a`, `-`, `none` and an empty field all mean the same. A list as long as the
+  heavy atoms is spread over them, leaving the hydrogens unmeasured; any other length is an
+  error naming the molecule and both counts.
+* **The index remembers the molecule.** `AtomTargets` is the list of measured (molecule, atom)
+  pairs with their values; a fit iterates over it, and the molecule each sample came from is
+  kept beside it because every honest split needs it.
+* **The folds hold out whole molecules.** `AtomTargets.folds` splits the molecules, never the
+  samples. Two shifts of one molecule, one in the training set and one in the test set, would
+  let a model see the molecule it is being tested on, and a per-atom q² obtained that way would
+  not mean anything. This is the grouped-fold rule of the chemotype splits, with the molecule as
+  the group.
+* **A prediction goes back on its atom.** `write_atom_predictions` writes an SDF whose atoms
+  carry the measured value and the predicted one, in RDKit's own `atom.dprop.<name>` spelling, so
+  a predicted shift sits on the carbon it belongs to and every program that reads an SDF can see
+  it.
+
+```bash
+cmf atoms shifts.sdf --list                       # what here could be a target
+cmf atoms shifts.sdf --target shift --out with_atoms.sdf
+```
+
+`cmf atoms` is the inspection the data model deserves before a model exists: it says how many
+atoms were measured in how many molecules, which molecules carry the most, and what the folds
+would look like, and it writes the file back in the canonical form. Listing is a looser rule than
+the one for fields on purpose -- a property with gaps cannot be a field but is exactly what a
+target looks like.
+
 ## Quantum-chemical properties with ORCA
 
 *Tools → Quantum-chemical properties with ORCA…* runs ORCA over the loaded molecules and brings
@@ -4172,6 +4214,7 @@ not every option.
 | `complement` | field complementarity with a protein pocket |
 | `compare` | are two sets the same population? (MMD, with a witness) |
 | `cluster` | cluster a set by its field kernel (spectral clustering) |
+| `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
 | `unalign` | give every molecule a random pose, the control experiment |
 
 ## The options of `build`, by group

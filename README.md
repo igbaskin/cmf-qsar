@@ -1842,6 +1842,26 @@ driven by the water that leaves the cavity, and an overlap between the guest's f
 host's has no term for the solvent it displaces. The score is a check on a pose — does this
 molecule fit, does it clash — and not an affinity.
 
+### A target that belongs to an atom
+
+A field is built from a property every atom has; a **target** of that shape is a different object,
+and `cmfqsar/atomtargets.py` is the data model for it (plan item LP1). A carbon shift or a local
+acidity is a number per atom, and such a table differs from a per-atom field in the way that
+decides everything downstream: most atoms have no value, and the atoms that do are not
+independent samples, because they share a molecule. So reading keeps the blanks (`1.2, , 3.4` is
+three atoms of which the middle one was not measured), the index remembers which molecule each
+sample came from, the folds hold out **whole molecules** — two shifts of one molecule on opposite
+sides of a split would let the model see the molecule it is tested on — and a prediction is
+written back onto the atom it belongs to, in RDKit's `atom.dprop.<name>` spelling.
+
+```bash
+cmf atoms shifts.sdf --list                  # what in this file could be a target
+cmf atoms shifts.sdf --target shift          # how much was measured, and how it would be split
+```
+
+There is no model over atoms yet: this is the part that has to be right before one can exist, and
+the local kernel is the item that adds one.
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the

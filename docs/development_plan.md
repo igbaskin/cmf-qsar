@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 64 modules and about 28,350 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with twenty-four subcommands (`build`, `build-crystals`, `diagnose`,
+* A library of 65 modules and about 28,700 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with twenty-five subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`), 907 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`), 927 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1714,6 +1714,28 @@ on the same folds.
   molecule are not independent samples; the grouped folds of `cmfqsar/chemotypes.py` are the
   pattern. Output as atom properties on the written SDF, so that a predicted shift or pKa sits
   on the atom it belongs to. No model yet; LP2 and M5 both need it first.
+  **Done 27 October 2026, as the data model it was asked to be.** `cmfqsar/atomtargets.py`:
+  `read_atom_target` reads one number per atom and *not a number* where the atom has none, in
+  both conventions, with a blank field between two commas meaning an unmeasured atom and a list
+  as long as the heavy atoms spread over them; a length that is neither is an error naming the
+  molecule and both counts. `AtomTargets` is the index of the measured (molecule, atom) pairs and
+  keeps the molecule of every sample; `AtomTargets.folds` holds out whole molecules, which is the
+  grouped-fold rule of `cmfqsar/chemotypes.py` with the molecule as the group, so a shift of a
+  molecule in the training set can never be tested against another shift of the same molecule.
+  `scatter` spreads a prediction back over the molecules and `write_atom_predictions` writes an
+  SDF carrying the measured and the predicted value on the atoms themselves, in RDKit's
+  `atom.dprop.<name>` spelling, which is the only one that survives the writer.
+  `Dataset.set_atom_activity` and `load_dataset(..., atom_activity=...)` carry it beside whatever
+  molecule-level activity the file has, and `cmf atoms` reports what a file holds, what the folds
+  would look like and writes it back. `candidate_targets` lists what *could* be a target, which
+  is deliberately a looser rule than the one for a per-atom field: a property with gaps cannot be
+  a field and is exactly what a target looks like.
+  **No measurement, because there is nothing yet to measure**, which is what the item says: there
+  is no model over atoms until the local kernel exists. What stands in its place is 20 tests of
+  the properties the later items will rely on -- that a blank is not a zero, that a molecule is
+  never split between two folds, and that a value written out comes back on the same atom.
+  **Not done:** no model, no per-atom q2, and no GUI; the file for LP2's measurement
+  (nmrshiftdb2) is not in the repository and has to be fetched when that item is taken.
 
 **Medium (one to two weeks each)**
 

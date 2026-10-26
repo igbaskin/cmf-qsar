@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 70 modules, 123 classes with 463 public methods, and 514 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 71 modules, 124 classes with 471 public methods, and 519 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -28,6 +28,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.active](#cmfqsaractive) | Which molecule to make next (plan item E2). |
 | [cmfqsar.align](#cmfqsaralign) | 3D structure generation and molecular alignment. |
 | [cmfqsar.anisotropic](#cmfqsaranisotropic) | Atom functions with a direction: Gaussians times a linear factor (plan item D1). |
+| [cmfqsar.atomtargets](#cmfqsaratomtargets) | A target that belongs to an atom rather than to a molecule (plan item LP1). |
 | [cmfqsar.atomtypes](#cmfqsaratomtypes) | Atom typing (Tripos/Sybyl-like) and van der Waals parameters. |
 | [cmfqsar.cdft](#cmfqsarcdft) | Conceptual-DFT fields on a grid, and what atom-centred Gaussians can and cannot make of them. |
 | [cmfqsar.chemotypes](#cmfqsarchemotypes) | Heterogeneous series: several chemotypes, no single common substructure. |
@@ -398,6 +399,113 @@ and the normal matrix is close to singular without it.
 ### `fit_cube(values: np.ndarray, cube, positions: Optional[np.ndarray]=None, window: Optional[np.ndarray]=None, n_terms: int=4, p_type: bool=True, ridge: float=1e-06, name: str='', chunk: int=100000) -> AnisotropicFit`
 
 `fit_field` on a `cmfqsar.cdft.Cube`, with the widths the probe fields share.
+
+## cmfqsar.atomtargets
+
+Source: `cmfqsar/atomtargets.py`
+
+A target that belongs to an atom rather than to a molecule (plan item LP1).
+
+Everything else in this program predicts one number per molecule.  A carbon shift, an acidity, a
+site's formation energy and a local reactivity are numbers per *atom*, and a data set of them is
+not a list: most atoms of a molecule carry no measurement at all, and the atoms that do are not
+independent samples of each other, because they share a molecule.
+
+This module is the data model for that, and nothing more -- there is no model here, and the item
+that adds one (the local kernel) needs this first.  It holds three things:
+
+* **reading**, with blanks.  `read_atom_target` returns one number per atom and *not a
+  number* where the atom has none, which is the case that separates an atom target from the
+  per-atom properties a field is built from (`cmfqsar.fields.atom_property`), where every
+  atom must have a value.
+* **a sample index.**  `AtomTargets` is the list of measured (molecule, atom) pairs with
+  their values, which is what a fit iterates over; the molecule each sample came from is kept
+  beside it, because it is needed for every honest split.
+* **folds that hold out whole molecules.**  Two shifts of one molecule in different folds would
+  let a model see the molecule it is being tested on, and a per-atom q2 obtained that way is
+  meaningless.  `AtomTargets.folds` splits the molecules, as the grouped folds of
+  `cmfqsar.chemotypes` split the chemotypes.
+
+The predictions go back where they came from: `write_atom_predictions` writes an SDF whose
+atoms carry the measured and the predicted value, so a shift sits on the carbon it belongs to.
+
+### `class AtomTargets  (dataclass)`
+
+The measured (molecule, atom) pairs of a data set, and what each one measured.
+
+Attributes:
+
+- `molecule: np.ndarray` = `_field(default_factory=lambda: np.zeros(0, int))`
+- `atom: np.ndarray` = `_field(default_factory=lambda: np.zeros(0, int))`
+- `y: np.ndarray` = `_field(default_factory=lambda: np.zeros(0))`
+- `n_mol: int` = `0`
+- `name: str` = `''`
+- `per_molecule: List[np.ndarray]` = `_field(default_factory=list)`
+
+#### `AtomTargets.n_measured_molecules` -> int  (property)
+
+#### `AtomTargets.from_molecules(mols: Sequence[Chem.Mol], name: str, names: Optional[Sequence[str]]=None) -> 'AtomTargets'`  (class method)
+
+Read the target from every molecule and build the index of what was measured.
+
+#### `AtomTargets.subset(rows: Sequence[int]) -> 'AtomTargets'`
+
+#### `AtomTargets.of_molecule(k: int) -> np.ndarray`
+
+The sample rows that belong to molecule `k`.
+
+#### `AtomTargets.counts() -> Dict[int, int]`
+
+How many atoms were measured in each molecule that has any.
+
+#### `AtomTargets.folds(k: int=10, seed: Optional[int]=0) -> List[np.ndarray]`
+
+Test-sample rows for `k` folds that hold out whole **molecules**.
+
+A molecule's atoms never straddle the split: two shifts of one molecule, one in the
+training set and one in the test set, would let the model see the molecule it is being
+tested on, and the q2 that came out would not mean anything.
+
+#### `AtomTargets.describe() -> str`
+
+### `read_atom_target(mol: Chem.Mol, name: str, mol_name: str='') -> np.ndarray`
+
+One number per atom, *not a number* where the atom has none (plan item LP1).
+
+Two conventions are read, in this order: a property on the atoms themselves, where an atom
+without it is simply unmeasured, and a molecule property holding the numbers in atom order,
+where a blank field is unmeasured.  A list as long as the molecule is taken atom for atom; a
+list as long as its heavy atoms is spread over them, leaving the hydrogens unmeasured, which
+is what a file written before the hydrogens were added means; any other length is an error
+naming the molecule and both counts, because the alternative is to guess which atom a number
+belongs to.
+
+Returns an array of length `mol.GetNumAtoms()`; a molecule carrying nothing comes back as
+all *not a number*, which is a molecule with no measurement rather than an error.
+
+### `scatter(targets: AtomTargets, values: Sequence[float]) -> List[np.ndarray]`
+
+Spread one value per sample back over the molecules, as one array per molecule.
+
+### `write_atom_predictions(path: str, mols: Sequence[Chem.Mol], targets: AtomTargets, predicted: Optional[Sequence[float]]=None, names: Optional[Sequence[str]]=None) -> int`
+
+Write an SDF whose atoms carry the measured value and, if given, the predicted one.
+
+A predicted shift belongs on the carbon it was predicted for, not in a column of a table
+beside the molecule, so it is written in RDKit's own per-atom convention, the molecule
+property `atom.dprop.<name>` holding one field per atom.  RDKit decodes that back into
+properties on the atoms themselves when the file is read, an atom whose field is `n/a`
+gets nothing, and the writer does not drop it as it drops properties set on atoms directly.
+
+### `candidate_targets(mols: Sequence[Chem.Mol], limit: int=200) -> Dict[str, Tuple[int, int]]`
+
+What in these molecules could be a per-atom target: (molecules carrying it, atoms measured).
+
+This is a looser rule than the one for a per-atom *field*
+(`cmfqsar.fields.atom_property_names`), and it has to be: a field needs a value on every
+atom, while a target is a measurement that most atoms do not have.  A property counts here
+when it is set on at least one atom, or when it is a molecule property whose fields number
+one per atom or one per heavy atom once the blanks are counted in.
 
 ## cmfqsar.atomtypes
 
@@ -859,6 +967,15 @@ kernel needs no frame, so the series needs no common scaffold and a candidate is
 whole molecule and embedded once.  That is what makes a design loop possible on a table of
 guests, which share no scaffold at all; the core is then only what names the position being
 varied on the parent.
+
+### `cmd_atoms(args)`
+
+What a file says about its atoms: a target that belongs to them (plan item LP1).
+
+There is no model over atoms yet -- the local kernel is the item that adds one -- so what
+this does is the part that has to be right first: read the target with its blanks, say what
+was measured and where, show the folds that hold out whole molecules, and write the whole
+thing back in the form every program can read.
 
 ### `cmd_transfer(args)`
 
@@ -1783,6 +1900,12 @@ Attributes:
 - `atom_properties: List[str]` = `field(default_factory=list)`
 - `path: str` = `''`
 - `activity_prop: str` = `''`
+- `atom_activity_prop: str` = `''`
+- `atom_targets: Optional['AtomTargets']` = `None`
+
+#### `Dataset.set_atom_activity(prop: str) -> 'AtomTargets'`
+
+Read a per-atom target and keep the index of the (molecule, atom) pairs it measured.
 
 #### `Dataset.train_indices` -> np.ndarray  (property)
 
@@ -1829,7 +1952,7 @@ Return (mols, names, property_names). Supports .sdf/.sd/.mol, .mol2, .smi/.csv/.
 
 SD properties that are numeric for at least `min_fraction` of the molecules.
 
-### `load_dataset(path: str, activity_prop: Optional[str]=None, add_hs: bool=True, subset: str='train', activity_file: Optional[str]=None, use_subset_column: bool=True, ensemble_by: Optional[str]=None) -> Dataset`
+### `load_dataset(path: str, activity_prop: Optional[str]=None, add_hs: bool=True, subset: str='train', activity_file: Optional[str]=None, use_subset_column: bool=True, ensemble_by: Optional[str]=None, atom_activity: Optional[str]=None) -> Dataset`
 
 Load a structure file; activities come from an SD property or from a separate table.
 
@@ -1842,6 +1965,10 @@ defining the published train/test split.
 of its conformations: "name" groups records that share a title, anything else is read as the
 name of a property to group by.  The conformations are used only in the ensemble mode of the
 field set; in the default single mode the first one of each compound is used, as before.
+
+`atom_activity` names a target that belongs to the atoms rather than to the molecule (plan
+item LP1): the data set then carries the index of the (molecule, atom) pairs that were
+measured, beside whatever molecule-level activity it has.
 
 ### `guess_activity_property(cands: Sequence[str]) -> Optional[str]`
 

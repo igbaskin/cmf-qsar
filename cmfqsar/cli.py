@@ -1760,6 +1760,48 @@ def _design_invariant(args, ds, mols, names, yy, core, labels, at_site, physchem
         print(f"  written to {args.out}")
 
 
+def cmd_atoms(args):
+    """What a file says about its atoms: a target that belongs to them (plan item LP1).
+
+    There is no model over atoms yet -- the local kernel is the item that adds one -- so what
+    this does is the part that has to be right first: read the target with its blanks, say what
+    was measured and where, show the folds that hold out whole molecules, and write the whole
+    thing back in the form every program can read.
+    """
+    from cmfqsar.atomtargets import AtomTargets, write_atom_predictions
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    print(f"{len(ds)} molecules from {args.dataset}")
+    if args.list:
+        from cmfqsar.atomtargets import candidate_targets
+        seen = candidate_targets(ds.mols)
+        if not seen:
+            print("  nothing here could be a per-atom target")
+        for name, (count, atoms) in sorted(seen.items(), key=lambda kv: -kv[1][1]):
+            print(f"  {name:24s} on {count} of {len(ds)} molecules, {atoms} atoms measured")
+        return
+    if not args.target:
+        raise SystemExit("name the target with --target, or ask for --list")
+    t = ds.set_atom_activity(args.target)
+    print("  " + t.describe())
+    if not len(t):
+        raise SystemExit(f"no atom carries '{args.target}': --list says what the file has")
+    counts = t.counts()
+    worst = sorted(counts.items(), key=lambda kv: -kv[1])[:args.top]
+    print(f"  the {len(worst)} molecules with the most measured atoms:")
+    for k, n in worst:
+        print(f"    {ds.names[k]:30s} {n:4d} atoms")
+    folds = t.folds(args.folds, seed=args.seed)
+    if folds:
+        sizes = [len(f) for f in folds]
+        print(f"  {len(folds)} folds holding out whole molecules: {min(sizes)} to {max(sizes)} "
+              f"atoms each, and no molecule is split between two of them")
+    if args.out:
+        written = write_atom_predictions(args.out, ds.mols, t, names=ds.names)
+        print(f"  {written} molecules written to {args.out}, the target on the atoms it "
+              f"belongs to")
+
+
 def cmd_transfer(args):
     """How much two models ask the same thing of the chemistry: item F3 of the plan."""
     from cmfqsar.transfer import cofield_overlap, describe_matrix, overlap_matrix
@@ -3582,6 +3624,24 @@ def main(argv=None):
                          "'selectivity' is the difference of the two, which is the map of what "
                          "separates them (plan item SC1)")
     cf.set_defaults(func=cmd_cofield)
+
+    at = sub.add_parser("atoms", help="a target that belongs to the atoms: what a file carries "
+                                      "and how it would be split")
+    at.add_argument("dataset")
+    at.add_argument("--target", default=None,
+                    help="the per-atom target: a property on the atoms, or a molecule property "
+                         "holding one field per atom with a blank where the atom was not "
+                         "measured")
+    at.add_argument("--list", action="store_true",
+                    help="what per-atom properties the file carries, and on how many molecules")
+    at.add_argument("--folds", type=int, default=10,
+                    help="folds to describe; they hold out whole molecules (default 10)")
+    at.add_argument("--seed", type=int, default=0)
+    at.add_argument("--top", type=int, default=5, help="molecules listed (default 5)")
+    at.add_argument("--activity", default=None, help="the molecule-level activity, if any")
+    at.add_argument("--out", default=None, metavar="FILE",
+                    help="write an SDF carrying the target on its atoms")
+    at.set_defaults(func=cmd_atoms)
 
     bm = sub.add_parser("benchmark", help="run, list or check the benchmarks of the checkout")
     bm.add_argument("name", nargs="*", help="which benchmarks to run (default: all of them)")

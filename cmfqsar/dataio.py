@@ -158,9 +158,20 @@ class Dataset:
     atom_properties: List[str] = field(default_factory=list)   # one value per atom, for prop: fields
     path: str = ""
     activity_prop: str = ""
+    #: the name of a target that belongs to the atoms rather than to the molecule (plan item
+    #: LP1), and the index of what was measured; both empty for an ordinary data set
+    atom_activity_prop: str = ""
+    atom_targets: Optional["AtomTargets"] = None
 
     def __len__(self) -> int:
         return len(self.mols)
+
+    def set_atom_activity(self, prop: str) -> "AtomTargets":
+        """Read a per-atom target and keep the index of the (molecule, atom) pairs it measured."""
+        from .atomtargets import AtomTargets
+        self.atom_targets = AtomTargets.from_molecules(self.mols, prop, names=self.names)
+        self.atom_activity_prop = prop
+        return self.atom_targets
 
     @property
     def train_indices(self) -> np.ndarray:
@@ -382,7 +393,8 @@ def numeric_properties(mols: Sequence[Chem.Mol], min_fraction: float = 0.5) -> L
 
 def load_dataset(path: str, activity_prop: Optional[str] = None, add_hs: bool = True,
                  subset: str = "train", activity_file: Optional[str] = None,
-                 use_subset_column: bool = True, ensemble_by: Optional[str] = None) -> Dataset:
+                 use_subset_column: bool = True, ensemble_by: Optional[str] = None,
+                 atom_activity: Optional[str] = None) -> Dataset:
     """Load a structure file; activities come from an SD property or from a separate table.
 
     `activity_file` is a text table (tab/comma/whitespace separated, header optional) with the
@@ -394,6 +406,10 @@ def load_dataset(path: str, activity_prop: Optional[str] = None, add_hs: bool = 
     of its conformations: "name" groups records that share a title, anything else is read as the
     name of a property to group by.  The conformations are used only in the ensemble mode of the
     field set; in the default single mode the first one of each compound is used, as before.
+
+    `atom_activity` names a target that belongs to the atoms rather than to the molecule (plan
+    item LP1): the data set then carries the index of the (molecule, atom) pairs that were
+    measured, beside whatever molecule-level activity it has.
     """
     mols, names, props = read_molecules(path, add_hs=add_hs)
     if ensemble_by:
@@ -419,6 +435,8 @@ def load_dataset(path: str, activity_prop: Optional[str] = None, add_hs: bool = 
             labels = [_subset_label(m.GetProp(tag)) if m.HasProp(tag) else None for m in mols]
             if any(l is not None for l in labels):
                 ds.subset = np.array([l or subset for l in labels], dtype=object)
+    if atom_activity:
+        ds.set_atom_activity(atom_activity)
     return ds
 
 
