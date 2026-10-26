@@ -3,7 +3,7 @@
 A field whose atomic weights are read from a property of the file is how a quantity the program
 cannot compute itself -- a quantum charge, a Fukui index, a local softness, an atomic
 polarisability -- becomes a molecular field.  Shipping quantum-chemical data with the program is
-another matter, so this script writes properties it can compute, in both of the conventions the
+a different problem, so this script writes properties it can compute, in both conventions the
 reader understands:
 
 * ``qgasteiger`` as an **atom property**, which RDKit writes to the SDF as ``atom.dprop.qgasteiger``
@@ -11,8 +11,8 @@ reader understands:
   which makes the file a test as much as an example: a field built from this property must
   reproduce the electrostatic field exactly.
 * ``crippen_logp`` as a **molecule property** holding one number per atom, separated by spaces,
-  which is how most quantum-chemistry packages dump such a table.  These are the Wildman-Crippen
-  atomic logP contributions, so the field is a per-atom lipophilicity of a different flavour from
+  which is how most quantum-chemistry packages write such a table.  These are the Wildman-Crippen
+  atomic logP contributions, so the field is a per-atom lipophilicity of a different kind from
   the program's own hydrophobic field.
 
 Usage:
@@ -43,7 +43,7 @@ def annotate(mol: Chem.Mol) -> Chem.Mol:
         q = atom.GetDoubleProp("_GasteigerCharge")
         atom.SetDoubleProp("qgasteiger", 0.0 if q != q else float(q))      # q != q catches nan
     # RDKit writes atom properties to SDF only through a property list, which the reader then
-    # turns back into atom properties; without this the numbers never leave memory
+    # turns back into atom properties; without this the numbers are not written to the file
     Chem.CreateAtomDoublePropertyList(m, "qgasteiger")
     contribs = [c[0] for c in Crippen.rdMolDescriptors._CalcCrippenContribs(m)]
     m.SetProp("crippen_logp", " ".join(f"{c:.4f}" for c in contribs))

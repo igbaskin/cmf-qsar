@@ -6,7 +6,7 @@ receptor selects, so averaging over them, or choosing among them, only dilutes o
 the series already carried.  The remaining idea is to make the ensemble bound-like by construction,
 which means putting every conformation into the site and letting the site decide where it sits.
 
-This is a small rigid-body docking written against what the program already has: the fields of the
+This is a small rigid-body docking built from what the program already has: the fields of the
 pocket from :mod:`cmfqsar.complementarity`, the exact overlap integrals between two sets of
 Gaussians, and a soft clash term.  A pose is scored by
 
@@ -39,9 +39,9 @@ from .fields import FieldSet, MoleculeFields, build_fields
 #: weight of the clash term relative to the field terms; a pose that clashes is not a pose
 CLASH_WEIGHT = 2.0
 #: weight of the burial term: without it nothing holds a pose inside the site, since the field
-#: terms are happy at the mouth of the pocket and the clash term is happiest outside it
+#: terms are satisfied at the mouth of the pocket and the clash term is lowest outside it
 BURIAL_WEIGHT = 2.0
-#: how far the centroid of a conformation may wander before it is penalised, in angstrom
+#: how far the centroid of a conformation may move before it is penalised, in angstrom
 TETHER_RADIUS = 3.0
 TETHER_WEIGHT = 1.0
 
@@ -53,7 +53,7 @@ class DockResult:
     score_after: float
     clash_before: float
     clash_after: float
-    moved: float                      # how far the conformation travelled, angstrom
+    moved: float                      # how far the conformation moved, angstrom
     restarts_used: int = 0
 
 
@@ -231,7 +231,7 @@ def dock_conformers(mol: Chem.Mol, pocket: MoleculeFields, fieldset: FieldSet,
     """Dock every conformation of a molecule into the pocket, in place in a copy.
 
     With `keep_best` the conformations are ordered by their docked score and only that many are
-    kept, which is how a docking program would hand over its best poses.
+    kept, which is how a docking program would return its best poses.
     """
     out = Chem.Mol(mol)
     single = fieldset.copy()

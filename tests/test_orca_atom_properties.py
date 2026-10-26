@@ -14,7 +14,7 @@ from cmfqsar.dataio import load_dataset  # noqa: E402
 from cmfqsar.fields import atom_property  # noqa: E402
 
 # A trimmed ORCA 6.1 output of a closed-shell water single point: the blocks the script reads, in
-# ORCA's own layout, with an earlier (stale) Mulliken block first to check that the LAST one wins.
+# ORCA's own layout, with an earlier (stale) Mulliken block first to check that the LAST is used.
 CLOSED_SHELL = """
 ---------------------------------
 CARTESIAN COORDINATES (ANGSTROEM)

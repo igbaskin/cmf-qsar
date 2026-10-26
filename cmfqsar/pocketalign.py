@@ -7,7 +7,7 @@ its fields most resemble the training set's, as the 2019 paper proposes.  It kno
 the receptor, so nothing stops it putting a molecule where no molecule could go, and on a series
 whose training poses are themselves only a superposition it can only reproduce that superposition.
 
-:mod:`cmfqsar.docking` places a molecule where the *pocket* likes it -- complementarity of the
+:mod:`cmfqsar.docking` places a molecule where the *pocket* prefers it -- complementarity of the
 fields with the receptor, less a clash penalty.  It knows nothing about the series, so nothing
 makes the pose it finds comparable with the poses the model was fitted on, and a shallow site
 leaves it under-determined.
@@ -19,10 +19,10 @@ that maximises the product.  In the units everything here is already in,
     minimise   sigma^2(pose)  -  w * [ complementarity(pose) - clash(pose) ]
 
 over the six rigid-body parameters, with the displacement guard of the confidence aligner kept so
-that neither criterion may walk a molecule out of the site it started in.  `w` is the only new
-number: at zero this is the confidence alignment exactly, and as it grows the pocket takes over.
+that neither criterion may move a molecule out of the site it started in.  `w` is the only new
+number: at zero this is the confidence alignment exactly, and as it grows the pocket dominates.
 
-The honest caveats are the ones both halves already carry.  The variance term is not a measure of
+The real caveats are the ones both halves already carry.  The variance term is not a measure of
 the applicability domain once a pose has been chosen to minimise it; the pocket term is not a
 docking score, since there is no desolvation, no entropy and no torsional search; and the
 internal geometry is never touched, so what is being chosen is a placement and not a
@@ -167,7 +167,7 @@ def pocket_align(mols: Sequence[MoleculeFields], model, pocket: MoleculeFields,
 
 
 def summarise(results: Sequence[PocketAlignResult]) -> dict:
-    """What a run of the joint alignment did, in one line's worth of numbers."""
+    """What a run of the joint alignment did, in a single line of numbers."""
     if not results:
         return {}
     return {"n": len(results),

@@ -4,7 +4,7 @@ Screening on a public benchmark, against measured inactives (plan item E4).
 
 Every screening number in this repository so far has been measured against a background invented
 here: ligands of other targets, or molecules property-matched to the actives out of the sets
-already shipped. Both are *presumed* inactive, and a presumed inactive is an easier opponent than
+already shipped. Both are *presumed* inactive, and a presumed inactive is an easier test than
 a measured one.
 
 LIT-PCBA supplies measured ones -- high-confidence PubChem dose-response assays, in the
@@ -13,7 +13,7 @@ recognising that actives resemble actives has been removed. `examples/make_litpc
 embeds and poses them; this measures four quite different ways of ranking a library with them:
 
 * the **one-class descriptions** of `cmfqsar/oneclass.py`, fitted on the training actives alone,
-  which is the honest setting for a screen -- nothing but the actives is known;
+  which is the legitimate setting for a screen -- nothing but the actives is known;
 * the **fingerprint baseline**: the maximum ECFP4 Tanimoto to the training actives, which is what
   a medicinal chemist would do in five minutes and what any 3D method has to beat;
 * a **supervised classifier** on the CMF kernel, told that half the inactives are negative, which
@@ -64,7 +64,7 @@ BAGS = 30
 ONECLASS = ("ocmean", "ocknn", "ocgp", "ockpca")
 #: The comparison with the fingerprint must not be dismissible as a badly chosen setting, so the
 #: one-class descriptions are given every setting they have and the best one *on the test set* is
-#: reported beside the default.  No honest protocol could pick that value, which is the point: it
+#: reported beside the default.  No fair protocol could pick that value, which is the purpose: it
 #: is an upper bound on what the description can do, not a score.
 #:
 #: nu is deliberately not in the sweep.  It places the offset so that a fraction nu of the training
@@ -252,7 +252,7 @@ def report(results=RESULTS):
                if one and mean[one]["auc"] <= fp else
                f"**The fields beat the fingerprint**: the best one-class description reaches "
                f"{mean[one]['auc']:.3f} AUC against {fp:.3f} for ECFP4") +
-              ", which is the comparison any three-dimensional method owes its reader and which "
+              ", which is the comparison any three-dimensional method must give its reader and which "
               "this repository had not made against measured inactives before.", ""]
     bounds = {m: (float(np.nanmean([r.get("best_auc", np.nan) for r in best[m]])),
                   float(np.nanmean([r.get("best_ef_1", np.nan) for r in best[m]])))
@@ -261,11 +261,11 @@ def report(results=RESULTS):
     if bounds:
         top = max(bounds, key=lambda m: bounds[m][0])
         n_set = sum(len(v) for v in GRID.values()) * len(main_data[0].get("alphas", ALPHAS))
-        lines += [f"**And not with the knobs turned to their best settings either.** Every "
+        lines += [f"**And not with every parameter at its best setting either.** Every "
                    f"setting that can change the order of the ranking was tried -- the field "
                    f"attenuation over {', '.join(f'{v:g}' for v in ALPHAS)} and each "
                    f"description's own parameter, {n_set} fits in all -- and the value that "
-                   f"scores best *on the test set* kept, which no honest protocol could pick, so "
+                   f"scores best *on the test set* kept, which no fair protocol could pick, so "
                    f"this is an upper bound rather than a result. It lifts the best description "
                    f"only to {bounds[top][0]:.3f} AUC ({LABEL[top]}, EF@1 % "
                    f"{bounds[top][1]:.1f}, averaged over each set's own best setting: "
@@ -294,7 +294,7 @@ def report(results=RESULTS):
         d_ef = mean["pu"]["ef_1"] - mean["supervised"]["ef_1"]
         lines += [(f"**Treating the inactives as unlabelled is worth {d_auc:+.3f} AUC and "
                    f"{d_ef:+.1f} in EF@1 %** against calling them negative. "
-                   + ("The bagging is doing something: an unlabelled molecule that looks like "
+                   + ("The bagging has an effect: an unlabelled molecule that looks like "
                       "the actives is called negative in few bags and scores high in the rest."
                       + ((f" And it is not the kernel that is failing: the same CMF kernel, "
                           f"used discriminatively, reaches {mean['pu']['auc']:.3f} against the "
@@ -302,7 +302,7 @@ def report(results=RESULTS):
                           f"one-class *description* of the actives, not the field similarity it "
                           f"is built from.") if abs(mean["pu"]["auc"] - fp) < 0.05 else "")
                       if d_auc > 0 else
-                      "On these sets it buys nothing, which is what should happen when the "
+                      "On these sets it gains nothing, which is what should happen when the "
                       "inactives really were measured inactive -- LIT-PCBA's are, and the PU "
                       "assumption is therefore wrong here in the direction that costs nothing.")),
                   ""]
@@ -331,24 +331,24 @@ def report(results=RESULTS):
         lines += ["",
                   f"**The generous placement is worth {oc_d:+.3f} AUC to the field descriptions "
                   f"and {fp_d:+.3f} to the fingerprint**, which never looks at a coordinate and "
-                  f"so returns exactly the same number. The direction is worth dwelling on, "
+                  f"so returns exactly the same number. The direction deserves attention, "
                   f"because it is not the obvious one. Posing a decoy where it most resembles "
                   f"the actives ought to make it harder to reject, and it does -- but the pose "
                   f"search also *fails* on a molecule whose field cannot be made to match, and "
                   f"the similarity it ends up with is then a shape-matching score in its own "
-                  f"right. Optimising every candidate's pose against the actives quietly turns "
+                  f"right. Optimising every candidate's pose against the actives turns "
                   f"the alignment into part of the scoring function, which is what shape-based "
                   f"screening does on purpose and what a field model measured this way is "
-                  f"getting for free.", "",
+                  f"getting without cost.", "",
                   "Two consequences. A screening figure measured against a similarity-posed "
                   "background is a statement about the posing as much as about the model, so the "
                   "sets built here are posed by the crystal ligand instead, by the same rule as "
-                  "the actives. And the generous condition leaks: `--ref-max` samples the posed "
+                  "the actives. And the generous condition leaks information: `--ref-max` samples the posed "
                   "actives without regard to the train/test split, so the decoys' poses were "
                   "optimised against molecules that include the held-out actives. Both are "
                   "reasons to read the crystal-posed table as the result and this one as its "
                   "control.", ""]
-    lines += ["A caveat that no amount of care removes: a screening run in the wild has to "
+    lines += ["A caveat that no amount of care removes: a real screening run has to "
               "generate and choose poses for molecules nobody has placed, and will do worse than "
               "any of this."]
     text = "\n".join(lines) + "\n"

@@ -170,7 +170,7 @@ def test_grid_search_and_nested_cv():
 
 
 def test_embedding_keeps_rdkit_aromaticity():
-    """MMFF optimisation must not leave MMFF aromaticity flags behind (breaks MCS alignment and typing)."""
+    """MMFF optimisation must not leave MMFF aromaticity flags set (breaks MCS alignment and typing)."""
     from cmfqsar.align import embed_3d, mcs_align
     smi = "COCCOCn1c(Sc2ccccc2)c(C)c(=O)[nH]c1=O"   # HEPT-type HIV-RT inhibitor (pyrimidinedione)
     m = embed_3d(Chem.MolFromSmiles(smi), seed=3)

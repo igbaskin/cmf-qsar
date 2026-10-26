@@ -7,15 +7,16 @@ description of the active class: a ball, a centroid, a nearest neighbour, a Gaus
 principal subspace (``cmfqsar/oneclass.py``).  The screening literature's answer is data fusion:
 combine the similarities to the individual actives by a fixed rule and never fit anything
 (``cmfqsar/fusion.py``).  Two of the rules are descriptions the program already had -- SUM is the
-centroid and MAX is the one-nearest-neighbour -- so the comparison is not between two worlds but
-between thirteen points in one, and the question is only which combination of a kernel row wins.
+centroid and MAX is the one-nearest-neighbour -- so the comparison is not between two separate
+families of methods but between thirteen methods in one family, and the question is only which
+combination of a kernel row wins.
 
 The protocol is the one the README's one-class table uses, so that the new rows can be read beside
 the old ones:
 
     actives       the molecules of a Sutherland set whose activity is above its median
     negatives     the inactives of the *same* set, which are already in the same frame and are
-                  the honest negatives here; a background drawn from another target separates on
+                  the legitimate negatives here; a background drawn from another target separates on
                   size and shape before any field model is involved
     folds         five, over the actives, so no active is ever scored by a description that saw it
     fields        the five physico-chemical ones, charges from the file, cosine-normalised per
@@ -23,7 +24,7 @@ the old ones:
     reported      AUC of the held-out actives against all the inactives, averaged over the folds
 
 Both representations are run, because the rules were established on fingerprints and the claim
-worth testing is whether they carry over to an overlap integral of molecular fields:
+worth testing is whether they transfer to an overlap integral of molecular fields:
 
     cmf     the CMF kernel at the attenuation given
     ecfp4   the Tanimoto coefficient of 2048-bit ECFP4, which is itself a kernel
@@ -136,7 +137,7 @@ def thresholds_of(S: np.ndarray) -> dict:
     where two molecules sharing no substructure score zero, and fails completely for an overlap
     integral of molecular fields: on these sets no normalised field similarity is below 0.6, so
     at the usual threshold of zero every reference counts for every molecule, the count is a
-    constant, and both rules collapse onto SUM exactly.  The threshold therefore has to come
+    constant, and both rules reduce exactly to SUM.  The threshold therefore has to come
     from the similarity distribution rather than from the literature's default, and these are
     quantiles of the set's own off-diagonal similarities.
     """

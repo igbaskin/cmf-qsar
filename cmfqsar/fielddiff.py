@@ -187,7 +187,7 @@ def _tversky_ratio(overlap: float, self_candidate: float, self_reference: float,
                    alpha: float, beta: float) -> float:
     """O / (O + alpha * (O_rr - O) + beta * (O_cc - O)), the overlap form of Eq. 8.44.
 
-    The two differences are taken as they come, without clamping them at zero.  That is what
+    The two differences are taken as they are, without clamping them at zero.  That is what
     makes the identities exact: the expression is Tanimoto at alpha = beta = 1 and Dice at
     alpha = beta = 1/2 whatever the signs of the three integrals.  It is also why a one-sided
     index can exceed one, which the containment note in :func:`tversky` explains.
@@ -220,14 +220,14 @@ def tversky(candidate: MoleculeFields, reference: MoleculeFields, fieldset: Fiel
     ``alpha = 0, beta = 1``
         `O_cr / O_cc`: how much of the candidate the reference accounts for.  This is the
         setting for growing a fragment or screening a library of smaller molecules against a
-        lead, because it charges the candidate for nothing that is merely absent from it.
+        lead, because it penalises the candidate for nothing that is merely absent from it.
     ``alpha = 1, beta = 0``
         `O_cr / O_rr`: how much of the reference the candidate covers, which asks the opposite
         question and rewards a candidate for leaving nothing out.
 
     The cosine of :func:`mismatch` is exactly the geometric mean of those last two, since their
-    product is `O_cr^2 / (O_cc O_rr)`.  That is the precise sense in which it splits the
-    difference between the two questions and answers neither.
+    product is `O_cr^2 / (O_cc O_rr)`.  That is the precise sense in which it is a compromise
+    between the two questions and answers neither.
 
     **A one-sided index can exceed one, and that is the containment signal rather than a bug.**
     An overlap integral is an inner product, not the measure of an intersection, so the
@@ -235,10 +235,10 @@ def tversky(candidate: MoleculeFields, reference: MoleculeFields, fieldset: Fiel
     candidate's everywhere, `O_cr` exceeds `O_cc` and `O_cr / O_cc` passes one.  A fragment of
     the reference, in the frame it was cut from, therefore scores one or a little above, and the
     amount above measures how much reference field surrounds it.  The shape literature reports
-    Tversky scores the same way.  Nothing is clamped, because clamping would buy a tidier range
-    at the price of the Tanimoto and Dice identities above.
+    Tversky scores the same way.  Nothing is clamped, because clamping would give a tidier range
+    at the cost of the Tanimoto and Dice identities above.
 
-    One further honesty note.  Tversky's index was defined on sets, and a field with signed
+    One further caution.  Tversky's index was defined on sets, and a field with signed
     weights is not one: the electrostatic overlap of two molecules can be negative while both
     self-overlaps are positive, and the index is then a formal ratio rather than a shared
     fraction.  The reading above holds for the non-negative fields, which is the steric,

@@ -260,7 +260,7 @@ def report(results=RESULTS):
               f"against {mean['auc_random']:.3f} for the same features moved to random places in "
               f"the same box: a paired difference of {float(diff.mean()):+.3f} with a 95 % "
               f"interval of [{lo:+.3f}, {hi:+.3f}]"
-              + (", so the places the co-field picked are doing the work."
+              + (", so the places the co-field picked are what matters."
                  if works else ", which contains zero.")
               + f" The query is ahead of its own features in random places on "
               f"{int(sum(ahead))} of {len(ahead)} splits. The model it was read from reaches "
@@ -271,9 +271,9 @@ def report(results=RESULTS):
               f"{1.0 / data[0]['top']:.1f} -- which is what a perfect ranking would reach when "
               f"the actives are the top {100 * data[0]['top']:.0f} %. The model is most of the "
               "way there and the query is a third of the way.", "",
-              "That gap is the price of the summary. A pharmacophore is four spheres and a "
+              "That gap is the cost of the summary. A pharmacophore is four spheres and a "
               "rule for counting them; the model is every training molecule's field weighed by "
-              "a fitted coefficient. What the query buys is that it leaves this program: it "
+              "a fitted coefficient. What the query gains is that it leaves this program: it "
               "goes into a screening tool and runs over libraries no kernel method here could "
               "hold.", "",
               "The matching rule used here is the simple one -- an atom of the right type inside "

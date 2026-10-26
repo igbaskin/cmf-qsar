@@ -33,7 +33,7 @@ def test_the_newton_iteration_reaches_the_mode(likelihood):
 
 @pytest.mark.parametrize("likelihood", LIKELIHOODS)
 def test_the_mode_maximises_the_objective_it_claims_to(likelihood):
-    """Nothing in a neighbourhood of the mode beats it on log p(y|f) - f K^-1 f / 2."""
+    """Nothing in a neighbourhood of the mode exceeds it on log p(y|f) - f K^-1 f / 2."""
     K, y, _ = _problem(n=30)
     g = LaplaceGPC(likelihood=likelihood, amplitude=2.0).fit(K, y)
     Ks = g.amplitude * K + g.jitter * np.eye(len(y))

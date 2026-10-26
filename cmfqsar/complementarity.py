@@ -6,7 +6,7 @@ closed form whichever side it comes from.  Four questions can then be answered w
 than with a glance at a picture:
 
 1. **How complementary is a molecule to the pocket?**  Overlap integrals between the ligand fields
-   and the pocket fields, normalised to a cosine so that size drops out.  Complementarity is not
+   and the pocket fields, normalised to a cosine so that the size of the molecule has no effect.  Complementarity is not
    similarity: the electrostatic term counts with a minus sign, because a positive ligand region
    should meet a negative protein region, while the hydrophobic term counts with a plus and the
    hydrogen-bond terms pair the donors of one side with the acceptors of the other.
@@ -21,8 +21,8 @@ than with a glance at a picture:
    nothing is a sign that the model is fitting the alignment or a correlated substituent instead of
    an interaction.
 4. **Which residues say so?**  The overlap integral is a double sum over atom pairs, so keeping
-   the per-atom column sums instead of the grand total costs nothing and resolves every score of
-   question 1 by receptor residue.  That turns one cosine into an interaction profile, which can
+   the per-atom column sums instead of the grand total costs no extra work and resolves every
+   score of question 1 by receptor residue.  That turns one cosine into an interaction profile, which can
    be compared with the profile of a reference ligand, averaged over several complexes into a
    consensus pattern, and used to require the conserved contacts of a target rather than every
    contact of one ligand.  A global score cannot say any of this, and neither can the ligand
@@ -110,7 +110,7 @@ def ionise(mol) -> int:
 def pocket_molecule(protein: Protein, add_hydrogens: bool = True, ionise_residues: bool = True):
     """Build an RDKit molecule from a structure so that the field code can parameterise it.
 
-    Crystal structures rarely carry hydrogens, and the donor field lives on the polar hydrogen, so
+    Crystal structures rarely carry hydrogens, and the donor field is on the polar hydrogen, so
     they are added with coordinates unless the structure already has them.
     """
     import tempfile
@@ -335,7 +335,7 @@ def surface_complementarity(mol: MoleculeFields, pocket: MoleculeFields, fieldse
 
     Returns (vertices, faces, per-vertex score in [-1, 1], correlations per field).  The
     electrostatic part compares potentials rather than the Gaussian charge densities, because the
-    potential is what the other side actually feels; the reported value is minus the correlation,
+    potential is what the other side actually senses; the reported value is minus the correlation,
     so that a positive number means complementary.
     """
     surf = shape_surface(mol, spacing=spacing, level=level)
@@ -405,8 +405,8 @@ def occupancy(mols: Sequence[MoleculeFields], grid, k: float = 0.693) -> np.ndar
 def _cosine(a: np.ndarray, b: np.ndarray, weights: Optional[np.ndarray] = None) -> float:
     """Weighted cosine between two fields, without removing their means.
 
-    Fields have a meaningful zero: no field means no interaction.  Mean-centring would throw that
-    away and report disagreement between two maps that are positive in the same places merely
+    Fields have a meaningful zero: no field means no interaction.  Mean-centring would discard
+    that and report disagreement between two maps that are positive in the same places merely
     because their gradients differ, so the cosine is the right statistic for comparing them.
     """
     a = np.asarray(a, float)
@@ -427,8 +427,8 @@ def _sign_agreement(a: np.ndarray, b: np.ndarray, weights: Optional[np.ndarray] 
     """Magnitude-weighted agreement of sign, in [-1, 1].
 
     A co-field is read by its sign: green means add this here.  This statistic asks only whether
-    the model and the pocket want the same sign in the same place, weighted by how strongly each
-    of them wants it, so two maps that agree everywhere in sign score 1 even if their shapes
+    the model and the pocket prefer the same sign in the same place, weighted by how strongly each
+    of them prefers it, so two maps that agree everywhere in sign score 1 even if their shapes
     differ.  The cosine, by contrast, also demands that the shapes match.
     """
     a = np.asarray(a, float)
@@ -507,7 +507,7 @@ def series_scores(mols: Sequence[MoleculeFields], pocket: MoleculeFields, fields
                   spacing: float = 0.5, progress=None) -> Tuple[List[Complementarity], Dict[str, float]]:
     """Complementarity of every molecule of a series, and how it relates to the activity.
 
-    The correlation between the score and the activity is the honest test of whether
+    The correlation between the score and the activity is the fair test of whether
     complementarity means anything for this series and this structure.
     """
     res: List[Complementarity] = []
@@ -550,8 +550,8 @@ def field_overlap_by_atom(a: MoleculeFields, spec_a, fa: int,
     """:func:`field_overlap`, split over the atoms of `b`; the sum is the whole integral.
 
     The overlap of two sums of Gaussians is a double sum over atom pairs, so keeping the column
-    sums instead of the grand total costs nothing and is exact.  It is what turns one number for
-    the whole pocket into a number per receptor residue.
+    sums instead of the grand total costs no extra work and is exact.  It is what turns one
+    number for the whole pocket into a number per receptor residue.
     """
     out = np.zeros(b.n_atoms)
     wa, wb = a.weights[:, fa], b.weights[:, fb]
@@ -746,7 +746,7 @@ def profile_similarity(a: InteractionProfile, b: InteractionProfile, binary: boo
     The continuous comparison is the cosine of the two flat profiles, which keeps the strength
     of every interaction.  ``binary=True`` reduces each profile to the interactions above
     `threshold` and takes the Tanimoto coefficient instead: cruder, but it is the form the
-    interaction-fingerprint literature reports and it does not care about the scale of the
+    interaction-fingerprint literature reports and it is not affected by the scale of the
     terms.
     """
     if list(a.residues) != list(b.residues) or list(a.labels) != list(b.labels):
@@ -764,7 +764,7 @@ def consensus_profile(profiles: Sequence[InteractionProfile], threshold: float =
 
     An interaction seen in most of the reference complexes is a property of the target; one seen
     in a single complex is more likely a property of that ligand.  The frequencies are therefore
-    the weights with which a candidate should be rewarded for reproducing each interaction, and
+    the weights with which a candidate should be credited for reproducing each interaction, and
     a threshold on them gives the conservative query: require the conserved contacts and let the
     rest vary.  Requiring the union of every complex's contacts, which is the other obvious
     choice, makes a query that only close analogues of one reference can satisfy.

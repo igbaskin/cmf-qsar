@@ -32,7 +32,7 @@ Variants
     all-nobg   as "all" without the background subtraction (control)
     all-hard   as "all" with a hard cutoff (control)
     all-log    as "all" on the logarithm of the target, predictions back-transformed
-    all-gauss  as "all" with a Gaussian kernel layer on top (nonlinear headroom; no co-pattern)
+    all-gauss  as "all" with a Gaussian kernel layer on top (room for a nonlinear gain; no co-pattern)
     physchem+mass-gauss, all+mass-gauss  the same layer on the sets with the mass field
     all-balanced, all+mass-balanced  mixing coefficients over the channel blocks: the physico-
                chemical pairs, the indicator pairs and the pairs across the two get the same

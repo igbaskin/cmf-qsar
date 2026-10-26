@@ -15,7 +15,7 @@ Leave-one-chemotype-out on the five chemotype-split sets, the regime the alignme
 
 Channels per molecule, averaged over the sets: two-point 255, signed, 1 shell 265, signed, 2 shells 275, signed, 4 shells 295, signed, 4 shells, balanced 295, stereo centres (C7) 280.
 
-## Does the difference survive the scatter?
+## Is the difference larger than the scatter?
 
 Paired against the two-point kernel, set by set, with a bootstrap interval over the five sets. Five is a small number of sets and the interval says so.
 
@@ -45,4 +45,4 @@ At stereo centres (C7) the mean difference is -0.024, of which **AChE supplies -
 
 **C7's stereo centres:** same handedness +0.468, opposite -0.468, a difference of +0.935 against a spread of 0.702 over 760 pairs.
 
-**Why.** A kernel method carries what it learnt from one molecule to another along a direction in feature space. The signed channels of a molecule and its own mirror image are exact negatives -- that is what the block is for -- but between *different* molecules they share nothing: the cosine of the signed block is -0.016 for two molecules of the same handedness and +0.016 for two of opposite handedness, a difference of -0.033 against a spread of 0.552 over 760 pairs. Handedness is not a direction in this space, so there is nothing for a linear model to transfer -- which is the whole of C5's failure, and what C7 was built to fix by reading the configuration at one centre instead of summing over the molecule.
+**Why.** A kernel method carries what it learnt from one molecule to another along a direction in feature space. The signed channels of a molecule and its own mirror image are exact negatives -- that is what the block is for -- but between *different* molecules they share nothing: the cosine of the signed block is -0.016 for two molecules of the same handedness and +0.016 for two of opposite handedness, a difference of -0.033 against a spread of 0.552 over 760 pairs. Handedness is not a direction in this space, so there is nothing for a linear model to transfer -- which explains all of C5's failure, and what C7 was built to fix by reading the configuration at one centre instead of summing over the molecule.

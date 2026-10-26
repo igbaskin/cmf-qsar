@@ -1,26 +1,27 @@
 """Prediction intervals with a coverage guarantee, for any learner and any kernel source.
 
-Everything else the program says about an individual prediction is a hope.  The Gaussian process
+Everything else the program says about an individual prediction is an estimate without
+a guarantee.  The Gaussian process
 returns a posterior standard deviation, but it is the standard deviation of *that model's own
-assumptions*, and when the kernel is misspecified -- which is the normal case for molecular
-fields -- it is not a statement about how often the truth lands inside.  The bootstrap intervals
-of :mod:`cmfqsar.validation` are intervals on a *statistic*, on q² or on an R²pred, and say
-nothing about one molecule.
+assumptions*, and when the kernel is misspecified -- which is the normal case for molecular fields
+-- it is not a statement about how often the true value falls inside.  The bootstrap intervals of
+:mod:`cmfqsar.validation` are intervals on a *statistic*, on q² or on an R²pred, and say nothing
+about one molecule.
 
 Conformal prediction (Vovk, Gammerman & Shafer 2005; Lei et al., JASA 113 (2018) 1094) supplies
-the missing guarantee, and asks almost nothing in return.  Take the absolute errors the model
+the missing guarantee, and requires almost nothing in return.  Take the absolute errors the model
 makes on molecules it did not fit, let *q* be their (1-alpha) quantile with the finite-sample
 correction below, and report y_hat +/- q.  Then, provided the calibration molecules and the new
 molecule are exchangeable, the truth lies in that interval at least (1-alpha) of the time --
 whatever the learner, whatever the kernel, however wrong the model is.  A badly specified model
-does not lose its coverage; it pays in width, which is the honest currency.
+does not lose its coverage; its cost is a wider interval, which is a fair cost.
 
-Two ways to get the errors, and they are not equally honest:
+Two ways to get the errors, and they are not equally reliable:
 
 ``split``
     Hold out a calibration set, fit on the rest, take the errors there.  The guarantee is exact
-    and distribution-free, and the price is that neither the fit nor the calibration sees all the
-    data -- which on a set of thirty molecules is a real price.
+    and distribution-free, and the cost is that neither the fit nor the calibration sees all the
+    data -- which on a set of thirty molecules is a real cost.
 
 ``cv``
     Use the out-of-fold errors of the cross-validation the program runs anyway, then predict with
@@ -30,7 +31,7 @@ Two ways to get the errors, and they are not equally honest:
     It is the variant used in practice, and `benchmarks/run_conformal.py` measures what its
     coverage actually is on real sets rather than asserting that it is fine.
 
-Normalised conformal is the third option, and the one this program is best placed to offer: scale
+Normalised conformal is the third option, and the one this program is best able to offer: scale
 each error by a measure of how hard its molecule is, and the interval widens where the model is
 extrapolating instead of staying the same width everywhere.  The measure used here is the
 applicability domain the program already computes -- one minus the mean kernel cosine to the
@@ -123,7 +124,7 @@ class Conformal:
             return float("nan")
         r = self.rank
         if r > len(s):
-            return float("inf")         # honest: this level is not reachable with this many
+            return float("inf")         # correct: this level is not reachable with this many
         return float(s[r - 1])
 
     @property
@@ -180,8 +181,8 @@ def calibrate(y_true: Sequence[float], y_pred: Sequence[float], level: float = 0
               kind: str = "cv") -> Conformal:
     """Calibrate on predictions the model made for molecules it did not fit.
 
-    It is the caller's business that those predictions really are out of sample; calibrating on
-    the fit would return an interval that covers the training set and nothing else.
+    It is the caller's responsibility that those predictions really are out of sample; calibrating
+    on the fit would return an interval that covers the training set and nothing else.
     """
     y_true = np.asarray(y_true, float).ravel()
     y_pred = np.asarray(y_pred, float).ravel()

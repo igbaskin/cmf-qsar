@@ -21,7 +21,7 @@ def test_exposure_is_a_fraction_and_the_inside_is_less_exposed_than_the_outside(
     e = atom_exposure(m)
     assert e.shape == (m.GetNumAtoms(),)
     assert np.all(e >= 0.0) and np.all(e <= 1.0)
-    # the two oxygens stick out; the ring carbon bearing the amide does not
+    # the two oxygens are exposed; the ring carbon bearing the amide does not
     sym = [a.GetSymbol() for a in m.GetAtoms()]
     oxygens = [i for i, s in enumerate(sym) if s == "O"]
     assert min(e[i] for i in oxygens) > 0.05

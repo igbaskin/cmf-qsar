@@ -57,6 +57,6 @@ enough to learn from.
 For scale, the published field-based models of this endpoint: CoMFA with COSMOsar3D
 fields on 60 alpha-CD guests (Q2 0.83, r2test 0.70), GRIND on 126 beta-CD guests
 (Q2LOO 0.64, r2test 0.68) and GRIND on 233 beta-CD guests (Q2LOO 0.75, r2test 0.74).
-Those sets are smaller and hand-curated, so these numbers are not a like-for-like
+Those sets are smaller and hand-curated, so these numbers are not a direct
 comparison with them.
 

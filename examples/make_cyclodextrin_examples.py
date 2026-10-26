@@ -14,8 +14,8 @@ opposite case, and it is here precisely for that: the *host* is fixed and the gu
 the literature happened to measure, from acetonitrile to steroids, so no scaffold is shared and no
 superposition is defined.  What replaces the frame is the host cavity, which every guest enters,
 and the kernel that needs no frame at all, :mod:`cmfqsar.invariant` (``--kernel autocorrelation``).
-The alignment benchmark says the invariant kernel is the better bet exactly where no curated
-superposition exists; here there is none to be had, so this is a test of that claim on a property
+The alignment benchmark says the invariant kernel is the better choice exactly where no curated
+superposition exists; here there is none available, so this is a test of that claim on a property
 that is not receptor binding.
 
 The published field-based models of this endpoint are the comparison: CoMFA with COSMOsar3D fields
@@ -32,7 +32,7 @@ the association constant K, DeltaG, and the literature reference.  From it this 
   around pH 7 by default -- so that a file is one host at one condition rather than a mixture of
   thermodynamic states;
 * one row per guest, the **median** of log10 K over the measurements that survive, with their
-  count and spread in their own columns.  The spread is almost always nil (a median of 0.00 to 0.01
+  count and spread in their own columns.  The spread is almost always zero (a median of 0.00 to 0.01
   log units over the repeated guests of the three natural cyclodextrins) but not always: one
   alpha-CD guest carries 3.2 log units between two references, and the ``spread`` column is there
   to be filtered on before anything is published from these numbers;
@@ -57,7 +57,7 @@ column the program reads, and the neutral ones stay in ``smiles_neutral`` beside
 The one setting that differs from the corrosion export is the cap on added protons.  There it is
 one, because at pH 0 the rules charge every ring nitrogen in a molecule while in truth the first
 protonation makes the second site far less basic.  At pH 7 only sites whose rule pKa is above 7
-are charged, which is the defensible case rather than the pathological one: putrescine really is
+are charged, which is the justified case rather than the problematic one: putrescine really is
 doubly protonated at pH 7 (pKa 9.0 and 10.8) and the rules say so.  So ``--max-protons`` defaults
 to no cap here, and the corrosion behaviour is available by setting it.
 
@@ -112,7 +112,7 @@ DEFAULT_OUT = os.path.join(HERE, "cyclodextrin")
 #: added after the other columns when the structures are protonated, as the corrosion export does
 PROTONATION_COLUMNS = ["smiles_neutral", "charge"]
 
-#: file name for the hosts named in the database; anything else is slugified from its own name
+#: file name for the hosts named in the database; any other host is named by slugify() below
 SLUGS = {
     "alpha-cyclodextrin": "alpha_cyclodextrin",
     "beta-cyclodextrin": "beta_cyclodextrin",

@@ -3,7 +3,7 @@ Conceptual-DFT fields on a grid, and what atom-centred Gaussians can and cannot 
 
 The program already carries the *condensed* conceptual-DFT quantities -- a Hirshfeld f+ per atom,
 a dual descriptor per atom -- and makes a field of them by putting one Gaussian of the field's own
-width on each atom.  That throws away the shape: a lone pair is a lobe to one side of the oxygen,
+width on each atom.  That discards the shape: a lone pair is a lobe to one side of the oxygen,
 a pi system sits above and below the plane, and a single isotropic Gaussian centred on the nucleus
 can say neither.  The quantity those numbers are condensed *from* is a function of position,
 f(r) = rho_{N+1}(r) - rho_N(r), and ORCA will write it on a grid.
@@ -18,8 +18,8 @@ with the widths `beta_t` shared across atoms, which is what makes the overlap of
 a closed-form double sum over atom pairs and term pairs, and so keeps the co-field, the
 training-set decomposition and the atom contributions.
 
-**The fit reproduces the field badly and the kernel well, and that difference is the point of
-this module.**  Taking the two measurements in the order they were made:
+**The fit reproduces the field badly and the kernel well, and that difference is what this
+module shows.**  Taking the two measurements in the order they were made:
 
 *The field is not reproduced.*  On acrolein, fitted
 against the valence part of the map (the raw maps peak *on the nuclei* -- every one of f+, f-,
@@ -41,7 +41,7 @@ few per cent (``tests/test_cdft.py``).  The target is what cannot be represented
 function is essentially a frontier-orbital density, and acrolein's is pi*: three quarters of its
 squared magnitude lies more than 0.5 A off the molecular plane, with a node *in* the plane, and an
 isotropic Gaussian centred on a nucleus cannot make a node.  Putting centres above and below the
-plane recovers a third of the error -- which confirms the diagnosis -- at the price of doubling
+plane recovers a third of the error -- which confirms the diagnosis -- at the cost of doubling
 the centres, and so quadrupling the kernel, and of giving up the one-to-one correspondence between
 a centre and an atom that makes the atom contributions mean anything.
 
@@ -68,7 +68,7 @@ atom rather than one -- and that is worth something: alone, the fitted field bea
 one by 0.08 in q2 on f+ and by 0.11 on the dual descriptor, and its kernel is much closer to the
 exact one (+0.93 against +0.72).
 
-Worth keeping in view before building on any of it: on that series none of the three helps.  The
+Worth remembering before building on any of it: on that series none of the three helps.  The
 five ordinary fields alone give +0.689, and the best quantum combination is +0.684.
 
 Two practical lessons survive for whoever tries again:
@@ -82,7 +82,7 @@ Two practical lessons survive for whoever tries again:
   what the Hirshfeld condensation in :mod:`cmfqsar.orca` already gives, more cheaply and without
   a grid.  The shape, which was the whole reason to go to the grid, is what is lost.
 
-Nothing here is wired into the field machinery.  It computes the conceptual-DFT fields, fits
+Nothing here is connected to the field machinery.  It computes the conceptual-DFT fields, fits
 them, and reports how well -- by the measure that decides it, which is the kernel and not the
 field.
 """
@@ -221,7 +221,7 @@ def fit_field(values: np.ndarray, cube: Cube, positions: Optional[np.ndarray] = 
 
     `window` multiplies the target before fitting -- pass :func:`valence_window` of the N-electron
     density to fit the valence part, which is what these maps mean.  The widths are the ones the
-    probe fields share, so the resulting coefficients drop straight into the probe kernel.
+    probe fields share, so the resulting coefficients can be used directly in the probe kernel.
 
     The normal equations are accumulated in chunks: the design matrix of a 48-atom molecule on an
     80^3 grid is 100 million entries, and the matrix that matters, A'A, is 192 by 192.
@@ -261,7 +261,7 @@ def overlap_kernel(coeffs: Sequence[np.ndarray], positions: Sequence[np.ndarray]
     """The closed-form overlap integrals between fitted fields: K[i, j] = int F_i F_j dr.
 
     The same formula the probe branch of :mod:`cmfqsar.kernels` evaluates, written here over
-    explicit coefficient matrices so that a fitted field can be scored without being wired into
+    explicit coefficient matrices so that a fitted field can be scored without being connected to
     a FieldSet.  Two Gaussians of widths b1, b2 a distance D apart overlap by
     ``(2 pi / (b1 + b2))^{3/2} exp(-b1 b2 D^2 / (2 (b1 + b2)))``; the rest is bookkeeping over
     pairs of centres and pairs of terms.

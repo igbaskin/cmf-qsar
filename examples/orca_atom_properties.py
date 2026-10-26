@@ -4,7 +4,7 @@ A corrosion inhibitor works through the atoms that bind the metal, and the quant
 to say *which* atoms those are -- condensed Fukui functions, local softness, local
 electrophilicity, atomic charges, frontier-orbital populations -- are per-atom numbers that the
 program cannot compute itself.  It can, however, build a molecular field from any per-atom
-property carried by the input file (``--fields prop:NAME``), so this script closes the gap: it
+property carried by the input file (``--fields prop:NAME``), so this script supplies them: it
 takes a data set the program reads, runs ORCA on every molecule and writes one SDF in which every
 atom carries the quantum-chemical descriptors and every molecule the global ones, together with
 everything the input had (name, activity, ...).
@@ -23,7 +23,7 @@ What is computed, per molecule
 
       f+ = q(N) - q(N+1)     (attack by a nucleophile; where the molecule accepts an electron)
       f- = q(N-1) - q(N)     (attack by an electrophile; where it gives one up -- the metal
-                              surface sees this side of an inhibitor)
+                              surface interacts with this side of an inhibitor)
       f0 = (f+ + f-) / 2,    dual descriptor = f+ - f-
 
   from the Hirshfeld charges (the Mulliken-based set is stored too, under ``*_mulliken``), and the
@@ -34,8 +34,8 @@ What is computed, per molecule
 
 The anion is computed with the same basis as the neutral; a small basis without diffuse functions
 can leave the extra electron poorly bound, which is the usual compromise for condensed Fukui
-functions and the reason the EA is reported alongside -- a negative one tells you how far to
-trust f+.
+functions and the reason the EA is reported alongside -- a negative one shows how far f+ can
+be trusted.
 
 Running ORCA
 ------------

@@ -16,7 +16,7 @@
 
 ## The pooled sets, ordered across sources
 
-The same models and splits, scored by Spearman's rho over *all* held-out pairs. A model that only ever compared molecules inside a source has no opinion about where one source sits relative to another, so this column is where its silence shows.
+The same models and splits, scored by Spearman's rho over *all* held-out pairs. A model that only ever compared molecules inside a source cannot say where one source lies relative to another, so this column shows that limitation.
 
 | set | KRR | rank | rank by source |
 |---|---:|---:|---:|
@@ -30,4 +30,4 @@ The same models and splits, scored by Spearman's rho over *all* held-out pairs. 
 | THR | +0.599 | +0.585 | +0.662 |
 | **mean** | **+0.574** | **+0.565** | **+0.663** |
 
-The clean columns are Spearman's rho over the held-out molecules; the pooled columns are the share of **same-source** held-out pairs ordered correctly, so 0.5 is a coin toss. The two halves are not comparable with each other.
+The clean columns are Spearman's rho over the held-out molecules; the pooled columns are the share of **same-source** held-out pairs ordered correctly, so 0.5 is no better than chance. The two halves are not comparable with each other.

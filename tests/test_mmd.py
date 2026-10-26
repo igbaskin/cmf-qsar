@@ -24,7 +24,7 @@ def test_a_set_against_itself_has_no_discrepancy():
 
     Handed the same points twice, the cross block carries the self-similarities that the two
     within-set means have had removed, so the unbiased estimator comes out below zero. That is
-    the bias correction doing its job, not a difference between the sets.
+    the bias correction working as intended, not a difference between the sets.
     """
     rng = np.random.default_rng(0)
     X = rng.normal(size=(40, 3))

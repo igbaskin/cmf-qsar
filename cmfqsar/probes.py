@@ -10,18 +10,18 @@ which works because a field is a sum of atom-centred Gaussians; a Lennard-Jones 
 has no closed-form overlap, and diverges at the atom, so the integral of its square does not even
 exist.
 
-The way through is to fit rather than to integrate numerically, and the fitting has to respect
+The solution is to fit rather than to integrate numerically, and the fitting has to respect
 what atom-centred Gaussians can and cannot do.  Three things were learned by measuring, and all
 three shape what is implemented here:
 
 * **The repulsive wall cannot be carried.**  Fitting a curve that is +30 kcal/mol at 2.5 A and
-  -0.13 at 3.5 A with a handful of Gaussians produces coefficients of +/- 1e7 that cancel and a
+  -0.13 at 3.5 A with a few Gaussians produces coefficients of +/- 1e7 that cancel and a
   worst-case error larger than the well it is meant to represent.  The wall is a truncation
   artefact in every grid implementation anyway, and this program already carries it: the steric
   field *is* a Gaussian van der Waals envelope.  So a probe field carries the **attractive** part
-  and the repulsion is left where it already lives.
+  and the repulsion is left where it is already represented.
 * **A well at a radius is a shell, and a shell is not a sum of centred Gaussians.**  Atom-centred
-  Gaussians are maximal at the atom; representing a bump at 3.5 A needs differences of broad
+  Gaussians are maximal at the atom; representing a peak at 3.5 A needs differences of broad
   Gaussians, which is that same ill-conditioning again.  Each term is therefore *capped* at its
   own optimum -- the Lennard-Jones part below the contact distance, the hydrogen-bond part below
   its preferred separation -- which makes every term monotone in r, and those a sum of Gaussians
@@ -108,7 +108,7 @@ def attraction(r: np.ndarray, p: Probe, symbol: str, charge: float = 0.0,
 
     Every term is capped at its own optimum so that the result falls monotonically with distance,
     and the whole is tapered to zero by 7 A.  Positive values -- the repulsive wall -- are not
-    represented; see the module docstring for why, and where they already live.
+    represented; see the module docstring for why, and where they are already represented.
     """
     r = np.maximum(np.asarray(r, float), 1e-3)
     R_i, E_i = vdw_params(symbol)
@@ -135,7 +135,7 @@ def basis_widths(n_terms: int = 4) -> np.ndarray:
     Sharing them is what keeps the kernel affordable: the overlap of two probe fields is a double
     sum over atom pairs *and* over pairs of terms, and with common widths each pair of terms is
     one pass over the distance matrix under the usual Gaussian-product rule, exactly like an
-    ordinary field.  Fitting the widths per atom as well is the trap the module docstring
+    ordinary field.  Fitting the widths per atom as well is the source of error the module docstring
     describes.
     """
     return np.geomspace(2.0, 0.08, int(max(1, n_terms)))
@@ -178,7 +178,7 @@ def fit(p: Probe, symbol: str, charge: float = 0.0, hbond: float = 0.0,
     """The expansion of one atom's contribution to a probe field, memoised.
 
     `charge` and `hbond` are rounded into the cache key: a fit per distinct partial charge would
-    be a fit per atom, which is slow and pointless, since the electrostatic term is linear in the
+    be a fit per atom, which is slow and useless, since the electrostatic term is linear in the
     charge and the rounding moves the energy far less than the capping does.
     """
     q, hb = round(float(charge), 2), round(float(hbond), 1)

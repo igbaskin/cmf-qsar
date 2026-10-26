@@ -260,7 +260,7 @@ class CofieldError:
 
     def describe(self) -> str:
         return (f"co-field error from sigma = {self.sigma:.3f} ({self.sigma_from}): "
-                f"{100 * self.surviving:.0f} % of the drawn volume stands more than "
+                f"{100 * self.surviving:.0f} % of the drawn volume lies more than "
                 f"{self.z:g} standard deviations from zero")
 
 
@@ -305,7 +305,7 @@ def dual_covariance_factor(model: CMFModel) -> np.ndarray:
 def noise_level(model: CMFModel, sigma: Optional[float] = None) -> Tuple[float, str]:
     """The noise level to propagate, and where it came from.
 
-    The out-of-fold error is the default and the honest estimate: it is what the model's own
+    The out-of-fold error is the default and the reliable estimate: it is what the model's own
     predictions miss by, and it includes the part of the error that is the model's fault rather
     than the assay's, which errs in the conservative direction.  The residual of the fit would be
     far too small -- a model with a small lambda reproduces its training set almost exactly,
@@ -327,7 +327,7 @@ def per_molecule_fields(model: CMFModel, f: int, points: np.ndarray,
     """(n_train, n_points): the normalised field of every training molecule at every point.
 
     This is the basis the co-field is a combination of: ``C_f = coef @ X``, and the variance of
-    the co-field is read off the same matrix, so the two cannot drift apart.
+    the co-field is read off the same matrix, so the two cannot disagree.
     """
     centres, coeffs, widths, index = model.cofield_basis(f)
     centres = np.asarray(centres, float)
@@ -385,7 +385,7 @@ def cofield_variance(model: CMFModel, f: int, grid: Grid, sigma: Optional[float]
     What is computed here is the other half of the question, with the training molecules and the
     kernel held fixed and the noise in the activities propagated.  It answers *how much of this
     lobe would survive the error in the measurements*, which is the question a co-field picture
-    provokes.  It says nothing about regions where the training set laid down no field at all:
+    raises.  It says nothing about regions where the training set put no field at all:
     there the co-field and its error are both zero, and the ratio of the two is not informative.
     """
     s, _src = noise_level(model, sigma)

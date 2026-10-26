@@ -35,7 +35,7 @@ def test_the_score_prefers_complementary_charges_and_hates_clashes():
     s_bad = PocketScorer(anion, pocket, FS, tether_weight=0.0)
     here = cation.coords
     assert s_good.score(here) > s_bad.score(here)
-    # moving on top of the pocket atom is a clash and must be punished
+    # moving on top of the pocket atom is a clash and must be penalised
     on_top = np.array([[6.0, 0.0, 0.0]])
     assert s_good.clash(on_top) > 0 and s_good.clash(here) == 0
     assert s_good.score(on_top) < s_good.score(here)
@@ -55,14 +55,14 @@ def test_docking_moves_a_clashing_pose_out_of_the_wall():
 
 def test_the_tether_keeps_a_pose_from_wandering_off():
     pocket = _fields([[0.0, 0, 0]], [-1.0], name="pocket")
-    probe = _fields([[4.0, 0, 0]], [-1.0])                # repelled: it would rather leave
+    probe = _fields([[4.0, 0, 0]], [-1.0])                # repelled: it moves away without a tether
     far = np.array([[40.0, 0.0, 0.0]])
     tight = PocketScorer(probe, pocket, FS, tether_radius=2.0, tether_weight=5.0)
     loose = PocketScorer(probe, pocket, FS, tether_weight=0.0)
     assert tight.score(far) < loose.score(far)            # the tether is what makes leaving costly
     coords, _ = dock_coords(probe, pocket, FS, restarts=1, seed=0)
     drift = np.linalg.norm(coords.mean(axis=0) - probe.coords.mean(axis=0))
-    assert drift < 12.0                                   # it stays in the neighbourhood
+    assert drift < 12.0                                   # it stays nearby
 
 
 def test_burial_pulls_a_pose_into_the_site():
@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
 
 def test_the_tether_radius_can_be_widened():
-    """A molecule that does not start in the site needs a longer leash to reach it."""
+    """A molecule that does not start in the site needs a larger tether radius to reach it."""
     pocket = _fields([[0.0, 0, 0], [3.0, 0, 0]], [-0.4, -0.4], name="pocket")
     probe = _fields([[12.0, 0, 0]], [+1.0])                 # far outside, attracted to the site
     tight, _ = dock_coords(probe, pocket, FS, restarts=1, seed=0, tether_radius=0.5)

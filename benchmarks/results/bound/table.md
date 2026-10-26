@@ -10,7 +10,7 @@ always meant. Averaged over the folds of each set, then over the sets.
 
 Relative spread of the posterior standard deviation across a held-out part: 0.486. A bound can only act where this is large.
 
-The actives are about half of a held-out part here, so the enrichment factors saturate early: their ceilings are 2.05 at 5 per cent and 2.05 at 10. BEDROC is the metric with room left.
+The actives are about half of a held-out part here, so the enrichment factors saturate early: their ceilings are 2.05 at 5 per cent and 2.05 at 10. BEDROC is the metric that is not yet saturated.
 
 | beta | AUC | EF 5% | EF 10% | BEDROC(20) |
 |---|---:|---:|---:|---:|
@@ -24,7 +24,7 @@ The actives are about half of a held-out part here, so the enrichment factors sa
 
 Relative spread of the posterior standard deviation across a held-out part: 0.330. A bound can only act where this is large.
 
-The actives are about half of a held-out part here, so the enrichment factors saturate early: their ceilings are 3.07 at 5 per cent and 2.67 at 10. BEDROC is the metric with room left.
+The actives are about half of a held-out part here, so the enrichment factors saturate early: their ceilings are 3.07 at 5 per cent and 2.67 at 10. BEDROC is the metric that is not yet saturated.
 
 | beta | AUC | EF 5% | EF 10% | BEDROC(20) |
 |---|---:|---:|---:|---:|

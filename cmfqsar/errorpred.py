@@ -17,14 +17,13 @@ I act on, which do I measure first.  So every estimate is scored against the abs
 supposed to anticipate, by three measures that answer three different questions.
 
 **Does it order the molecules correctly?**  Spearman's rho and Kendall's tau between the estimate
-and |y - yhat|.  Scale-free, and blind to how big the errors are.
+and |y - yhat|.  Scale-free, and unaware of how big the errors are.
 
-**What does acting on it buy?**  The risk--coverage curve: trust the most confident fraction of the
-molecules and measure the RMSE of that fraction.  A useful estimate makes the curve rise with
-coverage; a useless one leaves it flat at the overall RMSE.  The area under it (AURC) is one number,
-and it is read against two references -- the *oracle*, which orders the molecules by the error they
-actually made, and *random*, which is the flat curve.  The efficiency
-
+**What is gained by acting on it?**  The risk--coverage curve: trust the most confident fraction of
+the molecules and measure the RMSE of that fraction.  A useful estimate makes the curve rise with
+coverage; a useless one leaves it flat at the overall RMSE.  The area under it (AURC) is one
+number, and it is read against two references -- the *oracle*, which orders the molecules by the
+error they actually made, and *random*, which is the flat curve.  The efficiency
     (AURC_random - AURC) / (AURC_random - AURC_oracle)
 
 is then 1 for the oracle, 0 for an estimate that is no better than ignoring it, and negative for one
@@ -67,7 +66,7 @@ class PredictorScore:
 
     @property
     def ratio(self) -> float:
-        """RMSE of the doubted half over the trusted half; 1 means the split told you nothing."""
+        """RMSE of the doubted half over the trusted half; 1 means the split gave no information."""
         return float(self.rmse_doubted / self.rmse_trusted) if self.rmse_trusted > 0 else float("nan")
 
     def describe(self) -> str:
@@ -84,7 +83,7 @@ def risk_coverage(estimate: Sequence[float], error: Sequence[float],
     """(coverage, RMSE) of the most-confident fraction, for every fraction of at least `min_n`.
 
     The molecules are ordered by `estimate` ascending, so the first prefix is the one the estimate
-    is surest about; the RMSE of each prefix is the risk a chemist would run by acting on exactly
+    is surest about; the RMSE of each prefix is the risk a chemist would take by acting on exactly
     that many predictions.  Ties keep their input order, which is the only neutral choice.
     """
     e = np.asarray(estimate, float)
@@ -157,8 +156,8 @@ def compare(estimates: Mapping[str, Sequence[float]], y_true: Sequence[float],
 
     `estimates` maps a name to one number per molecule, oriented so that **larger means a larger
     error is expected**: a variance, a distance from the training set, an interval width.  An
-    estimate that runs the other way (a similarity) must be negated by the caller, which is the
-    one convention this module insists on.
+    estimate that is oriented the other way (a similarity) must be negated by the caller, which is
+    the one convention this module insists on.
     """
     err = np.asarray(y_true, float) - np.asarray(y_pred, float)
     out = [score_predictor(name, v, err, min_n=min_n) for name, v in estimates.items()]
@@ -206,7 +205,7 @@ def estimates_for(model, test, y_pred: Optional[Sequence[float]] = None) -> Dict
             K_xt = model.test_kernel(test)
             dom = domain(K_xt, model.joint_self(test), model.training_kernel(model.train))
             out["distance to training set"] = np.asarray(dom.distance, float)
-            # the domain's own statistic is a similarity, so it runs the wrong way: negate it
+            # the domain's own statistic is a similarity, so it is oriented the wrong way: negate it
             out["domain dissimilarity"] = 1.0 - np.asarray(dom.mean_top, float)
         except (ValueError, RuntimeError):
             pass

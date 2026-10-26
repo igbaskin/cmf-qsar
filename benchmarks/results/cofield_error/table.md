@@ -1,6 +1,6 @@
-# Does the co-field's error bar know which lobes are real
+# Does the co-field's error bar identify which lobes are real
 
-8 Sutherland sets. Each model's co-fields are computed on a 0.8 Å grid together with their closed-form standard deviation, and the mask keeps what stands more than 2 of them from zero. The training set is then resampled with replacement 30 times and refitted; a voxel is **stable** when the sign of its co-field survives that. Only the drawn part of each picture is counted -- a tenth of the peak and above, which is well below any isosurface anyone draws.
+8 Sutherland sets. Each model's co-fields are computed on a 0.8 Å grid together with their closed-form standard deviation, and the mask keeps what lies more than 2 of them from zero. The training set is then resampled with replacement 30 times and refitted; a voxel is **stable** when the sign of its co-field is unchanged by that. Only the drawn part of each picture is counted -- a tenth of the peak and above, which is well below any isosurface anyone draws.
 
 | set | n | q² | kept by the mask | stability kept | stability cut | difference |
 |---|---:|---:|---:|---:|---:|---:|

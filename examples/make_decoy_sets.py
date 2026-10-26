@@ -162,7 +162,7 @@ def build(target: str, n_decoys: int, restarts: int, alpha: float, out_dir: str,
     before = np.array([r.similarity_before for r in res])
     if conformers > 1:
         moved = sum(1 for r in res if r.conformer > 0)
-        print(f"{target:5s} a generated conformation won for {moved} of {len(res)} decoys")
+        print(f"{target:5s} a generated conformation was chosen for {moved} of {len(res)} decoys")
     print(f"{target:5s} {len(res):4d} decoys from {len(set(l[0] for l in labels))} other targets, "
           f"aligned to {len(act)} actives: similarity {before.mean():.3f} -> {sim.mean():.3f} "
           f"(max {sim.max():.3f}), {time.time() - t0:.0f} s -> {out}", flush=True)

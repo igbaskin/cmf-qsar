@@ -148,8 +148,8 @@ def report(path):
            "superimposed on a reference molecule by maximum common substructure for the Mittal",
            f"et al. (2009) collection. Same fields ({', '.join(rows[0]['fields'])}), same alpha",
            f"grid, same lambda grid, same {rows[0]['folds']}-fold CV.", "",
-           "| target | n | q2 published | q2 automatic | median fit RMSD | geometry buys "
-           "(published) | geometry buys (automatic) |",
+           "| target | n | q2 published | q2 automatic | median fit RMSD | gain from geometry "
+           "(published) | gain from geometry (automatic) |",
            "|---|---|---|---|---|---|---|"]
     for r in rows:
         p, a = r["published"], r["automatic"]
@@ -164,7 +164,7 @@ def report(path):
         np.mean([r["published"]["aligned"]["q2"] - r["automatic"]["aligned"]["q2"]
                  for r in rows])), "",
         "The frame against the conformer: the invariant column uses the same coordinates without",
-        "any superposition, so where it holds up and the aligned column does not, the frame is",
+        "any superposition, so where it keeps its q2 and the aligned column does not, the frame is",
         "what went wrong rather than the geometry.", "",
         "| target | aligned pub. | invariant pub. | counts pub. | aligned aut. | invariant aut. "
         "| counts aut. |", "|---|---|---|---|---|---|---|"]

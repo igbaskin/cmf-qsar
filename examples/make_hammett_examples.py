@@ -3,11 +3,12 @@
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed
 position, so the one hard requirement of CMF -- that the molecules share a frame -- is met by
 construction: put the benzene ring of every X-C6H5 in the same place and every substituent sits
-where the reaction centre of benzoic acid would see it.  With a linear kernel the CMF prediction
-is a linear functional of the molecular field, so a Hammett constant becomes the integral of the
-substituent's field against a learned weight function, the co-field, which is the sensitivity map
-of benzoic acid ionisation to charge and bulk around the ring.  sigma_m and sigma_p should then
-give co-fields that differ in *where* they sit, meta or para, and that is what the example is for.
+where it would be relative to the reaction centre of benzoic acid.  With a linear kernel the
+CMF prediction is a linear functional of the molecular field, so a Hammett constant becomes the
+integral of the substituent's field against a learned weight function, the co-field, which is the
+sensitivity map of benzoic acid ionisation to charge and bulk around the ring.  sigma_m and sigma_p
+should then give co-fields that differ in *where* they sit, meta or para, and that is what the
+example is for.
 
 The frame
 ---------
@@ -15,7 +16,7 @@ Ring centroid at the origin, the ipso carbon (the one carrying X) on the +x axis
 xy plane.  The ring has C2v symmetry about the C1-C4 axis, so two reflections (y -> -y, z -> -z)
 map the frame onto itself while turning a substituent conformer into an equally valid one; which of
 the four images a conformer generator happens to produce is noise.  The single-conformer file
-breaks the tie by a convention (the substituent's heavy atoms lean towards +y and +z); the
+chooses one of them by a convention (the substituent's heavy atoms lean towards +y and +z); the
 symmetrised file writes all four images of every molecule as conformers of one compound, so that
 the ensemble mode of the field set (``--ensemble-by name --conformations ensemble``) averages them
 and the field has the symmetry of the problem.
@@ -28,7 +29,7 @@ against the paper itself** -- the rows were recovered from the scan by the coord
 words, since its text layer comes out column by column -- and 38 agreed to the last digit.  The
 one that did not was CH2OCH3, written as 0.02 / 0.03 and given by Table I (row 223) as
 0.08 / 0.01, confirmed on the page image before it was changed.  The remaining 56 could not be
-matched to a row automatically, because the scan's optical character recognition mangles the
+matched to a row automatically, because the scan's optical character recognition corrupts the
 substituent names (Cl comes out as "c1", SO2Me as "SOIMe"), and they are still only as good as
 the memory they came from.
 
@@ -234,10 +235,10 @@ def place_in_frame(coords: np.ndarray, lean_positive: bool = True) -> np.ndarray
 
 
 def _shape_atoms(mol: Chem.Mol) -> np.ndarray:
-    """Atoms that tell conformers apart: heavy atoms and the hydrogens on N, O and S.
+    """Atoms that distinguish conformers: heavy atoms and the hydrogens on N, O and S.
 
-    A methyl rotation is not a conformer worth a field of its own; where a hydroxyl or an amino
-    hydrogen points is, for the donor field and the charges.
+    A methyl rotation is not a conformer that needs a field of its own; where a hydroxyl or an
+    amino hydrogen points is one, for the donor field and the charges.
     """
     idx = []
     for a in mol.GetAtoms():
@@ -306,7 +307,7 @@ def build_conformers(fragment: str, n_embed: int = 30, seed: int = 2026, keep: i
     else:
         results = AllChem.UFFOptimizeMoleculeConfs(work, maxIters=2000)
     energies = np.array([e if conv == 0 or e == e else np.inf for conv, e in results], float)
-    # UFF has no idea of a hypervalent sulfur and folds two fluorines of SF5 onto one point; a
+    # UFF has no model of a hypervalent sulfur and folds two fluorines of SF5 onto one point; a
     # conformer with any two atoms closer than 0.7 A is discarded, and if none is left the ETKDG
     # geometries are used as they are, with no energies to rank them (the first one is kept)
     for j, cid in enumerate(ids):

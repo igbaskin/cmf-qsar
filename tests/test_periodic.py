@@ -106,7 +106,7 @@ def test_the_background_removes_the_uniform_term():
 
 def test_the_taper_makes_the_cutoff_continuous():
     """Neighbours just inside a tapered cutoff contribute almost nothing; inside a hard one they
-    contribute in full, so a pair walking out of the sphere would jump."""
+    contribute in full, so a pair leaving the sphere would cause a jump."""
     a = 7.99
     one = Atoms("Fe", positions=[[0, 0, 0]], cell=np.eye(3) * a, pbc=True)
     c = CrystalFields(name="sc", coords=one.get_positions(), weights=np.ones((1, 1)),
@@ -114,7 +114,7 @@ def test_the_taper_makes_the_cutoff_continuous():
     hard = PeriodicSpec(r_max=8.0, step=1.0, sigma=0.5, taper=0.0, background=False, include_self=False)
     soft = PeriodicSpec(r_max=8.0, step=1.0, sigma=0.5, taper=2.0, background=False, include_self=False)
     h, s = periodic_autocorrelation(c, hard), periodic_autocorrelation(c, soft)
-    assert h[-1] > 1.0                      # six neighbours at 7.99 A land in the 8 A channel
+    assert h[-1] > 1.0                      # six neighbours at 7.99 A count in the 8 A channel
     assert s[-1] < 1e-3 * h[-1]
     w = soft.window(np.array([0.0, 5.9, 6.0, 7.0, 7.999, 8.0, 9.0]))
     assert np.allclose(w, [1.0, 1.0, 1.0, 0.5, 0.0, 0.0, 0.0], atol=1e-6)

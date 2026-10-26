@@ -135,7 +135,7 @@ def test_the_sites_can_be_brought_closer_together():
 
 
 def test_framework_core_finds_a_scaffold_where_the_mcs_finds_a_fragment():
-    """The measured failure that made the framework the default: GPB's MCS cuts nothing off."""
+    """The measured failure that made the framework the default: GPB's MCS removes nothing."""
     import os
     from rdkit import Chem
     from cmfqsar.dataio import load_dataset

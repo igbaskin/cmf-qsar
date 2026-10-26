@@ -189,7 +189,7 @@ def test_cv_training_alignment_runs_and_reports_diagnostics():
     # the molecules were moved, within the guard, and the drift is cumulative
     assert all(r.moved_max <= 1.05 for r in rows)
     assert rows[1].drift >= rows[0].drift - 1e-9
-    # steps shrink: the iteration converges rather than running away
+    # steps shrink: the iteration converges rather than diverging
     assert rows[1].moved_mean <= rows[0].moved_mean + 1e-9
     # the diagnostics are finite and the similarity is a correlation-like number
     for r in rows:

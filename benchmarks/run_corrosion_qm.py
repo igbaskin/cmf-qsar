@@ -6,7 +6,7 @@ The corrosion-inhibitor series are the place to ask. A corrosion inhibitor works
 electron density to the iron surface, which is exactly what a frontier orbital energy, a chemical
 hardness or a condensed Fukui index is about, and the DFT-descriptor literature on these compounds
 is large. The fields, meanwhile, have the hardest possible job here: the structures are
-two-dimensional, so the frame is one the program makes up (every molecule superimposed on the most
+two-dimensional, so the frame is one the program invents (every molecule superimposed on the most
 active large member of its series through the scaffold atoms), and ``run_corrosion.py`` measures
 that the resulting models are modest -- q2 from about zero to +0.7 depending on the series.
 
@@ -21,10 +21,10 @@ alpha and lambda grids and the same 10-fold cross-validation,
   base+desc     base plus the per-molecule quantum descriptors as a kernel block
   base+both     base plus both
   desc_only     the quantum descriptors alone, no geometry at all: the control that says whether
-                the fields are earning their keep
+                the fields are worth their cost
 
 ``desc_only`` is the control the DFT-descriptor papers implicitly claim: six numbers per molecule,
-no pose, no field. If it matches the field models, the geometry in this series is decoration.
+no pose, no field. If it matches the field models, the geometry in this series adds nothing.
 
 ORCA is run once per molecule (single point at the molecule's aligned geometry -- never optimised,
 which would unalign the series -- plus the N+1 and N-1 states for the Fukui indices), cached under

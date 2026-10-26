@@ -56,7 +56,7 @@ def test_built_molecule_sits_in_frame_and_leans_positive():
     _ring_frame_ok(coords)
     methyl = coords[7]                      # ring 0-5, O 6, C 7
     assert methyl[1] > -1e-6 and methyl[2] > -1e-6
-    assert all(a.GetIsAromatic() for a in list(mol.GetAtoms())[:6])      # MMFF left no trace
+    assert all(a.GetIsAromatic() for a in list(mol.GetAtoms())[:6])      # aromaticity flags kept
     assert mol.HasProp("mmff_energy")
 
 
@@ -140,7 +140,7 @@ def test_ensemble_file_round_trip_gives_boltzmann_weights(tmp_path):
         assert abs(w.sum() - 1.0) < 1e-12
         if n > 1:
             assert w.max() > 1.0 / (4 * n) + 1e-6          # not uniform
-            assert np.allclose(w[:4], w[0])                  # the four images weigh the same
+            assert np.allclose(w[:4], w[0])                  # the four images have the same weight
 
 
 def test_small_model_runs_end_to_end(tmp_path):

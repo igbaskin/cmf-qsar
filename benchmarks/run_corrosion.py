@@ -8,8 +8,8 @@ potency ``ln[theta / (C (1 - theta))]`` as ``activity``, and the node's scaffold
 ``scaffold`` column.  ``corrosion_hcl`` carries the same compounds protonated for 1 M HCl, which
 changes the charges the electrostatic field is built from but not the scaffold match.
 
-These sets are the case the Sutherland and Mittal measurements were circling: the structures are
-two-dimensional, so every frame is one the program makes up.  The ordinary model gets the
+These sets are the case the Sutherland and Mittal measurements were approaching: the structures are
+two-dimensional, so every frame is one the program invents.  The ordinary model gets the
 strongest automatic frame available here -- each molecule rigidly superimposed on the most active
 large member of its series *through the scaffold atoms*, which is exactly the superposition a
 corrosion-QSAR paper would describe -- and it is measured against
@@ -49,7 +49,7 @@ sys.path.insert(0, HERE)
 from rdkit import Chem, RDLogger  # noqa: E402
 from rdkit.Chem import rdMolAlign  # noqa: E402
 
-import run_topomer as T  # noqa: E402  - the Sutherland/Mittal benchmark, reused wholesale
+import run_topomer as T  # noqa: E402  - the Sutherland/Mittal benchmark, reused in full
 
 from cmfqsar.chemotypes import count_kernel  # noqa: E402
 from cmfqsar.dataio import load_dataset  # noqa: E402
@@ -263,7 +263,7 @@ def report(path, results=RESULTS, title="on the corrosion-inhibitor series"):
                        f"{r['aligned_kept']['q2'] - r['aligned_frag']['q2']:+.3f} | "
                        f"{r['aligned_frag']['q2'] - r['topomer']['q2']:+.3f} |")
         out += ["", "Mean q2: aligned %+.3f, topomer %+.3f (difference %+.3f); topomer wins %d of "
-                    "%d. Mean price of the cut %+.3f, of the pose %+.3f." % (
+                    "%d. Mean cost of the cut %+.3f, of the pose %+.3f." % (
                         a.mean(), t.mean(), (a - t).mean(), int((t > a).sum()), len(have),
                         (a - f).mean(), (f - t).mean())]
     allr = np.array([r["aligned"]["q2"] for r in rows])

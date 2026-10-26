@@ -50,7 +50,7 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Two endpoints on one kernel**, tied by a task correlation, so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Several endpoints on one kernel**, tied by a task covariance -- one shared correlation, a free-form low-rank matrix chosen by the marginal likelihood, or a covariance read off descriptors of the endpoints themselves, which is what lets an endpoint with no measurements at all be predicted from its neighbours -- so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
@@ -133,7 +133,7 @@ train/test split carried by the SD files:
 | THR, flexible | ensemble, on the reference (`reference`) | 0.492 | 0.126 |
 | THR, flexible | ensemble, reference + field (`field`) | 0.489 | 0.195 |
 
-Read the table and not the hope: **none of the three new criteria recovers the loss on thrombin**.
+Read the table, not the expectation: **none of the three new criteria recovers the loss on thrombin**.
 Anchoring every conformation on the molecule's own published scaffold lifts q²cv from 0.501 to
 0.514 and forcing the whole series into one frame gives 0.492, against 0.696 for the
 single conformation; R²pred stays near 0.1 where the single-conformation model reaches 0.373.
@@ -144,7 +144,7 @@ nothing there; the higher q²cv of the ensembles on that set is backed by no tes
 That is an answer, just not the expected one. Adding conformations to thrombin hurts however they
 are placed, which points at the conformations rather than at their orientation: the series carries
 poses its authors aligned as bound-like, and ETKDG conformations of an isolated molecule are not
-those poses, so averaging them into the field dilutes exactly the arrangement the model lives on.
+those poses, so averaging them into the field dilutes exactly the arrangement the model depends on.
 The ensemble size says the same thing - on thrombin, with the placement varied and everything else
 the default:
 
@@ -187,8 +187,8 @@ conformations, 0.693 at 2 Å keeping 2.9, and 0.692 for the full ensemble. The q
 how far the ensemble strays from the arrival pose, and the window recovers the baseline only by
 emptying the ensemble: generated conformations of these ligands stand about 3 Å from the aligned
 pose even after being superimposed on it, so any window tight enough to be *local* keeps nothing but
-the pose itself. There is no middle ground in which the ensemble both differs from one conformation
-and predicts better.
+the pose itself. There is no intermediate setting in which the ensemble both differs from one
+conformation and predicts better.
 
 Averaging over generated conformations therefore does not help an aligned 3D-QSAR series, and three
 placements and six windows did not find a case where it does. What remained was to stop averaging.
@@ -215,10 +215,10 @@ never conformations.
 
 On synthetic bags that obey the assumption, where the label is the best score among five instances,
 the method does what it should: it recovers the hidden instance in 98 % of bags and lifts q²cv from
-0.398 to 0.999, where averaging is helpless. That is the test that proves the machinery, and it is
+0.398 to 0.999, where averaging cannot help. That is the test that proves the machinery, and it is
 in the suite.
 
-On real series it does not pay, and how it fails is the interesting part. Five conformations per
+On real series it does not help, and how it fails is the interesting part. Five conformations per
 molecule, the kernels cosine-normalised, α and λ chosen by cross-validation:
 
 | set | representation | q²cv | R²pred | conformations that count |
@@ -237,9 +237,9 @@ matches the single-conformation result to three decimals. On ACE cross-validatio
 selection at all, and the gain it reports does not survive on the test set.
 
 The alternation is a local search, and that shows: started from equal weights instead of from the
-arrival pose, the same fit lands at q²cv -0.29 and keeps the published pose for 2 % to 24 % of
+arrival pose, the same fit ends at q²cv -0.29 and keeps the published pose for 2 % to 24 % of
 molecules. Annealing beta upwards from a soft start, which `anneal_weights` does, lifts that to
-0.23 but still falls far short, and it *degrades* a run that started at the published pose. So the
+0.23 but is still far below, and it *degrades* a run that started at the published pose. So the
 method cannot find a bioactive conformation among gas-phase ones; it can only confirm that the pose
 already there is the best of what is offered, which is a useful diagnostic and not a better model.
 
@@ -312,9 +312,9 @@ Boltzmann weighting was worse than uniform on all three sets, because the confor
 from one input pose and their energies then concentrate the weight on a few of them; uniform weighting
 is the safer default and is what the application starts with.
 
-One last trap: a seed of exactly zero makes RDKit return the same geometry for every conformation,
-which would silently collapse an ensemble; the generator maps it to a fixed non-zero seed and a test
-guards that.
+One last source of error: a seed of exactly zero makes RDKit return the same geometry for every
+conformation, which would silently collapse an ensemble; the generator maps it to a fixed non-zero
+seed and a test guards that.
 
 ### Heterogeneous series: several chemotypes, no one common substructure
 
@@ -336,7 +336,7 @@ molecule's own scaffold-mates in the training part, which is the most optimistic
    `place_groups` moves each cluster as a rigid body, so step 2 survives intact: either by
    maximising the CMF kernel between its reference and the reference of a chosen cluster (their
    centroids are brought together first, since the kernel is flat where two molecules do not
-   overlap and there is nothing to climb), or by docking that reference into the binding site,
+   overlap and there is no gradient to follow), or by docking that reference into the binding site,
    which needs a structure but no reference cluster at all.
 4. **Judge it by leave-one-chemotype-out.** `grouped_folds` never splits a group, and
    `grouped_cv_predict` holds out a whole chemotype at a time; `max_folds` bundles the groups
@@ -373,7 +373,7 @@ molecule's own scaffold-mates in the training part, which is the most optimistic
      *t*" — the baseline would lose the very descriptors it is built from, and the kernel would
      collapse towards a matrix of ones.
 
-   If the aligned model cannot beat this baseline, the alignment is not paying for itself, and on
+   If the aligned model cannot beat this baseline, the alignment is not worth its cost, and on
    a heterogeneous set that is the first thing worth knowing.
 
 `evaluate` runs steps 4 and 5 together and returns the three numbers with a verdict, plus the
@@ -391,24 +391,24 @@ groups of at least three molecules; the baseline gets the same λ grid on the sa
 | sutherland/AChE | 111 |  7 | +0.510 | **+0.275** | −0.060 |
 | mittal/ACHE     | 111 |  7 | +0.168 | −0.304 | **−0.058** |
 
-Random folds flatter every one of them, by 0.11 to 0.47 in q²; on ACHE they turn a model that
-cannot predict a new scaffold at all into a modestly positive number. That gap is the reason the
-grouped folds are here. Across scaffolds the aligned model still earns its keep on COX2, DHFR and
-Sutherland's AChE, and does not on BZR or on Mittal's ACHE, where a fragment-count model that
-ignores the geometry entirely does as well or better. Which it is cannot be guessed from the
-random-fold number, and the per-chemotype table says where the failure is: on DHFR one group of
-five molecules is predicted 2.07 log units too low whatever is done with it.
+Random folds overstate the quality of every one of them, by 0.11 to 0.47 in q²; on ACHE they
+turn a model that cannot predict a new scaffold at all into a modestly positive number. That gap
+is the reason the grouped folds are here. Across scaffolds the aligned model still justifies its
+cost on COX2, DHFR and Sutherland's AChE, and does not on BZR or on Mittal's ACHE, where a
+fragment-count model that ignores the geometry entirely does as well or better. Which it is cannot
+be guessed from the random-fold number, and the per-chemotype table says where the failure is: on
+DHFR one group of five molecules is predicted 2.07 log units too low whatever is done with it.
 
-How strict the baseline is matters, and shows how little attenuation it takes to smuggle the
+How strict the baseline is matters, and shows how little attenuation it takes to bring the
 geometry back in. The same column taken by the Gaussian route at α = 2·10⁻⁴ instead of at the
 limit reads +0.282 on COX2 and +0.250 on DHFR, against +0.174 and +0.159 here — the residual pose
 dependence at that attenuation is worth around 0.1 in q² on the two large sets. It does not
-change any verdict, but a baseline is only as honest as its limit.
+change any verdict, but a baseline is only as reliable as its limit.
 
 Realigning first did not rescue the sets that fail. Under the same protocol, Mittal's ACHE goes
 from −0.304 in its published poses to −0.392 after step 2 and −0.390 after step 3, and BZR from
-+0.088 to +0.097 and then +0.050: the same answer the conformational ensembles gave, from the
-other direction. A placement chosen to maximise field overlap is not a bioactive-pose hypothesis,
++0.088 to +0.097 and then +0.050: the same answer the conformational ensembles gave, seen from a
+different direction. A placement chosen to maximise field overlap is not a bioactive-pose hypothesis,
 and the model can tell. What the workflow is for is the question in step 4, not the realignment in
 steps 2 and 3, which are there for a set that arrives with no usable poses at all.
 
@@ -438,8 +438,8 @@ values, the verdict and every chemotype's RMSE and bias while it was the one hel
 
 The alignment-free baseline above is pose-free because it is two-dimensional: as α → 0 the
 indicator fields become atom counts and the geometry is gone. That leaves a gap in the
-comparison, because "the alignment did not pay for itself" and "three dimensions did not pay for
-themselves" are different statements, and the count kernel cannot tell them apart.
+comparison, because "the alignment was not worth its cost" and "three dimensions were not worth
+their cost" are different statements, and the count kernel cannot tell them apart.
 
 [invariant.py](cmfqsar/invariant.py) fills it. For every pair of field types it takes the
 distance distribution of the field weights inside one molecule,
@@ -501,13 +501,13 @@ model, +0.200 against +0.189; held to a single fixed distance grid, a third of t
 is 0.017 behind. Either way it more than doubles what the pose-free count kernel achieves. Per
 set the aligned model keeps a real lead on COX2, DHFR and Sutherland's AChE, the invariant kernel
 wins on BZR — the set where the alignment had already lost to counts — and neither helps on
-Mittal's ACHE, where nothing does. Five sets are not enough to call the draw at the top, but they
+Mittal's ACHE, where nothing does. Five sets are not enough to decide the near tie at the top, but they
 are enough to say that most of what the geometry contributes does not need the frame.
 
 So for a series of several chemotypes, most of what the three-dimensional fields contribute
 survives without any superposition at all. That is the useful half of the answer. The other half
-is what it costs: there is no co-field, because a map in space needs a space to live in. The
-decomposition that remains is in the descriptor's own currency — which pair of field types at
+is what it costs: there is no co-field, because a map in space needs a space to exist in. The
+decomposition that remains is in the descriptor's own terms — which pair of field types at
 which distance carries the weight, which `channel_labels` names.
 
 `evaluate` reports it as the fourth number, the `hetero` command prints it, and the Chemotypes
@@ -517,7 +517,7 @@ tab carries it beside the other three.
 
 A distance distribution is the same for a molecule and its mirror image, so everything above is
 blind to chirality: a test asserts that the two-point descriptor of an enantiomer pair is
-identical to the last bit. The signed quantity that is not blind is the triple product of three
+identical bit for bit. The signed quantity that is not blind is the triple product of three
 displacement vectors, and `--ac-chirality` adds it as a second block of channels.
 
 Summing the signed volume over every triple of atoms would cost O(N³). It does not have to,
@@ -549,9 +549,9 @@ congeneric chiral series built for the purpose — one scaffold, ten substituent
 enantiomers of each, activity set to the substituent effect plus a fixed ±0.75 for handedness,
 leave-one-enantiomer-pair-out — the plain kernel predicts the two hands identically and recovers
 exactly none of the ±0.75 gap, as it must. With the signed block it recovers 0.108 of a true
-1.500 and calls the hand right 60 % of the time. Up-weighting the block until it carries 98 % of
+1.500 and predicts the hand correctly 60 % of the time. Up-weighting the block until it carries 98 % of
 the squared norm raises that to 0.311 and 70–80 %, while the overall q² falls from +0.223 to
-+0.025 as the substituent signal is crowded out. A per-atom-triple version binned by the
++0.025 as the substituent signal is suppressed. A per-atom-triple version binned by the
 triangle's size, which does not factorise and costs O(N³), recovers 0.496 and is the direction to
 take if more is needed; it is not implemented, because three times a small number is still a
 small number.
@@ -594,7 +594,7 @@ raise rather than return something meaningless, while the contributions of the t
 
 ### Crystals: the periodic autocorrelation
 
-The autocorrelation above is the real-space face of a reciprocal-space object. Averaged over
+The autocorrelation above is the real-space counterpart of a reciprocal-space object. Averaged over
 orientations, the product of two typed structure factors is the sine transform of the typed
 pair-distance distribution (the Debye scattering equation), so the kernel compares two molecules
 by what a powder diffraction experiment on each would see, field type by field type. Nothing in
@@ -606,13 +606,13 @@ three things change:
   descriptor is intensive. A supercell, a different choice of cell, origin or orientation all give
   the same channels — tests assert it to twelve digits.
 * **The uniform background is removed.** In an infinite solid the number of pairs at a distance r
-  grows as r², the same for every structure, and swamps everything else at long range. What the
+  grows as r², the same for every structure, and overwhelms everything else at long range. What the
   Faber–Ziman partial structure factors keep is the deviation of each field pair from a uniform
   distribution over the cell, and that is what is subtracted, with the shell integral of the
   Gaussian channels computed once per grid. The self term stays, as it does for molecules: it
   carries the composition.
 * **The cutoff is tapered.** The last two ångström before the cutoff are weighted by a half-cosine,
-  so that a pair walking out of the sphere leaves the descriptor continuously instead of ringing.
+  so that a pair walking out of the sphere leaves the descriptor continuously instead of abruptly.
 
 A molecule placed in a box larger than the cutoff, with the background and the taper off, gives
 exactly the molecular autocorrelation per atom; a box of randomly placed atoms, with them on,
@@ -660,7 +660,7 @@ long-range periodicity is not.
 With the indicator fields alone the real-space side of this kernel is the partial radial
 distribution function of Schütt et al. (2014) and the Valle–Oganov fingerprint of USPEX; with the
 molecular transform of Soltzberg and Wilkins (1977) and 3D-MoRSE on the molecular side, the idea has
-ancestors. What is added is the kernel formulation with typed weights beyond element identity, the
+predecessors. What is added is the kernel formulation with typed weights beyond element identity, the
 cross terms between field types, and the co-pattern.
 
 **Measured on a Matbench task.** `matbench_phonons`: 1,265 inorganic crystals from the Materials
@@ -693,21 +693,21 @@ sits in the lower middle of that range, and three things it says are worth more 
 The single most useful field is the inverse square root of the atomic mass, added because the top
 of a phonon spectrum goes as 1/√m: it takes the three physico-chemical fields from 150 to 117,
 and its co-pattern is the steric × 1/√m and electronegativity × 1/√m channels at the
-bond distances — a light atom on a stiff bond to an electronegative one. The taper earns its
-place: the hard cutoff is the worst row. And the background subtraction, argued for above on
+bond distances — a light atom on a stiff bond to an electronegative one. The taper proves its
+value: the hard cutoff is the worst row. And the background subtraction, argued for above on
 physical grounds, costs accuracy here: with the uniform term kept the 58-field model improves
 from 181 to 119, and its co-pattern becomes the one a spectroscopist would write down, the H × O,
 H × N and H × S channels with positive weight, because the top of the spectrum in a hydrogen-
 containing solid is the O–H or N–H stretch. The uniform term carries the composition times the
-density, which this property wants and the subtraction removes; `background=False` in the
+density, which this property depends on and the subtraction removes; `background=False` in the
 library and `--no-background` on the command line keep it, and the four-field model kept it too
 goes from 117 to 92. The 55 indicator fields hurt in the joint cosine kernel, where seventeen
-hundred equally scaled element-pair blocks drown the ten that matter, and the block weights of
+hundred equally scaled element-pair blocks overwhelm the ten that matter, and the block weights of
 the section above are the remedy, measured: with the background removed they take the 59-field
 model from 179 to 148 (balanced) and 152 (aligned); with the background kept, from 119 to 112
 (balanced) and 97 (aligned), the aligned weights giving the physico-chemical blocks eight times
 the share of the kernel they had at equal weights and a co-pattern led by the H × O and H × N
-channels. What they do not do is make the indicator fields pay for themselves: the four
+channels. What they do not do is make the indicator fields worth their cost: the four
 physico-chemical fields alone, background kept, reach 92 ± 5 cm⁻¹ — the best linear model on
 this task, better than the four with the Gaussian layer — and no weighting of the 59 fields beats
 it. On a property set by the stiffest bond in the cell the element identity adds nothing the
@@ -723,12 +723,12 @@ tests that need them skip where they are missing.
 ### Topomer fields: a frame that comes from the topology
 
 The alignment-free kernel above throws the frame away. The topomer construction of
-[topomer.py](cmfqsar/topomer.py) takes the other road, Cramer's (topomer CoMFA, 2003): cut the
+[topomer.py](cmfqsar/topomer.py) takes the opposite approach, Cramer's (topomer CoMFA, 2003): cut the
 molecule at the bond that attaches a substituent and build that fragment into a pose that is a
 *deterministic function of its topology* — canonical atom numbering, one embedding with a fixed
 seed, every rotatable torsion set to 180°, the attachment atom at the origin with its open
 valence along −x, and the remaining roll fixed by the principal axis of the heavy atoms. The same
-R-group then always lands in the same place, whatever molecule it was cut from and however its
+R-group then always takes the same position, whatever molecule it was cut from and however its
 atoms were numbered — a test asserts the coordinates are identical, not merely close.
 
 Two things make this fit CMF better than it fits CoMFA. There is no grid: a fragment's field is
@@ -765,12 +765,12 @@ five fields, the same α grid (0.1–5), the same λ grid and the same 10-fold C
 Mean 0.101 q² in favour of the alignment — but the mean is the least informative number in the
 table. On two sets the rule-built poses beat the published superposition (AChE by 0.007, BZR by
 0.066); on the rest the alignment wins, by 0.05 to 0.27. On ACE neither field model beats
-atom-type counts, which is the heterogeneity of that series speaking rather than anything about
+atom-type counts, which reflects the heterogeneity of that series rather than anything about
 poses, and THR is no evidence either way: 22 molecules and q² below 0.1 everywhere means there is
 no model there to compare.
 
 **Which half of the construction costs that?** The topomer route does two separable things — it
-cuts the molecule up and parks the pieces at separate sites, and it rebuilds each piece by rule.
+cuts the molecule up and places the pieces at separate sites, and it rebuilds each piece by rule.
 A third column separates them: the same cut substituents at the same separated sites, each left
 exactly where the published superposition put it. Identical atoms and identical weights to the
 topomer column, only the coordinates differ.
@@ -787,18 +787,18 @@ topomer column, only the coordinates differ.
 | THR | +0.076 | −0.131 | −0.137 | +0.207 | +0.006 |
 
 **The pose rule costs 0.066 q² on average, and at most 0.165.** The cut costs less, 0.035 on
-average — and it is a cost only where the scaffold is doing work. Separate sites
+average — and it is a cost only where the scaffold contributes. Separate sites
 throw away the scaffold's own field *and* the geometry between one substituent and another, so
 THR (+0.207, where the core is most of the molecule) and THER (+0.137, a benzene core with
-21-heavy-atom peptide arms whose relative placement *is* the molecule) lose their accuracy at the
-knife. Where the scaffold is constant and the decorations small, cutting it away *helps* — BZR
+21-heavy-atom peptide arms whose relative placement *is* the molecule) lose their accuracy when
+cut. Where the scaffold is constant and the substituents small, cutting it away *helps* — BZR
 gains 0.102 q², DHFR 0.054 — because a core identical in every molecule adds the same large term
 to every kernel entry and dilutes the contrast between the parts that actually differ.
 
 Both costs are real and neither dominates. The pose rule is cheap on five of the eight sets
 (0.006 to 0.067 q²) and expensive on two, COX2 at 0.165 and DHFR at 0.116, where the substituents
 are large enough that a canonical anti torsion is a different molecule from the one the
-superposition shows. What is bought for that is reproducibility and speed: the same substituent
+superposition shows. What is gained for that is reproducibility and speed: the same substituent
 gives the same field for ever, so a virtual library is scored from a fragment table rather than a
 superposition search, and the frame exists where no superposition is possible at all. Choose the
 core so that the scaffold really is the invariant part of the series, and keep the substituents
@@ -810,7 +810,7 @@ an attachment point, and a nan field is read as no field, so the topomer models 
 four fields instead of five. Capping the open valence with hydrogen before the charges are
 computed fixed it, and the whole benchmark was re-run. It moved the mean loss from 0.073 to 0.101
 q² and, more usefully, it made the pose rule's cost visible: electrostatics is the field most
-sensitive to where an atom sits, and a model with no charges could not pay for misplacing
+sensitive to where an atom sits, and a model with no charges could not be penalised for misplacing
 them.)*
 
 **The same measurement where the alignment is automatic reverses the verdict**
@@ -828,16 +828,16 @@ have a scaffold with enough cuttable molecules to carry a topomer model, and on 
 | Mittal, automatic frame | 31 | 23 | +0.200 | **+0.261** | -0.027 | -0.033 |
 
 The pose rule costs 0.066 q² against a careful superposition and *gains* 0.033 against an
-automatic one, and the whole picture flips with the quality of the frame it replaces: the rule
-wins 23 of 31 sets there. Where it loses, it loses for a readable reason — the sets it
-loses on are the ones whose ring system is the pharmacophore and whose substituents are
-decoration.
+automatic one, and the whole picture reverses with the quality of the frame it replaces: the rule
+wins 23 of 31 sets there. Where it loses, it loses for a clear reason — the sets it
+loses on are the ones whose ring system is the pharmacophore and whose substituents
+contribute little.
 
 How much the frame itself is worth is measurable directly, because nine targets occur in both
 collections — the same compounds, curated superposition against automatic
 ([benchmarks/run_alignment.py](benchmarks/run_alignment.py)):
 
-| target | q² curated | q² automatic | median fit | geometry buys, curated | geometry buys, automatic |
+| target | q² curated | q² automatic | median fit | geometry gains, curated | geometry gains, automatic |
 |---|---:|---:|---:|---:|---:|
 | ACE | +0.651 | +0.470 | 1.27 Å | −0.003 | −0.142 |
 | AChE | +0.547 | +0.243 | 1.61 Å | +0.337 | +0.078 |
@@ -849,7 +849,7 @@ collections — the same compounds, curated superposition against automatic
 | THR | +0.701 | +0.021 | 2.71 Å | +0.691 | −0.163 |
 | STEROIDS | +0.719 | +0.515 | 1.40 Å | +0.219 | +0.065 |
 
-Mean +0.597 against +0.295: an automatic alignment costs half the model. "Geometry buys" is the
+Mean +0.597 against +0.295: an automatic alignment costs half the model. "Geometry gains" is the
 aligned model minus its own count baseline — +0.25 on average with the curated frame, −0.06 with
 the automatic one, so on five of the nine targets the fields in an automatic frame predict *worse
 than atom-type counts*. And on the automatic files the rotation-invariant autocorrelation kernel,
@@ -888,8 +888,8 @@ open valence.
 In the application it is *Tools → Replace molecules by their topomer substituents…*, and it is a
 **transformation of the data set** rather than a switch: the molecules are replaced by their
 posed substituents, keeping names, activities and the train/test split, and the data-set line
-says *[topomer substituents of …]* so the change is never silent. That is the honest shape for
-it, because a topomer model's co-field, contributions and Shapley values live in the substituent
+says *[topomer substituents of …]* so the change is never silent. That is the correct form for
+it, because a topomer model's co-field, contributions and Shapley values exist in the substituent
 frames and not around the original ligands — a hidden switch would produce maps that cannot be
 drawn next to anything. The sites stand 100 Å apart by default, adjustable in the dialog, and the
 view opens on the first of them, since the whole row at once is a line of specks. Reloading the
@@ -933,17 +933,17 @@ throughout, molecules in their published poses:
 | electrostatic and steric only | 2 | +0.305 | +0.401 | +0.103 | +0.180 | −0.244 |
 | alignment-free counts (the floor) | — | +0.174 | +0.159 | +0.144 | −0.060 | −0.058 |
 
-**Fitted weights earn their place.** Five property fields beat the 9 to 16 indicator fields on
-three sets and draw on a fourth: +0.10 on COX2, +0.08 on AChE, +0.01 on DHFR, −0.01 on BZR,
+**Fitted weights prove their value.** Five property fields beat the 9 to 16 indicator fields on
+three sets and tie on a fourth: +0.10 on COX2, +0.08 on AChE, +0.01 on DHFR, −0.01 on BZR,
 −0.06 on Mittal's ACHE. The three increment-derived fields are worth +0.05 to +0.12 over
 electrostatic and steric alone on every set. A coefficient fitted on thousands of outside
-molecules is information the hundred molecules of a QSAR set do not have to pay for.
+molecules is information the hundred molecules of a QSAR set do not have to supply.
 
 **The gain is the weighting, not the capacity.** Putting both representations in one model helps
 on DHFR (+0.055 over the best single one) and is neutral or slightly worse on the other four,
 which is what the kernel argument predicts: the cross-type overlaps the property field carries
 are most of what the extra fields would have supplied, and twenty fields on a hundred molecules
-is more freedom than the folds can pay for.
+is more freedom than the folds can support.
 
 **Which increments, matters.** The two parameterisations differ by 0.20 on AChE (+0.275 against
 +0.074) and by 0.05 on BZR, in opposite directions. Atomic contributions from a counts regression
@@ -955,7 +955,7 @@ types, and treat the result as one defensible decomposition rather than the true
 
 **No representation rescues a bad frame.** On BZR and Mittal's ACHE, where the aligned model
 already lost to the alignment-free floor, every row is still below it. Representation is not the
-binding constraint there; the alignment is.
+limiting factor there; the alignment is.
 
 One aside. The random-fold numbers would have ranked these differently — on AChE electrostatic
 and steric alone look best of all under random folds (+0.567) and second worst under grouped ones
@@ -1008,9 +1008,9 @@ On the eight Sutherland sets (five physico-chemical fields, cosine-normalised ke
 The Gaussian layer raises q²cv on seven of the eight sets and R²pred on six, by 0.08 on average; the
 largest gain is on acetylcholinesterase (R²pred 0.41 -> 0.76), the only loss on test is glycogen
 phosphorylase. A second arc-cosine layer is worth almost nothing over the first, as is usual for these
-kernels: depth beyond one layer buys little when the base kernel is already rich.
+kernels: depth beyond one layer adds little when the base kernel is already rich.
 
-The price is interpretation. With a layer active the model is no longer linear in the molecular field,
+The cost is interpretation. With a layer active the model is no longer linear in the molecular field,
 so there is no co-field and no decomposition into atoms; the application refuses to compute them and
 says why, rather than drawing quantities that no longer mean what they claim. What does survive is
 decomposition rule 2, the contributions `a_j K(X, X_j)` of the individual training molecules, which is
@@ -1029,7 +1029,7 @@ reported q²cv does not use the left-out activities, and they are rescaled to ke
 the joint kernel unchanged so that the λ grid stays comparable.
 
 What it is worth depends on how different the fields are, and on the shrinkage. With the five
-physico-chemical fields alone it buys nothing: their kernels are strongly correlated on a congeneric
+physico-chemical fields alone it gains nothing: their kernels are strongly correlated on a congeneric
 series, so data-driven weights mostly add variance. Over the eight Sutherland sets, with those five
 fields:
 
@@ -1041,12 +1041,12 @@ fields:
 | alignf, shrinkage off | 0.571 | 0.301 |
 
 Cross-validation barely moves, and the fall in test-set prediction comes almost entirely from one set
-(AChE, 0.407 -> -0.02), which is too thin a basis for a general claim; a benchmark over 86 data sets of
+(AChE, 0.407 -> -0.02), which is too weak a basis for a general claim; a benchmark over 86 data sets of
 the other collections (`docs/benchmark.md`) finds the per-field alignment neutral in external validation
 at the default shrinkage (+0.004 q²ex). Turning the shrinkage off is the one setting that does real harm
 (-0.069 q²ex there): the unshrunk solution puts about three quarters of the weight on a single field and
 zeroes two of the five, which on thrombin collapses the model (q²cv 0.674 -> 0.536, R²pred 0.428 ->
-0.053). With the continuous indicator fields added, which really do differ in relevance, it pays:
+0.053). With the continuous indicator fields added, which really do differ in relevance, it helps:
 
 | Set | fields | q²cv none | align | alignf | R²pred none | align | alignf |
 |---|---|---|---|---|---|---|---|
@@ -1120,8 +1120,8 @@ Phi_f(r) = sum_l phi_lf (b_l / 2 pi)^(3/2) exp(-b_l/2 |r - r_l|^2)
 so that the integral of the map over space is the sum of its values, which is the part of the
 prediction attributed to that field. It is the same relation that holds between partial charges and
 the charge density they generate, and it is what makes the picture quantitative rather than
-decorative. The result is one map per field type, drawn with the same isosurfaces, colours and iso
-level as a co-field, which is what a model with a nonlinear kernel otherwise cannot have. Switch the
+merely illustrative. The result is one map per field type, drawn with the same isosurfaces, colours
+and iso level as a co-field, which is what a model with a nonlinear kernel otherwise cannot have. Switch
 players to *atoms x field types* in the Shapley tab, then tick **Shapley field Φ(r)** above the 3D
 view; *File -> Export current Shapley field* writes a Gaussian cube, so the map opens beside the
 protein in any viewer. On the command line it is `--players atomfields`, with `--cube` to write one
@@ -1205,7 +1205,7 @@ T = O_cr / (O_cr + α (O_rr − O_cr) + β (O_cc − O_cr))
 
 where `O_cr` is the overlap integral of the two fields and `O_cc`, `O_rr` their self-overlaps —
 the same three numbers the table above already prints as the cosine and the two norms. So `α`
-charges the candidate for what the reference presents and it fails to reproduce, and `β` for what
+penalises the candidate for what the reference presents and it fails to reproduce, and `β` for what
 it adds, which is exactly the `missing` and `added` vocabulary of that table. Four settings matter:
 
 | `--tversky` | what it asks |
@@ -1216,7 +1216,7 @@ it adds, which is exactly the `missing` and `added` vocabulary of that table. Fo
 | `1,0` | `O_cr/O_rr`: how much of the **reference** the candidate covers, which rewards leaving nothing out |
 
 The cosine is the geometric mean of those last two, since their product is `O_cr²/(O_cc O_rr)`, so
-it splits the difference between the two questions and answers neither. A test asserts that
+it is a compromise between the two questions and answers neither. A test asserts that
 identity, and the other two.
 
 **A one-sided index can exceed one, and that is the containment signal rather than a bug.** An
@@ -1224,7 +1224,7 @@ overlap integral is an inner product, not the measure of an intersection, so the
 `|A − B| ≥ 0` has no counterpart: where the reference field exceeds the candidate's everywhere,
 `O_cr` exceeds `O_cc` and `O_cr/O_cc` passes one. A fragment of the reference, in the frame it was
 cut from, therefore scores exactly one or a little above, and the amount above measures how much
-reference field surrounds it. Nothing is clamped, because clamping would buy a tidier range at the
+reference field surrounds it. Nothing is clamped, because clamping would give a tidier range at the
 price of the two identities above; the shape literature reports Tversky scores the same way. On the
 thrombin set of the Merck benchmark, ranking the 22 ligands against `lig_4` at `0,1` puts `lig_7f`
 first at **1.003** — a molecule whose fields the reference more than covers.
@@ -1252,8 +1252,8 @@ so the discretisation is a matter of finding the lobes.
   centre is the field-weighted centroid of the region and its **tolerance radius** the radius of
   the sphere of the same volume, so a broad lobe gives a loose feature and a tight one a strict
   feature;
-* the **sign says what the feature asks for**. A positive electrostatic lobe wants a positive
-  partial charge, a negative one wants a negative charge — both are features to satisfy. For
+* the **sign says what the feature asks for**. A positive electrostatic lobe asks for a positive
+  partial charge, a negative one asks for a negative charge — both are features to satisfy. For
   every other field a negative lobe is a warning, and a negative steric lobe is an **exclusion
   volume**: the model's own statement that atoms there lower the activity;
 * each feature carries the integral of the co-field over its region, which is what it is worth
@@ -1283,10 +1283,10 @@ to one fitted model. The CSV carries everything; the PDB holds the features
 as pseudo-atoms with the tolerance radius in the B-factor and the weight in the occupancy, so any
 viewer can draw them beside the molecules.
 
-The point of the exercise is what a pharmacophore is good at and a field is not: matching
+The purpose of the extraction is what a pharmacophore is good at and a field is not: matching
 molecules of unrelated scaffolds into one frame, filtering a library before the field model
 scores it, and stating a hypothesis compactly enough to argue about. Discretising throws away
-what the continuous description exists for, so the sensible division of labour is to let the
+what the continuous description exists for, so the sensible division of tasks is to let the
 pharmacophore do the matching and the filtering and leave the scoring to the field.
 
 ### Protein binding sites behind the fields
@@ -1295,7 +1295,7 @@ The free-energy benchmark collections (`examples/openff`, `examples/schindler`) 
 the coordinate frame of a reference crystal structure, and every record carries the identifier of that
 structure, so nothing has to be superimposed: fetching the entry puts the protein exactly around the
 training set. Co-fields, molecular fields and Shapley maps are computed on a grid built from the same
-coordinates, so they land in the site as well.
+coordinates, so they fall in the site as well.
 
 `examples/pockets/` holds the sites of the benchmark sets, already trimmed and already in the frame of
 their ligands, so **opening a free-energy set brings its protein with it**: `examples/openff/cdk2.sdf`
@@ -1341,9 +1341,9 @@ in the protein row writes the name and number of each residue of the site at its
 centroid of a residue that has none, such as an ion or a cofactor, and drops the chain letter when the
 site has only one chain.
 
-Overlaying a co-field on the site is a real test rather than a decoration. The model never sees the
-protein, so its favourable lobes should fall into open subpockets and its unfavourable ones against the
-walls; where they do not, the alignment or the model is suspect.
+Overlaying a co-field on the site is a real test rather than a picture that adds nothing. The model
+never sees the protein, so its favourable lobes should fall into open subpockets and its unfavourable
+ones against the walls; where they do not, the alignment or the model is suspect.
 
 ### Complementarity with the pocket, as numbers
 
@@ -1430,7 +1430,7 @@ thrombin contacts, recovered from the fields alone by a program that was told no
 Three interactions are conserved across all 22: Trp215 burial and the two Gly216 hydrogen-bond
 directions.
 
-The same run also shows what a consensus is worth, and the answer is not flattering. Twenty-one of
+The same run also shows what a consensus is worth, and the answer is not favourable. Twenty-one of
 the 22 ligands match the consensus at a cosine of 0.99 and a Tanimoto of 1.000; `lig_4`, the one
 molecule that reaches Asp189, matches it at **0.644**. Similarity to the consensus therefore
 correlates **−0.51** with the activity on this set, while similarity to `lig_4`'s own profile
@@ -1509,7 +1509,7 @@ grids, 10-fold CV):
 On ACE four numbers that know nothing of the geometry predict better than the whole 3D model -
 which is a warning about that data set, and agrees with what the alignment-free baseline says
 about it elsewhere. Use them to *test* a model rather than to improve it: if adding them changes
-nothing, the geometry is carrying the model; if they take it over, the 3D part was decoration.
+nothing, the geometry is carrying the model; if they take it over, the 3D part contributed nothing.
 
 ### GRID-like probe fields
 
@@ -1539,7 +1539,7 @@ A water probe is worth between nothing and 0.027 q2 beside the five fields, and 
 are worse than the fields they would replace. That is the expected result - CoMSIA replaced
 GRID-like energies with Gaussian similarity indices for much the same reason - and it is why these
 fields are offered for *interpretation*: a probe co-field says where a water would be bound, which
-is more actionable than "more acceptor character here". The directional part of GRID's
+is easier to act on than "more acceptor character here". The directional part of GRID's
 hydrogen-bond term is not represented, and alignment by field similarity refuses to run on a probe
 field rather than quietly ignoring it.
 
@@ -1549,7 +1549,7 @@ Some things a molecule's activity depends on are not functions of space: a measu
 medium a series was recorded in, a temperature, an energy from a quantum calculation. The
 *Descriptors (per molecule)* row of the model panel (`--descriptors A,B`) adds them to the kernel
 as a block of its own, `h_d c_d z(A).z(B)`, with `z` standardised on the **training set** so that
-kilojoules cannot outvote log units, and `h_d` a mixing coefficient like a field's
+kilojoules cannot dominate log units, and `h_d` a mixing coefficient like a field's
 ([descriptors.py](cmfqsar/descriptors.py)).
 
 The block is *scaled* to unit mean diagonal rather than cosine-normalised, because dividing by
@@ -1574,21 +1574,21 @@ python cmf_cli.py build series.sdf --activity pIC50 --descriptors clogp,mw,tpsa
 A cross-validated q² answers one question and three others go with it, none of which the program
 could answer before: whether the same number could have come from meaningless activities, whether
 a given molecule is close enough to the training set for its prediction to mean anything, and how
-much of the number is the particular molecules it was computed over. All three live in
+much of the number is the particular molecules it was computed over. All three are in
 [validation.py](cmfqsar/validation.py), all three work on kernels the fit has already computed,
 and all three appear in the model panel's *Validation* row and as `build` options.
 
 **y-randomisation** (`--y-scramble N`, *shuffles*) refits and cross-validates on N shuffles of the
 activities and reports where the real q² falls among them: the scrambled mean and spread, the
-largest of them, the z-score and the permutation p-value. Two honest details the program insists
-on. A permutation test cannot report a p below 1/(N+1), so ten shuffles bottom out at 0.091
+largest of them, the z-score and the permutation p-value. Two details the program insists on, for
+fairness. A permutation test cannot report a p below 1/(N+1), so ten shuffles cannot go below 0.091
 whatever the model is worth; rather than printing a chance-correlation warning the data cannot
 support, the program says *"no shuffle came close, but 10 of them cannot support a p below
 0.091"* and names the number of shuffles that would. And the hyper-parameters are held fixed while
 the activities are shuffled, so the test asks whether the *fit* can be reached by chance; the
 stricter question is one tick away (*redo the search*, `--y-scramble-select`), and it matters:
 on the steroid set with a 3 x 3 grid the best scrambled q2 rises from -0.08 to **+0.32** once the
-search may pick the luckiest grid point on noise, against +0.78 for the real activities.
+search may pick the grid point that fits the noise best, against +0.78 for the real activities.
 
 **The applicability domain** (`--domain`) measures each non-training molecule's similarity to the
 training set in the model's own kernel, averaged over the three nearest training molecules, and
@@ -1622,8 +1622,8 @@ python cmf_cli.py build examples/steroids_cbg.sdf --alphas 0.5 --lams 0.1 --fold
 A regression model used to prioritise a library has always been read here as a point estimate:
 predict, sort, take the top. The objection is that a screening library is by construction
 dominated by molecules unlike the training set, that a kernel method returns the training mean
-dressed up for exactly those, and that a point estimate cannot tell that answer from a real one.
-`CMFModel.rank_score` ranks by a lower bound instead,
+presented as a prediction for exactly those, and that a point estimate cannot tell that answer
+from a real one. `CMFModel.rank_score` ranks by a lower bound instead,
 
 ```
 score = prediction − beta × posterior standard deviation
@@ -1659,7 +1659,7 @@ throughout, 2.05 at both fractions in the random regime, because about half of a
 active by this definition; that is why BEDROC is the column to read.
 
 One expectation was wrong and the measurement says so. The chemotype regime was supposed to be
-where a bound has most room, since a held-out chemotype has no scaffold-mate in the training set.
+where a bound has the most to gain, since a held-out chemotype has no scaffold-mate in the training set.
 Its relative spread of the posterior deviation is **0.330**, *below* the 0.486 of a random split.
 Holding out a whole chemotype raises the uncertainty of every molecule in it together, and a bound
 acts on the differences within a ranked list rather than on their level, so a uniformly distant
@@ -1730,8 +1730,9 @@ badly, so the evaluation measures the alignment and the model together.
 
 **Decoys must be posed, and the program poses them automatically.** A background molecule has to be
 placed in the frame of the training actives before its fields can be compared with theirs, and a
-molecule posed badly scores low for the wrong reason, which flatters the model. *Tools -> Align decoys
-to the training set* (CLI: `--align-decoys`) therefore gives every decoy its **best** pose: it maximises
+molecule posed badly scores low for the wrong reason, which overstates the quality of the model.
+*Tools -> Align decoys to the training set* (CLI: `--align-decoys`) therefore gives every decoy its
+**best** pose: it maximises
 a smooth maximum of the cosine-normalised CMF similarity between the decoy and the training molecules,
 over the six rigid-body parameters, with analytic gradients and several random starting orientations
 (`cmfqsar/decoys.py`). The evaluation is then conservative, since whatever enrichment survives is not an
@@ -1755,7 +1756,7 @@ matched decoys of each target:
 | AChE, 4 conformations | 0.741 | 63 / 100 | 373 s |
 
 So the decoys do look better: a generated conformation beats the one in the file for most of them,
-and twelve conformations buy about twice what four do, at four times the cost. The screening
+and twelve conformations gain about twice what four do, at four times the cost. The screening
 numbers do not move at all — AUC 1.000 and BEDROC 1.000 in every row — which is one more way of
 saying that these backgrounds are separated by composition rather than by pose.
 
@@ -1793,14 +1794,14 @@ metric is chosen. The discriminating negatives are the *weaker molecules of the 
 (AUC 0.6–0.8, see the one-class section above), or genuinely measured inactives — and those have
 now been used: **ESR1_ant, TP53** from LIT-PCBA, 152 measured actives against 2999 measured
 inactives, posed here by one rule that knows nothing about which class a molecule belongs to
-(`examples/make_litpcba_examples.py`, `benchmarks/run_screening.py`). The result is the most
-unflattering in this file. The best one-class field description reaches
+(`examples/make_litpcba_examples.py`, `benchmarks/run_screening.py`). The result is the least
+favourable in this file. The best one-class field description reaches
 **0.544 AUC** against **0.685** for the maximum ECFP4
 Tanimoto to the same actives; sweeping the attenuation and every description's own parameter
 (45 fits per set) and keeping the best *on the test set* lifts it only to
 0.574; and on TP53 the distance to the centre of the actives scores 0.365,
 below chance, because the AVE debiasing of this benchmark exists precisely to remove the
-resemblance those methods live on. What survives is the kernel used *discriminatively*: with the
+resemblance those methods depend on. What survives is the kernel used *discriminatively*: with the
 inactives treated as unlabelled rather than negative (bagging PU, `cmfqsar/pu.py`) the same kernel
 reaches **0.689**, level with the fingerprint and
 +0.110 above the same learner told the inactives were
@@ -1866,7 +1867,7 @@ same set, which are already in the same frame:
 | mean | 0.637 | 0.683 | **0.727** | 0.720 | 0.724 | 0.719 |
 
 The ball comes last. It is beaten on every single set, by 0.02 on COX2 and by 0.15 to 0.24 on
-DHFR, BZR, AChE and THR, and the enrichment in the top 1 % says the same more bluntly: the
+DHFR, BZR, AChE and THR, and the enrichment in the top 1 % says the same more directly: the
 molecules the 1-SVM ranks highest are inactives on four of the five sets (EF 0.00), while k-NN
 and kernel PCA reach the ceiling that the roughly equal class sizes allow (EF ≈ 2) on all five.
 
@@ -1884,7 +1885,7 @@ scored against 150 molecules drawn from the other four targets and posed into th
 decoy aligner. Every method scored AUC between 0.965 and 1.000 there, and the enrichment factors
 were identical across methods to the last digit. A background that unlike the actives measures
 nothing: it separates on size and shape before any field model is involved. The inactives of the
-same series are the harder and more honest negatives, and the decoy numbers in that experiment
+same series are the harder and more reliable negatives, and the decoy numbers in that experiment
 say more about the background than about the model — which is exactly what the section above
 warns of.
 
@@ -1902,7 +1903,7 @@ AUC of the best description (k-NN, on every one of the six similarities):
 | ECFP6, 2048 bits | 0.791 | 0.717 |
 | MACCS, 166 keys | 0.764 | 0.654 |
 
-On average the three-dimensional fields buy 0.005 over ECFP4 at their best setting and 0.012 at
+On average the three-dimensional fields gain 0.005 over ECFP4 at their best setting and 0.012 at
 the median — nothing. The averages hide a real disagreement, though: per target the gap is large
 and changes sign. Fields win on COX2 (0.826 against 0.713) and THR (0.816 against 0.763),
 fingerprints win on AChE (0.836 against 0.738) and BZR (0.790 against 0.732), and DHFR is a draw.
@@ -1910,7 +1911,7 @@ The two representations see different things, and neither dominates; what the me
 that no one of them is a safe default. MACCS is clearly behind both, so the measurement does
 discriminate between representations when there is something to discriminate.
 
-Two further things fall out of that run. k-NN is the best description on *all six* similarities,
+Two further things follow from that run. k-NN is the best description on *all six* similarities,
 so its advantage is a property of the geometry rather than of the fields. And the ball recovers
 on fingerprints — the 1-SVM is last on every field kernel (median 0.656 to 0.676) but competitive
 on ECFP6, where its median of 0.724 is the best of the five. Its weakness above is specific to
@@ -1919,7 +1920,7 @@ the kernel it was asked to enclose.
 This is a screening task judged on same-series inactives, not a QSAR regression, so it says
 nothing about what the fields are for — co-fields, atom contributions and complementarity with a
 pocket have no fingerprint counterpart. It does say that for *ranking by similarity to a set of
-actives*, the alignment and the overlap integrals are not buying what one might hope.
+actives*, the alignment and the overlap integrals do not gain what one might hope.
 
 ```bash
 python cmf_cli.py build examples/sutherland/THR.sdf --charges file --task oneclass \
@@ -1973,7 +1974,7 @@ and 0.052 on ECFP4, which is the literature's finding reproduced on both represe
 reason the rule was worth adding. **It does not beat a fitted description**: the Gaussian process
 leads on fields at both the best and the median setting, and on fingerprints the GP divided by its
 own standard deviation leads by a wide margin. So fusion's value here is not that it wins but that
-it needs nothing fitted and has nothing to overfit. And **ANZ and MNZ are vacuous as the
+it needs nothing fitted and has nothing to overfit. And **ANZ and MNZ are meaningless as the
 literature states them.** Both divide or multiply the total by the number of actives a molecule
 matches, which presupposes that some it does not match; on these sets no normalised field
 similarity is below 0.6, so at the usual threshold of zero that count is a constant and both rules
@@ -2008,7 +2009,7 @@ things the hinge loss cannot give.
 **Calibrated probabilities.** `p(active)` comes from the likelihood, averaged over the latent
 posterior — exactly for the probit link, by MacKay's approximation for the logistic one — so a
 molecule the model knows nothing about is reported near one half instead of confidently. The
-cross-validated probabilities are close to honest; predicted against observed, in bins, on COX2
+cross-validated probabilities are close to correct; predicted against observed, in bins, on COX2
 (Brier 0.128) and DHFR (0.137):
 
 | predicted | 0.0–0.2 | 0.2–0.4 | 0.4–0.6 | 0.6–0.8 | 0.8–1.0 |
@@ -2129,11 +2130,11 @@ single round with a 1 Å displacement guard, and the hyper-parameters are refitt
 Every alignment above is a superposition on something shared, and each needs something the hard
 cases do not have. The substructure alignment needs a common substructure, which a series of
 several scaffolds has not got. The kernel refinement needs a pose that already roughly overlaps,
-because the CMF kernel is flat where two molecules do not touch and there is nothing to climb,
+because the CMF kernel is flat where two molecules do not touch and there is no gradient to follow,
 which is exactly the position two chemotypes are in. The confidence alignment needs a fitted
 model, so it cannot align the training set the model is fitted on.
 
-[fieldgraph.py](cmfqsar/fieldgraph.py) is the third road, and an old one: field graphs
+[fieldgraph.py](cmfqsar/fieldgraph.py) is the third approach, and an old one: field graphs
 (Thorner, Willett, Wright & Taylor 1997), the field points of Cresset's methodology, and
 maximum-common-subgraph matching. Reduce each molecule's **own** fields to a handful of typed
 extrema, treat those as the vertices of a graph whose edges carry the distances between them, and
@@ -2147,8 +2148,9 @@ section already reads out of a co-field lobe, applied here to a molecule's own f
 per pair of points **of the same type**, joined when they reuse no point and the distance between
 two points of one molecule agrees with the distance between their partners in the other; the
 cliques of that graph by Bron-Kerbosch with pivoting, budgeted, since the count of maximal cliques
-is exponential in the worst case and a screening run may not hang; then Kabsch on each candidate,
-with the proper-rotation correction, so a mirror-image arrangement is never accepted as a match.
+is exponential in the worst case and a screening run must not run without end; then Kabsch on each
+candidate, with the proper-rotation correction, so a mirror-image arrangement is never accepted as a
+match.
 A graph can have several maximum cliques and they are *alternative hypotheses* about which features
 correspond, not interchangeable descriptions, so each is superimposed and then scored by the
 quantity the program actually cares about — the cosine of the two molecules' fields. That is the
@@ -2164,7 +2166,7 @@ because the Crippen contributions are signed, and the two hydrogen-bond fields �
 thirteen points for a ligand of thirty to sixty atoms, which is the regime the field-point
 literature works in.
 
-**Judged by the pose protocol**, which is the only honest judge the program has, on all sixteen
+**Judged by the pose protocol**, which is the only reliable judge the program has, on all sixteen
 FEP sets with crystal poses, 30 % held out, poses destroyed and recovered without any held-out
 activity:
 
@@ -2179,7 +2181,7 @@ activity:
 | field points, then confidence | **0.12 Å** | **96 %** | 96 % | +0.299 | a fitted model |
 | substructure, then confidence | 0.11 Å | 99 % | 99 % | +0.313 | both |
 
-Read the table and not the hope. On congeneric series the substructure alignment wins, as it
+Read the table, not the expectation. On congeneric series the substructure alignment wins, as it
 should: a shared scaffold with a known atom mapping is the strongest information available, and
 field points do not beat it on any count. What they do is reach 0.67 Å and 79 % within one
 ångström **with no substructure at all**, against a floor of 5.29 Å and 0 %, and when they supply
@@ -2215,7 +2217,7 @@ python benchmarks/run_poses.py --sets all --methods scrambled mcs field fieldgra
 
 What it does not do: it never changes a conformation, so a molecule is placed only as well as the
 conformation it arrives in allows, and it does not know which of its own points matter, because a
-molecule's field says what it presents and not what the target wants. A fitted model knows the
+molecule's field says what it presents and not what the target needs. A fitted model knows the
 second thing, which is why the two are worth running in series and why that series is the row that
 does best.
 
@@ -2243,7 +2245,7 @@ linear models are the same model, so the co-field is the same.
 
 `benchmarks/run_hammett.py` fits each constant with the five physico-chemical fields and with each
 field alone, α and λ by 10-fold cross-validation (there is no held-out set; with 95 substituents the
-folds are the honest measurement). Gasteiger charges, q²:
+folds are the reliable measurement). Gasteiger charges, q²:
 
 | constant (sd) | all five | electrostatic | steric | hydrophobic | HBA | HBD |
 |---|---|---|---|---|---|---|
@@ -2273,7 +2275,7 @@ python benchmarks/run_hammett.py
 ```
 
 Charges computed on the whole substituted molecule carry the polarisation of the ring by the
-substituent, which is where the resonance information lives, and the pipeline for them already
+substituent, which is where the resonance information is contained, and the pipeline for them already
 exists: `examples/orca_atom_properties.py --fast --no-fukui` on `hammett.sdf` writes Hirshfeld,
 Mulliken, Löwdin and CHELPG charges per atom, `make_hammett_examples.py --symmetrize` carries them to
 the four images, and `run_hammett.py --charges-prop q_hirshfeld` replaces the Gasteiger field with
@@ -2338,7 +2340,7 @@ python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens.sdf --weight
 python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens_qm.sdf --charges-prop q_hirshfeld --weighting boltzmann
 ```
 
-### Two endpoints on one kernel: the selectivity co-field
+### Several endpoints on one kernel: the selectivity co-field
 
 A separation problem is not one property but two. An extractant has an affinity for americium
 and an affinity for europium, and what matters is the difference; a model of the ratio works
@@ -2359,12 +2361,12 @@ hand `c[:, Am]` to the co-field code and you have that endpoint's co-field, hand
 `c[:, Am] − c[:, Eu]` and you have the **selectivity co-field**, a map of where more of a field
 raises one affinity more than the other. Only a model linear in the field can produce it, so it
 is refused under a nonlinear kernel layer. At ρ = 0 the endpoints are fitted separately and share
-only the kernel; towards 1 they borrow strength from each other; at 1 the two coefficient vectors
+only the kernel; towards 1 they share information with each other; at 1 the two coefficient vectors
 coincide and the model could only predict a constant selectivity, so 1 is excluded, and ρ may be
 negative for endpoints that move in opposite directions. Cross-validation holds out whole
 **molecules**, never single measurements, because a molecule with one endpoint in the training set
-and the other in the test set would have its answer handed over by the correlation. In the
-application, *Tools → Model two endpoints* refits the model already built, and an *Endpoint* box
+and the other in the test set would receive its answer through the correlation. In the
+application, *Tools → Model several endpoints* refits the model already built, and an *Endpoint* box
 in the viewer controls then swaps every map, export and table between either endpoint and their
 difference.
 
@@ -2390,7 +2392,7 @@ difference is in mixed units: only the sharing is of interest there. Same alignm
 | benzothiazole | potency / ΔG_ads | 20 / 16 | -0.99 | 0.69 / 0.74 | -0.95 | 0.73 / 0.76 | 0.76 → 0.77 (n 16) |
 <!-- /MULTITASK-TABLE -->
 
-**The sharing buys nothing that the intervals can see.** The two series large enough to decide,
+**The sharing gains nothing that the intervals can see.** The two series large enough to decide,
 benzene with both pairs and the imidazole series on the adsorption energy for its sparse endpoint, chose
 ρ = 0 or gained 0.04 on the rich endpoint and nothing on the sparse one; the small series chose a
 ρ of either sign, once against the sign of the correlation, and gained at most 0.09, on 23
@@ -2406,9 +2408,68 @@ the object of interest; on these series it shows what it has to show, that ρ = 
 separate models exactly and that the sharing can be measured against them, and the measurement
 says there was nothing to share.
 
+**Seven endpoints, and one that nobody measured.** `benchmarks/run_tasks.py` takes the
+generalisation to a set that has seven real endpoints and descriptors for them:
+`examples/cyclodextrin/`, 1669 guest molecules and 2671 association constants
+against the seven cyclodextrin hosts, where the *host* is a molecule too — so a task descriptor is
+a structure (cavity size, lipophilicity, charge, hydroxyls, heavy atoms) rather than a label, and
+an endpoint with no measurements is a host nobody has titrated. One kernel for every row (the
+rotation-invariant autocorrelation at α = 0.1, the best of the three routes on this
+data), 10-fold cross-validation over guests:
+
+<!-- TASKS-TABLE -->
+| task covariance | mean q² | beta | alpha | gamma | hp_beta | sbe_beta | methyl_beta | dimethyl_beta | what it is |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| independent | **+0.412** | +0.448 | +0.338 | +0.473 | +0.545 | +0.331 | +0.377 | +0.374 | rho = 0 |
+| one rho, CV | **+0.454** | +0.448 | +0.338 | +0.524 | +0.586 | +0.389 | +0.441 | +0.454 | rho = +0.90 |
+| one rho, evidence | **+0.454** | +0.449 | +0.341 | +0.523 | +0.592 | +0.391 | +0.435 | +0.451 | rho = +0.857 over 25 values |
+| free rank 1 | **+0.475** | +0.447 | +0.339 | +0.525 | +0.604 | +0.444 | +0.504 | +0.465 | 2 x 1 starts, 1603 evaluations of the evidence |
+| free rank 2 | **+0.488** | +0.447 | +0.340 | +0.527 | +0.624 | +0.452 | +0.536 | +0.490 | 2 x 1 starts, 2274 evaluations of the evidence |
+| descriptors | **+0.448** | +0.446 | +0.342 | +0.505 | +0.608 | +0.390 | +0.430 | +0.413 | rbf, length scale 4, nugget 0.1 |
+<!-- /TASKS-TABLE -->
+
+**Here the sharing does gain something: +0.076 mean q²**, +0.412 independent against
++0.488, which is the opposite of the corrosion result above and for a reason worth
+naming — those were two endpoints with their own molecules, these are seven endpoints of which
+five are small and sit beside two large ones. A free-form covariance adds a further +0.034 over one shared correlation, so with seven endpoints one number is not enough.
+The covariances other than the cross-validated one were chosen by the **marginal likelihood**,
+which costs one factorisation per candidate rather than ten, and the evidence
+ranked them in the same order as the out-of-fold q².
+
+Then every host was removed **entirely** and predicted from the other six through the descriptor
+covariance, with the mean linear in the descriptors so that there is something to extrapolate:
+
+<!-- COLDSTART-TABLE -->
+| host removed | n | nearest host | ρ, descriptor covariance | ρ, nearest host alone | ρ, mean of the measured hosts | q², descriptor |
+|---|---:|---|---:|---:|---:|---:|
+| beta | 1162 | sbe_beta | +0.577 | +0.320 | +0.623 (615) | +0.231 |
+| alpha | 827 | beta | +0.431 | +0.433 | +0.470 (522) | +0.066 |
+| gamma | 292 | sbe_beta | -0.284 | +0.145 | +0.533 (225) | -5.499 |
+| hp_beta | 135 | sbe_beta | +0.664 | +0.294 | +0.806 (105) | +0.483 |
+| sbe_beta | 135 | beta | +0.516 | +0.515 | +0.498 (74) | +0.200 |
+| methyl_beta | 77 | dimethyl_beta | +0.595 | +0.529 | +0.894 (73) | +0.416 |
+| dimethyl_beta | 43 | methyl_beta | +0.703 | +0.708 | +0.863 (38) | +0.044 |
+<!-- /COLDSTART-TABLE -->
+
+Mean Spearman ρ **+0.457** against **+0.421** for the nearest host's own model and
+**+0.670** for averaging the other hosts' measured values of the same guest. **The
+descriptor covariance knows something real about an endpoint it has never seen**, and it does not
+beat the cheapest baseline — which is not a model at all and can only say something about a guest that
+some other host was measured against. q² is negative on 1 of the 7 hosts: what
+comes out of this route is a ranking, not a binding constant. And the spread is governed by one thing.
+Five of the seven hosts have seven glucose units (β and its derivatives), α has six and γ has
+eight; remove one of the five and the covariance interpolates, remove α or γ and it must extrapolate
+outside the range it was built on. The five interpolated hosts average ρ **+0.611** against
+**+0.473** for the nearest host alone; the two extrapolated ones give +0.431 (α) and **−0.284**
+(γ, q² −5.50). Interpolation between measured endpoints is what this supports; extrapolation past
+them is not, and with seven endpoints the evidence cannot even localise the length scale — it
+chose 4 standardised units on all seven fits, the top of the grid, so it would prefer an even wider task
+kernel, with every host treated as a neighbour of every other.
+
 ```bash
 python benchmarks/run_multitask.py            # every pair in the table; results/multitask/table.md
 python benchmarks/run_multitask.py --set 0_c1ccccc1 --tasks mwila_hcl_adj mwila_h2so4_adj
+python benchmarks/run_tasks.py                # the seven cyclodextrin hosts; results/tasks/table.md
 ```
 
 ## Installation
@@ -2422,7 +2483,7 @@ pip install -e .[gui]
 installs the library (NumPy, SciPy, scikit-learn, scikit-image for marching cubes, RDKit, joblib)
 and, with the `gui` extra, the application (PySide6, pyqtgraph + PyOpenGL for the 3D view), and
 puts two commands on the path: `cmf`, the command-line tool, and `cmf-app`, the application. The
-library alone, `pip install -e .`, needs no Qt and is what a server or a notebook wants. Further
+library alone, `pip install -e .`, needs no Qt and is what a server or a notebook needs. Further
 extras: `docs` (reportlab and matplotlib, to typeset the manual), `dev` (pytest), `examples`
 (dimorphite_dl, for protonation states), and `all`. `pip install -r requirements.txt` is the
 working checkout, `.[gui,docs,dev]`. ORCA, for the quantum-chemical properties, is a program
@@ -2458,7 +2519,7 @@ python cmf_app.py examples/benzamides_synthetic.sdf --activity pActivity --test-
    SD property holding the activity. Use *Random split* or the *→ test* button to define a test set, or
    *Add test set…* to load a separate file. Clicking a column header sorts the table by it — activity,
    name, set, either column of predictions, or the chemotype — a second click reverses it and a third
-   restores the order of the file; molecules with no value in that column always sink to the bottom,
+   restores the order of the file; molecules with no value in that column always go to the bottom,
    and the selection, the *Show* ticks and everything else keep following the molecule rather than the
    row.
 2. If the molecules are not aligned: **Tools → Align data set to reference…** (maximum common substructure
@@ -2682,9 +2743,9 @@ of each set by maximum common substructure. The tags `align_mcs_atoms` and `alig
 the common substructure and the RMSD of the fit for every molecule, so that outliers of the automatic
 alignment can be excluded; `description` summarises the biological activity (Table 1 of the paper).
 These conformations and alignments are automatic, not those of the original 3D-QSAR studies, so the sets
-serve for method comparison on equal footing rather than for reproducing literature statistics. Nine of
-them (ACE, ACHE, BZR, COX2, DHFR, GPB, THERM, THR, STEROIDS) duplicate sets for which original aligned
-coordinates are available in `examples/sutherland` and `examples/steroids_cbg.sdf`.
+serve for method comparison under equal conditions rather than for reproducing literature statistics.
+Nine of them (ACE, ACHE, BZR, COX2, DHFR, GPB, THERM, THR, STEROIDS) duplicate sets for which original
+aligned coordinates are available in `examples/sutherland` and `examples/steroids_cbg.sdf`.
 
 A per-molecule SD tag named `subset`, `set` or `split` (values train/test or 1/2) is honoured by the loader
 in both the GUI and the CLI. Other literature data sets
@@ -2722,9 +2783,9 @@ contributions and Shapley values, and no change anywhere in the kernels.
 Two conventions are read, in this order: a property set on **every atom**, which RDKit writes to
 SDF as `atom.dprop.<name>` and reads back automatically, and a **molecule property holding one
 number per atom**, separated by spaces, commas or newlines, which is how most quantum-chemistry
-packages dump such a table. The hydrogens are the trap: a structure file without 3D coordinates
-is embedded on loading and hydrogens are added, so a list written for the heavy atoms is shorter
-than the molecule has become. A list as long as the molecule is taken atom for atom, a list as
+packages dump such a table. The hydrogens are the source of error: a structure file without 3D
+coordinates is embedded on loading and hydrogens are added, so a list written for the heavy atoms is
+shorter than the molecule has become. A list as long as the molecule is taken atom for atom, a list as
 long as the heavy atoms is spread over them with the hydrogens left at zero, and anything else is
 an error naming the molecule and both counts — never a guess about which atom a number belongs
 to. `--prop-missing zero` treats a molecule that lacks the property as having none of that
@@ -2732,8 +2793,8 @@ quantity instead of failing.
 
 `examples/make_property_example.py` writes a data set carrying both conventions — the Gasteiger
 charges as an atom property and the Wildman–Crippen atomic logP contributions as a molecule
-property — which doubles as a test: a field built from those charges reproduces the electrostatic
-field exactly, kernel matrix included, to the last bit.
+property — which also serves as a test: a field built from those charges reproduces the electrostatic
+field exactly, kernel matrix included, bit for bit.
 
 ```bash
 python examples/make_property_example.py
@@ -2827,7 +2888,7 @@ numbered differently gives identical coordinates, that the attachment atom sits 
 its open valence along the axis, that every attachment point keeps its own region of space and the
 kernel is the sum over them, and that a core fused to the rest of the molecule is reported rather
 than silently dropped. For the fields read from a per-atom property they check that both conventions are read and survive
-an SDF round trip, that values given for the heavy atoms alone land on them with the hydrogens at
+an SDF round trip, that values given for the heavy atoms alone are assigned to them with the hydrogens at
 zero, that a wrong length is an error naming the molecule, that a property field of the Gasteiger
 charges reproduces the electrostatic field and its kernel exactly, that a model on such fields fits,
 saves, reloads and still decomposes into atom contributions, and that a molecule without the
@@ -2844,7 +2905,7 @@ untouched while a change of conformation does not, that its channel at zero dist
 overlap integral of the molecule with itself, that the kernel is well formed and tells apart two
 conformations the count kernel calls identical, and that dropping the self-pairs removes exactly the
 count-like part. For the one-class descriptions they check that nu really is the fraction of the training molecules
-left outside for every one of them, that molecules far from the training cloud land outside and are
+left outside for every one of them, that molecules far from the training cloud fall outside and are
 ranked below it, that the score falls monotonically along a ray leaving the cloud, that the subspace
 description is stricter than the centroid one about molecules beside a flat set, that the two linear
 ones reproduce their own kernel expansion while the other two refuse to pretend they have one, and

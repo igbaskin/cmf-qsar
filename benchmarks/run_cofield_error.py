@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 """
-Does the co-field's error bar know which lobes are real?
+Does the co-field's error bar identify which lobes are real?
 
 A co-field is drawn as if it were a fact about the chemistry. It is a linear map of the measured
 activities, so part of its shape is a fact about the measurement error instead, and
 `cmfqsar.cofields.cofield_variance` says in closed form how much: the activities carry noise of
 some level, the dual coefficients carry the covariance that noise induces, and every point of the
-co-field carries the standard deviation that follows. Item F2 proposes drawing only what stands
+co-field carries the standard deviation that follows. Item F2 proposes drawing only what lies
 more than two of those standard deviations from zero.
 
 The claim to check is not the arithmetic -- a unit test does that against refits with noisy
 activities -- but the *use*: that what the mask keeps is the part of the picture that would still
 be there if the series had come out differently. So the perturbation here is harder than the one
 the formula models. The training set is resampled with replacement, the model is refitted, and
-the co-field is recomputed; a voxel is called **stable** when its sign survives that. The question
+the co-field is recomputed; a voxel is called **stable** when its sign is unchanged. The question
 is whether the kept region is more stable than the region the mask cuts away, and by how much.
 
 Everything reuses one kernel and one evaluation of the per-molecule fields on the grid, so a
@@ -169,12 +169,12 @@ def report(results=RESULTS):
     if not files:
         return "No co-field error results yet; run `python benchmarks/run_cofield_error.py`."
     data = [json.load(open(f)) for f in files]
-    lines = ["# Does the co-field's error bar know which lobes are real", "",
+    lines = ["# Does the co-field's error bar identify which lobes are real", "",
              f"{len(data)} Sutherland sets. Each model's co-fields are computed on a "
              f"{data[0]['spacing']:g} Å grid together with their closed-form standard "
-             f"deviation, and the mask keeps what stands more than {data[0]['z']:g} of them from "
+             f"deviation, and the mask keeps what lies more than {data[0]['z']:g} of them from "
              f"zero. The training set is then resampled with replacement {data[0]['boots']} "
-             "times and refitted; a voxel is **stable** when the sign of its co-field survives "
+             "times and refitted; a voxel is **stable** when the sign of its co-field is unchanged by "
              "that. Only the drawn part of each picture is counted -- a tenth of the peak and "
              "above, which is well below any isosurface anyone draws.", "",
              "| set | n | q² | kept by the mask | stability kept | stability cut | "

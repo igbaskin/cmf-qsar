@@ -1,8 +1,8 @@
 """Exporting the co-field pharmacophore as a query (plan item F5).
 
-A file in somebody else's format is only as good as its shape, so the tests read back what was
+A file in an external format is only as good as its structure, so the tests read back what was
 written and check it against the features that went in -- including the three kinds a query has
-no way to say, which have to come back as a refusal rather than as a silent omission.
+cannot express, which have to come back as a refusal rather than as a silent omission.
 """
 import json
 import os

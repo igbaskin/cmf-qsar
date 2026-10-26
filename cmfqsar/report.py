@@ -3,22 +3,22 @@
 This is written for the person who will never start the application: a colleague, a reviewer, a
 supervisor who wants to see the model that produced a number.  It is one self-contained file --
 every picture is a base64 PNG inside it, so it survives being emailed, attached to a report or put
-on a share -- and it draws only on what the model file already carries, so a report costs no
+on a shared drive -- and it draws only on what the model file already carries, so a report costs no
 refitting and cannot disagree with the model it describes.
 
 Seven sections, in the order a sceptical reader asks for them:
 
 1. **What this model is** -- fields, attenuation, learner, kernel, how the charges were made.
 2. **How well it fits and predicts** -- the statistics with the observed-against-predicted plots
-   beside them, which is the only honest way to show a q².
+   beside them, which is the only fair way to show a q².
 3. **Whether to believe that** -- the validation that was actually run: y-randomisation, the
    bootstrap interval, the applicability domain, the conformal level, the error predictors.  A
    check that was not run is reported as not run, never silently omitted.
 4. **What the model rests on** -- the mean absolute contribution of each field over the training
-   molecules, which is what distinguishes a model standing on its geometry from one standing on one
-   field.
+   molecules, which is what distinguishes a model that rests on its geometry from one that rests
+   on one field.
 5. **The co-fields**, projected onto the three coordinate planes from fixed viewpoints: where the
-   model wants charge, bulk, a donor.  A projection rather than an isosurface, because a report has
+   model needs charge, bulk, a donor.  A projection rather than an isosurface, because a report has
    no camera and a reader has no mouse.
 6. **The extremes of the series** -- the most and least active training molecules, each with its
    exact field-level Shapley decomposition and its largest atom contributions.
@@ -88,7 +88,7 @@ class ReportSpec:
     level: float = 0.5            # fraction of the peak that bounds a pharmacophore lobe
     max_features: int = 12
     top_atoms: int = 8            # atom contributions listed for each extreme molecule
-    cofield_z: float = 2.0        # draw only what stands this far from zero; 0 draws everything
+    cofield_z: float = 2.0        # draw only what lies this far from zero; 0 draws everything
     cofields: bool = True
     pharmacophore: bool = True
     dpi: int = 110
@@ -139,7 +139,7 @@ def _figure(png: bytes, caption: str) -> str:
 
 
 def _plt():
-    """matplotlib with no display, imported late so that importing this module stays cheap."""
+    """matplotlib with no display, imported late so that importing this module stays fast."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -203,7 +203,7 @@ def cofield_png(model, f: int, grid, volume: np.ndarray, spec: ReportSpec) -> by
         hi = volume.max(axis=c)
         lo = volume.min(axis=c)
         proj = np.where(np.abs(hi) >= np.abs(lo), hi, lo)
-        # proj is indexed (a, b); imshow wants (row = b, column = a), hence the transpose
+        # proj is indexed (a, b); imshow expects (row = b, column = a), hence the transpose
         extent = [axes_lo[a], axes_hi[a], axes_lo[b], axes_hi[b]]
         ax.imshow(proj.T, origin="lower", extent=extent, cmap="RdBu_r", vmin=-vmax, vmax=vmax,
                   aspect="equal", interpolation="bilinear")
@@ -387,8 +387,8 @@ def _section_fields(model, spec: ReportSpec) -> str:
     if not (model.is_linear and model.uses_fields) or model.train is None:
         return "\n".join(out + [_missing(
             "the contribution of a field is a property of the linear overlap kernel; this model "
-            "uses another and its decomposition is unavailable (the Shapley values below stand "
-            "in its place)")])
+            "uses another and its decomposition is unavailable (the Shapley values below take "
+            "its place)")])
     mols = list(model.train.molecules)
     specs = [s for s in model.fieldset.specs if s.enabled]
     idx = [i for i, s in enumerate(model.fieldset.specs) if s.enabled]
@@ -399,7 +399,7 @@ def _section_fields(model, spec: ReportSpec) -> str:
     totals /= max(len(mols), 1)
     out.append(_figure(contributions_png([s.label for s in specs], [totals[i] for i in idx], spec),
                        "How much of the prediction each field moves, averaged over the training "
-                       "molecules. A model standing on one field looks like one bar."))
+                       "molecules. A model that rests on one field looks like one bar."))
     share = totals[idx] / (totals[idx].sum() or 1.0)
     rows = [(_e(s.label), _num(totals[i], "{:.4f}"), f"{100 * sh:.1f} %")
             for s, i, sh in zip(specs, idx, share)]
@@ -415,8 +415,8 @@ def _section_cofields(model, spec: ReportSpec) -> str:
     from .cofields import cofield_volume, cofield_with_error, make_grid
 
     grid = make_grid(model.train.coords, margin=spec.margin, spacing=spec.spacing)
-    out.append("<p>Where the model wants something and where it wants it absent: the co-field is "
-               "the model's weights laid back into space, so a red lobe is a region where more of "
+    out.append("<p>Where the model needs something and where it needs its absence: the co-field is "
+               "the model's weights placed back into space, so a red lobe is a region where more of "
                "that field raises the predicted activity and a blue one where it lowers it. Each "
                "field is shown from three fixed viewpoints, as the strongest signed value along "
                "the viewing axis, with the training atoms as grey dots for scale.</p>")
@@ -424,7 +424,7 @@ def _section_cofields(model, spec: ReportSpec) -> str:
     if masked:
         try:
             probe = cofield_with_error(model, 0, grid, include_scale=True, z=spec.cofield_z)
-            out.append(f'<p class="note">Only what stands more than {spec.cofield_z:g} standard '
+            out.append(f'<p class="note">Only what lies more than {spec.cofield_z:g} standard '
                        f'deviations from zero is drawn. The error bar propagates a noise level '
                        f'of {probe.sigma:.3f} in the activities ({_e(probe.sigma_from)}) through '
                        f'the fit, with the molecules and the kernel held fixed; the rest of each '
@@ -509,7 +509,7 @@ def _section_pharmacophore(model, spec: ReportSpec) -> str:
     rows = [(_e(ft.kind), _e(ft.field), f"{ft.centre[0]:.2f}, {ft.centre[1]:.2f}, "
              f"{ft.centre[2]:.2f}", _num(ft.radius, "{:.2f}"), _num(ft.importance, "{:+.3f}"),
              _e(ft.meaning)) for ft in feats]
-    cut = (f" Read off the co-fields after they were cut at {spec.cofield_z:g} standard "
+    cut = (f" Read from the co-fields after they were cut at {spec.cofield_z:g} standard "
            "deviations, so no feature here is one the noise in the activities could have "
            "produced." if spec.cofield_z > 0 else "")
     out.append("<p>The lobes of the co-fields, read as typed features with tolerance radii: what "

@@ -4,7 +4,7 @@ Does weighting the fields by solvent exposure help?  The surface claim, measured
 
 A CMF kernel integrates over all of space, so it weights an atom buried inside a molecule as
 heavily as one on the outside, although a binding partner can only touch the second.  That is the
-claim the surface methods are founded on, and ``cmfqsar/exposure.py`` tests it the cheap way: each
+claim the surface methods are founded on, and ``cmfqsar/exposure.py`` tests it cheaply: each
 atomic weight is multiplied by its atom's relative solvent accessibility, which keeps the kernel
 in closed form and keeps the co-field.  Nothing else changes -- the same fields, the same alpha and
 lambda grids, the same 10-fold cross-validation, the same molecules.
@@ -14,7 +14,7 @@ Two families, chosen because their frames differ in origin and not in quality:
     sutherland  the eight sets of the 2013 paper, aligned by their authors
     openff      sixteen FEP sets whose ligands are co-crystallised, so the frame is a crystal one
 
-Four weightings are compared with the plain fields: exposure as it comes, softened
+Four weightings are compared with the plain fields: exposure unchanged, softened
 (``power 0.5``), sharpened (``power 2``), and with a floor of 0.2 so that a shielded atom keeps a
 fifth of its weight.  The exposure is computed **by group**: a heavy atom and its hydrogens count
 as one, because measured atom by atom a methyl carbon is occluded by its own hydrogens and the

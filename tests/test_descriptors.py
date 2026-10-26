@@ -160,11 +160,11 @@ def test_an_unknown_computed_descriptor_is_named_rather_than_guessed():
 
 
 def test_computed_descriptors_need_nothing_from_the_file():
-    """The point of them: a file carrying no numeric tags still has something to offer."""
+    """Their purpose: a file carrying no numeric tags still provides descriptors."""
     mols, y = _series()
     for m in mols:
         for prop in list(m.GetPropNames()):
-            m.ClearProp(prop)                     # strip the file clean
+            m.ClearProp(prop)                     # remove every property from the file
     names = [f"m{i}" for i in range(len(mols))]
     fs = FieldSet.create(physchem=["steric"], alpha=0.5,
                          descriptors=("calc:mw", "calc:clogp"))

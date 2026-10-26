@@ -1,8 +1,8 @@
 """Aligning inside the pocket: the confidence and the complementarity together (item C3).
 
-What the tests pin is the combination rather than either half, which has its own tests: that the
+What the tests fix is the combination rather than either half, which has its own tests: that the
 weight really does interpolate between the two criteria, that the guard holds, and that a
-molecule displaced from a pose both criteria like is brought back towards it.
+molecule displaced from a pose both criteria favour is brought back towards it.
 """
 import os
 import sys
@@ -84,7 +84,7 @@ def test_the_guard_holds(world):
     model, pocket, fs, _mf = world
     tight = PocketAligner(model, pocket, pocket_weight=5.0, max_rmsd=0.3, penalty=500.0)
     res = tight.align(build_fields(_mol(SMILES[7]), fs, "probe"), restarts=1)
-    assert res.rmsd < 0.8                      # the quadratic penalty bites beyond the guard
+    assert res.rmsd < 0.8                      # the quadratic penalty applies beyond the guard
     loose = PocketAligner(model, pocket, pocket_weight=5.0, max_rmsd=None)
     far = loose.align(build_fields(_mol(SMILES[7]), fs, "probe"), restarts=1)
     assert far.rmsd > res.rmsd

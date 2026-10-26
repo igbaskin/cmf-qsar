@@ -9,7 +9,7 @@ on the part that is noise.
 
 The ranking support-vector machine (Herbrich et al. 2000; Joachims, KDD 2002) fits the order.
 For every pair of molecules whose activities differ it asks that the more active one score higher
-by a margin, and it pays for every pair where that fails:
+by a margin, and it is penalised for every pair where that fails:
 
     minimise  |w|^2 / 2 + C sum_p xi_p
     subject to  <w, X_i - X_j> >= 1 - xi_p  for every pair p = (i, j) with y_i > y_j
@@ -54,17 +54,17 @@ def make_pairs(y: Sequence[float], gap: float = 0.0, groups: Optional[Sequence] 
                max_pairs: Optional[int] = None, seed: int = 0) -> np.ndarray:
     """Ordered pairs (i, j) with y_i > y_j, as an (m, 2) integer array.
 
-    `gap` drops the pairs whose activities differ by less than it.  This is not a speed trick: a
-    pair separated by less than the experimental error is a coin toss the model would be asked to
-    call correctly, and asking it is how a ranking model learns noise.  Half a log unit is a
-    defensible default for pooled literature potencies, zero for one careful assay.
+    `gap` drops the pairs whose activities differ by less than it.  This is not only a way to save
+    time: a pair separated by less than the experimental error is a matter of chance the model
+    would be asked to predict correctly, and asking it is how a ranking model learns noise.  Half a
+    log unit is a defensible default for pooled literature potencies, zero for one careful assay.
 
     `groups` restricts the pairs to within a group -- the same assay, the same paper, the same
     series -- which is what makes the method worth having on pooled data: an offset between two
     papers cancels inside each of them and is never compared across.
 
     `max_pairs` subsamples when the quadratic count is too large; the subsample is drawn once with
-    `seed` so that a fit is reproducible.  It matters more than it looks: the solver works on the
+    `seed` so that a fit is reproducible.  It matters more than it seems: the solver works on the
     kernel *between pairs*, which is m by m for m pairs, so m = 4000 already costs 128 MB and a
     set of 300 molecules would otherwise form 45,000 pairs and ask for 16 GB.  Subsampling the
     constraints is the standard remedy for the pairwise formulation, and the order of a set is
@@ -117,7 +117,7 @@ def pair_kernel(K: np.ndarray, pairs: np.ndarray, signs: Optional[np.ndarray] = 
 
 @dataclass
 class RankFit:
-    """What a ranking fit leaves behind: one coefficient per training molecule."""
+    """What a ranking fit produces: one coefficient per training molecule."""
     coef: np.ndarray
     pairs: np.ndarray
     alpha: np.ndarray                      # the dual variable of every pair, >= 0
@@ -152,7 +152,7 @@ def fit_rank(K: np.ndarray, y: Sequence[float], C: float = 1.0, gap: float = 0.0
     if len(np.unique(signs)) == 1:                 # one pair, or an unlucky draw
         signs[0] = -signs[0]
     Kp = pair_kernel(K, pairs, signs=signs, other_signs=signs)
-    # the kernel of difference vectors can be a hair non-symmetric after the products above
+    # the kernel of difference vectors can be slightly non-symmetric after the products above
     Kp = 0.5 * (Kp + Kp.T)
     est = SVC(kernel="precomputed", C=float(C)).fit(Kp, signs)
     alpha = np.zeros(len(pairs))
@@ -170,7 +170,7 @@ def fit_rank(K: np.ndarray, y: Sequence[float], C: float = 1.0, gap: float = 0.0
 
 def concordant_pairs(y_true: Sequence[float], score: Sequence[float],
                      gap: float = 0.0, groups: Optional[Sequence] = None) -> float:
-    """The fraction of comparable pairs the score puts the right way round; ties count a half."""
+    """The fraction of comparable pairs the score puts in the correct order; ties count a half."""
     pairs = make_pairs(y_true, gap=gap, groups=groups, max_pairs=None)
     if len(pairs) == 0:
         return float("nan")

@@ -4,7 +4,7 @@ Association constants between a cyclodextrin and a small guest, one file per hos
 fixed inside a file and the guests are whatever the literature measured, so these are the opposite
 of every other series under `examples/`: there is no shared scaffold and **no superposition is
 defined**. They are here for that reason, as the data on which an alignment-free kernel can be
-asked to earn its place.
+asked to prove its value.
 
 ## Where the data come from
 
@@ -20,7 +20,7 @@ physicochemical descriptors and their own `iso2vec` embeddings), and the licence
 
 **Terms.** Open Data Commons Open Database Licence (ODbL 1.0), the copy distributed in the archive
 being `upstream/LICENSE.md`. It permits redistribution, which is why the files are kept here rather
-than fetched on demand, and it asks three things in return: attribution, that the licence travel
+than fetched on demand, and it asks three things in return: attribution, that the licence be kept
 with the data, and that a *publicly used derived database* be offered under the same licence. The
 per-host tables in this folder are such a derived database. They are offered under ODbL 1.0, and
 anything further derived from them carries the same condition.
@@ -46,22 +46,22 @@ HCl. Dimorphite-DL decides each site from its SMARTS pKa rules; the protonated S
 `smiles` column the program reads and the neutral ones in `smiles_neutral`, beside the net
 `charge`. Of the 2671 guests, 882 change: 793 become anions, 342 cations, 1536 stay neutral.
 
-Unlike the corrosion export there is no cap on added protons. At pH 0 a cap is needed because the
-rules charge every ring nitrogen while the first protonation makes the second site far less basic;
-at pH 7 only sites with a rule pKa above 7 are charged, and putrescine, for one, really is doubly
-protonated there. A site whose pKa sits on top of the pH is the weak case either way: 4-nitrophenol
-is about forty per cent ionised at pH 7 and these rules leave it neutral.
+Unlike the corrosion export there is no limit on added protons. At pH 0 a limit is needed because
+the rules charge every ring nitrogen while the first protonation makes the second site far less
+basic; at pH 7 only sites with a rule pKa above 7 are charged, and putrescine, for example, really
+is doubly protonated there. A site whose pKa is close to the pH is the weak case at either pH:
+4-nitrophenol is about forty per cent ionised at pH 7 and these rules leave it neutral.
 
 Whether protonating helps is not settled. On a single 75/25 split of the three natural hosts with
 the invariant kernel at default settings, held-out prediction improved on all three, from 0.414 to
 0.477 on β-CD, 0.259 to 0.341 on α-CD and 0.413 to 0.438 on γ-CD. The fuller measurement,
 `benchmarks/run_cyclodextrin.py` over all seven hosts with a grid and ten-fold cross-validation,
-is less flattering: the invariant kernel improves on four hosts of seven and loses on the rest, so
-the mean barely moves. The two largest sets are among those that improve, which is the reading to
-prefer, that the charges carry signal a large enough set can use. See
+is less favourable: the invariant kernel improves on four hosts of seven and loses on the rest, so
+the mean barely moves. The two largest sets are among those that improve, which is the
+interpretation to prefer, that the charges carry signal a large enough set can use. See
 `benchmarks/results/cyclodextrin/table.md` for the numbers.
 
-For scale: the largest field-based models of this endpoint in the literature are CoMFA with
+For comparison: the largest field-based models of this endpoint in the literature are CoMFA with
 COSMOsar3D fields on 60 α-CD guests and GRIND on 126 and on 233 β-CD guests.
 
 Each file is an activity table the program reads directly, `activity` being log₁₀ K with K in
@@ -79,12 +79,12 @@ python examples/make_cyclodextrin_examples.py --protonate     # and ph7/ as well
 
 The first downloads the archive, checks its MD5 against the digest the Zenodo record publishes,
 unpacks it into `upstream/`, and writes the tables. `--protonate` takes an optional pH, the centre
-of the pH window by default, and `--max-protons` restores the corrosion export's cap. The selection is one window of conditions, 298 ± 2 K
+of the pH window by default, and `--max-protons` restores the corrosion export's limit. The selection is one window of conditions, 298 ± 2 K
 and pH 7 ± 0.5, and one row per guest holding the **median** of log₁₀ K over the measurements
 inside that window. Widen or move the window with `--temperature`, `--t-window`, `--ph`,
 `--ph-window`.
 
-## What to watch before quoting a number
+## What to check before quoting a number
 
 * **The SMILES at the top level are neutral forms**, as PubChem deposits them, so a carboxylic acid
   measured at pH 7 is written protonated there. Use `ph7/` for the structures as they existed in

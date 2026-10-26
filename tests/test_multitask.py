@@ -104,7 +104,7 @@ def test_cross_validation_holds_out_whole_molecules():
 
 
 def test_sharing_helps_when_the_endpoints_are_related():
-    """Two noisy views of one underlying signal: a positive rho must beat rho = 0."""
+    """Two noisy views of one underlying signal: a positive rho must do better than rho = 0."""
     n = 40
     K, X = _kernel(n, seed=11)
     rng = np.random.default_rng(12)

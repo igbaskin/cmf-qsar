@@ -10,9 +10,9 @@ everything needed for it except the loop.
 
 **Does the prediction mean anything for *this* molecule?**  A kernel method always returns a
 number, and for a molecule unlike anything in the training set that number is the training mean
-dressed up.  ``domain`` measures how close a molecule actually is to the training set, in the only
-geometry the model knows -- the field kernel itself -- and compares that with how close the
-training molecules are to each other.
+presented as a prediction.  ``domain`` measures how close a molecule actually is to the training
+set, in the only geometry the model knows -- the field kernel itself -- and compares that with how
+close the training molecules are to each other.
 
 **How certain is the statistic?**  A difference of 0.02 in q² between two settings is quoted all
 over this repository's benchmarks, and it is worth knowing when such a difference is noise.
@@ -80,9 +80,9 @@ class ScrambleResult:
     def caution(self) -> Optional[str]:
         """What the result warrants saying, which is not always what the p-value suggests.
 
-        A permutation test cannot report a p below 1/(runs+1), so a handful of shuffles produces
+        A permutation test cannot report a p below 1/(runs+1), so a few shuffles produce
         a large p even for a model that no shuffle came close to.  Saying "not distinguishable
-        from chance" there would be a false alarm; the honest message is that too few shuffles
+        from chance" there would be a false alarm; the correct message is that too few shuffles
         were run to say.
         """
         if not len(self.scrambled):
@@ -205,8 +205,8 @@ def domain_threshold(K_train: np.ndarray, k: int = 3, quantile: float = 0.05) ->
 
     Every training molecule is compared with the others, its mean similarity to its `k` nearest
     neighbours is taken, and the `quantile` point of that distribution becomes the threshold.  The
-    domain is then defined by the training set's own spread rather than by a number chosen out of
-    the air: a series of close analogues gets a tight domain, a diverse set a loose one.
+    domain is then defined by the training set's own spread rather than by a number chosen
+    arbitrarily: a series of close analogues gets a tight domain, a diverse set a loose one.
     """
     K = np.asarray(K_train, float)
     n = K.shape[0]
@@ -351,7 +351,7 @@ def scramble_selection(kernels: Sequence, y: Sequence[float], method: str = "krr
     `param_grid` the regularisations tried with each.  Every shuffle is scored by the *best* q2
     over that grid, exactly as the real activities were, so the test asks whether the whole
     procedure can reach the reported number by chance rather than whether a single fit can.  That
-    is the stricter and more honest question; it costs one cross-validation per grid point per
+    is the stricter and fairer question; it costs one cross-validation per grid point per
     shuffle, which is affordable only because the kernels do not depend on the activities and are
     therefore computed once.
     """

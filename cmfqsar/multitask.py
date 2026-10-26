@@ -19,7 +19,7 @@ and task,
     c_jt  =  sum_s a_js T(t,s),        y_t(X) = sum_j c_jt K(X, X_j) + b_t,
 
 each task's prediction is **linear in the molecular field with its own dual coefficients**, which
-is the whole point: it reduces to exactly the object the rest of the program already knows how to
+is the purpose: it reduces to exactly the object the rest of the program already knows how to
 read.  Hand ``c[:, t]`` to :meth:`cmfqsar.model.CMFModel.cofield_coefficients` and you get that
 endpoint's co-field; hand it ``c[:, Am] - c[:, Eu]`` and you get the **selectivity co-field**,
 
@@ -41,7 +41,7 @@ Three things the implementation has to get right, and does:
   anything; ``tests/test_multitask.py`` holds it to that.
 
 What the selected `rho` means is worth saying: at rho = 0 the endpoints are modelled separately;
-as rho rises they borrow strength from each other; and at rho = 1 the task covariance is singular,
+as rho rises they share information with each other; and at rho = 1 the task covariance is singular,
 the effective coefficients of the two tasks coincide, and the model can only predict a *constant*
 selectivity.  So the selectivity structure lives strictly below rho = 1, and the value chosen by
 cross-validation says how much of each metal's affinity is the other's.

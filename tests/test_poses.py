@@ -9,7 +9,7 @@ from cmfqsar.poses import POSERS, PoseScore, judge, pose_rmsd, table
 
 
 def _series(n=12):
-    """A congeneric series in one frame, standing in for a set of crystal poses."""
+    """A congeneric series in one frame, used in place of a set of crystal poses."""
     from cmfqsar.align import align_dataset
 
     subs = ["", "C", "CC", "F", "Cl", "O", "OC", "N", "NC", "C(F)(F)F", "C#N", "CO",
@@ -87,9 +87,9 @@ def test_the_floor_is_the_scrambled_poses_and_the_ceiling_is_the_crystal_ones():
 
 
 def test_a_method_that_restores_the_crystal_pose_scores_the_ceiling():
-    """The protocol must give full marks to a perfect poser, and the floor to an idle one.
+    """The protocol must give the maximum score to a perfect poser, and the minimum to an idle one.
 
-    Together with the previous test this pins both ends of the scale, which is what makes the
+    Together with the previous test this fixes both ends of the scale, which is what makes the
     numbers in between mean anything.
     """
     mols, names, y = _series()
@@ -109,7 +109,7 @@ def test_a_method_that_restores_the_crystal_pose_scores_the_ceiling():
     assert perfect.median_rmsd == pytest.approx(0.0, abs=1e-6)
     assert perfect.within(1.0) == 1.0
     assert perfect.recovery == pytest.approx(1.0, abs=1e-6)
-    # identical poses must give identical predictions, so the ceiling is reached exactly
+    # identical poses must give identical predictions, so the maximum is reached exactly
     assert perfect.r2_pred == pytest.approx(out["crystal"].r2_pred, abs=1e-9)
     assert out["scrambled"].median_rmsd > perfect.median_rmsd
 
@@ -146,9 +146,9 @@ def test_the_named_methods_run_and_are_reported():
 def test_a_regenerated_conformation_can_still_be_matched_by_substructure():
     """MMFF set-up alters aromaticity in place, and the MCS then fails to match its own molecule.
 
-    The failure is silent -- the aligner raises, the poser swallows it, and the molecule stays
+    The failure is silent -- the aligner raises, the poser ignores it, and the molecule stays
     where it was, which reads as "substructure alignment achieves nothing" instead of "the
-    substructure alignment never ran".  It cost five of sixteen sets in the first flexible run.
+    substructure alignment never ran".  It made five of sixteen sets fail in the first flexible run.
     """
     from cmfqsar.align import mcs_align
     from cmfqsar.poses import regenerate_conformation

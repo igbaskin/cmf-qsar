@@ -162,7 +162,7 @@ def _moved(mol, rng, shift=15.0):
 
 
 def test_a_model_on_this_kernel_ignores_the_poses(world):
-    """The point of the whole exercise: no alignment, and none needed."""
+    """The purpose of the whole method: no alignment, and none needed."""
     from cmfqsar.model import CMFModel
     fs, mols, mf = world
     y = np.array([5.0, 5.6, 6.1, 6.4, 7.0, 7.3])
@@ -176,7 +176,7 @@ def test_a_model_on_this_kernel_ignores_the_poses(world):
     far = build_fields(_moved(mols[5], rng), fs, "far")
     assert np.allclose(model.predict(AtomTable.from_molecules([far])), here, atol=1e-9)
 
-    # and the model itself does not care how the training molecules were posed
+    # and the model itself is unaffected by how the training molecules were posed
     shaken = [build_fields(_moved(m, rng), fs, f"s{i}") for i, m in enumerate(mols[:5])]
     other = CMFModel(fieldset=fs, method="krr", normalize=True,
                      kernel_source="autocorrelation", params={"lam": 0.1})
@@ -308,7 +308,7 @@ def test_the_signed_channels_survive_a_rigid_motion(world):
 
 
 def test_the_factorisation_is_the_triple_sum_it_claims_to_be(world):
-    """The whole point of the block: det[A_f, A_g, A_h] IS the sum over every atom triple."""
+    """The purpose of the block: det[A_f, A_g, A_h] IS the sum over every atom triple."""
     import itertools
     fs, _, mf = world
     mol = mf[0]
@@ -360,7 +360,7 @@ def test_the_kernel_separates_enantiomers_that_it_could_not_before(world):
 
 
 def test_the_scaling_honours_blocks_of_different_widths(world):
-    """A volume carries the cube of a length, so the block needs its own scale or it drowns."""
+    """A volume scales as a length cubed, so the block needs its own scale or it is negligible."""
     fs, _, mf = world
     X = feature_matrix(mf, CHIRAL)
     blocks = block_sizes(CHIRAL, len(fs.specs))
@@ -373,7 +373,7 @@ def test_the_scaling_honours_blocks_of_different_widths(world):
         if np.abs(block).max() > 0:
             assert float(np.sqrt(np.mean(block ** 2))) == pytest.approx(1.0, rel=1e-9)
         start += width
-    # without the explicit blocks the uniform assumption mis-slices, which is why it is passed
+    # without the explicit blocks the uniform assumption splits wrongly, which is why it is passed
     assert len(channel_scale(X, CHIRAL.n_bins)) == X.shape[1]
 
 

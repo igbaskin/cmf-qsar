@@ -212,7 +212,7 @@ def _fitted_aligned(tmp_path, n=14):
     model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": 0.1})
     model.fit(AtomTable.from_molecules(mf), y)
     path = str(tmp_path / "aligned.cmf")
-    save_model(path, model)                 # the provenance is written on the way out
+    save_model(path, model)                 # the provenance is written when the file is saved
     return load_model(path)[0], fs, mols
 
 

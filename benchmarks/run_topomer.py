@@ -3,8 +3,8 @@
 What the alignment is worth: aligned CMF against topomer CMF on the eight Sutherland sets.
 
 The Sutherland et al. (2004) data sets come with one aligned conformation per molecule, produced
-by hand-curated superposition -- the frame the ordinary CMF model lives in.  Topomer CMF
-(``cmfqsar/topomer.py``, after Cramer's topomer CoMFA) throws that frame away: it cuts every
+by hand-curated superposition -- the frame the ordinary CMF model works in.  Topomer CMF
+(``cmfqsar/topomer.py``, after Cramer's topomer CoMFA) discards that frame: it cuts every
 molecule at the bonds holding its substituents to a common core and rebuilds each substituent in
 a pose that is a function of its topology alone, so no superposition is ever computed.  This
 script measures the two on the same molecules, with the same fields, the same attenuation and
@@ -16,7 +16,7 @@ Three numbers per set, so the comparison cannot hide anything:
   aligned (kept)   the ordinary model on exactly the molecules the topomer route could cut,
                    which is the only fair comparison
   topomer          the rule-based frame on those molecules
-  counts           atom-type counts on those molecules: what is left when geometry goes
+  counts           atom-type counts on those molecules: what is left when the geometry is removed
 
 and, for context, the ordinary model on the whole set and how much of the set survived the cut.
 
@@ -86,7 +86,7 @@ def posed_as_found(mol, core, labels, spacing=100.0):
     """The same substituents the topomer route poses, left in their aligned coordinates.
 
     This is the control that separates the two things the topomer construction does at once.  It
-    cuts the same bonds and keeps the same atoms with the same weights, and it parks every
+    cuts the same bonds and keeps the same atoms with the same weights, and it places every
     substituent at its own site exactly as the topomer molecule does -- but each one keeps the
     position and conformation the published superposition gave it instead of being rebuilt by the
     rule.  Scored against the topomer column it measures the pose rule alone, since the atoms and
@@ -119,7 +119,7 @@ def posed_as_found(mol, core, labels, spacing=100.0):
 def pick_core(mols):
     """The scaffold a topomer model is built on: the framework of the largest ring chemotype.
 
-    This lives in the library now (:func:`cmfqsar.topomer.framework_core`, reached through
+    This is in the library now (:func:`cmfqsar.topomer.framework_core`, reached through
     ``choose_core``), because the measurement below is what made it the program's default: the
     maximum common substructure of a whole Sutherland set is a fragment like ``CCO`` that is fused
     into every ring system and cuts nothing off.  The size of the group is reported here as well,
@@ -247,9 +247,9 @@ def report(path, results=RESULTS, title="on the Sutherland sets"):
             "",
             "Splitting that loss in two. The middle column keeps the same cut substituents at the",
             "same separated sites but leaves each one exactly where the file's own alignment",
-            "put it, so the step to its left is the price of the cut itself -- the scaffold's own",
+            "put it, so the step to its left is the cost of the cut itself -- the scaffold's own",
             "field and the geometry between one substituent and another, both of which separated",
-            "sites destroy -- and the step to its right is the price of the pose rule alone, with",
+            "sites destroy -- and the step to its right is the cost of the pose rule alone, with",
             "the same atoms and the same weights in both.", "",
             "| set | q2 whole molecules | q2 substituents, as aligned | q2 substituents, posed "
             "by rule | cut costs | pose costs |",
@@ -263,7 +263,7 @@ def report(path, results=RESULTS, title="on the Sutherland sets"):
                    f"{r['aligned_frag']['q2'] - r['topomer']['q2']:+.3f} |")
     have = [r for r in rows if "aligned_frag" in r]
     if have:
-        out += ["", "Mean price of the cut %+.3f, mean price of the pose %+.3f." % (
+        out += ["", "Mean cost of the cut %+.3f, mean cost of the pose %+.3f." % (
             np.mean([r["aligned_kept"]["q2"] - r["aligned_frag"]["q2"] for r in have]),
             np.mean([r["aligned_frag"]["q2"] - r["topomer"]["q2"] for r in have]))]
     out += ["", "| set | RMSEcv aligned | RMSEcv topomer | aligned on all n |",

@@ -258,8 +258,8 @@ class Viewer3D(QWidget):
                            neutral=(0.85, 0.85, 0.85)) -> None:
         """A surface coloured per vertex by a signed value, red through grey to green.
 
-        Used for the complementarity of a molecule with the pocket, where the sign is the whole
-        message: green where the two fields complement each other, red where they fight.
+        Used for the complementarity of a molecule with the pocket, where the sign carries the
+        meaning: green where the two fields complement each other, red where they conflict.
         """
         v = np.asarray(verts, float)
         f = np.asarray(faces, int)

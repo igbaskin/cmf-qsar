@@ -23,7 +23,7 @@ def test_pairs_are_ordered_most_active_first():
 def test_the_gap_drops_pairs_too_close_to_call():
     y = [1.0, 1.2, 3.0]
     assert len(make_pairs(y)) == 3
-    assert len(make_pairs(y, gap=0.5)) == 2          # the 1.0 / 1.2 pair goes
+    assert len(make_pairs(y, gap=0.5)) == 2          # the 1.0 / 1.2 pair is dropped
     assert len(make_pairs(y, gap=5.0)) == 0
 
 
@@ -112,7 +112,7 @@ def test_groups_protect_the_model_from_an_offset_between_sources():
     rho_grouped = rank_scores(truth, grouped.score(K))["spearman"]
     rho_blind = rank_scores(truth, blind.score(K))["spearman"]
     assert rho_grouped > rho_blind
-    # the cross-group pairs are pure noise and there are more of them than the honest ones, so
+    # the cross-group pairs are pure noise and there are more of them than the within-group ones, so
     # the blind model is pulled by them; grouping leaves less than a tenth of the disorder
     assert (1.0 - rho_grouped) < 0.1 * (1.0 - rho_blind)
 

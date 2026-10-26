@@ -36,11 +36,11 @@ column says.
 | `ross/` (67 series, 1254 ligands, 5.8 MB) | the Schrodinger public binding free energy benchmark | schrodinger/public_binding_free_energy_benchmark | free (MIT, licence file in the folder; upstream `benchmark_metadata.csv` kept) | `make_ross_examples.py` | 86-set benchmark |
 | `pockets/` (73 files, 2.9 MB) | binding sites trimmed from the crystal structures the FEP sets name, in their frame | RCSB PDB entries, provenance in each file's `REMARK 400` | free (CC0) | `make_pocket_examples.py` | GUI pocket display, complementarity, docking |
 | `decoys/` (8 files, 3.5 MB) | posed background sets for ACE, AChE, GPB, THR, plain and property-matched | actives from `sutherland/`, decoys from the other example series | inherits `sutherland/` | `make_decoy_sets.py`, `_matched_decoys.py` | screening and one-class measurements of the README |
-| `litpcba/` (5 files, 15 MB) | 152 measured actives and 2999 measured inactives for two LIT-PCBA targets (ESR1 antagonists, p53), embedded and posed here; the `_decoys_similar` file is the same p53 inactives posed generously (1500 of them), for the control | SMILES and the active/inactive verdicts from LIT-PCBA AVE-unbiased (Tran-Nguyen, Jacquemard & Rognan 2020), itself from PubChem dose-response assays; conformations and poses this work | derived | `make_litpcba_examples.py` | `run_screening.py` |
+| `litpcba/` (5 files, 15 MB) | 152 measured actives and 2999 measured inactives for two LIT-PCBA targets (ESR1 antagonists, p53), embedded and posed here; the `_decoys_similar` file is the same p53 inactives posed in the way most favourable to them (1500 of them), for the control | SMILES and the active/inactive verdicts from LIT-PCBA AVE-unbiased (Tran-Nguyen, Jacquemard & Rognan 2020), itself from PubChem dose-response assays; conformations and poses this work | derived | `make_litpcba_examples.py` | `run_screening.py` |
 | `thrombin_atom_properties.sdf` | 40 THR molecules carrying per-atom Gasteiger and Crippen properties | `sutherland/THR.sdf` | inherits `sutherland/` | `make_property_example.py` | manual (`prop:` fields) |
 | `am-eu/` (MOL2 + table) | 46 Am/Eu extractants of the 2015 paper with lg SF, superimposed, heavy atoms | the authors' own data (Sitnikov et al. 2015); the author of this program is one of them | free | none (as prepared for that paper) | `run_am_eu.py` |
 | `corrosion/`, `corrosion_hcl/` (23 CSV each, 997 rows each) | congeneric series of iron corrosion inhibitors with the MWILA potency, per medium, and the Langmuir ΔG; the `_hcl` folder protonated at pH 0 | the author's own database of literature measurements, exported from its scaffold tree | free (the author's compilation); the underlying values are published, see below | `scaffold_tree_export.py` | `run_corrosion.py`, `run_corrosion_qm.py`, `run_multitask.py`, `run_cdft_kernels.py` |
-| `cyclodextrin/` (7 tables, 2671 guests, 0.7 MB; `ph7/` the same protonated, 0.8 MB; `upstream/` 4.1 MB) | association constants with a fixed cyclodextrin host, one table per host, activity = log K; the host-guest case, with no frame | Tahıl et al., Chemical Data Collections 45 (2023) 101022, Zenodo 10.5281/zenodo.7575539 | free (ODbL 1.0, share-alike; licence file in `upstream/`) | `make_cyclodextrin_examples.py --fetch --protonate` | `run_cyclodextrin.py` |
+| `cyclodextrin/` (7 tables, 2671 guests, 0.7 MB; `ph7/` the same protonated, 0.8 MB; `upstream/` 4.1 MB) | association constants with a fixed cyclodextrin host, one table per host, activity = log K; the host-guest case, with no frame | Tahıl et al., Chemical Data Collections 45 (2023) 101022, Zenodo 10.5281/zenodo.7575539 | free (ODbL 1.0, share-alike; licence file in `upstream/`) | `make_cyclodextrin_examples.py --fetch --protonate` | `run_cyclodextrin.py`, `run_tasks.py` (the seven hosts as seven endpoints) |
 
 Sizes are of the tracked files. The whole of `examples/` is 51 MB, of which the two items of
 unclear status and the two that inherit it are 10 MB, and `mittal/`, derived, is 15 MB.
@@ -67,8 +67,8 @@ the paper on 25 October 2026**: 39 of the 95 substituents were matched to a row 
 38 agreed to the last digit; the one that did not, CH2OCH3, was written here as σ_m 0.02 /
 σ_p 0.03 and is given by row 223 as **0.08 / 0.01**, which was confirmed on the page image before
 the value was changed in the script and in all five SDF files. The other 56 could not be matched
-automatically — the scan's character recognition mangles the substituent names, Cl coming out as
-"c1" and SO2Me as "SOIMe" — and remain as good as the memory they came from.
+automatically — the scan's character recognition distorts the substituent names, Cl coming out as
+"c1" and SO2Me as "SOIMe" — and remain only as reliable as the memory they were written from.
 
 **π is not from that paper.** The 1991 review tabulates σ, F and R and mentions π only in its
 introduction; the hydrophobic constants here come from the Hansch–Leo compilations and have not
@@ -128,7 +128,7 @@ repository's `data` tree, part of it from release 0.2.1 whose files are under gi
 KGaA FEP benchmark of Schindler et al. (`schindler/`, the complete series, by
 `make_schindler_examples.py`), and the Schrodinger public binding free energy benchmark of Ross
 et al. (`ross/`, 67 series of five or more ligands, by `make_ross_examples.py`). The scripts
-convert the affinities to a p-scale and leave the coordinates untouched; every record keeps the
+convert the affinities to a p-scale and leave the coordinates unchanged; every record keeps the
 tags that name its source, its PDB entry and, where the collection gives it, the DOI of the
 measurement. The pockets in `examples/pockets/` are trimmed by `make_pocket_examples.py` from
 the RCSB entries those tags name, which are public domain; each file records its entry, the
@@ -141,7 +141,7 @@ ligands of the other example series posed in the actives' frame (`make_decoy_set
 property-matched background in the manner of DUD-E (`_matched_decoys.py`).
 `examples/thrombin_atom_properties.sdf` is forty THR molecules with computed per-atom
 properties (`make_property_example.py`). Both are derived from `examples/sutherland/` and have
-its status; both are regenerated by their scripts in a minute.
+its status; both are regenerated by their scripts in about one minute.
 
 ### LIT-PCBA: inactives that were measured
 
@@ -151,27 +151,28 @@ assumption. LIT-PCBA is assembled from high-confidence PubChem dose-response ass
 authors recommend, the asymmetric validation embedding of Wallach & Heifets having removed the
 analogue bias that lets a screen score well merely by recognising that actives resemble actives.
 
-Two of the fifteen targets are kept, the ones whose inactive pools are small enough to pose
-honestly rather than in a token sample: **ESR1 antagonists** (88 actives, 3820 inactives in the
-pool) and **p53** (64, 3345). A seeded sample of 1500 inactives per target is taken.
+Two of the fifteen targets are kept, the ones whose inactive pools are small enough to pose with
+a meaningful sample rather than a small symbolic one: **ESR1 antagonists** (88 actives, 3820
+inactives in the pool) and **p53** (64, 3345). A seeded sample of 1500 inactives per target is
+taken.
 
-What the script adds is what LIT-PCBA has not got and a field method cannot do without:
+What the script adds is what LIT-PCBA does not provide and a field method requires:
 
 - 3D conformations, from ETKDG followed by MMFF;
 - a pose. The actives **and** the inactives are placed by one rule -- maximum CMF field similarity
-  to the target's crystal ligand, which the archive ships -- so the frame is the receptor's and the
-  placement knows nothing about which class a molecule belongs to.
+  to the target's crystal ligand, which the archive includes -- so the frame is the receptor's and
+  the placement uses no information about which class a molecule belongs to.
 
 `--pose-against actives` instead poses the inactives to maximise their similarity to the posed
-actives, the way `make_decoy_sets.py` does for `decoys/`. That is the generous placement, and
-`TP53_decoys_similar.sdf` keeps it so that the two can be compared: a molecule placed where it most
-resembles the actives is in field space inside their description by construction, and the
-difference between the two files is a measurement of how much a screening number owes to its
-posing. See `benchmarks/run_screening.py` and the manual.
+actives, the way `make_decoy_sets.py` does for `decoys/`. That is the placement most favourable to
+the inactives, and `TP53_decoys_similar.sdf` keeps it so that the two can be compared: a molecule
+placed where it most resembles the actives is in field space inside their description by
+construction, and the difference between the two files is a measurement of how much a screening
+number depends on its posing. See `benchmarks/run_screening.py` and the manual.
 
 The 57 MB archive (`AVE_unbiased.tgz`) is **not** redistributed here -- `examples/litpcba/*.tgz` is
-in `.gitignore` -- and the maker downloads it from
-https://drugdesign.unistra.fr/LIT-PCBA/Files/AVE_unbiased.tgz on demand. Every molecule written
+in `.gitignore` -- and the maker script downloads it when needed from
+https://drugdesign.unistra.fr/LIT-PCBA/Files/AVE_unbiased.tgz. Every molecule written
 carries a `source` tag naming the paper and the script. The derived structures are offered on the
 same terms as the upstream collection, which is free for academic use.
 
@@ -192,7 +193,7 @@ are exported by `examples/scaffold_tree_export.py` from the scaffold tree of the
 database of corrosion inhibitors of iron-based alloys, a compilation of published measurements:
 the MWILA potency ln[θ/(C(1−θ))] per compound, pooled and per medium, and the Langmuir adsorption
 free energy. The tree itself is a private page and the database is not public, so the CSV files
-are the only form in which these series exist outside the author's hands, and redistributing
+are the only form in which these series exist outside the author's own files, and redistributing
 them is the author's decision alone. What they lack for a data statement is the reference of each
 measurement: the rows carry the number of papers (`n_papers`) and a database id (`db_id`), not
 the papers. Before the corrosion paper, the export should add a column with the DOIs of the
@@ -207,12 +208,12 @@ Delorme, Le Berre, Monflier, Sayede and Tilloy (Chemical Data Collections 45 (20
 checks that digest, unpacks it into `upstream/`, and reduces their curated table of 3459
 measurements over 15 hosts to one activity table per host: 1162 β-CD guests, 827 α-CD, 292 γ-CD,
 135 HP-β-CD, 135 SBE-β-CD, 77 methyl-β-CD and 43 2,6-di-O-methyl-β-CD. `hosts.csv` keeps the eight
-hosts that fell below the twenty-guest threshold visible. The selection is one window of
+hosts that fell below the twenty-guest threshold visible. The selection is one range of
 conditions, 298 ± 2 K and pH 7 ± 0.5, and the median of log₁₀ K per guest inside it, with the count
 and the spread of the pooled measurements in their own columns.
 
 The licence is ODbL 1.0, which permits the copy kept here and asks for attribution, that the
-licence travel with the data, and that a publicly used derived database be offered under the same
+licence accompany the data, and that a publicly used derived database be offered under the same
 terms. The per-host tables are such a derived database and `examples/cyclodextrin/README.md` offers
 them under ODbL 1.0 accordingly. This is the first set in the repository with a share-alike
 condition, and anything built from these tables and then published inherits it.
@@ -223,24 +224,24 @@ measured at pH 7 is written protonated; repeated measurements are reduced to the
 excellent agreement in general but 3.2 log units apart for one α-CD guest; and 1:1 stoichiometry is
 assumed throughout.
 
-The first of those has the remedy that `examples/corrosion_hcl/` uses for 1 M HCl.
+The first of those is corrected in the same way that `examples/corrosion_hcl/` uses for 1 M HCl.
 `--protonate` writes `cyclodextrin/ph7/`, the same seven tables with the same activities and the
 structures in their state at pH 7 from Dimorphite-DL, the neutral form kept in `smiles_neutral`
 and the net charge in `charge`. 882 of the 2671 guests change: 793 anions, 342 cations, 1536
-unchanged. There is deliberately no cap on added protons, unlike the corrosion export, because the
-reason for that cap is specific to pH 0, where the rules charge every ring nitrogen although the
-first protonation makes the next site far less basic; at pH 7 only sites with a rule pKa above 7
-are charged. It is worth having both copies: the neutral tables are what the published models of
-this endpoint were built on and so the comparable ones, while the protonated tables are the honest
-structures. Which predicts better is not settled: on a single split of the three natural hosts the
-protonated copies were ahead on all three, but `run_cyclodextrin.py`, over all seven hosts with a
-grid and ten-fold cross-validation, has the invariant kernel improving on four and losing on three,
-the two largest sets among those that improve.
+unchanged. There is deliberately no limit on added protons, unlike the corrosion export, because
+the reason for that limit is specific to pH 0, where the rules charge every ring nitrogen although
+the first protonation makes the next site far less basic; at pH 7 only sites with a rule pKa above
+7 are charged. It is worth having both copies: the neutral tables are what the published models of
+this endpoint were built on and so the comparable ones, while the protonated tables are the
+physically correct structures. Which predicts better is not settled: on a single split of the three
+natural hosts the protonated copies were better on all three, but `run_cyclodextrin.py`, over all
+seven hosts with a grid and ten-fold cross-validation, has the invariant kernel improving on four
+and worsening on three, the two largest sets among those that improve.
 
 They are here for the alignment question. The host is fixed and the guests share no scaffold, so no
 superposition exists to be curated, which is the regime where `run_alignment.py` finds the
-rotation-invariant autocorrelation kernel of `cmfqsar/invariant.py` ahead of the aligned one. The
-published field-based models of this endpoint are the benchmark to beat: CoMFA with COSMOsar3D
+rotation-invariant autocorrelation kernel of `cmfqsar/invariant.py` better than the aligned one. The
+published field-based models of this endpoint are the reference to surpass: CoMFA with COSMOsar3D
 fields on 60 α-CD guests, GRIND on 126 and on 233 β-CD guests, all an order of magnitude smaller
 than the tables here. `benchmarks/run_cyclodextrin.py` measures the aligned, invariant and count
 kernels on every host, in both variants, with the grids of `run_alignment.py` so that the two
@@ -258,7 +259,7 @@ tables can be read beside each other.
   `--data-root`.
 * The corrosion database and its scaffold tree.
 * The LIT-PCBA AVE-unbiased archive (`AVE_unbiased.tgz`, 57 MB), which
-  `make_litpcba_examples.py` downloads on demand from
+  `make_litpcba_examples.py` downloads when needed from
   https://drugdesign.unistra.fr/LIT-PCBA/Files/AVE_unbiased.tgz; `examples/litpcba/*.tgz` is in
   `.gitignore`. The posed structures derived from it are kept.
 * ORCA outputs of the quantum stages (ignored by git); the SDF files that carry their per-atom
@@ -271,8 +272,8 @@ tables can be read beside each other.
    ask ACS and the Erlangen group for permission, to replace the copies by the scripts and a
    note that says where to download the originals (`run_topomer.py` and `run_alignment.py`
    would then need `make_sutherland_examples.py --data-root` to have been run first, and the
-   decoys and the property example would be regenerated by their scripts), or to keep them on
-   the ground that the files have circulated for twenty years and the UCI mirror serves them
+   decoys and the property example would be regenerated by their scripts), or to keep them
+   because the files have circulated for twenty years and the UCI mirror serves them
    openly. The plan's rule says the second; the decision is the author's. **Decided 22 October
    2026: the copies stay while the repository is private; the choice is made again before it
    goes public.**
@@ -282,7 +283,7 @@ tables can be read beside each other.
    as far as the scan allows: 39 of 95 checked, one corrected, 56 unmatched. π is unchecked and
    its attribution is corrected.
 5. Item A4 of the plan adds the hashes of every file here to the manifest of the benchmark
-   results, so that a changed data set is told apart from a changed program.
+   results, so that a changed data set is distinguished from a changed program.
 
 ---
 
@@ -319,7 +320,7 @@ Notes
 Note: the SDF has 32 records; index 23 is "cortisol-21-acetate" and index 32 is
 "cortisolacetat". Check whether 32 is a duplicate before using the set as 31 compounds.
 The affinities are stored with a negative sign (e.g. aldosterone pKi_CBG = -6.279), i.e.
-as log K rather than pK; flip the sign.
+as log K rather than pK; reverse the sign.
 
 ### 3. Congeneric series with crystal-structure-based poses (FEP benchmarks)
 
@@ -338,7 +339,7 @@ as log K rather than pK; flip the sign.
 | https://github.com/ci-lab-cz/ibenchmark | Synthetic + ChEMBL sets for QSAR interpretation benchmarking | reported |
 | http://www.3d-qsar.com (Ragno, Py-CoMFA) | 30 pre-aligned public data sets inside the portal; academic login required, no public download page | reported |
 
-### 5. Not found / dead ends
+### 5. Not found / searches without result
 
 - cheminformatics.org dataset archive (old mirror of the Sutherland sets): site offline, Wayback not reachable from here.
 - Open3DQSAR / Open3DALIGN: no bundled example data sets found on the project pages.

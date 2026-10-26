@@ -35,7 +35,7 @@ def test_every_rule_computes_what_it_says():
 
 
 def test_sum_ranks_as_the_mean_and_max_as_the_nearest_neighbour():
-    """The two rules this program already had, reached from the other direction."""
+    """The two rules this program already had, seen from a different direction."""
     assert np.argsort(-fuse(S, "sum")).tolist() == np.argsort(-S.mean(axis=1)).tolist()
     # with a normalised kernel d^2 = 2 - 2s, so the nearest neighbour is the largest similarity:
     # MAX and the one-nearest-neighbour description must rank a library identically
@@ -73,7 +73,7 @@ def test_a_molecule_is_never_its_own_reference():
 
 
 def test_a_molecule_comparable_with_nothing_scores_missing():
-    """Not zero: a row of missing values must not land anywhere in particular in the ranking."""
+    """Not zero: a row of missing values must not end at any particular place in the ranking."""
     T = np.array([[0.5, 0.4], [np.nan, np.nan], [0.1, 0.2]])
     for rule in FUSION_RULES:
         out = fuse(T, rule)

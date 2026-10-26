@@ -5,8 +5,8 @@ Does ranking by a confidence bound beat ranking by the prediction?
 A regression model used to prioritise a library has always been read here as a point estimate:
 compute the predicted activity, sort, take the top. The objection is that a screening library is
 by construction dominated by molecules unlike the training set, that a kernel method returns the
-training mean dressed up for exactly those, and that a point estimate cannot tell that answer
-from a real one. The remedy is to rank by a lower bound instead,
+training mean presented as a prediction for exactly those, and that a point estimate cannot
+tell that answer from a real one. The remedy is to rank by a lower bound instead,
 
     score = prediction - beta * posterior standard deviation
 
@@ -19,7 +19,7 @@ uncertainty varies across the library:
     chemotype  one Bemis-Murcko chemotype held out at a time, where a held-out molecule has no
                scaffold-mate in the training set and the spread is wide
 
-The second is the regime the objection is about, and the one where a bound has room to act. The
+The second is the regime the objection is about, and the one where a bound can act. The
 metrics are the early-recognition ones, since what a prioritisation is judged by is whether the
 actives are at the top: a molecule counts as active when its activity is above the median of the
 training part, so the labels never depend on anything held out.
@@ -185,7 +185,7 @@ def report(path=None, out_dir=RESULTS):
                   f"{np.nanmean([data[s]['regimes'][regime].get('max_ef5', np.nan) for s in sets]):.2f} "
                   f"at 5 per cent and "
                   f"{np.nanmean([data[s]['regimes'][regime].get('max_ef10', np.nan) for s in sets]):.2f} "
-                  f"at 10. BEDROC is the metric with room left.", "",
+                  f"at 10. BEDROC is the metric that is not yet saturated.", "",
                   "| beta | AUC | EF 5% | EF 10% | BEDROC(20) |", "|---|---:|---:|---:|---:|"]
         for tag in tags:
             row = []

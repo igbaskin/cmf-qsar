@@ -23,9 +23,9 @@ Mean loss from giving up the alignment: +0.101 q2 over 8 sets.
 
 Splitting that loss in two. The middle column keeps the same cut substituents at the
 same separated sites but leaves each one exactly where the file's own alignment
-put it, so the step to its left is the price of the cut itself -- the scaffold's own
+put it, so the step to its left is the cost of the cut itself -- the scaffold's own
 field and the geometry between one substituent and another, both of which separated
-sites destroy -- and the step to its right is the price of the pose rule alone, with
+sites destroy -- and the step to its right is the cost of the pose rule alone, with
 the same atoms and the same weights in both.
 
 | set | q2 whole molecules | q2 substituents, as aligned | q2 substituents, posed by rule | cut costs | pose costs |
@@ -39,7 +39,7 @@ the same atoms and the same weights in both.
 | THER | +0.458 | +0.321 | +0.264 | +0.137 | +0.056 |
 | THR | +0.076 | -0.131 | -0.137 | +0.207 | +0.006 |
 
-Mean price of the cut +0.035, mean price of the pose +0.066.
+Mean cost of the cut +0.035, mean cost of the pose +0.066.
 
 | set | RMSEcv aligned | RMSEcv topomer | aligned on all n |
 |---|---|---|---|

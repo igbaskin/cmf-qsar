@@ -24,14 +24,14 @@ arrive per atom per conformation and are summed back onto the atoms with
 This module builds the ensembles.  The field set decides whether they are used: ``conformers`` is
 ``"single"`` by default, which is the behaviour of the papers and of every earlier version.
 
-What to watch out for: the kernel cost grows with the square of the number of conformations kept,
+What to be careful about: the kernel cost grows with the square of the number of conformations kept,
 and the conformations have to be put somewhere.  That last point is not a detail.  The CMF kernel
 compares molecules with each other, so what matters is not where a conformation sits relative to
 its own molecule but where it sits relative to the rest of the series.  Superimposing the
 conformations of a molecule on that molecule's own first pose - all that
 ``rdMolAlign.AlignMolConformers`` can do - leaves them in arbitrary orientations with respect to
 every other molecule, and in a series that its authors aligned by hand that blurs the very
-arrangement the model lives on.  :data:`CONFORMER_ALIGNMENTS` lists what is offered instead, all
+arrangement the model depends on.  :data:`CONFORMER_ALIGNMENTS` lists what is offered instead, all
 of it relative to one common reference molecule of the series:
 
 ``self``
@@ -101,7 +101,7 @@ def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: f
     MMFF94s where it can be set up and from UFF otherwise, which is enough for Boltzmann weights.
 
     `window_rmsd`, when positive, keeps only the conformations that lie within that heavy-atom
-    root-mean-square distance of the input pose, measured where they stand rather than after a
+    root-mean-square distance of the input pose, measured where they are rather than after a
     best fit, so the ensemble covers the local flexibility around the pose the series was aligned
     to instead of the whole conformational surface.  A wider pool is embedded when a window is
     asked for, since most of it will be discarded.
@@ -116,8 +116,8 @@ def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: f
     # result stays reproducible
     params.randomSeed = int(seed) if int(seed) != 0 else 1000003
     params.useSmallRingTorsions = True
-    # pruning inside the embedding is brutal, turning six requested conformations into one on an
-    # ordinary flexible molecule, so it is done afterwards on optimised geometries instead
+    # pruning inside the embedding is very aggressive, turning six requested conformations into one
+    # on an ordinary flexible molecule, so it is done afterwards on optimised geometries instead
     params.pruneRmsThresh = -1.0
     work.RemoveAllConformers()
     window = float(window_rmsd) if window_rmsd and window_rmsd > 0 else 0.0
@@ -147,7 +147,7 @@ def generate_conformers(mol: Chem.Mol, n: int = 10, seed: int = 0, prune_rmsd: f
         align_conformers_to_reference(work, reference, mode=align_to, fieldset=fieldset,
                                       atom_map=atom_map)
     if window and work.GetNumConformers() > 1:
-        # after placement, because what matters is how far a conformation stands from the pose
+        # after placement, because what matters is how far a conformation lies from the pose
         # the series was aligned to, not how similar its shape is
         work, energies = _window_filter(work, energies, window, int(max(n, 1)))
     set_conformer_energies(work, energies)
@@ -441,7 +441,7 @@ def ensemble_summary(mols: Sequence[Chem.Mol], fieldset: FieldSet) -> Dict[str, 
     """How many conformations a series carries and how concentrated their weights are.
 
     The effective number of conformations is the exponential of the entropy of the weights: it is
-    the number of conformations that actually count, which with Boltzmann weights and a dominant
+    the number of conformations that actually matter, which with Boltzmann weights and a dominant
     minimum can be far below the number present.
     """
     k = [m.GetNumConformers() for m in mols if m is not None]

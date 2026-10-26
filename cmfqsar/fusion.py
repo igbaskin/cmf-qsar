@@ -5,8 +5,8 @@ than one.  The screening literature answers that with *data fusion*: compute the
 each library molecule to every known active and combine the results by a fixed rule (Willett,
 *Data fusion in ligand-based virtual screening*, 2013, and the group-fusion rules of Fox & Shaw
 1994 as they reached chemoinformatics through Whittle, Gillet, Willett et al. 2004).  No model is
-fitted and no inactive is needed, which is why fusion is the step up from a single-query search
-when a handful of actives is all there is.
+fitted and no inactive is needed, which is why fusion is the next step beyond a single-query search
+when a few actives are all there is.
 
 The input is one matrix: `S[i, j]`, the similarity of library molecule `i` to reference active
 `j`.  For this program that is the cosine-normalised CMF kernel between two sets of molecular
@@ -19,7 +19,7 @@ Eight rules, and the two that matter most are at the ends of the list:
 ``max``
     the similarity to the *best-matching* active.  The rule the literature most often finds
     best, and the one this program did not have: a molecule resembling one active strongly is a
-    better bet than one resembling all of them weakly, because a series usually binds through
+    better candidate than one resembling all of them weakly, because a series usually binds through
     one arrangement and not through an average of several.
 ``min``
     the similarity to the worst-matching active, which asks for resemblance to all of them at
@@ -33,9 +33,9 @@ Eight rules, and the two that matter most are at the ends of the list:
     the median, which is the robust form of ``sum`` and ignores one outlying reference.
 ``anz``, ``mnz``
     Fox and Shaw's combinations, on the actives whose similarity passes a threshold: ``anz`` is
-    the sum divided by how many passed and ``mnz`` the sum multiplied by it.  They pull in
+    the sum divided by how many passed and ``mnz`` the sum multiplied by it.  They act in
     opposite directions, ``anz`` rewarding a molecule that matches few actives well and ``mnz``
-    one that matches many at all, so the pair brackets how much the *number* of matches should
+    one that matches many at all, so the pair bounds how much the *number* of matches should
     count beside their strength.
 ``euc``
     the Euclidean norm of the similarity vector, which lies between ``max`` and ``sum`` and
@@ -157,12 +157,12 @@ def fuse(S: np.ndarray, rule: str = "max", threshold: float = 0.0, rrf_k: float 
 
 @dataclass
 class FusionScorer:
-    """A fusion rule wearing the interface of a fitted one-class description.
+    """A fusion rule with the interface of a fitted one-class description.
 
     It holds no model: the references *are* the description, and `fit` only records them and
     places the offset so that a fraction `nu` of them falls outside, which is what makes a
-    decision value here mean the same thing as one from :mod:`cmfqsar.oneclass`.  The whole
-    point of fusion is that nothing is fitted, so there is nothing to overfit and nothing to
+    decision value here mean the same thing as one from :mod:`cmfqsar.oneclass`.  The purpose
+    of fusion is that nothing is fitted, so there is nothing to overfit and nothing to
     cross-validate; what there is instead is a choice of rule, and the rule has to be chosen on
     data of its own if the choice is not to become the fit.
     """
@@ -174,7 +174,7 @@ class FusionScorer:
 
     offset_: float = 0.0
     n_ref_: int = 0
-    diag_: Optional[np.ndarray] = None   # training self-kernels, so the model can spot a refit
+    diag_: Optional[np.ndarray] = None   # training self-kernels, so the model can detect a refit
 
     #: Fusion is a rule on the kernel row rather than a kernel expansion with fixed weights, so
     #: no co-field, atom contribution or Shapley value exists for one.  ``sum`` is the exception

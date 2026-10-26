@@ -88,7 +88,7 @@ def convert(data_root: str, out_dir: str, min_ligands: int = 5) -> None:
             info = meta.get(series, {})
             dg_all = [float(m.GetProp("r_exp_dg")) for m in mols]
             # a few OPLS stress-test series store RELATIVE free energies (dG > 0 for some ligands);
-            # a constant offset does not affect a regression model (the bias absorbs it), but the
+            # a constant offset does not affect a regression model (the intercept absorbs it), but the
             # absolute scale of pAffinity is then meaningless
             scale = "absolute" if max(dg_all) < 0 else "relative (arbitrary offset)"
             odir = os.path.join(out_dir, group)

@@ -18,7 +18,7 @@ similarity to the whole training set, with redundant training molecules down-wei
 by the inverse kernel matrix.  No activity value of the aligned molecule is used, so
 the procedure is legitimate for prospective prediction.
 
-Two limitations are built into the method and are worth keeping in mind.
+Two limitations are built into the method and are worth remembering.
 
 1. It aligns molecules against a *fixed* training alignment.  Applied to the training
    set itself the criterion is degenerate: superimposing all molecules maximises mutual
@@ -113,8 +113,8 @@ class VarianceAligner:
 
     def _kvec(self, mol: MoleculeFields, coords: np.ndarray, sp: np.ndarray):
         """Joint kernel row k(x) and the per-field scaling (needed for the gradient)."""
-        # the probe coefficients travel with the molecule: without them the probe fields would
-        # be dropped from the kernel row without a word, and the pose chosen for a model that
+        # the probe coefficients are carried with the molecule: without them the probe fields would
+        # be dropped from the kernel row silently, and the pose chosen for a model that
         # is not the fitted one
         kraw = atom_kernel_block(coords, mol.weights, mol.radii, self.model.train, self.specs,
                                  ci=mol.probe_coeffs).sum(axis=1)

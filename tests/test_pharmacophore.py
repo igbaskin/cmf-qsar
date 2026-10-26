@@ -58,7 +58,7 @@ def test_a_lobe_becomes_a_feature_where_it_is(grid):
         assert np.allclose(f.centre, c, atol=0.3)
         assert 0.5 < f.radius < 3.0
         assert f.importance > 0
-    # the stronger bump is worth more and the weaker one is still found
+    # the stronger bump scores higher and the weaker one is still found
     assert feats[0].importance > feats[1].importance > 0
 
 
@@ -70,7 +70,7 @@ def test_the_contour_level_and_the_minimum_size_do_what_they_say(grid):
     assert np.allclose(tight.centre, loose.centre, atol=0.2)
     assert features_from_volume(vol, grid, "hydrophobic", +1, level=0.8, min_radius=5.0) == []
     # and the default minimum quietly drops a lobe that a 0.5 A grid resolves with a handful of
-    # cells, which is what keeps a real co-field from sprouting features out of its own noise
+    # cells, which is what keeps a real co-field from producing features from its own noise
     assert features_from_volume(vol, grid, "hydrophobic", +1, level=0.8) == []
 
 
@@ -136,6 +136,6 @@ def test_pocket_exclusions_thin_the_receptor_to_a_few_spheres(grid):
     for i, a in enumerate(feats):
         for b in feats[i + 1:]:
             assert np.linalg.norm(a.centre - b.centre) >= 2.0 - 1e-9
-    # hydrogens are not walls
+    # hydrogens produce no exclusion spheres
     protein.elements = ["H"] * len(protein.coords)
     assert pocket_exclusions(protein, grid) == []

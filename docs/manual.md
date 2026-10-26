@@ -616,7 +616,7 @@ matter more than the view, and *Restore default layout*.
 **Tools** — *Generate conformations (4D)…*; *Dock into the pocket…*; *Align data set to
 reference…*; *Align by prediction confidence (GP variance)…* and its cross-validated form for the
 training set; *Replace molecules by their topomer substituents…*; *Field difference from a
-reference molecule…*; *Extract pharmacophore from the co-field…*; *Model two endpoints (selectivity co-field)…*;
+reference molecule…*; *Extract pharmacophore from the co-field…*; *Model several endpoints (selectivity co-field)…*;
 *Chemical space map…*;
 *Align decoys to the training set…*; *Unalign (randomise poses)…*; *Center view on current
 molecule*; *Quantum-chemical properties with ORCA…* and *Save the data set with its
@@ -1094,7 +1094,7 @@ What comes out reproduces the attraction to about 15 % in the volume-weighted no
 (23 % on a realistic worst case), and the kernel it implies agrees with numerical integration of
 the fields themselves to 4·10⁻⁷ — a test asserts both. Each atom carries *K* Gaussians (four by
 default), so a probe field costs K² passes over the distance matrix where an ordinary field costs
-one; three is the cheap setting and five the careful one.
+one; three is the fast setting and five the accurate one.
 
 **Measured against the fields it would join**, same molecules, same α and λ grids, 10-fold CV:
 
@@ -1219,7 +1219,7 @@ that does not exist is refused before the fit with the nearest ones that do — 
 answers *did you mean NumHDonors?*.
 
 The default is deliberate, and so is the warning that belongs with it. These are two-dimensional
-quantities: they can lift a model that has a size or lipophilicity trend in it, and they can also
+quantities: they can improve a model that has a size or lipophilicity trend in it, and they can also
 carry a model that then gains nothing at all from its geometry. Measured on four Sutherland sets,
 same α and λ grids, 10-fold CV:
 
@@ -1990,7 +1990,7 @@ $$
 $$
 
 — one matrix product per block of grid points, no resampling and no refitting. The **hide noise**
-tick of the 3D view then draws only what stands more than two standard deviations from zero, and
+tick of the 3D view then draws only what lies more than two standard deviations from zero, and
 `pharmacophore --min-z 2` reads features off the same masked map, so that a lobe the noise could
 have produced never becomes a feature. The report (`report`) does both by default.
 
@@ -2127,7 +2127,7 @@ difference map draws as its own isosurface, and the table ranks the whole data s
 similarity to the reference. In a lead-optimisation reading: the "missing" column is what to put
 back, the "added" column is what may be causing trouble.
 
-## Two endpoints at once: the selectivity co-field
+## Several endpoints at once: the selectivity co-field
 
 A separation problem, or any selectivity, is not one property but two: an extractant has an
 affinity for americium and an affinity for europium, and what matters is the difference. A model
@@ -2136,9 +2136,9 @@ on partly different compounds; a ligand that binds both metals strongly looks, t
 ratio, exactly like one that binds neither; and the ratio cannot say *which* of the two affinities
 a substituent moved.
 
-*Tools → Model two endpoints (selectivity co-field)…* fits both endpoints on the kernel of the
-model you have already built, with one bias per endpoint and a task covariance that lets them
-share information with each other:
+*Tools → Model several endpoints (selectivity co-field)…* fits every endpoint you tick on the
+kernel of the model you have already built, with one bias per endpoint and a task covariance that
+lets them share information with each other:
 
 $$
 y_t(X) = \sum_j c_{jt}\,K(X, X_j) + b_t ,
@@ -2164,19 +2164,166 @@ a map of where more of a field raises the first endpoint more than the second. O
 linear in the field can produce it; it is available here for the same reason co-fields are
 available at all, and it is refused for a model with a nonlinear kernel layer.
 
-Once the fit is made, an **Endpoint** box appears in the *Maps* row of the control strip with
-three entries — the first endpoint, the second, and their difference — and every map, export and
+Once the fit is made, an **Endpoint** box appears in the *Maps* row of the control strip with one
+entry per endpoint and one for the difference of the pair you named — and every map, export and
 contribution table then refers to the chosen one; a cube exported while the selectivity is chosen
-carries it in its file name. The two endpoints are two numeric properties of the data set, so the
-second is imported with *File → Import activities from CSV…* or read from a column of the file.
-Molecules that carry only one of the two are kept: they inform the endpoint they have, and
-through the correlation the other. Each endpoint needs at least five molecules.
+carries it in its file name. The endpoints are numeric properties of the data set, so the ones
+beyond the first are imported with *File → Import activities from CSV…* or read from columns of
+the file. Molecules that carry only some of them are kept: they inform the endpoints they have,
+and through the covariance the others. Each endpoint needs at least five molecules.
 
 What the chosen $\rho$ means is itself a result. On the corrosion-inhibitor series of the
 benchmark (`benchmarks/results/multitask/table.md`) the cross-validation chose $\rho = 0$ on the
 two largest series and a non-zero $\rho$ of either sign on the small ones, where it gained at
 most 0.04 in q²: an endpoint that already has its own molecules gains little from another, and
 the $\rho$ the dialog reports in the log is the measurement that says how much.
+
+### Beyond one correlation
+
+One $\rho$ says that every pair of endpoints is related to the same degree. For two endpoints
+that is no assumption at all; for seven it is a strong one, and wrong in the usual case where some
+endpoints are nearly the same and others are only weakly related. The dialog's **Task covariance**
+box therefore offers a free-form matrix,
+
+$$
+\mathbf{T} = \mathbf{L}\mathbf{L}^{\mathrm{T}} + \mathrm{diag}(\mathbf{d}),
+$$
+
+with $\mathbf{L}$ of shape (endpoints, rank) and $\mathbf{d} > 0$. It is positive definite for
+every value of its parameters, which is why nothing has to be constrained; at rank 1 it contains
+the one-$\rho$ model exactly, so the comparison is meaningful; and its **diagonal is free**, which
+matters whenever the endpoints are in different units — a potency and a free energy in kJ/mol need
+their own amplitudes, and one shared correlation cannot give them one.
+
+Such a covariance has $(\mathrm{rank} + 1) \times \mathrm{endpoints}$ parameters, which is far
+too many for cross-validation: ten fits per candidate and several hundred candidates. It is chosen
+instead by the **marginal likelihood**, the multi-endpoint form of the criterion of
+*Choosing α and λ without holding anything out*: the mean is marginalised over the design columns
+under a flat prior — one constant per endpoint, or the task descriptors below — and the kernel
+amplitude is profiled out, so one factorisation scores a candidate and the value does not depend
+on the units of the activities. `cmfqsar/multitask.log_evidence` is that criterion and
+`fit_covariance` optimises it by Nelder–Mead from several starts, because the evidence over a
+covariance is not concave and a start at $\rho = 0.8$ and one at $\rho = 0.3$ do not always converge to the same answer.
+
+### An endpoint nobody measured
+
+A free-form row for an endpoint with no measurements is unidentifiable: there is nothing to fit it
+to. A row read off **task descriptors** is not. Give the endpoints their own descriptor vectors
+$\mathbf{z}_t$ — the medium, the metal, the temperature; in a host-guest problem the structure of
+the host itself — and set
+
+$$
+T(t, s) = (1 - \varepsilon)\,
+\exp\left(-\frac{|\mathbf{z}_t - \mathbf{z}_s|^2}{2\ell^2}\right)
++ \varepsilon\,\delta_{ts},
+$$
+
+whose length scale $\ell$ and nugget $\varepsilon$ are chosen by the same evidence
+(`descriptor_covariance`). The nugget is not optional: without it two endpoints with identical
+descriptors would be perfectly correlated, the covariance singular, and their coefficients forced
+to coincide. A `linear` form is available too, and is the one to use when two endpoints are
+expected to be *anti*-correlated, since an RBF kernel cannot be negative.
+
+The mean needs the same treatment, since an endpoint that was never measured has no bias to fit.
+Passing `task_features` to `Observations` replaces the indicator columns of the bias with the
+descriptors themselves, so that the mean is linear in them and extrapolates; with no features the
+design is the indicator matrix and the behaviour is exactly as before. Then
+
+```python
+from cmfqsar.multitask import Observations, descriptor_covariance, fit
+obs = Observations.from_columns(Y, names=hosts, task_features=Z_with_intercept)
+dc = descriptor_covariance(K, obs, Z)
+f = fit(K, obs, lam=dc.lam, T=dc.T)
+y_new = f.predict_new_task(K_cross, dc.row_for(z_new), features=z_new_with_intercept)
+```
+
+predicts the unmeasured endpoint, and `f.new_task_coefficients(dc.row_for(z_new))` gives it a
+co-field like any other. What this cannot do is invent what is peculiar to that endpoint: it
+interpolates between the endpoints that were measured and inherits only what they have in common.
+
+### What it measures
+
+Measured on `examples/cyclodextrin/` (`benchmarks/run_tasks.py`), which has seven real
+endpoints and descriptors for them: 1669 distinct guest molecules, 2671
+association constants against the seven cyclodextrin hosts
+(beta 1162, alpha 827, gamma 292, hp_beta 135, sbe_beta 135, methyl_beta 77, dimethyl_beta 43), and the hosts are molecules too, so
+the task descriptors are a structure rather than a label — cavity size, lipophilicity, charge,
+hydroxyl count, heavy atoms. One kernel for every row, the rotation-invariant field
+autocorrelation at α = 0.1 (there is no frame available here, and
+*Working without an alignment* found that kernel the best of the three on this data), and
+10-fold cross-validation over **guests**, so that no guest has one host in the training
+set and another in the test set.
+
+| task covariance | mean q² | beta | alpha | gamma | hp_beta | sbe_beta | methyl_beta | dimethyl_beta | what it is |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| independent | **+0.412** | +0.448 | +0.338 | +0.473 | +0.545 | +0.331 | +0.377 | +0.374 | rho = 0 |
+| one rho, CV | **+0.454** | +0.448 | +0.338 | +0.524 | +0.586 | +0.389 | +0.441 | +0.454 | rho = +0.90 |
+| one rho, evidence | **+0.454** | +0.449 | +0.341 | +0.523 | +0.592 | +0.391 | +0.435 | +0.451 | rho = +0.857 over 25 values |
+| free rank 1 | **+0.475** | +0.447 | +0.339 | +0.525 | +0.604 | +0.444 | +0.504 | +0.465 | 2 x 1 starts, 1603 evaluations of the evidence |
+| free rank 2 | **+0.488** | +0.447 | +0.340 | +0.527 | +0.624 | +0.452 | +0.536 | +0.490 | 2 x 1 starts, 2274 evaluations of the evidence |
+| descriptors | **+0.448** | +0.446 | +0.342 | +0.505 | +0.608 | +0.390 | +0.430 | +0.413 | rbf, length scale 4, nugget 0.1 |
+
+**Sharing is worth +0.076 mean q²** — +0.412 fitting the seven hosts independently on
+the same kernel against +0.488 for the free rank 2 covariance — and the gain is
+largest on the endpoints with fewest measurements, which is what sharing information between endpoints is supposed to do (the gain and the number of measurements correlate at -0.89, and the biggest gain goes to methyl_beta, while the smallest set is dimethyl_beta). A free-form covariance beats one shared correlation by +0.034, so with seven endpoints the single number misses part of the gain.
+
+The evidence was the objective for every row but the cross-validated one, and it is worth checking
+whether it chose what cross-validation would have:
+
+| task covariance | log evidence | mean q² |
+|---|---:|---:|
+| free rank 2 | -2605.3 | +0.488 |
+| free rank 1 | -2608.8 | +0.475 |
+| one rho, evidence | -2635.3 | +0.454 |
+| one rho, CV | -2635.8 | +0.454 |
+| descriptors | -2647.6 | +0.448 |
+| independent | -2713.1 | +0.412 |
+
+It did: the covariance with the highest evidence is also the one with the highest out-of-fold q², which is the agreement that is assumed without a check elsewhere in this manual.
+
+### An endpoint nobody measured, measured
+
+Each host was then removed **entirely** — the whole endpoint, not a fold of its guests — and
+predicted from the other six through the descriptor covariance, with the mean linear in the
+descriptors so that there is something to extrapolate. Spearman ρ is the column to read: the
+absolute scale of an endpoint nobody has titrated is not recoverable, and a screen ranks.
+
+| host removed | n | nearest host | ρ, descriptor covariance | ρ, nearest host alone | ρ, mean of the measured hosts | q², descriptor |
+|---|---:|---|---:|---:|---:|---:|
+| beta | 1162 | sbe_beta | +0.577 | +0.320 | +0.623 (615) | +0.231 |
+| alpha | 827 | beta | +0.431 | +0.433 | +0.470 (522) | +0.066 |
+| gamma | 292 | sbe_beta | -0.284 | +0.145 | +0.533 (225) | -5.499 |
+| hp_beta | 135 | sbe_beta | +0.664 | +0.294 | +0.806 (105) | +0.483 |
+| sbe_beta | 135 | beta | +0.516 | +0.515 | +0.498 (74) | +0.200 |
+| methyl_beta | 77 | dimethyl_beta | +0.595 | +0.529 | +0.894 (73) | +0.416 |
+| dimethyl_beta | 43 | methyl_beta | +0.703 | +0.708 | +0.863 (38) | +0.044 |
+
+Mean ρ **+0.457** through the descriptor covariance, against **+0.421** for the
+single-task model of the nearest host by descriptors and **+0.670** for simply averaging the
+other hosts' measured values of the same guest. So the covariance does carry real information
+about an endpoint it has never seen — it beats the nearest host's own model
+4 times
+out of 7 — and it does not beat the cheapest baseline of all. That baseline is
+not a model, which is its only disadvantage: it can only say something about a guest some other
+host was measured against, and says nothing about a new molecule. The q² column is the necessary
+warning: it is negative on 1 of the 7 hosts, so the
+numbers this route produces are a ranking and not a binding constant.
+
+What governs the spread is whether the removed host is interpolated between the others or
+extrapolated to. Cavity size is the first descriptor, and of the seven hosts five have seven
+glucose units — β-cyclodextrin and its four derivatives — while **α** has six and **γ** has
+eight. Remove one of those five and the covariance interpolates; remove α or γ and it has to
+extrapolate outside the range it was built on. The five interpolated hosts average ρ **+0.611** against
+**+0.473** for the nearest host's own model, a margin of +0.138; the two extrapolated ones give
++0.431 (α) and **−0.284** (γ, with q² −5.50, a prediction that is worse than useless).
+
+So the claim this route supports is *interpolation between endpoints that were measured*. γ is
+the warning: it is not merely the largest cavity but the only one of its size, the task kernel has
+no neighbour to take its shape from, and the mean — linear in the descriptors — is extrapolated
+past every host it was fitted on. The length scale the evidence chose is itself the symptom: 4 standardised units, which is the
+*top of the grid* on every one of the seven fits, so the criterion would prefer an even wider task
+kernel. With seven endpoints there is not enough to localise it, every endpoint is treated as a
+neighbour of every other, and that is generous towards γ and wrong.
 
 ## Comparing two models by their co-fields
 
@@ -2749,8 +2896,8 @@ image are exact negatives — that is what the block is for, and a test asserts 
 molecules of the same handedness and +0.016 for two of opposite handedness**, a difference of
 0.03 against a spread of 0.55. Even within one scaffold family, amino acids differing only in the
 side chain, the difference is 0.10 against a spread of 0.48. Handedness is not a direction in this
-space, so there is nothing for a linear model to transfer, and the two null results above are one
-null result seen twice.
+space, so there is nothing for a linear model to transfer, and the two negative results above are one
+result seen twice.
 
 That is the conclusion: the block is correct and does what it says about a molecule and its mirror
 image; it does not put the handedness of two different molecules on a common axis, which is what
@@ -3397,7 +3544,7 @@ The terms this manual uses in a particular sense, with the chapter that treats e
 | **probe field** | a GRID-like interaction energy with a chosen probe, expanded in Gaussians so that it keeps the closed-form kernel and the co-field. *GRID-like probe fields* |
 | **`prop:` field** | a field whose per-atom weights are read from the file or computed by ORCA rather than from a parameter table. *Charges and per-atom properties* |
 | **$q^2$, $R^2_{pred}$, RMSE** | the cross-validated, test-set and fit figures of merit. $q^2$ is not a test: it is what the search optimises, and a model can be chosen for it. *Validation*; *Statistics reported* |
-| **selectivity co-field** | the difference of two endpoints' co-fields in a multi-task model, which draws where a molecule should differ to be selective rather than merely potent. *Two endpoints at once* |
+| **selectivity co-field** | the difference of two endpoints' co-fields in a multi-task model, which draws where a molecule should differ to be selective rather than merely potent. *Several endpoints at once* |
 | **Shapley value** | the share of a prediction attributed to each field or atom by averaging over all subsets, with the pairwise interaction indices beside it. *Shapley values* |
 | **solvent exposure weighting** | multiplying each atomic weight by its relative solvent accessibility. Measured here and found not to help: ligands of this size have no interior. *Weighting the fields by solvent exposure* |
 | **surface kernel** | the in-plane invariant kernel for molecules on a surface: distances in the plane, resolved by the heights of both atoms, invariant to lateral position and rotation about the normal and to nothing else. *Molecules on a surface* |
@@ -3408,7 +3555,7 @@ The terms this manual uses in a particular sense, with the chapter that treats e
 
 References are grouped by what they are to this program: the papers that define the method it
 implements, those that apply it to one-class classification and virtual screening, and the work it
-borrows machinery or benchmark data from. Journal names follow the ACS abbreviations; a DOI is
+takes methods or benchmark data from. Journal names follow the ACS abbreviations; a DOI is
 given wherever the work has one.
 
 ## The method
@@ -3449,7 +3596,7 @@ A. S.; Novakov, I. A.; Zefirov, N. S. One-class approach: models for virtual scr
 non-nucleoside HIV-1 reverse transcriptase inhibitors based on the concept of continuous molecular
 fields. *Russ. Chem. Bull.* **2011**, *60*, 2418–2424. doi:10.1007/s11172-011-0372-8
 
-## Methods and data the program borrows
+## Methods and data taken from other work
 
 [9] Cramer, R. D.; Patterson, D. E.; Bunce, J. D. Comparative molecular field analysis (CoMFA).
 1. Effect of shape on binding of steroids to carrier proteins. *J. Am. Chem. Soc.* **1988**,

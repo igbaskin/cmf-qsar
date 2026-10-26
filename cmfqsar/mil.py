@@ -1,7 +1,7 @@
 """Multi-instance learning over conformations: let the model choose the pose.
 
 Averaging a molecule's conformations into one mean field, which is what the 4D mode of
-:mod:`cmfqsar.conformers` does, assumes that every conformation deserves the same say.  On an
+:mod:`cmfqsar.conformers` does, assumes that every conformation deserves the same weight.  On an
 aligned series that assumption is wrong and measurably harmful: the activity is produced by one
 conformation, the bioactive one, and the rest dilute it.
 
@@ -33,7 +33,7 @@ Fitting alternates, as multi-instance methods do: fit the regression with the cu
 score every conformation with it, update the weights, repeat.  The conformation kernel is computed
 once and every round after that is matrix algebra on it.  The objective is not convex, so the
 result depends on where it starts; the default starts from the pose the molecules arrived in, which
-makes the single-conformation model the point of departure and the thing to beat.
+makes the single-conformation model the starting point and the reference to beat.
 
 What this module does *not* do is pretend the choice is free: the weights are fitted to the
 training activities, so they must be refitted inside every cross-validation fold, which
@@ -59,8 +59,8 @@ def flatten_conformers(mols: Sequence, fieldset: FieldSet, names: Sequence[str],
                        max_conformers: int = 0) -> Tuple[List[MoleculeFields], np.ndarray]:
     """Every conformation of every molecule as its own entry, plus the bag it belongs to.
 
-    The field set is used in its single-conformation sense here, whatever its mode: the whole
-    point is that the conformations are kept apart so that the model can weigh them.
+    The field set is used in its single-conformation sense here, whatever its mode: the
+    purpose is that the conformations are kept apart so that the model can weigh them.
     """
     from rdkit import Chem
     single = fieldset.copy()
@@ -162,7 +162,7 @@ class MILFit:
         return weight_matrix(self.weights, self.bags, self.n_bags)
 
     def chosen(self) -> np.ndarray:
-        """Index of the heaviest conformation of every bag, which is the pose the model picked."""
+        """Index of the largest-weight conformation of every bag: the pose the model picked."""
         out = np.zeros(self.n_bags, dtype=int)
         for b in range(self.n_bags):
             idx = np.flatnonzero(self.bags == b)
@@ -170,7 +170,7 @@ class MILFit:
         return out
 
     def effective_counts(self) -> np.ndarray:
-        """Exponential of the entropy of each bag's weights: how many conformations really count."""
+        """Exponential of the entropy of each bag's weights: how many conformations matter."""
         out = np.ones(self.n_bags)
         for b in range(self.n_bags):
             w = self.weights[self.bags == b]
@@ -190,7 +190,8 @@ def learn_weights(K_conf: np.ndarray, bags: np.ndarray, y: np.ndarray, beta: flo
     molecule arrived with, so the single-conformation model is the starting point, and
     ``"uniform"`` starts from the plain ensemble.  `init_weights` overrides both, which is what
     annealing uses: run with a small beta, hand the weights to a larger one, and so on upwards.
-    The iteration stops when no bag changes its heaviest conformation and the objective settles.
+    The iteration stops when no bag changes its highest-weighted conformation and the objective
+    settles.
 
     The objective is not convex and the alternation only finds a local optimum, so where it
     starts matters and is worth varying.
@@ -241,7 +242,8 @@ def anneal_weights(K_conf: np.ndarray, bags: np.ndarray, y: np.ndarray,
 
     The alternation is a local search, and a hard rule applied to a model that has not settled
     picks the wrong conformation and then trains itself to believe it.  Starting soft keeps every
-    conformation in play while the model forms, and sharpening afterwards is the usual remedy.
+    conformation as a candidate while the model forms, and sharpening afterwards is the usual
+    remedy.
     """
     fit = None
     for beta in betas:
@@ -264,7 +266,7 @@ def predict_bags(K_new_conf: np.ndarray, fit: MILFit, bags_new: np.ndarray) -> n
     """Predict new bags: score their conformations with the fitted model, weigh, then combine.
 
     The weighting rule is the one the model was fitted with, applied once: a new molecule has no
-    activity to fit its weights to, which is exactly the point.
+    activity to fit its weights to, which is exactly the intention.
     """
     W_train = fit.W()
     scores = (K_new_conf @ W_train.T) @ fit.coef + fit.bias

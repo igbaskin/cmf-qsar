@@ -3,15 +3,14 @@
 Every alignment this program has is a superposition on something shared.  ``mcs_align`` needs a
 common substructure, which a series of several scaffolds does not have; ``field_align`` refines a
 pose that something else must first put in roughly the right place, because the CMF kernel is flat
-where two molecules do not overlap and there is nothing to climb; ``varalign`` and ``flexalign``
-need a fitted model, so they cannot align the training set that the model is fitted on.  The
-measurements in this repository all say the same thing about the consequence: the alignment decides
-more than the kernel, the learner or the fields, and on a heterogeneous set the frame is where the
-method fails.
-
-The construction here is the third road, and it is old (Thorner, Willett, Wright & Taylor 1997 for
+where two molecules do not overlap and there is no gradient to follow; ``varalign`` and
+``flexalign`` need a fitted model, so they cannot align the training set that the model is fitted
+on.  The measurements in this repository all say the same thing about the consequence: the
+alignment decides more than the kernel, the learner or the fields, and on a heterogeneous set the
+frame is where the method fails.
+The construction here is the third way, and it is old (Thorner, Willett, Wright & Taylor 1997 for
 field graphs; the field points of Cresset's methodology, and the maximum-common-subgraph matching
-of the virtual-screening literature).  Reduce each molecule's *own* fields to a handful of typed
+of the virtual-screening literature).  Reduce each molecule's *own* fields to a few typed
 extrema, treat those as the vertices of a graph whose edges carry the distances between them, and
 superimpose two molecules on the largest set of extrema whose mutual distances agree.  Nothing is
 shared in advance: not a substructure, not a reference frame, not a model.  What is matched is
@@ -32,7 +31,7 @@ How it works, in the order the code does it:
    partners in the other to within a tolerance.  A clique is then a set of mutually consistent
    pairings, which is a candidate common arrangement.
 3. **The cliques.**  Bron-Kerbosch with pivoting, budgeted, since the number of maximal cliques
-   is exponential in the worst case and a screening run may not hang.  Three points are the
+   is exponential in the worst case and a screening run must not run forever.  Three points are the
    minimum that fixes a rigid body, and the superposition that follows uses a proper rotation, so
    a mirror-image arrangement is never accepted as a match.
 4. **Choosing among them.**  A graph can have several maximum cliques and they are not
@@ -44,7 +43,7 @@ How it works, in the order the code does it:
 
 **The steric field is left out, and that is measured rather than assumed.**  At every contour
 tried, from 0.2 to 0.8 of its peak, the steric field of a drug-sized molecule has exactly one
-connected region: it is a single blob covering the molecule.  Its one extremum sits near the
+connected region: it is a single mass covering the molecule.  Its one extremum sits near the
 centroid and carries no information about where anything is, so including it would add a vertex
 that matches everything and constrains nothing.  The fields that do have localised structure are
 the electrostatic one, with two signs, the hydrophobic one, also with two signs because the
@@ -54,7 +53,7 @@ literature works in.
 
 What this does not do: it does not change a conformation, so a molecule can only be placed as
 well as the conformation it arrives in allows, and it does not know which of its own points
-matter, since a molecule's field says what it presents and not what the target wants.  A fitted
+matter, since a molecule's field says what it presents and not what the target needs.  A fitted
 model knows the second thing, which is why the confidence alignment exists and why the two are
 worth running in series.
 """
@@ -187,7 +186,7 @@ def maximal_cliques(adj: Sequence[set], min_size: int = 3, max_cliques: int = 50
 
     The count of maximal cliques is exponential in the worst case, so the search carries a
     budget and returns what it found when either limit is reached.  That makes the result a
-    heuristic under pressure and exact when the budget is not binding; a caller that cares can
+    heuristic when the budget is exhausted and exact when it is not; a caller that cares can
     raise both, and a screening run that cares more about finishing can lower them.
     """
     n = len(adj)
@@ -335,7 +334,7 @@ def align_dataset(mols: Sequence[MoleculeFields], reference: MoleculeFields,
 
 
 def summarise(matches: Sequence[Optional[FieldGraphMatch]]) -> Dict[str, float]:
-    """How the alignment went over a series: how many were placed, and how well."""
+    """How the alignment performed over a series: how many were placed, and how well."""
     done = [m for m in matches if m is not None]
     if not done:
         return {"n": float(len(matches)), "placed": 0.0}

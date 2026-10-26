@@ -160,7 +160,7 @@ def test_protonator_caps_added_protons():
     assert ste.net_charge(free("Nc1nc2ccccc2s1")) == 2 and ste.net_charge(one("Nc1nc2ccccc2s1")) == 1
     # the most basic site gets the proton: the alkylamine, not the pyridine
     assert one("NCCc1ccncc1") == "[NH3+]CCc1ccncc1" and two("NCCc1ccncc1") == "[NH3+]CCc1cc[nH+]cc1"
-    # equivalent sites flip together and jump over the cap: as many as the cap allows are kept
+    # equivalent sites change together and exceed the cap: as many as the cap allows are kept
     assert ste.net_charge(one("NCCN")) == 1 and ste.net_charge(two("NCCN")) == 2
     assert ste.net_charge(one("c1ccc(-c2n[nH]c(-c3ccccc3)n2)cc1")) == 1
     # a permanent charge does not count against the cap; an acid stays neutral at pH 0

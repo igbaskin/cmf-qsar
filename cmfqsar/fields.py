@@ -255,7 +255,7 @@ def atom_property(mol: Chem.Mol, name: str, n_atoms: Optional[int] = None,
     which survives a round trip through SDF as ``atom.dprop.<name>``), and a molecule property
     holding the numbers in atom order, separated by whitespace, commas or semicolons.
 
-    The hydrogens are the trap.  A structure file without 3D coordinates is embedded on loading
+    The hydrogens are the usual source of error.  A structure file without 3D coordinates is embedded on loading
     and hydrogens are added, so a list written for the heavy atoms is shorter than the molecule
     is now.  A list as long as the molecule is taken atom for atom; a list as long as the heavy
     atoms is spread over them in order, leaving the hydrogens at zero; anything else is an error
@@ -321,7 +321,7 @@ def _cap_dummies(mol: Chem.Mol) -> Chem.Mol:
     try:
         Chem.SanitizeMol(out)
     except Exception:                            # noqa: BLE001 - keep the original rather than
-        return mol                               # a copy that will not stand up
+        return mol                               # a copy that is not valid
     return out
 
 
@@ -632,7 +632,7 @@ def conformer_weights(mol: Chem.Mol, fieldset: FieldSet) -> np.ndarray:
             w = np.exp(-(e - e.min()) / kt)
         except Exception:                        # noqa: BLE001 - documented fallback
             w = np.ones(k)
-    order = np.argsort(-w)[:keep]                # keep the heaviest conformations
+    order = np.argsort(-w)[:keep]                # keep the conformations with the largest weights
     out = np.zeros(k)
     out[order] = w[order]
     total = out.sum()

@@ -178,7 +178,7 @@ def convert(data_root: str, out_dir: str) -> None:
                 continue
             types_used.add(ptype)
             mm = Chem.Mol(m)
-            for prop in list(mm.GetPropNames()):      # drop Schrodinger bookkeeping tags (r_epik_*, s_lp_* ...)
+            for prop in list(mm.GetPropNames()):      # drop Schrodinger internal tags (r_epik_*, s_lp_* ...)
                 mm.ClearProp(prop)
             mm.SetProp("pAffinity", f"{p:.3f}")
             mm.SetProp("affinity_type", ptype)

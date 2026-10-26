@@ -1,14 +1,14 @@
 """Build ``examples/pockets/<collection>/<target>.pdb``: the binding site of every benchmark set.
 
 The free-energy collections give their ligands in the coordinate frame of a reference crystal
-structure and name that structure in every record, so a pocket trimmed from the entry drops
-straight onto the molecules with no superposition.  Storing the trimmed site rather than the whole
+structure and name that structure in every record, so a pocket trimmed from the entry fits
+the molecules directly with no superposition.  Storing the trimmed site rather than the whole
 entry keeps the files small, tens of kilobytes instead of a megabyte, and lets the application show
 the protein without network access.
 
 What is written: every residue with an atom within ``--cutoff`` of any ligand of the set, taken
 whole, with crystallographic waters removed and the co-crystallised ligand removed when it occupies
-the same space as the data set.  Ions and cofactors lining the site are kept.  Coordinates are
+the same space as the data set.  Ions and cofactors inside the site are kept.  Coordinates are
 untouched, so the file is in the frame of the ligands.
 
 Structures come from RCSB and are in the public domain (CC0); the provenance of each file is

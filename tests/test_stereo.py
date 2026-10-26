@@ -92,8 +92,8 @@ def test_two_molecules_of_the_same_handedness_point_the_same_way(world):
 
     A kernel method transfers what it learnt along a direction in feature space, so the channels
     of two *different* molecules of the same configuration have to agree in sign. C5's block
-    separated same from opposite handedness by 0.03 against a spread of 0.55; this asks for
-    something that is not that.
+    separated same from opposite handedness by 0.03 against a spread of 0.55; this module needs
+    a different property.
     """
     fs, mols, mf = world
     V = np.array([_unit(stereo_channels(f, n_fields=len(fs.specs))) for f in mf])

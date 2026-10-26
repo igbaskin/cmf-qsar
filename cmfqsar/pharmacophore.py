@@ -1,6 +1,6 @@
 """A pharmacophore read out of a fitted co-field.
 
-A pharmacophore is a handful of typed points with tolerance spheres; a co-field is a continuous
+A pharmacophore is a few typed points with tolerance spheres; a co-field is a continuous
 function saying, at every point in space, how much field of one type raises or lowers the
 predicted activity.  The two are the same statement at different resolutions, and the fields of
 this program carry exactly the classical feature types -- hydrogen-bond donor and acceptor,
@@ -24,7 +24,7 @@ such, since a model fitted on ligands alone cannot know them.
 The result is an ordinary pharmacophore hypothesis, derived from a fitted model rather than
 guessed, which can be used to align molecules of unrelated scaffolds, to filter a library before
 the field model scores it, or simply to read what the model has learnt.  What it is not is a
-replacement for the co-field: discretising throws away what the continuous description was for.
+replacement for the co-field: discretising discards what the continuous description was for.
 """
 from __future__ import annotations
 
@@ -149,9 +149,9 @@ def extract(model, grid: Optional[Grid] = None, level: float = 0.5, max_features
     `level` is the fraction of each co-field's largest value that bounds a lobe: 0.5 gives the
     half-height regions, a larger value tighter and fewer features.  Features are ranked by the
     integral of the co-field over them and the strongest `max_features` are kept, exclusion
-    volumes counted separately so that they never crowd out the favourable ones.
+    volumes counted separately so that they never displace the favourable ones.
 
-    With `min_z` above zero the co-field is first masked where it stands less than that many
+    With `min_z` above zero the co-field is first masked where it lies less than that many
     standard deviations from zero (:func:`cmfqsar.cofields.cofield_with_error`), so that a lobe
     the activities' noise could have produced never becomes a feature.  Two is the usual value.
     A feature that survives is still a feature of this training set, but it is at least not a
@@ -191,7 +191,7 @@ def pocket_exclusions(protein, grid: Grid, max_spheres: int = 18, min_separation
     """Exclusion volumes from the receptor itself: where the protein already is.
 
     Heavy atoms inside the grid box are thinned to one sphere every `min_separation` angstrom,
-    nearest the centre of the box first, so that a handful of spheres marks the walls instead of
+    nearest the centre of the box first, so that a few spheres mark the walls instead of
     a copy of the pocket.
     """
     coords = np.asarray(protein.coords, float)
@@ -277,7 +277,7 @@ def write_pdb(path: str, features: Sequence[Feature]) -> None:
 #: what each of this program's feature types is called in a pharmacophore query.  Three of them
 #: have no counterpart: "bulk" asks for atoms of any kind, which no query language expresses,
 #: and the disfavoured "polar", "acceptor_bad" and "donor_bad" say that a *particular* kind of
-#: group is unwelcome, which an exclusion sphere -- the only negative a query has -- overstates
+#: group is undesirable, which an exclusion sphere -- the only negative a query has -- overstates
 #: by excluding every atom.
 PHARMIT_TYPE = {
     "donor": "HydrogenDonor", "acceptor": "HydrogenAcceptor", "hydrophobic": "Hydrophobic",

@@ -1,7 +1,7 @@
 """How much of a co-field is noise (plan item F2).
 
 The decisive test is the first one: the closed-form standard deviation has to agree with what
-actually happens when noisy activities are refitted, because the whole value of the thing is that
+actually happens when noisy activities are refitted, because the value of the method is that
 it replaces that experiment with one matrix product.
 """
 import os
@@ -74,7 +74,7 @@ def test_the_closed_form_is_what_refitting_noisy_activities_would_have_shown(nor
 
 
 def test_the_basis_is_the_one_the_co_field_is_made_of(fitted):
-    """If these two ever disagreed, the error bars would belong to a different picture."""
+    """If these two ever disagreed, the error bars would describe a different quantity."""
     model, _table = fitted
     grid = make_grid(model.train.coords, margin=1.0, spacing=1.5)
     X = per_molecule_fields(model, 1, grid.points())

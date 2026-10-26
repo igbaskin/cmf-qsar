@@ -79,7 +79,7 @@ def test_zero_angles_change_nothing_and_a_full_turn_returns():
 
 
 def test_the_torsion_chain_rule_matches_finite_differences():
-    """The whole point of the analytic gradient: it must be the derivative it claims to be."""
+    """The purpose of the analytic gradient: it must be the derivative it claims to be."""
     model, fs, mols, names = _fitted()
     rd = _mol("CCCCCCOc1ccccc1", seed=7)
     mf = build_fields(rd, fs, "probe")
@@ -169,7 +169,7 @@ def test_with_ensemble_starts_the_result_is_still_a_conformation_of_the_same_mol
     """The default path may return a *generated* conformation, whose internal geometry is its own.
 
     So the invariant is no longer that bond lengths are unchanged -- it is that what comes back
-    is a sane conformation of the same molecule, which is what the strain prior is there to keep.
+    is a valid conformation of the same molecule, which is what the strain prior is there to keep.
     """
     model, fs, mols, names = _fitted()
     rd = _mol("CCCCCCOc1ccccc1", seed=7)
@@ -201,7 +201,7 @@ def test_a_rigid_molecule_reduces_to_the_rigid_body_search():
 
 
 def test_the_guard_limits_the_pose_and_not_the_conformation():
-    """A torsional correction must not be charged to the displacement guard.
+    """A torsional correction must not be counted by the displacement guard.
 
     Measured on the final coordinates, the guard would treat a turning bond as though the whole
     molecule had been translated, and so suppress the one thing the flexible search adds.
@@ -216,7 +216,7 @@ def test_the_guard_limits_the_pose_and_not_the_conformation():
     c = X0.mean(axis=0)
     sp, kself = aligner._self_terms(mf)
 
-    # turning every bond hard, with no rigid motion at all, must not trip the guard
+    # turning every bond hard, with no rigid motion at all, must not trigger the guard
     p_turn = np.concatenate([np.zeros(6), np.full(len(ts), 1.2)])
     turned = apply_torsions(X0, ts, p_turn[6:])
     assert np.sqrt(((turned - X0) ** 2).sum(1).mean()) > 0.5, "the torsions moved the atoms"
@@ -225,7 +225,7 @@ def test_the_guard_limits_the_pose_and_not_the_conformation():
     without = free.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, p_turn)[0]
     assert with_guard == pytest.approx(without, abs=1e-9)
 
-    # a translation of the same size must trip it
+    # a translation of the same size must trigger it
     p_move = np.concatenate([np.zeros(3), [1.0, 0.0, 0.0], np.zeros(len(ts))])
     moved = aligner.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, p_move)[0]
     moved_free = free.objective_flex(mf, rd, X0, c, ts, strain, sp, kself, p_move)[0]

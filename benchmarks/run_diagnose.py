@@ -3,11 +3,11 @@
 The diagnosis, run over sets whose answers are already known (item C6).
 
 ``cmfqsar/diagnose.py`` says, before any modelling, whether a frame can exist, whether it carries
-signal, whether the geometry is decoration, and which route the set should take.  The way to
-check such a thing is to point it at sets this repository has already measured the hard way and
+signal, whether the geometry adds nothing, and which route the set should take.  The way to
+check such a thing is to run it on sets this repository has already measured in full and
 see whether its advice matches what was found:
 
-* **ACE** -- the descriptor-only baseline beat the 3D model, and the frame buys nothing.  The
+* **ACE** -- the descriptor-only baseline beat the 3D model, and the frame gains nothing.  The
   diagnosis should say so.
 * **Am/Eu** -- a curated frame worth +0.807 against -0.113 for atom counts.  It should say the
   opposite.
@@ -125,7 +125,7 @@ def validate(family="all", results=RESULTS, seeds=(0, 1, 2), force=False):
 
 
 def report_validation(rows, results=RESULTS, out=None):
-    """How often the advice was the right road, and what it cost when it was not."""
+    """How often the advice was the right route, and what it cost when it was not."""
     lines = ["# Following the advice: was it right?", "",
              "The diagnosis is run on the training part alone, so the advice never sees the",
              "molecules it is judged on; every route is then fitted on that part and asked about",

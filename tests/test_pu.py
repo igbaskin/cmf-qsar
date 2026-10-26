@@ -58,7 +58,7 @@ def test_a_held_out_molecule_is_scored_by_every_bag():
 
 
 def test_the_bag_never_scores_a_molecule_it_was_told_was_negative():
-    """The property the whole method rests on, checked by counting."""
+    """The property the whole method depends on, checked by counting."""
     K, pos, unl, _h, _n = _world(n_pos=10, n_hidden=10, n_neg=40)
     res = bagging_pu(K, pos, unl, bags=15, bag_size=20, seed=3)
     # with 50 unlabelled and bags of 20, a molecule is out of bag about 60 % of the time

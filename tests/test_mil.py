@@ -58,7 +58,7 @@ def test_selection_finds_the_witness_where_averaging_fails():
     assert hit > 0.9                                      # the hidden instance is recovered
     q2_flat = r2_score(y, cv_predict(K, bags, y, beta=0.0, lam=0.01, folds=5, init="uniform"))
     q2_pick = r2_score(y, cv_predict(K, bags, y, beta=20.0, lam=0.01, folds=5, init="uniform"))
-    assert q2_pick > 0.9 and q2_flat < 0.6                # and it is worth a great deal
+    assert q2_pick > 0.9 and q2_flat < 0.6                # and the gain is large
     assert picked.effective_counts().mean() < 1.5         # the weights really did concentrate
     assert flat.effective_counts().mean() == pytest.approx(5.0)
 
@@ -79,7 +79,7 @@ def test_hard_selection_is_one_hot_and_stops():
     fit = learn_weights(K, bags, y, beta=0.0, lam=0.01, selection="hard", init="first", rounds=20)
     assert set(np.unique(fit.weights)) <= {0.0, 1.0}
     assert fit.effective_counts() == pytest.approx(np.ones(30))
-    assert fit.rounds <= 20 and fit.moved[-1] == 0        # it settled rather than ran out
+    assert fit.rounds <= 20 and fit.moved[-1] == 0        # it converged before the round limit
     assert len(fit.objective) == fit.rounds + 1
 
 
@@ -120,7 +120,7 @@ def test_search_reports_a_grid_and_can_fall_back_to_averaging():
     K = Z @ Z.T
     res = search(K, bags, y, betas=[0.0, 10.0], lams=[0.01, 0.1], folds=4, seed=0, init="uniform")
     assert len(res.table) == 4
-    assert res.best_beta == 10.0                           # the witness data want selection
+    assert res.best_beta == 10.0                           # the witness data need selection
     assert res.best_q2 > 0.9 and res.fit.beta == res.best_beta
     assert {"beta", "lam", "q2", "rmse_cv"} <= set(res.table[0])
 
@@ -174,6 +174,6 @@ def test_annealing_runs_through_the_betas_and_ends_at_the_last():
     K = Z @ Z.T
     fit = anneal_weights(K, bags, y, betas=(0.5, 2.0, 10.0), lam=0.01, init="uniform", rounds=5)
     assert fit.beta == 10.0
-    assert fit.effective_counts().mean() < 2.0                 # it did sharpen
+    assert fit.effective_counts().mean() < 2.0                 # the weights did concentrate
     hit = np.mean(fit.chosen() - np.arange(40) * 5 == witness)
     assert hit > 0.8                                           # and still finds the witness here

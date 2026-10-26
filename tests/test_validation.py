@@ -119,7 +119,7 @@ def test_caution_does_not_cry_chance_when_there_were_too_few_shuffles():
     assert "19" in note
 
     enough = scramble_kernel(K, y, params={"lam": 0.1}, folds=5, runs=25)
-    assert enough.caution() is None                           # a clean bill of health
+    assert enough.caution() is None                           # no warning at all
 
     noise = np.random.RandomState(3).randn(len(y))
     bad = scramble_kernel(K, noise, params={"lam": 0.1}, folds=5, runs=25)
@@ -127,7 +127,7 @@ def test_caution_does_not_cry_chance_when_there_were_too_few_shuffles():
 
 
 def test_scramble_with_the_search_redone_raises_the_scrambled_baseline():
-    """Letting the search pick the best of several kernels flatters noise, which is the point."""
+    """Picking the best of several kernels overstates the fit to noise, which is the purpose."""
     from cmfqsar.validation import scramble_selection
     rng = np.random.RandomState(0)
     X = rng.randn(40, 3)

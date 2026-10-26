@@ -15,8 +15,8 @@ The supplementary data are two-dimensional.  For every set this script
      so that poorly aligned molecules can be recognised), ``reference`` and ``source``.
 
 The conformations and alignments are therefore *automatic* and not the ones used in the original
-3D-QSAR publications; the sets are meant for testing workflows and comparing methods on equal
-footing, not for reproducing literature statistics.  Two sets of the Supporting Information are corrupted (MT: every SMILES carries a "[Ce]" placeholder;
+3D-QSAR publications; the sets are meant for testing workflows and comparing methods under equal
+conditions, not for reproducing literature statistics.  Two sets of the Supporting Information are corrupted (MT: every SMILES carries a "[Ce]" placeholder;
 PLA2: dummy atoms "*") and are not produced.  Nine of the sets (ACE, ACHE, BZR, COX2, DHFR,
 GPB, THERM, THR, STEROIDS) overlap with ``examples/sutherland`` and ``examples/steroids_cbg.sdf``,
 where the original aligned coordinates are available.

@@ -28,7 +28,7 @@ _SHOW_BOX_STYLE = (
 
 
 def _group_colour(g: int) -> QColor:
-    """A pale, repeating colour per chemotype, so the groups can be told apart at a glance."""
+    """A pale, repeating colour per chemotype, so the groups can be distinguished quickly."""
     hues = [205, 25, 120, 290, 55, 170, 330, 240, 85, 10]
     col = QColor()
     col.setHsv(hues[g % len(hues)], 72, 255 - 12 * ((g // len(hues)) % 4))
@@ -49,7 +49,7 @@ def _float_list(text: str, default: List[float]) -> List[float]:
 
 class DatasetPanel(QWidget):
     #: the last column holds the applicability-domain similarity, which is filled only when
-    #: the domain was asked for; like the prediction columns it sorts and blanks sink
+    #: the domain was asked for; like the prediction columns it sorts, and blanks go last
     COLS = ["Show", "Name", "Activity", "Set", "Pred (fit)", "Pred (CV)", "Pred (test)",
             "AD"]
     selection_changed = Signal(int)          # current row (molecule index) or -1
@@ -300,7 +300,7 @@ class DatasetPanel(QWidget):
         self.table.setItem(row, len(self.COLS), it)
 
     # ----------------------------------------------------------------- sorting
-    #: how each column reads best on the first click, and what to call the two directions
+    #: the direction each column takes on the first click, and what to call the two directions
     SORT_STYLE = {0: (True, "shown first", "hidden first"),
                   1: (False, "A to Z", "Z to A"),
                   2: (True, "highest first", "lowest first"),
@@ -356,7 +356,7 @@ class DatasetPanel(QWidget):
             have = [i for i in range(len(self._names)) if self._sort_value(col, i) is not None]
             missing = [i for i in range(len(self._names)) if self._sort_value(col, i) is None]
             have.sort(key=lambda i: self._sort_value(col, i), reverse=reverse)
-            self._order = have + missing          # a molecule with no value always sinks
+            self._order = have + missing          # a molecule with no value always goes last
             hh.setSortIndicatorShown(True)
             hh.setSortIndicator(col, Qt.DescendingOrder if reverse else Qt.AscendingOrder)
         self._pos = {int(i): row for row, i in enumerate(self._order)}
@@ -498,7 +498,7 @@ class ModelPanel(QWidget):
         self.row_props.setVisible(False)
         self._prop_boxes: Dict[str, QCheckBox] = {}
         fl.addWidget(self.row_props)
-        # GRID-like probe fields: what a probe would gain by sitting at each point
+        # GRID-like probe fields: what a probe would gain if placed at each point
         prow = QHBoxLayout()
         prow.addWidget(QLabel("Probes:"))
         self._probe_boxes: Dict[str, QCheckBox] = {}
@@ -506,7 +506,7 @@ class ModelPanel(QWidget):
         for name, pr in _PROBES.items():
             box = QCheckBox(name)
             box.setToolTip(
-                f"<p>{pr.label}: a field of what that probe would gain by sitting at each point, "
+                f"<p>{pr.label}: a field of what that probe would gain if placed at each point, "
                 f"after Goodford's GRID.</p>"
                 f"<p>Every atom carries several Gaussians fitted to that attraction, so the "
                 f"kernel stays analytic and the co-field can still be drawn. The repulsive wall "
@@ -521,13 +521,13 @@ class ModelPanel(QWidget):
         self.spin_probe_terms.setPrefix("terms ")
         self.spin_probe_terms.setToolTip(
             "<p>Gaussians per atom in a probe field. The kernel costs the square of this: 3 is "
-            "the cheap setting, 5 the careful one.</p>")
+            "the fast setting, 5 the accurate one.</p>")
         self.spin_probe_terms.valueChanged.connect(lambda _: self.fields_changed.emit())
         prow.addWidget(self.spin_probe_terms)
         prow.addStretch(1)
         fl.addLayout(prow)
         # descriptors the program computes itself, so that a file with no numeric tags still has
-        # something to offer; all off by default, because a 3D model should stand on its geometry
+        # something to offer; all off by default, because a 3D model should be based on its geometry
         crow3 = QHBoxLayout()
         crow3.addWidget(QLabel("Computed:"))
         self._calc_boxes: Dict[str, QCheckBox] = {}
@@ -538,9 +538,9 @@ class ModelPanel(QWidget):
             box.setToolTip(
                 f"<p>Use the {what} as a descriptor: one number per molecule, computed by RDKit "
                 f"and standardised on the training set, beside the fields.</p>"
-                f"<p>Off by default. These are 2D quantities: they can lift a model that has a "
-                f"size or lipophilicity trend in it, and they can also carry a model that then "
-                f"owes nothing to its geometry, which the contribution table will show.</p>")
+                f"<p>Off by default. These are 2D quantities: they can improve a model that has a "
+                f"size or lipophilicity trend in it, and they can also dominate a model that then "
+                f"gains nothing from its geometry, which the contribution table will show.</p>")
             box.toggled.connect(self.fields_changed)
             crow3.addWidget(box)
             self._calc_boxes[key] = box
@@ -580,7 +580,7 @@ class ModelPanel(QWidget):
         self.spin_desc_h.setToolTip(
             "<p>Mixing coefficient of the descriptor block, the counterpart of a field's h. The "
             "block is standardised on the training set and scaled to unit mean diagonal, so "
-            "h = 1 puts it on the same footing as one field; 0 switches it off.</p>")
+            "h = 1 gives it the same weight as one field; 0 switches it off.</p>")
         self.lay_desc.addWidget(self.spin_desc_h)
         self.row_desc.setVisible(False)
         self._desc_boxes: Dict[str, QCheckBox] = {}
@@ -655,8 +655,8 @@ class ModelPanel(QWidget):
         self.spin_conf_max.setRange(0, 999)
         self.spin_conf_max.setValue(0)
         self.spin_conf_max.setPrefix("max ")
-        self.spin_conf_max.setToolTip("Use at most this many of the heaviest conformations "
-                                      "per molecule; 0 uses all of them")
+        self.spin_conf_max.setToolTip("Use at most this many conformations per molecule, those "
+                                      "with the largest weights; 0 uses all of them")
         self.spin_conf_max.valueChanged.connect(self.fields_changed)
         crow2.addWidget(self.spin_conf_max)
         self.spin_mil_beta = QDoubleSpinBox()
@@ -764,8 +764,8 @@ class ModelPanel(QWidget):
             "Multiple kernel learning sets them by centred alignment of the field kernels with",
             "the activities: per field (Cristianini et al. 2001) or jointly (Cortes et al. 2012,",
             "shrunk towards equal weights). The joint kernel stays linear, so co-fields remain",
-            "valid; the weights are re-derived inside every cross-validation fold, so q2 is honest.",
-            "It pays off when the fields differ in relevance, e.g. together with indicator fields."]))
+            "valid; the weights are re-derived in every cross-validation fold, so q2 is reliable.",
+            "It helps when the fields differ in relevance, e.g. together with indicator fields."]))
         form.addRow("Mixing coeff. h:", self.cmb_mix)
         arow = QHBoxLayout()
         self.rad_alpha_grid = QRadioButton("grid search (shared)")
@@ -808,7 +808,7 @@ class ModelPanel(QWidget):
         self.ed_Cs = QLineEdit("0.1, 1, 10, 100")
         self.ed_Cs.setToolTip("C of the support-vector methods; for the Gaussian-process "
                               "classifier the same grid is the amplitude of the kernel, which "
-                              "plays the same part and can also be read off the marginal "
+                              "has the same role and can also be read off the marginal "
                               "likelihood printed in the Statistics tab")
         self.ed_Cs.setToolTip("C for the support vector machines, and the amplitude of the "
                               "Gaussian-process classifier")
@@ -866,7 +866,7 @@ class ModelPanel(QWidget):
         self.spin_scramble.setToolTip("\n".join([
             "y-randomisation: refit the model on this many shuffles of the activities and",
             "report where the real q2 falls among them. 0 = off; 20 is enough to recognise a",
-            "chance model, 100 gives a p-value worth quoting. Unless the box beside it is",
+            "chance model, 100 gives a p-value that can be reported. Unless the box beside it is",
             "ticked the hyper-parameters are kept, so it asks whether the fit can be reached",
             "by chance, not whether the whole search can."]))
         vrow.addWidget(QLabel("shuffles"))
@@ -874,9 +874,9 @@ class ModelPanel(QWidget):
         self.chk_scramble_select = QCheckBox("redo the search")
         self.chk_scramble_select.setToolTip("\n".join([
             "Repeat the whole alpha/lambda search inside every shuffle, so that the test covers",
-            "the model selection as well as the fit. This is the stricter and more honest",
+            "the model selection as well as the fit. This is the stricter and fairer",
             "question, and it raises the scrambled baseline noticeably, because a search over a",
-            "grid can pick the luckiest point on noise. Costs one cross-validation per grid",
+            "grid can pick the point that best fits noise. Costs one cross-validation per grid",
             "point per shuffle; the kernels are computed once."]))
         vrow.addWidget(self.chk_scramble_select)
         self.spin_boot = QSpinBox()
@@ -1108,7 +1108,7 @@ class ModelPanel(QWidget):
                 f"training set and added to the kernel beside the fields.</p>"
                 f"<p>For what no field can represent - a measured property, a medium, a "
                 f"temperature. Never something derived from the activity: it would dominate the "
-                f"model and the geometry would look worthless.</p>")
+                f"model and the geometry would appear useless.</p>")
             box.setChecked(name in keep)
             box.toggled.connect(self.fields_changed)
             self.lay_desc.insertWidget(i + 1, box)
@@ -1233,7 +1233,7 @@ class ModelPanel(QWidget):
 # --------------------------------------------------------------------------- #
 
 class _NumItem(QTableWidgetItem):
-    """A table cell that reads as a number and sorts as one.
+    """A table cell that shows a number and sorts as one.
 
     Qt formats a stored double with %g, which turns a small complementarity term into "3e-04";
     the text is therefore written out and the value kept beside it for the comparison.
@@ -1414,7 +1414,7 @@ class ResultsPanel(QWidget):
             "  values explain the difference from it; few enough players to be exact.",
             "Field types: what each molecular field contributes, which replaces the overlap",
             "  integral of co-field and molecular field when the kernel is not linear.",
-            "Atoms x field types: one value per atom per field, which the viewer smears over",
+            "Atoms x field types: one value per atom per field, which the viewer spreads over",
             "  the Gaussians of that field into a Shapley field, one map per field type."]))
         self.cmb_shap_players.currentIndexChanged.connect(self._shap_players_changed)
         srow.addWidget(self.cmb_shap_players)
@@ -1480,10 +1480,10 @@ class ResultsPanel(QWidget):
         self.cmb_comp_stat.addItems(["sign agreement", "cosine", "correlation"])
         self.cmb_comp_stat.setToolTip("\n".join([
             "How a co-field is compared with what the pocket offers:",
-            "  sign agreement: do they want the same sign in the same place, weighted by",
-            "    how strongly each wants it; this is how a co-field is read",
+            "  sign agreement: do they prefer the same sign in the same place, weighted by",
+            "    how strongly each prefers it; this is how a co-field is read",
             "  cosine: also demands that the two maps have the same shape",
-            "  correlation: removes the means first, so it asks only whether the variations track"]))
+            "  correlation: removes the means first, so it only asks whether the variations agree"]))
         krow.addWidget(self.cmb_comp_stat)
         krow.addStretch(1)
         kl.addLayout(krow)
@@ -1532,9 +1532,9 @@ class ResultsPanel(QWidget):
         self.tbl_chemo.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
         self.tbl_chemo.verticalHeader().setVisible(False)
         self.tbl_chemo.setToolTip("\n".join([
-            "Random folds predict a molecule from its own scaffold-mates and flatter a",
-            "mixed series. The honest number is the grouped one, and it has to beat the",
-            "alignment-free model, which uses no poses at all."]))
+            "Random folds predict a molecule from its own scaffold-mates and overstate the",
+            "quality of a mixed series. The reliable number is the grouped one, and it has to",
+            "be better than the alignment-free model, which uses no poses at all."]))
         crow.addWidget(self.tbl_chemo, 1)
         self.tbl_chemo_group = QTableWidget(0, 4)
         self.tbl_chemo_group.setHorizontalHeaderLabels(["Chemotype", "N", "RMSE", "Bias"])
@@ -1543,7 +1543,7 @@ class ResultsPanel(QWidget):
         chh.setSectionResizeMode(0, QHeaderView.Stretch)
         self.tbl_chemo_group.verticalHeader().setVisible(False)
         self.tbl_chemo_group.setToolTip("Every chemotype while it was the one held out; a large "
-                                        "bias means the model cannot reach that scaffold at all")
+                                        "bias means the model cannot predict that scaffold at all")
         crow.addWidget(self.tbl_chemo_group, 2)
         cml.addLayout(crow)
         self.tabs.addTab(chem_w, "Chemotypes")
@@ -1887,8 +1887,8 @@ class ResultsPanel(QWidget):
                     cmap: str = "viridis", xlabel: str = "", ylabel: str = "") -> None:
         """Molecules as points with nothing behind them: the kernel-PCA score plot.
 
-        The landscape of a GTM fills the square it is drawn on, so the eye has somewhere to put
-        every molecule.  A score plot has no such backdrop and must not pretend to one -- what
+        The landscape of a GTM fills the square it is drawn on, so every molecule is seen against
+        a background.  A score plot has no such background and must not imitate one -- what
         it shows is the spacing of the points themselves, which is why the axes carry the share
         of the kernel variance each component explains and the aspect ratio stays locked.
         """
@@ -1909,7 +1909,7 @@ class ResultsPanel(QWidget):
         for side, text in (("bottom", xlabel or "component 1"),
                            ("left", ylabel or "component 2")):
             # the label already carries a figure in brackets, and pyqtgraph's own
-            # "(x0.001)" beside it reads as if that figure had been scaled
+            # "(x0.001)" beside it looks as if that figure had been scaled
             self.map_plot.getAxis(side).enableAutoSIPrefix(False)
             self.map_plot.setLabel(side, text)
         self.map_plot.setTitle(title)
@@ -2087,7 +2087,7 @@ class ViewerControls(QWidget):
         self.cmb_cofield_style.currentIndexChanged.connect(self.changed)
         self.chk_cofield_noise = QCheckBox("hide noise")
         self.chk_cofield_noise.setToolTip(chr(10).join([
-            "Draw only the part of the co-field that stands more than two standard deviations",
+            "Draw only the part of the co-field that lies more than two standard deviations",
             "from zero once the noise in the activities is propagated through the fit.",
             "",
             "The co-field is a linear map of the measured activities, so a noise level in them",
@@ -2109,7 +2109,7 @@ class ViewerControls(QWidget):
         self.chk_overlap = QCheckBox("overlap C·X")
         self.chk_shapfield = QCheckBox("Shapley field Φ(r)")
         self.chk_shapfield.setToolTip("\n".join([
-            "The Shapley values of the selected field smeared over the Gaussians of that field.",
+            "The Shapley values of the selected field spread over the Gaussians of that field.",
             "Its integral is the part of the prediction attributed to the field, as the integral",
             "of a charge density is the total charge. Compute it in the Results panel, Shapley",
             "tab, with the players set to 'atoms x field types'.",
@@ -2133,10 +2133,10 @@ class ViewerControls(QWidget):
             "kept until the model is rebuilt or the molecules move.")
         self.chk_pharmacophore.setEnabled(False)
         # the maps go on two rows of their own: on one line the labels were clipped to a few
-        # letters and the tick boxes ran into each other
+        # letters and the tick boxes overlapped each other
         row3.addWidget(QLabel("Maps:"))
         row3b = QHBoxLayout()
-        row3b.addWidget(QLabel("    "))              # indent, so the two rows read as one group
+        row3b.addWidget(QLabel("    "))              # indent, so the two rows look like one group
         for cb in (self.chk_cofield, self.chk_molfield, self.chk_overlap):
             cb.toggled.connect(self.changed)
             row3.addWidget(cb)
@@ -2212,7 +2212,7 @@ class ViewerControls(QWidget):
         self.chk_comp_map = QCheckBox("complementarity surface")
         self.chk_comp_map.setToolTip("\n".join([
             "Draw the surface of the selected molecule coloured by how well its fields",
-            "complement the pocket: green where they do, red where they fight.",
+            "complement the pocket: green where they do, red where they conflict.",
             "Compute it first in the Results panel, Complementarity tab."]))
         row4.addStretch(1)
         lay.addLayout(row4)

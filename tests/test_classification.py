@@ -87,8 +87,8 @@ def test_classification_decomposition_rules_hold():
 def test_one_class_model_fits_the_target_class_only():
     """The decision function must agree with scikit-learn's own one-class convention.
 
-    (The asymptotic bound "outliers <= nu" is not asserted here: on a handful of nearly
-    identical molecules the kernel is almost constant, most points land exactly on the
+    (The asymptotic bound "outliers <= nu" is not asserted here: on a few nearly
+    identical molecules the kernel is almost constant, most points end exactly on the
     boundary, and scikit-learn itself reports more outliers than nu.  On a real data set
     the bound is respected - 31 thrombin actives give 94 % inside at nu = 0.05.)
     """
@@ -163,7 +163,7 @@ def test_screening_scores_and_enrichment_curve():
 
 
 def test_early_recognition_sees_what_the_enrichment_factor_cannot():
-    """At a small fraction the enrichment factor saturates; BEDROC keeps ranking the ranking."""
+    """At a small fraction the enrichment factor saturates; BEDROC still separates the rankings."""
     from cmfqsar.model import rie_bedroc, screening_scores
     n_act, n = 30, 2000
     y = np.r_[np.ones(n_act), -np.ones(n - n_act)]
@@ -174,11 +174,11 @@ def test_early_recognition_sees_what_the_enrichment_factor_cannot():
     assert s_perfect["auc"] == pytest.approx(1.0)
     assert s_perfect["bedroc_20"] == pytest.approx(1.0, abs=1e-6)
     assert s_perfect["bedroc_160_9"] == pytest.approx(1.0, abs=1e-6)
-    # the ceiling is reported, and the factor reaches it
+    # the maximum is reported, and the factor reaches it
     assert s_perfect["ef_1"] == pytest.approx(s_perfect["max_ef_1"])
 
-    # two rankings that fill the top 1 % equally but differ below it: the factor cannot tell
-    # them apart, the early-recognition metrics can
+    # two rankings that fill the top 1 % equally but differ below it: the factor cannot
+    # distinguish them, the early-recognition metrics can
     top = int(round(0.01 * n))
     a = np.zeros(n); b = np.zeros(n)
     a[:top] = 10.0                      # the first actives on top, the others just below
@@ -188,14 +188,14 @@ def test_early_recognition_sees_what_the_enrichment_factor_cannot():
     a[n_act:] = rng.uniform(-1, 1, n - n_act)
     b[n_act:] = rng.uniform(-1, 1, n - n_act)
     sa, sb = screening_scores(y, a), screening_scores(y, b)
-    assert sa["ef_1"] == pytest.approx(sb["ef_1"])          # identical, and both at the ceiling
+    assert sa["ef_1"] == pytest.approx(sb["ef_1"])          # identical, and both at the maximum
     assert sa["bedroc_20"] > sb["bedroc_20"] + 0.1
     assert sa["auc"] > sb["auc"]
 
     # a random ranking scores near zero, a reversed one at zero
     assert screening_scores(y, rng.normal(size=n))["bedroc_20"] < 0.2
     assert screening_scores(y, -perfect)["bedroc_20"] == pytest.approx(0.0, abs=1e-6)
-    # and the pieces refuse a degenerate problem rather than inventing a number
+    # and the component functions refuse a degenerate problem rather than inventing a number
     assert not np.isfinite(rie_bedroc(np.arange(1, 4), 3, 3)[0])
 
 

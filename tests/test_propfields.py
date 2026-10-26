@@ -47,7 +47,7 @@ def test_both_conventions_are_read(tmp_path):
     assert np.allclose(atom_property(m, "commas"), 0.2 * np.arange(n))
     assert set(atom_property_names(m)) >= {"q", "fukui", "commas"}
 
-    # and the properties survive a round trip through an SDF, which is the point of them
+    # and the properties survive a round trip through an SDF, which is their purpose
     Chem.CreateAtomDoublePropertyList(m, "q")
     path = str(tmp_path / "x.sdf")
     w = Chem.SDWriter(path)
@@ -107,7 +107,7 @@ def test_a_model_on_property_fields_fits_saves_and_explains(tmp_path):
     pred = model.predict(AtomTable.from_molecules(mf[:2]))
     assert np.all(np.isfinite(pred))
 
-    # the interpretation machinery does not care where the weights came from
+    # the interpretation code does not depend on where the weights came from
     contrib = model.atom_contributions(mf[0])
     assert contrib.shape == (mf[0].n_atoms,)
     assert float(contrib.sum() + model.bias) == pytest.approx(float(model.predict(

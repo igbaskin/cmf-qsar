@@ -161,7 +161,7 @@ class OneClassScorer:
             raise ValueError(f"unknown one-class method {self.kind!r}")
         return s + self.offset_
 
-    # the rest of the program speaks in these two
+    # the rest of the program uses these two
     @property
     def coef(self) -> np.ndarray:
         if not self.is_linear:

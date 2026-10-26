@@ -11,17 +11,17 @@ checks, in three steps:
 1. **Which field carries the constant.**  Every target is fitted with all five physicochemical
    fields and with each field alone.  pi should be nearly exact from the hydrophobic field by
    itself (its weights are Crippen fragment increments, so this is close to a tautology);
-   sigma_m should ride on the electrostatic field; sigma_p needs the resonance part, which
+   sigma_m should depend mainly on the electrostatic field; sigma_p needs the resonance part, which
    fragment charges cannot see, so it should be the hardest.
 2. **The co-fields.**  Electrostatic and steric co-fields of sigma_m and sigma_p in the ring plane
    and above it, side by side, with the ring drawn in.
 3. **Quantum charges, when given.**  ``--charges-prop q_hirshfeld`` replaces the electrostatic
    field by a field of the named per-atom property, which ``examples/orca_atom_properties.py``
    writes; charges computed on the whole substituted molecule carry the polarisation of the ring
-   by the substituent, which is where the resonance information lives.
+   by the substituent, which is where the resonance information is.
 
 Everything is 10-fold cross-validated on the training set (there is no held-out set: with 95
-substituents the folds are the honest measurement) and the fitted r2 is printed beside q2 so that
+substituents the folds are the fair measurement) and the fitted r2 is printed beside q2 so that
 overfitting shows.
 
 Usage

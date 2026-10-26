@@ -21,7 +21,7 @@ def test_kernel_pca_reproduces_feature_space_distances():
     assert np.max(np.abs(pdist(Z) - pdist(X))) < 1e-10
     # the in-sample projection through the kernel agrees with the stored coordinates
     assert np.allclose(kp.transform(X @ X.T), Z, atol=1e-9)
-    # and a genuinely new molecule lands at the right distance from the training ones
+    # and a genuinely new molecule ends at the right distance from the training ones
     Y = rng.normal(size=(5, 6))
     assert np.max(np.abs(cdist(kp.transform(Y @ X.T), Z) - cdist(Y, X))) < 1e-9
     assert kp.explained_variance_ratio.sum() == pytest.approx(1.0)

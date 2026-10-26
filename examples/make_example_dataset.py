@@ -7,7 +7,7 @@ on the common scaffold, and a *synthetic* activity is computed as the overlap
 of the molecular fields with a hidden "pseudo-receptor" co-field consisting of
 a few Gaussian zones (steric, electrostatic, hydrophobic and H-bond-acceptor
 zones) plus Gaussian noise.  Because the activity is by construction a CMF-type
-functional of the molecular fields, the data set is a good sanity check for
+functional of the molecular fields, the data set is a good basic check for
 the software: a CMF model should recover the hidden co-field zones.
 
 Run:  python examples/make_example_dataset.py
@@ -124,7 +124,7 @@ def main():
     fs.specs[1].kind = "gauss"   # the pseudo-receptor uses plain Gaussians for every zone
     mf = [build_fields(m, fs, n) for m, (n, _) in zip(mols, series)]
     rec = pseudo_receptor(fs)
-    # widths for the receptor zones: encode as plain Gaussians via alpha/R^2 trick -> use kernel with kind gauss
+    # widths for the receptor zones: encode as plain Gaussians via the alpha/R^2 relation -> use kernel with kind gauss
     table = AtomTable.from_molecules(mf)
     rtab = AtomTable.from_molecules([rec])
     K = kernel_matrices(table, rtab, fs.specs)  # (F, n, 1)

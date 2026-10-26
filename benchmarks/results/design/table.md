@@ -8,7 +8,7 @@ Leave one substituent out: every molecule carrying a given R-group at the varied
 | GPB | 41 of 47 | 2 | +0.566 | +0.516 | 4.40 | 2.94 | 6.80 |
 | **mean** |  |  |  | **+0.397** |  |  |  |
 
-Over 87 held-out groups on 2 sets, the ranking agrees with the measurements at a mean Spearman ρ of **+0.397**, and the group the loop puts first is worth **+1.37** log units more than the library average -- it lands in the best 20 % of the library **48 %** of the time.
+Over 87 held-out groups on 2 sets, the ranking agrees with the measurements at a mean Spearman ρ of **+0.397**, and the group the loop puts first is worth **+1.37** log units more than the library average -- it is within the best 20 % of the library **48 %** of the time.
 
 Sets the loop cannot reach, and why:
 
@@ -21,4 +21,4 @@ Sets the loop cannot reach, and why:
 | DHFR | the core comes off cleanly in only 12% of the series |
 | THR | the core comes off cleanly in only 25% of the series |
 
-That is half the answer to how far this goes. A design loop over substituents needs a series with a scaffold that comes off at single acyclic bonds, and most public QSAR sets are not that: they are collections of several chemotypes with a common framework found by force. On the sets that are congeneric, the loop works; on the others there is nothing to vary and the honest answer is to say so rather than to rank whatever the core leaves behind.
+That is half the answer to how far this goes. A design loop over substituents needs a series with a scaffold that can be cut off at single acyclic bonds, and most public QSAR sets are not that: they are collections of several chemotypes with a common framework found by forcing a match. On the sets that are congeneric, the loop works; on the others there is nothing to vary and the correct answer is to say so rather than to rank whatever the core leaves behind.

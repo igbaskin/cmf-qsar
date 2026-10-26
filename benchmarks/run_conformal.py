@@ -23,7 +23,7 @@ This script asks it.  For every Sutherland set, repeatedly:
 
 4. predict the held-out 30 % and record whether the truth fell inside, and how wide;
 5. beside them, the Gaussian process posterior interval at the same nominal level, which carries
-   no guarantee at all and is the thing a user would otherwise reach for.
+   no guarantee at all and is what a user would otherwise use.
 
 The numbers to read are the **coverage** against the nominal level, and the **width**, in the
 units of the activity.  A rule that covers is useless if it covers by being as wide as the data,

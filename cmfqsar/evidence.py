@@ -1,7 +1,7 @@
 """Choosing alpha and lambda by the evidence instead of by cross-validation.
 
 Every hyper-parameter in this program is chosen by cross-validation: for each candidate, ten
-fits and ten predictions, and the best cross-validated score wins.  That is honest and slow, and
+fits and ten predictions, and the best cross-validated score wins.  That is reliable and slow, and
 it spends ten factorisations to learn what one can tell.
 
 A kernel ridge model is the posterior mean of a Gaussian process, and a Gaussian process scores
@@ -45,7 +45,7 @@ __all__ = ["evidence_grid", "log_evidence", "profile_amplitude"]
 
 
 def _cholesky(A: np.ndarray) -> np.ndarray:
-    """A Cholesky factor, with a jitter ladder for a kernel that is barely positive."""
+    """A Cholesky factor, with increasing jitter for a kernel that is barely positive."""
     A = 0.5 * (A + A.T)
     scale = float(np.mean(np.diag(A))) or 1.0
     eye = np.eye(A.shape[0])

@@ -2,8 +2,9 @@
 
 Every grouped validation in this program splits the molecules by their Bemis-Murcko scaffold:
 ``chemotype_labels`` groups them, ``grouped_cv_predict`` holds one group out at a time, and the
-benchmarks report that figure as the honest one.  The reasoning is sound -- random folds put a
-molecule's own scaffold-mates in the training part and flatter a mixed series -- but it rests on
+benchmarks report that figure as the reliable one.  The reasoning is sound -- random folds put a
+molecule's own scaffold-mates in the training part and overstate the quality of a model on a
+mixed series -- but it rests on
 an assumption nobody checks: that the scaffold is what makes two molecules look alike *to the
 model*.  The model does not see scaffolds.  It sees fields, and its notion of similarity is the
 kernel.
@@ -12,18 +13,18 @@ Spectral clustering (Ng, Jordan & Weiss 2002) partitions that similarity directl
 a similarity matrix already, so there is nothing to build: form the normalised Laplacian, take the
 eigenvectors of its smallest eigenvalues, normalise their rows to the unit sphere and run k-means
 there.  Clusters that are not linearly separable in field space are separable in those
-coordinates, which is the whole point of the construction and the reason plain k-means on the
+coordinates, which is the purpose of the construction and the reason plain k-means on the
 fields would not do.
 
-Two uses, and the second is the one that pays:
+Two uses, and the second is the one that helps most:
 
 * **as a grouping** -- hold out a cluster of the model's own similarity rather than a cluster of
-  the chemist's, which is a harder and more honest test whenever the two disagree;
+  the chemist's, which is a harder and fairer test whenever the two disagree;
 * **as a check on the usual grouping** -- the adjusted Rand index between the two partitions says
   how far the scaffold split and the field split agree.  Where it is high the scaffold grouping
   is doing what it claims.  Where it is low, one of the two is measuring something else, and
   which one matters: a leave-one-scaffold-out figure is only pessimistic if the scaffolds are
-  what the model keys on.
+  what the model responds to.
 
 How many clusters is decided by the **eigengap** when it is not given: the number of eigenvalues
 of the normalised Laplacian below the largest jump, which is the standard heuristic and is
@@ -44,7 +45,7 @@ def _normalised_laplacian(K: np.ndarray, floor: float = 0.0) -> Tuple[np.ndarray
 
     A CMF kernel of unnormalised fields can be negative -- an electrostatic field of one sign
     meeting one of the other -- and a negative affinity is not a similarity a graph Laplacian can
-    use.  Clipping at `floor` is the honest minimum: it says that two molecules whose fields
+    use.  Clipping at `floor` is the correct minimum: it says that two molecules whose fields
     oppose are not similar rather than pretending the relationship is a distance.
     """
     A = np.asarray(K, float).copy()

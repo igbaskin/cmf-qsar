@@ -3,7 +3,7 @@
 The cheap tests use a synthetic cache of per-field kernels, because what the descent has to get
 right is combinatorial rather than chemical: take the right field's matrix from the right width,
 never mix a field normalised at one width with its kernel at another, and come back with something
-no worse than the shared width it started from.  Two tests then run the real thing end to end.
+no worse than the shared width it started from.  Two tests then run the real computation end to end.
 """
 import os
 import sys

@@ -14,7 +14,7 @@ def test_named_styles_ignore_the_co_field():
 
 
 def test_auto_is_a_mesh_beside_a_co_field():
-    # the two share a colour scale, so only the style tells them apart
+    # the two share a colour scale, so only the style distinguishes them
     assert molfield_wireframe("auto", True) is True
 
 

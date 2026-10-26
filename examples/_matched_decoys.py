@@ -1,12 +1,12 @@
-"""Property-matched decoy selection, in the spirit of DUD-E, from the molecules shipped here.
+"""Property-matched decoy selection, following DUD-E, from the molecules shipped here.
 
 A background of ligands of unrelated targets picked at random is easy: they differ from the
 actives in size, shape and charge, so a screening model separates them before any field is
 involved (measured: every one-class description reached AUC 0.97 to 1.00 on such a set).  The
-recipe that makes a background hard is the one behind DUD-E: for every active, choose molecules
+method that makes a background hard is the one used by DUD-E: for every active, choose molecules
 that *match its physical properties* -- molecular weight, lipophilicity, hydrogen-bond donors and
 acceptors, rotatable bonds, net charge -- while being *topologically unlike* it, so that nothing
-but the binding hypothesis can tell them apart.
+but the binding hypothesis can distinguish them.
 
 Here the candidate pool is every other example series shipped with the program, which is small by
 DUD-E standards but needs no download and no licence.  Decoys remain presumed inactive, not
@@ -54,10 +54,10 @@ def select(actives: Sequence[Chem.Mol], pool: Sequence[Chem.Mol], n: int,
            seed: int = 0) -> Tuple[List[int], dict]:
     """Indices into `pool` of `n` decoys matched to `actives`, with a report.
 
-    Every active in turn claims the unused pool molecule that is closest to it in the scaled
+    Every active in turn takes the unused pool molecule that is closest to it in the scaled
     property space, among those whose ECFP4 Tanimoto similarity to *every* active is below
     `max_similarity`.  Going active by active rather than matching the pooled distribution keeps
-    the background spread over the actives instead of piling up around their centre.
+    the background spread over the actives instead of concentrating around their centre.
     """
     if not len(pool):
         return [], {"reason": "empty pool"}

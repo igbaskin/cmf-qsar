@@ -1,4 +1,4 @@
-"""Scoring the things that claim to know when a prediction is bad (plan item E5)."""
+"""Scoring the estimators that claim to know when a prediction is bad (plan item E5)."""
 import os
 import sys
 

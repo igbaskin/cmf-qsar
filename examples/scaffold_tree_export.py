@@ -31,12 +31,12 @@ activity measured under one condition.  So the script
 The compounds are stored in the tree with their protonation charges neutralised, while in 1 M HCl
 the basic nitrogens are protonated.  ``--protonate [PH]`` (default pH 0, that of 1 M HCl) sets the
 protonation state with Dimorphite-DL (``pip install dimorphite_dl``), whose SMARTS pKa rules decide
-site by site.  Taken at face value those rules over-protonate: at pH 0 they charge every ring
+site by site.  Applied without a cap those rules over-protonate: at pH 0 they charge every ring
 nitrogen of a triazole or oxadiazole and both nitrogens of 2-aminobenzothiazole, although the
 first protonation makes the second site far less basic.  So the protons added per molecule are
 capped (``--max-protons``, default 1): the pH is swept down from 14 towards the target and the
 sites are protonated in the order their rule pKa is passed, until the cap (see
-:class:`Protonator` for the ties).  The protonated SMILES go into the ``smiles`` column the app
+:class:`Protonator` for equal pKa).  The protonated SMILES go into the ``smiles`` column the app
 reads and the neutral ones into ``smiles_neutral``, with the net ``charge`` as a further column;
 swap the two columns to model the neutral set from the same file.
 
@@ -46,7 +46,7 @@ Usage::
         [--medium hcl|h2so4|all] [--adjusted] [--min-compounds 15] [--max-depth D]
         [--nodes 157,158] [--protonate [PH]] [--max-protons N] [--check-molecules 5] [--no-check]
 
-The HTML is the file the Artifact tool saves when it reads the page; a bare ``.json`` holding
+The HTML is the file the Artifact tool saves when it reads the page; a plain ``.json`` holding
 the same object is accepted too.
 """
 from __future__ import annotations
@@ -201,9 +201,9 @@ class Protonator:
     nitrogen whose rule pKa lies above the pH, however many there are in the molecule.  With
     `max_protons` set, the pH is lowered from `ph_top` towards `ph` and the sites are protonated
     in the order their rule pKa is passed, until the cap: the most basic sites get the protons
-    and the rest stay neutral.  Sites with the same rule pKa flip together; when that jumps over
+    and the rest stay neutral.  Sites with the same rule pKa change together; when that jumps over
     the cap, as many of them as the cap allows keep their proton (the first ones in atom order,
-    the only tie-break there is) and the others are deprotonated again.  A proton counts when it
+    the only possible rule) and the others are deprotonated again.  A proton counts when it
     sits on a positively charged atom, so permanent charges of the input and the deprotonation
     of acids at a higher pH do not enter the count.  `max_protons=None` returns the uncapped
     Dimorphite-DL state.  `unmapped` collects the SMILES whose states could not be matched back
@@ -255,7 +255,7 @@ class Protonator:
                     else:
                         hi, hi_state = mid, s
                 state = hi_state
-                # the sites that flip between hi and lo share a rule pKa: keep what the cap allows
+                # the sites that change between hi and lo share a rule pKa: keep what the cap allows
                 room = cap - added(hi_state)
                 if room > 0:
                     query = _skeleton_query(ref)

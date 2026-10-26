@@ -31,13 +31,13 @@ The slow calibration tier (VASP, same slab, same poses as starting points) is no
     pip install "torch==2.13.0+cu126" --index-url https://download.pytorch.org/whl/cu126   # its CUDA 12.6 libraries
     python -c "import torch; print(torch.cuda.is_available())"                            # True, RTX 4070 Laptop GPU
 
-Known noise: `warp-lang` (pulled in by fairchem's `nvalchemi-toolkit-ops`) warns at import that it
-wants a CUDA 13 driver; pip reports a `cuda-python` / `cuda-bindings` version conflict.  Neither
-affects the UMA calculator.
+Known harmless messages: `warp-lang` (installed as a dependency of fairchem's
+`nvalchemi-toolkit-ops`) warns at import that it needs a CUDA 13 driver; pip reports a
+`cuda-python` / `cuda-bindings` version conflict.  Neither affects the UMA calculator.
 
-The UMA weights are gated on Hugging Face under the FAIR Chemistry licence: accept the terms on
-https://huggingface.co/facebook/UMA (a form, filled in once), create a read token under
-Settings > Access Tokens, then, in WSL,
+The UMA weights are access-restricted on Hugging Face under the FAIR Chemistry licence: accept
+the terms on https://huggingface.co/facebook/UMA (a form, filled in once), create a read token
+under Settings > Access Tokens, then, in WSL,
 
     source ~/uma-env/bin/activate && hf auth login
 
@@ -53,7 +53,7 @@ and paste the token.  After that the first run downloads `uma-s-1p2p1.pt` into
   2.66-2.86 A; the omat head puts it at 2.89 A with a magnetic jump at 2.79 A; PBE: 2.83 A,
   experiment: 2.87 A).  The cell grows (nx by 1, ny by 2) when a molecule's flat footprint plus a
   6 A margin would not fit; 2-phenylbenzimidazole gets 7x6.  Initial moments 2.2 mu_B are
-  carried for the later VASP tier; the oc20 head ignores them.
+  kept for the later VASP tier; the oc20 head ignores them.
 - **All slab atoms fixed.**  Found during validation: with the bottom two layers fixed, every
   adsorption run gave E_ads of -14 to -21 eV.  The energy came from the slab, not the molecule:
   for the oc20 head the ideal Fe(110) surface is a saddle point, and once the adsorbate (or a
@@ -62,8 +62,8 @@ and paste the token.  After that the first run downloads `uma-s-1p2p1.pt` into
   0.25 eV per free atom, at a = 2.78 and 2.83 A alike.  bcc Fe(110) does not reconstruct in
   reality or in DFT, so this is a model artefact; the rigid ideal slab avoids it and keeps the
   three energies consistent (the clean slab relaxed from the symmetric start converges in 2 steps
-  and never finds the reconstruction, which is why the reference looked fine on its own).
-  `--fixed-layers 2` restores the relaxed-surface protocol for a model that behaves.
+  and never finds the reconstruction, which is why the reference appeared correct on its own).
+  `--fixed-layers 2` restores the relaxed-surface protocol for a model without this artefact.
 - **Molecules.** RDKit, neutral form (`rdMolStandardize.Uncharger`; permanent charges stay and
   are written as `charge`), ETKDG v3 + MMFF, re-sanitised.  Gas-phase reference: the molecule
   relaxed in a 20 A periodic box with the same head (checked: the free molecule's energy is the
@@ -76,7 +76,7 @@ and paste the token.  After that the first run downloads `uma-s-1p2p1.pt` into
   heavy atom at 2.2 A).
 - **Docking, then relaxation.** The oc20 head is trained on RPBE data, which has no dispersion
   and therefore no physisorption well: a pose that starts 2.5 A above the surface usually
-  drifts off to 4-5 A and ends with E_ads ~ 0 (in the first rigid-slab run all three poses of
+  drifts away to 4-5 A and ends with E_ads ~ 0 (in the first rigid-slab run all three poses of
   2-methylbenzimidazole did, its methyl hydrogens holding the ring at 3.4 A).  So each pose is
   first relaxed for up to 40 steps (fmax 0.1) with the heavy atoms of the molecule confined to
   their height (ASE `FixedPlane`; hydrogens and the lateral position move), then freely: BFGS,
@@ -100,11 +100,11 @@ for 7x6), model load 7-8 s, log in `validation_3mol.log`.
 
 | molecule | E_ads, eV | kJ/mol | pose | height of the lowest heavy atom, A | other poses, eV | steps | time, s | GPU peak, MB |
 |---|---|---|---|---|---|---|---|---|
-| Benzimidazole | -1.297 | -125.1 | flat | 1.72 | upright 0.004 (floated to 3.9 A), random -0.027 (unbound) | 118 | 118 | 2827 |
+| Benzimidazole | -1.297 | -125.1 | flat | 1.72 | upright 0.004 (rose to 3.9 A), random -0.027 (unbound) | 118 | 118 | 2827 |
 | 2-Methylbenzimidazole | -0.781 | -75.4 | flat | 1.91 | upright -0.058 (unbound), random -0.093 (unbound) | 107 | 81 | 2862 |
 | 2-Phenylbenzimidazole | -1.355 | -130.8 | flat | 1.84 | upright +0.211 (a bond broke), random +0.021 (unbound) | 100 | 172 | 3210 |
 
-Sanity checks: E_ads negative for all three; benzimidazole in the -1 to -3 eV range with the
+Basic checks: E_ads negative for all three; benzimidazole in the -1 to -3 eV range with the
 ring flat on the surface (heavy atoms 1.7-2.1 A above the top Fe layer); the clean-slab energy
 is bit-identical between runs; ~2 min per molecule (three poses plus the gas-phase reference).
 The N-down upright poses do not stay bound for this head: the azole N is not an anchor on
@@ -135,9 +135,9 @@ Output: `157_benzimidazole_uma.sdf` (the adsorbed poses, loads with
   +0.2 eV; median -0.56 eV.  55 of the 73 chosen poses are chemisorbed (`bound` = 1), 18
   ended unbound with E_ads within +-0.3 eV of zero: bulky N1-substituted and amide/sulfonamide
   compounds whose aromatic rings cannot lie on the surface, for which the dispersion-free oc20
-  head has no binding at all.  Flat poses win 44 times, upright 14, random 15; the upright
-  winners are mostly long-chain or multi-ring compounds where the "flat" start was a poor guess
-  for a non-planar molecule.
+  head has no binding at all.  Flat poses are chosen 44 times, upright 14, random 15; the
+  chosen upright poses are mostly long-chain or multi-ring compounds where the "flat" start
+  was a poor guess for a non-planar molecule.
 - **Dissociation.** 32 molecules had at least one pose in which a bond broke on the surface
   (`!` in `poses_eV`), typically an N-H, S-S or C-S cleavage; the chosen pose is intact for all
   73, because CMF needs the whole molecule.  Where the dissociated pose is much lower (the
@@ -182,26 +182,26 @@ geometry is arbitrary): potency q2 0.13 (mcs) and 0.11 (pose+mcs); E_ads q2 0.07
 
 What this says:
 
-- **The adsorbed frame carries the adsorption energy.** A field model in the surface frame
-  recovers the UMA E_ads with q2 = 0.5 (0.26 within the chemisorbed subset, where the easy
-  bound/unbound distinction is gone), while the same model in the MCS frame does not (0.13 and
-  0.07).  The vertical placement and the registration against the surface are the signal; the
-  in-plane MCS registration adds little (0.51 -> 0.52).  So the frame is informative, and the
-  E_ads target is learnable by CMF.
+- **The adsorbed frame holds the information on the adsorption energy.** A field model in the
+  surface frame recovers the UMA E_ads with q2 = 0.5 (0.26 within the chemisorbed subset,
+  where the easy bound/unbound distinction is gone), while the same model in the MCS frame
+  does not (0.13 and 0.07).  The vertical placement and the registration against the surface
+  are the signal; the in-plane MCS registration adds little (0.51 -> 0.52).  So the frame is
+  informative, and the E_ads target is learnable by CMF.
 - **It does not help the potency.** The electrochemical potency in 1 M HCl is weakly
   modelled in every frame (q2 0.09-0.19; scrambled models give 0, so the small values are
-  real), and the MCS frame is, if anything, slightly better.  Consistent with r = 0.14
+  real), and the MCS frame is even slightly better.  Consistent with r = 0.14
   between potency and E_ads: the neutral-molecule, dispersion-free adsorption energy on a bare
-  Fe(110) terrace is not what sets inhibition in acid, where protonation, the chloride-covered
-  surface, solvation and the molecule's hydrophobic footprint all enter.
-- **Where to go.** Use E_ads as a second task or co-field beside the potency rather than as the
+  Fe(110) terrace is not what determines inhibition in acid, where protonation, the chloride-covered
+  surface, solvation and the molecule's hydrophobic footprint all contribute.
+- **Next steps.** Use E_ads as a second task or co-field beside the potency rather than as the
   frame of the potency model; add dispersion and the protonated forms before expecting the
   adsorption tier to rank inhibitors; and treat the 18 unbound molecules separately, since
   their poses are not adsorption geometries.
 
 ## E_ads as a second input to the potency model (2026-10-23)
 
-`eads_as_second_target.py` (results in `eads_second_target.csv`) lets the UMA energy into the
+`eads_as_second_target.py` (results in `eads_second_target.csv`) adds the UMA energy to the
 potency model in the two ways the package offers, in both frames, same external 5x10 repeated
 cross-validation; the artefact molecule is excluded (n = 72; 58 for dG_ads).
 
@@ -223,19 +223,19 @@ cross-validation; the artefact molecule is excluded (n = 72; 58 for dG_ads).
   folds for every target; the rho-searched and single-task numbers coincide.  Alone it
   predicts nothing (q2 < 0).
 - **The alternative targets are worse, not better.**  The molecular-weight-adjusted MWILA
-  removes the size trend that the fields partly see, and what is left is not predictable
+  removes the size trend that the fields partly capture, and what is left is not predictable
   (q2 < 0 everywhere).  The papers' Langmuir dG_ads is predicted at q2 0.1 at best (pose frame)
   and not at all from the MCS frame.
 - **Conclusion for the study.**  The neutral-molecule, dispersion-free adsorption energy on a
   bare Fe(110) terrace carries no information about inhibition in 1 M HCl beyond what the
   molecular fields already hold.  Before more molecules are run, the tier has to model the
   medium: the protonated inhibitor, the chloride-covered surface, and dispersion.  The frame
-  result stands on its own: the UMA poses are a self-consistent, learnable geometry (q2 0.5 for
+  result holds on its own: the UMA poses are a self-consistent, learnable geometry (q2 0.5 for
   E_ads), so the pipeline is sound; it is the physics of the target that is missing.
 
 ## What the potency can support: reproducibility and single-laboratory series (2026-10-23)
 
-`potency_series.py` works from `node157_experiments.csv`, the per-experiment rows behind the
+`potency_series.py` works from `node157_experiments.csv`, the per-experiment rows underlying the
 node (1600 rows, 73 compounds, 62 articles, exported read-only from the database by the parent
 session; 1210 rows in 1 M HCl with a MWILA).  Results in `potency_noise.csv` and
 `potency_series.csv`.
@@ -248,19 +248,19 @@ session; 1210 rows in 1 M HCl with a MWILA).  Results in `potency_noise.csv` and
 | within-paper sd of a compound's MWILA over concentrations and methods (98 compound-paper pairs) | 1.23 |
 | between-paper sd of the same compound (20 compounds in 2-16 papers) | 1.20 |
 | split-half correlation of a compound's value across papers | 0.64 |
-| implied ceiling q2 for a model of the medians | 0.57 |
+| implied upper limit of q2 for a model of the medians | 0.57 |
 | PDP vs EIS on the same compound, paper and concentration (190 pairs) | r 0.98, PDP lower by 0.22 |
 | PDP vs weight loss (137 pairs) | r 0.95, PDP lower by 0.33 |
 | slope of MWILA vs ln C within a compound-paper series (80 series) | -0.60 (IQR -0.71 to -0.39; Langmuir would give 0) |
 
 So the pooled potency is reproducible to r 0.64 between laboratories, and a perfect model of
 the medians would reach q2 about 0.6: the 0.19 of the pooled models is far below what the data
-allow, i.e. the fields are missing information rather than fighting noise.  The methods agree
-with each other; the concentration dependence is the systematic part: efficiencies saturate
-less than Langmuir predicts, so MWILA falls by 0.6 per e-fold of concentration and a compound
-measured at high concentrations gets a low median.  Correcting every compound to 1 mM with a
-common slope (57 compounds with molar concentrations) did not help the models (q2 0.13 in both
-frames): the concentration choice is not what separates the laboratories.
+allow, i.e. the fields are missing information rather than being limited by noise.  The methods
+agree with each other; the concentration dependence is the systematic part: efficiencies
+saturate less than Langmuir predicts, so MWILA falls by 0.6 per e-fold of concentration and a
+compound measured at high concentrations gets a low median.  Correcting every compound to 1 mM
+with a common slope (57 compounds with molar concentrations) did not help the models (q2 0.13
+in both frames): the concentration choice is not what separates the laboratories.
 
 **Single-laboratory series** (the series' own medians; leave-one-out outer, 10-fold inner).
 
@@ -273,11 +273,12 @@ frames): the concentration choice is not what separates the laboratories.
 | Gutierrez 2016 | 6 | -0.58 | -0.48 | 0.46 |
 
 - On a clean series measured under one protocol, CMF in the conventional MCS frame works:
-  q2 0.66 on Hu 2011's 18 compounds, above the pooled node's ceiling.  The twelve-compound
+  q2 0.66 on Hu 2011's 18 compounds, above the pooled node's upper limit.  The twelve-compound
   series are too small and too narrow to decide anything (q2 within +-0.3 of zero in both
   frames), and the Dutta set has almost no spread to model.
-- The adsorbed-pose frame does not beat the MCS frame on the one series that can tell
-  (0.26 against 0.66), and E_ads correlates with the potency at r 0.1-0.3 everywhere.
+- The adsorbed-pose frame does not outperform the MCS frame on the one series that can
+  show a difference (0.26 against 0.66), and E_ads correlates with the potency at r 0.1-0.3
+  everywhere.
 - The loss from 0.66 on one laboratory to 0.19 on the node is therefore the heterogeneity
   between laboratories (different alloys, times, concentrations and ways of reading the
   efficiency), not a limit of the fields.  Pooling needs a laboratory offset: compounds
@@ -303,7 +304,7 @@ mu + a_i per compound, its potency at 1 mM in an average laboratory.
 | correlation with the raw medians | 0.87 |
 
 Only one component of the compound-paper graph is connected: 39 compounds in 27 papers that
-share compounds.  The other 34 compounds sit in 20 single-paper islands (Hu 2011's 18 among
+share compounds.  The other 34 compounds sit in 20 isolated single-paper groups (Hu 2011's 18 among
 them), whose offsets the random effect shrinks to zero, so those compounds keep their own means.
 The paper offsets of the linked papers span -2.4 to +2.1, i.e. the laboratories disagree by as
 much as the compounds differ.
@@ -324,8 +325,8 @@ Frame comparison with the pooled potency (5-fold external CV x 10, as before):
   target and either frame (q2 about 0 with a scatter of 0.15-0.2 between repeats).  They are
   the much-studied, chemically diverse members of the node (benzimidazole and its 2-amino,
   2-mercapto, 2-phenyl, bis- and N-substituted relatives), one or two per chemotype.  What the
-  pooled models predict comes from the single-paper islands, which are congeneric series
-  measured under one protocol, Hu 2011 above all (q2 0.66 on its own).
+  pooled models predict comes from the isolated single-paper groups, which are congeneric
+  series measured under one protocol, Hu 2011 above all (q2 0.66 on its own).
 - So the node behaves as a set of within-series trends that do not share one potency scale,
   rather than as one series with noisy labels.  A CMF model of inhibition at this level needs
   either a consistent measurement across chemotypes (one laboratory, one protocol, matched
@@ -358,12 +359,12 @@ Per paper (lenient, MCS): Raicheva 1993 rho 0.80, Popova 1996 0.83, Popova 2004 
 compounds).
 
 - The within-series order is predicted only for compounds that appear in other papers'
-  series as well: the lenient models carry a compound's relative standing from one laboratory
+  series as well: the lenient models transfer a compound's relative position from one laboratory
   to another (which is real information, and consistent with the between-paper reliability of
   0.64), but with the compounds removed nothing transfers.  Hu 2011's 18 compounds, which the
   fields model at q2 0.66 from inside the series, are ranked at rho 0.06 (lenient) and -0.17
   (strict) from the other fourteen papers: the structure-potency trend of one series does not
-  carry to another.
+  transfer to another.
 - E_ads does not rank analogues within a series either (rho 0.07 pooled, within +-0.3 in every
   paper).  This is the most direct test the adsorption tier can be put to, and it fails it.
 - Taken with the mixed-model result: the node holds series-specific trends, each learnable on
@@ -382,12 +383,12 @@ benzimidazole, the reference of the frame, drawn in (`cofields_eads.png`; the ra
 adsorption; red: weaker.  The scale is kJ/mol per unit of field density, which differs between
 fields, so the panels are read for shape rather than compared in magnitude.
 
-- **Electrostatic** carries the model (range +-12 at 2.0 A, the largest by far): at 2.0 A a
+- **Electrostatic** dominates the model (range +-12 at 2.0 A, the largest by far): at 2.0 A a
   strong blue lobe at the C2 position between the two ring nitrogens and red lobes at the far
   side of the benzo ring (positions 5 and 6) and beyond C2; at 3.5 A blue over the whole ring
   system.  So positive electrostatic field at C2 and above the rings, and negative field at
   the benzo positions, strengthen adsorption on the model's own terms: an electron-poor C2
-  with electron-rich benzo substituents is what the UMA energies reward.
+  with electron-rich benzo substituents is what the UMA energies favour.
 - **Hydrogen-bond donors** (range +-7): blue around N1/C2 at both heights, the position of an
   N-H or a 2-amino group; a donor there means a nitrogen lone pair that the surface can bind.
 - **Steric** is flat (+-0.3): size and shape as such do not change the energy, which agrees
@@ -418,18 +419,19 @@ with them (same molecules, registration and nested cross-validation as before; t
 | reactivity only: f-, f+, HOMO population, local softness s- | 0.53 +- 0.02 | 36.5 |
 | Hirshfeld + f- + HOMO population | 0.50 +- 0.02 | 37.6 |
 
-- **The quantum fields neither help nor hurt**: every set sits at q2 0.50-0.53, inside the
-  scatter between repeats.  Four reactivity fields with no classical field at all reach the
-  same 0.53, which says what the model is learning: the registration of atoms against the
-  surface in this frame, carried by whichever field type marks the atoms, not the chemistry of
-  the field.  That is consistent with the rigid-slab, dispersion-free UMA energies being
-  largely a geometric quantity, and it sets the useful ceiling of this target at about 0.5.
+- **The quantum fields neither improve nor worsen the model**: every set sits at q2 0.50-0.53,
+  inside the scatter between repeats.  Four reactivity fields with no classical field at all
+  reach the same 0.53, which says what the model is learning: the registration of atoms
+  against the surface in this frame, carried by whichever field type marks the atoms, not the
+  chemistry of the field.  That is consistent with the rigid-slab, dispersion-free UMA energies
+  being largely a geometric quantity, and it sets the practical upper limit of this target at
+  about 0.5.
 - **The co-fields agree with the classical ones** (`cofields_eads_qm.png`, reactivity set;
   `cofields_eads_qm_hirshfeld.png`, Hirshfeld + f- + HOMO; blue = stronger adsorption).  The
   Hirshfeld co-field repeats the Gasteiger picture: positive charge at the benzo 5/6 positions
   and beyond C2 weakens adsorption, i.e. electron-rich substituents there strengthen it.  f-
   and the HOMO population add that donor density at the 2-substituent and on the benzo
-  carbons strengthens adsorption.  In the reactivity set the local softness s- carries nearly
+  carbons strengthens adsorption.  In the reactivity set the local softness s- accounts for nearly
   everything (it is f- times the molecule's global softness, so it encodes "a soft molecule
   with donor density at the periphery"), with blue lobes at the benzo periphery and at the
   2-substituent position at 2.0 A.
@@ -467,24 +469,24 @@ now carries every setting, with a regression test).
 | surface kernel (s 0.5, z step 0.5) | none | 0.65 +- 0.02 | 31.5 |
 | surface kernel (s 1.0, z 1-7 step 1.5) | none | 0.66 +- 0.03 | 31.2 |
 | surface kernel | poses shuffled in the plane | 0.66 +- 0.03 (identical predictions) | 31.2 |
-| 3D autocorrelation (height thrown away) | none | 0.11 +- 0.08 | 50.2 |
+| 3D autocorrelation (height removed) | none | 0.11 +- 0.08 | 50.2 |
 
-- With no alignment step at all the surface kernel beats the registered overlap model, 0.66
+- With no alignment step at all the surface kernel outperforms the registered overlap model, 0.66
   against 0.52, and its numbers do not change when every pose is turned and shifted at random
   in the plane.  The grids hardly matter (0.65-0.66 over three settings).
 - The height is the information: the same descriptor with the height axis removed (the
   three-dimensional autocorrelation, invariant to every rigid motion) falls to 0.11.  Which
   field is at which height above the surface, and how far apart in the plane, is what the UMA
   energies depend on; where the molecule sits over the lattice is not.
-- This answers the alignment question for the adsorption tier in the cleanest way available:
+- This answers the alignment question for the adsorption tier in the clearest way available:
   the surface frame needs only the normal, and the in-plane registration that MCS provided
-  was never doing anything.  It also raises the ceiling of the E_ads target from about 0.5 to
+  never contributed anything.  It also raises the upper limit of the E_ads target from about 0.5 to
   about 0.65, which is the number to quote for "can CMF learn an ML adsorption energy".
 - What is lost is the co-field: a model on this kernel has no field in a fixed frame to draw.
   The decomposition that survives is per channel (which pair of fields, at which in-plane
   distance and heights), as for the three-dimensional kernel.  The lattice-registry variant
   (projection on the Fe(110) reciprocal lattice) was not built; the result above says the
-  registry carries little for this target.
+  registry contributes little for this target.
 
 ## Baselines on global descriptors (2026-10-24)
 
@@ -511,32 +513,33 @@ the node, leave-one-out on Hu 2011.
 Single indices: for E_ads the gap (r 0.61); for the pooled potency ln MW (0.60), logP (0.54)
 and IP (-0.48); for Hu 2011 the ionisation potential (r 0.89).
 
-- **E_ads: the fields win, but not for the reason given above.**  The global quantum indices
-  alone explain a third of the energy (q2 0.35), the gap being the carrier: a small gap means
-  a soft molecule that chemisorbs.  The fields explain more (0.52 in the aligned frame, 0.66
-  with the surface kernel), so the geometry over the surface adds to the electronic structure
-  rather than replacing it; the earlier reading "the model learns only the registration" was
-  too strong.  One caveat cuts the other way: the indices were computed at the *adsorbed*
-  geometries, and a chemisorbed ring has a smaller gap than a free one (mean gap 2.8 eV for
-  the bound molecules, 3.8 eV for the unbound), so part of r = 0.61 is the adsorption showing
-  in the descriptor rather than predicting it (within the bound set r = 0.48).  A fair
-  baseline needs the indices at the gas-phase geometries: a neutral-state ORCA run of about an
-  hour.
-- **Pooled potency: simple descriptors beat the fields.**  A random forest on RDKit
+- **E_ads: the fields are better, but not for the reason given above.**  The global quantum
+  indices alone explain a third of the energy (q2 0.35), the gap being the main contributor: a
+  small gap means a soft molecule that chemisorbs.  The fields explain more (0.52 in the
+  aligned frame, 0.66 with the surface kernel), so the geometry over the surface adds to the
+  electronic structure rather than replacing it; the earlier reading "the model learns only
+  the registration" was too strong.  One caveat works in the opposite direction: the indices
+  were computed at the *adsorbed* geometries, and a chemisorbed ring has a smaller gap than a
+  free one (mean gap 2.8 eV for the bound molecules, 3.8 eV for the unbound), so part of
+  r = 0.61 is the adsorption showing in the descriptor rather than predicting it (within the
+  bound set r = 0.48).  A fair baseline needs the indices at the gas-phase geometries: a
+  neutral-state ORCA run of about an hour.
+- **Pooled potency: simple descriptors outperform the fields.**  A random forest on RDKit
   descriptors reaches q2 0.38, and ln MW with logP alone, as a quadratic, 0.28: the pooled
   potency has a size-and-lipophilicity trend (r 0.60 with ln MW, which the scaffold tree's
   "MW-adjusted MWILA" was made to remove) that the field models at 0.19 capture only partly.
   The quantum indices alone predict nothing pooled.  So on heterogeneous literature data the
-  honest ranking is: coarse physical descriptors with a non-linear learner first, fields
+  fair ranking is: coarse physical descriptors with a non-linear learner first, fields
   second, frontier orbitals last.
-- **Hu 2011: the frontier orbitals win.**  On the one clean series the ionisation potential
+- **Hu 2011: the frontier orbitals are better.**  On the one clean series the ionisation potential
   alone correlates at 0.89 with the potency and ridge on the quantum indices gives q2 0.75
   (0.80 with the RDKit descriptors added), against 0.66 for the fields.  That is the
   corrosion literature's claim, reproduced where it should hold: within one protocol and one
-  chemotype, a substituent's effect on E_HOMO tracks its effect on inhibition.  Eighteen
-  molecules and eleven descriptors in a leave-one-out loop leave room for optimism even with
-  the inner tuning, so the margin over the fields is not to be over-read.
-- **What this does to the conclusions.**  The alignment results stand (the surface kernel is
+  chemotype, a substituent's effect on E_HOMO follows its effect on inhibition.  Eighteen
+  molecules and eleven descriptors in a leave-one-out loop leave room for over-optimistic
+  estimates even with the inner tuning, so the margin over the fields is not to be
+  over-interpreted.
+- **What this does to the conclusions.**  The alignment results hold (the surface kernel is
   the best E_ads model by a margin over every descriptor model).  The claim that the fields
   are the right tool for the potency does not: on the pooled node a forest on size and logP
   does better, and on the clean series the global quantum indices do better.  A paper has to
@@ -547,7 +550,7 @@ and IP (-0.48); for Hu 2011 the ionisation potential (r 0.89).
 The quantum indices above were computed at the adsorbed geometries.  `157_benzimidazole_gas_qm.sdf`
 holds a neutral-state r2SCAN-3c run on the script's own ETKDG+MMFF conformers (73 molecules,
 45 min, no N+-1 states), so its reactivity indices are Koopmans ones, IP = -E_HOMO and
-EA = -E_LUMO, as the corrosion literature computes them; for a like-for-like pair the adsorbed
+EA = -E_LUMO, as the corrosion literature computes them; for a directly comparable pair the adsorbed
 set was rerun in the same form (`--koopmans`).  Tables: `descriptor_baselines_gas.csv`,
 `descriptor_baselines_koopmans.csv`.
 
@@ -563,27 +566,27 @@ set was rerun in the same form (`--koopmans`).  Tables: `descriptor_baselines_ga
 Strongest single index at the gas-phase geometry: for E_ads the hardness at r 0.24 (0.61 at
 the adsorbed geometry); for the pooled potency dN at 0.40; for Hu 2011 dN at 0.90.
 
-- **E_ads: the caveat was the whole effect.**  At the free-molecule geometry the global quantum
+- **E_ads: the caveat explains the whole effect.**  At the free-molecule geometry the global quantum
   indices predict nothing of the adsorption energy (q2 about 0 by every learner); the 0.35 at
   the adsorbed geometry was the chemisorbed ring's smaller gap reporting that it had
   chemisorbed.  So the fields' margin is larger than the previous section said, and the reading
   that the E_ads model learns the arrangement over the surface rather than the molecule's
   electronic structure is restored: no global index of the free molecule anticipates the UMA
   energy, the surface kernel reaches 0.66.
-- **Hu 2011: the frontier-orbital model stands in gas phase.**  Ridge on the eleven Koopmans
+- **Hu 2011: the frontier-orbital model holds in gas phase.**  Ridge on the eleven Koopmans
   indices gives 0.65 (0.58-0.59 for the other learners), 0.80 with the RDKit descriptors added,
   and dN, the fraction of electrons transferred to iron, alone correlates at 0.90 with the
   potency of the series.  That is the literature's claim, and it holds where the literature
-  tests it, within one series under one protocol; the field model's 0.66 is on a par with the
+  tests it, within one series under one protocol; the field model's 0.66 is equal to the
   quantum indices alone and below the combined descriptors.
 - **Pooled potency: unchanged.**  The quantum indices alone predict nothing pooled in any form;
   with the RDKit descriptors the forest stays at 0.37-0.40, the size-and-lipophilicity trend.
 
-## A DFT anchor from OC20 (2026-10-24)
+## A DFT reference point from OC20 (2026-10-24)
 
-To see whether the surface kernel learns a DFT quantity and not a quirk of UMA, the OC20
+To see whether the surface kernel learns a DFT quantity and not an artefact of UMA, the OC20
 IS2RE data (8.1 GB tarball from dl.fbaipublicfiles.com, kept in WSL under ~/data/oc20) were
-read for every system on a pure-metal surface: `oc20_extract.py` walks the train and
+read for every system on a pure-metal surface: `oc20_extract.py` goes through the train and
 validation LMDBs (old-format PyG records) and writes the DFT-relaxed adsorbate atoms in the
 surface frame with OC20's relaxed adsorption energy (`oc20_Fe.npz`: 288 systems, 64
 adsorbates, 12 facets, sd 2.5 eV; `oc20_Cu.npz`: 591 systems, 72 adsorbates, sd 1.8 eV).
@@ -598,7 +601,7 @@ Copper, adsorbates of six or more atoms (192 systems, 27 adsorbates):
 | adsorbate identity (one-hot) | 0.92 | (undefined) |
 | element counts (ridge) | 0.67 | 0.48 |
 | overlap fields, poses as written | 0.71 | 0.60 |
-| 3D autocorrelation (height thrown away) | 0.82 | 0.54 |
+| 3D autocorrelation (height removed) | 0.82 | 0.54 |
 | surface kernel, sigma 0.5, z step 0.5 (the first setting) | 0.56 | 0.42 |
 | surface kernel, sigma 0.75, z step 1.0 | 0.70 | 0.53 |
 | surface kernel, sigma 1.0, z step 1.5 | 0.76 | 0.53 |
@@ -610,27 +613,27 @@ surface kernel 0.65.  Iron (288 systems, energies from -9.9 to +4.9 eV): every m
 small, spans twelve facets and the magnetic iron energies of OC20 are noisy.
 
 - **The kernel learns DFT energies at the level of the other representations, not above
-  it.**  On copper the surface kernel reaches 0.76 with a coarse grid, level with the overlap
+  it.**  On copper the surface kernel reaches 0.76 with a coarse grid, equal to the overlap
   model and the element counts, below the 3D autocorrelation (0.82-0.88) and far below the
   adsorbate's identity (0.90-0.92).  Its invariance holds (identical numbers on shuffled
-  poses) and its DFT target is real, which is what the anchor was for; but OC20's fragments
-  are one to twelve atoms whose energy is set by what they are, not how they lie, so there
-  is little pose variance for a pose-sensitive kernel to win on, and the height resolution
-  costs it against the plain distance profile.
+  poses) and its DFT target is real, which is what the reference point was for; but OC20's fragments
+  are one to twelve atoms whose energy is determined by what they are, not by how they are
+  placed, so there is little pose variance for a pose-sensitive kernel to exploit, and the
+  height resolution works against it compared with the plain distance profile.
 - **The grid matters on small fragments** (0.56 to 0.76 between the finest and the coarsest
   setting) where it did not on the benzimidazoles (0.65-0.66): with few atoms the fine
   channels are mostly empty.
 - **So the advantage measured on the benzimidazole node (0.66 against 0.52) is specific to
   molecules of that size and family**, where the composition hardly varies and the pose over
-  the surface does.  That is the claim a paper can make, with this table as its honest
+  the surface does.  That is the claim a paper can make, with this table as its fair
   boundary; the claim that the surface kernel is generally the better representation of an
   adsorbate cannot be made.
-- The iron set is too poor for any model to anchor anything; a VASP anchor on our own
-  structures remains the way to tie the benzimidazole numbers to DFT.
+- The iron set is too poor to give any model a reference point; a VASP reference point on
+  our own structures remains the way to connect the benzimidazole numbers to DFT.
 
 ## Follow-ups
 
-- Dispersion: fairchem ships a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
+- Dispersion: fairchem provides a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
   needs `torch-dftd`); adding it would deepen E_ads by ~0.5-1 eV for molecules of this size
   and give the bulky compounds a physisorbed minimum.
 - The VASP tier: `*_work/<name>_<k>_<pose>.xyz` are the starting structures; the slab there
@@ -640,4 +643,4 @@ small, spans twelve facets and the magnetic iron energies of OC20 are noisy.
   (charge in `atoms.info`) and a counter-ion or a charged-slab scheme; not attempted.
 - On the target side: a mixed model of MWILA with compound and paper effects, fitted on the
   per-experiment rows, to pool the laboratories without their offsets; and single-laboratory
-  series as the test beds for the alignment question (Hu 2011 is the one that works).
+  series as the test cases for the alignment question (Hu 2011 is the one that works).

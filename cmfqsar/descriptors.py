@@ -12,7 +12,7 @@ A descriptor block is therefore added to the kernel as a block of its own::
     K(A, B) = sum_f h_f c_f K_f(A, B)  +  h_d c_d  z(A) . z(B)
 
 where ``z`` holds the descriptors of a molecule, standardised with the **training set's** mean and
-standard deviation so that a descriptor in kilojoules does not outvote one in log units, and
+standard deviation so that a descriptor in kilojoules does not dominate one in log units, and
 ``h_d`` is a mixing coefficient like any field's.  The block is a linear kernel, so three things
 follow and all three are worth having:
 
@@ -25,11 +25,12 @@ follow and all three are worth having:
   that happens to sit at the training mean in every descriptor to a zero row and a zero diagonal,
   i.e. out of the model altogether, which for a perfectly ordinary molecule is absurd.  Instead
   the block is multiplied by a constant that makes its mean diagonal 1 over the training set, so
-  it enters on the same footing as a scaled field and the relative magnitudes survive.
+  it enters on the same basis as a scaled field and the relative magnitudes survive.
 
-What the block is *not* is a way to smuggle the activity in: a descriptor correlated with the
-activity by construction will dominate and the geometry will look worthless.  The program reports
-the descriptor contributions beside the field ones so that this is visible rather than hidden.
+What the block is *not* is a way to insert the activity itself into the inputs: a descriptor
+correlated with the activity by construction will dominate and the geometry will look worthless.
+The program reports the descriptor contributions beside the field ones so that this is visible
+rather than hidden.
 """
 from __future__ import annotations
 
@@ -59,7 +60,7 @@ def computed_names() -> List[str]:
 
 
 def rdkit_descriptors() -> Dict[str, object]:
-    """Every descriptor RDKit exposes, by its own name: 200-odd of them, as a lookup table."""
+    """Every descriptor RDKit exposes, by its own name: about 200 of them, as a lookup table."""
     from rdkit.Chem import Descriptors
     return {name: fn for name, fn in Descriptors._descList}
 
@@ -75,7 +76,7 @@ def _resolve(key: str):
     if key in table:
         return table[key]
     lowered = {k.lower(): v for k, v in table.items()}
-    if key.lower() in lowered:                       # RDKit's names are CamelCase; be forgiving
+    if key.lower() in lowered:                       # RDKit's names are CamelCase; accept any case
         return lowered[key.lower()]
     import difflib
     near = difflib.get_close_matches(key, list(table) + list(short), n=4)

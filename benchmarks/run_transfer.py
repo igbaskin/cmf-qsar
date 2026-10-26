@@ -234,7 +234,7 @@ def report(results=RESULTS):
                  "of SAR transfer." if overall > 0.3 else
                  "That is weaker than the item's claim. The cosine tells two SARs apart from one "
                  "SAR, which the control shows, but among genuinely different chemotypes it does "
-                 "not grade how well one model will order another's molecules. The honest "
+                 "not grade how well one model will order another's molecules. The fair "
                  "reading is that it is a map of *agreement*, and agreement is necessary for "
                  "transfer without being sufficient for it."), "",
               "A caveat that cannot be removed by any amount of care: the whole comparison rests "

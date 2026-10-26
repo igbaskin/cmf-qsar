@@ -28,7 +28,7 @@ Point 3 is the whole difference from C5, and the tests assert it directly.
 
 Using the field weights as the priority rather than the CIP rules keeps the descriptor a
 property of the fields -- the same quantities the rest of the program is built from -- and not of
-a toolkit's implementation of a convention.  The price is that two substituents of nearly equal
+a toolkit's implementation of a convention.  The cost is that two substituents of nearly equal
 weight have no reliable order, and an unreliable order is an unreliable sign; such centres are
 dropped rather than guessed at, and :func:`stereo_matrix` reports how many survived.
 """
@@ -48,11 +48,11 @@ class StereoSpec:
 
     `min_separation` is the margin, in units of the field's own spread over the molecule, that
     two neighbours' weights must differ by before their order is believed.  It matters more than
-    it looks: at zero every atom with three neighbours contributes a sign, including the ones
+    it seems: at zero every atom with three neighbours contributes a sign, including the ones
     whose substituents are the same and whose order is therefore noise, and the handedness of two
     molecules separates by 0.18 against a spread of 0.53.  At 0.1 to 0.3 the tied centres drop
     out and the separation is 0.86 against 0.70.  Above 0.6 so few centres survive that it falls
-    away again, so this is a real knob and not a formality.
+    away again, so this is a real parameter and not a formality.
     """
     min_neighbours: int = 3
     min_separation: float = 0.2

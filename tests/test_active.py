@@ -60,7 +60,7 @@ def test_expected_improvement_at_the_edges():
     assert np.all(expected_improvement([0.0], [1.0], best=5.0) > 0)       # never exactly zero
     wide = expected_improvement([1.0], [2.0], best=1.0)
     narrow = expected_improvement([1.0], [0.5], best=1.0)
-    assert wide > narrow                   # uncertainty is worth something when it is free
+    assert wide > narrow                   # uncertainty adds to the score when it costs nothing
 
 
 def test_each_rule_picks_what_it_says_it_picks():
@@ -74,7 +74,7 @@ def test_each_rule_picks_what_it_says_it_picks():
     assert pick("ucb", beta=0.0) == 1              # no optimism: the prediction alone
     assert pick("ucb", beta=5.0) == 0              # much optimism: the one it is unsure about
     assert pick("ei", best=2.5) == 1               # only one candidate can beat 2.5 on the mean
-    assert pick("ei", best=6.0) == 0               # out of reach: the widest posterior wins
+    assert pick("ei", best=6.0) == 0               # no mean can reach it: the widest posterior wins
     a = acquisition_scores("random", mu, sd, rng=np.random.default_rng(3))
     b = acquisition_scores("random", mu, sd, rng=np.random.default_rng(3))
     assert np.array_equal(a, b)
@@ -103,7 +103,7 @@ def test_suggest_ranks_real_candidates(fitted):
 
 
 def test_a_batch_does_not_pick_the_same_molecule_twice(fitted):
-    """The candidate set here holds every molecule twice over."""
+    """The candidate set here holds every molecule twice."""
     model, _table, mf = fitted
     doubled = AtomTable.from_molecules(mf + mf)
     names = [f"m{i}" for i in range(len(mf))] * 2
@@ -154,7 +154,7 @@ def test_the_loop_stops_when_the_pool_runs_out():
 
 
 def test_looking_for_actives_finds_them_sooner_than_picking_at_random():
-    """Averaged over starts, because any single run is a coin toss."""
+    """Averaged over starts, because any single run is a matter of chance."""
     kernels, y = _world(n=80, seed=1)
     found = {}
     for kind in ("ei", "random"):

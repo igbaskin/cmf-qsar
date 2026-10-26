@@ -15,14 +15,14 @@ energies as SD properties, which the CMF application reads as an aligned, labell
 
 The slab: bcc Fe, a = 2.78 A (the minimum of UMA's oc20 head for bcc Fe; --lattice changes
 it), four layers, 6x6 orthogonal surface cell (16.7 x 11.8 A; grown automatically when a
-molecule's footprint plus --margin would not fit), 15 A of vacuum, spin-polarised in spirit
+molecule's footprint plus --margin would not fit), 15 A of vacuum, nominally spin-polarised
 (initial moments 2.2 mu_B, which UMA's oc20 head does not read but VASP will, when the same
 structures go to the calibration tier).  All slab atoms are fixed by default: for the oc20 head
 the ideal Fe(110) surface is a saddle point, and any symmetry-breaking perturbation (an
 adsorbate, a 0.05 A shake) slides the free layers into a spurious reconstruction with Fe-Fe
-contacts of 2.1-2.3 A that lowers the energy by ~0.25 eV per free atom and swamps the
+contacts of 2.1-2.3 A that lowers the energy by ~0.25 eV per free atom and dominates the
 adsorption energy; a rigid slab keeps the three energies consistent (--fixed-layers N frees
-the top `layers - N` layers if a future model behaves).
+the top `layers - N` layers if a future model does not show this problem).
 
 The molecules: the neutral form (charges are removed where a proton can be added or taken
 away; permanent charges stay and are recorded), embedded with ETKDG + MMFF.  Starting poses:
@@ -45,7 +45,7 @@ Run in the WSL environment ~/uma-env (see examples/corrosion_fe110/README.md):
 
 Every molecule's record (energies of all poses, the final geometries) goes to <out>_work/, so a
 stopped run resumes where it was (--fresh recomputes), and the SDF and the CSV summary next to
-it are rewritten after every molecule.  The UMA weights are gated on Hugging Face: accept the
+it are rewritten after every molecule.  The UMA weights need a licence on Hugging Face: accept the
 licence of facebook/UMA and run `hf auth login` once in the environment.
 """
 from __future__ import annotations
@@ -156,7 +156,7 @@ def _is_carbonyl_carbon(atom: Chem.Atom) -> bool:
 
 def anchor_atom(mol: Chem.Mol) -> Optional[int]:
     """The atom that points at the surface in the upright pose: the most basic nitrogen, by a
-    rule of thumb (aliphatic amine > pyridine-type aromatic N > imine > aniline > pyrrole-type
+    simple rule (aliphatic amine > pyridine-type aromatic N > imine > aniline > pyrrole-type
     NH; amide, nitro and quaternary N never), else a thiol/thioether S, else a hydroxyl/ether O."""
     best, best_score = None, 0.0
     for atom in mol.GetAtoms():
@@ -232,8 +232,8 @@ def _tilt_anchor_lowest(coords: np.ndarray, anchor: int, clearance: float = 0.0)
     """The smallest tilt about the anchor atom that leaves every other atom at least `clearance`
     A above it (an azole with its lone pair straight down has the neighbouring C-H lower than
     the N; the tilt lets the N, not the H, meet the surface first).  A grid over tilt axes in
-    the surface plane and tilt angles; the first angle that clears wins.  Where no tilt up to
-    90 degrees clears (an amine with dangling alkyl H), the lone pair stays straight down."""
+    the surface plane and tilt angles; the first angle that clears is used.  Where no tilt up to
+    90 degrees clears (an amine with protruding alkyl H), the lone pair stays straight down."""
     out = coords - coords[anchor]
     others = np.delete(np.arange(len(out)), anchor)
     if len(others) == 0 or out[others, 2].min() >= clearance - 1e-9:
@@ -600,7 +600,7 @@ def run(rows: List[Dict[str, str]], out_sdf: str, calc, args, columns: Optional[
         log(f"[{index + 1}/{len(rows)}] {name}  {row['smiles']}")
         try:
             rec = process_molecule(row, index, calc, work, args, slab_cache)
-        except Exception as exc:              # one bad molecule must not stop the node
+        except Exception as exc:              # one failed molecule must not stop the node
             log(f"  [{name}] FAILED: {exc!r}")
             continue
         json.dump(rec, open(rec_path, "w"), indent=1)

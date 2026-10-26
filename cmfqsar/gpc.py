@@ -16,13 +16,13 @@ A Bernoulli likelihood is not conjugate to the Gaussian prior, so the posterior 
 by a Gaussian at its mode (Rasmussen and Williams, *Gaussian Processes for Machine Learning*,
 chapter 3; the Newton iteration is their Algorithm 3.1, the predictions 3.2 and the marginal
 likelihood 3.3).  Everything here works from a precomputed kernel, which is what the CMF
-machinery hands over, and nothing in it looks at a molecule.
+machinery provides, and nothing in it looks at a molecule.
 
 The latent mean stays a kernel expansion, ``f(x) = sum_j a_j K(x, x_j)``, so the co-field and the
 atom contributions remain exactly as well defined as they are for kernel ridge regression: unlike
 a nonlinear kernel layer, this classifier keeps the interpretation intact.
 
-Measured on the six classification sets of `examples/`, the accuracy is on a par with C-SVC; the
+Measured on the six classification sets of `examples/`, the accuracy is equal to that of C-SVC; the
 reason to use it is the three things above, not the Matthews correlation.
 """
 from __future__ import annotations
@@ -73,7 +73,7 @@ def squash(mean: np.ndarray, var: np.ndarray, likelihood: str = "probit") -> np.
 
     For the probit likelihood the average is exact, ``Phi(mean / sqrt(1 + var))``; for the
     logistic one it is MacKay's approximation.  Either way the variance pulls the probability
-    towards one half, which is the point: an uncertain molecule should not be called confidently.
+    towards one half, which is the purpose: an uncertain molecule should not be called confidently.
     """
     var = np.maximum(np.asarray(var, float), 0.0)
     if likelihood == "probit":
@@ -92,7 +92,7 @@ class LaplaceGPC:
     """Binary GP classifier on a precomputed kernel, fitted at the posterior mode.
 
     `amplitude` multiplies the kernel and is the only hyper-parameter: a large one lets the
-    latent function swing far from zero, which is what makes the fit confident, and it plays the
+    latent function move far from zero, which is what makes the fit confident, and it plays the
     role C plays for a support-vector classifier.  Unlike C it can be chosen by the marginal
     likelihood, without cross-validation; see :func:`select_by_evidence`.
     """
@@ -189,7 +189,7 @@ def _dual_from_mode(K: np.ndarray, f: np.ndarray, sW: np.ndarray, L: np.ndarray,
                     W: np.ndarray, grad: np.ndarray) -> np.ndarray:
     """``a = K^-1 f`` at the mode, taken the stable way: a = W f + grad - ... = grad, in exact
     arithmetic, because the mode satisfies f = K grad.  Recomputing it from the factorisation
-    keeps the marginal likelihood honest when the Newton iteration stopped early."""
+    keeps the marginal likelihood correct when the Newton iteration stopped early."""
     b = W * f + grad
     return b - sW * cho_solve((L, True), sW * (K @ b))
 
@@ -224,7 +224,7 @@ def select_by_evidence(kernels: Dict[object, np.ndarray], y: np.ndarray,
 
 
 def brier_score(y: np.ndarray, p: np.ndarray) -> float:
-    """Mean squared error of the probabilities; 0 is perfect, 0.25 is a coin."""
+    """Mean squared error of the probabilities; 0 is perfect, 0.25 is no better than chance."""
     t = (np.asarray(y, float) > 0).astype(float)
     return float(np.mean((np.asarray(p, float) - t) ** 2))
 

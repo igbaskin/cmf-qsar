@@ -93,7 +93,7 @@ def run_set(name, force=False, data=DATA, results=RESULTS):
         mask[rng.choice(n, n // 2, replace=False)] = True
         null_p.append(mmd_test(K, mask, permutations=PERMUTATIONS, seed=t).p_value)
 
-    # 2. the groups. The eigengap says how many clusters the kernel wants; the comparison with
+    # 2. the groups. The eigengap says how many clusters the kernel needs; the comparison with
     # the scaffolds is made at the same number of groups as the scaffolds, since holding out one
     # of two clusters removes half the training set and holding out one of nine does not --
     # a difference in granularity would otherwise be read as a difference in difficulty

@@ -14,14 +14,14 @@ Molecular fields are not vectors, so GTM cannot be applied to them directly; onl
 available.  The CMF kernel is an inner product in the Hilbert space of the fields, so kernel PCA on
 it is functional PCA, and its leading components are coordinates that reproduce the feature-space
 distances exactly.  Running the ordinary GTM in those coordinates is equivalent to a kernelised GTM
-(cf. Olier, Vellido & Giraldo, ESANN 2010) and keeps the out-of-sample projection a one-liner, which
-a map needs in order to place new molecules.
+(cf. Olier, Vellido & Giraldo, ESANN 2010) and keeps the out-of-sample projection a single formula,
+which a map needs in order to place new molecules.
 
-Two practical points, both learned the hard way elsewhere in this program:
+Two practical points, both learned from experience elsewhere in this program:
 
 * use cosine-normalised kernels, otherwise the leading components follow molecular size;
 * a CMF kernel between molecules that are not aligned in a common frame is meaningless, so a map
-  spanning several series would partly show alignment quality.  The escape is the limit of small
+  spanning several series would partly show alignment quality.  The way out is the limit of small
   attenuation: as alpha -> 0 a continuous indicator field tends to the count of atoms of that type
   (Sitnikov et al. 2015), so the kernel becomes an alignment-free fragment-descriptor kernel and the
   map can span a whole library.
@@ -303,7 +303,7 @@ class CMFMap:
         """The fitted molecules on two principal components, as an (N, 2) array.
 
         Unlike the latent coordinates of the map, these are distances one may read: the
-        projection is linear and orthogonal, so the plane is a faithful shadow of the kernel
+        projection is linear and orthogonal, so the plane is a faithful projection of the kernel
         geometry as far as its two eigenvalues reach.
         """
         if self.scores_ is None:

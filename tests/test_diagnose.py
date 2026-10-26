@@ -36,7 +36,7 @@ def _series(n=16, seed=0, congeneric=True):
 def test_the_descriptor_baseline_refuses_the_activity_itself():
     """Most files store the activity as a property; handed it, this baseline returns q2 = 1.
 
-    Then every set in the world would be diagnosed "use descriptors", which is why the guard
+    Then every set would be diagnosed "use descriptors", which is why the guard
     exists and why it is tested before anything else here.
     """
     mols, names, y = _series(14)
@@ -66,14 +66,14 @@ def test_the_frame_questions_notice_a_diverse_set_and_a_congeneric_one():
     fl = {f.code: f for f in frame_findings(loose, names_l)}
     assert ft["chemotypes"].numbers["chemotypes"] <= fl["chemotypes"].numbers["chemotypes"]
     assert ft["superimposed"].level == "ok", "an aligned series must read as superimposed"
-    # the unaligned set must not pass; with a small symmetric framework the test is entitled to
-    # say it cannot tell, but never that molecules at their own origins share a frame
+    # the unaligned set must not pass; with a small symmetric framework the test is allowed to
+    # say it cannot decide, but never that molecules at their own origins share a frame
     assert fl["superimposed"].level in ("warn", "note")
     assert fl["superimposed"].numbers["core_rmsd"] > ft["superimposed"].numbers["core_rmsd"]
 
 
 def test_the_paired_interval_is_wide_on_few_molecules():
-    """A difference is only a difference against its interval, which is the point of rule 4."""
+    """A difference is only a difference against its interval, which is the purpose of rule 4."""
     y = np.linspace(0, 5, 12)
     a = Route("a", q2=0.6, predicted=y + np.random.RandomState(0).normal(0, 0.9, 12))
     b = Route("b", q2=0.55, predicted=y + np.random.RandomState(1).normal(0, 0.95, 12))
@@ -138,12 +138,12 @@ def test_a_leak_that_only_several_columns_together_reconstruct_is_caught_by_the_
 
 
 def test_the_frame_test_declines_rather_than_guessing_when_it_cannot_tell():
-    """Its two failure modes pull in opposite directions, so it is allowed a third answer.
+    """Its two failure modes act in opposite directions, so it is allowed a third answer.
 
     A small symmetric framework matches a dozen ways and two rings near the origin coincide by
-    luck; a framework that is a small part of the molecule may match a different copy in each.
+    chance; a framework that is a small part of the molecule may match a different copy in each.
     So a near-coincidence is a verdict on its own, a large deviation only when the framework is
-    a fair share of the molecule, and otherwise the answer is "look at it".
+    a large part of the molecule, and otherwise the answer is "look at it".
     """
     from cmfqsar.diagnose import _superimposed_finding
 

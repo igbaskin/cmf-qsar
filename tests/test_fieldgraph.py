@@ -94,7 +94,7 @@ def test_field_points_move_with_the_molecule_and_keep_their_distances(world):
                         - np.array([p.centre for p in a])[None], axis=-1)
     db = np.linalg.norm(np.array([p.centre for p in b])[:, None]
                         - np.array([p.centre for p in b])[None], axis=-1)
-    # the grid is rebuilt around the moved molecule, so allow the discretisation its say
+    # the grid is rebuilt around the moved molecule, so allow for the discretisation error
     assert float(np.abs(da - db).max()) < 0.5
 
 

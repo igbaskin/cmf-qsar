@@ -1,25 +1,25 @@
 """Topomer fields: a frame that comes from the topology, not from a superposition.
 
 Everything else here needs the molecules to share a frame, and gets it by superimposing them --
-which works for a congeneric series and quietly stops meaning anything when the substituents are
+which works for a congeneric series and silently stops meaning anything when the substituents are
 unrelated, as the chemotype measurements show.  Cramer's topomer idea (topomer CoMFA, 2003)
 removes the search altogether: cut the molecule at the bond that attaches a substituent, and
 build that fragment into a pose that is a *deterministic function of its topology* -- standard
 geometry, every rotatable torsion at a fixed value, the attachment atom at the origin and its
 open valence along a fixed axis, the remaining roll fixed by a canonical rule.  The same R-group
-then always lands in the same place, whatever molecule it came from and however its atoms were
+then always ends in the same place, whatever molecule it came from and however its atoms were
 numbered, so the fields of different substituents at one attachment point can be compared with no
 alignment at all.
 
-The pose is a convention, not a bioactive conformation, and the method is honest about that: it
-compares like with like at one attachment point, and says nothing about how the ligand really
-sits.  What it buys is that the comparison is reproducible and instant.
+The pose is a convention, not a bioactive conformation, and the method is clear about that: it
+compares comparable things at one attachment point, and says nothing about how the ligand really
+sits.  What it gains is that the comparison is reproducible and instant.
 
 Two things make this fit CMF better than it fits CoMFA.  There is no grid: a fragment's field is
 its atoms and weights, and a fragment-fragment kernel is an analytic number.  And the fields are
 additive, so a molecule's kernel with another decomposes into scaffold and substituent terms that
 can be tabulated once per fragment and reused across a library -- which is the topomer-search
-trick, obtained here without approximation.
+technique, obtained here without approximation.
 
 The pose rule, in order:
 
@@ -184,7 +184,7 @@ def framework_core(mols: Sequence[Chem.Mol], min_atoms: int = 3) -> Optional[Che
 
     What a topomer model actually needs is the scaffold of *one* series, so this takes the
     Bemis-Murcko framework shared by the largest group of molecules.  Combine it with
-    :func:`series_indices`, which collects every molecule that framework comes cleanly off --
+    :func:`series_indices`, which collects every molecule that framework can be cut off cleanly --
     including molecules whose own framework is larger, because an extra ring on a substituent is
     part of the R-group and not of the scaffold.
     """
@@ -226,7 +226,7 @@ def choose_core(mols: Sequence[Chem.Mol], mode: str = "framework",
 
 def common_core(mols: Sequence[Chem.Mol], timeout: int = 20,
                 threshold: float = 1.0) -> Optional[Chem.Mol]:
-    """The maximum common substructure of a series, which is what the R-groups hang off."""
+    """The maximum common substructure of a series, which is what the R-groups are attached to."""
     # the loader gives every molecule explicit hydrogens; an MCS found over those carries [H]
     # atoms in its SMARTS and then fails to match molecules whose hydrogen count differs, so the
     # core is looked for on hydrogen-suppressed copies
@@ -296,7 +296,7 @@ def cuttable_fraction(mols: Sequence[Chem.Mol], core: Chem.Mol) -> float:
 
 
 def attachment_label(frag: Chem.Mol) -> int:
-    """Which core atom this substituent hangs off, as :func:`substituents` labels it."""
+    """Which core atom this substituent is attached to, as :func:`substituents` labels it."""
     for a in frag.GetAtoms():
         if a.GetAtomicNum() == 0:
             return int(a.GetIsotope())
@@ -332,7 +332,7 @@ def topomer_molecule(mol: Chem.Mol, core: Chem.Mol, labels: Sequence[int],
     """Every substituent of `mol` in its own topomer pose, each at its own attachment site.
 
     The result is one molecule for the field machinery to work on, but it is not a molecule any
-    chemist would draw: it is the series' substituents, each built by the rule and parked in a
+    chemist would draw: it is the series' substituents, each built by the rule and placed in a
     region of space reserved for its attachment point.  A position a molecule does not substitute
     simply contributes nothing there.
     """
@@ -381,7 +381,7 @@ def topomer_fields(mols: Sequence[Chem.Mol], names: Sequence[str], fieldset: Fie
     """Topomer fields of a series: every substituent posed by the rule, at its own site.
 
     Returns (fields, log).  A molecule whose substituents cannot be built gets ``None``, so the
-    caller can drop it and say which ones went.  Identical substituents at the same attachment
+    caller can drop it and say which ones were lost.  Identical substituents at the same attachment
     point give identical fields, whatever molecule they came from, which is what makes the
     comparison free of any alignment.
     """

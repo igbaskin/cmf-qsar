@@ -1,4 +1,4 @@
-"""Closing the loop: what to put at a position, ranked by the model (plan item E3).
+"""The last step of the design cycle: what to put at a position, ranked by the model (E3).
 
 Everything else in this program scores molecules somebody has already drawn.  This module makes
 the suggestion itself: take a parent compound of a series, take one of its attachment points,
@@ -9,15 +9,15 @@ The pose problem that stops this being easy is solved by not having one.  A new 
 no crystal structure and no alignment, and superimposing it on anything would be a guess; the
 topomer rule (:mod:`cmfqsar.topomer`) builds it into a pose that is a deterministic function of
 its own topology, so the candidate is posed by exactly the rule that posed the molecules the
-model was fitted on.  The comparison is then like with like at one attachment point, which is
-all a substituent ranking needs.  It is also the reason this works on a topomer model and not on
-an aligned one: a model fitted on superimposed whole molecules has no way to place a group that
-was never synthesised.
+model was fitted on.  The comparison is then between comparable things at one attachment point,
+which is all a substituent ranking needs.  It is also the reason this works on a topomer model and
+not on an aligned one: a model fitted on superimposed whole molecules has no way to place a group
+that was never synthesised.
 
 Three numbers come back for every candidate and they answer different questions:
 
 * the **prediction**, which is what the model expects;
-* the **posterior standard deviation**, which says whether the model has any business having an
+* the **posterior standard deviation**, which says whether the model has any basis for an
   expectation -- a fragment unlike anything in the series gets the training mean and a large
   spread, and the two together are what stop a design loop proposing its own ignorance;
 * an **acquisition score** (:mod:`cmfqsar.active`) that combines them according to what the
@@ -41,7 +41,7 @@ from .topomer import (TopomerSpec, attachment_label, series_labels, substituents
                       topomer_assembly)
 
 #: Common monovalent substituents of medicinal chemistry, as SMILES with one attachment point.
-#: A working default rather than a claim: it is a hand-made list of the groups that turn up in
+#: A working default rather than a claim: it is a hand-made list of the groups that appear in
 #: most series, ordered roughly from small to large, and a real campaign should pass its own
 #: library with ``--fragments``.
 COMMON_FRAGMENTS: Tuple[str, ...] = (
@@ -60,7 +60,7 @@ class Candidate:
     """One replacement at one position, with everything that was worked out about it."""
 
     smiles: str                   # the fragment, as SMILES with its attachment point
-    label: int                    # the core atom it hangs off
+    label: int                    # the core atom it is attached to
     mean: float = float("nan")
     sd: float = float("nan")
     score: float = float("nan")   # the acquisition score it was ranked by
@@ -123,8 +123,8 @@ def as_fragment(smiles: str, label: int) -> Optional[Chem.Mol]:
     """A library SMILES turned into a fragment this attachment point can accept.
 
     The attachment is written ``[*]`` or ``*``; it becomes the dummy atom with the isotope that
-    :func:`cmfqsar.topomer.substituents` uses to name the core atom a group hangs off, so that a
-    fragment from a library and a fragment cut off a molecule are the same kind of object.
+    :func:`cmfqsar.topomer.substituents` uses to name the core atom a group is attached to, so that
+    a fragment from a library and a fragment cut off a molecule are the same kind of object.
     """
     with rdBase.BlockLogs():
         mol = Chem.MolFromSmiles(smiles)
@@ -136,7 +136,7 @@ def as_fragment(smiles: str, label: int) -> Optional[Chem.Mol]:
     dummies[0].SetIsotope(int(label))
     try:
         Chem.SanitizeMol(mol)
-    except Exception:                            # noqa: BLE001 - a fragment that will not stand
+    except Exception:                            # noqa: BLE001 - a fragment that cannot be built
         return None
     return mol
 
@@ -145,7 +145,7 @@ def fragment_smiles(frag) -> str:
     """The canonical name of a fragment, with hydrogens implicit.
 
     A group cut out of an SDF carries its hydrogens as atoms; the same group written into a
-    library by hand does not, and the two spell themselves differently. Everything here -- which
+    library by hand does not, and the two are written differently. Everything here -- which
     candidate is which, which are the groups the series already uses, which candidate rebuilds a
     molecule somebody has already made -- is decided by this name, so it has to be one name.
     """
@@ -241,7 +241,7 @@ def design(model, parent: Chem.Mol, core: Chem.Mol, label: int,
                 continue
             try:
                 made.setdefault(_key(substituents(mol, core)), (nm, float(yv)))
-            except Exception:                    # noqa: BLE001 - a molecule the core misses
+            except Exception:                    # noqa: BLE001 - a molecule without the core
                 continue
     seen = set(known or [])
 

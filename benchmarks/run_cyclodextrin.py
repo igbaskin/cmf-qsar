@@ -3,7 +3,7 @@
 A frame that cannot exist: the three kernels on cyclodextrin guest sets.
 
 ``benchmarks/run_alignment.py`` asks what an alignment is worth by replacing a curated one with
-an automatic one.  This asks the question one step further out, on data where there is no curated
+an automatic one.  This asks the same question in a harder case, on data where there is no curated
 alignment to be had and no receptor to borrow a frame from.  In ``examples/cyclodextrin/`` the
 *host* is fixed and the guests are whatever the literature measured, from acetonitrile to
 steroids, so the molecules share no scaffold; the maximum common substructure of such a set is a
@@ -30,7 +30,7 @@ the two columns answer it per host rather than in general.
 
 What the comparison is against
 ------------------------------
-The published field-based models of this endpoint, for scale rather than as a like-for-like
+The published field-based models of this endpoint, for scale rather than as a direct
 reference: CoMFA with COSMOsar3D fields on 60 alpha-CD guests (Q2 0.83, r2test 0.70), GRIND on
 126 beta-CD guests (Q2LOO 0.64, r2test 0.68) and GRIND on 233 beta-CD guests (Q2LOO 0.75,
 r2test 0.74).  Those sets are an order of magnitude smaller than the tables here and were
@@ -290,7 +290,7 @@ def report(path):
     out += ["For scale, the published field-based models of this endpoint: CoMFA with COSMOsar3D",
             "fields on 60 alpha-CD guests (Q2 0.83, r2test 0.70), GRIND on 126 beta-CD guests",
             "(Q2LOO 0.64, r2test 0.68) and GRIND on 233 beta-CD guests (Q2LOO 0.75, r2test 0.74).",
-            "Those sets are smaller and hand-curated, so these numbers are not a like-for-like",
+            "Those sets are smaller and hand-curated, so these numbers are not a direct",
             "comparison with them.", ""]
     text = "\n".join(out) + "\n"
     os.makedirs(os.path.dirname(path), exist_ok=True)

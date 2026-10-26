@@ -441,7 +441,7 @@ class ChemotypeValidationDialog(QDialog):
         lay = QVBoxLayout(self)
         info = QLabel(
             f"Each of the {n_groups} chemotypes is held out in turn, so a molecule is never "
-            "predicted from its own scaffold-mates. Random folds flatter a mixed series badly, "
+            "predicted from its own scaffold-mates. Random folds overstate the quality of a mixed series badly, "
             "and both numbers are reported side by side.\n\n"
             "The comparison that matters is the last one: a continuous indicator field tends to "
             "a count of atoms of its type as its attenuation vanishes, and the baseline is that "
@@ -1294,7 +1294,7 @@ class SelectivityDialog(QDialog):
         self.ed_rhos.setToolTip("\n".join([
             "Task correlations to try; the cross-validation chooses one.",
             "0 fits the endpoints separately, sharing only the kernel.",
-            "Towards 1 they borrow strength from each other, and at 1 exactly the",
+            "Towards 1 they share information with each other, and at 1 exactly the",
             "model could only predict a constant selectivity, so 1 is excluded."]))
         form.addRow("Task correlation:", self.ed_rhos)
         self.ed_lams = QLineEdit("0.001, 0.01, 0.1, 1, 10")
@@ -2324,7 +2324,7 @@ class MainWindow(QMainWindow):
                     ("alpha", res.alpha), ("lambda", res.lam)]
             per = [(f"{g['name'][:48]}", g["n"], g["rmse"], g["bias"]) for g in res.per_group]
             self.results_panel.set_chemotypes(
-                f"{len(res.per_group)} chemotypes held out in turn. Random folds flatter a mixed "
+                f"{len(res.per_group)} chemotypes held out in turn. Random folds overstate the quality of a mixed "
                 f"series, because a molecule is then predicted from its own scaffold-mates. "
                 f"Verdict: {res.verdict()}.", rows, per)
             for i in range(self.results_panel.tabs.count()):
@@ -2950,7 +2950,7 @@ class MainWindow(QMainWindow):
         def done(out):
             self.cofield_sd = out
             self.log(f"Co-field error bars from sigma = {sigma:.3f} ({how}); "
-                     f"only what stands more than 2 standard deviations from zero is drawn")
+                     f"only what lies more than 2 standard deviations from zero is drawn")
             self.schedule_display()
 
         self.run_task(task, done, "Co-field error bars")
@@ -3158,7 +3158,7 @@ class MainWindow(QMainWindow):
                 vol = self.volumes[fname]
                 hiding = vc.chk_cofield_noise.isChecked()
                 if hiding and fname in self.cofield_sd:
-                    # only what stands more than two standard deviations from zero, the rest
+                    # only what lies more than two standard deviations from zero, the rest
                     # being shape the noise in the activities could have produced on its own
                     sd = self.cofield_sd[fname]
                     kept = np.abs(vol) >= 2.0 * sd

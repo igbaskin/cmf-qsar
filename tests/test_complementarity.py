@@ -114,7 +114,7 @@ def test_coulomb_potential_falls_off_and_sums():
     assert coulomb_potential(np.zeros((0, 3)), np.zeros((1, 3)), [1.0]).shape == (0,)
     const = coulomb_potential(np.array([[2.0, 0, 0]]), np.zeros((1, 3)), [1.0],
                               dielectric="constant")
-    assert const[0] > q[0]                      # 1/r beats 1/r^2 at this distance
+    assert const[0] > q[0]                      # 1/r is larger than 1/r^2 at this distance
 
 
 def test_surface_is_closed_and_carries_a_score_per_vertex():
@@ -285,7 +285,7 @@ def test_profiles_compare_and_a_consensus_marks_the_conserved_contact():
 
 
 def _point2(coords, charges, steric, name="probe", radius=1.7):
-    """A probe carrying both fields of TWO_FIELDS, so it can meet a real pocket."""
+    """A probe carrying both fields of TWO_FIELDS, so it can be scored against a real pocket."""
     n = len(coords)
     w = np.zeros((n, 2))
     w[:, 0] = charges

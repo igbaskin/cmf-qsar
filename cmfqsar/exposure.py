@@ -13,19 +13,19 @@ Taking a surface literally would cost the thing the program is built around.  Ev
 its *own* surface, so there is no shared integration domain -- worse than the grid kernel, which at
 least had one -- and the usual repair, projecting both surfaces onto a learned map, cannot be
 inverted back into a field in space, so the co-field, the atom contributions and the Shapley
-decomposition all go with it.
+decomposition are all lost with it.
 
-The same physical claim is available for the price of a scalar per atom.  Multiply each atomic
+The same physical claim is available at the cost of a scalar per atom.  Multiply each atomic
 weight by how exposed that atom is,
 
     w'_f,l  =  w_f,l * e_l,        e_l = SASA_l / 4 pi (R_l + R_probe)^2   in [0, 1],
 
 and a buried atom contributes little to any field while an exposed one contributes fully.  The
 field is still a sum of atom-centred Gaussians, so the kernel is still the closed-form overlap and
-every reader of it keeps working; the co-field of an exposure-weighted field is the co-field of a
-field that happens to vanish inside the molecule.  There is a tidier way to say this: a window that
-is itself a sum of atom-centred Gaussians leaves the triple-product integral analytic, and in
-practice such a window *is* a per-atom weight.
+everything that reads it keeps working; the co-field of an exposure-weighted field is the co-field
+of a field that happens to vanish inside the molecule.  There is a shorter way to say this: a
+window that is itself a sum of atom-centred Gaussians leaves the triple-product integral analytic,
+and in practice such a window *is* a per-atom weight.
 
 What this does and does not touch: the steric field becomes the bulk a partner can feel rather than
 the bulk that exists, which is the intent; indicator and per-atom property fields are scaled the
@@ -126,7 +126,7 @@ def exposed_set(mols: Sequence[Chem.Mol], fieldset, names: Optional[Sequence[str
 
 def buried_fraction(mol: Chem.Mol, cutoff: float = 0.05, heavy_only: bool = True,
                     probe_radius: float = PROBE_RADIUS, united: bool = True) -> float:
-    """The fraction of atoms the weighting all but removes: how much of a molecule is inside.
+    """The fraction of atoms the weighting almost removes: how much of a molecule is inside.
 
     Reported beside a measurement because it says whether the weighting had anything to do, and
     the answer for a ligand is usually *nothing*: measured by group, a drug-sized molecule has a

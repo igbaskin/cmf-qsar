@@ -55,7 +55,7 @@ def test_the_units_of_the_activity_move_every_candidate_by_the_same_amount():
 
 
 def test_the_amplitude_is_profiled_rather_than_searched():
-    """Scaling the kernel and the ridge together leaves the model alone and the evidence moving."""
+    """Scaling kernel and ridge together leaves the model unchanged and changes the evidence."""
     _X, K, y = _world()
     lam = 0.2
     base = log_evidence(K, y, lam)

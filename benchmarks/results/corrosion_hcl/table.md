@@ -54,6 +54,6 @@ On the 17 series with enough cuttable molecules, measured on exactly those molec
 | 165_O_c1cc_nH_n1_c1ccccc1 | -0.028 | -0.030 | +0.228 | +0.002 | -0.258 |
 | 20_O_c1cc_nH_nH_1 | -0.045 | -0.044 | +0.229 | -0.001 | -0.274 |
 
-Mean q2: aligned +0.303, topomer +0.358 (difference -0.055); topomer wins 11 of 17. Mean price of the cut +0.037, of the pose -0.092.
+Mean q2: aligned +0.303, topomer +0.358 (difference -0.055); topomer wins 11 of 17. Mean cost of the cut +0.037, of the pose -0.092.
 
 Over all 23 series: aligned +0.324, invariant +0.333, counts +0.233; the invariant kernel wins 9, the aligned model 14.

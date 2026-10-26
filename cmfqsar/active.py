@@ -9,11 +9,11 @@ The answer depends on what the asker is doing, and the module keeps the two apar
 pretending one rule serves both.
 
 * **To find an active compound** the acquisition is optimistic.  Expected improvement asks how
-  much a candidate is expected to beat the best thing already made, counting only the upside::
+  much a candidate is expected to beat the best thing already made, counting only the gain::
 
       EI(x) = (mu - y* - xi) Phi(z) + sigma phi(z),   z = (mu - y* - xi) / sigma
 
-  and the upper confidence bound ``mu + beta sigma`` is the cruder form of the same instinct.  A
+  and the upper confidence bound ``mu + beta sigma`` is the cruder form of the same idea.  A
   molecule the model is unsure about is *promoted*, because being wrong about it is cheap and
   being right is valuable.
 
@@ -23,9 +23,9 @@ pretending one rule serves both.
 
 Note that this is the opposite of :meth:`CMFModel.rank_score`, which ranks a *screening* library
 by ``mu - beta sigma``: there a molecule the model knows nothing about must be pushed down,
-because a kernel method hands back the training mean dressed up as a prediction and the library
-is full of such molecules.  Screening is a bet that has to be paid for; acquisition is a question
-that has to be answered.  Optimism is right for one and wrong for the other.
+because a kernel method hands back the training mean presented as a prediction and the library
+is full of such molecules.  Screening is a decision whose mistakes have a cost; acquisition is a
+question that has to be answered.  Optimism is right for one and wrong for the other.
 
 :func:`learning_curve` runs the loop retrospectively on a kernel whose activities are already
 known, which is how ``benchmarks/run_active.py`` measures whether any of this beats picking at

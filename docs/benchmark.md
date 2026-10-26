@@ -4,7 +4,7 @@ This document compares the `cmfqsar` implementation with the CMF models publishe
 paper on the eight literature data sets of Sutherland et al. (J. Med. Chem. 47 (2004) 5541):
 ACE, AChE, BZR, COX-2, DHFR, GPB, THER and THR, using Sutherland's alignments, ionisation states,
 conformations, partial charges and train/test splits.  All numbers below were produced with
-`benchmarks/run_sutherland.py`, which drives `cmf_cli.py build`; the raw results (statistics,
+`benchmarks/run_sutherland.py`, which calls `cmf_cli.py build`; the raw results (statistics,
 hyper-parameters, per-molecule predictions) are in `benchmarks/results/*.json`.
 
 ## Summary
@@ -58,9 +58,9 @@ The published models were produced with the `cmf-*.R` scripts (`cmf-params.R`, `
 
 1. Five fields: partial charges from the MOL2 file (`q`), steric (`vdw`: Tripos well depth E by
    Sybyl type, width α/R² with the Tripos radius by Sybyl type), hydrophobic (`logp`), hydrogen-bond
-   acceptor (`abrb`, Abraham B) and donor (`abra`, Abraham A) with in-house one-atom increments keyed
-   by Sybyl type and number of attached hydrogens.  Hydrogen atoms carry no increments, so the donor
-   field is centred on the heavy atom.
+   acceptor (`abrb`, Abraham B) and donor (`abra`, Abraham A) with in-house one-atom increments
+   indexed by Sybyl type and number of attached hydrogens.  Hydrogen atoms carry no increments, so
+   the donor field is centred on the heavy atom.
 2. Kernels: analytic Gaussian overlaps, `w_l w_m (π/α)^{3/2} exp(−α d²/4)` for ordinary fields and
    `w_l w_m (2π/(b_l+b_m))^{3/2} exp(−b_l b_m d²/(2(b_l+b_m)))` with `b = α/R²` for the steric field;
    the joint kernel is the **raw sum** of the five field kernels (h_f = 1, no normalisation, no
@@ -175,13 +175,13 @@ The internal statistics of THER (q² 0.60, RMSEcv 1.18, R²pred 0.31, RMSEpred 1
 exactly; only the external cross-validation deviates.  The inner objective RMSEcv(λ) (with the best
 α chosen inside) is **multimodal** in four of the five outer folds, e.g. fold 4 has local minima at
 (λ, α) = (0.01, 10), (0.80, 5), (2.24, 3) and (4.26, 2) with RMSEcv 1.375, 1.488, 1.493 and 1.495.
-R's `optimize()` is a local search; depending on where it lands in each fold, q²ex of the
+R's `optimize()` is a local search; depending on where it ends in each fold, q²ex of the
 external cross-validation ranges from 0.30 to 0.42 (RMSEcvex 1.54 to 1.69) over the 64 combinations
 of local minima.  The combination (0.01, 3), (0.37, 0.5), (0.01, 10), (4.26, 2), (0.37, 5) gives
 q²ex 0.4005 and RMSEcvex 1.5595, i.e. the published values; the global minimum in every fold
 (found by scipy's bounded Brent and confirmed by a fine λ grid) gives 0.327 / 1.652.  The published
 THER q²ex therefore reflects the path of the local optimiser rather than a property of the model,
-and the honest value under this protocol is about 0.33.  All other 47 numbers of Table 2 are
+and the correct value under this protocol is about 0.33.  All other 47 numbers of Table 2 are
 reproduced.
 
 ### 3. The hydrogen-counting bug of the original parameterisation
@@ -241,7 +241,7 @@ molecules without Sybyl typing.
 The program's default convention rescales every field kernel to unit mean diagonal before the
 h_f-weighted sum, so that h_f = 1 means "equal weight" instead of "raw magnitude".  Compared with
 the raw sum (same RDKit increments, same protocol otherwise) this helps DHFR (R²pred 0.51 → 0.64)
-and GPB (q²ex 0.47 → 0.57), changes little on BZR, COX-2 and THER, and hurts ACE (R²pred 0.67 →
+and GPB (q²ex 0.47 → 0.57), changes little on BZR, COX-2 and THER, and harms ACE (R²pred 0.67 →
 0.62), AChE (0.65 → 0.45) and in particular THR (R²pred 0.42 → 0.29, q²ex 0.67 → 0.54): on THR the
 raw convention's dominance of the steric field (weight ratio steric : electrostatic ≈ 50 : 1 at
 α = 0.25, see the table above) is evidently what the published model relies on.  Averaged over the
@@ -334,7 +334,7 @@ sulfonate oxygens are O.co2).
 ## The protocol of the paper, as reconstructed from the scripts and the stored results
 
 The CIF models were produced with `cmf-do-comp-ind-kernels-*.R`, `cmf-do-krr-train-ind.R`,
-`cmf-do-krr-pred-ind.R` and `cmf-do-krr-ecvr-ind.R` on top of `cmf-krr.R`/`cmf-kernels.R`:
+`cmf-do-krr-pred-ind.R` and `cmf-do-krr-ecvr-ind.R` built on `cmf-krr.R`/`cmf-kernels.R`:
 
 1. One indicator field per Sybyl atom type of the MOL2 file (`get_syb_types_list_ex`) that occurs
    in at least `min_occ` molecules (7 in the thrombin and dye scripts, 5 in the Am/Eu scripts and
@@ -346,7 +346,7 @@ The CIF models were produced with `cmf-do-comp-ind-kernels-*.R`, `cmf-do-krr-tra
    beyond the grid).  α and γ (= λ) are optimised **simultaneously by R's `optim()` Nelder–Mead
    simplex** started at (α, γ) = (0.25, 5) (`alpha_grid_search = FALSE`, `gamma_grid_search =
    FALSE`), the objective being RMSEcv of a 10-fold interleaved cross-validation; the final α is
-   clamped to the grid range.  Negative γ is not excluded by the scripts (15 of the 500 Am/Eu
+   limited to the grid range.  Negative γ is not excluded by the scripts (15 of the 500 Am/Eu
    fold models have γ < 0).
 3. KRR with the bias term (Eq. 11); the Am/Eu training model alone was built without bias
    (`set_b_0 = TRUE` in `_AmEu1-train.R`, b = 0), its external cross-validation with bias.
@@ -434,7 +434,7 @@ reshuffles; the stored R results give 0.655 ± 0.073 for thrombin CIF over 10 re
 
 The training models of the thrombin (CIF and physico-chemical), Am/Eu and dye sets are
 reproduced exactly from the stored result objects, including the non-grid α of the thrombin model
-(0.2426) found by the simplex search and the clamped α = 10 of the Am/Eu model.  The paper's
+(0.2426) found by the simplex search and the grid-limited α = 10 of the Am/Eu model.  The paper's
 r²ext "d" for thrombin (0.431) and Am/Eu (0.767) is the training-variance formula of
 `regr_param_ex`, now available as `r2_pred_train_var`; the program's older "train mean" variant
 (0.335 for thrombin) is a different quantity.  The Am/Eu r² of 0.906 and q² of 0.707 require the
@@ -473,21 +473,21 @@ recomputed ones by up to 2 log units.  The stored external cross-validation was 
 produced with a kernel set that no longer exists in the folder (file dates: kernels June 2013,
 result January 2014; the stored fold models cluster at α ≈ 0.25–0.39, γ ≈ 4.5–5.5 with inner q²
 0.74–0.81, better than the present kernels allow).  Its 20 repetitions also contain one with
-q² = −2.46, a Nelder–Mead run gone astray.  The CIF value of 0.712 and the PC value of 0.764 of
+q² = −2.46, a Nelder–Mead run that failed.  The CIF value of 0.712 and the PC value of 0.764 of
 Table 1 are thus not comparable with each other; with the present data the physico-chemical
 fields and the CIFs give the same external q² (0.67 vs 0.68).
 
 ### 4. The dye models: two basins of the simplex search
 
 The scripts' default start (α, γ) = (0.25, 5) leads the Nelder–Mead search of the dye set into
-the basin α → 0 (clamped to 0.01, γ 7.16, q² 0.924, RMSEcv 0.90, r² 0.981), which is the stored
+the basin α → 0 (limited to 0.01, γ 7.16, q² 0.924, RMSEcv 0.90, r² 0.981), which is the stored
 `aff-ind-model-all.RData`, whereas the paper reports q² 0.956, RMSEcv 0.69, r² 1.000.  From
 almost any other start (e.g. (1, 1)) the search converges to α 1.37, γ 0.017 with q² 0.959,
 RMSEcv 0.67, r² 0.9996, and the α-grid search with Brent γ gives α 1, γ 0.01, q² 0.956, RMSEcv
 0.69 (tag `cif-grid`), the published values.  The published dye model therefore belongs to the
 second basin and was obtained with a different start or an α grid search; all three variants give
 the same external cross-validation (q²ext 0.91–0.92, RMSEext-cv 0.91–1.00 vs 0.909 / 0.99).  The
-hydrogen-only model is reproduced from the default start (α ≥ 10 clamped, γ 0.0058, q² 0.940,
+hydrogen-only model is reproduced from the default start (α limited to 10, γ 0.0058, q² 0.940,
 RMSEcv 0.80, r² 0.999); its external cross-validation (ours 0.88–0.89 / 1.1, paper 0.822 / 1.39)
 is dominated by the instability of fold models with λ → 0 or λ < 0 (48–67 of 500 fold models,
 per-repetition q² between −2.9 and 0.95), so that the aggregated value depends on how many such
@@ -499,7 +499,7 @@ on 30 molecules.
 
 ### 5. Simplex search versus grid search
 
-For the thrombin CIF model the simplex search (q² 0.772) beats the α grid + Brent λ protocol
+For the thrombin CIF model the simplex search (q² 0.772) surpasses the α grid + Brent λ protocol
 (0.753, λ at the upper bound 20), while on the test set the grid model is better (R²ext 0.44 vs
 0.31, RMSEext 0.68 vs 0.75); the external cross-validations agree (0.684 vs 0.690).  On Am/Eu the
 grid protocol is slightly worse in all statistics (q² 0.675 vs 0.707); on the dyes it finds the
@@ -555,7 +555,7 @@ the README does not cover — `examples/openff`, `examples/schindler`, `examples
 data sets than the original benchmark and, unlike it, a mixture of good and bad alignments. The
 Sutherland numbers are not repeated here; only the conclusions drawn from them are tested.
 
-The short answer is that both conclusions survive, that both effects are small compared with what
+The short answer is that both conclusions hold, that both effects are small compared with what
 the *alignment* of a data set decides, and that one of the two alignment variants should not be
 used on these collections.
 
@@ -564,38 +564,39 @@ used on these collections.
 * The **Gaussian kernel layer** is confirmed: it raises q²cv by 0.027 on average (paired SD 0.076
   over 86 sets, t = 3.3) and q²ex by 0.026 (paired SD 0.097, t = 2.5). The direction is the same as
   on the Sutherland sets and the size is about a third of it. It wins on 53 of 86 sets in q²ex,
-  which is worth stressing: the layer is a reliable *average* improvement and a coin flip on any
-  single set.
+  which is worth stressing: the layer is a reliable *average* improvement and a matter of chance
+  on any single set.
 * **Alignment-based multiple kernel learning** behaves as reported, too, and the distinction between
   its two modes matters more here. Per-field alignment (`align`) gains 0.014 in q²cv (SD 0.036,
   t = 3.6) and 0.008 in q²ex (t = 1.4) over the same field set with h_f = 1 — the "about +0.01 with
   indicator fields" of the README, reproduced on ten times as many sets. The joint solution
-  (`alignf`) does not: it is level in q²cv (+0.010, t = 1.7) and **loses** 0.015 in q²ex, winning
+  (`alignf`) does not: q²cv is unchanged (+0.010, t = 1.7) and **loses** 0.015 in q²ex, winning
   only 40 of 86 sets. It is also the least stable configuration of the five (mean standard
   deviation over the five reshuffles of the external cross-validation 0.135 against 0.102 for
-  `align`), and it fails outright on individual sets — `schindler/cdk8` falls from q²ex 0.470 to
+  `align`), and it fails completely on individual sets — `schindler/cdk8` falls from q²ex 0.470 to
   −0.184. On these collections, use `align`.
-* Adding the **continuous indicator fields** at all is worth nothing on average (q²ex +0.005,
-  t = 0.3) but that average hides a clean split by size: over the 33 sets with at least 40
+* Adding the **continuous indicator fields** at all gains nothing on average (q²ex +0.005,
+  t = 0.3) but that average hides a clear split by size: over the 33 sets with at least 40
   molecules they raise q²ex from 0.220 to 0.248, and over the 53 smaller sets they lower it from
-  0.222 to 0.212. Twelve to eighteen extra field types need molecules to pay for themselves. Since
-  the alignment runs use the indicator fields, a `cif` column with h_f = 1 is carried through every
-  table; without it a comparison of `align` against the five physico-chemical fields would mix
-  "added the indicator fields" with "weighted them".
-* Over the **five physico-chemical fields alone** mixing is worth nothing, as the README says, but
+  0.222 to 0.212. Twelve to eighteen extra field types need enough molecules to be worth their
+  cost. Since the alignment runs use the indicator fields, a `cif` column with h_f = 1 is carried
+  through every table; without it a comparison of `align` against the five physico-chemical fields
+  would mix "added the indicator fields" with "weighted them".
+* Over the **five physico-chemical fields alone** mixing gains nothing, as the README says, but
   it is not harmful either: at the default shrinkage `align` gains 0.004 of q²ex (t = 0.8) and
   `alignf` loses 0.004 (t = −0.6) against h_f = 1. The *unshrunk* joint solution, which is what the
-  README's example was, is harmful and by a wide margin — q²ex 0.221 → 0.152, t = −4.7, 42 of the
-  86 sets losing more than 0.05 — because it zeroes three or more of the five fields on 43 sets.
+  README's example was, is harmful and by a large amount — q²ex 0.221 → 0.152, t = −4.7, 42 of
+  the 86 sets losing more than 0.05 — because it sets three or more of the five fields to zero on
+  43 sets.
   Full numbers
   [below](#does-alignment-based-multiple-kernel-learning-hurt-over-the-five-physico-chemical-fields-alone).
 * **None of this is the main effect.** The quality of the alignment is, by a factor of three. The
   five Mittal sets that consist of exactly the same molecules with exactly the same activities as
   their Sutherland counterparts, and differ only in the coordinates, go from a mean q²ex of 0.534
   with Sutherland's published alignment to 0.137 with automatic conformer generation and MCS
-  superposition. Against that, 0.026 for a kernel layer is a detail. Where a result below is about
-  the alignment rather than about the kernel, it is said so.
-* The honest resolution of a single set is about **±0.1 in q²ex**: that is the mean standard
+  superposition. Compared with that, 0.026 for a kernel layer is a small detail. Where a result
+  below is about the alignment rather than about the kernel, it is said so.
+* The measured resolution of a single set is about **±0.1 in q²ex**: that is the mean standard
   deviation of q²ex over the five reshuffles of the external cross-validation, and independently it
   is the scale on which two different preparations of one and the same congeneric series disagree
   (`schindler/cmet` and `ross/merck/cmet` are the same 24 ligands in different poses and give q²ex
@@ -622,16 +623,16 @@ than assumed:
 
 * `schindler/eg5.sdf` and `schindler/eg5_alternativeloop.sdf` hold **identical ligand coordinates**
   (maximum coordinate difference 0.0 over all 28 ligands); the two cases differ in a protein loop,
-  which a ligand-field model never sees. Their rows are therefore bit-identical and the
+  which a ligand-field model never uses. Their rows are therefore bit-identical and the
   `schindler` means count that series twice; read them as nine series, not ten.
 * `examples/ross/merck` is the same Merck benchmark as `examples/schindler`, re-prepared by
   Schrödinger, but it is not a copy of it. Only `shp2` (26 ligands) and `cmet` (24) have the same
   composition; the others hold more ligands (extra protomers, "fullmap"/"automap" variants:
   `tnks2` 27/33, `syk` 44/51, `cdk8` 33/41, `hif2a` 42/51, `pfkfb3` 40/87, `eg5` 28/34). `shp2` is
-  identical in molecules *and* poses and its two rows agree to the last digit, which is a free
-  end-to-end determinism check of the whole pipeline. `cmet` is the same molecules in *different*
-  poses and its two rows differ by 0.08 in q²cv and 0.11 in q²ex — the pose-preparation noise
-  quoted above.
+  identical in molecules *and* poses and its two rows agree to the last digit, which is an
+  end-to-end determinism check of the whole pipeline that costs nothing. `cmet` is the same
+  molecules in *different* poses and its two rows differ by 0.08 in q²cv and 0.11 in q²ex — the
+  pose-preparation noise quoted above.
 * `examples/mittal` overlaps `examples/sutherland` in nine targets, and in five of them
   (ACE, AChE/ACHE, GPB, THER/THERM, THR) the molecules and the activities are *identical*. That
   coincidence is what makes the alignment control below possible.
@@ -650,8 +651,8 @@ unit mean diagonal, kernel ridge regression with a bias term and the default gri
 | `align` | physico-chemical + continuous indicator fields | linear | centred kernel alignment per field |
 | `alignf` | physico-chemical + continuous indicator fields | linear | joint alignment, shrunk (ρ = 1) |
 
-Three further configurations were added afterwards, to settle the one README claim the five above
-leave open — that alignment-based mixing is harmful over the five physico-chemical fields on their
+Three further configurations were added afterwards, to decide the one README claim the five above
+do not test — that alignment-based mixing is harmful over the five physico-chemical fields on their
 own. They are reported separately, in
 [their own section](#does-alignment-based-multiple-kernel-learning-hurt-over-the-five-physico-chemical-fields-alone),
 and are not carried through the per-set tables of the five:
@@ -672,7 +673,7 @@ Two statistics are reported per set:
 * **q²cv / RMSEcv** — 10-fold cross-validation over all molecules, with α, λ, γ and the alignment
   weights chosen on that same cross-validation. It is therefore optimistically biased, and it is
   given because it is the number a user of the program sees. The alignment weights are at least
-  re-derived inside every fold by `mkl_cv_predict`, so they never see the left-out activities.
+  re-derived inside every fold by `mkl_cv_predict`, so they never use the left-out activities.
 * **q²ex / RMSEex** — external 5-fold cross-validation with the whole hyper-parameter search
   repeated inside every outer fold (`cmfqsar.model.nested_cv`), **averaged over five reshuffles** of
   the outer folds, with the standard deviation over the reshuffles kept in the raw results. A
@@ -684,7 +685,7 @@ cross-validation is used throughout instead of the single test set of the Suther
 The per-set tables below give q²ex and RMSEex together with the selected α; the q²cv numbers per
 set are in the raw results and in the report that the script writes.
 
-One departure from a strictly honest protocol is worth naming: the list of indicator atom types is
+One departure from a strictly correct protocol should be named: the list of indicator atom types is
 derived once from all molecules of a set, not inside each outer fold. It uses structures only and
 no activities, so it cannot inflate q²ex through the response, but it is not a fold-local decision
 either.
@@ -808,7 +809,8 @@ q²ex (mean over five reshuffles) and RMSEex for the five configurations, best o
 ## What wins where
 
 Collected over the sets of each collection, for both statistics, with the number of sets on which
-each option beats its own baseline (`gauss` against `pc`, `align` and `alignf` against `cif`):
+each option is better than its own baseline (`gauss` against `pc`, `align` and `alignf` against
+`cif`):
 
 | Collection | sets | mol. | stat | pc | gauss | cif | align | alignf | gauss > pc | align > cif | alignf > cif |
 |---|---|---|---|---|---|---|---|---|---|---|---|
@@ -835,46 +837,47 @@ distribution is what matters. Paired per-set differences against each option's o
 | `alignf` − `cif`, q²cv | +0.010 | 0.056 | +1.7 | +0.010 | 17 | 59 | 10 |
 | `alignf` − `cif`, q²ex | −0.015 | 0.114 | −1.3 | −0.003 | 16 | 54 | 16 |
 
-Three things follow. The **median** set is barely touched by any of the three options: on more than
-half of the sets every difference is inside ±0.05, which is well inside the per-set noise. The
+Three things follow. The **median** set is barely affected by any of the three options: on more
+than half of the sets every difference is inside ±0.05, which is well inside the per-set noise. The
 options are therefore not model improvements one can demonstrate on one's own series; they are
-average improvements over many. Second, `align` is the *tidiest* of the three in
+average improvements over many. Second, `align` is the *most consistent* of the three in
 cross-validation — only one set in 86 loses more than 0.05 — but most of that gain does not reach
-external validation (t = 3.6 falls to t = 1.4). The weights themselves are fold-safe, since
-`mkl_cv_predict` re-derives them inside every fold; what does not survive is the α and λ chosen
-alongside them on the same cross-validation. Third, `alignf` is the only option with a heavy tail:
+external validation (t = 3.6 falls to t = 1.4). The weights themselves do not leak information
+between folds, since `mkl_cv_predict` re-derives them inside every fold; what does not carry over
+to external validation is the α and λ chosen alongside them on the same cross-validation. Third,
+`alignf` is the only option with a heavy tail:
 its worst set loses 0.654 of q²ex, where the worst case of `align` loses 0.137 and of `gauss`
 0.251.
 
 The gain from the Gaussian layer is also not spread evenly over the sets. It concentrates where the
-linear model has little to show: over the 42 sets with a linear q²ex below 0.2 the mean gain is
+linear model performs poorly: over the 42 sets with a linear q²ex below 0.2 the mean gain is
 +0.040, over the 44 above it +0.013 (correlation between the linear q²ex and the gain, −0.21). A
-deeper kernel is worth most where a plain overlap integral is failing, and close to nothing where
+deeper kernel helps most where a plain overlap integral is failing, and almost not at all where
 it already works.
 
 The pattern is consistent and the collections disagree about one thing only.
 
 * The **Gaussian layer** improves the mean of both statistics in all four collections and is the
   single best configuration of the five on the three receptor-frame collections. Its largest gains
-  are on sets where the linear model has little: `openff/bace_hunt` q²ex 0.001 → 0.257,
+  are on sets where the linear model performs poorly: `openff/bace_hunt` q²ex 0.001 → 0.257,
   `ross/janssen_bace/bace_ciordia_retro` −0.086 → 0.328, `ross/gpcrs/ox2_hip_custcore`
-  −0.075 → 0.213, `schindler/eg5` 0.168 → 0.351. That is the same signature as on the Sutherland
+  −0.075 → 0.213, `schindler/eg5` 0.168 → 0.351. That is the same pattern as on the Sutherland
   sets, where its largest gain was on the worst linear model of the eight.
 * The **indicator fields with per-field alignment** win on `examples/mittal`, and there they are
   the best configuration of the five — the only collection where the five physico-chemical fields
   are not the better starting point. This is an alignment effect and is discussed below.
-* **`alignf` is the only option that is worse than doing nothing**, and the sets where it collapses
-  are instructive: `schindler/cdk8` 0.470 → −0.184, `ross/merck/cdk8_5cei_new_helix_loop_extra`
+* **`alignf` is the only option that is worse than doing nothing**, and the sets where it fails
+  are informative: `schindler/cdk8` 0.470 → −0.184, `ross/merck/cdk8_5cei_new_helix_loop_extra`
   0.527 → 0.065, `openff/bace_hunt` 0.032 → −0.136. The joint alignment problem is nearly sparse on
   a congeneric series, because the field kernels are strongly correlated; the shrinkage towards
-  equal weights (ρ = 1) keeps that in check on most sets but not on all, and when the solution does
-  concentrate on a few indicator fields the model loses the physico-chemical fields that carried it.
+  equal weights (ρ = 1) controls that on most sets but not on all, and when the solution does
+  concentrate on a few indicator fields the model loses the physico-chemical fields it relied on.
   Per-field alignment cannot do this, which is why it is the robust one.
 
 ## Do the conclusions of the Sutherland benchmark hold?
 
-Both of them do, in direction, and both effects are smaller here. To make the comparison on equal
-terms rather than against numbers obtained with a different protocol, the eight Sutherland sets
+Both of them do, in direction, and both effects are smaller here. To make the comparison fair
+rather than against numbers obtained with a different protocol, the eight Sutherland sets
 were run again under *exactly* the protocol of this section (all molecules, Gasteiger charges,
 external cross-validation with five reshuffles instead of the published test set). These numbers
 are therefore not comparable with the README's table and are not meant to replace it:
@@ -895,19 +898,19 @@ Under this protocol the Gaussian layer gains 0.062 in q²cv and 0.041 in q²ex o
 sets, against 0.027 and 0.026 over the 86 sets of the four collections; `align` gains 0.021 in q²cv
 and 0.021 in q²ex there, against 0.014 and 0.008 here. So the effects reported in the README are
 reproduced on a tenfold larger and much more varied sample, at roughly half to a third of the size.
-That the effects shrink on a larger sample is the ordinary fate of a result selected on eight sets,
+That the effects shrink on a larger sample is the usual outcome of a result selected on eight sets,
 and it is the reason to prefer the numbers in this section when deciding whether to switch an
 option on.
 
 ## Does alignment-based multiple kernel learning hurt over the five physico-chemical fields alone?
 
-This is the one claim of the README that the five configurations above cannot touch, because all
+This is the one claim of the README that the five configurations above cannot test, because all
 three of their mixing variants carry the indicator fields. It was therefore run separately, on
 exactly the same 86 sets and the same eight controls and under exactly the same protocol, in three
 configurations: `pc+align` and `pc+alignf` are the five physico-chemical fields with the two
 alignment modes at the shrinkage used everywhere above (ρ = 1, the program default), and
 `pc+alignf0` is the *unshrunk* joint solution (ρ = 0) that the README's own example — thrombin
-losing 0.138 of fold-safe q²cv — comes from.
+losing 0.138 of q²cv with the weights re-derived inside each fold — comes from.
 
 | Collection | sets | mol. | stat | `pc` | `pc+align` | `pc+alignf` | `pc+alignf0` | align > pc | alignf > pc | alignf0 > pc |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -936,14 +939,14 @@ sets of the four collections:
 | `pc+alignf0` − `pc`, q²cv | −0.014 | 0.108 | −1.2 | +0.002 | 23 | 42 | 21 |
 | `pc+alignf0` − `pc`, q²ex | **−0.069** | 0.136 | **−4.7** | −0.045 | 14 | 30 | **42** |
 
-The claim has two halves and they come out differently.
+The claim has two halves and they give different results.
 
 **"Not worth anything" is confirmed.** At the program's default shrinkage neither mode is worth
 running over the five physico-chemical fields. Per-field alignment gains +0.003 in q²cv (t = 1.1)
 and +0.004 in q²ex (t = 0.8); the joint solution gains +0.003 and loses 0.004, winning 38 of 86
 sets. Every one of those numbers is inside the noise and the medians are zero to three decimals.
 Against that, the same two modes over the field set that includes the indicator fields gain +0.014
-and +0.008 (`align`, t = 3.6 and 1.4). So the ordering the README gives — mixing pays only once
+and +0.008 (`align`, t = 3.6 and 1.4). So the ordering the README gives — mixing helps only when
 fields that really do differ in relevance are present — is reproduced in direction, with both terms
 small: on the eight Sutherland controls under this protocol `align` gains 0.022 of q²ex over `cif`
 (t = 2.8) against 0.007 over `pc` (t = 1.8).
@@ -956,7 +959,7 @@ way. The unshrunk joint solution is a different matter. It loses 0.069 of q²ex 
 on 42 of them, with a tail that reaches −0.414
 (`ross/merck/hif2a_automap`), −0.375 (`mittal/YOPH`) and −0.369
 (`ross/opls_stress/fxa_yoshikawa_set`). It is the only configuration anywhere in this benchmark
-that is harmful at a significance worth the name, and it is harmful in all four collections
+that is harmful at a meaningful significance level, and it is harmful in all four collections
 separately (q²ex −0.059 in openff, −0.099 in schindler, −0.079 in ross, −0.059 in mittal). The mean
 standard deviation of q²ex over the five reshuffles rises from 0.106 to 0.138, so it is also the
 least stable configuration run here.
@@ -964,27 +967,29 @@ least stable configuration run here.
 The mechanism is the one the README names, and over five fields it can be counted directly. The
 unshrunk solution puts 75 % of the total weight on a single field on average (median 76 %, against
 20 % for equal weights), passes 90 % on 24 of the 86 sets, and sets h_f to exactly zero for 2.5 of
-the five fields — on 43 sets three or more of the five are deleted outright. Shrinkage stops that:
+the five fields — on 43 sets three or more of the five are removed entirely. Shrinkage stops that:
 at ρ = 1 the joint solution's largest share averages 38 % and reaches 50 % on 9 sets, and per-field
-alignment averages 32 % and passes 50 % once in 86, with mean weights (electrostatic 1.07,
-steric 1.06, hydrophobic 1.08, H-bond acceptor 0.96, H-bond donor 0.78) that barely leave h_f = 1.
+alignment averages 32 % and passes 50 % once in 86, with mean weights (electrostatic 1.07, steric
+1.06, hydrophobic 1.08, H-bond acceptor 0.96, H-bond donor 0.78) that barely differ from h_f = 1.
 Five strongly correlated kernels do not contain enough independent information for a data-driven
-weighting to exploit, and the unshrunk problem answers that by discarding most of them. With the
+weighting to exploit, and the unshrunk problem responds by discarding most of them. With the
 indicator fields the same solution concentrates far less (largest share 25 % of 10 to 23 fields,
 against 7 % for equal weights), which is why `cif+alignf` is merely useless out of sample where
 `pc+alignf0` is damaging.
 
 One detail of the README's wording does **not** reproduce, and it is the symptom rather than the
-conclusion. There the harm is reported in the fold-safe q²cv, with thrombin falling from 0.674 to
-0.536. Here the unshrunk solution leaves q²cv essentially alone — −0.014 over the 86 sets (t =
-−1.2), median +0.002, and on the eight Sutherland sets +0.002, with thrombin at 0.677 against 0.677
-for h_f = 1 — and does its damage only in external validation (−0.069, t = −4.7). The likely
+conclusion. There the harm is reported in the q²cv with the weights re-derived inside each fold,
+with thrombin falling from 0.674 to 0.536. Here the unshrunk solution leaves q²cv essentially
+unchanged — −0.014 over the 86 sets (t = −1.2), median +0.002, and on the eight Sutherland sets
++0.002, with thrombin at 0.677 against 0.677 for h_f = 1 — and does its damage only in external
+validation (−0.069, t = −4.7). The likely
 explanation, which was not itself tested, is that the README's q²cv was obtained on the published
 training set with the published alignment and MOL2 charges, where 88 molecules and one α/λ choice
-make a single number volatile; the direction of the effect is right, the size quoted there is not
+make a single number unstable; the direction of the effect is right, the size quoted there is not
 representative, and the statistic that shows it is q²ex rather than q²cv. The practical advice is
-unchanged either way and now rests on 86 sets instead of eight: over the five physico-chemical
-fields alone leave h_f = 1, and if the joint solution is used at all, leave the shrinkage on.
+unchanged either way and is now supported by 86 sets instead of eight: over the five
+physico-chemical fields alone leave h_f = 1, and if the joint solution is used at all, leave the
+shrinkage on.
 
 ## Alignment, not the kernel
 
@@ -1003,13 +1008,13 @@ isolate the cost of an automatic alignment from everything else:
 | THR | 88 | 0.593 | 0.627 | 0.598 | 0.634 | 0.625 | -0.060 | -0.018 | -0.102 | -0.052 | -0.061 |
 | **mean** | | 0.534 | 0.560 | 0.560 | 0.584 | 0.563 | 0.137 | 0.150 | 0.168 | 0.185 | 0.167 |
 
-The whole model collapses. Averaged over the five configurations, mean q²ex falls from 0.56 to 0.16
+The whole model fails. Averaged over the five configurations, mean q²ex falls from 0.56 to 0.16
 and mean q²cv from 0.64 to 0.23; on thrombin, where the mean MCS superposition error is 2.9 Å, every
-configuration is at or below zero where the published alignment gives 0.59 to 0.63. For scale: the
-largest effect any kernel option has in this benchmark is 0.027. The alignment decides fifteen times
-as much.
+configuration is at or below zero where the published alignment gives 0.59 to 0.63. For
+comparison: the largest effect any kernel option has in this benchmark is 0.027. The alignment
+decides fifteen times as much.
 
-The hyper-parameter search says the same thing in its own language. The attenuation factor α sets
+The hyper-parameter search shows the same thing in its own terms. The attenuation factor α sets
 how local a field is, and a kernel built from sharply peaked fields can only work if the molecules
 are in a common frame:
 
@@ -1031,9 +1036,9 @@ are in a common frame:
 | | % at alpha = 0.2 | 0 | 0 | 12 | 12 | 0 |
 | | % at alpha = 3.0 | 38 | 12 | 75 | 62 | 50 |
 
-With the published alignment the indicator-field configurations run to the **top** of the α grid
+With the published alignment the indicator-field configurations move to the **top** of the α grid
 (median 3.0, three quarters of the `cif` runs at the upper edge and one at the lower); with the
-automatic alignment of the same molecules they run to the **bottom** (median 0.2, over half at the
+automatic alignment of the same molecules they move to the **bottom** (median 0.2, over half at the
 lower edge). The lower edge is where the model stops being a field model: as α → 0 a continuous
 indicator field tends to the plain count of atoms of that type (Sitnikov et al. 2015), so the
 kernel degenerates towards an alignment-free fragment-descriptor kernel. That is exactly why the
@@ -1042,15 +1047,15 @@ receptor-frame collections — on `examples/mittal` they are not being used as f
 gain from `align` on that collection is therefore evidence about a fragment kernel, not about
 multiple kernel learning on molecular fields.
 
-Two things should not be over-read from this. The per-set correlation between the mean MCS
-superposition error and q²cv *within* `examples/mittal` is only −0.36 over its 36 sets (−0.41 for
-the indicator-field configuration): the series also differ in size, activity range and chemotype
-diversity, so the cross-set correlation is loose even though the controlled comparison is
+Two conclusions should not be drawn too strongly from this. The per-set correlation between the
+mean MCS superposition error and q²cv *within* `examples/mittal` is only −0.36 over its 36 sets
+(−0.41 for the indicator-field configuration): the series also differ in size, activity range and
+chemotype diversity, so the cross-set correlation is weak even though the controlled comparison is
 unambiguous. The alignment error of a series predicts its q² only weakly; it is the *difference*
-between two alignments of one series that is decisive. And the automatic alignment is not uniformly bad —
-`mittal/AI` reaches q²ex 0.669 and `mittal/COMT` 0.608 — so the collection is usable for comparing
-methods on equal footing, which is what `make_mittal_examples.py` says it is for. It is not usable
-for comparing against literature 3D-QSAR statistics.
+between two alignments of one series that is decisive. And the automatic alignment is not
+uniformly bad — `mittal/AI` reaches q²ex 0.669 and `mittal/COMT` 0.608 — so the collection is
+usable for comparing methods under equal conditions, which is what `make_mittal_examples.py` says
+it is for. It is not usable for comparing against literature 3D-QSAR statistics.
 
 ## Caveats
 
@@ -1061,10 +1066,10 @@ for comparing against literature 3D-QSAR statistics.
   is 0.50 to 1.25 log units (median 0.78) against 0.76 to 2.27 (median 1.24) for the Sutherland
   sets. A q² is a fraction of a variance, and when the variance is small there is little to
   explain. 11 of the 86 sets have a negative q²ex under every one of the five configurations.
-* **Per-set numbers are soft.** The mean standard deviation of q²ex over the five reshuffles is
+* **Per-set numbers are imprecise.** The mean standard deviation of q²ex over the five reshuffles is
   0.093 (`gauss`) to 0.135 (`alignf`); an independent estimate from the two preparations of
   `cmet` is 0.11. Differences below roughly 0.1 on a single set are not interpretable, and nothing
-  in the discussion above rests on one.
+  in the discussion above depends on one.
 * **q²cv is biased** and is reported only because it is what the program's model panel shows. The
   hyper-parameters, and for the alignment runs the mixing coefficients, were selected on the same
   10-fold cross-validation. The gap between the two statistics is the size of that bias: 0.16 on
@@ -1072,8 +1077,8 @@ for comparing against literature 3D-QSAR statistics.
 * `mittal/PTC` activities are not in log units (their standard deviation is 26.8 against about 1
   for every other set), so its q² is comparable with the rest but its RMSE, around 20, is not.
 * `mittal/AMPH1` is 130 decapeptides of 169 atoms each; its kernels cost about fourteen times a
-  normal set, and its model is empty in every configuration (q²cv 0.063 to 0.132), which is what a
-  mean MCS superposition error of 3.2 Å over a flexible peptide should give.
+  normal set, and its model has no predictive power in every configuration (q²cv 0.063 to 0.132),
+  which is what a mean MCS superposition error of 3.2 Å over a flexible peptide should give.
 * The indicator atom-type list is selected from all molecules of a set rather than per outer fold
   (structures only, no activities), as noted under the protocol.
 * The α grid stops at 3.0 and 27 of the 86 `cif` runs selected that upper value, so on the
@@ -1083,8 +1088,8 @@ for comparing against literature 3D-QSAR statistics.
 
 ## Reproducing
 
-Every configuration of this benchmark is reachable from the shipped command line, so no extra code
-is needed to repeat a single run. For one data set, the five configurations are
+Every configuration of this benchmark is available from the command line as distributed, so no
+extra code is needed to repeat a single run. For one data set, the five configurations are
 
 ```bash
 D=examples/schindler/syk.sdf
@@ -1102,10 +1107,10 @@ loops over the SDF files of the four collections and calls `cmfqsar.model.grid_s
 `cmfqsar.model.nested_cv` directly, so that the per-field kernels of a set are computed once and
 reused by all five configurations; that driver is not part of the repository, since it adds no
 capability to the program. The whole benchmark is 470 runs, 8.7 hours of processor time, run in about
-three and a half hours of wall clock on 32 cores with six concurrent processes. Five sets account
+three and a half hours of elapsed time on 32 cores with six concurrent processes. Five sets account
 for a third of it: `mittal/AMPH1` 1.9 h (130 decapeptides, 22005 atoms), `mittal/DHFR` 1.2 h,
 `sutherland/DHFR` 0.8 h, `sutherland/COX2` 0.8 h and `mittal/COX2` 0.6 h. Everything else is
 minutes per set.
 
 No source file of `cmfqsar/` was changed for this benchmark; it reports the behaviour of the
-program as it stands.
+program in its current state.

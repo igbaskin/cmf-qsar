@@ -70,14 +70,14 @@ def test_the_sign_follows_which_end_is_active(world):
 
 
 def test_the_bound_demotes_the_molecule_the_model_knows_nothing_about(world):
-    """The whole point: a stranger gets the training mean and a wide posterior, and is pushed down."""
+    """The purpose: a molecule unlike the training set gets a wide posterior and is pushed down."""
     fs, mf, y, model, table = world
     stranger = build_fields(_mol("NCCc1ccc(O)cc1", seed=99, name="stranger"), fs, "stranger")
     far = AtomTable.from_molecules([mf[0], stranger])
     score0, yp0, sd0 = model.rank_score(far, beta=0.0)
     score1, yp1, sd1 = model.rank_score(far, beta=2.0)
-    assert sd1[1] > sd1[0]                       # the stranger is the uncertain one
-    # the bound costs the stranger more than the training molecule, so its rank can only fall
+    assert sd1[1] > sd1[0]                       # the unfamiliar molecule is the uncertain one
+    # the bound lowers the unfamiliar molecule more than the training one, so its rank can only fall
     drop = (yp1 - score1)
     assert drop[1] > drop[0]
     assert score1[1] - score1[0] < score0[1] - score0[0]

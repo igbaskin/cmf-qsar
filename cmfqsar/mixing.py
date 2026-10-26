@@ -3,8 +3,8 @@
 The joint kernel is a sum, ``K = sum_f h_f c_f K_f``, so choosing the mixing coefficients h_f is
 the multiple-kernel-learning problem, and :func:`cmfqsar.model.align_mixing` already solves it by
 kernel alignment: one number per field, no statement of how sure it is.  Under the Gaussian
-process the same sum has a reading that does better.  A sum of kernels is the kernel of a sum of
-independent processes,
+process the same sum has an interpretation that does better.  A sum of kernels is the kernel of a
+sum of independent processes,
 
     f(x) = sum_f f_f(x),    f_f ~ GP(0, h_f c_f K_f),
 
@@ -19,23 +19,23 @@ written ``h = F softmax(u)``, so the shares ``softmax(u)`` sum to one and can be
 1/F, the share a field would have if every field mattered equally.  The prior is
 ``u_f ~ N(0, sigma^2)`` independently, which is exchangeable over the fields -- it prefers no
 field over any other -- and weakly informative: sigma = 1.5 keeps a field's share within about a
-factor of twenty of the others before the data speak.  Adding a constant to every u_f leaves the
-shares alone, so the likelihood is flat along that direction and the prior settles it at the
-centred representative, which is to say the prior acts on the *spread* of the log-shares and not
-on their level.  The noise level is sampled with them, as
-``log lambda``, because a model that is allowed to reweigh its fields and not to adjust its
-regularisation is answering a different question.
+factor of twenty of the others before the data are taken into account.  Adding a constant to every
+u_f leaves the shares alone, so the likelihood is flat along that direction and the prior settles
+it at the centred representative, which is to say the prior acts on the *spread* of the log-shares
+and not on their level.  The noise level is sampled with them, as ``log lambda``, because a model
+that is allowed to reweigh its fields and not to adjust its regularisation is answering a different
+question.
 
 Three things come out, in increasing order of what they cost:
 
 * :func:`evidence_mixing` -- the weights that maximise the posterior.  A point estimate like the
-  alignment one, and a drop-in for it (``--mkl evidence``).
+  alignment one, and a direct replacement for it (``--mkl evidence``).
 * :func:`sample_mixing` -- the posterior itself, by slice sampling.  Slice sampling because it
   has no step size to tune: a library that asks its user to tune a sampler will be run with the
   default and the default will be wrong for their data.
 * :func:`drop_one` -- what the evidence loses when a field is removed outright, which is the
   Bayes factor against *this field does nothing*.  The sharpest form of the question, and the
-  cheapest to read.
+  cheapest to answer.
 
 **What this does not promise.**  The evidence is not a held-out score, and item D6 measured what
 happens when it is given more freedom over the shape of the kernel: it takes the freedom, its own
@@ -114,7 +114,7 @@ class MixingPosterior:
 
 def _log_posterior(u: np.ndarray, log_lam: float, K_fields: np.ndarray, y: np.ndarray,
                    scale: np.ndarray, log_lam0: float, prior_sd: float, fit_bias: bool) -> float:
-    """Log evidence of the weights plus their prior; -inf where the kernel will not stand."""
+    """Log evidence of the weights plus their prior; -inf where the kernel is not valid."""
     p = _softmax(u)
     h = p * len(p)
     K = np.tensordot(h * scale, K_fields, axes=(0, 0))
@@ -177,7 +177,7 @@ def evidence_mixing(K_fields: np.ndarray, y: np.ndarray, scale: Optional[np.ndar
     x0 = np.concatenate([np.zeros(idx.size), [log_lam0]])
     # the simplex is given explicitly: Nelder-Mead builds its own by perturbing each coordinate
     # by a fraction of its value, and every coordinate here starts at zero, so its own simplex
-    # would be 2.5e-4 wide and it would declare victory on the first iteration
+    # would be 2.5e-4 wide and it would report convergence on the first iteration
     step = np.full(idx.size + 1, 0.6)
     simplex = np.vstack([x0] + [x0 + np.eye(idx.size + 1)[i] * step[i]
                                 for i in range(idx.size + 1)])

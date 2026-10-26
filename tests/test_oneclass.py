@@ -62,7 +62,7 @@ def test_the_score_ranks_the_near_above_the_far(world, kind):
 
 
 def test_the_subspace_description_beats_the_ball_on_a_flat_set(world):
-    """The actives lie on a line; a ball has to swallow space the subspace does not."""
+    """The actives lie on a line; a ball has to include space the subspace does not."""
     X, _ = world
     K = _kernel(X, X)
     off = np.stack([np.zeros(40), np.linspace(0.6, 2.0, 40)], axis=1)   # beside the line
@@ -74,7 +74,7 @@ def test_the_subspace_description_beats_the_ball_on_a_flat_set(world):
 
 
 def test_which_descriptions_are_kernel_expansions(world):
-    """Two of them keep the co-field; the other two say so instead of pretending."""
+    """Two of them keep the co-field; the other two report that instead of inventing one."""
     X, _ = world
     K = _kernel(X, X)
     for kind in KINDS:
@@ -91,7 +91,7 @@ def test_which_descriptions_are_kernel_expansions(world):
 
 
 def test_the_gaussian_process_can_punish_what_it_knows_nothing_about(world):
-    """mean_over_sd uses the posterior width, which the plain mean throws away."""
+    """mean_over_sd uses the posterior width, which the plain mean discards."""
     X, far = world
     K = _kernel(X, X)
     plain = make("ocgp", nu=0.1, score="mean").fit(K)

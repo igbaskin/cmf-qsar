@@ -91,7 +91,7 @@ def test_ensemble_field_is_the_weighted_union(ensemble_mol):
 
 
 def test_ensemble_kernel_is_the_mean_of_the_conformer_kernels():
-    """The heart of the method: the mean-map kernel of the two conformational distributions."""
+    """The core of the method: the mean-map kernel of the two conformational distributions."""
     from rdkit import Chem
     fs_e = FieldSet.create(alpha=0.6, conformers="ensemble")
     fs_1 = FieldSet.create(alpha=0.6)
@@ -149,7 +149,7 @@ def test_weights_uniform_boltzmann_and_the_cap(ensemble_mol):
     assert conformer_weights(m, fs) == pytest.approx(np.full(k, 1.0 / k))
     m.ClearProp("conformer_energies")
     assert conformer_weights(m, fs) == pytest.approx(np.full(k, 1.0 / k))
-    # the cap keeps the heaviest conformations and renormalises
+    # the cap keeps the conformations with the largest weights and renormalises
     set_conformer_energies(m, np.arange(k, dtype=float))
     fs.conformer_kt = 0.6
     fs.max_conformers = 2
@@ -279,7 +279,7 @@ def test_every_alignment_mode_leaves_the_input_pose_alone(series):
 
 
 def test_reference_alignment_puts_the_conformations_in_the_frame_of_the_series(series):
-    """The point of the exercise: the extra conformations stop being arbitrarily oriented."""
+    """The purpose: the extra conformations stop being arbitrarily oriented."""
     from cmfqsar.align import mcs_atom_map
     mols, ref = series
     probe = mols[3]

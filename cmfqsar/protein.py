@@ -236,7 +236,7 @@ def read_structure(path: str, **kw) -> Protein:
 def write_pdb(protein: Protein, path: str, remarks: Sequence[str] = ()) -> None:
     """Write a structure as PDB, with free-text REMARK lines for provenance.
 
-    Used to store a trimmed binding site next to a data set, so that the pocket travels with the
+    Used to store a trimmed binding site next to a data set, so that the pocket stays with the
     molecules and needs no network access.
     """
     with open(path, "w", newline="\n") as fh:
@@ -367,7 +367,7 @@ def residue_anchors(protein: Protein) -> Tuple[np.ndarray, List[str]]:
             members[k] = []
             order.append(k)
         members[k].append(i)
-    one_chain = len({c.strip() for c in protein.chains}) <= 1      # then the chain is no news
+    one_chain = len({c.strip() for c in protein.chains}) <= 1      # then the chain is already known
     pos, txt = [], []
     for k in order:
         idx = members[k]

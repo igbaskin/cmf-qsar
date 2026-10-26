@@ -6,7 +6,7 @@ requirement, and the heterogeneous-series work shows what it costs when the fram
 the alignment-free comparator there is the count kernel, which is pose-free only because it has
 thrown the geometry away entirely.
 
-This module is the missing middle.  For every pair of field types it takes the distance
+This module fills the gap between those two.  For every pair of field types it takes the distance
 distribution of the field weights inside one molecule,
 
     Phi_fg(d) = sum_l sum_m w_lf w_mg exp(-(|r_l - r_m| - d)^2 / 2 sigma^2),
@@ -27,7 +27,7 @@ further channels resolve what that single number collapses: the overlap integral
 the fields of a molecule coincide, the autocorrelation reports at which distances they do.
 
 A distance distribution is the same for a molecule and its mirror image, so the two-point form
-above is blind to chirality.  The signed quantity that is not is the triple product of three
+above cannot detect chirality.  The signed quantity that is not is the triple product of three
 displacement vectors, and :func:`chirality` adds it as a second block of channels.  Summing the
 signed volume over every triple of atoms would cost O(N^3), but the determinant is trilinear, so
 the sum factorises into the triple product of three field-weighted first moments and costs one
@@ -35,15 +35,15 @@ pass over the atoms instead.  It is off by default, so a model built before it e
 unchanged; a test asserts that.
 
 What is lost with the frame is the co-field: a map in space needs a space to live in.  The
-decomposition that survives is the one in the descriptor's own currency -- which pair of field
+decomposition that survives is the one in the descriptor's own terms -- which pair of field
 types at which distance carries the weight -- and :func:`channel_labels` names those channels so
 a fitted model can be read that way.
 
 The channels come in blocks, one per pair of field types, and every block is scaled to unit root
 mean square before the blocks are taken together in one cosine-normalised dot product.  That is
-the right default for a handful of fields and the wrong one for sixty: with one indicator field
+the right default for a few fields and the wrong one for sixty: with one indicator field
 per element the pairs across the elements outnumber the physico-chemical pairs a hundred to one
-and, equally scaled, drown them.  The overlap kernel has its mixing coefficients h_f for this;
+and, equally scaled, overwhelm them.  The overlap kernel has its mixing coefficients h_f for this;
 the functions under "Mixing coefficients over the channel blocks" below give the invariant
 kernels theirs -- one weight per block, set by the kind of block (within a group of fields, across
 two groups) or by centred kernel alignment of the per-block kernels, as :func:`model.align_mixing`
@@ -274,7 +274,7 @@ def chirality(mol: MoleculeFields, spec: AutocorrelationSpec = AutocorrelationSp
     """The three-point signed channels of one molecule, flattened: (n_triples * n_shells,).
 
     A distance distribution is the same for a molecule and its mirror image, so everything above
-    is blind to chirality.  The signed quantity that is not is the triple product of three
+    cannot detect chirality.  The signed quantity that is not is the triple product of three
     displacement vectors, and the obvious way to use it -- summing the signed volume over every
     triple of atoms -- would cost O(N^3) per field triple.  It does not have to.  The determinant
     is trilinear, so the sum over triples factorises exactly:
@@ -292,7 +292,7 @@ def chirality(mol: MoleculeFields, spec: AutocorrelationSpec = AutocorrelationSp
 
     `chirality_shells` resolves the invariant over radial windows about the centroid, since one
     number per field triple describes the handedness of the molecule as a whole and cannot say
-    at which radius it lives.  The windows depend on `|r_l - c|`, which is itself reflection-
+    at which radius it is located.  The windows depend on `|r_l - c|`, which is itself reflection-
     invariant, so every channel keeps the sign behaviour above.
     """
     W = np.asarray(mol.weights, float)
@@ -414,8 +414,8 @@ def autocorrelation_kernel(train: np.ndarray, test: Optional[np.ndarray] = None,
 
     The normalisation is applied to the joint kernel, not block by block: normalising each pair
     of field types on its own would divide out the very magnitudes that distinguish molecules,
-    the same trap the alignment-free count kernel falls into when it is normalised field by
-    field.
+    the same source of error that affects the alignment-free count kernel when it is normalised
+    field by field.
     """
     A = np.asarray(train, float)
     B = A if test is None else np.asarray(test, float)
@@ -552,7 +552,7 @@ def align_block_weights(X: np.ndarray, y: np.ndarray, blocks: Sequence[int], mod
     ``X`` holds the scaled channel features of the training molecules (after
     :func:`channel_scale`), ``blocks`` the column count of every block.  Every block carries a
     linear kernel ``K_b = X_b X_b^T``; its centred form is ``K_b^c = X_b^c X_b^c^T`` with the
-    columns centred over the molecules, so everything the alignment needs lives in the feature
+    columns centred over the molecules, so everything the alignment needs is in the feature
     space and the kernels themselves are never formed: ``<K_b^c, y^c y^c^T>_F = ||X_b^c^T y^c||^2``
     and ``||K_b^c||_F = ||X_b^c^T X_b^c||_F``.
 

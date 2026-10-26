@@ -1,7 +1,7 @@
 """A posterior over the field weights (plan item E6).
 
 The tests are on synthetic kernels, because what has to be right is the inference: a kernel that
-explains the activities should take the weight, one that does not should be squeezed out, and the
+explains the activities should get the weight, one that does not should be reduced to zero, and the
 interval should say which case it is.
 """
 import os
@@ -44,7 +44,7 @@ def test_the_weights_keep_the_joint_kernel_the_size_it_was():
 
 
 def test_it_beats_equal_weights_at_the_thing_it_optimises():
-    """Pins a bug: Nelder-Mead builds its simplex from the starting point, which is all zeros."""
+    """Guards against a bug: Nelder-Mead builds its simplex from a starting point of all zeros."""
     K, y = _world()
     scale = np.ones(len(K))
     lam0 = _start(K, y, scale, True)

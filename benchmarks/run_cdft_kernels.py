@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
-Does the shape of a conceptual-DFT field buy a model anything the condensed numbers do not?
+Does the shape of a conceptual-DFT field give a model anything the condensed numbers do not?
 
 ``cmfqsar/cdft.py`` establishes that a Fukui function cannot be fitted by atom-centred isotropic
 Gaussians -- it is a frontier-orbital density with a node in the molecular plane, and the fit
-loses half of it.  What that does *not* settle is whether the model cares.  A kernel is an inner
+loses half of it.  What that does *not* settle is whether it matters.  A kernel is an inner
 product between molecules, and a per-molecule error that cancels in the same way for every
 molecule costs a model nothing.  Only three kernels on the same molecules can say.
 
@@ -131,7 +131,7 @@ def base_kernels(mols, names, alphas=T.ALPHAS):
 
 
 def condensed_kernels(mols, names, prop, alphas=T.ALPHAS):
-    """One Gaussian per atom weighted by the condensed index: the prop: field as it ships."""
+    """One Gaussian per atom weighted by the condensed index: the prop: field as the program provides it."""
     out = {}
     for alpha in alphas:
         fs = FieldSet.create(physchem=[], alpha=alpha, charge_model="gasteiger",

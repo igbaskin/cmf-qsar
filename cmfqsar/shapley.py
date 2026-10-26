@@ -133,7 +133,7 @@ class AtomGame(_Game):
 class AtomFieldGame(_Game):
     """Players are (atom or group, field type) pairs: what each atom contributes to each field.
 
-    This is the game behind a *Shapley field*.  Its values can be laid back onto the atoms of one
+    This is the game behind a *Shapley field*.  Its values can be mapped back onto the atoms of one
     field type and smeared over space with the Gaussians of that field, giving a map per field
     whose integral is the attributed part of the prediction, so that a nonlinear model gets one
     picture per field type where a linear one has a co-field.
@@ -285,7 +285,7 @@ class ShapleyResult:
         return out
 
     def field_atom_values(self, n_atoms: int, n_fields: int) -> np.ndarray:
-        """Values laid back onto (field, atom), ready to be smeared into a Shapley field."""
+        """Values mapped back onto (field, atom), ready to be smeared into a Shapley field."""
         if self.player_fields is None:
             raise ValueError("this decomposition has no field axis: use the atom-field game")
         out = np.zeros((n_fields, n_atoms))
@@ -512,7 +512,7 @@ def field_shapley(model, mol: MoleculeFields, interactions: bool = False, sample
 
 
 # --------------------------------------------------------------------------- #
-# Scaffold baseline: the common core and the substituents hanging from it
+# Scaffold baseline: the common core and the substituents attached to it
 # --------------------------------------------------------------------------- #
 
 def common_core(mol, references: Sequence, timeout: int = 10,

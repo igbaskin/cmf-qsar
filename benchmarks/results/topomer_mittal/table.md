@@ -46,9 +46,9 @@ Mean loss from giving up the alignment: -0.060 q2 over 31 sets.
 
 Splitting that loss in two. The middle column keeps the same cut substituents at the
 same separated sites but leaves each one exactly where the file's own alignment
-put it, so the step to its left is the price of the cut itself -- the scaffold's own
+put it, so the step to its left is the cost of the cut itself -- the scaffold's own
 field and the geometry between one substituent and another, both of which separated
-sites destroy -- and the step to its right is the price of the pose rule alone, with
+sites destroy -- and the step to its right is the cost of the pose rule alone, with
 the same atoms and the same weights in both.
 
 | set | q2 whole molecules | q2 substituents, as aligned | q2 substituents, posed by rule | cut costs | pose costs |
@@ -85,7 +85,7 @@ the same atoms and the same weights in both.
 | VATP | +0.478 | +0.459 | -0.205 | +0.020 | +0.664 |
 | YOPH | +0.678 | +0.461 | +0.564 | +0.218 | -0.104 |
 
-Mean price of the cut -0.027, mean price of the pose -0.033.
+Mean cost of the cut -0.027, mean cost of the pose -0.033.
 
 | set | RMSEcv aligned | RMSEcv topomer | aligned on all n |
 |---|---|---|---|

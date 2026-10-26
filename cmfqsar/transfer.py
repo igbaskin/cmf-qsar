@@ -25,12 +25,12 @@ of two demands rather than their sizes.
 
 What it is for, in the order the question usually arises:
 
-* **Two targets.**  A positive cosine says the two targets want the same thing at the same place,
-  which is why selectivity is hard; a negative one says they want opposite things, which is where
+* **Two targets.**  A positive cosine says the two targets require the same thing at the same place,
+  which is why selectivity is hard; a negative one says they require opposite things, which is where
   selectivity comes from.  The multi-task selectivity co-field is the difference of the two
   co-fields, and this is its inner product -- the same algebra, read as an angle.
 * **Two series on one target.**  Agreement means the SAR transfers; disagreement means two
-  chemotypes are being fitted by two different stories and a model pooled over both will be an
+  chemotypes are being fitted by two different explanations and a model pooled over both will be an
   average of them.
 * **One series across rounds.**  A model refitted after new compounds should move its co-field
   only where the new compounds taught it something; the cosine with the previous round says how
@@ -39,8 +39,8 @@ What it is for, in the order the question usually arises:
 **What it cannot do.**  Two co-fields are functions on one space only if their molecules were
 posed in one frame: comparing models fitted in different frames compares two different coordinate
 systems and means nothing, which is why :func:`incompatible` checks what it can (the same fields,
-the same attenuations, overlapping boxes) and the caller is told rather than quietly given a
-number.  And a cosine is not a prediction: that two models want the same thing does not mean
+the same attenuations, overlapping boxes) and the caller is told rather than silently given a
+number.  And a cosine is not a prediction: that two models require the same thing does not mean
 either is right.
 """
 from __future__ import annotations
@@ -143,7 +143,7 @@ def cofield_overlap(model_a, model_b, name_a: str = "A", name_b: str = "B",
     scaling when the overall cosine is formed, which is how the models themselves weigh them;
     the per-field cosines do not depend on it. With `strict` off, a reason the two should not be
     compared becomes a note on the result instead of an exception, which is what a matrix over
-    many models wants.
+    many models needs.
     """
     why = incompatible(model_a, model_b)
     notes = []

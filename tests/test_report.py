@@ -1,6 +1,6 @@
 """The model report: one self-contained HTML file for someone who will never run the program.
 
-What the tests hold it to is what the file promises: every section present, nothing fetched from
+What the tests require is what the file promises: every section present, nothing fetched from
 outside the file, a check that was not run said to be missing rather than left out, and a kernel
 that has no co-fields losing the co-fields and keeping the rest.
 """

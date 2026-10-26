@@ -1,4 +1,4 @@
-# What knows when a prediction is bad
+# Which estimate identifies a bad prediction
 
 8 Sutherland sets, 5 random 70/30 splits each. The training part chooses alpha and lambda by the evidence, is fitted, and calibrates the 80% conformal rule on its own out-of-fold errors; every estimate is then scored against the absolute error made on the held-out molecules.
 
@@ -25,11 +25,11 @@ Everything each estimate was scored on, averaged over the 40 splits:
 | domain dissimilarity | +0.133 | +0.095 | +0.181 | 0.841 | 1.022 | 1.36 |
 | conformal width | +0.133 | +0.095 | +0.181 | 0.841 | 1.022 | 1.36 |
 
-**GP variance** comes first, at +0.198 efficiency against +0.186 for distance to training set: a paired difference of +0.011 with a 95 % interval of [-0.021, +0.044], ahead on 6 of 8 sets. For scale, the oracle's AURC is 0.423 and ignoring the estimate costs 0.946.
+**GP variance** comes first, at +0.198 efficiency against +0.186 for distance to training set: a paired difference of +0.011 with a 95 % interval of [-0.021, +0.044], ahead on 6 of 8 sets. For scale, the AURC of a perfect ordering is 0.423 and ignoring the estimate costs 0.946.
 
 That interval contains zero, which is the first finding: on these sets the three estimates are **indistinguishable as orderings**, and the choice between them does not matter.
 
-Part of the reason is that they are not three independent quantities. The **normalised conformal width and the domain measure must score identically**: the normalisation divides the interval by the difficulty, which is the distance to the training set, so the width is a monotone function of the domain and orders the molecules exactly as it does. The conformal rule earns its place by being calibrated -- it covers what it says it covers -- not by ordering. The others are measured rather than argued; the mean Spearman correlation between the estimates themselves, over the same splits, is:
+Part of the reason is that they are not three independent quantities. The **normalised conformal width and the domain measure must score identically**: the normalisation divides the interval by the difficulty, which is the distance to the training set, so the width is a monotone function of the domain and orders the molecules exactly as it does. The value of the conformal rule is that it is calibrated -- it covers what it says it covers -- and not that it orders. The others are measured rather than argued; the mean Spearman correlation between the estimates themselves, over the same splits, is:
 
 | pair | rho |
 |---|---:|
@@ -40,4 +40,4 @@ Part of the reason is that they are not three independent quantities. The **norm
 | distance to training set vs domain dissimilarity | +0.860 |
 | domain dissimilarity vs conformal width | +1.000 |
 
-The second finding is the size of all of them. The best captures 20% of what the oracle would, and its RMSE is 0.83 on the half it trusts against 1.02 on the half it doubts, a ratio of 1.38. That is a real and useful difference -- it is what "measure the confident half first" is worth -- and it is nothing like a per-molecule error bar. On one set (THER) every estimate comes out negative, which is the honest reminder that an estimate of error is itself a model and can be wrong about a series.
+The second finding is the size of all of them. The best captures 20% of what a perfect ordering would, and its RMSE is 0.83 on the half it trusts against 1.02 on the half it doubts, a ratio of 1.38. That is a real and useful difference -- it is what "measure the confident half first" is worth -- and it is nothing like a per-molecule error bar. On one set (THER) every estimate comes out negative, which is the fair reminder that an estimate of error is itself a model and can be wrong about a series.

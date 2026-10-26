@@ -6,25 +6,26 @@ posterior-variance criterion, fold by fold so that no molecule is ever aligned a
 containing it.  Its own docstring records what measuring it found: the iteration converges, the
 contraction of the ensemble is mild, and the predictive gain is *not* reliable -- one set improved,
 one degraded, two were neutral, and rounds after the first consistently made the external
-prediction worse.  So it is run for one round with a displacement guard and hoped for the best.
+prediction worse.  So it is run for one round with a displacement guard, and the outcome is left to
+chance.
 
-That is not a method, it is a hope with a default.  What the loop actually is, is an EM iteration:
-the poses are latent variables, the M-step fits the model to the current poses, the E-step moves
-each molecule to where the model (fitted without it) is most confident.  Written that way it wants
-the three things an EM iteration wants, and this module adds them.
+That is not a method, it is a hope with a default setting.  What the loop actually is, is an EM
+iteration: the poses are latent variables, the M-step fits the model to the current poses, the
+E-step moves each molecule to where the model (fitted without it) is most confident.  Written that
+way it needs the three things an EM iteration needs, and this module adds them.
 
 **An objective, and an acceptance test.**  A round is kept only if it improves the quantity the
-iteration is entitled to improve: the **leave-fold-out error of the activities**.  This is a legal
+iteration is allowed to improve: the **leave-fold-out error of the activities**.  This is a valid
 objective here, and the reason is worth stating because the obvious alternative is not.  q2 of the
 realigned set is invalid -- realigning changes the geometry q2 is computed on, and in the earlier
 tests q2 and the external R2 moved in opposite directions.  But the *pose* of each molecule is
 chosen from the model's confidence alone and never from its activity, so predicting that
-molecule's activity afterwards, with the fold model that did not contain it, is an honest
-measurement.  A round that does not improve it is rejected and the poses are rolled back.
+molecule's activity afterwards, with the fold model that did not contain it, is a fair
+measurement.  A round that does not improve it is rejected and the previous poses are restored.
 
 **An annealed ridge.**  Early rounds run with a large lambda, where the model is smooth and the
 confidence landscape has few spurious minima, and later rounds sharpen it.  Annealing is what
-keeps an EM iteration from committing to a bad frame on the first pass.
+keeps an EM iteration from settling on a bad frame in the first round.
 
 **A contraction stop.**  The degeneracy of the criterion is that superimposing everything makes
 every variance zero, so the iteration is watched for it: the mean off-diagonal normalised kernel
@@ -118,7 +119,7 @@ def _fit(model_template, mols: Sequence[MoleculeFields], y: np.ndarray, lam: flo
 
 def leave_fold_out_error(mols: Sequence[MoleculeFields], y: np.ndarray, model_template,
                          lam: float, folds: int = 5, seed: int = 0) -> float:
-    """RMSE of the activities predicted fold by fold, with the poses as they stand.
+    """RMSE of the activities predicted fold by fold, with the poses as they currently are.
 
     The objective the iteration is allowed to improve: every molecule is predicted by a model
     that does not contain it, and no pose was chosen using an activity.
@@ -158,7 +159,8 @@ def coalign(mols: Sequence[MoleculeFields], y: Sequence[float], model_template,
     With a threshold of machine epsilon the first measurement accepted a round on eg5 whose
     objective fell by less than one part in a hundred thousand -- leave-fold-out RMSE 0.479 to
     0.479 -- while the molecules moved 0.40 A and the frame drifted from 0.07 to 0.25 A from the
-    crystal one.  A null round accepted is worse than no round at all, because the poses move.
+    crystal one.  An accepted round with no real gain is worse than no round at all, because the
+    poses move.
     """
     mols = list(mols)
     y = np.asarray(y, float)
@@ -231,7 +233,7 @@ def coalign(mols: Sequence[MoleculeFields], y: Sequence[float], model_template,
             kept_coords = [np.array(m.coords, float) for m in mols]
             result.best_round = rnd
         else:
-            for m, x in zip(mols, kept_coords):      # roll back to the last accepted poses
+            for m, x in zip(mols, kept_coords):      # restore the last accepted poses
                 m.coords = np.array(x, float)
             result.stopped = rec.note or "no improvement"
             break

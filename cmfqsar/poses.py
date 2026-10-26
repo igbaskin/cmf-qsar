@@ -174,7 +174,7 @@ def pose_mcs_then_variance(mols: Sequence[Chem.Mol], ctx: dict) -> None:
 
 
 def pose_pocket(mols: Sequence[Chem.Mol], ctx: dict) -> None:
-    """Place every molecule where the *pocket* likes it: complementarity less clash.
+    """Place every molecule where the *pocket* prefers it: complementarity less clash.
 
     The receptor alone, with no model: this is the prior half of item C3's objective, and it is
     here on its own so that the joint pose can be read against it.
@@ -306,7 +306,7 @@ def _scramble(mols: Sequence[Chem.Mol], fieldset: FieldSet, seed: int,
 def regenerate_conformation(mol: Chem.Mol, seed: int = 0) -> Chem.Mol:
     """The same molecule with a conformation generated from scratch, crystal geometry discarded.
 
-    Without this the protocol hands a held-out molecule its crystal *conformation* and only
+    Without this the protocol gives a held-out molecule its crystal *conformation* and only
     scrambles its pose, which is the one case a flexible method cannot help with: every torsion
     is already correct, so turning one can only do harm.  A molecule that arrives without a
     crystal structure arrives without its conformation too, and that is what a flexible
@@ -404,7 +404,7 @@ def judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
         if reconform:
             probe = [regenerate_conformation(p, seed=seed + j) for j, p in enumerate(probe)]
         _scramble(probe, fieldset, seed=seed, max_translation=max_translation)
-        # the floor is measured with the very same yardstick as the result: unalign reports its
+        # the floor is measured with exactly the same measure as the result: unalign reports its
         # own displacement over all atoms and without symmetry, and mixing the two measures gave
         # a method that does nothing a recovery of +19% on a twelve-molecule series
         floor = float(np.median([pose_rmsd(p, crystal[i]) for p, i in zip(probe, test)]))
@@ -471,7 +471,7 @@ def judge_training_frame(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequ
     The training poses are destroyed and recovered; the held-out molecules keep their crystal
     poses throughout, so what is measured is the frame and nothing else.  Two numbers per method:
     the per-molecule RMSD of the recovered frame to the crystal one, after the global
-    superposition that the kernel is blind to, and the external R2pred of the held-out molecules
+    superposition that the kernel cannot see, and the external R2pred of the held-out molecules
     posed onto the recovered frame by substructure alignment -- the operational route, since in a
     real application there is no crystal frame to align them to.
 

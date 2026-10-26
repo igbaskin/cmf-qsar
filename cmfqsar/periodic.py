@@ -11,20 +11,20 @@ object with three differences, and this module is those differences:
   supercell describes the same material, and gives the same channels.
 
 * **The uniform background is removed.**  In an infinite solid the number of pairs at distance r
-  grows as r^2, the same for every structure, and swamps everything else at long distance.  What
+  grows as r^2, the same for every structure, and dominates everything else at long distance.  What
   the Faber-Ziman partial structure factors keep is the deviation from a uniform distribution of
   each field over the cell volume, and that is what is subtracted here, pair of field types by
   pair of field types.  The l = m self term stays, as it does in the molecular descriptor: it
   carries the composition, the mean of w_f w_g over the atoms.
 
-* **The cutoff is tapered.**  A hard cutoff rings; the last ``taper`` angstrom before ``r_max``
-  are weighted by a cosine that falls smoothly to zero, so that a pair walking out of the sphere
-  leaves the descriptor continuously.
+* **The cutoff is tapered.**  A hard cutoff produces oscillations; the last ``taper`` angstrom
+  before ``r_max`` are weighted by a cosine that falls smoothly to zero, so that a pair leaving the
+  sphere leaves the descriptor continuously.
 
 Everything else is shared: the Gaussian along the distance axis, the pair-of-field-types
 channels, the per-block scaling and cosine normalisation of the kernel, the channel labels, and
 the learners.  The descriptor is invariant to rotation, translation, the choice of origin and of
-unit cell by construction, and blind to what any pair-distance distribution is blind to:
+unit cell by construction, and cannot see what any pair-distance distribution cannot see:
 enantiomorphs and homometric structures look the same, and so does anything beyond ``r_max``.
 
 Fields for inorganic solids
@@ -56,7 +56,7 @@ from .fields import AtomTable, FieldSet, FieldSpec
 from .invariant import block_sizes, channel_labels, field_pairs
 
 INORGANIC_FIELDS: Tuple[str, ...] = ("electrostatic", "steric", "prop:electronegativity")
-OTHER_ELEMENT = "other"          # the indicator field that catches the elements not listed
+OTHER_ELEMENT = "other"          # the indicator field that collects the elements not listed
 
 
 # --------------------------------------------------------------------------- #
@@ -183,7 +183,7 @@ def periodic_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec = Period
 
     with N the atoms in the cell, S_f the sum of the weights of field f over the cell, V its
     volume and I_k the shell integral of the spec.  The sum runs over ordered pairs, so a pair of
-    different field types is counted both ways round, as the molecular descriptor counts it; the
+    different field types is counted in both orders, as the molecular descriptor counts it; the
     background of such a pair is accordingly 2 S_f S_g / V * I_k.
     """
     W = np.asarray(crystal.weights, float)

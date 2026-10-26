@@ -9,10 +9,11 @@ from twenty molecules chosen at random, add one at a time by each rule, and watc
 things happen.
 
 **Finding an active** is one goal: how good is the best molecule acquired so far, and how many
-acquisitions pass before one of the top five per cent is in hand.
+acquisitions pass before one of the top five per cent has been acquired.
 
 **Improving the model** is the other: the RMSE of the model on everything not yet acquired, which
-is what a chemist cares about when the series is being mapped rather than mined.
+is what a chemist cares about when the goal is to understand the series rather than to find
+its best member.
 
 They are different goals and the rules trade between them, so both are reported. Everything --
 alpha, lambda -- is reselected by the evidence at every step from the molecules acquired and
@@ -147,17 +148,17 @@ def _paired(data, a, b, key):
 
 
 def _explore_paragraph(data, rm, explore, rng):
-    """What the exploration rules bought, judged by the interval rather than by the point."""
+    """What the exploration rules gained, judged by the interval rather than by the point."""
     best = min(explore, key=lambda s: rm[s]) if explore else "variance"
     diff = _paired(data, best, "random", "rmse_mean")
     bs = [float(np.mean(rng.choice(diff, len(diff), replace=True))) for _ in range(4000)]
     lo, hi = float(np.percentile(bs, 2.5)), float(np.percentile(bs, 97.5))
-    head = (f"**Exploring buys nothing measurable.** The best of the exploration rules ({best}) "
+    head = (f"**Exploring gains nothing measurable.** The best of the exploration rules ({best}) "
             f"reaches {rm[best]:.3f} RMSE against {rm['random']:.3f} for picking at random, a "
             f"paired difference of {float(np.mean(diff)):+.3f} with a 95 % interval of "
             f"[{lo:+.3f}, {hi:+.3f}] -- zero is inside it."
             if lo <= 0 <= hi else
-            f"**Exploring pays.** The best of the exploration rules ({best}) reaches "
+            f"**Exploring helps.** The best of the exploration rules ({best}) reaches "
             f"{rm[best]:.3f} RMSE against {rm['random']:.3f} for picking at random, a paired "
             f"difference of {float(np.mean(diff)):+.3f} with a 95 % interval of "
             f"[{lo:+.3f}, {hi:+.3f}].")
@@ -247,7 +248,7 @@ def report(results=RESULTS):
               f"**The uncertainty rules and the diversity rule are one rule.** variance and "
               f"maxmin come out within {var_max:.3f} RMSE of each other and within "
               f"{abs(gap['variance'] - gap['maxmin']):.1%} of the same activity found. That is "
-              "item E5 again from the other side: the posterior standard deviation of a CMF "
+              "item E5 again, seen from a different direction: the posterior standard deviation of a CMF "
               "model is very nearly the distance to the training set in other units, so "
               "acquiring by the model's uncertainty and acquiring by field-space diversity are "
               "the same experiment with two names. The Gaussian process is not adding "
@@ -261,7 +262,7 @@ def report(results=RESULTS):
               f"{best_find}. The sets are series of analogues, where nothing is far enough from "
               "the training molecules for the training mean to be returned; on a library of "
               "diverse candidates that protection is gone, and the expected-improvement rule, "
-              "which at least pays for optimism with a posterior, is the one to use."]
+              "which at least makes its optimism depend on the posterior, is the one to use."]
     text = "\n".join(lines) + "\n"
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:
         fh.write(text)

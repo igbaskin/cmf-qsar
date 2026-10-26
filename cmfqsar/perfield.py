@@ -24,12 +24,12 @@ costs ``passes * F * A * L`` factorisations, a few hundred, where the same desce
 cross-validated score would cost ten times that and the full grid 5^5 times.
 
 What this does not do is hold anything out, and over 5^5 assignments the evidence has room to
-please itself.  The descent is therefore deliberately short (two passes by default, from the best
-shared width rather than from nothing), and whether the extra freedom pays is a question for a
+favour itself.  The descent is therefore deliberately short (two passes by default, from the best
+shared width rather than from nothing), and whether the extra freedom helps is a question for a
 test set, not for the criterion that chose it: see ``benchmarks/run_perfield.py``.
 
 Fields whose kernel does not depend on alpha at all -- the probe fields, whose widths come from
-the expansion in :mod:`cmfqsar.probes` -- are detected and skipped rather than searched in vain.
+the expansion in :mod:`cmfqsar.probes` -- are detected and skipped rather than searched uselessly.
 """
 from __future__ import annotations
 
@@ -61,7 +61,7 @@ class PerFieldResult:
 
     @property
     def gain(self) -> float:
-        """How much log evidence the per-field widths bought over the shared one."""
+        """How much log evidence the per-field widths gained over the shared one."""
         return float(self.log_evidence - self.shared_log_evidence)
 
     @property
@@ -117,9 +117,9 @@ def descend(train, y: np.ndarray, model, cache: Dict[float, tuple], alphas: Sequ
     Starts from `start_alpha` for every field -- the width the shared search chose, so the descent
     can only improve on the configuration the program would have used -- and visits the tunable
     fields in turn, trying every width of `alphas` and every regularisation of `grid` and keeping
-    whatever the evidence likes best.  A pass that changes nothing ends the search.
+    whatever the evidence scores best.  A pass that changes nothing ends the search.
 
-    The model is left holding the chosen widths, the kernels assembled from them and the
+    The model is left with the chosen widths, the kernels assembled from them and the
     regularisation that goes with them, so a fit follows immediately.  `cache` is not modified.
     """
     y = np.asarray(y, float)

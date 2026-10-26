@@ -94,7 +94,7 @@ def test_but_a_change_of_height_or_tilt_does(world):
     tilted = surface_autocorrelation(build_fields(_moved(mols[0], rng, tilt=0.6), fs, "tilt"), spec)
     rel = lambda a, b: np.linalg.norm(a - b) / np.linalg.norm(a)
     assert rel(here, lifted) > 0.1 and rel(here, tilted) > 0.05
-    # the three-dimensional autocorrelation sees neither: it is the one that throws the height away
+    # the three-dimensional autocorrelation sees neither: it is the one that discards the height
     assert np.allclose(autocorrelation(mf[0]), autocorrelation(build_fields(_moved(mols[0], rng, dz=1.5), fs, "up")))
 
 

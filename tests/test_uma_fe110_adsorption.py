@@ -22,7 +22,7 @@ from cmfqsar.dataio import load_dataset  # noqa: E402
 
 
 class HeightSpring(Calculator):
-    """A stand-in for UMA: -4 eV per Fe, -1 eV per molecule atom, and for an adsorbed molecule a
+    """A substitute for UMA: -4 eV per Fe, -1 eV per molecule atom, and for an adsorbed molecule a
     -0.5 eV bond plus a spring that pulls the molecule's centroid to `z0` A above the top Fe atom
     and a small penalty on its vertical extent (so the flat pose wins and the forces converge)."""
     implemented_properties = ["energy", "forces"]
@@ -163,7 +163,7 @@ def test_docking_stage_holds_then_releases_the_heavy_atoms():
     assert steps > 0 and len(system.constraints) == 1               # the plane constraint is gone
     e, steps2, conv = ufa.dock_and_relax(system, n, mol, calc, fmax=0.05, steps=60, dock_steps=0)
     assert conv and not np.allclose(system.positions[n:][heavy, 2], z0)         # released
-    assert abs(system.positions[n:, 2].mean() - ufa.top_layer_z(system) - 2.0) < 0.1   # the spring wins
+    assert abs(system.positions[n:, 2].mean() - ufa.top_layer_z(system) - 2.0) < 0.1   # the spring dominates
 
 
 def test_bonds_intact_flags_a_dissociated_molecule():
@@ -213,7 +213,7 @@ def test_run_with_a_stub_calculator(tmp_path):
         z = np.array(m.GetConformer().GetPositions())[:, 2]
         heavy = np.array([a.GetAtomicNum() > 1 for a in m.GetAtoms()])
         assert abs(z.mean() - 2.0) < 0.1                               # the spring's height, over z = 0
-        assert z[heavy].max() - z[heavy].min() < 0.3                   # flat (the methyl H stick out)
+        assert z[heavy].max() - z[heavy].min() < 0.3                   # flat (the methyl H protrude)
         assert Chem.MolToSmiles(Chem.RemoveHs(m)) == Chem.MolToSmiles(Chem.MolFromSmiles(r["smiles"]))
 
     # the CSV summary and the per-molecule records

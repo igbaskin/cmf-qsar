@@ -11,7 +11,7 @@ instead of ten**.
 
 That is the promise. The objection is that the evidence answers a different question: how
 probable are these activities under this model, rather than how well would this model predict a
-molecule it has not seen. The two agree when the kernel is well specified and can part company
+molecule it has not seen. The two agree when the kernel is well specified and can disagree
 when it is not, which for molecular fields is the normal case. So the measurement is not whether
 the evidence is cheaper -- it plainly is -- but whether the model it picks predicts as well.
 
@@ -19,7 +19,7 @@ For every set, five random 70/30 splits. On the training part alone, the same gr
 lambdas is searched twice, once by ten-fold cross-validation and once by the evidence; each
 choice is then fitted on that part and asked about the held-out molecules it never saw. What is
 reported is the external R2pred of each choice, the time each search took, and how often the two
-land on the same point of the grid.
+choose the same point of the grid.
 
 Usage
 -----
@@ -159,7 +159,7 @@ def report(results=RESULTS):
              f"{len(data)} Sutherland sets, {data[0]['repeats']} random 70/30 splits each. Both "
              "criteria search the same grid on the training part alone; each choice is then "
              "fitted on that part and asked about the held-out molecules. `agree` is how often "
-             "the two land on the same point of the grid.", "",
+             "the two choose the same point of the grid.", "",
              "| set | n | R²pred by CV | R²pred by evidence | difference | agree | CV seconds | "
              "evidence seconds |", "|---|---:|---:|---:|---:|---:|---:|---:|"]
     diffs, speeds = [], []
@@ -183,10 +183,10 @@ def report(results=RESULTS):
               f"**{float(np.mean(speeds)):.0f} times faster**, which is the ten folds it does "
               "not run. The kernels are built once and shared by both searches, so that ratio is "
               "the selection alone; on sets of this size the absolute times are fractions of a "
-              "second either way, and what the ratio buys is a finer grid -- a per-field alpha, "
+              "second either way, and what the ratio gains is a finer grid -- a per-field alpha, "
               "say -- rather than a shorter wait.", "",
               "The two criteria agree on the point of the grid in 0 to 60 % of the splits and "
-              "reach the same predictive quality anyway. That is worth reading twice: it says "
+              "reach the same predictive quality anyway. That deserves attention: it says "
               "the surface is flat near its optimum, and that the cost of searching it matters "
               "more than which point is picked."]
     text = "\n".join(lines) + "\n"

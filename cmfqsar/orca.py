@@ -3,7 +3,7 @@ Quantum-chemical properties from ORCA: per-atom quantities that become fields, p
 that become descriptors.
 
 The program's own fields are built from what it can work out itself -- Gasteiger charges, Crippen
-increments, van der Waals parameters -- and that is a ceiling.  A quantum calculation lifts it: a
+increments, van der Waals parameters -- and that is a limit.  A quantum calculation raises it: a
 Hirshfeld charge, a Fukui index or a local softness says something about an atom that no increment
 table knows, and the frontier orbital energies say something about the molecule that no field can
 carry.  This module runs ORCA over a set of molecules and brings both back: the per-atom values as
@@ -69,7 +69,7 @@ class OrcaCancelled(RuntimeError):
 
 
 def _terminate(proc) -> None:
-    """Stop an ORCA process and the children it started, politely then firmly."""
+    """Stop an ORCA process and the children it started: ask it to terminate, then kill it."""
     try:
         proc.terminate()
         proc.wait(timeout=10)
@@ -120,7 +120,7 @@ def make_input(level: str, charge: int, mult: int, xyz_name: str, nprocs: int = 
     """Text of an ORCA input.
 
     `populations` adds the Hirshfeld analysis and the per-MO Mulliken atom populations; `chelpg`
-    the CHELPG fit (wanted for the N-electron state only).  An open-shell state is run
+    the CHELPG fit (needed for the N-electron state only).  An open-shell state is run
     unrestricted; a geometry optimisation prints nothing but what it needs.
     """
     keywords = [level]
@@ -584,7 +584,7 @@ def run_molecule(mol: Chem.Mol, name: str, index: int, cfg: Config) -> MoleculeO
             with open(status_path) as fh:
                 status = json.load(fh)
         if status.get("key") != key and os.path.isdir(jobdir):
-            # the directory belongs to another computation (or another molecule); start afresh
+            # the directory belongs to another computation (or another molecule); start again
             shutil.rmtree(jobdir)
             status = {}
         os.makedirs(jobdir, exist_ok=True)
@@ -750,7 +750,7 @@ def measured_seconds_per_job(workdir: str, fukui: bool = True) -> Optional[float
     """The mean time one ORCA job took in `workdir`, from the status files a previous run left.
 
     A dialog that has to warn about the cost is more convincing with a number measured on this
-    machine than with a guess, and after one run the number is there to be had.
+    machine than with a guess, and after one run the number is available.
     """
     times = []
     try:

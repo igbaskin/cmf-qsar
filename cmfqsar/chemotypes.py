@@ -3,7 +3,7 @@
 Everything in this program rests on the molecules sharing a frame, and for a congeneric series
 superposition on the common substructure supplies one: the alignment experiment rebuilt a published
 alignment from scrambled poses to within 0.06 Å for the median molecule.  A series of several
-scaffolds has no such substructure to superimpose on, and the usual recipe quietly becomes
+scaffolds has no such substructure to superimpose on, and the usual procedure silently becomes
 meaningless: one reference molecule, one maximum common substructure, one co-field, one random
 cross-validation that puts a molecule's own scaffold-mates in the training part.
 
@@ -11,16 +11,16 @@ This module is the workflow for that case, in the order the problem imposes:
 
 1. **Cluster by scaffold.**  :func:`chemotype_labels` groups the molecules by their Bemis-Murcko
    framework, either as drawn or made generic so that ring atoms and bond orders stop mattering.
-2. **Align within each cluster**, where a common substructure does exist and does the job well:
+2. **Align within each cluster**, where a common substructure does exist and works well:
    :func:`align_within_groups`.
 3. **Place the clusters relative to one another**, which is the part a congeneric series never
    needs: :func:`place_groups` moves each cluster rigidly, as a whole, either by maximising the
    field similarity of its reference with a chosen cluster or by docking that reference into the
    binding site.  Moving the cluster rigidly is what keeps step 2 intact.
 4. **Judge the result by leave-one-chemotype-out**, :func:`grouped_folds` and
-   :func:`grouped_cv_predict`.  Random folds flatter a multi-scaffold set, because the molecules
-   that look most like the one being predicted are its own scaffold-mates and they sit in the
-   training part; holding out a whole chemotype asks the question that matters.
+   :func:`grouped_cv_predict`.  Random folds overstate the quality of a multi-scaffold model,
+   because the molecules that look most like the one being predicted are its own scaffold-mates and
+   they sit in the training part; holding out a whole chemotype asks the question that matters.
 5. **Compare against a baseline that needs no alignment at all**, :func:`alignment_free_q2` over
    :func:`count_kernel`: with a small attenuation factor a continuous indicator field tends to a
    count of atoms of its type, so the kernel becomes a fragment-descriptor kernel and the poses
@@ -31,7 +31,7 @@ This module is the workflow for that case, in the order the problem imposes:
    pose dependence dies only linearly in it (at alpha = 0.02 a rigid motion of every molecule
    still moves the kernel by 0.7, at 2e-4 by 0.013), and the cosine normalisation has to be
    applied to the joint kernel rather than field by field, or the counts cancel.  If the aligned
-   model cannot beat that baseline, the alignment is not paying for itself, and on a heterogeneous
+   model cannot beat that baseline, the alignment is not worth its cost, and on a heterogeneous
    set that is the first thing worth knowing.
 """
 from __future__ import annotations
@@ -77,7 +77,7 @@ def chemotype_labels(mols: Sequence[Chem.Mol], generic: bool = False,
                      min_size: int = 1) -> Tuple[np.ndarray, List[str]]:
     """Group index per molecule and the scaffold of every group, largest group first.
 
-    Groups smaller than `min_size` are merged into one "other" group, so that a handful of
+    Groups smaller than `min_size` are merged into one "other" group, so that a few
     singletons does not turn leave-one-chemotype-out into leave-one-molecule-out.
     """
     keys = [scaffold_smiles(m, generic=generic) if m is not None else ACYCLIC for m in mols]
@@ -166,10 +166,11 @@ def place_groups(mols: Sequence[Chem.Mol], labels: np.ndarray, fieldset: FieldSe
     maximising the CMF kernel between them, which needs no common substructure.  ``fieldgraph``
     superimposes them on the largest consistent set of their typed field extrema instead
     (:mod:`cmfqsar.fieldgraph`), which needs no common substructure either and, unlike ``field``,
-    does not have to start from a pose that already roughly overlaps: a kernel maximisation is
-    blind where two molecules do not touch, which is exactly the position two chemotypes are in.
-    ``dock`` places each cluster's reference in the binding site instead, which needs a pocket but
-    no reference cluster at all.  Either way the transform found for the reference is applied to
+    does not have to start from a pose that already roughly overlaps: a kernel maximisation gives
+    no information where two molecules do not overlap, which is exactly the position two chemotypes
+    are in.  ``dock`` places each cluster's reference in the binding site instead, which needs a
+    pocket but no reference cluster at all.  Either way the transform found for the reference is
+    applied to
     every molecule of its cluster, so the within-cluster alignment of step 2 survives untouched.
     """
     log: List[str] = []
@@ -208,7 +209,7 @@ def place_groups(mols: Sequence[Chem.Mol], labels: np.ndarray, fieldset: FieldSe
                            f"{res.similarity:+.3f}")
             elif mode == "field":
                 # the kernel is flat where the two molecules do not overlap at all, and Powell
-                # has nothing to climb; put their centroids together first
+                # has no gradient to follow; put their centroids together first
                 here = np.array(mols[ref].GetConformer().GetPositions())
                 there = np.array(mols[anchor].GetConformer().GetPositions())
                 set_coords(mols[ref], here + (there.mean(axis=0) - here.mean(axis=0)))
@@ -244,7 +245,7 @@ def place_groups(mols: Sequence[Chem.Mol], labels: np.ndarray, fieldset: FieldSe
 def grouped_folds(labels: np.ndarray, max_folds: int = 0) -> List[np.ndarray]:
     """Folds that never split a chemotype: one fold per group, or groups bundled into `max_folds`.
 
-    This is the honest cross-validation for a heterogeneous series.  With random folds a molecule
+    This is the fair cross-validation for a heterogeneous series.  With random folds a molecule
     is predicted from its own scaffold-mates, which is a question nobody is asking.
     """
     members = [m for m in group_members(labels) if len(m)]
@@ -298,12 +299,12 @@ class HeteroResult:
             return "not enough chemotypes to judge"
         if self.q2_grouped <= 0:
             return ("the aligned model does not predict a held-out chemotype at all; "
-                    "the alignment is not carrying across scaffolds")
+                    "the alignment does not transfer across scaffolds")
         if self.q2_grouped < max(self.q2_baseline,
                                  self.q2_invariant if np.isfinite(self.q2_invariant) else -9e9):
             which = ("fragment-count" if self.q2_baseline >= self.q2_invariant
                      or not np.isfinite(self.q2_invariant) else "geometry-aware alignment-free")
-            return (f"the {which} model is better: the alignment is not paying for itself on "
+            return (f"the {which} model is better: the alignment is not worth its cost on "
                     f"this series")
         return "the aligned model beats the alignment-free baseline across chemotypes"
 

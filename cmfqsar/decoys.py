@@ -2,11 +2,11 @@
 Preparing a background (decoy) set for field-based virtual screening.
 
 A decoy has to be placed in the same frame as the training actives before its fields can be
-compared with theirs, and that placement decides its score: a molecule posed badly scores low
-for the wrong reason and flatters the model.  The safest choice is therefore to give every decoy
-its *best* pose, i.e. to align it so that its field similarity to the training actives is as large
-as it can be.  The evaluation is then conservative: whatever enrichment survives is not an artefact
-of sloppy placement.
+compared with theirs, and that placement decides its score: a molecule posed badly scores low for
+the wrong reason and overstates the model's quality.  The safest choice is therefore to give every
+decoy its *best* pose, i.e. to align it so that its field similarity to the training actives is as
+large as it can be.  The evaluation is then conservative: whatever enrichment survives is not an
+artefact of careless placement.
 
 The criterion maximised here is a smooth maximum (log-sum-exp) of the cosine-normalised CMF kernel
 between the decoy and each training molecule,
@@ -42,7 +42,7 @@ class DecoyAlignResult:
     similarity_after: float
     best_match: str = ""          # training molecule the decoy ends up most similar to
     n_eval: int = 0
-    conformer: int = 0            # which conformation won, 0 being the one from the file
+    conformer: int = 0            # which conformation was chosen, 0 being the one from the file
     n_conformers: int = 1
 
 
@@ -169,7 +169,7 @@ def align_decoys_flexible(mols: Sequence["Chem.Mol"], names: Sequence[str],
     """Pose every decoy from several conformations and keep the one that scores highest.
 
     The rigid aligner above can only turn and move the conformation a decoy arrives with, so a
-    molecule that would resemble the actives in some other conformation never gets the chance,
+    molecule that would resemble the actives in some other conformation never has the opportunity,
     and its low score may be an accident of the file it came from.  Here the conformations are
     generated (the input pose is kept as the first, so this can never do worse than the rigid
     alignment), each is given its best rigid pose, and the best of those is the decoy's pose.
@@ -178,7 +178,8 @@ def align_decoys_flexible(mols: Sequence["Chem.Mol"], names: Sequence[str],
     is why the restarts default lower here than in :func:`align_decoys`.
 
     Returns (fields, results): the chosen :class:`MoleculeFields` of every decoy, already in the
-    frame of the reference, and one :class:`DecoyAlignResult` each, saying which conformation won.
+    frame of the reference, and one :class:`DecoyAlignResult` each, saying which conformation was
+    chosen.
     """
     from .conformers import generate_conformers, single_conformer
     aligner = DecoyAligner(reference, fieldset, beta=beta)

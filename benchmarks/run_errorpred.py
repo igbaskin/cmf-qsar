@@ -171,7 +171,7 @@ def report(results=RESULTS):
         return "No error-predictor results yet; run `python benchmarks/run_errorpred.py`."
     data = [json.load(open(f)) for f in files]
     present = [nm for nm in NAMES if any(nm in r["scores"] for d in data for r in d["rows"])]
-    lines = ["# What knows when a prediction is bad", "",
+    lines = ["# Which estimate identifies a bad prediction", "",
              f"{len(data)} Sutherland sets, {data[0]['repeats']} random 70/30 splits each. The "
              "training part chooses alpha and lambda by the evidence, is fitted, and calibrates "
              f"the {data[0]['level']:.0%} conformal rule on its own out-of-fold errors; every "
@@ -215,7 +215,7 @@ def report(results=RESULTS):
               f"against {float(np.nanmean(per_set[second])):+.3f} for {second}: a paired "
               f"difference of {float(np.mean(diff)):+.3f} with a 95 % interval of "
               f"[{np.percentile(bt, 2.5):+.3f}, {np.percentile(bt, 97.5):+.3f}], ahead on "
-              f"{int((diff > 0).sum())} of {len(diff)} sets. For scale, the oracle's AURC is "
+              f"{int((diff > 0).sum())} of {len(diff)} sets. For scale, the AURC of a perfect ordering is "
               f"{oracle:.3f} and ignoring the estimate costs {random_:.3f}.", "",
               "That interval contains zero, which is the first finding: on these sets the "
               "three estimates are **indistinguishable as orderings**, and the choice between "
@@ -224,8 +224,8 @@ def report(results=RESULTS):
               "**normalised conformal width and the domain measure must score identically**: the "
               "normalisation divides the interval by the difficulty, which is the distance to the "
               "training set, so the width is a monotone function of the domain and orders the "
-              "molecules exactly as it does. The conformal rule earns its place by being "
-              "calibrated -- it covers what it says it covers -- not by ordering. The others are "
+              "molecules exactly as it does. The value of the conformal rule is that it is "
+              "calibrated -- it covers what it says it covers -- and not that it orders. The others are "
               "measured rather than argued; the mean Spearman correlation between the estimates "
               "themselves, over the same splits, is:", "",
               "| pair | rho |", "|---|---:|"]
@@ -236,13 +236,13 @@ def report(results=RESULTS):
     best_eff = float(np.nanmean(per_set[top]))
     lines += ["",
               f"The second finding is the size of all of them. The best captures "
-              f"{best_eff:.0%} of what the oracle would, and its RMSE is "
+              f"{best_eff:.0%} of what a perfect ordering would, and its RMSE is "
               f"{_mean(data, top, 'rmse_trusted'):.2f} on the half it trusts against "
               f"{_mean(data, top, 'rmse_doubted'):.2f} on the half it doubts, a ratio of "
               f"{_mean(data, top, 'ratio'):.2f}. That is a real and useful difference -- it is "
               "what \"measure the confident half first\" is worth -- and it is nothing like a "
               "per-molecule error bar. On one set (THER) every estimate comes out negative, which "
-              "is the honest reminder that an estimate of error is itself a model and can be "
+              "is the fair reminder that an estimate of error is itself a model and can be "
               "wrong about a series."]
     text = "\n".join(lines) + "\n"
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:

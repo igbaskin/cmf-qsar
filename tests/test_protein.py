@@ -107,7 +107,7 @@ def test_binding_site_selects_whole_residues_and_drops_the_crystal_ligand(pdb_fi
     assert "LIG" in names
     with_water = binding_site(p, probe, cutoff=3.0, keep_waters=True)
     assert "HOH" in set(with_water.resnames)
-    # a ligand the data set sits on top of is the co-crystallised one and is removed
+    # a ligand that the data set overlaps is the co-crystallised one and is removed
     on_ligand = np.array([[14.6, 12.1, 10.0]])
     assert "LIG" not in set(binding_site(p, on_ligand, cutoff=4.0).resnames)
     assert "ALA" in set(binding_site(p, on_ligand, cutoff=4.0).resnames)
@@ -198,7 +198,7 @@ def test_find_pocket_prefers_the_matching_folder(tmp_path):
     found = find_pocket(str(ex / "setA" / "target.sdf"))
     assert found is not None and os.path.normpath(found) == os.path.normpath(
         str(ex / "pockets" / "setA" / "target.pdb"))
-    # a structure lying beside the data set wins over the shared folder
+    # a structure lying beside the data set takes precedence over the shared folder
     (ex / "setA" / "target_pocket.pdb").write_text(PDB)
     assert os.path.dirname(find_pocket(str(ex / "setA" / "target.sdf"))) == str(ex / "setA")
     # and a set with no pocket anywhere gives nothing rather than the wrong one
@@ -241,6 +241,6 @@ def test_residue_labels_drop_the_chain_when_there_is_only_one(pdb_file):
     one = p.subset([i for i, c in enumerate(p.chains) if c == "A"])
     _, txt = residue_anchors(one)
     assert "ALA1" in txt and "ALA1.A" not in txt
-    # with two chains present the suffix tells them apart
+    # with two chains present the suffix distinguishes them
     _, both = residue_anchors(p)
     assert "ALA1.A" in both and "SER14.B" in both

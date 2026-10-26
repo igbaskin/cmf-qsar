@@ -16,7 +16,7 @@
 
 Paired over the sets, the per-field widths are -0.001 in R²pred against the shared one, 95 % interval [-0.020, +0.018], better on 4 of 8 sets -- while gaining +2.6 in log evidence, which is the criterion that chose them. The descent moved 3.5 of the 5 fields on average and left them all at the shared width in 0 % of the splits.
 
-Which width each field asks for, averaged over every split (the grid runs from 0.2 to 4; larger is sharper):
+Which width is chosen for each field, averaged over every split (the grid runs from 0.2 to 4; larger is sharper):
 
 | field | mean alpha chosen |
 |---|---:|

@@ -41,7 +41,7 @@ def test_the_expansion_reproduces_the_attraction_it_stands_for():
 
     Curves below 0.1 kcal/mol are skipped on purpose: they are the near-cancellation of a
     dispersion well against an electrostatic repulsion, they change sign, and a relative error
-    computed against a norm that is almost zero says nothing about anything.
+    computed against a norm that is almost zero says nothing useful.
     """
     r = np.linspace(0.2, 9.0, 700)
     vol = r ** 2
@@ -62,7 +62,7 @@ def test_the_expansion_reproduces_the_attraction_it_stands_for():
 
 
 def test_the_kernel_matches_numerical_integration_of_the_fields():
-    """The point of the whole construction: the overlap stays a closed form over atom pairs."""
+    """The purpose of the whole construction: the overlap stays a closed form over atom pairs."""
     fs = FieldSet.create(physchem=[], probes=["water"], alpha=0.5)
     mols = [_mol("c1ccccc1O", 7, "phenol"), _mol("c1ccccc1N", 11, "aniline")]
     mf = [build_fields(m, fs, m.GetProp("_Name")) for m in mols]

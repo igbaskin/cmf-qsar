@@ -89,7 +89,7 @@ def test_small_groups_are_pooled_so_that_the_folds_stay_meaningful(mixed):
     assert [len(m) for m in group_members(labels)] == [5, 6]
 
 
-# --------------------------------------------------------------------------- 4. honest folds
+# --------------------------------------------------------------------------- 4. fair folds
 
 def test_folds_never_split_a_chemotype(mixed):
     _, _, labels, _ = mixed
@@ -120,7 +120,7 @@ def test_holding_out_a_chemotype_exposes_what_random_folds_hide():
     random = grouped_cv_predict(K, y, np.arange(len(y)) % 5, params={"lam": 1e-6})
     assert np.isfinite(grouped).all() and np.isfinite(random).all()
     from cmfqsar.model import r2_score
-    assert r2_score(y, random) > 0.99            # the scaffold-mates give the answer away
+    assert r2_score(y, random) > 0.99            # scaffold-sharing molecules reveal the answer
     assert r2_score(y, grouped) < 0.0            # held out, the model knows nothing of it
 
 
@@ -231,7 +231,7 @@ def test_the_baseline_kernel_keeps_the_counts_and_drops_the_geometry(mixed):
     assert K.shape == (len(mols), len(mols))
     assert np.allclose(np.diag(K), 1.0, atol=1e-8)
     assert np.allclose(K, K.T, atol=1e-10)
-    # molecules of different composition are told apart: normalising field by field instead of
+    # molecules of different composition are distinguished: normalising field by field instead of
     # jointly would cancel the counts and make every entry 1
     assert K.min() < 0.9
     # a molecule whose geometry is destroyed but whose atoms are untouched is the same molecule
@@ -247,7 +247,7 @@ def test_the_baseline_kernel_keeps_the_counts_and_drops_the_geometry(mixed):
 
 
 def test_the_limit_is_what_the_gaussian_route_converges_on(mixed):
-    """The default writes the limit down; the attenuated kernel has to arrive at the same place."""
+    """The default computes the limit directly; the attenuated kernel must reach the same value."""
     mols, names, _, _ = mixed
     exact = count_kernel(mols, names, cif_min=1)             # alpha=None: the counts themselves
     gaps = [float(np.abs(count_kernel(mols, names, alpha=a, cif_min=1) - exact).max())
@@ -264,7 +264,7 @@ def test_the_limit_is_what_the_gaussian_route_converges_on(mixed):
 
 
 def test_the_baseline_kernel_does_not_move_with_the_poses(mixed):
-    """Rigid motions of every molecule leave it where it was, and the gap dies with alpha."""
+    """Rigid motions of every molecule leave it where it was, and the gap vanishes with alpha."""
     from rdkit import Chem
     mols, names, _, _ = mixed
     moved = [Chem.Mol(m) for m in mols]

@@ -6,23 +6,23 @@ Two questions, and they have different answers.
 
 **On clean data**, where the activities are one assay's numbers and mean what they say, a
 regression model is already a ranking model: its predictions are a score, and the order of that
-score is all a ranking model ever produces.  Fitting the order instead of the values throws away
+score is all a ranking model ever produces.  Fitting the order instead of the values discards
 information -- how far apart two molecules are, not merely which is higher -- so the expectation
 is that ranking does not win, and the first table checks it.
 
-**On pooled data** it is the other way round.  Potencies collected from several papers carry an
+**On pooled data** the opposite holds.  Potencies collected from several papers carry an
 offset per source that no descriptor explains, and a regression model spends its capacity
 fitting those offsets.  A ranking model told which molecules share a source compares only within
 one, and the offsets cancel exactly.  The second table makes that concrete the only way a
 benchmark can: it takes the same sets, splits each into synthetic sources **by
 scaffold**, shifts each source by an offset, and asks both models to recover the *true* order
-they never saw. The sources have to be chemistry and not a coin toss: an offset assigned at
+they never saw. The sources have to be chemistry and not a matter of chance: an offset assigned at
 random is unpredictable from structure, so a regression model averages it away and loses
 nothing. An offset that travels with a scaffold is exactly what a model will learn as if it
 were an effect of the scaffold, and that is the failure worth measuring.
 
 The pooled columns are therefore scored **within a source**: the share of same-source pairs put
-the right way round. A model that only ever compared molecules inside a source cannot be asked
+ordered correctly. A model that only ever compared molecules inside a source cannot be asked
 where one source sits relative to another -- it was never shown -- and the question a chemist
 has is in any case which compound of *this* series to make next.
 
@@ -68,7 +68,7 @@ FIELDS = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
 ALPHAS = (0.1, 0.3, 0.5, 1.0, 2.0)
 LAMS = (1e-3, 1e-2, 0.1, 1.0)
 CS = (0.1, 1.0, 10.0)
-#: the solver works on the kernel between pairs, so this is the knob that decides the cost
+#: the solver works on the kernel between pairs, so this is the parameter that decides the cost
 MAX_PAIRS = 1000
 N_SOURCES = 3            # synthetic papers, for the pooled experiment
 OFFSET = 1.5             # the spread of their offsets, in units of the activity's own sd
@@ -214,9 +214,9 @@ def report(results=RESULTS):
                  + " |")
     lines += ["", "## The pooled sets, ordered across sources", "",
               "The same models and splits, scored by Spearman's rho over *all* held-out pairs. "
-              "A model that only ever compared molecules inside a source has no opinion about "
-              "where one source sits relative to another, so this column is where its silence "
-              "shows.", "",
+              "A model that only ever compared molecules inside a source cannot say "
+              "where one source lies relative to another, so this column shows that "
+              "limitation.", "",
               "| set | KRR | rank | rank by source |", "|---|---:|---:|---:|"]
     gcols = [("pooled", "krr", "spearman"), ("pooled", "ranksvm", "spearman"),
              ("pooled", "ranksvm-groups", "spearman")]
@@ -232,7 +232,7 @@ def report(results=RESULTS):
                  + " |")
     lines += ["", "The clean columns are Spearman's rho over the held-out molecules; the "
               "pooled columns are the share of **same-source** held-out pairs ordered "
-              "correctly, so 0.5 is a coin toss. The two halves are not comparable with each "
+              "correctly, so 0.5 is no better than chance. The two halves are not comparable with each "
               "other."]
     text = "\n".join(lines) + "\n"
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:

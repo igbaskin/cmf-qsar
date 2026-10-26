@@ -38,7 +38,7 @@ def _fields(mols, names, fs):
 
 
 def test_the_objective_uses_no_activity_of_the_molecule_it_scores():
-    """Every molecule is predicted by a model fitted without it, so the error is honest."""
+    """Every molecule is predicted by a model fitted without it, so the error is a fair measure."""
     mols, names, y = _set()
     fs = FieldSet.create(physchem=["steric", "electrostatic"], alpha=0.5)
     mf = _fields(mols, names, fs)
@@ -95,7 +95,7 @@ def test_the_ridge_is_annealed_downwards():
 
 
 def test_a_contracting_ensemble_stops_the_run():
-    """The degeneracy of the criterion is that everything piles up; the tolerance catches it."""
+    """The criterion degenerates when all molecules collapse together; the tolerance catches it."""
     mols, names, y = _set(12)
     fs = FieldSet.create(physchem=["steric", "electrostatic"], alpha=0.5)
     mf = _fields(mols, names, fs)

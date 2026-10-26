@@ -205,7 +205,7 @@ def registry() -> List[Benchmark]:
                   minutes="10",
                   report=lambda: _mod("run_perfield").report(_r("perfield")),
                   tables=["perfield/table.md"]),
-        Benchmark("chirality", "do the signed three-point channels buy anything",
+        Benchmark("chirality", "do the signed three-point channels add anything",
                   "run_chirality.py", "chirality", compute=[[]],
                   minutes="20",
                   report=lambda: _mod("run_chirality").report(_r("chirality")),

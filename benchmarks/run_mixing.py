@@ -218,7 +218,7 @@ def report(results=RESULTS):
               "set so that positive means *the evidence was right*: a field it calls "
               "indispensable is one whose removal costs the held-out molecules.", "",
               ("That is the finding: the posterior cannot improve a prediction, and it can tell "
-               "you which fields the prediction rests on."
+               "you which fields the prediction depends on."
                if rho > 0.3 else
                "That is weaker than the interpretation claim deserves. The Bayes factor orders "
                "the fields by what the training activities say, and the held-out molecules do "

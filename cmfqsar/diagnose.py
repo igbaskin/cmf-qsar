@@ -1,11 +1,12 @@
 """
-What to ask of a data set before modelling it, and which road it should take.
+What to ask of a data set before modelling it, and which route it should take.
 
 Every expensive mistake this program has recorded was visible before the model was built, in a
 number that took seconds to compute.  The corrosion benzenes were modelled with five fields and an
-automatic frame, and atom-type counts -- no geometry at all -- beat them; the ACE set of the 2013
-paper is predicted better by four two-dimensional descriptors than by the whole 3D model; a
-thrombin model in the exposure study scored +0.059 with alpha pinned to the top of its grid, which
+automatic frame, and atom-type counts -- no geometry at all -- predicted better than them; the
+ACE set of the 2013 paper is predicted better by four two-dimensional descriptors than by the
+whole 3D model; a
+thrombin model in the exposure study scored +0.059 with alpha stuck at the top of its grid, which
 is what a mis-specified model looks like from outside.  None of these is subtle.  They are simply
 never asked, because asking means running three or four baselines by hand.
 
@@ -23,12 +24,12 @@ Five questions, and the numbers that answer each:
    program's own alignment will invent one.
 3. **Does the frame carry signal?**  The aligned model against the two baselines that need no
    frame: the atom-type count kernel, which has thrown the geometry away entirely, and the
-   rotation-invariant field autocorrelation, which keeps it without a pose.  If neither is beaten,
-   the alignment is decoration and the cheaper route is also the honest one.
-4. **Is the geometry decoration?**  The same comparison against descriptors alone -- what the file
-   carries plus the handful the program computes.  This is the question the ACE result forces.
+   rotation-invariant field autocorrelation, which keeps it without a pose.  If neither is
+   outperformed, the alignment adds nothing and the cheaper route is also the more reliable one.
+4. **Does the geometry add anything?**  The same comparison against descriptors alone -- what the
+   file carries plus the few the program computes.  This is the question the ACE result forces.
 5. **Was the model specified sensibly?**  Whether the chosen alpha sits on the edge of its grid,
-   which means the search wanted a value it was not offered.
+   which means the search needed a value it was not offered.
 
 Every comparison is paired over the molecules and reported with a bootstrap interval, because on
 twenty to thirty molecules a difference below about 0.1 in q2 is not a difference.  The
@@ -164,7 +165,7 @@ def _nested_best(kernels, y, lams=LAMS, folds=10, inner: int = 5, seed=0):
     This is the difference between "how well does the best of thirty settings fit this
     cross-validation" and "how well does the procedure predict a molecule it has not seen".  The
     diagnosis compares five routes carrying different numbers of hyper-parameters, and without
-    nesting the one with the largest grid wins a little of its lead by searching harder.
+    nesting the one with the largest grid gains a little of its lead merely by searching harder.
     """
     from .model import krr_fit
 
@@ -269,7 +270,8 @@ def topomer_route(mols, names, y, alphas=ALPHAS, folds=10, seed=0,
     Only the molecules that can be cut at the common framework take part, so the route carries
     the indices it covers and the diagnosis compares it with an aligned model fitted on those
     same molecules -- comparing a subset against the whole set is the mistake this repository
-    already made once, and it flatters whichever route happens to drop the hard compounds.
+    already made once, and it overstates the quality of whichever route happens to drop the hard
+    compounds.
     """
     from .topomer import TopomerSpec, choose_core, cuttable, series_labels, topomer_fields
 
@@ -309,7 +311,7 @@ def descriptor_route(mols, y, names_d: Optional[Sequence[str]] = None, folds=10,
     """Descriptors alone: the question the ACE result forces on every set.
 
     Most files store the activity as a molecule property, so the available descriptors usually
-    *include the quantity being predicted*; handed it, this baseline returns q2 = 1.000 and the
+    *include the quantity being predicted*; given it, this baseline returns q2 = 1.000 and the
     diagnosis recommends descriptors for every set in the world.  Anything in `exclude`, and
     anything correlating with the activity above `leak`, is therefore dropped and named.
 
@@ -419,7 +421,7 @@ def _superimposed_finding(mols: Sequence[Chem.Mol], core) -> Finding:
     A centroid cannot answer it: ``EmbedMolecule`` leaves every molecule centred on the origin,
     so a set of independently generated conformations has a centroid spread of 0.02 A and looks
     perfectly superimposed while every molecule points a different way.  The question is whether
-    the atoms the molecules *share* land in the same place, so that is what is measured -- the
+    the atoms the molecules *share* lie in the same place, so that is what is measured -- the
     framework atoms against the first molecule that carries them, with no superposition.
     """
     coords = [np.asarray(m.GetConformer().GetPositions(), float) for m in mols]
@@ -447,17 +449,17 @@ def _superimposed_finding(mols: Sequence[Chem.Mol], core) -> Finding:
         n_core = ref.shape[0]
         coverage = n_core / max(float(np.median([m.GetNumHeavyAtoms() for m in mols])), 1.0)
         ambiguous = float(np.median([len(xs) for xs in have]))
-        # The test can be fooled both ways, so it is allowed to decline.  A framework that is a
+        # The test can be misled both ways, so it may give no answer.  A framework that is a
         # small symmetric ring matches in a dozen orientations, and two rings near the origin
-        # will coincide to under an angstrom by luck -- a set of independently embedded
+        # will coincide to under an angstrom by chance -- a set of independently embedded
         # molecules passed that way.  A framework that is a small part of the molecule may also
         # match a *different* copy in each molecule, which made an author-aligned Sutherland set
-        # read as 9 A apart.  So a verdict is given only when the framework is a fair share of
+        # read as 9 A apart.  So a conclusion is drawn only when the framework is a large part of
         # the molecule and matches it in few ways.
-        # positive and negative evidence are not symmetric.  Six atoms landing on six atoms to
+        # positive and negative evidence are not symmetric.  Six atoms lying on six atoms to
         # within half an angstrom is not luck, however many ways the framework matches, so a
-        # small deviation is a verdict on its own.  A large one is only a verdict when the
-        # framework is a fair share of the molecule, since otherwise it may be matching a
+        # small deviation is a conclusion on its own.  A large one is only a conclusion when the
+        # framework is a large part of the molecule, since otherwise it may be matching a
         # different copy of itself in each molecule.
         conclusive = coverage >= 0.4
         where = (f"the {n_core} shared framework atoms sit {med:.1f} A apart between molecules, "
@@ -593,7 +595,7 @@ def _fit_predict(kernels, y, train, test, lams=LAMS, inner=5, seed=0):
 def validate_advice(mols, names, y, test_fraction=0.3, seeds=(0, 1, 2), alphas=ALPHAS,
                     charge_model="gasteiger", param_scheme="rdkit", activity_prop="",
                     folds=5, progress=None):
-    """Take the advice, build that model, and see whether it beat the aligned one.
+    """Take the advice, build that model, and see whether it did better than the aligned one.
 
     The diagnosis is run on the training part alone, so the advice never sees the molecules it
     will be judged on; every route is then fitted on that part and asked about the rest.  This
@@ -624,7 +626,7 @@ def validate_advice(mols, names, y, test_fraction=0.3, seeds=(0, 1, 2), alphas=A
                      param_scheme=param_scheme, activity_prop=activity_prop)
         advice = d.recommended.split(",")[0].split(" or ")[0].strip()
         # the diagnosis decides, on the training part, whether the descriptor baseline is
-        # reading the activity; if it is, that route is not a road the advice could have taken
+        # reading the activity; if it is, that route is not a route the advice could have taken
         # and must not count as the one it should have chosen
         dr = d.routes.get("descriptors")
         unusable = {"descriptors"} if (dr is not None and getattr(dr, "leaked", False)) else set()
@@ -727,7 +729,7 @@ def _diagnose(mols, names, y, fieldset, alphas, folds, seed, charge_model, param
             d.findings.append(Finding(
                 "alpha-edge", "warn",
                 f"the chosen attenuation {aligned.alpha:g} is at the {where} of the grid: the "
-                f"search wanted a value it was not offered, so widen it before believing the model",
+                f"search needed a value it was not offered, so widen it before believing the model",
                 {"alpha": aligned.alpha}))
 
     desc = d.routes.get("descriptors")
@@ -774,20 +776,20 @@ def _diagnose(mols, names, y, fieldset, alphas, folds, seed, charge_model, param
                 "frame-vs-topomer", "warn" if beaten else "ok",
                 text + (" -- cutting the molecules and posing the pieces by rule does as well as "
                         "the frame, on the molecules that can be cut" if beaten
-                        else " -- the frame beats the topomer rule"),
+                        else " -- the frame does better than the topomer rule"),
                 {"difference": diff, "low": lo, "high": hi,
                  "n": len(r.subset) if r.subset is not None else len(y)}))
         elif other == "descriptors":
             d.findings.append(Finding(
                 "decoration", "warn" if beaten else "ok",
-                text + (" -- descriptors alone do as well, so the geometry is decoration on this "
-                        "set" if beaten else " -- the geometry earns its place"),
+                text + (" -- descriptors alone do as well, so the geometry adds nothing on this "
+                        "set" if beaten else " -- the geometry adds something"),
                 {"difference": diff, "low": lo, "high": hi}))
         else:
             d.findings.append(Finding(
                 f"frame-vs-{other}", "warn" if beaten else "ok",
-                text + (f" -- the frame buys nothing over {other}" if beaten
-                        else f" -- the frame beats {other}"),
+                text + (f" -- the frame gains nothing over {other}" if beaten
+                        else f" -- the frame does better than {other}"),
                 {"difference": diff, "low": lo, "high": hi}))
 
     d.recommended, d.why = _recommend(d)
@@ -795,7 +797,7 @@ def _diagnose(mols, names, y, fieldset, alphas, folds, seed, charge_model, param
 
 
 def _recommend(d: Diagnosis) -> Tuple[str, str]:
-    """Read the intervals, and say which road the set should take."""
+    """Read the intervals, and say which route the set should take."""
     aligned = d.routes.get("aligned")
     inv = d.routes.get("invariant")
     counts = d.routes.get("counts")
@@ -807,7 +809,7 @@ def _recommend(d: Diagnosis) -> Tuple[str, str]:
     best = max(usable, key=lambda r: r.q2) if usable else aligned
     if best.q2 < 0.1:
         return "none", (f"no route reaches q2 0.1 (best {best.name} at {best.q2:+.3f}); the set "
-                        f"does not support a model as it stands")
+                        f"does not support a model as it is")
     topo = d.routes.get("topomer")
     frameless = [r for r in (inv, counts) if r is not None and np.isfinite(r.q2)]
     beaten_by_frameless = any(aligned.q2 - r.q2 < MEANINGFUL for r in frameless)
@@ -819,11 +821,11 @@ def _recommend(d: Diagnosis) -> Tuple[str, str]:
             and aligned.q2 - desc.q2 < MEANINGFUL):
         return ("descriptors", "descriptors alone match the 3D model, so a field model here is an "
                                "expensive way to count atoms; use the fields only if the co-field "
-                               "is the point")
+                               "is the purpose")
     if beaten_by_frameless:
         route = max(frameless, key=lambda r: r.q2)
-        return (route.name, f"the frame buys nothing over {route.name}, which needs no alignment "
-                            f"to curate and cannot be got wrong")
+        return (route.name, f"the frame gains nothing over {route.name}, which needs no alignment "
+                            f"to curate and cannot be done wrongly")
     topo_beaten = any(f.code == "frame-vs-topomer" and f.level == "ok" for f in d.findings)
     if not_superimposed:
         if topo is not None and np.isfinite(topo.q2) and topo_beaten:

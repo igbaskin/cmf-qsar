@@ -6,7 +6,7 @@ superimposed on a reference molecule by maximum common substructure for the Mitt
 et al. (2009) collection. Same fields (electrostatic, steric, hydrophobic, hba, hbd), same alpha
 grid, same lambda grid, same 10-fold CV.
 
-| target | n | q2 published | q2 automatic | median fit RMSD | geometry buys (published) | geometry buys (automatic) |
+| target | n | q2 published | q2 automatic | median fit RMSD | gain from geometry (published) | gain from geometry (automatic) |
 |---|---|---|---|---|---|---|
 | ACE | 114/114 | +0.651 | +0.470 | 1.27 A | -0.003 | -0.142 |
 | AChE | 111/111 | +0.547 | +0.243 | 1.61 A | +0.337 | +0.078 |
@@ -21,7 +21,7 @@ grid, same lambda grid, same 10-fold CV.
 Mean q2: published +0.597, automatic +0.295 (difference +0.303).
 
 The frame against the conformer: the invariant column uses the same coordinates without
-any superposition, so where it holds up and the aligned column does not, the frame is
+any superposition, so where it keeps its q2 and the aligned column does not, the frame is
 what went wrong rather than the geometry.
 
 | target | aligned pub. | invariant pub. | counts pub. | aligned aut. | invariant aut. | counts aut. |

@@ -47,7 +47,7 @@ def test_coverage_holds_on_exchangeable_data(level):
 
 
 def test_coverage_survives_a_badly_specified_model():
-    """A wrong model keeps its coverage and pays in width, which is the whole point."""
+    """A wrong model keeps its coverage at the cost of wider intervals, which is the purpose."""
     rng = np.random.default_rng(1)
     y = rng.normal(size=4000)
     good = y + rng.normal(scale=0.3, size=4000)
@@ -77,7 +77,7 @@ def test_the_normalised_rule_widens_where_the_model_is_extrapolating():
 
 
 def test_the_normalised_rule_is_narrower_where_it_can_be():
-    """Normalisation should buy something: tighter intervals for the easy molecules."""
+    """Normalisation should gain something: tighter intervals for the easy molecules."""
     rng = np.random.default_rng(3)
     hard = rng.random(3000)
     y = rng.normal(size=3000)

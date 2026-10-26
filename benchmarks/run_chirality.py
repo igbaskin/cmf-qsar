@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Do the signed three-point channels buy anything?  C5 of the development plan, measured.
+Do the signed three-point channels add anything?  C5 of the development plan, measured.
 
 The field autocorrelation of `cmfqsar/invariant.py` is alignment-free and geometry-aware, and it
 is two-point: it counts pairs of atoms at a distance, which is a quantity a mirror image has in
@@ -9,7 +9,7 @@ orientation of one field with respect to another.  The signed triple product of 
 displacement vectors is not, and `chirality()` adds it as a second block of channels, resolved
 over a few radial shells.
 
-Whether that is worth the columns it costs is an empirical question, and the bar is set by the
+Whether that is worth the columns it costs is an empirical question, and the standard is set by the
 descriptor it extends rather than by an aligned model: if the three-point channels add nothing to
 the two-point ones, the item is closed.
 
@@ -17,7 +17,7 @@ The test is leave-one-chemotype-out on the five chemotype-split sets, which is t
 alignment-free kernel exists for -- a held-out molecule has no scaffold-mate in the training part,
 so nothing can be recovered from a neighbour of the same series.
 
-Every variant gets the same freedom and the same honesty: three regularisations by three distance
+Every variant gets the same freedom and the same fairness: three regularisations by three distance
 grids, chosen **inside the training part of every fold** by a 10-fold cross-validation and never
 on the fold being predicted.  The number of radial shells is not searched over; each setting is a
 column of its own, so that the signed channels are never given more freedom than the kernel they
@@ -79,7 +79,7 @@ VARIANTS = (("two-point", 0), ("signed, 1 shell", 1), ("signed, 2 shells", 2),
 
 #: a negative shell count in VARIANTS means: scale the signed block up until it carries half the
 #: squared norm of a molecule's channel vector.  Left alone it carries 40 columns against the
-#: pairs' 255, so a null result would be a statement about that ratio and not about the
+#: pairs' 255, so a negative result would be a statement about that ratio and not about the
 #: information in the channels
 
 
@@ -188,7 +188,7 @@ def _mirrored(mol):
     their handedness, and the two-point descriptor sees that difference -- which would let it
     appear to solve a problem it is blind to.  Reflecting one conformation leaves the internal
     geometry alone, so the pair differs in handedness and in nothing else, and the two-point
-    channels of the two are identical to the last bit.
+    channels of the two are identical in every bit.
     """
     from rdkit import Chem
 
@@ -422,7 +422,7 @@ def report(results=RESULTS):
     cols = {k: int(np.mean([d["columns"].get(k, 0) for d in data])) for k in order}
     lines += ["", "Channels per molecule, averaged over the sets: "
               + ", ".join(f"{k} {cols[k]}" for k in order) + ".", "",
-              "## Does the difference survive the scatter?", "",
+              "## Is the difference larger than the scatter?", "",
               "Paired against the two-point kernel, set by set, with a bootstrap interval over "
               "the five sets. Five is a small number of sets and the interval says so.", "",
               "| variant | mean difference | 95 % interval | better on |", "|---|---:|---|---:|"]
@@ -484,7 +484,7 @@ def report(results=RESULTS):
                       f"same handedness and {d['opposite']:+.3f} for two of opposite handedness, "
                       f"a difference of {d['difference']:+.3f} against a spread of {d['sd']:.3f} "
                       f"over {d['n']} pairs. Handedness is not a direction in this space, so "
-                      "there is nothing for a linear model to transfer -- which is the whole of "
+                      "there is nothing for a linear model to transfer -- which explains all of "
                       "C5's failure, and what C7 was built to fix by reading the configuration "
                       "at one centre instead of summing over the molecule."]
     text = "\n".join(lines) + "\n"

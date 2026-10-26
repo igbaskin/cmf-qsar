@@ -3,7 +3,7 @@
 Would the design loop have suggested the substituent that was actually best?
 
 `cmfqsar/design.py` enumerates replacements at one position, poses each by the topomer rule and
-ranks them by what the model expects. The only honest test of that is retrospective and has to
+ranks them by what the model expects. The only fair test of that is retrospective and has to
 hold out the answer: **leave one substituent out**. Every molecule carrying a given R-group at
 the varied position is removed from the training set, the model is fitted on what is left, and
 the whole library of R-groups -- including the one just removed -- is enumerated and ranked. The
@@ -14,10 +14,10 @@ Two questions, kept apart:
 * **Does the ranking agree with the measurements?** Spearman's rho between the predicted score of
   every held-out group and the activity of the molecule that carries it.
 * **Would following it have helped?** The activity of the top-ranked suggestion, against the mean
-  over the library (what picking at random gives) and against the best in the library (what an
-  oracle gives) -- and how often the top suggestion lands in the best fifth.
+  over the library (what picking at random gives) and against the best in the library (what a
+  perfect ordering gives) -- and how often the top suggestion is within the best fifth.
 
-Only sets whose scaffold comes off cleanly are usable: a core fused to the rest of the molecule
+Only sets whose scaffold can be cut off cleanly are usable: a core fused to the rest of the molecule
 leaves something that is not a substituent, and the loop has nothing to vary. The ones that fail
 that test are reported rather than dropped, since how far this reaches on public data is part of
 the answer.
@@ -125,9 +125,9 @@ def run_set(name, force=False, data=DATA, results=RESULTS, min_cuttable=MIN_CUTT
     label = max(at_site, key=lambda k: len(at_site[k])) if at_site else None
     groups = at_site.get(label, {})
     if share < min_cuttable or label is None or len(groups) < MIN_GROUPS:
-        why = (f"the core comes off cleanly in only {share:.0%} of the series"
+        why = (f"the core can be cut off cleanly in only {share:.0%} of the series"
                if share < min_cuttable else
-               f"only {len(groups)} distinct groups at the busiest position")
+               f"only {len(groups)} distinct groups at the most varied position")
         out = {"set": name, "usable": False, "why": why, "cuttable": float(share),
                "core": Chem.MolToSmiles(core), "groups": len(groups)}
         json.dump(out, open(out_path, "w"), indent=1)
@@ -234,7 +234,7 @@ def report(results=RESULTS):
               f"{len(usable)} sets, the ranking agrees with the measurements at a mean Spearman "
               f"ρ of **{float(np.nanmean(rhos)):+.3f}**, and the group the loop puts first is "
               f"worth **{float(np.mean(lifts)):+.2f}** log units more than the library average "
-              f"-- it lands in the best {100 * TOP:.0f} % of the library "
+              f"-- it is within the best {100 * TOP:.0f} % of the library "
               f"**{100 * float(np.mean(hits)):.0f} %** of the time.", ""]
     if skipped:
         lines += ["Sets the loop cannot reach, and why:", "",
@@ -243,11 +243,11 @@ def report(results=RESULTS):
             lines.append(f"| {d['set']} | {d.get('why', 'unusable')} |")
         lines += ["",
                   "That is half the answer to how far this goes. A design loop over substituents "
-                  "needs a series with a scaffold that comes off at single acyclic bonds, and "
+                  "needs a series with a scaffold that can be cut off at single acyclic bonds, and "
                   "most public QSAR sets are not that: they are collections of several "
-                  "chemotypes with a common framework found by force. On the sets that are "
+                  "chemotypes with a common framework found by forcing a match. On the sets that are "
                   "congeneric, the loop works; on the others there is nothing to vary and the "
-                  "honest answer is to say so rather than to rank whatever the core leaves "
+                  "correct answer is to say so rather than to rank whatever the core leaves "
                   "behind."]
     text = "\n".join(lines) + "\n"
     with open(os.path.join(results, "table.md"), "w", encoding="utf-8") as fh:

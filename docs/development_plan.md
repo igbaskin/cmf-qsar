@@ -9,10 +9,10 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 57 modules and about 23,800 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 57 modules and about 24,300 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
   `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 647 tests, a typeset manual and a README that doubles
+  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 670 tests, a typeset manual and a README that doubles
   as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
@@ -478,6 +478,50 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   measurements at all can be predicted from its neighbours, and the selectivity co-field in the GUI
   as the difference of two co-fields. The Am/Eu problem is the first application; separations of
   other lanthanide and actinide pairs the next.
+  **Done 26 October 2026, and this one helps.** `cmfqsar/multitask.py` gains the multi-endpoint
+  **marginal likelihood** (the mean marginalised over the design columns, the amplitude profiled
+  out, one factorisation per candidate instead of ten folds), a **free-form low-rank covariance**
+  `L L' + diag(d)` -- positive definite for every parameter value, containing the one-rho model at
+  rank 1, with a free diagonal so that endpoints in different units get their own amplitudes --
+  and a **covariance from task descriptors** `T(t,s) = k(z_t, z_s)` whose length scale and nugget
+  the evidence chooses. `Observations` takes `task_features`, which replaces the indicator columns
+  of the bias with the descriptors so that the mean extrapolates, and
+  `MultiTaskFit.predict_new_task` predicts an endpoint that was never measured (with
+  `new_task_coefficients` giving it a co-field like any other). In the GUI the selectivity dialog
+  now fits any number of ticked endpoints, offers the covariance as a choice, prints the
+  correlation matrix, and lists every endpoint plus the named pair's difference in the Endpoint
+  box.
+  **Measured on `examples/cyclodextrin/`** (`benchmarks/run_tasks.py`), which has seven real
+  endpoints and descriptors for them -- 1669 guests, 2671 association constants
+  against seven hosts, and the host is itself a molecule, so the task descriptors are a structure.
+  One shared kernel, 10-fold cross-validation over guests: independent
+  +0.412 mean q2, one rho by cross-validation +0.454, free rank 2
+  +0.488, descriptors +0.448 --
+  **sharing is worth +0.076**, the opposite of the corrosion result of A6, and for a reason:
+  there two endpoints each had their own molecules, here five small endpoints sit beside two large
+  ones.
+  **An endpoint with no measurements.** Each host removed entirely and predicted from the other six: mean Spearman
+  rho **+0.457** through the descriptor covariance against **+0.421** for the nearest
+  host's own model -- so the descriptors carry real information about an endpoint never measured --
+  and **+0.670** for simply averaging the other hosts' values of the same guest, which it
+  does *not* beat. That baseline is not a model and can only say something about a guest some other host
+  was measured against; but it is the number to beat and it has not been beaten. q2 is
+  negative on 1 of the 7 hosts,
+  so what this produces is a ranking rather than a binding constant. The spread has one cause.
+  Five of the seven hosts have seven glucose units (beta and its derivatives), alpha has six and
+  gamma has eight: remove one of the five and the covariance interpolates, remove alpha or gamma
+  and it must extrapolate outside the range it was built on. The five interpolated hosts average
+  rho **+0.611** against **+0.473** for the nearest host alone; the two extrapolated ones give
+  +0.431 (alpha) and **-0.284** (gamma, q2 -5.50). **Interpolation between endpoints that were
+  measured is what this supports**, and the item's wording -- "an endpoint with no measurements at
+  all can be predicted from its neighbours" -- is right exactly to the extent that it has
+  neighbours. Seven endpoints are also too few for the evidence to localise the task kernel's
+  length scale: it came out at 4 standardised units on all seven fits, the top of the grid, so the
+  criterion would prefer it wider still, with every host treated as a neighbour of every other.
+  **Not done:** the Am/Eu application itself (the 46 extractants carry one endpoint, lg SF, not the
+  two affinities; getting those is a data task, not a modelling one), task descriptors for the
+  corrosion media, and a covariance whose descriptors are *fitted* rather than given, which is the
+  obvious next parameterisation and the one that would need more than seven endpoints to justify.
 * **E2. Active learning: which molecule to make next.** The GP variance is in hand. An acquisition
   loop over a set of posed candidates (expected improvement, or variance alone for exploration)
   turns the 2019 statement "maximising the overlap tells how to modify the molecule" into an
@@ -1235,7 +1279,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
-| Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
+| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; the review that ties the series together |
 

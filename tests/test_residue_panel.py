@@ -65,7 +65,7 @@ def test_the_header_says_how_much_of_the_score_those_residues_carry(panel):
 
 def test_the_strongest_residue_comes_first(panel):
     MainWindow._show_residue_profile(_stub(panel, _profile()), 0)
-    assert panel.tbl_comp_res.item(0, 0).text() == "LEU83.A"     # 0.030 beats 0.007
+    assert panel.tbl_comp_res.item(0, 0).text() == "LEU83.A"     # 0.030 ranks above 0.007
 
 
 def test_a_term_below_the_display_threshold_is_blank_not_zero(panel):

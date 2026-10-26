@@ -68,10 +68,10 @@ def test_points_are_coloured_only_where_there_is_a_value(panel):
 
 
 def test_the_window_builds_a_score_plot_from_a_fitted_map(panel):
-    """The glue between the map and the tab: axis labels, colours and the log line.
+    """The connection between the map and the tab: axis labels, colours and the log line.
 
-    Called unbound on a stub, because what is being checked is the wiring -- that the method
-    reaches for attributes that exist and hands the panel what it can draw -- and not the window.
+    Called unbound on a stub, because what is being checked is the connections -- that the method
+    uses attributes that exist and hands the panel what it can draw -- and not the window.
     """
     from types import SimpleNamespace
 

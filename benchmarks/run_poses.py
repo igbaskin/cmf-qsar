@@ -172,7 +172,7 @@ def variant(row):
     confs = int(row.get("conformers") or 0)
     guard = row.get("max_rmsd")
     # the set of methods is part of what a run is: two runs of the same protocol over different
-    # posers are not rows of one table, and merging them gives a set two rows with holes in both
+    # posers are not rows of one table, and merging them gives a set two rows with missing cells in both
     posers = tuple(sorted(m for m in row.get("methods", {}) if m != "crystal"))
     key = (recon, confs, -1.0 if guard is None else float(guard), posers)
     what = ("regenerated conformations" if recon else "crystal conformations, pose scrambled")

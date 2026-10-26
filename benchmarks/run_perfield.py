@@ -5,20 +5,20 @@ Does a separate attenuation per field predict better than one width shared by al
 The attenuation alpha decides how far a field reaches, and the protocol of the papers gives all
 five fields the same one. There is no chemical reason why it should: electrostatics is long-ranged
 and a hydrogen-bond donor is nearly a point. The reason was arithmetic -- a grid over one width is
-A kernels, a grid over one width per field is A^F -- and item B4 removed it twice over. The
+A kernels, a grid over one width per field is A^F -- and item B4 removed it in two ways. The
 per-field kernels are independent, so the A^F combinations are assembled out of the FA matrices the
 shared grid already builds; and the evidence scores a candidate with one factorisation instead of
 ten, so a coordinate descent over the widths costs a few hundred factorisations.
 
 So the cost objection is gone and the real question can be asked: the descent has 5^5 assignments
-to please itself with and nothing held out while it does so. Does the extra freedom buy prediction,
+to choose from and nothing held out while it does so. Does the extra freedom improve prediction,
 or only evidence?
 
 For every set, five random 70/30 splits. On the training part alone the shared grid is searched by
 the evidence, and then the per-field descent starts from the width it chose; each choice is fitted
 on that part and asked about the held-out molecules it never saw. What is reported is the external
 R2pred of each choice, what the descent gained in log evidence, how often it moved at all, and
-which fields ask for which widths.
+which widths are chosen for which fields.
 
 Usage
 -----
@@ -227,7 +227,7 @@ def report(results=RESULTS):
               f"{float(np.mean(moved_all)):.1f} of the {len(fields)} fields on average and left "
               f"them all at the shared width in "
               f"{100.0 * float(np.mean([m == 0 for m in moved_all])):.0f} % of the splits.", "",
-              "Which width each field asks for, averaged over every split (the grid runs from "
+              "Which width is chosen for each field, averaged over every split (the grid runs from "
               f"{min(data[0]['alphas']):g} to {max(data[0]['alphas']):g}; larger is sharper):", "",
               "| field | mean alpha chosen |", "|---|---:|"]
     for f in fields:

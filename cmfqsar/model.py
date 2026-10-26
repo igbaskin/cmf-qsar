@@ -148,7 +148,7 @@ def classification_scores(y_true: np.ndarray, decision: np.ndarray) -> Dict[str,
 def rie_bedroc(ranks: np.ndarray, n: int, n_act: int, alpha: float = 20.0) -> Tuple[float, float]:
     """Robust initial enhancement and BEDROC of Truchon and Bayly (2007).
 
-    The enrichment factor counts the actives above a cut and throws away where they are; RIE
+    The enrichment factor counts the actives above a cut and ignores where they are; RIE
     weights every active by exp(-alpha r / N), so a hit at rank 1 is worth more than one at rank
     50, and BEDROC rescales RIE onto [0, 1] given the active rate.  `alpha` sets how early
     "early" is: 20 puts 80 % of the weight in the top 8 % of the ranking, 160.9 in the top 1 %.
@@ -930,8 +930,8 @@ class CMFModel:
 
         The block is a dot product, so its share of the prediction splits exactly into one term
         per descriptor, and the terms sum to the block's whole contribution.  Reported beside the
-        atom contributions, this is what shows at a glance whether a model is standing on its
-        geometry or on a descriptor that happens to track the activity.
+        atom contributions, this is what shows at a glance whether a model rests on its
+        geometry or on a descriptor that happens to follow the activity.
         """
         if self.desc_train_ is None or self.coef is None:
             return []
@@ -1110,7 +1110,7 @@ class CMFModel:
                 st.extra["y_cv"] = ycv
             st.extra["y_fit"] = yfit
         elif self.method == "ranksvm":
-            # a ranking score has no units, so r2 and RMSE are arithmetic on nothing; what it
+            # a ranking score has no units, so r2 and RMSE have no meaning; what it
             # has are the order statistics, for the fit and for the molecules left out
             from .ranking import rank_scores
             gap = float(self.params.get("gap", 0.0))
@@ -1164,7 +1164,7 @@ class CMFModel:
 
         With `normalise` the errors are divided by the distance of their molecule from the rest
         of the training set, so that the interval widens where the model is extrapolating.  It
-        is off by default because, measured, it buys no sharpness on these sets.
+        is off by default because, measured, it gains no sharpness on these sets.
         """
         from .conformal import calibrate, difficulty_from_kernel
 
@@ -1270,9 +1270,9 @@ class CMFModel:
 
         so a molecule is promoted only if the model is both optimistic *and* sure about it.  The
         point is not caution for its own sake: a screening library is by construction dominated
-        by molecules unlike the training set, a kernel method returns the training mean dressed
-        up for those, and a point estimate cannot tell that answer from a real one.  Subtracting
-        the spread puts the molecules the model knows nothing about where they belong.
+        by molecules unlike the training set, a kernel method returns the training mean presented
+        as a prediction for those, and a point estimate cannot tell that answer from a real one.
+        Subtracting the spread puts the molecules the model knows nothing about where they belong.
 
         This is the same quantity the applicability domain reports and the one-class Gaussian
         process already divides by; `beta` is the only choice, and one standard deviation is the
@@ -1548,7 +1548,7 @@ class CMFModel:
             "desc_scaler": self.desc_scaler_,
             "desc_train": self.desc_train_,
             "desc_scale": self.desc_scale_,
-            # the calibrated interval: a handful of numbers, and useless to recompute later
+            # the calibrated interval: a few numbers, and useless to recompute later
             "conformal": getattr(self, "conformal_", None),
         }
 
@@ -1642,7 +1642,7 @@ def align_mixing(K_fields: np.ndarray, y: np.ndarray, scale: Optional[np.ndarray
     The weights are rescaled so that the mean diagonal of the joint kernel is the same as with
     h_f = 1, which keeps the regularisation grid comparable.  The combination stays linear, so
     co-fields and atom contributions remain valid - that is the difference from a nonlinear
-    kernel layer, which can buy accuracy but loses the interpretation.
+    kernel layer, which can gain accuracy but loses the interpretation.
     """
     K_fields = np.asarray(K_fields, float)
     F = K_fields.shape[0]
@@ -1843,7 +1843,7 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
     and the learner's regularisation parameters.  Optionally refine the mixing
     coefficients h_f by coordinate descent (beware of model-selection bias), or set them by
     centred kernel alignment (``mkl=True``, see :func:`align_mixing`), in which case the
-    reported RMSEcv is honest because the weights are re-derived inside every fold.
+    reported RMSEcv is reliable because the weights are re-derived inside every fold.
 
     ``lam_search="brent"`` (KRR/GP only) additionally minimises RMSEcv over a *continuous*
     lambda in [min(lams), max(lams)] with Brent's bounded method, as the R scripts of the
@@ -1971,7 +1971,7 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
             for params in grid:
                 if select == "evidence":
                     # one factorisation per candidate instead of one per fold, and nothing is
-                    # held out; the loss is the negative log evidence so that smaller still wins
+                    # held out; the loss is the negative log evidence so that smaller is still better
                     from .evidence import log_evidence
                     ev = log_evidence(K, y, float(params.get("lam", 1.0)),
                                       fit_bias=model.fit_bias)

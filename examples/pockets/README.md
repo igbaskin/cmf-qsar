@@ -29,4 +29,4 @@ python examples/make_pocket_examples.py --cutoff 10 --overwrite
 Sets whose ligands do not sit in the frame of the entry they name are reported and skipped rather
 than written, which is why a few targets are missing here. The application makes the same check when
 a structure is loaded and states the closest approach, so a mismatched frame is visible immediately
-instead of producing a picture that quietly means nothing.
+instead of producing a meaningless picture without any warning.

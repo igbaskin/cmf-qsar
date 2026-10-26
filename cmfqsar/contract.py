@@ -34,12 +34,12 @@ FRAME_MARGIN = 4.0
 
 #: how near an atom must come to some training atom to count as occupying the training volume
 #: (A).  The box of a training set is mostly empty -- a congeneric series fills a shape, not a
-#: brick -- so the cloud is what a new molecule has to lie in, and 1.5 A is about one bond
+#: box -- so the cloud is what a new molecule has to lie in, and 1.5 A is about one bond
 OCCUPANCY_RADIUS = 1.5
 
 #: the occupancy of a molecule is doubted below the training set's own fifth percentile, less
 #: this much.  Taking the threshold from the set rather than from a fixed number is what the
-#: applicability domain does, and for the same reason: a tight series earns a tight rule
+#: applicability domain does, and for the same reason: a tight series gets a tight rule
 OCCUPANCY_SLACK = 0.05
 
 
@@ -75,7 +75,7 @@ def _occupancy(model: CMFModel, coords: np.ndarray) -> float:
 
 
 def _occupancy_threshold(model: CMFModel, k: int = 24) -> "float | None":
-    """How much of itself the training set asks of a molecule, from the set's own spread.
+    """How much overlap with itself the training set requires of a molecule, from its spread.
 
     Each training atom is measured against the nearest atom of a *different* training molecule,
     so that a molecule is never judged by its own atoms; the fifth percentile of the resulting
@@ -183,10 +183,10 @@ def check_molecules(model: CMFModel, mf: Sequence[MoleculeFields]) -> List[Findi
 
 
     # 3b. the orientation: a molecule in the right place can still be turned the wrong way, and
-    # then it overlaps the training fields as a stranger does -- the prediction falls back
-    # towards the bias while the box test above sees nothing, because a rotation about the
-    # molecule's own centre moves no centroid.  This is the one case the model file's record
-    # could not see when it was written
+    # then it overlaps the training fields as an unrelated molecule does -- the prediction falls
+    # back towards the bias while the box test above sees nothing, because a rotation about the
+    # molecule's own centre moves no centroid.  This is the one case the model file's record could
+    # not see when it was written
     if model.uses_fields and model.train is not None and len(getattr(model.train, "coords", [])):
         thr = _occupancy_threshold(model)
         if thr is not None:

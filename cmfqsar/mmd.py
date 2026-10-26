@@ -8,7 +8,7 @@ extrapolation?  Averaging a per-molecule verdict does not answer it either: two 
 identical nearest-neighbour similarities and still occupy different regions.
 
 The maximum mean discrepancy (Gretton et al., JMLR 13 (2012) 723) is the natural answer when a
-kernel is already in hand.  Every set of molecules has a mean field -- the mean of its feature
+kernel is already available.  Every set of molecules has a mean field -- the mean of its feature
 maps, which for CMF is a function of space in its own right -- and the MMD is the distance
 between the two mean fields:
 
@@ -29,7 +29,7 @@ and nothing else, since the kernel is computed once.
 The **witness** says *where* the difference lies.  It is the function whose expectation separates
 the two sets, w(x) = mean_i K(x, x_i) - mean_j K(x, y_j), evaluated at each molecule: large and
 positive for molecules typical of the first set, large and negative for the second.  Ranking a
-library by it names the compounds that make it unlike the training set, which is the actionable
+library by it names the compounds that make it unlike the training set, which is the usable
 form of a p-value.
 """
 from __future__ import annotations

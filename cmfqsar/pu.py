@@ -1,12 +1,11 @@
 """Learning from positives and unlabelled molecules (part of plan item E4).
 
-A screening library is not a labelled set.  The compounds that came back negative in one assay at
-one concentration are *unlabelled* rather than inactive: some are genuinely inert, some were
+A screening library is not a labelled set.  The compounds that gave a negative result in one assay
+at one concentration are *unlabelled* rather than inactive: some are genuinely inert, some were
 mis-measured, some would have worked at another concentration, and a few are actives nobody has
-recognised yet.  Treating that mixture as a negative class teaches a classifier to reject the
-very molecules a screen is looking for, and the error is worst exactly where it matters, at the
-top of the ranking.
-
+recognised yet.  Treating that mixture as a negative class teaches a classifier to reject the very
+molecules a screen is looking for, and the error is worst exactly where it matters, at the top of
+the ranking.
 The remedy used here is **bagging PU** (Mordelet & Vert, *Pattern Recognit. Lett.* **37** (2014)
 201), which is the method that needs no estimate of the class prior and no assumption about how
 the positives were sampled:
@@ -81,7 +80,7 @@ def bagging_pu(K: np.ndarray, positives: Sequence[int], unlabelled: Sequence[int
     `also` names molecules that are in neither set -- a held-out test fold, say -- which are
     scored by every bag, since no bag ever sees them. Their scores are therefore comparable with
     the out-of-bag scores of the unlabelled set, which is what makes a ranking over both of them
-    honest.
+    fair.
     """
     K = np.asarray(K, float)
     pos = np.asarray(positives, int)
@@ -91,7 +90,7 @@ def bagging_pu(K: np.ndarray, positives: Sequence[int], unlabelled: Sequence[int
     if len(pos) == 0 or len(unl) == 0:
         raise ValueError("bagging PU needs positives and unlabelled molecules")
     # a bag that holds the whole unlabelled set leaves nothing out of bag, and the method is
-    # then the naive classifier wearing its name; half the set is the most that can be asked for
+    # then the naive classifier under another name; half the set is the most that can be asked for
     size = int(bag_size) if bag_size else min(len(pos), max(1, len(unl) // 2))
     size = max(1, min(size, len(unl)))
     total = np.zeros(n)

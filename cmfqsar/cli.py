@@ -129,7 +129,7 @@ def _report_validation(args, model, ds, mf, tr, te, target):
     """y-randomisation, the applicability domain and bootstrap intervals, when asked for.
 
     All three work on kernels the fit has already computed, so nothing here rebuilds a field.
-    The results are printed and stashed in ``model.stats.extra`` so that --json carries them.
+    The results are printed and stored in ``model.stats.extra`` so that --json carries them.
     """
     from cmfqsar.validation import bootstrap_ci, bootstrap_refit, domain, scramble_kernel
     st = model.stats
@@ -147,7 +147,7 @@ def _report_validation(args, model, ds, mf, tr, te, target):
             # they are built once here and reused by every shuffle.
             from cmfqsar.validation import scramble_selection
             train = model.train
-            # the loop below walks the alpha grid, which moves the field set off the alpha the
+            # the loop below goes through the alpha grid, which moves the field set off the alpha the
             # search chose; remember it and put it back afterwards, or everything downstream
             # (the domain, the saved model, the predictions) would use the last grid point
             chosen_alphas = [s.alpha for s in model.fieldset.specs]
@@ -364,7 +364,7 @@ def cmd_build(args):
               f"{before.mean():.3f} -> {after.mean():.3f} on average, best {after.max():.3f}")
         if n_conf > 1:
             moved = sum(1 for r in res if r.conformer > 0)
-            print(f"  a generated conformation beat the one in the file for {moved} of "
+            print(f"  a generated conformation posed better than the one in the file for {moved} of "
                   f"{len(res)} decoys")
         for m, mol in zip([ds.mols[i] for i in dec_idx], [mf[i] for i in dec_idx]):
             conf = m.GetConformer()
@@ -520,7 +520,7 @@ def cmd_build(args):
               f"(chosen without holding anything out)")
         pf = res.per_field
         if pf is not None:
-            # what the extra freedom bought, in the units the descent was scored in
+            # what the extra freedom gained, in the units the descent was scored in
             print(f"Per-field widths: {pf.gain:+.1f} in log evidence over the shared "
                   f"alpha = {pf.shared_alpha:g}, in {pf.n_eval} factorisations"
                   + (" (the descent came back to one shared width)" if pf.is_shared else "")
@@ -540,7 +540,7 @@ def cmd_build(args):
         p_fit = model.predict_proba(train)
         print(f"  log marginal likelihood {model.log_marginal_likelihood:.2f}, "
               f"Brier score of the fitted probabilities {brier_score(y, p_fit):.3f} "
-              f"(0.25 is a coin)")
+              f"(0.25 is no better than chance)")
     if args.align_train_variance is not None:
         from cmfqsar.varalign import cv_align_training_set
         guard = None if args.align_train_variance <= 0 else args.align_train_variance
@@ -610,7 +610,7 @@ def cmd_build(args):
         for name, v in totals.most_common():
             print(f"  {name:28s} {v:.4f}")
         if model.desc_scaler_.constant:
-            print(f"  constant over the training set, so inert: "
+            print(f"  constant over the training set, so without effect: "
                   f"{', '.join(model.desc_scaler_.constant)}")
     _report_validation(args, model, ds, mf, tr, te, target)
     conf = None
@@ -623,7 +623,7 @@ def cmd_build(args):
             raise SystemExit(f"--conformal: {exc}")
         print(conf.describe())
         if te and "y_test_pred" in model.stats.extra:
-            # the test set was never part of the calibration, so this is the honest check
+            # the test set was never part of the calibration, so this is the reliable check
             yp_te = np.asarray(model.stats.extra["y_test_pred"], float)
             d_te = None
             if conf.difficulty is not None:
@@ -937,7 +937,7 @@ def cmd_predict(args):
         if args.rank_bound:
             # rank by a confidence bound rather than by the point estimate: a library is mostly
             # unlike the training set, and for those molecules a point estimate is the training
-            # mean dressed up
+            # mean presented as a prediction
             score, yp, sd = model.rank_score(table, beta=float(args.rank_bound),
                                              larger_is_better=not args.smaller_is_better)
             var = sd ** 2
@@ -1120,7 +1120,7 @@ def cmd_design(args):
           f"evidence), q2 {model.stats.q2:+.3f}, RMSEcv {model.stats.rmse_cv:.3f}")
 
     # only a molecule the rule can take apart can be a parent: the candidates are built by
-    # replacing one of its groups, so the others have to be poseable as they stand
+    # replacing one of its groups, so the others have to be poseable as they are
     if args.parent:
         if args.parent not in names:
             raise SystemExit(f"no molecule called {args.parent!r} in {args.dataset}")
@@ -1674,7 +1674,7 @@ def cmd_topomer(args):
     print(f"Topomer model: alpha {alpha:g}, lambda {lam:g}")
     print(f"  q2 ({args.folds}-fold CV) {q2:+.3f}   RMSEcv {err:.3f}   on {kept}/{len(mols)} "
           f"molecules")
-    print("  the poses are a convention, not conformations: the same substituent always lands "
+    print("  the poses are a convention, not conformations: the same substituent is always placed "
           "the same way, which is what makes this comparable without any alignment")
 
 
@@ -1798,7 +1798,7 @@ def cmd_pharmacophore(args):
             kinds = sorted({f.kind for f in left})
             print(f"  left out, because a query has no way to say them: {', '.join(kinds)}. "
                   f"'bulk' asks for atoms of any kind, and the disfavoured features name a "
-                  f"group that is unwelcome, which only an exclusion sphere could carry and it "
+                  f"group that is undesired, which only an exclusion sphere could carry and it "
                   f"would exclude everything else with it.")
         print("  a hydrogen-bond feature is written without a direction: a co-field says that a "
               "donor here raises the activity, not where its hydrogen points")
@@ -1868,7 +1868,7 @@ def cmd_hetero(args):
                    baseline_alpha=args.baseline_alpha, progress=prog)
     print()
     print(f"Aligned model (alpha {res.alpha:g}, lambda {res.lam:g}):")
-    print(f"  q2 with random folds            {res.q2_random:+.3f}   <- flatters a mixed series")
+    print(f"  q2 with random folds            {res.q2_random:+.3f}   <- overstates the quality of a mixed series")
     print(f"  q2 leave-one-chemotype-out      {res.q2_grouped:+.3f}   RMSE {res.rmse_grouped:.3f}")
     how = f"alpha {args.baseline_alpha:g}" if args.baseline_alpha else "atom counts, the limit"
     print(f"  alignment-free fragment model   {res.q2_baseline:+.3f}   (indicator fields, {how})")
@@ -2141,7 +2141,7 @@ def main(argv=None):
                         "repulsive wall is left to the steric field, which already is one")
     b.add_argument("--probe-terms", type=int, default=4, metavar="K",
                    help="Gaussians per atom in a probe field (default 4). The kernel costs the "
-                        "square of this, so 3 is the cheap setting and 5 the careful one")
+                        "square of this, so 3 is the fast setting and 5 the accurate one")
     b.add_argument("--descriptors", default=None, metavar="A,B",
                    help="molecule properties to use as non-field descriptors, beside the fields: "
                         "one number per molecule, standardised on the training set and added to "
@@ -2202,7 +2202,8 @@ def main(argv=None):
                    help="ocgp: ridge on the constant target")
     b.add_argument("--oc-score", default="mean", choices=["mean", "mean_over_sd"],
                    help="ocgp: the predictive mean, or the mean divided by its standard "
-                        "deviation, which also punishes a molecule the model knows nothing about")
+                        "deviation, which also lowers the score of a molecule the model knows "
+                        "nothing about")
     b.add_argument("--fusion-threshold", type=float, default=0.0, metavar="S",
                    help="fuse-anz / fuse-mnz: what counts as a match. These two rules divide and "
                         "multiply by the number of actives a molecule matches, so on a field "
@@ -2266,7 +2267,7 @@ def main(argv=None):
                         "input pose as the first one")
     b.add_argument("--conformer-window", type=float, default=0.0, metavar="A",
                    help="keep only conformations within this heavy-atom RMSD of the pose the "
-                        "molecule arrived in, measured where they stand, so that the ensemble "
+                        "molecule arrived in, measured where they are placed, so that the ensemble "
                         "covers the flexibility around an aligned pose rather than the whole "
                         "conformational surface (0 = no window)")
     b.add_argument("--prune-rmsd", type=float, default=0.5, metavar="A",
@@ -2291,7 +2292,8 @@ def main(argv=None):
     b.add_argument("--kt", type=float, default=0.6, metavar="KCAL",
                    help="kT for the Boltzmann weights (default 0.6 kcal/mol, about RT at 300 K)")
     b.add_argument("--max-conformers", type=int, default=0, metavar="N",
-                   help="use at most the N heaviest conformations of each molecule (0 = all)")
+                   help="use at most the N conformations of each molecule with the largest weights "
+                        "(0 = all)")
     b.add_argument("--ensemble-by", default=None, metavar="KEY",
                    help="group the records of a multi-conformer file into ensembles, by 'name' or "
                         "by the named property")
@@ -2327,7 +2329,7 @@ def main(argv=None):
                    help="how alpha and lambda are chosen: by cross-validation, or by the Gaussian-process marginal likelihood, which costs one factorisation per candidate instead of one per fold and holds nothing out (regression with krr or gp only)")
     b.add_argument("--rank-gap", type=float, default=0.0, metavar="D",
                    help="ranksvm: ignore pairs whose activities differ by less than this. A pair "
-                        "closer than the experimental error is a coin toss, and learning it is "
+                        "closer than the experimental error is a matter of chance, and learning it is "
                         "learning noise; half a log unit suits pooled literature data")
     b.add_argument("--rank-pairs", type=int, default=4000, metavar="N",
                    help="ranksvm: the largest number of pairs used. The solver works on the "
@@ -2494,7 +2496,8 @@ def main(argv=None):
                    help="rank the molecules by a confidence bound, prediction minus BETA "
                         "posterior standard deviations, instead of by the prediction itself. A "
                         "screening library is mostly unlike the training set, and a kernel "
-                        "method returns the training mean dressed up for those molecules; "
+                        "method returns the training mean presented as a prediction for those "
+                        "molecules; "
                         "subtracting the spread demotes them. One standard deviation is the "
                         "conventional starting point")
     q.add_argument("--smaller-is-better", action="store_true",
@@ -2697,7 +2700,7 @@ def main(argv=None):
                         "baseline is the limit these fields tend to, taken from the atom counts "
                         "themselves, which is exactly pose-free and much faster. A value takes "
                         "the Gaussian route at that attenuation instead, which has to be far "
-                        "smaller than a modelling one, since the dependence on the poses dies "
+                        "smaller than a modelling one, since the dependence on the poses decreases "
                         f"only linearly in it ({BASELINE_ALPHA:g} is close enough)")
     h.add_argument("--top", type=int, default=10)
     h.add_argument("--seed", type=int, default=0)
@@ -2724,7 +2727,7 @@ def main(argv=None):
                          "query is a conjunction, so a dozen at once matches nothing; the rest "
                          "are written disabled, to be switched on in the other program")
     ph.add_argument("--min-z", type=float, default=0.0, metavar="Z",
-                    help="mask the co-field where it stands less than Z standard deviations "
+                    help="mask the co-field where it lies less than Z standard deviations "
                          "from zero before reading features off it, so that a lobe the noise in "
                          "the activities could have produced never becomes a feature (try 2)")
     ph.add_argument("--sigma", type=float, default=None, metavar="S",
@@ -2763,7 +2766,7 @@ def main(argv=None):
     df.add_argument("--top", type=int, default=10)
     df.add_argument("--tversky", default=None, metavar="ALPHA,BETA",
                     help="also report Tversky's index with these weights, and rank by it: "
-                         "ALPHA charges the candidate for what the reference has and it lacks, "
+                         "ALPHA penalises the candidate for what the reference has and it lacks, "
                          "BETA for what it adds.  1,1 is Tanimoto, 0.5,0.5 Dice, and 0,1 asks "
                          "how much of the candidate the reference accounts for, which is the "
                          "setting for a library of molecules smaller than the reference")
@@ -2847,9 +2850,9 @@ def main(argv=None):
                     help="fraction of a co-field's peak that bounds a pharmacophore feature")
     rp.add_argument("--max-features", type=int, default=12)
     rp.add_argument("--cofield-z", type=float, default=2.0, metavar="Z",
-                    help="draw only the part of each co-field that stands this far from zero "
+                    help="draw only the part of each co-field that lies this far from zero "
                          "once the noise in the activities is propagated through the fit, and "
-                         "read the pharmacophore off what is left; 0 draws everything")
+                         "read the pharmacophore from what is left; 0 draws everything")
     rp.add_argument("--top-atoms", type=int, default=8,
                     help="atom contributions listed for each of the two extreme molecules")
     rp.add_argument("--no-cofields", action="store_true",
@@ -2872,7 +2875,7 @@ def main(argv=None):
     sg.add_argument("--beta", type=float, default=1.0, metavar="B",
                     help="with --acquire ucb: how many standard deviations of optimism")
     sg.add_argument("--xi", type=float, default=0.0, metavar="X",
-                    help="with --acquire ei: how much a candidate must beat the best made by "
+                    help="with --acquire ei: how much a candidate must exceed the best made by "
                          "before the improvement counts")
     sg.add_argument("--max-similarity", type=float, default=0.98, metavar="C",
                     help="a candidate more similar than this to one already picked is skipped, "

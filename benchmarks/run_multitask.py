@@ -4,7 +4,7 @@ Two endpoints on one CMF kernel: does the sparse one gain, and is the difference
 
 ``cmfqsar/multitask.py`` fits several endpoints on a shared kernel so that selectivity comes out
 as a difference of co-fields.  The claim worth testing is the practical one: that an endpoint with
-few measurements predicts better when it borrows strength from a related endpoint with many, and
+few measurements predicts better when it shares information with a related endpoint with many, and
 that the *difference* of the two is itself modellable.
 
 The corrosion database carries two cases.  Its compounds were measured in two media, and the
@@ -20,7 +20,8 @@ of the two is a selectivity only in the first case; in the second the two endpoi
 different units and only the sharing is of interest.
 
 Reported, all on the same alignment, fields, alpha grid and 10-fold cross-validation **over
-molecules** (never over measurements, or the task correlation hands the answer over):
+molecules** (never over measurements, or the task correlation would carry the answer across the
+split):
 
     rho = 0      the two endpoints modelled separately, sharing only the kernel
     best rho     the sharing chosen by cross-validation
@@ -197,14 +198,14 @@ def run(set_name="0_c1ccccc1", tasks=TASKS, results=RESULTS, folds=T.FOLDS):
               f"q2 {sel['q2']:+.3f} shared, {sel0['q2']:+.3f} separate "
               f"(observed sd {np.std(sel['observed']):.2f})", flush=True)
 
-    # the selectivity co-field is a coefficient vector: report its spread, as a handle for the GUI
+    # the selectivity co-field is a coefficient vector: report its spread, for the GUI to use
     f = fit(Ks[best_sh[1]], obs, rho=best_sh[2], lam=best_sh[3])
     c = f.selectivity_coefficients(0, 1)
     top = np.argsort(-np.abs(c))[:5]
     res["selectivity_coefficients"] = {"max_abs": float(np.abs(c).max()),
                                        "top_molecules": [names[i] for i in top],
                                        "top_values": [float(c[i]) for i in top]}
-    print("    the selectivity co-field leans hardest on: "
+    print("    the selectivity co-field depends most on: "
           + ", ".join(f"{names[i]} ({c[i]:+.3f})" for i in top[:3]), flush=True)
     res["seconds"] = time.time() - t0
     os.makedirs(results, exist_ok=True)

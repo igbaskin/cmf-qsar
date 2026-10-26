@@ -34,26 +34,26 @@ a flexible method actually faces -- with the pose scrambled first every time:
 =================================  ==========  =======  =======  ==========  ===============
 method                             median RMSD  < 1 A    < 2 A    R2pred      conformer limit
 =================================  ==========  =======  =======  ==========  ===============
-crystal poses (the ceiling)        0.00 A      100%     100%     +0.334      0.00 A
-scrambled (the floor)              6.12 A        0%       1%     -0.696      1.73 A
+crystal poses (upper limit)        0.00 A      100%     100%     +0.334      0.00 A
+scrambled (lower limit)            6.12 A        0%       1%     -0.696      1.73 A
 substructure (MCS)                 1.94 A       15%      54%     -0.391      1.73 A
 MCS + rigid confidence             2.27 A       12%      45%     -0.396      1.73 A
 MCS + flexible confidence          1.41 A       35%      74%     +0.065      1.20 A
 MCS + flexible, 5 conformer starts 0.86 A       59%      88%     +0.264      0.71 A
 =================================  ==========  =======  =======  ==========  ===============
 
-Three things follow, and they set the defaults.  **The torsions rescue the criterion**: with a
+Three things follow, and they set the defaults.  **The torsions make the criterion work**: with a
 conformation to fix, the *rigid* confidence search is worse than not refining at all (2.27 against
 MCS's 1.94), which is the failure C1 found; the same objective with the bonds free is the best
 method available.  **The conformer generator is what makes it work** -- it is worth -0.55 A on the
 median pose, better on 15 of 16 sets (95% CI -0.77 to -0.35), and the combination beats plain
 substructure alignment on 16 of 16; so `conformers` defaults to five rather than zero.  **The
 displacement guard has nothing left to prevent**: with these starts no set is worse than 1.52 A
-and the blow-ups it was meant to catch are gone, a 1 A guard costs 0.6 A on jnk1, and 2 A is
+and the large failures it was meant to catch are gone, a 1 A guard costs 0.6 A on jnk1, and 2 A is
 indistinguishable from none, so the 2 A default is kept as insurance rather than as a necessity.
 
 What it does not do is replace knowing the conformation: +0.264 against the crystal poses' +0.334.
-The conformational residue is 0.71 A, and that is where the remaining error lives.
+The conformational residue is 0.71 A, and that is where the remaining error is.
 """
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ from scipy.spatial.transform import Rotation
 from .kernels import kernel_gradient, so3_right_jacobian
 from .varalign import VarianceAligner, VarianceAlignResult
 
-#: bonds that may turn: RDKit's strict definition, which already excludes amides and the like
+#: bonds that may turn: RDKit's strict definition, which already excludes amides and similar bonds
 ROTATABLE = Chem.MolFromSmarts("[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])"
                                "([CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@"
                                "[CD3]=[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]"
@@ -292,7 +292,7 @@ class FlexibleAligner(VarianceAligner):
         if self.max_rmsd is not None:
             # The guard measures the *rigid* displacement only: the starting conformation moved
             # by the same rotation and translation.  Measured on the final coordinates it would
-            # charge a torsional correction as though it were a translation, and so suppress
+            # count a torsional correction as though it were a translation, and so suppress
             # exactly the thing the flexible search is for; the conformation already has a
             # guard of its own, which is the strain prior.
             Vr = X0 - c

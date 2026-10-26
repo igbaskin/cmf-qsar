@@ -588,7 +588,7 @@ def write_predictions_csv(path: str, names: Sequence[str], y: Sequence[float], y
         if var is not None:
             header.append("gp_variance")
         if domain is not None:
-            # the similarity itself and the verdict, so that an extrapolation stays marked
+            # the similarity itself and the yes/no decision, so that an extrapolation stays marked
             # after the predictions leave the program
             header += ["ad_similarity", "in_domain"]
         if interval is not None:

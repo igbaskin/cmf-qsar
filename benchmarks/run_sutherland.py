@@ -6,7 +6,7 @@ Benchmark of the cmfqsar implementation against Table 2 of
 
 on the eight Sutherland et al. (2004) 3D-QSAR data sets (ACE, AChE, BZR, COX-2, DHFR, GPB,
 THER, THR; aligned MOL2 structures with MNDO ESP (THER: Gasteiger) charges, published
-train/test split).  The data sets are *not* part of this repository: point ``--data-root`` at
+train/test split).  The data sets are *not* part of this repository: set ``--data-root`` to
 a folder containing ``<set>_data/<prefix>-all.mol2`` and ``<set>_data/<set>-data-sybyl-all.txt``
 as distributed with the supplementary R scripts of the paper.
 
