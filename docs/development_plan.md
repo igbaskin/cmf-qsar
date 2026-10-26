@@ -31,12 +31,12 @@ The measurements already in hand settle several questions, and the plan treats t
 
 | Question | Verdict | Where |
 |---|---|---|
-| Does the kernel matter? | A Gaussian layer gains on average and is a coin flip per set; the alignment decides fifteen times as much | `docs/benchmark.md`, third part |
+| Does the kernel matter? | A Gaussian layer gains on average, but per set the gain is no better than chance; the alignment decides fifteen times as much | `docs/benchmark.md`, third part |
 | Do conformational ensembles help? | Five routes, none beats one well-chosen conformation on an aligned series | README, "The verdict on the fourth dimension" |
-| Do probe fields buy accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
+| Do probe fields improve accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
 | Do quantum-chemical fields help? | Not on the corrosion series or on Am/Eu; yes on Hammett, where resonance needs whole-molecule charges | `benchmarks/results/corrosion_qm/`, `am_eu/`, `hammett/` |
 | Can a Fukui function be a sum of atom Gaussians? | No (relative fit error 0.8 to 0.9), and the model does not care | `cmfqsar/cdft.py`, `benchmarks/results/cdft_kernels/` |
-| When do indicator fields pay? | Above about forty molecules | `docs/benchmark.md` |
+| When do indicator fields help? | Above about forty molecules | `docs/benchmark.md` |
 | Is the one-class ball a good description of the actives? | It comes last of five | README, "One-class models" |
 | Does realigning the training set by confidence help? | Not reliably; one round with a 1 Å guard is the safe default | README, "Alignment by prediction confidence" |
 
@@ -88,14 +88,14 @@ This is what the software paper needs, and nothing in the later parts should wai
   derived, unclear). Four items are of unclear status, `sutherland/`, `steroids_cbg.sdf` and the
   two derived from the first; the document says what replacing each copy by its script would
   cost, and the decision to remove them before the repository is public is the author's, not
-  taken here. Two further gaps it named: the corrosion exports lack per-compound references, which stands;
+  taken here. Two further gaps it named: the corrosion exports lack per-compound references, which remains the case;
   and the Hammett constants were transcribed from memory, **checked 25 October 2026**. The rows
   of Table I were recovered from the scan by the coordinates of its words, since its text layer
   comes out column by column; 39 of the 95 substituents were matched to a row and 38 agreed to
   the last digit. CH2OCH3 did not -- written as 0.02 / 0.03, given by row 223 as 0.08 / 0.01,
   confirmed on the page image -- and is corrected in the script and in all five SDF files, with
   the benchmark re-run. The remaining 56 could not be matched automatically, because the scan's
-  character recognition mangles the names. The hydrophobic constant pi turned out not to be in
+  character recognition corrupts the names. The hydrophobic constant pi turned out not to be in
   that paper at all: it tabulates sigma, F and R, so the attribution is corrected and pi remains
   unchecked.
 * **A4. One entry point for the tables.** Done 22 October 2026. `benchmarks/run_all.py` lists
@@ -129,7 +129,7 @@ This is what the software paper needs, and nothing in the later parts should wai
   against the others, less a slack, so the rule comes from the set as the applicability domain's
   threshold does. On the eight Sutherland sets it catches 95.5 % of held-out molecules turned 90
   degrees about their own centre, for a false-positive rate of 2.6 % on the molecules left alone.
-* **A6. Land the multi-task model.** Done 22 October 2026: `cmfqsar/multitask.py`, its test, the
+* **A6. Commit the multi-task model.** Done 22 October 2026: `cmfqsar/multitask.py`, its test, the
   selectivity dialog and `benchmarks/run_multitask.py` are committed with the result on the
   corrosion series (README, "Two endpoints on one kernel"; `benchmarks/results/multitask/table.md`).
   The first run of the benchmark had a correlation grid of non-negative values against a pair of
@@ -155,8 +155,8 @@ larger searches in parts C and E.
 * **B4. Hyper-parameters by evidence rather than cross-validation.** The GP marginal likelihood is
   implemented for the classifier (`select_by_evidence` in `cmfqsar/gpc.py`) and not for regression,
   where it is one determinant and one quadratic form on the factorisation KRR already does.
-  Selecting α and λ by evidence costs one factorisation per candidate instead of ten, and it opens the door to
-  per-field α, which the 2013 protocol shared across fields because a grid over five widths was
+  Selecting α and λ by evidence costs one factorisation per candidate instead of ten, and it makes
+  per-field α possible, which the 2013 protocol shared across fields because a grid over five widths was
   unaffordable. Measure on the 86 sets: evidence against cross-validation, shared α against per-field
   α, with the usual intervals.
   **Done 25 October 2026**: `cmfqsar/evidence.py` and `--select evidence` on `build`. The bias is
@@ -169,12 +169,12 @@ larger searches in parts C and E.
   same grid on the training part: R²pred +0.471 chosen by cross-validation against +0.479 chosen
   by the evidence, a paired difference of **+0.007** with a 95 % interval of [−0.013, +0.028],
   better on six of eight sets. Indistinguishable in quality, four times faster at selecting.
-  The finding worth keeping is next to it: the two criteria land on the **same point of the grid
+  The more useful finding is next to it: the two criteria choose the **same point of the grid
   in 0 to 60 % of splits** and predict equally well regardless, so the surface is flat near its
   optimum and the cost of the search matters more than the point it picks.
   **Not done:** the 86-set measurement of the item's own text. The per-field α this makes
-  affordable was the reason the item was worth doing, and it was spent at once: D6 below, where
-  the saving buys five widths instead of one, the evidence improves on every split and external
+  affordable was the reason the item was worth doing, and it was used at once: D6 below, where
+  the saved time is used for five widths instead of one, the evidence improves on every split and external
   prediction does not move. The second finding is the more useful of the two.
 * **B5. Optional compiled kernels.** Only if B1 and B2 leave screening too slow: a Numba path for the
   atom-pair block, behind the same function signature, with the NumPy path as the reference.
@@ -190,7 +190,7 @@ can judge it.
 
 * **C1. A protocol that can judge an alignment.** q² cannot, because realigning changes the
   geometry q² is computed on, and the README records q² and external R²pred moving in opposite
-  directions. The judge is the crystal pose: the FEP sets with pockets (`examples/openff`,
+  directions. The reference is the crystal pose: the FEP sets with pockets (`examples/openff`,
   `schindler`, `ross`) have one for every ligand. Metrics: RMSD of the recovered pose to the crystal
   pose, and prediction error on held-out molecules posed without their activity. Both, always, and the
   unalign control (`cmf_cli.py unalign`) before every run.
@@ -221,8 +221,8 @@ can judge it.
   Judged under C1, with the held-out **conformations regenerated**: median 0.86 A and R2pred
   +0.264, against 1.94 A / -0.391 for substructure alignment and **2.27 A / -0.396 for the rigid
   confidence search**, which is worse than not refining at all. That failure is what the protocol
-  was built to expose, and the torsions are what rescue the criterion. The five conformer starts
-  are worth 0.55 A of it, better on 15 of 16 sets.
+  was built to expose, and freeing the torsions is what makes the criterion work. The five conformer starts
+  account for 0.55 A of that improvement, better on 15 of 16 sets.
   **What remains is the conformation, not the pose:** +0.264 against the crystal poses' +0.334,
   with a conformational residue of 0.71 A.
 * **C3. Alignment inside the pocket.** `cmfqsar/docking.py` places conformations rigidly and
@@ -230,7 +230,7 @@ can judge it.
   prior and confidence as the likelihood: the pose must fit the pocket and sit inside the model's
   domain. Measure against the curated frames on the FEP sets, where the curated frame is the
   crystal pose and the ceiling is known.
-  **Done 26 October 2026, and the combination does not pay.** `cmfqsar/pocketalign.py` joins the
+  **Done 26 October 2026, and the combination does not help.** `cmfqsar/pocketalign.py` joins the
   two halves -- `sigma^2(pose) - w [complementarity - clash]` over the six rigid-body parameters,
   with the displacement guard of the confidence aligner -- `predict --align-variance
   --align-pocket STRUCTURE` runs it, and three posers (`pocket`, `pocket+variance`,
@@ -248,7 +248,7 @@ can judge it.
   **The control that makes this a result rather than a bug report**: at weight zero the joint
   aligner is the confidence objective optimised by a different method, and it recovers the pose
   as well as the gradient search does (0.29 A on p38 against 0.32 A). Turning
-  the weight up is what breaks it -- on p38, 0.25, 1 and 4 all give 3.5 to 3.7 A -- so what fails
+  the weight up is what makes it fail -- on p38, 0.25, 1 and 4 all give 3.5 to 3.7 A -- so what fails
   is the term and not the search.
   **Why.** Complementarity is a weak prior over six dimensions: a ligand that fits a site fits it
   in many placements, so the term adds a broad multi-modal surface to an objective that was
@@ -257,14 +257,14 @@ can judge it.
   So the item is built as it was specified and the specification was optimistic. What is left is
   a narrow use -- a pose that must be defensible to the receptor as well as to the model -- and a
   measurement that says the prior is too weak to improve the likelihood.
-  **Not done:** the flexible version (the torsions rescued the confidence criterion in C2 and
-  might rescue this), an analytic gradient for the pocket term, and the sets without a receptor,
+  **Not done:** the flexible version (freeing the torsions made the confidence criterion work in C2 and
+  might do the same here), an analytic gradient for the pocket term, and the sets without a receptor,
   which is most of them.
 * **C4. Training-set co-alignment done properly.** The present iteration (fit, realign, refit)
   contracts the ensemble and degrades one set in four. Treat it as what it is, an expectation-
   maximisation over poses, and regularise it: the displacement guard, a leave-one-out variance so no
   molecule is aligned against itself, and an annealed λ. Judge under C1 only.
-  **Done 24 October 2026** (`6d85fd2`), and the answer is null. `cmfqsar/coalign.py` is the
+  **Done 24 October 2026** (`6d85fd2`), and the result is negative. `cmfqsar/coalign.py` is the
   expectation-maximisation with all three regularisers -- a leave-fold-out error so no molecule
   is aligned against itself, an annealed lambda, and an acceptance test that keeps a round only
   when it improves that error by 1 % relative, with exact rollback otherwise. Judged under C1 on
@@ -280,7 +280,7 @@ can judge it.
   orientation of one field with respect to another. A three-point extension (field triples, or the
   cross-correlation of two field types) keeps the closed form and is the natural next term. Measure
   on the five chemotype-split sets under leave-one-chemotype-out, where the alignment-free baseline
-  already sets the bar.
+  is already the reference.
   **Built, not measured.** The three-point extension is in `cmfqsar/invariant.py` -- `chirality`,
   `chirality_triples`, the `chirality` and `chirality_shells` fields of `AutocorrelationSpec`, the
   signed triple product resolved over radial shells, with tests and the block scaling that the
@@ -292,7 +292,7 @@ can judge it.
   search so the signed channels never get more freedom than the kernel they extend. Mean q2 over
   the sets: two-point +0.063, signed +0.082 / +0.095 / +0.108 at one, two and four shells. Every
   paired interval over the five sets contains zero ([-0.028, +0.121] at four shells, better on
-  three of five), and **COX2 supplies +0.187 of the +0.045 mean difference while the other four
+  three of five), and **COX2 accounts for +0.187 of the +0.045 mean difference while the other four
   average +0.009**; AChE and BZR are made worse. One set out of five is not a result.
   **And the experiment those sets cannot do was then run on synthetic data**, which is what
   settles it. Twenty molecules with their exact mirror images -- one conformation reflected, so a
@@ -305,12 +305,12 @@ can judge it.
   -- cosine -0.016 for two molecules of the same handedness against +0.016 for opposite, a
   difference of 0.03 against a spread of 0.55, and 0.10 against 0.48 within one scaffold family.
   Handedness is not a direction in this space, so a linear model has nothing to transfer, and the
-  two nulls are one null seen twice.
+  two negative results are one result seen twice.
   **Closed, negatively.** The block is correct about a molecule and its mirror image and useless
   for carrying handedness between molecules. Making it useful needs a construction anchored on
   the stereocentre rather than summed over the whole molecule: that is **C7**, opened out of this
-  result, and it inherits this item's two measurements as the gate it has to pass before it goes
-  near a real set.
+  result, and it inherits this item's two measurements as the gate it has to pass before it is
+  tried on a real set.
 * **C6. A diagnosis of the data set.** Three diagnostics exist in pieces: α at the grid edge, the
   descriptor-only baseline that beat the 3D model on ACE, and the alignment-free baseline. Package
   them as `cmf diagnose`, which says before any modelling whether the frame carries signal, whether
@@ -322,16 +322,16 @@ can judge it.
   fold and scored outside it, which costs the aligned model 0.05 on ACE and the topomer route
   0.07 and is the size of the bias that scoring at each route's own best point would hide. Two
   guards it needed: the activity is usually a molecule property, so the descriptor baseline is
-  handed the answer, and on the corrosion files two laboratory-adjusted columns reconstruct the
+  given the answer, and on the corrosion files two laboratory-adjusted columns reconstruct the
   potency between them, which no per-column test can see -- so the outcome is judged as well.
   **Validated by following the advice**, which is the only check that matters for a
   recommendation: diagnose 70 % of a set, build what it recommends, score it on the rest. The
   advice names the best of the five routes on 21 of 39 splits and falls 0.096 short of the best
-  on average; always taking the aligned model names it on 12 and costs 0.201. Per set, the honest
+  on average; always taking the aligned model names it on 12 and costs 0.201. Per set, the correct
   unit, the advice costs 0.105 less (95 % interval -0.259 to +0.019), better on six of thirteen
-  sets and worse on four: a hedge against the frame being meaningless, not an edge.
+  sets and worse on four: insurance against a meaningless frame, not an advantage.
   **Still hand-chosen:** the q2 < 0.1 cutoff below which the command recommends no route at all.
-  It never fired on these 39 splits, so the validation cannot set it.
+  It was never triggered on these 39 splits, so the validation cannot set it.
 * **C7. A chirality descriptor anchored on the stereocentre.** Opened and built 25 October
   2026, out of C5's failure. The question C5 was asked -- can a field kernel see handedness -- is still a real
   one: a series in which both enantiomers are measured and differ in potency is an ordinary
@@ -374,14 +374,14 @@ can judge it.
   still have closed-form overlaps; one set per atom along the bond directions is the smallest
   extension that can represent a lobe. Repeat the fit-error measurement on the four corrosion series
   with ORCA results, and keep the extension only if the fit error drops and the model notices.
-* **D2. Pharmacophoric indicator fields.** Sybyl-type indicator fields pay only above about forty
+* **D2. Pharmacophoric indicator fields.** Sybyl-type indicator fields help only above about forty
   molecules because there are many types and each is rare. A vocabulary of six pharmacophore
   features (donor, acceptor, aromatic, hydrophobe, cation, anion) is learnable on small series and
   reads directly as a pharmacophore. Measure on the Sutherland sets against the five fields and
   against the Sybyl indicators, split by set size as before.
 * **D3. A cheap quantum stage.** ORCA takes two to three minutes per molecule serially, so the
   quantum fields have been tried on a few series only. GFN2-xTB through `tblite` gives charges and
-  Fukui indices in seconds, which puts a quantum stage on all 86 sets within reach. The Hammett
+  Fukui indices in seconds, which makes a quantum stage on all 86 sets feasible. The Hammett
   result says where to expect a gain (resonance) and the corrosion result says where not to; the
   question is whether the 86 sets contain any series of the first kind.
 * **D4. Protonation and tautomer ensembles.** The corrosion series in HCl are modelled in one
@@ -398,7 +398,7 @@ can judge it.
   matters: do increments learned on one set transfer to another? If they do not, the result is that
   the increments are a per-set nuisance parameter and the plan says so.
 * **D6. Per-field widths.** Follows from B4: once the evidence selects hyper-parameters, α per field
-  is five numbers instead of one, and the co-fields become sharper for the field that wants it.
+  is five numbers instead of one, and the co-fields become sharper for the field that needs it.
   **Done 25 October 2026, and the answer is no**: `cmfqsar/perfield.py` and
   `--alpha-search per-field`, a coordinate descent on the evidence over one α per field, starting
   from the best shared width. It is affordable for the two reasons B4 promised — the per-field
@@ -412,13 +412,13 @@ can judge it.
   of eight sets and on **20 of 40 splits**. The correlation between what a split gained in
   evidence and what it gained in R²pred is **−0.07**.
   So the item is implemented and the hypothesis behind it is refuted: the extra freedom is real,
-  the criterion likes it, and the molecules held out cannot tell. Read together with B4 — where
+  the criterion prefers it, and the held-out molecules show no difference. Read together with B4 — where
   two criteria disagreed about the shared width and predicted equally well — this says the
-  attenuation surface is flat around its optimum, and that the search is not where a CMF model's
-  accuracy is won. The flag stays for asking the question of a new series; it is not a default,
-  and nothing else in the plan should be built on the assumption that a finer α grid pays.
+  attenuation surface is flat around its optimum, and that the search is not what decides a CMF model's
+  accuracy. The flag stays for asking the question of a new series; it is not a default,
+  and nothing else in the plan should be built on the assumption that a finer α grid helps.
   The co-field half of the item is untouched: whether a per-field width makes a co-field easier to
-  read is a question about interpretation, not accuracy, and it needs an eye rather than a
+  read is a question about interpretation, not accuracy, and it needs visual judgement rather than a
   benchmark.
 
 **Molecular dynamics as the source of the ensemble (D7 to D10).** The fourth-dimension study used
@@ -456,7 +456,7 @@ says whether a trajectory does what a generated ensemble could not.
   and a water occupancy map from the trajectory is one. Fit the occupancy by Gaussians on a grid
   of hydration sites (the fitting machinery of `cmfqsar/probes.py` does this for probe fields) and
   add it as a sixth field with its own mixing coefficient, so that the co-field says where
-  displacing or keeping a water pays. It is the first CMF field that is not centred on an atom of
+  displacing or keeping a water helps. It is the first CMF field that is not centred on an atom of
   the molecule, which is why it waits for D4's builder with members of their own atoms.
 * **D10. Fluctuation as information.** The ensemble mode uses the mean field only. The variance of
   the field across frames is a flexibility map, and the kernel of two variance fields is in closed
@@ -502,15 +502,15 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   **92.2 %** for random, hits in a median of **4** acquisitions against 6, and gains
   **+0.163 [+0.062, +0.275]** in hit rate; `ei` hits soonest, in 3. For **improving the model**,
   the best exploration rule gains **−0.014 RMSE [−0.034, +0.006]** over random — zero is inside
-  it, so **exploring buys nothing measurable** — while `greedy` costs **+0.057 [+0.038, +0.078]**.
-  **Two findings worth more than the ranking.** `variance` and `maxmin` land within **0.000 RMSE**
+  it, so **exploring gains nothing measurable** — while `greedy` loses **+0.057 [+0.038, +0.078]**.
+  **Two findings worth more than the ranking.** `variance` and `maxmin` end within **0.000 RMSE**
   of each other and within 0.3 % of the same activity found: the posterior standard deviation of a
-  CMF model is the distance to the training set in other units, which is item E5 from the other
-  side, so there is no separate "uncertainty sampling" here to speak of. And `greedy` does better
-  than it deserves to, because a series of analogues never puts a candidate far enough away for
+  CMF model is the distance to the training set in other units, which is item E5 seen from a different
+  direction, so there is no separate "uncertainty sampling" here. And `greedy` does better
+  than it would in general, because a series of analogues never puts a candidate far enough away for
   the training mean to be returned in place of a prediction; on a diverse library that protection
   is gone, and `ei` is the rule to use.
-  **Not done:** a batch rule that refits between picks (the cosine filter is the cheap stand-in),
+  **Not done:** a batch rule that refits between picks (the cosine filter is the cheap substitute),
   the loop closed over generated candidates rather than a given file (that is E3), and any
   prospective test, which only a laboratory can give.
 * **E3. Co-field-guided design.** The field difference says what a candidate is missing and the
@@ -531,8 +531,8 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   position removed, the model refitted, the whole library ranked from one fixed parent: over
   87 held-out groups on 2 sets (GPB, THER) the ranking agrees with the
   measurements at a mean Spearman rho of **+0.397**, and the group the
-  loop puts first is worth **+1.37** log units more than the library
-  average, landing in the best 20 % of the library
+  loop puts first is on average **+1.37** log units better than the library
+  average, and lies in the best 20 % of the library
   **48 %** of the time. Of the five best groups held out on each set, the median
   rank is 7 of 42 on GPB and 12 of 46 on THER: the loop finds most of what is worth finding and
   misses one.
@@ -541,7 +541,7 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   Bemis-Murcko framework is fused into the molecules and what comes off is not a substituent.
   The benchmark reports those by name rather than ranking the pieces anyway. A design loop over
   substituents needs a congeneric series, and most public QSAR sets are not one.
-  **A defect it turned up, and the numbers that moved.** Gasteiger charges come back as nan for
+  **A defect it revealed, and the numbers that changed.** Gasteiger charges come back as nan for
   every atom of a molecule that carries an attachment point, and the field builder read nan as
   zero -- so every topomer model in the program, and every benchmark built on one, was fitted
   **without its electrostatic field**. `_cap_dummies` in `cmfqsar/fields.py` now caps the open
@@ -550,7 +550,7 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   `run_diagnose.py` were re-run. On the Sutherland sets the mean loss from giving up the
   alignment moved from +0.073 to +0.101 q2, and more usefully the pose rule's cost became
   visible: it was 0.015 q2 on four fields and is 0.066 on five, because electrostatics is the
-  field most sensitive to where an atom sits and a model with no charges could not pay for
+  field most sensitive to where an atom sits and a model with no charges could not be penalised for
   misplacing them.
   **Not done:** the GUI panel the item asks for, growing candidates at more than one position at
   a time, and any library beyond substituent replacement -- scaffold hopping needs a different
@@ -561,7 +561,7 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   DUD-E or LIT-PCBA subsets with posed decoys, the comparison with fingerprint similarity on the
   same task, and positive-unlabelled learning, since the inactives of a screening set are unlabelled
   rather than inactive.
-  **Done 26 October 2026, and it is the most unflattering measurement in the repository.**
+  **Done 26 October 2026, and it is the least favourable measurement in the repository.**
   DUD-E is unreachable (`dude.docking.org` does not answer), so LIT-PCBA supplied the negatives:
   `examples/make_litpcba_examples.py` reads the AVE-unbiased archive, embeds the molecules with
   ETKDG and MMFF and poses **both classes by one rule** -- maximum field similarity to the
@@ -604,22 +604,22 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   arrived with the conformal work earlier in the session, so all three were available to compare.
   Each estimate is scored against the absolute error on held-out molecules three ways: Spearman ρ
   for the order, the risk–coverage efficiency (1 = the ordering the errors themselves give, 0 = no
-  better than ignoring the estimate) for what acting on it buys, and the RMSE of the trusted half
+  better than ignoring the estimate) for what is gained by acting on it, and the RMSE of the trusted half
   against the doubted half for what a two-bin rule would do.
   **Measured on the eight Sutherland sets**, five 70/30 splits each, α and λ by the evidence:
   efficiency **+0.198** for the GP variance, **+0.186** for the distance to the training set,
   **+0.181** for the domain dissimilarity and the normalised conformal width. The GP variance
   leads by +0.011 with a 95 % interval of [−0.021, +0.044], so **the three are indistinguishable
   as orderings** and the choice between them does not matter.
-  Two findings outrank that. The normalised conformal width and the domain measure **score
+  Two findings matter more than that. The normalised conformal width and the domain measure **score
   identically and must**: the normalisation divides the interval by the difficulty, which is the
   distance to the training set, so the width is a monotone function of the domain. There are three
   estimates here, not four, and the conformal rule's contribution is calibration, not ordering.
-  The remaining two are barely two either: the estimates agree with each other at a mean Spearman
+  The remaining two are also nearly the same: the estimates agree with each other at a mean Spearman
   ρ of +0.80 to +0.86 (the conformal width against the domain measure at exactly +1.000), so what
   is being measured three times is one geometric fact — how far the molecule sits from the
   training set — in three sets of units. That is why no ranking between them could be found.
-  And all of them are weak: the best captures about a fifth of what the oracle would, the trusted
+  And all of them are weak: the best captures about a fifth of what a perfect ordering would, the trusted
   half's RMSE is 0.84 against 1.02 for the doubted half (a ratio of 1.4, which is genuinely useful
   for deciding what to measure first), and on THER every estimate is negative. An estimate of
   error is a model and can be wrong about a series.
@@ -645,10 +645,10 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   evidence optimum is **+0.003** against equal weights with a 95 % interval of
   [-0.026, +0.035]. That is item D6 again, on the other axis of the kernel: **the evidence
   takes whatever freedom it is given over the shape of the kernel, improves its own number and
-  leaves prediction where it was.** Choosing the weights is not how a CMF model is made better,
+  leaves the prediction unchanged.** Choosing the weights is not how a CMF model is made better,
   and the item's premise -- that MKL picking one set of coefficients is a limitation worth
   fixing -- is wrong about accuracy.
-  **The interpretation claim is the one that stands, in a qualified form.** Over the
+  **The interpretation claim is the one that survives, in a qualified form.** Over the
   200 (set, split, field) cases the drop-one Bayes factor and the cost of actually
   removing the field correlate at Spearman rho **+0.121**: the Bayes factor orders the fields by what the training activities can see, which is not the same as what the held-out molecules need.
   **The useful finding is the width of the intervals.** A field's 90 % interval spans
@@ -664,7 +664,7 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
 ## F. Interpretation (months 4 to 9)
 
 * **F1. Case studies.** Shapley values, field differences, pharmacophores and complementarity have
-  tests but no story. Three FEP series with crystal pockets, each worked through end to end in a
+  tests but no worked example. Three FEP series with crystal pockets, each worked through end to end in a
   script under `examples/` and a section of the manual, judged by a medicinal chemist. Paper 7 is
   written from these.
 * **F2. The uncertainty of a co-field.** The co-field is `Σ a_j X_j(r)`; under the GP the dual
@@ -693,14 +693,14 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   **30 %** of what would have been drawn, and what it keeps holds its sign under resampling
   **97.8 %** of the time against **90.6 %** for what it cuts, a difference of **+0.072** with a
   95 % interval of [+0.064, +0.083], in the same direction on **8 of 8** sets.
-  Two things the measurement adds. The bar is **conservative**: the bootstrap moves the co-field
+  Two things the measurement adds. The threshold is **conservative**: the bootstrap moves the co-field
   only 0.6 times as far as the closed form allows for, so cutting at two standard deviations is
   really cutting at about 3.2 of the bootstrap's, which follows from taking sigma to be the
   out-of-fold error rather than the assay's noise alone (`--sigma` sets it directly). And the
   thing it gets right is *where* the uncertainty is, the two orderings agreeing across the grid
   at a rank correlation of **+0.82** -- which is what a mask needs, a mask being an ordering with
-  a line drawn through it.
-  So the item's claim stands: it is cheap, it is new, and it changes what every co-field picture
+  a cut-off.
+  So the item's claim holds: it is cheap, it is new, and it changes what every co-field picture
   in the program means, the report's included. Between a half and five sixths of a drawn co-field,
   depending on the field, is shape the measurement error could have produced.
 * **F3. Co-fields compared.** The overlap of two co-fields is a closed-form similarity between two
@@ -722,7 +722,7 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   **0.22**, and within the chemotype pairs the cosine and the transfer correlate at rho
   **+0.667** over 64 pairs. The item's claim holds: a table of co-field overlaps is a map of SAR
   transfer.
-  **What it rests on.** Two co-fields are functions on one space only if their molecules were
+  **What it depends on.** Two co-fields are functions on one space only if their molecules were
   posed in one frame. `incompatible` checks what the model files allow -- both linear, both on
   the overlap kernel, the same fields with the same attenuations, overlapping training boxes --
   and refuses with the reason; it cannot check whether two alignments mean the same thing, and
@@ -747,14 +747,14 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   report costs no refitting and **cannot disagree with the model it describes** (`evaluate_test`
   now keeps the test activities beside their predictions so that the file alone is enough to draw
   the scatter). And **a check that was not run is reported as not run**, never silently omitted,
-  which is the difference between a report and an advertisement. Everything else degrades rather
-  than fails: a nonlinear kernel loses the co-fields, the contributions and the pharmacophore and
+  which is the difference between a report and an advertisement. For everything else a missing part is reported rather
+  than causing a failure: a nonlinear kernel loses the co-fields, the contributions and the pharmacophore and
   keeps the rest.
   About three seconds for a 50-molecule model with the co-field pictures, under one with
   `--no-cofields`.
   **Not done:** the PDF writer of the item's text (a browser prints the page, which is enough),
   the 3D isosurface renders a GUI screenshot would give, and F1's case studies, which are what
-  would make a report tell a story rather than state facts.
+  would make a report explain a model rather than only state facts.
 * **F5. Pharmacophore export.** The typed features with tolerance spheres of
   `cmfqsar/pharmacophore.py` in a format a pharmacophore-screening program can read, so the
   co-field can be used as a query outside CMF.
@@ -775,10 +775,10 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   interval [+0.102, +0.238], ahead on 36 of 40 splits. The model
   it was read from reaches **0.861** on the same molecules.
   So the places the co-field picks are better than chance and much worse than the model: the
-  export is a lossy summary whose value is that it leaves the program. That is what the item
+  export is a lossy summary whose value is that it can be used outside the program. That is what the item
   asked for, and the measurement says what it costs.
   **Not done:** a conformer-generating matcher (the benchmark matches molecules already posed in
-  the training frame, which flatters any query), and the MOE and Phase formats.
+  the training frame, which overstates the quality of any query), and the MOE and Phase formats.
 
 ## G. The application and the tool (continuous)
 
@@ -826,7 +826,7 @@ crystal, and the block mixing coefficients of the invariant kernels came with it
 a typed pair-distance kernel per atom of the cell is invariant to cell, origin and orientation and
 reads as chemistry through its co-pattern; the inverse square root of the mass is the field that
 matters for the top of a phonon spectrum; the taper is needed; the background subtraction, right
-for structure comparison, costs accuracy on a property that wants composition times density; and
+for structure comparison, costs accuracy on a property that depends on composition times density; and
 fifty element-indicator fields dilute the kernel in a way the block weights halve but do not remove.
 What it cannot do is the list below, ordered by the code each item needs. Rule 1 applies unchanged
 with the four-field periodic model (electrostatic, steric, electronegativity, 1/√m, background
@@ -837,7 +837,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
 * **M1. Lower-dimensional periodicity.** Polymers as 1D-periodic repeat units and slabs as
   2D-periodic surfaces already pass through the ASE neighbour list with mixed boundary conditions,
   but the background term of `periodic_autocorrelation` divides by the cell volume. It needs the
-  repeat length or the surface area, and the slab case wants the height channels of the surface
+  repeat length or the surface area, and the slab case needs the height channels of the surface
   kernel (`SurfaceSpec` in `cmfqsar/invariant.py`). Opens surface energies, work functions and
   facet-dependent adsorption. Measure on a slab set against the surface kernel alone.
 * **M2. Partial occupancy and configurational ensembles.** Solid solutions and disordered sites
@@ -860,7 +860,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   treatment, including a co-field drawn inside the cell, which the grid code of
   `cmfqsar/cofields.py` cannot do with open boundaries. This is the tool for the vacancy formation
   energies of the Li3PO4/Li3BP2O8/LiBO2 interface study, where the reciprocal form is a change of
-  basis and the co-field is what the grant paragraph wants to show. Gate: the co-field of the
+  basis and the co-field is what the grant paragraph needs to show. Gate: the co-field of the
   vacancy energy must name the coordinating oxygens and the Li neighbours, and the model must beat
   the periodic autocorrelation on the same cells.
 * **M5. Site-resolved models.** The periodic channel sum is a sum over the atoms of the cell, so it
@@ -900,12 +900,12 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   says it may not.
 * **M10. Three-body and chirality for solids.** The two-body kernel cannot separate homometric
   structures or enantiomorphs. Typed angle channels, or a periodic analogue of the signed-volume
-  block of `chirality` in `cmfqsar/invariant.py`, close the gap at the cost of a cubic sum per
+  block of `chirality` in `cmfqsar/invariant.py`, remove the deficiency at the cost of a cubic sum per
   structure; the factorisation trick of the molecular block does not survive the lattice sum.
   Measure on structure-type classification first, where the deficiency is visible, before any
   property.
 * **M11. Inverse design on prototypes.** The co-pattern says which pair at which distance to add.
-  Making that actionable needs a candidate generator over prototype structures with substitutions,
+  Making that usable for design needs a candidate generator over prototype structures with substitutions,
   ranking by the lower confidence bound of the GP view (`benchmarks/run_bound.py` measures it), and a
   loop that proposes, computes with VASP or UMA, and refits. The GP exists; the enumerator and the
   loop do not. Gate: the loop must find, on a held-out Matbench task, a structure better than the
@@ -920,7 +920,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   plot, no site colouring. It belongs to G, and it is what makes the materials side usable by
   someone other than the author. It waits for M4 and M5, which decide what there is to draw.
 
-**Order.** M4, M5 and M6 first: together they give the most science per line and supply the theory
+**Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
 by those three. M9 and M12 only after M6 has reported.
 
@@ -935,15 +935,15 @@ normal along z, top layer at z = 0; the surface autocorrelation kernel (`Surface
 without co-fields; and the quantum stage (`cmfqsar/orca.py`, `cmfqsar/cdft.py`) brings Hirshfeld
 and CHELPG charges, Fukui indices and Fukui grids into the kernel. What that work settled: on the
 HCl series the quantum fields and descriptors do not beat the five fields (mean q² 0.38 against
-0.38, `corrosion_qm/table.md`), the aligned overlap kernel and the frameless kernels trade places
-series by series, and two endpoints on one kernel give a selectivity co-field.
+0.38, `corrosion_qm/table.md`), the aligned overlap kernel and the frameless kernels alternate in rank
+from series to series, and two endpoints on one kernel give a selectivity co-field.
 
 What electrochemistry asks for next is decided by who the partner is. A redox potential of an
 isolated molecule is an electronic-structure quantity, and the program already carries what a
 congeneric series needs for it: Fukui and charge fields, the ionisation potential and electron
 affinity as descriptors, the applied potential and the pH as descriptors, the GP variance for a
 series of twenty. Nothing below is required for that; it is a benchmark to run, not code to write.
-Three partners the program cannot describe yet are an electrode surface met face-on, a metal centre
+Three partners the program cannot describe yet are an electrode surface approached face-on, a metal centre
 with its ligand periphery, and a cation as the receptor. The items are ordered by the code each
 needs. Rule 1 holds with two references: the surface autocorrelation kernel on the Fe(110)
 adsorption energies for anything on a surface, and the five-field model plus the ORCA descriptors
@@ -958,7 +958,7 @@ for anything molecular.
   are given, add a continuum-solvent keyword and a def2 basis with effective core potentials for
   the heavy elements, parse the Mulliken spin populations that stand next to the charges into
   `prop:spin`, and let `cdft.py` read the potential cube as it reads the density and spin cubes.
-  The module's own measurement says Gaussian fits carry long-range tails badly, so the CHELPG
+  The module's own measurement says Gaussian fits represent long-range tails badly, so the CHELPG
   field, already there, stays the first choice for the potential. Measure on a quinone or
   phenazine redox-potential series with Hirshfeld, Fukui and spin fields against the five fields
   and against the IP/EA descriptors alone; the conceptual-DFT result on corrosion says where not
@@ -998,7 +998,7 @@ for anything molecular.
   frequency and overpotential of the catalytic Tafel-plot benchmarking; nickel diphosphines with
   their hydricities) measured against the ORCA descriptors alone, with the co-field read for the
   known second-sphere effects: the pendant proton relay, the through-space cation, the steric
-  shield. The data are dozens of compounds per reaction, so this is GP territory with intervals,
+  shield. The data are dozens of compounds per reaction, so this is work for a Gaussian process with intervals,
   never SVR, and leave-one-chemotype-out applies.
 * **EC5. The electric-field kernel.** Every field in the program is a scalar; the quantity a
   reaction centre feels is the vector ∇φ. The integral of ∇φ_A·∇φ_B over space, for φ the sum of
@@ -1015,7 +1015,7 @@ for anything molecular.
   of `cmfqsar/periodic.py` supplies the parameters), the docking of `cmfqsar/docking.py`
   constrained to the surface (height, tilt, rotation about the normal, in-plane translation),
   and the complementarity scores with the surface in place of the pocket, residue profiles
-  becoming surface-site profiles. The Fe(110) poses are the ground truth no protein set has:
+  becoming surface-site profiles. The Fe(110) poses are the reference poses no protein set has:
   gate, the constrained docking recovers the UMA-relaxed poses and the complementarity score
   tracks `E_ads_kJmol` across the set. Shares the slab reader with M1 and the site resolution
   with M5; M7 is the same item for a pore.
@@ -1064,7 +1064,7 @@ right molecule is the cation with its first solvation shell. In organic electrod
 actives the molecule is a congeneric series with a shared frame, and the program already models
 its redox potential with Fukui and charge fields and its trade-offs with the two-task kernel. In
 the solid, the cell is the molecule, and transport is a property of the path between two sites
-rather than of either site. Most of what batteries ask for lands on items that exist: EC7 (Li⁺ as a
+rather than of either site. Most of what batteries ask for falls under items that exist: EC7 (Li⁺ as a
 probe), EC1 (charge and spin state), E1 (potential, solubility and stability on one kernel), M4
 and M5 (the co-field in the cell and the site resolution), M3 (Bader charges as fields), M1
 (polymer electrolytes as 1D-periodic chains), EC2 and EC6 (electrolyte molecules on lithium and
@@ -1072,7 +1072,7 @@ on cathode surfaces), and D4 (ensembles whose members have their own atoms), on 
 solvation-shell idea below depends. The items here are what none of those covers, ordered by the
 code each needs. Rule 1 holds with the periodic autocorrelation kernel as the reference for every
 property of a cell and the five-field model on the complex as the reference for every property of a
-shell. Two limits stand over the whole section and are not to be argued away by a q²: transport
+shell. Two limits stand over the whole section and cannot be removed by a good q²: transport
 properties (conductivity, transference, diffusion) are collective, so CMF models them only as a
 surrogate on bulk values that a simulation or a measurement supplies; and the electrochemical
 window as measured is kinetic, set by passivation, so models of stability are trained on measured
@@ -1084,12 +1084,12 @@ values and a computed oxidation potential is a descriptor, not a target.
   `cmfqsar/periodic.py` takes pymatgen's first oxidation-state guess on the reduced composition,
   which fails for a partially delithiated cathode (Li₀.₅CoO₂ has no integer assignment). A
   fallback that spreads the charge over the mixed-valence species, and Bader charges taken in
-  preference once M3 lands, are needed before any cathode series builds. Test: the charges of
+  preference once M3 is done, are needed before any cathode series builds. Test: the charges of
   Li_xCoO₂ for x in {1, 0.75, 0.5} sum to zero and vary monotonically on Co.
 * **BT2. Battery descriptors.** The descriptor block has no computed sources for crystals. The
   theoretical capacity from the formula, the Li content, the volume per formula unit and the
   density as per-structure descriptors; the coordination number and the mean Li–O distance as
-  per-complex descriptors for the shells of BT4. Trivial once the computed-descriptor registry of
+  per-complex descriptors for the shells of BT4. Simple once the computed-descriptor registry of
   `cmfqsar/descriptors.py` accepts an ASE `Atoms` as well as an RDKit molecule.
 * **BT3. A battery data loader.** `read_structures` reads files through ASE and
   `structures_from_matbench` reads one table. Electrode data from the Materials Project battery
@@ -1105,9 +1105,9 @@ values and a computed oxidation potential is a descriptor, not a target.
 * **BT4. A solvation-complex builder.** Li⁺ with its first shell is the molecule for every
   electrolyte property, and nothing builds one. A module that places one to four solvent
   molecules, optionally an anion for a contact ion pair, around a cation, optimises the complex
-  (GFN2-xTB through `tblite` when D3 lands, ORCA otherwise, cached as the quantum stage caches),
+  (GFN2-xTB through `tblite` once D3 is done, ORCA otherwise, cached as the quantum stage caches),
   and aligns every complex on the cation with the coordination polyhedron fixing the orientation,
-  so that the frame comes for free as the metal centre does in EC4. RDKit holds disconnected
+  so that the frame needs no extra work, as with the metal centre in EC4. RDKit holds disconnected
   fragments and the field builder needs no change. Targets: Li⁺ binding energy, desolvation energy
   and coordination number on a carbonate, ether and fluorinated-ether series computed here, and
   measured low-temperature or rate data where a series has them. Gate: the model on the complex
@@ -1136,13 +1136,13 @@ values and a computed oxidation potential is a descriptor, not a target.
 * **BT7. Migration paths as objects.** Ionic conductivity in a solid electrolyte is set by the
   bottleneck between two Li sites, not by either site, and M5 resolves single sites. A path module
   that enumerates neighbouring Li-site pairs, finds the bottleneck on the way between them (the
-  `free_space` test of `cmfqsar/complementarity.py` is the seed: the point of least free space on
+  `free_space` test of `cmfqsar/complementarity.py` is the starting point: the point of least free space on
   the straight or relaxed path), evaluates the fields along the path as a one-dimensional profile,
   and builds a kernel over site pairs from those profiles. Per-pair targets are the migration
   barriers from nudged-elastic-band or bond-valence calculations, and the LLZO, NASICON and
   argyrodite families have public sets. Gate: beat M5's site-resolved model on the same cells, and
   read the co-profile as the bottleneck chemistry (which anions, at what distance) the path
-  wants. Waits for M5, which decides whether the site resolution alone already carries the
+  requires. Waits for M5, which decides whether the site resolution alone already carries the
   barrier.
 
 **Outside the library**
@@ -1209,7 +1209,7 @@ on the same folds.
   from per-atom data alone.
 * **LP4. Conformers, tautomers and states for a local target.** A shift is a conformer average
   and a pKa is a property of a site in one protonation state. The ensemble builder gives the
-  first for free once an environment is a field; the second waits for D4 (members with their own
+  first with no extra work once an environment is a field; the second waits for D4 (members with their own
   atoms), since acid and anion differ by an atom. The site assignment (which atom carries the
   macroscopic pKa, which tautomer is in solution) is data preparation under rule 6, scripted per
   set, not a module.
@@ -1233,15 +1233,15 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 | When | What |
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
-| Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (null)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
-| Months 3 to 9 | D1 to D5; ~~C3~~ **done (null)**, ~~C4~~ **done (null)**, ~~C5~~ **done (null)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
-| Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (null for accuracy)**; G1 and G2 alongside |
+| Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
+| Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
+| Months 4 to 10 | E1, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
-F2 wants the GP view that B4 makes the default; D9 waits for D4 and, with D10, for the
+F2 needs the GP view that B4 makes the default; D9 waits for D4 and, with D10, for the
 verdict of D8.
 
 ## What is not planned
@@ -1277,7 +1277,7 @@ verdict of D8.
   signal. A q² on twenty catalysts without its interval is not reported.
 * **Trajectories cost more than they may return.** D8 needs simulations that take longer than
   every benchmark in the repository together, and the fourth-dimension verdict says that ensembles
-  have not paid so far. The control is the order: the reader first, the measurement on one set
+  have not helped so far. The control is the order: the reader first, the measurement on one set
   second, and the two new fields only after the measurement; an unconverged trajectory gives a mean
-  field with sampling error that would pass for chemistry, so D8 reports the block-averaged error of
+  field with sampling error that would look like chemistry, so D8 reports the block-averaged error of
   the mean field next to the q² interval.
