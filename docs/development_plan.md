@@ -1199,6 +1199,10 @@ and counts predict nothing, is the first case.
   that extension is EC4 below, and electrocatalysis is where the series with a free frame are.
   Properties of an atom rather than a molecule (pKa, NMR shifts, site reactivity) are the LP
   items below: the same kernels on a sample the program does not yet have.
+* **Host–guest chemistry and delivery systems.** The cyclodextrin tables are the first
+  fixed-host series, and the invariant kernel is the model for them, since the guests of one
+  host share no frame. Binding to an excipient, release and solubility gain are functions of
+  the constant the model predicts; the items are the SC section below.
 * **Peptides.** `mittal/AMPH1` is 130 decapeptides that no configuration models, and the reason is
   a 3.2 Å superposition error over a flexible chain. It is the test case for C2 and C3 together, and
   the plan expects it to stay hard.
@@ -1714,6 +1718,126 @@ because it needs no alignment and settles whether the environment field carries 
 LP3 after LP2 has reported, since its co-field is the point of the exercise but costs the alignment
 step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 
+### Supramolecular chemistry and host–guest delivery systems: the extensions the fixed host asks for (26 October 2026)
+
+A host–guest complex is the receptor–ligand problem with the receptor known to the atom, and most
+of the program applies to it as it stands. What exists: `examples/cyclodextrin/` holds 2671 guests
+of seven cyclodextrin hosts with log K as the activity, and two of the hosts (HP-β-CD and
+SBE-β-CD) are the excipients of marketed formulations. `benchmarks/run_cyclodextrin.py` measures
+the three kernels on every host. The rotation-invariant autocorrelation kernel is ahead of the
+aligned kernel on six hosts of seven (mean q² +0.446 against +0.341, atom-type counts +0.323),
+because the guests of one host share no scaffold, so no superposition exists to curate. The probe
+module (`cmfqsar/probes.py`) already carries a +1 cation probe, so the field an ionophore presents
+to a cation is one option of the field set. The two-endpoint model of `cmfqsar/multitask.py` was
+written for the Am/Eu extractants, which is itself a host–guest problem; it gives the selectivity
+of a host between two guests, or of a guest between a carrier and its biological target, as a
+co-field. The `complement` command reads a structure in PDB or mmCIF format and scores guests
+against it by field overlap, and a macrocyclic host written as PDB goes through the same path.
+The conformal option of `build` gives every predicted constant an interval.
+
+Most questions a delivery formulation asks are functions of the binding constant K, so a model of
+K answers them. The solubility gain is the intrinsic solubility times (1 + K·[host]) by the
+phase-solubility equation. The release half-life follows from K when association is
+diffusion-limited, which it is for small guests. The fraction of the complex that survives
+dilution in blood, or displacement by cholesterol and serum proteins, is a mass-action
+calculation from K and the concentrations. What the method does not reach is listed at the end.
+The items below are what the fixed host asks for beyond a drug series, ordered by the code each
+needs. Rule 1 applies with two references: on a guest table of one host, the invariant kernel at
+the numbers above; on a series of hosts, the five-field aligned model.
+
+**Small (days each)**
+
+* **SC1. The two-endpoint model on the command line.** `cmfqsar/multitask.py` is reached only
+  from `benchmarks/run_multitask.py` or from a Python script. Needed: a `--second-endpoint
+  <column>` option of `build`, the task correlation chosen by the evidence or given, both
+  endpoints reported by `predict`, and the selectivity written beside the model as a co-field
+  when the kernel has one (aligned) and as channel weights otherwise (invariant). The measurement
+  needs no new data: 496 guests appear in both the α-CD and the β-CD tables, and the selectivity
+  between the two cavities is the first supramolecular two-task problem. Gate: on the shared
+  guests the two-task fit is not worse than the two single fits by more than the interval of
+  rule 4, and the selectivity channels name the size of the guest, which is the known difference
+  between the two cavities.
+* **SC2. Delivery quantities from the constant.** The three formulas above are not printed by the
+  program. Needed: a post-processing option of `predict` that takes the host concentration and,
+  where given, the intrinsic solubility, and reports the solubility gain, the fraction bound at a
+  given dilution and the release half-life under the diffusion-limited assumption, each with the
+  conformal interval of K carried through. Under rule 5 this is a display tool unless a
+  phase-solubility set is found to test it. The formulas are standard and a spreadsheet does the
+  same, so the item is convenience and is kept small.
+* **SC3. A macrocyclic host as a pocket.** `complement` reads proteins. A cyclodextrin,
+  cucurbituril or calixarene comes as an SDF file or as a CIF file from the Cambridge Structural
+  Database, with no residues. Needed: a reader in `cmfqsar/protein.py` for a host given as a
+  molecule file, and a split of the host into its monomer units (one glucose, one glycoluril) by
+  ring system, so that the residue profiles of the dialog become monomer-unit profiles. Guests
+  are posed into the cavity by the pocket placement of `cmfqsar/docking.py`. The measurement is
+  the largest a complementarity score has had: 1162 β-CD guests with a measured constant in one
+  pocket, where no protein set in the repository offers more than a few dozen ligands per pocket.
+  Gate: the complementarity score correlates with log K. If it does not, the result stands as the
+  limit of a one-body score on an endpoint that the solvent drives.
+* **SC4. Host–guest sets curated by conditions.** `make_cyclodextrin_examples.py` keeps one window
+  of temperature and pH and the median of repeated measurements, and the spread between
+  laboratories reaches 3.2 log units for one guest. A second host family should be prepared by
+  the same script pattern, with the medium, the counter-ion and the stoichiometry as columns:
+  cucurbit[7]uril and cucurbit[8]uril from the published tabulations, and the SAMPL host–guest
+  challenge sets (CB7, octa-acid, TEMOA), which are small but measured to a tenth of a
+  kilocalorie per mole and are the reference sets of the binding free-energy community. Data
+  preparation under rule 6, scripted per set. The first run on each set includes the water probe
+  field, which is the closest the field set comes to the hydrophobic effect, so that its value is
+  settled by measurement and not by argument.
+
+**Medium (one to two weeks each)**
+
+* **SC5. Host series with a frame given by the cavity.** This is the measurement EC7 names, and
+  most of its code exists: the +1 probe, the aligned kernel and the two-task model. What is
+  missing is a frame convention. For a crown ether, a cryptand or a calixarene the natural frame
+  has its origin at the centroid of the donor atoms and its z axis along the principal axis of
+  the donor ring. `cmfqsar/align.py` should offer it as a `cavity` frame beside the substructure
+  and field superpositions, so that a host series is aligned by its cavity and not by a scaffold
+  that differs between hosts. The cation-specific radii of EC7 are the remaining part of the
+  probe. Measure on log K of Na⁺ and K⁺ for crown ethers and cryptands in methanol from the Izatt
+  tabulations, the electrostatic field against the probe field, and the Na⁺/K⁺ selectivity with
+  SC1. A host series has a physical frame, which few drug series have, so the co-field is
+  expected to be readable. Gate: the co-field of the K⁺ constant names the cavity size and the
+  donor positions.
+* **SC6. What an invariant model says about a guest.** The invariant kernel has no co-field, so a
+  model of a guest table cannot show where on the guest binding is gained or lost, which is the
+  question a formulation chemist asks. The channel sum is a sum over the atoms of the molecule,
+  so it splits into one contribution per atom, as the overlap kernel does; this is the
+  decomposition M5 asks for, on a molecule rather than a cell. Needed: the per-atom contribution
+  in `cmfqsar/invariant.py`, atoms coloured by it in the viewer, and the chart of weight against
+  distance per pair of field types that NT9 asks for. Gate: on β-CD the contributions name the
+  group that enters the cavity (adamantyl, phenyl, cyclohexyl), which is known chemistry.
+* **SC7. Design on a guest table.** `cmf design` runs on a topomer model only, because the
+  candidate substituents need a pose. On an invariant model no pose is needed: a candidate built
+  by substituent replacement is embedded once and its autocorrelation computed, and the ranking by
+  prediction, posterior standard deviation and acquisition score runs unchanged. Needed: the
+  design module accepting an invariant model, with the topomer step skipped. The field-difference
+  annotation needs a frame and is replaced by the contributions of SC6. Gate: leave-one-fragment-
+  out on β-CD, with the known strong binders recovered at the top of the list.
+
+**Large (a month or more)**
+
+* **SC8. Porous carriers.** Drug loading in a MOF or in mesoporous silica is M7, the periodic pore
+  frame, and nothing substitutes for it; SC8 is M7 measured on a drug-loading set. The data are
+  the difficulty: published loadings are per formulation, with the solvent and the activation
+  differing between studies, and the first task is the reproducibility check that the
+  nanotechnology section prescribes.
+
+**What this does not cover.** Carriers without a defined atomic structure: liposomes, micelles,
+polymer nanoparticles and dendrimers have no host geometry. Partition into such a carrier can be
+modelled from the guest side, but that endpoint is largely lipophilicity, and `cmf diagnose` is
+expected to report that a one-dimensional descriptor does as well as a field. Ternary and 1:2
+complexes (drug, cyclodextrin and polymer) break the one-guest-one-host sample of the data format
+and wait until SC1 to SC7 have reported. The hydrophobic contribution to binding in water is a
+property of the medium, not of the guest; the water probe is the closest the fields come, and SC4
+measures it. Permeability, uptake and pharmacokinetics are not functions of a molecular field.
+
+**Order.** SC1 and SC4 first: they need no new science, and they give the second host family and
+the two-task command that every later item measures with. SC5 next, because a host series with a
+cavity frame is the case where the co-field is expected to work, and EC7 has been waiting for its
+set. SC6 before SC7, since the design loop on a guest table is unreadable without the
+contributions. SC3 as the docking placement allows. SC2 at any time. SC8 is M7.
+
 ## Sequence
 
 | When | What |
@@ -1723,7 +1847,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
-| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; the review that ties the series together |
+| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
