@@ -196,10 +196,14 @@ def test_what_the_invariant_model_can_and_cannot_explain(world):
     assert tc.shape == (5,)
     assert float(tc.sum() + model.bias) == pytest.approx(
         float(model.predict(AtomTable.from_molecules([mf[5]]))[0]), abs=1e-8)
-    # the primal form does not: there is no field in a fixed frame to draw
-    for call in (lambda: model.cofield_coefficients(0), lambda: model.atom_contributions(mf[0])):
-        with pytest.raises(ValueError, match="overlap-integral kernel"):
-            call()
+    # the co-field does not: there is no fixed frame to draw a field in
+    with pytest.raises(ValueError, match="overlap-integral kernel"):
+        model.cofield_coefficients(0)
+    # the split over atoms does survive, because every channel is a sum over atom pairs
+    # (plan item SC6); it is tested in full in test_invariant_atoms.py
+    c = model.atom_contributions(mf[5])
+    assert float(c.sum() + model.bias) == pytest.approx(
+        float(model.predict(AtomTable.from_molecules([mf[5]]))[0]), abs=1e-8)
 
 
 def test_the_invariant_model_survives_a_round_trip(tmp_path, world):

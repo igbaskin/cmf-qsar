@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 26 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 64 modules and about 27,600 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 64 modules and about 27,750 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-four subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`), 853 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`), 867 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -36,6 +36,7 @@ The measurements already in hand settle several questions, and the plan treats t
 | Do conformational ensembles help? | Five routes, none beats one well-chosen conformation on an aligned series | README, "The verdict on the fourth dimension" |
 | Do probe fields improve accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
 | Do quantum-chemical fields help? | Not on the corrosion series or on Am/Eu; yes on Hammett, where resonance needs whole-molecule charges | `benchmarks/results/corrosion_qm/`, `am_eu/`, `hammett/` |
+| Does an alignment-free model know which group of a guest binds? | On beta-cyclodextrin yes (the three cavity groups +0.0394 per atom against the rest of their molecule, the three polar ones -0.0723), on alpha and gamma no | `cmfqsar/invariant.py`, `benchmarks/results/guest_atoms/` |
 | Do increments fitted on one series transfer to another? | No (+0.363 on the test set against +0.383 for the published table; the vectors fitted on two sets agree to +0.89 at best) | `cmfqsar/learnincrements.py`, `benchmarks/results/increments/` |
 | Does a pKa-weighted protonation ensemble beat one chosen state? | No on the corrosion series in HCl (+0.261 against +0.324): at pH 0 only 1% of the molecules are mixtures, and independent-site pKa picks the state badly | `cmfqsar/protonation.py`, `benchmarks/results/protonation/` |
 | Do six pharmacophore features beat twenty Sybyl indicators? | Below 40 molecules yes (+0.027 against +0.002 added to the five fields), above it no | `cmfqsar/pharmtypes.py`, `benchmarks/results/pharmfields_mittal/` |
@@ -1240,7 +1241,8 @@ and counts predict nothing, is the first case.
   the constant the model predicts; the items are the SC section below.
 * **Peptides.** `mittal/AMPH1` is 130 decapeptides that no configuration models, and the reason is
   a 3.2 Å superposition error over a flexible chain. It is the test case for C2 and C3 together, and
-  the plan expects it to stay hard.
+  the plan expects it to stay hard. Item MC10 of part I is the route that gives up on aligning
+  whole peptides.
 * **Field-based similarity for reactions.** Fields of reactant and product in one frame, with the
   difference field as the description of the transformation. Exploratory; no commitment until C is
   done.
@@ -1842,6 +1844,37 @@ the numbers above; on a series of hosts, the five-field aligned model.
   in `cmfqsar/invariant.py`, atoms coloured by it in the viewer, and the chart of weight against
   distance per pair of field types that NT9 asks for. Gate: on β-CD the contributions name the
   group that enters the cavity (adamantyl, phenyl, cyclohexyl), which is known chemistry.
+  **Done 26 October 2026, and the gate passes on beta-cyclodextrin.**
+  `cmfqsar/invariant.py` carries `channel_coefficients`, `atom_contributions` and
+  `pair_contributions`: a channel is a double sum over atom pairs and the prediction is a fixed
+  linear functional of the channels, so a pair is one term of the prediction, divided equally
+  between its two atoms. The numbers add up to the prediction minus the bias exactly, for kernel
+  ridge and for a support-vector model alike, and the tests assert that to the last digit.
+  `CMFModel.atom_contributions` now answers for this kernel as it does for the aligned one, so
+  the report lists the largest contributions and the viewer colours the atoms by them with no
+  further work; `--ac-chirality` is refused by name, since a triple has no place in a split over
+  two atoms.
+  **Measured by `benchmarks/run_guest_atoms.py`** on three cyclodextrin tables, with the
+  contributions taken out of fold so that a guest's own constant never enters its own
+  explanation, hydrogens reported on their heavy neighbour, and the statistic the mean share per
+  heavy atom inside a group minus the mean outside it. On beta-cyclodextrin (1162 guests,
+  invariant q2 +0.447) the three groups that enter the cavity are all positive --
+  adamantyl +0.0646 (6 guests), cyclohexyl +0.0378 (122), phenyl +0.0158 +-
+  0.0041 (817) -- and the three polar groups all negative: carboxyl -0.0366,
+  hydroxyl -0.0916, amine -0.0886. The order among the three is the order of the affinity
+  they are known to give.
+  **On the other two hosts the reading does not hold**: alpha-cyclodextrin, whose cavity is too
+  narrow for a benzene ring, gives phenyl -0.0158 and carboxyl +0.0703; gamma, whose
+  cavity none of these groups fills, gives all three below zero (-0.0333 phenyl,
+  -0.0558 cyclohexyl). The arithmetic is exact on all three, so what differs is whether the
+  group a chemist would name is the one that host's data makes the model lean on.
+  **It is a statement about a series, not about one molecule.** Against a null that shuffles the
+  numbers among the atoms of the same molecule, the group's z is +0.35 for phenyl and
+  +1.38 for adamantyl: within one guest the group does not stand out far above the spread
+  of its own atoms, and what is solid is the mean over hundreds of guests.
+  **Not done:** the chart of weight against distance per pair of field types (NT9) is not drawn;
+  the split over field *pairs* is reported as numbers only; and the surface and periodic
+  invariant kernels keep their own feature builders, so neither has the split yet.
 * **SC7. Design on a guest table.** `cmf design` runs on a topomer model only, because the
   candidate substituents need a pose. On an invariant model no pose is needed: a candidate built
   by substituent replacement is embedded once and its autocorrelation computed, and the ranking by
@@ -1873,6 +1906,191 @@ cavity frame is the case where the co-field is expected to work, and EC7 has bee
 set. SC6 before SC7, since the design loop on a guest table is unreadable without the
 contributions. SC3 as the docking placement allows. SC2 at any time. SC8 is M7.
 
+## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
+
+*Drafted 26 October 2026. Parts A to G build the model and part H leaves medicinal chemistry for
+other fields; this part stays inside medicinal chemistry and asks a different question: which task
+of lead optimisation does a finished CMF model already answer, and at what price. It is placed last
+because it was written last, and not because it comes last. MC1 to MC4 can be done as soon as the
+data they name are in hand.*
+
+One identity organises the section. A model linear in the field predicts an activity as the overlap
+of the co-field with the molecular field, and a molecular field is a sum over atoms. Two analogues
+that share a core in one pose therefore differ in predicted activity by the overlap of the co-field
+with the field difference of their two substituents alone:
+
+`y(A) − y(B) = ⟨C, X_A − X_B⟩`, where `C = Σ_j a_j X_j` is the co-field and `X_A`, `X_B` are the
+fields of the two substituents and of nothing else.
+
+The identity is exact for the overlap kernel, it is local, and it needs no refitting. It also says
+what interchangeability of two groups means in this program: their fields must agree where the
+co-field has weight, which is not the same as their fields agreeing. That is the whole content of
+field-based bioisosterism, and here it costs one integral per candidate group. Under rule 2 the
+Gaussian layer breaks the identity, and the Shapley values of `cmfqsar/shapley.py` take its place
+there.
+
+What the items build on is already measured. `cmfqsar/design.py` and the `design` command enumerate
+substituents at one position and rank them by prediction and posterior standard deviation (E3);
+`cmfqsar/active.py` and `suggest` give six acquisition rules and the finding that the posterior
+standard deviation of a CMF model is the distance to the training set in other units (E2);
+`cmfqsar/multitask.py` gives the selectivity of two endpoints as a difference of co-fields (A6);
+`cmfqsar/stereo.py` sees handedness on a synthetic set and has no real series to prove it on (C7);
+`cmfqsar/fielddiff.py` gives the field difference of two molecules and `cmfqsar/complementarity.py`
+the field a pocket would reward.
+
+Rule 1 applies with two references: on a whole series the five-field single-conformation aligned
+model, and on anything built out of substituents the topomer model of E3, whose cost is known (a
+mean loss of 0.101 q² against the aligned model on the eight Sutherland sets). Of those eight sets
+only GPB and THER have a scaffold that comes off at acyclic single bonds, so every substituent item
+below is measured on those two and reports that limit, as E3's benchmark does.
+
+**Small (days each)**
+
+* **MC1. A bioisostere table weighted by the co-field.** `cmf design` ranks candidate substituents
+  by the predicted activity of the whole molecule. The table a medicinal chemist asks for answers
+  the other question: which groups are interchangeable at this position, so that one of them can be
+  chosen for a property the model does not describe. The identity above gives that table directly,
+  as one integral per pair of groups rather than one model fit. Needed: the field difference of two
+  posed substituents restricted to their own atoms, which is a mask on the atom sums of
+  `cmfqsar/kernels.py`; its overlap with the co-field; and a square table of a library against
+  itself holding that distance and the predicted activity change, with the conformal interval
+  carried through. Gate: matched molecular pairs taken from GPB and THER with RDKit's `rdMMPA`; the
+  co-field-weighted substituent distance ranks the measured activity difference of a pair better
+  than the unweighted field distance of the same two substituents, and better than a 2D fingerprint
+  distance, by more than the interval of rule 4. If the weighting adds nothing then the ranking is
+  shape similarity and needs no model, which is a result of the same kind as D5.
+* **MC2. A batch rule that refits between picks.** E2 names this as not done. A laboratory makes ten
+  or twenty compounds at once, and the cosine filter of `cmfqsar/active.py` keeps a batch from being
+  one molecule several times over without saying how much it loses. The posterior covariance is in
+  hand, so a batch that maximises the determinant of its own covariance block is a greedy selection
+  with one Cholesky update per candidate, which costs less than refitting. Gate: on the eight
+  Sutherland sets, with the protocol of `benchmarks/run_active.py` and batches of ten, the
+  determinant rule beats the cosine filter in both of E2's two measures (the best molecule acquired,
+  and the error on what is left) by more than the bootstrap interval. E2's finding about the
+  posterior standard deviation predicts that the gain will be small; that the cheap filter is
+  enough is an acceptable outcome and closes the item.
+* **MC3. A series in which both enantiomers are measured.** This is the one part of C7 left open,
+  restated here because it is a data task of medicinal chemistry and not a kernel task. Needed: a
+  series with enantiomeric pairs and a separate potency for the eutomer and the distomer, prepared
+  by a script under `examples/` as rule 6 requires, with the configuration taken from the
+  publication and not from a compound name. Beta-blockers, the profens and the published
+  eudismic-ratio tabulations are the first places to look. Gate, two parts: the stereo channels of
+  `cmfqsar/stereo.py` gain on this set, where they gained nothing on five sets that hold no
+  enantiomeric pair; and the model puts the eutomer above the distomer in more pairs than chance,
+  with the chiral part of the co-field near the stereocentre and nowhere else.
+* **MC4. An anti-target panel and the selectivity co-field.** The two-task model gives the
+  selectivity of two endpoints as a difference of co-fields, measured on the Am/Eu extractants, and
+  E1 extends it to several tasks. Medicinal chemistry asks the same question of hERG, of a
+  cytochrome and of a kinase panel: where may field be added for the target that is not also added
+  for the off-target. What is missing is data in the program's format. Needed: one congeneric series
+  with a potency and at least one anti-target activity measured on the same compounds, scripted from
+  ChEMBL under rule 6, with the assay conditions as columns, because an anti-target number from
+  another laboratory is a different measurement. Gate, two parts: the two-task fit of the potency is
+  not worse than the single fit by more than the interval of rule 4; and the difference co-field
+  places weight of one sign on the groups that are known to drive the off-target, which for hERG is
+  the basic nitrogen and the lipophilic region beside it.
+
+**Medium (one to two weeks each)**
+
+* **MC5. Scoring a candidate only where the co-field has weight.** E3 says what scaffold hopping
+  lacks: the topomer frame is defined against a scaffold that is held fixed, so replacing the
+  scaffold leaves no frame. The way through is to stop asking for a match over the whole molecule.
+  Multiply the co-field by a soft mask, itself a sum of Gaussians placed on the atoms whose
+  contribution is largest, and score a candidate by its overlap with the masked co-field alone. A
+  product of two Gaussians is a Gaussian, so the masked overlap stays in closed form and rule 3
+  holds. The candidate is then free everywhere else, which is what a replacement scaffold needs, and
+  the complement of the mask gives the second score: the field the candidate must not place where
+  the model rewards none. Needed: a mask beside the co-field in `cmfqsar/cofields.py`, the masked
+  overlap in `cmfqsar/kernels.py`, and a screen over a conformer library. Gate: on a published pair
+  of scaffolds with the same activity, with the model fitted on the first scaffold only, the second
+  scaffold ranks above the posed decoys of `examples/decoys/` by the masked score, and ranks higher
+  by the masked score than by the unmasked field similarity.
+* **MC6. Matched pairs as transformation fields.** A matched molecular pair in a fixed pose has a
+  field difference, and that difference is a local object placed in space rather than a number
+  attached to an atom type. Collecting one per pair over many series asks whether a transformation
+  carries its effect with it. D5 is both the warning and the reference: increments fitted on one
+  series did not transfer, and the vectors fitted on two sets agreed to +0.89 at best. Needed: the
+  pair finder of MC1, the difference field of `cmfqsar/fielddiff.py` averaged over the pairs of one
+  transformation, and the predicted change for that transformation in a series held out. Gate: the
+  held-out prediction beats the mean change of that series by more than the interval of rule 4. The
+  FEP sets (`examples/schindler/`, `examples/ross/`) are the only data with a crystal pose for every
+  ligand and are where this is measured; their narrow activity ranges are the known risk, and a
+  negative result stands beside D5 rather than replacing it.
+* **MC7. Growing and linking a fragment.** `cmfqsar/complementarity.py` scores a ligand against a
+  pocket by field overlap. A bound fragment leaves a gap, which is the field the pocket would reward
+  minus the field the fragment already places. Needed: that difference as a field object, an
+  enumeration of linkers or of growth vectors, and the overlap of each candidate with the gap field,
+  ranked as E2 ranks. Gate: on a published fragment-linking case with structures for the two
+  fragments and for the linked compound, the true linker is among the first ten of the enumeration.
+  This is the item most likely to return nothing, because a one-body field score has never been
+  shown to rank linkers, and under rule 5 it becomes a display tool if the gate fails.
+* **MC8. Soft spots: a target that belongs to one atom.** The site of metabolism and the pKa of a
+  group are properties of an atom, and LP1 and LP2 are the items that make a per-atom target
+  possible. The use in medicinal chemistry is blocking a metabolic position, which is a question
+  about one atom and its surroundings. Needed: nothing beyond LP1, LP2 and a data set; the item
+  exists so that the measurement is made on drug-like molecules and not only on the small molecules
+  those items will use. Gate: the correct site among the first two predicted on a public
+  site-of-metabolism set, against a 2D baseline.
+* **MC9. Scoring a conformational restriction.** Rigidifying a molecule is one of the few moves in
+  medicinal chemistry whose effect is purely conformational, and the fourth-dimension verdict says
+  that ensembles do not improve a prediction. They may still answer a different question. The
+  variance field of D10 says where a molecule places field only part of the time; weighted by the
+  squared co-field it says how much of the activity-relevant field is intermittent. A restriction is
+  then scored by two numbers: how much of the weighted mean field it keeps, and how much of the
+  weighted variance it removes. Needed: D10, the weighting, and the score as an option of
+  `cmf explain` or of a subcommand of its own. Gate: on pairs of a flexible compound and its
+  restricted analogue with measured potencies, the weighted variance removed correlates with the
+  potency gain. Both members of a pair must come from the same conformer generator with the same
+  settings, since the comparison is between two ensembles and not between two molecules.
+
+**Large (a month or more each)**
+
+* **MC10. Peptidomimetics.** The direct route is closed and the repository says so: the 130
+  decapeptides of `examples/mittal/` are modelled by no configuration, the reason is a superposition
+  error of 3.2 Å over a flexible chain, and C2, C3 and C4 are three measured failures to fix an
+  alignment with the means the program has. What is left is a route that never aligns whole
+  molecules. The template is the bioactive conformation, taken from a structure or from a
+  constrained analogue and not from a model fitted on peptides. The scoring is MC5: match a
+  candidate scaffold to the masked co-field of the side-chain positions that carry the weight, and
+  ignore the backbone the mimetic is meant to replace. The restriction is scored by MC9, which is
+  how a cyclisation, an N-methylation or an α-methylation is compared with another. Needed: MC5,
+  MC9, D10 and a template. Gate, and it is hard: on a published peptide with several mimetics, the
+  mimetic scaffold that was active ranks above the ones that were not, and the predicted order of
+  two restrictions of the same peptide agrees with the measured potencies. Until that gate is passed
+  this is a hypothesis, and the plan expects peptides to stay hard.
+* **MC11. A design loop with more than one objective.** E2 and E3 close the loop on potency alone.
+  Lead optimisation has at least three objectives, and once E1 and MC4 are done they live on one
+  kernel: potency, selectivity against the panel, and whatever property of the same series is
+  measured. Needed: a scalarised or Pareto acquisition over the tasks, the batch rule of MC2, and a
+  report that says for each suggestion which objective it gains and which it loses. Gate:
+  retrospectively on a series with two measured endpoints, the Pareto front the loop reports
+  contains the compounds the authors went on to make. The risk is plain: three endpoints measured on
+  one congeneric series are rare in public data, so this item waits on MC4's data more than on its
+  own code.
+
+**What this does not cover.** Equivalence of frontier orbitals, which is the literal form of the
+isolobal analogy, needs a frontier-orbital field, and that road has been measured twice: a Fukui
+function is not a sum of atom Gaussians (relative fit error 0.8 to 0.9) and the model did not care,
+and giving every atom a direction fixed the fit and not the model (−0.004 q²). Quantum-chemical
+fields earned their place on the Hammett constants only, where resonance needs whole-molecule
+charges, so a field-based equivalence of groups rests on the five physico-chemical fields, which is
+MC1. Properties measured across a diverse set, such as solubility, permeability and clearance, have
+no superposition and therefore no field model; inside one congeneric series they are extra tasks on
+the shared kernel, which is where lead optimisation works anyway, and `cmf diagnose` is expected to
+report that a one-dimensional descriptor does as well on the diverse case. Covalent inhibitors and
+bifunctional degraders break the sample of one molecule in one pose: a warhead's effect is a
+reaction rate, and a degrader binds two proteins through a linker whose conformation is the whole
+problem. Which analogue can be made, and in how many steps, is not a property of a field; MC1, MC2
+and MC11 rank candidates and a chemist removes the ones nobody will synthesise.
+
+**Order.** MC1 and MC2 first: they need no new science, they use the two loops E2 and E3 have
+already measured, and MC1 is the item that answers the question most often asked of a 3D-QSAR model.
+MC3 and MC4 are data tasks and run beside them, since every later item that mentions selectivity
+waits on MC4's set and C7 cannot be closed without MC3's. MC5 next, because masked matching is the
+construction E3 names as missing and MC10 cannot start without it. MC9 after D10, which it needs,
+and before MC10. MC6 and MC7 at any time after MC1, and both are allowed to fail. MC8 with LP1 and
+LP2. MC11 last, after E1, MC2 and MC4.
+
 ## Sequence
 
 | When | What |
@@ -1881,13 +2099,14 @@ contributions. SC3 as the docking placement allows. SC2 at any time. SC8 is M7.
 | Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
-| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |
-| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; the review that ties the series together |
+| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
+| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
 F2 needs the GP view that B4 makes the default; D9 waits for D4 and, with D10, for the
-verdict of D8.
+verdict of D8; in part I the substituent items wait for the topomer rule E3 measured, MC9 for
+the variance field of D10, MC10 for MC5 and MC9 together, and MC11 for the panel data of MC4.
 
 ## What is not planned
 
@@ -1913,6 +2132,12 @@ verdict of D8.
 * **Dependencies.** ORCA is the serial build and xTB is not yet in the tool chain; RDKit's MMFF set-up
   alters aromaticity flags in place, so every new module that optimises geometry must re-sanitise, as
   the conformer generator does.
+* **Data for the medicinal-chemistry items.** Part I is limited by data and not by code. Four of
+  its eleven items need a set the repository does not hold: enantiomeric pairs with two
+  potencies (MC3), one series with a potency and an off-target activity (MC4), a
+  site-of-metabolism set (MC8) and pairs of a flexible compound with its restricted analogue
+  (MC9). The control is the order: MC1 and MC2 are measured on the Sutherland sets that are
+  already in place, so the part returns a result even if no new set is found.
 * **Metals and small series.** EC4 asks RDKit to hold coordination complexes it was not built
   for, and the catalyst series behind it are dozens of compounds with turnover frequencies that
   differ between laboratories by the factor the model is meant to explain. The control is the

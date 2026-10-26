@@ -491,8 +491,11 @@ def cmd_build(args):
               + (f", with the signed three-point channels over {args.ac_chirality_shells} radial "
                  f"shells, so enantiomers are distinguishable" if args.ac_chirality else "")
               + ", invariant to rotation and translation. No alignment is "
-              f"assumed; the attenuation grid is not used, and there are no co-fields or atom "
-              f"contributions, only the contributions of the training molecules.")
+              f"assumed and the attenuation grid is not used. There is no co-field, because "
+              f"there is no frame to draw one in, but the prediction still splits over the atoms "
+              f"of a molecule, because every channel is a sum over atom pairs (plan item SC6): "
+              f"`report` lists the largest contributions and the viewer colours the atoms by "
+              f"them.")
     if args.kernel_layer != "linear":
         print(f"Nonlinear kernel layer '{args.kernel_layer}': co-fields and atom contributions "
               "are not available for this model (the model is no longer linear in the field).")

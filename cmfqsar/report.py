@@ -479,7 +479,8 @@ def _section_extremes(model, spec: ReportSpec) -> str:
             head += "</h3>"
             body = _missing(f"no field decomposition: {exc}")
         out.append(head + body)
-        if model.is_linear and model.uses_fields:
+        if model.is_linear and (model.uses_fields
+                                or model.kernel_source == "autocorrelation"):
             try:
                 c = np.asarray(model.atom_contributions(mol), float)
                 order = np.argsort(-np.abs(c))[:spec.top_atoms]

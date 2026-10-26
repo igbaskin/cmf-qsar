@@ -3395,6 +3395,67 @@ $q^2$ never sees the left-out activities. The groups default to the continuous i
 names others. The fitted weights are printed by kind and stored with the model
 (`block_weight_report`).
 
+### What the model says about one molecule
+
+The invariant kernel has no co-field, because it has no frame, but **it does have a
+decomposition over atoms**. Every channel is a double sum over atom pairs, and the prediction is
+a fixed linear functional of the channels, so a pair of atoms is one term of the prediction and
+the only choice is how to divide a pair between its two atoms. Dividing it equally gives one
+number per atom that adds up to the prediction exactly:
+
+$$
+y(x) - b = \sum_a q_a, \qquad
+q_a = \frac{1}{\|s\,\Phi(x)\|} \sum_c s_c\, \gamma_c\, \Phi_c^{(a)}(x)
+$$
+
+with $\gamma$ the co-pattern -- the training molecules' channel rows summed with their dual
+coefficients -- and $\Phi_c^{(a)}$ that atom's half of the channel. `CMFModel.atom_contributions`
+returns them for an invariant model as it does for an aligned one, the report lists the largest,
+and the viewer colours the atoms by them. `invariant_pair_contributions` splits the same total
+over the pairs of field types instead, which says which kind of channel the prediction came from.
+The signed three-point channels are a sum over *triples*, so a model built with `--ac-chirality`
+has no split over two atoms and the program says so rather than dropping them.
+
+**Does it name the right atoms?** `benchmarks/run_guest_atoms.py` asks the question on the
+cyclodextrin guest tables, where the chemistry is known: binding is driven by a hydrophobic group
+entering the cavity, and polar groups stay in the water. For every guest the mean share per heavy
+atom inside a group is compared with the mean outside it, with the contributions taken from models
+fitted without that guest, so a guest's own constant never enters its own explanation.
+
+| Group on beta-cyclodextrin | guests | share per atom, inside minus outside |
+|---|---:|---:|
+| adamantyl | 6 | +0.0646 ± 0.0368 |
+| cyclohexyl | 122 | +0.0378 ± 0.0202 |
+| phenyl | 817 | +0.0158 ± 0.0041 |
+| carboxyl | 347 | -0.0366 ± 0.0046 |
+| hydroxyl | 221 | -0.0916 ± 0.0126 |
+| amine | 217 | -0.0886 ± 0.0270 |
+
+**On beta-cyclodextrin it does.** The three groups that are known to enter the cavity take more of
+the prediction than the rest of their own molecule and the three polar groups take less, and the
+order among the three -- adamantyl, then cyclohexyl, then phenyl -- is the order of the affinity
+they are known to give. The largest sets carry the claim: phenyl on
+817 guests and the three polar groups on
+347, 221 and
+217, every interval away from zero. Adamantyl is the strongest effect and
+the weakest evidence, 6 guests.
+
+**On the other two hosts it does not.** On alpha-cyclodextrin, whose cavity is too narrow for a
+benzene ring, phenyl comes out at -0.0158 and the carboxyl at
++0.0703; on gamma-cyclodextrin, whose cavity is wide enough
+that none of these groups fills it, every one of the three is negative
+(-0.0333 for phenyl,
+-0.0558 for cyclohexyl). Read that as the limit of the
+reading rather than a fault in the arithmetic: the split is exact for all three, and what differs
+is whether the group a chemist would name is the group this host's data makes the model lean on.
+
+**It is a statement about a series, not about one molecule.** Shuffling an atom's number among the
+atoms of the same molecule gives a null, and the group's z-score against it is
++0.35 for phenyl and +1.38 for
+adamantyl: within one guest the group does not stand out far above the spread of its own atoms.
+What is solid is the mean over hundreds of guests. Use the atom numbers to see what a model has
+learned from a table, not to decide where to put the next substituent on one compound.
+
 ## Molecules on a surface: the in-plane invariant kernel
 
 A molecule adsorbed on a surface has one direction that is not like the others. Its height above

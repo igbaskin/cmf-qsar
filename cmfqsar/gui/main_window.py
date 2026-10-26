@@ -3281,7 +3281,12 @@ class MainWindow(QMainWindow):
                 self.results_panel.clear_contributions(str(exc))
                 self.results_panel.set_atom_contributions([], [], np.zeros(0))
                 return
-            c = model.atom_contributions(mol) if model.is_linear else None
+            try:
+                # the overlap kernel and the rotation-invariant one both split a prediction
+                # over the atoms; the surface and periodic kernels do not
+                c = model.atom_contributions(mol) if model.is_linear else None
+            except (ValueError, RuntimeError):
+                c = None
             value = float((c.sum() if c is not None else tc.sum()) + model.bias)
             if c is None:
                 self.results_panel.set_contributions(

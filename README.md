@@ -1731,6 +1731,46 @@ vectors do not even agree with each other: the mean cosine between two sets' fit
 parameter, so the published table stays the default and `--learn-increments` is a diagnostic, not
 a setting to turn on.
 
+### What an invariant model says about a guest
+
+The rotation-invariant kernel is the best of the three on six of the seven cyclodextrin tables,
+and it has no co-field: there is no frame to draw a field in. It does have an exact decomposition
+over atoms, though. Every channel is a double sum over atom pairs and the prediction is a fixed
+linear functional of the channels, so a pair is one term of the prediction; divided equally
+between its two atoms it gives one number per atom that adds up to the prediction, to the last
+digit (`CMFModel.atom_contributions`, which now answers for this kernel as it does for the
+aligned one, so the report and the viewer show it).
+
+`benchmarks/run_guest_atoms.py` asks whether those numbers name the group that enters the cavity.
+The contributions come from models fitted without the guest being explained, hydrogens are
+reported on their heavy neighbour, and the statistic is the mean share per heavy atom inside a
+group minus the mean outside it:
+
+<!-- GUESTATOMS-TABLE -->
+| group on beta-cyclodextrin (1162 guests) | | guests | inside minus outside |
+|---|---|---:|---:|
+| adamantyl | enters the cavity | 6 | +0.0646 ± 0.0368 |
+| cyclohexyl | enters the cavity | 122 | +0.0378 ± 0.0202 |
+| phenyl | enters the cavity | 817 | +0.0158 ± 0.0041 |
+| carboxyl | stays in the water | 347 | -0.0366 ± 0.0046 |
+| hydroxyl | stays in the water | 221 | -0.0916 ± 0.0126 |
+| amine | stays in the water | 217 | -0.0886 ± 0.0270 |
+<!-- /GUESTATOMS-TABLE -->
+
+**On beta-cyclodextrin the split names the right groups**: the three that enter the cavity take
++0.0394 more of the prediction per atom than the rest of their molecule,
+the three polar ones -0.0723 less, and the order adamantyl, cyclohexyl,
+phenyl is the order of the affinity those groups are known to give. **On the other two hosts it
+does not**: alpha-cyclodextrin, whose cavity is too narrow for a benzene ring, puts phenyl at
+-0.0158, and gamma-cyclodextrin, whose cavity none of these
+groups fills, puts all three below zero. The arithmetic is exact on all three; what changes is
+whether the group a chemist would name is the one that host's data makes the model lean on.
+
+Within one guest the group does not stand far above the spread of its own atoms — the z-score
+against shuffling the numbers among the molecule's atoms is +0.35 for
+phenyl — so this is a statement about a series of hundreds of guests, not a reading for one
+compound.
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the

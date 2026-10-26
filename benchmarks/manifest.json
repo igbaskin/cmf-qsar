@@ -1,6 +1,6 @@
 {
- "commit": "96559bda459307f9dae4341e874ed22def6e9205",
- "created": "2026-10-26T21:08:02",
+ "commit": "091ed4d095c2c4a8a4dc217e5f9686bab9f6dccc",
+ "created": "2026-10-26T21:29:43",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1753,6 +1753,10 @@
   "benchmarks/results/fusion/DHFR.json": "7c65667dae1c84819161727e825b16ebef35082c3ccfceaf39bb48a381ca4150",
   "benchmarks/results/fusion/THR.json": "26185e1804ab3161f1643507df5c0c1e0f9bc02c74f13eabc72eca2618a4e970",
   "benchmarks/results/fusion/table.md": "958da5023b32e2ff89d351b2fd7214bd5a7b0b330e86dd386bd95906d8ed6ec2",
+  "benchmarks/results/guest_atoms/alpha.json": "3c69e95be93f78d8947ce42472e5c5e6fed5b2816730453b6c3a2269c2df9e01",
+  "benchmarks/results/guest_atoms/beta.json": "9e59600a461eea0f8d11d9df586767a3b99d2f08e377232d6e9e8d08bff3efc2",
+  "benchmarks/results/guest_atoms/gamma.json": "67f49ae1239e80e8bea1c3fa7b451e5f7d31065c6d6520ce9f6e942b203a5cb3",
+  "benchmarks/results/guest_atoms/table.md": "872b4c82d814222e0809e8ac496c4f523cbbb9f782f11b031ba8e91979546f1a",
   "benchmarks/results/hammett/cofields.png": "04c3e4be5a421d95e5e9007997023bf8bbee5e6770532bbfd4812b7493d01c6e",
   "benchmarks/results/hammett/cofields_ens.png": "0fa44a4602617e9ed6ed8d033b6d3e17c1e5a61b536594142a54150c90bd549e",
   "benchmarks/results/hammett/cofields_ens_boltzmann.png": "03cb4e243fa8c270e2cdee0ffff1794de0f29749e5159644a5f3bdc256f92380",

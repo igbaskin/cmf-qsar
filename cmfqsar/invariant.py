@@ -640,3 +640,123 @@ def block_weight_summary(keys: Sequence[str], w: Sequence[float]) -> List[Dict[s
                     "min": float(ws.min()), "max": float(ws.max()),
                     "share": float(np.sum(ws ** 2) / total)})
     return out
+
+
+# --------------------------------------------------------------------------- #
+# What the model says about one molecule, atom by atom (plan item SC6)
+# --------------------------------------------------------------------------- #
+
+
+def channel_coefficients(train: np.ndarray, scale: np.ndarray, dual: Sequence[float],
+                         normalize: bool = True) -> np.ndarray:
+    """The model as one vector in channel space.
+
+    A kernel ridge or support-vector model on this kernel predicts
+
+        y(x) = sum_j a_j K(x, x_j) + b,
+
+    and the kernel is a dot product of the scaled, length-normalised channel rows, so the sum
+    over the training molecules collapses into one vector::
+
+        c = sum_j a_j (s * F_j) / |s * F_j|      and      y(x) - b = u(x) . c
+
+    with ``u(x)`` the scaled row of the molecule being predicted, divided by its own length.
+    Everything the model has to say about a new molecule is that one dot product, which is what
+    makes the decomposition below exact rather than an attribution method.
+    """
+    A = np.asarray(train, float) * np.asarray(scale, float)
+    if normalize:
+        norms = np.sqrt(np.maximum(np.sum(A * A, axis=1), 1e-300))
+        A = A / norms[:, None]
+    return A.T @ np.asarray(dual, float)
+
+
+def atom_contributions(mol: MoleculeFields, coefficients: Sequence[float],
+                       scale: Optional[Sequence[float]] = None,
+                       spec: AutocorrelationSpec = AutocorrelationSpec(),
+                       pairs: Optional[Sequence[Tuple[int, int]]] = None,
+                       normalize: bool = True,
+                       per_pair: bool = False) -> np.ndarray:
+    """Split what the invariant model predicts for one molecule over its atoms (item SC6).
+
+    Returns (n_atoms,), or (n_pairs, n_atoms) with `per_pair`.  The numbers sum to the prediction
+    without the bias, exactly, so an atom's number is its share of the predicted value and not a
+    score of its own.
+
+    **Why it is exact.** Each channel of the autocorrelation is a double sum over atom pairs,
+
+        F[(f,g), k] = sum over atoms a, b of  W[a,f] B[a,b,k] W[b,g],
+
+    and the prediction is a fixed linear functional of those channels
+    (:func:`channel_coefficients`).  A pair (a, b) is therefore one term of the prediction, and
+    the only choice to make is how to divide a pair between its two atoms; it is divided equally,
+    which is the only split that treats the two the same way.  A self term (a = a) is one atom's
+    alone.  Nothing is left over: the atom numbers add up to the prediction minus the bias.
+
+    `coefficients` is the vector :func:`channel_coefficients` returns, `scale` what every channel
+    was multiplied by before the kernel was taken, and `normalize` says whether the kernel was
+    cosine-normalised, which divides the molecule's row by its own length.
+    """
+    W = np.asarray(mol.weights, float)
+    n_atoms, n_fields = W.shape
+    pairs = list(pairs) if pairs is not None else field_pairs(n_fields)
+    centres = spec.centres
+    n_bins = len(centres)
+    out = np.zeros((len(pairs), n_atoms))
+    if n_atoms == 0:
+        return out if per_pair else out.sum(axis=0)
+    c = np.asarray(coefficients, float)
+    s = np.ones(len(c)) if scale is None else np.asarray(scale, float)
+    need = len(pairs) * n_bins
+    if len(c) < need or len(s) < len(c):
+        raise ValueError(f"the model carries {len(c)} channels and this molecule needs {need}: "
+                         "the fields of the two do not match")
+    if len(c) > need:
+        # the signed three-point channels are a sum over triples, not pairs, so they have no
+        # place in a split over two atoms; refusing is better than quietly dropping them
+        raise ValueError("atom contributions are not defined for the signed three-point "
+                         "channels: build the model without --ac-chirality to decompose it")
+    gamma = (c * s)[:need].reshape(len(pairs), n_bins)
+
+    d = np.linalg.norm(mol.coords[:, None, :] - mol.coords[None, :, :], axis=-1)
+    if not spec.include_self:
+        np.fill_diagonal(d, np.inf)
+    B = np.exp(-((d[:, :, None] - centres[None, None, :]) ** 2) / (2.0 * spec.sigma ** 2))
+    # T[k] = B[:, :, k] @ W: for every atom and every field, what the rest of the molecule puts
+    # into that distance channel
+    T = np.einsum("abk,bf->kaf", B, W, optimize=True)
+    for i, (f, g) in enumerate(pairs):
+        mult = 2.0 if f != g else 1.0
+        # a as the first index of the pair, and a as the second; half of each
+        share = 0.5 * mult * (W[:, f][None, :] * T[:, :, g] + W[:, g][None, :] * T[:, :, f])
+        out[i] = gamma[i] @ share
+    if normalize:
+        row = autocorrelation(mol, spec, pairs)[:need] * s[:need]
+        length = float(np.sqrt(max(np.sum(row * row), 1e-300)))
+        out /= length
+    return out if per_pair else out.sum(axis=0)
+
+
+def pair_contributions(mol: MoleculeFields, coefficients: Sequence[float],
+                       scale: Optional[Sequence[float]] = None,
+                       spec: AutocorrelationSpec = AutocorrelationSpec(),
+                       fieldset: Optional[FieldSet] = None,
+                       normalize: bool = True) -> List[Tuple[str, float]]:
+    """The same split taken over the channel blocks instead of the atoms.
+
+    One number per pair of field types -- "steric with steric", "electrostatic with hba" -- which
+    says which kind of channel the prediction came from.  The numbers add up to the same total as
+    :func:`atom_contributions`.
+    """
+    n_fields = np.asarray(mol.weights, float).shape[1]
+    per = atom_contributions(mol, coefficients, scale=scale, spec=spec, normalize=normalize,
+                             per_pair=True)
+    labels = []
+    for i, (f, g) in enumerate(field_pairs(n_fields)):
+        if fieldset is not None:
+            name = (f"{fieldset.specs[f].name} with {fieldset.specs[g].name}" if f != g
+                    else f"{fieldset.specs[f].name}")
+        else:
+            name = f"{f} with {g}" if f != g else str(f)
+        labels.append((name, float(per[i].sum())))
+    return labels

@@ -1,0 +1,90 @@
+{
+ "host": "beta",
+ "n": 1162,
+ "q2": 0.44686972884633724,
+ "lam": 0.1,
+ "folds": 10,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "shuffles": 200,
+ "groups": {
+  "adamantyl": {
+   "kind": "cavity",
+   "guests": 6,
+   "difference_mean": 0.06461652919229026,
+   "difference_sem": 0.01875114067559323,
+   "z_mean": 1.3773200047193477,
+   "share_positive": 0.8333333333333334,
+   "mean_inside": 0.10194088330106756,
+   "mean_outside": 0.037324354108777304,
+   "atoms_inside": 10.0,
+   "activity_mean": 3.86145
+  },
+  "phenyl": {
+   "kind": "cavity",
+   "guests": 817,
+   "difference_mean": 0.01577886488284842,
+   "difference_sem": 0.002107539121617064,
+   "z_mean": 0.3516716863465039,
+   "share_positive": 0.6181150550795593,
+   "mean_inside": 0.05598727032101637,
+   "mean_outside": 0.040208405438167956,
+   "atoms_inside": 6.0,
+   "activity_mean": 2.514450305997552
+  },
+  "cyclohexyl": {
+   "kind": "cavity",
+   "guests": 122,
+   "difference_mean": 0.037838429525325776,
+   "difference_sem": 0.01028996307722344,
+   "z_mean": 0.2437264836125637,
+   "share_positive": 0.5163934426229508,
+   "mean_inside": 0.08660707673943131,
+   "mean_outside": 0.04876864721410554,
+   "atoms_inside": 6.0,
+   "activity_mean": 3.386926229508197
+  },
+  "carboxyl": {
+   "kind": "water",
+   "guests": 347,
+   "difference_mean": -0.036629936663152375,
+   "difference_sem": 0.0023552460273976983,
+   "z_mean": -0.7230749751447283,
+   "share_positive": 0.19020172910662825,
+   "mean_inside": 0.014989757848487727,
+   "mean_outside": 0.0516196945116401,
+   "atoms_inside": 3.0,
+   "activity_mean": 2.5386801152737752
+  },
+  "hydroxyl": {
+   "kind": "water",
+   "guests": 221,
+   "difference_mean": -0.09164878781258039,
+   "difference_sem": 0.006429233101527053,
+   "z_mean": -1.1210972376128412,
+   "share_positive": 0.09049773755656108,
+   "mean_inside": -0.032896871188932066,
+   "mean_outside": 0.05875191662364833,
+   "atoms_inside": 2.0,
+   "activity_mean": 2.5502235294117646
+  },
+  "amine": {
+   "kind": "water",
+   "guests": 217,
+   "difference_mean": -0.0886035544964523,
+   "difference_sem": 0.013767569235236593,
+   "z_mean": -0.6823135405192947,
+   "share_positive": 0.29493087557603687,
+   "mean_inside": -0.04684304429555476,
+   "mean_outside": 0.04176051020089753,
+   "atoms_inside": 1.0,
+   "activity_mean": 2.4455511520737323
+  }
+ },
+ "seconds": 34.35434055328369
+}

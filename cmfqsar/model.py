@@ -1449,9 +1449,13 @@ class CMFModel:
 
         Returns (N,) or, if per_field, (F, N).
 
-        Only defined for the linear (overlap-integral) kernel: the decomposition into atom pairs
-        is a property of that kernel and does not survive a nonlinear layer.
+        Defined for the overlap-integral kernel, where the decomposition into atom pairs is a
+        property of the kernel, and for the rotation-invariant autocorrelation kernel, whose
+        channels are also sums over atom pairs (plan item SC6,
+        :func:`cmfqsar.invariant.atom_contributions`).  Neither survives a nonlinear layer.
         """
+        if self.kernel_source == "autocorrelation":
+            return self._invariant_atom_contributions(mol, per_field=per_field)
         self._require_linear("atom contributions")
         blk = self._atom_block(mol)  # (F, N, n)
         if self.normalize:
@@ -1464,6 +1468,47 @@ class CMFModel:
         coef = self.fieldset.mixing_vector() * self.scale
         contrib = np.einsum("f,fnj,j->fn", coef, blk, self.coef)
         return contrib if per_field else contrib.sum(axis=0)
+
+    def _invariant_atom_contributions(self, mol: MoleculeFields,
+                                      per_field: bool = False) -> np.ndarray:
+        """The same decomposition for the rotation-invariant kernel (plan item SC6).
+
+        The autocorrelation channel is a sum over atom pairs, so the prediction splits over the
+        atoms exactly as it does for the overlap kernel; what it cannot give is a co-field, since
+        there is no frame.  `per_field` would need the split taken over field *pairs*, which is
+        what :func:`cmfqsar.invariant.pair_contributions` reports instead.
+        """
+        from .invariant import atom_contributions as split, channel_coefficients
+        if not self.is_linear:
+            raise ValueError(
+                "atom contributions are defined only for the linear kernel: with the "
+                f"'{self.kernel_layer}' layer the prediction is not a sum over the channels. "
+                "The Shapley decomposition works for any kernel.")
+        if per_field:
+            raise ValueError(
+                "the invariant kernel has one channel per *pair* of field types, so there is no "
+                "contribution per field; cmfqsar.invariant.pair_contributions gives the split "
+                "over those pairs.")
+        if getattr(self, "ac_train_", None) is None or self.coef is None:
+            raise RuntimeError("model is not fitted")
+        want = self.train.weights.shape[1]
+        got = np.asarray(mol.weights, float).shape[1]
+        if got != want:
+            raise ValueError(
+                f"this model was trained on {want} fields and the molecule carries {got}: the "
+                "channels of the two do not match. Build the molecule's fields from the model's "
+                "own field set.")
+        c = channel_coefficients(self.ac_train_, self.ac_column_scale, self.coef)
+        return split(mol, c, scale=self.ac_column_scale, spec=self._ac_spec())
+
+    def invariant_pair_contributions(self, mol: MoleculeFields) -> List[Tuple[str, float]]:
+        """What each pair of field types contributed to one prediction (plan item SC6)."""
+        from .invariant import channel_coefficients, pair_contributions
+        if self.kernel_source != "autocorrelation":
+            raise ValueError("the channel pairs belong to the invariant kernel")
+        c = channel_coefficients(self.ac_train_, self.ac_column_scale, self.coef)
+        return pair_contributions(mol, c, scale=self.ac_column_scale, spec=self._ac_spec(),
+                                  fieldset=self.fieldset)
 
     def _require_linear(self, what: str) -> None:
         self._require_fields_if_atoms(what)
