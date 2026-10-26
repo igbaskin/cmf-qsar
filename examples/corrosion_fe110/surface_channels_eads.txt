@@ -1,0 +1,39 @@
+surface-kernel model of E_ads: 72 molecules, lambda = 0.1, q2 (10-fold) = 0.674, fitted r2 = 0.974, 9180 channels = 15 pairs x 17 distances x 6^2 heights
+share of the summed |contribution| per field pair:
+  Steric                             9.4 %   net    +2.78 kJ/mol
+  Electrostatic x Steric             9.3 %   net    -3.86 kJ/mol
+  Steric x Hydrophobic               7.7 %   net    -1.88 kJ/mol
+  H-bond acceptor x H-bond donor     7.0 %   net    -1.12 kJ/mol
+  H-bond donor                       7.0 %   net    +2.39 kJ/mol
+  Hydrophobic x H-bond acceptor      6.8 %   net    +3.56 kJ/mol
+  Hydrophobic                        6.6 %   net    -2.64 kJ/mol
+  Electrostatic                      6.6 %   net    +2.72 kJ/mol
+  Steric x H-bond acceptor           6.6 %   net    +4.15 kJ/mol
+  Electrostatic x H-bond donor       6.5 %   net    -1.79 kJ/mol
+  Steric x H-bond donor              6.2 %   net    +3.45 kJ/mol
+  Electrostatic x H-bond acceptor    5.9 %   net    +1.48 kJ/mol
+  Electrostatic x Hydrophobic        5.7 %   net    +0.47 kJ/mol
+  Hydrophobic x H-bond donor         5.6 %   net    -0.69 kJ/mol
+  H-bond acceptor                    3.1 %   net    +0.76 kJ/mol
+channels that most strengthen adsorption (mean contribution, kJ/mol):
+    -0.39  Electrostatic x Steric at rho 4.50 A, heights 3 / 3 A
+    -0.36  H-bond donor at rho 0.00 A, heights 3 / 3 A
+    -0.32  Electrostatic x Steric at rho 3.75 A, heights 3 / 3 A
+    -0.32  Electrostatic x H-bond donor at rho 2.25 A, heights 3 / 3 A
+    -0.28  Electrostatic x H-bond donor at rho 2.25 A, heights 2 / 3 A
+    -0.28  Electrostatic x H-bond donor at rho 2.25 A, heights 3 / 2 A
+    -0.26  Electrostatic x Steric at rho 5.25 A, heights 3 / 3 A
+    -0.24  Electrostatic x H-bond donor at rho 6.00 A, heights 3 / 3 A
+    -0.23  Electrostatic x H-bond donor at rho 2.25 A, heights 2 / 2 A
+    -0.22  H-bond acceptor x H-bond donor at rho 3.00 A, heights 3 / 3 A
+channels that most weaken it:
+    +0.48  H-bond donor at rho 0.00 A, heights 5 / 5 A
+    +0.33  H-bond donor at rho 0.00 A, heights 5 / 4 A
+    +0.33  H-bond donor at rho 0.00 A, heights 4 / 5 A
+    +0.28  H-bond donor at rho 0.00 A, heights 4 / 4 A
+    +0.25  Electrostatic at rho 1.50 A, heights 5 / 5 A
+    +0.25  H-bond donor at rho 0.00 A, heights 2 / 2 A
+    +0.24  H-bond acceptor x H-bond donor at rho 3.00 A, heights 6 / 6 A
+    +0.23  Electrostatic at rho 1.50 A, heights 6 / 6 A
+    +0.23  H-bond acceptor x H-bond donor at rho 2.25 A, heights 6 / 6 A
+    +0.23  Electrostatic at rho 1.50 A, heights 3 / 2 A

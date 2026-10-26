@@ -631,6 +631,35 @@ small, spans twelve facets and the magnetic iron energies of OC20 are noisy.
 - The iron set is too poor to give any model a reference point; a VASP reference point on
   our own structures remains the way to connect the benzimidazole numbers to DFT.
 
+## What the surface-kernel model weighs (2026-10-26)
+
+`surface_channels_eads.py` fits the surface-kernel model once (UMA poses as written, no
+alignment, lambda 0.1 by 10-fold CV: q2 0.67, fitted r2 0.97) and reads it in its own currency.
+The model is linear in its 9180 channels (15 field pairs x 17 in-plane distances x 6 x 6
+heights), so each channel has a weight, and the mean contribution of a channel over the training
+set (weight times mean normalised channel value) says what drives the predictions.
+`surface_channels_eads.png` maps the contributions per field pair over the in-plane distance and
+the height, summed over the second height (blue: stronger adsorption); `surface_channels_eads.txt`
+lists the shares per pair and the twenty strongest channels.
+
+- **Height is the axis that matters, in every pair.**  Density at 2-3 A above the top Fe layer
+  strengthens adsorption (blue bands in the steric, hydrophobic, acceptor-donor and
+  electrostatic-steric panels at z = 2-3 A); density at 4-6 A weakens it (red bands at z >= 4 in
+  the steric, donor, steric-donor and hydrophobic-acceptor panels).  That is the chemisorbed
+  flat molecule against the upright or detached one, which the energy ranks first.
+- **The strongest single channels** are an N-H donor 5 A above the surface (+0.48 kJ/mol mean
+  contribution, the detached azole) against the same donor at 3 A (-0.36) and an N-H within
+  2.25 A of a charged atom at 2-3 A (-0.32): the imidazole N-H lying on the metal.  The
+  electrostatic-steric pair at an in-plane distance of 4-5 A and height 3 A (-0.39) is the
+  charge at one end of a flat ring against the bulk at the other.
+- The contribution is spread evenly over the field pairs (3-9 % each; the steric,
+  electrostatic-steric and steric-hydrophobic pairs lead), which is the kernel saying that
+  *where* the atoms are, not which field marks them, carries the energy: the same conclusion
+  the quantum fields gave.
+
+This figure is the surface kernel's substitute for a co-field: a map in (rho, z) rather than in
+(x, y, z), with the same linear reading.
+
 ## Follow-ups
 
 - Dispersion: fairchem provides a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,

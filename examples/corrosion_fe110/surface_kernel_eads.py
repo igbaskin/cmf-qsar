@@ -65,8 +65,12 @@ def main(argv=None):
     ap.add_argument("--repeats", type=int, default=10)
     ap.add_argument("--outer", type=int, default=5)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--csv", default=ca.CSV, help="the node CSV (default: the benzimidazole node)")
+    ap.add_argument("--sdf", default=ca.SDF, help="its UMA poses (default: 157_benzimidazole_uma.sdf)")
+    ap.add_argument("--tag", default="", help="suffix of the output table")
+    ap.add_argument("--scramble", type=int, default=0, help="y-scrambling runs of the surface kernel (0 = none)")
     a = ap.parse_args(argv)
-    fr = ca.frames()
+    fr = ca.frames(a.csv, a.sdf)
     fs = FieldSet.create()
     rows = []
 
@@ -93,7 +97,18 @@ def main(argv=None):
                 CMFModel(fieldset=fs, method="krr", fit_bias=True, kernel_source="autocorrelation"), [1.0])
             run("overlap fields, poses shuffled in the plane (what alignment-free costs the overlap)", shuffled, names, y,
                 CMFModel(fieldset=fs, method="krr", fit_bias=True), ca.ALPHAS)
-    out = os.path.join(HERE, "surface_kernel_eads.csv")
+            if a.scramble:
+                rng_s = np.random.default_rng(a.seed + 1)
+                q2s = []
+                for _ in range(a.scramble):
+                    res, _ = evaluate(mols, names, rng_s.permutation(y), fs,
+                                      CMFModel(fieldset=fs, method="krr", fit_bias=True, kernel_source="surface"),
+                                      a.outer, 1, a.seed, [1.0])
+                    q2s.append(res.q2_ex)
+                rows.append({"model": f"surface kernel, y scrambled x{a.scramble}: max q2", "n": len(y),
+                             "q2": round(max(q2s), 3), "q2_sd": round(float(np.std(q2s)), 3), "rmse": "", "seconds": ""})
+                print(f"surface kernel, y scrambled: max q2 {max(q2s):.3f}, mean {np.mean(q2s):.3f} over {a.scramble}", flush=True)
+    out = os.path.join(HERE, "surface_kernel_eads" + (f"_{a.tag}" if a.tag else "") + ".csv")
     with open(out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
         w.writeheader(); w.writerows(rows)

@@ -78,16 +78,17 @@ def register_in_plane(mol: Chem.Mol, ref: Chem.Mol) -> tuple:
     return rmsd, len(amap)
 
 
-def frames():
-    """name -> (mols, names, potency, E_ads or None, gas_intact)."""
+def frames(csv: str = CSV, sdf: str = SDF):
+    """name -> (mols, names, potency, E_ads or None, gas_intact), for the node of `csv` whose UMA
+    poses are in `sdf` (the benzimidazole node by default)."""
     out = {}
-    ds = load_dataset(CSV, activity_prop="activity")
+    ds = load_dataset(csv, activity_prop="activity")
     log = align_dataset(ds.mols, 0, use_mcs=True)
     failed = [l for l in log if "FAILED" in l]
     print(f"mcs frame: {len(ds)} molecules aligned on {ds.names[0]}, {len(failed)} failures")
     out["mcs"] = (ds.mols, ds.names, np.asarray(ds.activity, float), None, np.ones(len(ds), bool))
 
-    ds = load_dataset(SDF, activity_prop="activity")
+    ds = load_dataset(sdf, activity_prop="activity")
     e_ads = np.array([float(m.GetProp("E_ads_kJmol")) for m in ds.mols])
     gas_ok = np.array([m.GetProp("gas_intact") == "1" if m.HasProp("gas_intact") else True for m in ds.mols])
     bound = np.array([m.GetProp("bound") == "1" for m in ds.mols])
