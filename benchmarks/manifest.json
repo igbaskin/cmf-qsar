@@ -1,6 +1,6 @@
 {
- "commit": "ba7d9ba6c1419d1c54dc5c50ce6d200b7703ed42",
- "created": "2026-10-26T21:50:01",
+ "commit": "b8d7ba3f3eae17f61a919fcb67a30c162469861b",
+ "created": "2026-10-26T22:27:45",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1765,6 +1765,8 @@
   "benchmarks/results/guest_atoms/beta.json": "9e59600a461eea0f8d11d9df586767a3b99d2f08e377232d6e9e8d08bff3efc2",
   "benchmarks/results/guest_atoms/gamma.json": "67f49ae1239e80e8bea1c3fa7b451e5f7d31065c6d6520ce9f6e942b203a5cb3",
   "benchmarks/results/guest_atoms/table.md": "872b4c82d814222e0809e8ac496c4f523cbbb9f782f11b031ba8e91979546f1a",
+  "benchmarks/results/guest_design/beta.json": "88403eeaf7540f67aaaa18d4cfdb048b7135203d6e9f622a7eea5f0b2e632a53",
+  "benchmarks/results/guest_design/table.md": "1b26382b1e9bb98ff41d91a417b896b7aceba3d328541913b329528d145a2d9c",
   "benchmarks/results/hammett/cofields.png": "04c3e4be5a421d95e5e9007997023bf8bbee5e6770532bbfd4812b7493d01c6e",
   "benchmarks/results/hammett/cofields_ens.png": "0fa44a4602617e9ed6ed8d033b6d3e17c1e5a61b536594142a54150c90bd549e",
   "benchmarks/results/hammett/cofields_ens_boltzmann.png": "03cb4e243fa8c270e2cdee0ffff1794de0f29749e5159644a5f3bdc256f92380",

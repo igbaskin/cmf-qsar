@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 26 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 64 modules and about 27,900 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 64 modules and about 28,150 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-four subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`), 880 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`), 893 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -36,6 +36,7 @@ The measurements already in hand settle several questions, and the plan treats t
 | Do conformational ensembles help? | Five routes, none beats one well-chosen conformation on an aligned series | README, "The verdict on the fourth dimension" |
 | Do probe fields improve accuracy? | No; they are justified by interpretation only | README, "GRID-like probe fields" |
 | Do quantum-chemical fields help? | Not on the corrosion series or on Am/Eu; yes on Hammett, where resonance needs whole-molecule charges | `benchmarks/results/corrosion_qm/`, `am_eu/`, `hammett/` |
+| Can a model with no frame say what to make next? | On the beta-cyclodextrin guests, at the top of the list: with every guest carrying it removed, adamantyl comes first of 11 and Spearman is +0.709, but a held-out group is pulled towards the mean (-0.73) | `cmfqsar/design.py`, `benchmarks/results/guest_design/` |
 | Does a second endpoint help, and is the selectivity predictable? | Sharing gains nothing on three cyclodextrin pairs (every interval contains zero), but the selectivity is predictable (q2 +0.273 to +0.389) and follows the size of the guest | `cmfqsar/multitask.py`, `benchmarks/results/two_endpoints/` |
 | Does an alignment-free model know which group of a guest binds? | On beta-cyclodextrin yes (the three cavity groups +0.0394 per atom against the rest of their molecule, the three polar ones -0.0723), on alpha and gamma no | `cmfqsar/invariant.py`, `benchmarks/results/guest_atoms/` |
 | Do increments fitted on one series transfer to another? | No (+0.363 on the test set against +0.383 for the published table; the vectors fitted on two sets agree to +0.89 at best) | `cmfqsar/learnincrements.py`, `benchmarks/results/increments/` |
@@ -1912,6 +1913,33 @@ the numbers above; on a series of hosts, the five-field aligned model.
   design module accepting an invariant model, with the topomer step skipped. The field-difference
   annotation needs a frame and is replaced by the contributions of SC6. Gate: leave-one-fragment-
   out on β-CD, with the known strong binders recovered at the top of the list.
+  **Done 26 October 2026, and the gate passes at the top of the list.**
+  `design(pose="molecule")` builds a candidate as a whole molecule -- `whole_molecule` puts the
+  core and its groups back together, which is the inverse of the cut, and `embed` gives it one
+  conformation -- and the rotation-invariant kernel scores it without a frame.
+  `cmf design --kernel autocorrelation` fits that model on the table and takes this route; the
+  field-difference annotation, which needs a frame, is replaced by the atom contributions of
+  SC6, reported as how much of the prediction comes from the group that was put in. The route is
+  refused for an overlap kernel, where a candidate with no frame cannot be scored, and a flat
+  acquisition score -- expected improvement when the best molecule of the table is out of reach,
+  which is the normal case here -- is reported as not being a ranking.
+  **Measured by `benchmarks/run_guest_design.py`** on the 1162 guests of the beta-cyclodextrin
+  table, leave one group out: for each group of an eleven-group library of R-COOH, every guest
+  carrying that group is removed and the library is ranked by a model fitted on the rest.
+  Spearman +0.709 over the 10 groups whose acid is a measured guest.
+  **The two kinds of row are not equally hard**: removing the molecule alone leaves the model its
+  relatives (mean absolute error 0.26 over 6), removing every guest
+  that carries the group does not (0.95 over 4, bias
+  -0.73), and a group the table no longer holds is pulled towards the mean.
+  **The gate is about the top of the list and it passes**: adamantyl, whose six guests measure
+  2.9 to 4.3 against a median near 2 and whose own acid is not in the table, comes first of
+  11 with all six removed; cyclohexylmethyl, the strongest measured group that was fully
+  held out, comes second. Over every row the 4 groups measuring 3.0 or more have
+  mean rank 5.0, so the list is useful at the top and not in the
+  middle.
+  **Not done:** the candidate gets one embedded conformation, not an ensemble, so a flexible
+  group is represented by one shape; the library is a hand-made list of R groups and nothing
+  enumerates it from the table; and the loop still varies one position of one parent.
 
 **Large (a month or more)**
 

@@ -1533,6 +1533,12 @@ def cmd_design(args):
     The model is a topomer model built here from the series, because the suggestion has to be
     posed by the same rule as the molecules it is being compared with, and because a model
     fitted on superimposed whole molecules has no way to place a group nobody has made.
+
+    ``--kernel autocorrelation`` takes the other route (plan item SC7): the rotation-invariant
+    kernel needs no frame, so the series needs no common scaffold and a candidate is built as a
+    whole molecule and embedded once.  That is what makes a design loop possible on a table of
+    guests, which share no scaffold at all; the core is then only what names the position being
+    varied on the parent.
     """
     from rdkit import Chem
     from cmfqsar.design import design, fragment_smiles, read_fragments
@@ -1579,6 +1585,9 @@ def cmd_design(args):
 
     spec = TopomerSpec(torsion=args.torsion, seed=args.seed)
     physchem, atom_props = _split_fields(args.fields)
+    if args.kernel == "autocorrelation":
+        return _design_invariant(args, ds, mols, names, yy, core, labels, at_site, physchem,
+                                 atom_props, spec)
     best = None
     for alpha in _floats(args.alphas):
         fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, alpha=alpha,
@@ -1655,6 +1664,99 @@ def cmd_design(args):
                 w.writerow([k, c.smiles, c.label, f"{c.mean:.4f}", f"{c.sd:.4f}",
                             f"{c.score:.6f}", f"{c.delta:+.4f}", int(c.known), c.made or "",
                             "" if not np.isfinite(c.measured) else f"{c.measured:.4f}"])
+        print(f"  written to {args.out}")
+
+
+def _design_invariant(args, ds, mols, names, yy, core, labels, at_site, physchem, atom_props,
+                      spec):
+    """The design loop on a model that needs no frame (plan item SC7).
+
+    Nothing is superimposed and nothing is cut except the parent, whose group at the chosen
+    position is the one being replaced; every molecule of the table is a training molecule,
+    whether or not a scaffold comes off it.
+    """
+    from rdkit import Chem
+    from cmfqsar.design import design, fragment_smiles, read_fragments
+    from cmfqsar.evidence import log_evidence
+    from cmfqsar.topomer import attachment_label, substituents
+
+    fs = FieldSet.create(atom_properties=atom_props, physchem=physchem, alpha=1.0,
+                         charge_model=args.charges, param_scheme=args.param)
+    mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+    table = AtomTable.from_molecules(mf)
+    model = CMFModel(fieldset=fs, method="krr", normalize=True,
+                     kernel_source="autocorrelation", ac_sigma=args.ac_sigma,
+                     ac_d_max=args.ac_dmax)
+    K = model.training_kernel(table)
+    best = None
+    for lam in _floats(args.lams):
+        ev = log_evidence(K, yy, float(lam), fit_bias=True)
+        if np.isfinite(ev) and (best is None or ev > best[0]):
+            best = (ev, float(lam))
+    if best is None:
+        raise SystemExit("the evidence could not be evaluated on any lambda")
+    lam = best[1]
+    model = CMFModel(fieldset=fs, method="krr", params={"lam": lam}, normalize=True,
+                     kernel_source="autocorrelation", ac_sigma=args.ac_sigma,
+                     ac_d_max=args.ac_dmax)
+    model.fit(table, yy, cv_folds=args.folds, cv_seed=0)
+    print(f"Invariant model on {len(mols)} molecules: lambda {lam:g} (by the evidence), "
+          f"q2 {model.stats.q2:+.3f}, RMSEcv {model.stats.rmse_cv:.3f}")
+    if args.parent:
+        if args.parent not in names:
+            raise SystemExit(f"no molecule called {args.parent!r} in {args.dataset}")
+        p = names.index(args.parent)
+    else:
+        with_core = [i for i, m in enumerate(mols) if m.GetSubstructMatch(core)]
+        if not with_core:
+            raise SystemExit("no molecule of this table carries the core; give --parent or "
+                             "another --core")
+        p = int(with_core[int(np.argmax(yy[with_core]))])
+        print(f"  parent: {names[p]}, the most active molecule that carries the core "
+              f"({yy[p]:.2f}); --parent picks another")
+    here = [f for f in substituents(mols[p], core)]
+    if not here:
+        raise SystemExit(f"{names[p]} does not come apart at this core, so there is no position "
+                         f"to vary; name another parent or core")
+    label = int(args.position) if args.position is not None else attachment_label(here[0])
+    frags = []
+    if args.fragments in ("series", "both"):
+        frags += sorted(at_site.get(label, []))
+    if args.fragments in ("common", "both"):
+        frags += read_fragments("common")
+    if args.fragments not in ("series", "common", "both"):
+        frags = read_fragments(args.fragments)
+    seen = {fragment_smiles(f) for f in at_site.get(label, [])}
+    res = design(model, mols[p], core, label, fragments=frags, labels=labels,
+                 acquire=args.acquire, beta=args.beta, xi=args.xi, spec=spec,
+                 parent_name=names[p], series=mols, series_names=names, series_y=yy,
+                 known=seen, with_fields=args.fields_for, pose="molecule", seed=args.seed)
+    print()
+    print(f"Parent {res.parent}: measured {res.parent_measured:.3f}, "
+          f"predicted {res.parent_mean:.3f} +- {res.parent_sd:.3f}")
+    print("  " + res.describe())
+    for k, c in enumerate(res.top(args.top), start=1):
+        print(f"  {k:3d}. " + c.describe())
+        if c.molecule:
+            print(f"        {c.molecule}")
+    if res.failed:
+        print(f"  could not be built: {', '.join(res.failed[:6])}"
+              + (" ..." if len(res.failed) > 6 else ""))
+    print("  each candidate is one embedded conformation of the whole molecule; the kernel is "
+          "invariant to rotation, so nothing was superimposed on anything")
+    if args.out:
+        import csv
+        with open(args.out, "w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["rank", "fragment", "molecule", "position", "predicted", "sd",
+                        args.acquire, "delta", "known", "made", "measured", "group",
+                        "group_of_total"])
+            for k, c in enumerate(res.candidates, start=1):
+                w.writerow([k, c.smiles, c.molecule, c.label, f"{c.mean:.4f}", f"{c.sd:.4f}",
+                            f"{c.score:.6f}", f"{c.delta:+.4f}", int(c.known), c.made or "",
+                            "" if not np.isfinite(c.measured) else f"{c.measured:.4f}",
+                            "" if not np.isfinite(c.group_value) else f"{c.group_value:+.4f}",
+                            "" if not np.isfinite(c.group_total) else f"{c.group_total:+.4f}"])
         print(f"  written to {args.out}")
 
 
@@ -3579,6 +3681,15 @@ def main(argv=None):
     dg.add_argument("--param", default="rdkit", choices=["rdkit", "tripos"])
     dg.add_argument("--alphas", default="0.3,0.5,1.0,2.0")
     dg.add_argument("--lams", default="1e-3,1e-2,0.1,1")
+    dg.add_argument("--kernel", default="fields", choices=["fields", "autocorrelation"],
+                    help="fields: a topomer model, which poses every candidate by the topomer "
+                         "rule. autocorrelation: the rotation-invariant kernel, which needs no "
+                         "frame, so the series needs no common scaffold and a candidate is built "
+                         "as a whole molecule and embedded once (plan item SC7)")
+    dg.add_argument("--ac-sigma", type=float, default=0.75, metavar="A",
+                    help="with --kernel autocorrelation: the width along the distance axis")
+    dg.add_argument("--ac-dmax", type=float, default=12.0, metavar="A",
+                    help="with --kernel autocorrelation: the longest distance resolved")
     dg.add_argument("--folds", type=int, default=10)
     dg.add_argument("--activity", default=None)
     dg.add_argument("--activity-file", default=None)

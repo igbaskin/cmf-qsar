@@ -3134,6 +3134,67 @@ And it cannot tell you about a position the series never varied. A model learns 
 site that is the same in every training molecule carries no information about what else might go
 there, and the posterior standard deviation is the only thing that will say so.
 
+### A series that has no scaffold: the invariant route
+
+The three limits above belong to the topomer route. `--kernel autocorrelation` takes the other
+one (plan item SC7): the rotation-invariant kernel needs no frame, so **a candidate is built as a
+whole molecule and embedded once**, and nothing is superimposed on anything. The series then
+needs no common scaffold at all -- the core is only what names the position being varied on the
+parent -- which is what makes a design loop possible on a table of guests, where the molecules
+share nothing.
+
+```bash
+cmf design examples/cyclodextrin/beta_cyclodextrin.csv --kernel autocorrelation \
+    --core "C(=O)O" --parent "CC(=O)O" --acquire greedy
+```
+
+Two things change with it. There is no field difference to report, because there is no frame to
+draw one in; in its place each candidate carries **how much of its prediction comes from the
+group that was put in**, which the invariant model's atom contributions give exactly. And the
+acquisition score needs watching: on a table that is not a congeneric series the best molecule is
+far above anything the loop can reach, expected improvement is then the same for every candidate,
+and the command says so and asks for `--acquire greedy` rather than presenting an order that is
+no order.
+
+**Does the ranking mean anything?** `benchmarks/run_guest_design.py` answers with a leave-one-
+group-out test on the 1162 guests of the beta-cyclodextrin table. For each group of an
+eleven-group library of R-COOH, **every guest carrying that group is removed**, a model is fitted
+on what is left, and the library is ranked by it; a group's prediction therefore comes from a
+model that never saw a molecule containing it. A group carried by more than 30% of the table
+cannot have all of its guests removed -- a methyl is in every one of them -- and those rows
+remove the molecule alone and say so.
+
+| group | guests removed | predicted | rank | measured |
+|---|---:|---:|---:|---:|
+| methyl | 1 (the molecule only) | +1.545 | 11/11 | +1.301 |
+| propyl | 1 (the molecule only) | +1.864 | 10/11 | +1.505 |
+| butyl | 1 (the molecule only) | +2.022 | 9/11 | +1.954 |
+| pentyl | 1 (the molecule only) | +2.397 | 6/11 | +2.467 |
+| hexyl | 261 | +2.483 | 3/11 | +2.041 |
+| phenyl | 1 (the molecule only) | +2.081 | 8/11 | +2.127 |
+| 4-methylphenyl | 1 (the molecule only) | +2.435 | 5/11 | +3.225 |
+| cyclopentyl | 83 | +2.134 | 7/11 | +3.204 |
+| cyclohexyl | 122 | +2.243 | 6/11 | +3.620 |
+| cyclohexylmethyl | 111 | +2.613 | 2/11 | +3.519 |
+| adamantyl | 6 | +3.297 | 1/11 | - |
+
+Over the 10 groups whose acid is a measured guest the ranking follows the
+measurements: Spearman +0.709. **The two kinds of row are not equally hard**, and
+the mean over both would hide it: where only the molecule was removed the model had seen hundreds
+of its relatives and the mean absolute error is 0.26 over 6 groups,
+while where every guest carrying the group was removed (adamantyl, cyclohexylmethyl, hexyl, cyclohexyl, cyclopentyl) it is 0.95
+over 4, with a bias of -0.73. A group the table no longer contains is pulled
+towards the mean, which is what a model should do with a group it has never seen.
+
+**What survives that is the order at the top.** Adamantyl -- whose six guests in the table
+measure 2.9 to 4.3 against a median near 2, and whose own acid is not in the table at all --
+comes **first of the 11** with every one of those six removed, and cyclohexylmethyl, the
+strongest of the measured groups that were fully held out, comes second. Taken over every row the
+4 groups measuring 3.0 or more have mean rank 5.0,
+so the list is worth reading at the top and not in the middle. That is the claim a design loop
+has to make, and it is the one this measurement supports: it will name the group worth trying,
+not tell you what it will measure.
+
 # Conformations: the fourth dimension
 
 A 3D-QSAR model represents each molecule by one conformation, and the answer depends on which one.

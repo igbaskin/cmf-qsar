@@ -1771,6 +1771,47 @@ against shuffling the numbers among the molecule's atoms is +0.35 for
 phenyl — so this is a statement about a series of hundreds of guests, not a reading for one
 compound.
 
+### Designing on a table that has no scaffold
+
+The design loop needed a topomer model, because a substituent nobody has made has no pose and the
+topomer rule is what gives it one. A rotation-invariant model needs no pose: a candidate is built
+as a whole molecule, embedded once, and scored, and nothing is superimposed on anything
+(`cmf design --kernel autocorrelation`, plan item SC7). That is what makes the loop possible on a
+guest table, where the molecules share no scaffold. In place of the field difference, which needs
+a frame, each candidate carries how much of its prediction comes from the group that was put in —
+the exact atom split of the invariant kernel.
+
+`benchmarks/run_guest_design.py` tests the ranking by **leave one group out** on the 1162
+guests of the beta-cyclodextrin table: every guest carrying a group is removed, a model is fitted
+on the rest, and the eleven-group library is ranked by it, so a group's prediction comes from a
+model that never saw a molecule containing it.
+
+<!-- GUESTDESIGN-TABLE -->
+| group | guests removed | predicted | rank | measured |
+|---|---:|---:|---:|---:|
+| methyl | 1 (molecule only) | +1.545 | 11/11 | +1.301 |
+| propyl | 1 (molecule only) | +1.864 | 10/11 | +1.505 |
+| butyl | 1 (molecule only) | +2.022 | 9/11 | +1.954 |
+| pentyl | 1 (molecule only) | +2.397 | 6/11 | +2.467 |
+| hexyl | 261 | +2.483 | 3/11 | +2.041 |
+| phenyl | 1 (molecule only) | +2.081 | 8/11 | +2.127 |
+| 4-methylphenyl | 1 (molecule only) | +2.435 | 5/11 | +3.225 |
+| cyclopentyl | 83 | +2.134 | 7/11 | +3.204 |
+| cyclohexyl | 122 | +2.243 | 6/11 | +3.620 |
+| cyclohexylmethyl | 111 | +2.613 | 2/11 | +3.519 |
+| adamantyl | 6 | +3.297 | 1/11 | — |
+<!-- /GUESTDESIGN-TABLE -->
+
+Over the 10 groups whose acid is a measured guest, Spearman +0.709.
+**The two kinds of row are not equally hard**: removing the molecule alone leaves the model its
+relatives and a mean absolute error of 0.26, while removing every guest that
+carries the group gives 0.95 with a bias of -0.73 — a group the
+table no longer contains is pulled towards the mean. **The order at the top survives it**:
+adamantyl, the strongest group the cavity takes and one whose own acid is not in the table at
+all, comes first of the 11 with all six of its guests removed; cyclohexylmethyl comes
+second. The list is worth reading at the top and not in the middle, which is what a design loop
+can fairly claim.
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the
