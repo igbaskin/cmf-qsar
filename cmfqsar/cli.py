@@ -875,6 +875,49 @@ def cmd_diagnose(args):
     return 0
 
 
+#: the default block size of the screen subcommand, from cmfqsar.screen
+SCREEN_CHUNK = 500
+
+
+def cmd_screen(args):
+    """Score a library block by block, never holding more than one block of it."""
+    from cmfqsar.screen import ScreenSpec, screen
+
+    model, _extra = load_model(args.model)
+    if model.train is None:
+        raise SystemExit("the model file carries no training molecules, so nothing can be scored "
+                         "against it")
+    cutoff = args.cutoff
+    if cutoff is not None and str(cutoff).lower() not in ("auto", "none", "off"):
+        cutoff = float(cutoff)
+    elif cutoff is not None and str(cutoff).lower() in ("none", "off"):
+        cutoff = None
+    spec = ScreenSpec(chunk=max(1, int(args.chunk)), top=max(0, int(args.top)),
+                      beta=float(args.beta), larger_is_better=not args.smaller_is_better,
+                      pose=bool(args.pose), restarts=int(args.pose_restarts),
+                      conformers=int(args.pose_conformers), cutoff=cutoff)
+    print(f"Screening {args.library} against {os.path.basename(args.model)}: "
+          f"{model.train.n_mol} training molecules, blocks of {spec.chunk}"
+          + (", posing every molecule first" if spec.pose else "")
+          + (f", ranking by mean - {spec.beta:g} sd" if spec.beta else "")
+          + (f", cutoff {spec.cutoff}" if spec.cutoff is not None else ""))
+
+    last = [0.0]
+
+    def progress(n, seconds):
+        if seconds - last[0] >= 2.0:
+            last[0] = seconds
+            print(f"  {n} scored ({n / seconds:.0f} per second)", flush=True)
+
+    rep = screen(model, args.library, spec, out=args.out, progress=progress)
+    print(rep.describe())
+    if rep.failures:
+        print("molecules that could not be read or typed: " + ", ".join(rep.failures[:5])
+              + (" ..." if len(rep.failures) > 5 else ""))
+    if rep.out_path:
+        print(f"written {rep.out_path}")
+
+
 def cmd_predict(args):
     model, extra = load_model(args.model)
     ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file)
@@ -2835,6 +2878,43 @@ def main(argv=None):
     k.add_argument("--profile-out", default=None, metavar="FILE",
                    help="CSV of the interaction profiles: one row per molecule and residue")
     k.set_defaults(func=cmd_complement)
+
+    sc = sub.add_parser("screen", help="score a library against a saved model, reading it in "
+                                       "blocks so that its size does not matter")
+    sc.add_argument("model", help="a model file written by build --save")
+    sc.add_argument("library", help="the molecules to score: an SD file, read as a stream, or a "
+                                    "SMILES file, whose molecules are embedded as they are read")
+    sc.add_argument("--out", default=None, metavar="FILE",
+                    help="CSV of name, score, prediction and standard deviation, written as the "
+                         "run goes, so an interrupted run keeps what it had scored")
+    sc.add_argument("--chunk", type=int, default=SCREEN_CHUNK, metavar="N",
+                    help=f"molecules per block (default {SCREEN_CHUNK}); the peak memory is one "
+                         f"block of fields and one N x n_train kernel")
+    sc.add_argument("--top", type=int, default=25, metavar="N",
+                    help="how many of the best molecules to print and keep in memory")
+    sc.add_argument("--beta", type=float, default=0.0, metavar="B",
+                    help="rank by the lower confidence bound mean - B * sd instead of by the "
+                         "prediction; 1.0 is the conventional starting point and is what keeps a "
+                         "molecule the model knows nothing about out of the top of the list")
+    sc.add_argument("--smaller-is-better", action="store_true",
+                    help="the endpoint improves as it falls, so the bound is mean + B * sd")
+    sc.add_argument("--pose", action="store_true",
+                    help="place every molecule in the training set's frame first, by maximising "
+                         "its field similarity to the training molecules; about half a second per "
+                         "molecule, and optimistic, since a real library has to choose a pose "
+                         "without knowing the actives")
+    sc.add_argument("--pose-restarts", type=int, default=4, metavar="N")
+    sc.add_argument("--pose-conformers", type=int, default=0, metavar="N",
+                    help="generate N conformations of each molecule and pose every one, keeping "
+                         "the best (the conformation in the file is always among them)")
+    sc.add_argument("--cutoff", default=None, metavar="AUTO|R",
+                    help="drop atom pairs further apart than R angstroms, or let 'auto' decide "
+                         "per field whether a neighbour list is faster. The kernel is then an "
+                         "approximation whose dropped pairs were each below 1e-6 of a peak "
+                         "overlap; without this the sum is exact")
+    sc.add_argument("--allow-mismatch", action="store_true",
+                    help="score molecules the model's contract would reject")
+    sc.set_defaults(func=cmd_screen)
 
     rp = sub.add_parser("report", help="one HTML file describing a saved model, for a colleague "
                                        "who will never start the application")

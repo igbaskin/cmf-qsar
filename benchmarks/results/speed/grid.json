@@ -1,0 +1,39 @@
+{
+ "set": "COX2",
+ "n_mol": 200,
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "folds": 5,
+ "rows": [
+  {
+   "label": "as before",
+   "seconds": 13.81,
+   "alpha": 0.1,
+   "q2_cv": 0.5041746469277624
+  },
+  {
+   "label": "+ square root",
+   "seconds": 9.86,
+   "alpha": 0.1,
+   "q2_cv": 0.5041746469277716
+  },
+  {
+   "label": "+ symmetry",
+   "seconds": 5.0,
+   "alpha": 0.1,
+   "q2_cv": 0.504174646927775
+  },
+  {
+   "label": "+ shared distances",
+   "seconds": 4.06,
+   "alpha": 0.1,
+   "q2_cv": 0.504174646927775
+  }
+ ]
+}

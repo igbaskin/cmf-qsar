@@ -9,11 +9,12 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 25 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 57 modules and about 24,300 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with twenty subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
-  `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
-  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`), 670 tests, a typeset manual and a README that doubles
-  as the record of every measurement made so far.
+* A library of 58 modules and about 25,000 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with twenty-one subcommands (`build`, `build-crystals`, `diagnose`, `predict`,
+  `screen`, `unalign`, `map`, `compare`, `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`,
+  `difference`, `topomer`, `complement`, `report`, `suggest`, `design`, `transfer`, `mixing`),
+  703 tests, a typeset manual and a README that doubles as the record of every measurement made
+  so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational ensembles (mean-map kernels), the
   rotation-invariant autocorrelation kernel and topomer fields; a Gaussian or arc-cosine layer on
@@ -146,12 +147,83 @@ larger searches in parts C and E.
   squared distances do not change. Compute them once per molecule pair and take the exponentials for
   every α from the same array; for the steric field the width enters through `b = α/R²`, which is
   the same block with a different scalar.
+  **Done 26 October 2026, and the premise was wrong, which is the useful part.** The distance
+  matrix is **3 %** of a kernel block, measured on one 40-atom molecule against a 200-molecule
+  table, so sharing it across the grid could never have been the factor the item expected. The
+  measurement found the cost elsewhere and all three changes are in `cmfqsar/kernels.py`:
+  the **symmetry of the training kernel** (only the atom pairs with j >= i, then mirrored:
+  56 % of what was left, and it makes the matrix exactly symmetric, which it
+  was not), the **radius-scaled prefactor as `z*sqrt(z)` rather than `z**1.5`**
+  (27 % of the whole kernel, because a general power is a library call per
+  element and the steric field evaluates it for every atom pair), and finally the shared distances
+  the item asked for (16 %), through `kernel_matrices_multi` and
+  `CMFModel.prepare_training_kernels_grid`, which `grid_search` now uses for a grid of more than
+  one α.
+  **Measured** (`benchmarks/run_speed.py`): six attenuations on 200 congeneric
+  molecules 14.3 s -> 3.8 s
+  (3.7x), on 60 decapeptides
+  42.2 s -> 15.3 s
+  (2.8x); a whole `grid_search` with five-fold cross-validation
+  13.8 s -> 4.1 s (**3.4x**) with the same α
+  and the same q2cv to six decimals. Every shortcut is exact; the largest difference any of them
+  makes to a kernel entry is 1e-15 relative, which is round-off.
+  **Not done:** the atom-pair block itself is still one dense NumPy expression per field group,
+  and the exponential is now the floor (32 %
+  of the original time is in exp and the per-field multiplies). B5 is the item for going below
+  that.
 * **B2. A cutoff with a neighbour list.** A Gaussian overlap is below 10⁻⁶ of its peak beyond
   about `7/√α` Å. A KD-tree neighbour list per molecule pair turns the atom-pair sum from quadratic
   in atoms to linear for large molecules, with an exact fallback and a test that the two agree.
+  **Done 26 October 2026, and it helps only in one case.** `cutoff_radius`, `surviving_share`
+  and the neighbour-list branch of `atom_kernel_block` are in `cmfqsar/kernels.py`; `CMFModel`
+  carries a `cutoff` and `screen --cutoff auto|R` exposes it. The dense sum is the default and the
+  exact reference, and `tests/test_kernel_speed.py` holds the two to the tolerance the cutoff was
+  derived from.
+  **Why it is off by default.** The molecules of a congeneric series are superimposed in one frame
+  about 14 A across, and at the usual α = 0.5 the cutoff is 10.5 A for a shared-width field and
+  19 A for the radius-scaled steric one, so it keeps
+  98% and 100% of the atom pairs and
+  a neighbour list only adds cost -- forcing it on there makes the kernel five times slower.
+  The item's
+  "linear for large molecules" is right only for large molecules: on
+  60 decapeptides at α = 5 the cutoff
+  keeps 4% of the pairs and
+  `auto` is 2.18x faster.
+  **How `auto` decides**: it samples 2048 real atom-pair distances and uses a list only when the
+  surviving share is below a threshold that depends on the block size. A geometric estimate from
+  the bounding box was tried first and was wrong by a factor of three, because the molecules of a
+  series are concentrated in the middle of the box rather than spread through it; and the first
+  sampling was nine times larger and showed up as a 12 % overhead where the answer is "do not
+  bother".
+  **Not done:** the cutoff is per field group, not per molecule pair, so two molecules that do not
+  overlap at all are still evaluated; and the error it introduces (3e-07 relative) has not
+  been propagated to a q2, only bounded.
 * **B3. Prediction out of core.** Predicting needs only the rows `K(X, X_train)`, so a screening
   run over 10⁵ posed molecules should stream through an SDF and never hold more than one block. The
   CLI gets a `screen` subcommand that does this, with the decoy posing of `cmfqsar/decoys.py`.
+  **Done 26 October 2026.** `cmfqsar/screen.py` reads the library with a forward supplier (so the
+  file is never indexed), builds one block of fields at a time, computes that block's kernel rows,
+  writes the scores to a CSV as it goes and keeps only the best in memory; `screen MODEL LIBRARY`
+  is the subcommand, with `--chunk`, `--top`, `--beta`, `--pose`, `--pose-conformers` and
+  `--cutoff`. A SMILES library is read and embedded as it streams. The posterior standard
+  deviation is in every row, because a library is mostly molecules unlike the training set and a
+  point estimate cannot be told from the training mean; `--beta` turns the score into the lower
+  confidence bound.
+  **Measured** on a library of the example sets concatenated, scored against a
+  200-molecule model: 16664 molecules
+  (87 MB) in 237 s at **237 MB peak
+  process memory**, against 178 s and **1706 MB** loading the
+  file whole. Over a four-fold library the whole-file path grows 571 ->
+  1706 MB (3.0x) and the streamed one 232 ->
+  237 MB (1.02x), which is the claim of the item: the memory does not
+  grow with the file. The cost is 33 % of wall clock.
+  **One fix that came out of it**: the GP posterior variance factorised the training kernel on
+  every call, so a streamed run did it once per block and alignment by confidence once per pose.
+  It is cached on the model now (`_variance_factor`), keyed on the matrix so a realignment or
+  another fold still refactorises.
+  **Not done:** 10^5 molecules has not actually been run, only extrapolated from 12 848; the
+  posing is still a Python loop at about half a second a molecule, which dominates any run that
+  uses it; and nothing parallelises over blocks.
 * **B4. Hyper-parameters by evidence rather than cross-validation.** The GP marginal likelihood is
   implemented for the classifier (`select_by_evidence` in `cmfqsar/gpc.py`) and not for regression,
   where it is one determinant and one quadratic form on the factorisation KRR already does.
@@ -1277,7 +1349,7 @@ step. LP4 as D4 arrives, LP5 only if LP3 passes its gate.
 | When | What |
 |---|---|
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
-| Months 2 to 6 | ~~B4 (evidence)~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
+| Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~ and ~~B4 (evidence)~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; F1 (case studies) |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; H begins with separations |

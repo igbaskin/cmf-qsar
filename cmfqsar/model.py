@@ -15,7 +15,7 @@ import numpy as np
 
 from .fields import AtomTable, FieldSet, FieldSpec, MoleculeFields
 from .kernels import (Cancelled, atom_kernel_block, combine_kernels, kernel_matrices,
-                      normalize_kernels, self_kernels)
+                      kernel_matrices_multi, normalize_kernels, self_kernels, self_kernels_multi)
 from .neldermead import interp_terms, nmmin
 
 ProgressFn = Callable[[str, float], None]   # (message, fraction 0..1)
@@ -487,14 +487,35 @@ class _Learner:
             return np.full(len(K_test_train), np.nan)
         lam = float(self.params.get("lam", 1.0))
         n = self.K_train_.shape[0]
-        try:
-            L = np.linalg.cholesky(self.K_train_ + lam * np.eye(n))
+        L, Kinv = self._variance_factor(lam)
+        if L is not None:
             v = np.linalg.solve(L, K_test_train.T)
             var = k_test_self - np.sum(v * v, axis=0)
-        except np.linalg.LinAlgError:
-            Kinv = np.linalg.pinv(self.K_train_ + lam * np.eye(n))
+        else:
             var = k_test_self - np.einsum("ij,jk,ik->i", K_test_train, Kinv, K_test_train)
         return np.maximum(var, 0.0)
+
+    def _variance_factor(self, lam: float):
+        """The factorisation of ``K_train + lam I``, computed once and kept.
+
+        Every variance costs a solve against this factor, and the factorisation costs a cube of
+        the training set.  Alignment by prediction confidence asks for a variance at every pose it
+        tries, and a screening run asks for one per block of the library, so factorising on each
+        call was the whole cost of both.  The cache is keyed on the shape, the ridge and a
+        checksum of the matrix, which is quadratic and therefore free beside what it saves; a
+        kernel that changes -- a realignment, another fold -- misses the cache and is refactorised.
+        """
+        K = self.K_train_
+        key = (K.shape, float(lam), float(K[0, 0]), float(K[-1, -1]), float(K.sum()))
+        if getattr(self, "_var_key", None) == key:
+            return self._var_factor
+        n = K.shape[0]
+        try:
+            got = (np.linalg.cholesky(K + lam * np.eye(n)), None)
+        except np.linalg.LinAlgError:
+            got = (None, np.linalg.pinv(K + lam * np.eye(n)))
+        self._var_key, self._var_factor = key, got
+        return got
 
 
 def _kfold_indices(n: int, folds: int, seed: Optional[int]) -> List[np.ndarray]:
@@ -567,6 +588,12 @@ class CMFModel:
     params: Dict[str, float] = field(default_factory=lambda: {"lam": 1.0, "C": 1.0, "epsilon": 0.1, "nu": 0.5})
     normalize: bool = False                 # cosine-normalise each field kernel
     scale_fields: bool = True               # scale each field kernel to unit mean diagonal
+    # how far apart two atoms may be and still be summed (plan item B2).  None computes every
+    # pair, which is exact and is what every published table in this repository used; "auto" uses
+    # a neighbour list for the fields and molecules where it is faster, which is large molecules
+    # at a strong attenuation; a number is a radius in angstroms.  A cutoff makes the kernel an
+    # approximation whose dropped pairs were below 1e-6 of a peak overlap each.
+    cutoff: Optional[object] = None
     # where the kernel comes from: the overlap integrals of the fields, which needs the molecules
     # to share a frame, or the rotation-invariant autocorrelation of those fields, which does not
     kernel_source: str = "fields"           # "fields" | "autocorrelation" | "surface" | "periodic"
@@ -657,12 +684,16 @@ class CMFModel:
     def _raw_kernels(self, P: AtomTable, Q: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """Per-field kernels at the current alphas (interpolated between grid alphas if needed)."""
         it = self._interp_specs()
+        cut = self.cutoff
         if it is None:
-            return kernel_matrices(P, Q, self.fieldset.specs, progress=progress, cancel=cancel)
+            return kernel_matrices(P, Q, self.fieldset.specs, progress=progress, cancel=cancel,
+                                   cutoff=cut)
         (c_lo, lo), (c_hi, hi) = it
-        K = c_lo[:, None, None] * kernel_matrices(P, Q, lo, progress=progress, cancel=cancel)
+        K = c_lo[:, None, None] * kernel_matrices(P, Q, lo, progress=progress, cancel=cancel,
+                                                  cutoff=cut)
         if hi is not None:
-            K += c_hi[:, None, None] * kernel_matrices(P, Q, hi, progress=progress, cancel=cancel)
+            K += c_hi[:, None, None] * kernel_matrices(P, Q, hi, progress=progress, cancel=cancel,
+                                                       cutoff=cut)
         return K
 
     def _self_kernels(self, P: AtomTable) -> np.ndarray:
@@ -1035,6 +1066,46 @@ class CMFModel:
         self.prepare_descriptors(train)
         return self.K_fields_train
 
+    def prepare_training_kernels_grid(self, train: AtomTable, alphas: Sequence[float],
+                                      alpha_fields: Optional[Sequence[str]] = None,
+                                      progress=None, cancel=None) -> Optional[Dict]:
+        """Training kernels for a whole grid of attenuations, sharing the distances (item B1).
+
+        Returns ``{alpha: (K_fields, self_diag)}`` in the form :func:`grid_search` accepts as
+        ``precomputed``, or None when the shortcut does not apply: a kernel that is not the
+        overlap integral has no attenuation to sweep, and an attenuation that has to be
+        interpolated between grid points is two field sets rather than one, which the plain path
+        already handles.
+
+        The squared interatomic distances do not depend on the attenuation, so one pass over the
+        molecules serves every alpha.  The saving is about a quarter of the time on a six-point
+        grid; the larger part of the kernel work is the exponential, which has to be done per
+        alpha.
+        """
+        if not self.uses_fields:
+            return None
+        values = [a for a in alphas if a is not None]
+        if len(values) < 2:
+            return None
+        spec_sets, keys = [], []
+        original = [sp.alpha for sp in self.fieldset.specs]
+        try:
+            for alpha in values:
+                self.fieldset.set_alpha(alpha, alpha_fields)
+                if self._interp_specs() is not None:
+                    return None                      # interpolated alphas: leave it to the caller
+                spec_sets.append([FieldSpec(**vars(sp)) for sp in self.fieldset.specs])
+                keys.append(alpha)
+        finally:
+            for sp, a in zip(self.fieldset.specs, original):
+                sp.alpha = a
+        Ks = kernel_matrices_multi(train, train, spec_sets, progress=progress, cancel=cancel)
+        diags = self_kernels_multi(train, spec_sets) if self.normalize else [None] * len(Ks)
+        out = {}
+        for alpha, K, d in zip(keys, Ks, diags):
+            out[alpha] = (normalize_kernels(K, d, d) if self.normalize else K, d)
+        return out
+
     def prepare_descriptors(self, train: AtomTable) -> None:
         """Fit the descriptor statistics on the training molecules and scale the block.
 
@@ -1244,16 +1315,22 @@ class CMFModel:
         K = self.test_kernel(test)
         yp = K @ self.coef + self.bias
         if self.learner_ is None or self.learner_.K_train_ is None:
-            learner = _Learner("gp", self.params)
-            if self.uses_fields:
-                if self.K_fields_train is None:
-                    # a model read from a file stores its training atoms, not their kernels:
-                    # compute them again, with the stored self-kernels and scale untouched
-                    self.K_fields_train = self._field_kernels(self.train, self.train,
-                                                              self.self_diag, self.self_diag)
-                learner.K_train_ = self.joint_kernel(self.K_fields_train, self.train.descriptors)
-            else:
-                learner.K_train_ = self.training_kernel(self.train)
+            # kept on the model, because a screening run asks for this once per block of the
+            # library and a fresh learner each time would refactorise the training kernel
+            learner = getattr(self, "_var_learner", None)
+            if learner is None or learner.K_train_ is None:
+                learner = _Learner("gp", self.params)
+                if self.uses_fields:
+                    if self.K_fields_train is None:
+                        # a model read from a file stores its training atoms, not their kernels:
+                        # compute them again, with the stored self-kernels and scale untouched
+                        self.K_fields_train = self._field_kernels(self.train, self.train,
+                                                                  self.self_diag, self.self_diag)
+                    learner.K_train_ = self.joint_kernel(self.K_fields_train,
+                                                         self.train.descriptors)
+                else:
+                    learner.K_train_ = self.training_kernel(self.train)
+                self._var_learner = learner
         else:
             learner = self.learner_
         var = learner.predict_variance(K, self.joint_self(test))
@@ -1917,6 +1994,14 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
         if alpha_list == [None]:
             raise ValueError("Nelder-Mead alpha search needs an alpha grid")
         grid = [{"lam": float(nm_start[1])}]   # kernels only; the (alpha, lambda) search follows
+    if precomputed is None and len([a for a in alpha_list if a is not None]) > 1:
+        # one pass over the molecules for the whole grid instead of one per alpha (item B1)
+        if progress:
+            progress("kernels for every alpha", 0.0)
+        precomputed = model.prepare_training_kernels_grid(
+            train, alpha_list, alpha_fields, cancel=cancel,
+            progress=(lambda i, n: progress(f"kernels for every alpha: {i}/{n}", 0.5 * i / n))
+            if progress else None)
     for ia, alpha in enumerate(alpha_list):
         if cancel and cancel():
             raise Cancelled()

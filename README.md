@@ -2472,6 +2472,99 @@ python benchmarks/run_multitask.py --set 0_c1ccccc1 --tasks mwila_hcl_adj mwila_
 python benchmarks/run_tasks.py                # the seven cyclodextrin hosts; results/tasks/table.md
 ```
 
+### Making the kernel fast enough for a library
+
+A field kernel is a sum over atom pairs, so it costs the square of the set size times the square
+of the molecule size. Three things were measured and changed (`benchmarks/run_speed.py`), and the
+measurement came first, because the plan's own guess about where the time went was wrong: the
+squared interatomic distances, which a grid search recomputes for every attenuation, are 3 % of a
+kernel block. Half of it was one expression.
+
+<!-- SPEED-TABLE -->
+| shortcut | COX2 (40.8 atoms each) | AMPH1 (168.2 atoms each) | still agrees to |
+|---|---:|---:|---:|
+| as before | 14.3 s (1.0x) | 42.2 s (1.0x) | -- |
+| + square root | 10.5 s (1.4x) | 38.7 s (1.1x) | 3e-16 |
+| + symmetry | 4.6 s (3.1x) | 16.0 s (2.6x) | 1e-15 |
+| + shared distances | 3.8 s (3.7x) | 15.3 s (2.8x) | 1e-15 |
+<!-- /SPEED-TABLE -->
+
+- **The training kernel is computed once, not twice.** K_f(i,j) = K_f(j,i), so only the atom pairs
+  with j >= i are evaluated and then mirrored: 56 % of what was left. It also
+  makes the matrix exactly symmetric, which it was not — the two triangles differed by round-off
+  from summing the pairs in two orders.
+- **The radius-scaled prefactor is a square root, not a power.** The steric field gives every atom
+  its own width, so (2π/(b_l+b_m))^1.5 differs for every atom pair, and a general power is a
+  library call per element. z·sqrt(z) is the same number to fourteen digits and saves
+  27 % of the whole kernel.
+- **The distances are shared across the attenuation grid** (item B1 as written): a further
+  16 %.
+
+End to end, a grid search over six attenuations with five-fold cross-validation falls from
+13.8 s to 4.1 s, **3.4 times faster**, with
+the selected attenuation and q²cv identical to six decimal places. Nothing in any table in this
+file moved; the largest difference any shortcut makes to a kernel is 1e-15 relative.
+
+**A cutoff is implemented and is off by default, because it helps only in some cases.** A Gaussian
+overlap falls below 10⁻⁶ of its peak beyond sqrt(-4 ln tol / b) — 10.5 Å at α = 0.5 for a
+shared-width field, 19 Å for the steric one — so distant atom pairs can be dropped and the sum run
+over a KD-tree neighbour list. Whether that helps is a property of the molecules:
+
+<!-- CUTOFF-TABLE -->
+| set | atoms per molecule | α | pairs kept, shared width | pairs kept, steric | exact sum | `--cutoff auto` | what auto did |
+|---|---:|---:|---:|---:|---:|---:|---|
+| COX2 | 40.8 | 0.5 | 98% | 100% | 0.95 s | 0.85 s (1.12x) | kept the exact sum |
+| COX2 | 40.8 | 2 | 56% | 96% | 0.90 s | 0.91 s (0.99x) | kept the exact sum |
+| COX2 | 40.8 | 5 | 24% | 67% | 0.84 s | 0.82 s (1.02x) | kept the exact sum |
+| AMPH1 | 168.2 | 0.5 | 62% | 99% | 2.61 s | 2.64 s (0.99x) | kept the exact sum |
+| AMPH1 | 168.2 | 2 | 14% | 52% | 2.75 s | 2.15 s (1.28x) | used the neighbour list |
+| AMPH1 | 168.2 | 5 | 4% | 19% | 2.64 s | 1.21 s (2.18x) | used the neighbour list |
+<!-- /CUTOFF-TABLE -->
+
+On a congeneric series superimposed in one frame almost every atom pair is inside the cutoff, and
+`--cutoff auto` samples the real distances and declines to build a list, so the sum stays exact.
+On molecules five times longer at a strong attenuation it is worth
+2.18 times. The error it introduces
+when it is used is 3e-07 relative, every dropped pair having contributed less than a
+millionth of a peak overlap. Every table in this file was produced with the exact sum.
+
+### Screening a library in blocks
+
+Predicting needs only the rows K(X, X_train) — one row per new molecule, as wide as the training
+set — so nothing about a library has to be in memory at once. `cmfqsar/screen.py` and the `screen`
+subcommand read the file as a stream, score it block by block, write the scores as they go and
+keep only the best:
+
+```bash
+python cmf_cli.py screen model.cmf library.sdf --out scores.csv --beta 1.0 --top 25
+```
+
+<!-- SCREEN-TABLE -->
+| library | how it was read | seconds | molecules per second | peak process memory |
+|---|---|---:|---:|---:|
+| 4166 molecules (22 MB) | streamed, 500 per block | 48 | 86 | 295 MB |
+| 4166 molecules (22 MB) | streamed, 100 per block | 59 | 71 | 232 MB |
+| 4166 molecules (22 MB) | loaded whole | 46 | 90 | 571 MB |
+| 16664 molecules (87 MB) | streamed, 500 per block | 201 | 83 | 288 MB |
+| 16664 molecules (87 MB) | streamed, 100 per block | 237 | 70 | 237 MB |
+| 16664 molecules (87 MB) | loaded whole | 178 | 94 | 1706 MB |
+<!-- /SCREEN-TABLE -->
+
+**The memory does not grow with the file.** Over a four-fold library the whole-file path grows
+571 to 1706 MB while the streamed one stays at
+232 and 237 MB; at 100 000 molecules the first asks for
+about 10 GB and the second for the same
+237 MB. It costs 33 % in wall clock, from parsing the
+file in blocks.
+
+The score is the prediction, or with `--beta B` the lower confidence bound mean − B·sd, and the
+standard deviation is always in the CSV. That is not caution for its own sake: screen the thrombin
+series against a cyclooxygenase model and every molecule comes back at the training mean with a
+spread four times the residual error, which is the model saying it has nothing to contribute.
+`--pose` places each molecule by maximising its field similarity to the training set first, at
+about half a second each — far more than the scoring, and optimistic, since a real library has to
+choose a pose without knowing the actives.
+
 ## Installation
 
 Python ≥ 3.10. The package is declared in `pyproject.toml`; from a checkout:
@@ -2559,6 +2652,7 @@ python cmf_cli.py build examples/benzamides_synthetic.sdf --activity pActivity -
 python cmf_cli.py predict model.cmf new_molecules.sdf --out predictions.csv
 python cmf_cli.py predict model.cmf new_molecules.sdf --allow-mismatch     # past a refused contract check
 python cmf_cli.py predict model.cmf new_molecules.sdf --align-variance 2.0 --aligned-out aligned.sdf
+python cmf_cli.py screen model.cmf library.sdf --out scores.csv --beta 1.0 --top 25   # in blocks
 python cmf_cli.py build aligned_set.sdf --align-train-variance 1.0 --test-fraction 0.25
 python cmf_cli.py unalign aligned.sdf scrambled.sdf --max-rotation 40 --max-translation 2
 python cmf_cli.py map examples/sutherland/THR.sdf --charges file --out coords.csv --landscape-out land.csv

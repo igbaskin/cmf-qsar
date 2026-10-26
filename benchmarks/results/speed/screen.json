@@ -1,0 +1,81 @@
+{
+ "training_molecules": 200,
+ "runs": [
+  {
+   "chunk": 500,
+   "scored": 4166,
+   "seconds": 48.2,
+   "per_second": 86.4,
+   "peak_mb": 295.0,
+   "training_peak_mb": 141.0,
+   "blocks": 9,
+   "kernel_block_mb": 0.8,
+   "library": 4166,
+   "library_mb": 21.8,
+   "label": "streamed, 500 per block"
+  },
+  {
+   "chunk": 100,
+   "scored": 4166,
+   "seconds": 58.7,
+   "per_second": 70.9,
+   "peak_mb": 232.0,
+   "training_peak_mb": 140.0,
+   "blocks": 42,
+   "kernel_block_mb": 0.16,
+   "library": 4166,
+   "library_mb": 21.8,
+   "label": "streamed, 100 per block"
+  },
+  {
+   "chunk": 0,
+   "scored": 4166,
+   "seconds": 46.0,
+   "per_second": 90.5,
+   "peak_mb": 571.0,
+   "training_peak_mb": 139.0,
+   "atoms": 209770,
+   "library": 4166,
+   "library_mb": 21.8,
+   "label": "loaded whole"
+  },
+  {
+   "chunk": 500,
+   "scored": 16664,
+   "seconds": 201.1,
+   "per_second": 82.9,
+   "peak_mb": 288.0,
+   "training_peak_mb": 141.0,
+   "blocks": 34,
+   "kernel_block_mb": 0.8,
+   "library": 16664,
+   "library_mb": 87.2,
+   "label": "streamed, 500 per block"
+  },
+  {
+   "chunk": 100,
+   "scored": 16664,
+   "seconds": 236.9,
+   "per_second": 70.4,
+   "peak_mb": 237.0,
+   "training_peak_mb": 139.0,
+   "blocks": 167,
+   "kernel_block_mb": 0.16,
+   "library": 16664,
+   "library_mb": 87.2,
+   "label": "streamed, 100 per block"
+  },
+  {
+   "chunk": 0,
+   "scored": 16664,
+   "seconds": 178.2,
+   "per_second": 93.5,
+   "peak_mb": 1706.0,
+   "training_peak_mb": 139.0,
+   "atoms": 839080,
+   "library": 16664,
+   "library_mb": 87.2,
+   "label": "loaded whole"
+  }
+ ]
+}

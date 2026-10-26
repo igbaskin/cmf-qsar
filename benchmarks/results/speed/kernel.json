@@ -1,0 +1,68 @@
+{
+ "alphas": [
+  0.1,
+  0.3,
+  0.5,
+  1.0,
+  2.0,
+  5.0
+ ],
+ "sets": [
+  {
+   "set": "COX2",
+   "n_mol": 200,
+   "n_atoms": 8156,
+   "atoms_per_molecule": 40.8,
+   "rows": [
+    {
+     "label": "as before",
+     "seconds": 14.33,
+     "rel_error": 0.0
+    },
+    {
+     "label": "+ square root",
+     "seconds": 10.529,
+     "rel_error": 3.067249361014424e-16
+    },
+    {
+     "label": "+ symmetry",
+     "seconds": 4.599,
+     "rel_error": 7.66812340253606e-16
+    },
+    {
+     "label": "+ shared distances",
+     "seconds": 3.846,
+     "rel_error": 7.66812340253606e-16
+    }
+   ]
+  },
+  {
+   "set": "AMPH1",
+   "n_mol": 60,
+   "n_atoms": 10090,
+   "atoms_per_molecule": 168.2,
+   "rows": [
+    {
+     "label": "as before",
+     "seconds": 42.244,
+     "rel_error": 0.0
+    },
+    {
+     "label": "+ square root",
+     "seconds": 38.737,
+     "rel_error": 2.840451701869854e-16
+    },
+    {
+     "label": "+ symmetry",
+     "seconds": 16.019,
+     "rel_error": 1.4202258509349271e-15
+    },
+    {
+     "label": "+ shared distances",
+     "seconds": 15.343,
+     "rel_error": 1.4202258509349271e-15
+    }
+   ]
+  }
+ ]
+}

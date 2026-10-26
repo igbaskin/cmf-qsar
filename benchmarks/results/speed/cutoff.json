@@ -1,0 +1,79 @@
+{
+ "tol": 1e-06,
+ "sets": [
+  {
+   "set": "COX2",
+   "n_mol": 200,
+   "atoms_per_molecule": 40.8,
+   "rows": [
+    {
+     "alpha": 0.5,
+     "dense_seconds": 0.95,
+     "auto_seconds": 0.85,
+     "forced_seconds": 4.13,
+     "auto_exact": true,
+     "forced_rel_error": 6.833475903986106e-08,
+     "keep_gauss": 0.982421875,
+     "keep_steric": 1.0
+    },
+    {
+     "alpha": 2.0,
+     "dense_seconds": 0.9,
+     "auto_seconds": 0.91,
+     "forced_seconds": 2.86,
+     "auto_exact": true,
+     "forced_rel_error": 1.214587435181278e-07,
+     "keep_gauss": 0.55810546875,
+     "keep_steric": 0.9560546875
+    },
+    {
+     "alpha": 5.0,
+     "dense_seconds": 0.84,
+     "auto_seconds": 0.82,
+     "forced_seconds": 1.66,
+     "auto_exact": true,
+     "forced_rel_error": 2.0328885509821134e-07,
+     "keep_gauss": 0.24365234375,
+     "keep_steric": 0.66552734375
+    }
+   ]
+  },
+  {
+   "set": "AMPH1",
+   "n_mol": 60,
+   "atoms_per_molecule": 168.2,
+   "rows": [
+    {
+     "alpha": 0.5,
+     "dense_seconds": 2.61,
+     "auto_seconds": 2.64,
+     "forced_seconds": 6.92,
+     "auto_exact": true,
+     "forced_rel_error": 1.1988105337116178e-07,
+     "keep_gauss": 0.61865234375,
+     "keep_steric": 0.98583984375
+    },
+    {
+     "alpha": 2.0,
+     "dense_seconds": 2.75,
+     "auto_seconds": 2.15,
+     "forced_seconds": 2.7,
+     "auto_exact": false,
+     "forced_rel_error": 2.963766141183256e-07,
+     "keep_gauss": 0.14208984375,
+     "keep_steric": 0.5244140625
+    },
+    {
+     "alpha": 5.0,
+     "dense_seconds": 2.64,
+     "auto_seconds": 1.21,
+     "forced_seconds": 1.01,
+     "auto_exact": false,
+     "forced_rel_error": 2.3046847523271788e-07,
+     "keep_gauss": 0.04345703125,
+     "keep_steric": 0.1923828125
+    }
+   ]
+  }
+ ]
+}

@@ -1261,6 +1261,88 @@ kernels* uses cosine-normalised field kernels, and *Scale fields* rescales each 
 unit mean diagonal before mixing. Untick the second to get the raw-kernel convention of the papers
 (`--raw-scale`).
 
+## How long the kernel takes, and the three settings that change it
+
+A field kernel is a sum over atom pairs, so its cost is the number of atom pairs: the square of
+the set size times the square of the molecule size. A 200-molecule congeneric series costs under
+a second per attenuation and nothing has to be done about it. A library, a set of long molecules,
+or a grid search over six attenuations is a different matter, and three things were measured and
+changed (`benchmarks/run_speed.py` records all of them).
+
+**The training kernel is computed once rather than twice.** $K_f(i,j) = K_f(j,i)$, so for a set
+against itself only the pairs with $j \ge i$ are evaluated and then mirrored. This is the largest
+of the three, because it removes half of the work rather than part of it, and it is exact; it
+also makes the matrix exactly symmetric, which it was not before, the two triangles having
+differed by round-off from summing the atom pairs in two different orders.
+
+**The radius-scaled prefactor is a square root rather than a power.** The steric field gives every
+atom its own width, so $(2\pi/(b_l+b_m))^{3/2}$ differs for every atom pair, and a general power
+is a library call per element. Writing it as $z\sqrt{z}$ is the same number to fourteen digits and
+costs a third as much. Before this change that one expression was half the time of the whole
+kernel.
+
+**The distances are shared across the attenuation grid.** The attenuation enters only through the
+exponential, so a grid search can compute each molecule's squared distances once and take six
+exponentials from them. This is the smallest of the three: the distance matrix is 3 % of a block.
+
+Measured on 200 molecules of a congeneric series and
+60 decapeptides, all six attenuations of the usual grid
+(0.1, 0.3, 0.5, 1, 2, 5):
+
+| shortcut | COX2 (40.8 atoms each) | AMPH1 (168.2 atoms each) | still agrees to |
+|---|---:|---:|---:|
+| as before | 14.3 s (1.0x) | 42.2 s (1.0x) | -- |
+| + square root | 10.5 s (1.4x) | 38.7 s (1.1x) | 3e-16 |
+| + symmetry | 4.6 s (3.1x) | 16.0 s (2.6x) | 1e-15 |
+| + shared distances | 3.8 s (3.7x) | 15.3 s (2.8x) | 1e-15 |
+
+The last column is the point: every shortcut is exact, and what is left is round-off from summing
+the atom pairs in a different order. End to end, a `grid_search` over the same six attenuations
+with five-fold cross-validation:
+
+| shortcut | seconds | speed-up | alpha chosen | q²cv |
+|---|---:|---:|---:|---:|
+| as before | 13.8 | 1.00x | 0.1 | +0.504175 |
+| + square root | 9.9 | 1.40x | 0.1 | +0.504175 |
+| + symmetry | 5.0 | 2.76x | 0.1 | +0.504175 |
+| + shared distances | 4.1 | 3.40x | 0.1 | +0.504175 |
+
+**3.4 times faster**, and the attenuation chosen and the cross-validated q² are
+identical to six decimal places.
+
+Nothing here changes a number the program reports; the benchmark prints the chosen $\alpha$ and
+the cross-validated q² beside every timing for exactly that reason.
+
+### The cutoff, which is off unless you ask
+
+A Gaussian overlap falls below a fraction $\tau$ of its peak beyond
+a cutoff radius of $\sqrt{-4 \ln \tau / b}$, which at $\tau = 10^{-6}$ is
+10.5 Å for a shared-width field at $\alpha = 0.5$ and 19 Å for the radius-scaled steric field. Atom
+pairs further apart than that can be dropped, and `--cutoff auto` does so, deciding per field by
+sampling the real distances and building a neighbour list only when most pairs would go.
+
+Whether this helps is a property of the molecules, not of the program:
+
+| set | atoms per molecule | α | pairs kept, shared width | pairs kept, steric | exact sum | `--cutoff auto` | what auto did |
+|---|---:|---:|---:|---:|---:|---:|---|
+| COX2 | 40.8 | 0.5 | 98% | 100% | 0.95 s | 0.85 s (1.12x) | kept the exact sum |
+| COX2 | 40.8 | 2 | 56% | 96% | 0.90 s | 0.91 s (0.99x) | kept the exact sum |
+| COX2 | 40.8 | 5 | 24% | 67% | 0.84 s | 0.82 s (1.02x) | kept the exact sum |
+| AMPH1 | 168.2 | 0.5 | 62% | 99% | 2.61 s | 2.64 s (0.99x) | kept the exact sum |
+| AMPH1 | 168.2 | 2 | 14% | 52% | 2.75 s | 2.15 s (1.28x) | used the neighbour list |
+| AMPH1 | 168.2 | 5 | 4% | 19% | 2.64 s | 1.21 s (2.18x) | used the neighbour list |
+
+The two columns of surviving pairs explain the rest. The sampling that decides costs about a
+hundredth of a block, so `auto` is free when it declines, and on these sets it declines wherever
+the dense sum is faster. Forcing the list on with `--cutoff 10` or `--cutoff auto` where it does
+not pay can cost a factor of five, which is why it is not the default.
+
+On a congeneric series superimposed in one frame the cutoff keeps almost every pair and `auto`
+refuses to build a list, so the sum stays exact. On molecules five times longer it is worth a
+factor at a strong attenuation. A cutoff makes the kernel an approximation — each dropped pair
+contributed less than a millionth of a peak overlap, and the measured error is about $10^{-7}$
+relative — so it is off by default and every table in this manual was produced without it.
+
 ## The learners
 
 | Task | Methods | Key |
@@ -2572,6 +2654,62 @@ shifts by +0.000, because it never looks at a coordinate. That is the generous p
 the background sets of the previous section are given, and the difference is a measurement of how
 much a field-based screening figure depends on how its decoys were placed.
 
+## Screening a library that does not fit in memory
+
+Everything above loads a data set, builds every molecule's fields and keeps them. That is right
+for a training set and impossible for a library: a hundred thousand molecules will not fit, and
+nothing about them needs to be kept once their score is written.
+
+Predicting with a kernel method needs only the rows `K(X, X_train)` — one row per new
+molecule, as wide as the training set. So the `screen` subcommand reads the library in blocks and
+never holds more than one:
+
+```bash
+python cmf_cli.py screen model.cmf library.sdf --out scores.csv --beta 1.0 --top 25
+```
+
+It reads `--chunk` molecules (500 by default) with a forward supplier, so the file is streamed and
+never indexed; builds their fields with the model's own field set; computes the block's kernel
+rows; writes the scores to the CSV as it goes, so a run stopped after an hour keeps everything it
+had scored; and keeps only the best `--top` of them in memory. A SMILES file is accepted too and
+its molecules are embedded as they are read.
+
+Measured against the same library loaded whole, scored by a
+200-molecule model:
+
+| library | how it was read | seconds | molecules per second | peak process memory |
+|---|---|---:|---:|---:|
+| 4166 molecules (22 MB) | streamed, 500 per block | 48 | 86 | 295 MB |
+| 4166 molecules (22 MB) | streamed, 100 per block | 59 | 71 | 232 MB |
+| 4166 molecules (22 MB) | loaded whole | 46 | 90 | 571 MB |
+| 16664 molecules (87 MB) | streamed, 500 per block | 201 | 83 | 288 MB |
+| 16664 molecules (87 MB) | streamed, 100 per block | 237 | 70 | 237 MB |
+| 16664 molecules (87 MB) | loaded whole | 178 | 94 | 1706 MB |
+
+The memory column is what matters. Over a four-fold library the whole-file path grows
+571 to 1706 MB, a factor of 3.0, while the
+streamed path at 100 molecules per block stays at 232 and
+237 MB. Extrapolating the first to 100 000 molecules asks for about
+10 GB; the second would still be using
+237 MB. The price is 33 % of wall clock, from parsing
+the file in blocks rather than once.
+
+**What the score is.** For a regression model it is the prediction, or with `--beta B` the lower
+confidence bound $\mathrm{mean} - B\,\mathrm{sd}$, which is what a library should normally be
+ranked by, and the reason the standard deviation is always in the CSV: a library is mostly
+molecules unlike the training set, a kernel method answers the training mean for those, and a
+point estimate cannot be told from a real prediction. Screen the thrombin series against a
+cyclooxygenase model and every molecule comes back at the training mean with a spread four times
+the residual error — which is the model saying, correctly, that it has nothing to contribute.
+
+**What it does not do.** It does not invent poses. A field kernel compares molecules in one frame,
+so the library has to be in the training set's frame already, or `--pose` has to be given, which
+places each molecule by maximising its field similarity to the training molecules. That is the
+placement the background sets of the benchmarks are given, it costs about half a second per
+molecule — far more than the scoring — and it is optimistic, because a real library has to choose
+a pose without knowing the actives. `--pose-conformers N` generates N conformations of each
+molecule and poses every one, which multiplies the cost by N.
+
 ## Which molecule to make next
 
 The model predicts an activity and, through the Gaussian-process view, a standard deviation beside
@@ -3265,6 +3403,7 @@ not every option.
 | `build-crystals` | the same on periodic structures (CIF, POSCAR, extended XYZ) |
 | `diagnose` | ask a data set what it can support, before modelling it |
 | `predict` | predict with a saved model, optionally aligning by confidence first |
+| `screen` | score a library against a saved model, reading it in blocks, so its size does not matter |
 | `report` | one self-contained HTML page describing a saved model |
 | `suggest` | which posed candidate to make next (expected improvement and the rest) |
 | `design` | what to put at a position of a parent, ranked by the model |
