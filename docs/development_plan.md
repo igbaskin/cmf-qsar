@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 72 modules and about 31,950 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 74 modules and about 32,700 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-eight subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1097 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1122 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2406,6 +2406,37 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   FEP sets (`examples/schindler/`, `examples/ross/`) are the only data with a crystal pose for every
   ligand and are where this is measured; their narrow activity ranges are the known risk, and a
   negative result stands beside D5 rather than replacing it.
+  **Done 27 October 2026, and the gate is not passed: the negative result stands beside D5, as
+  the item allowed.** `cmfqsar/transformfield.py`. A pair becomes one field: the two groups,
+  each masked out of its molecule by the rule of MC1, placed in the frame of their attachment
+  point (origin at the core atom carrying the group, x along the bond to it, the plane fixed by
+  one more neighbour chosen by atom type so that both members pick the same one), the second
+  minus the first. The overlap kernel is bilinear, so reversing a pair reverses its kernel row,
+  and a ridge with no intercept predicts exactly the opposite change for the reverse of a pair;
+  a test fixes that. `average_field` is the transformation field the item asks for, the mean of
+  the difference fields of all the pairs of one transformation. 16 tests.
+  **Measured** by `benchmarks/run_transformfield.py` on 3814 matched pairs in 17 congeneric
+  series with a crystal pose for every ligand (the ten Merck KGaA sets, the duplicate
+  `eg5_alternativeloop` left out, and the eight Schrodinger JACS sets), holding out a whole
+  series at a time with the ridge chosen inside the training series the same way, and q2 taken
+  against each series' own mean change: no change at all -0.025; the transformation as a number,
+  which is D5's increment averaged over the series that have it, -0.073; the transformation as a
+  field -0.025 [-0.118, +0.035]; the field against the number +0.048 [-0.017, +0.108].
+  **Two controls say the construction is not what failed.** Described without a frame, as the
+  rotation-invariant autocorrelation of the difference field, the same pairs give the same
+  -0.025, so the frame convention is not the problem. Trained **inside** each series, with whole
+  molecules held out so that two pairs sharing a molecule cannot leak into each other, the same
+  difference fields reach q2 +0.465. The descriptor describes a change; it does not transfer.
+  The ridge chosen in every outer fold sits at the strong end of a grid that runs to 1e4, which
+  is the model saying it has nothing.
+  **The data answer the item before any model is fitted.** Of the twelve transformations that
+  occur in the most series, eleven raise the activity in one series and lower it in another:
+  methyl to chloro is +0.15 on average over 10 series and runs from -0.93 to +1.07; methyl to
+  ethyl -0.17 and runs from -1.15 to +1.01. There is no single effect for a field or a number to
+  carry. What a group does depends on the pocket it does it in, which is D5's finding in another
+  form, and the place for the difference field is inside one project rather than across them.
+  **The narrow activity ranges are the known risk and they are visible**: the spread of the
+  change inside a series is often well under one log unit.
 * **MC7. Growing and linking a fragment.** `cmfqsar/complementarity.py` scores a ligand against a
   pocket by field overlap. A bound fragment leaves a gap, which is the field the pocket would reward
   minus the field the fragment already places. Needed: that difference as a field object, an

@@ -1822,6 +1822,45 @@ against shuffling the numbers among the molecule's atoms is +0.35 for
 phenyl — so this is a statement about a series of hundreds of guests, not a reading for one
 compound.
 
+### A matched pair as a field placed in space
+
+A matched molecular pair is usually a row in a table: a transformation and the activity change it
+produced. In a series whose molecules are in one frame it is also a difference of two fields -- a
+local object with its shape and charge kept (`cmfqsar/transformfield.py`, plan item MC6). The
+difference field is placed in a frame of its own, the origin at the core atom that carries the
+group and the x axis along the bond to it, so that the same transformation in two series can be
+compared. The overlap kernel is bilinear, so reversing a pair reverses its kernel row, and a
+ridge with no intercept predicts exactly the opposite change for the reverse of a pair.
+
+The question is the one plan item D5 asked of increments and answered no: does a transformation
+carry its effect from one series to another? Measured on 3814 matched pairs from the 17 FEP
+series with a crystal pose for every ligand (Merck KGaA and Schrodinger), holding out a whole
+series at a time:
+
+| what predicts the change | q2 against each series' own mean |
+| --- | ---: |
+| no change at all | -0.025 |
+| the transformation as a field, inside one series (no transfer) | +0.465 |
+| the transformation as a number (plan item D5) | -0.073 |
+| the transformation as a field, without a frame | -0.025 |
+| the transformation as a field | -0.025 |
+
+**The gate is not passed, and the construction is not what fails.** Across series the field model
+predicts nothing, -0.025 [-0.118, +0.035], and the ridge chosen in every fold sits at the strong
+end of its grid. Describing the same pairs without a frame gives the same number, so the frame is
+not the problem. Inside one series, with whole molecules held out, the same difference fields
+reach +0.465: the descriptor works and the transfer does not.
+
+The data say it before any model is fitted. Of the twelve transformations that occur in the most
+series, eleven raise the activity in one series and lower it in another; replacing a methyl by a
+chlorine is worth +0.15 log units on average and anything from -0.93 to +1.07 depending on the
+protein. There is no one effect for a field or a number to carry.
+
+```bash
+python benchmarks/run_transformfield.py        # results/transformfield/table.md
+```
+
+
 ### Which groups are interchangeable: a bioisostere table
 
 `cmf design` ranks substituents by the predicted activity of the whole molecule. The table a

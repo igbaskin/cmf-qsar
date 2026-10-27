@@ -3266,6 +3266,76 @@ so the list is worth reading at the top and not in the middle. That is the claim
 has to make, and it is the one this measurement supports: it will name the group worth trying,
 not tell you what it will measure.
 
+## A matched pair as a field placed in space
+
+A matched molecular pair is usually a row in a table: a transformation, written as two group
+names, and the activity change it produced. In a series whose molecules are in one frame it is
+also something else -- **a difference of two fields**, a local object sitting where the two groups
+differ, with its shape and its charge kept. Plan item MC6 asks whether that object carries the
+effect of the transformation with it: can a change measured in other series predict the change in
+a series the model has never seen?
+
+Plan item D5 is the warning and the reference. Increments fitted on one series did not transfer,
+and the vectors fitted on two sets agreed to +0.89 at best. An increment is a number attached to
+an atom type; the field difference is the same transformation with its geometry kept, so it can
+tell a methyl that points into a pocket from one that points at the solvent. Whether that is
+enough is a measurement.
+
+**The construction** (`cmfqsar/transformfield.py`). The two members of a pair are already in one
+frame, since the series is aligned, so their fields are comparable with each other. What they do
+not share with another series is a frame, so the difference field is placed in a frame of its
+own: the origin at the core atom that carries the group, the x axis along the bond to the group,
+and the plane fixed by one more neighbour of that atom, chosen by atom type so that both members
+pick the same one. The difference field is the second group minus the first, each restricted to
+its own atoms by the mask of plan item MC1, and it is an ordinary field object: every kernel and
+every display of this program applies to it. The overlap kernel is bilinear, so reversing a pair
+reverses its kernel row, and a ridge with no intercept therefore predicts exactly the opposite
+change for the reverse of a pair -- the one property such a model must have.
+
+**The data** are the only sets here with a crystal pose for every ligand: the ten Merck KGaA FEP
+series of Schindler and co-workers and the eight Schrodinger JACS series, 3814 matched pairs in
+17 congeneric series. The folds hold out a whole series, the ridge is chosen inside the training
+series the same way, and q2 is taken against each series' own mean change, which is the strongest
+form of the reference the item names.
+
+| what predicts the change | q2 against each series' own mean |
+| --- | ---: |
+| no change at all | -0.025 |
+| the transformation as a field, inside one series (no transfer) | +0.465 |
+| the transformation as a number (plan item D5) | -0.073 |
+| the transformation as a field, without a frame | -0.025 |
+| the transformation as a field | -0.025 |
+
+**The gate is not passed, and the reason is not the construction.** Across series the model
+reaches q2 -0.025, with an interval over series of -0.118 to +0.035: it predicts nothing, and the
+ridge chosen in every fold is at the strong end of the grid, which is the model saying so. The
+same pairs described without a frame, as the rotation-invariant autocorrelation of the difference
+field, give the same -0.025, so a frame convention is not what went wrong. Trained **inside** each
+series, where nothing has to transfer, the same difference fields reach q2 +0.465 with whole
+molecules held out. The descriptor works; the transfer does not.
+
+**The data say it before any model is fitted.** Of the twelve transformations that occur in most
+series, eleven raise the activity in one series and lower it in another:
+
+| transformation | series | pairs | mean change | lowest | highest |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| methyl to chloro | 10 | 23 | +0.15 | -0.93 | +1.07 |
+| methyl to ethyl | 8 | 13 | -0.17 | -1.15 | +1.01 |
+| fluoro to methyl | 7 | 14 | +0.12 | -0.53 | +1.37 |
+| chloro to cyano | 5 | 12 | -0.48 | -1.05 | +0.09 |
+| isopropyl to ethyl | 5 | 8 | +0.30 | -0.64 | +1.62 |
+| methyl to methoxy | 4 | 13 | -0.14 | -1.49 | +0.40 |
+
+Replacing a methyl by a chlorine is worth about a tenth of a log unit on average and anything
+between -0.9 and +1.1 depending on the protein. There is no single effect for a field or for a
+number to carry, and that is the answer to the item rather than a failure of the machinery.
+
+**What is worth keeping** is the object itself. `transformfield.average_field` builds the mean
+difference field of all the pairs of one transformation, which is a picture of what that
+transformation does to the field, and the within-series row above says that inside one series the
+difference field predicts a change well. The place for it is inside a project, on one target,
+where plan item MC1's table already uses the same masking.
+
 ## Which groups are interchangeable: a bioisostere table
 
 `cmf design` ranks candidate substituents by the predicted activity of the whole molecule. The

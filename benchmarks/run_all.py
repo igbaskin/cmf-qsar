@@ -231,7 +231,7 @@ def registry() -> List[Benchmark]:
         Benchmark("transformfield",
                   "does a transformation carry its effect from one series to another",
                   "run_transformfield.py", "transformfield", compute=[[]],
-                  minutes="10",
+                  minutes="25",
                   report=lambda: _mod("run_transformfield").write_table(_r("transformfield")),
                   tables=["transformfield/table.md"]),
         Benchmark("bioisostere",

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 78 modules, 134 classes with 480 public methods, and 602 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 80 modules, 136 classes with 481 public methods, and 629 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -78,6 +78,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.periodic](#cmfqsarperiodic) | Continuous molecular fields of crystals: the periodic field autocorrelation. |
 | [cmfqsar.pharmacophore](#cmfqsarpharmacophore) | A pharmacophore read out of a fitted co-field. |
 | [cmfqsar.pharmtypes](#cmfqsarpharmtypes) | Six pharmacophore features as indicator fields (plan item D2). |
+| [cmfqsar.planealign](#cmfqsarplanealign) | Alignment onto a plane: the frame of a molecule on a surface, without the surface. |
 | [cmfqsar.pocketalign](#cmfqsarpocketalign) | Aligning a molecule inside the pocket (plan item C3). |
 | [cmfqsar.poses](#cmfqsarposes) | A protocol that can judge an alignment, because q2 cannot. |
 | [cmfqsar.probes](#cmfqsarprobes) | GRID-like probe fields, written as sums of Gaussians so that CMF can keep its algebra. |
@@ -94,6 +95,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.tautomers](#cmfqsartautomers) | Tautomer ensembles: the other half of plan item D4. |
 | [cmfqsar.topomer](#cmfqsartopomer) | Topomer fields: a frame that comes from the topology, not from a superposition. |
 | [cmfqsar.transfer](#cmfqsartransfer) | Comparing two models by their co-fields (plan item F3). |
+| [cmfqsar.transformfield](#cmfqsartransformfield) | A matched pair as a field placed in space (plan item MC6). |
 | [cmfqsar.validation](#cmfqsarvalidation) | The three questions a 3D-QSAR model has to answer besides "how good is q²". |
 | [cmfqsar.varalign](#cmfqsarvaralign) | Alignment by prediction confidence: the pose of a molecule is chosen so that the posterior variance of its predicted activity is as small as possible. |
 | [cmfqsar.gui](#cmfqsargui) | PySide6 desktop application for CMF 3D-QSAR. |
@@ -7962,6 +7964,160 @@ This is the measurement the item is an argument about, so it is worth being able
 a Sybyl vocabulary has many types each carried by few molecules, and these six are meant to
 be carried by most.
 
+## cmfqsar.planealign
+
+Source: `cmfqsar/planealign.py`
+
+Alignment onto a plane: the frame of a molecule on a surface, without the surface.
+
+A molecule adsorbed on an electrode, a corrosion inhibitor on steel, a modifier on a copper
+cathode, lives in a frame that no reference molecule defines: the normal of the surface is z,
+the top atomic layer is z = 0, and the molecule's height, tilt and face are the pose.  The
+surface autocorrelation kernel (`cmfqsar.invariant`) reads such poses without any
+in-plane registration, and the Fe(110) study found that the in-plane position over the lattice
+carries nothing for the adsorption energy while the height carries everything.  What the surface
+kernel cannot give is a co-field, because it has no fixed frame to draw one in.  The overlap
+kernel can, if the molecules are in the surface frame; and so far the only way into that frame
+has been to relax every molecule on a slab with a machine-learned potential.
+
+This module is the cheap way in.  It poses a molecule on z = 0 by rule, the same rules the UMA
+adsorption script uses for its *starting* poses:
+
+* `flat`: the plane of the two longest principal axes is laid parallel to the surface, the
+  longest axis along x, and the flattest face turned down (the out-of-plane atoms point away
+  from the surface, which is where a relaxation leaves a substituent that cannot bond);
+  the lowest heavy atom is put at `height`;
+* `upright`: the most basic nitrogen (by a rule: aliphatic amine > pyridine-type > imine >
+  aniline > pyrrole-type N-H; amide, nitro and quaternary N never; a thioether S or an ether O
+  when there is no nitrogen) points its lone pair at the surface and sits at `anchor_height`,
+  with the smallest tilt that leaves every other atom above it.
+
+Three further pieces turn a rule into an alignment:
+
+* `surface_field_align` refines a pose by the field similarity to a reference pose, as
+  `cmfqsar.align.field_align` does, but with the degrees of freedom a surface leaves:
+  translation in the plane and rotation about the normal (`dof="plane"`), plus tilt and
+  height (`dof="plane+tilt"`).  The reference is one molecule whose pose is trusted -- a
+  relaxed pose, a crystal pose, or the rule applied to the scaffold.
+* `plane_align` can try several starting poses (flat on either face, upright) and keep
+  the one most similar in field to the reference (`pose="auto"`), which is the alignment
+  criterion of the 2013 paper applied to a choice the rules cannot make.
+* `in_plane_rmsd` judges a pose against a known one modulo the motions the surface does
+  not fix (rotation about z, translation in the plane), so a molecule placed over a different
+  lattice site is not counted as misplaced; `height_rmsd` judges the heights alone.
+
+Everything here is rigid: the conformation is never touched.  The measurement that goes with
+the module is `benchmarks/run_fe110.py`, which asks whether rule-posed molecules reproduce
+the UMA-relaxed poses, and what the overlap kernel in the rule frame recovers of the adsorption
+energy against the surface kernel and against the relaxed frame.
+
+### `class PlanePose  (dataclass)`
+
+Attributes:
+
+- `name: str`
+- `label: str`
+- `anchor: Optional[int]`
+- `similarity: float` = `float('nan')`
+- `candidates: List[Tuple[str, float]]` = `field(default_factory=list)`
+
+#### `PlanePose.describe() -> str`
+
+### `anchor_atom(mol: Chem.Mol) -> Optional[int]`
+
+The atom that points at the surface in the upright pose: the most basic nitrogen, by a
+simple rule (aliphatic amine > pyridine-type aromatic N > imine > aniline > pyrrole-type
+NH; amide, nitro and quaternary N never), else a thiol/thioether S, else a hydroxyl/ether O.
+`None` when the molecule has nothing of the kind.  The rule is the one of the UMA
+adsorption script, with one repair: an oxygen on a nitrogen (nitro, N-oxide) is not an
+anchor, which the script's version let through.
+
+### `lone_pair_direction(mol: Chem.Mol, coords: np.ndarray, anchor: int) -> np.ndarray`
+
+Where the anchor atom's lone pair points: away from the mean of its bonded neighbours
+(away from the centroid when it has none).
+
+### `principal_axes(coords: np.ndarray) -> np.ndarray`
+
+Rows: the principal axes of the point cloud by decreasing extent, a right-handed frame.
+
+### `rotation_to_z(direction: np.ndarray, sign: float=-1.0) -> np.ndarray`
+
+The rotation matrix that takes `direction` to `sign * z`.
+
+### `axis_rotation(axis: Sequence[float], angle: float) -> np.ndarray`
+
+Rodrigues' rotation matrix about a unit axis.
+
+### `heavy_mask(mol: Chem.Mol) -> np.ndarray`
+
+### `orient_flat(coords: np.ndarray, heavy: Optional[np.ndarray]=None, face: str='down') -> np.ndarray`
+
+The molecule rotated about its centroid so that the plane of its two longest principal
+axes (over the heavy atoms when `heavy` is given) is the xy plane and the longest axis lies
+along x.  `face="down"` turns the flattest face to the surface: the atoms off the plane
+end up at positive z.  `face="up"` is the other face; `face="asis"` leaves the sign to
+the right-handed frame.
+
+### `orient_upright(mol: Chem.Mol, coords: np.ndarray, anchor: int) -> np.ndarray`
+
+The molecule rotated about its centroid so that the anchor atom's lone pair points at
+the surface (-z), tilted by the least that puts the anchor lowest, and turned about z so
+that its longest in-plane extent lies along x; the anchor over x = y = 0.
+
+### `place_at_height(coords: np.ndarray, heavy: np.ndarray, height: float, anchor: Optional[int]=None) -> np.ndarray`
+
+Shift along z so that the lowest heavy atom -- or the anchor atom -- is at `height`, and
+in the plane so that the heavy-atom centroid is over x = y = 0 (the anchor stays over the
+origin when there is one).
+
+### `rule_pose(mol: Chem.Mol, label: str, height: float=2.2, anchor_height: float=2.0) -> Tuple[np.ndarray, Optional[int]]`
+
+The coordinates of `mol` in the pose `label` (`flat`, `flat-up` or `upright`), and
+the anchor atom used (`None` for the flat poses).  Raises `ValueError` for an upright
+pose when the molecule has no anchor.
+
+### `surface_field_align(mol: Chem.Mol, ref: Chem.Mol, fieldset: FieldSet, dof: str='plane', restarts: int=4, seed: int=0, max_iter: int=300, max_tilt: float=30.0, max_dz: float=1.0, _reference: Optional[_Reference]=None) -> Tuple[float, float]`
+
+Refine the pose of `mol` on the surface by the normalised field similarity to `ref`,
+moving it only as a surface allows: in the plane and about the normal (`dof="plane"`),
+or also tilting it by up to `max_tilt` degrees and lifting it by up to `max_dz` A
+(`dof="plane+tilt"`).  Returns (similarity before, similarity after); `mol` is moved in
+place.  The restarts are rotations about z spread over the circle, since the in-plane
+orientation is the one thing a rule leaves open.
+
+### `plane_align(mol: Chem.Mol, pose: str='flat', height: float=2.2, anchor_height: float=2.0, ref: Optional[Chem.Mol]=None, fieldset: Optional[FieldSet]=None, refine: Optional[str]=None, restarts: int=4, seed: int=0, name: str='', _reference: Optional[_Reference]=None) -> PlanePose`
+
+Pose `mol` on the surface z = 0, in place.
+
+`pose` is `flat`, `flat-up` (the other face down), `upright` or `auto`.  `auto` builds the candidates -- flat with
+either face down and, when the molecule has an anchor atom, upright -- and keeps the one
+with the highest field similarity to `ref` (which then needs `fieldset`); without a
+reference it falls back to `flat`.  `refine` is `None`, `"plane"` or
+`"plane+tilt"`: with a reference, each candidate is refined by
+`surface_field_align` with those degrees of freedom before the choice is made.
+
+### `plane_align_dataset(mols: Sequence[Chem.Mol], names: Sequence[str], pose: str='flat', height: float=2.2, anchor_height: float=2.0, ref_index: Optional[int]=None, fieldset: Optional[FieldSet]=None, refine: Optional[str]=None, restarts: int=4, seed: int=0, ref_as_is: bool=True, progress=None) -> List[PlanePose]`
+
+Pose every molecule of a set on the surface, in place.  With `ref_index`, the molecule at
+that index is the reference the others are compared with: it is posed by the rule first
+unless `ref_as_is` is true and its coordinates are already a trusted pose.
+
+### `in_plane_rmsd(coords: np.ndarray, target: np.ndarray, mask: Optional[np.ndarray]=None) -> float`
+
+RMSD between `coords` and `target` after the best rotation about z and translation in
+the plane (Kabsch in two dimensions; z is compared as it stands).  This is the pose error a
+surface sees: the lattice site a molecule sits over is not part of it.
+
+### `height_rmsd(coords: np.ndarray, target: np.ndarray, mask: Optional[np.ndarray]=None) -> float`
+
+RMSD of the heights alone.
+
+### `rigid_rmsd(coords: np.ndarray, target: np.ndarray, mask: Optional[np.ndarray]=None) -> float`
+
+RMSD after the best rigid superposition in three dimensions: the floor a rigid pose of
+this conformation can reach, whatever the frame.
+
 ## cmfqsar.pocketalign
 
 Source: `cmfqsar/pocketalign.py`
@@ -9743,6 +9899,118 @@ is computed. A pair that cannot be compared leaves nan and a note.
 ### `describe_matrix(M: np.ndarray, names: Sequence[str], width: int=7) -> str`
 
 The matrix as a text table, for the command line.
+
+## cmfqsar.transformfield
+
+Source: `cmfqsar/transformfield.py`
+
+A matched pair as a field placed in space (plan item MC6).
+
+A matched molecular pair is usually a row in a table: a transformation, written as two group
+names, and the activity change it produced.  In a series whose molecules are in one frame the
+same pair is something else as well -- **a difference of two fields**, a local object sitting
+where the two groups differ.  Plan item MC6 asks whether that object carries the effect of the
+transformation with it: can a change measured in one series be predicted from changes measured in
+others?
+
+Plan item D5 is both the warning and the reference.  Increments fitted on one series did not
+transfer to another, and the vectors fitted on two sets agreed only to +0.89 at best.  An
+increment is a number attached to an atom type; the field difference of this module is the same
+transformation with its geometry kept, so it can tell a methyl that points into a pocket from one
+that points at the solvent.  Whether that is enough is a measurement, not an expectation.
+
+What one pair gives
+-------------------
+* Both members are in the frame of the series, so their fields are comparable with each other
+  without further work.  What the two molecules do **not** share with another series is a frame,
+  so the difference field is placed in a frame of its own: the origin at the atom of the core
+  that carries the group, the x axis along the bond to the group, and the plane fixed by one more
+  neighbour of that atom.  That frame is local and it is the same one for both members, so
+  nothing about the pair is changed by it.
+* The difference field is the field of the second group minus the field of the first, each
+  restricted to the atoms of the group itself (the mask of `cmfqsar.bioisostere`).  It is an
+  ordinary `cmfqsar.fields.MoleculeFields` with signed weights, so every kernel and every
+  display of the program applies to it.
+* The overlap kernel of two fields is bilinear, so the kernel of two difference fields is
+  signed: reversing a pair reverses its kernel row.  A ridge with no intercept therefore predicts
+  exactly the opposite change for the reverse of a pair, which is the one property such a model
+  must have.
+
+`benchmarks/run_transformfield.py` holds out whole series and asks whether the model beats
+predicting no change at all, which is the gate of the item.
+
+### `class Transformation  (dataclass)`
+
+One matched pair as a difference field in the frame of its attachment point.
+
+Attributes:
+
+- `series: str`
+- `key: Tuple[str, str]`
+- `field: MoleculeFields`
+- `delta: float`
+- `names: Tuple[str, str]` = `('', '')`
+
+### `attachment(mol, group_atoms: Sequence[int]) -> Optional[Tuple[int, int]]`
+
+(the core atom carrying the group, the group atom bonded to it), or None.
+
+`mol` is the RDKit molecule the group was cut out of.  A single cut leaves exactly one bond
+between the two pieces; anything else is not an attachment point and is refused.
+
+### `attachment_frame(mol, fields: MoleculeFields, core_atom: int, group_atom: int) -> Optional[Tuple[np.ndarray, np.ndarray]]`
+
+(origin, rotation) of the attachment point, or None where no frame exists.
+
+The origin is the core atom, the x axis points at the group, and the plane is fixed by one
+more neighbour of the core atom.  That neighbour is chosen by its atom type and then by its
+distance to the group atom, rounded, so that the two members of a pair -- which share the
+core and are superimposed -- choose the same one.
+
+### `posed(fields: MoleculeFields, atoms: Sequence[int], origin: np.ndarray, R: np.ndarray, name: str='') -> MoleculeFields`
+
+The group's own atoms, moved into the frame of its attachment point.
+
+### `pair_field(mols, fields: Sequence[MoleculeFields], pair: MatchedPair, series: str='') -> Optional[Transformation]`
+
+The difference field of one matched pair, posed, or None where no frame exists.
+
+The field is the second group minus the first, so its sign goes with `pair.delta`.
+
+### `reversed_of(t: Transformation) -> Transformation`
+
+The same pair read the other way round: the field and the change both change sign.
+
+### `both_ways(items: Sequence[Transformation]) -> List[Transformation]`
+
+Every pair in both directions, which is what makes a model of them antisymmetric.
+
+### `average_field(items: Sequence[Transformation], name: str='') -> MoleculeFields`
+
+The mean difference field of several pairs of the same transformation.
+
+A field is a sum of Gaussians, so the mean of several is again a field: its atoms are the
+atoms of all of them with the weights divided by how many there are.  That is the object plan
+item MC6 calls the transformation field, and it can be drawn like any other.
+
+### `by_transformation(items: Sequence[Transformation]) -> Dict[Tuple[str, str], List[Transformation]]`
+
+The pairs grouped by the transformation they are, in the direction they were read.
+
+### `shared(items: Sequence[Transformation], least: int=2) -> Dict[Tuple[str, str], List[str]]`
+
+The transformations seen in at least `least` different series, and in which.
+
+### `increment_table(items: Sequence[Transformation]) -> Dict[Tuple[str, str], float]`
+
+The mean measured change of every transformation, which is what D5 fitted and transferred.
+
+This is the reference the field has to beat: the transformation as a number, with no geometry
+in it at all.
+
+### `increment_predict(table: Dict[Tuple[str, str], float], items: Sequence[Transformation]) -> Tuple[np.ndarray, np.ndarray]`
+
+(the predicted change, whether the transformation was seen) for every pair.
 
 ## cmfqsar.validation
 
