@@ -20,8 +20,8 @@ the five days since produced results that the old plan had no place for:
   between molecules and a stereo-centre descriptor can (`results/chirality/`).
 * Two kernels that leave the molecule behind: the periodic autocorrelation of a crystal, measured
   on Matbench phonons (`results/matbench_phonons/`), and the in-plane invariant kernel of an
-  adsorbed molecule, measured on 72 benzimidazoles relaxed on Fe(110)
-  (`examples/corrosion_fe110/`).
+  adsorbed molecule, measured on 72 benzimidazoles and 63 quinolines relaxed on Fe(110) and on
+  OC20's DFT energies (`examples/corrosion_fe110/`).
 * A target that belongs to an atom: 13C shifts predicted from the field around the carbon
   (q² +0.97 against +0.85 for the atom-centred count), carboxylic acid pKa where the same
   construction gains nothing, and a co-field around one aromatic carbon that reproduces the
@@ -87,7 +87,7 @@ should carry the commit the manifest records.
 | 3 | **Alignment, not the kernel, and not the hyper-parameters either.** On 86 series the superposition decides fifteen times as much as the kernel, and the evidence chooses as well as cross-validation | `docs/benchmark.md` part 3, `results/alignment/`, `evidence/`, `perfield/`, `mixing/`, `pharmfields*/` | J. Chem. Inf. Model. or J. Comput.-Aided Mol. Des. | Results done; a 2D baseline still needed |
 | 4 | **Working without a frame.** The rotation-invariant autocorrelation kernel, the topomer rule and the diagnosis that says which route a series needs | README "Alignment-free, but geometry-aware", "Topomer fields", `results/topomer*/`, `diagnose/`, `chirality/`, `structure/`, `corrosion/` (the frame columns only) | J. Comput.-Aided Mol. Des. or J. Chem. Inf. Model. | Results done |
 | 5 | **Quantum-chemical fields in CMF.** They help where resonance matters and nowhere else that was measured | `results/corrosion_qm/`, `cdft_kernels/`, `anisotropic/`, `am_eu/` (the quantum rows), Hammett cited from paper 2 | J. Chem. Inf. Model. or J. Comput. Chem. | Results done |
-| 6 | **Corrosion inhibitors, application.** Fields on an aligned series beat the quantum descriptors the literature favours, and the protonation state is one state, not an ensemble | `results/corrosion_hcl/`, `protonation/`, `multitask/` (activity against adsorption energy), `examples/scaffold_tree_export.py` | Corrosion Science or J. Mol. Liq. | Results done |
+| 6 | **Corrosion inhibitors: what the literature data can support.** The pooled potency of a scaffold node is reproducible between laboratories (r 0.64) yet no model reaches a third of that ceiling, because the node is a set of series-specific trends with no shared scale; within one protocol fields and frontier-orbital descriptors are level, and a computed adsorption energy predicts nothing of inhibition; the protonation state is one state, not an ensemble | `examples/corrosion_fe110/` (the potency, mixed-model, leave-paper-out, descriptor-baseline and E_ads rows), `results/corrosion_hcl/`, `protonation/`, `examples/scaffold_tree_export.py` | Corrosion Science or J. Mol. Liq. | Results done |
 | 7 | **How much of a co-field is real.** The co-field has a closed-form error bar; masked by it, it is a usable pharmacophore and a map of SAR transfer | `results/cofield_error/`, `query/`, `transfer/`, `cases/`, README "Three series, worked through", Shapley and field-difference sections | J. Chem. Inf. Model. | Results done; needs a chemist's judgement of the cases |
 | 8 | **How certain is one prediction.** Conformal intervals keep their coverage, the GP variance does not, and no estimate orders the errors well | `results/conformal/`, `errorpred/`, `bound/`, `ranking/`, README "Chance, domain and uncertainty" | J. Chem. Inf. Model. or J. Cheminformatics | Results done |
 | 9 | **Several endpoints on one kernel: the selectivity co-field.** Selectivity is a difference of co-fields; sharing helps only when the endpoints share molecules unevenly; an endpoint nobody measured can be predicted from its neighbours | `results/selectivity/`, `multitask/` (method rows), `two_endpoints/`, `tasks/`, `cmfqsar/multitask.py`; the 2003 J. Med. Chem. set | J. Med. Chem. (perspective) or J. Chem. Inf. Model. | Results done |
@@ -95,7 +95,7 @@ should carry the commit the manifest records.
 | 11 | **Virtual screening with measured inactives.** One-class field descriptions lose to a fingerprint on LIT-PCBA; the same kernel with the inactives as unlabelled data draws level; the posing rule is half of any such figure | `results/screening/`, `fusion/`, `examples/litpcba/`, `cmfqsar/pu.py`, the one-class and GP-classifier sections of the README | J. Chem. Inf. Model. or J. Cheminformatics | Results done; two targets only |
 | 12 | **Which molecule to make next.** A confidence bound finds hits and a variance rule improves the model, and the two are different tasks; the substituent loop ranks held-out groups at ρ +0.4 | `results/active/`, `design/`, `guest_design/`, `cmfqsar/design.py` | J. Chem. Inf. Model. or Mol. Inform. | Results done |
 | 13 | **Host-guest binding without a frame.** Seven cyclodextrin tables, where the invariant kernel beats the alignment, names the group that enters the cavity, and a one-body complementarity score points the wrong way | `results/cyclodextrin/`, `guest_atoms/`, `host_pocket/`, `examples/cyclodextrin/`; the seven-host sharing cited from paper 9 | Phys. Chem. Chem. Phys., J. Phys. Chem. B or J. Incl. Phenom. | Results done |
-| 14 | **Continuous molecular fields of crystals and surfaces.** The periodic autocorrelation on Matbench phonons, and the in-plane invariant kernel that keeps the height of an adsorbate and nothing else | `results/matbench_phonons/`, `cmfqsar/periodic.py`, `examples/corrosion_fe110/surface_kernel_eads.py`, the OC20 anchor | Digital Discovery, J. Chem. Theory Comput. or npj Comput. Mater. | Needs two more Matbench tasks and the OC20 result stated |
+| 14 | **Continuous molecular fields of crystals and surfaces.** The periodic autocorrelation on Matbench phonons, and the in-plane invariant kernel that keeps the height of an adsorbate and nothing else: as accurate as the best aligned model with no alignment, better on one node and level on another and on OC20 | `results/matbench_phonons/`, `cmfqsar/periodic.py`, `examples/corrosion_fe110/surface_kernel_eads*.csv`, `surface_channels_eads.py`, `oc20_anchor.py` | Digital Discovery, J. Chem. Theory Comput. or npj Comput. Mater. | Needs two more Matbench tasks and a DFT anchor on the benzimidazole structures |
 | 15 | **Review.** The CMF series from 2009 to the present, the successor of the 2014 Springer chapter | papers 1 to 14 | WIREs Comput. Mol. Sci. or J. Comput.-Aided Mol. Des. (perspective) | Year 2 |
 
 Short communications, written only if a journal asks for a separate note: the fourth dimension
@@ -174,15 +174,36 @@ third decimal (+0.803 against +0.803) and the quantum stage adds nothing.
 Before submission: bootstrap intervals on every corrosion comparison, since with 20 to 29
 molecules the differences are inside the resolution and the paper must say so with numbers.
 
-### 6. Corrosion inhibitors, application
+### 6. Corrosion inhibitors: what the literature data can support
 
-Narrowed to the chemistry: scaffold-tree series as a way to define congeneric sets from a 2D
-database, the protonation state at pH 0 (one state; the pKa-weighted ensemble is worse, +0.261
-against +0.324, because only 1% of the molecules are mixtures and independent-site pKa picks
-the state badly), the co-field interpretation of the best series, and the corrective finding that
-fields on an aligned series beat the quantum descriptors the corrosion-QSAR literature favours.
-The two-endpoint fit of potency against adsorption energy (`results/multitask/`) belongs here as
-the chemistry result that the two measure different things; the method is paper 9's.
+A critical paper rather than an application, after the benzimidazole node was taken apart
+(`examples/corrosion_fe110/README.md`).  Its spine is the per-experiment database (1600
+measurements, 62 articles) behind one scaffold node: a compound's potency agrees between
+laboratories at r 0.64, so a perfect model of the pooled medians could reach q² 0.6, yet no
+model of any kind passes 0.2 on the 73 compounds, and 0.4 is the most that size and
+lipophilicity descriptors with a random forest reach.  The reason is measured: a mixed model
+with compound and paper effects (paper offsets of sd 1.05 against a within-paper residual of
+0.77) does not make the pooled target more predictable, the 39 compounds that link the
+laboratories are unpredictable in every frame, and centred potencies with whole papers held
+out show that the structure-potency trend of one series does not transfer to another.  Within
+one laboratory's series the picture is the conventional one: CMF on the 18 compounds of Hu
+2011 reaches q² 0.66, the frontier-orbital descriptors the corrosion literature favours 0.65
+to 0.80, level with the fields rather than beaten by them, and ΔN alone correlates at 0.9.
+The computed adsorption energy on Fe(110) (paper 14's tier) predicts nothing of inhibition:
+r 0.14 with the potency, no gain as a descriptor or as a second task (the two-endpoint fit
+chooses ρ = 0 in every fold), Spearman 0.07 for the ranking of analogues within a series.
+
+Kept from the earlier plan: scaffold-tree series as the way to define congeneric sets from a
+2D database, and the protonation state at pH 0 as one state (the pKa-weighted ensemble is
+worse, +0.261 against +0.324, because only 1% of the molecules are mixtures and
+independent-site pKa picks the state badly).  Dropped: the claim that fields beat the quantum
+descriptors; where the earlier series showed it, the comparison must be redone with the
+descriptor baselines of `descriptor_baselines.py` (gas-phase indices, ridge, kernel ridge and
+a forest, same folds) before it is stated.
+
+Before submission: the same reproducibility and leave-paper-out analysis on a second node
+(the per-experiment rows of the quinoline node are a query away), and one single-protocol
+series beyond Hu 2011 with ten or more compounds, if the database has one.
 
 Papers 4, 5, 6 and 14 all use corrosion data. The rule: paper 4 takes the frame columns, paper 5
 the quantum columns, paper 6 the chemistry, paper 14 the Fe(110) adsorption energies.
@@ -293,14 +314,28 @@ dummy predictor, 68 for a random forest and 29 for the best graph network, and t
 worth more than the number: the inverse square root of the atomic mass is the field the
 spectrum asks for, the taper beats a hard cutoff, and the background subtraction argued for on
 physical grounds costs accuracy. The in-plane invariant kernel keeps the height of an adsorbate
-and discards its lateral position: on 72 benzimidazoles on Fe(110) it reaches q² 0.655 where
-the overlap kernel reaches 0.52 with or without a lateral registration and the fully invariant
-kernel 0.11, and shuffling the poses in the plane changes it by nothing.
+and discards its lateral position, and the claim it supports is bounded on three sides
+(`examples/corrosion_fe110/README.md`): on 72 benzimidazoles relaxed on Fe(110) with UMA it
+reaches q² 0.66 where the overlap kernel reaches 0.52 with or without a lateral registration;
+on 63 quinolines it is level with the unregistered overlap kernel (0.52 to 0.58 against 0.56)
+and above the registered one (0.47); on OC20's DFT energies of small fragments on copper it is
+level with the other geometric representations (0.76 against 0.71 for the overlap and 0.82 for
+the fully invariant kernel) and far below the identity of the fragment (0.92).  What holds
+every time: shuffling the poses in the plane changes nothing, scrambled targets give nothing,
+and the fully invariant kernel, which throws the height away, loses the signal on both nodes
+(0.11 and 0.02).  The model read in its own channels (`surface_channels_eads.png`) says why:
+density 2 to 3 Å above the metal strengthens adsorption in every field pair and density at 4
+to 6 Å weakens it.  "Alignment-free at no cost, with the height as the carrier" is the
+statement; "better" is not.  The same README holds the physics of the tier: the OC20 head of
+UMA makes the ideal Fe(110) surface a saddle point (the slab is kept rigid), has no
+dispersion (the poses are docked before they are relaxed), and its energies are learnable at
+q² 0.5 by the overlap kernel in the surface frame but say nothing about inhibition (paper 6).
 
 Before submission: two more Matbench tasks (formation energy and band gap are the natural ones)
-so the kernel is placed on the leaderboard rather than on one task; the OC20 anchor stated
-(the surface kernel learns DFT adsorption energies at the level of the other representations,
-not above them); a co-author from materials science for the reading of the co-patterns.
+so the kernel is placed on the leaderboard rather than on one task; a DFT anchor on the
+benzimidazole structures themselves (VASP single points on eight to ten UMA geometries), since
+OC20's fragments could not supply one; a co-author from materials science for the reading of
+the co-patterns.
 
 ### 15. Review
 
@@ -336,7 +371,7 @@ time runs out, the papers that fold into others are 12 (into 8), 13 (into 4 and 
 | 3 | 2D baseline on 86 sets, Wilcoxon tests, paired-difference figure | days |
 | 4 | Nothing; the enantiomer limitation is stated | none |
 | 5 | Bootstrap intervals on the corrosion comparisons | days |
-| 6 | Nothing beyond the co-field figures of the best series | days |
+| 6 | The reproducibility and leave-paper-out analysis on a second node; the descriptor baselines rerun on the earlier series | days |
 | 7 | A medicinal chemist's judgement of three cases | a co-author |
 | 8 | Nothing | none |
 | 9 | Nothing; the 2003 set is rebuilt and modelled | none |
@@ -344,7 +379,7 @@ time runs out, the papers that fold into others are 12 (into 8), 13 (into 4 and 
 | 11 | Three more LIT-PCBA targets | one to two weeks of runs |
 | 12 | Nothing | none |
 | 13 | Nothing | none |
-| 14 | Two Matbench tasks, the OC20 statement, a materials co-author | weeks, and a co-author |
+| 14 | Two Matbench tasks, a VASP anchor on the benzimidazole structures, a materials co-author | weeks, and a co-author |
 
 ## Risks
 
