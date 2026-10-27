@@ -1268,7 +1268,72 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   asked for, and the measurement says what it costs.
   **Not done:** a conformer-generating matcher (the benchmark matches molecules already posed in
   the training frame, which overstates the quality of any query), and the MOE and Phase formats.
-
+* **F6. Kernel canonical correlation analysis: what the field sees that another view does not.**
+  A view is one description of the same molecules -- one kernel over them. The program builds
+  several: the five-field CMF kernel, the quantum fields of `cmfqsar/cdft.py`, the ECFP4
+  Tanimoto kernel of `benchmarks/run_fusion.py`, the pocket complementarity of
+  `cmfqsar/complementarity.py`. What no tool here answers is how much two of them say the same
+  thing, and, more useful, **which part of the field is the part a second view does not
+  contain**. Canonical correlation analysis (CCA) answers exactly that question: given two
+  descriptions of the same objects it finds the pair of directions, one in each description,
+  whose projections correlate most strongly, then the next such pair uncorrelated with the
+  first, and so on. The kernel form (KCCA) does it with kernels in place of coordinates, which
+  is what CMF needs because its description of a molecule has no coordinate vector.
+  With centred kernels `K` and `L` on the same molecules, the pairs are the solutions of the
+  generalised eigenproblem `[[0, KL], [LK, 0]] v = rho [[K^2 + c K, 0], [0, L^2 + c L]] v`,
+  where `rho` is the canonical correlation and `c` is a ridge. The ridge is not an option. With
+  `c = 0` and invertible kernels every canonical correlation is exactly 1 and the directions
+  are arbitrary, which is the classical failure of KCCA and the reason this item is measured
+  against a permutation control rather than against its own correlations.
+  Two properties make it a CMF tool rather than a general one. A canonical direction on the
+  field side is a vector of dual coefficients, the same object as a fitted model's, so
+  `CMFModel.cofield_coefficients` turns each component into a co-field with no new
+  interpretation code; rule 2 is satisfied because the direction is linear in the field. And
+  with the features of B6 both sides become matrices of m columns and the eigenproblem is m by
+  m, so the cost does not grow with the number of molecules.
+  **The degenerate case has to be stated first, because it is the obvious way to misuse the
+  method.** With the activity as the second view, that view has one dimension, and CCA with a
+  one-dimensional second view returns the ridge regression of the activity on the first view,
+  up to a scale factor. "KCCA-QSAR" in that sense is kernel ridge regression under another
+  name and predicts nothing new; the only use of the case here is as a correctness check, that
+  the first canonical direction reproduces what `cmf build` fits at a matched ridge. The method
+  earns its place only when both views are rich.
+  **The pairing to measure first** is the CMF kernel against the ECFP4 Tanimoto kernel, because
+  it puts CMF's own premise to the test. The field is three-dimensional and the fingerprint is
+  not; the canonical correlations say how much of the field space the fingerprint already
+  holds, and the field directions that correlate with nothing on the fingerprint side are the
+  part that is genuinely three-dimensional. Those directions have co-fields, so the answer is
+  not a number but a picture of where the three-dimensional information sits. Both kernels
+  exist today, neither needs an alignment that the repository does not have, and the eight
+  Sutherland sets carry them.
+  Needed: `cmfqsar/kcca.py` with the centred regularised eigenproblem, solved on the n by n
+  kernels for a small set and in B6's feature space for a large one, with the ridge chosen on
+  folds by the **held-out** correlation and never by the training correlation; a whole-molecule
+  Tanimoto kernel in the library (`cmfqsar/bioisostere.py` has one for substituents only, and
+  `benchmarks/run_fusion.py` has `ecfp4_similarity` which should move into the library); a
+  permutation null; the F3 cosine to compare the two co-fields of one component; and
+  `benchmarks/run_kcca.py`. Two to three weeks, most of it measurement.
+  Gate, in three parts, each with the interval of rule 4. (i) **The correlations are real**: the
+  canonical correlations on held-out molecules stay above the correlations obtained when the
+  pairing between the two views is shuffled. (ii) **The uncorrelated part carries activity**: a
+  model built on the field directions that the fingerprint does not contain predicts activity
+  better than a model built on the same number of directions that it does contain. (iii) **The
+  components are readable**: the two co-fields of one shared component resemble each other, by
+  the F3 cosine, more than the co-fields of two components taken at random do.
+  What a failure settles is worth as much as a success. If every field direction that carries
+  activity is also in the fingerprint, then on these sets the three-dimensional field adds
+  nothing a two-dimensional descriptor does not, which is a measured answer of the same kind as
+  D5 and belongs in the README whichever way it comes out. If part (i) fails, the ridge was too
+  small and the correlations were the degeneracy above, not chemistry.
+  **Other pairings, in the order they become possible.** The quantum fields against the
+  empirical ones, on the corrosion sets where both are computed and cached
+  (`benchmarks/run_cdft_kernels.py`), which asks what the conceptual-DFT field adds beyond the
+  shape and charge the empirical fields already carry. The ligand field against the pocket
+  field, which is the classical chemogenomics use and the most valuable one, and which this
+  repository cannot do yet: `examples/pockets/` holds one pocket per data set, so a kernel over
+  targets needs several targets whose ligands share a frame, and that is the alignment problem
+  of part C. The item is deliberately not a learning item: using the shared space as features
+  for a predictor belongs with E4 and E6 and is not claimed here.
 ## G. The application and the tool (continuous)
 
 * **G1. Subcommands.** Alignment is spread over flags of `build` and `predict` and the `hetero`
@@ -2753,14 +2818,14 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
-| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
+| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, F6 (kernel canonical correlation analysis) once a second view is wanted; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
 F2 needs the GP view that B4 makes the default; D9 waits for D4 and, with D10, for the
 verdict of D8; in part I the substituent items wait for the topomer rule E3 measured, MC9 for
-the variance field of D10, MC10 for MC5 and MC9 together, and MC11 for the panel data of MC4.
+the variance field of D10, MC10 for MC5 and MC9 together, and MC11 for the panel data of MC4. F6 needs the cosine of F3 to compare the two co-fields of a component, and the features of B6 to run on a set large enough for the question to matter.
 
 ## What is not planned
 
