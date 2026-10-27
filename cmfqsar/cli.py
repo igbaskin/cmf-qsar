@@ -1257,6 +1257,84 @@ def _conformal_half_width(model, level=0.9):
     return float("nan"), "unknown"
 
 
+def cmd_lowrank(args):
+    """Fit a model in the space of a few hundred landmarks instead of the molecules (item B6)."""
+    import numpy as np
+
+    from cmfqsar import lowrank as LR
+    from cmfqsar.model import r2_score, rmse
+
+    t0 = time.time()
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    y = np.asarray(ds.activity, float)
+    keep = np.isfinite(y)
+    if keep.sum() < 5:
+        raise SystemExit("fewer than five molecules carry an activity")
+    mols = [m for m, k in zip(ds.mols, keep) if k]
+    names = [n for n, k in zip(ds.names, keep) if k]
+    y = y[keep]
+    physchem, atom_props = _split_fields(args.fields)
+    fieldset = FieldSet.create(physchem=physchem, atom_properties=atom_props,
+                               alpha=float(args.alpha), charge_model=args.charges,
+                               param_scheme=args.param)
+    table = AtomTable.from_molecules([build_fields(m, fieldset, n)
+                                      for m, n in zip(mols, names)])
+    specs = [s for s in fieldset.specs if s.enabled]
+    print(f"{len(y)} molecules from {args.dataset}, {len(specs)} fields at alpha "
+          f"{args.alpha:g}")
+
+    kind, _, size = str(args.landmarks).partition(":")
+    if kind == "grid":
+        spacing = float(size or 2.0)
+        Z = LR.gaussian_centres(table, spacing, len(specs))
+        how = f"a grid of Gaussian centres {spacing:g} A apart"
+    elif kind == "molecules":
+        want = int(size or 80)
+        Z, rows = LR.landmark_molecules(table, want, seed=args.seed)
+        how = f"{Z.n_mol} of the molecules themselves"
+    else:
+        raise SystemExit(f"--landmarks takes grid:SPACING or molecules:N, not {args.landmarks!r}")
+    low = LR.build(Z, fieldset, normalize=True, kind=kind)
+    print(f"  {how}: {Z.n_mol} landmarks, {low.rank} columns of features")
+
+    g = LR.gram(low, table, y, block=args.block)
+    exact_bytes = LR.memory(len(y), low.rank, len(specs), exact=True)
+    low_bytes = LR.memory(len(y), low.rank, len(specs))
+    print(f"  the fit needs {low_bytes / 1e6:.1f} MB where the exact kernels need "
+          f"{exact_bytes / 1e6:.1f} MB"
+          + ("" if low_bytes <= exact_bytes else
+             f"; this set is small enough that the exact kernel is the cheaper of the two, and "
+             f"the two cross at about {low.rank} molecules"))
+
+    lams = _floats(args.lams) if args.lams else (1e-3, 1e-2, 0.1, 1.0)
+    rows = []
+    for lam in lams:
+        ev = LR.log_evidence(g, float(lam))
+        pred, _which = LR.cross_validate(low, table, y, float(lam), folds=args.folds,
+                                         seed=args.seed, block=args.block)
+        rows.append((float(lam), float(ev), float(r2_score(y, pred)), float(rmse(y, pred))))
+        print(f"    ridge {lam:<8g} evidence {ev:+.2f}  q2 {rows[-1][2]:+.3f}  "
+              f"RMSEcv {rows[-1][3]:.3f}")
+    pick = max(rows, key=lambda r: r[1] if args.select == "evidence" else r[2])
+    lam = pick[0]
+    print(f"  chosen by the {args.select}: ridge {lam:g}, q2 {pick[2]:+.3f}, "
+          f"RMSEcv {pick[3]:.3f}")
+
+    w, b = LR.fit(g, lam)
+    Phi = low.transform(table, block=args.block)
+    fitted = LR.predict(Phi, w, b)
+    print(f"  fit: r2 {r2_score(y, fitted):+.3f}, RMSE {rmse(y, fitted):.3f}")
+    if args.csv:
+        import csv
+        with open(args.csv, "w", encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(["name", "measured", "fitted"])
+            for n, a, p in zip(names, y, fitted):
+                writer.writerow([n, f"{a:.4f}", f"{p:.4f}"])
+        print(f"  {len(names)} rows written to {args.csv}")
+    print(f"Elapsed {time.time() - t0:.1f} s")
+
+
 def cmd_isosteres(args):
     """Which groups are interchangeable at a position, by the co-field (plan item MC1)."""
     import numpy as np
@@ -3995,6 +4073,35 @@ def main(argv=None):
                          "'selectivity' is the difference of the two, which is the map of what "
                          "separates them (plan item SC1)")
     cf.set_defaults(func=cmd_cofield)
+
+    lr = sub.add_parser("lowrank",
+                        help="fit in the space of a few hundred landmarks instead of the "
+                             "molecules, for a set too large for the exact kernel (item B6)")
+    lr.add_argument("dataset")
+    lr.add_argument("--activity", default=None, metavar="PROP")
+    lr.add_argument("--landmarks", default="grid:2.0", metavar="KIND:SIZE",
+                    help="grid:SPACING for a grid of Gaussian centres that many angstroms "
+                         "apart, or molecules:N for N of the molecules themselves. A grid "
+                         "spans the field only while its spacing is not much larger than the "
+                         "field's own width, so a narrow field wants molecules (default "
+                         "grid:2.0)")
+    lr.add_argument("--alpha", type=float, default=0.5,
+                    help="the attenuation; one value, since the point of this path is a large "
+                         "set and not a grid search (default 0.5)")
+    lr.add_argument("--lams", default=None, metavar="L1,L2",
+                    help="the ridges to try (default 0.001,0.01,0.1,1)")
+    lr.add_argument("--select", default="evidence", choices=["evidence", "cv"],
+                    help="how the ridge is chosen (default evidence, which costs no folds)")
+    lr.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
+    lr.add_argument("--charges", default="gasteiger")
+    lr.add_argument("--param", default="default")
+    lr.add_argument("--folds", type=int, default=10)
+    lr.add_argument("--seed", type=int, default=0)
+    lr.add_argument("--block", type=int, default=256, metavar="N",
+                    help="molecules per block when the features are built; the memory of a fit "
+                         "does not depend on it (default 256)")
+    lr.add_argument("--csv", default=None, metavar="FILE")
+    lr.set_defaults(func=cmd_lowrank)
 
     bi = sub.add_parser("isosteres",
                         help="which groups are interchangeable at a position, by the co-field "

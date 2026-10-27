@@ -2986,6 +2986,78 @@ shifts by +0.000, because it never looks at a coordinate. That is the generous p
 the background sets of the previous section are given, and the difference is a measurement of how
 much a field-based screening figure depends on how its decoys were placed.
 
+## Fitting in the space of the landmarks
+
+The exact model holds one n by n matrix per field and factorises the n by n joint kernel. On a
+32 GB machine that stops at ten to twenty thousand molecules: five field kernels of 10 000
+molecules are 4 GB. Memory is the limit and not time. Plan item B6 assessed the ways out, found
+that one of them fits this kernel, and `cmfqsar/lowrank.py` is that one.
+
+**The construction.** Choose m landmarks Z and replace every field kernel by
+
+    K(X, X) ~ K(X, Z) K(Z, Z)^+ K(Z, X),
+
+the Nystrom approximation. That is the Gram matrix of the features ``Phi = K(X, Z) W`` with
+``W W^T = K(Z, Z)^+``, so the model can be fitted in the space of the m columns instead of the
+space of the n molecules: `(Phi^T Phi + lam I) w = Phi^T y` is the same ridge as
+`(K + lam I) a = y`, in m by m memory. Nothing new is computed -- `K(X, Z)` is what the kernel
+module already produces -- and `lowrank.gram` accumulates `Phi^T Phi` and `Phi^T y` over blocks
+of molecules, so the features of the whole set are never held at once.
+
+**Two kinds of landmark.** `gaussian_centres` puts a cubic grid of one-atom landmarks over the
+frame: the rank such a basis needs depends on the frame and the width of the field, not on how
+many molecules there are, which is what makes the method worth having. `landmark_molecules`
+takes a subset of the molecules themselves, which has no width problem but is tied to the
+training set.
+
+**What stays exact.** A molecule's self-kernel is its own integral and costs nothing, so it is
+never approximated. That matters twice. The cosine normalisation divides by the exact diagonal;
+and the posterior variance keeps the exact k(x, x):
+
+    var(x) = k(x,x) - phi^T phi + lam phi^T (Phi^T Phi + lam I)^-1 phi,
+
+which is the exact Gaussian-process variance with K replaced by its approximation. Without that
+first pair of terms -- the plain subset-of-regressors form -- the variance falls towards zero
+far from the landmarks, which is the opposite of what a lower confidence bound needs.
+
+**The interpretation survives.** A fit in the feature space is a dual fit whose coefficients sit
+on the landmarks, so `lowrank.cofield_gaussians` returns the same three arrays
+(centres, coefficients, widths) that `CMFModel.cofield_coefficients` returns for an exact model,
+with the index set changed from training molecules to landmarks. The co-field is drawn, read and
+decomposed exactly as before.
+
+**Measured** by `benchmarks/run_lowrank.py` on the eight Sutherland sets:
+
+* **It is the exact model when nothing is approximated.** With every molecule its own landmark,
+  the kernel, the predictions, the log evidence, the posterior variance and the co-field on a
+  grid all agree with the exact path to 2e-11 or better.
+* **The approximation costs little on a broad field.** At an attenuation of 0.5, a grid of
+  Gaussian centres 2 A apart is within 0.004 of the exact q2 on every set, and 20 to 80
+  landmark molecules within 0.076. The attenuation decides this, not the number of molecules:
+  plan item B6 measured 0.01 to 0.04 of q2 lost at an attenuation of 2 and above with the same
+  spacing.
+* **What it saves is memory, and only beyond the crossing point.** At 361 molecules -- the
+  largest aligned set here -- the exact kernels are 6 MB and the low-rank fit is 13 MB, because
+  the rank of a 2 A grid over that frame is 1275. The low-rank memory does not grow with the
+  molecules at all, so the two cross at about 1275 molecules and everything beyond that is
+  saving. It is also eight times faster at that size, which was not the point: a kernel entry
+  against a one-atom centre costs a thirtieth of one against a whole molecule.
+* **The variance survives.** On molecules the landmarks do not reach, the form that keeps the
+  self-kernel is off by 0.013 against the exact variance where the form that drops it is off by
+  0.025.
+
+```bash
+cmf lowrank series.sdf --activity pKi --landmarks grid:2.0
+cmf lowrank series.sdf --activity pKi --landmarks molecules:200 --select cv
+```
+
+**What is not done.** The path is a command of its own and not a flag on `build`, so a low-rank
+model cannot yet be saved, predicted from or opened in the application; the landmarks are a grid
+or whole molecules, not the atoms of a subset, which is the case between the two that a narrow
+field wants; the inducing Gaussians take the field's own width; and the largest aligned set in
+the repository is 361 molecules, so the saving is shown where it is not yet needed. That last
+one is the alignment problem of the next part of the plan and not this item's to solve.
+
 ## Screening a library that does not fit in memory
 
 Everything above loads a data set, builds every molecule's fields and keeps them. That is right
@@ -5398,6 +5470,7 @@ not every option.
 | `cluster` | cluster a set by its field kernel (spectral clustering) |
 | `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
 | `local` | a model over atoms: the field around an atom against a count around it |
+| `lowrank` | fit in the space of a few hundred landmarks, for a set too large for the exact kernel |
 | `isosteres` | which groups are interchangeable at a position, by the co-field |
 | `restriction` | score a ring closure: how much of the field that matters stops moving |
 | `unalign` | give every molecule a random pose, the control experiment |

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 82 modules, 143 classes with 485 public methods, and 657 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 83 modules, 145 classes with 487 public methods, and 671 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -67,6 +67,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.localalign](#cmfqsarlocalalign) | Local alignment: an environment posed on its centre and first shell (plan item LP3). |
 | [cmfqsar.localenv](#cmfqsarlocalenv) | Atom-centred environments and the invariant local kernel (plan item LP2). |
 | [cmfqsar.locallarge](#cmfqsarlocallarge) | Many atoms at once: the local kernel without a kernel matrix (plan item LP5). |
+| [cmfqsar.lowrank](#cmfqsarlowrank) | Low-rank kernels for large training sets (plan item B6). |
 | [cmfqsar.mil](#cmfqsarmil) | Multi-instance learning over conformations: let the model choose the pose. |
 | [cmfqsar.mixing](#cmfqsarmixing) | A posterior over the field weights (plan item E6). |
 | [cmfqsar.mmd](#cmfqsarmmd) | Is this set of molecules like that one? |
@@ -1188,6 +1189,10 @@ Score a library block by block, never holding more than one block of it.
 ### `cmd_align(args)`
 
 Put a set of molecules in one frame, by whichever of the four criteria is asked for.
+
+### `cmd_lowrank(args)`
+
+Fit a model in the space of a few hundred landmarks instead of the molecules (item B6).
 
 ### `cmd_isosteres(args)`
 
@@ -6124,6 +6129,181 @@ This is the route plan item LP5 names, and it is needed for the **overlap** kern
 kernel it is not needed at all: that kernel has 255 features and the primal form above is
 exact.  The pseudo-inverse is taken through a symmetric eigendecomposition, which is what
 keeps a landmark set with near-duplicate members from blowing the approximation up.
+
+## cmfqsar.lowrank
+
+Source: `cmfqsar/lowrank.py`
+
+Low-rank kernels for large training sets (plan item B6).
+
+The exact model holds one n by n matrix per field and factorises the n by n joint kernel.  On a
+32 GB machine that stops at ten to twenty thousand molecules, and memory is the limit rather
+than time.  Plan item B6 assessed the ways out and measured one of them; this module implements
+it.
+
+**The Nystrom approximation.**  Choose m landmarks Z -- a grid of Gaussian centres in the common
+frame, or a subset of the training molecules -- and replace every field kernel by
+
+    K(X, X) ~ K(X, Z) K(Z, Z)^+ K(Z, X).
+
+That is the Gram matrix of the **features** `Phi = K(X, Z) W` with `W = V diag(w)^(-1/2)`
+from the eigendecomposition of K(Z, Z), so the model can be fitted in the space of the m columns
+instead of the space of the n molecules.  Nothing new has to be computed: `K(X, Z)` is what
+`cmfqsar.kernels.kernel_matrices` already produces and what `cmfqsar.screen` already
+streams a block at a time.
+
+What it costs and what it saves:
+
+    exact      n*n per field, n^3 to factorise      five fields of 10 000 molecules: 4 GB
+    low rank   n*m per field, m^3 to factorise      the same with 300 landmarks: 0.12 GB
+
+and the n by m features need never be held at once: `gram` accumulates `Phi^T Phi` and
+`Phi^T y` over blocks of molecules, so the memory of a fit is m by m whatever n is.
+
+**What stays exact.**  The self-kernel K(x, x) of a molecule is one molecule's own integral, so
+it costs nothing and is never approximated here.  That matters twice: the cosine normalisation
+divides by the exact diagonal, and the posterior variance keeps the exact `k(x, x)`, which is
+what stops it collapsing far from the landmarks.  Writing the variance out,
+
+    var(x) = k(x,x) - phi^T phi + lam * phi^T (Phi^T Phi + lam I)^-1 phi,
+
+which is the exact Gaussian-process variance with K replaced by its Nystrom approximation, and
+is the deterministic-training-conditional form of the literature.
+
+**What this module is not.**  The approximation is only as good as the landmarks, and plan item
+B6 measured where that fails: a grid of Gaussian centres spans the field while its spacing is not
+much larger than the field's own width, so at an attenuation of 2 or more a Sutherland-sized
+frame would need tens of thousands of centres.  Landmark molecules have no width problem.
+`gaussian_centres` and `landmark_molecules` build the two kinds and
+`benchmarks/run_lowrank.py` measures what each costs in accuracy.
+
+### `class LowRank  (dataclass)`
+
+The landmarks and the whitening that turn a molecule into a row of features.
+
+`transform` gives the (molecules, columns) matrix whose inner products are the approximate
+joint kernel, which is all the rest of the model needs.
+
+Attributes:
+
+- `landmarks: AtomTable`
+- `specs: Sequence[object]`
+- `whiteners: List[np.ndarray]`
+- `weights: np.ndarray`
+- `normalize: bool` = `True`
+- `self_landmarks: Optional[np.ndarray]` = `None`
+- `kind: str` = `'landmarks'`
+
+#### `LowRank.rank` -> int  (property)
+
+#### `LowRank.transform(table: AtomTable, block: int=BLOCK, progress=None) -> np.ndarray`
+
+The feature rows of every molecule of `table`, a block of molecules at a time.
+
+### `class Gram  (dataclass)`
+
+What a fit needs from the whole training set, in m by m memory.
+
+Attributes:
+
+- `PtP: np.ndarray`
+- `Pty: np.ndarray`
+- `Pt1: np.ndarray`
+- `n: int`
+- `sum_y: float`
+- `yty: float`
+
+### `gaussian_centres(table: AtomTable, spacing: float, n_fields: int, radius: float=CENTRE_RADIUS) -> AtomTable`
+
+A cubic grid of one-atom landmarks of unit weight covering the atoms of `table`.
+
+A centre further than one spacing from every atom carries nothing and is left out.  The rank
+such a basis needs depends on the frame and the width of the field, not on how many
+molecules there are, which is the property that makes the approximation worth having.
+
+### `landmark_molecules(table: AtomTable, n: int, seed: Optional[int]=0) -> Tuple[AtomTable, np.ndarray]`
+
+`n` of the molecules themselves as landmarks, drawn at random without replacement.
+
+Molecules have no width problem: whatever the attenuation, a molecule's own field is in the
+span of the molecules.  The price is that the landmarks are tied to the training set.
+
+### `whitener(K_zz: np.ndarray, rcond: float=RCOND) -> np.ndarray`
+
+`W` with `W W^T = K(Z, Z)^+`, from a symmetric eigendecomposition.
+
+The pseudo-inverse is what keeps a landmark set with near-duplicate members from blowing the
+approximation up: an eigenvalue below `rcond` of the largest is dropped rather than divided
+by.
+
+### `build(landmarks: AtomTable, fieldset: FieldSet, scale: Optional[Sequence[float]]=None, normalize: bool=True, rcond: float=RCOND, kind: str='landmarks') -> LowRank`
+
+The feature map of one landmark set, ready to transform any molecule in the same frame.
+
+### `gram(low: LowRank, table: AtomTable, y: Sequence[float], block: int=BLOCK, progress=None) -> Gram`
+
+Accumulate `Phi^T Phi`, `Phi^T y` and `Phi^T 1` over blocks of molecules.
+
+The features of the whole set are never held at once, which is the point of the item: the
+memory of a fit is the rank squared, whatever the number of molecules.
+
+### `fit(g: Gram, lam: float, fit_bias: bool=True) -> Tuple[np.ndarray, float]`
+
+(the weights over the features, the bias) of the ridge with this Gram.
+
+The dual ridge `(K + lam I) a = y` with `K = Phi Phi^T` is the primal ridge
+`(Phi^T Phi + lam I) w = Phi^T y` with `w = Phi^T a`: the same model, m by m instead of
+n by n.  The bias is the constant the bordered system of the exact solver fits, which here
+is one more row and column.
+
+### `predict(Phi: np.ndarray, w: np.ndarray, b: float=0.0) -> np.ndarray`
+
+### `variance(g: Gram, Phi: np.ndarray, lam: float, k_self: Optional[Sequence[float]]=None) -> np.ndarray`
+
+The posterior variance of every row of `Phi`, with the exact self-kernel kept.
+
+`var = k(x,x) - phi^T phi + lam phi^T (Phi^T Phi + lam I)^-1 phi`.  The first two terms
+are what the landmarks do not span, and they are why this does not fall to zero far from
+them; with `k_self` left out they are dropped and what is left is the plain subset-of-
+regressors variance, which does.
+
+### `log_evidence(g: Gram, lam: float, fit_bias: bool=True, profile: bool=True) -> float`
+
+The log marginal likelihood through the Woodbury identity.
+
+The same quantity `cmfqsar.evidence.log_evidence` computes from the n by n kernel,
+with `(Phi Phi^T + lam I)^-1 = (I - Phi (Phi^T Phi + lam I)^-1 Phi^T) / lam` and
+`log|Phi Phi^T + lam I| = log|Phi^T Phi + lam I| + (n - m) log lam`, so it costs m^3 and
+not n^3.  The conventions -- the constant mean marginalised, the amplitude profiled out --
+are the exact function's, so the two values may be compared.
+
+### `memory(n: int, m: int, n_fields: int, exact: bool=False) -> float`
+
+Bytes the kernels of a fit need, for the exact form and for this one.
+
+### `cross_validate(low: LowRank, table: AtomTable, y: Sequence[float], lam: float, folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, block: int=BLOCK) -> Tuple[np.ndarray, np.ndarray]`
+
+(out-of-fold predictions, the fold of every molecule), the features built once.
+
+### `landmark_coefficients(low: LowRank, w: Sequence[float]) -> List[np.ndarray]`
+
+The weight the fitted model puts on every landmark, one array per field.
+
+The features are `Phi_f = sqrt(h_f c_f) K(X, Z_f) W_f`, so a fit with weights `w` is the
+same model as a dual fit whose coefficients sit on the landmarks:
+`sqrt(h_f c_f) W_f w_f`.  Everything the program reads off a co-field -- the map itself,
+the atom contributions, the pharmacophore -- keeps its form with the index set changed from
+training molecules to landmarks, which is what makes the approximation usable and not only
+fast.
+
+### `cofield_gaussians(low: LowRank, w: Sequence[float], f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(centres, coefficients, widths) of the co-field of field `f`, over the landmarks.
+
+The same three arrays `cmfqsar.model.CMFModel.cofield_coefficients` returns for an
+exact model, so `cmfqsar.cofields.evaluate_gaussians` draws one as readily as the
+other.  A landmark that is a molecule contributes its own atoms; a landmark that is a
+Gaussian centre contributes itself.
 
 ## cmfqsar.mil
 

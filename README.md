@@ -3438,6 +3438,35 @@ remains the default everywhere except `screen`: the two differ by 2e-14 relative
 order of the round-off between two orderings of the NumPy sum, and every table in this file was
 produced with NumPy.
 
+### Fitting in the space of the landmarks
+
+The exact model holds one n by n matrix per field, which stops it at ten to twenty thousand
+molecules. `cmfqsar/lowrank.py` (plan item B6) replaces every field kernel by the Nystrom
+approximation `K(X, Z) K(Z, Z)^+ K(Z, X)` and fits in the space of the m features that
+approximation is the Gram matrix of. The features are accumulated a block of molecules at a
+time, so the memory of a fit is the rank squared whatever the number of molecules. The
+landmarks are either a grid of one-atom Gaussian centres over the frame, whose rank depends on
+the frame and the width of the field rather than on the number of molecules, or a subset of the
+molecules themselves.
+
+The self-kernel of a molecule is its own integral and is never approximated, which keeps the
+cosine normalisation exact and keeps the posterior variance from collapsing far from the
+landmarks. The co-field is a sum over the landmarks instead of over the training molecules and
+is otherwise the same function, so everything read off a co-field keeps its meaning.
+
+Measured on the eight Sutherland sets (`benchmarks/run_lowrank.py`): with every molecule its own
+landmark the kernel, the predictions, the evidence, the variance and the co-field agree with the
+exact path to 2e-11; at an attenuation of 0.5 a 2 A grid is within 0.004 of the exact q2 on
+every set and 20 to 80 landmark molecules within 0.076; at 361 molecules the fit is eight times
+faster than the exact path and the memory of the two crosses at about 1275 molecules, beyond
+which the saving grows without limit.
+
+```bash
+cmf lowrank series.sdf --activity pKi --landmarks grid:2.0
+python benchmarks/run_lowrank.py        # results/lowrank/table.md
+```
+
+
 ### Screening a library in blocks
 
 Predicting needs only the rows K(X, X_train) — one row per new molecule, as wide as the training

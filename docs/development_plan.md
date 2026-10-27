@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 76 modules and about 33,650 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with twenty-eight subcommands (`build`, `build-crystals`, `diagnose`,
+* A library of 77 modules and about 34,200 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with twenty-nine subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1184 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1203 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -363,10 +363,37 @@ larger searches in parts C and E.
   `invariant.py`, already has explicit features of a few hundred columns: for it no
   approximation is needed, only a learner that accepts a feature matrix, which is the cheaper
   route for LP5.
-  **Not done:** the implementation; a width for the inducing Gaussians other than the field's
-  own, since a broader basis may need fewer centres; landmark atoms; the variance of the
-  approximate Gaussian process; and any set larger than 361 molecules, which is where the point
-  of the item lies and where nothing in the repository is aligned.
+  **Implemented 27 October 2026.** `cmfqsar/lowrank.py` and the subcommand `cmf lowrank`.
+  `build` makes the feature map of a landmark set -- the whitener `W` with `W W^T = K(Z,Z)^+`
+  from a thresholded eigendecomposition, so a landmark set with near-duplicate members cannot
+  blow it up -- `transform` turns molecules into feature rows a block at a time, and `gram`
+  accumulates `Phi^T Phi` and `Phi^T y` over those blocks, so the features of the whole set are
+  never held at once and the memory of a fit is the rank squared whatever n is. `fit` solves
+  the bordered primal system that matches the exact solver's bias, `variance` is the
+  Gaussian-process variance with the **exact** self-kernel kept (the deterministic
+  training-conditional form, which is what stops it collapsing away from the landmarks),
+  `log_evidence` is the same quantity as `cmfqsar/evidence.py` through the Woodbury identity at
+  m^3 instead of n^3, and `gaussian_centres` and `landmark_molecules` are the two kinds of
+  landmark. `cofield_gaussians` returns the same (centres, coefficients, widths) that
+  `CMFModel.cofield_coefficients` returns, with the index set changed from training molecules to
+  landmarks, so the co-field and everything read off it keep their form. 19 tests.
+  **Measured** by `benchmarks/run_lowrank.py` on the eight Sutherland sets at an attenuation of
+  0.5 and a ridge of 0.1: with every molecule its own landmark the kernel, the predictions, the
+  log evidence, the posterior variance and the co-field on a grid agree with the exact path to
+  2e-11; a grid of Gaussian centres 2 A apart is within 0.004 of the exact q2 on every set and
+  1.5 A within 0.001; 20 to 80 landmark molecules within 0.076. At 361 molecules the exact
+  kernels are 6 MB and the low-rank fit 13 MB -- the rank of a 2 A grid over that frame is 1275,
+  so the two cross at about 1275 molecules -- while the fit is already eight times faster, since
+  a kernel entry against a one-atom centre costs a thirtieth of one against a whole molecule. On
+  held-out molecules the landmarks do not reach, the variance that keeps the self-kernel is off
+  by 0.013 against 0.025 for the form that drops it.
+  **Still not done:** the path is a command of its own and not a flag on `build`, so a low-rank
+  model cannot be saved, predicted from or opened in the application; landmark atoms, the case
+  between a grid and whole molecules that a narrow field wants; a width for the inducing
+  Gaussians other than the field's own; LinearSVR and LinearSVC on the features, the kernel
+  alignment from m by m Gram matrices and Nystrom kernel PCA, all of which the assessment names
+  as following the same way; and any set larger than 361 molecules, which is where the point of
+  the item lies and where nothing in the repository is aligned.
 
 ## C. The alignment problem (months 3 to 12)
 

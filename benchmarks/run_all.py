@@ -304,6 +304,13 @@ def registry() -> List[Benchmark]:
                   minutes="25",
                   report=lambda: _mod("run_speed").report(_r("speed")),
                   tables=["speed/table.md"]),
+        Benchmark("lowrank",
+                  "fitting in the space of the landmarks: is it the same model, and what does "
+                  "it save",
+                  "run_lowrank.py", "lowrank", compute=[[]],
+                  minutes="25",
+                  report=lambda: _mod("run_lowrank").write_table(_r("lowrank")),
+                  tables=["lowrank/table.md"]),
         Benchmark("nystrom", "can a low-rank kernel reproduce the exact model",
                   "run_nystrom.py", "nystrom", compute=[[]],
                   minutes="10",
