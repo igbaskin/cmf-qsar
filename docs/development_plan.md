@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 68 modules and about 30,100 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 70 modules and about 30,850 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-six subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 996 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 1038 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -786,6 +786,35 @@ says whether a trajectory does what a generated ensemble could not.
   form by the same algebra as the mean (a product of Gaussians is a Gaussian). Add it as a block
   with its own coefficient under multiple kernel learning, and let the mixing coefficient say
   whether it is worth anything; rule 1 applies, and the expectation is that it is a display tool.
+  **Done 27 October 2026, and the expectation in the item was right: it is a display tool.**
+  `cmfqsar/fluctuation.py`. The variance of a field across the conformations of an ensemble is a
+  field of the same class, which is the whole point: every term of
+  ``(1/k) sum_m X_m^2 - ((1/k) sum_m X_m)^2`` is a product of two Gaussians, and a product of two
+  Gaussians is a Gaussian, so the variance is a sum of Gaussians at the midpoints of atom pairs,
+  at twice the width, with a coefficient that falls off with the distance between the two atoms.
+  `variance_field` builds it, `variance_fieldset` doubles the widths it has to be evaluated with
+  and refuses a field whose width is not the same on every atom (the steric field, b = alpha/R^2,
+  cannot be written this way), and `kept_share` reports what the pair floor dropped. 11 tests,
+  the first of which is the one the item rests on: evaluated on a grid, the field is the variance
+  across the frames to a part in a thousand.
+  **What it costs.** k conformations of n atoms give k^2 n^2 pseudo-atoms before the floor, so the
+  field grows with the square of the molecule and the kernel with the fourth power. On the sets measured here that is 1065 to 2119 pseudo-atoms per molecule at an attenuation of 2 and a floor of 0.01, keeping 99% of the pair weight, and a kernel over a set takes 286 seconds at most. That is
+  affordable on sets of this size and is the reason the measurement below uses three conformations,
+  heavy atoms and an attenuation of 2 rather than the defaults.
+  **Measured** by `benchmarks/run_fluctuation.py` on 3 aligned sets, the mean field as the
+  reference of rule 1 and the same conformations, folds and ridge search for every row:
+  steroids (31 molecules) mean +0.794, variance alone +0.425, best mixture +0.785 at 0.10, -0.009 [-0.079, +0.062]; GPB (66 molecules) mean +0.460, variance alone +0.180, best mixture +0.462 at 0.10, +0.002 [-0.015, +0.020]; THR (88 molecules) mean +0.308, variance alone -0.013, best mixture +0.302 at 0.10, -0.006 [-0.032, +0.023].
+  **What the variance carries by itself runs out as the series grows**: alone it reaches
+  q2 +0.425 on the 31 steroids, +0.180 on the 66 of GPB and -0.013 on the 88 of thrombin,
+  something on a small set of one rigid scaffold and nothing on a larger and more varied one. Under rule 1 that closes the
+  item as the plan expected: **keep it as a map, not as a block**. A flexibility map answers a
+  different question from a co-field -- where the series is rigid, not where it is active -- and
+  the two are worth looking at together.
+  **Not done:** no multiple kernel learning proper. The mixing coefficient here is a grid searched
+  inside the cross-validation, not the kernel alignment of `cmfqsar/mixing.py`; with every
+  measured mixture at or below the mean alone, a better search for the coefficient would not
+  change the answer. And no display in the application: the variance field comes out as a field
+  object and `cmfqsar/cofields.py` will draw it, but no panel offers it.
 
 Two uses of the kernel on a trajectory need no new field and can be built alongside D7 as
 analysis tools: the kernel similarity between frames, with the invariant kernel of

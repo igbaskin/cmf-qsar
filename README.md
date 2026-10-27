@@ -316,6 +316,21 @@ One last source of error: a seed of exactly zero makes RDKit return the same geo
 conformation, which would silently collapse an ensemble; the generator maps it to a fixed non-zero
 seed and a test guards that.
 
+### The variance of an ensemble
+
+The ensemble mode represents a molecule by the mean of the fields of its conformations. The
+variance across them is a flexibility map, and it is a field of the same class: a product of two
+Gaussians is a Gaussian, so the variance is again a sum of Gaussians, at the midpoints of atom
+pairs and at twice the width (`cmfqsar/fluctuation.py`, plan item D10). No new kernel is needed,
+so it can be added as a block with a mixing coefficient and the coefficient asked whether it
+carries anything.
+
+**It does not help, and that is the answer the plan expected.** On the 31 CBG steroids, glycogen phosphorylase b, thrombin, every mixture that includes the variance is at or below the mean alone: the best of -0.009 [-0.079, +0.062], +0.002 [-0.015, +0.020], -0.006 [-0.032, +0.023]. Alone it reaches q2 +0.425 on the 31 steroids, +0.180 on the 66 of GPB and -0.013 on the 88 of thrombin: something on a small set of one rigid scaffold, nothing on a larger and more varied one, and on none of them something the mean does not already have. Keep it as a map of where a series is rigid, not as a block of the kernel.
+
+```bash
+python benchmarks/run_fluctuation.py        # results/fluctuation/table.md
+```
+
 ### Heterogeneous series: several chemotypes, no one common substructure
 
 Everything above rests on the molecules sharing a frame, and a congeneric series supplies one:

@@ -2314,6 +2314,8 @@ Two further maps use the same grid, for the molecule currently shown:
 - the **overlap** $C_f(\mathbf{r})\,X_f(\mathbf{r})$, whose integral *is* that field's contribution to the prediction
   (Eq. 7), so the map shows where the prediction comes from.
 
+![The prediction as an overlap, for the electrostatic field of one test molecule of the steroid set and the model of the previous figure: the co-field of the model, times the molecule's own field, gives the product whose integral over space, with the field's scale and mixing coefficient, is that field's contribution to the predicted affinity. The prediction is the sum of these contributions over the fields plus the bias. This is Fig. 1 of the 2013 paper drawn with the program's own maps; the application shows the same three maps in 3D for the molecule on screen.](docs/figures/overlapmap.png)
+
 *File → Export current co-field (Gaussian cube)* writes a cube file readable by PyMOL, VMD or
 Jmol, which is the way to put a co-field into a publication figure.
 
@@ -3411,6 +3413,43 @@ of the series.
 which conformation of each molecule to use, alternating between fitting and selecting. Use it when
 you believe one conformation is the bioactive one and the others are noise; use the ensemble when
 you believe the molecule is genuinely flexible.
+
+## The variance of an ensemble: a flexibility map
+
+The ensemble above represents a molecule by the **mean** of the fields of its conformations. A
+mean throws away how much the field moved between them, and that is a flexibility map: where a
+molecule's field is the same in every conformation, and where it is not. Plan item D10 asks
+whether that is worth carrying.
+
+**It is a field of the same class, which is what makes it cheap to ask.** With the Gaussians
+written as exp(-b/2 |r - c|^2), the variance across conformations is
+
+    V(r) = (1/k) sum_m X_m(r)^2  -  ( (1/k) sum_m X_m(r) )^2,
+
+and every term is a product of two Gaussians. A product of two Gaussians is a Gaussian, so V is
+again a sum of Gaussians: at the **midpoints of atom pairs**, at **twice the width**, with a
+coefficient that falls off as the two atoms move apart. `cmfqsar/fluctuation.py` builds it, and
+`variance_fieldset` gives the field set it must be used with -- the widths are doubled, so a
+variance field and an ordinary one must not go into the same kernel call. The construction is
+exact and the tests check it against the variance evaluated directly on a grid.
+
+**What it costs.** The pairs are what costs: k conformations and n atoms give k^2 n^2 pseudo-atoms
+before anything is dropped, so the field grows with the square of the molecule. A floor on the
+pair coefficient keeps that in hand -- pairs whose two atoms are far apart contribute almost
+nothing -- and `kept_share` says what the floor dropped. On the sets measured here that is 1065 to 2119 pseudo-atoms per molecule at an attenuation of 2 and a floor of 0.01, keeping 99% of the pair weight, and a kernel over a set takes 286 seconds at most. Hydrogens are dropped before the
+construction for the same reason: their fields are small and they double the atom count.
+
+**It does not help.**
+
+| set | molecules | the mean alone | the variance alone | the best mixture | difference |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| the 31 CBG steroids, the classic CoMFA benchmark | 31 | +0.794 | +0.425 | +0.785 at 0.10 | -0.009 [-0.079, +0.062] |
+| glycogen phosphorylase b, 66 molecules | 66 | +0.460 | +0.180 | +0.462 at 0.10 | +0.002 [-0.015, +0.020] |
+| thrombin, 88 molecules | 88 | +0.308 | -0.013 | +0.302 at 0.10 | -0.006 [-0.032, +0.023] |
+
+Every mixture that includes the variance is at or below the mean alone, and every interval contains zero or lies below it, so under rule 1 the block adds nothing. The best mixture is the smallest one offered on all three sets, which is what a block that is not helping looks like when a search is made to choose it.
+
+**What the variance carries by itself runs out as the series grows.** Alone it reaches q2 +0.425 on the 31 steroids, +0.180 on the 66 of GPB and -0.013 on the 88 of thrombin: something on a small set of one rigid scaffold, nothing on a larger and more varied one. And on none of them is it something the mean does not already have. That is the reading the plan expected, and it leaves the variance field where it is useful: as a map. Where a series is rigid and where it moves is a different question from where it is active, and the two pictures are worth putting side by side -- `cmfqsar/cofields.py` draws a variance field like any other, with the field set that `variance_fieldset` returns.
 
 ## Protonation and tautomers: ensembles of different molecules
 

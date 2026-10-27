@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 75 modules, 127 classes with 476 public methods, and 568 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 76 modules, 127 classes with 476 public methods, and 572 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -53,6 +53,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.fieldgraph](#cmfqsarfieldgraph) | Field-point graphs: an alignment that needs neither a common substructure nor a model. |
 | [cmfqsar.fields](#cmfqsarfields) | Parameterisation of continuous molecular fields. |
 | [cmfqsar.flexalign](#cmfqsarflexalign) | Flexible alignment by confidence: the rigid-body search of 2019, with the torsions. |
+| [cmfqsar.fluctuation](#cmfqsarfluctuation) | The variance of a field across the frames of an ensemble (plan item D10). |
 | [cmfqsar.fusion](#cmfqsarfusion) | Data fusion: one score from the similarities to several known actives. |
 | [cmfqsar.gpc](#cmfqsargpc) | Gaussian-process classification by the Laplace approximation. |
 | [cmfqsar.gradients](#cmfqsargradients) | The derivative of a prediction with respect to the atoms of the molecule being predicted. |
@@ -3738,6 +3739,82 @@ placed on the current pose first, so the rigid parameters mean the same thing fo
 ### `flexible_align(mols: Sequence, rdmols: Sequence[Chem.Mol], model, max_rmsd: Optional[float]=2.0, energy_slack: float=10.0, energy_weight: float=1.0, restarts: int=2, seed: int=0, max_torsions: int=12, conformers: int=5, prune_rmsd: float=0.5, progress=None, cancel=None) -> List[VarianceAlignResult]`
 
 Align every molecule in place by confidence over rigid motion and the rotatable bonds.
+
+## cmfqsar.fluctuation
+
+Source: `cmfqsar/fluctuation.py`
+
+The variance of a field across the frames of an ensemble (plan item D10).
+
+The ensemble mode of this program represents a molecule by the **mean** of the fields of its
+conformations (`cmfqsar.fields.combine_members`), which is the occupancy averaging of
+4D-QSAR.  A mean throws away how much the field moved, and that is a flexibility map: where a
+molecule's field is the same in every conformation, and where it is not.
+
+The variance is a field of the same class, which is what makes it usable without a new kernel.
+With the Gaussians written as `exp(-b/2 |r - c|^2)`, as everywhere else in this program,
+
+    X_m(r) = sum_i w_i exp(-b/2 |r - r_mi|^2)
+
+for conformation *m*, and the variance across conformations is
+
+    V(r) = (1/k) sum_m X_m(r)^2  -  ( (1/k) sum_m X_m(r) )^2.
+
+Every term is a product of two Gaussians, and a product of two Gaussians is a Gaussian:
+
+    exp(-b/2 |r-p|^2) exp(-b/2 |r-q|^2) = exp(-b |r - (p+q)/2|^2) exp(-b |p-q|^2 / 4),
+
+so V is again a sum of Gaussians -- at the **midpoints of atom pairs**, with **twice the width**,
+and with a coefficient that falls off with how far apart the two atoms are.  The same-conformation
+pairs enter with weight 1/k - 1/k^2 and the pairs from different conformations with -1/k^2, which
+is the two terms of the variance written out.
+
+`variance_field` builds that field, and `variance_fieldset` gives the field set it has
+to be used with: the widths are doubled, so a variance field must not be mixed with an ordinary
+one in the same kernel call.  Pairs whose coefficient is below a floor are dropped, which is what
+keeps the construction from growing with the square of the atoms; `kept_share` says what the
+floor cost.
+
+**What this is for.** The plan expects it to be a display tool -- a map of where a series is
+rigid and where it is not -- and asks for it to be measured as a block of its own under multiple
+kernel learning, so that the mixing coefficient says whether it carries anything the mean does
+not.  `benchmarks/run_fluctuation.py` does that.
+
+**What it is not.** Only fields whose Gaussians share one width can be written this way, which is
+every "gauss" field of a field set at one attenuation.  The steric field puts a different width on
+every atom (b = alpha / R^2), so a pair of atoms of different radii gives a product Gaussian whose
+width depends on the pair, which a single field set cannot express; `variance_fieldset`
+refuses it rather than approximating.
+
+### `variance_fieldset(fieldset: FieldSet) -> FieldSet`
+
+The field set a variance field has to be evaluated with: the same fields at twice the width.
+
+A product of two Gaussians of width `b` is a Gaussian of width `2b`, so the variance field
+lives at twice the attenuation of the field it came from.  A field whose width is not the same
+on every atom cannot be written this way and is refused.
+
+### `variance_field(members: Sequence[MoleculeFields], fieldset: FieldSet, weights: Optional[Sequence[float]]=None, floor: float=PAIR_FLOOR, name: str='') -> MoleculeFields`
+
+The variance of the fields of `members` across the ensemble, as a field.
+
+`members` are the fields of one molecule in its conformations, in the same atom order.  The
+result is a `cmfqsar.fields.MoleculeFields` whose atoms are pseudo-atoms at the
+midpoints of atom pairs; it must be used with `variance_fieldset`, because its Gaussians
+are twice as wide as the ones it was built from.
+
+The weights need not be uniform: a Boltzmann-weighted ensemble has the same algebra with
+`1/k` replaced by the member's weight.
+
+### `kept_share(members: Sequence[MoleculeFields], fieldset: FieldSet, floor: float=PAIR_FLOOR) -> float`
+
+The share of the pair factors the floor keeps, in [0, 1].
+
+### `evaluate(field: MoleculeFields, fieldset: FieldSet, f: int, points: np.ndarray) -> np.ndarray`
+
+One field of a `cmfqsar.fields.MoleculeFields` at a list of points.
+
+Used to check a variance field against the variance it is supposed to be, and to draw one.
 
 ## cmfqsar.fusion
 
