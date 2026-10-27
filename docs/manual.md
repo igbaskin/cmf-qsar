@@ -3266,6 +3266,70 @@ so the list is worth reading at the top and not in the middle. That is the claim
 has to make, and it is the one this measurement supports: it will name the group worth trying,
 not tell you what it will measure.
 
+## A design loop with more than one objective
+
+The suggestion rules of the earlier section close the loop on potency alone. Lead optimisation
+has at least two objectives, and since the two-task model they live on one kernel: one model
+predicts the potency and the anti-target activity of the same candidate, each with a posterior.
+Plan item MC11 is what goes between that model and a chemist's list, and it is
+`cmfqsar/multiobjective.py`.
+
+**The Pareto front** is the candidates no other candidate beats on every objective at once. A
+weighted sum needs weights, and nobody knows them before the compounds are made; a front does
+not. `pareto_layers` gives the front and the fronts behind it, so a list can be as long as the
+chemist wants.
+
+**The acquisition** is the expected improvement of each objective against the best already
+made, added with weights. Each term is already in the units of its own objective's improvement,
+so the weights say how much a log unit of one is worth against a log unit of another and
+nothing is hidden in them.
+
+**The batch** is the rule of the previous section with more than one task: after a pick, every
+objective's posterior covariance is conditioned on it and the acquisition is computed again.
+What that takes away is the uncertainty and not the promise -- two compounds the model is sure
+are a log unit better are both still worth making -- so the spreading acts through what the
+model does not yet know, which is the only honest place for it to act.
+
+**Every suggestion comes with the trade it makes**: `multiobjective.trade` reports, against the
+best compound already made, which objectives a candidate gains and which it loses, with a change
+smaller than the model's own error reported as no change. A loop that gives only a score hides
+the trade it is making.
+
+### What happened when it was run backwards
+
+The series of the previous section comes in two parts, which makes a retrospective test
+possible. The loop is trained on the 78 compounds of part 1 with both their endpoints, and then
+scores 425 candidates: every other histamine H3 ligand in ChEMBL that fits the same frame. 16 of
+them are the compounds **the same authors went on to make** in part 2 of the paper. The loop
+sees no activity of any candidate.
+
+| the list the loop reports | candidates | of them made next | share |
+| --- | ---: | ---: | ---: |
+| the Pareto front | 5 | 0 | 0.0% |
+| the first 10 by the acquisition | 10 | 0 | 0.0% |
+| the first 50 by the acquisition | 50 | 0 | 0.0% |
+
+**The gate is not met.** The front holds none of them, and the compounds the authors made sit at
+Pareto layer 23 of 47 against 19 for the rest of the pool, at rank 343 of 425 against 208: the
+loop puts them in the worse half. The best of them reaches layer 2 and rank 79, so they are not
+invisible to it.
+
+Three things explain the miss, and they are worth more than the verdict. The model does see that
+these compounds are good: their measured H3 affinity averages 9.15 against 7.98 for the rest of
+the pool, and the model predicted 8.68 against 8.59 -- the order is right and the size is not,
+which is what a q2 of +0.28 on a narrow series buys. What sinks them in the ranking is the other
+objective: the model predicts their hERG activity at 6.29 against 5.89 for the pool, and an
+acquisition that adds improvements prefers a candidate extreme in one objective to one that is
+good in both. And no hERG number was ever measured for them, so whether the model is right about
+that cannot be checked.
+
+The last point is the real limit of this test. The compounds the authors made next were chosen
+with knowledge the loop does not have -- synthetic access, a chemical idea, the rest of a
+programme -- so the ones they did not make are not known failures, and only one of the two
+objectives can be checked against what happened. What the item asked for and what this provides
+is the machinery: a front over several objectives on one kernel, a batch taken from it by the
+rule of the previous section, and for every suggestion the trade it makes, written out.
+
 ## An anti-target beside the potency
 
 Where may field be added for the target that is **not** also added for the off-target? The

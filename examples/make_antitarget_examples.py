@@ -26,6 +26,17 @@ endpoint), ``selectivity`` (their difference), the ChEMBL identifiers of the mol
 assays and the document, the two assay descriptions, and the alignment note.  The assay
 conditions travel with the file as columns, as the item requires.
 
+The candidate pool of plan item MC11
+------------------------------------
+``--candidates`` writes a second file, ``examples/antitarget/h3_candidates.sdf``: every other
+histamine H3 ligand in ChEMBL that fits the same frame, with a flag saying whether it is one of
+the compounds **these authors went on to make**.  Part 2 of the same work -- Lazewska and
+co-workers, Bioorg. Med. Chem. Lett. 21 (2011) 5384, ChEMBL document ``CHEMBL1821619`` -- is the
+follow-up, and its compounds carry an H3 affinity but no hERG number, which is exactly the
+situation a design loop is in: the potency of what was made is known afterwards, the off-target
+is not.  `benchmarks/run_designloop.py` asks whether the Pareto front of a loop trained on part 1
+contains them.
+
 Usage
 -----
     python examples/make_antitarget_examples.py                 # fetch and build
@@ -66,6 +77,10 @@ ANTI = ("CHEMBL240", "hERG (KCNH2)", "pIC50_hERG")
 MCS_SHARE = 0.5
 #: and the common part has to have at least this many atoms for the frame to mean anything
 MCS_ATOMS = 12
+#: the common-substructure search is given this long. The longest pair of this set takes 13
+#: seconds, so the limit never fires and the build gives the same molecules on every machine;
+#: a shorter limit makes the answer depend on how busy the computer is
+MCS_TIMEOUT = 20
 
 
 def get(path, **params):
@@ -168,8 +183,9 @@ def choose_reference(mols):
         for other in sample:
             if other is m:
                 continue
-            res = rdFMCS.FindMCS([Chem.RemoveHs(m), Chem.RemoveHs(other)], timeout=2,
-                                 ringMatchesRingOnly=True, completeRingsOnly=False)
+            res = rdFMCS.FindMCS([Chem.RemoveHs(m), Chem.RemoveHs(other)],
+                                 timeout=MCS_TIMEOUT, ringMatchesRingOnly=True,
+                                 completeRingsOnly=False)
             total += res.numAtoms if not res.canceled else 0
         if best is None or total > best[0]:
             best = (total, i)
@@ -201,7 +217,7 @@ def build(records, seed=0xC0FFEE, verbose=True):
     out, dropped = [], 0
     for mol, name in zip(mols, kept):
         heavy = Chem.RemoveHs(mol)
-        res = rdFMCS.FindMCS([heavy, Chem.RemoveHs(ref)], timeout=5,
+        res = rdFMCS.FindMCS([heavy, Chem.RemoveHs(ref)], timeout=MCS_TIMEOUT,
                              ringMatchesRingOnly=True, completeRingsOnly=False)
         share = res.numAtoms / max(heavy.GetNumHeavyAtoms(), 1)
         if res.canceled or res.numAtoms < MCS_ATOMS or share < MCS_SHARE:
@@ -209,7 +225,7 @@ def build(records, seed=0xC0FFEE, verbose=True):
             continue
         if mol is not ref:
             try:
-                mcs_align(mol, ref, timeout=5)
+                mcs_align(mol, ref, timeout=MCS_TIMEOUT)
             except Exception:
                 dropped += 1
                 continue
@@ -250,6 +266,85 @@ def write(path, aligned, records, info, reference):
     return n
 
 
+# ------------------------------------------------------------------ the candidate pool
+
+
+#: part 2 of the same work: what the authors went on to make
+PART2 = "CHEMBL1821619"
+#: the two ChEMBL targets that are the histamine H3 receptor
+H3_TARGETS = ("CHEMBL264", "CHEMBL3263")
+
+
+def h3_ligands(kinds=("Ki",)):
+    """{molecule: (smiles, the mean pKi, the documents it comes from)} for every H3 ligand."""
+    out = {}
+    for target in H3_TARGETS:
+        for kind in kinds:
+            for r in page("activity", target_chembl_id=target, assay_type="B",
+                          pchembl_value__isnull="false", standard_type=kind,
+                          only="molecule_chembl_id,document_chembl_id,pchembl_value,"
+                               "canonical_smiles"):
+                m, s = r.get("molecule_chembl_id"), r.get("canonical_smiles")
+                if not m or not s:
+                    continue
+                slot = out.setdefault(m, {"smiles": s, "y": [], "docs": set()})
+                slot["y"].append(float(r["pchembl_value"]))
+                if r.get("document_chembl_id"):
+                    slot["docs"].add(r["document_chembl_id"])
+    return out
+
+
+def candidates(trained, reference_mol, pool, seed=0xC0FFEE, verbose=True):
+    """Embed and align every candidate that fits the frame the training set was built in."""
+    from rdkit.Chem import rdFMCS
+
+    out = []
+    for i, (cid, rec) in enumerate(sorted(pool.items())):
+        if cid in trained:
+            continue
+        mol = Chem.MolFromSmiles(rec["smiles"])
+        if mol is None or not 15 <= mol.GetNumHeavyAtoms() <= 45:
+            continue
+        res = rdFMCS.FindMCS([mol, reference_mol], timeout=MCS_TIMEOUT,
+                             ringMatchesRingOnly=True, completeRingsOnly=False)
+        share = 0.0 if res.canceled else res.numAtoms / max(mol.GetNumHeavyAtoms(), 1)
+        if share < MCS_SHARE or res.numAtoms < MCS_ATOMS:
+            continue
+        got = embed(mol, seed)
+        if got is None:
+            continue
+        got.SetProp("_Name", cid)
+        try:
+            mcs_align(got, reference_mol, timeout=MCS_TIMEOUT)
+        except Exception:
+            continue
+        out.append((cid, got, rec, res.numAtoms))
+        if verbose and len(out) % 50 == 0:
+            print(f"   {len(out)} candidates posed, {i + 1} looked at", flush=True)
+    return out
+
+
+def write_candidates(path, posed, reference):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    n = 0
+    with Chem.SDWriter(path) as w:
+        for cid, mol, rec, common in posed:
+            made = PART2 in rec["docs"]
+            mol.SetProp("_Name", cid)
+            mol.SetProp("molecule_chembl_id", cid)
+            mol.SetProp("made_next", "1" if made else "0")
+            mol.SetProp(PRIMARY[2], f"{float(np.mean(rec['y'])):.3f}")
+            mol.SetProp("activity", f"{float(np.mean(rec['y'])):.3f}")
+            mol.SetProp("documents", " ".join(sorted(d for d in rec["docs"] if d)))
+            mol.SetProp("frame", reference)
+            mol.SetProp("common_atoms_with_frame", str(common))
+            mol.SetProp("note", "a candidate the loop may propose; made_next is 1 for the "
+                                "compounds of part 2, which these authors went on to make")
+            w.write(mol)
+            n += 1
+    return n
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -257,6 +352,14 @@ def main():
     ap.add_argument("--cache", default=os.path.join(HERE, "antitarget", "chembl_raw.json"),
                     help="where the download is kept, so the build can be repeated offline")
     ap.add_argument("--offline", action="store_true", help="build from the cache, fetch nothing")
+    ap.add_argument("--candidates", action="store_true",
+                    help="also write the candidate pool of plan item MC11: every other "
+                         "histamine H3 ligand that fits the same frame, flagged with whether "
+                         "the authors went on to make it")
+    ap.add_argument("--candidates-out",
+                    default=os.path.join(HERE, "antitarget", "h3_candidates.sdf"))
+    ap.add_argument("--candidates-cache",
+                    default=os.path.join(HERE, "antitarget", "chembl_h3_pool.json"))
     ap.add_argument("--seed", type=int, default=0xC0FFEE)
     a = ap.parse_args()
 
@@ -287,6 +390,27 @@ def main():
     print(f"  {ANTI[2]} {q.min():.2f} to {q.max():.2f} (spread {q.std():.2f})")
     print(f"  their correlation {np.corrcoef(p, q)[0, 1]:+.3f}; selectivity "
           f"{(p - q).min():.2f} to {(p - q).max():.2f}")
+    if a.candidates:
+        print("the candidate pool of plan item MC11")
+        if a.offline:
+            if not os.path.exists(a.candidates_cache):
+                raise SystemExit(f"--offline needs {a.candidates_cache}")
+            with io.open(a.candidates_cache, encoding="utf-8") as fh:
+                pool = {k: {"smiles": v["smiles"], "y": v["y"], "docs": set(v["docs"])}
+                        for k, v in json.load(fh).items()}
+        else:
+            pool = h3_ligands()
+            with io.open(a.candidates_cache, "w", encoding="utf-8") as fh:
+                json.dump({k: {"smiles": v["smiles"], "y": v["y"], "docs": sorted(v["docs"])}
+                           for k, v in pool.items()}, fh)
+        print(f"  {len(pool)} histamine H3 ligands in ChEMBL")
+        ref_mol = Chem.RemoveHs(dict((n, m) for n, m, _c, _s in aligned)[reference])
+        posed = candidates({n for n, _m, _c, _s in aligned}, ref_mol, pool, seed=a.seed)
+        made = sum(1 for _c, _m, rec, _k in posed if PART2 in rec["docs"])
+        k = write_candidates(a.candidates_out, posed, reference)
+        print(f"{k} candidates -> {a.candidates_out}")
+        print(f"  {made} of them are the compounds of part 2, which the authors went on to make")
+
     return 0
 
 

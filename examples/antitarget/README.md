@@ -40,11 +40,31 @@ has to be downloaded to use it.
   two assays and the document, the two assay descriptions and standard types, the reference, the
   name of the frame molecule and the size of each molecule's common part with it.
 
+## `h3_candidates.sdf` -- 425 candidates, 16 of them made next
+
+The pool a design loop would choose from, for plan item MC11. Every other histamine H3 ligand in
+ChEMBL that fits the same frame as the training set: posed the same way, carrying its measured
+H3 affinity (`pKi_H3`), the documents it comes from, and `made_next`, which is 1 for the 16
+compounds of **part 2 of the same work** -- Lazewska and co-workers, Bioorg. Med. Chem. Lett. 21
+(2011) 5384, ChEMBL document `CHEMBL1821619` -- and 0 for the rest.
+
+Part 2 reports an H3 affinity for its compounds and no hERG number, which is exactly the
+position a design loop is in: what was made is measured afterwards on the objective that was
+followed up, and not on the other one. No candidate carries a hERG value, so nothing in this
+file tells a loop trained on `h3_herg.sdf` anything about its second objective.
+
+    python examples/make_antitarget_examples.py --candidates
+
+rebuilds it; `chembl_h3_pool.json` is the download it is built from.
+
 ## What it is used for
 
-`benchmarks/run_antitarget.py` runs the two parts of plan item MC4's gate on it: whether tying
-the anti-target to the potency costs anything on the potency, and where the difference co-field
-puts its weight. `benchmarks/results/antitarget/table.md` holds the result. From the command
+`benchmarks/run_antitarget.py` runs the two parts of plan item MC4's gate on `h3_herg.sdf`:
+whether tying the anti-target to the potency costs anything on the potency, and where the
+difference co-field puts its weight. `benchmarks/run_designloop.py` runs plan item MC11 on both
+files: a design loop with two objectives, trained on the first and asked to choose from the
+second. `benchmarks/results/antitarget/table.md` and `benchmarks/results/designloop/table.md`
+hold the two results. From the command
 line the same model is
 
 ```bash

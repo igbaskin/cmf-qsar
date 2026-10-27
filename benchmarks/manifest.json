@@ -1,6 +1,6 @@
 {
- "commit": "3c110f262f18ec53044ee6148cfb174519a694ec",
- "created": "2026-10-27T18:16:14",
+ "commit": "6b9238ee7b8e60bd9460ec06c3c68fbd60e3a311",
+ "created": "2026-10-27T19:12:32",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -15,12 +15,20 @@
    "sha256": "0a1ad21385edea4963dccc2700edd4f9f01899b065dcb100ce735e1f3d00a561"
   },
   "examples/antitarget/README.md": {
-   "bytes": 3789,
-   "sha256": "ebdd39e97c11d649d34574f11ebc60a1d6c4931ab8f858bde152a24ccb01b1e3"
+   "bytes": 5010,
+   "sha256": "bc5dabe1825b25f1399f9ae2d5383ade1d2fe1d92c5b92f6a9003266707cdbe7"
+  },
+  "examples/antitarget/chembl_h3_pool.json": {
+   "bytes": 435340,
+   "sha256": "48e782ac1d0604c67c43b96e719a67d166d8b94b3b0a16a877b82dbf9dab5b53"
   },
   "examples/antitarget/chembl_raw.json": {
    "bytes": 282522,
    "sha256": "336a5c5fcfacc2d207f3761f889c373ac5e41f81ff2ac615c35a849f43f017dd"
+  },
+  "examples/antitarget/h3_candidates.sdf": {
+   "bytes": 2042959,
+   "sha256": "a6ca50d1e49343538af727c97247544fe709c72636202493ecfe4238bb7ad6a8"
   },
   "examples/antitarget/h3_herg.sdf": {
    "bytes": 433710,
@@ -587,8 +595,8 @@
    "sha256": "29e881e7fc12c73bbd94282b50571c4f9dd71e009f06c3810564e54d7bf69021"
   },
   "examples/make_antitarget_examples.py": {
-   "bytes": 12161,
-   "sha256": "31b082d879d1f471c52bd8330fc7316b549cb19305e7d36dc19fcfbdfc6b06cc"
+   "bytes": 18381,
+   "sha256": "c6f1126545efeb56a4378cc7cd72f59a5361960a77deca5404712d6bcbeb169f"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -1824,6 +1832,8 @@
   "benchmarks/results/design/THER.json": "683eaba7171ff6a01ab17a28669f4c81166722a597e3889a575c23abeac65bab",
   "benchmarks/results/design/THR.json": "5b3449a5ed041371100a48df723814399b9a4480df007d315684a6f3e93c451e",
   "benchmarks/results/design/table.md": "34fd8eb5b11f2cfc4ef79cf2813957db3b6df7fd5d12a70364c5967c4884b1c2",
+  "benchmarks/results/designloop/summary.json": "f64e80d334917d76cf4411dd8066053627f15203a71eece3befed37099a8879a",
+  "benchmarks/results/designloop/table.md": "6d4d0be333c466507d369399a1eb51520443e49b65f05724625328c3dc3f861a",
   "benchmarks/results/diagnose/ACE.json": "e4dd35cb3111a9a3ecca45a32638d8cbb93212d5e9f36a8794fb0a9aa88b139e",
   "benchmarks/results/diagnose/ACE_validate.json": "0afbd129729de6bd55359351199d67416562311bc42d8f9cdc5efccae2d41e50",
   "benchmarks/results/diagnose/AChE.json": "8d100a11659dc94e4059d3c61a236a30b84f66c3c593c513adf678733e45fec7",

@@ -1822,6 +1822,34 @@ against shuffling the numbers among the molecule's atoms is +0.35 for
 phenyl — so this is a statement about a series of hundreds of guests, not a reading for one
 compound.
 
+### A design loop with more than one objective
+
+Lead optimisation has more than one objective and since the two-task model they live on one
+kernel. `cmfqsar/multiobjective.py` (plan item MC11) is what goes between that model and a
+chemist's list: the Pareto front of the predicted objectives, an acquisition that adds the
+expected improvement of each one, the batch rule of plan item MC2 generalised to several tasks,
+and for every suggestion a sentence saying what it gains and what it loses against the best
+compound already made.
+
+**Run backwards on a series that came in two parts**, the gate is not met. The loop is trained
+on the 78 compounds of part 1 with their H3 affinity and their hERG activity, and scores 425
+candidates -- every other H3 ligand in ChEMBL that fits the frame -- of which 16 are the
+compounds the same authors made next. The Pareto front holds 5 of the 425 and none of the 16;
+those 16 sit at Pareto layer 23 of 47 against 19 for the pool and at rank 343 of 425 against
+208, so the loop puts them in the worse half.
+
+The model does see that they are good -- their measured affinity averages 9.15 against 7.98,
+and it predicted 8.68 against 8.59 -- but it predicts their hERG at 6.29 against 5.89, and an
+acquisition that adds improvements prefers a candidate extreme in one objective to one that is
+good in both. No hERG number was ever measured for them, so that prediction cannot be checked,
+which is the honest limit of a two-objective test on a series where only one objective was
+followed up.
+
+```bash
+python benchmarks/run_designloop.py        # results/designloop/table.md
+```
+
+
 ### An anti-target beside the potency
 
 Where may field be added for the target that is not also added for the off-target? The two-task

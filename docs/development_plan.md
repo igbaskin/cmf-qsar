@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 75 modules and about 33,400 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 76 modules and about 33,650 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-eight subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1167 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1184 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2634,6 +2634,38 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   contains the compounds the authors went on to make. The risk is plain: three endpoints measured on
   one congeneric series are rare in public data, so this item waits on MC4's data more than on its
   own code.
+  **Done 27 October 2026; the machinery is there and the gate is not met.**
+  `cmfqsar/multiobjective.py`: `pareto_layers` and `pareto_front` over any number of objectives
+  with a direction each; an acquisition that adds the expected improvement of every objective
+  against the best already made, which is scale-free because each term is in its own objective's
+  units of improvement; `batch`, which is MC2's rule with more than one task -- after a pick,
+  **every** objective's posterior covariance is conditioned on it and the acquisition recomputed
+  -- and `trade`, which says for one suggestion what it gains and what it loses against the best
+  compound already made, with a change smaller than the model's own error reported as no change.
+  `CMFModel.predict_with_covariance` (added for MC2) is what makes the batch possible on a real
+  model. 17 tests, one of which fixes the property that surprises: conditioning removes the
+  uncertainty and not the promise, so two compounds the model is sure are a log unit better are
+  both still worth making.
+  **The data for the retrospective test** came with MC4's series, which is in two parts. The
+  loop is trained on the 78 compounds of part 1 with both endpoints and scores 425 candidates
+  (`examples/antitarget/h3_candidates.sdf`, built by the same script with `--candidates`): every
+  other H3 ligand in ChEMBL that fits the frame, of which 16 are the compounds the same authors
+  made next, in part 2 of the paper. The loop sees no activity of any candidate.
+  **Measured** by `benchmarks/run_designloop.py`: the Pareto front holds 5 of the 425 and none
+  of the 16; nor do the first 50 by the acquisition. The compounds they made sit at Pareto layer
+  23 of 47 against 19 for the rest and at rank 343 of 425 against 208, so the loop puts them in
+  the worse half; the best of them reaches layer 2 and rank 79.
+  **Why, in three parts.** The model does see that they are good -- measured affinity 9.15
+  against 7.98 for the pool, predicted 8.68 against 8.59, the order right and the size not,
+  which is what q2 +0.28 on a narrow series buys. What sinks them is the second objective: their
+  hERG is predicted at 6.29 against 5.89, and an acquisition that adds improvements prefers a
+  candidate extreme in one objective to one that is good in both. And no hERG was ever measured
+  for them, so that prediction cannot be checked.
+  **What the test cannot settle**: the compounds the authors made were chosen with knowledge the
+  loop does not have, so the ones they did not make are not known failures; and only one of the
+  two objectives can be checked against what happened. A series with both endpoints measured on
+  the follow-up compounds would decide it, and the plan's own warning about three endpoints on
+  one congeneric series stands.
 
 **What this does not cover.** Equivalence of frontier orbitals, which is the literal form of the
 isolobal analogy, needs a frontier-orbital field, and that road has been measured twice: a Fukui
