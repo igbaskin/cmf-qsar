@@ -4123,6 +4123,8 @@ From 100 molecules to 6000 the error goes from 10.84 to 9.75 ppm, and from eight
 
 Halving the bin width gains 1.40 ppm and halving again gains 1.99 ppm in all -- against the 1.23 ppm that sixty times the data gave. **The error of this model is set by what the descriptor can tell apart, not by how many carbons it has seen.** The route to the shift predictors this item names runs through a richer descriptor, which is plan item C5, rather than through a larger training set. What the scale work gives is that the question could be asked at all: the whole curve above, every fold and every ridge, is a few minutes of arithmetic.
 
+![The learning curve of the local shift model on the 6000-molecule nmrshiftdb2 set, cross-validated error against the number of training molecules, each size a subset of the next, and the same error at the full size when the distance bins of the descriptor are halved twice. Sixty times the data gains about one ppm and stops gaining after eight hundred molecules; two halvings of the bin width gain two. Drawn from benchmarks/results/local_scale/curve.json.](docs/figures/scale.svg)
+
 **The kernel that does need landmarks.** The posed overlap kernel of the next section has no finite
 feature map -- its features are the field itself, a function on space -- so there the dual form is
 the only exact one and the Nyström approximation is the route the plan names.

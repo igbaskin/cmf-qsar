@@ -462,6 +462,39 @@ def fig_sutherland(path):
     save(fig, path)
 
 
+def fig_scale(path):
+    """Chapter 11: the learning curve of the local shift model, and what a finer descriptor gains."""
+    import matplotlib.pyplot as plt
+    d = json.load(open(os.path.join(RESULTS, "local_scale", "curve.json"), encoding="utf-8"))
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.5), sharey=True,
+                             gridspec_kw={"width_ratios": [1.6, 1]})
+    ax = axes[0]
+    ax.plot(d["molecules"], d["error"], "o-", color="C0", ms=4, lw=1.2)
+    ax.set_xscale("log")
+    ax.set_xticks(d["molecules"], [str(m) for m in d["molecules"]])
+    ax.set_xticks([], minor=True)
+    ax.set_xlabel("molecules in the training set")
+    ax.set_ylabel("cross-validated error / ppm")
+    ax.set_title(f"more data, bins every {d['step']:g} Å")
+    ax.grid(True, lw=0.4, alpha=0.5)
+    ax = axes[1]
+    steps = [d["step"]] + [f["step"] for f in d["finer"]]
+    errors = [d["error"][-1]] + [f["error"] for f in d["finer"]]
+    x = np.arange(len(steps))
+    ax.plot(x, errors, "s-", color="C3", ms=4, lw=1.2)
+    for xi, e in zip(x, errors):
+        ax.annotate(f"{e:.2f}", (xi, e), textcoords="offset points", xytext=(0, 6), ha="center",
+                    fontsize=7)
+    ax.set_xticks(x, [f"{s:g}" for s in steps])
+    ax.set_xlim(-0.5, len(steps) - 0.5)
+    ax.set_xlabel("width of the distance bins / Å")
+    ax.set_title(f"a finer descriptor, {d['n_molecules']} molecules")
+    ax.grid(True, lw=0.4, alpha=0.5)
+    axes[0].set_ylim(min(errors) - 0.6, max(d["error"]) + 0.5)
+    fig.tight_layout()
+    save(fig, path)
+
+
 FIGURES = {
     "fields.png": fig_fields,
     "overlap.svg": fig_overlap,
@@ -470,6 +503,7 @@ FIGURES = {
     "cofield.png": fig_cofield,
     "selectivity.png": fig_selectivity,
     "envelope.svg": fig_envelope,
+    "scale.svg": fig_scale,
     "sutherland.svg": fig_sutherland,
 }
 
