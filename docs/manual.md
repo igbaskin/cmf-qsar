@@ -3773,21 +3773,26 @@ atom and its surroundings (plan item LP2). The section on per-atom targets above
 of that shape (`cmfqsar/atomtargets.py`); `cmfqsar/localenv.py` builds the samples that go with
 them.
 
-**The sample is the field under an envelope.** The environment of atom *a* is the molecule's own
-fields multiplied by a Gaussian envelope about *a*,
+**The sample is the field under an envelope.** The environment of atom $a$ of molecule $A$ is the
+molecule's own field, for every field type $f$, multiplied by a Gaussian envelope centred on
+that atom:
 
-    g(r) = f(r) * exp(-rho |r - r_a|^2),
+$$
+X_{fa}(\mathbf{r}) = X_{fA}(\mathbf{r})\,\exp\!\left(-\rho\,|\mathbf{r}-\mathbf{r}_a|^2\right)
+$$
 
-so an atom near the centre keeps its weight and one far away loses it. A CMF field is a sum of
+Here $\mathbf{r}_a$ is the position of the atom and $\rho$ sets the width of the envelope, in
+Å$^{-2}$. An atom near the centre keeps its weight and one far away loses it. A CMF field is a sum of
 atom-centred Gaussians and the envelope keeps that form, which is the point: an environment **is**
 a field of the same class as a molecule's, so the kernels, the regression, the variance and the
 atom decomposition all apply to it unchanged. The centre is the first atom of the environment, and
 `member_atom_map` records which atom of the molecule each atom of the environment came from, so a
 per-atom quantity can be put back where it belongs.
 
-**`rho` says how far the model looks**, and it is a hyper-parameter like `alpha`: the envelope
-falls to 1/e at `1/sqrt(rho)`, which `envelope_width` reports. The default 0.5 A^-2 is a width of
-1.4 A, which is a first-shell view; 0.1 A^-2 is 3.2 A and takes in most of a small molecule. It
+**$\rho$ says how far the model looks**, and it is a hyper-parameter like $\alpha$ (the option is
+`rho`): the envelope falls to $1/e$ of its height at a distance $1/\sqrt{\rho}$ from the centre,
+which `envelope_width` reports. The default $\rho = 0.5$ Å$^{-2}$ is a width of 1.4 Å, which is a
+first-shell view; $\rho = 0.1$ Å$^{-2}$ is 3.2 Å and takes in most of a small molecule. It
 has to be chosen for the property, and the measurement below shows that it decides everything.
 Atoms whose envelope factor falls below 1e-4 are left out, which costs nothing measurable and
 saves carrying them; `kept_share` says what share of the enveloped weight that dropped.
@@ -3798,8 +3803,8 @@ over a whole molecule: two environments of two different molecules need not be s
 their autocorrelations to be compared. That matters here more than anywhere else, because a common
 frame for carbons of unrelated molecules does not exist. On an environment the autocorrelation
 becomes a double sum over atom pairs in which each atom carries its envelope factor, and the
-distance axis is shorter -- `LOCAL_SPEC` runs to 8 A in steps of 0.5 A, because the envelope has
-already removed everything beyond a few angstrom.
+distance axis is shorter -- `LOCAL_SPEC` runs to 8 Å in steps of 0.5 Å, because the envelope has
+already removed everything beyond a few Å.
 
 **An acidity is the field of a change.** A pKa is the free energy of losing a proton, so the sample
 for it is not the acid but the **difference field** of the acid and its anion, which
@@ -3852,11 +3857,11 @@ whatever the regression does with it afterwards.
 | local field | 2 | +0.969 | 9.460 | 0.562 | +0.116 [+0.103, +0.130] |
 
 **The field around a carbon predicts its shift better than a count around it does, and the
-envelope width decides how much.** At a width of 1.0 A the error is 8.8 ppm against
+envelope width decides how much.** At a width of 1.0 Å the error is 8.8 ppm against
 20.5 ppm for the counts, a difference in q2 of +0.120 [+0.107, +0.133], which is far outside
-the interval. At the module's default width of 1.4 A, which was fixed before either set here was
+the interval. At the module's default width of 1.4 Å, which was fixed before either set here was
 measured, it is +0.109 [+0.097, +0.123]. A wider envelope
-is worse (+0.902 at a width of 2.0 A) and so is a narrower one (+0.969 at 0.7 A), so the best view
+is worse (+0.902 at a width of 2.0 Å) and so is a narrower one (+0.969 at 0.7 Å), so the best view
 of a carbon is about one angstrom across, which is what a shift should ask for: it is a property of
 the atom, its bonds and the next shell.
 
@@ -3884,11 +3889,11 @@ narrower, and the measurement answers it.
 | local difference field | 2 | +0.033 | 0.816 | 0.998 | -0.508 [-0.561, -0.449] |
 
 **Here the local kernel is no better than the count, and the difference field, which the plan
-proposed as the sample, is far worse.** The best of the plain environments is a width of 3.2 A,
+proposed as the sample, is far worse.** The best of the plain environments is a width of 3.2 Å,
 +0.582 against +0.541 for the counts, a difference of +0.041 [-0.013, +0.094] -- inside the
 interval, so by rule 4 it is not a result. The direction the plan expected is right, though: an
 acidity wants a **wider** envelope than a shift, and a tight one fails: +0.526 at a width of
-1.4 A and +0.395 at 0.7 A, both below the count.
+1.4 Å and +0.395 at 0.7 Å, both below the count.
 
 The mean-kernel column says why, and it is the useful part of this measurement. For the difference
 field it is 0.998 or more at every width, and 0.9999 at the three widest: **every carboxylic
@@ -3896,7 +3901,7 @@ acid loses its proton in nearly the same way**, so the difference of the two fie
 after the cosine normalisation the samples are indistinguishable. The free energy of deprotonation
 is indeed a response to that change, but what distinguishes one acid from another is not in the
 change itself -- it is in what surrounds it, which is exactly what the difference removes. The same
-column explains the plain environments: at a width of 0.5 A the mean kernel is already
+column explains the plain environments: at a width of 1.4 Å the mean kernel is already
 0.957, because the first shell of a carboxyl group is the same group in every molecule,
 and the model only starts to see the substituent as the envelope widens.
 
