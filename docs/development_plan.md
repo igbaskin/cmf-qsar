@@ -298,7 +298,7 @@ larger searches in parts C and E.
   keeps six of them. Memory is the limit, not time: extrapolating from the 0.09 s of B5 for 200
   molecules, the compiled kernel of 10 000 molecules takes about four minutes and that of
   100 000 about six hours.
-  **Assessed and measured 26 October 2026; not implemented.** Of the methods for kernel models
+  **Assessed and measured 26 October 2026, before the implementation reported below.** Of the methods for kernel models
   on large sets, one fits this kernel and the others do not.
   *The Nyström approximation (inducing points) fits.* It replaces every field kernel by
   `K(X, Z) K(Z, Z)^+ K(Z, X)`, a matrix of rank m built from the kernels against m landmarks Z.
