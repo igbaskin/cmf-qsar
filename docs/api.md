@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 76 modules, 127 classes with 476 public methods, and 576 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 77 modules, 130 classes with 477 public methods, and 588 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -85,6 +85,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.pu](#cmfqsarpu) | Learning from positives and unlabelled molecules (part of plan item E4). |
 | [cmfqsar.ranking](#cmfqsarranking) | Learning to order molecules instead of to reproduce their numbers. |
 | [cmfqsar.report](#cmfqsarreport) | One HTML file that says what a model is, how well it works and what it says (plan item F4). |
+| [cmfqsar.restriction](#cmfqsarrestriction) | Scoring a conformational restriction (plan item MC9). |
 | [cmfqsar.screen](#cmfqsarscreen) | Screening a library without holding it in memory (plan item B3). |
 | [cmfqsar.shapley](#cmfqsarshapley) | Shapley decomposition of a CMF prediction. |
 | [cmfqsar.spectral](#cmfqsarspectral) | Clustering a set by its fields rather than by its scaffolds. |
@@ -936,6 +937,10 @@ Score a library block by block, never holding more than one block of it.
 ### `cmd_align(args)`
 
 Put a set of molecules in one frame, by whichever of the four criteria is asked for.
+
+### `cmd_restriction(args)`
+
+Score a conformational restriction against a saved model (plan item MC9).
 
 ### `cmd_cofield(args)`
 
@@ -8698,6 +8703,161 @@ The whole report as one self-contained HTML document.
 ### `write_report(path: str, model, extra: Optional[Dict]=None, title: Optional[str]=None, spec: Optional[ReportSpec]=None, source: str='', progress=None) -> str`
 
 Write the report to `path` and return the path.
+
+## cmfqsar.restriction
+
+Source: `cmfqsar/restriction.py`
+
+Scoring a conformational restriction (plan item MC9).
+
+Rigidifying a molecule -- tying two parts of it together into a ring so that it can no longer
+rotate freely -- is one of the few moves in medicinal chemistry whose effect is meant to be purely
+conformational.  The fourth-dimension verdict of this repository is that an ensemble of
+conformations does not predict better than one geometry (plan item D9), and plan item D10 found
+that the variance of the field across an ensemble adds nothing as a block of the kernel either.
+The variance is still a map of **where a molecule places field only part of the time**, and this
+module asks the one question that map is suited to: when a chemist closes a ring, how much of the
+field that matters for activity stops moving?
+
+Two numbers describe a restriction
+----------------------------------
+The co-field :math:`C_f(r)` of a fitted model says how much the field of type *f* at point *r*
+matters for the activity.  Its **square** is therefore a weight: positive everywhere, large where
+the model reads the field and near zero where it does not.  With that weight, one molecule gets
+two amounts:
+
+* **relevant** :math:`\int C_f(r)^2 \bar{X}_f(r)^2 dr`, how much activity-relevant field the
+  molecule places, averaged over its conformations;
+* **intermittent** :math:`\int C_f(r)^2 V_f(r) dr`, how much of that field is there only part of
+  the time, with :math:`V_f` the variance field of `cmfqsar.fluctuation`.
+
+Both are summed over the field types.  A pair of a flexible molecule **A** and its restricted
+analogue **B** is then scored by two shares:
+
+* **kept** = relevant(B) / relevant(A) -- did the restriction keep the field that matters, or did
+  closing the ring move it away?
+* **removed** = 1 - intermittent(B) / intermittent(A) -- how much of the intermittent part the
+  restriction took out.
+
+A restriction that works should keep the first and raise the second.  The gate of plan item MC9
+is that **removed** tracks the measured potency gain over a set of such pairs;
+`benchmarks/run_restriction.py` measures it.
+
+Both members of a pair must come from the same conformer generator with the same settings: the
+comparison is between two ensembles, not between two molecules, and a different number of
+conformations changes the variance by itself.
+
+### `class Pair  (dataclass)`
+
+A flexible molecule and the analogue that ties part of it into a ring.
+
+Attributes:
+
+- `flexible: int`
+- `restricted: int`
+- `common: float`
+- `rotatable_removed: int`
+- `gain: float`
+- `names: Tuple[str, str]` = `('', '')`
+
+### `class Amounts  (dataclass)`
+
+Per molecule: the activity-relevant field it places, and how much of it is intermittent.
+
+Attributes:
+
+- `relevant: np.ndarray`
+- `intermittent: np.ndarray`
+- `per_field: np.ndarray` = `_field(default_factory=lambda: np.zeros((0, 0, 2)))`
+- `fields: List[str]` = `_field(default_factory=list)`
+- `grid: Optional[Grid]` = `None`
+
+#### `Amounts.intermittent_share` -> np.ndarray  (property)
+
+How much of the activity-relevant field of each molecule is there only part of time.
+
+### `class Score  (dataclass)`
+
+What one restriction did, as two shares.
+
+Attributes:
+
+- `kept: float`
+- `removed: float`
+- `gain: float`
+- `names: Tuple[str, str]` = `('', '')`
+
+### `matched_pairs(mols: Sequence, y: Sequence[float], names: Optional[Sequence[str]]=None, mcs_share: float=MCS_SHARE, max_extra: int=MAX_EXTRA_ATOMS, max_composition: int=MAX_COMPOSITION, timeout: int=2) -> List[Pair]`
+
+Every pair in a set where the second molecule is the first with one more ring.
+
+The rule is deliberately mechanical, so that the pairs are not chosen by eye and the
+measurement cannot be steered.  The restricted member has exactly one ring more, at least one
+rotatable bond fewer, at most `max_extra` heavy atoms more, an atom composition differing by
+at most `max_composition` atoms counted element by element, and a maximum common substructure
+covering at least `mcs_share` of the smaller of the two.  The last condition is the one that
+decides, and a ring closure that also changes a substituent fails it; the ones before it are
+cheap, and keep the common-substructure search off most of the pairs in a set.
+
+A fingerprint is **not** used here, although it is the usual way to ask whether two molecules
+are alike.  Closing a ring changes the environment of every atom near the new bond, so
+butylphenol and 2-methylchroman -- the same eleven heavy atoms, one bond more -- are only
+0.15 alike as Morgan fingerprints, and a threshold high enough to be useful would throw away
+exactly the pairs this item is about.  The atom composition has no such blind spot.
+
+### `training_fields(model, grid: Grid) -> List[np.ndarray]`
+
+One (training molecules, grid points) array per enabled field: the co-field basis.
+
+Every co-field of this model, with any coefficients, is a combination of these rows, so the
+grid work is done once and the leave-one-pair-out co-fields below cost a matrix product each.
+
+### `cofield_from(basis: Sequence[np.ndarray], model, rows: Optional[Sequence[int]]=None, coef: Optional[np.ndarray]=None) -> List[np.ndarray]`
+
+The co-field of every field on the grid points, with its scales included.
+
+`rows` and `coef` refit nothing; they choose which training molecules the co-field is built
+from and with what dual coefficients.  That is how a co-field that has not seen a pair is
+made: solve the ridge without the two members, and pass the coefficients here with their rows.
+
+### `cofield_on_grid(model, grid: Grid, rows: Optional[Sequence[int]]=None, coef: Optional[np.ndarray]=None) -> List[np.ndarray]`
+
+The co-field on the grid, evaluating the basis on the spot.
+
+### `grid_volumes(means: Sequence[MoleculeFields], variances: Sequence[MoleculeFields], specs, vspecs, grid: Grid, rows: Optional[Sequence[int]]=None, progress=None) -> np.ndarray`
+
+(molecules, fields, 2, grid points): the mean field and the variance field of each.
+
+The two slices of the third axis are the mean field and the variance field.  They are held as
+32-bit numbers because they are only ever summed against a weight, and a set of a few hundred
+molecules would otherwise need gigabytes.
+
+### `amounts_from(cofields: Sequence[np.ndarray], volumes: np.ndarray, grid: Grid, fields: Optional[Sequence[str]]=None) -> Amounts`
+
+The two amounts of every molecule, from grid volumes that are already built.
+
+### `weighted_amounts(cofields: Sequence[np.ndarray], means: Sequence[MoleculeFields], variances: Sequence[MoleculeFields], specs, vspecs, grid: Grid, progress=None) -> Amounts`
+
+The two amounts of every molecule, from its mean field and its variance field.
+
+`cofields` holds one array per field over the grid points, as `cofield_on_grid` returns them;
+`specs` and `vspecs` are the field descriptions of the mean fields and of the variance fields
+(the variance of a Gaussian field is a Gaussian field of twice the width, which is why the
+second set is needed; see `cmfqsar.fluctuation.variance_fieldset`).
+
+### `grid_for(means: Sequence[MoleculeFields], margin: float=DEFAULT_MARGIN, spacing: float=DEFAULT_SPACING) -> Grid`
+
+One grid wide enough for every molecule of the set.
+
+### `score_pair(amounts: Amounts, pair: Pair) -> Score`
+
+The two shares of one pair.
+
+### `score_pairs(amounts: Amounts, pairs: Sequence[Pair]) -> List[Score]`
+
+### `correlation(x: Sequence[float], y: Sequence[float], runs: int=2000, seed: int=0) -> Tuple[float, float, float]`
+
+Pearson correlation of two columns with a bootstrap interval over the pairs.
 
 ## cmfqsar.screen
 

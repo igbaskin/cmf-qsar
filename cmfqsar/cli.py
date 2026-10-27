@@ -1222,6 +1222,79 @@ def cmd_align(args):
         print("Nothing written: give --out to keep the result.")
 
 
+def cmd_restriction(args):
+    """Score a conformational restriction against a saved model (plan item MC9)."""
+    import numpy as np
+    from cmfqsar.conformers import generate_conformers, single_conformer
+    from cmfqsar.fields import build_fields, combine_members
+    from cmfqsar.fluctuation import variance_field, variance_fieldset
+    from cmfqsar.restriction import (amounts_from, cofield_on_grid, correlation, grid_volumes,
+                                     matched_pairs, score_pairs)
+    from cmfqsar.cofields import make_grid
+    from rdkit import Chem
+
+    model, _extra = load_model(args.model)
+    model._require_linear("the restriction score")
+    if model.train is None:
+        raise SystemExit("the model file carries no training molecules, so it has no co-field")
+    ds = load_dataset(args.molecules, activity_prop=args.activity)
+    mols = [Chem.RemoveHs(m) for m in ds.mols]
+    y = np.asarray(ds.activity, float)
+    if not np.isfinite(y).any():
+        y = np.zeros(len(mols))
+        print("  no activity in the file: the pairs are scored, but nothing is correlated")
+    print(f"{len(mols)} molecules from {args.molecules}")
+
+    pairs = matched_pairs(mols, y, ds.names)
+    if not pairs:
+        raise SystemExit("no pair of a flexible molecule and a restricted analogue here: the "
+                         "rule wants one ring more, at least one rotatable bond fewer, nearly "
+                         "the same atoms, and most of the structure in common")
+    print(f"  {len(pairs)} pairs")
+
+    fieldset = model.fieldset
+    vfieldset = variance_fieldset(fieldset)
+    specs = [s for s in fieldset.specs if s.enabled]
+    vspecs = [s for s in vfieldset.specs if s.enabled]
+    means, variances = [], []
+    for k, m in enumerate(mols):
+        ens = generate_conformers(m, n=int(args.conformers), seed=args.seed)
+        n = max(ens.GetNumConformers(), 1)
+        members = [build_fields(single_conformer(ens, i) if ens.GetNumConformers() > 1 else ens,
+                                fieldset, name=f"{ds.names[k]}#{i}") for i in range(n)]
+        means.append(combine_members(members, np.ones(len(members)), kind="conformers",
+                                     name=ds.names[k]) if len(members) > 1 else members[0])
+        variances.append(variance_field(members if len(members) > 1 else members * 2, fieldset,
+                                        floor=args.floor, name=ds.names[k]))
+    print(f"  {args.conformers} conformations per molecule")
+
+    coords = np.vstack([model.train.coords] + [m.coords for m in means])
+    grid = make_grid(coords, margin=args.margin, spacing=args.spacing)
+    print(f"  grid {grid.shape} = {grid.n_points} points at {grid.spacing:.2f} A")
+    amounts = amounts_from(cofield_on_grid(model, grid),
+                           grid_volumes(means, variances, specs, vspecs, grid), grid,
+                           [s.name for s in specs])
+    scores = score_pairs(amounts, pairs)
+    for s in scores:
+        print("  " + str(s))
+    if np.isfinite(y).any() and len(scores) >= 3:
+        r = correlation([s.removed for s in scores], [s.gain for s in scores], seed=args.seed)
+        word = ("rises with" if r[1] > 0 else "falls with" if r[2] < 0
+                else "does not follow")
+        print(f"  the potency gain {word} the share of intermittent field removed: "
+              f"r {r[0]:+.3f} [{r[1]:+.3f}, {r[2]:+.3f}] over {len(scores)} pairs")
+    if args.csv:
+        import csv
+        with open(args.csv, "w", encoding="utf-8", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["flexible", "restricted", "atoms in common", "rotatable bonds removed",
+                        "relevant field kept", "intermittent field removed", "potency gain"])
+            for p, s in zip(pairs, scores):
+                w.writerow([p.names[0], p.names[1], f"{p.common:.3f}", p.rotatable_removed,
+                            f"{s.kept:.4f}", f"{s.removed:.4f}", f"{s.gain:.3f}"])
+        print(f"  {len(scores)} pairs written to {args.csv}")
+
+
 def cmd_cofield(args):
     """The co-fields of a saved model on a grid, as cube files and as numbers."""
     import numpy as np
@@ -3810,6 +3883,31 @@ def main(argv=None):
                          "'selectivity' is the difference of the two, which is the map of what "
                          "separates them (plan item SC1)")
     cf.set_defaults(func=cmd_cofield)
+
+    rs = sub.add_parser("restriction",
+                        help="score a ring closure: how much of the field that matters stops "
+                             "moving (plan item MC9)")
+    rs.add_argument("model", help="a model file written by build --save; its co-field is the "
+                                  "weight that says which field matters")
+    rs.add_argument("--molecules", required=True, metavar="FILE",
+                    help="the molecules to look for pairs in, in the model's own frame. A pair "
+                         "is a flexible molecule and an analogue with one ring more, nearly the "
+                         "same atoms and most of the structure in common")
+    rs.add_argument("--activity", default=None, metavar="PROP",
+                    help="the property holding the potency; without it the pairs are scored but "
+                         "nothing is correlated")
+    rs.add_argument("--conformers", type=int, default=3, metavar="N",
+                    help="conformations per molecule; both members of a pair get the same "
+                         "number, since the comparison is between two ensembles (default 3)")
+    rs.add_argument("--floor", type=float, default=1e-2,
+                    help="drop the atom pairs of the variance field below this weight "
+                         "(default 0.01)")
+    rs.add_argument("--spacing", type=float, default=1.0, metavar="A")
+    rs.add_argument("--margin", type=float, default=3.0, metavar="A")
+    rs.add_argument("--seed", type=int, default=1)
+    rs.add_argument("--csv", default=None, metavar="FILE",
+                    help="write one row per pair")
+    rs.set_defaults(func=cmd_restriction)
 
     at = sub.add_parser("atoms", help="a target that belongs to the atoms: what a file carries "
                                       "and how it would be split")

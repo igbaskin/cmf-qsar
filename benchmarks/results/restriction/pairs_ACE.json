@@ -1,0 +1,901 @@
+{
+ "names": [
+  "COO_23A",
+  "COO_23J",
+  "COO_24C",
+  "COO_25A",
+  "COO_25E",
+  "COO_26A",
+  "COO_26C",
+  "COO_26H",
+  "mol_07",
+  "mol_08",
+  "mol_09",
+  "mol_12",
+  "mol_14",
+  "mol_15",
+  "mol_16",
+  "mol_18",
+  "mol_19",
+  "mol_20",
+  "mol_21",
+  "mol_22",
+  "mol_24",
+  "mol_25",
+  "mol_26",
+  "mol_29",
+  "mol_30",
+  "mol_31",
+  "mol_33",
+  "mol_34",
+  "mol_37",
+  "mol_38",
+  "mol_41",
+  "mol_42",
+  "mol_43",
+  "mol_45",
+  "mol_46",
+  "mol_47",
+  "mol_49",
+  "mol_50",
+  "mol_51",
+  "mol_52",
+  "mol_53",
+  "mol_56",
+  "mol_57",
+  "mol_59",
+  "mol_63",
+  "mol_65",
+  "mol_66",
+  "mol_68",
+  "SQ29852",
+  "SQ29852_2B",
+  "SQ29852_2E",
+  "SQ29852_2I",
+  "SQ29852_2K",
+  "SQ29852_2Q",
+  "SQ29852_2R",
+  "SQ29852_2T",
+  "SQ29852_2U",
+  "SQ29852_2V",
+  "SQ29852_2W",
+  "SQ29852_2X",
+  "SQ29852_2Y",
+  "SQ29852_2Z",
+  "THIOL_10",
+  "THIOL_14",
+  "THIOL_18",
+  "THIOL_2",
+  "THIOL_20A",
+  "THIOL_20B",
+  "THIOL_27",
+  "THIOL_30A",
+  "THIOL_30B",
+  "THIOL_4",
+  "THIOL_5",
+  "THIOL_7A",
+  "THIOL_7B",
+  "THIOL_9",
+  "COO_23E",
+  "COO_24A",
+  "mol_01",
+  "mol_02",
+  "mol_03",
+  "mol_04",
+  "mol_05",
+  "mol_06",
+  "mol_10",
+  "mol_11",
+  "mol_13",
+  "mol_17",
+  "mol_23",
+  "mol_27",
+  "mol_28",
+  "mol_32",
+  "mol_35",
+  "mol_36",
+  "mol_39",
+  "mol_40",
+  "mol_44",
+  "mol_48",
+  "mol_54",
+  "mol_55",
+  "mol_58",
+  "mol_60",
+  "mol_61",
+  "mol_62",
+  "mol_64",
+  "mol_67",
+  "SQ29852_2A",
+  "SQ29852_2G",
+  "SQ29852_2H",
+  "SQ29852_2P",
+  "SQ29852_2S",
+  "THIOL_12",
+  "THIOL_22",
+  "THIOL_28"
+ ],
+ "pairs": [
+  {
+   "flexible": 1,
+   "restricted": 76,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.8100000000000005,
+   "names": [
+    "COO_23J",
+    "COO_23E"
+   ]
+  },
+  {
+   "flexible": 10,
+   "restricted": 11,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.33000000000000007,
+   "names": [
+    "mol_09",
+    "mol_12"
+   ]
+  },
+  {
+   "flexible": 10,
+   "restricted": 85,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.4499999999999993,
+   "names": [
+    "mol_09",
+    "mol_11"
+   ]
+  },
+  {
+   "flexible": 14,
+   "restricted": 19,
+   "common": 0.9615384615384616,
+   "rotatable_removed": 1,
+   "gain": 0.7000000000000011,
+   "names": [
+    "mol_16",
+    "mol_22"
+   ]
+  },
+  {
+   "flexible": 15,
+   "restricted": 19,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.3000000000000007,
+   "names": [
+    "mol_18",
+    "mol_22"
+   ]
+  },
+  {
+   "flexible": 16,
+   "restricted": 17,
+   "common": 0.8620689655172413,
+   "rotatable_removed": 4,
+   "gain": 0.040000000000000924,
+   "names": [
+    "mol_19",
+    "mol_20"
+   ]
+  },
+  {
+   "flexible": 16,
+   "restricted": 86,
+   "common": 0.9655172413793104,
+   "rotatable_removed": 4,
+   "gain": -0.15000000000000036,
+   "names": [
+    "mol_19",
+    "mol_13"
+   ]
+  },
+  {
+   "flexible": 25,
+   "restricted": 27,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.6299999999999999,
+   "names": [
+    "mol_31",
+    "mol_34"
+   ]
+  },
+  {
+   "flexible": 25,
+   "restricted": 31,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -3.33,
+   "names": [
+    "mol_31",
+    "mol_42"
+   ]
+  },
+  {
+   "flexible": 25,
+   "restricted": 92,
+   "common": 0.9090909090909091,
+   "rotatable_removed": 1,
+   "gain": 0.1200000000000001,
+   "names": [
+    "mol_31",
+    "mol_35"
+   ]
+  },
+  {
+   "flexible": 26,
+   "restricted": 64,
+   "common": 0.8823529411764706,
+   "rotatable_removed": 1,
+   "gain": -0.25,
+   "names": [
+    "mol_33",
+    "THIOL_18"
+   ]
+  },
+  {
+   "flexible": 26,
+   "restricted": 81,
+   "common": 1.0,
+   "rotatable_removed": 3,
+   "gain": 2.0599999999999996,
+   "names": [
+    "mol_33",
+    "mol_04"
+   ]
+  },
+  {
+   "flexible": 27,
+   "restricted": 11,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.6099999999999994,
+   "names": [
+    "mol_34",
+    "mol_12"
+   ]
+  },
+  {
+   "flexible": 29,
+   "restricted": 44,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.6099999999999999,
+   "names": [
+    "mol_38",
+    "mol_63"
+   ]
+  },
+  {
+   "flexible": 30,
+   "restricted": 11,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 2.3499999999999996,
+   "names": [
+    "mol_41",
+    "mol_12"
+   ]
+  },
+  {
+   "flexible": 30,
+   "restricted": 85,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 2.2300000000000004,
+   "names": [
+    "mol_41",
+    "mol_11"
+   ]
+  },
+  {
+   "flexible": 31,
+   "restricted": 11,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 4.569999999999999,
+   "names": [
+    "mol_42",
+    "mol_12"
+   ]
+  },
+  {
+   "flexible": 32,
+   "restricted": 44,
+   "common": 0.9333333333333333,
+   "rotatable_removed": 2,
+   "gain": 0.52,
+   "names": [
+    "mol_43",
+    "mol_63"
+   ]
+  },
+  {
+   "flexible": 32,
+   "restricted": 45,
+   "common": 0.8,
+   "rotatable_removed": 1,
+   "gain": 2.3499999999999996,
+   "names": [
+    "mol_43",
+    "mol_65"
+   ]
+  },
+  {
+   "flexible": 32,
+   "restricted": 104,
+   "common": 0.9333333333333333,
+   "rotatable_removed": 2,
+   "gain": 2.0300000000000002,
+   "names": [
+    "mol_43",
+    "mol_64"
+   ]
+  },
+  {
+   "flexible": 33,
+   "restricted": 45,
+   "common": 0.8125,
+   "rotatable_removed": 2,
+   "gain": 2.3299999999999996,
+   "names": [
+    "mol_45",
+    "mol_65"
+   ]
+  },
+  {
+   "flexible": 33,
+   "restricted": 104,
+   "common": 0.9375,
+   "rotatable_removed": 3,
+   "gain": 2.0100000000000002,
+   "names": [
+    "mol_45",
+    "mol_64"
+   ]
+  },
+  {
+   "flexible": 36,
+   "restricted": 11,
+   "common": 0.8666666666666667,
+   "rotatable_removed": 1,
+   "gain": 3.9299999999999997,
+   "names": [
+    "mol_49",
+    "mol_12"
+   ]
+  },
+  {
+   "flexible": 36,
+   "restricted": 79,
+   "common": 0.9333333333333333,
+   "rotatable_removed": 1,
+   "gain": 4.04,
+   "names": [
+    "mol_49",
+    "mol_02"
+   ]
+  },
+  {
+   "flexible": 37,
+   "restricted": 80,
+   "common": 0.8125,
+   "rotatable_removed": 1,
+   "gain": 3.11,
+   "names": [
+    "mol_50",
+    "mol_03"
+   ]
+  },
+  {
+   "flexible": 37,
+   "restricted": 85,
+   "common": 0.875,
+   "rotatable_removed": 2,
+   "gain": 3.3000000000000003,
+   "names": [
+    "mol_50",
+    "mol_11"
+   ]
+  },
+  {
+   "flexible": 40,
+   "restricted": 66,
+   "common": 0.8421052631578947,
+   "rotatable_removed": 1,
+   "gain": 2.91,
+   "names": [
+    "mol_53",
+    "THIOL_20A"
+   ]
+  },
+  {
+   "flexible": 40,
+   "restricted": 67,
+   "common": 0.8421052631578947,
+   "rotatable_removed": 1,
+   "gain": 2.16,
+   "names": [
+    "mol_53",
+    "THIOL_20B"
+   ]
+  },
+  {
+   "flexible": 40,
+   "restricted": 112,
+   "common": 0.8421052631578947,
+   "rotatable_removed": 1,
+   "gain": 0.13999999999999968,
+   "names": [
+    "mol_53",
+    "THIOL_22"
+   ]
+  },
+  {
+   "flexible": 41,
+   "restricted": 11,
+   "common": 0.8666666666666667,
+   "rotatable_removed": 2,
+   "gain": 2.54,
+   "names": [
+    "mol_56",
+    "mol_12"
+   ]
+  },
+  {
+   "flexible": 41,
+   "restricted": 79,
+   "common": 0.8666666666666667,
+   "rotatable_removed": 2,
+   "gain": 2.6500000000000004,
+   "names": [
+    "mol_56",
+    "mol_02"
+   ]
+  },
+  {
+   "flexible": 41,
+   "restricted": 85,
+   "common": 0.8666666666666667,
+   "rotatable_removed": 2,
+   "gain": 2.420000000000001,
+   "names": [
+    "mol_56",
+    "mol_11"
+   ]
+  },
+  {
+   "flexible": 43,
+   "restricted": 11,
+   "common": 0.9230769230769231,
+   "rotatable_removed": 2,
+   "gain": 4.119999999999999,
+   "names": [
+    "mol_59",
+    "mol_12"
+   ]
+  },
+  {
+   "flexible": 45,
+   "restricted": 83,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 1.0300000000000002,
+   "names": [
+    "mol_65",
+    "mol_06"
+   ]
+  },
+  {
+   "flexible": 50,
+   "restricted": 51,
+   "common": 1.0,
+   "rotatable_removed": 2,
+   "gain": 0.5599999999999987,
+   "names": [
+    "SQ29852_2E",
+    "SQ29852_2I"
+   ]
+  },
+  {
+   "flexible": 52,
+   "restricted": 51,
+   "common": 1.0,
+   "rotatable_removed": 2,
+   "gain": 0.0,
+   "names": [
+    "SQ29852_2K",
+    "SQ29852_2I"
+   ]
+  },
+  {
+   "flexible": 56,
+   "restricted": 59,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.08000000000000007,
+   "names": [
+    "SQ29852_2U",
+    "SQ29852_2X"
+   ]
+  },
+  {
+   "flexible": 57,
+   "restricted": 59,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.47999999999999865,
+   "names": [
+    "SQ29852_2V",
+    "SQ29852_2X"
+   ]
+  },
+  {
+   "flexible": 58,
+   "restricted": 59,
+   "common": 1.0,
+   "rotatable_removed": 2,
+   "gain": 0.6099999999999994,
+   "names": [
+    "SQ29852_2W",
+    "SQ29852_2X"
+   ]
+  },
+  {
+   "flexible": 65,
+   "restricted": 104,
+   "common": 0.8125,
+   "rotatable_removed": 2,
+   "gain": 2.5300000000000002,
+   "names": [
+    "THIOL_2",
+    "mol_64"
+   ]
+  },
+  {
+   "flexible": 71,
+   "restricted": 104,
+   "common": 0.8125,
+   "rotatable_removed": 2,
+   "gain": 0.8799999999999999,
+   "names": [
+    "THIOL_4",
+    "mol_64"
+   ]
+  },
+  {
+   "flexible": 84,
+   "restricted": 11,
+   "common": 0.9333333333333333,
+   "rotatable_removed": 1,
+   "gain": -0.7400000000000011,
+   "names": [
+    "mol_10",
+    "mol_12"
+   ]
+  },
+  {
+   "flexible": 84,
+   "restricted": 79,
+   "common": 0.9333333333333333,
+   "rotatable_removed": 1,
+   "gain": -0.6300000000000008,
+   "names": [
+    "mol_10",
+    "mol_02"
+   ]
+  },
+  {
+   "flexible": 91,
+   "restricted": 10,
+   "common": 0.9230769230769231,
+   "rotatable_removed": 2,
+   "gain": 1.8399999999999999,
+   "names": [
+    "mol_32",
+    "mol_09"
+   ]
+  },
+  {
+   "flexible": 91,
+   "restricted": 27,
+   "common": 0.9230769230769231,
+   "rotatable_removed": 2,
+   "gain": 0.9000000000000004,
+   "names": [
+    "mol_32",
+    "mol_34"
+   ]
+  },
+  {
+   "flexible": 91,
+   "restricted": 30,
+   "common": 0.9230769230769231,
+   "rotatable_removed": 2,
+   "gain": -0.8399999999999999,
+   "names": [
+    "mol_32",
+    "mol_41"
+   ]
+  },
+  {
+   "flexible": 91,
+   "restricted": 31,
+   "common": 0.9230769230769231,
+   "rotatable_removed": 2,
+   "gain": -3.0599999999999996,
+   "names": [
+    "mol_32",
+    "mol_42"
+   ]
+  },
+  {
+   "flexible": 91,
+   "restricted": 41,
+   "common": 0.9230769230769231,
+   "rotatable_removed": 1,
+   "gain": -1.0300000000000002,
+   "names": [
+    "mol_32",
+    "mol_56"
+   ]
+  },
+  {
+   "flexible": 91,
+   "restricted": 43,
+   "common": 0.8461538461538461,
+   "rotatable_removed": 1,
+   "gain": -2.61,
+   "names": [
+    "mol_32",
+    "mol_59"
+   ]
+  },
+  {
+   "flexible": 91,
+   "restricted": 84,
+   "common": 0.9230769230769231,
+   "rotatable_removed": 2,
+   "gain": 2.250000000000001,
+   "names": [
+    "mol_32",
+    "mol_10"
+   ]
+  },
+  {
+   "flexible": 91,
+   "restricted": 97,
+   "common": 0.8461538461538461,
+   "rotatable_removed": 3,
+   "gain": -2.1599999999999997,
+   "names": [
+    "mol_32",
+    "mol_48"
+   ]
+  },
+  {
+   "flexible": 92,
+   "restricted": 11,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 1.1199999999999992,
+   "names": [
+    "mol_35",
+    "mol_12"
+   ]
+  },
+  {
+   "flexible": 93,
+   "restricted": 27,
+   "common": 0.8181818181818182,
+   "rotatable_removed": 2,
+   "gain": 4.0,
+   "names": [
+    "mol_36",
+    "mol_34"
+   ]
+  },
+  {
+   "flexible": 93,
+   "restricted": 31,
+   "common": 0.8181818181818182,
+   "rotatable_removed": 2,
+   "gain": 0.040000000000000036,
+   "names": [
+    "mol_36",
+    "mol_42"
+   ]
+  },
+  {
+   "flexible": 93,
+   "restricted": 92,
+   "common": 0.8181818181818182,
+   "rotatable_removed": 2,
+   "gain": 3.49,
+   "names": [
+    "mol_36",
+    "mol_35"
+   ]
+  },
+  {
+   "flexible": 94,
+   "restricted": 64,
+   "common": 0.8333333333333334,
+   "rotatable_removed": 1,
+   "gain": 1.6100000000000003,
+   "names": [
+    "mol_39",
+    "THIOL_18"
+   ]
+  },
+  {
+   "flexible": 94,
+   "restricted": 66,
+   "common": 0.8888888888888888,
+   "rotatable_removed": 1,
+   "gain": 2.6800000000000006,
+   "names": [
+    "mol_39",
+    "THIOL_20A"
+   ]
+  },
+  {
+   "flexible": 94,
+   "restricted": 67,
+   "common": 0.8888888888888888,
+   "rotatable_removed": 1,
+   "gain": 1.9300000000000006,
+   "names": [
+    "mol_39",
+    "THIOL_20B"
+   ]
+  },
+  {
+   "flexible": 94,
+   "restricted": 81,
+   "common": 0.9444444444444444,
+   "rotatable_removed": 3,
+   "gain": 3.92,
+   "names": [
+    "mol_39",
+    "mol_04"
+   ]
+  },
+  {
+   "flexible": 95,
+   "restricted": 27,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 1.1800000000000006,
+   "names": [
+    "mol_40",
+    "mol_34"
+   ]
+  },
+  {
+   "flexible": 95,
+   "restricted": 31,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -2.7799999999999994,
+   "names": [
+    "mol_40",
+    "mol_42"
+   ]
+  },
+  {
+   "flexible": 95,
+   "restricted": 92,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.6700000000000008,
+   "names": [
+    "mol_40",
+    "mol_35"
+   ]
+  },
+  {
+   "flexible": 96,
+   "restricted": 45,
+   "common": 0.8125,
+   "rotatable_removed": 2,
+   "gain": 2.0999999999999996,
+   "names": [
+    "mol_44",
+    "mol_65"
+   ]
+  },
+  {
+   "flexible": 96,
+   "restricted": 104,
+   "common": 0.9375,
+   "rotatable_removed": 3,
+   "gain": 1.7800000000000002,
+   "names": [
+    "mol_44",
+    "mol_64"
+   ]
+  },
+  {
+   "flexible": 98,
+   "restricted": 66,
+   "common": 0.8,
+   "rotatable_removed": 2,
+   "gain": 4.16,
+   "names": [
+    "mol_54",
+    "THIOL_20A"
+   ]
+  },
+  {
+   "flexible": 98,
+   "restricted": 67,
+   "common": 0.8,
+   "rotatable_removed": 2,
+   "gain": 3.4100000000000006,
+   "names": [
+    "mol_54",
+    "THIOL_20B"
+   ]
+  },
+  {
+   "flexible": 98,
+   "restricted": 68,
+   "common": 0.8,
+   "rotatable_removed": 1,
+   "gain": 2.31,
+   "names": [
+    "mol_54",
+    "THIOL_27"
+   ]
+  },
+  {
+   "flexible": 98,
+   "restricted": 69,
+   "common": 0.8,
+   "rotatable_removed": 1,
+   "gain": 4.43,
+   "names": [
+    "mol_54",
+    "THIOL_30A"
+   ]
+  },
+  {
+   "flexible": 98,
+   "restricted": 70,
+   "common": 0.8,
+   "rotatable_removed": 1,
+   "gain": 1.4500000000000006,
+   "names": [
+    "mol_54",
+    "THIOL_30B"
+   ]
+  },
+  {
+   "flexible": 98,
+   "restricted": 112,
+   "common": 0.8,
+   "rotatable_removed": 2,
+   "gain": 1.3900000000000001,
+   "names": [
+    "mol_54",
+    "THIOL_22"
+   ]
+  },
+  {
+   "flexible": 98,
+   "restricted": 113,
+   "common": 0.8,
+   "rotatable_removed": 1,
+   "gain": -0.029999999999999805,
+   "names": [
+    "mol_54",
+    "THIOL_28"
+   ]
+  }
+ ]
+}

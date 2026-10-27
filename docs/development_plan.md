@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 70 modules and about 30,950 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 71 modules and about 31,350 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-six subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 1051 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`), 1071 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2408,6 +2408,41 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   restricted analogue with measured potencies, the weighted variance removed correlates with the
   potency gain. Both members of a pair must come from the same conformer generator with the same
   settings, since the comparison is between two ensembles and not between two molecules.
+  **Done 27 October 2026; the gate is not passed, and the half of the score that works is the
+  mean field rather than the variance.** `cmfqsar/restriction.py` and the subcommand
+  `cmf restriction`. The square of the co-field is a weight that is positive everywhere and
+  large only where the model reads the field, so a molecule gets two amounts on a grid: the
+  **relevant** field it places (the weight times the squared mean field) and the
+  **intermittent** part of it (the same weight on the variance field of D10). A pair is scored
+  by `kept` = relevant(B)/relevant(A) and `removed` = 1 - intermittent(B)/intermittent(A).
+  20 tests.
+  **The pairs are found by a rule, not by eye**, so the measurement cannot be steered: one ring
+  more, at least one rotatable bond fewer, at most two heavy atoms more, an atom composition
+  differing by at most two atoms, and a common substructure covering at least 80 per cent of the
+  smaller member. A fingerprint is deliberately not used for the likeness. Closing a ring changes
+  the environment of every atom near the new bond, so butylphenol and 2-methylchroman -- the same
+  eleven heavy atoms, one bond more -- are only 0.15 alike as Morgan fingerprints, and a
+  threshold high enough to be useful would throw away exactly the pairs the item is about.
+  **Measured** by `benchmarks/run_restriction.py` on 439 pairs from 4 aligned Sutherland sets
+  (THR 33, COX2 145, DHFR 190, ACE 71), 3 conformations per molecule from the same generator for
+  both members, correlated with the potency gain: the weighted variance removed +0.043 [-0.030,
+  +0.111], which contains zero; the same with the pair left out of the co-field +0.020 [-0.061,
+  +0.093], so there was nothing for the weight to learn; the unweighted variance removed -0.034
+  [-0.140, +0.062]. The reference of rule 1 is the cheapest thing a chemist could use instead,
+  the number of rotatable bonds the closure removed, and it reaches +0.236 [+0.151, +0.317]
+  without geometry, conformations or a model.
+  **What does track the gain is the mean field**: how much of the activity-relevant field the
+  restricted analogue still places, +0.220 [+0.120, +0.315]. A ring closure helps when the
+  molecule still puts its field where the model reads it and hurts when the ring holds it
+  somewhere else, which is the expected statement and does not need the variance to make it.
+  This is the third measured place where the conformational ensemble carries less than it
+  promises, after D9 (averaging does not predict better) and D10 (the variance adds nothing as a
+  block of the kernel); the variance field stays the map D10 made it.
+  **Two limits of this measurement**, both stated in the benchmark: the ensembles are three
+  conformations from a distance-geometry generator superimposed on the aligned pose, which is a
+  narrow view of what a molecule does in water; and a ring closure is never purely conformational
+  in practice, since it changes the shape and often an atom or two as well. A public set of pairs
+  differing in nothing but one bond, with measured potencies, was looked for and not found.
 
 **Large (a month or more each)**
 

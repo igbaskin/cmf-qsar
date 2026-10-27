@@ -331,6 +331,42 @@ carries anything.
 python benchmarks/run_fluctuation.py        # results/fluctuation/table.md
 ```
 
+### Scoring a conformational restriction
+
+Tying two parts of a molecule into a ring, so that a bond can no longer rotate, is one of the few
+moves in medicinal chemistry whose effect is meant to be purely conformational, and the variance
+field above is a map of what such a move is supposed to change. Plan item MC9 turns it into two
+numbers (`cmfqsar/restriction.py`). The square of the co-field is a weight -- positive
+everywhere, large where the model reads the field -- and with it every molecule has the
+**relevant** field it places (the integral of the squared co-field times the squared mean field)
+and the **intermittent** part of it (the same weight on the variance field). A pair of a flexible
+molecule and its restricted analogue is then two shares: how much of the relevant field the
+closure **kept**, and how much of the intermittent part it **removed**.
+
+The pairs come from a mechanical rule and not from eye: one ring more, at least one rotatable
+bond fewer, at most two heavy atoms more, nearly the same atom composition, and a common
+substructure covering at least 80 per cent of the smaller member. A fingerprint is deliberately
+not used -- butylphenol and 2-methylchroman, the same eleven atoms with one bond more, are 0.15
+alike as Morgan fingerprints, so a useful threshold would throw away exactly the pairs the item
+is about.
+
+**The score does not pass the gate, and the mean field does.** On 439 pairs from four Sutherland
+sets, the share of intermittent field a ring closure removes correlates with the potency gain at
++0.043 [-0.030, +0.111], an interval that contains zero; counting the rotatable bonds the closure
+removed reaches +0.236 [+0.151, +0.317] on the same pairs and needs no model at all. Rebuilding
+the co-field without both members of each pair leaves +0.020, so there was nothing for the weight
+to learn. What does track the gain is how much of the activity-relevant field the restricted
+analogue still places, +0.220 [+0.120, +0.315]: a ring closure helps when the molecule still puts
+its field where the model reads it. This is the third measured place where the conformational
+ensemble carries less than it promises, after the fourth dimension and the variance block, and
+the variance field stays a map.
+
+```bash
+cmf restriction model.cmf --molecules series.sdf --activity pIC50 --csv pairs.csv
+python benchmarks/run_restriction.py        # results/restriction/table.md
+```
+
+
 ### Heterogeneous series: several chemotypes, no one common substructure
 
 Everything above rests on the molecules sharing a frame, and a congeneric series supplies one:

@@ -1,0 +1,1883 @@
+{
+ "names": [
+  "1-1",
+  "1-28",
+  "1-29",
+  "1-3",
+  "1-38",
+  "1-41",
+  "1-5",
+  "1-6",
+  "1-9",
+  "10-2",
+  "11-10",
+  "11-13",
+  "11-14",
+  "11-21",
+  "11-24",
+  "11-25",
+  "11-26",
+  "11-30",
+  "11-32",
+  "11-33",
+  "11-8",
+  "12-3a",
+  "12-5a",
+  "12-5b",
+  "13-10",
+  "13-7c",
+  "14-13",
+  "14-15",
+  "14-7",
+  "3-10",
+  "3-100",
+  "3-12",
+  "3-13",
+  "3-14",
+  "3-15",
+  "3-17",
+  "3-18",
+  "3-20",
+  "3-22",
+  "3-27",
+  "3-28",
+  "3-30",
+  "3-31",
+  "3-32",
+  "3-38",
+  "3-40",
+  "3-42",
+  "3-43",
+  "3-44",
+  "3-46",
+  "3-47",
+  "3-5",
+  "3-50",
+  "3-52",
+  "3-54",
+  "3-55",
+  "3-56",
+  "3-57",
+  "3-58",
+  "3-6",
+  "3-61",
+  "3-66",
+  "3-69",
+  "3-70",
+  "3-71",
+  "3-72",
+  "3-73",
+  "3-79",
+  "3-87",
+  "3-88",
+  "3-89",
+  "3-90",
+  "3-96",
+  "3-99",
+  "4-25",
+  "4-36",
+  "4-40",
+  "4-41",
+  "4-42",
+  "4-43",
+  "4-44",
+  "4-49",
+  "4-50",
+  "4-51",
+  "4-52",
+  "4-53",
+  "4-54",
+  "4-55",
+  "4-56",
+  "4-57",
+  "4-58",
+  "4-62",
+  "4-64",
+  "4-66",
+  "4-71",
+  "4-72",
+  "4-73",
+  "4-75",
+  "4-76",
+  "4-78",
+  "5-1a",
+  "5-1b",
+  "5-1d",
+  "5-1f",
+  "5-1i",
+  "5-1k",
+  "5-1l",
+  "5-7a",
+  "5-7c",
+  "6-7b",
+  "6-7i",
+  "6-7l",
+  "6-7p",
+  "6-8a",
+  "6-8b",
+  "6-8i",
+  "6-8m",
+  "6-8o",
+  "7-17a",
+  "7-17b",
+  "7-20c",
+  "7-20h",
+  "7-20i",
+  "7-20j",
+  "7-20k",
+  "7-20o",
+  "7-21c",
+  "7-21d",
+  "7-21g",
+  "7-21j",
+  "7-21l",
+  "7-21p",
+  "7-21q",
+  "8-16a",
+  "8-1aa",
+  "8-1ab",
+  "8-1ad",
+  "8-1ae",
+  "8-1af",
+  "8-1al",
+  "8-1ar",
+  "8-1as",
+  "8-1at",
+  "8-1b",
+  "8-1c",
+  "8-1d",
+  "8-1g",
+  "8-1i",
+  "8-1j",
+  "8-1l",
+  "8-1n",
+  "8-1o",
+  "8-1q",
+  "8-1r",
+  "8-1t",
+  "8-1u",
+  "8-1w",
+  "8-1x",
+  "8-1y",
+  "8-1z",
+  "8-20b",
+  "8-20c",
+  "8-20d",
+  "8-24",
+  "8-25a",
+  "8-26",
+  "8-28a",
+  "8-2a",
+  "8-2g",
+  "8-2h",
+  "8-2m",
+  "8-2o",
+  "8-35",
+  "8-36",
+  "8-celecoxib",
+  "9-24",
+  "9-29",
+  "9-3",
+  "9-35",
+  "9-36",
+  "9-37",
+  "9-38",
+  "9-39",
+  "9-41",
+  "9-46",
+  "9-47",
+  "9-48",
+  "9-53",
+  "1-20",
+  "1-31",
+  "1-32",
+  "1-33",
+  "1-34",
+  "1-37",
+  "1-4",
+  "1-42",
+  "1-8",
+  "10-3",
+  "11-16",
+  "11-29",
+  "11-34",
+  "12-10b",
+  "12-10c",
+  "13-7a",
+  "14-12",
+  "14-14",
+  "14-3",
+  "2-20",
+  "3-101",
+  "3-103",
+  "3-29",
+  "3-33",
+  "3-49",
+  "3-75",
+  "3-80",
+  "3-91",
+  "4-59",
+  "4-60",
+  "4-63",
+  "4-67",
+  "4-69",
+  "4-70",
+  "4-74",
+  "4-77",
+  "4-79",
+  "4-80",
+  "5-1g",
+  "5-1h",
+  "5-1j",
+  "5-7e",
+  "6-7m",
+  "6-8h",
+  "6-8l",
+  "6-8p",
+  "6-Dup697",
+  "7-16a",
+  "7-17d",
+  "7-20g",
+  "7-20p",
+  "7-20q",
+  "7-21h",
+  "7-21i",
+  "7-21m",
+  "7-21o",
+  "7-32",
+  "8-13a",
+  "8-14a",
+  "8-17a",
+  "8-1ac",
+  "8-1ai",
+  "8-1aj",
+  "8-1ak",
+  "8-1an",
+  "8-1ao",
+  "8-1ap",
+  "8-1aq",
+  "8-1p",
+  "8-1s",
+  "8-1v",
+  "8-20e",
+  "8-20f",
+  "8-20g",
+  "8-21b",
+  "8-22c",
+  "8-22d",
+  "8-22e",
+  "8-22f",
+  "8-23",
+  "8-25b",
+  "8-25d",
+  "8-2c",
+  "8-2f",
+  "8-2n",
+  "8-37",
+  "8-38",
+  "8-39",
+  "8-8a",
+  "8-9b",
+  "9-19",
+  "9-20",
+  "9-32",
+  "9-40"
+ ],
+ "pairs": [
+  {
+   "flexible": 31,
+   "restricted": 56,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.5299999999999994,
+   "names": [
+    "3-12",
+    "3-56"
+   ]
+  },
+  {
+   "flexible": 31,
+   "restricted": 220,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 0.08999999999999986,
+   "names": [
+    "3-12",
+    "4-69"
+   ]
+  },
+  {
+   "flexible": 32,
+   "restricted": 92,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 0.08999999999999986,
+   "names": [
+    "3-13",
+    "4-64"
+   ]
+  },
+  {
+   "flexible": 32,
+   "restricted": 93,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.3700000000000001,
+   "names": [
+    "3-13",
+    "4-66"
+   ]
+  },
+  {
+   "flexible": 32,
+   "restricted": 219,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 0.1299999999999999,
+   "names": [
+    "3-13",
+    "4-67"
+   ]
+  },
+  {
+   "flexible": 33,
+   "restricted": 92,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -0.23000000000000043,
+   "names": [
+    "3-14",
+    "4-64"
+   ]
+  },
+  {
+   "flexible": 33,
+   "restricted": 93,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 1,
+   "gain": 0.04999999999999982,
+   "names": [
+    "3-14",
+    "4-66"
+   ]
+  },
+  {
+   "flexible": 33,
+   "restricted": 219,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -0.1900000000000004,
+   "names": [
+    "3-14",
+    "4-67"
+   ]
+  },
+  {
+   "flexible": 39,
+   "restricted": 56,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.3099999999999996,
+   "names": [
+    "3-27",
+    "3-56"
+   ]
+  },
+  {
+   "flexible": 39,
+   "restricted": 220,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.1299999999999999,
+   "names": [
+    "3-27",
+    "4-69"
+   ]
+  },
+  {
+   "flexible": 41,
+   "restricted": 92,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 0.4299999999999997,
+   "names": [
+    "3-30",
+    "4-64"
+   ]
+  },
+  {
+   "flexible": 41,
+   "restricted": 93,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 0.71,
+   "names": [
+    "3-30",
+    "4-66"
+   ]
+  },
+  {
+   "flexible": 41,
+   "restricted": 219,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.46999999999999975,
+   "names": [
+    "3-30",
+    "4-67"
+   ]
+  },
+  {
+   "flexible": 42,
+   "restricted": 92,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": -0.1200000000000001,
+   "names": [
+    "3-31",
+    "4-64"
+   ]
+  },
+  {
+   "flexible": 42,
+   "restricted": 93,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 0.16000000000000014,
+   "names": [
+    "3-31",
+    "4-66"
+   ]
+  },
+  {
+   "flexible": 42,
+   "restricted": 219,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.08000000000000007,
+   "names": [
+    "3-31",
+    "4-67"
+   ]
+  },
+  {
+   "flexible": 48,
+   "restricted": 56,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 1,
+   "gain": -0.05000000000000071,
+   "names": [
+    "3-44",
+    "3-56"
+   ]
+  },
+  {
+   "flexible": 48,
+   "restricted": 220,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -0.4900000000000002,
+   "names": [
+    "3-44",
+    "4-69"
+   ]
+  },
+  {
+   "flexible": 50,
+   "restricted": 92,
+   "common": 0.8620689655172413,
+   "rotatable_removed": 1,
+   "gain": -0.5700000000000003,
+   "names": [
+    "3-47",
+    "4-64"
+   ]
+  },
+  {
+   "flexible": 50,
+   "restricted": 93,
+   "common": 0.9310344827586207,
+   "rotatable_removed": 1,
+   "gain": -0.29000000000000004,
+   "names": [
+    "3-47",
+    "4-66"
+   ]
+  },
+  {
+   "flexible": 50,
+   "restricted": 219,
+   "common": 0.8620689655172413,
+   "rotatable_removed": 1,
+   "gain": -0.5300000000000002,
+   "names": [
+    "3-47",
+    "4-67"
+   ]
+  },
+  {
+   "flexible": 54,
+   "restricted": 56,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 1,
+   "gain": 0.16999999999999993,
+   "names": [
+    "3-54",
+    "3-56"
+   ]
+  },
+  {
+   "flexible": 54,
+   "restricted": 220,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 1,
+   "gain": -0.2699999999999996,
+   "names": [
+    "3-54",
+    "4-69"
+   ]
+  },
+  {
+   "flexible": 55,
+   "restricted": 92,
+   "common": 0.8620689655172413,
+   "rotatable_removed": 1,
+   "gain": -0.0600000000000005,
+   "names": [
+    "3-55",
+    "4-64"
+   ]
+  },
+  {
+   "flexible": 55,
+   "restricted": 93,
+   "common": 0.8620689655172413,
+   "rotatable_removed": 1,
+   "gain": 0.21999999999999975,
+   "names": [
+    "3-55",
+    "4-66"
+   ]
+  },
+  {
+   "flexible": 55,
+   "restricted": 219,
+   "common": 0.9655172413793104,
+   "rotatable_removed": 1,
+   "gain": -0.020000000000000462,
+   "names": [
+    "3-55",
+    "4-67"
+   ]
+  },
+  {
+   "flexible": 60,
+   "restricted": 56,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 1,
+   "gain": 0.75,
+   "names": [
+    "3-61",
+    "3-56"
+   ]
+  },
+  {
+   "flexible": 60,
+   "restricted": 220,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 1,
+   "gain": 0.3100000000000005,
+   "names": [
+    "3-61",
+    "4-69"
+   ]
+  },
+  {
+   "flexible": 67,
+   "restricted": 92,
+   "common": 0.896551724137931,
+   "rotatable_removed": 1,
+   "gain": -0.21999999999999975,
+   "names": [
+    "3-79",
+    "4-64"
+   ]
+  },
+  {
+   "flexible": 67,
+   "restricted": 93,
+   "common": 0.9310344827586207,
+   "rotatable_removed": 1,
+   "gain": 0.0600000000000005,
+   "names": [
+    "3-79",
+    "4-66"
+   ]
+  },
+  {
+   "flexible": 67,
+   "restricted": 219,
+   "common": 0.896551724137931,
+   "rotatable_removed": 1,
+   "gain": -0.17999999999999972,
+   "names": [
+    "3-79",
+    "4-67"
+   ]
+  },
+  {
+   "flexible": 101,
+   "restricted": 111,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.620000000000001,
+   "names": [
+    "5-1b",
+    "6-7l"
+   ]
+  },
+  {
+   "flexible": 104,
+   "restricted": 111,
+   "common": 0.9565217391304348,
+   "rotatable_removed": 1,
+   "gain": 2.1899999999999995,
+   "names": [
+    "5-1i",
+    "6-7l"
+   ]
+  },
+  {
+   "flexible": 110,
+   "restricted": 111,
+   "common": 0.9583333333333334,
+   "rotatable_removed": 1,
+   "gain": 0.7599999999999998,
+   "names": [
+    "6-7i",
+    "6-7l"
+   ]
+  },
+  {
+   "flexible": 110,
+   "restricted": 177,
+   "common": 0.875,
+   "rotatable_removed": 1,
+   "gain": 1.1999999999999993,
+   "names": [
+    "6-7i",
+    "9-3"
+   ]
+  },
+  {
+   "flexible": 110,
+   "restricted": 244,
+   "common": 0.9166666666666666,
+   "rotatable_removed": 1,
+   "gain": 0.16000000000000014,
+   "names": [
+    "6-7i",
+    "7-32"
+   ]
+  },
+  {
+   "flexible": 110,
+   "restricted": 280,
+   "common": 0.8333333333333334,
+   "rotatable_removed": 1,
+   "gain": 1.5999999999999996,
+   "names": [
+    "6-7i",
+    "9-32"
+   ]
+  },
+  {
+   "flexible": 115,
+   "restricted": 232,
+   "common": 0.9583333333333334,
+   "rotatable_removed": 1,
+   "gain": 0.8999999999999995,
+   "names": [
+    "6-8i",
+    "6-8l"
+   ]
+  },
+  {
+   "flexible": 115,
+   "restricted": 280,
+   "common": 0.875,
+   "rotatable_removed": 1,
+   "gain": 0.7199999999999998,
+   "names": [
+    "6-8i",
+    "9-32"
+   ]
+  },
+  {
+   "flexible": 121,
+   "restricted": 27,
+   "common": 0.8214285714285714,
+   "rotatable_removed": 1,
+   "gain": 1.830000000000001,
+   "names": [
+    "7-20h",
+    "14-15"
+   ]
+  },
+  {
+   "flexible": 121,
+   "restricted": 122,
+   "common": 1.0,
+   "rotatable_removed": 2,
+   "gain": 0.0,
+   "names": [
+    "7-20h",
+    "7-20i"
+   ]
+  },
+  {
+   "flexible": 121,
+   "restricted": 181,
+   "common": 0.8214285714285714,
+   "rotatable_removed": 1,
+   "gain": 0.40000000000000036,
+   "names": [
+    "7-20h",
+    "9-38"
+   ]
+  },
+  {
+   "flexible": 121,
+   "restricted": 205,
+   "common": 0.8571428571428571,
+   "rotatable_removed": 1,
+   "gain": 0.5600000000000005,
+   "names": [
+    "7-20h",
+    "14-14"
+   ]
+  },
+  {
+   "flexible": 121,
+   "restricted": 241,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 2,
+   "gain": 1.0200000000000005,
+   "names": [
+    "7-20h",
+    "7-21i"
+   ]
+  },
+  {
+   "flexible": 127,
+   "restricted": 129,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": 0.5100000000000007,
+   "names": [
+    "7-21d",
+    "7-21j"
+   ]
+  },
+  {
+   "flexible": 128,
+   "restricted": 123,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": -0.3800000000000008,
+   "names": [
+    "7-21g",
+    "7-20j"
+   ]
+  },
+  {
+   "flexible": 128,
+   "restricted": 129,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": 0.09999999999999964,
+   "names": [
+    "7-21g",
+    "7-21j"
+   ]
+  },
+  {
+   "flexible": 128,
+   "restricted": 183,
+   "common": 0.8148148148148148,
+   "rotatable_removed": 1,
+   "gain": 0.6999999999999993,
+   "names": [
+    "7-21g",
+    "9-41"
+   ]
+  },
+  {
+   "flexible": 128,
+   "restricted": 241,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": -0.8100000000000005,
+   "names": [
+    "7-21g",
+    "7-21i"
+   ]
+  },
+  {
+   "flexible": 134,
+   "restricted": 140,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -1.79,
+   "names": [
+    "8-1aa",
+    "8-1ar"
+   ]
+  },
+  {
+   "flexible": 134,
+   "restricted": 141,
+   "common": 0.9285714285714286,
+   "rotatable_removed": 1,
+   "gain": -0.75,
+   "names": [
+    "8-1aa",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 134,
+   "restricted": 252,
+   "common": 0.9285714285714286,
+   "rotatable_removed": 1,
+   "gain": -1.9699999999999998,
+   "names": [
+    "8-1aa",
+    "8-1an"
+   ]
+  },
+  {
+   "flexible": 134,
+   "restricted": 253,
+   "common": 0.9285714285714286,
+   "rotatable_removed": 1,
+   "gain": -2.38,
+   "names": [
+    "8-1aa",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 134,
+   "restricted": 255,
+   "common": 0.9285714285714286,
+   "rotatable_removed": 1,
+   "gain": -0.9199999999999999,
+   "names": [
+    "8-1aa",
+    "8-1aq"
+   ]
+  },
+  {
+   "flexible": 136,
+   "restricted": 142,
+   "common": 0.9655172413793104,
+   "rotatable_removed": 1,
+   "gain": 0.10000000000000053,
+   "names": [
+    "8-1ad",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 148,
+   "restricted": 140,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.5699999999999994,
+   "names": [
+    "8-1j",
+    "8-1ar"
+   ]
+  },
+  {
+   "flexible": 148,
+   "restricted": 141,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": 1.6099999999999994,
+   "names": [
+    "8-1j",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 148,
+   "restricted": 142,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": 1.21,
+   "names": [
+    "8-1j",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 148,
+   "restricted": 252,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": 0.3899999999999997,
+   "names": [
+    "8-1j",
+    "8-1an"
+   ]
+  },
+  {
+   "flexible": 148,
+   "restricted": 253,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": -0.020000000000000462,
+   "names": [
+    "8-1j",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 148,
+   "restricted": 255,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 1.4399999999999995,
+   "names": [
+    "8-1j",
+    "8-1aq"
+   ]
+  },
+  {
+   "flexible": 150,
+   "restricted": 141,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 1.1399999999999997,
+   "names": [
+    "8-1n",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 150,
+   "restricted": 142,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 0.7400000000000002,
+   "names": [
+    "8-1n",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 150,
+   "restricted": 253,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": -0.4900000000000002,
+   "names": [
+    "8-1n",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 151,
+   "restricted": 141,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.41999999999999993,
+   "names": [
+    "8-1o",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 151,
+   "restricted": 142,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.8199999999999994,
+   "names": [
+    "8-1o",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 151,
+   "restricted": 253,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": -2.05,
+   "names": [
+    "8-1o",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 152,
+   "restricted": 140,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -1.410000000000001,
+   "names": [
+    "8-1q",
+    "8-1ar"
+   ]
+  },
+  {
+   "flexible": 152,
+   "restricted": 252,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": -1.5900000000000007,
+   "names": [
+    "8-1q",
+    "8-1an"
+   ]
+  },
+  {
+   "flexible": 155,
+   "restricted": 141,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -0.6500000000000004,
+   "names": [
+    "8-1u",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 155,
+   "restricted": 252,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -1.87,
+   "names": [
+    "8-1u",
+    "8-1an"
+   ]
+  },
+  {
+   "flexible": 155,
+   "restricted": 253,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -2.2800000000000002,
+   "names": [
+    "8-1u",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 155,
+   "restricted": 255,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -0.8200000000000003,
+   "names": [
+    "8-1u",
+    "8-1aq"
+   ]
+  },
+  {
+   "flexible": 156,
+   "restricted": 141,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 1,
+   "gain": 2.7299999999999995,
+   "names": [
+    "8-1w",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 156,
+   "restricted": 142,
+   "common": 0.9285714285714286,
+   "rotatable_removed": 1,
+   "gain": 2.33,
+   "names": [
+    "8-1w",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 156,
+   "restricted": 253,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 1.0999999999999996,
+   "names": [
+    "8-1w",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 157,
+   "restricted": 141,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.34999999999999964,
+   "names": [
+    "8-1x",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 157,
+   "restricted": 142,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.7499999999999991,
+   "names": [
+    "8-1x",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 157,
+   "restricted": 252,
+   "common": 0.9285714285714286,
+   "rotatable_removed": 1,
+   "gain": -1.5699999999999994,
+   "names": [
+    "8-1x",
+    "8-1an"
+   ]
+  },
+  {
+   "flexible": 157,
+   "restricted": 253,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 1,
+   "gain": -1.9799999999999995,
+   "names": [
+    "8-1x",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 157,
+   "restricted": 255,
+   "common": 0.9285714285714286,
+   "rotatable_removed": 1,
+   "gain": -0.5199999999999996,
+   "names": [
+    "8-1x",
+    "8-1aq"
+   ]
+  },
+  {
+   "flexible": 158,
+   "restricted": 140,
+   "common": 0.9310344827586207,
+   "rotatable_removed": 2,
+   "gain": 0.2699999999999996,
+   "names": [
+    "8-1y",
+    "8-1ar"
+   ]
+  },
+  {
+   "flexible": 158,
+   "restricted": 142,
+   "common": 0.9655172413793104,
+   "rotatable_removed": 2,
+   "gain": 0.9100000000000001,
+   "names": [
+    "8-1y",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 159,
+   "restricted": 142,
+   "common": 0.9655172413793104,
+   "rotatable_removed": 2,
+   "gain": 1.0600000000000005,
+   "names": [
+    "8-1z",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 168,
+   "restricted": 141,
+   "common": 1.0,
+   "rotatable_removed": 2,
+   "gain": -0.14000000000000057,
+   "names": [
+    "8-2g",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 168,
+   "restricted": 253,
+   "common": 0.9615384615384616,
+   "rotatable_removed": 2,
+   "gain": -1.7700000000000005,
+   "names": [
+    "8-2g",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 168,
+   "restricted": 272,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": -0.20000000000000018,
+   "names": [
+    "8-2g",
+    "8-2n"
+   ]
+  },
+  {
+   "flexible": 169,
+   "restricted": 141,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 2,
+   "gain": 0.3799999999999999,
+   "names": [
+    "8-2h",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 169,
+   "restricted": 142,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 2,
+   "gain": -0.019999999999999574,
+   "names": [
+    "8-2h",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 169,
+   "restricted": 253,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 2,
+   "gain": -1.25,
+   "names": [
+    "8-2h",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 169,
+   "restricted": 272,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": 0.3200000000000003,
+   "names": [
+    "8-2h",
+    "8-2n"
+   ]
+  },
+  {
+   "flexible": 176,
+   "restricted": 184,
+   "common": 0.8076923076923077,
+   "rotatable_removed": 1,
+   "gain": 1.0299999999999994,
+   "names": [
+    "9-29",
+    "9-46"
+   ]
+  },
+  {
+   "flexible": 179,
+   "restricted": 184,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.29999999999999893,
+   "names": [
+    "9-36",
+    "9-46"
+   ]
+  },
+  {
+   "flexible": 210,
+   "restricted": 56,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 2,
+   "gain": 2.5999999999999996,
+   "names": [
+    "3-29",
+    "3-56"
+   ]
+  },
+  {
+   "flexible": 210,
+   "restricted": 220,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 2,
+   "gain": 2.16,
+   "names": [
+    "3-29",
+    "4-69"
+   ]
+  },
+  {
+   "flexible": 211,
+   "restricted": 56,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 0.5299999999999994,
+   "names": [
+    "3-33",
+    "3-56"
+   ]
+  },
+  {
+   "flexible": 211,
+   "restricted": 220,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 0.08999999999999986,
+   "names": [
+    "3-33",
+    "4-69"
+   ]
+  },
+  {
+   "flexible": 214,
+   "restricted": 92,
+   "common": 0.9310344827586207,
+   "rotatable_removed": 1,
+   "gain": 1.0099999999999998,
+   "names": [
+    "3-80",
+    "4-64"
+   ]
+  },
+  {
+   "flexible": 214,
+   "restricted": 93,
+   "common": 0.9310344827586207,
+   "rotatable_removed": 1,
+   "gain": 1.29,
+   "names": [
+    "3-80",
+    "4-66"
+   ]
+  },
+  {
+   "flexible": 214,
+   "restricted": 219,
+   "common": 0.9310344827586207,
+   "rotatable_removed": 1,
+   "gain": 1.0499999999999998,
+   "names": [
+    "3-80",
+    "4-67"
+   ]
+  },
+  {
+   "flexible": 228,
+   "restricted": 111,
+   "common": 0.9583333333333334,
+   "rotatable_removed": 2,
+   "gain": 2.5,
+   "names": [
+    "5-1j",
+    "6-7l"
+   ]
+  },
+  {
+   "flexible": 228,
+   "restricted": 175,
+   "common": 0.8333333333333334,
+   "rotatable_removed": 1,
+   "gain": 3.5199999999999996,
+   "names": [
+    "5-1j",
+    "9-24"
+   ]
+  },
+  {
+   "flexible": 228,
+   "restricted": 177,
+   "common": 0.875,
+   "rotatable_removed": 2,
+   "gain": 2.9399999999999995,
+   "names": [
+    "5-1j",
+    "9-3"
+   ]
+  },
+  {
+   "flexible": 228,
+   "restricted": 178,
+   "common": 0.9166666666666666,
+   "rotatable_removed": 2,
+   "gain": 3.6400000000000006,
+   "names": [
+    "5-1j",
+    "9-35"
+   ]
+  },
+  {
+   "flexible": 228,
+   "restricted": 179,
+   "common": 0.875,
+   "rotatable_removed": 1,
+   "gain": 3.120000000000001,
+   "names": [
+    "5-1j",
+    "9-36"
+   ]
+  },
+  {
+   "flexible": 228,
+   "restricted": 180,
+   "common": 0.8333333333333334,
+   "rotatable_removed": 1,
+   "gain": 3.8200000000000003,
+   "names": [
+    "5-1j",
+    "9-37"
+   ]
+  },
+  {
+   "flexible": 228,
+   "restricted": 244,
+   "common": 0.875,
+   "rotatable_removed": 2,
+   "gain": 1.9000000000000004,
+   "names": [
+    "5-1j",
+    "7-32"
+   ]
+  },
+  {
+   "flexible": 228,
+   "restricted": 279,
+   "common": 0.875,
+   "rotatable_removed": 1,
+   "gain": 2.59,
+   "names": [
+    "5-1j",
+    "9-20"
+   ]
+  },
+  {
+   "flexible": 229,
+   "restricted": 181,
+   "common": 0.8846153846153846,
+   "rotatable_removed": 1,
+   "gain": -0.41999999999999993,
+   "names": [
+    "5-7e",
+    "9-38"
+   ]
+  },
+  {
+   "flexible": 229,
+   "restricted": 182,
+   "common": 0.8461538461538461,
+   "rotatable_removed": 1,
+   "gain": -0.40000000000000036,
+   "names": [
+    "5-7e",
+    "9-39"
+   ]
+  },
+  {
+   "flexible": 229,
+   "restricted": 183,
+   "common": 0.8461538461538461,
+   "rotatable_removed": 2,
+   "gain": 1.71,
+   "names": [
+    "5-7e",
+    "9-41"
+   ]
+  },
+  {
+   "flexible": 229,
+   "restricted": 281,
+   "common": 0.8846153846153846,
+   "rotatable_removed": 2,
+   "gain": 1.4099999999999993,
+   "names": [
+    "5-7e",
+    "9-40"
+   ]
+  },
+  {
+   "flexible": 231,
+   "restricted": 232,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 0.0,
+   "names": [
+    "6-8h",
+    "6-8l"
+   ]
+  },
+  {
+   "flexible": 236,
+   "restricted": 129,
+   "common": 0.96,
+   "rotatable_removed": 1,
+   "gain": 0.9199999999999999,
+   "names": [
+    "7-17d",
+    "7-21j"
+   ]
+  },
+  {
+   "flexible": 236,
+   "restricted": 186,
+   "common": 0.88,
+   "rotatable_removed": 1,
+   "gain": 1.0399999999999991,
+   "names": [
+    "7-17d",
+    "9-48"
+   ]
+  },
+  {
+   "flexible": 236,
+   "restricted": 204,
+   "common": 0.88,
+   "rotatable_removed": 1,
+   "gain": 0.6699999999999999,
+   "names": [
+    "7-17d",
+    "14-12"
+   ]
+  },
+  {
+   "flexible": 237,
+   "restricted": 122,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": -1.42,
+   "names": [
+    "7-20g",
+    "7-20i"
+   ]
+  },
+  {
+   "flexible": 237,
+   "restricted": 123,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": 0.03000000000000025,
+   "names": [
+    "7-20g",
+    "7-20j"
+   ]
+  },
+  {
+   "flexible": 237,
+   "restricted": 281,
+   "common": 0.8148148148148148,
+   "rotatable_removed": 1,
+   "gain": 0.8099999999999996,
+   "names": [
+    "7-20g",
+    "9-40"
+   ]
+  },
+  {
+   "flexible": 240,
+   "restricted": 27,
+   "common": 0.8571428571428571,
+   "rotatable_removed": 1,
+   "gain": 1.1100000000000003,
+   "names": [
+    "7-21h",
+    "14-15"
+   ]
+  },
+  {
+   "flexible": 240,
+   "restricted": 122,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 2,
+   "gain": -0.7200000000000006,
+   "names": [
+    "7-21h",
+    "7-20i"
+   ]
+  },
+  {
+   "flexible": 240,
+   "restricted": 182,
+   "common": 0.8214285714285714,
+   "rotatable_removed": 1,
+   "gain": -0.3000000000000007,
+   "names": [
+    "7-21h",
+    "9-39"
+   ]
+  },
+  {
+   "flexible": 240,
+   "restricted": 241,
+   "common": 1.0,
+   "rotatable_removed": 2,
+   "gain": 0.2999999999999998,
+   "names": [
+    "7-21h",
+    "7-21i"
+   ]
+  },
+  {
+   "flexible": 256,
+   "restricted": 141,
+   "common": 1.0,
+   "rotatable_removed": 2,
+   "gain": 1.4899999999999993,
+   "names": [
+    "8-1p",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 256,
+   "restricted": 142,
+   "common": 0.9642857142857143,
+   "rotatable_removed": 2,
+   "gain": 1.0899999999999999,
+   "names": [
+    "8-1p",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 256,
+   "restricted": 252,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 2,
+   "gain": 0.2699999999999996,
+   "names": [
+    "8-1p",
+    "8-1an"
+   ]
+  },
+  {
+   "flexible": 256,
+   "restricted": 253,
+   "common": 0.9285714285714286,
+   "rotatable_removed": 2,
+   "gain": -0.14000000000000057,
+   "names": [
+    "8-1p",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 256,
+   "restricted": 255,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 2,
+   "gain": 1.3199999999999994,
+   "names": [
+    "8-1p",
+    "8-1aq"
+   ]
+  },
+  {
+   "flexible": 257,
+   "restricted": 141,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 2.84,
+   "names": [
+    "8-1s",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 257,
+   "restricted": 252,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 1.62,
+   "names": [
+    "8-1s",
+    "8-1an"
+   ]
+  },
+  {
+   "flexible": 257,
+   "restricted": 253,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 1.21,
+   "names": [
+    "8-1s",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 257,
+   "restricted": 255,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 2.67,
+   "names": [
+    "8-1s",
+    "8-1aq"
+   ]
+  },
+  {
+   "flexible": 258,
+   "restricted": 141,
+   "common": 1.0,
+   "rotatable_removed": 1,
+   "gain": 3.6499999999999995,
+   "names": [
+    "8-1v",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 258,
+   "restricted": 142,
+   "common": 0.9629629629629629,
+   "rotatable_removed": 1,
+   "gain": 3.25,
+   "names": [
+    "8-1v",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 258,
+   "restricted": 253,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 2.0199999999999996,
+   "names": [
+    "8-1v",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 268,
+   "restricted": 141,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": 0.1299999999999999,
+   "names": [
+    "8-25b",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 268,
+   "restricted": 252,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -1.0899999999999999,
+   "names": [
+    "8-25b",
+    "8-1an"
+   ]
+  },
+  {
+   "flexible": 268,
+   "restricted": 253,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -1.5,
+   "names": [
+    "8-25b",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 268,
+   "restricted": 255,
+   "common": 0.8928571428571429,
+   "rotatable_removed": 1,
+   "gain": -0.040000000000000036,
+   "names": [
+    "8-25b",
+    "8-1aq"
+   ]
+  },
+  {
+   "flexible": 269,
+   "restricted": 141,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 0.5800000000000001,
+   "names": [
+    "8-25d",
+    "8-1as"
+   ]
+  },
+  {
+   "flexible": 269,
+   "restricted": 142,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 0.1800000000000006,
+   "names": [
+    "8-25d",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 269,
+   "restricted": 253,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": -1.0499999999999998,
+   "names": [
+    "8-25d",
+    "8-1ao"
+   ]
+  },
+  {
+   "flexible": 271,
+   "restricted": 142,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 2,
+   "gain": 2.95,
+   "names": [
+    "8-2f",
+    "8-1at"
+   ]
+  },
+  {
+   "flexible": 271,
+   "restricted": 272,
+   "common": 0.9259259259259259,
+   "rotatable_removed": 1,
+   "gain": 3.29,
+   "names": [
+    "8-2f",
+    "8-2n"
+   ]
+  },
+  {
+   "flexible": 279,
+   "restricted": 184,
+   "common": 0.9615384615384616,
+   "rotatable_removed": 1,
+   "gain": 0.8300000000000001,
+   "names": [
+    "9-20",
+    "9-46"
+   ]
+  }
+ ]
+}

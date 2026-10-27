@@ -1,6 +1,6 @@
 {
- "commit": "2030ba9978ae3562c4687770df84818479afdd9f",
- "created": "2026-10-27T12:56:03",
+ "commit": "19120913b40fda00c741e6b92007ff45a9d6d1d0",
+ "created": "2026-10-27T14:50:49",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -565,6 +565,10 @@
   "examples/local/carboxylic_pka.sdf": {
    "bytes": 2583611,
    "sha256": "df863c0da1dffac6109848793876c77f886de8340c67e055e2d24fc036ab0ecd"
+  },
+  "examples/local/metabolism.sdf": {
+   "bytes": 2607874,
+   "sha256": "437ad80019d6f5b2bc063e88c8234e21b84d520d7e0f5a2555852834adf04d35"
   },
   "examples/local/shifts_cdcl3.sdf": {
    "bytes": 1621769,
@@ -1929,6 +1933,8 @@
   "benchmarks/results/matbench_phonons/physchem+mass.json": "80aa2701c2b6045fa5a17c558984d40cffdd3cfa793d8dcac8bf59d121417d64",
   "benchmarks/results/matbench_phonons/physchem.json": "aa43a12035be5672fe1b71a1375028bd8731998c0268ae5fb0f879e80f8ee04d",
   "benchmarks/results/matbench_phonons/table.md": "c4edcd573fc1f1e5345b423ec928a101be42e5f1f671c9a1763454c4e4f46b75",
+  "benchmarks/results/metabolism/summary.json": "59860be17e0346e694b88f908daef57ab6994b0e0239bb22dea2abe5161d332d",
+  "benchmarks/results/metabolism/table.md": "18a2b24409b7df74b4c6ce4bed0b8ba27a31d12397e32a21b3a0c207caed30e7",
   "benchmarks/results/mixing/ACE.json": "10263c6114c38c60b7e9e5f6b808ea912446d732aa15970204ab9f19cbbe28e1",
   "benchmarks/results/mixing/AChE.json": "e2c99a91eab1a66de0cc6432ab70c8a51bfd93c75eda0441e30bcee73ad23f7d",
   "benchmarks/results/mixing/BZR.json": "cb5680fd248f2186ced8fbce201b3387023746d09b314a2def78ae1e13eac024",

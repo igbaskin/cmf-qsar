@@ -3451,6 +3451,88 @@ Every mixture that includes the variance is at or below the mean alone, and ever
 
 **What the variance carries by itself runs out as the series grows.** Alone it reaches q2 +0.425 on the 31 steroids, +0.180 on the 66 of GPB and -0.013 on the 88 of thrombin: something on a small set of one rigid scaffold, nothing on a larger and more varied one. And on none of them is it something the mean does not already have. That is the reading the plan expected, and it leaves the variance field where it is useful: as a map. Where a series is rigid and where it moves is a different question from where it is active, and the two pictures are worth putting side by side -- `cmfqsar/cofields.py` draws a variance field like any other, with the field set that `variance_fieldset` returns.
 
+## Scoring a conformational restriction
+
+Tying two parts of a molecule together into a ring, so that a bond can no longer rotate, is one
+of the few moves in medicinal chemistry whose effect is meant to be purely conformational. The
+variance field of the previous section is a map of where a molecule places field only part of the
+time, which is exactly what such a move is supposed to change. Plan item MC9 asks whether it can
+be turned into a number: when a chemist closes a ring, does the field that matters stop moving,
+and does the potency follow?
+
+**Two amounts per molecule** (`cmfqsar/restriction.py`). The co-field C_f(r) says how much the
+field of type f at point r matters for the activity, so its **square** is a weight: positive
+everywhere, large where the model reads the field, near zero where it does not. With that weight
+a molecule has
+
+* **relevant**, the integral of C_f(r)^2 Xbar_f(r)^2 -- how much activity-relevant field the
+  molecule places, averaged over its conformations;
+* **intermittent**, the integral of C_f(r)^2 V_f(r) -- how much of that field is there only part
+  of the time.
+
+Both are summed over the field types and taken on a grid, the same grid machinery that draws a
+co-field. A pair of a flexible molecule A and its restricted analogue B is then two shares:
+**kept** = relevant(B)/relevant(A), and **removed** = 1 - intermittent(B)/intermittent(A).
+
+**The pairs are found by a rule and not by eye**, so that the measurement cannot be steered. The
+restricted member has exactly one ring more, at least one rotatable bond fewer, at most two heavy
+atoms more, an atom composition differing by at most two atoms, and a maximum common substructure
+covering at least 80 per cent of the smaller member. A fingerprint is deliberately **not** used
+for the similarity: closing a ring changes the environment of every atom near the new bond, so
+butylphenol and 2-methylchroman -- the same eleven heavy atoms, one bond more -- are only 0.15
+alike as Morgan fingerprints, and a threshold high enough to be useful would throw away exactly
+the pairs this item is about. Both members get the same conformer generator with the same
+settings, since the comparison is between two ensembles and not between two molecules.
+
+**Measured** by `benchmarks/run_restriction.py` on four aligned Sutherland sets, 439 pairs in
+all, with three scores on the same pairs:
+
+| score | pairs | correlation with the potency gain |
+| --- | ---: | ---: |
+| rotatable bonds removed | 439 | +0.236 [+0.151, +0.317] |
+| variance removed, unweighted | 439 | -0.034 [-0.140, +0.062] |
+| variance removed, weighted by the squared co-field | 439 | +0.043 [-0.030, +0.111] |
+| the same, with the pair left out of the co-field | 439 | +0.020 [-0.061, +0.093] |
+| relevant field kept, weighted | 439 | +0.220 [+0.120, +0.315] |
+
+**The score does not pass the gate of the item.** How much intermittent field a ring closure
+removes is not related to whether the closure gained potency: +0.043 [-0.030, +0.111], an
+interval that contains zero. Counting the rotatable bonds the closure removed reaches +0.236
+[+0.151, +0.317] on the same pairs and needs no geometry, no conformations and no model. The
+co-field is also rebuilt without both members of every pair, so the weight cannot have learned
+the answer from the two potencies it is compared with; that changes the score to +0.020, which
+says there was nothing to learn.
+
+**What does track the potency gain is the other half of the score.** How much of the
+activity-relevant field the restricted analogue still places reaches +0.220 [+0.120, +0.315].
+That is the **mean** field and not the variance, and it says the expected thing: a ring closure
+helps when the molecule still puts its field where the model reads it, and hurts when the ring
+holds it somewhere else.
+
+This is the third place in this manual where the conformational ensemble carries less than it
+promises. Averaging a field over conformations does not predict better than one geometry; the
+variance adds nothing as a block of the kernel; and it does not explain what a restriction did
+either. The variance field stays a map, which is where the previous section left it.
+
+**From the command line.** The score is a subcommand of its own, because it needs a model (for
+the co-field), a set of molecules in that model's frame, and conformations of each:
+
+```bash
+cmf restriction model.cmf --molecules series.sdf --activity pIC50 --conformers 3 \
+    --csv pairs.csv
+```
+
+It finds the pairs by the rule above, prints the two shares of each, correlates **removed** with
+the potency gain when the file carries potencies, and writes one row per pair. It is the right
+tool for asking the question of a series of your own; the answer on the four public sets above is
+that the question has a negative answer there.
+
+**Two limits of the measurement.** The ensembles are three conformations from a distance-geometry
+generator superimposed on the pose the series was aligned to, which is a narrow view of what a
+molecule does in water. And a ring closure is never purely conformational in practice: it changes
+the shape, and often an atom or two as well. A set of pairs that differ in nothing but a single
+bond would be a better test, and no public set of that kind with measured potencies was found.
+
 ## Protonation and tautomers: ensembles of different molecules
 
 A series measured in acid is modelled in one protonation state, chosen when the data was prepared.
@@ -4888,6 +4970,7 @@ not every option.
 | `cluster` | cluster a set by its field kernel (spectral clustering) |
 | `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
 | `local` | a model over atoms: the field around an atom against a count around it |
+| `restriction` | score a ring closure: how much of the field that matters stops moving |
 | `unalign` | give every molecule a random pose, the control experiment |
 
 ## The options of `build`, by group
