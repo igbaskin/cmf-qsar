@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 66 modules and about 29,250 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 67 modules and about 29,650 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-six subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 950 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 970 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1810,6 +1810,62 @@ on the same folds.
   the environment with its co-field instead of the molecule. Gate: the pKa co-field of the
   substituted benzoic acids reproduces the meta/para picture of `benchmarks/results/hammett/`
   from per-atom data alone.
+  **Done 27 October 2026, and it splits the other way from LP2: the frame gains on the model
+  and the co-field does not reproduce the picture the gate asks for.** `cmfqsar/localalign.py`:
+  `local_frames` fixes the rotation of an environment from two of the centre's bonded neighbours,
+  grouped by **atom type and nothing else** -- a frame that depended on which of two ring bonds is
+  a hundredth of an angstrom longer would not be a rule -- and every choice the type leaves open
+  becomes a pose, which `posed` averages into one mean field over the frames the site allows
+  (`combine_members`), the device the symmetrised Hammett set uses for a whole molecule applied to
+  one atom. `ring_frames` is the site the item names: an aromatic carbon of a six-membered ring,
+  the bond leaving the ring on +x, the ring in the xy plane, the two mirror images kept;
+  `RING_POSITIONS` holds the four substituent positions that frame fixes, and a carbon where two
+  rings meet is refused rather than posed anyway. `overlap_kernel` builds the `AtomTable` and the
+  ordinary CMF overlap kernel on the posed environments, so the co-field machinery applies
+  unchanged. `cmfqsar/cofields.py` gains `cofield_at_points`, `cofield_covariance_at` and
+  `contrast_at`: the co-field at places a chemist can name, with the error the noise in the
+  measured values allows and with the covariance between places included, which a comparison of
+  two positions needs and which two separate error bars get wrong. `cmf local --align --site ring
+  --cofield FILE.cube` writes the co-field in the frame of the pose. 20 tests, and
+  `benchmarks/run_local_cofield.py` on 1225 aromatic carbons of 170 molecules of
+  the shift set, folds holding out whole molecules.
+  **The frame gains where the envelope is wide and nothing where it is narrow.** Posed overlap
+  against the rotation-invariant local kernel at the same width: +0.756 [+0.718, +0.791] at a width of 4.5 A; +0.522 [+0.477, +0.572] at a width of 3.2 A; +0.096 [+0.069, +0.124] at a width of 2.0 A; +0.042 [+0.022, +0.061] at a width of 1.4 A; +0.025 [-0.015, +0.060] at a width of 1.0 A. The last is inside its
+  interval. Each at its own best width, posed at rho 0.25 (+0.899) against invariant at rho 0.5 (+0.847), +0.052 [+0.033, +0.071]. Against the atom-centred count the posed
+  kernel is +0.131 [+0.098, +0.170] at its best, q2 +0.899 and 4.22 ppm against +0.768 and
+  6.38 ppm. The reading is that an invariant descriptor of a **wide** environment has only
+  distances, and at a width of 4.5 A the surroundings of an aromatic carbon are nearly the same
+  distances in every molecule, while the pose keeps the directions that separate an ortho position
+  from a meta one; squeezed to 1 A there is little left but the first shell, which distances
+  describe perfectly well.
+  **The co-field says the large thing and not the subtle one.** Read at the four ring positions
+  with the noise in the shifts propagated, one feature stands far above the rest: the steric field
+  at the **ipso** position, +15.5 +- 1.3, twelve standard deviations from zero, where nothing
+  else reaches four. It
+  says that putting anything bulkier than hydrogen on the measured carbon raises its shift, which
+  is the dominant term of the 13C substituent effect and true of nearly every group (methyl +9
+  ppm, chlorine +6, nitro +20, methoxy +31). **The alternation around the ring is not
+  reproduced**: the electrostatic co-field differs between para and meta by -18.5 +- 24.7, the wrong
+  sign and inside the error, and no other field reaches two standard deviations either way. Its
+  signs agree with the measured methoxy shifts at 3 of the four positions (r +0.55), but
+  the y-scramble null for a correlation over four points is far too wide to call that a result.
+  **Why no better was to be expected from these fields:** a nitro group, whose nitrogen is
+  *positively* charged, also raises the ipso carbon and raises the para carbon where methoxy
+  lowers it, so no model linear in fragment charges can follow both groups -- what separates them
+  is resonance, which fragment charges do not carry. That is the same wall `run_hammett.py` met
+  for sigma_p, where quantum charges on the whole molecule were the remedy.
+  **The gate as written could not be measured, so the item was taken on the shifts, where LP2
+  found signal.** Its gate is the pKa co-field of the substituted benzoic acids reproducing
+  the meta/para picture of `benchmarks/results/hammett/`. LP2 had already found no signal to interpret on that set, and
+  the carboxyl half of this benchmark confirms that the missing frame was not the reason: the
+  carboxyl carbon poses uniquely -- two oxygens and one carbon, which the atom types separate, so
+  nothing is averaged -- and the posed kernel loses to the count, -0.101 [-0.164, -0.037], and differs
+  from the invariant kernel by -0.142 [-0.198, -0.088]. A co-field read off a model that does not predict
+  would be an interpretation of noise, so none is drawn.
+  **Not done:** no panel in the application (the co-field leaves as a cube file); no quantum
+  charges for the shift set, which is the first thing to try next, together with reading the
+  co-field of a continuous indicator field of one atom type -- what an oxygen at the ortho
+  position does, rather than what negative charge there does.
 * **LP4. Conformers, tautomers and states for a local target.** A shift is a conformer average
   and a pKa is a property of a site in one protonation state. The ensemble builder gives the
   first with no extra work once an environment is a field; the second needs members with their

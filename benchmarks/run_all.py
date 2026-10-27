@@ -210,7 +210,12 @@ def registry() -> List[Benchmark]:
                   minutes="45",
                   report=lambda: _mod("run_local").write_table(_r("local")),
                   tables=["local/table.md"]),
-
+        Benchmark("local_cofield",
+                  "a co-field around one atom: does it sit where substituent effects do",
+                  "run_local_cofield.py", "local_cofield", compute=[[]],
+                  minutes="15",
+                  report=lambda: _mod("run_local_cofield").write_table(_r("local_cofield")),
+                  tables=["local_cofield/table.md"]),
         Benchmark("increments",
                   "do increments fitted on one series transfer to another",
                   "run_increments.py", "increments", compute=[[]],

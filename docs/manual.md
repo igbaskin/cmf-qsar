@@ -3885,6 +3885,110 @@ column explains the plain environments: at a width of 0.5 A the mean kernel is a
 0.957, because the first shell of a carboxyl group is the same group in every molecule,
 and the model only starts to see the substituent as the envelope widens.
 
+## A co-field around one atom: the local alignment
+
+The local kernel of the previous section needs no frame, and that is also its limit: with no
+frame there is no co-field, so it cannot say **where** around the atom, and in which field, a
+feature raises or lowers the property. For one site a frame costs nothing, and plan item LP3 is
+that frame (`cmfqsar/localalign.py`).
+
+**The rule.** The centre is already the origin and the first atom of the environment, so what is
+left is the rotation, and two of the centre's bonded neighbours fix it: the first gives the x
+axis, the second the xy plane. Which two is decided by the **atom type and nothing else**. A bond
+length would make a poor rule -- the two ring bonds of an aromatic carbon differ by hundredths of
+an angstrom, and by which of them is longer in one conformation -- so neighbours of the same type
+are treated as interchangeable. When that leaves the choice open, as it does for the two ring
+neighbours of an aromatic carbon or the three hydrogens of a methyl group, **every pose is kept
+and averaged**: the environment becomes the mean field of its poses, which is a mean-map kernel
+over the frames the site allows. That is the device the symmetrised Hammett set uses for the four
+images of a monosubstituted benzene, applied to one atom instead of one molecule.
+
+**The ring site.** `ring_frames` is the site the plan names: an aromatic carbon of a six-membered
+ring, with the bond that leaves the ring on +x, the ring in the xy plane, the ring normal on z,
+and the two mirror images kept. In that frame the positions a substituent occupies on the ring are
+fixed numbers, which `RING_POSITIONS` holds: ipso at 1.4 A on +x, then ortho at 2.4 A, meta at
+3.7 A and para at 4.2 A from the centre. A carbon where two rings meet has three aromatic
+neighbours and no such frame, and the rule refuses it rather than posing it anyway.
+
+**Then everything applies.** The posed environments are in one frame, so the ordinary overlap
+kernel of this program works on them exactly as it works on molecules, and so does the co-field:
+`overlap_kernel` builds the `AtomTable` and the kernel, and `CMFModel.cofield_coefficients` gives
+the co-field around the atom. `cofields.cofield_at_points` reads it at places a chemist can name,
+`cofield_covariance_at` says how far the noise in the measured values moves it, and `contrast_at`
+compares two places with the right error bar: the co-field at two positions a few angstrom apart
+is built from the same training fields, so the two values are correlated and the error of their
+difference is not the two error bars added.
+
+```bash
+cmf local examples/local/shifts_cdcl3.sdf --target shift --align --site ring --rho 0.25 \
+    --cofield cofield.cube
+```
+
+`--align` replaces the rotation-invariant kernel by the posed overlap kernel, `--site ring` uses
+the ring rule and leaves out every atom it does not fit, and `--cofield` writes the co-field
+around the centre as a cube file in the frame of the pose, which any molecular viewer draws.
+
+### What it is worth, measured
+
+`benchmarks/run_local_cofield.py` measures two things on the aromatic carbons of the shift set:
+1225 carbons of six-membered aromatic rings in 170 molecules, with folds that
+hold out whole molecules, and the atom-centred count of the previous section as the reference.
+
+**The frame gains where the envelope is wide, and nothing where it is narrow.**
+
+| descriptor | envelope width rho | width (A) | q2 | error (ppm) | ridge | difference in q2 against the counts |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| atom-centred counts (18 atom types in 6 shells) | -- | -- | +0.768 | 6.383 | 0.01 | -- |
+| posed overlap | 0.05 | 4.5 | +0.872 | 4.745 | 0.1 | +0.104 [+0.070, +0.144] |
+| invariant local | 0.05 | 4.5 | +0.116 | 12.461 | 0.1 | -0.652 [-0.695, -0.594] |
+| posed overlap | 0.1 | 3.2 | +0.887 | 4.448 | 0.01 | +0.119 [+0.086, +0.158] |
+| invariant local | 0.1 | 3.2 | +0.366 | 10.554 | 0.1 | -0.402 [-0.457, -0.344] |
+| posed overlap | 0.25 | 2.0 | +0.899 | 4.217 | 0.01 | +0.131 [+0.098, +0.170] |
+| invariant local | 0.25 | 2.0 | +0.803 | 5.882 | 0.001 | +0.035 [+0.003, +0.068] |
+| posed overlap | 0.5 | 1.4 | +0.889 | 4.425 | 0.0001 | +0.121 [+0.083, +0.162] |
+| invariant local | 0.5 | 1.4 | +0.847 | 5.187 | 0.01 | +0.079 [+0.048, +0.116] |
+| posed overlap | 1 | 1.0 | +0.861 | 4.935 | 1e-06 | +0.093 [+0.046, +0.143] |
+| invariant local | 1 | 1.0 | +0.836 | 5.361 | 0.01 | +0.068 [+0.036, +0.105] |
+
+At the same envelope width the posed kernel is ahead of the invariant one by +0.756 [+0.718, +0.791] at a width of 4.5 A; +0.522 [+0.477, +0.572] at a width of 3.2 A; +0.096 [+0.069, +0.124] at a width of 2.0 A; +0.042 [+0.022, +0.061] at a width of 1.4 A; +0.025 [-0.015, +0.060] at a width of 1.0 A. The last of those is inside its interval, so at a width of 1 A the frame adds nothing that can be measured. Each at its own best width -- posed at rho 0.25 (+0.899) against invariant at rho 0.5 (+0.847) -- the difference is +0.052 [+0.033, +0.071].
+
+That is what a frame is and is not for. An invariant descriptor of a wide environment has only
+distances, and at a width of 4.5 A the surroundings of an aromatic carbon are nearly the same
+distances in every molecule; the pose keeps the directions, so the ortho position and the meta
+position are two places rather than two atoms at similar distances. Squeeze the envelope down to
+1 A and there is little left but the first shell, which distances alone describe perfectly well,
+and the frame adds nothing that can be measured.
+
+**Where the co-field sits, and what it does not say.**
+
+| field | ipso | ortho | meta | para | \|para\| - \|meta\| |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| electrostatic | -16.7 +- 20.3 | +33.0 +- 15.4 | -28.5 +- 15.0 | -10.0 +- 20.0 | -18.5 +- 24.7 |
+| steric | +15.5 +- 1.3 | -2.6 +- 1.0 | -2.7 +- 0.9 | -4.2 +- 1.2 | +1.5 +- 1.5 |
+| hydrophobic | +1.4 +- 4.5 | -2.0 +- 3.4 | +6.6 +- 3.3 | +2.2 +- 4.7 | -4.4 +- 5.9 |
+| hba | -57.4 +- 21.4 | +17.8 +- 15.0 | +29.6 +- 13.4 | -41.1 +- 18.8 | +11.5 +- 25.2 |
+| hbd | +7.1 +- 33.6 | +58.4 +- 25.4 | -0.2 +- 23.7 | +62.6 +- 30.4 | +62.4 +- 39.2 |
+
+**The co-field says the large thing and not the subtle one.** The numbers above are the co-field at the four positions with the error the noise in the shifts allows, and one feature stands far above everything else: the **steric field at the ipso position**, +15.5 +- 1.3, 12 standard deviations from zero where nothing else reaches four. It says that putting anything bulkier than hydrogen on the measured carbon raises its shift, which is the dominant term of the 13C substituent effect and true of nearly every group: methyl +9 ppm, chlorine +6, nitro +20, methoxy +31.
+
+**What it does not reproduce is the alternation around the ring, and that is the half of this item that fails.** The question the plan asks is whether the co-field puts more at the para position than at the meta one. The para position is further from the measured carbon (4.2 A) than the meta one (3.7 A), so the envelope and the overlap both favour meta, and a co-field that still came out larger at para would be saying what the geometry does not. None does. For the electrostatic field the difference is -18.5 +- 24.7, the wrong sign and inside the error. The closest any field comes is the hydrogen-bond-donor one, +62.4 +- 39.2 (z +1.6), which is the right sign and the right field -- a hydroxyl or an amino group is where the ortho and para effects on an aromatic shift are largest -- and still short of two standard deviations.
+
+Read the five co-fields together rather than one at a time. The fields overlap in what they describe -- an oxygen is a heavy atom, an acceptor and a negative charge at once -- so a co-field per field is a decomposition of one effect over five bases, not five independent statements, and the hydrogen-bond-acceptor co-field correcting the steric one at the ipso position is that decomposition at work rather than a claim about acceptors.
+
+The signs are the more interesting half, and they are not nothing. The electrostatic co-field comes out -16.7 at ipso, +33.0 at ortho, -28.5 at meta and -10.0 at para, and a negative value means that negative charge at that place raises the shift of the carbon at the origin. A methoxy group raises the shift of the carbon it sits on by 31 ppm and lowers the ortho and para carbons by 14 and 8 ppm, and its oxygen is negatively charged, so a co-field that had learned that effect would be negative at ipso and positive at ortho and para. This one agrees at 3 of the four positions, with a correlation of +0.55 over them, but the y-scramble null for that correlation is wide (z +1.2): a correlation over four points cannot be sharp, and this one is not.
+
+There is a reason to expect no better from these fields. A nitro group, whose nitrogen is **positively** charged, also raises the ipso carbon, by 20 ppm, and raises the para carbon where methoxy lowers it. No model linear in fragment charges can follow both groups, because what separates them is resonance and fragment charges do not carry it. That is the same wall the Hammett co-fields of this program met for sigma_p, and the remedy there was quantum charges computed on the whole molecule, which carry the polarisation of the ring by the substituent (`examples/orca_atom_properties.py` and the `prop:` fields). The shift set here has no such charges. Computing them, and reading the co-field of a continuous indicator field of one atom type instead of the electrostatic field -- what an oxygen at the ortho position does, rather than what negative charge there does -- are the two things to try next, and they belong to the item after this one rather than to this measurement.
+
+`benchmarks/results/local_cofield/cofield.png` draws the electrostatic and steric co-fields in the ring plane, with the ring and the four positions marked.
+
+**The other site the plan names, the carboxyl carbon, is not rescued by the frame either.**
+The previous section found no signal on the 912 carboxylic acids: the invariant local kernel was no better than an atom-centred count there, and the difference field of the acid and its anion was far worse. A carboxyl carbon has two oxygens and a carbon of its own, which the atom types separate, so its pose is unique and nothing has to be averaged -- and with it the model loses to the count, -0.101 [-0.164, -0.037], and differs from the invariant kernel by -0.142 [-0.198, -0.088]. The frame was not what was missing. Only the model is measured there: a co-field read off a model that does not predict would be an interpretation of noise, which is why the pKa co-field of the substituted benzoic acids that this item's gate asks for is not drawn.
+
+**What is not done.** The plan asks for a panel in the application that shows the environment with
+its co-field instead of the molecule. There is none: the co-field comes out of `cmf local
+--cofield` as a cube file, which a viewer draws, and the application still knows only models whose
+sample is a molecule.
+
 ## Topomer fields
 
 Cramer's topomer idea (topomer CoMFA, 2003), applied to fields. Cut the molecule at the bonds that

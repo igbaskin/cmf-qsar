@@ -402,6 +402,54 @@ def cofield_variance(model: CMFModel, f: int, grid: Grid, sigma: Optional[float]
     return var.reshape(grid.shape)
 
 
+def cofield_at_points(model: CMFModel, f: int, points: np.ndarray,
+                      include_scale: bool = True) -> np.ndarray:
+    """C_f at a list of points rather than on a grid.
+
+    A co-field read at a few places a chemist can name -- the ortho, meta and para positions of a
+    ring, the four corners of a pocket -- is a table, not a picture, and this is what fills it.
+    """
+    centres, coeffs, widths = model.cofield_coefficients(f)
+    v = evaluate_gaussians(np.asarray(points, float), centres, coeffs, widths)
+    if include_scale:
+        v = v * model.fieldset.specs[f].h * model.scale[f]
+    return v
+
+
+def cofield_covariance_at(model: CMFModel, f: int, points: np.ndarray,
+                          sigma: Optional[float] = None, include_scale: bool = True,
+                          chunk: int = 0) -> np.ndarray:
+    """Cov[C_f] at a list of points, under noise of level `sigma` in the activities.
+
+    The diagonal is what :func:`cofield_variance` gives on a grid.  The off-diagonal terms are
+    what a *difference* between two places needs: the co-field at two points a few angstrom
+    apart is built from the same training fields, so the two values are correlated and the error
+    of their difference is not the two errors added -- usually it is far smaller.  Without this
+    a comparison between two positions would be judged against the wrong error bar.
+    """
+    s, _src = noise_level(model, sigma)
+    G = dual_covariance_factor(model)
+    V = G.T @ per_molecule_fields(model, f, np.asarray(points, float), chunk=chunk)
+    cov = (s * s) * (V.T @ V)
+    if include_scale:
+        cov = cov * (model.fieldset.specs[f].h * model.scale[f]) ** 2
+    return cov
+
+
+def contrast_at(model: CMFModel, f: int, points: np.ndarray, weights: Sequence[float],
+                sigma: Optional[float] = None, include_scale: bool = True) -> Tuple[float, float]:
+    """A weighted combination of the co-field at a few points, and its standard deviation.
+
+    ``weights`` picks the comparison: (0, 0, -1, 1) at the four ring positions is "para minus
+    meta".  The standard deviation uses the whole covariance of :func:`cofield_covariance_at`, so
+    the correlation between the points is taken into account rather than ignored.
+    """
+    w = np.asarray(weights, float)
+    v = cofield_at_points(model, f, points, include_scale=include_scale)
+    cov = cofield_covariance_at(model, f, points, sigma=sigma, include_scale=include_scale)
+    return float(w @ v), float(np.sqrt(max(float(w @ cov @ w), 0.0)))
+
+
 def cofield_with_error(model: CMFModel, f: int, grid: Grid, sigma: Optional[float] = None,
                        include_scale: bool = False, z: float = 2.0,
                        chunk: int = 0) -> CofieldError:

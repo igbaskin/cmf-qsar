@@ -1835,26 +1835,89 @@ def cmd_local(args):
 
     best = None
     for rho in (args.rho or [DEFAULT_RHO]):
-        envs = environments(fields, t, rho=rho)
-        r = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds, seed=args.seed,
-                       name=f"local field, rho {rho:g}")
-        kept = float(np.mean([kept_share(fields[int(t.molecule[i])], int(t.atom[i]), rho)
-                              for i in range(len(t))]))
+        if args.align:
+            r, used, extra = _local_aligned(args, ds, fields, t, fieldset, rho)
+        else:
+            envs = environments(fields, t, rho=rho)
+            r = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds,
+                           seed=args.seed, name=f"local field, rho {rho:g}")
+            used, extra = t, f"{np.mean([e.n_atoms for e in envs]):.1f} atoms per sample"
+        kept = float(np.mean([kept_share(fields[int(used.molecule[i])], int(used.atom[i]), rho)
+                              for i in range(len(used))]))
         print("  " + r.summary())
-        print(f"    envelope width {envelope_width(rho):.2f} A, "
-              f"{np.mean([e.n_atoms for e in envs]):.1f} atoms per sample, "
+        print(f"    envelope width {envelope_width(rho):.2f} A, {extra}, "
               f"{kept:.1%} of the enveloped weight kept")
-        if reference is not None:
+        if reference is not None and len(used) == len(t):
             diff, lo, hi = paired_interval(r, reference, t, runs=args.bootstrap, seed=args.seed)
             word = ("beats" if lo > 0 else "loses to" if hi < 0 else "is no better than")
             print(f"    against the counts {diff:+.3f} [{lo:+.3f}, {hi:+.3f}]: it {word} them")
+        elif reference is not None:
+            print("    not compared with the counts: the site rule left out some of the atoms "
+                  "the reference was fitted on")
         if best is None or r.q2 > best[0].q2:
-            best = (r, rho)
+            best = (r, rho, used)
     if args.out and best is not None:
         from cmfqsar.atomtargets import write_atom_predictions
-        written = write_atom_predictions(args.out, ds.mols, t, best[0].predicted, names=ds.names)
+        written = write_atom_predictions(args.out, ds.mols, best[2], best[0].predicted,
+                                         names=ds.names)
         print(f"  {written} molecules written to {args.out}: the measured value and the "
               f"out-of-fold prediction on the atom each belongs to")
+
+
+def _local_aligned(args, ds, fields, targets, fieldset, rho):
+    """The posed overlap kernel of plan item LP3, and the co-field it allows."""
+    from cmfqsar.localalign import overlap_kernel, posed_environments, ring_frames
+    from cmfqsar.localenv import choose_lam
+
+    frames_of = ring_frames if args.site == "ring" else None
+    used = targets
+    if frames_of is not None:
+        from cmfqsar.localenv import environment
+        keep = [r for r in range(len(targets))
+                if frames_of(environment(fields[int(targets.molecule[r])],
+                                         int(targets.atom[r]), rho))]
+        if not keep:
+            raise SystemExit("the ring site rule accepts none of these atoms: it wants an "
+                             "aromatic carbon of a six-membered ring with two aromatic neighbours")
+        if len(keep) < len(targets):
+            print(f"  the ring site rule accepts {len(keep)} of {len(targets)} atoms; the rest "
+                  f"are left out")
+        used = targets.subset(keep)
+    envs = posed_environments(fields, used, rho=rho, frames_of=frames_of)
+    model, table, K = overlap_kernel(envs, fieldset)
+    r = choose_lam(K, used, folds=args.folds, seed=args.seed,
+                   name=f"posed overlap, rho {rho:g}")
+    poses = float(np.mean([e.n_conformers for e in envs]))
+    extra = (f"{np.mean([e.n_atoms for e in envs]):.1f} atoms per sample, "
+             f"{poses:.1f} poses averaged")
+    if args.cofield:
+        _write_local_cofield(args, model, table, envs, used, r.lam)
+    return r, used, extra
+
+
+def _write_local_cofield(args, model, table, envs, targets, lam):
+    """The co-field around the centre, as a cube file in the frame of the pose."""
+    from cmfqsar.cofields import cofield_volume, export_cube, make_grid
+
+    names = model.fieldset.names
+    if args.cofield_field not in names:
+        raise SystemExit(f"this model has no field called '{args.cofield_field}'; it has "
+                         + ", ".join(names))
+    model.params = dict(model.params)
+    model.params["lam"] = float(lam)
+    model.fit(table, np.asarray(targets.y, float), cv_folds=args.folds, cv_seed=args.seed,
+              reuse_kernels=True)
+    # a box around the centre, not around every atom the envelope kept: a co-field this far out
+    # is read off a handful of atoms and says nothing
+    reach = float(min(6.0, np.percentile(np.linalg.norm(
+        np.vstack([e.coords for e in envs[:200]]), axis=1), 90)))
+    grid = make_grid(np.array([[-reach, -reach, -reach], [reach, reach, reach]]), margin=0.0,
+                     spacing=0.3)
+    f = names.index(args.cofield_field)
+    volume = cofield_volume(model, f, grid, include_scale=True)
+    export_cube(args.cofield, grid, volume, envs[0])
+    print(f"    co-field of the {args.cofield_field} field written to {args.cofield}, in the "
+          f"frame of the pose: the centre is at the origin")
 
 
 def cmd_transfer(args):
@@ -3709,6 +3772,20 @@ def main(argv=None):
     lo.add_argument("--reference", action="store_true",
                     help="also fit the atom-centred count model on the same folds and bootstrap "
                          "the difference over molecules")
+    lo.add_argument("--align", action="store_true",
+                    help="pose every environment by a rule and use the overlap kernel instead of "
+                         "the rotation-invariant one (plan item LP3); this is what makes a "
+                         "co-field around the atom possible")
+    lo.add_argument("--site", default="ring", choices=["ring", "any"],
+                    help="which rule poses the environment: 'ring' is an aromatic carbon of a "
+                         "six-membered ring, with the bond leaving the ring on +x, and leaves out "
+                         "every atom it does not fit; 'any' uses the centre's first shell "
+                         "whatever it is (default ring)")
+    lo.add_argument("--cofield", default=None, metavar="FILE.cube",
+                    help="with --align: write the co-field around the centre as a cube file, in "
+                         "the frame of the pose")
+    lo.add_argument("--cofield-field", default="electrostatic", metavar="NAME",
+                    help="which field's co-field to write (default electrostatic)")
     lo.add_argument("--folds", type=int, default=10,
                     help="folds; they hold out whole molecules (default 10)")
     lo.add_argument("--seed", type=int, default=0)

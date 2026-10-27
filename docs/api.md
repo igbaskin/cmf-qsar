@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 72 modules, 125 classes with 472 public methods, and 538 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 73 modules, 125 classes with 472 public methods, and 551 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -60,6 +60,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.invariant](#cmfqsarinvariant) | Alignment-free but geometry-aware kernels: autocorrelation of the molecular fields. |
 | [cmfqsar.kernels](#cmfqsarkernels) | Molecular-field kernels. |
 | [cmfqsar.learnincrements](#cmfqsarlearnincrements) | Fitting the atomic increments to the data instead of taking them from the table (item D5). |
+| [cmfqsar.localalign](#cmfqsarlocalalign) | Local alignment: an environment posed on its centre and first shell (plan item LP3). |
 | [cmfqsar.localenv](#cmfqsarlocalenv) | Atom-centred environments and the invariant local kernel (plan item LP2). |
 | [cmfqsar.mil](#cmfqsarmil) | Multi-instance learning over conformations: let the model choose the pose. |
 | [cmfqsar.mixing](#cmfqsarmixing) | A posterior over the field weights (plan item E6). |
@@ -1311,6 +1312,31 @@ kernel held fixed and the noise in the activities propagated.  It answers *how m
 lobe would survive the error in the measurements*, which is the question a co-field picture
 raises.  It says nothing about regions where the training set put no field at all:
 there the co-field and its error are both zero, and the ratio of the two is not informative.
+
+### `cofield_at_points(model: CMFModel, f: int, points: np.ndarray, include_scale: bool=True) -> np.ndarray`
+
+C_f at a list of points rather than on a grid.
+
+A co-field read at a few places a chemist can name -- the ortho, meta and para positions of a
+ring, the four corners of a pocket -- is a table, not a picture, and this is what fills it.
+
+### `cofield_covariance_at(model: CMFModel, f: int, points: np.ndarray, sigma: Optional[float]=None, include_scale: bool=True, chunk: int=0) -> np.ndarray`
+
+Cov[C_f] at a list of points, under noise of level `sigma` in the activities.
+
+The diagonal is what `cofield_variance` gives on a grid.  The off-diagonal terms are
+what a *difference* between two places needs: the co-field at two points a few angstrom
+apart is built from the same training fields, so the two values are correlated and the error
+of their difference is not the two errors added -- usually it is far smaller.  Without this
+a comparison between two positions would be judged against the wrong error bar.
+
+### `contrast_at(model: CMFModel, f: int, points: np.ndarray, weights: Sequence[float], sigma: Optional[float]=None, include_scale: bool=True) -> Tuple[float, float]`
+
+A weighted combination of the co-field at a few points, and its standard deviation.
+
+`weights` picks the comparison: (0, 0, -1, 1) at the four ring positions is "para minus
+meta".  The standard deviation uses the whole covariance of `cofield_covariance_at`, so
+the correlation between the points is taken into account rather than ignored.
 
 ### `cofield_with_error(model: CMFModel, f: int, grid: Grid, sigma: Optional[float]=None, include_scale: bool=False, z: float=2.0, chunk: int=0) -> CofieldError`
 
@@ -4843,6 +4869,126 @@ The mean cosine between every pair of fitted vectors, per field, over the types 
 have in common.  One means the series learned the same increments; zero means they learned
 unrelated ones, and the increments are then a property of the series rather than of the atom
 types.
+
+## cmfqsar.localalign
+
+Source: `cmfqsar/localalign.py`
+
+Local alignment: an environment posed on its centre and first shell (plan item LP3).
+
+`cmfqsar.localenv` (plan item LP2) makes the sample an atom and its surroundings, and
+measures it with the rotation-invariant autocorrelation, which needs no frame.  That kernel has
+the same limitation as the invariant kernel for whole molecules: with no frame there is no
+co-field, so it cannot say **where** around the atom, and in which field, a feature raises or
+lowers the property.
+
+For one site the frame is not a problem.  An aromatic carbon with its two ring neighbours, or a
+carboxyl carbon with its two oxygens, fixes a frame to within a mirror image, so the environments
+of that site in different molecules can be put in one frame by a rule, with nothing fitted and
+nothing to converge.  This module is that rule, and with it the overlap kernel and the co-field of
+the rest of the program apply to an environment exactly as they apply to a molecule.
+
+**The rule.**  The centre is the origin already (`cmfqsar.localenv.environment` puts it
+there and makes it the first atom).  What is left is the rotation, and it is fixed by two of the
+centre's bonded neighbours: the first gives the x axis, the second the xy plane.  Which two is
+decided by the atom type, so that the same site of two molecules is posed the same way, and by
+nothing else: a frame that depended on which of two ring bonds is a hundredth of an angstrom
+longer would not be a rule.  Neighbours of the same type are therefore interchangeable, and when
+that leaves the choice open, as it does for the two ring neighbours of an aromatic carbon or the
+three hydrogens of a methyl group, every choice is kept and
+the environment becomes the **mean of those poses**, which is a mean-map kernel over the frames
+the site allows (`cmfqsar.fields.combine_members`).  That is the same device the symmetrised
+Hammett set uses for the four images of a monosubstituted benzene: a frame ambiguity is averaged
+over rather than resolved by a coin toss.
+
+**The ring site.**  `ring_frames` is the frame for the site the plan names, an aromatic
+carbon of a six-membered carbocycle: the carbon at the origin, the bond that leaves the ring on
++x, the ring in the xy plane, and the two mirror images kept.  In that frame the positions of the
+ortho, meta and para substituents of the ring are fixed numbers (`RING_POSITIONS`), so a
+co-field can be read at them and compared with what substituent effects on an aromatic carbon are
+known to be.
+
+### `frame_from(coords: np.ndarray, i: int, j: int, centre: int=0) -> Optional[np.ndarray]`
+
+The rotation whose rows are the x, y and z axes fixed by atoms `i` and `j`.
+
+x is along the centre-to-`i` direction, y is what is left of the centre-to-`j` direction after
+x is taken out, and z completes a right-handed set.  Returns None when the three atoms are
+collinear, where no frame exists.
+
+### `local_frames(env: MoleculeFields, max_images: int=MAX_IMAGES, centre: int=0) -> List[np.ndarray]`
+
+Every pose of this environment the key allows, at most `max_images` of them.
+
+One rotation is returned for a site the key separates, two for an aromatic carbon with two
+equivalent ring neighbours, three for a methyl carbon, and the identity for a centre with
+nothing bonded to it, where there is no frame to speak of.
+
+### `ring_frames(env: MoleculeFields, centre: int=0) -> List[np.ndarray]`
+
+The two poses of an aromatic ring carbon: the bond leaving the ring on +x, ring in xy.
+
+This is the site of plan item LP3 and the local analogue of the frame the Hammett set uses for
+a whole molecule.  x points away from the ring, so a substituent on the centre sits on +x at
+about 1.4 A; the ring is in the xy plane with its two neighbours at about +-120 degrees; z is
+the ring normal.  The two poses are mirror images in y, which is the ambiguity of which ring
+neighbour is called the first one, and averaging over them is what makes the pose a rule
+rather than a choice.
+
+Returns an empty list when the centre is not an aromatic carbon with exactly two aromatic
+neighbours, which is what a fused-ring carbon and a non-aromatic centre are.  A five-membered
+aromatic ring passes as well, and the frame is as good there, but `RING_POSITIONS` is
+the geometry of a six-membered ring and does not apply to it.
+
+### `ring_positions(radius: float=RING_RADIUS, bond: float=SUBSTITUENT_BOND) -> Dict[str, np.ndarray]`
+
+Where a substituent sits, in the frame of `ring_frames`, by ring position.
+
+The centre is a carbon of a regular six-membered ring of circumradius `radius`, so the ring
+centroid is at (-radius, 0, 0) and the other five carbons follow from the hexagon.  Each
+position is the place the first atom of a substituent on that carbon occupies, `bond` angstrom
+out from it along the direction away from the centroid.  The y > 0 member of each pair is
+given; the two poses of `ring_frames` are mirror images in y, so the co-field of a set
+posed that way is symmetric in y and one of each pair is enough.
+
+### `pose(env: MoleculeFields, R: np.ndarray, name: str='') -> MoleculeFields`
+
+The same environment with its coordinates turned into the frame `R`.
+
+### `posed(env: MoleculeFields, max_images: int=MAX_IMAGES, frames: Optional[Sequence[np.ndarray]]=None, name: str='') -> MoleculeFields`
+
+One field: the environment in every pose its site allows, averaged.
+
+With one pose the result is that pose.  With several it is their mean field, which is a
+mean-map kernel over the frames the site allows and removes the arbitrary part of the rule
+instead of hiding it.
+
+### `posed_environments(mols: Sequence[MoleculeFields], targets: AtomTargets, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, max_images: int=MAX_IMAGES, frames_of: Optional[Callable[[MoleculeFields], List[np.ndarray]]]=None, progress=None) -> List[MoleculeFields]`
+
+One posed environment per measured atom, in the row order of `targets`.
+
+`frames_of` replaces the general rule by a site rule -- `ring_frames` for an aromatic
+carbon -- and is given the environment, whose centre is its first atom.
+
+### `images_of(env: MoleculeFields, max_images: int=MAX_IMAGES, frames_of: Optional[Callable[[MoleculeFields], List[np.ndarray]]]=None) -> int`
+
+How many poses the site of this environment allows: 1 when the key settles it.
+
+### `well_posed(mols: Sequence[MoleculeFields], targets: AtomTargets, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, max_images: int=MAX_IMAGES, frames_of: Optional[Callable[[MoleculeFields], List[np.ndarray]]]=None) -> Dict[int, int]`
+
+How many of the samples have how many poses: {poses: samples}.
+
+A site that gives one pose is settled by the key; two is the usual mirror pair; zero means the
+site rule refuses this centre, and such a sample has to be left out rather than posed anyway.
+
+### `overlap_kernel(posed_envs: Sequence[MoleculeFields], fieldset, y=None, progress=None)`
+
+The overlap kernel of a set of posed environments, and the model that holds it.
+
+The environments are in one frame, so the ordinary CMF overlap kernel applies to them exactly
+as it applies to molecules: this builds the `cmfqsar.fields.AtomTable` and returns the
+fitted-kernel model together with the joint training kernel, which
+`cmfqsar.localenv.cross_validate` then runs over folds that hold out whole molecules.
 
 ## cmfqsar.localenv
 

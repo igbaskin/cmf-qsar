@@ -1895,6 +1895,37 @@ cmf local examples/local/carboxylic_pka.sdf --target pka --rho 0.1 0.5 --referen
 ```
 
 
+### A co-field around one atom
+
+The local kernel above needs no frame, and that is its limit: with no frame there is no co-field,
+so it cannot say where around the atom a feature acts. For one site a frame costs nothing
+(`cmfqsar/localalign.py`, plan item LP3): an aromatic carbon of a six-membered ring with its two
+ring neighbours fixes one to within a mirror image, so every such carbon of every molecule can be
+put in one frame by a rule -- the bond that leaves the ring on +x, the ring in the xy plane, both
+mirror images kept and averaged, nothing fitted. The frame is decided by the atom type and nothing
+else, because a frame that depended on which of two ring bonds is a hundredth of an angstrom
+longer would not be a rule. In that frame the ordinary overlap kernel and the co-field of this
+program apply to an environment exactly as they apply to a molecule.
+
+**The frame gains where the envelope is wide.** On 1225 aromatic carbons of 170
+molecules of the shift set, with folds that hold out whole molecules, the posed overlap kernel
+reaches q2 +0.899 and an error of 4.22 ppm, against +0.768 and 6.38 ppm for
+the atom-centred count and +0.847 for the rotation-invariant local kernel at its own best
+width (a difference of +0.052 [+0.033, +0.071]). At equal width the difference runs from +0.756 [+0.718, +0.791] at an envelope width of
+4.5 A down to +0.025 [-0.015, +0.060] at 1.0 A, which is inside the interval: an invariant descriptor of a
+wide environment has only distances, and the directions it throws away are exactly what separates
+an ortho position from a meta one.
+
+**The co-field it allows does not yet reproduce the ring picture.** In the frame above the places
+a substituent occupies are fixed numbers, so the co-field is read at the ipso, ortho, meta and
+para positions, with the error that the noise in the shifts allows and with the correlation
+between the positions taken into account. One feature stands far above the rest: the steric co-field at the **ipso** position, +15.5 +- 1.3, 12 standard deviations from zero where nothing else reaches four. It says that putting anything bulkier than hydrogen on the measured carbon raises its shift, which is the dominant term of the 13C substituent effect and true of nearly every group (methyl +9 ppm, chlorine +6, nitro +20, methoxy +31). What the co-field does not reproduce is the alternation around the ring: the electrostatic co-field differs between the para and meta positions by -18.54 +- 24.73, the wrong sign and inside the noise, and no other field reaches two standard deviations either way. The signs are closer to the chemistry -- 3 of the four agree with what a methoxy group measurably does to an aromatic shift -- but a correlation over four points is not sharp enough to call that a result. A nitro group, whose first atom is positively charged, moves an aromatic shift the same way methoxy does, so no model linear in fragment charges can follow both: that part is resonance, the same wall the Hammett co-fields met for sigma_p, and quantum charges are the way past it.
+
+```bash
+cmf local examples/local/shifts_cdcl3.sdf --target shift --align --site ring --cofield co.cube
+```
+
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the

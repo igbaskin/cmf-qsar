@@ -1,6 +1,6 @@
 {
- "commit": "75173a446a86ef160b19932349dd23d761d9829b",
- "created": "2026-10-27T08:26:40",
+ "commit": "0f653d00675d723793ec726a695e0c519bbbfff7",
+ "created": "2026-10-27T08:41:45",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1890,6 +1890,10 @@
   "benchmarks/results/local/pka.json": "8dfb0b579736ea7c29e9d15f7a75ef1a6a380caef6216d34aaef3649d96803bc",
   "benchmarks/results/local/shifts.json": "f8109b7b3a8c9bdcc09ca97750f0f23fa97d162b9bdb9e9d09da5a5790ac4b29",
   "benchmarks/results/local/table.md": "65ca59b845bb8f105a696dc5a8d485252e2cddfc6c062a3086e818758e1d4a93",
+  "benchmarks/results/local_cofield/cofield.png": "0b02eb2a753d8082b14020355bacd10b536e43b20015efc947cff028c663ed9a",
+  "benchmarks/results/local_cofield/pka.json": "097c09ae4c04cb773b64faf41c4e75947aaea0d1ba5278497c19852711a27b01",
+  "benchmarks/results/local_cofield/summary.json": "562ad3ef6c6056e1edfcd7b020bbcf7ca28edb243edd718a04329290477e7877",
+  "benchmarks/results/local_cofield/table.md": "58fd81e23b8fa15ea2e23d4d86a24e05cdfcdfd4f332dfc843c74fd664ba7e4b",
   "benchmarks/results/matbench_phonons/all+mass-align.json": "520553990efc6c20c853d2fa54a875596bcac511b33012ef16f5996841e557f7",
   "benchmarks/results/matbench_phonons/all+mass-alignf.json": "bdb5718ad6b8390d253d373ceb5b1b4382a81e408e3874fc320ff17f360fefd1",
   "benchmarks/results/matbench_phonons/all+mass-balanced.json": "2f22168dd45f00701229381084e689d63dad35584a0c1a47bac77d14b46893d1",
