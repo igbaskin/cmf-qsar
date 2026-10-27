@@ -1,6 +1,6 @@
 {
- "commit": "7a654ce3daef666cc46482aa700ade942187cd18",
- "created": "2026-10-27T07:46:38",
+ "commit": "75173a446a86ef160b19932349dd23d761d9829b",
+ "created": "2026-10-27T08:26:40",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -621,6 +621,10 @@
   "examples/make_schindler_examples.py": {
    "bytes": 6269,
    "sha256": "8426f5e21c6c223a8d1e6b8a2c523e672d84820f5ab42fc045e48b41bc3bf944"
+  },
+  "examples/make_selectivity_examples.py": {
+   "bytes": 16835,
+   "sha256": "41b2a586eb54d01898c20064c15011ff3c365a0a0bed532f69498a1ef62ea203"
   },
   "examples/make_sutherland_examples.py": {
    "bytes": 7074,
@@ -1494,6 +1498,26 @@
    "bytes": 109210,
    "sha256": "3c1ba015eafcd156620ed7cd9482d235b0ea7a62bfcda68f6fd77c87e72e5299"
   },
+  "examples/selectivity/ampa_glycine.sdf": {
+   "bytes": 227315,
+   "sha256": "3c6eac8d5c685e36e0a49c2477ec93271bcbcaa5434a7dd0a77b129de49ddb3b"
+  },
+  "examples/selectivity/docked_ampa.sdf": {
+   "bytes": 222602,
+   "sha256": "63baf93464ec17053d098ad123289702a87c4ae709afecb06a127fb36dd39b70"
+  },
+  "examples/selectivity/docked_glycine.sdf": {
+   "bytes": 222944,
+   "sha256": "3bb4afa7bd0d52d4917836521e1e50d1875cb3e48b84b12154a652722f62a835"
+  },
+  "examples/selectivity/receptor_ampa.pdb": {
+   "bytes": 220320,
+   "sha256": "799cd6ca02c2ae74f1d0c100ccfdd32b9c5830c6ea652a29611a867e03310566"
+  },
+  "examples/selectivity/receptor_glycine.pdb": {
+   "bytes": 189864,
+   "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
+  },
   "examples/steroids_cbg.sdf": {
    "bytes": 152464,
    "sha256": "e094d9ffd325b8adef98afba2a66265d41f666e4fbed71034b90b5b297e9a2fe"
@@ -2157,6 +2181,31 @@
   "benchmarks/results/screening/TP53.json": "07c2e41df74c98853924f02d0d42030b89a90e6773c0a046e9ed62b902cfd468",
   "benchmarks/results/screening/TP53_similar.json": "0490e2b39f264e936551e721979150c463f9d642b44990e3027a8061636cde61",
   "benchmarks/results/screening/table.md": "7273a2bb34e17796ef880e8781da294238f5105e31c5edb00ce2503165449686",
+  "benchmarks/results/selectivity/comfa-dedup.json": "74541a1f9ff35e8c0527fb0c8c5829abedb05e0e0102edd3a8b858a499798c96",
+  "benchmarks/results/selectivity/comfa-dedup_AMPA.json": "c83af9a8606a2baa8f6823fba0ae2ded665db0d21b1d557b5906b8d3d769c5af",
+  "benchmarks/results/selectivity/comfa-dedup_Delta.json": "d5649b8e81fe5c252b45367fc8ec8491e8b45cd0c6910253aefc171bf0ead6e8",
+  "benchmarks/results/selectivity/comfa-dedup_glycine.json": "c0372144e7082600e87fecb198728985fdcc9fce0237264da28fbee7172e9af8",
+  "benchmarks/results/selectivity/comfa.json": "c6d1e544a073653eabb3ba45e6334f01421f5e88fc841ee60056ab31855e9eac",
+  "benchmarks/results/selectivity/comfa_AMPA.json": "a182df30059233937777181e2dca969d273a83c338f054a042f7eacf451420ab",
+  "benchmarks/results/selectivity/comfa_Delta.json": "2b263415d48549367e52d034ae728b09312d771a2c674d96b5261719bea0bc53",
+  "benchmarks/results/selectivity/comfa_glycine.json": "769b2a05ef2da93b0e2d13609f776d798d5946b40b589142d8f992882f2410ba",
+  "benchmarks/results/selectivity/default-dedup.json": "2e6cef886171076d78157f444b989915ebef489a9e4c1b2d43ae4ef69c0a0867",
+  "benchmarks/results/selectivity/default-dedup_AMPA.json": "b5b83949539a3398c931bd03f4d21377da1d4544e076cc11300c5d09197d4627",
+  "benchmarks/results/selectivity/default-dedup_Delta.json": "111802f322aca3b76b33518aa5af79645e45fba54ba7d7fda08a937f3680d74f",
+  "benchmarks/results/selectivity/default-dedup_glycine.json": "3345810b4065888e1e6cca8ee36d7d4969658cb82919bf3c7dd6ff1fe194d37d",
+  "benchmarks/results/selectivity/default.json": "670a6c184ce26cda624bcb520642b19f3924d7868e1a3a3f6bbd2311298f10de",
+  "benchmarks/results/selectivity/default_AMPA.json": "bf1abda95ab64609537fba53e9c4f9b92a19059c3795bd67fb816adea035951e",
+  "benchmarks/results/selectivity/default_Delta.json": "3ae217317c04013925dd290e4cb50254bab92135e4529681db44ab6a0875ef2b",
+  "benchmarks/results/selectivity/default_glycine.json": "b40aacbfa69c0d45dc15f8a4b93ea6c423ce0d9a714d626137985c89e6581e71",
+  "benchmarks/results/selectivity/file-dedup.json": "a9a824cf156c48ba164201597e5b11a2ca0c4e08902afe7554db7971cabb1c1a",
+  "benchmarks/results/selectivity/file-dedup_AMPA.json": "cb042cd4c8a41c9a533ac6faa6abc1e08ef777dc7a68cd0ad0128ac0f2472b92",
+  "benchmarks/results/selectivity/file-dedup_Delta.json": "8e4319c7303ae3a96fc9ac0bd548a450803ebac7217f3ebd9b8f3622f54878fa",
+  "benchmarks/results/selectivity/file-dedup_glycine.json": "350b3106d83954c1c4a528e9b475a6ab9b2d97974d50247b466ea78e5c13f516",
+  "benchmarks/results/selectivity/file.json": "a7f1ed8223fd0a5341bab07ceb0e0eae09978b18aa8c62c5adf4d97dcfc2d1ec",
+  "benchmarks/results/selectivity/file_AMPA.json": "e9c3c216091efd128b2bd90065e6f421ddac9c2821c4f2d07673575a88e77308",
+  "benchmarks/results/selectivity/file_Delta.json": "50c0da4f33ca29dc6d3ad0516cdacdff87ea360e996800e8a046cb3a5997413c",
+  "benchmarks/results/selectivity/file_glycine.json": "fdf29ea54573147755c4d75dbfd4a682d611b9eebdee82cf3c777d38c20041fe",
+  "benchmarks/results/selectivity/table.md": "457c99257ba10154d192e7b780653e30544f9a1992b1c2b516c00b2fa3848597",
   "benchmarks/results/speed/cutoff.json": "709dd23788134aabcfc8e110ddcb9af69813477e46b684f48de4e55591969b3c",
   "benchmarks/results/speed/engine.json": "130e2f1a75835a513d11647d73e2e736b42fb475c074f346de48922559b7595c",
   "benchmarks/results/speed/grid.json": "e75d2d367375716bd6f56b9570f8bffc7edaeaaee742bb71de7a8bbb038b43b6",

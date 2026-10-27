@@ -190,6 +190,14 @@ def registry() -> List[Benchmark]:
                   minutes="5",
                   report=lambda: _mod("run_two_endpoints").report(_r("two_endpoints")),
                   tables=["two_endpoints/table.md"]),
+        Benchmark("selectivity",
+                  "the AMPA / glycine-NMDA set of the 2003 selectivity-fields paper: the "
+                  "difference of two affinities modelled directly, as a difference of models, "
+                  "and as a two-task fit",
+                  "run_selectivity.py", "selectivity", compute=[[]], minutes="1",
+                  report=lambda: _mod("run_selectivity").report(_r("selectivity")),
+                  tables=["selectivity/table.md"],
+                  readme=["Several endpoints on one kernel: the selectivity co-field"]),
         Benchmark("guest_atoms",
                   "does an alignment-free model name the group that enters the cavity",
                   "run_guest_atoms.py", "guest_atoms", compute=[[]],
@@ -202,6 +210,7 @@ def registry() -> List[Benchmark]:
                   minutes="45",
                   report=lambda: _mod("run_local").write_table(_r("local")),
                   tables=["local/table.md"]),
+
         Benchmark("increments",
                   "do increments fitted on one series transfer to another",
                   "run_increments.py", "increments", compute=[[]],

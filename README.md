@@ -2846,6 +2846,34 @@ python benchmarks/run_multitask.py --set 0_c1ccccc1 --tasks mwila_hcl_adj mwila_
 python benchmarks/run_tasks.py                # the seven cyclodextrin hosts; results/tasks/table.md
 ```
 
+**The set the selectivity field was proposed on.** The idea of modelling the difference of two
+affinities directly, and of reading its co-field as a map of selectivity, is from Baskin, Tikhonova,
+Palyulin & Zefirov, J. Med. Chem. 46 (2003) 4063: 52 tricyclic antagonists of the AMPA and the
+glycine/NMDA receptors, 5 test compounds, CoMFA with leave-one-out. `examples/selectivity/` is that
+data set rebuilt from the authors' Sybyl models and superimposed by the paper's rule, and
+`benchmarks/run_selectivity.py` models it three ways: a direct model of the difference Δ = pKi(AMPA) −
+pKi(glycine), the difference of the AMPA and glycine models, and the two-task fit of this section
+(`benchmarks/results/selectivity/table.md`). With the two CoMFA fields and leave-one-out, the single
+models come out near the paper's (AMPA q² +0.48 against 0.52, glycine +0.38 against 0.53), but the
+direct model of Δ does not: q² +0.32 against the paper's 0.61, and no better than the difference of
+the two models (+0.33). With the five fields the picture changes: Δ q² **+0.53** directly against
++0.46 for the difference of the models, and the hydrophobic and hydrogen-bond fields are what the
+selectivity needed. The gain of the direct model over the difference of the models is +0.07 on the
+published training set and +0.01 once the two compounds that the published set carries twice are
+removed, so it is small, and it is never negative with the five fields. The two-task fit chooses
+ρ = +0.46 and its selectivity q² equals the direct model's (+0.53): here every molecule carries both
+affinities, so there is nothing for the sharing to transfer, which is the corrosion result again. The
+five test compounds span 0.75 log units of Δ and every route predicts them with an RMSE of 0.4 to 0.6
+(the paper's selectivity model: 0.22); they decide nothing. The selectivity co-field itself comes from
+the two-task model:
+
+```bash
+python benchmarks/run_selectivity.py                      # results/selectivity/table.md
+python cmf_cli.py build examples/selectivity/ampa_glycine.sdf --activity pKi_AMPA \
+       --second-endpoint pKi_glycine --charges gasteiger --save ampa_glycine.cmf
+python cmf_cli.py cofield ampa_glycine.cmf --endpoint selectivity --out-prefix selectivity
+```
+
 ### Making the kernel fast enough for a library
 
 A field kernel is a sum over atom pairs, so it costs the square of the set size times the square
@@ -3301,6 +3329,22 @@ These conformations and alignments are automatic, not those of the original 3D-Q
 serve for method comparison under equal conditions rather than for reproducing literature statistics.
 Nine of them (ACE, ACHE, BZR, COX2, DHFR, GPB, THERM, THR, STEROIDS) duplicate sets for which original
 aligned coordinates are available in `examples/sutherland` and `examples/steroids_cbg.sdf`.
+
+`examples/selectivity/ampa_glycine.sdf` — the data set of the paper that introduced selectivity fields
+(Baskin, Tikhonova, Palyulin & Zefirov, J. Med. Chem. 46 (2003) 4063): 57 tricyclic antagonists of the
+AMPA and the glycine/NMDA receptors (triazolo[1,5-a]quinoxalinones and pyrazolo[1,5-c]quinazolinones
+from the Florence group) with `pKi_AMPA`, `pKi_glycine` and their difference `delta_AMPA_glycine`, the
+published split (`subset`: 52 training, 5 test), the paper's compound number, scaffold and substituents
+as tags. The structures are the original Sybyl models (Gasteiger-Hückel charges, carboxylic acids as
+carboxylates), superimposed here on the fourteen atoms of the tricyclic core, which is the rule of
+Figure 1 of the paper. The file charges are kept as per-atom properties, but for sixteen compounds they
+do not sum to the formal charge (`file_charge_sum` and `formal_charge` say so), so RDKit's Gasteiger
+charges are the setting to use. The same compounds as docked poses in each receptor model are in
+`docked_ampa.sdf` and `docked_glycine.sdf`, with the receptor models `receptor_ampa.pdb` (the
+ligand-binding core after PDB 1FTL) and `receptor_glycine.pdb` (a homology model of the glycine site).
+Produced by `examples/make_selectivity_examples.py` from the authors' files; the printed Table 1 of the
+paper has four substituent names that disagree with the modelled structures, and the script's docstring
+lists them. Used by `benchmarks/run_selectivity.py` (see *Several endpoints on one kernel* above).
 
 A per-molecule SD tag named `subset`, `set` or `split` (values train/test or 1/2) is honoured by the loader
 in both the GUI and the CLI. Other literature data sets

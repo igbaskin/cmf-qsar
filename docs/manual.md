@@ -1550,8 +1550,8 @@ On a congeneric series superimposed in one frame the cutoff keeps almost every p
 refuses to build a list, so the sum stays exact. On molecules five times longer it is worth a
 factor at a strong attenuation. A cutoff makes the kernel an approximation — each dropped pair
 contributed less than a millionth of a peak overlap, and the measured error is about $10^{-7}$
-relative — so it is off by default and every table in this manual was produced without it.
-
+relative — so it is off by default and every table in this manual was produced without it.
+
 ### The compiled kernel, if Numba is installed
 
 The kernel above is NumPy, and NumPy is single-threaded. The same arithmetic written as one fused
@@ -3011,8 +3011,8 @@ places each molecule by maximising its field similarity to the training molecule
 placement the background sets of the benchmarks are given, it costs about half a second per
 molecule — far more than the scoring — and it is optimistic, because a real library has to choose
 a pose without knowing the actives. `--pose-conformers N` generates N conformations of each
-molecule and poses every one, which multiplies the cost by N.
-
+molecule and poses every one, which multiplies the cost by N.
+
 ## Which molecule to make next
 
 The model predicts an activity and, through the Gaussian-process view, a standard deviation beside
@@ -4349,7 +4349,7 @@ not every option.
 | `complement` | field complementarity with a protein pocket |
 | `compare` | are two sets the same population? (MMD, with a witness) |
 | `cluster` | cluster a set by its field kernel (spectral clustering) |
-| `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
+| `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
 | `local` | a model over atoms: the field around an atom against a count around it |
 | `unalign` | give every molecule a random pose, the control experiment |
 
@@ -4659,6 +4659,7 @@ cmfqsar/gui/             the PySide6 application
 | `examples/benzamides_synthetic.sdf` | 109 aligned N-phenylbenzamides with a *synthetic* activity: the overlap of their fields with a hidden pseudo-receptor co-field plus noise (σ = 0.25). A model has to recover those zones; q² ≈ 0.87 against a noise ceiling of 0.94. The set to learn the program on, because the right answer is known. |
 | `examples/steroids_cbg.sdf` | the classic CoMFA benchmark: 31 steroids (Cramer, Patterson & Bunce 1988) with corticosteroid-binding-globulin affinities, in the corrected Gasteiger-group geometries, re-superimposed on the steroid skeleton of testosterone. Customary split 1–21 / 22–31, leave-one-out q² ≈ 0.79. |
 | `examples/sutherland/*.sdf` | the eight literature sets of the 2013 paper (Sutherland, O'Brien & Weaver 2004): ACE, AChE, BZR, COX-2, DHFR, GPB, THER, THR, with the aligned MMFF94s conformations as distributed, the published split, and the original Sybyl types and MNDO ESP charges as per-atom properties. Choose *Partial charges: file*. |
+| `examples/selectivity/ampa_glycine.sdf` | the 57 AMPA / glycine-NMDA antagonists of the 2003 selectivity-fields paper (Baskin, Tikhonova, Palyulin & Zefirov) with `pKi_AMPA`, `pKi_glycine`, their difference `delta_AMPA_glycine` and the published split (52 / 5), superimposed on the tricyclic core; the set to try *Model several endpoints (selectivity co-field)…* on. Use Gasteiger charges: the file charges of sixteen compounds are unreliable. `docked_ampa.sdf` and `docked_glycine.sdf` hold the same compounds docked in the two receptor models, `receptor_ampa.pdb` and `receptor_glycine.pdb`. |
 | `examples/mittal/*.sdf` | 38 of the 40 benchmark sets of Mittal, McKinnon & Sorich (2009), built here from their 2D supplementary data by ETKDG and an MCS superposition, with each molecule's fit quality recorded in `align_rmsd`. The collection to use when you want to know how a method behaves on an *automatic* alignment. |
 | `examples/openff/*.sdf` | 21 congeneric series, 513 ligands, from the Open Force Field protein–ligand benchmark, each posed in its target's crystal structure; activity tag `pAffinity`. |
 | `examples/pockets/*.pdb` | the binding sites of those series, trimmed and already in the ligands' frame, so they open together with the data. |

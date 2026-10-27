@@ -39,6 +39,7 @@ column says.
 | `litpcba/` (5 files, 15 MB) | 152 measured actives and 2999 measured inactives for two LIT-PCBA targets (ESR1 antagonists, p53), embedded and posed here; the `_decoys_similar` file is the same p53 inactives posed in the way most favourable to them (1500 of them), for the control | SMILES and the active/inactive verdicts from LIT-PCBA AVE-unbiased (Tran-Nguyen, Jacquemard & Rognan 2020), itself from PubChem dose-response assays; conformations and poses this work | derived | `make_litpcba_examples.py` | `run_screening.py` |
 | `thrombin_atom_properties.sdf` | 40 THR molecules carrying per-atom Gasteiger and Crippen properties | `sutherland/THR.sdf` | inherits `sutherland/` | `make_property_example.py` | manual (`prop:` fields) |
 | `am-eu/` (MOL2 + table) | 46 Am/Eu extractants of the 2015 paper with lg SF, superimposed, heavy atoms | the authors' own data (Sitnikov et al. 2015); the author of this program is one of them | free | none (as prepared for that paper) | `run_am_eu.py` |
+| `selectivity/` (3 SDF + 2 PDB, 1.1 MB) | 57 AMPA / glycine-NMDA antagonists of the 2003 selectivity-fields paper with both pKi values, their difference and the published split; superimposed on the tricyclic core, plus the docked poses and the two receptor models | the authors' own Sybyl models (I. Tikhonova; the author of this program is the first author of that paper); activities from Catarzi et al. 1999, 2001 and Varano et al. 2002 as tabulated in the paper | free (the authors' files; the measurements are published) | `make_selectivity_examples.py` from the authors' MOL2 files | `run_selectivity.py` |
 | `corrosion/`, `corrosion_hcl/` (23 CSV each, 997 rows each) | congeneric series of iron corrosion inhibitors with the MWILA potency, per medium, and the Langmuir ΔG; the `_hcl` folder protonated at pH 0 | the author's own database of literature measurements, exported from its scaffold tree | free (the author's compilation); the underlying values are published, see below | `scaffold_tree_export.py` | `run_corrosion.py`, `run_corrosion_qm.py`, `run_multitask.py`, `run_cdft_kernels.py` |
 | `cyclodextrin/` (7 tables, 2671 guests, 0.7 MB; `ph7/` the same protonated, 0.8 MB; `upstream/` 4.1 MB) | association constants with a fixed cyclodextrin host, one table per host, activity = log K; the host-guest case, with no frame | Tahıl et al., Chemical Data Collections 45 (2023) 101022, Zenodo 10.5281/zenodo.7575539 | free (ODbL 1.0, share-alike; licence file in `upstream/`) | `make_cyclodextrin_examples.py --fetch --protonate` | `run_cyclodextrin.py`, `run_tasks.py` (the seven hosts as seven endpoints) |
 
@@ -187,6 +188,22 @@ charges, no hydrogens, aromatic typing). The author of this program is an author
 and the files are the authors' own; the separation factors were compiled from the literature
 the 2015 paper cites. `run_am_eu.py` rebuilds the hydrogens for the
 quantum stage and writes `benchmarks/results/am_eu/am_eu_qm.sdf`.
+
+### The AMPA / glycine-NMDA selectivity set
+
+`examples/selectivity/` holds the data set of Baskin, Tikhonova, Palyulin and Zefirov, J. Med.
+Chem. 46 (2003) 4063, the paper that introduced selectivity fields: 57 antagonists of the AMPA
+and the glycine/NMDA receptors with both inhibition constants (Tables 1 and 2 of the paper, from
+Catarzi et al., J. Med. Chem. 42 (1999) 2478 and 44 (2001) 3157, and Varano et al., J. Med.
+Chem. 45 (2002) 1035). The three-dimensional structures are the Sybyl models built by
+I. Tikhonova for that work (Gasteiger-Hückel charges), which the author of this program holds
+as the docked poses in the two receptor models; `make_selectivity_examples.py` superimposes
+them on the tricyclic core by the rule of Figure 1 of the paper and writes the aligned file,
+the two docked files and the two receptor models (the AMPA ligand-binding core after PDB 1FTL
+and a homology model of the glycine site). The files are the authors' own. The script's
+docstring records where the printed Table 1 disagrees with the modelled structures, that the
+published training set contains two compounds twice, that the file charges of sixteen compounds
+do not sum to the formal charge, and that two hydrogens missing from one file were added.
 
 ### The corrosion-inhibitor series
 
