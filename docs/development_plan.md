@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 71 modules and about 31,350 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with twenty-six subcommands (`build`, `build-crystals`, `diagnose`,
+* A library of 72 modules and about 31,950 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with twenty-eight subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`), 1071 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1097 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2295,6 +2295,45 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   than the unweighted field distance of the same two substituents, and better than a 2D fingerprint
   distance, by more than the interval of rule 4. If the weighting adds nothing then the ranking is
   shape similarity and needs no model, which is a result of the same kind as D5.
+  **Done 27 October 2026, and the gate is passed on two of the three sets with no set against
+  it.** `cmfqsar/bioisostere.py` and the subcommand `cmf isosteres`. The table needs no new
+  model: the prediction of the overlap kernel is a sum over the atoms (decomposition rule 3), so
+  the part of it that belongs to a substituent is the sum over that substituent's own atoms, and
+  exchanging group A for group B is the difference of two such sums -- one integral per pair of
+  groups rather than one model fit per group. The masking is exact and not an approximation,
+  because the kernel is itself a sum over pairs of atoms; `masked_field` builds the subset as a
+  field object of its own and a test checks that for any division of a molecule in two,
+  K(whole, whole) = K(a,a) + 2K(a,b) + K(b,b). 26 tests.
+  **The pairs** are matched molecular pairs from RDKit's `rdMMPA` as the gate asks: one single
+  bond cut at a time, both pieces tried as the core, two molecules with the same core and
+  different groups, two molecules that match on several cores counted once. 730 pairs on GPB,
+  142 on THER, 751 on THR.
+  **Measured** by `benchmarks/run_bioisostere.py` as the rank correlation between each measure
+  of how far apart two groups are and the size of the measured activity difference, with the
+  dual coefficients refitted without **both** members of every pair so that the predicted change
+  has not seen the two activities it is judged against. GPB: fingerprint -0.025, field distance
+  +0.005, predicted change +0.561. THER: +0.084, +0.162, +0.277. THR: +0.144, +0.242, +0.335.
+  The gains of the predicted change over the two references are, on GPB +0.586 [+0.505, +0.669]
+  and +0.556 [+0.479, +0.632]; on THR +0.191 [+0.106, +0.279] and +0.093 [+0.008, +0.181]; on
+  THER +0.193 [-0.059, +0.437] and +0.116 [-0.089, +0.313], which contains zero and is the set
+  with the fewest pairs. On no set is the co-field worse than either reference.
+  **What this does and does not show.** The field distance is not a weak reference: it compares
+  the two groups **in their poses**, so it already knows the shape and the charge each of them
+  puts where, and the co-field still adds to it. What the co-field has that the references cannot
+  is whether the activity depends on the place where the two groups differ. Against that, the gap
+  between the honest column and the whole model is large (+0.561 against +0.631, +0.277 against
+  +0.641, +0.335 against +0.711), so a table built from a model that has seen the compounds it is
+  asked about will look better than it is; and the field types, the attenuation and the ridge
+  were still chosen on all the molecules.
+  **What the table is read for is the size rather than the ranking.** A predicted change smaller
+  than twice the conformal half width is a change the model cannot see, and the groups inside
+  that bound are the ones the table calls interchangeable; that part is the model's own error bar
+  and not a claim about the chemistry. On the GPB model, whose half width is 1.5 log units, the
+  bound covers every pair of the 35 groups at that position, which is the table saying honestly
+  that this model cannot separate them. What is left is the order, and it is chemically
+  reasonable: the groups it puts closest to the carboxamide are the methyl carbamate (+0.02),
+  butyramide (+0.04) and acetamide (+0.05).
+  This unblocks MC6 and MC7, which the plan puts after MC1.
 * **MC2. A batch rule that refits between picks.** E2 names this as not done. A laboratory makes ten
   or twenty compounds at once, and the cosine filter of `cmfqsar/active.py` keeps a batch from being
   one molecule several times over without saying how much it loses. The posterior covariance is in

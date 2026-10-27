@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 77 modules, 130 classes with 477 public methods, and 588 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 78 modules, 134 classes with 480 public methods, and 602 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -30,6 +30,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.anisotropic](#cmfqsaranisotropic) | Atom functions with a direction: Gaussians times a linear factor (plan item D1). |
 | [cmfqsar.atomtargets](#cmfqsaratomtargets) | A target that belongs to an atom rather than to a molecule (plan item LP1). |
 | [cmfqsar.atomtypes](#cmfqsaratomtypes) | Atom typing (Tripos/Sybyl-like) and van der Waals parameters. |
+| [cmfqsar.bioisostere](#cmfqsarbioisostere) | Which groups are interchangeable here? |
 | [cmfqsar.cdft](#cmfqsarcdft) | Conceptual-DFT fields on a grid, and what atom-centred Gaussians can and cannot make of them. |
 | [cmfqsar.chemotypes](#cmfqsarchemotypes) | Heterogeneous series: several chemotypes, no single common substructure. |
 | [cmfqsar.cli](#cmfqsarcli) | Command-line interface for building CMF 3D-QSAR models (no GUI needed). |
@@ -542,6 +543,195 @@ Return a list with one atom type string per atom in `mol`.
 If the molecule carries pre-assigned types in the atom property `_TriposAtomType`
 (e.g. read from a MOL2 file) and `scheme == "sybyl"` these are used directly.
 
+## cmfqsar.bioisostere
+
+Source: `cmfqsar/bioisostere.py`
+
+Which groups are interchangeable here? A bioisostere table weighted by the co-field (MC1).
+
+`cmf design` ranks candidate substituents by the predicted activity of the whole molecule.  The
+table a medicinal chemist asks for answers a different question: **which groups can replace each
+other at this position**, so that one of them can be chosen for a property the model knows
+nothing about -- solubility, cost, a patent, a metabolic liability.
+
+The model answers it without being refitted once per group.  The prediction of the overlap kernel
+is a sum over the atoms of the molecule (decomposition rule 3,
+`cmfqsar.model.CMFModel.atom_contributions`), so the part of the prediction that belongs to
+a substituent is the sum over that substituent's own atoms, and the predicted effect of exchanging
+group A for group B at one position is the difference of those two sums.  That is one integral per
+pair of groups rather than one model fit per group.
+
+Three distances between two groups
+----------------------------------
+For every pair of substituents at the same position this module computes:
+
+* **the fingerprint distance**, one minus the Tanimoto similarity of their Morgan fingerprints:
+  two dimensions, no geometry, no model;
+* **the field distance**, the distance between the two posed groups in the field metric of the
+  model's own kernel, restricted to the atoms of the groups themselves: geometry, but no model;
+* **the predicted change**, the difference of the two atom-contribution sums: geometry and the
+  model's co-field, since the contribution of an atom is its field weighted by the co-field.
+
+The gate of plan item MC1 is whether the third ranks the measured activity difference of a matched
+molecular pair better than the first two.  If it does not, then what the table shows is shape
+similarity and needs no model at all, which would be a result of the same kind as plan item D5.
+`benchmarks/run_bioisostere.py` is that measurement.
+
+Finding the pairs
+-----------------
+The pairs come from RDKit's `rdMMPA`, which cuts one single bond at a time and reports the two
+pieces.  Every cut is taken in both directions, so each piece is tried as the core; two molecules
+whose cores are the same molecule and whose groups are different are a matched pair at that
+position.  Nothing is chosen by eye.
+
+### `class Substituent  (dataclass)`
+
+One group of one molecule, with the core it hangs on.
+
+Attributes:
+
+- `molecule: int`
+- `core: str`
+- `group: str`
+- `atoms: np.ndarray`
+
+### `class MatchedPair  (dataclass)`
+
+Two molecules that differ in one group at one position.
+
+Attributes:
+
+- `a: int`
+- `b: int`
+- `core: str`
+- `groups: Tuple[str, str]`
+- `atoms_a: np.ndarray`
+- `atoms_b: np.ndarray`
+- `delta: float`
+- `names: Tuple[str, str]` = `('', '')`
+
+### `class PairScore  (dataclass)`
+
+One matched pair, by the three measures and by what was measured.
+
+Attributes:
+
+- `pair: MatchedPair`
+- `fingerprint: float`
+- `field: float`
+- `change: float`
+
+#### `PairScore.measured` -> float  (property)
+
+### `class Table  (dataclass)`
+
+A square table of groups against groups at one position.
+
+Attributes:
+
+- `core: str`
+- `groups: List[str]`
+- `molecules: List[int]`
+- `distance: np.ndarray`
+- `change: np.ndarray`
+- `half_width: float` = `float('nan')`
+- `names: List[str]` = `_field(default_factory=list)`
+
+#### `Table.interchangeable(group: str, within: Optional[float]=None) -> List[str]`
+
+The groups whose predicted change against `group` is inside the model's own error.
+
+Without `within`, the bound is twice the conformal half width: the model cannot tell two
+predictions apart by less than that, so a smaller change is not a change it can see.
+
+#### `Table.rows()`
+
+(group a, group b, distance, change) for every ordered pair, a != b.
+
+### `fragment(mol, max_substituent: int=MAX_SUBSTITUENT, min_core: float=MIN_CORE_SHARE) -> List[Substituent]`
+
+Every way of cutting one single bond of `mol`, as (core, group, the group's atoms).
+
+Both directions of every cut are reported, because which piece is the core is decided by
+what the other molecules of the set have in common and not by this molecule.  The atom
+indices refer to `mol` as it was passed in, which is what lets the group be masked out of the
+molecule's fields afterwards.
+
+### `substituents(mols: Sequence, **kw) -> List[Substituent]`
+
+`fragment` over a set, with the molecule index filled in.
+
+### `matched_pairs(mols: Sequence, y: Sequence[float], names: Optional[Sequence[str]]=None, max_substituent: int=MAX_SUBSTITUENT, min_core: float=MIN_CORE_SHARE, one_per_couple: bool=True) -> List[MatchedPair]`
+
+Every matched molecular pair of a set: two molecules, one core, two different groups.
+
+`delta` is the activity of the second molecule minus that of the first.  With
+`one_per_couple`, two molecules that can be matched on several cores are reported once, on
+the largest core, because the same two measured numbers must not enter a correlation twice.
+
+### `masked_field(mol: MoleculeFields, atoms: Sequence[int], name: str='') -> MoleculeFields`
+
+The fields of `mol` restricted to `atoms`, as a field object of its own.
+
+A kernel of this program is a sum over pairs of atoms, so restricting one side of it to a
+subset of the atoms is the same as building the fields of that subset and nothing else.  The
+atoms keep the coordinates they have in the molecule, so two groups compared this way are
+compared **in their poses** and not as detached fragments.
+
+### `group_distance(a: MoleculeFields, b: MoleculeFields, fieldset: FieldSet, scale: Optional[np.ndarray]=None) -> float`
+
+The distance between two posed groups in the field metric, with no model in it.
+
+`d^2 = K(a,a) - 2 K(a,b) + K(b,b)` over the enabled fields, each field scaled as the model
+scales it so that the fields are comparable with one another.  This is the reference the
+co-field weighting has to beat: it knows where the two groups put their field, but not
+whether the activity depends on it.
+
+### `group_contribution(model, mol: MoleculeFields, atoms: Sequence[int], coef: Optional[np.ndarray]=None) -> float`
+
+How much of the prediction for `mol` belongs to the atoms of one group.
+
+The prediction of the overlap kernel is a sum over the atoms (decomposition rule 3), so this
+is simply that sum restricted to the group.  `coef` replaces the model's dual coefficients,
+which is how a value is obtained from a model that has not seen the molecules being compared.
+
+### `predicted_change(model, mol_a: MoleculeFields, atoms_a: Sequence[int], mol_b: MoleculeFields, atoms_b: Sequence[int], coef: Optional[np.ndarray]=None) -> float`
+
+What the model says exchanging the first group for the second does to the activity.
+
+### `fingerprint_distance(group_a: str, group_b: str, radius: int=2, bits: int=2048) -> float`
+
+One minus the Tanimoto similarity of two groups, written as SMILES with an attachment.
+
+### `score_pairs(model, fields: Sequence[MoleculeFields], pairs: Sequence[MatchedPair], coef_of=None, progress=None) -> List[PairScore]`
+
+The three measures for every pair.
+
+`coef_of(pair)` returns the dual coefficients to use for that pair, which is how the model is
+kept away from the two activities it is being compared with; the default uses the model's own.
+
+### `spearman(x: Sequence[float], y: Sequence[float]) -> float`
+
+Rank correlation, which is what "ranks better" means here.
+
+### `rank_gain(better: Sequence[float], worse: Sequence[float], measured: Sequence[float], runs: int=2000, seed: int=0) -> Tuple[float, float, float]`
+
+How much better one measure ranks the measured difference than another, with an interval.
+
+Both measures are compared with the **size** of the measured activity difference, and the
+bootstrap resamples the pairs, so the interval is the one rule 4 asks for.
+
+### `build_table(model, fields: Sequence[MoleculeFields], core: str, subs: Sequence[Substituent], half_width: float=float('nan'), names: Optional[Sequence[str]]=None) -> Table`
+
+The square table of one position: every group of `subs` against every other.
+
+One group per molecule is used, so that the table is a table of groups and not of molecules;
+where two molecules carry the same group the first is kept.
+
+### `biggest_core(subs: Sequence[Substituent], least: int=3) -> Optional[str]`
+
+The core carrying the most different groups, which is where a table is worth building.
+
 ## cmfqsar.cdft
 
 Source: `cmfqsar/cdft.py`
@@ -937,6 +1127,10 @@ Score a library block by block, never holding more than one block of it.
 ### `cmd_align(args)`
 
 Put a set of molecules in one frame, by whichever of the four criteria is asked for.
+
+### `cmd_isosteres(args)`
+
+Which groups are interchangeable at a position, by the co-field (plan item MC1).
 
 ### `cmd_restriction(args)`
 

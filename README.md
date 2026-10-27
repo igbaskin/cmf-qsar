@@ -1822,6 +1822,48 @@ against shuffling the numbers among the molecule's atoms is +0.35 for
 phenyl — so this is a statement about a series of hundreds of guests, not a reading for one
 compound.
 
+### Which groups are interchangeable: a bioisostere table
+
+`cmf design` ranks substituents by the predicted activity of the whole molecule. The table a
+medicinal chemist asks for answers the other question: which groups can replace each other at
+this position, so that one of them can be chosen for a property the model knows nothing about --
+solubility, cost, a patent, a metabolic liability (`cmfqsar/bioisostere.py`, plan item MC1).
+
+It needs no new model. The prediction of the overlap kernel is a sum over the atoms, so the part
+of it that belongs to a substituent is the sum over that substituent's own atoms, and exchanging
+group A for group B is the difference of two such sums: one integral per pair of groups instead
+of one model fit per group. The masking is exact, because the kernel is a sum over pairs of
+atoms; a test checks that for any division of a molecule in two, K(whole, whole) is K(a,a) +
+2K(a,b) + K(b,b).
+
+**The co-field weighting earns its place.** On matched molecular pairs found by RDKit's `rdMMPA`,
+each measure of how far apart two groups are is compared with the size of the measured activity
+difference by rank correlation, with the model refitted without both members of every pair:
+
+| set | pairs | fingerprint | field distance | co-field (pair left out) |
+| --- | ---: | ---: | ---: | ---: |
+| GPB | 730 | -0.025 | +0.005 | +0.561 |
+| THER | 142 | +0.084 | +0.162 | +0.277 |
+| THR | 751 | +0.144 | +0.242 | +0.335 |
+
+On GPB and THR the predicted change beats both references by more than the interval of rule 4
+(against the fingerprint +0.586 [+0.505, +0.669] and +0.191 [+0.106, +0.279]; against the field
+distance +0.556 [+0.479, +0.632] and +0.093 [+0.008, +0.181]); on THER, the set with the fewest
+pairs, it is ahead of both but the interval contains zero. The field distance is not a weak
+reference -- it compares the two groups in their poses -- and the co-field still adds to it,
+which is the part neither reference can have: whether the activity depends on the place where
+the two groups differ.
+
+What the table is read for is the size rather than the ranking. A predicted change smaller than
+twice the conformal half width is a change the model cannot see, and the groups inside that
+bound are the ones the table calls interchangeable.
+
+```bash
+cmf isosteres model.cmf --molecules series.sdf --activity pKi --csv table.csv
+python benchmarks/run_bioisostere.py        # results/bioisostere/table.md
+```
+
+
 ### Designing on a table that has no scaffold
 
 The design loop needed a topomer model, because a substituent nobody has made has no pose and the

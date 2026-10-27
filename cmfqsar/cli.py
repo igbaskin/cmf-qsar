@@ -1222,6 +1222,83 @@ def cmd_align(args):
         print("Nothing written: give --out to keep the result.")
 
 
+def _conformal_half_width(model, level=0.9):
+    """The model's own half width, from its stored out-of-fold predictions where it has them."""
+    import numpy as np
+    from cmfqsar.conformal import calibrate
+    y = np.asarray(getattr(model, "y", None), float) if getattr(model, "y", None) is not None \
+        else None
+    ycv = model.stats.extra.get("y_cv") if model.stats is not None else None
+    if y is not None and ycv is not None and len(np.ravel(ycv)) == len(y):
+        h = float(np.ravel(calibrate(y, np.ravel(ycv), level=level).half_width())[0])
+        return h, "from the model's own cross-validated residuals"
+    if model.stats is not None and np.isfinite(model.stats.rmse_cv):
+        return 1.645 * float(model.stats.rmse_cv), "1.645 times the cross-validated error"
+    return float("nan"), "unknown"
+
+
+def cmd_isosteres(args):
+    """Which groups are interchangeable at a position, by the co-field (plan item MC1)."""
+    import numpy as np
+    from rdkit import Chem
+
+    from cmfqsar.bioisostere import biggest_core, build_table, substituents
+    from cmfqsar.fields import build_fields
+
+    model, _extra = load_model(args.model)
+    model._require_linear("a bioisostere table")
+    ds = load_dataset(args.molecules, activity_prop=args.activity)
+    mols = [Chem.RemoveHs(m) for m in ds.mols]
+    fields = [build_fields(m, model.fieldset, name=n) for m, n in zip(mols, ds.names)]
+    print(f"{len(mols)} molecules from {args.molecules}")
+
+    subs = substituents(mols, max_substituent=args.max_group)
+    if not subs:
+        raise SystemExit("no single bond of these molecules cuts into a core and a group of the "
+                         "size asked for; --max-group raises the limit")
+    core = args.core or biggest_core(subs, least=max(2, args.least))
+    if core is None:
+        raise SystemExit(f"no position carries {args.least} different groups in this file: a "
+                         f"table needs a core several molecules share")
+    half, how = _conformal_half_width(model, args.level)
+    table = build_table(model, fields, core, subs, half_width=half, names=list(ds.names))
+    print(f"  core {core}")
+    print(f"  {len(table.groups)} groups on it")
+    print(f"  conformal half width {half:.2f} at {args.level:.0%} ({how})")
+
+    bound = 2.0 * half if args.within is None else float(args.within)
+    inside = int(sum(1 for _a, _b, _d, c in table.rows() if abs(c) <= bound))
+    total = len(table.groups) * (len(table.groups) - 1)
+    if np.isfinite(bound):
+        print(f"  the model cannot see a change smaller than {bound:.2f}, and {inside} of the "
+              f"{total} ordered pairs are inside that")
+        if inside > 0.9 * total:
+            print("  nearly all of them are, so on this model the table says which groups are "
+                  "closest rather than which are different")
+    shown = table.groups[:args.groups]
+    for g in shown:
+        i = table.groups.index(g)
+        order = [j for j in np.argsort(np.abs(table.change[i])) if j != i][:args.show]
+        print(f"    {g}: " + ", ".join(
+            f"{table.groups[j]} {table.change[i, j]:+.2f}"
+            + ("" if abs(table.change[i, j]) <= bound else "*") for j in order))
+    if len(shown) < len(table.groups):
+        print(f"    ... and {len(table.groups) - len(shown)} further groups")
+    if np.isfinite(bound):
+        print("  a star marks a change the model can see; the rest are inside its own error")
+    if args.csv:
+        import csv
+        with open(args.csv, "w", encoding="utf-8", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(["group a", "group b", "field distance", "predicted change",
+                        "inside the model's error"])
+            for a, b, d, c in table.rows():
+                w.writerow([a, b, f"{d:.4f}", f"{c:+.4f}",
+                            "yes" if np.isfinite(bound) and abs(c) <= bound else "no"])
+        print(f"  {len(table.groups) * (len(table.groups) - 1)} ordered pairs written to "
+              f"{args.csv}")
+
+
 def cmd_restriction(args):
     """Score a conformational restriction against a saved model (plan item MC9)."""
     import numpy as np
@@ -3883,6 +3960,36 @@ def main(argv=None):
                          "'selectivity' is the difference of the two, which is the map of what "
                          "separates them (plan item SC1)")
     cf.set_defaults(func=cmd_cofield)
+
+    bi = sub.add_parser("isosteres",
+                        help="which groups are interchangeable at a position, by the co-field "
+                             "(plan item MC1)")
+    bi.add_argument("model", help="a model file written by build --save")
+    bi.add_argument("--molecules", required=True, metavar="FILE",
+                    help="the molecules the groups are taken from, in the model's own frame")
+    bi.add_argument("--activity", default=None, metavar="PROP",
+                    help="the activity property, only used to read the file")
+    bi.add_argument("--core", default=None, metavar="SMILES",
+                    help="the position to tabulate, as the core SMILES with its attachment "
+                         "point; the default is the core carrying the most different groups")
+    bi.add_argument("--least", type=int, default=3, metavar="N",
+                    help="a core needs this many different groups to be chosen (default 3)")
+    bi.add_argument("--max-group", type=int, default=12, metavar="N",
+                    help="a piece larger than this many heavy atoms is not a group (default 12)")
+    bi.add_argument("--level", type=float, default=0.9,
+                    help="the confidence level of the conformal half width (default 0.9)")
+    bi.add_argument("--within", type=float, default=None, metavar="LOG",
+                    help="call two groups interchangeable when the predicted change is at most "
+                         "this; the default is twice the conformal half width, which is what "
+                         "the model cannot tell apart")
+    bi.add_argument("--show", type=int, default=6, metavar="N",
+                    help="how many of the nearest partners to print per group (default 6)")
+    bi.add_argument("--groups", type=int, default=12, metavar="N",
+                    help="how many groups to print; the table written by --csv holds them all "
+                         "(default 12)")
+    bi.add_argument("--csv", default=None, metavar="FILE",
+                    help="write the whole square table, one row per ordered pair")
+    bi.set_defaults(func=cmd_isosteres)
 
     rs = sub.add_parser("restriction",
                         help="score a ring closure: how much of the field that matters stops "

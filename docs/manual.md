@@ -3266,6 +3266,78 @@ so the list is worth reading at the top and not in the middle. That is the claim
 has to make, and it is the one this measurement supports: it will name the group worth trying,
 not tell you what it will measure.
 
+## Which groups are interchangeable: a bioisostere table
+
+`cmf design` ranks candidate substituents by the predicted activity of the whole molecule. The
+table a medicinal chemist asks for answers a different question: **which groups can replace each
+other at this position**, so that one of them can be chosen for a property the model knows
+nothing about -- solubility, cost, a patent, a metabolic liability. Plan item MC1 builds that
+table (`cmfqsar/bioisostere.py`).
+
+**It needs no new model.** The prediction of the overlap kernel is a sum over the atoms of the
+molecule (decomposition rule 3), so the part of a prediction that belongs to a substituent is the
+sum over that substituent's own atoms, and the predicted effect of exchanging group A for group B
+at one position is the difference of those two sums. That is one integral per pair of groups
+instead of one model fit per group. The masking is exact rather than approximate: the kernel is a
+sum over pairs of atoms, so restricting one side of it to a subset of the atoms is the same thing
+as building the fields of that subset and nothing else, and `masked_field` does that. A test
+checks the split: for any division of a molecule in two, K(whole, whole) is K(a,a) + 2K(a,b) +
+K(b,b).
+
+**Three ways to say how far apart two groups are**, which is the ladder of rule 1:
+
+1. the **fingerprint distance** between the two groups, one minus their Morgan Tanimoto: two
+   dimensions, no geometry, no model;
+2. the **field distance** between the two posed groups, restricted to their own atoms: geometry,
+   but no model. This is not a weak reference -- it already knows the shape and the charge each
+   group puts where;
+3. the **predicted change**, the difference of the two atom-contribution sums: geometry and the
+   co-field, so it also knows whether the activity depends on the place where the two groups
+   differ.
+
+**Measured** by `benchmarks/run_bioisostere.py` on matched molecular pairs found by RDKit's
+`rdMMPA` -- one single bond cut at a time, both pieces tried as the core, two molecules with the
+same core and different groups, nothing chosen by eye. Each measure is compared with the size of
+the measured activity difference by rank correlation. For every pair the dual coefficients are
+refitted **without both of its members**, so the predicted change has not seen the two activities
+it is judged against.
+
+| set | pairs | fingerprint | field | co-field (pair left out) | co-field (whole model) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| GPB, 66 molecules | 730 | -0.025 | +0.005 | +0.561 | +0.631 |
+| THER, 76 molecules | 142 | +0.084 | +0.162 | +0.277 | +0.641 |
+| THR, 88 molecules | 751 | +0.144 | +0.242 | +0.335 | +0.711 |
+
+**The co-field weighting earns its place.** On GPB and THR the predicted change ranks the measured
+activity difference better than both references by more than the interval of rule 4: against the
+fingerprint distance +0.586 [+0.505, +0.669] and +0.191 [+0.106, +0.279], against the field
+distance +0.556 [+0.479, +0.632] and +0.093 [+0.008, +0.181]. On THER it is ahead of both as
+well, +0.193 [-0.059, +0.437] and +0.116 [-0.089, +0.313], but the interval contains zero; that is
+the set with the fewest pairs. On no set is it worse than either reference.
+
+**How much of it is memory** is the gap between the last two columns, and the gap is large: the
+whole model, which has seen both activities of every pair it judges, reaches +0.631, +0.641 and
++0.711, while refitting without the two members leaves +0.561, +0.277 and +0.335. The honest
+column is the one above. Two things still come from the whole set and are worth naming: the field
+types, the attenuation and the ridge were chosen on all the molecules, and the alignment is the
+published one.
+
+**What the table is read for is the size, not the ranking.** A predicted change smaller than
+twice the conformal half width is a change the model cannot see, and the groups inside that bound
+are the ones the table calls interchangeable. That part is the model's own error bar rather than a
+claim about the chemistry. On a model of GPB whose half width is 1.5 log units the bound covers
+every pair of the 35 groups at that position, which is the table saying honestly that this model
+cannot separate them; what it still gives is the order, and the groups it puts closest to the
+carboxamide are the methyl carbamate (+0.02), butyramide (+0.04) and acetamide (+0.05).
+
+```bash
+cmf isosteres model.cmf --molecules series.sdf --activity pKi --csv table.csv
+```
+
+The command finds the position carrying the most different groups, prints for each group the
+partners the model puts closest with the predicted change of the exchange, marks those the model
+can actually tell apart, and writes the whole square table.
+
 ## The gradient of a prediction
 
 Everything above ranks candidates that somebody enumerated: a library of fragments, a table of
@@ -4970,6 +5042,7 @@ not every option.
 | `cluster` | cluster a set by its field kernel (spectral clustering) |
 | `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
 | `local` | a model over atoms: the field around an atom against a count around it |
+| `isosteres` | which groups are interchangeable at a position, by the co-field |
 | `restriction` | score a ring closure: how much of the field that matters stops moving |
 | `unalign` | give every molecule a random pose, the control experiment |
 
