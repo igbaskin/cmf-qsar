@@ -116,6 +116,8 @@ with width $b_{lf} = \alpha_f$ for every field except the steric one, where it i
 atom's van der Waals radius, $b_{lf} = \alpha_f/R_{l}^2$, so that a large atom spreads its bulk
 over a correspondingly larger region.
 
+![The electrostatic field of cortisol in the mean plane of the steroid series at α = 0.3 and at α = 3, and its steric field at α = 1; red is positive, blue negative, and the skeleton of the molecule is drawn over the map. A small attenuation spreads the Gaussian of every atom over its neighbours, a large one keeps each atom's contribution to itself. Drawn by `docs/make_figures.py`, as are the other computed figures of this manual.](docs/figures/fields.png)
+
 There is no grid. The field is never evaluated anywhere in order to make a prediction; it is
 evaluated only when a map has to be *drawn*.
 
@@ -144,6 +146,8 @@ only thing that decides how far apart two atoms may be and still contribute: lar
 demands close matching, small $\alpha$ lets distant atoms see each other, and in the limit
 $\alpha \to 0$ the geometry drops out altogether and the kernel becomes a product of atom counts —
 which is the alignment-free baseline of *Working without an alignment*.
+
+![The overlap of the Gaussians of two atoms of the same width against the distance between them, relative to its value at distance zero, exp(−αd²/4), for three attenuations. At α = 3 two atoms 2 Å apart no longer see each other; at α = 0.3 their overlap is still 74 % of the maximum.](docs/figures/overlap.svg)
 
 ## Normalisation and scaling
 
@@ -1460,6 +1464,8 @@ edge of the grid means the grid was too small.
 python cmf_cli.py build data.sdf --alphas 0.1,0.3,0.5,1,2,5 --lams 1e-3,1e-2,0.1,1,10
 ```
 
+![The cross-validated q² of the steroid training set, 21 molecules, over a grid of attenuation and ridge; the best point is in bold. The surface is flat along α: from α = 5 on, every doubling of α adds one or two hundredths, so the best point sits on the edge of the grid and a wider grid would move it further without changing the model much. The ridge decides more: the lowest row is what too little regularisation costs.](docs/figures/search.svg)
+
 Refinements, all optional: continuous Brent minimisation over λ as in the original R scripts
 (`--lam-search brent`), a Nelder–Mead search over α (`--alpha-search nelder-mead`), coordinate
 descent or centred kernel alignment for the mixing coefficients `h_f` (`--optimize-h`, `--mkl`),
@@ -2119,6 +2125,8 @@ own out-of-fold errors:
 The GP variance is ahead by +0.011 in efficiency over the distance, with a 95 % interval of
 [−0.021, +0.044] — zero is inside it, and the choice between the three does not matter.
 
+![The risk–coverage efficiency of the three estimates on each of the eight Sutherland sets, mean over five splits. One would be the oracle that knows the error of every molecule, zero an estimate that carries no information. The three move together from set to set, and on THER all three are below zero.](docs/figures/errorpred.svg)
+
 Two things in that table deserve more attention than the ranking. The first is that the **normalised
 conformal width and the domain measure score identically, and must**: the normalisation divides the
 interval by the molecule's difficulty, which *is* its distance from the training set, so the width
@@ -2294,6 +2302,8 @@ What the lobes mean: a positive co-field lobe is a region where *more* of that f
 predicted activity. For the electrostatic field that means positive charge is favoured there, for
 the steric field bulk, for the hydrophobic field lipophilicity, and for an indicator field it means
 an atom of that type is favoured at that position.
+
+![The electrostatic and the steric co-field of a model of the steroid training set (α = 1, λ = 1, q² = 0.79), cut in the mean plane of the series, with corticosterone, the most active training molecule, drawn over them. Red marks a region where more of that field raises the predicted affinity: positive charge for the electrostatic field, bulk for the steric one. The lobes sit at the two ends of the skeleton, which is where the series varies.](docs/figures/cofield.png)
 
 Two further maps use the same grid, for the molecule currently shown:
 
@@ -2512,6 +2522,8 @@ $$
 a map of where more of a field raises the first endpoint more than the second. Only a model
 linear in the field can produce it; it is available here for the same reason co-fields are
 available at all, and it is refused for a model with a nonlinear kernel layer.
+
+![The selectivity co-field of the 57 AMPA / glycine-NMDA antagonists of `examples/selectivity`, AMPA minus glycine, in the plane of the tricyclic core, with the most AMPA-selective compound drawn over it. A red lobe is a place where more of that field shifts the preference towards the AMPA receptor, a blue one towards the glycine site. The two-endpoint fit has its correlation and ridge chosen by cross-validation.](docs/figures/selectivity.png)
 
 Once the fit is made, an **Endpoint** box appears in the *Maps* row of the control strip with one
 entry per endpoint and one for the difference of the pair you named — and every map, export and
@@ -3700,6 +3712,8 @@ carry the signal, which `top_channels` ranks against the labels of
 `surface_channel_labels`. The measurements above come from `surface_kernel_eads.py`, in
 `examples/corrosion_fe110`, which writes its table next to the script.
 
+![The co-pattern of the surface model of the adsorption energies of 72 molecules on Fe(110), q² = 0.67: the mean contribution of every channel to the prediction, in kJ/mol, summed over the second height, by pair of field types, in-plane distance and height. Blue means stronger adsorption. The signal sits in a few channels, among them the electrostatic and the hydrogen-bond donor field at zero in-plane distance. Drawn by `surface_channels_eads.py` in `examples/corrosion_fe110`.](examples/corrosion_fe110/surface_channels_eads.png)
+
 ## Crystals: the periodic autocorrelation kernel
 
 The same descriptor for a periodic structure, summed over the neighbour list of one cell with its
@@ -3905,6 +3919,8 @@ column explains the plain environments: at a width of 1.4 Å the mean kernel is 
 0.957, because the first shell of a carboxyl group is the same group in every molecule,
 and the model only starts to see the substituent as the envelope widens.
 
+![q² against the envelope width 1/√ρ for the two per-atom targets, with the atom-centred counts as the dotted line. Left: a ¹³C shift wants a narrow envelope of about 1 Å. Middle: an acidity wants a wide one, and the difference field fails at every width. Right: the gain of the pKa models over the counts with its 95 % bootstrap interval; only an interval that excludes zero is a result.](docs/figures/envelope.svg)
+
 **The conformations the molecule visits.** A measured shift is an average over the
 conformations a molecule visits, and so is an acidity; the single geometry that distance geometry
 returns is a stand-in for that average, and both measurements above named it as their weakest
@@ -4047,7 +4063,9 @@ The signs are the more interesting half, and they are not nothing. The electrost
 
 There is a reason to expect no better from these fields. A nitro group, whose nitrogen is **positively** charged, also raises the ipso carbon, by 20 ppm, and raises the para carbon where methoxy lowers it. No model linear in fragment charges can follow both groups, because what separates them is resonance and fragment charges do not carry it. That is the same wall the Hammett co-fields of this program met for sigma_p, and the remedy there was quantum charges computed on the whole molecule, which carry the polarisation of the ring by the substituent (`examples/orca_atom_properties.py` and the `prop:` fields). The shift set here has no such charges. The other way round the wall is to stop asking the charge and ask the atom type, which is what the next part does and what settles the question.
 
-`benchmarks/results/local_cofield/cofield.png` draws the electrostatic and steric co-fields in the ring plane, with the ring and the four positions marked.
+![The co-fields of the Hammett constants $\sigma_m$ and $\sigma_p$, from the Hammett benchmark: the electrostatic and the steric co-field in the ring plane and 1.7 Å above it, with the ring and the substituent position X marked. Red raises the constant per unit of field. The electrostatic map of $\sigma_p$ has lobes of both signs around the substituent position, a pattern that fragment charges cannot deliver for a nitro group and a methoxy group at once. Drawn by `benchmarks/run_hammett.py`.](benchmarks/results/hammett/cofields.png)
+
+![The electrostatic and the steric co-field of the shift model around the measured carbon, at the origin, in the ring plane, with the ring and its four positions marked. Red raises the shift of that carbon per unit of field. The steric lobe at the ipso position is the feature twelve standard deviations from zero; the electrostatic map alternates in sign around the ring. Drawn by `benchmarks/run_local_cofield.py`.](benchmarks/results/local_cofield/cofield.png)
 
 **The same co-field, read from the indicator fields.** A partial charge cannot tell a
 pi-donor from a pi-acceptor, which is why the electrostatic co-field above could not reproduce the
@@ -4524,6 +4542,8 @@ cmf benchmark --list            # what there is, what it needs, how long it take
 cmf benchmark --check           # do the tables and the documents match the stored results?
 cmf benchmark alignment poses   # run these two
 ```
+
+![The eight Sutherland sets: q² of the cross-validation and R²pred on the published test sets, from Table 2 of the 2013 paper and from this program with the paper's protocol and with its defaults. The paper's numbers are reproduced by the paper's protocol; the defaults differ most on R²pred, where the test sets are small.](docs/figures/sutherland.svg)
 
 It needs the source checkout, because the benchmarks and their data are not installed with the
 package; the command says so rather than failing obscurely if they are missing.

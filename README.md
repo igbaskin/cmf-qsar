@@ -3486,6 +3486,8 @@ python docs/make_api.py                     # docs/api.md: the function-by-funct
 python docs/make_api.py --check             # fail if docs/api.md is not what the source gives
 python -m sphinx -b html docs/sphinx docs/sphinx/_build/html   # the same reference as an HTML site with links and search
 python docs/tutorials/run_tutorials.py --check   # fail if a tutorial notebook no longer runs
+python docs/make_figures.py                 # docs/figures/: the computed figures of the manual
+python docs/make_figures.py --check         # fail if a figure differs from the committed one
 python benchmarks/run_all.py --compute all --data-root <Sutherland MOL2 folder> --orca
 ```
 
@@ -3632,5 +3634,6 @@ docs/development_plan.md  what gets built next, in what order, and what each pie
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
 docs/tutorials/         four notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

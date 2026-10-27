@@ -378,10 +378,19 @@ def figure(path, caption, st, frame_width):
     if not os.path.exists(full):
         print(f"[warn] no such figure: {path}", file=sys.stderr)
         return Spacer(1, 1)
-    reader = ImageReader(full)
-    iw, ih = reader.getSize()
-    width = min(frame_width, float(iw))
-    img = Image(full, width=width, height=width * ih / iw)
+    if full.lower().endswith(".svg"):
+        # a vector figure, as the equations: scaled to the text width, never rasterised
+        from svglib.svglib import svg2rlg
+        img = svg2rlg(full)
+        scale = min(1.0, frame_width / img.width)
+        img.scale(scale, scale)
+        img.width, img.height = img.width * scale, img.height * scale
+    else:
+        reader = ImageReader(full)
+        iw, ih = reader.getSize()
+        # a 150 dpi raster is drawn at its natural size, or narrower to fit
+        width = min(frame_width, float(iw) * 72.0 / 150.0)
+        img = Image(full, width=width, height=width * ih / iw)
     img.hAlign = "CENTER"
     parts = [Spacer(1, 4), img]
     if caption:
