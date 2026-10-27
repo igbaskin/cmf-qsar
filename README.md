@@ -3466,10 +3466,16 @@ which the saving grows without limit.
 
 It is a flag on `build` and not a path of its own, so a low-rank model is saved, predicted
 from and read like any other; what the file keeps is the landmarks and one weight per feature
-instead of one coefficient per training molecule.
+instead of one coefficient per training molecule. The branch scores a test set when
+`--test-fraction` leaves one out, and `--conformal LEVEL` calibrates a prediction interval on
+the out-of-fold errors and reports what it covered on those test molecules. Only
+`--conformal-normalise` is refused, because the distance it divides by is read off the n by n
+kernel this path never forms.
 
 ```bash
 cmf build series.sdf --activity pKi --low-rank grid:2.0 --alphas 0.5 --save model.cmf
+cmf build series.sdf --activity pKi --low-rank atoms:0.75 --alphas 2 \
+    --test-fraction 0.3 --conformal 0.9 --predictions table.csv
 cmf predict model.cmf new.sdf --out predicted.csv
 python benchmarks/run_lowrank.py        # results/lowrank/table.md
 ```

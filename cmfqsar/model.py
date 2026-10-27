@@ -1291,6 +1291,12 @@ class CMFModel:
                              "cv_folds >= 2")
         difficulty = None
         if normalise:
+            if self.is_low_rank:
+                raise ValueError("a normalised interval needs the distance of every training "
+                                 "molecule from every other, which is the n by n kernel a "
+                                 "low-rank model was fitted to avoid; leave the interval "
+                                 "unnormalised, which on the sets measured in "
+                                 "benchmarks/run_conformal.py is no wider")
             K = self._linear_train_kernel()
             difficulty = difficulty_from_kernel(K, np.diag(K), K)
         self.conformal_ = calibrate(self.y, ycv, level=float(level), difficulty=difficulty,

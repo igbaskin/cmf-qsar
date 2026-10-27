@@ -3064,20 +3064,37 @@ cmf predict model.cmf new.sdf --out predicted.csv
 cmf cofield model.cmf --out-prefix map
 ```
 
+**A test set and a prediction interval, as on the exact path.** `--test-fraction` leaves
+molecules out and the branch scores them: R2pred and RMSEpred are reported in the same block
+as the training statistics, because `evaluate_test` needs nothing but a prediction and the
+prediction is the one thing the approximation already provides. `--conformal LEVEL` calibrates
+on the out-of-fold errors the fit leaves behind, prints the half width, and reports what the
+interval covered on the test molecules, which were never part of the calibration. The interval
+travels in the model file, so `cmf predict --conformal` reports it from a saved low-rank model.
+`--predictions` writes both subsets with their `lower` and `upper` columns.
+
+```bash
+cmf build series.sdf --activity pKi --low-rank atoms:0.75 --alphas 2 \
+    --test-fraction 0.3 --conformal 0.9 --predictions table.csv --save model.cmf
+```
+
+What this branch refuses is `--conformal-normalise`. A normalised interval divides each error
+by the distance of its molecule from every other training molecule, and that distance is read
+off the n by n kernel, which is the one matrix a low-rank model is fitted to avoid. The plain
+interval is the one to use here, and on the sets measured in `benchmarks/run_conformal.py`
+normalising gains no sharpness anyway.
+
 What the file keeps is the landmarks, the whitening and one weight per feature instead of one
 coefficient per training molecule. The training table travels with it as before, because it is
 linear in the number of molecules and the provenance and the contract are read off it; what is
 never built, at any point, is the n by n kernel. `cmf lowrank` remains as the short path that
 fits and reports without saving anything.
 
-**What is not done.** The low-rank branch of `build` does not score a test set, take a second
-endpoint, calibrate a conformal interval or write the JSON report -- it says so when a test set
-is present, and the exact path is there for all four. The landmarks are a grid or whole
-molecules, not the atoms of a subset, which is the case between the two that a narrow field
-wants; the inducing Gaussians take the field's own width; the application has no control for
-any of this; and the largest aligned set in the repository is 361 molecules, so the saving is
-shown where it is not yet needed. That last one is the alignment problem of the next part of
-the plan and not this item's to solve.
+**What is not done.** The low-rank branch of `build` does not take a second endpoint or write
+the JSON report, and the exact path is there for both. The inducing Gaussians take the field's
+own width; the application has no control for any of this; and the largest aligned set in the
+repository is 361 molecules, so the saving is shown where it is not yet needed. That last one
+is the alignment problem of the next part of the plan and not this item's to solve.
 
 ## Screening a library that does not fit in memory
 

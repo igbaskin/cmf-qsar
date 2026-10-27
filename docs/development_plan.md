@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 77 modules and about 34,400 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 77 modules and about 34,500 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-nine subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1219 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1226 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -405,10 +405,19 @@ larger searches in parts C and E.
   On GPB at an attenuation of 5 that is 6.5e-01 against 1.8e-02 for 259 landmark atoms, and q2
   +0.548 against +0.593 where the exact model gives +0.594. The kernel error is the number to
   read: these sets are small and their q2 moves by more than the approximation does. 35 tests.
-  **Still not done:** the low-rank branch of `build` does not score a test set, take a second
-  endpoint, calibrate a conformal interval or write the JSON report (it says so when a test set
-  is present); the application has no control for it; the case
-  between a grid and whole molecules that a narrow field wants; a width for the inducing
+  **A test set and the conformal interval, 27 October 2026.** The low-rank branch of `build`
+  now scores a test set left out by `--test-fraction` and calibrates a prediction interval with
+  `--conformal LEVEL`. Neither needed new mathematics: `evaluate_test` asks only for a
+  prediction, and the conformal rule asks only for the out-of-fold errors, both of which the
+  low-rank fit already produces. The interval is stored in the model file, so
+  `cmf predict --conformal` reports it from a saved low-rank model, and `--predictions` writes
+  both subsets with `lower` and `upper` columns. `--conformal-normalise` is refused with the
+  reason: the distance it divides each error by is read off the n by n kernel this path exists
+  to avoid, and measured in `benchmarks/run_conformal.py` normalising gains no sharpness. 42
+  tests, including one that checks the test score of the low-rank path equals the exact one
+  when every training molecule is a landmark.
+  **Still not done:** the low-rank branch of `build` does not take a second endpoint or write
+  the JSON report; the application has no control for it; a width for the inducing
   Gaussians other than the field's own; LinearSVR and LinearSVC on the features, the kernel
   alignment from m by m Gram matrices and Nystrom kernel PCA, all of which the assessment names
   as following the same way; and any set larger than 361 molecules, which is where the point of

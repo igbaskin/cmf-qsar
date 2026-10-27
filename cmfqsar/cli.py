@@ -248,12 +248,13 @@ def _landmarks_for(args, train, fieldset):
                      f"{args.low_rank!r}")
 
 
-def _build_low_rank(model, args, ds, tr, train, y, seed, t0):
-    """Fit in the space of the landmarks and save it (plan item B6).
+def _build_low_rank(model, args, ds, mf, tr, te, train, y, target, seed, t0):
+    """Fit in the space of the landmarks, score a test set, calibrate and save (item B6).
 
-    A shorter path than the kernel one: it chooses the ridge, fits, reports and saves.  What it
-    does not do is a test set, a second endpoint, a conformal interval or the JSON report, all
-    of which belong to the exact path and none of which the approximation changes in principle.
+    A shorter path than the kernel one: it chooses the ridge, fits, scores the test set if
+    there is one, calibrates a conformal interval if one is asked for, and saves.  What it does
+    not do is a second endpoint or the JSON report, neither of which the approximation changes
+    in principle.
     """
     import numpy as np
 
@@ -264,9 +265,6 @@ def _build_low_rank(model, args, ds, tr, train, y, seed, t0):
         print("  --low-rank takes one attenuation; the first of --alphas is used")
     alpha = (_floats(args.alphas) or [1.0])[0]
     model.fieldset.set_alpha(float(alpha))
-    if len(tr) < len(ds):
-        print(f"  NOTE: {len(ds) - len(tr)} molecules are in the test set and this path does "
-              f"not score one; the fit below uses the {len(tr)} training molecules only")
     Z, kind, how = _landmarks_for(args, train, model.fieldset)
     low = LR.build(Z, model.fieldset, normalize=model.normalize, kind=kind)
     print(f"Low rank: {how}, {Z.n_mol} landmarks, {low.rank} columns of features at "
@@ -295,12 +293,42 @@ def _build_low_rank(model, args, ds, tr, train, y, seed, t0):
 
     model.fit_low_rank(train, y, Z, lam=best[0], kind=kind, folds=args.folds, seed=seed,
                        block=args.low_rank_block)
+    if te:
+        model.evaluate_test(AtomTable.from_molecules([mf[i] for i in te]), target[te])
     print(model.stats.summary())
+
+    conf = None
+    if args.conformal is not None:
+        from cmfqsar.conformal import coverage as _coverage
+        try:
+            conf = model.calibrate_conformal(level=float(args.conformal),
+                                             normalise=bool(args.conformal_normalise))
+        except ValueError as exc:
+            raise SystemExit(f"--conformal: {exc}")
+        print(conf.describe())
+        if conf.usable and te and "y_test_pred" in model.stats.extra:
+            # the test set was never part of the calibration, so this is the reliable check
+            lo, hi = conf.interval(np.asarray(model.stats.extra["y_test_pred"], float))
+            got = _coverage(target[te], lo, hi)
+            print(f"  on the {got['n']} test molecules it covered {got['coverage']:.0%}, "
+                  f"mean width {got['mean_width']:.3f}")
+
     if args.predictions:
         from cmfqsar.dataio import write_predictions_csv
-        fitted = model.predict(train)
-        write_predictions_csv(args.predictions, [ds.names[i] for i in tr], y, fitted,
-                              ["train"] * len(tr), y_cv=model.stats.extra.get("y_cv"))
+        yp = np.full(len(ds), np.nan)
+        yp[tr] = model.predict(train)
+        if te:
+            yp[te] = model.stats.extra["y_test_pred"]
+        ycv = np.full(len(ds), np.nan)
+        if "y_cv" in model.stats.extra:
+            ycv[tr] = model.stats.extra["y_cv"]
+        bounds = None
+        if conf is not None and conf.usable:
+            lo, hi = conf.interval(np.nan_to_num(yp, nan=0.0))
+            bounds = (np.where(np.isfinite(yp), lo, np.nan),
+                      np.where(np.isfinite(yp), hi, np.nan))
+        write_predictions_csv(args.predictions, ds.names, ds.activity, yp, ds.subset,
+                              y_cv=ycv, interval=bounds)
         print(f"Predictions written to {args.predictions}")
     if args.save:
         save_model(args.save, model, extra={"dataset": args.dataset, "task": args.task,
@@ -666,7 +694,7 @@ def cmd_build(args):
         print(f"Elapsed {time.time() - t0:.1f} s")
         return
     if getattr(args, "low_rank", None):
-        _build_low_rank(model, args, ds, tr, train, y, seed, t0)
+        _build_low_rank(model, args, ds, mf, tr, te, train, y, target, seed, t0)
         return
     res = grid_search(train, y, model, alphas, lams=lams, Cs=_floats(args.Cs),
                       epsilons=_floats(args.epsilons), nus=_floats(args.nus),
@@ -793,7 +821,7 @@ def cmd_build(args):
         except ValueError as exc:
             raise SystemExit(f"--conformal: {exc}")
         print(conf.describe())
-        if te and "y_test_pred" in model.stats.extra:
+        if conf.usable and te and "y_test_pred" in model.stats.extra:
             # the test set was never part of the calibration, so this is the reliable check
             yp_te = np.asarray(model.stats.extra["y_test_pred"], float)
             d_te = None
@@ -3575,9 +3603,9 @@ def main(argv=None):
                         "a narrow field wants because a grid only spans a field while its "
                         "spacing is not much larger than the field's own width; molecules:N "
                         "takes N of the training molecules. The model is saved and predicted "
-                        "from like any other; what "
-                        "this path does not do is a test set, a second endpoint, a conformal "
-                        "interval or the JSON report")
+                        "from like any other, and it scores a test set and calibrates a "
+                        "conformal interval when it is asked to; what this path does not do is "
+                        "a second endpoint or the JSON report")
     b.add_argument("--low-rank-block", type=int, default=256, metavar="N",
                    help="molecules per block while the features are built; the memory of the "
                         "fit does not depend on it (default 256)")

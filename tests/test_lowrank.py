@@ -454,3 +454,117 @@ def test_the_command_takes_atoms_as_landmarks(tmp_path, capsys):
           "--fields", "electrostatic,steric", "--lams", "0.1", "--folds", "3"])
     text = capsys.readouterr().out
     assert "the atoms of" in text and "thinned to" in text
+
+# ------------------------------------------- a test set and an interval on the low-rank branch
+
+
+def test_a_low_rank_model_scores_a_test_set():
+    """`evaluate_test` needs only `predict`, so it works on a model fitted the low-rank way."""
+    fs, table, y = _series()
+    tr, te = list(range(7)), list(range(7, 10))
+    train, test = table.subset(tr), table.subset(te)
+    model = CMFModel(fieldset=fs, method="krr", normalize=True)
+    model.fit_low_rank(train, y[tr], train, lam=0.1, kind="molecules", folds=3, seed=0)
+    model.evaluate_test(test, y[te])
+    assert model.stats.n_test == len(te)
+    assert np.isfinite(model.stats.r2_pred) and np.isfinite(model.stats.rmse_pred)
+    assert np.allclose(model.stats.extra["y_test_pred"], model.predict(test))
+
+
+def test_the_test_score_is_the_exact_one_when_every_training_molecule_is_a_landmark():
+    """The approximation is then no approximation, so the two paths must agree."""
+    fs, table, y = _series()
+    tr, te = list(range(7)), list(range(7, 10))
+    train, test = table.subset(tr), table.subset(te)
+    exact, _K = _exact(fs, train, y[tr], lam=0.1)
+    exact.evaluate_test(test, y[te])
+    low = CMFModel(fieldset=fs, method="krr", normalize=True)
+    low.fit_low_rank(train, y[tr], train, lam=0.1, kind="molecules", folds=3, seed=0)
+    low.evaluate_test(test, y[te])
+    assert np.allclose(low.stats.extra["y_test_pred"], exact.stats.extra["y_test_pred"],
+                       atol=1e-8)
+    assert abs(low.stats.r2_pred - exact.stats.r2_pred) < 1e-8
+
+
+def test_a_low_rank_model_calibrates_an_interval_on_its_own_out_of_fold_errors():
+    fs, table, y = _series()
+    model = _fitted_low_rank(fs, table, y)
+    conf = model.calibrate_conformal(level=0.9)
+    assert conf.usable and conf.difficulty is None
+    lo, hi = conf.interval(model.predict(table))
+    assert np.all(hi > lo)
+    pred, lo2, hi2 = model.predict_interval(table)
+    assert np.allclose(lo, lo2) and np.allclose(hi, hi2)
+
+
+def test_the_normalised_interval_is_refused_on_a_low_rank_model():
+    """It needs the n by n kernel, which is the one thing this path never forms."""
+    fs, table, y = _series()
+    model = _fitted_low_rank(fs, table, y)
+    with pytest.raises(ValueError, match="n by n kernel"):
+        model.calibrate_conformal(level=0.9, normalise=True)
+
+
+def test_the_calibration_travels_with_a_saved_low_rank_model(tmp_path):
+    from cmfqsar.dataio import load_model, save_model
+    fs, table, y = _series()
+    model = _fitted_low_rank(fs, table, y)
+    model.calibrate_conformal(level=0.9)
+    path = os.path.join(str(tmp_path), "m.cmf")
+    save_model(path, model, extra={"dataset": "toy"})
+    back, _extra = load_model(path)
+    assert back.is_low_rank
+    _p, lo, hi = back.predict_interval(table)
+    _p0, lo0, hi0 = model.predict_interval(table)
+    assert np.allclose(lo, lo0) and np.allclose(hi, hi0)
+
+
+def _write_series(tmp_path):
+    path = os.path.join(str(tmp_path), "set.sdf")
+    with Chem.SDWriter(path) as w:
+        for k, smi in enumerate(SMILES):
+            m = Chem.AddHs(Chem.MolFromSmiles(smi))
+            p = AllChem.ETKDGv3()
+            p.randomSeed = k + 1
+            AllChem.EmbedMolecule(m, p)
+            m.SetProp("_Name", f"m{k}")
+            m.SetProp("activity", f"{4.0 + 0.3 * k:.2f}")
+            w.write(m)
+    return path
+
+
+def test_build_scores_a_test_set_and_reports_the_interval_on_the_low_rank_branch(tmp_path,
+                                                                                 capsys):
+    import csv
+
+    from cmfqsar.cli import main
+    path = _write_series(tmp_path)
+    out = os.path.join(str(tmp_path), "p.csv")
+    capsys.readouterr()
+    main(["build", path, "--activity", "activity", "--fields", "electrostatic,steric",
+          "--low-rank", "molecules:6", "--alphas", "0.5", "--lams", "0.1",
+          "--test-fraction", "0.3", "--folds", "3", "--conformal", "0.8",
+          "--predictions", out])
+    text = capsys.readouterr().out
+    assert "Test set:" in text and "R2pred" in text
+    assert "conformal" in text and "test molecules it covered" in text
+    assert "does not score one" not in text
+    with open(out, newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    assert {"lower", "upper"} <= set(rows[0])
+    assert {r["subset"] for r in rows} == {"train", "test"}
+    for r in rows:
+        assert float(r["lower"]) < float(r["predicted"]) < float(r["upper"])
+
+
+def test_build_explains_why_it_cannot_normalise_the_interval_on_the_low_rank_branch(tmp_path,
+                                                                                    capsys):
+    from cmfqsar.cli import main
+    path = _write_series(tmp_path)
+    capsys.readouterr()
+    with pytest.raises(SystemExit) as err:
+        main(["build", path, "--activity", "activity", "--fields", "electrostatic,steric",
+              "--low-rank", "molecules:6", "--alphas", "0.5", "--lams", "0.1",
+              "--test-fraction", "0.3", "--folds", "3", "--conformal", "0.9",
+              "--conformal-normalise"])
+    assert "n by n kernel" in str(err.value)
