@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 77 modules and about 34,500 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 79 modules and about 35,500 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-nine subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1226 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1289 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -695,6 +695,39 @@ can judge it.
   Fukui indices in seconds, which makes a quantum stage on all 86 sets feasible. The Hammett
   result says where to expect a gain (resonance) and the corrosion result says where not to; the
   question is whether the 86 sets contain any series of the first kind.
+  **Done 27 October 2026, and the answer is yes for a minority of series.** `cmfqsar/xtb.py`
+  and `examples/xtb_atom_properties.py`. One call of xtb per molecule
+  (`--gfn 2 --vfukui`) gives the GFN2 partial charge `q_xtb`, the atomic polarisability
+  `alpha_xtb` and the condensed Fukui indices, cached per molecule, failures reported and
+  skipped, the geometry never relaxed unless asked. The Fukui names mean exactly what
+  `cmfqsar/orca.py` means by them -- a test runs the three charge states separately and checks
+  that xtb's printed f+ is q(N) - q(N+1) of its own charges -- so one `prop:` field can be
+  filled by either program; `q_xtb` carries a name of its own because a tight-binding
+  population is not a Hirshfeld charge. What is deliberately not computed is the ionisation
+  potential and the electron affinity: the energies xtb prints for the ionic states of a Fukui
+  run are electronic energies, not total ones, and `--vipea` needs a different Hamiltonian,
+  which would describe one molecule with two methods. 19 tests.
+  **Measured** by `benchmarks/run_xtb.py` in three stages. *Cost:* on the 40 molecules ORCA was
+  run on here, **0.25 s** per molecule against **360 s**, a factor of 1437, both including the
+  ionic states. The premise of the item holds. *Agreement:* over every atom of 101 corrosion
+  molecules that have both, the charges correlate at +0.95 with the Hirshfeld ones, the dual
+  descriptor at +0.78, f+ at +0.78 and f- at +0.71. *Gain:* over **52 series of 3511
+  molecules** -- the eight Sutherland sets, the Hammett sets and the FEP collections, every
+  series with at least 15 molecules -- the three reactivity fields added to the five
+  physico-chemical ones raise q2 beyond the bootstrap interval of rule 4 on **7 series** and
+  lower it on 1, where a 95% interval would be cleared by about 1.3 of 52 by chance. The median
+  change is +0.014. The largest gains are tnks2 +0.181 [+0.061, +0.330], thrombin with the nozob
+  ligands +0.129 [+0.025, +0.238], mcl1 +0.092 [+0.020, +0.164], ACE +0.067 [+0.033, +0.107],
+  the symmetrised Hammett set +0.040 [+0.023, +0.058] and DHFR +0.042 [+0.026, +0.059] on 361
+  molecules. The Hammett sets were the positive control and they gain, which is what the item
+  predicted.
+  **What this settles.** A quantum field helps a minority of series and costs the rest a little,
+  and the cheap stage is good enough to find which. That could not be known before, because the
+  expensive stage could not be run on more than four series.
+  **Not done:** the 46 FEP series with fewer than 15 molecules, which cannot carry a 10-fold
+  cross-validation; the application has no dialog for xtb as it has for ORCA; a solvent model
+  (`--alpb` is implemented and was not measured); and the per-atom polarisability `alpha_xtb` is
+  written but was not put in a field of its own in the comparison.
 * **D4. Protonation and tautomer ensembles.** The corrosion series in HCl are modelled in one
   protonation state. The mean-map kernel needs only bilinearity, so an ensemble over protonation
   states weighted by pKa is the same mathematics as a conformer ensemble; but `ensemble_fields` in
@@ -820,6 +853,36 @@ says whether a trajectory does what a generated ensemble could not.
   costs k² atom-pair integrals for k frames per molecule, which is why the subsampling is part of
   the reader and not left to the user. `max_conformers` and the RMSD pruning in
   `cmfqsar/conformers.py` do the rest once the frames are loaded.
+  **Done 27 October 2026.** `cmfqsar/trajectory.py` and `examples/trajectory_ensemble.py`.
+  `read_trajectory` is the one function the item asks for and does the five steps in order:
+  read through mdtraj or MDAnalysis (XTC, DCD, NetCDF, TRR, multi-model PDB), strip the solvent
+  and the ions, superimpose every frame on the binding-site backbone when the topology holds a
+  receptor and on the ligand itself when it does not (the result says which), thin the frames by
+  leader clustering with the radius raised until the cap is met, and return one RDKit molecule
+  whose conformations are the representatives and whose `conformer_weights` property is their
+  cluster populations. The weights are populations and never Boltzmann factors, for the reason
+  the item gives; a test checks that no energies are written, so none can be used by mistake.
+  Force-field charges are written as `q_mm` where the topology carries them. The script writes
+  an SDF of one record per conformation under one title, which `--ensemble-by name` collapses
+  again, so the whole path from a trajectory to a fitted ensemble model is one command line.
+  44 tests, on trajectories the tests build themselves, so they need no simulation package and
+  no downloaded data.
+  **Measured** by `benchmarks/run_trajectory.py`, on what belongs to the reader rather than to
+  D8. *The two readers agree*: on 36 trajectories read by both, the largest difference in any
+  coordinate is 4e-7 A, so which one is installed does not change a result. *The superposition
+  works*: a system whose frames differ by nothing but a rigid rotation collapses to a single
+  conformation, which is the test that would fail if the binding-site fit did not. *The
+  thinning* trades accuracy for time in a straight line with no free radius: over 36 molecules
+  of 60 frames the joint kernel is 1.0e-02 from the all-frames one at 0.25 A (34 conformations
+  kept, 87 s), 4.7e-02 at 1 A (21 kept, 44 s) and 1.2e-01 at 3 A (2 kept), against 176 s for all
+  sixty. *The cost* follows the square of the number kept: 27 times as many conformations is 658
+  times the kernel time against 734 for an exact square, which is why the thinning is inside the
+  reader.
+  **Not done, and it is the point of the item:** nothing here compares a trajectory with a
+  crystal pose, because the frames measured are conformations of real ligands and not a
+  simulation. That is D8, which needs OpenMM and a few nanoseconds per ligand, neither of which
+  this repository has. Also not done: a dialog in the application, and a reader for a trajectory
+  too large to hold in memory (the stride is the only control over that today).
 * **D8. The measurement.** Short ligand-in-pocket simulations (a few nanoseconds each, GAFF or
   OpenFF through OpenMM) on one FEP set with a crystal pose for every ligand, so that the
   curated frame is known. Three comparisons on the same folds, with intervals: the crystal pose

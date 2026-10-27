@@ -1,0 +1,56 @@
+{
+ "frames": 60,
+ "molecules": 36,
+ "rows": [
+  {
+   "cutoff": 0.25,
+   "kept_mean": 34.47222222222222,
+   "kept_max": 60,
+   "error": 0.01010376228423475,
+   "kernel_seconds": 87.33302879333496
+  },
+  {
+   "cutoff": 0.5,
+   "kept_mean": 31.194444444444443,
+   "kept_max": 60,
+   "error": 0.0166799773132499,
+   "kernel_seconds": 77.68881320953369
+  },
+  {
+   "cutoff": 0.75,
+   "kept_mean": 25.166666666666668,
+   "kept_max": 60,
+   "error": 0.03839176578252969,
+   "kernel_seconds": 59.08237600326538
+  },
+  {
+   "cutoff": 1.0,
+   "kept_mean": 21.055555555555557,
+   "kept_max": 58,
+   "error": 0.04738518395500655,
+   "kernel_seconds": 43.72689771652222
+  },
+  {
+   "cutoff": 1.5,
+   "kept_mean": 12.63888888888889,
+   "kept_max": 42,
+   "error": 0.0828123629831156,
+   "kernel_seconds": 17.269961833953857
+  },
+  {
+   "cutoff": 2.0,
+   "kept_mean": 6.416666666666667,
+   "kept_max": 23,
+   "error": 0.09662570530053712,
+   "kernel_seconds": 4.2317633628845215
+  },
+  {
+   "cutoff": 3.0,
+   "kept_mean": 1.8611111111111112,
+   "kept_max": 5,
+   "error": 0.12085411358948082,
+   "kernel_seconds": 0.18401384353637695
+  }
+ ],
+ "full_seconds": 175.8734836578369
+}

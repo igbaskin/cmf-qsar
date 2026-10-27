@@ -1,0 +1,23 @@
+{
+ "molecules": 101,
+ "fukui_plus": {
+  "atoms": 3071,
+  "pearson": 0.7819178053964628,
+  "spearman": 0.6916282262214188
+ },
+ "fukui_minus": {
+  "atoms": 3071,
+  "pearson": 0.7080143544140088,
+  "spearman": 0.5989012468517878
+ },
+ "dual": {
+  "atoms": 3071,
+  "pearson": 0.7765352426286658,
+  "spearman": 0.6973391810650914
+ },
+ "charge": {
+  "atoms": 3071,
+  "pearson": 0.9482902227089789,
+  "spearman": 0.8857839322615315
+ }
+}

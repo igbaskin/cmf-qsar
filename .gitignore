@@ -29,6 +29,13 @@ orca_work/
 benchmarks/results/corrosion_qm/*/orca/
 benchmarks/results/am_eu/orca/
 
+# xtb scratch of the cheap quantum stage: one job directory per molecule, 233 MB for the
+# whole collection. The annotated results are in the .json files, which are kept.
+benchmarks/results/xtb/work/
+
+# the trajectories benchmarks/run_trajectory.py writes for itself, rebuilt by one command
+benchmarks/results/trajectory/work/
+
 # build artefacts of the package
 build/
 dist/

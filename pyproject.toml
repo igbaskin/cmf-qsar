@@ -49,8 +49,12 @@ crystals = ["ase>=3.22", "pymatgen>=2023.1"]
 # cmfqsar/fastkernel.py: the compiled, threaded atom-pair loop.  Optional in the strict sense:
 # without it the NumPy path is used, which is the reference every table was produced with.
 fast = ["numba>=0.59"]
+# cmfqsar/trajectory.py: reading a molecular-dynamics trajectory as a conformational ensemble.
+# Either reader will do and the module checks which is there; MDAnalysis also carries the
+# force-field charges of a topology, which mdtraj does not.
+md = ["mdtraj>=1.9"]
 # everything, for a working checkout
-all = ["cmfqsar[gui,docs,tutorials,dev,examples,crystals,fast]"]
+all = ["cmfqsar[gui,docs,tutorials,dev,examples,crystals,fast,md]"]
 
 [project.scripts]
 cmf = "cmfqsar.cli:main"

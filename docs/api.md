@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 83 modules, 145 classes with 490 public methods, and 672 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 85 modules, 152 classes with 496 public methods, and 691 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -97,10 +97,12 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.stereo](#cmfqsarstereo) | Handedness as a property of a centre, not of a shape. |
 | [cmfqsar.tautomers](#cmfqsartautomers) | Tautomer ensembles: the other half of plan item D4. |
 | [cmfqsar.topomer](#cmfqsartopomer) | Topomer fields: a frame that comes from the topology, not from a superposition. |
+| [cmfqsar.trajectory](#cmfqsartrajectory) | A molecular-dynamics trajectory as a conformational ensemble (plan item D7). |
 | [cmfqsar.transfer](#cmfqsartransfer) | Comparing two models by their co-fields (plan item F3). |
 | [cmfqsar.transformfield](#cmfqsartransformfield) | A matched pair as a field placed in space (plan item MC6). |
 | [cmfqsar.validation](#cmfqsarvalidation) | The three questions a 3D-QSAR model has to answer besides "how good is q²". |
 | [cmfqsar.varalign](#cmfqsarvaralign) | Alignment by prediction confidence: the pose of a molecule is chosen so that the posterior variance of its predicted activity is as small as possible. |
+| [cmfqsar.xtb](#cmfqsarxtb) | A cheap quantum stage: per-atom properties from GFN2-xTB (plan item D3). |
 | [cmfqsar.gui](#cmfqsargui) | PySide6 desktop application for CMF 3D-QSAR. |
 | [cmfqsar.gui.app](#cmfqsarguiapp) | Application entry point. |
 | [cmfqsar.gui.main_window](#cmfqsarguimain_window) | Main window of the CMF 3D-QSAR desktop application. |
@@ -10370,6 +10372,178 @@ comparison free of any alignment.
 
 The distinct R-groups of a series, as SMILES -- the library a topomer model sees.
 
+## cmfqsar.trajectory
+
+Source: `cmfqsar/trajectory.py`
+
+A molecular-dynamics trajectory as a conformational ensemble (plan item D7).
+
+The ensemble machinery of this program takes a molecule carrying several conformations and a
+weight for each, and builds the mean field over them (the mean-map kernel of
+`cmfqsar/fields.py`).  Where those conformations come from is of no concern to the kernel.  So far
+they have come from the conformer generator, which samples the molecule on its own, in no
+surroundings.  A trajectory of the ligand inside its pocket samples it where it actually sits,
+with the protein holding it, and this module turns such a trajectory into exactly the object the
+ensemble machinery already takes: one RDKit molecule, a few dozen conformations, one weight each.
+
+The chain is five steps, and each is a decision worth stating.
+
+1. **Read.** `mdtraj` or `MDAnalysis`, whichever is installed, both optional dependencies in
+   the way ORCA and xtb are external programs.  XTC, DCD, NetCDF, TRR and multi-model PDB all
+   work, because the readers handle them; this module does not parse any format itself.
+2. **Strip.** Water, the common ion residues and anything else the caller names are dropped.  A
+   trajectory is mostly solvent, and solvent is not part of the ligand's field.
+3. **Superimpose.** When the topology holds a receptor, every frame is superimposed on the
+   **backbone of the binding site** -- the residues near the ligand in the first frame -- so that
+   what is left in the ligand's coordinates is its motion *relative to the pocket*.  That is the
+   quantity a field model of a series needs, because it is what differs between two ligands in
+   the same site.  Superimposing on the ligand's own atoms instead would remove exactly that and
+   leave only its internal flexibility; it is what happens when there is no receptor, and the
+   result says which was used.
+4. **Subsample.** The kernel of an ensemble of k conformations costs k^2 atom-pair integrals, so
+   a hundred thousand frames is not an option and the thinning has to happen here rather than be
+   left to the caller.  Frames are clustered by heavy-atom distance with a leader algorithm: the
+   first frame starts a cluster, every later frame joins the first cluster whose representative
+   is within the cutoff, and starts a new one otherwise.  If that gives more clusters than asked
+   for, the cutoff is raised and the pass repeated.  The representative of a cluster is the frame
+   that opened it.
+5. **Weight.** The weight of a conformation is its **cluster population** divided by the number
+   of frames, and nothing else.  It is never a Boltzmann factor of the frame energy.  An
+   equilibrated trajectory has already sampled the Boltzmann distribution -- that is what running
+   it was for -- so weighting the frames by exp(-E/kT) a second time would square the
+   distribution and sharpen the ensemble onto its deepest basin.  The weights are written to the
+   molecule property `conformer_weights`, which is what `conformer_weighting="given"` reads.
+
+The force-field charges of the topology, where the format carries them (PSF, PRMTOP, a TPR), are
+written as the per-atom property `q_mm`, so that `prop:q_mm` is a field like any other and a
+model can use the charges the simulation itself was run with.
+
+**This module is the reader, and the question it was built for is not settled by it.** Plan item
+D8 is the measurement: short simulations on a set whose ligands have crystal poses, and the three
+comparisons that say whether the trajectory mean field beats the single crystal pose.
+`benchmarks/run_trajectory.py` measures what can be measured without those simulations -- that
+the two readers agree, what the thinning costs, and how fast the mean field settles as the number
+of representatives grows -- and says plainly that it answers the reader's own questions and not
+D8's.
+
+### `class TrajectoryError  — bases: RuntimeError`
+
+### `class Trajectory  (dataclass)`
+
+One trajectory as plain arrays, whichever reader produced it. Coordinates in angstrom.
+
+Attributes:
+
+- `coords: np.ndarray`
+- `elements: List[str]`
+- `atom_names: List[str]`
+- `residues: List[str]`
+- `resids: np.ndarray`
+- `bonds: List[Tuple[int, int]]` = `field(default_factory=list)`
+- `charges: Optional[np.ndarray]` = `None`
+- `engine: str` = `''`
+
+#### `Trajectory.n_frames` -> int  (property)
+
+#### `Trajectory.n_atoms` -> int  (property)
+
+#### `Trajectory.subset(idx: Sequence[int]) -> 'Trajectory'`
+
+### `class Ensemble  (dataclass)`
+
+What `read_trajectory` returns.
+
+Attributes:
+
+- `mol: Chem.Mol`
+- `weights: np.ndarray`
+- `populations: np.ndarray`
+- `frames: np.ndarray`
+- `n_frames: int`
+- `stripped: int`
+- `fitted_on: str`
+- `fit_atoms: int`
+- `cutoff: float`
+- `engine: str`
+
+#### `Ensemble.describe() -> str`
+
+### `available_engines() -> List[str]`
+
+Which of the two readers can be imported here.
+
+### `load(topology: str, trajectory: Optional[str]=None, stride: int=1, engine: str='auto') -> Trajectory`
+
+Read a topology and (optionally) a trajectory into plain arrays.
+
+`engine` is `mdtraj`, `mdanalysis` or `auto`.  Under `auto` MDAnalysis is preferred
+when the topology is one of the formats that carry force-field charges, because those charges
+are the point of reading them; otherwise mdtraj is, being the faster reader.
+
+### `strip_solvent(traj: Trajectory, extra: Sequence[str]=()) -> Tuple[Trajectory, int]`
+
+Drop water, counter-ions and any residue named in `extra`; returns (trajectory, dropped).
+
+### `ligand_indices(traj: Trajectory, resname: Optional[str]=None) -> np.ndarray`
+
+The atoms of the ligand.
+
+With `resname` given, the atoms of that residue.  Without it, the largest residue that is
+neither protein nor nucleic nor solvent, which is what a ligand is in almost every prepared
+system; if there is none, every atom, which is the case of a trajectory of the ligand alone.
+
+### `site_backbone(traj: Trajectory, ligand: Sequence[int], radius: float=DEFAULT_SITE_RADIUS, frame: int=0) -> np.ndarray`
+
+Backbone atoms of the residues with an atom within `radius` of the ligand in `frame`.
+
+Empty when the topology holds no protein, which is how the caller learns that there is no
+receptor to superimpose on.
+
+### `superimpose(coords: np.ndarray, fit_atoms: Sequence[int], reference: int=0) -> np.ndarray`
+
+Every frame moved so that `fit_atoms` lie on their position in frame `reference`.
+
+The whole system is moved, not only the fitted atoms, so what the ligand's coordinates then
+show is its motion relative to whatever was fitted.
+
+### `rmsd_to(coords: np.ndarray, frame: np.ndarray) -> np.ndarray`
+
+Root-mean-square distance of every frame from `frame`, where they stand, with no fit.
+
+### `leader_cluster(coords: np.ndarray, cutoff: float=DEFAULT_CUTOFF, max_frames: int=DEFAULT_MAX_FRAMES, grow: float=1.5, max_passes: int=40) -> Tuple[np.ndarray, np.ndarray, float]`
+
+Thin the frames; returns (representatives, population of each, the radius that was used).
+
+The leader algorithm in one pass over the frames in their own order: a frame joins the first
+representative within `cutoff` and becomes a representative itself otherwise.  The order is
+the trajectory's, so the result is deterministic and does not depend on a random seed.  When
+a pass produces more representatives than `max_frames`, the cutoff is multiplied by `grow`
+and the pass repeated, so the number asked for is an upper bound that is always met.  The
+radius returned is the one the successful pass used, and every frame is within it of its own
+representative.
+
+### `to_molecule(traj: Trajectory, frames: Sequence[int], weights: Sequence[float], template: Optional[Chem.Mol]=None, name: str='', charge_prop: str=CHARGE_PROP) -> Chem.Mol`
+
+One molecule carrying the chosen frames as conformations, with their weights.
+
+`frames` are indices into the trajectory and `weights` the matching populations, normalised
+here so that they sum to one.  The weights go to the molecule property `conformer_weights`,
+which `conformer_weighting="given"` reads.
+
+### `read_trajectory(topology: str, trajectory: Optional[str]=None, *, ligand: Optional[str]=None, template: Optional[Chem.Mol]=None, max_frames: int=DEFAULT_MAX_FRAMES, cutoff: float=DEFAULT_CUTOFF, stride: int=1, site_radius: float=DEFAULT_SITE_RADIUS, extra_solvent: Sequence[str]=(), engine: str='auto', name: str='', heavy_only: bool=True) -> Ensemble`
+
+A trajectory as a weighted conformational ensemble of its ligand (plan item D7).
+
+`topology` may be a PDB, PSF, PRMTOP or anything the reader understands; `trajectory` is the
+frames (XTC, DCD, NetCDF, TRR), or None when the topology file holds them itself, as a
+multi-model PDB does.  `ligand` names the residue; without it the largest residue that is
+neither protein nor solvent is taken.  `template` is the ligand as the data set holds it and
+is the reliable way to get the bond orders right; without one they are worked out from the
+topology's bonds, which can fail and then says so.
+
+`heavy_only` measures the distances between frames on the heavy atoms alone, which is what a
+conformational difference means; the hydrogens still travel with the frames that are kept.
+
 ## cmfqsar.transfer
 
 Source: `cmfqsar/transfer.py`
@@ -10893,6 +11067,153 @@ Two warnings that the caller should pass on to the user:
 Returns
 -------
 list of `CVAlignRound`
+
+## cmfqsar.xtb
+
+Source: `cmfqsar/xtb.py`
+
+A cheap quantum stage: per-atom properties from GFN2-xTB (plan item D3).
+
+`cmfqsar/orca.py` brings quantum-chemical per-atom quantities into the program as `prop:`
+fields, and it works, but a density-functional single point takes two to three minutes per
+molecule on this machine.  That is affordable for one series and not for a collection.  GFN2-xTB
+is a semi-empirical tight-binding method: it solves a parameterised one-electron problem instead
+of the Kohn-Sham equations, so a molecule of forty atoms takes a fraction of a second, including
+the two ionic states a Fukui index needs.  The question the plan asks is not whether the cheap
+method is as good as the expensive one -- it is not -- but whether it is good enough to say, over
+a whole collection of series, which series a quantum field helps at all.
+
+What it computes, in **one** call of the program per molecule (`--gfn 2 --vfukui`):
+
+=====================  ===============================================================
+`q_xtb`              the GFN2 partial charge of the atom
+`fukui_plus`         f+, the charge the atom gains when an electron is added
+`fukui_minus`        f-, the charge it loses when an electron is removed
+`fukui_zero`         f0, the mean of the two
+`dual`               f+ - f-, positive where the atom is electrophilic
+`alpha_xtb`          the atomic polarisability alpha(0), in atomic units
+=====================  ===============================================================
+
+and per molecule the total energy, the frontier orbital energies, their gap and the dipole.
+
+**The Fukui convention is the same as ORCA's**, which is what makes the two engines
+interchangeable in a `prop:` field name.  `cmfqsar/orca.py` forms `f+ = q(N) - q(N+1)` from
+Hirshfeld charges; xtb prints f+ directly, and `tests/test_xtb.py` checks on water that the
+printed value is the same difference of the program's own charges to three decimals.  What
+differs is the population analysis behind the charges -- Hirshfeld there, a Mulliken-like
+tight-binding population here -- so `q_xtb` is **not** `q_hirshfeld` and carries a name of its
+own.  A model fitted on one must be predicted with the same one.
+
+Three things are built in rather than left to the caller, as in `cmfqsar/orca.py`.  Every job is
+**cached** by a key over the molecule, its charge, the method and the geometry, so an interrupted
+run resumes.  A molecule that fails is **reported and skipped**, never fatal to the set.  And the
+geometry is **not optimised** unless asked: a superimposed series optimised molecule by molecule
+is no longer superimposed.
+
+What this module does not provide is the ionisation potential and the electron affinity, and so
+not the hardness, the softness or the electrophilicity index that `cmfqsar/orca.py` derives from
+them.  The energies xtb prints for the two ionic states of a Fukui run are electronic energies of
+the self-consistent charge step alone, not total energies, so a difference against the neutral's
+total energy would not be an ionisation potential.  xtb computes those properly with `--vipea`,
+which needs a different Hamiltonian (GFN1 with the ipea parameters); mixing a GFN1 descriptor with
+GFN2 fields would describe one molecule with two methods, so it is left out.
+
+The command-line front end is `examples/xtb_atom_properties.py`.
+
+### `class XtbError  — bases: RuntimeError`
+
+### `class XtbResult  (dataclass)`
+
+What one xtb call reports; the Fukui entries are None without `--vfukui`.
+
+Attributes:
+
+- `symbols: List[str]`
+- `charges: np.ndarray`
+- `polarisability: np.ndarray`
+- `energy: float` = `float('nan')`
+- `homo: float` = `float('nan')`
+- `lumo: float` = `float('nan')`
+- `gap: float` = `float('nan')`
+- `dipole: float` = `float('nan')`
+- `fukui_plus: Optional[np.ndarray]` = `None`
+- `fukui_minus: Optional[np.ndarray]` = `None`
+- `fukui_zero: Optional[np.ndarray]` = `None`
+- `version: str` = `''`
+
+#### `XtbResult.n_atoms` -> int  (property)
+
+### `class Config  (dataclass)`
+
+Attributes:
+
+- `xtb: str` = `''`
+- `gfn: int` = `DEFAULT_METHOD`
+- `opt: bool` = `False`
+- `fukui: bool` = `True`
+- `solvent: str` = `''`
+- `accuracy: float` = `1.0`
+- `timeout: Optional[float]` = `600.0`
+- `workdir: str` = `'xtb_work'`
+- `cancel: Optional[object]` = `None`
+
+#### `Config.level() -> str`
+
+One string naming the method, for the cache key and the provenance of the file.
+
+### `class MoleculeOutcome  (dataclass)`
+
+Attributes:
+
+- `index: int`
+- `name: str`
+- `mol: Optional[Chem.Mol]` = `None`
+- `error: str` = `''`
+- `seconds: float` = `0.0`
+- `reused: bool` = `False`
+
+### `find_xtb(explicit: Optional[str]=None) -> str`
+
+The xtb executable: the one given, then `XTB_EXE`, then the path, then the default.
+
+### `xtb_version(exe: str) -> str`
+
+The version string the program reports, for the provenance of a result file.
+
+### `parse_output(text: str) -> XtbResult`
+
+Read the quantities this module uses out of an xtb run.
+
+The partial charges are taken from the per-atom table of the output rather than from the
+`charges` file, so that a result can be parsed from the text alone; `run_molecule` prefers
+the file, which carries more digits.
+
+### `derive_properties(res: XtbResult, charge: int=0, mult: int=1) -> Tuple[Dict[str, np.ndarray], Dict[str, float]]`
+
+(per-atom, per-molecule) properties from one result, named as `cmfqsar/orca.py` names them.
+
+`dual` is f+ - f-, the dual descriptor: positive where an atom takes an electron more
+readily than it gives one.  The Fukui entries are absent when the run did not compute them.
+
+### `command(cfg: Config, xyz: str, charge: int, mult: int) -> List[str]`
+
+The argument list for one molecule.
+
+### `run_job(jobdir: str, cfg: Config, charge: int, mult: int) -> XtbResult`
+
+Run xtb in `jobdir` on `geom.xyz`, or reuse the output already there.
+
+### `run_molecule(mol: Chem.Mol, name: str, index: int, cfg: Config) -> MoleculeOutcome`
+
+The whole chain for one molecule: geometry, the xtb call, parsing, the annotated copy.
+
+### `process_molecules(mols: Sequence[Chem.Mol], names: Sequence[str], cfg: Config, jobs: int=1, log=print) -> List[MoleculeOutcome]`
+
+Run every molecule and return the outcomes, in the order of the input.
+
+### `process_dataset(path: str, out: str, cfg: Config, limit: Optional[int]=None, jobs: int=1, log=print) -> List[MoleculeOutcome]`
+
+Run every molecule of `path` and write the annotated SDF `out`; returns the outcomes.
 
 ## cmfqsar.gui
 

@@ -969,6 +969,136 @@ The same computation runs from the command line as `examples/orca_atom_propertie
 lists its options), which reads an SDF and writes the annotated one. The script and the dialog
 share the module `cmfqsar/orca.py`, so the numbers are the same either way.
 
+## A simulation as a conformational ensemble
+
+The ensemble mode takes a molecule with several conformations and a weight for each, and builds
+the mean field over them. Where those conformations come from is of no concern to the kernel. So
+far they have come from the conformer generator, which samples a molecule on its own, in no
+surroundings. A molecular-dynamics trajectory of a ligand inside its pocket samples it where it
+actually sits. `cmfqsar/trajectory.py` (plan item D7) turns such a trajectory into exactly the
+object the ensemble mode already takes.
+
+```bash
+python examples/trajectory_ensemble.py sys.pdb sys.xtc --ligand LIG -o ligand.sdf
+python examples/trajectory_ensemble.py --directory runs/ --template series.sdf -o series.sdf
+cmf build series.sdf --activity pKi --ensemble-by name --conformations ensemble \
+    --conformer-weighting given
+```
+
+The chain is five steps, and each is a decision rather than a detail.
+
+1. **Read.** Through `mdtraj` or `MDAnalysis`, whichever is installed; XTC, DCD, NetCDF, TRR and
+   a multi-model PDB all work, because the readers handle them. Either reader gives the same
+   geometry — on 36 trajectories read by both, the largest difference in any coordinate is
+   4e-7 Å — so which one is installed does not change a result. MDAnalysis also carries the
+   force-field charges of a topology that has them (PSF, PRMTOP, a TPR), and those are written
+   as the per-atom property `q_mm`, so `prop:q_mm` is a field built from the charges the
+   simulation itself was run with.
+2. **Strip.** Water, the common ion residues and anything else named in `--extra-solvent`.
+3. **Superimpose.** When the topology holds a receptor, every frame is superimposed on the
+   **backbone of the binding site** — the residues near the ligand in the first frame — so what
+   is left in the ligand's coordinates is its motion *relative to the pocket*. That is the
+   quantity a field model of a series needs, because it is what differs between two ligands in
+   the same site. Fitting on the ligand's own atoms instead would remove exactly that; it is
+   what happens when there is no receptor, and the result says which was used.
+4. **Subsample.** The kernel of an ensemble of $k$ conformations is a double sum over its
+   members and so costs $k^2$ atom-pair integrals. A hundred thousand frames is therefore not an
+   option, and the thinning is part of the reader rather than left to the user. Frames are
+   clustered by heavy-atom distance with a leader algorithm: the first frame starts a cluster,
+   every later frame joins the first cluster whose representative is within the radius, and
+   starts a new one otherwise. If that leaves more clusters than `--max-frames`, the radius is
+   raised and the pass repeated, so the number asked for is always met.
+5. **Weight.** The weight of a conformation is its **cluster population** divided by the number
+   of frames, and nothing else. It is never a Boltzmann factor of the frame energy. An
+   equilibrated trajectory has already sampled the Boltzmann distribution — that is what running
+   it was for — so weighting the frames by $e^{-E/kT}$ a second time would square the
+   distribution and collapse the ensemble onto its deepest basin.
+
+**What the thinning costs** (`benchmarks/run_trajectory.py`, 36 molecules of 60 frames each).
+The error is of the joint kernel, which is what a model is fitted to, against the kernel built
+from every frame:
+
+| clustering radius | conformations kept | error of the kernel | kernel time |
+| ---: | ---: | ---: | ---: |
+| 0.25 Å | 34.5 | 1.0e-02 | 87 s |
+| 0.50 Å | 31.2 | 1.7e-02 | 78 s |
+| 1.00 Å | 21.1 | 4.7e-02 | 44 s |
+| 2.00 Å | 6.4 | 9.7e-02 | 4 s |
+| 3.00 Å | 1.9 | 1.2e-01 | 0.2 s |
+
+All sixty frames take 176 s. The curve does not flatten: keeping more frames keeps improving the
+kernel, so the number to keep is a decision about cost and not a point where the curve stops
+moving. At the default radius of 1 Å the kernel is within 5 % of the one from every frame for a
+quarter of the time. The cost follows the square of the number kept, as the algebra says: going
+from 1 to 27 conformations is 27 times as many and 658 times the kernel time, against 734 for an
+exact square.
+
+> **What this does not yet say.** None of this compares a trajectory with a crystal pose. The
+> frames above are conformations of real ligands written to a real trajectory file, which
+> exercises the reader but is not a simulation. Whether a trajectory mean field models a series
+> better than its single crystal pose is plan item **D8**, and it needs short simulations on a
+> set whose ligands have crystal poses. The reader exists so that measurement can be made.
+
+`mdtraj` is the `md` extra; MDAnalysis does as well. Neither is required for anything else.
+
+## A cheap quantum stage: GFN2-xTB
+
+The section above costs two to three minutes of ORCA per molecule. That is affordable for one
+series and not for a collection, and it is why the quantum fields were measured on four
+corrosion series and nowhere else. `cmfqsar/xtb.py` and the script
+`examples/xtb_atom_properties.py` run GFN2-xTB instead. GFN2-xTB is a semi-empirical
+tight-binding method: it solves a parameterised one-electron problem rather than the Kohn-Sham
+equations, and a molecule of forty atoms takes **0.2 seconds** including the two ionic states a
+Fukui index is built from.
+
+```bash
+python examples/xtb_atom_properties.py series.sdf -o series_xtb.sdf
+cmf build series_xtb.sdf --activity pKi --fields electrostatic,steric,hydrophobic,hba,hbd,prop:fukui_minus,prop:dual
+```
+
+**What it writes.** Per atom, and so available as `prop:` fields: the GFN2 partial charge
+`q_xtb`, the atomic polarisability `alpha_xtb`, and the condensed Fukui indices `fukui_plus`,
+`fukui_minus`, `fukui_zero` and `dual`. Per molecule, and so available as descriptors: the total
+energy, the HOMO and LUMO energies, their gap and the dipole.
+
+**The Fukui names mean the same as ORCA's.** Both define $f^+ = q(N) - q(N+1)$ and
+$f^- = q(N-1) - q(N)$, so one `prop:fukui_minus` field can be filled by either program; a test
+runs the three charge states separately and checks that xtb's printed value is that difference
+of its own charges. The charge is a different matter: `q_xtb` is a Mulliken-like tight-binding
+population and `q_hirshfeld` is a Hirshfeld charge, so they carry different names and a model
+fitted on one must be predicted with the same one.
+
+**What the two programs agree on.** Measured over every atom of 101 corrosion molecules that
+have both (`benchmarks/run_xtb.py`): the charges correlate at **+0.95**, the dual descriptor at
+**+0.78**, $f^+$ at **+0.78** and $f^-$ at **+0.71**. The cheap method therefore orders the atoms
+of a molecule much as the expensive one does for charge, and roughly for reactivity.
+
+**What it is for, and what was found.** A stage that costs 0.25 s instead of 360 s per molecule
+can be run over every series in the repository, which is what plan item D3 asked for. Over 52
+series of 3511 molecules -- the eight Sutherland sets, the Hammett sets and the FEP collections
+-- adding the three reactivity fields to the five physico-chemical ones raises q² beyond the
+bootstrap interval on **7 series** and lowers it on 1, where chance alone would give about 1.3.
+The median change is +0.014, so most series gain nothing: a quantum field is not free, and on a
+series it does not suit it dilutes the fields that work. The series it does help are named in
+`benchmarks/results/xtb/table.md`; the largest gains are tnks2 (+0.181), thrombin with the
+nozob ligands (+0.129), mcl1 (+0.092), ACE (+0.067) and DHFR (+0.042, on 361 molecules).
+
+> **About the geometry.** As with ORCA, the geometry is not relaxed unless `--opt` is given, and
+> for the same reason: xtb would relax each molecule on its own and a superimposed series would
+> no longer be superimposed.
+
+**What it does not compute.** The ionisation potential and the electron affinity, and so not the
+hardness, the softness or the electrophilicity index that the ORCA stage derives from them. The
+energies xtb prints for the two ionic states of a Fukui run are electronic energies of the
+self-consistent charge step, not total energies, so a difference against the neutral's total
+energy would not be an ionisation potential. xtb computes those properly with `--vipea`, which
+needs a different Hamiltonian (GFN1 with the ipea parameters), and describing one molecule with
+two methods is worse than leaving the descriptor out.
+
+xtb is not part of this repository. Its Windows and Linux builds are released at
+<https://github.com/grimme-lab/xtb/releases> under LGPL-3.0; give the path with `--xtb`, or set
+`XTB_EXE`.
+
 ## Can a Fukui function be a field?
 
 A `prop:` field puts one isotropic Gaussian on each atom, weighted by a number: a charge, a

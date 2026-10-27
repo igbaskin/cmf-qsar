@@ -3481,6 +3481,56 @@ python benchmarks/run_lowrank.py        # results/lowrank/table.md
 ```
 
 
+### A simulation as a conformational ensemble
+
+The ensemble mode does not care where the conformations come from. `cmfqsar/trajectory.py` (plan
+item D7) turns a molecular-dynamics trajectory into one: it reads through mdtraj or MDAnalysis,
+strips the solvent, superimposes every frame on the **binding-site backbone** so that what is
+left is the ligand's motion relative to the pocket, thins the frames by clustering, and gives
+each kept conformation a weight equal to its **cluster population** — never a Boltzmann factor,
+because an equilibrated trajectory has already sampled that distribution.
+
+```bash
+python examples/trajectory_ensemble.py --directory runs/ --template series.sdf -o series.sdf
+cmf build series.sdf --activity pKi --ensemble-by name --conformations ensemble \
+    --conformer-weighting given
+python benchmarks/run_trajectory.py       # results/trajectory/table.md
+```
+
+The two readers agree to 4e-7 Å on 36 trajectories. The thinning trades accuracy for time in a
+straight line with no free radius: on 36 molecules of 60 frames, the joint kernel is 1.0e-02 away
+from the all-frames one when 34 conformations are kept and 1.2e-01 away when 2 are, and the cost
+follows the square of the number kept (27 times as many conformations, 658 times the kernel
+time). What this does **not** say is whether a trajectory beats a crystal pose: that is plan item
+D8 and needs simulations this repository does not have.
+
+
+### A cheap quantum stage
+
+`cmfqsar/orca.py` brings quantum per-atom properties in as `prop:` fields and costs two to three
+minutes a molecule, which is why they had been measured on four series. `cmfqsar/xtb.py` (plan
+item D3) runs GFN2-xTB instead: **0.25 s a molecule** against ORCA's 360 s on the same molecules,
+including the two ionic states a Fukui index needs. It writes the GFN2 charge, the atomic
+polarisability and the four Fukui names ORCA already writes, with the same definition of each, so
+one `prop:fukui_minus` field can be filled by either program.
+
+```bash
+python examples/xtb_atom_properties.py series.sdf -o series_xtb.sdf
+cmf build series_xtb.sdf --activity pKi --fields electrostatic,steric,hba,hbd,prop:dual
+python benchmarks/run_xtb.py              # results/xtb/table.md
+```
+
+Over every atom of 101 corrosion molecules that have both, the cheap charges correlate with the
+Hirshfeld ones at +0.95 and the dual descriptor at +0.78. Run over 52 series of 3511 molecules,
+the three reactivity fields added to the five physico-chemical ones raise q² beyond the bootstrap
+interval on 7 series and lower it on 1, against about 1.3 expected by chance; the median change
+is +0.014, so a quantum field helps a minority of series and costs the rest a little. The largest
+gains are tnks2 +0.181, thrombin (nozob) +0.129, mcl1 +0.092, ACE +0.067 and DHFR +0.042.
+
+xtb is not part of this repository; its builds are released at
+<https://github.com/grimme-lab/xtb/releases> under LGPL-3.0.
+
+
 ### Screening a library in blocks
 
 Predicting needs only the rows K(X, X_train) — one row per new molecule, as wide as the training
@@ -3575,8 +3625,10 @@ puts two commands on the path: `cmf`, the command-line tool, and `cmf-app`, the 
 library alone, `pip install -e .`, needs no Qt and is what a server or a notebook needs. Further
 extras: `docs` (reportlab and matplotlib, to typeset the manual), `dev` (pytest), `examples`
 (dimorphite_dl, for protonation states), and `all`. `pip install -r requirements.txt` is the
-working checkout, `.[gui,docs,dev]`. ORCA, for the quantum-chemical properties, is a program
-rather than a package and is found through the dialog, `ORCA_EXE`, its standard location or the path.
+working checkout, `.[gui,docs,dev]`. ORCA and xtb, for the quantum-chemical properties, are
+programs rather than packages: ORCA is found through the dialog, `ORCA_EXE`, its standard
+location or the path, and xtb through `--xtb`, `XTB_EXE` or the path. The extra `md`
+(mdtraj) is what `cmfqsar/trajectory.py` needs to read a simulation; MDAnalysis does as well.
 
 `requirements-lock.txt` pins the exact versions every table in this README and in
 `docs/benchmark.md` was produced with, for reproducing them on another machine:
