@@ -1812,6 +1812,48 @@ all, comes first of the 11 with all six of its guests removed; cyclohexylmethyl 
 second. The list is worth reading at the top and not in the middle, which is what a design loop
 can fairly claim.
 
+### The gradient of a prediction: which way, not which of these
+
+The design loop ranks candidates somebody enumerated. A prediction is also a differentiable
+function of the molecule, and that answers the other question. The kernel is a sum of Gaussian
+overlaps over pairs of atoms, and a Gaussian overlap is an analytic function of the distance
+between the two atoms, so the prediction has a closed-form derivative with respect to every atom
+position and every per-atom field weight (`cmfqsar.gradients`):
+
+```python
+from cmfqsar.gradients import prediction_gradient
+
+g = prediction_gradient(model, mol)
+g.coords      # (N, 3): which way each atom would have to move to raise the prediction
+g.weights     # (N, F): how much more of each field the model wants on each atom
+```
+
+The chain rule covers everything the model puts between the atom pairs and the prediction: the
+cosine normalisation, the field scaling and mixing, the nonlinear kernel layers and the
+interpolation between attenuation grid points. For an unnormalised linear model the result is the
+co-field read as a potential -- the derivative for one atom is its weight times the gradient of
+the co-field at its position, smoothed by the atom's own Gaussian -- and `cofield_gradient` gives
+that field anywhere, with no molecule needed. This is what lets a three-dimensional generative
+model be steered by a fitted CMF model instead of only judged by it, and it also refines a pose
+or a conformation by predicted activity, the way `varalign` refines it by confidence.
+
+**Measured** by `benchmarks/run_gradient.py` against central finite differences of `predict`
+itself, which is the only independent check. The disagreement falls as the square of the step
+until round-off takes over, which is the signature of a correct derivative; the best agreement is
+**6e-9** relative on the steroid set (54 atoms) and **5e-9** on a thrombin ligand (75 atoms).
+The analytic form costs 5.6 ms where the finite differences it replaces cost 1.07 s, a gain of
+**190 times** on the steroid set and 258 times on the thrombin one, because a molecule of N atoms
+with F fields has 3N + NF degrees of freedom and each needs two predictions.
+
+**And what following it actually does**, which is the honest part. Twenty steepest-ascent steps
+on one held-out steroid, no atom moving more than 0.05 A per step, raise the prediction from
++7.93 to +10.33 -- and triple the posterior standard deviation, from 0.234 to 0.701, while
+pulling one bond length 0.80 A out of shape. The gradient knows nothing about valence, so it
+raises the number and damages the molecule. It is a term to add to a generator or a force field
+that enforces geometry, not an optimiser to run on its own; and the per-atom weights are not free
+parameters of a real molecule, since the charges of one sum to its total charge and follow from
+its structure.
+
 ### A macrocyclic host as a pocket
 
 `complement` read proteins. A cyclodextrin is a pocket too, and arrives as a molecule file with no

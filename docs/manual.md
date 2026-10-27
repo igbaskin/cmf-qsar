@@ -3264,6 +3264,111 @@ so the list is worth reading at the top and not in the middle. That is the claim
 has to make, and it is the one this measurement supports: it will name the group worth trying,
 not tell you what it will measure.
 
+## The gradient of a prediction
+
+Everything above ranks candidates that somebody enumerated: a library of fragments, a table of
+guests, a set of poses. A prediction is also a differentiable function, and the derivative answers
+a different question -- not *which of these* but *which way*.
+
+The kernel is a sum of Gaussian overlaps over pairs of atoms, and a Gaussian overlap is an
+analytic function of the distance between the two atoms. So the prediction of a molecule is an
+analytic function of the positions of its atoms and of the per-atom weights that carry its
+fields, and both derivatives are available in closed form:
+
+```python
+from cmfqsar.gradients import prediction_gradient
+
+g = prediction_gradient(model, mol)
+print(g.value)                      # the prediction, the same number predict() gives
+print(g.coords.shape)               # (N, 3): d(prediction) / d(atom position)
+print(g.weights.shape)              # (N, F): d(prediction) / d(per-atom field weight)
+print(g.largest_weight_terms(3))    # the three atoms and fields that matter most
+```
+
+Nothing has to be enumerated first, and nothing is approximated: the normalisation, the field
+scaling and mixing, the nonlinear kernel layer and the interpolation between attenuation grid
+points are all differentiated with the kernel. The non-field descriptors contribute nothing,
+because they are computed from the molecular graph and do not change when an atom moves.
+
+**The co-field is the potential the atoms move in.** For an unnormalised linear model the two
+readings of the model are the same statement. The derivative of the prediction with respect to
+the position of one atom is the atom's weight, times the gradient of the co-field at the atom's
+own position, smoothed by the atom's own Gaussian, summed over the fields. `cofield_gradient`
+evaluates that gradient anywhere, with or without the smoothing, and needs no molecule -- only a
+place to stand. A design rule that was a picture (*put something electronegative in the red
+lobe*) becomes a force.
+
+**Three uses.** A three-dimensional generative model proposes atom positions, and a gradient lets
+a fitted CMF model steer that proposal instead of only judging the result. A pose or a
+conformation can be refined by predicted activity, the way `varalign` and `flexalign` refine it
+by confidence. And the derivative with respect to one atom's weight is a local reading of the
+model: how much the prediction would change if that atom carried a little more charge, or were a
+little more hydrophobic -- the question a co-field picture is usually asked, answered as a number
+per atom.
+
+### Is it the derivative, and what does it cost
+
+The only independent check is a finite difference of `predict` itself. A correct gradient
+disagrees with it by the square of the step until round-off in the predictions takes over, so a
+scan over the step shows a minimum, and the depth of that minimum is the accuracy of the
+comparison rather than of the gradient (`benchmarks/run_gradient.py`).
+
+| set | molecule | atoms | step 1e-2 | 1e-3 | 1e-4 | 1e-5 | 1e-6 |
+|---|---|---:|---:|---:|---:|---:|---:|
+| steroids | prednisolone | 54 | 3.4e-04 | 3.4e-06 | 3.4e-08 | **6.2e-09** | 4.1e-08 |
+| THR | 01 | 75 | 5.4e-05 | 5.4e-07 | **5.4e-09** | 2.3e-08 | 2.1e-07 |
+
+The alternative to the analytic form is that finite difference, which costs two predictions for
+every degree of freedom -- 3N for the positions and N per field for the weights.
+
+| set | atoms | degrees of freedom | analytic | finite differences | gain |
+|---|---:|---:|---:|---:|---:|
+| steroids | 54 | 432 | 5.6 ms | 1.07 s | 190 times |
+| THR | 75 | 600 | 29 ms | 7.4 s | 258 times |
+
+### What happens if you follow it
+
+Steepest ascent on the atom positions of one held-out steroid, with every step capped so that no
+atom moves more than 0.05 A. The last two columns are the important ones.
+
+| step | prediction | largest displacement | rmsd | posterior sd | worst bond length change |
+|---:|---:|---:|---:|---:|---:|
+| 0 | +7.934 | 0.00 A | 0.00 A | 0.234 | 0.00 A |
+| 1 | +8.149 | 0.05 A | 0.01 A | 0.247 | 0.06 A |
+| 5 | +8.875 | 0.25 A | 0.07 A | 0.356 | 0.29 A |
+| 10 | +9.534 | 0.50 A | 0.12 A | 0.508 | 0.54 A |
+| 20 | +10.329 | 1.00 A | 0.22 A | 0.701 | 0.80 A |
+
+The prediction rises by 2.4 log units, which is more than the whole range of some series. Two
+things rise with it. The posterior standard deviation triples, so the molecule is leaving the
+training set at the same rate as the number is improving. And the bond lengths are pulled apart
+by up to 0.8 A, because nothing in the gradient knows that a molecule has bonds. The same walk on
+a thrombin ligand gains 2.0 log units and distorts a bond by 0.44 A.
+
+### What it cannot do
+
+**A weight is not a molecule.** The weight of an atom in the electrostatic field is its partial
+charge, and the charges of a real molecule are not free: they sum to its total charge and they
+follow from its structure. A positive derivative says the model would like more of that quantity
+there. It does not say that a molecule exists in which only that one atom has changed. The weight
+gradient is a direction in the field representation, to be realised by choosing another atom or
+another substituent.
+
+**Maximising an overlap is not designing a molecule.** The table above is the demonstration: the
+overlap with a positive lobe of a co-field grows without limit as atoms are piled into that lobe.
+The gradient is a term to add to a generative model or a force field that enforces geometry, and
+not an optimiser to run on its own.
+
+**The model still has a domain.** A step along the gradient goes where the training set is not.
+The posterior standard deviation, the conformal interval and the two-sample test are what say how
+far it can be trusted, and the lower confidence bound of *Which molecule to make next* is the
+objective to follow when the aim is a molecule to make rather than a number to maximise.
+
+**It needs a frame.** The gradient is defined for the overlap-integral kernel, which is the one
+that needs the molecules superimposed. The rotation-invariant, surface and periodic kernels are
+built from the distances inside each molecule, and the program refuses them with that reason
+instead of returning a number.
+
 # Conformations: the fourth dimension
 
 A 3D-QSAR model represents each molecule by one conformation, and the answer depends on which one.
@@ -4870,6 +4975,7 @@ cmfqsar/decoys.py        posing a background set for screening evaluation
 cmfqsar/screen.py        screening a library that does not fit in memory
 cmfqsar/active.py        which molecule to make next
 cmfqsar/design.py        what to put at a position, ranked by the model
+cmfqsar/gradients.py     which way to move an atom: the derivative of a prediction
 ```
 
 Protein pockets:

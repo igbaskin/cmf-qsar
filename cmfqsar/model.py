@@ -711,13 +711,24 @@ class CMFModel:
         return d
 
     def _atom_block(self, mol: MoleculeFields) -> np.ndarray:
+        """Kernels between the atoms of one molecule and every training molecule: (F, N, n).
+
+        The molecule's probe-field coefficients are passed on.  Without them a probe field has no
+        Gaussians on the moving side and its whole row comes back as zero, so everything built on
+        this block -- the atom contributions, the Shapley values, the gradients -- would describe
+        a model with one field fewer than the one that was fitted, and say nothing about it.
+        """
+        ci = mol.probe_coeffs or None
         it = self._interp_specs()
         if it is None:
-            return atom_kernel_block(mol.coords, mol.weights, mol.radii, self.train, self.fieldset.specs)
+            return atom_kernel_block(mol.coords, mol.weights, mol.radii, self.train,
+                                     self.fieldset.specs, ci=ci)
         (c_lo, lo), (c_hi, hi) = it
-        blk = c_lo[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii, self.train, lo)
+        blk = c_lo[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii,
+                                                      self.train, lo, ci=ci)
         if hi is not None:
-            blk += c_hi[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii, self.train, hi)
+            blk += c_hi[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii,
+                                                           self.train, hi, ci=ci)
         return blk
 
     def _atom_self_block(self, mol: MoleculeFields) -> np.ndarray:
@@ -731,14 +742,19 @@ class CMFModel:
         singles = AtomTable(coords=mol.coords, weights=mol.weights, radii=mol.radii,
                             offsets=np.arange(n + 1), names=[str(i) for i in range(n)],
                             molecules=[])
+        # every atom is a molecule of its own here, in the molecule's own atom order, so the
+        # molecule's probe coefficients serve as the expansion coefficients of both sides
+        ci = mol.probe_coeffs or None
         it = self._interp_specs()
         if it is None:
             return atom_kernel_block(mol.coords, mol.weights, mol.radii, singles,
-                                     self.fieldset.specs)
+                                     self.fieldset.specs, ci=ci, cq=ci)
         (c_lo, lo), (c_hi, hi) = it
-        blk = c_lo[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii, singles, lo)
+        blk = c_lo[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii,
+                                                      singles, lo, ci=ci, cq=ci)
         if hi is not None:
-            blk += c_hi[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii, singles, hi)
+            blk += c_hi[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii,
+                                                           singles, hi, ci=ci, cq=ci)
         return blk
 
     def _field_kernels(self, P: AtomTable, Q: AtomTable, dP: Optional[np.ndarray] = None,
