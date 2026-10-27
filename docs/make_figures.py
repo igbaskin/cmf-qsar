@@ -260,15 +260,17 @@ def fig_search(path):
     save(fig, path)
 
 
-def fig_cofield(path):
-    """Chapter 8: the electrostatic and the steric co-field of the steroid model in the ring plane."""
-    import matplotlib.pyplot as plt
+def cofield_model():
+    """The steroid model whose co-field is drawn, and the frame it is drawn in, built once.
+
+    It is fitted at alpha = 1 with the ridge the search found best there: a sharper attenuation
+    scores a little higher on this set and gives a co-field of isolated dots.
+    """
+    if "cofield_model" in _CACHE:
+        return _CACHE["cofield_model"]
     from cmfqsar import CMFModel
     from cmfqsar.fields import AtomTable, FieldSet, build_fields
     s = steroids()
-    mf, fs = s["mf"], s["fs"]
-    # the model drawn is fitted at alpha = 1 with the ridge the search found best there: a sharper
-    # attenuation scores a little higher on this set and gives a co-field of isolated dots
     rows = [r for r in s["search"].table if r["alpha"] == 1.0]
     best = max(rows, key=lambda r: r["q2"])
     fs = FieldSet.create(alpha=1.0)
@@ -276,12 +278,24 @@ def fig_cofield(path):
     train = AtomTable.from_molecules([mf[i] for i in s["train_idx"]])
     model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": best["lam"]})
     model.fit(train, s["y"], cv_folds=10)
-    _CACHE["cofield_model"] = (best["lam"], round(float(model.stats.q2), 3))
     frame = plane_of([mf[i] for i in s["train_idx"]])
-    ref = mf[s["train_idx"][int(np.argmax(s["y"]))]]      # the most active training molecule
     xy = np.vstack([project(frame, mf[i].coords) for i in s["train_idx"]])
     lo, hi = xy.min(axis=0) - 2.0, xy.max(axis=0) + 2.0
     xs, ys = np.arange(lo[0], hi[0], 0.15), np.arange(lo[1], hi[1], 0.15)
+    out = {"fs": fs, "mf": mf, "model": model, "frame": frame, "xs": xs, "ys": ys,
+           "lam": best["lam"], "q2": round(float(model.stats.q2), 3)}
+    _CACHE["cofield_model"] = out
+    print(f"  co-field model: alpha = 1, lambda = {out['lam']:g}, q2 = {out['q2']}")
+    return out
+
+
+def fig_cofield(path):
+    """Chapter 8: the electrostatic and the steric co-field of the steroid model in the ring plane."""
+    import matplotlib.pyplot as plt
+    s, c = steroids(), cofield_model()
+    fs, mf, model, frame = c["fs"], c["mf"], c["model"], c["frame"]
+    ref = mf[s["train_idx"][int(np.argmax(s["y"]))]]      # the most active training molecule
+    xs, ys = c["xs"], c["ys"]
     pts, shape = plane_points(frame, xs, ys)
     fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.9))
     for ax, name in zip(axes, ("electrostatic", "steric")):
@@ -294,8 +308,53 @@ def fig_cofield(path):
         fig.colorbar(im, ax=ax, shrink=0.85, pad=0.03).ax.tick_params(labelsize=7)
     fig.tight_layout()
     save(fig, path)
-    print(f"  co-field model: alpha = 1, lambda = {_CACHE['cofield_model'][0]:g}, "
-          f"q2 = {_CACHE['cofield_model'][1]}, drawn with {ref.name}")
+    print(f"  co-field drawn with {ref.name}")
+
+
+def fig_overlapmap(path):
+    """Chapter 8: a test molecule's field, the co-field, and their product, whose integral is the
+    contribution of that field to the prediction."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.cofields import make_grid, overlap_volume
+    s, c = steroids(), cofield_model()
+    fs, mf, model, frame = c["fs"], c["mf"], c["model"], c["frame"]
+    f = fs.names.index("electrostatic")
+    # the test molecule whose electrostatic field contributes most, in either direction
+    test = list(s["ds"].test_indices)
+    contrib = {i: model.atom_contributions(mf[i], per_field=True)[f].sum() for i in test}
+    i = max(contrib, key=lambda k: abs(contrib[k]))
+    mol = mf[i]
+    # the integral over space of the overlap, on a grid, against the exact contribution
+    grid = make_grid(mol.coords, margin=4.0, spacing=0.25)
+    integral = float(overlap_volume(model, mol, f, grid).sum() * grid.spacing ** 3)
+    print(f"  overlap map: {mol.name}, electrostatic contribution {contrib[i]:+.3f} exact, "
+          f"{integral:+.3f} integrated on the grid")
+    xs, ys = c["xs"], c["ys"]
+    pts, shape = plane_points(frame, xs, ys)
+    X = field_slice(mol, fs.specs[f], f, pts).reshape(shape) * model.field_scale_for(f, mol)
+    C = cofield_slice(model, f, pts).reshape(shape)
+    # read as the equation of Fig. 1 of the 2013 paper: co-field, times field, equals the
+    # integrand whose integral over space is the contribution
+    panels = [(C, "co-field $C_f$"), (X, "field $X_f$"), (C * X, "product $C_f\\,X_f$")]
+    fig, axes = plt.subplots(1, 3, figsize=(WIDTH, 2.1))
+    bars = []
+    for ax, (Z, title) in zip(axes, panels):
+        im = signed_map(ax, Z, xs, ys)
+        draw_skeleton(ax, mol, frame)
+        ax.set_title(title, fontsize=8)
+        axes_in_angstrom(ax, ylabel=ax is axes[0])
+        bars.append(fig.colorbar(im, ax=ax, shrink=0.7, pad=0.02))
+        bars[-1].ax.tick_params(labelsize=6.5)
+    fig.suptitle("contribution of field $f$ to the prediction $= h_f c_f \\int C_f(\\mathbf{r})\\,"
+                 "X_f(\\mathbf{r})\\,\\mathrm{d}\\mathbf{r}$\n"
+                 + f"$= {contrib[i]:+.2f}$ for the electrostatic field of {mol.name}",
+                 fontsize=8.5, y=0.9)
+    fig.tight_layout(rect=(0, 0, 1, 0.84))
+    for k, symbol in ((0, "×"), (1, "=")):
+        left, right = bars[k].ax.get_position(), axes[k + 1].get_position()
+        fig.text((left.x1 + right.x0) / 2, (right.y0 + right.y1) / 2, symbol, ha="center",
+                 va="center", fontsize=14)
+    save(fig, path)
 
 
 def fig_selectivity(path):
@@ -501,6 +560,7 @@ FIGURES = {
     "search.svg": fig_search,
     "errorpred.svg": fig_errorpred,
     "cofield.png": fig_cofield,
+    "overlapmap.png": fig_overlapmap,
     "selectivity.png": fig_selectivity,
     "envelope.svg": fig_envelope,
     "scale.svg": fig_scale,
