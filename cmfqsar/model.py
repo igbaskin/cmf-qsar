@@ -1318,7 +1318,86 @@ class CMFModel:
         dQ = self._self_kernels(test) if self.normalize else None
         return self._field_kernels(test, self.train, dQ, self.self_diag, progress=progress, cancel=cancel)
 
-    def predict(self, test: AtomTable, return_fields: bool = False, progress=None, cancel=None):
+    # ----------------------------------------------------------------- low rank
+
+    def fit_low_rank(self, train: AtomTable, y: Sequence[float], landmarks: AtomTable,
+                     lam: Optional[float] = None, kind: str = "landmarks",
+                     folds: int = 10, seed: Optional[int] = 0, block: int = 256,
+                     progress=None) -> "CMFModel":
+        """Fit in the space of the landmarks instead of the space of the molecules (item B6).
+
+        The model keeps the landmarks and one weight per feature instead of one coefficient per
+        training molecule, and everything a prediction needs follows from those: see
+        :mod:`cmfqsar.lowrank`.  The training table is still kept, because it is linear in the
+        number of molecules and the provenance and the contract are read off it; what is never
+        built is the n by n kernel.
+        """
+        from . import lowrank as LR
+        from .model import r2_score, rmse          # local, to keep the import graph flat
+
+        self._require_linear("the low-rank path")
+        if not self.uses_fields:
+            raise ValueError("the low-rank path is for the overlap kernel; the invariant "
+                             "kernel already has explicit features, which cmfqsar.locallarge "
+                             "fits directly")
+        y = np.asarray(y, float).ravel()
+        lam = float(self.params.get("lam", 1.0) if lam is None else lam)
+        self.params["lam"] = lam
+        specs = [s for s in self.fieldset.specs if s.enabled]
+        if self.normalize or not self.scale_fields:
+            scale = np.ones(len(specs))
+        else:
+            d = np.asarray(self_kernels(train, specs), float)
+            scale = np.array([1.0 / m if m > 1e-300 else 0.0 for m in d.mean(axis=1)])
+        self.scale = scale
+        low = LR.build(landmarks, self.fieldset, scale=scale, normalize=self.normalize,
+                       kind=kind)
+        g = LR.gram(low, train, y, block=block, progress=progress)
+        w, b = LR.fit(g, lam, fit_bias=self.fit_bias)
+        self.low_rank_ = low
+        self.low_gram_ = g
+        self.low_weights_ = np.asarray(w, float)
+        self.coef = None
+        self.bias = float(b)
+        self.train, self.y = train, y
+        self.self_diag = np.asarray(self_kernels(train, specs), float)
+        pred, _which = LR.cross_validate(low, train, y, lam, folds=folds, seed=seed,
+                                         fit_bias=self.fit_bias, block=block)
+        fitted = LR.predict(low.transform(train, block=block), w, b)
+        self.stats = ModelStats(n_train=len(y), r2=float(r2_score(y, fitted)),
+                                rmse_fit=float(rmse(y, fitted)),
+                                q2=float(r2_score(y, pred)), rmse_cv=float(rmse(y, pred)),
+                                cv_folds=int(folds))
+        self.stats.extra["y_cv"] = pred
+        self.stats.extra["y_fit"] = fitted
+        self.stats.extra["low_rank"] = dict(kind=kind, landmarks=int(landmarks.n_mol),
+                                            rank=int(low.rank))
+        return self
+
+    @property
+    def is_low_rank(self) -> bool:
+        """True when this model was fitted in the space of its landmarks."""
+        return getattr(self, "low_rank_", None) is not None
+
+    def low_rank_features(self, test: AtomTable, block: int = 256, progress=None) -> np.ndarray:
+        if not self.is_low_rank:
+            raise RuntimeError("this model was not fitted in the space of landmarks")
+        return self.low_rank_.transform(test, block=block, progress=progress)
+
+    def _low_rank_self(self, test: AtomTable) -> np.ndarray:
+        """The joint self-kernel of the molecules, which the variance keeps exact."""
+        specs = [s for s in self.fieldset.specs if s.enabled]
+        d = np.asarray(self_kernels(test, specs), float)
+        if self.normalize:
+            d = np.ones_like(d)
+        h = np.asarray(self.fieldset.mixing_vector(), float)[:len(specs)]
+        return (d.T * (h * np.asarray(self.scale, float)[:len(specs)])).sum(axis=1)
+
+    def predict(self, test: AtomTable, return_fields: bool = False, progress=None, cancel=None):
+        if self.is_low_rank:
+            yp = (self.low_rank_.transform(test, progress=progress) @ self.low_weights_
+                  + self.bias)
+            return (yp, None) if return_fields else yp
         oc = getattr(self.learner_, "oc_", None) if self.learner_ is not None else None
         if self.coef is None and oc is None:
             raise RuntimeError("model is not fitted")
@@ -1371,6 +1450,13 @@ class CMFModel:
 
     def predict_with_variance(self, test: AtomTable) -> Tuple[np.ndarray, np.ndarray]:
         """Prediction and GP posterior variance (only meaningful for method 'gp'/'krr')."""
+        if self.is_low_rank:
+            from . import lowrank as LR
+            Phi = self.low_rank_.transform(test)
+            yp = Phi @ self.low_weights_ + self.bias
+            var = LR.variance(self.low_gram_, Phi, float(self.params.get("lam", 1.0)),
+                              k_self=self._low_rank_self(test))
+            return yp, var
         if not self.is_linear:
             raise ValueError(
                 f"the posterior variance is implemented for the linear CMF kernel; this model uses "
@@ -1629,6 +1715,14 @@ class CMFModel:
         For a model whose alpha lies between the points of ``alpha_grid`` (interpolated
         kernels) the co-field is evaluated with the nominal alpha, an approximation.
         """
+        if self.is_low_rank:
+            from . import lowrank as LR
+            # the same three arrays, with the index set changed from training molecules to
+            # landmarks; the field scale h_f c_f is already inside the feature weights, so it
+            # is divided out here to match what this method returns for an exact model
+            c, k, w = LR.cofield_gaussians(self.low_rank_, self.low_weights_, f)
+            h = float(self.fieldset.specs[f].h) * float(self.scale[f])
+            return c, (k / h if abs(h) > 1e-300 else k), w
         centres, coeffs, widths, index = self.cofield_basis(f)
         return centres, coeffs * np.asarray(self.coef, float)[index], widths
 
@@ -1688,6 +1782,38 @@ class CMFModel:
                   "rdkit": rdBase.rdkitVersion})
         return p
 
+    def _low_rank_state(self) -> Optional[dict]:
+        """The landmarks, the whitening and the weights, or None for an ordinary model."""
+        if not self.is_low_rank:
+            return None
+        low = self.low_rank_
+        g = self.low_gram_
+        return dict(landmarks=low.landmarks, whiteners=low.whiteners, weights=low.weights,
+                    normalize=low.normalize, self_landmarks=low.self_landmarks, kind=low.kind,
+                    w=self.low_weights_,
+                    gram=dict(PtP=g.PtP, Pty=g.Pty, Pt1=g.Pt1, n=g.n, sum_y=g.sum_y,
+                              yty=g.yty) if g is not None else None)
+
+    def _set_low_rank_state(self, st: Optional[dict]) -> None:
+        """Rebuild the low-rank state of a model read from a file."""
+        if not st:
+            self.low_rank_ = None
+            self.low_gram_ = None
+            self.low_weights_ = None
+            return
+        from .lowrank import Gram, LowRank
+        specs = [s for s in self.fieldset.specs if s.enabled]
+        self.low_rank_ = LowRank(landmarks=st["landmarks"], specs=specs,
+                                 whiteners=list(st["whiteners"]), weights=st["weights"],
+                                 normalize=bool(st.get("normalize", True)),
+                                 self_landmarks=st.get("self_landmarks"),
+                                 kind=str(st.get("kind", "landmarks")))
+        self.low_weights_ = np.asarray(st["w"], float)
+        g = st.get("gram")
+        self.low_gram_ = (Gram(PtP=g["PtP"], Pty=g["Pty"], Pt1=g["Pt1"], n=int(g["n"]),
+                               sum_y=float(g["sum_y"]), yty=float(g["yty"]))
+                          if g else None)
+
     def state(self) -> dict:
         return {
             "version": self.FILE_VERSION,
@@ -1737,6 +1863,8 @@ class CMFModel:
             "desc_scale": self.desc_scale_,
             # the calibrated interval: a few numbers, and useless to recompute later
             "conformal": getattr(self, "conformal_", None),
+            # the landmarks and the weights over them, for a model fitted the low-rank way
+            "low_rank": self._low_rank_state(),
         }
 
     @classmethod
@@ -1772,6 +1900,7 @@ class CMFModel:
         m.gamma_scale_ = st.get("gamma_scale")
         m.train, m.y, m.coef, m.bias = st["train"], st["y"], st["coef"], st["bias"]
         m.conformal_ = st.get("conformal")
+        m._set_low_rank_state(st.get("low_rank"))
         m.self_diag, m.scale, m.stats = st["self_diag"], st["scale"], st["stats"]
         m.provenance = dict(st.get("provenance") or {})
         m.file_version = version

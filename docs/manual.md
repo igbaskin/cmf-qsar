@@ -3046,17 +3046,30 @@ decomposed exactly as before.
   self-kernel is off by 0.013 against the exact variance where the form that drops it is off by
   0.025.
 
+**It is a flag on `build`, so the model is an ordinary model.** `--low-rank grid:2.0` or
+`--low-rank molecules:200` fits this way, chooses the ridge by the evidence or on folds, and
+`--save` writes a file that `predict`, `cofield` and the rest read like any other:
+
 ```bash
-cmf lowrank series.sdf --activity pKi --landmarks grid:2.0
-cmf lowrank series.sdf --activity pKi --landmarks molecules:200 --select cv
+cmf build series.sdf --activity pKi --low-rank grid:2.0 --alphas 0.5 --save model.cmf
+cmf predict model.cmf new.sdf --out predicted.csv
+cmf cofield model.cmf --out-prefix map
 ```
 
-**What is not done.** The path is a command of its own and not a flag on `build`, so a low-rank
-model cannot yet be saved, predicted from or opened in the application; the landmarks are a grid
-or whole molecules, not the atoms of a subset, which is the case between the two that a narrow
-field wants; the inducing Gaussians take the field's own width; and the largest aligned set in
-the repository is 361 molecules, so the saving is shown where it is not yet needed. That last
-one is the alignment problem of the next part of the plan and not this item's to solve.
+What the file keeps is the landmarks, the whitening and one weight per feature instead of one
+coefficient per training molecule. The training table travels with it as before, because it is
+linear in the number of molecules and the provenance and the contract are read off it; what is
+never built, at any point, is the n by n kernel. `cmf lowrank` remains as the short path that
+fits and reports without saving anything.
+
+**What is not done.** The low-rank branch of `build` does not score a test set, take a second
+endpoint, calibrate a conformal interval or write the JSON report -- it says so when a test set
+is present, and the exact path is there for all four. The landmarks are a grid or whole
+molecules, not the atoms of a subset, which is the case between the two that a narrow field
+wants; the inducing Gaussians take the field's own width; the application has no control for
+any of this; and the largest aligned set in the repository is 361 molecules, so the saving is
+shown where it is not yet needed. That last one is the alignment problem of the next part of
+the plan and not this item's to solve.
 
 ## Screening a library that does not fit in memory
 

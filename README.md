@@ -3461,8 +3461,13 @@ every set and 20 to 80 landmark molecules within 0.076; at 361 molecules the fit
 faster than the exact path and the memory of the two crosses at about 1275 molecules, beyond
 which the saving grows without limit.
 
+It is a flag on `build` and not a path of its own, so a low-rank model is saved, predicted
+from and read like any other; what the file keeps is the landmarks and one weight per feature
+instead of one coefficient per training molecule.
+
 ```bash
-cmf lowrank series.sdf --activity pKi --landmarks grid:2.0
+cmf build series.sdf --activity pKi --low-rank grid:2.0 --alphas 0.5 --save model.cmf
+cmf predict model.cmf new.sdf --out predicted.csv
 python benchmarks/run_lowrank.py        # results/lowrank/table.md
 ```
 

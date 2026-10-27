@@ -224,6 +224,86 @@ def _report_validation(args, model, ds, mf, tr, te, target):
                               "inside": [bool(v) for v in dom.inside]}
 
 
+def _landmarks_for(args, train, fieldset):
+    """The landmark set `--low-rank` asks for, and a sentence describing it."""
+    from cmfqsar import lowrank as LR
+
+    specs = [s for s in fieldset.specs if s.enabled]
+    kind, _, size = str(args.low_rank).partition(":")
+    if kind == "grid":
+        spacing = float(size or 2.0)
+        Z = LR.gaussian_centres(train, spacing, len(specs))
+        return Z, kind, f"a grid of Gaussian centres {spacing:g} A apart"
+    if kind == "molecules":
+        want = int(size or 200)
+        Z, _rows = LR.landmark_molecules(train, want, seed=args.seed)
+        return Z, kind, f"{Z.n_mol} of the training molecules"
+    raise SystemExit(f"--low-rank takes grid:SPACING or molecules:N, not {args.low_rank!r}")
+
+
+def _build_low_rank(model, args, ds, tr, train, y, seed, t0):
+    """Fit in the space of the landmarks and save it (plan item B6).
+
+    A shorter path than the kernel one: it chooses the ridge, fits, reports and saves.  What it
+    does not do is a test set, a second endpoint, a conformal interval or the JSON report, all
+    of which belong to the exact path and none of which the approximation changes in principle.
+    """
+    import numpy as np
+
+    from cmfqsar import lowrank as LR
+    from cmfqsar.model import r2_score, rmse
+
+    if len(_floats(args.alphas) if args.alphas else [1.0]) > 1:
+        print("  --low-rank takes one attenuation; the first of --alphas is used")
+    alpha = (_floats(args.alphas) or [1.0])[0]
+    model.fieldset.set_alpha(float(alpha))
+    if len(tr) < len(ds):
+        print(f"  NOTE: {len(ds) - len(tr)} molecules are in the test set and this path does "
+              f"not score one; the fit below uses the {len(tr)} training molecules only")
+    Z, kind, how = _landmarks_for(args, train, model.fieldset)
+    low = LR.build(Z, model.fieldset, normalize=model.normalize, kind=kind)
+    print(f"Low rank: {how}, {Z.n_mol} landmarks, {low.rank} columns of features at "
+          f"alpha {alpha:g}")
+    g = LR.gram(low, train, y, block=args.low_rank_block)
+    exact_bytes = LR.memory(len(y), low.rank, len([s for s in model.fieldset.specs if s.enabled]),
+                            exact=True)
+    print(f"  the fit holds {LR.memory(len(y), low.rank, 1) / 1e6:.1f} MB where the exact "
+          f"kernels would hold {exact_bytes / 1e6:.1f} MB")
+
+    lams = _floats(args.lams) if args.lams else (1e-3, 1e-2, 0.1, 1.0)
+    rows = []
+    for lam in lams:
+        ev = LR.log_evidence(g, float(lam), fit_bias=model.fit_bias)
+        if args.select == "evidence":
+            rows.append((float(lam), float(ev), float("nan"), float("nan")))
+            print(f"    ridge {lam:<8g} log evidence {ev:+.2f}")
+            continue
+        pred, _w = LR.cross_validate(low, train, y, float(lam), folds=args.folds, seed=seed,
+                                     fit_bias=model.fit_bias, block=args.low_rank_block)
+        rows.append((float(lam), float(ev), float(r2_score(y, pred)), float(rmse(y, pred))))
+        print(f"    ridge {lam:<8g} log evidence {ev:+.2f}  q2 {rows[-1][2]:+.3f}  "
+              f"RMSEcv {rows[-1][3]:.3f}")
+    best = max(rows, key=lambda r: r[1] if args.select == "evidence" else r[2])
+    print(f"  chosen by the {args.select}: ridge {best[0]:g}")
+
+    model.fit_low_rank(train, y, Z, lam=best[0], kind=kind, folds=args.folds, seed=seed,
+                       block=args.low_rank_block)
+    print(model.stats.summary())
+    if args.predictions:
+        from cmfqsar.dataio import write_predictions_csv
+        fitted = model.predict(train)
+        write_predictions_csv(args.predictions, [ds.names[i] for i in tr], y, fitted,
+                              ["train"] * len(tr), y_cv=model.stats.extra.get("y_cv"))
+        print(f"Predictions written to {args.predictions}")
+    if args.save:
+        save_model(args.save, model, extra={"dataset": args.dataset, "task": args.task,
+                                            "activity": ds.activity_prop,
+                                            "low_rank": {"kind": kind, "landmarks": Z.n_mol,
+                                                         "rank": low.rank}})
+        print(f"Model saved to {args.save}")
+    print(f"Elapsed {time.time() - t0:.1f} s")
+
+
 def cmd_build(args):
     t0 = time.time()
     ds = _load_dataset(args)
@@ -577,6 +657,9 @@ def cmd_build(args):
                                                 "activity": ds.activity_prop})
             print(f"Model saved to {args.save}")
         print(f"Elapsed {time.time() - t0:.1f} s")
+        return
+    if getattr(args, "low_rank", None):
+        _build_low_rank(model, args, ds, tr, train, y, seed, t0)
         return
     res = grid_search(train, y, model, alphas, lams=lams, Cs=_floats(args.Cs),
                       epsilons=_floats(args.epsilons), nus=_floats(args.nus),
@@ -3469,6 +3552,17 @@ def main(argv=None):
                         "and not only the fit. One cross-validation per grid point per shuffle; "
                         "the kernels are computed once because they do not depend on the "
                         "activities")
+    b.add_argument("--low-rank", default=None, metavar="KIND:SIZE",
+                   help="fit in the space of a few hundred landmarks instead of the space of "
+                        "the molecules, for a training set too large for the exact kernel "
+                        "(plan item B6). grid:SPACING puts Gaussian centres that many "
+                        "angstroms apart over the frame; molecules:N takes N of the training "
+                        "molecules. The model is saved and predicted from like any other; what "
+                        "this path does not do is a test set, a second endpoint, a conformal "
+                        "interval or the JSON report")
+    b.add_argument("--low-rank-block", type=int, default=256, metavar="N",
+                   help="molecules per block while the features are built; the memory of the "
+                        "fit does not depend on it (default 256)")
     b.add_argument("--bootstrap", type=int, default=0, metavar="N",
                    help="percentile confidence intervals for q2 and R2pred from N bootstrap "
                         "resamples of the (observed, predicted) pairs")

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 83 modules, 145 classes with 487 public methods, and 671 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 83 modules, 145 classes with 490 public methods, and 671 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -6936,6 +6936,28 @@ is off by default because, measured, it gains no sharpness on these sets.
 (prediction, lower, upper) for new molecules, using the stored calibration.
 
 #### `CMFModel.test_kernels(test: AtomTable, progress=None, cancel=None) -> np.ndarray`
+
+#### `CMFModel.fit_low_rank(train: AtomTable, y: Sequence[float], landmarks: AtomTable, lam: Optional[float]=None, kind: str='landmarks', folds: int=10, seed: Optional[int]=0, block: int=256, progress=None) -> 'CMFModel'`
+
+Fit in the space of the landmarks instead of the space of the molecules (item B6).
+
+
+
+The model keeps the landmarks and one weight per feature instead of one coefficient per
+
+training molecule, and everything a prediction needs follows from those: see
+
+`cmfqsar.lowrank`.  The training table is still kept, because it is linear in the
+
+number of molecules and the provenance and the contract are read off it; what is never
+
+built is the n by n kernel.
+
+#### `CMFModel.is_low_rank` -> bool  (property)
+
+True when this model was fitted in the space of its landmarks.
+
+#### `CMFModel.low_rank_features(test: AtomTable, block: int=256, progress=None) -> np.ndarray`
 
 #### `CMFModel.predict(test: AtomTable, return_fields: bool=False, progress=None, cancel=None)`
 

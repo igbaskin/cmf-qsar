@@ -264,3 +264,114 @@ def test_the_command_runs_and_reports_what_it_used(tmp_path, capsys):
     text = capsys.readouterr().out
     assert "landmarks" in text and "columns of features" in text
     assert "chosen by the evidence" in text
+
+
+# ------------------------------------------------------- the model, saved and loaded
+
+
+def _fitted_low_rank(fs, table, y, lam=0.1, kind="molecules"):
+    model = CMFModel(fieldset=fs, method="krr", normalize=True)
+    Z = (table if kind == "molecules"
+         else LR.gaussian_centres(table, 1.5, len([s for s in fs.specs if s.enabled])))
+    model.fit_low_rank(table, y, Z, lam=lam, kind=kind, folds=3, seed=0)
+    return model
+
+
+def test_the_model_knows_it_was_fitted_the_low_rank_way():
+    fs, table, y = _series()
+    model = _fitted_low_rank(fs, table, y)
+    assert model.is_low_rank and model.coef is None
+    assert model.low_rank_.rank == model.low_weights_.size
+    assert model.stats.extra["low_rank"]["landmarks"] == table.n_mol
+
+
+def test_predicting_from_the_model_is_the_feature_fit():
+    fs, table, y = _series()
+    model = _fitted_low_rank(fs, table, y)
+    Phi = model.low_rank_features(table)
+    assert np.allclose(model.predict(table), Phi @ model.low_weights_ + model.bias)
+
+
+def test_the_low_rank_model_is_the_exact_model_when_every_molecule_is_a_landmark():
+    fs, table, y = _series()
+    low = _fitted_low_rank(fs, table, y, lam=0.1, kind="molecules")
+    model, K = _exact(fs, table, y, 0.1)
+    a, b = krr_fit(K, y, 0.1)
+    assert np.allclose(low.predict(table), K @ a + b, atol=1e-8)
+
+
+def test_the_variance_comes_out_of_the_model_too():
+    fs, table, y = _series()
+    model = _fitted_low_rank(fs, table, y)
+    mu, var = model.predict_with_variance(table)
+    assert np.allclose(mu, model.predict(table))
+    assert np.all(var >= 0) and np.all(np.isfinite(var))
+
+
+def test_the_cofield_of_a_low_rank_model_is_over_its_landmarks():
+    fs, table, y = _series()
+    model = _fitted_low_rank(fs, table, y, kind="grid")
+    centres, coeffs, widths = model.cofield_coefficients(0)
+    assert len(centres) == model.low_rank_.landmarks.coords.shape[0]
+    assert len(coeffs) == len(centres) and len(widths) == len(centres)
+
+
+def test_a_low_rank_model_is_saved_and_read_back(tmp_path):
+    from cmfqsar.dataio import load_model, save_model
+    fs, table, y = _series()
+    model = _fitted_low_rank(fs, table, y)
+    path = os.path.join(str(tmp_path), "m.cmf")
+    save_model(path, model, {"dataset": "toy"})
+    back, extra = load_model(path)
+    assert back.is_low_rank and extra["dataset"] == "toy"
+    assert np.allclose(back.predict(table), model.predict(table))
+    assert np.allclose(back.predict_with_variance(table)[1],
+                       model.predict_with_variance(table)[1])
+    c0, k0, w0 = model.cofield_coefficients(0)
+    c1, k1, w1 = back.cofield_coefficients(0)
+    assert np.allclose(c0, c1) and np.allclose(k0, k1) and np.allclose(w0, w1)
+
+
+def test_an_ordinary_model_has_no_low_rank_state(tmp_path):
+    from cmfqsar.dataio import load_model, save_model
+    fs, table, y = _series()
+    model, _K = _exact(fs, table, y)
+    assert not model.is_low_rank
+    path = os.path.join(str(tmp_path), "m.cmf")
+    save_model(path, model)
+    back, _extra = load_model(path)
+    assert not back.is_low_rank
+    assert np.allclose(back.predict(table), model.predict(table))
+
+
+def test_the_low_rank_path_refuses_a_kernel_that_has_features_already():
+    fs, table, y = _series()
+    model = CMFModel(fieldset=fs, method="krr", normalize=True)
+    model.kernel_source = "autocorrelation"
+    with pytest.raises(ValueError, match="invariant kernel"):
+        model.fit_low_rank(table, y, table, lam=0.1)
+
+
+def test_build_saves_a_low_rank_model_that_predict_can_read(tmp_path, capsys):
+    from cmfqsar.cli import main
+    path = os.path.join(str(tmp_path), "set.sdf")
+    with Chem.SDWriter(path) as w:
+        for k, smi in enumerate(SMILES):
+            m = Chem.AddHs(Chem.MolFromSmiles(smi))
+            p = AllChem.ETKDGv3()
+            p.randomSeed = k + 1
+            AllChem.EmbedMolecule(m, p)
+            m.SetProp("_Name", f"m{k}")
+            m.SetProp("activity", f"{4.0 + 0.3 * k:.2f}")
+            w.write(m)
+    saved = os.path.join(str(tmp_path), "m.cmf")
+    capsys.readouterr()
+    main(["build", path, "--activity", "activity", "--fields", "electrostatic,steric",
+          "--low-rank", "molecules:6", "--alphas", "0.5", "--lams", "0.1",
+          "--test-fraction", "0", "--folds", "3", "--save", saved])
+    text = capsys.readouterr().out
+    assert "Low rank:" in text and "columns of features" in text
+    assert os.path.exists(saved)
+    main(["predict", saved, path, "--out", os.path.join(str(tmp_path), "p.csv")])
+    out = capsys.readouterr().out
+    assert "Predictions written" in out

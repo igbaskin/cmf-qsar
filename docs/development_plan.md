@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 77 modules and about 34,200 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 77 modules and about 34,400 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-nine subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1203 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1212 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -387,8 +387,16 @@ larger searches in parts C and E.
   a kernel entry against a one-atom centre costs a thirtieth of one against a whole molecule. On
   held-out molecules the landmarks do not reach, the variance that keeps the self-kernel is off
   by 0.013 against 0.025 for the form that drops it.
-  **Still not done:** the path is a command of its own and not a flag on `build`, so a low-rank
-  model cannot be saved, predicted from or opened in the application; landmark atoms, the case
+  **The flag on `build`, 27 October 2026.** `CMFModel.fit_low_rank` holds the landmarks, the
+  whitening and one weight per feature instead of one coefficient per training molecule;
+  `predict`, `predict_with_variance` and `cofield_coefficients` take the low-rank route when it
+  is there, and `state`/`from_state` carry it, so `cmf build --low-rank grid:2.0 --save` writes
+  a file that `cmf predict` and `cmf cofield` read like any other. The training table still
+  travels with the file, because it is linear in the number of molecules and the provenance and
+  the contract are read off it; the n by n kernel is never built at any point. 28 tests.
+  **Still not done:** the low-rank branch of `build` does not score a test set, take a second
+  endpoint, calibrate a conformal interval or write the JSON report (it says so when a test set
+  is present); the application has no control for it; landmark atoms, the case
   between a grid and whole molecules that a narrow field wants; a width for the inducing
   Gaussians other than the field's own; LinearSVR and LinearSVC on the features, the kernel
   alignment from m by m Gram matrices and Nystrom kernel PCA, all of which the assessment names
