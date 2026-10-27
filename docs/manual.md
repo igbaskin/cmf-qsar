@@ -3266,6 +3266,67 @@ so the list is worth reading at the top and not in the middle. That is the claim
 has to make, and it is the one this measurement supports: it will name the group worth trying,
 not tell you what it will measure.
 
+## Choosing ten compounds at once
+
+A laboratory makes ten or twenty compounds at a time, not one. The acquisition rules of the
+previous section pick one molecule and refit; a whole plate has to be chosen before any of it is
+measured, so something has to keep the plate from being one molecule ten times over.
+
+**The cheap rule** has been in `cmfqsar/active.py` from the start: take the best scores in
+order, and skip a candidate whose cosine with a pick already made is above a threshold. It
+works, and it has a threshold in it that nothing fixes.
+
+**The rule the posterior already implies** is what plan item MC2 asks for. After a pick, the
+posterior covariance conditioned on that pick says how much uncertainty is left everywhere
+else:
+
+    cov' = cov - cov[:, j] cov[j, :] / cov[j, j],
+
+which is one step of a Cholesky factorisation with `j` as the pivot. The acquisition is then
+evaluated again on the conditional standard deviations, so a candidate whose uncertainty the
+first pick has already removed scores low by itself, with no threshold and no refitting
+(`active.condition_on`, `active.batch_by_covariance`). With the **variance** acquisition the
+score is the conditional standard deviation, so the rule is the greedy maximisation of the
+determinant of the batch's own covariance block -- the classical D-optimal design -- and a test
+checks the greedy batch against the exhaustive best on a small matrix.
+
+`model.predict_with_covariance` returns the whole posterior covariance of a block of candidates,
+which is what the rule needs and what `predict_with_variance` only gives the diagonal of.
+
+**Measured** by `benchmarks/run_batch.py` with the protocol of the previous section -- the eight
+Sutherland sets, twenty molecules to start, the attenuation and the ridge reselected by the
+evidence at every fit, ten repeats, the same starting set for every rule -- in batches of ten:
+
+| how the batch is chosen | fits | best acquired | error on what is left |
+| --- | ---: | ---: | ---: |
+| one at a time | 35 | 8.878 | 1.034 |
+| ei, similarity filter | 3 | 8.902 | 1.041 |
+| ei, covariance | 3 | 8.939 | 1.025 |
+| variance, similarity filter | 3 | 8.540 | 1.029 |
+| variance, covariance (largest determinant) | 3 | 8.403 | 1.043 |
+| random | 3 | 8.709 | 1.011 |
+
+**The gate is not met, and the item says that is an answer.** Paired run by run, the covariance
+rule minus the filter is +0.037 [-0.015, +0.110] in the best acquired and -0.016 [-0.035,
++0.002] in the error for expected improvement, and -0.137 [-0.267, -0.013] and +0.014 [-0.008,
++0.037] for the variance acquisition. None of the four favours the covariance rule beyond its
+interval and one favours the filter, so the cheap filter is enough. That is the outcome plan
+item E2 predicted from the posterior standard deviation being nearly flat over these pools: if
+conditioning on a pick barely moves the ordering, the two rules choose almost the same plate by
+different arithmetic.
+
+**What a batch costs is nothing measurable here**, which is the more useful finding. Against the
+one-at-a-time loop, which sees every measurement before choosing the next molecule and pays
+thirty-five fits for it, expected improvement with the filter differs by +0.025 [-0.025, +0.079]
+in the best acquired and +0.008 [-0.016, +0.033] in the error. A plate of ten chosen at once is
+worth as much as ten chosen one after another, at a tenth of the fitting.
+
+Both rules are on the command line:
+
+```bash
+cmf suggest model.cmf --candidates library.sdf --kind ei -n 10 --batch-rule covariance
+```
+
 ## Growing a bound fragment into the gap
 
 A fragment that binds fills part of a site and leaves the rest empty. The question a fragment

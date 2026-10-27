@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 81 modules, 141 classes with 483 public methods, and 642 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 81 modules, 141 classes with 484 public methods, and 647 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -195,17 +195,68 @@ The score of every candidate under one rule; larger is always better.
 `distance` is the field-space distance of each candidate to the nearest molecule already
 made, which only `maxmin` uses; `best` is the best activity so far, which only `ei` uses.
 
-### `suggest(model, candidates, kind: str='ei', n: int=1, beta: float=1.0, xi: float=0.0, names: Optional[Sequence[str]]=None, max_similarity: float=0.98, seed: Optional[int]=0) -> List[Suggestion]`
+### `suggest(model, candidates, kind: str='ei', n: int=1, beta: float=1.0, xi: float=0.0, names: Optional[Sequence[str]]=None, max_similarity: float=0.98, seed: Optional[int]=0, batch_rule: str='cosine') -> List[Suggestion]`
 
 Rank posed candidates by one acquisition rule and return the best `n`.
 
 The model must be a regression on the linear kernel, since that is where a posterior exists.
-With `n` above one the picks are taken greedily and a candidate too similar to one already
-picked is skipped (`max_similarity`, a cosine in the model's own kernel): a proper batch rule
-would refit the model after every pick, and this is the cheap approximation to it, which is
-worth knowing when a whole plate is being chosen at once.
+With `n` above one a batch is chosen, and `batch_rule` says how (plan item MC2):
 
-### `learning_curve(kernels: Dict[float, np.ndarray], y: Sequence[float], kind: str, start: Sequence[int], steps: int, lams: Sequence[float]=(0.01, 0.1, 1.0), beta: float=1.0, xi: float=0.0, seed: int=0, fit_bias: bool=True) -> Dict[str, list]`
+* `"cosine"` takes the best scores in order and skips a candidate too similar to one
+  already picked (`max_similarity`, a cosine in the model's own kernel).  It is cheap and it
+  has a threshold in it.
+* `"covariance"` recomputes the score after every pick from the posterior covariance
+  conditioned on the picks already made, which needs no threshold and costs one Cholesky
+  step per pick.  With `kind="variance"` it is the batch of largest determinant.
+
+Neither refits the model inside the batch, which is what a laboratory would have to pay for;
+`benchmarks/run_batch.py` measures what the two rules are worth against that.
+
+### `conditional_variances(cov: np.ndarray) -> np.ndarray`
+
+The diagonal of a covariance matrix, which is where a greedy batch starts.
+
+### `condition_on(cov: np.ndarray, j: int, floor: float=1e-12) -> np.ndarray`
+
+The covariance of everything else once candidate `j` is known.
+
+One step of a Cholesky factorisation with `j` as the pivot:
+
+    cov' = cov - cov[:, j] cov[j, :] / cov[j, j]
+
+The variance of `j` itself becomes zero, and the variance of anything correlated with it
+falls.  That is how a batch chosen this way stops being one molecule several times over:
+nothing has to be refitted, because the posterior covariance already knows what a second
+measurement near the first would add.
+
+### `batch_by_covariance(kind: str, mean: Sequence[float], cov: np.ndarray, size: int, best: Optional[float]=None, beta: float=1.0, xi: float=0.0, distance: Optional[Sequence[float]]=None, rng: Optional[np.random.Generator]=None) -> List[int]`
+
+A batch of `size` candidates, the score recomputed after every pick (plan item MC2).
+
+The cheap rule of `suggest` ranks once and drops a candidate that looks too much like
+one already picked, which is a filter with a threshold in it.  This rule has no threshold:
+after each pick the posterior covariance is conditioned on that pick
+(`condition_on`), the standard deviations are taken from the conditioned covariance,
+and the acquisition is evaluated again.  A candidate whose uncertainty the first pick has
+already removed scores low by itself.
+
+With `kind="variance"` the score **is** the conditional standard deviation, so this is the
+greedy maximisation of the determinant of the batch's own covariance block -- the classical
+D-optimal design -- and `log det` of that block is the sum of the logs of the conditional
+variances the picks were chosen by.
+
+### `batch_by_cosine(score: Sequence[float], cosine: Optional[np.ndarray], size: int, max_similarity: float=0.98) -> List[int]`
+
+A batch of `size` by score, skipping a candidate too similar to one already picked.
+
+This is the rule `suggest` has always used, as a function of its own so that the two
+can be measured against each other.
+
+### `log_determinant(cov: np.ndarray, rows: Sequence[int]) -> float`
+
+log det of the covariance block of a batch, which is what a D-optimal rule maximises.
+
+### `learning_curve(kernels: Dict[float, np.ndarray], y: Sequence[float], kind: str, start: Sequence[int], steps: int, lams: Sequence[float]=(0.01, 0.1, 1.0), beta: float=1.0, xi: float=0.0, seed: int=0, fit_bias: bool=True, batch: int=1, batch_rule: str='cosine', max_similarity: float=0.98) -> Dict[str, list]`
 
 Run the acquisition loop over a set whose activities are already known.
 
@@ -214,8 +265,14 @@ reselect the hyper-parameters at every step -- by the evidence, from what has be
 and nothing else, which is what item B4 made affordable.  Nothing outside `start` and the
 molecules the rule asks for is ever looked at.
 
-Returns, after every acquisition: the RMSE and q2 of the model on the molecules *not* yet
-made, the best activity among those made, and which molecule was taken.
+With `batch` above one the model is refitted once per batch and not once per molecule,
+which is what a laboratory that makes ten compounds at a time does (plan item MC2).
+`batch_rule` is then how the rest of the batch is chosen after the first pick: `"cosine"`
+takes the next best scores and skips what looks too similar, `"covariance"` recomputes the
+score from the posterior covariance conditioned on the picks already made.
+
+Returns, after every acquisition or batch: the RMSE and q2 of the model on the molecules
+*not* yet made, the best activity among those made, and which molecules were taken.
 
 ## cmfqsar.align
 
@@ -6704,6 +6761,14 @@ is off by default because, measured, it gains no sharpness on these sets.
 #### `CMFModel.predict_from_field_kernels(K_fields_test: np.ndarray) -> np.ndarray`
 
 Prediction from precomputed per-field kernels (F, n_test, n_train) with the training set.
+
+#### `CMFModel.predict_with_covariance(test: AtomTable) -> Tuple[np.ndarray, np.ndarray]`
+
+Prediction and the whole posterior covariance over the candidates (plan item MC2).
+
+`predict_with_variance` gives the diagonal of the same matrix.  The rest of it is
+what makes a batch more than a list: two candidates the model is equally unsure about
+may be unsure about *the same thing*, and only the covariance says so.
 
 #### `CMFModel.predict_with_variance(test: AtomTable) -> Tuple[np.ndarray, np.ndarray]`
 

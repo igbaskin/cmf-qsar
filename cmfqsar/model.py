@@ -495,6 +495,26 @@ class _Learner:
             var = k_test_self - np.einsum("ij,jk,ik->i", K_test_train, Kinv, K_test_train)
         return np.maximum(var, 0.0)
 
+    def predict_covariance(self, K_test_train: np.ndarray,
+                           K_test_test: np.ndarray) -> np.ndarray:
+        """The whole GP posterior covariance of a block of candidates, not only its diagonal.
+
+        A batch rule needs the off-diagonal part: what a second measurement adds depends on the
+        first (plan item MC2).  The factorisation is the one the variance already uses.
+        """
+        if self.K_train_ is None:
+            n = len(K_test_train)
+            return np.full((n, n), np.nan)
+        lam = float(self.params.get("lam", 1.0))
+        L, Kinv = self._variance_factor(lam)
+        if L is not None:
+            v = np.linalg.solve(L, np.asarray(K_test_train, float).T)
+            cov = np.asarray(K_test_test, float) - v.T @ v
+        else:
+            K = np.asarray(K_test_train, float)
+            cov = np.asarray(K_test_test, float) - K @ Kinv @ K.T
+        return 0.5 * (cov + cov.T)
+
     def _variance_factor(self, lam: float):
         """The factorisation of ``K_train + lam I``, computed once and kept.
 
@@ -1327,6 +1347,27 @@ class CMFModel:
             raise ValueError("this model has non-field descriptors; predict from the atom "
                              "table instead of precomputed field kernels")
         return self.joint_kernel(K_fields_test) @ self.coef + self.bias
+
+    def predict_with_covariance(self, test: AtomTable) -> Tuple[np.ndarray, np.ndarray]:
+        """Prediction and the whole posterior covariance over the candidates (plan item MC2).
+
+        :meth:`predict_with_variance` gives the diagonal of the same matrix.  The rest of it is
+        what makes a batch more than a list: two candidates the model is equally unsure about
+        may be unsure about *the same thing*, and only the covariance says so.
+        """
+        mu, _var = self.predict_with_variance(test)
+        learner = self.learner_ if (self.learner_ is not None
+                                    and self.learner_.K_train_ is not None) else \
+            getattr(self, "_var_learner", None)
+        if learner is None:
+            raise RuntimeError("model is not fitted")
+        K_ct = self.test_kernel(test)
+        dQ = self._self_kernels(test) if self.normalize else None
+        # the field part only, as the similarity filter of cmfqsar.active already does: a
+        # non-field descriptor block is defined against the training set, not candidate to
+        # candidate
+        K_cc = self.joint_kernel(self._field_kernels(test, test, dQ, dQ))
+        return mu, learner.predict_covariance(K_ct, K_cc)
 
     def predict_with_variance(self, test: AtomTable) -> Tuple[np.ndarray, np.ndarray]:
         """Prediction and GP posterior variance (only meaningful for method 'gp'/'krr')."""

@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 75 modules and about 33,200 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 75 modules and about 33,400 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-eight subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1139 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1155 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2359,6 +2359,29 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   and the error on what is left) by more than the bootstrap interval. E2's finding about the
   posterior standard deviation predicts that the gain will be small; that the cheap filter is
   enough is an acceptable outcome and closes the item.
+  **Done 27 October 2026; the gate is not met, the cheap filter is enough, and the item is
+  closed on the outcome it allowed.** `active.condition_on` is one Cholesky step with a
+  candidate as the pivot, `active.batch_by_covariance` is the greedy batch built from it -- the
+  acquisition recomputed after every pick from the conditional standard deviations, so there is
+  no threshold anywhere -- and `active.batch_by_cosine` is the old filter, pulled out as a
+  function of its own so that the two can be measured against each other.
+  `CMFModel.predict_with_covariance` returns the whole posterior covariance of a block of
+  candidates. With the variance acquisition the rule is the greedy maximisation of the
+  determinant of the batch's covariance block, and a test checks it against the exhaustive best
+  on a small matrix. `learning_curve` acquires a batch between fits and reports the error after
+  the last one; `cmf suggest --batch-rule covariance` is the command line. 16 tests.
+  **Measured** by `benchmarks/run_batch.py` with the protocol of `run_active.py` on the eight
+  Sutherland sets, 20 molecules to start, 10 repeats, the same starting set for every rule, in
+  batches of 10. Paired run by run, the covariance rule minus the similarity filter: expected
+  improvement +0.037 [-0.015, +0.110] in the best acquired and -0.016 [-0.035, +0.002] in the
+  error on what is left; the variance acquisition -0.137 [-0.267, -0.013] and +0.014 [-0.008,
+  +0.037]. None of the four favours the covariance rule beyond its interval and one favours the
+  filter, so the gate asked for by this item is not met.
+  **The useful finding is beside the gate**: a batch costs nothing measurable. Against the
+  one-at-a-time loop, which sees every measurement before choosing the next molecule and pays
+  thirty-five fits for it, the batch differs by +0.025 [-0.025, +0.079] in the best acquired and
+  +0.008 [-0.016, +0.033] in the error. A plate of ten chosen at once is worth as much as ten
+  chosen one after another, at a tenth of the fitting.
 * **MC3. A series in which both enantiomers are measured.** This is the one part of C7 left open,
   restated here because it is a data task of medicinal chemistry and not a kernel task. Needed: a
   series with enantiomeric pairs and a separate potency for the eutomer and the distomer, prepared

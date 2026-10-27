@@ -131,14 +131,21 @@ def _distance_to_training(K_xt: np.ndarray, k_self: Sequence[float],
 
 def suggest(model, candidates, kind: str = "ei", n: int = 1, beta: float = 1.0, xi: float = 0.0,
             names: Optional[Sequence[str]] = None, max_similarity: float = 0.98,
-            seed: Optional[int] = 0) -> List[Suggestion]:
+            seed: Optional[int] = 0, batch_rule: str = "cosine") -> List[Suggestion]:
     """Rank posed candidates by one acquisition rule and return the best `n`.
 
     The model must be a regression on the linear kernel, since that is where a posterior exists.
-    With `n` above one the picks are taken greedily and a candidate too similar to one already
-    picked is skipped (`max_similarity`, a cosine in the model's own kernel): a proper batch rule
-    would refit the model after every pick, and this is the cheap approximation to it, which is
-    worth knowing when a whole plate is being chosen at once.
+    With `n` above one a batch is chosen, and `batch_rule` says how (plan item MC2):
+
+    * ``"cosine"`` takes the best scores in order and skips a candidate too similar to one
+      already picked (`max_similarity`, a cosine in the model's own kernel).  It is cheap and it
+      has a threshold in it.
+    * ``"covariance"`` recomputes the score after every pick from the posterior covariance
+      conditioned on the picks already made, which needs no threshold and costs one Cholesky
+      step per pick.  With ``kind="variance"`` it is the batch of largest determinant.
+
+    Neither refits the model inside the batch, which is what a laboratory would have to pay for;
+    `benchmarks/run_batch.py` measures what the two rules are worth against that.
     """
     if kind not in ACQUISITIONS:
         raise ValueError(f"unknown acquisition {kind!r}; one of {', '.join(ACQUISITIONS)}")
@@ -159,24 +166,129 @@ def suggest(model, candidates, kind: str = "ei", n: int = 1, beta: float = 1.0, 
     if len(nm) != len(mu):
         nm = [f"candidate {i + 1}" for i in range(len(mu))]
 
-    # cosine similarity between the candidates themselves, so that a batch is not one molecule
-    # n times over; computed only when a batch is asked for, since it is a square block
-    cos = None
-    if int(n) > 1 and max_similarity < 1.0 and len(mu) > 1:
-        dQ = model._self_kernels(candidates) if model.normalize else None
-        Kcc = model.joint_kernel(model._field_kernels(candidates, candidates, dQ, dQ))
-        d = np.sqrt(np.maximum(np.diag(Kcc), 1e-300))
-        cos = Kcc / np.outer(d, d)
-    picks: List[Suggestion] = []
-    for i in np.argsort(-score):
-        if len(picks) >= int(n):
+    if batch_rule not in BATCH_RULES:
+        raise ValueError(f"unknown batch rule {batch_rule!r}; one of {', '.join(BATCH_RULES)}")
+    if int(n) > 1 and batch_rule == "covariance":
+        _mu, cov = model.predict_with_covariance(candidates)
+        chosen = batch_by_covariance(kind, mu, cov, int(n), best=best, beta=beta, xi=xi,
+                                     distance=dist, rng=np.random.default_rng(seed))
+    else:
+        # cosine similarity between the candidates themselves, so that a batch is not one
+        # molecule n times over; computed only when a batch is asked for, since it is a block
+        cos = None
+        if int(n) > 1 and max_similarity < 1.0 and len(mu) > 1:
+            dQ = model._self_kernels(candidates) if model.normalize else None
+            Kcc = model.joint_kernel(model._field_kernels(candidates, candidates, dQ, dQ))
+            d = np.sqrt(np.maximum(np.diag(Kcc), 1e-300))
+            cos = Kcc / np.outer(d, d)
+        chosen = batch_by_cosine(score, cos, int(n), max_similarity=max_similarity)
+    return [Suggestion(index=int(i), name=nm[int(i)], mean=float(mu[int(i)]),
+                       sd=float(sd[int(i)]), score=float(score[int(i)]),
+                       distance=float(dist[int(i)])) for i in chosen]
+
+
+#: the batch rules of plan item MC2
+BATCH_RULES = ("cosine", "covariance")
+
+#: what each one does, printed by the command line
+BATCH_PURPOSE = {
+    "cosine": "take the best scores in order, skipping one too similar to a pick already made",
+    "covariance": "recompute the score after every pick from the posterior covariance of the "
+                  "batch itself, which for the variance rule is the largest determinant",
+}
+
+
+def conditional_variances(cov: np.ndarray) -> np.ndarray:
+    """The diagonal of a covariance matrix, which is where a greedy batch starts."""
+    return np.maximum(np.diag(np.asarray(cov, float)), 0.0)
+
+
+def condition_on(cov: np.ndarray, j: int, floor: float = 1e-12) -> np.ndarray:
+    """The covariance of everything else once candidate `j` is known.
+
+    One step of a Cholesky factorisation with `j` as the pivot::
+
+        cov' = cov - cov[:, j] cov[j, :] / cov[j, j]
+
+    The variance of `j` itself becomes zero, and the variance of anything correlated with it
+    falls.  That is how a batch chosen this way stops being one molecule several times over:
+    nothing has to be refitted, because the posterior covariance already knows what a second
+    measurement near the first would add.
+    """
+    c = np.asarray(cov, float)
+    pivot = float(c[int(j), int(j)])
+    if pivot <= floor:
+        out = c.copy()
+        out[int(j), :] = 0.0
+        out[:, int(j)] = 0.0
+        return out
+    col = c[:, int(j)]
+    return c - np.outer(col, col) / pivot
+
+
+def batch_by_covariance(kind: str, mean: Sequence[float], cov: np.ndarray, size: int,
+                        best: Optional[float] = None, beta: float = 1.0, xi: float = 0.0,
+                        distance: Optional[Sequence[float]] = None,
+                        rng: Optional[np.random.Generator] = None) -> List[int]:
+    """A batch of `size` candidates, the score recomputed after every pick (plan item MC2).
+
+    The cheap rule of :func:`suggest` ranks once and drops a candidate that looks too much like
+    one already picked, which is a filter with a threshold in it.  This rule has no threshold:
+    after each pick the posterior covariance is conditioned on that pick
+    (:func:`condition_on`), the standard deviations are taken from the conditioned covariance,
+    and the acquisition is evaluated again.  A candidate whose uncertainty the first pick has
+    already removed scores low by itself.
+
+    With ``kind="variance"`` the score **is** the conditional standard deviation, so this is the
+    greedy maximisation of the determinant of the batch's own covariance block -- the classical
+    D-optimal design -- and ``log det`` of that block is the sum of the logs of the conditional
+    variances the picks were chosen by.
+    """
+    mu = np.asarray(mean, float)
+    c = np.asarray(cov, float).copy()
+    taken: List[int] = []
+    for _ in range(int(size)):
+        sd = np.sqrt(conditional_variances(c))
+        score = acquisition_scores(kind, mu, sd, best=best, beta=beta, xi=xi,
+                                   distance=distance, rng=rng)
+        score = np.asarray(score, float).copy()
+        if taken:
+            score[np.asarray(taken, int)] = -np.inf
+        j = int(np.argmax(score))
+        if not np.isfinite(score[j]):
+            break
+        taken.append(j)
+        c = condition_on(c, j)
+    return taken
+
+
+def batch_by_cosine(score: Sequence[float], cosine: Optional[np.ndarray], size: int,
+                    max_similarity: float = 0.98) -> List[int]:
+    """A batch of `size` by score, skipping a candidate too similar to one already picked.
+
+    This is the rule :func:`suggest` has always used, as a function of its own so that the two
+    can be measured against each other.
+    """
+    s = np.asarray(score, float)
+    taken: List[int] = []
+    for i in np.argsort(-s):
+        if len(taken) >= int(size):
             break
         i = int(i)
-        if cos is not None and any(cos[i, p.index] > max_similarity for p in picks):
+        if cosine is not None and any(cosine[i, j] > max_similarity for j in taken):
             continue
-        picks.append(Suggestion(index=i, name=nm[i], mean=float(mu[i]), sd=float(sd[i]),
-                                score=float(score[i]), distance=float(dist[i])))
-    return picks
+        taken.append(i)
+    return taken
+
+
+def log_determinant(cov: np.ndarray, rows: Sequence[int]) -> float:
+    """log det of the covariance block of a batch, which is what a D-optimal rule maximises."""
+    r = np.asarray(rows, int)
+    if not len(r):
+        return float("-inf")
+    block = np.asarray(cov, float)[np.ix_(r, r)]
+    sign, value = np.linalg.slogdet(block)
+    return float(value) if sign > 0 else float("-inf")
 
 
 # --------------------------------------------------------------------------- #
@@ -203,6 +315,29 @@ def _fit_predict(K: np.ndarray, y: np.ndarray, have: np.ndarray, pool: np.ndarra
     return mu, np.sqrt(np.maximum(var, 0.0))
 
 
+def _fit_predict_cov(K: np.ndarray, y: np.ndarray, have: np.ndarray, pool: np.ndarray,
+                     lam: float, fit_bias: bool = True):
+    """(mean, the whole posterior covariance of the pool) from a fit on what has been made.
+
+    The diagonal of that covariance is what :func:`_fit_predict` returns; a batch rule needs the
+    rest of it, because what a second measurement adds depends on the first.
+    """
+    from .model import krr_fit
+
+    Ktr = K[np.ix_(have, have)]
+    a, b = krr_fit(Ktr, y[have], lam, fit_bias)
+    Kxt = K[np.ix_(pool, have)]
+    mu = Kxt @ a + b
+    A = Ktr + lam * np.eye(len(have))
+    try:
+        L = np.linalg.cholesky(A)
+        V = np.linalg.solve(L, Kxt.T)
+        cov = K[np.ix_(pool, pool)] - V.T @ V
+    except np.linalg.LinAlgError:
+        cov = K[np.ix_(pool, pool)] - Kxt @ np.linalg.pinv(A) @ Kxt.T
+    return mu, 0.5 * (cov + cov.T)
+
+
 def _rmse(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.sqrt(np.mean((np.asarray(a, float) - np.asarray(b, float)) ** 2)))
 
@@ -210,7 +345,8 @@ def _rmse(a: np.ndarray, b: np.ndarray) -> float:
 def learning_curve(kernels: Dict[float, np.ndarray], y: Sequence[float], kind: str,
                    start: Sequence[int], steps: int, lams: Sequence[float] = (1e-2, 0.1, 1.0),
                    beta: float = 1.0, xi: float = 0.0, seed: int = 0,
-                   fit_bias: bool = True) -> Dict[str, list]:
+                   fit_bias: bool = True, batch: int = 1, batch_rule: str = "cosine",
+                   max_similarity: float = 0.98) -> Dict[str, list]:
     """Run the acquisition loop over a set whose activities are already known.
 
     `kernels` maps an attenuation to its full joint kernel over every molecule, so the loop can
@@ -218,8 +354,14 @@ def learning_curve(kernels: Dict[float, np.ndarray], y: Sequence[float], kind: s
     and nothing else, which is what item B4 made affordable.  Nothing outside `start` and the
     molecules the rule asks for is ever looked at.
 
-    Returns, after every acquisition: the RMSE and q2 of the model on the molecules *not* yet
-    made, the best activity among those made, and which molecule was taken.
+    With `batch` above one the model is refitted once per batch and not once per molecule,
+    which is what a laboratory that makes ten compounds at a time does (plan item MC2).
+    `batch_rule` is then how the rest of the batch is chosen after the first pick: ``"cosine"``
+    takes the next best scores and skips what looks too similar, ``"covariance"`` recomputes the
+    score from the posterior covariance conditioned on the picks already made.
+
+    Returns, after every acquisition or batch: the RMSE and q2 of the model on the molecules
+    *not* yet made, the best activity among those made, and which molecules were taken.
     """
     from .evidence import log_evidence
 
@@ -246,7 +388,13 @@ def learning_curve(kernels: Dict[float, np.ndarray], y: Sequence[float], kind: s
                     pick = (e, float(a), float(lam))
         _e, alpha, lam = pick
         K = kernels[alpha]
-        mu, sd = _fit_predict(K, y, h, p, lam, fit_bias)
+        want = min(int(batch), len(pool))
+        if want > 1 and batch_rule == "covariance":
+            mu, cov = _fit_predict_cov(K, y, h, p, lam, fit_bias)
+            sd = np.sqrt(np.maximum(np.diag(cov), 0.0))
+        else:
+            mu, sd = _fit_predict(K, y, h, p, lam, fit_bias)
+            cov = None
         dist = _distance_to_training(K[np.ix_(p, h)], np.diag(K)[p], np.diag(K)[h])
         score = acquisition_scores(kind, mu, sd, best=float(np.max(y[h])), beta=beta, xi=xi,
                                    distance=dist, rng=rng)
@@ -258,9 +406,36 @@ def learning_curve(kernels: Dict[float, np.ndarray], y: Sequence[float], kind: s
         out["best"].append(float(np.max(y[h])))
         out["alpha"].append(alpha)
         out["lam"].append(lam)
-        taken = int(p[int(np.argmax(score))])
-        out["taken"].append(taken)
-        have.append(taken)
-        pool.remove(taken)
+        if want <= 1:
+            chosen = [int(np.argmax(score))]
+        elif batch_rule == "covariance":
+            chosen = batch_by_covariance(kind, mu, cov, want, best=float(np.max(y[h])),
+                                         beta=beta, xi=xi, distance=dist, rng=rng)
+        elif batch_rule == "cosine":
+            cosine = None
+            if max_similarity < 1.0 and len(p) > 1:
+                block = K[np.ix_(p, p)]
+                d = np.sqrt(np.maximum(np.diag(block), 1e-300))
+                cosine = block / np.outer(d, d)
+            chosen = batch_by_cosine(score, cosine, want, max_similarity=max_similarity)
+        else:
+            raise ValueError(f"unknown batch rule {batch_rule!r}; one of "
+                             f"{', '.join(BATCH_RULES)}")
+        taken = [int(p[int(c)]) for c in chosen]
+        out["taken"].append(taken if want > 1 else taken[0])
+        for t in taken:
+            have.append(t)
+            pool.remove(t)
     out["have"] = list(have)
+    # the error after the last acquisition, which the loop above never reaches: every entry of
+    # "rmse" is measured before the molecules of that step are acquired, and a batch run has few
+    # of them
+    if pool:
+        h, p = np.asarray(have, int), np.asarray(pool, int)
+        mu, _sd = _fit_predict(kernels[out["alpha"][-1]], y, h, p, out["lam"][-1], fit_bias)
+        out["rmse_end"] = _rmse(y[p], mu)
+        out["q2_end"] = (1.0 - (out["rmse_end"] ** 2) / var_all if var_all > 0 else float("nan"))
+    else:
+        out["rmse_end"] = float("nan")
+        out["q2_end"] = float("nan")
     return out

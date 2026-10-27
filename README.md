@@ -1822,6 +1822,40 @@ against shuffling the numbers among the molecule's atoms is +0.35 for
 phenyl — so this is a statement about a series of hundreds of guests, not a reading for one
 compound.
 
+### Choosing ten compounds at once
+
+A laboratory makes ten compounds at a time, and a plate has to be chosen before any of it is
+measured. The cheap rule in `cmfqsar/active.py` takes the best acquisition scores and skips a
+candidate too similar to one already picked, which needs a threshold. Plan item MC2 adds the
+rule the posterior implies: condition the covariance on each pick, which is one Cholesky step,
+and score again from the conditional standard deviations. With the variance acquisition that is
+the batch of largest determinant, the classical D-optimal design.
+
+Measured with the protocol of the active-learning section -- eight Sutherland sets, twenty
+molecules to start, ten repeats, the hyper-parameters reselected by the evidence at every fit --
+in batches of ten:
+
+| how the batch is chosen | fits | best acquired | error on what is left |
+| --- | ---: | ---: | ---: |
+| one at a time | 35 | 8.878 | 1.034 |
+| ei, similarity filter | 3 | 8.902 | 1.041 |
+| ei, covariance | 3 | 8.939 | 1.025 |
+| variance, similarity filter | 3 | 8.540 | 1.029 |
+| variance, covariance (largest determinant) | 3 | 8.403 | 1.043 |
+
+**The gate is not met and that closes the item.** None of the four paired comparisons favours
+the covariance rule beyond its interval and one favours the filter, so the cheap filter is
+enough -- which is what E2 predicted, the posterior standard deviation being nearly flat over
+these pools. **What a batch costs is nothing measurable**: against one at a time, the batch
+differs by +0.025 [-0.025, +0.079] in the best acquired and +0.008 [-0.016, +0.033] in the
+error, at a tenth of the fits.
+
+```bash
+cmf suggest model.cmf --candidates library.sdf --kind ei -n 10 --batch-rule covariance
+python benchmarks/run_batch.py        # results/batch/table.md
+```
+
+
 ### Growing a bound fragment into the gap
 
 A fragment that binds leaves the rest of the site empty, and the next question is what to put

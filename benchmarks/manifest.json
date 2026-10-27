@@ -1,6 +1,6 @@
 {
- "commit": "2c739084852f02b81bb3c4976650004494568a0e",
- "created": "2026-10-27T17:05:59",
+ "commit": "e38e0a9547a9168af1e32dc48646c6e0a670c4c9",
+ "created": "2026-10-27T17:30:08",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1855,6 +1855,8 @@
   "benchmarks/results/fluctuation/THR.json": "ff89959e81b62714f93e55598e43e5c18d3dcaef8cc561b5cf02f738584771e2",
   "benchmarks/results/fluctuation/steroids.json": "f334ce7afee1517955b57b9462f59e94f6e45a9474d489e4c44266eca32b3a9f",
   "benchmarks/results/fluctuation/table.md": "6c1484b788a629fde0b50c2ae60e260fbc80cd77d4d8d35271258f53d938c7ab",
+  "benchmarks/results/fraggrow/summary.json": "b45ac920a1af538e6b97dfc49ecb0152711af80c4d63783ecd3e3ad14b43a83b",
+  "benchmarks/results/fraggrow/table.md": "03c738d30cef65e26aa8b9a8e6794b86656b646091d64affc51a3d60a1734d41",
   "benchmarks/results/fusion/AChE.json": "0a5ced40cbb3549fd53dedf8dedea786c061b1c7d53331c95930d831b45ae20f",
   "benchmarks/results/fusion/BZR.json": "6337fc4829245a0b649114b44de8a53e89af88d99f3cc699316760bd14dd24f6",
   "benchmarks/results/fusion/COX2.json": "bc52a0a6427bc44914316572e44d4d2ef0d44457fa0b6d4626071e5b32da08a6",

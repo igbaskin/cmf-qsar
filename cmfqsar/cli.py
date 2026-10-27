@@ -1679,7 +1679,7 @@ def cmd_suggest(args):
           f"{best:.3f}")
     print(f"{len(ds)} candidates, ranked by {args.acquire}: {PURPOSE[args.acquire]}")
     picks = suggest(model, table, kind=args.acquire, n=args.top, beta=args.beta, xi=args.xi,
-                    names=list(ds.names), max_similarity=args.max_similarity, seed=args.seed)
+                    names=list(ds.names), max_similarity=args.max_similarity, batch_rule=args.batch_rule, seed=args.seed)
     for k, p in enumerate(picks, start=1):
         print(f"  {k:3d}. " + p.describe(args.acquire))
     if args.out:
@@ -4230,6 +4230,11 @@ def main(argv=None):
     sg.add_argument("--xi", type=float, default=0.0, metavar="X",
                     help="with --acquire ei: how much a candidate must exceed the best made by "
                          "before the improvement counts")
+    sg.add_argument("--batch-rule", default="cosine", choices=["cosine", "covariance"],
+                    help="how a batch of more than one is chosen (plan item MC2). cosine: the "
+                         "best scores in order, skipping what looks too similar. covariance: "
+                         "the score recomputed after every pick from the posterior covariance, "
+                         "which needs no similarity threshold")
     sg.add_argument("--max-similarity", type=float, default=0.98, metavar="C",
                     help="a candidate more similar than this to one already picked is skipped, "
                          "so that a batch is not one molecule several times")
