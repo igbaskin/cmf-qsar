@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 67 modules and about 29,650 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 67 modules and about 29,750 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-six subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 970 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 974 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1810,8 +1810,9 @@ on the same folds.
   the environment with its co-field instead of the molecule. Gate: the pKa co-field of the
   substituted benzoic acids reproduces the meta/para picture of `benchmarks/results/hammett/`
   from per-atom data alone.
-  **Done 27 October 2026, and it splits the other way from LP2: the frame gains on the model
-  and the co-field does not reproduce the picture the gate asks for.** `cmfqsar/localalign.py`:
+  **Done 27 October 2026, and it splits the other way from LP2: the frame gains on the model,
+  and the co-field reproduces the substituent table once it is read by atom type instead of by
+  charge.** `cmfqsar/localalign.py`:
   `local_frames` fixes the rotation of an environment from two of the centre's bonded neighbours,
   grouped by **atom type and nothing else** -- a frame that depended on which of two ring bonds is
   a hundredth of an angstrom longer would not be a rule -- and every choice the type leaves open
@@ -1862,10 +1863,19 @@ on the same folds.
   nothing is averaged -- and the posed kernel loses to the count, -0.101 [-0.164, -0.037], and differs
   from the invariant kernel by -0.142 [-0.198, -0.088]. A co-field read off a model that does not predict
   would be an interpretation of noise, so none is drawn.
-  **Not done:** no panel in the application (the co-field leaves as a cube file); no quantum
-  charges for the shift set, which is the first thing to try next, together with reading the
-  co-field of a continuous indicator field of one atom type -- what an oxygen at the ortho
-  position does, rather than what negative charge there does.
+  **The indicator fields do reproduce the table, which the electrostatic field could not.** A
+  partial charge cannot tell a pi-donor from a pi-acceptor; an atom type can. With one continuous
+  indicator field per Sybyl type (17 of them, 22 fields in all, envelope width
+  4.5 A, q2 +0.882 and 4.55 ppm out of fold, against +0.872 and 4.75 for the five fields alone
+  at that width) the
+  same machinery reports, for each type and each ring position, **what one atom of that type
+  there adds to the predicted shift in ppm**: `cofields.atom_effect`, the closed-form overlap of
+  the co-field with that atom's own Gaussian, with the weight the envelope gives it at that
+  distance, checked in the tests against what the model's own prediction does when the atom is
+  added. Over the 15 (type, ring position) pairs with a measured value -- the ipso position left out, since it is the largest effect in every row -- the correlation is +0.89 at a slope of 0.46, and +0.72 with ipso included. The comparison the electrostatic field could not make comes out: the amino nitrogen lowers the para carbon (-5.9 +- 1.4 ppm against -9.8 measured, four standard deviations from zero) while the sp2 carbon raises it (+0.7 +- 0.7 against +4.2), and the ether oxygen sits with the donor (-1.5 +- 0.9). So the local co-field does carry the substituent table; it was the field it was read from that could not. The sizes are compressed -- root mean square difference per type Cl 0.7, C.2 1.8, C.3 2.5, N.pl3 8.1, O.3 14.0 ppm -- by the ridge, by the envelope (a para atom enters at 0.41 of itself) and by a set whose rings mostly carry several substituents at once.
+  **Not done:** no panel in the application (the co-field leaves as a cube file), and no quantum
+  charges for the shift set, which is what the *electrostatic* co-field would need to carry the
+  resonance that the indicator fields carry by type.
 * **LP4. Conformers, tautomers and states for a local target.** A shift is a conformer average
   and a pKa is a property of a site in one protonation state. The ensemble builder gives the
   first with no extra work once an environment is a field; the second needs members with their

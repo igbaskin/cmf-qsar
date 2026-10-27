@@ -1822,7 +1822,10 @@ def cmd_local(args):
         raise SystemExit(f"no atom carries '{args.target}': 'cmf atoms --list' says what the "
                          f"file has")
     physchem, atom_props = _split_fields(args.fields)
-    fieldset = FieldSet.create(physchem=physchem, atom_properties=atom_props,
+    cif = cif_types_in(ds.mols, "sybyl", args.cif_min) if args.cif else []
+    if cif:
+        print(f"  {len(cif)} indicator fields: " + ", ".join(cif))
+    fieldset = FieldSet.create(physchem=physchem, atom_properties=atom_props, cif_types=cif,
                                charge_model=args.charges, param_scheme=args.param)
     fields = [build_fields(m, fieldset, name=n) for m, n in zip(ds.mols, ds.names)]
 
@@ -3794,6 +3797,13 @@ def main(argv=None):
     lo.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd",
                     help="the fields the environment is built from; prop:NAME takes a per-atom "
                          "property of the file, a quantum charge or a Fukui index")
+    lo.add_argument("--cif", action="store_true",
+                    help="add one continuous indicator field per atom type. With --align this is "
+                         "what lets a co-field say what an atom of a given type at a given place "
+                         "does, which a charge cannot: a donor and an acceptor carry opposite "
+                         "charges and move a shift the same way (plan item LP3)")
+    lo.add_argument("--cif-min", type=int, default=10, metavar="N",
+                    help="an indicator field is made for a type carried by at least N molecules")
     lo.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
     lo.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
     lo.add_argument("--activity", default=None, help="the molecule-level activity, if any")

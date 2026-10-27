@@ -60,9 +60,10 @@ sys.path.insert(0, HERE)
 from rdkit import Chem, RDLogger  # noqa: E402
 
 from cmfqsar.atomtargets import AtomTargets, read_atom_target  # noqa: E402
-from cmfqsar.cofields import cofield_at_points, contrast_at  # noqa: E402
+from cmfqsar.cofields import (atom_effect, atom_effect_covariance,  # noqa: E402
+                              cofield_at_points, contrast_at, dual_covariance_factor)
 from cmfqsar.dataio import load_dataset  # noqa: E402
-from cmfqsar.fields import FieldSet, build_fields  # noqa: E402
+from cmfqsar.fields import FieldSet, build_fields, cif_types_in  # noqa: E402
 from cmfqsar.localalign import (RING_POSITIONS, overlap_kernel, posed_environments,  # noqa: E402
                                 ring_frames, well_posed)
 from cmfqsar.localenv import (choose_lam, count_features, count_kernel,  # noqa: E402
@@ -91,6 +92,29 @@ SCS = {"methoxy (donor)": {"ipso": 31.4, "ortho": -14.4, "meta": 1.0, "para": -7
 SCS_SIGN = {"methoxy (donor)": -1.0, "nitro (acceptor)": +1.0}
 POSITIONS = ("ipso", "ortho", "meta", "para")
 SCRAMBLES = 20
+
+
+#: measured substituent-induced 13C shifts on benzene, in ppm, by ring position, for substituents
+#: whose first atom carries these Sybyl types.  Transcribed from the standard tables (Pretsch,
+#: Buhlmann and Badertscher, Structure Determination of Organic Compounds); as with the Hammett
+#: constants of `examples/hammett`, check a number against the book before quoting it.  The point
+#: of the list is the contrast between the rows, which is not in doubt: a donor (O.3, N.pl3)
+#: lowers the para carbon and an acceptor (C.2, as in acetophenone) raises it, while both raise
+#: the carbon they sit on.
+TYPE_SCS = {
+    "O.3": ((31.4, -14.4, 1.0, -7.7), "methoxy (anisole)"),
+    "N.pl3": ((18.0, -13.3, 0.9, -9.8), "amino (aniline)"),
+    "C.3": ((9.3, 0.7, -0.1, -2.9), "methyl (toluene)"),
+    "C.2": ((9.3, 0.2, 0.2, 4.2), "acetyl (acetophenone)"),
+    "Cl": ((6.2, 0.4, 1.3, -1.9), "chlorine (chlorobenzene)"),
+    "Br": ((-5.4, 3.3, 2.2, -1.0), "bromine (bromobenzene)"),
+}
+#: the envelope width the indicator co-fields are read at: wider than the one the physico-chemical
+#: co-fields use, because the para position is 4.2 A from the centre and an envelope that damps it
+#: to nothing cannot be asked what sits there
+INDICATOR_RHO = 0.05
+#: a type needs at least this many samples carrying it at a position before that number is read
+MIN_SEEN = 20
 
 
 def _say(text):
@@ -470,6 +494,137 @@ def run_pka(rhos=RHOS, folds=10, seed=0, max_molecules=0, results=RESULTS):
     return out
 
 
+def occupancy(fields, targets, rho, tol=0.75):
+    """How many samples carry an atom of each type at each ring position.
+
+    A co-field is read at a place; what it is worth there depends on how often the training set
+    put anything there.  This counts it, by posing every sample and looking for an atom within
+    `tol` of each of the four positions, on both sides of the x axis for the two that have a
+    mirror image.
+    """
+    seen = {}
+    for r in range(len(targets)):
+        k, i = int(targets.molecule[r]), int(targets.atom[r])
+        env = environment(fields[k], i, rho)
+        frames = ring_frames(env)
+        if not frames:
+            continue
+        c = np.asarray(env.coords, float) @ frames[0].T
+        for name, p in RING_POSITIONS.items():
+            for sign in (1.0, -1.0):
+                q = np.array([p[0], sign * p[1], p[2]])
+                d = np.linalg.norm(c - q, axis=1)
+                j = int(np.argmin(d))
+                if d[j] < tol:
+                    key = (str(env.atom_types[j]), name)
+                    seen[key] = seen.get(key, 0) + 1
+                if abs(p[1]) < 1e-9:
+                    break
+    return seen
+
+
+def indicator_effects(model, table, y, lam, fieldset, rho, sigma, seen):
+    """What one atom of each indicator type at each ring position does to the predicted shift.
+
+    The co-field says what the prediction gains per unit of field, which is not a number anyone
+    can check.  `cofields.atom_effect` turns it into the effect of **one atom** placed there, in
+    ppm, which is what a table of substituent-induced shifts holds.  The atom enters with the
+    weight the envelope gives it at that distance -- an atom at the para position counts for
+    exp(-rho d^2) of itself in the sample the model was fitted on -- so the number is what a real
+    substituent at that position contributes, not what an undamped one would.
+    """
+    pts = np.array([RING_POSITIONS[k] for k in POSITIONS])
+    damp = np.exp(-float(rho) * np.sum(pts ** 2, axis=1))
+    model.params = dict(model.params)
+    model.params["lam"] = float(lam)
+    model.fit(table, y, cv_folds=5, cv_seed=0, reuse_kernels=True)
+    factor = dual_covariance_factor(model)
+    out = {}
+    for f, name in enumerate(fieldset.names):
+        if not name.startswith("cif:"):
+            continue
+        t = name[4:]
+        row = {"type": t, "seen": {p: int(seen.get((t, p), 0)) for p in POSITIONS}}
+        for k, p in enumerate(POSITIONS):
+            v = float(atom_effect(model, f, pts[k:k + 1], weight=float(damp[k]))[0])
+            cov = atom_effect_covariance(model, f, pts[k:k + 1], weight=float(damp[k]),
+                                         sigma=sigma, factor=factor)
+            row[p] = v
+            row["sd_" + p] = float(np.sqrt(max(float(cov[0, 0]), 0.0)))
+        # para against meta, with the covariance between the two places
+        cov2 = atom_effect_covariance(model, f, pts[[2, 3]], weight=1.0, sigma=sigma,
+                                      factor=factor)
+        w = np.array([-float(np.sign(row["meta"]) or 1.0) * damp[2],
+                      float(np.sign(row["para"]) or 1.0) * damp[3]])
+        row["para_minus_meta"] = abs(row["para"]) - abs(row["meta"])
+        row["para_minus_meta_sd"] = float(np.sqrt(max(float(w @ cov2 @ w), 0.0)))
+        row["para_minus_meta_z"] = (row["para_minus_meta"] / row["para_minus_meta_sd"]
+                                    if row["para_minus_meta_sd"] > 0 else float("nan"))
+        if t in TYPE_SCS:
+            want = np.array(TYPE_SCS[t][0], float)
+            got = np.array([row[p] for p in POSITIONS], float)
+            row["scs"] = list(want)
+            row["scs_what"] = TYPE_SCS[t][1]
+            row["signs"] = int(np.sum(np.sign(got) == np.sign(want)))
+            row["r"] = (float(np.corrcoef(got, want)[0, 1])
+                        if np.std(got) > 0 and np.std(want) > 0 else float("nan"))
+            row["rms"] = float(np.sqrt(np.mean((got - want) ** 2)))
+        out[t] = row
+    return out
+
+
+def run_indicator(rho=INDICATOR_RHO, folds=10, seed=0, max_molecules=0, results=RESULTS,
+                  min_molecules=10):
+    """The same co-field, read from the indicator fields instead of the five physico-chemical ones.
+
+    The electrostatic field carries a partial charge, and a partial charge cannot tell a pi-donor
+    from a pi-acceptor: methoxy and nitro both raise the carbon they sit on while their first
+    atoms carry opposite charges, which is why no model linear in that field reproduced the ring
+    picture.  A continuous indicator field carries the atom **type** instead, so "an ether oxygen
+    at the ortho position" and "a carbonyl carbon at the ortho position" are different features
+    and may have different co-fields.  That is how a table of substituent effects is written, and
+    this asks whether the model writes the same table.
+    """
+    mols, names, targets = aromatic_samples(max_molecules=max_molecules)
+    cif = cif_types_in(mols, "sybyl", min_molecules=min_molecules)
+    fieldset = FieldSet.create(cif_types=cif)
+    fields = [build_fields(m, fieldset, name=n) for m, n in zip(mols, names)]
+    _say(f"=== indicator fields: {len(cif)} types on {len(targets)} carbons in "
+         f"{targets.n_measured_molecules} molecules, rho {rho:g}")
+    t0 = time.time()
+    envs = posed_environments(fields, targets, rho=rho, frames_of=ring_frames)
+    model, table, K = overlap_kernel(envs, fieldset)
+    _say(f"  kernel of {fieldset.n_fields} fields in {time.time() - t0:.0f} s")
+    best = choose_lam(K, targets, folds=folds, seed=seed, name="posed overlap with indicators")
+    _say("  " + best.summary())
+    seen = occupancy(fields, targets, rho)
+    eff = indicator_effects(model, table, np.asarray(targets.y, float), best.lam, fieldset, rho,
+                            best.error, seen)
+    for t, row in sorted(eff.items(), key=lambda kv: -sum(kv[1]["seen"].values())):
+        if max(row["seen"].values()) < MIN_SEEN:
+            continue
+        _say(f"  {t:7s} " + "  ".join(f"{p} {row[p]:+6.1f} +- {row['sd_' + p]:4.1f} "
+                                      f"(n {row['seen'][p]})" for p in POSITIONS))
+        if "r" in row:
+            _say(f"          measured {row['scs_what']}: "
+                 + ", ".join(f"{v:+.1f}" for v in row["scs"])
+                 + f"; r {row['r']:+.2f}, signs {row['signs']}/4, "
+                   f"root mean square difference {row['rms']:.1f} ppm")
+    out = dict(n_samples=len(targets), n_molecules=targets.n_measured_molecules, folds=folds,
+               seed=seed, rho=float(rho), types=list(cif), n_fields=fieldset.n_fields,
+               lam=float(best.lam), q2=best.q2, error=best.error, min_seen=MIN_SEEN,
+               envelope_at={k: float(np.exp(-float(rho) * float(np.sum(np.asarray(v) ** 2))))
+                            for k, v in RING_POSITIONS.items()},
+               effects=eff)
+    os.makedirs(results, exist_ok=True)
+    draw = [n for n in ("cif:O.3", "cif:C.2") if n in fieldset.names]
+    if draw:
+        plot_cofield(model, fieldset.names, os.path.join(results, "indicator.png"), fields=draw)
+    with io.open(os.path.join(results, "indicator.json"), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
 def report(results=RESULTS):
     path = os.path.join(results, "summary.json")
     if not os.path.exists(path):
@@ -612,6 +767,64 @@ def report(results=RESULTS):
                     f"{best['aligned_against_invariant'][0]:+.3f} "
                     f"[{best['aligned_against_invariant'][1]:+.3f}, "
                     f"{best['aligned_against_invariant'][2]:+.3f}].", ""]
+    path = os.path.join(results, "indicator.json")
+    if os.path.exists(path):
+        with io.open(path, encoding="utf-8") as fh:
+            q = json.load(fh)
+        out += ["## The same co-field, read from the indicator fields", "",
+                "A partial charge cannot tell a pi-donor from a pi-acceptor: methoxy and nitro "
+                "both raise the carbon they sit on while their first atoms carry opposite "
+                "charges. A continuous indicator field carries the atom **type** instead, so an "
+                "ether oxygen at the ortho position and a carbonyl carbon at the ortho position "
+                "are different features with their own co-fields. That is how a table of "
+                "substituent effects is written, and this asks whether the model writes the same "
+                f"table. {q['n_fields']} fields ({len(q['types'])} types and the five "
+                f"physico-chemical ones), envelope width rho {q['rho']:g}, q2 {q['q2']:+.3f}, "
+                f"error {q['error']:.2f} ppm out of fold.", "",
+                "The numbers are **what one atom of that type at that position does to the "
+                "predicted shift, in ppm** (`cofields.atom_effect`), with the weight the envelope "
+                "gives an atom at that distance, so they are what a real substituent there "
+                "contributes. `n` is how many of the carbons had an atom of that type at that "
+                f"position; a row is shown when one position reaches {q['min_seen']}.", "",
+                "| type | ipso | ortho | meta | para | measured |",
+                "| --- | ---: | ---: | ---: | ---: | --- |"]
+        rows = sorted(q["effects"].values(), key=lambda r: -sum(r["seen"].values()))
+        for r in rows:
+            if max(r["seen"].values()) < q["min_seen"]:
+                continue
+            cells = " | ".join(f"{r[p]:+.1f} +- {r['sd_' + p]:.1f} (n {r['seen'][p]})"
+                               for p in POSITIONS)
+            got = (", ".join(f"{v:+.1f}" for v in r["scs"]) + f" ({r['scs_what']})"
+                   if "scs" in r else "--")
+            out.append(f"| {r['type']} | {cells} | {got} |")
+        with_scs = [r for r in rows if "r" in r and max(r["seen"].values()) >= q["min_seen"]]
+        if with_scs:
+            out += ["", "| type | r with the measured row | signs | root mean square difference "
+                        "(ppm) |",
+                    "| --- | ---: | ---: | ---: |"]
+            for r in with_scs:
+                out.append(f"| {r['type']} | {r['r']:+.2f} | {r['signs']}/4 | {r['rms']:.1f} |")
+            got = np.concatenate([[r[p] for p in POSITIONS] for r in with_scs])
+            want = np.concatenate([r["scs"] for r in with_scs])
+            overall = float(np.corrcoef(got, want)[0, 1])
+            out += ["", f"Over all {len(got)} (type, position) pairs with a measured row the "
+                        f"correlation is {overall:+.2f}.", ""]
+            donor = next((r for r in with_scs if r["type"] == "O.3"), None)
+            acceptor = next((r for r in with_scs if r["type"] == "C.2"), None)
+            if donor and acceptor:
+                out.append(
+                    "The sharpest question these fields can answer is the one the electrostatic "
+                    "field could not: a donor lowers the para carbon and an acceptor raises it. "
+                    f"Here the ether oxygen gives {donor['para']:+.1f} +- {donor['sd_para']:.1f} "
+                    f"at para and the sp2 carbon {acceptor['para']:+.1f} +- "
+                    f"{acceptor['sd_para']:.1f}, against {donor['scs'][3]:+.1f} and "
+                    f"{acceptor['scs'][3]:+.1f} measured.")
+            out.append("`indicator.png` draws the two co-fields in the ring plane side by "
+                       "side. Both are positive where a substituent sits on the measured "
+                       "carbon and negative at the ortho positions; what separates the "
+                       "donor from the acceptor is the weaker pattern further out, which "
+                       "the table above reads off at the points rather than by eye.")
+            out.append("")
     return "\n".join(out)
 
 
@@ -632,9 +845,9 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--scrambles", type=int, default=SCRAMBLES)
     ap.add_argument("--max-molecules", type=int, default=0)
-    ap.add_argument("--only", default="all", choices=["all", "ring", "pka"],
-                    help="which half to compute: the aromatic ring site, the carboxyl site, or "
-                         "both (default)")
+    ap.add_argument("--only", default="all", choices=["all", "ring", "pka", "indicator"],
+                    help="which part to compute: the aromatic ring site, the carboxyl site, the "
+                         "indicator co-fields, or all of them (default)")
     ap.add_argument("--report", nargs="?", const="-", default=None, metavar="PATH")
     a = ap.parse_args()
     RDLogger.DisableLog("rdApp.*")
@@ -650,6 +863,8 @@ def main():
     if a.only in ("all", "ring"):
         run(rhos=a.rho, cofield_rho=a.cofield_rho, folds=a.folds, seed=a.seed,
             max_molecules=a.max_molecules, scrambles=a.scrambles)
+    if a.only in ("all", "indicator"):
+        run_indicator(folds=a.folds, seed=a.seed, max_molecules=a.max_molecules)
     if a.only in ("all", "pka"):
         run_pka(rhos=a.rho, folds=a.folds, seed=a.seed, max_molecules=a.max_molecules)
     print()

@@ -362,9 +362,95 @@ def test_the_command_fits_the_posed_model_and_writes_a_cofield(tmp_path, capsys)
     cube = os.path.join(str(tmp_path), "co.cube")
     capsys.readouterr()
     main(["local", path, "--target", "shift", "--rho", "0.1", "--align", "--site", "ring",
-          "--folds", "3", "--cofield", cube])
+          "--folds", "3", "--cif", "--cif-min", "2", "--cofield", cube])
     text = capsys.readouterr().out
     assert "posed overlap" in text and "poses averaged" in text
+    assert "indicator fields" in text          # --cif added one field per atom type
     assert os.path.exists(cube)
     with io.open(cube, encoding="utf-8") as fh:
         assert "co-field" in fh.readline().lower()
+
+# ------------------------------------------------- what one atom placed there would do
+
+
+def _with_extra_atom(env, point, f, weight=1.0):
+    """The same environment with one more atom, carrying weight in field `f` and nothing else."""
+    import numpy as np
+
+    out = type(env)(**{k: v for k, v in vars(env).items()})
+    out.coords = np.vstack([np.asarray(env.coords, float), np.asarray(point, float)])
+    w = np.zeros((1, env.weights.shape[1]))
+    w[0, f] = float(weight)
+    out.weights = np.vstack([np.asarray(env.weights, float), w])
+    out.radii = np.concatenate([np.asarray(env.radii, float), [1.7]])
+    out.symbols = list(env.symbols) + ["C"]
+    out.atom_types = list(env.atom_types) + ["C.3"]
+    out.charges = np.concatenate([np.asarray(env.charges, float).reshape(-1)[:env.n_atoms],
+                                  [0.0]])
+    out.bonds = np.asarray(env.bonds, int).reshape(-1, 2)
+    out.name = env.name + "+1"
+    return out
+
+
+def test_an_atom_effect_is_the_prediction_it_would_change(posed_set):
+    """The number the co-field gives for an atom placed somewhere has to be that atom's effect."""
+    from cmfqsar.cofields import atom_effect
+    from cmfqsar.fields import AtomTable
+
+    _fields, t, envs, fs = posed_set
+    model, table, _K = overlap_kernel(envs, fs)
+    model.fit(table, np.asarray(t.y, float), cv_folds=3, cv_seed=0, reuse_kernels=True)
+    f = fs.names.index("electrostatic")
+    point = RING_POSITIONS["ortho"]
+    before = float(model.predict(AtomTable.from_molecules([envs[0]]))[0])
+    after = float(model.predict(AtomTable.from_molecules(
+        [_with_extra_atom(envs[0], point, f, 0.4)]))[0])
+    said = float(atom_effect(model, f, [point], weight=0.4)[0])
+    assert said == pytest.approx(after - before, rel=1e-6, abs=1e-9)
+    assert abs(said) > 1e-12
+
+
+def test_the_effect_is_linear_in_the_weight_and_falls_off_with_distance(posed_set):
+    from cmfqsar.cofields import atom_effect
+
+    _fields, t, envs, fs = posed_set
+    model, table, _K = overlap_kernel(envs, fs)
+    model.fit(table, np.asarray(t.y, float), cv_folds=3, cv_seed=0, reuse_kernels=True)
+    f = fs.names.index("electrostatic")
+    pts = np.array([RING_POSITIONS[k] for k in ("ipso", "ortho", "meta", "para")])
+    one = atom_effect(model, f, pts, weight=1.0)
+    assert atom_effect(model, f, pts, weight=2.5) == pytest.approx(2.5 * one)
+    far = atom_effect(model, f, np.array([[0.0, 0.0, 40.0]]), weight=1.0)
+    assert abs(float(far[0])) < 1e-9
+    wide = atom_effect(model, f, pts, weight=1.0, width=0.2)
+    assert not np.allclose(wide, one)          # a fatter probe sees a different average
+
+
+def test_a_field_with_no_single_width_refuses_a_probe(posed_set):
+    from cmfqsar.cofields import atom_effect
+
+    _fields, t, envs, fs = posed_set
+    model, table, _K = overlap_kernel(envs, fs)
+    model.fit(table, np.asarray(t.y, float), cv_folds=3, cv_seed=0, reuse_kernels=True)
+    with pytest.raises(ValueError, match="no single width"):
+        atom_effect(model, fs.names.index("steric"), [RING_POSITIONS["ipso"]])
+
+
+def test_the_error_of_an_atom_effect_uses_the_same_basis(posed_set):
+    from cmfqsar.cofields import atom_effect, atom_effect_covariance
+
+    _fields, t, envs, fs = posed_set
+    model, table, _K = overlap_kernel(envs, fs)
+    model.fit(table, np.asarray(t.y, float), cv_folds=3, cv_seed=0, reuse_kernels=True)
+    f = fs.names.index("hba")
+    pts = np.array([RING_POSITIONS[k] for k in ("ortho", "meta")])
+    cov = atom_effect_covariance(model, f, pts, sigma=1.0)
+    assert cov.shape == (2, 2)
+    assert cov == pytest.approx(cov.T)
+    assert (np.diag(cov) >= 0).all()
+    # twice the noise is twice the standard deviation
+    cov2 = atom_effect_covariance(model, f, pts, sigma=2.0)
+    assert cov2 == pytest.approx(4.0 * cov, rel=1e-9)
+    # and a weight of zero leaves nothing to be uncertain about
+    assert atom_effect(model, f, pts, weight=0.0) == pytest.approx(np.zeros(2))
+

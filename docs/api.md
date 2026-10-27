@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 73 modules, 125 classes with 472 public methods, and 551 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 73 modules, 125 classes with 472 public methods, and 554 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1280,12 +1280,14 @@ than the assay's, which errs in the conservative direction.  The residual of the
 far too small -- a model with a small lambda reproduces its training set almost exactly,
 which says nothing about the noise in it.
 
-### `per_molecule_fields(model: CMFModel, f: int, points: np.ndarray, chunk: int=0) -> np.ndarray`
+### `per_molecule_fields(model: CMFModel, f: int, points: np.ndarray, chunk: int=0, basis=None) -> np.ndarray`
 
 (n_train, n_points): the normalised field of every training molecule at every point.
 
 This is the basis the co-field is a combination of: `C_f = coef @ X`, and the variance of
-the co-field is read off the same matrix, so the two cannot disagree.
+the co-field is read off the same matrix, so the two cannot disagree.  `basis` replaces the
+Gaussians of `CMFModel.cofield_basis` by another set over the same training molecules,
+which is how `atom_effect` reads the same quantity convolved with one atom.
 
 ### `cofield_variance(model: CMFModel, f: int, grid: Grid, sigma: Optional[float]=None, include_scale: bool=False, chunk: int=0) -> np.ndarray`
 
@@ -1320,7 +1322,7 @@ C_f at a list of points rather than on a grid.
 A co-field read at a few places a chemist can name -- the ortho, meta and para positions of a
 ring, the four corners of a pocket -- is a table, not a picture, and this is what fills it.
 
-### `cofield_covariance_at(model: CMFModel, f: int, points: np.ndarray, sigma: Optional[float]=None, include_scale: bool=True, chunk: int=0) -> np.ndarray`
+### `cofield_covariance_at(model: CMFModel, f: int, points: np.ndarray, sigma: Optional[float]=None, include_scale: bool=True, chunk: int=0, factor: Optional[np.ndarray]=None) -> np.ndarray`
 
 Cov[C_f] at a list of points, under noise of level `sigma` in the activities.
 
@@ -1330,13 +1332,52 @@ apart is built from the same training fields, so the two values are correlated a
 of their difference is not the two errors added -- usually it is far smaller.  Without this
 a comparison between two positions would be judged against the wrong error bar.
 
-### `contrast_at(model: CMFModel, f: int, points: np.ndarray, weights: Sequence[float], sigma: Optional[float]=None, include_scale: bool=True) -> Tuple[float, float]`
+`factor` is the matrix `dual_covariance_factor` returns.  It does not depend on the
+field, and computing it costs a solve with as many right-hand sides as there are training
+molecules, so a caller reading the co-fields of twenty fields at the same points should
+compute it once and pass it here instead of paying for it twenty times.
+
+### `contrast_at(model: CMFModel, f: int, points: np.ndarray, weights: Sequence[float], sigma: Optional[float]=None, include_scale: bool=True, factor: Optional[np.ndarray]=None) -> Tuple[float, float]`
 
 A weighted combination of the co-field at a few points, and its standard deviation.
 
 `weights` picks the comparison: (0, 0, -1, 1) at the four ring positions is "para minus
 meta".  The standard deviation uses the whole covariance of `cofield_covariance_at`, so
-the correlation between the points is taken into account rather than ignored.
+the correlation between the points is taken into account rather than ignored.  `factor` is
+passed through, so several comparisons on one model share the one expensive solve.
+
+### `probe_basis(centres, coeffs, widths, width: float, weight: float=1.0)`
+
+The same Gaussian basis, convolved with one atom's own Gaussian of width `width`.
+
+The overlap of two Gaussians is a Gaussian, which is what makes every integral in this
+program closed form:
+
+    int exp(-b/2 |r - c|^2) exp(-bp/2 |r - p|^2) dr
+        = (2 pi / (b + bp))^(3/2) exp(-(b bp) / (2 (b + bp)) |p - c|^2),
+
+the same expression `cmfqsar.kernels` sums over atom pairs.  So a basis evaluated at a
+point becomes the overlap with an atom placed there by scaling every coefficient and widening
+every width, and nothing else in this module has to change.
+
+### `atom_effect(model: CMFModel, f: int, points: np.ndarray, width: Optional[float]=None, weight: float=1.0, include_scale: bool=True) -> np.ndarray`
+
+What one atom placed at each point would add to the prediction.
+
+A co-field says what the prediction gains per unit of field at a point, which is not a number
+a chemist can check against anything: a field is not something one can put somewhere.  An atom
+is.  This is the overlap of the co-field with one atom's own Gaussian, so the result is in the
+units of the measured value -- ppm for a shift, pKa units for an acidity -- and can be read
+beside a table of measured substituent effects.
+
+For a continuous indicator field the weight of an atom of its type is 1, so the default
+`weight=1` is one such atom; for the electrostatic field the weight is a partial charge and
+the caller should pass it.  `width` defaults to the field's own attenuation, which is the
+Gaussian the kernel puts on an atom of that field.
+
+### `atom_effect_covariance(model: CMFModel, f: int, points: np.ndarray, width: Optional[float]=None, weight: float=1.0, sigma: Optional[float]=None, include_scale: bool=True, chunk: int=0, factor: Optional[np.ndarray]=None) -> np.ndarray`
+
+Cov of `atom_effect` under noise of level `sigma` in the measured values.
 
 ### `cofield_with_error(model: CMFModel, f: int, grid: Grid, sigma: Optional[float]=None, include_scale: bool=False, z: float=2.0, chunk: int=0) -> CofieldError`
 

@@ -89,3 +89,32 @@ Plan item LP2 found no signal on this set: on 912 acids the invariant local kern
 
 At its best width the posed kernel loses to the count: -0.101 [-0.164, -0.037]. Against the invariant kernel at the same width it is -0.142 [-0.198, -0.088].
 
+## The same co-field, read from the indicator fields
+
+A partial charge cannot tell a pi-donor from a pi-acceptor: methoxy and nitro both raise the carbon they sit on while their first atoms carry opposite charges. A continuous indicator field carries the atom **type** instead, so an ether oxygen at the ortho position and a carbonyl carbon at the ortho position are different features with their own co-fields. That is how a table of substituent effects is written, and this asks whether the model writes the same table. 22 fields (17 types and the five physico-chemical ones), envelope width rho 0.05, q2 +0.882, error 4.55 ppm out of fold.
+
+The numbers are **what one atom of that type at that position does to the predicted shift, in ppm** (`cofields.atom_effect`), with the weight the envelope gives an atom at that distance, so they are what a real substituent there contributes. `n` is how many of the carbons had an atom of that type at that position; a row is shown when one position reaches 20.
+
+| type | ipso | ortho | meta | para | measured |
+| --- | ---: | ---: | ---: | ---: | --- |
+| H | -1.6 +- 0.6 (n 774) | +0.2 +- 0.4 (n 1483) | +0.5 +- 0.3 (n 1448) | -0.1 +- 0.3 (n 733) | -- |
+| O.3 | +5.4 +- 1.6 (n 170) | -6.4 +- 1.1 (n 342) | -1.3 +- 0.8 (n 334) | -1.5 +- 0.9 (n 157) | +31.4, -14.4, +1.0, -7.7 (methoxy (anisole)) |
+| C.3 | +13.6 +- 0.8 (n 126) | +0.5 +- 0.5 (n 242) | -1.1 +- 0.4 (n 239) | -0.5 +- 0.5 (n 120) | +9.3, +0.7, -0.1, -2.9 (methyl (toluene)) |
+| C.2 | +9.0 +- 1.1 (n 87) | -0.2 +- 0.7 (n 172) | -0.7 +- 0.5 (n 168) | +0.7 +- 0.7 (n 84) | +9.3, +0.2, +0.2, +4.2 (acetyl (acetophenone)) |
+| C.ar | +1.0 +- 0.2 (n 0) | -0.3 +- 0.2 (n 68) | -0.1 +- 0.1 (n 108) | -0.1 +- 0.2 (n 56) | -- |
+| N.pl3 | +3.1 +- 2.0 (n 25) | -9.1 +- 1.4 (n 50) | -2.2 +- 1.1 (n 50) | -5.9 +- 1.4 (n 25) | +18.0, -13.3, +0.9, -9.8 (amino (aniline)) |
+| Cl | +7.4 +- 2.2 (n 16) | +0.1 +- 1.5 (n 32) | +1.7 +- 1.3 (n 32) | -2.4 +- 1.7 (n 16) | +6.2, +0.4, +1.3, -1.9 (chlorine (chlorobenzene)) |
+
+| type | r with the measured row | signs | root mean square difference (ppm) |
+| --- | ---: | ---: | ---: |
+| O.3 | +0.96 | 3/4 | 14.0 |
+| C.3 | +0.96 | 4/4 | 2.5 |
+| C.2 | +0.94 | 2/4 | 1.8 |
+| N.pl3 | +0.99 | 3/4 | 8.1 |
+| Cl | +1.00 | 4/4 | 0.7 |
+
+Over all 20 (type, position) pairs with a measured row the correlation is +0.72.
+
+The sharpest question these fields can answer is the one the electrostatic field could not: a donor lowers the para carbon and an acceptor raises it. Here the ether oxygen gives -1.5 +- 0.9 at para and the sp2 carbon +0.7 +- 0.7, against -7.7 and +4.2 measured.
+`indicator.png` draws the two co-fields in the ring plane side by side. Both are positive where a substituent sits on the measured carbon and negative at the ortho positions; what separates the donor from the acceptor is the weaker pattern further out, which the table above reads off at the points rather than by eye.
+

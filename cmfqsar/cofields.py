@@ -323,13 +323,15 @@ def noise_level(model: CMFModel, sigma: Optional[float] = None) -> Tuple[float, 
 
 
 def per_molecule_fields(model: CMFModel, f: int, points: np.ndarray,
-                        chunk: int = 0) -> np.ndarray:
+                        chunk: int = 0, basis=None) -> np.ndarray:
     """(n_train, n_points): the normalised field of every training molecule at every point.
 
     This is the basis the co-field is a combination of: ``C_f = coef @ X``, and the variance of
-    the co-field is read off the same matrix, so the two cannot disagree.
+    the co-field is read off the same matrix, so the two cannot disagree.  `basis` replaces the
+    Gaussians of :meth:`CMFModel.cofield_basis` by another set over the same training molecules,
+    which is how :func:`atom_effect` reads the same quantity convolved with one atom.
     """
-    centres, coeffs, widths, index = model.cofield_basis(f)
+    centres, coeffs, widths, index = (model.cofield_basis(f) if basis is None else basis)
     centres = np.asarray(centres, float)
     coeffs = np.asarray(coeffs, float)
     widths = np.asarray(widths, float)
@@ -418,7 +420,7 @@ def cofield_at_points(model: CMFModel, f: int, points: np.ndarray,
 
 def cofield_covariance_at(model: CMFModel, f: int, points: np.ndarray,
                           sigma: Optional[float] = None, include_scale: bool = True,
-                          chunk: int = 0) -> np.ndarray:
+                          chunk: int = 0, factor: Optional[np.ndarray] = None) -> np.ndarray:
     """Cov[C_f] at a list of points, under noise of level `sigma` in the activities.
 
     The diagonal is what :func:`cofield_variance` gives on a grid.  The off-diagonal terms are
@@ -426,9 +428,14 @@ def cofield_covariance_at(model: CMFModel, f: int, points: np.ndarray,
     apart is built from the same training fields, so the two values are correlated and the error
     of their difference is not the two errors added -- usually it is far smaller.  Without this
     a comparison between two positions would be judged against the wrong error bar.
+
+    `factor` is the matrix :func:`dual_covariance_factor` returns.  It does not depend on the
+    field, and computing it costs a solve with as many right-hand sides as there are training
+    molecules, so a caller reading the co-fields of twenty fields at the same points should
+    compute it once and pass it here instead of paying for it twenty times.
     """
     s, _src = noise_level(model, sigma)
-    G = dual_covariance_factor(model)
+    G = dual_covariance_factor(model) if factor is None else np.asarray(factor, float)
     V = G.T @ per_molecule_fields(model, f, np.asarray(points, float), chunk=chunk)
     cov = (s * s) * (V.T @ V)
     if include_scale:
@@ -437,17 +444,92 @@ def cofield_covariance_at(model: CMFModel, f: int, points: np.ndarray,
 
 
 def contrast_at(model: CMFModel, f: int, points: np.ndarray, weights: Sequence[float],
-                sigma: Optional[float] = None, include_scale: bool = True) -> Tuple[float, float]:
+                sigma: Optional[float] = None, include_scale: bool = True,
+                factor: Optional[np.ndarray] = None) -> Tuple[float, float]:
     """A weighted combination of the co-field at a few points, and its standard deviation.
 
     ``weights`` picks the comparison: (0, 0, -1, 1) at the four ring positions is "para minus
     meta".  The standard deviation uses the whole covariance of :func:`cofield_covariance_at`, so
-    the correlation between the points is taken into account rather than ignored.
+    the correlation between the points is taken into account rather than ignored.  `factor` is
+    passed through, so several comparisons on one model share the one expensive solve.
     """
     w = np.asarray(weights, float)
     v = cofield_at_points(model, f, points, include_scale=include_scale)
-    cov = cofield_covariance_at(model, f, points, sigma=sigma, include_scale=include_scale)
+    cov = cofield_covariance_at(model, f, points, sigma=sigma, include_scale=include_scale,
+                                factor=factor)
     return float(w @ v), float(np.sqrt(max(float(w @ cov @ w), 0.0)))
+
+
+def probe_basis(centres, coeffs, widths, width: float, weight: float = 1.0):
+    """The same Gaussian basis, convolved with one atom's own Gaussian of width `width`.
+
+    The overlap of two Gaussians is a Gaussian, which is what makes every integral in this
+    program closed form:
+
+        int exp(-b/2 |r - c|^2) exp(-bp/2 |r - p|^2) dr
+            = (2 pi / (b + bp))^(3/2) exp(-(b bp) / (2 (b + bp)) |p - c|^2),
+
+    the same expression :mod:`cmfqsar.kernels` sums over atom pairs.  So a basis evaluated at a
+    point becomes the overlap with an atom placed there by scaling every coefficient and widening
+    every width, and nothing else in this module has to change.
+    """
+    b = np.asarray(widths, float)
+    bp = float(width)
+    s = b + bp
+    return (np.asarray(centres, float),
+            np.asarray(coeffs, float) * float(weight) * (2.0 * np.pi / s) ** 1.5,
+            b * bp / s)
+
+
+def _probe_width(model: CMFModel, f: int, width: Optional[float]) -> float:
+    if width is not None:
+        return float(width)
+    spec = model.fieldset.specs[f]
+    if spec.kind != "gauss":
+        raise ValueError(f"the '{spec.name}' field puts a different Gaussian on every atom "
+                         f"({spec.kind}), so there is no single width for a probe atom: pass one")
+    return float(spec.alpha)
+
+
+def atom_effect(model: CMFModel, f: int, points: np.ndarray, width: Optional[float] = None,
+                weight: float = 1.0, include_scale: bool = True) -> np.ndarray:
+    """What one atom placed at each point would add to the prediction.
+
+    A co-field says what the prediction gains per unit of field at a point, which is not a number
+    a chemist can check against anything: a field is not something one can put somewhere.  An atom
+    is.  This is the overlap of the co-field with one atom's own Gaussian, so the result is in the
+    units of the measured value -- ppm for a shift, pKa units for an acidity -- and can be read
+    beside a table of measured substituent effects.
+
+    For a continuous indicator field the weight of an atom of its type is 1, so the default
+    ``weight=1`` is one such atom; for the electrostatic field the weight is a partial charge and
+    the caller should pass it.  `width` defaults to the field's own attenuation, which is the
+    Gaussian the kernel puts on an atom of that field.
+    """
+    centres, coeffs, widths = model.cofield_coefficients(f)
+    c, k, b = probe_basis(centres, coeffs, widths, _probe_width(model, f, width), weight)
+    v = evaluate_gaussians(np.asarray(points, float), c, k, b)
+    if include_scale:
+        v = v * model.fieldset.specs[f].h * model.scale[f]
+    return v
+
+
+def atom_effect_covariance(model: CMFModel, f: int, points: np.ndarray,
+                           width: Optional[float] = None, weight: float = 1.0,
+                           sigma: Optional[float] = None, include_scale: bool = True,
+                           chunk: int = 0, factor: Optional[np.ndarray] = None) -> np.ndarray:
+    """Cov of :func:`atom_effect` under noise of level `sigma` in the measured values."""
+    s, _src = noise_level(model, sigma)
+    G = dual_covariance_factor(model) if factor is None else np.asarray(factor, float)
+    centres, coeffs, widths, index = model.cofield_basis(f)
+    c, k, b = probe_basis(centres, coeffs, widths, _probe_width(model, f, width), weight)
+    X = per_molecule_fields(model, f, np.asarray(points, float), chunk=chunk,
+                            basis=(c, k, b, index))
+    V = G.T @ X
+    cov = (s * s) * (V.T @ V)
+    if include_scale:
+        cov = cov * (model.fieldset.specs[f].h * model.scale[f]) ** 2
+    return cov
 
 
 def cofield_with_error(model: CMFModel, f: int, grid: Grid, sigma: Optional[float] = None,

@@ -2360,6 +2360,21 @@ out-of-fold error. What it gets right is *where* the uncertainty is, and the two
 across the grid at a rank correlation of +0.82. That is what a mask needs, since a mask is an
 ordering with a cut-off.
 
+**A co-field at a point, and what an atom there would do.** A co-field is a value per unit
+of field, which is not a number anyone can check against anything: a field is not something one
+can put somewhere. An atom is. `cofields.atom_effect` gives the overlap of the co-field with one
+atom's own Gaussian, which is the same closed-form integral the kernel sums over atom pairs, so
+the answer is in the units of the activity -- ppm for a shift, log units for an affinity -- and
+says what adding that atom there would add to the prediction. For a continuous indicator field the
+atom of its type carries a weight of one, so the number is directly "what one oxygen here does";
+for the electrostatic field the weight is a partial charge and has to be given.
+`cofield_at_points` reads the co-field itself at a list of places, `cofield_covariance_at` and
+`atom_effect_covariance` give the error that the noise in the activities allows, and `contrast_at`
+compares two places with the covariance between them taken into account, which matters because two
+points a few angstrom apart are built from the same training fields and their errors are far from
+independent. Plan item LP3 uses all of this to read a co-field at the ortho, meta and para
+positions of a ring; nothing in it is specific to that use.
+
 ## Contributions
 
 The *Contributions* tab answers two questions about the selected molecule:
@@ -3977,9 +3992,53 @@ Read the five co-fields together rather than one at a time. The fields overlap i
 
 The signs are the more interesting half, and they are not nothing. The electrostatic co-field comes out -16.7 at ipso, +33.0 at ortho, -28.5 at meta and -10.0 at para, and a negative value means that negative charge at that place raises the shift of the carbon at the origin. A methoxy group raises the shift of the carbon it sits on by 31 ppm and lowers the ortho and para carbons by 14 and 8 ppm, and its oxygen is negatively charged, so a co-field that had learned that effect would be negative at ipso and positive at ortho and para. This one agrees at 3 of the four positions, with a correlation of +0.55 over them, but the y-scramble null for that correlation is wide (z +1.2): a correlation over four points cannot be sharp, and this one is not.
 
-There is a reason to expect no better from these fields. A nitro group, whose nitrogen is **positively** charged, also raises the ipso carbon, by 20 ppm, and raises the para carbon where methoxy lowers it. No model linear in fragment charges can follow both groups, because what separates them is resonance and fragment charges do not carry it. That is the same wall the Hammett co-fields of this program met for sigma_p, and the remedy there was quantum charges computed on the whole molecule, which carry the polarisation of the ring by the substituent (`examples/orca_atom_properties.py` and the `prop:` fields). The shift set here has no such charges. Computing them, and reading the co-field of a continuous indicator field of one atom type instead of the electrostatic field -- what an oxygen at the ortho position does, rather than what negative charge there does -- are the two things to try next, and they belong to the item after this one rather than to this measurement.
+There is a reason to expect no better from these fields. A nitro group, whose nitrogen is **positively** charged, also raises the ipso carbon, by 20 ppm, and raises the para carbon where methoxy lowers it. No model linear in fragment charges can follow both groups, because what separates them is resonance and fragment charges do not carry it. That is the same wall the Hammett co-fields of this program met for sigma_p, and the remedy there was quantum charges computed on the whole molecule, which carry the polarisation of the ring by the substituent (`examples/orca_atom_properties.py` and the `prop:` fields). The shift set here has no such charges. The other way round the wall is to stop asking the charge and ask the atom type, which is what the next part does and what settles the question.
 
 `benchmarks/results/local_cofield/cofield.png` draws the electrostatic and steric co-fields in the ring plane, with the ring and the four positions marked.
+
+**The same co-field, read from the indicator fields.** A partial charge cannot tell a
+pi-donor from a pi-acceptor, which is why the electrostatic co-field above could not reproduce the
+ring picture. A continuous indicator field carries the atom **type** instead: there is one field
+per Sybyl type, so an ether oxygen at the ortho position and a carbonyl carbon at the ortho
+position are different features with co-fields of their own. That is how a table of substituent
+effects is written, and the second part of `benchmarks/run_local_cofield.py` asks whether the
+model writes the same table. It uses 17 types beside the five physico-chemical fields, at
+an envelope width of 4.5 A -- wider than the co-field above, because an envelope that damps
+the para position to nothing cannot be asked what sits there -- and predicts about as well
+(q2 +0.882, 4.55 ppm out of fold).
+
+Two things make this a comparison of numbers rather than of pictures. First,
+`cofields.atom_effect` turns a co-field into **what one atom placed at a point would add to the
+prediction**, in ppm: the co-field is a sum of Gaussians and so is the atom, the overlap of two
+Gaussians is the closed-form integral the kernel itself sums over atom pairs, and the test suite
+checks the result against what the model's own prediction does when that atom is added. Second,
+the atom enters with the weight the envelope gives it at that distance (ipso 0.91, ortho 0.75, meta 0.50, para 0.41), so the number
+is what a real substituent at that ring position contributes rather than what an undamped one
+would.
+
+| type | ipso | ortho | meta | para | measured, for the group named |
+| --- | ---: | ---: | ---: | ---: | --- |
+| H | -1.6 +- 0.6 (n 774) | +0.2 +- 0.4 (n 1483) | +0.5 +- 0.3 (n 1448) | -0.1 +- 0.3 (n 733) | -- |
+| O.3 | +5.4 +- 1.6 (n 170) | -6.4 +- 1.1 (n 342) | -1.3 +- 0.8 (n 334) | -1.5 +- 0.9 (n 157) | +31.4, -14.4, +1.0, -7.7 (methoxy (anisole)) |
+| C.3 | +13.6 +- 0.8 (n 126) | +0.5 +- 0.5 (n 242) | -1.1 +- 0.4 (n 239) | -0.5 +- 0.5 (n 120) | +9.3, +0.7, -0.1, -2.9 (methyl (toluene)) |
+| C.2 | +9.0 +- 1.1 (n 87) | -0.2 +- 0.7 (n 172) | -0.7 +- 0.5 (n 168) | +0.7 +- 0.7 (n 84) | +9.3, +0.2, +0.2, +4.2 (acetyl (acetophenone)) |
+| C.ar | +1.0 +- 0.2 (n 0) | -0.3 +- 0.2 (n 68) | -0.1 +- 0.1 (n 108) | -0.1 +- 0.2 (n 56) | -- |
+| N.pl3 | +3.1 +- 2.0 (n 25) | -9.1 +- 1.4 (n 50) | -2.2 +- 1.1 (n 50) | -5.9 +- 1.4 (n 25) | +18.0, -13.3, +0.9, -9.8 (amino (aniline)) |
+| Cl | +7.4 +- 2.2 (n 16) | +0.1 +- 1.5 (n 32) | +1.7 +- 1.3 (n 32) | -2.4 +- 1.7 (n 16) | +6.2, +0.4, +1.3, -1.9 (chlorine (chlorobenzene)) |
+
+**The pattern comes out right.** Over the 15 (type, ring position) pairs that have a measured value -- the ipso position left out, because it is the largest effect in every row and would carry the comparison by itself -- the correlation with the measured table is +0.89. Including the ipso position it is +0.72. The sharpest of these is the question the electrostatic field could not answer at all: a pi-donor lowers the para carbon and a pi-acceptor raises it, although the first atom of the donor is negatively charged and that of the acceptor is positive. Here the amino nitrogen gives -5.9 +- 1.4 ppm at the para position, 4 standard deviations from zero, against -9.8 measured, while the sp2 carbon gives +0.7 +- 0.7 against +4.2 measured. The signs are opposite, and the ether oxygen sits on the donor side as well (-1.5 +- 0.9). That is the resonance distinction no model linear in fragment charges can make.
+
+**The sizes are compressed.** A straight line through those 15 pairs has a slope of 0.46, so the model reproduces the shape of the table and about 46 per cent of its size. The root mean square difference from the measured row, per type, is Cl 0.7, C.2 1.8, C.3 2.5, N.pl3 8.1, O.3 14.0 ppm: the halogen and the two carbons come within a few ppm and the two strong donors are the ones held back. Three things pull that way: the ridge, which shrinks every coefficient; the envelope, which lets a para atom in at 0.41 of itself; and the set, where most rings carry several substituents whose effects the model shares out, while the table is measured on rings carrying one. The type labels are coarser than the table's groups too -- O.3 is every ether and hydroxyl oxygen, not only a methoxy, and C.2 is every sp2 carbon, not only an acetyl -- so the measured column is the nearest published row rather than the same quantity.
+
+The same field set is a flag on the command, so the table above can be read off any per-atom
+target without the benchmark:
+
+```bash
+cmf local examples/local/shifts_cdcl3.sdf --target shift --align --site ring \
+    --rho 0.05 --cif --cofield cofield.cube
+```
+
+`benchmarks/results/local_cofield/indicator.png` draws the two co-fields in the ring plane side by side. Both are positive where a substituent sits on the measured carbon and negative at the ortho positions, which is the large part of the effect; what separates the donor from the acceptor is the weaker pattern further out, and that is read off at the points in the table rather than by eye.
 
 **The other site the plan names, the carboxyl carbon, is not rescued by the frame either.**
 The previous section found no signal on the 912 carboxylic acids: the invariant local kernel was no better than an atom-centred count there, and the difference field of the acid and its anion was far worse. A carboxyl carbon has two oxygens and a carbon of its own, which the atom types separate, so its pose is unique and nothing has to be averaged -- and with it the model loses to the count, -0.101 [-0.164, -0.037], and differs from the invariant kernel by -0.142 [-0.198, -0.088]. The frame was not what was missing. Only the model is measured there: a co-field read off a model that does not predict would be an interpretation of noise, which is why the pKa co-field of the substituted benzoic acids that this item's gate asks for is not drawn.
