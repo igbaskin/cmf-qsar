@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 67 modules and about 30,450 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 68 modules and about 30,100 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-six subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 985 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 996 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1930,6 +1930,43 @@ on the same folds.
   small sets that the co-field says something a chemist recognises. The ShiftML precedent (SOAP
   with Gaussian-process regression, about 0.5 ppm on protons in molecular crystals) is the number
   to reach, and the co-field is what CMF would add to it.
+  **Done 27 October 2026, and it answers the item's premise rather than carrying it out:
+  the scale is free and the data is not what is missing.** `cmfqsar/locallarge.py`. The
+  rotation-invariant local kernel is a linear kernel on a finite feature map -- the
+  autocorrelation of an environment is 255 channels for the five fields, scaled per block
+  and cosine-normalised -- so the ridge can be solved in the space of those coefficients rather
+  than the space of the samples. `normalised_rows` stops `autocorrelation_kernel` one step early
+  and returns the rows whose inner products are the kernel; `primal_fit`, `cross_validate_primal`
+  and `choose_lam_primal` are the dual routines of `cmfqsar/localenv.py` computed the other way
+  round. It is the same model, not an approximation: on the 5096 carbons of the repository set
+  the two sets of out-of-fold predictions differ by 2e-06 ppm, with the folds taking
+  13 s and 0.1 s and the memory 0.19 GB against 10 MB. 11 tests,
+  and `benchmarks/run_local_scale.py` with `--data-root`, since the set it needs is too large for
+  the repository (`docs/public_3dqsar_datasets.md` says how to build it).
+  **The learning curve is flat.** On 58705 carbons in 6000 molecules built
+  from the whole nmrshiftdb2 dump, cross-validated in 7 s where an exact kernel would
+  have been 26 GB: 100 molecules 10.84 ppm; 200 molecules 10.13 ppm; 400 molecules 9.73 ppm; 800 molecules 9.61 ppm; 1600 molecules 9.70 ppm; 3200 molecules 9.83 ppm; 6000 molecules 9.75 ppm. Sixty times the data buys 1.23 ppm and stops paying
+  after about eight hundred molecules.
+  **What the data could not give, resolution gives.** At the full size, halving the width of the
+  distance bins (255 channels to 495) takes the error from 9.75 to
+  8.35 ppm, and halving again (975 channels) to 7.76 ppm -- 1.99 ppm
+  against the 1.23 ppm that sixty times the data gave. **The model is
+  representation-limited, not data-limited**, so the route to the ShiftML number this item names
+  is a richer descriptor, which is C5, and not a larger training set, which is this item. The
+  scale work is still worth having, because it is what made the question answerable in seconds,
+  but it is not the bottleneck it was expected to be.
+  **The overlap kernel is the one that needs landmarks, and they work.** Its feature map is a
+  function on space, so the dual form is the only exact one; `nystrom_kernel` approximates it from
+  landmark environments. On the 1225 aromatic carbons of LP3, 200 landmarks
+  (16 per cent of the rank) reproduce the exact q2 of +0.899 and
+  100 already give a relative kernel error of 0.001. The environments
+  of one site are alike, which is why so few span them. That matters because the exact overlap
+  kernel took 71 s on those 1225 samples and grows with the square: the
+  58 705 carbons above would be about 45 hours and 26 GB without it.
+  **Not done:** no inducing-point Gaussian process, which is what the item asks for by name; the
+  landmarks here approximate the kernel and are then used in the ordinary ridge, which is enough
+  to measure what the approximation costs but is not a sparse GP with its own variance. No proton
+  shifts and no DFT shift sets, and so no comparison with ShiftML on its own ground.
 
 **Order.** LP1 first and shared with M5. LP2 next, invariant kernel and pKa by difference field,
 because it needs no alignment and settles whether the environment field carries the property.

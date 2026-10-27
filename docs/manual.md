@@ -4074,6 +4074,71 @@ cmf local examples/local/shifts_cdcl3.sdf --target shift --conformers 5 \
 The option is there because the question is a fair one to ask of another set, not because it helps
 on these two.
 
+**Many atoms at once.** A per-atom target is a large problem where a per-molecule one is a
+small one: the 400 molecules in `examples/local/` are 5096 carbons, and the free NMR databases
+hold hundreds of thousands. An exact kernel over samples costs the square of their number in
+memory and the cube in time, so plan item LP5 asks for a Nyström or inducing-point approximation.
+For this kernel none is needed, and that is the first thing `benchmarks/run_local_scale.py`
+measures.
+
+The rotation-invariant local kernel is a **linear kernel on a finite feature map**. The field
+autocorrelation of an environment is a fixed number of channels -- 255 for the five
+physico-chemical fields -- scaled per block and cosine-normalised, and the kernel is the inner
+product of those rows. So the ridge regression can be solved in the space of the 255
+coefficients instead of the space of the samples (`cmfqsar/locallarge.py`), which is the same
+model and not an approximation of it:
+
+| route | q2 | error (ppm) | memory | the folds |
+| --- | ---: | ---: | ---: | ---: |
+| dual, an n by n kernel | +0.972645 | 8.8240 | 0.19 GB | 13 s |
+| primal, n by d rows | +0.972645 | 8.8240 | 10 MB | 0.1 s |
+
+The predictions of the two differ by 2e-06 ppm, which is round-off. What differs is the cost, and
+it is the memory that decides: the kernel grows with the square of the samples and the rows grow
+with the samples. At twenty times these 5096 carbons the kernel would be 77 GB and the rows 198 MB.
+
+**More data does not help.** With the primal route a much larger set becomes easy, so the question
+the item really asks can be put: is the error of the sections above the method's or the data
+set's? The set is 58705 carbons in 6000 molecules, built from the whole nmrshiftdb2 dump rather than from its chloroform spectra alone, so it is noisier by about a ppm and far larger. An exact kernel over it would be 25.7 GB; the primal route cross-validates it in 7 seconds. Each size is a subset of the next.
+
+| molecules | carbons | q2 | error (ppm) | the folds |
+| ---: | ---: | ---: | ---: | ---: |
+| 100 | 1105 | +0.953 | 10.84 | 0.2 s |
+| 200 | 2131 | +0.961 | 10.13 | 0.3 s |
+| 400 | 4113 | +0.964 | 9.73 | 0.4 s |
+| 800 | 8079 | +0.965 | 9.61 | 1.0 s |
+| 1600 | 15780 | +0.965 | 9.70 | 1.7 s |
+| 3200 | 31221 | +0.964 | 9.83 | 3.2 s |
+| 6000 | 58705 | +0.965 | 9.75 | 6.8 s |
+
+From 100 molecules to 6000 the error goes from 10.84 to 9.75 ppm, and from eight hundred molecules onwards it does not move at all. Sixty times the data is worth 1.23 ppm, nearly all of it spent before the first thousand molecules.
+
+**A finer descriptor helps more than sixty times the data.** A flat curve says the error is not the data's. What is left is the descriptor, and the cheapest test of that is a finer one on the same samples: the distance axis of the autocorrelation at 0.5 A per bin against two finer spacings, everything else unchanged.
+
+| distance bins | channels | q2 | error (ppm) |
+| ---: | ---: | ---: | ---: |
+| every 0.5 A | 255 | +0.965 | 9.75 |
+| every 0.25 A | 495 | +0.974 | 8.35 |
+| every 0.125 A | 975 | +0.978 | 7.76 |
+
+Halving the bin width gains 1.40 ppm and halving again gains 1.99 ppm in all -- against the 1.23 ppm that sixty times the data gave. **The error of this model is set by what the descriptor can tell apart, not by how many carbons it has seen.** The route to the shift predictors this item names runs through a richer descriptor, which is plan item C5, rather than through a larger training set. What the scale work gives is that the question could be asked at all: the whole curve above, every fold and every ridge, is a few minutes of arithmetic.
+
+**The kernel that does need landmarks.** The posed overlap kernel of the next section has no finite
+feature map -- its features are the field itself, a function on space -- so there the dual form is
+the only exact one and the Nyström approximation is the route the plan names.
+`locallarge.nystrom_kernel` builds it from landmark environments, and on the 1225
+aromatic carbons of that section it works very well: 200 landmarks of 1225 samples, 16 per cent of the rank, reproduce the exact q2 of +0.899, and 100 already give a relative kernel error of 0.001, while 25 give 0.072. The environments of one site are alike, which is why so few span them.
+
+| landmarks | relative error of the kernel | q2 | error (ppm) |
+| ---: | ---: | ---: | ---: |
+| all 1225 (exact) | 0.000 | +0.899 | 4.217 |
+| 25 | 0.072 | +0.801 | 5.908 |
+| 50 | 0.031 | +0.859 | 4.970 |
+| 100 | 0.001 | +0.883 | 4.539 |
+| 200 | 0.000 | +0.899 | 4.203 |
+| 400 | 0.000 | +0.898 | 4.231 |
+| 800 | 0.000 | +0.899 | 4.217 |
+
 ## A co-field around one atom: the local alignment
 
 The local kernel of the previous section needs no frame, and that is also its limit: with no

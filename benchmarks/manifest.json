@@ -1,6 +1,6 @@
 {
- "commit": "0f0582114805116bc3745ed771b797721d0ff33c",
- "created": "2026-10-27T10:51:12",
+ "commit": "0d7d2e71fbc60a0c7f7f95e760c16817aeb9366c",
+ "created": "2026-10-27T11:32:00",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -599,8 +599,8 @@
    "sha256": "db3e49f8f3461150b6d316ba4db2cfd47c93bea4b8327ed80d181783389d7b38"
   },
   "examples/make_local_examples.py": {
-   "bytes": 11631,
-   "sha256": "bad5c1a5559fc7ee7585d8ad3a649f507f5c4a264ecc08761871ed3c7a9e6985"
+   "bytes": 12651,
+   "sha256": "d18e9848af7eaea5f2c060d8e459a8fa8d524e59c54fe269c8347bd7d597b8af"
   },
   "examples/make_mittal_examples.py": {
    "bytes": 10432,
@@ -1841,6 +1841,8 @@
   "benchmarks/results/fusion/DHFR.json": "7c65667dae1c84819161727e825b16ebef35082c3ccfceaf39bb48a381ca4150",
   "benchmarks/results/fusion/THR.json": "26185e1804ab3161f1643507df5c0c1e0f9bc02c74f13eabc72eca2618a4e970",
   "benchmarks/results/fusion/table.md": "958da5023b32e2ff89d351b2fd7214bd5a7b0b330e86dd386bd95906d8ed6ec2",
+  "benchmarks/results/gradient/gradient.json": "8b80e274c3a7585f00e2b79155fb0f6a318a053776aeebfd4aeb2e97f84d1f54",
+  "benchmarks/results/gradient/table.md": "c9a435062bfbfb45822cf8ffa43270ecdc83c9fb455cdb0d0617ac8bd1b38485",
   "benchmarks/results/guest_atoms/alpha.json": "3c69e95be93f78d8947ce42472e5c5e6fed5b2816730453b6c3a2269c2df9e01",
   "benchmarks/results/guest_atoms/beta.json": "9e59600a461eea0f8d11d9df586767a3b99d2f08e377232d6e9e8d08bff3efc2",
   "benchmarks/results/guest_atoms/gamma.json": "67f49ae1239e80e8bea1c3fa7b451e5f7d31065c6d6520ce9f6e942b203a5cb3",
@@ -1898,6 +1900,10 @@
   "benchmarks/results/local_cofield/pka.json": "097c09ae4c04cb773b64faf41c4e75947aaea0d1ba5278497c19852711a27b01",
   "benchmarks/results/local_cofield/summary.json": "562ad3ef6c6056e1edfcd7b020bbcf7ca28edb243edd718a04329290477e7877",
   "benchmarks/results/local_cofield/table.md": "388c12a23f3bb88b876afda40632513a04079408c14ef9a23819bd364f437947",
+  "benchmarks/results/local_scale/curve.json": "6054b56590a7265c9ca8522bc4ff604ad33e61bda304ab29efa8adbd3a66f90a",
+  "benchmarks/results/local_scale/landmarks.json": "4abdb97d740ee34fc2c9a99eb7d6b430bcbe7aad45d95ce1d4de666093a0f50f",
+  "benchmarks/results/local_scale/routes.json": "5b2e6f903c3824e545ff0f48920717805a95d5008283e94730d642f034c8b7e1",
+  "benchmarks/results/local_scale/table.md": "2f5919bc112c28b44c16800a30d73838ebccadbed9d60a552a0ebb48934c3406",
   "benchmarks/results/matbench_phonons/all+mass-align.json": "520553990efc6c20c853d2fa54a875596bcac511b33012ef16f5996841e557f7",
   "benchmarks/results/matbench_phonons/all+mass-alignf.json": "bdb5718ad6b8390d253d373ceb5b1b4382a81e408e3874fc320ff17f360fefd1",
   "benchmarks/results/matbench_phonons/all+mass-balanced.json": "2f22168dd45f00701229381084e689d63dad35584a0c1a47bac77d14b46893d1",

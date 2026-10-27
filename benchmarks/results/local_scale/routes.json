@@ -1,0 +1,25 @@
+{
+ "n_samples": 5096,
+ "n_molecules": 400,
+ "channels": 255,
+ "rho": 1.0,
+ "lam": 1e-06,
+ "folds": 10,
+ "seed": 0,
+ "environments_seconds": 2.837770938873291,
+ "dual": {
+  "q2": 0.9726454243399242,
+  "error": 8.823988666164869,
+  "build_seconds": 0.1600956916809082,
+  "fold_seconds": 12.828060388565063,
+  "gigabytes": 0.19348573684692383
+ },
+ "primal": {
+  "q2": 0.9726454244068062,
+  "error": 8.823988655377523,
+  "build_seconds": 0.008774995803833008,
+  "fold_seconds": 0.09851193428039551,
+  "megabytes": 9.91424560546875
+ },
+ "largest_difference": 1.5419169052677262e-06
+}

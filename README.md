@@ -1944,6 +1944,18 @@ molecule, each centred on that conformation's own copy of the atom, and `localal
 does the same with a frame, posing each conformation before averaging. On 5096 carbon shifts the prepared geometry gives an error of 8.82 ppm and a five-conformation average 11.63 ppm, a difference in q2 of -0.020 [-0.024, -0.017]; on the 912 acidities the ensemble is -0.020 [-0.061, +0.025]. The control that makes this readable is a second single conformation, the lowest in energy of the same pool, which costs -0.000 [-0.001, +0.000] -- nothing. So the model does not care which conformation it is given and is worse when given several: the mean field smears each atom over the positions it takes, and inside the envelope the conformations agree anyway. Five force-field conformations are not the populated set that a measured shift averages over, which is what a trajectory would be.
 
 
+**Many atoms at once, and what scale is worth.** A per-atom target is a large
+problem: 400 molecules are 5096 carbons and the free databases hold hundreds of thousands. The
+rotation-invariant local kernel needs no approximation to get there, because it is a linear kernel
+on 255 features: `cmfqsar/locallarge.py` solves the ridge in the space of those
+coefficients instead of the space of the samples, which is the same model -- the predictions agree
+to 2e-06 ppm -- at 5% of the memory and 0.8% of the time for the folds. A set of 58705 carbons, which an exact kernel could not hold at 26 GB, cross-validates in 7 seconds.
+
+**And it buys nothing.** On that set the error is 10.84 ppm at 100 molecules and 9.75 ppm at 6000, flat from about eight hundred molecules onwards: sixty times the data is worth 1.23 ppm. Halving the width of the distance bins, at the same size, is worth 1.40 ppm and halving again 1.99 ppm in all. The model is representation-limited, not data-limited, so a richer descriptor is the route to a shift predictor and a larger training set is not.
+
+The overlap kernel does need landmarks, and they work: 200 landmark environments of 1225 samples reproduce the exact q2, and 100 give a relative kernel error of 0.001.
+
+
 ### A co-field around one atom
 
 The local kernel above needs no frame, and that is its limit: with no frame there is no co-field,

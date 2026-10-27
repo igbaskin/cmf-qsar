@@ -101,8 +101,9 @@ def as_fields(values):
 
 def write(path, records, name):
     """Write the molecules with their per-atom target."""
-    if not os.path.isdir(OUT):
-        os.makedirs(OUT)
+    folder = os.path.dirname(path) or "."
+    if not os.path.isdir(folder):
+        os.makedirs(folder)
     with Chem.SDWriter(path) as w:
         for mol, values, title, extra in records:
             out = Chem.Mol(mol)
@@ -141,14 +142,19 @@ def in_chloroform(mol):
     return "Chloroform-D1" in first
 
 
-def shift_records(path, limit, seed=1, verbose=True):
-    """Molecules of nmrshiftdb2 with their assigned 13C shifts, prepared in three dimensions."""
+def shift_records(path, limit, seed=1, verbose=True, any_solvent=False):
+    """Molecules of nmrshiftdb2 with their assigned 13C shifts, prepared in three dimensions.
+
+    `any_solvent` keeps the records whose solvent is unreported as well, which is most of the
+    database.  A shift depends on the solvent, so that set is noisier by a few ppm; it is what
+    plan item LP5 uses to show that the method runs at the size the database really has.
+    """
     out, keys, read, embedded = [], set(), 0, 0
     for mol in Chem.ForwardSDMolSupplier(path, removeHs=False):
         read += 1
         if mol is None or not mol.HasProp("Spectrum 13C 0"):
             continue
-        if not in_chloroform(mol) or not ordinary(mol):
+        if not (any_solvent or in_chloroform(mol)) or not ordinary(mol):
             continue
         assigned = parse_spectrum(mol.GetProp("Spectrum 13C 0"))
         n = mol.GetNumAtoms()
@@ -279,6 +285,13 @@ def main(argv=None):
     ap.add_argument("--max-shifts", type=int, default=400,
                     help="molecules to keep for the shift set (default 400)")
     ap.add_argument("--seed", type=int, default=1, help="seed of the conformation generator")
+    ap.add_argument("--any-solvent", action="store_true",
+                    help="keep the 13C spectra whose solvent is unreported as well, which is most "
+                         "of the database and is noisier by a few ppm (plan item LP5)")
+    ap.add_argument("--out", default=OUT, metavar="DIR",
+                    help="where the prepared files go (default examples/local). A set of "
+                         "thousands of molecules belongs outside the repository; plan item LP5 "
+                         "builds one that way and the benchmark reads it with --data-root")
     a = ap.parse_args(argv)
     RDLogger.DisableLog("rdApp.*")
     if not a.shifts and not a.pka_dir:
@@ -286,8 +299,9 @@ def main(argv=None):
 
     if a.shifts:
         print(f"Carbon shifts from {a.shifts}")
-        records, read = shift_records(a.shifts, a.max_shifts, a.seed)
-        path = os.path.join(OUT, "shifts_cdcl3.sdf")
+        records, read = shift_records(a.shifts, a.max_shifts, a.seed,
+                                      any_solvent=a.any_solvent)
+        path = os.path.join(a.out, "shifts_cdcl3.sdf")
         n = write(path, records, "shift")
         atoms = sum(int(np.isfinite(v).sum()) for _m, v, _t, _e in records)
         print(f"  {n} molecules, {atoms} measured carbons, from {read} records -> {path}")
@@ -297,7 +311,7 @@ def main(argv=None):
         paths = [os.path.join(a.pka_dir, f) for f in
                  ("AvLiLuMoVe.sdf", "combined_training_datasets_unique.sdf")]
         records, unique = pka_records(paths, a.seed)
-        path = os.path.join(OUT, "carboxylic_pka.sdf")
+        path = os.path.join(a.out, "carboxylic_pka.sdf")
         n = write(path, records, "pka")
         print(f"  {n} acids of {unique} unique ones -> {path}")
     return 0

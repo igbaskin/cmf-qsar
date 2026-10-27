@@ -311,6 +311,13 @@ the geometry it was measured in, and one force-field conformation is a poor stan
   `.gitignore`. The posed structures derived from it are kept.
 * ORCA outputs of the quantum stages (ignored by git); the SDF files that carry their per-atom
   results are kept.
+* The nmrshiftdb2 dump (`nmrshiftdb2withsignals.sd`, 159 MB, the free download named in
+  `examples/make_local_examples.py`) and the larger shift sets built from it. The 400
+  molecules in `examples/local/` are kept; plan item LP5 needs a set of thousands, which
+  `make_local_examples.py --max-shifts 6000 --any-solvent --out DIR` writes outside the
+  repository and `benchmarks/run_local_scale.py --data-root DIR` reads. That set is 6000
+  molecules and 58 705 carbons, 19 MB, and its spectra are not restricted to one solvent,
+  so it is noisier than the kept one by a few ppm.
 
 ## Before the repository is public
 
