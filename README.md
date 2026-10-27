@@ -3215,7 +3215,7 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `01_first_model.ipynb` | an aligned series: fields, fitting, cross-validation, the co-field in 3D, the atoms behind one prediction |
 | `02_no_alignment.ipynb` | a SMILES table with no common frame: the rotation-invariant kernel, per-atom contributions, predicting new molecules |
 | `03_trusting_a_prediction.ipynb` | y-randomisation, the confidence interval of q², conformal intervals, the applicability domain, the two-sample test |
-| `04_two_endpoints.ipynb` | two activities on one kernel, how much sharing helps, selectivity |
+| `04_two_endpoints.ipynb` | two activities on one kernel, how much sharing helps, and the selectivity field of an aligned two-receptor series |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
