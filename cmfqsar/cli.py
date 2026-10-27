@@ -1802,6 +1802,61 @@ def cmd_atoms(args):
               f"belongs to")
 
 
+def cmd_local(args):
+    """A model over atoms: the field around an atom against a count around it (plan item LP2).
+
+    The sample is an atom in a molecule, not the molecule. The descriptor is the molecule's
+    fields under a Gaussian envelope about the atom, turned into the rotation-invariant
+    autocorrelation, so nothing has to be aligned. The folds hold out whole molecules, and
+    `--reference` adds the atom-centred count that every such model has to beat.
+    """
+    from cmfqsar.localenv import (DEFAULT_RHO, choose_lam, count_features, count_kernel,
+                                  environments, envelope_width, kept_share, local_features,
+                                  local_kernel, paired_interval, types_of)
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    t = ds.set_atom_activity(args.target)
+    print(f"{len(ds)} molecules from {args.dataset}")
+    print("  " + t.describe())
+    if not len(t):
+        raise SystemExit(f"no atom carries '{args.target}': 'cmf atoms --list' says what the "
+                         f"file has")
+    physchem, atom_props = _split_fields(args.fields)
+    fieldset = FieldSet.create(physchem=physchem, atom_properties=atom_props,
+                               charge_model=args.charges, param_scheme=args.param)
+    fields = [build_fields(m, fieldset, name=n) for m, n in zip(ds.mols, ds.names)]
+
+    reference = None
+    if args.reference:
+        types = types_of(fields, min_atoms=max(5, len(t) // 100))
+        reference = choose_lam(count_kernel(count_features(fields, t, types)), t,
+                               folds=args.folds, seed=args.seed, name="atom-centred counts")
+        print("  " + reference.summary())
+
+    best = None
+    for rho in (args.rho or [DEFAULT_RHO]):
+        envs = environments(fields, t, rho=rho)
+        r = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds, seed=args.seed,
+                       name=f"local field, rho {rho:g}")
+        kept = float(np.mean([kept_share(fields[int(t.molecule[i])], int(t.atom[i]), rho)
+                              for i in range(len(t))]))
+        print("  " + r.summary())
+        print(f"    envelope width {envelope_width(rho):.2f} A, "
+              f"{np.mean([e.n_atoms for e in envs]):.1f} atoms per sample, "
+              f"{kept:.1%} of the enveloped weight kept")
+        if reference is not None:
+            diff, lo, hi = paired_interval(r, reference, t, runs=args.bootstrap, seed=args.seed)
+            word = ("beats" if lo > 0 else "loses to" if hi < 0 else "is no better than")
+            print(f"    against the counts {diff:+.3f} [{lo:+.3f}, {hi:+.3f}]: it {word} them")
+        if best is None or r.q2 > best[0].q2:
+            best = (r, rho)
+    if args.out and best is not None:
+        from cmfqsar.atomtargets import write_atom_predictions
+        written = write_atom_predictions(args.out, ds.mols, t, best[0].predicted, names=ds.names)
+        print(f"  {written} molecules written to {args.out}: the measured value and the "
+              f"out-of-fold prediction on the atom each belongs to")
+
+
 def cmd_transfer(args):
     """How much two models ask the same thing of the chemistry: item F3 of the plan."""
     from cmfqsar.transfer import cofield_overlap, describe_matrix, overlap_matrix
@@ -3642,6 +3697,33 @@ def main(argv=None):
     at.add_argument("--out", default=None, metavar="FILE",
                     help="write an SDF carrying the target on its atoms")
     at.set_defaults(func=cmd_atoms)
+
+    lo = sub.add_parser("local", help="a model over atoms: the field around an atom against a "
+                                      "count around it")
+    lo.add_argument("dataset")
+    lo.add_argument("--target", required=True,
+                    help="the per-atom target, as 'cmf atoms --list' reports it")
+    lo.add_argument("--rho", nargs="*", type=float, default=None, metavar="RHO",
+                    help="envelope width parameters to try, in A^-2; the envelope falls to 1/e "
+                         "at 1/sqrt(rho), so a larger value looks less far (default 0.5)")
+    lo.add_argument("--reference", action="store_true",
+                    help="also fit the atom-centred count model on the same folds and bootstrap "
+                         "the difference over molecules")
+    lo.add_argument("--folds", type=int, default=10,
+                    help="folds; they hold out whole molecules (default 10)")
+    lo.add_argument("--seed", type=int, default=0)
+    lo.add_argument("--bootstrap", type=int, default=2000,
+                    help="bootstrap samples for the interval (default 2000)")
+    lo.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd",
+                    help="the fields the environment is built from; prop:NAME takes a per-atom "
+                         "property of the file, a quantum charge or a Fukui index")
+    lo.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    lo.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    lo.add_argument("--activity", default=None, help="the molecule-level activity, if any")
+    lo.add_argument("--out", default=None, metavar="FILE",
+                    help="write an SDF carrying the measured and the predicted value on the "
+                         "atoms they belong to")
+    lo.set_defaults(func=cmd_local)
 
     bm = sub.add_parser("benchmark", help="run, list or check the benchmarks of the checkout")
     bm.add_argument("name", nargs="*", help="which benchmarks to run (default: all of them)")

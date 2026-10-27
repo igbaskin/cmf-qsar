@@ -42,8 +42,10 @@ column says.
 | `corrosion/`, `corrosion_hcl/` (23 CSV each, 997 rows each) | congeneric series of iron corrosion inhibitors with the MWILA potency, per medium, and the Langmuir ΔG; the `_hcl` folder protonated at pH 0 | the author's own database of literature measurements, exported from its scaffold tree | free (the author's compilation); the underlying values are published, see below | `scaffold_tree_export.py` | `run_corrosion.py`, `run_corrosion_qm.py`, `run_multitask.py`, `run_cdft_kernels.py` |
 | `cyclodextrin/` (7 tables, 2671 guests, 0.7 MB; `ph7/` the same protonated, 0.8 MB; `upstream/` 4.1 MB) | association constants with a fixed cyclodextrin host, one table per host, activity = log K; the host-guest case, with no frame | Tahıl et al., Chemical Data Collections 45 (2023) 101022, Zenodo 10.5281/zenodo.7575539 | free (ODbL 1.0, share-alike; licence file in `upstream/`) | `make_cyclodextrin_examples.py --fetch --protonate` | `run_cyclodextrin.py`, `run_tasks.py` (the seven hosts as seven endpoints) |
 
-Sizes are of the tracked files. The whole of `examples/` is 51 MB, of which the two items of
-unclear status and the two that inherit it are 10 MB, and `mittal/`, derived, is 15 MB.
+| `local/shifts_cdcl3.sdf` (1.6 MB) | 400 molecules with 5096 assigned 13C shifts in ppm, on the carbon each belongs to; conformations generated here | nmrshiftdb2 (`nmrshiftdb2withsignals.sd`), filtered to the chloroform spectra | unclear | `make_local_examples.py --shifts` | `run_local.py` |
+| `local/carboxylic_pka.sdf` (2.5 MB) | 912 carboxylic acids with the acidity of the carboxyl group on its carbon; conformations generated here | Baltruschat & Czodrowski 2020, `AvLiLuMoVe.sdf` and `combined_training_datasets_unique.sdf` | free (CC BY 4.0, attribution; the terms and the changes are in `local/README.md`) | `make_local_examples.py --pka-dir` | `run_local.py` |
+Sizes are of the tracked files. The whole of `examples/` is 73 MB, of which the three items of
+unclear status and the two that inherit it are 12 MB, and `mittal/`, derived, is 15 MB.
 
 ## Each set in detail
 
@@ -246,6 +248,34 @@ fields on 60 α-CD guests, GRIND on 126 and on 233 β-CD guests, all an order of
 than the tables here. `benchmarks/run_cyclodextrin.py` measures the aligned, invariant and count
 kernels on every host, in both variants, with the grids of `run_alignment.py` so that the two
 tables can be read beside each other.
+
+### The two per-atom sets
+
+`examples/local/` holds the only two sets in the repository whose measured value belongs to an
+**atom** rather than to a molecule, which is what plan items LP1 and LP2 are about:
+`shifts_cdcl3.sdf` carries 5096 measured 13C shifts on the carbons they were measured for, and
+`carboxylic_pka.sdf` carries 912 carboxyl acidities on the carboxyl carbon.
+`examples/local/README.md` is the full record: the two downloads, every filter, what was changed
+and the licence of each. In short:
+
+* The shifts come from **nmrshiftdb2**, the open NMR database of the University of Cologne, from
+  its distributed dump of 58 187 records. Only the 13C spectra measured in deuterated chloroform
+  are kept, because a shift depends on the solvent and most records do not report one. The project
+  states that its spectra may be used without restrictions and names an "nmrshiftdb2 Data License"
+  for the database; that licence page could not be retrieved on 27 October 2026, the server
+  refusing the connection, so the status here is **unclear** in the sense above: redistribution is
+  invited by the project's own statements but an explicit permission has not been read. The file is
+  a derived subset of 400 molecules, not the database, and replacing it costs one download and one
+  run of the script.
+* The acidities come from the collection of **Baltruschat and Czodrowski** (F1000Research 9:113,
+  2020), which is **CC BY 4.0**, so the copy here is free to redistribute with attribution and a
+  statement of the changes; both are in `local/README.md`. Only molecules with exactly one
+  carboxylic acid group and a value below 6.5 are kept, which is what makes the site unambiguous.
+
+Both sets had to be given three-dimensional coordinates here, with ETKDG and MMFF94, because both
+sources distribute two-dimensional structures. The atom order is left untouched, so a measured atom
+keeps the index its source assigns it. That is the weakest part of both files: a shift responds to
+the geometry it was measured in, and one force-field conformation is a poor stand-in for it.
 
 ## What is not in the repository
 

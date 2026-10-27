@@ -1862,6 +1862,39 @@ cmf atoms shifts.sdf --target shift          # how much was measured, and how it
 There is no model over atoms yet: this is the part that has to be right before one can exist, and
 the local kernel is the item that adds one.
 
+### A model over atoms: the field around one atom
+
+A carbon shift or an acidity belongs to an atom, not to a molecule, so the sample has to be the
+atom and its surroundings. `cmfqsar/localenv.py` builds that sample (plan item LP2): the
+molecule's fields multiplied by a Gaussian envelope about the atom. A CMF field is a sum of
+atom-centred Gaussians and the envelope keeps that form, so an environment **is** a field and the
+whole program applies to it; the rotation-invariant autocorrelation then turns it into a
+descriptor that needs no alignment, which matters here because a common frame for carbons of
+unrelated molecules does not exist. The reference every such model has to beat is an atom-centred
+count: the type of the centre and the atom types in distance shells around it, which is what a
+per-atom increment scheme is. The folds hold out whole molecules, and the bootstrap interval
+resamples molecules, because the atoms of one molecule are not independent samples.
+
+**On 13C shifts it works.** 5096 assigned carbons in 400 molecules of
+nmrshiftdb2, measured in chloroform: the local field gives q2 +0.973 and an error of
+8.8 ppm at an envelope width of 1.0 A, against +0.853 and
+20.5 ppm for the count, a difference of +0.120 [+0.107, +0.133]. The width decides it: 2.0 A
+gives +0.902, which says a shift is a property of the atom and its first shells.
+
+**On carboxylic acid pKa it does not.** 912 acids: the best local field is +0.582, at the much
+wider envelope of 3.2 A that an acidity turns out to want, against +0.541 for the count, a difference of +0.041 [-0.013, +0.094], inside the interval. The
+**difference field** of the acid and its anion, which the plan proposed as the sample because
+acidity is the free energy of that change, is much worse, and the measurement says why: the mean
+kernel between two difference-field samples is 0.9999, because every carboxylic acid
+loses its proton in nearly the same way. What distinguishes two acids is not the change but what
+surrounds it, and the difference removes exactly that.
+
+```bash
+cmf local examples/local/shifts_cdcl3.sdf --target shift --reference
+cmf local examples/local/carboxylic_pka.sdf --target pka --rho 0.1 0.5 --reference
+```
+
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the
@@ -3250,6 +3283,8 @@ eight series CDK8 (33), c-Met (24), Eg5 (28), HIF-2α (42), PFKFB3 (40), SHP-2 (
 with the LigPrep poses in the binding site, the measured IC50 (ITC Kd for the 2023 HIF-2α set) converted to
 `pAffinity`, and the experimental ΔG and the FEP+ prediction (20 ns) kept as tags where the repository
 provides them. Produced by `examples/make_schindler_examples.py`.
+
+`examples/local/shifts_cdcl3.sdf`, `examples/local/carboxylic_pka.sdf` — the only two sets here whose measured value belongs to an **atom**: 400 molecules with 5096 assigned 13C shifts from nmrshiftdb2, in deuterated chloroform, each shift on the carbon it was measured for, and 912 carboxylic acids with the acidity of the carboxyl group on its carbon, from the collection of Baltruschat and Czodrowski (F1000Research 9:113, 2020, CC BY 4.0). Both are prepared by `examples/make_local_examples.py` from free downloads that are not in this repository; `examples/local/README.md` gives every filter, every change and the licence of each, and `docs/public_3dqsar_datasets.md` records that the nmrshiftdb2 terms could not be read on 27 October 2026. The structures are two-dimensional at the source, so a conformation is generated here with ETKDG and MMFF94, which is the weakest part of both files. Used by `benchmarks/run_local.py` and by `cmf local` (see *A model over atoms* above).
 
 `examples/mittal/*.sdf` — 38 of the 40 benchmark sets of Mittal, McKinnon & Sorich (J. Chem. Inf. Model.
 49 (2009) 1810), compiled for comparing QSAR methods in lead optimisation (ryanodine receptor, vacuolar

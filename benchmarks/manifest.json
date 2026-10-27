@@ -1,6 +1,6 @@
 {
- "commit": "457486a7f3485e023c9c6b4a6d6b1e026d513599",
- "created": "2026-10-27T00:35:10",
+ "commit": "7a654ce3daef666cc46482aa700ade942187cd18",
+ "created": "2026-10-27T07:46:38",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -130,9 +130,17 @@
    "bytes": 1131018,
    "sha256": "ae8f0c80a1f0c6cec59e7212c0d5d6c86e101334e19fe018ae4b96f2281eb3d9"
   },
+  "examples/corrosion_fe110/158_quinoline_uma.csv": {
+   "bytes": 19212,
+   "sha256": "a5f3a29335c20ff7968b417b793f6a4d54ab330e4b7a45191f062efc402540fc"
+  },
+  "examples/corrosion_fe110/158_quinoline_uma.sdf": {
+   "bytes": 258284,
+   "sha256": "7dda493ddaf706c2eba513295ba031758d02b5537165d5b51f06bafcc75ff90d"
+  },
   "examples/corrosion_fe110/README.md": {
-   "bytes": 46702,
-   "sha256": "ac0f4479f48629a72164243c4cfcb0c9d63d2db31860960f76b5a336bdc4e0c9"
+   "bytes": 49329,
+   "sha256": "fb210dc2cf1d5c7b8d9fff8cbc4f0dba295fde7b35542d3403aaef3e834594b0"
   },
   "examples/corrosion_fe110/alignment_comparison.csv": {
    "bytes": 452,
@@ -285,6 +293,10 @@
   "examples/corrosion_fe110/surface_kernel_eads.py": {
    "bytes": 6419,
    "sha256": "ab5c385c865579776c888be12ded7c67d918066d7ce853e4ab230fa79fbcfac5"
+  },
+  "examples/corrosion_fe110/surface_kernel_eads_quinoline.csv": {
+   "bytes": 760,
+   "sha256": "629d5410f821e1327c66ff937fcf67badf30d34271648a6e418b5293b9fc451a"
   },
   "examples/corrosion_hcl/0_c1ccccc1.csv": {
    "bytes": 51892,
@@ -546,6 +558,18 @@
    "bytes": 4865304,
    "sha256": "ad6b33311456cd656aa6ad77f4d9eaf89299af67d4258e25d8dbead160213391"
   },
+  "examples/local/README.md": {
+   "bytes": 4657,
+   "sha256": "a4dda7ebdf44219868ffa93aabd8abe7000c4c38f9c0bc1743c6c598fa3f2230"
+  },
+  "examples/local/carboxylic_pka.sdf": {
+   "bytes": 2583611,
+   "sha256": "df863c0da1dffac6109848793876c77f886de8340c67e055e2d24fc036ab0ecd"
+  },
+  "examples/local/shifts_cdcl3.sdf": {
+   "bytes": 1621769,
+   "sha256": "29e881e7fc12c73bbd94282b50571c4f9dd71e009f06c3810564e54d7bf69021"
+  },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
    "sha256": "d907e0d56bb8cc513cf00b4f0d28ac8a72fd9b37b9e4c67fc97c7978252fe778"
@@ -573,6 +597,10 @@
   "examples/make_litpcba_examples.py": {
    "bytes": 12863,
    "sha256": "db3e49f8f3461150b6d316ba4db2cfd47c93bea4b8327ed80d181783389d7b38"
+  },
+  "examples/make_local_examples.py": {
+   "bytes": 11631,
+   "sha256": "bad5c1a5559fc7ee7585d8ad3a649f507f5c4a264ecc08761871ed3c7a9e6985"
   },
   "examples/make_mittal_examples.py": {
    "bytes": 10432,
@@ -1835,6 +1863,9 @@
   "benchmarks/results/increments/fit_THER.json": "253f094cb036d29371f190e6cb393e207d35f6f21c35c968393e32af73d1abd1",
   "benchmarks/results/increments/fit_THR.json": "9139076596732502f5ecc289749d0b6e0e5a82cb4fe7bbb89d3ff1a004416f53",
   "benchmarks/results/increments/table.md": "9b4636871329e755237af0146743b1a3fbf4aab5c751ee83581b7efa49161609",
+  "benchmarks/results/local/pka.json": "8dfb0b579736ea7c29e9d15f7a75ef1a6a380caef6216d34aaef3649d96803bc",
+  "benchmarks/results/local/shifts.json": "f8109b7b3a8c9bdcc09ca97750f0f23fa97d162b9bdb9e9d09da5a5790ac4b29",
+  "benchmarks/results/local/table.md": "65ca59b845bb8f105a696dc5a8d485252e2cddfc6c062a3086e818758e1d4a93",
   "benchmarks/results/matbench_phonons/all+mass-align.json": "520553990efc6c20c853d2fa54a875596bcac511b33012ef16f5996841e557f7",
   "benchmarks/results/matbench_phonons/all+mass-alignf.json": "bdb5718ad6b8390d253d373ceb5b1b4382a81e408e3874fc320ff17f360fefd1",
   "benchmarks/results/matbench_phonons/all+mass-balanced.json": "2f22168dd45f00701229381084e689d63dad35584a0c1a47bac77d14b46893d1",

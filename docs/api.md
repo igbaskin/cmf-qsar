@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 71 modules, 124 classes with 471 public methods, and 519 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 72 modules, 125 classes with 472 public methods, and 538 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -60,6 +60,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.invariant](#cmfqsarinvariant) | Alignment-free but geometry-aware kernels: autocorrelation of the molecular fields. |
 | [cmfqsar.kernels](#cmfqsarkernels) | Molecular-field kernels. |
 | [cmfqsar.learnincrements](#cmfqsarlearnincrements) | Fitting the atomic increments to the data instead of taking them from the table (item D5). |
+| [cmfqsar.localenv](#cmfqsarlocalenv) | Atom-centred environments and the invariant local kernel (plan item LP2). |
 | [cmfqsar.mil](#cmfqsarmil) | Multi-instance learning over conformations: let the model choose the pose. |
 | [cmfqsar.mixing](#cmfqsarmixing) | A posterior over the field weights (plan item E6). |
 | [cmfqsar.mmd](#cmfqsarmmd) | Is this set of molecules like that one? |
@@ -976,6 +977,15 @@ There is no model over atoms yet -- the local kernel is the item that adds one -
 this does is the part that has to be right first: read the target with its blanks, say what
 was measured and where, show the folds that hold out whole molecules, and write the whole
 thing back in the form every program can read.
+
+### `cmd_local(args)`
+
+A model over atoms: the field around an atom against a count around it (plan item LP2).
+
+The sample is an atom in a molecule, not the molecule. The descriptor is the molecule's
+fields under a Gaussian envelope about the atom, turned into the rotation-invariant
+autocorrelation, so nothing has to be aligned. The folds hold out whole molecules, and
+`--reference` adds the atom-centred count that every such model has to beat.
 
 ### `cmd_transfer(args)`
 
@@ -4833,6 +4843,202 @@ The mean cosine between every pair of fitted vectors, per field, over the types 
 have in common.  One means the series learned the same increments; zero means they learned
 unrelated ones, and the increments are then a property of the series rather than of the atom
 types.
+
+## cmfqsar.localenv
+
+Source: `cmfqsar/localenv.py`
+
+Atom-centred environments and the invariant local kernel (plan item LP2).
+
+Everything else in this program takes a molecule as the sample.  A carbon shift, an acidity or a
+site reactivity belongs to an *atom in a molecule*, so the sample has to be the atom and its
+surroundings.  `cmfqsar.atomtargets` (plan item LP1) holds the targets of that shape; this
+module builds the samples that go with them.
+
+**The environment.**  One molecule gives as many samples as it has measured atoms.  The sample for
+atom *a* is the molecule's own fields multiplied by a Gaussian envelope about *a*,
+
+    g(r) = f(r) * exp(-rho |r - r_a|^2),
+
+so an atom close to the centre keeps its weight and one far away loses it.  A CMF field is a sum
+of atom-centred Gaussians, and this envelope keeps that form: `environment` returns a
+`cmfqsar.fields.MoleculeFields` whose atoms are the atoms of the molecule, whose
+coordinates are measured from the centre, and whose weights are damped by the envelope.  Every
+tool that works on a molecule's fields therefore works on an environment -- the kernels, the
+regression, the variance, the atom decomposition -- because an environment *is* a field.
+
+`rho` is a hyper-parameter like `alpha`, and it says how far the model is allowed to look: the
+envelope falls to 1/e at `1/sqrt(rho)`, which `envelope_width` reports.  A shielding is a
+short-range property and wants a narrow envelope; an acidity is felt further away and wants a
+wider one.
+
+**The kernel.**  The first kernel to measure is the rotation-invariant field autocorrelation of
+`cmfqsar.invariant`, taken on the environment instead of on the whole molecule, because it
+needs no alignment: two environments of different molecules need not be superposed for their
+autocorrelations to be compared.  The autocorrelation is a double sum over atom pairs, so on an
+environment it becomes
+
+    sum over atoms a, b of  w_a w_b exp(-rho d_a0^2) exp(-rho d_b0^2) * (distance bin of d_ab),
+
+with `d_a0` the distance of an atom from the centre.  It is a local descriptor built from the
+same fields as the global one, and the prediction still splits over the atoms exactly
+(`cmfqsar.model.CMFModel.atom_contributions`, plan item SC6).
+
+**The reference.**  Under rule 1 of the plan every item is measured against the simplest thing
+that could work, which here is an atom-centred count: the type of the centre itself and the counts
+of atom types in distance shells around it, which is what a per-atom increment scheme is.
+`count_features` builds it from the same molecules, the same atom types and the same
+samples, and `cross_validate` runs both through one cross-validation, so the only difference
+between the two numbers is the descriptor.
+
+**The folds.**  `cmfqsar.atomtargets.AtomTargets.folds` holds out whole molecules, and this
+module uses nothing else.  Two carbons of one molecule, one in the training set and one in the
+test set, would let the model see the molecule it is being tested on.
+
+### `class LocalResult  (dataclass)`
+
+What one descriptor scored on the per-atom target, out of fold.
+
+Attributes:
+
+- `name: str`
+- `predicted: np.ndarray`
+- `q2: float`
+- `error: float`
+- `mae: float`
+- `lam: float`
+- `n_samples: int`
+- `n_molecules: int`
+- `folds: int`
+- `note: str` = `''`
+- `molecule: np.ndarray` = `_field(default_factory=lambda: np.zeros(0, int))`
+
+#### `LocalResult.summary() -> str`
+
+### `envelope_width(rho: float=DEFAULT_RHO) -> float`
+
+The distance at which the envelope falls to 1/e, in angstrom.
+
+### `envelope_radius(rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR) -> float`
+
+The distance beyond which an atom is left out of the environment, in angstrom.
+
+### `envelope(coords: np.ndarray, centre: Sequence[float], rho: float=DEFAULT_RHO) -> np.ndarray`
+
+The envelope factor exp(-rho d^2) of every atom, with d measured from `centre`.
+
+### `environment(mol: MoleculeFields, atom: int, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, name: str='') -> MoleculeFields`
+
+The fields of `mol` seen from `atom`: the same fields under a Gaussian envelope.
+
+The result is an ordinary `cmfqsar.fields.MoleculeFields`, with the centre at the
+origin and every weight multiplied by `exp(-rho d^2)`, so the whole program applies to it.
+Atoms whose factor is below `floor` are left out, which costs nothing measurable and saves the
+cost of carrying them: at the default floor and the default `rho` that is everything beyond
+4.3 A, which `envelope_radius` reports.  `kept_share` says what share of the
+enveloped weight the floor dropped.
+
+The centre is the first atom of the result, so that `e.coords[0]` is the origin and
+`e.atom_types[0]` is the type of the atom the sample belongs to.  Which atom of the parent
+molecule every other atom came from is kept in `member_atom_map`, which is otherwise used
+for the members of an ensemble and is inert here, so that a per-atom quantity computed on an
+environment can be put back on the molecule it came from.
+
+An ensemble field may be passed, and `atom` then indexes its concatenated atom list.  The
+result is a plain field rather than an ensemble, because the members' weights are already
+multiplied into the atoms they belong to; the atom decomposition of such an environment is
+therefore per atom of a member, which is what a difference field (`difference_field`)
+means.
+
+### `kept_share(mol: MoleculeFields, atom: int, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR) -> float`
+
+The share of the enveloped field weight that the floor keeps, in [0, 1].
+
+### `environments(mols: Sequence[MoleculeFields], targets: AtomTargets, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, progress=None) -> List[MoleculeFields]`
+
+One environment per measured atom, in the row order of `targets`.
+
+### `difference_field(a: MoleculeFields, b: MoleculeFields, name: str='') -> MoleculeFields`
+
+The field of `a` minus the field of `b`, as one field (plan item LP2).
+
+A kernel on CMF fields is bilinear, so a difference of two fields is again a field: its atoms
+are the atoms of both molecules, with the second molecule's weights negated.  That is the
+signed counterpart of `cmfqsar.fields.combine_members`, which averages members and so
+needs non-negative weights.
+
+The acidity of a site is the free energy of a change -- the acid loses a proton -- and the
+difference field of the acid and its anion is that change as a field, which is why it is the
+sample for a pKa.  The two molecules must be in one frame for the difference to mean anything;
+the protonation states built by `cmfqsar.protonation` are, because they are built on the
+geometry of the parent.
+
+### `local_features(envs: Sequence[MoleculeFields], spec: AutocorrelationSpec=LOCAL_SPEC, progress=None) -> np.ndarray`
+
+Autocorrelation features of a list of environments, one row each.
+
+### `local_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, scale: Optional[np.ndarray]=None, spec: AutocorrelationSpec=LOCAL_SPEC, normalize: bool=True) -> np.ndarray`
+
+Cosine-normalised linear kernel on the environment autocorrelations.
+
+### `types_of(mols: Sequence[MoleculeFields], min_atoms: int=20) -> List[str]`
+
+The atom types worth a column of their own: those on at least `min_atoms` atoms.
+
+### `type_index(types: Sequence[str]) -> Dict[str, int]`
+
+Where each type sits in a count row; everything else shares the last column.
+
+### `shell_counts(mol: MoleculeFields, atom: int, types: Sequence[str], edges: Sequence[float]=SHELL_EDGES) -> np.ndarray`
+
+What is around one atom: its own type, and the atom types in distance shells about it.
+
+This is the reference the local kernel has to beat (rule 1 of the plan): an atom-centred
+increment scheme, written as counts.  The row is the one-hot type of the centre followed by
+one count per (type, shell), with a last column in each block for every type too rare to have
+one of its own.
+
+### `count_features(mols: Sequence[MoleculeFields], targets: AtomTargets, types: Sequence[str], edges: Sequence[float]=SHELL_EDGES) -> np.ndarray`
+
+Count rows of the reference, one per measured atom, in the row order of `targets`.
+
+### `count_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, normalize: bool=True) -> np.ndarray`
+
+Cosine-normalised linear kernel on the count rows.
+
+Every column is a count, so there is nothing to rescale between them: unlike the field
+channels, which carry charges in one block and ones in another, the blocks here are already
+in the same units.
+
+### `cross_validate(K: np.ndarray, targets: AtomTargets, lam: float=0.001, folds: int=10, seed: Optional[int]=0, name: str='', note: str='') -> LocalResult`
+
+Out-of-fold predictions of a kernel on a per-atom target, holding out whole molecules.
+
+The folds come from `cmfqsar.atomtargets.AtomTargets.folds`, so every atom of a molecule
+is predicted by a model that never saw that molecule.
+
+### `cross_validate_lams(K: np.ndarray, targets: AtomTargets, lams: Sequence[float]=LAMS, folds: int=10, seed: Optional[int]=0, name: str='') -> List[LocalResult]`
+
+One result per ridge value, from one pass over the folds.
+
+### `choose_lam(K: np.ndarray, targets: AtomTargets, lams: Sequence[float]=LAMS, folds: int=10, seed: Optional[int]=0, name: str='') -> LocalResult`
+
+The ridge that cross-validates best, and its result.
+
+Both the local kernel and the count reference are given this same search on the same folds, so
+the choice favours neither.  The q2 it reports is the one the search maximised and is
+therefore optimistic by the amount any such search is; what is being compared is a difference
+between two descriptors treated alike, not an absolute figure.
+
+### `paired_interval(a: LocalResult, b: LocalResult, targets: AtomTargets, runs: int=2000, seed: int=0, statistic: str='q2') -> Tuple[float, float, float]`
+
+(difference, low, high) for `a` against `b`, bootstrapped over **molecules**.
+
+Resampling atoms would overstate the precision, because the atoms of one molecule are not
+independent: they share a geometry, a charge model and whatever the molecule's chemistry does
+to all of them.  So a bootstrap sample is a sample of molecules, with every measured atom of a
+drawn molecule going in with it.  Rule 4 of the plan then applies as it does to molecules: a
+difference inside the interval is not a result.
 
 ## cmfqsar.mil
 

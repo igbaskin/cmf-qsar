@@ -3750,6 +3750,141 @@ remedy: with the background kept, the aligned weights take the 59-field model fr
 do not make it better than the four physico-chemical fields alone. The full table and the
 co-patterns are in `benchmarks/results/matbench_phonons/table.md`.
 
+## An atom instead of a molecule: the local invariant kernel
+
+Every model so far predicts one number per molecule. A carbon shift, an acidity, a local
+reactivity or a site's energy belongs to an **atom in a molecule**, so the sample has to be the
+atom and its surroundings (plan item LP2). The section on per-atom targets above holds the targets
+of that shape (`cmfqsar/atomtargets.py`); `cmfqsar/localenv.py` builds the samples that go with
+them.
+
+**The sample is the field under an envelope.** The environment of atom *a* is the molecule's own
+fields multiplied by a Gaussian envelope about *a*,
+
+    g(r) = f(r) * exp(-rho |r - r_a|^2),
+
+so an atom near the centre keeps its weight and one far away loses it. A CMF field is a sum of
+atom-centred Gaussians and the envelope keeps that form, which is the point: an environment **is**
+a field of the same class as a molecule's, so the kernels, the regression, the variance and the
+atom decomposition all apply to it unchanged. The centre is the first atom of the environment, and
+`member_atom_map` records which atom of the molecule each atom of the environment came from, so a
+per-atom quantity can be put back where it belongs.
+
+**`rho` says how far the model looks**, and it is a hyper-parameter like `alpha`: the envelope
+falls to 1/e at `1/sqrt(rho)`, which `envelope_width` reports. The default 0.5 A^-2 is a width of
+1.4 A, which is a first-shell view; 0.1 A^-2 is 3.2 A and takes in most of a small molecule. It
+has to be chosen for the property, and the measurement below shows that it decides everything.
+Atoms whose envelope factor falls below 1e-4 are left out, which costs nothing measurable and
+saves carrying them; `kept_share` says what share of the enveloped weight that dropped.
+
+**The kernel needs no alignment.** The kernel to use on an environment first is the
+rotation-invariant field autocorrelation of the sections above, taken from the centre instead of
+over a whole molecule: two environments of two different molecules need not be superimposed for
+their autocorrelations to be compared. That matters here more than anywhere else, because a common
+frame for carbons of unrelated molecules does not exist. On an environment the autocorrelation
+becomes a double sum over atom pairs in which each atom carries its envelope factor, and the
+distance axis is shorter -- `LOCAL_SPEC` runs to 8 A in steps of 0.5 A, because the envelope has
+already removed everything beyond a few angstrom.
+
+**An acidity is the field of a change.** A pKa is the free energy of losing a proton, so the sample
+for it is not the acid but the **difference field** of the acid and its anion, which
+`difference_field` builds: a kernel on CMF fields is bilinear, so a difference of two fields is
+again a field, whose atoms are the atoms of both molecules with the second one's weights negated.
+That is the signed counterpart of the ensemble builder of the protonation section, which averages
+members and therefore needs non-negative weights. The two molecules have to be in one frame for
+the difference to mean anything, which is why the anion is built on the geometry of the acid.
+
+**The reference is an atom-centred count.** What such a model has to beat is the simplest thing
+that could work: the type of the centre itself plus the counts of atom types in distance shells
+around it, which is what a per-atom increment scheme is. `count_features` builds it from the same
+molecules, the same samples and the same folds, so the only difference between the two numbers is
+the descriptor.
+
+**The folds hold out whole molecules.** `AtomTargets.folds` splits molecules, never atoms. Two
+carbons of one molecule, one in the training set and one in the test set, would let the model see
+the molecule it is being tested on. For the same reason the bootstrap interval resamples
+molecules, with every measured atom of a drawn molecule going in with it.
+
+```bash
+cmf atoms examples/local/shifts_cdcl3.sdf --list        # what could be a target here
+cmf local examples/local/shifts_cdcl3.sdf --target shift --reference
+cmf local examples/local/carboxylic_pka.sdf --target pka --rho 0.1 0.5 --reference \
+    --out with_predictions.sdf
+```
+
+`cmf local` fits the local kernel on the per-atom target, searches the ridge on the folds that hold
+out whole molecules, and with `--reference` fits the count model on the same folds and bootstraps
+the difference over molecules. `--out` writes an SDF carrying the measured value and the
+out-of-fold prediction on the atom each belongs to.
+
+### What it is worth, measured
+
+`benchmarks/run_local.py` measures the two properties the plan names, against the count reference
+on the same folds. Both sets are prepared by `examples/make_local_examples.py` from free
+downloads and are in `examples/local/`, with their origin, their licences and every filter in
+`examples/local/README.md`. The last column but one is the mean kernel value between two different
+samples: a cosine-normalised kernel of 1 says the descriptor cannot tell two samples apart,
+whatever the regression does with it afterwards.
+
+**13C shifts in chloroform, 5096 assigned carbons in 400 molecules.**
+
+| descriptor | envelope width rho | q2 | error (ppm) | mean kernel between two samples | difference in q2 against the counts |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| atom-centred counts (18 atom types in 6 shells) | -- | +0.853 | 20.464 | 0.566 | -- |
+| local field | 0.25 | +0.902 | 16.731 | 0.462 | +0.049 [+0.030, +0.067] |
+| local field | 0.5 | +0.962 | 10.404 | 0.486 | +0.109 [+0.097, +0.123] |
+| local field | 1 | +0.973 | 8.824 | 0.537 | +0.120 [+0.107, +0.133] |
+| local field | 2 | +0.969 | 9.460 | 0.562 | +0.116 [+0.103, +0.130] |
+
+**The field around a carbon predicts its shift better than a count around it does, and the
+envelope width decides how much.** At a width of 1.0 A the error is 8.8 ppm against
+20.5 ppm for the counts, a difference in q2 of +0.120 [+0.107, +0.133], which is far outside
+the interval. At the module's default width of 1.4 A, which was fixed before either set here was
+measured, it is +0.109 [+0.097, +0.123]. A wider envelope
+is worse (+0.902 at a width of 2.0 A) and so is a narrower one (+0.969 at 0.7 A), so the best view
+of a carbon is about one angstrom across, which is what a shift should ask for: it is a property of
+the atom, its bonds and the next shell.
+
+What these numbers are **not** is a shift predictor. Programs built for that task reach one to
+three ppm on 13C by using tens of thousands of spectra and often a calculated geometry; this model
+has 400 molecules and one force-field conformation each. The question the item asks is
+narrower, and the measurement answers it.
+
+**Carboxylic acid pKa, 912 acids with the value on the carboxyl carbon.**
+
+| descriptor | envelope width rho | q2 | error (pKa units) | mean kernel between two samples | difference in q2 against the counts |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| atom-centred counts (20 atom types in 6 shells) | -- | +0.541 | 0.563 | 0.577 | -- |
+| local field | 0.05 | +0.570 | 0.545 | 0.716 | +0.029 [-0.030, +0.086] |
+| local difference field | 0.05 | +0.045 | 0.811 | 1.000 | -0.495 [-0.718, -0.356] |
+| local field | 0.1 | +0.582 | 0.537 | 0.775 | +0.041 [-0.013, +0.094] |
+| local difference field | 0.1 | +0.028 | 0.818 | 1.000 | -0.512 [-0.570, -0.451] |
+| local field | 0.25 | +0.553 | 0.555 | 0.877 | +0.013 [-0.052, +0.075] |
+| local difference field | 0.25 | +0.014 | 0.824 | 1.000 | -0.526 [-0.579, -0.468] |
+| local field | 0.5 | +0.526 | 0.571 | 0.957 | -0.014 [-0.079, +0.051] |
+| local difference field | 0.5 | +0.315 | 0.687 | 1.000 | -0.226 [-0.383, -0.113] |
+| local field | 1 | +0.470 | 0.604 | 0.990 | -0.070 [-0.126, -0.006] |
+| local difference field | 1 | +0.020 | 0.822 | 0.999 | -0.520 [-0.610, -0.445] |
+| local field | 2 | +0.395 | 0.646 | 0.997 | -0.146 [-0.207, -0.081] |
+| local difference field | 2 | +0.033 | 0.816 | 0.998 | -0.508 [-0.561, -0.449] |
+
+**Here the local kernel is no better than the count, and the difference field, which the plan
+proposed as the sample, is far worse.** The best of the plain environments is a width of 3.2 A,
++0.582 against +0.541 for the counts, a difference of +0.041 [-0.013, +0.094] -- inside the
+interval, so by rule 4 it is not a result. The direction the plan expected is right, though: an
+acidity wants a **wider** envelope than a shift, and a tight one fails: +0.526 at a width of
+1.4 A and +0.395 at 0.7 A, both below the count.
+
+The mean-kernel column says why, and it is the useful part of this measurement. For the difference
+field it is 0.998 or more at every width, and 0.9999 at the three widest: **every carboxylic
+acid loses its proton in nearly the same way**, so the difference of the two fields is nearly the same pattern for all 912 of them, and
+after the cosine normalisation the samples are indistinguishable. The free energy of deprotonation
+is indeed a response to that change, but what distinguishes one acid from another is not in the
+change itself -- it is in what surrounds it, which is exactly what the difference removes. The same
+column explains the plain environments: at a width of 0.5 A the mean kernel is already
+0.957, because the first shell of a carboxyl group is the same group in every molecule,
+and the model only starts to see the substituent as the envelope widens.
+
 ## Topomer fields
 
 Cramer's topomer idea (topomer CoMFA, 2003), applied to fields. Cut the molecule at the bonds that
@@ -4214,7 +4349,8 @@ not every option.
 | `complement` | field complementarity with a protein pocket |
 | `compare` | are two sets the same population? (MMD, with a witness) |
 | `cluster` | cluster a set by its field kernel (spectral clustering) |
-| `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
+| `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
+| `local` | a model over atoms: the field around an atom against a count around it |
 | `unalign` | give every molecule a random pose, the control experiment |
 
 ## The options of `build`, by group

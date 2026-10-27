@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 65 modules and about 28,700 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with twenty-five subcommands (`build`, `build-crystals`, `diagnose`,
+* A library of 66 modules and about 29,250 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with twenty-six subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`), 927 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 950 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1750,6 +1750,57 @@ on the same folds.
   atoms, and carboxylic acid pKa with the difference field of acid and anion (`cmfqsar/fielddiff.py`)
   as the sample, since the free energy of deprotonation is a response to that change. Gate: beats
   the count kernel by more than the interval of rule 4 on both.
+  **Done 27 October 2026, and the gate splits: it passes on the shifts and fails on the
+  acidity, for a reason the measurement names.** `cmfqsar/localenv.py`: `environment` multiplies
+  a molecule's fields by `exp(-rho d^2)` about one atom and returns an ordinary `MoleculeFields`
+  with the centre at the origin and the envelope folded into the weights, so an environment is a
+  field of the same class as a molecule's and every kernel, learner and decomposition applies to
+  it unchanged; `member_atom_map` keeps which atom of the molecule each atom of the environment
+  came from, and `kept_share` reports what the 1e-4 floor dropped. `difference_field` is the
+  signed counterpart of `combine_members`, which is what the acid-minus-anion sample needs, since
+  averaging members requires non-negative weights. `local_features`/`local_kernel` take the
+  rotation-invariant autocorrelation of `cmfqsar/invariant.py` on an environment, over a shorter
+  distance axis (8 A in steps of 0.5 A). The reference of rule 1 is `shell_counts`: the one-hot
+  type of the centre plus the counts of atom types in six distance shells about it, which is a
+  per-atom increment scheme written as counts. `cross_validate` and `cross_validate_lams` run the
+  folds of `AtomTargets.folds`, which hold out whole molecules, and get every ridge value from one
+  eigendecomposition per fold (`_ridge_path`, verified against `krr_fit`); `paired_interval`
+  bootstraps over **molecules**, not atoms, because the atoms of one molecule are not independent.
+  `cmf local` fits either set from the command line, with `--reference` for the comparison and
+  `--out` to write the out-of-fold predictions back onto the atoms. 23 tests.
+  Both data sets are new and prepared by `examples/make_local_examples.py` from free downloads,
+  with origin, licence and every filter in `examples/local/README.md` and in
+  `docs/public_3dqsar_datasets.md`: 400 molecules with 5096 assigned 13C shifts from nmrshiftdb2
+  (the chloroform spectra only, because a shift depends on the solvent), and 912 carboxylic acids
+  with the acidity of the carboxyl group from the collection of Baltruschat and Czodrowski (2020).
+  **Shifts: the gate passes, and by a wide margin.** The local field gives q2 +0.973 and an error
+  of 8.8 ppm at an envelope width of 1.0 A, against +0.853 and 20.5 ppm for the atom-centred
+  count; the difference in q2 is +0.120 [+0.107, +0.133], and at the module's default width
+  (1.4 A, fixed before either set here was measured) +0.109 [+0.097, +0.123]. The width decides the result: +0.902 at 2.0 A width, +0.973 at
+  1.0 A, +0.969 at 0.7 A, which is the behaviour a short-range property should show.
+  **Acidity: the gate fails, and the reason is worth more than the number.** The best plain
+  environment is at a width of 3.2 A -- the plan's expectation that an acidity is felt further away
+  than a shift is confirmed in direction -- but it gives +0.582 against +0.541 for the count, a
+  difference of +0.041 [-0.013, +0.094], inside the interval, so under rule 4 it is not a result.
+  The **difference field**, which the item proposed as the sample, is far worse: +0.028 at that
+  width, -0.512 [-0.570, -0.451] against the count. The diagnostic added for this says why: the
+  mean kernel between two difference-field samples is 0.998 or more at every width, and 0.9999 at
+  the three widest, because every carboxylic acid loses its proton in nearly the same way, so the
+  difference of the two fields is
+  nearly the same pattern for all 912 of them and the samples are indistinguishable after
+  normalisation. The free energy of deprotonation is a response to that change, but what tells two
+  acids apart is not the change itself -- it is what surrounds it, which is exactly what the
+  difference removes. The same column explains the plain environments: a mean kernel of 0.957 at a
+  width of 1.4 A, because the first shell of a carboxyl group is the same group in every molecule.
+  **What this says for the items below.** LP3 should take the shifts, where there is signal to
+  interpret, and should not expect its co-field from the difference field; its stated gate -- the
+  meta/para picture of `benchmarks/results/hammett/` out of per-atom pKa data -- now looks out of
+  reach on this set, because the local kernel does not beat a count on it at all. LP4's protonation
+  ensembles and LP5's scale both wait on LP3.
+  **Not done:** no local alignment and no co-field around an atom (LP3), no panel in the
+  application, and no attempt at the shift sets that would make this a shift predictor: 400
+  molecules with one force-field conformation each is far from the one to three ppm that programs
+  built for the task reach with tens of thousands of spectra and calculated geometries.
 * **LP3. Local alignment and the co-field around an atom.** For a congeneric site (the carboxyl
   group, an aromatic carbon with its two neighbours) a superposition on the centre and its first
   shell is well posed, and the overlap kernel in that frame gives what the invariant kernel

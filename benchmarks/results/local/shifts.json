@@ -1,0 +1,89 @@
+{
+ "set": "shifts",
+ "what": "13C shifts in chloroform (nmrshiftdb2)",
+ "unit": "ppm",
+ "target": "shift",
+ "n_samples": 5096,
+ "n_molecules": 400,
+ "folds": 10,
+ "seed": 0,
+ "fixed_rho": 0.5,
+ "spec": {
+  "d_max": 8.0,
+  "step": 0.5,
+  "sigma": 0.5
+ },
+ "reference": {
+  "name": "atom-centred counts",
+  "q2": 0.852883378051454,
+  "error": 20.463542728189754,
+  "mae": 14.832666587105354,
+  "lam": 0.1,
+  "note": "18 atom types in 6 shells",
+  "alike": 0.565841542380516
+ },
+ "rows": [
+  {
+   "kind": "local field",
+   "rho": 0.25,
+   "q2": 0.9016600392284018,
+   "error": 16.730732899258356,
+   "mae": 11.465055122512275,
+   "lam": 0.0001,
+   "note": "255 channels, 50 s",
+   "difference": 0.04877666117694779,
+   "low": 0.029729259302456443,
+   "high": 0.06687199829878661,
+   "alike": 0.46225621226021224,
+   "atoms_per_environment": 28.93210361067504
+  },
+  {
+   "kind": "local field",
+   "rho": 0.5,
+   "q2": 0.9619720132253222,
+   "error": 10.404030522884046,
+   "mae": 7.1964773913691324,
+   "lam": 1e-05,
+   "note": "255 channels, 50 s",
+   "difference": 0.10908863517386824,
+   "low": 0.09688730212341923,
+   "high": 0.12311000521449994,
+   "alike": 0.48579886469803973,
+   "atoms_per_environment": 20.009026687598116
+  },
+  {
+   "kind": "local field",
+   "rho": 1.0,
+   "q2": 0.9726454245578015,
+   "error": 8.82398863102364,
+   "mae": 6.076737696053076,
+   "lam": 1e-06,
+   "note": "255 channels, 51 s",
+   "difference": 0.11976204650634747,
+   "low": 0.10697492558965845,
+   "high": 0.133323241284492,
+   "alike": 0.537426519169636,
+   "atoms_per_environment": 12.553571428571429
+  },
+  {
+   "kind": "local field",
+   "rho": 2.0,
+   "q2": 0.9685624925596847,
+   "error": 9.459626802685163,
+   "mae": 6.584169300286569,
+   "lam": 1e-05,
+   "note": "255 channels, 52 s",
+   "difference": 0.11567911450823076,
+   "low": 0.10326934349088247,
+   "high": 0.12965203153101895,
+   "alike": 0.5624154369657667,
+   "atoms_per_environment": 5.067700156985871
+  }
+ ],
+ "y": {
+  "low": 7.0,
+  "high": 220.5,
+  "mean": 85.75940349293565,
+  "spread": 53.35190738892568
+ }
+}
