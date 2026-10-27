@@ -1810,9 +1810,21 @@ def cmd_local(args):
     autocorrelation, so nothing has to be aligned. The folds hold out whole molecules, and
     `--reference` adds the atom-centred count that every such model has to beat.
     """
-    from cmfqsar.localenv import (DEFAULT_RHO, choose_lam, count_features, count_kernel,
-                                  environments, envelope_width, kept_share, local_features,
-                                  local_kernel, paired_interval, types_of)
+    from cmfqsar.localenv import (DEFAULT_RHO, LOCAL_SPEC, choose_lam, count_features,
+                                  count_kernel, environments, envelope_width, kept_share,
+                                  local_features, local_kernel, paired_interval,
+                                  top_k_accuracy, types_of)
+    from cmfqsar.locallarge import choose_lam_primal, normalised_rows
+
+    def fit(features, name, n_bins=1, flat=False):
+        """One model on one feature matrix, by whichever route was asked for."""
+        if args.primal:
+            scale = np.ones(features.shape[1]) if flat else None
+            rows, _s = normalised_rows(features, scale=scale, n_bins=n_bins)
+            return choose_lam_primal(rows, t, folds=args.folds, seed=args.seed, name=name)
+        k = (count_kernel(features) if flat
+             else local_kernel(features))
+        return choose_lam(k, t, folds=args.folds, seed=args.seed, name=name)
 
     ds = load_dataset(args.dataset, activity_prop=args.activity)
     t = ds.set_atom_activity(args.target)
@@ -1832,8 +1844,7 @@ def cmd_local(args):
     reference = None
     if args.reference:
         types = types_of(fields, min_atoms=max(5, len(t) // 100))
-        reference = choose_lam(count_kernel(count_features(fields, t, types)), t,
-                               folds=args.folds, seed=args.seed, name="atom-centred counts")
+        reference = fit(count_features(fields, t, types), "atom-centred counts", flat=True)
         print("  " + reference.summary())
 
     members = _conformations(args, ds, fieldset) if args.conformers > 1 else None
@@ -1846,20 +1857,28 @@ def cmd_local(args):
             envs = [ensemble_environment(members[int(t.molecule[k])][0], int(t.atom[k]), rho,
                                          weights=members[int(t.molecule[k])][1])
                     for k in range(len(t))]
-            r = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds,
-                           seed=args.seed, name=f"local field, rho {rho:g}")
+            r = fit(local_features(envs), f"local field, rho {rho:g}",
+                    n_bins=LOCAL_SPEC.n_bins)
             used, extra = t, (f"{np.mean([e.n_atoms for e in envs]):.1f} atoms per sample over "
                               f"{np.mean([e.n_conformers for e in envs]):.1f} conformations")
         else:
             envs = environments(fields, t, rho=rho)
-            r = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds,
-                           seed=args.seed, name=f"local field, rho {rho:g}")
+            r = fit(local_features(envs), f"local field, rho {rho:g}",
+                    n_bins=LOCAL_SPEC.n_bins)
             used, extra = t, f"{np.mean([e.n_atoms for e in envs]):.1f} atoms per sample"
         kept = float(np.mean([kept_share(fields[int(used.molecule[i])], int(used.atom[i]), rho)
                               for i in range(len(used))]))
         print("  " + r.summary())
         print(f"    envelope width {envelope_width(rho):.2f} A, {extra}, "
               f"{kept:.1%} of the enveloped weight kept")
+        if args.rank:
+            print(f"    the true atom is first in {top_k_accuracy(used, r.predicted, 1):.1%} of "
+                  f"the molecules and among the first two in "
+                  f"{top_k_accuracy(used, r.predicted, 2):.1%}")
+            if reference is not None and len(used) == len(t):
+                print(f"    the counts put it first in "
+                      f"{top_k_accuracy(t, reference.predicted, 1):.1%} and among the first two "
+                      f"in {top_k_accuracy(t, reference.predicted, 2):.1%}")
         if reference is not None and len(used) == len(t):
             diff, lo, hi = paired_interval(r, reference, t, runs=args.bootstrap, seed=args.seed)
             word = ("beats" if lo > 0 else "loses to" if hi < 0 else "is no better than")
@@ -3840,6 +3859,14 @@ def main(argv=None):
     lo.add_argument("--seed", type=int, default=0)
     lo.add_argument("--bootstrap", type=int, default=2000,
                     help="bootstrap samples for the interval (default 2000)")
+    lo.add_argument("--primal", action="store_true",
+                   help="solve in the space of the 255 features instead of the space of the "
+                        "samples: the same model, but memory that grows with the samples rather "
+                        "than with their square (needed above about ten thousand atoms)")
+    lo.add_argument("--rank", action="store_true",
+                   help="for a target that is one on the atom and zero elsewhere, also report "
+                        "the share of molecules whose true atom is among the first and the "
+                        "first two the model ranks")
     lo.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd",
                     help="the fields the environment is built from; prop:NAME takes a per-atom "
                          "property of the file, a quantum charge or a Fukui index")

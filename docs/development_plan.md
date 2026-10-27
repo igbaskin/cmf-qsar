@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 70 modules and about 30,850 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 70 modules and about 30,950 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-six subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 1038 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 1051 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2367,6 +2367,36 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   exists so that the measurement is made on drug-like molecules and not only on the small molecules
   those items will use. Gate: the correct site among the first two predicted on a public
   site-of-metabolism set, against a 2D baseline.
+  **Done 27 October 2026; the gate is passed, but by the field next to the count and not by the
+  field alone.** The data set is `examples/local/metabolism.sdf`, prepared by
+  `examples/make_local_examples.py --som`: 636 molecules, 1301 sites among 14 488 heavy atoms,
+  from the benchmark of Zaretzki, Matlock and Swamidass (J. Chem. Inf. Model. 53 (2013) 3373) in
+  the preprocessed form the FAME.AL project publishes under the MIT licence, the sites merged over
+  the cytochrome P450 isoforms. `localenv.topological_counts` is the two-dimensional baseline the
+  gate names -- the centre's atom type and the types one to four bonds away, which is what an
+  atom's topological fingerprint holds. `localenv.top_hits` and `localenv.top_k_accuracy` are the
+  measure: in what share of the molecules is a true site among the one, or the two, atoms the
+  model ranks highest, ranked inside each molecule. `cmf local` gained `--rank`, which reports it,
+  and `--primal`, because 14 488 atoms give a 1.7 GB kernel and the primal route of LP5 is the
+  same model in 10 MB. 13 tests.
+  **Measured** by `benchmarks/run_metabolism.py` on 10 folds that hold out whole molecules, the
+  ridge searched the same way for every row, as the share of molecules whose site is among the
+  first two: count over bonds (the 2D baseline) 70.9%; count over distance 73.9%, +3.0% [+0.3%,
+  +5.5%]; the local field at its best width (rho 0.25) 71.1%, +0.2% [-3.3%, +3.8%], which is no
+  better than the baseline; the count and the field together **76.9%**, +3.0% [+0.5%, +5.7%] over
+  the count alone and +6.0% [+3.3%, +8.8%] over the baseline, which is the gate.
+  **What the rows say.** Geometry gains, and it gains in its simplest form: the same atom types
+  placed in space rather than along the bond graph are worth three points. The field adds three
+  more on top of the count, so the two descriptions hold different things. The field alone is weak
+  here for a reason that belongs to the descriptor: the autocorrelation of an environment never
+  names its centre, and how easily an atom is oxidised depends first of all on what the atom is.
+  Giving the field only the centre's own atom type already reaches 74.8%. On the shift set of LP2
+  that costs little because every sample is a carbon; here the candidates are carbons, nitrogens,
+  oxygens and sulfurs at once. The width is interior: the field rows rise to rho 0.25 and fall on
+  both sides. The mixture that passes the gate lives in the benchmark, not in `cmf local`, which
+  fits one descriptor at a time; and the merged isoforms make this a question about the atom
+  rather than about the fit of a molecule into one binding site, which is the half of the
+  statement an isoform-resolved target would test.
 * **MC9. Scoring a conformational restriction.** Rigidifying a molecule is one of the few moves in
   medicinal chemistry whose effect is purely conformational, and the fourth-dimension verdict says
   that ensembles do not improve a prediction. They may still answer a different question. The

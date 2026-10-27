@@ -24,7 +24,18 @@ stored in the ionised form.  Only molecules with exactly one carboxylic acid gro
 between 0.5 and 6.5 are kept, so that the value can only be the acidity of that group: a
 protonated amine is a base and would sit above 7.  The target is written on the carboxyl carbon.
 
-Structures in both sources are two-dimensional, so a conformation is generated here with ETKDG and
+**Sites of metabolism** (``examples/local/metabolism.sdf``) come from the set of Zaretzki,
+Matlock and Swamidass (J. Chem. Inf. Model. 53 (2013) 3373), the benchmark the site-of-metabolism
+literature is measured on, in the form preprocessed by the FAME.AL work of Molecular Informatics
+Vienna, which is MIT licensed:
+
+    https://github.com/molinfo-vienna/FAME.AL/blob/main/data/zaretzki_preprocessed.sdf
+
+Each record lists the atoms a cytochrome P450 attacks, merged over the isoforms.  The target is
+one per atom: one where the atom is a site, zero where it is not, so the question is which atom of
+a molecule is attacked rather than whether the molecule is a substrate.
+
+Structures in all three sources are two-dimensional, so a conformation is generated here with ETKDG and
 refined with MMFF, and the atom order is left untouched so that the measured atom keeps its index.
 
 Usage
@@ -274,6 +285,56 @@ def pka_records(paths, seed=1, verbose=True):
     return out, len(found)
 
 
+# --------------------------------------------------------------- sites of metabolism
+
+
+def som_records(path, seed=1, verbose=True):
+    """The site-of-metabolism set, prepared in three dimensions with the sites on the atoms.
+
+    The deposited structures are two-dimensional and carry the sites as a list of atom indices in
+    a property; the target written here is one number per atom, one for a site and zero for any
+    other heavy atom, with the hydrogens left unmeasured.  A molecule with no site at all is a
+    molecule the set says nothing about and is dropped.
+    """
+    import ast
+
+    out, keys, read = [], set(), 0
+    for mol in Chem.ForwardSDMolSupplier(path, removeHs=False):
+        read += 1
+        if mol is None or not mol.HasProp("soms"):
+            continue
+        try:
+            sites = [int(i) for i in ast.literal_eval(mol.GetProp("soms"))]
+        except (ValueError, SyntaxError):
+            continue
+        n = mol.GetNumAtoms()
+        if not sites or any(not 0 <= i < n for i in sites):
+            continue
+        if not ordinary(mol, lo_heavy=5, hi_heavy=70):
+            continue
+        if any(mol.GetAtomWithIdx(i).GetAtomicNum() <= 1 for i in sites):
+            continue
+        key = Chem.MolToInchiKey(mol)
+        if not key or key in keys:
+            continue
+        keys.add(key)
+        m = embed(mol, seed)
+        if m is None:
+            continue
+        values = np.full(m.GetNumAtoms(), np.nan)
+        for a in m.GetAtoms():
+            if a.GetAtomicNum() > 1:
+                values[a.GetIdx()] = 0.0
+        for i in sites:
+            values[i] = 1.0
+        title = mol.GetProp("mol_id") if mol.HasProp("mol_id") else f"mol{len(out)}"
+        out.append((m, values, f"zaretzki{title}",
+                    {"activity": f"{len(sites)}", "sites": " ".join(str(i) for i in sites)}))
+        if verbose and len(out) % 100 == 0:
+            print(f"  {len(out)} molecules prepared out of {read} read", flush=True)
+    return out, read
+
+
 # --------------------------------------------------------------------------- main
 
 
@@ -285,6 +346,7 @@ def main(argv=None):
     ap.add_argument("--max-shifts", type=int, default=400,
                     help="molecules to keep for the shift set (default 400)")
     ap.add_argument("--seed", type=int, default=1, help="seed of the conformation generator")
+    ap.add_argument("--som", default="", help="path to zaretzki_preprocessed.sdf")
     ap.add_argument("--any-solvent", action="store_true",
                     help="keep the 13C spectra whose solvent is unreported as well, which is most "
                          "of the database and is noisier by a few ppm (plan item LP5)")
@@ -294,8 +356,8 @@ def main(argv=None):
                          "builds one that way and the benchmark reads it with --data-root")
     a = ap.parse_args(argv)
     RDLogger.DisableLog("rdApp.*")
-    if not a.shifts and not a.pka_dir:
-        ap.error("give --shifts, --pka-dir, or both")
+    if not a.shifts and not a.pka_dir and not a.som:
+        ap.error("give --shifts, --pka-dir, --som, or several of them")
 
     if a.shifts:
         print(f"Carbon shifts from {a.shifts}")
@@ -314,6 +376,16 @@ def main(argv=None):
         path = os.path.join(a.out, "carboxylic_pka.sdf")
         n = write(path, records, "pka")
         print(f"  {n} acids of {unique} unique ones -> {path}")
+    if a.som:
+        print(f"Sites of metabolism from {a.som}")
+        records, read = som_records(a.som, a.seed)
+        path = os.path.join(a.out, "metabolism.sdf")
+        n = write(path, records, "som")
+        sites = sum(int(np.nansum(v)) for _m, v, _t, _e in records)
+        atoms = sum(int(np.isfinite(v).sum()) for _m, v, _t, _e in records)
+        print(f"  {n} molecules, {sites} sites among {atoms} heavy atoms, from {read} records "
+              f"-> {path}")
+
     return 0
 
 

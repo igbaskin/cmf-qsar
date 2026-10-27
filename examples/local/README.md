@@ -1,14 +1,14 @@
-# Two targets that belong to atoms
+# Three targets that belong to atoms
 
-Both files in this folder carry a measured value **per atom** rather than per molecule, which is
+Every file in this folder carries a measured value **per atom** rather than per molecule, which is
 what plan item LP1 added to the data model and what plan item LP2 builds a model on. The value sits
 on the atoms themselves, written in RDKit's own convention: the molecule property
 `atom.dprop.<name>` holds one field per atom, with `n/a` where the atom was not measured. The
 molecule property `activity` holds a per-molecule number as well, so that each file can also be
 read as an ordinary data set.
 
-`examples/make_local_examples.py` produced both files from free downloads; its docstring gives the
-two download commands. The downloads themselves are not in this repository.
+`examples/make_local_examples.py` produced all three files from free downloads; its docstring gives
+the download commands. The downloads themselves are not in this repository.
 
 ## `shifts_cdcl3.sdf` — 400 molecules, 5096 assigned carbons
 
@@ -59,9 +59,37 @@ The acidity of the carboxyl group, in pKa units, on the carboxyl carbon (`atom.d
   of the acid. The structures were given a three-dimensional conformation here in the same way as
   the shift set. The target was placed on the carboxyl carbon found by substructure match.
 
+## `metabolism.sdf` — 636 drug-like molecules, 1301 sites among 14 488 heavy atoms
+
+Where a cytochrome P450 attacks the molecule, as one number per heavy atom (`atom.dprop.som`):
+one if the atom is a site of metabolism, zero if it is not. Hydrogens are left unmeasured, so a
+model is asked which heavy atom is attacked.
+
+* **Source.** The benchmark of Jed Zaretzki, Matthew Matlock and S. Joshua Swamidass, *XenoSite:
+  accurately predicting CYP-mediated sites of metabolism with neural networks*, J. Chem. Inf.
+  Model. 53 (2013) 3373, <https://doi.org/10.1021/ci400518g>, which collects the substrates of
+  nine P450 isoforms from the literature. The copy used here is the preprocessed file
+  `data/zaretzki_preprocessed.sdf` of the FAME.AL work of Molecular Informatics Vienna,
+  <https://github.com/molinfo-vienna/FAME.AL>, 657 records.
+* **Licence.** The FAME.AL repository is MIT licensed, so this copy may be redistributed; the
+  attribution above is the condition.
+* **Selection.** Records whose site list is readable and points at heavy atoms only, neutral
+  single-piece molecules of the usual elements with 5 to 70 heavy atoms, one molecule per InChI
+  key, and a conformation that could be generated. That leaves 636 of the 657.
+* **What was changed.** The sites are merged over the isoforms, as the deposited file already
+  merges them, so the target here is whether the atom is attacked at all and not which enzyme
+  attacks it. The deposited structures are two-dimensional; a conformation was generated here with
+  ETKDG and refined with MMFF94, with the atom order left untouched so that a site keeps the index
+  the record gives it. The per-molecule `activity` property holds the number of sites, which is
+  not a useful target and is there only so that the file also reads as an ordinary data set.
+
 ## What they are used for
 
-`benchmarks/run_local.py` measures both: the field around an atom (`cmfqsar/localenv.py`) against
-an atom-centred count of atom types in distance shells, on folds that hold out whole molecules.
-`benchmarks/results/local/table.md` holds the result, and `cmf local` fits either set from the
-command line.
+`benchmarks/run_local.py` measures the shift and the acidity sets: the field around an atom
+(`cmfqsar/localenv.py`) against an atom-centred count of atom types in distance shells, on folds
+that hold out whole molecules. `benchmarks/results/local/table.md` holds the result.
+`benchmarks/run_metabolism.py` measures the metabolism set, where the question is a ranking inside
+each molecule rather than a number, and adds a third reference: the same atom types counted over
+**bonds** instead of over distance, which is what a model with no geometry has.
+`benchmarks/results/metabolism/table.md` holds that result. `cmf local` fits any of the three sets
+from the command line.

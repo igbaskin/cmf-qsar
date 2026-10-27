@@ -2004,6 +2004,49 @@ cmf local examples/local/shifts_cdcl3.sdf --target shift --align --site ring --c
 ```
 
 
+### Which atom is attacked: a site of metabolism
+
+Blocking a metabolic position is a standard move in medicinal chemistry and a question about one
+atom: of the twenty-odd heavy atoms of a drug, which one does a cytochrome P450 attack? Plan item
+MC8 measures the per-atom machinery above on that question, on drug-like molecules rather than on
+the small ones the two sections above use. `examples/local/metabolism.sdf` holds 636 molecules,
+1301 sites among 14 488 heavy atoms, from the benchmark of Zaretzki, Matlock and Swamidass (2013)
+as the FAME.AL project publishes it under the MIT licence; the sites are merged over the P450
+isoforms, so the target is whether the atom is attacked at all.
+
+A q2 on a target of zeros and ones is not what a chemist needs, so the measure is the one the
+site-of-metabolism literature uses: in what share of the molecules is a true site among the one,
+or the two, atoms the model ranks highest, the ranking taken inside each molecule
+(`localenv.top_hits`). The baseline the item names is a model with no geometry: the same atom
+types counted over **bonds** instead of over distance (`localenv.topological_counts`), which is
+what an atom's topological fingerprint holds.
+
+**The field adds next to the count, not instead of it.** On ten folds that hold out whole
+molecules (`benchmarks/run_metabolism.py`), the count over bonds puts a site among the first two
+atoms in 70.9% of the molecules. The local field on its own reaches 71.1% at its best width,
++0.2% [-3.3%, +3.8%], which is no better. The same atom types counted over distance instead reach
+73.9%, +3.0% [+0.3%, +5.5%]: geometry is worth something here, and in its simplest form. The
+count and the field together reach **76.9%**, +3.0% [+0.5%, +5.7%] over the count alone and +6.0%
+[+3.3%, +8.8%] over the two-dimensional baseline, which is the gate of the item.
+
+Most of what the count contributes to that mixture is the name of the atom being asked about:
+replacing the whole count by its first block, the centre's own atom type, already reaches 74.8%.
+The autocorrelation of an environment never names its centre -- it is built from distances between
+pairs of weighted atoms, and the centre is only the atom the envelope weights most. How easily an
+atom is oxidised depends first of all on what the atom is, so the invariant local field starts
+without the most informative variable and has to recover it indirectly. On the shift set that
+costs little, because there every sample is a carbon; here the candidates are carbons, nitrogens,
+oxygens and sulfurs at once.
+
+This is also the first set large enough for the exact kernel to be the wrong route: 14 488 atoms
+give a kernel of 1.7 GB. `--primal` solves the same model in the space of the 255 features, and
+`--rank` reports the ranking measure next to the q2; the two together take about fifteen seconds.
+
+```bash
+cmf local examples/local/metabolism.sdf --target som --rho 0.25 --primal --rank --reference
+```
+
+
 ### Descriptors that are not fields
 
 Some things a molecule's activity depends on are not functions of space: a measured logP, the
@@ -3421,7 +3464,7 @@ with the LigPrep poses in the binding site, the measured IC50 (ITC Kd for the 20
 `pAffinity`, and the experimental ΔG and the FEP+ prediction (20 ns) kept as tags where the repository
 provides them. Produced by `examples/make_schindler_examples.py`.
 
-`examples/local/shifts_cdcl3.sdf`, `examples/local/carboxylic_pka.sdf` — the only two sets here whose measured value belongs to an **atom**: 400 molecules with 5096 assigned 13C shifts from nmrshiftdb2, in deuterated chloroform, each shift on the carbon it was measured for, and 912 carboxylic acids with the acidity of the carboxyl group on its carbon, from the collection of Baltruschat and Czodrowski (F1000Research 9:113, 2020, CC BY 4.0). Both are prepared by `examples/make_local_examples.py` from free downloads that are not in this repository; `examples/local/README.md` gives every filter, every change and the licence of each, and `docs/public_3dqsar_datasets.md` records that the nmrshiftdb2 terms could not be read on 27 October 2026. The structures are two-dimensional at the source, so a conformation is generated here with ETKDG and MMFF94, which is the weakest part of both files. Used by `benchmarks/run_local.py` and by `cmf local` (see *A model over atoms* above).
+`examples/local/shifts_cdcl3.sdf`, `examples/local/carboxylic_pka.sdf`, `examples/local/metabolism.sdf` — the three sets here whose measured value belongs to an **atom**: 400 molecules with 5096 assigned 13C shifts from nmrshiftdb2, in deuterated chloroform, each shift on the carbon it was measured for, and 912 carboxylic acids with the acidity of the carboxyl group on its carbon, from the collection of Baltruschat and Czodrowski (F1000Research 9:113, 2020, CC BY 4.0), and 636 drug-like molecules with 1301 sites of cytochrome P450 metabolism among their 14 488 heavy atoms, from the benchmark of Zaretzki, Matlock and Swamidass (J. Chem. Inf. Model. 53 (2013) 3373) as the FAME.AL project publishes it (MIT). All three are prepared by `examples/make_local_examples.py` from free downloads that are not in this repository; `examples/local/README.md` gives every filter, every change and the licence of each, and `docs/public_3dqsar_datasets.md` records that the nmrshiftdb2 terms could not be read on 27 October 2026. The structures are two-dimensional at the source, so a conformation is generated here with ETKDG and MMFF94, which is the weakest part of all three files. Used by `benchmarks/run_local.py`, by `benchmarks/run_metabolism.py` and by `cmf local` (see *A model over atoms* and *Which atom is attacked* above).
 
 `examples/mittal/*.sdf` — 38 of the 40 benchmark sets of Mittal, McKinnon & Sorich (J. Chem. Inf. Model.
 49 (2009) 1810), compiled for comparing QSAR methods in lead optimisation (ryanodine receptor, vacuolar

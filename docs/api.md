@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 76 modules, 127 classes with 476 public methods, and 572 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 76 modules, 127 classes with 476 public methods, and 576 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -5519,6 +5519,25 @@ one of its own.
 
 Count rows of the reference, one per measured atom, in the row order of `targets`.
 
+### `topological_counts(mol, atom: int, types: Sequence[str], shells: int=BOND_SHELLS) -> np.ndarray`
+
+What is around one atom counted over **bonds** rather than over space.
+
+This is the two-dimensional baseline: the type of the centre and the atom types one, two,
+three and four bonds away, which is what a topological fingerprint of an atom holds and what
+a model without any geometry has to work with.  `shell_counts` is its counterpart over
+distance, and the two differ in exactly the thing a field model is supposed to add.
+
+`mol` is an RDKit molecule here rather than a `cmfqsar.fields.MoleculeFields`, because
+the bond graph is what it counts over; the types are the Sybyl types of
+`cmfqsar.atomtypes`, so that the two baselines name their columns the same way.
+
+### `topological_features(mols, targets: AtomTargets, types: Sequence[str], shells: int=BOND_SHELLS) -> np.ndarray`
+
+Topological count rows, one per measured atom, in the row order of `targets`.
+
+`mols` are RDKit molecules, in the order the targets index them.
+
 ### `count_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, normalize: bool=True) -> np.ndarray`
 
 Cosine-normalised linear kernel on the count rows.
@@ -5546,6 +5565,19 @@ Both the local kernel and the count reference are given this same search on the 
 the choice favours neither.  The q2 it reports is the one the search maximised and is
 therefore optimistic by the amount any such search is; what is being compared is a difference
 between two descriptors treated alike, not an absolute figure.
+
+### `top_hits(targets: AtomTargets, predicted: np.ndarray, k: int=1) -> np.ndarray`
+
+One 0 or 1 per molecule: is a measured atom with a positive value among its top `k`?
+
+This is the measure for a target that asks **which atom** rather than how much: a site of
+metabolism, the most reactive position, the atom a reagent reaches first (plan item MC8).  The
+ranking happens inside a molecule, so the scale of one molecule's predictions cannot help or
+hurt another, and a molecule with no positive value asks no question and is left out.
+
+### `top_k_accuracy(targets: AtomTargets, predicted: np.ndarray, k: int=1) -> float`
+
+The share of molecules whose true atom is among the `k` the model ranks highest.
 
 ### `paired_interval(a: LocalResult, b: LocalResult, targets: AtomTargets, runs: int=2000, seed: int=0, statistic: str='q2') -> Tuple[float, float, float]`
 

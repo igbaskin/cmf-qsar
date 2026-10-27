@@ -4330,6 +4330,96 @@ its co-field instead of the molecule. There is none: the co-field comes out of `
 --cofield` as a cube file, which a viewer draws, and the application still knows only models whose
 sample is a molecule.
 
+## Which atom is attacked: a site of metabolism
+
+Blocking a metabolic position is one of the standard moves in medicinal chemistry, and the
+question it asks is about one atom: of the twenty-odd heavy atoms of a drug, which one does a
+cytochrome P450 attack? That is the shape of target the two previous sections built the machinery
+for, and plan item MC8 is the measurement of it on drug-like molecules rather than on the small
+ones those sections use.
+
+**The data set.** `examples/local/metabolism.sdf` holds 636 molecules, 1301 sites among 14 488
+heavy atoms, from the benchmark of Zaretzki, Matlock and Swamidass (2013) in the form the FAME.AL
+project publishes under the MIT licence. The target is one number per heavy atom: one if the atom
+is a site, zero if it is not. The sites are merged over the P450 isoforms, so the question is the
+general one -- where is this molecule attacked -- and not which enzyme attacks it.
+`examples/local/README.md` gives the selection and what was changed.
+
+**The measure is a ranking inside a molecule.** A q² on a target of zeros and ones is not what a
+chemist needs. The question is which atom, so the measure is the one the site-of-metabolism
+literature uses: **in what share of the molecules is a true site among the one, or the two, atoms
+the model ranks highest**. The ranking happens inside each molecule, so the scale of one
+molecule's predictions cannot help or hurt another, and a molecule with no site asks no question.
+`localenv.top_hits` and `localenv.top_k_accuracy` are that measure.
+
+**The baseline the item names** is a model with no geometry: the same atom types, counted over
+**bonds** instead of over distance. `localenv.topological_counts` builds it -- the type of the
+centre, and the types one, two, three and four bonds away -- which is what an atom's topological
+fingerprint holds. It is the counterpart of `shell_counts`, and the two differ in exactly the
+thing a three-dimensional model is supposed to add.
+
+`benchmarks/run_metabolism.py` measures all of it on ten folds that hold out whole molecules, with
+the ridge searched the same way for every row:
+
+| descriptor | the site is first | among the first two | area under the curve | against the count over bonds |
+| --- | ---: | ---: | ---: | ---: |
+| count over bonds (2D) | 53.6% | 70.9% | 0.859 | -- |
+| count over distance (3D) | 57.5% | 73.9% | 0.864 | +3.0% [+0.3%, +5.5%] |
+| local field, rho 0.15 | 54.4% | 70.1% | 0.843 | -0.8% [-4.2%, +2.7%] |
+| local field, rho 0.25 | 55.0% | 71.1% | 0.853 | +0.2% [-3.3%, +3.8%] |
+| local field, rho 0.5 | 55.2% | 69.7% | 0.854 | -1.3% [-4.9%, +2.5%] |
+| local field, rho 1 | 55.3% | 69.3% | 0.844 | -1.6% [-5.2%, +2.2%] |
+| local field, rho 2 | 53.0% | 66.5% | 0.837 | -4.4% [-8.0%, -0.8%] |
+| count and field, rho 0.25 | 60.8% | 76.9% | 0.875 | +6.0% [+3.3%, +8.8%] |
+| centre type and field, rho 0.25 | 59.9% | 74.8% | 0.860 | +3.9% [+0.6%, +7.2%] |
+
+**The field adds next to the count, not instead of it.** On its own the local field is no better
+than the two-dimensional baseline: 71.1% against 70.9%, +0.2% [-3.3%, +3.8%]. Counting the
+same atom types over distance instead of over bonds does better on its own, 73.9%, +3.0%
+[+0.3%, +5.5%] -- geometry is worth something here, and it is worth it in the simplest form.
+The two together reach **76.9%**, which is +3.0% [+0.5%, +5.7%] over the count alone and
++6.0% [+3.3%, +8.8%] over the baseline. That is the gate of the item, and it is passed by the
+pair rather than by the field. The two descriptions hold different things: the count says which
+atom types are at which distance, the field says how the charge and the shape are arranged there,
+and neither carries the other.
+
+**Why the field alone is weak here is worth stating,** because it is a property of the descriptor
+and not of the set. Most of what the count contributes to that mixture is the name of the atom
+being asked about: replacing the whole count by its first block -- the centre's own atom type, one
+column per type -- already reaches 74.8%, against the 76.9% of the whole count. The autocorrelation of an environment
+never names its centre. It is built from distances between pairs of weighted atoms, and the centre
+is only the atom the envelope weights most. How easily an atom is oxidised depends first of all on
+what the atom is, so the invariant local field starts without the single most informative variable
+and has to recover it indirectly. On the shift set of the first section that costs little, because
+there every sample is a carbon; here the candidates are carbons, nitrogens, oxygens and sulfurs at
+once.
+
+**The width is chosen and not taken from the edge of the range.** The field rows rise to rho 0.25,
+an envelope 2.0 Å wide, and fall on both sides of it. A wider envelope makes every atom of a
+molecule look alike, because the features are measured from the molecule as a whole and not from
+the centre; a narrower one leaves too little of the molecule inside the envelope to tell two
+carbons apart.
+
+**From the command line.** This is the first set in the manual large enough for the exact kernel
+to be the wrong route: 14 488 atoms give a kernel of 1.7 GB. `--primal` solves the same model in
+the space of the 255 features instead (the previous section shows the two agree to round-off), and
+`--rank` reports the ranking measure next to the q²:
+
+```bash
+cmf local examples/local/metabolism.sdf --target som --rho 0.25 \
+    --primal --rank --reference
+```
+
+That runs in about fifteen seconds and prints both the field model and the atom-centred count,
+with the share of molecules whose site each puts first and among the first two.
+
+**What is not done.** The mixture of the count and the field, which is the row that passes the
+gate, is in the benchmark and not in `cmf local`: the command fits one descriptor at a time. An
+isoform-resolved target is the other open question. The sites here are merged over the isoforms,
+so the target is a property of the atom; a target resolved by enzyme would ask about the fit of
+the molecule into one binding site, which is what a field describes best, and that is the test
+this set cannot give.
+
 ## Topomer fields
 
 Cramer's topomer idea (topomer CoMFA, 2003), applied to fields. Cut the molecule at the bonds that

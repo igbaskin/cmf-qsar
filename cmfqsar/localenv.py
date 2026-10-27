@@ -343,6 +343,57 @@ def count_features(mols: Sequence[MoleculeFields], targets: AtomTargets,
     return out
 
 
+#: how many bonds out the topological baseline counts
+BOND_SHELLS = 4
+
+
+def topological_counts(mol, atom: int, types: Sequence[str],
+                       shells: int = BOND_SHELLS) -> np.ndarray:
+    """What is around one atom counted over **bonds** rather than over space.
+
+    This is the two-dimensional baseline: the type of the centre and the atom types one, two,
+    three and four bonds away, which is what a topological fingerprint of an atom holds and what
+    a model without any geometry has to work with.  :func:`shell_counts` is its counterpart over
+    distance, and the two differ in exactly the thing a field model is supposed to add.
+
+    `mol` is an RDKit molecule here rather than a :class:`~cmfqsar.fields.MoleculeFields`, because
+    the bond graph is what it counts over; the types are the Sybyl types of
+    :mod:`cmfqsar.atomtypes`, so that the two baselines name their columns the same way.
+    """
+    from rdkit import Chem
+
+    from .atomtypes import assign_atom_types
+
+    idx = type_index(types)
+    n_t = len(types) + 1
+    out = np.zeros(n_t * (1 + int(shells)))
+    labels = assign_atom_types(mol)
+    i = int(atom)
+    out[idx.get(labels[i], len(types))] = 1.0
+    d = Chem.GetDistanceMatrix(mol)
+    for k in range(mol.GetNumAtoms()):
+        if k == i:
+            continue
+        step = int(d[i, k])
+        if 1 <= step <= int(shells):
+            out[n_t * step + idx.get(labels[k], len(types))] += 1.0
+    return out
+
+
+def topological_features(mols, targets: AtomTargets, types: Sequence[str],
+                         shells: int = BOND_SHELLS) -> np.ndarray:
+    """Topological count rows, one per measured atom, in the row order of `targets`.
+
+    `mols` are RDKit molecules, in the order the targets index them.
+    """
+    n_t = len(types) + 1
+    out = np.zeros((len(targets), n_t * (1 + int(shells))))
+    for r in range(len(targets)):
+        out[r] = topological_counts(mols[int(targets.molecule[r])], int(targets.atom[r]), types,
+                                    shells)
+    return out
+
+
 def count_kernel(train: np.ndarray, test: Optional[np.ndarray] = None,
                  normalize: bool = True) -> np.ndarray:
     """Cosine-normalised linear kernel on the count rows.
@@ -472,6 +523,32 @@ def choose_lam(K: np.ndarray, targets: AtomTargets, lams: Sequence[float] = LAMS
     """
     results = cross_validate_lams(K, targets, lams, folds, seed, name=name)
     return max(results, key=lambda r: r.q2)
+
+
+def top_hits(targets: AtomTargets, predicted: np.ndarray, k: int = 1) -> np.ndarray:
+    """One 0 or 1 per molecule: is a measured atom with a positive value among its top `k`?
+
+    This is the measure for a target that asks **which atom** rather than how much: a site of
+    metabolism, the most reactive position, the atom a reagent reaches first (plan item MC8).  The
+    ranking happens inside a molecule, so the scale of one molecule's predictions cannot help or
+    hurt another, and a molecule with no positive value asks no question and is left out.
+    """
+    y = np.asarray(targets.y, float)
+    p = np.asarray(predicted, float)
+    out = []
+    for m in sorted({int(x) for x in targets.molecule}):
+        rows = targets.of_molecule(m)
+        if float(y[rows].sum()) <= 0:
+            continue
+        order = rows[np.argsort(-p[rows], kind="stable")]
+        out.append(1.0 if float(y[order[:int(k)]].sum()) > 0 else 0.0)
+    return np.asarray(out, float)
+
+
+def top_k_accuracy(targets: AtomTargets, predicted: np.ndarray, k: int = 1) -> float:
+    """The share of molecules whose true atom is among the `k` the model ranks highest."""
+    hits = top_hits(targets, predicted, k)
+    return float(hits.mean()) if len(hits) else float("nan")
 
 
 def paired_interval(a: LocalResult, b: LocalResult, targets: AtomTargets, runs: int = 2000,
