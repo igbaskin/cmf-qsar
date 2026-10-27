@@ -1,6 +1,6 @@
 {
- "commit": "e38e0a9547a9168af1e32dc48646c6e0a670c4c9",
- "created": "2026-10-27T17:30:08",
+ "commit": "3c110f262f18ec53044ee6148cfb174519a694ec",
+ "created": "2026-10-27T18:16:14",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -13,6 +13,18 @@
   "examples/am-eu/AmEu1-all.txt": {
    "bytes": 628,
    "sha256": "0a1ad21385edea4963dccc2700edd4f9f01899b065dcb100ce735e1f3d00a561"
+  },
+  "examples/antitarget/README.md": {
+   "bytes": 3789,
+   "sha256": "ebdd39e97c11d649d34574f11ebc60a1d6c4931ab8f858bde152a24ccb01b1e3"
+  },
+  "examples/antitarget/chembl_raw.json": {
+   "bytes": 282522,
+   "sha256": "336a5c5fcfacc2d207f3761f889c373ac5e41f81ff2ac615c35a849f43f017dd"
+  },
+  "examples/antitarget/h3_herg.sdf": {
+   "bytes": 433710,
+   "sha256": "0edcdb80f392aa309e7dbc1b6c879eab1ae3e8ef3d39920b719e833aceddfb3c"
   },
   "examples/benzamides_synthetic.sdf": {
    "bytes": 371416,
@@ -573,6 +585,10 @@
   "examples/local/shifts_cdcl3.sdf": {
    "bytes": 1621769,
    "sha256": "29e881e7fc12c73bbd94282b50571c4f9dd71e009f06c3810564e54d7bf69021"
+  },
+  "examples/make_antitarget_examples.py": {
+   "bytes": 12161,
+   "sha256": "31b082d879d1f471c52bd8330fc7316b549cb19305e7d36dc19fcfbdfc6b06cc"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -1654,6 +1670,17 @@
   "benchmarks/results/anisotropic/161_c1ccc2scnc2c1.json": "da787eb735e56e11b599a597a46034ccfc77ee2d898d53b30f2e2105002cc026",
   "benchmarks/results/anisotropic/7_c1nncs1.json": "2aec060b6c86265bffa6ba1f07b098397d2319a880e9a20907d1fb431a9fdb9a",
   "benchmarks/results/anisotropic/table.md": "c779fb9104c279f295bd95e375e396be9a67a36dbb2af033659044fbca6abece",
+  "benchmarks/results/antitarget/summary.json": "636e51ce5b791245a1f1f10dc506339cb95b76a1f92789e60a78ae1bce12f408",
+  "benchmarks/results/antitarget/table.md": "6876378a1b2c02f8c01f9078e47f2b1d63556a23e47bc92211e0d79948cd0289",
+  "benchmarks/results/batch/ACE.json": "ee78b3015256b3726423c56237bf0e5aa7d524c9a5017880b1909839277aaf79",
+  "benchmarks/results/batch/AChE.json": "7d498f0d1e81fcdf5c32134d434f0634961ce43ed798c33173c4c4b5862bf9a6",
+  "benchmarks/results/batch/BZR.json": "0e0d2f6af753c0862290f202dd76097e98ac24f1f6ac1cbf16de42c536873e8e",
+  "benchmarks/results/batch/COX2.json": "17bfe4f8afd2bcf43f918d0ba4406e4249ac5850c5c17a26a6e42a5f3c5c07cf",
+  "benchmarks/results/batch/DHFR.json": "cbda3afa3fd5e9806412f8b0bb230420441cc2af4197fb67d01781daea2045d3",
+  "benchmarks/results/batch/GPB.json": "21e00256af7865f90ba815509bf562bf0ebd64217dc96a637d564c608674930c",
+  "benchmarks/results/batch/THER.json": "057f9885a6ec09a5f26c49c1c3e94fb45d68ca9006230b368cff45ee36b42f68",
+  "benchmarks/results/batch/THR.json": "26707a90f8e3fc6a45d68287d259883f7e193968e97dea195895ebb341faa359",
+  "benchmarks/results/batch/table.md": "9a5427a4b9fff213051c2c6ec2cd23bdae4d32f9ce557f754136c540a5a4b071",
   "benchmarks/results/bioisostere/GPB.json": "a74ee215bc07868fcd3b133d97d3691a09f999a29f00308c1c5b17adc4701be4",
   "benchmarks/results/bioisostere/THER.json": "cf2c0524143592232fbf241ced918cfe708d0743ffaea1bccad43bb2622b4616",
   "benchmarks/results/bioisostere/THR.json": "d762d756a7bdbb7401a02059c0753d316e7863058813a9b95c0b4e5fea44f898",

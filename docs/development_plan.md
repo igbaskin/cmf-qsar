@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with twenty-eight subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1155 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1167 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2402,6 +2402,36 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   not worse than the single fit by more than the interval of rule 4; and the difference co-field
   places weight of one sign on the groups that are known to drive the off-target, which for hERG is
   the basic nitrogen and the lipophilic region beside it.
+  **Done 27 October 2026; both parts of the gate are met, the second with a sign the item did
+  not expect.** The data were the missing piece and are now
+  `examples/antitarget/h3_herg.sdf`, built by `examples/make_antitarget_examples.py` from one
+  ChEMBL document under rule 6: Lazewska and co-workers, *Novel and highly potent histamine H3
+  receptor ligands. Part 1: withdrawing of hERG activity*, Bioorg. Med. Chem. Lett. 21 (2011)
+  5378, whose own subject is this question. 78 of the paper's 224 compounds with both numbers
+  form one series by the common-substructure rule; each carries an H3 Ki (displacement of
+  [125I]iodoproxyfan) and a hERG IC50 (displacement of [3H]dofetilide), **one assay each from
+  one laboratory**, with the assay descriptions as columns as the item requires. The spreads are
+  0.68 log units each and the correlation is -0.22. 12 tests; `examples/antitarget/README.md` is
+  the data statement.
+  **The first part.** The task correlation by the evidence is -0.431. The potency reaches q2
+  +0.341 with the second endpoint against +0.319 alone, which is +0.022 [-0.005, +0.048] paired
+  over the molecules: not worse. The selectivity itself is predicted at q2 +0.471, better than
+  either endpoint alone, which is the 2003 paper's claim met on another kind of series.
+  **The second part**, read with `cofields.atom_effect` as what one more atom at that place
+  would do to the predicted selectivity: at the basic nitrogen steric +12.84 [+9.68, +15.99] and
+  hydrophobic +6.96 [+5.46, +8.47]; at the carbons within 5 A of it +11.56 and +7.35; over every
+  other heavy atom +0.03 [-2.39, +2.45] and +0.70 [-0.77, +2.17], neither clear of the noise.
+  The weight is of one sign and concentrated exactly at the groups the item names.
+  **The sign is positive, not negative.** Lipophilicity does drive hERG in this series as
+  expected -- cLogP correlates +0.38 with the hERG activity and -0.31 with the selectivity over
+  a range of 3.0 to 7.0 -- but a co-field is about a place and cLogP is about a molecule. What
+  the series says is that the lipophilicity costing selectivity is the lipophilicity far from
+  the amine, while the amine region is where the H3 affinity is made; the paper kept that region
+  and changed what is far from it. A whole-molecule number cannot make that distinction, which
+  is the only thing a co-field adds.
+  **What it is not**: one series, one paper, hERG by displacement rather than patch-clamp, and
+  an alignment by common substructure rather than by a crystal structure. A second series
+  measured another way is what would turn the reading into a rule.
 
 **Medium (one to two weeks each)**
 

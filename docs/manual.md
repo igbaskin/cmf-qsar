@@ -3266,6 +3266,78 @@ so the list is worth reading at the top and not in the middle. That is the claim
 has to make, and it is the one this measurement supports: it will name the group worth trying,
 not tell you what it will measure.
 
+## An anti-target beside the potency
+
+Where may field be added for the target that is **not** also added for the off-target? The
+two-task model answers it as a difference of co-fields, and the section on two endpoints above
+measured that on the Am/Eu extractants. Plan item MC4 asks the same question in its
+medicinal-chemistry form, and what it needed was data: one series with a potency and an
+anti-target activity measured on the same compounds.
+
+**The series** is `examples/antitarget/h3_herg.sdf`, built by
+`examples/make_antitarget_examples.py` from one ChEMBL document, which is one paper: Lazewska
+and co-workers, *Novel and highly potent histamine H3 receptor ligands. Part 1: withdrawing of
+hERG activity*, Bioorg. Med. Chem. Lett. 21 (2011) 5378. The paper's own subject is this
+question. 78 compounds carry both numbers: the H3 affinity as a displacement of
+[125I]iodoproxyfan, and the hERG activity as a displacement of [3H]dofetilide, **one assay
+each, in one laboratory**. That matters, and the assay descriptions travel with the file as
+columns: an anti-target number from another paper is a different measurement. The two endpoints
+have the same spread, 0.68 log units each, and correlate only -0.22, so there is a selectivity
+to find rather than a single axis seen twice.
+
+**The first part of the gate: the potency must not suffer.** The task correlation chosen by the
+evidence is -0.431 -- in this series a compound good for H3 tends to be worse at hERG -- and
+with it:
+
+| endpoint | q2 with the other endpoint | q2 on its own |
+| --- | ---: | ---: |
+| pKi_H3 | +0.341 | +0.319 |
+| pIC50_hERG | +0.357 | +0.338 |
+
+On the potency the two-task fit is +0.022 [-0.005, +0.048] against the single fit, paired over
+the molecules: not worse, so the selectivity co-field is not bought with a worse model of the
+thing that matters. The selectivity itself is predicted at q2 +0.471, better than either
+endpoint alone, which is the 2003 paper's claim met again on a different kind of series.
+
+**The second part: where the difference co-field puts its weight.** `cofields.atom_effect` says
+what one more atom of a given field type, at a given place, would do to the predicted
+selectivity, in log units, with the error the activities allow. Read at the basic nitrogen of
+every molecule, at the carbons within 5 A of it, and at every other heavy atom:
+
+| place | field | effect on the selectivity |
+| --- | --- | ---: |
+| the basic nitrogen | steric | +12.84 [+9.68, +15.99] |
+| the basic nitrogen | hydrophobic | +6.96 [+5.46, +8.47] |
+| the carbons beside it | steric | +11.56 [+8.86, +14.26] |
+| the carbons beside it | hydrophobic | +7.35 [+5.92, +8.78] |
+| every other heavy atom | steric | +0.03 [-2.39, +2.45] |
+| every other heavy atom | hydrophobic | +0.70 [-0.77, +2.17] |
+
+The weight is of one sign and it is concentrated exactly where the item says hERG is driven
+from: at the amine and the carbons beside it two fields stand clear of the noise and both are
+positive, while over the rest of the molecule neither does. A co-field that said the same thing
+everywhere would be saying nothing about the basic nitrogen in particular.
+
+**The sign is the opposite of what the item expected, and that is the interesting part.**
+Lipophilicity does drive hERG here as the textbook says: cLogP correlates +0.38 with the hERG
+activity and -0.31 with the selectivity over a range of 3.0 to 7.0. But the co-field is about a
+**place** and cLogP is about a molecule, and what this series says is that the lipophilicity
+costing selectivity is the lipophilicity spread over the rest of the molecule, while the region
+around the basic nitrogen is where the H3 affinity is made. That is also what the paper did: it
+kept that region and changed what is far from it. A whole-molecule number cannot make that
+distinction, and it is the only thing a co-field adds.
+
+```bash
+cmf build examples/antitarget/h3_herg.sdf --activity pKi_H3 --second-endpoint pIC50_hERG \
+    --save h3.cmf
+cmf cofield h3.cmf --endpoint selectivity --out-prefix selectivity
+```
+
+`benchmarks/run_antitarget.py` is the measurement above. It is one series from one paper, with
+hERG measured by displacement rather than by patch-clamp and an alignment by common
+substructure rather than by a crystal structure; a second series, measured another way, is what
+would turn this reading into a rule.
+
 ## Choosing ten compounds at once
 
 A laboratory makes ten or twenty compounds at a time, not one. The acquisition rules of the

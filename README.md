@@ -1822,6 +1822,40 @@ against shuffling the numbers among the molecule's atoms is +0.35 for
 phenyl — so this is a statement about a series of hundreds of guests, not a reading for one
 compound.
 
+### An anti-target beside the potency
+
+Where may field be added for the target that is not also added for the off-target? The two-task
+model answers it as a difference of co-fields; what plan item MC4 needed was data in the
+program's format. `examples/antitarget/h3_herg.sdf` is 78 histamine H3 ligands with their hERG
+activity, from one paper (Lazewska and co-workers, Bioorg. Med. Chem. Lett. 21 (2011) 5378,
+through ChEMBL) whose own subject is taking the hERG activity out of the series. One assay each,
+one laboratory, and the assay descriptions travel with the file as columns, because an
+anti-target number from another paper is a different measurement.
+
+**The potency does not suffer from the sharing.** The task correlation chosen by the evidence is
+-0.431; the potency reaches q2 +0.341 with the second endpoint against +0.319 on its own, a
+paired +0.022 [-0.005, +0.048]. The selectivity itself is predicted at q2 +0.471, better than
+either endpoint alone.
+
+**The difference co-field puts its weight where the question is.** What one more atom would do
+to the predicted selectivity, read with `cofields.atom_effect`: at the basic nitrogen, steric
++12.84 [+9.68, +15.99] and hydrophobic +6.96 [+5.46, +8.47]; at the carbons within 5 A of it,
++11.56 and +7.35; over every other heavy atom, +0.03 [-2.39, +2.45] and +0.70 [-0.77, +2.17],
+neither clear of the noise. The weight is of one sign and it is concentrated exactly at the
+groups hERG is driven from.
+
+The sign is positive, which is the opposite of the expectation, and the reason is worth keeping:
+cLogP correlates +0.38 with hERG and -0.31 with the selectivity, so lipophilicity does cost
+selectivity here -- but a co-field is about a place and cLogP is about a molecule. In this
+series the lipophilicity that costs is the lipophilicity far from the amine, while the amine
+region is where the H3 affinity is made, which is what the paper itself exploited.
+
+```bash
+cmf build examples/antitarget/h3_herg.sdf --activity pKi_H3 --second-endpoint pIC50_hERG
+python benchmarks/run_antitarget.py        # results/antitarget/table.md
+```
+
+
 ### Choosing ten compounds at once
 
 A laboratory makes ten compounds at a time, and a plate has to be chosen before any of it is
