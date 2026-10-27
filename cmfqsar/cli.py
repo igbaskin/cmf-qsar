@@ -1088,7 +1088,7 @@ def cmd_screen(args):
         print(f"written {rep.out_path}")
 
 
-ALIGN_WAYS = ("mcs", "field", "variance", "pocket")
+ALIGN_WAYS = ("mcs", "field", "variance", "pocket", "plane")
 
 
 def _write_sdf(path, rdmols, fields, names):
@@ -1149,7 +1149,27 @@ def cmd_align(args):
         raise SystemExit("--by pocket needs --pocket STRUCTURE")
     guard = None if args.max_rmsd is not None and args.max_rmsd <= 0 else args.max_rmsd
 
-    if way == "mcs":
+    if way == "plane":
+        from cmfqsar.planealign import plane_align_dataset
+        ref = None
+        if args.pose == "auto" or args.refine:
+            ref = _reference_index(list(ds.names), args.reference, y)
+        what = {"flat": "flat, the flattest face down", "flat-up": "flat, the other face down",
+                "upright": "upright on the most basic nitrogen",
+                "auto": "flat on either face or upright, whichever is most similar in field to "
+                        "the reference"}[args.pose]
+        print(f"Posing {len(mf)} molecules on the surface z = 0: {what}"
+              + (f"; reference {ds.names[ref]}, its input pose kept" if ref is not None else "")
+              + (f"; refined in the {args.refine.replace('+', ' and ')} by the field similarity"
+                 if args.refine else ""))
+        res = plane_align_dataset(list(ds.mols), list(ds.names), pose=args.pose,
+                                  height=args.height, anchor_height=args.anchor_height,
+                                  ref_index=ref, fieldset=fieldset, refine=args.refine,
+                                  restarts=args.restarts, seed=args.seed)
+        mf = [build_fields(m, fieldset, n) for m, n in zip(ds.mols, ds.names)]
+        for r in res:
+            print("  " + r.describe())
+    elif way == "mcs":
         from cmfqsar.align import align_dataset
         ref = _reference_index(list(ds.names), args.reference, y)
         print(f"Aligning {len(mf)} molecules onto {ds.names[ref]} by maximum common substructure"
@@ -3896,15 +3916,30 @@ def main(argv=None):
     k.set_defaults(func=cmd_complement)
 
     al = sub.add_parser("align", help="put a set of molecules in one frame, by substructure, "
-                                      "by field similarity, by prediction confidence or in a "
-                                      "pocket")
+                                      "by field similarity, by prediction confidence, in a "
+                                      "pocket or on a surface")
     al.add_argument("dataset")
     al.add_argument("--by", default="mcs", choices=list(ALIGN_WAYS),
                     help="mcs: superimpose on the maximum common substructure with a reference "
                          "molecule. field: maximise the CMF field similarity to a reference. "
                          "variance: minimise the posterior variance of the prediction, which "
                          "needs a model. pocket: the confidence criterion with a complementarity "
-                         "term, which needs a model and a structure")
+                         "term, which needs a model and a structure. plane: pose every molecule "
+                         "on a surface z = 0 by rule (--pose), with no reference needed")
+    al.add_argument("--pose", default="flat", choices=["flat", "flat-up", "upright", "auto"],
+                    help="with --by plane: flat (the flattest face down, lowest heavy atom at "
+                         "--height), flat-up (the other face down), upright (the most basic "
+                         "nitrogen down at --anchor-height), "
+                         "or auto (flat on either face or upright, whichever is most similar in "
+                         "field to the reference, whose input pose is kept)")
+    al.add_argument("--height", type=float, default=2.2, metavar="A",
+                    help="with --by plane: height of the lowest heavy atom in a flat pose (2.2)")
+    al.add_argument("--anchor-height", type=float, default=2.0, metavar="A",
+                    help="with --by plane: height of the anchor atom in an upright pose (2.0)")
+    al.add_argument("--refine", default=None, choices=["plane", "plane+tilt"],
+                    help="with --by plane: refine each pose on the field similarity to the "
+                         "reference, moving it in the plane and about the normal only, or also "
+                         "tilting and lifting it")
     al.add_argument("--out", default=None, metavar="SDF",
                     help="where to write the aligned structures; without it nothing is kept")
     al.add_argument("--model", default=None, metavar="FILE",

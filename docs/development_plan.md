@@ -1522,17 +1522,29 @@ for anything molecular.
   phenazine redox-potential series with Hirshfeld, Fukui and spin fields against the five fields
   and against the IP/EA descriptors alone; the conceptual-DFT result on corrosion says where not
   to expect a gain, and the Hammett result where to.
-* **EC2. Planar alignment.** Nothing aligns a molecule onto a plane. The Fe(110) script places its
-  starting poses by rule (flat: the plane of the two longest principal axes parallel to the
-  surface; upright: the lone pair of the most basic nitrogen down) and UMA relaxes them. A
-  principal-axes aligner in `cmfqsar/align.py` that lays a molecule on z = 0 with a chosen face
-  down, followed by `field_align` restricted to in-plane translation, rotation about the normal
-  and tilt, gives the aligned overlap kernel a surface frame and therefore the first **surface
-  co-field**. Gate: on `examples/corrosion_fe110` the aligner reproduces the UMA-relaxed poses
-  to the RMSD of C3's pocket placement, and the overlap kernel in that frame is measured against
-  the surface kernel on `E_ads_kJmol` with the interval of rule 4. If it does not beat the
-  surface kernel, the co-field is still the thing the surface kernel cannot draw, and the item
-  stays as a display tool under rule 5 with that said.
+* **EC2. Planar alignment.** Built 27 October 2026: `cmfqsar/planealign.py` (flat, flat-up,
+  upright and auto poses, the refinement in the plane or with tilt, the in-plane and height
+  RMSDs), `cmf align --by plane`, `tests/test_planealign.py`, `benchmarks/run_fe110.py` with
+  `benchmarks/results/fe110/table.md`, the README section *Posed by rule: the surface frame
+  without the slab* and its manual section. The ask was a principal-axes aligner that lays a
+  molecule on z = 0 with a chosen face down, refined by `field_align` restricted to the plane,
+  the normal and the tilt, so that the overlap kernel gets a surface frame and a surface
+  co-field. **Gates not passed, and the item stays as a display tool, as the ask said it then
+  would.** Pose recovery: the chemisorbed benzimidazoles UMA left flat are reproduced to 0.36 Å
+  from the relaxed geometry *given the face*, but the face of a planar molecule is a mirror in
+  the plane that neither the "flattest face down" rule (which reads chemisorption bending
+  backwards, 2.2 Å) nor the field similarity to one reference decides; the upright and oblique
+  third are 3 Å from any rule pose, and refining the tilt hurts everywhere. Models: the overlap
+  kernel in the rule frame from MMFF conformers gives q² 0.27 on the benzimidazoles, exactly the
+  relaxed frame with its heights levelled (0.27), and nothing on the quinolines; the surface
+  kernel on the same rule poses gives 0.31 and 0.00, so the rule frame does not beat it. What the
+  measurement found instead is that the relaxed frame carries the outcome of the relaxation: a
+  line on the lowest heavy-atom height alone predicts E_ads with q² 0.47 and 0.42, so the
+  0.5–0.66 quoted for the Fe(110) sets was mostly the relaxation's verdict, and the number for
+  E_ads from structure alone is about 0.3 and about 0. The co-field in the rule frame agrees with the
+  relaxed-frame one only at the height of the ring and only for some fields (r 0.6 for the
+  hydrophobic field on the benzimidazoles, for the steric and donor fields on the quinolines,
+  below 0.3 for the rest and for everything 1.5 Å higher).
 * **EC3. Fields at anchored points.** The potential and its gradient at fixed points of the
   shared frame as descriptors: the positions of the atoms of a bound intermediate, the metal
   site, the reaction centre of a Hammett series. `_gauss_field_at` and `coulomb_potential` in
@@ -1607,10 +1619,13 @@ for anything molecular.
   (the protein viewer is the model), no vector co-field, no surface frame. It belongs to G and
   waits for EC2, EC5 and EC6, which decide what there is to draw.
 
-**Order.** EC2 and EC1 first: days each, both run on data and modules already in the repository,
-and EC2 delivers the first surface co-field, which is the picture the corrosion and modifier
-work has been missing. EC4 next, since EC3, EC5, EC8 and EC9 are empty without a catalyst series
-that loads. EC6 after M1, EC7 on its own, EC8 after M5, EC9 and EC10 last.
+**Order.** EC2 was first and is done: it gives the surface frame and the co-field in it, and
+it found that the relaxed frames carry the relaxation's outcome, which changes what the Fe(110)
+numbers mean. EC1 next, days on modules already in the repository. EC4 after that, since EC3, EC5,
+EC8 and EC9 are empty without a catalyst series that loads. EC6 after M1, EC7 on its own, EC8
+after M5, EC9 and EC10 last. The EC2 result also says what EC6 must do differently: a slab as
+the receptor has to decide the face and the tilt by complementarity, since no rule and no
+reference does.
 
 ### Battery science: the extensions the cell and the solvation shell ask for (25 October 2026)
 
@@ -2540,7 +2555,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; EC1 and EC2 (quantum-stage controls, planar alignment and the surface co-field) as soon as the Fe(110) set is benchmarked, EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;

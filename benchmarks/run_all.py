@@ -228,6 +228,12 @@ def registry() -> List[Benchmark]:
                   minutes="15",
                   report=lambda: _mod("run_fluctuation").write_table(_r("fluctuation")),
                   tables=["fluctuation/table.md"]),
+        Benchmark("transformfield",
+                  "does a transformation carry its effect from one series to another",
+                  "run_transformfield.py", "transformfield", compute=[[]],
+                  minutes="10",
+                  report=lambda: _mod("run_transformfield").write_table(_r("transformfield")),
+                  tables=["transformfield/table.md"]),
         Benchmark("bioisostere",
                   "which groups are interchangeable: the co-field against shape and fingerprints",
                   "run_bioisostere.py", "bioisostere", compute=[[]],
@@ -355,6 +361,15 @@ def registry() -> List[Benchmark]:
                   minutes="20",   # examples/sutherland and examples/openff, both in the repo
                   report=lambda: _mod("run_exposure").report(_r("exposure")),
                   tables=["exposure/table.md"]),
+        Benchmark("fe110", "the planar aligner against the relaxed poses on the Fe(110) "
+                           "adsorption sets, and the overlap kernel in the rule frame against the "
+                           "surface kernel",
+                  "run_fe110.py", "fe110",
+                  compute=[["--node", "benzimidazole"], ["--node", "quinoline"]],
+                  minutes="25",   # examples/corrosion_fe110, in the repo
+                  report=lambda: _mod("run_fe110").report(_r("fe110")),
+                  tables=["fe110/table.md"],
+                  readme=["Posed by rule: the surface frame without the slab"]),
         Benchmark("bound", "ranking by a confidence bound against ranking by the prediction",
                   "run_bound.py", "bound", compute=[[]], minutes="15",
                   report=lambda: _mod("run_bound").report(_r("bound/table.md")),

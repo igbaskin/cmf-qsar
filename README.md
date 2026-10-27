@@ -2803,6 +2803,94 @@ molecule's field says what it presents and not what the target needs. A fitted m
 second thing, which is why the two are worth running in series and why that series is the row that
 does best.
 
+### Posed by rule: the surface frame without the slab
+
+The surface kernel of the previous sections reads a molecule on a surface without any in-plane
+registration, and on the Fe(110) sets it found that the height is the information and the
+lattice site is not. What it cannot do is draw a co-field, because it has no fixed frame. The
+overlap kernel can, if the molecules are posed in the surface frame — the normal along z, the top
+layer at z = 0 — and so far the only way into that frame has been to relax every molecule on a
+slab with a machine-learned potential, about five minutes of GPU each.
+[planealign.py](cmfqsar/planealign.py) poses a molecule there by rule in milliseconds, the same
+rules the adsorption script uses for its *starting* poses:
+
+- **flat**: the plane of the two longest principal axes parallel to the surface, the longest axis
+  along x, the lowest heavy atom at a chosen height, and the flattest face down (the atoms off the
+  plane point away from the surface); `flat-up` is the other face;
+- **upright**: the most basic nitrogen (aliphatic amine > pyridine-type > imine > aniline >
+  pyrrole-type N–H; never an amide, nitro or quaternary N; a thioether S or ether O failing that)
+  points its lone pair at the surface, tilted by the least that leaves every other atom above it;
+- **auto**: all of those as candidates, keeping the one most similar in field to one reference
+  pose, optionally after a refinement that moves it only as a surface allows — in the plane and
+  about the normal, or also in tilt and height.
+
+```bash
+cmf align poses.sdf --by plane --pose flat --height 1.9 --out onsurface.sdf
+cmf align poses.sdf --by plane --pose auto --refine plane --reference 0 --out onsurface.sdf
+```
+
+A pose is judged by the RMSD over heavy atoms *after* the best rotation about the normal and
+translation in the plane, so a molecule over a different lattice site is not misplaced.
+[run_fe110.py](benchmarks/run_fe110.py) measures the rules against the UMA-relaxed poses of the
+two Fe(110) nodes
+([table](benchmarks/results/fe110/table.md)), starting from the relaxed geometry turned at random
+and from an ETKDG+MMFF conformer of the SMILES, and then fits the E_ads model in every frame with
+the same nested cross-validation as before (5 outer folds, 10 repeats, paired bootstrap intervals).
+
+**The poses.** For the 35 benzimidazoles that UMA left lying flat, the flat rule from the relaxed
+geometry lands within **0.36 Å** of the relaxed pose — with the right face. With the face the rule
+chooses it is 2.18 Å, because a chemisorbed ring bends its substituents *towards* the metal and
+the "flattest face down" rule reads that bending backwards; and for a planar molecule the face is
+a mirror in the plane that no rule can decide, a coin toss that the field similarity to one
+reference does not call either (`auto` ≈ `flat`; refining the tilt makes everything worse). From a
+gas-phase conformer the same molecules land at 1.6–1.9 Å, of which 1.2 Å is the conformer itself —
+the relaxed ring is bent and the MMFF one is not. The third of the chemisorbed molecules that UMA
+left upright or oblique are 3 Å from any rule pose. On the quinoline node, where half the
+molecules detach, the better face gives 1.8 Å and 35 % within 1 Å.
+
+**The models.** The first thing the measurement found is about the relaxed frame, not the rule.
+The lowest heavy atom of a relaxed pose sits at 1.9 Å when the molecule chemisorbed and at 4.3 Å
+when it detached, and E_ads averages −83 kJ/mol for the first and −8 for the second: a straight
+line on that one height predicts E_ads with a leave-one-out q² of **0.47** (benzimidazoles) and
+**0.42** (quinolines). That is the outcome of the relaxation written into the frame, and the
+0.5–0.66 the relaxed frame gave earlier was mostly it. Lowering every relaxed pose to one common
+height removes it:
+
+| E_ads, q² (all molecules / chemisorbed only) | benzimidazole (72 / 54) | quinoline (63 / 31) |
+|---|---:|---:|
+| overlap, relaxed poses as written | 0.51 / 0.35 | 0.56 / 0.34 |
+| overlap, relaxed, lowered to 1.9 Å | 0.27 / 0.23 | −0.01 / 0.14 |
+| overlap, **flat rule from an MMFF conformer** | 0.27 / 0.15 | −0.03 / −0.14 |
+| overlap, MCS frame of the conformers | −0.01 / 0.01 | −0.07 / −0.33 |
+| surface kernel, relaxed as written | 0.66 / 0.50 | 0.52 / 0.15 |
+| surface kernel, relaxed, lowered | 0.55 / 0.40 | 0.34 / 0.17 |
+| surface kernel, flat rule from a conformer | 0.31 / 0.28 | 0.00 / −0.03 |
+| a line on the lowest height alone (LOO) | 0.47 | 0.42 |
+
+- On the benzimidazoles the overlap kernel in the rule frame recovers exactly what it recovers in
+  the relaxed frame once the outcome is removed, 0.27 against 0.27, from a conformer and no slab;
+  the MCS frame gives nothing. So the rule *is* the surface frame for the overlap kernel, and the
+  co-field can be drawn in it. But the surface kernel on the same rule poses does as well (0.31),
+  and on the relaxed-and-lowered poses better (0.55): the bending and tilt the relaxation produced
+  carry signal that a rigid rule from a gas-phase conformer does not have.
+- On the quinolines nothing from a rule carries signal, and nothing from the relaxed frame does
+  either once its height is removed from the overlap kernel; only the surface kernel on the
+  lowered relaxed poses keeps a third of its q².
+- The co-fields of the two frames ([figure](benchmarks/results/fe110/cofields_benzimidazole.png))
+  agree only at the height of the ring and only in places: at 2 Å the hydrophobic co-field of
+  the benzimidazoles correlates at 0.59 between the frames, the steric and donor co-fields of the
+  quinolines at about 0.6, and every other field below 0.3; 1.5 Å higher nothing correlates
+  above 0.3. A co-field can be drawn in the rule frame, but it is not the picture the relaxed
+  frame draws.
+
+**What this settles.** The number to quote for "can CMF predict a machine-learned adsorption
+energy from the structure alone" is about 0.3 on the benzimidazole node and 0 on the quinoline
+node, not 0.5–0.65; the rest was the relaxation telling the model which molecules it had bound.
+The rule aligner does not beat the surface kernel, which was the gate the plan set it, and it
+stays as what the plan said it would then be: a display tool, the way to put a set in a surface
+frame and draw a co-field in it, with the face of a planar molecule left to the user. Which it
+can do in milliseconds, and the slab cannot be avoided for anything more.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

@@ -698,6 +698,30 @@ nothing to hold them with.  Then `surface_kernel_eads.py --csv ... --sdf ... --t
   molecules, level on a node of 63 with half unbound, and level with other representations on
   OC20's fragments.  "Alignment-free at no cost" is the defensible statement; "better" is not.
 
+## Posed by rule, and what the relaxed frame carries (2026-10-27)
+
+`cmfqsar/planealign.py` (plan item EC2; `cmf align --by plane`) poses a molecule in this frame by
+the rules this script uses for its starting poses, without the slab, and
+`benchmarks/run_fe110.py` measures it on both nodes (`benchmarks/results/fe110/table.md`; the
+README section *Posed by rule: the surface frame without the slab* has the discussion). Two
+things it found that bear on the sections above:
+
+- **The relaxed frame carries the outcome.** The lowest heavy atom sits at 1.86 A (median) for a
+  chemisorbed molecule and at 4.3 A for a detached one, and a straight line on that one height
+  gives a leave-one-out q2 of 0.47 (benzimidazoles) and 0.42 (quinolines) for E_ads.  The
+  0.51/0.66 and 0.56/0.52 of the overlap and surface kernels in the frames as written are
+  mostly that.  With every relaxed pose lowered to the common height of 1.9 A the overlap kernel
+  keeps 0.27 on the benzimidazoles and nothing on the quinolines, the surface kernel 0.55 and
+  0.34.  The "upper limit of about 0.65" quoted above is the limit with the relaxation's verdict
+  in the input; from the structure alone it is about 0.3 and about 0.
+- **The rules reproduce a flat-lying pose, given its face.** For the 35 benzimidazoles UMA left
+  flat, the flat rule from the relaxed geometry is 0.36 A from the relaxed pose with the right
+  face and 2.2 A with the face the "flattest face down" rule picks, because chemisorption bends
+  substituents toward the metal.  From an MMFF conformer, 1.6-1.9 A, of which 1.2 A is the
+  conformer.  The upright and oblique third are 3 A from any rule pose.  The overlap kernel in
+  the rule frame from conformers gives 0.27 on the benzimidazoles, the same as the lowered
+  relaxed frame, and the surface kernel on the same poses 0.31; on the quinolines, nothing.
+
 ## Follow-ups
 
 - Dispersion: fairchem provides a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,

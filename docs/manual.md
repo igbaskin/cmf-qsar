@@ -4012,6 +4012,38 @@ carry the signal, which `top_channels` ranks against the labels of
 
 ![The co-pattern of the surface model of the adsorption energies of 72 molecules on Fe(110), q² = 0.67: the mean contribution of every channel to the prediction, in kJ/mol, summed over the second height, by pair of field types, in-plane distance and height. Blue means stronger adsorption. The signal sits in a few channels, among them the electrostatic and the hydrogen-bond donor field at zero in-plane distance. Drawn by `surface_channels_eads.py` in `examples/corrosion_fe110`.](examples/corrosion_fe110/surface_channels_eads.png)
 
+## Posed by rule: the surface frame without the slab
+
+The surface kernel needs only the normal, but it cannot draw a co-field; the overlap kernel can,
+if the molecules are in the surface frame, and so far that frame came from relaxing every
+molecule on a slab. `cmfqsar/planealign.py` puts a molecule there by rule — flat, with the plane
+of its two longest principal axes parallel to the surface and the lowest heavy atom at a chosen
+height; upright, with its most basic nitrogen pointing a lone pair at the surface; or whichever
+of those is most similar in field to one trusted pose — and `cmf align --by plane` applies it to a
+set:
+
+```bash
+cmf align poses.sdf --by plane --pose flat --height 1.9 --out onsurface.sdf
+cmf align poses.sdf --by plane --pose auto --refine plane --reference 0 --out onsurface.sdf
+```
+
+`--pose flat` turns the flattest face down and `flat-up` the other; `--pose auto` tries both
+faces and the upright pose and keeps the most similar to the reference, after `--refine plane`
+(moved in the plane and about the normal only) or `--refine plane+tilt` (also tilted by up to 30°
+and lifted by up to 1 Å). Nothing else moves: the conformation is never touched.
+
+What the rule is worth was measured on the Fe(110) sets (`benchmarks/run_fe110.py`, the README
+section of the same name). A chemisorbed ring that the relaxation left flat is reproduced to
+0.4 Å *given its face*; the face of a planar molecule is a mirror in the plane that no rule and
+no field similarity to one reference decides, and the molecules the relaxation left upright or
+oblique are 3 Å from any rule pose. The overlap kernel in the rule frame recovers of the
+adsorption energy exactly what it recovers in the relaxed frame once that frame's height — the
+outcome of the relaxation, which alone predicts E_ads with q² 0.4–0.5 — is removed, and the
+surface kernel on the same rule poses does as well. The aligner therefore does not replace the
+slab; it is the way to put a set in a surface frame and draw a co-field in it when the frame is
+all that is wanted, and `--pose flat-up` is there because the user may know the face that the
+rule cannot.
+
 ## Crystals: the periodic autocorrelation kernel
 
 The same descriptor for a periodic structure, summed over the neighbour list of one cell with its
@@ -4937,14 +4969,15 @@ trimmed at 8 Å around a shallow, solvent-exposed hinge leaves most of a ligand 
 ## One command for the alignment: `cmf align`
 
 Alignment was spread over flags of `build` and `predict` and the `hetero` workflow, which made the
-four criteria the program has look like four unrelated features. They are one question — where do
-these molecules go — asked four ways, and `align` asks it:
+criteria the program has look like unrelated features. They are one question — where do these
+molecules go — asked five ways, and `align` asks it:
 
 ```bash
 cmf align data.sdf --by mcs    --out aligned.sdf          # on the common substructure
 cmf align data.sdf --by field  --reference 0 --out aligned.sdf
 cmf align data.sdf --by variance --model m.cmf --max-rmsd 2 --out aligned.sdf
 cmf align data.sdf --by pocket --model m.cmf --pocket site.pdb --out aligned.sdf
+cmf align data.sdf --by plane  --pose auto --refine plane --reference 0 --out onsurface.sdf
 ```
 
 | `--by` | what it maximises | what it needs |
@@ -4953,6 +4986,7 @@ cmf align data.sdf --by pocket --model m.cmf --pocket site.pdb --out aligned.sdf
 | `field` | the CMF field similarity to a reference molecule, a model's training set, or the set itself | nothing, but `--restarts` decides how hard it tries |
 | `variance` | the confidence of the model's own prediction — the criterion of *Alignment by prediction confidence* | a model (`--model`), and `--flexible` adds the torsions |
 | `pocket` | that confidence with a complementarity term, $\sigma^2 - w\,[\text{fit} - \text{clash}]$ | a model and a structure; see the warning in *Alignment inside the pocket* |
+| `plane` | nothing, by default: it poses each molecule on a surface $z = 0$ by rule (`--pose flat` or `upright`); with `--pose auto` and `--refine`, the field similarity to one reference pose, moved only as a surface allows | a reference whose input pose is trusted, for `auto` and `--refine`; see *Posed by rule: the surface frame without the slab* |
 
 Every mode prints what it did per molecule and then how far the set moved, and writes nothing
 unless `--out` is given — an alignment that is not kept is a measurement, and saying so avoids the
@@ -5042,7 +5076,7 @@ not every option.
 | `cluster` | cluster a set by its field kernel (spectral clustering) |
 | `atoms` | a target that belongs to the atoms: what a file carries, and how it would be split |
 | `local` | a model over atoms: the field around an atom against a count around it |
-| `isosteres` | which groups are interchangeable at a position, by the co-field |
+| `isosteres` | which groups are interchangeable at a position, by the co-field |
 | `restriction` | score a ring closure: how much of the field that matters stops moving |
 | `unalign` | give every molecule a random pose, the control experiment |
 
