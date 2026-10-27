@@ -3266,6 +3266,61 @@ so the list is worth reading at the top and not in the middle. That is the claim
 has to make, and it is the one this measurement supports: it will name the group worth trying,
 not tell you what it will measure.
 
+## Growing a bound fragment into the gap
+
+A fragment that binds fills part of a site and leaves the rest empty. The question a fragment
+campaign asks next is what to put there. `cmfqsar/fraggrow.py` answers it with the fields alone,
+which is what plan item MC7 asks for, and the answer it gives is a measured no.
+
+**The construction.** The pocket's offer at a point is its own field with the sign convention of
+the complementarity section: the electrostatic field with a minus, because a positive ligand
+region should meet a negative protein region; the hydrophobic field with a plus; the pocket's
+donors paired with the ligand's acceptors and the other way round. The **gap** is that offer in
+the space that is free -- free of the protein, and free of the fragment, which is how "minus
+what the fragment already places" is taken here. An offer is open only where a new atom could
+sit. (The other reading, subtracting the fragment's own field from the pocket's offer, compares
+two different quantities and erases exactly the contact region a new group would use; it was
+tried and it does not work.)
+
+**The candidates** are built from their SMILES with a distance-geometry embedding and a force
+field, never from a crystal structure, and placed on the growth vector by rule: the origin at
+the atom that grows, the x axis along the direction that atom's own bonds leave empty, the bond
+length the sum of two covalent radii, and the turn about the new bond scanned. The true answer
+is built and placed exactly like every other candidate, so nothing about it enters the geometry.
+A placement whose atoms come closer than 2.5 A to the protein is refused.
+
+**Measured** by `benchmarks/run_fraggrow.py` on 25 growing cases from the fragment sets of the
+Schrodinger free-energy collection -- the only public sets here with a pocket and with the
+fragment and the compound it grew into in one crystal frame -- against a library of 201 groups
+taken from the ligands of the same collection:
+
+| ranking | median rank of the true group | among the first ten | first |
+| --- | ---: | ---: | ---: |
+| at random | 82 | 0% | 0% |
+| by whether it fits, at random inside that | 15 | 40% | 0% |
+| by whether it fits, then by the size of the group | 28 | 12% | 0% |
+| by whether it fits, then by the field score | 25 | 28% | 0% |
+
+**The gate is not met, and the field score is worse than not scoring at all.** Refusing the
+placements that clash and shuffling the rest puts the true group at a median rank of 15 of 201,
+and finds it among the first ten in 40 per cent of the cases. Sorting those same candidates by
+the field score moves it to 25 and 28 per cent. The score is not neutral: it rewards whatever
+fills most of the gap, so it prefers the largest group that still fits, while the additions in
+these cases are a fluorine, a methyl, a chlorine. What carries the ranking is the geometry --
+whether the group fits at all -- and the field adds nothing to it.
+
+Under rule 5 that makes the gap a display tool: a picture of where there is room next to a bound
+fragment and what the pocket would reward there, which is worth drawing before a chemist chooses
+a group, and not a way of choosing one. `fraggrow.gap` returns it on a grid, with one array per
+field type, ready for the same cube export as any other field of this program.
+
+**What the measurement cannot settle.** The library holds 201 groups and the true one is always
+in it, which is the easy part of a real enumeration. The cases are few, because a public set
+with a pocket, a fragment and the compound it grew into is rare. And every candidate gets one
+embedded conformation and a turn about the new bond, where a real growing tool would minimise
+the group inside the site. A negative result here is evidence against the one-body field score,
+not against fragment growing.
+
 ## A matched pair as a field placed in space
 
 A matched molecular pair is usually a row in a table: a transformation, written as two group

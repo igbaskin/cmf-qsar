@@ -1,0 +1,496 @@
+{
+ "cases": 25,
+ "library": 201,
+ "turns": 12,
+ "alpha": 1.0,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "seconds": 198.3326530456543,
+ "rows": [
+  {
+   "set": "frag_liga_auto",
+   "names": [
+    "5",
+    "9"
+   ],
+   "smiles": "CC(F)(F)[*:1]",
+   "added": 4,
+   "candidates": 201,
+   "free": 57,
+   "points": 681,
+   "rank_field": 18,
+   "rank_size": 35,
+   "rank_chance": 18,
+   "rank_fit": 6,
+   "clashes": 0,
+   "score": 0.08775513610514434
+  },
+  {
+   "set": "frag_liga_auto",
+   "names": [
+    "5",
+    "6"
+   ],
+   "smiles": "CO[*:1]",
+   "added": 2,
+   "candidates": 201,
+   "free": 57,
+   "points": 681,
+   "rank_field": 44,
+   "rank_size": 46,
+   "rank_chance": 180,
+   "rank_fit": 50,
+   "clashes": 0,
+   "score": -0.00019440604021935253
+  },
+  {
+   "set": "frag_liga_auto",
+   "names": [
+    "5",
+    "10"
+   ],
+   "smiles": "FC(F)(F)[*:1]",
+   "added": 4,
+   "candidates": 201,
+   "free": 57,
+   "points": 681,
+   "rank_field": 21,
+   "rank_size": 25,
+   "rank_chance": 82,
+   "rank_fit": 20,
+   "clashes": 0,
+   "score": 0.0842011400730887
+  },
+  {
+   "set": "frag_liga_auto",
+   "names": [
+    "5",
+    "8"
+   ],
+   "smiles": "C1CC([*:1])C1",
+   "added": 4,
+   "candidates": 201,
+   "free": 57,
+   "points": 681,
+   "rank_field": 15,
+   "rank_size": 28,
+   "rank_chance": 117,
+   "rank_fit": 34,
+   "clashes": 0,
+   "score": 0.10972992655278621
+  },
+  {
+   "set": "frag_liga_auto",
+   "names": [
+    "5",
+    "7"
+   ],
+   "smiles": "C[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 57,
+   "points": 681,
+   "rank_field": 38,
+   "rank_size": 51,
+   "rank_chance": 169,
+   "rank_fit": 48,
+   "clashes": 0,
+   "score": 0.017963226137105763
+  },
+  {
+   "set": "frag_liga_auto",
+   "names": [
+    "5",
+    "4"
+   ],
+   "smiles": "Cl[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 57,
+   "points": 681,
+   "rank_field": 36,
+   "rank_size": 52,
+   "rank_chance": 42,
+   "rank_fit": 11,
+   "clashes": 0,
+   "score": 0.03563127663271924
+  },
+  {
+   "set": "frag_liga_auto",
+   "names": [
+    "11",
+    "12"
+   ],
+   "smiles": "OCCN[*:1]",
+   "added": 4,
+   "candidates": 201,
+   "free": 131,
+   "points": 922,
+   "rank_field": 74,
+   "rank_size": 109,
+   "rank_chance": 146,
+   "rank_fit": 94,
+   "clashes": 0,
+   "score": 0.01861705356890961
+  },
+  {
+   "set": "frag_mup1",
+   "names": [
+    "PT",
+    "SBT_R"
+   ],
+   "smiles": "C[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 50,
+   "points": 506,
+   "rank_field": 26,
+   "rank_size": 44,
+   "rank_chance": 20,
+   "rank_fit": 7,
+   "clashes": 0,
+   "score": 0.01527896649414292
+  },
+  {
+   "set": "frag_mup1",
+   "names": [
+    "PT",
+    "SBT_S"
+   ],
+   "smiles": "C[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 50,
+   "points": 506,
+   "rank_field": 26,
+   "rank_size": 44,
+   "rank_chance": 131,
+   "rank_fit": 36,
+   "clashes": 0,
+   "score": 0.01527896649414292
+  },
+  {
+   "set": "frag_p38",
+   "names": [
+    "3",
+    "1_1W7H"
+   ],
+   "smiles": "N[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 115,
+   "points": 2180,
+   "rank_field": 61,
+   "rank_size": 112,
+   "rank_chance": 173,
+   "rank_fit": 101,
+   "clashes": 0,
+   "score": 0.0076391248206095505
+  },
+  {
+   "set": "hsp90_frag_2rings",
+   "names": [
+    "17",
+    "19"
+   ],
+   "smiles": "F[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 14,
+   "points": 571,
+   "rank_field": 7,
+   "rank_size": 10,
+   "rank_chance": 48,
+   "rank_fit": 4,
+   "clashes": 0,
+   "score": 0.0044123952009083285
+  },
+  {
+   "set": "hsp90_frag_2rings",
+   "names": [
+    "15",
+    "18"
+   ],
+   "smiles": "F[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 15,
+   "points": 571,
+   "rank_field": 7,
+   "rank_size": 11,
+   "rank_chance": 48,
+   "rank_fit": 7,
+   "clashes": 0,
+   "score": 0.004094654544784536
+  },
+  {
+   "set": "hsp90_frag_2rings",
+   "names": [
+    "14",
+    "15"
+   ],
+   "smiles": "C[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 55,
+   "points": 477,
+   "rank_field": 41,
+   "rank_size": 49,
+   "rank_chance": 73,
+   "rank_fit": 19,
+   "clashes": 0,
+   "score": 0.0025642396241608687
+  },
+  {
+   "set": "hsp90_frag_single_ring",
+   "names": [
+    "3",
+    "10"
+   ],
+   "smiles": "F[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 17,
+   "points": 585,
+   "rank_field": 8,
+   "rank_size": 13,
+   "rank_chance": 171,
+   "rank_fit": 15,
+   "clashes": 0,
+   "score": 0.004447837306961507
+  },
+  {
+   "set": "hsp90_frag_single_ring",
+   "names": [
+    "9",
+    "10"
+   ],
+   "smiles": "C[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 56,
+   "points": 557,
+   "rank_field": 41,
+   "rank_size": 50,
+   "rank_chance": 78,
+   "rank_fit": 23,
+   "clashes": 0,
+   "score": 0.002714761840841129
+  },
+  {
+   "set": "hsp90_frag_single_ring",
+   "names": [
+    "8",
+    "11"
+   ],
+   "smiles": "F[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 15,
+   "points": 583,
+   "rank_field": 7,
+   "rank_size": 11,
+   "rank_chance": 32,
+   "rank_fit": 2,
+   "clashes": 0,
+   "score": 0.004472188726834382
+  },
+  {
+   "set": "hsp90_frag_single_ring",
+   "names": [
+    "11",
+    "12"
+   ],
+   "smiles": "C[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 55,
+   "points": 477,
+   "rank_field": 41,
+   "rank_size": 49,
+   "rank_chance": 159,
+   "rank_fit": 47,
+   "clashes": 0,
+   "score": 0.0025796813811590053
+  },
+  {
+   "set": "hsp90_frag_single_ring",
+   "names": [
+    "2",
+    "3"
+   ],
+   "smiles": "C[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 58,
+   "points": 558,
+   "rank_field": 43,
+   "rank_size": 52,
+   "rank_chance": 20,
+   "rank_fit": 3,
+   "clashes": 0,
+   "score": 0.002744954738276026
+  },
+  {
+   "set": "hsp90_frag_single_ring",
+   "names": [
+    "2",
+    "9"
+   ],
+   "smiles": "F[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 17,
+   "points": 584,
+   "rank_field": 8,
+   "rank_size": 13,
+   "rank_chance": 186,
+   "rank_fit": 16,
+   "clashes": 0,
+   "score": 0.0044241296910247875
+  },
+  {
+   "set": "jak2_set1",
+   "names": [
+    "2_3E63",
+    "9"
+   ],
+   "smiles": "Cl[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 1,
+   "points": 1226,
+   "rank_field": 18,
+   "rank_size": 18,
+   "rank_chance": 54,
+   "rank_fit": 5,
+   "clashes": 1,
+   "score": 0.0022402742231047773
+  },
+  {
+   "set": "jak2_set1",
+   "names": [
+    "2_3E63",
+    "8"
+   ],
+   "smiles": "Cl[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 31,
+   "points": 667,
+   "rank_field": 26,
+   "rank_size": 27,
+   "rank_chance": 191,
+   "rank_fit": 30,
+   "clashes": 0,
+   "score": 0.0009108217330033806
+  },
+  {
+   "set": "jak2_set2_extra",
+   "names": [
+    "13_3E64",
+    "22"
+   ],
+   "smiles": "Cl[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 1,
+   "points": 289,
+   "rank_field": 6,
+   "rank_size": 6,
+   "rank_chance": 154,
+   "rank_fit": 7,
+   "clashes": 1,
+   "score": 0.0015198884033804788
+  },
+  {
+   "set": "jak2_set2_extra",
+   "names": [
+    "13_3E64",
+    "21"
+   ],
+   "smiles": "C[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 11,
+   "points": 211,
+   "rank_field": 3,
+   "rank_size": 7,
+   "rank_chance": 102,
+   "rank_fit": 6,
+   "clashes": 0,
+   "score": 0.0007280263300579599
+  },
+  {
+   "set": "jak2_set2_extra",
+   "names": [
+    "13_3E64",
+    "20"
+   ],
+   "smiles": "Cl[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 11,
+   "points": 211,
+   "rank_field": 20,
+   "rank_size": 22,
+   "rank_chance": 57,
+   "rank_fit": 15,
+   "clashes": 1,
+   "score": 0.0010266073344751946
+  },
+  {
+   "set": "jak2_set2_extra",
+   "names": [
+    "13_3E64",
+    "22 flip"
+   ],
+   "smiles": "Cl[*:1]",
+   "added": 1,
+   "candidates": 201,
+   "free": 32,
+   "points": 621,
+   "rank_field": 25,
+   "rank_size": 28,
+   "rank_chance": 38,
+   "rank_fit": 6,
+   "clashes": 0,
+   "score": 0.0014527247804229867
+  }
+ ],
+ "summary": {
+  "field": {
+   "median": 25.0,
+   "top10": 0.28,
+   "top1": 0.0,
+   "mean_share": 0.13134328358208955,
+   "n": 25
+  },
+  "size": {
+   "median": 28.0,
+   "top10": 0.12,
+   "top1": 0.0,
+   "mean_share": 0.18149253731343282,
+   "n": 25
+  },
+  "chance": {
+   "median": 82.0,
+   "top10": 0.0,
+   "top1": 0.0,
+   "mean_share": 0.49532338308457713,
+   "n": 25
+  },
+  "fit": {
+   "median": 15.0,
+   "top10": 0.4,
+   "top1": 0.0,
+   "mean_share": 0.12179104477611942,
+   "n": 25
+  }
+ }
+}

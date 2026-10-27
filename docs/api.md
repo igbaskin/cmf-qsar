@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 80 modules, 136 classes with 481 public methods, and 629 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 81 modules, 141 classes with 483 public methods, and 642 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -55,6 +55,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.fields](#cmfqsarfields) | Parameterisation of continuous molecular fields. |
 | [cmfqsar.flexalign](#cmfqsarflexalign) | Flexible alignment by confidence: the rigid-body search of 2019, with the torsions. |
 | [cmfqsar.fluctuation](#cmfqsarfluctuation) | The variance of a field across the frames of an ensemble (plan item D10). |
+| [cmfqsar.fraggrow](#cmfqsarfraggrow) | Growing a bound fragment into the gap the pocket leaves (plan item MC7). |
 | [cmfqsar.fusion](#cmfqsarfusion) | Data fusion: one score from the similarities to several known actives. |
 | [cmfqsar.gpc](#cmfqsargpc) | Gaussian-process classification by the Laplace approximation. |
 | [cmfqsar.gradients](#cmfqsargradients) | The derivative of a prediction with respect to the atoms of the molecule being predicted. |
@@ -4016,6 +4017,181 @@ The share of the pair factors the floor keeps, in [0, 1].
 One field of a `cmfqsar.fields.MoleculeFields` at a list of points.
 
 Used to check a variance field against the variance it is supposed to be, and to draw one.
+
+## cmfqsar.fraggrow
+
+Source: `cmfqsar/fraggrow.py`
+
+Growing a bound fragment into the gap the pocket leaves (plan item MC7).
+
+A fragment that binds fills part of a site and leaves the rest empty.  What should be put there?
+`cmfqsar.complementarity` already scores a whole ligand against a pocket by field overlap,
+with the sign convention that makes a score of this kind mean something: a positive ligand region
+should meet a negative protein region, hydrophobic meets hydrophobic, a donor meets an acceptor.
+This module turns that into a question about one growth vector:
+
+* **the gap** is what the pocket would still reward, on a grid, after the fragment's own field is
+  taken off -- the field a group would have to place to be worth adding;
+* **the candidates** are groups built from their SMILES and placed on the vector by rule, with
+  the torsion about the new bond scanned, so that nothing about the answer enters the geometry;
+* **the score** is the overlap of the grown molecule's added field with the gap, and a placement
+  that clashes with the protein is refused.
+
+The gate of plan item MC7 is whether the group that was actually added comes out among the first
+ten of such an enumeration.  The plan says this is the item most likely to return nothing,
+because a one-body field score has never been shown to rank linkers;
+`benchmarks/run_fraggrow.py` is the measurement, and rule 5 then decides what is kept.
+
+Nothing here needs a model: the pocket and the fragment are enough, which is what makes it usable
+on a target with no series yet -- the situation a fragment campaign is in.
+
+### `class Vector  (dataclass)`
+
+A place on a fragment where a group can be added, and the frame that places it.
+
+Attributes:
+
+- `atom: int`
+- `origin: np.ndarray`
+- `rotation: np.ndarray`
+- `hydrogen: Optional[int]` = `None`
+
+#### `Vector.to_pocket(local: np.ndarray, turn: float=0.0) -> np.ndarray`
+
+Local coordinates of a group, turned about the new bond, in the pocket's frame.
+
+### `class Case  (dataclass)`
+
+A fragment, the compound it was grown into, and what was added where.
+
+Attributes:
+
+- `fragment: int`
+- `grown: int`
+- `smiles: str`
+- `atom: int`
+- `added: List[int]`
+- `names: Tuple[str, str]` = `('', '')`
+
+### `class Group  (dataclass)`
+
+A candidate group in its own frame: the attachment point at the origin, the bond on +x.
+
+Attributes:
+
+- `smiles: str`
+- `mol: object`
+- `local: np.ndarray`
+- `first: int`
+
+#### `Group.heavy` -> int  (property)
+
+### `class Gap  (dataclass)`
+
+What a group would still have to place, on a grid around one growth vector.
+
+Attributes:
+
+- `points: np.ndarray`
+- `reward: Dict[str, np.ndarray]`
+- `room: np.ndarray`
+- `cell: float`
+
+### `class Candidate  (dataclass)`
+
+One group placed on one vector, with the best turn found for it.
+
+Attributes:
+
+- `smiles: str`
+- `score: float`
+- `turn: float`
+- `clashes: int`
+- `heavy: int`
+- `placed: object` = `None`
+
+### `vacant_direction(coords: np.ndarray, atom: int, neighbours: Sequence[int]) -> np.ndarray`
+
+Where the next bond of `atom` would point, from the bonds it already has.
+
+### `growth_vector(mol, atom: int) -> Optional[Vector]`
+
+The frame of the bond that would be made at `atom`, with the hydrogen it replaces.
+
+The direction is the one the atom's own bonds leave empty, so it is fixed by the fragment
+alone and nothing about what will be added enters it.  The plane is fixed by the atom's
+first heavy neighbour, which makes the frame reproducible.
+
+### `addition(fragment, grown, max_added: int=20) -> Optional[Tuple[str, int, List[int]]]`
+
+(the added group as SMILES, the fragment atom it hangs on, the added atoms of `grown`).
+
+Both molecules are taken without hydrogens, and the fragment must be a substructure of the
+grown compound, which is what makes this a growing case rather than a pair of analogues.
+The group is written by the same single-bond cut as the matched pairs of
+`cmfqsar.bioisostere`, so the two items speak of groups in the same words.
+
+### `build_group(smiles: str, seed: int=1) -> Optional[Group]`
+
+A group written as SMILES with one attachment point, embedded and put in its own frame.
+
+The geometry comes from the SMILES and a force field, never from a crystal structure, so a
+candidate that happens to be the right answer is built exactly like every other one.
+
+### `grow(fragment, vector: Vector, group: Group, turn: float=0.0)`
+
+The fragment with the group bonded on, as one molecule with coordinates.
+
+### `gap_points(vector: Vector, reach: float=REACH, spacing: float=SPACING) -> np.ndarray`
+
+A ball of grid points in front of the growth vector, where a group could go.
+
+### `gap(pocket: MoleculeFields, fragment: MoleculeFields, fieldset: FieldSet, vector: Vector, reach: float=REACH, spacing: float=SPACING) -> Gap`
+
+What a group would be rewarded for placing, in the space the fragment leaves free.
+
+One array per ligand field type, with the sign convention of
+`cmfqsar.complementarity.COMPLEMENTARY_PAIRS`: the pocket's electrostatic field counts
+with a minus, its hydrophobic field with a plus, and its donors pair with the ligand's
+acceptors.  `room` is the space left by the protein **and** by the fragment, which is how
+"minus what the fragment already places" is taken here: an offer is open only where a new
+atom could sit.  Shape needs no field of its own, because that is what the room is.
+
+### `room(points: np.ndarray, pocket: MoleculeFields, contact: float=CONTACT, ramp: float=RAMP) -> np.ndarray`
+
+How much of a ligand atom the pocket allows at each point, from 0 to 1.
+
+This is not `cmfqsar.complementarity.free_space`, which asks where a ligand could sit
+comfortably and is right for comparing a co-field with a pocket.  A group that is added to a
+bound fragment **touches** the protein -- that contact is the interaction -- so the mask here
+has to be open at the contact distance and closed only where an atom would not fit.
+
+### `score(added: MoleculeFields, fieldset: FieldSet, g: Gap, weights: Optional[Dict[str, float]]=None) -> float`
+
+How much of the gap one added group fills, as one number.
+
+The integral is taken only where the pocket leaves room, so a group cannot be rewarded for
+placing field inside the protein.
+
+### `clashes(mol, pocket: MoleculeFields, atoms: Optional[Sequence[int]]=None, contact: float=CLASH) -> int`
+
+How many heavy atoms of the molecule sit closer than `contact` to a protein heavy atom.
+
+### `try_group(fragment, vector: Vector, group: Group, pocket: MoleculeFields, fieldset: FieldSet, g: Gap, turns: int=TORSIONS, keep_placed: bool=False) -> Optional[Candidate]`
+
+Place one group on the vector, turn it, and keep the best placement that does not clash.
+
+The molecule is assembled and its fields are built **once**: an atom's type, weight and
+radius come from the bond graph, which the turn about the new bond does not change, so every
+further turn is a rotation of the added atoms' coordinates and nothing else.
+
+### `enumerate_groups(fragment, vector: Vector, pocket: MoleculeFields, fieldset: FieldSet, groups: Sequence[Group], turns: int=TORSIONS, reach: float=REACH, spacing: float=SPACING, progress=None) -> List[Candidate]`
+
+Every group of the library placed on one vector, best first.
+
+### `rank_of(candidates: Sequence[Candidate], smiles: str) -> Optional[int]`
+
+Where one group came in the enumeration, counting from one.
 
 ## cmfqsar.fusion
 

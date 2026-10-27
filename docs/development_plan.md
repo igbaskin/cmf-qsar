@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 74 modules and about 32,700 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 75 modules and about 33,200 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-eight subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1122 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`), 1139 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2445,6 +2445,34 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   fragments and for the linked compound, the true linker is among the first ten of the enumeration.
   This is the item most likely to return nothing, because a one-body field score has never been
   shown to rank linkers, and under rule 5 it becomes a display tool if the gate fails.
+  **Done 27 October 2026; the gate is not met and rule 5 applies, which is what the item
+  expected.** `cmfqsar/fraggrow.py`. The pocket's offer is its own field with the sign
+  convention of `complementarity.COMPLEMENTARY_PAIRS`; the **gap** is that offer in the space
+  free of the protein and of the fragment, which is how "minus what the fragment already places"
+  is taken. The other reading, subtracting the fragment's field from the pocket's offer, was
+  tried first and is wrong: it compares two different quantities and erases the contact region a
+  new group would use. Candidates are built from SMILES with ETKDG and a force field, never from
+  a crystal structure, placed on the growth vector by rule -- origin at the growing atom, x
+  along the direction its own bonds leave empty, the bond length the sum of two covalent radii,
+  the turn about the new bond scanned -- and a placement closer than 2.5 A to the protein is
+  refused. 17 tests.
+  **Measured** by `benchmarks/run_fraggrow.py` on 25 growing cases from the fragment sets of the
+  Schrodinger collection (`examples/ross/fragments/`, with the pockets of
+  `examples/pockets/ross/fragments/`), a library of 201 groups taken from the ligands of the
+  same collection, 12 turns per candidate. The median rank of the group that was really added,
+  out of 201: at random 82; refusing the placements that clash and shuffling the rest 15 (among
+  the first ten in 40% of the cases); those candidates sorted by size 28 (12%); sorted by the
+  field score 25 (28%).
+  **The field score is worse than not scoring at all.** All of the ranking comes from the
+  geometry -- whether the group fits -- and ordering what fits by the score pushes the right
+  answer down, because the score rewards whatever fills most of the gap and so prefers the
+  largest group that still fits, while these additions are a fluorine, a methyl, a chlorine.
+  Under rule 5 the gap becomes a display tool: a picture of where there is room beside a bound
+  fragment and what the pocket would reward there.
+  **What the measurement cannot settle**: the library always contains the answer, which is the
+  easy part of a real enumeration; the cases are few, because a public set with a pocket, a
+  fragment and the compound it grew into is rare; and every candidate gets one embedded
+  conformation and a turn, where a real growing tool would minimise the group in the site.
 * **MC8. Soft spots: a target that belongs to one atom.** The site of metabolism and the pKa of a
   group are properties of an atom, and LP1 and LP2 are the items that make a per-atom target
   possible. The use in medicinal chemistry is blocking a metabolic position, which is a question

@@ -1822,6 +1822,39 @@ against shuffling the numbers among the molecule's atoms is +0.35 for
 phenyl — so this is a statement about a series of hundreds of guests, not a reading for one
 compound.
 
+### Growing a bound fragment into the gap
+
+A fragment that binds leaves the rest of the site empty, and the next question is what to put
+there. The pocket's offer, with the sign convention of the complementarity section, taken in the
+space that is free of the protein and of the fragment, is the **gap** (`cmfqsar/fraggrow.py`,
+plan item MC7). A candidate group is built from its SMILES, placed on the growth vector by rule
+with the turn about the new bond scanned, and scored by how much of the gap its own field fills.
+Nothing about the answer enters the geometry: the true group is built and placed like every
+other candidate.
+
+Measured on 25 growing cases from the Schrodinger fragment sets -- the only public sets here with
+a pocket and with the fragment and the compound it grew into in one crystal frame -- against a
+library of 201 groups:
+
+| ranking | median rank of the true group | among the first ten |
+| --- | ---: | ---: |
+| at random | 82 | 0% |
+| by whether it fits, at random inside that | 15 | 40% |
+| by whether it fits, then by the size of the group | 28 | 12% |
+| by whether it fits, then by the field score | 25 | 28% |
+
+**The gate is not met, and the field score is worse than not scoring at all.** Refusing the
+placements that clash and shuffling the rest beats sorting them by the score, 15 against 25 and
+40 against 28 per cent. The score rewards whatever fills most of the gap, so it prefers the
+largest group that still fits, while these additions are a fluorine, a methyl, a chlorine. What
+ranks is the geometry. Under rule 5 the gap stays a display tool: a picture of where there is
+room beside a bound fragment and what the pocket would reward there.
+
+```bash
+python benchmarks/run_fraggrow.py        # results/fraggrow/table.md
+```
+
+
 ### A matched pair as a field placed in space
 
 A matched molecular pair is usually a row in a table: a transformation and the activity change it
