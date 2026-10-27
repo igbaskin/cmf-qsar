@@ -102,6 +102,49 @@ def landmark_molecules(table: AtomTable, n: int, seed: Optional[int] = 0
     return table.subset(rows), rows
 
 
+def landmark_atoms(table: AtomTable, n_fields: int, molecules: int = 0,
+                   min_distance: float = 0.75, seed: Optional[int] = 0,
+                   max_landmarks: int = 4000) -> AtomTable:
+    """The atoms of a subset of molecules, each one a landmark where it stands.
+
+    This is the case between the two above, and it is the one a **narrow** field wants.  A grid
+    spans a field while its spacing is not much larger than the field's own width, so at a
+    strong attenuation a grid over a whole frame would need tens of thousands of centres --
+    but the field is only ever large near an atom, and the atoms are where a new molecule's
+    atoms will be as well.  Putting a landmark on every atom of a few molecules follows the
+    field instead of covering the box.
+
+    Each landmark carries unit weight in every field and the radius of the atom it stands on,
+    so it is a basis function of the right width at the right place rather than a copy of that
+    atom's own field.  `min_distance` thins the set: atoms of different molecules that sit on
+    top of each other add nothing but rank, and the pseudo-inverse of the feature map would
+    have to drop them anyway.  `molecules` takes the atoms of that many molecules, drawn at
+    random; 0 takes them all.
+    """
+    source = table
+    if molecules:
+        source = landmark_molecules(table, int(molecules), seed=seed)[0]
+    coords = np.asarray(source.coords, float)
+    radii = np.asarray(source.radii, float)
+    order = (np.arange(len(coords)) if seed is None
+             else np.random.RandomState(seed).permutation(len(coords)))
+    keep: List[int] = []
+    for i in order:
+        if len(keep) >= int(max_landmarks):
+            break
+        if keep and float(min_distance) > 0:
+            d = np.linalg.norm(coords[keep] - coords[i], axis=1)
+            if float(d.min()) < float(min_distance):
+                continue
+        keep.append(int(i))
+    keep = sorted(keep)
+    pts = coords[keep]
+    m = len(pts)
+    return AtomTable(coords=pts, weights=np.ones((m, int(n_fields))), radii=radii[keep],
+                     offsets=np.arange(m + 1), names=[f"atom{i}" for i in range(m)],
+                     molecules=[])
+
+
 # --------------------------------------------------------------------------- #
 # The feature map
 # --------------------------------------------------------------------------- #

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 83 modules, 145 classes with 490 public methods, and 671 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 83 modules, 145 classes with 490 public methods, and 672 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -6227,6 +6227,24 @@ molecules there are, which is the property that makes the approximation worth ha
 
 Molecules have no width problem: whatever the attenuation, a molecule's own field is in the
 span of the molecules.  The price is that the landmarks are tied to the training set.
+
+### `landmark_atoms(table: AtomTable, n_fields: int, molecules: int=0, min_distance: float=0.75, seed: Optional[int]=0, max_landmarks: int=4000) -> AtomTable`
+
+The atoms of a subset of molecules, each one a landmark where it stands.
+
+This is the case between the two above, and it is the one a **narrow** field wants.  A grid
+spans a field while its spacing is not much larger than the field's own width, so at a
+strong attenuation a grid over a whole frame would need tens of thousands of centres --
+but the field is only ever large near an atom, and the atoms are where a new molecule's
+atoms will be as well.  Putting a landmark on every atom of a few molecules follows the
+field instead of covering the box.
+
+Each landmark carries unit weight in every field and the radius of the atom it stands on,
+so it is a basis function of the right width at the right place rather than a copy of that
+atom's own field.  `min_distance` thins the set: atoms of different molecules that sit on
+top of each other add nothing but rank, and the pseudo-inverse of the feature map would
+have to drop them anyway.  `molecules` takes the atoms of that many molecules, drawn at
+random; 0 takes them all.
 
 ### `whitener(K_zz: np.ndarray, rcond: float=RCOND) -> np.ndarray`
 

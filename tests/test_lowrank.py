@@ -375,3 +375,82 @@ def test_build_saves_a_low_rank_model_that_predict_can_read(tmp_path, capsys):
     main(["predict", saved, path, "--out", os.path.join(str(tmp_path), "p.csv")])
     out = capsys.readouterr().out
     assert "Predictions written" in out
+
+
+# ------------------------------------------------------------- landmark atoms
+
+
+def test_the_atoms_of_the_molecules_become_landmarks_where_they_stand():
+    fs, table, y = _series()
+    Z = LR.landmark_atoms(table, 2, min_distance=0.0)
+    assert Z.n_mol == table.coords.shape[0], "one landmark per atom when nothing is thinned"
+    assert np.allclose(np.sort(Z.coords, axis=0), np.sort(np.asarray(table.coords, float),
+                                                          axis=0))
+    assert np.allclose(Z.weights, 1.0), "a landmark is a basis function, not a copy of an atom"
+    assert Z.weights.shape[1] == 2
+
+
+def test_a_landmark_atom_keeps_the_radius_of_the_atom_it_stands_on():
+    fs, table, y = _series()
+    Z = LR.landmark_atoms(table, 2, min_distance=0.0, seed=None)
+    assert np.allclose(Z.radii, np.asarray(table.radii, float))
+
+
+def test_thinning_keeps_the_landmarks_apart_and_fewer():
+    fs, table, y = _series()
+    loose = LR.landmark_atoms(table, 2, min_distance=1.0, seed=0)
+    tight = LR.landmark_atoms(table, 2, min_distance=0.0, seed=0)
+    assert loose.n_mol < tight.n_mol
+    from scipy.spatial import cKDTree
+    d = cKDTree(loose.coords).query(loose.coords, k=2)[0][:, 1]
+    assert float(d.min()) >= 1.0 - 1e-9
+
+
+def test_the_atoms_of_a_subset_of_molecules_can_be_taken():
+    fs, table, y = _series()
+    part = LR.landmark_atoms(table, 2, molecules=3, min_distance=0.0, seed=0)
+    whole = LR.landmark_atoms(table, 2, molecules=0, min_distance=0.0, seed=0)
+    assert part.n_mol < whole.n_mol
+
+
+def test_the_number_of_landmarks_can_be_capped():
+    fs, table, y = _series()
+    Z = LR.landmark_atoms(table, 2, min_distance=0.0, max_landmarks=17, seed=0)
+    assert Z.n_mol == 17
+
+
+def test_landmark_atoms_follow_a_narrow_field_where_a_grid_of_the_same_size_does_not():
+    """The case plan item B6 named: a Gaussian narrow enough to fall between grid points."""
+    fs, table, y = _series(alpha=5.0)
+    model, K = _exact(fs, table, y)
+    n_f = len([s for s in fs.specs if s.enabled])
+    grid = LR.build(LR.gaussian_centres(table, 2.0, n_f), fs, scale=model.scale, kind="grid")
+    atoms = LR.build(LR.landmark_atoms(table, n_f, min_distance=0.5, seed=0), fs,
+                     scale=model.scale, kind="atoms")
+
+    def error(low):
+        Phi = low.transform(table)
+        return float(np.linalg.norm(Phi @ Phi.T - K) / np.linalg.norm(K))
+
+    assert error(atoms) < 0.2 * error(grid), (
+        f"atoms {error(atoms):.2e} should be far better than a grid {error(grid):.2e} "
+        f"at a narrow attenuation")
+
+
+def test_the_command_takes_atoms_as_landmarks(tmp_path, capsys):
+    from cmfqsar.cli import main
+    path = os.path.join(str(tmp_path), "set.sdf")
+    with Chem.SDWriter(path) as w:
+        for k, smi in enumerate(SMILES):
+            m = Chem.AddHs(Chem.MolFromSmiles(smi))
+            p = AllChem.ETKDGv3()
+            p.randomSeed = k + 1
+            AllChem.EmbedMolecule(m, p)
+            m.SetProp("_Name", f"m{k}")
+            m.SetProp("activity", f"{4.0 + 0.3 * k:.2f}")
+            w.write(m)
+    capsys.readouterr()
+    main(["lowrank", path, "--activity", "activity", "--landmarks", "atoms:0.75",
+          "--fields", "electrostatic,steric", "--lams", "0.1", "--folds", "3"])
+    text = capsys.readouterr().out
+    assert "the atoms of" in text and "thinned to" in text

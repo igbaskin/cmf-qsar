@@ -157,6 +157,42 @@ def stage_accuracy(sets=SETS, lam=LAM, folds=10, seed=0, results=RESULTS):
     return rows
 
 
+def stage_narrow(sets=("GPB", "THR", "AChE"), alphas=(0.5, 2.0, 5.0), lam=LAM, folds=10,
+                 seed=0, results=RESULTS):
+    """Where a grid of centres fails: the attenuation the item warned about.
+
+    A grid spans a field while its spacing is not much larger than the field's own width, so at
+    a strong attenuation it would need tens of thousands of centres.  The atoms of a few
+    molecules follow the field instead of covering the box, which is the case plan item B6
+    named and left open.  The number to read here is the error of the kernel, not the q2: these
+    sets are small and a q2 moves by more than the approximation does.
+    """
+    rows = []
+    for name in sets:
+        for alpha in alphas:
+            fs, table, y = table_of(name, alpha)
+            model, K, q2 = exact_of(fs, table, y, lam, folds, seed)
+            n_f = len([s for s in fs.specs if s.enabled])
+            kinds = (("a grid 2.0 A apart", LR.gaussian_centres(table, 2.0, n_f), "grid"),
+                     ("the atoms, 0.75 A apart",
+                      LR.landmark_atoms(table, n_f, min_distance=0.75, seed=seed), "atoms"),
+                     ("the atoms, 0.5 A apart",
+                      LR.landmark_atoms(table, n_f, min_distance=0.5, seed=seed), "atoms"),
+                     ("40 molecules", LR.landmark_molecules(table, 40, seed=seed)[0],
+                      "molecules"))
+            for label, Z, kind in kinds:
+                low = LR.build(Z, fs, scale=model.scale, kind=kind)
+                Phi = low.transform(table)
+                err = float(np.linalg.norm(Phi @ Phi.T - K) / max(np.linalg.norm(K), 1e-300))
+                pred, _w = LR.cross_validate(low, table, y, lam, folds=folds, seed=seed)
+                rows.append(dict(set=name, alpha=float(alpha), way=label, kind=kind,
+                                 landmarks=int(Z.n_mol), rank=int(low.rank),
+                                 error=err, q2=float(r2_score(y, pred)), exact=q2))
+                _say(f"  {name:6s} alpha {alpha:<4g} {label:24s} {Z.n_mol:5d} landmarks  "
+                     f"kernel error {err:.1e}  q2 {rows[-1]['q2']:+.3f} ({q2:+.3f} exact)")
+    return rows
+
+
 def stage_cost(name="DHFR", sizes=(50, 100, 200, 361), lam=LAM, results=RESULTS):
     """What each path costs as the set grows, on the largest aligned set in the repository."""
     fs, table, y = table_of(name)
@@ -224,8 +260,8 @@ def stage_variance(name="THR", lam=LAM, held=20, seed=0, results=RESULTS):
 def run(sets=SETS, results=RESULTS, **kw):
     t0 = time.time()
     out = dict(exact=stage_exact(), accuracy=stage_accuracy(sets=sets),
-               cost=stage_cost(), variance=stage_variance(), fields=FIELDS, alpha=ALPHA,
-               lam=LAM)
+               narrow=stage_narrow(), cost=stage_cost(), variance=stage_variance(),
+               fields=FIELDS, alpha=ALPHA, lam=LAM)
     out["seconds"] = time.time() - t0
     os.makedirs(results, exist_ok=True)
     with io.open(os.path.join(results, "summary.json"), "w", encoding="utf-8") as fh:
@@ -273,6 +309,20 @@ def report(results=RESULTS):
     for r in d["accuracy"]:
         out.append(f"| {r['set']} ({r['way']}) | {r['n']} | {r['landmarks']} | {r['rank']} | "
                    f"{r['q2']:+.3f} | {r['q2'] - r['exact']:+.3f} |")
+    if d.get("narrow"):
+        out += ["", "## Where a grid fails, and what follows the atoms instead", "",
+                "A grid spans a field while its spacing is not much larger than the field's "
+                "own width, so at a strong attenuation it would need tens of thousands of "
+                "centres. Putting a landmark on every atom of the molecules, thinned to a "
+                "spacing, follows the field instead of covering the box. The number to read is "
+                "the error of the kernel: these sets are small and a q2 moves by more than the "
+                "approximation does.", "",
+                "| set | attenuation | landmarks | how many | error of the kernel | q2 | exact "
+                "q2 |", "| --- | ---: | --- | ---: | ---: | ---: | ---: |"]
+        for r in d["narrow"]:
+            out.append(f"| {r['set']} | {r['alpha']:g} | {r['way']} | {r['landmarks']} | "
+                       f"{r['error']:.1e} | {r['q2']:+.3f} | {r['exact']:+.3f} |")
+        out.append("")
     out += ["", "## What it saves", "",
             "The memory of a fit is the rank squared whatever the number of molecules, because "
             "the features are accumulated a block at a time and never held at once.", "",
@@ -334,6 +384,22 @@ def _verdict(d):
                    if faster else
                    f" The time is {cost['low_seconds']:.1f} s against "
                    f"{cost['exact_seconds']:.1f} s.")]
+    narrow = d.get("narrow") or []
+    if narrow:
+        strong = [r for r in narrow if r["alpha"] >= 2.0]
+        grid = [r for r in strong if r["kind"] == "grid"]
+        atoms = [r for r in strong if r["kind"] == "atoms"]
+        if grid and atoms:
+            g_err = float(np.median([r["error"] for r in grid]))
+            a_err = float(np.median([r["error"] for r in atoms]))
+            out += ["",
+                    f"**At a narrow field the landmarks have to follow the atoms, and that "
+                    f"works.** At an attenuation of 2 and above, a grid 2 A apart reproduces "
+                    f"the kernel to {g_err:.0e} while the atoms of the same molecules, thinned "
+                    f"to 0.5 to 0.75 A, reach {a_err:.0e} with a landmark count of the same "
+                    f"order. That is the case plan item B6 named and left open: a grid covers "
+                    f"the box, the atoms cover the field, and only the second survives a "
+                    f"Gaussian narrow enough to fall between grid points."]
     out += ["",
             f"**The variance survives the approximation** because the self-kernel is never "
             f"approximated: on molecules the landmarks do not reach it is off by "

@@ -3004,11 +3004,14 @@ space of the n molecules: `(Phi^T Phi + lam I) w = Phi^T y` is the same ridge as
 module already produces -- and `lowrank.gram` accumulates `Phi^T Phi` and `Phi^T y` over blocks
 of molecules, so the features of the whole set are never held at once.
 
-**Two kinds of landmark.** `gaussian_centres` puts a cubic grid of one-atom landmarks over the
-frame: the rank such a basis needs depends on the frame and the width of the field, not on how
-many molecules there are, which is what makes the method worth having. `landmark_molecules`
+**Three kinds of landmark.** `gaussian_centres` puts a cubic grid of one-atom landmarks over
+the frame: the rank such a basis needs depends on the frame and the width of the field, not on
+how many molecules there are, which is what makes the method worth having. `landmark_molecules`
 takes a subset of the molecules themselves, which has no width problem but is tied to the
-training set.
+training set. `landmark_atoms` is between the two and is what a **narrow** field wants: one
+landmark on every atom of a few molecules, thinned to a spacing, each with the radius of the
+atom it stands on and unit weight in every field. A grid covers the box; the atoms cover the
+field, which is only ever large near an atom.
 
 **What stays exact.** A molecule's self-kernel is its own integral and costs nothing, so it is
 never approximated. That matters twice. The cosine normalisation divides by the exact diagonal;
@@ -3033,9 +3036,13 @@ decomposed exactly as before.
   grid all agree with the exact path to 2e-11 or better.
 * **The approximation costs little on a broad field.** At an attenuation of 0.5, a grid of
   Gaussian centres 2 A apart is within 0.004 of the exact q2 on every set, and 20 to 80
-  landmark molecules within 0.076. The attenuation decides this, not the number of molecules:
-  plan item B6 measured 0.01 to 0.04 of q2 lost at an attenuation of 2 and above with the same
-  spacing.
+  landmark molecules within 0.076. The attenuation decides this, not the number of molecules.
+* **At a narrow field the landmarks have to follow the atoms.** At an attenuation of 2 and
+  above a grid 2 A apart reproduces the kernel only to 5e-01, where the atoms of the same
+  molecules thinned to 0.5 to 0.75 A reach 2e-02 with a landmark count of the same order -- on
+  GPB at an attenuation of 5, 6.5e-01 against 1.8e-02 for 259 landmark atoms. The q2 follows:
+  +0.548 for the grid against +0.593 for the atoms, where the exact model gives +0.594. That is
+  the case the assessment of this item named and left open.
 * **What it saves is memory, and only beyond the crossing point.** At 361 molecules -- the
   largest aligned set here -- the exact kernels are 6 MB and the low-rank fit is 13 MB, because
   the rank of a 2 A grid over that frame is 1275. The low-rank memory does not grow with the
@@ -3052,6 +3059,7 @@ decomposed exactly as before.
 
 ```bash
 cmf build series.sdf --activity pKi --low-rank grid:2.0 --alphas 0.5 --save model.cmf
+cmf build series.sdf --activity pKi --low-rank atoms:0.5 --alphas 2 --save narrow.cmf
 cmf predict model.cmf new.sdf --out predicted.csv
 cmf cofield model.cmf --out-prefix map
 ```

@@ -3445,9 +3445,12 @@ molecules. `cmfqsar/lowrank.py` (plan item B6) replaces every field kernel by th
 approximation `K(X, Z) K(Z, Z)^+ K(Z, X)` and fits in the space of the m features that
 approximation is the Gram matrix of. The features are accumulated a block of molecules at a
 time, so the memory of a fit is the rank squared whatever the number of molecules. The
-landmarks are either a grid of one-atom Gaussian centres over the frame, whose rank depends on
-the frame and the width of the field rather than on the number of molecules, or a subset of the
-molecules themselves.
+landmarks are a grid of one-atom Gaussian centres over the frame, whose rank depends on the
+frame and the width of the field rather than on the number of molecules; a subset of the
+molecules themselves; or the atoms of a few molecules, thinned to a spacing, which is what a
+narrow field wants. A grid covers the box and the atoms cover the field: at an attenuation of 2
+and above a 2 A grid reproduces the kernel to 5e-01 where the atoms reach 2e-02 with a
+comparable number of landmarks.
 
 The self-kernel of a molecule is its own integral and is never approximated, which keeps the
 cosine normalisation exact and keeps the posterior variance from collapsing far from the

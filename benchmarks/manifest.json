@@ -1,6 +1,6 @@
 {
- "commit": "280c99ba3367e5df27261a7c39445f4b616b6f91",
- "created": "2026-10-27T20:29:36",
+ "commit": "cdd27edbcb8c9c72528686a9d2852f273fd53b81",
+ "created": "2026-10-27T20:53:24",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1963,8 +1963,8 @@
   "benchmarks/results/local_scale/landmarks.json": "4abdb97d740ee34fc2c9a99eb7d6b430bcbe7aad45d95ce1d4de666093a0f50f",
   "benchmarks/results/local_scale/routes.json": "5b2e6f903c3824e545ff0f48920717805a95d5008283e94730d642f034c8b7e1",
   "benchmarks/results/local_scale/table.md": "2f5919bc112c28b44c16800a30d73838ebccadbed9d60a552a0ebb48934c3406",
-  "benchmarks/results/lowrank/summary.json": "6ee1a47021e365248a871b7edce4e99ab4a02c2a30f97590f2ac8ca643aa0db2",
-  "benchmarks/results/lowrank/table.md": "cf40033e239f57716f3a8f7911bfd7615963dde8b55d985225313d9947923f69",
+  "benchmarks/results/lowrank/summary.json": "0c1577d4ea3a133d1316893e9e6837b303ba191708ebf03ab8fc171b95a61f51",
+  "benchmarks/results/lowrank/table.md": "bda1ccf6ad68fcac9a4a899c883ecbffd1ab25f6f9bfcadc21ba03323f6dfdca",
   "benchmarks/results/matbench_phonons/all+mass-align.json": "520553990efc6c20c853d2fa54a875596bcac511b33012ef16f5996841e557f7",
   "benchmarks/results/matbench_phonons/all+mass-alignf.json": "bdb5718ad6b8390d253d373ceb5b1b4382a81e408e3874fc320ff17f360fefd1",
   "benchmarks/results/matbench_phonons/all+mass-balanced.json": "2f22168dd45f00701229381084e689d63dad35584a0c1a47bac77d14b46893d1",

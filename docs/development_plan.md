@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with twenty-nine subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1212 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1219 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -394,9 +394,20 @@ larger searches in parts C and E.
   a file that `cmf predict` and `cmf cofield` read like any other. The training table still
   travels with the file, because it is linear in the number of molecules and the provenance and
   the contract are read off it; the n by n kernel is never built at any point. 28 tests.
+  **Landmark atoms, 27 October 2026.** `lowrank.landmark_atoms` puts one landmark on every atom
+  of a subset of the molecules, thinned to a spacing, each with the radius of the atom it
+  stands on and unit weight in every field; `--low-rank atoms:SPACING` and
+  `--landmarks atoms:SPACING` take it. This is the case the assessment named for narrow fields
+  and it does what it was expected to: measured by the narrow-field stage of
+  `benchmarks/run_lowrank.py` on GPB, THR and AChE at attenuations 0.5, 2 and 5, a grid 2 A
+  apart reproduces the kernel to 5e-01 at an attenuation of 2 and above while the atoms of the
+  same molecules thinned to 0.5 to 0.75 A reach 2e-02 with a landmark count of the same order.
+  On GPB at an attenuation of 5 that is 6.5e-01 against 1.8e-02 for 259 landmark atoms, and q2
+  +0.548 against +0.593 where the exact model gives +0.594. The kernel error is the number to
+  read: these sets are small and their q2 moves by more than the approximation does. 35 tests.
   **Still not done:** the low-rank branch of `build` does not score a test set, take a second
   endpoint, calibrate a conformal interval or write the JSON report (it says so when a test set
-  is present); the application has no control for it; landmark atoms, the case
+  is present); the application has no control for it; the case
   between a grid and whole molecules that a narrow field wants; a width for the inducing
   Gaussians other than the field's own; LinearSVR and LinearSVC on the features, the kernel
   alignment from m by m Gram matrices and Nystrom kernel PCA, all of which the assessment names

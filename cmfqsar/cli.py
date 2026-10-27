@@ -238,7 +238,14 @@ def _landmarks_for(args, train, fieldset):
         want = int(size or 200)
         Z, _rows = LR.landmark_molecules(train, want, seed=args.seed)
         return Z, kind, f"{Z.n_mol} of the training molecules"
-    raise SystemExit(f"--low-rank takes grid:SPACING or molecules:N, not {args.low_rank!r}")
+    if kind == "atoms":
+        spacing = float(size or 0.75)
+        Z = LR.landmark_atoms(train, len(specs), molecules=min(200, train.n_mol),
+                              min_distance=spacing, seed=args.seed)
+        return Z, kind, (f"the atoms of {min(200, train.n_mol)} molecules, thinned to "
+                         f"{spacing:g} A apart")
+    raise SystemExit(f"--low-rank takes grid:SPACING, atoms:SPACING or molecules:N, not "
+                     f"{args.low_rank!r}")
 
 
 def _build_low_rank(model, args, ds, tr, train, y, seed, t0):
@@ -1375,8 +1382,15 @@ def cmd_lowrank(args):
         want = int(size or 80)
         Z, rows = LR.landmark_molecules(table, want, seed=args.seed)
         how = f"{Z.n_mol} of the molecules themselves"
+    elif kind == "atoms":
+        spacing = float(size or 0.75)
+        Z = LR.landmark_atoms(table, len(specs), molecules=min(200, table.n_mol),
+                              min_distance=spacing, seed=args.seed)
+        how = (f"the atoms of {min(200, table.n_mol)} molecules, thinned to {spacing:g} A "
+               f"apart")
     else:
-        raise SystemExit(f"--landmarks takes grid:SPACING or molecules:N, not {args.landmarks!r}")
+        raise SystemExit(f"--landmarks takes grid:SPACING, atoms:SPACING or molecules:N, not "
+                         f"{args.landmarks!r}")
     low = LR.build(Z, fieldset, normalize=True, kind=kind)
     print(f"  {how}: {Z.n_mol} landmarks, {low.rank} columns of features")
 
@@ -3556,8 +3570,12 @@ def main(argv=None):
                    help="fit in the space of a few hundred landmarks instead of the space of "
                         "the molecules, for a training set too large for the exact kernel "
                         "(plan item B6). grid:SPACING puts Gaussian centres that many "
-                        "angstroms apart over the frame; molecules:N takes N of the training "
-                        "molecules. The model is saved and predicted from like any other; what "
+                        "angstroms apart over the frame; atoms:SPACING puts one on every atom "
+                        "of up to 200 of the molecules, thinned to that spacing, which is what "
+                        "a narrow field wants because a grid only spans a field while its "
+                        "spacing is not much larger than the field's own width; molecules:N "
+                        "takes N of the training molecules. The model is saved and predicted "
+                        "from like any other; what "
                         "this path does not do is a test set, a second endpoint, a conformal "
                         "interval or the JSON report")
     b.add_argument("--low-rank-block", type=int, default=256, metavar="N",
@@ -4175,10 +4193,11 @@ def main(argv=None):
     lr.add_argument("--activity", default=None, metavar="PROP")
     lr.add_argument("--landmarks", default="grid:2.0", metavar="KIND:SIZE",
                     help="grid:SPACING for a grid of Gaussian centres that many angstroms "
-                         "apart, or molecules:N for N of the molecules themselves. A grid "
-                         "spans the field only while its spacing is not much larger than the "
-                         "field's own width, so a narrow field wants molecules (default "
-                         "grid:2.0)")
+                         "apart, atoms:SPACING for one on every atom of up to 200 molecules "
+                         "thinned to that spacing, or molecules:N for N of the molecules "
+                         "themselves. A grid spans the field only while its spacing is not "
+                         "much larger than the field's own width, so a narrow field wants the "
+                         "atoms or the molecules (default grid:2.0)")
     lr.add_argument("--alpha", type=float, default=0.5,
                     help="the attenuation; one value, since the point of this path is a large "
                          "set and not a grid search (default 0.5)")
