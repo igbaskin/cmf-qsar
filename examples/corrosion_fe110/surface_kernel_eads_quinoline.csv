@@ -1,0 +1,10 @@
+model,n,q2,q2_sd,rmse,seconds
+"overlap fields, poses as written",63,0.56,0.046,49.03,2
+"surface kernel sigma 0.75, z 1-6 step 1, poses as written",63,0.517,0.042,51.37,9
+"surface kernel sigma 0.5, z 1-6 step 0.5, poses as written",63,0.575,0.028,48.2,14
+"surface kernel sigma 1, z 1-7 step 1.5, poses as written",63,0.521,0.031,51.17,7
+"surface kernel sigma 0.75, z 1-6 step 1, poses shuffled in the plane",63,0.517,0.042,51.37,8
+"3D autocorrelation (height thrown away), poses as written",63,0.02,0.084,73.19,2
+"overlap fields, poses shuffled in the plane (what alignment-free costs the overlap)",63,0.437,0.029,55.49,2
+"surface kernel, y scrambled x5: max q2",63,0.073,0.099,,
+"overlap fields, poses registered in the plane",63,0.469,0.039,53.89,2

@@ -660,6 +660,44 @@ lists the shares per pair and the twenty strongest channels.
 This figure is the surface kernel's substitute for a co-field: a map in (rho, z) rather than in
 (x, y, z), with the same linear reading.
 
+## The quinoline node, and the surface kernel on it (2026-10-27)
+
+    python examples/uma_fe110_adsorption.py examples/corrosion/158_c1ccc2ncccc2c1.csv         -o examples/corrosion_fe110/158_quinoline_uma.sdf
+
+65 molecules in 5.0 h (mean 278 s per molecule, GPU peak 6.3 GB), no failures, two gas-phase
+artefacts (`gas_intact` = 0, excluded below), 32 of 65 chemisorbed; E_ads median -0.12 eV,
+the most strongly bound at -2.71 eV.  More of this node stays unbound than of the
+benzimidazoles: the quinolines carry bulkier substituents, and the dispersion-free head has
+nothing to hold them with.  Then `surface_kernel_eads.py --csv ... --sdf ... --tag quinoline
+--scramble 5` (table `surface_kernel_eads_quinoline.csv`), 63 molecules:
+
+| model | alignment | q2 | RMSE, kJ/mol |
+|---|---|---|---|
+| overlap fields | registered in the plane by MCS on oxyquinoline | 0.47 +- 0.04 | 53.9 |
+| overlap fields | poses as written | 0.56 +- 0.05 | 49.0 |
+| overlap fields | poses shuffled in the plane | 0.44 +- 0.03 | 55.5 |
+| surface kernel (s 0.75, z step 1) | none | 0.52 +- 0.04 | 51.4 |
+| surface kernel (s 0.5, z step 0.5) | none | 0.58 +- 0.03 | 48.2 |
+| surface kernel (s 1.0, z step 1.5) | none | 0.52 +- 0.03 | 51.2 |
+| surface kernel | poses shuffled in the plane | 0.52, identical predictions | 51.4 |
+| surface kernel, y scrambled (5 runs) | | max 0.07 | |
+| 3D autocorrelation (height thrown away) | none | 0.02 +- 0.08 | 73.2 |
+
+- **The surface kernel equals the best overlap model without any alignment, and that is
+  all.**  On this node the benzimidazole margin (0.66 against 0.52) does not repeat: 0.52-0.58
+  against 0.56.  What repeats is everything structural: the predictions do not change when
+  the poses are turned and shifted, scrambled targets give nothing, and throwing the height
+  away loses the signal entirely (0.02).
+- **Registering the poses in the plane hurt here** (0.47 against 0.56 unregistered): the MCS
+  superposition on oxyquinoline, a substitution pattern many of the node's compounds do not
+  share, moves molecules into worse agreement than the relaxation left them in.  The
+  surface kernel has no such step to get wrong.
+- With the OC20 result, the claim the surface kernel supports is now bounded on three sides:
+  it learns adsorption energies as well as the best aligned or unaligned overlap model, with
+  no alignment, with the height as its carrier; it is better on one node of 72 flat-lying
+  molecules, level on a node of 63 with half unbound, and level with other representations on
+  OC20's fragments.  "Alignment-free at no cost" is the defensible statement; "better" is not.
+
 ## Follow-ups
 
 - Dispersion: fairchem provides a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
