@@ -1895,6 +1895,13 @@ cmf local examples/local/carboxylic_pka.sdf --target pka --rho 0.1 0.5 --referen
 ```
 
 
+**Averaging over conformations costs rather than gains here.** A measured shift is a
+conformational average, so plan item LP4 asks what the single prepared geometry costs:
+`localenv.ensemble_environment` averages an atom's environment over the conformations of its
+molecule, each centred on that conformation's own copy of the atom, and `localalign.posed_ensemble`
+does the same with a frame, posing each conformation before averaging. On 5096 carbon shifts the prepared geometry gives an error of 8.82 ppm and a five-conformation average 11.63 ppm, a difference in q2 of -0.020 [-0.024, -0.017]; on the 912 acidities the ensemble is -0.020 [-0.061, +0.025]. The control that makes this readable is a second single conformation, the lowest in energy of the same pool, which costs -0.000 [-0.001, +0.000] -- nothing. So the model does not care which conformation it is given and is worse when given several: the mean field smears each atom over the positions it takes, and inside the envelope the conformations agree anyway. Five force-field conformations are not the populated set that a measured shift averages over, which is what a trajectory would be.
+
+
 ### A co-field around one atom
 
 The local kernel above needs no frame, and that is its limit: with no frame there is no co-field,

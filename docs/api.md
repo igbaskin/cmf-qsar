@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 73 modules, 125 classes with 472 public methods, and 554 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 74 modules, 126 classes with 475 public methods, and 561 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -55,6 +55,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.flexalign](#cmfqsarflexalign) | Flexible alignment by confidence: the rigid-body search of 2019, with the torsions. |
 | [cmfqsar.fusion](#cmfqsarfusion) | Data fusion: one score from the similarities to several known actives. |
 | [cmfqsar.gpc](#cmfqsargpc) | Gaussian-process classification by the Laplace approximation. |
+| [cmfqsar.gradients](#cmfqsargradients) | The derivative of a prediction with respect to the atoms of the molecule being predicted. |
 | [cmfqsar.gtm](#cmfqsargtm) | Chemical space and activity landscapes from CMF kernels: kernel PCA + Generative Topographic Mapping. |
 | [cmfqsar.increments](#cmfqsarincrements) | Atomic increments of the original CMF implementation (Baskin & Zhokhova 2013). |
 | [cmfqsar.invariant](#cmfqsarinvariant) | Alignment-free but geometry-aware kernels: autocorrelation of the molecular fields. |
@@ -3962,6 +3963,216 @@ Mean squared error of the probabilities; 0 is perfect, 0.25 is no better than ch
 
 Rows of (bin centre, mean predicted probability, observed fraction, count).
 
+## cmfqsar.gradients
+
+Source: `cmfqsar/gradients.py`
+
+The derivative of a prediction with respect to the atoms of the molecule being predicted.
+
+A CMF model predicts an overlap integral.  The prediction of molecule *x* is
+
+    y(x) = sum_j a_j K(x, j) + b,
+
+and the kernel is a sum of Gaussian overlaps over pairs of atoms, one atom from *x* and one from
+training molecule *j*.  A Gaussian overlap is an analytic function of the distance between the two
+atoms, so `y` is an analytic function of the coordinates of the atoms of *x* and of the per-atom
+weights that carry its fields.  This module differentiates it.
+
+What the derivative is for
+--------------------------
+Three things, all of which otherwise have to be done by trying one structure at a time:
+
+* **Guiding a generative model.**  A three-dimensional generative model proposes atom positions.
+  With a gradient, a fitted CMF model can be used as a guidance term inside that proposal: the
+  gradient says which way every atom would have to move to raise the predicted activity.  Nothing
+  has to be enumerated first.
+* **Refining a pose or a conformation by predicted activity.**  `cmfqsar.varalign` and
+  `cmfqsar.flexalign` already move a molecule by *confidence*, with their own gradients.
+  This module supplies the other objective, the prediction itself, in the same analytic form.
+* **Reading the model at an atom.**  The derivative with respect to an atom's weight is a local
+  statement: how much the prediction would change if that one atom carried a little more charge,
+  or were a little more hydrophobic.  That is the question a chemist asks of a co-field picture,
+  answered as a number per atom instead of as a surface.
+
+The derivatives
+---------------
+Write the raw kernel of field *f* as a double sum over atoms, with `g_f` the Gaussian overlap of
+two atoms as a function of their squared distance:
+
+    K_f(x, j) = sum_l sum_m w_fl w_fjm g_f(|r_l - r_jm|^2)
+
+and the molecule's own self-kernel as `d_f(x) = K_f(x, x)`.  Then
+
+    dK_f(x, j) / dr_l   = 2 sum_m w_fl w_fjm dg_f (r_l - r_jm)
+    dK_f(x, j) / dw_fl  = sum_m w_fjm g_f(|r_l - r_jm|^2)
+    dd_f(x) / dr_l      = 2 (the same sum, over the atoms of x itself)
+    dd_f(x) / dw_fl     = 2 sum_m w_fm g_f(|r_l - r_m|^2)
+
+where `dg_f` is the derivative of the overlap with respect to the squared distance.  The factor
+of two in the last two lines is there because atom *l* appears in both arguments of the
+self-kernel.  The ratio of that derivative to the overlap itself is a constant per field
+(`-alpha_f/4`) for a field whose Gaussians share one width, and a constant per atom pair for the
+radius-scaled steric field; that is the part `cmfqsar.kernels.kernel_gradient` already did,
+and the coordinate part of this module is a chain rule on top of it.
+
+Everything the model puts between the raw kernel and the prediction is differentiated with it:
+
+* the **cosine normalisation**, through `s_f(x) = d_f(x) ** -0.5` and its derivative
+  `-0.5 s_f ** 3 dd_f`.  This term is what makes the gradient of a normalised model different
+  from the gradient of its kernel row: moving an atom changes what the molecule is divided by, as
+  well as its overlap with the training set;
+* the **field scaling and mixing**, `h_f c_f`, which are constants of the fitted model;
+* the **nonlinear kernel layer** (`gauss`, `arccos1`, `arccos2`), which depends on the
+  linear kernel and on the molecule's own self-kernel, so it contributes through both;
+* the **non-field descriptors**, which contribute nothing: they are computed from the molecular
+  graph or read from a file property, so they do not change when an atom moves.
+
+What the derivative is not
+--------------------------
+**A weight is not a molecule.**  The weight of an atom in the electrostatic field is its partial
+charge, and the charges of a real molecule are not free: they sum to its total charge and they
+follow from its structure.  A positive derivative with respect to one atom's weight says the model
+would like more of that quantity there.  It does not say that a molecule exists in which only that
+atom's charge has changed.  The same holds for the other fields, whose weights are table
+increments of an atom type.  Treat the weight gradient as a direction in the field
+representation, to be realised by choosing a different atom or a different substituent, not as a
+molecule.
+
+**The gradient is local and the model has a domain.**  A step along the gradient leaves the
+training set, which is where a CMF model is least reliable.  The posterior variance
+(`cmfqsar.model.CMFModel.predict_with_variance`), the conformal interval
+(`cmfqsar.conformal`) and the two-sample test (`cmfqsar.mmd`) are the three things that
+say how far a step can be trusted; the lower confidence bound of `cmfqsar.active` is the
+objective to follow when the aim is a molecule to make rather than a number to maximise.
+
+**Maximising an overlap is not designing a molecule.**  The overlap of a field with a positive
+lobe of a co-field grows without limit as atoms are piled into that lobe.  Nothing in this
+gradient knows about valence, bond lengths or sterics.  It is a term to add to a generator or a
+force field that does, not an optimiser on its own.
+
+**Probe fields have no per-atom weight.**  In a GRID-like probe field every atom carries several
+Gaussians whose coefficients come from the expansion of a probe interaction curve
+(`cmfqsar.probes`), not from one weight.  The coordinate gradient covers them; the weight
+gradient reports zero for their columns and names them in
+`PredictionGradient.weightless_fields`.
+
+Which models are covered
+------------------------
+Any fitted model whose prediction is a sum over the training molecules plus a constant: the
+regression learners, the classifiers (the gradient is then of the decision value, not of the
+probability) and the ranking SVM, on the overlap-integral kernel.  The rotation-invariant,
+surface and periodic kernels are built from the distances *inside* each molecule and are not
+overlap integrals, so this gradient does not apply to them; neither do the one-class and
+data-fusion scores, whose decision is not of that form.  Every case that is not covered is
+refused with a reason rather than approximated.
+
+Checked against finite differences
+----------------------------------
+`tests/test_gradients.py` holds the analytic gradient to central finite differences of
+`cmfqsar.model.CMFModel.predict` itself, over the combinations that change the chain rule:
+normalised and unnormalised kernels, the steric field with its per-atom widths, probe fields,
+interpolated attenuations, the three nonlinear layers, a descriptor block and a conformational
+ensemble.  The remaining disagreement is that of the finite difference, not of the gradient.
+
+### `class PredictionGradient  (dataclass)`
+
+The prediction of one molecule and its derivatives.
+
+Attributes
+----------
+value : the prediction itself, the number `cmfqsar.model.CMFModel.predict` gives.
+coords : (N, 3) derivative with respect to the atom positions, in activity units per
+    angstrom, or None when it was not asked for.  For a molecule that is an ensemble of
+    conformations or states, the rows are the atoms of all of its members, one member after
+    another, in the order the ensemble was built.
+weights : (N, F) derivative with respect to the per-atom field weights, in activity units per
+    unit of weight, one column per field of the field set, or None when it was not asked for.
+field_names : the field of every column of `weights`.
+weightless_fields : fields whose weight column is zero because they have no single per-atom
+    weight to differentiate (the probe fields).
+
+Attributes:
+
+- `value: float`
+- `coords: Optional[np.ndarray]` = `None`
+- `weights: Optional[np.ndarray]` = `None`
+- `field_names: List[str]` = `field(default_factory=list)`
+- `weightless_fields: List[str]` = `field(default_factory=list)`
+
+#### `PredictionGradient.forces` -> Optional[np.ndarray]  (property)
+
+The negative of the coordinate derivative: the direction in which every atom would
+have to move to *lower* the prediction, which is the sign convention of a force.
+
+#### `PredictionGradient.largest_coordinate_terms(n: int=5) -> List[Tuple[int, float]]`
+
+The `n` atoms whose position matters most, as (atom index, length of its derivative).
+
+#### `PredictionGradient.largest_weight_terms(n: int=5) -> List[Tuple[int, str, float]]`
+
+The `n` largest weight derivatives, as (atom index, field name, derivative).
+
+### `prediction_gradient(model: CMFModel, mol: MoleculeFields, coords: Optional[np.ndarray]=None, weights: Optional[np.ndarray]=None, wrt: str='both', chunk: int=4000) -> PredictionGradient`
+
+The prediction of `mol` and its analytic derivatives with respect to its atoms.
+
+Parameters
+----------
+model : a fitted `cmfqsar.model.CMFModel` on the overlap-integral kernel.  Its
+    training poses define the frame, exactly as they do for a prediction.
+mol : the molecule, as `cmfqsar.fields.MoleculeFields` from
+    `cmfqsar.fields.build_fields`, in the frame of the training set.
+coords : positions to differentiate at, (N, 3), instead of the molecule's own.  Nothing is
+    written back to `mol`, which is what lets a caller follow a gradient without rebuilding
+    the fields at every step.
+weights : per-atom weights to differentiate at, (N, F), instead of the molecule's own.
+wrt : "coords", "weights" or "both".  Asking for less costs less.
+chunk : training atoms per block of the coordinate sum, which bounds the memory it uses.
+
+Returns
+-------
+`PredictionGradient`
+
+Notes
+-----
+The per-atom weights of a field are not free parameters of a molecule, and a step along the
+gradient leaves the training set.  Read the limits in the module docstring before using
+either derivative for design.
+
+### `numerical_prediction_gradient(model: CMFModel, mol: MoleculeFields, h: float=1e-05, wrt: str='both') -> PredictionGradient`
+
+The same derivatives by central finite differences of `CMFModel.predict` (slow).
+
+The reference the analytic gradient is tested against, and the way to check a model this
+module has not been tried on.  It costs two predictions per degree of freedom, so it is for
+small molecules and for tests, not for a design loop.
+
+### `smoothed_cofield(model: CMFModel, f: int, points: np.ndarray, width: Optional[float]=None, include_scale: bool=True) -> np.ndarray`
+
+The co-field of field `f` at `points`, optionally smoothed by an atom's own Gaussian.
+
+With `width` of None this is the co-field itself, which is what
+`cmfqsar.cofields.cofield_at_points` gives, computed exactly rather than with a
+neighbour cutoff.  With `width` set to the `b` of an atom's Gaussian (`alpha` for an
+ordinary field, `alpha / R_vdw ** 2` for the steric one), the value at a point is what an
+atom of unit weight centred there would contribute to the prediction, before the mixing
+coefficient and the field scaling that `include_scale` applies.
+
+### `cofield_gradient(model: CMFModel, f: int, points: np.ndarray, width: Optional[float]=None, include_scale: bool=True) -> np.ndarray`
+
+The gradient of that same function, (M, 3).
+
+This is the co-field read as a potential: at a point in the binding site it says which way a
+piece of field of this type would have to move to raise the prediction.  It is the quantity a
+generative model can be steered by, and it needs no molecule, only a place to stand.
+
+For an unnormalised linear model the two gradients are the same statement: the derivative of
+the prediction with respect to the position of atom *l* is `h_f c_f w_fl` times this
+gradient, taken at the atom's own position and smoothed by the atom's own Gaussian, summed
+over the fields.  `prediction_gradient` is the form to use on a molecule, because it
+also carries the normalisation and the nonlinear layer; this one is the form to use at a point
+where no atom is yet.
+
 ## cmfqsar.gtm
 
 Source: `cmfqsar/gtm.py`
@@ -5004,6 +5215,18 @@ With one pose the result is that pose.  With several it is their mean field, whi
 mean-map kernel over the frames the site allows and removes the arbitrary part of the rule
 instead of hiding it.
 
+### `posed_ensemble(members: Sequence[MoleculeFields], atom: int, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, weights: Optional[Sequence[float]]=None, max_images: int=MAX_IMAGES, frames_of: Optional[Callable[[MoleculeFields], List[np.ndarray]]]=None, name: str='') -> MoleculeFields`
+
+One field: an atom's environment in every conformation, each posed in its own frame.
+
+The frame is a property of the site, and the site moves with the conformation, so the pose
+has to be taken per conformation and the averaging has to come after it.  Posing the mean
+field instead would put one rotation on geometries that do not share it.
+
+The result is the mean over conformations and over the poses each site allows, which is one
+ensemble field: the two averages compose, because a mean of means over a shared atom list is
+a mean (`cmfqsar.fields.combine_members`).
+
 ### `posed_environments(mols: Sequence[MoleculeFields], targets: AtomTargets, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, max_images: int=MAX_IMAGES, frames_of: Optional[Callable[[MoleculeFields], List[np.ndarray]]]=None, progress=None) -> List[MoleculeFields]`
 
 One posed environment per measured atom, in the row order of `targets`.
@@ -5114,7 +5337,7 @@ The distance beyond which an atom is left out of the environment, in angstrom.
 
 The envelope factor exp(-rho d^2) of every atom, with d measured from `centre`.
 
-### `environment(mol: MoleculeFields, atom: int, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, name: str='') -> MoleculeFields`
+### `environment(mol: MoleculeFields, atom: int, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, name: str='', keep: Optional[Sequence[int]]=None) -> MoleculeFields`
 
 The fields of `mol` seen from `atom`: the same fields under a Gaussian envelope.
 
@@ -5135,7 +5358,36 @@ An ensemble field may be passed, and `atom` then indexes its concatenated atom l
 result is a plain field rather than an ensemble, because the members' weights are already
 multiplied into the atoms they belong to; the atom decomposition of such an environment is
 therefore per atom of a member, which is what a difference field (`difference_field`)
-means.
+means.  To average an environment over the **conformations** of one molecule, use
+`ensemble_environment` instead: the atom is in a different place in every conformation,
+so each one has its own environment and it is those that are averaged.
+
+`keep` overrides the choice of atoms the floor would make, which is what lets several
+conformations of one molecule share an atom list.
+
+### `kept_atoms(mol: MoleculeFields, atom: int, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR) -> np.ndarray`
+
+The atoms `environment` would keep, as an index array.
+
+### `ensemble_environment(members: Sequence[MoleculeFields], atom: int, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, weights: Optional[Sequence[float]]=None, name: str='') -> MoleculeFields`
+
+The environment of one atom, averaged over the conformations of its molecule (LP4).
+
+A measured shift is an average over the conformations the molecule visits, and so is an
+acidity; the single conformation that a distance-geometry program returns is a stand-in for
+that average and a poor one.  The averaging needs no new kernel, because an environment is a
+field: the mean field of the per-conformation environments is itself a field, and the kernel
+on it is the mean-map kernel of `cmfqsar.fields.combine_members`, exactly as a
+conformational ensemble of whole molecules is handled.
+
+What it cannot be is the environment of the mean field of the molecule.  The atom sits in a
+different place in every conformation, so there is no single centre to put an envelope on;
+each conformation has its own environment, centred on its own copy of the atom, and it is
+those that are averaged.
+
+`members` are the fields of one molecule in its conformations, in the same atom order.  They
+share one atom list -- the union of what the floor keeps in any of them -- so that the mean is
+taken over the same atoms rather than over whichever ones happened to survive.
 
 ### `kept_share(mol: MoleculeFields, atom: int, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR) -> float`
 

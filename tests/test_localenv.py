@@ -19,12 +19,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from cmfqsar.atomtargets import AtomTargets  # noqa: E402
 from cmfqsar.fields import FieldSet, build_fields  # noqa: E402
 from cmfqsar.invariant import autocorrelation  # noqa: E402
-from cmfqsar.localenv import (DEFAULT_RHO, LOCAL_SPEC, SHELL_EDGES, count_features,  # noqa: E402
-                              count_kernel, choose_lam, cross_validate, cross_validate_lams,
-                              difference_field,
+from cmfqsar.localenv import (DEFAULT_RHO, LOCAL_SPEC, SHELL_EDGES,  # noqa: E402
+                              choose_lam, count_features, count_kernel, cross_validate,
+                              cross_validate_lams, difference_field, ensemble_environment,
                               envelope, envelope_radius, envelope_width, environment,
-                              environments, kept_share, local_features, local_kernel,
-                              paired_interval, shell_counts, types_of)
+                              environments, kept_atoms, kept_share, local_features,
+                              local_kernel, paired_interval, shell_counts, types_of)
 
 SMILES = ["CC(=O)Oc1ccccc1C(=O)O", "CCOc1ccccc1N", "CC(C)c1ccccc1O", "CCCCc1ccccc1",
           "CC(=O)Nc1ccc(O)cc1", "COc1ccc(C=O)cc1"]
@@ -354,3 +354,103 @@ def test_the_command_fits_a_model_over_atoms_and_writes_the_predictions(tmp_path
     back = [m for m in Chem.SDMolSupplier(out, removeHs=False) if m is not None]
     predicted = AtomTargets.from_molecules(back, "nh_predicted")
     assert len(predicted) == len(AtomTargets.from_molecules(back, "nh"))
+
+# ------------------------------------------- the conformations the molecule visits (plan item LP4)
+
+
+def _conformer_fields(smiles, n=4, seed=1, name="m"):
+    """One molecule's fields in each of several conformations, the embedded one first."""
+    from cmfqsar.conformers import generate_conformers, single_conformer
+
+    fs = FieldSet.create()
+    m = _mol(smiles, name, seed)
+    ens = generate_conformers(m, n=n, seed=seed)
+    k = ens.GetNumConformers()
+    return [build_fields(single_conformer(ens, i), fs, name=f"{name}#{i}") for i in range(k)], ens
+
+
+def test_an_ensemble_environment_is_the_mean_of_the_per_conformation_ones():
+    members, _ens = _conformer_fields("CCCCc1ccccc1", n=4)
+    assert len(members) > 1, "the generator gave only one conformation"
+    e = ensemble_environment(members, 2, rho=0.5)
+    assert e.is_ensemble and e.n_conformers == len(members)
+    # every member keeps the same atoms, so the mean is taken over the same atoms
+    assert e.n_atoms % len(members) == 0
+    assert e.atoms_per_conformer == e.n_atoms // len(members)
+    # the mean halves nothing: the member weights sum to one
+    one = environment(members[0], 2, rho=0.5, keep=range(members[0].n_atoms))
+    assert float(np.abs(e.weights).sum()) == pytest.approx(
+        float(np.mean([np.abs(environment(m, 2, rho=0.5,
+                                          keep=range(m.n_atoms)).weights).sum()
+                       for m in members])), rel=0.2)
+    assert one.n_atoms == members[0].n_atoms
+
+
+def test_each_conformation_is_centred_on_its_own_copy_of_the_atom():
+    """The atom moves between conformations, so there is no single centre to put an envelope on."""
+    members, _ens = _conformer_fields("CCCCc1ccccc1", n=4)
+    e = ensemble_environment(members, 2, rho=0.5)
+    n = e.atoms_per_conformer
+    for i in range(e.n_conformers):
+        part = e.coords[e.member_slice(i)]
+        assert part[0] == pytest.approx([0.0, 0.0, 0.0], abs=1e-9)   # the centre of that member
+
+
+def test_one_conformation_gives_the_plain_environment():
+    members, _ens = _conformer_fields("CCO", n=4)
+    e = ensemble_environment(members[:1], 1, rho=0.5)
+    assert not e.is_ensemble
+    assert e.coords == pytest.approx(environment(members[0], 1, rho=0.5).coords)
+
+
+def test_the_conformations_have_to_be_the_same_molecule():
+    fs = FieldSet.create()
+    a = build_fields(_mol("CCO", "a"), fs, name="a")
+    b = build_fields(_mol("CCCO", "b"), fs, name="b")
+    with pytest.raises(ValueError, match="same atoms"):
+        ensemble_environment([a, b], 0, rho=0.5)
+    with pytest.raises(ValueError, match="at least one conformation"):
+        ensemble_environment([], 0, rho=0.5)
+
+
+def test_the_weights_decide_how_much_each_conformation_counts():
+    members, _ens = _conformer_fields("CCCCc1ccccc1", n=4)
+    k = len(members)
+    even = ensemble_environment(members, 2, rho=0.5, weights=np.ones(k))
+    first = ensemble_environment(members, 2, rho=0.5,
+                                 weights=[1.0] + [1e-12] * (k - 1))
+    alone = environment(members[0], 2, rho=0.5)
+    # weighting everything onto the first conformation reproduces that conformation
+    a = local_features([first])[0]
+    b = local_features([alone])[0]
+    assert np.corrcoef(a, b)[0, 1] > 0.999
+    assert not np.allclose(local_features([even])[0], a)
+
+
+def test_the_union_of_kept_atoms_is_used_so_the_members_match():
+    """A tight envelope keeps different atoms in different conformations; the union fixes that."""
+    members, _ens = _conformer_fields("CCCCc1ccccc1", n=4)
+    sets = [set(kept_atoms(m, 2, rho=1.0).tolist()) for m in members]
+    assert len(set(map(frozenset, sets))) > 1, "the conformations keep the same atoms here"
+    e = ensemble_environment(members, 2, rho=1.0)
+    assert e.atoms_per_conformer == len(set().union(*sets))
+
+def test_the_command_can_average_over_conformations(tmp_path, capsys):
+    from cmfqsar.cli import main
+    path = os.path.join(str(tmp_path), "set.sdf")
+    with Chem.SDWriter(path) as w:
+        for i, smiles in enumerate(SMILES[:4]):
+            m = _mol(smiles, f"m{i}", seed=i + 1)
+            v = []
+            for a in m.GetAtoms():
+                n_h = sum(1 for nb in a.GetNeighbors() if nb.GetSymbol() == "H")
+                v.append("%.1f" % n_h if a.GetSymbol() == "C" else "n/a")
+            m.SetProp("atom.dprop.nh", " ".join(v))
+            w.write(m)
+    capsys.readouterr()
+    main(["local", path, "--target", "nh", "--rho", "0.5", "--folds", "3",
+          "--conformers", "3", "--conformer-weighting", "boltzmann"])
+    text = capsys.readouterr().out
+    assert "conformations per molecule, weighted boltzmann" in text
+    assert "conformations" in text and "local field" in text
+

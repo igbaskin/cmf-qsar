@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 67 modules and about 29,750 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 67 modules and about 30,450 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-six subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 974 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`), 985 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1882,6 +1882,45 @@ on the same folds.
   own atoms, since acid and anion differ by an atom, which D4 has built. The site assignment (which atom carries the
   macroscopic pKa, which tautomer is in solution) is data preparation under rule 6, scripted per
   set, not a module.
+  **Done 27 October 2026: averaging over conformations costs accuracy on the shifts and
+  does not pay on the acidities.**
+  `cmfqsar/localenv.ensemble_environment` averages an atom's environment over the conformations of
+  its molecule. The averaging needs no new kernel -- an environment is a field, so the mean of the
+  per-conformation environments is a field and the kernel on it is the mean-map kernel of
+  `combine_members`, which is the item's "no extra work once an environment is a field". What it
+  cannot be is the environment of the mean field: the atom is in a different place in every
+  conformation, so each conformation has its own environment centred on its own copy of the atom.
+  With a frame the order is pose first and average second (`cmfqsar/localalign.posed_ensemble`),
+  because the site moves with the conformation; posing a mean field would put one rotation on
+  geometries that do not share it. The conformations keep a common atom list, the union of what
+  the envelope floor keeps in any of them, so the mean is over the same atoms. `cmf local
+  --conformers N --conformer-weighting uniform|boltzmann`, 11 tests.
+  **Measured** with 5 conformations per molecule from distance geometry refined by the
+  force field, the prepared geometry kept as the first of them, on the same folds as LP2:
+  on the shifts, the prepared geometry gives 8.82 ppm and the ensemble 11.63 ppm weighed equally, -0.020 [-0.024, -0.017] in q2, or -0.016 [-0.019, -0.014] weighed by the force field's energies; on the acidities, -0.020 [-0.061, +0.025] and -0.032 [-0.070, +0.013]. Both shift rows are outside their intervals and both acidity rows include zero, so the loss is measurable on the shifts and only a direction on the acidities; none of the four is positive.
+  **The control is the second row and it is what makes the result readable.** Using a different
+  single conformation -- the lowest in energy of the same pool, which differs from the prepared one
+  for 285 of the 400 molecules on the shift set -- costs -0.000 [-0.001, +0.000], nothing.
+  So the loss is
+  not that the generated geometries are worse than the prepared one; it is the averaging itself.
+  The reading is that the mean field smears every atom over the positions it takes in the
+  conformations, and at an envelope width of 1.0 Å what is left inside the envelope is the
+  first
+  shells, which every conformation shares. The averaging therefore adds blur and no information.
+  On the acidities the envelope is wide enough (3.2 Å) to reach the parts that move, which is
+  where averaging had its best chance; the point estimates go the same way and the intervals
+  include zero, so there the honest statement is that it does not pay rather than that it costs.
+  **What this says about the earlier items.** LP2 and LP3 both named the single force-field
+  conformation as their weakest part. On this evidence it is not: the model is insensitive to
+  which conformation it is given and worse when given several. What a shift averages over is the
+  thermally populated set in solution, and five conformations ranked by a force field are not
+  that; the way to test the premise properly is a populated ensemble from molecular dynamics or
+  from a quantum ranking, which is D7's trajectory reader rather than this item.
+  **Not done:** no tautomers and no protonation states. The item asks for them, and the site
+  assignment they need is data preparation under rule 6, scripted per set. Neither set here
+  offers it: the nmrshiftdb2 records are deposited in one tautomer with no evidence that the
+  measured compound was a mixture, and for the acidities the protonation state is the acid by
+  definition, so weighing acid against anion at a pH would use the answer to build the sample.
 
 **Large (a month or more)**
 

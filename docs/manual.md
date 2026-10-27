@@ -3905,6 +3905,54 @@ column explains the plain environments: at a width of 1.4 Å the mean kernel is 
 0.957, because the first shell of a carboxyl group is the same group in every molecule,
 and the model only starts to see the substituent as the envelope widens.
 
+**The conformations the molecule visits.** A measured shift is an average over the
+conformations a molecule visits, and so is an acidity; the single geometry that distance geometry
+returns is a stand-in for that average, and both measurements above named it as their weakest
+part. Plan item LP4 is the test of what it costs. It needs no new kernel: an environment is a
+field, so the mean of the per-conformation environments is a field too and the kernel on it is the
+mean-map kernel (`localenv.ensemble_environment`). What it cannot be is the environment of the
+mean field of the molecule: the atom sits in a different place in every conformation, so each
+conformation has its own environment, centred on its own copy of the atom, and it is those that
+are averaged. With a frame the same order applies -- pose each conformation, then average
+(`localalign.posed_ensemble`) -- because the site moves with the conformation.
+
+`benchmarks/run_local.py` asks for 5 conformations per molecule from the distance-geometry
+generator with a force-field refinement, keeps the prepared geometry as the first of them, and
+measures four samples: that geometry alone, the lowest in energy of the pool alone, and the
+ensemble weighed equally and by the force field's energies.
+
+**On the shifts, averaging costs, and the control says it is the averaging.**
+
+| conformations | q2 | error (ppm) | atoms per sample | difference in q2 against the prepared one |
+| --- | ---: | ---: | ---: | ---: |
+| one, as prepared | +0.973 | 8.824 | 13 | -- |
+| one, lowest in energy | +0.972 | 8.880 | 13 | -0.000 [-0.001, +0.000] |
+| the ensemble, weighed equally | +0.952 | 11.632 | 71 | -0.020 [-0.024, -0.017] |
+| the ensemble, weighed by energy | +0.956 | 11.149 | 71 | -0.016 [-0.019, -0.014] |
+
+The prepared geometry gives q2 +0.973 and 8.82 ppm. Averaging over the ensemble gives 11.63 ppm weighed equally and 11.15 ppm weighed by energy, which is -0.020 [-0.024, -0.017] and -0.016 [-0.019, -0.014] in q2 -- both outside their intervals, so both are real losses. The second row is the control: a different single conformation, the lowest in energy of the same pool, which differs from the prepared one for 285 of the 400 molecules and costs -0.000 [-0.001, +0.000] -- nothing. So the loss is not that the generated geometries are worse than the prepared one. It is the averaging.
+
+The reading is that the mean field smears every atom over the positions it takes in the conformations. At an envelope width of 1.0 Å what is left inside the envelope is the first shells, and those are the same in every conformation: the averaging adds blur and no information. The atom count per sample says the same thing from the other side -- 13 atoms become 71 and the model gets worse.
+
+**On the acidities, it neither helps nor costs.**
+
+| conformations | q2 | error (pKa units) | atoms per sample | difference in q2 against the prepared one |
+| --- | ---: | ---: | ---: | ---: |
+| one, as prepared | +0.582 | 0.537 | 25 | -- |
+| one, lowest in energy | +0.576 | 0.540 | 25 | -0.005 [-0.043, +0.035] |
+| the ensemble, weighed equally | +0.562 | 0.550 | 127 | -0.020 [-0.061, +0.025] |
+| the ensemble, weighed by energy | +0.549 | 0.557 | 127 | -0.032 [-0.070, +0.013] |
+
+The prepared geometry gives q2 +0.582, the ensemble +0.562 weighed equally and +0.549 weighed by energy, which is -0.020 [-0.061, +0.025] and -0.032 [-0.070, +0.013]. The control costs -0.005 [-0.043, +0.035]. Both ensemble intervals include zero, so by rule 4 this is not a measurable loss; what it is not is a gain. The envelope here is wider, 3.2 Å, and does reach the parts of a molecule that move between conformations, which is the case where averaging had the best chance of paying. It did not take it.
+
+```bash
+cmf local examples/local/shifts_cdcl3.sdf --target shift --conformers 5 \
+    --conformer-weighting boltzmann
+```
+
+The option is there because the question is a fair one to ask of another set, not because it helps
+on these two.
+
 ## A co-field around one atom: the local alignment
 
 The local kernel of the previous section needs no frame, and that is also its limit: with no

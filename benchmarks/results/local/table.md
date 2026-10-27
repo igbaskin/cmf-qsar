@@ -45,3 +45,33 @@ The error is in pKa units. A mean kernel close to 1 says the descriptor cannot t
 * at the module's default width (rho 0.5, local difference field) it loses to the counts: -0.226 [-0.383, -0.113]
 * at the best width of the scan (rho 0.1, local field) it is no better than the counts: +0.041 [-0.013, +0.094]
 
+## 13C shifts in chloroform (nmrshiftdb2): the conformations the molecules visit
+
+A measured value of this kind is an average over the conformations a molecule visits, and the single geometry that distance geometry returns is a stand-in for that average. 5 conformations were asked for per molecule and 4.8 were kept on average (2 molecules gave only one); the deposited geometry is the first of them, so the single-conformation row below is exactly the model the sections above measured. Envelope width rho 1, 5096 atoms in 400 molecules, 10 folds holding out whole molecules.
+
+| conformations | weighting | q2 | error (ppm) | ridge | atoms per sample | difference in q2 against one conformation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| one, as prepared | -- | +0.973 | 8.824 | 1e-06 | 13 | -- |
+| one, lowest in energy | -- | +0.972 | 8.880 | 1e-06 | 13 | -0.000 [-0.001, +0.000] |
+| 5 asked for | uniform | +0.952 | 11.632 | 1e-06 | 71 | -0.020 [-0.024, -0.017] |
+| 5 asked for | boltzmann | +0.956 | 11.149 | 1e-06 | 71 | -0.016 [-0.019, -0.014] |
+
+Averaging over the conformations costs: the better of the two weightings is boltzmann, -0.016 [-0.019, -0.014] against the conformation the set was prepared with.
+
+The row that says whether that is about averaging or about the geometries themselves is the second one: a single conformation again, the lowest in energy of the same pool, which scores -0.000 [-0.001, +0.000]. One conformation is one conformation whichever it is, so the loss belongs to the averaging rather than to the geometries.
+
+## carboxylic acid pKa (Baltruschat and Czodrowski 2020): the conformations the molecules visit
+
+A measured value of this kind is an average over the conformations a molecule visits, and the single geometry that distance geometry returns is a stand-in for that average. 5 conformations were asked for per molecule and 4.8 were kept on average (0 molecules gave only one); the deposited geometry is the first of them, so the single-conformation row below is exactly the model the sections above measured. Envelope width rho 0.1, 912 atoms in 912 molecules, 10 folds holding out whole molecules.
+
+| conformations | weighting | q2 | error (pKa units) | ridge | atoms per sample | difference in q2 against one conformation |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| one, as prepared | -- | +0.582 | 0.537 | 0.001 | 25 | -- |
+| one, lowest in energy | -- | +0.576 | 0.540 | 0.01 | 25 | -0.005 [-0.043, +0.035] |
+| 5 asked for | uniform | +0.562 | 0.550 | 0.01 | 127 | -0.020 [-0.061, +0.025] |
+| 5 asked for | boltzmann | +0.549 | 0.557 | 0.01 | 127 | -0.032 [-0.070, +0.013] |
+
+Averaging over the conformations changes nothing that can be measured: the better of the two weightings is uniform, -0.020 [-0.061, +0.025] against the conformation the set was prepared with.
+
+The row that says whether that is about averaging or about the geometries themselves is the second one: a single conformation again, the lowest in energy of the same pool, which scores -0.005 [-0.043, +0.035]. One conformation is one conformation whichever it is, so the loss belongs to the averaging rather than to the geometries.
+

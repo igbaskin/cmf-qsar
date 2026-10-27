@@ -53,7 +53,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 import numpy as np
 
 from .atomtargets import AtomTargets
-from .fields import MoleculeFields
+from .fields import MoleculeFields, combine_members
 from .invariant import AutocorrelationSpec, autocorrelation_kernel, feature_matrix
 from .model import krr_fit, r2_score, rmse
 
@@ -100,7 +100,8 @@ def envelope(coords: np.ndarray, centre: Sequence[float], rho: float = DEFAULT_R
 
 
 def environment(mol: MoleculeFields, atom: int, rho: float = DEFAULT_RHO,
-                floor: float = ENVELOPE_FLOOR, name: str = "") -> MoleculeFields:
+                floor: float = ENVELOPE_FLOOR, name: str = "",
+                keep: Optional[Sequence[int]] = None) -> MoleculeFields:
     """The fields of `mol` seen from `atom`: the same fields under a Gaussian envelope.
 
     The result is an ordinary :class:`~cmfqsar.fields.MoleculeFields`, with the centre at the
@@ -120,7 +121,12 @@ def environment(mol: MoleculeFields, atom: int, rho: float = DEFAULT_RHO,
     result is a plain field rather than an ensemble, because the members' weights are already
     multiplied into the atoms they belong to; the atom decomposition of such an environment is
     therefore per atom of a member, which is what a difference field (:func:`difference_field`)
-    means.
+    means.  To average an environment over the **conformations** of one molecule, use
+    :func:`ensemble_environment` instead: the atom is in a different place in every conformation,
+    so each one has its own environment and it is those that are averaged.
+
+    `keep` overrides the choice of atoms the floor would make, which is what lets several
+    conformations of one molecule share an atom list.
     """
     i = int(atom)
     n = mol.n_atoms
@@ -128,9 +134,11 @@ def environment(mol: MoleculeFields, atom: int, rho: float = DEFAULT_RHO,
         raise ValueError(f"{mol.name or 'a molecule'} has {n} atoms, so atom {i} is not one of "
                          f"them")
     g = envelope(mol.coords, mol.coords[i], rho)
-    keep = np.where(g >= float(floor))[0]
-    if len(keep) == 0:                       # cannot happen: the centre's own factor is 1
-        keep = np.array([i], int)
+    if keep is None:
+        keep = np.where(g >= float(floor))[0]
+        if len(keep) == 0:                   # cannot happen: the centre's own factor is 1
+            keep = np.array([i], int)
+    keep = np.asarray(keep, int)
     keep = np.concatenate([[i], keep[keep != i]])      # the centre first
     coords = np.asarray(mol.coords, float)[keep] - np.asarray(mol.coords, float)[i]
     weights = np.asarray(mol.weights, float)[keep] * g[keep][:, None]
@@ -151,6 +159,52 @@ def environment(mol: MoleculeFields, atom: int, rho: float = DEFAULT_RHO,
         atom_types=[mol.atom_types[k] for k in keep],
         bonds=bonds, charges=charges, member_atom_map=keep.astype(int),
         charge_source=mol.charge_source)
+
+
+def kept_atoms(mol: MoleculeFields, atom: int, rho: float = DEFAULT_RHO,
+               floor: float = ENVELOPE_FLOOR) -> np.ndarray:
+    """The atoms :func:`environment` would keep, as an index array."""
+    g = envelope(mol.coords, mol.coords[int(atom)], rho)
+    out = np.where(g >= float(floor))[0]
+    return out if len(out) else np.array([int(atom)], int)
+
+
+def ensemble_environment(members: Sequence[MoleculeFields], atom: int,
+                         rho: float = DEFAULT_RHO, floor: float = ENVELOPE_FLOOR,
+                         weights: Optional[Sequence[float]] = None,
+                         name: str = "") -> MoleculeFields:
+    """The environment of one atom, averaged over the conformations of its molecule (LP4).
+
+    A measured shift is an average over the conformations the molecule visits, and so is an
+    acidity; the single conformation that a distance-geometry program returns is a stand-in for
+    that average and a poor one.  The averaging needs no new kernel, because an environment is a
+    field: the mean field of the per-conformation environments is itself a field, and the kernel
+    on it is the mean-map kernel of :func:`cmfqsar.fields.combine_members`, exactly as a
+    conformational ensemble of whole molecules is handled.
+
+    What it cannot be is the environment of the mean field of the molecule.  The atom sits in a
+    different place in every conformation, so there is no single centre to put an envelope on;
+    each conformation has its own environment, centred on its own copy of the atom, and it is
+    those that are averaged.
+
+    `members` are the fields of one molecule in its conformations, in the same atom order.  They
+    share one atom list -- the union of what the floor keeps in any of them -- so that the mean is
+    taken over the same atoms rather than over whichever ones happened to survive.
+    """
+    if not members:
+        raise ValueError("an ensemble environment needs at least one conformation")
+    n = members[0].n_atoms
+    if any(m.n_atoms != n for m in members):
+        raise ValueError("the conformations of one molecule must have the same atoms: "
+                         + ", ".join(str(m.n_atoms) for m in members))
+    union = sorted(set().union(*[set(kept_atoms(m, atom, rho, floor).tolist()) for m in members]))
+    envs = [environment(m, atom, rho, floor, keep=union) for m in members]
+    if len(envs) == 1:
+        envs[0].name = name or envs[0].name
+        return envs[0]
+    w = np.ones(len(envs)) if weights is None else np.asarray(weights, float)
+    return combine_members(envs, w, kind="conformers",
+                           name=name or f"{members[0].name or 'molecule'}:{int(atom)}")
 
 
 def kept_share(mol: MoleculeFields, atom: int, rho: float = DEFAULT_RHO,

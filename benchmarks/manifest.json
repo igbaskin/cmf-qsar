@@ -1,6 +1,6 @@
 {
- "commit": "05bcabcb49a79f9d4780cc10861a5ec071f68598",
- "created": "2026-10-27T09:42:16",
+ "commit": "0f0582114805116bc3745ed771b797721d0ff33c",
+ "created": "2026-10-27T10:51:12",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1563,7 +1563,7 @@
    "sha256": "ae21e57833b6eef2a99dc8562e02a462dc79f5b44122063068c2e674b4ae6eb4"
   }
  },
- "dirty": false,
+ "dirty": true,
  "packages": {
   "PyOpenGL": "3.1.10",
   "PySide6": "6.11.1",
@@ -1888,8 +1888,10 @@
   "benchmarks/results/increments/fit_THR.json": "9139076596732502f5ecc289749d0b6e0e5a82cb4fe7bbb89d3ff1a004416f53",
   "benchmarks/results/increments/table.md": "9b4636871329e755237af0146743b1a3fbf4aab5c751ee83581b7efa49161609",
   "benchmarks/results/local/pka.json": "8dfb0b579736ea7c29e9d15f7a75ef1a6a380caef6216d34aaef3649d96803bc",
+  "benchmarks/results/local/pka_conformers.json": "6d337283122a7addc24889557321ed6e167853d1e9e5fdbbcf8ab2c716f292d9",
   "benchmarks/results/local/shifts.json": "f8109b7b3a8c9bdcc09ca97750f0f23fa97d162b9bdb9e9d09da5a5790ac4b29",
-  "benchmarks/results/local/table.md": "65ca59b845bb8f105a696dc5a8d485252e2cddfc6c062a3086e818758e1d4a93",
+  "benchmarks/results/local/shifts_conformers.json": "824a7bb8cc007271c9e27906aa0d0ae058ca088bd1e9baab93972f02852fea80",
+  "benchmarks/results/local/table.md": "9069a1a15215cd6eb77f701880f7cd33dadccbd5e10481d95c813b9d5bc2bf45",
   "benchmarks/results/local_cofield/cofield.png": "0b02eb2a753d8082b14020355bacd10b536e43b20015efc947cff028c663ed9a",
   "benchmarks/results/local_cofield/indicator.json": "6b4c32c234d0e14b31d7a65f42e588993810bae1720850d695c9fe8a29037328",
   "benchmarks/results/local_cofield/indicator.png": "c0fa0ae309f19adba56fbd48b4f4f8739965b73fa49dd642d174ba2f8214c53f",

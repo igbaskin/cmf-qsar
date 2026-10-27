@@ -226,6 +226,46 @@ def posed(env: MoleculeFields, max_images: int = MAX_IMAGES,
     return out
 
 
+def posed_ensemble(members: Sequence[MoleculeFields], atom: int, rho: float = DEFAULT_RHO,
+                   floor: float = ENVELOPE_FLOOR, weights: Optional[Sequence[float]] = None,
+                   max_images: int = MAX_IMAGES,
+                   frames_of: Optional[Callable[[MoleculeFields], List[np.ndarray]]] = None,
+                   name: str = "") -> MoleculeFields:
+    """One field: an atom's environment in every conformation, each posed in its own frame.
+
+    The frame is a property of the site, and the site moves with the conformation, so the pose
+    has to be taken per conformation and the averaging has to come after it.  Posing the mean
+    field instead would put one rotation on geometries that do not share it.
+
+    The result is the mean over conformations and over the poses each site allows, which is one
+    ensemble field: the two averages compose, because a mean of means over a shared atom list is
+    a mean (:func:`cmfqsar.fields.combine_members`).
+    """
+    from .localenv import kept_atoms
+
+    if not members:
+        raise ValueError("a posed ensemble needs at least one conformation")
+    n = members[0].n_atoms
+    if any(m.n_atoms != n for m in members):
+        raise ValueError("the conformations of one molecule must have the same atoms")
+    union = sorted(set().union(*[set(kept_atoms(m, atom, rho, floor).tolist()) for m in members]))
+    envs = []
+    for m in members:
+        env = environment(m, atom, rho, floor, keep=union)
+        frames = frames_of(env) if frames_of is not None else None
+        envs.append(posed(env, max_images, frames))
+    sizes = {e.n_atoms for e in envs}
+    if len(sizes) != 1:
+        raise ValueError("the conformations gave different numbers of poses, so their fields "
+                         "cannot be averaged: " + ", ".join(str(s) for s in sorted(sizes)))
+    if len(envs) == 1:
+        envs[0].name = name or envs[0].name
+        return envs[0]
+    w = np.ones(len(envs)) if weights is None else np.asarray(weights, float)
+    return combine_members(envs, w, kind="conformers",
+                           name=name or f"{members[0].name or 'molecule'}:{int(atom)}")
+
+
 def posed_environments(mols: Sequence[MoleculeFields], targets: AtomTargets,
                        rho: float = DEFAULT_RHO, floor: float = ENVELOPE_FLOOR,
                        max_images: int = MAX_IMAGES,

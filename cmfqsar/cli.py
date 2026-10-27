@@ -1836,10 +1836,20 @@ def cmd_local(args):
                                folds=args.folds, seed=args.seed, name="atom-centred counts")
         print("  " + reference.summary())
 
+    members = _conformations(args, ds, fieldset) if args.conformers > 1 else None
     best = None
     for rho in (args.rho or [DEFAULT_RHO]):
         if args.align:
-            r, used, extra = _local_aligned(args, ds, fields, t, fieldset, rho)
+            r, used, extra = _local_aligned(args, ds, fields, t, fieldset, rho, members)
+        elif members is not None:
+            from cmfqsar.localenv import ensemble_environment
+            envs = [ensemble_environment(members[int(t.molecule[k])][0], int(t.atom[k]), rho,
+                                         weights=members[int(t.molecule[k])][1])
+                    for k in range(len(t))]
+            r = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds,
+                           seed=args.seed, name=f"local field, rho {rho:g}")
+            used, extra = t, (f"{np.mean([e.n_atoms for e in envs]):.1f} atoms per sample over "
+                              f"{np.mean([e.n_conformers for e in envs]):.1f} conformations")
         else:
             envs = environments(fields, t, rho=rho)
             r = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds,
@@ -1867,9 +1877,40 @@ def cmd_local(args):
               f"out-of-fold prediction on the atom each belongs to")
 
 
-def _local_aligned(args, ds, fields, targets, fieldset, rho):
+def _conformations(args, ds, fieldset):
+    """The fields of every molecule in each of its conformations, with their weights.
+
+    A measured shift or acidity is an average over the conformations a molecule visits, and one
+    geometry is a stand-in for that average (plan item LP4).  The weights are uniform or from the
+    force field's energies; `benchmarks/run_local.py` measures what the averaging is worth, and
+    on the sets there it costs rather than gains, so this is an option and not the default.
+    """
+    from cmfqsar.conformers import generate_conformers, get_conformer_energies, single_conformer
+
+    out = []
+    for k, m in enumerate(ds.mols):
+        try:
+            ens = generate_conformers(m, n=int(args.conformers), seed=args.seed + k)
+        except Exception:
+            ens = m
+        n = max(ens.GetNumConformers(), 1)
+        fields = [build_fields(single_conformer(ens, i) if ens.GetNumConformers() > 1 else ens,
+                               fieldset, name=f"{ds.names[k]}#{i}") for i in range(n)]
+        w = np.ones(n)
+        if args.conformer_weighting == "boltzmann" and n > 1:
+            e = get_conformer_energies(ens)
+            if e is not None and len(e) == n and np.isfinite(e).all():
+                w = np.exp(-(np.asarray(e, float) - float(np.min(e))) / 0.6)
+        out.append((fields, w))
+    print(f"  {np.mean([len(f) for f, _w in out]):.1f} conformations per molecule, weighted "
+          f"{args.conformer_weighting}")
+    return out
+
+
+def _local_aligned(args, ds, fields, targets, fieldset, rho, members=None):
     """The posed overlap kernel of plan item LP3, and the co-field it allows."""
-    from cmfqsar.localalign import overlap_kernel, posed_environments, ring_frames
+    from cmfqsar.localalign import (overlap_kernel, posed_ensemble, posed_environments,
+                                    ring_frames)
     from cmfqsar.localenv import choose_lam
 
     frames_of = ring_frames if args.site == "ring" else None
@@ -1886,7 +1927,12 @@ def _local_aligned(args, ds, fields, targets, fieldset, rho):
             print(f"  the ring site rule accepts {len(keep)} of {len(targets)} atoms; the rest "
                   f"are left out")
         used = targets.subset(keep)
-    envs = posed_environments(fields, used, rho=rho, frames_of=frames_of)
+    if members is not None:
+        envs = [posed_ensemble(members[int(used.molecule[r])][0], int(used.atom[r]), rho,
+                               weights=members[int(used.molecule[r])][1], frames_of=frames_of)
+                for r in range(len(used))]
+    else:
+        envs = posed_environments(fields, used, rho=rho, frames_of=frames_of)
     model, table, K = overlap_kernel(envs, fieldset)
     r = choose_lam(K, used, folds=args.folds, seed=args.seed,
                    name=f"posed overlap, rho {rho:g}")
@@ -3797,6 +3843,14 @@ def main(argv=None):
     lo.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd",
                     help="the fields the environment is built from; prop:NAME takes a per-atom "
                          "property of the file, a quantum charge or a Fukui index")
+    lo.add_argument("--conformers", type=int, default=1, metavar="N",
+                    help="average the environment over N conformations of each molecule instead "
+                         "of using the one in the file (plan item LP4). On the sets measured in "
+                         "benchmarks/run_local.py this costs accuracy rather than gaining it")
+    lo.add_argument("--conformer-weighting", default="uniform",
+                    choices=["uniform", "boltzmann"],
+                    help="how the conformations are weighed: equally, or by the force field's "
+                         "energies at about room temperature")
     lo.add_argument("--cif", action="store_true",
                     help="add one continuous indicator field per atom type. With --align this is "
                          "what lets a co-field say what an atom of a given type at a given place "

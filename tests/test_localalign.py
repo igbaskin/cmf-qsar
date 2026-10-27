@@ -454,3 +454,66 @@ def test_the_error_of_an_atom_effect_uses_the_same_basis(posed_set):
     # and a weight of zero leaves nothing to be uncertain about
     assert atom_effect(model, f, pts, weight=0.0) == pytest.approx(np.zeros(2))
 
+# ------------------------------------- a conformation at a time, each in its own frame (LP4)
+
+
+def _conformer_fields(smiles, n=4, seed=1, name="m"):
+    from cmfqsar.conformers import generate_conformers, single_conformer
+
+    fs = FieldSet.create()
+    m = _mol(smiles, name, seed)
+    ens = generate_conformers(m, n=n, seed=seed)
+    k = ens.GetNumConformers()
+    return m, [build_fields(single_conformer(ens, i), fs, name=f"{name}#{i}") for i in range(k)]
+
+
+def test_every_conformation_is_posed_in_its_own_frame():
+    from cmfqsar.localalign import posed_ensemble
+
+    mol, members = _conformer_fields("CCOc1ccccc1", n=4)
+    assert len(members) > 1
+    ring = [a.GetIdx() for a in mol.GetAtoms() if a.GetIsAromatic()]
+    e = posed_ensemble(members, ring[1], rho=0.1, frames_of=ring_frames)
+    assert e.is_ensemble and e.n_conformers == len(members)
+    for i in range(e.n_conformers):
+        part = e.coords[e.member_slice(i)]
+        assert part[0] == pytest.approx([0.0, 0.0, 0.0], abs=1e-9)
+    # each member carries the two mirror poses of that conformation
+    assert e.atoms_per_conformer % 2 == 0
+
+
+def test_posing_the_mean_is_not_the_mean_of_the_poses():
+    """The site moves with the conformation, so the pose has to come first."""
+    from cmfqsar.localalign import posed_ensemble
+    from cmfqsar.localenv import ensemble_environment
+
+    mol, members = _conformer_fields("CCOc1ccccc1", n=4)
+    ring = [a.GetIdx() for a in mol.GetAtoms() if a.GetIsAromatic()]
+    right = posed_ensemble(members, ring[1], rho=0.1, frames_of=ring_frames)
+    averaged_first = ensemble_environment(members, ring[1], rho=0.1)
+    assert right.n_atoms != averaged_first.n_atoms or not np.allclose(
+        np.sort(right.coords, axis=0), np.sort(averaged_first.coords, axis=0))
+
+
+def test_a_posed_ensemble_of_one_conformation_is_the_posed_environment():
+    from cmfqsar.localalign import posed, posed_ensemble
+    from cmfqsar.localenv import environment
+
+    mol, members = _conformer_fields("CCOc1ccccc1", n=4)
+    ring = [a.GetIdx() for a in mol.GetAtoms() if a.GetIsAromatic()]
+    one = posed_ensemble(members[:1], ring[1], rho=0.1, frames_of=ring_frames)
+    env = environment(members[0], ring[1], rho=0.1)
+    assert one.coords == pytest.approx(posed(env, frames=ring_frames(env)).coords)
+
+
+def test_conformations_that_do_not_match_are_refused():
+    from cmfqsar.localalign import posed_ensemble
+
+    fs = FieldSet.create()
+    a = build_fields(_mol("CCO", "a"), fs, name="a")
+    b = build_fields(_mol("CCCO", "b"), fs, name="b")
+    with pytest.raises(ValueError, match="same atoms"):
+        posed_ensemble([a, b], 0, rho=0.5)
+    with pytest.raises(ValueError, match="at least one conformation"):
+        posed_ensemble([], 0, rho=0.5)
+
