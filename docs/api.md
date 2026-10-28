@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 89 modules, 168 classes with 534 public methods, and 754 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 89 modules, 168 classes with 535 public methods, and 756 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1548,6 +1548,11 @@ The coefficients are a linear map of the activities -- with a bias, the bordered
 coefficients carrying covariance sigma^2 G G^T, and every linear functional of them carries
 the matching variance.  Nothing here is a Bayesian posterior: see `cofield_variance`.
 
+The Laplacian-regularised ridge (method `lapkrr`) is the same kind of map, with two
+differences: its system matrix carries the smoothness penalty, and only the molecules that
+have an activity carry noise, so G has one column per labelled molecule rather than per
+training molecule.  `G G^T` is the same size either way, and so is everything downstream.
+
 ### `noise_level(model: CMFModel, sigma: Optional[float]=None) -> Tuple[float, str]`
 
 The noise level to propagate, and where it came from.
@@ -2269,6 +2274,14 @@ Read a per-atom target and keep the index of the (molecule, atom) pairs it measu
 #### `Dataset.decoy_indices` -> np.ndarray  (property)
 
 Background molecules, presumed inactive; never used for fitting.
+
+#### `Dataset.unlabelled_indices` -> np.ndarray  (property)
+
+Molecules loaded as a set without activities, for a semi-supervised fit.
+
+They are trained on -- they are rows of the kernel and terms of the model's expansion --
+but there is no activity to fit or to score them against; see `--unlabelled` and
+`--method lapkrr`.  Decoys, in contrast, are never trained on at all.
 
 #### `Dataset.random_split(test_fraction: float=0.25, seed: int=0) -> None`
 
@@ -7755,6 +7768,46 @@ With the linear CMF kernel this is PLS regression in the space of the fields, th
 learner with the grid replaced by the continuous field.  Returns (a, b, components used);
 fewer components than asked for are used when the residual or the next score vanishes.
 
+### `lapkrr_fit(K: np.ndarray, y: np.ndarray, lam: float, manifold: float=1.0, neighbours: int=LAPKRR_NEIGHBOURS, fit_bias: bool=True) -> Tuple[np.ndarray, float]`
+
+Kernel ridge regression with a smoothness penalty over labelled *and* unlabelled molecules.
+
+Manifold regularisation (Belkin, Niyogi & Sindhwani, J. Mach. Learn. Res. 7 (2006)
+2399-2434).  A library being screened, a set of decoys, a batch not yet measured: these
+molecules have fields but no activity, and plain kernel ridge regression cannot use them at
+all.  Here they enter through a second penalty,
+
+    gamma f' L f,
+
+with f the predicted values at all n molecules and L the normalised Laplacian of the graph
+of field similarity (`cmfqsar.spectral.knn_laplacian`).  That term is small when the
+prediction changes slowly between molecules that are close in field space, whether or not
+they are labelled, so the unlabelled molecules say where the prediction may vary and where
+it may not.  Minimising it together with the squared error on the labelled molecules and the
+usual ridge gives one dual solve over all n molecules,
+
+    (J K + lam I + gamma L K) a = J y,
+
+where J is the diagonal indicator of the molecules that have an activity.  With a bias term
+the stationarity conditions add one row and one column, exactly as in `krr_fit`.
+
+**The activities of the unlabelled molecules are passed as nan.**  A learner that needs more
+than (K, y) is new in this program, and the alternative -- a second kernel block handed to
+the learner on the side -- would have put the unlabelled molecules outside the training
+table, where the co-field, the molecule contributions and the atom contributions could not
+see them.  The expansion `f(x) = sum_j a_j K(x, x_j) + b` runs over all n molecules, so
+the training table has to hold all n; marking the missing activities in y is what keeps the
+model one kernel expansion over one training table and every reader of it unchanged.
+
+**The assumption.**  gamma f' L f asks the activity to vary smoothly along the data.  An
+activity cliff -- two molecules whose fields are nearly the same and whose activities are
+not -- breaks that assumption, and the penalty then pulls the prediction of both towards
+their average.  How many such pairs a set holds is therefore worth counting before the
+method is used on it (`benchmarks/run_lapkrr.py` reports the count per set).
+
+`manifold = 0` switches the penalty off; the unlabelled molecules then get coefficients of
+zero and the fit is ridge regression on the labelled molecules alone.
+
 ### `kfda_fit(K: np.ndarray, y: np.ndarray, lam: float) -> Tuple[np.ndarray, float]`
 
 Kernel Fisher discriminant analysis for two classes (Mika et al. 1999).
@@ -7928,12 +7981,13 @@ accuracy when only one class is present in a fold) and the balanced accuracy.  R
 1 - rho and Spearman's rho, because the score of a ranking model has no units and
 minimising its squared error would be selecting on a quantity that does not exist.
 
-### `grid_search(train: AtomTable, y: np.ndarray, model: CMFModel, alphas: Sequence[float], lams: Sequence[float]=(1.0,), Cs: Sequence[float]=(1.0,), epsilons: Sequence[float]=(0.1,), nus: Sequence[float]=(0.5,), gammas: Sequence[float]=(), folds: int=10, seed: Optional[int]=0, optimize_h: bool=False, mkl=False, mkl_rho: float=1.0, h_grid: Sequence[float]=(0.0, 0.25, 0.5, 1.0, 2.0, 4.0), h_passes: int=2, alpha_fields: Optional[Sequence[str]]=None, progress: Optional[ProgressFn]=None, cancel: Optional[CancelFn]=None, lam_search: str='grid', precomputed: Optional[Dict]=None, alpha_search: str='grid', nm_start: Sequence[float]=(0.25, 5.0), nm_maxit: int=500, select: str='cv', components: Sequence[int]=()) -> SearchResult`
+### `grid_search(train: AtomTable, y: np.ndarray, model: CMFModel, alphas: Sequence[float], lams: Sequence[float]=(1.0,), Cs: Sequence[float]=(1.0,), epsilons: Sequence[float]=(0.1,), nus: Sequence[float]=(0.5,), gammas: Sequence[float]=(), folds: int=10, seed: Optional[int]=0, optimize_h: bool=False, mkl=False, mkl_rho: float=1.0, h_grid: Sequence[float]=(0.0, 0.25, 0.5, 1.0, 2.0, 4.0), h_passes: int=2, alpha_fields: Optional[Sequence[str]]=None, progress: Optional[ProgressFn]=None, cancel: Optional[CancelFn]=None, lam_search: str='grid', precomputed: Optional[Dict]=None, alpha_search: str='grid', nm_start: Sequence[float]=(0.25, 5.0), nm_maxit: int=500, select: str='cv', components: Sequence[int]=(), manifolds: Sequence[float]=()) -> SearchResult`
 
 Minimise RMSEcv over alpha (shared by all fields unless `alpha_fields` restricts it)
 and the learner's regularisation parameters (`lams` for KRR/GP, `Cs` with `epsilons`
 or `nus` for the support-vector methods, `components` for KPLS, which falls back to
-`DEFAULT_COMPONENTS` when empty).  Optionally refine the mixing
+`DEFAULT_COMPONENTS` when empty, `lams` together with `manifolds` for the
+Laplacian-regularised ridge, which falls back to `DEFAULT_MANIFOLDS`).  Optionally refine the mixing
 coefficients h_f by coordinate descent (beware of model-selection bias), or set them by
 centred kernel alignment (`mkl=True`, see `align_mixing`), in which case the
 reported RMSEcv is reliable because the weights are re-derived inside every fold.
@@ -7956,7 +8010,7 @@ the simplex search is used as it is (no comparison with the grid), the model's
 (used by `nested_cv` to avoid recomputing kernels for every outer fold).
 `seed=None` selects the deterministic interleaved folds of the original scripts.
 
-### `nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel, alphas: Sequence[float], lams=(1.0,), Cs=(1.0,), epsilons=(0.1,), nus=(0.5,), outer_folds: int=5, inner_folds: int=10, repeats: int=1, seed: Optional[int]=0, optimize_h: bool=False, mkl=False, mkl_rho: float=1.0, alpha_fields=None, gammas: Sequence[float]=(), progress: Optional[ProgressFn]=None, cancel: Optional[CancelFn]=None, lam_search: str='grid', precompute: bool=True, max_precompute_bytes: float=2000000000.0, alpha_search: str='grid', nm_start: Sequence[float]=(0.25, 5.0), inner_seed='same', components: Sequence[int]=()) -> NestedCVResult`
+### `nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel, alphas: Sequence[float], lams=(1.0,), Cs=(1.0,), epsilons=(0.1,), nus=(0.5,), outer_folds: int=5, inner_folds: int=10, repeats: int=1, seed: Optional[int]=0, optimize_h: bool=False, mkl=False, mkl_rho: float=1.0, alpha_fields=None, gammas: Sequence[float]=(), progress: Optional[ProgressFn]=None, cancel: Optional[CancelFn]=None, lam_search: str='grid', precompute: bool=True, max_precompute_bytes: float=2000000000.0, alpha_search: str='grid', nm_start: Sequence[float]=(0.25, 5.0), inner_seed='same', components: Sequence[int]=(), manifolds: Sequence[float]=()) -> NestedCVResult`
 
 External k-fold cross-validation with the hyper-parameters selected in an
 inner cross-validation loop on each working set (Baskin & Zhokhova 2013).
@@ -11054,6 +11108,25 @@ Attributes:
 #### `SpectralFit.sizes` -> Dict[int, int]  (property)
 
 #### `SpectralFit.describe() -> str`
+
+### `knn_laplacian(K: np.ndarray, neighbours: int=10, floor: float=0.0) -> np.ndarray`
+
+The normalised Laplacian of the graph in which every molecule keeps its closest neighbours.
+
+The same construction `spectral_clusters` uses, with two changes that are what a
+smoothness penalty needs (plan item E10, manifold regularisation):
+
+* the affinity is the **cosine** of the kernel, `K(i,j) / sqrt(K(i,i) K(j,j))`, so that
+  "close" means similar in field space and not simply large.  A kernel of unnormalised
+  fields grows with the size of a molecule, and without this the neighbours of every
+  molecule would be the biggest molecules of the set;
+* every row keeps only its `neighbours` largest affinities and the rest are set to zero, so
+  the penalty is **local**.  A pair survives if either of the two molecules counts the other
+  among its neighbours, which is the usual symmetric form of the k-nearest-neighbour graph.
+  Without the truncation every molecule is a neighbour of every other and the penalty asks
+  the prediction to be flat over the whole set instead of smooth along it.
+
+`neighbours <= 0` or a number at or above n - 1 keeps the full graph.
 
 ### `eigengap(values: Sequence[float], k_max: int=10) -> Tuple[int, float]`
 

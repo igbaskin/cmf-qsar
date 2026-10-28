@@ -169,6 +169,32 @@ def _auc(y, decision):
     return float((np.sum(ranks[pos[order]]) - n_p * (n_p + 1) / 2.0) / (n_p * n_n))
 
 
+def _enrichment(y, decision, fraction=0.01):
+    """Enrichment factor: how many times more actives the top `fraction` of the ranking holds
+    than the whole library does.  1.0 is a random order and 1/(share of actives) the ceiling."""
+    pos = y > 0
+    n, n_act = len(y), int(np.count_nonzero(pos))
+    if n_act == 0 or n_act == n:
+        return float("nan")
+    k = max(1, int(round(fraction * n)))
+    order = np.argsort(-decision, kind="mergesort")
+    return float((np.count_nonzero(pos[order[:k]]) / k) / (n_act / n))
+
+
+def _bedroc(y, decision, alpha=20.0):
+    """BEDROC: the enrichment read over the whole ranking with an exponential weight on the top,
+    so that it does not saturate the way an enrichment factor at a small fraction does."""
+    from cmfqsar.model import rie_bedroc
+
+    pos = y > 0
+    n, n_act = len(y), int(np.count_nonzero(pos))
+    if n_act == 0 or n_act == n:
+        return float("nan")
+    order = np.argsort(-decision, kind="mergesort")
+    ranks = np.flatnonzero(pos[order]) + 1
+    return float(rie_bedroc(ranks, n, n_act, alpha=float(alpha))[1])
+
+
 def _metric(name, y, decision, proba=None):
     """One metric of one prediction.  Written out here rather than taken from
     :func:`cmfqsar.model.classification_scores` because the bootstrap asks for a single number
@@ -179,6 +205,10 @@ def _metric(name, y, decision, proba=None):
         return _auc(y, decision)
     if name in ("balanced_accuracy", "balanced_accuracy_common"):
         return _balanced_accuracy(y, decision)
+    if name.startswith("ef_"):
+        return _enrichment(y, decision, fraction=float(name[3:]) / 100.0)
+    if name.startswith("bedroc_"):
+        return _bedroc(y, decision, alpha=float(name[7:]))
     return float(classification_scores(y, decision)[name])
 
 
@@ -219,6 +249,7 @@ def paired_interval(name, y, a, b, runs=RUNS, seed=SEED):
 def _select(K, y, method, grid, folds=INNER_FOLDS, seed=SEED):
     """The setting with the best out-of-fold AUC, among `grid`, on these molecules alone."""
     best = None
+    lab = np.isfinite(np.asarray(y, float))          # nan: in the fit, nothing to score
     for params in grid:
         p = dict(params)
         # the selection criterion is the AUC, which no threshold can change, so the threshold
@@ -226,9 +257,9 @@ def _select(K, y, method, grid, folds=INNER_FOLDS, seed=SEED):
         if method == "kfda":
             p["kfda_threshold"] = "midpoint"
         ycv = cv_predict(K, y, method, p, folds=folds, seed=seed)
-        auc = classification_scores(y, ycv)["auc"]
+        auc = classification_scores(y[lab], ycv[lab])["auc"]
         if not np.isfinite(auc):
-            auc = classification_scores(y, ycv)["balanced_accuracy"]
+            auc = classification_scores(y[lab], ycv[lab])["balanced_accuracy"]
         if best is None or auc > best[1]:
             best = (dict(params), float(auc))
     return best[0], best[1]
@@ -248,9 +279,10 @@ def _common_cut(K_tr, y_tr, method, params, score_tr, inner=INNER_FOLDS, seed=SE
     are on one scale.  Returns the cut in raw score units of the final fit.
     """
     ycv = cv_predict(K_tr, y_tr, method, params, folds=inner, seed=seed)
-    centre_in, spread_in = kfda_frame(ycv, y_tr > 0)
-    cut_scaled, _ = _balanced_threshold(y_tr, (ycv - centre_in) / spread_in)
-    centre, spread = kfda_frame(score_tr, y_tr > 0)
+    lab = np.isfinite(np.asarray(y_tr, float)) & np.isfinite(ycv)
+    centre_in, spread_in = kfda_frame(ycv[lab], y_tr[lab] > 0)
+    cut_scaled, _ = _balanced_threshold(y_tr[lab], (ycv[lab] - centre_in) / spread_in)
+    centre, spread = kfda_frame(score_tr[lab], y_tr[lab] > 0)
     return centre + cut_scaled * spread
 
 

@@ -121,6 +121,12 @@ def _load_dataset(args):
         dec.subset = np.array(["decoy"] * len(dec), dtype=object)
         ds.append(dec, subset="decoy")
         print(f"  {len(dec)} background molecules (decoys) loaded from {args.decoys}")
+    if getattr(args, "unlabelled", None):
+        unl = load_dataset(args.unlabelled, activity_prop=args.activity, subset="unlabelled")
+        unl.subset = np.array(["unlabelled"] * len(unl), dtype=object)
+        unl.activity = np.full(len(unl), np.nan)     # whatever the file carries is not used
+        ds.append(unl, subset="unlabelled")
+        print(f"  {len(unl)} molecules without activities loaded from {args.unlabelled}")
     if args.test_file:
         te = load_dataset(args.test_file, activity_prop=args.activity or (None if args.activity_file else ds.activity_prop),
                           activity_file=args.activity_file, subset="test")
@@ -353,8 +359,9 @@ def cmd_build(args):
     ds = _load_dataset(args)
     print(f"Loaded {len(ds)} molecules from {args.dataset}; activity: {ds.activity_prop}")
     ok = np.isfinite(ds.activity)
-    if ok.sum() < len(ds):
-        print(f"  {len(ds) - ok.sum()} molecules without activity are ignored")
+    n_unlabelled = len(ds.unlabelled_indices)
+    if ok.sum() + n_unlabelled < len(ds):
+        print(f"  {len(ds) - ok.sum() - n_unlabelled} molecules without activity are ignored")
     dec_idx = [int(i) for i in ds.decoy_indices]
     if args.test_fraction > 0:
         keep = ds.subset.copy()
@@ -534,6 +541,9 @@ def cmd_build(args):
             raise SystemExit("the kernel Fisher discriminant needs both classes; use ocsvm")
         if args.method == "klr" and args.task == "oneclass":
             raise SystemExit("kernel logistic regression needs both classes; use ocsvm")
+        if args.method == "lapkrr" and args.task == "oneclass":
+            raise SystemExit("Laplacian-regularised kernel ridge regression fits activities, so "
+                             "it needs both classes; use ocsvm")
         if args.task == "oneclass" and not args.normalize:
             # without cosine normalisation the decision value scales with the size of the molecule,
             # so the ranking measures molecular size rather than similarity to the target class
@@ -573,6 +583,34 @@ def cmd_build(args):
             conf = m.GetConformer()
             for a, xyz in enumerate(mol.coords):
                 conf.SetAtomPosition(a, [float(v) for v in xyz])
+    unl_idx = [int(i) for i in ds.unlabelled_indices]
+    if unl_idx:
+        # the molecules without activities join the training table, with nan where an activity
+        # would be.  That is what makes them part of the model: the expansion runs over every
+        # row of this table, so the co-field, the molecule contributions and the applicability
+        # domain see the unlabelled molecules without a special case (--method lapkrr).
+        if args.method != "lapkrr":
+            raise SystemExit("--unlabelled molecules are only used by --method lapkrr "
+                             "(Laplacian-regularised kernel ridge regression); every other "
+                             "learner here fits the labelled molecules alone")
+        for name, flag in (("--low-rank", getattr(args, "low_rank", None)),
+                           ("--second-endpoint", args.second_endpoint),
+                           ("--align-train-variance", args.align_train_variance)):
+            if flag:
+                raise SystemExit(f"{name} and --unlabelled cannot be combined: "
+                                 f"{name} rebuilds the training set from the activities")
+        if args.task == "oneclass":
+            raise SystemExit("--unlabelled makes no sense for the one-class task, which already "
+                             "fits molecules of one class and uses no activities")
+        target = np.asarray(target, float).copy()
+        target[unl_idx] = np.nan
+        tr = list(tr) + unl_idx
+        train = AtomTable.from_molecules([mf[i] for i in tr])
+        print(f"  training table: {len(tr) - len(unl_idx)} molecules with an activity and "
+              f"{len(unl_idx)} without; the model expands over all {len(tr)}")
+    elif args.method == "lapkrr":
+        print("  no unlabelled molecules given (--unlabelled), so the smoothness penalty of "
+              "lapkrr acts on the labelled molecules alone")
     y = target[tr]
     model = CMFModel(fieldset=fs, task=args.task, method=args.method, normalize=args.normalize,
                      scale_fields=not args.raw_scale, fit_bias=not args.no_bias,
@@ -715,7 +753,8 @@ def cmd_build(args):
                       optimize_h=args.optimize_h, mkl=args.mkl or False, mkl_rho=args.mkl_rho, progress=prog,
                       lam_search=args.lam_search, select=args.select,
                       alpha_search=args.alpha_search, nm_start=nm_start,
-                      components=_ints(args.pls_components))
+                      components=_ints(args.pls_components),
+                      manifolds=_floats(args.manifold_weights))
     print()
     knob = (f"sigma = {args.ac_sigma:g} A" if args.kernel == "autocorrelation"
             else f"alpha = {res.best_alpha:g}")
@@ -797,7 +836,8 @@ def cmd_build(args):
                           gammas=_floats(args.gammas), folds=args.folds,
                           seed=seed, optimize_h=args.optimize_h, mkl=args.mkl or False, mkl_rho=args.mkl_rho, progress=prog,
                           lam_search=args.lam_search, alpha_search=args.alpha_search, nm_start=nm_start,
-                          components=_ints(args.pls_components))
+                          components=_ints(args.pls_components),
+                          manifolds=_floats(args.manifold_weights))
         print()
         print(f"After realignment: alpha = {res.best_alpha:g}, {res.best_params}, "
               f"RMSEcv = {res.best_rmse:.3f}, q2 = {res.best_q2:.3f}")
@@ -811,7 +851,8 @@ def cmd_build(args):
         args.nested = False
     if args.nested:
         if args.nested_on == "all":
-            idx = [i for i in range(len(ds)) if ok[i]]
+            unl = set(unl_idx)
+            idx = [i for i in range(len(ds)) if ok[i] or i in unl]
             print(f"External cross-validation on all {len(idx)} molecules ...")
         else:
             idx = tr
@@ -822,13 +863,14 @@ def cmd_build(args):
         # interleaved outer *and* inner folds on the permuted order, i.e. random folds in both loops.
         # With a single repeat --cv-no-shuffle gives interleaved folds in file order in both loops.
         outer_seed = args.seed if args.repeats > 1 else seed
-        ncv = nested_cv(table, ds.activity[idx], model, alphas, lams=lams, Cs=_floats(args.Cs),
+        ncv = nested_cv(table, np.asarray(target, float)[idx], model, alphas, lams=lams, Cs=_floats(args.Cs),
                         epsilons=_floats(args.epsilons), nus=_floats(args.nus), outer_folds=args.outer_folds,
                         inner_folds=args.folds, repeats=args.repeats, seed=outer_seed, inner_seed=outer_seed,
                         optimize_h=args.optimize_h, mkl=args.mkl or False, mkl_rho=args.mkl_rho, gammas=_floats(args.gammas),
                         progress=prog, lam_search=args.lam_search,
                         alpha_search=args.alpha_search, nm_start=nm_start,
-                        components=_ints(args.pls_components))
+                        components=_ints(args.pls_components),
+                        manifolds=_floats(args.manifold_weights))
         print()
         model.stats.q2_ex, model.stats.rmse_ex = ncv.q2_ex, ncv.rmse_ex
         model.stats.q2_ex_sd, model.stats.rmse_ex_sd = ncv.q2_ex_sd, ncv.rmse_ex_sd
@@ -3496,6 +3538,11 @@ def main(argv=None):
                         "best, so that a decoy is not rejected for the conformation its file "
                         "happened to carry. The pose from the file is always among the "
                         "candidates, and the cost is N times the alignment")
+    b.add_argument("--unlabelled", default=None, metavar="FILE",
+                   help="molecules with fields but no activity, added to the training table for "
+                        "--method lapkrr. They are rows of the kernel and terms of the model's "
+                        "expansion, so the co-field sees them, but nothing is fitted or scored "
+                        "against them. Unlike --decoys, which are never trained on at all")
     b.add_argument("--decoys", default=None,
                    help="structure file with background molecules (presumed inactive) used only to "
                         "evaluate a screening model: reports AUC and enrichment at the top 1/5/10 %%")
@@ -3520,7 +3567,8 @@ def main(argv=None):
                         "or the Sybyl-type increments of the original CMF scripts (tripos; -legacy reproduces "
                         "the hydrogen-counting bug of the 2013 scripts)")
     b.add_argument("--method", default="krr",
-                   choices=["krr", "gp", "kpls", "svr", "nusvr", "ranksvm", "svc", "nusvc", "gpc",
+                   choices=["krr", "gp", "kpls", "lapkrr", "svr", "nusvr", "ranksvm", "svc",
+                            "nusvc", "gpc",
                             "kfda", "klr", "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca",
                             "fuse-max", "fuse-min", "fuse-sum", "fuse-med",
                             "fuse-anz", "fuse-mnz", "fuse-euc", "fuse-rrf"],
@@ -3528,6 +3576,12 @@ def main(argv=None):
                         "regression CoMFA uses: with the linear kernel it is PLS in the space of "
                         "the fields, regularised by the number of components (--pls-components) "
                         "instead of lambda. "
+                        "lapkrr is Laplacian-regularised kernel ridge regression: kernel ridge "
+                        "regression with a second penalty that asks the prediction to change "
+                        "slowly between molecules close in field space, so that molecules "
+                        "without a measured activity (--unlabelled) take part in the fit. Its "
+                        "two settings are the ridge (--lams) and the weight of that penalty "
+                        "(--manifold-weights), with --neighbours deciding how local it is. "
                         "gpc is the Gaussian-process classifier (Laplace approximation): it "
                         "gives calibrated probabilities, a posterior variance per molecule and "
                         "the marginal likelihood, and takes its amplitude from the C grid. "
@@ -3643,6 +3697,15 @@ def main(argv=None):
     b.add_argument("--pls-components", default="1,2,3,4,5,6,7,8,10,12", metavar="N,M,...",
                    help="--method kpls: the numbers of PLS components tried; the one with the "
                         "lowest RMSEcv is kept, as lambda is for KRR")
+    b.add_argument("--manifold-weights", default="0,0.01,0.1,1", metavar="G,H,...",
+                   help="--method lapkrr: the weights of the smoothness penalty tried; the one "
+                        "with the lowest RMSEcv is kept, together with lambda. A weight of 0 is "
+                        "plain kernel ridge regression on the labelled molecules, so it is the "
+                        "reference the search can fall back to")
+    b.add_argument("--neighbours", type=int, default=10, metavar="K",
+                   help="--method lapkrr: how many closest molecules each molecule is asked to "
+                        "resemble in the smoothness penalty (default 10). 0 keeps every pair, "
+                        "which makes the penalty global instead of local")
     b.add_argument("--lam-search", default="grid", choices=["grid", "brent"],
                    help="brent: continuous minimisation of RMSEcv over lambda within [min, max] of --lams")
     b.add_argument("--alpha-search", default="grid", choices=["grid", "nelder-mead", "per-field"],

@@ -50,7 +50,7 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), **kernel PLS** (the kernel form of CoMFA's learner, its number of components chosen by cross-validation; see below), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below), or **kernel Fisher discriminant analysis**, the only classifier here found in closed form and the only one whose score is a linear functional of the field, so that a classification model has a co-field (see below), or **kernel logistic regression**, which is the same Laplace mode the Gaussian-process classifier finds with its ridge chosen on the folds and no posterior variance, so its probability is the likelihood at the mode and scoring a library costs an order of magnitude less (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Several endpoints on one kernel**, tied by a task covariance -- one shared correlation, a free-form low-rank matrix chosen by the marginal likelihood, or a covariance read off descriptors of the endpoints themselves, which is what lets an endpoint with no measurements at all be predicted from its neighbours -- so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), **kernel PLS** (the kernel form of CoMFA's learner, its number of components chosen by cross-validation; see below), ε-SVR / ν-SVR (precomputed kernel), a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below), and the **Laplacian-regularised ridge**, which brings molecules that carry no measured activity into the fit through a smoothness penalty over the graph of field similarity, so that a co-field can be drawn over a library rather than over a training set (it gains no accuracy on these series; see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below), or **kernel Fisher discriminant analysis**, the only classifier here found in closed form and the only one whose score is a linear functional of the field, so that a classification model has a co-field (see below), or **kernel logistic regression**, which is the same Laplace mode the Gaussian-process classifier finds with its ridge chosen on the folds and no posterior variance, so its probability is the likelihood at the mode and scoring a library costs an order of magnitude less (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Several endpoints on one kernel**, tied by a task covariance -- one shared correlation, a free-form low-rank matrix chosen by the marginal likelihood, or a covariance read off descriptors of the endpoints themselves, which is what lets an endpoint with no measurements at all be predicted from its neighbours -- so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
@@ -2990,6 +2990,69 @@ is [benchmarks/results/klr/table.md](benchmarks/results/klr/table.md).
 ```bash
 python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task classification \
        --threshold 6.84 --method klr --lams 0.01,0.03,0.1,0.3,1,3 --normalize
+```
+
+### Molecules without an activity: the Laplacian-regularised ridge
+
+A screening library, a set of decoys, a batch synthesised but not yet measured: molecules with
+fields and no activity, and usually far more of them than there are measurements. `--method
+lapkrr` is the standard way of using them, **manifold regularisation** (Belkin, Niyogi and
+Sindhwani 2006). Kernel ridge regression gains a second penalty `gamma f' L f` over the Laplacian
+of the graph of field similarity, which is small when the prediction changes slowly between
+molecules the kernel calls similar, whether or not they carry an activity. The dual is one solve
+over all `n` molecules, `(J K + lambda I + gamma L K) a = J y` with `J` the indicator of the
+labelled ones, so the fitted model is still one kernel expansion — with the unlabelled molecules
+among its terms, which is what lets a co-field picture see the library. The activity of an
+unlabelled molecule is `nan`, so one training table and one expansion over it serve every reader
+of the model; the folds hold out only labelled molecules and every statistic is taken on them.
+
+**On the eight Sutherland sets with half the training activities hidden, it recovers none of what
+the hidden measurements are worth.** Three models, scored on the published test set that none of
+them saw, each choosing its own settings by cross-validation on the molecules it may see, means
+over five halvings:
+
+| mean of the eight sets | R2pred |
+|---|---:|
+| ridge, the visible half only | 0.258 |
+| lapkrr, the hidden half unlabelled | 0.235 |
+| ridge, every activity measured (the ceiling) | 0.376 |
+
+The hidden activities are worth +0.118 of R2pred; the penalty gains **-0.023**, is ahead on two of
+the eight sets, and on no set does its interval exclude zero above. On BZR (-0.032 [-0.062,
+-0.007]) and GPB (-0.051 [-0.177, -0.004]) it measurably loses.
+
+**It is the method, not the choice of its weight.** Choosing both settings by looking at the test
+activities — an oracle that cannot be used, and is here only to separate the two explanations —
+gains +0.009 of R2pred on average, with the interval excluding zero on none of the eight sets.
+There is no weight at which the penalty is worth anything on these series.
+
+**The activity cliffs do not explain the loss.** They are counted, because the plan item asked for
+a loss to be read against them: a pair of labelled molecules is similar at a field cosine of 0.9
+or more and a cliff when it is similar and the activities also differ by at least one log unit.
+Between 22 % (BZR) and 63 % (THER) of the similar pairs are cliffs, but the rank correlation
+between that share and the gain is -0.33, and between the mean activity difference of a similar
+pair and the gain -0.38. What lines up is the **size of the set**: the rank correlation between the
+number of labelled molecules and the gain is +0.74, so the penalty loses most on the smallest sets
+and nothing on the largest.
+
+**On the screening sets no enrichment is lost.** The two LIT-PCBA targets, with the held-out fold
+of each split given to the learner as an unlabelled library: no difference in AUC, in the
+enrichment factor at the top 1 % or 5 %, or in BEDROC against either kernel ridge regression on
+±1 labels or C-SVC excludes zero below it. That half of the gate passes, and passes quietly — on
+ESR1_ant the folds chose a penalty weight of zero in all five folds, so the model fitted there
+*is* kernel ridge regression.
+
+So the learner is kept and labelled as what it measures: the correct implementation of the
+standard method (`tests/test_lapkrr.py` shows it turning an R2 of +0.02 into +0.91 on data built
+to satisfy its assumption) which gains nothing on an aligned congeneric series of a few dozen
+molecules. It is worth having for the co-field over a library, and it is safe to try because the
+weight zero is inside its grid: the cross-validation can switch the penalty off, and on half of
+these fits it did. Kernel ridge regression stays the default. The full table is
+[benchmarks/results/lapkrr/table.md](benchmarks/results/lapkrr/table.md).
+
+```bash
+python cmf_cli.py build examples/sutherland/GPB.sdf --charges file --method lapkrr \
+       --unlabelled library.sdf --lams 0.01,0.1,1 --manifold-weights 0,0.1,1 --normalize
 ```
 
 ### Alignment by prediction confidence

@@ -37,7 +37,7 @@ from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 
-__all__ = ["SpectralFit", "adjusted_rand", "eigengap", "spectral_clusters"]
+__all__ = ["SpectralFit", "adjusted_rand", "eigengap", "knn_laplacian", "spectral_clusters"]
 
 
 def _normalised_laplacian(K: np.ndarray, floor: float = 0.0) -> Tuple[np.ndarray, np.ndarray]:
@@ -56,6 +56,43 @@ def _normalised_laplacian(K: np.ndarray, floor: float = 0.0) -> Tuple[np.ndarray
     inv = np.where(d > 1e-12, 1.0 / np.sqrt(np.maximum(d, 1e-300)), 0.0)
     L = np.eye(A.shape[0]) - (inv[:, None] * A * inv[None, :])
     return L, d
+
+
+def knn_laplacian(K: np.ndarray, neighbours: int = 10, floor: float = 0.0) -> np.ndarray:
+    """The normalised Laplacian of the graph in which every molecule keeps its closest neighbours.
+
+    The same construction :func:`spectral_clusters` uses, with two changes that are what a
+    smoothness penalty needs (plan item E10, manifold regularisation):
+
+    * the affinity is the **cosine** of the kernel, ``K(i,j) / sqrt(K(i,i) K(j,j))``, so that
+      "close" means similar in field space and not simply large.  A kernel of unnormalised
+      fields grows with the size of a molecule, and without this the neighbours of every
+      molecule would be the biggest molecules of the set;
+    * every row keeps only its `neighbours` largest affinities and the rest are set to zero, so
+      the penalty is **local**.  A pair survives if either of the two molecules counts the other
+      among its neighbours, which is the usual symmetric form of the k-nearest-neighbour graph.
+      Without the truncation every molecule is a neighbour of every other and the penalty asks
+      the prediction to be flat over the whole set instead of smooth along it.
+
+    ``neighbours <= 0`` or a number at or above n - 1 keeps the full graph.
+    """
+    A = np.asarray(K, float)
+    A = 0.5 * (A + A.T)
+    n = A.shape[0]
+    d = np.sqrt(np.maximum(np.diag(A), 0.0))
+    inv = np.where(d > 1e-12, 1.0 / np.maximum(d, 1e-300), 0.0)
+    A = inv[:, None] * A * inv[None, :]
+    np.fill_diagonal(A, 0.0)
+    A = np.maximum(A, float(floor))
+    k = int(neighbours)
+    if 0 < k < n - 1:
+        keep = np.zeros_like(A, dtype=bool)
+        order = np.argsort(-A, axis=1, kind="stable")[:, :k]
+        np.put_along_axis(keep, order, True, axis=1)
+        keep |= keep.T                               # a pair either of the two calls a neighbour
+        A = np.where(keep, A, 0.0)
+    L, _d = _normalised_laplacian(A, floor=floor)
+    return L
 
 
 def eigengap(values: Sequence[float], k_max: int = 10) -> Tuple[int, float]:

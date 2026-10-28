@@ -496,6 +496,15 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_klr").report(_r("klr/table.md")),
                   tables=["klr/table.md"],
                   readme=["Classification (manual), Learning row of the feature table"]),
+        Benchmark("lapkrr", "Laplacian-regularised kernel ridge regression: molecules without an "
+                            "activity brought into the fit, measured on the eight Sutherland "
+                            "sets with half the training activities hidden and on the LIT-PCBA "
+                            "screening sets with the library unlabelled",
+                  "run_lapkrr.py", "lapkrr", compute=[["--part", "all"]], minutes="25",
+                  report=lambda: _mod("run_lapkrr").report(_r("lapkrr/table.md")),
+                  tables=["lapkrr/table.md"],
+                  readme=["Molecules without an activity (manual), Learning row of the "
+                          "feature table"]),
     ]
 
 

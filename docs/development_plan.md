@@ -6,14 +6,14 @@ to prove before it is allowed to stay. File references point at the code the wor
 
 ## Where the program stands
 
-The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
+The repository holds, as of 29 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 83 modules and about 38,500 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 83 modules and about 38,900 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1434 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1460 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -21,7 +21,8 @@ kept current; the counts are the ones the repository gives today):
   top, and multiple kernel learning for the mixing coefficients.
 * Learners: kernel ridge regression, kernel partial least squares, SVR, Gaussian-process regression
   with variances, SVC, a Laplace Gaussian-process classifier, kernel Fisher discriminant analysis
-  (the classifier that has a co-field), kernel logistic regression, five one-class descriptions, and a multi-task model on a shared
+  (the classifier that has a co-field), kernel logistic regression, the Laplacian-regularised ridge
+  (the only learner here that fits molecules carrying no activity), five one-class descriptions, and a multi-task model on a shared
   kernel whose selectivity is a difference of co-fields (`cmfqsar/multitask.py`, measured on the
   corrosion series in `benchmarks/results/multitask/`).
 * Interpretation: co-fields, contributions, exact Shapley values under nonlinear kernels, field
@@ -1542,6 +1543,78 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   ceiling on most sets and (ii) does not lose enrichment. The assumption to state is that the
   activity varies smoothly along the data, which an activity cliff breaks; report, per set, how
   many labelled pairs are cliffs by the F3 measure, so that a loss can be read against them.
+  **Done 29 October 2026. Part (i) of the gate fails, part (ii) passes, and the method is kept
+  under rule 5 as what the measurement makes it.**
+  **What was built.** `lapkrr_fit` in `cmfqsar/model.py` -- the dual the entry states,
+  `(JK + lam I + gamma L K) a = J y`, with one extra row and column for the bias, as `krr_fit`
+  has -- and `knn_laplacian` in `cmfqsar/spectral.py`, the normalised Laplacian of the entry with
+  two additions the entry does not state and that both matter: the affinity is the **cosine** of
+  the kernel, so that a neighbour is a similar molecule and not a big one, and every molecule
+  keeps its ten closest neighbours, which is the truncation the entry asks for.
+  `--method lapkrr` with `--unlabelled`, `--manifold-weights` and `--neighbours`;
+  `tests/test_lapkrr.py` (26 tests); `benchmarks/run_lapkrr.py`, registered in `run_all.py`.
+  **The one design decision the entry leaves open, and it is the reason every co-field reader
+  still works.** The activity of an unlabelled molecule is **nan**. A learner needing more than
+  `(K, y)` is new in this program, and the alternative -- a second block of molecules handed to
+  the learner on the side -- would have put the unlabelled molecules outside the training table,
+  where `cofield_coefficients`, `training_contributions` and `atom_contributions` could not reach
+  them. Marking the missing values keeps one training table and one expansion over it, so those
+  three read the model unchanged and their sums still equal the prediction over all n terms.
+  What that convention cost elsewhere was small and is all of it: `_cv_splits` builds the folds
+  over the labelled molecules and keeps the unlabelled ones in the training part of every fold;
+  `cv_loss`, `CMFModel.fit` and `nested_cv` take their statistics on the labelled molecules;
+  `align_mixing` derives the field weights from the labelled molecules; and
+  `dual_covariance_factor` gained the system above with one column per labelled molecule, so the
+  co-field error band works on this learner too.
+  **Part (i) fails, and it is the method that fails.** Half of the published training activities
+  hidden, the three models scored on the published test set that none of them saw, settings chosen
+  by cross-validation inside what each may see, means over five halvings: ridge on the visible
+  half **+0.258** of R2pred, lapkrr with the hidden half unlabelled **+0.235**, ridge on every
+  activity **+0.376**. So the hidden measurements are worth **+0.118** and the penalty recovers
+  **-0.023** of it -- none. It is ahead on two of the eight sets, its interval excludes zero above
+  on none, and on BZR (**-0.032 [-0.062, -0.007]**) and GPB (**-0.051 [-0.177, -0.004]**) it
+  measurably loses. **Choosing both settings on the test set**, an oracle that cannot be used and
+  is reported only to separate the two explanations, gains **+0.009** with the interval excluding
+  zero on no set: there is no weight at which this penalty is worth anything on these series, so
+  the failure is not the cross-validation missing it.
+  **The cliffs the entry asked for do not explain the loss.** A pair of labelled molecules counts
+  as similar at a field cosine of 0.9 or more -- the cosine of F3, applied to two molecules
+  instead of two co-fields; F3 fixes the measure and not a cutoff, so the cutoffs are the
+  benchmark's and are stated with the counts -- and as a cliff when it is similar and the
+  activities also differ by at least one log unit. Between **22 %** (BZR) and **63 %** (THER) of
+  the similar pairs are cliffs, but the rank correlation between that share and the gain is
+  **-0.33**, and between the mean activity difference of a similar pair and the gain **-0.38**.
+  What lines up instead is the **size of the set**: rank correlation **+0.74** between the number
+  of labelled molecules and the gain. The penalty loses most on the smallest sets and nothing at
+  all on the largest. The smoothness assumption is not what these sets break; there are simply
+  too few molecules for a second regularisation parameter to be chosen on.
+  **Part (ii) passes, quietly.** The two LIT-PCBA sets under the protocol of E4 and E8, with the
+  held-out fold given to the learner as the unlabelled library: no difference in AUC, in the
+  enrichment factor at the top 1 % or 5 %, or in BEDROC against either `krr` on +-1 labels or
+  `svc` excludes zero below it, so no enrichment is lost. It passes partly because the method
+  reduces to its reference: on ESR1_ant the folds chose a penalty weight of zero in all five
+  folds, so the model fitted there *is* kernel ridge regression and every difference against it
+  is exactly zero. Over part (i) the weight zero was chosen in half of the forty fits.
+  **Neither does the neighbourhood size rescue it**: 5, 10, 20 neighbours and the untruncated
+  graph give +0.452/+0.410/+0.428/+0.419 on GPB and +0.506/+0.506/+0.506/+0.514 on DHFR, none of
+  them reaching ridge on the labelled half.
+  **Why it is kept.** The implementation is right, which the tests show rather than claim: on two
+  thin curved bands of points with one label each -- the situation manifold regularisation was
+  written for -- it turns an R2 of +0.02 into +0.91. What fails is the match between that
+  situation and an aligned congeneric series of a few dozen molecules, which is what every data
+  set in this repository is. Two things make it worth having anyway. It is the only learner here
+  whose co-field is built from molecules that were never measured, so a picture can be drawn over
+  a library instead of over a training set. And the weight zero is inside its grid, so trying it
+  on a larger or less congeneric collection risks nothing: the cross-validation can switch the
+  penalty off, and half the time it did. **Kernel ridge regression stays the default.** Numbers in
+  `benchmarks/results/lapkrr/table.md`, the manual (*Molecules without an activity*) and the
+  README.
+  **Not done:** the graphical interface, which has nowhere to name a second set of molecules, so
+  the learner is on the command line and in the library only; the one setting of
+  `--unlabelled` where the item might still pay, namely a library far larger and more varied than
+  the labelled set, for which this repository has no set with measured activities to test against;
+  and the untested guess that a weight shared across sets, or a weight chosen by the evidence
+  rather than by the folds, would avoid the loss on the small sets.
 
 ## F. Interpretation (months 4 to 9)
 
@@ -3324,7 +3397,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
-| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**; E10 (unlabelled molecules) next; ~~G1~~ and ~~G2~~ **done** |
+| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; part E complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 

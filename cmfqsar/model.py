@@ -412,6 +412,91 @@ def kpls_fit(K: np.ndarray, y: np.ndarray, components: int) -> Tuple[np.ndarray,
     return a, b, int(T.shape[1])
 
 
+#: how many neighbours every molecule keeps in the graph of the manifold penalty, when the
+#: caller asks for no particular number
+LAPKRR_NEIGHBOURS = 10
+#: weights of the manifold penalty tried by the hyper-parameter search when none are given.
+#: Zero is one of them on purpose: it is plain kernel ridge regression on the labelled molecules,
+#: so the search can decide that the unlabelled molecules do not help.
+DEFAULT_MANIFOLDS = (0.0, 0.01, 0.1, 1.0)
+
+
+def lapkrr_fit(K: np.ndarray, y: np.ndarray, lam: float, manifold: float = 1.0,
+               neighbours: int = LAPKRR_NEIGHBOURS,
+               fit_bias: bool = True) -> Tuple[np.ndarray, float]:
+    """Kernel ridge regression with a smoothness penalty over labelled *and* unlabelled molecules.
+
+    Manifold regularisation (Belkin, Niyogi & Sindhwani, J. Mach. Learn. Res. 7 (2006)
+    2399-2434).  A library being screened, a set of decoys, a batch not yet measured: these
+    molecules have fields but no activity, and plain kernel ridge regression cannot use them at
+    all.  Here they enter through a second penalty,
+
+        gamma f' L f,
+
+    with f the predicted values at all n molecules and L the normalised Laplacian of the graph
+    of field similarity (:func:`cmfqsar.spectral.knn_laplacian`).  That term is small when the
+    prediction changes slowly between molecules that are close in field space, whether or not
+    they are labelled, so the unlabelled molecules say where the prediction may vary and where
+    it may not.  Minimising it together with the squared error on the labelled molecules and the
+    usual ridge gives one dual solve over all n molecules,
+
+        (J K + lam I + gamma L K) a = J y,
+
+    where J is the diagonal indicator of the molecules that have an activity.  With a bias term
+    the stationarity conditions add one row and one column, exactly as in :func:`krr_fit`.
+
+    **The activities of the unlabelled molecules are passed as nan.**  A learner that needs more
+    than (K, y) is new in this program, and the alternative -- a second kernel block handed to
+    the learner on the side -- would have put the unlabelled molecules outside the training
+    table, where the co-field, the molecule contributions and the atom contributions could not
+    see them.  The expansion ``f(x) = sum_j a_j K(x, x_j) + b`` runs over all n molecules, so
+    the training table has to hold all n; marking the missing activities in y is what keeps the
+    model one kernel expansion over one training table and every reader of it unchanged.
+
+    **The assumption.**  gamma f' L f asks the activity to vary smoothly along the data.  An
+    activity cliff -- two molecules whose fields are nearly the same and whose activities are
+    not -- breaks that assumption, and the penalty then pulls the prediction of both towards
+    their average.  How many such pairs a set holds is therefore worth counting before the
+    method is used on it (``benchmarks/run_lapkrr.py`` reports the count per set).
+
+    ``manifold = 0`` switches the penalty off; the unlabelled molecules then get coefficients of
+    zero and the fit is ridge regression on the labelled molecules alone.
+    """
+    from .spectral import knn_laplacian
+
+    K = np.asarray(K, float)
+    y = np.asarray(y, float)
+    n = len(y)
+    lab = np.isfinite(y)
+    if not lab.any():
+        raise ValueError("Laplacian-regularised kernel ridge regression needs at least one "
+                         "molecule with a measured activity")
+    yj = np.where(lab, y, 0.0)
+    A = np.zeros((n, n))
+    A[lab] = K[lab]                                  # J K
+    A[np.diag_indices(n)] += float(lam)              # lam I
+    gamma = float(manifold)
+    if gamma != 0.0:
+        A += gamma * (knn_laplacian(K, neighbours=neighbours) @ K)
+
+    def _solve(M, rhs):
+        try:
+            return np.linalg.solve(M, rhs)
+        except np.linalg.LinAlgError:
+            return np.linalg.lstsq(M, rhs, rcond=None)[0]
+
+    if not fit_bias:
+        return _solve(A, yj), 0.0
+    j = lab.astype(float)
+    M = np.zeros((n + 1, n + 1))
+    M[:n, :n] = A
+    M[:n, n] = j                                     # J 1
+    M[n, :n] = j @ K                                 # (J 1)' K
+    M[n, n] = float(np.count_nonzero(lab))
+    sol = _solve(M, np.concatenate([yj, [float(yj.sum())]]))
+    return sol[:n], float(sol[n])
+
+
 #: folds used to choose the threshold and the probability map of a kernel Fisher discriminant,
 #: when the caller asks for no particular number
 KFDA_FOLDS = 5
@@ -761,6 +846,17 @@ class _Learner:
             self.alpha_, self.b_ = a, b
             self.support_ = np.arange(n)
             self.n_components_ = used
+        elif self.method == "lapkrr":
+            # Laplacian-regularised kernel ridge regression: the molecules without an activity
+            # are rows of this kernel and terms of this expansion like any other, and are marked
+            # by a nan in y.  Nothing else in the class changes, which is the point of that
+            # convention: the coefficients, the bias and the training table keep their meaning.
+            a, b = lapkrr_fit(K, y, float(self.params.get("lam", 1.0)),
+                              manifold=float(self.params.get("manifold", 1.0)),
+                              neighbours=int(self.params.get("neighbours", LAPKRR_NEIGHBOURS)),
+                              fit_bias=self.fit_bias)
+            self.alpha_, self.b_ = a, b
+            self.support_ = np.arange(n)
         elif self.method in ("svr", "nusvr"):
             from sklearn.svm import SVR, NuSVR
             if self.method == "svr":
@@ -971,6 +1067,28 @@ def _kfold_indices(n: int, folds: int, seed: Optional[int]) -> List[np.ndarray]:
     return [idx[k::folds] for k in range(folds)]
 
 
+def _cv_splits(y: np.ndarray, folds: int,
+               seed: Optional[int]) -> List[Tuple[np.ndarray, np.ndarray]]:
+    """(left-out indices, training indices) of every fold.
+
+    With every activity measured this is the plain k-fold split: the folds of
+    :func:`_kfold_indices` and their complements.  A molecule whose activity is nan has nothing
+    to predict and is put in the **training part of every fold**, which is how a semi-supervised
+    learner (``--method lapkrr``) uses it: the unlabelled molecules are part of the model being
+    cross-validated, not part of what is being held out.
+    """
+    y = np.asarray(y, float)
+    n = len(y)
+    lab = np.flatnonzero(np.isfinite(y))
+    if len(lab) == n:
+        folds = max(2, min(folds, n))
+        return [(te, np.setdiff1d(np.arange(n), te))
+                for te in _kfold_indices(n, folds, seed)]
+    folds = max(2, min(folds, max(len(lab), 2)))
+    return [(lab[k], np.setdiff1d(np.arange(n), lab[k]))
+            for k in _kfold_indices(len(lab), folds, seed)]
+
+
 def cv_predict(K: np.ndarray, y: np.ndarray, method: str, params: Dict[str, float],
                folds: int = 10, seed: Optional[int] = 0, fit_bias: bool = True,
                groups: Optional[Sequence] = None) -> np.ndarray:
@@ -980,11 +1098,9 @@ def cv_predict(K: np.ndarray, y: np.ndarray, method: str, params: Dict[str, floa
     of the original R scripts; an integer seed shuffles the molecules first.
     """
     n = len(y)
-    folds = max(2, min(folds, n))
-    yp = np.zeros(n)
+    yp = np.full(n, np.nan)
     g = None if groups is None else np.asarray(groups)
-    for te in _kfold_indices(n, folds, seed):
-        tr = np.setdiff1d(np.arange(n), te)
+    for te, tr in _cv_splits(y, folds, seed):
         learner = _Learner(method, params, fit_bias)
         if g is not None:
             learner.groups_ = g[tr]            # the pairs of a fold stay inside their groups
@@ -1029,7 +1145,7 @@ class CMFModel:
     fieldset: FieldSet
     # "regression" | "classification" (binary, +1 active / -1 inactive) | "oneclass" (novelty detection)
     task: str = "regression"
-    method: str = "krr"                     # krr | gp | kpls | svr | nusvr | svc | nusvc | kfda | klr | ocsvm
+    method: str = "krr"                     # krr | gp | kpls | lapkrr | svr | nusvr | svc | nusvc | kfda | klr | ocsvm
     params: Dict[str, float] = field(default_factory=lambda: {"lam": 1.0, "C": 1.0, "epsilon": 0.1,
                                                               "nu": 0.5, "components": 5})
     normalize: bool = False                 # cosine-normalise each field kernel
@@ -1633,20 +1749,24 @@ class CMFModel:
         self.coef = self.learner_.alpha_
         self.bias = self.learner_.b_
         yfit = self.learner_.predict(K)
+        # a molecule without a measured activity (--method lapkrr) is part of the model and has
+        # nothing to be scored against, so every statistic below is taken on the labelled ones
+        lab = np.isfinite(y) if y is not None and y.size else np.zeros(0, bool)
+        n_lab = int(np.count_nonzero(lab))
         if self.task == "oneclass":
             st = ClassStats(task="oneclass", n_train=len(y) if y is not None else K.shape[0])
             st.inlier_fraction = float(np.mean(yfit >= 0))
             st.n_support = int(len(self.learner_.support_)) if self.learner_.support_ is not None else 0
             st.extra["y_fit"] = yfit
         elif self.task == "classification":
-            st = ClassStats(task="classification", n_train=len(y),
-                            fit=classification_scores(y, yfit))
-            if cv_folds and cv_folds >= 2 and len(y) >= 3:
+            st = ClassStats(task="classification", n_train=n_lab,
+                            fit=classification_scores(y[lab], yfit[lab]))
+            if cv_folds and cv_folds >= 2 and n_lab >= 3:
                 if progress:
                     progress("Cross-validation", 0.9)
                 ycv = self._cv_predictions(K, y, cv_folds, cv_seed)
-                st.cv = classification_scores(y, ycv)
-                st.cv_folds = min(cv_folds, len(y))
+                st.cv = classification_scores(y[lab], ycv[lab])
+                st.cv_folds = min(cv_folds, n_lab)
                 st.extra["y_cv"] = ycv
             st.extra["y_fit"] = yfit
         elif self.method == "ranksvm":
@@ -1666,14 +1786,15 @@ class CMFModel:
                 st.extra["y_cv"] = ycv
             st.extra["y_fit"] = yfit
         else:
-            st = ModelStats(n_train=len(y), r2=r2_score(y, yfit), rmse_fit=rmse(y, yfit))
-            if cv_folds and cv_folds >= 2 and len(y) >= 3:
+            st = ModelStats(n_train=n_lab, r2=r2_score(y[lab], yfit[lab]),
+                            rmse_fit=rmse(y[lab], yfit[lab]))
+            if cv_folds and cv_folds >= 2 and n_lab >= 3:
                 if progress:
                     progress("Cross-validation", 0.9)
                 ycv = self._cv_predictions(K, y, cv_folds, cv_seed)
-                st.q2 = r2_score(y, ycv)
-                st.rmse_cv = rmse(y, ycv)
-                st.cv_folds = min(cv_folds, len(y))
+                st.q2 = r2_score(y[lab], ycv[lab])
+                st.rmse_cv = rmse(y[lab], ycv[lab])
+                st.cv_folds = min(cv_folds, n_lab)
                 st.extra["y_cv"] = ycv
             st.extra["y_fit"] = yfit
         self.stats = st
@@ -2011,12 +2132,16 @@ class CMFModel:
             self.stats.extra["y_test_pred"] = yp
             return yp
         if ok.sum() >= 2:
+            # the training molecules without an activity (--method lapkrr) have no value to
+            # take a mean or a variance of, so the two reference figures use the labelled ones
+            y_train = np.asarray(self.y, float)
+            y_train = y_train[np.isfinite(y_train)]
             self.stats.n_test = int(ok.sum())
             self.stats.r2_pred = r2_score(y_test[ok], yp[ok])
-            self.stats.r2_pred_train_mean = r2_score(y_test[ok], yp[ok], float(np.mean(self.y)))
+            self.stats.r2_pred_train_mean = r2_score(y_test[ok], yp[ok], float(np.mean(y_train)))
             self.stats.rmse_pred = rmse(y_test[ok], yp[ok])
             m = int(ok.sum())
-            var_train = float(np.var(self.y, ddof=1)) if len(self.y) > 1 else float("nan")
+            var_train = float(np.var(y_train, ddof=1)) if len(y_train) > 1 else float("nan")
             if m > 1 and var_train > 0:
                 rss = float(np.sum((y_test[ok] - yp[ok]) ** 2))
                 self.stats.r2_pred_train_var = 1.0 - (rss / (m - 1)) / var_train
@@ -2424,6 +2549,12 @@ def align_mixing(K_fields: np.ndarray, y: np.ndarray, scale: Optional[np.ndarray
     kernel layer, which can gain accuracy but loses the interpretation.
     """
     K_fields = np.asarray(K_fields, float)
+    lab = np.isfinite(np.asarray(y, float))
+    if not lab.all():
+        # a molecule without an activity says nothing about which field matters, so the
+        # alignment with the activities is measured on the labelled molecules alone
+        K_fields = K_fields[:, lab][:, :, lab]
+        y = np.asarray(y, float)[lab]
     F = K_fields.shape[0]
     if scale is None:
         scale = np.ones(F)
@@ -2469,13 +2600,10 @@ def mkl_fold_weights(K_fields: np.ndarray, y: np.ndarray, model: "CMFModel", fol
                      rho: float = 1.0) -> List[Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """Per-fold alignment weights: a list of (test indices, training indices, h)."""
     y = np.asarray(y, float)
-    n = len(y)
-    folds = max(2, min(folds, n))
     on = [s.enabled for s in model.fieldset.specs]
     f_idx = np.arange(K_fields.shape[0])
     out = []
-    for te in _kfold_indices(n, folds, seed):
-        tr = np.setdiff1d(np.arange(n), te)
+    for te, tr in _cv_splits(y, folds, seed):
         out.append((te, tr, align_mixing(K_fields[np.ix_(f_idx, tr, tr)], y[tr], model.scale, on,
                                          mode=mode, rho=rho)))
     return out
@@ -2492,7 +2620,7 @@ def mkl_cv_predict(K_fields: np.ndarray, y: np.ndarray, model: "CMFModel", param
     each fold only.  Returns the predictions and the weights of the full training set.
     """
     y = np.asarray(y, float)
-    yp = np.zeros(len(y))
+    yp = np.full(len(y), np.nan)
     if fold_h is None:
         fold_h = mkl_fold_weights(K_fields, y, model, folds, seed, mode=mode, rho=rho)
     for te, tr, h in fold_h:
@@ -2565,9 +2693,16 @@ class SearchResult:
 DEFAULT_COMPONENTS = (1, 2, 3, 4, 5, 6, 7, 8, 10, 12)
 
 
-def _param_grid(method: str, lams, Cs, epsilons, nus, components=()):
+def _param_grid(method: str, lams, Cs, epsilons, nus, components=(), manifolds=()):
     if method in ("krr", "gp"):
         return [{"lam": float(l)} for l in lams]
+    if method == "lapkrr":
+        # two regularisers: the ridge on the norm of the model and the weight of the smoothness
+        # penalty over labelled and unlabelled molecules together.  gamma = 0 is ridge regression
+        # on the labelled molecules alone, so the reference rule 1 of the repository asks for is
+        # inside the grid and the search can decide that the unlabelled molecules do not help.
+        gammas = sorted({float(g) for g in (manifolds or DEFAULT_MANIFOLDS)})
+        return [{"lam": float(l), "manifold": g} for l in lams for g in gammas]
     if method == "kpls":
         comps = sorted({max(1, int(c)) for c in (components or DEFAULT_COMPONENTS)})
         return [{"components": c} for c in comps]
@@ -2605,6 +2740,10 @@ def cv_loss(model: "CMFModel", y: np.ndarray, ycv: np.ndarray) -> Tuple[float, f
     1 - rho and Spearman's rho, because the score of a ranking model has no units and
     minimising its squared error would be selecting on a quantity that does not exist.
     """
+    lab = np.isfinite(np.asarray(y, float))
+    if not lab.all():
+        # unlabelled molecules (--method lapkrr) have no prediction to be scored against
+        y, ycv = np.asarray(y, float)[lab], np.asarray(ycv, float)[lab]
     if model.method == "ranksvm":
         from .ranking import rank_scores
         rho = rank_scores(y, ycv, gap=float(model.params.get("gap", 0.0)),
@@ -2633,11 +2772,13 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
                 lam_search: str = "grid", precomputed: Optional[Dict] = None,
                 alpha_search: str = "grid", nm_start: Sequence[float] = (0.25, 5.0),
                 nm_maxit: int = 500, select: str = "cv",
-                components: Sequence[int] = ()) -> SearchResult:
+                components: Sequence[int] = (),
+                manifolds: Sequence[float] = ()) -> SearchResult:
     """Minimise RMSEcv over alpha (shared by all fields unless `alpha_fields` restricts it)
     and the learner's regularisation parameters (``lams`` for KRR/GP, ``Cs`` with ``epsilons``
     or ``nus`` for the support-vector methods, ``components`` for KPLS, which falls back to
-    :data:`DEFAULT_COMPONENTS` when empty).  Optionally refine the mixing
+    :data:`DEFAULT_COMPONENTS` when empty, ``lams`` together with ``manifolds`` for the
+    Laplacian-regularised ridge, which falls back to :data:`DEFAULT_MANIFOLDS`).  Optionally refine the mixing
     coefficients h_f by coordinate descent (beware of model-selection bias), or set them by
     centred kernel alignment (``mkl=True``, see :func:`align_mixing`), in which case the
     reported RMSEcv is reliable because the weights are re-derived inside every fold.
@@ -2695,7 +2836,7 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
     if mkl and optimize_h:
         raise ValueError("choose either alignment-based multiple kernel learning or the "
                          "coordinate-descent refinement of h, not both")
-    grid = _param_grid(model.method, lams, Cs, epsilons, nus, components)
+    grid = _param_grid(model.method, lams, Cs, epsilons, nus, components, manifolds)
     rows = []
     h_cache = {}
     best = None
@@ -2963,7 +3104,8 @@ def nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel,
               lam_search: str = "grid", precompute: bool = True,
               max_precompute_bytes: float = 2e9, alpha_search: str = "grid",
               nm_start: Sequence[float] = (0.25, 5.0), inner_seed="same",
-              components: Sequence[int] = ()) -> NestedCVResult:
+              components: Sequence[int] = (),
+              manifolds: Sequence[float] = ()) -> NestedCVResult:
     """External k-fold cross-validation with the hyper-parameters selected in an
     inner cross-validation loop on each working set (Baskin & Zhokhova 2013).
 
@@ -3005,13 +3147,13 @@ def nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel,
                 sd = np.array([np.diag(Kf[f]) for f in range(len(specs))])
                 Kf = normalize_kernels(Kf, sd, sd)
             pre_full[alpha] = (Kf, sd)
+    lab = np.isfinite(y)
     for rep in range(repeats):
-        folds = _kfold_indices(n, outer_folds, None if seed is None else seed + rep)
+        folds = _cv_splits(y, outer_folds, None if seed is None else seed + rep)
         fold_hyper = []     # (alpha, params) selected in every outer fold
-        for k, te in enumerate(folds):
+        for k, (te, tr) in enumerate(folds):
             if cancel and cancel():
                 raise Cancelled()
-            tr = np.setdiff1d(np.arange(n), te)
             sub_train = train.subset(tr)
             model = model_template.fresh_copy()
             base = pre_frac + (1.0 - pre_frac) * step / total_steps
@@ -3026,7 +3168,7 @@ def nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel,
                               progress=(lambda msg, fr: progress(f"repeat {rep + 1}/{repeats}, fold {k + 1}/{outer_folds}: {msg}", base + span * fr)) if progress else None,
                               cancel=cancel, lam_search=lam_search, precomputed=pre,
                               alpha_search=alpha_search, nm_start=nm_start,
-                              components=components)
+                              components=components, manifolds=manifolds)
             model.fit(sub_train, y[tr], cv_folds=0, reuse_kernels=True)
             fold_hyper.append((float(res.best_alpha), dict(res.best_params)))
             if pre_full is not None and model.is_linear:
@@ -3039,7 +3181,8 @@ def nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel,
             else:
                 preds[rep, te] = model.predict(train.subset(te))
             step += 1
-        per_repeat.append({"q2": r2_score(y, preds[rep]), "rmse": rmse(y, preds[rep]), "hyper": fold_hyper})
+        per_repeat.append({"q2": r2_score(y[lab], preds[rep][lab]),
+                           "rmse": rmse(y[lab], preds[rep][lab]), "hyper": fold_hyper})
     q2s = np.array([d["q2"] for d in per_repeat])
     rs = np.array([d["rmse"] for d in per_repeat])
     y_mean = preds.mean(axis=0)
@@ -3047,4 +3190,5 @@ def nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel,
                           q2_ex_sd=float(q2s.std(ddof=1)) if repeats > 1 else float("nan"),
                           rmse_ex_sd=float(rs.std(ddof=1)) if repeats > 1 else float("nan"),
                           y_pred=y_mean, per_repeat=per_repeat,
-                          q2_ex_aggr=r2_score(y, y_mean), rmse_ex_aggr=rmse(y, y_mean))
+                          q2_ex_aggr=r2_score(y[lab], y_mean[lab]),
+                          rmse_ex_aggr=rmse(y[lab], y_mean[lab]))

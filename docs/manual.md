@@ -2059,7 +2059,7 @@ molecules, where the NumPy neighbour list of the previous section is also worth 
 
 | Task | Methods | Key |
 |---|---|---|
-| Regression | kernel ridge regression with bias; Gaussian process (the same fit plus predictive variances); kernel partial least squares (CoMFA's learner, regularised by its number of components); ε-SVR; ν-SVR; the ranking SVM, which fits the order and not the values | `krr`, `gp`, `kpls`, `svr`, `nusvr`, `ranksvm` |
+| Regression | kernel ridge regression with bias; Gaussian process (the same fit plus predictive variances); kernel partial least squares (CoMFA's learner, regularised by its number of components); ε-SVR; ν-SVR; the ranking SVM, which fits the order and not the values; the Laplacian-regularised ridge, which adds molecules that have no measured activity to the fit | `krr`, `gp`, `kpls`, `svr`, `nusvr`, `ranksvm`, `lapkrr` |
 | Binary classification | C-SVC; ν-SVC; Gaussian-process classifier by the Laplace approximation; kernel Fisher discriminant analysis, the only classifier here whose score is linear in the field and which therefore has a co-field; kernel logistic regression, the same Laplace mode with its ridge chosen on the folds and no posterior variance | `svc`, `nusvc`, `gpc`, `kfda`, `klr` |
 | One-class / screening | 1-SVM; distance to the centre of the actives; distance to the k-th nearest active; one-class Gaussian process; distance from the principal subspace (kernel PCA) | `ocsvm`, `ocmean`, `ocknn`, `ocgp`, `ockpca` |
 
@@ -2388,6 +2388,128 @@ learner here chooses its own, no prior to argue about and no approximation in th
 beyond the mode itself. It is also the cheap way to score a large library with a probability. If
 you want a probability that admits ignorance for a molecule unlike the training set, `gpc` is
 still the method, and its evidence is a better way of choosing its amplitude than the folds are.
+
+## Molecules without an activity: the Laplacian-regularised ridge
+
+Every learner above fits the molecules whose activity is known and ignores the rest. A screening
+library, a set of decoys, a batch synthesised but not yet measured: these molecules have fields,
+and there are usually far more of them than there are measurements. `--method lapkrr` is the
+standard way of putting them to use, **manifold regularisation** (Belkin, Niyogi and Sindhwani
+2006): kernel ridge regression with a second penalty that asks the prediction to change slowly
+between molecules that are close in field space, whether or not they carry an activity.
+
+**What it minimises.** With $J$ the diagonal indicator of the molecules that have an activity and
+$L$ the Laplacian of the graph of field similarity,
+
+$$
+\sum_{i \in \text{labelled}} \left(y_i - f(x_i)\right)^2 + \lambda\,\|f\|^2
++ \gamma\, f^{T} L f, \qquad f(x) = \sum_j a_j K(x, x_j) + b,
+$$
+
+where the sum over $j$ now runs over **every** molecule, labelled or not. The third term is small
+when $f$ takes similar values at molecules the kernel calls similar. Setting the derivatives to
+zero gives one linear solve over all $n$ molecules,
+
+$$
+(J K + \lambda I + \gamma L K)\, a = J y,
+$$
+
+with one extra row and column for the bias, exactly as for kernel ridge regression. So the fitted
+model is still one kernel expansion, and **the co-field, the molecule contributions and the atom
+contributions all read it with no special case** — with the unlabelled molecules now among the
+terms, which is what lets a co-field picture see the library.
+
+**How the activities are passed.** The activity of an unlabelled molecule is `nan`. A learner that
+needs more than the kernel and the activities is new in this program, and the alternative — a
+second block of molecules handed to the learner on the side — would have put the unlabelled
+molecules outside the training table, where nothing that reads a model could see them. Marking
+the missing values in the activity vector keeps one training table and one expansion over it.
+Everything downstream follows: the cross-validation folds hold out only molecules that have an
+activity and keep the unlabelled ones in the training part of every fold, and every statistic is
+computed on the labelled molecules alone.
+
+**The graph.** $L$ is the normalised Laplacian of `cmfqsar/spectral.py`, built from the **cosine**
+of the kernel so that "close" means similar and not merely large, with every molecule keeping only
+its `--neighbours` closest neighbours (10 by default). Without that truncation every molecule is a
+neighbour of every other and the penalty asks the prediction to be flat over the whole set instead
+of smooth along it.
+
+**The assumption, which is the whole of it.** $\gamma f^{T} L f$ says the activity varies smoothly
+along the data. An **activity cliff** — two molecules whose fields are nearly the same and whose
+activities are not — says it does not, and where there is one the penalty pulls both predictions
+towards their average.
+
+```bash
+python cmf_cli.py build examples/sutherland/GPB.sdf --charges file --method lapkrr \
+       --unlabelled library.sdf --lams 0.01,0.1,1 --manifold-weights 0,0.1,1 --normalize
+```
+
+The weight zero is in the grid on purpose: it is plain kernel ridge regression on the labelled
+molecules, so the cross-validation can decide that the unlabelled molecules do not help.
+
+### Measured, and it does not help
+
+`benchmarks/run_lapkrr.py` asks the two questions of the plan entry. First, on the eight
+Sutherland sets, half of the published training activities are hidden and three models are scored
+on the published test set, which none of them saw: ridge on the visible half, this learner with
+the hidden half unlabelled, and ridge on every activity, which is the ceiling. Each chooses its
+own settings by cross-validation on the molecules it may see; the figures are means over five
+halvings and the intervals are paired bootstraps over the test molecules.
+
+| Mean of the eight sets | R2pred |
+|---|---:|
+| ridge, the visible half only | 0.258 |
+| lapkrr, the hidden half unlabelled | 0.235 |
+| ridge, every activity measured (the ceiling) | 0.376 |
+
+**The penalty recovers none of the gap.** The hidden activities are worth +0.118 of R2pred. The
+penalty gains −0.023 on average, is ahead on two of the eight sets, and on no set does its
+interval exclude zero above; on two sets (BZR −0.032 [−0.062, −0.007] and GPB −0.051 [−0.177,
+−0.004]) the interval excludes zero **below**, so there it measurably loses.
+
+**It is the method and not the choice of its weight.** Choosing both settings by looking at the
+test activities — an oracle that cannot be used — gains +0.009 of R2pred on average over ridge
+chosen the same way, and the interval excludes zero on none of the eight sets. There is no weight
+at which this penalty is worth anything on these series.
+
+**And the cliffs do not explain it.** The plan entry expected a loss to be read against the
+activity cliffs, so they are counted: a pair of labelled molecules counts as similar when the
+cosine of their fields is 0.9 or more, and as a cliff when it is similar and the activities also
+differ by at least one log unit. Between 22 % (BZR) and 63 % (THER) of the similar pairs are
+cliffs. The rank correlation between that share and what the penalty gains is −0.33, and between
+the mean activity difference of a similar pair and the gain −0.38: too weak to predict anything.
+What does line up is the **size of the set**: the rank correlation between the number of labelled
+molecules and the gain is +0.74. The penalty loses most on the smallest sets and nothing at all on
+the largest.
+
+One place it gives a little. Read on the hidden molecules themselves rather than on the test set
+— which is the transductive setting manifold regularisation is usually stated in, since those
+molecules are in the expansion — it is ahead on six of the eight sets, +0.383 against +0.374 on
+average. That is a gain of 0.009 and well inside the noise.
+
+Second, the screening sets: the two LIT-PCBA targets of *A classifier with a co-field*, with the
+held-out fold of each split given to the learner as an unlabelled library. **No enrichment is
+lost**: no difference in AUC, in the enrichment factor at the top 1 % or 5 %, or in BEDROC
+against either kernel ridge regression on ±1 labels or C-SVC excludes zero below it. That part of
+the gate passes, but it passes quietly: on ESR1\_ant the folds chose a penalty weight of zero in
+all five folds, so the model fitted there *is* kernel ridge regression and every difference is
+exactly zero.
+
+**So what it is for.** Not accuracy. The learner is kept, labelled as what the measurement makes
+it: the standard way of using unlabelled molecules, implemented correctly — `tests/test_lapkrr.py`
+shows it turning an R2 of +0.02 into +0.91 on data built to satisfy its assumption — and gaining
+nothing on an aligned congeneric series of a few dozen molecules, which is what the data sets in
+this repository are. Two reasons to have it anyway. It is the only learner here whose co-field is
+built from molecules that were never measured, so a picture can be drawn over a library rather
+than over a training set. And the weight zero is inside its grid, so a user who tries it on a
+larger or less congeneric collection risks nothing: the cross-validation can switch the penalty
+off, and on half of these fits it did. Kernel ridge regression stays the default.
+
+The full table, per set, with the oracle rows, the cliff counts and the neighbourhood sizes, is
+`benchmarks/results/lapkrr/table.md`.
+
+**Not in the graphical interface.** The fit panel has nowhere to name a second set of molecules,
+so this learner is on the command line and in the library only.
 
 ## Fitting the order instead of the values: the ranking SVM
 

@@ -1,6 +1,6 @@
 {
- "commit": "509d3ecfa164d3300352bca5c4aef319b5b2c8be",
- "created": "2026-10-28T23:28:45",
+ "commit": "b37d02acaf0c9a223ac86a33a36458e7c6462926",
+ "created": "2026-10-29T00:28:17",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2112,6 +2112,19 @@
   "benchmarks/results/kpls/THR_kpls.json": "0d13a5093e2cdaf40f6e86280ad4cbd4d27cef366e102d67b28e0fcd178acbbd",
   "benchmarks/results/kpls/THR_krr.json": "d44c018df68601313da630f71e8cbf2d6b19bdc8759a3ed859e003b5de18faef",
   "benchmarks/results/kpls/table.md": "cd6107f9c8abea9004883c9efaf4931cb04e9b971ced4052b39206be0f37ee89",
+  "benchmarks/results/lapkrr/hidden_ACE.json": "b812a43e012501cfa8b0ee96928f2e596bc404b0cd76033999500a7eab4ebe59",
+  "benchmarks/results/lapkrr/hidden_AChE.json": "76d9da2388e3891df28a6d0a0e9e136b1a8a63c097814d981456c021226b8964",
+  "benchmarks/results/lapkrr/hidden_BZR.json": "56b86545e8af3508a6b77f3e3d0e665e98518508472f81997953e9b7b3f3ca21",
+  "benchmarks/results/lapkrr/hidden_COX2.json": "0282a5eda926c98981b422ad675e65f99b415b6a683eefe65d062401e9c2d2a2",
+  "benchmarks/results/lapkrr/hidden_DHFR.json": "3029eea95d8fe034cfd15cb031798939404fc67d89d93b40583bb2fe4d2432b6",
+  "benchmarks/results/lapkrr/hidden_GPB.json": "fe5cb71c6b2765560b8f75d9dacbde45e6ea92ed2a4494b99ca06551203adbcc",
+  "benchmarks/results/lapkrr/hidden_THER.json": "b3a124760ba569b20a40ee54a7e5ff5e9bf301ef3db60bf035a971a6e78dc8d6",
+  "benchmarks/results/lapkrr/hidden_THR.json": "541c21f922ef129fd5dbc2cae7e1e5d54fe889b6f0feca52e1a5788cd0dc57a3",
+  "benchmarks/results/lapkrr/neighbours_DHFR.json": "bfce0d4913333108dd493b4e332ecfb2a00b102418a63196e6b61e24bafc9efc",
+  "benchmarks/results/lapkrr/neighbours_GPB.json": "29942a2d8a3c389d47128deda9c7630409321e48ae513c74367ab9a6b575c6bf",
+  "benchmarks/results/lapkrr/screen_ESR1_ant.json": "61945cc6f09467640b8f6f0d5763181808c267bdbd785dd0c83ba7ac6714db81",
+  "benchmarks/results/lapkrr/screen_TP53.json": "ca4ec175fc92d04ce75ea7870c4c3cc21b60675a8aef014e8d7903d72002fba8",
+  "benchmarks/results/lapkrr/table.md": "36d28177c5fe41eaf403a5d44a34f4dd42dc19d57634a30a1fdacd40413b726a",
   "benchmarks/results/local/pka.json": "8dfb0b579736ea7c29e9d15f7a75ef1a6a380caef6216d34aaef3649d96803bc",
   "benchmarks/results/local/pka_conformers.json": "6d337283122a7addc24889557321ed6e167853d1e9e5fdbbcf8ab2c716f292d9",
   "benchmarks/results/local/shifts.json": "f8109b7b3a8c9bdcc09ca97750f0f23fa97d162b9bdb9e9d09da5a5790ac4b29",

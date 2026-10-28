@@ -186,6 +186,16 @@ class Dataset:
         """Background molecules, presumed inactive; never used for fitting."""
         return np.where(self.subset == "decoy")[0]
 
+    @property
+    def unlabelled_indices(self) -> np.ndarray:
+        """Molecules loaded as a set without activities, for a semi-supervised fit.
+
+        They are trained on -- they are rows of the kernel and terms of the model's expansion --
+        but there is no activity to fit or to score them against; see ``--unlabelled`` and
+        ``--method lapkrr``.  Decoys, in contrast, are never trained on at all.
+        """
+        return np.where(self.subset == "unlabelled")[0]
+
     def random_split(self, test_fraction: float = 0.25, seed: int = 0) -> None:
         n = len(self)
         rng = np.random.RandomState(seed)

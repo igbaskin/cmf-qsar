@@ -272,8 +272,13 @@ def dual_covariance_factor(model: CMFModel) -> np.ndarray:
     (K + lam I)^-1.  So activities carrying independent noise of variance sigma^2 give
     coefficients carrying covariance sigma^2 G G^T, and every linear functional of them carries
     the matching variance.  Nothing here is a Bayesian posterior: see :func:`cofield_variance`.
+
+    The Laplacian-regularised ridge (method ``lapkrr``) is the same kind of map, with two
+    differences: its system matrix carries the smoothness penalty, and only the molecules that
+    have an activity carry noise, so G has one column per labelled molecule rather than per
+    training molecule.  ``G G^T`` is the same size either way, and so is everything downstream.
     """
-    if model.method not in ("krr", "gp"):
+    if model.method not in ("krr", "gp", "lapkrr"):
         raise ValueError(f"the dual coefficients of a '{model.method}' model come out of a "
                          "quadratic program and are not a linear map of the activities, so this "
                          "covariance does not describe them; fit krr or gp for co-field errors")
@@ -287,7 +292,30 @@ def dual_covariance_factor(model: CMFModel) -> np.ndarray:
     K = model.joint_kernel(model.K_fields_train, model.train.descriptors)
     n = K.shape[0]
     lam = float(model.params.get("lam", 1.0))
-    if not model.fit_bias:
+    if model.method == "lapkrr":
+        from .spectral import knn_laplacian
+        lab = np.isfinite(np.asarray(model.y, float))
+        j = lab.astype(float)
+        M = np.zeros((n, n))
+        M[lab] = K[lab]
+        M[np.diag_indices(n)] += lam
+        gamma = float(model.params.get("manifold", 1.0))
+        if gamma != 0.0:
+            M += gamma * (knn_laplacian(
+                K, neighbours=int(model.params.get("neighbours", 10))) @ K)
+        cols = np.flatnonzero(lab)                   # only a measured activity carries noise
+        E = np.zeros((n, len(cols)))
+        E[cols, np.arange(len(cols))] = 1.0
+        if not model.fit_bias:
+            A, rhs = M, E
+        else:
+            A = np.zeros((n + 1, n + 1))
+            A[:n, :n] = M
+            A[:n, n] = j
+            A[n, :n] = j @ K
+            A[n, n] = float(np.count_nonzero(lab))
+            rhs = np.vstack([E, np.ones((1, len(cols)))])
+    elif not model.fit_bias:
         A, rhs = K + lam * np.eye(n), np.eye(n)
     else:
         A = np.zeros((n + 1, n + 1))

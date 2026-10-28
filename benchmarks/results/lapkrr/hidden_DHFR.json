@@ -1,0 +1,203 @@
+{
+ "set": "DHFR",
+ "part": "hidden",
+ "n_train": 237,
+ "n_test": 124,
+ "alpha": 0.5,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "repeats": 5,
+ "visible_share": 0.5,
+ "neighbours": 10,
+ "inner_folds": 10,
+ "seed": 0,
+ "lams": [
+  0.01,
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0
+ ],
+ "manifolds": [
+  0.0,
+  0.03,
+  0.1,
+  0.3,
+  1.0,
+  3.0
+ ],
+ "modes": {
+  "ridge-half": {
+   "r2_pred": 0.5059497717525238,
+   "rmse_pred": 0.9556566856846741,
+   "r2_hidden": 0.5875825001036111,
+   "chosen": [
+    {
+     "lam": 0.3
+    },
+    {
+     "lam": 0.3
+    },
+    {
+     "lam": 0.3
+    },
+    {
+     "lam": 0.1
+    },
+    {
+     "lam": 0.3
+    }
+   ]
+  },
+  "lapkrr": {
+   "r2_pred": 0.5061691581673993,
+   "rmse_pred": 0.9554355061907897,
+   "r2_hidden": 0.5877343760203911,
+   "chosen": [
+    {
+     "lam": 0.3,
+     "manifold": 0.03,
+     "neighbours": 10.0
+    },
+    {
+     "lam": 0.3,
+     "manifold": 0.0,
+     "neighbours": 10.0
+    },
+    {
+     "lam": 0.3,
+     "manifold": 0.0,
+     "neighbours": 10.0
+    },
+    {
+     "lam": 0.1,
+     "manifold": 0.0,
+     "neighbours": 10.0
+    },
+    {
+     "lam": 0.3,
+     "manifold": 0.0,
+     "neighbours": 10.0
+    }
+   ]
+  },
+  "ridge-all": {
+   "r2_pred": 0.5776227183348018,
+   "rmse_pred": 0.8848108953034381,
+   "r2_hidden": 0.7740237035780828,
+   "chosen": [
+    {
+     "lam": 1.0
+    },
+    {
+     "lam": 1.0
+    },
+    {
+     "lam": 1.0
+    },
+    {
+     "lam": 1.0
+    },
+    {
+     "lam": 1.0
+    }
+   ]
+  },
+  "ridge-half-oracle": {
+   "r2_pred": 0.5268095597498448,
+   "rmse_pred": 0.936103401728906,
+   "r2_hidden": 0.5884391790104135,
+   "chosen": [
+    {
+     "lam": 0.3
+    },
+    {
+     "lam": 0.3
+    },
+    {
+     "lam": 3.0
+    },
+    {
+     "lam": 0.3
+    },
+    {
+     "lam": 1.0
+    }
+   ]
+  },
+  "lapkrr-oracle": {
+   "r2_pred": 0.5366556061563069,
+   "rmse_pred": 0.9261878390756101,
+   "r2_hidden": 0.5970005965801366,
+   "chosen": [
+    {
+     "lam": 0.1,
+     "manifold": 0.1,
+     "neighbours": 10.0
+    },
+    {
+     "lam": 0.1,
+     "manifold": 0.1,
+     "neighbours": 10.0
+    },
+    {
+     "lam": 1.0,
+     "manifold": 0.3,
+     "neighbours": 10.0
+    },
+    {
+     "lam": 0.3,
+     "manifold": 0.03,
+     "neighbours": 10.0
+    },
+    {
+     "lam": 0.3,
+     "manifold": 0.1,
+     "neighbours": 10.0
+    }
+   ]
+  }
+ },
+ "differences": {
+  "lapkrr-ridge-half/r2_pred": [
+   0.00021938641487551092,
+   -0.0006472926804639234,
+   0.0013009731673051207
+  ],
+  "ridge-all-ridge-half/r2_pred": [
+   0.07167294658227807,
+   0.03571007625801648,
+   0.11646963602624107
+  ],
+  "lapkrr-ridge-all/r2_pred": [
+   -0.07145356016740256,
+   -0.11558900398664557,
+   -0.03595635667632777
+  ],
+  "lapkrr-oracle-ridge-half-oracle/r2_pred": [
+   0.009846046406462139,
+   -0.004307800986708324,
+   0.026008409502365874
+  ]
+ },
+ "ceiling_gap": 0.07167294658227807,
+ "recovered": 0.00021938641487551092,
+ "recovered_share": 0.003060937569012359,
+ "cliffs": {
+  "pairs": 27966,
+  "similar": 1238,
+  "cliffs": 382,
+  "cliff_share_of_similar": 0.308562197092084,
+  "cliff_share_of_pairs": 0.013659443610097976,
+  "cosine_cutoff": 0.9,
+  "gap_cutoff": 1.0,
+  "mean_gap_of_similar": 0.8051130856219709
+ },
+ "seconds": 7.0
+}
