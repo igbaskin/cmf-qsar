@@ -1,6 +1,6 @@
 {
- "commit": "e5f75779a83177cddbbe63266faa5fd791d6a4a5",
- "created": "2026-10-28T06:47:11",
+ "commit": "5a205bdb70bfdfb13cd7a7f102043e5f68d8a2aa",
+ "created": "2026-10-28T07:04:03",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -631,8 +631,8 @@
    "sha256": "b1a438023258c9840325d3e6016f71c5638f22c03d3b7678259ae4578cbdaadb"
   },
   "examples/make_md_trajectories.py": {
-   "bytes": 20227,
-   "sha256": "f162272a742dd0e309794ec84857133951719e115d9dfc744f1c0b27441fae5a"
+   "bytes": 20820,
+   "sha256": "f8faef91e0a673ebba3386f1e5aa382b172b40bdf29a74f1081b261d15a61baa"
   },
   "examples/make_mittal_examples.py": {
    "bytes": 10432,
@@ -671,16 +671,20 @@
    "sha256": "dfca7597dce5ccffc755b14e937a568f95970695e9fe682a3e2c0b396e400ffc"
   },
   "examples/md/mcl1_md.sdf": {
-   "bytes": 1242544,
-   "sha256": "7b13e706b74812b02596f1f9f0d13e13dd6e3d10798c48dd56c6a2d98d49573d"
+   "bytes": 1280875,
+   "sha256": "528f02913b2bf1b3f93e9c60f3f2746768f674c474b2635ec89fa23251242ef8"
   },
   "examples/md/mcl1_md_ownframe.sdf": {
    "bytes": 1242700,
    "sha256": "2a58d19e38d845e4c971a571023e75d49664610c891103ee1d7bf48ac85b854b"
   },
+  "examples/md/mcl1_water.json": {
+   "bytes": 48526,
+   "sha256": "e1ce6768c01d0c27a36378344aca8b34ccca5be9b5803765d329cc8b525ca1d9"
+  },
   "examples/md/provenance.json": {
-   "bytes": 788,
-   "sha256": "02cdad43e2a2d198b1fd83c25673a101a21c6c27a37de5486d8d45fc081f8a22"
+   "bytes": 824,
+   "sha256": "6ac59fa720e0a98db09f583720aebba13df62390dacb631027f7536370ffd6e4"
   },
   "examples/mittal/ACE.sdf": {
    "bytes": 491549,
@@ -2322,6 +2326,8 @@
   "benchmarks/results/selectivity/file_Delta.json": "50c0da4f33ca29dc6d3ad0516cdacdff87ea360e996800e8a046cb3a5997413c",
   "benchmarks/results/selectivity/file_glycine.json": "fdf29ea54573147755c4d75dbfd4a682d611b9eebdee82cf3c777d38c20041fe",
   "benchmarks/results/selectivity/table.md": "457c99257ba10154d192e7b780653e30544f9a1992b1c2b516c00b2fa3848597",
+  "benchmarks/results/solvent/mcl1.json": "cfaa3dc070f9a60c4fe43c84260c2738155458cf2eabbaeb1ab063d796e32a6a",
+  "benchmarks/results/solvent/table.md": "08a023557a8ea5122e3824da669f43f6cfa69637d582bc1dc4b40abc93081470",
   "benchmarks/results/speed/cutoff.json": "709dd23788134aabcfc8e110ddcb9af69813477e46b684f48de4e55591969b3c",
   "benchmarks/results/speed/engine.json": "130e2f1a75835a513d11647d73e2e736b42fb475c074f346de48922559b7595c",
   "benchmarks/results/speed/grid.json": "e75d2d367375716bd6f56b9570f8bffc7edaeaaee742bb71de7a8bbb038b43b6",

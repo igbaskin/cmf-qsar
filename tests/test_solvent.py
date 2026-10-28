@@ -433,3 +433,98 @@ def test_the_report_says_what_is_missing_when_nothing_has_been_run(tmp_path):
     text = rs.report(results=str(tmp_path), path=str(tmp_path / "t.md"))
     assert "make_md_trajectories.py" in text
     assert os.path.isfile(str(tmp_path / "t.md"))
+
+
+# --------------------------------------------------------------------------- the sweep
+
+
+def test_a_coefficient_belongs_to_one_attenuation():
+    """The same map fitted at two widths gives two sets, which is why both are stored."""
+    pts = SV._grid_points(np.array([-4.0, -4.0, -4.0]), (17, 17, 17), 0.5)
+    centre = np.array([[0.0, 0.0, 0.0]])
+    occ = SV.Occupancy(points=pts, values=0.6 * np.exp(-0.5 * 0.5 * (pts ** 2).sum(axis=1)),
+                       frames=1)
+    got = SV.coefficients_at(occ, centre, [0.5, 2.0])
+    assert sorted(got) == ["0.5", "2"]
+    assert got["0.5"][0] == pytest.approx(0.6, rel=1e-6), "the width it was made at"
+    assert abs(got["2"][0] - 0.6) > 0.01, "another width needs another coefficient"
+
+
+def test_a_stricter_threshold_keeps_fewer_sites(tmp_path):
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=1.0, n_waters=4,
+                                             tag="strict")
+    occ = SV.occupancy(pdb, dcd, reference=ref)
+    loose, _h1 = SV.hydration_sites(occ, min_occupancy=0.2, min_distance=2.4)
+    tight, _h2 = SV.hydration_sites(occ, min_occupancy=0.8, min_distance=2.4)
+    assert len(tight) <= len(loose)
+
+
+def test_a_wider_spacing_keeps_fewer_sites(tmp_path):
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=1.0, n_waters=4,
+                                             tag="wide")
+    occ = SV.occupancy(pdb, dcd, reference=ref)
+    near, _h1 = SV.hydration_sites(occ, min_occupancy=0.2, min_distance=1.0)
+    far, _h2 = SV.hydration_sites(occ, min_occupancy=0.2, min_distance=6.0)
+    assert len(far) <= len(near)
+
+
+def test_the_sweep_names_the_ligands_a_definition_leaves_without_a_site(tmp_path):
+    rs = _bench()
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=0.4, tag="miss")
+    occ = SV.occupancy(pdb, dcd, reference=ref)
+    maps = {"a": occ, "b": occ}
+    sites, missing = rs.sites_at(maps, ["a", "b"], 0.5, min_occupancy=0.99, min_distance=2.4)
+    assert sites == {} and missing == ["a", "b"]
+    sites, missing = rs.sites_at(maps, ["a", "b"], 0.5, min_occupancy=0.2, min_distance=2.4)
+    assert missing == [] and set(sites) == {"a", "b"}
+    assert len(sites["a"]) == 3, "centres, coefficients and occupancies"
+
+
+def test_the_sweep_section_says_when_a_control_beats_the_real_maps():
+    """The warning that matters: at a loose definition a random block can do as well."""
+    rs = _bench()
+    sweep = {"set": "toy", "n": 25, "reference": 0.5,
+             "occupancies": [0.3, 0.6], "distances": [2.4],
+             "rows": [dict(min_occupancy=0.3, min_distance=2.4, missing=0, sites=30.0,
+                           sites_min=20, sites_max=40, alpha=2.0, mix=0.3, mixed=0.5,
+                           alone=-0.02, control=0.44, delta=0.0, lo=-0.1, hi=0.1),
+                      dict(min_occupancy=0.6, min_distance=2.4, missing=0, sites=4.0,
+                           sites_min=2, sites_max=6, alpha=2.0, mix=0.3, mixed=0.52,
+                           alone=0.55, control=-0.09, delta=0.02, lo=-0.1, hi=0.2)]}
+    text = " ".join(rs.sweep_section(sweep))
+    assert "random-site control does as well as the real maps or better" in text
+    assert "should not be quoted as this item's result" in text
+    assert "the stronger the sites, the more they carry" in text
+
+
+def test_the_sweep_section_says_when_a_definition_leaves_no_sites():
+    rs = _bench()
+    sweep = {"set": "toy", "n": 25, "reference": 0.5, "occupancies": [0.9],
+             "distances": [2.4],
+             "rows": [dict(min_occupancy=0.9, min_distance=2.4, missing=7, sites=None)]}
+    text = " ".join(rs.sweep_section(sweep))
+    assert "7 ligand(s) with no site" in text
+    assert "nothing can be read from this" in text
+
+
+def test_the_stored_sites_can_be_rebuilt_from_the_trajectories():
+    """The committed file has to be what the script produces, or it is not provenance."""
+    import json
+
+    path = os.path.join(HERE, "..", "examples", "md", "mcl1_water.json")
+    runs = os.path.join(HERE, "..", "examples", "md", "work", "mcl1", "runs")
+    ready = os.path.join(HERE, "..", "examples", "md", "work", "mcl1", "4HW3_ready.pdb")
+    if not (os.path.isfile(path) and os.path.isdir(runs) and os.path.isfile(ready)):
+        pytest.skip("the trajectories are not in this checkout")
+    with open(path) as fh:
+        d = json.load(fh)
+    row = d["ligands"][0]
+    nm = row["name"]
+    field, occ, _h = SV.field_for(os.path.join(runs, f"{nm}.pdb"),
+                                  os.path.join(runs, f"{nm}.dcd"), reference=ready,
+                                  alpha=d["alpha"], name=nm,
+                                  min_occupancy=d["min_occupancy"])
+    stored = np.asarray(row["sites"], float)
+    assert len(stored) == field.n_atoms
+    assert np.allclose(stored[:, :3], field.coords, atol=1e-3)
+    assert np.allclose(stored[:, 3], np.asarray(field.weights).ravel(), atol=1e-4)

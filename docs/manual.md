@@ -1078,18 +1078,44 @@ reference is not held back:
 | model | q² | change against the five fields |
 | --- | ---: | --- |
 | the five fields alone | **+0.575** | the reference |
-| the five fields and the water | +0.558 | −0.017 [−0.186, +0.198] |
-| the water alone | +0.231 | − |
-| random sites alone (control) | −0.034 | − |
+| the five fields and the water | +0.560 | −0.015 [−0.178, +0.186] |
+| the water alone | +0.263 | − |
+| random sites alone (control) | −0.028 | − |
 | one shared set of sites alone (control) | −0.138 | − |
 
 **The water field does not improve the model**, and the interval is wide enough that a small gain
 could not have been seen on 25 ligands. But the two controls make the rest of the table worth
-reading. The water field **on its own** reaches +0.231, while the same number of sites moved to
-random places in the same box reaches −0.034 and one ligand's sites given to every ligand
+reading. The water field **on its own** reaches +0.263, while the same number of sites moved to
+random places in the same box reaches −0.028 and one ligand's sites given to every ligand
 −0.138. Both controls are below zero, as a block that cannot tell the ligands apart must be. So
-*where the water sits* does carry information about activity — it is simply information the
-ligand's own fields already carry, since adding it gains nothing.
+at this definition of a site, *where the water sits* does carry information about activity — it
+is simply information the ligand's own fields already carry, since adding it gains nothing.
+
+**How much of that depends on the definition of a site.** Two numbers decide what a hydration
+site is and neither follows from anything: the share of frames a point has to be occupied, and
+how close two sites may be. `--sweep` runs the whole comparison again at every pair of them, and
+the answer is different for the two conclusions.
+
+The first conclusion is firm. Of the sixteen definitions that leave every ligand a site, **none**
+beats the five fields beyond the interval and none falls behind; the change runs from −0.130 to
++0.087 and every interval contains zero.
+
+The second is not. The water field on its own runs from **−0.124 to +0.607** over those sixteen,
+and it is not positive at three of them. Averaged over the spacings it goes 30 % +0.080, 40 %
++0.052, 50 % +0.197, 60 % +0.568, so the sensitivity has a clear direction: **the signal is in
+the few places a water really sits**, and adding weakly occupied points dilutes it. At the
+strictest threshold that still leaves every ligand a site — 60 %, about 3.6 sites a ligand — the
+water alone reaches +0.554 to +0.607 against a control of −0.096 to −0.055, and it does so at all
+four spacings rather than at one.
+
+> **Two cautions, both from the sweep itself.** At the loosest definition tried (30 % occupancy,
+> 3.6 Å spacing, about 25 sites a ligand) the **random-site control reaches +0.438 against
+> −0.022 for the measured sites**. A block of two dozen plausible numbers carries what a block
+> of two dozen random numbers carries, so a claim about where the water sits is only worth
+> making at a definition where the control is beaten. And the +0.607 above is the largest of
+> sixteen values tried on 25 molecules after seeing them; it should not be quoted as this item's
+> result. The defaults of the module, 50 % and 2.4 Å, were fixed before any of this was measured
+> and are left as they are for that reason.
 
 **Where the model asks for water.** The sites of all the ligands are in one frame, so they gather
 into places, and the weight the water block puts on a place is what it asks of the water there:

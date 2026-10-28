@@ -3518,17 +3518,32 @@ coefficient.
 | model | q2 | change against the five fields |
 | --- | ---: | --- |
 | the five fields alone | **+0.575** | the reference |
-| the five fields and the water | +0.558 | -0.017 [-0.186, +0.198] |
-| the water alone | +0.231 | - |
-| random sites alone (control) | -0.034 | - |
+| the five fields and the water | +0.560 | -0.015 [-0.178, +0.186] |
+| the water alone | +0.263 | - |
+| random sites alone (control) | -0.028 | - |
 | one shared set of sites alone (control) | -0.138 | - |
 
 **The water field does not improve the model.** What the controls add is the interesting part:
-the water field alone reaches +0.231 while random sites reach -0.034 and one shared set of sites
--0.138, so **where the water sits does carry information about activity** -- information the
-ligand's own fields apparently already carry. The co-field over the sites says where the model
-asks for more water and where for less; under rule 5 it is a display tool, since the block does
-not improve the model.
+the water field alone reaches +0.263 while random sites reach -0.028 and one shared set of sites
+-0.138, so at this definition of a site **where the water sits does carry information about
+activity** -- information the ligand's own fields apparently already carry. The co-field over the
+sites says where the model asks for more water and where for less; under rule 5 it is a display
+tool, since the block does not improve the model.
+
+**What the definition of a site decides** (`--sweep`, sixteen pairs of the occupancy threshold
+and the site spacing). The first conclusion is firm: none of the sixteen beats the five fields
+beyond the interval, the change running from -0.130 to +0.087. The second is not: the water
+alone runs from **-0.124 to +0.607** and is not positive at three of them, with a clear
+direction -- averaged over the spacings it goes 30% +0.080, 40% +0.052, 50% +0.197, 60% +0.568,
+so the signal is in the few places a water really sits. Two cautions from the same sweep: at the
+loosest definition the random-site control reaches +0.438 against -0.022 for the measured sites,
+so a claim about positions is only worth making where the control is beaten; and +0.607 is the
+largest of sixteen values tried on 25 molecules after seeing them and is not quotable as a
+result.
+
+```bash
+python benchmarks/run_solvent.py --sweep  # results/solvent/table.md
+```
 
 ```bash
 python benchmarks/run_solvent.py          # results/solvent/table.md

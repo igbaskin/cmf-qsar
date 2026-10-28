@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with twenty-nine subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1345 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1352 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -979,23 +979,44 @@ says whether a trajectory does what a generated ensemble could not.
   site there within 1 A and that a water which moves every frame raises none.
   **Measured** by `benchmarks/run_solvent.py`, every model at its own best attenuation so that
   the reference is not held back by a choice made to suit the water: the five fields alone
-  **+0.575**, the five fields and the water +0.558 (**-0.017 [-0.186, +0.198]**), the water
-  alone +0.231, random sites alone -0.034, one shared set of sites alone -0.138.
+  **+0.575**, the five fields and the water +0.560 (**-0.015 [-0.178, +0.186]**), the water
+  alone +0.263, random sites alone -0.028, one shared set of sites alone -0.138.
   **What it settles, and it is not nothing.** The water field does not improve the model, and
   the interval is too wide for 25 ligands to show a small gain either way. But the water field
-  **on its own** reaches +0.231 while both controls are below zero, which is what a block that
-  cannot tell the ligands apart must give. So where the water sits does carry information about
-  activity; it is information the ligand's own fields already carry, since adding it gains
-  nothing. That is a sharper statement than D8's gate anticipated, and it is the reason the item
-  was worth building against the gate.
+  **on its own** reaches +0.263 while both controls are below zero, which is what a block that
+  cannot tell the ligands apart must give. So at this definition of a site, where the water sits
+  does carry information about activity; it is information the ligand's own fields already
+  carry, since adding it gains nothing. That is a sharper statement than D8's gate anticipated,
+  and it is the reason the item was worth building against the gate.
+  **How much the definition decides, 28 October 2026**, measured with `--sweep` over the two
+  numbers that define a site -- the share of frames a point must be occupied and how close two
+  sites may be -- because neither follows from anything. The two conclusions come apart. *The
+  first is firm:* of the sixteen definitions that leave every ligand a site, none beats the five
+  fields beyond the interval and none falls behind, the change running from -0.130 to +0.087.
+  *The second is not:* the water alone runs from **-0.124 to +0.607** and is not positive at
+  three of the sixteen. The sensitivity has a direction -- averaged over the spacings the water
+  alone goes 30% +0.080, 40% +0.052, 50% +0.197, 60% +0.568 -- so the signal sits in the few
+  places a water really occupies and weakly occupied points dilute it. At the strictest
+  threshold that still leaves every ligand a site, 60% with 3.6 sites per ligand, the water
+  alone reaches +0.554 to +0.607 against a control of -0.096 to -0.055, at all four spacings.
+  **Two cautions the sweep itself produced.** At the loosest definition tried, 30% occupancy and
+  3.6 A spacing with about 25 sites per ligand, the **random-site control reaches +0.438 against
+  -0.022 for the measured sites**: a block of two dozen plausible numbers carries what a block
+  of two dozen random numbers carries, so a claim about positions is only worth making where the
+  control is beaten. And +0.607 is the largest of sixteen values tried on 25 molecules after
+  seeing them and is not an estimate of anything; the defaults, 50% and 2.4 A, were fixed before
+  this was measured and are left alone. One fault of mine was found on the way: a site's
+  coefficient is fitted against Gaussians of one width, and the stored file fixed that width at
+  0.5 whatever width the kernel then used, so the file now carries a coefficient for every
+  attenuation of the grid and the two tables agree where they overlap.
   **The co-field** over the sites is in the table: the sites of every ligand gathered into
   places, each with the weight the block puts on it, positive for more water and negative for
   less. Under rule 5 it is a display tool, because the block does not improve the model.
-  **Not done:** one set and one definition of a site; the threshold (50% of frames) and the
-  spacing (2.4 A) were not varied, so how much the result depends on them is unmeasured; the
-  hydrogens of the water are ignored, so the field says where a water is and not which way it
-  points; and there is no control for the simulation length, which is what would say whether
-  2 ns places the sites surely enough.
+  **Not done:** one set; the hydrogens of the water are ignored, so the field says where a water
+  is and not which way it points; there is no control for the simulation length, which is what
+  would say whether 2 ns places the sites surely enough; and the strict end of the sweep, where
+  the water alone is worth most, has not been tried on a set that was not used to find it, which
+  is the measurement that would turn +0.554 to +0.607 into an estimate.
 * **D10. Fluctuation as information.** The ensemble mode uses the mean field only. The variance of
   the field across frames is a flexibility map, and the kernel of two variance fields is in closed
   form by the same algebra as the mean (a product of Gaussians is a Gaussian). Add it as a block

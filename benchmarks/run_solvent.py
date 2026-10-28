@@ -76,6 +76,9 @@ MIXES = (0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0)
 FOLDS = 10
 SEED = 0
 RUNS = 2000
+#: the two numbers that define a hydration site, swept to see how much they decide
+SWEEP_OCCUPANCY = (0.3, 0.4, 0.5, 0.6, 0.7)
+SWEEP_DISTANCE = (1.8, 2.4, 3.0, 3.6)
 
 
 def _say(text):
@@ -86,21 +89,32 @@ def _say(text):
 # the data
 # ----------------------------------------------------------------------------------------------
 
-def water_sites(name):
-    """{ligand: (centres, coefficients)} and the record, from the file the maker wrote."""
+def water_sites(name, alpha=None):
+    """{ligand: (centres, coefficients, occupancies)} and the record the maker wrote.
+
+    A coefficient is fitted against Gaussians of one width, so `alpha` picks the set fitted at
+    the width the kernel will use. The file carries one set per attenuation of the grid; without
+    a match it falls back to the single column it also stores, and says nothing, because that is
+    what an older file holds.
+    """
     path = os.path.join(MD_DATA, name + "_water.json")
     if not os.path.isfile(path):
         return None, None
     with open(path) as fh:
         d = json.load(fh)
+    key = None if alpha is None else f"{float(alpha):g}"
     out = {}
     for row in d["ligands"]:
         arr = np.asarray(row["sites"], float)
         if arr.size == 0:
             continue
-        # column 3 is the coefficient fitted to the map, column 4 the share of frames the
-        # site is occupied; the first builds the field and the second is for reading
-        out[row["name"]] = (arr[:, :3].copy(), arr[:, 3].copy(), arr[:, 4].copy())
+        # column 3 is a coefficient fitted at the file's own attenuation and column 4 the share
+        # of frames the site is occupied
+        coeff = arr[:, 3].copy()
+        stored = row.get("coefficients") or {}
+        if key is not None and key in stored:
+            coeff = np.asarray(stored[key], float)
+        out[row["name"]] = (arr[:, :3].copy(), coeff, arr[:, 4].copy())
     return out, d
 
 
@@ -205,6 +219,120 @@ def _scan(Kf, Kw, y, mixes=MIXES):
     return rows
 
 
+def occupancy_maps(name, ligands, log=_say):
+    """The occupancy map of every ligand, rebuilt from the trajectories.
+
+    The sites in ``examples/md/<set>_water.json`` were cut at one threshold and one spacing, so
+    varying either needs the maps themselves, which need the trajectories. They are not in the
+    repository -- ``examples/make_md_trajectories.py`` rebuilds them -- so this returns None when
+    they are absent and the stage is skipped rather than guessed at. Reading a map needs mdtraj
+    and no simulation software.
+    """
+    runs = os.path.join(MD_DATA, "work", name, "runs")
+    work = os.path.join(MD_DATA, "work", name)
+    if not os.path.isdir(runs):
+        return None
+    ready = sorted(glob.glob(os.path.join(work, "*_ready.pdb")))
+    if not ready:
+        return None
+    out = {}
+    for nm in ligands:
+        top = os.path.join(runs, f"{nm}.pdb")
+        dcd = os.path.join(runs, f"{nm}.dcd")
+        if not (os.path.isfile(top) and os.path.isfile(dcd)):
+            continue
+        try:
+            out[nm] = SV.occupancy(top, dcd, reference=ready[0], name=nm)
+        except (SV.SolventError, Exception) as exc:      # noqa: BLE001 - reported and skipped
+            log(f"    {nm}: no map -- {type(exc).__name__}: {exc}")
+    return out or None
+
+
+def sites_at(maps, names, alpha, min_occupancy, min_distance):
+    """{ligand: (centres, coefficients, occupancies)} at one definition of a site.
+
+    Returns (sites, missing): `missing` names the ligands with no point occupied often enough,
+    which is how a definition too strict for a set shows itself.
+    """
+    sites, missing = {}, []
+    for nm in names:
+        occ = maps[nm]
+        centres, heights = SV.hydration_sites(occ, min_occupancy=float(min_occupancy),
+                                              min_distance=float(min_distance))
+        if len(centres) == 0:
+            missing.append(nm)
+            continue
+        coeff = SV.fit_coefficients(occ, centres, alpha=float(alpha))
+        sites[nm] = (centres, coeff, heights)
+    return sites, missing
+
+
+def stage_sweep(name, mols, names, y, maps, results=RESULTS, seed=SEED, log=_say):
+    """The same comparison at every definition of a hydration site.
+
+    Two numbers decide what a site is: the share of frames a point has to be occupied, and how
+    close two sites may be. Neither follows from anything, so the question is whether the result
+    of this item is a property of the water or of those two numbers.
+    """
+    Kf = {a: field_kernel(mols, names, a) for a in ALPHAS}
+    base = {}
+    for a in ALPHAS:
+        base[a] = best(Kf[a], y)
+    ref = max(base.values(), key=lambda r: r[0])
+    rows = []
+    for occ_t in SWEEP_OCCUPANCY:
+        for dist in SWEEP_DISTANCE:
+            picked = None
+            counts, missing = None, None
+            for a in ALPHAS:
+                sites, miss = sites_at(maps, names, a, occ_t, dist)
+                if miss:
+                    counts, missing = None, miss
+                    break
+                counts = [len(sites[n][0]) for n in names]
+                Kw = water_kernel(sites, names, a)
+                scan = _scan(Kf[a], Kw, y)
+                inner = [r for r in scan if 0.0 < r["mix"] < 1.0]
+                chosen = max(inner, key=lambda r: r["q2"]) if inner else scan[0]
+                alone = scan[-1]
+                control = _scan(Kf[a], water_kernel(scrambled_sites(sites, names, seed=seed),
+                                                    names, a), y)[-1]
+                # each model at its own best attenuation, as the main table does, so that the
+                # row for the default definition reproduces it exactly
+                if picked is None or chosen["q2"] > picked["mixed"]:
+                    picked = dict(picked or {}, alpha=float(a), mixed=chosen["q2"],
+                                  mix=chosen["mix"], pred=chosen["pred"])
+                if picked.get("alone") is None or alone["q2"] > picked["alone"]:
+                    picked["alone"] = alone["q2"]
+                    picked["alone_alpha"] = float(a)
+                if picked.get("control") is None or control["q2"] > picked["control"]:
+                    picked["control"] = control["q2"]
+            if missing:
+                rows.append(dict(min_occupancy=float(occ_t), min_distance=float(dist),
+                                 missing=len(missing), sites=None))
+                log(f"    occupancy {occ_t:.0%}, spacing {dist:.1f} A: "
+                    f"{len(missing)} ligand(s) with no site; skipped")
+                continue
+            d, lo, hi = bootstrap_difference(y, picked["pred"], ref[3])
+            rows.append(dict(min_occupancy=float(occ_t), min_distance=float(dist), missing=0,
+                             sites=float(np.mean(counts)), sites_min=int(min(counts)),
+                             sites_max=int(max(counts)), alpha=picked["alpha"],
+                             mix=picked["mix"], mixed=picked["mixed"], alone=picked["alone"],
+                             alone_alpha=picked.get("alone_alpha"),
+                             control=picked["control"], delta=d, lo=lo, hi=hi))
+            log(f"    occupancy {occ_t:.0%}, spacing {dist:.1f} A: "
+                f"{np.mean(counts):4.1f} sites, mixed {picked['mixed']:+.3f} "
+                f"({d:+.3f} [{lo:+.3f}, {hi:+.3f}]), alone {picked['alone']:+.3f}, "
+                f"control {picked['control']:+.3f}")
+    out = {"set": name, "n": int(len(y)), "reference": float(ref[0]),
+           "occupancies": list(SWEEP_OCCUPANCY), "distances": list(SWEEP_DISTANCE),
+           "rows": rows}
+    os.makedirs(results, exist_ok=True)
+    with open(os.path.join(results, f"{name}_sweep.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
 def site_places(sites, names, y, alpha, radius=2.4, folds=FOLDS, seed=SEED):
     """Where the model asks for water, and where it asks for less of it.
 
@@ -279,9 +407,7 @@ def run_set(name, results=RESULTS, force=False, seed=SEED):
          f"(from {min(counts)} to {max(counts)})")
 
     t0 = time.time()
-    variants = {"water": sites,
-                "scrambled": scrambled_sites(sites, names, seed=seed),
-                "shared": shared_sites(sites, names)}
+    variants = {}
     # every model is given its own best attenuation over the same grid. Choosing one attenuation
     # to suit the water block and then scoring the five fields at it would hold the reference
     # back, and the reference of rule 1 is the five fields at their best.
@@ -294,6 +420,11 @@ def run_set(name, results=RESULTS, force=False, seed=SEED):
         if picks["fields"] is None or base[0] > picks["fields"]["q2"]:
             picks["fields"] = dict(q2=base[0], rmse=base[1], lam=base[2], alpha=float(alpha),
                                    pred=base[3])
+        # the coefficients belong to the width the kernel is about to use
+        at_alpha, _rec = water_sites(name, alpha=alpha)
+        variants = {"water": at_alpha or sites,
+                    "scrambled": scrambled_sites(at_alpha or sites, names, seed=seed),
+                    "shared": shared_sites(at_alpha or sites, names)}
         for tag, s in variants.items():
             Kw = water_kernel(s, names, alpha)
             scan = _scan(Kf, Kw, y)
@@ -339,7 +470,8 @@ def run_set(name, results=RESULTS, force=False, seed=SEED):
                                        delta=d, lo=lo, hi=hi)
     alone = picks.get("water_alone")
     if alone is not None:
-        places, lam = site_places(sites, names, y, alpha=float(alone["alpha"]))
+        at_alpha, _rec = water_sites(name, alpha=float(alone["alpha"]))
+        places, lam = site_places(at_alpha or sites, names, y, alpha=float(alone["alpha"]))
         out["places"] = places
         out["places_alpha"] = float(alone["alpha"])
         out["places_lam"] = lam
@@ -374,8 +506,19 @@ ORDER = ("fields", "water_mixed", "water_alone", "scrambled", "shared",
 def load_all(results=RESULTS):
     out = []
     for p in sorted(glob.glob(os.path.join(results, "*.json"))):
+        if p.endswith("_sweep.json"):
+            continue
         with open(p) as fh:
             out.append(json.load(fh))
+    return out
+
+
+def load_sweeps(results=RESULTS):
+    out = {}
+    for p in sorted(glob.glob(os.path.join(results, "*_sweep.json"))):
+        with open(p) as fh:
+            d = json.load(fh)
+        out[d["set"]] = d
     return out
 
 
@@ -438,6 +581,9 @@ def report(results=RESULTS, path=None):
                 out.append(f"| {x:.1f}, {y_:.1f}, {z:.1f} | {p['ligands']} | "
                            f"{p['occupancy']:.0%} | {p['weight']:+.3f} |")
             out.append("")
+        sweep = load_sweeps().get(rec["set"])
+        if sweep:
+            out += sweep_section(sweep)
     out += verdict(rows)
     text = "\n".join(out) + "\n"
     if path:
@@ -445,6 +591,108 @@ def report(results=RESULTS, path=None):
         with open(path, "w", newline="\n") as fh:
             fh.write(text)
     return text
+
+
+def sweep_section(sweep):
+    """The table and the reading of the sweep over what counts as a hydration site."""
+    done = [r for r in sweep["rows"] if r.get("sites")]
+    out = ["### How much the definition of a site decides", "",
+           "Two numbers decide what a hydration site is, and neither follows from anything: the "
+           "share of frames a point has to be occupied, and how close two sites may be. Here "
+           "the whole comparison is run again at every pair of them, each time with the "
+           f"attenuation and the mixing coefficient chosen as before. The reference is the five "
+           f"fields at their best, {sweep['reference']:+.3f}.", "",
+           "| occupancy | spacing | sites per ligand | with water | change against the fields | "
+           "water alone | random sites alone |",
+           "| ---: | ---: | ---: | ---: | --- | ---: | ---: |"]
+    for r in sweep["rows"]:
+        if not r.get("sites"):
+            out.append(f"| {r['min_occupancy']:.0%} | {r['min_distance']:.1f} A | "
+                       f"-- | -- | {r['missing']} ligand(s) with no site | -- | -- |")
+            continue
+        out.append(f"| {r['min_occupancy']:.0%} | {r['min_distance']:.1f} A | "
+                   f"{r['sites']:.1f} | {r['mixed']:+.3f} | "
+                   f"{r['delta']:+.3f} [{r['lo']:+.3f}, {r['hi']:+.3f}] | "
+                   f"{r['alone']:+.3f} | {r['control']:+.3f} |")
+    out.append("")
+    if not done:
+        out += ["Every definition tried left some ligand without a site, so nothing can be "
+                "read from this.", ""]
+        return out
+
+    ahead = [r for r in done if r["lo"] > 0]
+    behind = [r for r in done if r["hi"] < 0]
+    alone = [r["alone"] for r in done]
+    gap = [r["alone"] - r["control"] for r in done]
+    out += [f"**The first conclusion does not depend on the definition.** Of the "
+            f"{len(done)} definitions that give every ligand a site, "
+            f"{'none' if not ahead else str(len(ahead))} beats the five fields beyond the "
+            f"interval and {'none' if not behind else str(len(behind))} falls behind it. The "
+            f"change against the reference runs from {min(r['delta'] for r in done):+.3f} to "
+            f"{max(r['delta'] for r in done):+.3f}, and every interval contains zero.", ""]
+    inverted = [r for r in done if r["control"] >= r["alone"]]
+    if min(alone) > 0 and not inverted:
+        out += [f"**The second conclusion does not depend on it either.** The water field on its "
+                f"own stays positive throughout, from {min(alone):+.3f} to {max(alone):+.3f}, "
+                f"and stays above the random-site control at every definition, by "
+                f"{min(gap):+.3f} to {max(gap):+.3f}. So the signal in where the water sits is "
+                f"not an artefact of one threshold.", ""]
+    else:
+        weak = [r for r in done if r["alone"] <= 0]
+        out += [f"**The second conclusion does depend on it, and this is the finding of the "
+                f"sweep.** The water field on its own runs from {min(alone):+.3f} to "
+                f"{max(alone):+.3f} across the {len(done)} definitions, and is not positive at "
+                f"{len(weak)} of them. What was reported for the default definition alone was "
+                f"therefore one point of a range, not a property of the water.", ""]
+    if inverted:
+        worst = max(inverted, key=lambda r: r["control"] - r["alone"])
+        out += [f"**At {len(inverted)} of the {len(done)} definitions the random-site control "
+                f"does as well as the real maps or better**, the worst being an occupancy of "
+                f"{worst['min_occupancy']:.0%} and a spacing of {worst['min_distance']:.1f} A, "
+                f"where the control reaches {worst['control']:+.3f} against {worst['alone']:+.3f} "
+                f"for the measured sites. A loose definition puts tens of weakly occupied points "
+                f"in the field, and a block of that many plausible numbers carries whatever a "
+                f"block of that many random numbers carries. Any claim about where the water "
+                f"sits has to be made at a definition where the control is beaten, and the table "
+                f"says which those are.", ""]
+
+    # the direction: does a stricter threshold help or hurt?
+    by_threshold = {}
+    for r in done:
+        by_threshold.setdefault(r["min_occupancy"], []).append(r["alone"])
+    means = sorted((t, float(np.mean(v))) for t, v in by_threshold.items())
+    if len(means) >= 2:
+        trend = ", ".join(f"{t:.0%} {m:+.3f}" for t, m in means)
+        rising = means[-1][1] > means[0][1]
+        out += [f"**The sensitivity has a direction: the stronger the sites, the more they "
+                f"carry.** Averaged over the spacings, the water alone goes {trend}. "
+                + (f"A stricter threshold keeps fewer sites and they carry more, which says the "
+                   f"signal is in the few places a water really sits and that adding weakly "
+                   f"occupied points dilutes it."
+                   if rising else
+                   f"A stricter threshold keeps fewer sites and they carry less, which says the "
+                   f"signal is spread over many places rather than concentrated in a few."), ""]
+    best = max(done, key=lambda r: r["alone"])
+    out += [f"The strongest the water alone gets is {best['alone']:+.3f}, at an occupancy "
+            f"threshold of {best['min_occupancy']:.0%} and a spacing of "
+            f"{best['min_distance']:.1f} A, with {best['sites']:.1f} sites per ligand. **That "
+            f"number should not be quoted as this item's result.** It is the largest of "
+            f"{len(done)} tried on 25 molecules, chosen after seeing them, and the honest "
+            f"estimate of what a strict definition is worth would need a set this one was not "
+            f"used to choose on. The defaults of the module, 50% and 2.4 A, were fixed before "
+            f"any of this was measured and are left alone for that reason.", ""]
+    strict = [r for r in done if r["min_occupancy"] >= max(r2["min_occupancy"] for r2 in done)]
+    if strict:
+        out += [f"One thing the sweep does settle about the strict end: at the strictest "
+                f"threshold that still leaves every ligand a site "
+                f"({strict[0]['min_occupancy']:.0%}, {strict[0]['sites']:.1f} sites per ligand), "
+                f"the water alone reaches {min(r['alone'] for r in strict):+.3f} to "
+                f"{max(r['alone'] for r in strict):+.3f} against a control of "
+                f"{min(r['control'] for r in strict):+.3f} to "
+                f"{max(r['control'] for r in strict):+.3f}, and it does so at all "
+                f"{len(strict)} spacings rather than at one. A threshold above that leaves "
+                f"ligands with no site at all, which is the end of the range.", ""]
+    return out
 
 
 def verdict(rows):
@@ -522,6 +770,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--sets", nargs="*", default=list(SETS))
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--sweep", action="store_true",
+                    help="also vary what counts as a hydration site: the share of frames a "
+                         "point has to be occupied, and how close two sites may be. Needs the "
+                         "trajectories, which the repository does not carry")
     ap.add_argument("--report", nargs="?", const=os.path.join(RESULTS, "table.md"), default=None)
     a = ap.parse_args(argv)
 
@@ -532,6 +784,22 @@ def main(argv=None):
     os.makedirs(RESULTS, exist_ok=True)
     for name in a.sets:
         run_set(name, force=a.force)
+        if a.sweep:
+            sites, _record = water_sites(name)
+            if not sites:
+                continue
+            mols, names, y = crystal_set(name)
+            keep = [i for i, n in enumerate(names) if n in sites]
+            mols = [mols[i] for i in keep]
+            names = [names[i] for i in keep]
+            y = y[keep]
+            _say(f"  {name}: rebuilding the occupancy maps")
+            maps = occupancy_maps(name, names)
+            if maps is None or len(maps) < len(names):
+                _say(f"  {name}: the trajectories are not here, so the sweep is skipped; "
+                     f"examples/make_md_trajectories.py rebuilds them")
+            else:
+                stage_sweep(name, mols, names, y, maps)
     report(path=os.path.join(RESULTS, "table.md"))
     print(f"written {os.path.join(RESULTS, 'table.md')}")
     return 0

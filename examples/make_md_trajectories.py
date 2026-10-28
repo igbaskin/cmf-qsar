@@ -127,6 +127,7 @@ def pose_drift(ensemble, crystal):
 def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=0.75,
               stride=1, limit=0, read_only=False, chain_radius=5.0, keep_chains=(),
               max_drift=4.0, common_reference=True, water=True, water_alpha=0.5,
+              water_alphas=(0.1, 0.3, 0.5, 1.0, 2.0),
               min_occupancy=SV.MIN_OCCUPANCY, log=say):
     """One set: download, prepare, simulate, read back, write the ensemble SDF."""
     pocket = os.path.join(POCKETS, name + ".pdb")
@@ -241,6 +242,12 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
                                                                 round(float(h), 4)]
                              for c, w, h in zip(field.coords,
                                                 np.asarray(field.weights).ravel(), heights)],
+                   # a coefficient belongs to one attenuation, so one set per attenuation a
+                   # measurement will use; without them a model at another width would be
+                   # built from a fit made at this one
+                   "coefficients": {k: [round(v, 5) for v in vs] for k, vs in
+                                    SV.coefficients_at(occ, field.coords,
+                                                       water_alphas).items()},
                    "strongest": round(float(occ.values.max()), 4),
                    "bulk": round(float(occ.bulk), 4)}
             for prop in ds.properties:
@@ -253,6 +260,7 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
             path = os.path.join(out_dir, f"{name}_water.json")
             with open(path, "w", newline=NEWLINE) as fh:
                 json.dump({"set": name, "entry": code, "alpha": float(water_alpha),
+                           "alphas": [float(a) for a in water_alphas],
                            "min_occupancy": float(min_occupancy),
                            "probe": SV.PROBE, "spacing": SV.SPACING,
                            "min_distance": SV.MIN_DISTANCE, "ligands": sites}, fh, indent=1)

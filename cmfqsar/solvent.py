@@ -332,6 +332,19 @@ def water_field(centres: np.ndarray, coefficients: np.ndarray, name: str = "",
         charges=np.zeros(n), charge_source="none")
 
 
+def coefficients_at(occ: "Occupancy", centres: np.ndarray,
+                    alphas: Sequence[float]) -> dict:
+    """{attenuation: coefficients} for one set of sites.
+
+    A coefficient is fitted against Gaussians of the field's own width, so it belongs to one
+    attenuation and a model at another needs its own. Storing them for every attenuation a
+    measurement will use keeps the map out of the comparison: the map is needed to fit, and the
+    fit is all a model needs.
+    """
+    return {f"{float(a):g}": [float(v) for v in fit_coefficients(occ, centres, float(a))]
+            for a in alphas}
+
+
 def field_for(topology: str, trajectory: str, *, reference: str, alpha: float = 0.5,
               ligand: Optional[str] = None, name: str = "",
               **kwargs) -> Tuple[MoleculeFields, Occupancy, np.ndarray]:

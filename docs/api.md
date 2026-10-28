@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 87 modules, 157 classes with 501 public methods, and 714 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 87 modules, 157 classes with 501 public methods, and 715 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -10290,6 +10290,15 @@ mixed in with a coefficient, exactly as the variance field of `cmfqsar/fluctuati
 ### `water_field(centres: np.ndarray, coefficients: np.ndarray, name: str='', radius: float=WATER_RADIUS) -> MoleculeFields`
 
 The hydration sites of one ligand as a field, one Gaussian per site.
+
+### `coefficients_at(occ: 'Occupancy', centres: np.ndarray, alphas: Sequence[float]) -> dict`
+
+{attenuation: coefficients} for one set of sites.
+
+A coefficient is fitted against Gaussians of the field's own width, so it belongs to one
+attenuation and a model at another needs its own. Storing them for every attenuation a
+measurement will use keeps the map out of the comparison: the map is needed to fit, and the
+fit is all a model needs.
 
 ### `field_for(topology: str, trajectory: str, *, reference: str, alpha: float=0.5, ligand: Optional[str]=None, name: str='', **kwargs) -> Tuple[MoleculeFields, Occupancy, np.ndarray]`
 
