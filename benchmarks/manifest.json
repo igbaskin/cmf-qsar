@@ -1,6 +1,6 @@
 {
- "commit": "5a205bdb70bfdfb13cd7a7f102043e5f68d8a2aa",
- "created": "2026-10-28T07:04:03",
+ "commit": "23d777fd0b50d0ba6c9b789bfe592445602b407e",
+ "created": "2026-10-28T12:15:21",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1980,6 +1980,15 @@
   "benchmarks/results/increments/fit_THER.json": "253f094cb036d29371f190e6cb393e207d35f6f21c35c968393e32af73d1abd1",
   "benchmarks/results/increments/fit_THR.json": "9139076596732502f5ecc289749d0b6e0e5a82cb4fe7bbb89d3ff1a004416f53",
   "benchmarks/results/increments/table.md": "9b4636871329e755237af0146743b1a3fbf4aab5c751ee83581b7efa49161609",
+  "benchmarks/results/kcca/ACE.json": "45ddbb28b9434901ac188ba50ebceab67fa360c1176359347ce6fda424f13c25",
+  "benchmarks/results/kcca/AChE.json": "cc6a741bc6acb021c4440571e544bda1cfb70b20e83123056e81aa6f53c05f57",
+  "benchmarks/results/kcca/BZR.json": "1bc61adfd030a9071ee6ca01601c30014ca87595a2cfec2fc1fbcc416638e75c",
+  "benchmarks/results/kcca/COX2.json": "1511896cacc0de495d442c4a52b8b0fd99f81312d635be7707aa04d097c73529",
+  "benchmarks/results/kcca/DHFR.json": "b06d837258ef280e252a7b2a9286a3a4d7645bcbf640b9a5d27f69aea22293f8",
+  "benchmarks/results/kcca/GPB.json": "05509b785501ad4bebce23cb3b2e9b37d568b42a0bf392244c49143b84bbdafc",
+  "benchmarks/results/kcca/THER.json": "38a61a3d20d6ee04d76139fb860d335acde627dd0fa07d1b21114ecf7bae6e6a",
+  "benchmarks/results/kcca/THR.json": "a9e40db5c99e021a39c5fb2348be2069a71cb7ceb12f7c6e43ef9d3a4447d61f",
+  "benchmarks/results/kcca/table.md": "b3f87ebbb6507162955f597ebe8e0200115a6b16bca4ce6ee70cd611e7feb454",
   "benchmarks/results/local/pka.json": "8dfb0b579736ea7c29e9d15f7a75ef1a6a380caef6216d34aaef3649d96803bc",
   "benchmarks/results/local/pka_conformers.json": "6d337283122a7addc24889557321ed6e167853d1e9e5fdbbcf8ab2c716f292d9",
   "benchmarks/results/local/shifts.json": "f8109b7b3a8c9bdcc09ca97750f0f23fa97d162b9bdb9e9d09da5a5790ac4b29",
@@ -2327,6 +2336,7 @@
   "benchmarks/results/selectivity/file_glycine.json": "fdf29ea54573147755c4d75dbfd4a682d611b9eebdee82cf3c777d38c20041fe",
   "benchmarks/results/selectivity/table.md": "457c99257ba10154d192e7b780653e30544f9a1992b1c2b516c00b2fa3848597",
   "benchmarks/results/solvent/mcl1.json": "cfaa3dc070f9a60c4fe43c84260c2738155458cf2eabbaeb1ab063d796e32a6a",
+  "benchmarks/results/solvent/mcl1_sweep.json": "7940aaf28e8c7bcbac67367fc0ac5f712dbc44460e99c72b5f3888825a595026",
   "benchmarks/results/solvent/table.md": "08a023557a8ea5122e3824da669f43f6cfa69637d582bc1dc4b40abc93081470",
   "benchmarks/results/speed/cutoff.json": "709dd23788134aabcfc8e110ddcb9af69813477e46b684f48de4e55591969b3c",
   "benchmarks/results/speed/engine.json": "130e2f1a75835a513d11647d73e2e736b42fb475c074f346de48922559b7595c",

@@ -3254,6 +3254,131 @@ def cmd_cluster(args):
         print(f"Clusters written to {args.out}")
 
 
+def cmd_kcca(args):
+    """What the field sees that another view does not: item F6 of the plan."""
+    import csv as _csv
+    from cmfqsar import kcca as KC
+    from cmfqsar.descriptors import fingerprint_kernel
+
+    ds = load_dataset(args.dataset, activity_prop=args.activity)
+    if len(ds) < 6:
+        raise SystemExit("canonical correlation needs at least six molecules")
+    fs = _fieldset_from(args, list(ds.mols))
+    mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+    table = AtomTable.from_molecules(mf)
+    probe = CMFModel(fieldset=fs, method="krr", normalize=not args.raw)
+    K = probe.joint_kernel(probe.prepare_training_kernels(table))
+    print(f"View A: {len(ds)} molecules, fields {', '.join(s_.label for s_ in fs.specs)}, "
+          f"alpha = {args.alpha:g}" + ("" if args.raw else ", cosine-normalised"))
+
+    probe_b = None
+    fs_b = None
+    if args.other == "ecfp4":
+        L = fingerprint_kernel(ds.mols, radius=args.radius, bits=args.bits)
+        print(f"View B: Tanimoto coefficient of {args.bits}-bit Morgan fingerprints of radius "
+              f"{args.radius} (no shape, no pose)")
+    else:
+        other = argparse.Namespace(**vars(args))
+        if args.other_fields:
+            other.fields = args.other_fields
+        if args.other_alpha is not None:
+            other.alpha = args.other_alpha
+        if args.other == "fields":
+            if not args.other_fields:
+                raise SystemExit("--other fields needs --other-fields with the fields of view B")
+            mols_b, names_b, what = list(ds.mols), list(ds.names), "the same molecules"
+        else:
+            if not args.other_dataset:
+                raise SystemExit("--other dataset needs --other-dataset with the file of view B")
+            ds_b = load_dataset(args.other_dataset)
+            where = {n: i for i, n in enumerate(ds_b.names)}
+            missing = [n for n in ds.names if n not in where]
+            if missing:
+                raise SystemExit(f"{len(missing)} molecules of {args.dataset} are not in "
+                                 f"{args.other_dataset} (matched by name): "
+                                 f"{', '.join(missing[:5])}")
+            mols_b = [ds_b.mols[where[n]] for n in ds.names]
+            names_b = list(ds.names)
+            what = os.path.basename(args.other_dataset)
+        fs_b = _fieldset_from(other, mols_b)
+        table_b = AtomTable.from_molecules([build_fields(m, fs_b, n)
+                                            for m, n in zip(mols_b, names_b)])
+        probe_b = CMFModel(fieldset=fs_b, method="krr", normalize=not args.raw)
+        L = probe_b.joint_kernel(probe_b.prepare_training_kernels(table_b))
+        print(f"View B: {what}, fields {', '.join(s_.label for s_ in fs_b.specs)}, "
+              f"alpha = {other.alpha:g}")
+
+    y = np.asarray(ds.activity, float)
+    has_y = np.isfinite(y).sum() >= 6
+    res = KC.analyse(K, L, y=y if has_y else None, ridge=args.ridge, components=args.components,
+                     folds=args.folds, seed=args.seed, permutations=args.permutations,
+                     progress=(lambda msg: print("  ...", msg, flush=True)) if not args.quiet
+                     else None)
+    print()
+    print(res.describe())
+    if not has_y:
+        print("  (ii) needs an activity: give --activity to ask which directions carry it")
+
+    k = min(args.components, res.fit.n_components)
+    models_a = [KC.component_model(probe, res.fit.a[:, i], res.fit.u[:, i]) for i in range(k)]
+    models_b = []
+    if probe_b is not None:
+        models_b = [KC.component_model(probe_b, res.fit.b[:, i], res.fit.v[:, i])
+                    for i in range(k)]
+        from cmfqsar.transfer import incompatible
+        why = incompatible(models_a[0], models_b[0]) if models_a and models_b else "no components"
+        if why is None:
+            M = KC.component_cosines(models_a, models_b)
+            diag, off = KC.cosine_summary(M)
+            print()
+            print("  (iii) cosine between the co-field of component i in view A and of "
+                  "component j in view B:")
+            print("        " + "".join(f"   B{j + 1:<4d}" for j in range(k)))
+            for i in range(k):
+                print(f"     A{i + 1:<3d}" + "".join(f"  {M[i, j]:+6.3f} " for j in range(k)))
+            print(f"       the same component: {diag:+.3f} on average; different components: "
+                  f"{off:.3f} (absolute); "
+                  + ("the components are readable from either side" if diag > off else
+                     "the two sides of a component do not draw the same picture"))
+        else:
+            print(f"  (iii) the co-fields of the two views cannot be compared by a cosine: {why}")
+    elif args.other == "ecfp4":
+        print("  (iii) a fingerprint has no co-field; only the field side of each component can "
+              "be drawn")
+
+    if args.save_components:
+        os.makedirs(args.save_components, exist_ok=True)
+        for view, models in (("A", models_a), ("B", models_b)):
+            for i, m in enumerate(models):
+                path = os.path.join(args.save_components, f"{view}{i + 1}.cmf")
+                save_model(path, m, extra={"train_names": list(ds.names),
+                                           "kcca_component": i + 1, "kcca_view": view,
+                                           "rho": float(res.fit.rho[i])})
+        if res.private_coef is not None:
+            m = KC.component_model(probe, res.private_coef, res.ycv_private)
+            m.y = y.copy()
+            save_model(os.path.join(args.save_components, "private.cmf"), m,
+                       extra={"train_names": list(ds.names), "kcca_view": "A",
+                              "kcca_part": "the part of view A that view B does not contain",
+                              "q2": float(res.q2_private)})
+        first = os.path.join(args.save_components, "A1.cmf")
+        print(f"\n  components written to {args.save_components} as model files; draw one with: "
+              f"cmf cofield {first} --out-prefix A1"
+              + ("; private.cmf is the activity model on the part of view A that view B does "
+                 "not contain, and its co-field is where that part carries the activity"
+                 if res.private_coef is not None else ""))
+    if args.out:
+        with open(args.out, "w", newline="") as fh:
+            w = _csv.writer(fh)
+            w.writerow(["name", "activity"] + [f"u{i + 1}" for i in range(k)]
+                       + [f"v{i + 1}" for i in range(k)])
+            for j, nm in enumerate(ds.names):
+                w.writerow([nm, f"{y[j]:.6g}" if np.isfinite(y[j]) else ""]
+                           + [f"{res.fit.u[j, i]:.6f}" for i in range(k)]
+                           + [f"{res.fit.v[j, i]:.6f}" for i in range(k)])
+        print(f"  canonical variates written to {args.out}")
+
+
 def cmd_map(args):
     """Chemical space map and activity landscape (kernel PCA + GTM) from the CMF kernels."""
     import csv as _csv
@@ -3870,6 +3995,50 @@ def main(argv=None):
     cl.add_argument("--seed", type=int, default=0)
     cl.add_argument("--out", default=None, help="CSV of the cluster of every molecule")
     cl.set_defaults(func=cmd_cluster)
+
+    kc = sub.add_parser("kcca", help="what the field sees that another view does not (kernel "
+                                     "canonical correlation analysis)")
+    kc.add_argument("dataset")
+    kc.add_argument("--activity", default=None,
+                    help="activity property, for asking which directions carry it")
+    kc.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd",
+                    help="the fields of view A")
+    kc.add_argument("--cif", action="store_true")
+    kc.add_argument("--cif-scheme", default="sybyl",
+                    choices=["sybyl", "element", "element+aromatic"])
+    kc.add_argument("--cif-min", type=int, default=5)
+    kc.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
+    kc.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
+    kc.add_argument("--alpha", type=float, default=0.5)
+    kc.add_argument("--raw", action="store_true",
+                    help="do not cosine-normalise the field kernels (the default normalises)")
+    kc.add_argument("--other", default="ecfp4", choices=["ecfp4", "fields", "dataset"],
+                    help="view B: the ECFP4 Tanimoto kernel of the same molecules (default), "
+                         "another set of fields of the same molecules (--other-fields), or the "
+                         "same molecules from another file, matched by name (--other-dataset)")
+    kc.add_argument("--other-fields", default=None,
+                    help="the fields of view B, for --other fields or --other dataset")
+    kc.add_argument("--other-alpha", type=float, default=None,
+                    help="the attenuation of view B (default: the same as view A)")
+    kc.add_argument("--other-dataset", default=None, metavar="FILE",
+                    help="the file of view B, for --other dataset")
+    kc.add_argument("--radius", type=int, default=2, help="Morgan radius of the fingerprint")
+    kc.add_argument("--bits", type=int, default=2048, help="length of the fingerprint")
+    kc.add_argument("--ridge", type=float, default=None,
+                    help="the ridge, as a multiple of the mean eigenvalue; by default chosen "
+                         "on held-out molecules from a grid")
+    kc.add_argument("--components", type=int, default=3,
+                    help="leading components to report, and directions per activity model")
+    kc.add_argument("--folds", type=int, default=5)
+    kc.add_argument("--permutations", type=int, default=200,
+                    help="shuffled pairings that make the null distribution; 0 skips it")
+    kc.add_argument("--seed", type=int, default=0)
+    kc.add_argument("--save-components", default=None, metavar="DIR",
+                    help="write each leading component as a model file, to draw its co-field")
+    kc.add_argument("--out", default=None, metavar="FILE",
+                    help="CSV of the canonical variates of every molecule")
+    kc.add_argument("--quiet", action="store_true", help="no progress lines")
+    kc.set_defaults(func=cmd_kcca)
 
     e = sub.add_parser("explain", help="Shapley decomposition of a prediction (any kernel)")
     e.add_argument("--allow-mismatch", action="store_true",

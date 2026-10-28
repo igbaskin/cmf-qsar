@@ -3648,6 +3648,46 @@ spread four times the residual error, which is the model saying it has nothing t
 about half a second each — far more than the scoring, and optimistic, since a real library has to
 choose a pose without knowing the actives.
 
+### What the field sees that a fingerprint does not
+
+A *view* is one kernel over the molecules, and the program builds several: the five fields, the
+quantum fields, a fingerprint, the pocket complementarity. Kernel canonical correlation analysis
+(`cmfqsar/kcca.py`, the `kcca` subcommand) finds the pairs of directions, one in each of two
+views, whose projections correlate most strongly, and so says which part of the field a second
+view does not contain. The ridge is not an option: without one every canonical correlation is 1
+whatever the two views hold, so the ridge is chosen by the correlations on held-out molecules and
+every correlation is compared with a shuffled pairing of the two views. A canonical direction on
+the field side is a vector of dual coefficients, so it has a co-field, and the model on the part
+of the field the other view does not contain has one too: `--save-components` writes them as
+model files for `cmf cofield`.
+
+```bash
+python cmf_cli.py kcca examples/sutherland/THR.sdf --charges file --save-components comps
+python benchmarks/run_kcca.py             # results/kcca/table.md
+```
+
+The pairing measured first puts CMF's own premise to the test: the five-field kernel against the
+ECFP4 Tanimoto kernel on the eight Sutherland sets.
+
+| | mean over the eight sets |
+|---|---:|
+| canonical pairs that hold out above the shuffled pairing | 83 % |
+| directions of the field the fingerprint contains (more than half their variance explained) | 14 % |
+| q² on the whole field / the contained part / the part the fingerprint does not contain | +0.528 / +0.478 / +0.164 |
+| q² on a random part of the field of the contained part's size | +0.018 |
+
+The correlations are real on every set, and so is the answer: **the part of the field the
+fingerprint already contains carries nearly all of the activity**, and the three-dimensional
+remainder predicts at +0.16 on average, below the contained part with its bootstrap interval on
+7 of 8 sets. A random part of the same size predicts nothing, so the fingerprint is picking out
+the directions along which the molecules vary most, and on these congeneric series those are
+where the activity is. The third gate, that the two co-fields of one component are one picture,
+holds on two field views of the same molecules (the file's poses against poses moved by up to
+10° and 0.5 Å): cosine +0.83 for the same component against 0.05 for different ones, on all eight
+sets. The whole field still predicts better than either part, and a fingerprint has no co-field
+and no pose; what the measurement settles is where, on a series of one chemotype, the information
+sits, which is the finding of the fourth-dimension study again from the other side.
+
 ### Three series, worked through
 
 The interpretation tools above — Shapley decompositions, field differences, pharmacophores,
@@ -3802,6 +3842,7 @@ python cmf_cli.py mil examples/sutherland/THR.sdf --charges file --conformers 5 
 python cmf_cli.py mil examples/schindler/hif2a-jmc2023.sdf --conformers 5 --dock
 python cmf_cli.py hetero examples/sutherland/COX2.sdf --charges file --min-group 3 --out groups.csv
 python cmf_cli.py hetero examples/mittal/ACHE.sdf --align-within --place field --out-sdf placed.sdf
+python cmf_cli.py kcca examples/sutherland/THR.sdf --charges file --save-components comps   # against ECFP4
 ```
 
 `python cmf_cli.py build -h` lists all options (method, kernel normalisation, mixing-coefficient
@@ -4234,6 +4275,7 @@ cmfqsar/evidence.py     the marginal likelihood, for choosing alpha and lambda
 cmfqsar/perfield.py     one attenuation per field, by coordinate descent on the evidence
 cmfqsar/report.py       one self-contained HTML page describing a model
 cmfqsar/transfer.py     comparing two models by the overlap of their co-fields
+cmfqsar/kcca.py         kernel canonical correlation analysis: what the field sees that another view does not
 cmfqsar/mixing.py       a posterior over the field weights: which fields a series needs
 cmfqsar/pocketalign.py  posing by the pocket and the model's confidence together
 cmfqsar/gpc.py          Gaussian-process classification (Laplace), probabilities and evidence

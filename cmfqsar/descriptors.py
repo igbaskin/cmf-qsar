@@ -245,3 +245,30 @@ def contributions(Z_mol: np.ndarray, Z_train: np.ndarray, coef: np.ndarray, h: f
         w = np.where(nj[:, None] > 1e-12, w / np.maximum(nj[:, None], 1e-12), 0.0)
         z = z / nz
     return float(h) * float(scale) * z * w.sum(axis=0)
+
+
+# --------------------------------------------------------------------------- #
+# A whole-molecule fingerprint as a kernel
+# --------------------------------------------------------------------------- #
+
+
+def fingerprint_kernel(mols: Sequence, radius: int = 2, bits: int = 2048) -> np.ndarray:
+    """The Tanimoto coefficient of Morgan fingerprints, which is a positive semi-definite kernel.
+
+    The default is 2048-bit ECFP4 (radius 2), the fingerprint the screening literature's fusion
+    rules were established on.  It describes a molecule by its substructures and knows nothing
+    of its shape or its pose, which is what makes it the second view plan item F6 measures the
+    field against: what the field sees that the fingerprint does not is the part of the
+    description that is three-dimensional.  :mod:`cmfqsar.bioisostere` has the same similarity
+    for substituents; this one is over whole molecules.
+    """
+    from rdkit import DataStructs
+    from rdkit.Chem import rdFingerprintGenerator
+
+    gen = rdFingerprintGenerator.GetMorganGenerator(radius=int(radius), fpSize=int(bits))
+    fps = [gen.GetFingerprint(m) for m in mols]
+    n = len(fps)
+    S = np.eye(n)
+    for i in range(n):
+        S[i, :] = DataStructs.BulkTanimotoSimilarity(fps[i], fps)
+    return 0.5 * (S + S.T)

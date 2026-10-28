@@ -1515,6 +1515,44 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   targets needs several targets whose ligands share a frame, and that is the alignment problem
   of part C. The item is deliberately not a learning item: using the shared space as features
   for a predictor belongs with E4 and E6 and is not claimed here.
+  **Done 28 October 2026**: `cmfqsar/kcca.py`, the `kcca` subcommand, the whole-molecule
+  Tanimoto kernel as `cmfqsar.descriptors.fingerprint_kernel` (which `run_fusion.py` now
+  uses), and `benchmarks/run_kcca.py`. The eigenproblem is solved through the spectra of the two
+  centred kernels, as the singular value decomposition of
+  `diag(sqrt(k/(k+c))) U^T V diag(sqrt(l/(l+c)))`; the ridge is relative to the mean eigenvalue
+  of each view and chosen by the mean held-out correlation over all pairs, never by the training
+  one; the shuffled pairing is the null for every component; `component_model` turns a direction
+  into a model whose co-field the existing code draws. The degenerate case is a unit test: against
+  a one-dimensional view the first direction gives the fitted values of kernel ridge regression at
+  the matched ridge exactly, and the dual vector itself when the kernel has full rank.
+  **One deviation from the text of gate (ii).** It asked for a model on the directions the other
+  view does not contain against a model on the same number it does contain. Fitted on the
+  canonical variates that comparison measures nothing, because the variates are whitened by
+  construction and a regression on them has lost how much the molecules vary along each
+  direction, which is the prior kernel ridge regression rests on (on the thrombin set a model on
+  *all* the variates fell to q² 0.0 where the field model reaches 0.6). The gate is therefore
+  measured on a projection: a direction counts as contained when the other view explains more
+  than half of its variance on held-out molecules, the field kernel is split into its part inside
+  those directions and the rest, and kernel ridge regression is fitted on each with the
+  regularisation chosen inside the folds. The two parts have different dimensions; a random
+  subspace of the contained part's dimension is run beside them as the control for that.
+  **Measured** (`benchmarks/run_kcca.py`, the eight Sutherland sets, the five fields at the
+  evidence's attenuation against ECFP4). (i) holds: the leading pairs hold out at **0.93 to
+  0.99** on every set against about 0.2 for the shuffled pairing, and 83 % of all pairs clear it.
+  (ii) comes out against the premise: the fingerprint contains **14 %** of the field's directions
+  on average, and that part predicts the activity at q² **+0.478** against **+0.164** for the
+  rest and +0.528 for the whole field; the difference is below zero with its interval on **7 of
+  8** sets (−0.31 on average), and a random part of the contained part's size reaches +0.018, so
+  it is the directions and not their number. (iii) holds, on two field views of the same molecules
+  (the file's poses against poses moved by up to 10° and 0.5 Å, since a fingerprint has no
+  co-field): the co-fields of the two sides of one component agree at **+0.83** against 0.05 for
+  different components, on all eight sets. So on the Sutherland series a two-dimensional
+  descriptor already holds the field directions that carry the activity; the three-dimensional
+  remainder adds little, which is the fourth-dimension finding from the other side, and the whole
+  field still beats either part.
+  **Not done:** the other pairings (quantum against empirical fields, ligand against pocket),
+  which wait on the data they need; the feature-space solver for B6's landmarks, since every set
+  here fits the n by n form; and the GUI.
 ## G. The application and the tool (continuous)
 
 * **G1. Subcommands.** Alignment is spread over flags of `build` and `predict` and the `hetero`
@@ -2999,7 +3037,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
-| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, F6 (kernel canonical correlation analysis) once a second view is wanted; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
+| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol

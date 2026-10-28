@@ -3089,6 +3089,122 @@ fail. What it cannot check is whether two alignments *mean* the same thing, and 
 cosine would reveal that they did not. A cosine is also not a prediction: that two models want the
 same thing does not mean either is right.
 
+## What the field sees that another view does not
+
+A *view* is one description of the same molecules, which in this program means one kernel over
+them. The program builds several: the five-field kernel, the quantum fields, a fingerprint, the
+pocket complementarity, the same fields over a conformer ensemble. Nothing above says how much two
+of them say the same thing, or, more useful, **which part of the field is the part a second view
+does not contain**. Canonical correlation analysis answers that question: given two descriptions
+of the same objects it finds the pair of directions, one in each description, whose projections
+correlate most strongly, then the next such pair uncorrelated with the first, and so on. The
+kernel form does it with kernels in place of coordinates, which is what CMF needs because its
+description of a molecule has no coordinate vector.
+
+```bash
+python cmf_cli.py kcca examples/sutherland/THR.sdf --charges file                 # against ECFP4
+python cmf_cli.py kcca examples/sutherland/THR.sdf --charges file --save-components comps
+python cmf_cli.py kcca set.sdf --other dataset --other-dataset set_other_poses.sdf   # two field views
+python cmf_cli.py kcca set.sdf --fields steric,hydrophobic --other fields --other-fields electrostatic,hba,hbd
+```
+
+View A is always a field kernel, built with the same options as a model's. View B is the Tanimoto
+kernel of 2048-bit ECFP4 by default, which describes a molecule by its substructures and knows
+nothing of shape or pose; or the same molecules from another file, matched by name, which is how
+two poses or two conformer sets are compared; or another set of fields of the same molecules.
+
+With centred kernels $\mathbf{K}$ and $\mathbf{L}$ on the same $n$ molecules and dual directions
+$\mathbf{a}$, $\mathbf{b}$ (one coefficient per molecule, the same object as a fitted model's
+coefficients), the pairs solve the two coupled equations
+
+$$
+\mathbf{K}\mathbf{L}\,\mathbf{b} = \rho\,(\mathbf{K}^2 + c_K \mathbf{K})\,\mathbf{a}, \qquad
+\mathbf{L}\mathbf{K}\,\mathbf{a} = \rho\,(\mathbf{L}^2 + c_L \mathbf{L})\,\mathbf{b},
+$$
+
+where $\rho$ is the canonical correlation and $c_K$, $c_L$ are ridges. **The ridge is not an
+option.** With $c = 0$ and invertible kernels every canonical correlation is exactly 1 and the
+directions are arbitrary: both views have as many directions as there are molecules, so any
+direction of one can be matched exactly by some direction of the other. That is the classical
+failure of the method, and it is why the program never judges a pairing by its training
+correlations. The ridge is chosen by the correlations on **held-out** molecules (the directions
+fitted on four fifths of the set, the variates correlated on the fifth), and every correlation is
+compared with the one a **shuffled pairing** of the two views produces, where each molecule's
+field is paired with another molecule's fingerprint. A correlation that does not clear the
+shuffled one is the degeneracy, not chemistry.
+
+The output is a table of the leading components with their training correlation, their held-out
+correlation, the 95th percentile of the shuffled pairing, and a *variance share*: how much of the
+direction the ridge left, which is 1 for every direction when the ridge is too small. Then three
+verdicts, in the order the item of the development plan asks them:
+
+* **(i) The correlations are real:** how many components hold out above the shuffled pairing.
+* **(ii) Where the activity is.** A direction of the field counts as *contained* in the other
+  view when that view explains more than half of its variance on held-out molecules. The field
+  kernel is split into its part inside the contained directions and the rest, which is the part
+  of the field that is the field's own, and kernel ridge regression is fitted on each with the
+  regularisation chosen inside the folds. The difference of the two q² values comes with its
+  bootstrap interval, and an interval that covers zero is not a result. The split is a projection
+  of the kernel and not a regression on the canonical variates, because the variates are whitened
+  by construction: a model on them has lost how much the molecules vary along each direction,
+  which is the prior kernel ridge regression rests on.
+* **(iii) The components are readable.** A canonical direction on a field side is a vector of
+  dual coefficients, so it has a co-field, drawn by the same code as a model's. When both views
+  are field kernels on the same fields in one frame, the two co-fields of one component are
+  functions on one space, and the program prints their cosines (the one of *Comparing two models
+  by their co-fields*): the two sides of one component should agree, and two different components
+  should not. A fingerprint has no co-field, so against ECFP4 only the field side of each
+  component can be drawn.
+
+`--save-components DIR` writes each leading component as a model file, `A1.cmf` and so on, and
+`private.cmf`, the activity model on the part of the field the other view does not contain; `cmf
+cofield DIR/private.cmf` draws where that part carries the activity, which is the picture the
+question was asked for. `--out` writes the canonical variates of every molecule.
+
+**The degenerate case, which is the obvious misuse.** With the activity itself as the second view,
+that view has one dimension, and the first canonical direction is the kernel ridge regression of
+the activity on the field at the matched ridge, up to a scale factor. "KCCA-QSAR" in that sense is
+kernel ridge regression under another name and predicts nothing new; the test suite uses the
+identity as a correctness check and nothing else. The method earns its place only when both views
+are rich.
+
+### What the fingerprint already holds, measured
+
+The pairing that puts CMF's own premise to the test: the five-field kernel, at the attenuation the
+evidence picks for each set, against the ECFP4 Tanimoto kernel of the same molecules, on the eight
+Sutherland sets (`benchmarks/run_kcca.py`). The field is three-dimensional and the fingerprint is
+not, so the directions of the field the fingerprint does not contain are the part of the
+description that is genuinely three-dimensional.
+
+| | mean over the eight sets |
+|---|---:|
+| canonical pairs that hold out above the shuffled pairing | 83 % |
+| directions of the field the fingerprint contains (more than half their variance explained) | 14 % |
+| q² of kernel ridge regression on the whole field | +0.528 |
+| q² on the part of the field the fingerprint contains | +0.478 |
+| q² on the part it does not contain | +0.164 |
+| q² on a random part of the field of the contained part's size | +0.018 |
+
+**(i)** holds: the leading pairs hold out at correlations of 0.93 to 0.99 on every set, far above
+the shuffled pairing's 0.2, so the two views agree about most of what varies between the molecules.
+**(ii)** comes out the other way from the premise. The part of the field the fingerprint contains,
+a tenth to a fifth of its directions, carries nearly all of the activity; the rest, which is the
+three-dimensional part, predicts at +0.16 on average and the difference is below zero with its
+interval on 7 of the 8 sets (−0.31 on average). A random subspace of the contained part's size
+predicts nothing, so it is not the size of the part that matters: the fingerprint picks out the
+directions along which the molecules vary most, and on these congeneric series those are where the
+activity is. **(iii)** holds, measured on two field views of the same molecules (the file's poses
+against the same poses moved by up to 10° and 0.5 Å): the co-fields of the two sides of one
+component agree at a cosine of +0.83 on average, against 0.05 between different components, on all
+eight sets.
+
+What this settles is what the item asked to be told either way. On the Sutherland series a
+two-dimensional descriptor already holds the directions of the field that carry the activity, and
+the three-dimensional remainder adds little, which is the finding of the fourth-dimension study
+again from the other side. It does not say the field is useless: the whole field predicts better
+than either part, and a fingerprint has no co-field, no pose and nothing to say about a molecule
+whose substructures are new. It says where, on series of one chemotype, the information is.
+
 ## Chemical space maps
 
 *Tools → Chemical space map…* builds a two-dimensional map of the set from the CMF kernels.
@@ -6044,6 +6160,7 @@ cmfqsar/shapley.py       Shapley decomposition over atoms, substituents, field t
 cmfqsar/pharmacophore.py typed features with tolerance spheres, from the co-field
 cmfqsar/fielddiff.py     field differences against a reference molecule
 cmfqsar/transfer.py      comparing two models by their co-fields
+cmfqsar/kcca.py          what the field sees that another view does not (kernel CCA)
 cmfqsar/spectral.py      clustering a set by its kernel rather than by its scaffolds
 cmfqsar/gtm.py           chemical-space maps and activity landscapes
 cmfqsar/report.py        the HTML report of a model

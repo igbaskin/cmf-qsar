@@ -58,6 +58,7 @@ sys.path.insert(0, HERE)
 from rdkit import Chem, RDLogger  # noqa: E402
 
 from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.descriptors import fingerprint_kernel  # noqa: E402
 from cmfqsar.fields import AtomTable, FieldSet, build_fields  # noqa: E402
 from cmfqsar.fusion import FUSION_RULES, fuse  # noqa: E402
 from cmfqsar.kernels import kernel_matrices, normalize_kernels, self_kernels  # noqa: E402
@@ -102,17 +103,13 @@ def cmf_similarity(mols, names, alpha: float) -> np.ndarray:
 
 
 def ecfp4_similarity(mols) -> np.ndarray:
-    """The Tanimoto coefficient of 2048-bit ECFP4, which is a positive semi-definite kernel."""
-    from rdkit.Chem import rdFingerprintGenerator
-    from rdkit import DataStructs
-    gen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=2048)
-    fps = [gen.GetFingerprint(m) for m in mols]
-    n = len(fps)
-    S = np.eye(n)
-    for i in range(n):
-        sims = DataStructs.BulkTanimotoSimilarity(fps[i], fps)
-        S[i, :] = sims
-    return S
+    """The Tanimoto coefficient of 2048-bit ECFP4, which is a positive semi-definite kernel.
+
+    The kernel itself lives in the library (:func:`cmfqsar.descriptors.fingerprint_kernel`),
+    since plan item F6 pairs it with the field kernel; this is that function under the name the
+    result files were produced with.
+    """
+    return fingerprint_kernel(mols, radius=2, bits=2048)
 
 
 def folds_of(n: int, k: int = 5, seed: int = 0):

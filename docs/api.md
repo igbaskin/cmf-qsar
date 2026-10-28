@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 87 modules, 157 classes with 501 public methods, and 715 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 88 modules, 161 classes with 515 public methods, and 732 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -62,6 +62,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.gtm](#cmfqsargtm) | Chemical space and activity landscapes from CMF kernels: kernel PCA + Generative Topographic Mapping. |
 | [cmfqsar.increments](#cmfqsarincrements) | Atomic increments of the original CMF implementation (Baskin & Zhokhova 2013). |
 | [cmfqsar.invariant](#cmfqsarinvariant) | Alignment-free but geometry-aware kernels: autocorrelation of the molecular fields. |
+| [cmfqsar.kcca](#cmfqsarkcca) | Kernel canonical correlation analysis: what one view of the molecules sees that another does not (plan item F6). |
 | [cmfqsar.kernels](#cmfqsarkernels) | Molecular-field kernels. |
 | [cmfqsar.learnincrements](#cmfqsarlearnincrements) | Fitting the atomic increments to the data instead of taking them from the table (item D5). |
 | [cmfqsar.localalign](#cmfqsarlocalalign) | Local alignment: an environment posed on its centre and first shell (plan item LP3). |
@@ -1307,6 +1308,10 @@ Are two sets of molecules drawn from the same population?  A kernel two-sample t
 ### `cmd_cluster(args)`
 
 Cluster a set by the field kernel itself, and compare that with its scaffolds.
+
+### `cmd_kcca(args)`
+
+What the field sees that another view does not: item F6 of the plan.
 
 ### `cmd_map(args)`
 
@@ -2560,6 +2565,17 @@ The block is a dot product, so the prediction's descriptor part splits exactly:
 one term per descriptor, and they add up to the block's whole contribution.  With cosine
 normalisation the two norms divide in, which is done here as well so that the terms still sum
 to the number the model actually used.
+
+### `fingerprint_kernel(mols: Sequence, radius: int=2, bits: int=2048) -> np.ndarray`
+
+The Tanimoto coefficient of Morgan fingerprints, which is a positive semi-definite kernel.
+
+The default is 2048-bit ECFP4 (radius 2), the fingerprint the screening literature's fusion
+rules were established on.  It describes a molecule by its substructures and knows nothing
+of its shape or its pose, which is what makes it the second view plan item F6 measures the
+field against: what the field sees that the fingerprint does not is the part of the
+description that is three-dimensional.  `cmfqsar.bioisostere` has the same similarity
+for substituents; this one is over whole molecules.
 
 ## cmfqsar.design
 
@@ -5239,6 +5255,327 @@ The same split taken over the channel blocks instead of the atoms.
 One number per pair of field types -- "steric with steric", "electrostatic with hba" -- which
 says which kind of channel the prediction came from.  The numbers add up to the same total as
 `atom_contributions`.
+
+## cmfqsar.kcca
+
+Source: `cmfqsar/kcca.py`
+
+Kernel canonical correlation analysis: what one view of the molecules sees that another does
+not (plan item F6).
+
+A *view* is one description of the same molecules, which in this program means one kernel over
+them.  The program builds several: the five-field CMF kernel, the quantum fields, the ECFP4
+Tanimoto kernel, the pocket complementarity, the same fields over a conformer ensemble.  No tool
+here says how much two of them say the same thing, and, more useful, **which part of the field
+is the part a second view does not contain**.
+
+Canonical correlation analysis (CCA) answers that question.  Given two descriptions of the same
+objects it finds the pair of directions, one in each description, whose projections correlate
+most strongly; then the next such pair, uncorrelated with the first; and so on.  The kernel form
+(KCCA) does it with kernels in place of coordinates, which is what CMF needs because its
+description of a molecule has no coordinate vector.  With centred kernels `K` and `L` on the
+same `n` molecules and dual directions `a` and `b` (one coefficient per molecule, like the
+coefficients of a fitted model), the pairs solve the generalised eigenproblem
+
+    [ 0    K L ] [a]         [ K^2 + c_K K      0      ] [a]
+    [ L K   0  ] [b] = rho   [     0       L^2 + c_L L ] [b]
+
+where `rho` is the canonical correlation and `c_K`, `c_L` are ridges.  **The ridge is not
+an option.**  With `c = 0` and invertible kernels every canonical correlation is exactly 1 and
+the directions are arbitrary -- any direction of one view can be matched exactly by some
+direction of the other, because both have as many directions as there are molecules.  That is the
+classical failure of KCCA, and it is why nothing here is judged by its training correlations:
+the ridge is chosen by the correlations on **held-out** molecules, and the correlations are
+compared with the ones a **shuffled pairing** of the two views produces.
+
+The eigenproblem is solved through the spectra of the two kernels.  With `K = U diag(k) U^T`
+and `L = V diag(l) V^T` the substitution `a = U diag(k (k + c_K))^(-1/2) p` turns it into
+the singular value decomposition of
+
+    M = diag( sqrt(k / (k + c_K)) )  U^T V  diag( sqrt(l / (l + c_L)) )
+
+whose singular values are the canonical correlations and whose singular vectors give the
+directions.  The factor `sqrt(k / (k + c))` is what the ridge does: a direction along which
+the molecules barely vary (small `k`) is shrunk towards nothing instead of being inflated to
+unit variance, and `||K a_i||^2`, which is 1 without a ridge, says how much of each direction
+the ridge left.  That number is reported for every component as its **variance share**.
+
+Two properties make this a CMF tool rather than a general one.  A canonical direction on the
+field side is a vector of dual coefficients, the same object as a fitted model's, so
+`component_model` turns a component into a model whose co-field
+(`cmfqsar.model.CMFModel.cofield_coefficients`) is the picture of that direction, with no
+new interpretation code and with rule 2 of the plan kept: the direction is linear in the field.
+And when both views are field kernels over the same fields, the two co-fields of one component
+are functions on one space and `component_cosines` compares them by the cosine of plan
+item F3.
+
+**The degenerate case, stated first because it is the obvious misuse.**  With the activity as the
+second view that view has one dimension, and the first canonical direction is the kernel ridge
+regression of the activity on the first view at ridge `c_K` -- `a = (K + c_K I)^-1 y`, up to
+a scale factor.  "KCCA-QSAR" in that sense is kernel ridge regression under another name and
+predicts nothing new.  The test suite uses the identity as a correctness check and nothing else.
+
+**What the field sees that the other view does not.**  A direction of the field view counts
+as *contained* in the other view when that view explains more than half of its variance on
+held-out molecules (`contained_directions`).  The field kernel is then split in two:
+`projected_kernel` restricts it to the span of the contained directions, and the
+difference is the kernel of what is left, the part of the field that is the field's own.  The
+split is a projection and not a regression on the canonical variates, because the variates are
+whitened by construction and a model on them has lost the variance along each direction, which
+is the prior kernel ridge regression rests on; the projected kernels keep it.  Kernel ridge
+regression on the two parts, with the regularisation chosen inside the folds
+(`activity_on_kernel`), answers the question the item asks, with the bootstrap interval of
+the difference; and the model on the field's own part has dual coefficients
+(`private_coefficients`), so where that part carries the activity is a co-field.
+
+### `class KCCAFit  (dataclass)`
+
+The canonical directions of two views on one set of molecules.
+
+`a` and `b` hold one dual direction per column, in the order of `rho` (largest
+first); `u = K_c a` and `v = L_c b` are the canonical variates of the training
+molecules.  `variance_a[i] = ||K_c a_i||^2` lies in (0, 1] and says how much of the
+direction the ridge left; without a ridge it is 1 for every direction.
+
+Attributes:
+
+- `rho: np.ndarray`
+- `a: np.ndarray`
+- `b: np.ndarray`
+- `u: np.ndarray`
+- `v: np.ndarray`
+- `variance_a: np.ndarray`
+- `variance_b: np.ndarray`
+- `ridge: float`
+- `ridge_a: float`
+- `ridge_b: float`
+- `rank_a: int`
+- `rank_b: int`
+- `col_mean_a: np.ndarray` = `_field(repr=False, default=None)`
+- `col_mean_b: np.ndarray` = `_field(repr=False, default=None)`
+- `grand_a: float` = `0.0`
+- `grand_b: float` = `0.0`
+
+#### `KCCAFit.n_components` -> int  (property)
+
+#### `KCCAFit.project_a(K_test_train: np.ndarray) -> np.ndarray`
+
+Canonical variates of new molecules in view A, from their kernel block to the training set.
+
+#### `KCCAFit.project_b(L_test_train: np.ndarray) -> np.ndarray`
+
+The same for view B.
+
+#### `KCCAFit.shared_variance() -> np.ndarray`
+
+Variance of each direction of view A that view B follows: `v_i rho_i^2`.
+
+#### `KCCAFit.private_variance() -> np.ndarray`
+
+Variance of each direction of view A that view B does not follow: `v_i (1 - rho_i^2)`.
+
+### `class HeldOut  (dataclass)`
+
+Canonical correlations measured on molecules the directions were not fitted on.
+
+Attributes:
+
+- `per_fold: np.ndarray`
+- `ridge: float`
+
+#### `HeldOut.mean` -> np.ndarray  (property)
+
+The held-out correlation of each component, averaged over the folds.
+
+#### `HeldOut.n_components` -> int  (property)
+
+### `class RidgeChoice  (dataclass)`
+
+The ridge the held-out correlations chose, and what every candidate scored.
+
+Attributes:
+
+- `ridge: float`
+- `scores: Dict[float, float]`
+- `components: int`
+
+#### `RidgeChoice.describe() -> str`
+
+### `class KCCAResult  (dataclass)`
+
+The analysis of two views: the fit, what held out, what shuffling gave, and the gates.
+
+Attributes:
+
+- `fit: KCCAFit`
+- `held_out: HeldOut`
+- `ridge_choice: Optional[RidgeChoice]`
+- `null: Optional[np.ndarray]`
+- `components: int`
+- `n: int`
+- `contained: Optional[np.ndarray]` = `None`
+- `q2_all: float` = `float('nan')`
+- `q2_shared: float` = `float('nan')`
+- `q2_private: float` = `float('nan')`
+- `q2_difference: Tuple[float, float, float]` = `(float('nan'), float('nan'), float('nan'))`
+- `ycv_all: Optional[np.ndarray]` = `None`
+- `ycv_shared: Optional[np.ndarray]` = `None`
+- `ycv_private: Optional[np.ndarray]` = `None`
+- `private_coef: Optional[np.ndarray]` = `None`
+- `private_lam: float` = `float('nan')`
+
+#### `KCCAResult.null_quantile(q: float=0.95) -> np.ndarray`
+
+The `q` quantile of the shuffled held-out correlation, per component.
+
+#### `KCCAResult.p_values() -> np.ndarray`
+
+Share of shuffles whose held-out correlation reached the observed one, per component.
+
+#### `KCCAResult.real_components(q: float=0.95) -> int`
+
+How many components hold out above the `q` quantile of the shuffled pairing.
+
+#### `KCCAResult.n_contained() -> int`
+
+#### `KCCAResult.rows(components: Optional[int]=None) -> List[Dict[str, float]]`
+
+One record per leading component, for a table or a file.
+
+#### `KCCAResult.describe() -> str`
+
+### `centre(K: np.ndarray) -> np.ndarray`
+
+`H K H` with `H = I - 11^T / n`: the feature space centred at the mean molecule.
+
+### `centre_against(K_test_train: np.ndarray, K_train: np.ndarray) -> np.ndarray`
+
+The block between new molecules and the training set, centred with the training means.
+
+A new molecule is placed in the feature space the training set was centred in, so the
+column means and the grand mean are the training set's, and only the row mean is its own.
+
+### `kcca(K: np.ndarray, L: np.ndarray, ridge: float=0.1, rcond: float=RCOND, max_rank: Optional[int]=None) -> KCCAFit`
+
+Regularised kernel canonical correlation analysis of two kernels on the same molecules.
+
+`K` and `L` are the raw (uncentred) kernels; they are centred here.  `ridge` is relative:
+each view's absolute ridge is `ridge` times the mean eigenvalue of its centred kernel, so
+that the same number means the same thing for a kernel of overlap integrals and for a
+Tanimoto coefficient.  `rcond` drops the eigenvalues that are round-off and `max_rank`, if
+given, keeps only that many leading eigenvectors of each view (a cheap second regulariser,
+not used by default).
+
+### `held_out_correlations(K: np.ndarray, L: np.ndarray, ridge: float, folds: int=5, seed: Optional[int]=0, components: Optional[int]=None, rcond: float=RCOND, max_rank: Optional[int]=None) -> HeldOut`
+
+Fit the directions on four fifths of the molecules, correlate the variates on the fifth.
+
+This is the number KCCA has to be judged by.  The training correlations approach 1 as the
+ridge goes to zero whatever the two views contain; the held-out correlation does not, and
+falls when the directions were fitted to the particular molecules rather than to what the
+views share.  The correlation is Pearson's, per fold, averaged over the folds.
+
+### `choose_ridge(K: np.ndarray, L: np.ndarray, grid: Sequence[float]=RIDGE_GRID, folds: int=5, seed: Optional[int]=0, components: Optional[int]=None, rcond: float=RCOND) -> RidgeChoice`
+
+The ridge with the highest mean held-out correlation over the pairs.
+
+Over all pairs by default, so that a ridge too small to stop the deep components fitting
+noise is told apart from one that lets them hold out; `components` restricts the mean to
+the leading pairs.  Never the training correlation: that is highest at the smallest ridge of
+any grid.
+
+### `permutation_null(K: np.ndarray, L: np.ndarray, ridge: float, permutations: int=200, folds: int=5, seed: Optional[int]=0, components: Optional[int]=None, rcond: float=RCOND) -> np.ndarray`
+
+Held-out correlations when the pairing between the two views is shuffled.
+
+The molecules of view B are permuted, so every molecule's field is paired with another
+molecule's fingerprint, and the analysis is repeated at the same ridge on the same folds.
+What comes back, `permutations` rows of `components` values, is what the leading held-out
+correlations look like when the two views share nothing but their marginal distributions.
+A real correlation has to clear this; one that does not is the degeneracy of the method,
+not chemistry.
+
+### `contained_directions(fit: KCCAFit, held_out: HeldOut, null: Optional[np.ndarray]=None, share: float=CONTAINED_SHARE, quantile: float=0.95) -> np.ndarray`
+
+Which directions of view A the other view contains: a boolean per component.
+
+A direction counts as contained when the other view explains more than `share` of its
+variance on held-out molecules (a held-out correlation above `sqrt(share)`) and, when the
+shuffled pairing is given, that correlation is also above its `quantile`.  A component the
+folds could not produce (the full fit has a few more than a fold's) is not contained.
+
+### `projected_kernel(fit: KCCAFit, index: Sequence[int]) -> np.ndarray`
+
+The centred kernel of view A restricted to the span of the directions `index`.
+
+With `E = Phi^T A_S` the feature-space vectors of the directions, the projector onto their
+span is `E (E^T E)^-1 E^T` and the kernel of the projected features is
+
+    K_S = (K_c A_S) (A_S^T K_c A_S)^-1 (K_c A_S)^T = U_S G^-1 U_S^T
+
+which keeps the variance of the molecules along those directions as it is.  That is the
+point of projecting rather than regressing on the variates: the canonical variates are
+whitened by construction, so a regression on them has no way to prefer the directions the
+molecules actually vary along, which is the prior kernel ridge regression rests on.
+`K_c - K_S` is the kernel of what is left, the part of the field outside the span.
+
+### `activity_on_kernel(K: np.ndarray, y: np.ndarray, folds: int=5, seed: Optional[int]=0, lams: Sequence[float]=LAMS) -> Tuple[float, np.ndarray, float]`
+
+Nested cross-validated q2 of kernel ridge regression on a kernel, with the predictions.
+
+The regularisation is chosen inside every outer fold by an inner cross-validation on the
+training part, so the q2 is not helped by the choice.  `lams` are multiples of the mean
+diagonal of the kernel.  Returns `(q2, y_cv, lam)` where `lam` is the regularisation an
+inner cross-validation on the whole set picks, for a final model.
+
+### `private_coefficients(fit: KCCAFit, contained: np.ndarray, beta: np.ndarray) -> np.ndarray`
+
+Dual coefficients over the training molecules of a model fitted on the private kernel.
+
+A model on `K_P = K_c - K_S` predicts `f(x) = phi(x)^T (I - P_S) Phi_c^T beta`, which is
+linear in the field with the weight vector `Phi_c^T (beta - A_S G^-1 U_S^T beta)`; the
+centring makes the coefficients sum to zero.  Returned as coefficients on the raw training
+Gaussians, so `component_model` turns the private part of the field into a co-field.
+
+### `paired_difference(y: np.ndarray, pred_a: np.ndarray, pred_b: np.ndarray, runs: int=2000, seed: Optional[int]=0, level: float=0.95) -> Tuple[float, float, float]`
+
+`q2(pred_a) - q2(pred_b)` with its bootstrap interval over the molecules (rule 4).
+
+The two predictions are resampled together, molecule by molecule, so the interval is that
+of the difference and not of two separate numbers.
+
+### `analyse(K: np.ndarray, L: np.ndarray, y: Optional[np.ndarray]=None, ridge: Optional[float]=None, components: int=3, folds: int=5, seed: Optional[int]=0, permutations: int=200, grid: Sequence[float]=RIDGE_GRID, rcond: float=RCOND, share: float=CONTAINED_SHARE, progress=None) -> KCCAResult`
+
+The whole analysis of two views: ridge, held-out correlations, shuffled pairing, gates.
+
+`ridge` of None chooses it on the folds by the mean held-out correlation over all pairs;
+`permutations` of 0 skips the shuffled pairing; `y` of None skips gate (ii).  `components`
+is how many leading pairs the tables show.  `share` is the share of a direction's variance
+the other view has to explain on held-out molecules for the direction to count as contained.
+
+### `component_model(probe, direction: np.ndarray, variate: Optional[np.ndarray]=None)`
+
+A canonical direction of a field view as a model, so that it has a co-field.
+
+`probe` is a `cmfqsar.model.CMFModel` whose training kernels were prepared on the
+molecules of the view (`prepare_training_kernels`); the result shares its field set,
+normalisation and kernels and has the direction as its dual coefficients, a bias of zero and
+the canonical variate as its "activity".  Everything that reads a linear model -- the
+co-field export, the atom contributions, the F3 cosine -- works on it unchanged, and it can
+be saved with `cmfqsar.dataio.save_model` and drawn with `cmf cofield`.
+
+### `component_cosines(models_a: Sequence, models_b: Sequence) -> np.ndarray`
+
+The F3 cosine between the co-fields of the components of two field views.
+
+Entry `(i, j)` is the cosine between component `i` of view A and component `j` of
+view B, over all fields together.  For two views on the same fields in one frame the
+diagonal is what gate (iii) of the item reads: the two co-fields of one shared component
+should resemble each other more than the co-fields of two different components do.
+
+### `cosine_summary(M: np.ndarray) -> Tuple[float, float]`
+
+Mean signed cosine on the diagonal and mean absolute cosine off it.
 
 ## cmfqsar.kernels
 
