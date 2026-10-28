@@ -3552,12 +3552,37 @@ where mcl1 kept 3.6, because its site holds far more ordered water. At **70%**, 
 to 6.7 sites, the water alone reaches **+0.312 to +0.341** against controls near -0.02 and the
 mixture clears the interval -- **+0.276 [+0.037, +0.560] to +0.299 [+0.063, +0.593]** -- the only
 place in this item where a water block has done so. So the threshold is a proxy for how few sites
-survive and the proxy is target-specific; stated as a count, both sets agree that four to seven
-strongly occupied sites carry something and ten or more carry nothing. That count-based statement
-was formulated after seeing both sets, so it is a hypothesis awaiting a third one.
+survive and the proxy is target-specific; stated as a count, both sets appeared to agree that
+four to seven strongly occupied sites carry something and ten or more carry nothing.
+
+**A third set, with the definition fixed as a count, and that hypothesis failed.** A count is
+testable where a threshold is not, because it means the same on two targets. The definition was
+written down before anything ran -- the **five most occupied sites a ligand**, a 30% floor so
+that the count decides, 2.4 A spacing -- and run on **hif2a** (37 ligands, receptor 5TBM, 22,717
+atoms solvated, 5.3 min a ligand; 36 ligands kept, `antechamber` could not charge lig_43). The
+two earlier sets were measured again at the same count.
+
+| set | ligands | sites a ligand | the five fields | with the water | change | the water alone | random sites alone |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| **hif2a** (held out) | 36 | 5.0 | +0.342 | +0.262 | **-0.079 [-0.287, -0.007]** | +0.058 | +0.177 |
+| mcl1 | 25 | 5.0 | +0.575 | +0.455 | -0.120 [-0.316, +0.074] | +0.172 | -0.134 |
+| p38 | 29 | 5.0 | +0.261 | +0.267 | +0.006 [-0.100, +0.133] | -0.043 | +0.089 |
+
+On hif2a the water alone reaches +0.058 against **+0.177** for the same sites moved at random, so
+the measured positions do worse than random ones, and the mixture is the first case in this item
+where the water makes a model **worse beyond the interval**. The count also loses each earlier
+set its own result: mcl1 +0.172 where its 60% floor gave +0.607 at 3.6 sites, p38 -0.043 where
+its 70% floor gave +0.341 at 6.3 sites. So the reformulation was a mistake in reading the sweep,
+not a property that failed to transfer -- and the random-site control had always held the count
+fixed, which is why the count could never have been the governing variable. What the working
+definitions share is the floor: every site kept is occupied in most frames, and how many survive
+follows from that. What is left: a water field does not improve a model at any definition that
+can be fixed in advance, a high floor is the only setting where it carries anything, the floor
+that works differs between targets, and nothing explains why.
 
 ```bash
-python benchmarks/run_solvent.py --sweep  # results/solvent/table.md
+python benchmarks/run_solvent.py --sweep                       # results/solvent/table.md
+python benchmarks/run_solvent.py --sets mcl1 p38 hif2a --count
 ```
 
 ```bash

@@ -1,0 +1,23 @@
+{
+ "set": "p38",
+ "n": 29,
+ "max_sites": 5,
+ "min_occupancy": 0.3,
+ "min_distance": 2.4,
+ "sites": 5.0,
+ "sites_min": 5,
+ "sites_max": 5,
+ "strongest": 0.9029310344827587,
+ "reference": 0.26067701609815075,
+ "reference_alpha": 0.1,
+ "mixed": 0.2665578191998339,
+ "mix": 0.1,
+ "mixed_alpha": 0.1,
+ "alone": -0.04257422510390474,
+ "alone_alpha": 0.1,
+ "scrambled": 0.0887559940937922,
+ "shared": -0.05138483445712638,
+ "delta": 0.005880803101683152,
+ "lo": -0.09982755765676056,
+ "hi": 0.13305491129696415
+}

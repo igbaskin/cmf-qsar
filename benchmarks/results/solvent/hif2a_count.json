@@ -1,0 +1,23 @@
+{
+ "set": "hif2a",
+ "n": 36,
+ "max_sites": 5,
+ "min_occupancy": 0.3,
+ "min_distance": 2.4,
+ "sites": 5.0,
+ "sites_min": 5,
+ "sites_max": 5,
+ "strongest": 0.8293055555555556,
+ "reference": 0.3419218055526625,
+ "reference_alpha": 0.3,
+ "mixed": 0.26249764597909286,
+ "mix": 0.1,
+ "mixed_alpha": 0.3,
+ "alone": 0.05845316069194062,
+ "alone_alpha": 2.0,
+ "scrambled": 0.1773888844410133,
+ "shared": -0.0779821301787369,
+ "delta": -0.07942415957356963,
+ "lo": -0.286943381666322,
+ "hi": -0.006910727316651771
+}

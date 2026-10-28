@@ -2,6 +2,52 @@
 
 Plan item D9. The places a ligand's water occupies in a simulation, turned into a field of Gaussians at the hydration sites and mixed with the kernel of the five physico-chemical fields under one coefficient. Every difference is against the five fields alone, with the bootstrap interval of rule 4. Two controls carry the weight of the design: the same sites moved at random, and one ligand's sites given to every ligand.
 
+## hif2a
+
+36 ligands, 5.0 hydration sites each (from 5 to 5), chosen at an attenuation of 0.3. A site is a point occupied at least 30% of the frames, against 14% for bulk water; the strongest site of a ligand averages 83%.
+
+Every model is given its own best attenuation over the same grid, so the reference is not held back by a choice made to suit the water block.
+
+| model | q2 | attenuation | mixing coefficient | change against the five fields |
+| --- | ---: | ---: | ---: | --- |
+| the five fields alone | +0.342 | 0.3 | -- | the reference |
+| the five fields and the water | +0.262 | 0.3 | 0.1 | -0.079 [-0.287, -0.007] |
+| the water alone | +0.059 | 2 | 1.0 | -0.283 [-0.685, +0.086] |
+| with sites moved at random (control) | +0.470 | 0.3 | 0.1 | +0.128 [+0.038, +0.339] |
+| with one ligand's water for every ligand (control) | +0.345 | 0.1 | 0.7 | +0.003 [-0.270, +0.156] |
+| random sites alone (control) | +0.177 | 0.3 | 1.0 | -0.165 [-0.435, +0.310] |
+| one shared set of sites alone (control) | -0.078 | 0.1 | 1.0 | -0.420 [-0.671, +0.207] |
+
+The mixing coefficient at an attenuation of 0.3, where the water block did best, from the fields alone to the water alone:
+
+| coefficient | q2 | RMSEcv |
+| ---: | ---: | ---: |
+| 0.0 | +0.342 | 0.590 |
+| 0.1 | +0.262 | 0.624 |
+| 0.2 | +0.196 | 0.652 |
+| 0.3 | +0.175 | 0.660 |
+| 0.5 | +0.144 | 0.673 |
+| 0.7 | +0.101 | 0.689 |
+| 0.9 | +0.036 | 0.714 |
+| 1.0 | -0.018 | 0.734 |
+
+### Where the model asks for water
+
+The sites of every ligand gathered into places, with the weight the water block puts on each. A positive weight asks for **more** water there and a negative one for less, which is where displacing a water is worth trying. Only places shared by at least three ligands are listed, and under rule 5 this is a display tool: the table above says the block does not improve the model, so a place here is something to look at and not a prediction.
+
+| place (x, y, z) | ligands with a site there | mean occupancy | weight |
+| --- | ---: | ---: | ---: |
+| 30.9, 0.4, -2.5 | 12 | 66% | -0.513 |
+| 29.6, 7.1, -15.1 | 3 | 60% | +0.312 |
+| 26.4, 4.7, -9.8 | 13 | 73% | +0.225 |
+| 33.5, -4.2, -2.5 | 7 | 57% | +0.068 |
+| 19.6, 8.6, -19.0 | 6 | 64% | +0.049 |
+| 11.5, 4.2, -18.0 | 19 | 63% | +0.041 |
+| 23.8, -8.6, -4.5 | 36 | 69% | +0.040 |
+| 24.1, 9.1, -15.8 | 6 | 60% | -0.040 |
+| 14.8, -9.6, -20.1 | 35 | 68% | +0.020 |
+| 28.8, -8.8, -11.3 | 34 | 81% | +0.011 |
+
 ## mcl1
 
 25 ligands, 7.8 hydration sites each (from 4 to 12), chosen at an attenuation of 0.1. A site is a point occupied at least 50% of the frames, against 14% for bulk water; the strongest site of a ligand averages 73%.
@@ -180,7 +226,35 @@ One thing the sweep does settle about the strict end: at the strictest threshold
 
 **What the threshold is standing in for is the number of sites.** The water alone clearly carries something at 4 of the 20 definitions, and all of them are at an occupancy of 70%, leaving 6.3 to 6.7 sites per ligand. Every other definition leaves 9.8 to 40.0 and gives at best +0.092, with 2 of them marginal rather than flat. A threshold is a proxy for how few sites survive, and the proxy is target-specific: the same share of frames leaves a different number of sites on a site that holds much ordered water than on one that holds little. The count is the quantity to compare across targets, not the threshold.
 
+## The definition given as a count of sites
+
+The sweep above left a hypothesis and not a result: what appeared to decide whether the water field carries anything was **how many strongly occupied sites survive**, not the occupancy threshold, because the same threshold leaves a different number of sites on two targets. A threshold is therefore a target-specific proxy for a count, and a count is what can mean the same thing on two sets. This section fixes it: the **5 most occupied sites a ligand**, an occupancy floor of 30% so that the count and not the floor decides, and the module's own spacing of 2.4 A. Everything else is unchanged.
+
+**hif2a** is the set the count was not chosen on. Its definition was written down before the simulations were started, so its row is a test that could fail. The other rows are the sets the hypothesis was read from, which cannot confirm it -- but they can still refute it, by giving less at the fixed count than they gave at their own threshold.
+
+| set | ligands | sites a ligand | the five fields | with the water | change against the five fields | the water alone | random sites alone | one shared set alone |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: |
+| **hif2a** | 36 | 5.0 | +0.342 | +0.262 | -0.079 [-0.287, -0.007] | +0.058 | +0.177 | -0.078 |
+| mcl1 | 25 | 5.0 | +0.575 | +0.455 | -0.120 [-0.316, +0.074] | +0.172 | -0.134 | -0.138 |
+| p38 | 29 | 5.0 | +0.261 | +0.267 | +0.006 [-0.100, +0.133] | -0.043 | +0.089 | -0.051 |
+
+**The water block improves no set beyond the interval** at this definition. The change runs from -0.120 to +0.006, and on 1 of the 3 sets (hif2a) the water block makes the model **worse** beyond the interval, which no definition tried before this one had done. A fixed count does not make the water field worth adding.
+
+The water field **on its own** carries something on 1 of the 3 sets (mcl1): mcl1 +0.172 against -0.134 for the same number of sites moved at random.
+
+**What the held-out set says.** On hif2a the water alone reaches +0.058 against +0.177 for random sites, and the mixture -0.079 [-0.287, -0.007] against the five fields. The hypothesis predicted that a count of 5 would carry something here, and it does not. The count-based statement is therefore **not supported** on the one set that could test it.
+
+**The count does not reproduce what the threshold gave, on 2 of the 3 sets**: mcl1 +0.172 at 5.0 sites against +0.607 at 3.6 sites (60% occupancy); p38 -0.043 at 5.0 sites against +0.341 at 6.3 sites (70% occupancy). That is the clearest result here. A fixed count was put forward as the definition the two sets agreed on, and it gives less on both of the sets it was read from, so the reformulation was a mistake in reading the sweep rather than a property that failed to transfer. What the working definitions have in common is not how many sites survive but that **every site kept is strongly occupied**; the number of survivors is a consequence of that floor and differs between targets. Fixing the count forces a ligand with one strongly held water to take four weak ones as well, which is why a count behaves like a loose threshold.
+
+> **What is fixed and what is not.** The count, the floor and the spacing were written down before the held-out set was simulated, so its row is an estimate and not the best of several. Why one target needs a floor of 60% and another 70% is still unexplained, and a floor chosen per target is not a definition anyone can fix in advance. The honest reading is in the verdict below.
+
 ## What it settles
+
+**On hif2a the water field makes the model worse.** -0.079 [-0.287, -0.007] against the five fields, which clears the interval in the wrong direction.
+
+The water alone reaches +0.059. That is the number to read first: it says how much of the activity the places a ligand's water occupies can account for by themselves, with no field of the molecule in the kernel at all.
+
+**The positions are carrying nothing.** The water field on its own reaches +0.059 and the controls reach random sites alone +0.177 and one shared set of sites alone -0.078, so a block of plausible numbers does as well as the measured maps and the places the water occupies are not what the model is using.
 
 **On mcl1 the water field adds nothing that can be measured.** The five fields reach +0.575 and the best mixture +0.560, a change of -0.015 [-0.178, +0.186], an interval that contains zero. On a set of 25 ligands an interval that wide cannot show a small gain, so what this says is that the water field is not worth a simulation here, not that the solvent carries nothing.
 

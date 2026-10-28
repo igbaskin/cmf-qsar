@@ -1178,13 +1178,10 @@ carries something when the definition leaves roughly four to seven strongly occu
 ligand (mcl1 +0.554 at 3.6 sites, p38 +0.312 to +0.341 at 6.3 to 6.7), and nothing when it leaves
 ten or more.
 
-> **What that is worth.** The count-based statement was formulated after seeing both sets, so it
-> is a hypothesis with two observations behind it and not a result. The honest status of this item
-> is: the water field does not improve a model at the definitions anyone would pick in advance;
-> at a strict definition on one of two targets it does, beyond the interval; and the variable
-> that appears to govern it is the number of surviving sites, which a third set would have to
-> confirm. `hydration_sites` already takes `max_sites`, so a count-based definition needs no new
-> code — only a set it was not chosen on.
+> **That statement was a hypothesis, and it was put to a test.** It was formulated after seeing
+> both sets, so it carried two observations and no estimate. A count is testable in a way a
+> threshold is not, because a count means the same on two targets. The test is the last part of
+> this section, and it failed.
 
 > **Two cautions, both from the sweep itself.** At the loosest definition tried (30 % occupancy,
 > 3.6 Å spacing, about 25 sites a ligand) the **random-site control reaches +0.438 against
@@ -1194,6 +1191,54 @@ ten or more.
 > sixteen values tried on 25 molecules after seeing them; it should not be quoted as this item's
 > result. The defaults of the module, 50 % and 2.4 Å, were fixed before any of this was measured
 > and are left as they are for that reason.
+
+**A third set, with the definition fixed as a count, and the hypothesis failed.** The definition
+was written down before anything was run: the **five most occupied sites a ligand**, an occupancy
+floor of 30 % so that the count and not the floor decides, and the module's own spacing of 2.4 Å.
+The set was **hif2a**, chosen as the largest one available with the smallest receptor and not for
+anything it had shown: 37 ligands, chain A of entry 5TBM, 1,749 atoms after preparation,
+22,717 atoms solvated, 5.3 minutes a ligand, about four hours in all. One ligand was
+lost, because `antechamber` could not charge lig_43, so 36 remain. The two earlier sets were then
+measured again at the same count, from the trajectories they already had.
+
+| set | ligands | sites a ligand | the five fields | with the water | change against the five fields | the water alone | random sites alone |
+| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| **hif2a** (held out) | 36 | 5.0 | +0.342 | +0.262 | **−0.079 [−0.287, −0.007]** | +0.058 | +0.177 |
+| mcl1 | 25 | 5.0 | +0.575 | +0.455 | −0.120 [−0.316, +0.074] | +0.172 | −0.134 |
+| p38 | 29 | 5.0 | +0.261 | +0.267 | +0.006 [−0.100, +0.133] | −0.043 | +0.089 |
+
+**The test failed on the held-out set.** On hif2a the water alone reaches +0.058, while the same
+five sites moved to random places in the same box reach +0.177: the measured positions do worse
+than random ones. The mixture is also the first case in this item where adding the water makes a
+model **worse beyond the interval**, −0.079 [−0.287, −0.007].
+
+**It failed on the two sets the hypothesis was read from as well, which is the clearer result.**
+A count of five gives mcl1 +0.172 where its own 60 % floor gave +0.607 with 3.6 sites, and p38
+−0.043 where its own 70 % floor gave +0.341 with 6.3 sites. A reformulation that loses the result
+on both of the sets it was formed on is a mistake in reading the sweep, and not a property that
+failed to carry over to a third target.
+
+**Why the count was the wrong variable.** The random-site control keeps each ligand's number of
+sites and moves them, so the count was already held fixed in every comparison in this item. At
+mcl1's 60 % floor the measured sites reach +0.554 and that control −0.096, which says the
+difference lies in the positions of strongly occupied sites and not in how many of them there
+are. What the two working definitions have in common is the floor itself: **every site kept is
+occupied in most frames**. How many survive follows from the floor and differs between targets,
+3.6 on one and 6.3 on the other. Fixing the count at five does the opposite of what a floor does.
+A ligand with one strongly held water is made to take four weak places as well, so a count
+behaves like a loose threshold, which is the end of the sweep where the field carries least.
+
+> **What is left of this item.** A water field does not improve a model at any definition that
+> can be fixed in advance, and at one such definition on one set it makes the model measurably
+> worse. A high occupancy floor is the only setting in which the field carries anything; the
+> floor that works differs between targets; and nothing here explains why. Across the two sweeps
+> 36 definitions were tried and one cleared the interval, which is also what trying 36
+> definitions produces on its own. The field and its co-field stay in the program as a display
+> tool under rule 5.
+
+```bash
+python benchmarks/run_solvent.py --sets mcl1 p38 hif2a --count
+```
 
 **Where the model asks for water.** The sites of all the ligands are in one frame, so they gather
 into places, and the weight the water block puts on a place is what it asks of the water there:

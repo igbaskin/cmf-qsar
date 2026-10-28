@@ -497,6 +497,80 @@ def test_the_sweep_section_says_when_a_control_beats_the_real_maps():
     assert "the stronger the sites, the more they carry" in text
 
 
+def test_a_count_keeps_only_the_strongest_sites(tmp_path):
+    """A definition can be given as a count, which is the only form that travels between sets."""
+    rs = _bench()
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=1.0, n_waters=4,
+                                             tag="count")
+    occ = SV.occupancy(pdb, dcd, reference=ref)
+    maps = {"a": occ, "b": occ}
+    many, missing = rs.sites_at(maps, ["a", "b"], 0.5, min_occupancy=0.2, min_distance=1.0)
+    assert missing == []
+    few, missing = rs.sites_at(maps, ["a", "b"], 0.5, min_occupancy=0.2, min_distance=1.0,
+                               max_sites=2)
+    assert missing == []
+    assert len(few["a"][0]) <= 2
+    assert len(few["a"][0]) <= len(many["a"][0])
+    # the strongest sites are the ones kept, in the same order
+    assert np.allclose(few["a"][0], many["a"][0][:len(few["a"][0])])
+
+
+def test_the_count_section_reports_a_held_out_test_that_failed():
+    """A held-out set that carries nothing has to be reported as a failure, not as a caution."""
+    rs = _bench()
+    counts = [dict(set="one", n=25, max_sites=5, min_occupancy=0.3, min_distance=2.4,
+                   sites=5.0, sites_min=5, sites_max=5, strongest=0.8, reference=0.5,
+                   reference_alpha=1.0, mixed=0.52, mix=0.3, mixed_alpha=1.0, alone=0.55,
+                   alone_alpha=1.0, scrambled=-0.05, shared=-0.1, delta=0.02, lo=-0.1, hi=0.15),
+              dict(set="held", n=36, max_sites=5, min_occupancy=0.3, min_distance=2.4,
+                   sites=5.0, sites_min=5, sites_max=5, strongest=0.8, reference=0.5,
+                   reference_alpha=1.0, mixed=0.49, mix=0.1, mixed_alpha=1.0, alone=-0.04,
+                   alone_alpha=1.0, scrambled=-0.02, shared=-0.1, delta=-0.01, lo=-0.12,
+                   hi=0.09)]
+    text = " ".join(rs.count_section(counts, held_out="held"))
+    assert "not supported" in text
+    assert "improves no set beyond the interval" in text
+    assert "on 1 of the 2 sets" in text, "the set that does carry something is named"
+
+
+def test_the_count_section_reports_a_held_out_test_that_passed():
+    rs = _bench()
+    counts = [dict(set="held", n=36, max_sites=5, min_occupancy=0.3, min_distance=2.4,
+                   sites=5.0, sites_min=5, sites_max=5, strongest=0.8, reference=0.5,
+                   reference_alpha=1.0, mixed=0.62, mix=0.3, mixed_alpha=1.0, alone=0.40,
+                   alone_alpha=1.0, scrambled=-0.03, shared=-0.1, delta=0.12, lo=0.02,
+                   hi=0.23)]
+    text = " ".join(rs.count_section(counts, held_out="held"))
+    assert "could have failed and did not" in text
+    assert "improves the model beyond the interval on 1 of the 1 sets" in text
+    assert "not supported" not in text
+
+
+def test_the_count_section_says_when_a_count_loses_a_set_its_own_result():
+    """A reformulation that gives less than the threshold it replaced is refuted by that set."""
+    rs = _bench()
+    counts = [dict(set="one", n=25, max_sites=5, min_occupancy=0.3, min_distance=2.4,
+                   sites=5.0, sites_min=5, sites_max=5, strongest=0.8, reference=0.5,
+                   reference_alpha=1.0, mixed=0.45, mix=0.3, mixed_alpha=1.0, alone=0.17,
+                   alone_alpha=1.0, scrambled=-0.13, shared=-0.14, delta=-0.12, lo=-0.32,
+                   hi=0.07)]
+    sweeps = {"one": {"set": "one", "rows": [
+        dict(min_occupancy=0.6, min_distance=2.4, missing=0, sites=3.6, sites_min=1,
+             sites_max=7, alpha=2.0, mix=0.3, mixed=0.62, alone=0.55, control=-0.1,
+             delta=0.04, lo=-0.19, hi=0.3)]}}
+    text = " ".join(rs.count_section(counts, sweeps, held_out="other"))
+    assert "does not reproduce what the threshold gave, on 1 of the 1 sets" in text
+    assert "+0.170 at 5.0 sites against +0.550 at 3.6 sites" in text
+    assert "every site kept is strongly occupied" in text
+    quiet = " ".join(rs.count_section(counts, None, held_out="other"))
+    assert "does not reproduce" not in quiet, "no sweep, no comparison"
+
+
+def test_the_count_section_is_empty_without_a_measurement():
+    rs = _bench()
+    assert rs.count_section([]) == []
+
+
 def test_the_sweep_section_says_when_a_definition_leaves_no_sites():
     rs = _bench()
     sweep = {"set": "toy", "n": 25, "reference": 0.5, "occupancies": [0.9],

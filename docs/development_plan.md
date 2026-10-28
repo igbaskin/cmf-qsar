@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1384 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1389 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1028,22 +1028,57 @@ says whether a trajectory does what a generated ensemble could not.
   **clears the interval** at all four spacings. Those are the only definitions anywhere in this
   item where a water block has cleared it, and they also overturn the first conclusion as a
   general statement: on mcl1 no definition beat the five fields, on p38 four do.
-  **What the two sets agree on, stated as a count rather than a threshold.** The threshold is a
-  proxy for how few sites survive and the proxy is target-specific. In terms of the count, both
-  sets say the same: the water field carries something where the definition leaves roughly four
-  to seven strongly occupied sites a ligand (mcl1 +0.554 at 3.6, p38 +0.312 to +0.341 at 6.3 to
-  6.7) and nothing where it leaves ten or more. That statement was formulated after seeing both
-  sets, so it is a hypothesis with two observations behind it; `hydration_sites` already takes
-  `max_sites`, so testing it needs no new code, only a third set it was not chosen on.
+  **What the two sets appeared to agree on, stated as a count rather than a threshold.** The
+  threshold looked like a proxy for how few sites survive, and the proxy is target-specific. In
+  terms of the count, both sets appeared to say the same: the water field carries something where
+  the definition leaves roughly four to seven strongly occupied sites a ligand (mcl1 +0.554 at
+  3.6, p38 +0.312 to +0.341 at 6.3 to 6.7) and nothing where it leaves ten or more. That was
+  formulated after seeing both sets, so it was a hypothesis with two observations behind it and
+  no estimate.
+  **A third set, with the definition fixed as a count, 28 October 2026, and the hypothesis
+  failed.** A count is testable where a threshold is not, because a count means the same thing
+  on two targets. The definition was written down before anything was run: the **five most
+  occupied sites a ligand**, an occupancy floor of 30% so that the count and not the floor
+  decides, and the module's spacing of 2.4 A. The set was **hif2a**, chosen as the largest one
+  available with the smallest receptor: 37 ligands, chain A of entry 5TBM, 1,749 atoms after
+  preparation, 22,717 atoms solvated, about 540 ns/day, 5.3 minutes a ligand, 235 minutes in
+  all; `antechamber` could not charge lig_43, so 36 ligands remain. The two earlier
+  sets were measured again at the same count from the trajectories they already had.
+  **The three rows**, each model at its own best attenuation, the change against the five
+  fields with the interval of rule 4: **hif2a** (held out) 36 ligands, the five fields +0.342,
+  with the water +0.262, **-0.079 [-0.287, -0.007]**, the water alone +0.058, random sites
+  +0.177, one shared set -0.078. **mcl1** +0.575, +0.455, -0.120 [-0.316, +0.074], alone +0.172,
+  random -0.134, shared -0.138. **p38** +0.261, +0.267, +0.006 [-0.100, +0.133], alone -0.043,
+  random +0.089, shared -0.051.
+  **What the test says.** On the held-out set the water alone reaches +0.058 while the same five
+  sites moved at random reach +0.177, so the measured positions do worse than random ones; and
+  the mixture is the first case in this item where adding the water makes a model **worse beyond
+  the interval**. The count also loses each earlier set its own result: mcl1 +0.172 where its
+  60% floor gave +0.607 at 3.6 sites, p38 -0.043 where its 70% floor gave +0.341 at 6.3 sites.
+  A reformulation that loses the result on both of the sets it was formed on is a mistake in
+  reading the sweep, not a property that failed to transfer to a third target.
+  **Why the count was the wrong variable.** The random-site control keeps each ligand's number
+  of sites and moves them, so the count was already held fixed in every comparison in this item:
+  at mcl1's 60% floor the measured sites reach +0.554 and that control -0.096, which places the
+  difference in the positions of strongly occupied sites and not in how many there are. What the
+  two working definitions have in common is the floor itself, that every site kept is occupied
+  in most frames; how many survive follows from the floor and differs between targets, 3.6 on
+  one and 6.3 on the other. Fixing the count does the opposite: a ligand with one strongly held
+  water is made to take four weak places as well, so a count behaves like a loose threshold,
+  which is the end of the sweep where the field carries least.
   **The honest status of the item.** A water field does not improve a model at any definition
-  anyone would fix in advance. At a strict definition it does on one of two targets, beyond the
-  interval. The variable that appears to govern it is the number of surviving sites. Nothing
-  here is settled, and the first conclusion reported on 28 October -- that the water field never
-  improves the model -- is now known to hold on mcl1 and fail on p38.
-  **Not done:** a third set, with the definition given as a site count, which is the measurement
-  that would settle the hypothesis above; the hydrogens of the water are ignored, so the field
-  says where a water is and not which way it points; and there is no control for the simulation
-  length, which is what would say whether 2 ns places the sites surely enough.
+  that can be fixed in advance, and at one such definition on one set it makes the model
+  measurably worse. A high occupancy floor is the only setting in which the field carries
+  anything, the floor that works differs between targets, and nothing here explains why. Across
+  the two sweeps 36 definitions were tried and one cleared the interval, which is also what
+  trying 36 definitions produces on its own. The field and its co-field stay in the program as a
+  display tool under rule 5.
+  **Not done:** the rule that picked both working definitions -- the strictest floor that still
+  leaves every ligand at least one site -- has not itself been tested on a set it was not read
+  from, and that is the one statement in this item that could still turn out to be real; the
+  hydrogens of the water are ignored, so the field says where a water is and not which way it
+  points; and there is no control for the simulation length, which is what would say whether
+  2 ns places the sites surely enough.
 * **D10. Fluctuation as information.** The ensemble mode uses the mean field only. The variance of
   the field across frames is a flexibility map, and the kernel of two variance fields is in closed
   form by the same algebra as the mean (a product of Gaussians is a Gaussian). Add it as a block

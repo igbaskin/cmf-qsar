@@ -1,0 +1,23 @@
+{
+ "set": "mcl1",
+ "n": 25,
+ "max_sites": 5,
+ "min_occupancy": 0.3,
+ "min_distance": 2.4,
+ "sites": 5.0,
+ "sites_min": 5,
+ "sites_max": 5,
+ "strongest": 0.733,
+ "reference": 0.5750222866826342,
+ "reference_alpha": 0.1,
+ "mixed": 0.4551463835953571,
+ "mix": 0.1,
+ "mixed_alpha": 2.0,
+ "alone": 0.17217395264122093,
+ "alone_alpha": 2.0,
+ "scrambled": -0.13385926293165307,
+ "shared": -0.13834222349530778,
+ "delta": -0.11987590308727714,
+ "lo": -0.3164767640392813,
+ "hi": 0.0741389128481177
+}

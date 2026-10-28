@@ -1,5 +1,79 @@
 [
  {
+  "set": "hif2a",
+  "entry": "5TBM",
+  "chains": [
+   "A"
+  ],
+  "ligands": 36,
+  "water_fields": 36,
+  "hydration_sites": 5.0,
+  "records": 359,
+  "skipped": [
+   "lig_43"
+  ],
+  "left_the_site": [],
+  "max_frames": 20,
+  "cutoff": 0.75,
+  "max_drift": 4.0,
+  "drift_median": 0.8343157621820386,
+  "drift_max": 1.5272985520878617,
+  "trajectory_mb": 2030.3,
+  "settings": {
+   "nanoseconds": 2.0,
+   "equilibration_ps": 200.0,
+   "timestep_fs": 4.0,
+   "temperature": 300.0,
+   "pressure": 1.0,
+   "padding": 10.0,
+   "ionic_strength": 0.15,
+   "frame_ps": 10.0,
+   "restraint_k": 5.0,
+   "restrain_production": false,
+   "small_molecule_forcefield": "gaff-2.11",
+   "protein_forcefield": "amber14-all.xml",
+   "water_forcefield": "amber14/tip3pfb.xml",
+   "platform": "CUDA",
+   "seed": 0
+  }
+ },
+ {
+  "set": "mcl1",
+  "entry": "4HW3",
+  "chains": [
+   "B"
+  ],
+  "ligands": 25,
+  "water_fields": 25,
+  "hydration_sites": 7.8,
+  "records": 283,
+  "skipped": [],
+  "left_the_site": [],
+  "max_frames": 20,
+  "cutoff": 0.75,
+  "max_drift": 4.0,
+  "drift_median": 0.9331509843620407,
+  "drift_max": 1.389677273737852,
+  "trajectory_mb": 1259.9,
+  "settings": {
+   "nanoseconds": 2.0,
+   "equilibration_ps": 200.0,
+   "timestep_fs": 4.0,
+   "temperature": 300.0,
+   "pressure": 1.0,
+   "padding": 10.0,
+   "ionic_strength": 0.15,
+   "frame_ps": 10.0,
+   "restraint_k": 5.0,
+   "restrain_production": false,
+   "small_molecule_forcefield": "gaff-2.11",
+   "protein_forcefield": "amber14-all.xml",
+   "water_forcefield": "amber14/tip3pfb.xml",
+   "platform": "CUDA",
+   "seed": 0
+  }
+ },
+ {
   "set": "p38",
   "entry": "3FLY",
   "chains": [

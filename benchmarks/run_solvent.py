@@ -79,6 +79,13 @@ RUNS = 2000
 #: the two numbers that define a hydration site, swept to see how much they decide
 SWEEP_OCCUPANCY = (0.3, 0.4, 0.5, 0.6, 0.7)
 SWEEP_DISTANCE = (1.8, 2.4, 3.0, 3.6)
+#: the definition given as a count of sites rather than a threshold, the same on every set,
+#: fixed before the third set was run
+COUNT_SITES = 5
+COUNT_OCCUPANCY = 0.3
+COUNT_DISTANCE = 2.4
+#: the set the count was not chosen on, which is the only one that can test the hypothesis
+COUNT_HELD_OUT = "hif2a"
 
 
 def _say(text):
@@ -248,17 +255,19 @@ def occupancy_maps(name, ligands, log=_say):
     return out or None
 
 
-def sites_at(maps, names, alpha, min_occupancy, min_distance):
+def sites_at(maps, names, alpha, min_occupancy, min_distance, max_sites=SV.MAX_SITES):
     """{ligand: (centres, coefficients, occupancies)} at one definition of a site.
 
     Returns (sites, missing): `missing` names the ligands with no point occupied often enough,
-    which is how a definition too strict for a set shows itself.
+    which is how a definition too strict for a set shows itself. `max_sites` keeps only the
+    strongest sites, so a definition can be given as a count instead of a threshold.
     """
     sites, missing = {}, []
     for nm in names:
         occ = maps[nm]
         centres, heights = SV.hydration_sites(occ, min_occupancy=float(min_occupancy),
-                                              min_distance=float(min_distance))
+                                              min_distance=float(min_distance),
+                                              max_sites=int(max_sites))
         if len(centres) == 0:
             missing.append(nm)
             continue
@@ -329,6 +338,67 @@ def stage_sweep(name, mols, names, y, maps, results=RESULTS, seed=SEED, log=_say
            "rows": rows}
     os.makedirs(results, exist_ok=True)
     with open(os.path.join(results, f"{name}_sweep.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
+def stage_count(name, mols, names, y, maps, max_sites=COUNT_SITES,
+                min_occupancy=COUNT_OCCUPANCY, min_distance=COUNT_DISTANCE,
+                results=RESULTS, seed=SEED, log=_say):
+    """The same comparison with the number of sites fixed instead of the threshold.
+
+    The sweep on two sets left a hypothesis rather than a result. What appeared to govern
+    whether the water field carries anything was not the occupancy threshold but how many
+    strongly occupied sites survive it, because the same threshold leaves a different number of
+    sites on two targets: 11.4 on one and 3.6 on the other. If that is right, the definition to
+    fix across sets is the count, and this stage fixes it at `max_sites` for every set. The
+    threshold is kept low so that it is the count that decides, and the spacing is the module's
+    own.
+    """
+    Kf, refs = {}, []
+    for a in ALPHAS:
+        Kf[a] = field_kernel(mols, names, a)
+        refs.append((best(Kf[a], y), float(a)))
+    ref, ref_alpha = max(refs, key=lambda r: r[0][0])
+    picked, counts, occupancies = {}, None, None
+    for a in ALPHAS:
+        sites, miss = sites_at(maps, names, a, min_occupancy, min_distance, max_sites=max_sites)
+        if miss:
+            log(f"    {len(miss)} ligand(s) with no site at all; the stage is skipped")
+            return None
+        counts = [len(sites[n][0]) for n in names]
+        occupancies = [float(sites[n][2][0]) for n in names]
+        Kw = water_kernel(sites, names, a)
+        scan = _scan(Kf[a], Kw, y)
+        inner = [r for r in scan if 0.0 < r["mix"] < 1.0]
+        # every model at its own best attenuation, as the main table does
+        rows = {"mixed": max(inner, key=lambda r: r["q2"]) if inner else scan[0],
+                "alone": scan[-1],
+                "scrambled": _scan(Kf[a], water_kernel(
+                    scrambled_sites(sites, names, seed=seed), names, a), y)[-1],
+                "shared": _scan(Kf[a], water_kernel(
+                    shared_sites(sites, names), names, a), y)[-1]}
+        for key, row in rows.items():
+            if picked.get(key) is None or row["q2"] > picked[key]["q2"]:
+                picked[key] = dict(row, alpha=float(a))
+    d, lo, hi = bootstrap_difference(y, picked["mixed"]["pred"], ref[3])
+    out = {"set": name, "n": int(len(y)), "max_sites": int(max_sites),
+           "min_occupancy": float(min_occupancy), "min_distance": float(min_distance),
+           "sites": float(np.mean(counts)), "sites_min": int(min(counts)),
+           "sites_max": int(max(counts)), "strongest": float(np.mean(occupancies)),
+           "reference": float(ref[0]), "reference_alpha": ref_alpha,
+           "mixed": float(picked["mixed"]["q2"]), "mix": float(picked["mixed"]["mix"]),
+           "mixed_alpha": picked["mixed"]["alpha"],
+           "alone": float(picked["alone"]["q2"]), "alone_alpha": picked["alone"]["alpha"],
+           "scrambled": float(picked["scrambled"]["q2"]),
+           "shared": float(picked["shared"]["q2"]),
+           "delta": d, "lo": lo, "hi": hi}
+    log(f"    {name}: {out['sites']:.1f} sites a ligand, the five fields "
+        f"{out['reference']:+.3f}, with the water {out['mixed']:+.3f} "
+        f"({d:+.3f} [{lo:+.3f}, {hi:+.3f}]), the water alone {out['alone']:+.3f}, "
+        f"random sites {out['scrambled']:+.3f}, one shared set {out['shared']:+.3f}")
+    os.makedirs(results, exist_ok=True)
+    with open(os.path.join(results, f"{name}_count.json"), "w") as fh:
         json.dump(out, fh, indent=1)
     return out
 
@@ -506,7 +576,7 @@ ORDER = ("fields", "water_mixed", "water_alone", "scrambled", "shared",
 def load_all(results=RESULTS):
     out = []
     for p in sorted(glob.glob(os.path.join(results, "*.json"))):
-        if p.endswith("_sweep.json"):
+        if p.endswith(("_sweep.json", "_count.json")):
             continue
         with open(p) as fh:
             out.append(json.load(fh))
@@ -519,6 +589,14 @@ def load_sweeps(results=RESULTS):
         with open(p) as fh:
             d = json.load(fh)
         out[d["set"]] = d
+    return out
+
+
+def load_counts(results=RESULTS):
+    out = []
+    for p in sorted(glob.glob(os.path.join(results, "*_count.json"))):
+        with open(p) as fh:
+            out.append(json.load(fh))
     return out
 
 
@@ -584,6 +662,7 @@ def report(results=RESULTS, path=None):
         sweep = load_sweeps().get(rec["set"])
         if sweep:
             out += sweep_section(sweep)
+    out += count_section(load_counts(results), load_sweeps(results))
     out += verdict(rows)
     text = "\n".join(out) + "\n"
     if path:
@@ -740,6 +819,129 @@ def sweep_section(sweep):
     return out
 
 
+def count_section(counts, sweeps=None, held_out=COUNT_HELD_OUT):
+    """The table and the reading of the definition given as a count of sites.
+
+    The reading follows the numbers rather than the expectation. It counts the sets where the
+    water block beats the five fields beyond the interval and the sets where the water alone
+    beats its own random-site control. Where a set also has a sweep it compares the count with
+    the best the same set reached at a threshold, because a count that does not reproduce a
+    set's own result is refuted by that set and not only by the held-out one.
+    """
+    if not counts:
+        return []
+    first = counts[0]
+    out = ["## The definition given as a count of sites", "",
+           f"The sweep above left a hypothesis and not a result: what appeared to decide "
+           f"whether the water field carries anything was **how many strongly occupied sites "
+           f"survive**, not the occupancy threshold, because the same threshold leaves a "
+           f"different number of sites on two targets. A threshold is therefore a "
+           f"target-specific proxy for a count, and a count is what can mean the same thing on "
+           f"two sets. This section fixes it: the **{first['max_sites']} most occupied sites a "
+           f"ligand**, an occupancy floor of {first['min_occupancy']:.0%} so that the count and "
+           f"not the floor decides, and the module's own spacing of "
+           f"{first['min_distance']:.1f} A. Everything else is unchanged.", ""]
+    if any(r["set"] == held_out for r in counts):
+        out += [f"**{held_out}** is the set the count was not chosen on. Its definition was "
+                f"written down before the simulations were started, so its row is a test that "
+                f"could fail. The other rows are the sets the hypothesis was read from, which "
+                f"cannot confirm it -- but they can still refute it, by giving less at the "
+                f"fixed count than they gave at their own threshold.", ""]
+    out += ["| set | ligands | sites a ligand | the five fields | with the water | "
+            "change against the five fields | the water alone | random sites alone | "
+            "one shared set alone |",
+            "| --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: |"]
+    for r in counts:
+        label = f"**{r['set']}**" if r["set"] == held_out else r["set"]
+        out.append(f"| {label} | {r['n']} | {r['sites']:.1f} | {r['reference']:+.3f} | "
+                   f"{r['mixed']:+.3f} | {r['delta']:+.3f} [{r['lo']:+.3f}, {r['hi']:+.3f}] | "
+                   f"{r['alone']:+.3f} | {r['scrambled']:+.3f} | {r['shared']:+.3f} |")
+    out.append("")
+
+    ahead = [r for r in counts if r["lo"] > 0]
+    behind = [r for r in counts if r["hi"] < 0]
+    carries = [r for r in counts if r["alone"] > max(0.05, r["scrambled"] + 0.05)]
+    held = [r for r in counts if r["set"] == held_out]
+
+    if ahead:
+        out += [f"**The water block improves the model beyond the interval on "
+                f"{len(ahead)} of the {len(counts)} sets** at this definition "
+                f"({', '.join(r['set'] for r in ahead)}), by "
+                f"{min(r['delta'] for r in ahead):+.3f} to "
+                f"{max(r['delta'] for r in ahead):+.3f}.", ""]
+    else:
+        out += [f"**The water block improves no set beyond the interval** at this definition. "
+                f"The change runs from {min(r['delta'] for r in counts):+.3f} to "
+                f"{max(r['delta'] for r in counts):+.3f}, and "
+                + (f"on {len(behind)} of the {len(counts)} sets "
+                   f"({', '.join(r['set'] for r in behind)}) the water block makes the model "
+                   f"**worse** beyond the interval, which no definition tried before this one "
+                   f"had done."
+                   if behind else "every interval contains zero.")
+                + " A fixed count does not make the water field worth adding.", ""]
+    if carries:
+        out += [f"The water field **on its own** carries something on "
+                f"{len(carries)} of the {len(counts)} sets "
+                f"({', '.join(r['set'] for r in carries)}): "
+                + "; ".join(f"{r['set']} {r['alone']:+.3f} against "
+                            f"{r['scrambled']:+.3f} for the same number of sites moved at "
+                            f"random" for r in carries) + ".", ""]
+    else:
+        out += [f"The water field on its own carries nothing on any of the "
+                f"{len(counts)} sets at this definition: it reaches "
+                f"{min(r['alone'] for r in counts):+.3f} to "
+                f"{max(r['alone'] for r in counts):+.3f} against random-site controls of "
+                f"{min(r['scrambled'] for r in counts):+.3f} to "
+                f"{max(r['scrambled'] for r in counts):+.3f}.", ""]
+
+    if held:
+        h = held[0]
+        passed = h["alone"] > max(0.05, h["scrambled"] + 0.05)
+        out += [f"**What the held-out set says.** On {h['set']} the water alone reaches "
+                f"{h['alone']:+.3f} against {h['scrambled']:+.3f} for random sites, and the "
+                f"mixture {h['delta']:+.3f} [{h['lo']:+.3f}, {h['hi']:+.3f}] against the five "
+                f"fields. "
+                + (f"That is the direction the hypothesis predicted, on a set it was not read "
+                   f"from, so the count-based statement now has one test behind it that could "
+                   f"have failed and did not."
+                   if passed else
+                   f"The hypothesis predicted that a count of {h['max_sites']} would carry "
+                   f"something here, and it does not. The count-based statement is therefore "
+                   f"**not supported** on the one set that could test it.") , ""]
+    # the count against each set's own best threshold: a reformulation that loses a set's own
+    # result is refuted by that set, whether or not the held-out set agrees
+    lost = []
+    for r in counts:
+        sweep = (sweeps or {}).get(r["set"])
+        rows = [w for w in (sweep or {}).get("rows", []) if w.get("sites")]
+        if not rows:
+            continue
+        top = max(rows, key=lambda w: w["alone"])
+        if top["alone"] > r["alone"] + 0.05:
+            lost.append((r, top))
+    if lost:
+        parts = "; ".join(f"{r['set']} {r['alone']:+.3f} at {r['sites']:.1f} sites against "
+                          f"{t['alone']:+.3f} at {t['sites']:.1f} sites "
+                          f"({t['min_occupancy']:.0%} occupancy)" for r, t in lost)
+        out += [f"**The count does not reproduce what the threshold gave, on "
+                f"{len(lost)} of the {len(counts)} sets**: {parts}. That is the clearest "
+                f"result here. A fixed count was put forward as the definition the two sets "
+                f"agreed on, and it gives less on both of the sets it was read from, so the "
+                f"reformulation was a mistake in reading the sweep rather than a property that "
+                f"failed to transfer. What the working definitions have in common is not how "
+                f"many sites survive but that **every site kept is strongly occupied**; the "
+                f"number of survivors is a consequence of that floor and differs between "
+                f"targets. Fixing the count forces a ligand with one strongly held water to "
+                f"take four weak ones as well, which is why a count behaves like a loose "
+                f"threshold.", ""]
+    out += ["> **What is fixed and what is not.** The count, the floor and the spacing were "
+            "written down before the held-out set was simulated, so its row is an estimate and "
+            "not the best of several. Why one target needs a floor of 60% and another 70% is "
+            "still unexplained, and a floor chosen per target is not a definition anyone can "
+            "fix in advance. The honest reading is in the verdict below.", ""]
+    return out
+
+
 def verdict(rows):
     out = ["## What it settles", ""]
     for rec in rows:
@@ -819,6 +1021,11 @@ def main(argv=None):
                     help="also vary what counts as a hydration site: the share of frames a "
                          "point has to be occupied, and how close two sites may be. Needs the "
                          "trajectories, which the repository does not carry")
+    ap.add_argument("--count", action="store_true",
+                    help=f"also measure the definition given as a count of sites "
+                         f"({COUNT_SITES} a ligand) rather than as an occupancy threshold, "
+                         f"which is the one definition that can mean the same on two targets. "
+                         f"Needs the trajectories, as --sweep does")
     ap.add_argument("--report", nargs="?", const=os.path.join(RESULTS, "table.md"), default=None)
     a = ap.parse_args(argv)
 
@@ -829,7 +1036,7 @@ def main(argv=None):
     os.makedirs(RESULTS, exist_ok=True)
     for name in a.sets:
         run_set(name, force=a.force)
-        if a.sweep:
+        if a.sweep or a.count:
             sites, _record = water_sites(name)
             if not sites:
                 continue
@@ -841,10 +1048,13 @@ def main(argv=None):
             _say(f"  {name}: rebuilding the occupancy maps")
             maps = occupancy_maps(name, names)
             if maps is None or len(maps) < len(names):
-                _say(f"  {name}: the trajectories are not here, so the sweep is skipped; "
+                _say(f"  {name}: the trajectories are not here, so the stage is skipped; "
                      f"examples/make_md_trajectories.py rebuilds them")
             else:
-                stage_sweep(name, mols, names, y, maps)
+                if a.sweep:
+                    stage_sweep(name, mols, names, y, maps)
+                if a.count:
+                    stage_count(name, mols, names, y, maps)
     report(path=os.path.join(RESULTS, "table.md"))
     print(f"written {os.path.join(RESULTS, 'table.md')}")
     return 0

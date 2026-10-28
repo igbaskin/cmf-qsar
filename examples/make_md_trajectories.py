@@ -128,7 +128,7 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
               stride=1, limit=0, read_only=False, chain_radius=5.0, keep_chains=(),
               max_drift=4.0, common_reference=True, water=True, water_alpha=0.5,
               water_alphas=(0.1, 0.3, 0.5, 1.0, 2.0),
-              min_occupancy=SV.MIN_OCCUPANCY, log=say):
+              min_occupancy=SV.MIN_OCCUPANCY, max_sites=SV.MAX_SITES, log=say):
     """One set: download, prepare, simulate, read back, write the ensemble SDF."""
     pocket = os.path.join(POCKETS, name + ".pdb")
     ligands = os.path.join(LIGANDS, name + ".sdf")
@@ -233,7 +233,8 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
             try:
                 field, occ, heights = SV.field_for(
                     top, dcd, reference=receptor, alpha=float(water_alpha), name=nm,
-                    stride=stride, min_occupancy=float(min_occupancy))
+                    stride=stride, min_occupancy=float(min_occupancy),
+                    max_sites=int(max_sites))
             except (SV.SolventError, TJ.TrajectoryError) as exc:
                 log(f"  {nm}: no water field -- {exc}")
                 continue
@@ -262,6 +263,7 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
                 json.dump({"set": name, "entry": code, "alpha": float(water_alpha),
                            "alphas": [float(a) for a in water_alphas],
                            "min_occupancy": float(min_occupancy),
+                           "max_sites": int(max_sites),
                            "probe": SV.PROBE, "spacing": SV.SPACING,
                            "min_distance": SV.MIN_DISTANCE, "ligands": sites}, fh, indent=1)
             log(f"  {len(sites)} water fields -> {path}")
@@ -278,6 +280,26 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
             "settings": {k: v for k, v in vars(settings).items()}}
 
 
+def _left_out(r):
+    """Why each ligand of a set is missing, with the two reasons kept apart.
+
+    A ligand can be missing for two different reasons and the note has to say which. Either the
+    simulation moved it out of the site, which is a result about the ligand, or there is no
+    trajectory for it at all, which is a failure of the preparation and says nothing about the
+    ligand. Reporting the second as the first would be a wrong statement about the data.
+    """
+    left = list(r.get("left_the_site") or [])
+    none = [nm for nm in (r.get("skipped") or []) if nm not in left]
+    out = ""
+    if left:
+        out += (f" {len(left)} ligand(s) are left out because the simulation did not keep them "
+                f"in the site: {', '.join(left[:6])}.")
+    if none:
+        out += (f" {len(none)} ligand(s) have no trajectory at all, because the preparation "
+                f"could not build a system for them: {', '.join(none[:6])}.")
+    return out
+
+
 def work_size(path):
     """Megabytes of trajectory left in the working directory, for the data statement."""
     total = 0
@@ -288,6 +310,21 @@ def work_size(path):
             except OSError:
                 pass
     return round(total / 1e6, 1)
+
+
+def merge_records(records, out_dir=OUT_DIR):
+    """This run's records, plus the records of the sets it did not build, sorted by set."""
+    path = os.path.join(out_dir, "provenance.json")
+    old = []
+    if os.path.isfile(path):
+        try:
+            with open(path) as fh:
+                old = json.load(fh)
+        except (OSError, ValueError):
+            old = []
+    fresh = {r["set"] for r in records}
+    kept = [r for r in old if isinstance(r, dict) and r.get("set") not in fresh]
+    return sorted(records + kept, key=lambda r: r.get("set", ""))
 
 
 def write_readme(records, out_dir=OUT_DIR):
@@ -312,9 +349,7 @@ def write_readme(records, out_dir=OUT_DIR):
         f"* `{r['set']}_md.sdf`: {r['ligands']} ligands, {r['records']} records, receptor "
         f"**{r['entry']}**"
         + (f", chain {' and '.join(r['chains'])} of it" if r.get("chains") else "")
-        + "." + (f" {len(r['skipped'])} ligand(s) of the set are left out because the "
-                 f"simulation did not keep them in the site: "
-                 f"{', '.join(r['skipped'][:6])}." if r["skipped"] else "")
+        + "." + _left_out(r)
         + (f" The kept ligands sit {r['drift_median']:.2f} A from their crystal pose on "
            f"average, at most {r['drift_max']:.2f} A." if r.get("drift_median") else "")
         for r in records)
@@ -351,6 +386,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                          "<set>_md_ownframe.sdf. This is not how an ensemble should be made -- "
                          "it leaves every ligand in a frame of its own -- and the file is there "
                          "so that benchmarks/run_md.py can measure what that costs")
+    ap.add_argument("--water-max-sites", type=int, default=SV.MAX_SITES,
+                    help=f"keep at most this many hydration sites per ligand, the most "
+                         f"occupied first (default {SV.MAX_SITES}). Giving a small number makes "
+                         f"the count the definition of a site rather than the threshold, which "
+                         f"is what plan item D9 found transfers between targets")
     ap.add_argument("--no-water", action="store_true",
                     help="skip the water occupancy maps of plan item D9")
     ap.add_argument("--water-alpha", type=float, default=0.5,
@@ -388,7 +428,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                                  max_drift=a.max_drift,
                                  common_reference=not a.no_common_reference,
                                  water=not a.no_water, water_alpha=a.water_alpha,
-                                 min_occupancy=a.min_occupancy))
+                                 min_occupancy=a.min_occupancy,
+                                 max_sites=a.water_max_sites))
+    # the directory holds one set per run and the notes have to describe all of them, so a run
+    # replaces the records of the sets it built and leaves the others as they are
+    records = merge_records(records, out_dir=a.out)
     if not a.no_common_reference:
         write_readme(records, out_dir=a.out)
     with open(os.path.join(a.out, "provenance.json"), "w") as fh:
