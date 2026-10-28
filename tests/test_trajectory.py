@@ -469,3 +469,39 @@ def test_the_ensemble_survives_a_round_trip_through_an_sdf(tmp_path):
     assert len(w) == mol.GetNumConformers()
     assert w.sum() == pytest.approx(1.0)
     assert build_fields(mol, fs, "lig").n_conformers == mol.GetNumConformers()
+
+
+# ------------------------------------------------------------------------ periodic images
+
+
+def test_a_molecule_split_across_a_face_is_made_whole():
+    """A wrapped trajectory splits any molecule that straddles a face; that is not a change."""
+    box = np.eye(3)[None, :, :] * 20.0
+    whole = np.array([[1.0, 1.0, 1.0], [2.0, 1.0, 1.0], [3.0, 1.0, 1.0]])
+    wrapped = whole.copy()
+    wrapped[2] -= np.array([20.0, 0.0, 0.0])        # the third atom imaged to the far side
+    got = TJ.make_whole(wrapped[None, :, :], [0, 1, 2], box)[0]
+    assert np.allclose(got, whole), "the molecule was not put back together"
+
+
+def test_a_wandering_ligand_is_brought_back_beside_the_protein():
+    """The artefact that would otherwise look like a ligand fifty angstroms from its site."""
+    box = np.eye(3)[None, :, :] * 58.0
+    protein = np.array([[10.0, 10.0, 10.0], [11.0, 10.0, 10.0], [10.0, 11.0, 10.0]])
+    ligand = np.array([[12.0, 10.0, 10.0], [12.0, 11.0, 10.0]])
+    coords = np.vstack([protein, ligand + np.array([58.0, 0.0, 0.0])])[None, :, :]
+    got = TJ.reimage(coords, [3, 4], [0, 1, 2], box)[0]
+    assert np.allclose(got[3:], ligand), "the ligand was not re-imaged next to the protein"
+    assert np.allclose(got[:3], protein), "the protein must not move"
+
+
+def test_undoing_the_wrapping_does_nothing_without_a_cell():
+    coords = np.random.RandomState(0).normal(size=(2, 6, 3))
+    assert np.allclose(TJ.make_whole(coords, [0, 1], None), coords)
+    assert np.allclose(TJ.reimage(coords, [0, 1], [2, 3], None), coords)
+
+
+def test_the_reader_keeps_the_cell_when_the_file_has_one(tmp_path):
+    pdb, dcd, _lig, _n = _system(tmp_path, tag="cell")
+    t = TJ.load(pdb, dcd)
+    assert t.box is None or t.box.shape == (t.n_frames, 3, 3)

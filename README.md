@@ -3505,6 +3505,41 @@ time). What this does **not** say is whether a trajectory beats a crystal pose: 
 D8 and needs simulations this repository does not have.
 
 
+### Does a trajectory beat the crystal pose?
+
+Plan item D8, the measurement `cmfqsar/trajectory.py` was built for. The 25 ligands of the mcl1
+free-energy set were simulated for 2 ns each in the site of PDB entry 4HW3 — GAFF-2.11 with
+AM1-BCC charges, Amber ff14SB, TIP3P water, 20,284 atoms at 658 ns/day, 351 s a ligand — and the
+resulting ensembles were compared with the crystal poses they started from, on the same folds
+and grids, with bootstrap intervals.
+
+| model | q2 | change against the crystal pose |
+| --- | ---: | --- |
+| the crystal pose | **+0.575** | the reference |
+| generated conformations | +0.556 | -0.019 [-0.271, +0.279] |
+| trajectory, clusters equal | +0.391 | -0.184 [-0.526, +0.136] |
+| trajectory, by population | +0.180 | -0.395 [-0.830, -0.053] |
+| trajectory, multi-instance | +0.463 | -0.112 [-0.384, +0.169] |
+| trajectory, each in its own frame | +0.277 | - |
+
+**The answer is no.** No reading of the trajectory beats the crystal pose; the best is
+indistinguishable from it and the population weighting is behind it beyond the interval. The
+ligands did stay in their poses (0.93 A from the crystal pose in the median), so this measures
+what an ensemble around a *correct* pose is worth. Generated conformations change nothing either,
+which reproduces the fourth-dimension result on a set where the pose is known. The
+multi-instance search chose beta = 0, the plain ensemble, so no frame was worth singling out.
+
+The last row is about alignment rather than simulation: fitting each trajectory to its own first
+frame instead of to the one structure every run was built from costs 0.114 of q2, and those
+frames differ by a few tenths of an angstrom. A field kernel notices less misalignment than part
+C of this plan is about.
+
+```bash
+python examples/make_md_trajectories.py --set mcl1 --ns 2   # needs OpenMM and the OpenFF stack
+python benchmarks/run_md.py                                 # results/md/table.md
+```
+
+
 ### A cheap quantum stage
 
 `cmfqsar/orca.py` brings quantum per-atom properties in as `prop:` fields and costs two to three

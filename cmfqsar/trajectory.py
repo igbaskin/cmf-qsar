@@ -106,6 +106,7 @@ class Trajectory:
     resids: np.ndarray                     # residue index per atom
     bonds: List[Tuple[int, int]] = field(default_factory=list)
     charges: Optional[np.ndarray] = None   # per atom, when the topology carries them
+    box: Optional[np.ndarray] = None       # (n_frames, 3, 3) cell vectors in angstrom
     engine: str = ""
 
     @property
@@ -126,6 +127,7 @@ class Trajectory:
                           residues=[self.residues[i] for i in idx],
                           resids=self.resids[idx].copy(), bonds=bonds,
                           charges=None if self.charges is None else self.charges[idx].copy(),
+                          box=None if self.box is None else self.box.copy(),
                           engine=self.engine)
 
 
@@ -155,10 +157,13 @@ def _load_mdtraj(topology: str, trajectory: Optional[str], stride: int) -> Traje
         residues.append(str(a.residue.name).upper())
         resids.append(int(a.residue.index))
     bonds = [(int(b[0].index), int(b[1].index)) for b in top.bonds]
+    box = None
+    if getattr(t, "unitcell_vectors", None) is not None:
+        box = np.asarray(t.unitcell_vectors, float) * 10.0          # nm to angstrom
     return Trajectory(coords=np.asarray(t.xyz, float) * 10.0,       # nm to angstrom
                       elements=elements, atom_names=names, residues=residues,
                       resids=np.asarray(resids, int), bonds=bonds, charges=None,
-                      engine="mdtraj")
+                      box=box, engine="mdtraj")
 
 
 def _load_mdanalysis(topology: str, trajectory: Optional[str], stride: int) -> Trajectory:
@@ -184,13 +189,19 @@ def _load_mdanalysis(topology: str, trajectory: Optional[str], stride: int) -> T
             charges = q
     except Exception:                        # noqa: BLE001 - a topology without charges
         charges = None
-    frames = [np.asarray(ts.positions, float).copy()
-              for ts in u.trajectory[::max(1, int(stride))]]
+    frames, boxes = [], []
+    for ts in u.trajectory[::max(1, int(stride))]:
+        frames.append(np.asarray(ts.positions, float).copy())
+        try:
+            boxes.append(np.asarray(ts.triclinic_dimensions, float).copy())
+        except Exception:                    # noqa: BLE001 - a trajectory without a cell
+            boxes.append(None)
     if not frames:
         raise TrajectoryError("the trajectory holds no frames")
+    box = np.stack(boxes) if boxes and all(b is not None for b in boxes) else None
     return Trajectory(coords=np.stack(frames), elements=elements, atom_names=names,
                       residues=residues, resids=resids, bonds=bonds, charges=charges,
-                      engine="mdanalysis")
+                      box=box, engine="mdanalysis")
 
 
 def load(topology: str, trajectory: Optional[str] = None, stride: int = 1,
@@ -292,6 +303,54 @@ def site_backbone(traj: Trajectory, ligand: Sequence[int], radius: float = DEFAU
 # superimposing and thinning
 # ----------------------------------------------------------------------------------------------
 
+def make_whole(coords: np.ndarray, group: Sequence[int],
+               box: Optional[np.ndarray]) -> np.ndarray:
+    """Undo the wrapping inside `group`: every atom moved to the image nearest the first one.
+
+    A trajectory is usually written with every atom wrapped into the cell, which splits any
+    molecule that straddles a face: half of it appears a box length away from the other half.
+    For a molecule small enough that no two of its atoms are further apart than half the cell --
+    a ligand, always -- taking each atom's image nearest the first atom puts it back together.
+    """
+    coords = np.asarray(coords, float)
+    if box is None:
+        return coords
+    group = np.asarray(group, int)
+    out = coords.copy()
+    for k in range(coords.shape[0]):
+        cell = np.asarray(box[k], float)
+        inv = np.linalg.inv(cell)
+        anchor = coords[k][group[0]]
+        d = coords[k][group] - anchor
+        shift = np.round(d @ inv) @ cell
+        out[k][group] = coords[k][group] - shift
+    return out
+
+
+def reimage(coords: np.ndarray, group: Sequence[int], anchor: Sequence[int],
+            box: Optional[np.ndarray]) -> np.ndarray:
+    """Move `group`, as one piece, to the periodic image nearest `anchor`.
+
+    The ligand of a simulation wanders across the cell and is written wrapped, so in some frames
+    it appears a box length from the protein it is bound to. Nothing physical has happened: the
+    image beside the protein is the same molecule. Without this step those frames look like a
+    ligand sitting fifty angstroms away, which is how a periodic-boundary artefact turns into a
+    false conclusion about a simulation.
+    """
+    coords = np.asarray(coords, float)
+    if box is None:
+        return coords
+    group = np.asarray(group, int)
+    anchor = np.asarray(anchor, int)
+    out = coords.copy()
+    for k in range(coords.shape[0]):
+        cell = np.asarray(box[k], float)
+        inv = np.linalg.inv(cell)
+        d = out[k][group].mean(axis=0) - out[k][anchor].mean(axis=0)
+        out[k][group] -= np.round(d @ inv) @ cell
+    return out
+
+
 def _kabsch(before: np.ndarray, after: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """The rigid transform that takes `before` onto `after` (both (N, 3), same order)."""
     cb, ca = before.mean(axis=0), after.mean(axis=0)
@@ -302,8 +361,13 @@ def _kabsch(before: np.ndarray, after: np.ndarray) -> Tuple[np.ndarray, np.ndarr
     return R, ca - R @ cb
 
 
-def superimpose(coords: np.ndarray, fit_atoms: Sequence[int], reference: int = 0) -> np.ndarray:
-    """Every frame moved so that `fit_atoms` lie on their position in frame `reference`.
+def superimpose(coords: np.ndarray, fit_atoms: Sequence[int], reference: int = 0,
+                target: Optional[np.ndarray] = None) -> np.ndarray:
+    """Every frame moved so that `fit_atoms` lie on the target.
+
+    The target is frame `reference` of this trajectory by default, and `target` replaces it with
+    positions from somewhere else -- the one structure a whole series was built from, so that
+    several trajectories come back in one frame rather than each in its own.
 
     The whole system is moved, not only the fitted atoms, so what the ligand's coordinates then
     show is its motion relative to whatever was fitted.
@@ -312,7 +376,13 @@ def superimpose(coords: np.ndarray, fit_atoms: Sequence[int], reference: int = 0
     fit = np.asarray(fit_atoms, int)
     if fit.size < 3:
         raise TrajectoryError("a superposition needs at least three atoms")
-    target = coords[int(reference)][fit]
+    if target is None:
+        target = coords[int(reference)][fit]
+    else:
+        target = np.asarray(target, float)
+        if target.shape != (fit.size, 3):
+            raise TrajectoryError(f"the target has {target.shape} positions for {fit.size} "
+                                  f"fitted atoms")
     out = np.empty_like(coords)
     for k in range(coords.shape[0]):
         R, t = _kabsch(coords[k][fit], target)
@@ -549,12 +619,38 @@ class Ensemble:
                 f"frames), read by {self.engine}")
 
 
+def _reference_positions(reference: str, traj: "Trajectory",
+                         fit: Sequence[int]) -> np.ndarray:
+    """The positions the fitted atoms have in `reference`, checked atom by atom.
+
+    The trajectory lists the protein first, because that is the order a system is built in, so a
+    protein atom's index in the trajectory is its index in the reference as well.  The elements
+    are compared rather than trusted: a mismatch means the two do not describe the same protein
+    and a superposition on it would be meaningless.
+    """
+    ref = load(reference)
+    fit = np.asarray(fit, int)
+    if int(fit.max()) >= ref.n_atoms:
+        raise TrajectoryError(f"{os.path.basename(reference)} has {ref.n_atoms} atoms and the "
+                              f"superposition needs atom {int(fit.max())} of the trajectory; the "
+                              f"reference must be the structure the system was built from")
+    mine = [traj.elements[i] for i in fit]
+    theirs = [ref.elements[i] for i in fit]
+    if mine != theirs:
+        bad = next(k for k in range(len(mine)) if mine[k] != theirs[k])
+        raise TrajectoryError(f"{os.path.basename(reference)} does not list the same atoms as "
+                              f"the trajectory: atom {int(fit[bad])} is {theirs[bad]} there and "
+                              f"{mine[bad]} here")
+    return ref.coords[0][fit]
+
+
 def read_trajectory(topology: str, trajectory: Optional[str] = None, *,
                     ligand: Optional[str] = None, template: Optional[Chem.Mol] = None,
                     max_frames: int = DEFAULT_MAX_FRAMES, cutoff: float = DEFAULT_CUTOFF,
                     stride: int = 1, site_radius: float = DEFAULT_SITE_RADIUS,
                     extra_solvent: Sequence[str] = (), engine: str = "auto",
-                    name: str = "", heavy_only: bool = True) -> Ensemble:
+                    name: str = "", heavy_only: bool = True,
+                    reference: Optional[str] = None) -> Ensemble:
     """A trajectory as a weighted conformational ensemble of its ligand (plan item D7).
 
     `topology` may be a PDB, PSF, PRMTOP or anything the reader understands; `trajectory` is the
@@ -566,6 +662,16 @@ def read_trajectory(topology: str, trajectory: Optional[str] = None, *,
 
     `heavy_only` measures the distances between frames on the heavy atoms alone, which is what a
     conformational difference means; the hydrogens still travel with the frames that are kept.
+
+    `reference` is the structure every frame is superimposed on, and it matters whenever several
+    trajectories of one series are read.  Without it each trajectory is superimposed on its own
+    first frame, which is that run's equilibrated protein: two runs equilibrate to protein
+    conformations that differ by a few tenths of an angstrom, so their ligands end up in frames
+    that differ by the same rotation and the series loses the common alignment a field kernel
+    depends on.  Pass the one structure every run was built from -- the prepared receptor -- and
+    every ligand comes back in that structure's frame.  The file must list the protein atoms
+    first and in the same order as the trajectory does, which is the case when the systems were
+    built from it; the elements are checked and a mismatch is refused.
     """
     traj = load(topology, trajectory, stride=stride, engine=engine)
     n_read = traj.n_frames
@@ -574,18 +680,43 @@ def read_trajectory(topology: str, trajectory: Optional[str] = None, *,
     if lig.size == 0:
         raise TrajectoryError("the ligand selection is empty")
 
+    if traj.box is not None:
+        # the ligand first made whole, then brought to the image beside the protein; both are
+        # undone wrapping and neither moves the molecule in any physical sense
+        protein = np.asarray([i for i, r in enumerate(traj.residues) if r in AMINO_ACIDS], int)
+        coords = make_whole(traj.coords, lig, traj.box)
+        if protein.size >= 3:
+            coords = reimage(coords, lig, protein, traj.box)
+        traj = Trajectory(coords=coords, elements=traj.elements, atom_names=traj.atom_names,
+                          residues=traj.residues, resids=traj.resids, bonds=traj.bonds,
+                          charges=traj.charges, box=traj.box, engine=traj.engine)
+
     fit = site_backbone(traj, lig, radius=site_radius)
     if fit.size >= 3:
         fitted_on = "the binding-site backbone"
+    elif reference is not None:
+        # a common reference is a frame of the receptor, so there has to be a receptor to fit
+        # on. No backbone within the radius means the ligand is not in a site -- either the
+        # topology holds no protein, or the ligand left during the simulation -- and fitting on
+        # the ligand instead would put this one molecule in a frame of its own.
+        raise TrajectoryError(
+            f"no protein backbone within {site_radius:g} A of the ligand in the first frame, "
+            f"so it is not in a site and cannot be put in the frame of "
+            f"{os.path.basename(reference)}; a ligand that left its site is not a bound pose")
     else:
         # no receptor: the ligand is superimposed on its own first pose, which leaves only its
         # internal flexibility and not its motion in a site
         fit = lig
         fitted_on = "the ligand itself"
-    coords = superimpose(traj.coords, fit)
+    target = None
+    if reference is not None:
+        target = _reference_positions(reference, traj, fit)
+    coords = superimpose(traj.coords, fit, target=target)
+    if target is not None:
+        fitted_on += " of the common reference"
     traj = Trajectory(coords=coords, elements=traj.elements, atom_names=traj.atom_names,
                       residues=traj.residues, resids=traj.resids, bonds=traj.bonds,
-                      charges=traj.charges, engine=traj.engine)
+                      charges=traj.charges, box=traj.box, engine=traj.engine)
 
     measure = lig
     if heavy_only:

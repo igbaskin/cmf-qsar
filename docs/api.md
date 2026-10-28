@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 85 modules, 152 classes with 496 public methods, and 691 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 86 modules, 155 classes with 499 public methods, and 705 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -68,6 +68,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.localenv](#cmfqsarlocalenv) | Atom-centred environments and the invariant local kernel (plan item LP2). |
 | [cmfqsar.locallarge](#cmfqsarlocallarge) | Many atoms at once: the local kernel without a kernel matrix (plan item LP5). |
 | [cmfqsar.lowrank](#cmfqsarlowrank) | Low-rank kernels for large training sets (plan item B6). |
+| [cmfqsar.md](#cmfqsarmd) | Short ligand-in-pocket simulations, for plan item D8. |
 | [cmfqsar.mil](#cmfqsarmil) | Multi-instance learning over conformations: let the model choose the pose. |
 | [cmfqsar.mixing](#cmfqsarmixing) | A posterior over the field weights (plan item E6). |
 | [cmfqsar.mmd](#cmfqsarmmd) | Is this set of molecules like that one? |
@@ -6325,6 +6326,151 @@ exact model, so `cmfqsar.cofields.evaluate_gaussians` draws one as readily as th
 other.  A landmark that is a molecule contributes its own atoms; a landmark that is a
 Gaussian centre contributes itself.
 
+## cmfqsar.md
+
+Source: `cmfqsar/md.py`
+
+Short ligand-in-pocket simulations, for plan item D8.
+
+`cmfqsar/trajectory.py` (item D7) reads a simulation as a conformational ensemble. This module
+produces the simulations that reader was built for, so that the question of item D8 can be
+asked: does the mean field of a ligand's trajectory in its pocket model a series better than the
+single crystal pose it started from?
+
+What one run is, and why each choice was made.
+
+**The whole protein, not the trimmed pocket.** `examples/pockets/` holds binding sites cut to
+the residues near the ligand. Those files are right for display and for the complementarity
+score, and wrong for a simulation: every cut leaves a broken peptide bond that a preparation
+tool turns into a charged terminus, so a pocket of twenty residues would carry twenty charges
+that the protein does not have. The source entry named in the file's `REMARK 400` line is
+downloaded instead and simulated whole.
+
+**The ligands keep their frame.** The free-energy collections give their ligands in the
+coordinates of the reference entry, so the protein and the ligands are already in one frame and
+nothing is docked or superimposed here. That is what makes the comparison of item D8 fair: the
+crystal pose and the trajectory describe the same molecule in the same place.
+
+**GAFF through OpenMM**, with AM1-BCC charges, which is the item's own choice; the protein is
+Amber ff14SB and the water TIP3P. Hydrogen mass repartitioning allows a 4 fs step.
+
+**The backbone is restrained lightly** (`restraint_k`, on the alpha carbons) through the
+equilibration and released for the production run unless `restrain_production` is set. A few
+nanoseconds is not long enough for a protein to need holding, but it is long enough for a
+loosely packed crystal structure to drift, and the field model cares about the ligand's position
+relative to the site rather than about the protein's own motion.
+
+**Nothing is optimised away.** Every run writes its topology, its trajectory and a record of the
+settings, and a run already finished is not repeated, so a set can be built over several
+sessions.
+
+OpenMM and the OpenFF/AmberTools stack are not dependencies of this program. They are imported
+when a simulation is actually run, and `available` says whether they are there.
+
+### `class MDError  — bases: RuntimeError`
+
+### `class Settings  (dataclass)`
+
+Everything that decides what a run is; written beside the trajectory.
+
+Attributes:
+
+- `nanoseconds: float` = `2.0`
+- `equilibration_ps: float` = `200.0`
+- `timestep_fs: float` = `4.0`
+- `temperature: float` = `300.0`
+- `pressure: float` = `1.0`
+- `padding: float` = `10.0`
+- `ionic_strength: float` = `0.15`
+- `frame_ps: float` = `10.0`
+- `restraint_k: float` = `DEFAULT_RESTRAINT`
+- `restrain_production: bool` = `False`
+- `small_molecule_forcefield: str` = `'gaff-2.11'`
+- `protein_forcefield: str` = `'amber14-all.xml'`
+- `water_forcefield: str` = `'amber14/tip3pfb.xml'`
+- `platform: str` = `'CUDA'`
+- `seed: int` = `0`
+
+#### `Settings.production_steps` -> int  (property)
+
+#### `Settings.equilibration_steps` -> int  (property)
+
+#### `Settings.frame_steps` -> int  (property)
+
+### `class RunOutcome  (dataclass)`
+
+Attributes:
+
+- `name: str`
+- `topology: str` = `''`
+- `trajectory: str` = `''`
+- `frames: int` = `0`
+- `seconds: float` = `0.0`
+- `ns_per_day: float` = `0.0`
+- `atoms: int` = `0`
+- `error: str` = `''`
+- `reused: bool` = `False`
+
+### `available() -> Dict[str, bool]`
+
+Which parts of the stack can be imported here.
+
+### `charge_toolkit() -> Optional[str]`
+
+The registered toolkit that can assign AM1-BCC charges, or None.
+
+AmberTools registers itself only when `antechamber` is on PATH, which running the
+environment's interpreter by its full path does not do; this is the usual reason a run that
+has every package still cannot charge a ligand.
+
+### `require(charges: bool=True) -> None`
+
+### `entry_of(pocket_pdb: str) -> Optional[str]`
+
+The source entry a pocket file of `examples/pockets/` names in its REMARK 400 lines.
+
+### `fetch_entry(code: str, directory: str) -> str`
+
+The PDB entry, downloaded from RCSB once and kept. Entries there are public domain.
+
+### `chains_of(pdb_path: str) -> List[str]`
+
+The chain identifier of every atom record, in file order.
+
+### `chains_near(pdb_path: str, ligands: Sequence[Chem.Mol], radius: float=5.0, min_atoms: int=20) -> List[str]`
+
+The chains of an entry whose atoms line the site the ligands occupy.
+
+A crystal entry often holds several copies of the protein -- 4HW3, the receptor of the mcl1
+set, holds twelve -- and simulating all of them costs ten times what the question needs. The
+ligands of a free-energy collection are given in the entry's own frame, so the chain they sit
+in can be found by distance. A chain is kept when at least `min_atoms` of its atoms are
+within `radius` of some ligand atom, which keeps both chains of a site formed by two.
+
+### `prepare_receptor(pdb_path: str, out_path: str, ph: float=7.0, keep_chains: Sequence[str]=()) -> str`
+
+The entry made ready to simulate: one copy, no water, missing atoms built, hydrogens on.
+
+Heteroatoms are dropped, the co-crystallised ligand included: the ligand that is simulated
+is the one from the data set, placed in the same frame, and keeping the crystal ligand as
+well would put two molecules in one site.
+
+### `build(receptor_pdb: str, ligand: Chem.Mol, settings: Settings)`
+
+(simulation-ready topology, system, positions) for one complex in water.
+
+### `add_restraints(system, topology, positions, k: float)`
+
+Harmonic restraints on the alpha carbons; returns the index of the force that was added.
+
+### `simulate(ligand: Chem.Mol, name: str, receptor_pdb: str, outdir: str, settings: Optional[Settings]=None, log=print) -> RunOutcome`
+
+One ligand: build, minimise, equilibrate with restraints, run, write the trajectory.
+
+### `simulate_set(mols: Sequence[Chem.Mol], names: Sequence[str], receptor_pdb: str, outdir: str, settings: Optional[Settings]=None, log=print) -> List[RunOutcome]`
+
+Every ligand of a set, in order; one that fails is reported and the rest go on.
+
 ## cmfqsar.mil
 
 Source: `cmfqsar/mil.py`
@@ -10441,6 +10587,7 @@ Attributes:
 - `resids: np.ndarray`
 - `bonds: List[Tuple[int, int]]` = `field(default_factory=list)`
 - `charges: Optional[np.ndarray]` = `None`
+- `box: Optional[np.ndarray]` = `None`
 - `engine: str` = `''`
 
 #### `Trajectory.n_frames` -> int  (property)
@@ -10499,9 +10646,32 @@ Backbone atoms of the residues with an atom within `radius` of the ligand in `fr
 Empty when the topology holds no protein, which is how the caller learns that there is no
 receptor to superimpose on.
 
-### `superimpose(coords: np.ndarray, fit_atoms: Sequence[int], reference: int=0) -> np.ndarray`
+### `make_whole(coords: np.ndarray, group: Sequence[int], box: Optional[np.ndarray]) -> np.ndarray`
 
-Every frame moved so that `fit_atoms` lie on their position in frame `reference`.
+Undo the wrapping inside `group`: every atom moved to the image nearest the first one.
+
+A trajectory is usually written with every atom wrapped into the cell, which splits any
+molecule that straddles a face: half of it appears a box length away from the other half.
+For a molecule small enough that no two of its atoms are further apart than half the cell --
+a ligand, always -- taking each atom's image nearest the first atom puts it back together.
+
+### `reimage(coords: np.ndarray, group: Sequence[int], anchor: Sequence[int], box: Optional[np.ndarray]) -> np.ndarray`
+
+Move `group`, as one piece, to the periodic image nearest `anchor`.
+
+The ligand of a simulation wanders across the cell and is written wrapped, so in some frames
+it appears a box length from the protein it is bound to. Nothing physical has happened: the
+image beside the protein is the same molecule. Without this step those frames look like a
+ligand sitting fifty angstroms away, which is how a periodic-boundary artefact turns into a
+false conclusion about a simulation.
+
+### `superimpose(coords: np.ndarray, fit_atoms: Sequence[int], reference: int=0, target: Optional[np.ndarray]=None) -> np.ndarray`
+
+Every frame moved so that `fit_atoms` lie on the target.
+
+The target is frame `reference` of this trajectory by default, and `target` replaces it with
+positions from somewhere else -- the one structure a whole series was built from, so that
+several trajectories come back in one frame rather than each in its own.
 
 The whole system is moved, not only the fitted atoms, so what the ligand's coordinates then
 show is its motion relative to whatever was fitted.
@@ -10530,7 +10700,7 @@ One molecule carrying the chosen frames as conformations, with their weights.
 here so that they sum to one.  The weights go to the molecule property `conformer_weights`,
 which `conformer_weighting="given"` reads.
 
-### `read_trajectory(topology: str, trajectory: Optional[str]=None, *, ligand: Optional[str]=None, template: Optional[Chem.Mol]=None, max_frames: int=DEFAULT_MAX_FRAMES, cutoff: float=DEFAULT_CUTOFF, stride: int=1, site_radius: float=DEFAULT_SITE_RADIUS, extra_solvent: Sequence[str]=(), engine: str='auto', name: str='', heavy_only: bool=True) -> Ensemble`
+### `read_trajectory(topology: str, trajectory: Optional[str]=None, *, ligand: Optional[str]=None, template: Optional[Chem.Mol]=None, max_frames: int=DEFAULT_MAX_FRAMES, cutoff: float=DEFAULT_CUTOFF, stride: int=1, site_radius: float=DEFAULT_SITE_RADIUS, extra_solvent: Sequence[str]=(), engine: str='auto', name: str='', heavy_only: bool=True, reference: Optional[str]=None) -> Ensemble`
 
 A trajectory as a weighted conformational ensemble of its ligand (plan item D7).
 
@@ -10543,6 +10713,16 @@ topology's bonds, which can fail and then says so.
 
 `heavy_only` measures the distances between frames on the heavy atoms alone, which is what a
 conformational difference means; the hydrogens still travel with the frames that are kept.
+
+`reference` is the structure every frame is superimposed on, and it matters whenever several
+trajectories of one series are read.  Without it each trajectory is superimposed on its own
+first frame, which is that run's equilibrated protein: two runs equilibrate to protein
+conformations that differ by a few tenths of an angstrom, so their ligands end up in frames
+that differ by the same rotation and the series loses the common alignment a field kernel
+depends on.  Pass the one structure every run was built from -- the prepared receptor -- and
+every ligand comes back in that structure's frame.  The file must list the protein atoms
+first and in the same order as the trajectory does, which is the case when the systems were
+built from it; the elements are checked and a mismatch is refused.
 
 ## cmfqsar.transfer
 

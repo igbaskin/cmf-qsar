@@ -1041,6 +1041,80 @@ exact square.
 
 `mdtraj` is the `md` extra; MDAnalysis does as well. Neither is required for anything else.
 
+## Does a trajectory beat the crystal pose?
+
+The section above reads a simulation as an ensemble. Whether that ensemble is worth having is a
+separate question, and plan item D8 is the measurement that answers it. The fourth-dimension
+study of this program built its ensembles by generating conformations of a molecule on its own
+and found they did not help; what it never had was a pose known to be right. A free-energy set
+gives one, because every ligand is co-crystallised.
+
+`cmfqsar/md.py` runs the simulations and `examples/make_md_trajectories.py` is the whole recipe:
+
+```bash
+python examples/make_md_trajectories.py --set mcl1 --ns 2
+python benchmarks/run_md.py
+```
+
+**What was run.** The 25 ligands of `examples/openff/mcl1.sdf`, each in the site of PDB entry
+4HW3, for 2 ns at 300 K and 1 bar after 200 ps of equilibration, with GAFF-2.11 and AM1-BCC
+charges for the ligand, Amber ff14SB for the protein and TIP3P water with 0.15 M of ions. The
+system is 20,284 atoms and ran at 658 ns/day on one consumer GPU, which is 351 seconds per
+ligand including the charges and the equilibration. `examples/md/README.md` holds the full
+statement.
+
+Two choices in that are worth naming. The **whole protein** is simulated, not the trimmed pocket
+of `examples/pockets/`, because every cut in a trimmed site leaves a broken peptide bond that
+preparation turns into a charged terminus. And **only the chain that lines the site** is kept:
+4HW3 holds twelve copies of Mcl-1, and simulating all of them would cost ten times what the
+question needs.
+
+**The ligands stayed where they started**, 0.93 Å from their crystal pose in the median and
+1.39 Å at worst, so every one of the 25 is kept. That matters for reading the result: this
+measures what an ensemble around a correct pose is worth, not whether a simulation can find a
+pose.
+
+**The answer is no.** Six models on the same molecules, the same folds and the same grids, each
+difference against the crystal pose with the bootstrap interval of rule 4:
+
+| model | q² | change against the crystal pose |
+| --- | ---: | --- |
+| the crystal pose | **+0.575** | the reference |
+| generated conformations | +0.556 | −0.019 [−0.271, +0.279] |
+| trajectory, clusters equal | +0.391 | −0.184 [−0.526, +0.136] |
+| trajectory, by population | +0.180 | −0.395 [−0.830, −0.053] |
+| trajectory, multi-instance | +0.463 | −0.112 [−0.384, +0.169] |
+| trajectory, each in its own frame | +0.277 | − |
+
+No reading of the trajectory is ahead of the crystal pose, the best is indistinguishable from it,
+and the population weighting is behind it by more than the interval. The control says this is not
+about molecular dynamics in particular: generated conformations change nothing either, which
+reproduces the fourth-dimension result on a set where the pose is known. Around a pose that is
+already right, averaging over the ligand's motion does not add information, and weighting that
+average badly subtracts some.
+
+Three readings of the same frames, and the differences between them say more than the headline.
+**Letting the model choose the frames gained nothing**: the multi-instance search chose
+$\beta = 0$, which is the plain ensemble, so there was no frame worth concentrating the weight
+on. **The weighting mattered more than the simulation did**: equal weights give +0.391 and
+weights by population +0.180, a gap of 0.211, larger than the 0.184 between the better of them
+and the crystal pose. That contradicts the argument in `cmfqsar/trajectory.py` for weighting by
+population — that an equilibrated trajectory has already sampled the distribution — and the
+contradiction is reported rather than resolved, because the argument is about the physics and the
+measurement is about the model.
+
+**And the last row is a measurement about alignment, not about simulation.** Reading the same
+frames with each trajectory superimposed on its own first frame, rather than on the one structure
+every run was built from, costs 0.114 of q² (+0.391 to +0.277). Two runs equilibrate to protein
+conformations a few tenths of an ångström apart, so fitting each ligand to its own leaves the
+series in as many frames as it has molecules. A field kernel notices a misalignment far smaller
+than the ones part C of the plan is about.
+
+> **What this does not settle.** One set, one force field, one length. A few nanoseconds samples
+> the motion around a pose and not a change of binding mode. A set whose poses are *not* known
+> would be a different question, and the one where a trajectory should help most: there the
+> ensemble would be covering uncertainty in the pose rather than motion around a good one.
+
 ## A cheap quantum stage: GFN2-xTB
 
 The section above costs two to three minutes of ORCA per molecule. That is affordable for one

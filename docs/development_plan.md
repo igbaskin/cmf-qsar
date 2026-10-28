@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 79 modules and about 35,500 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 80 modules and about 36,100 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-nine subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1289 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1315 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -878,11 +878,21 @@ says whether a trajectory does what a generated ensemble could not.
   sixty. *The cost* follows the square of the number kept: 27 times as many conformations is 658
   times the kernel time against 734 for an exact square, which is why the thinning is inside the
   reader.
-  **Not done, and it is the point of the item:** nothing here compares a trajectory with a
-  crystal pose, because the frames measured are conformations of real ligands and not a
-  simulation. That is D8, which needs OpenMM and a few nanoseconds per ligand, neither of which
-  this repository has. Also not done: a dialog in the application, and a reader for a trajectory
-  too large to hold in memory (the stride is the only control over that today).
+  **Corrected 28 October 2026 by D8, which found two faults in this reader.** Both would have
+  produced a confident false negative there. The superposition had **no common frame**: each
+  trajectory was fitted to its own first frame, which is that run's equilibrated protein, so
+  several trajectories of one series came back in as many frames as there were molecules;
+  `read_trajectory` now takes a `reference`, the one structure every run was built from, and
+  checks atom by atom that it describes the same protein. And **periodic images were ignored**:
+  a trajectory is written with every atom wrapped into the cell, so a ligand that crossed a face
+  appeared a box length away -- 17 of 25 mcl1 ligands looked 58 A from their crystal poses, all
+  at the same distance, which is the box size and not chemistry. `make_whole` puts a split
+  molecule back together and `reimage` brings the ligand to the image beside the protein, both
+  before anything is fitted, and both are tested on constructed cases. With the two fixed the
+  ligands sit 0.93 A from their crystal poses in the median, which is what a 2 ns simulation of
+  a bound ligand should give. 48 tests.
+  **Not done:** a dialog in the application, and a reader for a trajectory too large to hold in
+  memory (the stride is the only control over that today).
 * **D8. The measurement.** Short ligand-in-pocket simulations (a few nanoseconds each, GAFF or
   OpenFF through OpenMM) on one FEP set with a crystal pose for every ligand, so that the
   curated frame is known. Three comparisons on the same folds, with intervals: the crystal pose
@@ -893,6 +903,54 @@ says whether a trajectory does what a generated ensemble could not.
   shows anything, since its 3.2 Å superposition error is what a shared receptor frame would
   remove. If the trajectory mean does not beat the crystal pose, the result joins the verdict in
   the README and D9 and D10 are not built.
+  **Done 28 October 2026, and the answer is no.** `cmfqsar/md.py` builds and runs one
+  ligand-in-pocket simulation, `examples/make_md_trajectories.py` is the whole recipe from the
+  entry code to the ensemble file, `benchmarks/run_md.py` is the comparison and
+  `examples/md/mcl1_md.sdf` is the data it needs, so the table rebuilds on a machine with no
+  simulation software.
+  **What was run.** The 25 ligands of `examples/openff/mcl1.sdf` in the site of PDB entry 4HW3,
+  2 ns each at 300 K and 1 bar after 200 ps of equilibration with the alpha carbons restrained,
+  GAFF-2.11 with AM1-BCC charges, Amber ff14SB, TIP3P water and 0.15 M of ions. 20,284 atoms,
+  658 ns/day on one consumer GPU, 351 s per ligand including the charges. Two deviations from
+  the item's wording, both deliberate: the **whole protein** rather than the trimmed pocket of
+  `examples/pockets/`, because every cut leaves a broken peptide bond that preparation turns
+  into a charged terminus; and **only the chain lining the site**, because 4HW3 holds twelve
+  copies of Mcl-1. The ligands stayed in their poses -- 0.93 A from the crystal pose in the
+  median, 1.39 A at worst -- so all 25 are kept and the measurement is about an ensemble around
+  a correct pose rather than about finding a pose.
+  **Measured.** Six models, same molecules, same folds, same grids, each against the crystal
+  pose with the interval of rule 4: the crystal pose **+0.575**; generated conformations +0.556
+  (-0.019 [-0.271, +0.279]); the trajectory with clusters equal +0.391 (-0.184 [-0.526,
+  +0.136]); by population +0.180 (-0.395 [-0.830, -0.053]); multi-instance +0.463 (-0.112
+  [-0.384, +0.169]); and, as a control on the method rather than the science, the same frames
+  with each trajectory in its own frame +0.277.
+  **What it settles.** No reading of the trajectory beats the crystal pose. The best is
+  indistinguishable from it and the population weighting is behind it beyond the interval. The
+  control says this is not about molecular dynamics in particular: generated conformations
+  change nothing either, which reproduces D6's fourth-dimension result on a set where the pose
+  is known. Around a pose that is already right, averaging over the ligand's motion adds no
+  information and weighting that average badly subtracts some. The multi-instance search chose
+  beta = 0, the plain ensemble, so no frame was worth singling out. **Therefore D9 does not
+  follow from this result**, which is what the item said; D10 was built earlier on conformer
+  ensembles and its own verdict stands.
+  **Two findings about the method, not the question.** How the clusters are weighted matters
+  more than whether the trajectory is used: equal weights and weights by population differ by
+  0.211, which is larger than the 0.184 between the better of them and the crystal pose. That
+  contradicts the physical argument for population weights in `cmfqsar/trajectory.py` and the
+  contradiction is reported rather than resolved. And the common frame is what makes any of this
+  measurable: 0.114 of q2 is lost when each trajectory is fitted to its own first frame instead
+  of to the one structure every run was built from, a misalignment of a few tenths of an
+  angstrom. A field kernel notices less than part C is about.
+  **Two faults in D7's reader were found by this item and fixed**, both of which would have
+  turned into a confident false negative: the superposition had no common frame across
+  trajectories, and periodic images were ignored, which made 17 of 25 ligands appear 58 A -- one
+  box length -- from their poses. `read_trajectory` now takes a `reference`, and `make_whole`
+  and `reimage` undo the wrapping before anything is fitted; both are tested on constructed
+  cases. 20 tests for this item, 48 for the reader.
+  **Not done:** one set only, one force field and one length; a set whose poses are *not* known,
+  which is where an ensemble should help most and where this result says nothing; and the
+  flexible-series question the item names, `mittal/AMPH1`, which the item made conditional on
+  this set showing something and which therefore does not follow either.
 * **D9. Solvent as a field.** The 2015 indicator-field formalism accepts any continuous density,
   and a water occupancy map from the trajectory is one. Fit the occupancy by Gaussians on a grid
   of hydration sites (the fitting machinery of `cmfqsar/probes.py` does this for probe fields) and

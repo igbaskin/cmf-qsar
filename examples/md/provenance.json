@@ -1,0 +1,36 @@
+[
+ {
+  "set": "mcl1",
+  "entry": "4HW3",
+  "chains": [
+   "B"
+  ],
+  "ligands": 25,
+  "records": 283,
+  "skipped": [],
+  "left_the_site": [],
+  "max_frames": 20,
+  "cutoff": 0.75,
+  "max_drift": 4.0,
+  "drift_median": 82.89126716476223,
+  "drift_max": 83.5882396678362,
+  "trajectory_mb": 1259.9,
+  "settings": {
+   "nanoseconds": 2.0,
+   "equilibration_ps": 200.0,
+   "timestep_fs": 4.0,
+   "temperature": 300.0,
+   "pressure": 1.0,
+   "padding": 10.0,
+   "ionic_strength": 0.15,
+   "frame_ps": 10.0,
+   "restraint_k": 5.0,
+   "restrain_production": false,
+   "small_molecule_forcefield": "gaff-2.11",
+   "protein_forcefield": "amber14-all.xml",
+   "water_forcefield": "amber14/tip3pfb.xml",
+   "platform": "CUDA",
+   "seed": 0
+  }
+ }
+]
