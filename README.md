@@ -3884,9 +3884,36 @@ frame instead of to the one structure every run was built from costs 0.114 of q2
 frames differ by a few tenths of an angstrom. A field kernel notices less misalignment than part
 C of this plan is about.
 
+**Two more sets, 29 October 2026, and the answer is not the same on every set.** The
+trajectories built for the water field cover two further free-energy sets, so the same five
+models were measured on them with no new simulation: p38 (29 ligands, PDB entry 3FLY) and hif2a
+(36 ligands, 5TBM).
+
+| set | ligands | the crystal pose | best reading of the trajectory | change |
+| --- | ---: | ---: | ---: | --- |
+| mcl1 | 25 | **+0.575** | +0.463, multi-instance | -0.112 [-0.384, +0.169] |
+| p38 | 29 | **+0.261** | +0.455, multi-instance | +0.195 [-0.133, +0.522] |
+| hif2a | 36 | **+0.342** | +0.534, by population | +0.192 [-0.068, +0.561] |
+
+On these two the best reading of the trajectory is about +0.19 ahead of the crystal pose rather
+than behind it, and on hif2a one reading clears the interval (the multi-instance fit, +0.178
+[+0.003, +0.465]). So "the answer is no" was a statement about the mcl1 set and not about the
+method.
+
+**What the three sets support together is weak.** Ten readings of a trajectory were compared
+with their crystal pose and one clears its interval, with the near edge +0.003 from zero, which
+is about what ten comparisons produce on their own. That reading is also the uniform ensemble:
+at beta = 0 the multi-instance fit weighs every conformation alike, and "clusters equal" on the
+same set reaches +0.129 [-0.076, +0.365] and does not clear. The two are the same model, and
+what separates them is where the kernel is normalised -- the ensemble path normalises the kernel
+of the whole ensemble, the multi-instance path normalises every conformation and then averages.
+Measured at one attenuation on all three sets, the gap between the two paths is 0.019 to 0.049
+of q2 and falls to 0.002 to 0.015 with the normalisation switched off.
+
 ```bash
 python examples/make_md_trajectories.py --set mcl1 --ns 2   # needs OpenMM and the OpenFF stack
-python benchmarks/run_md.py                                 # results/md/table.md
+python benchmarks/run_md.py --sets mcl1 p38 hif2a           # results/md/table.md
+python benchmarks/run_md.py --sets mcl1 p38 hif2a --normalisation
 ```
 
 

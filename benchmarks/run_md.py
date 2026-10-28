@@ -35,7 +35,7 @@ rebuilt on a machine with no simulation software.
 Usage
 -----
     python benchmarks/run_md.py
-    python benchmarks/run_md.py --sets mcl1
+    python benchmarks/run_md.py --sets mcl1 p38 hif2a
     python benchmarks/run_md.py --report
 """
 from __future__ import annotations
@@ -67,7 +67,7 @@ RDLogger.DisableLog("rdApp.*")
 RESULTS = os.path.join(HERE, "results", "md")
 MD_DATA = os.path.join(ROOT, "examples", "md")
 CRYSTAL_DATA = os.path.join(ROOT, "examples", "openff")
-SETS = ("mcl1",)
+SETS = ("mcl1", "p38", "hif2a")
 FIELDS = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
 ALPHAS = (0.1, 0.3, 0.5, 1.0, 2.0)
 LAMS = (1e-3, 1e-2, 0.1, 1.0, 10.0)
@@ -77,6 +77,9 @@ SEED = 0
 RUNS = 2000
 #: conformations generated for the control ensemble, to match the trajectory ensemble's size
 N_CONFORMERS = 20
+#: the attenuation and lambda at which the normalisation check is run, one setting for all sets
+NORM_ALPHA = 0.3
+NORM_LAM = 0.1
 
 
 def _say(text):
@@ -278,6 +281,60 @@ def run_set(name, results=RESULTS, force=False):
 
 
 # ----------------------------------------------------------------------------------------------
+# where the kernel is normalised
+# ----------------------------------------------------------------------------------------------
+
+def stage_normalisation(name, results=RESULTS, alpha=NORM_ALPHA, lam=NORM_LAM, force=False):
+    """Two paths that should be the same model, measured against each other.
+
+    `cmfqsar/mil.py` says beta = 0 is the plain ensemble with every conformation weighing the
+    same, so the multi-instance fit at beta = 0 and the uniform ensemble are one model. They do
+    not give one q2. The difference is where the kernel is normalised: the ensemble path
+    normalises the kernel of the whole ensemble, the multi-instance path normalises every
+    conformation and then averages. Switching the normalisation off is what shows that, so the
+    four numbers are measured at one attenuation and one lambda, with no grid and no choice.
+    """
+    from cmfqsar import mil
+
+    out_path = os.path.join(results, f"{name}_norm.json")
+    if os.path.exists(out_path) and not force:
+        with open(out_path) as fh:
+            return json.load(fh)
+    md = md_set(name)
+    if md is None:
+        return None
+    _c, md = matched(crystal_set(name), md)
+    mols, names, y = md
+
+    rows = {}
+    for normalize in (True, False):
+        fs = field_set(alpha, "ensemble", "uniform")
+        table = AtomTable.from_molecules([build_fields(m, fs, n) for m, n in zip(mols, names)])
+        model = CMFModel(fieldset=fs, method="krr", normalize=normalize)
+        K = KC.joint_training_kernel(model, table)
+        pred = cv_predict(K, y, "krr", {"lam": float(lam)}, folds=FOLDS, seed=SEED)
+        rows[f"ensemble_{'normalised' if normalize else 'plain'}"] = float(r2_score(y, pred))
+
+        fs = field_set(alpha, "single")
+        flat, bags = mil.flatten_conformers(mols, fs, names)
+        table = AtomTable.from_molecules(flat)
+        model = CMFModel(fieldset=fs, method="krr", normalize=normalize)
+        K_conf = KC.joint_training_kernel(model, table)
+        ycv = mil.cv_predict(K_conf, bags, y, beta=0.0, lam=float(lam), folds=FOLDS, seed=SEED)
+        rows[f"mil_{'normalised' if normalize else 'plain'}"] = float(r2_score(y, ycv))
+
+    rec = {"set": name, "n": int(len(y)), "alpha": float(alpha), "lam": float(lam),
+           "q2": rows}
+    os.makedirs(results, exist_ok=True)
+    with open(out_path, "w") as fh:
+        json.dump(rec, fh, indent=1)
+    _say(f"  {name}: ensemble {rows['ensemble_normalised']:+.3f} against multi-instance at "
+         f"beta = 0 {rows['mil_normalised']:+.3f}; with the normalisation off "
+         f"{rows['ensemble_plain']:+.3f} against {rows['mil_plain']:+.3f}")
+    return rec
+
+
+# ----------------------------------------------------------------------------------------------
 # the report
 # ----------------------------------------------------------------------------------------------
 
@@ -288,11 +345,69 @@ LABEL = {"crystal": "the crystal pose", "conformers": "generated conformations",
          "md_ownframe": "trajectory, each in its own frame"}
 
 
+#: file endings in the results directory that are not a set's own result
+OTHER_RESULTS = ("_norm.json",)
+
+
 def load_all(results=RESULTS):
     out = []
     for p in sorted(glob.glob(os.path.join(results, "*.json"))):
+        if p.endswith(OTHER_RESULTS):
+            continue
         with open(p) as fh:
             out.append(json.load(fh))
+    return out
+
+
+def load_norms(results=RESULTS):
+    out = []
+    for p in sorted(glob.glob(os.path.join(results, "*_norm.json"))):
+        with open(p) as fh:
+            out.append(json.load(fh))
+    return out
+
+
+def norm_section(norms):
+    """What the normalisation check settles, when it has been run.
+
+    It is reported because a result depends on it: on a set where the only reading of the
+    trajectory that clears the interval is the multi-instance fit at beta = 0, that reading is
+    the uniform ensemble with the kernel normalised in another place.
+    """
+    if not norms:
+        return []
+    out = ["## Where the kernel is normalised", "",
+           f"The multi-instance fit at beta = 0 is the uniform ensemble: every conformation "
+           f"weighs the same. The two are the same model and they do not give the same q2. Each "
+           f"row is one attenuation ({norms[0]['alpha']:g}) and one lambda "
+           f"({norms[0]['lam']:g}), with no grid and nothing chosen, so these numbers are not "
+           f"comparable with the table above, where every model is taken at its own best "
+           f"attenuation.", "",
+           "| set | ligands | ensemble | multi-instance, beta = 0 | ensemble, no normalisation "
+           "| multi-instance, no normalisation |",
+           "| --- | ---: | ---: | ---: | ---: | ---: |"]
+    for r in norms:
+        q = r["q2"]
+        out.append(f"| {r['set']} | {r['n']} | {q['ensemble_normalised']:+.3f} | "
+                   f"{q['mil_normalised']:+.3f} | {q['ensemble_plain']:+.3f} | "
+                   f"{q['mil_plain']:+.3f} |")
+    out.append("")
+
+    gaps = [abs(r["q2"]["mil_normalised"] - r["q2"]["ensemble_normalised"]) for r in norms]
+    plain = [abs(r["q2"]["mil_plain"] - r["q2"]["ensemble_plain"]) for r in norms]
+    narrower = sum(1 for a, b in zip(gaps, plain) if b < a)
+    out += [f"**The two paths differ by {min(gaps):.3f} to {max(gaps):.3f} of q2, and the "
+            f"difference narrows to {min(plain):.3f} to {max(plain):.3f} when the normalisation "
+            f"is switched off** -- on {narrower} of the {len(norms)} sets. So most of what "
+            f"separates two paths through one model is where the kernel is normalised: the "
+            f"ensemble path normalises the kernel of the whole ensemble, the multi-instance "
+            f"path normalises every conformation and then averages. Up to {max(plain):.3f} is "
+            f"left over, so the normalisation is not all of it.", "",
+            f"Both places are defensible, which is why this matters for reading the table: a "
+            f"gain of this size can come from the choice alone. Where the only reading of a set "
+            f"that clears the interval is the multi-instance fit at beta = 0, that reading is "
+            f"the uniform ensemble with the kernel normalised in the other place, and the "
+            f"uniform ensemble itself does not clear it.", ""]
     return out
 
 
@@ -332,12 +447,85 @@ def report(results=RESULTS, path=None):
                        f"{r['alpha']:g} | {change} |")
         out.append("")
     out += verdict(rows)
+    out += norm_section(load_norms(results))
     text = "\n".join(out) + "\n"
     if path:
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         with open(path, "w", newline="\n") as fh:
             fh.write(text)
     return text
+
+
+#: a gain whose interval comes this close to zero is reported as an edge result
+EDGE = 0.05
+
+
+def across_sets(rows):
+    """Whether the sets give the same answer, when there is more than one.
+
+    One set can only say what that set does. The paragraph this returns is the reason for
+    measuring more than one: it names each set's best reading of the trajectory with its
+    interval and says whether they agree.
+    """
+    if len(rows) < 2:
+        return []
+    best = []
+    for rec in rows:
+        m = rec.get("models") or {}
+        tags = [t for t in TAGS if t.startswith("md_") and t in m]
+        if not tags:
+            continue
+        top = max(tags, key=lambda t: m[t]["delta"])
+        clears = [t for t in tags if m[t]["lo"] > 0]
+        best.append((rec["set"], int(rec["n"]), top, m[top], clears, tags,
+                     [float(m[t]["lo"]) for t in clears]))
+    if len(best) < 2:
+        return []
+
+    parts = "; ".join(f"**{nm}** ({n} ligands) {d['delta']:+.3f} "
+                      f"[{d['lo']:+.3f}, {d['hi']:+.3f}], {LABEL[t]}"
+                      for nm, n, t, d, _c, _a, _l in best)
+    # a set counts as ahead when any reading of its frames clears the interval, which need not
+    # be the reading with the largest gain
+    ahead = [b for b in best if b[4]]
+    behind = [b for b in best if b[3]["hi"] < 0]
+
+    if not ahead:
+        head = (f"**No set shows a gain from the trajectory.** On each of the {len(best)} sets "
+                f"the best reading of the simulation is at or below the crystal pose: {parts}.")
+        tail = (f" {len(behind)} of the {len(best)} are behind it beyond the interval."
+                if behind else
+                f" None of the {len(best)} intervals excludes zero in either direction.")
+        close = (" So the answer this item gave on one set is not a property of that set: an "
+                 "ensemble around a pose that is already right adds nothing on any of them.")
+    elif len(ahead) == len(best):
+        head = (f"**Every set shows a gain from the trajectory.** On all {len(best)} of them "
+                f"some reading of it beats the crystal pose beyond the interval. The largest "
+                f"gain on each set: {parts}.")
+        tail = ""
+        close = (" That is the opposite of what one set said, so the earlier reading was a "
+                 "property of that set and the item has to be read again.")
+    else:
+        head = (f"**The sets disagree.** Some reading of the trajectory beats the crystal pose "
+                f"beyond the interval on {len(ahead)} of the {len(best)} sets "
+                f"({', '.join(b[0] for b in ahead)}) and on none of the others. The largest "
+                f"gain on each set: {parts}.")
+        tail = ""
+        close = (" A result that holds on some sets and not on others is not a method yet; what "
+                 "separates them is the next thing to measure.")
+
+    edge = ""
+    if ahead:
+        tried = sum(len(b[5]) for b in best)
+        lows = [lo for b in best for lo in b[6]]
+        near = min(lows) if lows else 0.0
+        if near < EDGE:
+            edge = (f" **Read that carefully.** {tried} readings of a trajectory were compared "
+                    f"with their crystal pose across the {len(best)} sets, and the nearest edge "
+                    f"of a clearing interval is {near:+.3f} from zero. One result at the edge "
+                    f"of {tried} comparisons is about what chance produces, so what the sets "
+                    f"support is a weak statement and not a method.")
+    return [head + tail + close + edge, ""]
 
 
 def verdict(rows):
@@ -367,12 +555,40 @@ def verdict(rows):
                     f"in the wrong direction. Averaging a ligand over its own motion costs "
                     f"information that the single curated pose keeps.", ""]
         else:
+            others = [t for t in TAGS
+                      if t.startswith("md_") and t in m and m[t]["lo"] > 0]
+            cost = ("" if others else
+                    ", so on this set the simulation is not worth its cost")
             out += [f"**On {name} the trajectory neither beats the crystal pose nor loses to "
                     f"it.** The best reading of it, {LABEL[best_tag]}, differs by "
                     f"{best['delta']:+.3f} [{best['lo']:+.3f}, {best['hi']:+.3f}], an interval "
-                    f"that contains zero, so on this set the simulation is not worth its cost. "
-                    f"The crystal pose reaches {m['crystal']['q2']:+.3f} and it reaches "
-                    f"{best['q2']:+.3f}.", ""]
+                    f"that contains zero{cost}. The crystal pose reaches "
+                    f"{m['crystal']['q2']:+.3f} and it reaches {best['q2']:+.3f}.", ""]
+        clears = [t for t in TAGS if t.startswith("md_") and t in m and m[t]["lo"] > 0]
+        if clears and not ahead:
+            t = max(clears, key=lambda k: m[k]["lo"])
+            r = m[t]
+            # at beta = 0 the multi-instance fit is the uniform ensemble, so the reading to
+            # compare it with is that one: the same model, and it does not clear the interval
+            same = (t == "md_mil" and float(m[t].get("beta", -1.0)) == 0.0
+                    and "md_uniform" in m)
+            if same:
+                u = m["md_uniform"]
+                why = (f"At beta = 0 the multi-instance fit is the uniform ensemble, so the "
+                       f"reading to hold it against is {LABEL['md_uniform']}, which is the "
+                       f"same model: that gives {u['delta']:+.3f} [{u['lo']:+.3f}, "
+                       f"{u['hi']:+.3f}] and does not clear the interval. What separates them "
+                       f"is where the kernel is normalised, which the last section of this "
+                       f"table measures.")
+            else:
+                why = "The two differ in how the frames are weighted."
+            out += [f"**A different reading of the same frames does clear the interval.** On "
+                    f"{name}, {LABEL[t]} is {r['delta']:+.3f} [{r['lo']:+.3f}, {r['hi']:+.3f}] "
+                    f"ahead of the crystal pose, while the largest gain, {LABEL[best_tag]}, is "
+                    f"not. {why} So what this set supports is the weaker statement: some "
+                    f"reading of the trajectory is ahead here, and which reading that is was "
+                    f"not fixed before the measurement.", ""]
+
         if "conformers" in m:
             c = m["conformers"]
             out += [f"The control says where that comes from. An ensemble of generated "
@@ -422,20 +638,35 @@ def verdict(rows):
                     f"is {abs(u['q2'] - o['q2']):.3f} of q2 lost to a misalignment far smaller "
                     f"than the ones part C of the plan is about, which is a measure of how much "
                     f"a field kernel asks of an alignment.", ""]
-    out += ["**What this rests on.** One set, simulated with GAFF in TIP3P water for the length "
+    out += across_sets(rows)
+    out += [f"**What this rests on.** "
+            + ("One set, simulated" if len(rows) < 2 else
+               f"{len(rows)} sets, each simulated") +
+            " with GAFF in TIP3P water for the length "
             "stated in `examples/md/README.md`. A few nanoseconds samples the ligand's motion "
-            "around its crystal pose and not a change of binding mode, which is the honest "
+            "around its crystal pose and not a change of binding mode, which is the fair "
             "scope of the question asked here. The ligands stayed where they started -- the "
             "data statement gives the median distance from the crystal pose -- so this measures "
             "what an ensemble around a correct pose is worth, which is exactly the question, "
             "and not whether a simulation can find a pose.", ""]
-    if any(_loses(rec) for rec in rows):
-        out += ["**What follows for the plan.** The item said that if the trajectory mean does "
-                "not beat the crystal pose then plan items D9 and D10 are not built on it. No "
-                "reading of the trajectory beats the crystal pose here, so D9 -- solvent as a "
-                "field, read off these trajectories -- does not follow from this result. D10 "
-                "was built before this measurement and on conformer ensembles rather than "
-                "trajectories, and its own verdict already stands.", ""]
+    lost = [rec["set"] for rec in rows if _loses(rec)]
+    won = [rec["set"] for rec in rows if not _loses(rec)]
+    if lost:
+        where = ("here" if len(rows) < 2 else
+                 f"on {len(lost)} of the {len(rows)} sets ({', '.join(lost)})")
+        out += [f"**What follows for the plan.** The item said that if the trajectory mean does "
+                f"not beat the crystal pose then plan items D9 and D10 are not built on it. No "
+                f"reading of the trajectory beats the crystal pose {where}, so D9 -- solvent as "
+                f"a field, read off these trajectories -- does not follow from this result. D10 "
+                f"was built before this measurement and on conformer ensembles rather than "
+                f"trajectories, and its own verdict already stands.", ""]
+        if won:
+            out += [f"The gate is no longer a plain no, because some reading is ahead beyond the "
+                    f"interval on {', '.join(won)}. D9 was built in any case, at the author's "
+                    f"instruction, and it failed on its own evidence: two readings of its "
+                    f"definition sweep were written down beforehand and both failed on a set "
+                    f"they were not read from. So the gate reopening changes what is still open "
+                    f"here, which is the trajectory itself, and not the verdict of D9.", ""]
     return out
 
 
@@ -457,6 +688,10 @@ def main(argv=None):
     ap.add_argument("--sets", nargs="*", default=list(SETS))
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--report", nargs="?", const=os.path.join(RESULTS, "table.md"), default=None)
+    ap.add_argument("--normalisation", action="store_true",
+                    help="measure the uniform ensemble against the multi-instance fit at "
+                         "beta = 0, which is the same model with the kernel normalised "
+                         "elsewhere")
     a = ap.parse_args(argv)
 
     if a.report:
@@ -465,7 +700,10 @@ def main(argv=None):
         return 0
     os.makedirs(RESULTS, exist_ok=True)
     for name in a.sets:
-        run_set(name, force=a.force)
+        if a.normalisation:
+            stage_normalisation(name, force=a.force)
+        else:
+            run_set(name, force=a.force)
     report(path=os.path.join(RESULTS, "table.md"))
     print(f"written {os.path.join(RESULTS, 'table.md')}")
     return 0

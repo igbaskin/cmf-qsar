@@ -1,0 +1,12 @@
+{
+ "set": "hif2a",
+ "n": 36,
+ "alpha": 0.3,
+ "lam": 0.1,
+ "q2": {
+  "ensemble_normalised": 0.47136312317862894,
+  "mil_normalised": 0.5203108758414542,
+  "ensemble_plain": 0.5496085317832675,
+  "mil_plain": 0.5520933860758579
+ }
+}

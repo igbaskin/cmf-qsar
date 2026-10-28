@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1460 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1473 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -948,11 +948,47 @@ says whether a trajectory does what a generated ensemble could not.
   trajectories, and periodic images were ignored, which made 17 of 25 ligands appear 58 A -- one
   box length -- from their poses. `read_trajectory` now takes a `reference`, and `make_whole`
   and `reimage` undo the wrapping before anything is fitted; both are tested on constructed
-  cases. 20 tests for this item, 48 for the reader.
-  **Not done:** one set only, one force field and one length; a set whose poses are *not* known,
-  which is where an ensemble should help most and where this result says nothing; and the
-  flexible-series question the item names, `mittal/AMPH1`, which the item made conditional on
-  this set showing something and which therefore does not follow either.
+  cases. 35 tests for this item, 48 for the reader.
+  **Two more sets, 29 October 2026, and the answer is not the same on every set.** The
+  trajectories built for D9 cover two further free-energy sets, so the same five models were
+  measured on them with no new simulation: **p38**, 29 ligands in PDB entry 3FLY, and **hif2a**,
+  36 ligands in 5TBM. One ligand of hif2a has no trajectory, because its charges could not be
+  computed, so 36 of 37 are compared.
+  **p38**, crystal pose +0.261: conformations +0.082 (-0.178 [-0.414, +0.182]), clusters equal
+  +0.239 (-0.022 [-0.310, +0.299]), by population +0.091 (-0.169 [-0.402, +0.181]),
+  multi-instance +0.455 (**+0.195 [-0.133, +0.522]**, beta = 1).
+  **hif2a**, crystal pose +0.342: conformations +0.311 (-0.031 [-0.246, +0.433]), clusters equal
+  +0.471 (+0.129 [-0.076, +0.365]), by population +0.534 (+0.192 [-0.068, +0.561]),
+  multi-instance +0.520 (**+0.178 [+0.003, +0.465]**, beta = 0).
+  **What that changes.** On mcl1 no reading of the trajectory was ahead of the crystal pose. On
+  these two the best reading is about +0.19 ahead, and on hif2a one reading clears the interval.
+  So "the answer is no" was a statement about mcl1 and not about the method, which is what one
+  set can say. It is also the first time the multi-instance search chose a beta above zero: on
+  p38 it chose beta = 1, so the model did concentrate the weight on some frames.
+  **What the three sets support together is weak, and the item says so.** Ten readings of a
+  trajectory were compared with their crystal pose over the three sets and one of them clears
+  its interval, with the near edge +0.003 from zero, which is about what ten comparisons produce
+  on their own. That one reading is also the uniform ensemble: at beta = 0 the multi-instance
+  fit weighs every conformation alike, and "clusters equal" on the same set reaches +0.129
+  [-0.076, +0.365] and does not clear. The two are the same model.
+  **What separates them is where the kernel is normalised**, measured with `--normalisation` at
+  one attenuation and one lambda on all three sets, because a result rests on it: the ensemble
+  path normalises the kernel of the whole ensemble, the multi-instance path normalises every
+  conformation and then averages. The gap between the two paths is 0.019 to 0.049 of q2 and
+  falls to 0.002 to 0.015 when the normalisation is switched off, so most of it is the
+  normalisation; up to 0.015 is left over, so not all of it. Both places are defensible, which
+  is why a gain of this size can come from the choice alone.
+  **Where it leaves the gate.** The gate of this item is no longer a plain no: on hif2a some
+  reading is ahead beyond the interval, weak as that reading is. D9 was built in any case, at
+  the author's instruction, and failed on its own evidence -- two readings of its definition
+  sweep were written down beforehand and both failed on a set they were not read from -- so the
+  gate reopening changes what is still open about the trajectory and nothing about D9.
+  **Not done:** one force field and one length on all three sets; a set whose poses are *not*
+  known, which is where an ensemble should help most and where this result still says nothing;
+  the own-frame control on the two new sets, which exists for mcl1 only; a reading of the
+  trajectory that is fixed in advance rather than chosen as the best of five, which is what the
+  +0.003 edge asks for; and the flexible-series question the item names, `mittal/AMPH1`, which
+  the item made conditional on a set showing something and which these two sets now permit.
 * **D9. Solvent as a field.** The 2015 indicator-field formalism accepts any continuous density,
   and a water occupancy map from the trajectory is one. Fit the occupancy by Gaussians on a grid
   of hydration sites (the fitting machinery of `cmfqsar/probes.py` does this for probe fields) and

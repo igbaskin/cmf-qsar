@@ -233,6 +233,181 @@ def test_the_verdict_always_names_the_control_and_the_scope():
     assert "not a change of binding mode" in text, "the scope must be stated"
 
 
+def test_one_set_is_not_compared_with_itself():
+    """The across-sets paragraph needs two sets, so a single set gets none."""
+    import run_md
+
+    rec = _rows({"conformers": 0.0, "md_uniform": -0.2, "md_population": -0.3, "md_mil": -0.25})
+    assert run_md.across_sets([rec]) == []
+
+
+def test_the_sets_are_reported_as_agreeing_when_none_of_them_gains():
+    import run_md
+
+    one = _rows({"conformers": 0.0, "md_uniform": -0.2, "md_population": -0.3, "md_mil": -0.25})
+    two = _rows({"conformers": 0.0, "md_uniform": -0.3, "md_population": -0.4, "md_mil": -0.35},
+                seed=3)
+    two["set"] = "other"
+    text = " ".join(run_md.across_sets([one, two]))
+    assert "No set shows a gain from the trajectory" in text
+    assert "on each of the 2 sets" in text.lower()
+    assert "not a property of that set" in text
+
+
+def test_the_sets_are_reported_as_disagreeing_when_one_of_them_gains():
+    import run_md
+
+    one = _rows({"conformers": 0.0, "md_uniform": -0.2, "md_population": -0.3, "md_mil": -0.25})
+    two = _rows({"conformers": 0.0, "md_uniform": 0.45, "md_population": 0.4, "md_mil": 0.3},
+                seed=3)
+    two["set"] = "other"
+    text = " ".join(run_md.across_sets([one, two]))
+    assert "The sets disagree" in text
+    assert "on 1 of the 2 sets (other)" in text
+    assert "not a method yet" in text
+
+
+def _across_row(name, n, deltas):
+    """A record for the across-sets paragraph: {tag: (delta, lo, hi)}."""
+    models = {"crystal": dict(q2=0.3, rmse=1.0, alpha=0.5, lam=0.1, delta=0.0, lo=0.0, hi=0.0)}
+    for tag, (d, lo, hi) in deltas.items():
+        models[tag] = dict(q2=0.3 + d, rmse=1.0, alpha=0.5, lam=0.1, delta=d, lo=lo, hi=hi)
+        if tag == "md_mil":
+            models[tag]["beta"] = 0.0
+    return {"set": name, "n": n, "frames_mean": 10.0, "frames_min": 8, "frames_max": 12,
+            "seconds": 1.0, "models": models}
+
+
+def test_a_set_counts_as_ahead_when_any_reading_clears_the_interval():
+    """The largest gain and the gain that clears the interval need not be the same reading."""
+    import run_md
+
+    one = _across_row("flat", 29, {"md_uniform": (-0.02, -0.31, 0.30),
+                                   "md_mil": (0.195, -0.13, 0.52)})
+    two = _across_row("edge", 36, {"md_population": (0.192, -0.07, 0.56),
+                                   "md_mil": (0.178, 0.003, 0.47)})
+    text = " ".join(run_md.across_sets([one, two]))
+    assert "The sets disagree" in text
+    assert "on 1 of the 2 sets (edge)" in text, "the set with a clearing reading is named"
+    assert "md_population" not in text, "the reading is named in words, not by its tag"
+
+
+def test_an_interval_that_only_just_excludes_zero_is_reported_as_an_edge_result():
+    import run_md
+
+    one = _across_row("flat", 29, {"md_mil": (0.195, -0.13, 0.52)})
+    two = _across_row("edge", 36, {"md_population": (0.192, -0.07, 0.56),
+                                   "md_mil": (0.178, 0.003, 0.47)})
+    text = " ".join(run_md.across_sets([one, two]))
+    assert "Read that carefully" in text
+    assert "3 readings of a trajectory were compared" in text, "every comparison is counted"
+    assert "about what chance produces" in text
+
+
+def test_a_clear_gain_is_not_reported_as_an_edge_result():
+    import run_md
+
+    one = _across_row("flat", 29, {"md_mil": (0.195, -0.13, 0.52)})
+    two = _across_row("wide", 36, {"md_mil": (0.40, 0.21, 0.60)})
+    text = " ".join(run_md.across_sets([one, two]))
+    assert "Read that carefully" not in text
+
+
+def test_the_set_paragraph_names_a_reading_that_clears_when_the_largest_does_not():
+    import run_md
+
+    rec = _across_row("edge", 36, {"conformers": (-0.03, -0.25, 0.43),
+                                   "md_uniform": (0.129, -0.076, 0.365),
+                                   "md_population": (0.192, -0.07, 0.56),
+                                   "md_mil": (0.178, 0.003, 0.47)})
+    text = " ".join(run_md.verdict([rec]))
+    assert "neither beats the crystal pose nor loses to it" in text, "the largest gain is flat"
+    assert "A different reading of the same frames does clear the interval" in text
+    assert "was not fixed before the measurement" in text
+    assert "which is the same model" in text, "beta = 0 is the uniform ensemble"
+    assert "+0.129" in text, "and that model's own interval is given"
+    assert "where the kernel is normalised" in text
+
+
+def test_a_clearing_reading_that_does_weight_the_frames_says_so():
+    """With beta above zero the multi-instance fit really does weight the frames."""
+    import run_md
+
+    rec = _across_row("edge", 36, {"md_uniform": (0.05, -0.20, 0.30),
+                                   "md_population": (0.192, -0.07, 0.56),
+                                   "md_mil": (0.178, 0.003, 0.47)})
+    rec["models"]["md_mil"]["beta"] = 1.0
+    text = " ".join(run_md.verdict([rec]))
+    assert "The two differ in how the frames are weighted" in text
+    assert "differ in where the kernel is normalised" not in text
+
+
+def test_the_consequence_says_the_gate_is_no_longer_a_plain_no():
+    import run_md
+
+    lost = _across_row("flat", 29, {"md_mil": (0.195, -0.13, 0.52)})
+    won = _across_row("edge", 36, {"md_mil": (0.178, 0.003, 0.47)})
+    text = " ".join(run_md.verdict([lost, won]))
+    assert "What follows for the plan" in text
+    assert "no longer a plain no" in text
+    assert "it failed on its own evidence" in text, "D9's own verdict is not reopened"
+
+
+def test_the_closing_text_counts_the_sets_it_rests_on():
+    import run_md
+
+    one = _rows({"conformers": 0.0, "md_uniform": -0.2, "md_population": -0.3, "md_mil": -0.25})
+    two = _rows({"conformers": 0.0, "md_uniform": -0.3, "md_population": -0.4, "md_mil": -0.35},
+                seed=3)
+    two["set"] = "other"
+    text = " ".join(run_md.verdict([one, two]))
+    assert "What this rests on.** 2 sets, each" in text
+    assert "One set, simulated" not in text
+    assert "on 2 of the 2 sets (toy, other)" in text, "the consequence names the sets"
+
+
+def _norm_row(name, n, ens, mil_, ens_plain, mil_plain):
+    return {"set": name, "n": n, "alpha": 0.3, "lam": 0.1,
+            "q2": {"ensemble_normalised": ens, "mil_normalised": mil_,
+                   "ensemble_plain": ens_plain, "mil_plain": mil_plain}}
+
+
+def test_the_normalisation_section_is_empty_without_a_measurement():
+    import run_md
+
+    assert run_md.norm_section([]) == []
+
+
+def test_the_normalisation_section_puts_the_difference_on_the_normalisation():
+    """The two paths are one model, so a gap that closes without normalisation is its doing."""
+    import run_md
+
+    rows = [_norm_row("one", 36, 0.471, 0.520, 0.550, 0.552),
+            _norm_row("two", 25, 0.391, 0.463, 0.470, 0.471)]
+    text = " ".join(run_md.norm_section(rows))
+    assert "where the kernel is normalised" in text
+    assert "0.049" in text and "0.072" in text, "both gaps are given"
+    assert "0.001" in text and "0.002" in text, "and both gaps with the normalisation off"
+    assert "on 2 of the 2 sets" in text, "how many sets the gap narrows on"
+    assert "not all of it" in text, "the leftover is not hidden"
+
+
+def test_a_normalisation_record_is_not_read_as_a_set_result(tmp_path):
+    """The two kinds of file live in one directory, so the table must not read the check."""
+    import json
+
+    import run_md
+
+    rec = _rows({"conformers": 0.0, "md_uniform": -0.2, "md_population": -0.3, "md_mil": -0.25})
+    with open(str(tmp_path / "toy.json"), "w") as fh:
+        json.dump(rec, fh)
+    with open(str(tmp_path / "toy_norm.json"), "w") as fh:
+        json.dump(_norm_row("toy", 24, 0.4, 0.45, 0.5, 0.5), fh)
+    got = run_md.load_all(results=str(tmp_path))
+    assert [r["set"] for r in got] == ["toy"], "only the set result is a row of the table"
+    assert len(run_md.load_norms(results=str(tmp_path))) == 1
+
+
 def test_the_report_says_what_is_missing_when_nothing_has_been_run(tmp_path):
     import run_md
 

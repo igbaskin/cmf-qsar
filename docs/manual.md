@@ -1360,10 +1360,64 @@ conformations a few tenths of an ångström apart, so fitting each ligand to its
 series in as many frames as it has molecules. A field kernel notices a misalignment far smaller
 than the ones part C of the plan is about.
 
-> **What this does not settle.** One set, one force field, one length. A few nanoseconds samples
-> the motion around a pose and not a change of binding mode. A set whose poses are *not* known
-> would be a different question, and the one where a trajectory should help most: there the
-> ensemble would be covering uncertainty in the pose rather than motion around a good one.
+### Two more sets, and the answer is not the same on every set
+
+The section above was one set. The trajectories built for the water field (plan item D9) cover
+two further free-energy sets, so the same five models were measured on them with no new
+simulation: **p38**, 29 ligands in the site of PDB entry 3FLY, and **hif2a**, 36 ligands in
+5TBM. One hif2a ligand has no trajectory, because its charges could not be computed, so 36 of
+its 37 ligands are compared.
+
+| set | ligands | the crystal pose | best reading of the trajectory | change against the crystal pose |
+| --- | ---: | ---: | ---: | --- |
+| mcl1 | 25 | **+0.575** | +0.463, multi-instance | −0.112 [−0.384, +0.169] |
+| p38 | 29 | **+0.261** | +0.455, multi-instance | +0.195 [−0.133, +0.522] |
+| hif2a | 36 | **+0.342** | +0.534, by population | +0.192 [−0.068, +0.561] |
+
+On mcl1 no reading of the trajectory was ahead of the crystal pose. On these two the best
+reading is about +0.19 ahead, and on hif2a one reading clears its interval: the multi-instance
+fit, +0.178 [+0.003, +0.465]. **So "the answer is no" was a statement about the mcl1 set rather
+than about the method.** It is also the first time the multi-instance search chose a $\beta$
+above zero — on p38 it chose $\beta = 1$, so the model did concentrate the weight on some
+frames instead of averaging them.
+
+**What the three sets support together is weak, and two things say so.** First the count: ten
+readings of a trajectory were compared with their crystal pose over the three sets, one of them
+clears its interval, and the near edge of that interval is +0.003 from zero. One result at the
+edge out of ten comparisons is about what chance produces. Second the reading itself: at
+$\beta = 0$ the multi-instance fit is the uniform ensemble, every conformation weighing the
+same, and "clusters equal" on the same set reaches +0.129 [−0.076, +0.365] and does not clear
+the interval. The two are the same model.
+
+**Where they differ is the normalisation of the kernel**, which `--normalisation` measures at one
+attenuation (0.3) and one lambda (0.1) on all three sets, with no grid and nothing chosen. These
+numbers are therefore not comparable with the tables above, where every model is taken at its
+own best attenuation.
+
+| set | ligands | ensemble | multi-instance, $\beta = 0$ | ensemble, no normalisation | multi-instance, no normalisation |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| hif2a | 36 | +0.471 | +0.520 | +0.550 | +0.552 |
+| mcl1 | 25 | −0.068 | −0.049 | +0.168 | +0.183 |
+| p38 | 29 | +0.198 | +0.223 | +0.255 | +0.264 |
+
+The gap between two paths through the same model is 0.019 to 0.049 of q² and falls to 0.002 to
+0.015 when the normalisation is switched off, on all three sets. So most of it is the
+normalisation: the ensemble path normalises the kernel of the whole ensemble, while the
+multi-instance path normalises every conformation and then averages. Up to 0.015 is left over,
+so the normalisation is not all of it. Both places are defensible, and that is the point for
+reading the table: a gain of the size measured here can come from the choice alone.
+
+```bash
+python benchmarks/run_md.py --sets mcl1 p38 hif2a
+python benchmarks/run_md.py --sets mcl1 p38 hif2a --normalisation
+```
+
+> **What this does not settle.** Three sets now, but one force field and one length on all of
+> them. A few nanoseconds samples the motion around a pose and not a change of binding mode. A
+> set whose poses are *not* known would be a different question, and the one where a trajectory
+> should help most: there the ensemble would be covering uncertainty in the pose rather than
+> motion around a good one. And the gain reported here is the best of five readings rather than
+> one fixed in advance, which is what the +0.003 edge asks for next.
 
 ## A cheap quantum stage: GFN2-xTB
 
