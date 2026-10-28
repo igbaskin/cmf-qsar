@@ -1329,6 +1329,44 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   coefficients and a bias, so every reader of a kernel expansion works unchanged.
   `benchmarks/run_kpls.py` measures it against kernel ridge regression on the eight Sutherland
   sets under one protocol (`results/kpls/table.md`; the numbers are in the manual, *The learners*).
+* **E8. Kernel Fisher discriminant analysis.** The classification counterpart of kernel ridge
+  regression: the direction of field space along which the two classes are furthest apart
+  relative to their spread. In the dual it is one linear solve, α = (N + λI)⁻¹(m₊ − m₋) with the
+  class means and within-class scatter written on the kernel, and it is known to coincide with
+  kernel ridge regression on ±1 targets weighted by class size, so the learner costs nothing new
+  and the whole chain that reads a kernel expansion (co-field, contributions, Shapley values,
+  domain) applies to a classifier without change. The threshold is chosen by cross-validated
+  balanced accuracy; probabilities, when wanted, by a one-dimensional logistic fit on the
+  cross-validated scores. **Gate:** measured against C-SVC and the Laplace GP classifier on the
+  classification sets of E4 under one protocol; the co-field of the discriminant compared with the
+  SVC's by the cosine of F3. Kept as a method if its balanced accuracy is within the interval of
+  the two; kept as the default classifier only if it is also ahead on calibration.
+* **E9. Kernel logistic regression.** The probabilistic classifier that is linear in the field:
+  logistic loss plus λ‖f‖², fitted by Newton's method on the dual. This is the mode that
+  `cmfqsar/gpc.py` already finds in its Laplace step, so the learner is that step with λ chosen by
+  cross-validation instead of the evidence and without the posterior variance; a method `klr`
+  beside `gpc`, cheaper by the variance it does not compute. Several classes by one model per
+  class against the rest, when a data task asks for it. **Gate:** Brier score and AUC against
+  `gpc` and `svc` on the same sets as E8; expected to tie `gpc` on accuracy and to be the
+  reference its probabilities are judged against, since the two share the likelihood and differ
+  only in what λ is chosen by.
+* **E10. Laplacian-regularised kernel ridge regression.** Molecules without an activity — the
+  library being screened, the decoys, the inactives that carry no value — enter the fit through
+  the graph Laplacian of the kernel over labelled and unlabelled molecules together (manifold
+  regularisation, Belkin, Niyogi and Sindhwani 2006): the penalty γ fᵀLf asks the prediction to
+  change slowly between molecules that are close in field space, whether or not they are
+  labelled. The dual is one solve over all n molecules, α = (JK + λI + γLK)⁻¹Jy with J the
+  indicator of the labelled ones, so the model stays a kernel expansion and every co-field reader
+  works; the expansion now includes unlabelled molecules, which is what makes the co-field see the
+  library. The normalised Laplacian of `cmfqsar/spectral.py` is the one to use, with the
+  neighbourhood truncated so that the penalty is local. **Gate, in two parts:** (i) on the eight
+  Sutherland sets hide the activities of half the training molecules and compare with ridge on
+  the labelled half alone and with ridge on all of them, the second being the ceiling; (ii) on
+  the screening sets of E4 fit with the library unlabelled and score the actives among the
+  decoys, against the plain model. Kept if (i) recovers a measurable part of the gap to the
+  ceiling on most sets and (ii) does not lose enrichment. The assumption to state is that the
+  activity varies smoothly along the data, which an activity cliff breaks; report, per set, how
+  many labelled pairs are cliffs by the F3 measure, so that a loss can be read against them.
 
 ## F. Interpretation (months 4 to 9)
 
@@ -3111,13 +3149,15 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
-| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**; G1 and G2 alongside |
+| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**; E8 and E9 (the two classifiers) together, E10 (unlabelled molecules) after them; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
-F2 needs the GP view that B4 makes the default; D9 waits for D4 and, with D10, for the
+F2 needs the GP view that B4 makes the default; E8 and E9 are judged on the classification sets
+of E4 and E9 reuses the Newton step of the Laplace classifier, E10 waits for both because its
+screening gate needs a classifier to compare with; D9 waits for D4 and, with D10, for the
 verdict of D8; in part I the substituent items wait for the topomer rule E3 measured, MC9 for
 the variance field of D10, MC10 for MC5 and MC9 together, and MC11 for the panel data of MC4. F6 needs the cosine of F3 to compare the two co-fields of a component, and the features of B6 to run on a set large enough for the question to matter.
 
