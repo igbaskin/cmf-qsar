@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 88 modules, 161 classes with 515 public methods, and 732 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 88 modules, 161 classes with 516 public methods, and 732 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -5437,6 +5437,10 @@ Share of shuffles whose held-out correlation reached the observed one, per compo
 How many components hold out above the `q` quantile of the shuffled pairing.
 
 #### `KCCAResult.n_contained() -> int`
+
+#### `KCCAResult.summary() -> Dict[str, object]`
+
+The numbers a benchmark keeps: ridge, held-out correlations, the counts and gate (ii).
 
 #### `KCCAResult.rows(components: Optional[int]=None) -> List[Dict[str, float]]`
 

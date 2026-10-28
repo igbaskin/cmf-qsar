@@ -83,7 +83,7 @@ RIDGE_GRID = (1e-3, 3e-3, 1e-2, 3e-2, 0.1, 0.3, 1.0, 3.0, 10.0)
 #: eigenvalues below this share of the largest are not directions but round-off
 RCOND = 1e-8
 #: regularisation grid of the activity models, as multiples of the mean kernel diagonal
-LAMS = (1e-3, 1e-2, 0.1, 1.0, 10.0)
+LAMS = (1e-3, 1e-2, 0.1, 1.0, 10.0, 100.0)
 #: share of a direction's variance the other view must explain for the direction to count as
 #: contained in it (a held-out correlation above sqrt(1/2) = 0.71)
 CONTAINED_SHARE = 0.5
@@ -579,6 +579,21 @@ class KCCAResult:
 
     def n_contained(self) -> int:
         return int(self.contained.sum()) if self.contained is not None else 0
+
+    def summary(self) -> Dict[str, object]:
+        """The numbers a benchmark keeps: ridge, held-out correlations, the counts and gate (ii)."""
+        held = self.held_out.mean
+        d, lo, hi = self.q2_difference
+        return {"ridge": float(self.fit.ridge),
+                "ridge_scores": dict(self.ridge_choice.scores) if self.ridge_choice else {},
+                "pairs": int(self.fit.n_components), "pairs_held_out": int(len(held)),
+                "rho_held_out": [float(v) for v in held[:10]],
+                "rho_held_out_mean": float(np.nanmean(held)) if len(held) else float("nan"),
+                "null_95": [float(v) for v in self.null_quantile()[:10]],
+                "real": int(self.real_components()), "contained": self.n_contained(),
+                "q2_all": float(self.q2_all), "q2_contained": float(self.q2_shared),
+                "q2_own": float(self.q2_private), "own_minus_contained": [d, lo, hi],
+                "rows": self.rows()}
 
     def rows(self, components: Optional[int] = None) -> List[Dict[str, float]]:
         """One record per leading component, for a table or a file."""

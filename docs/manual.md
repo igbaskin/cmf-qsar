@@ -3182,15 +3182,15 @@ description that is genuinely three-dimensional.
 | directions of the field the fingerprint contains (more than half their variance explained) | 14 % |
 | q² of kernel ridge regression on the whole field | +0.528 |
 | q² on the part of the field the fingerprint contains | +0.478 |
-| q² on the part it does not contain | +0.164 |
-| q² on a random part of the field of the contained part's size | +0.018 |
+| q² on the part it does not contain | +0.162 |
+| q² on a random part of the field of the contained part's size | +0.024 |
 
 **(i)** holds: the leading pairs hold out at correlations of 0.93 to 0.99 on every set, far above
 the shuffled pairing's 0.2, so the two views agree about most of what varies between the molecules.
 **(ii)** comes out the other way from the premise. The part of the field the fingerprint contains,
 a tenth to a fifth of its directions, carries nearly all of the activity; the rest, which is the
 three-dimensional part, predicts at +0.16 on average and the difference is below zero with its
-interval on 7 of the 8 sets (−0.31 on average). A random subspace of the contained part's size
+interval on 7 of the 8 sets (−0.32 on average). A random subspace of the contained part's size
 predicts nothing, so it is not the size of the part that matters: the fingerprint picks out the
 directions along which the molecules vary most, and on these congeneric series those are where the
 activity is. **(iii)** holds, measured on two field views of the same molecules (the file's poses
@@ -3204,6 +3204,20 @@ the three-dimensional remainder adds little, which is the finding of the fourth-
 again from the other side. It does not say the field is useless: the whole field predicts better
 than either part, and a fingerprint has no co-field, no pose and nothing to say about a molecule
 whose substructures are new. It says where, on series of one chemotype, the information is.
+
+**Two more pairings** were measured the same way. The three reactivity fields of the cheap quantum
+stage (f+, f−, the dual descriptor) against the five empirical fields, on 49 series
+(`benchmarks/run_kcca_quantum.py`): the empirical view contains 23 % of the quantum view's
+directions, and that part predicts the activity at q² +0.18 while the quantum view's own part
+predicts at −0.06, below it with the interval on 20 of 49 series. So what the reactivity fields
+know about the activity, shape and charge already contain, which is why adding them gained little
+in the earlier chapters; the Hammett set is the exception, as it should be. And the ligand's fields
+against its interaction profile with the stored binding site, the pocket's view of the ligand, on
+21 free-energy series (`benchmarks/run_kcca_pocket.py`): the profile contains 35 % of the field's
+directions, but on sets of 22 to 44 ligands neither part can be said to carry more of the activity
+(the interval covers zero on 16 of 21), the profile alone predicts nothing, and the whole field
+beats either part. The cross-target form of that pairing, a kernel over targets, needs several
+targets whose ligands share a frame and is not possible here.
 
 ## Chemical space maps
 

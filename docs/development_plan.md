@@ -1540,9 +1540,9 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   evidence's attenuation against ECFP4). (i) holds: the leading pairs hold out at **0.93 to
   0.99** on every set against about 0.2 for the shuffled pairing, and 83 % of all pairs clear it.
   (ii) comes out against the premise: the fingerprint contains **14 %** of the field's directions
-  on average, and that part predicts the activity at q² **+0.478** against **+0.164** for the
+  on average, and that part predicts the activity at q² **+0.478** against **+0.162** for the
   rest and +0.528 for the whole field; the difference is below zero with its interval on **7 of
-  8** sets (−0.31 on average), and a random part of the contained part's size reaches +0.018, so
+  8** sets (−0.32 on average), and a random part of the contained part's size reaches +0.024, so
   it is the directions and not their number. (iii) holds, on two field views of the same molecules
   (the file's poses against poses moved by up to 10° and 0.5 Å, since a fingerprint has no
   co-field): the co-fields of the two sides of one component agree at **+0.83** against 0.05 for
@@ -1550,9 +1550,35 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   descriptor already holds the field directions that carry the activity; the three-dimensional
   remainder adds little, which is the fourth-dimension finding from the other side, and the whole
   field still beats either part.
-  **Not done:** the other pairings (quantum against empirical fields, ligand against pocket),
-  which wait on the data they need; the feature-space solver for B6's landmarks, since every set
-  here fits the n by n form; and the GUI.
+  **The other two pairings, measured 28 October 2026.** *The quantum fields against the
+  empirical ones* (`benchmarks/run_kcca_quantum.py`): view A the three reactivity fields (f+, f−,
+  the dual descriptor, one Gaussian per atom weighted by the condensed index), view B the five
+  empirical fields. On the 49 series of the GFN2-xTB stage of D3, 78 % of the pairs hold out
+  above the shuffled pairing and the empirical view contains **23 %** of the quantum view's
+  directions; that contained part predicts the activity at q² **+0.181** against **−0.058** for
+  the quantum view's own part, with the interval below zero on **20 of 49** series and above
+  zero on 3 (`hammett_sym`, the one series where the quantum field was built to matter, and the
+  pfkfb3 and eg5 free-energy sets). The empirical view alone reaches +0.364 and the whole quantum
+  view +0.272. So what the reactivity fields know about the activity is the part of them that
+  shape and charge already contain, which is why adding them to the five fields gained little in
+  D3 and in the corrosion study; it is a statement about the condensed atom-centred form of the
+  fields, not about conceptual DFT. The four ORCA corrosion series (20 to 29 molecules) say the
+  same with intervals that all cover zero. *The ligand field against the pocket*
+  (`benchmarks/run_kcca_pocket.py`): the chemogenomics form needs several targets whose ligands
+  share a frame, which the repository does not have, so the pocket's view of a ligand is its
+  interaction profile with the stored binding site, the complementarity resolved by residue and
+  interaction type (`cmfqsar/complementarity.py`), as a linear kernel. On the 21 free-energy
+  series with a binding site in the ligands' frame (two Schindler sets resolved to a pocket 30
+  to 50 Å away and are refused by a frame check), 83 % of the pairs hold out and the profile
+  contains **35 %** of the field's directions; but the contacts predict at q² −0.010, the
+  field's own part at +0.018, the profile alone at −0.015 and the whole field at +0.180, with the
+  interval covering zero on 16 of 21 series and the rest on both sides. Under rule 4 that is no
+  result for where the activity sits, and it says two other things: the contact profile is not a
+  predictor on its own on sets of 22 to 44 ligands, and the whole field predicts better than
+  either of its parts, so the split costs more than it tells on sets this small.
+  **Not done:** the cross-target form of the pocket pairing, which is the alignment problem of
+  part C; the feature-space solver for B6's landmarks, since every set here fits the n by n form;
+  and the GUI.
 ## G. The application and the tool (continuous)
 
 * **G1. Subcommands.** Alignment is spread over flags of `build` and `predict` and the `hetero`

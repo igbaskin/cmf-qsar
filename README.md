@@ -3673,8 +3673,8 @@ ECFP4 Tanimoto kernel on the eight Sutherland sets.
 |---|---:|
 | canonical pairs that hold out above the shuffled pairing | 83 % |
 | directions of the field the fingerprint contains (more than half their variance explained) | 14 % |
-| q² on the whole field / the contained part / the part the fingerprint does not contain | +0.528 / +0.478 / +0.164 |
-| q² on a random part of the field of the contained part's size | +0.018 |
+| q² on the whole field / the contained part / the part the fingerprint does not contain | +0.528 / +0.478 / +0.162 |
+| q² on a random part of the field of the contained part's size | +0.024 |
 
 The correlations are real on every set, and so is the answer: **the part of the field the
 fingerprint already contains carries nearly all of the activity**, and the three-dimensional
@@ -3687,6 +3687,24 @@ holds on two field views of the same molecules (the file's poses against poses m
 sets. The whole field still predicts better than either part, and a fingerprint has no co-field
 and no pose; what the measurement settles is where, on a series of one chemotype, the information
 sits, which is the finding of the fourth-dimension study again from the other side.
+
+The same analysis on the two other pairings the program can build (`benchmarks/run_kcca_quantum.py`,
+`benchmarks/run_kcca_pocket.py`):
+
+| view A against view B | series | directions of A that B contains | q² on A's contained part | q² on A's own part | sets with the interval below / above zero |
+|---|---:|---:|---:|---:|---|
+| GFN2-xTB reactivity fields against the five empirical fields | 49 | 23 % | +0.181 | −0.058 | 20 / 3 |
+| ligand fields against its interaction profile with the pocket | 21 | 35 % | −0.010 | +0.018 | 3 / 2 |
+
+**The quantum fields** know about the activity through the part of them that shape and charge
+already contain: their own part predicts nothing on 20 of 49 series, and the three exceptions
+include the Hammett set, the one series where a quantum field was built to matter. That is why
+adding them to the five fields gained little before, and it is a statement about the condensed
+atom-centred form of the fields rather than about conceptual DFT. **The pocket pairing** uses the
+interaction profile of a ligand with its stored binding site as the pocket's view of it, since the
+cross-target form needs several targets in one frame. Its answer under rule 4 is no result: on 16
+of 21 series the interval covers zero. What it does show is that the contact profile alone predicts
+nothing on sets of 22 to 44 ligands and that the whole field beats either of its parts.
 
 ### Three series, worked through
 
