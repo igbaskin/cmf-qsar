@@ -3541,6 +3541,21 @@ so a claim about positions is only worth making where the control is beaten; and
 largest of sixteen values tried on 25 molecules after seeing them and is not quotable as a
 result.
 
+**A second set, with the definition fixed in advance.** The strict-threshold finding was put to
+a held-out test: 60% occupancy and 2.4 A fixed before anything ran, the protocol unchanged, on
+p38 (29 ligands, receptor 3FLY, 67,423 atoms solvated, 13 min a ligand). **It failed** -- the
+water alone reaches -0.043 there against a random-site control of +0.002, so mcl1's +0.554 at
+that definition does not transfer.
+
+The p38 sweep shows why and finds something mcl1 did not. At 60% p38 keeps 11.4 sites a ligand
+where mcl1 kept 3.6, because its site holds far more ordered water. At **70%**, which leaves 6.3
+to 6.7 sites, the water alone reaches **+0.312 to +0.341** against controls near -0.02 and the
+mixture clears the interval -- **+0.276 [+0.037, +0.560] to +0.299 [+0.063, +0.593]** -- the only
+place in this item where a water block has done so. So the threshold is a proxy for how few sites
+survive and the proxy is target-specific; stated as a count, both sets agree that four to seven
+strongly occupied sites carry something and ten or more carry nothing. That count-based statement
+was formulated after seeing both sets, so it is a hypothesis awaiting a third one.
+
 ```bash
 python benchmarks/run_solvent.py --sweep  # results/solvent/table.md
 ```

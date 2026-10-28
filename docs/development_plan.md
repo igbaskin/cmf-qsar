@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 81 modules and about 36,500 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with twenty-nine subcommands (`build`, `build-crystals`, `diagnose`,
+* A library of 83 modules and about 38,000 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1352 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1384 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1012,11 +1012,38 @@ says whether a trajectory does what a generated ensemble could not.
   **The co-field** over the sites is in the table: the sites of every ligand gathered into
   places, each with the weight the block puts on it, positive for more water and negative for
   less. Under rule 5 it is a display tool, because the block does not improve the model.
-  **Not done:** one set; the hydrogens of the water are ignored, so the field says where a water
-  is and not which way it points; there is no control for the simulation length, which is what
-  would say whether 2 ns places the sites surely enough; and the strict end of the sweep, where
-  the water alone is worth most, has not been tried on a set that was not used to find it, which
-  is the measurement that would turn +0.554 to +0.607 into an estimate.
+  **A held-out second set, 28 October 2026, and the pre-registered claim failed.** The strict
+  end of the mcl1 sweep was the largest of sixteen values tried, so it was put to a test that
+  could fail: the definition was fixed at **60% occupancy and 2.4 A** before anything was run,
+  the protocol was left unchanged, and the whole chain ran on **p38** -- 29 ligands, receptor
+  3FLY, one chain of 3,113 atoms, 67,423 atoms solvated, 273 ns/day, 13 minutes a ligand, all 29
+  ligands keeping their poses. At that definition the water alone reaches **-0.043** against a
+  random-site control of **+0.002**: nothing at all, where mcl1 gave +0.554. The number did not
+  transfer and would have been wrong to quote.
+  **The sweep on p38 explains it and finds what mcl1 did not.** At 60% p38 keeps **11.4 sites a
+  ligand** where mcl1 kept 3.6, because its site holds far more ordered water, so the same share
+  of frames is a much looser filter there. At **70%**, leaving 6.3 to 6.7 sites, the water alone
+  reaches **+0.312 to +0.341** against controls near -0.02, and the mixture reaches +0.536 to
+  +0.560: **+0.276 [+0.037, +0.560] to +0.299 [+0.063, +0.593]** against the five fields, which
+  **clears the interval** at all four spacings. Those are the only definitions anywhere in this
+  item where a water block has cleared it, and they also overturn the first conclusion as a
+  general statement: on mcl1 no definition beat the five fields, on p38 four do.
+  **What the two sets agree on, stated as a count rather than a threshold.** The threshold is a
+  proxy for how few sites survive and the proxy is target-specific. In terms of the count, both
+  sets say the same: the water field carries something where the definition leaves roughly four
+  to seven strongly occupied sites a ligand (mcl1 +0.554 at 3.6, p38 +0.312 to +0.341 at 6.3 to
+  6.7) and nothing where it leaves ten or more. That statement was formulated after seeing both
+  sets, so it is a hypothesis with two observations behind it; `hydration_sites` already takes
+  `max_sites`, so testing it needs no new code, only a third set it was not chosen on.
+  **The honest status of the item.** A water field does not improve a model at any definition
+  anyone would fix in advance. At a strict definition it does on one of two targets, beyond the
+  interval. The variable that appears to govern it is the number of surviving sites. Nothing
+  here is settled, and the first conclusion reported on 28 October -- that the water field never
+  improves the model -- is now known to hold on mcl1 and fail on p38.
+  **Not done:** a third set, with the definition given as a site count, which is the measurement
+  that would settle the hypothesis above; the hydrogens of the water are ignored, so the field
+  says where a water is and not which way it points; and there is no control for the simulation
+  length, which is what would say whether 2 ns places the sites surely enough.
 * **D10. Fluctuation as information.** The ensemble mode uses the mean field only. The variance of
   the field across frames is a flexibility map, and the kernel of two variance fields is in closed
   form by the same algebra as the mean (a product of Gaussians is a Gaussian). Add it as a block

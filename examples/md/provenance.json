@@ -1,22 +1,22 @@
 [
  {
-  "set": "mcl1",
-  "entry": "4HW3",
+  "set": "p38",
+  "entry": "3FLY",
   "chains": [
-   "B"
+   "A"
   ],
-  "ligands": 25,
-  "water_fields": 25,
-  "hydration_sites": 7.8,
-  "records": 283,
+  "ligands": 29,
+  "water_fields": 29,
+  "hydration_sites": 11.413793103448276,
+  "records": 318,
   "skipped": [],
   "left_the_site": [],
   "max_frames": 20,
   "cutoff": 0.75,
   "max_drift": 4.0,
-  "drift_median": 0.9331509843620407,
-  "drift_max": 1.389677273737852,
-  "trajectory_mb": 1259.9,
+  "drift_median": 1.31369418467871,
+  "drift_max": 2.200012555210546,
+  "trajectory_mb": 4851.5,
   "settings": {
    "nanoseconds": 2.0,
    "equilibration_ps": 200.0,

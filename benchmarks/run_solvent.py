@@ -624,12 +624,29 @@ def sweep_section(sweep):
     behind = [r for r in done if r["hi"] < 0]
     alone = [r["alone"] for r in done]
     gap = [r["alone"] - r["control"] for r in done]
-    out += [f"**The first conclusion does not depend on the definition.** Of the "
-            f"{len(done)} definitions that give every ligand a site, "
-            f"{'none' if not ahead else str(len(ahead))} beats the five fields beyond the "
-            f"interval and {'none' if not behind else str(len(behind))} falls behind it. The "
-            f"change against the reference runs from {min(r['delta'] for r in done):+.3f} to "
-            f"{max(r['delta'] for r in done):+.3f}, and every interval contains zero.", ""]
+    span = (f"The change against the reference runs from "
+            f"{min(r['delta'] for r in done):+.3f} to {max(r['delta'] for r in done):+.3f}")
+    if not ahead and not behind:
+        out += [f"**Whether the water field improves the model does not depend on the "
+                f"definition: it does not, at any of them.** Of the {len(done)} definitions "
+                f"that give every ligand a site, none beats the five fields beyond the interval "
+                f"and none falls behind it. {span}, and every interval contains zero.", ""]
+    elif ahead:
+        strongest = max(ahead, key=lambda r: r["delta"])
+        out += [f"**Whether the water field improves the model does depend on the definition.** "
+                f"Of the {len(done)} definitions that give every ligand a site, **{len(ahead)} "
+                f"beat the five fields beyond the interval** and "
+                f"{'none' if not behind else str(len(behind))} fall behind it. {span}. The "
+                f"strongest is an occupancy of {strongest['min_occupancy']:.0%} and a spacing "
+                f"of {strongest['min_distance']:.1f} A, {strongest['delta']:+.3f} "
+                f"[{strongest['lo']:+.3f}, {strongest['hi']:+.3f}], with "
+                f"{strongest['sites']:.1f} sites per ligand. Those definitions are the strict "
+                f"end of the sweep, and they are the only place in this item where a water "
+                f"block has cleared the interval.", ""]
+    else:
+        out += [f"**The water field makes the model worse at some definitions and at none does "
+                f"it help.** Of the {len(done)} that give every ligand a site, none beats the "
+                f"five fields beyond the interval and {len(behind)} fall behind it. {span}.", ""]
     inverted = [r for r in done if r["control"] >= r["alone"]]
     if min(alone) > 0 and not inverted:
         out += [f"**The second conclusion does not depend on it either.** The water field on its "
@@ -677,10 +694,10 @@ def sweep_section(sweep):
             f"threshold of {best['min_occupancy']:.0%} and a spacing of "
             f"{best['min_distance']:.1f} A, with {best['sites']:.1f} sites per ligand. **That "
             f"number should not be quoted as this item's result.** It is the largest of "
-            f"{len(done)} tried on 25 molecules, chosen after seeing them, and the honest "
-            f"estimate of what a strict definition is worth would need a set this one was not "
-            f"used to choose on. The defaults of the module, 50% and 2.4 A, were fixed before "
-            f"any of this was measured and are left alone for that reason.", ""]
+            f"{len(done)} tried on {sweep['n']} molecules, chosen after seeing them, and an "
+            f"honest estimate of what a strict definition is worth needs a set it was not "
+            f"chosen on. The defaults of the module, 50% and 2.4 A, were fixed before any of "
+            f"this was measured and are left as they are for that reason.", ""]
     strict = [r for r in done if r["min_occupancy"] >= max(r2["min_occupancy"] for r2 in done)]
     if strict:
         out += [f"One thing the sweep does settle about the strict end: at the strictest "
@@ -692,6 +709,34 @@ def sweep_section(sweep):
                 f"{max(r['control'] for r in strict):+.3f}, and it does so at all "
                 f"{len(strict)} spacings rather than at one. A threshold above that leaves "
                 f"ligands with no site at all, which is the end of the range.", ""]
+    # what the two numbers really stand for: how few sites survive, which is not the same
+    # threshold on two targets
+    # what the two numbers really stand for: how few sites survive. A threshold is a proxy for
+    # that count and the proxy is target-specific, so the count is the quantity to report.
+    clear = [r for r in done if r["alone"] > 0.15 and r["alone"] > r["control"] + 0.15]
+    marginal = [r for r in done if r not in clear and r["alone"] > 0.05]
+    if clear:
+        sites = sorted(set(round(r["sites"], 1) for r in clear))
+        thresholds = sorted(set(r["min_occupancy"] for r in clear))
+        other = [r for r in done if r not in clear]
+        out += [f"**What the threshold is standing in for is the number of sites.** The water "
+                f"alone clearly carries something at {len(clear)} of the {len(done)} "
+                f"definitions, and all of them are at an occupancy of "
+                f"{', '.join(f'{t:.0%}' for t in thresholds)}, leaving "
+                f"{min(sites):.1f} to {max(sites):.1f} sites per ligand. Every other definition "
+                f"leaves {min(r['sites'] for r in other):.1f} to "
+                f"{max(r['sites'] for r in other):.1f} and gives at best "
+                f"{max(r['alone'] for r in other):+.3f}"
+                + (f", with {len(marginal)} of them marginal rather than flat" if marginal
+                   else "") + ". A threshold is a proxy for how few sites survive, and the "
+                f"proxy is target-specific: the same share of frames leaves a different number "
+                f"of sites on a site that holds much ordered water than on one that holds "
+                f"little. The count is the quantity to compare across targets, not the "
+                f"threshold.", ""]
+    elif marginal:
+        out += [f"The water alone never clearly carries anything here: its best is "
+                f"{max(r['alone'] for r in done):+.3f}, at {len(marginal)} definitions it is "
+                f"weakly positive, and at the rest it is flat or negative.", ""]
     return out
 
 

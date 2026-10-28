@@ -28,7 +28,7 @@ the coefficient fitted to the occupancy map. `cmfqsar/solvent.py` turns those in
 Every ligand was simulated for **2 ns** at 300 K and 1 bar, after 200 ps of equilibration with the alpha carbons restrained at 5 kcal/mol/A^2. The force fields are gaff-2.11 for the ligand with AM1-BCC charges, amber14-all.xml for the protein and TIP3P water with 0.15 M of ions, in a box with 10 A of padding; the time step is 4 fs with hydrogen mass repartitioning and a frame was written every 10 ps. The frames were then superimposed on the binding-site backbone and thinned to at most 20 conformations at a clustering radius of 0.75 A. Where the crystal entry holds several copies of the protein, only the chain lining the site the ligands occupy was kept.
 
 `examples/make_md_trajectories.py` is the script, and it is the whole recipe: nothing was done
-by hand. The trajectories themselves are not in the repository -- they come to 1.3 GB -- but the script
+by hand. The trajectories themselves are not in the repository -- they come to 4.9 GB -- but the script
 rebuilds them from the data here and the entries named below.
 
 ## Where the data comes from
@@ -38,4 +38,4 @@ rebuilds them from the data here and the entries named below.
 * The receptors: the PDB entries named below, downloaded from RCSB. The wwPDB distributes its
   holdings in the public domain under CC0, so they carry no restrictions.
 
-* `mcl1_md.sdf`: 25 ligands, 283 records, receptor **4HW3**, chain B of it. The kept ligands sit 0.93 A from their crystal pose on average, at most 1.39 A.
+* `p38_md.sdf`: 29 ligands, 318 records, receptor **3FLY**, chain A of it. The kept ligands sit 1.31 A from their crystal pose on average, at most 2.20 A.

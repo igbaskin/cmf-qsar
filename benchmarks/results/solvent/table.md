@@ -77,7 +77,7 @@ Two numbers decide what a hydration site is, and neither follows from anything: 
 | 70% | 3.0 A | -- | -- | 7 ligand(s) with no site | -- | -- |
 | 70% | 3.6 A | -- | -- | 7 ligand(s) with no site | -- | -- |
 
-**The first conclusion does not depend on the definition.** Of the 16 definitions that give every ligand a site, none beats the five fields beyond the interval and none falls behind it. The change against the reference runs from -0.130 to +0.087, and every interval contains zero.
+**Whether the water field improves the model does not depend on the definition: it does not, at any of them.** Of the 16 definitions that give every ligand a site, none beats the five fields beyond the interval and none falls behind it. The change against the reference runs from -0.130 to +0.087, and every interval contains zero.
 
 **The second conclusion does depend on it, and this is the finding of the sweep.** The water field on its own runs from -0.117 to +0.607 across the 16 definitions, and is not positive at 1 of them. What was reported for the default definition alone was therefore one point of a range, not a property of the water.
 
@@ -85,9 +85,100 @@ Two numbers decide what a hydration site is, and neither follows from anything: 
 
 **The sensitivity has a direction: the stronger the sites, the more they carry.** Averaged over the spacings, the water alone goes 30% +0.264, 40% +0.057, 50% +0.197, 60% +0.568. A stricter threshold keeps fewer sites and they carry more, which says the signal is in the few places a water really sits and that adding weakly occupied points dilutes it.
 
-The strongest the water alone gets is +0.607, at an occupancy threshold of 60% and a spacing of 3.6 A, with 3.6 sites per ligand. **That number should not be quoted as this item's result.** It is the largest of 16 tried on 25 molecules, chosen after seeing them, and the honest estimate of what a strict definition is worth would need a set this one was not used to choose on. The defaults of the module, 50% and 2.4 A, were fixed before any of this was measured and are left alone for that reason.
+The strongest the water alone gets is +0.607, at an occupancy threshold of 60% and a spacing of 3.6 A, with 3.6 sites per ligand. **That number should not be quoted as this item's result.** It is the largest of 16 tried on 25 molecules, chosen after seeing them, and an honest estimate of what a strict definition is worth needs a set it was not chosen on. The defaults of the module, 50% and 2.4 A, were fixed before any of this was measured and are left as they are for that reason.
 
 One thing the sweep does settle about the strict end: at the strictest threshold that still leaves every ligand a site (60%, 3.6 sites per ligand), the water alone reaches +0.554 to +0.607 against a control of -0.096 to -0.055, and it does so at all 4 spacings rather than at one. A threshold above that leaves ligands with no site at all, which is the end of the range.
+
+**What the threshold is standing in for is the number of sites.** The water alone clearly carries something at 9 of the 16 definitions, and all of them are at an occupancy of 30%, 50%, 60%, leaving 3.6 to 39.2 sites per ligand. Every other definition leaves 7.2 to 24.8 and gives at best +0.131, with 6 of them marginal rather than flat. A threshold is a proxy for how few sites survive, and the proxy is target-specific: the same share of frames leaves a different number of sites on a site that holds much ordered water than on one that holds little. The count is the quantity to compare across targets, not the threshold.
+
+## p38
+
+29 ligands, 11.4 hydration sites each (from 6 to 20), chosen at an attenuation of 0.1. A site is a point occupied at least 60% of the frames, against 14% for bulk water; the strongest site of a ligand averages 90%.
+
+Every model is given its own best attenuation over the same grid, so the reference is not held back by a choice made to suit the water block.
+
+| model | q2 | attenuation | mixing coefficient | change against the five fields |
+| --- | ---: | ---: | ---: | --- |
+| the five fields alone | +0.261 | 0.1 | -- | the reference |
+| the five fields and the water | +0.424 | 0.5 | 0.5 | +0.164 [-0.080, +0.473] |
+| the water alone | -0.043 | 0.1 | 1.0 | -0.303 [-0.633, +0.096] |
+| with sites moved at random (control) | +0.361 | 0.1 | 0.1 | +0.100 [-0.031, +0.291] |
+| with one ligand's water for every ligand (control) | +0.281 | 0.1 | 0.7 | +0.020 [-0.143, +0.122] |
+| random sites alone (control) | +0.002 | 0.1 | 1.0 | -0.259 [-0.580, +0.147] |
+| one shared set of sites alone (control) | -0.051 | 0.1 | 1.0 | -0.312 [-0.578, +0.065] |
+
+The mixing coefficient at an attenuation of 0.5, where the water block did best, from the fields alone to the water alone:
+
+| coefficient | q2 | RMSEcv |
+| ---: | ---: | ---: |
+| 0.0 | +0.201 | 0.623 |
+| 0.1 | +0.258 | 0.601 |
+| 0.2 | +0.329 | 0.571 |
+| 0.3 | +0.375 | 0.551 |
+| 0.5 | +0.424 | 0.529 |
+| 0.7 | +0.405 | 0.538 |
+| 0.9 | +0.211 | 0.620 |
+| 1.0 | -0.050 | 0.715 |
+
+### Where the model asks for water
+
+The sites of every ligand gathered into places, with the weight the water block puts on each. A positive weight asks for **more** water there and a negative one for less, which is where displacing a water is worth trying. Only places shared by at least three ligands are listed, and under rule 5 this is a display tool: the table above says the block does not improve the model, so a place here is something to look at and not a prediction.
+
+| place (x, y, z) | ligands with a site there | mean occupancy | weight |
+| --- | ---: | ---: | ---: |
+| 30.5, 13.6, 26.2 | 6 | 69% | -0.026 |
+| 21.8, 0.5, 37.6 | 7 | 64% | -0.018 |
+| 23.1, 2.8, 22.6 | 12 | 74% | -0.018 |
+| 22.7, 13.1, 41.0 | 8 | 68% | +0.017 |
+| 22.1, 1.3, 39.6 | 13 | 63% | +0.017 |
+| 8.4, 6.4, 24.9 | 9 | 68% | +0.016 |
+| 19.3, -0.2, 30.1 | 9 | 67% | +0.013 |
+| 20.1, 20.7, 24.7 | 6 | 78% | +0.013 |
+| 26.5, 3.4, 33.2 | 5 | 64% | -0.011 |
+| 17.2, 18.0, 40.0 | 4 | 73% | +0.010 |
+| 7.9, 1.8, 31.8 | 17 | 71% | +0.010 |
+| 30.3, 19.4, 25.9 | 6 | 64% | -0.008 |
+
+### How much the definition of a site decides
+
+Two numbers decide what a hydration site is, and neither follows from anything: the share of frames a point has to be occupied, and how close two sites may be. Here the whole comparison is run again at every pair of them, each time with the attenuation and the mixing coefficient chosen as before. The reference is the five fields at their best, +0.261.
+
+| occupancy | spacing | sites per ligand | with water | change against the fields | water alone | random sites alone |
+| ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| 30% | 1.8 A | 40.0 | +0.206 | -0.054 [-0.083, -0.031] | -0.058 | +0.060 |
+| 30% | 2.4 A | 40.0 | +0.196 | -0.065 [-0.096, -0.037] | -0.060 | +0.043 |
+| 30% | 3.0 A | 40.0 | +0.261 | +0.000 [-0.031, +0.042] | +0.053 | +0.017 |
+| 30% | 3.6 A | 39.4 | +0.242 | -0.018 [-0.041, +0.020] | +0.092 | -0.011 |
+| 40% | 1.8 A | 34.4 | +0.225 | -0.035 [-0.084, +0.006] | +0.001 | -0.048 |
+| 40% | 2.4 A | 33.9 | +0.225 | -0.036 [-0.085, +0.006] | +0.015 | -0.044 |
+| 40% | 3.0 A | 30.1 | +0.289 | +0.028 [-0.221, +0.184] | -0.037 | +0.113 |
+| 40% | 3.6 A | 24.4 | +0.319 | +0.059 [-0.183, +0.222] | -0.049 | +0.076 |
+| 50% | 1.8 A | 21.3 | +0.194 | -0.066 [-0.314, +0.176] | -0.067 | +0.005 |
+| 50% | 2.4 A | 21.1 | +0.203 | -0.058 [-0.353, +0.221] | -0.067 | +0.017 |
+| 50% | 3.0 A | 18.9 | +0.174 | -0.087 [-0.176, +0.000] | -0.068 | -0.029 |
+| 50% | 3.6 A | 16.2 | +0.201 | -0.059 [-0.150, +0.044] | -0.068 | -0.051 |
+| 60% | 1.8 A | 11.5 | +0.425 | +0.165 [-0.079, +0.475] | -0.043 | -0.022 |
+| 60% | 2.4 A | 11.4 | +0.424 | +0.164 [-0.080, +0.473] | -0.043 | +0.002 |
+| 60% | 3.0 A | 10.8 | +0.405 | +0.144 [-0.101, +0.456] | -0.055 | -0.057 |
+| 60% | 3.6 A | 9.8 | +0.360 | +0.099 [-0.123, +0.322] | -0.054 | +0.014 |
+| 70% | 1.8 A | 6.7 | +0.536 | +0.276 [+0.037, +0.560] | +0.312 | -0.032 |
+| 70% | 2.4 A | 6.7 | +0.536 | +0.276 [+0.037, +0.560] | +0.312 | -0.032 |
+| 70% | 3.0 A | 6.4 | +0.559 | +0.298 [+0.063, +0.588] | +0.340 | -0.014 |
+| 70% | 3.6 A | 6.3 | +0.560 | +0.299 [+0.063, +0.593] | +0.341 | -0.010 |
+
+**Whether the water field improves the model does depend on the definition.** Of the 20 definitions that give every ligand a site, **4 beat the five fields beyond the interval** and 2 fall behind it. The change against the reference runs from -0.087 to +0.299. The strongest is an occupancy of 70% and a spacing of 3.6 A, +0.299 [+0.063, +0.593], with 6.3 sites per ligand. Those definitions are the strict end of the sweep, and they are the only place in this item where a water block has cleared the interval.
+
+**The second conclusion does depend on it, and this is the finding of the sweep.** The water field on its own runs from -0.068 to +0.341 across the 20 definitions, and is not positive at 12 of them. What was reported for the default definition alone was therefore one point of a range, not a property of the water.
+
+**At 11 of the 20 definitions the random-site control does as well as the real maps or better**, the worst being an occupancy of 40% and a spacing of 3.0 A, where the control reaches +0.113 against -0.037 for the measured sites. A loose definition puts tens of weakly occupied points in the field, and a block of that many plausible numbers carries whatever a block of that many random numbers carries. Any claim about where the water sits has to be made at a definition where the control is beaten, and the table says which those are.
+
+**The sensitivity has a direction: the stronger the sites, the more they carry.** Averaged over the spacings, the water alone goes 30% +0.007, 40% -0.017, 50% -0.067, 60% -0.049, 70% +0.326. A stricter threshold keeps fewer sites and they carry more, which says the signal is in the few places a water really sits and that adding weakly occupied points dilutes it.
+
+The strongest the water alone gets is +0.341, at an occupancy threshold of 70% and a spacing of 3.6 A, with 6.3 sites per ligand. **That number should not be quoted as this item's result.** It is the largest of 20 tried on 29 molecules, chosen after seeing them, and an honest estimate of what a strict definition is worth needs a set it was not chosen on. The defaults of the module, 50% and 2.4 A, were fixed before any of this was measured and are left as they are for that reason.
+
+One thing the sweep does settle about the strict end: at the strictest threshold that still leaves every ligand a site (70%, 6.7 sites per ligand), the water alone reaches +0.312 to +0.341 against a control of -0.032 to -0.010, and it does so at all 4 spacings rather than at one. A threshold above that leaves ligands with no site at all, which is the end of the range.
+
+**What the threshold is standing in for is the number of sites.** The water alone clearly carries something at 4 of the 20 definitions, and all of them are at an occupancy of 70%, leaving 6.3 to 6.7 sites per ligand. Every other definition leaves 9.8 to 40.0 and gives at best +0.092, with 2 of them marginal rather than flat. A threshold is a proxy for how few sites survive, and the proxy is target-specific: the same share of frames leaves a different number of sites on a site that holds much ordered water than on one that holds little. The count is the quantity to compare across targets, not the threshold.
 
 ## What it settles
 
@@ -98,6 +189,12 @@ The water alone reaches +0.263. That is the number to read first: it says how mu
 **The positions are carrying something, and that is the result worth keeping.** The water field on its own reaches +0.263, while the same number of sites moved to random places in the same box or one ligand's sites given to every ligand reach random sites alone -0.028 and one shared set of sites alone -0.138. Both controls are below zero, which is what a block that cannot tell the ligands apart must give, so the signal in the real maps is in **where the water sits** and not in how many sites a ligand has.
 
 A note on reading the mixed controls: one ligand's sites given to every ligand make every kernel entry the same, and a constant block added to a kernel is absorbed by the fit's own bias. That control therefore lands exactly on the reference by construction, which is a check that the mixing does nothing of itself rather than a result about water.
+
+**On p38 the water field adds nothing that can be measured.** The five fields reach +0.261 and the best mixture +0.424, a change of +0.164 [-0.080, +0.473], an interval that contains zero. On a set of 29 ligands an interval that wide cannot show a small gain, so what this says is that the water field is not worth a simulation here, not that the solvent carries nothing.
+
+The water alone reaches -0.043. That is the number to read first: it says how much of the activity the places a ligand's water occupies can account for by themselves, with no field of the molecule in the kernel at all.
+
+**The positions are carrying nothing.** The water field on its own reaches -0.043 and the controls reach random sites alone +0.002 and one shared set of sites alone -0.051, so a block of plausible numbers does as well as the measured maps and the places the water occupies are not what the model is using.
 
 **What this rests on.** One set of 25 ligands, 2 ns of simulation each, and a definition of a hydration site -- a point occupied at least half the frames, with sites no closer than one water across. A longer simulation would place the sites more surely; it would not make 25 ligands a larger set, and the interval above is set by the 25 and not by the nanoseconds.
 

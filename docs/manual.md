@@ -1153,6 +1153,39 @@ strictest threshold that still leaves every ligand a site — 60 %, about 3.6 si
 water alone reaches +0.554 to +0.607 against a control of −0.096 to −0.055, and it does so at all
 four spacings rather than at one.
 
+**A second set, with the definition fixed in advance.** The paragraphs above are all from one
+set, and the strongest number in them was the largest of sixteen tried. So the strict-threshold
+finding was put to a held-out test: the definition was fixed at **60 % occupancy and 2.4 Å**
+before anything was run, the protocol was left exactly as it was, and the whole chain was run on
+**p38** — 29 ligands, receptor 3FLY, a single chain of 3,113 atoms, 67,423 atoms solvated,
+13 minutes a ligand.
+
+**It failed.** On p38 at that definition the water alone reaches **−0.043**, against a
+random-site control of +0.002: nothing. The +0.554 that mcl1 gave at the same definition does not
+transfer, and anyone quoting it as a property of water fields would have been wrong.
+
+**The sweep on p38 shows why, and finds something mcl1 never did.** At 60 % occupancy p38 keeps
+**11.4 sites a ligand** where mcl1 kept 3.6 — p38's site holds far more ordered water, so the
+same share of frames is a far looser filter there. Going to **70 %**, which leaves 6.3 to 6.7
+sites, the water alone reaches **+0.312 to +0.341** against controls near −0.02, and the mixture
+reaches +0.536 to +0.560, **+0.276 [+0.037, +0.560] to +0.299 [+0.063, +0.593]** against the five
+fields. Those four definitions are the only place in this item where a water block has cleared
+the interval at all.
+
+So the threshold is a **proxy for how few sites survive, and the proxy is target-specific**. Put
+in terms of the count rather than the threshold, both sets say the same thing: the water field
+carries something when the definition leaves roughly four to seven strongly occupied sites a
+ligand (mcl1 +0.554 at 3.6 sites, p38 +0.312 to +0.341 at 6.3 to 6.7), and nothing when it leaves
+ten or more.
+
+> **What that is worth.** The count-based statement was formulated after seeing both sets, so it
+> is a hypothesis with two observations behind it and not a result. The honest status of this item
+> is: the water field does not improve a model at the definitions anyone would pick in advance;
+> at a strict definition on one of two targets it does, beyond the interval; and the variable
+> that appears to govern it is the number of surviving sites, which a third set would have to
+> confirm. `hydration_sites` already takes `max_sites`, so a count-based definition needs no new
+> code — only a set it was not chosen on.
+
 > **Two cautions, both from the sweep itself.** At the loosest definition tried (30 % occupancy,
 > 3.6 Å spacing, about 25 sites a ligand) the **random-site control reaches +0.438 against
 > −0.022 for the measured sites**. A block of two dozen plausible numbers carries what a block
