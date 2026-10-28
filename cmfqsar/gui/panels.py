@@ -729,7 +729,7 @@ class ModelPanel(QWidget):
         form.addRow("Classes:", crow)
         self.cmb_method = QComboBox()
         self.cmb_method.addItems(["Kernel ridge regression (KRR)", "Gaussian process (KRR + variance)",
-                                  "epsilon-SVR", "nu-SVR"])
+                                  "Kernel PLS (components chosen by CV)", "epsilon-SVR", "nu-SVR"])
         form.addRow("Method:", self.cmb_method)
         self.cmb_kernel = QComboBox()
         self.cmb_kernel.addItems(["none: linear CMF kernel (overlap integral)",
@@ -960,8 +960,9 @@ class ModelPanel(QWidget):
         return [n for n, cb in self.chk_fields.items() if cb.isChecked()]
 
     REG_METHODS = ["Kernel ridge regression (KRR)", "Gaussian process (KRR + variance)",
+                   "Kernel PLS (components chosen by CV)",
                    "epsilon-SVR", "nu-SVR", "Ranking SVM (order only)"]
-    REG_KEYS = ["krr", "gp", "svr", "nusvr", "ranksvm"]
+    REG_KEYS = ["krr", "gp", "kpls", "svr", "nusvr", "ranksvm"]
     CLS_METHODS = ["Support vector classification (C-SVC)", "nu-SVC",
                    "Gaussian process classifier (Laplace)"]
     CLS_KEYS = ["svc", "nusvc", "gpc"]

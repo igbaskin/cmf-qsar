@@ -1,9 +1,10 @@
 """
 CMF regression models: kernel ridge regression (KRR, the method of the 2013
-paper), support vector regression and a Gaussian-process view of KRR that
+paper), kernel partial least squares (KPLS, the kernel form of the PLS that
+CoMFA uses), support vector regression and a Gaussian-process view of KRR that
 provides predictive variances.  Includes k-fold cross-validation, grid search
-over hyper-parameters (alpha, lambda / C, optionally mixing coefficients h_f)
-and external (nested) cross-validation.
+over hyper-parameters (alpha, lambda / C / number of PLS components, optionally
+mixing coefficients h_f) and external (nested) cross-validation.
 """
 from __future__ import annotations
 
@@ -350,6 +351,63 @@ def krr_fit(K: np.ndarray, y: np.ndarray, lam: float, fit_bias: bool = True) -> 
     return sol[:n], float(sol[n])
 
 
+def kpls_fit(K: np.ndarray, y: np.ndarray, components: int) -> Tuple[np.ndarray, float, int]:
+    """Kernel partial least squares (Rosipal & Trejo 2001) with one response.
+
+    The kernel is centred in the field space and the activity is centred; every component is
+    one NIPALS step (one response needs no iteration), after which the kernel and the activity
+    residual are deflated by that component's score.  The dual coefficients are
+    a = U (T' Kc U)^-1 T' yc on the centred kernel Kc, and are then folded, together with the
+    centring, into coefficients on the *uncentred* kernel plus a bias, so that the prediction
+    is K(x, train) a + b exactly as for every other learner here.  The coefficients sum to
+    zero, as those of kernel ridge regression with a bias term do.
+
+    With the linear CMF kernel this is PLS regression in the space of the fields, that is CoMFA's
+    learner with the grid replaced by the continuous field.  Returns (a, b, components used);
+    fewer components than asked for are used when the residual or the next score vanishes.
+    """
+    K = np.asarray(K, float)
+    y = np.asarray(y, float)
+    n = len(y)
+    components = max(1, int(components))
+    ybar = float(np.mean(y))
+    yc = y - ybar
+    Kc = K - K.mean(axis=0)[None, :] - K.mean(axis=1)[:, None] + K.mean()
+    Kd = Kc.copy()
+    yr = yc.copy()
+    scale = float(np.trace(Kc)) / n if n else 1.0
+    tol = 1e-10 * max(scale, 1e-300)
+    T, U = [], []
+    for _ in range(min(components, max(n - 1, 1))):
+        nu = float(np.linalg.norm(yr))
+        if nu <= 1e-12 * max(float(np.linalg.norm(yc)), 1e-300):
+            break                                  # the activity is fitted exactly
+        u = yr / nu
+        t = Kd @ u
+        nt = float(np.linalg.norm(t))
+        if nt <= tol:
+            break                                  # nothing of the kernel is left
+        t = t / nt
+        T.append(t)
+        U.append(u)
+        Kt = Kd @ t                                # (I - t t') Kd (I - t t'), Kd symmetric
+        Kd = Kd - np.outer(t, Kt) - np.outer(Kt, t) + float(t @ Kt) * np.outer(t, t)
+        yr = yr - t * float(t @ yr)
+    if not T:
+        return np.zeros(n), ybar, 0
+    T = np.column_stack(T)
+    U = np.column_stack(U)
+    M = T.T @ Kc @ U
+    try:
+        c = np.linalg.solve(M, T.T @ yc)
+    except np.linalg.LinAlgError:
+        c = np.linalg.lstsq(M, T.T @ yc, rcond=None)[0]
+    a = U @ c
+    a = a - a.mean()                               # the centring of the training side
+    b = ybar - float(K.sum(axis=0) @ a) / n        # the centring of the test side
+    return a, b, int(T.shape[1])
+
+
 class _Learner:
     """Thin wrapper around the different kernel learners (dual coefficients + bias)."""
 
@@ -372,6 +430,12 @@ class _Learner:
             self.support_ = np.arange(n)
             if self.method == "gp":
                 self.K_train_ = K
+        elif self.method == "kpls":
+            # the centring plays the part of the bias term, so fit_bias has no effect here
+            a, b, used = kpls_fit(K, y, int(self.params.get("components", 5)))
+            self.alpha_, self.b_ = a, b
+            self.support_ = np.arange(n)
+            self.n_components_ = used
         elif self.method in ("svr", "nusvr"):
             from sklearn.svm import SVR, NuSVR
             if self.method == "svr":
@@ -604,8 +668,9 @@ class CMFModel:
     fieldset: FieldSet
     # "regression" | "classification" (binary, +1 active / -1 inactive) | "oneclass" (novelty detection)
     task: str = "regression"
-    method: str = "krr"                     # krr | gp | svr | nusvr | svc | nusvc | ocsvm
-    params: Dict[str, float] = field(default_factory=lambda: {"lam": 1.0, "C": 1.0, "epsilon": 0.1, "nu": 0.5})
+    method: str = "krr"                     # krr | gp | kpls | svr | nusvr | svc | nusvc | ocsvm
+    params: Dict[str, float] = field(default_factory=lambda: {"lam": 1.0, "C": 1.0, "epsilon": 0.1,
+                                                              "nu": 0.5, "components": 5})
     normalize: bool = False                 # cosine-normalise each field kernel
     scale_fields: bool = True               # scale each field kernel to unit mean diagonal
     # how far apart two atoms may be and still be summed (plan item B2).  None computes every
@@ -2104,9 +2169,16 @@ class SearchResult:
     per_field: Optional[object] = None       # the PerFieldResult, with its trace
 
 
-def _param_grid(method: str, lams, Cs, epsilons, nus):
+#: the numbers of PLS components tried when none are given
+DEFAULT_COMPONENTS = (1, 2, 3, 4, 5, 6, 7, 8, 10, 12)
+
+
+def _param_grid(method: str, lams, Cs, epsilons, nus, components=()):
     if method in ("krr", "gp"):
         return [{"lam": float(l)} for l in lams]
+    if method == "kpls":
+        comps = sorted({max(1, int(c)) for c in (components or DEFAULT_COMPONENTS)})
+        return [{"components": c} for c in comps]
     if method == "svr":
         return [{"C": float(C), "epsilon": float(e)} for C in Cs for e in epsilons]
     if method == "nusvr":
@@ -2160,9 +2232,12 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
                 progress: Optional[ProgressFn] = None, cancel: Optional[CancelFn] = None,
                 lam_search: str = "grid", precomputed: Optional[Dict] = None,
                 alpha_search: str = "grid", nm_start: Sequence[float] = (0.25, 5.0),
-                nm_maxit: int = 500, select: str = "cv") -> SearchResult:
+                nm_maxit: int = 500, select: str = "cv",
+                components: Sequence[int] = ()) -> SearchResult:
     """Minimise RMSEcv over alpha (shared by all fields unless `alpha_fields` restricts it)
-    and the learner's regularisation parameters.  Optionally refine the mixing
+    and the learner's regularisation parameters (``lams`` for KRR/GP, ``Cs`` with ``epsilons``
+    or ``nus`` for the support-vector methods, ``components`` for KPLS, which falls back to
+    :data:`DEFAULT_COMPONENTS` when empty).  Optionally refine the mixing
     coefficients h_f by coordinate descent (beware of model-selection bias), or set them by
     centred kernel alignment (``mkl=True``, see :func:`align_mixing`), in which case the
     reported RMSEcv is reliable because the weights are re-derived inside every fold.
@@ -2220,7 +2295,7 @@ def grid_search(train: AtomTable, y: np.ndarray, model: CMFModel,
     if mkl and optimize_h:
         raise ValueError("choose either alignment-based multiple kernel learning or the "
                          "coordinate-descent refinement of h, not both")
-    grid = _param_grid(model.method, lams, Cs, epsilons, nus)
+    grid = _param_grid(model.method, lams, Cs, epsilons, nus, components)
     rows = []
     h_cache = {}
     best = None
@@ -2487,7 +2562,8 @@ def nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel,
               progress: Optional[ProgressFn] = None, cancel: Optional[CancelFn] = None,
               lam_search: str = "grid", precompute: bool = True,
               max_precompute_bytes: float = 2e9, alpha_search: str = "grid",
-              nm_start: Sequence[float] = (0.25, 5.0), inner_seed="same") -> NestedCVResult:
+              nm_start: Sequence[float] = (0.25, 5.0), inner_seed="same",
+              components: Sequence[int] = ()) -> NestedCVResult:
     """External k-fold cross-validation with the hyper-parameters selected in an
     inner cross-validation loop on each working set (Baskin & Zhokhova 2013).
 
@@ -2549,7 +2625,8 @@ def nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel,
                               alpha_fields=alpha_fields,
                               progress=(lambda msg, fr: progress(f"repeat {rep + 1}/{repeats}, fold {k + 1}/{outer_folds}: {msg}", base + span * fr)) if progress else None,
                               cancel=cancel, lam_search=lam_search, precomputed=pre,
-                              alpha_search=alpha_search, nm_start=nm_start)
+                              alpha_search=alpha_search, nm_start=nm_start,
+                              components=components)
             model.fit(sub_train, y[tr], cv_folds=0, reuse_kernels=True)
             fold_hyper.append((float(res.best_alpha), dict(res.best_params)))
             if pre_full is not None and model.is_linear:

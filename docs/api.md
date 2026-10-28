@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 88 modules, 161 classes with 516 public methods, and 732 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 88 modules, 161 classes with 516 public methods, and 733 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -73,7 +73,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.mil](#cmfqsarmil) | Multi-instance learning over conformations: let the model choose the pose. |
 | [cmfqsar.mixing](#cmfqsarmixing) | A posterior over the field weights (plan item E6). |
 | [cmfqsar.mmd](#cmfqsarmmd) | Is this set of molecules like that one? |
-| [cmfqsar.model](#cmfqsarmodel) | CMF regression models: kernel ridge regression (KRR, the method of the 2013 paper), support vector regression and a Gaussian-process view of KRR that provides predictive variances. |
+| [cmfqsar.model](#cmfqsarmodel) | CMF regression models: kernel ridge regression (KRR, the method of the 2013 paper), kernel partial least squares (KPLS, the kernel form of the PLS that CoMFA uses), support vector regression and a Gaussian-process view of KRR that provides predictive variances. |
 | [cmfqsar.multiobjective](#cmfqsarmultiobjective) | A design loop with more than one objective (plan item MC11). |
 | [cmfqsar.multitask](#cmfqsarmultitask) | Two endpoints at once, so that selectivity is a co-field rather than a ratio. |
 | [cmfqsar.neldermead](#cmfqsarneldermead) | Nelder-Mead simplex minimiser, a direct port of R's `nmmin` (`optim(method = "Nelder-Mead")`, R 2.x-4.x), which the original CMF R scripts use to optimise the attenuation factor alpha and the regularisation parameter gamma simultaneously (`cmf_krr_train_mem` with `alpha_grid_search = FALSE`). |
@@ -7179,10 +7179,11 @@ compare their parameterisations as much as their chemistry.
 Source: `cmfqsar/model.py`
 
 CMF regression models: kernel ridge regression (KRR, the method of the 2013
-paper), support vector regression and a Gaussian-process view of KRR that
+paper), kernel partial least squares (KPLS, the kernel form of the PLS that
+CoMFA uses), support vector regression and a Gaussian-process view of KRR that
 provides predictive variances.  Includes k-fold cross-validation, grid search
-over hyper-parameters (alpha, lambda / C, optionally mixing coefficients h_f)
-and external (nested) cross-validation.
+over hyper-parameters (alpha, lambda / C / number of PLS components, optionally
+mixing coefficients h_f) and external (nested) cross-validation.
 
 ### `class ModelStats  (dataclass)`
 
@@ -7249,7 +7250,7 @@ Attributes:
 - `fieldset: FieldSet`
 - `task: str` = `'regression'`
 - `method: str` = `'krr'`
-- `params: Dict[str, float]` = `field(default_factory=lambda: {'lam': 1.0, 'C': 1.0, 'epsilon': 0.1, 'nu': 0.5})`
+- `params: Dict[str, float]` = `field(default_factory=lambda: {'lam': 1.0, 'C': 1.0, 'epsilon': 0.1, 'nu': 0.5, 'components': 5})`
 - `normalize: bool` = `False`
 - `scale_fields: bool` = `True`
 - `cutoff: Optional[object]` = `None`
@@ -7648,6 +7649,22 @@ Kernel ridge regression with a bias term, Eq. 12 of Baskin & Zhokhova (2013):
 With `fit_bias=False` the plain KRR system (K + lam I) a = y is solved and b = 0
 (the `set_b_0` option of the original R scripts).
 
+### `kpls_fit(K: np.ndarray, y: np.ndarray, components: int) -> Tuple[np.ndarray, float, int]`
+
+Kernel partial least squares (Rosipal & Trejo 2001) with one response.
+
+The kernel is centred in the field space and the activity is centred; every component is
+one NIPALS step (one response needs no iteration), after which the kernel and the activity
+residual are deflated by that component's score.  The dual coefficients are
+a = U (T' Kc U)^-1 T' yc on the centred kernel Kc, and are then folded, together with the
+centring, into coefficients on the *uncentred* kernel plus a bias, so that the prediction
+is K(x, train) a + b exactly as for every other learner here.  The coefficients sum to
+zero, as those of kernel ridge regression with a bias term do.
+
+With the linear CMF kernel this is PLS regression in the space of the fields, that is CoMFA's
+learner with the grid replaced by the continuous field.  Returns (a, b, components used);
+fewer components than asked for are used when the residual or the next score vanishes.
+
 ### `cv_predict(K: np.ndarray, y: np.ndarray, method: str, params: Dict[str, float], folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, groups: Optional[Sequence]=None) -> np.ndarray`
 
 k-fold cross-validated predictions on a precomputed joint kernel matrix.
@@ -7724,10 +7741,12 @@ accuracy when only one class is present in a fold) and the balanced accuracy.  R
 1 - rho and Spearman's rho, because the score of a ranking model has no units and
 minimising its squared error would be selecting on a quantity that does not exist.
 
-### `grid_search(train: AtomTable, y: np.ndarray, model: CMFModel, alphas: Sequence[float], lams: Sequence[float]=(1.0,), Cs: Sequence[float]=(1.0,), epsilons: Sequence[float]=(0.1,), nus: Sequence[float]=(0.5,), gammas: Sequence[float]=(), folds: int=10, seed: Optional[int]=0, optimize_h: bool=False, mkl=False, mkl_rho: float=1.0, h_grid: Sequence[float]=(0.0, 0.25, 0.5, 1.0, 2.0, 4.0), h_passes: int=2, alpha_fields: Optional[Sequence[str]]=None, progress: Optional[ProgressFn]=None, cancel: Optional[CancelFn]=None, lam_search: str='grid', precomputed: Optional[Dict]=None, alpha_search: str='grid', nm_start: Sequence[float]=(0.25, 5.0), nm_maxit: int=500, select: str='cv') -> SearchResult`
+### `grid_search(train: AtomTable, y: np.ndarray, model: CMFModel, alphas: Sequence[float], lams: Sequence[float]=(1.0,), Cs: Sequence[float]=(1.0,), epsilons: Sequence[float]=(0.1,), nus: Sequence[float]=(0.5,), gammas: Sequence[float]=(), folds: int=10, seed: Optional[int]=0, optimize_h: bool=False, mkl=False, mkl_rho: float=1.0, h_grid: Sequence[float]=(0.0, 0.25, 0.5, 1.0, 2.0, 4.0), h_passes: int=2, alpha_fields: Optional[Sequence[str]]=None, progress: Optional[ProgressFn]=None, cancel: Optional[CancelFn]=None, lam_search: str='grid', precomputed: Optional[Dict]=None, alpha_search: str='grid', nm_start: Sequence[float]=(0.25, 5.0), nm_maxit: int=500, select: str='cv', components: Sequence[int]=()) -> SearchResult`
 
 Minimise RMSEcv over alpha (shared by all fields unless `alpha_fields` restricts it)
-and the learner's regularisation parameters.  Optionally refine the mixing
+and the learner's regularisation parameters (`lams` for KRR/GP, `Cs` with `epsilons`
+or `nus` for the support-vector methods, `components` for KPLS, which falls back to
+`DEFAULT_COMPONENTS` when empty).  Optionally refine the mixing
 coefficients h_f by coordinate descent (beware of model-selection bias), or set them by
 centred kernel alignment (`mkl=True`, see `align_mixing`), in which case the
 reported RMSEcv is reliable because the weights are re-derived inside every fold.
@@ -7750,7 +7769,7 @@ the simplex search is used as it is (no comparison with the grid), the model's
 (used by `nested_cv` to avoid recomputing kernels for every outer fold).
 `seed=None` selects the deterministic interleaved folds of the original scripts.
 
-### `nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel, alphas: Sequence[float], lams=(1.0,), Cs=(1.0,), epsilons=(0.1,), nus=(0.5,), outer_folds: int=5, inner_folds: int=10, repeats: int=1, seed: Optional[int]=0, optimize_h: bool=False, mkl=False, mkl_rho: float=1.0, alpha_fields=None, gammas: Sequence[float]=(), progress: Optional[ProgressFn]=None, cancel: Optional[CancelFn]=None, lam_search: str='grid', precompute: bool=True, max_precompute_bytes: float=2000000000.0, alpha_search: str='grid', nm_start: Sequence[float]=(0.25, 5.0), inner_seed='same') -> NestedCVResult`
+### `nested_cv(train: AtomTable, y: np.ndarray, model_template: CMFModel, alphas: Sequence[float], lams=(1.0,), Cs=(1.0,), epsilons=(0.1,), nus=(0.5,), outer_folds: int=5, inner_folds: int=10, repeats: int=1, seed: Optional[int]=0, optimize_h: bool=False, mkl=False, mkl_rho: float=1.0, alpha_fields=None, gammas: Sequence[float]=(), progress: Optional[ProgressFn]=None, cancel: Optional[CancelFn]=None, lam_search: str='grid', precompute: bool=True, max_precompute_bytes: float=2000000000.0, alpha_search: str='grid', nm_start: Sequence[float]=(0.25, 5.0), inner_seed='same', components: Sequence[int]=()) -> NestedCVResult`
 
 External k-fold cross-validation with the hyper-parameters selected in an
 inner cross-validation loop on each working set (Baskin & Zhokhova 2013).

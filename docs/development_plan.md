@@ -1293,6 +1293,16 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   **Not done:** the same treatment of the attenuations (D6 settled that by measurement), and a
   GUI reading of the intervals.
 
+* **E7. Kernel partial least squares.** CoMFA's learner, in its kernel form, on the continuous
+  field: with the linear kernel it is PLS in the space of the fields, so a CoMFA-against-CMF
+  comparison then differs in the representation alone. Regularised by the number of components,
+  chosen by cross-validation as λ is.
+  **Done 28 October 2026.** `kpls_fit` in `cmfqsar/model.py` (`--method kpls`,
+  `--pls-components`, the GUI's method list, the report); the centring is folded into the dual
+  coefficients and a bias, so every reader of a kernel expansion works unchanged.
+  `benchmarks/run_kpls.py` measures it against kernel ridge regression on the eight Sutherland
+  sets under one protocol (`results/kpls/table.md`; the numbers are in the manual, *The learners*).
+
 ## F. Interpretation (months 4 to 9)
 
 * **F1. Case studies.** Shapley values, field differences, pharmacophores and complementarity have

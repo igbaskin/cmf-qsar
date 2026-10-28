@@ -55,6 +55,10 @@ def _floats(s):
     return [float(x) for x in s.split(",") if x.strip()]
 
 
+def _ints(s):
+    return [int(x) for x in (s or "").split(",") if x.strip()]
+
+
 def _block_weights(text):
     """--block-weights: None, 'balanced', 'align', 'alignf', or 'KIND=W,KIND=W' with a kind a
     group name ('physchem', 'indicator', or a group of --block-groups) or two joined by '*'."""
@@ -156,9 +160,14 @@ def _report_validation(args, model, ds, mf, tr, te, target):
                 if a is not None:
                     model.fieldset.set_alpha(a)
                 grids.append(model.training_kernel(train))
-            params = [{"lam": float(l)} for l in _floats(args.lams)] or [dict(model.params)]
+            if model.method == "kpls":
+                params = [{"components": c} for c in _ints(args.pls_components)] or [dict(model.params)]
+                knob_name = "component counts"
+            else:
+                params = [{"lam": float(l)} for l in _floats(args.lams)] or [dict(model.params)]
+                knob_name = "lambdas"
             print(f"  the search is repeated inside every shuffle: {len(grids)} alphas x "
-                  f"{len(params)} lambdas")
+                  f"{len(params)} {knob_name}")
             res = scramble_selection(grids, y[tr], method=model.method, param_grid=params,
                                      folds=args.folds, cv_seed=args.seed,
                                      runs=int(args.y_scramble), seed=args.seed)
@@ -516,7 +525,7 @@ def cmd_build(args):
             tr = [i for i in tr if target[i] > 0]
             train = AtomTable.from_molecules([mf[i] for i in tr])
             print(f"  one-class model fitted on the {len(tr)} active molecules only")
-        if args.method in ("krr", "gp", "svr", "nusvr"):
+        if args.method in ("krr", "gp", "kpls", "svr", "nusvr"):
             args.method = "ocsvm" if args.task == "oneclass" else "svc"
             print(f"  method set to {args.method} for this task")
         if args.method == "gpc" and args.task == "oneclass":
@@ -701,7 +710,8 @@ def cmd_build(args):
                       gammas=_floats(args.gammas), folds=args.folds, seed=seed,
                       optimize_h=args.optimize_h, mkl=args.mkl or False, mkl_rho=args.mkl_rho, progress=prog,
                       lam_search=args.lam_search, select=args.select,
-                      alpha_search=args.alpha_search, nm_start=nm_start)
+                      alpha_search=args.alpha_search, nm_start=nm_start,
+                      components=_ints(args.pls_components))
     print()
     knob = (f"sigma = {args.ac_sigma:g} A" if args.kernel == "autocorrelation"
             else f"alpha = {res.best_alpha:g}")
@@ -759,7 +769,8 @@ def cmd_build(args):
                           epsilons=_floats(args.epsilons), nus=_floats(args.nus),
                           gammas=_floats(args.gammas), folds=args.folds,
                           seed=seed, optimize_h=args.optimize_h, mkl=args.mkl or False, mkl_rho=args.mkl_rho, progress=prog,
-                          lam_search=args.lam_search, alpha_search=args.alpha_search, nm_start=nm_start)
+                          lam_search=args.lam_search, alpha_search=args.alpha_search, nm_start=nm_start,
+                          components=_ints(args.pls_components))
         print()
         print(f"After realignment: alpha = {res.best_alpha:g}, {res.best_params}, "
               f"RMSEcv = {res.best_rmse:.3f}, q2 = {res.best_q2:.3f}")
@@ -789,7 +800,8 @@ def cmd_build(args):
                         inner_folds=args.folds, repeats=args.repeats, seed=outer_seed, inner_seed=outer_seed,
                         optimize_h=args.optimize_h, mkl=args.mkl or False, mkl_rho=args.mkl_rho, gammas=_floats(args.gammas),
                         progress=prog, lam_search=args.lam_search,
-                        alpha_search=args.alpha_search, nm_start=nm_start)
+                        alpha_search=args.alpha_search, nm_start=nm_start,
+                        components=_ints(args.pls_components))
         print()
         model.stats.q2_ex, model.stats.rmse_ex = ncv.q2_ex, ncv.rmse_ex
         model.stats.q2_ex_sd, model.stats.rmse_ex_sd = ncv.q2_ex_sd, ncv.rmse_ex_sd
@@ -3474,11 +3486,15 @@ def main(argv=None):
                         "or the Sybyl-type increments of the original CMF scripts (tripos; -legacy reproduces "
                         "the hydrogen-counting bug of the 2013 scripts)")
     b.add_argument("--method", default="krr",
-                   choices=["krr", "gp", "svr", "nusvr", "ranksvm", "svc", "nusvc", "gpc",
+                   choices=["krr", "gp", "kpls", "svr", "nusvr", "ranksvm", "svc", "nusvc", "gpc",
                             "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca",
                             "fuse-max", "fuse-min", "fuse-sum", "fuse-med",
                             "fuse-anz", "fuse-mnz", "fuse-euc", "fuse-rrf"],
-                   help="gpc is the Gaussian-process classifier (Laplace approximation): it "
+                   help="kpls is kernel partial least squares, the kernel form of the PLS "
+                        "regression CoMFA uses: with the linear kernel it is PLS in the space of "
+                        "the fields, regularised by the number of components (--pls-components) "
+                        "instead of lambda. "
+                        "gpc is the Gaussian-process classifier (Laplace approximation): it "
                         "gives calibrated probabilities, a posterior variance per molecule and "
                         "the marginal likelihood, and takes its amplitude from the C grid. The "
                         "fuse-* methods are the data-fusion rules for the one-class task: one "
@@ -3581,6 +3597,9 @@ def main(argv=None):
     b.add_argument("--no-bias", action="store_true", help="KRR without bias term (b = 0)")
     b.add_argument("--alphas", default="0.2,0.3,0.5,0.7,1.0,1.5,2.0,3.0")
     b.add_argument("--lams", default="1e-4,1e-3,1e-2,0.1,1,10")
+    b.add_argument("--pls-components", default="1,2,3,4,5,6,7,8,10,12", metavar="N,M,...",
+                   help="--method kpls: the numbers of PLS components tried; the one with the "
+                        "lowest RMSEcv is kept, as lambda is for KRR")
     b.add_argument("--lam-search", default="grid", choices=["grid", "brent"],
                    help="brent: continuous minimisation of RMSEcv over lambda within [min, max] of --lams")
     b.add_argument("--alpha-search", default="grid", choices=["grid", "nelder-mead", "per-field"],

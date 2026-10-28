@@ -246,7 +246,8 @@ def _section_what(model, extra: Dict) -> str:
                  ", ".join(f"{s.name} {s.alpha:g}" for s in specs))
     # the parameter dictionary carries a default for every learner; name only the ones this
     # learner uses, or a kernel ridge model appears to have been given an epsilon
-    used = {"krr": ("lam",), "gp": ("lam",), "svr": ("C", "epsilon"), "nusvr": ("C", "nu"),
+    used = {"krr": ("lam",), "gp": ("lam",), "kpls": ("components",),
+            "svr": ("C", "epsilon"), "nusvr": ("C", "nu"),
             "ranksvm": ("C",), "svc": ("C",), "nusvc": ("nu",), "gpc": ("amplitude",),
             "ocsvm": ("nu",)}.get(model.method, ("lam",))
     if model.kernel_layer == "gauss":

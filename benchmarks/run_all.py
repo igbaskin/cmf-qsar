@@ -474,6 +474,12 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_matbench_phonons").report(_r("matbench_phonons/table.md")),
                   tables=["matbench_phonons/table.md"],
                   readme=["Crystals: the periodic autocorrelation"]),
+        Benchmark("kpls", "kernel partial least squares against kernel ridge regression on the "
+                          "Sutherland sets, each choosing its own setting by cross-validation",
+                  "run_kpls.py", "kpls", compute=[[]], minutes="30",
+                  report=lambda: _mod("run_kpls").report(_r("kpls/table.md")),
+                  tables=["kpls/table.md"],
+                  readme=["The learners (manual), Learning row of the feature table"]),
     ]
 
 

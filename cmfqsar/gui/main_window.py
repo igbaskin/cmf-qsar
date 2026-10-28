@@ -23,7 +23,7 @@ from ..conformers import CONFORMER_ALIGNMENTS
 from ..contract import check_molecules, summary as model_summary
 from ..dataio import Dataset, load_dataset, load_model, numeric_properties, save_model, write_predictions_csv, write_sdf
 from ..fields import AtomTable, FieldSet, MoleculeFields, build_fields, cif_types_in
-from ..model import CMFModel, grid_search, nested_cv
+from ..model import DEFAULT_COMPONENTS, CMFModel, grid_search, nested_cv
 from ..protein import (binding_site, contact_distance, fetch_pdb, find_pocket,
                        read_structure, residue_anchors)
 from .panels import DatasetPanel, ModelPanel, ResultsPanel, ViewerControls
@@ -921,7 +921,10 @@ def _run_validation(model, mf, tr, te, y_all, names, task_name, n_scramble, n_bo
             for a in alphas:
                 model.fieldset.set_alpha(a)
                 grids.append(model.training_kernel(model.train))
-            params = [{"lam": float(l)} for l in (lams or [])] or [dict(model.params)]
+            if model.method == "kpls":
+                params = [{"components": c} for c in DEFAULT_COMPONENTS]
+            else:
+                params = [{"lam": float(l)} for l in (lams or [])] or [dict(model.params)]
             res = scramble_selection(grids, y[tr], method=model.method, param_grid=params,
                                      folds=folds, cv_seed=seed, runs=int(n_scramble), seed=seed,
                                      progress=lambda m_, f_: progress(m_, 0.95 + 0.02 * f_),

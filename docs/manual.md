@@ -1897,7 +1897,7 @@ molecules, where the NumPy neighbour list of the previous section is also worth 
 
 | Task | Methods | Key |
 |---|---|---|
-| Regression | kernel ridge regression with bias; Gaussian process (the same fit plus predictive variances); ε-SVR; ν-SVR; the ranking SVM, which fits the order and not the values | `krr`, `gp`, `svr`, `nusvr`, `ranksvm` |
+| Regression | kernel ridge regression with bias; Gaussian process (the same fit plus predictive variances); kernel partial least squares (CoMFA's learner, regularised by its number of components); ε-SVR; ν-SVR; the ranking SVM, which fits the order and not the values | `krr`, `gp`, `kpls`, `svr`, `nusvr`, `ranksvm` |
 | Binary classification | C-SVC; ν-SVC; Gaussian-process classifier by the Laplace approximation | `svc`, `nusvc`, `gpc` |
 | One-class / screening | 1-SVM; distance to the centre of the actives; distance to the k-th nearest active; one-class Gaussian process; distance from the principal subspace (kernel PCA) | `ocsvm`, `ocmean`, `ocknn`, `ocgp`, `ockpca` |
 
@@ -1907,6 +1907,81 @@ of *Preparing the data* minimises. The Laplace GP classifier adds calibrated pro
 variance and model selection by marginal likelihood — it scores no better than C-SVC on the
 benchmark sets (mean difference 0.001 in Matthews correlation), so it is not the default, but its
 probabilities are calibrated and its evidence picks hyper-parameters without holding anything out.
+
+## Kernel partial least squares: CoMFA's learner on the continuous field
+
+CoMFA fits its grid values by partial least squares (PLS). Kernel PLS is the same method written
+in terms of the kernel (Rosipal and Trejo 2001). With the linear CMF kernel it is PLS in the space
+of the fields: every component is a direction in that space, and the regression coefficients are
+a field. So `--method kpls` is CoMFA's learner with the grid replaced by the continuous field,
+and it is the most direct comparison between CoMFA and CMF on one alignment, because the two
+then differ in the representation alone.
+
+**How it works.** The kernel is centred, which subtracts the mean field of the training set, and
+the activity is centred. Each component is the direction of field space that covaries most with
+the current activity residual: its score vector is $t = K_c u$, normalised, where $u$ is that
+residual. The kernel and the residual are then deflated by the component, and the next one is
+taken from what remains. After $m$ components the dual coefficients are
+
+$$
+\mathbf{a} = U\,(T^\top K_c\, U)^{-1}\, T^\top \mathbf{y}
+$$
+
+with $T$ and $U$ the matrices of score and residual vectors. The centring is folded into
+$\mathbf{a}$ and a bias $b$, so the model predicts $K(x, \mathrm{train})\,\mathbf{a} + b$ like
+every other learner here, and $\mathbf{a}$ sums to zero as the coefficients of kernel ridge
+regression with a bias term do. Everything that reads a kernel expansion keeps working: the
+co-fields, the atom and molecule contributions, the Shapley values, the pharmacophore and the
+applicability domain. Only the posterior variance of the Gaussian-process view belongs to ridge
+regression and is not available.
+
+**The one setting.** Kernel PLS has no λ. Its regularisation is the number of components: a few
+components keep a few strong directions of the field space and drop the rest; all of them (one
+less than the number of training molecules) reproduce the training activities exactly, as ridge
+regression does when λ goes to zero. `--pls-components` lists the counts tried (the default is 1
+to 12) and the count with the lowest RMSEcv is kept, inside every outer fold of the external
+cross-validation, exactly as λ is for kernel ridge regression. The curve of RMSEcv against the
+count is often flat over several values; the search keeps the minimum, and the search table of
+the JSON output shows how flat it was. `--no-bias` has no effect on this learner: the centring is
+the bias.
+
+```bash
+python cmf_cli.py build data.sdf --charges file --method kpls --pls-components 1,2,3,4,5,6,8,10
+```
+
+### Measured against kernel ridge regression
+
+`benchmarks/run_kpls.py` runs both learners on the eight Sutherland sets under one protocol: the
+same fields, alignment, attenuation grid and folds, each learner choosing its own setting on the
+same 10-fold RMSEcv, with that choice repeated inside every outer fold of the external
+cross-validation. The attenuation α is chosen on the training set, so q² and R²pred carry that
+choice too; q²ex is the fair comparison.
+
+| Mean over the eight sets | kernel ridge regression | kernel PLS | sets where kernel PLS is ahead |
+|---|---:|---:|---:|
+| q² (10-fold, training set) | 0.625 | 0.619 | 4 of 8 |
+| R²pred (test set) | 0.443 | 0.357 | 0 of 8 |
+| q²ex (external 5-fold, whole set) | 0.530 | 0.502 | 1 of 8 |
+
+**The two tie on what was used to choose, and ridge wins on what was not.** On the
+cross-validated q² of the training set kernel PLS is ahead on four sets and behind on four. On
+the external cross-validation it is behind by 0.03 on average, on seven of the eight sets, and on
+the test sets by 0.09, on every set. The gap is not in what the learner can fit but in how it
+regularises. The ridge shrinks every direction of the field space by a smooth amount, and a λ
+chosen on one subset carries over to another. PLS keeps a few directions whole and drops the
+rest; the count it chose here is large (4 to 11 components, where CoMFA on a grid usually takes
+2 to 6), each count is a step rather than a dial, and the count chosen together with the
+attenuation carries over less well. The thrombin set shows the failure: kernel PLS chose a sharp
+attenuation (α = 0.05, 7 components) that gave the best q² of any model on that set and an R²pred
+of 0.07, against 0.42 for ridge. Kernel PLS also costs about one and a half times the time of
+ridge, because every count is a separate fit.
+
+So the measurement supports the choice of the 2013 paper: kernel ridge regression stays the
+default. `--method kpls` is there for what it is. It is CoMFA's learner on the continuous field,
+and so the right comparator when the question is what the continuous representation gains over
+the grid, with the learner held fixed; and it is a second opinion whose components, like
+CoMFA's, can be plotted and counted. The full table, per set and with the settings chosen, is
+`benchmarks/results/kpls/table.md`.
 
 ## Fitting the order instead of the values: the ranking SVM
 

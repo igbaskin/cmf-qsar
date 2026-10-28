@@ -50,7 +50,7 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Several endpoints on one kernel**, tied by a task covariance -- one shared correlation, a free-form low-rank matrix chosen by the marginal likelihood, or a covariance read off descriptors of the endpoints themselves, which is what lets an endpoint with no measurements at all be predicted from its neighbours -- so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), **kernel PLS** (the kernel form of CoMFA's learner, its number of components chosen by cross-validation; see below), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Several endpoints on one kernel**, tied by a task covariance -- one shared correlation, a free-form low-rank matrix chosen by the marginal likelihood, or a covariance read off descriptors of the endpoints themselves, which is what lets an endpoint with no measurements at all be predicted from its neighbours -- so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
@@ -3706,6 +3706,34 @@ cross-target form needs several targets in one frame. Its answer under rule 4 is
 of 21 series the interval covers zero. What it does show is that the contact profile alone predicts
 nothing on sets of 22 to 44 ligands and that the whole field beats either of its parts.
 
+### Kernel PLS: CoMFA's learner on the continuous field
+
+CoMFA fits its grid values by partial least squares. `--method kpls` is the kernel form of that
+learner (Rosipal and Trejo 2001), and with the linear CMF kernel it is PLS in the space of the
+fields: the components are directions in field space and the coefficients are a field. The model
+is still a kernel expansion with a bias, the centring folded into both, so the co-fields, the
+contributions and the domain read it as they read a ridge model. Its one setting is the number of
+components, chosen by cross-validation where ridge chooses λ (`--pls-components`).
+
+```bash
+python cmf_cli.py build data.sdf --charges file --method kpls --pls-components 1,2,3,4,5,6,8,10
+python benchmarks/run_kpls.py             # results/kpls/table.md
+```
+
+Measured against kernel ridge regression on the eight Sutherland sets, same fields, alignment and
+folds, each learner choosing its own setting by cross-validation:
+
+| Mean over the eight sets | kernel ridge regression | kernel PLS | sets where kernel PLS is ahead |
+|---|---:|---:|---:|
+| q² (10-fold, training set) | 0.625 | 0.619 | 4 of 8 |
+| R²pred (test set) | 0.443 | 0.357 | 0 of 8 |
+| q²ex (external 5-fold, whole set) | 0.530 | 0.502 | 1 of 8 |
+
+The two tie on what was used to choose and ridge wins on what was not: a λ chosen on one subset
+carries over to another, a number of components (here 4 to 11) carries over less well. Kernel
+ridge regression stays the default; kernel PLS is the right comparator when the question is what
+the continuous field gains over the grid with CoMFA's learner held fixed (manual, *The learners*).
+
 ### Three series, worked through
 
 The interpretation tools above — Shapley decompositions, field differences, pharmacophores,
@@ -4266,7 +4294,7 @@ cmfqsar/atomtypes.py    Sybyl atom typing, vdW parameters
 cmfqsar/increments.py   hydrophobic / H-bond increments of the original CMF scripts
 cmfqsar/fields.py       field parameterisation, FieldSet / MoleculeFields / AtomTable
 cmfqsar/kernels.py      analytic field kernels (vectorised)
-cmfqsar/model.py        KRR/SVR/GP, cross-validation, grid search, nested CV, statistics
+cmfqsar/model.py        KRR/KPLS/SVR/GP, cross-validation, grid search, nested CV, statistics
 cmfqsar/cofields.py     co-fields and molecular fields on grids, isosurfaces, cube export
 cmfqsar/dataio.py       SDF/MOL2/SMILES reading, model persistence, exports
 cmfqsar/align.py        3D embedding, MCS alignment, field-similarity refinement, unalign
