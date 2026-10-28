@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 80 modules and about 36,100 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 81 modules and about 36,500 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with twenty-nine subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1315 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`), 1345 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -957,6 +957,45 @@ says whether a trajectory does what a generated ensemble could not.
   add it as a sixth field with its own mixing coefficient, so that the co-field says where
   displacing or keeping a water helps. It is the first CMF field that is not centred on an atom of
   the molecule, which is what D4's `combine_members` builder, now in place, allows.
+  **Done 28 October 2026, against the gate of D8, at the author's instruction.** D8 said this
+  item does not follow if a trajectory does not beat the crystal pose, and it did not. It was
+  built anyway because the quantity is not the same one: D8 averaged the *ligand's* motion into
+  a mean field, while this uses the trajectory for something the ligand's field cannot express
+  at all, namely where the water sits. The measurement below is therefore its own, with the five
+  fields as the reference of rule 1 rather than anything inherited from D8.
+  **What it is.** `cmfqsar/solvent.py`. For every point of a grid around the ligand, the share
+  of frames in which a water oxygen lies within 1 A of it: an occupancy in [0, 1] whose reading
+  needs no normalisation, with bulk water at about 14% of it. The peaks above 50% are taken
+  greedily, strongest first, no two closer than 2.4 A, so a site is a place a water occupies and
+  not a cluster of molecules; the coefficients are then fitted to the whole map by a
+  **non-negative** least squares rather than read off the peak heights, because an occupancy
+  cannot be negative and a negative coefficient would read as a place water avoids. The result
+  is an ordinary `MoleculeFields` whose atoms are hydration sites, so the existing kernel code
+  takes it unchanged -- the same arrangement `cmfqsar/fluctuation.py` uses for D10. It cannot
+  share a table with the molecule's own fields, because a table holds one set of atoms and a
+  hydration site is not one of the molecule's, so it is a block of its own mixed in with one
+  coefficient. On mcl1 it gives 7.8 sites per ligand, from 4 to 12, the strongest averaging 73%.
+  30 tests, the two that matter being that a water held at a known place in every frame raises a
+  site there within 1 A and that a water which moves every frame raises none.
+  **Measured** by `benchmarks/run_solvent.py`, every model at its own best attenuation so that
+  the reference is not held back by a choice made to suit the water: the five fields alone
+  **+0.575**, the five fields and the water +0.558 (**-0.017 [-0.186, +0.198]**), the water
+  alone +0.231, random sites alone -0.034, one shared set of sites alone -0.138.
+  **What it settles, and it is not nothing.** The water field does not improve the model, and
+  the interval is too wide for 25 ligands to show a small gain either way. But the water field
+  **on its own** reaches +0.231 while both controls are below zero, which is what a block that
+  cannot tell the ligands apart must give. So where the water sits does carry information about
+  activity; it is information the ligand's own fields already carry, since adding it gains
+  nothing. That is a sharper statement than D8's gate anticipated, and it is the reason the item
+  was worth building against the gate.
+  **The co-field** over the sites is in the table: the sites of every ligand gathered into
+  places, each with the weight the block puts on it, positive for more water and negative for
+  less. Under rule 5 it is a display tool, because the block does not improve the model.
+  **Not done:** one set and one definition of a site; the threshold (50% of frames) and the
+  spacing (2.4 A) were not varied, so how much the result depends on them is unmeasured; the
+  hydrogens of the water are ignored, so the field says where a water is and not which way it
+  points; and there is no control for the simulation length, which is what would say whether
+  2 ns places the sites surely enough.
 * **D10. Fluctuation as information.** The ensemble mode uses the mean field only. The variance of
   the field across frames is a flexibility map, and the kernel of two variance fields is in closed
   form by the same algebra as the mean (a product of Gaussians is a Gaussian). Add it as a block

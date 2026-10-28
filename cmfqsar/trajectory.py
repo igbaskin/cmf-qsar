@@ -619,8 +619,8 @@ class Ensemble:
                 f"frames), read by {self.engine}")
 
 
-def _reference_positions(reference: str, traj: "Trajectory",
-                         fit: Sequence[int]) -> np.ndarray:
+def reference_positions(reference: str, traj: "Trajectory",
+                        fit: Sequence[int]) -> np.ndarray:
     """The positions the fitted atoms have in `reference`, checked atom by atom.
 
     The trajectory lists the protein first, because that is the order a system is built in, so a
@@ -710,7 +710,7 @@ def read_trajectory(topology: str, trajectory: Optional[str] = None, *,
         fitted_on = "the ligand itself"
     target = None
     if reference is not None:
-        target = _reference_positions(reference, traj, fit)
+        target = reference_positions(reference, traj, fit)
     coords = superimpose(traj.coords, fit, target=target)
     if target is not None:
         fitted_on += " of the common reference"

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 86 modules, 155 classes with 499 public methods, and 705 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 87 modules, 157 classes with 501 public methods, and 714 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -94,6 +94,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.restriction](#cmfqsarrestriction) | Scoring a conformational restriction (plan item MC9). |
 | [cmfqsar.screen](#cmfqsarscreen) | Screening a library without holding it in memory (plan item B3). |
 | [cmfqsar.shapley](#cmfqsarshapley) | Shapley decomposition of a CMF prediction. |
+| [cmfqsar.solvent](#cmfqsarsolvent) | Solvent as a field: where a ligand's water sits, as a CMF field (plan item D9). |
 | [cmfqsar.spectral](#cmfqsarspectral) | Clustering a set by its fields rather than by its scaffolds. |
 | [cmfqsar.stereo](#cmfqsarstereo) | Handedness as a property of a centre, not of a shape. |
 | [cmfqsar.tautomers](#cmfqsartautomers) | Tautomer ensembles: the other half of plan item D4. |
@@ -10173,6 +10174,137 @@ Group the atoms outside the core into connected substituents, with readable labe
 
 Shapley values of the substituents of a congeneric series over their common scaffold.
 
+## cmfqsar.solvent
+
+Source: `cmfqsar/solvent.py`
+
+Solvent as a field: where a ligand's water sits, as a CMF field (plan item D9).
+
+Every field this program has built so far is centred on the atoms of the molecule. The 2015
+indicator-field formalism does not require that -- it accepts any continuous density -- and a
+water occupancy map from a simulation is one. This module turns that map into a field of the
+same class as every other, so a sixth kernel block carries it and a co-field over it says where
+displacing a water raises the predicted activity and where keeping one does.
+
+The chain, and the decision in each step.
+
+1. **The map is an occupancy, not a count.** For every point of a grid around the ligand, the
+   share of frames in which some water oxygen lies within `PROBE` of it. That is a number
+   in [0, 1] with a plain meaning -- "a water sits here nine tenths of the time" -- and it needs
+   no normalisation against bulk density to be read. Bulk water gives about 0.13 at a 1 angstrom
+   probe, which is why `MIN_OCCUPANCY` defaults well above it.
+2. **Every frame is put in the common frame first**, by the same superposition the trajectory
+   reader uses: the binding-site backbone onto the one structure every run was built from. Maps
+   of two ligands are then in one frame and their hydration sites are comparable, which is the
+   whole point of making a field out of them.
+3. **The water is re-imaged before anything else.** A periodic box writes every atom wrapped, so
+   the water beside the site may be recorded on the far side of the cell; the image nearest the
+   site is the one that is physically there. This is the same correction the trajectory reader
+   makes for the ligand, and skipping it does not give a worse map, it gives an empty one.
+4. **Hydration sites are the peaks of the map**, taken greedily: the highest point above
+   `MIN_OCCUPANCY`, then everything within `MIN_DISTANCE` of it excluded, and again.
+   A site is therefore a place a water occupies, not a cluster of water molecules, and two sites
+   are never closer than one water across.
+5. **The coefficients are fitted, not read off the peaks.** With the centres fixed at the sites
+   and the width taken from the field set, the occupancy map is fitted by a non-negative least
+   squares, so the field reproduces the map rather than the heights of its maxima. Non-negative
+   because an occupancy cannot be negative, and a fitted field with negative water in it would
+   be read as a place water avoids, which is a different statement.
+
+What comes out of `water_field` is a `cmfqsar.fields.MoleculeFields` whose atoms
+are hydration sites. It is used exactly as the variance field of `cmfqsar/fluctuation.py` is:
+built per molecule, kept in a table of its own, turned into a kernel of its own, and mixed with
+the kernel of the ordinary fields under one coefficient. It cannot share a table with the
+molecule's own fields, because a table has one set of atoms and these atoms are not the
+molecule's.
+
+**What this does not claim.** That the water field helps. `benchmarks/run_solvent.py` measures
+it against the five physico-chemical fields under rule 1, with the interval of rule 4, and
+against two controls: sites placed at random in the same box, and the occupancy map of one
+ligand used for every ligand. The first says whether the positions matter and the second whether
+anything beyond the shared shape of the site does.
+
+### `class SolventError  — bases: RuntimeError`
+
+### `class Occupancy  (dataclass)`
+
+A water occupancy map of one ligand, in the common frame.
+
+Attributes:
+
+- `points: np.ndarray`
+- `values: np.ndarray`
+- `frames: int`
+- `name: str` = `''`
+- `spacing: float` = `SPACING`
+- `probe: float` = `PROBE`
+
+#### `Occupancy.bulk` -> float  (property)
+
+What a point in bulk water would score, for comparison with a peak.
+
+The expected number of oxygens in the probe sphere at the density of liquid water,
+0.0334 per cubic angstrom, capped at one because an occupancy cannot exceed it.
+
+#### `Occupancy.describe() -> str`
+
+### `water_oxygens(traj: Trajectory) -> np.ndarray`
+
+The oxygen of every water molecule of the topology.
+
+### `occupancy(topology: str, trajectory: str, *, reference: str, ligand: Optional[str]=None, spacing: float=SPACING, map_radius: float=MAP_RADIUS, probe: float=PROBE, stride: int=1, site_radius: float=8.0, engine: str='auto', name: str='') -> Occupancy`
+
+The water occupancy map of one simulation, in the frame of `reference`.
+
+`reference` is the structure every run of the series was built from; without it two ligands'
+maps would be in two frames and could not be compared, which is the same requirement the
+trajectory reader has.
+
+### `hydration_sites(occ: Occupancy, min_occupancy: float=MIN_OCCUPANCY, min_distance: float=MIN_DISTANCE, max_sites: int=MAX_SITES) -> Tuple[np.ndarray, np.ndarray]`
+
+(centres, occupancies) of the peaks of the map, strongest first.
+
+Greedy: the highest point above `min_occupancy` becomes a site, every point within
+`min_distance` of it is removed, and the next highest is taken. Two sites are therefore never
+closer than one water across, and a site is a place a water occupies rather than a cluster of
+molecules.
+
+### `fit_coefficients(occ: Occupancy, centres: np.ndarray, alpha: float, max_points: int=20000, seed: int=0) -> np.ndarray`
+
+Non-negative coefficients of Gaussians at `centres` that reproduce the occupancy map.
+
+The Gaussians are the field's own, `exp(-alpha/2 |r - c|^2)`, so what comes out is a field
+of the ordinary kind rather than a new sort of object. Non-negative because an occupancy
+cannot be negative and a negative coefficient would be read as a place water avoids, which
+the map does not say. The grid is subsampled when it is large, since a least squares over
+sixty thousand points and forty columns says nothing a sample of twenty thousand does not.
+
+### `solvent_fieldset(alpha: float=0.5, name: str='solvent') -> FieldSet`
+
+The one-field set a water field is evaluated with.
+
+A water field cannot share a table with the molecule's own fields, because a table carries
+one set of atoms and a hydration site is not an atom of the molecule. It is its own block,
+mixed in with a coefficient, exactly as the variance field of `cmfqsar/fluctuation.py` is.
+
+### `water_field(centres: np.ndarray, coefficients: np.ndarray, name: str='', radius: float=WATER_RADIUS) -> MoleculeFields`
+
+The hydration sites of one ligand as a field, one Gaussian per site.
+
+### `field_for(topology: str, trajectory: str, *, reference: str, alpha: float=0.5, ligand: Optional[str]=None, name: str='', **kwargs) -> Tuple[MoleculeFields, Occupancy, np.ndarray]`
+
+The whole chain for one ligand: (water field, its map, the site occupancies).
+
+### `site_contributions(model, fields: Sequence[MoleculeFields], coefficients: Sequence[float]) -> List[np.ndarray]`
+
+What the model asks of the water at each hydration site, per molecule.
+
+The co-field of a linear kernel model is `sum_j a_j X_j`, so the weight the model puts on
+one molecule's site is that molecule's dual coefficient times the site's own coefficient. A
+positive number means the model wants **more** water there -- keeping that water raises the
+prediction -- and a negative one means it wants less, which is where displacing a water is
+worth trying.
+
 ## cmfqsar.spectral
 
 Source: `cmfqsar/spectral.py`
@@ -10699,6 +10831,15 @@ One molecule carrying the chosen frames as conformations, with their weights.
 `frames` are indices into the trajectory and `weights` the matching populations, normalised
 here so that they sum to one.  The weights go to the molecule property `conformer_weights`,
 which `conformer_weighting="given"` reads.
+
+### `reference_positions(reference: str, traj: 'Trajectory', fit: Sequence[int]) -> np.ndarray`
+
+The positions the fitted atoms have in `reference`, checked atom by atom.
+
+The trajectory lists the protein first, because that is the order a system is built in, so a
+protein atom's index in the trajectory is its index in the reference as well.  The elements
+are compared rather than trusted: a mismatch means the two do not describe the same protein
+and a superposition on it would be meaningless.
 
 ### `read_trajectory(topology: str, trajectory: Optional[str]=None, *, ligand: Optional[str]=None, template: Optional[Chem.Mol]=None, max_frames: int=DEFAULT_MAX_FRAMES, cutoff: float=DEFAULT_CUTOFF, stride: int=1, site_radius: float=DEFAULT_SITE_RADIUS, extra_solvent: Sequence[str]=(), engine: str='auto', name: str='', heavy_only: bool=True, reference: Optional[str]=None) -> Ensemble`
 

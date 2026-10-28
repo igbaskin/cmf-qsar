@@ -1,0 +1,435 @@
+"""Tests for cmfqsar/solvent.py: a water occupancy map as a CMF field (plan item D9).
+
+The trajectories are built here, with the water put where the test wants it, so that the claims
+can fail. The one that matters most is `test_a_site_appears_where_the_water_actually_sits`: a
+water held at a known position in most frames must produce a hydration site there and nowhere
+else, and a water that moves every frame must produce none.
+"""
+import os
+import sys
+
+import numpy as np
+import pytest
+from rdkit import Chem
+from rdkit.Chem import AllChem
+
+HERE = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(HERE, ".."))
+
+from cmfqsar import solvent as SV  # noqa: E402
+from cmfqsar import trajectory as TJ  # noqa: E402
+from cmfqsar.fields import AtomTable, build_fields  # noqa: E402
+
+mdtraj = pytest.importorskip("mdtraj", reason="the solvent map is read from a trajectory")
+
+BOX = 30.0
+
+
+def _peptide():
+    p = Chem.MolFromSequence("AAGAA")
+    AllChem.EmbedMolecule(p, randomSeed=3)
+    AllChem.MMFFOptimizeMolecule(p)
+    return p
+
+
+def _ligand():
+    m = Chem.AddHs(Chem.MolFromSmiles("c1ccccc1O"))
+    AllChem.EmbedMolecule(m, randomSeed=5)
+    AllChem.MMFFOptimizeMolecule(m)
+    for k, a in enumerate(m.GetAtoms()):
+        ri = Chem.AtomPDBResidueInfo()
+        ri.SetResidueName("LIG")
+        ri.SetResidueNumber(900)
+        ri.SetIsHeteroAtom(True)
+        ri.SetName(f"{a.GetSymbol()}{k:<3d}"[:4])
+        a.SetMonomerInfo(ri)
+    return m
+
+
+def _water_mol(n, positions):
+    """`n` waters as one molecule, each three atoms, at the given oxygen positions."""
+    rw = Chem.RWMol()
+    xyz = []
+    for k in range(n):
+        base = np.asarray(positions[k], float)
+        for sym, off in (("O", (0, 0, 0)), ("H", (0.76, 0.59, 0)), ("H", (-0.76, 0.59, 0))):
+            a = Chem.Atom(sym)
+            ri = Chem.AtomPDBResidueInfo()
+            ri.SetResidueName("HOH")
+            ri.SetResidueNumber(2000 + k)
+            ri.SetIsHeteroAtom(True)
+            ri.SetName(f" {sym}  "[:4])
+            a.SetMonomerInfo(ri)
+            rw.AddAtom(a)
+            xyz.append(base + np.asarray(off, float))
+    mol = rw.GetMol()
+    conf = Chem.Conformer(mol.GetNumAtoms())
+    for i, p in enumerate(xyz):
+        conf.SetAtomPosition(i, Chem.rdGeometry.Point3D(*[float(v) for v in p]))
+    mol.AddConformer(conf)
+    return mol
+
+
+def _system(tmp_path, held_fraction=1.0, n_frames=20, n_waters=4, tag="sys", seed=0):
+    """Peptide, ligand and water; water 0 is held at a fixed spot in `held_fraction` of frames.
+
+    The fixed spot is beside the ligand, so a hydration site there is a site in the map. The
+    other waters are moved every frame, so they should raise no site of their own.
+    """
+    rng = np.random.RandomState(seed)
+    pep, lig = _peptide(), _ligand()
+    pep_xyz = np.asarray(pep.GetConformer().GetPositions())
+    lig_xyz = np.asarray(lig.GetConformer().GetPositions())
+    pep_xyz = pep_xyz - pep_xyz.mean(axis=0) + lig_xyz.mean(axis=0) + np.array([5.0, 0.0, 0.0])
+    held = lig_xyz.mean(axis=0) + np.array([0.0, 4.0, 0.0])
+    water = _water_mol(n_waters, [held] + [held + np.array([0.0, 3.0 * (k + 1), 0.0])
+                                           for k in range(n_waters - 1)])
+    wat_xyz = np.asarray(water.GetConformer().GetPositions())
+
+    whole = Chem.CombineMols(Chem.CombineMols(pep, lig), water)
+    mol = Chem.RWMol(whole).GetMol()
+    conf = Chem.Conformer(mol.GetNumAtoms())
+    for i, p in enumerate(np.vstack([pep_xyz, lig_xyz, wat_xyz])):
+        conf.SetAtomPosition(i, Chem.rdGeometry.Point3D(*[float(v) for v in p]))
+    mol.RemoveAllConformers()
+    mol.AddConformer(conf)
+
+    n_pep, n_lig = pep.GetNumAtoms(), lig.GetNumAtoms()
+    frames = []
+    for k in range(n_frames):
+        w = wat_xyz.copy()
+        if k >= int(round(held_fraction * n_frames)):
+            w[0:3] += rng.uniform(-8.0, 8.0, size=3)      # water 0 lets go in these frames
+        for j in range(1, n_waters):                       # the others wander every frame
+            w[3 * j:3 * j + 3] += rng.uniform(-8.0, 8.0, size=3)
+        frames.append(np.vstack([pep_xyz, lig_xyz, w]))
+
+    pdb = str(tmp_path / f"{tag}.pdb")
+    Chem.MolToPDBFile(mol, pdb)
+    top = mdtraj.load(pdb).topology
+    traj = mdtraj.Trajectory(np.stack(frames) / 10.0, top)
+    traj.unitcell_vectors = np.tile(np.eye(3) * (BOX / 10.0), (len(frames), 1, 1))
+    dcd = str(tmp_path / f"{tag}.dcd")
+    traj.save_dcd(dcd)
+    ref = str(tmp_path / f"{tag}_ref.pdb")
+    only = Chem.RWMol(pep).GetMol()
+    rc = Chem.Conformer(only.GetNumAtoms())
+    for i, p in enumerate(pep_xyz):
+        rc.SetAtomPosition(i, Chem.rdGeometry.Point3D(*[float(v) for v in p]))
+    only.RemoveAllConformers()
+    only.AddConformer(rc)
+    Chem.MolToPDBFile(only, ref)
+    return pdb, dcd, ref, lig, held, (n_pep, n_lig)
+
+
+# ------------------------------------------------------------------------------- the map
+
+
+def test_a_topology_with_no_water_is_refused(tmp_path):
+    lig = _ligand()
+    xyz = np.asarray(lig.GetConformer().GetPositions())
+    pdb = str(tmp_path / "dry.pdb")
+    Chem.MolToPDBFile(lig, pdb)
+    t = TJ.load(pdb)
+    with pytest.raises(SV.SolventError, match="no water"):
+        SV.water_oxygens(t)
+
+
+def test_the_oxygens_are_found_and_the_hydrogens_are_not(tmp_path):
+    pdb, dcd, _ref, _lig, _held, _n = _system(tmp_path, tag="ox")
+    t = TJ.load(pdb, dcd)
+    ox = SV.water_oxygens(t)
+    assert len(ox) == 4, "one oxygen per water"
+    assert all(t.elements[i].upper() == "O" for i in ox)
+    assert all(t.residues[i] == "HOH" for i in ox)
+
+
+def test_bulk_occupancy_is_what_the_density_says():
+    occ = SV.Occupancy(points=np.zeros((1, 3)), values=np.zeros(1), frames=1, probe=1.0)
+    assert occ.bulk == pytest.approx(0.14, abs=0.01), "0.0334 per cubic angstrom in a 1 A sphere"
+
+
+def test_a_map_needs_a_periodic_cell(tmp_path, monkeypatch):
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, tag="nocell")
+    real = SV.load
+
+    def without_box(*a, **k):
+        t = real(*a, **k)
+        t.box = None
+        return t
+
+    monkeypatch.setattr(SV, "load", without_box)
+    with pytest.raises(SV.SolventError, match="periodic cell"):
+        SV.occupancy(pdb, dcd, reference=ref)
+
+
+# ----------------------------------------------------------------------------- the sites
+
+
+def test_a_site_appears_where_the_water_actually_sits(tmp_path):
+    """The claim the module rests on: a held water becomes a site, a wandering one does not."""
+    pdb, dcd, ref, _lig, held, _n = _system(tmp_path, held_fraction=1.0, n_frames=20,
+                                            tag="held")
+    occ = SV.occupancy(pdb, dcd, reference=ref, spacing=0.5, map_radius=6.0)
+    centres, heights = SV.hydration_sites(occ, min_occupancy=0.5, min_distance=2.4)
+    assert len(centres) >= 1, "the held water raised no site"
+    nearest = float(np.linalg.norm(centres - held, axis=1).min())
+    assert nearest < 1.0, f"the strongest site is {nearest:.2f} A from where the water was held"
+    assert heights.max() > 0.9, "a water held in every frame must be occupied in every frame"
+
+
+def test_a_water_that_never_settles_raises_no_site(tmp_path):
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=0.0, n_frames=20,
+                                             tag="free")
+    occ = SV.occupancy(pdb, dcd, reference=ref, spacing=0.5, map_radius=6.0)
+    centres, _h = SV.hydration_sites(occ, min_occupancy=0.5, min_distance=2.4)
+    assert len(centres) == 0, f"{len(centres)} site(s) from water that moved every frame"
+
+
+def test_a_water_held_half_the_time_is_occupied_about_half_the_time(tmp_path):
+    pdb, dcd, ref, _lig, held, _n = _system(tmp_path, held_fraction=0.5, n_frames=20,
+                                            tag="half")
+    occ = SV.occupancy(pdb, dcd, reference=ref, spacing=0.5, map_radius=6.0)
+    at = occ.values[np.linalg.norm(occ.points - held, axis=1) < 0.4]
+    assert at.size and 0.35 < at.max() < 0.65, f"occupancy {at.max():.2f} for half the frames"
+
+
+def test_two_sites_are_never_closer_than_the_spacing_asked_for(tmp_path):
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=1.0, n_waters=3,
+                                             tag="apart")
+    occ = SV.occupancy(pdb, dcd, reference=ref)
+    centres, _h = SV.hydration_sites(occ, min_occupancy=0.3, min_distance=3.0)
+    if len(centres) > 1:
+        d = np.linalg.norm(centres[:, None, :] - centres[None, :, :], axis=2)
+        d += np.eye(len(centres)) * 1e3
+        assert d.min() >= 3.0 - 1e-9
+
+
+def test_the_sites_come_out_strongest_first(tmp_path):
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=1.0, n_waters=3,
+                                             tag="order")
+    occ = SV.occupancy(pdb, dcd, reference=ref)
+    _c, heights = SV.hydration_sites(occ, min_occupancy=0.2, min_distance=2.4)
+    assert np.all(np.diff(heights) <= 1e-12), "the sites are not in order of occupancy"
+
+
+def test_the_number_of_sites_can_be_capped(tmp_path):
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=1.0, n_waters=4,
+                                             tag="cap")
+    occ = SV.occupancy(pdb, dcd, reference=ref)
+    centres, _h = SV.hydration_sites(occ, min_occupancy=0.1, min_distance=1.0, max_sites=2)
+    assert len(centres) <= 2
+
+
+# ----------------------------------------------------------------------- the coefficients
+
+
+def test_the_coefficients_reproduce_a_map_made_of_one_gaussian():
+    """The fit is a fit: given a map that *is* a Gaussian, it must recover its height."""
+    centre = np.array([[0.0, 0.0, 0.0]])
+    pts = SV._grid_points(np.array([-3.0, -3.0, -3.0]), (13, 13, 13), 0.5)
+    alpha = 0.5
+    truth = 0.7 * np.exp(-0.5 * alpha * (pts ** 2).sum(axis=1))
+    occ = SV.Occupancy(points=pts, values=truth, frames=1)
+    coeff = SV.fit_coefficients(occ, centre, alpha=alpha)
+    assert coeff[0] == pytest.approx(0.7, rel=1e-6)
+
+
+def test_the_coefficients_are_never_negative():
+    """An occupancy cannot be negative, and a negative coefficient would read as the opposite."""
+    pts = SV._grid_points(np.array([-3.0, -3.0, -3.0]), (13, 13, 13), 0.5)
+    rng = np.random.RandomState(0)
+    occ = SV.Occupancy(points=pts, values=rng.uniform(0.0, 0.1, len(pts)), frames=1)
+    centres = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0]])
+    coeff = SV.fit_coefficients(occ, centres, alpha=0.5)
+    assert np.all(coeff >= 0.0)
+
+
+def test_no_sites_give_no_coefficients():
+    occ = SV.Occupancy(points=np.zeros((4, 3)), values=np.zeros(4), frames=1)
+    assert SV.fit_coefficients(occ, np.zeros((0, 3)), alpha=0.5).size == 0
+
+
+# ---------------------------------------------------------------------------- the field
+
+
+def test_the_water_field_is_a_field_of_hydration_sites():
+    centres = np.array([[0.0, 0.0, 0.0], [3.0, 0.0, 0.0]])
+    f = SV.water_field(centres, np.array([0.8, 0.4]), name="x")
+    assert f.n_atoms == 2
+    assert f.weights.shape == (2, 1)
+    assert np.allclose(f.coords, centres)
+    assert np.allclose(f.radii, SV.WATER_RADIUS)
+
+
+def test_a_field_with_no_site_is_refused():
+    with pytest.raises(SV.SolventError, match="no hydration site"):
+        SV.water_field(np.zeros((0, 3)), np.zeros(0))
+
+
+def test_a_coefficient_per_site_is_required():
+    with pytest.raises(SV.SolventError, match="coefficients"):
+        SV.water_field(np.zeros((3, 3)), np.zeros(2))
+
+
+def test_the_water_field_goes_through_the_kernel_machinery():
+    """The point of making it a field: the ordinary kernel code must take it unchanged."""
+    from cmfqsar.model import CMFModel
+
+    fs = SV.solvent_fieldset(alpha=0.5)
+    fields = [SV.water_field(np.array([[0.0, 0.0, 0.0], [3.0, 0.0, 0.0]]),
+                             np.array([0.8, 0.4]), name="a"),
+              SV.water_field(np.array([[0.5, 0.0, 0.0], [3.5, 0.0, 0.0]]),
+                             np.array([0.6, 0.5]), name="b"),
+              SV.water_field(np.array([[9.0, 9.0, 9.0]]), np.array([0.9]), name="c")]
+    table = AtomTable.from_molecules(fields)
+    model = CMFModel(fieldset=fs, method="krr", normalize=True)
+    K = np.asarray(model.joint_kernel(model.prepare_training_kernels(table)), float)
+    assert K.shape == (3, 3)
+    assert np.allclose(np.diag(K), 1.0), "the cosine normalisation still holds"
+    assert K[0, 1] > K[0, 2], "two overlapping maps are more alike than two that do not touch"
+
+
+def test_the_field_set_carries_one_field_named_for_the_solvent():
+    fs = SV.solvent_fieldset(alpha=1.5, name="solvent")
+    assert [s.name for s in fs.specs] == ["solvent"]
+    assert fs.specs[0].alpha == 1.5 and fs.specs[0].kind == "gauss"
+
+
+# --------------------------------------------------------------------------- reading it
+
+
+def test_the_site_weights_say_which_way_the_model_wants_the_water():
+    a = SV.water_field(np.array([[0.0, 0.0, 0.0], [3.0, 0.0, 0.0]]), np.array([0.8, 0.4]))
+    b = SV.water_field(np.array([[0.0, 0.0, 0.0]]), np.array([0.5]))
+    got = SV.site_contributions(None, [a, b], [2.0, -1.0])
+    assert np.allclose(got[0], [1.6, 0.8]), "a positive coefficient asks for more water"
+    assert np.allclose(got[1], [-0.5]), "a negative one asks for less"
+
+
+def test_one_coefficient_per_molecule_is_required():
+    a = SV.water_field(np.array([[0.0, 0.0, 0.0]]), np.array([0.8]))
+    with pytest.raises(SV.SolventError, match="dual coefficients"):
+        SV.site_contributions(None, [a], [1.0, 2.0])
+
+
+# ------------------------------------------------------------------------- the whole chain
+
+
+def test_the_chain_gives_a_field_that_can_be_built_on(tmp_path):
+    pdb, dcd, ref, _lig, held, _n = _system(tmp_path, held_fraction=1.0, tag="chain")
+    field, occ, heights = SV.field_for(pdb, dcd, reference=ref, alpha=0.5, name="one",
+                                       min_occupancy=0.5)
+    assert field.n_atoms == len(heights) >= 1
+    assert occ.frames == 20
+    assert float(np.linalg.norm(field.coords - held, axis=1).min()) < 1.0
+    fs = SV.solvent_fieldset(alpha=0.5)
+    table = AtomTable.from_molecules([field])
+    assert table.coords.shape[0] == field.n_atoms
+
+
+def test_a_ligand_with_no_site_says_so(tmp_path):
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=0.0, tag="nosite")
+    with pytest.raises(SV.SolventError, match="hydration site"):
+        SV.field_for(pdb, dcd, reference=ref, alpha=0.5, min_occupancy=0.9)
+
+
+# ----------------------------------------------------------------------- the benchmark
+
+
+def _bench():
+    sys.path.insert(0, os.path.join(HERE, "..", "benchmarks"))
+    import run_solvent
+    return run_solvent
+
+
+def test_the_controls_keep_the_same_number_of_sites_per_ligand():
+    """A control that changed the count would test two things at once."""
+    rs = _bench()
+    rng = np.random.RandomState(0)
+    sites = {"a": (rng.normal(size=(5, 3)), rng.random(5), rng.random(5)),
+             "b": (rng.normal(size=(3, 3)), rng.random(3), rng.random(3))}
+    names = ["a", "b"]
+    for made in (rs.scrambled_sites(sites, names), rs.shared_sites(sites, names)):
+        assert set(made) == set(names)
+        for n in names:
+            assert len(made[n][1]) == len(made[n][0])
+    assert [len(rs.scrambled_sites(sites, names)[n][0]) for n in names] == [5, 3]
+
+
+def test_random_sites_stay_inside_the_box_the_real_ones_span():
+    rs = _bench()
+    rng = np.random.RandomState(1)
+    sites = {"a": (rng.uniform(0, 10, size=(6, 3)), rng.random(6), rng.random(6))}
+    made = rs.scrambled_sites(sites, ["a"], seed=2)
+    every = sites["a"][0]
+    assert np.all(made["a"][0] >= every.min(axis=0) - 1e-9)
+    assert np.all(made["a"][0] <= every.max(axis=0) + 1e-9)
+
+
+def test_one_shared_set_of_sites_gives_every_ligand_the_same_field():
+    rs = _bench()
+    rng = np.random.RandomState(3)
+    sites = {"a": (rng.normal(size=(4, 3)), rng.random(4), rng.random(4)),
+             "b": (rng.normal(size=(2, 3)), rng.random(2), rng.random(2))}
+    made = rs.shared_sites(sites, ["a", "b"])
+    assert np.allclose(made["a"][0], made["b"][0])
+    assert np.allclose(made["a"][0], sites["a"][0]), "the first ligand's sites are the shared set"
+
+
+def test_mixing_a_kernel_with_itself_changes_nothing():
+    rs = _bench()
+    K = np.array([[1.0, 0.3], [0.3, 1.0]])
+    assert np.allclose(rs.mixed(K, K, 0.4), K)
+    assert np.allclose(rs.mixed(K, np.eye(2), 0.0), K)
+    assert np.allclose(rs.mixed(K, np.eye(2), 1.0), np.eye(2))
+
+
+def test_the_places_gather_the_sites_of_several_ligands():
+    """Two ligands with a site at the same spot make one place, not two."""
+    rs = _bench()
+    here = np.array([[0.0, 0.0, 0.0]])
+    far = np.array([[10.0, 0.0, 0.0]])
+    sites = {"a": (np.vstack([here, far]), np.array([0.5, 0.5]), np.array([0.8, 0.8])),
+             "b": (np.vstack([here + 0.3, far]), np.array([0.5, 0.5]), np.array([0.7, 0.7])),
+             "c": (np.vstack([here - 0.2, far]), np.array([0.5, 0.5]), np.array([0.9, 0.9]))}
+    names = ["a", "b", "c"]
+    y = np.array([5.0, 6.0, 7.0])
+    places, lam = rs.site_places(sites, names, y, alpha=0.5, folds=3)
+    assert len(places) == 2, f"{len(places)} places from two spots"
+    assert max(p["ligands"] for p in places) == 3
+    assert all(0.0 <= p["occupancy"] <= 1.0 for p in places)
+    assert lam > 0
+
+
+def test_the_verdict_names_the_controls_and_the_scope():
+    rs = _bench()
+    rec = {"set": "toy", "n": 25, "models": {
+        "fields": {"q2": 0.5, "delta": 0.0, "lo": 0.0, "hi": 0.0},
+        "water_mixed": {"q2": 0.52, "mix": 0.3, "delta": 0.02, "lo": -0.1, "hi": 0.15},
+        "water_alone": {"q2": 0.2, "delta": -0.3, "lo": -0.5, "hi": -0.1},
+        "scrambled_alone": {"q2": -0.05, "delta": -0.55, "lo": -0.8, "hi": -0.3},
+        "shared_alone": {"q2": -0.1, "delta": -0.6, "lo": -0.9, "hi": -0.3}}}
+    text = " ".join(rs.verdict([rec]))
+    assert "adds nothing that can be measured" in text
+    assert "positions are carrying something" in text
+    assert "What this rests on" in text
+
+
+def test_the_verdict_says_so_when_the_positions_carry_nothing():
+    rs = _bench()
+    rec = {"set": "toy", "n": 25, "models": {
+        "fields": {"q2": 0.5, "delta": 0.0, "lo": 0.0, "hi": 0.0},
+        "water_mixed": {"q2": 0.52, "mix": 0.3, "delta": 0.02, "lo": -0.1, "hi": 0.15},
+        "water_alone": {"q2": 0.1, "delta": -0.4, "lo": -0.6, "hi": -0.2},
+        "scrambled_alone": {"q2": 0.15, "delta": -0.35, "lo": -0.6, "hi": -0.1},
+        "shared_alone": {"q2": -0.1, "delta": -0.6, "lo": -0.9, "hi": -0.3}}}
+    text = " ".join(rs.verdict([rec]))
+    assert "positions are carrying nothing" in text
+
+
+def test_the_report_says_what_is_missing_when_nothing_has_been_run(tmp_path):
+    rs = _bench()
+    text = rs.report(results=str(tmp_path), path=str(tmp_path / "t.md"))
+    assert "make_md_trajectories.py" in text
+    assert os.path.isfile(str(tmp_path / "t.md"))

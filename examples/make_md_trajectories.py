@@ -35,6 +35,8 @@ import json
 import os
 import sys
 import time
+
+NEWLINE = chr(10)
 from typing import Optional, Sequence
 
 import numpy as np
@@ -46,6 +48,7 @@ sys.path.insert(0, ROOT)
 from rdkit import Chem, RDLogger  # noqa: E402
 
 from cmfqsar import md as MD  # noqa: E402
+from cmfqsar import solvent as SV  # noqa: E402
 from cmfqsar import trajectory as TJ  # noqa: E402
 from cmfqsar.dataio import load_dataset  # noqa: E402
 
@@ -74,6 +77,11 @@ cmf build examples/md/mcl1_md.sdf --activity pAffinity --ensemble-by name \\
 
 Each molecule carries `conformer_weights`, the share of simulation frames that fell in that
 conformation's cluster, and the activity of the ligand as the source collection gives it.
+
+Beside it, `<set>_water.json` holds the **hydration sites** of every ligand, for plan item D9:
+the positions where a water sits in the site, each with the share of frames it is occupied and
+the coefficient fitted to the occupancy map. `cmfqsar/solvent.py` turns those into a field and
+`benchmarks/run_solvent.py` measures whether that field is worth a sixth kernel block.
 
 ## How they were made
 
@@ -118,7 +126,8 @@ def pose_drift(ensemble, crystal):
 
 def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=0.75,
               stride=1, limit=0, read_only=False, chain_radius=5.0, keep_chains=(),
-              max_drift=4.0, common_reference=True, log=say):
+              max_drift=4.0, common_reference=True, water=True, water_alpha=0.5,
+              min_occupancy=SV.MIN_OCCUPANCY, log=say):
     """One set: download, prepare, simulate, read back, write the ensemble SDF."""
     pocket = os.path.join(POCKETS, name + ".pdb")
     ligands = os.path.join(LIGANDS, name + ".sdf")
@@ -210,8 +219,49 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
                 w.write(e.mol, confId=conf.GetId())
                 records += 1
     log(f"  {len(kept)} ligands in {records} records -> {out}")
+
+    sites = []
+    if water and common_reference:
+        # the occupancy map needs the water, which the ensemble file does not carry, so it is
+        # read from the trajectories a second time; it also needs the common frame, which is why
+        # it is skipped for the own-frame reading
+        for e in kept:
+            nm = e.mol.GetProp("_Name")
+            top = os.path.join(runs, f"{nm}.pdb")
+            dcd = os.path.join(runs, f"{nm}.dcd")
+            try:
+                field, occ, heights = SV.field_for(
+                    top, dcd, reference=receptor, alpha=float(water_alpha), name=nm,
+                    stride=stride, min_occupancy=float(min_occupancy))
+            except (SV.SolventError, TJ.TrajectoryError) as exc:
+                log(f"  {nm}: no water field -- {exc}")
+                continue
+            row = {"name": nm,
+                   "sites": [[round(float(v), 4) for v in c] + [round(float(w), 5),
+                                                                round(float(h), 4)]
+                             for c, w, h in zip(field.coords,
+                                                np.asarray(field.weights).ravel(), heights)],
+                   "strongest": round(float(occ.values.max()), 4),
+                   "bulk": round(float(occ.bulk), 4)}
+            for prop in ds.properties:
+                if e.mol.HasProp(prop):
+                    row[prop] = e.mol.GetProp(prop)
+            sites.append(row)
+            log(f"  {nm}: {len(row['sites'])} hydration sites, strongest "
+                f"{row['strongest']:.0%} against {row['bulk']:.0%} for bulk water")
+        if sites:
+            path = os.path.join(out_dir, f"{name}_water.json")
+            with open(path, "w", newline=NEWLINE) as fh:
+                json.dump({"set": name, "entry": code, "alpha": float(water_alpha),
+                           "min_occupancy": float(min_occupancy),
+                           "probe": SV.PROBE, "spacing": SV.SPACING,
+                           "min_distance": SV.MIN_DISTANCE, "ligands": sites}, fh, indent=1)
+            log(f"  {len(sites)} water fields -> {path}")
     held = [v for k, v in drifts.items() if k not in left]
     return {"set": name, "entry": code, "chains": chains, "ligands": len(kept),
+            "water_fields": len(sites),
+            "hydration_sites": (float(np.mean([len(r["sites"]) for r in sites]))
+                                if sites else None),
             "records": records, "skipped": skipped, "left_the_site": left,
             "max_frames": max_frames, "cutoff": cutoff, "max_drift": float(max_drift),
             "drift_median": (float(np.median(held)) if held else None),
@@ -293,6 +343,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                          "<set>_md_ownframe.sdf. This is not how an ensemble should be made -- "
                          "it leaves every ligand in a frame of its own -- and the file is there "
                          "so that benchmarks/run_md.py can measure what that costs")
+    ap.add_argument("--no-water", action="store_true",
+                    help="skip the water occupancy maps of plan item D9")
+    ap.add_argument("--water-alpha", type=float, default=0.5,
+                    help="the attenuation the hydration-site Gaussians are fitted at "
+                         "(default 0.5, the one the benchmarks use)")
+    ap.add_argument("--min-occupancy", type=float, default=SV.MIN_OCCUPANCY,
+                    help=f"a point has to be occupied this share of the frames to be a "
+                         f"hydration site (default {SV.MIN_OCCUPANCY:g}; bulk water is about "
+                         f"0.14 at a 1 A probe)")
     ap.add_argument("--max-drift", type=float, default=4.0,
                     help="leave out a ligand whose conformations sit further than this from its "
                          "crystal pose, in angstrom; 0 keeps every ligand (default 4)")
@@ -319,7 +378,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                                  read_only=a.read_only, chain_radius=a.chain_radius,
                                  keep_chains=[c for c in a.chains.split(",") if c],
                                  max_drift=a.max_drift,
-                                 common_reference=not a.no_common_reference))
+                                 common_reference=not a.no_common_reference,
+                                 water=not a.no_water, water_alpha=a.water_alpha,
+                                 min_occupancy=a.min_occupancy))
     if not a.no_common_reference:
         write_readme(records, out_dir=a.out)
     with open(os.path.join(a.out, "provenance.json"), "w") as fh:

@@ -1041,6 +1041,68 @@ exact square.
 
 `mdtraj` is the `md` extra; MDAnalysis does as well. Neither is required for anything else.
 
+## The water as a field
+
+Every field described so far sits on the atoms of the molecule. The 2015 indicator-field
+formalism does not require that -- it accepts any continuous density -- and a water occupancy map
+from a simulation is one. `cmfqsar/solvent.py` (plan item D9) turns the places a ligand's water
+occupies into a field of the ordinary kind, so that a sixth kernel block can carry it and a
+co-field over it can say where displacing a water helps.
+
+```bash
+python examples/make_md_trajectories.py --set mcl1        # writes mcl1_water.json too
+python benchmarks/run_solvent.py
+```
+
+**What a hydration site is here.** For every point of a grid around the ligand, the share of
+frames in which some water oxygen lies within 1 Å of it. That is an occupancy in $[0, 1]$ with a
+plain reading — "a water sits here nine tenths of the time" — and bulk water scores about 14 %
+of it, which is why a site has to clear 50 %. The peaks are taken greedily, strongest first,
+with no two sites closer than 2.4 Å, so a site is a place a water occupies rather than a cluster
+of molecules. The coefficients are then fitted to the whole map by a non-negative least squares
+rather than read off the peak heights, so the field reproduces the map; non-negative because an
+occupancy cannot be negative and a negative coefficient would read as a place water avoids,
+which the map does not say.
+
+On the mcl1 set that gives **7.8 sites per ligand** (from 4 to 12), the strongest averaging 73 %
+occupancy.
+
+**The water field is a block of its own**, not a sixth column of the molecule's table: a table
+holds one set of atoms and a hydration site is not an atom of the molecule. So the kernel is
+mixed, $K(h) = (1-h) K_{\text{fields}} + h\,K_{\text{water}}$, with $h$ searched on the same
+folds as everything else — the same arrangement the variance field of plan item D10 uses.
+
+**Measured** (`benchmarks/run_solvent.py`), every model at its own best attenuation so the
+reference is not held back:
+
+| model | q² | change against the five fields |
+| --- | ---: | --- |
+| the five fields alone | **+0.575** | the reference |
+| the five fields and the water | +0.558 | −0.017 [−0.186, +0.198] |
+| the water alone | +0.231 | − |
+| random sites alone (control) | −0.034 | − |
+| one shared set of sites alone (control) | −0.138 | − |
+
+**The water field does not improve the model**, and the interval is wide enough that a small gain
+could not have been seen on 25 ligands. But the two controls make the rest of the table worth
+reading. The water field **on its own** reaches +0.231, while the same number of sites moved to
+random places in the same box reaches −0.034 and one ligand's sites given to every ligand
+−0.138. Both controls are below zero, as a block that cannot tell the ligands apart must be. So
+*where the water sits* does carry information about activity — it is simply information the
+ligand's own fields already carry, since adding it gains nothing.
+
+**Where the model asks for water.** The sites of all the ligands are in one frame, so they gather
+into places, and the weight the water block puts on a place is what it asks of the water there:
+positive for more water, negative for less, which is where displacing one is worth trying. The
+table in `benchmarks/results/solvent/table.md` lists the places shared by at least three
+ligands. Under rule 5 this is a **display tool**: the block does not improve the model, so a
+place it names is something to look at and not a prediction.
+
+> **One reading to avoid.** The mixed control in which every ligand is given the same sites lands
+> exactly on the reference, and that is arithmetic rather than a result: identical sites make
+> every kernel entry the same, and a constant block added to a kernel is absorbed by the fit's
+> own bias. It is a check that the mixing does nothing of itself.
+
 ## Does a trajectory beat the crystal pose?
 
 The section above reads a simulation as an ensemble. Whether that ensemble is worth having is a

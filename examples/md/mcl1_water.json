@@ -1,0 +1,1851 @@
+{
+ "set": "mcl1",
+ "entry": "4HW3",
+ "alpha": 0.5,
+ "min_occupancy": 0.5,
+ "probe": 1.0,
+ "spacing": 0.5,
+ "min_distance": 2.4,
+ "ligands": [
+  {
+   "name": "lig_43",
+   "sites": [
+    [
+     72.018,
+     -36.2027,
+     31.9964,
+     0.3505,
+     0.605
+    ],
+    [
+     56.018,
+     -28.2027,
+     31.9964,
+     0.21422,
+     0.59
+    ],
+    [
+     74.518,
+     -42.2027,
+     27.4964,
+     0.3321,
+     0.575
+    ],
+    [
+     66.518,
+     -42.7027,
+     36.4964,
+     0.22782,
+     0.56
+    ],
+    [
+     58.518,
+     -24.7027,
+     34.4964,
+     0.26329,
+     0.56
+    ],
+    [
+     70.018,
+     -24.2027,
+     20.9964,
+     0.1939,
+     0.555
+    ],
+    [
+     74.518,
+     -31.2027,
+     18.4964,
+     0.36199,
+     0.515
+    ],
+    [
+     71.518,
+     -36.2027,
+     25.4964,
+     0.25929,
+     0.51
+    ],
+    [
+     72.518,
+     -27.7027,
+     26.4964,
+     0.28689,
+     0.5
+    ]
+   ],
+   "strongest": 0.605,
+   "bulk": 0.1399,
+   "pAffinity": "5.125",
+   "affinity_type": "pKi",
+   "affinity_value": "7.5",
+   "affinity_unit": "uM",
+   "affinity_error": "0.6",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 43",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_56",
+   "sites": [
+    [
+     55.7624,
+     -28.9926,
+     31.7237,
+     0.21603,
+     0.73
+    ],
+    [
+     56.2624,
+     -25.4926,
+     28.2237,
+     0.1874,
+     0.7
+    ],
+    [
+     72.2624,
+     -27.9926,
+     26.2237,
+     0.26695,
+     0.69
+    ],
+    [
+     72.2624,
+     -36.4926,
+     32.2237,
+     0.3178,
+     0.625
+    ],
+    [
+     69.7624,
+     -23.9926,
+     21.2237,
+     0.19957,
+     0.59
+    ],
+    [
+     56.7624,
+     -22.9926,
+     27.7237,
+     0.20042,
+     0.585
+    ],
+    [
+     71.7624,
+     -35.9926,
+     25.7237,
+     0.26339,
+     0.58
+    ]
+   ],
+   "strongest": 0.73,
+   "bulk": 0.1399,
+   "pAffinity": "6.745",
+   "affinity_type": "pKi",
+   "affinity_value": "0.18",
+   "affinity_unit": "uM",
+   "affinity_error": "0.01",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 56",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_47",
+   "sites": [
+    [
+     70.0748,
+     -24.0617,
+     20.596,
+     0.12302,
+     0.62
+    ],
+    [
+     68.5748,
+     -26.5617,
+     20.096,
+     0.12094,
+     0.555
+    ],
+    [
+     59.0748,
+     -31.0617,
+     37.596,
+     0.25662,
+     0.515
+    ],
+    [
+     72.0748,
+     -36.5617,
+     31.596,
+     0.27145,
+     0.5
+    ]
+   ],
+   "strongest": 0.62,
+   "bulk": 0.1399,
+   "pAffinity": "4.208",
+   "affinity_type": "pKi",
+   "affinity_value": "62",
+   "affinity_unit": "uM",
+   "affinity_error": "17",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 47",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_37",
+   "sites": [
+    [
+     56.1139,
+     -28.1138,
+     32.2031,
+     0.27606,
+     0.805
+    ],
+    [
+     72.6139,
+     -28.1138,
+     25.7031,
+     0.29757,
+     0.705
+    ],
+    [
+     72.1139,
+     -36.6138,
+     32.2031,
+     0.31618,
+     0.6
+    ],
+    [
+     70.1139,
+     -23.6138,
+     21.2031,
+     0.21068,
+     0.59
+    ],
+    [
+     74.6139,
+     -41.6138,
+     27.2031,
+     0.30482,
+     0.53
+    ],
+    [
+     61.1139,
+     -40.1138,
+     38.2031,
+     0.2472,
+     0.505
+    ]
+   ],
+   "strongest": 0.805,
+   "bulk": 0.1399,
+   "pAffinity": "6.523",
+   "affinity_type": "pKi",
+   "affinity_value": "0.3",
+   "affinity_unit": "uM",
+   "affinity_error": "0.15",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 37",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_65",
+   "sites": [
+    [
+     55.7354,
+     -28.6727,
+     32.3702,
+     0.22008,
+     0.76
+    ],
+    [
+     57.7354,
+     -24.1727,
+     33.8702,
+     0.27428,
+     0.66
+    ],
+    [
+     72.2354,
+     -36.6727,
+     31.8702,
+     0.28587,
+     0.645
+    ],
+    [
+     59.7354,
+     -30.6727,
+     37.3702,
+     0.26779,
+     0.63
+    ],
+    [
+     54.7354,
+     -24.6727,
+     28.8702,
+     0.21763,
+     0.61
+    ],
+    [
+     74.7354,
+     -41.6727,
+     27.3702,
+     0.31766,
+     0.585
+    ],
+    [
+     55.7354,
+     -25.6727,
+     32.8702,
+     0.1442,
+     0.57
+    ],
+    [
+     72.7354,
+     -28.1727,
+     26.3702,
+     0.33227,
+     0.55
+    ],
+    [
+     61.2354,
+     -40.1727,
+     38.3702,
+     0.27999,
+     0.515
+    ],
+    [
+     69.7354,
+     -23.6727,
+     20.8702,
+     0.12523,
+     0.515
+    ],
+    [
+     72.7354,
+     -42.6727,
+     34.8702,
+     0.29505,
+     0.51
+    ]
+   ],
+   "strongest": 0.76,
+   "bulk": 0.1399,
+   "pAffinity": "6.125",
+   "affinity_type": "pKi",
+   "affinity_value": "0.75",
+   "affinity_unit": "uM",
+   "affinity_error": "0.24",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 65",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_60",
+   "sites": [
+    [
+     72.6429,
+     -28.1368,
+     26.2388,
+     0.32646,
+     0.625
+    ],
+    [
+     61.1429,
+     -40.1368,
+     38.2388,
+     0.21137,
+     0.61
+    ],
+    [
+     74.6429,
+     -41.6368,
+     27.2388,
+     0.31154,
+     0.6
+    ],
+    [
+     56.1429,
+     -28.6368,
+     31.7388,
+     0.24437,
+     0.565
+    ],
+    [
+     56.1429,
+     -25.6368,
+     28.2388,
+     0.2289,
+     0.55
+    ],
+    [
+     66.6429,
+     -42.6368,
+     36.2388,
+     0.22654,
+     0.545
+    ],
+    [
+     72.1429,
+     -36.1368,
+     31.7388,
+     0.30743,
+     0.535
+    ],
+    [
+     70.1429,
+     -23.6368,
+     21.2388,
+     0.21159,
+     0.515
+    ]
+   ],
+   "strongest": 0.625,
+   "bulk": 0.1399,
+   "pAffinity": "6.495",
+   "affinity_type": "pKi",
+   "affinity_value": "0.32",
+   "affinity_unit": "uM",
+   "affinity_error": "0.01",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 60",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_67",
+   "sites": [
+    [
+     56.571,
+     -25.4694,
+     27.793,
+     0.23179,
+     0.685
+    ],
+    [
+     69.571,
+     -24.4694,
+     21.293,
+     0.24259,
+     0.665
+    ],
+    [
+     72.571,
+     -28.4694,
+     26.293,
+     0.3352,
+     0.665
+    ],
+    [
+     60.071,
+     -30.9694,
+     37.793,
+     0.28097,
+     0.635
+    ],
+    [
+     55.571,
+     -28.9694,
+     31.793,
+     0.27111,
+     0.63
+    ],
+    [
+     72.071,
+     -36.4694,
+     32.293,
+     0.32886,
+     0.585
+    ],
+    [
+     74.571,
+     -41.4694,
+     27.293,
+     0.30792,
+     0.525
+    ],
+    [
+     74.571,
+     -31.4694,
+     18.793,
+     0.36122,
+     0.515
+    ],
+    [
+     71.071,
+     -37.9694,
+     38.293,
+     0.25264,
+     0.505
+    ]
+   ],
+   "strongest": 0.685,
+   "bulk": 0.1399,
+   "pAffinity": "5.523",
+   "affinity_type": "pKi",
+   "affinity_value": "3.0",
+   "affinity_unit": "uM",
+   "affinity_error": "0.1",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 67",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_46",
+   "sites": [
+    [
+     72.2588,
+     -28.0565,
+     26.2145,
+     0.31722,
+     0.77
+    ],
+    [
+     56.2588,
+     -28.5565,
+     32.2145,
+     0.21637,
+     0.74
+    ],
+    [
+     71.7588,
+     -36.5565,
+     32.2145,
+     0.31574,
+     0.51
+    ],
+    [
+     56.2588,
+     -25.5565,
+     28.7145,
+     0.22759,
+     0.505
+    ]
+   ],
+   "strongest": 0.77,
+   "bulk": 0.1399,
+   "pAffinity": "5.538",
+   "affinity_type": "pKi",
+   "affinity_value": "2.9",
+   "affinity_unit": "uM",
+   "affinity_error": "0.1",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 46",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_50",
+   "sites": [
+    [
+     55.8677,
+     -28.7486,
+     31.7914,
+     0.22275,
+     0.705
+    ],
+    [
+     72.3677,
+     -27.7486,
+     26.2914,
+     0.29202,
+     0.695
+    ],
+    [
+     72.3677,
+     -36.7486,
+     31.7914,
+     0.30512,
+     0.605
+    ],
+    [
+     55.8677,
+     -25.2486,
+     28.2914,
+     0.24059,
+     0.535
+    ],
+    [
+     69.8677,
+     -23.2486,
+     20.7914,
+     0.19259,
+     0.52
+    ]
+   ],
+   "strongest": 0.705,
+   "bulk": 0.1399,
+   "pAffinity": "6.796",
+   "affinity_type": "pKi",
+   "affinity_value": "0.16",
+   "affinity_unit": "uM",
+   "affinity_error": "0.04",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 50",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_61",
+   "sites": [
+    [
+     55.9364,
+     -28.2545,
+     31.6983,
+     0.29991,
+     0.8
+    ],
+    [
+     72.9364,
+     -28.2545,
+     26.1983,
+     0.33352,
+     0.68
+    ],
+    [
+     71.9364,
+     -36.2545,
+     32.1983,
+     0.32592,
+     0.61
+    ],
+    [
+     69.9364,
+     -23.7545,
+     21.1983,
+     0.17547,
+     0.56
+    ],
+    [
+     60.9364,
+     -40.2545,
+     38.1983,
+     0.16445,
+     0.555
+    ],
+    [
+     60.9364,
+     -26.2545,
+     37.1983,
+     0.29077,
+     0.5
+    ]
+   ],
+   "strongest": 0.8,
+   "bulk": 0.1399,
+   "pAffinity": "5.886",
+   "affinity_type": "pKi",
+   "affinity_value": "1.3",
+   "affinity_unit": "uM",
+   "affinity_error": "0.52",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 61",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_36",
+   "sites": [
+    [
+     55.6398,
+     -28.8577,
+     31.63,
+     0.20783,
+     0.785
+    ],
+    [
+     56.6398,
+     -25.3577,
+     28.13,
+     0.25374,
+     0.75
+    ],
+    [
+     69.6398,
+     -24.3577,
+     20.63,
+     0.16041,
+     0.67
+    ],
+    [
+     72.1398,
+     -36.8577,
+     32.13,
+     0.28851,
+     0.585
+    ],
+    [
+     61.1398,
+     -39.8577,
+     38.13,
+     0.14505,
+     0.585
+    ],
+    [
+     72.6398,
+     -28.3577,
+     26.13,
+     0.30077,
+     0.585
+    ],
+    [
+     71.1398,
+     -36.3577,
+     25.63,
+     0.24461,
+     0.58
+    ],
+    [
+     71.1398,
+     -32.8577,
+     22.13,
+     0.2467,
+     0.55
+    ],
+    [
+     60.1398,
+     -31.3577,
+     37.63,
+     0.21618,
+     0.515
+    ],
+    [
+     68.6398,
+     -26.3577,
+     19.63,
+     0.10489,
+     0.51
+    ],
+    [
+     63.6398,
+     -40.8577,
+     39.13,
+     0.25976,
+     0.505
+    ]
+   ],
+   "strongest": 0.785,
+   "bulk": 0.1399,
+   "pAffinity": "5.959",
+   "affinity_type": "pKi",
+   "affinity_value": "1.1",
+   "affinity_unit": "uM",
+   "affinity_error": "0.1",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 36",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_53",
+   "sites": [
+    [
+     55.941,
+     -28.9776,
+     31.5586,
+     0.13795,
+     0.8
+    ],
+    [
+     56.441,
+     -25.4776,
+     28.0586,
+     0.22118,
+     0.705
+    ],
+    [
+     72.441,
+     -27.4776,
+     26.0586,
+     0.29561,
+     0.625
+    ],
+    [
+     72.441,
+     -36.9776,
+     32.0586,
+     0.32396,
+     0.595
+    ],
+    [
+     74.441,
+     -42.4776,
+     27.5586,
+     0.32252,
+     0.56
+    ],
+    [
+     53.941,
+     -27.4776,
+     31.0586,
+     0.20703,
+     0.53
+    ],
+    [
+     69.941,
+     -23.9776,
+     21.0586,
+     0.18406,
+     0.52
+    ],
+    [
+     60.941,
+     -40.4776,
+     38.0586,
+     0.17468,
+     0.515
+    ]
+   ],
+   "strongest": 0.8,
+   "bulk": 0.1399,
+   "pAffinity": "7.260",
+   "affinity_type": "pKi",
+   "affinity_value": "0.055",
+   "affinity_unit": "uM",
+   "affinity_error": "0.018",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 53",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_31",
+   "sites": [
+    [
+     56.0903,
+     -25.5504,
+     28.2134,
+     0.18397,
+     0.675
+    ],
+    [
+     60.0903,
+     -31.0504,
+     37.2134,
+     0.28337,
+     0.655
+    ],
+    [
+     71.5903,
+     -36.0504,
+     25.7134,
+     0.29091,
+     0.635
+    ],
+    [
+     72.5903,
+     -28.0504,
+     26.2134,
+     0.3254,
+     0.62
+    ],
+    [
+     70.0903,
+     -23.5504,
+     20.7134,
+     0.22454,
+     0.565
+    ],
+    [
+     56.0903,
+     -29.0504,
+     31.7134,
+     0.18862,
+     0.54
+    ],
+    [
+     56.5903,
+     -23.0504,
+     27.7134,
+     0.12331,
+     0.525
+    ],
+    [
+     72.0903,
+     -36.5504,
+     32.2134,
+     0.31679,
+     0.505
+    ]
+   ],
+   "strongest": 0.675,
+   "bulk": 0.1399,
+   "pAffinity": "5.770",
+   "affinity_type": "pKi",
+   "affinity_value": "1.7",
+   "affinity_unit": "uM",
+   "affinity_error": "0.08",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 31",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_58",
+   "sites": [
+    [
+     72.353,
+     -36.5387,
+     32.0915,
+     0.31435,
+     0.705
+    ],
+    [
+     56.353,
+     -28.5387,
+     31.5915,
+     0.19168,
+     0.675
+    ],
+    [
+     74.353,
+     -42.0387,
+     27.5915,
+     0.3378,
+     0.665
+    ],
+    [
+     73.853,
+     -30.5387,
+     22.5915,
+     0.3272,
+     0.555
+    ],
+    [
+     72.853,
+     -28.0387,
+     26.0915,
+     0.31389,
+     0.555
+    ],
+    [
+     64.853,
+     -23.0387,
+     23.5915,
+     0.13795,
+     0.52
+    ]
+   ],
+   "strongest": 0.705,
+   "bulk": 0.1399,
+   "pAffinity": "6.854",
+   "affinity_type": "pKi",
+   "affinity_value": "0.14",
+   "affinity_unit": "uM",
+   "affinity_error": "0.01",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 58",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_34",
+   "sites": [
+    [
+     56.4729,
+     -25.6305,
+     27.9431,
+     0.23265,
+     0.75
+    ],
+    [
+     69.9729,
+     -24.1305,
+     20.9431,
+     0.21667,
+     0.61
+    ],
+    [
+     74.4729,
+     -41.6305,
+     27.4431,
+     0.29538,
+     0.6
+    ],
+    [
+     72.4729,
+     -28.1305,
+     26.4431,
+     0.31347,
+     0.57
+    ],
+    [
+     71.9729,
+     -36.6305,
+     31.9431,
+     0.27765,
+     0.55
+    ],
+    [
+     66.9729,
+     -42.6305,
+     36.4431,
+     0.17225,
+     0.52
+    ],
+    [
+     55.4729,
+     -28.6305,
+     31.4431,
+     0.2947,
+     0.515
+    ],
+    [
+     71.4729,
+     -36.1305,
+     25.4431,
+     0.21574,
+     0.5
+    ],
+    [
+     73.9729,
+     -31.1305,
+     22.9431,
+     0.33259,
+     0.5
+    ]
+   ],
+   "strongest": 0.75,
+   "bulk": 0.1399,
+   "pAffinity": "5.004",
+   "affinity_type": "pKi",
+   "affinity_value": "9.9",
+   "affinity_unit": "uM",
+   "affinity_error": "3.2",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 34",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_35",
+   "sites": [
+    [
+     69.8412,
+     -24.2512,
+     21.2061,
+     0.27241,
+     0.755
+    ],
+    [
+     56.3412,
+     -25.7512,
+     28.2061,
+     0.2146,
+     0.695
+    ],
+    [
+     72.3412,
+     -28.7512,
+     26.2061,
+     0.24889,
+     0.635
+    ],
+    [
+     72.3412,
+     -36.7512,
+     32.2061,
+     0.2851,
+     0.545
+    ],
+    [
+     74.3412,
+     -41.7512,
+     26.7061,
+     0.27318,
+     0.545
+    ],
+    [
+     71.8412,
+     -34.7512,
+     20.7061,
+     0.33604,
+     0.525
+    ],
+    [
+     60.8412,
+     -39.7512,
+     38.2061,
+     0.23659,
+     0.515
+    ],
+    [
+     72.3412,
+     -25.7512,
+     29.7061,
+     0.26791,
+     0.505
+    ]
+   ],
+   "strongest": 0.755,
+   "bulk": 0.1399,
+   "pAffinity": "6.420",
+   "affinity_type": "pKi",
+   "affinity_value": "0.38",
+   "affinity_unit": "uM",
+   "affinity_error": "0.14",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 35",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_49",
+   "sites": [
+    [
+     55.9912,
+     -28.6144,
+     31.8481,
+     0.21751,
+     0.83
+    ],
+    [
+     69.9912,
+     -24.6144,
+     20.8481,
+     0.2256,
+     0.72
+    ],
+    [
+     72.4912,
+     -27.6144,
+     26.3481,
+     0.3512,
+     0.64
+    ],
+    [
+     71.9912,
+     -36.6144,
+     32.3481,
+     0.33634,
+     0.62
+    ],
+    [
+     60.9912,
+     -40.6144,
+     38.3481,
+     0.24155,
+     0.615
+    ],
+    [
+     59.9912,
+     -31.1144,
+     37.3481,
+     0.28494,
+     0.58
+    ],
+    [
+     60.4912,
+     -32.6144,
+     39.8481,
+     0.18694,
+     0.54
+    ],
+    [
+     74.4912,
+     -42.1144,
+     27.3481,
+     0.32773,
+     0.525
+    ]
+   ],
+   "strongest": 0.83,
+   "bulk": 0.1399,
+   "pAffinity": "6.092",
+   "affinity_type": "pKi",
+   "affinity_value": "0.81",
+   "affinity_unit": "uM",
+   "affinity_error": "0.16",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 49",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_52",
+   "sites": [
+    [
+     56.2557,
+     -28.328,
+     31.5865,
+     0.23792,
+     0.76
+    ],
+    [
+     72.2557,
+     -27.828,
+     25.5865,
+     0.32661,
+     0.67
+    ],
+    [
+     72.2557,
+     -36.828,
+     32.5865,
+     0.33718,
+     0.615
+    ],
+    [
+     69.7557,
+     -23.828,
+     21.0865,
+     0.15004,
+     0.605
+    ],
+    [
+     56.2557,
+     -25.328,
+     28.0865,
+     0.17027,
+     0.565
+    ],
+    [
+     74.2557,
+     -30.828,
+     18.5865,
+     0.37673,
+     0.545
+    ],
+    [
+     61.2557,
+     -38.828,
+     37.5865,
+     0.23657,
+     0.515
+    ],
+    [
+     74.2557,
+     -42.328,
+     27.5865,
+     0.26666,
+     0.505
+    ]
+   ],
+   "strongest": 0.76,
+   "bulk": 0.1399,
+   "pAffinity": "6.721",
+   "affinity_type": "pKi",
+   "affinity_value": "0.19",
+   "affinity_unit": "uM",
+   "affinity_error": "0.02",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 52",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_48",
+   "sites": [
+    [
+     69.7738,
+     -24.1856,
+     21.3399,
+     0.21568,
+     0.63
+    ],
+    [
+     72.2738,
+     -28.1856,
+     26.3399,
+     0.29788,
+     0.63
+    ],
+    [
+     72.2738,
+     -36.1856,
+     31.8399,
+     0.31885,
+     0.625
+    ],
+    [
+     74.2738,
+     -31.6856,
+     18.8399,
+     0.32694,
+     0.55
+    ],
+    [
+     74.7738,
+     -41.6856,
+     27.3399,
+     0.35277,
+     0.545
+    ],
+    [
+     66.7738,
+     -42.6856,
+     36.3399,
+     0.22109,
+     0.51
+    ]
+   ],
+   "strongest": 0.63,
+   "bulk": 0.1399,
+   "pAffinity": "4.854",
+   "affinity_type": "pKi",
+   "affinity_value": "14",
+   "affinity_unit": "uM",
+   "affinity_error": "0.3",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 48",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_63",
+   "sites": [
+    [
+     56.4218,
+     -25.482,
+     28.1311,
+     0.24486,
+     0.785
+    ],
+    [
+     55.9218,
+     -28.482,
+     31.6311,
+     0.26522,
+     0.7
+    ],
+    [
+     72.4218,
+     -27.982,
+     25.6311,
+     0.25871,
+     0.67
+    ],
+    [
+     69.9218,
+     -23.982,
+     20.6311,
+     0.23748,
+     0.62
+    ],
+    [
+     58.4218,
+     -24.482,
+     34.6311,
+     0.28847,
+     0.615
+    ],
+    [
+     71.9218,
+     -36.982,
+     32.6311,
+     0.32635,
+     0.61
+    ],
+    [
+     74.4218,
+     -41.982,
+     27.6311,
+     0.30209,
+     0.51
+    ]
+   ],
+   "strongest": 0.785,
+   "bulk": 0.1399,
+   "pAffinity": "6.602",
+   "affinity_type": "pKi",
+   "affinity_value": "0.25",
+   "affinity_unit": "uM",
+   "affinity_error": "0.04",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 63",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_30",
+   "sites": [
+    [
+     62.604,
+     -42.0928,
+     20.796,
+     0.22611,
+     0.915
+    ],
+    [
+     69.604,
+     -24.0928,
+     20.796,
+     0.24336,
+     0.77
+    ],
+    [
+     60.104,
+     -31.0928,
+     37.296,
+     0.22165,
+     0.715
+    ],
+    [
+     56.604,
+     -25.5928,
+     28.296,
+     0.14171,
+     0.695
+    ],
+    [
+     68.604,
+     -26.5928,
+     20.296,
+     0.12143,
+     0.65
+    ],
+    [
+     72.104,
+     -36.5928,
+     32.296,
+     0.31294,
+     0.64
+    ],
+    [
+     74.104,
+     -42.0928,
+     27.296,
+     0.30924,
+     0.61
+    ],
+    [
+     72.604,
+     -28.0928,
+     26.296,
+     0.34335,
+     0.585
+    ],
+    [
+     55.604,
+     -28.0928,
+     31.796,
+     0.22324,
+     0.58
+    ],
+    [
+     56.604,
+     -23.0928,
+     27.796,
+     0.13741,
+     0.565
+    ],
+    [
+     71.604,
+     -36.0928,
+     25.796,
+     0.2384,
+     0.56
+    ],
+    [
+     61.604,
+     -29.0928,
+     37.296,
+     0.21866,
+     0.53
+    ]
+   ],
+   "strongest": 0.915,
+   "bulk": 0.1399,
+   "pAffinity": "5.721",
+   "affinity_type": "pKi",
+   "affinity_value": "1.9",
+   "affinity_unit": "uM",
+   "affinity_error": "0.6",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 30",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_33",
+   "sites": [
+    [
+     55.8416,
+     -28.5993,
+     31.6358,
+     0.22367,
+     0.73
+    ],
+    [
+     69.8416,
+     -24.0993,
+     21.1358,
+     0.14552,
+     0.695
+    ],
+    [
+     68.8416,
+     -26.5993,
+     20.1358,
+     0.13586,
+     0.61
+    ],
+    [
+     71.3416,
+     -36.0993,
+     25.1358,
+     0.2678,
+     0.565
+    ],
+    [
+     74.3416,
+     -42.0993,
+     27.6358,
+     0.27675,
+     0.54
+    ],
+    [
+     72.3416,
+     -36.5993,
+     32.1358,
+     0.3073,
+     0.53
+    ],
+    [
+     59.3416,
+     -30.5993,
+     37.6358,
+     0.19277,
+     0.515
+    ],
+    [
+     56.3416,
+     -25.5993,
+     28.1358,
+     0.19101,
+     0.5
+    ],
+    [
+     74.3416,
+     -31.0993,
+     18.6358,
+     0.34169,
+     0.5
+    ]
+   ],
+   "strongest": 0.73,
+   "bulk": 0.1399,
+   "pAffinity": "5.009",
+   "affinity_type": "pKi",
+   "affinity_value": "9.8",
+   "affinity_unit": "uM",
+   "affinity_error": "2.9",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 33",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_32",
+   "sites": [
+    [
+     69.7985,
+     -23.7061,
+     21.2692,
+     0.16852,
+     0.71
+    ],
+    [
+     72.2985,
+     -28.2061,
+     25.7692,
+     0.30014,
+     0.695
+    ],
+    [
+     56.2985,
+     -25.2061,
+     27.7692,
+     0.28366,
+     0.625
+    ],
+    [
+     72.2985,
+     -36.2061,
+     31.7692,
+     0.33841,
+     0.575
+    ],
+    [
+     74.2985,
+     -41.7061,
+     27.2692,
+     0.26634,
+     0.51
+    ],
+    [
+     71.7985,
+     -36.2061,
+     25.2692,
+     0.24675,
+     0.505
+    ],
+    [
+     72.2985,
+     -25.7061,
+     29.7692,
+     0.27979,
+     0.505
+    ]
+   ],
+   "strongest": 0.71,
+   "bulk": 0.1399,
+   "pAffinity": "4.796",
+   "affinity_type": "pKi",
+   "affinity_value": "16",
+   "affinity_unit": "uM",
+   "affinity_error": "3.1",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 32",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_28",
+   "sites": [
+    [
+     56.2086,
+     -25.2599,
+     27.9589,
+     0.30338,
+     0.73
+    ],
+    [
+     55.7086,
+     -29.2599,
+     31.4589,
+     0.23329,
+     0.685
+    ],
+    [
+     72.2086,
+     -36.2599,
+     31.9589,
+     0.2961,
+     0.675
+    ],
+    [
+     69.7086,
+     -23.7599,
+     20.9589,
+     0.16158,
+     0.63
+    ],
+    [
+     60.2086,
+     -31.7599,
+     37.4589,
+     0.23273,
+     0.625
+    ],
+    [
+     72.2086,
+     -27.7599,
+     25.9589,
+     0.29447,
+     0.615
+    ],
+    [
+     66.7086,
+     -43.2599,
+     35.9589,
+     0.27862,
+     0.56
+    ],
+    [
+     74.7086,
+     -31.2599,
+     18.9589,
+     0.35918,
+     0.5
+    ]
+   ],
+   "strongest": 0.73,
+   "bulk": 0.1399,
+   "pAffinity": "4.824",
+   "affinity_type": "pKi",
+   "affinity_value": "15",
+   "affinity_unit": "uM",
+   "affinity_error": "0.7",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 28",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  },
+  {
+   "name": "lig_27",
+   "sites": [
+    [
+     56.2876,
+     -25.8614,
+     27.8442,
+     0.21931,
+     0.66
+    ],
+    [
+     69.7876,
+     -23.8614,
+     20.8442,
+     0.17232,
+     0.625
+    ],
+    [
+     55.7876,
+     -28.8614,
+     31.3442,
+     0.24585,
+     0.615
+    ],
+    [
+     59.7876,
+     -31.3614,
+     37.3442,
+     0.21364,
+     0.615
+    ],
+    [
+     71.7876,
+     -36.3614,
+     31.8442,
+     0.32398,
+     0.605
+    ],
+    [
+     72.7876,
+     -27.8614,
+     26.3442,
+     0.34514,
+     0.585
+    ],
+    [
+     61.7876,
+     -29.3614,
+     37.3442,
+     0.18748,
+     0.565
+    ],
+    [
+     74.2876,
+     -41.8614,
+     27.3442,
+     0.20576,
+     0.535
+    ],
+    [
+     61.2876,
+     -40.3614,
+     38.3442,
+     0.18579,
+     0.51
+    ],
+    [
+     74.7876,
+     -39.3614,
+     25.8442,
+     0.26716,
+     0.505
+    ],
+    [
+     68.2876,
+     -26.3614,
+     20.3442,
+     0.16107,
+     0.5
+    ]
+   ],
+   "strongest": 0.66,
+   "bulk": 0.1399,
+   "pAffinity": "4.456",
+   "affinity_type": "pKi",
+   "affinity_value": "35.0",
+   "affinity_unit": "uM",
+   "affinity_error": "7.1",
+   "measurement_doi": "10.1021/jm301448p",
+   "measurement_comment": "Table 3, entry 27",
+   "target": "mcl1",
+   "pdb": "4HW3",
+   "series": "Schrodinger JACS",
+   "target_comment": "hydrophobic interactions contributing to binding",
+   "source": "Open Force Field protein-ligand-benchmark (github.com/openforcefield/protein-ligand-benchmark, MIT licence); ligand poses from the benchmark, affinities from the cited publications"
+  }
+ ]
+}

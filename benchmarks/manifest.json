@@ -1,6 +1,6 @@
 {
- "commit": "7b91e9b3c84a4f75bc73ceb3169a0d48d36e8243",
- "created": "2026-10-28T03:53:53",
+ "commit": "e5f75779a83177cddbbe63266faa5fd791d6a4a5",
+ "created": "2026-10-28T06:47:11",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -630,6 +630,10 @@
    "bytes": 15923,
    "sha256": "b1a438023258c9840325d3e6016f71c5638f22c03d3b7678259ae4578cbdaadb"
   },
+  "examples/make_md_trajectories.py": {
+   "bytes": 20227,
+   "sha256": "f162272a742dd0e309794ec84857133951719e115d9dfc744f1c0b27441fae5a"
+  },
   "examples/make_mittal_examples.py": {
    "bytes": 10432,
    "sha256": "0cc9df0c21689d5d102d05994ba1cb305a309cd7579d98e1d02e98e85239e250"
@@ -661,6 +665,22 @@
   "examples/make_two_endpoint_example.py": {
    "bytes": 3336,
    "sha256": "d49b9a94e7f574e0f86dbda86d75461a6a7b9a22b12fc58e5a5edf524c7d093a"
+  },
+  "examples/md/README.md": {
+   "bytes": 2787,
+   "sha256": "dfca7597dce5ccffc755b14e937a568f95970695e9fe682a3e2c0b396e400ffc"
+  },
+  "examples/md/mcl1_md.sdf": {
+   "bytes": 1242544,
+   "sha256": "7b13e706b74812b02596f1f9f0d13e13dd6e3d10798c48dd56c6a2d98d49573d"
+  },
+  "examples/md/mcl1_md_ownframe.sdf": {
+   "bytes": 1242700,
+   "sha256": "2a58d19e38d845e4c971a571023e75d49664610c891103ee1d7bf48ac85b854b"
+  },
+  "examples/md/provenance.json": {
+   "bytes": 788,
+   "sha256": "02cdad43e2a2d198b1fd83c25673a101a21c6c27a37de5486d8d45fc081f8a22"
   },
   "examples/mittal/ACE.sdf": {
    "bytes": 491549,
@@ -1994,6 +2014,8 @@
   "benchmarks/results/matbench_phonons/physchem+mass.json": "80aa2701c2b6045fa5a17c558984d40cffdd3cfa793d8dcac8bf59d121417d64",
   "benchmarks/results/matbench_phonons/physchem.json": "aa43a12035be5672fe1b71a1375028bd8731998c0268ae5fb0f879e80f8ee04d",
   "benchmarks/results/matbench_phonons/table.md": "c4edcd573fc1f1e5345b423ec928a101be42e5f1f671c9a1763454c4e4f46b75",
+  "benchmarks/results/md/mcl1.json": "8de0f672089f620c2c03d2f536db6fde5c84b3327d78b45e90d993c5d4fe5344",
+  "benchmarks/results/md/table.md": "fa53f94dc66344056772b5df794060d16ed2ba9aad5c2b199485f666a2fcd3d2",
   "benchmarks/results/metabolism/summary.json": "59860be17e0346e694b88f908daef57ab6994b0e0239bb22dea2abe5161d332d",
   "benchmarks/results/metabolism/table.md": "18a2b24409b7df74b4c6ce4bed0b8ba27a31d12397e32a21b3a0c207caed30e7",
   "benchmarks/results/mixing/ACE.json": "10263c6114c38c60b7e9e5f6b808ea912446d732aa15970204ab9f19cbbe28e1",

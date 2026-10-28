@@ -3505,6 +3505,36 @@ time). What this does **not** say is whether a trajectory beats a crystal pose: 
 D8 and needs simulations this repository does not have.
 
 
+### The water as a field
+
+Plan item D9. Every other field in this program sits on the atoms of the molecule; this one does
+not. `cmfqsar/solvent.py` reads a water occupancy map from the simulations of D8 -- for each grid
+point, the share of frames a water oxygen is within 1 A of it -- takes its peaks as hydration
+sites, and fits Gaussians to the map at those sites by non-negative least squares. On mcl1 that
+is 7.8 sites a ligand, the strongest averaging 73% occupancy against 14% for bulk water. The
+field is a kernel block of its own, mixed with the five physico-chemical fields under one
+coefficient.
+
+| model | q2 | change against the five fields |
+| --- | ---: | --- |
+| the five fields alone | **+0.575** | the reference |
+| the five fields and the water | +0.558 | -0.017 [-0.186, +0.198] |
+| the water alone | +0.231 | - |
+| random sites alone (control) | -0.034 | - |
+| one shared set of sites alone (control) | -0.138 | - |
+
+**The water field does not improve the model.** What the controls add is the interesting part:
+the water field alone reaches +0.231 while random sites reach -0.034 and one shared set of sites
+-0.138, so **where the water sits does carry information about activity** -- information the
+ligand's own fields apparently already carry. The co-field over the sites says where the model
+asks for more water and where for less; under rule 5 it is a display tool, since the block does
+not improve the model.
+
+```bash
+python benchmarks/run_solvent.py          # results/solvent/table.md
+```
+
+
 ### Does a trajectory beat the crystal pose?
 
 Plan item D8, the measurement `cmfqsar/trajectory.py` was built for. The 25 ligands of the mcl1

@@ -18,6 +18,11 @@ cmf build examples/md/mcl1_md.sdf --activity pAffinity --ensemble-by name \
 Each molecule carries `conformer_weights`, the share of simulation frames that fell in that
 conformation's cluster, and the activity of the ligand as the source collection gives it.
 
+Beside it, `<set>_water.json` holds the **hydration sites** of every ligand, for plan item D9:
+the positions where a water sits in the site, each with the share of frames it is occupied and
+the coefficient fitted to the occupancy map. `cmfqsar/solvent.py` turns those into a field and
+`benchmarks/run_solvent.py` measures whether that field is worth a sixth kernel block.
+
 ## How they were made
 
 Every ligand was simulated for **2 ns** at 300 K and 1 bar, after 200 ps of equilibration with the alpha carbons restrained at 5 kcal/mol/A^2. The force fields are gaff-2.11 for the ligand with AM1-BCC charges, amber14-all.xml for the protein and TIP3P water with 0.15 M of ions, in a box with 10 A of padding; the time step is 4 fs with hydrogen mass repartitioning and a frame was written every 10 ps. The frames were then superimposed on the binding-site backbone and thinned to at most 20 conformations at a clustering radius of 0.75 A. Where the crystal entry holds several copies of the protein, only the chain lining the site the ligands occupy was kept.
