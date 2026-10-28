@@ -2214,6 +2214,8 @@ python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task class
        --threshold 6.84 --method kfda --lams 0.01,0.03,0.1,0.3,1,3 --normalize
 ```
 
+![The co-field of the kernel Fisher discriminant on the AChE set of the command above, 56 actives above pIC50 6.84 against 55 inactives, with the charges of the file, α = 0.5 and λ = 0.01, with the most active ligand drawn over it. Red is field that moves a molecule towards the actives, blue towards the inactives: the electrostatic map alternates in sign along the chain between the two aromatic ends, and the steric map asks for bulk around its middle. Because the discriminant score is linear in the field, the map is read exactly as a regression co-field.](docs/figures/kfda.png)
+
 ### Measured against the other classifiers
 
 `benchmarks/run_kfda.py` puts four learners on one kernel and one set of folds, on the two
@@ -3884,6 +3886,8 @@ et al. (2011). Five descriptions of the active class are implemented:
 On the sets measured here the 1-SVM is the **most fragile** of the five: the centroid, k-NN and
 kernel-PCA descriptions are as good or better and have one parameter fewer to go wrong. Try more
 than one; they disagree in interesting places.
+
+![The co-field of the one-class SVM fitted on the 88 thrombin inhibitors alone, with the charges of the file, α = 0.5 and ν = 0.1, in the mean plane of the series, with the most active inhibitor drawn over it. A one-class model sees no inactives, so its co-field is a description of the active class: red is where the actives have field in common, the positive charge of the amidine at the left end in the electrostatic map and the whole skeleton in the steric one. The score of a new molecule is its overlap with this map, and the boundary is a threshold on that score.](docs/figures/oneclass.png)
 
 ## Decoys and the figures that matter
 

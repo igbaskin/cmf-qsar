@@ -554,6 +554,77 @@ def fig_scale(path):
     save(fig, path)
 
 
+def sutherland_model(name, task, method, params, alpha=0.5, labels=None):
+    """A model on one Sutherland set with the charges of the file, and the frame to draw it in."""
+    from cmfqsar import CMFModel
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.fields import AtomTable, FieldSet, build_fields
+    ds = load_dataset(os.path.join(ROOT, "examples", "sutherland", f"{name}.sdf"))
+    fs = FieldSet.create(alpha=alpha, charge_model="file")
+    mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+    train = AtomTable.from_molecules(mf)
+    y = ds.activity if labels is None else labels(ds.activity)
+    model = CMFModel(fieldset=fs, task=task, method=method, normalize=True, params=params)
+    model.fit(train, y, cv_folds=5)
+    frame = plane_of(mf)
+    xy = np.vstack([project(frame, m.coords) for m in mf])
+    lo, hi = xy.min(axis=0) - 2.0, xy.max(axis=0) + 2.0
+    xs, ys = np.arange(lo[0], hi[0], 0.15), np.arange(lo[1], hi[1], 0.15)
+    return {"ds": ds, "fs": fs, "mf": mf, "model": model, "frame": frame, "xs": xs, "ys": ys}
+
+
+def two_cofields(c, ref, path, titles, suptitle):
+    """The electrostatic and the steric co-field of a model in its plane, with one molecule drawn."""
+    import matplotlib.pyplot as plt
+    fs, model, frame, xs, ys = c["fs"], c["model"], c["frame"], c["xs"], c["ys"]
+    pts, shape = plane_points(frame, xs, ys)
+    # the height follows the shape of the series, so a long flat series leaves no empty band
+    height = min(3.4, max(2.3, 0.5 * WIDTH * (ys[-1] - ys[0]) / (xs[-1] - xs[0]) + 1.0))
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, height))
+    for ax, name, title in zip(axes, ("electrostatic", "steric"), titles):
+        f = fs.names.index(name)
+        Z = cofield_slice(model, f, pts).reshape(shape)
+        im = signed_map(ax, Z, xs, ys)
+        draw_skeleton(ax, ref, frame)
+        ax.set_title(title)
+        axes_in_angstrom(ax, ylabel=ax is axes[0])
+        fig.colorbar(im, ax=ax, shrink=0.85, pad=0.03).ax.tick_params(labelsize=7)
+    fig.suptitle(suptitle, fontsize=9)
+    fig.tight_layout()
+    save(fig, path)
+
+
+def fig_oneclass(path):
+    """Chapter 9: the co-field of a one-class SVM fitted on the thrombin inhibitors alone."""
+    nu = 0.1
+    c = sutherland_model("THR", "oneclass", "ocsvm", {"nu": nu})
+    ds, mf, model = c["ds"], c["mf"], c["model"]
+    ref = mf[int(np.argmax(ds.activity))]
+    st = model.stats
+    print(f"  one-class SVM on THR: {len(mf)} actives, nu = {nu}, {st.n_support} support vectors, "
+          f"{st.inlier_fraction:.2f} of the training set inside; drawn with {ref.name}")
+    two_cofields(c, ref, path, ("electrostatic co-field", "steric co-field"),
+                 f"one-class SVM of the {len(mf)} thrombin inhibitors, ν = {nu:g}, "
+                 f"{st.n_support} support vectors")
+
+
+def fig_kfda(path):
+    """Chapter 7: the co-field of the kernel Fisher discriminant on AChE, active above pIC50 6.84."""
+    threshold, lam = 6.84, 0.01
+    c = sutherland_model("AChE", "classification", "kfda", {"lam": lam},
+                         labels=lambda a: np.where(a >= threshold, 1.0, -1.0))
+    ds, mf, model = c["ds"], c["mf"], c["model"]
+    ref = mf[int(np.argmax(ds.activity))]
+    cv = model.stats.cv or {}
+    auc = float(cv.get("auc", float("nan")))
+    n_act = int(np.sum(ds.activity >= threshold))
+    print(f"  kernel FDA on AChE: {n_act} of {len(mf)} active above {threshold}, lambda = {lam}, "
+          f"cross-validated AUC {auc:.3f}; drawn with {ref.name}")
+    two_cofields(c, ref, path, ("electrostatic co-field", "steric co-field"),
+                 f"kernel Fisher discriminant of AChE: {n_act} actives against "
+                 f"{len(mf) - n_act} inactives, λ = {lam:g}, cross-validated AUC {auc:.2f}")
+
+
 FIGURES = {
     "fields.png": fig_fields,
     "overlap.svg": fig_overlap,
@@ -561,6 +632,8 @@ FIGURES = {
     "errorpred.svg": fig_errorpred,
     "cofield.png": fig_cofield,
     "overlapmap.png": fig_overlapmap,
+    "oneclass.png": fig_oneclass,
+    "kfda.png": fig_kfda,
     "selectivity.png": fig_selectivity,
     "envelope.svg": fig_envelope,
     "scale.svg": fig_scale,
