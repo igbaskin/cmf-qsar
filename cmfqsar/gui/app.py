@@ -7,7 +7,9 @@ import sys
 
 def main(argv=None):
     p = argparse.ArgumentParser(description="CMF 3D-QSAR desktop application")
-    p.add_argument("dataset", nargs="?", help="structure file to load as training set")
+    p.add_argument("dataset", nargs="?",
+                   help="structure file to load as training set, or a project file (.cmfproj) "
+                        "to reopen")
     p.add_argument("--activity", default=None, help="SD property with activity values")
     p.add_argument("--test-fraction", type=float, default=0.0)
     p.add_argument("--autotest", default=None, metavar="PNG",
@@ -46,7 +48,11 @@ def main(argv=None):
             if args.autotest:
                 _autotest(win, args.autotest)
 
-        win.load_dataset_file(args.dataset, "train", activity=args.activity, on_loaded=after_load)
+        from ..project import PROJECT_EXTENSION, is_project_file
+        if args.dataset.lower().endswith(PROJECT_EXTENSION) or is_project_file(args.dataset):
+            win.load_project_file(args.dataset, on_loaded=after_load)
+        else:
+            win.load_dataset_file(args.dataset, "train", activity=args.activity, on_loaded=after_load)
 
     return app.exec()
 

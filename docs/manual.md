@@ -614,7 +614,8 @@ Twelve tabs, each filled by the work that produces it:
 
 **File** — *Open training set…* (Ctrl+O), *Add test set…*, *Add decoys (background set)…*, *Import
 activities from CSV…*; *Load protein structure (PDB/mmCIF)…*, *Fetch protein from the PDB…*,
-*Forget protein structure*; *Load model…* (Ctrl+L), *Save model…* (Ctrl+S); *Export predictions
+*Forget protein structure*; *Open project…* (Ctrl+Shift+O), *Save project* (Ctrl+Shift+S), *Save
+project as…*; *Load model…* (Ctrl+L), *Save model…* (Ctrl+S); *Export predictions
 (CSV)…*, *Export aligned data set (SDF)…*, *Export current co-field (Gaussian cube)…*, *Export
 current Shapley field (Gaussian cube)…*, *Save 3D view as image…*; *Quit* (Ctrl+Q).
 
@@ -626,7 +627,8 @@ reference…*; *Align by prediction confidence (GP variance)…* and its cross-v
 training set; *Replace molecules by their topomer substituents…*; *Field difference from a
 reference molecule…*; *Extract pharmacophore from the co-field…*; *Model several endpoints (selectivity co-field)…*;
 *Chemical space map…*;
-*Align decoys to the training set…*; *Unalign (randomise poses)…*; *Center view on current
+*Align decoys to the training set…*; *Unalign (randomise poses)…*; *Undo last alignment step*
+(Ctrl+Z); *Compare two models on these molecules…*; *Center view on current
 molecule*; *Quantum-chemical properties with ORCA…* and *Save the data set with its
 properties (SDF)…*; and the submenu *Heterogeneous sets (several chemotypes)* with its four numbered steps.
 
@@ -635,6 +637,49 @@ part of the program implements.
 
 Every *Tools* entry opens a dialog that states what it is about to do and on which molecules, and
 each one runs in the background with the progress bar and the *Cancel* button live.
+
+## Projects: a session that can be reopened, a step that can be undone
+
+A session is more than a model. It is the molecules with the poses they have now, the poses they
+had before each step that moved them, the settings of every panel, the model with the molecules
+it was fitted and tested on, the search table, the validation report and the log. *File → Save
+project* writes all of it to one file (`.cmfproj`), and *Open project* brings the session back
+as it was: the panels show the settings, the Results panel shows the model's statistics and
+plots, the log of the saved session is appended to the new one, and the protein structure comes
+back with the molecules. A project file given on the command line is opened the same way:
+
+```bash
+python cmf_app.py series.cmfproj
+```
+
+The model inside a project is the same object a model file holds, so *Save model* still exists
+for the case where only the model is wanted, for `cmf predict`, `cmf screen` or a colleague.
+
+**Undo.** Every step that moves molecules — *Align data set to reference*, the two
+confidence-based alignments, *Unalign*, *Dock into the pocket*, *Generate conformations*,
+*Align decoys* and the two chemotype steps that move anything — first keeps a snapshot of every
+conformer of every molecule. *Tools → Undo last alignment step* (Ctrl+Z) puts the molecules back
+to the latest snapshot and names the step it undid; a second Ctrl+Z undoes the step before, and
+so on. The molecules move, so the model fitted on the previous poses is discarded, as it is after
+any alignment; the fields are rebuilt and the view follows. The snapshots travel with the
+project, so a step can be undone after the session has been closed and reopened. The last fifty
+steps are kept; a snapshot taken before conformations were generated removes them again when it
+is restored.
+
+**Two models on the same molecules.** *Tools → Compare two models on these molecules…* takes
+model A and model B — the model of this session, a model file or a project file for either — and
+predicts every loaded molecule with both. The window that opens lists, per molecule, the
+experimental value, the two predictions and their difference, sorted by the difference so the
+molecules the two models disagree about come first; above the table are the RMSE and r² of each
+model on the training, test and whole set, the correlation of the two prediction vectors, the
+mean and largest difference, and on how many molecules B is nearer the measurement than A. The
+same lines go to the log, and *Save as CSV…* keeps the table.
+
+Both models see the molecules as they are posed now. That is what makes the comparison useful
+after a realignment — build a model, realign, build again, compare the two on the new poses — and
+it is also the caveat: a model fitted in another frame is being asked about poses it never saw,
+and will look wrong because the frame moved, not because the model is worse. Compare models
+that share a frame, or compare on the frame of the model being judged.
 
 # Preparing the data
 

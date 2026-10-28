@@ -24,9 +24,12 @@ from ..contract import check_molecules, summary as model_summary
 from ..dataio import Dataset, load_dataset, load_model, numeric_properties, save_model, write_predictions_csv, write_sdf
 from ..fields import AtomTable, FieldSet, MoleculeFields, build_fields, cif_types_in
 from ..model import DEFAULT_COMPONENTS, CMFModel, grid_search, nested_cv
+from ..project import (PROJECT_EXTENSION, PoseHistory, Project, compare_models, is_project_file,
+                       load_project, save_project)
 from ..protein import (binding_site, contact_distance, fetch_pdb, find_pocket,
                        read_structure, residue_anchors)
-from .panels import DatasetPanel, ModelPanel, ResultsPanel, ViewerControls
+from .panels import (DatasetPanel, ModelPanel, ResultsPanel, ViewerControls, apply_field_table,
+                     apply_settings, capture_settings)
 from .viewer3d import Viewer3D, cofield_colors
 from .workers import TaskWorker
 
@@ -1349,6 +1352,124 @@ class SelectivityDialog(QDialog):
         return tuple(out) or (1.0,)
 
 
+class CompareModelsDialog(QDialog):
+    """Which two models to score on the loaded molecules (plan item G2)."""
+    SOURCES = ["the model of this session", "a model file (.cmf)", "a project file (.cmfproj)"]
+
+    def __init__(self, has_current: bool, parent=None):
+        from PySide6.QtWidgets import (QComboBox, QGridLayout, QHBoxLayout, QLabel, QLineEdit,
+                                       QPushButton, QVBoxLayout)
+        super().__init__(parent)
+        self.setWindowTitle("Compare two models on these molecules")
+        lay = QVBoxLayout(self)
+        note = QLabel("Both models predict every loaded molecule as it is posed now, so a model "
+                      "fitted on another alignment of the series is judged on this one. That is "
+                      "the comparison to make after a realignment, and its caveat: a model built "
+                      "in another frame will look wrong here because the frame moved, not "
+                      "because the model is worse.")
+        note.setWordWrap(True)
+        lay.addWidget(note)
+        grid = QGridLayout()
+        for col, head in enumerate(["", "Source", "File", "", "Label"]):
+            grid.addWidget(QLabel(head), 0, col)
+        self._rows = []
+        for k, letter in enumerate(("A", "B")):
+            cmb = QComboBox()
+            cmb.addItems(self.SOURCES)
+            cmb.setCurrentIndex(0 if (k == 0 and has_current) else 1)
+            ed = QLineEdit()
+            ed.setPlaceholderText("model or project file")
+            ed.setMinimumWidth(260)
+            btn = QPushButton("Browse…")
+            lab = QLineEdit(letter)
+            lab.setMaximumWidth(120)
+            grid.addWidget(QLabel(f"Model {letter}"), k + 1, 0)
+            grid.addWidget(cmb, k + 1, 1)
+            grid.addWidget(ed, k + 1, 2)
+            grid.addWidget(btn, k + 1, 3)
+            grid.addWidget(lab, k + 1, 4)
+            btn.clicked.connect(lambda _=False, e=ed, c=cmb: self._browse(e, c))
+            cmb.currentIndexChanged.connect(lambda ix, e=ed, b=btn: (e.setEnabled(ix > 0),
+                                                                     b.setEnabled(ix > 0)))
+            ed.setEnabled(cmb.currentIndex() > 0)
+            btn.setEnabled(cmb.currentIndex() > 0)
+            self._rows.append((cmb, ed, lab))
+        lay.addLayout(grid)
+        bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        bb.accepted.connect(self._accept)
+        bb.rejected.connect(self.reject)
+        lay.addWidget(bb)
+
+    def _browse(self, ed, cmb):
+        proj = cmb.currentIndex() == 2
+        flt = (f"CMF project (*{PROJECT_EXTENSION});;All files (*)" if proj
+               else "CMF model (*.cmf);;All files (*)")
+        path, _ = QFileDialog.getOpenFileName(self, "Choose a model", "", flt)
+        if path:
+            ed.setText(path)
+
+    def _accept(self):
+        for k, (cmb, ed, _lab) in enumerate(self._rows):
+            if cmb.currentIndex() > 0 and not os.path.exists(ed.text().strip()):
+                QMessageBox.information(self, "File", f"Model {'AB'[k]}: choose an existing file.")
+                return
+        self.accept()
+
+    def side(self, k: int):
+        """(source index, file path, label) of model A (0) or B (1)."""
+        cmb, ed, lab = self._rows[k]
+        return cmb.currentIndex(), ed.text().strip(), lab.text().strip()
+
+
+class ComparisonWindow(QDialog):
+    """The two models' predictions side by side, with the summary and a CSV export."""
+
+    def __init__(self, cmp, parent=None):
+        from PySide6.QtWidgets import (QAbstractItemView, QHBoxLayout, QLabel, QPushButton,
+                                       QTableWidget, QTableWidgetItem, QVBoxLayout)
+        from .panels import _NumItem
+        super().__init__(parent)
+        self.cmp = cmp
+        self.setWindowTitle(f"Two models: {cmp.label_a} against {cmp.label_b}")
+        self.setModal(False)
+        self.resize(760, 560)
+        lay = QVBoxLayout(self)
+        summary = QLabel("\n".join(cmp.lines()))
+        summary.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        lay.addWidget(summary)
+        heads = ["Molecule", "Subset", "Experimental", cmp.label_a, cmp.label_b, "B − A"]
+        tbl = QTableWidget(len(cmp.rows), len(heads))
+        tbl.setHorizontalHeaderLabels(heads)
+        tbl.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        tbl.setSelectionBehavior(QAbstractItemView.SelectRows)
+        for r, row in enumerate(cmp.rows):
+            tbl.setItem(r, 0, QTableWidgetItem(row.name))
+            tbl.setItem(r, 1, QTableWidgetItem(row.subset))
+            for c, v in enumerate((row.y, row.pred_a, row.pred_b, row.difference), start=2):
+                txt = "" if not np.isfinite(v) else (f"{v:+.3f}" if c == 5 else f"{v:.3f}")
+                tbl.setItem(r, c, _NumItem(v if np.isfinite(v) else -np.inf, txt))
+        tbl.setSortingEnabled(True)
+        tbl.sortItems(5, Qt.DescendingOrder)
+        tbl.resizeColumnsToContents()
+        self.table = tbl
+        lay.addWidget(tbl, 1)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        btn_csv = QPushButton("Save as CSV…")
+        btn_csv.clicked.connect(self._save_csv)
+        btn_close = QPushButton("Close")
+        btn_close.clicked.connect(self.close)
+        row.addWidget(btn_csv)
+        row.addWidget(btn_close)
+        lay.addLayout(row)
+
+    def _save_csv(self):
+        path, _ = QFileDialog.getSaveFileName(self, "Save the comparison", "comparison.csv",
+                                              "CSV (*.csv)")
+        if path:
+            self.cmp.to_csv(path)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -1385,6 +1506,9 @@ class MainWindow(QMainWindow):
         self._mol_volume_cache: Dict[tuple, np.ndarray] = {}
         self.worker: Optional[TaskWorker] = None
         self._pose_reference: Optional[Dict[int, np.ndarray]] = None   # poses before "Unalign"
+        self.history = PoseHistory()        # the poses before every step that moved molecules
+        self.project_path: Optional[str] = None
+        self.model_target = None
         self._display_timer = QTimer(self)
         self._display_timer.setSingleShot(True)
         self._display_timer.setInterval(60)
@@ -1456,6 +1580,10 @@ class MainWindow(QMainWindow):
         self._act(fm, "Fetch protein from the PDB…", self.fetch_protein)
         self._act(fm, "Forget protein structure", self.clear_protein)
         fm.addSeparator()
+        self._act(fm, "Open project…", self.open_project_file, "Ctrl+Shift+O")
+        self._act(fm, "Save project", self.save_project_file, "Ctrl+Shift+S")
+        self._act(fm, "Save project as…", lambda: self.save_project_file(save_as=True))
+        fm.addSeparator()
         self._act(fm, "Load model…", self.load_model_file, "Ctrl+L")
         self._act(fm, "Save model…", self.save_model_file, "Ctrl+S")
         fm.addSeparator()
@@ -1493,6 +1621,9 @@ class MainWindow(QMainWindow):
         tm.addSeparator()
         self._act(tm, "Align decoys to the training set…", self.align_decoys_dialog)
         self._act(tm, "Unalign (randomise poses)…", self.unalign_dialog)
+        self.act_undo = self._act(tm, "Undo last alignment step", self.undo_alignment, "Ctrl+Z")
+        self.act_undo.setEnabled(False)
+        self._act(tm, "Compare two models on these molecules…", self.compare_models_dialog)
         self._act(tm, "Center view on current molecule", self.center_current)
         tm.addSeparator()
         self._act(tm, "Quantum-chemical properties with ORCA…", self.orca_dialog)
@@ -2241,6 +2372,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.Yes:
             return
         mols = self.ds.mols
+        self._remember_poses("Align within chemotypes")
 
         def task(progress, cancel):
             return align_within_groups(mols, labels, progress=progress, cancel=cancel)
@@ -2272,6 +2404,7 @@ class MainWindow(QMainWindow):
         fs = self._fieldset_from_panel()
         fs.conformers = "single"
         mols, protein = self.ds.mols, self.protein
+        self._remember_poses("Place chemotypes in one frame")
 
         def task(progress, cancel):
             pocket = None
@@ -2390,6 +2523,7 @@ class MainWindow(QMainWindow):
         align_to, ref_index = dlg.alignment(), dlg.reference_index()
         fs = self._fieldset_from_panel() if align_to == "field" else None
         mols = list(self.ds.mols)
+        self._remember_poses(f"Generate {n} conformations")
 
         def task(progress, cancel):
             from ..conformers import generate_for_dataset
@@ -2441,6 +2575,7 @@ class MainWindow(QMainWindow):
             return
         restarts, tether = dlg.spin_restarts.value(), dlg.spin_tether.value()
         keep = dlg.spin_keep.value()
+        self._remember_poses(f"Dock into {self.protein.name}")
         fs = self._fieldset_from_panel()
         fs.conformers = "single"          # the docking scores one placement at a time
         mols, protein = list(self.ds.mols), self.protein
@@ -3395,6 +3530,7 @@ class MainWindow(QMainWindow):
         max_rmsd, restarts = dlg.max_rmsd(), dlg.spin_restarts.value()
         flexible, conformers = dlg.flexible(), dlg.conformers()
         slack = dlg.energy_slack()
+        self._remember_poses("Align by prediction confidence")
         model, fs = self.model, self.model.fieldset
         mols, names = self.ds.mols, self.ds.names
         if flexible:
@@ -3819,6 +3955,7 @@ class MainWindow(QMainWindow):
         if dlg.exec() != QDialog.Accepted:
             return
         n, n_conf = dlg.spin_restarts.value(), dlg.spin_conformers.value()
+        self._remember_poses(f"Align {len(dec)} decoys to the training set")
         fs = self.model.fieldset if self.model is not None else self._fieldset_from_panel()
         mols, names = self.ds.mols, self.ds.names
 
@@ -4152,6 +4289,7 @@ class MainWindow(QMainWindow):
             return
         from ..align import unalign
         fs = self.model.fieldset if self.model is not None else self._display_fieldset()
+        self._remember_poses(f"Unalign {len(idx)} molecules")
         if self._pose_reference is None:
             self._pose_reference = {}
         mf = []
@@ -4200,6 +4338,7 @@ class MainWindow(QMainWindow):
             return
         rounds, folds = dlg.spin_rounds.value(), dlg.spin_folds.value()
         max_rmsd, restarts = dlg.max_rmsd(), dlg.spin_restarts.value()
+        self._remember_poses("Align training set by prediction confidence")
         mp = self.model_panel
         params = dict(self.model.params) if self.model is not None else {"lam": 1.0}
         method = self.model.method if self.model is not None else mp.method_key()
@@ -4254,6 +4393,7 @@ class MainWindow(QMainWindow):
         use_mcs, refine = dlg.chk_mcs.isChecked(), dlg.chk_field.isChecked()
         fs = self._fieldset_from_panel()
         mols = self.ds.mols
+        self._remember_poses(f"Align to {self.ds.names[ref]}")
 
         def task(progress, cancel):
             return align_dataset(mols, ref, use_mcs=use_mcs, field_refine=refine, fieldset=fs,
@@ -4268,6 +4408,251 @@ class MainWindow(QMainWindow):
             self.results_panel.tabs.setCurrentIndex(4)
 
         self.run_task(task, done, "Aligning")
+
+    # ------------------------------------------------------------------ projects (plan item G2)
+    def _remember_poses(self, label: str) -> None:
+        """Keep the poses before a step that moves molecules, so that the step can be undone."""
+        if self.ds is None:
+            return
+        self.history.remember(self.ds.mols, label)
+        self._refresh_undo_action()
+
+    def _refresh_undo_action(self) -> None:
+        lab = self.history.last_label
+        self.act_undo.setEnabled(lab is not None)
+        self.act_undo.setText("Undo last alignment step" + (f" ({lab})" if lab else ""))
+
+    def undo_alignment(self):
+        """Put the molecules back where they were before the last step that moved them."""
+        if self.ds is None or not len(self.history):
+            QMessageBox.information(self, "Nothing to undo",
+                                    "No step has moved the molecules in this session.")
+            return
+        try:
+            label, moved = self.history.undo(self.ds.mols)
+        except ValueError as exc:
+            self.error(f"Could not undo: {exc}")
+            return
+        self._pose_reference = None
+        self._after_poses_changed()          # rebuilds the fields and drops the model
+        self._update_conformer_info()
+        self._refresh_undo_action()
+        ok = np.isfinite(moved)
+        n = int((moved[ok] > 1e-6).sum())
+        msg = f"Undid '{label}': {n} molecules moved back"
+        if ok.any():
+            msg += f", {np.nanmean(moved[ok]):.2f} A on average (max {np.nanmax(moved[ok]):.2f})"
+        msg += (f"; {len(self.history)} earlier step(s) can still be undone."
+                if len(self.history) else ".")
+        self.log(msg)
+
+    def _session_settings(self) -> dict:
+        return {"model_panel": capture_settings(self.model_panel),
+                "dataset_panel": capture_settings(self.dataset_panel),
+                "controls": capture_settings(self.controls),
+                "results_full_width": bool(self.act_full_width.isChecked())}
+
+    def _apply_session_settings(self, settings: dict) -> None:
+        mp = self.model_panel
+        for key, panel in (("model_panel", mp), ("dataset_panel", self.dataset_panel),
+                           ("controls", self.controls)):
+            apply_settings(panel, settings.get(key) or {})
+        for fn in ("_task_changed", "_kernel_changed", "_conformers_changed"):
+            f = getattr(mp, fn, None)
+            if callable(f):
+                try:
+                    f()
+                except Exception:  # noqa: BLE001 - a handler that needs a data set
+                    pass
+        self.refresh_fieldset()
+        apply_field_table(mp, (settings.get("model_panel") or {}).get("__fields__", {}))
+        self.refresh_fieldset()              # keeps the edits and rebuilds the field set
+        full = bool(settings.get("results_full_width", False))
+        self.act_full_width.setChecked(full)
+        self.toggle_results_span(full)
+
+    def _project_from_session(self) -> Project:
+        return Project(dataset=self.ds, settings=self._session_settings(),
+                       history=list(self.history.steps),
+                       model_state=self.model.state() if self.model is not None else None,
+                       train_indices=list(self.model_train_idx),
+                       test_indices=list(self.model_test_idx),
+                       decoy_indices=list(getattr(self, "model_decoy_idx", None) or []),
+                       search_rows=list(self.search_rows), validation=self.validation,
+                       log=self.results_panel.log.toPlainText(), protein=self.protein,
+                       protein_path=str(getattr(self.protein, "path", "") or ""),
+                       target=None if self.model_target is None
+                       else np.asarray(self.model_target, float))
+
+    def _set_project_path(self, path: Optional[str]) -> None:
+        self.project_path = path
+        base = f"CMF 3D-QSAR  –  Continuous Molecular Fields  (v{__version__})"
+        self.setWindowTitle(f"{os.path.basename(path)}  –  {base}" if path else base)
+
+    def save_project_file(self, save_as: bool = False):
+        """Write the session: molecules and poses, pose history, settings, model, results."""
+        if self.ds is None:
+            QMessageBox.information(self, "Nothing to save",
+                                    "Load a data set first; a project is a session.")
+            return
+        path = self.project_path
+        if save_as or not path:
+            start = path or "project" + PROJECT_EXTENSION
+            path, _ = QFileDialog.getSaveFileName(self, "Save project", start,
+                                                  f"CMF project (*{PROJECT_EXTENSION})")
+            if not path:
+                return
+            if not path.lower().endswith(PROJECT_EXTENSION):
+                path += PROJECT_EXTENSION
+        try:
+            save_project(path, self._project_from_session())
+        except Exception as exc:  # noqa: BLE001 - shown to the user
+            self.error(f"Could not save the project: {exc}")
+            return
+        self._set_project_path(path)
+        what = [f"{len(self.ds)} molecules"]
+        if len(self.history):
+            what.append(f"{len(self.history)} pose snapshot(s)")
+        what.append("the model" if self.model is not None else "no model")
+        if self.protein is not None:
+            what.append("the protein")
+        self.log(f"Project saved to {path} ({', '.join(what)})")
+
+    def open_project_file(self):
+        path, _ = QFileDialog.getOpenFileName(self, "Open project", "",
+                                              f"CMF project (*{PROJECT_EXTENSION});;All files (*)")
+        if not path:
+            return
+        self.load_project_file(path)
+
+    def load_project_file(self, path: str, on_loaded=None):
+        def task(progress, cancel):
+            progress(f"Reading {os.path.basename(path)}", 0.2)
+            return load_project(path)
+
+        self.run_task(task, lambda proj: self._apply_project(proj, path, on_loaded),
+                      "Opening project")
+
+    def _apply_project(self, proj: Project, path: str, on_loaded=None) -> None:
+        self.ds = proj.dataset
+        self.model_target = None
+        self._after_dataset_change()
+        self.history = PoseHistory(proj.history)
+        self._refresh_undo_action()
+        self._pose_reference = None
+        try:
+            self._apply_session_settings(proj.settings)
+        except Exception as exc:  # noqa: BLE001 - a project from another version of the panels
+            self.log(f"Some settings of the project could not be restored: {exc}")
+        self._set_project_path(path)
+        if proj.log:
+            self.results_panel.append_log("---- log of the saved session ----")
+            self.results_panel.append_log(proj.log)
+            self.results_panel.append_log("---- end of the saved log ----")
+        if proj.protein is not None:
+            try:
+                self._install_protein(proj.protein, "the project")
+            except Exception as exc:  # noqa: BLE001
+                self.log(f"The protein of the project could not be restored: {exc}")
+        when = f", saved {proj.saved}" if proj.saved else ""
+        self.log(f"Project opened from {path}: {len(self.ds)} molecules, "
+                 f"{len(self.history)} pose snapshot(s){when}")
+        self._update_conformer_info()
+        try:
+            model = proj.model
+        except Exception as exc:  # noqa: BLE001
+            self.error(f"The model in the project could not be read: {exc}")
+            model = None
+        if model is None:
+            self.schedule_display()
+            if on_loaded:
+                on_loaded()
+            return
+        fs, mols, names = model.fieldset, self.ds.mols, self.ds.names
+
+        def task(progress, cancel):
+            mf = []
+            for k, (m, n) in enumerate(zip(mols, names)):
+                mf.append(build_fields(m, fs, n))
+                if k % 20 == 0:
+                    progress(f"Molecular fields of the model {k + 1}/{len(mols)}",
+                             k / max(len(mols), 1))
+            return mf
+
+        def done(mf):
+            self.model = model
+            self.molfields = mf
+            self.shapley_result = self.shapley_fields = None
+            self.model_train_idx = list(proj.train_indices)
+            self.model_test_idx = list(proj.test_indices)
+            self.model_decoy_idx, self.model_decoy_scores = list(proj.decoy_indices), None
+            self.model_target = proj.target
+            self.search_rows = list(proj.search_rows)
+            self.validation = proj.validation
+            self.fieldset = model.fieldset
+            self.volumes.clear()
+            self._mol_volume_cache.clear()
+            self.grid = None
+            self.model_panel.show_fitted_values(model.fieldset, model.scale)
+            self.controls.set_fields([(s.name, s.label) for s in model.fieldset.specs])
+            self._show_results()
+            self.log("    " + model_summary(model))
+            self.schedule_display()
+            if on_loaded:
+                on_loaded()
+
+        self.run_task(task, done, "Restoring the model")
+
+    def _model_from_choice(self, source: int, path: str, label: str):
+        """The model a side of the comparison names: this session's, a model file or a project."""
+        if source == 0:
+            if self.model is None:
+                raise ValueError("there is no model in this session; build or load one, or "
+                                 "choose a file for both sides")
+            return self.model, (label or "this session")
+        if not path or not os.path.exists(path):
+            raise ValueError(f"no such file: {path or '(empty)'}")
+        name = label or os.path.splitext(os.path.basename(path))[0]
+        if source == 2 or is_project_file(path):
+            model = load_project(path).model
+            if model is None:
+                raise ValueError(f"the project {os.path.basename(path)} holds no model")
+            return model, name
+        return load_model(path)[0], name
+
+    def compare_models_dialog(self):
+        """Two models, one set of molecules: the predictions side by side (plan item G2)."""
+        if self.ds is None:
+            QMessageBox.information(self, "No data", "Load a data set first.")
+            return
+        dlg = CompareModelsDialog(self.model is not None, self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        try:
+            model_a, label_a = self._model_from_choice(*dlg.side(0))
+            model_b, label_b = self._model_from_choice(*dlg.side(1))
+        except Exception as exc:  # noqa: BLE001 - shown to the user
+            self.error(f"Could not set up the comparison: {exc}")
+            return
+        if model_a is model_b:
+            QMessageBox.information(self, "Same model", "Choose two different models.")
+            return
+        ds = self.ds
+
+        def task(progress, cancel):
+            return compare_models(model_a, model_b, ds, labels=(label_a, label_b),
+                                  progress=progress)
+
+        def done(cmp):
+            self.comparison = cmp
+            for line in cmp.lines():
+                self.results_panel.append_log(line)
+            self.results_panel.tabs.setCurrentIndex(4)
+            win = ComparisonWindow(cmp, self)
+            self._comparison_window = win
+            win.show()
+
+        self.run_task(task, done, "Comparing two models")
 
     # ------------------------------------------------------------------ files
     def save_model_file(self):

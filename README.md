@@ -3819,6 +3819,17 @@ or directly with a data set:
 python cmf_app.py examples/benzamides_synthetic.sdf --activity pActivity --test-fraction 0.25
 ```
 
+A session can be kept and reopened: **File → Save project** writes the molecules with their
+current poses, the poses before every step that moved them, every panel's settings, the model with
+the molecules it was fitted and tested on, the search table, the validation report, the log and
+the protein to one `.cmfproj` file, and **Open project** (or the file on the command line) brings
+the session back as it was. **Tools → Undo last alignment step** (Ctrl+Z) puts the molecules back
+to where they were before the last alignment, docking, unaligning or conformer generation, one step
+at a time and also after reopening; **Compare two models on these molecules…** predicts every
+loaded molecule with two models — this session's, a model file or a project — and lists the two
+predictions and their difference per molecule with the RMSE and r² of each model per subset
+(`cmfqsar/project.py`, plan item G2).
+
 ### Typical workflow
 
 1. **Data set → Open training set…** — SDF/MOL2 with 3D coordinates of *aligned* molecules (hydrogens are
@@ -4295,6 +4306,7 @@ cmfqsar/increments.py   hydrophobic / H-bond increments of the original CMF scri
 cmfqsar/fields.py       field parameterisation, FieldSet / MoleculeFields / AtomTable
 cmfqsar/kernels.py      analytic field kernels (vectorised)
 cmfqsar/model.py        KRR/KPLS/SVR/GP, cross-validation, grid search, nested CV, statistics
+cmfqsar/project.py      project files, pose history and undo, two models compared on one set
 cmfqsar/cofields.py     co-fields and molecular fields on grids, isosurfaces, cube export
 cmfqsar/dataio.py       SDF/MOL2/SMILES reading, model persistence, exports
 cmfqsar/align.py        3D embedding, MCS alignment, field-similarity refinement, unalign

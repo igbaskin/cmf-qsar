@@ -1620,6 +1620,18 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
 * **G2. Projects.** A project file that holds the data set, its poses before and after each
   alignment, the settings, the model and the results, so a session can be reopened; undo of an
   alignment step; a panel that compares two models on the same molecules.
+  **Done 28 October 2026.** `cmfqsar/project.py` holds the pieces without Qt: a pose snapshot
+  (every conformer of every molecule), `PoseHistory` (last in, first out, bounded at fifty),
+  `Project` with `save_project` / `load_project` (a joblib dump like a model file; the molecules
+  travel as RDKit binaries with their properties) and `compare_models` (per-molecule rows, RMSE
+  and r² per subset, agreement of the two prediction vectors). The application keeps a snapshot
+  before each of the nine steps that move molecules, *Undo last alignment step* (Ctrl+Z) restores
+  it and discards the model as any alignment does, *Save project* / *Open project* carry the data
+  set, the history, every panel's settings (captured by attribute name, so a new widget needs no
+  change), the model with its indices, the search table, the validation report, the log and the
+  protein; a `.cmfproj` on the command line reopens the session. *Compare two models on these
+  molecules…* opens a sortable table with a CSV export. `tests/test_project.py` covers the round
+  trip, undo order and bound, the comparison, and the application's own save, reopen and undo.
 * **G3. The library as an interface.** The classes the README already presents (`CMFModel`,
   `FieldSet`, `AtomTable`, `Dataset`) become the documented stable surface, with a notebook per
   workflow (aligned series, frameless series, screening) under `examples/`.

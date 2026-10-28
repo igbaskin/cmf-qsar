@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 88 modules, 161 classes with 516 public methods, and 733 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 89 modules, 167 classes with 530 public methods, and 748 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -87,6 +87,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.pocketalign](#cmfqsarpocketalign) | Aligning a molecule inside the pocket (plan item C3). |
 | [cmfqsar.poses](#cmfqsarposes) | A protocol that can judge an alignment, because q2 cannot. |
 | [cmfqsar.probes](#cmfqsarprobes) | GRID-like probe fields, written as sums of Gaussians so that CMF can keep its algebra. |
+| [cmfqsar.project](#cmfqsarproject) | Projects (plan item G2): a session that can be saved and reopened, the poses before every alignment step so that a step can be undone, and two models compared on one set of molecules. |
 | [cmfqsar.protein](#cmfqsarprotein) | Protein structures for display behind the molecules, their fields and the co-fields. |
 | [cmfqsar.protonation](#cmfqsarprotonation) | Protonation ensembles: one molecule as the weighted mean of its ionisation states (item D4). |
 | [cmfqsar.pu](#cmfqsarpu) | Learning from positives and unlabelled molecules (part of plan item E4). |
@@ -9604,6 +9605,148 @@ charge and the rounding moves the energy far less than the capping does.
 
 How faithfully the expansion reproduces the attraction, element by element.
 
+## cmfqsar.project
+
+Source: `cmfqsar/project.py`
+
+Projects (plan item G2): a session that can be saved and reopened, the poses before every
+alignment step so that a step can be undone, and two models compared on one set of molecules.
+
+A project file holds the data set with its current coordinates and properties, the pose history
+(one snapshot of every conformer of every molecule, taken before each step that moved them), the
+settings of the application's panels, the fitted model if there is one with the indices it was
+fitted and tested on, the hyper-parameter search table, the validation report and the log.  It is
+a joblib dump of a plain dictionary, like a model file, and the molecules travel as RDKit binary
+blobs with their properties, so nothing is lost between sessions.
+
+Nothing here needs Qt.  The application calls `snapshot_poses` before a step that moves
+molecules, `PoseHistory` keeps the snapshots in order, `save_project` and
+`load_project` move a `Project` to and from disk, and `compare_models` scores
+two models on the same molecules.  The widgets' values are captured and restored by the
+application itself (`cmfqsar.gui.panels.capture_settings`); here they are a dictionary.
+
+### `class PoseHistory(steps: Optional[List[dict]]=None, limit: int=50)`
+
+The snapshots taken before each step that moved the molecules, oldest first.
+
+`remember` is called before a step, `undo` puts the molecules back to the latest
+snapshot and drops it.  The history is bounded so that a long session of trial alignments on
+a large set does not grow without limit; the oldest snapshots go first.
+
+#### `PoseHistory.remember(mols: Sequence[Chem.Mol], label: str) -> dict`
+
+#### `PoseHistory.last_label` -> Optional[str]  (property)
+
+#### `PoseHistory.undo(mols: Sequence[Chem.Mol]) -> Tuple[str, np.ndarray]`
+
+Restore the latest snapshot; returns its label and the displacement it undid.
+
+#### `PoseHistory.labels() -> List[str]`
+
+### `class Project  (dataclass)`
+
+Everything a session holds that is worth reopening.
+
+Attributes:
+
+- `dataset: Dataset`
+- `settings: Dict[str, object]` = `field(default_factory=dict)`
+- `history: List[dict]` = `field(default_factory=list)`
+- `model_state: Optional[dict]` = `None`
+- `train_indices: List[int]` = `field(default_factory=list)`
+- `test_indices: List[int]` = `field(default_factory=list)`
+- `decoy_indices: List[int]` = `field(default_factory=list)`
+- `search_rows: List[dict]` = `field(default_factory=list)`
+- `validation: Optional[dict]` = `None`
+- `log: str` = `''`
+- `protein_path: str` = `''`
+- `notes: str` = `''`
+- `protein: Optional[object]` = `None`
+- `target: Optional[np.ndarray]` = `None`
+- `saved: str` = `''`
+- `program_version: str` = `''`
+
+#### `Project.model` -> Optional[CMFModel]  (property)
+
+### `class ComparisonRow  (dataclass)`
+
+Attributes:
+
+- `index: int`
+- `name: str`
+- `subset: str`
+- `y: float`
+- `pred_a: float`
+- `pred_b: float`
+
+#### `ComparisonRow.difference` -> float  (property)
+
+### `class Comparison  (dataclass)`
+
+Two models' predictions for one set of molecules, and what they agree on.
+
+Attributes:
+
+- `label_a: str`
+- `label_b: str`
+- `rows: List[ComparisonRow]`
+- `summary: Dict[str, dict]`
+- `agreement: dict`
+
+#### `Comparison.lines() -> List[str]`
+
+The comparison as text, for the log.
+
+#### `Comparison.to_csv(path: str) -> None`
+
+### `snapshot_poses(mols: Sequence[Chem.Mol], label: str) -> dict`
+
+Every conformer of every molecule, as it is now, under a label that says what is about
+to move them ("Align to reference", "Unalign", ...).
+
+### `restore_poses(mols: Sequence[Chem.Mol], snapshot: dict) -> None`
+
+Put the molecules back where the snapshot has them.  The conformers are replaced, so a
+snapshot taken before conformers were generated removes them again.
+
+### `pose_displacement(mols: Sequence[Chem.Mol], snapshot: dict) -> np.ndarray`
+
+How far each molecule's first conformer now stands from the snapshot, as the root mean
+square displacement of its atoms in angstrom (nan where the shapes do not match).
+
+### `dataset_state(ds: Dataset) -> dict`
+
+### `dataset_from_state(st: dict) -> Dataset`
+
+### `project_state(project: Project) -> dict`
+
+### `project_from_state(st: dict) -> Project`
+
+### `save_project(path: str, project: Project) -> None`
+
+Write the project; the file is a compressed joblib dump of `project_state`.
+
+### `load_project(path: str) -> Project`
+
+Read a project file; refuses one written by a newer version of the program.
+
+### `is_project_file(path: str) -> bool`
+
+Whether a file on disk is a project rather than a model, judged by its content.
+
+### `predict_dataset(model: CMFModel, ds: Dataset, progress=None) -> np.ndarray`
+
+One prediction per molecule of the data set, with the fields the model was fitted with.
+
+### `compare_models(model_a: CMFModel, model_b: CMFModel, ds: Dataset, labels: Tuple[str, str]=('A', 'B'), progress=None, pred_a: Optional[np.ndarray]=None, pred_b: Optional[np.ndarray]=None) -> Comparison`
+
+Score two models on the same molecules.
+
+Both models see the molecules as they are now, in one frame: a model fitted on another
+alignment of the same series is compared on *this* alignment, which is the comparison the
+panel is for (did the realignment help?) and also its caveat.  Predictions already in hand
+can be passed in to save the fields.
+
 ## cmfqsar.protein
 
 Source: `cmfqsar/protein.py`
@@ -12042,6 +12185,18 @@ Every endpoint to fit, with the named pair first and second.
 
 #### `SelectivityDialog.lams()`
 
+### `class CompareModelsDialog(has_current: bool, parent=None)  — bases: QDialog`
+
+Which two models to score on the loaded molecules (plan item G2).
+
+#### `CompareModelsDialog.side(k: int)`
+
+(source index, file path, label) of model A (0) or B (1).
+
+### `class ComparisonWindow(cmp, parent=None)  — bases: QDialog`
+
+The two models' predictions side by side, with the summary and a CSV export.
+
 ### `class MainWindow()  — bases: QMainWindow`
 
 #### `MainWindow.toggle_results_span(full_width: bool)`
@@ -12190,6 +12345,22 @@ Give the chosen molecules a random pose (control experiment for alignment method
 Self-consistent alignment of the training set by the posterior-variance criterion.
 
 #### `MainWindow.align_dataset_dialog()`
+
+#### `MainWindow.undo_alignment()`
+
+Put the molecules back where they were before the last step that moved them.
+
+#### `MainWindow.save_project_file(save_as: bool=False)`
+
+Write the session: molecules and poses, pose history, settings, model, results.
+
+#### `MainWindow.open_project_file()`
+
+#### `MainWindow.load_project_file(path: str, on_loaded=None)`
+
+#### `MainWindow.compare_models_dialog()`
+
+Two models, one set of molecules: the predictions side by side (plan item G2).
 
 #### `MainWindow.save_model_file()`
 
@@ -12469,6 +12640,23 @@ Decomposition rule 3: the contribution of every atom of the selected molecule.
 Offer one entry per endpoint of a two-endpoint model, plus their difference.
 
 #### `ViewerControls.current_endpoint()`
+
+### `capture_settings(panel: QWidget) -> Dict[str, object]`
+
+Every value widget the panel holds as an attribute, keyed by the attribute's name.
+
+Check boxes and radio buttons give a bool, spin boxes a number, combo boxes their current
+text and line edits their text.  The keys are the attribute names, so a panel that gains a
+widget is captured without a change here, and a project saved before the widget existed
+simply leaves it at its default.
+
+### `apply_settings(panel: QWidget, values: Dict[str, object]) -> List[str]`
+
+Put captured values back; returns the keys that no longer match a widget.
+
+### `apply_field_table(panel: 'ModelPanel', values: Dict[str, dict]) -> None`
+
+Set the enabled flag, alpha and h of the fields the table lists, by field name.
 
 ## cmfqsar.gui.viewer3d
 

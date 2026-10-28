@@ -2297,3 +2297,80 @@ class ViewerControls(QWidget):
         # count, not visibility: a populated combo whose dock is hidden still holds the
         # user's choice, and gating on isVisible() would silently ignore it
         return self.cmb_endpoint.currentData() if self.cmb_endpoint.count() else None
+
+
+# --------------------------------------------------------------------------- #
+# Settings of a panel, as a dictionary (for the project file, plan item G2)
+# --------------------------------------------------------------------------- #
+
+_VALUE_WIDGETS = (QCheckBox, QRadioButton, QSpinBox, QDoubleSpinBox, QComboBox, QLineEdit)
+
+
+def capture_settings(panel: QWidget) -> Dict[str, object]:
+    """Every value widget the panel holds as an attribute, keyed by the attribute's name.
+
+    Check boxes and radio buttons give a bool, spin boxes a number, combo boxes their current
+    text and line edits their text.  The keys are the attribute names, so a panel that gains a
+    widget is captured without a change here, and a project saved before the widget existed
+    simply leaves it at its default.
+    """
+    out: Dict[str, object] = {}
+    for name, w in vars(panel).items():
+        if isinstance(w, (QCheckBox, QRadioButton)):
+            out[name] = bool(w.isChecked())
+        elif isinstance(w, (QSpinBox, QDoubleSpinBox)):
+            out[name] = w.value()
+        elif isinstance(w, QComboBox):
+            out[name] = w.currentText()
+        elif isinstance(w, QLineEdit):
+            out[name] = w.text()
+    tbl = getattr(panel, "table_values", None)
+    if callable(tbl):
+        out["__fields__"] = tbl()
+    return out
+
+
+def apply_settings(panel: QWidget, values: Dict[str, object]) -> List[str]:
+    """Put captured values back; returns the keys that no longer match a widget."""
+    missing = []
+    for name, v in values.items():
+        if name == "__fields__":
+            continue
+        w = getattr(panel, name, None)
+        if w is None:
+            missing.append(name)
+            continue
+        w.blockSignals(True)
+        try:
+            if isinstance(w, (QCheckBox, QRadioButton)):
+                w.setChecked(bool(v))
+            elif isinstance(w, (QSpinBox, QDoubleSpinBox)):
+                w.setValue(type(w.value())(v))
+            elif isinstance(w, QComboBox):
+                k = w.findText(str(v))
+                if k >= 0:
+                    w.setCurrentIndex(k)
+            elif isinstance(w, QLineEdit):
+                w.setText(str(v))
+            else:
+                missing.append(name)
+        finally:
+            w.blockSignals(False)
+    return missing
+
+
+def apply_field_table(panel: "ModelPanel", values: Dict[str, dict]) -> None:
+    """Set the enabled flag, alpha and h of the fields the table lists, by field name."""
+    tbl = panel.tbl_fields
+    tbl.blockSignals(True)
+    try:
+        for i in range(tbl.rowCount()):
+            name = tbl.item(i, 1).data(Qt.UserRole)
+            v = values.get(name)
+            if not v:
+                continue
+            tbl.item(i, 0).setCheckState(Qt.Checked if v.get("enabled", True) else Qt.Unchecked)
+            tbl.item(i, 2).setText(f"{float(v.get('alpha', 1.0)):g}")
+            tbl.item(i, 3).setText(f"{float(v.get('h', 1.0)):g}")
+    finally:
+        tbl.blockSignals(False)
