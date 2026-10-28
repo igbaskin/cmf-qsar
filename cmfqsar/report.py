@@ -249,7 +249,7 @@ def _section_what(model, extra: Dict) -> str:
     used = {"krr": ("lam",), "gp": ("lam",), "kpls": ("components",),
             "svr": ("C", "epsilon"), "nusvr": ("C", "nu"),
             "ranksvm": ("C",), "svc": ("C",), "nusvc": ("nu",), "gpc": ("amplitude",),
-            "kfda": ("lam",),
+            "kfda": ("lam",), "klr": ("lam",),
             "ocsvm": ("nu",)}.get(model.method, ("lam",))
     if model.kernel_layer == "gauss":
         used = used + ("gamma",)

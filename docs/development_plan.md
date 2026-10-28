@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 27 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 83 modules and about 38,000 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 83 modules and about 38,500 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1412 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1434 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -21,7 +21,7 @@ kept current; the counts are the ones the repository gives today):
   top, and multiple kernel learning for the mixing coefficients.
 * Learners: kernel ridge regression, kernel partial least squares, SVR, Gaussian-process regression
   with variances, SVC, a Laplace Gaussian-process classifier, kernel Fisher discriminant analysis
-  (the classifier that has a co-field), five one-class descriptions, and a multi-task model on a shared
+  (the classifier that has a co-field), kernel logistic regression, five one-class descriptions, and a multi-task model on a shared
   kernel whose selectivity is a difference of co-fields (`cmfqsar/multitask.py`, measured on the
   corrosion series in `benchmarks/results/multitask/`).
 * Interpretation: co-fields, contributions, exact Shapley values under nonlinear kernels, field
@@ -1473,6 +1473,58 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   `gpc` and `svc` on the same sets as E8; expected to tie `gpc` on accuracy and to be the
   reference its probabilities are judged against, since the two share the likelihood and differ
   only in what λ is chosen by.
+  **Done 28 October 2026.** `klr_fit` in `cmfqsar/gpc.py` beside the Laplace step it *is*
+  (`--method klr`, the λ grid, the GUI's classification list, the report), `klr_threshold` and
+  the shared `out_of_fold_scores` in `cmfqsar/model.py`, `tests/test_klr.py` (20 tests),
+  `benchmarks/run_klr.py`. The entry said the learner is the Laplace step with λ chosen on the
+  folds, so it runs that step rather than a second Newton iteration: `LaplaceGPC` gained an
+  `evidence=False` flag that stops before the factorisation the posterior variance and the
+  marginal likelihood are read from, and `klr_fit` calls it with the logistic likelihood at
+  amplitude 1/λ. The tests check the identity against `LaplaceGPC`, against linear logistic
+  regression on explicit features, and against the objective itself (the gradient vanishes and no
+  perturbation improves it). The decision boundary is left at f = 0, which is p = 0.5, so the
+  class and the probability never disagree — the one wart E8's threshold rule has; `klr_threshold`
+  moves it when an imbalanced set needs that, and is off by default.
+  **The comparison the gate asks for needed one correction before it could be made.** The entry's
+  reasoning rests on `klr` and `gpc` sharing the likelihood, and `gpc` defaults to **probit**.
+  Run that way the two differ in three things at once and nothing can be attributed. So the
+  benchmark runs `gpc` with the logistic likelihood, and runs it **twice** — amplitude by
+  cross-validation and amplitude by the marginal likelihood — which separates the two real
+  differences: averaging over the posterior variance, and choosing the hyper-parameter without
+  holding anything out. Everything else is E8's protocol, imported from `run_kfda.py`.
+  **The expected tie on accuracy holds**: AUC against `gpc` at the same likelihood and the same
+  selection is **−0.001 [−0.012, +0.010]** and **+0.019 [−0.059, +0.085]**; against `svc` the mean
+  is **−0.011 [−0.061, +0.041]** and against `kfda` **−0.008 [−0.065, +0.048]**. They are the same
+  mode, so they are the same classifier, and no reference is beaten on accuracy.
+  **The expectation about the probabilities fails, and taking it apart is the result.** The two
+  differences pull opposite ways. Dropping the variance averaging gains: Brier
+  **−0.0034 [−0.0056, −0.0010]** and **−0.0046 [−0.0075, −0.0015]** against the cross-validated
+  Gaussian process, excluding zero on both sets. Choosing the amplitude by the evidence gains
+  more in the other direction: the evidence-selected Gaussian process beats `klr` by
+  **+0.0041 [+0.0020, +0.0064]** and **+0.0053 [+0.0025, +0.0083]**. **The evidence is the better
+  selector for calibration on these sets**, so `klr` does not become the reference the entry
+  expected; that is a point for `gpc`, and the second time its evidence has held its own against a
+  cross-validated search here (B4 was the first, on ranking).
+  **And no classifier's probabilities beat the base rate.** Predicting the share of actives for
+  every molecule scores **0.0458** over the two sets; `klr` scores 0.0519, `gpc` by CV 0.0559,
+  `gpc` by evidence 0.0472 and `kfda` 0.0457. The reliability table says why: every learner puts
+  almost every molecule in the lowest bin, where about 5 % are active, and the few it places
+  higher are active about one time in ten rather than the one in two or three predicted. These
+  probabilities are a ranking, not a frequency, and the manual says so.
+  **"Cheaper" is worth a measured number, and it is not where the entry implies.** On these
+  ~1570-molecule kernels one fit takes 490 ms against 567 ms and 499 ms against 531 ms, a gain of
+  6 to 16 %, because Newton's method takes the same number of steps either way and only the last
+  factorisation is saved. Scoring every molecule takes 0.6 ms against 37.9 ms and 0.3 ms against
+  30.2 ms — **61 and 112 times less** — because the variance costs a triangular solve per
+  molecule. The saving is at prediction time, which is what a screen spends its time on.
+  **So E9 is kept under rule 5**, as E8 was: no accuracy gain, no calibration gain, labelled as
+  the plain regularised logistic regression in field space and as the cheap way to put a
+  probability on a library. `svc` stays the default classifier and `gpc` stays the method for a
+  probability that admits ignorance. Numbers in `benchmarks/results/klr/table.md`, the manual
+  (*Kernel logistic regression*) and the README.
+  **Not done:** several classes by one model per class against the rest, which the entry made
+  conditional on a data task asking for it and none has; and a probability that widens away from
+  the training set, which is exactly what this learner gives up and `gpc` keeps.
 * **E10. Laplacian-regularised kernel ridge regression.** Molecules without an activity — the
   library being screened, the decoys, the inactives that carry no value — enter the fit through
   the graph Laplacian of the kernel over labelled and unlabelled molecules together (manifold
@@ -3272,7 +3324,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
-| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**; E9 (the second classifier), E10 (unlabelled molecules) after it; ~~G1~~ and ~~G2~~ **done** |
+| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**; E10 (unlabelled molecules) next; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 

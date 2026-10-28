@@ -317,6 +317,7 @@ hyper-parameter search is not a model: the arithmetic is the lesson here, not th
 | C-SVC, ν-SVC | the same formula, read as a decision value: its sign is the class, its magnitude the margin |
 | Laplace GP classifier | the same formula gives the latent mean, which is squashed to a probability and averaged over the latent variance |
 | Kernel Fisher discriminant | the same formula gives the position along the discriminant direction, in units of the within-class spread; the bias is the threshold chosen out of fold, and a logistic map turns the score into a probability |
+| Kernel logistic regression | the same formula gives the latent function, and the probability is the likelihood at it, $1/(1+e^{-f})$, with no variance averaged in; the boundary is $f = 0$, which is $p = 0.5$ |
 | One-class methods | a score built from the same kernel row, but also from the molecule's own self-kernel: distance to the centroid, to the k-th nearest active, to the principal subspace, or the 1-SVM decision value |
 | Nonlinear kernel layer | the joint kernel is passed through $\exp(-\gamma d^2)$ or an arc-cosine function first; the prediction formula is unchanged, the co-field identity is lost |
 | Autocorrelation source | the kernel row comes from the rotation-invariant distance profiles instead of the overlap integrals; everything downstream is identical |
@@ -2059,7 +2060,7 @@ molecules, where the NumPy neighbour list of the previous section is also worth 
 | Task | Methods | Key |
 |---|---|---|
 | Regression | kernel ridge regression with bias; Gaussian process (the same fit plus predictive variances); kernel partial least squares (CoMFA's learner, regularised by its number of components); ε-SVR; ν-SVR; the ranking SVM, which fits the order and not the values | `krr`, `gp`, `kpls`, `svr`, `nusvr`, `ranksvm` |
-| Binary classification | C-SVC; ν-SVC; Gaussian-process classifier by the Laplace approximation; kernel Fisher discriminant analysis, the only classifier here whose score is linear in the field and which therefore has a co-field | `svc`, `nusvc`, `gpc`, `kfda` |
+| Binary classification | C-SVC; ν-SVC; Gaussian-process classifier by the Laplace approximation; kernel Fisher discriminant analysis, the only classifier here whose score is linear in the field and which therefore has a co-field; kernel logistic regression, the same Laplace mode with its ridge chosen on the folds and no posterior variance | `svc`, `nusvc`, `gpc`, `kfda`, `klr` |
 | One-class / screening | 1-SVM; distance to the centre of the actives; distance to the k-th nearest active; one-class Gaussian process; distance from the principal subspace (kernel PCA) | `ocsvm`, `ocmean`, `ocknn`, `ocgp`, `ockpca` |
 
 Kernel ridge regression is the method of the papers and the default. The Gaussian-process view adds
@@ -2287,6 +2288,106 @@ form. One limit belongs here. The error band of *How much of it is noise* propag
 **activities**, and a class label carries none, so the band is not available for this classifier
 or for any other; `cmf cofield` says so and draws the map unmasked. The full table, per
 set and with the settings chosen, is `benchmarks/results/kfda/table.md`.
+
+## Kernel logistic regression: the Gaussian process with its ridge chosen on the folds
+
+The Gaussian-process classifier above does two things at once that can be separated. It finds the
+mode of the latent function under a Bernoulli likelihood, and it then averages its probability
+over a posterior around that mode; and it chooses its one hyper-parameter, the kernel amplitude,
+from the marginal likelihood rather than from held-out molecules. `--method klr` is the same mode
+with neither of those: the ridge comes from the λ grid on the folds, and the probability is the
+likelihood at the mode with nothing averaged over it.
+
+**What it minimises.** The logistic loss of the latent function plus a ridge on its norm in the
+space the kernel defines,
+
+$$
+\sum_i \log\left(1 + e^{-y_i f(x_i)}\right) + \frac{\lambda}{2}\,\|f\|^2,
+\qquad f(x) = \sum_j a_j K(x, x_j),
+$$
+
+a smooth convex problem solved by Newton's method. The stationarity condition is worth knowing
+because it says what the coefficients *are*: $\lambda a_i = t_i - \pi_i$, the difference between
+the class label and the fitted probability. A molecule the model already gets right contributes
+almost nothing to the model.
+
+**It is the Laplace step, not a second implementation of it.** The mode above is exactly the mode
+`cmfqsar/gpc.py` finds with the logistic likelihood and amplitude $1/\lambda$, so `klr_fit` runs
+that iteration rather than repeating it, and `tests/test_klr.py` checks the two agree and that
+both agree with linear logistic regression on explicit features when the kernel is linear. What
+is skipped is the factorisation afterwards, which is what the posterior variance and the marginal
+likelihood are read from — so `klr` has neither, and asks you to fit `gpc` if you want them.
+
+**The boundary and the probability are one statement.** $f = 0$ is $p = 0.5$, so the class this
+learner reports and the probability it reports never disagree, which is the one wart of the
+kernel Fisher discriminant above. The price is that $p = 0.5$ follows the larger class: on a set
+with one active in twenty, calling everything inactive is right nineteen times in twenty, and the
+balanced accuracy of that is 0.5. The parameter `klr_threshold` set to `cv` moves the boundary to
+the best out-of-fold balanced accuracy instead, at the cost of the class and the probability
+disagreeing again. It is off by default.
+
+```bash
+python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task classification \
+       --threshold 6.84 --method klr --lams 0.01,0.03,0.1,0.3,1,3 --normalize
+```
+
+### Measured against the Gaussian process it comes from
+
+`benchmarks/run_klr.py` runs the protocol of *A classifier with a co-field* on the same two
+LIT-PCBA sets, and holds the likelihood fixed: the Gaussian-process classifier is run with the
+**logistic** likelihood here, not with its own probit default, because otherwise the two would
+differ in three things at once and nothing could be attributed to any of them. It appears twice,
+once choosing its amplitude on the folds and once from the marginal likelihood, which separates
+the two differences.
+
+| Mean of the two sets | AUC | Brier score | balanced accuracy (common rule) |
+|---|---:|---:|---:|
+| kernel logistic regression, ridge by CV | 0.596 | 0.0519 | 0.511 |
+| GP classifier, amplitude by CV | 0.587 | 0.0559 | 0.508 |
+| GP classifier, amplitude by the marginal likelihood | 0.598 | 0.0472 | 0.514 |
+| C-SVC | 0.607 | — | 0.517 |
+| kernel Fisher discriminant | 0.605 | 0.0457 | 0.529 |
+| the share of actives, predicted for every molecule | 0.500 | 0.0458 | 0.500 |
+
+**The expected tie on accuracy holds.** Against the Gaussian process with the same likelihood and
+its amplitude chosen the same way, the AUC difference is −0.001 [−0.012, +0.010] on one set and
++0.019 [−0.059, +0.085] on the other: the two are one classifier, which is what they should be,
+since they are the same mode. Against C-SVC the mean difference is −0.011 [−0.061, +0.041] and
+against the discriminant −0.008 [−0.065, +0.048]. No accuracy gain anywhere.
+
+**On calibration the entry's expectation fails.** E9 was written expecting this learner to become
+the reference the Gaussian process's probabilities are judged against. It is not. Dropping the
+variance averaging does gain a little — the Brier score is lower than the cross-validated
+Gaussian process's, by differences of −0.0034 [−0.0056, −0.0010] and −0.0046 [−0.0075, −0.0015]
+that exclude zero on both sets — but choosing the amplitude by the marginal likelihood
+gains more in the other direction: the evidence-selected Gaussian process beats this learner by
+0.0041 [+0.0020, +0.0064] and 0.0053 [+0.0025, +0.0083]. **The evidence is the better selector
+for calibration on these sets, and that is a point for the Gaussian process, not against it.**
+
+**And none of them beats the base rate.** Predicting the share of actives for every molecule and
+saying nothing else scores 0.0458 over the two sets. Kernel logistic regression scores 0.0519,
+the cross-validated Gaussian process 0.0560; only the evidence-selected Gaussian process (0.0472)
+and the discriminant (0.0457) come back to it, and neither beats it. The reliability table in
+`benchmarks/results/klr/table.md` shows why: every learner puts almost every molecule in the
+lowest probability bin, where the observed share of actives is about 0.05, and the few molecules
+it places higher turn out active about one time in ten rather than the one time in two or three it
+predicted. These probabilities are over-confident where they are not trivial. Read them as a
+ranking, not as a frequency.
+
+**What "cheaper" is worth.** The plan entry claims this learner is cheaper by the variance it
+does not compute. Measured on these kernels, with about 1570 molecules: one fit takes 490 ms
+against 567 ms and 499 ms against 531 ms, a gain of 6 to 16 %, because Newton's method takes the
+same number of steps either way and only the final factorisation is saved. Scoring every molecule
+takes 0.6 ms against 37.9 ms and 0.3 ms against 30.2 ms — 61 and 112 times less — because the
+variance costs a triangular solve for each molecule scored. **The saving is at prediction time,
+which is where a screen spends its time, and not at fit time.**
+
+**So what it is for.** Not accuracy, and not calibration. It is the plain object: the regularised
+logistic regression in the field space, with one hyper-parameter chosen the way every other
+learner here chooses its own, no prior to argue about and no approximation in the probability
+beyond the mode itself. It is also the cheap way to score a large library with a probability. If
+you want a probability that admits ignorance for a molecule unlike the training set, `gpc` is
+still the method, and its evidence is a better way of choosing its amplitude than the folds are.
 
 ## Fitting the order instead of the values: the ranking SVM
 

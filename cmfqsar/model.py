@@ -3,9 +3,10 @@ CMF regression models: kernel ridge regression (KRR, the method of the 2013
 paper), kernel partial least squares (KPLS, the kernel form of the PLS that
 CoMFA uses), support vector regression and a Gaussian-process view of KRR that
 provides predictive variances.  The classifiers are here too: the support-vector
-classifiers, the Laplace Gaussian-process classifier of :mod:`cmfqsar.gpc` and
-the kernel Fisher discriminant (KFDA), whose score is linear in the field and
-which therefore has a co-field.  Includes k-fold cross-validation, grid search
+classifiers, the Laplace Gaussian-process classifier of :mod:`cmfqsar.gpc`,
+kernel logistic regression (the same mode with its ridge chosen on the folds)
+and the kernel Fisher discriminant (KFDA), whose score is linear in the field
+and which therefore has a co-field.  Includes k-fold cross-validation, grid search
 over hyper-parameters (alpha, lambda / C / number of PLS components, optionally
 mixing coefficients h_f) and external (nested) cross-validation.
 """
@@ -657,6 +658,33 @@ def kfda_calibrate(K: np.ndarray, y: np.ndarray, lam: float, folds: int = KFDA_F
     used with, so that the same cut can be turned back into a bias on its raw score; it is
     computed here from a fit on all the molecules when the caller does not supply it.
     """
+    sc, used, folds = out_of_fold_scores(K, y, lambda Ktr, ytr: kfda_fit(Ktr, ytr, lam),
+                                         folds, seed)
+    if not used:
+        return KFDACalibration(threshold=0.0, folds=0, scores=None)
+    if frame is None:
+        a_all, _ = kfda_fit(K, y, lam)
+        frame = kfda_frame(K @ a_all, y > 0)
+    cut, bal = _balanced_threshold(y, sc)
+    slope, intercept = _logistic_1d(y, sc)
+    return KFDACalibration(threshold=float(cut), slope=float(slope), intercept=float(intercept),
+                           folds=int(folds), balanced_accuracy=float(bal), scores=sc,
+                           centre=float(frame[0]), spread=float(frame[1]))
+
+
+def out_of_fold_scores(K: np.ndarray, y: np.ndarray, fit, folds: int = KFDA_FOLDS,
+                       seed: Optional[int] = 0) -> Tuple[np.ndarray, int, int]:
+    """Scores of molecules that the fit which scored them had not seen, in class-mean units.
+
+    `fit(K_train, y_train)` returns (dual coefficients, bias) for one fold's training molecules.
+    Every fold's scores are put into that fold's own class-mean units (:func:`kfda_frame`) before
+    they are pooled, which is what makes pooling them sound: a classifier fitted on four fifths of
+    the molecules separates them by a different amount than one fitted on all of them, and a cut
+    carried over in raw score units then lands in the wrong place.
+
+    Returns (scores, how many folds contributed, how many folds were asked for).  A fold whose
+    training part holds only one class is skipped, and with no usable fold the scores are all nan.
+    """
     y = np.asarray(y, float)
     n = len(y)
     folds = max(2, min(int(folds), n))
@@ -667,20 +695,42 @@ def kfda_calibrate(K: np.ndarray, y: np.ndarray, lam: float, folds: int = KFDA_F
         if len(tr) < 4 or not ((y[tr] > 0).any() and (y[tr] <= 0).any()):
             continue
         Ktr = K[np.ix_(tr, tr)]
-        a, _ = kfda_fit(Ktr, y[tr], lam)
+        a, _ = fit(Ktr, y[tr])
         centre, spread = kfda_frame(Ktr @ a, y[tr] > 0)
         sc[te] = (K[np.ix_(te, tr)] @ a - centre) / spread
         used += 1
-    if used == 0 or not np.isfinite(sc).any():
-        return KFDACalibration(threshold=0.0, folds=0, scores=None)
+    if not np.isfinite(sc).any():
+        used = 0
+    return sc, used, folds
+
+
+def klr_threshold(K: np.ndarray, y: np.ndarray, lam: float, folds: int = KFDA_FOLDS,
+                  seed: Optional[int] = 0,
+                  frame: Optional[Tuple[float, float]] = None) -> Tuple[float, float]:
+    """Where to cut a kernel logistic regression when p = 0.5 is the wrong place.
+
+    The natural boundary of this learner is f = 0, which is p(active) = 0.5, and that is the
+    default because the class it reports and its probability then say the same thing.  It is also
+    the boundary that follows the larger class: with one active in twenty, calling a molecule
+    inactive is right nineteen times in twenty whatever the fields say, and the balanced accuracy
+    of such a model is 0.5.  This returns the bias that puts the best out-of-fold balanced
+    accuracy at zero instead, and that accuracy, leaving the probability untouched -- so a model
+    using it reports a class and a probability that disagree, which is the price and is stated in
+    :meth:`CMFModel.predict_proba`.
+
+    Returns (bias, balanced accuracy out of fold); (0.0, nan) when no fold could be fitted.
+    """
+    from .gpc import klr_fit
+
+    sc, used, folds = out_of_fold_scores(K, y, lambda Ktr, ytr: klr_fit(Ktr, ytr, lam)[:2],
+                                         folds, seed)
+    if not used:
+        return 0.0, float("nan")
     if frame is None:
-        a_all, _ = kfda_fit(K, y, lam)
-        frame = kfda_frame(K @ a_all, y > 0)
+        a_all, _, _ = klr_fit(K, y, lam)
+        frame = kfda_frame(K @ a_all, np.asarray(y, float) > 0)
     cut, bal = _balanced_threshold(y, sc)
-    slope, intercept = _logistic_1d(y, sc)
-    return KFDACalibration(threshold=float(cut), slope=float(slope), intercept=float(intercept),
-                           folds=int(folds), balanced_accuracy=float(bal), scores=sc,
-                           centre=float(frame[0]), spread=float(frame[1]))
+    return -(float(frame[0]) + cut * float(frame[1])), float(bal)
 
 
 class _Learner:
@@ -759,6 +809,25 @@ class _Learner:
                 if cal.folds and np.isfinite(cal.threshold):
                     self.b_ = cal.bias()
                     self.kfda_ = cal
+        elif self.method == "klr":
+            # kernel logistic regression: the same Laplace mode the GP classifier finds, with the
+            # ridge chosen on the folds instead of from the evidence and no posterior variance.
+            # The decision boundary is f = 0, which is p(active) = 0.5, so the class and the
+            # probability say the same thing; a threshold rule can be asked for instead.
+            from .gpc import klr_fit
+            a, b, fit = klr_fit(K, y, float(self.params.get("lam", 1.0)))
+            self.alpha_, self.b_ = a, b
+            self.support_ = np.arange(n)
+            self.classes_ = np.array([-1.0, 1.0])
+            self.klr_ = fit
+            if n >= 8 and str(self.params.get("klr_threshold", "zero")) == "cv":
+                bias, bal = klr_threshold(K, y, float(self.params.get("lam", 1.0)),
+                                          folds=int(self.params.get("klr_folds", KFDA_FOLDS)),
+                                          seed=int(self.params.get("klr_seed", 0)),
+                                          frame=kfda_frame(K @ a, y > 0))
+                if np.isfinite(bias) and np.isfinite(bal):
+                    self.b_ = bias
+                    self.klr_balanced_ = bal
         elif self.method == "gpc":
             # Gaussian-process classification at the posterior mode: the latent mean is a kernel
             # expansion like every other method here, so the decomposition rules still apply
@@ -960,7 +1029,7 @@ class CMFModel:
     fieldset: FieldSet
     # "regression" | "classification" (binary, +1 active / -1 inactive) | "oneclass" (novelty detection)
     task: str = "regression"
-    method: str = "krr"                     # krr | gp | kpls | svr | nusvr | svc | nusvc | kfda | ocsvm
+    method: str = "krr"                     # krr | gp | kpls | svr | nusvr | svc | nusvc | kfda | klr | ocsvm
     params: Dict[str, float] = field(default_factory=lambda: {"lam": 1.0, "C": 1.0, "epsilon": 0.1,
                                                               "nu": 0.5, "components": 5})
     normalize: bool = False                 # cosine-normalise each field kernel
@@ -1895,11 +1964,18 @@ class CMFModel:
         cal = getattr(learner, "kfda_", None) if learner is not None else None
         if cal is not None:
             return cal.probability(self.predict(test) - float(self.bias))
+        klr = getattr(learner, "klr_", None) if learner is not None else None
+        if klr is not None:
+            # the likelihood at the mode, with no variance to average over.  No self-kernels are
+            # passed: that is what would bring the posterior variance in, and this learner has
+            # none.  The probability belongs to the latent function, so any bias on the decision
+            # does not enter it.
+            return klr.predict_proba(self.test_kernel(test))
         if learner is None or getattr(learner, "gpc_", None) is None:
-            raise ValueError("probabilities come from the Gaussian-process classifier or the "
-                             "kernel Fisher discriminant; fit with method='gpc' or "
-                             "method='kfda' (the support-vector classifiers return a decision "
-                             "value, which is not a probability)")
+            raise ValueError("probabilities come from the Gaussian-process classifier, kernel "
+                             "logistic regression or the kernel Fisher discriminant; fit with "
+                             "method='gpc', method='klr' or method='kfda' (the support-vector "
+                             "classifiers return a decision value, which is not a probability)")
         self._require_linear("class probabilities")
         K = self.test_kernel(test)
         return learner.gpc_.predict_proba(K, self.joint_self(test))
@@ -2218,6 +2294,9 @@ class CMFModel:
             # the threshold and the probability map of a kernel Fisher discriminant: a few
             # numbers that cannot be recovered from the coefficients alone
             "kfda": getattr(self.learner_, "kfda_", None) if self.learner_ is not None else None,
+            # the fitted mode of a kernel logistic regression, which is what its probability
+            # comes from; the coefficients alone give the class but not p(active)
+            "klr": getattr(self.learner_, "klr_", None) if self.learner_ is not None else None,
             "kernel_source": self.kernel_source,
             "ac_sigma": self.ac_sigma,
             "ac_chirality": self.ac_chirality,
@@ -2290,12 +2369,14 @@ class CMFModel:
             # a version-1 file with a descriptor block stored the training molecules and their
             # raw descriptor values but not the standardisation; fit it again on them
             m.prepare_descriptors(m.train)
-        if st.get("oneclass") is not None or st.get("kfda") is not None:
+        if any(st.get(k) is not None for k in ("oneclass", "kfda", "klr")):
             m.learner_ = _Learner(st["method"], st["params"])
             if st.get("oneclass") is not None:
                 m.learner_.oc_ = st["oneclass"]
             if st.get("kfda") is not None:
                 m.learner_.kfda_ = st["kfda"]
+            if st.get("klr") is not None:
+                m.learner_.klr_ = st["klr"]
             m.learner_.alpha_, m.learner_.b_ = m.coef, m.bias
         return m
 
@@ -2501,6 +2582,10 @@ def _param_grid(method: str, lams, Cs, epsilons, nus, components=()):
     if method == "kfda":
         # the ridge of the discriminant, on the grid kernel ridge regression uses: it is relative
         # to the scale of the within-class scatter, so one grid means the same thing for both
+        return [{"lam": float(l)} for l in lams]
+    if method == "klr":
+        # the ridge on the norm of the latent function, which is what the GP classifier's
+        # amplitude is the reciprocal of; chosen on the folds, which is the whole of item E9
         return [{"lam": float(l)} for l in lams]
     if method == "gpc":
         # the amplitude of the kernel plays the part C plays for a support-vector classifier

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 89 modules, 168 classes with 534 public methods, and 751 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 89 modules, 168 classes with 534 public methods, and 754 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -4427,6 +4427,11 @@ a nonlinear kernel layer, this classifier keeps the interpretation intact.
 Measured on the six classification sets of `examples/`, the accuracy is equal to that of C-SVC; the
 reason to use it is the three things above, not the Matthews correlation.
 
+`klr_fit` (plan item E9) is the same Laplace step read as a learner of its own: kernel
+logistic regression is exactly this mode with the logistic likelihood, so it reuses the iteration
+here instead of repeating it, and differs only in choosing its ridge on the folds rather than from
+the evidence and in not computing the posterior variance.
+
 ### `class LaplaceGPC  (dataclass)`
 
 Binary GP classifier on a precomputed kernel, fitted at the posterior mode.
@@ -4443,6 +4448,7 @@ Attributes:
 - `jitter: float` = `1e-08`
 - `max_iter: int` = `100`
 - `tol: float` = `1e-09`
+- `evidence: bool` = `True`
 - `y_: Optional[np.ndarray]` = `None`
 - `f_: Optional[np.ndarray]` = `None`
 - `grad_: Optional[np.ndarray]` = `None`
@@ -4481,6 +4487,41 @@ p(active) from the latent mean and variance, averaged over the latent posterior.
 For the probit likelihood the average is exact, `Phi(mean / sqrt(1 + var))`; for the
 logistic one it is MacKay's approximation.  Either way the variance pulls the probability
 towards one half, which is the purpose: an uncertain molecule should not be called confidently.
+
+### `klr_fit(K: np.ndarray, y: np.ndarray, lam: float, max_iter: int=100, tol: float=1e-09) -> Tuple[np.ndarray, float, 'LaplaceGPC']`
+
+Kernel logistic regression (plan item E9): the probabilistic classifier that is linear
+in the field.
+
+It minimises the logistic loss of the latent function plus a ridge on its norm in the
+reproducing-kernel Hilbert space,
+
+    sum_i log(1 + exp(-y_i f(x_i)))  +  (lam / 2) ||f||^2,      f(x) = sum_j a_j K(x, x_j),
+
+which is a smooth convex problem solved by Newton's method.  **It is the same problem the
+Laplace step of `LaplaceGPC` already solves**, because that step finds the mode of
+`log p(y | f) - f' (s K)^-1 f / 2` with the logistic likelihood, and the two agree when the
+amplitude is `s = 1 / lam`.  So this function runs that step rather than a second Newton
+iteration of its own; `tests/test_klr.py` checks that the two give the same coefficients.
+
+Two things differ from `gpc`, and they are the whole of the difference:
+
+* **lam is chosen by cross-validation, not by the marginal likelihood.**  The Gaussian process
+  picks its amplitude from the evidence, which needs no held-out molecules; this learner picks
+  lam the way kernel ridge regression picks its own, on the folds.
+* **there is no posterior variance.**  The probability is the likelihood at the mode,
+  `p(active) = 1 / (1 + exp(-f))`, not the likelihood averaged over a posterior, so a
+  molecule unlike anything in the training set is *not* pulled towards one half.  That is what
+  makes the fit cheaper -- the factorisation the variance is read from is never made -- and it
+  is also what the Gaussian process gives that this does not.
+
+The decision boundary is `f = 0`, which is `p(active) = 0.5`: the class the model reports
+and its probability are the same statement, unlike a discriminant whose threshold is placed
+separately.  On a set with far more inactives than actives that boundary follows the larger
+class, and moving it is then worth considering; `cmfqsar.model` takes a `klr_threshold`
+parameter for that and leaves it off by default.
+
+Returns (dual coefficients, bias, the fit), the bias being zero.
 
 ### `evidence(K: np.ndarray, y: np.ndarray, amplitude: float=1.0, likelihood: str='probit') -> float`
 
@@ -7183,9 +7224,10 @@ CMF regression models: kernel ridge regression (KRR, the method of the 2013
 paper), kernel partial least squares (KPLS, the kernel form of the PLS that
 CoMFA uses), support vector regression and a Gaussian-process view of KRR that
 provides predictive variances.  The classifiers are here too: the support-vector
-classifiers, the Laplace Gaussian-process classifier of `cmfqsar.gpc` and
-the kernel Fisher discriminant (KFDA), whose score is linear in the field and
-which therefore has a co-field.  Includes k-fold cross-validation, grid search
+classifiers, the Laplace Gaussian-process classifier of `cmfqsar.gpc`,
+kernel logistic regression (the same mode with its ridge chosen on the folds)
+and the kernel Fisher discriminant (KFDA), whose score is linear in the field
+and which therefore has a co-field.  Includes k-fold cross-validation, grid search
 over hyper-parameters (alpha, lambda / C / number of PLS components, optionally
 mixing coefficients h_f) and external (nested) cross-validation.
 
@@ -7781,6 +7823,34 @@ Every fold's scores are first put into that fold's own class-mean units
 in those units.  `frame` is the (centre, half-separation) of the fit the threshold will be
 used with, so that the same cut can be turned back into a bias on its raw score; it is
 computed here from a fit on all the molecules when the caller does not supply it.
+
+### `out_of_fold_scores(K: np.ndarray, y: np.ndarray, fit, folds: int=KFDA_FOLDS, seed: Optional[int]=0) -> Tuple[np.ndarray, int, int]`
+
+Scores of molecules that the fit which scored them had not seen, in class-mean units.
+
+`fit(K_train, y_train)` returns (dual coefficients, bias) for one fold's training molecules.
+Every fold's scores are put into that fold's own class-mean units (`kfda_frame`) before
+they are pooled, which is what makes pooling them sound: a classifier fitted on four fifths of
+the molecules separates them by a different amount than one fitted on all of them, and a cut
+carried over in raw score units then lands in the wrong place.
+
+Returns (scores, how many folds contributed, how many folds were asked for).  A fold whose
+training part holds only one class is skipped, and with no usable fold the scores are all nan.
+
+### `klr_threshold(K: np.ndarray, y: np.ndarray, lam: float, folds: int=KFDA_FOLDS, seed: Optional[int]=0, frame: Optional[Tuple[float, float]]=None) -> Tuple[float, float]`
+
+Where to cut a kernel logistic regression when p = 0.5 is the wrong place.
+
+The natural boundary of this learner is f = 0, which is p(active) = 0.5, and that is the
+default because the class it reports and its probability then say the same thing.  It is also
+the boundary that follows the larger class: with one active in twenty, calling a molecule
+inactive is right nineteen times in twenty whatever the fields say, and the balanced accuracy
+of such a model is 0.5.  This returns the bias that puts the best out-of-fold balanced
+accuracy at zero instead, and that accuracy, leaving the probability untouched -- so a model
+using it reports a class and a probability that disagree, which is the price and is stated in
+`CMFModel.predict_proba`.
+
+Returns (bias, balanced accuracy out of fold); (0.0, nan) when no fold could be fitted.
 
 ### `cv_predict(K: np.ndarray, y: np.ndarray, method: str, params: Dict[str, float], folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, groups: Optional[Sequence]=None) -> np.ndarray`
 

@@ -280,13 +280,28 @@ def cross_validate(K, y, method, grid, folds=FOLDS, seed=SEED, inner=INNER_FOLDS
             plain["kfda_threshold"] = "midpoint"
         raw_tr, raw_te = Ktr @ lr.alpha_, Kte @ lr.alpha_
         tuned[te] = raw_te - _common_cut(Ktr, y[tr], method, plain, raw_tr, inner, seed)
-        cal = getattr(lr, "kfda_", None)
-        if cal is not None:
-            proba[te] = cal.probability(raw_te)
-        elif getattr(lr, "gpc_", None) is not None:
-            proba[te] = lr.gpc_.predict_proba(Kte, np.diag(K)[te])
+        proba[te] = probabilities(lr, Kte, raw_te, np.diag(K)[te])
     has_proba = bool(np.isfinite(proba).all())
     return decision, tuned, (proba if has_proba else None), chosen
+
+
+def probabilities(lr, K_test_train, raw_score, diag_test):
+    """p(active) from whichever learner this is, or nan where the learner has none.
+
+    Each probabilistic classifier in the program reports differently: the discriminant through
+    the logistic map fitted on its own out-of-fold scores, the Gaussian process through the
+    likelihood averaged over the latent variance, kernel logistic regression through the
+    likelihood at the mode with no variance in it.  The support-vector classifiers and kernel
+    ridge regression have none, because a decision value is not a probability.
+    """
+    cal = getattr(lr, "kfda_", None)
+    if cal is not None:
+        return cal.probability(raw_score)
+    if getattr(lr, "klr_", None) is not None:
+        return lr.klr_.predict_proba(K_test_train)
+    if getattr(lr, "gpc_", None) is not None:
+        return lr.gpc_.predict_proba(K_test_train, diag_test)
+    return np.full(np.atleast_2d(K_test_train).shape[0], np.nan)
 
 
 # ----------------------------------------------------------------------------------------------

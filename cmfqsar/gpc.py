@@ -24,6 +24,11 @@ a nonlinear kernel layer, this classifier keeps the interpretation intact.
 
 Measured on the six classification sets of `examples/`, the accuracy is equal to that of C-SVC; the
 reason to use it is the three things above, not the Matthews correlation.
+
+:func:`klr_fit` (plan item E9) is the same Laplace step read as a learner of its own: kernel
+logistic regression is exactly this mode with the logistic likelihood, so it reuses the iteration
+here instead of repeating it, and differs only in choosing its ridge on the folds rather than from
+the evidence and in not computing the posterior variance.
 """
 from __future__ import annotations
 
@@ -101,6 +106,10 @@ class LaplaceGPC:
     jitter: float = 1e-8
     max_iter: int = 100
     tol: float = 1e-9
+    #: with False the factorisation that is only needed afterwards is not made, which leaves the
+    #: marginal likelihood and the posterior variance unavailable and the mode unchanged.  That is
+    #: what :func:`klr_fit` wants: kernel logistic regression is this mode and nothing else.
+    evidence: bool = True
 
     # fitted quantities
     y_: Optional[np.ndarray] = None
@@ -143,6 +152,12 @@ class LaplaceGPC:
         loglik, grad, W = _terms(self.likelihood, f, y)
         W = np.maximum(W, 1e-12)
         sW = np.sqrt(W)
+        if not self.evidence:
+            # the mode is all that was asked for.  At the mode f = K grad, so the dual
+            # coefficients are grad itself and no factorisation is needed to read them off; the
+            # variance and the marginal likelihood stay unavailable, which is what they cost.
+            self.y_, self.f_, self.grad_, self.sqrt_W_, self.L_ = y, f, grad, sW, None
+            return self
         B = np.eye(n) + sW[:, None] * K * sW[None, :]
         L = np.linalg.cholesky(B)
         a = _dual_from_mode(K, f, sW, L, W, grad)
@@ -170,6 +185,10 @@ class LaplaceGPC:
     def latent_variance(self, K_test_train: np.ndarray, k_test_self: np.ndarray) -> np.ndarray:
         """Posterior variance of the latent function (Algorithm 3.2)."""
         if self.L_ is None:
+            if self.grad_ is not None:
+                raise RuntimeError("this fit was made with evidence=False, which skips the "
+                                   "factorisation the posterior variance is read from; fit again "
+                                   "with evidence=True, or use the latent mean alone")
             raise RuntimeError("the classifier is not fitted")
         Ks = self.amplitude * np.asarray(K_test_train, float)
         v = solve_triangular(self.L_, self.sqrt_W_[:, None] * Ks.T, lower=True)
@@ -192,6 +211,50 @@ def _dual_from_mode(K: np.ndarray, f: np.ndarray, sW: np.ndarray, L: np.ndarray,
     keeps the marginal likelihood correct when the Newton iteration stopped early."""
     b = W * f + grad
     return b - sW * cho_solve((L, True), sW * (K @ b))
+
+
+def klr_fit(K: np.ndarray, y: np.ndarray, lam: float, max_iter: int = 100,
+            tol: float = 1e-9) -> Tuple[np.ndarray, float, "LaplaceGPC"]:
+    """Kernel logistic regression (plan item E9): the probabilistic classifier that is linear
+    in the field.
+
+    It minimises the logistic loss of the latent function plus a ridge on its norm in the
+    reproducing-kernel Hilbert space,
+
+        sum_i log(1 + exp(-y_i f(x_i)))  +  (lam / 2) ||f||^2,      f(x) = sum_j a_j K(x, x_j),
+
+    which is a smooth convex problem solved by Newton's method.  **It is the same problem the
+    Laplace step of :class:`LaplaceGPC` already solves**, because that step finds the mode of
+    ``log p(y | f) - f' (s K)^-1 f / 2`` with the logistic likelihood, and the two agree when the
+    amplitude is ``s = 1 / lam``.  So this function runs that step rather than a second Newton
+    iteration of its own; ``tests/test_klr.py`` checks that the two give the same coefficients.
+
+    Two things differ from `gpc`, and they are the whole of the difference:
+
+    * **lam is chosen by cross-validation, not by the marginal likelihood.**  The Gaussian process
+      picks its amplitude from the evidence, which needs no held-out molecules; this learner picks
+      lam the way kernel ridge regression picks its own, on the folds.
+    * **there is no posterior variance.**  The probability is the likelihood at the mode,
+      ``p(active) = 1 / (1 + exp(-f))``, not the likelihood averaged over a posterior, so a
+      molecule unlike anything in the training set is *not* pulled towards one half.  That is what
+      makes the fit cheaper -- the factorisation the variance is read from is never made -- and it
+      is also what the Gaussian process gives that this does not.
+
+    The decision boundary is ``f = 0``, which is ``p(active) = 0.5``: the class the model reports
+    and its probability are the same statement, unlike a discriminant whose threshold is placed
+    separately.  On a set with far more inactives than actives that boundary follows the larger
+    class, and moving it is then worth considering; `cmfqsar.model` takes a ``klr_threshold``
+    parameter for that and leaves it off by default.
+
+    Returns (dual coefficients, bias, the fit), the bias being zero.
+    """
+    lam = float(lam)
+    if not lam > 0.0:
+        raise ValueError("kernel logistic regression needs a positive lam (the ridge on the "
+                         "norm of the latent function)")
+    g = LaplaceGPC(likelihood="logit", amplitude=1.0 / lam, max_iter=int(max_iter),
+                   tol=float(tol), evidence=False).fit(K, y)
+    return g.coef, 0.0, g
 
 
 def evidence(K: np.ndarray, y: np.ndarray, amplitude: float = 1.0,

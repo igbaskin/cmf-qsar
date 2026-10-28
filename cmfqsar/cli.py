@@ -532,6 +532,8 @@ def cmd_build(args):
             raise SystemExit("the Gaussian-process classifier needs both classes; use ocsvm")
         if args.method == "kfda" and args.task == "oneclass":
             raise SystemExit("the kernel Fisher discriminant needs both classes; use ocsvm")
+        if args.method == "klr" and args.task == "oneclass":
+            raise SystemExit("kernel logistic regression needs both classes; use ocsvm")
         if args.task == "oneclass" and not args.normalize:
             # without cosine normalisation the decision value scales with the size of the molecule,
             # so the ranking measures molecular size rather than similarity to the target class
@@ -757,6 +759,21 @@ def cmd_build(args):
         cal = getattr(model.learner_, "kfda_", None)
         if cal is not None:
             print("  " + cal.describe())
+            print(f"  Brier score of the fitted probabilities "
+                  f"{brier_score(y, model.predict_proba(train)):.3f} "
+                  f"(0.25 is no better than chance)")
+    if args.method == "klr":
+        from cmfqsar.gpc import brier_score
+        fit = getattr(model.learner_, "klr_", None)
+        if fit is not None:
+            print(f"  Newton's method converged in {fit.n_iter} iterations"
+                  if fit.converged else
+                  f"  WARNING: Newton's method did not converge in {fit.n_iter} iterations")
+            bal = getattr(model.learner_, "klr_balanced_", None)
+            print(f"  decision boundary moved off p = 0.5 (balanced accuracy {bal:.3f} out of "
+                  f"fold), so the reported class and the reported probability disagree"
+                  if bal is not None else
+                  "  decision boundary at p = 0.5, where the class and the probability agree")
             print(f"  Brier score of the fitted probabilities "
                   f"{brier_score(y, model.predict_proba(train)):.3f} "
                   f"(0.25 is no better than chance)")
@@ -3504,7 +3521,7 @@ def main(argv=None):
                         "the hydrogen-counting bug of the 2013 scripts)")
     b.add_argument("--method", default="krr",
                    choices=["krr", "gp", "kpls", "svr", "nusvr", "ranksvm", "svc", "nusvc", "gpc",
-                            "kfda", "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca",
+                            "kfda", "klr", "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca",
                             "fuse-max", "fuse-min", "fuse-sum", "fuse-med",
                             "fuse-anz", "fuse-mnz", "fuse-euc", "fuse-rrf"],
                    help="kpls is kernel partial least squares, the kernel form of the PLS "
@@ -3518,7 +3535,11 @@ def main(argv=None):
                         "linear in the field, so it is the only one of the three a co-field can "
                         "be drawn from. Its ridge comes from the lambda grid, its threshold from "
                         "the out-of-fold balanced accuracy and its probabilities from a logistic "
-                        "fit on the out-of-fold scores. The "
+                        "fit on the out-of-fold scores. "
+                        "klr is kernel logistic regression: the same posterior mode gpc finds, "
+                        "with its ridge taken from the lambda grid instead of from the marginal "
+                        "likelihood and with no posterior variance, so its probability is the "
+                        "likelihood at the mode and its decision boundary is p = 0.5. The "
                         "fuse-* methods are the data-fusion rules for the one-class task: one "
                         "score from the similarities to the individual actives, with nothing "
                         "fitted; fuse-max is the similarity to the best-matching active and "

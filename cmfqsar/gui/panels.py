@@ -965,8 +965,9 @@ class ModelPanel(QWidget):
     REG_KEYS = ["krr", "gp", "kpls", "svr", "nusvr", "ranksvm"]
     CLS_METHODS = ["Support vector classification (C-SVC)", "nu-SVC",
                    "Gaussian process classifier (Laplace)",
-                   "Kernel Fisher discriminant (has a co-field)"]
-    CLS_KEYS = ["svc", "nusvc", "gpc", "kfda"]
+                   "Kernel Fisher discriminant (has a co-field)",
+                   "Kernel logistic regression (lambda by CV)"]
+    CLS_KEYS = ["svc", "nusvc", "gpc", "kfda", "klr"]
     OC_METHODS = ["One-class SVM (1-SVM)",
                   "Distance to the centre of the actives",
                   "Distance to the k-th nearest active",

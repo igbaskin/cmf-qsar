@@ -2136,6 +2136,18 @@ class MainWindow(QMainWindow):
                                  "Its threshold is the midpoint of the two class means."))
             except Exception as exc:                   # noqa: BLE001
                 txt.insert(2, f"Kernel Fisher discriminant: probabilities unavailable ({exc})")
+        if m.method == "klr":
+            from ..gpc import brier_score
+            try:
+                txt.insert(2, "Kernel logistic regression: the same posterior mode the Gaussian "
+                              "process finds, with lambda chosen on the folds and no posterior "
+                              "variance, so a molecule unlike the training set is not pulled "
+                              "towards one half. Brier score of the fitted probabilities "
+                              f"{brier_score(m.y, m.predict_proba(m.train)):.3f} (0.25 is no "
+                              "better than chance). The score is a kernel expansion, so the "
+                              "Co-field tab works on it.")
+            except Exception as exc:                   # noqa: BLE001
+                txt.insert(2, f"Kernel logistic regression: probabilities unavailable ({exc})")
         val = getattr(self, "validation", None)
         if val and val.get("lines"):
             txt += ["", "Validation:"] + ["  " + line for line in val["lines"]]
@@ -2224,6 +2236,12 @@ class MainWindow(QMainWindow):
                 scores = squash(scores, np.zeros_like(scores),
                                 str(m.params.get("likelihood", "probit")))
                 rp.set_scores(ds.names, scores, target, ds.subset, boundary=0.5)
+            elif getattr(m.learner_, "klr_", None) is not None:
+                # the likelihood at the mode; the boundary stays where the model put it, which is
+                # p = 0.5 unless a threshold rule moved it
+                from ..gpc import squash
+                rp.set_scores(ds.names, squash(scores - float(m.bias), np.zeros_like(scores),
+                                               "logit"), target, ds.subset, boundary=0.5)
             elif getattr(m.learner_, "kfda_", None) is not None:
                 # the discriminant score turned into a probability by the logistic map fitted
                 # out of fold; the bias is removed first, because that map is on the raw score

@@ -50,7 +50,7 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), **kernel PLS** (the kernel form of CoMFA's learner, its number of components chosen by cross-validation; see below), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below), or **kernel Fisher discriminant analysis**, the only classifier here found in closed form and the only one whose score is a linear functional of the field, so that a classification model has a co-field (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Several endpoints on one kernel**, tied by a task covariance -- one shared correlation, a free-form low-rank matrix chosen by the marginal likelihood, or a covariance read off descriptors of the endpoints themselves, which is what lets an endpoint with no measurements at all be predicted from its neighbours -- so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), **kernel PLS** (the kernel form of CoMFA's learner, its number of components chosen by cross-validation; see below), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below), or **kernel Fisher discriminant analysis**, the only classifier here found in closed form and the only one whose score is a linear functional of the field, so that a classification model has a co-field (see below), or **kernel logistic regression**, which is the same Laplace mode the Gaussian-process classifier finds with its ridge chosen on the folds and no posterior variance, so its probability is the likelihood at the mode and scoring a library costs an order of magnitude less (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Several endpoints on one kernel**, tied by a task covariance -- one shared correlation, a free-form low-rank matrix chosen by the marginal likelihood, or a covariance read off descriptors of the endpoints themselves, which is what lets an endpoint with no measurements at all be predicted from its neighbours -- so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
@@ -2906,6 +2906,90 @@ classifier or for any other — `cmf cofield` says so and draws the map unmasked
 ```bash
 python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task classification \
        --threshold 6.84 --method kfda --lams 0.01,0.03,0.1,0.3,1,3 --normalize
+```
+
+### Kernel logistic regression: separating what the Gaussian process does
+
+The Gaussian-process classifier above does two separable things. It finds the mode of the latent
+function under a Bernoulli likelihood and then averages its probability over a posterior around
+that mode; and it picks its one hyper-parameter from the marginal likelihood rather than from
+held-out molecules. `klr` ([gpc.py](cmfqsar/gpc.py), `klr_fit`) is the same mode with neither:
+logistic loss plus a ridge `lam` on the norm of the latent function, `lam` chosen on the folds,
+and the probability read straight off the likelihood at the mode.
+
+It is not a second implementation. The problem it minimises *is* the Laplace mode with the
+logistic likelihood at amplitude `1/lam`, so `klr_fit` runs that iteration instead of repeating
+it, and [tests/test_klr.py](tests/test_klr.py) checks both that the two agree and that they agree
+with linear logistic regression on explicit features when the kernel is linear. What is skipped
+is the factorisation afterwards, which is where the posterior variance and the marginal
+likelihood come from; `klr` has neither and says so rather than returning something wrong. The
+stationarity condition is the readable part: `lam * a_i = t_i - pi_i`, so a coefficient is the
+amount by which the model still gets that molecule wrong.
+
+One thing it has that the discriminant of the previous section does not: `f = 0` is `p = 0.5`, so
+the class it reports and the probability it reports never disagree. The price is that `p = 0.5`
+follows the larger class on an imbalanced set; `klr_threshold` set to `cv` moves the boundary to
+the best out-of-fold balanced accuracy, and is off by default.
+
+**Measured, with the likelihood held fixed.** [benchmarks/run_klr.py](benchmarks/run_klr.py) uses
+the protocol of the previous section on the same two LIT-PCBA sets, and runs the Gaussian-process
+classifier with the **logistic** likelihood rather than its own probit default — otherwise the two
+would differ in three things at once and nothing could be attributed to any of them. It appears
+twice, choosing its amplitude on the folds and from the marginal likelihood, which separates the
+two differences. Means over the two sets:
+
+| mean of the two sets | AUC | Brier score | balanced accuracy (common rule) |
+|---|---:|---:|---:|
+| kernel logistic regression, ridge by CV | 0.596 | 0.0519 | 0.511 |
+| GP classifier, amplitude by CV | 0.587 | 0.0559 | 0.508 |
+| GP classifier, amplitude by the marginal likelihood | 0.598 | **0.0472** | 0.514 |
+| C-SVC | 0.607 | — | 0.517 |
+| kernel Fisher discriminant | 0.605 | **0.0457** | 0.529 |
+| the share of actives, predicted for every molecule | 0.500 | 0.0458 | 0.500 |
+
+**The tie on accuracy is confirmed, which is what it should be.** Against the Gaussian process at
+the same likelihood and the same selection, the AUC difference is −0.001 [−0.012, +0.010] on one
+set and +0.019 [−0.059, +0.085] on the other. They are the same mode, so they are the same
+classifier. Against C-SVC the mean is −0.011 [−0.061, +0.041] and against the discriminant −0.008
+[−0.065, +0.048]. No accuracy gain anywhere.
+
+**On calibration the expectation written into the plan fails, and the result is more interesting
+than the expectation.** E9 was written expecting this learner to become the reference the
+Gaussian process's probabilities are judged against, on the reasoning that cross-validation is
+the honest way to choose a hyper-parameter. Taken apart, the two differences pull opposite ways.
+Dropping the variance averaging gains a little: the Brier score is lower than the cross-validated
+Gaussian process's, by differences of −0.0034 [−0.0056, −0.0010] and −0.0046 [−0.0075, −0.0015]
+that exclude zero on both sets. Choosing the amplitude by the marginal likelihood gains more the
+other way: the
+evidence-selected Gaussian process beats this learner by 0.0041 [+0.0020, +0.0064] and 0.0053
+[+0.0025, +0.0083]. **The evidence is the better selector for calibration here** — a point for the
+Gaussian process, and the second time in this repository that its evidence has held its own
+against a cross-validated search — the first was on ranking, in the section above.
+
+**None of them beats the base rate, and the reliability table says why.** Predicting the share of
+actives for every molecule scores 0.0458; only the evidence-selected Gaussian process and the
+discriminant come back to that, and neither beats it. Every learner puts almost every molecule in
+the lowest probability bin, where about 5 % turn out active, and the handful it places higher turn
+out active about one time in ten rather than the one in two or three it predicted. Read these
+probabilities as a ranking, not as a frequency.
+
+**What "cheaper" is worth, measured.** One fit on these ~1570-molecule kernels takes 490 ms
+against 567 ms, and 499 ms against 531 ms: 6 to 16 %, because Newton's method takes the same
+number of steps either way and only the final factorisation is saved. Scoring every molecule
+takes 0.6 ms against 37.9 ms and 0.3 ms against 30.2 ms — **61 and 112 times less**, because the
+variance costs a triangular solve per molecule scored. The saving is at prediction time, which is
+where a screen spends its time.
+
+So `klr` is kept for what it is rather than for a win: the plain regularised logistic regression
+in the field space, with one hyper-parameter chosen the way every other learner here chooses its
+own, nothing approximated beyond the mode, and the cheap way to put a probability on a large
+library. For a probability that admits ignorance about a molecule unlike the training set, `gpc`
+is still the method — and its evidence is the better way to choose its amplitude. The full table
+is [benchmarks/results/klr/table.md](benchmarks/results/klr/table.md).
+
+```bash
+python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task classification \
+       --threshold 6.84 --method klr --lams 0.01,0.03,0.1,0.3,1,3 --normalize
 ```
 
 ### Alignment by prediction confidence
