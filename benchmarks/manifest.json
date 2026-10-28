@@ -1,6 +1,6 @@
 {
- "commit": "3c96506861e7688ea2c68d0035e2c1d6a52215b0",
- "created": "2026-10-28T21:23:19",
+ "commit": "8e23be489770203eb13f3bfb9a38370791c3597c",
+ "created": "2026-10-28T21:44:00",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2446,13 +2446,16 @@
   "benchmarks/results/selectivity/table.md": "457c99257ba10154d192e7b780653e30544f9a1992b1c2b516c00b2fa3848597",
   "benchmarks/results/solvent/hif2a.json": "3e9d432b00bd2565b22c702fad0c082b6a94dfb845760f70348f21c673b94f94",
   "benchmarks/results/solvent/hif2a_count.json": "55828ad52eb965a891fe8d712deca1e6cea7dfd7a657b07b0f1d26de5a7be30d",
+  "benchmarks/results/solvent/hif2a_rule.json": "9404ea950497e86d6bfe5906cf352e819a2e47b0b5a2ff74f1ac7e5ecd676516",
   "benchmarks/results/solvent/mcl1.json": "cfaa3dc070f9a60c4fe43c84260c2738155458cf2eabbaeb1ab063d796e32a6a",
   "benchmarks/results/solvent/mcl1_count.json": "6f82f47bcf8deeb1d0e1dc25c936cb94d9c2ea1dca1f0d1d7634b37abc61d007",
+  "benchmarks/results/solvent/mcl1_rule.json": "dad03b0d6cfe331d3c803577983845b6108c6de94670a6b9362e0df08fd45980",
   "benchmarks/results/solvent/mcl1_sweep.json": "7940aaf28e8c7bcbac67367fc0ac5f712dbc44460e99c72b5f3888825a595026",
   "benchmarks/results/solvent/p38.json": "0a05ab2c99ddc163e33e00fdaf662a84567add7c15dda39dfb2353e48147512b",
   "benchmarks/results/solvent/p38_count.json": "7d3548feeb237ff393e3cc69c75a1d192c6c40d99bce773c5a8073e07645e288",
+  "benchmarks/results/solvent/p38_rule.json": "4d1e217307af6a8e5b5673117a1a6947017612821723c09609109064d8361611",
   "benchmarks/results/solvent/p38_sweep.json": "68fab2625c132679eedd8a8b1372bca2a169507c74659f4327852d38911c4de3",
-  "benchmarks/results/solvent/table.md": "8c8b2a10959038a480ec5e1ce8648dda1e6f3f8709f38d17e8d6ec569c1a7c7f",
+  "benchmarks/results/solvent/table.md": "7621237add1ff678a87039d722c9308e2e1cf9e55bebde34578640eb1b3a0d82",
   "benchmarks/results/speed/cutoff.json": "709dd23788134aabcfc8e110ddcb9af69813477e46b684f48de4e55591969b3c",
   "benchmarks/results/speed/engine.json": "130e2f1a75835a513d11647d73e2e736b42fb475c074f346de48922559b7595c",
   "benchmarks/results/speed/grid.json": "e75d2d367375716bd6f56b9570f8bffc7edaeaaee742bb71de7a8bbb038b43b6",

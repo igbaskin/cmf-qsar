@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1389 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1395 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1073,12 +1073,41 @@ says whether a trajectory does what a generated ensemble could not.
   the two sweeps 36 definitions were tried and one cleared the interval, which is also what
   trying 36 definitions produces on its own. The field and its co-field stay in the program as a
   display tool under rule 5.
-  **Not done:** the rule that picked both working definitions -- the strictest floor that still
-  leaves every ligand at least one site -- has not itself been tested on a set it was not read
-  from, and that is the one statement in this item that could still turn out to be real; the
-  hydrogens of the water are ignored, so the field says where a water is and not which way it
-  points; and there is no control for the simulation length, which is what would say whether
-  2 ns places the sites surely enough.
+  **The rule behind those definitions, tested as a rule, 28 October 2026, and it failed too.**
+  One statement survived the count: both definitions where the water alone carried anything
+  looked like the **strictest occupancy floor that still leaves every ligand at least one
+  site**, 60% on mcl1 and 70% on p38. That is a rule and not a number, so it can be carried to
+  a new set, and it reads only the occupancy maps -- no activity and no q2 -- so the choice
+  cannot be a search in disguise. `strictest_floor` and `stage_rule` in the benchmark do exactly
+  that: raise the floor in steps of 10% while every ligand still has a site, then measure the
+  five models once.
+  **The three rows.** **hif2a** (held out), floor 60%, 4.6 sites a ligand: the five fields
+  +0.342, with the water +0.396, +0.054 [-0.216, +0.330], the water alone **-0.074**, random
+  sites **+0.277**. **mcl1**, floor 60%, 3.6 sites: +0.575, +0.617, +0.042 [-0.190, +0.299],
+  alone +0.554, random -0.096. **p38**, floor 80%, 3.0 sites: +0.261, +0.301, +0.040 [-0.176,
+  +0.220], alone +0.169, random +0.100.
+  **The rule is refuted by its own evidence, before the held-out set is consulted.** On p38 it
+  picks 80% and not the 70% the sweep had found, and at 80% the water alone reaches +0.169
+  against a control of +0.100: nothing. The cause is a mistake in reading the sweep: its grid
+  stopped at 70%, so a floor that was the strictest **tried** was taken for the strictest
+  **possible**. Applied as stated, the rule walks past the definition the sweep had found. It
+  reproduces its evidence only on mcl1, where 70% does leave seven ligands without a site.
+  **It failed on the held-out set as well.** At the 60% floor the rule picks for hif2a the water
+  alone reaches -0.074 while the same sites moved at random reach +0.277 -- the control ahead by
+  a wide margin, the same inversion the loosest definitions of the sweep produced. The mixture
+  is +0.054 [-0.216, +0.330], and every interval in the table contains zero.
+  **Where this leaves the item.** Two readings of the sweep were written down and tested on a
+  set they were not read from, and both failed. A water field does not improve a model at any
+  definition that can be fixed in advance. The one place in this item where a water block
+  cleared the interval, p38 at a 70% floor with +0.276 [+0.037, +0.560], cannot be reached by
+  any rule stated beforehand, and it is one result from 36 definitions tried on two sets, which
+  is about what 36 attempts produce on their own. The field and its co-field stay in the program
+  as a display tool under rule 5.
+  **Not done:** the hydrogens of the water are ignored, so the field says where a water is and
+  not which way it points; there is no control for the simulation length, which is what would
+  say whether 2 ns places the sites surely enough; and no definition of a hydration site has
+  been found that carries the same meaning on two targets, which is what the two failed tests
+  were looking for.
 * **D10. Fluctuation as information.** The ensemble mode uses the mean field only. The variance of
   the field across frames is a flexibility map, and the kernel of two variance fields is in closed
   form by the same algebra as the mean (a product of Gaussians is a Gaussian). Add it as a block

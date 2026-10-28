@@ -1236,8 +1236,45 @@ behaves like a loose threshold, which is the end of the sweep where the field ca
 > definitions produces on its own. The field and its co-field stay in the program as a display
 > tool under rule 5.
 
+**The rule behind those definitions, applied as a rule, and it failed too.** One thing survived
+the count: both definitions where the water alone carried anything looked like the **strictest
+occupancy floor that still leaves every ligand at least one site**, 60 % on mcl1 and 70 % on p38.
+That is a rule and not a number, so it can be carried to a new set. It also reads nothing it
+should not: the floor is chosen from the occupancy maps alone, with no activity and no q² in
+sight, and the five models are then measured once at the chosen floor.
+
+| set | ligands | floor the rule picks | sites a ligand | the five fields | with the water | change against the five fields | the water alone | random sites alone |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| **hif2a** (held out) | 36 | 60 % | 4.6 | +0.342 | +0.396 | +0.054 [−0.216, +0.330] | **−0.074** | **+0.277** |
+| mcl1 | 25 | 60 % | 3.6 | +0.575 | +0.617 | +0.042 [−0.190, +0.299] | +0.554 | −0.096 |
+| p38 | 29 | 80 % | 3.0 | +0.261 | +0.301 | +0.040 [−0.176, +0.220] | +0.169 | +0.100 |
+
+**The rule was refuted by its own evidence, before the held-out set was consulted.** On p38 it
+picks a floor of **80 %**, not the 70 % the sweep had found, and at 80 % the water alone reaches
++0.169 against a random-site control of +0.100 — nothing. The reason is a mistake of mine in
+reading the sweep: its grid stopped at 70 %, so a floor that was the strictest **tried** was taken
+for the strictest **possible**. Carried out as stated, the rule keeps raising the floor while
+every ligand still has a site, and on p38 it walks straight past the definition the sweep had
+found. The rule only reproduces its evidence on mcl1, where 70 % does leave seven ligands with
+no site and 60 % really is the strictest floor available.
+
+**It failed on the held-out set as well.** On hif2a the rule picks 60 %, leaving 4.6 sites a
+ligand, and there the water alone reaches **−0.074 while the same sites moved at random reach
++0.277**. The control beats the measured positions by a wide margin, which is the same inversion
+the loosest definitions of the sweep produced. The mixture is +0.054 [−0.216, +0.330]: positive,
+and the interval contains zero, as it does on all three sets.
+
+> **Where that leaves this item.** Two readings of the sweep were written down and tested on a
+> set they were not read from, and both failed. The water field does not improve a model at any
+> definition that can be fixed in advance. The one place in the whole item where a water block
+> cleared the interval — p38 at a 70 % floor, +0.276 [+0.037, +0.560] — cannot be reached by any
+> rule stated beforehand, and it is one result from 36 definitions tried on two sets, which is
+> about what 36 attempts produce on their own. The field and its co-field remain in the program
+> as a display tool under rule 5, which is what rule 5 is for.
+
 ```bash
 python benchmarks/run_solvent.py --sets mcl1 p38 hif2a --count
+python benchmarks/run_solvent.py --sets mcl1 p38 hif2a --rule
 ```
 
 **Where the model asks for water.** The sites of all the ligands are in one frame, so they gather

@@ -566,6 +566,76 @@ def test_the_count_section_says_when_a_count_loses_a_set_its_own_result():
     assert "does not reproduce" not in quiet, "no sweep, no comparison"
 
 
+def _rule_row(name, alone, scrambled, delta, lo, hi, floor=0.6, sites=3.6):
+    return dict(set=name, n=25, floor=floor, min_distance=2.4, floors=[0.3, 0.6, 0.9],
+                sites=sites, sites_min=1, sites_max=7, reference=0.575, reference_alpha=1.0,
+                mixed=0.6, mix=0.3, mixed_alpha=1.0, alone=alone, alone_alpha=2.0,
+                scrambled=scrambled, shared=-0.14, delta=delta, lo=lo, hi=hi)
+
+
+def test_the_rule_takes_the_strictest_floor_that_keeps_every_ligand(tmp_path):
+    """The rule reads no activity, so it can be carried to a set it was not read from."""
+    rs = _bench()
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=1.0, n_waters=4,
+                                             tag="rule")
+    occ = SV.occupancy(pdb, dcd, reference=ref)
+    maps = {"a": occ, "b": occ}
+    floor = rs.strictest_floor(maps, ["a", "b"], floors=(0.2, 0.5, 0.9), min_distance=2.4)
+    assert floor is not None
+    # the floor it picks leaves every ligand a site, and the next one up does not
+    for nm in maps:
+        assert len(SV.hydration_sites(occ, min_occupancy=floor, min_distance=2.4)[0]) > 0
+    higher = [f for f in (0.2, 0.5, 0.9) if f > floor]
+    for f in higher[:1]:
+        assert len(SV.hydration_sites(occ, min_occupancy=f, min_distance=2.4)[0]) == 0
+
+
+def test_the_rule_gives_nothing_when_even_the_loosest_floor_is_too_strict(tmp_path):
+    rs = _bench()
+    pdb, dcd, ref, _lig, _held, _n = _system(tmp_path, held_fraction=0.1, tag="rulenone")
+    occ = SV.occupancy(pdb, dcd, reference=ref)
+    assert rs.strictest_floor({"a": occ}, ["a"], floors=(0.99,), min_distance=2.4) is None
+
+
+def test_the_rule_section_reports_a_held_out_test_that_held():
+    rs = _bench()
+    rules = [_rule_row("one", 0.554, -0.096, 0.042, -0.19, 0.30),
+             _rule_row("held", 0.31, -0.03, 0.28, 0.04, 0.56, floor=0.7, sites=6.7)]
+    text = " ".join(rs.rule_section(rules, held_out="held"))
+    assert "could have failed and did not" in text
+    assert "control on 2 of the 2 sets" in text
+    assert "on 1 of the 2 sets (held)" in text, "the set it helps is named"
+
+
+def test_the_rule_section_reports_a_rule_that_misses_its_own_evidence():
+    """A rule that does not pick the definition it was read from is refuted by that set."""
+    rs = _bench()
+    rules = [_rule_row("one", 0.169, 0.100, 0.040, -0.18, 0.22, floor=0.8, sites=3.0)]
+    sweeps = {"one": {"set": "one", "rows": [
+        dict(min_occupancy=0.7, min_distance=2.4, missing=0, sites=6.7, sites_min=1,
+             sites_max=11, alpha=2.0, mix=0.3, mixed=0.536, alone=0.312, control=-0.032,
+             delta=0.276, lo=0.037, hi=0.560)]}}
+    text = " ".join(rs.rule_section(rules, sweeps, held_out="other"))
+    assert "does not pick the definition it was read from, on 1 of the 1 sets" in text
+    assert "strictest **tried** was taken for the strictest **possible**" in text
+    assert "ahead by less than 0.20" in text, "a small margin is not read as a result"
+
+
+def test_the_rule_section_reports_a_held_out_test_that_failed():
+    rs = _bench()
+    rules = [_rule_row("one", 0.554, -0.096, 0.042, -0.19, 0.30),
+             _rule_row("held", 0.02, 0.09, -0.08, -0.29, -0.01, floor=0.6, sites=4.1)]
+    text = " ".join(rs.rule_section(rules, held_out="held"))
+    assert "failed a test on a set they were not read from" in text
+    assert "control on 1 of the 2 sets" in text
+    assert "makes the model worse beyond the interval" in text
+
+
+def test_the_rule_section_is_empty_without_a_measurement():
+    rs = _bench()
+    assert rs.rule_section([]) == []
+
+
 def test_the_count_section_is_empty_without_a_measurement():
     rs = _bench()
     assert rs.count_section([]) == []

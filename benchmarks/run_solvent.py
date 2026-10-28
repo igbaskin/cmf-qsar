@@ -86,6 +86,8 @@ COUNT_OCCUPANCY = 0.3
 COUNT_DISTANCE = 2.4
 #: the set the count was not chosen on, which is the only one that can test the hypothesis
 COUNT_HELD_OUT = "hif2a"
+#: the floors the rule of the next stage chooses between, in the steps the sweep used
+RULE_FLOORS = (0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
 
 
 def _say(text):
@@ -403,6 +405,86 @@ def stage_count(name, mols, names, y, maps, max_sites=COUNT_SITES,
     return out
 
 
+def strictest_floor(maps, names, floors=RULE_FLOORS, min_distance=COUNT_DISTANCE):
+    """The strictest occupancy floor at which every ligand still has at least one site.
+
+    This is the rule that picked both definitions where the water field carried anything, 60% on
+    one set and 70% on the other. It is stated here on its own, and it reads no activity and no
+    q2: it looks only at whether a definition leaves a ligand with nothing. A rule of that kind
+    can be applied to a set it was not read from, which a number cannot.
+
+    Returns None when even the loosest floor leaves a ligand without a site.
+    """
+    out = None
+    for floor in sorted(float(f) for f in floors):
+        every = all(len(SV.hydration_sites(maps[nm], min_occupancy=floor,
+                                           min_distance=float(min_distance))[0]) > 0
+                    for nm in names)
+        if not every:
+            break
+        out = floor
+    return out
+
+
+def stage_rule(name, mols, names, y, maps, floors=RULE_FLOORS, min_distance=COUNT_DISTANCE,
+               results=RESULTS, seed=SEED, log=_say):
+    """The comparison at the definition the rule above picks, measured once.
+
+    The count-based reading of the sweep was refuted. What is left of it is a rule rather than a
+    number: both definitions where the water alone carried anything were the strictest floor that
+    still left every ligand a site. The floor is chosen first, from the maps alone, and the five
+    models are then measured once at that floor. Nothing is searched over after the choice, so
+    the row is an estimate on a set the rule was not read from.
+    """
+    floor = strictest_floor(maps, names, floors, min_distance)
+    if floor is None:
+        log(f"    {name}: even the loosest floor leaves a ligand with no site; skipped")
+        return None
+    Kf, refs = {}, []
+    for a in ALPHAS:
+        Kf[a] = field_kernel(mols, names, a)
+        refs.append((best(Kf[a], y), float(a)))
+    ref, ref_alpha = max(refs, key=lambda r: r[0][0])
+    picked, counts = {}, None
+    for a in ALPHAS:
+        sites, miss = sites_at(maps, names, a, floor, min_distance)
+        if miss:                                  # the floor was chosen so that this cannot happen
+            log(f"    {name}: {len(miss)} ligand(s) lost their site at the chosen floor")
+            return None
+        counts = [len(sites[n][0]) for n in names]
+        scan = _scan(Kf[a], water_kernel(sites, names, a), y)
+        inner = [r for r in scan if 0.0 < r["mix"] < 1.0]
+        rows = {"mixed": max(inner, key=lambda r: r["q2"]) if inner else scan[0],
+                "alone": scan[-1],
+                "scrambled": _scan(Kf[a], water_kernel(
+                    scrambled_sites(sites, names, seed=seed), names, a), y)[-1],
+                "shared": _scan(Kf[a], water_kernel(
+                    shared_sites(sites, names), names, a), y)[-1]}
+        for key, row in rows.items():
+            if picked.get(key) is None or row["q2"] > picked[key]["q2"]:
+                picked[key] = dict(row, alpha=float(a))
+    d, lo, hi = bootstrap_difference(y, picked["mixed"]["pred"], ref[3])
+    out = {"set": name, "n": int(len(y)), "floor": float(floor),
+           "min_distance": float(min_distance), "floors": [float(f) for f in floors],
+           "sites": float(np.mean(counts)), "sites_min": int(min(counts)),
+           "sites_max": int(max(counts)),
+           "reference": float(ref[0]), "reference_alpha": ref_alpha,
+           "mixed": float(picked["mixed"]["q2"]), "mix": float(picked["mixed"]["mix"]),
+           "mixed_alpha": picked["mixed"]["alpha"],
+           "alone": float(picked["alone"]["q2"]), "alone_alpha": picked["alone"]["alpha"],
+           "scrambled": float(picked["scrambled"]["q2"]),
+           "shared": float(picked["shared"]["q2"]),
+           "delta": d, "lo": lo, "hi": hi}
+    log(f"    {name}: the rule picks a floor of {floor:.0%}, {out['sites']:.1f} sites a ligand; "
+        f"the five fields {out['reference']:+.3f}, with the water {out['mixed']:+.3f} "
+        f"({d:+.3f} [{lo:+.3f}, {hi:+.3f}]), the water alone {out['alone']:+.3f}, "
+        f"random sites {out['scrambled']:+.3f}, one shared set {out['shared']:+.3f}")
+    os.makedirs(results, exist_ok=True)
+    with open(os.path.join(results, f"{name}_rule.json"), "w") as fh:
+        json.dump(out, fh, indent=1)
+    return out
+
+
 def site_places(sites, names, y, alpha, radius=2.4, folds=FOLDS, seed=SEED):
     """Where the model asks for water, and where it asks for less of it.
 
@@ -576,7 +658,7 @@ ORDER = ("fields", "water_mixed", "water_alone", "scrambled", "shared",
 def load_all(results=RESULTS):
     out = []
     for p in sorted(glob.glob(os.path.join(results, "*.json"))):
-        if p.endswith(("_sweep.json", "_count.json")):
+        if p.endswith(("_sweep.json", "_count.json", "_rule.json")):
             continue
         with open(p) as fh:
             out.append(json.load(fh))
@@ -595,6 +677,14 @@ def load_sweeps(results=RESULTS):
 def load_counts(results=RESULTS):
     out = []
     for p in sorted(glob.glob(os.path.join(results, "*_count.json"))):
+        with open(p) as fh:
+            out.append(json.load(fh))
+    return out
+
+
+def load_rules(results=RESULTS):
+    out = []
+    for p in sorted(glob.glob(os.path.join(results, "*_rule.json"))):
         with open(p) as fh:
             out.append(json.load(fh))
     return out
@@ -663,6 +753,7 @@ def report(results=RESULTS, path=None):
         if sweep:
             out += sweep_section(sweep)
     out += count_section(load_counts(results), load_sweeps(results))
+    out += rule_section(load_rules(results), load_sweeps(results))
     out += verdict(rows)
     text = "\n".join(out) + "\n"
     if path:
@@ -942,6 +1033,135 @@ def count_section(counts, sweeps=None, held_out=COUNT_HELD_OUT):
     return out
 
 
+#: a margin over the random-site control below this is reported as small, not as a result
+RULE_MARGIN = 0.2
+
+
+def rule_section(rules, sweeps=None, held_out=COUNT_HELD_OUT):
+    """The table and the reading of the strictest-floor rule.
+
+    The reading follows the numbers. It says which floor the rule chose on each set, whether the
+    water alone beat its own random-site control there and by how much, and whether the mixture
+    cleared the interval; and it separates the set the rule was not read from, which is the only
+    one whose row is an estimate. Where a set has a sweep it also checks the rule's own premise,
+    that the floor the rule picks is the floor at which that set's water field did best, because
+    a rule that does not pick its own evidence is refuted before it is carried anywhere.
+    """
+    if not rules:
+        return []
+    out = ["## The rule that was meant to pick both working definitions", "",
+           "A count was the wrong reading of the sweep. What was left of it was a **rule** "
+           "rather than a number: the definitions where the water alone carried anything looked "
+           "like the **strictest occupancy floor that still leaves every ligand at least one "
+           "site**. A rule of that form can be carried to a new set, which a number cannot. It "
+           "is applied here as a rule: the floor is chosen from the occupancy maps alone, "
+           "reading no activity and no q2, and the five models are then measured once at that "
+           "floor. Nothing is searched over after the choice.", ""]
+    if any(r["set"] == held_out for r in rules):
+        out += [f"**{held_out}** is again the set nothing was read from, so its row is an "
+                f"estimate. The other rows are the sets the rule was read from: they can only "
+                f"show whether the rule picks the definition it was meant to pick, which is a "
+                f"check on the rule and not evidence for it.", ""]
+    out += ["| set | ligands | floor the rule picks | sites a ligand | the five fields | "
+            "with the water | change against the five fields | the water alone | "
+            "random sites alone |",
+            "| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: |"]
+    for r in rules:
+        label = f"**{r['set']}**" if r["set"] == held_out else r["set"]
+        out.append(f"| {label} | {r['n']} | {r['floor']:.0%} | {r['sites']:.1f} | "
+                   f"{r['reference']:+.3f} | {r['mixed']:+.3f} | "
+                   f"{r['delta']:+.3f} [{r['lo']:+.3f}, {r['hi']:+.3f}] | {r['alone']:+.3f} | "
+                   f"{r['scrambled']:+.3f} |")
+    out.append("")
+
+    # the premise first: a rule that does not pick the definition it was read from is refuted
+    # by its own evidence, whatever the held-out set then says
+    missed = []
+    for r in rules:
+        rows = [w for w in (sweeps or {}).get(r["set"], {}).get("rows", []) if w.get("sites")]
+        if not rows:
+            continue
+        top = max(rows, key=lambda w: w["alone"])
+        if abs(float(top["min_occupancy"]) - r["floor"]) > 1e-9 \
+                and top["alone"] > r["alone"] + 0.05:
+            missed.append((r, top))
+    if missed:
+        parts = "; ".join(f"on {r['set']} it picks {r['floor']:.0%} and the water alone reaches "
+                          f"{r['alone']:+.3f} there, while the sweep's best was "
+                          f"{top['alone']:+.3f} at {top['min_occupancy']:.0%}"
+                          for r, top in missed)
+        out += [f"**The rule does not pick the definition it was read from, on "
+                f"{len(missed)} of the {len(rules)} sets**: {parts}. That refutes the rule "
+                f"before any held-out set is consulted, and it shows where the rule came from: "
+                f"the sweep's grid stopped at 70%, so a floor that was the strictest **tried** "
+                f"was taken for the strictest **possible**. Carried out properly, the rule "
+                f"keeps raising the floor while every ligand still has a site, and it goes past "
+                f"the definition the sweep had found.", ""]
+
+    clear = [r for r in rules if r["alone"] > 0.05
+             and r["alone"] - r["scrambled"] >= RULE_MARGIN]
+    small = [r for r in rules if r["alone"] > 0.05
+             and 0.0 < r["alone"] - r["scrambled"] < RULE_MARGIN]
+    ahead = [r for r in rules if r["lo"] > 0]
+    behind = [r for r in rules if r["hi"] < 0]
+    held = [r for r in rules if r["set"] == held_out]
+
+    margins = sorted(r["alone"] - r["scrambled"] for r in clear)
+    out += [f"**The water alone clearly beats its own random-site control on "
+            f"{len(clear)} of the {len(rules)} sets**"
+            + (f" ({', '.join(r['set'] for r in clear)}), by "
+               + (f"{margins[0]:+.3f}" if len(margins) == 1 else
+                  f"{margins[0]:+.3f} to {margins[-1]:+.3f}") + "." if clear else
+               f". It reaches {min(r['alone'] for r in rules):+.3f} to "
+               f"{max(r['alone'] for r in rules):+.3f} against random-site controls of "
+               f"{min(r['scrambled'] for r in rules):+.3f} to "
+               f"{max(r['scrambled'] for r in rules):+.3f}.")
+            + (f" On {'one further set' if len(small) == 1 else str(len(small)) + ' further sets'}"
+               f" ({', '.join(r['set'] for r in small)}) it is ahead by less than "
+               f"{RULE_MARGIN:.2f}, which on sets of this size is not a difference worth "
+               f"reading: "
+               + "; ".join(f"{r['set']} {r['alone']:+.3f} against {r['scrambled']:+.3f}"
+                           for r in small) + "." if small else ""), ""]
+    if ahead:
+        out += [f"The water block **improves the model beyond the interval** on "
+                f"{len(ahead)} of the {len(rules)} sets "
+                f"({', '.join(r['set'] for r in ahead)}), by "
+                f"{min(r['delta'] for r in ahead):+.3f} to "
+                f"{max(r['delta'] for r in ahead):+.3f}.", ""]
+    else:
+        out += [f"The water block improves no set beyond the interval even here: the change "
+                f"runs from {min(r['delta'] for r in rules):+.3f} to "
+                f"{max(r['delta'] for r in rules):+.3f}"
+                + (f", and on {len(behind)} of the {len(rules)} sets "
+                   f"({', '.join(r['set'] for r in behind)}) it makes the model worse beyond "
+                   f"the interval." if behind else ", and every interval contains zero."), ""]
+    if held:
+        h = held[0]
+        passed = h["alone"] > max(0.05, h["scrambled"] + 0.05)
+        out += [f"**What the held-out set says.** The rule picks a floor of {h['floor']:.0%} on "
+                f"{h['set']}, which leaves {h['sites']:.1f} sites a ligand. There the water "
+                f"alone reaches {h['alone']:+.3f} against {h['scrambled']:+.3f} for random "
+                f"sites, and the mixture {h['delta']:+.3f} [{h['lo']:+.3f}, {h['hi']:+.3f}] "
+                f"against the five fields. "
+                + (f"The rule therefore holds on a set it was not read from: at the definition "
+                   f"it chooses, where the water sits carries information about activity. That "
+                   f"is one test that could have failed and did not, and it is the only "
+                   f"statement in this item with a held-out measurement behind it."
+                   if passed else
+                   f"The rule does not hold on the set it was not read from: at the definition "
+                   f"it chooses, the water field carries nothing that random sites do not. "
+                   f"Both readings of the sweep have now failed a test on a set they were "
+                   f"not read from, and what the sweep found on two sets is best treated as a "
+                   f"property of those two sets."),
+                ""]
+    out += ["> **What this does not settle.** A floor chosen by this rule still depends on the "
+            "set, so two targets get different definitions and the rule gives no number anyone "
+            "can quote. The rule itself was read from two sets and is tested here on one. And "
+            "whether the water block is worth adding to a model is answered by the change "
+            "column, not by the water alone: that column is where rule 1 applies.", ""]
+    return out
+
+
 def verdict(rows):
     out = ["## What it settles", ""]
     for rec in rows:
@@ -1026,6 +1246,11 @@ def main(argv=None):
                          f"({COUNT_SITES} a ligand) rather than as an occupancy threshold, "
                          f"which is the one definition that can mean the same on two targets. "
                          f"Needs the trajectories, as --sweep does")
+    ap.add_argument("--rule", action="store_true",
+                    help="also measure the definition the strictest-floor rule picks: the "
+                         "strictest occupancy floor that still leaves every ligand at least "
+                         "one site, chosen from the maps alone and then measured once. Needs "
+                         "the trajectories, as --sweep does")
     ap.add_argument("--report", nargs="?", const=os.path.join(RESULTS, "table.md"), default=None)
     a = ap.parse_args(argv)
 
@@ -1036,7 +1261,7 @@ def main(argv=None):
     os.makedirs(RESULTS, exist_ok=True)
     for name in a.sets:
         run_set(name, force=a.force)
-        if a.sweep or a.count:
+        if a.sweep or a.count or a.rule:
             sites, _record = water_sites(name)
             if not sites:
                 continue
@@ -1055,6 +1280,8 @@ def main(argv=None):
                     stage_sweep(name, mols, names, y, maps)
                 if a.count:
                     stage_count(name, mols, names, y, maps)
+                if a.rule:
+                    stage_rule(name, mols, names, y, maps)
     report(path=os.path.join(RESULTS, "table.md"))
     print(f"written {os.path.join(RESULTS, 'table.md')}")
     return 0

@@ -248,6 +248,28 @@ The water field **on its own** carries something on 1 of the 3 sets (mcl1): mcl1
 
 > **What is fixed and what is not.** The count, the floor and the spacing were written down before the held-out set was simulated, so its row is an estimate and not the best of several. Why one target needs a floor of 60% and another 70% is still unexplained, and a floor chosen per target is not a definition anyone can fix in advance. The honest reading is in the verdict below.
 
+## The rule that was meant to pick both working definitions
+
+A count was the wrong reading of the sweep. What was left of it was a **rule** rather than a number: the definitions where the water alone carried anything looked like the **strictest occupancy floor that still leaves every ligand at least one site**. A rule of that form can be carried to a new set, which a number cannot. It is applied here as a rule: the floor is chosen from the occupancy maps alone, reading no activity and no q2, and the five models are then measured once at that floor. Nothing is searched over after the choice.
+
+**hif2a** is again the set nothing was read from, so its row is an estimate. The other rows are the sets the rule was read from: they can only show whether the rule picks the definition it was meant to pick, which is a check on the rule and not evidence for it.
+
+| set | ligands | floor the rule picks | sites a ligand | the five fields | with the water | change against the five fields | the water alone | random sites alone |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| **hif2a** | 36 | 60% | 4.6 | +0.342 | +0.396 | +0.054 [-0.216, +0.330] | -0.074 | +0.277 |
+| mcl1 | 25 | 60% | 3.6 | +0.575 | +0.617 | +0.042 [-0.190, +0.299] | +0.554 | -0.096 |
+| p38 | 29 | 80% | 3.0 | +0.261 | +0.301 | +0.040 [-0.176, +0.220] | +0.169 | +0.100 |
+
+**The rule does not pick the definition it was read from, on 1 of the 3 sets**: on p38 it picks 80% and the water alone reaches +0.169 there, while the sweep's best was +0.341 at 70%. That refutes the rule before any held-out set is consulted, and it shows where the rule came from: the sweep's grid stopped at 70%, so a floor that was the strictest **tried** was taken for the strictest **possible**. Carried out properly, the rule keeps raising the floor while every ligand still has a site, and it goes past the definition the sweep had found.
+
+**The water alone clearly beats its own random-site control on 1 of the 3 sets** (mcl1), by +0.650. On one further set (p38) it is ahead by less than 0.20, which on sets of this size is not a difference worth reading: p38 +0.169 against +0.100.
+
+The water block improves no set beyond the interval even here: the change runs from +0.040 to +0.054, and every interval contains zero.
+
+**What the held-out set says.** The rule picks a floor of 60% on hif2a, which leaves 4.6 sites a ligand. There the water alone reaches -0.074 against +0.277 for random sites, and the mixture +0.054 [-0.216, +0.330] against the five fields. The rule does not hold on the set it was not read from: at the definition it chooses, the water field carries nothing that random sites do not. Both readings of the sweep have now failed a test on a set they were not read from, and what the sweep found on two sets is best treated as a property of those two sets.
+
+> **What this does not settle.** A floor chosen by this rule still depends on the set, so two targets get different definitions and the rule gives no number anyone can quote. The rule itself was read from two sets and is tested here on one. And whether the water block is worth adding to a model is answered by the change column, not by the water alone: that column is where rule 1 applies.
+
 ## What it settles
 
 **On hif2a the water field makes the model worse.** -0.079 [-0.287, -0.007] against the five fields, which clears the interval in the wrong direction.

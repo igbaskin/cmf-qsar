@@ -3580,9 +3580,33 @@ follows from that. What is left: a water field does not improve a model at any d
 can be fixed in advance, a high floor is the only setting where it carries anything, the floor
 that works differs between targets, and nothing explains why.
 
+**The rule behind those definitions, applied as a rule, and it failed too.** Both definitions
+where the water alone carried anything looked like the **strictest occupancy floor that still
+leaves every ligand at least one site** (60% on mcl1, 70% on p38). That is a rule, not a number,
+so it travels; and it reads only the maps, no activity and no q2.
+
+| set | ligands | floor the rule picks | sites a ligand | the five fields | with the water | change | the water alone | random sites alone |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: | ---: |
+| **hif2a** (held out) | 36 | 60% | 4.6 | +0.342 | +0.396 | +0.054 [-0.216, +0.330] | **-0.074** | **+0.277** |
+| mcl1 | 25 | 60% | 3.6 | +0.575 | +0.617 | +0.042 [-0.190, +0.299] | +0.554 | -0.096 |
+| p38 | 29 | 80% | 3.0 | +0.261 | +0.301 | +0.040 [-0.176, +0.220] | +0.169 | +0.100 |
+
+The rule is refuted by its own evidence before the held-out set is consulted: on p38 it picks
+**80%**, not the 70% the sweep found, and there the water alone reaches +0.169 against +0.100 for
+random sites. The sweep's grid stopped at 70%, so a floor that was the strictest *tried* was
+taken for the strictest *possible*. On the held-out set it fails as well: at the 60% floor it
+picks for hif2a, the water alone reaches -0.074 while the same sites moved at random reach
++0.277.
+
+So two readings of the sweep were written down and tested on a set they were not read from, and
+both failed. A water field does not improve a model at any definition that can be fixed in
+advance. The one interval-clearing result in this item, p38 at a 70% floor, cannot be reached by
+any rule stated beforehand and is one result out of 36 definitions tried on two sets.
+
 ```bash
 python benchmarks/run_solvent.py --sweep                       # results/solvent/table.md
 python benchmarks/run_solvent.py --sets mcl1 p38 hif2a --count
+python benchmarks/run_solvent.py --sets mcl1 p38 hif2a --rule
 ```
 
 ```bash
