@@ -2123,6 +2123,19 @@ class MainWindow(QMainWindow):
                               f"(0.25 is a coin). The Scores tab carries p(active) from the latent mean.")
             except Exception as exc:                   # noqa: BLE001
                 txt.insert(2, f"Gaussian process: probabilities unavailable ({exc})")
+        if m.method == "kfda":
+            from ..gpc import brier_score
+            cal = getattr(m.learner_, "kfda_", None)
+            try:
+                txt.insert(2, "Kernel Fisher discriminant: the score is linear in the field, so "
+                              "this classifier has a co-field (the Co-field tab works on it). "
+                              + (f"Its {cal.describe()}, and the Brier score of the fitted "
+                                 f"probabilities is "
+                                 f"{brier_score(m.y, m.predict_proba(m.train)):.3f} "
+                                 f"(0.25 is no better than chance)." if cal is not None else
+                                 "Its threshold is the midpoint of the two class means."))
+            except Exception as exc:                   # noqa: BLE001
+                txt.insert(2, f"Kernel Fisher discriminant: probabilities unavailable ({exc})")
         val = getattr(self, "validation", None)
         if val and val.get("lines"):
             txt += ["", "Validation:"] + ["  " + line for line in val["lines"]]
@@ -2211,6 +2224,12 @@ class MainWindow(QMainWindow):
                 scores = squash(scores, np.zeros_like(scores),
                                 str(m.params.get("likelihood", "probit")))
                 rp.set_scores(ds.names, scores, target, ds.subset, boundary=0.5)
+            elif getattr(m.learner_, "kfda_", None) is not None:
+                # the discriminant score turned into a probability by the logistic map fitted
+                # out of fold; the bias is removed first, because that map is on the raw score
+                cal = m.learner_.kfda_
+                rp.set_scores(ds.names, cal.probability(scores - float(m.bias)), target,
+                              ds.subset, boundary=0.5)
             else:
                 rp.set_scores(ds.names, scores, target, ds.subset)
             if "screening_truth" in st.extra:

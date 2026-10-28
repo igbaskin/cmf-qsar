@@ -1,0 +1,206 @@
+{
+ "set": "TP53",
+ "part": "gate",
+ "n": 1564,
+ "n_actives": 64,
+ "alpha": 0.5,
+ "folds": 5,
+ "inner_folds": 5,
+ "seed": 0,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "methods": {
+  "kfda": {
+   "balanced_accuracy": 0.5523125,
+   "auc": 0.57896875,
+   "sensitivity": 0.390625,
+   "specificity": 0.714,
+   "mcc": 0.045664811756340275,
+   "balanced_accuracy_common": 0.5078125,
+   "sensitivity_common": 0.265625,
+   "specificity_common": 0.75,
+   "mcc_common": 0.007142476220949673,
+   "brier": 0.03942099863060952,
+   "chosen": [
+    {
+     "lam": 1.0
+    },
+    {
+     "lam": 1.0
+    },
+    {
+     "lam": 1.0
+    },
+    {
+     "lam": 0.01
+    },
+    {
+     "lam": 0.1
+    }
+   ],
+   "seconds": 7.0
+  },
+  "svc": {
+   "balanced_accuracy": 0.5310625,
+   "auc": 0.6037708333333334,
+   "sensitivity": 0.078125,
+   "specificity": 0.984,
+   "mcc": 0.09123234320700266,
+   "balanced_accuracy_common": 0.5042291666666667,
+   "sensitivity_common": 0.203125,
+   "specificity_common": 0.8053333333333333,
+   "mcc_common": 0.0042291942005727055,
+   "brier": NaN,
+   "chosen": [
+    {
+     "C": 0.1
+    },
+    {
+     "C": 10.0
+    },
+    {
+     "C": 1.0
+    },
+    {
+     "C": 10.0
+    },
+    {
+     "C": 10.0
+    }
+   ],
+   "seconds": 1.1
+  },
+  "gpc": {
+   "balanced_accuracy": 0.4964791666666667,
+   "auc": 0.5311041666666667,
+   "sensitivity": 0.015625,
+   "specificity": 0.9773333333333334,
+   "mcc": -0.009431338112400931,
+   "balanced_accuracy_common": 0.49522916666666666,
+   "sensitivity_common": 0.203125,
+   "specificity_common": 0.7873333333333333,
+   "mcc_common": -0.004622590914593037,
+   "brier": 0.07843117374396485,
+   "chosen": [
+    {
+     "amplitude": 100.0
+    },
+    {
+     "amplitude": 100.0
+    },
+    {
+     "amplitude": 100.0
+    },
+    {
+     "amplitude": 100.0
+    },
+    {
+     "amplitude": 1.0
+    }
+   ],
+   "seconds": 19.1
+  },
+  "krr": {
+   "balanced_accuracy": 0.49066666666666664,
+   "auc": 0.5721979166666666,
+   "sensitivity": 0.0,
+   "specificity": 0.9813333333333333,
+   "mcc": -0.027888667551135855,
+   "balanced_accuracy_common": 0.5275416666666667,
+   "sensitivity_common": 0.34375,
+   "specificity_common": 0.7113333333333334,
+   "mcc_common": 0.024026159649428162,
+   "brier": NaN,
+   "chosen": [
+    {
+     "lam": 0.03
+    },
+    {
+     "lam": 0.01
+    },
+    {
+     "lam": 3.0
+    },
+    {
+     "lam": 0.03
+    },
+    {
+     "lam": 3.0
+    }
+   ],
+   "seconds": 4.0
+  }
+ },
+ "differences": {
+  "kfda-svc/balanced_accuracy": [
+   0.02124999999999999,
+   -0.048142865178955434,
+   0.09091283222687524
+  ],
+  "kfda-svc/auc": [
+   -0.024802083333333336,
+   -0.11015078956887661,
+   0.0590104911074727
+  ],
+  "kfda-svc/balanced_accuracy_common": [
+   0.0035833333333332718,
+   -0.08127638264036216,
+   0.08575358466149684
+  ],
+  "kfda-gpc/balanced_accuracy": [
+   0.05583333333333329,
+   -0.00698979522277843,
+   0.11838667964987225
+  ],
+  "kfda-gpc/auc": [
+   0.04786458333333332,
+   -0.04610970841874277,
+   0.14617977397531023
+  ],
+  "kfda-gpc/brier": [
+   -0.03901017511335533,
+   -0.04430422202862871,
+   -0.03384219019932965
+  ],
+  "kfda-gpc/balanced_accuracy_common": [
+   0.012583333333333335,
+   -0.013794460781255154,
+   0.045088755026257685
+  ],
+  "kfda-krr/balanced_accuracy": [
+   0.061645833333333344,
+   0.002506170793524954,
+   0.1226445011347583
+  ],
+  "kfda-krr/auc": [
+   0.0067708333333333925,
+   -0.07453282110385455,
+   0.0914989546050704
+  ],
+  "kfda-krr/balanced_accuracy_common": [
+   -0.019729166666666687,
+   -0.11518100266033675,
+   0.07706404849113252
+  ]
+ },
+ "cofield_cosine": {
+  "overall": 0.23280773624880646,
+  "fields": {
+   "electrostatic": 0.2915164884351137,
+   "steric": 0.28510857464653067,
+   "hydrophobic": 0.030423062895261626,
+   "hba": 0.32364853982079683,
+   "hbd": 0.20580692246010043
+  },
+  "lam": 1.0,
+  "C": 10.0
+ },
+ "base_rate_brier": 0.039246211105369536,
+ "active_share": 0.04092071611253197,
+ "seconds": 257.1
+}

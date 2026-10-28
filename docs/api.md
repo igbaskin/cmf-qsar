@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 89 modules, 167 classes with 530 public methods, and 748 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 89 modules, 168 classes with 534 public methods, and 751 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -7182,7 +7182,10 @@ Source: `cmfqsar/model.py`
 CMF regression models: kernel ridge regression (KRR, the method of the 2013
 paper), kernel partial least squares (KPLS, the kernel form of the PLS that
 CoMFA uses), support vector regression and a Gaussian-process view of KRR that
-provides predictive variances.  Includes k-fold cross-validation, grid search
+provides predictive variances.  The classifiers are here too: the support-vector
+classifiers, the Laplace Gaussian-process classifier of `cmfqsar.gpc` and
+the kernel Fisher discriminant (KFDA), whose score is linear in the field and
+which therefore has a co-field.  Includes k-fold cross-validation, grid search
 over hyper-parameters (alpha, lambda / C / number of PLS components, optionally
 mixing coefficients h_f) and external (nested) cross-validation.
 
@@ -7233,6 +7236,41 @@ Attributes:
 - `extra: Dict[str, object]` = `field(default_factory=dict)`
 
 #### `ClassStats.summary() -> str`
+
+### `class KFDACalibration  (dataclass)`
+
+Where a kernel Fisher discriminant cuts its score, and how it turns it into a probability.
+
+Both are fitted on scores of molecules the discriminant that scored them had not seen, so
+neither carries the optimism of a threshold read off the training scores.  Both are also
+expressed in the class-mean units of `kfda_frame` rather than in raw score units: the
+scaled score is (raw score - `centre`) / `spread`, which is 0 at the midpoint of the two
+class means and +-1 at the means themselves.
+
+Attributes:
+
+- `threshold: float` = `0.0`
+- `slope: float` = `1.0`
+- `intercept: float` = `0.0`
+- `folds: int` = `0`
+- `balanced_accuracy: float` = `float('nan')`
+- `scores: Optional[np.ndarray]` = `None`
+- `centre: float` = `0.0`
+- `spread: float` = `1.0`
+
+#### `KFDACalibration.scale(score: np.ndarray) -> np.ndarray`
+
+Raw scores K(x, train) a expressed in the class-mean units the threshold is kept in.
+
+#### `KFDACalibration.bias() -> float`
+
+The bias b that puts the chosen threshold at zero, so that the class is sign(K a + b).
+
+#### `KFDACalibration.probability(score: np.ndarray) -> np.ndarray`
+
+p(active) for raw scores K(x, train) a, that is for predictions with the bias removed.
+
+#### `KFDACalibration.describe() -> str`
 
 ### `class CMFModel  (dataclass)`
 
@@ -7509,10 +7547,19 @@ posterior exists.
 
 #### `CMFModel.predict_proba(test: AtomTable) -> np.ndarray`
 
-p(active) for new molecules; only the Gaussian-process classifier provides it.
+p(active) for new molecules; the two probabilistic classifiers provide it.
 
-The latent posterior variance is averaged over, so a molecule the model has nothing to
-say about is reported near one half rather than confidently.
+For the Gaussian-process classifier the latent posterior variance is averaged over, so a
+molecule the model has nothing to say about is reported near one half rather than
+confidently.  For the kernel Fisher discriminant the probability is the logistic map that
+was fitted on the out-of-fold discriminant scores, which has no such term: it reports the
+rate of actives seen at this score during cross-validation, wherever the molecule lies.
+
+For the discriminant, `p >= 0.5` and the reported class are two different cuts, and on
+a set with many more inactives than actives they are far apart.  p = 0.5 is the score at
+which actives and inactives were equally frequent; the class comes from the threshold
+that maximises balanced accuracy, which weighs the two classes equally and therefore
+sits lower.  Read the probability as a frequency and the class as a decision.
 
 #### `CMFModel.log_marginal_likelihood` -> float  (property)
 
@@ -7665,6 +7712,75 @@ zero, as those of kernel ridge regression with a bias term do.
 With the linear CMF kernel this is PLS regression in the space of the fields, that is CoMFA's
 learner with the grid replaced by the continuous field.  Returns (a, b, components used);
 fewer components than asked for are used when the residual or the next score vanishes.
+
+### `kfda_fit(K: np.ndarray, y: np.ndarray, lam: float) -> Tuple[np.ndarray, float]`
+
+Kernel Fisher discriminant analysis for two classes (Mika et al. 1999).
+
+The direction in field space along which the two classes are furthest apart relative to
+their own spread.  In the dual it is one linear solve,
+
+    a = (N + lam t I)^-1 (m_+ - m_-),
+
+where m_c is the mean kernel row of class c, N = K W K is the within-class scatter written
+on the kernel, W = I - 1_+ 1_+' / n_+ - 1_- 1_-' / n_- is the projector that centres each
+class on its own mean, and t = trace(N) / n.
+
+**What the regularisation is for.**  N has rank at most n - 2, so N on its own is singular
+and the solve has no unique answer: the ridge is what makes the direction defined at all.
+It also bounds the norm of the discriminant, which is the usual control of overfitting --
+without it the quotient being maximised can be made arbitrarily large along directions that
+the training molecules happen to span and new molecules do not.  lam is relative: the ridge
+added is lam times the mean diagonal of N, so one lam grid means the same amount of
+regularisation whatever the size of the kernel, as the lam of kernel ridge regression does
+on a kernel scaled to unit mean diagonal.
+
+The coefficients are scaled so that the within-class standard deviation of the training
+scores is 1.  A discriminant direction is defined only up to its length, and fixing the
+length this way makes the score readable (it is measured in within-class standard
+deviations) and comparable between fits on different training sets, which is what
+`kfda_calibrate` needs when it pools the scores of several folds.
+
+The score is K(x, train) a + b, a kernel expansion like every other learner here, so the
+co-field, the molecule contributions, the Shapley values and the applicability domain all
+apply to this classifier without change.  That is what the support-vector classifier cannot
+offer: its decision function is a kernel expansion too, but it is not linear in the field in
+the sense a co-field needs, because the coefficients are the solution of a quadratic program
+on the hinge loss rather than a linear map of the class labels.
+
+The bias returned puts the decision at the midpoint of the two projected class means, which
+is the Fisher threshold for equal class priors; `kfda_calibrate` replaces it with the
+threshold that scores best out of fold.  Returns (dual coefficients, bias).
+
+### `kfda_frame(score: np.ndarray, pos: np.ndarray) -> Tuple[float, float]`
+
+(midpoint, half-separation) of the two class means of a discriminant score.
+
+These two numbers are the units a threshold on this score is kept in: measured from the
+midpoint and divided by the half-separation, the mean active scores +1, the mean inactive
+scores -1, and a cut expressed that way means the same thing for two discriminants fitted on
+different numbers of molecules.  That is what lets `kfda_calibrate` pool the scores of
+several folds, and it is needed: the length of the solve is only fixed up to the within-class
+spread of the molecules it was fitted on, which on a small fold is not the spread of the
+molecules it is scoring.  Fitted on 35 of the 44 training molecules of the GPB set at a weak
+ridge, the out-of-fold scores spread six times as widely as the full fit's, and a cut carried
+over in raw score units then lands in the wrong place.
+
+### `kfda_calibrate(K: np.ndarray, y: np.ndarray, lam: float, folds: int=KFDA_FOLDS, seed: Optional[int]=0, frame: Optional[Tuple[float, float]]=None) -> KFDACalibration`
+
+Threshold and probability map of a kernel Fisher discriminant, from out-of-fold scores.
+
+A discriminant direction says where the classes differ, not where to cut between them: the
+solve of `kfda_fit` is invariant to any shift of the score.  The molecules are split
+into folds, each fold is scored by a discriminant fitted on the other folds, and the cut with
+the best balanced accuracy on those scores is the one kept.  The same scores give the
+one-dimensional logistic map from score to probability.
+
+Every fold's scores are first put into that fold's own class-mean units
+(`kfda_frame`), which is what makes pooling them sound, and the cut that comes out is
+in those units.  `frame` is the (centre, half-separation) of the fit the threshold will be
+used with, so that the same cut can be turned back into a bias on its raw score; it is
+computed here from a fit on all the molecules when the caller does not supply it.
 
 ### `cv_predict(K: np.ndarray, y: np.ndarray, method: str, params: Dict[str, float], folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, groups: Optional[Sequence]=None) -> np.ndarray`
 

@@ -964,8 +964,9 @@ class ModelPanel(QWidget):
                    "epsilon-SVR", "nu-SVR", "Ranking SVM (order only)"]
     REG_KEYS = ["krr", "gp", "kpls", "svr", "nusvr", "ranksvm"]
     CLS_METHODS = ["Support vector classification (C-SVC)", "nu-SVC",
-                   "Gaussian process classifier (Laplace)"]
-    CLS_KEYS = ["svc", "nusvc", "gpc"]
+                   "Gaussian process classifier (Laplace)",
+                   "Kernel Fisher discriminant (has a co-field)"]
+    CLS_KEYS = ["svc", "nusvc", "gpc", "kfda"]
     OC_METHODS = ["One-class SVM (1-SVM)",
                   "Distance to the centre of the actives",
                   "Distance to the k-th nearest active",

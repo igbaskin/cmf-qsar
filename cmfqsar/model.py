@@ -2,7 +2,10 @@
 CMF regression models: kernel ridge regression (KRR, the method of the 2013
 paper), kernel partial least squares (KPLS, the kernel form of the PLS that
 CoMFA uses), support vector regression and a Gaussian-process view of KRR that
-provides predictive variances.  Includes k-fold cross-validation, grid search
+provides predictive variances.  The classifiers are here too: the support-vector
+classifiers, the Laplace Gaussian-process classifier of :mod:`cmfqsar.gpc` and
+the kernel Fisher discriminant (KFDA), whose score is linear in the field and
+which therefore has a co-field.  Includes k-fold cross-validation, grid search
 over hyper-parameters (alpha, lambda / C / number of PLS components, optionally
 mixing coefficients h_f) and external (nested) cross-validation.
 """
@@ -408,6 +411,278 @@ def kpls_fit(K: np.ndarray, y: np.ndarray, components: int) -> Tuple[np.ndarray,
     return a, b, int(T.shape[1])
 
 
+#: folds used to choose the threshold and the probability map of a kernel Fisher discriminant,
+#: when the caller asks for no particular number
+KFDA_FOLDS = 5
+
+
+def kfda_fit(K: np.ndarray, y: np.ndarray, lam: float) -> Tuple[np.ndarray, float]:
+    """Kernel Fisher discriminant analysis for two classes (Mika et al. 1999).
+
+    The direction in field space along which the two classes are furthest apart relative to
+    their own spread.  In the dual it is one linear solve,
+
+        a = (N + lam t I)^-1 (m_+ - m_-),
+
+    where m_c is the mean kernel row of class c, N = K W K is the within-class scatter written
+    on the kernel, W = I - 1_+ 1_+' / n_+ - 1_- 1_-' / n_- is the projector that centres each
+    class on its own mean, and t = trace(N) / n.
+
+    **What the regularisation is for.**  N has rank at most n - 2, so N on its own is singular
+    and the solve has no unique answer: the ridge is what makes the direction defined at all.
+    It also bounds the norm of the discriminant, which is the usual control of overfitting --
+    without it the quotient being maximised can be made arbitrarily large along directions that
+    the training molecules happen to span and new molecules do not.  lam is relative: the ridge
+    added is lam times the mean diagonal of N, so one lam grid means the same amount of
+    regularisation whatever the size of the kernel, as the lam of kernel ridge regression does
+    on a kernel scaled to unit mean diagonal.
+
+    The coefficients are scaled so that the within-class standard deviation of the training
+    scores is 1.  A discriminant direction is defined only up to its length, and fixing the
+    length this way makes the score readable (it is measured in within-class standard
+    deviations) and comparable between fits on different training sets, which is what
+    :func:`kfda_calibrate` needs when it pools the scores of several folds.
+
+    The score is K(x, train) a + b, a kernel expansion like every other learner here, so the
+    co-field, the molecule contributions, the Shapley values and the applicability domain all
+    apply to this classifier without change.  That is what the support-vector classifier cannot
+    offer: its decision function is a kernel expansion too, but it is not linear in the field in
+    the sense a co-field needs, because the coefficients are the solution of a quadratic program
+    on the hinge loss rather than a linear map of the class labels.
+
+    The bias returned puts the decision at the midpoint of the two projected class means, which
+    is the Fisher threshold for equal class priors; :func:`kfda_calibrate` replaces it with the
+    threshold that scores best out of fold.  Returns (dual coefficients, bias).
+    """
+    K = np.asarray(K, float)
+    y = np.asarray(y, float)
+    n = len(y)
+    pos = y > 0
+    n_p = int(np.count_nonzero(pos))
+    n_n = n - n_p
+    if n_p == 0 or n_n == 0:
+        raise ValueError("the kernel Fisher discriminant needs molecules of both classes")
+    # A = K W: every column of K centred on the mean of the columns of its own class
+    A = K.copy()
+    A[:, pos] -= K[:, pos].mean(axis=1)[:, None]
+    A[:, ~pos] -= K[:, ~pos].mean(axis=1)[:, None]
+    N = A @ A.T                                 # = K W K, symmetric and non-negative definite
+    M = K @ np.where(pos, 1.0 / n_p, -1.0 / n_n)
+    t = float(np.trace(N)) / n
+    S = N + float(lam) * (t if t > 1e-300 else 1.0) * np.eye(n)
+    try:
+        a = np.linalg.solve(S, M)
+    except np.linalg.LinAlgError:
+        a = np.linalg.lstsq(S, M, rcond=None)[0]
+    within = float(a @ N @ a) / max(n - 2, 1)   # variance of the scores inside the classes
+    if within > 1e-300:
+        a = a / np.sqrt(within)
+    centre, _ = kfda_frame(K @ a, pos)
+    return a, -centre
+
+
+def kfda_frame(score: np.ndarray, pos: np.ndarray) -> Tuple[float, float]:
+    """(midpoint, half-separation) of the two class means of a discriminant score.
+
+    These two numbers are the units a threshold on this score is kept in: measured from the
+    midpoint and divided by the half-separation, the mean active scores +1, the mean inactive
+    scores -1, and a cut expressed that way means the same thing for two discriminants fitted on
+    different numbers of molecules.  That is what lets :func:`kfda_calibrate` pool the scores of
+    several folds, and it is needed: the length of the solve is only fixed up to the within-class
+    spread of the molecules it was fitted on, which on a small fold is not the spread of the
+    molecules it is scoring.  Fitted on 35 of the 44 training molecules of the GPB set at a weak
+    ridge, the out-of-fold scores spread six times as widely as the full fit's, and a cut carried
+    over in raw score units then lands in the wrong place.
+    """
+    s = np.asarray(score, float)
+    pos = np.asarray(pos, bool)
+    if not pos.any() or not (~pos).any():
+        return 0.0, 1.0
+    hi, lo = float(np.mean(s[pos])), float(np.mean(s[~pos]))
+    half = 0.5 * (hi - lo)
+    return 0.5 * (hi + lo), (half if half > 1e-300 else 1.0)
+
+
+def _balanced_threshold(y: np.ndarray, score: np.ndarray) -> Tuple[float, float]:
+    """The cut on `score` with the highest balanced accuracy, and that balanced accuracy.
+
+    Balanced accuracy is the mean of sensitivity and specificity, so the cut it chooses does not
+    follow the larger class, which is what a screening set with many more inactives than actives
+    would otherwise make every cut do.  A molecule whose score equals the cut counts as active,
+    so only cuts strictly between two different scores are tried.
+
+    Balanced accuracy is a step function of the cut, so a whole range of cuts usually reaches the
+    best value.  The middle of that range is returned, not its lower edge: the edge sits against
+    the score of one molecule and moves with it, while the middle is the most stable point of the
+    plateau.
+    """
+    y = np.asarray(y, float)
+    s = np.asarray(score, float)
+    ok = np.isfinite(y) & np.isfinite(s)
+    y, s = y[ok], s[ok]
+    pos = y > 0
+    n_p, n_n = int(np.count_nonzero(pos)), int(np.count_nonzero(~pos))
+    if n_p == 0 or n_n == 0:
+        return 0.0, float("nan")
+    order = np.argsort(s, kind="mergesort")
+    s_sorted, p_sorted = s[order], pos[order]
+    below_p = np.concatenate([[0], np.cumsum(p_sorted)])        # actives below the cut
+    below_n = np.concatenate([[0], np.cumsum(~p_sorted)])       # inactives below the cut
+    bal = 0.5 * ((n_p - below_p) / n_p + below_n / n_n)
+    # a cut between two equal scores would split molecules the score cannot tell apart
+    usable = np.ones(len(bal), bool)
+    usable[1:-1] = s_sorted[1:] > s_sorted[:-1]
+    bal = np.where(usable, bal, -np.inf)
+    best = float(np.max(bal))
+    tied = np.flatnonzero(bal >= best - 1e-12)
+    k = int(tied[len(tied) // 2])                               # the middle of the plateau
+
+    def cut_at(j: int) -> float:
+        if j == 0:
+            return float(s_sorted[0]) - 1.0
+        if j == len(s_sorted):
+            return float(s_sorted[-1]) + 1.0
+        return 0.5 * (float(s_sorted[j - 1]) + float(s_sorted[j]))
+
+    return cut_at(k), best
+
+
+def _logistic_1d(y: np.ndarray, score: np.ndarray, max_iter: int = 100,
+                 tol: float = 1e-10) -> Tuple[float, float]:
+    """Slope and intercept of p(active) = 1 / (1 + exp(-(slope * score + intercept))).
+
+    Platt's (1999) map from a decision value to a probability, fitted by Newton's method on the
+    two parameters.  The targets are smoothed as Platt prescribes -- (n_+ + 1) / (n_+ + 2) for an
+    active and 1 / (n_- + 2) for an inactive instead of 1 and 0 -- so that a training set the
+    score separates completely gives a finite slope instead of an infinite one.
+
+    The slope is kept at or above zero.  A negative slope would say that a higher score means a
+    less active molecule, which contradicts the class the same score is used to report and which
+    a set small enough to produce it cannot support; the fit under that constraint is slope zero
+    and the base rate for every molecule, which is the honest answer when cross-validation found
+    no usable relation between the score and the class.
+    """
+    y = np.asarray(y, float)
+    s = np.asarray(score, float)
+    ok = np.isfinite(y) & np.isfinite(s)
+    y, s = y[ok], s[ok]
+    pos = y > 0
+    n_p, n_n = int(np.count_nonzero(pos)), int(np.count_nonzero(~pos))
+    if n_p == 0 or n_n == 0 or len(s) < 3:
+        return 1.0, 0.0
+    t = np.where(pos, (n_p + 1.0) / (n_p + 2.0), 1.0 / (n_n + 2.0))
+    # fitted on standardised scores and mapped back, so that the Newton step is well scaled
+    mu, sd = float(np.mean(s)), float(np.std(s))
+    base = float(np.log(max(np.mean(t), 1e-12) / max(1.0 - np.mean(t), 1e-12)))
+    if sd <= 1e-300:
+        return 0.0, base
+    z = (s - mu) / sd
+    w, c = 0.0, 0.0
+    for _ in range(int(max_iter)):
+        f = w * z + c
+        p = 1.0 / (1.0 + np.exp(-np.clip(f, -500.0, 500.0)))
+        r = p - t
+        g = np.array([float(r @ z), float(np.sum(r))])
+        v = p * (1.0 - p)
+        H = np.array([[float(v @ (z * z)), float(v @ z)],
+                      [float(v @ z), float(np.sum(v))]])
+        H = H + 1e-12 * np.eye(2)
+        try:
+            step = np.linalg.solve(H, g)
+        except np.linalg.LinAlgError:
+            break
+        w, c = w - float(step[0]), c - float(step[1])
+        if float(np.max(np.abs(step))) < tol:
+            break
+    if w <= 0.0:
+        return 0.0, base
+    return w / sd, c - w * mu / sd
+
+
+@dataclass
+class KFDACalibration:
+    """Where a kernel Fisher discriminant cuts its score, and how it turns it into a probability.
+
+    Both are fitted on scores of molecules the discriminant that scored them had not seen, so
+    neither carries the optimism of a threshold read off the training scores.  Both are also
+    expressed in the class-mean units of :func:`kfda_frame` rather than in raw score units: the
+    scaled score is (raw score - `centre`) / `spread`, which is 0 at the midpoint of the two
+    class means and +-1 at the means themselves.
+    """
+    threshold: float = 0.0                      # cut on the scaled score
+    #: p(active) = sigmoid(slope * scaled score + intercept); slope 0 means cross-validation
+    #: found no usable relation between the score and the class, so every molecule gets the
+    #: base rate of actives
+    slope: float = 1.0
+    intercept: float = 0.0
+    folds: int = 0
+    balanced_accuracy: float = float("nan")     # of the out-of-fold scores at that threshold
+    scores: Optional[np.ndarray] = None         # the out-of-fold scaled scores themselves
+    centre: float = 0.0                         # the final fit's midpoint of the class means
+    spread: float = 1.0                         # the final fit's half-separation of those means
+
+    def scale(self, score: np.ndarray) -> np.ndarray:
+        """Raw scores K(x, train) a expressed in the class-mean units the threshold is kept in."""
+        return (np.asarray(score, float) - self.centre) / self.spread
+
+    def bias(self) -> float:
+        """The bias b that puts the chosen threshold at zero, so that the class is sign(K a + b)."""
+        return -(self.centre + self.threshold * self.spread)
+
+    def probability(self, score: np.ndarray) -> np.ndarray:
+        """p(active) for raw scores K(x, train) a, that is for predictions with the bias removed."""
+        f = self.slope * self.scale(score) + self.intercept
+        return 1.0 / (1.0 + np.exp(-np.clip(f, -500.0, 500.0)))
+
+    def describe(self) -> str:
+        return (f"threshold {self.threshold:+.3f} in class-mean units (0 is the midpoint of the "
+                f"two class means, +-1 the means), chosen on {self.folds}-fold out-of-fold "
+                f"scores (balanced accuracy {self.balanced_accuracy:.3f} there)")
+
+
+def kfda_calibrate(K: np.ndarray, y: np.ndarray, lam: float, folds: int = KFDA_FOLDS,
+                   seed: Optional[int] = 0,
+                   frame: Optional[Tuple[float, float]] = None) -> KFDACalibration:
+    """Threshold and probability map of a kernel Fisher discriminant, from out-of-fold scores.
+
+    A discriminant direction says where the classes differ, not where to cut between them: the
+    solve of :func:`kfda_fit` is invariant to any shift of the score.  The molecules are split
+    into folds, each fold is scored by a discriminant fitted on the other folds, and the cut with
+    the best balanced accuracy on those scores is the one kept.  The same scores give the
+    one-dimensional logistic map from score to probability.
+
+    Every fold's scores are first put into that fold's own class-mean units
+    (:func:`kfda_frame`), which is what makes pooling them sound, and the cut that comes out is
+    in those units.  `frame` is the (centre, half-separation) of the fit the threshold will be
+    used with, so that the same cut can be turned back into a bias on its raw score; it is
+    computed here from a fit on all the molecules when the caller does not supply it.
+    """
+    y = np.asarray(y, float)
+    n = len(y)
+    folds = max(2, min(int(folds), n))
+    sc = np.full(n, np.nan)
+    used = 0
+    for te in _kfold_indices(n, folds, seed):
+        tr = np.setdiff1d(np.arange(n), te)
+        if len(tr) < 4 or not ((y[tr] > 0).any() and (y[tr] <= 0).any()):
+            continue
+        Ktr = K[np.ix_(tr, tr)]
+        a, _ = kfda_fit(Ktr, y[tr], lam)
+        centre, spread = kfda_frame(Ktr @ a, y[tr] > 0)
+        sc[te] = (K[np.ix_(te, tr)] @ a - centre) / spread
+        used += 1
+    if used == 0 or not np.isfinite(sc).any():
+        return KFDACalibration(threshold=0.0, folds=0, scores=None)
+    if frame is None:
+        a_all, _ = kfda_fit(K, y, lam)
+        frame = kfda_frame(K @ a_all, y > 0)
+    cut, bal = _balanced_threshold(y, sc)
+    slope, intercept = _logistic_1d(y, sc)
+    return KFDACalibration(threshold=float(cut), slope=float(slope), intercept=float(intercept),
+                           folds=int(folds), balanced_accuracy=float(bal), scores=sc,
+                           centre=float(frame[0]), spread=float(frame[1]))
+
+
 class _Learner:
     """Thin wrapper around the different kernel learners (dual coefficients + bias)."""
 
@@ -467,6 +742,23 @@ class _Learner:
             self.alpha_, self.b_ = a, float(est.intercept_[0])
             self.support_ = np.array(est.support_)
             self.classes_ = est.classes_
+        elif self.method == "kfda":
+            # kernel Fisher discriminant: a classifier whose score is a linear functional of the
+            # field, so a co-field exists for it; the threshold and the probability map are
+            # fitted on out-of-fold scores, not on the training scores
+            lam = float(self.params.get("lam", 1.0))
+            a, b = kfda_fit(K, y, lam)
+            self.alpha_, self.b_ = a, b
+            self.support_ = np.arange(n)
+            self.classes_ = np.array([-1.0, 1.0])
+            if n >= 8 and str(self.params.get("kfda_threshold", "cv")) == "cv":
+                cal = kfda_calibrate(K, y, lam,
+                                     folds=int(self.params.get("kfda_folds", KFDA_FOLDS)),
+                                     seed=int(self.params.get("kfda_seed", 0)),
+                                     frame=kfda_frame(K @ a, y > 0))
+                if cal.folds and np.isfinite(cal.threshold):
+                    self.b_ = cal.bias()
+                    self.kfda_ = cal
         elif self.method == "gpc":
             # Gaussian-process classification at the posterior mode: the latent mean is a kernel
             # expansion like every other method here, so the decomposition rules still apply
@@ -668,7 +960,7 @@ class CMFModel:
     fieldset: FieldSet
     # "regression" | "classification" (binary, +1 active / -1 inactive) | "oneclass" (novelty detection)
     task: str = "regression"
-    method: str = "krr"                     # krr | gp | kpls | svr | nusvr | svc | nusvc | ocsvm
+    method: str = "krr"                     # krr | gp | kpls | svr | nusvr | svc | nusvc | kfda | ocsvm
     params: Dict[str, float] = field(default_factory=lambda: {"lam": 1.0, "C": 1.0, "epsilon": 0.1,
                                                               "nu": 0.5, "components": 5})
     normalize: bool = False                 # cosine-normalise each field kernel
@@ -1585,16 +1877,29 @@ class CMFModel:
         return (yp - b * sd if larger_is_better else yp + b * sd), yp, sd
 
     def predict_proba(self, test: AtomTable) -> np.ndarray:
-        """p(active) for new molecules; only the Gaussian-process classifier provides it.
+        """p(active) for new molecules; the two probabilistic classifiers provide it.
 
-        The latent posterior variance is averaged over, so a molecule the model has nothing to
-        say about is reported near one half rather than confidently.
+        For the Gaussian-process classifier the latent posterior variance is averaged over, so a
+        molecule the model has nothing to say about is reported near one half rather than
+        confidently.  For the kernel Fisher discriminant the probability is the logistic map that
+        was fitted on the out-of-fold discriminant scores, which has no such term: it reports the
+        rate of actives seen at this score during cross-validation, wherever the molecule lies.
+
+        For the discriminant, ``p >= 0.5`` and the reported class are two different cuts, and on
+        a set with many more inactives than actives they are far apart.  p = 0.5 is the score at
+        which actives and inactives were equally frequent; the class comes from the threshold
+        that maximises balanced accuracy, which weighs the two classes equally and therefore
+        sits lower.  Read the probability as a frequency and the class as a decision.
         """
         learner = self.learner_
+        cal = getattr(learner, "kfda_", None) if learner is not None else None
+        if cal is not None:
+            return cal.probability(self.predict(test) - float(self.bias))
         if learner is None or getattr(learner, "gpc_", None) is None:
-            raise ValueError("probabilities come from the Gaussian-process classifier; "
-                             "fit with method='gpc' (the support-vector classifiers return a "
-                             "decision value, which is not a probability)")
+            raise ValueError("probabilities come from the Gaussian-process classifier or the "
+                             "kernel Fisher discriminant; fit with method='gpc' or "
+                             "method='kfda' (the support-vector classifiers return a decision "
+                             "value, which is not a probability)")
         self._require_linear("class probabilities")
         K = self.test_kernel(test)
         return learner.gpc_.predict_proba(K, self.joint_self(test))
@@ -1910,6 +2215,9 @@ class CMFModel:
             "scale": self.scale,
             "stats": self.stats,
             "oneclass": getattr(self.learner_, "oc_", None) if self.learner_ is not None else None,
+            # the threshold and the probability map of a kernel Fisher discriminant: a few
+            # numbers that cannot be recovered from the coefficients alone
+            "kfda": getattr(self.learner_, "kfda_", None) if self.learner_ is not None else None,
             "kernel_source": self.kernel_source,
             "ac_sigma": self.ac_sigma,
             "ac_chirality": self.ac_chirality,
@@ -1982,9 +2290,12 @@ class CMFModel:
             # a version-1 file with a descriptor block stored the training molecules and their
             # raw descriptor values but not the standardisation; fit it again on them
             m.prepare_descriptors(m.train)
-        if st.get("oneclass") is not None:
+        if st.get("oneclass") is not None or st.get("kfda") is not None:
             m.learner_ = _Learner(st["method"], st["params"])
-            m.learner_.oc_ = st["oneclass"]
+            if st.get("oneclass") is not None:
+                m.learner_.oc_ = st["oneclass"]
+            if st.get("kfda") is not None:
+                m.learner_.kfda_ = st["kfda"]
             m.learner_.alpha_, m.learner_.b_ = m.coef, m.bias
         return m
 
@@ -2187,6 +2498,10 @@ def _param_grid(method: str, lams, Cs, epsilons, nus, components=()):
         return [{"C": float(C)} for C in Cs]
     if method == "svc":
         return [{"C": float(C)} for C in Cs]
+    if method == "kfda":
+        # the ridge of the discriminant, on the grid kernel ridge regression uses: it is relative
+        # to the scale of the within-class scatter, so one grid means the same thing for both
+        return [{"lam": float(l)} for l in lams]
     if method == "gpc":
         # the amplitude of the kernel plays the part C plays for a support-vector classifier
         return [{"amplitude": float(C)} for C in Cs]

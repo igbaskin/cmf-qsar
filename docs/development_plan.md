@@ -13,14 +13,15 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1395 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1412 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
   rotation-invariant autocorrelation kernel and topomer fields; a Gaussian or arc-cosine layer on
   top, and multiple kernel learning for the mixing coefficients.
-* Learners: kernel ridge regression, SVR, Gaussian-process regression with variances, SVC, a Laplace
-  Gaussian-process classifier, five one-class descriptions, and a multi-task model on a shared
+* Learners: kernel ridge regression, kernel partial least squares, SVR, Gaussian-process regression
+  with variances, SVC, a Laplace Gaussian-process classifier, kernel Fisher discriminant analysis
+  (the classifier that has a co-field), five one-class descriptions, and a multi-task model on a shared
   kernel whose selectivity is a difference of co-fields (`cmfqsar/multitask.py`, measured on the
   corrosion series in `benchmarks/results/multitask/`).
 * Interpretation: co-fields, contributions, exact Shapley values under nonlinear kernels, field
@@ -1405,6 +1406,64 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   classification sets of E4 under one protocol; the co-field of the discriminant compared with the
   SVC's by the cosine of F3. Kept as a method if its balanced accuracy is within the interval of
   the two; kept as the default classifier only if it is also ahead on calibration.
+  **Done 28 October 2026.** `kfda_fit`, `kfda_frame` and `kfda_calibrate` in `cmfqsar/model.py`
+  (`--method kfda`, the λ grid, the GUI's classification list, the report), `tests/test_kfda.py`,
+  `benchmarks/run_kfda.py`. The score is a kernel expansion, so the co-field, the contributions,
+  the Shapley values, the domain and `cmf cofield` read a fitted classifier unchanged, which is
+  the whole point of the item. Three implementation decisions the entry did not specify, each
+  taken for a reason written down in the docstrings: λ is **relative** (the ridge is λ times the
+  mean diagonal of the within-class scatter), so one λ grid means the same amount of
+  regularisation whatever the kernel; the coefficients are scaled to unit within-class standard
+  deviation of the training scores, without which the scores of different folds carry different
+  arbitrary lengths and cannot be pooled (measured: at a weak ridge on GPB the out-of-fold scores
+  spread six times as widely as the full fit's); and the balanced-accuracy cut is taken at the
+  middle of its plateau rather than at its lower edge, which is where the step function first
+  reaches its maximum and moves with one molecule's score.
+  **Measured on the two LIT-PCBA sets of E4** (1587 and 1564 molecules, 88 and 64 measured
+  actives), one kernel per set, one 5-fold split stratified by class, each of four learners
+  choosing its own setting inside every fold by cross-validated AUC. The fourth learner is kernel
+  ridge regression on ±1 labels, the simplest reference rule 1 asks for, and it is not a straw
+  man: as λ goes to zero the discriminant is that regression with the labels weighted by class
+  size, which `tests/test_kfda.py` checks.
+  **The gate's condition is met and the result is still a negative one.** Balanced accuracy under
+  one threshold rule for all four learners: **+0.012 [−0.047, +0.070]** against C-SVC,
+  **+0.003 [−0.037, +0.045]** against the GP classifier, **−0.001 [−0.066, +0.067]** against the
+  ridge — inside the interval of the two, so the method is kept. But the AUC differences are
+  **−0.003 [−0.071, +0.065]**, **+0.038 [−0.032, +0.108]** and **+0.005 [−0.051, +0.063]**: the
+  discriminant does not order the molecules better than any of the three. The ordering is the
+  kernel's, and all four share it.
+  **The one large difference is a threshold effect, and naming it is the useful part.** Left at
+  each learner's own boundary the discriminant leads by +0.067, +0.082 and +0.087 balanced
+  accuracy with intervals excluding zero. That is not a better model: it is the only one of the
+  four that places a boundary at all, and a boundary left at the fit's own zero calls nearly every
+  molecule inactive on a set with one active in twenty, scoring 0.50 whatever lies behind it. The
+  advice this measurement produces is to move the threshold of whichever classifier is used on an
+  imbalanced set.
+  **Calibration: ahead, and not for a good reason.** The Brier score beats the GP classifier's by
+  **0.025 [−0.029, −0.021]** on both sets, which satisfies the gate's wording for promotion to
+  default. It should not be read that way. Predicting the share of actives for every molecule
+  scores 0.0458 over the two sets and the discriminant scores **0.0457** — the base rate to three
+  decimal places — while the GP classifier at 0.0707 is *worse* than the base rate. The
+  discriminant is better calibrated only in being less overconfident; neither carries usable
+  probability information here. **C-SVC therefore stays the default classifier**, a departure from
+  the gate as written, taken because the measurement that would trigger the promotion is not
+  evidence of anything.
+  **The co-field comparison of F3:** cosine **+0.681** on ESR1_ant and **+0.233** on TP53 against
+  the SVC's kernel expansion, positive in all five fields on both sets.
+  **A second measurement the entry implied but did not ask for.** The threshold rule the entry
+  prescribes (out-of-fold balanced accuracy) was compared with the plain Fisher midpoint of the
+  two class means on eight balanced two-class problems from the Sutherland sets, cut at each set's
+  median: mean balanced accuracy **0.773** against **0.770**, difference **−0.003** with an
+  interval containing zero on seven of the eight sets. The search gains nothing measurable over
+  the rule that fits nothing. It stays the default because it assumes nothing about the class
+  priors, and `kfda_threshold="midpoint"` selects the other.
+  **So E8 is kept under rule 5:** it does not beat a simpler reference on accuracy and is labelled
+  as what it is — the classification model this program can draw, not a gain in classification.
+  Numbers in `benchmarks/results/kfda/table.md`, the manual (*A classifier with a co-field*) and
+  the README.
+  **Not done:** the multi-class case (one discriminant against the rest), and a probability that
+  widens for a molecule outside the training set, which the GP classifier's latent variance gives
+  and a logistic map on the score cannot.
 * **E9. Kernel logistic regression.** The probabilistic classifier that is linear in the field:
   logistic loss plus λ‖f‖², fitted by Newton's method on the dual. This is the mode that
   `cmfqsar/gpc.py` already finds in its Laplace step, so the learner is that step with λ chosen by
@@ -3213,7 +3272,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
-| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**; E8 and E9 (the two classifiers) together, E10 (unlabelled molecules) after them; ~~G1~~ and ~~G2~~ **done** |
+| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**; E9 (the second classifier), E10 (unlabelled molecules) after it; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 

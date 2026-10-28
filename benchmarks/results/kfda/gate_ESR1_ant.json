@@ -1,0 +1,206 @@
+{
+ "set": "ESR1_ant",
+ "part": "gate",
+ "n": 1587,
+ "n_actives": 88,
+ "alpha": 0.5,
+ "folds": 5,
+ "inner_folds": 5,
+ "seed": 0,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "methods": {
+  "kfda": {
+   "balanced_accuracy": 0.6116767238765237,
+   "auc": 0.6308069015707441,
+   "sensitivity": 0.6022727272727273,
+   "specificity": 0.6210807204803203,
+   "mcc": 0.10473707712374371,
+   "balanced_accuracy_common": 0.5492601128024743,
+   "sensitivity_common": 0.22727272727272727,
+   "specificity_common": 0.8712474983322215,
+   "mcc_common": 0.06614307509742005,
+   "brier": 0.051986892824356715,
+   "chosen": [
+    {
+     "lam": 0.01
+    },
+    {
+     "lam": 0.01
+    },
+    {
+     "lam": 0.01
+    },
+    {
+     "lam": 0.01
+    },
+    {
+     "lam": 0.1
+    }
+   ],
+   "seconds": 12.3
+  },
+  "svc": {
+   "balanced_accuracy": 0.49934425980957003,
+   "auc": 0.6111953423494451,
+   "sensitivity": 0.011363636363636364,
+   "specificity": 0.9873248832555037,
+   "mcc": -0.0026906329389713157,
+   "balanced_accuracy_common": 0.529466614106374,
+   "sensitivity_common": 0.11363636363636363,
+   "specificity_common": 0.9452968645763843,
+   "mcc_common": 0.05771489020309504,
+   "brier": NaN,
+   "chosen": [
+    {
+     "C": 10.0
+    },
+    {
+     "C": 1.0
+    },
+    {
+     "C": 0.1
+    },
+    {
+     "C": 0.1
+    },
+    {
+     "C": 10.0
+    }
+   ],
+   "seconds": 1.8
+  },
+  "gpc": {
+   "balanced_accuracy": 0.5036918551761781,
+   "auc": 0.6036145308993875,
+   "sensitivity": 0.022727272727272728,
+   "specificity": 0.9846564376250834,
+   "mcc": 0.013570826096907039,
+   "balanced_accuracy_common": 0.5550556431560434,
+   "sensitivity_common": 0.3522727272727273,
+   "specificity_common": 0.7578385590393596,
+   "mcc_common": 0.058331837304264264,
+   "brier": 0.06297629962781685,
+   "chosen": [
+    {
+     "amplitude": 10.0
+    },
+    {
+     "amplitude": 10.0
+    },
+    {
+     "amplitude": 1.0
+    },
+    {
+     "amplitude": 10.0
+    },
+    {
+     "amplitude": 1.0
+    }
+   ],
+   "seconds": 35.7
+  },
+  "krr": {
+   "balanced_accuracy": 0.5,
+   "auc": 0.6274486020983686,
+   "sensitivity": 0.0,
+   "specificity": 1.0,
+   "mcc": NaN,
+   "balanced_accuracy_common": 0.5305355085208321,
+   "sensitivity_common": 0.18181818181818182,
+   "specificity_common": 0.8792528352234823,
+   "mcc_common": 0.042387401330789616,
+   "brier": NaN,
+   "chosen": [
+    {
+     "lam": 1.0
+    },
+    {
+     "lam": 1.0
+    },
+    {
+     "lam": 3.0
+    },
+    {
+     "lam": 3.0
+    },
+    {
+     "lam": 3.0
+    }
+   ],
+   "seconds": 5.5
+  }
+ },
+ "differences": {
+  "kfda-svc/balanced_accuracy": [
+   0.11233246406695369,
+   0.058189772588714855,
+   0.1654228340891049
+  ],
+  "kfda-svc/auc": [
+   0.01961155922129909,
+   -0.031818295907479935,
+   0.07076742044685902
+  ],
+  "kfda-svc/balanced_accuracy_common": [
+   0.019793498696100364,
+   -0.012549537938652733,
+   0.05467204302318928
+  ],
+  "kfda-gpc/balanced_accuracy": [
+   0.10798486870034563,
+   0.052547674333213064,
+   0.1608346066867097
+  ],
+  "kfda-gpc/auc": [
+   0.027192370671356714,
+   -0.01717140990619941,
+   0.07068968449833617
+  ],
+  "kfda-gpc/brier": [
+   -0.010989406803460139,
+   -0.014477132733196452,
+   -0.0076730170515377635
+  ],
+  "kfda-gpc/balanced_accuracy_common": [
+   -0.005795530353569056,
+   -0.06016779020861569,
+   0.044649547826931195
+  ],
+  "kfda-krr/balanced_accuracy": [
+   0.11167672387652372,
+   0.055567442745450696,
+   0.16324917760825483
+  ],
+  "kfda-krr/auc": [
+   0.0033582994723755366,
+   -0.02762906806140854,
+   0.033723597119518584
+  ],
+  "kfda-krr/balanced_accuracy_common": [
+   0.018724604281642243,
+   -0.017562670976695536,
+   0.056517115504869826
+  ]
+ },
+ "cofield_cosine": {
+  "overall": 0.6813963364574585,
+  "fields": {
+   "electrostatic": 0.6342759835392144,
+   "steric": 0.7851434710085551,
+   "hydrophobic": 0.6715518080182762,
+   "hba": 0.6515303386161021,
+   "hbd": 0.7370085474244349
+  },
+  "lam": 0.01,
+  "C": 0.1
+ },
+ "base_rate_brier": 0.0523757737032418,
+ "active_share": 0.055450535601764335,
+ "seconds": 287.1
+}

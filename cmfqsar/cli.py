@@ -530,6 +530,8 @@ def cmd_build(args):
             print(f"  method set to {args.method} for this task")
         if args.method == "gpc" and args.task == "oneclass":
             raise SystemExit("the Gaussian-process classifier needs both classes; use ocsvm")
+        if args.method == "kfda" and args.task == "oneclass":
+            raise SystemExit("the kernel Fisher discriminant needs both classes; use ocsvm")
         if args.task == "oneclass" and not args.normalize:
             # without cosine normalisation the decision value scales with the size of the molecule,
             # so the ranking measures molecular size rather than similarity to the target class
@@ -750,6 +752,14 @@ def cmd_build(args):
         print(f"  log marginal likelihood {model.log_marginal_likelihood:.2f}, "
               f"Brier score of the fitted probabilities {brier_score(y, p_fit):.3f} "
               f"(0.25 is no better than chance)")
+    if args.method == "kfda":
+        from cmfqsar.gpc import brier_score
+        cal = getattr(model.learner_, "kfda_", None)
+        if cal is not None:
+            print("  " + cal.describe())
+            print(f"  Brier score of the fitted probabilities "
+                  f"{brier_score(y, model.predict_proba(train)):.3f} "
+                  f"(0.25 is no better than chance)")
     if args.align_train_variance is not None:
         from cmfqsar.varalign import cv_align_training_set
         guard = None if args.align_train_variance <= 0 else args.align_train_variance
@@ -1646,6 +1656,13 @@ def cmd_cofield(args):
         mol = build_fields(ds.mols[0], model.fieldset, ds.names[0])
         print(f"  against {ds.names[0]} from {args.molecule}")
     sigma = None
+    if args.z > 0 and model.task != "regression":
+        # the error band of the co-field propagates noise in the activities, and a class label
+        # carries none; the map itself is drawn as for any other model
+        print(f"  the model is a {model.task} model, which has no noise level in the activities "
+              f"to propagate, so the co-field is drawn unmasked (the error band is defined for "
+              f"a regression model)")
+        args.z = 0.0
     if args.z > 0:
         sigma, src = noise_level(model)
         print(f"  masking below {args.z:g} standard deviations, noise level {sigma:.3f} ({src})")
@@ -3487,7 +3504,7 @@ def main(argv=None):
                         "the hydrogen-counting bug of the 2013 scripts)")
     b.add_argument("--method", default="krr",
                    choices=["krr", "gp", "kpls", "svr", "nusvr", "ranksvm", "svc", "nusvc", "gpc",
-                            "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca",
+                            "kfda", "ocsvm", "ocmean", "ocknn", "ocgp", "ockpca",
                             "fuse-max", "fuse-min", "fuse-sum", "fuse-med",
                             "fuse-anz", "fuse-mnz", "fuse-euc", "fuse-rrf"],
                    help="kpls is kernel partial least squares, the kernel form of the PLS "
@@ -3496,7 +3513,12 @@ def main(argv=None):
                         "instead of lambda. "
                         "gpc is the Gaussian-process classifier (Laplace approximation): it "
                         "gives calibrated probabilities, a posterior variance per molecule and "
-                        "the marginal likelihood, and takes its amplitude from the C grid. The "
+                        "the marginal likelihood, and takes its amplitude from the C grid. "
+                        "kfda is the kernel Fisher discriminant: the classifier whose score is "
+                        "linear in the field, so it is the only one of the three a co-field can "
+                        "be drawn from. Its ridge comes from the lambda grid, its threshold from "
+                        "the out-of-fold balanced accuracy and its probabilities from a logistic "
+                        "fit on the out-of-fold scores. The "
                         "fuse-* methods are the data-fusion rules for the one-class task: one "
                         "score from the similarities to the individual actives, with nothing "
                         "fitted; fuse-max is the similarity to the best-matching active and "

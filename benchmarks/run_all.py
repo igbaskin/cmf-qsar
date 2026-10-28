@@ -480,6 +480,14 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_kpls").report(_r("kpls/table.md")),
                   tables=["kpls/table.md"],
                   readme=["The learners (manual), Learning row of the feature table"]),
+        Benchmark("kfda", "kernel Fisher discriminant analysis against C-SVC, the Gaussian-process "
+                          "classifier and kernel ridge regression on the LIT-PCBA classification "
+                          "sets, and the two rules for where to cut its score on the Sutherland "
+                          "sets",
+                  "run_kfda.py", "kfda", compute=[[]], minutes="15",
+                  report=lambda: _mod("run_kfda").report(_r("kfda/table.md")),
+                  tables=["kfda/table.md"],
+                  readme=["Classification (manual), Learning row of the feature table"]),
     ]
 
 

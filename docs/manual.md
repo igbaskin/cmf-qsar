@@ -316,6 +316,7 @@ hyper-parameter search is not a model: the arithmetic is the lesson here, not th
 | ε-SVR, ν-SVR | the same formula; most $a_j$ are zero |
 | C-SVC, ν-SVC | the same formula, read as a decision value: its sign is the class, its magnitude the margin |
 | Laplace GP classifier | the same formula gives the latent mean, which is squashed to a probability and averaged over the latent variance |
+| Kernel Fisher discriminant | the same formula gives the position along the discriminant direction, in units of the within-class spread; the bias is the threshold chosen out of fold, and a logistic map turns the score into a probability |
 | One-class methods | a score built from the same kernel row, but also from the molecule's own self-kernel: distance to the centroid, to the k-th nearest active, to the principal subspace, or the 1-SVM decision value |
 | Nonlinear kernel layer | the joint kernel is passed through $\exp(-\gamma d^2)$ or an arc-cosine function first; the prediction formula is unchanged, the co-field identity is lost |
 | Autocorrelation source | the kernel row comes from the rotation-invariant distance profiles instead of the overlap integrals; everything downstream is identical |
@@ -2058,7 +2059,7 @@ molecules, where the NumPy neighbour list of the previous section is also worth 
 | Task | Methods | Key |
 |---|---|---|
 | Regression | kernel ridge regression with bias; Gaussian process (the same fit plus predictive variances); kernel partial least squares (CoMFA's learner, regularised by its number of components); ε-SVR; ν-SVR; the ranking SVM, which fits the order and not the values | `krr`, `gp`, `kpls`, `svr`, `nusvr`, `ranksvm` |
-| Binary classification | C-SVC; ν-SVC; Gaussian-process classifier by the Laplace approximation | `svc`, `nusvc`, `gpc` |
+| Binary classification | C-SVC; ν-SVC; Gaussian-process classifier by the Laplace approximation; kernel Fisher discriminant analysis, the only classifier here whose score is linear in the field and which therefore has a co-field | `svc`, `nusvc`, `gpc`, `kfda` |
 | One-class / screening | 1-SVM; distance to the centre of the actives; distance to the k-th nearest active; one-class Gaussian process; distance from the principal subspace (kernel PCA) | `ocsvm`, `ocmean`, `ocknn`, `ocgp`, `ockpca` |
 
 Kernel ridge regression is the method of the papers and the default. The Gaussian-process view adds
@@ -2142,6 +2143,150 @@ and so the right comparator when the question is what the continuous representat
 the grid, with the learner held fixed; and it is a second opinion whose components, like
 CoMFA's, can be plotted and counted. The full table, per set and with the settings chosen, is
 `benchmarks/results/kpls/table.md`.
+
+## A classifier with a co-field: kernel Fisher discriminant analysis
+
+A co-field exists only where the model is linear in the field. That rule leaves the program's
+classifiers in an awkward position. The Laplace Gaussian-process classifier passes it, because its
+latent function is a kernel expansion. C-SVC does not, in the sense that matters: its decision
+function is a kernel expansion too, but the coefficients come out of a quadratic program on the
+hinge loss, so they are not a linear map of the class labels and the uncertainty of the co-field
+cannot be written down. Kernel Fisher discriminant analysis (`--method kfda`) is the second
+classifier that passes the rule, and it passes it in closed form.
+
+**What it finds.** The direction in field space along which the two classes are furthest apart
+relative to their own spread — Fisher's discriminant, written on the kernel (Mika et al. 1999). In
+the dual it is one linear solve,
+
+$$
+\mathbf{a} = (\mathbf{N} + \lambda t \mathbf{I})^{-1} (\mathbf{m}_{+} - \mathbf{m}_{-}),
+$$
+
+where $\mathbf{m}_c$ is the mean kernel row of class $c$, $\mathbf{N} = \mathbf{K}\mathbf{W}\mathbf{K}$
+is the within-class scatter written on the kernel, $\mathbf{W}$ is the projector that centres each
+class on its own mean, and $t = \mathrm{tr}(\mathbf{N})/n$. The prediction is
+$K(x,\mathrm{train})\mathbf{a} + b$, the same expression as every other learner here, so the
+co-field, the atom and molecule contributions, the Shapley values and the applicability domain
+read a fitted classifier with no special case, and `cmf cofield` draws its map from a saved model
+file.
+
+**What λ is for.** $\mathbf{N}$ has rank at most $n - 2$, so without the ridge the solve has no
+unique answer at all: the regularisation is what makes the direction defined. It also bounds the
+length of the discriminant, which is the usual control of overfitting, since the quotient being
+maximised can otherwise be driven up along directions that the training molecules happen to span
+and new molecules do not. λ is **relative**: the ridge added is λ times the mean diagonal of
+$\mathbf{N}$, so the same λ grid means the same amount of regularisation whatever the size of the
+kernel, exactly as the λ of kernel ridge regression does on a kernel scaled to unit mean diagonal.
+`--lams` supplies the grid and the value with the best cross-validated AUC is kept.
+
+**The length and the threshold.** A discriminant direction is defined only up to its length, and
+Fisher's quotient says nothing about where to cut it. The program fixes both. The coefficients are
+scaled so that the within-class standard deviation of the training scores is 1, which makes the
+score readable and, more importantly, makes two fits on different numbers of molecules comparable.
+The cut is then chosen on out-of-fold scores: the training molecules are split into five folds,
+each fold scored by a discriminant fitted on the other four, every fold's scores expressed in that
+fold's own class-mean units, and the cut with the best balanced accuracy on the pooled scores is
+kept as the bias. Balanced accuracy, not accuracy, because a screening set with one active in
+twenty makes "inactive" the right answer for accuracy whatever the model says.
+
+**Probabilities.** The same out-of-fold scores give a one-dimensional logistic map from score to
+probability — Platt's (1999) recipe, with his smoothed targets so that a set the score separates
+completely gives a finite slope. `predict_proba` and the *Scores* tab report it. Two cautions. The
+probability is a frequency read off cross-validation, with no term for how far a molecule lies
+from the training set, so unlike the Gaussian-process classifier it does not return towards one
+half for a molecule the model has never seen anything like. And `p ≥ 0.5` is **not** the same cut
+as the class the model reports: p = 0.5 is the score at which actives and inactives were equally
+frequent, while the class comes from the balanced-accuracy threshold, which weighs the two classes
+equally and on an imbalanced set sits lower. Read the probability as a frequency and the class as
+a decision.
+
+**Its relation to kernel ridge regression.** As λ goes to zero the discriminant score becomes
+exactly the kernel ridge regression fitted to the labels $n/n_{+}$ and $-n/n_{-}$, up to a
+positive factor and a constant. That is a textbook identity, and it is worth knowing what it
+implies: the discriminant is not a different kind of model from a ridge on class labels, it is the
+same model with the labels weighted by class size and the ridge chosen for separation instead of
+for squared error. The gain it can offer over a plain ridge is therefore bounded, and the
+measurement below shows what it actually is.
+
+```bash
+python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task classification \
+       --threshold 6.84 --method kfda --lams 0.01,0.03,0.1,0.3,1,3 --normalize
+```
+
+### Measured against the other classifiers
+
+`benchmarks/run_kfda.py` puts four learners on one kernel and one set of folds, on the two
+LIT-PCBA classification sets — measured actives against measured inactives, 1587 and 1564
+molecules with 88 and 64 actives. The four are the discriminant, C-SVC, the Gaussian-process
+classifier and kernel ridge regression on the labels +1 and −1, which is the simplest learner
+that can be put to this task and which the discriminant is nearly a special case of. Each chooses
+its own setting inside every fold by cross-validated AUC.
+
+Balanced accuracy is given twice, and the difference between the two columns is the whole result.
+*Own boundary* leaves every learner's decision boundary where the learner puts it. *Common rule*
+gives all four the same boundary, chosen out of fold by balanced accuracy.
+
+| Mean of the two sets | discriminant | C-SVC | GP classifier | ridge on ±1 labels |
+|---|---:|---:|---:|---:|
+| balanced accuracy, own boundary | 0.582 | 0.515 | 0.500 | 0.495 |
+| balanced accuracy, common rule | 0.529 | 0.517 | 0.525 | 0.529 |
+| AUC | 0.605 | 0.607 | 0.567 | 0.600 |
+| Brier score | 0.0457 | — | 0.0707 | — |
+| Brier score of the share of actives alone | 0.0458 | | | |
+
+Differences against the discriminant, with 95 % paired bootstrap intervals over the molecules,
+averaged over the two sets:
+
+| Difference, discriminant minus | balanced accuracy, own boundary | balanced accuracy, common rule | AUC |
+|---|---|---|---|
+| C-SVC | +0.067 [+0.005, +0.128] | +0.012 [−0.047, +0.070] | −0.003 [−0.071, +0.065] |
+| GP classifier | +0.082 [+0.023, +0.140] | +0.003 [−0.037, +0.045] | +0.038 [−0.032, +0.108] |
+| ridge on ±1 labels | +0.087 [+0.029, +0.143] | −0.001 [−0.066, +0.067] | +0.005 [−0.051, +0.063] |
+
+**The discriminant does not order molecules better.** Every AUC difference contains zero, against
+all three references, on both sets. The ordering is the kernel's, and the kernel is the same for
+all four.
+
+**What it does do is place its threshold.** With each learner's own boundary the discriminant is
+ahead by 0.067 to 0.087 balanced accuracy and those intervals exclude zero — but that is not a
+better model. It is that the discriminant is the only one of the four that chooses a boundary at
+all: the others leave theirs where their fit put it, which on a set with one active in twenty
+calls nearly every molecule inactive and scores 0.50 whatever the ordering behind it. Give the
+same out-of-fold rule to all four and the advantage disappears: +0.012, +0.003 and −0.001, every
+interval containing zero. If you use C-SVC or the Gaussian-process classifier on an imbalanced
+set, move the threshold yourself; the discriminant is simply the method that does it for you.
+
+**Calibration.** The discriminant's Brier score is better than the Gaussian-process classifier's
+on both sets, by 0.025 on average with an interval of [−0.029, −0.021] that excludes zero. Read
+that against the right reference. Predicting the share of actives for every molecule and saying
+nothing else scores 0.0524 on ESR1_ant and 0.0392 on TP53; the discriminant scores 0.0520 and
+0.0394, which is that reference to three decimal places, and the Gaussian-process classifier
+scores 0.0630 and 0.0784, which is worse than it. So the discriminant is better calibrated only
+in the sense of being less overconfident. Neither classifier's probabilities carry usable
+information on these sets, and the comparison is not a reason to prefer either.
+
+**The co-field.** Both classifiers fitted on all the molecules of a set, their co-fields compared
+by the cosine of *Comparing two models by their co-fields*: 0.681 on ESR1_ant and 0.233 on TP53,
+positive in every field on both sets. The two classifiers ask the chemistry for the same thing,
+clearly on one set and weakly on the other. Only the discriminant's map, however, has the
+standing of a co-field in the sense this manual uses the word.
+
+**Where to cut the score, measured.** The threshold rule above is one of two. The other is the
+plain midpoint of the two projected class means, the Fisher threshold for equal class priors,
+which fits nothing. On eight balanced two-class problems made from the Sutherland sets by cutting
+each set at its median activity, the two rules give mean balanced accuracies of 0.770 and 0.773,
+a difference of −0.003 whose interval contains zero on seven of the eight sets. Searching for the
+cut gains nothing measurable over the midpoint and loses nothing. The search is the default
+because it needs no assumption about the class priors; `--method kfda` with the parameter
+`kfda_threshold` set to `midpoint` selects the other.
+
+**So what is it for.** Not accuracy: on these sets the four learners are one classifier as far as
+the measurement can tell. It is for the picture. The discriminant is the classification model this
+program can draw, because its score is one linear functional of the field and is found in closed
+form. One limit belongs here. The error band of *How much of it is noise* propagates noise in the
+**activities**, and a class label carries none, so the band is not available for this classifier
+or for any other; `cmf cofield` says so and draws the map unmasked. The full table, per
+set and with the settings chosen, is `benchmarks/results/kfda/table.md`.
 
 ## Fitting the order instead of the values: the ranking SVM
 
@@ -6109,6 +6254,11 @@ map is worth looking at:
 electrostatic    peak     0.6146 (signed    -0.6146)   7% of the covered grid above 2 sd
 hydrophobic      peak     0.8206 (signed    +0.8206)   18% of the covered grid above 2 sd
 ```
+
+On a classification or one-class model there is nothing to mask with. The band propagates noise in
+the activities and a class label carries none, so `--z` is reported as ignored and the map is drawn
+unmasked. The map itself is the same expression for every learner whose score is a kernel
+expansion, the kernel Fisher discriminant included.
 
 ## The benchmarks from the tool: `cmf benchmark`
 

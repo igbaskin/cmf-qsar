@@ -50,7 +50,7 @@ structure, which the data set brings with it and which needs no superposition.*
 |---|---|
 | Molecular fields | One conformation per molecule by default, or a **conformational ensemble** whose mean field is the fourth dimension of 4D-QSAR (see below). Every field is a sum of atom-centred Gaussians `w exp(-α/2 |r-r_l|²)` (Eq. 4 of the 2013 paper). Five physico-chemical fields (electrostatic, steric, hydrophobic, H-bond acceptor, H-bond donor) and **continuous indicator fields** (one per Sybyl atom type, 2015 paper). The steric field uses radius-scaled widths `α/R_vdW²` (Eq. 10–11). |
 | Kernels | Overlap integrals of the fields computed **analytically** for all atom pairs (Eq. 5 / Eq. 11), summed per field type (Eq. 2) and mixed with coefficients `h_f` (Eq. 1). Optional cosine normalisation. Vectorised NumPy implementation; a 300-molecule set takes a few seconds per α value. An optional **nonlinear kernel layer** (Gaussian or arc-cosine) and **multiple kernel learning** for the mixing coefficients are described below. |
-| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), **kernel PLS** (the kernel form of CoMFA's learner, its number of components chosen by cross-validation; see below), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Several endpoints on one kernel**, tied by a task covariance -- one shared correlation, a free-form low-rank matrix chosen by the marginal likelihood, or a covariance read off descriptors of the endpoints themselves, which is what lets an endpoint with no measurements at all be predicted from its neighbours -- so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
+| Learning | **Regression**: kernel ridge regression with bias term (Eq. 12), **kernel PLS** (the kernel form of CoMFA's learner, its number of components chosen by cross-validation; see below), ε-SVR / ν-SVR (precomputed kernel) and a Gaussian-process view of KRR giving predictive variances, which a library can be **ranked by a lower confidence bound** on rather than by the point estimate (see below). **Binary classification**: C-SVC / ν-SVC, or a **Gaussian-process classifier** fitted by the Laplace approximation, which adds calibrated probabilities, a posterior variance per molecule and model selection by marginal likelihood (see below), or **kernel Fisher discriminant analysis**, the only classifier here found in closed form and the only one whose score is a linear functional of the field, so that a classification model has a co-field (see below). **One-class classification** (novelty detection) for similarity-based virtual screening: the 1-SVM, or the centroid, k-nearest-neighbour, Gaussian-process and kernel-PCA descriptions of the active class, or the eight **data-fusion** rules, which combine the similarities to the individual actives and fit nothing at all (see below). **Several endpoints on one kernel**, tied by a task covariance -- one shared correlation, a free-form low-rank matrix chosen by the marginal likelihood, or a covariance read off descriptors of the endpoints themselves, which is what lets an endpoint with no measurements at all be predicted from its neighbours -- so that a selectivity is the difference of two co-fields rather than a ratio (see below). |
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
@@ -2812,6 +2812,100 @@ with probabilities rather than decision values.
 ```bash
 python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task classification \
        --threshold 6.84 --method gpc --Cs 1,10,100
+```
+
+### A classifier that has a co-field: kernel Fisher discriminant analysis
+
+A co-field exists only where the model is linear in the field. That rule had an awkward
+consequence for classification. The Gaussian-process classifier above passes it, since its latent
+function is a kernel expansion. C-SVC does not, in the sense that matters: its decision function
+is a kernel expansion too, but the coefficients solve a quadratic program on the hinge loss, so
+they are not a linear map of the class labels and the uncertainty of the co-field cannot be
+written down. So a chemist who wanted a *picture* of a classification model had one method and no
+second opinion. `kfda` ([model.py](cmfqsar/model.py), `kfda_fit`) is that second opinion, and it
+is found in closed form.
+
+It is Fisher's discriminant written on the kernel (Mika et al. 1999): the direction in field space
+along which the two classes are furthest apart relative to their own spread, which in the dual is
+one linear solve, `a = (N + lam t I)^-1 (m_+ - m_-)` with `m_c` the mean kernel row of class `c`
+and `N = K W K` the within-class scatter on the kernel. `N` has rank at most `n - 2`, so the ridge
+is not a refinement but what makes the direction defined at all; it also bounds the length of the
+discriminant, which is the usual control of overfitting. `lam` is relative — the ridge added is
+`lam` times the mean diagonal of `N` — so one λ grid means the same thing whatever the size of the
+kernel. The coefficients are then scaled so that the within-class standard deviation of the
+training scores is 1, which makes two fits on different numbers of molecules comparable; the
+threshold is chosen on out-of-fold scores by balanced accuracy, and the same scores give Platt's
+logistic map from score to probability.
+
+Everything downstream reads it with no special case: the co-field, the atom and training-molecule
+contributions, the Shapley values, the applicability domain, and `cmf cofield` on a saved model
+file.
+
+**Measured against the other classifiers.** [benchmarks/run_kfda.py](benchmarks/run_kfda.py) puts
+four learners on one kernel and one set of folds, on the two LIT-PCBA classification sets of the
+screening measurement above — measured actives against measured inactives, 1587 and 1564 molecules
+with 88 and 64 actives. The fourth is kernel ridge regression on the labels +1 and −1, which is
+the simplest learner that can be put to this task, and not a straw man: as the ridge goes to zero
+the discriminant *is* that regression with the labels weighted by class size. Each learner chooses
+its own setting inside every fold by cross-validated AUC. Means over the two sets:
+
+| mean of the two sets | discriminant | C-SVC | GP classifier | ridge on ±1 labels |
+|---|---:|---:|---:|---:|
+| balanced accuracy, each learner's own boundary | **0.582** | 0.515 | 0.500 | 0.495 |
+| balanced accuracy, one boundary rule for all four | 0.529 | 0.517 | 0.525 | 0.529 |
+| AUC | 0.605 | 0.607 | 0.567 | 0.600 |
+| Brier score | 0.0457 | — | 0.0707 | — |
+
+**It does not order molecules better.** Every AUC difference contains zero, against all three
+references, on both sets: −0.003 [−0.071, +0.065] against C-SVC, +0.038 [−0.032, +0.108] against
+the GP classifier, +0.005 [−0.051, +0.063] against the ridge, as 95 % paired bootstraps over the
+molecules. The ordering belongs to the kernel, which all four share.
+
+**The advantage it does show is its threshold, not its model.** With each learner's own boundary
+the discriminant leads by +0.067 [+0.005, +0.128] over C-SVC, +0.082 [+0.023, +0.140] over the GP
+classifier and +0.087 [+0.029, +0.143] over the ridge, intervals excluding zero. That is real but
+it is not a better classifier: the discriminant is the only one of the four that chooses a
+boundary at all, and the others leave theirs where the fit put it, which on a set with one active
+in twenty calls nearly every molecule inactive and scores 0.50 whatever ordering lies behind it.
+Give the same out-of-fold rule to all four and the lead goes: +0.012 [−0.047, +0.070],
++0.003 [−0.037, +0.045] and −0.001 [−0.066, +0.067]. **The practical advice is the useful part of
+this result**: on an imbalanced set, move the threshold of whichever classifier you use. The
+discriminant is the one that does it for you.
+
+**Its calibration is better than the GP classifier's, and that says less than it sounds.** The
+Brier score is lower on both sets, by 0.025 with an interval of [−0.029, −0.021]. But predicting
+the share of actives for every molecule and saying nothing else scores 0.0458 on these two sets,
+and the discriminant scores 0.0457. Its probabilities are the base rate to three decimal places;
+the GP classifier's, at 0.0707, are worse than the base rate. The discriminant is better
+calibrated only in the sense of being less overconfident, neither carries usable probability
+information on these sets, and so calibration is no reason to prefer either as the default. C-SVC
+stays the default classifier.
+
+**The co-field, against the support-vector classifier's.** Both fitted on all the molecules of a
+set, compared by the cosine of plan item F3: 0.681 on ESR1_ant and 0.233 on TP53, positive in
+every one of the five fields on both sets. The two classifiers ask the chemistry for the same
+thing, clearly on one set and weakly on the other.
+
+**Where to cut the score, also measured.** The out-of-fold search is one of two rules; the other
+is the plain midpoint of the two projected class means, the Fisher threshold for equal class
+priors, which fits nothing. On eight balanced two-class problems made from the Sutherland sets by
+cutting each at its median activity, the two give mean balanced accuracies of 0.773 and 0.770, a
+difference of −0.003 whose interval contains zero on seven of the eight sets. The search gains
+nothing measurable over the midpoint and loses nothing; it is the default only because it assumes
+nothing about the class priors.
+
+**So the verdict is a negative one on accuracy and a positive one on interpretation.** On these
+sets the four learners are one classifier as far as the measurement can tell, and `kfda` is not
+promoted to the default on that evidence. It is kept for what it was added for: it is the
+classification model this program can draw, because its score is one linear functional of the
+field and is found in closed form. One limit to state: the error band of the co-field propagates
+noise in the *activities*, and a class label carries none, so the band is not available for this
+classifier or for any other — `cmf cofield` says so and draws the map unmasked. The full table is
+[benchmarks/results/kfda/table.md](benchmarks/results/kfda/table.md).
+
+```bash
+python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task classification \
+       --threshold 6.84 --method kfda --lams 0.01,0.03,0.1,0.3,1,3 --normalize
 ```
 
 ### Alignment by prediction confidence
