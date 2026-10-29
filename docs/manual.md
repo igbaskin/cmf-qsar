@@ -3301,6 +3301,42 @@ and the pharmacophore are computed. `--open` shows it in the browser straight aw
 A CMF model is readable in a way a grid model is not, because the prediction can be taken apart
 exactly. The 2019 paper states three decomposition rules, and the program implements all three.
 
+## The three decomposition rules
+
+Every model the program fits is a sum of kernel values with the training molecules, and the three rules below follow from that one fact. The 2019 paper states them for the kernel of overlap integrals. The program keeps them for every model that is still such a sum, and it says so when a model is not: a nonlinear kernel layer keeps rule 2 and loses rules 1 and 3.
+
+**Rule 1: the co-field is a weighted sum of the fields of the training molecules.**
+
+$$
+C_f(\mathbf{r}) = \sum_j a_j\, s_j\, X_{fj}(\mathbf{r})
+$$
+
+The weights are the fitted dual coefficients $a_j$, one per training molecule, times the normalisation $s_j$ of its field when the kernels are normalised. Every lobe of a co-field therefore comes from named molecules: a positive lobe is where the fields of the molecules with a positive weight are strong and the fields of the molecules with a negative weight are weak. The scheme below draws the three terms of the largest weight for the electrostatic co-field of the steroid model, and the co-field that they and the other eighteen terms add up to. In the program the co-field is the **Compute co-field** button, described in *Co-fields* below; the weights are `model.coef` in the library, and the *Contributions* tab lists them beside the products of rule 2.
+
+![Rule 1 for the electrostatic co-field of the steroid model of this chapter: the three training molecules of the largest weight, each field drawn times its weight with the skeleton of the molecule over it, and the co-field that all 21 terms add up to, on one colour scale. The weight of a training molecule is its dual coefficient times the normalisation of its field, and the sign of the weight, not the activity itself, decides whether its field is added or subtracted.](docs/figures/rule1.png)
+
+**Rule 2: a prediction is the bias plus one contribution per training molecule.**
+
+$$
+\hat{y} = b + \sum_j a_j\, K(X, X_j)
+$$
+
+$K(X, X_j)$ is the kernel between the molecule and training molecule $j$, so the contribution of a training molecule is its similarity to the molecule times its weight. The rule holds for every kernel, a nonlinear layer included, because the layer changes the kernel and not the form of the sum. It is the first thing to read when a prediction surprises you: a prediction resting on one or two training molecules is a warning, and a support vector machine makes the sum short on purpose, since most of its coefficients are zero. The scheme shows the contributions of the 21 training molecules to one test molecule of the steroid set, sorted: the molecules the fit weighted positively and that resemble the test molecule pull the prediction up, the others pull it down. The *Contributions* tab lists them, `cmf report` prints the largest, and `model.training_contributions(mol)` returns them.
+
+![Rule 2 for one test molecule of the steroid set, the one the model of this chapter predicts highest: the contribution of each of the 21 training molecules, sorted, with the observed affinity of the training molecule in brackets; the bias and the sum of the bars are in the title. The bars are not an activity ranking of the training set, because the similarity to the test molecule is a factor in every term.](docs/figures/rule2.svg)
+
+**Rule 3: a prediction is a sum over the atoms of the molecule.**
+
+$$
+\hat{y} = b + \sum_k y_k
+$$
+
+The field of a molecule is a sum of Gaussians centred on its atoms, and the overlap kernel is a sum over pairs of atoms, so the contribution of every training molecule splits further into one term $y_k$ per atom $k$ of the molecule being predicted (Eq. 14 of the 2015 paper). The contribution of a substituent or a fragment is the sum over its atoms. This is the rule for design, because it says which part of a molecule helps and which part does not. It needs a kernel that is a sum over atom pairs, which the overlap kernel and the rotation-invariant autocorrelation kernel are and a nonlinear layer is not; under a layer the Shapley values of *Shapley values* below take its place. The scheme draws the atom contributions of the two test molecules the steroid model predicts highest and lowest, as the 2019 paper draws its Figure 3: red spheres raise the predicted affinity, blue ones lower it, and the area is the magnitude. The 3D view draws the same spheres for the selected molecule, and `model.atom_contributions(mol)` returns the values, per field with `per_field=True`.
+
+![Rule 3 for the two test molecules of the steroid set that the model of this chapter predicts highest and lowest, drawn as the 2019 paper draws its Figure 3: one circle per atom, hydrogens included, red for a positive contribution and blue for a negative one, with an area proportional to the magnitude and the three largest values written out. The sums in the titles are the predictions minus the bias. The largest contributions sit on oxygen atoms, where the electrostatic co-field has its lobes.](docs/figures/rule3.svg)
+
+The two sums are the same number: the contributions of the training molecules and the contributions of the atoms both add up to the prediction minus the bias, and a test asserts it. For a classification model the coefficients carry the sign of the class, $a_j = \alpha_j y_j$, and the three rules read the same way with the active class in place of the higher activity.
+
 ## Co-fields
 
 The co-field is the model as a function of space:

@@ -710,11 +710,157 @@ def fig_roc(path):
     save(fig, path)
 
 
+def rule_molecules():
+    """The two test molecules of the steroid set that the co-field model predicts highest and
+    lowest, with their predictions: the examples of the decomposition rules."""
+    if "rule_molecules" in _CACHE:
+        return _CACHE["rule_molecules"]
+    from cmfqsar.fields import AtomTable
+    s, c = steroids(), cofield_model()
+    test = list(s["ds"].test_indices)
+    yp = c["model"].predict(AtomTable.from_molecules([c["mf"][i] for i in test]))
+    order = np.argsort(yp)
+    out = {"high": test[order[-1]], "low": test[order[0]],
+           "pred": {test[k]: float(yp[k]) for k in range(len(test))}}
+    _CACHE["rule_molecules"] = out
+    return out
+
+
+def fig_rule1(path):
+    """Chapter 8, rule 1: the co-field is a weighted sum of the training molecules' fields."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.cofields import evaluate_gaussians
+    s, c = steroids(), cofield_model()
+    fs, mf, model, frame, xs, ys = c["fs"], c["mf"], c["model"], c["frame"], c["xs"], c["ys"]
+    f = fs.names.index("electrostatic")
+    pts, shape = plane_points(frame, xs, ys)
+    centres, coeffs, widths, index = model.cofield_basis(f)
+    coef = np.asarray(model.coef, float)
+    unit = float(fs.specs[f].h) * float(model.scale[f])
+
+    def term(mask):
+        v = evaluate_gaussians(pts, centres[mask], coeffs[mask] * coef[index[mask]], widths[mask])
+        return (v * unit).reshape(shape)
+
+    # the weight of training molecule j in the co-field is a_j s_j, with s_j the normalisation
+    # of its own field; the three largest in magnitude are drawn, the other terms are summed
+    weights = coef / np.sqrt(np.asarray(model.self_diag, float)[f])
+    top = list(np.argsort(-np.abs(weights))[:3])
+    maps = [term(index == j) for j in top]
+    total = term(np.ones(len(index), bool))
+    vmax = max(np.abs(m).max() for m in maps + [total])
+    names = [mf[s["train_idx"][j]].name for j in top]
+    print("  rule 1: electrostatic co-field; largest weights "
+          + ", ".join(f"{n} ({w:+.2f})" for n, w in zip(names, weights[top])))
+    # the axes are placed by hand, in inches, so that the figure is exactly two rows of maps of
+    # the shape of the series with their titles, and no empty band is left between the rows
+    ratio = (ys[-1] - ys[0]) / (xs[-1] - xs[0])
+    pw = 0.27 * WIDTH
+    ph = pw * ratio
+    title_h, gap, top_h, bottom_h = 0.38, 0.12, 0.28, 0.06
+    H = top_h + 2 * (title_h + ph) + gap + bottom_h
+    fig = plt.figure(figsize=(WIDTH, H))
+    lefts = [0.03 * WIDTH + k * (pw + 0.065 * WIDTH) for k in range(3)]
+    y_top = H - top_h - title_h - ph
+    y_bottom = bottom_h
+    boxes = [(lefts[k], y_top) for k in range(3)] + [(lefts[1], y_bottom)]
+    axes = [fig.add_axes([x / WIDTH, y / H, pw / WIDTH, ph / H]) for x, y in boxes]
+    for ax, Z, title in zip(axes, maps + [total],
+                            [f"{n}\n$a_j s_j = {w:+.2f}$" for n, w in zip(names, weights[top])]
+                            + ["electrostatic co-field $C_f$"]):
+        im = signed_map(ax, Z, xs, ys, vmax=vmax)
+        ax.set_title(title, fontsize=8)
+        ax.set_xticks([])
+        ax.set_yticks([])
+    for j, ax in zip(top, axes[:3]):
+        draw_skeleton(ax, mf[s["train_idx"][j]], frame)
+    for k in (0, 1):
+        left, right = axes[k].get_position(), axes[k + 1].get_position()
+        fig.text((left.x1 + right.x0) / 2, (left.y0 + left.y1) / 2, "+", ha="center",
+                 va="center", fontsize=13)
+    bottom = axes[3].get_position()
+    fig.text(bottom.x0 - 0.03, (bottom.y0 + bottom.y1) / 2,
+             f"+ the {len(coef) - 3} other\ntraining molecules\n$=$", ha="right", va="center",
+             fontsize=8)
+    cax = fig.add_axes([bottom.x1 + 0.02, bottom.y0, 0.015, bottom.y1 - bottom.y0])
+    fig.colorbar(im, cax=cax).ax.tick_params(labelsize=6.5)
+    fig.suptitle("rule 1: $C_f(\\mathbf{r}) = \\sum_j a_j s_j X_{fj}(\\mathbf{r})$, "
+                 f"the steroid model, each term scaled by $h_f c_f$", fontsize=9,
+                 y=1 - 0.5 * top_h / H, va="center")
+    save(fig, path)
+
+
+def fig_rule2(path):
+    """Chapter 8, rule 2: a prediction is the bias plus one contribution per training molecule."""
+    import matplotlib.pyplot as plt
+    s, c, r = steroids(), cofield_model(), rule_molecules()
+    mf, model, ds = c["mf"], c["model"], s["ds"]
+    i = r["high"]
+    contrib = model.training_contributions(mf[i])
+    bias, pred = float(model.bias), r["pred"][i]
+    assert abs(bias + contrib.sum() - pred) < 1e-6
+    order = np.argsort(contrib)
+    labels = [f"{ds.names[s['train_idx'][j]]} ({s['y'][j]:.2f})" for j in order]
+    print(f"  rule 2: {mf[i].name}, prediction {pred:.2f} = bias {bias:.2f} + "
+          f"{contrib.sum():+.2f}; largest {labels[-1]} {contrib[order[-1]]:+.2f}")
+    fig, ax = plt.subplots(figsize=(WIDTH * 0.85, 0.165 * len(contrib) + 1.1))
+    y = np.arange(len(contrib))
+    ax.barh(y, contrib[order], color=np.where(contrib[order] >= 0, "C3", "C0"), height=0.7)
+    ax.set_yticks(y, labels, fontsize=7)
+    ax.axvline(0, color="black", lw=0.6)
+    ax.set_xlabel("contribution $a_j K(X, X_j)$ to the predicted pK")
+    ax.set_title(f"rule 2: {mf[i].name}, prediction {pred:.2f} = bias {bias:.2f} "
+                 f"+ sum of the contributions {contrib.sum():+.2f}\n"
+                 f"training molecules with their observed pK in brackets", fontsize=8.5)
+    ax.grid(True, axis="x", lw=0.4, alpha=0.5)
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    fig.tight_layout()
+    save(fig, path)
+
+
+def fig_rule3(path):
+    """Chapter 8, rule 3: a prediction is a sum over the atoms of the molecule, drawn as the
+    paper draws it, for the highest and the lowest predicted test molecule."""
+    import matplotlib.pyplot as plt
+    s, c, r = steroids(), cofield_model(), rule_molecules()
+    mf, model, frame, ds = c["mf"], c["model"], c["frame"], s["ds"]
+    picks = [r["high"], r["low"]]
+    values = [model.atom_contributions(mf[i]) for i in picks]
+    bias = float(model.bias)
+    vmax = max(np.abs(v).max() for v in values)
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.45))
+    for ax, i, v in zip(axes, picks, values):
+        mol = mf[i]
+        xy = project(frame, mol.coords)
+        draw_skeleton(ax, mol, frame, colour="0.55")
+        ax.scatter(xy[:, 0], xy[:, 1], s=260 * np.abs(v) / vmax,
+                   color=np.where(v >= 0, "C3", "C0"), alpha=0.75, linewidths=0, zorder=5)
+        for k in np.argsort(-np.abs(v))[:3]:
+            ax.annotate(f"{v[k]:+.2f}", xy[k], xytext=(0, 10), textcoords="offset points",
+                        ha="center", fontsize=6.5, zorder=6,
+                        bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="none", alpha=0.8))
+        ax.set_aspect("equal")
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_title(f"{mol.name}, {len(v)} atoms\nobserved {ds.activity[i]:.2f}, predicted "
+                     f"{r['pred'][i]:.2f} = bias {bias:.2f} {v.sum():+.2f}", fontsize=8)
+        print(f"  rule 3: {mol.name}, sum of the atom contributions {v.sum():+.3f}, "
+              f"largest {v[np.argmax(np.abs(v))]:+.3f} on {mol.symbols[int(np.argmax(np.abs(v)))]}")
+    fig.suptitle("rule 3: the prediction as a sum over the atoms; red raises the predicted pK, "
+                 "blue lowers it, the area is the magnitude", fontsize=9)
+    fig.tight_layout(rect=(0, 0, 1, 0.9))
+    save(fig, path)
+
+
 FIGURES = {
     "fields.png": fig_fields,
     "overlap.svg": fig_overlap,
     "search.svg": fig_search,
     "scatter.svg": fig_scatter,
+    "rule1.png": fig_rule1,
+    "rule2.svg": fig_rule2,
+    "rule3.svg": fig_rule3,
     "roc.svg": fig_roc,
     "errorpred.svg": fig_errorpred,
     "cofield.png": fig_cofield,
