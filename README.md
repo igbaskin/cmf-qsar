@@ -3301,6 +3301,44 @@ stays as what the plan said it would then be: a display tool, the way to put a s
 frame and draw a co-field in it, with the face of a planar molecule left to the user. Which it
 can do in milliseconds, and the slab cannot be avoided for anything more.
 
+### A frame by rule: the gap of polybenzenoid hydrocarbons
+
+A planar molecule needs no slab and no reference: its frame is its own inertia tensor, and
+[pbh.py](cmfqsar/pbh.py) fixes the signs of the axes by a rule, so a series of rigid planar
+molecules is the cleanest test the overlap kernel can get. The test is COMPAS-1 (Gershoni-Poranne
+group, 2022): every cata-condensed polybenzenoid hydrocarbon of one to eleven rings, 8,678
+molecules at B3LYP-D3BJ/def2-SVP with their HOMO–LUMO gap, downloaded by
+[run_compas.py](benchmarks/run_compas.py) (CC-BY-NC-SA, kept in `benchmarks/cache`). Beside the
+steric field, GFN2-xTB charges and indicator fields of the three carbon classes of a benzenoid
+(rim, two-ring, three-ring; `--cif-scheme pbh`), the study adds **ring-centred fields**: one
+Gaussian per ring centroid, in one field per annulation class (terminal, linear, angular,
+branched) or weighted by the ring's share of the Clar sextets, carried as pseudo-atoms so that
+the kernel, the co-field and rule 3 need no change (`ring:<class>` in a field set). Five random
+80/10/10 splits and size-extrapolation splits (train on fewer than N rings, test on N), kernel
+ridge regression with the attenuations and the ridge chosen by cross-validation
+([table](benchmarks/results/compas/table.md), [notes](benchmarks/results/compas/NOTES.md),
+[report](benchmarks/results/compas/REPORT.md)). Test R² (mean ± sd over the seeds), then R² on the
+N = 8, 9, 10 splits:
+
+| field set | test R² | RMSE (eV) | N = 8 | N = 9 | N = 10 |
+|---|---|---|---|---|---|
+| steric | 0.42 ± 0.04 | 0.30 | −0.48 | −0.40 | −1.47 |
+| steric + charges + atom classes | 0.60 ± 0.05 | 0.25 | −0.05 | −0.12 | −1.07 |
+| ring classes alone | 0.65 ± 0.02 | 0.24 | 0.52 | 0.51 | −0.04 |
+| steric + charges + atom classes + ring classes | 0.78 ± 0.11 | 0.18 | 0.59 | 0.53 | 0.44 |
+| the same + Clar-sextet ring field | 0.87 ± 0.02 | 0.14 | 0.67 | 0.78 | 0.70 |
+README_| ridge on the counts of atom classes, ring classes, rings and sextets (additivity scheme) | – | 0.70 ± 0.01 | 0.22 | 0.63 | 0.65 | 0.67 |
+| random forest on 66 RDKit descriptors | – | 0.91 ± 0.02 | 0.12 | 0.32 | 0.35 | −0.16 |
+| straight line in the number of rings | – | 0.02 ± 0.03 | 0.39 | −0.18 | −0.08 | −0.02 |
+
+The gap of a benzenoid is topology: the ring fields carry what extrapolates to larger molecules,
+and the sets without one have a negative R² there. The spread of the four-group row is one
+molecule, benzene, which seed 0 puts in the test part and the model extrapolates to 10–13 eV.
+The co-fields of the ring fields over a reference molecule and the per-ring contributions of
+four test molecules (decomposition rule 3 summed per ring, `ring_contributions`) are drawn by the
+benchmark; the manual section of the same name has the figures. The Nyström path on the 34,072
+molecules of COMPAS-1x (`--stage scaling`) is the next step.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

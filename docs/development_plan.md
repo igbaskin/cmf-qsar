@@ -3085,6 +3085,61 @@ cavity frame is the case where the co-field is expected to work, and EC7 has bee
 set. SC6 before SC7, since the design loop on a guest table is unreadable without the
 contributions. SC3 as the docking placement allows. SC2 at any time. SC8 is M7.
 
+### Physical organic chemistry: a planar series in a frame given by rule (29 October 2026)
+
+The COMPAS-1 study (`cmfqsar/pbh.py`, `benchmarks/run_compas.py`, measured in
+`benchmarks/results/compas/`, manual section *A frame by rule: the gap of polybenzenoid
+hydrocarbons*) is the first CMF model of a quantum-chemical property on an enumerated chemical
+space: the HOMO–LUMO gap of the 8,678 cata-condensed polybenzenoid hydrocarbons of COMPAS-1D
+(Gershoni-Poranne group, 2022). It came from an outside brief — a one-page proposal for a
+computational-chemistry group — and was built inside the repository rather than as the separate
+package the brief proposed, because every piece but five already existed. What it added:
+
+* a planar frame by rule (`canonical_frame`): the inertia axes of the heavy atoms, the signs of
+  the in-plane axes fixed by a fixed sequence of odd moments, and the third-, fourth- or
+  sixth-moment direction where the in-plane moments are degenerate; the kernel-based choice
+  among the four frames (alignment by prediction confidence) as an option;
+* the typing scheme `pbh` (rim carbon, two-ring carbon, three-ring carbon) for the indicator
+  fields, on the command line and in the application;
+* **ring-centred fields**: one Gaussian per ring centroid, in one field per annulation class
+  (terminal, linear, angular, branched) or weighted by the Clar-sextet share, carried as
+  pseudo-atoms of the molecular field so that the kernel, the co-field and rule 3 need no change
+  (`ring:<class>` in a field set, `FieldSet.create(ring_classes=...)`);
+* rule 3 summed per ring (`ring_contributions`), and `mae` beside `rmse`;
+* a COMPAS reader that matches the SMILES to the xyz atoms by graph and refuses a mismatch.
+
+What it settled. The gap of a benzenoid is topology: the steric field alone reaches a test R² of
+0.42 (five random 80/10/10 splits), the carbon-class indicator fields 0.49, the four ring-class
+fields alone 0.65, and the four groups together 0.78 (q² 0.83, MAE 0.13 eV); the Clar-sextet
+ring field on top takes that to 0.87 (q² 0.87, RMSE 0.14 eV, MAE 0.11 eV). On the
+size-extrapolation splits — train on fewer than N rings, test on N — the sets without a ring
+field have negative R² and the sets with one are positive (0.44 to 0.78), which is the one
+result a proposal can rest on: the ring field is what carries over to larger molecules. The
+frame costs nothing: a planar molecule needs no alignment step and the rule leaves nothing to
+fit. The co-field of the ring-class fields over a six-ring reference molecule and the per-ring
+contributions of four test molecules are drawn by the benchmark.
+
+What it leaves open, in order:
+
+* **PBH1. The Nyström path on COMPAS-1x** (34,072 molecules at GFN2-xTB): the stage exists
+  (`--stage scaling`, landmark molecules through `fit_low_rank`) and was run on 300 molecules;
+  the full run (xTB charges on 34k molecules, m = 500, 1000, 2000 landmarks) is the second
+  milestone and waits for a compute estimate.
+* **PBH2. A NICS-weighted ring field.** `ring:sextet` was meant as the placeholder and turned
+  out the largest single gain; a nucleus-independent chemical shift per ring needs one DFT
+  calculation per ring (`cmfqsar/orca.py` has the per-atom plumbing, not yet ghost atoms at ring
+  centres) and has to beat the sextet share, not the set without it.
+* **PBH3. Peri-condensed systems (COMPAS-3)**: `C.3r` carbons and rings with adjacent shared
+  bonds (`peri` in `ring_classes`) appear; the typing and the ring classes are written for them
+  and untested on them.
+* **PBH4. Hetero-atom systems (COMPAS-2)**: indicator fields per hetero-atom type, which the
+  `element+aromatic` scheme already gives, and the electrostatic field gains meaning.
+* **PBH5. Δ-learning xTB → DFT**: COMPAS-1x carries xTB-to-DFT-corrected values; the
+  multi-task model (`cmfqsar/multitask.py`) on the two levels is the natural form.
+* **PBH6. The grids.** The chosen steric attenuation sits at the top of the grid and the ridge
+  at the bottom (1e-4) for every set with a ring field; a wider steric grid and a smaller ridge
+  (the float32 kernels allow about 1e-5) are one more run.
+
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
 *Drafted 26 October 2026. Parts A to G build the model and part H leaves medicinal chemistry for

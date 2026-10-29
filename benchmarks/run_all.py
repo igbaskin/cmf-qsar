@@ -475,6 +475,15 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_matbench_phonons").report(_r("matbench_phonons/table.md")),
                   tables=["matbench_phonons/table.md"],
                   readme=["Crystals: the periodic autocorrelation"]),
+        Benchmark("compas", "the HOMO-LUMO gap of the cata-condensed polybenzenoid hydrocarbons of "
+                  "COMPAS-1D in a frame given by rule: steric, electrostatic, atom-class and "
+                  "ring-class indicator fields, baselines, co-fields and per-ring contributions "
+                  "(downloads the 27 MB of COMPAS-1 into benchmarks/cache on the first run; needs "
+                  "xtb for the charges, or --charges gasteiger)",
+                  "run_compas.py", "compas", compute=[["--jobs", "12"]], minutes="240",
+                  report=lambda: _mod("run_compas").report(_r("compas/table.md")),
+                  tables=["compas/table.md"],
+                  readme=["A frame by rule: the gap of polybenzenoid hydrocarbons"]),
         Benchmark("kpls", "kernel partial least squares against kernel ridge regression on the "
                           "Sutherland sets, each choosing its own setting by cross-validation",
                   "run_kpls.py", "kpls", compute=[[]], minutes="30",

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 89 modules, 168 classes with 535 public methods, and 756 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 90 modules, 169 classes with 537 public methods, and 784 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -79,6 +79,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.neldermead](#cmfqsarneldermead) | Nelder-Mead simplex minimiser, a direct port of R's `nmmin` (`optim(method = "Nelder-Mead")`, R 2.x-4.x), which the original CMF R scripts use to optimise the attenuation factor alpha and the regularisation parameter gamma simultaneously (`cmf_krr_train_mem` with `alpha_grid_search = FALSE`). |
 | [cmfqsar.oneclass](#cmfqsaroneclass) | One-class scores on a precomputed kernel: four geometries besides the 1-SVM's ball. |
 | [cmfqsar.orca](#cmfqsarorca) | Quantum-chemical properties from ORCA: per-atom quantities that become fields, per-molecule ones that become descriptors. |
+| [cmfqsar.pbh](#cmfqsarpbh) | Polybenzenoid hydrocarbons: a planar frame, ring classes, ring-centred fields and per-ring contributions. |
 | [cmfqsar.perfield](#cmfqsarperfield) | A separate attenuation for every field, chosen by the evidence (plan item D6). |
 | [cmfqsar.periodic](#cmfqsarperiodic) | Continuous molecular fields of crystals: the periodic field autocorrelation. |
 | [cmfqsar.pharmacophore](#cmfqsarpharmacophore) | A pharmacophore read out of a fitted co-field. |
@@ -603,6 +604,12 @@ Assign an approximate Sybyl (Tripos) atom type to an RDKit atom.
 ### `element_atom_type(atom: Chem.Atom) -> str`
 
 ### `element_aromatic_atom_type(atom: Chem.Atom) -> str`
+
+### `pbh_atom_type(atom: Chem.Atom) -> str`
+
+The carbon classes of a benzenoid hydrocarbon: a rim carbon bonded to a hydrogen
+(`C.H`), a carbon shared by two rings (`C.2r`), by three (`C.3r`); see
+`cmfqsar.pbh.pbh_atom_type`.
 
 ### `assign_atom_types(mol: Chem.Mol, scheme: str='sybyl') -> List[str]`
 
@@ -3659,6 +3666,10 @@ happens in Sybyl MOL2 files).
     pharm:<feature> the same for one of six pharmacophore features (donor, acceptor, aromatic,
                     hydrophobe, cation, anion); see cmfqsar/pharmtypes.py
                     (Sitnikov et al. 2015, Eq. 6)
+    ring:<class>    one Gaussian per benzene-ring centroid, w = 1 for rings of the annulation
+                    class <class> (terminal, linear, angular, branched) or w = the Clar-sextet
+                    share of the ring (sextet); the centroids are pseudo-atoms appended by
+                    cmfqsar/pbh.py
 
 ### `class FieldSpec  (dataclass)`
 
@@ -3696,6 +3707,13 @@ A GRID-like probe field: every atom carries several Gaussians, not one.
 
 #### `FieldSpec.probe` -> Optional[str]  (property)
 
+#### `FieldSpec.is_ring` -> bool  (property)
+
+A field carried by one Gaussian per ring centroid rather than by the atoms
+(`ring:<class>`; see `cmfqsar.pbh`).
+
+#### `FieldSpec.ring_class` -> Optional[str]  (property)
+
 ### `class FieldSet  (dataclass)`
 
 The complete set of field types used by a model plus parameterisation options.
@@ -3729,7 +3747,7 @@ Attributes:
 
 #### `FieldSet.is_tautomer_ensemble` -> bool  (property)
 
-#### `FieldSet.create(physchem: Sequence[str]=PHYSCHEM_FIELDS, cif_types: Sequence[str]=(), alpha: float=1.0, charge_model: str='gasteiger', cif_scheme: str='sybyl', param_scheme: str='rdkit', conformers: str='single', conformer_weighting: str='uniform', conformer_kt: float=0.6, max_conformers: int=0, atom_properties: Sequence[str]=(), prop_missing: str='error', descriptors: Sequence[str]=(), descriptor_h: float=1.0, probes: Sequence[str]=(), probe_terms: int=4, pharm_features: Sequence[str]=(), protonation_ph: Optional[float]=None, protonation_states: int=8, protonation_min: float=0.01, tautomers: str='', tautomer_forms: int=8) -> 'FieldSet'`  (class method)
+#### `FieldSet.create(physchem: Sequence[str]=PHYSCHEM_FIELDS, cif_types: Sequence[str]=(), alpha: float=1.0, charge_model: str='gasteiger', cif_scheme: str='sybyl', param_scheme: str='rdkit', conformers: str='single', conformer_weighting: str='uniform', conformer_kt: float=0.6, max_conformers: int=0, atom_properties: Sequence[str]=(), prop_missing: str='error', descriptors: Sequence[str]=(), descriptor_h: float=1.0, probes: Sequence[str]=(), probe_terms: int=4, pharm_features: Sequence[str]=(), ring_classes: Sequence[str]=(), protonation_ph: Optional[float]=None, protonation_states: int=8, protonation_min: float=0.01, tautomers: str='', tautomer_forms: int=8) -> 'FieldSet'`  (class method)
 
 #### `FieldSet.names` -> List[str]  (property)
 
@@ -7710,6 +7728,10 @@ Attributes:
 
 ### `rmse(y: np.ndarray, yp: np.ndarray) -> float`
 
+### `mae(y: np.ndarray, yp: np.ndarray) -> float`
+
+The mean absolute error.
+
 ### `classification_scores(y_true: np.ndarray, decision: np.ndarray) -> Dict[str, float]`
 
 Metrics of a binary classifier from its decision values.
@@ -8805,6 +8827,219 @@ The mean time one ORCA job took in `workdir`, from the status files a previous r
 
 A dialog that has to warn about the cost is more convincing with a number measured on this
 machine than with a guess, and after one run the number is available.
+
+## cmfqsar.pbh
+
+Source: `cmfqsar/pbh.py`
+
+Polybenzenoid hydrocarbons: a planar frame, ring classes, ring-centred fields and per-ring
+contributions.
+
+A cata-condensed polybenzenoid hydrocarbon (PBH) is a set of fused benzene rings in which no
+carbon belongs to three rings.  The COMPAS-1 data set of the Gershoni-Poranne group (Wahab et
+al., J. Chem. Inf. Model. 2022, 62, 3704) enumerates every such molecule of one to eleven rings
+with optimised geometries and frontier-orbital energies.  It is a good test of the overlap kernel
+for two reasons: the property is a quantum-chemical one rather than a binding affinity, and the
+molecules are rigid and nearly planar, so the alignment that usually decides a 3D-QSAR model is
+reduced to a rule.  This module holds what that study needs beyond the ordinary machinery:
+
+* `read_compas` builds RDKit molecules from the SMILES of the table and the coordinates
+  of the xyz files, and checks that the two describe the same atoms;
+* `canonical_frame` puts a molecule into its inertial frame (x along the long axis, z
+  along the normal) and resolves the signs of the in-plane axes by a fixed rule, so that two
+  molecules that are alike in shape are alike in position;
+* `pbh_atom_type` is the atom typing of the continuous indicator fields: a ring carbon
+  bonded to a hydrogen, a carbon shared by two rings, a carbon shared by three;
+* `ring_classes` perceives the rings and classifies them by annulation -- terminal,
+  linear, angular, branched -- and `clar_weights` gives every ring its share of the Clar
+  sextets;
+* `build_pbh_fields` adds one Gaussian per ring centroid to the molecular field, carried
+  by the `ring:<class>` fields, which is what `ring:terminal` and the rest mean in a field set;
+* `ring_contributions` sums decomposition rule 3 over the atoms of every ring.
+
+Everything here is read by `benchmarks/run_compas.py`; see the manual, section "A gap, not an
+affinity: polybenzenoid hydrocarbons".
+
+### `class Ring  (dataclass)`
+
+One benzene ring of a benzenoid.
+
+Attributes:
+
+- `atoms: Tuple[int, ...]`
+- `centroid: np.ndarray`
+- `neighbours: Tuple[int, ...]`
+- `cls: str`
+- `sextet: float` = `0.0`
+
+### `parse_xyz(text: str) -> Tuple[List[str], np.ndarray]`
+
+Symbols and coordinates of one xyz block (count line, comment line, atoms).
+
+### `mol_from_smiles_xyz(smiles: str, symbols: Sequence[str], coords: np.ndarray, name: str='', max_bond: float=1.8) -> Chem.Mol`
+
+An RDKit molecule with the bonds of `smiles` and the coordinates of the xyz atoms.
+
+The xyz file and the SMILES list the atoms in different orders.  Bonds are perceived from the
+coordinates, the two graphs are matched (elements and connectivity, bond orders ignored), and
+the coordinates are copied over the match.  A mismatch -- different elements, a graph that
+does not match, a bonded pair further apart than `max_bond` angstroms after the copy -- raises
+`ValueError` naming the molecule.
+
+### `read_compas_table(csv_path: str) -> List[Dict[str, str]]`
+
+The rows of a COMPAS-1 csv file, as dictionaries keyed by the column names.
+
+### `read_compas(csv_path: str, geometries: str, limit: Optional[int]=None, names: Optional[Sequence[str]]=None, progress=None)`
+
+The molecules of a COMPAS-1 set as a `cmfqsar.dataio.Dataset`.
+
+`geometries` is the folder of xyz files or the tar.gz archive itself.  Every row of the table
+becomes one molecule with the columns of `COMPAS_NUMERIC` and `COMPAS_TEXT` as
+properties and `GAP_eV` as the activity.  `limit` keeps the first rows only; `names`
+keeps the listed molecules only.  A molecule whose geometry does not match its SMILES stops
+the reading with a `ValueError`.
+
+### `heavy_mask(mol: Chem.Mol) -> np.ndarray`
+
+### `atomic_masses(mol: Chem.Mol) -> np.ndarray`
+
+### `inertial_frame(coords: np.ndarray, masses: Optional[np.ndarray]=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+Centre of mass, the rows x, y, z of the inertial frame, and the three moments.
+
+x is the axis of the smallest moment of inertia (the largest extent), z the axis of the
+largest moment (the normal of a planar molecule); the frame is right-handed.
+
+### `sign_key(xy: np.ndarray) -> np.ndarray`
+
+The five moments that decide the signs of the in-plane axes.
+
+Under x -> -x the first and the last two change sign; under y -> -y the second, third and
+the last two do.  A molecule for which all five vanish is symmetric under the flip in
+question, and its fields are then the same in either frame.
+
+### `resolve_signs(coords: np.ndarray, heavy: Optional[np.ndarray]=None, tol: float=1e-06) -> Tuple[np.ndarray, Tuple[float, float]]`
+
+Among the four sign choices of a frame, the one with the largest `sign_key`.
+
+The keys are compared in order, each within a tolerance relative to the size of the
+molecule; candidates still tied after the fifth key are equivalent by symmetry and the first
+in `FLIPS` is taken.  Returns the coordinates and the flip applied.
+
+### `canonical_frame(mol: Chem.Mol, coords: Optional[np.ndarray]=None, degenerate_tol: float=0.001) -> np.ndarray`
+
+The coordinates of `mol` in its canonical planar frame.
+
+The frame is that of the heavy-atom inertia tensor: origin at the centre of mass, x along the
+axis of the smallest moment (the long axis), z along the largest (the normal).  When the two
+in-plane moments are equal within `degenerate_tol` of their mean (benzene, triphenylene and
+the other molecules with a three-fold or higher axis), x is put along the in-plane direction
+with the largest third moment of the heavy atoms, or the largest fourth or sixth moment when
+the lower ones do not depend on the direction.  The signs of x and y are then fixed by
+`resolve_signs`.  Hydrogens follow the heavy atoms and take no part in the rule.
+
+### `frame_candidates(coords: np.ndarray, z_flip: bool=False) -> List[np.ndarray]`
+
+The four (eight with `z_flip`) frames that share the inertial axes of `coords`.
+
+### `choose_frame_by_kernel(mol: Chem.Mol, fieldset: FieldSet, reference: AtomTable, scale: Optional[np.ndarray]=None, z_flip: bool=False, engine=None) -> Tuple[np.ndarray, np.ndarray]`
+
+Alignment by prediction confidence: of the frames that share the inertial axes, the one
+whose field is on average most similar to the molecules of `reference`.
+
+The similarity is the cosine-normalised joint kernel, with the field scales `scale` of the
+model when given.  Returns the chosen coordinates and the mean similarity of every candidate
+in the order of `frame_candidates`.
+
+### `pbh_atom_type(atom: Chem.Atom) -> str`
+
+The carbon classes of a benzenoid: `C.H` on the rim (one ring, bonded to a hydrogen),
+`C.2r` shared by two rings, `C.3r` shared by three (absent in a cata-condensed set).
+Hydrogens are `H`; anything else keeps its element symbol, `C.1r` for a ring carbon
+without a hydrogen and `C` for a carbon outside the rings.
+
+### `ring_classes(mol: Chem.Mol, coords: Optional[np.ndarray]=None) -> List[Ring]`
+
+The six-membered carbon rings of `mol` with their centroids and annulation classes.
+
+Two rings are fused when they share a bond.  A ring with one fused neighbour (or none:
+benzene) is `terminal`; with two, it is `linear` when the two shared bonds face each
+other across the ring (anthracene's middle ring) and `angular` when one bond separates
+them (phenanthrene's); with three it is `branched` (triphenylene's centre).  Two shared
+bonds that touch would make a carbon of three rings, which is peri-condensation; such a ring
+is labelled `peri`.
+
+### `ring_class_counts(rings: Sequence[Ring]) -> Dict[str, int]`
+
+### `annulation_counts(lalas: str) -> Tuple[int, int]`
+
+(linear, angular-or-branched) rings announced by a COMPAS annulation string.
+
+The `lalas` column writes one letter per inner ring: `L` for a linearly annulated ring,
+`A` for an angular one; a branch is written in parentheses after the ring it hangs from,
+and that ring is also written `A`.  Terminal rings are not written.
+
+### `clar_structures(mol: Chem.Mol, rings: Sequence[Ring]) -> List[Tuple[int, ...]]`
+
+Every Clar structure with the largest number of sextets, as tuples of ring indices.
+
+A Clar structure places aromatic sextets on rings that share no atom and covers every other
+carbon by a double bond.  All independent sets of rings are enumerated (at most eleven rings
+in COMPAS-1) and those whose remaining carbons admit a perfect matching are kept; the ones of
+the largest size are returned.
+
+### `clar_weights(mol: Chem.Mol, rings: Sequence[Ring]) -> np.ndarray`
+
+The share of the maximal Clar structures in which every ring carries a sextet, in [0, 1];
+also written into `Ring.sextet`.  Naphthalene gives 0.5 and 0.5, anthracene 1/3 each,
+phenanthrene 1, 0, 1.
+
+### `ring_field_weight(ring: Ring, field_name: str) -> float`
+
+The weight of one ring in a `ring:<class>` or `ring:sextet` field.
+
+### `with_ring_centres(mf: MoleculeFields, rings: Sequence[Ring], fieldset: FieldSet) -> MoleculeFields`
+
+`mf` with one pseudo-atom per ring centroid appended, carrying the `ring:` fields.
+
+The pseudo-atoms have weight zero in every atom field and the real atoms weight zero in the
+ring fields, so the kernel of a ring field is a sum over ring pairs only.  They are appended
+in the order of `rings`, which `ring_contributions` relies on.
+
+### `build_pbh_fields(mol: Chem.Mol, fieldset: FieldSet, name: str='', rings: Optional[Sequence[Ring]]=None) -> MoleculeFields`
+
+`cmfqsar.fields.build_fields` followed by the ring-centre pseudo-atoms when the
+field set has `ring:` fields.  The Clar weights are computed when `ring:sextet` asks.
+
+### `n_real_atoms(mf: MoleculeFields) -> int`
+
+Atoms of `mf` that are not ring-centre pseudo-atoms.
+
+### `ring_contributions(model, mf: MoleculeFields, rings: Sequence[Ring]) -> Tuple[np.ndarray, np.ndarray, float]`
+
+Decomposition rule 3 summed per ring.
+
+Every atom's contribution (`cmfqsar.model.CMFModel.atom_contributions`) goes to the
+rings it belongs to, shared equally when it belongs to two; a hydrogen goes with the heavy
+atom it is bonded to; a ring-centre pseudo-atom goes to its ring.  Returns the per-ring sums,
+the per-atom contributions they were summed from, and what could not be placed (atoms in no
+ring), which is zero for a benzenoid.  The per-ring sums plus the unplaced part equal the
+prediction minus the bias.
+
+### `count_features(mol: Chem.Mol, rings: Optional[Sequence[Ring]]=None) -> np.ndarray`
+
+Counts of the atom classes, the ring classes, the rings and the Clar sextets: what the
+indicator and ring fields reduce to when their attenuation goes to zero.
+
+### `random_split(n: int, seed: int, fractions: Sequence[float]=(0.8, 0.1, 0.1)) -> Dict[str, np.ndarray]`
+
+Indices of a shuffled train / validation / test split with the given fractions.
+
+### `size_split(n_rings: Sequence[int], test_rings: int) -> Dict[str, np.ndarray]`
+
+Train on the molecules with fewer than `test_rings` rings, test on those with exactly
+`test_rings`: the size-extrapolation split.
 
 ## cmfqsar.perfield
 

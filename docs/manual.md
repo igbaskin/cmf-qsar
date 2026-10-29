@@ -5716,6 +5716,125 @@ slab; it is the way to put a set in a surface frame and draw a co-field in it wh
 all that is wanted, and `--pose flat-up` is there because the user may know the face that the
 rule cannot.
 
+## A frame by rule: the gap of polybenzenoid hydrocarbons
+
+The surface frame of the previous section was a rule with a slab behind it. A planar molecule
+needs no slab: its frame is its own inertia tensor, and the only thing left to decide is which
+way the axes point. That makes a series of rigid planar molecules the cleanest test the overlap
+kernel can get, because the alignment that usually decides a 3D-QSAR model is reduced to a rule
+that cannot be wrong. The series is COMPAS-1 (Wahab, Pfuderer, Paenurk and Gershoni-Poranne,
+*J. Chem. Inf. Model.* 2022, 62, 3704): every cata-condensed polybenzenoid hydrocarbon of one to
+eleven rings — 8,678 molecules at B3LYP-D3BJ/def2-SVP, 34,072 at GFN2-xTB — with its HOMO and
+LUMO energies. The property is the HOMO–LUMO gap in eV, a quantum-chemical quantity rather than a
+binding affinity, and the data set is downloaded by the benchmark (CC-BY-NC-SA, kept in
+`benchmarks/cache`, not shipped). `cmfqsar/pbh.py` holds what the study needs beyond the ordinary
+machinery, and `benchmarks/run_compas.py` is the study; its notes, table and one-page report are
+in `benchmarks/results/compas/`.
+
+**The frame.** The heavy atoms are moved to their centre of mass and rotated onto the axes of
+their inertia tensor: $x$ along the smallest moment (the long axis), $z$ along the largest (the
+normal of the plane). Four proper rotations share those axes — the signs of $x$ and $y$, with $z$
+following so that the frame stays right-handed — and `canonical_frame` picks one by comparing, in
+order, $\sum x^3$, $\sum y^3$, $\sum x^2 y$, $\sum x^3 y$ and $\sum x y^3$ over the heavy atoms
+and keeping the largest. Each of these changes sign under one of the flips, so a molecule for
+which all five vanish is symmetric under that flip and its field is the same in either frame.
+Benzene, triphenylene and the other molecules with a three-fold or higher axis have equal
+in-plane moments and no long axis; for them $x$ is put along the direction of the largest third
+moment, or the fourth or sixth when the lower ones do not depend on the direction. A molecule that
+is already in its frame stays where it is, a rotated or shifted copy lands on the same point set,
+and a mirror image lands on the mirrored one (`tests/test_pbh.py`). The alternative the 2013
+paper offers — among the four candidate frames, the one whose field is most similar on average to
+the training set (`choose_frame_by_kernel`, alignment by prediction confidence) — is implemented
+and off by default, since the rule leaves nothing to choose for a planar molecule without symmetry.
+
+**The fields.** Five groups, each an ordinary entry of the field set:
+
+- **A, steric**: the steric field of the program (Tripos well depths, widths scaled by the van der
+  Waals radius, hydrogens included).
+- **B, electrostatic**: GFN2-xTB partial charges computed by `cmfqsar/xtb.py` on the DFT geometry
+  (0.3 s per ten-ring molecule), as the field `prop:q_xtb`; Gasteiger charges on request, and the
+  substitution is then printed and written to the notes.
+- **C, atom-class indicator fields**: the three carbon classes of a benzenoid, `cif:C.H` (a rim
+  carbon bonded to a hydrogen), `cif:C.2r` (a carbon shared by two rings) and `cif:C.3r` (shared
+  by three, which a cata-condensed set does not have and the benchmark drops): the typing scheme
+  `pbh` of `--cif-scheme`.
+- **D, ring-class indicator fields**: one Gaussian per ring *centroid*, in one field per
+  annulation class — `ring:terminal` (one fused neighbour), `ring:linear` (two neighbours on
+  opposite bonds, the middle ring of anthracene), `ring:angular` (two neighbours one bond apart,
+  the middle ring of phenanthrene) and `ring:branched` (three, the centre of triphenylene). The
+  centroids enter the molecular field as pseudo-atoms appended by `build_pbh_fields`, with weight
+  zero in every atom field, so every kernel, the co-field and the atom contributions work on them
+  unchanged; this is Clar's topology of a benzenoid written as a field in space.
+- **E, Clar-sextet ring field** (`ring:sextet`): the same centroids weighted by the share of the
+  maximal Clar structures in which the ring carries an aromatic sextet (`clar_weights`:
+  naphthalene ½ and ½, anthracene ⅓ each, phenanthrene 1, 0, 1). It was meant to stand in for an
+  aromaticity field until a field weighted by the NICS of every ring, which needs a DFT
+  calculation per ring, could be built.
+
+**The protocol.** Random 80/10/10 splits for five seeds, and size-extrapolation splits that train
+on the molecules with fewer than $N$ rings and test on the molecules with $N$, for $N$ = 8, 9 and
+10 (179, 619 and 2,270 training molecules: the set is dominated by ten-ring molecules). The
+attenuation shared by the groups of a field set and then one attenuation per group (by coordinate
+descent) are chosen by 5-fold cross-validation on 2,500 training molecules; the ridge by 5-fold
+cross-validation on the whole training part; the choice between the shared and the per-group
+attenuation on the validation part. Kernel ridge regression with the bias of Eq. 12, every field
+kernel scaled to unit mean diagonal over the set. The baselines are the attenuation-to-zero limit
+of the indicator and ring fields — ridge regression on the counts of the atom classes, the ring
+classes, the rings and the sextets, an additivity scheme, which the field model equals exactly at
+a vanishing attenuation (`tests/test_pbh.py`) — a random forest on RDKit descriptors, and a
+straight line in the number of rings.
+
+**What it measured.** Test R² over the five random splits (mean ± sd), then R² on the three
+size-extrapolation splits:
+
+| field set | q² | test R² | test RMSE (eV) | N = 8 | N = 9 | N = 10 |
+|---|---|---|---|---|---|---|
+| A steric | 0.43 | 0.42 ± 0.04 | 0.30 | −0.48 | −0.40 | −1.47 |
+| A, B | 0.52 | 0.51 ± 0.03 | 0.28 | −0.69 | −0.40 | −1.00 |
+| C atom classes | 0.49 | 0.49 ± 0.02 | 0.29 | −0.02 | −0.49 | −1.15 |
+| D ring classes | 0.66 | 0.65 ± 0.02 | 0.24 | 0.52 | 0.51 | −0.04 |
+| A, B, C | 0.60 | 0.60 ± 0.05 | 0.25 | −0.05 | −0.12 | −1.07 |
+| C, D | 0.75 | 0.71 ± 0.08 | 0.21 | 0.50 | 0.50 | 0.31 |
+| A, B, C, D | 0.83 | 0.78 ± 0.11 | 0.18 | 0.59 | 0.53 | 0.44 |
+| A, B, C, D, E | 0.87 | 0.87 ± 0.02 | 0.14 | 0.67 | 0.78 | 0.70 |
+| ridge on the counts of atom classes, ring classes, rings and sextets (additivity scheme) | – | 0.70 ± 0.01 | 0.22 | 0.63 | 0.65 | 0.67 |
+| random forest on 66 RDKit descriptors | – | 0.91 ± 0.02 | 0.12 | 0.32 | 0.35 | −0.16 |
+| straight line in the number of rings | – | 0.02 ± 0.03 | 0.39 | −0.18 | −0.08 | −0.02 |
+
+The gap of a benzenoid is topology. The steric field sees the shape and reaches 0.42; the carbon
+classes, which say where the rim is, 0.49; the four ring-class fields alone 0.65, more than the
+three atom groups together; and the Clar-sextet field, the placeholder, is the largest single
+gain on top of everything else. The size-extrapolation splits say the same thing more sharply:
+every set without a ring field has a negative R² on the larger molecules — it has learned the
+isomers it saw and nothing that carries over — and every set with one is positive. The spread of
+the A, B, C, D row over the seeds is one molecule: seed 0 puts benzene, the only one-ring
+molecule, in the test part, and the model extrapolates its gap to 10–13 eV (computed 6.72); over
+the molecules of three rings and more the RMSE is 0.164 ± 0.003 eV for A, B, C, D and 0.138 ± 0.002 eV with the sextet field. The baselines put the numbers in their place. The additivity scheme — ridge regression on the counts of the atom classes, the ring classes, the rings and the sextets — reaches 0.70 on the random splits and 0.63 to 0.67 on the size splits, so the four-group field set beats it on the random splits and not on the size splits, and only the set with the sextet field beats it on both. The random forest on 66 RDKit descriptors reaches 0.91 on the random splits, better than any field set, and 0.32, 0.35 and −0.16 on the size splits, worse than every set with a ring field: it knows the isomers it saw and nothing that carries over to a larger molecule, which is the question a model of an enumerated space is asked.
+
+![The co-fields of the gap over a six-ring reference molecule of the test set, one panel per field group, in the molecular plane and 1 Å above it; red raises the gap per unit of field, blue lowers it. Drawn by `benchmarks/run_compas.py`.](benchmarks/results/compas/figures/cofield_gap_hc_c26h16_0pent_13.png)
+
+**Reading a prediction ring by ring.** Decomposition rule 3 gives every atom its share of a
+prediction; `ring_contributions` sums the shares over the atoms of every ring, splitting an atom
+shared by two rings in half, giving a hydrogen to its carbon and a ring centroid to its ring, so
+that the per-ring values and the bias add up to the prediction to 10⁻⁸ eV. The benchmark draws
+them on the skeleton for four test molecules and writes, for the reference molecule, which rings
+and which zones of the co-fields raise or lower the gap (`benchmarks/results/compas/narrative_*.md`).
+The values are large and cancel: a ring on one side of the frame counts positive and one on the
+other side negative whatever its class, because a ridge of 10⁻⁴ lets the coefficients grow and
+the co-field acquires a smooth component across the frame. The sum is the prediction; the
+single values read position as much as chemistry, and a decomposition against a reference (the
+Shapley values of the section *Shapley values*) is the next thing to try on this series.
+
+![Per-ring contributions to the gap (decomposition rule 3 summed per ring) of four test molecules: the two with the smallest and the two with the largest computed gap among the test molecules of four rings and more. Drawn by `benchmarks/run_compas.py`.](benchmarks/results/compas/figures/ring_contributions_gap.png)
+
+What the study does not settle is written in `benchmarks/results/compas/NOTES.md`: the
+size-extrapolation splits train on few molecules; the few helicene-like molecules are not planar
+and the two faces of their frame differ; the chosen steric attenuation and ridge sit at the edges
+of their grids; the NICS field is missing and has to beat the sextet share; the published
+COMPAS-1 numbers are not filled in. The same script fits COMPAS-1x in the space of landmark
+molecules (`--stage scaling`, the Nyström path of `fit_low_rank`); that measurement is the second
+milestone of the study.
+
 ## Crystals: the periodic autocorrelation kernel
 
 The same descriptor for a periodic structure, summed over the neighbour list of one cell with its
