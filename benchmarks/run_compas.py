@@ -1326,7 +1326,31 @@ def report(path: str, set_key: str = "1D") -> str:
                 else:
                     row += " - | - |"
             lines.append(row)
-        lines.append("| literature (COMPAS-1 papers) | TBD | TBD | TBD |" + " TBD | TBD |" * len(size_names))
+        lines.append("")
+        lines.append("### Published models of the gap on the same molecules (random splits; no "
+                     "size-extrapolation numbers are published)")
+        lines.append("")
+        lines.append("| model | source | protocol | test MAE (eV) | test RMSE (eV) | test R2 |")
+        lines.append("|---|---|---|---|---|---|")
+        lines.append("| SE(3)-transformer on a graph of rings (SE(3)-GOR) | Weiss, Wahab, Bronstein, "
+                     "Gershoni-Poranne, J. Org. Chem. 2023, 88, 9645, Table 1 | COMPAS-1D, 8,678 molecules, "
+                     "random 81/9/10, seed 42 | 0.012 +- 0.002 | - | - |")
+        lines.append("| SE(3)-transformer on a graph of atoms (SE(3)-GOA) | same | same | 0.011 +- 0.004 | - | - |")
+        lines.append("| SphereNet / DimeNet++ / SchNet (geometric graph networks) | same | same | "
+                     "0.013 / 0.015 / 0.022 | - | - |")
+        lines.append("| CHEM-BERT (SMILES language model) / AttentiveFP (topological graph) | same | same | "
+                     "0.033 / 0.073 | - | - |")
+        lines.append("| RNN on one-hot augmented LALA annulation strings | Fite, Wahab, Paenurk, Gross, "
+                     "Gershoni-Poranne, J. Phys. Org. Chem. 2023, 36, e4458, Fig. 3 | COMPAS-1D, 7,674 training "
+                     "molecules (90 %) | 0.05 (all model/representation pairs: 0.04 to 0.26) | - | - |")
+        lines.append("| extra-trees / random forest on selected RDKit descriptors | Zheng, Zhu, Lu, Yan, Jiang, "
+                     "Sun, Chem. Phys. Lett. 2023, 814, 140358 | COMPAS-1D without benzene and naphthalene "
+                     "(8,676), random 90/10, 100 repeats | - | about 0.12 (MSE about 0.014) | about 0.91 |")
+        lines.append("")
+        lines.append("The random forest of this study (0.074 eV MAE, 0.117 eV RMSE, R2 0.91) reproduces the "
+                     "last row.  The field models of this study (MAE 0.13 eV for {A,B,C,D}, 0.11 eV with the "
+                     "sextet field) sit at the lower end of the annulation-string models and an order of "
+                     "magnitude above the geometric graph networks on these random splits.")
         lines.append("")
     rows = []
     for name in sorted(os.listdir(RESULTS)) if os.path.isdir(RESULTS) else []:
@@ -1440,19 +1464,17 @@ def write_notes(set_key: str = "1D") -> str:
                  "the planar frame; the frame is defined for them but the two faces differ.")
     lines.append("- The size-extrapolation split trains on few molecules (the sets are dominated by "
                  "ten-ring molecules), so its numbers mix extrapolation with a small training set.")
-    lines.append("- Published COMPAS-1 gap-prediction numbers for the literature row. Two papers of the "
-                 "Gershoni-Poranne group model the gap on this same 8,678-molecule DFT set: Weiss, Wahab, "
-                 "Bronstein, Gershoni-Poranne, J. Org. Chem. 2023, 88, 9645 (an SE(3)-transformer on a "
-                 "graph of rings; their code splits the set at random into 81/9/10 train/validation/test "
-                 "with seed 42 and normalises the targets, gitlab.com/porannegroup/PBHs-interpretability) "
-                 "and Fite, Wahab, Paenurk, Gross, Gershoni-Poranne, J. Phys. Org. Chem. 2023, 36, e4458 "
-                 "(random forest, kernel ridge regression and CUSTODI on annulation strings and SMILES, "
-                 "test part of 1,000 molecules, training parts of 1,000 to 7,600, "
-                 "gitlab.com/porannegroup/lalas). Their error values are in the papers, which are not "
-                 "open access; Zheng et al., Chem. Phys. Lett. 2023, 814, 140358 also model the gap of "
-                 "benzenoids on these data. The random split of this study (80/10/10, five seeds) is "
-                 "close to the first protocol, so the test RMSE and MAE of the table can be set beside "
-                 "those papers' numbers once they are copied from the papers.")
+    lines.append("- Published models on the same molecules (table.md, last table): the geometric graph "
+                 "networks of Weiss et al. 2023 reach a test MAE of 0.011 to 0.022 eV on a random 81/9/10 "
+                 "split (their code: gitlab.com/porannegroup/PBHs-interpretability), the sequence model on "
+                 "augmented annulation strings of Fite et al. 2023 0.05 eV (gitlab.com/porannegroup/lalas), "
+                 "and the descriptor forests of Zheng et al. 2023 R2 0.91. The field models here (MAE 0.11 "
+                 "to 0.13 eV) are an order of magnitude behind the graph networks on interpolation among "
+                 "isomers. The gap is set by the ring arrangement to a precision the overlap of wide "
+                 "Gaussians does not resolve: the chosen widths are the widest of the grid and the ridge "
+                 "the smallest, so the model asks for more resolution than it was given. Nothing published "
+                 "measures the size-extrapolation split, where the ring fields are positive and the "
+                 "descriptor forest is not.")
     lines.append("- The chosen hyperparameters sit at the edges of the grids: the steric attenuation at "
                  "the top (its width is scaled by the van der Waals radius, so the same grid value is a "
                  "wider Gaussian) and the ridge at the bottom (1e-4) for the sets with the ring fields. "

@@ -1,6 +1,6 @@
 {
- "commit": "b2164c5112ee0cd7841b30cef4a9f636598059ab",
- "created": "2026-10-29T22:09:24",
+ "commit": "e795533328168d3b52d057a13fbab83c1c745f2e",
+ "created": "2026-10-29T22:34:19",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1825,8 +1825,8 @@
   "benchmarks/results/cofield_error/THER.json": "e1ad96f166b74bfefd2fdb4ebd4131db97631ed43ccd0dd1500ade0de2caaab1",
   "benchmarks/results/cofield_error/THR.json": "ec962f4b1027f8645961dd47c337e2be53e3fbf4843f6a143191edeb661d65fe",
   "benchmarks/results/cofield_error/table.md": "10b3f3c6d81e404c2cdc4828e3ad247abece30de02005ecf21f02a0c8502b0ca",
-  "benchmarks/results/compas/NOTES.md": "ff1bd06eb0084499a303791eb0d0bfa8bada4d2dcf40337a51cdcb7f1fba2e6a",
-  "benchmarks/results/compas/REPORT.md": "f7ccf2b277484f57c58d9d9ecc78faacce1b48648e92f7fb26bdb5eca8524d27",
+  "benchmarks/results/compas/NOTES.md": "1b7a0eacfe05600bff08129604cb881fb605325cdde3499178719ff917be6453",
+  "benchmarks/results/compas/REPORT.md": "d835da36d9e4abe72fd362bee6b684365926a52de9a3f1138c961ea08f7f674c",
   "benchmarks/results/compas/baselines_1D.json": "a3dc13435337443415a7d0b7dbe1ea0817163b064c6bdbd1fe159e61085cb678",
   "benchmarks/results/compas/fields_1D.json": "890d5f38f5941899e7b9a08a7ca2a958f2d97703d8faa9f0f4d0f56f49efb5f0",
   "benchmarks/results/compas/fields_ABCDE_1D.json": "e4fc4ec9c28b4a30faf7e904b9706f904764e5404d699d5abb14316a3d9415d3",
@@ -1845,7 +1845,7 @@
   "benchmarks/results/compas/scaling_1x.json": "c091db50934ce4b223eeaa75f65f4d60bd62c670767f296306cb9dba680b9ad6",
   "benchmarks/results/compas/splits_1D.json": "315e464f97fcb772e5f1dd2f12efbc8e531487760f18fdbd0915eeed47128b31",
   "benchmarks/results/compas/splits_1x.json": "73f8cafe090c087fef5661ad3ea45045da763d285a4c789f6192d1d335890d32",
-  "benchmarks/results/compas/table.md": "a1c7c71b01621fcd5c460effa195e0a22af4b11b244154e4a5c7c78301dd910f",
+  "benchmarks/results/compas/table.md": "b0caa6b70fd43202bc9d02ba62c1fd2576fd1ff30ce0f8c5524e31df9a2d633c",
   "benchmarks/results/conformal/ACE.json": "ca49f870b34a4711c95f31afe601e24f1bea07f9cc00178a5c261682dd68f6dc",
   "benchmarks/results/conformal/AChE.json": "94e4b305deac26328070ccca9015d709e0765e62653563418ad04ab1c8f680e2",
   "benchmarks/results/conformal/BZR.json": "3d6b476647e20fe6b0ee45870b5b6affae506b2cd2391ebd128f95ed28269952",

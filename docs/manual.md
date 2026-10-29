@@ -5805,6 +5805,20 @@ the A, B, C, D row over the seeds is one molecule: seed 0 puts benzene, the only
 molecule, in the test part, and the model extrapolates its gap to 10–13 eV (computed 6.72); over
 the molecules of three rings and more the RMSE is 0.164 ± 0.003 eV for A, B, C, D and 0.138 ± 0.002 eV with the sextet field. The baselines put the numbers in their place. The additivity scheme — ridge regression on the counts of the atom classes, the ring classes, the rings and the sextets — reaches 0.70 on the random splits and 0.63 to 0.67 on the size splits, so the four-group field set beats it on the random splits and not on the size splits, and only the set with the sextet field beats it on both. The random forest on 66 RDKit descriptors reaches 0.91 on the random splits, better than any field set, and 0.32, 0.35 and −0.16 on the size splits, worse than every set with a ring field: it knows the isomers it saw and nothing that carries over to a larger molecule, which is the question a model of an enumerated space is asked.
 
+**Against the published models.** The same 8,678 molecules have been modelled before, on random
+splits like ours. The geometric graph networks of Weiss et al. (*J. Org. Chem.* 2023, 88, 9645,
+Table 1: an SE(3)-transformer on a graph of rings or of atoms, SphereNet, DimeNet++, SchNet) reach a
+test MAE of 0.011 to 0.022 eV; a SMILES language model 0.033; a recurrent network on augmented
+annulation strings 0.05 eV (Fite et al., *J. Phys. Org. Chem.* 2023, 36, e4458); extra-trees on
+selected RDKit descriptors R² 0.91 (Zheng et al., *Chem. Phys. Lett.* 2023, 814, 140358), which
+our random forest reproduces. The field models, at 0.11 to 0.13 eV, are an order of magnitude
+behind the graph networks on interpolation among isomers, and the table says why: the chosen
+widths are the widest of the grid and the ridge the smallest, so the gap is set by the ring
+arrangement to a precision the overlap of wide Gaussians does not resolve. A finer and wider
+attenuation grid and the Gaussian kernel layer are the two settings to measure before any new
+field. Nothing published measures the size-extrapolation split, which stays the field model's own
+claim, together with the reading of the model as a co-field and as per-ring contributions.
+
 ![The co-fields of the gap over a six-ring reference molecule of the test set, one panel per field group, in the molecular plane and 1 Å above it; red raises the gap per unit of field, blue lowers it. Drawn by `benchmarks/run_compas.py`.](benchmarks/results/compas/figures/cofield_gap_hc_c26h16_0pent_13.png)
 
 **Reading a prediction ring by ring.** Decomposition rule 3 gives every atom its share of a

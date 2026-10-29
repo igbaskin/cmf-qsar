@@ -37,7 +37,19 @@ Test RMSE (eV) over the molecules of three rings and more, random splits: {A,B,C
 | ridge on atom-class and ring-class counts (additivity scheme) | 0.699 +- 0.013 | 0.218 +- 0.008 | 0.166 +- 0.003 | 0.626 | 0.257 | 0.646 | 0.238 | 0.668 | 0.224 |
 | straight line in the number of rings | 0.021 +- 0.029 | 0.393 +- 0.005 | 0.312 +- 0.006 | -0.184 | 0.458 | -0.076 | 0.415 | -0.022 | 0.393 |
 | random forest on 66 RDKit descriptors | 0.913 +- 0.024 | 0.117 +- 0.017 | 0.074 +- 0.003 | 0.319 | 0.347 | 0.347 | 0.323 | -0.160 | 0.418 |
-| literature (COMPAS-1 papers) | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD |
+
+### Published models of the gap on the same molecules (random splits; no size-extrapolation numbers are published)
+
+| model | source | protocol | test MAE (eV) | test RMSE (eV) | test R2 |
+|---|---|---|---|---|---|
+| SE(3)-transformer on a graph of rings (SE(3)-GOR) | Weiss, Wahab, Bronstein, Gershoni-Poranne, J. Org. Chem. 2023, 88, 9645, Table 1 | COMPAS-1D, 8,678 molecules, random 81/9/10, seed 42 | 0.012 +- 0.002 | - | - |
+| SE(3)-transformer on a graph of atoms (SE(3)-GOA) | same | same | 0.011 +- 0.004 | - | - |
+| SphereNet / DimeNet++ / SchNet (geometric graph networks) | same | same | 0.013 / 0.015 / 0.022 | - | - |
+| CHEM-BERT (SMILES language model) / AttentiveFP (topological graph) | same | same | 0.033 / 0.073 | - | - |
+| RNN on one-hot augmented LALA annulation strings | Fite, Wahab, Paenurk, Gross, Gershoni-Poranne, J. Phys. Org. Chem. 2023, 36, e4458, Fig. 3 | COMPAS-1D, 7,674 training molecules (90 %) | 0.05 (all model/representation pairs: 0.04 to 0.26) | - | - |
+| extra-trees / random forest on selected RDKit descriptors | Zheng, Zhu, Lu, Yan, Jiang, Sun, Chem. Phys. Lett. 2023, 814, 140358 | COMPAS-1D without benzene and naphthalene (8,676), random 90/10, 100 repeats | - | about 0.12 (MSE about 0.014) | about 0.91 |
+
+The random forest of this study (0.074 eV MAE, 0.117 eV RMSE, R2 0.91) reproduces the last row.  The field models of this study (MAE 0.13 eV for {A,B,C,D}, 0.11 eV with the sextet field) sit at the lower end of the annulation-string models and an order of magnitude above the geometric graph networks on these random splits.
 
 ### Nystroem approximation (landmark molecules)
 

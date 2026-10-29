@@ -3332,7 +3332,12 @@ README_| ridge on the counts of atom classes, ring classes, rings and sextets (a
 | straight line in the number of rings | – | 0.02 ± 0.03 | 0.39 | −0.18 | −0.08 | −0.02 |
 
 The gap of a benzenoid is topology: the ring fields carry what extrapolates to larger molecules,
-and the sets without one have a negative R² there. The spread of the four-group row is one
+and the sets without one have a negative R² there. On the random splits the published geometric
+graph networks (Weiss et al., *J. Org. Chem.* 2023) reach a test MAE of 0.011 to 0.022 eV on these
+same molecules, ten times better than the 0.11 to 0.13 eV of the field models, whose chosen widths
+sit at the widest end of the grid and whose ridge at the smallest: the gap is set by the ring
+arrangement to a precision the overlap of wide Gaussians does not resolve, and a finer grid with
+the nonlinear kernel layer is the next measurement. The spread of the four-group row is one
 molecule, benzene, which seed 0 puts in the test part and the model extrapolates to 10–13 eV.
 The co-fields of the ring fields over a reference molecule and the per-ring contributions of
 four test molecules (decomposition rule 3 summed per ring, `ring_contributions`) are drawn by the

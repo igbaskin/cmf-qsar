@@ -3140,9 +3140,17 @@ What it leaves open, in order:
   `element+aromatic` scheme already gives, and the electrostatic field gains meaning.
 * **PBH5. Δ-learning xTB → DFT**: COMPAS-1x carries xTB-to-DFT-corrected values; the
   multi-task model (`cmfqsar/multitask.py`) on the two levels is the natural form.
-* **PBH6. The grids.** The chosen steric attenuation sits at the top of the grid and the ridge
-  at the bottom (1e-4) for every set with a ring field; a wider steric grid and a smaller ridge
-  (the float32 kernels allow about 1e-5) are one more run.
+* **PBH6. The grids, which is now the first item.** The published geometric graph networks
+  (Weiss et al., J. Org. Chem. 2023, Table 1) reach a test MAE of 0.011 to 0.022 eV on the same
+  8,678 molecules and a random split like ours; the sequence model on augmented annulation
+  strings (Fite et al., J. Phys. Org. Chem. 2023) 0.05 eV; the field models here 0.11 to 0.13
+  eV, with the steric attenuation at the top of its grid and the ridge at the bottom (1e-4) for
+  every set with a ring field. The gap is fixed by the ring arrangement to a precision that the
+  overlap of wide Gaussians does not resolve. The measurement to make: attenuations above and
+  between the grid points, a ridge below 1e-4 on float64 kernels, and the Gaussian kernel layer
+  (`kernel_layer="gauss"`) on top of the overlap kernel, each against the published numbers on
+  the same split. Nothing published measures the size-extrapolation split, which stays the
+  field model's own claim.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 

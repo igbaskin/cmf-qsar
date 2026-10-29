@@ -40,7 +40,21 @@ the size-extrapolation splits (N = 8, 9, 10 rings; 179, 619 and 2,270 training m
 | ridge on counts (additivity scheme) | 0.70 ± 0.01 | 0.22 | 0.17 | 0.63 | 0.65 | 0.67 |
 | random forest, 66 RDKit descriptors | 0.91 ± 0.02 | 0.12 | 0.07 | 0.32 | 0.35 | −0.16 |
 | straight line in the number of rings | 0.02 ± 0.03 | 0.39 | 0.31 | −0.18 | −0.08 | −0.02 |
-| literature (COMPAS-1 papers) | TBD | TBD | TBD | TBD | TBD | TBD |
+
+**Published models on the same molecules** (random splits only; nothing published measures size
+extrapolation):
+
+| model | source | split | test MAE (eV) |
+|---|---|---|---|
+| SE(3)-transformer on a graph of rings / of atoms | Weiss et al., *J. Org. Chem.* 2023, 88, 9645, Table 1 | 81/9/10 | 0.012 / 0.011 |
+| SphereNet / DimeNet++ / SchNet | same | same | 0.013 / 0.015 / 0.022 |
+| CHEM-BERT (SMILES) / AttentiveFP | same | same | 0.033 / 0.073 |
+| RNN on augmented LALA annulation strings (all pairs 0.04–0.26) | Fite et al., *J. Phys. Org. Chem.* 2023, 36, e4458, Fig. 3 | 90/10 | 0.05 |
+| extra-trees on selected RDKit descriptors | Zheng et al., *Chem. Phys. Lett.* 2023, 814, 140358 | 90/10, 100 repeats | R² 0.91, RMSE ≈ 0.12 |
+
+Our random forest (MAE 0.074 eV, R² 0.91) reproduces the last row. The field models (MAE 0.11 to
+0.13 eV) are at the lower end of the annulation-string models and an order of magnitude behind the
+geometric graph networks on interpolation among isomers.
 
 Cross-validated q² on the training part: 0.83 for A, B, C, D and 0.87 with the sextet field. The
 spread of the A, B, C, D row over the seeds is one molecule: seed 0 holds benzene, the only
@@ -92,10 +106,16 @@ worst and gives the same test R² (0.593 on seed 0).
   the molecules larger than any it was trained on; every set with one is positive. The random
   forest on descriptors is the best model on the random splits (0.91) and among the worst on the
   size splits (0.32, 0.35, −0.16): it knows the isomers it saw.
-- **The additivity scheme is the bar to clear, not the descriptors.** Ridge on the counts reaches
-  0.70 on random and 0.63–0.67 on size splits; the four-group field model beats it on the first
-  and not on the second, the set with the sextet field on both. What the field adds to the counts
-  is read off the co-field and the per-ring contributions, which the counts do not have.
+- **On interpolation the field model is not competitive, and the reason is visible.** The
+  published geometric graph networks reach 0.011 to 0.022 eV MAE on the same molecules, ten times
+  better than the 0.11 to 0.13 eV here; even the additivity scheme (0.70 on random, 0.63–0.67 on
+  size splits) is beaten only by the set with the sextet field. The gap is fixed by the ring
+  arrangement to a precision that the overlap of wide Gaussians does not resolve: the chosen widths
+  are the widest of the grid and the ridge the smallest, so the model asks for more resolution than
+  it was given. A finer and wider attenuation grid, and the nonlinear kernel layer the program
+  offers, are the two settings to try before any new field. What the field keeps over every
+  published model is the reading: a co-field in space and per-ring contributions, and a positive
+  R² on the larger molecules that the descriptor forest does not have.
 
 ## Limitations
 
@@ -112,6 +132,10 @@ worst and gives the same test R² (0.593 on seed 0).
 
 ## Follow-ups
 
+0. The resolution of the model: attenuations above the grid for the steric field and between the
+   grid points for the ring fields, a ridge below 1e-4 (with float64 kernels), and the Gaussian
+   kernel layer on top of the overlap kernel, measured against the 0.01 to 0.02 eV of the graph
+   networks on the same random split.
 1. A NICS-weighted ring field (one DFT calculation per ring), which has to beat the Clar-sextet
    share rather than the set without it.
 2. Peri-condensed systems (COMPAS-3): three-ring carbons and adjacent shared bonds; the typing and
