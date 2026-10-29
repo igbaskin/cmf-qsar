@@ -28,7 +28,7 @@ the coefficient fitted to the occupancy map. `cmfqsar/solvent.py` turns those in
 Every ligand was simulated for **2 ns** at 300 K and 1 bar, after 200 ps of equilibration with the alpha carbons restrained at 5 kcal/mol/A^2. The force fields are gaff-2.11 for the ligand with AM1-BCC charges, amber14-all.xml for the protein and TIP3P water with 0.15 M of ions, in a box with 10 A of padding; the time step is 4 fs with hydrogen mass repartitioning and a frame was written every 10 ps. The frames were then superimposed on the binding-site backbone and thinned to at most 20 conformations at a clustering radius of 0.75 A. Where the crystal entry holds several copies of the protein, only the chain lining the site the ligands occupy was kept.
 
 `examples/make_md_trajectories.py` is the script, and it is the whole recipe: nothing was done
-by hand. The trajectories themselves are not in the repository -- they come to 8.1 GB -- but the script
+by hand. The trajectories themselves are not in the repository -- they come to 9.4 GB -- but the script
 rebuilds them from the data here and the entries named below.
 
 ## Where the data comes from
@@ -40,4 +40,5 @@ rebuilds them from the data here and the entries named below.
 
 * `hif2a_md.sdf`: 36 ligands, 359 records, receptor **5TBM**, chain A of it. 1 ligand(s) have no trajectory at all, because the preparation could not build a system for them: lig_43. The kept ligands sit 0.83 A from their crystal pose on average, at most 1.53 A.
 * `mcl1_md.sdf`: 25 ligands, 283 records, receptor **4HW3**, chain B of it. The kept ligands sit 0.93 A from their crystal pose on average, at most 1.39 A.
+* `mcl1_docked_md.sdf`: 25 ligands, 286 records, receptor **4HW3**, chain B of it. The kept ligands sit 1.69 A from their crystal pose on average, at most 5.43 A. The starting poses are not the crystal ones: every ligand was posed while it was held out, by the pocket docking of examples/make_docked_poses.py, a median 1.12 A from its crystal pose.
 * `p38_md.sdf`: 29 ligands, 318 records, receptor **3FLY**, chain A of it. The kept ligands sit 1.31 A from their crystal pose on average, at most 2.20 A.

@@ -128,17 +128,26 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
               stride=1, limit=0, read_only=False, chain_radius=5.0, keep_chains=(),
               max_drift=4.0, common_reference=True, water=True, water_alpha=0.5,
               water_alphas=(0.1, 0.3, 0.5, 1.0, 2.0),
-              min_occupancy=SV.MIN_OCCUPANCY, max_sites=SV.MAX_SITES, log=say):
-    """One set: download, prepare, simulate, read back, write the ensemble SDF."""
+              min_occupancy=SV.MIN_OCCUPANCY, max_sites=SV.MAX_SITES,
+              ligands_path=None, tag="", note="", log=say):
+    """One set: download, prepare, simulate, read back, write the ensemble SDF.
+
+    `ligands_path` simulates other starting poses of the same set instead of the crystal poses
+    the collection gives -- the poses of `examples/make_docked_poses.py`, say. Such a run gets a
+    `tag`, which names its working directory and its output file, so that it stands beside the
+    crystal-pose ensemble rather than replacing it, and it uses the receptor the untagged run
+    prepared, because two runs in different frames cannot be compared.
+    """
     pocket = os.path.join(POCKETS, name + ".pdb")
-    ligands = os.path.join(LIGANDS, name + ".sdf")
+    ligands = ligands_path or os.path.join(LIGANDS, name + ".sdf")
     for path in (pocket, ligands):
         if not os.path.isfile(path):
             raise SystemExit(f"{path} is missing; this script works on the openff collection")
     code = MD.entry_of(pocket)
     if not code:
         raise SystemExit(f"{pocket} does not name a source entry in its REMARK 400 lines")
-    work = work or os.path.join(out_dir, "work", name)
+    label = f"{name}_{tag}" if tag else name
+    work = work or os.path.join(out_dir, "work", label)
     os.makedirs(work, exist_ok=True)
 
     ds = load_dataset(ligands)
@@ -148,15 +157,26 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
     log(f"{name}: {len(mols)} ligands, receptor {code}")
 
     receptor = os.path.join(work, f"{code}_ready.pdb")
+    if not os.path.isfile(receptor):
+        # a tagged run is the same site with other starting poses, so it takes the receptor the
+        # untagged run prepared: preparing a second one would put the two in different frames
+        shared = os.path.join(out_dir, "work", name, f"{code}_ready.pdb")
+        if tag and os.path.isfile(shared):
+            receptor = shared
+            log(f"  receptor: the one prepared for {name}")
     chains = list(keep_chains)
-    if not read_only:
+    if not read_only and not os.path.isfile(receptor):
         raw = MD.fetch_entry(code, os.path.join(work, "entries"))
         if not chains:
             chains = MD.chains_near(raw, mols, radius=chain_radius)
-        if not os.path.isfile(receptor):
-            log(f"  preparing {code}, chain(s) {', '.join(chains)} of "
-                f"{len(set(MD.chains_of(raw)))} in the entry")
-            MD.prepare_receptor(raw, receptor, keep_chains=chains)
+        log(f"  preparing {code}, chain(s) {', '.join(chains)} of "
+            f"{len(set(MD.chains_of(raw)))} in the entry")
+        MD.prepare_receptor(raw, receptor, keep_chains=chains)
+    if not chains and os.path.isfile(receptor):
+        # the receptor was prepared by an earlier run, so its chains are read from the
+        # file itself, otherwise the data statement would not name them
+        chains = sorted(set(MD.chains_of(receptor)))
+    if not read_only:
         outcomes = MD.simulate_set(mols, names, receptor, os.path.join(work, "runs"),
                                    settings=settings, log=log)
         failed = [o for o in outcomes if o.error]
@@ -212,7 +232,7 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
 
     os.makedirs(out_dir, exist_ok=True)
     suffix = "_md" if common_reference else "_md_ownframe"
-    out = os.path.join(out_dir, f"{name}{suffix}.sdf")
+    out = os.path.join(out_dir, f"{label}{suffix}.sdf")
     records = 0
     with Chem.SDWriter(out) as w:
         for e in kept:
@@ -268,7 +288,10 @@ def build_set(name, settings, out_dir=OUT_DIR, work=None, max_frames=20, cutoff=
                            "min_distance": SV.MIN_DISTANCE, "ligands": sites}, fh, indent=1)
             log(f"  {len(sites)} water fields -> {path}")
     held = [v for k, v in drifts.items() if k not in left]
-    return {"set": name, "entry": code, "chains": chains, "ligands": len(kept),
+    return {"set": label, "entry": code, "chains": chains, "ligands": len(kept),
+            "note": note,
+            "poses": ("the crystal poses of the collection" if not ligands_path else
+                      os.path.relpath(ligands_path, ROOT).replace(chr(92), "/")),
             "water_fields": len(sites),
             "hydration_sites": (float(np.mean([len(r["sites"]) for r in sites]))
                                 if sites else None),
@@ -352,6 +375,7 @@ def write_readme(records, out_dir=OUT_DIR):
         + "." + _left_out(r)
         + (f" The kept ligands sit {r['drift_median']:.2f} A from their crystal pose on "
            f"average, at most {r['drift_max']:.2f} A." if r.get("drift_median") else "")
+        + (" " + r["note"] if r.get("note") else "")
         for r in records)
     total = sum(r.get("trajectory_mb") or 0 for r in records)
     size = (f"they come to {total / 1000:.1f} GB" if total >= 1000
@@ -406,6 +430,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--read-only", action="store_true",
                     help="do not simulate; read the trajectories already in the working "
                          "directory and write the SDF")
+    ap.add_argument("--ligands", default=None,
+                    help="an SDF of the same ligands in other starting poses, for instance the "
+                         "held-out poses of examples/make_docked_poses.py; needs --tag")
+    ap.add_argument("--tag", default="",
+                    help="a name for a run that starts from other poses: it names the working "
+                         "directory and the output file, so <set>_<tag>_md.sdf stands beside "
+                         "the crystal-pose ensemble instead of replacing it")
+    ap.add_argument("--note", default="",
+                    help="one sentence on where the starting poses came from, for the data "
+                         "statement of a tagged run")
     ap.add_argument("--out", default=OUT_DIR)
     a = ap.parse_args(argv)
 
@@ -422,6 +456,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     records = []
     for name in (a.sets or ["mcl1"]):
         records.append(build_set(name, settings, out_dir=a.out, max_frames=a.max_frames,
+                                 ligands_path=a.ligands, tag=a.tag, note=a.note,
                                  cutoff=a.cutoff, stride=a.stride, limit=a.limit,
                                  read_only=a.read_only, chain_radius=a.chain_radius,
                                  keep_chains=[c for c in a.chains.split(",") if c],

@@ -408,6 +408,144 @@ def test_a_normalisation_record_is_not_read_as_a_set_result(tmp_path):
     assert len(run_md.load_norms(results=str(tmp_path))) == 1
 
 
+# ----------------------------------------------------------------- poses that are not known
+
+
+def _docked_rec(name="toy", n=25, uniform=(0.33, 0.055, -0.08, 0.21), pop=None, mil=None,
+                poses=(1.12, 8.26, 0.36, 0.56), repair=(0.90, 1.30)):
+    """A pose-not-known record; each reading is (q2, delta, low, high) against the found pose."""
+    def row(q2, d, lo, hi, vs=(-0.30, -0.62, -0.04)):
+        return dict(q2=q2, rmse=1.0, alpha=0.5, lam=0.1, delta=d, lo=lo, hi=hi,
+                    vs_crystal=dict(delta=vs[0], lo=vs[1], hi=vs[2]))
+
+    models = {"crystal": row(0.575, 0.300, 0.080, 0.520),
+              "docked": row(0.275, 0.0, 0.0, 0.0)}
+    models["docked_uniform"] = row(*uniform)
+    if pop is not None:
+        models["docked_population"] = row(*pop)
+    if mil is not None:
+        models["docked_mil"] = row(*mil)
+    med, mx, w1, w2 = poses
+    return {"set": name, "n": n, "method": "pocket", "frames_mean": 12.0, "frames_min": 8,
+            "frames_max": 20, "seconds": 1.0,
+            "poses": {"median_rmsd": med, "max_rmsd": mx, "within_1A": w1, "within_2A": w2},
+            "repair": {"nearest_median": repair[0], "conformation_median": repair[1]},
+            "models": models}
+
+
+def test_the_pose_not_known_section_is_empty_without_a_result():
+    import run_md
+
+    assert run_md.docked_section([]) == []
+
+
+def test_the_pose_not_known_section_reports_the_poses_it_started_from():
+    import run_md
+
+    text = " ".join(run_md.docked_section([_docked_rec()]))
+    assert "Poses that are not known" in text
+    assert "median 1.12 A from the crystal poses" in text
+    assert "36% within 1 A" in text
+    assert "no crystal frame of any kind" in text, "how the poses were made is stated"
+    assert "| the pose that was found | +0.275 | the reference |" in text
+
+
+def test_an_ensemble_that_beats_the_found_pose_is_reported_as_worth_something():
+    import run_md
+
+    text = " ".join(run_md.docked_section([_docked_rec(uniform=(0.45, 0.175, 0.02, 0.33))]))
+    assert "the ensemble is worth something" in text
+    assert "an ensemble covers a pose that is wrong" in text
+
+
+def test_an_ensemble_that_does_not_beat_the_found_pose_is_reported_plainly():
+    import run_md
+
+    text = " ".join(run_md.docked_section([_docked_rec(uniform=(0.33, 0.055, -0.08, 0.21))]))
+    assert "gains nothing here either" in text
+    assert "does not show it helping" in text
+
+
+def test_an_ensemble_worse_than_the_found_pose_is_reported_as_worse():
+    import run_md
+
+    text = " ".join(run_md.docked_section([_docked_rec(uniform=(0.12, -0.155, -0.33, -0.02))]))
+    assert "worse than the single pose it started from" in text
+
+
+def test_the_largest_of_the_three_readings_is_named_when_it_is_not_the_fixed_one():
+    import run_md
+
+    rec = _docked_rec(uniform=(0.33, 0.055, -0.08, 0.21), pop=(0.41, 0.135, -0.05, 0.30))
+    text = " ".join(run_md.docked_section([rec]))
+    assert "trajectory from it, by population" in text
+    assert "taking the largest of three is what the section above measured the cost of" in text
+
+
+def test_the_section_says_whether_the_simulation_brought_the_pose_nearer():
+    import run_md
+
+    near = " ".join(run_md.docked_section([_docked_rec(repair=(0.90, 1.30))]))
+    assert "bring the ligand nearer to the pose it should have had" in near
+    far = " ".join(run_md.docked_section([_docked_rec(repair=(1.80, 2.20))]))
+    assert "bring the ligand no nearer to the pose it should have had" in far
+
+
+def test_the_nearest_conformation_is_not_read_as_repair_on_its_own():
+    """A smallest of several is below a single pose even when nothing moved nearer."""
+    import run_md
+
+    text = " ".join(run_md.docked_section([_docked_rec(repair=(0.79, 1.51))]))
+    assert "chosen after the fact" in text
+    assert "a smallest of several and not repair" in text
+    assert "did not move towards it" in text, "the ensemble drifted away, and the text says so"
+    near = " ".join(run_md.docked_section([_docked_rec(repair=(0.79, 0.95))]))
+    assert "did not move towards it" not in near
+
+
+def test_a_pose_not_known_record_is_not_read_as_a_set_result(tmp_path):
+    import run_md
+
+    rec = _rows({"conformers": 0.0, "md_uniform": -0.2, "md_population": -0.3, "md_mil": -0.25})
+    with open(str(tmp_path / "toy.json"), "w") as fh:
+        json.dump(rec, fh)
+    with open(str(tmp_path / "toy_docked.json"), "w") as fh:
+        json.dump(_docked_rec(), fh)
+    got = run_md.load_all(results=str(tmp_path))
+    assert [r["set"] for r in got] == ["toy"], "only the set result is a row of the table"
+    assert len(run_md.load_docked(results=str(tmp_path))) == 1
+
+
+def test_the_conformations_are_measured_against_the_pose_without_superposition():
+    """A conformation translated by 1 angstrom is 1 angstrom away, not zero."""
+    import run_md
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+
+    ref = Chem.AddHs(Chem.MolFromSmiles("CCO"))
+    AllChem.EmbedMolecule(ref, randomSeed=0)
+    ref = Chem.RemoveHs(ref)
+    many = Chem.Mol(ref)
+    many.RemoveAllConformers()
+    for shift in (0.0, 1.0):
+        conf = Chem.Conformer(ref.GetConformer())
+        for i in range(ref.GetNumAtoms()):
+            x, y, z = conf.GetAtomPosition(i)
+            conf.SetAtomPosition(i, (x + shift, y, z))
+        many.AddConformer(conf, assignId=True)
+    got = run_md._conformer_rmsds(many, ref)
+    assert len(got) == 2
+    assert got[0] == pytest.approx(0.0, abs=1e-6)
+    assert got[1] == pytest.approx(1.0, abs=1e-6)
+
+
+def test_a_set_without_found_poses_has_no_stage(tmp_path):
+    import run_md
+
+    assert run_md.docked_set("not_a_set") is None
+    assert run_md.stage_docked("not_a_set", results=str(tmp_path)) is None
+
+
 # ------------------------------------------------------------- the reading fixed in advance
 
 

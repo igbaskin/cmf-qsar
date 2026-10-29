@@ -105,6 +105,26 @@ The same frames, read twice, with the same weighting (clusters equal). Everywher
 
 **Dropping the common frame does not change q2 in one direction.** The change is between -0.175 and +0.129 of q2 over the 3 sets, and the sign is not the same on all of them. The interval excludes zero on 1 of the 3 sets (hif2a), so only there is the change larger than the resampling of the molecules explains. Two runs of the same protein equilibrate to conformations a few tenths of an angstrom apart, so fitting each ligand to its own run leaves the series in as many frames as it has molecules. A field kernel was expected to lose from that, and on one set it does. On the others it does not, so the measurement does not support the general statement that a common frame is what makes this comparison possible. What an alignment of a few tenths of an angstrom is worth is set by set here, not by the method. One more reason to read the gains of the tables above with care: on 1 of the 3 sets this control is itself above the crystal pose (p38 +0.107), and it was built to be wrong.
 
+## Poses that are not known
+
+Every number above rests on crystal poses, and the item itself says that an ensemble should help most where the pose is *not* known. On **mcl1** it is asked there too. Every ligand was posed while it was held out: its pose was destroyed, a random placement within 2 A of the site, and then the receptor's own fields put it back where the pocket prefers it -- no model, no activity of its own and no crystal frame of any kind. Those poses sit a median 1.12 A from the crystal poses (36% within 1 A, 56% within 2 A, at most 8.26 A). Each ligand was then simulated from its found pose, for the same length as everywhere above.
+
+25 ligands, 11.4 conformations each.
+
+| model | q2 | change against the pose that was found | change against the crystal pose |
+| --- | ---: | --- | --- |
+| the crystal pose | +0.575 | +0.173 [-0.144, +0.567] | the ceiling |
+| the pose that was found | +0.402 | the reference | -0.173 [-0.567, +0.144] |
+| trajectory from it, clusters equal | -0.040 | -0.442 [-1.461, +0.272] | -0.615 [-1.470, -0.107] |
+| trajectory from it, by population | +0.024 | -0.378 [-0.833, +0.185] | -0.551 [-0.957, -0.197] |
+| trajectory from it, multi-instance | -0.012 | -0.413 [-1.134, +0.198] | -0.587 [-1.140, -0.215] |
+
+**Did the simulation repair the pose?** The nearest kept conformation of each ligand is a median 0.79 A from its crystal pose and the middle conformation 1.51 A, against 1.12 A for the pose the simulation started from. So two nanoseconds in the site bring the ligand nearer to the pose it should have had. The nearest conformation is chosen after the fact, out of 11.4 of them, so part of that is a smallest of several and not repair. The middle conformation is farther from the crystal pose than the starting pose was, so the ensemble as a whole did not move towards it.
+
+**The ensemble gains nothing here either.** The reading fixed in advance gives -0.442 [-1.461, +0.272] against the single pose it started from, which does not clear the interval. So the place where an ensemble should help most does not show it helping, on this set and at this length. The largest of the three readings is trajectory from it, by population, -0.378 [-0.833, +0.185], and taking the largest of three is what the section above measured the cost of.
+
+What the whole exercise costs: posing the ligands instead of reading their crystal poses gives -0.173 [-0.567, +0.144] of q2. That is the size of the thing an ensemble would have to repair.
+
 ## Where the kernel is normalised
 
 The multi-instance fit at beta = 0 is the uniform ensemble: every conformation weighs the same. The two are the same model and they do not give the same q2. Each row is one attenuation (0.3) and one lambda (0.1), with no grid and nothing chosen, so these numbers are not comparable with the table above, where every model is taken at its own best attenuation.

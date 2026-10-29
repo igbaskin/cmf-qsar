@@ -1,6 +1,6 @@
 {
- "commit": "71bf7392b550aed90bbe5dc72b5969fc7add127e",
- "created": "2026-10-29T08:10:54",
+ "commit": "5e3383f2f9e231e7437176548a8d3123933e7a73",
+ "created": "2026-10-29T16:26:38",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -534,6 +534,18 @@
    "bytes": 557544,
    "sha256": "bb0844ef4ec636ca0d7683e405c640e905e33d9609e2cfd9e2d56848cdf11f20"
   },
+  "examples/docked/README.md": {
+   "bytes": 2221,
+   "sha256": "4a120381e4d0e0404becf2bcfd68d51379a18b2a6a44c8a07ae9b311dde33e90"
+  },
+  "examples/docked/mcl1_pocket.json": {
+   "bytes": 948,
+   "sha256": "69c19998f4929d213d3733f48ae69c3263d2a870511af4649b8d6157215affd5"
+  },
+  "examples/docked/mcl1_pocket.sdf": {
+   "bytes": 112344,
+   "sha256": "5a53ec6bdce961887f6adb0223e3bb3e53bb3773ea36fc4ec65353936c63aaee"
+  },
   "examples/hammett/hammett.sdf": {
    "bytes": 214396,
    "sha256": "b13591410be3472f9e9a9edcf87fed426dfb5edb4ba3b07ac8af2e5f8e965c1f"
@@ -606,6 +618,10 @@
    "bytes": 9331,
    "sha256": "81a6d68b5f8291f7319e63999b5d3aa4280f0a2a4def563cd536591e16546dad"
   },
+  "examples/make_docked_poses.py": {
+   "bytes": 13124,
+   "sha256": "dbdac6a38d53dea4c0be780a76da2e6b7bf22361d8dd4898ce736e5cf5e92b87"
+  },
   "examples/make_example_dataset.py": {
    "bytes": 6052,
    "sha256": "91541d45e989b588b488b48b10821d0d4fe8b9f6205974f40f63ad3ad07bb04f"
@@ -631,8 +647,8 @@
    "sha256": "b1a438023258c9840325d3e6016f71c5638f22c03d3b7678259ae4578cbdaadb"
   },
   "examples/make_md_trajectories.py": {
-   "bytes": 23256,
-   "sha256": "f69d65eeff047ac7bfad5a70bdfc5aa98b334bcd6a1a86bde91cfa0976c9e540"
+   "bytes": 25583,
+   "sha256": "301982799011d613c2e96bb1cf386db7102c6e59343667d67c5114610405e676"
   },
   "examples/make_mittal_examples.py": {
    "bytes": 10432,
@@ -667,8 +683,8 @@
    "sha256": "d49b9a94e7f574e0f86dbda86d75461a6a7b9a22b12fc58e5a5edf524c7d093a"
   },
   "examples/md/README.md": {
-   "bytes": 3205,
-   "sha256": "a43c5b5cf22b6ac1a10906129b5b386d49e6146ccfae1ec2831dcfa5310306aa"
+   "bytes": 3554,
+   "sha256": "4e4a089e536678a3adb0bc9e3a04308d8456bb7ea7c1d0216bd1bb653e39a813"
   },
   "examples/md/hif2a_md.sdf": {
    "bytes": 1384506,
@@ -681,6 +697,10 @@
   "examples/md/hif2a_water.json": {
    "bytes": 54285,
    "sha256": "b12e27a8014f133656eeac3311a81796c9a753c37764f1920c43409ef210285c"
+  },
+  "examples/md/mcl1_docked_md.sdf": {
+   "bytes": 1290029,
+   "sha256": "b4543b9799955d5ff3ca4baeb21b138152988845a9847a0a13343bac43b5b697"
   },
   "examples/md/mcl1_md.sdf": {
    "bytes": 1280875,
@@ -707,8 +727,8 @@
    "sha256": "f792d78ed2b9512b93df3c41a0a7620802f81078b1fe8edc773f6214171b3075"
   },
   "examples/md/provenance.json": {
-   "bytes": 2386,
-   "sha256": "e0ed4b77ba4b2438e966d1fc820d90e1a6fab6237e7758bb4fe6f5439ed0ec15"
+   "bytes": 3422,
+   "sha256": "f1bdcc7dde25a68269a20a67a07585de1fb7d9e077aaa2662f574f402b43836b"
   },
   "examples/mittal/ACE.sdf": {
    "bytes": 491549,
@@ -2174,10 +2194,11 @@
   "benchmarks/results/md/hif2a.json": "3acd962cc3bb03053a9359811a32d7f67097287b4d84f1ba352412d6dc03d3aa",
   "benchmarks/results/md/hif2a_norm.json": "22c843ba3635cda4ebab1ee120d193ee4ee233751c6f0d9c3ecb6ad1e39e7f49",
   "benchmarks/results/md/mcl1.json": "c1bfb0eddabb5373cde91ed17fea73d1611b92d398c9e191e6d51a5261d487e2",
+  "benchmarks/results/md/mcl1_docked.json": "0a0d26a3358e17e3778f6a2950e89e4fdffe55d7600161f564a4da66a18e4bef",
   "benchmarks/results/md/mcl1_norm.json": "26fdfb31409c63664875caf5fa31a41ad190943dd896bb566921b457aef5cd67",
   "benchmarks/results/md/p38.json": "9380c7863e41b677e535ee6e44191cabbfa90f2ed3381763b88b847f102fba80",
   "benchmarks/results/md/p38_norm.json": "4ead547cc2984c35976c51dace05ea94df8c342d2ee611f7dd6eeb2aa3112700",
-  "benchmarks/results/md/table.md": "af0f03dd178acfbaf3ed1cc78d945e55bf5cb5fc7d46f14ac885374e9aebff0f",
+  "benchmarks/results/md/table.md": "f5be7828530bb7734ebcd7f1fec7aacb720d6f00a4bc5f46dfa2f8a9c18724bd",
   "benchmarks/results/metabolism/summary.json": "59860be17e0346e694b88f908daef57ab6994b0e0239bb22dea2abe5161d332d",
   "benchmarks/results/metabolism/table.md": "18a2b24409b7df74b4c6ce4bed0b8ba27a31d12397e32a21b3a0c207caed30e7",
   "benchmarks/results/mixing/ACE.json": "10263c6114c38c60b7e9e5f6b808ea912446d732aa15970204ab9f19cbbe28e1",

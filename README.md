@@ -3946,11 +3946,39 @@ also +0.107 above the crystal pose, which is one more reason to read the gains o
 care. The control is left out of the nine readings counted above, and a set does not count as
 ahead because it clears an interval.
 
+**Where the pose is not known, the ensemble is worse and not better.** Every number above starts
+from a crystal pose, which is not where an ensemble should help most. So mcl1 was read the other
+way too: every ligand was posed while it was held out -- its pose destroyed, a random rigid
+placement within 2 A of the site, and the pocket docking of part C putting it back where the
+receptor's own fields prefer it, with no model, no activity of its own and no crystal frame. The
+25 poses sit a median 1.12 A from the crystal poses, and that median hides the shape: 14 are
+within 1.3 A, while on the other 11 the docking missed the site, 4.0 to 8.3 A away. Each ligand
+was then simulated from the pose that was found.
+
+| model | q2 | change against the pose that was found | change against the crystal pose |
+| --- | ---: | --- | --- |
+| the crystal pose | **+0.575** | +0.173 [-0.144, +0.567] | the ceiling |
+| the pose that was found | +0.402 | the reference | -0.173 [-0.567, +0.144] |
+| trajectory from it, clusters equal | -0.040 | -0.442 [-1.461, +0.272] | -0.615 [-1.470, -0.107] |
+| trajectory from it, by population | +0.024 | -0.378 [-0.833, +0.185] | -0.551 [-0.957, -0.197] |
+| trajectory from it, multi-instance | -0.012 | -0.413 [-1.134, +0.198] | -0.587 [-1.140, -0.215] |
+
+The ensemble is 0.44 of q2 below the single pose it started from, and below the crystal pose
+beyond the interval, which the found pose itself is not. A pose error of a median 1.12 A costs
+0.173 of q2; two nanoseconds of motion around those poses cost 0.442 more. The comparison against
+the found pose does not clear its own interval -- 25 molecules and a scattered ensemble make a
+wide one -- so the sentence supported beyond the interval is the one against the crystal pose.
+The nearest kept conformation of a ligand does sit nearer to the crystal pose than the starting
+pose did, 0.79 A against 1.12 A, but the nearest of 11.4 conformations is a smallest of several
+and not a repair: the middle conformation is at 1.51 A, farther out than the start.
+
 ```bash
 python examples/make_md_trajectories.py --set mcl1 --ns 2   # needs OpenMM and the OpenFF stack
 python benchmarks/run_md.py --sets mcl1 p38 hif2a           # results/md/table.md
 python benchmarks/run_md.py --sets mcl1 p38 hif2a --normalisation
 python examples/make_md_trajectories.py --set p38 --read-only --no-common-reference
+python examples/make_docked_poses.py --set mcl1             # poses found without the crystal one
+python benchmarks/run_md.py --sets mcl1 --docked
 ```
 
 

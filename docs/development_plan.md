@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1488 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1499 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1027,11 +1027,50 @@ says whether a trajectory does what a generated ensemble could not.
   attenuation and lambda are still chosen by cross-validation inside every model, which the
   crystal pose gets in the same measure, so that choice is not what separates the columns. The
   combined number pools three targets, which is why the three sets are also given on their own.
-  49 tests for this item.
-  **Not done:** one force field and one length on all three sets; a set whose poses are *not*
-  known, which is where an ensemble should help most and where this result still says nothing;
-  why the own frame costs q2 on hif2a and not on the other two, which is a question about the
-  sets rather than about the method; a combined estimate that treats the sets as a sample of
+  **A set whose poses are not known, 29 October 2026, and the ensemble is worse there rather
+  than better.** Every number above starts from a crystal pose, which the item itself names as
+  the gap. mcl1 was therefore turned into the other case without a new set:
+  `examples/make_docked_poses.py` poses every ligand while it is held out. The pose is destroyed
+  -- a random rigid placement within 2 A of the site -- and then the pocket docking of C3 puts it
+  back where the receptor's own fields prefer it, with no model, no activity of its own and no
+  crystal frame of any kind, which is the protocol C1 defines. Each ligand was then simulated
+  from the pose that was found, 2 ns on the same receptor frame as everywhere above, and read in
+  the same three ways.
+  **What the posing produced is two groups rather than a spread.** The 25 poses sit a median
+  1.12 A from the crystal poses, but the median hides the shape: 14 ligands are within 1.3 A,
+  and on the other 11 the docking missed the site, 4.0 to 8.3 A away. So this test is harder
+  than its median suggests, and a reading of it is also a reading of how often that docking
+  fails.
+  **Measured**, every model against the pose a modeller would actually have -- the one that was
+  found -- and then against the crystal pose as the ceiling: the crystal pose +0.575; the
+  **found pose +0.402** (-0.173 [-0.567, +0.144] against the crystal pose, which does not clear
+  the interval); the trajectory from it with **clusters equal -0.040** (-0.442 [-1.461, +0.272]
+  against the found pose, -0.615 [-1.470, -0.107] against the crystal pose); by population
+  +0.024 (-0.378 [-0.833, +0.185]); multi-instance -0.012 (-0.413 [-1.134, +0.198], beta = 1).
+  **What it settles: the ensemble does not cover for a pose that is wrong.** It is 0.44 of q2
+  below the single pose it started from, and it is below the crystal pose beyond the interval,
+  which the found pose itself is not. A pose error of a median 1.12 A costs 0.173 of q2; two
+  nanoseconds of motion around those poses cost 0.442 more. The multi-instance fit chose
+  beta = 1 here, which is the second time it put weight on some frames rather than none, and it
+  did not recover the loss. Read strictly, the comparison against the found pose does not clear
+  its own interval, because 25 molecules and an ensemble this scattered make a wide one; the
+  statement that does clear its interval is the one against the crystal pose. Either way the
+  direction is the opposite of the one this item expected, so the gap is answered and not left
+  open.
+  **Did the simulation repair the pose?** Partly, and not in a way the model could use. The
+  nearest kept conformation of a ligand is a median 0.79 A from its crystal pose, against 1.12 A
+  for the pose the run started from, but the nearest of 11.4 conformations is a smallest of
+  several and not a repair, and the middle conformation sits at 1.51 A, farther out than the
+  start. The 11 ligands the docking placed wrongly did move in, from a median 5.17 A to 3.70 A,
+  and none of them came back under 2 A in 2 ns; the 14 that started near drifted out a little,
+  from 0.95 A to 1.21 A. The cost was 3.4 hours of one consumer GPU for the 25 simulations and
+  232 s for the measurement.
+  60 tests for this item.
+  **Not done:** one force field and one length on all three sets; poses that are not known on a
+  second set, and with a docking that does not miss the site on 11 ligands of 25, since the
+  result above is as much about that docking as about the ensemble; why the own frame costs q2
+  on hif2a and not on the other two, which is a question about the sets rather than about the
+  method; a combined estimate that treats the sets as a sample of
   targets rather than weighting them by size; and the flexible-series question the item names,
   `mittal/AMPH1`, which the item made conditional on a set showing something and which the
   best-of-three reading permits but this one does not support.

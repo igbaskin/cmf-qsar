@@ -1417,11 +1417,10 @@ python benchmarks/run_md.py --sets mcl1 p38 hif2a --normalisation
 ```
 
 > **What this does not settle.** Three sets now, but one force field and one length on all of
-> them. A few nanoseconds samples the motion around a pose and not a change of binding mode. A
-> set whose poses are *not* known would be a different question, and the one where a trajectory
-> should help most: there the ensemble would be covering uncertainty in the pose rather than
-> motion around a good one. And the gain reported here is the best of five readings rather than
-> one fixed in advance, which is what the +0.003 edge asks for next.
+> them. A few nanoseconds samples the motion around a pose and not a change of binding mode. Two
+> further questions are answered in the subsections below: the gain reported here is the largest
+> of three readings rather than one fixed in advance, and every number rests on a crystal pose,
+> while a set whose poses are *not* known is the case where a trajectory should help most.
 
 ### One reading fixed in advance
 
@@ -1486,6 +1485,56 @@ model built to be wrong must make the evidence look neither stronger nor weaker 
 ```bash
 python examples/make_md_trajectories.py --set p38 --set hif2a --read-only --no-common-reference
 python benchmarks/run_md.py --sets mcl1 p38 hif2a --force
+```
+
+### Where the pose is not known
+
+Every number above starts from a crystal pose, and an ensemble should help most where the pose is
+*not* known: there it covers uncertainty in the placement and not only motion around a placement
+that is already right. **mcl1** is therefore read that way as well, without a new set. Every
+ligand was posed while it was held out: its pose was destroyed — a random rigid placement
+within 2 Å of the site — and the pocket docking of part C put it back where the
+receptor's own fields prefer it, with no model, no activity of its own and no crystal frame of
+any kind. Each ligand was then simulated from the pose that was found, for the same 2 ns and on
+the same receptor frame as above.
+
+The 25 poses sit a median 1.12 Å from the crystal poses, and that median hides the shape of
+the test: 14 of them are within 1.3 Å, while on the other 11 the docking missed the site, 4.0
+to 8.3 Å away. The table below is as much a reading of that docking as of the ensemble.
+
+| model | q² | change against the pose that was found | change against the crystal pose |
+| --- | ---: | --- | --- |
+| the crystal pose | **+0.575** | +0.173 [−0.144, +0.567] | the ceiling |
+| the pose that was found | +0.402 | the reference | −0.173 [−0.567, +0.144] |
+| trajectory from it, clusters equal | −0.040 | −0.442 [−1.461, +0.272] | −0.615 [−1.470, −0.107] |
+| trajectory from it, by population | +0.024 | −0.378 [−0.833, +0.185] | −0.551 [−0.957, −0.197] |
+| trajectory from it, multi-instance | −0.012 | −0.413 [−1.134, +0.198] | −0.587 [−1.140, −0.215] |
+
+**Where the pose is not known the ensemble does not cover for it; it makes the model worse.** It
+is 0.44 of q² below the single pose it started from, and it is below the crystal pose beyond
+the interval, which the found pose itself is not. A pose error of a median 1.12 Å costs 0.173
+of q²; two nanoseconds of motion around those poses cost 0.442 more. The multi-instance fit
+chose $\beta = 1$ here, so even putting the weight on some frames rather than all does not
+recover the loss.
+
+Read strictly, the comparison against the found pose does not clear its own interval: 25
+molecules and an ensemble this scattered make a wide one. The statement that does clear its
+interval is the one against the crystal pose. The direction, however, is the opposite of the one
+expected on both readings, so this is an answer and not an open question.
+
+**Did the simulation repair the pose?** Partly, and not in a way the model could use. The nearest
+kept conformation of a ligand is a median 0.79 Å from its crystal pose, against 1.12 Å
+for the pose the run started from — but the nearest of 11.4 conformations is a smallest of
+several and not a repair, and the middle conformation sits at 1.51 Å, farther out than the
+start. The 11 ligands the docking placed wrongly did move in, from a median 5.17 Å to
+3.70 Å, and none of them came back under 2 Å in 2 ns; the 14 that started near drifted
+out a little, from 0.95 Å to 1.21 Å.
+
+```bash
+python examples/make_docked_poses.py --set mcl1            # examples/docked/mcl1_pocket.sdf
+python examples/make_md_trajectories.py --set mcl1 --ligands examples/docked/mcl1_pocket.sdf \
+    --tag docked --max-drift 0 --no-water
+python benchmarks/run_md.py --sets mcl1 --docked
 ```
 
 ## A cheap quantum stage: GFN2-xTB

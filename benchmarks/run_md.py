@@ -66,6 +66,7 @@ RDLogger.DisableLog("rdApp.*")
 
 RESULTS = os.path.join(HERE, "results", "md")
 MD_DATA = os.path.join(ROOT, "examples", "md")
+DOCKED_DATA = os.path.join(ROOT, "examples", "docked")
 CRYSTAL_DATA = os.path.join(ROOT, "examples", "openff")
 SETS = ("mcl1", "p38", "hif2a")
 FIELDS = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
@@ -93,6 +94,23 @@ def _say(text):
 def crystal_set(name, activity="pAffinity"):
     """The ligands as the collection gives them: one crystal pose each, with their activities."""
     path = os.path.join(CRYSTAL_DATA, name + ".sdf")
+    ds = load_dataset(path, activity_prop=activity)
+    y = np.asarray(ds.activity, float)
+    ok = np.isfinite(y)
+    return ([m for m, g in zip(ds.mols, ok) if g],
+            [n for n, g in zip(ds.names, ok) if g], y[ok])
+
+
+def docked_set(name, activity="pAffinity", method=None):
+    """The poses found while each ligand was held out, one pose per ligand.
+
+    `examples/make_docked_poses.py` writes them: no ligand is posed with the help of its own
+    crystal pose or its own activity.
+    """
+    method = method or DOCK_METHOD
+    path = os.path.join(DOCKED_DATA, f"{name}_{method}.sdf")
+    if not os.path.isfile(path):
+        return None
     ds = load_dataset(path, activity_prop=activity)
     y = np.asarray(ds.activity, float)
     ok = np.isfinite(y)
@@ -291,6 +309,210 @@ def run_set(name, results=RESULTS, force=False):
 
 
 # ----------------------------------------------------------------------------------------------
+# poses that are not known
+# ----------------------------------------------------------------------------------------------
+
+def _conformer_rmsds(mol, ref):
+    """How far every conformation of `mol` is from the single pose `ref`, no superposition."""
+    from cmfqsar.poses import pose_rmsd
+    out = []
+    for conf in mol.GetConformers():
+        one = Chem.Mol(mol)
+        one.RemoveAllConformers()
+        one.AddConformer(Chem.Conformer(conf), assignId=True)
+        out.append(float(pose_rmsd(one, ref)))
+    return [v for v in out if v == v]
+
+
+def stage_docked(name, results=RESULTS, method=None, force=False):
+    """The same question where the pose is not known, which is where an ensemble should help.
+
+    Five models of the same ligands on the same folds and grids: the crystal pose as the ceiling,
+    the pose that was found while the ligand was held out, and three readings of a simulation
+    started from that found pose. Every difference is against the found pose, because that is
+    what a modeller would have without a crystal structure; the difference from the crystal pose
+    is reported beside it, to say how much of the ceiling is lost.
+    """
+    method = method or DOCK_METHOD
+    out_path = os.path.join(results, f"{name}_docked.json")
+    if os.path.exists(out_path) and not force:
+        with open(out_path) as fh:
+            return json.load(fh)
+    docked = docked_set(name, method=method)
+    ens = md_set(name, suffix="_docked_md")
+    if docked is None or ens is None:
+        _say(f"  {name}: no poses found without the crystal pose, or no simulation from them; "
+             f"run examples/make_docked_poses.py and then "
+             f"examples/make_md_trajectories.py --ligands")
+        return None
+
+    cm, cn, cy = crystal_set(name)
+    di = dict(zip(docked[1], docked[0]))
+    ei = dict(zip(ens[1], ens[0]))
+    keep = [i for i, n in enumerate(cn) if n in di and n in ei]
+    names = [cn[i] for i in keep]
+    y = cy[keep]
+    c_mols = [cm[i] for i in keep]
+    d_mols = [di[n] for n in names]
+    e_mols = [ei[n] for n in names]
+    frames = [m.GetNumConformers() for m in e_mols]
+    _say(f"  {name}: {len(names)} ligands posed without their crystal poses, "
+         f"{np.mean(frames):.1f} trajectory conformations each")
+
+    t0 = time.time()
+    rows = {}
+    for tag, mols in (("crystal", c_mols), ("docked", d_mols)):
+        q2, rms, alpha, lam, pred = best_over_grid(mols, names, y, mode="single")
+        rows[tag] = dict(q2=q2, rmse=rms, alpha=alpha, lam=lam, pred=pred.tolist())
+        _say(f"    {tag:18s} q2 {q2:+.3f}  RMSEcv {rms:.3f}  alpha {alpha:g} lambda {lam:g}")
+    for tag, weighting in (("docked_uniform", "uniform"), ("docked_population", "given")):
+        q2, rms, alpha, lam, pred = best_over_grid(e_mols, names, y, mode="ensemble",
+                                                   weighting=weighting)
+        rows[tag] = dict(q2=q2, rmse=rms, alpha=alpha, lam=lam, pred=pred.tolist())
+        _say(f"    {tag:18s} q2 {q2:+.3f}  RMSEcv {rms:.3f}  alpha {alpha:g} lambda {lam:g}")
+    q2, rms, alpha, lam, pred, beta = best_mil(e_mols, names, y)
+    rows["docked_mil"] = dict(q2=q2, rmse=rms, alpha=alpha, lam=lam, beta=beta,
+                              pred=pred.tolist())
+    _say(f"    docked_mil         q2 {q2:+.3f}  RMSEcv {rms:.3f}  alpha {alpha:g} "
+         f"lambda {lam:g} beta {beta:g}")
+
+    # the found pose is the reference, because that is what a modeller has without a crystal
+    # structure; the crystal pose is the ceiling and is reported as a second difference
+    base = np.asarray(rows["docked"]["pred"], float)
+    ceiling = np.asarray(rows["crystal"]["pred"], float)
+    for tag in rows:
+        pred = np.asarray(rows[tag]["pred"], float)
+        d, lo, hi = bootstrap_difference(y, pred, base)
+        rows[tag].update(delta=d, lo=lo, hi=hi)
+        d, lo, hi = bootstrap_difference(y, pred, ceiling)
+        rows[tag].update(vs_crystal=dict(delta=d, lo=lo, hi=hi))
+
+    from cmfqsar.poses import pose_rmsd
+    before = [float(pose_rmsd(d, c)) for d, c in zip(d_mols, c_mols)]
+    nearest, middle = [], []
+    for e, c in zip(e_mols, c_mols):
+        rs = _conformer_rmsds(e, c)
+        if rs:
+            nearest.append(float(np.min(rs)))
+            middle.append(float(np.median(rs)))
+    rec = {"set": name, "method": method, "n": int(len(y)),
+           "frames_mean": float(np.mean(frames)), "frames_min": int(np.min(frames)),
+           "frames_max": int(np.max(frames)), "seconds": float(time.time() - t0),
+           "activity": [float(v) for v in y],
+           "poses": {"median_rmsd": float(np.median(before)),
+                     "max_rmsd": float(np.max(before)),
+                     "within_1A": float(np.mean(np.asarray(before) <= 1.0)),
+                     "within_2A": float(np.mean(np.asarray(before) <= 2.0))},
+           "repair": {"nearest_median": float(np.median(nearest)) if nearest else None,
+                      "conformation_median": float(np.median(middle)) if middle else None},
+           "models": rows}
+    os.makedirs(results, exist_ok=True)
+    with open(out_path, "w") as fh:
+        json.dump(rec, fh, indent=1)
+    return rec
+
+
+def load_docked(results=RESULTS):
+    """Every result of the pose-not-known stage, biggest set first."""
+    out = []
+    for path in sorted(glob.glob(os.path.join(results, "*_docked.json"))):
+        with open(path) as fh:
+            out.append(json.load(fh))
+    return sorted(out, key=lambda r: -int(r.get("n") or 0))
+
+
+def docked_section(rows):
+    """What an ensemble is worth when the pose it covers is not known."""
+    if not rows:
+        return []
+    out = ["## Poses that are not known", ""]
+    for rec in rows:
+        m = rec["models"]
+        p, rp = rec.get("poses") or {}, rec.get("repair") or {}
+        out += [f"Every number above rests on crystal poses, and the item itself says that an "
+                f"ensemble should help most where the pose is *not* known. On **{rec['set']}** "
+                f"it is asked there too. Every ligand was posed while it was held out: its pose "
+                f"was destroyed, a random placement within 2 A of the site, and then the "
+                f"receptor's own fields put it back where the pocket prefers it -- no model, no "
+                f"activity of its own and no crystal frame of any kind. Those poses sit a "
+                f"median {p.get('median_rmsd', float('nan')):.2f} A from the crystal poses "
+                f"({p.get('within_1A', 0.0):.0%} within 1 A, "
+                f"{p.get('within_2A', 0.0):.0%} within 2 A, at most "
+                f"{p.get('max_rmsd', float('nan')):.2f} A). Each ligand was then simulated from "
+                f"its found pose, for the same length as everywhere above.", "",
+                f"{rec['n']} ligands, {rec['frames_mean']:.1f} conformations each.", "",
+                "| model | q2 | change against the pose that was found | "
+                "change against the crystal pose |",
+                "| --- | ---: | --- | --- |"]
+        for tag in DOCK_TAGS:
+            if tag not in m:
+                continue
+            r = m[tag]
+            vc = r.get("vs_crystal") or {}
+            first = ("the reference" if tag == "docked" else
+                     f"{r['delta']:+.3f} [{r['lo']:+.3f}, {r['hi']:+.3f}]")
+            second = ("the ceiling" if tag == "crystal" else
+                      f"{vc['delta']:+.3f} [{vc['lo']:+.3f}, {vc['hi']:+.3f}]"
+                      if vc else "-")
+            out.append(f"| {DOCK_LABEL[tag]} | {r['q2']:+.3f} | {first} | {second} |")
+        out.append("")
+
+        if rp.get("nearest_median") is not None:
+            moved = ("nearer to" if rp["nearest_median"] < p.get("median_rmsd", 0.0)
+                     else "no nearer to")
+            # the nearest of several conformations is a minimum over them, so it is lower
+            # than a single pose even when nothing moved nearer: say so
+            drifted = (rp["conformation_median"] > p.get("median_rmsd", 0.0))
+            caution = (" The middle conformation is farther from the crystal pose than the "
+                       "starting pose was, so the ensemble as a whole did not move towards it."
+                       if drifted else "")
+            out += [f"**Did the simulation repair the pose?** The nearest kept conformation of "
+                    f"each ligand is a median {rp['nearest_median']:.2f} A from its crystal "
+                    f"pose and the middle conformation {rp['conformation_median']:.2f} A, "
+                    f"against {p.get('median_rmsd', float('nan')):.2f} A for the pose the "
+                    f"simulation started from. So two nanoseconds in the site bring the ligand "
+                    f"{moved} the pose it should have had. The nearest conformation is "
+                    f"chosen after the fact, out of {rec['frames_mean']:.1f} of "
+                    f"them, so part of that is a smallest of several and not repair."
+                    + caution, ""]
+
+        fixed = m.get("docked_uniform")
+        if fixed:
+            if fixed["lo"] > 0:
+                says = (f"**Where the pose is not known, the ensemble is worth something.** The "
+                        f"reading fixed in advance gives {fixed['delta']:+.3f} "
+                        f"[{fixed['lo']:+.3f}, {fixed['hi']:+.3f}] against the single pose it "
+                        f"started from, which clears the interval. That is the opposite of what "
+                        f"the same reading does on crystal poses, and it is what the item "
+                        f"expected: an ensemble covers a pose that is wrong.")
+            elif fixed["hi"] < 0:
+                says = (f"**The ensemble is worse than the single pose it started from**, "
+                        f"{fixed['delta']:+.3f} [{fixed['lo']:+.3f}, {fixed['hi']:+.3f}] for "
+                        f"the reading fixed in advance, beyond the interval.")
+            else:
+                says = (f"**The ensemble gains nothing here either.** The reading fixed in "
+                        f"advance gives {fixed['delta']:+.3f} [{fixed['lo']:+.3f}, "
+                        f"{fixed['hi']:+.3f}] against the single pose it started from, which "
+                        f"does not clear the interval. So the place where an ensemble should "
+                        f"help most does not show it helping, on this set and at this length.")
+            best = max((t for t in DOCK_TAGS if t.startswith("docked_") and t in m),
+                       key=lambda t: m[t]["delta"], default=None)
+            if best and best != "docked_uniform":
+                b = m[best]
+                says += (f" The largest of the three readings is {DOCK_LABEL[best]}, "
+                         f"{b['delta']:+.3f} [{b['lo']:+.3f}, {b['hi']:+.3f}], and taking the "
+                         f"largest of three is what the section above measured the cost of.")
+            out += [says, ""]
+        cr = (m.get("docked") or {}).get("vs_crystal") or {}
+        if cr:
+            out += [f"What the whole exercise costs: posing the ligands instead of reading their "
+                    f"crystal poses gives {cr['delta']:+.3f} [{cr['lo']:+.3f}, "
+                    f"{cr['hi']:+.3f}] of q2. That is the size of the thing an ensemble would "
+                    f"have to repair.", ""]
+    return out
+
+
+# ----------------------------------------------------------------------------------------------
 # where the kernel is normalised
 # ----------------------------------------------------------------------------------------------
 
@@ -356,7 +578,15 @@ LABEL = {"crystal": "the crystal pose", "conformers": "generated conformations",
 
 
 #: file endings in the results directory that are not a set's own result
-OTHER_RESULTS = ("_norm.json",)
+OTHER_RESULTS = ("_norm.json", "_docked.json")
+
+#: the stage for poses that are not known: the posing method, and the models it compares
+DOCK_METHOD = "pocket"
+DOCK_TAGS = ("crystal", "docked", "docked_uniform", "docked_population", "docked_mil")
+DOCK_LABEL = {"crystal": "the crystal pose", "docked": "the pose that was found",
+              "docked_uniform": "trajectory from it, clusters equal",
+              "docked_population": "trajectory from it, by population",
+              "docked_mil": "trajectory from it, multi-instance"}
 
 #: the one reading of the trajectory that was fixed before the sets were compared with each
 #: other: the ensemble with every conformation weighing the same. It contains no choice -- there
@@ -470,6 +700,7 @@ def report(results=RESULTS, path=None):
     out += verdict(rows)
     out += fixed_section(rows)
     out += ownframe_section(rows)
+    out += docked_section(load_docked(results))
     out += norm_section(load_norms(results))
     text = "\n".join(out) + "\n"
     if path:
@@ -905,6 +1136,10 @@ def main(argv=None):
     ap.add_argument("--sets", nargs="*", default=list(SETS))
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--report", nargs="?", const=os.path.join(RESULTS, "table.md"), default=None)
+    ap.add_argument("--docked", action="store_true",
+                    help="measure the same comparison on poses that were found rather than "
+                         "read: needs examples/make_docked_poses.py and a simulation started "
+                         "from its poses")
     ap.add_argument("--normalisation", action="store_true",
                     help="measure the uniform ensemble against the multi-instance fit at "
                          "beta = 0, which is the same model with the kernel normalised "
@@ -919,6 +1154,8 @@ def main(argv=None):
     for name in a.sets:
         if a.normalisation:
             stage_normalisation(name, force=a.force)
+        elif a.docked:
+            stage_docked(name, force=a.force)
         else:
             run_set(name, force=a.force)
     report(path=os.path.join(RESULTS, "table.md"))
