@@ -625,10 +625,97 @@ def fig_kfda(path):
                  f"{len(mf) - n_act} inactives, λ = {lam:g}, cross-validated AUC {auc:.2f}")
 
 
+def fig_scatter(path):
+    """Chapter 7: observed against predicted for the steroid model, cross-validation and test set.
+
+    The model is the one of the search figure, at the best point of the grid, so the numbers in
+    the legend are the ones the Statistics tab shows after a search on that set.
+    """
+    import matplotlib.pyplot as plt
+    from cmfqsar.fields import AtomTable
+    s = steroids()
+    ds, mf, model = s["ds"], s["mf"], s["model"]
+    te = list(ds.test_indices)
+    y_test = ds.activity[te]
+    yp = model.evaluate_test(AtomTable.from_molecules([mf[i] for i in te]), y_test)
+    st = model.stats
+    ycv = np.asarray(st.extra["y_cv"], float)
+    alpha, lam = s["fs"].specs[0].alpha, float(model.params["lam"])
+    worst = int(np.argmax(np.abs(yp - y_test)))
+    print(f"  scatter: alpha = {alpha:g}, lambda = {lam:g}, q2 = {st.q2:.3f}, R2pred = {st.r2_pred:.3f} "
+          f"(test variance) / {st.r2_pred_train_mean:.3f} (training mean), RMSEpred = {st.rmse_pred:.3f}; "
+          f"largest error {ds.names[te[worst]]} ({yp[worst] - y_test[worst]:+.2f})")
+    fig, ax = plt.subplots(figsize=(WIDTH * 0.62, WIDTH * 0.62))
+    values = np.concatenate([s["y"], ycv, y_test, yp])
+    lo, hi = values.min() - 0.3, values.max() + 0.3
+    ax.plot([lo, hi], [lo, hi], color="0.6", lw=0.8, zorder=1)
+    ax.scatter(s["y"], ycv, s=24, marker="o", color="C0", edgecolor="white", linewidth=0.5,
+               zorder=2, label=f"cross-validation, q² = {st.q2:.2f}")
+    ax.scatter(y_test, yp, s=28, marker="s", color="C3", edgecolor="white", linewidth=0.5,
+               zorder=3, label=f"test set, R²pred = {st.r2_pred:.2f} or {st.r2_pred_train_mean:.2f}")
+    ax.annotate(ds.names[te[worst]], (y_test[worst], yp[worst]), xytext=(5, 6),
+                textcoords="offset points", fontsize=7, color="C3")
+    ax.set_xlim(lo, hi)
+    ax.set_ylim(lo, hi)
+    ax.set_aspect("equal")
+    ax.set_xlabel("observed pK")
+    ax.set_ylabel("predicted pK")
+    ax.legend(frameon=False, loc="lower right")
+    ax.set_title(f"steroid set: {len(s['y'])} training and {len(te)} test molecules\n"
+                 f"kernel ridge regression, α = {alpha:g}, λ = {lam:g}")
+    fig.tight_layout()
+    save(fig, path)
+
+
+def fig_roc(path):
+    """Chapter 9: the ROC curves of the kernel Fisher discriminant on AChE, on the split of the file."""
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import roc_curve
+    from cmfqsar import CMFModel
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.fields import AtomTable, FieldSet, build_fields
+    threshold, alpha, lam = 6.84, 0.5, 0.01
+    ds = load_dataset(os.path.join(ROOT, "examples", "sutherland", "AChE.sdf"))
+    labels = np.where(ds.activity >= threshold, 1.0, -1.0)
+    fs = FieldSet.create(alpha=alpha, charge_model="file")
+    mf = [build_fields(m, fs, n) for m, n in zip(ds.mols, ds.names)]
+    tr, te = list(ds.train_indices), list(ds.test_indices)
+    model = CMFModel(fieldset=fs, task="classification", method="kfda", normalize=True,
+                     params={"lam": lam})
+    model.fit(AtomTable.from_molecules([mf[i] for i in tr]), labels[tr], cv_folds=5)
+    model.evaluate_test(AtomTable.from_molecules([mf[i] for i in te]), labels[te])
+    st = model.stats
+    curves = [("fit", labels[tr], st.extra["y_fit"], st.fit),
+              (f"{st.cv_folds}-fold cross-validation", labels[tr], st.extra["y_cv"], st.cv),
+              ("test set", labels[te], st.extra["y_test_pred"], st.test)]
+    n_act = int(np.sum(labels[tr] > 0)), int(np.sum(labels[te] > 0))
+    print(f"  ROC on AChE: {n_act[0]} of {len(tr)} training and {n_act[1]} of {len(te)} test "
+          f"molecules active above {threshold}; AUC "
+          + ", ".join(f"{label} {scores['auc']:.3f}" for label, _, _, scores in curves))
+    fig, ax = plt.subplots(figsize=(WIDTH * 0.62, WIDTH * 0.62))
+    ax.plot([0, 1], [0, 1], color="0.6", lw=0.8, ls="--", zorder=1)
+    for k, (label, y, decision, scores) in enumerate(curves):
+        fp, tp, _ = roc_curve((np.asarray(y) > 0).astype(int), np.asarray(decision, float))
+        ax.plot(fp, tp, lw=1.4, color=f"C{k}", zorder=2 + k,
+                label=f"{label}, AUC = {scores['auc']:.2f}")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect("equal")
+    ax.set_xlabel("false positive rate")
+    ax.set_ylabel("true positive rate")
+    ax.legend(frameon=False, loc="lower right")
+    ax.set_title(f"AChE: {n_act[0]} of {len(tr)} training and {n_act[1]} of {len(te)} test "
+                 f"molecules active\nkernel Fisher discriminant, α = {alpha:g}, λ = {lam:g}")
+    fig.tight_layout()
+    save(fig, path)
+
+
 FIGURES = {
     "fields.png": fig_fields,
     "overlap.svg": fig_overlap,
     "search.svg": fig_search,
+    "scatter.svg": fig_scatter,
+    "roc.svg": fig_roc,
     "errorpred.svg": fig_errorpred,
     "cofield.png": fig_cofield,
     "overlapmap.png": fig_overlapmap,

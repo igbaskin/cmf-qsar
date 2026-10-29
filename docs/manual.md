@@ -3247,6 +3247,8 @@ and the ROC curve, each for the fit, the cross-validation and the test set. Scre
 enrichment factors at 0.5, 1, 5 and 10 %, the best achievable enrichment at each of those
 fractions, BEDROC and RIE.
 
+![Observed against predicted for the kernel ridge model of the steroid set at the best point of the grid of *Attenuation, regularisation and the grids*: the cross-validated predictions of the training molecules and the predictions of the ten test molecules, with the line of a perfect prediction. The two values of R²pred are the two conventions, against the variance of the test set and against the training mean; the test affinities span a narrow range, so the first is negative while the second is not. The molecule named is the only one with a fluorine, an atom the training set does not contain. The *Scatter plot* tab shows the same points and names the molecule under the cursor.](docs/figures/scatter.svg)
+
 ## Saving and reusing
 
 *File → Save model…* writes a `.cmf` file (joblib) holding the field set, the kernels' definition,
@@ -3989,6 +3991,8 @@ classifier; the *ROC* and *Scores* tabs replace the scatter plot.
 python cmf_cli.py build examples/sutherland/AChE.sdf --charges file \
        --task classification --threshold 6.84 --method gpc --Cs 1,10,100
 ```
+
+![The ROC curves of a classification model of the AChE set with the classes of the command above, here the kernel Fisher discriminant of *A classifier with a co-field* on the split of the file: the fit on the training molecules, their five-fold cross-validation and the test set, each with its area under the curve. The curve of the fit says how well the model separates the molecules it was fitted on; the other two say how well it separates molecules it has not seen. The *ROC* tab draws the same curves.](docs/figures/roc.svg)
 
 ## One-class models: screening with actives alone
 
