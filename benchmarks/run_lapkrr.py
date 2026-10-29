@@ -5,10 +5,11 @@ Laplacian-regularised kernel ridge regression: do molecules without an activity 
 Every learner in this program fits the molecules whose activity is known and ignores the rest.
 A screening library, a set of decoys, a batch not yet measured: these molecules have fields, and
 manifold regularisation (Belkin, Niyogi & Sindhwani 2006) is the standard way of putting them to
-use.  A second penalty, ``gamma f' L f`` over the graph of field similarity, asks the prediction
+use.  A second penalty, ``gamma g' L g`` over the graph of field similarity, asks the prediction
 to change slowly between molecules that are close in field space, whether or not they are
-labelled.  ``--method lapkrr`` adds that penalty to kernel ridge regression; this script measures
-what it gains, in the two halves of the gate the plan entry sets.
+labelled (``g = K a``, the prediction without its bias term).  ``--method lapkrr`` adds that
+penalty to kernel ridge regression; this script measures what it gains, in the two halves of the
+gate the plan entry sets.
 
 Part 1, the hidden half (regression)
 ------------------------------------

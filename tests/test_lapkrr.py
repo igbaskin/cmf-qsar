@@ -124,6 +124,31 @@ def test_the_solve_is_the_minimum_of_the_objective():
         assert _objective(K, y_half, a, b + db, lam, gamma, k) >= best * (1.0 - 1e-9)
 
 
+def test_the_bias_stays_outside_the_smoothness_penalty():
+    """The penalty is gamma (K a)' L (K a) and not gamma (K a + b)' L (K a + b).
+
+    The two are different objectives, because L 1 is not zero for a normalised Laplacian, while
+    it is zero for the unnormalised one.  The documented formula therefore has to say which of
+    the two is minimised, and this test holds it to that: the fit is the stationary point of the
+    first (the test above) and is not a minimum of the second.
+    """
+    K, _y, y_half = _problem(n=50, seed=11)
+    lam, gamma, k = 0.1, 0.5, 8
+    L = knn_laplacian(K, neighbours=k)
+    assert np.abs(L @ np.ones(len(K))).max() > 1e-6   # a constant is not free under this L
+    a, b = lapkrr_fit(K, y_half, lam, manifold=gamma, neighbours=k)
+    assert b != 0.0                                   # otherwise the two objectives coincide
+
+    def bias_inside(a, b):
+        lab = np.isfinite(y_half)
+        f = K @ a + b
+        return (float(np.sum((y_half[lab] - f[lab]) ** 2)) + lam * float(a @ K @ a)
+                + gamma * float(f @ L @ f))
+
+    base = bias_inside(a, b)
+    assert min(bias_inside(a, b + db) for db in (-1e-3, 1e-3)) < base - 1e-9
+
+
 def test_the_stated_dual_system_is_what_is_solved():
     """(J K + lam I + gamma L K) a = J y, the equation of the plan entry, with b = 0."""
     K, _y, y_half = _problem(n=40, seed=8)

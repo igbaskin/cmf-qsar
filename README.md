@@ -2997,9 +2997,10 @@ python cmf_cli.py build examples/sutherland/AChE.sdf --charges file --task class
 A screening library, a set of decoys, a batch synthesised but not yet measured: molecules with
 fields and no activity, and usually far more of them than there are measurements. `--method
 lapkrr` is the standard way of using them, **manifold regularisation** (Belkin, Niyogi and
-Sindhwani 2006). Kernel ridge regression gains a second penalty `gamma f' L f` over the Laplacian
-of the graph of field similarity, which is small when the prediction changes slowly between
-molecules the kernel calls similar, whether or not they carry an activity. The dual is one solve
+Sindhwani 2006). Kernel ridge regression gains a second penalty `gamma g' L g` over the Laplacian
+of the graph of field similarity, with `g = K a` the prediction without its bias term. That
+penalty is small when the prediction changes slowly between molecules the kernel calls similar,
+whether or not they carry an activity. The dual is one solve
 over all `n` molecules, `(J K + lambda I + gamma L K) a = J y` with `J` the indicator of the
 labelled ones, so the fitted model is still one kernel expansion — with the unlabelled molecules
 among its terms, which is what lets a co-field picture see the library. The activity of an

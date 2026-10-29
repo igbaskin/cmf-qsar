@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1487 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1488 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1633,8 +1633,15 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   two additions the entry does not state and that both matter: the affinity is the **cosine** of
   the kernel, so that a neighbour is a similar molecule and not a big one, and every molecule
   keeps its ten closest neighbours, which is the truncation the entry asks for.
+  **The penalty is taken over the model without its bias**, that is over `K a` and not over
+  `K a + b`, and the entry's `γ fᵀLf` is read in that sense throughout. Adding the same constant
+  to every activity does not make a model vary faster, so a bias should not be charged for. It is
+  worth stating because `L 1` is not zero for a normalised Laplacian, while it is zero for the
+  unnormalised one: a bias inside the penalty would be charged for being a constant, and the dual
+  above would carry a further `γ L 1 b` term in its extra column. `tests/test_lapkrr.py` fixes the
+  choice in both directions.
   `--method lapkrr` with `--unlabelled`, `--manifold-weights` and `--neighbours`;
-  `tests/test_lapkrr.py` (26 tests); `benchmarks/run_lapkrr.py`, registered in `run_all.py`.
+  `tests/test_lapkrr.py` (27 tests); `benchmarks/run_lapkrr.py`, registered in `run_all.py`.
   **The one design decision the entry leaves open, and it is the reason every co-field reader
   still works.** The activity of an unlabelled molecule is **nan**. A learner needing more than
   `(K, y)` is new in this program, and the alternative -- a second block of molecules handed to

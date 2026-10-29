@@ -431,19 +431,27 @@ def lapkrr_fit(K: np.ndarray, y: np.ndarray, lam: float, manifold: float = 1.0,
     molecules have fields but no activity, and plain kernel ridge regression cannot use them at
     all.  Here they enter through a second penalty,
 
-        gamma f' L f,
+        gamma g' L g,        g = K a,
 
-    with f the predicted values at all n molecules and L the normalised Laplacian of the graph
-    of field similarity (:func:`cmfqsar.spectral.knn_laplacian`).  That term is small when the
-    prediction changes slowly between molecules that are close in field space, whether or not
-    they are labelled, so the unlabelled molecules say where the prediction may vary and where
-    it may not.  Minimising it together with the squared error on the labelled molecules and the
-    usual ridge gives one dual solve over all n molecules,
+    where g holds the predicted values at all n molecules without the bias term, and L is the
+    normalised Laplacian of the graph of field similarity
+    (:func:`cmfqsar.spectral.knn_laplacian`).  That term is small when the prediction changes
+    slowly between molecules that are close in field space, whether or not they are labelled, so
+    the unlabelled molecules say where the prediction may vary and where it may not.  Minimising
+    it together with the squared error on the labelled molecules and the usual ridge gives one
+    dual solve over all n molecules,
 
         (J K + lam I + gamma L K) a = J y,
 
     where J is the diagonal indicator of the molecules that have an activity.  With a bias term
     the stationarity conditions add one row and one column, exactly as in :func:`krr_fit`.
+
+    **The bias stays outside the penalty**, which is what ``g = K a`` says above.  Adding the
+    same constant to every activity does not make a model vary faster, so a bias should not be
+    charged for.  The distinction matters here, because ``L 1`` is not zero for a normalised
+    Laplacian, while it is zero for the unnormalised one.  A bias inside the penalty would
+    therefore be charged for being a constant, and the dual above would carry a further
+    ``gamma L 1 b`` term in its extra column.
 
     **The activities of the unlabelled molecules are passed as nan.**  A learner that needs more
     than (K, y) is new in this program, and the alternative -- a second kernel block handed to
@@ -453,7 +461,7 @@ def lapkrr_fit(K: np.ndarray, y: np.ndarray, lam: float, manifold: float = 1.0,
     the training table has to hold all n; marking the missing activities in y is what keeps the
     model one kernel expansion over one training table and every reader of it unchanged.
 
-    **The assumption.**  gamma f' L f asks the activity to vary smoothly along the data.  An
+    **The assumption.**  gamma g' L g asks the activity to vary smoothly along the data.  An
     activity cliff -- two molecules whose fields are nearly the same and whose activities are
     not -- breaks that assumption, and the penalty then pulls the prediction of both towards
     their average.  How many such pairs a set holds is therefore worth counting before the

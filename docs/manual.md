@@ -2528,12 +2528,12 @@ $L$ the Laplacian of the graph of field similarity,
 
 $$
 \sum_{i \in \text{labelled}} \left(y_i - f(x_i)\right)^2 + \lambda\,\|f\|^2
-+ \gamma\, f^{T} L f, \qquad f(x) = \sum_j a_j K(x, x_j) + b,
++ \gamma\, g^{T} L g, \qquad f(x) = \sum_j a_j K(x, x_j) + b, \qquad g = K a,
 $$
 
 where the sum over $j$ now runs over **every** molecule, labelled or not. The third term is small
-when $f$ takes similar values at molecules the kernel calls similar. Setting the derivatives to
-zero gives one linear solve over all $n$ molecules,
+when the prediction takes similar values at molecules the kernel calls similar. Setting the
+derivatives to zero gives one linear solve over all $n$ molecules,
 
 $$
 (J K + \lambda I + \gamma L K)\, a = J y,
@@ -2543,6 +2543,13 @@ with one extra row and column for the bias, exactly as for kernel ridge regressi
 model is still one kernel expansion, and **the co-field, the molecule contributions and the atom
 contributions all read it with no special case** — with the unlabelled molecules now among the
 terms, which is what lets a co-field picture see the library.
+
+**The bias stays outside the penalty.** That is what $g = K a$ says above: $g$ holds the predicted
+values without the bias term. Adding the same constant to every activity does not make a model
+vary faster, so a bias should not be charged for. The distinction matters here, because
+$L \mathbf{1}$ is not zero for a normalised Laplacian, while it is zero for the unnormalised one.
+A bias inside the penalty would therefore be charged for being a constant, and the solve above
+would carry a further $\gamma L \mathbf{1} b$ term in its extra column.
 
 **How the activities are passed.** The activity of an unlabelled molecule is `nan`. A learner that
 needs more than the kernel and the activities is new in this program, and the alternative — a
@@ -2559,7 +2566,7 @@ its `--neighbours` closest neighbours (10 by default). Without that truncation e
 neighbour of every other and the penalty asks the prediction to be flat over the whole set instead
 of smooth along it.
 
-**The assumption, which is the whole of it.** $\gamma f^{T} L f$ says the activity varies smoothly
+**The assumption, which is the whole of it.** $\gamma g^{T} L g$ says the activity varies smoothly
 along the data. An **activity cliff** — two molecules whose fields are nearly the same and whose
 activities are not — says it does not, and where there is one the penalty pulls both predictions
 towards their average.
