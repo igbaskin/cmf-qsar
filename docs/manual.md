@@ -5830,8 +5830,9 @@ COMPAS-1 numbers are not filled in.
 **The 34,072 molecules of COMPAS-1x.** The same model in the space of landmark molecules
 (`--stage scaling`, the Nyström path of `cmfqsar/lowrank.py`, with the attenuations and the
 ridge of the COMPAS-1D model and the compiled kernel engine) reaches a test R² of 0.80 with 500
-landmarks and the same with 1,000, at an RMSE of 0.133 eV on the GFN2-xTB gaps; the rank of the
-feature map grows only from 2,244 to 2,570 where the number of columns doubles. The fields of
+landmarks and the same with 1,000 and 2,000, at an RMSE of 0.133 eV on the GFN2-xTB gaps; the
+rank of the feature map grows only from 2,244 to 2,722 where the number of columns quadruples.
+The fields of
 planar molecules in one frame span a few thousand directions, so the 34k set is a quarter of an
 hour of kernel evaluation against a few hundred landmarks and never its 34k × 34k matrix.
 

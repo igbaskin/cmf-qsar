@@ -3123,8 +3123,8 @@ What it leaves open, in order:
 
 * **PBH1. The Nyström path on COMPAS-1x, done** (34,072 molecules at GFN2-xTB, `--stage
   scaling`): with the attenuations and ridge of the COMPAS-1D model, 500 landmark molecules give
-  q² 0.78 and test R² 0.80, and 1,000 give the same to three decimals while the rank of the
-  feature map grows only from 2,244 to 2,570. The fields of planar molecules in one frame span a
+  q² 0.78 and test R² 0.80, and 1,000 and 2,000 give the same to three decimals while the rank
+  of the feature map grows only from 2,244 to 2,722. The fields of planar molecules in one frame span a
   few thousand directions, so the 34k set is a quarter of an hour of kernel evaluation against a
   few hundred landmarks. Two things the run taught: the landmark path has to run on the compiled
   kernel engine (the NumPy path is single-threaded, and `fit_low_rank` builds the feature map

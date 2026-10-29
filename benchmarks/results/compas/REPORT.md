@@ -56,9 +56,10 @@ the space of m landmark molecules):
 |---|---|---|---|---|---|---|
 | 500 | 2,244 | 0.78 | 0.80 | 0.133 | 0.106 | 15 |
 | 1,000 | 2,570 | 0.78 | 0.80 | 0.133 | 0.106 | 22 |
+| 2,000 | 2,722 | 0.78 | 0.80 | 0.133 | 0.106 | 55 |
 
-The approximation has converged at 500 landmarks: doubling them changes nothing to three decimals,
-and the rank grows by 15 % where the number of columns doubles. The fields of these planar molecules
+The approximation has converged at 500 landmarks: quadrupling them changes nothing to three
+decimals, and the rank grows by a fifth where the number of columns quadruples. The fields of these planar molecules
 in one frame span a few thousand directions, so a model of the 34k set costs the kernel of every
 molecule against a few hundred landmarks, built on all cores in a quarter of an hour, and never the
 34k × 34k matrix.

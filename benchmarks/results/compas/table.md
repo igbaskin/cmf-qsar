@@ -45,6 +45,7 @@ Test RMSE (eV) over the molecules of three rings and more, random splits: {A,B,C
 |---|---|---|---|---|---|---|---|
 | COMPAS-1x | 34072 | 500 | 2244 | 0.782 | 0.803 | 0.133 | 902 |
 | COMPAS-1x | 34072 | 1000 | 2570 | 0.782 | 0.803 | 0.133 | 1296 |
+| COMPAS-1x | 34072 | 2000 | 2722 | 0.782 | 0.803 | 0.133 | 3319 |
 
 ### Interpretation
 
