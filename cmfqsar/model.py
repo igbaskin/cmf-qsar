@@ -47,6 +47,13 @@ def rmse(y: np.ndarray, yp: np.ndarray) -> float:
     return float(np.sqrt(np.mean((y - yp) ** 2)))
 
 
+def mae(y: np.ndarray, yp: np.ndarray) -> float:
+    """The mean absolute error."""
+    y = np.asarray(y, float)
+    yp = np.asarray(yp, float)
+    return float(np.mean(np.abs(y - yp)))
+
+
 @dataclass
 class ModelStats:
     n_train: int = 0

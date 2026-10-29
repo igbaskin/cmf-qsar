@@ -476,7 +476,7 @@ class ModelPanel(QWidget):
         self.chk_cif = QCheckBox("Indicator fields (CIF)")
         self.chk_cif.toggled.connect(self.fields_changed)
         self.cmb_cif_scheme = QComboBox()
-        self.cmb_cif_scheme.addItems(["sybyl", "element", "element+aromatic"])
+        self.cmb_cif_scheme.addItems(["sybyl", "element", "element+aromatic", "pbh"])
         self.cmb_cif_scheme.currentIndexChanged.connect(self.fields_changed)
         self.spin_cif_min = QSpinBox()
         self.spin_cif_min.setRange(1, 999)

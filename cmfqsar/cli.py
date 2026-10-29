@@ -3548,7 +3548,7 @@ def main(argv=None):
                         "evaluate a screening model: reports AUC and enrichment at the top 1/5/10 %%")
     b.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
     b.add_argument("--cif", action="store_true", help="add continuous indicator fields")
-    b.add_argument("--cif-scheme", default="sybyl", choices=["sybyl", "element", "element+aromatic"])
+    b.add_argument("--cif-scheme", default="sybyl", choices=["sybyl", "element", "element+aromatic", "pbh"])
     b.add_argument("--cif-min", type=int, default=5, help="min. number of molecules containing an atom type")
     b.add_argument("--cif-types", default=None,
                    help="explicit comma-separated list of CIF atom types (overrides the --cif-min selection)")
@@ -4063,7 +4063,7 @@ def main(argv=None):
     g.add_argument("--all", action="store_true", help="map every molecule, not only the training set")
     g.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
     g.add_argument("--cif", action="store_true")
-    g.add_argument("--cif-scheme", default="sybyl", choices=["sybyl", "element", "element+aromatic"])
+    g.add_argument("--cif-scheme", default="sybyl", choices=["sybyl", "element", "element+aromatic", "pbh"])
     g.add_argument("--cif-min", type=int, default=5)
     g.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
     g.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
@@ -4088,7 +4088,7 @@ def main(argv=None):
     cp.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
     cp.add_argument("--cif", action="store_true")
     cp.add_argument("--cif-scheme", default="sybyl",
-                    choices=["sybyl", "element", "element+aromatic"])
+                    choices=["sybyl", "element", "element+aromatic", "pbh"])
     cp.add_argument("--cif-min", type=int, default=5)
     cp.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
     cp.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
@@ -4112,7 +4112,7 @@ def main(argv=None):
     cl.add_argument("--fields", default="electrostatic,steric,hydrophobic,hba,hbd")
     cl.add_argument("--cif", action="store_true")
     cl.add_argument("--cif-scheme", default="sybyl",
-                    choices=["sybyl", "element", "element+aromatic"])
+                    choices=["sybyl", "element", "element+aromatic", "pbh"])
     cl.add_argument("--cif-min", type=int, default=5)
     cl.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
     cl.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
@@ -4130,7 +4130,7 @@ def main(argv=None):
                     help="the fields of view A")
     kc.add_argument("--cif", action="store_true")
     kc.add_argument("--cif-scheme", default="sybyl",
-                    choices=["sybyl", "element", "element+aromatic"])
+                    choices=["sybyl", "element", "element+aromatic", "pbh"])
     kc.add_argument("--cif-min", type=int, default=5)
     kc.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
     kc.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
@@ -4273,7 +4273,7 @@ def main(argv=None):
     h.add_argument("--cif-min", type=int, default=5, metavar="N",
                    help="an indicator field needs atoms of its type in at least N molecules")
     h.add_argument("--cif-scheme", default="sybyl",
-                   choices=["sybyl", "element", "element+aromatic"])
+                   choices=["sybyl", "element", "element+aromatic", "pbh"])
     h.add_argument("--charges", default="gasteiger", choices=["gasteiger", "mmff", "file"])
     h.add_argument("--param", default="rdkit", choices=["rdkit", "tripos", "tripos-legacy"])
     h.add_argument("--raw-kernels", action="store_true")

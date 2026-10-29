@@ -199,10 +199,19 @@ def element_aromatic_atom_type(atom: Chem.Atom) -> str:
     return sym + ".ar" if atom.GetIsAromatic() else sym
 
 
+def pbh_atom_type(atom: Chem.Atom) -> str:
+    """The carbon classes of a benzenoid hydrocarbon: a rim carbon bonded to a hydrogen
+    (``C.H``), a carbon shared by two rings (``C.2r``), by three (``C.3r``); see
+    :func:`cmfqsar.pbh.pbh_atom_type`."""
+    from .pbh import pbh_atom_type as _pbh_atom_type
+    return _pbh_atom_type(atom)
+
+
 TYPING_SCHEMES = {
     "sybyl": sybyl_atom_type,
     "element": element_atom_type,
     "element+aromatic": element_aromatic_atom_type,
+    "pbh": pbh_atom_type,
 }
 
 

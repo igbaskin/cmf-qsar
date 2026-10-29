@@ -33,6 +33,10 @@ happens in Sybyl MOL2 files). ::
     pharm:<feature> the same for one of six pharmacophore features (donor, acceptor, aromatic,
                     hydrophobe, cation, anion); see cmfqsar/pharmtypes.py
                     (Sitnikov et al. 2015, Eq. 6)
+    ring:<class>    one Gaussian per benzene-ring centroid, w = 1 for rings of the annulation
+                    class <class> (terminal, linear, angular, branched) or w = the Clar-sextet
+                    share of the ring (sextet); the centroids are pseudo-atoms appended by
+                    cmfqsar/pbh.py
 """
 from __future__ import annotations
 
@@ -77,6 +81,8 @@ class FieldSpec:
             return self.name[6:].capitalize()
         if self.name.startswith("prop:"):
             return self.name[5:]
+        if self.name.startswith("ring:"):
+            return "Ring " + self.name[5:]
         return FIELD_LABELS.get(self.name, self.name)
 
     @property
@@ -114,13 +120,23 @@ class FieldSpec:
     def probe(self) -> Optional[str]:
         return self.name[6:] if self.is_probe else None
 
+    @property
+    def is_ring(self) -> bool:
+        """A field carried by one Gaussian per ring centroid rather than by the atoms
+        (``ring:<class>``; see :mod:`cmfqsar.pbh`)."""
+        return self.name.startswith("ring:")
+
+    @property
+    def ring_class(self) -> Optional[str]:
+        return self.name[5:] if self.is_ring else None
+
 
 @dataclass
 class FieldSet:
     """The complete set of field types used by a model plus parameterisation options."""
     specs: List[FieldSpec] = field(default_factory=list)
     charge_model: str = "gasteiger"     # "gasteiger" | "mmff" | "file"
-    cif_scheme: str = "sybyl"           # "sybyl" | "element" | "element+aromatic"
+    cif_scheme: str = "sybyl"           # "sybyl" | "element" | "element+aromatic" | "pbh"
     param_scheme: str = "rdkit"         # "rdkit" | "tripos" | "tripos-legacy"
     #: increments fitted to the data instead of taken from the published table (plan item D5),
     #: keyed by "<Sybyl type>/<hydrogen count>"; used only with a "tripos" parameterisation
@@ -179,6 +195,7 @@ class FieldSet:
                descriptor_h: float = 1.0, probes: Sequence[str] = (),
                probe_terms: int = 4,
                pharm_features: Sequence[str] = (),
+               ring_classes: Sequence[str] = (),
                protonation_ph: Optional[float] = None, protonation_states: int = 8,
                protonation_min: float = 0.01, tautomers: str = "",
                tautomer_forms: int = 8) -> "FieldSet":
@@ -192,6 +209,10 @@ class FieldSet:
             # an indicator field of a pharmacophore feature rather than of an atom type: six
             # of them instead of twenty-odd, each carried by most molecules of a series
             specs.append(FieldSpec(name=f"pharm:{p}", kind="gauss", alpha=alpha))
+        for rc in ring_classes:
+            # one Gaussian per benzene-ring centroid of the named annulation class, or
+            # weighted by the Clar-sextet share (cmfqsar/pbh.py)
+            specs.append(FieldSpec(name=f"ring:{rc}", kind="gauss", alpha=alpha))
         for pr in probes:
             # a GRID-like field: what a probe would gain by sitting at each point. Its alpha
             # is unused -- the widths come from the expansion in cmfqsar/probes.py
@@ -975,6 +996,10 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
         elif spec.is_probe:
             # the weight column is unused for a probe field: its atoms carry several
             # Gaussians each, which are kept in probe_coeffs below
+            W[:, k] = 0.0
+        elif spec.is_ring:
+            # the weight sits on the ring-centre pseudo-atoms that
+            # cmfqsar.pbh.build_pbh_fields appends afterwards; the atoms carry none of it
             W[:, k] = 0.0
         else:
             raise ValueError(f"Unknown field type {spec.name}")
