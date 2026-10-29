@@ -1,6 +1,6 @@
 {
- "commit": "f4ded78fd95d110ce30ec913dee729af035fc761",
- "created": "2026-10-29T18:00:34",
+ "commit": "5c28e5513661d2da6e4aa3b5a08ba24a46323cde",
+ "created": "2026-10-29T21:05:16",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -607,8 +607,8 @@
    "sha256": "29e881e7fc12c73bbd94282b50571c4f9dd71e009f06c3810564e54d7bf69021"
   },
   "examples/make_antitarget_examples.py": {
-   "bytes": 18381,
-   "sha256": "c6f1126545efeb56a4378cc7cd72f59a5361960a77deca5404712d6bcbeb169f"
+   "bytes": 18379,
+   "sha256": "7a89f4385c6d91414959c36781dc8b1898fb63fff0bb48c7d6bac5a4545fe8ff"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -1667,7 +1667,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "packages": {
   "PyOpenGL": "3.1.10",
   "PySide6": "6.11.1",
@@ -1825,8 +1825,8 @@
   "benchmarks/results/cofield_error/THER.json": "e1ad96f166b74bfefd2fdb4ebd4131db97631ed43ccd0dd1500ade0de2caaab1",
   "benchmarks/results/cofield_error/THR.json": "ec962f4b1027f8645961dd47c337e2be53e3fbf4843f6a143191edeb661d65fe",
   "benchmarks/results/cofield_error/table.md": "10b3f3c6d81e404c2cdc4828e3ad247abece30de02005ecf21f02a0c8502b0ca",
-  "benchmarks/results/compas/NOTES.md": "10e773685ea63400f3d560126b937e51d664f8a3592b00bbd6a19aeb725eb230",
-  "benchmarks/results/compas/REPORT.md": "be966537baa76e17fbdd077e80800d22a628c6a233475e4145419eb61f89027a",
+  "benchmarks/results/compas/NOTES.md": "93d3eab7ad991b9b452dff981293e2872e9c4823e47b1175e55fd1cd25bc942c",
+  "benchmarks/results/compas/REPORT.md": "364ec8f4d1ee2d3080d9698b7200203c0c5e966a4bb6c27b58b9c73886b4a99b",
   "benchmarks/results/compas/baselines_1D.json": "a3dc13435337443415a7d0b7dbe1ea0817163b064c6bdbd1fe159e61085cb678",
   "benchmarks/results/compas/fields_1D.json": "890d5f38f5941899e7b9a08a7ca2a958f2d97703d8faa9f0f4d0f56f49efb5f0",
   "benchmarks/results/compas/fields_ABCDE_1D.json": "e4fc4ec9c28b4a30faf7e904b9706f904764e5404d699d5abb14316a3d9415d3",
@@ -1842,7 +1842,7 @@
   "benchmarks/results/compas/narrative_hc_c26h16_0pent_13.md": "ee6cf7d38a0c3e82938fd21428d3513e2341eb411f5d11a9cb9bf9283500e66a",
   "benchmarks/results/compas/prepared_1D.json": "1ab57444e8c893c86584b53c3df832d549f57bd540e64e3ab2bb068ccc08a9b3",
   "benchmarks/results/compas/splits_1D.json": "315e464f97fcb772e5f1dd2f12efbc8e531487760f18fdbd0915eeed47128b31",
-  "benchmarks/results/compas/table.md": "47b7041424f0c6a1303e878745625b6a51d75524ee23fe266c0da02d2e6a3da5",
+  "benchmarks/results/compas/table.md": "9d806910655ba9e4d145041f8ab4aa39c1cf10b82a15359838a7f075e6509e29",
   "benchmarks/results/conformal/ACE.json": "ca49f870b34a4711c95f31afe601e24f1bea07f9cc00178a5c261682dd68f6dc",
   "benchmarks/results/conformal/AChE.json": "94e4b305deac26328070ccca9015d709e0765e62653563418ad04ab1c8f680e2",
   "benchmarks/results/conformal/BZR.json": "3d6b476647e20fe6b0ee45870b5b6affae506b2cd2391ebd128f95ed28269952",

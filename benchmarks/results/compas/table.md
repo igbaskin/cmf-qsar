@@ -41,7 +41,10 @@ Test RMSE (eV) over the molecules of three rings and more, random splits: {A,B,C
 
 ### Nystroem approximation (landmark molecules)
 
-Nystroem on COMPAS-1x: pending (second milestone).
+| set | molecules | m landmarks | rank | q2 | test R2 | test RMSE (eV) | fit time (s) |
+|---|---|---|---|---|---|---|---|
+| COMPAS-1x | 34072 | 500 | 2244 | 0.782 | 0.803 | 0.133 | 902 |
+| COMPAS-1x | 34072 | 1000 | 2570 | 0.782 | 0.803 | 0.133 | 1296 |
 
 ### Interpretation
 

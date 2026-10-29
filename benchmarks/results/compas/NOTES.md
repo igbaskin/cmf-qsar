@@ -23,7 +23,7 @@ COMPAS-1D: 8678 molecules at B3LYP-D3BJ/def2-SVP; the GitLab repository poranneg
 - The attenuations are chosen on a random subset of 2,500 training molecules (5-fold CV); the ridge is then chosen by 5-fold CV on the whole training part.
 - The aromaticity field E is the Clar-sextet share of every ring (placeholder); a NICS-weighted ring field is a follow-up that needs a DFT calculation per ring.
 - Literature numbers for the gap on COMPAS-1 are not filled in (table row 'TBD').
-- The Nystroem scaling experiment on COMPAS-1x is the second milestone; the stage exists (--stage scaling) and was smoke-tested on a subset only.
+- The Nystroem scaling experiment on COMPAS-1x (--stage scaling) uses the attenuations and the ridge of the main COMPAS-1D model (no search on the 34k set), one random 80/10/10 split, and the landmark path of cmfqsar.lowrank with the compiled kernel engine switched on for the process; the feature map of the training part is built once and the cross-validation reuses it, which CMFModel.fit_low_rank does not do.
 
 ## Decisions
 
@@ -42,4 +42,5 @@ COMPAS-1D: 8678 molecules at B3LYP-D3BJ/def2-SVP; the GitLab repository poranneg
 - The chosen hyperparameters sit at the edges of the grids: the steric attenuation at the top (its width is scaled by the van der Waals radius, so the same grid value is a wider Gaussian) and the ridge at the bottom (1e-4) for the sets with the ring fields. A wider steric grid and a smaller ridge are worth one more run; the float32 kernels limit the ridge to about 1e-5.
 - Seed 0 of the random splits puts benzene, the only one-ring molecule, in the test part; the main model extrapolates it to 10-13 eV (computed 6.72), which is the whole difference between that seed and the other four (table.md gives the RMSE over the molecules of three rings and more).
 - The Clar-sextet ring field (E), meant as a placeholder, is the single largest gain on top of {A,B,C,D}; the NICS-weighted field should be compared against it, not against the set without it.
+- On COMPAS-1x the landmark approximation converges at 500 landmark molecules: 1,000 landmarks give the same q2 and test R2 to three decimals and the rank of the feature map grows only from 2,244 to 2,570 (9 fields x 1,000 landmarks would allow 9,000). The fields of these planar molecules in one frame span a few thousand directions, which is also why the exact 8,678 x 8,678 model of COMPAS-1D is not needed for them.
 - The per-ring contributions (rule 3) are large and cancel: a ring on the +x side of the frame counts positive and one on the -x side negative, whatever its class, because the co-field has a smooth component across the frame and a ridge of 1e-4 lets the coefficients grow. Their sum is the prediction; the individual values read position as much as chemistry. A decomposition against a reference (the Shapley values of cmfqsar/shapley.py) is the next thing to try for this series.

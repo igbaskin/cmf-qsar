@@ -3121,10 +3121,14 @@ contributions of four test molecules are drawn by the benchmark.
 
 What it leaves open, in order:
 
-* **PBH1. The Nyström path on COMPAS-1x** (34,072 molecules at GFN2-xTB): the stage exists
-  (`--stage scaling`, landmark molecules through `fit_low_rank`) and was run on 300 molecules;
-  the full run (xTB charges on 34k molecules, m = 500, 1000, 2000 landmarks) is the second
-  milestone and waits for a compute estimate.
+* **PBH1. The Nyström path on COMPAS-1x, done** (34,072 molecules at GFN2-xTB, `--stage
+  scaling`): with the attenuations and ridge of the COMPAS-1D model, 500 landmark molecules give
+  q² 0.78 and test R² 0.80, and 1,000 give the same to three decimals while the rank of the
+  feature map grows only from 2,244 to 2,570. The fields of planar molecules in one frame span a
+  few thousand directions, so the 34k set is a quarter of an hour of kernel evaluation against a
+  few hundred landmarks. Two things the run taught: the landmark path has to run on the compiled
+  kernel engine (the NumPy path is single-threaded, and `fit_low_rank` builds the feature map
+  three times), and the attenuations were not searched on the 34k set.
 * **PBH2. A NICS-weighted ring field.** `ring:sextet` was meant as the placeholder and turned
   out the largest single gain; a nucleus-independent chemical shift per ring needs one DFT
   calculation per ring (`cmfqsar/orca.py` has the per-atom plumbing, not yet ghost atoms at ring

@@ -365,13 +365,15 @@ def make_fieldset(groups: str, meta: dict, alpha_by_group: Optional[Dict[str, fl
 
 def build_table(ds, fieldset: FieldSet, ring_cache: Optional[dict] = None) -> AtomTable:
     mfs = []
+    want_sextet = any(s.name == pbh.SEXTET_FIELD for s in fieldset.specs)
     for m, name in zip(ds.mols, ds.names):
         rings = None
         if ring_cache is not None:
             rings = ring_cache.get(name)
             if rings is None:
                 rings = pbh.ring_classes(m)
-                pbh.clar_weights(m, rings)
+                if want_sextet:
+                    pbh.clar_weights(m, rings)
                 ring_cache[name] = rings
         mfs.append(pbh.build_pbh_fields(m, fieldset, name=name, rings=rings))
     return AtomTable.from_molecules(mfs)
@@ -1094,10 +1096,19 @@ def write_narrative(item: dict, extremes: dict, rule2: Sequence[dict], meta: dic
 def scaling(set_key: str = "1x", groups: str = MAIN_SET, limit: Optional[int] = None,
             ms: Sequence[int] = NYSTROEM_M, charges: str = "xtb", jobs: int = 8,
             engine: Optional[str] = "auto", force: bool = False, seed: int = 0) -> dict:
-    """Kernel ridge regression in the space of m landmark molecules (``CMFModel.fit_low_rank``):
-    accuracy and wall time against m, on a random 80/10/10 split of the set."""
-    from cmfqsar.lowrank import landmark_molecules
+    """Kernel ridge regression in the space of m landmark molecules (the Nystroem path of
+    ``cmfqsar.lowrank``, as ``CMFModel.fit_low_rank`` uses it): accuracy and wall time against
+    m, on a random 80/10/10 split of the set.  The compiled kernel engine is switched on for the
+    whole process when Numba is installed, because the feature map evaluates the kernel of every
+    molecule against every landmark."""
+    from cmfqsar import fastkernel
+    from cmfqsar import kernels as KN
+    from cmfqsar import lowrank as LR
+    from cmfqsar.kernels import self_kernels
 
+    if engine != "numpy" and fastkernel.available():
+        KN.ENGINE = "numba"
+    log(f"kernel engine for the scaling stage: {KN.ENGINE}")
     tag = f"scaling_{set_key}" + (f"_n{limit}" if limit else "")
     path = os.path.join(RESULTS, tag + ".json")
     if os.path.isfile(path) and not force:
@@ -1122,22 +1133,57 @@ def scaling(set_key: str = "1x", groups: str = MAIN_SET, limit: Optional[int] = 
     table = build_table(ds, fs, ring_cache={})
     split = pbh.random_split(len(ds), seed)
     tr, te = split["train"], split["test"]
-    out = {"set": set_key, "n": len(ds), "groups": groups, "alphas": abg, "lam": lam, "rows": []}
+    train, test = table.subset(tr), table.subset(te)
+    out = {"set": set_key, "n": len(ds), "groups": groups, "alphas": abg, "lam": lam,
+           "n_train": int(len(tr)), "n_test": int(len(te)), "rows": []}
+    # the field scales of the exact model: unit mean diagonal over the training part
+    specs = [s for s in fs.specs if s.enabled]
+    d = np.asarray(self_kernels(train, specs), float)
+    scale = np.array([1.0 / v if v > 1e-300 else 0.0 for v in d.mean(axis=1)])
+    folds = _kfold_indices(len(tr), FOLDS, seed)
     for m in ms:
         if m >= len(tr):
             continue
         t0 = time.time()
-        model = CMFModel(fieldset=fs, method="krr", params={"lam": lam}, engine=engine)
-        landmarks, _rows = landmark_molecules(table.subset(tr), m, seed=seed)
-        model.fit_low_rank(table.subset(tr), y[tr], landmarks, lam=lam, folds=FOLDS, seed=seed)
+        landmarks, _rows = LR.landmark_molecules(train, m, seed=seed)
+        low = LR.build(landmarks, fs, scale=scale, normalize=False, kind="landmarks")
+        t_build = time.time() - t0
+        try:
+            # the features of the training part once (fit_low_rank would build them three
+            # times: for the Gram, for the cross-validation and for the fitted values)
+            Phi = low.transform(train, block=256)
+        except MemoryError:
+            log(f"Nystroem m={m}: not run, the feature matrix does not fit in memory")
+            out["rows"].append({"m": int(m), "rank": int(low.rank), "skipped": "memory"})
+            jdump(out, path)
+            continue
+        t_features = time.time() - t0 - t_build
+        y_tr = y[tr]
+        PtP = Phi.T @ Phi
+        g = LR.Gram(PtP=PtP, Pty=Phi.T @ y_tr, Pt1=Phi.sum(axis=0), n=len(y_tr),
+                    sum_y=float(y_tr.sum()), yty=float(y_tr @ y_tr))
+        w, b = LR.fit(g, lam, fit_bias=True)
         t_fit = time.time() - t0
-        pt = model.predict(table.subset(te))
-        row = {"m": int(m), "rank": int(model.low_rank_.rank), "seconds_fit": t_fit,
-               "seconds_total": time.time() - t0, "q2": model.stats.q2, "test": metrics(y[te], pt)}
+        pred_cv = np.zeros(len(y_tr))
+        for held in folds:
+            Pf = Phi[held]
+            keep = np.setdiff1d(np.arange(len(y_tr)), held)
+            gf = LR.Gram(PtP=PtP - Pf.T @ Pf, Pty=Phi.T @ y_tr - Pf.T @ y_tr[held],
+                         Pt1=Phi.sum(axis=0) - Pf.sum(axis=0), n=len(keep),
+                         sum_y=float(y_tr[keep].sum()), yty=float(y_tr[keep] @ y_tr[keep]))
+            wf, bf = LR.fit(gf, lam, fit_bias=True)
+            pred_cv[held] = LR.predict(Pf, wf, bf)
+            del Pf, gf
+        pt = LR.predict(low.transform(test, block=256), w, b)
+        row = {"m": int(m), "rank": int(low.rank), "seconds_build": t_build,
+               "seconds_features": t_features, "seconds_fit": t_fit,
+               "seconds_total": time.time() - t0, "q2": r2_score(y_tr, pred_cv),
+               "rmse_cv": rmse(y_tr, pred_cv), "test": metrics(y[te], pt)}
         out["rows"].append(row)
-        log(f"Nystroem m={m}: q2 {row['q2']:.3f} test r2 {row['test']['r2']:.3f} "
-            f"rmse {row['test']['rmse']:.3f} ({t_fit:.0f} s)")
+        log(f"Nystroem m={m}: rank {low.rank}, q2 {row['q2']:.3f} test r2 {row['test']['r2']:.3f} "
+            f"rmse {row['test']['rmse']:.3f} (features {t_features:.0f} s, fit {t_fit:.0f} s)")
         jdump(out, path)
+        del Phi, PtP
     return out
 
 
@@ -1356,8 +1402,11 @@ def write_notes(set_key: str = "1D") -> str:
         "The aromaticity field E is the Clar-sextet share of every ring (placeholder); a "
         "NICS-weighted ring field is a follow-up that needs a DFT calculation per ring.",
         "Literature numbers for the gap on COMPAS-1 are not filled in (table row 'TBD').",
-        "The Nystroem scaling experiment on COMPAS-1x is the second milestone; the stage exists "
-        "(--stage scaling) and was smoke-tested on a subset only.",
+        "The Nystroem scaling experiment on COMPAS-1x (--stage scaling) uses the attenuations and "
+        "the ridge of the main COMPAS-1D model (no search on the 34k set), one random 80/10/10 split, "
+        "and the landmark path of cmfqsar.lowrank with the compiled kernel engine switched on for the "
+        "process; the feature map of the training part is built once and the cross-validation reuses "
+        "it, which CMFModel.fit_low_rank does not do.",
     ]
     for s in subs:
         lines.append(f"- {s}")
@@ -1404,6 +1453,11 @@ def write_notes(set_key: str = "1D") -> str:
     lines.append("- The Clar-sextet ring field (E), meant as a placeholder, is the single largest gain "
                  "on top of {A,B,C,D}; the NICS-weighted field should be compared against it, not "
                  "against the set without it.")
+    lines.append("- On COMPAS-1x the landmark approximation converges at 500 landmark molecules: 1,000 "
+                 "landmarks give the same q2 and test R2 to three decimals and the rank of the feature "
+                 "map grows only from 2,244 to 2,570 (9 fields x 1,000 landmarks would allow 9,000). "
+                 "The fields of these planar molecules in one frame span a few thousand directions, "
+                 "which is also why the exact 8,678 x 8,678 model of COMPAS-1D is not needed for them.")
     lines.append("- The per-ring contributions (rule 3) are large and cancel: a ring on the +x side of "
                  "the frame counts positive and one on the -x side negative, whatever its class, "
                  "because the co-field has a smooth component across the frame and a ridge of 1e-4 "

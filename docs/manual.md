@@ -5825,9 +5825,15 @@ What the study does not settle is written in `benchmarks/results/compas/NOTES.md
 size-extrapolation splits train on few molecules; the few helicene-like molecules are not planar
 and the two faces of their frame differ; the chosen steric attenuation and ridge sit at the edges
 of their grids; the NICS field is missing and has to beat the sextet share; the published
-COMPAS-1 numbers are not filled in. The same script fits COMPAS-1x in the space of landmark
-molecules (`--stage scaling`, the Nyström path of `fit_low_rank`); that measurement is the second
-milestone of the study.
+COMPAS-1 numbers are not filled in.
+
+**The 34,072 molecules of COMPAS-1x.** The same model in the space of landmark molecules
+(`--stage scaling`, the Nyström path of `cmfqsar/lowrank.py`, with the attenuations and the
+ridge of the COMPAS-1D model and the compiled kernel engine) reaches a test R² of 0.80 with 500
+landmarks and the same with 1,000, at an RMSE of 0.133 eV on the GFN2-xTB gaps; the rank of the
+feature map grows only from 2,244 to 2,570 where the number of columns doubles. The fields of
+planar molecules in one frame span a few thousand directions, so the 34k set is a quarter of an
+hour of kernel evaluation against a few hundred landmarks and never its 34k × 34k matrix.
 
 ## Crystals: the periodic autocorrelation kernel
 

@@ -46,8 +46,22 @@ Cross-validated q² on the training part: 0.83 for A, B, C, D and 0.87 with the 
 spread of the A, B, C, D row over the seeds is one molecule: seed 0 holds benzene, the only
 one-ring molecule, in its test part, and the model extrapolates its gap to 10–13 eV (computed
 6.72); over the molecules of three rings and more the test RMSE is 0.164 ± 0.003 eV (0.138 with
-the sextet field). The Nyström scaling experiment on the 34,072 molecules of COMPAS-1x is written
-(`--stage scaling`) and not yet run: second milestone.
+the sextet field).
+
+**Scaling to COMPAS-1x** (34,072 molecules at GFN2-xTB, gap mean 1.98 eV, sd 0.30 eV; one random
+80/10/10 split, the attenuations and ridge of the A, B, C, D model above, kernel ridge regression in
+the space of m landmark molecules):
+
+| m landmarks | rank of the feature map | q² | test R² | test RMSE (eV) | test MAE (eV) | features + fit (min) |
+|---|---|---|---|---|---|---|
+| 500 | 2,244 | 0.78 | 0.80 | 0.133 | 0.106 | 15 |
+| 1,000 | 2,570 | 0.78 | 0.80 | 0.133 | 0.106 | 22 |
+
+The approximation has converged at 500 landmarks: doubling them changes nothing to three decimals,
+and the rank grows by 15 % where the number of columns doubles. The fields of these planar molecules
+in one frame span a few thousand directions, so a model of the 34k set costs the kernel of every
+molecule against a few hundred landmarks, built on all cores in a quarter of an hour, and never the
+34k × 34k matrix.
 
 ## The co-field
 
