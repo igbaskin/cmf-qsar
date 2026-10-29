@@ -66,6 +66,17 @@ Attenuation grid (0.02, 0.05, 0.1, 0.2, 0.35, 0.5, 0.7, 1.0, 2.0, 5.0, 10.0, 20.
 | {A,B,C,D} | per-group (first seed's choice shown) | A: 0.35, B: 0.05, C: 0.1, D: 0.1 | 0.0001 | 0.825 | 0.778 | 0.194 | 0.131 |
 | {A,B,C,D} | gauss (first seed's choice shown) | A: 0.35, B: 0.05, C: 0.1, D: 0.1; gamma 0.25 | 0.0001 | 0.937 | 0.923 | 0.115 | 0.073 |
 
+Size-extrapolation splits (train on fewer than N rings, test on N), the same three configurations against the coarse-grid linear model of the main table:
+
+| field set | split | coarse linear R2 / RMSE | wide-grid linear R2 / RMSE | Gaussian layer R2 / RMSE | layer MAE (eV) | gamma |
+|---|---|---|---|---|---|---|
+| {A,B,C,D,E} | size8 | 0.672 / 0.241 | 0.705 / 0.228 | 0.803 / 0.187 | 0.145 | 0.25 |
+| {A,B,C,D,E} | size9 | 0.780 / 0.187 | 0.778 / 0.188 | 0.891 / 0.132 | 0.100 | 0.25 |
+| {A,B,C,D,E} | size10 | 0.700 / 0.213 | 0.702 / 0.212 | 0.916 / 0.113 | 0.086 | 0.25 |
+| {A,B,C,D} | size8 | 0.591 / 0.269 | 0.589 / 0.270 | 0.691 / 0.234 | 0.179 | 0.25 |
+| {A,B,C,D} | size9 | 0.531 / 0.274 | 0.570 / 0.262 | 0.809 / 0.175 | 0.132 | 0.25 |
+| {A,B,C,D} | size10 | 0.441 / 0.290 | 0.441 / 0.290 | 0.840 / 0.155 | 0.118 | 0.25 |
+
 ### Nystroem approximation (landmark molecules)
 
 | set | molecules | m landmarks | rank | q2 | test R2 | test RMSE (eV) | fit time (s) |

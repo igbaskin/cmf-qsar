@@ -3151,11 +3151,13 @@ What it leaves open, in order:
   (0.11 eV), and the Gaussian kernel layer on the same kernel halves the error to 0.056 ± 0.004
   eV MAE, R² 0.964 ± 0.005 over three seeds, level with the annulation-string network and
   ahead of the descriptor forests, three to five times behind the graph networks. The
-  resolution was the nonlinearity, not the width. The layered model gives up the co-field and
-  rule 3; what is left to measure is the layered model on the size-extrapolation splits, Shapley
-  values as its per-ring reading, and a wider grid of layer widths (the chosen gamma sat at the
-  widest end). Nothing published measures the size-extrapolation split, which stays the field
-  model's own claim.
+  resolution was the nonlinearity, not the width. On the size-extrapolation splits the layer
+  gains as much: trained on the 2,270 molecules of up to nine rings, the layered five-group
+  model predicts the 6,408 ten-ring molecules with R² 0.92 and RMSE 0.113 eV (linear 0.70 and
+  0.213 eV; the descriptor forest −0.16). The layered model gives up the co-field and rule 3;
+  what is left to measure is Shapley values as its per-ring reading and a wider grid of layer
+  widths (the chosen gamma sat at the widest end on every split). Nothing published measures
+  the size-extrapolation split, which stays the field model's own claim.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 

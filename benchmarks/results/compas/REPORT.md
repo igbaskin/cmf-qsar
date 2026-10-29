@@ -70,7 +70,21 @@ its width chosen by cross-validation):
 The wider grid gains nothing: the linear model is not short of width, it is short of
 nonlinearity. The Gaussian layer halves the error and puts the field model level with the
 published annulation-string network (0.05 eV) and ahead of the descriptor forests, with the
-geometric graph networks (0.011 to 0.022 eV) three to five times better still. The price is the
+geometric graph networks (0.011 to 0.022 eV) three to five times better still.
+
+The gain carries over to the size-extrapolation splits, where no published number exists
+(test R² / RMSE in eV; the linear coarse-grid model of the main table beside the layered one):
+
+| field set | N = 8 (train 179) | N = 9 (train 619) | N = 10 (train 2,270) |
+|---|---|---|---|
+| A, B, C, D, E, linear | 0.67 / 0.241 | 0.78 / 0.187 | 0.70 / 0.213 |
+| A, B, C, D, E, Gaussian layer | 0.80 / 0.187 | 0.89 / 0.132 | 0.92 / 0.113 |
+| A, B, C, D, linear | 0.59 / 0.269 | 0.53 / 0.274 | 0.44 / 0.290 |
+| A, B, C, D, Gaussian layer | 0.69 / 0.234 | 0.81 / 0.175 | 0.84 / 0.155 |
+
+Trained on the 2,270 molecules of up to nine rings, the layered five-group model predicts the
+6,408 ten-ring molecules with R² 0.92 and RMSE 0.113 eV; the descriptor forest on the same split
+has R² −0.16. The price is the
 reading: with the layer the prediction is no longer an overlap integral of a co-field with the
 molecular field, so the co-field and the per-ring contributions above belong to the linear model
 only (Shapley values, which the program computes for any kernel, are the way to read the layered one).
@@ -131,10 +145,11 @@ worst and gives the same test R² (0.593 on seed 0).
   (0.70) matches unless the sextet field is included. A wider attenuation grid and a smaller ridge
   change nothing; the Gaussian kernel layer halves the error to 0.056 eV MAE (R² 0.96), level with
   the published annulation-string network and ahead of the descriptor forests, three to five times
-  behind the graph networks. What the linear model keeps over every published model is the
-  reading, a co-field in space and per-ring contributions, and a positive R² on the larger
-  molecules that the descriptor forest does not have; the layered model gives up the first for
-  half the error.
+  behind the graph networks. On the size-extrapolation splits the layered model is better
+  still in proportion: R² 0.92 on the ten-ring molecules from a training part of up to nine
+  rings, where the descriptor forest is negative. What the linear model keeps over every
+  published model is the reading, a co-field in space and per-ring contributions; the layered
+  model gives that up for half the error, and Shapley values are its reading.
 
 ## Limitations
 
@@ -151,8 +166,8 @@ worst and gives the same test R² (0.593 on seed 0).
 
 ## Follow-ups
 
-0. The layered model on the size-extrapolation splits (does the halved error carry over to larger
-   molecules?), and Shapley values as its per-ring reading in place of rule 3.
+0. Shapley values as the per-ring reading of the layered model in place of rule 3, and a wider
+   grid of layer widths (the chosen width sat at the widest end of its grid on every split).
 1. A NICS-weighted ring field (one DFT calculation per ring), which has to beat the Clar-sextet
    share rather than the set without it.
 2. Peri-condensed systems (COMPAS-3): three-ring carbons and adjacent shared bonds; the typing and

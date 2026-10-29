@@ -1153,7 +1153,9 @@ def write_narrative(item: dict, extremes: dict, rule2: Sequence[dict], meta: dic
 # --------------------------------------------------------------------------- #
 
 RESOLUTION_RUNS = (("ABCDE", "random0"), ("ABCDE", "random1"), ("ABCDE", "random2"),
-                   ("ABCD", "random0"))
+                   ("ABCD", "random0"),
+                   ("ABCDE", "size8"), ("ABCDE", "size9"), ("ABCDE", "size10"),
+                   ("ABCD", "size8"), ("ABCD", "size9"), ("ABCD", "size10"))
 
 
 def resolution(set_key: str = "1D", runs: Sequence[Tuple[str, str]] = RESOLUTION_RUNS,
@@ -1233,6 +1235,29 @@ def report_resolution(set_key: str = "1D") -> List[str]:
                          f"{_mean_std([c['test']['rmse'] for c in cs])} | "
                          f"{_mean_std([c['test']['mae'] for c in cs])} |")
     lines.append("")
+    size_keys = [k for k in done if "|size" in k]
+    if size_keys:
+        lines.append("Size-extrapolation splits (train on fewer than N rings, test on N), the same three "
+                     "configurations against the coarse-grid linear model of the main table:")
+        lines.append("")
+        lines.append("| field set | split | coarse linear R2 / RMSE | wide-grid linear R2 / RMSE | "
+                     "Gaussian layer R2 / RMSE | layer MAE (eV) | gamma |")
+        lines.append("|---|---|---|---|---|---|---|")
+        for groups in ("ABCDE", "ABCD"):
+            for sname in ("size8", "size9", "size10"):
+                k = f"{TARGET}|{groups}|{sname}"
+                if k not in done:
+                    continue
+                r = done[k]
+                lin = r["configs"].get("per-group", r["configs"]["shared"])
+                ga = r["configs"].get("gauss")
+                ck = coarse.get(k)
+                cc = ck["configs"][ck["chosen"]] if ck else None
+                cell = lambda c: f"{c['test']['r2']:.3f} / {c['test']['rmse']:.3f}" if c else "-"
+                lines.append(f"| {{{','.join(groups)}}} | {sname} | {cell(cc)} | {cell(lin)} | {cell(ga)} | "
+                             f"{ga['test']['mae']:.3f} | {ga['gamma']:g} |" if ga else
+                             f"| {{{','.join(groups)}}} | {sname} | {cell(cc)} | {cell(lin)} | - | - | - |")
+        lines.append("")
     return lines
 
 
@@ -1627,7 +1652,10 @@ def write_notes(set_key: str = "1D") -> str:
                  "behind the graph networks. The layered model is no longer linear in the field: the "
                  "co-field and rule 3 belong to the linear model, and Shapley values are the reading of "
                  "the layered one. Its width came out at gamma = 0.25-0.5 of the median squared distance, "
-                 "the widest of the grid, and a wider grid of gammas is one more run.")
+                 "the widest of the grid, and a wider grid of gammas is one more run. On the "
+                 "size-extrapolation splits the layer gains as much: the five-group model trained on the "
+                 "molecules of up to nine rings predicts the 6,408 ten-ring molecules with R2 0.92 and RMSE "
+                 "0.113 eV (linear: 0.70 and 0.213), where the descriptor forest is negative.")
     lines.append("- The chosen hyperparameters sit at the edges of the grids: the steric attenuation at "
                  "the top (its width is scaled by the van der Waals radius, so the same grid value is a "
                  "wider Gaussian) and the ridge at the bottom (1e-4) for the sets with the ring fields. "

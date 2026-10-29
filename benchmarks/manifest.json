@@ -1,6 +1,6 @@
 {
- "commit": "3bb23b7083e8464473d3295f121f568e067889fd",
- "created": "2026-10-30T00:42:06",
+ "commit": "84b60e78cdff86f41baf2effe5bf51dfae791107",
+ "created": "2026-10-30T01:08:32",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -619,8 +619,8 @@
    "sha256": "81a6d68b5f8291f7319e63999b5d3aa4280f0a2a4def563cd536591e16546dad"
   },
   "examples/make_docked_poses.py": {
-   "bytes": 13124,
-   "sha256": "dbdac6a38d53dea4c0be780a76da2e6b7bf22361d8dd4898ce736e5cf5e92b87"
+   "bytes": 14729,
+   "sha256": "516aee14c5c9227d1e769c171477986967cec86e78e1ef5e2647c8c2de88e440"
   },
   "examples/make_example_dataset.py": {
    "bytes": 6052,
@@ -1825,8 +1825,8 @@
   "benchmarks/results/cofield_error/THER.json": "e1ad96f166b74bfefd2fdb4ebd4131db97631ed43ccd0dd1500ade0de2caaab1",
   "benchmarks/results/cofield_error/THR.json": "ec962f4b1027f8645961dd47c337e2be53e3fbf4843f6a143191edeb661d65fe",
   "benchmarks/results/cofield_error/table.md": "10b3f3c6d81e404c2cdc4828e3ad247abece30de02005ecf21f02a0c8502b0ca",
-  "benchmarks/results/compas/NOTES.md": "77a9df3a862bc5c51525f8bbbd704dcb83a2b2acacdb1036da0f9e0536522473",
-  "benchmarks/results/compas/REPORT.md": "89feec3e59f87c2159d1c85bdb3cb6f9b1274472aa212e1e8af5e24d0bea650a",
+  "benchmarks/results/compas/NOTES.md": "6a650751e1e1573fa927aaa8b42072cc50aa87bebebd49b6e041124d4a16512b",
+  "benchmarks/results/compas/REPORT.md": "36e661780189176af7b615793c3f73b6911eef2ce18d6e701c397e8fcaba773b",
   "benchmarks/results/compas/baselines_1D.json": "a3dc13435337443415a7d0b7dbe1ea0817163b064c6bdbd1fe159e61085cb678",
   "benchmarks/results/compas/fields_1D.json": "890d5f38f5941899e7b9a08a7ca2a958f2d97703d8faa9f0f4d0f56f49efb5f0",
   "benchmarks/results/compas/fields_ABCDE_1D.json": "e4fc4ec9c28b4a30faf7e904b9706f904764e5404d699d5abb14316a3d9415d3",
@@ -1842,10 +1842,11 @@
   "benchmarks/results/compas/narrative_hc_c26h16_0pent_13.md": "ee6cf7d38a0c3e82938fd21428d3513e2341eb411f5d11a9cb9bf9283500e66a",
   "benchmarks/results/compas/prepared_1D.json": "1ab57444e8c893c86584b53c3df832d549f57bd540e64e3ab2bb068ccc08a9b3",
   "benchmarks/results/compas/prepared_1x.json": "ff107697a3d20da516d79286f1f747f9a6548386562698f6816ecfcf16496c21",
+  "benchmarks/results/compas/resolution_1D.json": "de3ee3f980aacf171324c589a3f04408c62d9d19224ada7bf3fadb0f768dd026",
   "benchmarks/results/compas/scaling_1x.json": "c091db50934ce4b223eeaa75f65f4d60bd62c670767f296306cb9dba680b9ad6",
   "benchmarks/results/compas/splits_1D.json": "315e464f97fcb772e5f1dd2f12efbc8e531487760f18fdbd0915eeed47128b31",
   "benchmarks/results/compas/splits_1x.json": "73f8cafe090c087fef5661ad3ea45045da763d285a4c789f6192d1d335890d32",
-  "benchmarks/results/compas/table.md": "d23fb8bea3872a5515e5617676a103436065960e6f90837e661472b18c55a2ba",
+  "benchmarks/results/compas/table.md": "4499d22cf2edb2e9fa050eeb1679d1e7454e59b0d2046dbcbf60cdbe2c9d3fe0",
   "benchmarks/results/conformal/ACE.json": "ca49f870b34a4711c95f31afe601e24f1bea07f9cc00178a5c261682dd68f6dc",
   "benchmarks/results/conformal/AChE.json": "94e4b305deac26328070ccca9015d709e0765e62653563418ad04ab1c8f680e2",
   "benchmarks/results/conformal/BZR.json": "3d6b476647e20fe6b0ee45870b5b6affae506b2cd2391ebd128f95ed28269952",

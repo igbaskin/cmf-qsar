@@ -3339,7 +3339,9 @@ sit at the widest end of the grid and whose ridge at the smallest: the gap is se
 arrangement to a precision the overlap of wide Gaussians does not resolve. A wider grid changes
 nothing; the Gaussian kernel layer on the same kernel halves the error to 0.056 eV MAE (R² 0.96,
 three seeds), level with the published annulation-string network and ahead of the descriptor
-forests, at the price of the co-field, which belongs to the linear model. The spread of the four-group row is one
+forests, at the price of the co-field, which belongs to the linear model. On the size splits the
+layer gains as much: trained on the molecules of up to nine rings, it predicts the 6,408 ten-ring
+molecules with R² 0.92 (linear 0.70, descriptor forest −0.16). The spread of the four-group row is one
 molecule, benzene, which seed 0 puts in the test part and the model extrapolates to 10–13 eV.
 The co-fields of the ring fields over a reference molecule and the per-ring contributions of
 four test molecules (decomposition rule 3 summed per ring, `ring_contributions`) are drawn by the
