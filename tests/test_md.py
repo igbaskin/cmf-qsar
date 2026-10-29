@@ -408,6 +408,83 @@ def test_a_normalisation_record_is_not_read_as_a_set_result(tmp_path):
     assert len(run_md.load_norms(results=str(tmp_path))) == 1
 
 
+# ---------------------------------------------------------------------- the own-frame control
+
+
+def _own_row(name, n, uniform, own, interval=None):
+    """A record with both readings of the same frames: one common frame, and each in its own."""
+    models = {"crystal": dict(q2=0.3, rmse=1.0, alpha=0.5, lam=0.1, delta=0.0, lo=0.0, hi=0.0),
+              "md_uniform": dict(q2=uniform, rmse=1.0, alpha=0.5, lam=0.1,
+                                 delta=uniform - 0.3, lo=-0.1, hi=0.3),
+              "md_ownframe": dict(q2=own, rmse=1.0, alpha=0.5, lam=0.1,
+                                  delta=own - 0.3, lo=-0.5, hi=0.1)}
+    if interval is not None:
+        d, lo, hi = interval
+        models["md_ownframe"]["vs_uniform"] = dict(delta=d, lo=lo, hi=hi)
+    return {"set": name, "n": n, "frames_mean": 10.0, "frames_min": 8, "frames_max": 12,
+            "seconds": 1.0, "models": models}
+
+
+def test_the_own_frame_section_is_empty_without_the_control():
+    import run_md
+
+    rec = _across_row("one", 25, {"md_uniform": (0.1, -0.1, 0.3)})
+    assert run_md.ownframe_section([rec]) == []
+
+
+def test_the_own_frame_section_reports_the_loss_on_every_set():
+    import run_md
+
+    text = " ".join(run_md.ownframe_section([_own_row("one", 25, 0.391, 0.277),
+                                             _own_row("two", 36, 0.471, 0.400)]))
+    assert "What the common frame is worth" in text
+    assert "| one | 25 | +0.391 | +0.277 |" in text
+    assert "| two | 36 | +0.471 | +0.400 |" in text
+    assert "between 0.071 and 0.114 of q2" in text, "the range of the loss over the sets"
+    assert "all 2 sets" in text
+
+
+def test_the_own_frame_section_names_the_sets_whose_loss_clears_the_interval():
+    import run_md
+
+    text = " ".join(run_md.ownframe_section(
+        [_own_row("one", 25, 0.391, 0.277, interval=(-0.114, -0.28, -0.01)),
+         _own_row("two", 36, 0.471, 0.400, interval=(-0.071, -0.21, 0.06))]))
+    assert "[-0.280, -0.010]" in text, "the interval against the common frame is in the table"
+    assert "excludes zero on 1 of the 2 sets (one)" in text
+
+
+def test_an_own_frame_reading_that_does_not_lose_is_not_called_a_loss():
+    import run_md
+
+    text = " ".join(run_md.ownframe_section([_own_row("one", 25, 0.391, 0.277),
+                                             _own_row("two", 36, 0.400, 0.460)]))
+    assert "does not change q2 in one direction" in text
+    assert "The common frame is what makes any of this measurable" not in text
+
+
+def test_the_own_frame_control_is_not_counted_among_the_readings_that_were_tried():
+    """It is built to be wrong, so counting it would make the comparisons look more numerous."""
+    import run_md
+
+    one = _across_row("flat", 29, {"md_mil": (0.195, -0.13, 0.52),
+                                   "md_ownframe": (-0.30, -0.67, -0.03)})
+    two = _across_row("edge", 36, {"md_population": (0.192, -0.07, 0.56),
+                                   "md_mil": (0.178, 0.003, 0.47),
+                                   "md_ownframe": (-0.25, -0.60, -0.02)})
+    text = " ".join(run_md.across_sets([one, two]))
+    assert "3 readings of a trajectory were compared" in text, "the control is left out"
+    assert "own frame" not in text
+
+
+def test_a_set_is_not_ahead_because_the_own_frame_control_clears_the_interval():
+    import run_md
+
+    rec = _across_row("one", 25, {"md_uniform": (-0.18, -0.52, 0.13),
+                                  "md_ownframe": (0.30, 0.10, 0.50)})
+    assert run_md._loses(rec), "only a candidate reading can put a set ahead"
+
+
 def test_the_report_says_what_is_missing_when_nothing_has_been_run(tmp_path):
     import run_md
 

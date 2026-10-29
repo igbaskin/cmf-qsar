@@ -433,10 +433,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     # the directory holds one set per run and the notes have to describe all of them, so a run
     # replaces the records of the sets it built and leaves the others as they are
     records = merge_records(records, out_dir=a.out)
+    # both the data statement and the provenance describe the common-frame ensemble, which is
+    # the one the benchmarks read; an own-frame run is a control built from the same files and
+    # must not replace what they say about it
     if not a.no_common_reference:
         write_readme(records, out_dir=a.out)
-    with open(os.path.join(a.out, "provenance.json"), "w") as fh:
-        json.dump(records, fh, indent=1)
+        with open(os.path.join(a.out, "provenance.json"), "w") as fh:
+            json.dump(records, fh, indent=1)
     print(f"total wall time {(time.time() - t0) / 60:.1f} min")
     print("  next:  python benchmarks/run_md.py")
     return 0

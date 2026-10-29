@@ -13,6 +13,7 @@ Plan item D8. Five models of the same ligands on the same folds, with the same a
 | trajectory, clusters equal | +0.471 | 0.529 | 0.3 | +0.129 [-0.076, +0.365] |
 | trajectory, by population | +0.534 | 0.496 | 0.3 | +0.192 [-0.068, +0.561] |
 | trajectory, multi-instance | +0.520 | 0.504 | 0.3 | +0.178 [+0.003, +0.465] |
+| trajectory, each in its own frame | +0.297 | 0.610 | 0.1 | -0.045 [-0.323, +0.214] |
 
 ## mcl1
 
@@ -38,6 +39,7 @@ Plan item D8. Five models of the same ligands on the same folds, with the same a
 | trajectory, clusters equal | +0.239 | 0.608 | 0.5 | -0.022 [-0.310, +0.299] |
 | trajectory, by population | +0.091 | 0.665 | 0.5 | -0.169 [-0.402, +0.181] |
 | trajectory, multi-instance | +0.455 | 0.515 | 2 | +0.195 [-0.133, +0.522] |
+| trajectory, each in its own frame | +0.368 | 0.555 | 0.5 | +0.107 [-0.351, +0.498] |
 
 ## What it settles
 
@@ -59,8 +61,6 @@ The control says where that comes from. An ensemble of generated conformations -
 
 Letting the model choose the frames gives +0.463, -0.112 [-0.384, +0.169] against the crystal pose. The search chose beta = 0, which is the plain ensemble with every conformation weighing the same, so on this set letting the model pick a bioactive frame gained nothing over averaging them.
 
-**The common frame is what makes any of this measurable.** Read the same frames with each trajectory superimposed on its own first frame instead of on the one structure every run was built from, and q2 falls from +0.391 to +0.277. Two runs equilibrate to protein conformations a few tenths of an angstrom apart, so fitting each ligand to its own leaves the series in as many frames as it has molecules. That is 0.114 of q2 lost to a misalignment far smaller than the ones part C of the plan is about, which is a measure of how much a field kernel asks of an alignment.
-
 **On p38 the trajectory neither beats the crystal pose nor loses to it.** The best reading of it, trajectory, multi-instance, differs by +0.195 [-0.133, +0.522], an interval that contains zero, so on this set the simulation is not worth its cost. The crystal pose reaches +0.261 and it reaches +0.455.
 
 The control says where that comes from. An ensemble of generated conformations -- what the fourth-dimension study built -- changes q2 by -0.178 [-0.414, +0.182] against the same crystal pose. 
@@ -69,13 +69,25 @@ The control says where that comes from. An ensemble of generated conformations -
 
 Letting the model choose the frames gives +0.455, +0.195 [-0.133, +0.522] against the crystal pose. The search chose beta = 1, so the model did concentrate the weight on some frames rather than averaging them evenly.
 
-**The sets disagree.** Some reading of the trajectory beats the crystal pose beyond the interval on 1 of the 3 sets (hif2a) and on none of the others. The largest gain on each set: **hif2a** (36 ligands) +0.192 [-0.068, +0.561], trajectory, by population; **mcl1** (25 ligands) -0.112 [-0.384, +0.169], trajectory, multi-instance; **p38** (29 ligands) +0.195 [-0.133, +0.522], trajectory, multi-instance. A result that holds on some sets and not on others is not a method yet; what separates them is the next thing to measure. **Read that carefully.** 10 readings of a trajectory were compared with their crystal pose across the 3 sets, and the nearest edge of a clearing interval is +0.003 from zero. One result at the edge of 10 comparisons is about what chance produces, so what the sets support is a weak statement and not a method.
+**The sets disagree.** Some reading of the trajectory beats the crystal pose beyond the interval on 1 of the 3 sets (hif2a) and on none of the others. The largest gain on each set: **hif2a** (36 ligands) +0.192 [-0.068, +0.561], trajectory, by population; **mcl1** (25 ligands) -0.112 [-0.384, +0.169], trajectory, multi-instance; **p38** (29 ligands) +0.195 [-0.133, +0.522], trajectory, multi-instance. A result that holds on some sets and not on others is not a method yet; what separates them is the next thing to measure. **Read that carefully.** 9 readings of a trajectory were compared with their crystal pose across the 3 sets, and the nearest edge of a clearing interval is +0.003 from zero. One result at the edge of 9 comparisons is about what chance produces, so what the sets support is a weak statement and not a method.
 
 **What this rests on.** 3 sets, each simulated with GAFF in TIP3P water for the length stated in `examples/md/README.md`. A few nanoseconds samples the ligand's motion around its crystal pose and not a change of binding mode, which is the fair scope of the question asked here. The ligands stayed where they started -- the data statement gives the median distance from the crystal pose -- so this measures what an ensemble around a correct pose is worth, which is exactly the question, and not whether a simulation can find a pose.
 
 **What follows for the plan.** The item said that if the trajectory mean does not beat the crystal pose then plan items D9 and D10 are not built on it. No reading of the trajectory beats the crystal pose on 2 of the 3 sets (mcl1, p38), so D9 -- solvent as a field, read off these trajectories -- does not follow from this result. D10 was built before this measurement and on conformer ensembles rather than trajectories, and its own verdict already stands.
 
 The gate is no longer a plain no, because some reading is ahead beyond the interval on hif2a. D9 was built in any case, at the author's instruction, and it failed on its own evidence: two readings of its definition sweep were written down beforehand and both failed on a set they were not read from. So the gate reopening changes what is still open here, which is the trajectory itself, and not the verdict of D9.
+
+## What the common frame is worth
+
+The same frames, read twice, with the same weighting (clusters equal). Everywhere above, a trajectory is superimposed on the one structure all the runs of its set were built from, so the whole series sits in a single frame. Here each trajectory is superimposed on its own first frame instead, which leaves every ligand in a frame of its own.
+
+| set | ligands | one common frame | each in its own frame | change against the common frame |
+| --- | ---: | ---: | ---: | --- |
+| hif2a | 36 | +0.471 | +0.297 | -0.175 [-0.391, -0.020] |
+| mcl1 | 25 | +0.391 | +0.277 | -0.114 [-0.386, +0.081] |
+| p38 | 29 | +0.239 | +0.368 | +0.129 [-0.207, +0.369] |
+
+**Dropping the common frame does not change q2 in one direction.** The change is between -0.175 and +0.129 of q2 over the 3 sets, and the sign is not the same on all of them. The interval excludes zero on 1 of the 3 sets (hif2a), so only there is the change larger than the resampling of the molecules explains. Two runs of the same protein equilibrate to conformations a few tenths of an angstrom apart, so fitting each ligand to its own run leaves the series in as many frames as it has molecules. A field kernel was expected to lose from that, and on one set it does. On the others it does not, so the measurement does not support the general statement that a common frame is what makes this comparison possible. What an alignment of a few tenths of an angstrom is worth is set by set here, not by the method. One more reason to read the gains of the tables above with care: on 1 of the 3 sets this control is itself above the crystal pose (p38 +0.107), and it was built to be wrong.
 
 ## Where the kernel is normalised
 

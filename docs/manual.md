@@ -1358,7 +1358,9 @@ frames with each trajectory superimposed on its own first frame, rather than on 
 every run was built from, costs 0.114 of q² (+0.391 to +0.277). Two runs equilibrate to protein
 conformations a few tenths of an ångström apart, so fitting each ligand to its own leaves the
 series in as many frames as it has molecules. A field kernel notices a misalignment far smaller
-than the ones part C of the plan is about.
+than the ones part C of the plan is about. The subsection *What the common frame is worth*,
+below, measures the same control on the two further sets and gives it an interval of its own;
+it does not support this reading as a statement about the method.
 
 ### Two more sets, and the answer is not the same on every set
 
@@ -1418,6 +1420,40 @@ python benchmarks/run_md.py --sets mcl1 p38 hif2a --normalisation
 > should help most: there the ensemble would be covering uncertainty in the pose rather than
 > motion around a good one. And the gain reported here is the best of five readings rather than
 > one fixed in advance, which is what the +0.003 edge asks for next.
+
+### What the common frame is worth
+
+The last row of the mcl1 table is a control and not a model: the same frames, read with each
+trajectory superimposed on its own first frame instead of on the one structure all the runs of
+its set were built from, which leaves every ligand in a frame of its own. It is now measured on
+all three sets. The change it causes has an interval of its own, taken against the common-frame
+ensemble on the same molecules and with the same weighting (clusters equal).
+
+| set | ligands | one common frame | each in its own frame | change against the common frame |
+| --- | ---: | ---: | ---: | --- |
+| hif2a | 36 | +0.471 | +0.297 | −0.175 [−0.391, −0.020] |
+| mcl1 | 25 | +0.391 | +0.277 | −0.114 [−0.386, +0.081] |
+| p38 | 29 | +0.239 | +0.368 | +0.129 [−0.207, +0.369] |
+
+**The change is not in one direction.** Only hif2a loses beyond the interval. On mcl1 the drop of
+0.114 reported above does not clear the interval, now that the control has one; on p38 the own
+frame reads 0.129 *higher* than the common one. So the sentence above — that the common frame is
+what makes any of this measurable — was a reading of one set, and these three sets do not support
+it as a statement about the method. What an alignment of a few tenths of an ångström is worth is
+decided set by set here.
+
+**And on p38 this control is itself above the crystal pose**, +0.107 [−0.351, +0.498]. That is
+one more reason to read the gains of that set with care: there a reading nobody would defend does
+no worse than the pose it was built to lose to.
+
+The control is kept out of the counting. It is not one of the ten readings compared with their
+crystal pose above, and a set does not count as ahead because the control clears an interval. A
+model built to be wrong must make the evidence look neither stronger nor weaker than it is.
+
+```bash
+python examples/make_md_trajectories.py --set p38 --set hif2a --read-only --no-common-reference
+python benchmarks/run_md.py --sets mcl1 p38 hif2a --force
+```
 
 ## A cheap quantum stage: GFN2-xTB
 

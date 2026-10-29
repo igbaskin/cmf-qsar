@@ -3881,8 +3881,8 @@ multi-instance search chose beta = 0, the plain ensemble, so no frame was worth 
 
 The last row is about alignment rather than simulation: fitting each trajectory to its own first
 frame instead of to the one structure every run was built from costs 0.114 of q2, and those
-frames differ by a few tenths of an angstrom. A field kernel notices less misalignment than part
-C of this plan is about.
+frames differ by a few tenths of an angstrom. The three-set reading below gives that 0.114 an
+interval and does not support it as a general statement.
 
 **Two more sets, 29 October 2026, and the answer is not the same on every set.** The
 trajectories built for the water field cover two further free-energy sets, so the same five
@@ -3910,10 +3910,29 @@ of the whole ensemble, the multi-instance path normalises every conformation and
 Measured at one attenuation on all three sets, the gap between the two paths is 0.019 to 0.049
 of q2 and falls to 0.002 to 0.015 with the normalisation switched off.
 
+**The own-frame control on all three sets.** The last row of the first table is a control: the
+same frames with each trajectory fitted to its own first frame instead of to the one structure
+every run was built from. It now exists for all three sets, measured against the common-frame
+ensemble on the same molecules and with the same weighting.
+
+| set | ligands | one common frame | each in its own frame | change against the common frame |
+| --- | ---: | ---: | ---: | --- |
+| hif2a | 36 | +0.471 | +0.297 | -0.175 [-0.391, -0.020] |
+| mcl1 | 25 | +0.391 | +0.277 | -0.114 [-0.386, +0.081] |
+| p38 | 29 | +0.239 | +0.368 | +0.129 [-0.207, +0.369] |
+
+Only hif2a loses beyond the interval. On mcl1 the 0.114 above does not clear it, and on p38 the
+own frame reads higher than the common one. So "the common frame is what makes any of this
+measurable" was a reading of one set and not a statement about the method. On p38 the control is
+also +0.107 above the crystal pose, which is one more reason to read the gains of that set with
+care. The control is left out of the ten readings counted above, and a set does not count as
+ahead because it clears an interval.
+
 ```bash
 python examples/make_md_trajectories.py --set mcl1 --ns 2   # needs OpenMM and the OpenFF stack
 python benchmarks/run_md.py --sets mcl1 p38 hif2a           # results/md/table.md
 python benchmarks/run_md.py --sets mcl1 p38 hif2a --normalisation
+python examples/make_md_trajectories.py --set p38 --read-only --no-common-reference
 ```
 
 

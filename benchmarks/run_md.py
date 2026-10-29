@@ -271,6 +271,13 @@ def run_set(name, results=RESULTS, force=False):
         d, lo, hi = bootstrap_difference(y, np.asarray(rows[tag]["pred"], float), base)
         rows[tag].update(delta=d, lo=lo, hi=hi)
 
+    if "md_ownframe" in rows and "md_uniform" in rows:
+        # the control is also read against the common-frame ensemble, because the alignment is
+        # the only thing that differs between those two: same frames, same weighting
+        d, lo, hi = bootstrap_difference(y, np.asarray(rows["md_ownframe"]["pred"], float),
+                                         np.asarray(rows["md_uniform"]["pred"], float))
+        rows["md_ownframe"].update(vs_uniform=dict(delta=d, lo=lo, hi=hi))
+
     rec = {"set": name, "n": int(len(y)), "frames_mean": float(np.mean(frames)),
            "frames_min": int(np.min(frames)), "frames_max": int(np.max(frames)),
            "seconds": float(time.time() - t0), "models": rows}
@@ -347,6 +354,11 @@ LABEL = {"crystal": "the crystal pose", "conformers": "generated conformations",
 
 #: file endings in the results directory that are not a set's own result
 OTHER_RESULTS = ("_norm.json",)
+
+#: readings of the trajectory that are controls rather than candidate models. The own-frame
+#: reading is built to be wrong on purpose -- it drops the common frame -- so it is left out of
+#: the comparison between the sets and out of the count of readings that were tried.
+CONTROLS = ("md_ownframe",)
 
 
 def load_all(results=RESULTS):
@@ -447,6 +459,7 @@ def report(results=RESULTS, path=None):
                        f"{r['alpha']:g} | {change} |")
         out.append("")
     out += verdict(rows)
+    out += ownframe_section(rows)
     out += norm_section(load_norms(results))
     text = "\n".join(out) + "\n"
     if path:
@@ -472,7 +485,7 @@ def across_sets(rows):
     best = []
     for rec in rows:
         m = rec.get("models") or {}
-        tags = [t for t in TAGS if t.startswith("md_") and t in m]
+        tags = [t for t in TAGS if t.startswith("md_") and t not in CONTROLS and t in m]
         if not tags:
             continue
         top = max(tags, key=lambda t: m[t]["delta"])
@@ -526,6 +539,86 @@ def across_sets(rows):
                     f"of {tried} comparisons is about what chance produces, so what the sets "
                     f"support is a weak statement and not a method.")
     return [head + tail + close + edge, ""]
+
+
+def ownframe_section(rows):
+    """What a field model loses when the series is not in one frame.
+
+    The same frames read twice. Everywhere else in this table a trajectory is superimposed on
+    the one structure all the runs of its set were built from, so the whole series sits in a
+    single frame. Here each trajectory is superimposed on its own first frame instead, which
+    leaves every ligand in a frame of its own.
+    """
+    have = [r for r in rows if "md_ownframe" in (r.get("models") or {})
+            and "md_uniform" in r["models"]]
+    if not have:
+        return []
+    out = ["## What the common frame is worth", "",
+           "The same frames, read twice, with the same weighting (clusters equal). Everywhere "
+           "above, a trajectory is superimposed on the one structure all the runs of its set "
+           "were built from, so the whole series sits in a single frame. Here each trajectory "
+           "is superimposed on its own first frame instead, which leaves every ligand in a "
+           "frame of its own.", "",
+           "| set | ligands | one common frame | each in its own frame | "
+           "change against the common frame |",
+           "| --- | ---: | ---: | ---: | --- |"]
+    for rec in have:
+        m = rec["models"]
+        u, o = m["md_uniform"], m["md_ownframe"]
+        v = o.get("vs_uniform") or {}
+        change = (f"{v['delta']:+.3f} [{v['lo']:+.3f}, {v['hi']:+.3f}]" if v
+                  else f"{o['q2'] - u['q2']:+.3f}")
+        out.append(f"| {rec['set']} | {rec['n']} | {u['q2']:+.3f} | {o['q2']:+.3f} | "
+                   f"{change} |")
+    gaps = [r["models"]["md_ownframe"]["q2"] - r["models"]["md_uniform"]["q2"] for r in have]
+    one_way = all(g < 0 for g in gaps)
+    if one_way:
+        size = (f"{abs(gaps[0]):.3f} of q2" if len(have) == 1 else
+                f"between {min(abs(g) for g in gaps):.3f} and "
+                f"{max(abs(g) for g in gaps):.3f} of q2")
+        where = "this set" if len(have) == 1 else f"all {len(have)} sets"
+        head = (f"**The common frame is what makes any of this measurable.** Dropping it costs "
+                f"{size} on {where}.")
+    else:
+        head = (f"**Dropping the common frame does not change q2 in one direction.** The change "
+                f"is between {min(gaps):+.3f} and {max(gaps):+.3f} of q2 over the {len(have)} "
+                f"sets, and the sign is not the same on all of them.")
+    # the loss has an interval of its own, measured on the same molecules, so the one-set
+    # reading of this control can be stated as weakly as it deserves
+    clear = [r for r in have
+             if (r["models"]["md_ownframe"].get("vs_uniform") or {}).get("hi", 1.0) < 0]
+    if not clear:
+        says = (" No interval excludes zero, so these sets do not settle how much the common "
+                "frame is worth.")
+    elif len(clear) == len(have):
+        says = (" The interval excludes zero on every set, so the loss is larger than the "
+                f"resampling of the molecules explains.")
+    else:
+        names = ", ".join(r["set"] for r in clear)
+        says = (f" The interval excludes zero on {len(clear)} of the {len(have)} sets "
+                f"({names}), so only there is the change larger than the resampling of the "
+                f"molecules explains.")
+    why = (" Two runs of the same protein equilibrate to conformations a few tenths of an "
+           "angstrom apart, so fitting each ligand to its own run leaves the series in as many "
+           "frames as it has molecules.")
+    if one_way:
+        close = (" The misalignment is far smaller than the ones part C of the plan is about, "
+                 "which is a measure of how much a field kernel asks of an alignment.")
+    else:
+        close = (" A field kernel was expected to lose from that, and on one set it does. On "
+                 "the others it does not, so the measurement does not support the general "
+                 "statement that a common frame is what makes this comparison possible. What "
+                 "an alignment of a few tenths of an angstrom is worth is set by set here, not "
+                 "by the method.")
+    ahead = [r for r in have if r["models"]["md_ownframe"].get("delta", 0.0) > 0]
+    if ahead:
+        extra = "; ".join(f"{r['set']} {r['models']['md_ownframe']['delta']:+.3f}"
+                          for r in ahead)
+        close += (f" One more reason to read the gains of the tables above with care: on "
+                  f"{len(ahead)} of the {len(have)} sets this control is itself above the "
+                  f"crystal pose ({extra}), and it was built to be wrong.")
+    out += ["", head + says + why + close, ""]
+    return out
 
 
 def verdict(rows):
@@ -627,17 +720,6 @@ def verdict(rows):
             out += [f"Letting the model choose the frames gives {mi['q2']:+.3f}, "
                     f"{mi['delta']:+.3f} [{mi['lo']:+.3f}, {mi['hi']:+.3f}] against the crystal "
                     f"pose.{chose}", ""]
-        if "md_ownframe" in m and "md_uniform" in m:
-            o, u = m["md_ownframe"], m["md_uniform"]
-            out += [f"**The common frame is what makes any of this measurable.** Read the same "
-                    f"frames with each trajectory superimposed on its own first frame instead "
-                    f"of on the one structure every run was built from, and q2 falls from "
-                    f"{u['q2']:+.3f} to {o['q2']:+.3f}. Two runs equilibrate to protein "
-                    f"conformations a few tenths of an angstrom apart, so fitting each ligand "
-                    f"to its own leaves the series in as many frames as it has molecules. That "
-                    f"is {abs(u['q2'] - o['q2']):.3f} of q2 lost to a misalignment far smaller "
-                    f"than the ones part C of the plan is about, which is a measure of how much "
-                    f"a field kernel asks of an alignment.", ""]
     out += across_sets(rows)
     out += [f"**What this rests on.** "
             + ("One set, simulated" if len(rows) < 2 else
@@ -674,7 +756,7 @@ def _loses(rec):
     """True when no reading of the trajectory is ahead of the crystal pose beyond the interval."""
     m = rec.get("models") or {}
     for tag in TAGS:
-        if tag.startswith("md_") and tag in m:
+        if tag.startswith("md_") and tag not in CONTROLS and tag in m:
             lo = m[tag].get("lo")
             if lo is not None and lo == lo and lo > 0:
                 return False

@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1473 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1479 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -948,7 +948,7 @@ says whether a trajectory does what a generated ensemble could not.
   trajectories, and periodic images were ignored, which made 17 of 25 ligands appear 58 A -- one
   box length -- from their poses. `read_trajectory` now takes a `reference`, and `make_whole`
   and `reimage` undo the wrapping before anything is fitted; both are tested on constructed
-  cases. 35 tests for this item, 48 for the reader.
+  cases. 41 tests for this item, 48 for the reader.
   **Two more sets, 29 October 2026, and the answer is not the same on every set.** The
   trajectories built for D9 cover two further free-energy sets, so the same five models were
   measured on them with no new simulation: **p38**, 29 ligands in PDB entry 3FLY, and **hif2a**,
@@ -983,12 +983,35 @@ says whether a trajectory does what a generated ensemble could not.
   the author's instruction, and failed on its own evidence -- two readings of its definition
   sweep were written down beforehand and both failed on a set they were not read from -- so the
   gate reopening changes what is still open about the trajectory and nothing about D9.
+  **The own-frame control on all three sets, 29 October 2026, and it does not say what one set
+  said.** The control reads the same frames with each trajectory superimposed on its own first
+  frame instead of on the one structure all the runs of its set were built from, so every ligand
+  sits in a frame of its own. It now exists for the two new sets as well, built from the
+  trajectories already on disk, and the change it causes has an interval of its own, taken
+  against the common-frame ensemble on the same molecules and with the same weighting:
+  **hif2a** +0.471 to +0.297 (**-0.175 [-0.391, -0.020]**), **mcl1** +0.391 to +0.277 (-0.114
+  [-0.386, +0.081]), **p38** +0.239 to +0.368 (+0.129 [-0.207, +0.369]).
+  **Only hif2a loses beyond the interval.** On mcl1 the drop of 0.114 reported above does not
+  clear the interval, now that the control has one; on p38 the own frame reads 0.129 *higher*
+  than the common one. So the sentence above -- that the common frame is what makes any of this
+  measurable -- was a reading of one set, and these three do not support it as a statement about
+  the method. What an alignment of a few tenths of an angstrom is worth is decided set by set
+  here. On p38 the control is also +0.107 [-0.351, +0.498] above the crystal pose, which is one
+  more reason to read the gains of that set with care: there a reading built to be wrong does no
+  worse than the pose it was meant to lose to.
+  **The control is kept out of the counting.** It is not one of the ten readings compared with
+  their crystal pose, and a set is not counted as ahead because the control clears an interval;
+  `CONTROLS` in `benchmarks/run_md.py` is what leaves it out, with a test for each. A reading
+  built to be wrong must make the evidence look neither stronger nor weaker than it is. An
+  own-frame run also no longer overwrites `examples/md/provenance.json`, which describes the
+  common-frame ensemble and not this control.
   **Not done:** one force field and one length on all three sets; a set whose poses are *not*
   known, which is where an ensemble should help most and where this result still says nothing;
-  the own-frame control on the two new sets, which exists for mcl1 only; a reading of the
-  trajectory that is fixed in advance rather than chosen as the best of five, which is what the
-  +0.003 edge asks for; and the flexible-series question the item names, `mittal/AMPH1`, which
-  the item made conditional on a set showing something and which these two sets now permit.
+  why the own frame costs q2 on hif2a and not on the other two, which is a question about the
+  sets rather than about the method; a reading of the trajectory that is fixed in advance rather
+  than chosen as the best of five, which is what the +0.003 edge asks for; and the
+  flexible-series question the item names, `mittal/AMPH1`, which the item made conditional on a
+  set showing something and which these two sets now permit.
 * **D9. Solvent as a field.** The 2015 indicator-field formalism accepts any continuous density,
   and a water occupancy map from the trajectory is one. Fit the occupancy by Gaussians on a grid
   of hydration sites (the fitting machinery of `cmfqsar/probes.py` does this for probe fields) and
