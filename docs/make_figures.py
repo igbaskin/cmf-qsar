@@ -135,15 +135,21 @@ def project(frame, coords):
     return np.column_stack([d @ e1, d @ e2])
 
 
-def draw_skeleton(ax, mol, frame, colour="black"):
-    """The bonds between heavy atoms of one molecule, projected onto the plane."""
+def draw_skeleton(ax, mol, frame, colour="black", hydrogens=False):
+    """The bonds between heavy atoms of one molecule, projected onto the plane; with
+    `hydrogens`, the bonds to the hydrogen atoms as well, drawn thinner."""
     xy = project(frame, mol.coords)
     heavy = np.array([s != "H" for s in mol.symbols])
     for a, b in mol.bonds:
         if heavy[a] and heavy[b]:
             ax.plot([xy[a, 0], xy[b, 0]], [xy[a, 1], xy[b, 1]], color=colour, lw=1.0,
                     solid_capstyle="round", zorder=3)
+        elif hydrogens:
+            ax.plot([xy[a, 0], xy[b, 0]], [xy[a, 1], xy[b, 1]], color=colour, lw=0.5,
+                    solid_capstyle="round", zorder=3)
     ax.scatter(xy[heavy, 0], xy[heavy, 1], s=7, color=colour, zorder=4)
+    if hydrogens:
+        ax.scatter(xy[~heavy, 0], xy[~heavy, 1], s=2.5, color=colour, zorder=4)
 
 
 def field_slice(mol, spec, f, pts):
@@ -833,7 +839,7 @@ def fig_rule3(path):
     for ax, i, v in zip(axes, picks, values):
         mol = mf[i]
         xy = project(frame, mol.coords)
-        draw_skeleton(ax, mol, frame, colour="0.55")
+        draw_skeleton(ax, mol, frame, colour="0.55", hydrogens=True)
         ax.scatter(xy[:, 0], xy[:, 1], s=260 * np.abs(v) / vmax,
                    color=np.where(v >= 0, "C3", "C0"), alpha=0.75, linewidths=0, zorder=5)
         for k in np.argsort(-np.abs(v))[:3]:
