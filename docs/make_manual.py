@@ -5,7 +5,11 @@ Typeset ``docs/manual.md`` as ``docs/CMF_manual.pdf``.
 A deliberately small Markdown subset is understood -- headings, paragraphs, bullet and numbered
 lists, fenced code blocks, pipe tables, block quotes, horizontal rules and the inline markup
 ``**bold**``, ``*italic*`` and ``code`` -- which is all the manual uses and all that is needed to
-keep the source readable on its own.  The point of writing the manual in Markdown and converting
+keep the source readable on its own.  Display equations between ``$$`` lines are numbered by
+chapter in order of appearance; a comment ``<!-- #eq:name -->`` on the line after an equation
+labels it, and ``(#eq:name)`` in the text becomes its number, such as ``(2.3)``.  Chapters,
+sections and equations are all numbered here, never in the source, so no number can go stale.
+The point of writing the manual in Markdown and converting
 it here, rather than building flowables by hand, is that the text stays editable by anyone and the
 layout lives in one place.
 
@@ -129,6 +133,57 @@ def styles(have_dejavu: bool):
 # Inline markup
 # --------------------------------------------------------------------------- #
 
+#: the numbers of the display equations in order of appearance, and the number of every labelled
+#: one, filled by number_equations() before the source is parsed, so that a reference may come
+#: before the equation it points at
+EQUATIONS = {"numbers": [], "labels": {}}
+
+_EQ_LABEL = re.compile(r"^<!--\s*#eq:([\w-]+)\s*-->$")
+
+
+def number_equations(lines):
+    """Number every display equation as (chapter.n), counting from 1 in each chapter, with an
+    appendix keeping its letter; returns the numbers in order and the labels.
+
+    An equation is labelled by an HTML comment on the line after its closing ``$$``, written
+    ``<!-- #eq:name -->``, and the text refers to it as ``(#eq:name)``, which becomes ``(2.3)``.
+    The chapter count mirrors parse(): a ``# `` heading starts a chapter unless its title starts
+    with ``Appendix``, and headings inside code blocks do not count.
+    """
+    numbers, labels = [], {}
+    chapter, number, n, i = 0, "0", 0, 0
+    while i < len(lines):
+        s = lines[i].strip()
+        if s.startswith("# "):
+            m = re.match(r"^Appendix ([A-Z])(?![A-Za-z])", s[2:])
+            if m:
+                number = m.group(1)
+            else:
+                chapter += 1
+                number = str(chapter)
+            n = 0
+        elif s.startswith("```"):
+            i += 1
+            while i < len(lines) and not lines[i].strip().startswith("```"):
+                i += 1
+        elif s.startswith("$$"):
+            j = i
+            if not (s.endswith("$$") and len(s) > 4):
+                j = i + 1
+                while j < len(lines) and not lines[j].strip().startswith("$$"):
+                    j += 1
+            n += 1
+            numbers.append(f"{number}.{n}")
+            m = _EQ_LABEL.match(lines[j + 1].strip()) if j + 1 < len(lines) else None
+            if m:
+                if m.group(1) in labels:
+                    print(f"[warn] equation label {m.group(1)} used twice", file=sys.stderr)
+                labels[m.group(1)] = numbers[-1]
+            i = j
+        i += 1
+    return numbers, labels
+
+
 def inline(text: str, mono: str) -> str:
     """Markdown inline markup to reportlab's mini-HTML, escaping what must be escaped."""
     # maths first, so that its backslashes and braces never meet the escaping below
@@ -140,7 +195,15 @@ def inline(text: str, mono: str) -> str:
         maths[key] = inline_math(m.group(1), mono)
         return key
 
+    def equation(m):
+        label = m.group(1)
+        if label in EQUATIONS["labels"]:
+            return f"({EQUATIONS['labels'][label]})"
+        print(f"[warn] no equation is labelled {label}", file=sys.stderr)
+        return m.group(0)
+
     out = re.sub(r"(?<!\\)\$([^$]+)\$", stash, text)
+    out = re.sub(r"\(#eq:([\w-]+)\)", equation, out)
     out = out.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     out = re.sub(r"`([^`]+)`",
                  lambda m: f'<font name="{mono}" size="8.6">{m.group(1)}</font>', out)
@@ -356,18 +419,30 @@ def math_drawing(latex: str, fontsize: float = 13.0, colour: str = "#1a1a1a"):
     return drawing
 
 
-def math_block(lines, st, frame_width):
-    """A display equation, centred, with the source kept as a fallback."""
+def math_block(lines, st, frame_width, number=None):
+    """A display equation, centred, with its number at the right margin and the source kept as
+    a fallback."""
+    from reportlab.graphics.shapes import Drawing, Group, String
     latex = " ".join(l.strip() for l in lines if l.strip())
     drawing = math_drawing(latex)
     if drawing is None:
         return code_block(lines, st, frame_width)
-    if drawing.width > frame_width:               # a long equation is scaled, never clipped
-        scale = frame_width / drawing.width
-        drawing.scale(scale, scale)
-        drawing.width, drawing.height = frame_width, drawing.height * scale
-    drawing.hAlign = "CENTER"
-    return KeepTogether([Spacer(1, 5), drawing, Spacer(1, 9)])
+    # the number takes a margin on the right, and the same margin is kept on the left so that
+    # the equation stays centred on the page; a long equation is scaled into the room, never clipped
+    margin = 44 if number else 0
+    scale = min(1.0, (frame_width - 2 * margin) / drawing.width)
+    width, height = drawing.width * scale, drawing.height * scale
+    group = Group(*drawing.contents)
+    group.transform = (scale, 0, 0, scale, (frame_width - width) / 2, 0)
+    block = Drawing(frame_width, height)
+    block.add(group)
+    if number:
+        size = 9.5
+        block.add(String(frame_width, (height - 0.7 * size) / 2, f"({number})",
+                         fontName=st["_fonts"][0], fontSize=size, textAnchor="end",
+                         fillColor=INK))
+    block.hAlign = "CENTER"
+    return KeepTogether([Spacer(1, 5), block, Spacer(1, 9)])
 
 
 def figure(path, caption, st, frame_width):
@@ -457,7 +532,7 @@ def parse(source: str, st, frame_width):
     story, lines, i = [], source.replace("\r\n", "\n").split("\n"), 0
     # chapters and sections are numbered here, never in the source, so the numbers cannot go
     # stale; an appendix keeps the letter its title already carries, and its sections take it
-    chapter, section, number, heads = 0, 0, "0", 0
+    chapter, section, number, heads, equations = 0, 0, "0", 0, 0
     while i < len(lines):
         line = lines[i]
         stripped = line.strip()
@@ -485,16 +560,24 @@ def parse(source: str, st, frame_width):
             i += 1
             continue
         if stripped.startswith("$$"):
+            numbers = EQUATIONS["numbers"]
+            eq_number = numbers[equations] if equations < len(numbers) else None
+            equations += 1
             if stripped.endswith("$$") and len(stripped) > 4:      # a one-line equation
-                story.append(math_block([stripped[2:-2]], st, frame_width))
+                story.append(math_block([stripped[2:-2]], st, frame_width, eq_number))
                 i += 1
-                continue
-            j, block = i + 1, []
-            while j < len(lines) and not lines[j].strip().startswith("$$"):
-                block.append(lines[j])
-                j += 1
-            story.append(math_block(block, st, frame_width))
-            i = j + 1
+            else:
+                j, block = i + 1, []
+                while j < len(lines) and not lines[j].strip().startswith("$$"):
+                    block.append(lines[j])
+                    j += 1
+                story.append(math_block(block, st, frame_width, eq_number))
+                i = j + 1
+            if i < len(lines) and _EQ_LABEL.match(lines[i].strip()):   # the label line
+                i += 1
+            continue
+        if stripped.startswith("<!--") and stripped.endswith("-->"):
+            i += 1                                               # any other comment
             continue
         if stripped.startswith("```"):
             j = i + 1
@@ -701,6 +784,8 @@ def build(source_path, out_path):
     head, rest = text.split("\n", 1) if "\n" in text else (text, "")
     sub, rest = rest.split("\n", 1) if "\n" in rest else (rest, "")
     title, subtitle = head.lstrip("# ").strip(), sub.strip()
+    EQUATIONS["numbers"], EQUATIONS["labels"] = number_equations(
+        rest.replace("\r\n", "\n").split("\n"))
     lines = ["Desktop application, library and command-line tool",
              "for the Continuous Molecular Fields approach to 3D-QSAR", "", "User manual", "",
              '<font name="%s" size="9">github.com/igbaskin/cmf-qsar</font>' % st["_fonts"][3]]
