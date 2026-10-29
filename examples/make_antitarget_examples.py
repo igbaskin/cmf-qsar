@@ -9,7 +9,7 @@ potency and an anti-target activity measured on the same compounds.
 
 This script fetches one from ChEMBL:
 
-    Lazewska D. et al., "Novel and highly potent histamine H3 receptor ligands. Part 1:
+    Levoin N. et al., "Novel and highly potent histamine H3 receptor ligands. Part 1:
     withdrawing of hERG activity", Bioorg. Med. Chem. Lett. 21 (2011) 5378-5382,
     https://doi.org/10.1016/j.bmcl.2011.07.006  (ChEMBL document CHEMBL1821550)
 

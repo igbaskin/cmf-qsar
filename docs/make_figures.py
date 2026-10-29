@@ -507,7 +507,7 @@ def fig_sutherland(path):
     for ax, stat, col, title in ((axes[0], "q2", 0, "q², cross-validation"),
                                  (axes[1], "r2_pred", 2, "R²pred, the published test set")):
         ax.plot(x - 0.2, [paper[s][col] for s in sets], "o", ms=5, color="black",
-                label="the 2013 paper, Table 2")
+                label="Table 2 of [2]")
         for k, (label, tag) in enumerate(runs.items()):
             vals = []
             for s in sets:

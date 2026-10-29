@@ -554,7 +554,8 @@ def parse(source: str, st, frame_width):
                 i += 1
             story.append(Paragraph(inline(" ".join(block), mono), st["ref"]))
             continue
-        m_img = re.match(r"^!\[([^\]]*)\]\(([^)]+)\)\s*$", stripped)
+        # the caption may carry a citation in brackets, so it runs to the last "](" of the line
+        m_img = re.match(r"^!\[(.*)\]\(([^()]+)\)\s*$", stripped)
         if m_img:
             story.append(figure(m_img.group(2), m_img.group(1), st, frame_width))
             i += 1

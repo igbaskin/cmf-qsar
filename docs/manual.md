@@ -5,9 +5,8 @@ The continuous molecular fields approach, as a program
 
 CMF 3D-QSAR is a desktop application, a Python library and a command-line tool implementing the
 **Continuous Molecular Fields** approach to three-dimensional structure–activity modelling. The
-method was introduced by Zhokhova, Baskin and co-workers (Dokl. Chem. **429** (2009) 273;
-J. Comput.-Aided Mol. Des. **27** (2013) 427; continuous indicator fields: J. Comput.-Aided Mol.
-Des. **29** (2015) 233; co-fields: Future Med. Chem. **11** (2019) 2701), and the program follows
+method was introduced by Zhokhova, Baskin and co-workers [1, 2] and extended with continuous
+indicator fields [4] and co-fields [6], and the program follows
 those papers closely enough that their published statistics can be reproduced from the same data —
 `docs/benchmark.md` records that comparison set by set.
 
@@ -17,7 +16,7 @@ A molecule is represented not by a table of descriptors and not by values on a l
 **continuous functions of space**. Each field is a sum of Gaussians centred on the atoms,
 
 $$
-X_f(\mathbf{r}) = \sum_l w_{lf}\, \exp\!\left(-\frac{\alpha_f}{2}\,|\mathbf{r}-\mathbf{r}_l|^2\right)
+X_f(\mathbf{r}) = \sum_l w_{lf}\, \exp\!\left(-\dfrac{\alpha_f}{2}\,|\mathbf{r}-\mathbf{r}_l|^2\right)
 $$
 
 where $w_{lf}$ is the weight of atom $l$ in field $f$ — its partial charge for the electrostatic
@@ -29,7 +28,7 @@ Two molecules are compared by the **overlap integral** of their fields, which fo
 closed form:
 
 $$
-K_f(A,B) = \int X_{fA}(\mathbf{r})\, X_{fB}(\mathbf{r})\, \mathrm{d}\mathbf{r} = \left(\frac{\pi}{\alpha}\right)^{3/2} \sum_l \sum_m w_{lf} w_{mf}\, \exp\!\left(-\frac{\alpha}{4}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
+K_f(A,B) = \int X_{fA}(\mathbf{r})\, X_{fB}(\mathbf{r})\, \mathrm{d}\mathbf{r} = \left(\dfrac{\pi}{\alpha}\right)^{3/2} \sum_l \sum_m w_{lf} w_{mf}\, \exp\!\left(-\dfrac{\alpha}{4}\,|\mathbf{r}_l-\mathbf{r}_m|^2\right)
 $$
 
 No grid is ever evaluated for this: the kernel is a sum over atom pairs, computed exactly. The
@@ -79,8 +78,8 @@ the numbers are assigned when the PDF is built, so this text refers to chapters 
 
 Conventions: *Menu → Item* names a menu command, `monospace` names a file, an option or a piece of
 code. Equations are numbered by chapter when the PDF is built, (2.3) being the third equation
-of chapter 2, and the text refers to them by that number; where an equation also appears in
-one of the papers, its number there is given once, where the equation is introduced.
+of chapter 2, and the text refers to them by that number. References are cited by their number in the
+bibliography of Appendix D.
 
 # How a prediction is made
 
@@ -111,13 +110,13 @@ in an indicator field for atoms of that type and 0 elsewhere, or a number read f
 The field itself is the sum of Gaussians those weights define,
 
 $$
-X_f(\mathbf{r}) = \sum_l w_{lf}\,\exp\!\left(-\frac{b_{lf}}{2}|\mathbf{r}-\mathbf{r}_l|^2\right)
+X_f(\mathbf{r}) = \sum_l w_{lf}\,\exp\!\left(-\dfrac{b_{lf}}{2}|\mathbf{r}-\mathbf{r}_l|^2\right)
 $$
 <!-- #eq:field -->
 
 with width $b_{lf} = \alpha_f$ for every field except the steric one, where it is scaled by the
 atom's van der Waals radius, $b_{lf} = \alpha_f/R_{l}^2$, so that a large atom spreads its bulk
-over a correspondingly larger region (Eqs. 10–11 of the 2013 paper).
+over a correspondingly larger region.
 
 ![The electrostatic field of cortisol in the mean plane of the steroid series at α = 0.3 and at α = 3, and its steric field at α = 1; red is positive, blue negative, and the skeleton of the molecule is drawn over the map. A small attenuation spreads the Gaussian of every atom over its neighbours, a large one keeps each atom's contribution to itself. Drawn by `docs/make_figures.py`, as are the other computed figures of this manual.](docs/figures/fields.png)
 
@@ -130,14 +129,14 @@ Two Gaussians have an overlap integral in closed form, so the inner product of t
 a double sum over atom pairs:
 
 $$
-K_f(A,B) = \int X_{fA}(\mathbf{r})X_{fB}(\mathbf{r})\,\mathrm{d}\mathbf{r} = \sum_{l \in A}\sum_{m \in B} w_{lf}w_{mf}\left(\frac{2\pi}{b_{lf}+b_{mf}}\right)^{3/2}\exp\!\left(-\frac{b_{lf}b_{mf}}{2(b_{lf}+b_{mf})}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
+K_f(A,B) = \int X_{fA}(\mathbf{r})X_{fB}(\mathbf{r})\,\mathrm{d}\mathbf{r} = \sum_{l \in A}\ \sum_{m \in B} w_{lf}w_{mf}\left(\dfrac{2\pi}{b_{lf}+b_{mf}}\right)^{3/2}\exp\!\left(-\dfrac{b_{lf}b_{mf}}{2(b_{lf}+b_{mf})}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
 $$
 
 When every atom shares one width, $b_{lf} = b_{mf} = \alpha$, this collapses to the form the
 papers quote,
 
 $$
-K_f(A,B) = \left(\frac{\pi}{\alpha}\right)^{3/2}\sum_l \sum_m w_{lf}w_{mf}\,\exp\!\left(-\frac{\alpha}{4}|\mathbf{r}_l-\mathbf{r}_m|^2\right)
+K_f(A,B) = \left(\dfrac{\pi}{\alpha}\right)^{3/2}\sum_l \sum_m w_{lf}w_{mf}\,\exp\!\left(-\dfrac{\alpha}{4}\,|\mathbf{r}_l-\mathbf{r}_m|^2\right)
 $$
 <!-- #eq:kernel -->
 
@@ -161,7 +160,7 @@ Two corrections stand between the raw integrals and a usable kernel, and they do
 fields,
 
 $$
-\hat{K}_f(A,B) = \frac{K_f(A,B)}{\sqrt{K_f(A,A)\,K_f(B,B)}}
+\hat{K}_f(A,B) = \dfrac{K_f(A,B)}{\sqrt{K_f(A,A)\,K_f(B,B)}}
 $$
 <!-- #eq:normalised -->
 
@@ -198,7 +197,7 @@ the matrix in the worked example below.
 
 ## Fitting: what is learned from the training set
 
-Kernel ridge regression with a bias term solves one linear system (Eq. 12 of the 2013 paper):
+Kernel ridge regression with a bias term solves one linear system:
 
 $$
 (\mathbf{K} + \lambda\mathbf{I})\,\mathbf{a} + b\,\mathbf{1} = \mathbf{y}, \qquad \mathbf{1}^{\mathrm{T}}\mathbf{a} = 0
@@ -228,12 +227,12 @@ For a molecule the model has never seen, the program:
    molecule, giving one row $K_f(x, j)$ per field;
 3. normalises that row with the molecule's own self-kernels and the **stored** training
    self-kernels, and multiplies by the **stored** scales $c_f$;
-4. mixes those normalised, scaled fields into one row $k(x)_j$ with the mixing coefficients
+4. mixes those normalised, scaled fields into one row $k_j(x)$ with the mixing coefficients
    $h_f$, which is the joint kernel $K(x, j)$ of *Mixing the fields* above;
 5. returns
 
 $$
-\hat{y}(x) = \sum_j a_j\, k(x)_j + b = \mathbf{k}(x)^{\mathrm{T}}\mathbf{a} + b
+\hat{y}(x) = \sum_j a_j\, k_j(x) + b = \mathbf{k}(x)^{\mathrm{T}}\mathbf{a} + b
 $$
 <!-- #eq:prediction -->
 
@@ -246,17 +245,17 @@ why the *Contributions* tab can list the handful that actually make a given pred
 
 Because the kernel is an integral of a product and the prediction is linear in it, the sum over
 training molecules can be moved inside the integral. Writing $s_j = 1/\sqrt{K_f(j,j)}$ for the
-normalisation of training molecule *j*, define the **co-field** (Eq. 9 of the 2013 paper)
+normalisation of training molecule *j*, define the **co-field**
 
 $$
 C_f(\mathbf{r}) = \sum_j a_j\, s_j X_{fj}(\mathbf{r})
 $$
 <!-- #eq:cofield -->
 
-and the prediction becomes (Eq. 7 of the 2013 paper)
+and the prediction becomes
 
 $$
-\hat{y}(x) = \sum_f \frac{h_f c_f}{\sqrt{K_f(x,x)}}\int X_{fx}(\mathbf{r})\,C_f(\mathbf{r})\,\mathrm{d}\mathbf{r} + b
+\hat{y}(x) = \sum_f \dfrac{h_f c_f}{\sqrt{K_f(x,x)}}\int X_{fx}(\mathbf{r})\,C_f(\mathbf{r})\,\mathrm{d}\mathbf{r} + b
 $$
 <!-- #eq:prediction-field -->
 
@@ -369,7 +368,7 @@ the program compares the new molecules with that record and reports what does no
   training atom, against the share this training set asks of its own molecules — the fifth
   percentile of the same quantity measured on each training molecule against the others, less a
   small slack, so that a series of close analogues gets a strict rule, exactly as the applicability domain's
-  threshold does. Measured on the eight Sutherland sets, turning every held-out molecule 90° about
+  threshold does. Measured on the eight Sutherland sets [17], turning every held-out molecule 90° about
   its own centre is caught **95 % of the time, for a false-positive rate of 2.6 %** on the
   molecules left as they were. If the new molecules are not in the frame, align them (*Preparing
   the data*) or use a frame-free kernel source (*Working without an alignment*).
@@ -734,7 +733,7 @@ The tools, in increasing order of sophistication:
 
 - *Tools → Align data set to reference…* — rigid superposition on the maximum common substructure
   with a reference molecule, optionally refined by maximising the CMF kernel similarity, which is
-  the alignment criterion proposed in the 2013 paper.
+  the alignment criterion proposed in [2].
 - *Tools → Align by prediction confidence…* — minimises the Gaussian-process posterior variance
   $\sigma^2(x) = K(x,x) - \mathbf{k}(x)^{\mathrm{T}}(\mathbf{K} + \lambda\mathbf{I})^{-1}\mathbf{k}(x)$ of a molecule under an existing model, which moves it into the model's applicability domain. It uses
   no activity value, so it is valid for prospective prediction. The program refuses to move
@@ -783,7 +782,7 @@ than read from the crystal — which is the case a new molecule actually present
 | MCS + flexible, 5 conformer starts | **0.86 Å** | **88 %** | **+0.264** | **0.71 Å** |
 
 Three things follow. **Freeing the torsions makes the confidence criterion work**: with a conformation to fix,
-the rigid search of the 2019 paper is worse than not refining at all, which is the failure the
+the rigid search of [6] is worse than not refining at all, which is the failure the
 protocol was built to expose; the same objective with the rotatable bonds free is the best method
 available. The **conformer generator is what makes it work** — five generated starting
 conformations improve the median pose by 0.55 Å, better on 15 of 16 sets, and the combination
@@ -804,7 +803,7 @@ complementarity as a **prior** over poses and the confidence as the **likelihood
 pose that maximises the product:
 
 $$
-\min_{p}\ \sigma^2(p) - w\,[\,\mathrm{complementarity}(p) - \mathrm{clash}(p)\,]
+\min_{p}\ \left[\, \sigma^2(p) - w\,\left(\mathrm{complementarity}(p) - \mathrm{clash}(p)\right) \right]
 $$
 
 over the six rigid-body parameters $p$, with the same displacement guard. At $w = 0$ this is the
@@ -1629,8 +1628,7 @@ The smallest extension that can make one is to multiply the Gaussian by a linear
 width convention this program uses, atom $l$ then carries
 
 $$
-s_l(\mathbf{r}) = e^{-b |\mathbf{r} - \mathbf{R}_l|^2 / 2}, \qquad
-p_l^u(\mathbf{r}) = (r_u - R_{l,u})\, e^{-b |\mathbf{r} - \mathbf{R}_l|^2 / 2}
+s_l(\mathbf{r}) = \exp\!\left(-\dfrac{b}{2}\,|\mathbf{r} - \mathbf{R}_l|^2\right), \qquad p_l^u(\mathbf{r}) = (r_u - R_{l,u})\, \exp\!\left(-\dfrac{b}{2}\,|\mathbf{r} - \mathbf{R}_l|^2\right)
 $$
 
 for $u = x, y, z$: one s and three p functions per atom per width. A p function is odd about its
@@ -1644,11 +1642,7 @@ $p = a + b$, $\mathbf{d} = \mathbf{B} - \mathbf{A}$ and
 $S = (2\pi/p)^{3/2} e^{-ab|\mathbf{d}|^2 / 2p}$ the four blocks are
 
 $$
-\langle s_A | s_B\rangle = S, \qquad
-\langle p_A^u | s_B\rangle = \frac{b}{p} d_u S, \qquad
-\langle s_A | p_B^v\rangle = -\frac{a}{p} d_v S, \qquad
-\langle p_A^u | p_B^v\rangle = \left[\frac{\delta_{uv}}{p}
-- \frac{ab}{p^2} d_u d_v\right] S
+\langle s_A | s_B\rangle = S, \qquad \langle p_A^u | s_B\rangle = \dfrac{b}{p} d_u S, \qquad \langle s_A | p_B^v\rangle = -\dfrac{a}{p} d_v S, \qquad \langle p_A^u | p_B^v\rangle = \left[\dfrac{\delta_{uv}}{p} - \dfrac{ab}{p^2} d_u d_v\right] S
 $$
 
 and `cmfqsar/anisotropic.py` evaluates them. A kernel between two such fields is still a double
@@ -1724,7 +1718,7 @@ molecules across half a log unit cannot support a conclusion, whatever q² comes
 command says so and stops.
 
 **Can a frame exist at all?** The number of chemotypes, the size of the common Bemis–Murcko
-framework, and whether the molecules are actually superimposed. That last test is asked of the
+framework [11], and whether the molecules are actually superimposed. That last test is asked of the
 shared framework atoms rather than of the centroids, because `EmbedMolecule` leaves every
 molecule centred on the origin: a set of independently generated conformations has a centroid
 spread of 0.02 Å and looks perfectly aligned while every molecule points a different way. The
@@ -1820,7 +1814,7 @@ donor — are the default and reproduce the published CMF models. The steric fie
 width is scaled by the van der Waals radius of each atom, $b_{lf} = \alpha_f/R_l^2$ in
 Eq. (#eq:field), rather than being shared.
 
-**Continuous indicator fields** (CIF, 2015 paper) add one field per atom type, with weight 1 on
+**Continuous indicator fields** (CIF) [4] add one field per atom type, with weight 1 on
 atoms of that type and 0 elsewhere. Tick *Continuous indicator fields* and set the minimum number
 of training molecules an atom type must appear in (3 by default) to be given a field of its own.
 Three typing schemes are available: `sybyl` (the types of the original scripts, read from MOL2 or
@@ -1852,7 +1846,7 @@ Measured on two collections (`benchmarks/run_pharmfields.py`, with and without
 `--mittal`), each set on its own alignment with the same attenuation and ridge grids and the same
 ten-fold cross-validation as *Does an alignment help?*. The Sutherland sets cannot answer the
 question, because the smallest of the eight has 66 molecules and the claim is about series
-below forty; the 38 Mittal sets can, 15 of them being smaller than that.
+below forty; the 38 Mittal sets [18] can, 15 of them being smaller than that.
 
 | sets | how many | median n | five | five + pharm | pharm | five + cif | cif |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -2267,7 +2261,7 @@ residual. The kernel and the residual are then deflated by the component, and th
 taken from what remains. After $m$ components the dual coefficients are
 
 $$
-\mathbf{a} = U\,(T^\top K_c\, U)^{-1}\, T^\top \mathbf{y}
+\mathbf{a} = \mathbf{U}\,(\mathbf{T}^{\mathrm{T}}\mathbf{K}_c\,\mathbf{U})^{-1}\,\mathbf{T}^{\mathrm{T}}\mathbf{y}
 $$
 
 with $T$ and $U$ the matrices of score and residual vectors. The centring is folded into
@@ -2319,7 +2313,7 @@ attenuation (α = 0.05, 7 components) that gave the best q² of any model on tha
 of 0.07, against 0.42 for ridge. Kernel PLS also costs about one and a half times the time of
 ridge, because every count is a separate fit.
 
-So the measurement supports the choice of the 2013 paper: kernel ridge regression stays the
+So the measurement supports the choice of [2]: kernel ridge regression stays the
 default. `--method kpls` is there for what it is. It is CoMFA's learner on the continuous field,
 and so the right comparator when the question is what the continuous representation gains over
 the grid, with the learner held fixed; and it is a second opinion whose components, like
@@ -2372,7 +2366,7 @@ kept as the bias. Balanced accuracy, not accuracy, because a screening set with 
 twenty makes "inactive" the right answer for accuracy whatever the model says.
 
 **Probabilities.** The same out-of-fold scores give a one-dimensional logistic map from score to
-probability — Platt's (1999) recipe, with his smoothed targets so that a set the score separates
+probability — Platt's recipe [22], with his smoothed targets so that a set the score separates
 completely gives a finite slope. `predict_proba` and the *Scores* tab report it. Two cautions. The
 probability is a frequency read off cross-validation, with no term for how far a molecule lies
 from the training set, so unlike the Gaussian-process classifier it does not return towards one
@@ -2485,8 +2479,7 @@ likelihood at the mode with nothing averaged over it.
 space the kernel defines,
 
 $$
-\sum_i \log\left(1 + e^{-y_i f(x_i)}\right) + \frac{\lambda}{2}\,\|f\|^2,
-\qquad f(x) = \sum_j a_j K(x, x_j),
+\sum_i \log\left(1 + e^{-y_i f(x_i)}\right) + \dfrac{\lambda}{2}\,\|f\|^2, \qquad f(x) = \sum_j a_j K(x, x_j),
 $$
 
 a smooth convex problem solved by Newton's method. The stationarity condition is worth knowing
@@ -2585,16 +2578,16 @@ between molecules that are close in field space, whether or not they carry an ac
 $L$ the Laplacian of the graph of field similarity,
 
 $$
-\sum_{i \in \text{labelled}} \left(y_i - f(x_i)\right)^2 + \lambda\,\|f\|^2
-+ \gamma\, g^{T} L g, \qquad f(x) = \sum_j a_j K(x, x_j) + b, \qquad g = K a,
+\sum_{i \in \mathcal{L}} \left(y_i - f(x_i)\right)^2 + \lambda\,\|f\|^2 + \gamma\, \mathbf{g}^{\mathrm{T}}\mathbf{L}\,\mathbf{g}, \qquad f(x) = \sum_j a_j K(x, x_j) + b, \qquad \mathbf{g} = \mathbf{K}\mathbf{a},
 $$
 
-where the sum over $j$ now runs over **every** molecule, labelled or not. The third term is small
+where the sum over $i$ runs over the labelled molecules only and the sum over $j$ runs over
+**every** molecule, labelled or not. The third term is small
 when the prediction takes similar values at molecules the kernel calls similar. Setting the
 derivatives to zero gives one linear solve over all $n$ molecules,
 
 $$
-(J K + \lambda I + \gamma L K)\, a = J y,
+(\mathbf{J}\mathbf{K} + \lambda\mathbf{I} + \gamma\mathbf{L}\mathbf{K})\,\mathbf{a} = \mathbf{J}\mathbf{y},
 $$
 
 with one extra row and column for the bias, exactly as for kernel ridge regression. So the fitted
@@ -2602,7 +2595,7 @@ model is still one kernel expansion, and **the co-field, the molecule contributi
 contributions all read it with no special case** — with the unlabelled molecules now among the
 terms, which is what lets a co-field picture see the library.
 
-**The bias stays outside the penalty.** That is what $g = K a$ says above: $g$ holds the predicted
+**The bias stays outside the penalty.** That is what $\mathbf{g} = \mathbf{K}\mathbf{a}$ says above: $\mathbf{g}$ holds the predicted
 values without the bias term. Adding the same constant to every activity does not make a model
 vary faster, so a bias should not be charged for. The distinction matters here, because
 $L \mathbf{1}$ is not zero for a normalised Laplacian, while it is zero for the unnormalised one.
@@ -2714,7 +2707,7 @@ spends its capacity on the part that is noise.
 that the more active one score higher by a margin, and is penalised for every pair where that fails:
 
 $$
-\mathrm{min}\;\; \frac{1}{2}\|w\|^2 + C \sum_p \xi_p \;\;\mathrm{with}\;\; w \cdot (X_i - X_j) \geq 1 - \xi_p
+\min_{w,\,\xi}\ \dfrac{1}{2}\,\|w\|^2 + C \sum_p \xi_p \qquad \text{subject to}\quad w \cdot (X_i - X_j) \geq 1 - \xi_p
 $$
 
 over the pairs $p = (i, j)$ with $y_i > y_j$ — an ordinary support-vector classification on the
@@ -2797,7 +2790,7 @@ kernel ridge.
 A layer on top of the CMF kernel makes the model more expressive than an overlap integral: a
 Gaussian layer, $\exp(-\gamma d^2)$ with $d^2 = K(i,i) + K(j,j) - 2K(i,j)$, or one or two
 arc-cosine layers,
-the kernel of an infinitely wide neural network (Cho & Saul 2009). The cost is interpretability: the
+the kernel of an infinitely wide neural network [14]. The cost is interpretability: the
 model is then no longer linear in the field, so co-fields and atom contributions are unavailable.
 The similarity decomposition stays valid, and the **Shapley tab** decomposes the prediction
 instead, which is why it exists.
@@ -3048,7 +3041,7 @@ exercise an extrapolation? — and averaging a per-molecule verdict does not ans
 have identical nearest-neighbour similarities and still occupy different regions.
 
 Every set of molecules has a **mean field**, the mean of its feature maps, which for CMF is itself
-a function of space. The maximum mean discrepancy (Gretton *et al.*, JMLR **13** (2012) 723) is the
+a function of space. The maximum mean discrepancy [23] is the
 distance between two of them:
 
 $$
@@ -3100,7 +3093,7 @@ reports a percentile confidence interval for q² and for R²pred. It is the unce
 On the 21 training steroids, q² = 0.768 carries a 95 % interval of [0.47, 0.89] — wide enough to
 show that a difference of a hundredth means nothing.
 
-`--bootstrap-refit N` adds Cramer's bootstrap as well: resample the training set with replacement,
+`--bootstrap-refit N` adds Cramer's bootstrap [26] as well: resample the training set with replacement,
 refit, and score the molecules that were left out of the bag. That one measures the variability of
 the fit rather than of the statistic, and it is the more pessimistic of the two. The kernel is
 never recomputed — a resample is an index into the matrix — so a hundred refits cost about as much
@@ -3243,8 +3236,7 @@ and its notion of similarity is the kernel.
 
 *Spectral clustering* partitions that similarity directly. The kernel is already a similarity
 matrix, so there is nothing to build: form the normalised Laplacian, take the eigenvectors
-belonging to its smallest eigenvalues, put the rows on the unit sphere and run k-means there (Ng,
-Jordan & Weiss 2002). Groups that are not linearly separable in field space are separable in those
+belonging to its smallest eigenvalues, put the rows on the unit sphere and run k-means there [27]. Groups that are not linearly separable in field space are separable in those
 coordinates, which is the point of the construction. How many groups is decided by the **eigengap**
 unless it is given, and the gap is reported beside the answer so that a weak one can be seen for
 what it is.
@@ -3366,11 +3358,11 @@ and the pharmacophore are computed. `--open` shows it in the browser straight aw
 # Reading the model
 
 A CMF model is readable in a way a grid model is not, because the prediction can be taken apart
-exactly. The 2019 paper states three decomposition rules, and the program implements all three.
+exactly. Reference [6] states three decomposition rules, and the program implements all three.
 
 ## The three decomposition rules
 
-Every model the program fits is a sum of kernel values with the training molecules, and the three rules below follow from that one fact. The 2019 paper states them for the kernel of overlap integrals. The program keeps them for every model that is still such a sum, and it says so when a model is not: a nonlinear kernel layer keeps rule 2 and loses rules 1 and 3.
+Every model the program fits is a sum of kernel values with the training molecules, and the three rules below follow from that one fact. Reference [6] states them for the kernel of overlap integrals. The program keeps them for every model that is still such a sum, and it says so when a model is not: a nonlinear kernel layer keeps rule 2 and loses rules 1 and 3.
 
 **Rule 1: the co-field is a weighted sum of the fields of the training molecules.**
 
@@ -3404,13 +3396,13 @@ $$
 The field of a molecule is a sum of Gaussians centred on its atoms, and the overlap kernel is a sum over pairs of atoms, so the contribution of every training molecule splits further into one term $y_k$ per atom $k$ of the molecule being predicted, the overlap of that atom's own Gaussians with the co-fields:
 
 $$
-y_k = \sum_f \frac{h_f c_f}{\sqrt{K_f(x,x)}} \int X_{fk}(\mathbf{r})\, C_f(\mathbf{r})\, \mathrm{d}\mathbf{r}, \qquad X_{fx}(\mathbf{r}) = \sum_k X_{fk}(\mathbf{r})
+y_k = \sum_f \dfrac{h_f c_f}{\sqrt{K_f(x,x)}} \int X_{fk}(\mathbf{r})\, C_f(\mathbf{r})\, \mathrm{d}\mathbf{r}, \qquad X_{fx}(\mathbf{r}) = \sum_k X_{fk}(\mathbf{r})
 $$
 <!-- #eq:atom -->
 
-Here $X_{fk}$ is the part of the field of the molecule that atom $k$ carries, and the rest is Eq. (#eq:prediction-field) with the sum over the atoms taken outside the integral; it is Eq. 14 of the 2015 paper in the notation of chapter 2. The contribution of a substituent or a fragment is the sum over its atoms. This is the rule for design, because it says which part of a molecule helps and which part does not. It needs a kernel that is a sum over atom pairs, which the overlap kernel and the rotation-invariant autocorrelation kernel are and a nonlinear layer is not; under a layer the Shapley values of *Shapley values* below take its place. The scheme draws the atom contributions of the two test molecules the steroid model predicts highest and lowest, as the 2019 paper draws its Figure 3: red spheres raise the predicted affinity, blue ones lower it, and the area is the magnitude. The 3D view draws the same spheres for the selected molecule, and `model.atom_contributions(mol)` returns the values, per field with `per_field=True`.
+Here $X_{fk}$ is the part of the field of the molecule that atom $k$ carries, and the rest is Eq. (#eq:prediction-field) with the sum over the atoms taken outside the integral. The contribution of a substituent or a fragment is the sum over its atoms. This is the rule for design, because it says which part of a molecule helps and which part does not. It needs a kernel that is a sum over atom pairs, which the overlap kernel and the rotation-invariant autocorrelation kernel are and a nonlinear layer is not; under a layer the Shapley values of *Shapley values* below take its place. The scheme draws the atom contributions of the two test molecules the steroid model predicts highest and lowest, as Figure 3 of [6] draws them: red spheres raise the predicted affinity, blue ones lower it, and the area is the magnitude. The 3D view draws the same spheres for the selected molecule, and `model.atom_contributions(mol)` returns the values, per field with `per_field=True`.
 
-![Rule 3 for the two test molecules of the steroid set that the model of this chapter predicts highest and lowest, drawn as the 2019 paper draws its Figure 3: one circle per atom, hydrogens included, red for a positive contribution and blue for a negative one, with an area proportional to the magnitude and the three largest values written out. The sums in the titles are the predictions minus the bias. The largest contributions sit on oxygen atoms, where the electrostatic co-field has its lobes.](docs/figures/rule3.svg)
+![Rule 3 for the two test molecules of the steroid set that the model of this chapter predicts highest and lowest, drawn as Figure 3 of [6]: one circle per atom, hydrogens included, red for a positive contribution and blue for a negative one, with an area proportional to the magnitude and the three largest values written out. The sums in the titles are the predictions minus the bias. The largest contributions sit on oxygen atoms, where the electrostatic co-field has its lobes.](docs/figures/rule3.svg)
 
 **What to do with the map.** An atom with a negative contribution is a candidate for removal or for replacement, an atom with a positive one is what to keep, and the sum over a substituent is what the model says that substituent is worth at its position. The predicted effect of exchanging one group for another at a position is the difference of the two sums, one integral per pair of groups and no refit: that is the measure behind the table of *Which groups are interchangeable: a bioisostere table*, `cmf design` in *Designing the next compound* ranks candidate groups by the prediction for the whole molecule, and on a series without a common frame the invariant route of that chapter reports how much of a candidate's prediction comes from the group that was put in. One caution: the contributions describe the molecule as it is posed in the model's frame. Taking a group away changes the normalisation of the field and may change the conformation, the alignment and the charges of what is left, so the map says where to act, and the prediction for the edited molecule says whether the action worked.
 
@@ -3444,7 +3436,7 @@ Two further maps use the same grid, for the molecule currently shown:
 - the **overlap** $C_f(\mathbf{r})\,X_f(\mathbf{r})$, whose integral *is* that field's contribution to the prediction
   by Eq. (#eq:prediction-field), so the map shows where the prediction comes from.
 
-![The prediction as an overlap, for the electrostatic field of one test molecule of the steroid set and the model of the previous figure: the co-field of the model, times the molecule's own field, gives the product whose integral over space, with the field's scale and mixing coefficient, is that field's contribution to the predicted affinity. The prediction is the sum of these contributions over the fields plus the bias. This is Fig. 1 of the 2013 paper drawn with the program's own maps; the application shows the same three maps in 3D for the molecule on screen.](docs/figures/overlapmap.png)
+![The prediction as an overlap, for the electrostatic field of one test molecule of the steroid set and the model of the previous figure: the co-field of the model, times the molecule's own field, gives the product whose integral over space, with the field's scale and mixing coefficient, is that field's contribution to the predicted affinity. The prediction is the sum of these contributions over the fields plus the bias. This is Fig. 1 of [2] drawn with the program's own maps; the application shows the same three maps in 3D for the molecule on screen.](docs/figures/overlapmap.png)
 
 *File → Export current co-field (Gaussian cube)* writes a cube file readable by PyMOL, VMD or
 Jmol, which is the way to put a co-field into a publication figure.
@@ -3455,14 +3447,12 @@ A co-field is read as a fact about the chemistry. It is a linear map of the meas
 part of its shape is a fact about the measurement error instead, and the program can say which part
 in closed form.
 
-The dual coefficients are a linear map of the activities — with a bias, the bordered system of the
-2013 paper, whose inverse's top-left block is the matrix below — so activities carrying independent
-noise of variance $\sigma^2$ give coefficients carrying covariance $\sigma^2 G G^{\mathrm{T}}$, and
+The dual coefficients are a linear map of the activities — with a bias, the bordered system of Eq. (#eq:ridge), whose inverse's top-left block is the matrix below — so activities carrying independent
+noise of variance $\sigma^2$ give coefficients carrying covariance $\sigma^2 \mathbf{G}\mathbf{G}^{\mathrm{T}}$, and
 the co-field, being linear in them, carries
 
 $$
-\mathrm{Var}\,[C_f(\mathbf{r})] = \sigma^2 \left\| G^{\mathrm{T}} \mathbf{x}_f(\mathbf{r}) \right\|^2,
-\qquad x_{fj}(\mathbf{r}) = s_{fj} X_{fj}(\mathbf{r})
+\mathrm{Var}\,[C_f(\mathbf{r})] = \sigma^2 \left\| \mathbf{G}^{\mathrm{T}} \mathbf{x}_f(\mathbf{r}) \right\|^2, \qquad x_{fj}(\mathbf{r}) = s_{fj} X_{fj}(\mathbf{r})
 $$
 
 — one matrix product per block of grid points, no resampling and no refitting. The **hide noise**
@@ -3747,9 +3737,7 @@ $\mathbf{z}_t$ — the medium, the metal, the temperature; in a host-guest probl
 the host itself — and set
 
 $$
-T(t, s) = (1 - \varepsilon)\,
-\exp\left(-\frac{|\mathbf{z}_t - \mathbf{z}_s|^2}{2\ell^2}\right)
-+ \varepsilon\,\delta_{ts},
+T(t, s) = (1 - \varepsilon)\, \exp\left(-\dfrac{|\mathbf{z}_t - \mathbf{z}_s|^2}{2\ell^2}\right) + \varepsilon\,\delta_{ts},
 $$
 
 whose length scale $\ell$ and nugget $\varepsilon$ are chosen by the same evidence
@@ -3875,8 +3863,7 @@ for B, the overlap is a sum of overlap integrals of atom-centred Gaussians — w
 kernel between the two training sets:
 
 $$
-\langle C_f^A, C_f^B\rangle = \sum_{j,k} a_j b_k s_{fj} s_{fk} K_f^{\mathrm{raw}}(j,k)
-= \mathbf{a}^{\mathrm{T}} \mathbf{K}_f(A,B)\, \mathbf{b}
+\langle C_f^A, C_f^B\rangle = \sum_{j,k} a_j b_k s_{fj} s_{fk} K_f^{\mathrm{raw}}(j,k) = \mathbf{a}^{\mathrm{T}} \mathbf{K}_f(A,B)\, \mathbf{b}
 $$
 
 one matrix product on a block the program computes for a prediction anyway. The number to read is
@@ -3946,8 +3933,7 @@ $\mathbf{a}$, $\mathbf{b}$ (one coefficient per molecule, the same object as a f
 coefficients), the pairs solve the two coupled equations
 
 $$
-\mathbf{K}\mathbf{L}\,\mathbf{b} = \rho\,(\mathbf{K}^2 + c_K \mathbf{K})\,\mathbf{a}, \qquad
-\mathbf{L}\mathbf{K}\,\mathbf{a} = \rho\,(\mathbf{L}^2 + c_L \mathbf{L})\,\mathbf{b},
+\mathbf{K}\mathbf{L}\,\mathbf{b} = \rho\,(\mathbf{K}^2 + c_K \mathbf{K})\,\mathbf{a}, \qquad \mathbf{L}\mathbf{K}\,\mathbf{a} = \rho\,(\mathbf{L}^2 + c_L \mathbf{L})\,\mathbf{b},
 $$
 
 where $\rho$ is the canonical correlation and $c_K$, $c_L$ are ridges. **The ridge is not an
@@ -4097,8 +4083,7 @@ python cmf_cli.py build examples/sutherland/AChE.sdf --charges file \
 ## One-class models: screening with actives alone
 
 Often there are no reliable inactives, only a set of known actives, and the question is whether a
-new molecule belongs to the same class. That is one-class classification, applied to CMF by Karpov
-et al. (2011). Five descriptions of the active class are implemented:
+new molecule belongs to the same class. That is one-class classification, applied to CMF by Karpov et al. [7, 8]. Five descriptions of the active class are implemented:
 
 | Method | What it measures |
 |---|---|
@@ -4130,8 +4115,7 @@ Two problems the program handles explicitly:
   (the file's own conformation is always among the candidates).
 - **AUC saturates.** With cross-target decoys almost any method reaches 0.95 and above, which tells
   you nothing. Read the **enrichment factors** at 0.5, 1, 5 and 10 % instead, which the program
-  reports beside the maximum achievable value at each fraction, and **BEDROC/RIE** (Truchon &
-  Bayly), which weight the top of the list.
+  reports beside the maximum achievable value at each fraction, and **BEDROC/RIE** [16], which weight the top of the list.
 
 A measured caution from the benchmarks in this repository: field similarity on these tasks performs
 about as well as ECFP4 fingerprint similarity, and cross-target decoys are trivially separable by
@@ -4142,10 +4126,10 @@ either. If a screening result looks spectacular, check what the decoys were.
 Every background in the previous section is *presumed* inactive, and a presumed inactive is an
 easier to reject than a measured one. A compound that was tested and did nothing is the kind of
 molecule a screen actually has to reject, and there is a public collection of them: **LIT-PCBA**
-(Tran-Nguyen, Jacquemard & Rognan 2020), assembled from high-confidence PubChem dose-response
+[19], assembled from high-confidence PubChem dose-response
 assays — 15 targets, 7761 actives and 382674 inactives, every one with an experimental verdict.
 The AVE-unbiased subsets are the form the authors recommend, since the asymmetric validation
-embedding of Wallach & Heifets removes the analogue bias that otherwise lets a screen score well
+embedding of Wallach and Heifets [20] removes the analogue bias that otherwise lets a screen score well
 by recognising that actives resemble actives.
 
 What LIT-PCBA does not have is the thing a field method needs: a conformation and a pose.
@@ -4177,7 +4161,7 @@ concentration, and a few are actives nobody has recognised. Training a classifie
 as a negative class teaches it to reject the very molecules a screen is looking for, and the damage
 is worst at the top of the ranking, which is the only part anyone reads.
 
-`cmfqsar/pu.py` implements **bagging PU** (Mordelet & Vert 2014), the method that needs neither an
+`cmfqsar/pu.py` implements **bagging PU** [21], the method that needs neither an
 estimate of the class prior nor an assumption about how the positives were sampled:
 
 1. draw a small random sample of the unlabelled set and call it negative;
@@ -4409,7 +4393,7 @@ molecule and poses every one, which multiplies the cost by N.
 ## Which molecule to make next
 
 The model predicts an activity and, through the Gaussian-process view, a standard deviation beside
-it. Those two numbers answer a question the 2019 paper poses and leaves as a statement — that
+it. Those two numbers answer a question [6] poses and leaves as a statement — that
 maximising the overlap tells one how to modify the molecule — as an operation with a number:
 
 ```bash
@@ -4435,8 +4419,7 @@ pretending one serves both.
 Expected improvement counts only the upside, which is why it is the usual choice:
 
 $$
-\mathrm{EI}(x) = (\mu - y^{*} - \xi)\,\Phi(z) + \sigma\,\varphi(z), \qquad
-z = \frac{\mu - y^{*} - \xi}{\sigma}
+\mathrm{EI}(x) = (\mu - y^{*} - \xi)\,\Phi(z) + \sigma\,\varphi(z), \qquad z = \dfrac{\mu - y^{*} - \xi}{\sigma}
 $$
 
 Note that this is the **opposite** of how the same two numbers are used to rank a screening
@@ -4703,9 +4686,7 @@ medicinal-chemistry form, and what it needed was data: one series with a potency
 anti-target activity measured on the same compounds.
 
 **The series** is `examples/antitarget/h3_herg.sdf`, built by
-`examples/make_antitarget_examples.py` from one ChEMBL document, which is one paper: Lazewska
-and co-workers, *Novel and highly potent histamine H3 receptor ligands. Part 1: withdrawing of
-hERG activity*, Bioorg. Med. Chem. Lett. 21 (2011) 5378. The paper's own subject is this
+`examples/make_antitarget_examples.py` from one ChEMBL document, which is one paper [25]. The paper's own subject is this
 question. 78 compounds carry both numbers: the H3 affinity as a displacement of
 [125I]iodoproxyfan, and the hERG activity as a displacement of [3H]dofetilide, **one assay
 each, in one laboratory**. That matters, and the assay descriptions travel with the file as
@@ -4725,7 +4706,7 @@ with it:
 On the potency the two-task fit is +0.022 [-0.005, +0.048] against the single fit, paired over
 the molecules: not worse, so the selectivity co-field is not bought with a worse model of the
 thing that matters. The selectivity itself is predicted at q2 +0.471, better than either
-endpoint alone, which is the 2003 paper's claim met again on a different kind of series.
+endpoint alone, which is the claim of [10] met again on a different kind of series.
 
 **The second part: where the difference co-field puts its weight.** `cofields.atom_effect` says
 what one more atom of a given field type, at a given place, would do to the predicted
@@ -5132,7 +5113,7 @@ instead of returning a number.
 # Conformations: the fourth dimension
 
 A 3D-QSAR model represents each molecule by one conformation, and the answer depends on which one.
-4D-QSAR (Hopfinger et al. 1997) replaces the choice by an ensemble and averages over it.
+4D-QSAR [12] replaces the choice by an ensemble and averages over it.
 *Model → Conformations* switches between the two; **single is the default and is unchanged**, and
 the tests assert that by comparing its fields against those built before ensembles existed.
 
@@ -5165,7 +5146,7 @@ of the series.
 | `self` | on the molecule's own pose, over all heavy atoms — the default, so nothing changes silently |
 | `core` | on its own pose, over the common substructure with a reference only, so the scaffold stays where the published alignment put it and only the flexible part moves |
 | `reference` | on a reference molecule of the series, through that same common substructure, which puts every conformation of the series in one frame |
-| `field` | as `reference`, then refined by maximising the normalised CMF kernel — the 2013 paper's criterion, applied per conformation |
+| `field` | as `reference`, then refined by maximising the normalised CMF kernel — the criterion of [2], applied per conformation |
 
 **Multi-instance learning** (`cmf_cli.py mil`) goes further: instead of averaging, the model chooses
 which conformation of each molecule to use, alternating between fitting and selecting. Use it when
@@ -5323,7 +5304,7 @@ Dimorphite-DL's patterns, given its regression pKa, and weighted by the Henderso
 fraction
 
 $$
-f = 1 / (1 + 10^{\mathrm{pH} - \mathrm{p}K_{\mathrm{a}}})
+f = \dfrac{1}{1 + 10^{\,\mathrm{pH} - \mathrm{p}K_{\mathrm{a}}}}
 $$
 
 for the protonated form and its complement for the deprotonated one; a state's weight is the
@@ -5430,7 +5411,7 @@ Geometry without a frame. For each pair of field types the program computes the 
 autocorrelation
 
 $$
-\Phi_{fg}(d) = \sum_l \sum_m w_{lf} w_{mg}\, \exp\!\left(-\frac{(|\mathbf{r}_l-\mathbf{r}_m| - d)^2}{2\sigma^2}\right)
+\Phi_{fg}(d) = \sum_l \sum_m w_{lf} w_{mg}\, \exp\!\left(-\dfrac{(|\mathbf{r}_l-\mathbf{r}_m| - d)^2}{2\sigma^2}\right)
 $$
 
 as a function of interatomic distance $d$, which is invariant under rotation and translation by
@@ -5442,7 +5423,7 @@ channel $c$, a channel being one pair of field types at one distance — and the
 cosine-normalised dot product of two such vectors:
 
 $$
-K(A,B) = \frac{\sum_c s_c^2\, \Phi_c(A)\, \Phi_c(B)}{\|s\,\Phi(A)\|\; \|s\,\Phi(B)\|}
+K(A,B) = \dfrac{\sum_c s_c^2\, \Phi_c(A)\, \Phi_c(B)}{\|s\,\Phi(A)\|\; \|s\,\Phi(B)\|}
 $$
 
 with $s_c$ the scale channel $c$ inherits from its block: the reciprocal root mean square of that
@@ -5569,8 +5550,7 @@ the only choice is how to divide a pair between its two atoms. Dividing it equal
 number per atom that adds up to the prediction exactly:
 
 $$
-y(x) - b = \sum_a q_a, \qquad
-q_a = \frac{1}{\|s\,\Phi(x)\|} \sum_c s_c\, \gamma_c\, \Phi_c^{(a)}(x)
+y(x) - b = \sum_a q_a, \qquad q_a = \dfrac{1}{\|s\,\Phi(x)\|} \sum_c s_c\, \gamma_c\, \Phi_c^{(a)}(x)
 $$
 
 with $\gamma$ the co-pattern -- the training molecules' channel rows summed with their dual
@@ -5639,7 +5619,7 @@ $$
 $$
 
 $$
-G_s(u) = \exp\!\left(-\frac{u^2}{2s^2}\right), \qquad \rho_{lm} = |\mathbf{r}_l^{\,xy} - \mathbf{r}_m^{\,xy}|
+G_s(u) = \exp\!\left(-\dfrac{u^2}{2s^2}\right), \qquad \rho_{lm} = |\mathbf{r}_l^{\,xy} - \mathbf{r}_m^{\,xy}|
 $$
 
 It is therefore invariant to translation in the plane and to rotation about the normal, and to
@@ -5660,7 +5640,7 @@ terms are kept. Those channels are again a descriptor of one molecule, and the k
 them is the dot product of the preceding section, over this section's channels:
 
 $$
-K(A,B) = \frac{\sum_c s_c^2\, \Phi_c(A)\, \Phi_c(B)}{\|s\,\Phi(A)\|\; \|s\,\Phi(B)\|}, \qquad c = (f, g, \rho_k, z_i, z_j)
+K(A,B) = \dfrac{\sum_c s_c^2\, \Phi_c(A)\, \Phi_c(B)}{\|s\,\Phi(A)\|\; \|s\,\Phi(B)\|}, \qquad c = (f, g, \rho_k, z_i, z_j)
 $$
 
 The command is `--kernel surface`; the model panel does not offer it.
@@ -5756,8 +5736,8 @@ Benzene, triphenylene and the other molecules with a three-fold or higher axis h
 in-plane moments and no long axis; for them $x$ is put along the direction of the largest third
 moment, or the fourth or sixth when the lower ones do not depend on the direction. A molecule that
 is already in its frame stays where it is, a rotated or shifted copy lands on the same point set,
-and a mirror image lands on the mirrored one (`tests/test_pbh.py`). The alternative the 2013
-paper offers — among the four candidate frames, the one whose field is most similar on average to
+and a mirror image lands on the mirrored one (`tests/test_pbh.py`). The alternative that [2]
+offers — among the four candidate frames, the one whose field is most similar on average to
 the training set (`choose_frame_by_kernel`, alignment by prediction confidence) — is implemented
 and off by default, since the rule leaves nothing to choose for a planar molecule without symmetry.
 
@@ -5856,14 +5836,14 @@ periodic images out to a cutoff $r_{\max}$, per atom of the cell, with the unifo
 each field pair removed and the cutoff tapered:
 
 $$
-\Phi_{fg}(d) = \frac{1}{N}\left[\, P_{fg}(d) \;-\; \frac{S_f S_g}{V}\, B(d) \,\right]
+\Phi_{fg}(d) = \dfrac{1}{N}\left[\, P_{fg}(d) \;-\; \dfrac{S_f S_g}{V}\, B(d) \,\right]
 $$
 
 The first term is the tapered pair histogram of the two fields, over every atom $l$ of the cell
 and every neighbour $m$ inside the cutoff, periodic images included:
 
 $$
-P_{fg}(d) = \sum_{l \,\in\, \mathrm{cell}} \;\, \sum_{m\,:\; r_{lm} < r_{\max}} w_{lf} w_{mg}\, \omega(r_{lm})\, \exp\!\left(-\frac{(r_{lm} - d)^2}{2\sigma^2}\right)
+P_{fg}(d) = \sum_{l \in \mathrm{cell}}\ \sum_{m:\, r_{lm} < r_{\max}} w_{lf} w_{mg}\, \omega(r_{lm})\, \exp\!\left(-\dfrac{(r_{lm} - d)^2}{2\sigma^2}\right)
 $$
 
 The second is what that histogram would be if the same total weight of each field were spread
@@ -5871,7 +5851,7 @@ uniformly through the cell, which is the part of $P_{fg}$ that reports only how 
 is:
 
 $$
-B(d) = \int_{0}^{r_{\max}} 4\pi r^2\, \omega(r)\, \exp\!\left(-\frac{(r - d)^2}{2\sigma^2}\right) \mathrm{d}r
+B(d) = \int_{0}^{r_{\max}} 4\pi r^2\, \omega(r)\, \exp\!\left(-\dfrac{(r - d)^2}{2\sigma^2}\right) \mathrm{d}r
 $$
 
 Here $N$ is the number of atoms in the cell, $r_{lm}$ the distance from atom $l$ to image $m$,
@@ -5884,7 +5864,7 @@ preceding sections $\Phi$ describes one structure, and the kernel of two of them
 cosine-normalised dot product over the channels:
 
 $$
-K(A,B) = \frac{\sum_c s_c^2\, \Phi_c(A)\, \Phi_c(B)}{\|s\,\Phi(A)\|\; \|s\,\Phi(B)\|}, \qquad c = (f, g, d_k)
+K(A,B) = \dfrac{\sum_c s_c^2\, \Phi_c(A)\, \Phi_c(B)}{\|s\,\Phi(A)\|\; \|s\,\Phi(B)\|}, \qquad c = (f, g, d_k)
 $$
 
 It is invariant to the choice of cell, origin and orientation, so a supercell is the same
@@ -6330,7 +6310,7 @@ for, and plan item MC8 is the measurement of it on drug-like molecules rather th
 ones those sections use.
 
 **The data set.** `examples/local/metabolism.sdf` holds 636 molecules, 1301 sites among 14 488
-heavy atoms, from the benchmark of Zaretzki, Matlock and Swamidass (2013) in the form the FAME.AL
+heavy atoms, from the benchmark of Zaretzki, Matlock and Swamidass [24] in the form the FAME.AL
 project publishes under the MIT licence. The target is one number per heavy atom: one if the atom
 is a site, zero if it is not. The sites are merged over the P450 isoforms, so the question is the
 general one -- where is this molecule attacked -- and not which enzyme attacks it.
@@ -6413,7 +6393,7 @@ this set cannot give.
 
 ## Topomer fields
 
-Cramer's topomer idea (topomer CoMFA, 2003), applied to fields. Cut the molecule at the bonds that
+Cramer's topomer idea [10], applied to fields. Cut the molecule at the bonds that
 attach its substituents to a common core and rebuild each substituent in a pose that is a
 **deterministic function of its topology**: canonical atom numbering, one embedding with a fixed
 seed, every rotatable torsion set to 180°, the attachment atom at the origin with its open valence
@@ -6842,7 +6822,7 @@ cmf benchmark --check           # do the tables and the documents match the stor
 cmf benchmark alignment poses   # run these two
 ```
 
-![The eight Sutherland sets: q² of the cross-validation and R²pred on the published test sets, from Table 2 of the 2013 paper and from this program with the paper's protocol and with its defaults. The paper's numbers are reproduced by the paper's protocol; the defaults differ most on R²pred, where the test sets are small.](docs/figures/sutherland.svg)
+![The eight Sutherland sets: q² of the cross-validation and R²pred on the published test sets, from Table 2 of [2] and from this program with the protocol of [2] and with its defaults. The numbers of [2] are reproduced by its protocol; the defaults differ most on R²pred, where the test sets are small.](docs/figures/sutherland.svg)
 
 It needs the source checkout, because the benchmarks and their data are not installed with the
 package; the command says so rather than failing obscurely if they are missing.
@@ -6946,7 +6926,7 @@ python cmf_cli.py build examples/benzamides_synthetic.sdf --activity pActivity -
 python cmf_cli.py predict model.cmf new.sdf --align-variance 2.0 \
        --aligned-out aligned.sdf --out predictions.csv
 
-# the published protocol of the 2013 paper on a Sutherland set
+# the published protocol of [2] on a Sutherland set
 python cmf_cli.py build examples/sutherland/THR.sdf --charges file --param tripos-legacy \
        --raw-scale --cv-no-shuffle --lam-search brent --nested --nested-on all
 
@@ -7087,7 +7067,7 @@ Data, fields and kernels:
 cmfqsar/dataio.py        reading SDF / MOL2 / SMILES, model persistence, exports
 cmfqsar/fields.py        field parameterisation; FieldSet / MoleculeFields / AtomTable
 cmfqsar/atomtypes.py     Sybyl-like atom typing and van der Waals parameters
-cmfqsar/increments.py    atomic increments of the original CMF implementation (2013)
+cmfqsar/increments.py    atomic increments of the original CMF implementation [2]
 cmfqsar/learnincrements.py  increments fitted to the data instead of taken from the table
 cmfqsar/pharmtypes.py    six pharmacophore features as indicator fields
 cmfqsar/probes.py        GRID-like probe fields written as sums of Gaussians
@@ -7197,15 +7177,15 @@ cmfqsar/gui/             the PySide6 application
 | Set | Contents |
 |---|---|
 | `examples/benzamides_synthetic.sdf` | 109 aligned N-phenylbenzamides with a *synthetic* activity: the overlap of their fields with a hidden pseudo-receptor co-field plus noise (σ = 0.25). A model has to recover those zones; q² ≈ 0.87 against a noise ceiling of 0.94. The set to learn the program on, because the right answer is known. |
-| `examples/steroids_cbg.sdf` | the classic CoMFA benchmark: 31 steroids (Cramer, Patterson & Bunce 1988) with corticosteroid-binding-globulin affinities, in the corrected Gasteiger-group geometries, re-superimposed on the steroid skeleton of testosterone. Customary split 1–21 / 22–31, leave-one-out q² ≈ 0.79. |
-| `examples/sutherland/*.sdf` | the eight literature sets of the 2013 paper (Sutherland, O'Brien & Weaver 2004): ACE, AChE, BZR, COX-2, DHFR, GPB, THER, THR, with the aligned MMFF94s conformations as distributed, the published split, and the original Sybyl types and MNDO ESP charges as per-atom properties. Choose *Partial charges: file*. |
+| `examples/steroids_cbg.sdf` | the classic CoMFA benchmark: 31 steroids [9] with corticosteroid-binding-globulin affinities, in the corrected Gasteiger-group geometries, re-superimposed on the steroid skeleton of testosterone. Customary split 1–21 / 22–31, leave-one-out q² ≈ 0.79. |
+| `examples/sutherland/*.sdf` | the eight literature sets of [2], from Sutherland et al. [17]: ACE, AChE, BZR, COX-2, DHFR, GPB, THER, THR, with the aligned MMFF94s conformations as distributed, the published split, and the original Sybyl types and MNDO ESP charges as per-atom properties. Choose *Partial charges: file*. |
 | `examples/selectivity/ampa_glycine.sdf` | the 57 AMPA / glycine-NMDA antagonists of the 2003 selectivity-fields paper (Baskin, Tikhonova, Palyulin & Zefirov) with `pKi_AMPA`, `pKi_glycine`, their difference `delta_AMPA_glycine` and the published split (52 / 5), superimposed on the tricyclic core; the set to try *Model several endpoints (selectivity co-field)…* on. Use Gasteiger charges: the file charges of sixteen compounds are unreliable. `docked_ampa.sdf` and `docked_glycine.sdf` hold the same compounds docked in the two receptor models, `receptor_ampa.pdb` and `receptor_glycine.pdb`. |
-| `examples/mittal/*.sdf` | 38 of the 40 benchmark sets of Mittal, McKinnon & Sorich (2009), built here from their 2D supplementary data by ETKDG and an MCS superposition, with each molecule's fit quality recorded in `align_rmsd`. The collection to use when you want to know how a method behaves on an *automatic* alignment. |
+| `examples/mittal/*.sdf` | 38 of the 40 benchmark sets of Mittal, McKinnon and Sorich [18], built here from their 2D supplementary data by ETKDG and an MCS superposition, with each molecule's fit quality recorded in `align_rmsd`. The collection to use when you want to know how a method behaves on an *automatic* alignment. |
 | `examples/openff/*.sdf` | 21 congeneric series, 513 ligands, from the Open Force Field protein–ligand benchmark, each posed in its target's crystal structure; activity tag `pAffinity`. |
 | `examples/pockets/*.pdb` | the binding sites of those series, trimmed and already in the ligands' frame, so they open together with the data. |
 | `examples/thrombin_atom_properties.sdf` | a worked example of `prop:<name>` fields: per-atom quantum properties carried in an SDF. |
 
-`docs/benchmark.md` compares the program with Table 2 of the 2013 paper on the eight literature
+`docs/benchmark.md` compares the program with Table 2 of [2] on the eight literature
 sets. `benchmarks/run_sutherland.py` reruns that comparison, `benchmarks/run_topomer.py` measures
 the alignment against the topomer rule (`--mittal` for the automatically aligned collection),
 `benchmarks/run_alignment.py` compares the value of a curated alignment with that of an automatic one, and
@@ -7507,3 +7487,27 @@ doi:10.1021/acs.jcim.7b00403
 
 [21] Mordelet, F.; Vert, J.-P. A bagging SVM to learn from positive and unlabeled examples.
 *Pattern Recognit. Lett.* **2014**, *37*, 201–209. doi:10.1016/j.patrec.2013.06.010
+
+[22] Platt, J. C. Probabilistic outputs for support vector machines and comparisons to
+regularized likelihood methods. In *Advances in Large Margin Classifiers*; Smola, A. J.,
+Bartlett, P., Schölkopf, B., Schuurmans, D., Eds.; MIT Press: Cambridge, MA, 1999; pp 61–74.
+
+[23] Gretton, A.; Borgwardt, K. M.; Rasch, M. J.; Schölkopf, B.; Smola, A. A kernel two-sample
+test. *J. Mach. Learn. Res.* **2012**, *13*, 723–773.
+
+[24] Zaretzki, J.; Matlock, M.; Swamidass, S. J. XenoSite: accurately predicting CYP-mediated
+sites of metabolism with neural networks. *J. Chem. Inf. Model.* **2013**, *53*, 3373–3383.
+doi:10.1021/ci400518g
+
+[25] Levoin, N.; Labeeuw, O.; Calmels, T.; Poupardin-Olivier, O.; Berrebi-Bertrand, I.; Lecomte,
+J.-M.; Schwartz, J.-C.; Capet, M. Novel and highly potent histamine H3 receptor ligands. Part 1:
+withdrawing of hERG activity. *Bioorg. Med. Chem. Lett.* **2011**, *21*, 5378–5383.
+doi:10.1016/j.bmcl.2011.07.006
+
+[26] Cramer, R. D.; Bunce, J. D.; Patterson, D. E.; Frank, I. E. Crossvalidation, bootstrapping,
+and partial least squares compared with multiple regression in conventional QSAR studies.
+*Quant. Struct.-Act. Relat.* **1988**, *7*, 18–25. doi:10.1002/qsar.19880070105
+
+[27] Ng, A. Y.; Jordan, M. I.; Weiss, Y. On spectral clustering: analysis and an algorithm. In
+*Advances in Neural Information Processing Systems 14*; Dietterich, T. G., Becker, S.,
+Ghahramani, Z., Eds.; MIT Press: Cambridge, MA, 2002; pp 849–856.
