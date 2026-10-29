@@ -1,6 +1,6 @@
 # Notes of the COMPAS-1 pilot
 
-Written by benchmarks/run_compas.py on 2026-10-29.
+Written by benchmarks/run_compas.py on 2026-10-30.
 
 ## Data
 
@@ -39,6 +39,7 @@ COMPAS-1D: 8678 molecules at B3LYP-D3BJ/def2-SVP; the GitLab repository poranneg
 - Whether the gap of the few non-planar molecules (helicene-like fjords) is served by the planar frame; the frame is defined for them but the two faces differ.
 - The size-extrapolation split trains on few molecules (the sets are dominated by ten-ring molecules), so its numbers mix extrapolation with a small training set.
 - Published models on the same molecules (table.md, last table): the geometric graph networks of Weiss et al. 2023 reach a test MAE of 0.011 to 0.022 eV on a random 81/9/10 split (their code: gitlab.com/porannegroup/PBHs-interpretability), the sequence model on augmented annulation strings of Fite et al. 2023 0.05 eV (gitlab.com/porannegroup/lalas), and the descriptor forests of Zheng et al. 2023 R2 0.91. The field models here (MAE 0.11 to 0.13 eV) are an order of magnitude behind the graph networks on interpolation among isomers. The gap is set by the ring arrangement to a precision the overlap of wide Gaussians does not resolve: the chosen widths are the widest of the grid and the ridge the smallest, so the model asks for more resolution than it was given. Nothing published measures the size-extrapolation split, where the ring fields are positive and the descriptor forest is not.
+- The resolution stage (table.md) answers where the resolution is: not in the width. The attenuation grid extended to 0.02-20 A^-2 and the ridge down to 1e-6 leave the linear {A,B,C,D,E} model at 0.11 eV MAE; the Gaussian kernel layer on the same kernel halves it to 0.056 +- 0.004 eV (R2 0.964 +- 0.005, three seeds), level with the published annulation-string network and ahead of the descriptor forests, three to five times behind the graph networks. The layered model is no longer linear in the field: the co-field and rule 3 belong to the linear model, and Shapley values are the reading of the layered one. Its width came out at gamma = 0.25-0.5 of the median squared distance, the widest of the grid, and a wider grid of gammas is one more run.
 - The chosen hyperparameters sit at the edges of the grids: the steric attenuation at the top (its width is scaled by the van der Waals radius, so the same grid value is a wider Gaussian) and the ridge at the bottom (1e-4) for the sets with the ring fields. A wider steric grid and a smaller ridge are worth one more run; the float32 kernels limit the ridge to about 1e-5.
 - Seed 0 of the random splits puts benzene, the only one-ring molecule, in the test part; the main model extrapolates it to 10-13 eV (computed 6.72), which is the whole difference between that seed and the other four (table.md gives the RMSE over the molecules of three rings and more).
 - The Clar-sextet ring field (E), meant as a placeholder, is the single largest gain on top of {A,B,C,D}; the NICS-weighted field should be compared against it, not against the set without it.

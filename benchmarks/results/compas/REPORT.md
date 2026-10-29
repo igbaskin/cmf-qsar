@@ -52,9 +52,28 @@ extrapolation):
 | RNN on augmented LALA annulation strings (all pairs 0.04–0.26) | Fite et al., *J. Phys. Org. Chem.* 2023, 36, e4458, Fig. 3 | 90/10 | 0.05 |
 | extra-trees on selected RDKit descriptors | Zheng et al., *Chem. Phys. Lett.* 2023, 814, 140358 | 90/10, 100 repeats | R² 0.91, RMSE ≈ 0.12 |
 
-Our random forest (MAE 0.074 eV, R² 0.91) reproduces the last row. The field models (MAE 0.11 to
-0.13 eV) are at the lower end of the annulation-string models and an order of magnitude behind the
-geometric graph networks on interpolation among isomers.
+Our random forest (MAE 0.074 eV, R² 0.91) reproduces the last row. The linear field models (MAE
+0.11 to 0.13 eV) are at the lower end of the annulation-string models and an order of magnitude
+behind the geometric graph networks on interpolation among isomers.
+
+**Resolution of the field model** (random splits; the attenuation grid extended to 0.02 to 20 Å⁻²,
+the ridge grid down to 10⁻⁶, and the program's Gaussian kernel layer on top of the overlap kernel,
+its width chosen by cross-validation):
+
+| model | seeds | q² | test R² | test RMSE (eV) | test MAE (eV) |
+|---|---|---|---|---|---|
+| A, B, C, D, E, linear kernel, coarse grid (main table) | 5 | 0.87 | 0.87 ± 0.02 | 0.144 | 0.108 |
+| A, B, C, D, E, linear kernel, wide grid and small ridge | 3 | 0.87 | 0.87 ± 0.01 | 0.147 | 0.110 |
+| **A, B, C, D, E, Gaussian kernel layer** | 3 | **0.96** | **0.96 ± 0.01** | **0.076 ± 0.006** | **0.056 ± 0.004** |
+| A, B, C, D, Gaussian kernel layer | 1 | 0.94 | 0.92 | 0.115 | 0.073 |
+
+The wider grid gains nothing: the linear model is not short of width, it is short of
+nonlinearity. The Gaussian layer halves the error and puts the field model level with the
+published annulation-string network (0.05 eV) and ahead of the descriptor forests, with the
+geometric graph networks (0.011 to 0.022 eV) three to five times better still. The price is the
+reading: with the layer the prediction is no longer an overlap integral of a co-field with the
+molecular field, so the co-field and the per-ring contributions above belong to the linear model
+only (Shapley values, which the program computes for any kernel, are the way to read the layered one).
 
 Cross-validated q² on the training part: 0.83 for A, B, C, D and 0.87 with the sextet field. The
 spread of the A, B, C, D row over the seeds is one molecule: seed 0 holds benzene, the only
@@ -106,16 +125,16 @@ worst and gives the same test R² (0.593 on seed 0).
   the molecules larger than any it was trained on; every set with one is positive. The random
   forest on descriptors is the best model on the random splits (0.91) and among the worst on the
   size splits (0.32, 0.35, −0.16): it knows the isomers it saw.
-- **On interpolation the field model is not competitive, and the reason is visible.** The
+- **The linear field model is not competitive on interpolation; the nonlinear one is close.** The
   published geometric graph networks reach 0.011 to 0.022 eV MAE on the same molecules, ten times
-  better than the 0.11 to 0.13 eV here; even the additivity scheme (0.70 on random, 0.63–0.67 on
-  size splits) is beaten only by the set with the sextet field. The gap is fixed by the ring
-  arrangement to a precision that the overlap of wide Gaussians does not resolve: the chosen widths
-  are the widest of the grid and the ridge the smallest, so the model asks for more resolution than
-  it was given. A finer and wider attenuation grid, and the nonlinear kernel layer the program
-  offers, are the two settings to try before any new field. What the field keeps over every
-  published model is the reading: a co-field in space and per-ring contributions, and a positive
-  R² on the larger molecules that the descriptor forest does not have.
+  better than the 0.11 to 0.13 eV of the linear field model, which even the additivity scheme
+  (0.70) matches unless the sextet field is included. A wider attenuation grid and a smaller ridge
+  change nothing; the Gaussian kernel layer halves the error to 0.056 eV MAE (R² 0.96), level with
+  the published annulation-string network and ahead of the descriptor forests, three to five times
+  behind the graph networks. What the linear model keeps over every published model is the
+  reading, a co-field in space and per-ring contributions, and a positive R² on the larger
+  molecules that the descriptor forest does not have; the layered model gives up the first for
+  half the error.
 
 ## Limitations
 
@@ -132,10 +151,8 @@ worst and gives the same test R² (0.593 on seed 0).
 
 ## Follow-ups
 
-0. The resolution of the model: attenuations above the grid for the steric field and between the
-   grid points for the ring fields, a ridge below 1e-4 (with float64 kernels), and the Gaussian
-   kernel layer on top of the overlap kernel, measured against the 0.01 to 0.02 eV of the graph
-   networks on the same random split.
+0. The layered model on the size-extrapolation splits (does the halved error carry over to larger
+   molecules?), and Shapley values as its per-ring reading in place of rule 3.
 1. A NICS-weighted ring field (one DFT calculation per ring), which has to beat the Clar-sextet
    share rather than the set without it.
 2. Peri-condensed systems (COMPAS-3): three-ring carbons and adjacent shared bonds; the typing and

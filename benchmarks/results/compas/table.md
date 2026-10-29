@@ -51,6 +51,21 @@ Test RMSE (eV) over the molecules of three rings and more, random splits: {A,B,C
 
 The random forest of this study (0.074 eV MAE, 0.117 eV RMSE, R2 0.91) reproduces the last row.  The field models of this study (MAE 0.13 eV for {A,B,C,D}, 0.11 eV with the sextet field) sit at the lower end of the annulation-string models and an order of magnitude above the geometric graph networks on these random splits.
 
+### Resolution: a wider attenuation grid, a smaller ridge and the Gaussian kernel layer
+
+Attenuation grid (0.02, 0.05, 0.1, 0.2, 0.35, 0.5, 0.7, 1.0, 2.0, 5.0, 10.0, 20.0), ridge grid down to 1e-06, Gaussian layer widths (0.25, 0.5, 1.0, 2.0, 4.0, 8.0) (relative to the median squared distance); random splits, mean +- sd over the seeds.
+
+| field set | configuration | alpha per group (A^-2), gamma | lambda | q2 | test R2 | test RMSE (eV) | test MAE (eV) |
+|---|---|---|---|---|---|---|---|
+| {A,B,C,D,E} | coarse grid, as in the main table | - | - | 0.874 +- 0.002 | 0.869 +- 0.018 | 0.144 +- 0.012 | 0.108 +- 0.002 |
+| {A,B,C,D,E} | shared (first seed's choice shown) | A: 0.05, B: 0.05, C: 0.05, D: 0.05, E: 0.05 | 0.0001 | 0.867 +- 0.004 | 0.868 +- 0.012 | 0.147 +- 0.009 | 0.110 +- 0.002 |
+| {A,B,C,D,E} | per-group (first seed's choice shown) | A: 0.2, B: 0.05, C: 0.05, D: 0.02, E: 0.1 | 0.0001 | 0.868 +- 0.005 | 0.831 +- 0.071 | 0.164 +- 0.037 | 0.112 +- 0.004 |
+| {A,B,C,D,E} | gauss (first seed's choice shown) | A: 0.2, B: 0.05, C: 0.05, D: 0.02, E: 0.1; gamma 0.25 | 0.0001/0.001/3e-05 | 0.961 +- 0.004 | 0.964 +- 0.005 | 0.076 +- 0.006 | 0.056 +- 0.004 |
+| {A,B,C,D} | coarse grid, as in the main table | - | - | 0.825 +- 0.002 | 0.780 +- 0.105 | 0.184 +- 0.044 | 0.130 +- 0.002 |
+| {A,B,C,D} | shared (first seed's choice shown) | A: 0.1, B: 0.1, C: 0.1, D: 0.1 | 0.0001 | 0.824 | 0.770 | 0.198 | 0.132 |
+| {A,B,C,D} | per-group (first seed's choice shown) | A: 0.35, B: 0.05, C: 0.1, D: 0.1 | 0.0001 | 0.825 | 0.778 | 0.194 | 0.131 |
+| {A,B,C,D} | gauss (first seed's choice shown) | A: 0.35, B: 0.05, C: 0.1, D: 0.1; gamma 0.25 | 0.0001 | 0.937 | 0.923 | 0.115 | 0.073 |
+
 ### Nystroem approximation (landmark molecules)
 
 | set | molecules | m landmarks | rank | q2 | test R2 | test RMSE (eV) | fit time (s) |

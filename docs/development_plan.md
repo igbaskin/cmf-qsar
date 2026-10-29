@@ -3146,11 +3146,16 @@ What it leaves open, in order:
   strings (Fite et al., J. Phys. Org. Chem. 2023) 0.05 eV; the field models here 0.11 to 0.13
   eV, with the steric attenuation at the top of its grid and the ridge at the bottom (1e-4) for
   every set with a ring field. The gap is fixed by the ring arrangement to a precision that the
-  overlap of wide Gaussians does not resolve. The measurement to make: attenuations above and
-  between the grid points, a ridge below 1e-4 on float64 kernels, and the Gaussian kernel layer
-  (`kernel_layer="gauss"`) on top of the overlap kernel, each against the published numbers on
-  the same split. Nothing published measures the size-extrapolation split, which stays the
-  field model's own claim.
+  overlap of wide Gaussians does not resolve. Measured the same night (`--stage resolution`):
+  the attenuation grid extended to 0.02 to 20 Å⁻² and the ridge down to 10⁻⁶ change nothing
+  (0.11 eV), and the Gaussian kernel layer on the same kernel halves the error to 0.056 ± 0.004
+  eV MAE, R² 0.964 ± 0.005 over three seeds, level with the annulation-string network and
+  ahead of the descriptor forests, three to five times behind the graph networks. The
+  resolution was the nonlinearity, not the width. The layered model gives up the co-field and
+  rule 3; what is left to measure is the layered model on the size-extrapolation splits, Shapley
+  values as its per-ring reading, and a wider grid of layer widths (the chosen gamma sat at the
+  widest end). Nothing published measures the size-extrapolation split, which stays the field
+  model's own claim.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 

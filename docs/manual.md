@@ -5814,10 +5814,16 @@ selected RDKit descriptors R² 0.91 (Zheng et al., *Chem. Phys. Lett.* 2023, 814
 our random forest reproduces. The field models, at 0.11 to 0.13 eV, are an order of magnitude
 behind the graph networks on interpolation among isomers, and the table says why: the chosen
 widths are the widest of the grid and the ridge the smallest, so the gap is set by the ring
-arrangement to a precision the overlap of wide Gaussians does not resolve. A finer and wider
-attenuation grid and the Gaussian kernel layer are the two settings to measure before any new
-field. Nothing published measures the size-extrapolation split, which stays the field model's own
-claim, together with the reading of the model as a co-field and as per-ring contributions.
+arrangement to a precision the overlap of wide Gaussians does not resolve. Both remedies were
+measured (`--stage resolution`, the last table of `benchmarks/results/compas/table.md`): the
+attenuation grid extended to 0.02 to 20 Å⁻² and the ridge down to 10⁻⁶ change nothing, and the
+Gaussian kernel layer of the section *Nonlinear kernel layers and multiple kernel learning* on the
+same kernel halves the error to 0.056 ± 0.004 eV MAE (R² 0.964 ± 0.005 over three seeds), level
+with the annulation-string network and ahead of the descriptor forests, three to five times behind
+the graph networks. The resolution was the nonlinearity, not the width. The layered model is no
+longer linear in the field, so the co-field and the per-ring contributions of this section belong
+to the linear model, and Shapley values are the reading of the layered one. Nothing published
+measures the size-extrapolation split, which stays the field model's own claim.
 
 ![The co-fields of the gap over a six-ring reference molecule of the test set, one panel per field group, in the molecular plane and 1 Å above it; red raises the gap per unit of field, blue lowers it. Drawn by `benchmarks/run_compas.py`.](benchmarks/results/compas/figures/cofield_gap_hc_c26h16_0pent_13.png)
 
