@@ -1440,7 +1440,19 @@ def write_notes(set_key: str = "1D") -> str:
                  "the planar frame; the frame is defined for them but the two faces differ.")
     lines.append("- The size-extrapolation split trains on few molecules (the sets are dominated by "
                  "ten-ring molecules), so its numbers mix extrapolation with a small training set.")
-    lines.append("- Published COMPAS-1 gap-prediction numbers for the literature row.")
+    lines.append("- Published COMPAS-1 gap-prediction numbers for the literature row. Two papers of the "
+                 "Gershoni-Poranne group model the gap on this same 8,678-molecule DFT set: Weiss, Wahab, "
+                 "Bronstein, Gershoni-Poranne, J. Org. Chem. 2023, 88, 9645 (an SE(3)-transformer on a "
+                 "graph of rings; their code splits the set at random into 81/9/10 train/validation/test "
+                 "with seed 42 and normalises the targets, gitlab.com/porannegroup/PBHs-interpretability) "
+                 "and Fite, Wahab, Paenurk, Gross, Gershoni-Poranne, J. Phys. Org. Chem. 2023, 36, e4458 "
+                 "(random forest, kernel ridge regression and CUSTODI on annulation strings and SMILES, "
+                 "test part of 1,000 molecules, training parts of 1,000 to 7,600, "
+                 "gitlab.com/porannegroup/lalas). Their error values are in the papers, which are not "
+                 "open access; Zheng et al., Chem. Phys. Lett. 2023, 814, 140358 also model the gap of "
+                 "benzenoids on these data. The random split of this study (80/10/10, five seeds) is "
+                 "close to the first protocol, so the test RMSE and MAE of the table can be set beside "
+                 "those papers' numbers once they are copied from the papers.")
     lines.append("- The chosen hyperparameters sit at the edges of the grids: the steric attenuation at "
                  "the top (its width is scaled by the van der Waals radius, so the same grid value is a "
                  "wider Gaussian) and the ridge at the bottom (1e-4) for the sets with the ring fields. "

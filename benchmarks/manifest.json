@@ -1,6 +1,6 @@
 {
- "commit": "50e8c18ac0de9157d3fd94a2a38cdc445ca144ab",
- "created": "2026-10-29T22:04:55",
+ "commit": "b2164c5112ee0cd7841b30cef4a9f636598059ab",
+ "created": "2026-10-29T22:09:24",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1825,7 +1825,7 @@
   "benchmarks/results/cofield_error/THER.json": "e1ad96f166b74bfefd2fdb4ebd4131db97631ed43ccd0dd1500ade0de2caaab1",
   "benchmarks/results/cofield_error/THR.json": "ec962f4b1027f8645961dd47c337e2be53e3fbf4843f6a143191edeb661d65fe",
   "benchmarks/results/cofield_error/table.md": "10b3f3c6d81e404c2cdc4828e3ad247abece30de02005ecf21f02a0c8502b0ca",
-  "benchmarks/results/compas/NOTES.md": "93d3eab7ad991b9b452dff981293e2872e9c4823e47b1175e55fd1cd25bc942c",
+  "benchmarks/results/compas/NOTES.md": "ff1bd06eb0084499a303791eb0d0bfa8bada4d2dcf40337a51cdcb7f1fba2e6a",
   "benchmarks/results/compas/REPORT.md": "f7ccf2b277484f57c58d9d9ecc78faacce1b48648e92f7fb26bdb5eca8524d27",
   "benchmarks/results/compas/baselines_1D.json": "a3dc13435337443415a7d0b7dbe1ea0817163b064c6bdbd1fe159e61085cb678",
   "benchmarks/results/compas/fields_1D.json": "890d5f38f5941899e7b9a08a7ca2a958f2d97703d8faa9f0f4d0f56f49efb5f0",
