@@ -631,6 +631,42 @@ def fig_kfda(path):
                  f"{len(mf) - n_act} inactives, λ = {lam:g}, cross-validated AUC {auc:.2f}")
 
 
+def fig_parent(path):
+    """Chapter 2: the parent of the worked example, N-phenylbenzamide, drawn by RDKit with the
+    positions the series substitutes marked: 3 and 4 on the ring of the acid, 3' and 4' on the
+    ring of the amine, as the molecule names of the file count them."""
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+    from rdkit.Chem.Draw import rdMolDraw2D
+    sup = Chem.SDMolSupplier(os.path.join(ROOT, "examples", "benzamides_synthetic.sdf"))
+    parent = next(m for m in sup if m.GetProp("_Name") == "parent")
+    mol = Chem.RemoveHs(parent)
+    rdDepictor.SetPreferCoordGen(False)
+    rdDepictor.Compute2DCoords(mol)
+    # the ipso carbon of each ring: bonded to the carbonyl carbon (unprimed positions) or to the
+    # nitrogen (primed positions); the other positions are counted along the ring from it
+    amide = mol.GetSubstructMatch(Chem.MolFromSmarts("O=C(N)"))
+    carbonyl_c, nitrogen = amide[1], amide[2]
+    dist = Chem.GetDistanceMatrix(mol)
+    for anchor, prime in ((carbonyl_c, ""), (nitrogen, "'")):
+        ipso = next(a.GetIdx() for a in mol.GetAtomWithIdx(anchor).GetNeighbors()
+                    if a.GetIsAromatic())
+        ring = next(r for r in mol.GetRingInfo().AtomRings() if ipso in r)
+        for number, steps in (("3", 2), ("4", 3)):
+            atom = next(i for i in ring if int(dist[ipso, i]) == steps)
+            mol.GetAtomWithIdx(atom).SetProp("atomNote", number + prime)
+    d = rdMolDraw2D.MolDraw2DSVG(320, 150)
+    opts = d.drawOptions()
+    opts.annotationFontScale = 0.9
+    opts.clearBackground = False
+    d.DrawMolecule(mol)
+    d.FinishDrawing()
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(d.GetDrawingText())
+    print(f"  parent: {Chem.MolToSmiles(mol)}, positions 3, 4 on the acid ring and 3', 4' on "
+          f"the amine ring")
+
+
 def fig_scatter(path):
     """Chapter 7: observed against predicted for the steroid model, cross-validation and test set.
 
@@ -863,6 +899,7 @@ FIGURES = {
     "fields.png": fig_fields,
     "overlap.svg": fig_overlap,
     "search.svg": fig_search,
+    "parent.svg": fig_parent,
     "scatter.svg": fig_scatter,
     "rule1.png": fig_rule1,
     "rule2.svg": fig_rule2,

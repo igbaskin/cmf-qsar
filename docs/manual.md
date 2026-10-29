@@ -264,6 +264,8 @@ Four molecules from `examples/benzamides_synthetic.sdf` as the training set, the
 fields, α = 0.5, cosine normalisation, λ = 0.1, and the fifth molecule as the one to predict. The
 numbers below are the program's own, printed from the objects it fits.
 
+![The parent of the worked example, N-phenylbenzamide, with the positions the series substitutes marked as the molecule names of the file count them: 3 and 4 on the ring of the acid, 3' and 4' on the ring of the amine. The names in the tables below are the substituents at those positions, so 4'Cl is a chlorine para to the nitrogen and 4F a fluorine para to the carbonyl group.](docs/figures/parent.svg)
+
 The joint kernel of the training set, the sum of the five normalised field kernels, so the diagonal is 5:
 
 ```
