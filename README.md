@@ -3900,15 +3900,32 @@ than behind it, and on hif2a one reading clears the interval (the multi-instance
 [+0.003, +0.465]). So "the answer is no" was a statement about the mcl1 set and not about the
 method.
 
-**What the three sets support together is weak.** Ten readings of a trajectory were compared
+**What the three sets support together is weak.** Nine readings of a trajectory were compared
 with their crystal pose and one clears its interval, with the near edge +0.003 from zero, which
-is about what ten comparisons produce on their own. That reading is also the uniform ensemble:
+is about what nine comparisons produce on their own. That reading is also the uniform ensemble:
 at beta = 0 the multi-instance fit weighs every conformation alike, and "clusters equal" on the
 same set reaches +0.129 [-0.076, +0.365] and does not clear. The two are the same model, and
 what separates them is where the kernel is normalised -- the ensemble path normalises the kernel
 of the whole ensemble, the multi-instance path normalises every conformation and then averages.
 Measured at one attenuation on all three sets, the gap between the two paths is 0.019 to 0.049
 of q2 and falls to 0.002 to 0.015 with the normalisation switched off.
+
+**One reading fixed in advance, and it answers the question: no gain.** Every number above is
+the largest of three readings of the same frames. Read once with one reading instead -- the
+plainest, every conformation weighing the same -- and nothing is left:
+
+| set | ligands | the crystal pose | trajectory, clusters equal | change against the crystal pose |
+| --- | ---: | ---: | ---: | --- |
+| hif2a | 36 | +0.342 | +0.471 | +0.129 [-0.076, +0.365] |
+| mcl1 | 25 | **+0.575** | +0.391 | -0.184 [-0.526, +0.136] |
+| p38 | 29 | +0.261 | +0.239 | -0.022 [-0.310, +0.299] |
+
+None of the three clears its interval, and combined over the three sets the change is **-0.006
+[-0.157, +0.163]** over 90 molecules, each set weighted by its molecules and the molecules
+resampled inside their own set. The reading was fixed because it has no free choice in it -- no
+weighting to pick, no beta to search -- and it is not the largest gain on any of the sets. So the
++0.003 edge above is what taking the best of three readings produces, and the answer to the item
+is no. It is not a pre-registration: the sets had been measured before the rule was written down.
 
 **The own-frame control on all three sets.** The last row of the first table is a control: the
 same frames with each trajectory fitted to its own first frame instead of to the one structure
@@ -3925,7 +3942,7 @@ Only hif2a loses beyond the interval. On mcl1 the 0.114 above does not clear it,
 own frame reads higher than the common one. So "the common frame is what makes any of this
 measurable" was a reading of one set and not a statement about the method. On p38 the control is
 also +0.107 above the crystal pose, which is one more reason to read the gains of that set with
-care. The control is left out of the ten readings counted above, and a set does not count as
+care. The control is left out of the nine readings counted above, and a set does not count as
 ahead because it clears an interval.
 
 ```bash

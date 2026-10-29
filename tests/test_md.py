@@ -408,6 +408,117 @@ def test_a_normalisation_record_is_not_read_as_a_set_result(tmp_path):
     assert len(run_md.load_norms(results=str(tmp_path))) == 1
 
 
+# ------------------------------------------------------------- the reading fixed in advance
+
+
+def _fixed_row(name, n, delta, seed=0, lo=None, hi=None, extra=None):
+    """A record with the activities stored, so that one reading can be combined over sets."""
+    import run_md
+
+    rng = np.random.RandomState(seed)
+    y = rng.normal(size=n) * 2.0
+    base = y + rng.normal(size=n) * 1.0
+
+    def shift(d):
+        return (1.0 - d) * base + d * y if d >= 0 else (1.0 + abs(d)) * base - abs(d) * y
+
+    models = {"crystal": dict(q2=float(run_md.r2_score(y, base)), rmse=1.0, alpha=0.5, lam=0.1,
+                              pred=base.tolist(), delta=0.0, lo=0.0, hi=0.0)}
+    for tag, d in [("md_uniform", delta)] + list((extra or {}).items()):
+        pred = shift(d)
+        dd, blo, bhi = run_md.bootstrap_difference(y, pred, base)
+        models[tag] = dict(q2=float(run_md.r2_score(y, pred)), rmse=1.0, alpha=0.5, lam=0.1,
+                           pred=np.asarray(pred, float).tolist(), delta=dd, lo=blo, hi=bhi)
+    if lo is not None:
+        models["md_uniform"]["lo"] = lo
+    if hi is not None:
+        models["md_uniform"]["hi"] = hi
+    return {"set": name, "n": n, "frames_mean": 10.0, "frames_min": 8, "frames_max": 12,
+            "seconds": 1.0, "activity": y.tolist(), "models": models}
+
+
+def test_the_fixed_reading_section_is_empty_without_a_result():
+    import run_md
+
+    assert run_md.fixed_section([]) == []
+
+
+def test_the_fixed_reading_is_reported_on_every_set():
+    import run_md
+
+    text = " ".join(run_md.fixed_section([_fixed_row("one", 25, 0.1, seed=1),
+                                          _fixed_row("two", 29, 0.2, seed=2)]))
+    assert "One reading fixed in advance" in text
+    assert "trajectory, clusters equal" in text
+    assert "| one | 25 |" in text and "| two | 29 |" in text
+    assert "Combined over the 2 sets" in text
+    assert "This is not a pre-registration" in text, "the limit of the rule is stated"
+
+
+def test_the_combined_difference_weights_the_sets_by_their_molecules():
+    import run_md
+
+    rows = [_fixed_row("small", 12, 0.3, seed=3), _fixed_row("large", 36, 0.0, seed=4)]
+    got = run_md.combined_difference(rows)
+    want = 0.0
+    for rec in rows:
+        y = np.asarray(rec["activity"], float)
+        a = np.asarray(rec["models"]["md_uniform"]["pred"], float)
+        b = np.asarray(rec["models"]["crystal"]["pred"], float)
+        want += len(y) / 48.0 * (run_md.r2_score(y, a) - run_md.r2_score(y, b))
+    assert got["sets"] == 2 and got["n"] == 48
+    assert abs(got["delta"] - want) < 1e-9, "the larger set weighs more"
+    assert got["lo"] < got["delta"] < got["hi"]
+
+
+def test_one_set_alone_gives_no_combined_difference():
+    import run_md
+
+    assert run_md.combined_difference([_fixed_row("one", 25, 0.2)]) is None
+
+
+def test_a_set_whose_activities_were_not_stored_is_left_out_of_the_combined_estimate():
+    """Records written before the activities were kept must not silently shift the average."""
+    import run_md
+
+    rows = [_fixed_row("one", 25, 0.2, seed=5), _fixed_row("two", 29, 0.2, seed=6),
+            _fixed_row("old", 36, 0.2, seed=7)]
+    del rows[2]["activity"]
+    got = run_md.combined_difference(rows)
+    assert got["sets"] == 2 and got["n"] == 54
+
+
+def test_a_reading_that_gains_nothing_fixed_in_advance_is_reported_as_no_gain():
+    import run_md
+
+    text = " ".join(run_md.fixed_section([_fixed_row("one", 25, 0.0, seed=8),
+                                          _fixed_row("two", 29, 0.0, seed=9)]))
+    assert "shows no gain" in text
+    assert "taking the best of several" in text
+
+
+def test_a_reading_that_still_gains_fixed_in_advance_is_reported_as_a_gain():
+    import run_md
+
+    text = " ".join(run_md.fixed_section([_fixed_row("one", 25, 0.5, seed=10),
+                                          _fixed_row("two", 29, 0.5, seed=11)]))
+    assert "still shows a gain" in text
+    assert "does not depend on choosing the reading after the sets were seen" in text
+
+
+def test_the_fixed_reading_says_whether_it_is_also_the_largest_gain():
+    import run_md
+
+    smaller = {"md_mil": 0.05}
+    text = " ".join(run_md.fixed_section([_fixed_row("one", 25, 0.3, seed=12, extra=smaller),
+                                          _fixed_row("two", 29, 0.3, seed=13, extra=smaller)]))
+    assert "also the largest gain on every one of these sets" in text
+    larger = {"md_mil": 0.6}
+    text = " ".join(run_md.fixed_section([_fixed_row("one", 25, 0.1, seed=14, extra=larger),
+                                          _fixed_row("two", 29, 0.1, seed=15, extra=larger)]))
+    assert "not the largest gain on any of the 2 sets" in text
+
+
 # ---------------------------------------------------------------------- the own-frame control
 
 

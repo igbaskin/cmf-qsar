@@ -77,6 +77,22 @@ Letting the model choose the frames gives +0.455, +0.195 [-0.133, +0.522] agains
 
 The gate is no longer a plain no, because some reading is ahead beyond the interval on hif2a. D9 was built in any case, at the author's instruction, and it failed on its own evidence: two readings of its definition sweep were written down beforehand and both failed on a set they were not read from. So the gate reopening changes what is still open here, which is the trajectory itself, and not the verdict of D9.
 
+## One reading fixed in advance
+
+Every gain above is the largest of several readings of the same frames. This section reports one reading instead: the trajectory with every conformation weighing the same, the "trajectory, clusters equal" row of the tables above. It was fixed before the sets were compared with each other, and it contains no choice -- there is no weighting to pick and no beta to search -- so it cannot be the reading that happened to win. It is not the largest gain on any of the 3 sets.
+
+| set | ligands | the crystal pose | trajectory, clusters equal | change against the crystal pose |
+| --- | ---: | ---: | ---: | --- |
+| hif2a | 36 | +0.342 | +0.471 | +0.129 [-0.076, +0.365] |
+| mcl1 | 25 | +0.575 | +0.391 | -0.184 [-0.526, +0.136] |
+| p38 | 29 | +0.261 | +0.239 | -0.022 [-0.310, +0.299] |
+
+**Combined over the 3 sets: -0.006 [-0.157, +0.163]**, over 90 molecules. Each set is weighted by the molecules it contributes, and the molecules are resampled inside their own set, never across sets: two sets have different targets and their activities are not on one scale.
+
+**Fixed in advance, the trajectory shows no gain.** It clears the interval on none of the 3 sets, and the combined estimate does not clear it either. The gains in the tables above are what taking the best of several readings produces. This is the number the item should be read as giving.
+
+This is not a pre-registration. The sets had been measured before the rule was written down, and no rule written afterwards can undo that. What it does avoid is the other fault: deciding which of several readings to believe after seeing which of them won. The attenuation and lambda are still chosen by cross-validation inside every model, which the crystal pose gets in the same measure, so that choice is not what separates the two columns.
+
 ## What the common frame is worth
 
 The same frames, read twice, with the same weighting (clusters equal). Everywhere above, a trajectory is superimposed on the one structure all the runs of its set were built from, so the whole series sits in a single frame. Here each trajectory is superimposed on its own first frame instead, which leaves every ligand in a frame of its own.

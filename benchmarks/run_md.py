@@ -280,7 +280,10 @@ def run_set(name, results=RESULTS, force=False):
 
     rec = {"set": name, "n": int(len(y)), "frames_mean": float(np.mean(frames)),
            "frames_min": int(np.min(frames)), "frames_max": int(np.max(frames)),
-           "seconds": float(time.time() - t0), "models": rows}
+           "seconds": float(time.time() - t0),
+           # the measured activities, in the order of the predictions, so that a reading can be
+           # combined over the sets afterwards without fitting anything again
+           "activity": [float(v) for v in y], "models": rows}
     os.makedirs(results, exist_ok=True)
     with open(out_path, "w") as fh:
         json.dump(rec, fh, indent=1)
@@ -354,6 +357,12 @@ LABEL = {"crystal": "the crystal pose", "conformers": "generated conformations",
 
 #: file endings in the results directory that are not a set's own result
 OTHER_RESULTS = ("_norm.json",)
+
+#: the one reading of the trajectory that was fixed before the sets were compared with each
+#: other: the ensemble with every conformation weighing the same. It contains no choice -- there
+#: is no weighting to pick and no beta to search -- which is what makes it reportable when the
+#: best of several readings is not.
+FIXED_TAG = "md_uniform"
 
 #: readings of the trajectory that are controls rather than candidate models. The own-frame
 #: reading is built to be wrong on purpose -- it drops the common frame -- so it is left out of
@@ -459,6 +468,7 @@ def report(results=RESULTS, path=None):
                        f"{r['alpha']:g} | {change} |")
         out.append("")
     out += verdict(rows)
+    out += fixed_section(rows)
     out += ownframe_section(rows)
     out += norm_section(load_norms(results))
     text = "\n".join(out) + "\n"
@@ -539,6 +549,131 @@ def across_sets(rows):
                     f"of {tried} comparisons is about what chance produces, so what the sets "
                     f"support is a weak statement and not a method.")
     return [head + tail + close + edge, ""]
+
+
+def combined_difference(rows, tag=FIXED_TAG, runs=RUNS, seed=SEED):
+    """One difference in q2 for the whole comparison, from one reading on every set.
+
+    Each set keeps its own molecules: they are resampled inside their set, never across sets,
+    because two sets have different targets and different activity scales. The sets are then
+    averaged with a weight equal to the number of molecules they contribute.
+    """
+    sets = []
+    for rec in rows:
+        m = rec.get("models") or {}
+        y = rec.get("activity")
+        if not y or tag not in m or "crystal" not in m:
+            continue
+        sets.append((np.asarray(y, float), np.asarray(m[tag]["pred"], float),
+                     np.asarray(m["crystal"]["pred"], float)))
+    if len(sets) < 2:
+        return None
+    w = np.asarray([len(y) for y, _a, _b in sets], float)
+    w = w / w.sum()
+    point = float(sum(wi * (r2_score(y, a) - r2_score(y, b))
+                      for wi, (y, a, b) in zip(w, sets)))
+    rng = np.random.RandomState(seed)
+    out = []
+    for _ in range(int(runs)):
+        total, ok = 0.0, True
+        for wi, (y, a, b) in zip(w, sets):
+            idx = rng.randint(0, len(y), len(y))
+            if np.std(y[idx]) <= 0:
+                ok = False
+                break
+            total += wi * (r2_score(y[idx], a[idx]) - r2_score(y[idx], b[idx]))
+        if ok:
+            out.append(total)
+    if not out:
+        return None
+    return {"delta": point, "lo": float(np.percentile(out, 2.5)),
+            "hi": float(np.percentile(out, 97.5)), "sets": len(sets),
+            "n": int(sum(len(y) for y, _a, _b in sets))}
+
+
+def fixed_section(rows, tag=FIXED_TAG):
+    """The one reading that was fixed first, instead of the best of several.
+
+    Every gain in the tables above is the largest of several readings of the same frames, and
+    that is what makes a single interval at the edge of zero so weak. This section reports one
+    reading of the trajectory on every set, chosen for having no free parameter in it rather
+    than for winning, and one combined number for the three sets together.
+    """
+    have = [r for r in rows if tag in (r.get("models") or {}) and "crystal" in r["models"]]
+    if not have:
+        return []
+    # whether the fixed reading is also the one that won somewhere, which the reader has to be
+    # told either way: a rule that names the winner is not a rule
+    top = []
+    for rec in have:
+        m = rec["models"]
+        cand = [t for t in TAGS if t.startswith("md_") and t not in CONTROLS and t in m]
+        if cand and max(cand, key=lambda t: m[t]["delta"]) == tag:
+            top.append(rec["set"])
+    if not top:
+        won = f"It is not the largest gain on any of the {len(have)} sets."
+    elif len(top) == len(have):
+        won = "It is also the largest gain on every one of these sets."
+    else:
+        won = (f"It is also the largest gain on {len(top)} of the {len(have)} sets "
+               f"({', '.join(top)}).")
+    out = ["## One reading fixed in advance", "",
+           f"Every gain above is the largest of several readings of the same frames. This "
+           f"section reports one reading instead: the trajectory with every conformation "
+           f"weighing the same, the \"{LABEL[tag]}\" row of the tables above. It was "
+           f"fixed before the sets were compared with "
+           f"each other, and it contains no choice -- there is no weighting to pick and no beta "
+           f"to search -- so it cannot be the reading that happened to win. {won}", "",
+           "| set | ligands | the crystal pose | " + LABEL[tag] +
+           " | change against the crystal pose |",
+           "| --- | ---: | ---: | ---: | --- |"]
+    for rec in have:
+        m = rec["models"]
+        r, c = m[tag], m["crystal"]
+        out.append(f"| {rec['set']} | {rec['n']} | {c['q2']:+.3f} | {r['q2']:+.3f} | "
+                   f"{r['delta']:+.3f} [{r['lo']:+.3f}, {r['hi']:+.3f}] |")
+    out.append("")
+
+    comb = combined_difference(have, tag=tag)
+    if comb:
+        out += [f"**Combined over the {comb['sets']} sets: {comb['delta']:+.3f} "
+                f"[{comb['lo']:+.3f}, {comb['hi']:+.3f}]**, over {comb['n']} molecules. Each "
+                f"set is weighted by the molecules it contributes, and the molecules are "
+                f"resampled inside their own set, never across sets: two sets have different "
+                f"targets and their activities are not on one scale.", ""]
+    clears = [r["set"] for r in have if r["models"][tag]["lo"] > 0]
+    behind = [r["set"] for r in have if r["models"][tag]["hi"] < 0]
+    ahead = comb is not None and comb["lo"] > 0
+    if not clears and not ahead:
+        close = (f"**Fixed in advance, the trajectory shows no gain.** It clears the interval on "
+                 f"none of the {len(have)} sets, and the combined estimate does not clear it "
+                 f"either. The gains in the tables above are what taking the best of several "
+                 f"readings produces. This is the number the item should be read as giving.")
+    elif clears and ahead:
+        close = (f"**Fixed in advance, the trajectory still shows a gain**, on "
+                 f"{len(clears)} of the {len(have)} sets ({', '.join(clears)}) and in the "
+                 f"combined estimate, so it does not depend on choosing the reading after the "
+                 f"sets were seen.")
+    elif ahead:
+        close = (f"**The combined estimate clears the interval although no single set does.** "
+                 f"Pooling {comb['n']} molecules can do that, and it rests on the sets being "
+                 f"comparable enough to pool, which three targets with three activity scales "
+                 f"are only in part.")
+    else:
+        close = (f"**One set clears the interval and the combined estimate does not** "
+                 f"({', '.join(clears)}), so what is measured there belongs to that set rather "
+                 f"than to the method.")
+    if behind:
+        close += (f" The reading is behind the crystal pose beyond the interval on "
+                  f"{len(behind)} of the {len(have)} sets ({', '.join(behind)}).")
+    out += [close, ""]
+    out += ["This is not a pre-registration. The sets had been measured before the rule was "
+            "written down, and no rule written afterwards can undo that. What it does avoid is "
+            "the other fault: deciding which of several readings to believe after seeing which "
+            "of them won. The attenuation and lambda are still chosen by cross-validation "
+            "inside every model, which the crystal pose gets in the same measure, so that "
+            "choice is not what separates the two columns.", ""]
+    return out
 
 
 def ownframe_section(rows):

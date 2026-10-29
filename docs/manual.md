@@ -1383,10 +1383,10 @@ than about the method.** It is also the first time the multi-instance search cho
 above zero — on p38 it chose $\beta = 1$, so the model did concentrate the weight on some
 frames instead of averaging them.
 
-**What the three sets support together is weak, and two things say so.** First the count: ten
+**What the three sets support together is weak, and two things say so.** First the count: nine
 readings of a trajectory were compared with their crystal pose over the three sets, one of them
 clears its interval, and the near edge of that interval is +0.003 from zero. One result at the
-edge out of ten comparisons is about what chance produces. Second the reading itself: at
+edge out of nine comparisons is about what chance produces. Second the reading itself: at
 $\beta = 0$ the multi-instance fit is the uniform ensemble, every conformation weighing the
 same, and "clusters equal" on the same set reaches +0.129 [−0.076, +0.365] and does not clear
 the interval. The two are the same model.
@@ -1421,6 +1421,37 @@ python benchmarks/run_md.py --sets mcl1 p38 hif2a --normalisation
 > motion around a good one. And the gain reported here is the best of five readings rather than
 > one fixed in advance, which is what the +0.003 edge asks for next.
 
+### One reading fixed in advance
+
+Every gain in the tables above is the largest of three readings of the same frames, and that is
+what makes a single interval at the edge of zero weak evidence. So the three sets are read once
+more with **one** reading of the trajectory, the plainest one: every conformation weighing the
+same, the row *trajectory, clusters equal* of the tables above. It contains no choice — there is
+no weighting to pick and no $\beta$ to search — and it is not the largest gain on any of the
+three sets, so the rule does not name a winner.
+
+| set | ligands | the crystal pose | trajectory, clusters equal | change against the crystal pose |
+| --- | ---: | ---: | ---: | --- |
+| hif2a | 36 | +0.342 | +0.471 | +0.129 [−0.076, +0.365] |
+| mcl1 | 25 | **+0.575** | +0.391 | −0.184 [−0.526, +0.136] |
+| p38 | 29 | +0.261 | +0.239 | −0.022 [−0.310, +0.299] |
+
+None of the three clears its interval. **Combined over the three sets the change is −0.006
+[−0.157, +0.163]**, over 90 molecules, with each set weighted by the molecules it contributes and
+the molecules resampled inside their own set — three targets do not share an activity scale, so
+they are never mixed in a resample.
+
+**Fixed in advance, a trajectory ensemble around a crystal pose is worth nothing.** The interval
+is now narrow enough to say that rather than to leave it open: it is 0.32 of q² wide over 90
+molecules, against 0.66 on the 25 molecules of mcl1 alone. The +0.003 edge of the previous subsection is what
+taking the best of three readings produces.
+
+This is not a pre-registration. The sets had been measured before the rule was written down, and
+no rule written afterwards undoes that. What it avoids is the other fault: deciding which of
+several readings to believe after seeing which one won. The attenuation and lambda are still
+chosen by cross-validation inside every model, which the crystal pose gets in the same measure,
+so that choice is not what separates the two columns.
+
 ### What the common frame is worth
 
 The last row of the mcl1 table is a control and not a model: the same frames, read with each
@@ -1446,7 +1477,7 @@ decided set by set here.
 one more reason to read the gains of that set with care: there a reading nobody would defend does
 no worse than the pose it was built to lose to.
 
-The control is kept out of the counting. It is not one of the ten readings compared with their
+The control is kept out of the counting. It is not one of the nine readings compared with their
 crystal pose above, and a set does not count as ahead because the control clears an interval. A
 model built to be wrong must make the evidence look neither stronger nor weaker than it is.
 
