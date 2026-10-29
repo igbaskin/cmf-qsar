@@ -1,6 +1,6 @@
 {
- "commit": "5e3383f2f9e231e7437176548a8d3123933e7a73",
- "created": "2026-10-29T16:26:38",
+ "commit": "f4ded78fd95d110ce30ec913dee729af035fc761",
+ "created": "2026-10-29T18:00:34",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1667,7 +1667,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "packages": {
   "PyOpenGL": "3.1.10",
   "PySide6": "6.11.1",
@@ -1825,6 +1825,24 @@
   "benchmarks/results/cofield_error/THER.json": "e1ad96f166b74bfefd2fdb4ebd4131db97631ed43ccd0dd1500ade0de2caaab1",
   "benchmarks/results/cofield_error/THR.json": "ec962f4b1027f8645961dd47c337e2be53e3fbf4843f6a143191edeb661d65fe",
   "benchmarks/results/cofield_error/table.md": "10b3f3c6d81e404c2cdc4828e3ad247abece30de02005ecf21f02a0c8502b0ca",
+  "benchmarks/results/compas/NOTES.md": "10e773685ea63400f3d560126b937e51d664f8a3592b00bbd6a19aeb725eb230",
+  "benchmarks/results/compas/REPORT.md": "be966537baa76e17fbdd077e80800d22a628c6a233475e4145419eb61f89027a",
+  "benchmarks/results/compas/baselines_1D.json": "a3dc13435337443415a7d0b7dbe1ea0817163b064c6bdbd1fe159e61085cb678",
+  "benchmarks/results/compas/fields_1D.json": "890d5f38f5941899e7b9a08a7ca2a958f2d97703d8faa9f0f4d0f56f49efb5f0",
+  "benchmarks/results/compas/fields_ABCDE_1D.json": "e4fc4ec9c28b4a30faf7e904b9706f904764e5404d699d5abb14316a3d9415d3",
+  "benchmarks/results/compas/fields_ABCD_1D.json": "ba1965b8bd7b4918e1f2444c3a17b29140d1a64d5cd32455a7a74634ea2e702a",
+  "benchmarks/results/compas/fields_ABC_1D.json": "3cfbfe81677ff75fb67ab0fbd3fe9ecd9272b24af7bae8fde7af50b67bba3a26",
+  "benchmarks/results/compas/fields_CD_1D.json": "47ff6b9d84f73308d1fb7a54ec86bbf64f5bbcec29f05d7d524f61f8074eb6d6",
+  "benchmarks/results/compas/figures/cofield_gap_hc_c26h16_0pent_13.html": "4fda6a77c6e745d4332a63b5e51659d0051cba7bd2f204be25226995fd2761cc",
+  "benchmarks/results/compas/figures/cofield_gap_hc_c26h16_0pent_13.png": "c63f71751d505cdd73603f08e552f7dea251343bfad7d10a21af8139be0080ae",
+  "benchmarks/results/compas/figures/ring_contributions_gap.png": "e4e220f836b2288e4104eab636fd42370a87e392bbe7a18d2acbd78c7d45fcdf",
+  "benchmarks/results/compas/figures/ring_contributions_hc_c26h16_0pent_13.png": "f62904ea97604137bb723bb4bead14220652fb0e501cb4a2ad32e6af532ec431",
+  "benchmarks/results/compas/interpret_1D.json": "26eddc4b3ca3db1b7c1a758694853d722f01ec3a8421d8c1028ded691063927b",
+  "benchmarks/results/compas/kernels_1D.json": "555cecb958b2d549c289b40e3acee758e658b66347055cad3c4f0ef65e2f90d5",
+  "benchmarks/results/compas/narrative_hc_c26h16_0pent_13.md": "ee6cf7d38a0c3e82938fd21428d3513e2341eb411f5d11a9cb9bf9283500e66a",
+  "benchmarks/results/compas/prepared_1D.json": "1ab57444e8c893c86584b53c3df832d549f57bd540e64e3ab2bb068ccc08a9b3",
+  "benchmarks/results/compas/splits_1D.json": "315e464f97fcb772e5f1dd2f12efbc8e531487760f18fdbd0915eeed47128b31",
+  "benchmarks/results/compas/table.md": "47b7041424f0c6a1303e878745625b6a51d75524ee23fe266c0da02d2e6a3da5",
   "benchmarks/results/conformal/ACE.json": "ca49f870b34a4711c95f31afe601e24f1bea07f9cc00178a5c261682dd68f6dc",
   "benchmarks/results/conformal/AChE.json": "94e4b305deac26328070ccca9015d709e0765e62653563418ad04ab1c8f680e2",
   "benchmarks/results/conformal/BZR.json": "3d6b476647e20fe6b0ee45870b5b6affae506b2cd2391ebd128f95ed28269952",
