@@ -3321,7 +3321,7 @@ $$
 \hat{y} = b + \sum_j a_j\, K(X, X_j)
 $$
 
-$K(X, X_j)$ is the kernel between the molecule and training molecule $j$, so the contribution of a training molecule is its similarity to the molecule times its weight. The rule holds for every kernel, a nonlinear layer included, because the layer changes the kernel and not the form of the sum. It is the first thing to read when a prediction surprises you: a prediction resting on one or two training molecules is a warning, and a support vector machine makes the sum short on purpose, since most of its coefficients are zero. The scheme shows the contributions of the 21 training molecules to one test molecule of the steroid set, sorted: the molecules the fit weighted positively and that resemble the test molecule pull the prediction up, the others pull it down. The *Contributions* tab lists them, `cmf report` prints the largest, and `model.training_contributions(mol)` returns them.
+$K(X, X_j)$ is the kernel between the molecule and training molecule $j$, so the contribution of a training molecule is its similarity to the molecule times its weight, which is why the rule is also called the similarity decomposition. The rule holds for every kernel, a nonlinear layer included, because the layer changes the kernel and not the form of the sum. It is the first thing to read when a prediction surprises you: a prediction resting on one or two training molecules is a warning, and a support vector machine makes the sum short on purpose, since most of its coefficients are zero. The scheme shows the contributions of the 21 training molecules to one test molecule of the steroid set, sorted: the molecules the fit weighted positively and that resemble the test molecule pull the prediction up, the others pull it down. The *Contributions* tab lists them, `cmf report` prints the largest, and `model.training_contributions(mol)` returns them.
 
 ![Rule 2 for one test molecule of the steroid set, the one the model of this chapter predicts highest: the contribution of each of the 21 training molecules, sorted, with the observed affinity of the training molecule in brackets; the bias and the sum of the bars are in the title. The bars are not an activity ranking of the training set, because the similarity to the test molecule is a factor in every term.](docs/figures/rule2.svg)
 
@@ -3334,6 +3334,8 @@ $$
 The field of a molecule is a sum of Gaussians centred on its atoms, and the overlap kernel is a sum over pairs of atoms, so the contribution of every training molecule splits further into one term $y_k$ per atom $k$ of the molecule being predicted (Eq. 14 of the 2015 paper). The contribution of a substituent or a fragment is the sum over its atoms. This is the rule for design, because it says which part of a molecule helps and which part does not. It needs a kernel that is a sum over atom pairs, which the overlap kernel and the rotation-invariant autocorrelation kernel are and a nonlinear layer is not; under a layer the Shapley values of *Shapley values* below take its place. The scheme draws the atom contributions of the two test molecules the steroid model predicts highest and lowest, as the 2019 paper draws its Figure 3: red spheres raise the predicted affinity, blue ones lower it, and the area is the magnitude. The 3D view draws the same spheres for the selected molecule, and `model.atom_contributions(mol)` returns the values, per field with `per_field=True`.
 
 ![Rule 3 for the two test molecules of the steroid set that the model of this chapter predicts highest and lowest, drawn as the 2019 paper draws its Figure 3: one circle per atom, hydrogens included, red for a positive contribution and blue for a negative one, with an area proportional to the magnitude and the three largest values written out. The sums in the titles are the predictions minus the bias. The largest contributions sit on oxygen atoms, where the electrostatic co-field has its lobes.](docs/figures/rule3.svg)
+
+**What to do with the map.** An atom with a negative contribution is a candidate for removal or for replacement, an atom with a positive one is what to keep, and the sum over a substituent is what the model says that substituent is worth at its position. The predicted effect of exchanging one group for another at a position is the difference of the two sums, one integral per pair of groups and no refit: that is the measure behind the table of *Which groups are interchangeable: a bioisostere table*, `cmf design` in *Designing the next compound* ranks candidate groups by the prediction for the whole molecule, and on a series without a common frame the invariant route of that chapter reports how much of a candidate's prediction comes from the group that was put in. One caution: the contributions describe the molecule as it is posed in the model's frame. Taking a group away changes the normalisation of the field and may change the conformation, the alignment and the charges of what is left, so the map says where to act, and the prediction for the edited molecule says whether the action worked.
 
 The two sums are the same number: the contributions of the training molecules and the contributions of the atoms both add up to the prediction minus the bias, and a test asserts it. For a classification model the coefficients carry the sign of the class, $a_j = \alpha_j y_j$, and the three rules read the same way with the active class in place of the higher activity.
 
@@ -3442,16 +3444,6 @@ compares two places with the covariance between them taken into account, which m
 points a few angstrom apart are built from the same training fields and their errors are far from
 independent. Plan item LP3 uses all of this to read a co-field at the ortho, meta and para
 positions of a ring; nothing in it is specific to that use.
-
-## Contributions
-
-The *Contributions* tab answers two questions about the selected molecule:
-
-- **Which training molecules** make its prediction, as $a_j K(X, X_j)$ — the similarity
-  decomposition, rule 2. A prediction resting on one or two training molecules is a warning.
-- **Which of its atoms**, as the atom contributions of Eq. 14 of the 2015 paper, drawn in the 3D
-  view as red and blue spheres whose size is the magnitude. This is the map that is most
-  useful for design: it says *this* substituent is helping and *that* one is not.
 
 ## Shapley values
 
