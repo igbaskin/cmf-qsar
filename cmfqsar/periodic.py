@@ -263,8 +263,9 @@ def inorganic_fieldset(elements: Sequence[str] = (), physchem: Sequence[str] = I
     oxidation states from the composition (pymatgen), falling back to the electronegativity proxy
     when no assignment exists; ``"electronegativity"`` uses that proxy throughout: the deviation
     of each atom's Pauling electronegativity from the mean over the cell, with the sign of a
-    charge (an electronegative atom is negative); ``"file"`` reads ``oxi_states`` or ``charges``
-    from the structure's per-atom arrays and refuses when there are none.
+    charge (an electronegative atom is negative); ``"file"`` reads ``oxi_states``, ``charges`` or
+    ``bader_charges`` (what :mod:`cmfqsar.vasp` writes) from the structure's per-atom arrays, or
+    its initial charges, and refuses when there are none.
     """
     specs = []
     for name in physchem:
@@ -344,7 +345,7 @@ def crystal_charges(atoms, model: str = "oxidation") -> Tuple[np.ndarray, str]:
     """Per-atom charges for the electrostatic field of a solid, and where they came from."""
     symbols = list(atoms.get_chemical_symbols())
     if model == "file":
-        for key in ("oxi_states", "charges"):
+        for key in ("oxi_states", "charges", "bader_charges"):
             if key in atoms.arrays:
                 return np.asarray(atoms.arrays[key], float), key
         q = atoms.get_initial_charges()

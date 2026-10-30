@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 90 modules, 169 classes with 538 public methods, and 789 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 92 modules, 172 classes with 558 public methods, and 825 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -60,6 +60,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.gpc](#cmfqsargpc) | Gaussian-process classification by the Laplace approximation. |
 | [cmfqsar.gradients](#cmfqsargradients) | The derivative of a prediction with respect to the atoms of the molecule being predicted. |
 | [cmfqsar.gtm](#cmfqsargtm) | Chemical space and activity landscapes from CMF kernels: kernel PCA + Generative Topographic Mapping. |
+| [cmfqsar.hops](#cmfqsarhops) | A migration path as the sample: the environment of a hop, its frame and its labels (BT7). |
 | [cmfqsar.increments](#cmfqsarincrements) | Atomic increments of the original CMF implementation (Baskin & Zhokhova 2013). |
 | [cmfqsar.invariant](#cmfqsarinvariant) | Alignment-free but geometry-aware kernels: autocorrelation of the molecular fields. |
 | [cmfqsar.kcca](#cmfqsarkcca) | Kernel canonical correlation analysis: what one view of the molecules sees that another does not (plan item F6). |
@@ -107,6 +108,7 @@ are reconstructed from the dual coefficients and can be visualised.
 | [cmfqsar.transformfield](#cmfqsartransformfield) | A matched pair as a field placed in space (plan item MC6). |
 | [cmfqsar.validation](#cmfqsarvalidation) | The three questions a 3D-QSAR model has to answer besides "how good is q²". |
 | [cmfqsar.varalign](#cmfqsarvaralign) | Alignment by prediction confidence: the pose of a molecule is chosen so that the posterior variance of its predicted activity is as small as possible. |
+| [cmfqsar.vasp](#cmfqsarvasp) | Per-atom arrays from a VASP run, read into an ASE structure (plan item M3). |
 | [cmfqsar.xtb](#cmfqsarxtb) | A cheap quantum stage: per-atom properties from GFN2-xTB (plan item D3). |
 | [cmfqsar.gui](#cmfqsargui) | PySide6 desktop application for CMF 3D-QSAR. |
 | [cmfqsar.gui.app](#cmfqsarguiapp) | Application entry point. |
@@ -1268,6 +1270,16 @@ The sample is an atom in a molecule, not the molecule. The descriptor is the mol
 fields under a Gaussian envelope about the atom, turned into the rotation-invariant
 autocorrelation, so nothing has to be aligned. The folds hold out whole molecules, and
 `--reference` adds the atom-centred count that every such model has to beat.
+
+### `cmd_hops(args)`
+
+A model over migration paths: the field around a hop against a count around it (BT7).
+
+The sample is a hop of the mobile ion between two sites of a crystal, with the ion itself
+removed; the descriptor is the cell's fields under a Gaussian envelope about the midpoint,
+in the frame of the hop and averaged over the rotation about it, which is a closed form.
+The folds hold out whole structures.  Labels come from the bond-valence landscape
+(`--bvse`) or from a table (`--labels`).
 
 ### `cmd_transfer(args)`
 
@@ -4966,6 +4978,387 @@ Responsibility-weighted fraction of the positive class at every node (NaN withou
 ### `predict_from_landscape(R_new: np.ndarray, land: np.ndarray) -> np.ndarray`
 
 Predict a property of new molecules as their responsibility-weighted landscape value.
+
+## cmfqsar.hops
+
+Source: `cmfqsar/hops.py`
+
+A migration path as the sample: the environment of a hop, its frame and its labels (BT7).
+
+Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two
+sites, not by either site.  That barrier is a field property in the sense of this program: the
+ion moving from one site through the bottleneck to the next feels the electrostatic potential,
+the repulsion and the polarisability of the framework around the path.  In the language of the
+rest of the program the framework is the receptor, the ion is the ligand and the barrier is the
+binding energy.
+
+The sample is therefore one **hop**: a pair of sites of the mobile species, in one structure,
+with the migrating ion itself removed.  Everything the per-atom items built (plan items LP1 to
+LP3) carries over, with three changes that are this module:
+
+* **The environment is cut from a periodic cell.**  `point_environment` is
+  `cmfqsar.localenv.environment` for a periodic structure: it collects every atom and every
+  periodic image within the reach of the envelope, measured from a *point* rather than from an
+  atom, and returns an ordinary `cmfqsar.fields.MoleculeFields`.  The centre of a hop is
+  the midpoint of the two sites, so the first atom of the result is a weightless marker there,
+  which keeps the convention of the local modules that the centre is atom 0.
+* **The frame is the hop itself.**  The origin is the midpoint and z points from the first site
+  to the second, which is the direction the barrier is measured in.  What is left is the rotation
+  about z, and `hop_frames` does not choose it: the environment is posed at `n_poses`
+  equally spaced angles and averaged, which is a mean-map kernel over the rotation group about
+  the path (the device of `cmfqsar.localalign` for a frame ambiguity).  The starting angle
+  is fixed by a rule, the nearest framework atom to the midpoint, so that the discrete set is
+  itself a rule.  Reversing a hop reverses z, and the forward and the reverse barrier are two
+  samples.
+* **The sample index is a pair.**  A hop is (structure, site a, site b, lattice offset of b), and
+  the folds hold out whole structures (`HopSet.targets` builds an
+  `cmfqsar.atomtargets.AtomTargets` whose "molecule" is the structure), since the hops
+  of one cell are not independent of each other.
+
+**Labels.**  `bvse_barriers` reads the barrier of every hop from the bond-valence
+site-energy landscape (the softBV model, through the `bvlain` package): the lowest energy at
+which the two sites are connected through the landscape, which is a minimax path and the
+quantity the percolation analysis of that method is built from.  It is cheap, so it labels
+thousands of hops, and under rule 1 of the plan it is also the reference a model trained on
+DFT barriers has to beat.  Measured or DFT barriers come from a table (`read_hop_labels`).
+
+**From hops to conduction.**  `percolation_thresholds` takes one energy per hop of a
+structure and reports the level at which the network of hops first connects through the cell in
+one, two and three independent directions, which is what the effective activation energy of a
+conductor is read from.  The model predicts per hop; this is the step that turns those
+predictions into a number per structure.
+
+**The bottleneck.**  `bottleneck` finds the point of least free space on the straight
+path, in the spirit of the free-space test of `cmfqsar.complementarity`, and names the
+atoms that form it; it is reported with every hop and is a check that the environment the model
+sees is the one a chemist would describe.
+
+### `class Hop  (dataclass)`
+
+One migration path: site `a` of a structure to site `b` in the image `offset`.
+
+Attributes:
+
+- `structure: int`
+- `a: int`
+- `b: int`
+- `offset: Tuple[int, int, int]`
+- `start: np.ndarray`
+- `vector: np.ndarray`
+- `shift: np.ndarray` = `_field(default_factory=lambda: np.zeros(3))`
+- `y: float` = `float('nan')`
+- `y_reverse: float` = `float('nan')`
+- `site_a: float` = `float('nan')`
+- `site_b: float` = `float('nan')`
+- `saddle: float` = `float('nan')`
+- `bottleneck: float` = `float('nan')`
+- `bottleneck_at: float` = `float('nan')`
+- `bottleneck_atoms: List[str]` = `_field(default_factory=list)`
+- `representative: int` = `-1`
+- `multiplicity: int` = `1`
+- `name: str` = `''`
+
+#### `Hop.length` -> float  (property)
+
+#### `Hop.midpoint` -> np.ndarray  (property)
+
+#### `Hop.end` -> np.ndarray  (property)
+
+#### `Hop.reversed() -> 'Hop'`
+
+The same path the other way: b in its image to a in the home cell.
+
+#### `Hop.label(names: Optional[Sequence[str]]=None) -> str`
+
+### `class HopSet  (dataclass)`
+
+Structures, their hops, and the index that turns the hops into a per-sample target.
+
+Attributes:
+
+- `structures: list`
+- `names: List[str]`
+- `hops: List[Hop]`
+- `mobile: str` = `'Li'`
+
+#### `HopSet.build(structures: Sequence, names: Optional[Sequence[str]]=None, mobile: str='Li', d_min: float=HOP_MIN, d_max: float=HOP_MAX) -> 'HopSet'`  (class method)
+
+#### `HopSet.of_structure(k: int) -> List[int]`
+
+#### `HopSet.representatives() -> List[int]`
+
+#### `HopSet.crystals(fieldset: FieldSet) -> List[CrystalFields]`
+
+#### `HopSet.environments(crystals: Sequence[CrystalFields], rows: Optional[Sequence[int]]=None, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, r_max: Optional[float]=None, posed: bool=False, n_poses: int=DEFAULT_POSES, progress=None) -> List[MoleculeFields]`
+
+The environment of every hop in `rows` (all of them by default), posed if asked.
+
+#### `HopSet.annotate(crystals: Sequence[CrystalFields], rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, r_max: Optional[float]=None) -> List[int]`
+
+Bottleneck of every hop and the symmetry reduction; returns the representatives.
+
+#### `HopSet.targets(rows: Optional[Sequence[int]]=None, which: str='forward', name: str='barrier') -> AtomTargets`
+
+The hops in `rows` with a finite label, as an index whose "molecule" is the structure.
+
+The folds of the result hold out whole structures, and every tool of the local modules
+that takes an `cmfqsar.atomtargets.AtomTargets` takes this one.  `atom` is the
+index of the hop in `hops`.
+
+#### `HopSet.describe() -> str`
+
+### `class HopModel  (dataclass)`
+
+A kernel ridge model on hop environments with the rotation-averaged overlap kernel.
+
+The environments are kept in their hop frames; the kernel is the closed-form average over
+the rotation about the hop (`cylindrical_blocks`), one block per field, each divided
+by its diagonal so that no field dominates by its units, and summed with the mixing
+coefficients of the field set.  `profile` reads the co-field as a function of the
+position along the hop and the distance from its axis, which is what the averaged kernel
+makes the co-field depend on.
+
+Attributes:
+
+- `fieldset: FieldSet`
+- `train: List[MoleculeFields]`
+- `K: np.ndarray`
+- `diag: np.ndarray`
+- `lam: float` = `0.001`
+- `coef: Optional[np.ndarray]` = `None`
+- `bias: float` = `0.0`
+- `y: Optional[np.ndarray]` = `None`
+- `K_fields: Optional[np.ndarray]` = `None`
+
+#### `HopModel.build(envs: Sequence[MoleculeFields], fieldset: FieldSet, keep_blocks: bool=False, progress=None, n_jobs: int=1) -> 'HopModel'`  (class method)
+
+#### `HopModel.specs`  (property)
+
+#### `HopModel.fit(y: Sequence[float], lam: Optional[float]=None) -> 'HopModel'`
+
+#### `HopModel.kernel_to(envs: Sequence[MoleculeFields], progress=None) -> np.ndarray`
+
+The (n_test, n_train) joint kernel of new environments against the training ones.
+
+#### `HopModel.predict(envs: Sequence[MoleculeFields], progress=None) -> np.ndarray`
+
+#### `HopModel.profile(f: int, zs: Sequence[float], rs: Sequence[float], sigma: Optional[float]=None) -> Tuple[np.ndarray, Optional[np.ndarray]]`
+
+The co-field of field `f` at every (z, r), as a (len(zs), len(rs)) table, with its
+standard deviation under noise of level `sigma` in the barriers when that is given.
+
+The co-field is `sum_j a_j s_fj X_fj(rho, z)` with `s_fj` the normalisation and
+`X_fj` the field of environment j averaged about the hop axis; its error follows the
+dual coefficients, whose covariance under independent noise of level sigma is
+`sigma^2 (K + lam I)^-2`.
+
+#### `HopModel.atom_contributions(env: MoleculeFields) -> np.ndarray`
+
+What every atom of an environment adds to its prediction, the bias apart.
+
+The kernel is a sum over the atoms of the environment, so the prediction splits over
+them exactly, as the atom contributions of the overlap model do.
+
+### `point_environment(crystal: CrystalFields, centre: Sequence[float], rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, r_max: Optional[float]=None, exclude: Sequence[Tuple[int, Sequence[int]]]=(), name: str='') -> MoleculeFields`
+
+The fields of a periodic structure seen from a point, under a Gaussian envelope.
+
+Every atom of the cell and every periodic image of it within the reach of the envelope is
+collected, with the coordinates measured from `centre` and the weights multiplied by
+`exp(-rho d^2)`, as `cmfqsar.localenv.environment` does for a molecule.  The reach is
+where the envelope falls below `floor`, or `r_max` when that is given and smaller.
+
+`exclude` lists (atom index, lattice offset) pairs to leave out: for a hop these are the two
+positions of the migrating ion.  Other images of the same atom are other ions and stay.
+
+The first atom of the result is a weightless marker at the centre, so that the local modules'
+convention that the centre is atom 0 holds; `member_atom_map` holds the index in the cell
+of every other atom (-1 for the marker), so that a per-atom quantity can be put back on the
+cell.  `bonds` is empty: a framework is described by distances, not by a bond graph.
+
+### `enumerate_hops(atoms, mobile: str='Li', d_min: float=HOP_MIN, d_max: float=HOP_MAX, structure: int=0) -> List[Hop]`
+
+Every pair of sites of the mobile species between `d_min` and `d_max` apart, both ways.
+
+Periodic images count, so a hop from an atom to its own image in a small cell is a hop.  Each
+unordered pair gives two hops, because the barrier has a direction.
+
+### `hop_environment(crystal: CrystalFields, hop: Hop, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, r_max: Optional[float]=None, name: str='') -> MoleculeFields`
+
+The environment of a hop: the cell seen from the midpoint, without the migrating ion.
+
+### `hop_axis_frame(vector: Sequence[float], reference: Optional[Sequence[float]]=None) -> np.ndarray`
+
+The rotation whose rows are x, y, z with z along the hop and x towards `reference`.
+
+`reference` is a direction whose component perpendicular to the hop fixes x; without one, or
+when it is parallel to the hop, x is taken as the lattice-independent choice of the axis of
+the global frame least aligned with z.
+
+### `hop_frames(env: MoleculeFields, vector: Sequence[float], n_poses: int=DEFAULT_POSES) -> List[np.ndarray]`
+
+`n_poses` frames of a hop environment: z along the hop, x turned about it in equal steps.
+
+The starting angle points x at the framework atom nearest to the midpoint (the centre is
+atom 0 and is skipped), so that the set is fixed by the geometry and not by the coordinates
+the file happened to use.
+
+### `posed_hop(env: MoleculeFields, vector: Sequence[float], n_poses: int=DEFAULT_POSES, name: str='') -> MoleculeFields`
+
+The hop environment in its frame, averaged over the rotation about the hop axis.
+
+### `bottleneck(env: MoleculeFields, vector: Sequence[float], n_points: int=41, margin: float=0.3) -> Tuple[float, float, List[str]]`
+
+The point of least free space on the straight path, as (distance, position, atoms).
+
+The path runs from -vector/2 to +vector/2 through the centre of `env`; at every point the
+distance to the nearest framework atom is taken, and the smallest of those is the
+bottleneck.  `position` is the fraction of the path at which it occurs (0.5 is the midpoint)
+and `atoms` are the symbols of the atoms within `margin` angstrom of that nearest distance,
+which is the ring the ion has to pass through.
+
+### `fingerprint(env: MoleculeFields, vector: Sequence[float], reach: float=5.0, decimals: int=2) -> Tuple`
+
+What a hop looks like up to a rotation about its axis: the sorted (symbol, distance from
+the midpoint, position along the hop) of the atoms within `reach`.
+
+Two hops related by a symmetry of the structure have the same fingerprint; a hop and its
+reverse have different ones unless the two sites are equivalent, which is as it should be,
+since their barriers then differ.
+
+### `reduce_by_symmetry(hops: Sequence[Hop], envs: Sequence[MoleculeFields]) -> List[int]`
+
+Mark equivalent hops of one structure and return the indices of the representatives.
+
+Equivalence is equality of `fingerprint`.  Every hop gets its `representative` and the
+representative its `multiplicity`, so that a prediction for the representative can be spread
+back to all the hops it stands for, which the percolation step needs.
+
+### `bvse_calculator(atoms, mobile: str='Li', oxidation: Optional[Dict[str, float]]=None, resolution: float=0.25, r_cut: float=10.0)`
+
+A `bvlain` calculator with the landscape of the mobile ion over the framework.
+
+The oxidation states come from `oxidation`, else from the structure's `oxi_states` array,
+else from the composition (`cmfqsar.periodic.oxidation_states`).  The framework is the
+structure without the mobile species, which is how the bond-valence method is defined.
+
+### `bvse_energy(calc, points: np.ndarray, f: float=0.74) -> np.ndarray`
+
+The bond-valence site energy of the mobile ion at Cartesian `points`, in eV.
+
+This evaluates the same Morse plus screened-Coulomb sum `bvlain` puts on its grid, at
+points of the caller's choosing: the points are wrapped into the cell and placed in the
+middle of the calculator's supercell, whose neighbour search then applies.
+
+### `path_barrier(energy: Callable[[np.ndarray], np.ndarray], start: np.ndarray, vector: np.ndarray, spacing: float=0.2, pad: float=2.5, site_search: float=SITE_SEARCH) -> Tuple[float, float, float]`
+
+(saddle, energy at the start site, energy at the end site) on a landscape.
+
+A box is laid around the path -- `pad` angstrom beyond each site along it and `pad` to the
+sides -- and sampled at `spacing`; the energy of a site is the lowest value within
+`site_search` of it, so that a site that the landscape puts a little off the given position
+is still that site.  The saddle is the lowest level at which the two minima are connected
+through the box, found by bisection on the level with a connected-components labelling at
+each step: a minimax path, which is what a migration barrier on a grid is.
+
+### `bvse_barriers(hopset: HopSet, rows: Optional[Sequence[int]]=None, oxidation: Optional[Dict[str, float]]=None, resolution: float=0.25, spacing: float=0.2, pad: float=2.5, progress=None, spread: bool=True, grid_percolation: bool=True) -> Dict[str, Dict[str, float]]`
+
+Label the hops in `rows` with their bond-valence barriers; returns the percolation
+energies of every structure's landscape as `bvlain` reports them, by structure name.
+
+With `spread`, a hop that was not labelled itself but has a labelled representative takes
+its representative's values, and a hop whose reverse was labelled takes the reverse values.
+`grid_percolation` asks `bvlain` for the percolation energies of its own grid, which the
+hop network of `structure_percolation` can be compared with; it can take minutes on a
+landscape with many pockets, so it can be switched off.
+
+### `spread_labels(hopset: HopSet) -> int`
+
+Give every unlabelled hop the label of its representative, or of its reverse; returns
+how many were filled.
+
+### `read_hop_labels(path: str, hopset: HopSet, column: str='barrier', reverse_column: str='barrier_reverse') -> int`
+
+Read barriers from a table onto the hops; returns how many hops were labelled.
+
+The table has the columns `structure` (a name of the set, or its index), `a` and `b`
+(atom indices in the structure), optionally `offset_x`, `offset_y` and `offset_z` (the
+image of `b`; the nearest image is taken without them), and the barrier column.  A row
+naming a hop the set does not contain is an error, because a silent miss would be a label
+thrown away.
+
+### `write_hops(path: str, hopset: HopSet, predicted: Optional[Dict[int, float]]=None) -> int`
+
+Write every hop with what is known about it; `predicted` maps hop index to prediction.
+
+### `percolation_thresholds(n_sites: int, hops: Sequence[Hop], levels: Sequence[float]) -> Dict[str, float]`
+
+The lowest level at which the hops connect through the cell in 1, 2 and 3 directions.
+
+`levels` is one number per hop, the energy a path crossing it has to reach -- the saddle
+energy relative to the lowest site, or a barrier -- and a hop in either direction carries the
+same connection.  Hops are added in order of increasing level, and the result is
+`{"E_1D", "E_2D", "E_3D"}` with *infinity* where the network never wraps in that many
+independent directions.  The sites are the atoms of the mobile species, indexed as the hops
+index them.
+
+### `structure_percolation(hopset: HopSet, k: int, values: Optional[Dict[int, float]]=None, relative: bool=True) -> Dict[str, float]`
+
+Percolation thresholds of structure `k` from the hops' saddle energies, or from `values`.
+
+`values` maps a hop index to the energy a path crossing it has to reach; without it the
+bond-valence saddles are used.  With `relative` the thresholds are measured from the lowest
+site energy of the structure, which is what a percolation barrier means.
+
+### `saddle_from_barrier(hopset: HopSet, predicted: Dict[int, float]) -> Dict[int, float]`
+
+Turn predicted forward barriers into saddle energies: site energy plus barrier, where
+the site energy is known, else the barrier itself.
+
+### `hop_types(envs: Sequence[MoleculeFields], min_atoms: int=20) -> List[str]`
+
+The atom types of the environments worth a column of the count reference.
+
+### `hop_count_features(envs: Sequence[MoleculeFields], types: Sequence[str], edges: Optional[Sequence[float]]=None) -> np.ndarray`
+
+The atom-centred count of `cmfqsar.localenv.shell_counts` about the midpoint of
+every hop, which is the reference every hop model has to beat.
+
+### `profile_points(zs: Sequence[float], rs: Sequence[float], n_angles: int=DEFAULT_POSES) -> np.ndarray`
+
+Points of a (z, r) profile in the hop frame: for every z along the hop and every
+radius r from the axis, `n_angles` points around the axis, which are averaged.
+
+### `cofield_profile(model, f: int, zs: Sequence[float], rs: Sequence[float], n_angles: int=DEFAULT_POSES, include_scale: bool=True) -> np.ndarray`
+
+The co-field of field `f` as a (len(zs), len(rs)) table in the hop frame.
+
+The posed kernel averages over the rotation about the hop, so the co-field is a function of
+the position along the hop and the distance from its axis; this reads it at those places and
+averages the residual dependence on the angle that the finite number of poses leaves.
+
+### `format_profile(table: np.ndarray, zs: Sequence[float], rs: Sequence[float], unit: str='') -> str`
+
+A (z, r) table as text: rows along the hop, columns away from its axis.
+
+### `cylindrical_blocks(P: Sequence[MoleculeFields], Q: Sequence[MoleculeFields], specs, chunk: int=40000, progress=None, n_jobs: int=1) -> np.ndarray`
+
+The rotation-averaged overlap kernels between the environments of P and of Q: (F, nP, nQ).
+
+Every environment is in its hop frame, z along the hop.  When `P` is `Q` only the upper
+triangle is computed and mirrored.  The geometric part of the kernel is computed once per
+group of fields that share a width, and the weights are applied per field.  With `n_jobs`
+above one the rows are split over that many processes (joblib), which pays from a few
+hundred environments on; the result does not depend on it.
+
+### `cross_validate_hop_model(model: HopModel, targets: AtomTargets, lams: Optional[Sequence[float]]=None, folds: int=10, seed: Optional[int]=0, name: str='')`
+
+The ridge search of `cmfqsar.localenv.choose_lam` on a hop model's kernel.
+
+### `framed_environments(hopset: HopSet, crystals: Sequence[CrystalFields], rows: Optional[Sequence[int]]=None, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, r_max: Optional[float]=None, progress=None) -> List[MoleculeFields]`
+
+The environment of every hop in `rows`, turned into its hop frame (one pose, z along the
+hop), which is what the rotation-averaged kernel takes.
 
 ## cmfqsar.increments
 
@@ -9343,8 +9736,9 @@ listed (`cif:<symbol>`) and, with `other`, one more for every element not listed
 oxidation states from the composition (pymatgen), falling back to the electronegativity proxy
 when no assignment exists; `"electronegativity"` uses that proxy throughout: the deviation
 of each atom's Pauling electronegativity from the mean over the cell, with the sign of a
-charge (an electronegative atom is negative); `"file"` reads `oxi_states` or `charges`
-from the structure's per-atom arrays and refuses when there are none.
+charge (an electronegative atom is negative); `"file"` reads `oxi_states`, `charges` or
+`bader_charges` (what `cmfqsar.vasp` writes) from the structure's per-atom arrays, or
+its initial charges, and refuses when there are none.
 
 ### `elements_in(structures: Iterable, min_structures: int=5) -> List[str]`
 
@@ -12470,6 +12864,83 @@ Two warnings that the caller should pass on to the user:
 Returns
 -------
 list of `CVAlignRound`
+
+## cmfqsar.vasp
+
+Source: `cmfqsar/vasp.py`
+
+Per-atom arrays from a VASP run, read into an ASE structure (plan item M3).
+
+Every materials study so far had to script the same step by hand: take the Bader charges of a
+run, subtract the valence electrons, and put the result on the atoms as an array the periodic
+field builder can read.  This module does that once.  It reads the three files a run leaves
+behind and returns an ASE `Atoms` whose `arrays` carry what the fields need:
+
+* `CONTCAR` (or `POSCAR`): the structure, with the species in the order VASP wrote them.
+* `ACF.dat` of the Bader program (Henkelman group): the electrons each atom holds, in the
+  column `CHARGE`.  A *net* charge is the valence electrons of the pseudopotential minus that
+  number, so the Bader file alone is not enough.
+* `OUTCAR`: the valence electrons per species (`ZVAL`), the ions per species, and, for a
+  spin-polarised run, the magnetic moment per atom (the last `magnetization (x)` block).
+
+The result carries `bader_charges` (net Bader charges, also set as the atoms' initial charges,
+both of which `cmfqsar.periodic.crystal_charges` reads with the charge model `"file"`),
+`bader_electrons` (the raw column), and `magnetic_moment` when the run was spin-polarised.
+Any of them can then be a field as `prop:<name>`, and the electrostatic field of `cmfqsar.periodic.inorganic_fieldset` with `charge_model="file"`
+takes the net Bader charges in place of the oxidation-state guess.
+
+A file that is missing is reported by name; a file whose atom count does not match the structure
+is an error naming both counts, because the alternative is to put a charge on the wrong atom.
+
+### `read_acf(path: str) -> np.ndarray`
+
+The `CHARGE` column of a Bader `ACF.dat`: electrons per atom, in atom order.
+
+### `read_outcar_species(path: str) -> Dict[str, Sequence]`
+
+What the OUTCAR says about the species: symbols, ions per type and valence electrons.
+
+Returns `{"symbols": [...], "counts": [...], "zval": [...]}` with one entry per species in
+the order VASP uses.  The symbols come from the `VRHFIN` lines of the pseudopotentials, the
+counts from `ions per type` and the valence electrons from the `ZVAL` line that lists
+them all at once (the per-pseudopotential `ZVAL` lines are used when that line is absent).
+
+### `read_outcar_magmoms(path: str) -> Optional[np.ndarray]`
+
+The per-atom magnetic moments of the last `magnetization (x)` block, or None.
+
+### `read_outcar_energy(path: str) -> Optional[float]`
+
+The last `energy  without entropy` of an OUTCAR, in eV, or None.
+
+### `net_bader_charges(electrons: np.ndarray, symbols: Sequence[str], zval: Dict[str, float]) -> np.ndarray`
+
+Valence electrons of each atom's species minus the electrons Bader gave it.
+
+### `structure_with_arrays(run_dir: str, structure: str='CONTCAR', zval: Optional[Dict[str, float]]=None, require_bader: bool=True)`
+
+An ASE `Atoms` of a VASP run with its per-atom arrays attached.
+
+`run_dir` holds the run; `structure` names the file the geometry is read from (`CONTCAR`
+by default, `POSCAR` for the input geometry).  `zval` overrides the valence electrons per
+species, which are otherwise read from the OUTCAR.  With `require_bader` a run without an
+`ACF.dat` is an error; without it the structure is returned with whatever arrays exist.
+
+The arrays set are `bader_charges` (net Bader charges, also the initial charges of the
+atoms, so that they survive a write to extended XYZ), `bader_electrons`, and
+`magnetic_moment` when the OUTCAR holds a magnetisation block; `atoms.info["vasp_energy"]` holds the final
+energy.
+
+### `write_structure(atoms, path: str) -> None`
+
+Write the structure with its arrays as extended XYZ, which keeps every per-atom array.
+
+The `bader_charges` array and the initial charges both come back from such a file, and
+`cmfqsar.periodic.crystal_charges` reads either under the charge model `"file"`.
+
+### `describe_arrays(atoms) -> str`
+
+One line per per-atom array: its name, mean and range.
 
 ## cmfqsar.xtb
 

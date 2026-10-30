@@ -1,0 +1,490 @@
+#!/usr/bin/env python
+"""
+A migration path as the sample: does the field around a Li hop predict its barrier? (BT7)
+
+Two measurements, both with folds that hold out whole structures.
+
+1. **The public set.**  Ternary compounds of lithium and oxygen (Li, O and one more element) of the Materials Project within 0.05 eV/atom of
+   the convex hull, every symmetry-distinct Li hop between 1.5 and 4.5 A, labelled with the
+   bond-valence site-energy barrier of the softBV model (``benchmarks/prepare_hops.py`` writes
+   ``results/hops/prepared_mp.json``).  The bond-valence barrier is a known function of the
+   framework around the path, so this asks whether the kernel can learn such a function across
+   structure types, and which descriptor it needs: the count of atoms in shells about the
+   midpoint (the reference of rule 1), two numbers a chemist would start from (the hop length
+   and the free space at the bottleneck), the rotation-invariant local kernel of plan item LP2,
+   or the overlap kernel in the frame of the hop averaged over the rotation about it, which is
+   the one that has a co-field.  The co-field is read along the hop and away from its axis,
+   and the out-of-fold barriers are run through the percolation step to see whether the
+   predicted network gives the percolation thresholds the labelled one does.
+
+2. **The three hosts of the Li interface study** (``examples/hops``): Li3PO4, Li3BP2O8 and
+   LiBO2 as DFT-relaxed supercells with Bader charges.  The model trained on the public set is
+   applied to their distinct hops, and the two hops with a DFT elastic-band barrier are listed
+   next to the bond-valence and the predicted value.  Three structures are too few for a q2 of
+   their own; what is measured is the transfer.
+
+Usage
+-----
+    python benchmarks/run_hops.py                     # both parts
+    python benchmarks/run_hops.py --max-structures 60 # a quick look
+    python benchmarks/run_hops.py --report            # the table from the stored results
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import time
+from typing import Dict, List
+
+import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+sys.path.insert(0, ROOT)
+sys.path.insert(0, HERE)
+
+from cmfqsar.hops import (Hop, HopModel, HopSet, cross_validate_hop_model,  # noqa: E402
+                          framed_environments, hop_count_features, hop_types, read_hop_labels,
+                          saddle_from_barrier, spread_labels, structure_percolation)
+from cmfqsar.localenv import (LAMS, LocalResult, choose_lam, count_kernel,  # noqa: E402
+                              cross_validate_lams, local_features, local_kernel,
+                              paired_interval)
+from cmfqsar.model import r2_score, rmse  # noqa: E402
+from cmfqsar.periodic import elements_in, inorganic_fieldset  # noqa: E402
+
+RESULTS = os.path.join(HERE, "results", "hops")
+PREPARED = os.path.join(RESULTS, "prepared_mp.json")
+EXAMPLES = os.path.join(ROOT, "examples", "hops")
+HOSTS = ("phosphate", "borophosphate", "borate")
+RHOS = (0.05, 0.1, 0.25)
+R_MAX = 6.0
+PROFILE_Z = (-2.0, -1.0, 0.0, 1.0, 2.0)
+PROFILE_R = (0.0, 1.0, 2.0, 3.0, 4.0)
+PHYSCHEM = ("electrostatic", "steric", "prop:electronegativity")
+
+
+# ----------------------------------------------------------------------------- the data
+
+
+def load_prepared(path: str = PREPARED, max_structures: int = 0, max_per_structure: int = 0,
+                  seed: int = 0) -> HopSet:
+    """The prepared public set as a HopSet, with oxidation states as a per-atom array."""
+    from ase import Atoms
+    d = json.load(open(path))
+    rows = d["structures"]
+    if max_structures:
+        rows = rows[:max_structures]
+    rng = np.random.RandomState(seed)
+    structures, names, hops = [], [], []
+    for k, row in enumerate(rows):
+        a = Atoms(symbols=row["symbols"], positions=np.asarray(row["positions"], float),
+                  cell=np.asarray(row["cell"], float), pbc=True)
+        a.set_array("oxi_states", np.array([float(row["oxidation"][s]) for s in row["symbols"]]))
+        a.info["hull"] = row["hull"]
+        a.info["percolation"] = row.get("percolation", {})
+        structures.append(a)
+        names.append(f"{row['id']} {row['formula']}")
+        base = len(hops)
+        cell = np.asarray(row["cell"], float)
+        pos = np.asarray(row["positions"], float)
+        reps = [i for i, h in enumerate(row["hops"]) if h["representative"] == i]
+        if max_per_structure and len(reps) > max_per_structure:
+            keep = set(rng.choice(reps, max_per_structure, replace=False).tolist())
+        else:
+            keep = set(reps)
+        for i, h in enumerate(row["hops"]):
+            off = np.asarray(h["offset"], int)
+            shift = off @ cell
+            vec = pos[h["b"]] + shift - pos[h["a"]]
+            hop = Hop(k, int(h["a"]), int(h["b"]), tuple(int(x) for x in off),
+                      start=pos[h["a"]].copy(), vector=vec, shift=shift,
+                      y=float(h["y"]) if h["y"] is not None else float("nan"),
+                      y_reverse=float(h["y_reverse"]) if h["y_reverse"] is not None else float("nan"),
+                      site_a=float(h["site_a"]) if h["site_a"] is not None else float("nan"),
+                      site_b=float(h["site_b"]) if h["site_b"] is not None else float("nan"),
+                      saddle=float(h["saddle"]) if h["saddle"] is not None else float("nan"),
+                      bottleneck=float(h["bottleneck"]), bottleneck_at=0.5,
+                      bottleneck_atoms=list(h["bottleneck_atoms"]),
+                      representative=base + int(h["representative"]),
+                      multiplicity=int(h["multiplicity"]))
+            hop.name = hop.label(names)
+            if h["representative"] == i and i not in keep:
+                hop.y = float("nan")                      # left out of the sample, kept in the net
+            hops.append(hop)
+    return HopSet(structures, names, hops, "Li")
+
+
+def load_hosts() -> HopSet:
+    """The three hosts of the Li interface study, with their bond-valence labels."""
+    from cmfqsar.periodic import read_structures
+    structures = [read_structures(os.path.join(EXAMPLES, f"{h}.extxyz"))[0] for h in HOSTS]
+    hs = HopSet.build(structures, list(HOSTS), "Li")
+    labels = os.path.join(EXAMPLES, "hops_bvse.csv")
+    if os.path.exists(labels):
+        read_hop_labels(labels, hs)
+        spread_labels(hs)
+    return hs
+
+
+def fieldset_for(hopset: HopSet, charge_model: str):
+    elements = elements_in(hopset.structures, min_structures=max(1, len(hopset.structures) // 20))
+    return inorganic_fieldset(elements, physchem=PHYSCHEM, charge_model=charge_model,
+                              other=len(elements) < len(elements_in(hopset.structures, 1)))
+
+
+# ----------------------------------------------------------------------------- the models
+
+
+def _entry(r: LocalResult, rho=None, extra=None) -> dict:
+    out = {"name": r.name, "q2": r.q2, "rmse": r.error, "mae": r.mae, "lam": r.lam,
+           "n": r.n_samples, "structures": r.n_molecules, "folds": r.folds}
+    if rho is not None:
+        out["rho"] = rho
+    if extra:
+        out.update(extra)
+    return out
+
+
+def geometry_baseline(hopset: HopSet, targets, folds: int, seed: int) -> LocalResult:
+    """Ridge on the hop length and the bottleneck distance: two numbers a chemist starts from."""
+    X = np.array([[hopset.hops[r].length, hopset.hops[r].bottleneck] for r in targets.atom])
+    X = (X - X.mean(axis=0)) / np.maximum(X.std(axis=0), 1e-12)
+    return choose_lam(X @ X.T, targets, LAMS, folds=folds, seed=seed,
+                      name="hop length and bottleneck")
+
+
+def run_public(args, log) -> dict:
+    t0 = time.time()
+    hs = load_prepared(args.prepared, args.max_structures, args.max_per_structure, args.seed)
+    fs = fieldset_for(hs, "file")
+    crystals = hs.crystals(fs)
+    reps = [i for i, h in enumerate(hs.hops) if h.representative == i and np.isfinite(h.y)]
+    t = hs.targets(reps)
+    log(hs.describe())
+    log(f"  sample: {len(t)} distinct hops with a barrier in {t.n_measured_molecules} structures; "
+        f"fields: {', '.join(fs.names)}")
+    log("  " + t.describe().replace("atoms", "hops").replace("molecules", "structures"))
+    out = {"n_structures": len(hs.structures), "n_hops": len(hs.hops), "n_samples": len(t),
+           "fields": fs.names, "r_max": args.r_max, "folds": args.folds, "models": [],
+           "pairs": [], "hull": 0.05}
+    # the references
+    envs0 = hs.environments(crystals, rows=t.atom, rho=RHOS[1], r_max=args.r_max)
+    types = hop_types(envs0, min_atoms=20)
+    ref = choose_lam(count_kernel(hop_count_features(envs0, types)), t, folds=args.folds,
+                     seed=args.seed, name="counts about the midpoint")
+    log("  " + ref.summary())
+    geo = geometry_baseline(hs, t, args.folds, args.seed)
+    log("  " + geo.summary())
+    out["models"] += [_entry(ref, extra={"types": types}), _entry(geo)]
+    results = {"counts": ref, "geometry": geo}
+    best = None
+    for rho in args.rho:
+        envs = envs0 if rho == RHOS[1] else hs.environments(crystals, rows=t.atom, rho=rho,
+                                                           r_max=args.r_max)
+        inv = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds, seed=args.seed,
+                         name=f"invariant local, rho {rho:g}")
+        log("  " + inv.summary())
+        fr = framed_environments(hs, crystals, rows=t.atom, rho=rho, r_max=args.r_max)
+        t1 = time.time()
+        model = HopModel.build(fr, fs, n_jobs=args.jobs)
+        cyl = cross_validate_hop_model(model, t, folds=args.folds, seed=args.seed,
+                                       name=f"rotation-averaged overlap, rho {rho:g}")
+        log(f"  {cyl.summary()}  (kernel {time.time() - t1:.0f} s, "
+            f"{np.mean([e.n_atoms for e in envs]):.0f} atoms per environment)")
+        out["models"] += [_entry(inv, rho, {"atoms": float(np.mean([e.n_atoms for e in envs]))}),
+                          _entry(cyl, rho, {"atoms": float(np.mean([e.n_atoms for e in envs]))})]
+        results[f"invariant {rho}"] = inv
+        results[f"overlap {rho}"] = cyl
+        for name, r in ((f"invariant {rho}", inv), (f"overlap {rho}", cyl)):
+            for ref_name in ("counts", "geometry"):
+                d, lo, hi = paired_interval(r, results[ref_name], t, runs=args.bootstrap,
+                                            seed=args.seed)
+                out["pairs"].append({"a": name, "b": ref_name, "diff": d, "low": lo, "high": hi})
+        d, lo, hi = paired_interval(cyl, inv, t, runs=args.bootstrap, seed=args.seed)
+        out["pairs"].append({"a": f"overlap {rho}", "b": f"invariant {rho}", "diff": d,
+                             "low": lo, "high": hi})
+        log(f"    overlap against invariant at the same width {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
+        if best is None or cyl.q2 > best[0].q2:
+            best = (cyl, rho, model, fr)
+    cyl, rho, model, fr = best
+    out["best_rho"] = rho
+    # the co-field along and around the hop, with the error the out-of-fold residuals allow
+    model.fit(t.y, lam=cyl.lam)
+    out["profile"] = {"z": list(PROFILE_Z), "r": list(PROFILE_R), "sigma": cyl.error, "fields": {}}
+    for f, name in enumerate(fs.names):
+        v, sd = model.profile(f, PROFILE_Z, PROFILE_R, sigma=cyl.error)
+        out["profile"]["fields"][name] = {"value": v.tolist(), "sd": sd.tolist()}
+    # the learning curve of the best model, on the kernel already in hand
+    curve = []
+    which = np.unique(t.molecule)
+    rng = np.random.RandomState(args.seed)
+    for n_struct in (25, 50, 100, 200, 400):
+        if n_struct >= len(which):
+            break
+        q2s = []
+        for rep in range(3):
+            drawn = set(rng.choice(which, n_struct, replace=False).tolist())
+            rows = np.array([i for i in range(len(t)) if int(t.molecule[i]) in drawn])
+            sub = t.subset(rows)
+            r = choose_lam(model.K[np.ix_(rows, rows)], sub, LAMS, folds=min(args.folds, n_struct),
+                           seed=args.seed + rep, name="subset")
+            q2s.append(r.q2)
+        curve.append({"structures": n_struct, "q2": float(np.mean(q2s)),
+                      "spread": float(np.std(q2s))})
+        log(f"    learning curve: {n_struct} structures, q2 {np.mean(q2s):+.3f} +- {np.std(q2s):.3f}")
+    curve.append({"structures": int(len(which)), "q2": cyl.q2, "spread": 0.0})
+    out["learning_curve"] = curve
+    # percolation from the out-of-fold barriers against the labelled network
+    predicted = {int(a): float(p) for a, p in zip(t.atom, cyl.predicted)}
+    for i, h in enumerate(hs.hops):
+        if i not in predicted and h.representative in predicted:
+            predicted[i] = predicted[h.representative]
+    perc = []
+    for k in range(len(hs.structures)):
+        rows = hs.of_structure(k)
+        if not all(i in predicted for i in rows):
+            continue
+        if not all(np.isfinite(hs.hops[i].saddle) for i in rows):
+            continue                                   # a structure not fully labelled
+        ref_p = structure_percolation(hs, k)
+        pred_p = structure_percolation(hs, k, saddle_from_barrier(hs, predicted))
+        perc.append({"structure": hs.names[k], "labelled": ref_p, "predicted": pred_p,
+                     "grid": hs.structures[k].info.get("percolation", {})})
+    out["percolation"] = perc
+    for dim in ("E_1D", "E_2D", "E_3D"):
+        a = np.array([p["labelled"][dim] for p in perc])
+        b = np.array([p["predicted"][dim] for p in perc])
+        ok = np.isfinite(a) & np.isfinite(b)
+        agree = int(np.sum(np.isfinite(a) == np.isfinite(b)))
+        out[f"percolation_{dim}"] = {
+            "n": int(ok.sum()), "finite_agreement": agree / max(len(a), 1),
+            "r": float(np.corrcoef(a[ok], b[ok])[0, 1]) if ok.sum() > 2 else float("nan"),
+            "mae": float(np.mean(np.abs(a[ok] - b[ok]))) if ok.sum() else float("nan")}
+        log(f"    percolation {dim}: {ok.sum()} structures with a finite threshold in both, "
+            f"r {out[f'percolation_{dim}']['r']:+.3f}, mean absolute difference "
+            f"{out[f'percolation_{dim}']['mae']:.3f} eV; finite or not agrees for "
+            f"{agree}/{len(a)}")
+    out["seconds"] = time.time() - t0
+    return out, (hs, fs, model, cyl, rho)
+
+
+def run_hosts(args, log, trained) -> dict:
+    hs = load_hosts()
+    public, fs_public, model, cyl, rho = trained
+    log(hs.describe())
+    fs = inorganic_fieldset([e for e in fs_public.names if e.startswith("cif:")
+                             and e != "cif:other"] and
+                            [s.name[4:] for s in fs_public.specs if s.is_cif
+                             and s.name != "cif:other"],
+                            physchem=PHYSCHEM, charge_model="oxidation",
+                            other=any(s.name == "cif:other" for s in fs_public.specs))
+    crystals = hs.crystals(fs)
+    reps = hs.annotate(crystals)
+    rows = [r for r in reps if np.isfinite(hs.hops[r].y)]
+    out = {"n_hops": len(hs.hops), "n_distinct": len(reps), "n_labelled": len(rows)}
+    if not rows:
+        log("  no bond-valence labels for the hosts (examples/hops/hops_bvse.csv missing)")
+        return out
+    fr = framed_environments(hs, crystals, rows=rows, rho=rho, r_max=args.r_max)
+    pred = model.predict(fr)
+    y = np.array([hs.hops[r].y for r in rows])
+    out["transfer"] = {"q2": r2_score(y, pred), "rmse": rmse(y, pred),
+                       "r": float(np.corrcoef(y, pred)[0, 1]), "rho": rho}
+    log(f"  transfer of the public model to the hosts' {len(rows)} distinct hops: "
+        f"q2 {out['transfer']['q2']:+.3f}, error {out['transfer']['rmse']:.3f} eV, "
+        f"r {out['transfer']['r']:+.3f}")
+    per_host = {}
+    for k, name in enumerate(hs.names):
+        sel = [i for i, r in enumerate(rows) if hs.hops[r].structure == k]
+        if len(sel) > 2:
+            per_host[name] = {"n": len(sel), "r": float(np.corrcoef(y[sel], pred[sel])[0, 1]),
+                              "mae": float(np.mean(np.abs(y[sel] - pred[sel])))}
+    out["per_host"] = per_host
+    # within the hosts: leave one host out, with the same kernel
+    t = hs.targets(rows)
+    own = HopModel.build(fr, fs)
+    loo = cross_validate_hop_model(own, t, folds=3, seed=args.seed,
+                                   name="rotation-averaged overlap, leave one host out")
+    envs = hs.environments(crystals, rows=rows, rho=rho, r_max=args.r_max)
+    ref = choose_lam(count_kernel(hop_count_features(envs, hop_types(envs, 5))), t, folds=3,
+                     seed=args.seed, name="counts about the midpoint")
+    log("  " + loo.summary())
+    log("  " + ref.summary())
+    out["leave_one_host_out"] = [_entry(loo, rho), _entry(ref)]
+    # the two DFT hops
+    dft = os.path.join(EXAMPLES, "dft_barriers.csv")
+    listing = []
+    if os.path.exists(dft):
+        import csv
+        for row in csv.DictReader(open(dft, newline="")):
+            k = hs.names.index(row["structure"])
+            off = (int(row["offset_x"]), int(row["offset_y"]), int(row["offset_z"]))
+            i = next(i for i, h in enumerate(hs.hops) if h.structure == k and h.a == int(row["a"])
+                     and h.b == int(row["b"]) and h.offset == off)
+            h = hs.hops[i]
+            e = framed_environments(hs, crystals, rows=[i], rho=rho, r_max=args.r_max)
+            p = float(model.predict(e)[0])
+            listing.append({"structure": row["structure"], "hop": f"{h.a} -> {h.b}",
+                            "length": h.length, "dft": float(row["barrier"]),
+                            "dft_reverse": float(row["barrier_reverse"]), "bvse": h.y,
+                            "bvse_reverse": h.y_reverse, "predicted": p,
+                            "bottleneck": h.bottleneck, "bottleneck_atoms": h.bottleneck_atoms})
+            log(f"  {row['structure']:14s} {h.a:3d} -> {h.b:3d} ({h.length:.2f} A): DFT "
+                f"{float(row['barrier']):.3f}, bond-valence {h.y:.3f}, predicted {p:.3f} eV")
+    out["dft_hops"] = listing
+    return out
+
+
+# ----------------------------------------------------------------------------- the table
+
+
+def _fmt(x, nd=3, sign=True):
+    if x is None or not np.isfinite(x):
+        return "--"
+    return f"{x:+.{nd}f}" if sign else f"{x:.{nd}f}"
+
+
+def write_table(results_dir: str = RESULTS) -> str:
+    pub = json.load(open(os.path.join(results_dir, "public.json")))
+    hosts_path = os.path.join(results_dir, "hosts.json")
+    hosts = json.load(open(hosts_path)) if os.path.exists(hosts_path) else None
+    L = []
+    L.append("# A migration path as the sample: the barrier of a Li hop from the field around it\n")
+    L.append(f"Public set: {pub['n_structures']} ternary compounds of lithium and oxygen (Li, O and one more element) of the Materials Project "
+             f"within {pub['hull']} eV/atom of the hull, {pub['n_hops']} Li hops of 1.5 to 4.5 A, "
+             f"{pub['n_samples']} distinct by symmetry and labelled with the bond-valence "
+             f"site-energy barrier; {pub['folds']} folds holding out whole structures; "
+             f"environments within {pub['r_max']} A of the midpoint. Fields: "
+             + ", ".join(pub["fields"]) + ".\n")
+    L.append("| descriptor | envelope width rho | q2 | error (eV) | mean absolute error (eV) | "
+             "ridge | against the counts | against length and bottleneck |")
+    L.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+    pairs = {(p["a"], p["b"]): p for p in pub["pairs"]}
+
+    def against(name, ref):
+        p = pairs.get((name, ref))
+        return "--" if p is None else f"{_fmt(p['diff'])} [{_fmt(p['low'])}, {_fmt(p['high'])}]"
+
+    for m in pub["models"]:
+        rho = m.get("rho")
+        key = (("invariant " if m["name"].startswith("invariant") else "overlap ") + f"{rho}"
+               if rho is not None else None)
+        L.append(f"| {m['name']} | {rho if rho is not None else '--'} | {_fmt(m['q2'])} | "
+                 f"{_fmt(m['rmse'], sign=False)} | {_fmt(m['mae'], sign=False)} | {m['lam']:g} | "
+                 f"{against(key, 'counts') if key else '--'} | "
+                 f"{against(key, 'geometry') if key else '--'} |")
+    L.append("")
+    same = [p for p in pub["pairs"] if p["a"].startswith("overlap") and p["b"].startswith("invariant")]
+    if same:
+        L.append("Overlap in the hop frame against the invariant kernel at the same width: "
+                 + "; ".join(f"rho {p['a'].split()[1]}: {_fmt(p['diff'])} [{_fmt(p['low'])}, "
+                             f"{_fmt(p['high'])}]" for p in same) + ".\n")
+    if pub.get("learning_curve"):
+        L.append("Learning curve of the best overlap model (q2 against the number of training "
+                 "structures, three random draws): "
+                 + "; ".join(f"{c['structures']}: {_fmt(c['q2'])}" for c in pub["learning_curve"])
+                 + ".\n")
+    prof = pub.get("profile")
+    if prof:
+        L.append(f"## The co-field along the hop (z, A from the midpoint) and away from its axis "
+                 f"(r, A), best model at rho {pub['best_rho']}\n")
+        L.append(f"Values in eV of barrier per unit of normalised field, with the standard "
+                 f"deviation the out-of-fold error ({prof['sigma']:.3f} eV) allows in brackets.\n")
+        for name, table in prof["fields"].items():
+            v, sd = np.array(table["value"]), np.array(table["sd"])
+            if np.abs(v).max() < 1e-9:
+                continue
+            L.append(f"**{name}**\n")
+            L.append("| z \\ r | " + " | ".join(f"{r:.0f}" for r in prof["r"]) + " |")
+            L.append("| --- | " + " | ".join("---:" for _ in prof["r"]) + " |")
+            for z, row, srow in zip(prof["z"], v, sd):
+                L.append(f"| {z:+.0f} | " + " | ".join(f"{x:+.2f} ({s:.2f})" for x, s in zip(row, srow))
+                         + " |")
+            L.append("")
+    L.append("## From hops to conduction: percolation thresholds of the predicted network\n")
+    L.append("| direction | structures with a finite threshold in both | correlation | "
+             "mean absolute difference (eV) | finite or not agrees |")
+    L.append("| --- | ---: | ---: | ---: | ---: |")
+    for dim in ("E_1D", "E_2D", "E_3D"):
+        p = pub.get(f"percolation_{dim}", {})
+        L.append(f"| {dim[2:]} | {p.get('n', 0)} | {_fmt(p.get('r'))} | "
+                 f"{_fmt(p.get('mae'), sign=False)} | {p.get('finite_agreement', 0):.0%} |")
+    L.append("")
+    if hosts:
+        L.append("## The three hosts of the Li interface study\n")
+        tr = hosts.get("transfer")
+        if tr:
+            L.append(f"The public model applied to the {hosts['n_labelled']} distinct hops of "
+                     f"Li3PO4, Li3BP2O8 and LiBO2 (bond-valence labels): q2 {_fmt(tr['q2'])}, "
+                     f"error {tr['rmse']:.3f} eV, correlation {_fmt(tr['r'])}.")
+            for name, p in hosts.get("per_host", {}).items():
+                L.append(f"- {name}: {p['n']} hops, correlation {_fmt(p['r'])}, "
+                         f"mean absolute error {p['mae']:.3f} eV")
+            L.append("")
+        for m in hosts.get("leave_one_host_out", []):
+            L.append(f"- leave one host out, {m['name']}: q2 {_fmt(m['q2'])}, error "
+                     f"{m['rmse']:.3f} eV")
+        L.append("")
+        if hosts.get("dft_hops"):
+            L.append("| host | hop | length (A) | DFT barrier (eV) | DFT reverse | bond-valence | "
+                     "bond-valence reverse | predicted | bottleneck (A) |")
+            L.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+            for h in hosts["dft_hops"]:
+                L.append(f"| {h['structure']} | {h['hop']} | {h['length']:.2f} | {h['dft']:.3f} | "
+                         f"{h['dft_reverse']:.3f} | {h['bvse']:.3f} | {h['bvse_reverse']:.3f} | "
+                         f"{h['predicted']:.3f} | {h['bottleneck']:.2f} "
+                         f"({' '.join(h['bottleneck_atoms'])}) |")
+            L.append("")
+            L.append("The DFT barriers are plain elastic-band values for a vacancy hop into a "
+                     "relaxed vacancy, so they are lower bounds and include the relaxation the "
+                     "rigid bond-valence landscape does not; the columns are not expected to "
+                     "agree in value, only in order.\n")
+    text = "\n".join(L)
+    with open(os.path.join(results_dir, "table.md"), "w", encoding="utf-8") as fh:
+        fh.write(text)
+    return text
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--prepared", default=PREPARED)
+    ap.add_argument("--max-structures", type=int, default=0)
+    ap.add_argument("--max-per-structure", type=int, default=6,
+                    help="distinct hops kept per structure in the sample (default 6); the rest "
+                         "stay in the network for the percolation step")
+    ap.add_argument("--jobs", type=int, default=8,
+                    help="processes for the rotation-averaged kernel (default 8)")
+    ap.add_argument("--rho", nargs="*", type=float, default=list(RHOS))
+    ap.add_argument("--r-max", type=float, default=R_MAX)
+    ap.add_argument("--folds", type=int, default=10)
+    ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--bootstrap", type=int, default=1000)
+    ap.add_argument("--report", action="store_true")
+    ap.add_argument("--no-hosts", action="store_true")
+    args = ap.parse_args()
+    os.makedirs(RESULTS, exist_ok=True)
+    if args.report:
+        print(write_table(RESULTS))
+        return
+    lines = []
+
+    def log(s):
+        print(s, flush=True)
+        lines.append(s)
+
+    if not os.path.exists(args.prepared):
+        raise SystemExit(f"{args.prepared} is missing: run benchmarks/prepare_hops.py first")
+    public, trained = run_public(args, log)
+    json.dump(public, open(os.path.join(RESULTS, "public.json"), "w"), indent=1)
+    if not args.no_hosts:
+        hosts = run_hosts(args, log, trained)
+        json.dump(hosts, open(os.path.join(RESULTS, "hosts.json"), "w"), indent=1)
+    with open(os.path.join(RESULTS, "log.txt"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))
+    print(write_table(RESULTS))
+
+
+if __name__ == "__main__":
+    main()

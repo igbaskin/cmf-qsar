@@ -2259,6 +2259,56 @@ cmf local examples/local/shifts_cdcl3.sdf --target shift --align --site ring --c
 ```
 
 
+### A migration path as the sample: the barrier of a Li hop
+
+Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two
+sites, not by either site, and that barrier is a field property: the ion moving through the
+bottleneck feels the electrostatic potential, the repulsion and the polarisability of the
+framework around the path. `cmfqsar/hops.py` (plan item BT7) makes the hop the sample. The
+environment is cut from the periodic cell about the midpoint of the two sites, with the migrating
+ion removed and every periodic image within reach of the envelope kept, so an environment is an
+ordinary field and the local machinery above applies to it. The frame is the hop itself, z from
+the first site to the second, and the rotation about that axis is not chosen but **averaged in
+closed form**: the mean of the overlap kernel over the rotation group about the hop is the plain
+kernel with the cosine term replaced by a modified Bessel function, one evaluation per atom
+pair, which is what 96 finite poses approximate to machine precision at the cost of 96 squared.
+The co-field is then a profile along the hop and away from its axis. The folds hold out whole
+structures, and `percolation_thresholds` turns per-hop barriers into the energy at which the
+network of hops connects through the cell in one, two and three directions, which is what the
+activation energy of a conductor is read from. `cmfqsar/vasp.py` (plan item M3) reads the Bader
+charges and magnetic moments of a VASP run onto the atoms, so that a relaxed cell with its DFT
+charges is one call away from being a sample.
+
+The labels come from the bond-valence site-energy landscape of the softBV model (`bvlain`), as
+the lowest level at which two sites are connected through a box around the path, or from a table
+of measured or DFT barriers.
+
+**Measured on 472 lithium oxides of the Materials Project** (1732
+distinct Li hops with bond-valence barriers, folds holding out whole structures): the count of
+atoms in shells about the midpoint gives q2 +0.491 and the hop length with the
+bottleneck distance +0.103; the rotation-invariant local kernel +0.657; the
+overlap kernel in the hop frame +0.662 at a width of 2.0 A, an
+error of 0.469 eV, +0.170 [+0.112, +0.265] against the counts and
++0.005 [-0.060, +0.071] against the invariant kernel at the same
+width. The predicted barriers, run through the percolation step, reproduce the percolation
+thresholds of the labelled network with a correlation of +0.808 in one
+direction and +0.754 in three. Applied unchanged to the three hosts of the Li
+interface study (`examples/hops/`) the model gives q2 -1.415. The frame kernel beats the counts by +0.170 [+0.112, +0.265] and matches the invariant kernel at
+its best width, gaining over it only at the widest envelope, as the ring carbons did. The
+co-field profile says what a chemist would: anything on the axis raises the barrier, a ring of
+oxygens about 2 A from the axis at the midpoint lowers it (four standard deviations, the
+bottleneck rule), and lithium or a cation within 3 A of a site raises it (five). The predicted
+barriers reproduce whether each structure percolates in every case and the threshold to within
+0.35 eV. On the hosts the model ranks the hops of the two phosphates (correlations +0.84 and
++0.78) and does not carry the scale over, which is what the negative q2 says: the public set is
+cathode chemistry, and a model for electrolytes wants a set of their own.
+
+```bash
+cmf hops examples/hops/phosphate.extxyz examples/hops/borophosphate.extxyz examples/hops/borate.extxyz \
+    --charges file --bvse --reference --invariant --profile --percolate --out hops.csv
+cmf hops calcs/phosphate/pristine --charges file --list      # a VASP run directory
+```
+
 ### Which atom is attacked: a site of metabolism
 
 Blocking a metabolic position is a standard move in medicinal chemistry and a question about one

@@ -2321,6 +2321,18 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   as per-atom arrays (`prop:<name>`); a reader for VASP outputs (ACF.dat, OUTCAR magmoms,
   OSZICAR energies) feeds the kernel from the Li interface and Fe(110) runs directly. No new
   science; it removes the step every materials study has had to script by hand.
+  **Done 30 October 2026.** `cmfqsar/vasp.py`: `structure_with_arrays` reads a run directory
+  (`CONTCAR`, `ACF.dat`, `OUTCAR`) into an ASE structure whose arrays carry the net Bader
+  charges (valence electrons of the pseudopotential, read from the OUTCAR, minus the Bader
+  electrons; also set as the initial charges so that they survive extended XYZ), the raw Bader
+  column, and the magnetic moments of the last magnetisation block when the run was
+  spin-polarised. `crystal_charges` takes them under the charge model `"file"`, so
+  `inorganic_fieldset(..., charge_model="file")` builds the electrostatic field from DFT charges
+  with nothing written by hand. A count that does not match is refused rather than
+  misassigned. 8 tests; the three hosts of the Li interface study are in `examples/hops/` in
+  this form (mean Bader charges Li +0.89, P +3.63 to +3.68, B +2.31 to +2.35, O -1.55 to -1.60).
+  **Not done:** no OSZICAR reader beyond the final energy of the OUTCAR, and no reader for
+  other codes.
 
 **Medium (one to two weeks each)**
 
@@ -2727,6 +2739,51 @@ values and a computed oxidation potential is a descriptor, not a target.
   read the co-profile as the bottleneck chemistry (which anions, at what distance) the path
   requires. Waits for M5, which decides whether the site resolution alone already carries the
   barrier.
+  **Done 30 October 2026, by the local route rather than through M4 and M5.** The item was
+  written for the whole-cell route; what it needed was already in the per-atom items. LP2's
+  environment becomes `hops.point_environment`, the same envelope cut from a periodic cell with
+  its images, about a *point* (the midpoint of the hop) and without the migrating ion; LP3's
+  frame becomes the hop itself, z from the first site to the second, with the rotation about the
+  axis **averaged in closed form** rather than chosen: the mean of the overlap kernel over the
+  rotation group about the hop is the plain kernel with the cosine term replaced by a modified
+  Bessel function (`cylindrical_blocks`, one evaluation per atom pair, equal to 96 finite poses
+  to 1e-14 and a thousand times faster); LP1's index becomes (structure, site a, site b, lattice
+  offset), with folds that hold out whole structures. The enumeration, the symmetry reduction by
+  a fingerprint, the bottleneck (least free space on the straight path, with the atoms that form
+  it), the bond-valence labels (the minimax level connecting the two sites through a box around
+  the path on the softBV landscape of `bvlain`), a table reader for DFT or measured barriers,
+  the co-field as a (z, r) profile with its error, exact atom contributions, and the percolation
+  step (union-find with lattice offsets: the level at which the hop network wraps the cell in 1,
+  2 and 3 directions) are `cmfqsar/hops.py`; `cmf hops` runs it. 23 tests.
+  **Measured** (`benchmarks/run_hops.py`, `benchmarks/results/hops/`): 472
+  ternary compounds of lithium and oxygen (Li, O and one more element) of the Materials Project within 0.05 eV/atom of the hull
+  (`prepare_hops.py`, through OPTIMADE), 24004 Li hops, 1732 distinct
+  and labelled, 10 folds holding out whole structures, environments within
+  6 A of the midpoint. The count of atoms in shells about the midpoint (rule 1)
+  gives q2 +0.491, the hop length with the bottleneck distance +0.103; the
+  rotation-invariant local kernel +0.657 at rho 0.25; the overlap
+  kernel in the hop frame +0.662 at rho 0.25 (error 0.469 eV),
+  +0.170 [+0.112, +0.265] against the counts and
+  +0.005 [-0.060, +0.071] against the invariant kernel at the same
+  width. Learning curve of the frame model: 25 structures +0.078; 50 structures +0.153; 100 structures +0.441; 200 structures +0.498; 400 structures +0.660; 459 structures +0.662. The predicted barriers run through the
+  percolation step reproduce the thresholds of the labelled network with correlation
+  +0.808 (1D, 164 structures), +0.857 (2D) and
+  +0.754 (3D), mean absolute difference 0.38, 0.35
+  and 0.34 eV. Applied unchanged to the 48 distinct hops of
+  the three hosts of the Li interface study the public model gives q2 -1.415 (correlation
+  +0.683, error 0.279 eV); within the hosts, leave one host out, the frame
+  kernel gives -0.120 against -0.115 for the counts, which three structures
+  cannot turn into an interval. The two DFT elastic-band hops (Li3PO4 0.29 eV,
+  Li3BP2O8 0.00 eV) sit next to bond-valence values of 0.73 and
+  0.39 eV and predictions of 0.80 and 0.56 eV:
+  vacancy hops with full relaxation against a rigid landscape, listed and not compared.
+  **The gate as written could not be applied**: there is no M5 model to beat, so the reference
+  is the count and the two chemist's numbers, and the co-profile is read as the gate asks. What
+  it says is in the manual's section *A migration path as the sample*.
+  **Not done:** no DFT-labelled public set (the LLZO, NASICON and argyrodite barriers the item
+  names are scattered over papers and not in one table), no polarisability field, no disorder
+  (M2) and so no argyrodites or garnets, no relaxed path (the bottleneck is on the straight
+  line), and no panel in the application.
 
 **Outside the library**
 
@@ -2738,8 +2795,8 @@ values and a computed oxidation potential is a descriptor, not a target.
 
 **Order.** BT1 and BT3 first: days each, and together they give the periodic kernel a battery
 benchmark on the voltages before any new kernel is written. BT4 next, since BT5 is empty without a
-complex that builds and aligns, and BT2 as BT3 and BT4 need it. BT6 with M4, BT7 after M5, BT5 only
-after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
+complex that builds and aligns, and BT2 as BT3 and BT4 need it. BT6 with M4, ~~BT7 after M5~~ (BT7 is done by the local route, 30 October 2026, and did not
+need M5), BT5 only after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 

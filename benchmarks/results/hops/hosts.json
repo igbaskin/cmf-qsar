@@ -1,0 +1,82 @@
+{
+ "n_hops": 1040,
+ "n_distinct": 48,
+ "n_labelled": 48,
+ "transfer": {
+  "q2": -1.415102181603253,
+  "rmse": 0.27946694267791744,
+  "r": 0.6825507497140878,
+  "rho": 0.25
+ },
+ "per_host": {
+  "phosphate": {
+   "n": 20,
+   "r": 0.8372987027656182,
+   "mae": 0.2307286764214887
+  },
+  "borophosphate": {
+   "n": 18,
+   "r": 0.7844507750017099,
+   "mae": 0.25285297323292927
+  },
+  "borate": {
+   "n": 10,
+   "r": -0.48970051221204186,
+   "mae": 0.15478118538768798
+  }
+ },
+ "leave_one_host_out": [
+  {
+   "name": "rotation-averaged overlap, leave one host out",
+   "q2": -0.11960447788317241,
+   "rmse": 0.1902808146567155,
+   "mae": 0.15830230190116232,
+   "lam": 1.0,
+   "n": 48,
+   "structures": 3,
+   "folds": 3,
+   "rho": 0.25
+  },
+  {
+   "name": "counts about the midpoint",
+   "q2": -0.1146399378739753,
+   "rmse": 0.18985847522288987,
+   "mae": 0.15774895260559238,
+   "lam": 1.0,
+   "n": 48,
+   "structures": 3,
+   "folds": 3
+  }
+ ],
+ "dft_hops": [
+  {
+   "structure": "phosphate",
+   "hop": "34 -> 0",
+   "length": 2.9801741132420108,
+   "dft": 0.2869,
+   "dft_reverse": 0.469,
+   "bvse": 0.7316,
+   "bvse_reverse": 0.6563,
+   "predicted": 0.7978867381433474,
+   "bottleneck": 1.25643619080301,
+   "bottleneck_atoms": [
+    "O"
+   ]
+  },
+  {
+   "structure": "borophosphate",
+   "hop": "18 -> 8",
+   "length": 2.6381831330667587,
+   "dft": 0.0033,
+   "dft_reverse": 0.2763,
+   "bvse": 0.3925,
+   "bvse_reverse": 0.347,
+   "predicted": 0.5610485082354302,
+   "bottleneck": 1.4769604498908468,
+   "bottleneck_atoms": [
+    "O",
+    "O"
+   ]
+  }
+ ]
+}

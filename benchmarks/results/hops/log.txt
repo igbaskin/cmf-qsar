@@ -1,0 +1,28 @@
+24004 hops of Li in 472 structures (2 to 336 per structure), 10900 distinct by symmetry, 10853 with a barrier
+  sample: 1732 distinct hops with a barrier in 459 structures; fields: electrostatic, steric, prop:electronegativity, cif:Co, cif:Cr, cif:Li, cif:Mn, cif:Ni, cif:O, cif:Ti, cif:V, cif:other
+  'barrier': 1732 hops measured in 459 of 472 structures, 3.8 per molecule (from 1 to 6); values 0.002 to 7.667, mean 0.894
+  counts about the midpoint: q2 +0.491, error 0.576, mean absolute error 0.403 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01
+  hop length and bottleneck: q2 +0.103, error 0.765, mean absolute error 0.510 over 1732 atoms in 459 molecules, 10 folds, ridge 1
+  invariant local, rho 0.05: q2 +0.553, error 0.540, mean absolute error 0.357 over 1732 atoms in 459 molecules, 10 folds, ridge 0.1
+  rotation-averaged overlap, rho 0.05: q2 +0.630, error 0.491, mean absolute error 0.335 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 610 s, 89 atoms per environment)
+    overlap against invariant at the same width +0.076 [-0.002, +0.145]
+  invariant local, rho 0.1: q2 +0.624, error 0.495, mean absolute error 0.327 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01
+  rotation-averaged overlap, rho 0.1: q2 +0.649, error 0.478, mean absolute error 0.325 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 614 s, 89 atoms per environment)
+    overlap against invariant at the same width +0.024 [-0.049, +0.099]
+  invariant local, rho 0.25: q2 +0.657, error 0.473, mean absolute error 0.307 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01
+  rotation-averaged overlap, rho 0.25: q2 +0.662, error 0.469, mean absolute error 0.322 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 625 s, 89 atoms per environment)
+    overlap against invariant at the same width +0.005 [-0.060, +0.071]
+    learning curve: 25 structures, q2 +0.078 +- 0.167
+    learning curve: 50 structures, q2 +0.153 +- 0.134
+    learning curve: 100 structures, q2 +0.441 +- 0.048
+    learning curve: 200 structures, q2 +0.498 +- 0.111
+    learning curve: 400 structures, q2 +0.660 +- 0.012
+    percolation E_1D: 164 structures with a finite threshold in both, r +0.808, mean absolute difference 0.380 eV; finite or not agrees for 164/164
+    percolation E_2D: 110 structures with a finite threshold in both, r +0.857, mean absolute difference 0.351 eV; finite or not agrees for 164/164
+    percolation E_3D: 60 structures with a finite threshold in both, r +0.754, mean absolute difference 0.343 eV; finite or not agrees for 164/164
+1040 hops of Li in 3 structures (144 to 640 per structure), 1040 distinct by symmetry, 1040 with a barrier
+  transfer of the public model to the hosts' 48 distinct hops: q2 -1.415, error 0.279 eV, r +0.683
+  rotation-averaged overlap, leave one host out: q2 -0.120, error 0.190, mean absolute error 0.158 over 48 atoms in 3 molecules, 3 folds, ridge 1
+  counts about the midpoint: q2 -0.115, error 0.190, mean absolute error 0.158 over 48 atoms in 3 molecules, 3 folds, ridge 1
+  phosphate       34 ->   0 (2.98 A): DFT 0.287, bond-valence 0.732, predicted 0.798 eV
+  borophosphate   18 ->   8 (2.64 A): DFT 0.003, bond-valence 0.393, predicted 0.561 eV

@@ -46,6 +46,8 @@ column says.
 
 | `local/shifts_cdcl3.sdf` (1.6 MB) | 400 molecules with 5096 assigned 13C shifts in ppm, on the carbon each belongs to; conformations generated here | nmrshiftdb2 (`nmrshiftdb2withsignals.sd`), filtered to the chloroform spectra | unclear | `make_local_examples.py --shifts` | `run_local.py` |
 | `local/carboxylic_pka.sdf` (2.5 MB) | 912 carboxylic acids with the acidity of the carboxyl group on its carbon; conformations generated here | Baltruschat & Czodrowski 2020, `AvLiLuMoVe.sdf` and `combined_training_datasets_unique.sdf` | free (CC BY 4.0, attribution; the terms and the changes are in `local/README.md`) | `make_local_examples.py --pka-dir` | `run_local.py` |
+| `hops/` (3 extended-XYZ files and 2 tables, 0.1 MB) | the three hosts of the Li interface study (beta-Li3PO4, Li3BP2O8, alpha-LiBO2) as DFT-relaxed supercells with net Bader charges per atom, the bond-valence barriers of their 1040 Li hops and two DFT elastic-band barriers | the author's own VASP runs (October 2026), read by `cmfqsar.vasp` | free | none (written by `cmf hops ... --out`) | `run_hops.py` |
+| `benchmarks/results/hops/prepared_mp.json` (not under `examples/`) | ternary compounds of lithium and oxygen (Li, O and one more element) of the Materials Project within 0.05 eV/atom of the hull, with every Li hop of 1.5 to 4.5 A and the bond-valence barrier of up to 12 distinct hops per structure | Materials Project through its OPTIMADE interface (no key), structures and energies above the hull | free (CC BY 4.0; the structures carry their `mp-` identifiers) | `benchmarks/prepare_hops.py` | `run_hops.py` |
 Sizes are of the tracked files. The whole of `examples/` is 73 MB, of which the three items of
 unclear status and the two that inherit it are 12 MB, and `mittal/`, derived, is 15 MB.
 
@@ -294,6 +296,20 @@ Both sets had to be given three-dimensional coordinates here, with ETKDG and MMF
 sources distribute two-dimensional structures. The atom order is left untouched, so a measured atom
 keeps the index its source assigns it. That is the weakest part of both files: a shift responds to
 the geometry it was measured in, and one force-field conformation is a poor stand-in for it.
+
+### The hop sets
+
+Plan item BT7 makes a migration path the sample, and two sets carry its labels.
+`examples/hops/` holds the three hosts of the Li interface study as DFT-relaxed supercells with
+their Bader charges, together with the bond-valence barriers of every Li hop that `cmf hops`
+wrote and the two DFT elastic-band barriers the study computed; `examples/hops/README.md` is
+the record. `benchmarks/results/hops/prepared_mp.json` holds the public set:
+the ternary compounds of lithium and oxygen (Li, O and one more element) of the **Materials Project** within 0.05 eV/atom of the convex hull,
+fetched through its OPTIMADE interface, which needs no key, with every symmetry-distinct Li hop
+and its bond-valence site-energy barrier computed here with `bvlain`. The Materials Project
+distributes its data under **CC BY 4.0**, so the prepared file is free to redistribute with
+attribution, which the `mp-` identifier on every structure gives; `benchmarks/prepare_hops.py`
+rebuilds it from the network in about an hour.
 
 ## What is not in the repository
 

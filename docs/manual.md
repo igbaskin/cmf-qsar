@@ -6528,6 +6528,254 @@ its co-field instead of the molecule. There is none: the co-field comes out of `
 --cofield` as a cube file, which a viewer draws, and the application still knows only models whose
 sample is a molecule.
 
+## A migration path as the sample: the barrier of a Li hop
+
+Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two
+sites, not by either site. That barrier is a field property in the sense of this program: the
+ion moving from one site through the bottleneck to the next feels the electrostatic potential,
+the repulsion and the polarisability of the framework around the path. In the language of the
+rest of the manual the framework is the receptor, the ion is the ligand and the barrier is the
+binding energy. Plan item BT7 makes the **hop** the sample (`cmfqsar/hops.py`), and everything
+the per-atom sections above built carries over with three changes.
+
+**The environment is cut from a periodic cell.** `point_environment` is the `environment` of the
+local sections for a crystal: it collects every atom of the cell and every periodic image within
+the reach of the envelope, measured from a *point* rather than from an atom, multiplies the
+weights by $e^{-\rho d^2}$ and returns an ordinary field. The centre of a hop is the midpoint of
+the two sites, the migrating ion is removed from both its positions, and the first atom of the
+result is a weightless marker at the centre, so that the convention of the local modules that
+the centre is atom 0 holds. The fields are the inorganic set of the crystal section: the
+electrostatic field with oxidation states or, from a VASP run, net Bader charges
+(`cmfqsar/vasp.py`, plan item M3, reads them from `ACF.dat` and the `OUTCAR` with nothing
+written by hand), the steric field, the electronegativity, and one indicator field per element.
+
+**The frame is the hop itself.** The origin is the midpoint and $z$ points from the first site to
+the second, which is the direction the barrier is measured in; a hop and its reverse are two
+samples with two barriers. What is left is the rotation about $z$, and the program does not
+choose it: the kernel is **averaged over the whole rotation group about the hop axis**, which has
+a closed form. For two Gaussians of widths $b_l$ and $b_m$ at $(\rho_l, z_l)$ and $(\rho_m, z_m)$
+in cylindrical coordinates about the axis, the overlap at a relative angle $\theta$ is
+
+$$
+\left(\frac{2\pi}{b_l + b_m}\right)^{3/2}
+\exp\!\left(-c\,[(z_l - z_m)^2 + \rho_l^2 + \rho_m^2 - 2\rho_l\rho_m\cos\theta]\right),
+\qquad c = \frac{b_l b_m}{2(b_l + b_m)},
+$$
+
+and its mean over $\theta$ replaces the cosine term by the modified Bessel function
+$I_0(2c\rho_l\rho_m)$:
+
+$$
+\bar k(l, m) = w_l w_m \left(\frac{2\pi}{b_l + b_m}\right)^{3/2}
+\exp\!\left(-c\,[(z_l - z_m)^2 + (\rho_l - \rho_m)^2]\right)\, e^{-x} I_0(x),
+\qquad x = 2c\rho_l\rho_m .
+$$
+<!-- #eq:hopkernel -->
+
+This is the mean-map kernel over the rotation group, the device the local alignment uses for a
+frame ambiguity, taken over a continuous group instead of a finite set of poses. The rotation
+average is a projection, so the kernel of two averaged fields equals the kernel of one plain
+field with one averaged field, and (#eq:hopkernel) costs one Bessel evaluation per atom pair,
+the same as the plain overlap kernel; the finite poses of `posed_hop` cost the number of poses
+squared and agree with it to machine precision at 96 poses. `HopModel` holds the kernel, one
+block per field divided by its diagonal and summed with the mixing coefficients, and the ridge
+regression on it; the rotation-invariant local kernel of the atom sections applies to the same
+environments unchanged and is the frame-free comparison.
+
+**The co-field is a profile.** Averaged about the axis, the co-field depends on the position
+along the hop and the distance from its axis, so `HopModel.profile` reads it as a table in
+$(z, r)$: where along the path, and how far from it, an atom of a given field raises or lowers
+the barrier. Its error follows the dual coefficients, whose covariance under independent noise of
+level $\sigma$ in the barriers is $\sigma^2 (K + \lambda I)^{-2}$, and `atom_contributions`
+splits a prediction over the atoms of the environment exactly, as the overlap model does.
+
+**The sample index is a pair.** A hop is (structure, site $a$, site $b$, lattice offset of $b$).
+`enumerate_hops` lists every pair of sites of the mobile species between 1.5 and 4.5 A apart,
+periodic images included, both ways; `reduce_by_symmetry` keeps one of every set of hops with
+the same fingerprint (the sorted symbols, distances from the midpoint and positions along the
+hop of the atoms within 5 A), records the multiplicity, and `bottleneck` reports the point of
+least free space on the straight path with the atoms that form it. `HopSet.targets` turns the
+labelled hops into an `AtomTargets` whose "molecule" is the structure, so the folds hold out
+whole structures and the bootstrap resamples structures, since the hops of one cell are not
+independent.
+
+**The labels.** `bvse_barriers` reads the barrier of every hop from the bond-valence site-energy
+landscape of the softBV model (the `bvlain` package): the energy is evaluated on a box around
+the path, the two sites are the lowest points within 0.6 A of them, and the barrier is the
+lowest level at which the two are connected through the box, found by bisection with a
+connected-components labelling at each step. That is a minimax path, which is what a migration
+barrier on a grid is, and it is cheap, so it labels thousands of hops; under rule 1 of the plan
+it is also the reference a model trained on DFT barriers has to beat. Measured or DFT barriers
+come from a table (`read_hop_labels`): structure, the two site indices, the image of the second
+site, the barrier and, if known, the reverse one.
+
+**From hops to conduction.** The model predicts per hop. `percolation_thresholds` takes one energy
+per hop of a structure, adds the hops in order of increasing energy to a union-find over the
+sites that keeps the lattice offset of every site to its root, and reports the energy at which
+the network first connects through the cell in one, two and three independent directions (a path
+that comes back to a site at a different offset is a wrap, and the rank of the wraps is the
+dimensionality). `structure_percolation` does this from the bond-valence saddles or from
+predicted barriers, measured from the lowest site energy, which is what the effective activation
+energy of a conductor is read from.
+
+```bash
+cmf hops examples/hops/phosphate.extxyz examples/hops/borophosphate.extxyz examples/hops/borate.extxyz \
+    --charges file --bvse --reference --invariant --profile --percolate --out hops.csv
+cmf hops structure.cif --labels barriers.csv --rho 0.05 0.1 0.25 --reference
+cmf hops calcs/phosphate/pristine --charges file --list
+```
+
+The first command labels the hops of the three hosts of the Li interface study with the
+bond-valence landscape, fits the count reference, the invariant kernel and the rotation-averaged
+overlap kernel with folds that hold out whole structures, prints the co-field profile of the
+best model and the percolation thresholds of each structure from the labels and from the
+predictions, and writes every hop with its labels and out-of-fold prediction. The second takes
+barriers from a table; the third reads a VASP run directory (`CONTCAR`, `ACF.dat`, `OUTCAR`)
+and lists the distinct hops with their bottlenecks.
+
+### What it is worth, measured
+
+`benchmarks/run_hops.py` measures the hop model on a public set and on the three hosts of the
+Li interface study (`benchmarks/results/hops/`).
+
+**The public set.** 472 ternary compounds of lithium and oxygen (Li, O and one more element) of the Materials Project within
+0.05 eV/atom of the convex hull, fetched through its OPTIMADE interface and prepared by
+`benchmarks/prepare_hops.py`: 24004 Li hops of 1.5 to 4.5 A, of which
+1732 are distinct by symmetry, labelled with the bond-valence barrier and kept as
+the sample (at most six per structure, so that no structure dominates); 10 folds
+holding out whole structures; environments within 6 A of the midpoint; the
+fields are the electrostatic field with oxidation-state charges, the steric field, the
+electronegativity and one indicator field per element. The bond-valence barrier is a known
+function of the framework around the path, so the question is whether the kernel can learn such
+a function across structure types, and which descriptor it needs.
+
+| descriptor | envelope width (A) | q2 | error (eV) | against the counts | against length and bottleneck |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| counts of atoms in shells about the midpoint | -- | +0.491 | 0.576 | -- | -- |
+| hop length and bottleneck distance | -- | +0.103 | 0.765 | -- | -- |
+| invariant local kernel | 4.5 | +0.553 | 0.540 | +0.062 [-0.003, +0.170] | +0.451 [+0.321, +0.538] |
+| overlap kernel in the hop frame | 4.5 | +0.630 | 0.491 | +0.138 [+0.085, +0.219] | +0.527 [+0.402, +0.608] |
+| invariant local kernel | 3.2 | +0.624 | 0.495 | +0.133 [+0.066, +0.231] | +0.522 [+0.391, +0.609] |
+| overlap kernel in the hop frame | 3.2 | +0.649 | 0.478 | +0.158 [+0.096, +0.250] | +0.546 [+0.423, +0.628] |
+| invariant local kernel | 2.0 | +0.657 | 0.473 | +0.165 [+0.097, +0.266] | +0.554 [+0.421, +0.643] |
+| overlap kernel in the hop frame | 2.0 | +0.662 | 0.469 | +0.170 [+0.112, +0.265] | +0.559 [+0.432, +0.641] |
+
+Overlap in the hop frame against the invariant kernel at the same width: 4.5 A: +0.076 [-0.002, +0.145]; 3.2 A: +0.024 [-0.049, +0.099]; 2.0 A: +0.005 [-0.060, +0.071]. Learning curve
+of the frame model, q2 against the number of training structures (three random draws each):
+25: +0.078; 50: +0.153; 100: +0.441; 200: +0.498; 400: +0.660; 459: +0.662.
+
+**The field beats the counts, and the frame pays only where the envelope is wide.** The
+overlap kernel in the hop frame is ahead of the count reference by +0.170 [+0.112, +0.265] and
+of the two chemist's numbers by +0.559 [+0.432, +0.641], so the barrier is not a function of the
+hop length and the bottleneck width alone, nor of how many atoms of which kind surround the
+midpoint; where they sit matters. Against the rotation-invariant kernel at the same width the
+frame gains +0.076 [-0.002, +0.145] at 4.5 A, at the edge of the interval, and nothing at 3.2
+and 2.0 A. That is the same picture the local alignment gave for the ring carbons: a wide
+environment is nearly the same set of distances in every structure and the directions
+separate it, while a narrow one is its first shell, which distances describe perfectly well.
+The best width is the narrowest (2.0 A), so at this size of set the frame is not what limits
+the model. The learning curve has not levelled off, +0.08 at 25 structures, +0.44 at 100 and
++0.66 at 400, which is the opposite of what the shift set showed in LP5: here the set, not the
+representation, is the limit. The error of 0.47 eV on barriers whose quartiles are 0.34 and
+1.13 eV is enough to rank hops and not to give a number; part of it is in the label, since a
+rigid landscape and a box around the straight path give some hops barriers of several eV that a
+relaxed path would not.
+
+**The co-field is a profile along the hop and away from its axis.** Read at the midpoint and
+2 A either side of it, 0 to 4 A from the axis, with the standard deviation the out-of-fold error
+(0.469 eV) allows, for the model at a width of 2.0 A:
+
+*Electrostatic field (a positive charge where the value is positive raises the barrier)*
+
+| z \\ r | 0 A | 1 A | 2 A | 3 A | 4 A |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| -2 A | -1.42 (0.81) | -0.01 (0.45) | -0.39 (0.32) | -0.07 (0.27) | +0.32 (0.26) |
+| -1 A | -2.62 (1.07) | +0.10 (0.43) | +0.26 (0.31) | +0.36 (0.27) | +0.48 (0.25) |
+| +0 A | -1.15 (1.11) | +0.38 (0.41) | -0.46 (0.32) | -0.10 (0.23) | -0.16 (0.22) |
+| +1 A | -1.52 (1.07) | -0.02 (0.43) | +0.16 (0.31) | +0.82 (0.27) | +0.62 (0.24) |
+| +2 A | -1.77 (0.80) | -0.67 (0.44) | -0.47 (0.33) | +0.35 (0.27) | +0.30 (0.26) |
+
+*Steric field*
+
+| z \\ r | 0 A | 1 A | 2 A | 3 A | 4 A |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| -2 A | +1.49 (0.74) | -0.23 (0.44) | -1.13 (0.36) | -0.50 (0.25) | +0.02 (0.21) |
+| -1 A | +2.61 (0.96) | +0.33 (0.56) | -0.86 (0.44) | -0.09 (0.27) | +0.14 (0.20) |
+| +0 A | +2.15 (1.74) | +0.60 (0.72) | -0.49 (0.47) | +0.24 (0.31) | +0.07 (0.22) |
+| +1 A | +2.84 (0.94) | +0.70 (0.56) | -0.56 (0.44) | -0.03 (0.27) | +0.08 (0.19) |
+| +2 A | +1.68 (0.73) | -0.11 (0.43) | -1.04 (0.37) | -0.64 (0.25) | -0.10 (0.21) |
+
+*Indicator field of oxygen*
+
+| z \\ r | 0 A | 1 A | 2 A | 3 A | 4 A |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| -2 A | +0.77 (0.62) | -0.23 (0.39) | +0.56 (0.31) | +0.65 (0.24) | -0.38 (0.20) |
+| -1 A | +1.96 (0.98) | +0.10 (0.44) | +0.18 (0.35) | +0.89 (0.25) | -0.27 (0.20) |
+| +0 A | +3.03 (1.06) | +0.42 (0.44) | -1.31 (0.31) | -0.28 (0.25) | -0.50 (0.21) |
+| +1 A | +1.89 (0.98) | +0.19 (0.44) | -0.13 (0.35) | +0.76 (0.25) | -0.12 (0.20) |
+| +2 A | +0.67 (0.62) | -0.14 (0.40) | +0.61 (0.31) | +0.63 (0.24) | -0.39 (0.20) |
+
+**Three things stand above their error, and they are the rules a chemist would state.**
+First, anything on the axis raises the barrier: the steric co-field is +1.5 to +2.8 along the
+whole path at r = 0 (two to three standard deviations), the oxygen indicator +3.0 (1.1) and the
+lithium indicator +5.2 (1.2) at the midpoint, because a path that runs through an atom is not a
+path. The electrostatic co-field on the axis is negative, -1.2 to -2.6, for the same reason:
+the atoms that lie on a straight line between two Li sites are oxygens, whose charge is
+negative, and a negative co-field times a negative weight raises the barrier. Second, an oxygen
+about 2 A from the axis at the midpoint **lowers** the barrier, -1.31 (0.31), four standard
+deviations: that is the bottleneck rule, a wide ring of anions around the saddle makes a low
+barrier and a narrow one a high barrier, and the co-field places the ring where the bottleneck
+of a 3 A hop in an oxide sits. Third, lithium and cations beside the sites raise it: the
+lithium indicator is +1.2 and +1.4 (0.25) at 3 A from the axis beside either site, five
+standard deviations, and the electrostatic co-field is +0.8 (0.27) there, so a positive charge
+within 3 A of a site repels the mobile ion out of it. The element indicators also separate
+cobalt (+3.1 at the midpoint) and manganese (+1.8 beside a site) from nickel (-1.5 at the
+midpoint), with the caution the local alignment section gives: the fields overlap in what they
+describe, so the twelve co-fields are one effect decomposed over twelve bases and not twelve
+statements, and an element read alone is partly the oxygen coordination that comes with it.
+
+**From hops to conduction.** The out-of-fold barriers of every hop (the equivalent hops taking
+their representative's value) were run through the percolation step and compared with the
+thresholds of the labelled network, on the structures whose every distinct hop was labelled:
+
+| direction | structures | correlation | mean absolute difference (eV) | finite or not agrees |
+| --- | ---: | ---: | ---: | ---: |
+| 1D | 164 | +0.808 | 0.380 | 100% |
+| 2D | 110 | +0.857 | 0.351 | 100% |
+| 3D | 60 | +0.754 | 0.343 | 100% |
+
+The predicted network agrees with the labelled one on whether a structure percolates in one,
+two or three directions in every case, and gives the threshold to within 0.35 to 0.38 eV with a
+correlation of 0.75 to 0.86. The difference is about the model's error on one hop, which is what
+it should be, since a threshold is the barrier of one hop of the network. That is the step from
+a per-hop model to a per-structure number, and it holds.
+
+**The three hosts.** Applied unchanged to the 48 distinct hops of Li3PO4,
+Li3BP2O8 and LiBO2 (`examples/hops/`, bond-valence labels, Bader charges on the atoms but the
+public model's oxidation-state charges for the prediction), the public model gives
+q2 -1.415, correlation +0.683 and an error of 0.279 eV. Within the
+hosts, leaving one host out, the frame kernel gives -0.120 and the counts
+-0.115; three structures cannot turn that into an interval, which is why the public
+set exists. The two hops the study computed with DFT are listed next to the bond-valence value
+and the prediction:
+
+| host | hop | length (A) | DFT barrier (eV) | bond-valence (eV) | predicted (eV) | bottleneck (A) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| phosphate | 34 -> 0 | 2.98 | 0.287 | 0.732 | 0.798 | 1.26 (O) |
+| borophosphate | 18 -> 8 | 2.64 | 0.003 | 0.393 | 0.561 | 1.48 (O O) |
+
+The DFT values are plain elastic bands for a vacancy hop into a relaxed vacancy, so they are lower
+bounds and include the relaxation the rigid landscape does not; the columns are not expected to
+agree in value. The public model ranks the hops of Li3PO4 and Li3BP2O8 (correlations +0.84 and +0.78) and
+fails on LiBO2, whose ten distinct hops span 0.03 eV, less than the error. The negative q2 says
+it does not carry the scale over: the public barriers average 0.89 eV and the hosts' 0.46, and
+the hosts are a phosphate, a borophosphate and a borate where the public set holds six
+silicates, four borates and no phosphate. A model for these hosts wants a set of their own
+chemistry, and the chemistry the public set has is that of the Materials Project, which is
+cathodes. The DFT values are lower than the bond-valence ones by about 0.4 eV, as a relaxed
+vacancy hop against a rigid landscape should be, and the order of the two hops is the same in
+every column.
+
 ## Which atom is attacked: a site of metabolism
 
 Blocking a metabolic position is one of the standard moves in medicinal chemistry, and the

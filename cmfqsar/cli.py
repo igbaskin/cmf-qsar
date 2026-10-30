@@ -2468,6 +2468,127 @@ def _write_local_cofield(args, model, table, envs, targets, lam):
           f"frame of the pose: the centre is at the origin")
 
 
+def cmd_hops(args):
+    """A model over migration paths: the field around a hop against a count around it (BT7).
+
+    The sample is a hop of the mobile ion between two sites of a crystal, with the ion itself
+    removed; the descriptor is the cell's fields under a Gaussian envelope about the midpoint,
+    in the frame of the hop and averaged over the rotation about it, which is a closed form.
+    The folds hold out whole structures.  Labels come from the bond-valence landscape
+    (`--bvse`) or from a table (`--labels`).
+    """
+    from cmfqsar.hops import (DEFAULT_RHO, HopModel, HopSet, bvse_barriers,
+                              cross_validate_hop_model, format_profile, framed_environments,
+                              hop_count_features, hop_types, read_hop_labels, spread_labels,
+                              structure_percolation, write_hops)
+    from cmfqsar.localenv import (choose_lam, count_kernel, local_features, local_kernel,
+                                  paired_interval)
+    from cmfqsar.periodic import elements_in, inorganic_fieldset, read_structures
+
+    structures, names = [], []
+    for path in args.structures:
+        if os.path.isdir(path):
+            from cmfqsar.vasp import structure_with_arrays
+            structures.append(structure_with_arrays(path, require_bader=args.charges == "file"))
+            names.append(os.path.basename(os.path.normpath(path)))
+        else:
+            for k, a in enumerate(read_structures(path)):
+                structures.append(a)
+                base = os.path.splitext(os.path.basename(path))[0]
+                names.append(base if k == 0 else f"{base}#{k}")
+    if not structures:
+        raise SystemExit("no structures read")
+    hs = HopSet.build(structures, names, mobile=args.mobile, d_min=args.min_hop,
+                      d_max=args.max_hop)
+    physchem, atom_props = _split_fields(args.fields)
+    elements = [] if args.no_cif else elements_in(structures, min_structures=1)
+    fieldset = inorganic_fieldset(elements, physchem=tuple(physchem)
+                                  + tuple("prop:" + p for p in atom_props),
+                                  charge_model=args.charges, other=False)
+    crystals = hs.crystals(fieldset)
+    reps = hs.annotate(crystals)
+    print(hs.describe())
+    print("  fields: " + ", ".join(fieldset.names))
+    if args.list:
+        for r in reps:
+            h = hs.hops[r]
+            print(f"  {h.label(names):40s} x{h.multiplicity:<3d} bottleneck {h.bottleneck:.2f} A "
+                  f"({' '.join(h.bottleneck_atoms)})")
+        return
+    if args.labels:
+        n = read_hop_labels(args.labels, hs)
+        spread_labels(hs)
+        print(f"  {n} hops labelled from {args.labels}")
+    perc = {}
+    if args.bvse:
+        t0 = time.time()
+        perc = bvse_barriers(hs, rows=reps, resolution=args.bvse_resolution)
+        print(f"  bond-valence barriers of the distinct hops in {time.time() - t0:.0f} s")
+    t = hs.targets(reps)
+    if not len(t):
+        raise SystemExit("no hop carries a barrier: use --bvse or --labels")
+    print("  " + t.describe().replace("atoms", "hops").replace("molecules", "structures"))
+    reference = None
+    results = []
+    for rho in (args.rho or [DEFAULT_RHO]):
+        envs = hs.environments(crystals, rows=t.atom, rho=rho, r_max=args.r_max)
+        if reference is None and args.reference:
+            types = hop_types(envs, min_atoms=5)
+            reference = choose_lam(count_kernel(hop_count_features(envs, types)), t,
+                                   folds=args.folds, seed=args.seed, name="counts about the midpoint")
+            print("  " + reference.summary())
+        if args.invariant:
+            r = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds,
+                           seed=args.seed, name=f"invariant local, rho {rho:g}")
+            results.append((r, rho, None))
+            print("  " + r.summary())
+        fr = framed_environments(hs, crystals, rows=t.atom, rho=rho, r_max=args.r_max)
+        model = HopModel.build(fr, fieldset, n_jobs=args.jobs)
+        r = cross_validate_hop_model(model, t, folds=args.folds, seed=args.seed,
+                                     name=f"rotation-averaged overlap, rho {rho:g}")
+        results.append((r, rho, model))
+        print("  " + r.summary())
+        print(f"    {np.mean([e.n_atoms for e in envs]):.0f} atoms per environment")
+        if reference is not None:
+            for rr, _rho, _m in results[-(2 if args.invariant else 1):]:
+                diff, lo, hi = paired_interval(rr, reference, t, runs=args.bootstrap, seed=args.seed)
+                word = ("beats" if lo > 0 else "loses to" if hi < 0 else "is no better than")
+                print(f"    {rr.name} against the counts {diff:+.3f} [{lo:+.3f}, {hi:+.3f}]: "
+                      f"it {word} them")
+    best = max((x for x in results if x[2] is not None), key=lambda x: x[0].q2)
+    r, rho, model = best
+    predicted = {int(a): float(p) for a, p in zip(t.atom, r.predicted)}
+    for h in hs.hops:                        # the equivalent hops take their representative's
+        if h.representative in predicted and h.representative != -1:
+            predicted.setdefault(hs.hops.index(h), predicted[h.representative])
+    if args.profile:
+        model.fit(t.y, lam=r.lam)
+        zs = [-2.0, -1.0, 0.0, 1.0, 2.0]
+        rs = [0.0, 1.0, 2.0, 3.0, 4.0]
+        print(f"  co-field of the best model (rho {rho:g}) along the hop (z) and away from its "
+              f"axis (r), with the error the out-of-fold residuals allow:")
+        for f, name in enumerate(fieldset.names):
+            v, sd = model.profile(f, zs, rs, sigma=r.error)
+            print(f"  {name}:")
+            print("    " + format_profile(v, zs, rs).replace("\n", "\n    "))
+            print("    standard deviation " + ", ".join(f"{x:.2f}" for x in
+                                                        [sd.min(), np.median(sd), sd.max()]))
+    if args.percolate:
+        print("  percolation thresholds per structure, eV above the lowest site: from the "
+              "bond-valence saddles / from the out-of-fold predictions")
+        from cmfqsar.hops import saddle_from_barrier
+        for k, name in enumerate(names):
+            ref_p = structure_percolation(hs, k)
+            pred_p = structure_percolation(hs, k, saddle_from_barrier(hs, predicted))
+            grid = perc.get(name, {})
+            print(f"    {name:20s} " + "  ".join(
+                f"{d}: {ref_p[d]:.2f}/{pred_p[d]:.2f}" for d in ("E_1D", "E_2D", "E_3D"))
+                  + (f"   (landscape grid: " + ", ".join(f"{grid[d]:.2f}" for d in ("E_1D", "E_2D", "E_3D") if d in grid) + ")" if grid else ""))
+    if args.out:
+        n = write_hops(args.out, hs, predicted)
+        print(f"  {n} hops written to {args.out} with their labels and out-of-fold predictions")
+
+
 def cmd_transfer(args):
     """How much two models ask the same thing of the chemistry: item F3 of the plan."""
     from cmfqsar.transfer import cofield_overlap, describe_matrix, overlap_matrix
@@ -4711,6 +4832,59 @@ def main(argv=None):
                     help="write an SDF carrying the measured and the predicted value on the "
                          "atoms they belong to")
     lo.set_defaults(func=cmd_local)
+
+    ho = sub.add_parser("hops", help="a model over migration paths of a mobile ion in crystals: "
+                                     "the field around a hop against a count around it")
+    ho.add_argument("structures", nargs="+",
+                    help="structure files ASE reads (CIF, POSCAR, extended XYZ) or VASP run "
+                         "directories (CONTCAR with ACF.dat and OUTCAR)")
+    ho.add_argument("--mobile", default="Li", help="the mobile species (default Li)")
+    ho.add_argument("--min-hop", type=float, default=1.5, help="shortest hop, A (default 1.5)")
+    ho.add_argument("--max-hop", type=float, default=4.5, help="longest hop, A (default 4.5)")
+    ho.add_argument("--list", action="store_true",
+                    help="print the symmetry-distinct hops with their bottlenecks and stop")
+    ho.add_argument("--bvse", action="store_true",
+                    help="label the distinct hops with the bond-valence site-energy barrier "
+                         "(needs the bvlain package)")
+    ho.add_argument("--bvse-resolution", type=float, default=0.25,
+                    help="grid spacing of the bond-valence landscape, A (default 0.25)")
+    ho.add_argument("--labels", default=None, metavar="FILE.csv",
+                    help="barriers from a table with the columns structure, a, b, "
+                         "[offset_x, offset_y, offset_z], barrier[, barrier_reverse]")
+    ho.add_argument("--rho", nargs="*", type=float, default=None, metavar="RHO",
+                    help="envelope width parameters to try, in A^-2 (default 0.1, which falls "
+                         "to 1/e at 3.2 A from the midpoint)")
+    ho.add_argument("--r-max", type=float, default=None,
+                    help="leave out every atom further than this from the midpoint, A")
+    ho.add_argument("--fields", default="electrostatic,steric,prop:electronegativity",
+                    help="the physico-chemical fields; prop:NAME takes a per-atom array of the "
+                         "structure (Bader charges, magnetic moments)")
+    ho.add_argument("--no-cif", action="store_true",
+                    help="no indicator field per element (one per element is the default)")
+    ho.add_argument("--charges", default="oxidation",
+                    choices=["oxidation", "file", "electronegativity"],
+                    help="where the electrostatic weights come from: an oxidation-state guess, "
+                         "the structure's own arrays (Bader charges from a VASP run), or the "
+                         "electronegativity proxy")
+    ho.add_argument("--invariant", action="store_true",
+                    help="also fit the rotation-invariant local kernel, which needs no frame")
+    ho.add_argument("--reference", action="store_true",
+                    help="also fit the count model about the midpoint and bootstrap the "
+                         "difference over structures")
+    ho.add_argument("--profile", action="store_true",
+                    help="print the co-field of the best model along and around the hop")
+    ho.add_argument("--percolate", action="store_true",
+                    help="percolation thresholds of every structure from the bond-valence "
+                         "saddles and from the predicted barriers")
+    ho.add_argument("--folds", type=int, default=10,
+                    help="folds; they hold out whole structures (default 10)")
+    ho.add_argument("--jobs", type=int, default=1,
+                    help="processes for the rotation-averaged kernel (default 1)")
+    ho.add_argument("--seed", type=int, default=0)
+    ho.add_argument("--bootstrap", type=int, default=2000)
+    ho.add_argument("--out", default=None, metavar="FILE.csv",
+                    help="write every hop with its labels and out-of-fold prediction")
+    ho.set_defaults(func=cmd_hops)
 
     bm = sub.add_parser("benchmark", help="run, list or check the benchmarks of the checkout")
     bm.add_argument("name", nargs="*", help="which benchmarks to run (default: all of them)")
