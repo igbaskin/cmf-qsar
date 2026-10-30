@@ -13,7 +13,7 @@ has a crystal pose to be judged against. Every ligand is posed while it is held 
 1. the ligands are split into folds (five by default) with a fixed seed,
 2. for each fold, a model is fitted on the other ligands in their crystal poses,
 3. the fold's ligands have their poses destroyed, exactly as `benchmarks/run_poses.py` destroys
-   them: a random rigid placement within 2 A of the site,
+   them: a random rigid placement within 2 A of the site and a uniformly random orientation,
 4. one posing method, fixed before the run, recovers them. With the default `pocket` method that
    is `cmfqsar/docking.py`: the receptor's own fields, complementarity less clash, with no model
    and no crystal frame of any kind,
@@ -66,7 +66,16 @@ OUT_DIR = os.path.join(HERE, "docked")
 FIELDS = ["electrostatic", "steric", "hydrophobic", "hba", "hbd"]
 ALPHA = 0.5
 LAM = 0.1
-RESTARTS = 2
+# how many restarts the docking is given. Measured on mcl1: two restarts leave 11 of 25
+# ligands 4 to 8 A from their crystal poses, and twenty with a random orientation leave
+# none above 1.7 A. The first files here were made with two.
+RESTARTS = 20
+# how far a restart of the docking may turn the conformation. The protocol destroys the
+# orientation completely, so a restart has to be able to draw any orientation: 180 degrees means
+# a uniformly random one. The first files here were made at 30 degrees, which cannot undo a
+# random orientation, and their names carry no suffix.
+ROTATION = 180.0
+HISTORICAL_ROTATION = 30.0
 MAX_TRANSLATION = 2.0
 FOLDS = 5
 SEED = 0
@@ -113,8 +122,14 @@ def folds_of(n, folds=FOLDS, seed=SEED):
     return [sorted(int(i) for i in part) for part in np.array_split(idx, int(folds))]
 
 
+def label(name, method, rotation=ROTATION):
+    """The file name of one run: the orientation setting is in it unless it is the first one."""
+    tail = "" if float(rotation) <= HISTORICAL_ROTATION else f"_rot{int(round(float(rotation)))}"
+    return f"{name}_{method}{tail}"
+
+
 def recover(name, method="pocket", folds=FOLDS, seed=SEED, alpha=ALPHA, lam=LAM,
-            restarts=RESTARTS, out_dir=OUT_DIR, log=print):
+            restarts=RESTARTS, rotation=ROTATION, out_dir=OUT_DIR, log=print):
     """Pose every ligand of a set while it is held out, and write the poses that were found."""
     if method not in POSERS:
         raise SystemExit(f"no posing method called {method}; "
@@ -142,7 +157,8 @@ def recover(name, method="pocket", folds=FOLDS, seed=SEED, alpha=ALPHA, lam=LAM,
         _scramble(probe, fs, seed=int(seed), max_translation=MAX_TRANSLATION)
         ctx = {"reference": mols[train[int(np.argmax(y[train]))]], "fieldset": fs,
                "model": model, "restarts": int(restarts), "seed": int(seed),
-               "max_rmsd": None, "conformers": 0, "pocket": pocket, "pocket_weight": 1.0}
+               "max_rmsd": None, "conformers": 0, "pocket": pocket, "pocket_weight": 1.0,
+               "max_rotation_deg": float(rotation)}
         POSERS[method](probe, ctx)
         for i, p in zip(test, probe):
             found[i], rmsds[i], folded[i] = p, float(pose_rmsd(p, mols[i])), k + 1
@@ -151,7 +167,7 @@ def recover(name, method="pocket", folds=FOLDS, seed=SEED, alpha=ALPHA, lam=LAM,
             f"crystal poses")
 
     os.makedirs(out_dir, exist_ok=True)
-    out = os.path.join(out_dir, f"{name}_{method}.sdf")
+    out = os.path.join(out_dir, f"{label(name, method, rotation)}.sdf")
     with Chem.SDWriter(out) as w:
         for m, nm, value, r, k in zip(found, names, y, rmsds, folded):
             m.SetProp("_Name", nm)
@@ -163,13 +179,14 @@ def recover(name, method="pocket", folds=FOLDS, seed=SEED, alpha=ALPHA, lam=LAM,
     rec = {"set": name, "method": method, "n": len(mols), "folds": int(folds),
            "seed": int(seed), "fields": FIELDS, "alpha": float(alpha), "lam": float(lam),
            "restarts": int(restarts), "max_translation": MAX_TRANSLATION,
+           "max_rotation_deg": float(rotation),
            "pocket_atoms": None if pocket is None else int(pocket.n_atoms),
            "median_rmsd": float(np.median(rmsds)), "max_rmsd": float(np.max(rmsds)),
            "within_1A": float(np.mean(np.asarray(rmsds) <= 1.0)),
            "within_2A": float(np.mean(np.asarray(rmsds) <= 2.0)),
            "rmsd": {nm: round(float(r), 4) for nm, r in zip(names, rmsds)},
            "seconds": float(time.time() - t0)}
-    with open(os.path.join(out_dir, f"{name}_{method}.json"), "w") as fh:
+    with open(os.path.join(out_dir, f"{label(name, method, rotation)}.json"), "w") as fh:
         json.dump(rec, fh, indent=1)
     log(f"  {len(mols)} poses -> {out}")
     log(f"  median {rec['median_rmsd']:.2f} A from the crystal pose, at most "
@@ -225,11 +242,14 @@ def write_readme(records, out_dir=OUT_DIR):
               f"{r['alpha']:g}, lambda {r['lam']:g}), the fold's ligands have their poses "
               f"destroyed -- a random rigid placement within {r['max_translation']:g} A of the "
               f"site, the same destruction `benchmarks/run_poses.py` uses -- and one posing "
-              f"method puts them back. So no ligand is posed with the help of its own crystal "
+              f"method puts them back, from the orientation the destruction left it in. So no "
+              f"ligand is posed with the help of its own crystal "
               f"pose or its own activity. What is still taken from the crystal structure is the "
               f"*conformation*: the posing is rigid, so only the placement is searched.")
     entries = NEWLINE.join(
-        f"* `{x['set']}_{x['method']}.sdf`: {x['n']} ligands, method **{x['method']}**"
+        f"* `{label(x['set'], x['method'], x.get('max_rotation_deg', HISTORICAL_ROTATION))}"
+        f".sdf`: {x['n']} ligands, method **{x['method']}**, restarts {x['restarts']} of at most "
+        f"{x.get('max_rotation_deg', HISTORICAL_ROTATION):g} degrees"
         + (f" ({x['pocket_atoms']} atoms of the binding site)" if x.get("pocket_atoms") else "")
         + f". The poses sit a median {x['median_rmsd']:.2f} A from the crystal poses, at most "
           f"{x['max_rmsd']:.2f} A; {x['within_1A']:.0%} within 1 A, {x['within_2A']:.0%} "
@@ -244,16 +264,19 @@ def merge_records(records, out_dir=OUT_DIR):
     out = []
     for x in records:
         out.append({k: v for k, v in x.items() if k != "rmsd"})
-    fresh = {(x["set"], x["method"]) for x in out}
+    fresh = {(x["set"], x["method"], x.get("max_rotation_deg")) for x in out}
     for path in sorted(glob.glob(os.path.join(out_dir, "*.json"))):
         try:
             with open(path) as fh:
                 old = json.load(fh)
         except (OSError, ValueError):
             continue
-        if isinstance(old, dict) and (old.get("set"), old.get("method")) not in fresh:
+        key = (old.get("set"), old.get("method"), old.get("max_rotation_deg")) \
+            if isinstance(old, dict) else None
+        if isinstance(old, dict) and key not in fresh:
             out.append({k: v for k, v in old.items() if k != "rmsd"})
-    return sorted(out, key=lambda x: (x.get("set", ""), x.get("method", "")))
+    return sorted(out, key=lambda x: (x.get("set", ""), x.get("method", ""),
+                                      x.get("max_rotation_deg") or 0.0))
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -264,6 +287,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--method", default="pocket",
                     help="the posing method, fixed before the run (default pocket: the "
                          "receptor's fields alone, with no model and no crystal frame)")
+    ap.add_argument("--max-rotation-deg", dest="rotation", type=float, default=ROTATION,
+                    help="how far a restart of the docking may turn the conformation; 180 or "
+                         "more draws a uniformly random orientation, which is what a destroyed "
+                         f"pose needs (default {ROTATION:g})")
     ap.add_argument("--folds", type=int, default=FOLDS,
                     help=f"how many held-out folds the posing is done in (default {FOLDS})")
     ap.add_argument("--seed", type=int, default=SEED)
@@ -273,7 +300,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     for name in (a.sets or ["mcl1"]):
         print(f"{name}: posing every ligand while it is held out, method {a.method}")
         records.append(recover(name, method=a.method, folds=a.folds, seed=a.seed,
-                               out_dir=a.out))
+                               rotation=a.rotation, out_dir=a.out))
     write_readme(merge_records(records, out_dir=a.out), out_dir=a.out)
     return 0
 

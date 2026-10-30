@@ -6,14 +6,14 @@ to prove before it is allowed to stay. File references point at the code the wor
 
 ## Where the program stands
 
-The repository holds, as of 29 October 2026 (the lists below were written on 22 October and are
+The repository holds, as of 30 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 83 modules and about 38,900 lines (`cmfqsar/`), a PySide6 application, a
+* A library of 90 modules and about 47,600 lines (`cmfqsar/`), a PySide6 application, a
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1499 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1548 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -451,6 +451,45 @@ can judge it.
   **Still to do:** the protocol has been exercised on `examples/openff` only, 16 of its sets.
   `schindler` and `ross` are in the repository with their pockets, and `run_poses.py` hard-codes
   `DATA = examples/openff`; extending it to them is a data path and a run, not new work.
+  **Corrected 30 October 2026, and the correction is larger than this item.** The protocol
+  destroys a pose by placing the molecule at random within 2 A of the site **and giving it a
+  uniformly random orientation**. Three of the four searches it judges restarted from a turn of at
+  most about 63 degrees around the pose they had arrived at, and restarted twice. A bounded turn
+  cannot undo an orientation drawn uniformly, however many restarts are spent on it, so the
+  protocol was measuring the starting points of those searches and not the criteria they optimise.
+  `varalign.py`, `pocketalign.py` and `flexalign.py` now take `any_orientation`, which
+  `cmfqsar/poses.py` sets whenever the protocol has destroyed the orientation; the protocol's own
+  defaults are 20 restarts from any orientation, while the docking keeps the 30 degrees a series
+  already placed in the site needs. A user reaches it as
+  `align --any-orientation`, `predict --align-any-orientation` and a tick box in *Align by
+  prediction confidence...*, which also removes the displacement limit and raises the restarts,
+  since a setting nobody can switch on is of no use to anyone.
+  **Both halves are needed, and a control measures them apart**: the number of restarts and the
+  turn they are allowed, varied separately on two sets (`mcl1_r2.json`, `mcl1_r20_rot30.json`,
+  `thrombin_r2.json`, `thrombin_r20_rot30.json`, beside the two files at the defaults). Each
+  change on its own brings the median down -- on thrombin from 5.00 A to 0.11 A with the
+  orientation alone and to 0.10 A with the restarts alone -- and neither removes the last
+  misplaced molecule: one ligand of the seven stays 7.62 A out in all three of those corners, and
+  that one ligand holds R2pred at about zero (-2.804, -0.014, -0.011). With 20 restarts from any
+  orientation its worst molecule is 0.33 A and the same model predicts at +0.440. On mcl1, which
+  never failed outright, 20 restarts are enough whichever turn they are allowed (0.17 A, +0.387).
+  So the median is the wrong number to read here, which is why the protocol reports the error of
+  the prediction beside it. The bounded
+  branch draws the same random numbers as before, so every number measured with it reproduces
+  exactly; those files keep their names, a run at other settings writes its own file
+  (`*_r20.json`) and its own table section, and every record stores the settings it was measured
+  with.
+  **What it changes.** The confidence criterion alone (`variance`) on the 16 FEP sets, mean over
+  the sets: median RMSD 1.35 A -> **0.11 A**, within 1 A 64 % -> **100 %**, recovery 74 % ->
+  **98 %**, external R2pred -0.219 -> **+0.312** against the crystal poses' +0.334. It is now
+  level with substructure alignment (0.25 A, +0.329) and needs no substructure to align on. No set
+  is worse, and the four sets it had failed on are the four it gains most: syk 6.26 -> 0.13,
+  thrombin 5.00 -> 0.10, jnk1 3.49 -> 0.10, pde2 3.14 -> 0.12 A.
+  **What it does not change.** `mcs+variance`, which starts from a substructure frame, was already
+  at 0.11 A and stays there; and the field-similarity refinement of `cmfqsar/align.py` always drew
+  a full random orientation, which is why that search never showed this failure.
+  23 tests for the correction, over the four searches, the file naming and the two user routes to
+  the option.
 * **C2. Flexible alignment by confidence.** The present search is rigid-body with analytic
   gradients. Add the torsions, with the conformer generator supplying starting points and the
   kernel gradient already in `kernel_gradient` extended by the chain rule over rotatable bonds. The
@@ -471,6 +510,16 @@ can judge it.
   account for 0.55 A of that improvement, better on 15 of 16 sets.
   **What remains is the conformation, not the pose:** +0.264 against the crystal poses' +0.334,
   with a conformational residue of 0.71 A.
+  **Re-measured 30 October 2026 with the widened search of C1**, from the generated conformation
+  alone: `flex` 2.47 A -> **1.51 A** median, within 1 A 21 % -> 40 %, R2pred -0.160 -> +0.027,
+  better on fifteen of sixteen sets and worse on none (pde2 5.94 -> 2.27, eg5 3.44 -> 1.51,
+  pde10 3.17 -> 1.27, bace 1.39 -> 0.53 A). After a substructure frame it changes nothing for the
+  better: `mcs+flex` 1.41 A -> 1.48 A, the wider search leaving a good start as often as it
+  improves one. The statement above survives the correction: the rigid confidence search on
+  regenerated conformations is 2.27 A at 2 bounded restarts and 2.32 A at 20 unbounded ones, so
+  what defeats it there is the conformation and not the pose search, which is what this item was
+  about. The five-conformer runs, the 0.86 A among them, were measured with the narrow search and
+  have not been repeated.
 * **C3. Alignment inside the pocket.** `cmfqsar/docking.py` places conformations rigidly and
   `cmfqsar/complementarity.py` scores them against the pocket fields. Use complementarity as the
   prior and confidence as the likelihood: the pose must fit the pocket and sit inside the model's
@@ -503,9 +552,38 @@ can judge it.
   So the item is built as it was specified and the specification was optimistic. What is left is
   a narrow use -- a pose that must be defensible to the receptor as well as to the model -- and a
   measurement that says the prior is too weak to improve the likelihood.
+  **Corrected 30 October 2026: most of the failure above was the search and not the term.** The
+  numbers above were measured with the search C1's correction describes, 2 restarts of a turn of
+  at most 63 degrees, which cannot recover an orientation the protocol drew uniformly. Repeated on
+  the same four sets with 20 restarts from any orientation (`*_pocket_r20.json`): the receptor
+  alone 4.22 A -> **1.12 A** median, 31 % -> **74 %** within 2 A, recovery 14 % -> **78 %**,
+  R2pred -0.805 -> -0.241; the two together 3.22 A -> **0.15 A**, recovery 32 % -> **97 %**. These
+  figures are means over the four sets, as `benchmarks/results/poses/table.md` prints them, while
+  the RMSD figures in the paragraphs above are medians over the sets and their percentages are
+  means; that is why the receptor alone reads 3.93 A there and 4.22 A here, from one measurement.
+  **The verdict of the item is unchanged and the evidence for it is now much smaller.** At a search
+  that can find the pose, the receptor term still adds nothing to the confidence criterion: 0.15 A
+  against 0.11 A for confidence alone on these four sets, worse on all four of them by 0.03 to
+  0.05 A, with a worse R2pred (-0.110 against +0.286) and about ten times the cost. So "adding the
+  receptor makes the confidence criterion worse" stands, but the sentence **"what fails is the
+  term and not the search" is wrong**: the term costs 0.04 A and the search cost 3.07 A. The
+  weight-zero control remains valid as what it was, a comparison of two optimisers of one
+  objective at one search setting.
+  **The two criteria answer the two settings differently, and a control on mcl1 separates them**
+  (`mcl1_pocket.json`, `mcl1_pocket_r20_rot30.json`, `mcl1_pocket_r20.json`, 8 held-out ligands).
+  The receptor alone gains most from the number of restarts: 3.00 A at 2 restarts of a bounded
+  turn, 1.00 A at 20 restarts of the same turn, 0.93 A at 20 restarts from any orientation. One
+  ligand stays about 8 A out in all three, which is where the receptor term's own optimum is. The
+  two criteria together answer the other way round: 20 bounded restarts change nothing at all
+  (0.31 A either way, the same ligand 7.89 A out), and only a restart from a completely different
+  orientation brings that ligand back (0.37 A, median 0.22 A). So the receptor term holds a pose in
+  an orientation that a bounded turn cannot leave, while the confidence criterion alone on this set
+  is recovered by 20 bounded restarts. This is a second reason to keep the free orientation on
+  wherever the receptor term is used.
   **Not done:** the flexible version (freeing the torsions made the confidence criterion work in C2 and
-  might do the same here), an analytic gradient for the pocket term, and the sets without a receptor,
-  which is most of them.
+  might do the same here), an analytic gradient for the pocket term, the sets without a receptor,
+  which is most of them, and the weight sweep repeated at the corrected search, which would say
+  whether the weight still matters once the search can find the pose.
 * **C4. Training-set co-alignment done properly.** The present iteration (fit, realign, refit)
   contracts the ensemble and degrades one set in four. Treat it as what it is, an expectation-
   maximisation over poses, and regularise it: the displacement guard, a leave-one-out variance so no
@@ -1031,7 +1109,8 @@ says whether a trajectory does what a generated ensemble could not.
   than better.** Every number above starts from a crystal pose, which the item itself names as
   the gap. mcl1 was therefore turned into the other case without a new set:
   `examples/make_docked_poses.py` poses every ligand while it is held out. The pose is destroyed
-  -- a random rigid placement within 2 A of the site -- and then the pocket docking of C3 puts it
+  -- a random rigid placement within 2 A of the site and a uniformly random orientation -- and
+  then the pocket docking of C3 puts it
   back where the receptor's own fields prefer it, with no model, no activity of its own and no
   crystal frame of any kind, which is the protocol C1 defines. Each ligand was then simulated
   from the pose that was found, 2 ns on the same receptor frame as everywhere above, and read in
@@ -1041,6 +1120,12 @@ says whether a trajectory does what a generated ensemble could not.
   and on the other 11 the docking missed the site, 4.0 to 8.3 A away. So this test is harder
   than its median suggests, and a reading of it is also a reading of how often that docking
   fails.
+  **That docking has since been fixed (C1, 30 October 2026).** Missing the site on 11 of 25 was
+  the bounded restart and not the scoring function: with 20 restarts from any orientation all 25
+  mcl1 ligands come back within 2 A of their crystal poses, on two seeds. The poses used here are
+  the old ones, so every number in this paragraph and the next three is about them. Re-posing the
+  set and simulating from the better poses is 3.4 hours of one consumer GPU and has not been
+  done.
   **Measured**, every model against the pose a modeller would actually have -- the one that was
   found -- and then against the crystal pose as the ceiling: the crystal pose +0.575; the
   **found pose +0.402** (-0.173 [-0.567, +0.144] against the crystal pose, which does not clear
@@ -1067,8 +1152,8 @@ says whether a trajectory does what a generated ensemble could not.
   232 s for the measurement.
   60 tests for this item.
   **Not done:** one force field and one length on all three sets; poses that are not known on a
-  second set, and with a docking that does not miss the site on 11 ligands of 25, since the
-  result above is as much about that docking as about the ensemble; why the own frame costs q2
+  second set, and the same measurement at the poses the corrected docking finds, since the result
+  above is as much about the old docking as about the ensemble; why the own frame costs q2
   on hif2a and not on the other two, which is a question about the sets rather than about the
   method; a combined estimate that treats the sets as a sample of
   targets rather than weighting them by size; and the flexible-series question the item names,
@@ -3158,6 +3243,41 @@ What it leaves open, in order:
   what is left to measure is Shapley values as its per-ring reading and a wider grid of layer
   widths (the chosen gamma sat at the widest end on every split). Nothing published measures
   the size-extrapolation split, which stays the field model's own claim.
+
+### CMF–neural device integration (30 October 2026)
+
+**Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework
+(the neural device), so that alignment-based 3D field information and the graph-based model can
+be combined and ablated on one data set.
+
+**Rationale.** CMF is a fixed-kernel linear model on field space: it is the infinite-width limit
+of a radial-basis-function network whose neurons tile 3D space. The neural device is the learned,
+feature-learning end of the same spectrum. Merging the two means letting the device learn what
+CMF currently fixes.
+
+**Stages.**
+
+* **ND1. CMF as a featuriser.** Compute the CMF kernel rows of every molecule (or a Nyström or
+  random-feature approximation of them) and feed them as an input vector to the existing model.
+  Baseline: CMF alone, the device alone, and the two combined.
+* **ND2. A learnable CMF layer.** Make the Gaussian widths and the mixing weights of the field
+  types trainable end to end; keep the regression-coefficient field (the co-field) exportable as
+  a 3D map, so that the reading is not lost.
+* **ND3. Field-to-graph fusion (optional, later).** Sample the field values at the atoms or at
+  probe points and use them as node or edge attributes of an equivariant GNN, which removes the
+  superposition requirement.
+
+**Data set.** COMPAS-1, which is large enough for stages ND2 and ND3 and reuses the specification
+of the CMF pilot above.
+
+**Open questions.**
+
+* The alignment protocol for stages ND1 and ND2.
+* Which field types to include first: steric, electrostatic, hydrogen bond, CIF.
+* How to quantify the loss of interpretability from one stage to the next.
+* The interface between the R package and the Python/PyTorch device: export the kernels, or
+  reimplement the field kernels in Python (`cmfqsar/kernels.py` already holds them in Python, so
+  the export route is the one left to write).
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 

@@ -113,8 +113,8 @@ def split(n, fraction=TEST_FRACTION, seed=0):
 
 
 def run_set(name, methods=METHODS, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM,
-            restarts=2, max_rmsd=None, force=False, reconform=False, suffix="",
-            conformers=0, pocket_weight=1.0):
+            restarts=20, max_rotation_deg=180.0, max_rmsd=None, force=False, reconform=False,
+            suffix="", conformers=0, pocket_weight=1.0):
     out_path = os.path.join(results, f"{name}{suffix}.json")
     if os.path.exists(out_path) and not force:
         print(f"[skip] {out_path} exists")
@@ -136,12 +136,14 @@ def run_set(name, methods=METHODS, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM
         else:
             print(f"    pocket: {pocket.n_atoms} atoms of the binding site", flush=True)
     scores = judge(mols, names, y, tr, te, fs, methods=methods, lam=lam, seed=seed,
-                   restarts=restarts, max_rmsd=max_rmsd, reconform=reconform,
+                   restarts=restarts, max_rotation_deg=max_rotation_deg,
+                   max_rmsd=max_rmsd, reconform=reconform,
                    conformers=conformers, pocket=pocket, pocket_weight=pocket_weight,
                    progress=lambda msg: print(f"    {msg}", flush=True))
     res = {"set": name, "n": len(mols), "n_train": len(tr), "n_test": len(te),
            "fields": FIELDS, "alpha": alpha, "lam": lam, "seed": seed,
-           "restarts": restarts, "max_rmsd": max_rmsd, "reconform": reconform,
+           "restarts": restarts, "max_rotation_deg": float(max_rotation_deg),
+           "max_rmsd": max_rmsd, "reconform": reconform,
            "conformers": conformers,
            "pocket": None if pocket is None else int(pocket.n_atoms),
            "pocket_weight": float(pocket_weight) if pocket is not None else None,
@@ -157,8 +159,31 @@ def run_set(name, methods=METHODS, results=RESULTS, seed=0, alpha=ALPHA, lam=LAM
     return res
 
 
+HISTORICAL_ROTATION = 30.0   # the turn a restart was limited to before the setting existed
+
+
+def search_setting(row):
+    """How wide the pose search of this run was, as a key and as a phrase for the heading.
+
+    The phrase is empty for the first settings, 2 restarts of a bounded turn, so the tables
+    measured before the setting existed keep their headings.
+    """
+    # a run without a restarting search, such as co-alignment alone, stores no count; it reads as
+    # the first setting so that its heading is not labelled with a search it does not use
+    restarts = int(row.get("restarts") or 2)
+    rotation = float(row.get("max_rotation_deg") or HISTORICAL_ROTATION)
+    if (restarts, rotation) == (2, HISTORICAL_ROTATION):
+        return (restarts, rotation), ""
+    turn = ("any orientation" if rotation >= 180.0
+            else f"a turn of at most {rotation:g} degrees")
+    return (restarts, rotation), f"; the pose search restarts {restarts} times from {turn}"
+
+
 def variant(row):
     """What a result file is a run of, as a key and as a sentence."""
+    # more restarts, or a restart that may draw any orientation, finds other poses, so two runs
+    # that differ there are two results and not two rows of one table
+    search, searched = search_setting(row)
     if row.get("frame"):
         # a training-frame run answers a different question from a pose run, so it never shares
         # a table with one
@@ -167,14 +192,18 @@ def variant(row):
         what = (f"the training frame destroyed and recovered: {co.get('rounds', '?')} rounds, "
                 f"guard {co.get('max_rmsd')} A"
                 + (", flexible E-step" if co.get("flexible") else ", rigid E-step"))
-        return (2, int(bool(co.get("flexible"))), 0.0, posers), what
+        return (2, int(bool(co.get("flexible"))), 0.0, posers, search), what + searched
     recon = bool(row.get("reconform"))
     confs = int(row.get("conformers") or 0)
     guard = row.get("max_rmsd")
     # the set of methods is part of what a run is: two runs of the same protocol over different
-    # posers are not rows of one table, and merging them gives a set two rows with missing cells in both
+    # posers are not rows of one table: merging them would give a set two rows, each
+    # with cells the other fills
     posers = tuple(sorted(m for m in row.get("methods", {}) if m != "crystal"))
-    key = (recon, confs, -1.0 if guard is None else float(guard), posers)
+    # a run at another weight of the receptor term finds other poses, so it is another result and
+    # not another row: without this the weight sweep gave one table with each set in it twice
+    weight = float(row.get("pocket_weight") if row.get("pocket_weight") is not None else 1.0)
+    key = (recon, confs, -1.0 if guard is None else float(guard), posers, search, weight)
     what = ("regenerated conformations" if recon else "crystal conformations, pose scrambled")
     if recon:
         what += (f", {confs} generated starting conformations" if confs
@@ -182,7 +211,14 @@ def variant(row):
     what += (f", displacement guard {guard:g} A" if guard else ", no displacement guard")
     if any(p.startswith("fieldgraph") for p in posers):
         what += "; field-point graph alignment"
-    return key, what
+    # a run with a receptor answers a different question from one without it, and the two
+    # groups would otherwise carry the same heading
+    if any("pocket" in p for p in posers):
+        what += "; the receptor pocket of each set"
+        # weight 1 is the first setting, so those tables keep the heading they had
+        if weight != 1.0:
+            what += f", its term weighted {weight:g}"
+    return key, what + searched
 
 
 def _table(group, methods, label):
@@ -209,7 +245,9 @@ def _table(group, methods, label):
             got = [r["methods"][m] for r in group if m in r["methods"]]
             if not got:
                 continue
-            rec = np.nanmean([g["recovery"] for g in got])
+            # crystal has no recovery to average, and a mean over nothing but NaN warns
+            got_rec = [g["recovery"] for g in got if np.isfinite(g["recovery"])]
+            rec = np.mean(got_rec) if got_rec else float("nan")
             lim = np.mean([g.get("conformer_limit", 0.0) for g in got])
             lines.append(f"| {m} | {np.mean([g['median_rmsd'] for g in got]):.2f} A | "
                          f"{np.mean([g['within_1A'] for g in got]):.0%} | "
@@ -275,7 +313,8 @@ def report(results=RESULTS, out=None):
         key, what = variant(r)
         groups.setdefault((key, what), []).append(r)
     known = (["crystal"] + [m for m in list(METHODS) + list(FLEX_METHODS)
-                                   + list(GRAPH_METHODS)] + ["coalign", "mcs+coalign"])
+                                   + list(GRAPH_METHODS) + list(POCKET_METHODS)]
+                                  + ["coalign", "mcs+coalign"])
     seen = []
     for m in known:
         if m not in seen:
@@ -318,7 +357,14 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--alpha", type=float, default=ALPHA)
     ap.add_argument("--lam", type=float, default=LAM)
-    ap.add_argument("--restarts", type=int, default=2)
+    ap.add_argument("--restarts", type=int, default=20,
+                    help="how many times a pose search starts again from another random "
+                         "placement; the first measurements used 2, which is too few to find a "
+                         "pose whose orientation is unknown (default 20)")
+    ap.add_argument("--max-rotation-deg", dest="rotation", type=float, default=180.0,
+                    help="how far a restart of a pose search may turn a conformation; 180 or "
+                         "more draws a uniformly random orientation, which is what the destroyed "
+                         "pose of this protocol needs (default 180)")
     ap.add_argument("--max-rmsd", type=float, default=None,
                     help="displacement guard for the confidence search (angstrom)")
     ap.add_argument("--force", action="store_true")
@@ -363,8 +409,16 @@ def main(argv=None):
             default_suffix += "_pocket"
             if abs(args.pocket_weight - 1.0) > 1e-9:
                 default_suffix += f"_w{args.pocket_weight:g}".replace(".", "")
+        # the search settings change which pose is found, so a run with other settings is another
+        # result file and not an overwrite of this one. The first files were measured with 2
+        # restarts of a bounded turn and keep their names; every other setting is in the name.
+        if (args.restarts, args.rotation) != (2, HISTORICAL_ROTATION):
+            default_suffix += f"_r{args.restarts}"
+            if args.rotation < 180.0:
+                default_suffix += f"_rot{args.rotation:g}"
         run_set(name, methods=methods, seed=args.seed, alpha=args.alpha,
-                lam=args.lam, restarts=args.restarts, max_rmsd=args.max_rmsd,
+                lam=args.lam, restarts=args.restarts, max_rotation_deg=args.rotation,
+                max_rmsd=args.max_rmsd,
                 force=args.force, reconform=reconform, conformers=args.conformers,
                 pocket_weight=args.pocket_weight,
                 suffix=args.suffix if args.suffix is not None else default_suffix)

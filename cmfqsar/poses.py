@@ -161,8 +161,11 @@ def pose_variance(mols: Sequence[Chem.Mol], ctx: dict) -> None:
     from .varalign import variance_align
     fs, model = ctx["fieldset"], ctx["model"]
     mf = [build_fields(m, fs, f"probe{i}") for i, m in enumerate(mols)]
+    # the protocol destroys the orientation, so the restarts must be allowed to draw any of
+    # them; a series already in the site keeps the bounded turn
+    anywhere = float(ctx.get("max_rotation_deg", 30.0)) >= 180.0
     variance_align(mf, model, max_rmsd=ctx.get("max_rmsd"), restarts=ctx.get("restarts", 2),
-                   seed=ctx.get("seed", 0))
+                   seed=ctx.get("seed", 0), any_orientation=anywhere)
     for m, f in zip(mols, mf):
         set_coords(m, f.coords)
 
@@ -184,8 +187,9 @@ def pose_pocket(mols: Sequence[Chem.Mol], ctx: dict) -> None:
     mf = [build_fields(m, fs, f"probe{i}") for i, m in enumerate(mols)]
     for i, (m, f) in enumerate(zip(mols, mf)):
         try:
-            coords, _res = dock_coords(f, pocket, fs, restarts=ctx.get("restarts", 2),
-                                       seed=ctx.get("seed", 0) + i)
+            coords, _res = dock_coords(
+                f, pocket, fs, restarts=ctx.get("restarts", 2), seed=ctx.get("seed", 0) + i,
+                max_rotation_deg=ctx.get("max_rotation_deg", 30.0))
         except Exception:                   # noqa: BLE001 - one molecule, not the set
             continue
         set_coords(m, coords)
@@ -196,9 +200,12 @@ def pose_pocket_variance(mols: Sequence[Chem.Mol], ctx: dict) -> None:
     from .pocketalign import pocket_align
     fs, model, pocket = ctx["fieldset"], ctx["model"], ctx["pocket"]
     mf = [build_fields(m, fs, f"probe{i}") for i, m in enumerate(mols)]
+    # the protocol destroys the orientation, so the restarts must be allowed to draw any of
+    # them; a series already in the site keeps the bounded turn
+    anywhere = float(ctx.get("max_rotation_deg", 30.0)) >= 180.0
     pocket_align(mf, model, pocket, pocket_weight=ctx.get("pocket_weight", 1.0),
                  max_rmsd=ctx.get("max_rmsd"), restarts=ctx.get("restarts", 2),
-                 seed=ctx.get("seed", 0), fieldset=fs)
+                 seed=ctx.get("seed", 0), any_orientation=anywhere, fieldset=fs)
     for m, f in zip(mols, mf):
         set_coords(m, f.coords)
 
@@ -220,7 +227,8 @@ def pose_flexible(mols: Sequence[Chem.Mol], ctx: dict) -> None:
                    restarts=ctx.get("restarts", 2), seed=ctx.get("seed", 0),
                    max_torsions=ctx.get("max_torsions", 12),
                    conformers=ctx.get("conformers", 0),
-                   prune_rmsd=ctx.get("prune_rmsd", 0.5))
+                   prune_rmsd=ctx.get("prune_rmsd", 0.5),
+                   any_orientation=float(ctx.get("max_rotation_deg", 30.0)) >= 180.0)
     for m, f in zip(mols, mf):
         set_coords(m, f.coords)
 
@@ -360,7 +368,8 @@ def judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
           train: Sequence[int], test: Sequence[int], fieldset: FieldSet,
           methods: Sequence[str] = ("scrambled", "mcs", "field", "variance"),
           lam: float = 0.1, seed: int = 0, max_translation: float = 2.0,
-          restarts: int = 2, max_rmsd: Optional[float] = None,
+          restarts: int = 20, max_rotation_deg: float = 180.0,
+          max_rmsd: Optional[float] = None,
           posers: Optional[Dict[str, Callable]] = None,
           reconform: bool = False, conformers: int = 0,
           pocket: Optional[MoleculeFields] = None, pocket_weight: float = 1.0,
@@ -371,6 +380,12 @@ def judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
     are; the test molecules then have their poses destroyed, and each method is asked to recover
     them from that starting point, without ever seeing a test activity.  Returns a score per
     method, plus ``"crystal"`` -- the ceiling, the test molecules in the poses they came in.
+
+    The destruction gives every test molecule a uniformly random orientation, so a method that
+    searches orientations must be allowed to draw any of them: `max_rotation_deg` is 180 here,
+    where the docking's own default is the 30 degrees a series already in the site needs.
+    `restarts` is 20 for the same reason.  Both halves are needed: a random orientation is only
+    useful if enough of them are drawn, and more draws of a bounded turn do not help at all.
     """
     import time
 
@@ -411,7 +426,8 @@ def judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float],
         ctx = {"reference": mols[train[int(np.argmax(y[train]))]], "fieldset": fieldset,
                "model": model, "restarts": restarts, "seed": seed, "max_rmsd": max_rmsd,
                "conformers": int(conformers), "pocket": pocket,
-               "pocket_weight": float(pocket_weight)}
+               "pocket_weight": float(pocket_weight),
+               "max_rotation_deg": float(max_rotation_deg)}
         poser(probe, ctx)                                       # ... and scrambled, every time
         rmsds = np.array([pose_rmsd(p, crystal[i]) for p, i in zip(probe, test)])
         pred = _predict(model, probe, [names[i] for i in test], fieldset)

@@ -255,8 +255,11 @@ term, a burial term and a tether. A pose is scored by
 complementarity with the pocket + burial - clash - tether
 ```
 
-and the six rigid-body parameters of each conformation are optimised from where it stands, with
-bounded restarts. The internal geometry is never touched, so the conformations stay as generated and
+and the six rigid-body parameters of each conformation are optimised from where it stands. A
+restart turns the pose by at most 30 degrees, which is what a conformation already placed in the site
+needs; `max_rotation_deg` sets it, and 180 lets every restart draw a completely different orientation,
+which is what a pose with no known orientation needs (see *What a bounded restart cannot do* in the
+manual). The internal geometry is never touched, so the conformations stay as generated and
 only their placement changes. It is not a docking program: there is no desolvation, no entropy and
 no torsional search, and the scoring function is not fitted to binding data.
 
@@ -286,7 +289,13 @@ search would place poses better than this one does.
 That second point suggests where this code is actually worth using. Placing a molecule in a site by
 optimising a pocket score is an *alignment* method, and for a series whose alignment is a guess from
 a common substructure it may well beat that guess. The ensemble question is closed; docking as an
-alignment criterion is open and the machinery for it is now here.
+alignment criterion has since been measured, by the pose protocol and on the four FEP sets with a
+receptor structure: from a destroyed pose it recovers a median 1.12 A, with 74 % of the molecules
+within 2 A of the crystal pose. On mcl1 the two settings of the corrected search were varied
+separately for this criterion as well: the number of restarts takes it from 3.00 A to 1.00 A, and a
+restart from any orientation takes it to 0.93 A, so here the restarts do most of the work. That is far better than nothing and well behind the confidence
+criterion's 0.11 A on the same four sets, which is the answer *Alignment inside the pocket* in the
+manual reports in full.
 
 Both are in the application as well as on the command line. *Model -> Conformations* has a third
 entry, "ensemble, weights learned", with the hardness beside it and a box for choosing exactly one
@@ -3084,6 +3093,33 @@ giving 3.35 Å mean deviation from the published alignment. Minimising the varia
 to within 1 Å (0.27 Å on average) and restored the prediction error from 1.49 to 0.84 log units, against
 0.83 for the published poses.
 
+**The restarts were bounded, and correcting that changed this section more than anything else in
+it.** Until 30 October 2026 a restart turned the pose it had arrived at by at most about 63°. That
+is enough for the thrombin test above, where the disturbance is a 40° rotation, and it is useless
+when the orientation is unknown, because a bounded turn cannot undo a uniformly random one however
+many restarts are spent on it. Every restart can now draw a completely different orientation:
+`--align-any-orientation` on `predict`, `--any-orientation` on `align`, `any_orientation` in the
+library. Judged by the pose protocol on all sixteen FEP sets, with the held-out poses destroyed by
+a random placement **and a uniformly random orientation** and recovered without any held-out
+activity, mean over the sets:
+
+| method, and how its restarts start | median RMSD | within 1 Å | recovery | R²pred |
+|---|---:|---:|---:|---:|
+| the confidence criterion, 2 restarts turned by at most 63° | 1.35 Å | 64 % | 74 % | −0.219 |
+| the confidence criterion, 20 restarts from any orientation | **0.11 Å** | **100 %** | **98 %** | **+0.312** |
+| substructure alignment, for comparison | 0.25 Å | 94 % | 95 % | +0.329 |
+| the crystal poses, the ceiling | 0.00 Å | 100 % | — | +0.334 |
+
+The criterion now reaches the ceiling with no common substructure to align on, no receptor and no
+activity. Both halves of the change are needed, and a control on two sets varies
+them separately. Each alone brings the median down -- on thrombin from 5.00 Å to 0.11 Å with the
+orientation alone and to 0.10 Å with the restarts alone -- and neither removes the last misplaced
+molecule: one ligand of seven stays 7.6 Å out, which holds R²pred at about zero. With both, that
+molecule comes back to 0.33 Å and the same model predicts at +0.440. The manual's *What a bounded
+restart cannot do* has the full control. The guard on the
+displacement has to be off, because a reorientation is a large displacement, so this setting is for
+molecules whose pose is unknown and not for refining one that is roughly right.
+
 #### Unalign: the control experiment
 
 *Tools → Unalign (randomise poses)* (CLI: `cmf_cli.py unalign in.sdf out.sdf`) gives every chosen
@@ -3203,9 +3239,21 @@ every other re-placement experiment in this repository has given.
 ```bash
 python cmf_cli.py hetero examples/sutherland/AChE.sdf --charges file --min-group 3 \
        --align-within --place fieldgraph
+# the search settings the table above was measured with, which are no longer the defaults; the
+# file names come from --suffix, so without them this run would overwrite the table with others
 python benchmarks/run_poses.py --sets all --methods scrambled mcs field fieldgraph \
-       fieldgraph+field fieldgraph+variance --suffix _fg --force
+       fieldgraph+field fieldgraph+variance --suffix _fg \
+       --restarts 2 --max-rotation-deg 30 --force
 ```
+
+**One reading of that table is overtaken by the correction of the pose search** (*What a bounded
+restart cannot do*, in the manual). Its two confidence rows were measured with two restarts of a
+turn of at most 63°; with twenty restarts from any orientation the confidence criterion recovers a
+destroyed pose to 0.11 Å with no starting frame at all. So "field points, then confidence" is no
+longer a way of giving that search a frame it could not find for itself, and what the field points
+are worth is what their own two rows say: 0.67 Å and 79 % within one ångström, from nothing. The
+table is left as it was measured, and the rows that depend on the pose search have not been
+measured again.
 
 What it does not do: it never changes a conformation, so a molecule is placed only as well as the
 conformation it arrives in allows, and it does not know which of its own points matter, because a

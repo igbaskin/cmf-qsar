@@ -1347,6 +1347,12 @@ def cmd_align(args):
     if way == "pocket" and not args.pocket:
         raise SystemExit("--by pocket needs --pocket STRUCTURE")
     guard = None if args.max_rmsd is not None and args.max_rmsd <= 0 else args.max_rmsd
+    # a restart that draws another orientation moves the molecule far, so a guard that is still
+    # on rejects exactly what the option was switched on for
+    if getattr(args, "any_orientation", False) and guard is not None:
+        print(f"Note: --any-orientation draws orientations that lie more than {guard:g} A from "
+              f"the input pose, which --max-rmsd then rejects. Pass --max-rmsd 0 to search "
+              f"freely.")
 
     if way == "plane":
         from cmfqsar.planealign import plane_align_dataset
@@ -1398,12 +1404,14 @@ def cmd_align(args):
             print(f"Aligning {len(mf)} molecules by prediction confidence, rigid motion and the "
                   f"rotatable bonds, from {args.conformers} conformations")
             res = flexible_align(mf, list(ds.mols), model, max_rmsd=guard,
-                                 restarts=args.restarts, conformers=args.conformers)
+                                 restarts=args.restarts, conformers=args.conformers,
+                                 any_orientation=args.any_orientation)
         else:
             from cmfqsar.varalign import variance_align
             print(f"Aligning {len(mf)} molecules by prediction confidence (rigid)"
                   + (f", at most {guard} A from the input pose" if guard else ""))
-            res = variance_align(mf, model, max_rmsd=guard, restarts=args.restarts)
+            res = variance_align(mf, model, max_rmsd=guard, restarts=args.restarts,
+                                 any_orientation=args.any_orientation)
         for r in res:
             print(f"  {r.name:28s} variance {r.variance_before:8.4f} -> "
                   f"{r.variance_after:8.4f}   moved {r.rmsd:5.2f} A"
@@ -1418,7 +1426,8 @@ def cmd_align(args):
               f"{prot.name or args.pocket} ({pocket.n_atoms} atoms), complementarity weighted "
               f"{args.pocket_weight:g} against the confidence")
         res = pocket_align(mf, model, pocket, pocket_weight=args.pocket_weight,
-                           max_rmsd=guard, restarts=args.restarts)
+                           max_rmsd=guard, restarts=args.restarts,
+                           any_orientation=args.any_orientation)
         for r in res:
             print("  " + r.describe())
         st = summarise(res)
@@ -1815,7 +1824,14 @@ def cmd_predict(args):
             if args.align_conformers:
                 how += f", from {args.align_conformers} generated conformations"
         print(f"Aligning {len(mf)} molecules by prediction confidence ({how})"
-              + (f" (max displacement {guard} A)" if guard else " (no displacement limit)") + " ...")
+              + (f" (max displacement {guard} A)" if guard else " (no displacement limit)")
+              + (", every restart from another orientation" if args.align_any_orientation else "")
+              + " ...")
+        # the same warning as `align`: the guard undoes what the option asks for
+        if args.align_any_orientation and guard is not None:
+            print(f"Note: --align-any-orientation draws orientations that lie more than "
+                  f"{guard:g} A from the input pose, which the displacement limit then rejects. "
+                  f"Pass --align-variance 0 to search freely.")
         if args.align_flexible:
             from cmfqsar.flexalign import flexible_align
             res = flexible_align(mf, list(ds.mols), model, max_rmsd=guard,
@@ -1823,7 +1839,8 @@ def cmd_predict(args):
                                  energy_slack=args.align_energy_slack,
                                  energy_weight=args.align_energy_weight,
                                  max_torsions=args.align_max_torsions,
-                                 conformers=args.align_conformers)
+                                 conformers=args.align_conformers,
+                                 any_orientation=args.align_any_orientation)
         elif args.align_pocket:
             from cmfqsar.complementarity import pocket_fields
             from cmfqsar.pocketalign import pocket_align, summarise
@@ -1834,7 +1851,8 @@ def cmd_predict(args):
                   f"{pocket.n_atoms} atoms, complementarity weighted {args.pocket_weight:g} "
                   f"against the confidence")
             res = pocket_align(mf, model, pocket, pocket_weight=args.pocket_weight,
-                               max_rmsd=guard, restarts=args.align_restarts)
+                               max_rmsd=guard, restarts=args.align_restarts,
+                               any_orientation=args.align_any_orientation)
             for r in res:
                 print("  " + r.describe())
             s = summarise(res)
@@ -1844,7 +1862,8 @@ def cmd_predict(args):
             res = []
         else:
             from cmfqsar.varalign import variance_align
-            res = variance_align(mf, model, max_rmsd=guard, restarts=args.align_restarts)
+            res = variance_align(mf, model, max_rmsd=guard, restarts=args.align_restarts,
+                                 any_orientation=args.align_any_orientation)
         for r in res:
             print(f"  {r.name:28s} variance {r.variance_before:8.4f} -> {r.variance_after:8.4f}   "
                   f"moved {r.rmsd:5.2f} A   prediction {r.prediction_before:7.3f} -> {r.prediction_after:7.3f}"
@@ -4000,6 +4019,15 @@ def main(argv=None):
                         "displacement in A from the input pose (default 2.0, <=0 for no limit)")
     q.add_argument("--align-restarts", type=int, default=2,
                    help="random restarts of the alignment search (default 2)")
+    q.add_argument("--align-any-orientation", action="store_true",
+                   help="let every restart try a completely different orientation, instead of "
+                        "turning the input pose by at most about 63 degrees. This is for "
+                        "molecules whose orientation is not known, for example structures built "
+                        "from SMILES; it needs more --align-restarts than the default 2, and it "
+                        "needs --align-variance 0, because a reorientation is a large "
+                        "displacement. On the pose benchmark, with 20 restarts and no limit, it "
+                        "is the difference between a median 1.35 A from the crystal pose and "
+                        "0.11 A")
     q.add_argument("--align-flexible", action="store_true",
                    help="turn the rotatable bonds as well as moving the molecule, with the force "
                         "field as a prior on the conformation (the 2019 proposal in full); the "
@@ -4466,6 +4494,15 @@ def main(argv=None):
     al.add_argument("--max-rmsd", type=float, default=2.0, metavar="A",
                     help="how far a molecule may move from its input pose; <=0 for no limit")
     al.add_argument("--restarts", type=int, default=2)
+    al.add_argument("--any-orientation", action="store_true",
+                    help="with --by variance or pocket: let every restart try a completely "
+                         "different orientation, instead of turning the input pose by at most "
+                         "about 63 degrees. This is for molecules whose orientation is not known, "
+                         "for example structures built from SMILES; it needs more restarts than "
+                         "the default 2, and it needs --max-rmsd 0, because a reorientation is a "
+                         "large displacement. On the pose benchmark, with 20 restarts and no "
+                         "limit, it is the difference between a median 1.35 A from the crystal "
+                         "pose and 0.11 A")
     al.add_argument("--flexible", action="store_true",
                     help="with --by variance, also turn the rotatable bonds")
     al.add_argument("--conformers", type=int, default=5, metavar="N",

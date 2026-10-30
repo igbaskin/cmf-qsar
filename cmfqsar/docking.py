@@ -182,6 +182,28 @@ def _transform(coords: np.ndarray, p: np.ndarray, center: np.ndarray) -> np.ndar
     return (coords - center) @ R.T + center + p[3:]
 
 
+def restart_poses(restarts: int, rng, max_shift: float = 2.0,
+                  max_rotation_deg: float = 30.0) -> List[np.ndarray]:
+    """The rigid-body parameters each restart starts from, the arriving pose first.
+
+    A restart is a perturbation of the pose that arrived: an axis drawn at random and a turn of
+    at most `max_rotation_deg` about it, with a small shift. At 180 degrees or more the turn is
+    replaced by a uniformly random orientation, because a pose whose orientation is unknown
+    cannot be found by perturbing the wrong one.
+    """
+    out = [np.zeros(6)]
+    anywhere = float(max_rotation_deg) >= 180.0
+    for _ in range(max(int(restarts), 0)):
+        if anywhere:
+            rv = Rotation.random(random_state=rng).as_rotvec()
+        else:
+            axis = rng.normal(size=3)
+            axis /= max(np.linalg.norm(axis), 1e-9)
+            rv = axis * np.deg2rad(rng.uniform(0.0, max_rotation_deg))
+        out.append(np.concatenate([rv, rng.normal(scale=max_shift / 2.0, size=3)]))
+    return out
+
+
 def dock_coords(mol: MoleculeFields, pocket: MoleculeFields, fieldset: FieldSet,
                 restarts: int = 0, seed: int = 0, max_iter: int = 200,
                 max_shift: float = 2.0, max_rotation_deg: float = 30.0,
@@ -192,6 +214,12 @@ def dock_coords(mol: MoleculeFields, pocket: MoleculeFields, fieldset: FieldSet,
     The search starts from the pose the conformation arrives in and stays near it: restarts are
     bounded perturbations rather than a global search, because the series is already in the site
     and the question is where in the site each conformation belongs, not whether it binds.
+
+    That assumption fails where the orientation is not known at all. The pose-recovery protocol
+    of item C1 gives every held-out molecule a uniformly random orientation, and a restart that
+    turns the conformation by at most 30 degrees can never undo it. Set `max_rotation_deg` to
+    180 or more and every restart draws a uniformly random orientation instead, which is the
+    setting for a pose that has to be found rather than refined.
     """
     scorer = PocketScorer(mol, pocket, fieldset, clash_weight=clash_weight,
                           tether_radius=tether_radius)
@@ -204,12 +232,8 @@ def dock_coords(mol: MoleculeFields, pocket: MoleculeFields, fieldset: FieldSet,
     before = -objective(best_p)
     best_val = -before
     rng = np.random.RandomState(seed)
-    starts = [np.zeros(6)]
-    for _ in range(max(int(restarts), 0)):
-        axis = rng.normal(size=3)
-        axis /= max(np.linalg.norm(axis), 1e-9)
-        rv = axis * np.deg2rad(rng.uniform(0.0, max_rotation_deg))
-        starts.append(np.concatenate([rv, rng.normal(scale=max_shift / 2.0, size=3)]))
+    starts = restart_poses(restarts, rng, max_shift=max_shift,
+                           max_rotation_deg=max_rotation_deg)
     used = 0
     for k, p0 in enumerate(starts):
         res = minimize(objective, p0, method="Powell",

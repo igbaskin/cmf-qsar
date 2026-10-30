@@ -738,7 +738,9 @@ The tools, in increasing order of sophistication:
   $\sigma^2(x) = K(x,x) - \mathbf{k}(x)^{\mathrm{T}}(\mathbf{K} + \lambda\mathbf{I})^{-1}\mathbf{k}(x)$ of a molecule under an existing model, which moves it into the model's applicability domain. It uses
   no activity value, so it is valid for prospective prediction. The program refuses to move
   training molecules, because the optimum there is degenerate: superimposing everything maximises
-  mutual similarity and destroys the signal.
+  mutual similarity and destroys the signal. The search tries a few orientations near the pose it
+  is given, which is what a molecule already placed in the site needs; for a molecule whose
+  orientation is unknown, see *What a bounded restart cannot do*.
 - *Tools → Align decoys to the training set…* — the same idea for a background set, so that no
   decoy is rejected merely for having been posed badly.
 - *Tools → Unalign (randomise poses)…* — the control experiment. It gives every molecule a random
@@ -793,6 +795,71 @@ indistinguishable from none.
 What none of it does is replace knowing the conformation: +0.264 against the crystal poses'
 +0.334. The conformational residue is 0.71 Å, and that is where the remaining error comes from.
 
+### What a bounded restart cannot do
+
+The protocol destroys a pose by placing the molecule at random within 2 Å of the site **and giving
+it a uniformly random orientation**. Until 30 October 2026 three of the searches it judges
+restarted by turning the pose they had arrived at by at most about 63°, and restarted twice. A
+bounded turn cannot undo an orientation that was drawn uniformly, however many restarts are spent
+on it, so the measurement was about the starting points of those searches and not about the
+criteria they optimise. The searches now accept an unbounded restart — `--any-orientation` on
+`cmf align`, `--align-any-orientation` on `cmf predict`, and **every restart from a completely
+different orientation** in *Tools → Align by prediction confidence…*, which also removes the
+displacement limit and raises the restarts to twenty, because those are what the measurement
+needed. The protocol itself uses twenty restarts from any orientation.
+
+**Both halves are needed, and the control says why.** The number of restarts and the turn they are
+allowed were varied separately, on two sets, with the confidence criterion alone and the same
+held-out molecules:
+
+| set | restarts, and the turn each may make | median RMSD | within 1 Å | R²pred | the worst molecule |
+|---|---|---:|---:|---:|---:|
+| thrombin | 2, at most 63° | 5.00 Å | 43 % | −2.804 | 7.62 Å |
+| thrombin | 2, any orientation | 0.11 Å | 71 % | −0.014 | 7.62 Å |
+| thrombin | 20, at most 63° | 0.10 Å | 86 % | −0.011 | 7.62 Å |
+| thrombin | 20, any orientation | **0.10 Å** | **100 %** | **+0.440** | **0.33 Å** |
+| mcl1 | 2, at most 63° | 0.29 Å | 62 % | +0.207 | 7.65 Å |
+| mcl1 | 2, any orientation | 0.22 Å | 88 % | +0.249 | 7.63 Å |
+| mcl1 | 20, at most 63° | 0.17 Å | 100 % | +0.387 | 0.34 Å |
+| mcl1 | 20, any orientation | 0.17 Å | 100 % | +0.387 | 0.34 Å |
+
+Either change on its own brings the median down. On thrombin only the two together remove the last
+misplaced molecule, and that molecule is what the prediction depends on: with one ligand of seven
+left 7.6 Å away, R²pred stays at about zero whichever half was changed, and when it comes back
+the same model predicts at +0.440. On mcl1, which never failed outright, twenty restarts are
+enough whichever turn they may make. This is also why the protocol reports the error of the
+prediction beside the RMSD: a median of 0.10 Å can hide a molecule in the wrong site.
+
+```bash
+# the control above: the two settings varied separately, two sets each
+python benchmarks/run_poses.py --sets mcl1 thrombin --restarts 2 --max-rotation-deg 180
+python benchmarks/run_poses.py --sets mcl1 thrombin --restarts 20 --max-rotation-deg 30
+```
+
+What it changes, over the same sixteen FEP sets but with the held-out **conformations taken from
+the crystal**, so that the pose is the only thing left to find:
+
+| method | median RMSD | within 1 Å | recovery | R²pred |
+|---|---:|---:|---:|---:|
+| crystal poses (the ceiling) | 0.00 Å | 100 % | — | +0.334 |
+| scrambled (the floor) | 5.29 Å | 0 % | 0 % | −0.683 |
+| substructure (MCS) | 0.25 Å | 94 % | 95 % | +0.329 |
+| confidence, restarts turned by at most 63° | 1.35 Å | 64 % | 74 % | −0.219 |
+| confidence, restarts from any orientation | **0.11 Å** | **100 %** | **98 %** | **+0.312** |
+
+The confidence criterion reaches the crystal-pose ceiling with no substructure to align on and no
+receptor. No set is worse than it was, and the four sets where it had failed outright are the four
+that gain most: syk 6.26 → 0.13 Å, thrombin 5.00 → 0.10 Å, jnk1 3.49 → 0.10 Å, pde2
+3.14 → 0.12 Å.
+
+Two cautions. This table is about the pose and not the conformation, because it reads the held-out
+conformation from the crystal; the table before it, which regenerates the conformation, is the
+harder and more realistic case, and there the wider search improves the flexible route from
+2.47 Å to 1.51 Å and leaves the substructure-started rows where they were. And an unbounded
+restart is for a molecule whose orientation is genuinely unknown: it needs the displacement guard
+switched off, since a reorientation is a large displacement, and it needs about ten times the
+restarts.
+
 ### Inside the pocket
 
 Both criteria above know only half of the problem. The confidence criterion knows the series and
@@ -814,40 +881,72 @@ cmf predict model.cmf new.sdf --align-variance --align-pocket complex.pdb --pock
 ```
 
 Judged by the protocol above on 4 FEP sets with a receptor structure
-(mcl1, p38, thrombin, tnks2), the held-out poses scrambled and recovered:
+(mcl1, p38, thrombin, tnks2), the held-out poses scrambled and recovered, with the pose search
+restarting twenty times from any orientation. Every number is a mean over the four sets:
 
 | method | median RMSD | within 2 Å | R²pred |
 |---|---:|---:|---:|
 | crystal poses (the ceiling) | 0.00 Å | 100% | +0.335 |
-| scrambled (the floor) | 5.03 Å | 0% | -0.965 |
-| substructure (MCS) | 0.16 Å | 100% | +0.229 |
-| confidence alone | 0.30 Å | 59% | -1.166 |
-| MCS + confidence | 0.10 Å | 100% | +0.286 |
-| pocket alone | 3.93 Å | 31% | -0.805 |
-| pocket + confidence | 2.50 Å | 46% | -0.831 |
-| MCS + pocket + confidence | 0.13 Å | 100% | +0.265 |
+| scrambled (the floor) | 5.00 Å | 0% | -0.965 |
+| substructure (MCS) | 0.24 Å | 100% | +0.229 |
+| confidence alone | 0.11 Å | 100% | +0.286 |
+| MCS + confidence | 0.11 Å | 100% | +0.286 |
+| pocket alone | 1.12 Å | 74% | -0.241 |
+| pocket + confidence | 0.15 Å | 90% | -0.110 |
+| MCS + pocket + confidence | 0.15 Å | 100% | +0.265 |
 
 Per set, the comparison that carries the answer — the receptor added to the confidence criterion,
 with and without a substructure frame to start from:
 
 | set | confidence alone | pocket + confidence | MCS + confidence | MCS + pocket + confidence |
 |---|---:|---:|---:|---:|
-| mcl1 | 0.29 Å | 0.31 Å | 0.17 Å | 0.22 Å |
-| p38 | 0.32 Å | 3.73 Å | 0.09 Å | 0.13 Å |
-| thrombin | 5.00 Å | 7.58 Å | 0.10 Å | 0.14 Å |
-| tnks2 | 0.21 Å | 1.26 Å | 0.07 Å | 0.09 Å |
+| mcl1 | 0.17 Å | 0.22 Å | 0.17 Å | 0.22 Å |
+| p38 | 0.09 Å | 0.12 Å | 0.09 Å | 0.12 Å |
+| thrombin | 0.10 Å | 0.15 Å | 0.10 Å | 0.14 Å |
+| tnks2 | 0.07 Å | 0.11 Å | 0.07 Å | 0.09 Å |
 
-**The receptor term is not worth its cost.** From a scrambled start the confidence criterion alone
-finds the pose on three of the four sets, and adding the complementarity makes it worse on two of
-them and better on none. After a substructure frame every refinement ends within a tenth of an
-ångström of the others, and the predictions differ by less than the sets differ among themselves.
-The joint objective also costs about ten times as much, because the pocket term has no analytic
-gradient and the search falls back on Powell.
+The two left columns repeat the two right ones, and that is the first thing to read here: with a
+search that can find the pose, the criterion no longer depends on the frame it starts from, so the
+substructure start adds nothing to it.
 
-**The problem is the pocket term, not the search method.** At weight zero the joint aligner is the confidence
-objective optimised by a different method, and it recovers the pose as well as the gradient
-search does (0.29 Å on p38 against 0.32 Å).
-Turning the weight up from there is what makes it fail:
+**The receptor term is not worth its cost.** It is behind the confidence criterion on all four
+sets, by 0.03 to 0.05 Å, its predictions are worse (-0.110 against +0.286), and it costs about ten
+times as much, because the pocket term has no analytic gradient and the search falls back on
+Powell. What it no longer does is ruin the pose.
+
+**Before 30 October 2026 these differences were twenty times larger, and the reason was the search
+and not the term.** With two restarts of a bounded turn (*What a bounded restart cannot do*) the
+receptor alone sat at 4.22 Å and the two together at 3.22 Å, against 0.11 Å for the confidence
+criterion: the term costs 0.04 Å and that search cost 3.07 Å. The earlier edition of this manual
+gave 3.93 Å and 2.50 Å for those two rows, which are the medians over the four sets of the same
+measurement; every number in the table above is a mean, as `benchmarks/results/poses/table.md`
+prints them.
+
+**The receptor criterion needs the free orientation more than the confidence criterion does.** On
+mcl1 the number of restarts and the turn they may make were varied separately, with the receptor
+in the objective, on the same 8 held-out ligands. Every number is a distance from the crystal
+pose:
+
+| restarts, and the turn each may make | receptor alone, median | receptor alone, worst molecule | receptor and confidence, median | receptor and confidence, worst molecule |
+|---|---:|---:|---:|---:|
+| 2, at most 30° | 3.00 Å | 7.97 Å | 0.31 Å | 7.89 Å |
+| 20, at most 30° | 1.00 Å | 8.02 Å | 0.31 Å | 7.89 Å |
+| 20, any orientation | **0.93 Å** | 7.82 Å | **0.22 Å** | **0.37 Å** |
+
+The receptor alone gains most from the number of restarts, and one ligand stays about 8 Å from
+its crystal pose whatever the search does: that placement is where the receptor term's own optimum
+is, and none of the three searches moved it. The two criteria together answer the other way round.
+Twenty bounded restarts change nothing, and the one restart setting that recovers the last ligand
+is the one that draws a completely different orientation. The confidence criterion alone on this
+same set is recovered by twenty bounded restarts (the control in *What a bounded restart cannot
+do*), so the receptor term is what holds the pose in an orientation a bounded turn cannot leave.
+This is a second reason to leave `--any-orientation` on wherever `--align-pocket` is used.
+
+**How much of the receptor the pose can stand**, measured at the narrow search and so comparable
+with the figures of the paragraph above rather than with the table at the top of this section. At
+weight zero the joint aligner is the confidence objective optimised by a different method, and it
+recovers the pose as well as the gradient search does (0.29 Å on p38 against 0.32 Å), so the
+optimiser is not what fails. Turning the weight up from there is what makes it fail:
 
 | pocket weight | p38 | tnks2 |
 |---|---:|---:|
@@ -861,6 +960,12 @@ is visible in what complementarity is: a weak prior over six dimensions. A ligan
 site fits it in many placements, so the term adds a broad, multi-modal surface to an objective
 that was already multi-modal, and its optimum is not where the crystal pose is — not with a
 scoring function that has no desolvation, no entropy and no torsional search.
+
+Read that table together with the one at the top of this section. At the narrow search a weight of
+1 costs p38 3.4 Å; at twenty restarts from any orientation the same weight costs 0.03 Å. So what
+the weights measure is how far the receptor term can lead a search that starts from the wrong
+orientation, and the cost of the term itself, measured where the search can find the pose, is the
+0.04 Å above.
 
 The proper use of what is implemented is therefore narrow. `--align-pocket` is for a pose that
 must be defensible **to the receptor** as well as to the model: it will not improve on the
@@ -1502,7 +1607,8 @@ Every number above starts from a crystal pose, and an ensemble should help most 
 *not* known: there it covers uncertainty in the placement and not only motion around a placement
 that is already right. **mcl1** is therefore read that way as well, without a new set. Every
 ligand was posed while it was held out: its pose was destroyed — a random rigid placement
-within 2 Å of the site — and the pocket docking of part C put it back where the
+within 2 Å of the site and a uniformly random orientation — and the pocket docking of part C put
+it back where the
 receptor's own fields prefer it, with no model, no activity of its own and no crystal frame of
 any kind. Each ligand was then simulated from the pose that was found, for the same 2 ns and on
 the same receptor frame as above.
@@ -1510,6 +1616,12 @@ the same receptor frame as above.
 The 25 poses sit a median 1.12 Å from the crystal poses, and that median hides the shape of
 the test: 14 of them are within 1.3 Å, while on the other 11 the docking missed the site, 4.0
 to 8.3 Å away. The table below is as much a reading of that docking as of the ensemble.
+
+**That docking has since been corrected** (*What a bounded restart cannot do*). Missing the site
+on 11 of 25 was the bounded restart and not the scoring function: with twenty restarts from any
+orientation all 25 ligands come back within 2 Å of their crystal poses. The poses read below are
+the old ones, so the numbers are about them; re-posing the set and simulating again from the
+better poses costs 3.4 hours of one consumer GPU and has not been done.
 
 | model | q² | change against the pose that was found | change against the crystal pose |
 | --- | ---: | --- | --- |
@@ -6799,7 +6911,7 @@ cmf align data.sdf --by plane  --pose auto --refine plane --reference 0 --out on
 |---|---|---|
 | `mcs` | the overlap of the maximum common substructure with a reference molecule | a reference, or it takes the first of the most active quarter |
 | `field` | the CMF field similarity to a reference molecule, a model's training set, or the set itself | nothing, but `--restarts` decides how hard it tries |
-| `variance` | the confidence of the model's own prediction — the criterion of *Alignment by prediction confidence* | a model (`--model`), and `--flexible` adds the torsions |
+| `variance` | the confidence of the model's own prediction — the criterion of *Alignment by prediction confidence* | a model (`--model`); `--flexible` adds the torsions, and `--any-orientation` with `--max-rmsd 0` searches orientations as well as placements |
 | `pocket` | that confidence with a complementarity term, $\sigma^2 - w\,[\text{fit} - \text{clash}]$ | a model and a structure; see the warning in *Alignment inside the pocket* |
 | `plane` | nothing, by default: it poses each molecule on a surface $z = 0$ by rule (`--pose flat` or `upright`); with `--pose auto` and `--refine`, the field similarity to one reference pose, moved only as a surface allows | a reference whose input pose is trusted, for `auto` and `--refine`; see *Posed by rule: the surface frame without the slab* |
 

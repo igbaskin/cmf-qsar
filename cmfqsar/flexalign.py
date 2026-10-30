@@ -311,12 +311,14 @@ class FlexibleAligner(VarianceAligner):
     def align_flexible(self, mol, rd: Chem.Mol, restarts: int = 2, seed: int = 0,
                        max_iter: int = 300, apply: bool = True,
                        torsion_start: float = 0.4, conformers: int = 0,
-                       prune_rmsd: float = 0.5) -> VarianceAlignResult:
+                       prune_rmsd: float = 0.5,
+                       any_orientation: bool = False) -> VarianceAlignResult:
         """Place `mol` by confidence, turning its rotatable bonds as well as moving it.
 
         With `conformers`, the generator supplies that many further starting *configurations*,
         each superimposed on the current pose, besides the one the molecule arrived in; the
-        search runs from each and the best is kept.
+        search runs from each and the best is kept.  `any_orientation` has every restart draw a
+        uniformly random orientation; see :meth:`VarianceAligner.align`.
         """
         base = np.array(mol.coords, dtype=float)
         if rd.GetNumAtoms() != len(base):
@@ -343,8 +345,11 @@ class FlexibleAligner(VarianceAligner):
             starts = [np.zeros(6 + n_t)]
             if ci == 0:        # the random restarts belong to the pose the molecule arrived in
                 for _ in range(max(0, restarts)):
+                    # the same draw as before unless the orientation is unknown, so that the
+                    # results measured with the bounded restart are reproduced exactly
+                    rv = Rotation.random(random_state=rng).as_rotvec()
                     starts.append(np.concatenate([
-                        Rotation.random(random_state=rng).as_rotvec() * 0.35,
+                        rv if any_orientation else rv * 0.35,
                         rng.normal(scale=0.8, size=3),
                         rng.normal(scale=torsion_start, size=n_t)]))
             for p0 in starts:
@@ -377,6 +382,7 @@ def flexible_align(mols: Sequence, rdmols: Sequence[Chem.Mol], model,
                    max_rmsd: Optional[float] = 2.0, energy_slack: float = 10.0,
                    energy_weight: float = 1.0, restarts: int = 2, seed: int = 0,
                    max_torsions: int = 12, conformers: int = 5, prune_rmsd: float = 0.5,
+                   any_orientation: bool = False,
                    progress=None, cancel=None) -> List[VarianceAlignResult]:
     """Align every molecule in place by confidence over rigid motion and the rotatable bonds."""
     aligner = FlexibleAligner(model, max_rmsd=max_rmsd, energy_slack=energy_slack,
@@ -387,7 +393,8 @@ def flexible_align(mols: Sequence, rdmols: Sequence[Chem.Mol], model,
             break
         out.append(aligner.align_flexible(mf, rd, restarts=restarts, seed=seed + i,
                                           conformers=conformers,
-                                          prune_rmsd=prune_rmsd))
+                                          prune_rmsd=prune_rmsd,
+                                          any_orientation=any_orientation))
         if progress is not None:
             progress(i + 1, len(mols))
     return out

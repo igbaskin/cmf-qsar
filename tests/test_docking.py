@@ -8,7 +8,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from cmfqsar.docking import (PocketScorer, dock_coords, dock_conformers,  # noqa: E402
-                             dock_dataset, summarise)
+                             dock_dataset, restart_poses, summarise)
 from cmfqsar.fields import FieldSet, FieldSpec, MoleculeFields  # noqa: E402
 
 #: an electrostatic and a steric field, which is all these tests need
@@ -142,3 +142,49 @@ def test_the_tether_radius_can_be_widened():
     assert np.linalg.norm(tight.mean(axis=0) - start) < np.linalg.norm(wide.mean(axis=0) - start)
     assert np.linalg.norm(wide.mean(axis=0) - pocket.coords.mean(axis=0)) < \
         np.linalg.norm(start - pocket.coords.mean(axis=0))
+
+
+# ------------------------------------------------------- the orientation a restart may draw
+
+
+def _angles(starts):
+    """How far each restart turns the conformation, in degrees; the arriving pose is left out."""
+    return np.degrees([np.linalg.norm(p[:3]) for p in starts[1:]])
+
+
+def test_the_arriving_pose_is_always_the_first_thing_tried():
+    starts = restart_poses(5, np.random.RandomState(0))
+    assert len(starts) == 6
+    assert np.allclose(starts[0], np.zeros(6))
+
+
+def test_a_bounded_restart_stays_within_its_angle():
+    angles = _angles(restart_poses(200, np.random.RandomState(0), max_rotation_deg=30.0))
+    assert angles.max() <= 30.0 + 1e-6
+    assert angles.min() >= 0.0
+
+
+def test_a_restart_draws_any_orientation_at_180_degrees():
+    """A pose whose orientation is unknown cannot be found by perturbing the wrong one."""
+    angles = _angles(restart_poses(400, np.random.RandomState(0), max_rotation_deg=180.0))
+    assert angles.max() > 150.0
+    assert (angles > 90.0).mean() > 0.5
+    # a uniformly random orientation turns by about 126 degrees on average
+    assert 110.0 < angles.mean() < 140.0
+
+
+def test_no_restarts_leaves_only_the_arriving_pose():
+    for rotation in (30.0, 180.0):
+        starts = restart_poses(0, np.random.RandomState(0), max_rotation_deg=rotation)
+        assert len(starts) == 1
+
+
+def test_the_orientation_setting_reaches_the_search():
+    """The same seed and the same restarts search different poses once any turn is allowed."""
+    pocket = _fields([[-7.0, 0, 0], [7.0, 0, 0]], [-1.0, +1.0], name="pocket")
+    probe = _fields([[1.5, 0, 0], [-1.5, 0, 0]], [+1.0, -1.0])
+    near, r_near = dock_coords(probe, pocket, FS, restarts=8, seed=0, max_rotation_deg=30.0)
+    far, r_far = dock_coords(probe, pocket, FS, restarts=8, seed=0, max_rotation_deg=180.0)
+    assert not np.allclose(near, far), "a wider set of starting orientations finds another pose"
+    for res in (r_near, r_far):
+        assert res.score_after >= res.score_before, "a search never returns a worse pose"

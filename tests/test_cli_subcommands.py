@@ -97,6 +97,47 @@ def test_align_by_confidence_lowers_the_variance(tmp_path, capsys):
         assert after <= before + 1e-9       # the criterion never gets worse
 
 
+def test_align_from_any_orientation_reaches_the_search(tmp_path, capsys, monkeypatch):
+    """The option is useless if it stops at the command line, so follow it to the aligner."""
+    from cmfqsar import varalign
+
+    data, model = _model(tmp_path)
+    seen = {}
+    monkeypatch.setattr(varalign, "variance_align",
+                        lambda mols, mdl, **kw: seen.update(kw) or [])
+    main(["align", data, "--by", "variance", "--model", model, "--max-rmsd", "0",
+          "--any-orientation", "--restarts", "3"])
+    assert seen["any_orientation"] is True
+    assert seen["restarts"] == 3
+    seen.clear()
+    main(["align", data, "--by", "variance", "--model", model, "--max-rmsd", "0"])
+    assert seen["any_orientation"] is False
+
+
+def test_align_says_the_guard_would_undo_any_orientation(tmp_path, capsys, monkeypatch):
+    """A reorientation is a large displacement, so the two options work against each other."""
+    from cmfqsar import varalign
+
+    data, model = _model(tmp_path)
+    monkeypatch.setattr(varalign, "variance_align", lambda mols, mdl, **kw: [])
+    main(["align", data, "--by", "variance", "--model", model, "--max-rmsd", "2",
+          "--any-orientation"])
+    assert "--max-rmsd 0" in capsys.readouterr().out
+
+
+def test_predict_passes_any_orientation_to_the_aligner(tmp_path, capsys, monkeypatch):
+    from cmfqsar import varalign
+
+    data, model = _model(tmp_path)
+    seen = {}
+    monkeypatch.setattr(varalign, "variance_align",
+                        lambda mols, mdl, **kw: seen.update(kw) or [])
+    main(["predict", model, data, "--align-variance", "0", "--align-any-orientation",
+          "--align-restarts", "4"])
+    assert seen["any_orientation"] is True
+    assert seen["restarts"] == 4
+
+
 def test_align_by_confidence_needs_a_model(tmp_path):
     data = _set(os.path.join(str(tmp_path), "in.sdf"))
     with pytest.raises(SystemExit, match="needs --model"):

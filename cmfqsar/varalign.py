@@ -160,8 +160,15 @@ class VarianceAligner:
 
     # ------------------------------------------------------------------ optimisation
     def align(self, mol: MoleculeFields, restarts: int = 2, seed: int = 0,
-              max_iter: int = 200, apply: bool = True) -> VarianceAlignResult:
-        """Find the rigid-body pose of `mol` that minimises the posterior variance."""
+              max_iter: int = 200, apply: bool = True,
+              any_orientation: bool = False) -> VarianceAlignResult:
+        """Find the rigid-body pose of `mol` that minimises the posterior variance.
+
+        A restart turns the arriving pose by at most about 63 degrees, which is what a molecule
+        already placed in the site needs.  With `any_orientation` every restart draws a uniformly
+        random orientation instead: a pose whose orientation is unknown cannot be found by
+        perturbing the wrong one, however many restarts are spent on it.
+        """
         X0 = np.array(mol.coords, dtype=float)
         c = X0.mean(axis=0)
         sp, kself = self._self_terms(mol)
@@ -174,7 +181,10 @@ class VarianceAligner:
         starts = [np.zeros(6)]
         rng = np.random.RandomState(seed)
         for _ in range(max(0, restarts)):
-            starts.append(np.concatenate([Rotation.random(random_state=rng).as_rotvec() * 0.35,
+            # the same draw as before unless the orientation is unknown, so that the results
+            # measured with the bounded restart are reproduced exactly
+            rv = Rotation.random(random_state=rng).as_rotvec()
+            starts.append(np.concatenate([rv if any_orientation else rv * 0.35,
                                           rng.normal(scale=0.8, size=3)]))
         best = None
         for p0 in starts:
@@ -202,7 +212,7 @@ class VarianceAligner:
 
 
 def variance_align(mols: Sequence[MoleculeFields], model, max_rmsd: Optional[float] = 2.0,
-                   restarts: int = 2, seed: int = 0,
+                   restarts: int = 2, seed: int = 0, any_orientation: bool = False,
                    progress: Optional[Callable[[int, int], None]] = None,
                    cancel: Optional[Callable[[], bool]] = None) -> List[VarianceAlignResult]:
     """Align every molecule of `mols` in place by minimising the model's posterior variance."""
@@ -211,7 +221,8 @@ def variance_align(mols: Sequence[MoleculeFields], model, max_rmsd: Optional[flo
     for i, mol in enumerate(mols):
         if cancel is not None and cancel():
             break
-        out.append(aligner.align(mol, restarts=restarts, seed=seed + i))
+        out.append(aligner.align(mol, restarts=restarts, seed=seed + i,
+                                 any_orientation=any_orientation))
         if progress is not None:
             progress(i + 1, len(mols))
     return out

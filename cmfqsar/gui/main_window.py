@@ -117,9 +117,21 @@ class VarianceAlignDialog(QDialog):
                                  "its maximum-common-substructure alignment (0 = no limit)")
         form.addRow("Max. displacement:", self.spin_max)
         self.spin_restarts = QSpinBox()
-        self.spin_restarts.setRange(0, 20)
+        self.spin_restarts.setRange(0, 50)
         self.spin_restarts.setValue(2)
         form.addRow("Random restarts:", self.spin_restarts)
+        self.chk_any = QCheckBox("every restart from a completely different orientation")
+        self.chk_any.setToolTip(
+            "<p>For molecules whose orientation is not known, for example structures built from "
+            "SMILES. Without it a restart turns the current pose by at most about 63 degrees, "
+            "which is what a molecule already placed in the site needs and which cannot recover "
+            "an orientation that was never known.</p>"
+            "<p>On the pose benchmark, with 20 restarts and no displacement limit, this is the "
+            "difference between a median 1.35 A from the crystal pose and 0.11 A. Ticking it "
+            "therefore removes the displacement limit and raises the restarts to 20, because a "
+            "reorientation is a large displacement and one orientation is not enough.</p>")
+        self.chk_any.toggled.connect(self._any_toggled)
+        form.addRow("", self.chk_any)
         self.chk_flexible = QCheckBox("turn the rotatable bonds as well")
         self.chk_flexible.setToolTip(
             "<p>Search the conformation together with the pose, which is the 2019 proposal in "
@@ -162,6 +174,16 @@ class VarianceAlignDialog(QDialog):
     def _flex_toggled(self, on: bool) -> None:
         for w in (self.spin_conformers, self.spin_slack):
             w.setEnabled(bool(on))
+
+    def _any_toggled(self, on: bool) -> None:
+        """Set the two options the measurement needed with it, and say so in the tool tip."""
+        if on:
+            self.spin_max.setValue(0.0)              # the special value: no limit
+            if self.spin_restarts.value() < 20:
+                self.spin_restarts.setValue(20)
+
+    def any_orientation(self) -> bool:
+        return bool(self.chk_any.isChecked())
 
     def flexible(self) -> bool:
         return bool(self.chk_flexible.isChecked())
@@ -3566,6 +3588,7 @@ class MainWindow(QMainWindow):
             return
         max_rmsd, restarts = dlg.max_rmsd(), dlg.spin_restarts.value()
         flexible, conformers = dlg.flexible(), dlg.conformers()
+        anywhere = dlg.any_orientation()
         slack = dlg.energy_slack()
         self._remember_poses("Align by prediction confidence")
         model, fs = self.model, self.model.fieldset
@@ -3574,6 +3597,9 @@ class MainWindow(QMainWindow):
             self.log(f"Aligning by confidence over rigid motion and the rotatable bonds"
                      + (f", from {conformers} generated conformations" if conformers else "")
                      + f"; strain allowance {slack:g} kcal/mol")
+        if anywhere:
+            self.log(f"Every one of the {restarts} restarts starts from another orientation, so "
+                     f"the pose the molecule arrives in decides nothing")
 
         def task(progress, cancel):
             mf = [build_fields(mols[i], fs, names[i]) for i in idx]
@@ -3582,11 +3608,12 @@ class MainWindow(QMainWindow):
                 from ..flexalign import flexible_align
                 res = flexible_align(mf, [mols[i] for i in idx], model, max_rmsd=max_rmsd,
                                      restarts=restarts, energy_slack=slack,
-                                     conformers=conformers, progress=report, cancel=cancel)
+                                     conformers=conformers, any_orientation=anywhere,
+                                     progress=report, cancel=cancel)
             else:
                 from ..varalign import variance_align
                 res = variance_align(mf, model, max_rmsd=max_rmsd, restarts=restarts,
-                                     progress=report, cancel=cancel)
+                                     any_orientation=anywhere, progress=report, cancel=cancel)
             return mf, res
 
         def done(out):

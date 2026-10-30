@@ -2,6 +2,8 @@
 import os
 import sys
 
+from types import SimpleNamespace
+
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -174,6 +176,36 @@ def test_unalign_then_variance_align_recovers_the_pose():
     recovered = float(np.sqrt(((probe.coords - reference) ** 2).sum(1).mean()))
     assert moved > 0.8                       # the scramble really displaced the molecule
     assert recovered < 0.2 * moved and recovered < 0.3
+
+
+def test_what_the_restarts_start_from(monkeypatch):
+    """Plan item C1: a bounded restart turns the arriving pose by at most about 63 degrees.
+
+    That is what a molecule already placed in the site needs, and it cannot recover an orientation
+    the pose protocol drew uniformly, which is why `any_orientation` exists. The claim about
+    recovery is measured on the sixteen FEP sets; what is fixed here is the starting points the
+    option gives the optimiser, because the eight small molecules of this file are nearly
+    symmetric and their variance surface has no wrong optimum to be trapped in.
+    """
+    import cmfqsar.varalign as va
+
+    model, fs, mols = _model()
+    starts = []
+
+    def fake(fun, p0, **kw):
+        starts.append(np.asarray(p0, float).copy())
+        return SimpleNamespace(x=np.zeros_like(p0), fun=float(fun(p0)[0]), nit=0, success=True)
+
+    monkeypatch.setattr(va, "minimize", fake)
+    for anywhere, lo, hi in ((False, 0.0, 63.0), (True, 115.0, 180.1)):
+        starts.clear()
+        probe = build_fields(mols[4], fs, "probe")
+        variance_align([probe], model, max_rmsd=None, restarts=40, seed=0,
+                       any_orientation=anywhere)
+        turns = np.degrees([np.linalg.norm(p[:3]) for p in starts if np.any(p[:3])])
+        assert len(turns) >= 40, "every restart must reach the optimiser"
+        assert turns.max() <= hi
+        assert lo <= float(np.mean(turns)) <= hi
 
 
 def test_cv_training_alignment_runs_and_reports_diagnostics():

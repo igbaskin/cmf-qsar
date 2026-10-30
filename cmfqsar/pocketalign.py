@@ -107,8 +107,13 @@ class PocketAligner:
         return obj, var, poc, X
 
     def align(self, mol: MoleculeFields, restarts: int = 2, seed: int = 0,
-              max_iter: int = 300, apply: bool = True) -> PocketAlignResult:
-        """Find the pose that the model and the pocket agree on."""
+              max_iter: int = 300, apply: bool = True,
+              any_orientation: bool = False) -> PocketAlignResult:
+        """Find the pose that the model and the pocket agree on.
+
+        `any_orientation` has every restart draw a uniformly random orientation instead of turning
+        the arriving pose by at most about 63 degrees; see :meth:`VarianceAligner.align`.
+        """
         scorer = PocketScorer(mol, self.pocket, self.fieldset, **self.scorer_kw)
         X0 = np.array(mol.coords, float)
         c = X0.mean(axis=0)
@@ -122,7 +127,10 @@ class PocketAligner:
         starts = [np.zeros(6)]
         rng = np.random.RandomState(seed)
         for _ in range(max(0, restarts)):
-            starts.append(np.concatenate([Rotation.random(random_state=rng).as_rotvec() * 0.35,
+            # the same draw as before unless the orientation is unknown, so that the results
+            # measured with the bounded restart are reproduced exactly
+            rv = Rotation.random(random_state=rng).as_rotvec()
+            starts.append(np.concatenate([rv if any_orientation else rv * 0.35,
                                           rng.normal(scale=0.8, size=3)]))
         best = None
         for p0 in starts:
@@ -149,7 +157,8 @@ class PocketAligner:
 
 def pocket_align(mols: Sequence[MoleculeFields], model, pocket: MoleculeFields,
                  pocket_weight: float = POCKET_WEIGHT, max_rmsd: Optional[float] = 2.0,
-                 restarts: int = 2, seed: int = 0, fieldset: Optional[FieldSet] = None,
+                 restarts: int = 2, seed: int = 0, any_orientation: bool = False,
+                 fieldset: Optional[FieldSet] = None,
                  progress: Optional[Callable[[int, int], None]] = None,
                  cancel: Optional[Callable[[], bool]] = None,
                  **scorer_kw) -> List[PocketAlignResult]:
@@ -160,7 +169,8 @@ def pocket_align(mols: Sequence[MoleculeFields], model, pocket: MoleculeFields,
     for i, mol in enumerate(mols):
         if cancel is not None and cancel():
             break
-        out.append(aligner.align(mol, restarts=restarts, seed=seed + i))
+        out.append(aligner.align(mol, restarts=restarts, seed=seed + i,
+                                 any_orientation=any_orientation))
         if progress is not None:
             progress(i + 1, len(mols))
     return out
