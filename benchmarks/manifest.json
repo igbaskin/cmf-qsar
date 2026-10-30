@@ -1,6 +1,6 @@
 {
- "commit": "f82c592880584b19e6473e189a6d39eb294eb3bd",
- "created": "2026-10-30T15:44:47",
+ "commit": "c0a1364464193ef81970ee5d9de0152255a2c75b",
+ "created": "2026-10-30T17:55:47",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2406,7 +2406,10 @@
   "benchmarks/results/poses/p38_pocket_r20.json": "d32828fea9f06e4e3787dc7bf9b80d82e0c5bed21212df77384fe20be3628b55",
   "benchmarks/results/poses/p38_pocket_w0.json": "c3cae46ced900a9cd9c3b742869b766b147527744798bb5acb621449e39df1b5",
   "benchmarks/results/poses/p38_pocket_w025.json": "c6942c5a75ff02960780bec4028343e54331473652786ad09dec2846edb6d36a",
+  "benchmarks/results/poses/p38_pocket_w025_r20.json": "b77e94437be913c6e4af5e34ce61c9dfbd83aed837beb12bf1c24c487162a9de",
+  "benchmarks/results/poses/p38_pocket_w0_r20.json": "a560fba6e278dbad09e819ba1a205d600391346f1fe8ff33fa0ff16c20f4de3d",
   "benchmarks/results/poses/p38_pocket_w4.json": "fc31acbcc8901e9d42df07125771df5244c8c6411a211b90a1877f6b3d9d7337",
+  "benchmarks/results/poses/p38_pocket_w4_r20.json": "1b831ff1aac466ba0a980853d1abb2b59002afbce956779e6c5087e1097c1cee",
   "benchmarks/results/poses/p38_r20.json": "8833cf5744cabe22c053e24b977b0462866d723021fd610a2eb4fbc64607a68d",
   "benchmarks/results/poses/pde10.json": "1c61161d62bb4e37f91f39602b6f45fd01941b5100cae3431be2600ff4f4ce10",
   "benchmarks/results/poses/pde10_fg.json": "3b36960ea4f33d167004d41075465ab015dc18ec4d0a53516843247af6181307",
@@ -2474,7 +2477,10 @@
   "benchmarks/results/poses/tnks2_pocket_r20.json": "83d44ba3be79ef7596ef7261636e91a8f37008c9690dc43feb38fc03f2d2d5bf",
   "benchmarks/results/poses/tnks2_pocket_w0.json": "aba52fd3b144a6c34530ae35de4bc6781f7dc090a5b17ecbefdbe326bc69e561",
   "benchmarks/results/poses/tnks2_pocket_w025.json": "a134bf468bbabdc46dd5cb4261cff08f7bbf258627f86d2c5b13db66a37e96db",
+  "benchmarks/results/poses/tnks2_pocket_w025_r20.json": "84688ddd9969eb71d51a0d66dec994a07ab94dd0c52075a425f3bd2709928d20",
+  "benchmarks/results/poses/tnks2_pocket_w0_r20.json": "90ae2da96167e1d6ece3ff91ec803839de7f4bc7d39915e8e920547be6fc1fd0",
   "benchmarks/results/poses/tnks2_pocket_w4.json": "cd14b9f657e53af848018b6756cc75381d64bb5a43d3031e7249ec425883f376",
+  "benchmarks/results/poses/tnks2_pocket_w4_r20.json": "e0b4dc57579bef33f57c9c57e970c7728ef454aa51fdda581e1132da16e5b426",
   "benchmarks/results/poses/tnks2_r20.json": "d26c803a2d0a83a113d8acf6a548ec247dc178104baa2592ab3d05b710ef1617",
   "benchmarks/results/protonation/0_c1ccccc1__ph0.json": "6cbcd945419b62d60b4e76d8b469a5c65d97a03331621e225b54f84029eb1e4e",
   "benchmarks/results/protonation/0_c1ccccc1__ph3.json": "e7fe9d8e9eebdb0329abe8362578f42b4b74e135b52584f3c9f666819c2587a9",

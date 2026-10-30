@@ -580,10 +580,23 @@ can judge it.
   an orientation that a bounded turn cannot leave, while the confidence criterion alone on this set
   is recovered by 20 bounded restarts. This is a second reason to keep the free orientation on
   wherever the receptor term is used.
+  **The weight sweep repeated at the corrected search, 30 October 2026**
+  (`{p38,tnks2}_pocket_w{0,025,4}_r20.json`, the joint aligner only, since the weight changes no
+  other method). Median distance, narrow search then corrected search: p38 0.29 -> 0.09 A at weight
+  0, 3.52 -> 0.10 at 0.25, 3.73 -> 0.12 at 1, 3.63 -> 0.24 at 4; tnks2 0.07 -> 0.07, 0.11 -> 0.09,
+  1.26 -> 0.11, 1.32 -> 0.27. So the first sweep measured the search and not the weight, and the
+  answer to the question the item asked is that the weight no longer matters for the median. It
+  still matters for one molecule: on tnks2 the worst of the eight distances is 0.33 A at weight zero
+  and 2.59 A at weight 0.25, and that single ligand takes R2pred from +0.212 to -0.422 (-0.517 at
+  weight 4), against +0.291 for the crystal poses. On p38 no weight loses a molecule and R2pred
+  stays at the crystal value. Weight zero also serves as the control of the two optimisers at the
+  corrected search: 0.09 A on p38 and 0.07 A on tnks2 are the numbers the confidence criterion alone
+  gives, so the joint optimiser is not what fails.
   **Not done:** the flexible version (freeing the torsions made the confidence criterion work in C2 and
   might do the same here), an analytic gradient for the pocket term, the sets without a receptor,
-  which is most of them, and the weight sweep repeated at the corrected search, which would say
-  whether the weight still matters once the search can find the pose.
+  which is most of them, and the two kinds of section of the pose table that are
+  still measured at the narrow search alone: the five-conformer flexible runs and the `_fg`
+  field-point runs.
 * **C4. Training-set co-alignment done properly.** The present iteration (fit, realign, refit)
   contracts the ensemble and degrades one set in four. Treat it as what it is, an expectation-
   maximisation over poses, and regularise it: the displacement guard, a leave-one-out variance so no

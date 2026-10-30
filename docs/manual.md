@@ -942,30 +942,43 @@ same set is recovered by twenty bounded restarts (the control in *What a bounded
 do*), so the receptor term is what holds the pose in an orientation a bounded turn cannot leave.
 This is a second reason to leave `--any-orientation` on wherever `--align-pocket` is used.
 
-**How much of the receptor the pose can stand**, measured at the narrow search and so comparable
-with the figures of the paragraph above rather than with the table at the top of this section. At
-weight zero the joint aligner is the confidence objective optimised by a different method, and it
-recovers the pose as well as the gradient search does (0.29 Å on p38 against 0.32 Å), so the
-optimiser is not what fails. Turning the weight up from there is what makes it fail:
+**How much of the receptor the pose can stand.** The weight of the receptor term was varied on two
+sets, first at the narrow search of two bounded restarts and then, on 30 October 2026, at the
+corrected search of twenty restarts from any orientation. Weight zero is the control: the joint
+aligner is then the confidence objective optimised by a different method, and at the corrected
+search it gives 0.09 Å on p38 and 0.07 Å on tnks2, which are the two numbers the confidence
+criterion alone gives in the table at the top of this section. Median distance from the crystal
+pose, the receptor and the confidence together:
 
-| pocket weight | p38 | tnks2 |
-|---|---:|---:|
-| 0  (the confidence criterion alone) | 0.29 Å | 0.07 Å |
-| 0.25 | 3.52 Å | 0.11 Å |
-| 1 | 3.73 Å | 1.26 Å |
-| 4 | 3.63 Å | 1.32 Å |
+| weight of the receptor term | p38, narrow search | p38, corrected search | tnks2, narrow search | tnks2, corrected search |
+|---|---:|---:|---:|---:|
+| 0 (the confidence criterion alone) | 0.29 Å | 0.09 Å | 0.07 Å | 0.07 Å |
+| 0.25 | 3.52 Å | 0.10 Å | 0.11 Å | 0.09 Å |
+| 1 | 3.73 Å | 0.12 Å | 1.26 Å | 0.11 Å |
+| 4 | 3.63 Å | 0.24 Å | 1.32 Å | 0.27 Å |
 
-On p38 any amount of the receptor destroys the recovery; on tnks2 it degrades it mildly. The reason
-is visible in what complementarity is: a weak prior over six dimensions. A ligand that fits a
-site fits it in many placements, so the term adds a broad, multi-modal surface to an objective
-that was already multi-modal, and its optimum is not where the crystal pose is — not with a
-scoring function that has no desolvation, no entropy and no torsional search.
+The weight-1 row of the two corrected columns is the *pocket + confidence* row of the table at the
+top of this section, measured in the same run as the rest of that table.
 
-Read that table together with the one at the top of this section. At the narrow search a weight of
-1 costs p38 3.4 Å; at twenty restarts from any orientation the same weight costs 0.03 Å. So what
-the weights measure is how far the receptor term can lead a search that starts from the wrong
-orientation, and the cost of the term itself, measured where the search can find the pose, is the
-0.04 Å above.
+At the narrow search any amount of the receptor destroyed the recovery on p38 and degraded it on
+tnks2. At the corrected search the largest weight costs 0.2 Å of the median, so most of what the
+first sweep measured was the search and not the weight. What the weight still costs is one
+molecule. On tnks2 the eight distances end at 0.33 Å at weight zero; at weight 0.25 one ligand
+sits at 2.59 Å and at weight 4 the same ligand at 2.56 Å, and that one molecule takes R²pred
+from +0.212 to −0.422 and −0.517, against +0.291 for the crystal poses. On p38 no weight loses a
+molecule (every distance stays under 0.65 Å) and R²pred stays at the crystal value (+0.105,
++0.109 and +0.088 against +0.105). So the receptor term no longer spoils the median once the search
+can find the pose, and it can still place one ligand of eight where the protein allows it and the
+crystal does not.
+
+The reason the narrow search failed so widely is visible in what complementarity is: a weak prior
+over six dimensions. A ligand that fits a site fits it in many placements, so the term adds a
+broad, multi-modal surface to an objective that was already multi-modal, and its optimum is not
+where the crystal pose is — not with a scoring function that has no desolvation, no entropy and no
+torsional search. A search that starts from the wrong orientation follows that surface to the wrong
+placement; a search with twenty free restarts does not have to. What the first sweep measured is
+therefore how far the receptor term can lead a search that starts from the wrong orientation, and
+the cost of the term itself, measured where the search can find the pose, is the 0.04 Å above.
 
 The proper use of what is implemented is therefore narrow. `--align-pocket` is for a pose that
 must be defensible **to the receptor** as well as to the model: it will not improve on the

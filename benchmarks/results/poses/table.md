@@ -381,6 +381,75 @@ Fields: `electrostatic`, `steric`, `hydrophobic`, `hba`, `hbd`; alpha 0.5, lambd
 | crystal | 0.00 A | 100% | 100% | - | +0.198 | 0.00 A |
 | pocket+variance | 0.18 A | 83% | 83% | +96% | -0.279 | 0.00 A |
 
+## crystal conformations, pose scrambled, no displacement guard; the receptor pocket of each set, its term weighted 0; the pose search restarts 20 times from any orientation
+
+### Median RMSD to the crystal pose, angstrom
+
+| set | n | crystal | pocket+variance |
+|---|---:|---:|---:|
+| p38 | 29 | 0.00 | 0.09 |
+| tnks2 | 27 | 0.00 | 0.07 |
+
+### External R2pred of the held-out molecules in those poses
+
+| set | n | crystal | pocket+variance |
+|---|---:|---:|---:|
+| p38 | 29 | +0.105 | +0.105 |
+| tnks2 | 27 | +0.291 | +0.212 |
+
+### Mean over the sets
+
+| method | median RMSD | within 1 A | within 2 A | recovery | R2pred | conformer limit |
+|---|---:|---:|---:|---:|---:|---:|
+| crystal | 0.00 A | 100% | 100% | - | +0.198 | 0.00 A |
+| pocket+variance | 0.08 A | 100% | 100% | +98% | +0.158 | 0.00 A |
+
+## crystal conformations, pose scrambled, no displacement guard; the receptor pocket of each set, its term weighted 0.25; the pose search restarts 20 times from any orientation
+
+### Median RMSD to the crystal pose, angstrom
+
+| set | n | crystal | pocket+variance |
+|---|---:|---:|---:|
+| p38 | 29 | 0.00 | 0.10 |
+| tnks2 | 27 | 0.00 | 0.09 |
+
+### External R2pred of the held-out molecules in those poses
+
+| set | n | crystal | pocket+variance |
+|---|---:|---:|---:|
+| p38 | 29 | +0.105 | +0.109 |
+| tnks2 | 27 | +0.291 | -0.422 |
+
+### Mean over the sets
+
+| method | median RMSD | within 1 A | within 2 A | recovery | R2pred | conformer limit |
+|---|---:|---:|---:|---:|---:|---:|
+| crystal | 0.00 A | 100% | 100% | - | +0.198 | 0.00 A |
+| pocket+variance | 0.09 A | 94% | 94% | +98% | -0.156 | 0.00 A |
+
+## crystal conformations, pose scrambled, no displacement guard; the receptor pocket of each set, its term weighted 4; the pose search restarts 20 times from any orientation
+
+### Median RMSD to the crystal pose, angstrom
+
+| set | n | crystal | pocket+variance |
+|---|---:|---:|---:|
+| p38 | 29 | 0.00 | 0.24 |
+| tnks2 | 27 | 0.00 | 0.27 |
+
+### External R2pred of the held-out molecules in those poses
+
+| set | n | crystal | pocket+variance |
+|---|---:|---:|---:|
+| p38 | 29 | +0.105 | +0.088 |
+| tnks2 | 27 | +0.291 | -0.517 |
+
+### Mean over the sets
+
+| method | median RMSD | within 1 A | within 2 A | recovery | R2pred | conformer limit |
+|---|---:|---:|---:|---:|---:|---:|
+| crystal | 0.00 A | 100% | 100% | - | +0.198 | 0.00 A |
+| pocket+variance | 0.26 A | 94% | 94% | +95% | -0.214 | 0.00 A |
+
 ## regenerated conformations, the generated conformation alone, no displacement guard
 
 ### Median RMSD to the crystal pose, angstrom

@@ -1,0 +1,79 @@
+{
+ "set": "p38",
+ "n": 29,
+ "n_train": 20,
+ "n_test": 9,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "alpha": 0.5,
+ "lam": 0.1,
+ "seed": 0,
+ "restarts": 20,
+ "max_rotation_deg": 180.0,
+ "max_rmsd": null,
+ "reconform": false,
+ "conformers": 0,
+ "pocket": 1039,
+ "pocket_weight": 0.0,
+ "activity": {
+  "min": 6.226,
+  "max": 9.0,
+  "sd": 0.6973632964115091
+ },
+ "methods": {
+  "crystal": {
+   "method": "crystal",
+   "n": 9,
+   "median_rmsd": 0.0,
+   "conformer_limit": 0.0,
+   "within_1A": 1.0,
+   "within_2A": 1.0,
+   "recovery": NaN,
+   "r2_pred": 0.10507202036389662,
+   "rmse_pred": 0.7298166704610634,
+   "seconds": 0.0
+  },
+  "pocket+variance": {
+   "method": "pocket+variance",
+   "n": 9,
+   "median_rmsd": 0.09171065667065854,
+   "conformer_limit": 0.0,
+   "within_1A": 1.0,
+   "within_2A": 1.0,
+   "recovery": 0.9817808693888069,
+   "r2_pred": 0.10458060865048735,
+   "rmse_pred": 0.730017016885095,
+   "seconds": 2407.218549489975
+  }
+ },
+ "rmsd": {
+  "crystal": [
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0,
+   0.0
+  ],
+  "pocket+variance": [
+   0.38852345831425134,
+   0.08532974900100325,
+   0.04994061821952755,
+   0.07218575348749652,
+   0.09171065667065854,
+   0.06895125324860202,
+   0.11538567832085912,
+   0.3175761125718831,
+   0.29061486099840783
+  ]
+ },
+ "seconds": 2407.7591304779053
+}

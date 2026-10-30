@@ -483,8 +483,16 @@ def registry() -> List[Benchmark]:
                            ["--sets", "p38", "tnks2", "--pocket", "--pocket-weight", "0.25",
                             "--restarts", "2", "--max-rotation-deg", "30", "--force"],
                            ["--sets", "p38", "tnks2", "--pocket", "--pocket-weight", "4",
-                            "--restarts", "2", "--max-rotation-deg", "30", "--force"]],
-                  minutes="700",
+                            "--restarts", "2", "--max-rotation-deg", "30", "--force"],
+                           # the same three weights at the corrected search. The weight changes the
+                           # joint aligner and no other method, so only that one is computed here
+                           ["--sets", "p38", "tnks2", "--pocket", "--pocket-weight", "0",
+                            "--methods", "pocket+variance", "--force"],
+                           ["--sets", "p38", "tnks2", "--pocket", "--pocket-weight", "0.25",
+                            "--methods", "pocket+variance", "--force"],
+                           ["--sets", "p38", "tnks2", "--pocket", "--pocket-weight", "4",
+                            "--methods", "pocket+variance", "--force"]],
+                  minutes="960",
                   report=lambda: _mod("run_poses").report(_r("poses")),
                   tables=["poses/table.md"]),
         Benchmark("multitask", "two endpoints on one kernel, on the corrosion series",
