@@ -3214,17 +3214,40 @@ What it leaves open, in order:
   few hundred landmarks. Two things the run taught: the landmark path has to run on the compiled
   kernel engine (the NumPy path is single-threaded, and `fit_low_rank` builds the feature map
   three times), and the attenuations were not searched on the 34k set.
-* **PBH2. A NICS-weighted ring field.** `ring:sextet` was meant as the placeholder and turned
-  out the largest single gain; a nucleus-independent chemical shift per ring needs one DFT
-  calculation per ring (`cmfqsar/orca.py` has the per-atom plumbing, not yet ghost atoms at ring
-  centres) and has to beat the sextet share, not the set without it.
-* **PBH3. Peri-condensed systems (COMPAS-3)**: `C.3r` carbons and rings with adjacent shared
-  bonds (`peri` in `ring_classes`) appear; the typing and the ring classes are written for them
-  and untested on them.
-* **PBH4. Hetero-atom systems (COMPAS-2)**: indicator fields per hetero-atom type, which the
-  `element+aromatic` scheme already gives, and the electrostatic field gains meaning.
-* **PBH5. Δ-learning xTB → DFT**: COMPAS-1x carries xTB-to-DFT-corrected values; the
-  multi-task model (`cmfqsar/multitask.py`) on the two levels is the natural form.
+* **PBH2. A NICS-weighted ring field, replaced by a geometric one and calibrated (30 October
+  2026).** A NICS field for the set is a week of serial ORCA on one desktop (5.5 min per six-ring
+  molecule), so the field built is the HOMA index of every ring from the bond lengths of the DFT
+  geometry (`ring:homa`, group F), and NICS(1) was computed for the 179 molecules of up to seven
+  rings as its calibration (`--stage nics`): r = −0.77 between HOMA and NICS(1)zz over 1,158
+  rings, −0.50 for the Clar share; the linear rings are the most shielded by NICS and not the
+  most bond-equalised by HOMA, so a NICS field would weight them more. The HOMA field beats the Clar field in
+  the linear model by the MAE (0.097 against 0.108 eV) and on the size splits (R² 0.83 against
+  0.70 on the ten-ring molecules); the two together under the Gaussian layer give 0.050 eV MAE
+  and R² 0.93 on the ten-ring molecules. The sum of the HOMA indices added to the counts takes
+  the additivity scheme from 0.70 to 0.80. What is left is the NICS field itself on a cluster,
+  and HOMA parameters for bonds to boron.
+* **PBH3. Peri-condensed systems (COMPAS-3), done (30 October 2026)**: 8,844 molecules, the
+  `C.3r` carbons and the fifth annulation class `peri` (every molecule holds one). The picture
+  of COMPAS-1D repeats: ring classes alone 0.46, with the Clar field 0.83, with Clar and HOMA
+  0.90 (linear), 0.097 eV RMSE and 0.072 eV MAE with the layer, R² 0.86 on the 6,891 ten-ring
+  molecules from 1,953 smaller ones (descriptor forest −2.3). The linear four-group model is
+  ill-conditioned on this set (a float64 refit moves one test prediction by 0.89 eV), so its
+  per-ring reading is not usable here.
+* **PBH4. Hetero-atom systems (COMPAS-2), measured on a 10,000-molecule subset (30 October
+  2026)**: atom types N, N.H, O, S, B, B.H, one ring field per ring type (group R), the HOMA
+  field, no Clar field. The best layered model explains 69 % of the variance (0.38 eV RMSE on a
+  spread of 0.68 eV; 0.60 on the ten-ring molecules, against 0.56 and 0.43 for the descriptor
+  forest and 0.51 and 0.36 for the additivity scheme); the steric attenuation goes to the
+  narrow end of its grid and the ridge to a hundred times that of the benzenoid sets or more,
+  because the inertia frame depends on the masses and molecules of
+  one skeleton with different hetero atoms do not lie on top of each other. The next item on this
+  set is a frame from the skeleton, not from the masses; the full 52,000 go through the landmark
+  path unchanged.
+* **PBH5. Δ-learning xTB → DFT, done in the residual form (30 October 2026)**: a straight line
+  in the GFN2-xTB gap leaves 0.047 eV RMSE and 0.036 eV MAE; the layered field model on the
+  residual reaches 0.026 ± 0.002 eV RMSE and 0.018 ± 0.001 eV MAE (0.030 eV on the ten-ring
+  molecules), inside the range of the published graph networks for one xTB calculation per
+  molecule. The multi-task form (`cmfqsar/multitask.py`) was not run.
 * **PBH6. The grids, which is now the first item.** The published geometric graph networks
   (Weiss et al., J. Org. Chem. 2023, Table 1) reach a test MAE of 0.011 to 0.022 eV on the same
   8,678 molecules and a random split like ours; the sequence model on augmented annulation
@@ -3243,6 +3266,12 @@ What it leaves open, in order:
   what is left to measure is Shapley values as its per-ring reading and a wider grid of layer
   widths (the chosen gamma sat at the widest end on every split). Nothing published measures
   the size-extrapolation split, which stays the field model's own claim.
+* **PBH7. Planarity and reflection.** Measured on 30 October 2026: 89 % of the COMPAS-1D
+  molecules have a heavy atom more than 0.5 Å from their best plane (median 1.48 Å), most
+  ten-ring cata-condensed isomers holding a fjord; COMPAS-3D median 1.21 Å. The frame is defined
+  for them, but a mirror image lands in the mirrored frame and the model is not symmetric under
+  reflection although the gap is. A kernel averaged over the two faces (the z-flip of one
+  molecule) is one line and was not run.
 
 ### CMF–neural device integration (30 October 2026)
 

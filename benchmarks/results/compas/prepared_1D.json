@@ -43428,5 +43428,10 @@
  "frame": "cmfqsar.pbh.canonical_frame (heavy-atom inertia tensor, sign rule)",
  "seconds": 489.2344400882721,
  "sdf": "C:\\Users\\baski\\work\\claude\\cmf\\benchmarks\\cache\\compas\\compas-1D.sdf",
- "date": "2026-10-29"
+ "date": "2026-10-29",
+ "max_out_of_plane_A": {
+  "median": 1.4797,
+  "p95": 2.914,
+  "max": 4.1516
+ }
 }

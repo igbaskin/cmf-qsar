@@ -499,12 +499,36 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_matbench_phonons").report(_r("matbench_phonons/table.md")),
                   tables=["matbench_phonons/table.md"],
                   readme=["Crystals: the periodic autocorrelation"]),
-        Benchmark("compas", "the HOMO-LUMO gap of the cata-condensed polybenzenoid hydrocarbons of "
-                  "COMPAS-1D in a frame given by rule: steric, electrostatic, atom-class and "
-                  "ring-class indicator fields, baselines, co-fields and per-ring contributions "
-                  "(downloads the 27 MB of COMPAS-1 into benchmarks/cache on the first run; needs "
-                  "xtb for the charges, or --charges gasteiger)",
-                  "run_compas.py", "compas", compute=[["--jobs", "12"]], minutes="240",
+        Benchmark("compas", "the HOMO-LUMO gap of the polybenzenoid hydrocarbons of COMPAS-1D in a "
+                  "frame given by rule: steric, electrostatic, atom-class, ring-class, Clar-sextet and "
+                  "HOMA ring fields, the Gaussian kernel layer, baselines, co-fields and per-ring "
+                  "contributions; Delta-learning from the GFN2-xTB gap; NICS(1) of the small molecules "
+                  "(ORCA); the landmark model on COMPAS-1x; the peri-condensed set COMPAS-3D and a "
+                  "10,000-molecule subset of the hetero-atom set COMPAS-2D (downloads about 400 MB of "
+                  "COMPAS into benchmarks/cache on the first run; needs xtb for the charges, or "
+                  "--charges gasteiger)",
+                  "run_compas.py", "compas",
+                  compute=[["--jobs", "12"],
+                           ["--stage", "fields", "--sets", "ABCDF,ABCDEF", "--layer", "gauss",
+                            "--splits", "random0,random1,random2,size8,size9,size10"],
+                           ["--stage", "fields", "--sets", "ABCDE", "--layer", "gauss", "--targets",
+                            "DELTA_eV", "--splits", "random0,random1,random2,size8,size9,size10"],
+                           ["--stage", "baselines", "--force"],
+                           ["--stage", "resolution"],
+                           ["--stage", "nics", "--jobs", "10"],
+                           ["--stage", "scaling", "--set", "1x", "--jobs", "12"],
+                           ["--set", "3D", "--stage", "prepare", "--jobs", "12"],
+                           ["--set", "3D", "--stage", "kernels"],
+                           ["--set", "3D", "--stage", "fields", "--layer", "gauss",
+                            "--splits", "random0,random1,random2,size8,size9,size10"],
+                           ["--set", "3D", "--stage", "baselines"],
+                           ["--set", "3D", "--stage", "interpret"],
+                           ["--set", "2D", "--stage", "prepare", "--jobs", "12"],
+                           ["--set", "2D", "--stage", "kernels"],
+                           ["--set", "2D", "--stage", "fields", "--layer", "gauss",
+                            "--splits", "random0,random1,random2,size8,size9,size10"],
+                           ["--set", "2D", "--stage", "baselines"]],
+                  minutes="900",
                   report=lambda: _mod("run_compas").report(_r("compas/table.md")),
                   tables=["compas/table.md"],
                   readme=["A frame by rule: the gap of polybenzenoid hydrocarbons"]),

@@ -24,12 +24,20 @@ reduced to a rule.  This module holds what that study needs beyond the ordinary 
   by the ``ring:<class>`` fields, which is what ``ring:terminal`` and the rest mean in a field set;
 * :func:`ring_contributions` sums decomposition rule 3 over the atoms of every ring.
 
-Everything here is read by ``benchmarks/run_compas.py``; see the manual, section "A gap, not an
-affinity: polybenzenoid hydrocarbons".
+The same machinery serves the later COMPAS sets: the peri-condensed benzenoids of COMPAS-3
+(a fifth annulation class, ``peri``, for a ring whose shared bonds touch) and the hetero-atom
+systems of COMPAS-2 (rings of four to six atoms with B, N, O or S, typed by ring type; read by
+:func:`read_compas2` from the SDF of that set).  :func:`ring_classes` also gives every ring its
+HOMA index, the harmonic-oscillator measure of aromaticity computed from the bond lengths
+alone, which the ``ring:homa`` field uses as weight.
+
+Everything here is read by ``benchmarks/run_compas.py``; see the manual, section "A frame by
+rule: the gap of polybenzenoid hydrocarbons".
 """
 from __future__ import annotations
 
 import csv
+import gzip
 import math
 import os
 import tarfile
@@ -59,6 +67,23 @@ COMPAS_TEXT = ("smiles", "lalas", "augmented_lalas", "balaban_notation")
 #: symbol and radius of a ring-centre pseudo-atom
 RING_SYMBOL = "Du"
 RING_RADIUS = 1.7
+#: the fifth annulation class, of peri-condensed systems: a ring two of whose shared bonds touch
+#: (so that one of its carbons belongs to three rings), or a ring fused to four or more rings
+PERI_CLASS = "peri"
+RING_CLASSES_PERI = RING_CLASSES + (PERI_CLASS,)
+#: the ring field weighted by the HOMA index of the ring: the harmonic-oscillator model of
+#: aromaticity, 1 for the bond lengths of benzene and 0 for a Kekulé structure, from the
+#: optimised geometry alone (Krygowski, J. Chem. Inf. Comput. Sci. 1993, 33, 70)
+HOMA_FIELD = "ring:homa"
+#: HOMA parameters per bond type: the optimal length in Å and the normalisation constant
+HOMA_PARAMS = {("C", "C"): (1.388, 257.7), ("C", "N"): (1.334, 93.52), ("C", "O"): (1.265, 157.38),
+               ("C", "S"): (1.677, 94.09), ("N", "N"): (1.309, 130.33), ("N", "O"): (1.248, 57.21)}
+#: the ring types of COMPAS-2, named as in its table (``14diborinine`` is 1,4-diborinine,
+#: ``dhdiborinine`` the 1,2-dihydro-1,2-diborinine with two bonded borons)
+RING_TYPES = ("benzene", "pyridine", "pyrazine", "borinine", "14diborinine", "dhdiborinine",
+              "pyrrole", "furan", "thiophene", "borole", "cyclobutadiene")
+#: the atom types of the hetero-atom sets beyond :data:`PBH_TYPES`
+HETERO_TYPES = ("N", "N.H", "O", "S", "B", "B.H")
 
 
 # --------------------------------------------------------------------------- #
@@ -224,6 +249,74 @@ def read_compas(csv_path: str, geometries: str, limit: Optional[int] = None,
     ds = Dataset(mols=mols, names=out_names, activity=np.array(y, float),
                  subset=np.array(["train"] * len(mols), dtype=object),
                  properties=[c for c in COMPAS_NUMERIC if mols and mols[0].HasProp(c)],
+                 path=csv_path, activity_prop="GAP_eV")
+    return ds
+
+
+def read_compas2(csv_path: str, sdf_gz: str, limit: Optional[int] = None,
+                 names: Optional[Sequence[str]] = None, progress=None):
+    """The neutral molecules of a COMPAS-2 set as a :class:`cmfqsar.dataio.Dataset`.
+
+    COMPAS-2 stores one row per molecule and charge state (-1, 0, +1) and the geometries in one
+    gzipped SDF with ``name`` and ``charge`` tags.  The neutral rows are kept, the geometry of
+    the neutral state is taken, and the SDF graph is checked against the SMILES of the table.
+    The columns ``gap``, ``homo``, ``lumo`` and ``rings`` become ``GAP_eV``, ``HOMO_eV``,
+    ``LUMO_eV`` and ``n_rings``, so that the molecules carry the same properties as COMPAS-1.
+    """
+    from .dataio import Dataset
+
+    with open(csv_path, newline="", encoding="utf-8") as fh:
+        rows = [r for r in csv.DictReader(fh) if r.get("charge") == "0"]
+    needed = ("name", "smiles", "gap", "rings")
+    missing = [c for c in needed if rows and c not in rows[0]]
+    if missing:
+        raise ValueError(f"{csv_path}: columns missing: {missing}")
+    if names is not None:
+        keep = set(names)
+        rows = [r for r in rows if r["name"] in keep]
+    if limit:
+        rows = rows[:int(limit)]
+    wanted = {r["name"]: r for r in rows}
+    found: Dict[str, Chem.Mol] = {}
+    with gzip.open(sdf_gz, "rb") as fh:
+        supplier = Chem.ForwardSDMolSupplier(fh, removeHs=False, sanitize=True)
+        for k, m in enumerate(supplier):
+            if progress is not None and k % 5000 == 0:
+                progress(len(found), len(wanted))
+            if m is None or not m.HasProp("name") or m.GetProp("charge") != "0":
+                continue
+            name = m.GetProp("name")
+            if name in wanted and name not in found:
+                found[name] = m
+                if len(found) == len(wanted):
+                    break
+    lost = [n for n in wanted if n not in found]
+    if lost:
+        raise ValueError(f"{len(lost)} molecules of {csv_path} have no neutral geometry in "
+                         f"{sdf_gz}; the first is {lost[0]}")
+    mols, out_names, y = [], [], []
+    for name, r in wanted.items():
+        m = Chem.Mol(found[name])
+        ref = Chem.MolFromSmiles(r["smiles"])
+        if ref is None or Chem.MolToSmiles(Chem.RemoveHs(m)) != Chem.MolToSmiles(ref):
+            raise ValueError(f"{name}: the SDF graph does not match the SMILES of the table")
+        if m.GetNumConformers() != 1 or not m.GetConformer().Is3D():
+            raise ValueError(f"{name}: no 3D geometry in the SDF")
+        m.SetProp("_Name", name)
+        for col, prop in (("gap", "GAP_eV"), ("homo", "HOMO_eV"), ("lumo", "LUMO_eV"),
+                          ("rings", "n_rings"), ("heteroatoms", "n_heteroatoms"),
+                          ("aromatic_rings", "n_aromatic_rings")):
+            if col in r and r[col] != "":
+                m.SetProp(prop, r[col])
+        for col in ("smiles", "formula", "inchi"):
+            if col in r:
+                m.SetProp(col, r[col])
+        mols.append(m)
+        out_names.append(name)
+        y.append(float(r["gap"]))
+    ds = Dataset(mols=mols, names=out_names, activity=np.array(y, float),
+                 subset=np.array(["train"] * len(mols), dtype=object),
+                 properties=["HOMO_eV", "LUMO_eV", "GAP_eV", "n_rings"],
                  path=csv_path, activity_prop="GAP_eV")
     return ds
 
@@ -414,13 +507,15 @@ def choose_frame_by_kernel(mol: Chem.Mol, fieldset: FieldSet, reference: AtomTab
 def pbh_atom_type(atom: Chem.Atom) -> str:
     """The carbon classes of a benzenoid: ``C.H`` on the rim (one ring, bonded to a hydrogen),
     ``C.2r`` shared by two rings, ``C.3r`` shared by three (absent in a cata-condensed set).
-    Hydrogens are ``H``; anything else keeps its element symbol, ``C.1r`` for a ring carbon
-    without a hydrogen and ``C`` for a carbon outside the rings."""
+    Hydrogens are ``H``; a hetero atom is its element symbol, with ``.H`` appended when it
+    carries a hydrogen (``N.H`` of pyrrole, ``B.H`` of borole and borinine); ``C.1r`` is a ring
+    carbon without a hydrogen and ``C`` a carbon outside the rings."""
     z = atom.GetAtomicNum()
     if z == 1:
         return "H"
     if z != 6:
-        return atom.GetSymbol()
+        sym = atom.GetSymbol()
+        return sym + ".H" if atom.GetTotalNumHs(includeNeighbors=True) > 0 else sym
     n = atom.GetOwningMol().GetRingInfo().NumAtomRings(atom.GetIdx())
     if n >= 3:
         return "C.3r"
@@ -437,8 +532,10 @@ class Ring:
     atoms: Tuple[int, ...]          # the six carbons, in cyclic order
     centroid: np.ndarray            # (3,)
     neighbours: Tuple[int, ...]     # indices of the rings fused to it
-    cls: str                        # one of RING_CLASSES
+    cls: str                        # one of RING_CLASSES_PERI
     sextet: float = 0.0             # the Clar-sextet share, set by clar_weights
+    homa: float = float("nan")      # the HOMA index from the bond lengths (nan: no parameters)
+    ring_type: str = "benzene"      # one of RING_TYPES, or "ring:<size>:<hetero atoms>"
 
 
 def _cyclic_order(mol: Chem.Mol, atoms: Sequence[int]) -> Tuple[int, ...]:
@@ -457,40 +554,93 @@ def _cyclic_order(mol: Chem.Mol, atoms: Sequence[int]) -> Tuple[int, ...]:
     return tuple(order)
 
 
-def ring_classes(mol: Chem.Mol, coords: Optional[np.ndarray] = None) -> List[Ring]:
-    """The six-membered carbon rings of `mol` with their centroids and annulation classes.
+def ring_type_of(mol: Chem.Mol, atoms: Sequence[int]) -> str:
+    """The ring type of COMPAS-2 from the ring size and its hetero atoms, or a generic
+    ``ring:<size>:<symbols>`` name for anything else."""
+    syms = [mol.GetAtomWithIdx(int(i)).GetSymbol() for i in atoms]
+    hetero = sorted(s for s in syms if s != "C")
+    n = len(atoms)
+    if n == 6:
+        if not hetero:
+            return "benzene"
+        if hetero == ["N"]:
+            return "pyridine"
+        if hetero == ["N", "N"]:
+            return "pyrazine"
+        if hetero == ["B"]:
+            return "borinine"
+        if hetero == ["B", "B"]:
+            borons = [int(i) for i in atoms if mol.GetAtomWithIdx(int(i)).GetSymbol() == "B"]
+            bonded = mol.GetBondBetweenAtoms(borons[0], borons[1]) is not None
+            return "dhdiborinine" if bonded else "14diborinine"
+    if n == 5 and len(hetero) == 1:
+        return {"N": "pyrrole", "O": "furan", "S": "thiophene", "B": "borole"}.get(hetero[0],
+                                                                                  "")
+    if n == 4 and not hetero:
+        return "cyclobutadiene"
+    return f"ring:{n}:{''.join(hetero) or 'C'}"
 
-    Two rings are fused when they share a bond.  A ring with one fused neighbour (or none:
-    benzene) is ``terminal``; with two, it is ``linear`` when the two shared bonds face each
-    other across the ring (anthracene's middle ring) and ``angular`` when one bond separates
-    them (phenanthrene's); with three it is ``branched`` (triphenylene's centre).  Two shared
-    bonds that touch would make a carbon of three rings, which is peri-condensation; such a ring
-    is labelled ``peri``.
+
+def ring_homa(mol: Chem.Mol, pos: np.ndarray, atoms: Sequence[int]) -> float:
+    """The HOMA index of one ring from its bond lengths, ``nan`` when a bond of the ring has
+    no parameters (a bond to boron)."""
+    total = 0.0
+    n = len(atoms)
+    for k in range(n):
+        a, b = int(atoms[k]), int(atoms[(k + 1) % n])
+        key = tuple(sorted((mol.GetAtomWithIdx(a).GetSymbol(), mol.GetAtomWithIdx(b).GetSymbol())))
+        if key not in HOMA_PARAMS:
+            return float("nan")
+        r_opt, alpha = HOMA_PARAMS[key]
+        total += alpha * (r_opt - float(np.linalg.norm(pos[a] - pos[b]))) ** 2
+    return 1.0 - total / n
+
+
+def ring_classes(mol: Chem.Mol, coords: Optional[np.ndarray] = None,
+                 carbon_only: bool = True) -> List[Ring]:
+    """The rings of `mol` with their centroids, annulation classes, HOMA indices and types.
+
+    With `carbon_only` (the default) only six-membered carbon rings are taken, as in a
+    benzenoid; otherwise every ring of four to six atoms, which is what the hetero-atom systems
+    of COMPAS-2 need.  Two rings are fused when they share a bond.  A ring with one fused
+    neighbour (or none: benzene) is ``terminal``; with two, it is ``linear`` when the two shared
+    bonds face each other across the ring (anthracene's middle ring) and ``angular`` when they
+    do not (phenanthrene's; any five-membered ring); with three it is ``branched``
+    (triphenylene's centre).  Two shared bonds that touch make a carbon of three rings, which is
+    peri-condensation: such a ring, and a ring fused to four or more, is ``peri``.
     """
     pos = np.asarray(mol.GetConformer().GetPositions() if coords is None else coords, float)
-    rings_raw = [tuple(r) for r in mol.GetRingInfo().AtomRings()
-                 if len(r) == 6 and all(mol.GetAtomWithIdx(i).GetAtomicNum() == 6 for i in r)]
+    if carbon_only:
+        rings_raw = [tuple(r) for r in mol.GetRingInfo().AtomRings()
+                     if len(r) == 6 and all(mol.GetAtomWithIdx(i).GetAtomicNum() == 6 for i in r)]
+    else:
+        rings_raw = [tuple(r) for r in mol.GetRingInfo().AtomRings() if 4 <= len(r) <= 6]
     ordered = [_cyclic_order(mol, r) for r in rings_raw]
     sets = [frozenset(r) for r in ordered]
     rings: List[Ring] = []
     for i, atoms in enumerate(ordered):
-        nbrs = [j for j in range(len(ordered)) if j != i and len(sets[i] & sets[j]) == 2]
-        bonds = [frozenset((atoms[k], atoms[(k + 1) % 6])) for k in range(6)]
-        shared = []
-        for j in nbrs:
+        n = len(atoms)
+        bonds = [frozenset((atoms[k], atoms[(k + 1) % n])) for k in range(n)]
+        nbrs, shared = [], []
+        for j in range(len(ordered)):
             pair = sets[i] & sets[j]
-            shared.append(bonds.index(frozenset(pair)))
+            if j != i and len(pair) == 2 and frozenset(pair) in bonds:
+                nbrs.append(j)
+                shared.append(bonds.index(frozenset(pair)))
+        touching = any((shared[a] - shared[b]) % n in (1, n - 1)
+                       for a in range(len(shared)) for b in range(a))
         if len(nbrs) <= 1:
             cls = "terminal"
+        elif touching or len(nbrs) > 3:
+            cls = PERI_CLASS
         elif len(nbrs) == 2:
-            d = (shared[1] - shared[0]) % 6
-            cls = "linear" if d == 3 else ("angular" if d in (2, 4) else "peri")
-        elif len(nbrs) == 3:
-            cls = "branched"
+            d = (shared[1] - shared[0]) % n
+            cls = "linear" if n % 2 == 0 and d == n // 2 else "angular"
         else:
-            cls = "peri"
+            cls = "branched"
         rings.append(Ring(atoms=atoms, centroid=pos[list(atoms)].mean(axis=0),
-                          neighbours=tuple(nbrs), cls=cls))
+                          neighbours=tuple(nbrs), cls=cls, homa=ring_homa(mol, pos, atoms),
+                          ring_type=ring_type_of(mol, atoms)))
     return rings
 
 
@@ -614,11 +764,14 @@ def clar_weights(mol: Chem.Mol, rings: Sequence[Ring]) -> np.ndarray:
 # --------------------------------------------------------------------------- #
 
 def ring_field_weight(ring: Ring, field_name: str) -> float:
-    """The weight of one ring in a ``ring:<class>`` or ``ring:sextet`` field."""
+    """The weight of one ring in a ``ring:<class>``, ``ring:<type>``, ``ring:sextet`` or
+    ``ring:homa`` field."""
     cls = field_name[5:]
     if cls == "sextet":
         return float(ring.sextet)
-    return 1.0 if ring.cls == cls else 0.0
+    if cls == "homa":
+        return 0.0 if math.isnan(ring.homa) else float(ring.homa)
+    return 1.0 if cls in (ring.cls, ring.ring_type) else 0.0
 
 
 def with_ring_centres(mf: MoleculeFields, rings: Sequence[Ring], fieldset: FieldSet) -> MoleculeFields:
@@ -711,22 +864,42 @@ def ring_contributions(model, mf: MoleculeFields, rings: Sequence[Ring]
 # Count descriptors (the additivity baseline) and splits
 # --------------------------------------------------------------------------- #
 
-COUNT_NAMES = ("n_CH", "n_C2r", "n_C3r", "n_terminal", "n_linear", "n_angular", "n_branched",
-               "n_rings", "n_sextet")
+def count_names(atom_types: Sequence[str] = PBH_TYPES, ring_classes_: Sequence[str] = RING_CLASSES,
+                ring_types: Sequence[str] = (), sextet: bool = True, homa: bool = False) -> Tuple[str, ...]:
+    """The names of :func:`count_features` for the given classes."""
+    names = ["n_" + t.replace(".", "") for t in atom_types] + ["n_" + c for c in ring_classes_]
+    names += ["n_" + t for t in ring_types] + ["n_rings"]
+    if sextet:
+        names.append("n_sextet")
+    if homa:
+        names.append("sum_homa")
+    return tuple(names)
 
 
-def count_features(mol: Chem.Mol, rings: Optional[Sequence[Ring]] = None) -> np.ndarray:
-    """Counts of the atom classes, the ring classes, the rings and the Clar sextets: what the
-    indicator and ring fields reduce to when their attenuation goes to zero."""
+COUNT_NAMES = count_names()
+
+
+def count_features(mol: Chem.Mol, rings: Optional[Sequence[Ring]] = None,
+                   atom_types: Sequence[str] = PBH_TYPES, ring_classes_: Sequence[str] = RING_CLASSES,
+                   ring_types: Sequence[str] = (), sextet: bool = True, homa: bool = False,
+                   carbon_only: bool = True) -> np.ndarray:
+    """Counts of the atom classes, the ring classes (and ring types), the rings and the Clar
+    sextets, and the sum of the HOMA indices when asked: what the indicator and ring fields
+    reduce to when their attenuation goes to zero."""
     if rings is None:
-        rings = ring_classes(mol)
-        clar_weights(mol, rings)
+        rings = ring_classes(mol, carbon_only=carbon_only)
+        if sextet:
+            clar_weights(mol, rings)
     types = Counter(pbh_atom_type(a) for a in mol.GetAtoms())
-    rc = ring_class_counts(rings)
-    sext = float(sum(r.sextet for r in rings))
-    return np.array([types.get("C.H", 0), types.get("C.2r", 0), types.get("C.3r", 0),
-                     rc["terminal"], rc["linear"], rc["angular"], rc["branched"],
-                     len(rings), sext], float)
+    rc = Counter(r.cls for r in rings)
+    rt = Counter(r.ring_type for r in rings)
+    out = [types.get(t, 0) for t in atom_types] + [rc.get(c, 0) for c in ring_classes_]
+    out += [rt.get(t, 0) for t in ring_types] + [len(rings)]
+    if sextet:
+        out.append(float(sum(r.sextet for r in rings)))
+    if homa:
+        out.append(float(sum(0.0 if math.isnan(r.homa) else r.homa for r in rings)))
+    return np.array(out, float)
 
 
 def random_split(n: int, seed: int, fractions: Sequence[float] = (0.8, 0.1, 0.1)

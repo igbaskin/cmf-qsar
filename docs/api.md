@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 90 modules, 169 classes with 537 public methods, and 784 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 90 modules, 169 classes with 538 public methods, and 789 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -2974,6 +2974,15 @@ Scores a pose against one pocket, with everything that does not move precomputed
 
 #### `PocketScorer.clash(coords: np.ndarray) -> float`
 
+### `restart_poses(restarts: int, rng, max_shift: float=2.0, max_rotation_deg: float=30.0) -> List[np.ndarray]`
+
+The rigid-body parameters each restart starts from, the arriving pose first.
+
+A restart is a perturbation of the pose that arrived: an axis drawn at random and a turn of
+at most `max_rotation_deg` about it, with a small shift. At 180 degrees or more the turn is
+replaced by a uniformly random orientation, because a pose whose orientation is unknown
+cannot be found by perturbing the wrong one.
+
 ### `dock_coords(mol: MoleculeFields, pocket: MoleculeFields, fieldset: FieldSet, restarts: int=0, seed: int=0, max_iter: int=200, max_shift: float=2.0, max_rotation_deg: float=30.0, clash_weight: float=CLASH_WEIGHT, tether_radius: float=TETHER_RADIUS) -> Tuple[np.ndarray, DockResult]`
 
 Optimise the rigid-body placement of one conformation inside the pocket.
@@ -2981,6 +2990,12 @@ Optimise the rigid-body placement of one conformation inside the pocket.
 The search starts from the pose the conformation arrives in and stays near it: restarts are
 bounded perturbations rather than a global search, because the series is already in the site
 and the question is where in the site each conformation belongs, not whether it binds.
+
+That assumption fails where the orientation is not known at all. The pose-recovery protocol
+of item C1 gives every held-out molecule a uniformly random orientation, and a restart that
+turns the conformation by at most 30 degrees can never undo it. Set `max_rotation_deg` to
+180 or more and every restart draws a uniformly random orientation instead, which is the
+setting for a pose that has to be found rather than refined.
 
 ### `dock_conformers(mol: Chem.Mol, pocket: MoleculeFields, fieldset: FieldSet, restarts: int=0, seed: int=0, max_shift: float=2.0, max_rotation_deg: float=30.0, keep_best: int=0, clash_weight: float=CLASH_WEIGHT, tether_radius: float=TETHER_RADIUS) -> Tuple[Chem.Mol, List[DockResult]]`
 
@@ -4020,13 +4035,14 @@ representation does not carry.
 
 #### `FlexibleAligner.objective_flex(mol, rd: Chem.Mol, X0: np.ndarray, c: np.ndarray, torsions: Sequence[Torsion], strain: _Strain, sp: np.ndarray, kself: float, p: np.ndarray)`
 
-#### `FlexibleAligner.align_flexible(mol, rd: Chem.Mol, restarts: int=2, seed: int=0, max_iter: int=300, apply: bool=True, torsion_start: float=0.4, conformers: int=0, prune_rmsd: float=0.5) -> VarianceAlignResult`
+#### `FlexibleAligner.align_flexible(mol, rd: Chem.Mol, restarts: int=2, seed: int=0, max_iter: int=300, apply: bool=True, torsion_start: float=0.4, conformers: int=0, prune_rmsd: float=0.5, any_orientation: bool=False) -> VarianceAlignResult`
 
 Place `mol` by confidence, turning its rotatable bonds as well as moving it.
 
 With `conformers`, the generator supplies that many further starting *configurations*,
 each superimposed on the current pose, besides the one the molecule arrived in; the
-search runs from each and the best is kept.
+search runs from each and the best is kept.  `any_orientation` has every restart draw a
+uniformly random orientation; see `VarianceAligner.align`.
 
 ### `rotatable_torsions(mol: Chem.Mol, max_torsions: int=12) -> List[Torsion]`
 
@@ -4053,7 +4069,7 @@ why: after a flexible alignment the residual error is conformational, so a local
 search is only as good as the conformations it is allowed to start from.  Every member is
 placed on the current pose first, so the rigid parameters mean the same thing for each.
 
-### `flexible_align(mols: Sequence, rdmols: Sequence[Chem.Mol], model, max_rmsd: Optional[float]=2.0, energy_slack: float=10.0, energy_weight: float=1.0, restarts: int=2, seed: int=0, max_torsions: int=12, conformers: int=5, prune_rmsd: float=0.5, progress=None, cancel=None) -> List[VarianceAlignResult]`
+### `flexible_align(mols: Sequence, rdmols: Sequence[Chem.Mol], model, max_rmsd: Optional[float]=2.0, energy_slack: float=10.0, energy_weight: float=1.0, restarts: int=2, seed: int=0, max_torsions: int=12, conformers: int=5, prune_rmsd: float=0.5, any_orientation: bool=False, progress=None, cancel=None) -> List[VarianceAlignResult]`
 
 Align every molecule in place by confidence over rigid motion and the rotatable bonds.
 
@@ -8857,8 +8873,15 @@ reduced to a rule.  This module holds what that study needs beyond the ordinary 
   by the `ring:<class>` fields, which is what `ring:terminal` and the rest mean in a field set;
 * `ring_contributions` sums decomposition rule 3 over the atoms of every ring.
 
-Everything here is read by `benchmarks/run_compas.py`; see the manual, section "A gap, not an
-affinity: polybenzenoid hydrocarbons".
+The same machinery serves the later COMPAS sets: the peri-condensed benzenoids of COMPAS-3
+(a fifth annulation class, `peri`, for a ring whose shared bonds touch) and the hetero-atom
+systems of COMPAS-2 (rings of four to six atoms with B, N, O or S, typed by ring type; read by
+`read_compas2` from the SDF of that set).  `ring_classes` also gives every ring its
+HOMA index, the harmonic-oscillator measure of aromaticity computed from the bond lengths
+alone, which the `ring:homa` field uses as weight.
+
+Everything here is read by `benchmarks/run_compas.py`; see the manual, section "A frame by
+rule: the gap of polybenzenoid hydrocarbons".
 
 ### `class Ring  (dataclass)`
 
@@ -8871,6 +8894,8 @@ Attributes:
 - `neighbours: Tuple[int, ...]`
 - `cls: str`
 - `sextet: float` = `0.0`
+- `homa: float` = `float('nan')`
+- `ring_type: str` = `'benzene'`
 
 ### `parse_xyz(text: str) -> Tuple[List[str], np.ndarray]`
 
@@ -8899,6 +8924,16 @@ becomes one molecule with the columns of `COMPAS_NUMERIC` and `COMPAS_TEXT` as
 properties and `GAP_eV` as the activity.  `limit` keeps the first rows only; `names`
 keeps the listed molecules only.  A molecule whose geometry does not match its SMILES stops
 the reading with a `ValueError`.
+
+### `read_compas2(csv_path: str, sdf_gz: str, limit: Optional[int]=None, names: Optional[Sequence[str]]=None, progress=None)`
+
+The neutral molecules of a COMPAS-2 set as a `cmfqsar.dataio.Dataset`.
+
+COMPAS-2 stores one row per molecule and charge state (-1, 0, +1) and the geometries in one
+gzipped SDF with `name` and `charge` tags.  The neutral rows are kept, the geometry of
+the neutral state is taken, and the SDF graph is checked against the SMILES of the table.
+The columns `gap`, `homo`, `lumo` and `rings` become `GAP_eV`, `HOMO_eV`,
+`LUMO_eV` and `n_rings`, so that the molecules carry the same properties as COMPAS-1.
 
 ### `heavy_mask(mol: Chem.Mol) -> np.ndarray`
 
@@ -8956,19 +8991,32 @@ in the order of `frame_candidates`.
 
 The carbon classes of a benzenoid: `C.H` on the rim (one ring, bonded to a hydrogen),
 `C.2r` shared by two rings, `C.3r` shared by three (absent in a cata-condensed set).
-Hydrogens are `H`; anything else keeps its element symbol, `C.1r` for a ring carbon
-without a hydrogen and `C` for a carbon outside the rings.
+Hydrogens are `H`; a hetero atom is its element symbol, with `.H` appended when it
+carries a hydrogen (`N.H` of pyrrole, `B.H` of borole and borinine); `C.1r` is a ring
+carbon without a hydrogen and `C` a carbon outside the rings.
 
-### `ring_classes(mol: Chem.Mol, coords: Optional[np.ndarray]=None) -> List[Ring]`
+### `ring_type_of(mol: Chem.Mol, atoms: Sequence[int]) -> str`
 
-The six-membered carbon rings of `mol` with their centroids and annulation classes.
+The ring type of COMPAS-2 from the ring size and its hetero atoms, or a generic
+`ring:<size>:<symbols>` name for anything else.
 
-Two rings are fused when they share a bond.  A ring with one fused neighbour (or none:
-benzene) is `terminal`; with two, it is `linear` when the two shared bonds face each
-other across the ring (anthracene's middle ring) and `angular` when one bond separates
-them (phenanthrene's); with three it is `branched` (triphenylene's centre).  Two shared
-bonds that touch would make a carbon of three rings, which is peri-condensation; such a ring
-is labelled `peri`.
+### `ring_homa(mol: Chem.Mol, pos: np.ndarray, atoms: Sequence[int]) -> float`
+
+The HOMA index of one ring from its bond lengths, `nan` when a bond of the ring has
+no parameters (a bond to boron).
+
+### `ring_classes(mol: Chem.Mol, coords: Optional[np.ndarray]=None, carbon_only: bool=True) -> List[Ring]`
+
+The rings of `mol` with their centroids, annulation classes, HOMA indices and types.
+
+With `carbon_only` (the default) only six-membered carbon rings are taken, as in a
+benzenoid; otherwise every ring of four to six atoms, which is what the hetero-atom systems
+of COMPAS-2 need.  Two rings are fused when they share a bond.  A ring with one fused
+neighbour (or none: benzene) is `terminal`; with two, it is `linear` when the two shared
+bonds face each other across the ring (anthracene's middle ring) and `angular` when they
+do not (phenanthrene's; any five-membered ring); with three it is `branched`
+(triphenylene's centre).  Two shared bonds that touch make a carbon of three rings, which is
+peri-condensation: such a ring, and a ring fused to four or more, is `peri`.
 
 ### `ring_class_counts(rings: Sequence[Ring]) -> Dict[str, int]`
 
@@ -8997,7 +9045,8 @@ phenanthrene 1, 0, 1.
 
 ### `ring_field_weight(ring: Ring, field_name: str) -> float`
 
-The weight of one ring in a `ring:<class>` or `ring:sextet` field.
+The weight of one ring in a `ring:<class>`, `ring:<type>`, `ring:sextet` or
+`ring:homa` field.
 
 ### `with_ring_centres(mf: MoleculeFields, rings: Sequence[Ring], fieldset: FieldSet) -> MoleculeFields`
 
@@ -9027,10 +9076,15 @@ the per-atom contributions they were summed from, and what could not be placed (
 ring), which is zero for a benzenoid.  The per-ring sums plus the unplaced part equal the
 prediction minus the bias.
 
-### `count_features(mol: Chem.Mol, rings: Optional[Sequence[Ring]]=None) -> np.ndarray`
+### `count_names(atom_types: Sequence[str]=PBH_TYPES, ring_classes_: Sequence[str]=RING_CLASSES, ring_types: Sequence[str]=(), sextet: bool=True, homa: bool=False) -> Tuple[str, ...]`
 
-Counts of the atom classes, the ring classes, the rings and the Clar sextets: what the
-indicator and ring fields reduce to when their attenuation goes to zero.
+The names of `count_features` for the given classes.
+
+### `count_features(mol: Chem.Mol, rings: Optional[Sequence[Ring]]=None, atom_types: Sequence[str]=PBH_TYPES, ring_classes_: Sequence[str]=RING_CLASSES, ring_types: Sequence[str]=(), sextet: bool=True, homa: bool=False, carbon_only: bool=True) -> np.ndarray`
+
+Counts of the atom classes, the ring classes (and ring types), the rings and the Clar
+sextets, and the sum of the HOMA indices when asked: what the indicator and ring fields
+reduce to when their attenuation goes to zero.
 
 ### `random_split(n: int, seed: int, fractions: Sequence[float]=(0.8, 0.1, 0.1)) -> Dict[str, np.ndarray]`
 
@@ -9755,11 +9809,14 @@ The variance half comes from `cmfqsar.varalign.VarianceAligner` and the pocket h
 from `cmfqsar.docking.PocketScorer`, so this class adds no new physics: it is the
 combination, the guard and the search.
 
-#### `PocketAligner.align(mol: MoleculeFields, restarts: int=2, seed: int=0, max_iter: int=300, apply: bool=True) -> PocketAlignResult`
+#### `PocketAligner.align(mol: MoleculeFields, restarts: int=2, seed: int=0, max_iter: int=300, apply: bool=True, any_orientation: bool=False) -> PocketAlignResult`
 
 Find the pose that the model and the pocket agree on.
 
-### `pocket_align(mols: Sequence[MoleculeFields], model, pocket: MoleculeFields, pocket_weight: float=POCKET_WEIGHT, max_rmsd: Optional[float]=2.0, restarts: int=2, seed: int=0, fieldset: Optional[FieldSet]=None, progress: Optional[Callable[[int, int], None]]=None, cancel: Optional[Callable[[], bool]]=None, **scorer_kw) -> List[PocketAlignResult]`
+`any_orientation` has every restart draw a uniformly random orientation instead of turning
+the arriving pose by at most about 63 degrees; see `VarianceAligner.align`.
+
+### `pocket_align(mols: Sequence[MoleculeFields], model, pocket: MoleculeFields, pocket_weight: float=POCKET_WEIGHT, max_rmsd: Optional[float]=2.0, restarts: int=2, seed: int=0, any_orientation: bool=False, fieldset: Optional[FieldSet]=None, progress: Optional[Callable[[int, int], None]]=None, cancel: Optional[Callable[[], bool]]=None, **scorer_kw) -> List[PocketAlignResult]`
 
 Align every molecule in place by the model's confidence and the pocket together.
 
@@ -9933,7 +9990,7 @@ The RMSD the best possible rigid placement of this conformation would still leav
 No rigid method can beat it, so it is the ceiling for a molecule whose conformation is wrong,
 and the number against which a flexible method has to be read.
 
-### `judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float], train: Sequence[int], test: Sequence[int], fieldset: FieldSet, methods: Sequence[str]=('scrambled', 'mcs', 'field', 'variance'), lam: float=0.1, seed: int=0, max_translation: float=2.0, restarts: int=2, max_rmsd: Optional[float]=None, posers: Optional[Dict[str, Callable]]=None, reconform: bool=False, conformers: int=0, pocket: Optional[MoleculeFields]=None, pocket_weight: float=1.0, progress: Optional[Callable[[str], None]]=None) -> Dict[str, PoseScore]`
+### `judge(mols: Sequence[Chem.Mol], names: Sequence[str], y: Sequence[float], train: Sequence[int], test: Sequence[int], fieldset: FieldSet, methods: Sequence[str]=('scrambled', 'mcs', 'field', 'variance'), lam: float=0.1, seed: int=0, max_translation: float=2.0, restarts: int=20, max_rotation_deg: float=180.0, max_rmsd: Optional[float]=None, posers: Optional[Dict[str, Callable]]=None, reconform: bool=False, conformers: int=0, pocket: Optional[MoleculeFields]=None, pocket_weight: float=1.0, progress: Optional[Callable[[str], None]]=None) -> Dict[str, PoseScore]`
 
 Judge posing methods against the crystal poses of a set.
 
@@ -9941,6 +9998,12 @@ Judge posing methods against the crystal poses of a set.
 are; the test molecules then have their poses destroyed, and each method is asked to recover
 them from that starting point, without ever seeing a test activity.  Returns a score per
 method, plus `"crystal"` -- the ceiling, the test molecules in the poses they came in.
+
+The destruction gives every test molecule a uniformly random orientation, so a method that
+searches orientations must be allowed to draw any of them: `max_rotation_deg` is 180 here,
+where the docking's own default is the 30 degrees a series already in the site needs.
+`restarts` is 20 for the same reason.  Both halves are needed: a random orientation is only
+useful if enough of them are drawn, and more draws of a bounded turn do not help at all.
 
 ### `global_superpose(probe: Sequence[Chem.Mol], ref: Sequence[Chem.Mol]) -> float`
 
@@ -12348,9 +12411,14 @@ Posterior variance of the prediction for `mol` in the given pose.
 Variance and its analytic gradient for the rigid-body parameters
 `p = (rotation vector, translation)` applied about the centroid `c`.
 
-#### `VarianceAligner.align(mol: MoleculeFields, restarts: int=2, seed: int=0, max_iter: int=200, apply: bool=True) -> VarianceAlignResult`
+#### `VarianceAligner.align(mol: MoleculeFields, restarts: int=2, seed: int=0, max_iter: int=200, apply: bool=True, any_orientation: bool=False) -> VarianceAlignResult`
 
 Find the rigid-body pose of `mol` that minimises the posterior variance.
+
+A restart turns the arriving pose by at most about 63 degrees, which is what a molecule
+already placed in the site needs.  With `any_orientation` every restart draws a uniformly
+random orientation instead: a pose whose orientation is unknown cannot be found by
+perturbing the wrong one, however many restarts are spent on it.
 
 ### `class CVAlignRound  (dataclass)`
 
@@ -12366,7 +12434,7 @@ Attributes:
 
 #### `CVAlignRound.describe() -> str`
 
-### `variance_align(mols: Sequence[MoleculeFields], model, max_rmsd: Optional[float]=2.0, restarts: int=2, seed: int=0, progress: Optional[Callable[[int, int], None]]=None, cancel: Optional[Callable[[], bool]]=None) -> List[VarianceAlignResult]`
+### `variance_align(mols: Sequence[MoleculeFields], model, max_rmsd: Optional[float]=2.0, restarts: int=2, seed: int=0, any_orientation: bool=False, progress: Optional[Callable[[int, int], None]]=None, cancel: Optional[Callable[[], bool]]=None) -> List[VarianceAlignResult]`
 
 Align every molecule of `mols` in place by minimising the model's posterior variance.
 
@@ -12577,6 +12645,8 @@ Main window of the CMF 3D-QSAR desktop application.
 Options for aligning molecules by the posterior variance of their prediction.
 
 #### `VarianceAlignDialog.max_rmsd()`
+
+#### `VarianceAlignDialog.any_orientation() -> bool`
 
 #### `VarianceAlignDialog.flexible() -> bool`
 

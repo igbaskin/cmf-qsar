@@ -5957,8 +5957,8 @@ Shapley values of the section *Shapley values*) is the next thing to try on this
 ![Per-ring contributions to the gap (decomposition rule 3 summed per ring) of four test molecules: the two with the smallest and the two with the largest computed gap among the test molecules of four rings and more. Drawn by `benchmarks/run_compas.py`.](benchmarks/results/compas/figures/ring_contributions_gap.png)
 
 What the study does not settle is written in `benchmarks/results/compas/NOTES.md`: the
-size-extrapolation splits train on few molecules; the few helicene-like molecules are not planar
-and the two faces of their frame differ; the chosen steric attenuation and ridge sit at the edges
+size-extrapolation splits train on few molecules; most molecules are twisted (89 % have a
+heavy atom more than 0.5 Å from their best plane) and the two faces of their frame differ; the chosen steric attenuation and ridge sit at the edges
 of their grids; the NICS field is missing and has to beat the sextet share; the published
 COMPAS-1 numbers are not filled in.
 
@@ -5970,6 +5970,78 @@ rank of the feature map grows only from 2,244 to 2,722 where the number of colum
 The fields of
 planar molecules in one frame span a few thousand directions, so the 34k set is a quarter of an
 hour of kernel evaluation against a few hundred landmarks and never its 34k × 34k matrix.
+
+**The four follow-ups, measured.** The first report named four things to do next; they were run
+the next day with the same protocol (three random seeds, the size splits, the Gaussian layer as a
+third configuration), and `benchmarks/results/compas/table.md` holds every number.
+
+*A geometric aromaticity field.* A NICS field for the whole set is one DFT calculation per
+molecule with a ghost atom above every ring (55 s for naphthalene, 5.5 min for six rings with
+the serial ORCA of one desktop: about a week for the set), so the field built is the **HOMA
+index** of every ring (harmonic-oscillator model of aromaticity, Krygowski 1993: from the bond
+lengths of the DFT geometry, 1 for benzene, below 0 for alternating bonds) as the weight of a
+ring-centred field, group F (`ring:homa`, `ring_homa` in `cmfqsar/pbh.py`). NICS(1) and
+NICS(1)zz were computed for the 179 molecules of up to seven rings as its calibration
+(`--stage nics`: B3LYP-D3BJ/def2-SVP, GIAO, one ghost hydrogen 1 Å above every centroid).
+On the 1,158 rings the HOMA index follows NICS(1)zz with r = −0.77 (the Clar-sextet share
+−0.50), so the geometric index is the better stand-in of the two; the linear rings are the
+most shielded (mean NICS(1)zz −30 ppm, against −25 for a terminal ring, −18 angular, −8
+branched) and not the most bond-equalised (HOMA 0.68 against 0.79), so a NICS field would
+weight them more than the HOMA field does. Across the rings of the set the HOMA index follows the Clar-sextet share (r = 0.82; mean
+0.80 for a terminal ring, 0.70 linear, 0.48 angular, 0.11 branched). In the linear model the HOMA
+field beats the Clar field by the MAE (0.097 against 0.108 eV) and on the size splits (R² 0.83
+against 0.70 on the ten-ring molecules), and the two together are the best linear model (MAE
+0.085 eV; 0.84 on the ten-ring molecules); under the Gaussian layer the six groups reach 0.077 eV
+RMSE and 0.050 eV MAE, and R² 0.93 on the ten-ring molecules from the 2,270 smaller ones. The
+sum of the HOMA indices added to the counts takes the additivity scheme from 0.70 to 0.80: most of
+what the field carries is a per-molecule sum, and the field is worth 0.05 eV of MAE beyond it.
+
+*Δ-learning from the GFN2-xTB gap.* COMPAS-1x holds the xTB gap of every COMPAS-1D molecule, and
+a straight line in it, fitted on the training part of every split, already leaves 0.047 eV RMSE
+and 0.036 eV MAE (R² 0.986). The field model trained on that residual (`--targets DELTA_eV`)
+reaches 0.026 ± 0.002 eV RMSE and 0.018 ± 0.001 eV MAE with the Gaussian layer, and 0.030 eV on
+the ten-ring molecules against 0.045 eV for the line: inside the range of the published graph
+networks (0.011 to 0.022 eV) for the price of one xTB calculation per molecule.
+
+*The peri-condensed set.* COMPAS-3D (Wahab and Gershoni-Poranne, *Phys. Chem. Chem. Phys.* 2024,
+26, 15344: 8,844 molecules of four to ten rings, 6,891 with ten, CAM-B3LYP-D3BJ/def2-SVP) brings
+the three-ring carbon `C.3r` and a fifth annulation class, `peri` (a ring two of whose shared
+bonds touch, or fused to four or more rings; 44,187 of its 85,960 rings). The picture repeats:
+the ring classes alone 0.46, the four groups 0.61, with the Clar field 0.83, with the Clar and
+HOMA fields 0.90 (linear); the layer takes the six groups to 0.097 eV RMSE and 0.072 eV MAE
+(R² 0.95), and to R² 0.86 on the 6,891 ten-ring molecules from 1,953 smaller ones, where the
+descriptor forest is at −2.3 and the additivity scheme at 0.75. The reading of the linear model does not survive this set: the four-group model refitted for
+the figures has rule-2 contributions of ±5·10⁴ eV that cancel to a prediction, and a float64
+refit moves one test prediction by 0.89 eV (0.06 eV on COMPAS-1D), so the per-ring figure of
+this set is not a reading, and Shapley values of the layered model are.
+
+*Hetero atoms.* A random 10,000 of the 52,000 neutral molecules of COMPAS-2D (Mayo Yanes,
+Chakraborty and Gershoni-Poranne, *Sci. Data* 2024, 11, 97: nitrogen, oxygen, sulfur and boron
+in rings of four to six atoms; read by `read_compas2` from the gzipped SDF) is where the frame by
+rule stops working. The atom classes gain the types N, N.H, O, S, B and B.H, a group R holds one
+ring-centred field per ring type (pyridine, pyrrole, borole and the others), the HOMA field is
+defined where the Krygowski parameters exist (not for a bond to boron), and there is no Clar
+field. The best model (A, B, C, D, F, R with the layer) explains 69 % of the variance, 0.38 eV
+RMSE on a spread of 0.68 eV, and 0.60 on the 1,120 ten-ring molecules from the 8,880 smaller
+ones (0.38 eV RMSE), and the chosen parameters say why: the steric
+attenuation sits at the narrow end of its grid and the ridge at 0.1, a hundred times the ridge
+of the benzenoid sets or more, on every combined set, so the steric kernel is a near-identity and the fit rests on the indicator fields. The
+inertia axes depend on the masses, a sulfur or a boron at the rim moves the frame, and two
+molecules of one skeleton with different hetero atoms no longer lie on top of each other; the atom
+types alone reach 0.55, the ring types 0.48, and the HOMA field is the one clear gain on top
+(0.64 to 0.69). The descriptor forest reaches 0.56 and the additivity scheme on the 24 counts
+0.51 (0.43 and 0.36 on the ten-ring molecules), so the fields stay ahead of both baselines, by
+a smaller margin than on the benzenoid sets. A frame from the skeleton rather than from the masses is the
+next thing to try on this set.
+
+*Planarity, measured.* The frame rule was written for planar molecules, and the first version
+of the report called the non-planar ones a few helicene-like molecules. Measured, 89 % of the COMPAS-1D
+molecules have a heavy atom more than 0.5 Å from their best plane (median of the largest distance
+1.48 Å, 95th percentile 2.91 Å; COMPAS-3D median 1.21 Å; COMPAS-2D median 0.13 Å): most ten-ring
+cata-condensed isomers hold a fjord and are twisted. The frame is defined for them, the two faces
+of it differ, and a mirror image lands in the mirrored frame, so the model is not symmetric under
+reflection although the gap is; a kernel averaged over the two faces is one line and was not
+run.
 
 ## Crystals: the periodic autocorrelation kernel
 

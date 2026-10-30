@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from rdkit import Chem
 from rdkit.Chem import AllChem
+from rdkit.Geometry import Point3D
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -326,3 +327,157 @@ def test_indicator_model_at_small_alpha_is_the_count_model():
 
 def test_mae():
     assert mae([1.0, 2.0, 4.0], [2.0, 2.0, 1.0]) == pytest.approx(4.0 / 3.0)
+
+
+# --------------------------------------------------------------------------- later COMPAS sets
+
+HETERO_SMILES = {
+    "pyrene": "c1cc2ccc3cccc4ccc(c1)c2c34",
+    "coronene": "c1cc2ccc3ccc4ccc5ccc6ccc1c1c2c3c4c5c61",
+    "indole-fused": "c1ccc2c(c1)cc1[nH]ccc1c2",
+    "dibenzothiophene": "c1ccc2c(c1)sc1ccccc12",
+    "borole": "C1=CC=CB1",
+    "1,4-diborinine": "B1=CC=BC=C1",
+    "1,2-dihydro-1,2-diborinine": "B1C=CC=CB1",
+    "pyrazine": "c1cnccn1",
+    "cyclobutadiene": "C1=CC=C1",
+}
+
+
+def _hetero(name, seed=1):
+    m = Chem.AddHs(Chem.MolFromSmiles(HETERO_SMILES[name]))
+    p = AllChem.ETKDGv3()
+    p.randomSeed = seed
+    AllChem.EmbedMolecule(m, p)
+    m.SetProp("_Name", name)
+    return m
+
+
+def test_peri_class_and_homa_index():
+    # every ring of pyrene and of coronene has two shared bonds that touch: peri
+    for name, n in (("pyrene", 4), ("coronene", 7)):
+        rings = pbh.ring_classes(_hetero(name))
+        assert len(rings) == n and all(r.cls == pbh.PERI_CLASS for r in rings), name
+    assert pbh.ring_class_counts(pbh.ring_classes(_hetero("pyrene")))["peri"] == 4
+    # the cata-condensed classes are unchanged
+    assert sorted(r.cls for r in pbh.ring_classes(_mol("phenanthrene"))) == ["angular", "terminal", "terminal"]
+    # HOMA: 1 for a regular hexagon of 1.388 A, negative for alternating 1.33 / 1.47 A
+    m = Chem.AddHs(Chem.MolFromSmiles("c1ccccc1"))
+    AllChem.EmbedMolecule(m, randomSeed=1)
+    conf = m.GetConformer()
+    ring = list(m.GetRingInfo().AtomRings()[0])
+    order = pbh._cyclic_order(m, ring)
+    radius = 1.388
+    for k, a in enumerate(order):
+        ang = 2 * np.pi * k / 6
+        conf.SetAtomPosition(a, Point3D(radius * np.cos(ang), radius * np.sin(ang), 0.0))
+    rings = pbh.ring_classes(m)
+    assert abs(rings[0].homa - 1.0) < 1e-9
+    pos = conf.GetPositions()
+    kek = []
+    for k, a in enumerate(order):
+        kek.append(1.33 if k % 2 == 0 else 1.47)
+    # place the atoms on a hexagon with alternating edge lengths (approximately, by scaling angles)
+    r_alt = np.zeros((6, 3))
+    theta = 0.0
+    r_alt[0] = [0.0, 0.0, 0.0]
+    heading = 0.0
+    for k in range(1, 6):
+        heading += np.pi / 3
+        r_alt[k] = r_alt[k - 1] + kek[k - 1] * np.array([np.cos(heading), np.sin(heading), 0.0])
+    for k, a in enumerate(order):
+        conf.SetAtomPosition(a, Point3D(*r_alt[k]))
+    expect = 1 - 257.7 / 6 * sum((1.388 - d) ** 2 for d in [1.33, 1.47, 1.33, 1.47, 1.33, kek[5]])
+    rings = pbh.ring_classes(m)
+    assert rings[0].homa < 0 and abs(rings[0].homa - expect) < 0.05
+    # a ring with a bond to boron has no HOMA parameters: nan, and weight 0 in the field
+    b = pbh.ring_classes(_hetero("borole"), carbon_only=False)[0]
+    assert np.isnan(b.homa) and pbh.ring_field_weight(b, pbh.HOMA_FIELD) == 0.0
+
+
+def test_hetero_ring_types_and_atom_types():
+    expect = {"indole-fused": {"benzene": 2, "pyrrole": 1}, "dibenzothiophene": {"benzene": 2, "thiophene": 1},
+              "borole": {"borole": 1}, "1,4-diborinine": {"14diborinine": 1},
+              "1,2-dihydro-1,2-diborinine": {"dhdiborinine": 1}, "pyrazine": {"pyrazine": 1},
+              "cyclobutadiene": {"cyclobutadiene": 1}}
+    for name, types in expect.items():
+        rings = pbh.ring_classes(_hetero(name), carbon_only=False)
+        seen = {}
+        for r in rings:
+            seen[r.ring_type] = seen.get(r.ring_type, 0) + 1
+        assert seen == types, name
+    # carbon-only perception ignores the hetero rings
+    assert len(pbh.ring_classes(_hetero("dibenzothiophene"))) == 2
+    # five-membered rings fused on two sides are angular; the thiophene of dibenzothiophene
+    assert [r.cls for r in pbh.ring_classes(_hetero("dibenzothiophene"), carbon_only=False)
+            if r.ring_type == "thiophene"] == ["angular"]
+    types = {pbh.pbh_atom_type(a) for a in _hetero("indole-fused").GetAtoms()}
+    assert "N.H" in types and "N" not in types
+    types = {pbh.pbh_atom_type(a) for a in _hetero("1,4-diborinine").GetAtoms()}
+    assert "B" in types and "B.H" not in types
+    assert "B.H" in {pbh.pbh_atom_type(a) for a in _hetero("borole").GetAtoms()}
+    # the generalised count features: hetero atom types, the peri class, the ring types
+    names = pbh.count_names(pbh.PBH_TYPES + pbh.HETERO_TYPES, pbh.RING_CLASSES_PERI, pbh.RING_TYPES,
+                            sextet=False, homa=True)
+    f = pbh.count_features(_hetero("indole-fused"), atom_types=pbh.PBH_TYPES + pbh.HETERO_TYPES,
+                           ring_classes_=pbh.RING_CLASSES_PERI, ring_types=pbh.RING_TYPES,
+                           sextet=False, homa=True, carbon_only=False)
+    d = dict(zip(names, f))
+    assert d["n_NH"] == 1 and d["n_pyrrole"] == 1 and d["n_benzene"] == 2 and d["n_rings"] == 3
+    assert d["n_linear"] == 1 and d["n_terminal"] == 2 and d["n_peri"] == 0
+    # the default call is unchanged
+    assert list(pbh.count_features(_mol("anthracene"))) == [10, 4, 0, 2, 1, 0, 0, 3, 1]
+
+
+def test_ring_type_fields_are_pseudo_atoms():
+    fs = FieldSet.create(physchem=("steric",), ring_classes=("pyrrole", "benzene", "angular"), alpha=0.5)
+    m = _hetero("indole-fused")
+    rings = pbh.ring_classes(m, carbon_only=False)
+    mf = pbh.build_pbh_fields(m, fs, rings=rings)
+    assert mf.n_atoms == m.GetNumAtoms() + 3
+    tail = mf.weights[m.GetNumAtoms():]
+    assert tail[:, fs.names.index("ring:pyrrole")].sum() == 1
+    assert tail[:, fs.names.index("ring:benzene")].sum() == 2
+    assert tail[:, fs.names.index("ring:angular")].sum() == 0
+
+
+def test_read_compas2(tmp_path):
+    import csv
+    import gzip
+    rows, blocks = [], []
+    for k, (name, smi) in enumerate((("C2M000001", "c1ccc2[nH]ccc2c1"), ("C2M000002", "c1ccc2occc2c1"))):
+        m = Chem.AddHs(Chem.MolFromSmiles(smi))
+        AllChem.EmbedMolecule(m, randomSeed=1)
+        for charge in (-1, 0, 1):
+            rows.append({"name": name, "charge": str(charge), "smiles": Chem.MolToSmiles(Chem.MolFromSmiles(smi)),
+                         "gap": "" if charge else f"{4.0 + k:.3f}", "homo": "-6", "lumo": "-2",
+                         "rings": "2", "heteroatoms": "1", "formula": "x"})
+            mm = Chem.Mol(m)
+            mm.SetProp("name", name)
+            mm.SetProp("charge", str(charge))
+            blocks.append(mm)
+    csv_path = tmp_path / "t.csv"
+    with open(csv_path, "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    sdf_path = tmp_path / "t.sdf.gz"
+    with gzip.open(sdf_path, "wt") as fh:
+        wr = Chem.SDWriter(fh)
+        for b in blocks:
+            wr.write(b)
+        wr.close()
+    ds = pbh.read_compas2(str(csv_path), str(sdf_path))
+    assert ds.names == ["C2M000001", "C2M000002"] and list(ds.activity) == [4.0, 5.0]
+    assert ds.mols[0].GetProp("n_rings") == "2" and ds.mols[1].GetProp("GAP_eV") == "5.000"
+    assert ds.mols[0].GetNumAtoms() == 16              # hydrogens kept
+    ds1 = pbh.read_compas2(str(csv_path), str(sdf_path), names=["C2M000002"])
+    assert ds1.names == ["C2M000002"]
+    # a SMILES that does not match the SDF graph is refused
+    rows[4]["smiles"] = "c1ccc2sccc2c1"
+    with open(csv_path, "w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    with pytest.raises(ValueError):
+        pbh.read_compas2(str(csv_path), str(sdf_path))

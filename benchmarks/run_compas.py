@@ -103,11 +103,26 @@ RDLogger.DisableLog("rdApp.*")
 CACHE = os.path.join(HERE, "cache", "compas")
 RESULTS = os.path.join(HERE, "results", "compas")
 BASE_URL = "https://gitlab.com/porannegroup/compas/-/raw/main/COMPAS-1/"
+#: the raw-file folders of the three COMPAS sets used here, by family (the first character of a set key)
+BASE_URLS = {"1": BASE_URL, "2": BASE_URL.replace("COMPAS-1", "COMPAS-2"),
+             "3": BASE_URL.replace("COMPAS-1", "COMPAS-3")}
+README = {"1": "README.md", "2": "readme.md", "3": "README.md"}
 FILES = {
     "1D": ("compas-1D_b3lyp_def2-svp.csv", "compas-1D_b3lyp_def2-svp.tar.gz"),
     "1x": ("compas-1x.csv", "compas-1x.tar.gz"),
+    "3D": ("compas-3D.csv", "compas-3D.tar.gz"),
+    "3x": ("compas-3x.csv", "compas-3x.tar.gz"),
+    "2D": ("compas-2D.csv", "compas-2D.sdf.gz"),
 }
-LEVELS = {"1D": "B3LYP-D3BJ/def2-SVP", "1x": "GFN2-xTB"}
+LEVELS = {"1D": "B3LYP-D3BJ/def2-SVP", "1x": "GFN2-xTB",
+          "3D": "CAM-B3LYP-D3BJ/def2-SVP geometries (xyz headers), energies as in the COMPAS-3 paper",
+          "3x": "GFN2-xTB",
+          "2D": "CAM-B3LYP-D3BJ/def2-SVP (COMPAS-2 paper, Sci. Data 2024, 11, 97)"}
+#: the sets with a peri-condensed ring (COMPAS-3) and with hetero atoms (COMPAS-2)
+PERI_FAMILIES = ("2", "3")
+HETERO_FAMILIES = ("2",)
+#: COMPAS-2D holds 52,000 molecules; the stored-kernel protocol runs on a random subset of this size
+SUBSET_2D = 10000
 
 #: attenuation grid, in the convention of the program (field = w exp(-alpha/2 r^2), alpha in A^-2;
 #: the prompt's alpha' in exp(-alpha'^2 r^2) is sqrt(alpha/2): 0.22 to 1.6 A^-1 here)
@@ -130,11 +145,20 @@ GROUP_FIELDS = {
     "C": ["cif:C.H", "cif:C.2r", "cif:C.3r"],
     "D": list(pbh.RING_FIELDS),
     "E": [pbh.SEXTET_FIELD],
+    "F": [pbh.HOMA_FIELD],
+    "R": [],                           # the ring-type fields of a hetero-atom set, from its table
 }
 GROUP_LABELS = {"A": "steric", "B": "electrostatic", "C": "atom-class indicator",
-                "D": "ring-class indicator", "E": "Clar-sextet ring"}
-FIELD_SETS = ("A", "AB", "C", "D", "ABC", "ABCD", "CD", "ABCDE")
+                "D": "ring-class indicator", "E": "Clar-sextet ring", "F": "HOMA-weighted ring",
+                "R": "ring-type indicator"}
+FIELD_SETS = ("A", "AB", "C", "D", "ABC", "ABCD", "CD", "ABCDE", "ABCDF", "ABCDEF")
+#: the field sets run on the later sets (three random seeds and the size splits)
+FIELD_SETS_BY_FAMILY = {"1": FIELD_SETS, "3": ("D", "ABCD", "ABCDE", "ABCDEF"),
+                        "2": ("C", "D", "R", "ABCD", "ABCDR", "ABCDFR")}
 MAIN_SET = "ABCD"
+#: the gap minus its linear estimate from the GFN2-xTB gap (slope and intercept fitted on the
+#: training part of every split): the target of the Delta-learning rows
+DELTA = "DELTA_eV"
 NYSTROEM_M = (500, 1000, 2000)
 
 
@@ -191,9 +215,11 @@ def download(set_key: str) -> Dict[str, dict]:
     ensure_dir(CACHE)
     record_path = os.path.join(CACHE, "checksums.json")
     record = jload(record_path) if os.path.isfile(record_path) else {}
-    for name in FILES[set_key] + ("README.md",):
-        path = os.path.join(CACHE, name)
-        url = BASE_URL + name
+    fam = set_key[0]
+    readme_local = "README.md" if fam == "1" else f"README-COMPAS-{fam}.md"
+    for name, local in [(n, n) for n in FILES[set_key]] + [(README[fam], readme_local)]:
+        path = os.path.join(CACHE, local)
+        url = BASE_URLS[fam] + name
         if not os.path.isfile(path):
             log(f"downloading {url}")
             urllib.request.urlretrieve(url, path)
@@ -202,14 +228,17 @@ def download(set_key: str) -> Dict[str, dict]:
         if name.endswith(".gz") and head != b"\x1f\x8b":
             raise SystemExit(f"{path} is not a gzip archive (a Git-LFS pointer?): ask the user "
                              f"for the file")
-        if name not in record:
-            record[name] = {"url": url, "bytes": os.path.getsize(path), "sha256": sha256(path),
-                            "downloaded": _dt.date.today().isoformat()}
+        if local not in record:
+            record[local] = {"url": url, "bytes": os.path.getsize(path), "sha256": sha256(path),
+                             "downloaded": _dt.date.today().isoformat()}
     jdump(record, record_path)
     return record
 
 
 def extract(set_key: str) -> str:
+    archive = os.path.join(CACHE, FILES[set_key][1])
+    if archive.endswith(".sdf.gz"):
+        return archive                      # read in place by pbh.read_compas2
     folder = os.path.join(CACHE, f"xyz{set_key}")
     if os.path.isdir(folder) and any(os.scandir(folder)):
         return folder
@@ -227,37 +256,75 @@ def prepared_sdf(set_key: str) -> str:
     return os.path.join(CACHE, f"compas-{set_key}.sdf")
 
 
+def subset_names(csv_path: str, size: int, seed: int = 0) -> List[str]:
+    """A random subset of the neutral molecules of a COMPAS-2 table, by name."""
+    import csv as _csv
+    with open(csv_path, newline="", encoding="utf-8") as fh:
+        names = [r["name"] for r in _csv.DictReader(fh) if r.get("charge") == "0"]
+    rng = np.random.RandomState(seed)
+    pick = np.sort(rng.choice(len(names), size=min(size, len(names)), replace=False))
+    return [names[i] for i in pick]
+
+
 def prepare(set_key: str, charges: str = "xtb", jobs: int = 8, limit: Optional[int] = None,
-            force: bool = False) -> dict:
-    """Download, parse, align, compute the charges, write the SDF, make the splits."""
+            force: bool = False, subset: Optional[int] = None) -> dict:
+    """Download, parse, align, compute the charges, write the SDF, make the splits.
+
+    COMPAS-3D (peri-condensed) and COMPAS-2D (hetero atoms) go through the same steps; the
+    hetero-atom set is read from its SDF, on a random subset of `subset` molecules (default
+    :data:`SUBSET_2D`), with every ring of four to six atoms and the ring types of its table.
+    """
     from cmfqsar import xtb
 
     meta_path = results_path(set_key, "prepared")
     if os.path.isfile(meta_path) and os.path.isfile(prepared_sdf(set_key)) and not force:
         return jload(meta_path)
+    fam = set_key[0]
+    carbon_only = fam not in HETERO_FAMILIES
     t0 = time.time()
     record = download(set_key)
     folder = extract(set_key)
     csv_path = os.path.join(CACHE, FILES[set_key][0])
     log(f"reading {csv_path}")
-    ds = pbh.read_compas(csv_path, folder, limit=limit,
-                         progress=lambda k, n: log(f"  {k}/{n} molecules read"))
+    chosen_names = None
+    if fam in HETERO_FAMILIES:
+        size = subset if subset is not None else SUBSET_2D
+        chosen_names = subset_names(csv_path, size)
+        ds = pbh.read_compas2(csv_path, folder, limit=limit, names=chosen_names,
+                              progress=lambda k, n: log(f"  {k}/{n} molecules read"))
+    else:
+        ds = pbh.read_compas(csv_path, folder, limit=limit,
+                             progress=lambda k, n: log(f"  {k}/{n} molecules read"))
     log(f"{len(ds)} molecules; frame and rings")
-    mismatches, peri = [], []
+    mismatches, peri, flat = [], [], []
+    types_seen: Dict[str, int] = {}
+    classes_seen: Dict[str, int] = {}
+    ring_types_seen: Dict[str, int] = {}
     has_c3r = False
     for m in ds.mols:
         set_coords(m, pbh.canonical_frame(m))
-        rings = pbh.ring_classes(m)
+        rings = pbh.ring_classes(m, carbon_only=carbon_only)
         rc = pbh.ring_class_counts(rings)
-        if any(r.cls == "peri" for r in rings):
+        for r in rings:
+            classes_seen[r.cls] = classes_seen.get(r.cls, 0) + 1
+            ring_types_seen[r.ring_type] = ring_types_seen.get(r.ring_type, 0) + 1
+        if any(r.cls == pbh.PERI_CLASS for r in rings):
             peri.append(m.GetProp("_Name"))
-        lin, ang = pbh.annulation_counts(m.GetProp("lalas") if m.HasProp("lalas") else "")
-        if len(rings) != int(m.GetProp("n_rings")) or rc["linear"] != lin \
-                or rc["angular"] + rc["branched"] != ang:
+        if m.HasProp("lalas"):
+            lin, ang = pbh.annulation_counts(m.GetProp("lalas"))
+            if len(rings) != int(m.GetProp("n_rings")) or rc["linear"] != lin \
+                    or rc["angular"] + rc["branched"] != ang:
+                mismatches.append(m.GetProp("_Name"))
+        elif len(rings) != int(m.GetProp("n_rings")):
             mismatches.append(m.GetProp("_Name"))
-        if any(pbh.pbh_atom_type(a) == "C.3r" for a in m.GetAtoms()):
-            has_c3r = True
-    if peri:
+        for a in m.GetAtoms():
+            t = pbh.pbh_atom_type(a)
+            types_seen[t] = types_seen.get(t, 0) + 1
+            if t == "C.3r":
+                has_c3r = True
+        pos = m.GetConformer().GetPositions()
+        flat.append(float(np.abs(pos[pbh.heavy_mask(m), 2]).max()))
+    if peri and fam not in PERI_FAMILIES:
         raise SystemExit(f"{len(peri)} molecules have a peri-fused ring (first: {peri[0]}); "
                          "this study is for cata-condensed sets only")
     if mismatches:
@@ -293,6 +360,10 @@ def prepare(set_key: str, charges: str = "xtb", jobs: int = 8, limit: Optional[i
         log("SUBSTITUTION: Gasteiger charges instead of GFN2-xTB")
     if not has_c3r:
         substitutions.append("cif:C.3r dropped: no carbon of three rings in a cata-condensed set")
+    if chosen_names is not None:
+        substitutions.append(f"COMPAS-{set_key}: a random subset of {len(chosen_names)} of the "
+                             f"neutral molecules (seed 0) instead of the whole set, so that the "
+                             f"stored-kernel protocol of COMPAS-1D applies unchanged")
     out = prepared_sdf(set_key)
     with Chem.SDWriter(out) as w:
         for m in ds.mols:
@@ -308,7 +379,19 @@ def prepare(set_key: str, charges: str = "xtb", jobs: int = 8, limit: Optional[i
         "annulation_mismatches": mismatches, "files": {k: record[k] for k in FILES[set_key]},
         "frame": "cmfqsar.pbh.canonical_frame (heavy-atom inertia tensor, sign rule)",
         "seconds": time.time() - t0, "sdf": out, "date": _dt.date.today().isoformat(),
+        "family": fam, "carbon_only": carbon_only, "subset": chosen_names is not None,
+        "atom_types": [t for t in pbh.PBH_TYPES + pbh.HETERO_TYPES if types_seen.get(t, 0) > 0],
+        "atom_type_counts": types_seen,
+        "ring_classes": [c for c in pbh.RING_CLASSES_PERI if classes_seen.get(c, 0) > 0],
+        "ring_class_counts": classes_seen,
+        "ring_types": [t for t in pbh.RING_TYPES if ring_types_seen.get(t, 0) > 0] if not carbon_only else [],
+        "ring_type_counts": ring_types_seen, "n_peri_molecules": len(peri),
+        "max_out_of_plane_A": {"median": float(np.median(flat)), "p95": float(np.percentile(flat, 95)),
+                               "max": float(np.max(flat))},
     }
+    unknown = [t for t in ring_types_seen if t not in pbh.RING_TYPES]
+    if unknown and not carbon_only:
+        log(f"WARNING: ring types outside the COMPAS-2 list: {unknown}")
     jdump(meta, meta_path)
     splits = make_splits(n_rings)
     jdump(splits, results_path(set_key, "splits"))
@@ -332,6 +415,31 @@ def make_splits(n_rings: Sequence[int]) -> Dict[str, dict]:
     return out
 
 
+def xtb_gaps(set_key: str, names: Sequence[str]) -> Optional[np.ndarray]:
+    """The GFN2-xTB gap of every molecule of a DFT set from the xTB table of the same family
+    (COMPAS-1x for 1D, COMPAS-3x for 3D), or None when that table is not in the cache."""
+    import csv as _csv
+    xkey = set_key[0] + "x"
+    if xkey not in FILES:
+        return None
+    path = os.path.join(CACHE, FILES[xkey][0])
+    if not os.path.isfile(path):
+        return None
+    with open(path, newline="", encoding="utf-8") as fh:
+        gaps = {r["molecule"]: float(r["GAP_eV"]) for r in _csv.DictReader(fh)}
+    if any(n not in gaps for n in names):
+        return None
+    return np.array([gaps[n] for n in names], float)
+
+
+def default_groups(meta: dict) -> str:
+    """The kernel groups of a set: A to F for the benzenoids, A to D, F and the ring types for
+    the hetero-atom sets (the Clar sextets are defined for carbon rings only)."""
+    if meta.get("ring_types"):
+        return "ABCDFR"
+    return "ABCDEF"
+
+
 def load_prepared(set_key: str):
     meta = jload(results_path(set_key, "prepared"))
     ds = load_dataset(prepared_sdf(set_key), activity_prop=TARGET)
@@ -351,8 +459,15 @@ def group_fields(group: str, meta: dict) -> List[str]:
     names = list(GROUP_FIELDS[group])
     if group == "B" and meta["charges"] != "xtb":
         names = ["electrostatic"]
-    if group == "C" and not meta.get("has_C3r", False):
-        names = [n for n in names if n != "cif:C.3r"]
+    if group == "C":
+        if meta.get("atom_types"):
+            names = ["cif:" + t for t in meta["atom_types"]]
+        elif not meta.get("has_C3r", False):
+            names = [n for n in names if n != "cif:C.3r"]
+    if group == "D" and meta.get("ring_classes"):
+        names = ["ring:" + c for c in meta["ring_classes"]]
+    if group == "R":
+        names = ["ring:" + t for t in meta.get("ring_types", [])]
     return names
 
 
@@ -368,15 +483,18 @@ def make_fieldset(groups: str, meta: dict, alpha_by_group: Optional[Dict[str, fl
     return FieldSet(specs=specs, charge_model="gasteiger", cif_scheme="pbh")
 
 
-def build_table(ds, fieldset: FieldSet, ring_cache: Optional[dict] = None) -> AtomTable:
+def build_table(ds, fieldset: FieldSet, ring_cache: Optional[dict] = None,
+                carbon_only: bool = True) -> AtomTable:
     mfs = []
     want_sextet = any(s.name == pbh.SEXTET_FIELD for s in fieldset.specs)
+    if ring_cache is None:
+        ring_cache = {}
     for m, name in zip(ds.mols, ds.names):
         rings = None
         if ring_cache is not None:
             rings = ring_cache.get(name)
             if rings is None:
-                rings = pbh.ring_classes(m)
+                rings = pbh.ring_classes(m, carbon_only=carbon_only)
                 if want_sextet:
                     pbh.clar_weights(m, rings)
                 ring_cache[name] = rings
@@ -407,19 +525,26 @@ def kernel_path(set_key: str, group: str, alpha: float) -> str:
     return os.path.join(CACHE, "kernels", f"{set_key}_{group}_{alpha:g}.npy")
 
 
-def kernels(set_key: str, groups: str = "ABCDE", engine: Optional[str] = "auto",
+def kernels(set_key: str, groups: Optional[str] = None, engine: Optional[str] = "auto",
             force: bool = False, alphas: Sequence[float] = ALPHAS) -> dict:
     """The group kernels on the whole set for every attenuation of the grid, stored as float32."""
     ds, meta = load_prepared(set_key)
+    groups = groups or default_groups(meta)
     rec_path = results_path(set_key, "kernels")
     rec = jload(rec_path) if os.path.isfile(rec_path) and not force else {}
     fs_all = make_fieldset(groups, meta)
     log(f"building the fields of {len(ds)} molecules")
-    table = build_table(ds, fs_all, ring_cache={})
+    table = build_table(ds, fs_all, ring_cache={}, carbon_only=meta.get("carbon_only", True))
     log(f"{table.coords.shape[0]} atoms including {sum(1 for m in table.molecules for s in m.symbols if s == pbh.RING_SYMBOL)} ring centres")
+    n_mol = len(ds)
     for g in groups:
         cols = [fs_all.names.index(n) for n in group_fields(g, meta)]
-        part = restrict_table(table, cols)
+        if not cols:
+            continue
+        # one table per field, holding only the atoms that carry weight in it: a field kernel is
+        # then built alone (one float64 n x n matrix at a time) and summed into the group kernel
+        parts = [restrict_table(table, [c]) for c in cols]
+        n_atoms = sum(int(p.coords.shape[0]) for p in parts)
         for alpha in alphas:
             key = f"{g}_{alpha:g}"
             path = kernel_path(set_key, g, alpha)
@@ -428,20 +553,23 @@ def kernels(set_key: str, groups: str = "ABCDE", engine: Optional[str] = "auto",
             specs = [FieldSpec(name=fs_all.specs[c].name, kind=fs_all.specs[c].kind, alpha=alpha)
                      for c in cols]
             t0 = time.time()
-            K = kernel_matrices(part, part, specs, engine=engine)
-            diag_mean = [float(np.mean(np.diag(K[f]))) for f in range(len(specs))]
-            scale = [1.0 / d if d > 1e-300 else 0.0 for d in diag_mean]
-            joint = np.zeros(K.shape[1:], dtype=np.float32)
-            for f in range(len(specs)):
-                joint += (scale[f] * K[f]).astype(np.float32)
-            del K
+            joint = np.zeros((n_mol, n_mol), dtype=np.float32)
+            diag_mean, scale = [], []
+            for part, spec in zip(parts, specs):
+                Kf = kernel_matrices(part, part, [spec], engine=engine)[0]
+                d = float(np.mean(np.diag(Kf)))
+                s = 1.0 / d if d > 1e-300 else 0.0
+                diag_mean.append(d)
+                scale.append(s)
+                joint += (s * Kf).astype(np.float32)
+                del Kf
             ensure_dir(os.path.dirname(path))
             np.save(path, joint)
             rec[key] = {"group": g, "alpha": alpha, "fields": [s.name for s in specs],
-                        "diag_mean": diag_mean, "scale": scale, "atoms": int(part.coords.shape[0]),
+                        "diag_mean": diag_mean, "scale": scale, "atoms": n_atoms,
                         "seconds": time.time() - t0, "engine": engine}
             jdump(rec, rec_path)
-            log(f"kernel {key}: {part.coords.shape[0]} atoms, {time.time() - t0:.0f} s")
+            log(f"kernel {key}: {n_atoms} atoms, {time.time() - t0:.0f} s")
     return rec
 
 
@@ -450,10 +578,11 @@ class KernelStore:
 
     A kernel is read whole (300 MB in float32 for 8,678 molecules) rather than memory-mapped:
     gathering the rows and columns of a split from a memory map is many small reads and was the
-    slowest part of a split.  The last `max_loaded` kernels stay in memory.
+    slowest part of a split.  The last `max_loaded` kernels stay in memory (four: a field
+    process then holds about 3 GB, and several of them run at once).
     """
 
-    def __init__(self, set_key: str, max_loaded: int = 8):
+    def __init__(self, set_key: str, max_loaded: int = 4):
         from collections import OrderedDict
         self.set_key = set_key
         self.rec = jload(results_path(set_key, "kernels"))
@@ -716,8 +845,23 @@ def load_fields(set_key: str) -> dict:
     return done
 
 
+def delta_target(gap: np.ndarray, gap_xtb: np.ndarray, train: np.ndarray
+                 ) -> Tuple[np.ndarray, Tuple[float, float]]:
+    """The gap minus its linear estimate from the xTB gap, the line fitted on `train` only."""
+    A = np.c_[gap_xtb[train], np.ones(len(train))]
+    coef, *_ = np.linalg.lstsq(A, gap[train], rcond=None)
+    return gap - (coef[0] * gap_xtb + coef[1]), (float(coef[0]), float(coef[1]))
+
+
 def fields(set_key: str, sets: Sequence[str] = FIELD_SETS, splits_wanted: Optional[Sequence[str]] = None,
-           targets: Sequence[str] = (TARGET,), force: bool = False) -> dict:
+           targets: Sequence[str] = (TARGET,), force: bool = False, layer: Optional[str] = None) -> dict:
+    """Every (target, field set, split): the attenuations, the ridge and the test metrics.
+
+    ``layer="gauss"`` adds the Gaussian kernel layer as a third configuration of every run
+    (chosen against the linear ones on the validation part; the report shows both).  The target
+    :data:`DELTA` is the gap minus its linear xTB estimate, fitted on the training part of each
+    split, and needs the xTB table of the family in the cache.
+    """
     check_krr_equivalence()
     ds, meta = load_prepared(set_key)
     store = KernelStore(set_key, max_loaded=4)
@@ -725,6 +869,10 @@ def fields(set_key: str, sets: Sequence[str] = FIELD_SETS, splits_wanted: Option
     done = {} if force else load_fields(set_key)
     ys = {TARGET: np.asarray(meta["gap"], float), "HOMO_eV": np.asarray(meta["homo"], float),
           "LUMO_eV": np.asarray(meta["lumo"], float)}
+    gx = xtb_gaps(set_key, meta["names"]) if DELTA in targets else None
+    if DELTA in targets and gx is None:
+        raise SystemExit(f"the xTB gaps of COMPAS-{set_key} are not available (the x table of the "
+                         "family must be in the cache and list every molecule)")
     for target in targets:
         for groups in sets:
             path = results_path(set_key, f"fields_{groups}")
@@ -735,8 +883,15 @@ def fields(set_key: str, sets: Sequence[str] = FIELD_SETS, splits_wanted: Option
                 if key in done:
                     continue
                 split = dict(split, name=sname)
-                res = evaluate_set(store, groups, split, ys[target], target=target)
-                res["y_test"] = ys[target][np.asarray(split["test"], int)]
+                line = None
+                if target == DELTA:
+                    y, line = delta_target(ys[TARGET], gx, np.asarray(split["train"], int))
+                else:
+                    y = ys[target]
+                res = evaluate_set(store, groups, split, y, target=target, layer=layer)
+                res["y_test"] = y[np.asarray(split["test"], int)]
+                if line is not None:
+                    res["xtb_line"] = {"slope": line[0], "intercept": line[1]}
                 done[key] = res
                 part = jload(path) if os.path.isfile(path) and not force else {}
                 part[key] = res
@@ -778,10 +933,19 @@ def baselines(set_key: str, force: bool = False) -> dict:
         return jload(path)
     y = np.asarray(meta["gap"], float)
     log("count features and RDKit descriptors")
-    counts = np.array([pbh.count_features(m) for m in ds.mols])
+    carbon_only = meta.get("carbon_only", True)
+    atom_types = tuple(meta.get("atom_types") or pbh.PBH_TYPES)
+    ring_classes_ = tuple(meta.get("ring_classes") or pbh.RING_CLASSES)
+    ring_types = tuple(meta.get("ring_types") or ())
+    names_c = pbh.count_names(atom_types, ring_classes_, ring_types, sextet=carbon_only, homa=True)
+    counts = np.array([pbh.count_features(m, atom_types=atom_types, ring_classes_=ring_classes_,
+                                          ring_types=ring_types, sextet=carbon_only, homa=True,
+                                          carbon_only=carbon_only) for m in ds.mols])
     X_desc, desc_names = descriptor_matrix(ds.mols)
     n_rings = np.asarray(meta["n_rings"], float)[:, None]
-    out = {"count_names": list(pbh.COUNT_NAMES), "n_descriptors": len(desc_names), "splits": {}}
+    gx = xtb_gaps(set_key, meta["names"])
+    out = {"count_names": list(names_c), "n_descriptors": len(desc_names), "splits": {},
+           "xtb_gaps": gx is not None}
     ridge_grid = (1e-3, 1e-2, 0.1, 1.0, 10.0, 100.0)
     for sname, split in splits.items():
         tr = np.asarray(split["train"], int)
@@ -805,7 +969,12 @@ def baselines(set_key: str, force: bool = False) -> dict:
         mdl = Ridge(alpha=best[1]).fit(Xtr, y[tr])
         rec["count_ridge"] = {"lam": best[1], "rmse_cv": best[0], "q2": best[2],
                               "test": metrics(y[te], mdl.predict(Xte)),
-                              "coef": dict(zip(pbh.COUNT_NAMES, (mdl.coef_ / sc.scale_).tolist()))}
+                              "coef": dict(zip(names_c, (mdl.coef_ / sc.scale_).tolist()))}
+        if gx is not None:
+            # the linear xTB-to-DFT correction, fitted on the training part: the Delta baseline
+            _d, (slope, icpt) = delta_target(y, gx, tr)
+            rec["xtb_linear"] = {"slope": slope, "intercept": icpt,
+                                 "test": metrics(y[te], slope * gx[te] + icpt)}
         # a straight line in the number of rings
         lin = LinearRegression().fit(n_rings[tr], y[tr])
         rec["rings_line"] = {"test": metrics(y[te], lin.predict(n_rings[te])),
@@ -821,6 +990,131 @@ def baselines(set_key: str, force: bool = False) -> dict:
             f"rings {rec['rings_line']['test']['r2']:.3f}  "
             f"RF {rec['rf_descriptors']['test']['r2']:.3f}")
         jdump(out, path)
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# Stage: nics (the magnetic aromaticity index at the ring centres of the small molecules)
+# --------------------------------------------------------------------------- #
+
+NICS_LEVEL = "B3LYP D3BJ def2-SVP NMR TightSCF"
+NICS_MAX_RINGS = 7
+
+
+def _nics_input(mol: Chem.Mol, rings: Sequence[pbh.Ring], height: float = 1.0) -> str:
+    """An ORCA NMR input with one ghost hydrogen 1 A above every ring centroid (the molecule
+    is in its planar frame, so the normal is z); the shielding at a ghost atom is minus the
+    nucleus-independent chemical shift NICS(1)."""
+    pos = mol.GetConformer().GetPositions()
+    lines = ["! " + NICS_LEVEL, "%maxcore 3000", "* xyz 0 1"]
+    for a, p in zip(mol.GetAtoms(), pos):
+        lines.append(f"{a.GetSymbol():2s} {p[0]:12.6f} {p[1]:12.6f} {p[2]:12.6f}")
+    for r in rings:
+        c = r.centroid + np.array([0.0, 0.0, height])
+        lines.append(f"H: {c[0]:12.6f} {c[1]:12.6f} {c[2]:12.6f}")
+    lines.append("*")
+    return "\n".join(lines) + "\n"
+
+
+def _parse_nics(text: str, n_real: int, n_rings: int) -> Optional[Dict[str, List[float]]]:
+    """The isotropic shielding and the zz component of the shielding tensor at the ghost
+    nuclei (the last `n_rings` nuclei), as NICS values (minus the shielding)."""
+    if "ORCA TERMINATED NORMALLY" not in text:
+        return None
+    lines = text.splitlines()
+    iso: Dict[int, float] = {}
+    zz: Dict[int, float] = {}
+    for i, line in enumerate(lines):
+        if line.startswith(" Nucleus") and line.rstrip().endswith(":"):
+            try:
+                k = int(line.split()[1].rstrip("H:").rstrip("CH"))
+            except ValueError:
+                continue
+            for j in range(i, min(i + 40, len(lines))):
+                if lines[j].startswith("Total shielding tensor"):
+                    zz[k] = float(lines[j + 3].split()[2])
+                if lines[j].startswith(" Total") and "iso=" in lines[j]:
+                    iso[k] = float(lines[j].split("iso=")[1])
+                    break
+    ghosts = list(range(n_real, n_real + n_rings))
+    if any(k not in iso or k not in zz for k in ghosts):
+        return None
+    return {"nics1_iso": [-iso[k] for k in ghosts], "nics1_zz": [-zz[k] for k in ghosts]}
+
+
+def nics(set_key: str = "1D", max_rings: int = NICS_MAX_RINGS, jobs: int = 10,
+         force: bool = False) -> dict:
+    """NICS(1) and NICS(1)zz at every ring centre of the molecules of up to `max_rings` rings
+    (179 molecules of COMPAS-1D), with ORCA, serial jobs run `jobs` at a time; the HOMA index,
+    the Clar-sextet share and the annulation class of every ring are stored beside them, so
+    that the geometric and the magnetic aromaticity indices can be compared ring by ring.
+    A full-set NICS field would need about a week of this machine (five minutes per six-ring
+    molecule, a quarter of an hour per ten-ring molecule, one core each)."""
+    import subprocess
+    from concurrent.futures import ThreadPoolExecutor
+    from cmfqsar.orca import find_orca
+
+    path = results_path(set_key, "nics")
+    if os.path.isfile(path) and not force:
+        return jload(path)
+    ds, meta = load_prepared(set_key)
+    exe = find_orca()
+    work = ensure_dir(os.path.join(CACHE, f"nics_{set_key}"))
+    pick = [i for i, nr in enumerate(meta["n_rings"]) if int(nr) <= max_rings]
+    log(f"NICS(1) for {len(pick)} molecules of up to {max_rings} rings, {jobs} ORCA jobs at a time")
+    rings_of = {}
+    for i in pick:
+        rings = pbh.ring_classes(ds.mols[i], carbon_only=meta.get("carbon_only", True))
+        pbh.clar_weights(ds.mols[i], rings)
+        rings_of[i] = rings
+
+    def run(i: int) -> Tuple[int, Optional[dict], float]:
+        name = ds.names[i]
+        d = ensure_dir(os.path.join(work, name))
+        out = os.path.join(d, "nics.out")
+        t0 = time.time()
+        if not (os.path.isfile(out) and "ORCA TERMINATED NORMALLY" in open(out, errors="replace").read()):
+            with open(os.path.join(d, "nics.inp"), "w") as fh:
+                fh.write(_nics_input(ds.mols[i], rings_of[i]))
+            with open(out, "w") as fh:
+                subprocess.run([exe, "nics.inp"], cwd=d, stdout=fh, stderr=subprocess.STDOUT)
+        parsed = _parse_nics(open(out, errors="replace").read(), ds.mols[i].GetNumAtoms(), len(rings_of[i]))
+        return i, parsed, time.time() - t0
+
+    t0 = time.time()
+    rows, failed = [], []
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        for k, (i, parsed, dt) in enumerate(pool.map(run, pick)):
+            if parsed is None:
+                failed.append(ds.names[i])
+                continue
+            rings = rings_of[i]
+            rows.append({"name": ds.names[i], "n_rings": int(meta["n_rings"][i]), "gap": float(meta["gap"][i]),
+                         "classes": [r.cls for r in rings], "sextet": [float(r.sextet) for r in rings],
+                         "homa": [float(r.homa) for r in rings], "seconds": dt, **parsed})
+            if k % 20 == 0:
+                log(f"  {k + 1}/{len(pick)} molecules, {time.time() - t0:.0f} s")
+    out = {"set": set_key, "level": NICS_LEVEL, "height_A": 1.0, "max_rings": max_rings,
+           "n_molecules": len(rows), "failed": failed, "jobs": jobs, "seconds": time.time() - t0,
+           "molecules": rows}
+    # the ring-by-ring agreement of the indices
+    h = np.array([v for r in rows for v in r["homa"]])
+    s = np.array([v for r in rows for v in r["sextet"]])
+    zi = np.array([v for r in rows for v in r["nics1_iso"]])
+    zzv = np.array([v for r in rows for v in r["nics1_zz"]])
+    cls = [c for r in rows for c in r["classes"]]
+    out["rings"] = int(len(h))
+    out["correlations"] = {"homa_vs_nics1_zz": float(np.corrcoef(h, zzv)[0, 1]),
+                           "homa_vs_nics1_iso": float(np.corrcoef(h, zi)[0, 1]),
+                           "sextet_vs_nics1_zz": float(np.corrcoef(s, zzv)[0, 1]),
+                           "sextet_vs_homa": float(np.corrcoef(s, h)[0, 1])}
+    out["by_class"] = {c: {"n": int(sum(1 for x in cls if x == c)),
+                           "nics1_zz_mean": float(np.mean([v for v, x in zip(zzv, cls) if x == c])),
+                           "homa_mean": float(np.mean([v for v, x in zip(h, cls) if x == c]))}
+                       for c in sorted(set(cls))}
+    jdump(out, path)
+    log(f"NICS done: {len(rows)} molecules, {len(h)} rings, r(HOMA, NICS(1)zz) = "
+        f"{out['correlations']['homa_vs_nics1_zz']:.3f}, {time.time() - t0:.0f} s")
     return out
 
 
@@ -846,7 +1140,7 @@ def refit_model(set_key: str, groups: str = MAIN_SET, split_name: str = "random0
     # table exactly (scale_fields would recompute them over the training part)
     fs = make_fieldset(groups, meta, alpha_by_group=abg, h_by_field=store.scales(abg))
     ring_cache: dict = {}
-    table = build_table(ds, fs, ring_cache=ring_cache)
+    table = build_table(ds, fs, ring_cache=ring_cache, carbon_only=meta.get("carbon_only", True))
     idx_tr = np.asarray(split["train"], int)
     idx_te = np.asarray(split["test"], int)
     y = np.asarray(meta["gap"], float)
@@ -883,8 +1177,9 @@ def pick_reference(ds, meta: dict, split: dict) -> int:
         if best is None or score > best[0]:
             best = (score, i)
     if best is None:
-        # fall back to the smallest test molecule with an angular ring
-        cands = sorted(te, key=lambda i: int(meta["n_rings"][i]))
+        # no annulation strings (COMPAS-2, COMPAS-3): a six-ring test molecule, else the smallest
+        six = [i for i in te if int(meta["n_rings"][i]) == 6]
+        cands = six or sorted(te, key=lambda i: int(meta["n_rings"][i]))
         best = (None, cands[0])
     return best[1]
 
@@ -1073,7 +1368,8 @@ def interpret(set_key: str, groups: str = MAIN_SET, split_name: str = "random0",
                       "y": float(y[i]), "yp": yp, "bias": float(model.bias), "lost": lost,
                       "classes": [r.cls for r in rings], "sextet": [r.sextet for r in rings],
                       "centroids": [r.centroid.tolist() for r in rings], "n_rings": len(rings)})
-    plot_ring_contributions(items[1:], os.path.join(figdir, "ring_contributions_gap.png"))
+    ring_fig_name = "ring_contributions_gap.png" if set_key == "1D" else f"ring_contributions_gap_{set_key}.png"
+    plot_ring_contributions(items[1:], os.path.join(figdir, ring_fig_name))
     plot_ring_contributions(items[:1], os.path.join(figdir, f"ring_contributions_{ref_name}.png"))
     # rule 2 for the reference: the training molecules that weigh most
     tc = model.training_contributions(mf_ref)
@@ -1088,7 +1384,7 @@ def interpret(set_key: str, groups: str = MAIN_SET, split_name: str = "random0",
         "groups": groups, "split": split_name, "reference": ref_name,
         "reference_rings": meta["n_rings"][ref], "reference_gap": float(y[ref]),
         "refit_check": check, "figure": os.path.relpath(fig_path, ROOT),
-        "ring_figure": os.path.relpath(os.path.join(figdir, "ring_contributions_gap.png"), ROOT),
+        "ring_figure": os.path.relpath(os.path.join(figdir, ring_fig_name), ROOT),
         "html": os.path.relpath(html_path, ROOT) if html_ok else "",
         "cube": os.path.relpath(cube_path, ROOT), "extremes": extremes, "rule2": rule2,
         "molecules": [{k: v for k, v in it.items() if k not in ("mf", "rings")} for it in items],
@@ -1368,6 +1664,203 @@ def _mean_std(values: Sequence[float]) -> str:
     return f"{v.mean():.3f} +- {v.std(ddof=1):.3f}"
 
 
+def linear_cfg(res: dict) -> dict:
+    """The chosen configuration among the linear ones (shared or per-group attenuations),
+    by the rule of evaluate_set: the validation RMSE, else the cross-validated RMSE."""
+    cands = {k: v for k, v in res["configs"].items() if k != "gauss"}
+    if res.get("n_valid", 0):
+        return min(cands.values(), key=lambda c: c["valid"]["rmse"])
+    return min(cands.values(), key=lambda c: c["rmse_cv"])
+
+
+def set_label(groups: str) -> str:
+    return "{" + ",".join(groups) + "}"
+
+
+def report_fields(set_key: str, field_sets: Sequence[str], target: str = TARGET) -> List[str]:
+    """The field-set table of one set: one row per field set (the linear model) and, where the
+    Gaussian kernel layer was run, a second row for the layered model."""
+    done = load_fields(set_key)
+    splits = jload(results_path(set_key, "splits"))
+    size_names = [s for s in splits if splits[s]["kind"] == "size"]
+    lines: List[str] = []
+    head = "| field set | fields | q2 (5-fold CV, train) | test R2 | test RMSE (eV) | test MAE (eV) |"
+    for s in size_names:
+        n_tr, n_te = len(splits[s]["train"]), len(splits[s]["test"])
+        head += f" N={splits[s]['test_rings']} R2 (train {n_tr}, test {n_te}) | N={splits[s]['test_rings']} RMSE |"
+    lines.append(head)
+    lines.append("|" + "---|" * (head.count("|") - 1))
+    for groups in field_sets:
+        keys = [k for k in done if k.startswith(f"{target}|{groups}|random")]
+        if not keys:
+            continue
+        for layered in (False, True):
+            if layered and not any("gauss" in done[k]["configs"] for k in keys):
+                continue
+            pick = (lambda r: r["configs"].get("gauss")) if layered else linear_cfg
+            chosen = [pick(done[k]) for k in keys if pick(done[k]) is not None]
+            label = set_label(groups) + (" + Gaussian layer" if layered else "")
+            if len(chosen) != len(SEEDS):
+                label += f" ({len(chosen)} seeds)"
+            fields_txt = ", ".join(done[keys[0]]["fields"]) if not layered else "the same kernel, exp(-gamma d^2)"
+            row = (f"| {label} | {fields_txt} | "
+                   f"{_mean_std([c['q2'] for c in chosen])} | {_mean_std([c['test']['r2'] for c in chosen])} | "
+                   f"{_mean_std([c['test']['rmse'] for c in chosen])} | {_mean_std([c['test']['mae'] for c in chosen])} |")
+            for s in size_names:
+                k = f"{target}|{groups}|{s}"
+                c = pick(done[k]) if k in done else None
+                row += f" {c['test']['r2']:.3f} | {c['test']['rmse']:.3f} |" if c else " - | - |"
+            lines.append(row)
+    lines.append("")
+    return lines
+
+
+def report_baselines(set_key: str) -> List[str]:
+    bpath = results_path(set_key, "baselines")
+    if not os.path.isfile(bpath):
+        return []
+    b = jload(bpath)
+    splits = jload(results_path(set_key, "splits"))
+    size_names = [s for s in splits if splits[s]["kind"] == "size"]
+    lines = ["### Baselines on the same splits", ""]
+    head = "| model | test R2 | test RMSE (eV) | test MAE (eV) |"
+    for s in size_names:
+        head += f" N={splits[s]['test_rings']} R2 | N={splits[s]['test_rings']} RMSE |"
+    lines.append(head)
+    lines.append("|" + "---|" * (head.count("|") - 1))
+    labels = {"count_ridge": f"ridge on {len(b['count_names'])} counts of atom classes, ring classes"
+                             + (", ring types" if any(n[2:] in pbh.RING_TYPES for n in b["count_names"]) else "")
+                             + " and HOMA (additivity scheme)" if "sum_homa" in b["count_names"] else
+                             "ridge on atom-class and ring-class counts (additivity scheme)",
+              "rings_line": "straight line in the number of rings",
+              "rf_descriptors": f"random forest on {b['n_descriptors']} RDKit descriptors",
+              "xtb_linear": "linear correction of the GFN2-xTB gap (slope and intercept fitted on the training part)"}
+    for key, label in labels.items():
+        rand = [b["splits"][s][key]["test"] for s in b["splits"] if s.startswith("random") and key in b["splits"][s]]
+        if not rand:
+            continue
+        row = (f"| {label} | {_mean_std([m['r2'] for m in rand])} | {_mean_std([m['rmse'] for m in rand])} | "
+               f"{_mean_std([m['mae'] for m in rand])} |")
+        for s in size_names:
+            if s in b["splits"] and key in b["splits"][s]:
+                m = b["splits"][s][key]["test"]
+                row += f" {m['r2']:.3f} | {m['rmse']:.3f} |"
+            else:
+                row += " - | - |"
+        lines.append(row)
+    lines.append("")
+    return lines
+
+
+def report_interpret(set_key: str = "1D") -> List[str]:
+    """The interpretation lines of a set: the reference molecule, the figures, the refit check."""
+    ipath = results_path(set_key, "interpret")
+    if not os.path.isfile(ipath):
+        return []
+    it = jload(ipath)
+    fig = str(it["figure"]).replace("\\", "/")
+    ring_fig = str(it["ring_figure"]).replace("\\", "/")
+    rt = it["refit_check"]["test"]
+    lines = ["### Interpretation", "",
+             f"Reference molecule {it['reference']} ({it['reference_rings']} rings, gap "
+             f"{it['reference_gap']:.2f} eV); co-field figure `{fig}`; per-ring "
+             f"contributions `{ring_fig}`.  The CMFModel refitted in float64 for the figures "
+             f"reproduces the table's test predictions (float32 kernels) to "
+             f"{it['refit_check']['max_dev']:.1e} eV at worst; its own test R2 is {rt['r2']:.3f}, "
+             f"RMSE {rt['rmse']:.3f} eV."]
+    if it["refit_check"]["max_dev"] > 0.2:
+        lines.append("A difference of that size means the linear model at this ridge is ill-conditioned on "
+                     "this set: the contributions of decomposition rule 2 are large and cancel, and the "
+                     "per-ring reading is not reliable.")
+    lines.append("")
+    return lines
+
+
+def report_delta(set_key: str = "1D") -> List[str]:
+    """The Delta-learning rows: the field model on the gap minus its linear xTB estimate."""
+    done = load_fields(set_key)
+    keys = [k for k in done if k.startswith(DELTA + "|")]
+    if not keys:
+        return []
+    lines = [f"### Delta-learning: the DFT gap from the GFN2-xTB gap and the fields (COMPAS-{set_key})", ""]
+    lines.append("Target: the DFT gap minus a straight line in the GFN2-xTB gap, the line fitted on the "
+                 "training part of each split (the xTB gaps from the x table of the same family).  The "
+                 "metrics are on the gap scale, since adding the line back changes no difference.  The "
+                 "first row is the line alone.")
+    lines.append("")
+    sets_here = sorted({k.split("|")[1] for k in keys}, key=len)
+    lines.extend(report_fields(set_key, sets_here, target=DELTA))
+    bpath = results_path(set_key, "baselines")
+    if os.path.isfile(bpath):
+        b = jload(bpath)
+        rand = [b["splits"][s]["xtb_linear"]["test"] for s in b["splits"]
+                if s.startswith("random") and "xtb_linear" in b["splits"][s]]
+        sizes = [(s, b["splits"][s]["xtb_linear"]["test"]) for s in b["splits"]
+                 if s.startswith("size") and "xtb_linear" in b["splits"][s]]
+        if rand:
+            lines.append("The line alone (every random seed): test R2 " + _mean_std([m["r2"] for m in rand])
+                         + ", RMSE " + _mean_std([m["rmse"] for m in rand]) + " eV, MAE "
+                         + _mean_std([m["mae"] for m in rand]) + " eV; size splits: "
+                         + "; ".join(f"{s} R2 {m['r2']:.3f}, RMSE {m['rmse']:.3f}" for s, m in sizes) + ".")
+            lines.append("")
+    return lines
+
+
+def report_nics(set_key: str = "1D") -> List[str]:
+    path = results_path(set_key, "nics")
+    if not os.path.isfile(path):
+        return []
+    n = jload(path)
+    c = n["correlations"]
+    lines = [f"### NICS(1) against the HOMA index and the Clar-sextet share, ring by ring (COMPAS-{set_key})", ""]
+    lines.append(f"ORCA, {n['level']}, one ghost atom 1 A above every ring centroid, {n['n_molecules']} "
+                 f"molecules of up to {n['max_rings']} rings ({n['rings']} rings; {n['seconds'] / 60:.0f} min "
+                 f"with {n['jobs']} serial jobs).  Correlation coefficients over the rings: HOMA against "
+                 f"NICS(1)zz {c['homa_vs_nics1_zz']:.3f}, HOMA against NICS(1) {c['homa_vs_nics1_iso']:.3f}, "
+                 f"Clar share against NICS(1)zz {c['sextet_vs_nics1_zz']:.3f}, Clar share against HOMA "
+                 f"{c['sextet_vs_homa']:.3f}.")
+    lines.append("")
+    lines.append("| ring class | rings | mean NICS(1)zz (ppm) | mean HOMA |")
+    lines.append("|---|---|---|---|")
+    for cls, v in n["by_class"].items():
+        lines.append(f"| {cls} | {v['n']} | {v['nics1_zz_mean']:.1f} | {v['homa_mean']:.3f} |")
+    lines.append("")
+    return lines
+
+
+SET_TITLES = {"3D": "the peri-condensed polybenzenoid hydrocarbons of COMPAS-3D",
+              "2D": "the cata-condensed hetero-polycyclic systems of COMPAS-2D"}
+
+
+def report_other_set(set_key: str) -> List[str]:
+    """The section of a later set: what it holds, the field-set table, the baselines."""
+    meta = jload(results_path(set_key, "prepared"))
+    fam = set_key[0]
+    lines = [f"## COMPAS-{set_key} ({meta['level']}): {SET_TITLES.get(set_key, 'the gap')}, "
+             f"{meta['n']} molecules", ""]
+    rc = meta.get("ring_class_counts", {})
+    txt = (f"Charges: {meta['charge_source']}.  Rings by annulation class: "
+           + ", ".join(f"{k} {v}" for k, v in sorted(rc.items())) + ".")
+    if meta.get("ring_types"):
+        rt = meta.get("ring_type_counts", {})
+        txt += "  Rings by type: " + ", ".join(f"{k} {v}" for k, v in sorted(rt.items(), key=lambda kv: -kv[1])) + "."
+        txt += "  Atom types of the indicator fields: " + ", ".join(meta["atom_types"]) + "."
+    if meta.get("subset"):
+        txt += f"  A random subset (seed 0) of the {('52,000' if set_key == '2D' else '')} neutral molecules."
+    oop = meta.get("max_out_of_plane_A", {})
+    if oop:
+        txt += (f"  Largest heavy-atom distance from the molecular plane: median {oop['median']:.2f} A, "
+                f"95th percentile {oop['p95']:.2f} A, maximum {oop['max']:.2f} A.")
+    lines.append(txt)
+    lines.append("")
+    lines.append("### Field sets (three random seeds and the size-extrapolation splits)")
+    lines.append("")
+    lines.extend(report_fields(set_key, FIELD_SETS_BY_FAMILY.get(fam, FIELD_SETS)))
+    lines.extend(report_baselines(set_key))
+    lines.extend(report_interpret(set_key))
+    return lines
+
+
 def report(path: str, set_key: str = "1D") -> str:
     """Rebuild table.md from the JSON results."""
     lines: List[str] = []
@@ -1387,29 +1880,12 @@ def report(path: str, set_key: str = "1D") -> str:
         size_names = [s for s in splits if splits[s]["kind"] == "size"]
         lines.append("### Field sets")
         lines.append("")
-        head = "| field set | fields | q2 (5-fold CV, train) | test R2 | test RMSE (eV) | test MAE (eV) |"
-        for s in size_names:
-            n_tr, n_te = len(splits[s]["train"]), len(splits[s]["test"])
-            head += f" N={splits[s]['test_rings']} R2 (train {n_tr}, test {n_te}) | N={splits[s]['test_rings']} RMSE |"
-        lines.append(head)
-        lines.append("|" + "---|" * (head.count("|") - 1))
-        for groups in FIELD_SETS:
-            keys = [k for k in done if k.startswith(f"{TARGET}|{groups}|random")]
-            if not keys:
-                continue
-            chosen = [done[k]["configs"][done[k]["chosen"]] for k in keys]
-            row = (f"| {{{','.join(groups)}}} | {', '.join(done[keys[0]]['fields'])} | "
-                   f"{_mean_std([c['q2'] for c in chosen])} | {_mean_std([c['test']['r2'] for c in chosen])} | "
-                   f"{_mean_std([c['test']['rmse'] for c in chosen])} | {_mean_std([c['test']['mae'] for c in chosen])} |")
-            for s in size_names:
-                k = f"{TARGET}|{groups}|{s}"
-                if k in done:
-                    c = done[k]["configs"][done[k]["chosen"]]
-                    row += f" {c['test']['r2']:.3f} | {c['test']['rmse']:.3f} |"
-                else:
-                    row += " - | - |"
-            lines.append(row)
+        lines.append("Field group F is the ring field weighted by the HOMA index of every ring (from the bond "
+                     "lengths of the DFT geometry).  A row '+ Gaussian layer' is the same kernel under "
+                     "exp(-gamma d^2) (the resolution section explains it); the sets added later were run on "
+                     "three seeds.")
         lines.append("")
+        lines.extend(report_fields(set_key, FIELD_SETS))
         # the smallest molecules: a random test part that holds benzene or naphthalene asks the
         # model to extrapolate to a size it has one or no example of, and one such molecule can
         # set the RMSE of a seed; the table above keeps them, this line says what they cost
@@ -1422,7 +1898,7 @@ def report(path: str, set_key: str = "1D") -> str:
             vals = []
             for k in keys:
                 r = done[k]
-                c = r["configs"][r["chosen"]]
+                c = linear_cfg(r)
                 te = np.asarray(splits[r["split"]]["test"], int)
                 keep = n_rings[te] >= 3
                 vals.append(rmse(np.asarray(r["y_test"])[keep], np.asarray(c["y_test_pred"])[keep]))
@@ -1470,31 +1946,7 @@ def report(path: str, set_key: str = "1D") -> str:
             lines.append("")
     bpath = results_path(set_key, "baselines")
     if os.path.isfile(bpath):
-        b = jload(bpath)
-        splits = jload(results_path(set_key, "splits"))
-        size_names = [s for s in splits if splits[s]["kind"] == "size"]
-        lines.append("### Baselines on the same splits")
-        lines.append("")
-        head = "| model | test R2 | test RMSE (eV) | test MAE (eV) |"
-        for s in size_names:
-            head += f" N={splits[s]['test_rings']} R2 | N={splits[s]['test_rings']} RMSE |"
-        lines.append(head)
-        lines.append("|" + "---|" * (head.count("|") - 1))
-        labels = {"count_ridge": "ridge on atom-class and ring-class counts (additivity scheme)",
-                  "rings_line": "straight line in the number of rings",
-                  "rf_descriptors": f"random forest on {b['n_descriptors']} RDKit descriptors"}
-        for key, label in labels.items():
-            rand = [b["splits"][s][key]["test"] for s in b["splits"] if s.startswith("random")]
-            row = (f"| {label} | {_mean_std([m['r2'] for m in rand])} | {_mean_std([m['rmse'] for m in rand])} | "
-                   f"{_mean_std([m['mae'] for m in rand])} |")
-            for s in size_names:
-                if s in b["splits"]:
-                    m = b["splits"][s][key]["test"]
-                    row += f" {m['r2']:.3f} | {m['rmse']:.3f} |"
-                else:
-                    row += " - | - |"
-            lines.append(row)
-        lines.append("")
+        lines.extend(report_baselines(set_key))
         lines.append("### Published models of the gap on the same molecules (random splits; no "
                      "size-extrapolation numbers are published)")
         lines.append("")
@@ -1537,21 +1989,12 @@ def report(path: str, set_key: str = "1D") -> str:
     else:
         lines.append("Nystroem on COMPAS-1x: pending (second milestone).")
     lines.append("")
-    ipath = results_path(set_key, "interpret")
-    if os.path.isfile(ipath):
-        it = jload(ipath)
-        lines.append("### Interpretation")
-        lines.append("")
-        fig = str(it["figure"]).replace("\\", "/")
-        ring_fig = str(it["ring_figure"]).replace("\\", "/")
-        rt = it["refit_check"]["test"]
-        lines.append(f"Reference molecule {it['reference']} ({it['reference_rings']} rings, gap "
-                     f"{it['reference_gap']:.2f} eV); co-field figure `{fig}`; per-ring "
-                     f"contributions `{ring_fig}`.  The CMFModel refitted in float64 for the figures "
-                     f"reproduces the table's test predictions (float32 kernels) to "
-                     f"{it['refit_check']['max_dev']:.1e} eV at worst; its own test R2 is {rt['r2']:.3f}, "
-                     f"RMSE {rt['rmse']:.3f} eV.")
-        lines.append("")
+    lines.extend(report_interpret(set_key))
+    lines.extend(report_delta(set_key))
+    lines.extend(report_nics(set_key))
+    for other in ("3D", "2D"):
+        if other != set_key and os.path.isfile(results_path(other, "prepared")):
+            lines.extend(report_other_set(other))
     text = "\n".join(lines) + "\n"
     ensure_dir(os.path.dirname(path))
     with open(path, "w", encoding="utf-8") as fh:
@@ -1629,8 +2072,12 @@ def write_notes(set_key: str = "1D") -> str:
     lines.append("")
     lines.append("## Open questions")
     lines.append("")
-    lines.append("- Whether the gap of the few non-planar molecules (helicene-like fjords) is served by "
-                 "the planar frame; the frame is defined for them but the two faces differ.")
+    lines.append("- Whether the gap of the non-planar molecules is served by the planar frame.  Most of the "
+                 "ten-ring molecules hold a helicene-like fjord and are twisted: 89 % of the COMPAS-1D "
+                 "molecules have a heavy atom more than 0.5 A from the best plane (median of the largest "
+                 "distance 1.48 A, 95th percentile 2.91 A).  The frame is defined for them, the two faces "
+                 "differ, and a mirror image lands in the mirrored frame, so the model is not symmetric "
+                 "under reflection although the gap is.")
     lines.append("- The size-extrapolation split trains on few molecules (the sets are dominated by "
                  "ten-ring molecules), so its numbers mix extrapolation with a small training set.")
     lines.append("- Published models on the same molecules (table.md, last table): the geometric graph "
@@ -1679,6 +2126,52 @@ def write_notes(set_key: str = "1D") -> str:
                  "lets the coefficients grow. Their sum is the prediction; the individual values read "
                  "position as much as chemistry. A decomposition against a reference (the Shapley "
                  "values of cmfqsar/shapley.py) is the next thing to try for this series.")
+    lines.append("")
+    lines.append("## The later sets and the follow-ups of the plan (30 October 2026)")
+    lines.append("")
+    lines.append("- HOMA ring field (group F): the harmonic-oscillator model of aromaticity of every ring from "
+                 "the bond lengths of the DFT geometry (Krygowski 1993 parameters for C-C, C-N, C-O, C-S, "
+                 "N-N, N-O; a ring with a bond to boron has no parameters and weight 0).  It stands in for "
+                 "the NICS field of the task text, which would need about a week of serial ORCA on this "
+                 "machine; --stage nics computes NICS(1) and NICS(1)zz (B3LYP-D3BJ/def2-SVP, GIAO, ghost "
+                 "atom 1 A above each centroid) for the 179 molecules of up to seven rings and reports the "
+                 "ring-by-ring correlation with HOMA and with the Clar share (table.md).")
+    lines.append("- Delta-learning (target DELTA_eV): the DFT gap minus a straight line in the GFN2-xTB gap of "
+                 "the same molecule (COMPAS-1x lists every COMPAS-1D molecule), the line fitted on the training "
+                 "part of every split; the field model learns the residual.  The 'corrected' columns of "
+                 "COMPAS-1x are not used: they are fitted to another functional and are 2.2 eV from the "
+                 "B3LYP gaps.  The multi-task form (cmfqsar/multitask.py) was not run: the residual form is "
+                 "the standard one and the xTB value exists for every molecule.")
+    lines.append("- COMPAS-3D (peri-condensed): the same reader (xyz archive) and frame; a fifth annulation "
+                 "class 'peri' (a ring two of whose shared bonds touch, or fused to four or more rings); the "
+                 "C.3r indicator field is present; Clar sextets as before (the enumeration is over all "
+                 "independent ring sets, fine for up to ten rings).  Three seeds and the three size splits; "
+                 "sets D, ABCD, ABCDE, ABCDEF, each with the Gaussian layer as a third configuration.")
+    lines.append("- COMPAS-2D (hetero atoms): read from the gzipped SDF (neutral rows), a random subset of "
+                 "10,000 of the 52,000 molecules (seed 0) so that the stored-kernel protocol applies; every "
+                 "ring of four to six atoms is a ring; the atom types add N, N.H, O, S, B, B.H; group R is "
+                 "one ring-centred field per ring type of the table (benzene, pyridine, pyrazine, borinine, "
+                 "1,4-diborinine, 1,2-dihydro-1,2-diborinine, pyrrole, furan, thiophene, borole, "
+                 "cyclobutadiene); no Clar field (undefined for hetero rings).  Sets C, D, R, ABCD, ABCDR, "
+                 "ABCDFR, three seeds and the size splits.")
+    oop = []
+    for s in ("1D", "3D", "2D"):
+        pth = results_path(s, "prepared")
+        if os.path.isfile(pth):
+            d = jload(pth).get("max_out_of_plane_A") or {}
+            if d:
+                oop.append(f"COMPAS-{s}: median {d['median']:.2f} A, 95th percentile {d['p95']:.2f} A, "
+                           f"maximum {d['max']:.2f} A")
+    lines.append("- Non-planarity: the frame is defined for every molecule, and the largest distance of a heavy "
+                 "atom from the molecular plane is recorded in prepared_<set>.json ("
+                 + "; ".join(oop) + ").  The peri-condensed molecules with a cove or fjord "
+                 "region are twisted, and the two faces of their frame differ; the frame rule keeps the sign "
+                 "convention of the planar case and does not choose between the faces.")
+    lines.append("- Open: NICS on the full set (a week of this machine, or a cluster); the multi-task form of "
+                 "Delta-learning; HOMA parameters for boron; a frame from the skeleton rather than from the "
+                 "masses for the hetero-atom set, and then the 52,000 molecules of COMPAS-2 beyond the subset "
+                 "(the landmark path of --stage scaling applies to them unchanged); a kernel averaged over "
+                 "the two faces of the frame, so that a mirror image gets the same prediction.")
     text = "\n".join(lines) + "\n"
     with open(os.path.join(RESULTS, "NOTES.md"), "w", encoding="utf-8") as fh:
         fh.write(text)
@@ -1689,19 +2182,25 @@ def write_notes(set_key: str = "1D") -> str:
 # Command line
 # --------------------------------------------------------------------------- #
 
-STAGES = ("prepare", "kernels", "fields", "baselines", "interpret", "scaling", "resolution", "report")
+STAGES = ("prepare", "kernels", "fields", "baselines", "interpret", "scaling", "resolution", "nics",
+          "report")
 
 
 def main(argv=None) -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--stage", choices=STAGES + ("all",), default="all")
-    ap.add_argument("--set", default="1D", choices=("1D", "1x"))
+    ap.add_argument("--set", default="1D", choices=tuple(FILES))
     ap.add_argument("--charges", default="xtb", choices=("xtb", "gasteiger"))
     ap.add_argument("--jobs", type=int, default=8, help="xtb runs at a time")
     ap.add_argument("--limit", type=int, default=None, help="first molecules only (smoke tests)")
     ap.add_argument("--sets", default=",".join(FIELD_SETS), help="field sets, comma separated")
     ap.add_argument("--splits", default="", help="split names, comma separated (default: all)")
-    ap.add_argument("--targets", default=TARGET, help="targets, comma separated")
+    ap.add_argument("--targets", default=TARGET,
+                    help=f"targets, comma separated ({TARGET}, HOMO_eV, LUMO_eV, {DELTA})")
+    ap.add_argument("--layer", default="", choices=("", "gauss"),
+                    help="add the Gaussian kernel layer as a configuration of the field stage")
+    ap.add_argument("--subset", type=int, default=None,
+                    help=f"molecules of COMPAS-2D to use (default {SUBSET_2D})")
     ap.add_argument("--engine", default="auto", help="kernel engine: auto, numba or numpy")
     ap.add_argument("--landmarks", default=",".join(str(m) for m in NYSTROEM_M))
     ap.add_argument("--force", action="store_true")
@@ -1719,13 +2218,18 @@ def main(argv=None) -> None:
     for stage in stages:
         log(f"== stage {stage}")
         if stage == "prepare":
-            prepare(args.set, charges=args.charges, jobs=args.jobs, limit=args.limit, force=args.force)
+            prepare(args.set, charges=args.charges, jobs=args.jobs, limit=args.limit, force=args.force,
+                    subset=args.subset)
         elif stage == "kernels":
             kernels(args.set, engine=engine, force=args.force)
         elif stage == "fields":
-            fields(args.set, sets=[s for s in args.sets.split(",") if s],
+            sets = [s for s in args.sets.split(",") if s]
+            if args.sets == ",".join(FIELD_SETS):
+                sets = list(FIELD_SETS_BY_FAMILY.get(args.set[0], FIELD_SETS))
+            fields(args.set, sets=sets,
                    splits_wanted=[s for s in args.splits.split(",") if s] or None,
-                   targets=[t for t in args.targets.split(",") if t], force=args.force)
+                   targets=[t for t in args.targets.split(",") if t], force=args.force,
+                   layer=args.layer or None)
         elif stage == "baselines":
             baselines(args.set, force=args.force)
         elif stage == "interpret":
@@ -1736,6 +2240,8 @@ def main(argv=None) -> None:
                     jobs=args.jobs, engine=engine, force=args.force)
         elif stage == "resolution":
             resolution(args.set, engine=engine, force=args.force)
+        elif stage == "nics":
+            nics(args.set, jobs=args.jobs, force=args.force)
         elif stage == "report":
             pass
     print(report(os.path.join(RESULTS, "table.md"), "1D" if os.path.isfile(results_path("1D", "prepared")) else args.set))

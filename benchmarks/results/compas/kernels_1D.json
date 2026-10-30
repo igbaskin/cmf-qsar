@@ -1102,5 +1102,101 @@
   "atoms": 66273,
   "seconds": 3.5972342491149902,
   "engine": "auto"
+ },
+ "F_0.1": {
+  "group": "F",
+  "alpha": 0.1,
+  "fields": [
+   "ring:homa"
+  ],
+  "diag_mean": [
+   2644.284280896486
+  ],
+  "scale": [
+   0.00037817416501866133
+  ],
+  "atoms": 83617,
+  "seconds": 10.006941556930542,
+  "engine": "auto"
+ },
+ "F_0.2": {
+  "group": "F",
+  "alpha": 0.2,
+  "fields": [
+   "ring:homa"
+  ],
+  "diag_mean": [
+   655.1971794246176
+  ],
+  "scale": [
+   0.0015262580966514264
+  ],
+  "atoms": 83617,
+  "seconds": 9.10634160041809,
+  "engine": "auto"
+ },
+ "F_0.5": {
+  "group": "F",
+  "alpha": 0.5,
+  "fields": [
+   "ring:homa"
+  ],
+  "diag_mean": [
+   101.14296281348336
+  ],
+  "scale": [
+   0.009886995320120186
+  ],
+  "atoms": 83617,
+  "seconds": 7.899203062057495,
+  "engine": "auto"
+ },
+ "F_1": {
+  "group": "F",
+  "alpha": 1.0,
+  "fields": [
+   "ring:homa"
+  ],
+  "diag_mean": [
+   26.58037599142723
+  ],
+  "scale": [
+   0.0376217402012117
+  ],
+  "atoms": 83617,
+  "seconds": 8.355748653411865,
+  "engine": "auto"
+ },
+ "F_2": {
+  "group": "F",
+  "alpha": 2.0,
+  "fields": [
+   "ring:homa"
+  ],
+  "diag_mean": [
+   7.888538040074833
+  ],
+  "scale": [
+   0.1267662011541132
+  ],
+  "atoms": 83617,
+  "seconds": 12.55404019355774,
+  "engine": "auto"
+ },
+ "F_5": {
+  "group": "F",
+  "alpha": 5.0,
+  "fields": [
+   "ring:homa"
+  ],
+  "diag_mean": [
+   1.897741797861196
+  ],
+  "scale": [
+   0.5269420745894019
+  ],
+  "atoms": 83617,
+  "seconds": 12.791925430297852,
+  "engine": "auto"
  }
 }

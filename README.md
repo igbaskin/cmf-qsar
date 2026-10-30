@@ -3399,6 +3399,27 @@ Nyström path of `cmfqsar/lowrank.py`) reaches a test R² of 0.80 with 500 landm
 with 1,000 and 2,000: the feature map has a rank of 2,200 to 2,700 whatever the number of
 landmarks, so the 34k set never needs its 34k × 34k kernel.
 
+The four follow-ups of the first report were measured the next day (three seeds, the size
+splits, the Gaussian layer; the manual section has the tables). A ring field weighted by the
+HOMA index of every ring (from the bond lengths of the DFT geometry; `ring:homa`) stands in for
+the NICS field, which would cost a week of serial DFT, and NICS(1) on the 179 molecules of up to
+seven rings is its calibration (`--stage nics`; r = −0.77 between HOMA and NICS(1)zz over
+1,158 rings, −0.50 for the Clar share). The HOMA field beats the Clar
+field in the linear model by the MAE and on the size splits, and the two together under the
+layer reach 0.050 eV MAE and R² 0.93 on the ten-ring molecules. Δ-learning on the residual of a
+straight line in the GFN2-xTB gap (`--targets DELTA_eV`) reaches 0.018 eV MAE, inside the range
+of the published graph networks, for one xTB calculation per molecule. On the 8,844
+peri-condensed molecules of COMPAS-3D (the `C.3r` carbons and a fifth annulation class, `peri`)
+the picture repeats: 0.072 eV MAE with the layer and R² 0.86 on the 6,891 ten-ring molecules from
+1,953 smaller ones. On a 10,000-molecule subset of the hetero-atom set COMPAS-2D (atom types N,
+N.H, O, S, B, B.H, a ring field per ring type, `read_compas2`) the best model explains 69 % of
+the variance (0.38 eV RMSE on a spread of 0.68 eV; 0.60 on the ten-ring molecules), ahead of
+the descriptor forest (0.56) and the additivity scheme (0.51): the inertia frame depends on the
+masses, so molecules of one skeleton with different hetero atoms do not lie on top of each
+other, and a frame from the skeleton is the next thing to try. Measured on the way: 89 % of the
+COMPAS-1D molecules are twisted by more than 0.5 Å (a fjord in most ten-ring isomers), the frame
+is defined for them, and a mirror image lands in the mirrored frame.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed
