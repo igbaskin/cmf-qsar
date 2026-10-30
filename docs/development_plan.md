@@ -3321,6 +3321,52 @@ of the CMF pilot above.
   reimplement the field kernels in Python (`cmfqsar/kernels.py` already holds them in Python, so
   the export route is the one left to write).
 
+**ND4. Transformers inside CMF (30 October 2026).** The CMF kernel is already a form of
+attention. The kernel between two molecules is a double sum over their atoms, where each atom
+pair contributes the product of its two atom coefficients times a Gaussian of the distance
+between the atoms. A transformer's attention layer is the same object with the pair score learned
+and a softmax added (the linear-attention form is a kernel method; see Tsai et al., EMNLP 2019,
+and Choromanski et al., ICLR 2021). The question is therefore not whether a transformer fits, but
+which part of the model it is allowed to learn. The four options below are ordered by how much of
+CMF they keep: the closed-form kernel, the co-field and the exact Shapley values.
+
+* **ND4a. A transformer that produces the atom coefficients.** Today the per-atom values are
+  fixed: MMFF charges, van der Waals radii, hydrogen-bond strengths. A transformer on the
+  molecular graph, or an equivariant 3D transformer (TorchMD-Net, Equiformer), produces them
+  instead. The kernel, the co-field and the Shapley decomposition are untouched, because the
+  network only produces a field; this is ND2 with the architecture named, and it stays inside
+  the E11 exception, since the model remains the kernel model. End-to-end training is cheap
+  because the landmark features of `cmfqsar/lowrank.py` make the ridge solution a
+  differentiable function of the atom coefficients; the Gaussian-overlap kernel of
+  `cmfqsar/kernels.py` is a few dozen lines in PyTorch. *The small-data constraint:* on a
+  congeneric series of a few dozen molecules a transformer with thousands of parameters
+  overfits. The remedy is to pretrain it on a per-atom quantity the program already computes
+  without activity labels (xTB or ORCA charges, `cmfqsar/xtb.py` and `cmfqsar/orca.py`), then
+  fine-tune it as a correction to the MMFF values with a penalty toward zero.
+* **ND4b. A learned atom-pair score inside the kernel.** Replace the product of two fixed
+  coefficients by the inner product of two learned atom embeddings. The result is still a
+  positive-definite kernel, because it is the product of a graph-embedding kernel and the
+  spatial Gaussian kernel. The co-field survives, but it becomes a field over space and
+  embedding directions, so the embedding must be limited to a few named channels to keep the
+  3D reading.
+* **ND4c. Learned probe tokens.** The landmark construction of B6 is one cross-attention layer:
+  the atoms of a molecule attend to fixed points in the frame, with the Gaussian as the
+  attention score and a linear readout. Making the landmark positions and widths trainable and
+  adding depth gives a set transformer. The co-field reading survives at the first layer only.
+* **ND4d. A full 3D transformer as the regressor.** An equivariant transformer on the atoms,
+  with no superposition, is ND3. It gives up the co-field and the exact Shapley values, which
+  is why "What is not planned" excludes it as the model, and it is data-hungry. It makes sense
+  only on large sets such as COMPAS-1.
+
+Options ND4a to ND4c still need superposed molecules; only ND4d removes that requirement.
+
+**Order.** ND4a first, measured on COMPAS-1 and on one Sutherland set against the fixed MMFF
+coefficients inside the same kernel. It answers the one question that matters: do learned atom
+values improve on the physics-based ones? ND4b is the second step. ND4d stays excluded for the
+medicinal-chemistry use case. *Gate:* ND4a continues only if it improves on the fixed
+coefficients on both sets by more than the cross-validation noise; otherwise rule 5 applies and
+the result is recorded.
+
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
 *Drafted 26 October 2026. Parts A to G build the model and part H leaves medicinal chemistry for
