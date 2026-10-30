@@ -73,7 +73,12 @@ def linked_component(h: pd.DataFrame):
     return sorted(n[1] for n in big if n[0] == "c"), sorted(n[1] for n in big if n[0] == "p")
 
 
-def main():
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.split(chr(10) * 2)[0])
+    ap.add_argument("--node", default="157", choices=sorted(ps.NODES))
+    a = ap.parse_args(argv)
+    suffix = ps.configure(a.node)
     h = ps.rows_1m_hcl()
     y_mixed, paper_eff, info = fit_mixed(h)
     print("mixed model:", {k: (round(v, 3) if isinstance(v, float) else v) for k, v in info.items()})
@@ -88,9 +93,9 @@ def main():
     print("raw median vs mixed: r %.3f, sd raw %.2f, sd mixed %.2f, max |diff| %.2f" % (
         np.corrcoef(both.raw_median, both.mixed)[0, 1], both.raw_median.std(), both.mixed.std(),
         (both.raw_median - both.mixed).abs().max()))
-    node = pd.read_csv(os.path.join(HERE, "..", "corrosion", "157_c1ccc2_nH_cnc2c1.csv"))
+    node = pd.read_csv(ps.node_paths()[0])
     both = both.join(node.set_index("db_id")[["name", "smiles"]])
-    both.reset_index().to_csv(os.path.join(HERE, "potency_mixed.csv"), index=False)
+    both.reset_index().to_csv(os.path.join(HERE, f"potency_mixed{suffix}.csv"), index=False)
 
     fs = FieldSet.create()
     fr = ps.frames_by_db_id()
@@ -99,10 +104,10 @@ def main():
     ps.evaluate_target(fr, y_mixed, "mixed model, 73", fs, outer=5, rows=rows)
     ps.evaluate_target(fr, raw[raw.index.isin(linked_c)], "raw median, linked 39", fs, outer=5, rows=rows)
     ps.evaluate_target(fr, y_mixed[y_mixed.index.isin(linked_c)], "mixed model, linked 39", fs, outer=5, rows=rows)
-    with open(os.path.join(HERE, "potency_mixed_models.csv"), "w", newline="") as fh:
+    with open(os.path.join(HERE, f"potency_mixed_models{suffix}.csv"), "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
         w.writeheader(); w.writerows(rows)
-    print("->", os.path.join(HERE, "potency_mixed_models.csv"))
+    print("->", os.path.join(HERE, f"potency_mixed_models{suffix}.csv"))
 
 
 if __name__ == "__main__":

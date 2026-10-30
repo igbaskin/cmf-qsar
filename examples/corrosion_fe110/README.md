@@ -722,6 +722,49 @@ things it found that bear on the sections above:
   the rule frame from conformers gives 0.27 on the benzimidazoles, the same as the lowered
   relaxed frame, and the surface kernel on the same poses 0.31; on the quinolines, nothing.
 
+## The same potency analysis on the quinoline node (2026-10-31)
+
+`node158_experiments.csv` (parent session's export: 1242 rows, 65 compounds, 42 articles, 1008
+rows in 1 M HCl with a MWILA from 36 papers).  The three scripts take `--node 158`; tables
+`potency_noise_158.csv`, `potency_series_158.csv`, `potency_mixed_158.csv`,
+`potency_mixed_models_158.csv`, `potency_within_paper_158.csv`; log `potency_node158.log`.
+
+| quantity | benzimidazoles (node 157) | quinolines (node 158) |
+|---|---|---|
+| sd of the compound medians | 1.87 | 1.85 |
+| within-paper sd of a compound over concentrations and methods | 1.23 | 1.88 |
+| slope of MWILA against ln C within a series | -0.60 | -0.81 |
+| compounds measured in two or more papers | 20 | 3 |
+| between-paper reliability of a compound | r 0.64 | not estimable |
+| papers with 3 or more of the node's compounds | 15 (up to 18 compounds) | 5 (3-4 compounds each) |
+| mixed model: paper sd / residual sd | 1.05 / 0.77 | 0.78 / 0.59 (36 nearly disjoint papers: the offsets are barely identified) |
+| fields, pooled potency, MCS frame / pose frame | 0.19 / 0.16 | 0.01 / -0.02 |
+| fields, concentration-corrected potency | 0.13 / 0.14 | 0.08 / -0.02 |
+| fields, mixed-model potency | 0.21 / 0.17 | -0.10 / -0.13 |
+| random forest on RDKit descriptors, pooled potency | 0.38 | 0.35 (+-0.13) |
+| ln MW and logP alone, pooled potency | 0.28 (r with ln MW 0.60) | -0.02 (r 0.04) |
+| leave-paper-out on centred potencies | 88 rows, 15 papers; lenient 0.28, strict -0.13 | 17 rows, 5 papers; -0.02 (the papers share no compounds, so lenient = strict) |
+| r(E_ads, potency) | 0.14 | 0.24 |
+
+- **The evidence of this node is thinner and noisier.**  Nearly every compound was measured by
+  one paper, so the between-laboratory reliability that gave the benzimidazoles a ceiling of
+  q² 0.6 cannot be estimated at all; the within-paper spread is half again larger and the
+  concentration dependence steeper (efficiencies saturate even less than Langmuir predicts).
+  The pooled potency is unpredictable by the fields in any frame or form, and the five
+  multi-compound papers, three or four compounds each, give no series on which a within-series
+  model could be built or tested.
+- **What repeats from the first node.**  The pooled medians of a scaffold node from the
+  literature are not one potency scale, and whatever structure is in them is reached by coarse
+  descriptors with a non-linear learner (the forest, 0.35 here against 0.38 there) and not by
+  the fields; here even the size trend that explained part of the benzimidazole potency is
+  absent, so the forest's 0.35 rests on other counts.  The adsorption energy of the tier is
+  again weakly related to the potency (r 0.24).
+- **For paper 6** the second node adds the case where the conventional analysis cannot even
+  start: no shared compounds, no series of ten.  The claim that the literature potency of a
+  node is a set of series-specific trends is supported where it can be tested (node 157) and
+  not contradicted where it cannot (node 158).  A third node with several shared compounds
+  (benzothiazole, 20 compounds, or thiadiazole) would be the natural next check.
+
 ## Follow-ups
 
 - Dispersion: fairchem provides a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,

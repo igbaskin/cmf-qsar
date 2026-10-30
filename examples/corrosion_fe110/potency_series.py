@@ -37,14 +37,48 @@ sys.path.insert(0, HERE)
 import compare_alignments as ca  # noqa: E402
 from cmfqsar.fields import FieldSet  # noqa: E402
 
-EXPERIMENTS = os.path.join(HERE, "node157_experiments.csv")
-SERIES = {
-    "hu2011": ["hu2011-2402"],
-    "raicheva1993": ["raicheva1993-343"],
-    "popova lab": ["popova2004-1333", "popova1996-benzimidazoles-ei", "popova2003-756", "popova2003-33"],
-    "dutta lab": ["dutta2017-256", "dutta2015-541", "dutta2015-921"],
-    "gutierrez2016": ["gutierrez2016-23"],
+# the nodes this analysis has been run on: the per-experiment rows, the node CSV, the UMA poses,
+# and the single-laboratory series (papers or laboratories with several of the node's compounds)
+NODES = {
+    "157": {
+        "experiments": "node157_experiments.csv",
+        "csv": "157_c1ccc2_nH_cnc2c1.csv",
+        "sdf": "157_benzimidazole_uma.sdf",
+        "series": {
+            "hu2011": ["hu2011-2402"],
+            "raicheva1993": ["raicheva1993-343"],
+            "popova lab": ["popova2004-1333", "popova1996-benzimidazoles-ei", "popova2003-756", "popova2003-33"],
+            "dutta lab": ["dutta2017-256", "dutta2015-541", "dutta2015-921"],
+            "gutierrez2016": ["gutierrez2016-23"],
+        },
+    },
+    "158": {
+        "experiments": "node158_experiments.csv",
+        "csv": "158_c1ccc2ncccc2c1.csv",
+        "sdf": "158_quinoline_uma.sdf",
+        "series": {
+            "shanbhag2014": ["shanbhag2014-804"],
+            "elfaydy2017": ["elfaydy2017-1014"],
+        },
+    },
 }
+NODE = "157"
+EXPERIMENTS = os.path.join(HERE, NODES[NODE]["experiments"])
+SERIES = NODES[NODE]["series"]
+
+
+def configure(node: str) -> str:
+    """Point the module at one node; returns the suffix for that node's output files."""
+    global NODE, EXPERIMENTS, SERIES
+    NODE = str(node)
+    EXPERIMENTS = os.path.join(HERE, NODES[NODE]["experiments"])
+    SERIES = NODES[NODE]["series"]
+    return "" if NODE == "157" else f"_{NODE}"
+
+
+def node_paths():
+    return (os.path.join(ROOT, "examples", "corrosion", NODES[NODE]["csv"]),
+            os.path.join(HERE, NODES[NODE]["sdf"]))
 
 
 def rows_1m_hcl():
@@ -99,8 +133,9 @@ def concentration_corrected(h: pd.DataFrame, c_ref: float = 1e-3):
 
 
 def frames_by_db_id():
-    fr = ca.frames()
-    node = pd.read_csv(os.path.join(ROOT, "examples", "corrosion", "157_c1ccc2_nH_cnc2c1.csv"))
+    csv_path, sdf_path = node_paths()
+    fr = ca.frames(csv_path, sdf_path)
+    node = pd.read_csv(csv_path)
     name_to_id = dict(zip(node["name"], node["db_id"]))
     out = {}
     for frame in ("mcs", "pose+mcs"):
@@ -130,7 +165,12 @@ def evaluate_target(fr, y_by_id: pd.Series, label: str, fs, outer=None, repeats=
               f"(sd y {np.std(y[idx]):.3f})  r(E_ads, y) = {r_e:5.2f}", flush=True)
 
 
-def main():
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.split(chr(10) * 2)[0])
+    ap.add_argument("--node", default="157", choices=sorted(NODES))
+    a = ap.parse_args(argv)
+    suffix = configure(a.node)
     h = rows_1m_hcl()
     nc = noise_ceiling(h)
     print("noise ceiling:", {k: (round(v, 3) if isinstance(v, float) else v) for k, v in nc.items()})
@@ -146,11 +186,11 @@ def main():
     print(f"concentration correction: common slope {slope:.3f} per ln C, residual sd {resid_sd:.2f}, {len(y_c)} compounds")
     evaluate_target(fr, h.groupby("db_id").MWILA.median(), "node median (as before)", fs, outer=5, rows=rows)
     evaluate_target(fr, y_c, "node at 1 mM (corrected)", fs, outer=5, rows=rows)
-    out = os.path.join(HERE, "potency_series.csv")
+    out = os.path.join(HERE, f"potency_series{suffix}.csv")
     with open(out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))
         w.writeheader(); w.writerows(rows)
-    with open(os.path.join(HERE, "potency_noise.csv"), "w", newline="") as fh:
+    with open(os.path.join(HERE, f"potency_noise{suffix}.csv"), "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(nc.keys()))
         w.writeheader(); w.writerow(nc)
     print("->", out)

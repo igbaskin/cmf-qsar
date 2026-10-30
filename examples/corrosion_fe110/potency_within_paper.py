@@ -118,7 +118,12 @@ def summarise(obs: pd.DataFrame, pred: np.ndarray, label: str, rows: list, extra
           f"mean Spearman = {row['spearman_mean']:.2f}   [{row['spearman_by_paper']}]", flush=True)
 
 
-def main():
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.split(chr(10) * 2)[0])
+    ap.add_argument("--node", default="157", choices=sorted(ps.NODES))
+    a = ap.parse_args(argv)
+    suffix = ps.configure(a.node)
     h = ps.rows_1m_hcl()
     obs = observations(h)
     print(f"{len(obs)} (compound, paper) observations from {obs.Refcode.nunique()} papers with >= {MIN_COMPOUNDS} compounds; "
@@ -142,7 +147,7 @@ def main():
             pred = leave_paper_out(obs, Ks, id_to_pos, strict, ca.LAMS)
             summarise(obs, pred, f"fields, {frame}, {'strict' if strict else 'lenient'}", rows,
                       {"frame": frame, "strict": int(strict)})
-    out = os.path.join(HERE, "potency_within_paper.csv")
+    out = os.path.join(HERE, f"potency_within_paper{suffix}.csv")
     keys = ["model", "frame", "strict", "n_rows", "n_papers", "q2_within", "spearman_mean", "spearman_by_paper"]
     with open(out, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=keys)

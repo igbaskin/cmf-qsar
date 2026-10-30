@@ -1,0 +1,5 @@
+target,frame,n,q2,q2_sd,rmse,sd_y,r_E_ads,cv
+"raw median, 73",mcs,65,0.007,0.13,1.825,1.834,0.24,5x10
+"raw median, 73",pose+mcs,65,-0.023,0.1,1.853,1.834,0.24,5x10
+"mixed model, 73",mcs,65,-0.102,0.096,0.872,0.831,0.19,5x10
+"mixed model, 73",pose+mcs,65,-0.125,0.123,0.881,0.831,0.19,5x10

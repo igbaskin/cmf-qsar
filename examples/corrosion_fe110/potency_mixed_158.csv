@@ -1,0 +1,66 @@
+index,raw_median,mixed,linked,name,smiles
+125,3.913408,7.638251848309807,True,Oxyquinoline,Oc1cccc2cccnc12
+462,7.872118,7.806110944986785,False,(Quinolin-8-yloxy)-acetic acid [1-(2-hydroxy-phenyl)-meth-(E)-ylidene]-hydrazide,O=C(COc1cccc2cccnc12)N/N=C/c1ccccc1O
+543,10.798105,9.465889288822462,False,N-quinolin-8-ylquinoline-2-carboxamide,O=C(Nc1cccc2cccnc12)c1ccc2ccccc2n1
+544,9.6257725,8.561222526575381,False,N-(quinolin-8-yl)pyrazine-2-carboxamide,O=C(Nc1cccc2cccnc12)c1cnccn1
+549,11.17466,9.345199272292877,False,1-((8-hydroxyquinolin-5-yl)methyl)-3-(prop-1-en-2-yl)-1H-benzimidazol-2(3H)-one,C=C(C)n1c(=O)n(Cc2ccc(O)c3ncccc23)c2ccccc21
+550,11.47608,9.662755605626211,False,"1,3-bis((8-hydroxy-quinolin-5-yl)methyl)-1H-benzimidazol-2(3H)-one",O=c1n(Cc2ccc(O)c3ncccc23)c2ccccc2n1Cc1ccc(O)c2ncccc12
+645,10.35209,8.684954738959533,False,4-Hydroxy-6-methyl-3-(3-quinolin-8-yl-acryloyl)-pyran-2-one,Cc1cc(O)c(C(=O)/C=C/c2cccc3cccnc23)c(=O)o1
+678,12.29575,9.18139158395932,False,N-(2-Chloroquinolin-3-ylmethylene)aniline,Clc1nc2ccccc2cc1C=Nc1ccccc1
+679,9.1670345,8.47847654923126,False,N-(1E)-(2-chloroquinolin-3-yl) methylene]-N-(4-fluorophenyl) amine,Fc1ccc(/N=C/c2cc3ccccc3nc2Cl)cc1
+680,11.06129,10.46703179923126,False,(z)-4-chloro-N-((2-chloroquinolin-3-yl)methylene)aniline,Clc1ccc(N=Cc2cc3ccccc3nc2Cl)cc1
+681,10.55908,9.973901799231259,False,(4-Bromo-phenyl)-(2-chloro-quinolin-3-ylmethylene)-amine,Clc1nc2ccccc2cc1C=Nc1ccc(Br)cc1
+721,14.034645000000001,11.28863375703266,False,5-[(2-Aminoethyl)amino]methylquinolin-8-ol,NCCNCc1ccc(O)c2ncccc12
+722,13.860019999999999,11.145950007032662,False,5-((2-aminoethoxy)methyl)quinolin-8-ol,NCCOCc1ccc(O)c2ncccc12
+915,8.623482,8.269933461872137,False,"2,6-Dichloroquinoline-3-carbaldehyde",O=Cc1cc2cc(Cl)ccc2nc1Cl
+916,8.866569,8.523859795205471,False,2-Chloro-6-nitroquinoline-3-carbaldehyde,O=Cc1cc2cc([N+](=O)[O-])ccc2nc1Cl
+917,9.504762,9.223485711872137,False,"2,6-Dichloro-8-nitroquinoline-3-carbaldehyde",O=Cc1cc2cc(Cl)cc([N+](=O)[O-])c2nc1Cl
+931,10.43567,8.338997096023848,False,Ethyl 3-(((8-hydroxyquinolin-5-yl)methyl)amino)-3-oxopropanoate,CCOC(=O)CC(=O)NCc1ccc(O)c2ncccc12
+932,11.51183,9.62574218693294,False,tert-Butyl ((8-hydroxyquinolin-5-yl)methyl)carbamate,CC(C)(C)OC(=O)NCc1ccc(O)c2ncccc12
+933,11.3532,9.444037405626126,False,7-((Dipropylamino)methyl)quinolin-8-ol,CCCN(CCC)Cc1ccc2cccnc2c1O
+934,10.79597,8.822191205626124,False,7-((Dimethylamino)methyl)quinolin-8-ol,CN(C)Cc1ccc2cccnc2c1O
+952,10.47601,8.508685805626191,False,5-(((1-Azido-3-chloropropan-2-yl)oxy)methyl)quinolin-8-ol,[N-]=[N+]=NCC(CCl)OCc1ccc(O)c2ncccc12
+953,11.00912,9.122513405626195,False,"5-(((1,3-Diazidopropan-2-yl)oxy)methyl)quinolin-8-ol",[N-]=[N+]=NCC(CN=[N+]=[N-])OCc1ccc(O)c2ncccc12
+954,11.975155,9.036906507032791,False,5-((Benzyloxy)methyl)quinolin-8-ol,Oc1ccc(COCc2ccccc2)c2cccnc12
+955,12.023845,9.453747757032792,False,5-((2-(Diethylamino)ethoxy)methyl)quinolin-8-ol,CCN(CC)CCOCc1ccc(O)c2ncccc12
+967,11.3965,9.541474672292829,False,N-((8-Hydroxyquinolin-5-yl)methyl)-4-methylpiperazine-1-carbothioamide,CN1CCN(C(=S)NCc2ccc(O)c3ncccc23)CC1
+968,10.83183,8.93799480562616,False,N-((8-Hydroxyquinolin-5-yl)methyl)-4-phenylpiperazine-1-carbothioamide,Oc1ccc(CNC(=S)N2CCN(c3ccccc3)CC2)c2cccnc12
+977,11.99376,9.711701708750375,False,5-(Chloromethyl)quinolin-8-ol hydrochloride,Oc1ccc(CCl)c2cccnc12
+978,11.06779,9.338318186933016,False,7-((4-(4-Chlorophenyl)piperazin-1-yl)methyl)quinolin-8-ol,Oc1c(CN2CCN(c3ccc(Cl)cc3)CC2)ccc2cccnc12
+979,10.51132,8.591234368751199,False,7-((4-Methylpiperazin-1-yl)methyl)quinolin-8-ol,CN1CCN(Cc2ccc3cccnc3c2O)CC1
+980,11.00093,8.618690138959716,False,2-(((8-Hydroxyquinolin-5-yl)methylimino)methyl)phenol,Oc1ccccc1C=NCc1ccc(O)c2ncccc12
+981,11.04234,8.862064272293047,False,5-(((4-Chlorobenzylidene)amino)methyl)quinolin-8-ol,Oc1ccc(CN=Cc2ccc(Cl)cc2)c2cccnc12
+989,11.44707,9.311577637501156,False,"5-((4,5-Dihydrooxazol-2-yl)methyl)quinolin-8-ol",Oc1ccc(CC2=NCCO2)c2cccnc12
+990,11.7712,9.788447111185365,False,"5-((4,5-Dihydro-1H-imidazol-2-yl)methyl)quinolin-8-ol",Oc1ccc(CC2=NCCN2)c2cccnc12
+1110,11.22185,9.348436605626071,False,N-[(8-Hydroxyquinolin-5-yl)methyl]-4-methoxybenzamide,COc1ccc(C(=O)NCc2ccc(O)c3ncccc23)cc1
+1111,10.70649,8.633708605626081,False,N-[(8-Hydroxyquinolin-5-yl)methyl]propanamide,CCC(=O)NCc1ccc(O)c2ncccc12
+1112,11.48788,9.454490823296522,False,5-({[4-(Dimethylamino)benzylidene]amino}methyl)quinolin-8-ol,CN(C)c1ccc(/C=N/Cc2ccc(O)c3ncccc23)cc1
+1118,12.03512,9.867525938959393,False,"5-{[2-(4-Bromophenyl)-5,6-dimethyl-1H-benzimidazol-1-yl]methyl}quinolin-8-ol",Cc1cc2nc(-c3ccc(Br)cc3)n(Cc3ccc(O)c4ncccc34)c2cc1C
+1119,11.37467,9.186172938959393,False,5-{[2-(4-Bromophenyl)-1H-benzimidazol-1-yl]methyl}quinolin-8-ol,Oc1ccc(Cn2c(-c3ccc(Br)cc3)nc3ccccc32)c2cccnc12
+1129,10.24077,8.671019368751093,False,"2-Amino-4-phenyl-4H-pyrano[3,2-h]quinoline-3-carbonitrile",N#CC1=C(N)Oc2c(ccc3cccnc23)C1c1ccccc1
+1130,9.811843,7.887621186932911,False,"2-Amino-4-(4-methoxyphenyl)-4H-pyrano[3,2-h]quinoline-3-carbonitrile",COc1ccc(C2C(C#N)=C(N)Oc3c2ccc2cccnc32)cc1
+1164,7.346221,7.608755935226537,False,"4,4'-Oxybis[N-(quinolin-2-ylmethylidene)aniline]",C(=N\c1ccc(Oc2ccc(/N=C/c3ccc4ccccc4n3)cc2)cc1)/c1ccc2ccccc2n1
+1165,7.869168999999999,7.875455135226535,False,"4,4'-Ethylenebis[N-(quinolin-2-ylmethylidene)aniline]",C(=N\c1ccc(CCc2ccc(/N=C/c3ccc4ccccc4n3)cc2)cc1)/c1ccc2ccccc2n1
+1166,6.9369495,7.286060835226525,False,"4,4'-Methylenebis[N-(quinolin-2-ylmethylidene)aniline]",C(=N\c1ccc(Cc2ccc(/N=C/c3ccc4ccccc4n3)cc2)cc1)/c1ccc2ccccc2n1
+1172,10.05307,9.198602297205984,False,6-Benzylquinoline,c1ccc(Cc2ccc3ncccc3c2)cc1
+1173,10.43669,9.681824024478711,False,"6-(Quinolin-6-ylmethyl)benzene-1,2,3,4,5-pentasulfonic acid",O=S(=O)(O)c1c(Cc2ccc3ncccc3c2)c(S(=O)(=O)O)c(S(=O)(=O)O)c(S(=O)(=O)O)c1S(=O)(=O)O
+1244,10.32502,7.863640736936045,True,5-aminomethyl-8-hydroxyquinoline,NCc1ccc(O)c2ncccc12
+1245,10.9928,8.540267203602712,True,"5-N-acethylaminomethyl-8-hydroxyquinoline (printed 'CMHQ'/'ACMAHQ' in figures/Tables 3,4)",CC(=O)NCc1ccc(O)c2ncccc12
+1246,11.42999,8.912222003602713,True,"5-N,N'-dimethylaminomethyl-8-hydroxyquinoline",CN(C)Cc1ccc(O)c2ncccc12
+1248,11.932615,9.07396892369942,False,7-((4-benzylpiperazin-1-yl)methyl)quinolin-8-ol,Oc1c(CN2CCN(Cc3ccccc3)CC2)ccc2cccnc12
+1261,11.53378,9.613079538959576,False,(8-hydroxyquinolin-5-yl)methyl 4-chlorobenzoate,O=C(OCc1ccc(O)c2ncccc12)c1ccc(Cl)cc1
+1262,10.94494,9.176548938959577,False,(8-hydroxyquinolin-5-yl)methyl 4-nitrobenzoate,O=C(OCc1ccc(O)c2ncccc12)c1ccc([N+](=O)[O-])cc1
+1303,11.251,9.174673186932942,False,"Methyl 2-amino-4-(4-chlorophenyl)-4H-pyrano[3,2-h]quinoline-3-carboxylate",COC(=O)C1=C(N)Oc2c(ccc3cccnc23)C1c1ccc(Cl)cc1
+1304,11.59954,9.609514277842033,False,"Methyl 2-amino-4-(4-methoxyphenyl)-4H-pyrano[3,2-h]quinoline-3-carboxylate",COC(=O)C1=C(N)Oc2c(ccc3cccnc23)C1c1ccc(OC)cc1
+1506,13.715499999999999,10.200052549258146,False,N-((2-chloroquinolin-3-yl)methylene)-5-methylthiazol-2-amine,Cc1cnc(N=Cc2cc3ccccc3nc2Cl)s1
+1507,12.4767,9.980287705760098,False,3-((phenylimino)methyl)quinoline-2-thiol,Sc1nc2ccccc2cc1C=Nc1ccccc1
+1508,13.8062,11.040832694708323,False,3-((5-methylthiazol-2-ylimino)methyl)quinoline-2-thiol,Cc1cnc(N=Cc2cc3ccccc3nc2S)s1
+1591,11.58783,9.184744907101628,False,4-{[(1E)-(2-chloroquinolin-3-yl)methylene]amino}phenol,Oc1ccc(/N=C/c2cc3ccccc3nc2Cl)cc1
+1592,11.04609,8.590264240434962,False,N-[(1E)-(2-chloroquinolin-3-yl)methylene]-N-(4-methoxyphenyl)amine,COc1ccc(/N=C/c2cc3ccccc3nc2Cl)cc1
+1593,10.25338,7.888110040434961,False,N-[(1E)-(2-chloroquinolin-3-yl)methylene]-N-(4-nitrophenyl)amine,O=[N+]([O-])c1ccc(/N=C/c2cc3ccccc3nc2Cl)cc1
+1743,8.983661000000001,8.901471662846687,False,1-10 phenantrolin (PHEN),c1cnc2c(c1)ccc1cccnc12
+1822,11.83125,9.292567090366099,False,8-quinolinol-5-azoantipyrine (HQAP),Cc1c(N=Nc2ccc(O)c3ncccc23)c(=O)n(-c2ccccc2)n1C
+1824,4.461127,8.138594793031409,True,3-formyl-8-hydroxy quinoline (FQ),O=Cc1cnc2c(O)cccc2c1
+1837,9.7221665,8.637200942700154,False,N'-[4-(diethylamino)benzylidine]-3-{[8-(trifluoromethyl)quinolin-4-yl]thio}propano hydrazide (DEQTPH),CCN(CC)c1ccc(C=NNC(=O)CCSc2ccnc3c(C(F)(F)F)cccc23)cc1
+1838,9.706251,8.446676791875257,False,Quinolin-5-ylmethylene-3-{[8-(trifluoromethyl)quinolin-4-yl]thio}propanohydrazide (QMQTPH),O=C(CCSc1ccnc2c(C(F)(F)F)cccc12)NN=Cc1cccc2ncccc12
+2009,7.74713,7.503080223756359,False,"Anthranilic acid (text: IUPAC name '1-[N-[8-(trifluoromethyl)-4-quinolyl] anthranilate]', drawn as the glycerol ester)",O=C(OCC(O)CO)c1ccccc1Nc1ccnc2c(C(F)(F)F)cccc12

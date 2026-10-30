@@ -1,0 +1,6 @@
+model,frame,strict,n_rows,n_papers,q2_within,spearman_mean,spearman_by_paper
+"E_ads centred (one slope, no CV)",,,15,5,0.115,nan,
+"fields, mcs, lenient",mcs,0,17,5,-0.017,nan,
+"fields, mcs, strict",mcs,1,17,5,-0.017,nan,
+"fields, pose+mcs, lenient",pose+mcs,0,17,5,-0.108,nan,
+"fields, pose+mcs, strict",pose+mcs,1,17,5,-0.108,nan,
