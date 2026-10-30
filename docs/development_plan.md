@@ -1842,6 +1842,89 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   and the untested guess that a weight shared across sets, or a weight chosen by the evidence
   rather than by the folds, would avoid the loss on the small sets.
 
+* **E11. A field autoencoder with an analytic decoder.** Kernel PCA on the CMF kernel is the
+  linear autoencoder of the field space, and the program has it twice: as the coordinates of the
+  GTM map (`cmfqsar/gtm.py`) and as the `kpca` applicability-domain score of `cmfqsar/oneclass.py`.
+  What it cannot give is a pre-image. A field reconstructed by kernel PCA is a sum of training
+  fields: it can be drawn on the grid, but it is not a set of atoms, and nothing can be sampled
+  from it. This item adds the nonlinear autoencoder without leaving the field space. The
+  *encoder* maps a molecule to a code of a few dimensions. Its input is the whitened kernel to a
+  few hundred landmarks, the feature vector of `cmfqsar/lowrank.py`, so the encoder sees the
+  molecule exactly as the kernel does and needs neither a grid nor an atom order. The *decoder*
+  maps a code to a fixed number of pseudo-atoms, each with a position and one weight per field
+  type, so its output has the same form as every other field in the program. The *loss* is the
+  squared distance between the input field and the decoded field in the field Hilbert space,
+
+      ||f - f'||^2 = k(f, f) - 2 k(f, f') + k(f', f'),
+
+  and all three terms are sums of overlap integrals of atom-centred Gaussians. The loss is
+  therefore in closed form and is differentiable in the positions and weights of the pseudo-atoms;
+  `cmfqsar/gradients.py` already holds the derivative of a Gaussian overlap with respect to the
+  atom positions and weights. Rule 3 holds: no grid enters the training. The pseudo-atoms are the
+  pre-image that kernel PCA lacks. They are not a molecule, but they are the field a molecule
+  would have to place, and that is what the design items consume: E3, MC5 and MC7 all score a
+  candidate by its overlap with a target field.
+  Four versions, in the order they are built:
+  (i) *plain*: the reconstruction error of a new molecule is a nonlinear applicability-domain
+  score, compared with the five scores of `cmfqsar/oneclass.py` under the protocol of E5;
+  (ii) *denoising*: the decoder is trained to reconstruct the single-conformation field of a
+  molecule from each member of its conformer ensemble (`cmfqsar/conformers.py`), or from the
+  field with atoms removed at random, so that the decoded field is a consensus field with the
+  pose noise averaged out. Judged by whether a model fitted on decoded fields beats the model on
+  the raw fields on the same folds (rule 1). The fourth-dimension verdict says ensembles do not
+  help on an aligned series, so the expected outcome is a null result, reported as such;
+  (iii) *variational*: a Gaussian prior on the code, so that codes can be sampled and
+  interpolated and a decoded sample is a hypothesis field. The overlap of a decoded field with a
+  co-field is a differentiable function of the code, because the co-field is linear in the field
+  (rule 2), so a code can be moved along the gradient of the predicted activity, decoded, and
+  matched against the fragment libraries of E3 and MC7 to find a group whose field fits the
+  decoded one. This is the inverse-QSAR step the plan does not have;
+  (iv) *semi-supervised*: the encoder is trained on molecules that carry no activity, in the same
+  frame, and the code then enters the predictive model as one more kernel view, a Gaussian
+  kernel on the codes mixed with the five field kernels by the mixing of E6. The predictive
+  model stays a kernel model and rule 2 holds. It is the neural counterpart of E10, whose
+  result, that unlabelled molecules gain nothing on a congeneric series of a few dozen, is the
+  expected outcome unless the unlabelled set is large and varied.
+  **What does not change: the activity model.** The autoencoder is never the regressor. A code
+  that enters a prediction enters it as a kernel, so the co-field, the Shapley values and every
+  interpretation tool are untouched. That is why this item is not the convolutional network that
+  "What is not planned" excludes: there the grid replaces the kernel and the network replaces the
+  model; here the loss *is* the closed-form kernel and the model is the one the program has.
+  **Needed:** a module `cmfqsar/fieldae.py` with the landmark encoder, the pseudo-atom decoder,
+  the reconstruction, denoising and variational losses, and a `sample` and `pre_image` entry
+  point; the overlap-kernel derivatives of `cmfqsar/gradients.py` exposed for a set of
+  pseudo-atoms against a molecule; PyTorch as an optional dependency, in the same way as ORCA
+  and xTB, with the module absent rather than broken when it is not installed; a benchmark script
+  `benchmarks/run_fieldae.py`; a `cofield`-style grid export of a decoded field for the viewer.
+  No graphical interface until a gate is passed (rule 5).
+  **Data.** The item cannot be judged on a series of thirty molecules, where kernel PCA has as many
+  components as it needs and any network is underdetermined. The training data are the sets of
+  this repository that are large and share a frame: the COMPAS sets of part H (8,678 to 34,072
+  molecules in a frame given by rule) and the docked pose sets of C1 where a series has more
+  than a few hundred ligands. The invariant kernel of C5 has no decoder of this form, because the
+  autocorrelation is not a field that pseudo-atoms can reproduce, so the item is for aligned
+  tables only.
+  **Gates**, one per version, each with the interval of rule 4:
+  (a) on held-out COMPAS-1D molecules the relative reconstruction error
+  `||f - f'|| / ||f||` of a decoder with M pseudo-atoms is below the kernel PCA reconstruction
+  with the same number of latent dimensions; if it is not, there is no nonlinearity to use, and
+  the item closes here;
+  (b) the reconstruction error ranks the absolute residuals of a held-out fold at least as well
+  as the best of the five one-class scores, by the rank correlation of E5;
+  (c) on a series with a held-out active chemotype, a code sampled near the training actives,
+  decoded and matched against the fragment library, puts a group of the held-out active in the
+  first ten, which is the gate of MC7 used in reverse;
+  (d) the semi-supervised kernel view is judged on the folds of E10 and gains nothing until its
+  interval excludes zero.
+  A version that fails its gate is reported and the module is kept, if at all, for the pre-image
+  of (iii) alone, labelled under rule 5 as a display tool.
+  **Risks.** The number of pseudo-atoms is fixed and their set is unordered; the overlap loss is
+  invariant to their order, which is right, but it lets pseudo-atoms collapse onto one position,
+  so a repulsion term or a cap on the weights will probably be needed. The optimiser can place a
+  pseudo-atom where no atom could stand, inside another, and the design use of (iii) must filter
+  such fields before matching. The whole item depends on PyTorch, which is the first such
+  dependency in the library and must stay optional.
+
 ## F. Interpretation (months 4 to 9)
 
 * **F1. Case studies.** Shapley values, field differences, pharmacophores and complementarity have
@@ -3367,6 +3450,104 @@ medicinal-chemistry use case. *Gate:* ND4a continues only if it improves on the 
 coefficients on both sets by more than the cross-validation noise; otherwise rule 5 applies and
 the result is recorded.
 
+**ND5 to ND10. Six more deep-learning methods, ordered by the CMF cost each removes (30 October
+2026).** The four options of ND4 ask which part of the model a network may learn. The six items
+below leave the model alone and put a network at one of the places where the method is expensive
+or weak: the quality of the geometries and charges, the superposition, the small size of a
+series, and the inverse step from a co-field to a molecule. Every one keeps the kernel as the
+activity model, so rule 2 holds and the co-field and the exact Shapley values survive. Every one
+follows the optional-dependency rule of E11: PyTorch and any model weights are optional, and the
+module is absent rather than broken when they are missing.
+
+* **ND5. Machine-learned interatomic potentials for the geometries and charges.** The fields are
+  computed from MMFF conformations and MMFF charges, and the xTB study of part C showed that
+  better charges help a minority of series. A machine-learned interatomic potential (MACE, UMA,
+  ANI) gives a conformation of DFT quality at a cost close to MMFF, and a charge model trained on
+  DFT (a charge-equilibration or multipole head of the same potential) gives charges to match.
+  Nothing in the model changes: the item is a third source of geometries and charges next to xTB
+  and ORCA, filled into the same `prop:` fields. It also supplies the pretraining target that
+  ND4a needs, so it is worth running before ND4a. *Needed:* `cmfqsar/mlip.py`, which relaxes a
+  conformation and returns charges with the caching and failure handling of `cmfqsar/xtb.py`;
+  `benchmarks/run_mlip.py`, built on `run_xtb.py`. *Gate:* on the eight Sutherland sets, the
+  five fields from the potential's geometries and charges against the MMFF reference of rule 1
+  and against the xTB row, with the interval of rule 4. The potential becomes a default source
+  only where it beats xTB at a lower cost per molecule; otherwise it is recorded as a third
+  charge source.
+* **ND6. Amortised alignment.** Superposition is the step that scales worst, and the one that
+  ND4a to ND4c still need. The pose protocol of C1 and the pocket placement of C3 produce a
+  judged pose for every training molecule, and those poses are a training set. An equivariant
+  network of the kind used for pose prediction (EquiBind, Uni-Mol) trained on them predicts the
+  pose of a new molecule in one forward pass. The pose search then starts from the prediction and
+  refines it, or runs in full only where the network's own score is low. The training loss is the
+  kernel distance between the predicted pose and the judged one, whose gradient
+  `cmfqsar/gradients.py` already holds. *Needed:* `cmfqsar/posenet.py`; `benchmarks/run_posenet.py`,
+  with the C1 protocol of `run_poses.py` as the judge. *Data:* the docked pose sets of C1 where a
+  series has more than a few hundred ligands; COMPAS does not need it, because its frame is given
+  by rule. *Gate, in two parts:* (i) on held-out ligands the predicted pose is within the RMSD the
+  C1 protocol accepts for a fraction of ligands large enough that prediction plus refinement is
+  cheaper than the full search, with the factor stated with the measurement; (ii) q² on the
+  predicted poses is within the interval of rule 4 of q² on the searched poses. If (ii) fails the
+  network is a starting-point generator for the search only, recorded under rule 5.
+* **ND7. The graph neural tangent kernel as a kernel view.** The rationale above calls CMF the
+  infinite-width limit of a radial-basis network. The same limit exists for a graph network: the
+  graph neural tangent kernel (Du et al., NeurIPS 2019) is the kernel of an infinitely wide graph
+  network at initialisation, computed in closed form from the bond graph with no training at
+  all. Mixed with the five field kernels by the multiple kernel learning of E6, it adds what the
+  bond graph knows and the aligned field does not, at no data cost. The model stays a kernel
+  model and every interpretation tool works; the Shapley value of a graph view is per molecule
+  rather than per point in space, and the co-field is read from the field views alone. *Needed:*
+  `cmfqsar/gntk.py`, a few hundred lines of NumPy with no new dependency; a `gntk` view in
+  `cmfqsar/mixing.py`; `benchmarks/run_gntk.py`. *Gate:* on the eight Sutherland sets and on
+  COMPAS-1, the five fields plus the graph kernel against the five fields alone and against the
+  five fields plus the invariant kernel of C5, with the interval of rule 4. A gain that the
+  invariant kernel already gives is not a result.
+* **ND8. Pretrained 3D representations as a kernel view.** E11 (iv) trains an encoder on
+  unlabelled molecules of the same frame, and E10 found that unlabelled molecules close to a
+  congeneric series gain nothing. A pretrained equivariant model (Uni-Mol, or the representation
+  layer of a MACE or UMA potential) has already seen millions of molecules, and a Gaussian kernel
+  on its per-molecule embedding enters the E6 mixing as one more view. This is the practical form
+  of the semi-supervised item, with the unlabelled set large and varied, which is the case E10 did
+  not cover. There is no fine-tuning: the embedding is fixed and the kernel width is the only
+  parameter, so nothing overfits on thirty molecules. *Needed:* `cmfqsar/pretrained.py`, with one
+  cached embedding per molecule; `benchmarks/run_pretrained.py`. *Gate:* as ND7, with one extra
+  comparison against ND7, because the two views carry overlapping information; where they tie,
+  the cheaper one (ND7) is kept.
+* **ND9. Diffusion models guided by the co-field, for inverse QSAR.** E11 (iii) decodes a field
+  into pseudo-atoms and then matches fragments to them. A 3D diffusion model over atom positions
+  and types (an EDM- or DiffSBDD-type generator) can instead be steered during denoising by the
+  gradient of the kernel distance between the field of the current structure and the target
+  co-field, in the way such models are steered by a pocket. The steering needs no training,
+  because the gradient is the one of `cmfqsar/gradients.py`; only the unconditional generator
+  needs training, and a published pretrained one serves. This is the item most likely to turn
+  the co-field from a picture into a design tool. It is the generative counterpart of MC1 and
+  MC7, which rank existing substituents and fragments rather than make new ones. *Needed:*
+  `cmfqsar/fielddiffusion.py`, with a `cmf generate` entry that takes a fitted model and a target
+  region; `benchmarks/run_fielddiffusion.py`. *Gate:* a generated molecule must be judged by a
+  model that did not steer it. Fit the steering model on one half of a series, generate, and
+  score the molecules with the model fitted on the other half; the gain over unsteered generation
+  must exceed the interval of rule 4, and the molecules must be chemically valid and pass a
+  synthetic-accessibility filter (the SA score of Ertl and Schuffenhauer 2009, below a stated
+  cut-off). Without that the item is a display tool under rule 5.
+* **ND10. Predicted electron densities as the electrostatic field.** The electrostatic field is a
+  sum of Gaussians on point charges, and point charges cannot reproduce the field above an
+  aromatic ring or at a lone pair, which is where the ring work of part H put the chemistry. A
+  network that predicts the electron density or atomic multipoles from the geometry (a DeepDFT-type
+  density model, or the multipole output of a potential trained for it) gives a field with these
+  features at the cost of one forward pass. The field enters as a sixth field type with its own
+  mixing coefficient, in the way D9 adds a solvent field, and the kernel stays in closed form
+  (rule 3) when the density is represented by Gaussians on atoms and bond midpoints with per-site
+  coefficients, which is what the multipole output gives after projection. *Needed:*
+  `cmfqsar/densityfield.py`; `benchmarks/run_densityfield.py`. *Gate:* on COMPAS-1 and on the
+  Sutherland sets where the xTB charges helped, the five fields plus the density field against
+  the five fields, and against the five fields with xTB charges, with the interval of rule 4. It
+  replaces the point-charge electrostatic field only if it beats it on every set where the point
+  charges were measured; otherwise it is a sixth view.
+
+**Order.** ND5 first, because it changes inputs the existing benchmarks score at once and gives
+ND4a its pretraining target. Then ND7, which is a few hundred lines of NumPy with no new
+dependency. Then ND6, the item that makes the method usable on a library. ND8 to ND10 wait for
+the larger sets and for the ND4a gate.
+
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
 *Drafted 26 October 2026. Parts A to G build the model and part H leaves medicinal chemistry for
@@ -3807,12 +3988,12 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
 | Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
-| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; part E complete; ~~G1~~ and ~~G2~~ **done** |
+| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
 | Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
-of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule;
+of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;
 F2 needs the GP view that B4 makes the default; E8 and E9 are judged on the classification sets
 of E4 and E9 reuses the Newton step of the Laplace classifier, E10 waits for both because its
 screening gate needs a classifier to compare with; D9 waits for D4 and, with D10, for the
@@ -3821,9 +4002,12 @@ the variance field of D10, MC10 for MC5 and MC9 together, and MC11 for the panel
 
 ## What is not planned
 
-* **Neural networks on fields.** A 3D convolutional network on a field grid gives up the closed-form
-  kernel, the co-field and the exactness of the Shapley values at once. The nonlinear kernel layer
-  and the Shapley decomposition already cover the case where a linear model is not enough.
+* **Neural networks on fields as the model.** A 3D convolutional network on a field grid gives up
+  the closed-form kernel, the co-field and the exactness of the Shapley values at once. The
+  nonlinear kernel layer and the Shapley decomposition already cover the case where a linear
+  model is not enough. The one exception is E11, where a network is trained on the closed-form
+  kernel distance and the activity model stays the kernel model; a network that replaces the
+  model is still not planned.
 * **A web service.** The program is a desktop application and a library; serving it is a different
   project.
 * **General docking.** The pocket placement in `cmfqsar/docking.py` exists to pose conformations for
