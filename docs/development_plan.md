@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1548 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1611 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2257,9 +2257,59 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
 * **G3. The library as an interface.** The classes the README already presents (`CMFModel`,
   `FieldSet`, `AtomTable`, `Dataset`) become the documented stable surface, with a notebook per
   workflow (aligned series, frameless series, screening) under `examples/`.
+  **Done 31 October 2026.** The surface is nine names, declared in `cmfqsar/__all__` and imported
+  from the package root: the four the item lists, plus `FieldSpec`, `MoleculeFields`, `ModelStats`,
+  `build_fields` and `load_dataset`, which is what the manual's own examples use. The promise is
+  stated in the package docstring, in the manual (chapter *Using it as a library*, section *The
+  stable surface*) and in the README: within a major version a name is not removed or renamed, and
+  a recorded argument keeps its name, its position and its default, while new arguments may be
+  added after it. `tests/test_stable_surface.py` is what makes that checkable rather than a
+  promise in prose: it records the arguments of ten entry points, fails when one disappears or
+  changes its default or its place, fits and predicts through the surface alone, and reads the
+  manual chapter itself, so an example there cannot go on importing a name the package no longer
+  has. Whole signatures are deliberately *not* compared -- a model gains a field almost every
+  week, and a test that failed on every new field would be deleted within a month.
+  **The notebooks.** Four already existed and the item's third workflow did not:
+  `docs/tutorials/05_screening.ipynb` is screening, on the 88 thrombin inhibitors against the 100
+  presumed inactives of `examples/decoys/THR_decoys.sdf`. It runs in 3 s and shows what the item
+  is really about: the lower confidence bound ranks better than the prediction (AUC 0.92 against
+  0.83, enrichment at 10 % of the list 3.42 against 2.74 of a possible 4.45), and it says why the
+  number is optimistic -- two COX-2 decoys outrank every inhibitor, the background was posed by
+  field similarity, and 129 molecules make the top fractions meaningless.
+  **Deviation from the item's text:** the notebooks live under `docs/tutorials/` and not under
+  `examples/`, with `run_tutorials.py` to execute them so that the committed outputs come from the
+  current code. The manual and the README point there, and moving them now would break the Colab
+  links that are already published.
+  **Not done:** the notebooks are not executed in continuous integration (`run_tutorials.py
+  --check` exists and the workflow does not call it, which needs the `tutorials` extra in
+  `requirements-lock.txt`), and the stable surface has no deprecation mechanism -- a name that
+  does have to change would have to change in a major version with nothing to warn the caller
+  first.
 * **G4. The manual grows with the program.** Each feature lands with its manual section and its
   benchmark script in the same commit, as the probe fields and descriptors did; `docs/make_manual.py`
   rebuilds the PDF.
+  **Done 31 October 2026, as far as a program can decide it.** No check can say that a section was
+  *written*; two checks catch the omissions that matter, and `benchmarks/run_all.py --check` now
+  runs both. First, **every registered benchmark is named in the manual** -- by its name, its
+  results folder or its script. Five of the 73 were not when the check was written, and the gap it
+  found was real: the manual described the ORCA stage at length and never said what it gained.
+  It now does, with the numbers (`corrosion_qm`: mean q2 +0.382 for the five ordinary fields
+  against +0.348 with the quantum fields and descriptors added, and +0.218 for the descriptors
+  alone; `am_eu`: +0.803 against +0.803 for the ORCA charges; against the Hammett series, where
+  Hirshfeld charges take sigma-meta from 0.70 to 0.79, because a substituent constant is a
+  statement about resonance). `cdft_kernels`, `cofield_error` and `designloop` were quoted without
+  a reference to the file the numbers come from, and now carry one. Second, **the typeset manual is
+  the manual**: `docs/make_manual.py` writes `docs/CMF_manual.sha256`, the hash of the Markdown it
+  read, and both `--check` commands compare it with `docs/manual.md` as it stands. A PDF carries
+  its build date, so two builds of one source are different files and the PDF itself cannot be
+  compared with a rebuild; the hash of the source can be, and it answers the question that matters
+  -- has the manual been edited since the PDF was made? `tests/test_documents.py` runs both checks
+  in the suite, and also drives each of them into failure on a temporary copy, because a check
+  that has never failed is not known to work.
+  **Not done:** nothing checks that a *feature* brought a manual section, only that a benchmark
+  did, so a feature with no benchmark can still arrive undocumented; and the same hash mechanism
+  is not applied to `docs/figures/` (`make_figures.py --check` redraws them instead, which costs
+  minutes) nor to `docs/api.md` (`make_api.py --check` regenerates it, which is cheap and exact).
 * **G5. Other platforms.** The application has been run on Windows only. Linux and macOS through A2
   first, then the high-DPI and OpenGL differences the 3D view will meet there.
 

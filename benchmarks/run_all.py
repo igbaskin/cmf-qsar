@@ -737,6 +737,38 @@ def check_manifest() -> List[str]:
     return problems
 
 
+def check_documents() -> List[str]:
+    """What the manual is missing: a benchmark it never names, or a PDF older than its Markdown.
+
+    Plan item G4 is a working rule -- a feature lands with its manual section and its benchmark
+    script in the same commit -- and this is the part of it a program can check. A benchmark the
+    manual never mentions is a measurement nobody can find; a PDF built from an older manual is a
+    document that disagrees with the one in the repository.
+    """
+    problems = []
+    manual = os.path.join(ROOT, "docs", "manual.md")
+    if not os.path.exists(manual):
+        return ["docs/manual.md is missing"]
+    text = _read(manual)
+    for b in registry():
+        if not any(m in text for m in (b.name, f"results/{b.results}/", b.script)):
+            problems.append(f"the manual never names the benchmark {b.name}: neither its name, "
+                            f"nor results/{b.results}/, nor {b.script}")
+    # the stamp docs/make_manual.py writes: comment lines, then "<sha256>  manual.md"
+    pdf = os.path.join(ROOT, "docs", "CMF_manual.pdf")
+    stamp = os.path.join(ROOT, "docs", "CMF_manual.sha256")
+    if not os.path.exists(pdf) or not os.path.exists(stamp):
+        problems.append("docs/CMF_manual.pdf or its .sha256 is missing: "
+                        "run python docs/make_manual.py")
+    else:
+        recorded = [ln.split()[0] for ln in _read(stamp).splitlines()
+                    if ln.strip() and not ln.startswith("#")]
+        if not recorded or recorded[0] != _sha256(manual):
+            problems.append("docs/CMF_manual.pdf was built from an older docs/manual.md: "
+                            "run python docs/make_manual.py")
+    return problems
+
+
 # ----------------------------------------------------------------------------- listing, computing
 
 def list_benchmarks():
@@ -815,7 +847,7 @@ def main(argv=None):
     if args.manifest:
         write_manifest()
     if args.check:
-        problems = check_manifest()
+        problems = check_manifest() + check_documents()
         problems += ["table or document was not what its result files give: "
                      + os.path.relpath(c, ROOT) for c in changed]
         if problems:
@@ -823,7 +855,8 @@ def main(argv=None):
             for p in problems:
                 print("  " + p)
             return 1
-        print("check passed: tables and documents match their result files, data matches the manifest")
+        print("check passed: tables and documents match their result files, every benchmark is "
+              "named in the manual, the manual PDF is current, data matches the manifest")
     if not (args.compute or args.tables or args.manifest or args.check) or args.list:
         list_benchmarks()
     return 0

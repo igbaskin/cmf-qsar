@@ -4531,7 +4531,7 @@ print(res.prediction, res.baseline, res.table(), res.top_interactions(5))
 
 ### Tutorials
 
-Four notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
+Five notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
 example data in the repository. Each opens in Google Colab from the badge at its top and runs there
 without any installation; locally they need `pip install cmfqsar[tutorials]`.
 
@@ -4541,9 +4541,21 @@ without any installation; locally they need `pip install cmfqsar[tutorials]`.
 | `02_no_alignment.ipynb` | a SMILES table with no common frame: the rotation-invariant kernel, per-atom contributions, predicting new molecules |
 | `03_trusting_a_prediction.ipynb` | y-randomisation, the confidence interval of q², conformal intervals, the applicability domain, the two-sample test |
 | `04_two_endpoints.ipynb` | two activities on one kernel, how much sharing helps, and the selectivity field of an aligned two-receptor series |
+| `05_screening.ipynb` | scoring a library a block at a time: what the standard deviation beside a prediction is for, and what the ranking is worth against 100 presumed inactives |
 
 `python docs/tutorials/run_tutorials.py` executes them so that the committed outputs come from the
 current code; `--check` only verifies that they run.
+
+### What you may rely on
+
+Nine names are the supported interface of the package: `load_dataset`, `Dataset`, `FieldSet`,
+`FieldSpec`, `build_fields`, `MoleculeFields`, `AtomTable`, `CMFModel` and `ModelStats`.
+`from cmfqsar import ...` imports every one of them and `cmfqsar.__all__` lists them. Within a
+major version they are not removed or renamed, and an argument of them that
+`tests/test_stable_surface.py` records keeps its name, its position and its default; new arguments
+may be added after those. Every other module is internal: it is documented in `docs/api.md` and
+may change in any release, so a script that imports one should say which version it was written
+for. The manual chapter *Using it as a library* describes each of the nine.
 
 ## Example data
 
@@ -4766,7 +4778,10 @@ and rebuilds its Markdown table from them; `benchmarks/run_all.py` is the one en
 python benchmarks/run_all.py                # list every benchmark, its inputs and its state
 python benchmarks/run_all.py --tables       # every results/*/table.md, and the tables the documents carry
 python benchmarks/run_all.py --manifest     # benchmarks/manifest.json: versions, platform, commit, data and result hashes
-python benchmarks/run_all.py --check        # fail if a table, a document or a data file is not what the files give
+python benchmarks/run_all.py --check        # fail if a table, a document or a data file is not what the files give,
+                                            # if the manual names no measurement of some benchmark, or if its PDF is older than it
+python docs/make_manual.py                  # docs/CMF_manual.pdf and docs/CMF_manual.sha256, the hash of the Markdown it read
+python docs/make_manual.py --check          # fail if docs/manual.md has been edited since the PDF was built
 python docs/make_api.py                     # docs/api.md: the function-by-function reference, from the docstrings
 python docs/make_api.py --check             # fail if docs/api.md is not what the source gives
 python -m sphinx -b html docs/sphinx docs/sphinx/_build/html   # the same reference as an HTML site with links and search
@@ -4920,7 +4935,7 @@ docs/publication_plan.md  the papers planned from this work, what each takes and
 docs/development_plan.md  what gets built next, in what order, and what each piece must prove
 docs/api.md             the function-by-function reference, generated from the docstrings by docs/make_api.py
 docs/sphinx/            the same reference as an HTML site (python -m sphinx -b html docs/sphinx docs/sphinx/_build/html)
-docs/tutorials/         four notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
+docs/tutorials/         five notebooks that run locally or in Google Colab; run_tutorials.py executes or checks them
 docs/figures/           the computed figures of the manual, drawn by docs/make_figures.py
 tests/                  unit tests
 ```

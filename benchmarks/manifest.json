@@ -1,6 +1,6 @@
 {
- "commit": "c0b9c5b8dea10e95a60fc1895aa6ef8bc7f184fc",
- "created": "2026-10-31T00:23:52",
+ "commit": "3e20e9cb18b3f16dda549f4e2b774546d56929eb",
+ "created": "2026-10-31T00:41:13",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -601,6 +601,30 @@
   "examples/hammett/hammett_sym.sdf": {
    "bytes": 874759,
    "sha256": "35dd1fa383fa1c204b299ca6ed9b5b338258c5d574f6d7f8d0dfaac9fc15b457"
+  },
+  "examples/hops/README.md": {
+   "bytes": 2986,
+   "sha256": "c8fd2744770eacd4bdd1d649ed3e916b9356dd69a9a23e1965737b8d51f3abbe"
+  },
+  "examples/hops/borate.extxyz": {
+   "bytes": 13826,
+   "sha256": "db75b3c40077db1eecf1741df0b90d926f3a51acc428a8282b26399d2b59a611"
+  },
+  "examples/hops/borophosphate.extxyz": {
+   "bytes": 12188,
+   "sha256": "6706771112e7bab8d5a93983f3403ab1fdbc1a66cea7bdf04cea8d066ad05625"
+  },
+  "examples/hops/dft_barriers.csv": {
+   "bytes": 139,
+   "sha256": "b1b1526695b7ea5b949f2cddcad1951c09faa21f3c5235629421a5f73d529779"
+  },
+  "examples/hops/hops_bvse.csv": {
+   "bytes": 92828,
+   "sha256": "b9624592341feee89c38e8565756e346a9ff015e6095e2030db522811a55a3f1"
+  },
+  "examples/hops/phosphate.extxyz": {
+   "bytes": 13790,
+   "sha256": "be1554e42bca3884bf8e05a8e3f7a6a1a09d7658b3c4034a0da4a4ec7bc3bbf4"
   },
   "examples/litpcba/ESR1_ant.sdf": {
    "bytes": 331763,

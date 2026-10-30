@@ -20,6 +20,18 @@ analytically), and kernel ridge regression (or SVR / GP) is used to fit
 3D-QSAR models.  The fields of regression coefficients ("molecular co-fields")
 are reconstructed from the dual coefficients and can be visualised.
 
+The stable surface
+------------------
+The names in `__all__` below are the supported interface of this package (plan item G3).  They
+are documented in the manual, chapter *Using it as a library*, used by the notebooks under
+`docs/tutorials/` and guarded by `tests/test_stable_surface.py`, which records the arguments
+each one promises.  Within a major version they are not removed or renamed, and an argument that
+is recorded there keeps its name and its default; new arguments may be added after them.
+
+Every other module is internal.  It is documented in `docs/api.md` and may change in any
+release, so a script that imports one should say which version of the package it was written
+for.
+
 ## Modules
 
 | Module | What it is for |
@@ -138,6 +150,18 @@ kernels between molecules are overlap integrals of those fields (computed
 analytically), and kernel ridge regression (or SVR / GP) is used to fit
 3D-QSAR models.  The fields of regression coefficients ("molecular co-fields")
 are reconstructed from the dual coefficients and can be visualised.
+
+The stable surface
+------------------
+The names in `__all__` below are the supported interface of this package (plan item G3).  They
+are documented in the manual, chapter *Using it as a library*, used by the notebooks under
+`docs/tutorials/` and guarded by `tests/test_stable_surface.py`, which records the arguments
+each one promises.  Within a major version they are not removed or renamed, and an argument that
+is recorded there keeps its name and its default; new arguments may be added after them.
+
+Every other module is internal.  It is documented in `docs/api.md` and may change in any
+release, so a script that imports one should say which version of the package it was written
+for.
 
 ## cmfqsar.active
 

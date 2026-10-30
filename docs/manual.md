@@ -1145,6 +1145,23 @@ The same computation runs from the command line as `examples/orca_atom_propertie
 lists its options), which reads an SDF and writes the annotated one. The script and the dialog
 share the module `cmfqsar/orca.py`, so the numbers are the same either way.
 
+**What the quantum stage gained, measured.** On the four corrosion series with finished ORCA runs
+(`benchmarks/results/corrosion_qm/table.md`) it gained nothing. Mean q² over the four series: the
+five ordinary fields alone **+0.382**; the ORCA charges in place of the Gasteiger ones +0.381; the
+Fukui fields added +0.359; the six per-molecule descriptors added +0.371; both added +0.348. The
+descriptors on their own reach +0.218, so they carry rather more than half of what the fields
+carry and add nothing to them. On the 46 Am/Eu extractants
+(`benchmarks/results/am_eu/table.md`) the answer is the same: the classic fields give q² +0.803
+and the ORCA charges +0.803, the Fukui fields +0.788, the descriptors +0.786, and everything
+together +0.762.
+
+Where the stage does pay is a property that *is* electronic. On the 95 substituents of the Hammett
+series (`benchmarks/results/hammett/table.md`) Hirshfeld charges in place of the Gasteiger ones
+take q² for sigma-meta from 0.70 to 0.75, and to 0.79 once the charges are symmetrised over the
+equivalent positions. A substituent constant is a statement about resonance, and resonance is what
+a Gasteiger charge does not know. Spend the hours where the activity is electronic; on an
+adsorption potency the five ordinary fields already carry what there is.
+
 ## A simulation as a conformational ensemble
 
 The ensemble mode takes a molecule with several conformations and a weight for each, and builds
@@ -1741,8 +1758,8 @@ two fields a closed-form sum over atom pairs and so keeps the co-field and the a
 contributions.
 
 **It cannot, and the reason is a node.** Fitted against the valence part of the map on the four
-corrosion series with finished quantum runs, the relative error of an isotropic fit is
-84%. A Fukui function is essentially a frontier-orbital density: on acrolein it is $\pi^*$,
+corrosion series with finished quantum runs (`benchmarks/results/cdft_kernels/table.md`), the
+relative error of an isotropic fit is 84%. A Fukui function is essentially a frontier-orbital density: on acrolein it is $\pi^*$,
 three quarters of its squared magnitude lies more than 0.5 Å off the molecular plane, and there is
 a node *in* the plane. A function that is positive everywhere and centred on a nucleus cannot make
 a node.
@@ -3599,9 +3616,10 @@ fixed, and the noise in the activities is propagated. It answers *how much of th
 survive the error in the measurements*, which is the question a co-field picture provokes.
 
 **Measured, the mask keeps about a third of the picture, and that third is the part that is stable.**
-Eight Sutherland sets, co-fields on a 0.8 Å grid; the training set is then resampled with
-replacement thirty times and refitted, and a voxel counts as stable when the sign of its co-field
-survives that — a harder perturbation than the formula models, since it moves the molecules too:
+Eight Sutherland sets, co-fields on a 0.8 Å grid
+(`benchmarks/results/cofield_error/table.md`); the training set is then resampled with replacement
+thirty times and refitted, and a voxel counts as stable when the sign of its co-field survives
+that — a harder perturbation than the formula models, since it moves the molecules too:
 
 | | |
 |---|---|
@@ -4744,7 +4762,8 @@ The suggestion rules of the earlier section close the loop on potency alone. Lea
 has at least two objectives, and since the two-task model they live on one kernel: one model
 predicts the potency and the anti-target activity of the same candidate, each with a posterior.
 Plan item MC11 is what goes between that model and a chemist's list, and it is
-`cmfqsar/multiobjective.py`.
+`cmfqsar/multiobjective.py`; the retrospective run at the end of this section is
+`benchmarks/results/designloop/table.md`.
 
 **The Pareto front** is the candidates no other candidate beats on every objective at once. A
 weighted sum needs weights, and nobody knows them before the compounds are made; a front does
@@ -7302,6 +7321,33 @@ cmf benchmark alignment poses   # run these two
 It needs the source checkout, because the benchmarks and their data are not installed with the
 package; the command says so rather than failing obscurely if they are missing.
 
+**What `--check` checks.** It is the statement that the documents of this repository say what the
+measurements say, and it answers five questions:
+
+| question | what fails it |
+|---|---|
+| Is every result table what its result files give? | a table rebuilt from the stored results differs from the committed one |
+| Is every spliced passage current? | a passage between `<!-- tag -->` markers in a document differs from what the result files give |
+| Does the manual name every measurement? | a benchmark is registered that the manual mentions nowhere, by name, by its results folder or by its script |
+| Is the typeset manual the manual? | `docs/manual.md` has been edited since `docs/CMF_manual.pdf` was built |
+| Is the example data the data that was measured? | a file under `examples/` differs from its hash in `benchmarks/manifest.json` |
+
+The third and fourth questions are the part of the working rule below that a program can decide.
+The last one is what makes a published number traceable: the table, the document, the result file
+and the molecules all have to agree, or the command fails and says which of them does not.
+
+A PDF cannot be compared with a rebuild of itself, because it carries the date it was built on, so
+two builds of one source are different files. `python docs/make_manual.py` therefore writes
+`docs/CMF_manual.sha256`, the hash of the Markdown it read, and `python docs/make_manual.py
+--check` compares that hash with the file as it stands. The question it answers is the useful one:
+has the manual been edited since the PDF was made?
+
+**The working rule.** A feature lands with its manual section and its benchmark script in the same
+commit (plan item G4). Nothing can check that a section was *written*, and these two checks make
+the omissions that matter visible: a measurement nobody can find, and a PDF that disagrees with
+the Markdown beside it. `tests/test_documents.py` runs both in the test suite, so the rule holds
+on every commit and not only when someone remembers to run the benchmarks.
+
 # Command-line reference
 
 Everything the application does is available without it, which is what makes the program scriptable
@@ -7523,10 +7569,43 @@ fit = MT.fit(K, obs, rho=rho, lam=lam)
 print(fit.predict_selectivity(K[:5], 0, 1))  # beta minus alpha for the first five guests
 ```
 
-Four notebooks under `docs/tutorials/` take the library through the same ground step by step, with
+Five notebooks under `docs/tutorials/` take the library through the same ground step by step, with
 plots and 3D views: a first model on an aligned series, a series with no alignment, the checks
-that say how far a prediction can be trusted, and two endpoints with their selectivity. Each runs
-on the example data of the repository, locally or in Google Colab from the link at its top.
+that say how far a prediction can be trusted, two endpoints with their selectivity, and screening
+a library against a model of one series. Each runs on the example data of the repository, locally
+or in Google Colab from the link at its top. `python docs/tutorials/run_tutorials.py` executes
+them, so that the outputs in the files come from the current code.
+
+## The stable surface
+
+Nine names are the supported interface of the package. They are what the examples above import,
+what the notebooks use, and what this chapter describes:
+
+| name | what it is |
+|---|---|
+| `load_dataset` | reads an SDF, MOL2 or SMILES file and returns a `Dataset` |
+| `Dataset` | the molecules, their names, the activity, and the indices of the training and test subsets |
+| `FieldSet` | which fields a model uses and how wide their Gaussians are; `FieldSet.create` makes one |
+| `FieldSpec` | one field of a field set |
+| `build_fields` | one molecule plus a field set, as a `MoleculeFields` |
+| `MoleculeFields` | the fields of one molecule |
+| `AtomTable` | the fields of several molecules in one table, which is what a model is fitted on; `AtomTable.from_molecules` makes one |
+| `CMFModel` | the model: `fit`, `predict`, `predict_interval`, `calibrate_conformal`, `rank_score` |
+| `ModelStats` | what the fit measured: `q2`, `r2`, `rmse_cv`, `r2_pred`, and `summary()` |
+
+`from cmfqsar import ...` imports every one of them, and `cmfqsar.__all__` lists them in the
+source. The promise is this: within a major version a name on this list is not removed or
+renamed, and an argument of it that `tests/test_stable_surface.py` records keeps its name, its
+position and its default. New arguments may be added after the recorded ones, so a call written
+today keeps working; a call that relies on an argument's position beyond those recorded does not
+have that promise.
+
+Everything else in the package is internal. It is listed below and documented in `docs/api.md`,
+and it may change in any release, so a script that imports a module directly should say which
+version of the package it was written for. The two surfaces are also tested differently: the
+stable one by `tests/test_stable_surface.py`, which fails when a promised argument disappears or
+when an example in this chapter imports a name the package no longer has, and the rest by the
+tests of the feature that owns it.
 
 The function-by-function reference is a separate file, `docs/api.md`. It is generated from the
 docstrings of the source by `python docs/make_api.py`, so it lists every public class, method and

@@ -17,11 +17,18 @@ The DejaVu fonts that ship with matplotlib are registered if they can be found, 
 is full of Greek letters, angstroms and superscripts that the built-in Type 1 fonts do not carry
 and would silently print as black boxes.
 
+The build also writes ``docs/CMF_manual.sha256``, the hash of the Markdown it read.  A PDF carries
+a build date, so two builds of one source are different files and the PDF itself cannot be
+compared with a rebuild; the hash of the source can be, and ``--check`` asks the question that
+matters: has the manual been edited since the PDF was made?
+
 Usage:  python docs/make_manual.py [--out docs/CMF_manual.pdf] [--source docs/manual.md]
+        python docs/make_manual.py --check    # exit 1 if the PDF is older than the Markdown
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import re
 import unicodedata
@@ -824,16 +831,77 @@ def build(source_path, out_path):
     raise RuntimeError("the contents refuses to settle")
 
 
+def source_sha256(source_path):
+    """The hash of the Markdown the PDF is built from."""
+    h = hashlib.sha256()
+    with open(source_path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def stamp_path(out_path):
+    return os.path.splitext(out_path)[0] + ".sha256"
+
+
+def write_stamp(source_path, out_path):
+    """Record which Markdown this PDF was built from (plan item G4).
+
+    A PDF carries a build date, so two builds of one source are different files and the PDF cannot
+    be compared with a rebuild.  The hash of the source can be, and that is the question worth
+    asking: has the manual been edited since the PDF was made?
+    """
+    text = (f"# the sha256 of {os.path.basename(source_path)} that "
+            f"{os.path.basename(out_path)} was built from\n"
+            f"# written by docs/make_manual.py; `python docs/make_manual.py --check` compares it\n"
+            f"{source_sha256(source_path)}  {os.path.basename(source_path)}\n")
+    with open(stamp_path(out_path), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+    return stamp_path(out_path)
+
+
+def check_stamp(source_path, out_path):
+    """What is wrong between the source, the PDF and the stamp; an empty list when nothing is."""
+    problems = []
+    if not os.path.exists(out_path):
+        return [f"{os.path.relpath(out_path, ROOT)} does not exist: run python docs/make_manual.py"]
+    path = stamp_path(out_path)
+    if not os.path.exists(path):
+        return [f"{os.path.relpath(path, ROOT)} does not exist: run python docs/make_manual.py"]
+    with open(path, encoding="utf-8") as fh:
+        recorded = [ln.split()[0] for ln in fh if ln.strip() and not ln.startswith("#")]
+    if not recorded:
+        problems.append(f"{os.path.relpath(path, ROOT)} records no hash")
+    elif recorded[0] != source_sha256(source_path):
+        problems.append(
+            f"{os.path.relpath(out_path, ROOT)} was built from another "
+            f"{os.path.basename(source_path)}: run python docs/make_manual.py")
+    return problems
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--source", default=os.path.join(HERE, "manual.md"))
     ap.add_argument("--out", default=os.path.join(HERE, "CMF_manual.pdf"))
+    ap.add_argument("--check", action="store_true",
+                    help="do not build: exit 1 if the PDF was built from another manual.md")
     args = ap.parse_args()
+    if args.check:
+        problems = check_stamp(args.source, args.out)
+        for p in problems:
+            print(p)
+        if problems:
+            return 1
+        print(f"{os.path.basename(args.out)} is the typeset "
+              f"{os.path.basename(args.source)} as it stands")
+        return 0
     path = build(args.source, args.out)
     size = os.path.getsize(path)
     print(f"written {path}  ({size / 1024:.0f} kB)")
+    print(f"written {write_stamp(args.source, path)}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
