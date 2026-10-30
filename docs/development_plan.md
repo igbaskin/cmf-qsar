@@ -3548,6 +3548,56 @@ ND4a its pretraining target. Then ND7, which is a few hundred lines of NumPy wit
 dependency. Then ND6, the item that makes the method usable on a library. ND8 to ND10 wait for
 the larger sets and for the ND4a gate.
 
+**ND11 to ND13. Normalizing flows (30 October 2026).** A normalizing flow is an invertible
+network with an exact likelihood and an exact inverse. CMF has one use for each of these two
+properties and one for the degenerate one-dimensional case, which is the only flow that fits a
+congeneric series. A flow that warps field space before the Gaussian kernel is not among them:
+the kernel would stay positive definite, but the co-field would live in the warped coordinates
+and lose its reading. A Boltzmann generator for conformer ensembles is not among them either,
+because the fourth-dimension verdict says ensembles do not help, so it has nothing to improve.
+
+* **ND11. A warped Gaussian process: a one-dimensional flow on the activity.** A monotone
+  invertible transform of the response learned together with the GP (Snelson, Ghahramani and
+  Rasmussen, NIPS 2003) handles a skewed or censored pIC50 scale with a handful of parameters,
+  so it fits thirty molecules. The model stays linear in the field in the warped units, and the
+  co-field is read in those units, which the output must say. *Needed:* a `--warp` option of the
+  GP fit in `cmfqsar/model.py`, the transform stored in the model file so that `predict` and the
+  conformal interval of `cmfqsar/conformal.py` report in the original units;
+  `benchmarks/run_warped.py`. *Gate:* on the eight Sutherland sets and the 86-set collection,
+  q² and the interval coverage and width of the warped GP against the plain GP and the conformal
+  interval, with the interval of rule 4; a series whose activities are already close to normal
+  must lose nothing. The item is kept as a default only if coverage improves on more series
+  than it worsens; otherwise it is an option, recorded under rule 5.
+* **ND12. A flow on the landmark features as the density of a series in field space.** A flow
+  on the landmark feature vector of B6, which has the fixed dimension a flow needs, learns the
+  probability density of the training molecules in field space, and a new molecule gets a
+  likelihood under it. This is a proper density, which none of the five scores of
+  `cmfqsar/oneclass.py` is (they give a boundary or a distance) and which the GP variance is not
+  either. *Needed:* `cmfqsar/fieldflow.py`, PyTorch optional, with a `flow` score next to the
+  five of `cmfqsar/oneclass.py`; `benchmarks/run_fieldflow.py` under the protocol of E5 (Spearman
+  ρ against the held-out error, risk–coverage efficiency, and the two-bin RMSE). *Data:* the
+  docked pose sets of C1 with more than a few hundred ligands and COMPAS-1; on thirty molecules a
+  flow is underdetermined, and the gate must show the point at which it stops being so. *Gate:*
+  the likelihood ranks the held-out errors better than the GP variance and the best one-class
+  score, with the interval of rule 4, on the sets where it is trained on more than a stated
+  number of molecules; below that number the item is not used, and the number is recorded.
+* **ND13. Flow matching as the generator of ND9, with design in latent space.** An equivariant
+  flow over atom positions and types is invertible, so the ridge model on the decoded field is a
+  differentiable function of the latent code, and design becomes gradient ascent of the
+  predicted activity in latent space followed by an exact decode. That is what E11 (iii) wants and
+  what a diffusion model cannot do exactly, because diffusion has no encoder. The classical
+  discrete flows (RealNVP, Glow) do poorly on 3D molecules; the equivariant flow of Satorras et
+  al. (NeurIPS 2021) works, and the form in use today is flow matching (Lipman et al., ICLR
+  2023; FlowMol and EquiFM for molecules), which trains like a diffusion model and samples in a
+  few steps. Those few steps are its gain over ND9 at library scale. *Needed:* a second generator
+  in `cmfqsar/fielddiffusion.py` behind the same `cmf generate` entry, with a `--latent-ascent`
+  mode; the benchmark of ND9 extended with a flow row. *Gate:* the gate of ND9, applied to both
+  generators on the same series, plus the cost per accepted molecule; the two share one gate and
+  the one that passes at the lower cost is kept, the other recorded under rule 5.
+
+**Order.** ND11 first, because it runs on the existing sets and gates on the calibration the
+program already measures. ND12 after ND5 to ND7, on the larger sets. ND13 with ND9.
+
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
 *Drafted 26 October 2026. Parts A to G build the model and part H leaves medicinal chemistry for
