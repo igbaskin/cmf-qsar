@@ -1,6 +1,6 @@
 {
- "commit": "d758de09858e041ad24ebe6ed9ea66245621e889",
- "created": "2026-10-31T21:15:59",
+ "commit": "fef4daa79eec88f348c1ff20a0f9f831fe87a456",
+ "created": "2026-10-31T21:36:10",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2415,9 +2415,10 @@
   "benchmarks/results/perfield/table.md": "691258709c739b25e9992e78a3e895a1d397c1b427a3d97226c64f9f932c787b",
   "benchmarks/results/periodic_overlap/cofield.json": "290e4705cc86db7f0cb853aeb77562edc7afe63ecc019baf5ded718bd6d9fab4",
   "benchmarks/results/periodic_overlap/cofield.png": "3b888999470f4f4699a62e2a3597d38cbc194c8fb054d78127d20a5e434e81b4",
+  "benchmarks/results/periodic_overlap/cofield_3d.png": "caec569179197ae4bb3fc2e40ad520cf86d1210b4319314cc8bee477aa4c61d3",
   "benchmarks/results/periodic_overlap/fit.json": "aaacbd0f7955a4b1c30730bbd549ae949b6d8d86a1dcc19c1a6a8780a1443256",
   "benchmarks/results/periodic_overlap/prepared.json": "f78b4157b73775b08f32f221dfab9b16dc14232d5413d68849c0980b48976706",
-  "benchmarks/results/periodic_overlap/table.md": "3d81eb4e7e86a2e2f56a0f2b7c7f5d559b600e6364197fd2cbbcc8410b46a2de",
+  "benchmarks/results/periodic_overlap/table.md": "fdcc444d0d00ce8e1f88cff33c969fbdae6252e7c82f88e0a6f5bbbbee9bd7b7",
   "benchmarks/results/pharmfields/ACE.json": "0af6b3445a5fea5d2c144492483bb4b5e9965bd6c88b59ad7d900fdc5f077246",
   "benchmarks/results/pharmfields/AChE.json": "09a360e1b8ec1d70060554a68a0d22c95b9fb30ed11d567aa1f8b65c7bff66d1",
   "benchmarks/results/pharmfields/BZR.json": "242c6d71c09caa1a93ccb991c32aa1e862c70e4e51d413dcc9abff0c72122909",

@@ -6532,6 +6532,29 @@ and any viewer will tile it. Nothing in this is special to crystals except the b
 two calls draw a co-field around a molecule, and the periodic sum is what makes the volume come
 out periodic.
 
+It also draws the isosurfaces itself, reading that cube file back as an outside viewer would,
+which is both the picture and a check that the file says what it is meant to say
+(`run_periodic_overlap.py --stage isosurface`, `cofields.isosurface` for the marching cubes):
+
+![The steric co-field of the formation energy in the perovskite cell, as isosurfaces at plus and minus 45 % of its largest value: red raises the predicted formation energy per unit of field, blue lowers it. The atoms are the cell the cube file carries, PbRuO$_3$, with the periodic images that fall on the cell: lead at the eight corners, ruthenium at the centre and the six oxygens of the octahedron, whose arms are drawn. The blue surface wraps the B site and the oxygens; the red lobes sit in the faces, away from every site. Read back from `cofield_steric.cube` by `benchmarks/run_periodic_overlap.py`.](benchmarks/results/periodic_overlap/cofield_3d.png)
+
+What a cube of a periodic co-field costs is worth knowing before asking for a fine one. The work
+is the number of grid points times the Gaussians each point sees, and the basis of this model is
+1.8 million of them at 69 per cubic angstrom, so a point sees of order $10^5$. Measured here, in
+seconds, for one field over one cell:
+
+| grid | spacing | electrostatic | steric, a 1.7 Å atom | steric, a 2.4 Å atom |
+|---|---:|---:|---:|---:|
+| 10³ | 0.46 Å | 1.1 | 2.8 | 7.3 |
+| 18³ | 0.24 Å | 3.4 | 13.8 | 55.5 |
+| 26³ | 0.17 Å | 8.7 | 40.5 | 132.8 |
+
+The cost is linear in the points and grows with the width of the field, because a wider Gaussian
+reaches further and every point then sees more of them; it is also linear in the size of the
+training set, since that is what sets the number of Gaussians. The memory is bounded whatever
+the density: `evaluate_gaussians` cuts its chunk from the neighbour count it measures, so one
+neighbour list stays under `cofields.MAX_PAIRS`.
+
 ## An atom instead of a molecule: the local invariant kernel
 
 Every model so far predicts one number per molecule. A carbon shift, an acidity, a local

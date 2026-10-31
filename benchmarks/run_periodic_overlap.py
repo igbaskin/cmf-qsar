@@ -512,6 +512,99 @@ def draw_cell(ax, plane: str, a: float) -> None:
     ax.set_ylim(-0.02 * a, 1.02 * a)
 
 
+#: fraction of the largest value of the volume at which the isosurfaces are drawn
+ISO_LEVEL = 0.45
+#: how the three-dimensional figure is viewed (elevation, azimuth), in degrees
+ISO_VIEW = (20.0, -62.0)
+
+
+def isosurface_figure(cube: str = "", out: str = "", level: float = ISO_LEVEL) -> str:
+    """The co-field as two isosurfaces around the cell, read back from the cube file.
+
+    Nothing is recomputed: the cube is the volume the co-field stage already evaluated, and this
+    reads it back exactly as an outside viewer would, which is also a check that the file says
+    what it is meant to say.
+    """
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+    from cmfqsar.cdft import read_cube
+    from cmfqsar.cofields import Grid, isosurface
+
+    rec = jload(result("cofield.json"))
+    cube = cube or result(rec["cubes"][0]["path"])
+    c = read_cube(cube)
+    grid = Grid(origin=np.asarray(c.origin, float), spacing=float(c.vectors[0][0]),
+                shape=c.values.shape)
+    volume = np.asarray(c.values, float)
+    a = float(rec["cell_a"])
+    peak = float(np.abs(volume).max())
+    log(f"{os.path.basename(cube)}: {volume.shape} points, |value| up to {peak:.3g}, "
+        f"{len(c.numbers)} atoms")
+
+    fig = plt.figure(figsize=(7.2, 6.4))
+    ax = fig.add_subplot(111, projection="3d")
+    for sign, colour in ((+1.0, "#c0392b"), (-1.0, "#2471a3")):
+        got = isosurface(volume, sign * level * peak, grid)
+        if got is None:
+            continue
+        verts, faces, _normals = got
+        mesh = Poly3DCollection(verts[faces], alpha=0.33, linewidths=0)
+        mesh.set_facecolor(colour)
+        ax.add_collection3d(mesh)
+    # the cell, drawn as twelve edges
+    for s0, s1 in ((0, 1), (0, 2), (0, 4), (1, 3), (1, 5), (2, 3), (2, 6),
+                   (3, 7), (4, 5), (4, 6), (5, 7), (6, 7)):
+        p0 = np.array([(s0 >> k) & 1 for k in range(3)], float) * a
+        p1 = np.array([(s1 >> k) & 1 for k in range(3)], float) * a
+        ax.plot(*zip(p0, p1), color="0.25", lw=0.9)
+    # the atoms of the cell the cube carries, with the periodic images that fall inside it:
+    # a site at a corner or a face belongs to the neighbouring cells as well, and the
+    # octahedron around the B site has three of its six arms in them
+    from rdkit.Chem import GetPeriodicTable
+
+    table = GetPeriodicTable()
+    numbers = np.asarray(c.numbers, int)
+    shifts = np.array([[i, j, k] for i in (0, 1) for j in (0, 1) for k in (0, 1)], float) * a
+    drawn = []
+    for z, p in zip(numbers, np.asarray(c.positions, float)):
+        for t in shifts:
+            q = p + t
+            if np.all(q <= 1.02 * a) and np.all(q >= -0.02 * a):
+                drawn.append((int(z), q))
+    heavy = max(int(z) for z in numbers)
+    for z, q in drawn:
+        ax.scatter(*q, s=150 if z == heavy or z > 20 else 55, c="0.15", depthshade=False)
+    # one label per element, on the instance nearest the viewer's corner
+    for z in sorted(set(numbers), reverse=True):
+        q = max((q for zz, q in drawn if zz == z), key=lambda v: v[0] - v[1] + v[2])
+        ax.text(q[0], q[1], q[2] + 0.25, table.GetElementSymbol(int(z)), fontsize=9)
+    centre = np.array([0.5, 0.5, 0.5]) * a
+    for _z, q in drawn:                       # the six arms of the BX6 octahedron
+        d = float(np.linalg.norm(q - centre))
+        if 0.1 < d < 0.6 * a:
+            ax.plot(*zip(centre, q), color="0.15", lw=1.1)
+    ax.set_xlim(0, a)
+    ax.set_ylim(0, a)
+    ax.set_zlim(0, a)
+    ax.set_box_aspect((1, 1, 1))
+    ax.view_init(elev=ISO_VIEW[0], azim=ISO_VIEW[1])
+    ax.set_axis_off()
+    ax.set_title(f"The steric co-field of the formation energy in the perovskite cell, "
+                 f"isosurfaces at ±{level:.0%} of the peak\n"
+                 f"red raises the energy, blue lowers it", fontsize=10)
+    fig.tight_layout()
+    out = out or result("cofield_3d.png")
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    fig.savefig(out, dpi=170)
+    plt.close(fig)
+    log(f"written to {out}")
+    return out
+
+
 def figure(out: str = "") -> str:
     """The co-field in the two planes of the cell, with the cell drawn over it."""
     import matplotlib
@@ -610,7 +703,9 @@ def report(out: str = "") -> str:
                       "the structure: "
                       + "; ".join(f"`{c['path']}` ({c['field']}, {c['shape'][0]}^3 points at "
                                   f"{c['spacing']:.2f} A, the atoms of {c['structure']})"
-                                  for c in cof["cubes"]) + ".", ""]
+                                  for c in cof["cubes"]) + ".", "",
+                      "`cofield_3d.png` draws the isosurfaces of that cube around the cell, "
+                      "read back from the file as an outside viewer would read it.", ""]
     text = "\n".join(lines) + "\n"
     out = out or result("table.md")
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -623,7 +718,8 @@ def report(out: str = "") -> str:
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--stage", choices=("prepare", "fit", "cofield", "figure"), default=None)
+    ap.add_argument("--stage", choices=("prepare", "fit", "cofield", "figure", "isosurface"),
+                    default=None)
     ap.add_argument("--kernels", nargs="+", default=list(KERNELS))
     ap.add_argument("--frames", nargs="+", default=list(FRAMES))
     ap.add_argument("--limit", type=int, default=LIMIT)
@@ -641,7 +737,8 @@ def main():
     if args.report:
         report()
         return 0
-    stages = (args.stage,) if args.stage else ("prepare", "fit", "cofield", "figure")
+    stages = ((args.stage,) if args.stage
+              else ("prepare", "fit", "cofield", "figure", "isosurface"))
     for stage in stages:
         log(f"=== {stage}")
         if stage == "prepare":
@@ -654,6 +751,8 @@ def main():
                     cube=not args.no_cube, cube_spacing=args.cube_spacing, force=args.force)
         elif stage == "figure":
             figure()
+        elif stage == "isosurface":
+            isosurface_figure()
     report()
     return 0
 

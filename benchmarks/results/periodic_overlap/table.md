@@ -33,3 +33,5 @@ The co-field itself is drawn in `cofield.png`, with the cell over it, in the pla
 
 It is also written as a Gaussian cube over one cell, which carries the atoms beside the values, so a viewer draws the periodic co-field around the structure: `cofield_steric.cube` (steric, 18^3 points at 0.24 A, the atoms of O3PbRu_12).
 
+`cofield_3d.png` draws the isosurfaces of that cube around the cell, read back from the file as an outside viewer would read it.
+
