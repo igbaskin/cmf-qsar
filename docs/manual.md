@@ -4294,9 +4294,18 @@ fit stops improving as well, which is the optimiser and not the representation: 
 fifty-six atoms is described by about thirty pseudo-atoms, and more of them collapse onto each
 other (`fieldae.min_pseudo_distance` reports that, and a repulsion term keeps it in check).
 
-**Where the reconstruction fails, and why.** The figure
-`benchmarks/results/fieldae/decoded.png` draws the ring field of a held-out molecule beside the
-field its code decodes to. For the median molecule the two are the same picture. The worst case
+**Where the reconstruction fails, and why.**
+
+![A held-out molecule beside the field its code decodes to, for the ring-class field of the
+terminal rings: on the left the molecule's own field with its atoms as black points, on the
+right the field of the 32 pseudo-atoms the decoder places, drawn in green, with the relative
+reconstruction error in the title. The upper row is the molecule of median error, a
+forty-two-carbon benzenoid, where the two pictures are the same picture. The lower row is the
+worst of the whole held-out part: benzene, where a fixed thirty-two pseudo-atoms are spread over
+a field that one ring makes. Drawn by
+`benchmarks/run_fieldae.py`.](benchmarks/results/fieldae/decoded.png)
+
+For the median molecule the decoded field and the real one are the same picture. The worst case
 of the whole held-out part is **benzene**, at a relative error of 1.68 -- the one molecule of one
 ring in a part where 652 of 868 molecules have ten. A decoder has a fixed number of pseudo-atoms
 and places thirty-two of them around a single ring, which is far more than that field needs.
@@ -6471,15 +6480,24 @@ It is worth computing `periodic.overlap_asymmetry` on any new series before trus
 from it.
 
 **What the co-field says.** This is what the kernel is for, and no autocorrelation can produce
-it: `benchmarks/results/periodic_overlap/cofield.png` draws the co-field of the formation energy
-inside the perovskite cell, in the plane of the A site and the equatorial oxygens (z = 0) and in
-the plane of the B site (z = a/2). It is periodic, and its strongest features sit on the sites:
-the steric co-field has a deep negative lobe exactly at the B site and at the oxygen, and a
-positive one at the A site, so steric weight at the B and X sites lowers the predicted formation
-energy while steric weight at the A site raises it. The electrostatic, electronegativity and mass
-co-fields oscillate with the lattice instead of sitting on the sites, and are correspondingly
-harder to read -- which is itself worth seeing, and is the kind of thing a picture shows and a
-channel weight does not.
+it.
+
+![The co-field of the formation energy inside the perovskite cell, from the model on one
+lattice: one column per field, the upper row in the plane through the A site and the equatorial
+oxygens (z = 0), the lower row in the plane through the B site (z = a/2). Red is field that
+raises the predicted formation energy per unit of field, blue field that lowers it; the circle
+marks the A site, the triangle the B site and the square an oxygen. The co-field repeats with
+the lattice, which is what the periodic sum is for. The steric map has a deep blue lobe exactly
+on the B site and on the oxygen and red at the A site; the other three oscillate with the
+lattice instead of sitting on the sites. Drawn by
+`benchmarks/run_periodic_overlap.py`.](benchmarks/results/periodic_overlap/cofield.png)
+
+It is periodic, and its strongest features sit on the sites: the steric co-field has a deep
+negative lobe exactly at the B site and at the oxygen, and a positive one at the A site, so
+steric weight at the B and X sites lowers the predicted formation energy while steric weight at
+the A site raises it. The electrostatic, electronegativity and mass co-fields oscillate with the
+lattice instead of sitting on the sites, and are correspondingly harder to read -- which is
+itself worth seeing, and is the kind of thing a picture shows and a channel weight does not.
 
 Decomposition rule 3 gives the same reading as numbers, one contribution per site of every cell
 (a sample of 150 cells): A +2.37 ± 0.58, B -6.16 ± 0.81, X -3.87 ± 0.55 eV per atom. The means
