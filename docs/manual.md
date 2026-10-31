@@ -4221,10 +4221,25 @@ Plan item E11 adds a decoder whose output *is* a set of atoms.
 |---|---|
 | encoder | a molecule to a code of a few dimensions. Its input is the whitened kernel against a few hundred landmarks, the feature vector of *Fitting in the space of the landmarks*, so it sees a molecule exactly as the kernel does: no grid, no atom order, no fixed atom count |
 | decoder | a code to a fixed number of **pseudo-atoms**, each with a position and one weight per field. That is the form every other field in this program has, so a decoded field goes straight into the overlap kernel, a co-field reader or a matcher |
-| loss | the squared distance between the two fields in the field Hilbert space, `k(f,f) - 2 k(f,f') + k(f',f')` |
+| loss | the squared distance between the two fields in the field Hilbert space |
 
-All three terms of the loss are sums of overlap integrals of atom-centred Gaussians -- the same
-closed form as every kernel in this manual -- so the loss is exact and differentiable in the
+The decoded field has the form of any other field in this program, a sum of Gaussians on $M$
+pseudo-atoms at positions $\hat{\mathbf{r}}_m$ with weights $\hat{w}_{mf}$,
+
+$$
+\hat{X}_f(\mathbf{r}) = \sum_{m=1}^{M} \hat{w}_{mf}\,\exp\!\left(-\dfrac{b_f}{2}\,|\mathbf{r}-\hat{\mathbf{r}}_m|^2\right)
+$$
+<!-- #eq:decoded-field -->
+
+and what is minimised is its distance from the molecule's own field in the field Hilbert space,
+
+$$
+\|X_f - \hat{X}_f\|^2 = k(X_f, X_f) - 2\,k(X_f, \hat{X}_f) + k(\hat{X}_f, \hat{X}_f)
+$$
+<!-- #eq:fieldae-loss -->
+
+All three terms are sums of overlap integrals of atom-centred Gaussians -- the same closed form
+as every kernel in this manual, (#eq:kernel) -- so the loss is exact and differentiable in the
 positions and the weights of the pseudo-atoms, and **no grid enters the training**. The
 derivative comes from automatic differentiation of that formula, and the test suite holds it to
 central finite differences of the ordinary NumPy kernel, which stays the reference.
@@ -4259,8 +4274,7 @@ molecules, which is the precision of the stored kernel and not of the formula.
 
 The first gate of the item is a stopping rule: if the nonlinear decoder cannot reconstruct better
 than kernel PCA with the same number of latent dimensions, there is nothing to use.
-(`benchmarks/results/fieldae/table.md`, relative reconstruction error `||f - f'|| / ||f||` on the
-held-out part, 32 pseudo-atoms; lower is better.)
+(`benchmarks/results/fieldae/table.md`, relative reconstruction error $\|X_f - \hat{X}_f\| \,/\, \|X_f\|$ on the held-out part, 32 pseudo-atoms; lower is better.)
 
 | latent dimensions | the decoder | kernel PCA | the decoder gains |
 |---:|---:|---:|---:|
@@ -4296,14 +4310,7 @@ other (`fieldae.min_pseudo_distance` reports that, and a repulsion term keeps it
 
 **Where the reconstruction fails, and why.**
 
-![A held-out molecule beside the field its code decodes to, for the ring-class field of the
-terminal rings: on the left the molecule's own field with its atoms as black points, on the
-right the field of the 32 pseudo-atoms the decoder places, drawn in green, with the relative
-reconstruction error in the title. The upper row is the molecule of median error, a
-forty-two-carbon benzenoid, where the two pictures are the same picture. The lower row is the
-worst of the whole held-out part: benzene, where a fixed thirty-two pseudo-atoms are spread over
-a field that one ring makes. Drawn by
-`benchmarks/run_fieldae.py`.](benchmarks/results/fieldae/decoded.png)
+![A held-out molecule beside the field its code decodes to, for the ring-class field of the terminal rings: on the left the molecule's own field with its atoms as black points, on the right the field of the 32 pseudo-atoms the decoder places, drawn in green, with the relative reconstruction error in the title. The upper row is the molecule of median error, a forty-two-carbon benzenoid, where the two pictures are the same picture. The lower row is the worst of the whole held-out part: benzene, where a fixed thirty-two pseudo-atoms are spread over a field that one ring makes. Drawn by `benchmarks/run_fieldae.py`.](benchmarks/results/fieldae/decoded.png)
 
 For the median molecule the decoded field and the real one are the same picture. The worst case
 of the whole held-out part is **benzene**, at a relative error of 1.68 -- the one molecule of one
@@ -6393,15 +6400,22 @@ exactly as the molecules of a congeneric series do, and the overlap integral -- 
 own kernel -- applies with one change: the integral runs over one cell and the fields are
 periodic.
 
-Writing the field of a cell as the lattice sum of its atoms' Gaussians, the overlap over one
-cell is
+The field of a cell is the lattice sum of its atoms' Gaussians,
 
-```
-K_f(i, j) = INT_cell rho_f^i rho_f^j dr
-          = sum_{l in cell i} sum_{m in cell j} sum_T k_f(|r_l - r_m - T|)
-```
+$$
+\rho_{fi}(\mathbf{r}) = \sum_{l\,\in\,\mathrm{cell}\,i}\;\sum_{\mathbf{T}} w_{lf}\,\exp\!\left(-\dfrac{b_{lf}}{2}\,|\mathbf{r}-\mathbf{r}_l-\mathbf{T}|^2\right)
+$$
+<!-- #eq:pbc-field -->
 
-with `k_f` the same closed-form Gaussian pair overlap as everywhere else: one atom stays in the
+with $\mathbf{T}$ running over the translations of the lattice, and the overlap integral is taken
+over one cell $\Omega$ rather than over all space:
+
+$$
+K_f(i,j) = \int_{\Omega} \rho_{fi}(\mathbf{r})\,\rho_{fj}(\mathbf{r})\,\mathrm{d}\mathbf{r} = \sum_{l\,\in\,i}\;\sum_{m\,\in\,j}\;\sum_{\mathbf{T}} k_f\!\left(|\mathbf{r}_l-\mathbf{r}_m-\mathbf{T}|\right)
+$$
+<!-- #eq:pbc-overlap -->
+
+where $k_f$ is the closed-form Gaussian pair overlap of (#eq:kernel). One atom stays in the
 reference cell and the other runs over every periodic image. So the periodic kernel *is* the
 ordinary kernel evaluated against an image-expanded table, and every shortcut of the kernel code
 -- the grouping by width, the cutoff of plan item B2, the compiled threaded loop -- carries over
@@ -6482,15 +6496,7 @@ from it.
 **What the co-field says.** This is what the kernel is for, and no autocorrelation can produce
 it.
 
-![The co-field of the formation energy inside the perovskite cell, from the model on one
-lattice: one column per field, the upper row in the plane through the A site and the equatorial
-oxygens (z = 0), the lower row in the plane through the B site (z = a/2). Red is field that
-raises the predicted formation energy per unit of field, blue field that lowers it; the circle
-marks the A site, the triangle the B site and the square an oxygen. The co-field repeats with
-the lattice, which is what the periodic sum is for. The steric map has a deep blue lobe exactly
-on the B site and on the oxygen and red at the A site; the other three oscillate with the
-lattice instead of sitting on the sites. Drawn by
-`benchmarks/run_periodic_overlap.py`.](benchmarks/results/periodic_overlap/cofield.png)
+![The co-field of the formation energy inside the perovskite cell, from the model on one lattice: one column per field, the upper row in the plane through the A site and the equatorial oxygens ($z = 0$), the lower row in the plane through the B site ($z = a/2$). Red is field that raises the predicted formation energy per unit of field, blue field that lowers it; the circle marks the A site, the triangle the B site and the square an oxygen. The co-field repeats with the lattice, which is what the periodic sum is for. The steric map has a deep blue lobe exactly on the B site and on the oxygen and red at the A site; the other three oscillate with the lattice instead of sitting on the sites. Drawn by `benchmarks/run_periodic_overlap.py`.](benchmarks/results/periodic_overlap/cofield.png)
 
 It is periodic, and its strongest features sit on the sites: the steric co-field has a deep
 negative lobe exactly at the B site and at the oxygen, and a positive one at the A site, so
