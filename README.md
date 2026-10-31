@@ -2377,6 +2377,40 @@ cmf hops examples/hops/phosphate.extxyz examples/hops/borophosphate.extxyz examp
 cmf hops calcs/phosphate/pristine --charges file --list      # a VASP run directory
 ```
 
+### A single-atom site as the sample: two reactions on one metal
+
+A metal atom held by four atoms of a graphene divacancy is the active site of the
+metal-nitrogen-carbon catalysts of oxygen reduction and hydrogen evolution, and a catalyst that
+does both is one whose H binding is near zero while its OH binding sits on the top of the oxygen
+reduction volcano. `benchmarks/run_sac.py` (the pilot of plan item EC8) makes the bare site the
+sample: its environment is cut from the periodic sheet by the hop machinery above, in the frame
+the shared template gives for free (origin under the metal in the plane of the sheet, the metal
+on the +z side), and the four binding energies are the targets, one model each and the four
+together. The data are the 140 M@C(4-x)Nx catalysts of He, Wang and Ouyang (Chem. Mater. 2023),
+28 metals in five motifs (`examples/sac/`). The pilot found a fault in them and works around it:
+the bare sheets of eight metals were relaxed with DFT+U while every adsorbed state was relaxed
+without it, which puts their binding energies 10 eV off; those sheets are being recomputed with
+plain PBE, and until then 98 catalysts carry targets (`examples/sac/README.md`).
+
+**Measured on those 98, with folds that hold out random catalysts, a whole metal, or a whole
+motif:** the overlap kernel of the site with the inorganic fields and the tabulated properties
+of the atoms as fields gives mean q² +0.84, +0.74 and +0.82 over the four endpoints: OH and OOH
+to 0.4 eV, O to 0.7 eV, H to 0.7 eV (q² 0.58, the hard one). That does not beat the periodic
+autocorrelation of the whole cell (+0.84, +0.78, +0.83) or the tabulated properties of the metal
+with the nitrogen count (+0.82, +0.81, +0.82): every difference is inside its interval except O
+on unseen metals, where the site kernel is worse, and the invariant local kernel of the same
+environment matches the frame kernel everywhere. Sharing the four endpoints in one fit gains
+nothing. What the site kernel gives that the references cannot is the **two-reaction reading**:
+the difference dE_H - dE_OH is predicted with q² +0.82 (0.55 eV on an sd of 1.30 eV), the oxygen
+reduction overpotential derived from the out-of-fold energies ranks the sites with a rank
+correlation of +0.90 (+0.79 on unseen metals) and recovers 7 of the 10 best bifunctional sites,
+and the difference co-field places the lever where a chemist would look: the charge at the metal
+(an electropositive metal binds OH and OOH more and H about the same) and at its four neighbours
+(nitrogen in the first shell weakens OH binding more than H binding), while the size of the metal
+weakens all three alike. The GP interval covers 84 to 93 % at the nominal 95 % and its width
+ranks the errors only weakly, so it is not yet an acquisition rule. The table, the co-field maps
+in the plane of the sheet and the scatter plots are in `benchmarks/results/sac/`.
+
 ### Which atom is attacked: a site of metabolism
 
 Blocking a metabolic position is a standard move in medicinal chemistry and a question about one

@@ -2914,6 +2914,40 @@ for anything molecular.
   on a public single-atom-catalyst set, beat the periodic autocorrelation kernel and M5's
   site-resolved model on the same cells. Waits for M5, which decides whether the site resolution
   of the periodic kernel already does the job.
+  **Pilot measured 1 November 2026, without the cut-and-terminate step and without M5**
+  (`benchmarks/run_sac.py`, `benchmarks/results/sac/table.md`, `examples/sac/README.md`): the
+  environment of the metal cut from the periodic sheet by the hop machinery of BT7, in the frame
+  the shared 8x8 template gives for free, on the 140 M@C(4-x)Nx catalysts of He, Wang and Ouyang
+  (Chem. Mater. 2023) with their H, O, OH and OOH binding energies. The source data have a fault
+  the pilot found and works around: the bare sheets of eight metals were relaxed with DFT+U while
+  every adsorbed state was relaxed without it, so 40 catalysts carry no binding energy until their
+  sheets are recomputed with plain PBE (a VASP queue in WSL, about 45 minutes per sheet, running);
+  15 OOH states dissociated and Os@C4's sheet is 7 eV off. On the 98 catalysts that remain, with
+  gas references computed at the set's settings and three fold designs (random, one metal held
+  out, one motif held out), the overlap kernel of the site with electrostatic, steric,
+  electronegativity, d-count, valence, ionisation and radius fields gives mean q² +0.84, +0.74
+  and +0.82 over the four endpoints; OH and OOH are predicted to 0.4 eV (q² 0.93), O to 0.7 eV,
+  H to 0.7 eV (q² 0.58, the hard endpoint). **The gate is not passed**: the periodic
+  autocorrelation of the whole cell gives +0.84, +0.78, +0.83 and the tabulated metal properties
+  with the nitrogen count +0.82, +0.81, +0.82, every difference inside the bootstrap interval
+  except for O on unseen metals, where the site kernel is worse by 0.17 to 0.19; the invariant
+  local kernel of the same environment matches the frame kernel everywhere, so the frame adds
+  nothing to the prediction. The indicator fields of the metal collapse on unseen metals (q²
+  +0.26), as a one-hot does. Sharing the four endpoints in one multi-task fit gains nothing
+  (the chosen task correlation is zero). What the pilot delivers is what the references cannot:
+  the bifunctional difference dE_H - dE_OH is predicted with q² +0.82 (0.55 eV on an sd of
+  1.30), the ORR overpotential derived from the out-of-fold energies ranks the sites with a
+  rank correlation of +0.90 (+0.79 on unseen metals) and recovers 7 of the 10 best bifunctional
+  sites, and the difference co-field says where the two reactions part: the charge at the metal
+  (+0.39 eV per unit of the electrostatic field there: an electropositive metal binds OH and OOH
+  more and H about the same) and at its four neighbours (+0.11: nitrogen in the first shell
+  weakens OH binding more than H binding), while the size of the metal weakens all three alike.
+  The GP interval covers 84 to 93 % at the nominal 95 % and its width ranks the errors weakly
+  (rank correlation +0.06 to +0.34 on unseen metals), so the variance is not yet the acquisition
+  rule E2 would need. Next, in order: finish the sheet recompute and rerun on 138 catalysts
+  (one command); a frame averaged over the point symmetry of the site (the D2h of the
+  divacancy), which is the M14 device and is what the frame kernel lacks against the invariant
+  one; the EC4 metal types so that the same measurement runs on the molecular macrocycles.
 * **EC9. Potential-dependent targets.** A catalyst is a curve, turnover frequency against
   overpotential, not a number. The descriptor block already admits the applied potential as a
   condition, which covers a fixed set of overpotentials; a product kernel over catalysts and
