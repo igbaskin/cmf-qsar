@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 93 modules, 173 classes with 567 public methods, and 840 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 94 modules, 176 classes with 573 public methods, and 847 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -82,6 +82,7 @@ for.
 | [cmfqsar.localenv](#cmfqsarlocalenv) | Atom-centred environments and the invariant local kernel (plan item LP2). |
 | [cmfqsar.locallarge](#cmfqsarlocallarge) | Many atoms at once: the local kernel without a kernel matrix (plan item LP5). |
 | [cmfqsar.lowrank](#cmfqsarlowrank) | Low-rank kernels for large training sets (plan item B6). |
+| [cmfqsar.maskedmatch](#cmfqsarmaskedmatch) | Scoring a candidate only where the co-field has weight (plan item MC5). |
 | [cmfqsar.md](#cmfqsarmd) | Short ligand-in-pocket simulations, for plan item D8. |
 | [cmfqsar.mil](#cmfqsarmil) | Multi-instance learning over conformations: let the model choose the pose. |
 | [cmfqsar.mixing](#cmfqsarmixing) | A posterior over the field weights (plan item E6). |
@@ -1530,6 +1531,42 @@ have seen that is more than `z` standard deviations from zero.
 
 #### `CofieldError.describe() -> str`
 
+### `class CofieldMask  (dataclass)`
+
+A soft region of space: a sum of Gaussians on the atoms the model rewards most.
+
+Everything else in this program compares two molecules over the whole of both of them, which
+is right for a congeneric series and wrong for a replacement scaffold.  A candidate that
+carries the same field where the co-field has weight is the one worth making, and what it
+does elsewhere is its own business -- that is the whole content of plan item MC5, and this is
+the region "elsewhere" is measured against.
+
+`centres`, `weights` and `widths` are a Gaussian expansion like any other in this module, so
+the mask can be drawn, exported as a cube and multiplied into a co-field with
+`cmfqsar.kernels.gaussian_product`.  `atoms` and `contributions` say which atoms it was
+built from and what each contributed, because a mask nobody can explain is not useful.
+
+Attributes:
+
+- `centres: np.ndarray`
+- `weights: np.ndarray`
+- `widths: np.ndarray`
+- `atoms: np.ndarray` = `None`
+- `molecules: np.ndarray` = `None`
+- `contributions: np.ndarray` = `None`
+
+#### `CofieldMask.expansion() -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+#### `CofieldMask.volume(grid: Grid) -> np.ndarray`
+
+The mask itself on a grid, so that it can be drawn beside the co-field it cuts.
+
+#### `CofieldMask.describe() -> str`
+
+#### `CofieldMask.peak() -> float`
+
+The largest value the mask takes at one of its own centres.
+
 ### `make_grid(coords: np.ndarray, margin: float=3.0, spacing: float=0.5, max_points: int=1500000) -> Grid`
 
 Rectangular grid enclosing `coords` with a margin; the spacing is coarsened if needed.
@@ -1717,6 +1754,36 @@ The co-field, its standard deviation and the threshold that decides what is draw
 Zero rather than nan, so the result is still a field an isosurface can be drawn on: a lobe
 keeps its shape where it is significant and is cut where it is not.  Where the error is zero
 the value is kept, because there the co-field is zero as well and there is nothing to cut.
+
+### `mask_width(model: CMFModel, width: Optional[float]=None) -> float`
+
+The width of the mask's Gaussians: by default the attenuation the kernel itself uses.
+
+A mask is a region and not a field, so it has one width for every field of the model.  The
+default is the mean attenuation of the fields that put one Gaussian of a fixed width on an
+atom, which is the Gaussian the kernel compares atoms with; a field whose width is per atom
+(the radius-scaled steric field) has no single value to contribute and is left out.
+
+### `top_atom_mask(model: CMFModel, mols, k: int=10, width: Optional[float]=None, normalise: bool=True, per_field: bool=False) -> CofieldMask`
+
+A mask on the `k` atoms of `mols` whose contribution to the prediction is largest.
+
+`mols` is one `cmfqsar.fields.MoleculeFields` or several -- the training molecules the
+mask should describe, usually the series the model was fitted on.  Atoms are ranked by the
+absolute value of their contribution (decomposition rule 3), pooled over the molecules given,
+so a superimposed series votes on the region rather than one molecule choosing it.
+
+With `normalise` the weights are scaled so that the mask's largest value is 1, which keeps a
+masked overlap in the units of the unmasked one and makes the two comparable.
+
+### `masked_cofield(model: CMFModel, f: int, mask: CofieldMask, tol: float=1e-09)`
+
+The Gaussians of `C_f(r) m(r)`: the co-field where the mask is, and nothing elsewhere.
+
+A product of two Gaussian expansions is a Gaussian expansion
+(`cmfqsar.kernels.gaussian_product`), so the masked co-field is the same kind of object
+as the co-field and every reader of one works on it.  `tol` drops the product terms whose
+weight is a negligible fraction of the largest, which removes the pairs that are far apart.
 
 ## cmfqsar.complementarity
 
@@ -6278,6 +6345,33 @@ Cosine-normalised kernels K_f(i,j) / sqrt(K_f(i,i) K_f(j,j)); zero where undefin
 
 Joint kernel K = sum_f h_f * scale_f * K_f.
 
+### `expansion_overlap(x1, w1, b1, x2, w2, b2) -> float`
+
+The overlap integral of two Gaussian expansions, in closed form.
+
+The expansions are given the way the rest of this program gives them: centres `(n, 3)`,
+weights `(n,)` and widths `(n,)`.  The integral is the sum of the pair overlaps at the top
+of this module, so this is the same formula `atom_kernel_block` evaluates over atom
+pairs, written for two bags of Gaussians that need not be molecules at all -- a co-field, a
+mask, a masked co-field (plan item MC5).
+
+### `gaussian_product(x1, w1, b1, x2, w2, b2, tol: float=0.0)`
+
+The Gaussian expansion of the pointwise *product* of two Gaussian expansions.
+
+The product of two Gaussians is a Gaussian -- the same fact that makes every overlap in this
+program closed form, used on the integrand instead of on the integral:
+
+    exp(-b/2 |r - A|^2) exp(-c/2 |r - B|^2)
+        = exp(-(b c) / (2 (b + c)) |A - B|^2) exp(-(b + c)/2 |r - C|^2),
+        C = (b A + c B) / (b + c)
+
+So a co-field multiplied by a mask is again a sum of Gaussians, and anything that reads a
+Gaussian expansion -- the grid drawing, the cube export, `expansion_overlap` -- works on
+it unchanged (plan item MC5).  The result has `n1 * n2` terms; `tol` drops the terms whose
+weight is below that fraction of the largest, which is worth doing because two Gaussians far
+apart make a term that is numerically zero.
+
 ### `numerical_overlap(x1, w1, b1, x2, w2, b2, spacing=0.1, extent=6.0) -> float`
 
 Numerically integrate the product of two Gaussian atom fields (slow; for tests).
@@ -7205,6 +7299,99 @@ The same three arrays `cmfqsar.model.CMFModel.cofield_coefficients` returns for 
 exact model, so `cmfqsar.cofields.evaluate_gaussians` draws one as readily as the
 other.  A landmark that is a molecule contributes its own atoms; a landmark that is a
 Gaussian centre contributes itself.
+
+## cmfqsar.maskedmatch
+
+Source: `cmfqsar/maskedmatch.py`
+
+Scoring a candidate only where the co-field has weight (plan item MC5).
+
+Every other comparison in this program is made over the whole of both molecules.  That is right
+for a congeneric series, where the molecules differ in a substituent and agree everywhere else,
+and it is wrong for the question a chemist asks when a scaffold has to be replaced: *does this
+other skeleton put the same field where the model rewards field?*  What the candidate does
+elsewhere is not the question, and an overlap taken over the whole molecule answers mostly with
+how similar the skeletons are.
+
+Item E3 measured where that leaves scaffold hopping: the topomer frame is defined against a
+scaffold that is held fixed, so replacing the scaffold leaves no frame, and the design loop has
+nothing to pose the candidate with.  This module is the construction E3 lacked.  It needs no
+frame of the candidate's own beyond a pose in the model's frame, and it asks nothing of the
+candidate away from the region the model cares about.
+
+How it works
+------------
+A **mask** is a soft region of space: a sum of Gaussians on the atoms whose contribution to the
+prediction is largest (`cmfqsar.cofields.top_atom_mask`).  Multiplying a co-field by it
+gives the co-field inside that region and nothing outside, and because the product of two
+Gaussians is a Gaussian the masked co-field is again a sum of Gaussians
+(`cmfqsar.kernels.gaussian_product`).  So rule 3 holds: every integral below is closed
+form, with no grid and no sampling.
+
+Three numbers come out of it, for every candidate:
+
+* **inside** -- the part of the model's prediction that comes from the masked region,
+  `sum_f h_f c_f INT C_f(r) m(r) X_f(r) dr`, in the units of the measured activity.  This is
+  the score a replacement scaffold should be ranked by.
+* **outside** -- the rest of the prediction, `prediction - bias - inside`.  It is the second
+  score the item asks for: field the candidate places where the model rewards none.  A candidate
+  whose promise is all outside is a candidate the model is extrapolating about.
+* **cosine** -- the same comparison with the size of the molecule divided out.  The mask defines
+  an inner product `<f, g>_m = INT f g m`, and this is the cosine of the co-field and the
+  candidate's field in it.  A raw overlap grows with the number of atoms, so a ranking by
+  `inside` alone prefers large molecules; the cosine does not.
+
+What it does not do
+-------------------
+It does not pose the candidate.  The molecules handed to it must already stand in the model's
+frame -- docked, posed by field similarity, or built by a rule -- exactly as for
+`cmfqsar.screen.screen`.  A mask makes the *comparison* local; it does not make the
+placement free.
+
+### `class MaskedScore  (dataclass)`
+
+What one candidate collects inside the mask, outside it, and how much of its size that is.
+
+Attributes:
+
+- `name: str`
+- `inside: float`
+- `outside: float`
+- `prediction: float`
+- `cosine: float`
+- `n_atoms: int` = `0`
+- `conformer: int` = `0`
+
+### `class MaskedScorer(model: CMFModel, mask: CofieldMask, fields: Optional[Sequence[int]]=None, tol: float=1e-09)`
+
+A model, a mask, and everything about them that does not depend on the candidate.
+
+The masked co-field is the same for every candidate, and it is the expensive part -- one
+product per field over the training atoms -- so it is built once here and reused.  Scoring a
+candidate is then two overlaps per field.
+
+#### `MaskedScorer.score(mol: MoleculeFields, name: Optional[str]=None, conformer: int=0) -> MaskedScore`
+
+The three numbers for one molecule, which must already stand in the model's frame.
+
+#### `MaskedScorer.prediction_check(mol: MoleculeFields) -> Tuple[float, float]`
+
+(the primal prediction from these overlaps, the model's own) -- a test of rule 3.
+
+The two must agree: the unmasked overlap summed over the fields *is* the prediction, so a
+masked score that is built from the same integrals cannot be measuring something else.
+
+### `score_candidates(model: CMFModel, mols: Sequence[MoleculeFields], mask: CofieldMask, fields: Optional[Sequence[int]]=None) -> List[MaskedScore]`
+
+Every molecule of `mols` scored against the masked co-field, best first by the cosine.
+
+### `screen_conformers(model: CMFModel, mols, mask: CofieldMask, names: Optional[Sequence]=None, fields: Optional[Sequence[int]]=None, rank_by: str='cosine') -> List[MaskedScore]`
+
+The same over a conformer library: every conformation scored, the best one kept.
+
+`mols` are RDKit molecules that may carry several conformations each, already placed in the
+model's frame.  A candidate is as good as its best conformation, which is the question a
+library asks, and the conformer that wins is reported so that it can be looked at.
 
 ## cmfqsar.md
 

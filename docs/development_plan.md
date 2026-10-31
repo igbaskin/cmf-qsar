@@ -3986,6 +3986,43 @@ below is measured on those two and reports that limit, as E3's benchmark does.
   of scaffolds with the same activity, with the model fitted on the first scaffold only, the second
   scaffold ranks above the posed decoys of `examples/decoys/` by the masked score, and ranks higher
   by the masked score than by the unmasked field similarity.
+  **Built and measured 31 October 2026. The gate fails on its own background, passes on a harder
+  one, and the method is kept under rule 5 for what the measurement makes it: a diagnosis and not
+  a better ranking.**
+  **What was built.** `kernels.gaussian_product` (the Gaussian expansion of the pointwise product
+  of two expansions) and `kernels.expansion_overlap` (the overlap of two expansions, the module's
+  own pair formula written for bags of Gaussians that need not be molecules); `cofields.CofieldMask`,
+  `cofields.top_atom_mask` and `cofields.masked_cofield`; `cmfqsar/maskedmatch.py` with
+  `MaskedScorer`, `score_candidates` and `screen_conformers`, which keeps the best conformation of
+  every candidate. Three numbers per candidate: **inside** (the part of the prediction that comes
+  from the masked region), **outside** (the rest -- the complement the item asks for, obtained as
+  the unmasked overlap minus the masked one, so that `1 - m` never has to be represented) and a
+  **cosine** in the inner product the mask defines, which does not grow with the size of the
+  molecule. 16 tests, each against something independent: the product against a dense evaluation
+  of both factors, its integral against the closed-form overlap, the overlap against the
+  quadrature already in the module, and `inside + outside + bias` against the model's own
+  `predict`, which is rule 3 holding.
+  **The measurement** (`benchmarks/run_maskedmatch.py`, `results/maskedmatch/table.md`): a model
+  on the largest chemotype of a Sutherland set, and the molecules of every other chemotype that
+  are at least as active to be ranked above a background. Against the posed presumed inactives --
+  the gate's own background -- the unmasked field similarity is already at its ceiling (AUC 0.918
+  mean, 1.000 on two sets) because those molecules come from other targets and differ in size and
+  shape, so the gate cannot distinguish two measures and the mask, which throws size away, is
+  worse (0.584). Against the weakly active molecules of the same other chemotypes, where nothing
+  but the activity differs, the masked cosine reaches 0.729 and the masked overlap 0.743 against
+  0.566 for field similarity: **+0.163 AUC, ahead on 3 of 4 sets**. Neither beats the model's own
+  prediction (0.718), and on the two sets whose single-chemotype model has a positive q² (GPB
+  +0.587, AChE +0.096) the prediction is ahead of the masked cosine on both.
+  **What is kept, and why.** The inside/outside split behaves as the item predicted on every set
+  and every mask size -- the active molecules of the unseen scaffolds collect more of their
+  prediction inside the mask than the weak ones (GPB +0.477 against +0.121, AChE +0.309 against
+  +0.078) -- so the two numbers say how much of a candidate's promise the model has evidence for.
+  That is what the construction is for; ranking by it is not better than predicting.
+  **Not done:** no subcommand and no panel (the mask is in the library and in the benchmark
+  only); the mask is chosen by a count of atoms and not by a share of the prediction, which would
+  be the better rule; and the one measurement that could still overturn the verdict is a series
+  with a *measured* scaffold hop -- two scaffolds with the same activity and a published pair --
+  which is a data task of the same kind as MC3.
 * **MC6. Matched pairs as transformation fields.** A matched molecular pair in a fixed pose has a
   field difference, and that difference is a local object placed in space rather than a number
   attached to an atom type. Collecting one per pair over many series asks whether a transformation

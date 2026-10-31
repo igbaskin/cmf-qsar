@@ -581,3 +581,124 @@ def mask_noise(volume: np.ndarray, sd: np.ndarray, z: float = 2.0) -> np.ndarray
     volume = np.asarray(volume, float)
     sd = np.asarray(sd, float)
     return np.where((sd <= 0) | (np.abs(volume) >= z * sd), volume, 0.0)
+
+
+# --------------------------------------------------------------------------- #
+# A mask over the co-field, and the co-field restricted to it (plan item MC5)
+# --------------------------------------------------------------------------- #
+
+@dataclass
+class CofieldMask:
+    """A soft region of space: a sum of Gaussians on the atoms the model rewards most.
+
+    Everything else in this program compares two molecules over the whole of both of them, which
+    is right for a congeneric series and wrong for a replacement scaffold.  A candidate that
+    carries the same field where the co-field has weight is the one worth making, and what it
+    does elsewhere is its own business -- that is the whole content of plan item MC5, and this is
+    the region "elsewhere" is measured against.
+
+    `centres`, `weights` and `widths` are a Gaussian expansion like any other in this module, so
+    the mask can be drawn, exported as a cube and multiplied into a co-field with
+    :func:`cmfqsar.kernels.gaussian_product`.  `atoms` and `contributions` say which atoms it was
+    built from and what each contributed, because a mask nobody can explain is not useful.
+    """
+    centres: np.ndarray
+    weights: np.ndarray
+    widths: np.ndarray
+    atoms: np.ndarray = None              # (k,) atom index within its molecule
+    molecules: np.ndarray = None          # (k,) which molecule each atom came from
+    contributions: np.ndarray = None      # (k,) the contribution that selected it
+
+    def expansion(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        return self.centres, self.weights, self.widths
+
+    def volume(self, grid: Grid) -> np.ndarray:
+        """The mask itself on a grid, so that it can be drawn beside the co-field it cuts."""
+        return evaluate_gaussians(grid.points(), self.centres, self.weights,
+                                  self.widths).reshape(grid.shape)
+
+    def describe(self) -> str:
+        lines = [f"a mask of {len(self.centres)} Gaussians, width "
+                 f"{np.mean(self.widths):.3g}, peak {self.peak():.3g}"]
+        if self.contributions is not None:
+            for i in np.argsort(-np.abs(self.contributions)):
+                lines.append(f"  molecule {int(self.molecules[i])} atom {int(self.atoms[i])}: "
+                             f"contribution {self.contributions[i]:+.4f}")
+        return "\n".join(lines)
+
+    def peak(self) -> float:
+        """The largest value the mask takes at one of its own centres."""
+        if not len(self.centres):
+            return 0.0
+        return float(np.max(evaluate_gaussians(self.centres, self.centres, self.weights,
+                                               self.widths)))
+
+
+def mask_width(model: CMFModel, width: Optional[float] = None) -> float:
+    """The width of the mask's Gaussians: by default the attenuation the kernel itself uses.
+
+    A mask is a region and not a field, so it has one width for every field of the model.  The
+    default is the mean attenuation of the fields that put one Gaussian of a fixed width on an
+    atom, which is the Gaussian the kernel compares atoms with; a field whose width is per atom
+    (the radius-scaled steric field) has no single value to contribute and is left out.
+    """
+    if width is not None:
+        return float(width)
+    alphas = [float(s.alpha) for s in model.fieldset.specs if s.kind == "gauss"]
+    return float(np.mean(alphas)) if alphas else 1.0
+
+
+def top_atom_mask(model: CMFModel, mols, k: int = 10, width: Optional[float] = None,
+                  normalise: bool = True, per_field: bool = False) -> CofieldMask:
+    """A mask on the `k` atoms of `mols` whose contribution to the prediction is largest.
+
+    `mols` is one :class:`~cmfqsar.fields.MoleculeFields` or several -- the training molecules the
+    mask should describe, usually the series the model was fitted on.  Atoms are ranked by the
+    absolute value of their contribution (decomposition rule 3), pooled over the molecules given,
+    so a superimposed series votes on the region rather than one molecule choosing it.
+
+    With `normalise` the weights are scaled so that the mask's largest value is 1, which keeps a
+    masked overlap in the units of the unmasked one and makes the two comparable.
+    """
+    if isinstance(mols, MoleculeFields):
+        mols = [mols]
+    mols = list(mols)
+    if not mols:
+        raise ValueError("a mask needs at least one molecule to read the contributions of")
+    coords, contrib, atom_ix, mol_ix = [], [], [], []
+    for j, mol in enumerate(mols):
+        c = model.atom_contributions(mol, per_field=False)
+        coords.append(np.asarray(mol.coords, float))
+        contrib.append(np.asarray(c, float))
+        atom_ix.append(np.arange(len(c)))
+        mol_ix.append(np.full(len(c), j))
+    coords = np.vstack(coords)
+    contrib = np.concatenate(contrib)
+    atom_ix = np.concatenate(atom_ix)
+    mol_ix = np.concatenate(mol_ix)
+    k = int(min(max(k, 1), len(contrib)))
+    pick = np.argsort(-np.abs(contrib))[:k]
+    b = mask_width(model, width)
+    mask = CofieldMask(centres=coords[pick], weights=np.ones(k), widths=np.full(k, b),
+                       atoms=atom_ix[pick], molecules=mol_ix[pick],
+                       contributions=contrib[pick])
+    if normalise:
+        peak = mask.peak()
+        if peak > 1e-300:
+            mask.weights = mask.weights / peak
+    return mask
+
+
+def masked_cofield(model: CMFModel, f: int, mask: CofieldMask, tol: float = 1e-9):
+    """The Gaussians of ``C_f(r) m(r)``: the co-field where the mask is, and nothing elsewhere.
+
+    A product of two Gaussian expansions is a Gaussian expansion
+    (:func:`cmfqsar.kernels.gaussian_product`), so the masked co-field is the same kind of object
+    as the co-field and every reader of one works on it.  `tol` drops the product terms whose
+    weight is a negligible fraction of the largest, which removes the pairs that are far apart.
+    """
+    from .kernels import gaussian_product
+
+    centres, coeffs, widths = model.cofield_coefficients(f)
+    mc, mw, mb = mask.expansion()
+    return gaussian_product(centres, coeffs, widths, mc, mw, mb, tol=tol)

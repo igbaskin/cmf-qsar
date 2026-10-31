@@ -477,6 +477,68 @@ def combine_kernels(K: np.ndarray, h: np.ndarray, scale: np.ndarray) -> np.ndarr
 # Reference implementation (numerical quadrature) used in the unit tests
 # --------------------------------------------------------------------------- #
 
+def expansion_overlap(x1, w1, b1, x2, w2, b2) -> float:
+    """The overlap integral of two Gaussian expansions, in closed form.
+
+    The expansions are given the way the rest of this program gives them: centres ``(n, 3)``,
+    weights ``(n,)`` and widths ``(n,)``.  The integral is the sum of the pair overlaps at the top
+    of this module, so this is the same formula :func:`atom_kernel_block` evaluates over atom
+    pairs, written for two bags of Gaussians that need not be molecules at all -- a co-field, a
+    mask, a masked co-field (plan item MC5).
+    """
+    x1 = np.atleast_2d(np.asarray(x1, float))
+    x2 = np.atleast_2d(np.asarray(x2, float))
+    w1 = np.asarray(w1, float).reshape(-1)
+    w2 = np.asarray(w2, float).reshape(-1)
+    b1 = np.asarray(b1, float).reshape(-1)
+    b2 = np.asarray(b2, float).reshape(-1)
+    if len(x1) == 0 or len(x2) == 0:
+        return 0.0
+    s = b1[:, None] + b2[None, :]
+    d2 = cdist(x1, x2, "sqeuclidean")
+    k = _pow32(2.0 * np.pi / s) * np.exp(-(b1[:, None] * b2[None, :]) / (2.0 * s) * d2)
+    return float(w1 @ k @ w2)
+
+
+def gaussian_product(x1, w1, b1, x2, w2, b2, tol: float = 0.0):
+    """The Gaussian expansion of the pointwise *product* of two Gaussian expansions.
+
+    The product of two Gaussians is a Gaussian -- the same fact that makes every overlap in this
+    program closed form, used on the integrand instead of on the integral::
+
+        exp(-b/2 |r - A|^2) exp(-c/2 |r - B|^2)
+            = exp(-(b c) / (2 (b + c)) |A - B|^2) exp(-(b + c)/2 |r - C|^2),
+            C = (b A + c B) / (b + c)
+
+    So a co-field multiplied by a mask is again a sum of Gaussians, and anything that reads a
+    Gaussian expansion -- the grid drawing, the cube export, :func:`expansion_overlap` -- works on
+    it unchanged (plan item MC5).  The result has ``n1 * n2`` terms; `tol` drops the terms whose
+    weight is below that fraction of the largest, which is worth doing because two Gaussians far
+    apart make a term that is numerically zero.
+    """
+    x1 = np.atleast_2d(np.asarray(x1, float))
+    x2 = np.atleast_2d(np.asarray(x2, float))
+    w1 = np.asarray(w1, float).reshape(-1)
+    w2 = np.asarray(w2, float).reshape(-1)
+    b1 = np.asarray(b1, float).reshape(-1)
+    b2 = np.asarray(b2, float).reshape(-1)
+    if len(x1) == 0 or len(x2) == 0:
+        return np.zeros((0, 3)), np.zeros(0), np.zeros(0)
+    s = b1[:, None] + b2[None, :]                                  # (n1, n2)
+    d2 = cdist(x1, x2, "sqeuclidean")
+    weights = (w1[:, None] * w2[None, :]
+               * np.exp(-(b1[:, None] * b2[None, :]) / (2.0 * s) * d2))
+    centres = ((b1[:, None, None] * x1[:, None, :] + b2[None, :, None] * x2[None, :, :])
+               / s[:, :, None])
+    centres = centres.reshape(-1, 3)
+    weights = weights.reshape(-1)
+    widths = s.reshape(-1)
+    if tol > 0.0 and len(weights):
+        keep = np.abs(weights) >= tol * np.max(np.abs(weights))
+        centres, weights, widths = centres[keep], weights[keep], widths[keep]
+    return centres, weights, widths
+
+
 def numerical_overlap(x1, w1, b1, x2, w2, b2, spacing=0.1, extent=6.0) -> float:
     """Numerically integrate the product of two Gaussian atom fields (slow; for tests)."""
     lo = np.minimum(x1, x2) - extent

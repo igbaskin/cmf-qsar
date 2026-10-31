@@ -4756,6 +4756,76 @@ so the list is worth reading at the top and not in the middle. That is the claim
 has to make, and it is the one this measurement supports: it will name the group worth trying,
 not tell you what it will measure.
 
+## Replacing the scaffold: scoring only where the co-field has weight
+
+The section above replaces a substituent and keeps the scaffold, because the topomer rule needs a
+scaffold to pose against. Replacing the *scaffold* leaves no frame, and comparing two whole
+molecules then answers mostly with how similar their skeletons are -- which is the one thing a
+scaffold hop has decided to change. Plan item MC5 is the way through: stop comparing the
+molecules everywhere.
+
+A **mask** is a soft region of space, a sum of Gaussians on the atoms whose contribution to the
+prediction is largest (`cofields.top_atom_mask`). Multiplying the co-field by it leaves the
+co-field inside that region and nothing outside, and because the product of two Gaussians is a
+Gaussian the masked co-field is again a sum of Gaussians, so every integral stays closed form
+(`kernels.gaussian_product`, `kernels.expansion_overlap`). `cmfqsar.maskedmatch` gives three
+numbers for every candidate:
+
+| number | what it is |
+|---|---|
+| **inside** | the part of the prediction that comes from the masked region, in the units of the activity |
+| **outside** | the rest of the prediction: field the candidate places where the model rewards none |
+| **cosine** | the same comparison with the size of the molecule divided out, the cosine in the inner product the mask defines |
+
+```python
+from cmfqsar.cofields import top_atom_mask
+from cmfqsar.maskedmatch import MaskedScorer, screen_conformers
+
+mask = top_atom_mask(model, training_fields, k=10)   # the ten atoms that carry the prediction
+print(mask.describe())                               # which atoms, and what each contributes
+best = screen_conformers(model, candidates, mask)    # one row per molecule, its best conformer
+print(best[0])
+```
+
+**Measured, on the question the item asks and on a harder one.** A model is fitted on *one*
+chemotype of a series -- the largest Bemis-Murcko group -- and the molecules of every other
+chemotype that are at least as active have to be ranked above a background. Nothing of those
+scaffolds is in the training set, which is what a hop is.
+(`benchmarks/results/maskedmatch/table.md`, mask of 10 atoms, AUC of the ranking.)
+
+| background | masked cosine | masked overlap | field similarity | the model's prediction |
+|---|---:|---:|---:|---:|
+| the weakly active molecules of the same other chemotypes | **0.729** | **0.743** | 0.566 | 0.718 |
+| the 100 property-matched presumed inactives | 0.584 | 0.637 | **0.918** | 0.657 |
+
+The two rows answer in opposite directions, and the reason is the same in both. The mask throws
+away everything about a molecule except what it does where the model rewards field -- including
+its size and its overall shape. Against decoys from other targets that is exactly the
+information that separates the two groups, so the mask makes the ranking worse and the unmasked
+field similarity is already at its ceiling (0.918, and 1.000 on two of the four sets). Against
+molecules of the same target in the same frame, where nothing but the activity distinguishes the
+two groups, the mask gains **+0.163** AUC over that same field similarity and is ahead on three
+of the four sets. So the gate the item states -- the hops above the decoys, by the masked score
+rather than by field similarity -- **fails on its own background and passes on a harder one**,
+and the second measurement is the one worth keeping.
+
+What the mask does not do is beat the model. Predicting the activity of the candidates and
+ranking by that gives 0.718 against the masked cosine's 0.729 and the masked overlap's 0.743, a
+difference smaller than the spread between the sets. Two of the four single-chemotype models have
+a negative q² (THR -0.138, ACE -0.420), so two of the four rows are rankings from models that do
+not predict at all; of the two that do, GPB (q² +0.587) puts the prediction first (0.877 against
+0.862) and AChE (+0.096) also puts it first (0.672 against 0.643).
+
+**What is worth using is the split, not the ranking.** On every one of the four sets, and at every
+mask size, the active molecules of the unseen scaffolds collect more of their prediction inside
+the mask than the weak ones do -- on GPB +0.477 against +0.121, on AChE +0.309 against +0.078 --
+so the inside number says how much of a candidate's promise comes from the region the model has
+evidence about, and the outside number says how much of it is extrapolation. That is a reading a
+chemist can act on, and it is what this construction should be used for.
+
+It does not pose anything. The candidates must already stand in the model's frame, as for
+`cmf screen`; a mask makes the comparison local and does not make the placement free.
+
 ## A design loop with more than one objective
 
 The suggestion rules of the earlier section close the loop on potency alone. Lead optimisation

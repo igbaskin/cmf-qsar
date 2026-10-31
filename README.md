@@ -4543,6 +4543,22 @@ res = scaffold_decomposition(model, mf[0], ds.mols[0], ds.mols[1:20])   # per su
 print(res.prediction, res.baseline, res.table(), res.top_interactions(5))
 ```
 
+### Replacing the scaffold, scored only where the co-field has weight
+
+Substituent design keeps the scaffold, because the topomer rule needs one to pose against. For a
+scaffold replacement there is no frame, and comparing whole molecules answers with how similar
+the skeletons are. `cmfqsar.maskedmatch` multiplies the co-field by a soft mask on the atoms that
+carry the prediction and scores a candidate there alone; the product of two Gaussians is a
+Gaussian, so it stays closed form. Measured by fitting on one chemotype of a series and ranking
+the active molecules of every other chemotype (`benchmarks/results/maskedmatch/table.md`): against
+the weakly active molecules of those same scaffolds the masked cosine reaches an AUC of 0.729
+against 0.566 for unmasked field similarity, and against presumed inactives from other targets it
+is the other way round (0.584 against 0.918), because the mask discards the molecular size that
+separates decoys. Neither beats predicting with the model (0.718). What it is for is the split it
+makes: on all four sets the active molecules collect more of their prediction inside the mask than
+the weak ones do, so the two numbers say how much of a candidate's promise the model has evidence
+for.
+
 ### Tutorials
 
 Five notebooks under `docs/tutorials/` show the library step by step, with plots and 3D views, on the
