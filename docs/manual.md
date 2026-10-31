@@ -6496,7 +6496,7 @@ from it.
 **What the co-field says.** This is what the kernel is for, and no autocorrelation can produce
 it.
 
-![The co-field of the formation energy inside the perovskite cell, from the model on one lattice: one column per field, the upper row in the plane through the A site and the equatorial oxygens ($z = 0$), the lower row in the plane through the B site ($z = a/2$). Red is field that raises the predicted formation energy per unit of field, blue field that lowers it; the circle marks the A site, the triangle the B site and the square an oxygen. The co-field repeats with the lattice, which is what the periodic sum is for. The steric map has a deep blue lobe exactly on the B site and on the oxygen and red at the A site; the other three oscillate with the lattice instead of sitting on the sites. Drawn by `benchmarks/run_periodic_overlap.py`.](benchmarks/results/periodic_overlap/cofield.png)
+![The co-field of the formation energy inside the perovskite cell with the cell drawn over it, from the model on one lattice: one column per field, the upper row in the plane through the A site and the X sites ($z = 0$), the lower row in the plane through the B site and the equatorial X sites ($z = a/2$). Red is field that raises the predicted formation energy per unit of field, blue field that lowers it. The circle is the A site, the triangle the B site, the square an X site, and the lines in the lower row are the four equatorial bonds of the BX$_6$ octahedron; the sites on the edges are the periodic images of the sites inside, because the field repeats with the lattice -- which is what the periodic sum is for. The steric map is blue on the X site at the centre of the upper row and on the B site at the centre of the lower one, and red away from both, along the faces that carry the A site; the other three oscillate with the lattice instead of sitting on the sites at all. Drawn by `benchmarks/run_periodic_overlap.py`.](benchmarks/results/periodic_overlap/cofield.png)
 
 It is periodic, and its strongest features sit on the sites: the steric co-field has a deep
 negative lobe exactly at the B site and at the oxygen, and a positive one at the A site, so
@@ -6510,6 +6510,27 @@ Decomposition rule 3 gives the same reading as numbers, one contribution per sit
 carry a large constant that the bias cancels, so what they say is in the spread: **the B site's
 contribution varies most from compound to compound**, which is the site the chemistry of a
 perovskite turns on.
+
+**In three dimensions, over the structure.** A plane is a cut, and the co-field of a crystal is
+a periodic function of all three coordinates. `cofield_volume` evaluates it on a grid inside the
+cell exactly as for a molecule -- the basis is the image-expanded training table, so the volume
+that comes out is already periodic -- and `cofields.export_cube` writes that grid as a Gaussian
+cube **with the atoms of a cell in the file**, which is what a viewer needs to draw the field
+around the structure:
+
+```python
+from cmfqsar.cofields import Grid, cofield_volume, export_cube
+
+a = float(table.molecules[0].cell[0, 0])
+grid = Grid(origin=np.zeros(3), spacing=a / 16, shape=(17, 17, 17))
+volume = cofield_volume(model, f=1, grid=grid, include_scale=True)   # the steric co-field
+export_cube("cofield_steric.cube", grid, volume, table.molecules[0])
+```
+
+The benchmark writes that file beside its results; one cell is enough, because the field repeats
+and any viewer will tile it. Nothing in this is special to crystals except the basis: the same
+two calls draw a co-field around a molecule, and the periodic sum is what makes the volume come
+out periodic.
 
 ## An atom instead of a molecule: the local invariant kernel
 

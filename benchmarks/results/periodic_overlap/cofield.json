@@ -1,6 +1,21 @@
 {
  "alpha": 2.0,
  "cell_a": 4.144665351786719,
+ "cubes": [
+  {
+   "atoms": 5,
+   "field": "steric",
+   "path": "cofield_steric.cube",
+   "seconds": 58.45913577079773,
+   "shape": [
+    18,
+    18,
+    18
+   ],
+   "spacing": 0.24380384422274815,
+   "structure": "O3PbRu_12"
+  }
+ ],
  "fields": [
   "electrostatic",
   "steric",

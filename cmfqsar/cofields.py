@@ -60,9 +60,39 @@ def make_grid(coords: np.ndarray, margin: float = 3.0, spacing: float = 0.5, max
     return Grid(origin=lo.astype(float), spacing=spacing, shape=shape)
 
 
+#: pairs held in one neighbour list, which scipy returns as (point, centre, distance) in
+#: 24 bytes each: this cap is about half a gigabyte.  It exists because the chunk below counts
+#: *points*, and what costs memory is points times the centres each one sees -- a few hundred
+#: for a molecule's co-field, over a hundred thousand for the co-field of a periodic model,
+#: whose basis is the image-expanded training table.
+MAX_PAIRS = 20_000_000
+
+
+def points_per_chunk(points: np.ndarray, tree, cutoff: float, chunk: int,
+                     sample: int = 16) -> int:
+    """How many points to put in one neighbour list, from how many centres a point sees.
+
+    The count is measured on a few points rather than assumed, because it is the one quantity
+    that differs by orders of magnitude between a molecular co-field and a periodic one.
+    """
+    n = len(points)
+    if n == 0:
+        return max(1, int(chunk))
+    step = max(1, n // int(sample))
+    probe = np.asarray(points, float)[::step][:int(sample)]
+    seen = tree.query_ball_point(probe, cutoff, return_length=True)
+    per_point = max(1, int(np.mean(np.asarray(seen, float))))
+    return max(1, min(int(chunk), int(MAX_PAIRS // per_point)))
+
+
 def evaluate_gaussians(points: np.ndarray, centers: np.ndarray, coeffs: np.ndarray, widths: np.ndarray,
                        eps: float = 1e-5, chunk: int = 20000) -> np.ndarray:
-    """``sum_m coeffs[m] exp(-widths[m]/2 |p - centers[m]|^2)`` for every point p (sparse evaluation)."""
+    """``sum_m coeffs[m] exp(-widths[m]/2 |p - centers[m]|^2)`` for every point p (sparse evaluation).
+
+    `chunk` is an upper bound on the points evaluated at once; the real one is
+    :data:`MAX_PAIRS`, which bounds the neighbour list of a chunk and so the memory this needs,
+    whatever the density of the centres.
+    """
     centers = np.asarray(centers, float)
     coeffs = np.asarray(coeffs, float)
     widths = np.asarray(widths, float)
@@ -74,6 +104,7 @@ def evaluate_gaussians(points: np.ndarray, centers: np.ndarray, coeffs: np.ndarr
     bmin = max(float(widths.min()), 1e-6)
     cutoff = np.sqrt(2.0 * np.log(1.0 / eps) / bmin)
     tree_atoms = cKDTree(centers)
+    chunk = points_per_chunk(points, tree_atoms, cutoff, chunk)
     for s in range(0, len(points), chunk):
         pts = points[s:s + chunk]
         tree_pts = cKDTree(pts)

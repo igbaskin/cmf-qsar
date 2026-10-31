@@ -29,5 +29,7 @@ One overlap model on all 1500 cells (frame: one lattice, attenuation 2, ridge 0.
 | B | -6.1553 | 0.8119 | 149 |
 | X | -3.8685 | 0.5461 | 451 |
 
-The co-field itself is drawn in `cofield.png`, in the plane of the A site and the equatorial oxygens (z = 0) and in the plane of the B site (z = a/2).
+The co-field itself is drawn in `cofield.png`, with the cell over it, in the plane of the A site and the X sites (z = 0) and in the plane of the B site and the equatorial X sites (z = a/2).
+
+It is also written as a Gaussian cube over one cell, which carries the atoms beside the values, so a viewer draws the periodic co-field around the structure: `cofield_steric.cube` (steric, 18^3 points at 0.24 A, the atoms of O3PbRu_12).
 

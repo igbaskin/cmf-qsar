@@ -96,6 +96,8 @@ FRAMES = ("as given", "one lattice")
 #: cells whose sites are decomposed for the per-site table: the decomposition pairs every atom
 #: of a cell against every image atom of the training set, which is about a second per cell
 SITE_SAMPLE = 150
+#: fields exported as a Gaussian cube over one cell, for a viewer that draws the structure too
+CUBE_FIELDS = ("steric",)
 #: electronegativity differences rather than pymatgen's oxidation-state guess: the guess is slow
 #: on thousands of structures and fails on the mixed-valence members, and the charge field is a
 #: field of this program either way (see `crystal_charges`)
@@ -377,9 +379,42 @@ def site_labels(mol) -> list:
     return out
 
 
+def export_cubes(model, fs, table, fields=CUBE_FIELDS, spacing: float = 0.25) -> list:
+    """The co-field over one cell as a Gaussian cube, with the atoms of a cell written into it.
+
+    A cube file carries the grid *and* the atoms, so a viewer draws the co-field around the
+    structure with no further work; the field is periodic, so one cell tiles to as much of the
+    crystal as one wants to see. The atoms written are those of the first structure of the set,
+    which stands at the ideal sites of the lattice like every other member.
+    """
+    from cmfqsar.cofields import Grid, cofield_volume, export_cube
+
+    mol = table.molecules[0]
+    a = float(np.asarray(mol.cell, float)[0, 0])
+    n = int(round(a / float(spacing))) + 1
+    grid = Grid(origin=np.zeros(3), spacing=a / (n - 1), shape=(n, n, n))
+    names = [sp.name for sp in fs.specs if sp.enabled]
+    out = []
+    for name in fields:
+        if name not in names:
+            continue
+        f = names.index(name)
+        t0 = time.time()
+        volume = cofield_volume(model, f, grid, include_scale=True)
+        path = result(f"cofield_{name.replace(':', '_')}.cube")
+        export_cube(path, grid, volume, mol,
+                    title=f"CMF co-field of {TARGET}, field {name}, one cell")
+        out.append({"field": name, "path": os.path.basename(path), "atoms": int(mol.n_atoms),
+                    "structure": mol.name, "shape": list(grid.shape),
+                    "spacing": grid.spacing, "seconds": time.time() - t0})
+        log(f"  {name} as a cube over one cell: {grid.shape[0]}^3 points, "
+            f"{time.time() - t0:.0f} s -> {os.path.basename(path)}")
+    return out
+
+
 def cofield(frame: str = "one lattice", alpha: float = 2.0, lam: float = 1e-3,
             limit: int = LIMIT, engine: str = "auto", sites: int = SITE_SAMPLE,
-            force: bool = False) -> dict:
+            cube: bool = True, cube_spacing: float = 0.25, force: bool = False) -> dict:
     """Fit one overlap model on the whole set and read it: per-site contributions and planes.
 
     The co-field of a periodic model carries one Gaussian per image atom of the training set --
@@ -440,7 +475,9 @@ def cofield(frame: str = "one lattice", alpha: float = 2.0, lam: float = 1e-3,
             log(f"  {fs.specs[f].name} on the plane {name}: {len(centres)} Gaussians, "
                 f"{time.time() - t2:.0f} s")
         planes[name] = per_field
-    out = {"frame": frame, "alpha": alpha, "lam": lam, "n": int(table.n_mol),
+    cubes = export_cubes(model, fs, table, spacing=cube_spacing) if cube else []
+    out = {"cubes": cubes,
+           "frame": frame, "alpha": alpha, "lam": lam, "n": int(table.n_mol),
            "sites_sampled": int(len(sample)),
            "r2_fitted": float(r2_score(y, pred)), "per_site": per_site,
            "cell_a": a, "grid": axis.tolist(), "planes": planes,
@@ -449,8 +486,34 @@ def cofield(frame: str = "one lattice", alpha: float = 2.0, lam: float = 1e-3,
     return out
 
 
+def draw_cell(ax, plane: str, a: float) -> None:
+    """The cell over the co-field: its edges, its sites and the bonds that lie in this plane.
+
+    Drawn from the lattice rather than from one member of the set, because the co-field belongs
+    to the model and every member stands at these sites; the images at the edges are drawn as
+    well, since a periodic field repeats and a reader should see it repeat.
+    """
+    ax.plot([0, a, a, 0, 0], [0, 0, a, a, 0], "-", color="0.35", lw=0.8)
+    if plane == "z = 0":
+        ax.plot([0, 0, a, a], [0, a, 0, a], "o", color="k", ms=6)
+        ax.plot([0.5 * a], [0.5 * a], "s", color="k", ms=5, mfc="none")
+        ax.annotate("A", (0.04 * a, 0.04 * a), fontsize=8, color="k")
+        ax.annotate("X", (0.54 * a, 0.52 * a), fontsize=8, color="k")
+    else:
+        xs = [0.0, 0.5 * a, a, 0.5 * a]
+        ys = [0.5 * a, 0.0, 0.5 * a, a]
+        for x, y in zip(xs, ys):                       # the equatorial bonds of the octahedron
+            ax.plot([0.5 * a, x], [0.5 * a, y], "-", color="k", lw=0.9, alpha=0.65)
+        ax.plot(xs, ys, "s", color="k", ms=5, mfc="none")
+        ax.plot([0.5 * a], [0.5 * a], "^", color="k", ms=7)
+        ax.annotate("B", (0.54 * a, 0.52 * a), fontsize=8, color="k")
+        ax.annotate("X", (0.54 * a, 0.03 * a), fontsize=8, color="k")
+    ax.set_xlim(-0.02 * a, 1.02 * a)
+    ax.set_ylim(-0.02 * a, 1.02 * a)
+
+
 def figure(out: str = "") -> str:
-    """The co-field in the two planes of the cell, with the sites marked."""
+    """The co-field in the two planes of the cell, with the cell drawn over it."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -467,19 +530,15 @@ def figure(out: str = "") -> str:
             m = float(np.max(np.abs(v))) or 1.0
             im = ax.imshow(v.T, origin="lower", extent=[0, a, 0, a], cmap="RdBu_r",
                            vmin=-m, vmax=m, aspect="equal")
-            if plane == "z = 0":
-                ax.plot([0, 0, a, a], [0, a, 0, a], "ko", ms=5)          # the A site, at the corner
-                ax.plot([0.5 * a], [0.5 * a], "ks", ms=5, mfc="none")    # the equatorial oxygen
-            else:
-                ax.plot([0.5 * a], [0.5 * a], "k^", ms=6)                # the B site, at the centre
-                ax.plot([0, 0.5 * a], [0.5 * a, 0], "ks", ms=5, mfc="none")
+            draw_cell(ax, plane, a)
             ax.set_title(f"{name}, {plane}", fontsize=9)
             ax.set_xticks([])
             ax.set_yticks([])
             fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
-    fig.suptitle("The co-field of the formation energy inside the perovskite cell "
-                 "(red: this field raises it; blue: lowers it). "
-                 "Circle: A site. Triangle: B site. Square: oxygen.", fontsize=10)
+    # the title says what the panels are; which marker is which site belongs in the caption,
+    # where there is room for it, and a long title is clipped at the width of the figure
+    fig.suptitle("The co-field of the formation energy inside the perovskite cell, with the "
+                 "cell over it: red raises the energy, blue lowers it", fontsize=11)
     fig.tight_layout()
     out = out or result("cofield.png")
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -542,9 +601,16 @@ def report(out: str = "") -> str:
             v = cof["per_site"].get(s)
             if v:
                 lines.append(f"| {s} | {v['mean']:+.4f} | {v['sd']:.4f} | {v['n']} |")
-        lines += ["", "The co-field itself is drawn in `cofield.png`, in the plane of the A site "
-                  "and the equatorial oxygens (z = 0) and in the plane of the B site "
-                  "(z = a/2).", ""]
+        lines += ["", "The co-field itself is drawn in `cofield.png`, with the cell over it, in "
+                  "the plane of the A site and the X sites (z = 0) and in the plane of the B "
+                  "site and the equatorial X sites (z = a/2).", ""]
+        if cof.get("cubes"):
+            lines += ["It is also written as a Gaussian cube over one cell, which carries the "
+                      "atoms beside the values, so a viewer draws the periodic co-field around "
+                      "the structure: "
+                      + "; ".join(f"`{c['path']}` ({c['field']}, {c['shape'][0]}^3 points at "
+                                  f"{c['spacing']:.2f} A, the atoms of {c['structure']})"
+                                  for c in cof["cubes"]) + ".", ""]
     text = "\n".join(lines) + "\n"
     out = out or result("table.md")
     os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -565,6 +631,10 @@ def main():
     ap.add_argument("--engine", default="auto", help="kernel engine: numpy, numba or auto")
     ap.add_argument("--sites", type=int, default=SITE_SAMPLE,
                     help="cells whose sites are decomposed for the per-site table")
+    ap.add_argument("--no-cube", action="store_true",
+                    help="skip the cube files of the co-field over one cell")
+    ap.add_argument("--cube-spacing", type=float, default=0.25,
+                    help="grid spacing of those cube files, in angstroms")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--report", action="store_true")
     args = ap.parse_args()
@@ -581,7 +651,7 @@ def main():
                 force=args.force)
         elif stage == "cofield":
             cofield(alpha=args.alpha, limit=args.limit, engine=args.engine, sites=args.sites,
-                    force=args.force)
+                    cube=not args.no_cube, cube_spacing=args.cube_spacing, force=args.force)
         elif stage == "figure":
             figure()
     report()
