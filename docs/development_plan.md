@@ -648,6 +648,10 @@ can judge it.
   the stereocentre rather than summed over the whole molecule: that is **C7**, opened out of this
   result, and it inherits this item's two measurements as the gate it has to pass before it is
   tried on a real set.
+  **The other three-point term, 31 October 2026.** The angle at the centre of a local
+  environment, which is the part of a triangle the two-point kernel does not resolve and
+  which is not handedness, is built as `cmfqsar/triangles.py` and measured under LP5 below:
+  it matches SOAP on the carbon shifts with the fields as channels.
 * **C6. A diagnosis of the data set.** Three diagnostics exist in pieces: α at the grid edge, the
   descriptor-only baseline that beat the 3D model on ACE, and the alignment-free baseline. Package
   them as `cmf diagnose`, which says before any modelling whether the frame carries signal, whether
@@ -3185,6 +3189,34 @@ on the same folds.
   distances from the centre as well as the distance between the pair, with the field weights
   as the channels in place of the elements. That is what this program would add to SOAP, and
   the gate did not measure it. Results in `benchmarks/results/soap_gate/`.
+  **The CMF form of the angular term, built and measured 31 October 2026.**
+  `cmfqsar/triangles.py` is the three-distance autocorrelation: the pair sum of the environment
+  resolved over the two distances of a neighbour pair from the centre and the distance between
+  them, with one weight per field as the channels (`cmf local --triangles`; `--r-max`,
+  `--grid-step`, `--grid-sigma`, `--scaling`, `--power`). Three sides fix a triangle, so it
+  carries what the SOAP power spectrum carries, in a different basis. `benchmarks/run_triangles.py`
+  measures it on the carbons and folds of the gate, with the element indicators of SOAP as an
+  alternative set of channels through the same code. Settings chosen on the sets: cutoff 5 A,
+  grid step 0.5 A, window 0.35 A, kernel power 1. On the 5096 carbons the five fields reach
+  **5.45 ppm against 5.72 for the best SOAP** (+0.001 [-0.001, +0.003] in q2, the same model)
+  and 8.82 for the two-point kernel (+0.017 [+0.014, +0.020]); the element channels give 5.47
+  ppm (-0.000 [-0.002, +0.002] against the fields), so the basis reproduces SOAP, and fields
+  with elements together reach **4.83 ppm**, better than SOAP (+0.003 [+0.002, +0.005]) and than
+  either set of channels alone. On the 1225 aromatic carbons the fields reach 4.13 ppm against
+  5.19 for the two-point kernel (+0.056 [+0.033, +0.079]) but stay behind SOAP, 3.50 ppm (-0.027
+  [-0.050, -0.010]); the element channels in this basis give 3.67 ppm, inside SOAP's interval
+  (-0.007 [-0.015, +0.001]), and adding the fields to them gains nothing (3.81 ppm; -0.006
+  [-0.035, +0.011]). So the form is right and the fields are a good set of channels on the
+  broad set, where they add to the elements, and a weaker set on the aromatic carbons, where
+  the shift follows the substitution pattern more closely than the field weights express it.
+  A window of 0.35 A is better than 0.5 or 0.7 A on both sets; raising the kernel to a power,
+  which SOAP needs, gains nothing here; scaling the channel blocks per field is best for the
+  field channels and no scaling for the element channels. The 5 A cutoff costs 32 340 channels
+  for five fields and 128 205 for ten, and ten to twenty-five minutes per cross-validation on
+  the 5096 carbons where the two-point kernel takes one; 4 A, the default, loses 0.02 ppm on the
+  shift set and nothing on the aromatic carbons. What is still open is the ShiftML comparison
+  the item started from, which needs its DFT shift sets. Results in
+  `benchmarks/results/triangles/`.
 
 **Order.** LP1 first and shared with M5. LP2 next, invariant kernel and pKa by difference field,
 because it needs no alignment and settles whether the environment field carries the property.

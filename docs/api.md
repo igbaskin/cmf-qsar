@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 92 modules, 172 classes with 559 public methods, and 830 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 93 modules, 173 classes with 567 public methods, and 840 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -118,6 +118,7 @@ for.
 | [cmfqsar.trajectory](#cmfqsartrajectory) | A molecular-dynamics trajectory as a conformational ensemble (plan item D7). |
 | [cmfqsar.transfer](#cmfqsartransfer) | Comparing two models by their co-fields (plan item F3). |
 | [cmfqsar.transformfield](#cmfqsartransformfield) | A matched pair as a field placed in space (plan item MC6). |
+| [cmfqsar.triangles](#cmfqsartriangles) | The three-distance autocorrelation of an environment: the angle at the centre (plan item C5). |
 | [cmfqsar.validation](#cmfqsarvalidation) | The three questions a 3D-QSAR model has to answer besides "how good is q²". |
 | [cmfqsar.varalign](#cmfqsarvaralign) | Alignment by prediction confidence: the pose of a molecule is chosen so that the posterior variance of its predicted activity is as small as possible. |
 | [cmfqsar.vasp](#cmfqsarvasp) | Per-atom arrays from a VASP run, read into an ASE structure (plan item M3). |
@@ -12672,6 +12673,182 @@ in it at all.
 ### `increment_predict(table: Dict[Tuple[str, str], float], items: Sequence[Transformation]) -> Tuple[np.ndarray, np.ndarray]`
 
 (the predicted change, whether the transformation was seen) for every pair.
+
+## cmfqsar.triangles
+
+Source: `cmfqsar/triangles.py`
+
+The three-distance autocorrelation of an environment: the angle at the centre (plan item C5).
+
+The rotation-invariant local kernel of `cmfqsar.localenv` describes an atom's surroundings by
+the two-point autocorrelation of `cmfqsar.invariant`: for every pair of field types, how much
+field weight sits at each distance from how much other field weight.  On an environment that is a
+histogram of the distances between neighbours of the centre, and it leaves something open.  Two
+neighbours and the centre form a triangle; the two-point descriptor resolves the side between the
+neighbours and not the two sides that meet at the centre, so it does not know the angle at the
+centre.  `benchmarks/run_soap_gate.py` measured what that costs: the SOAP descriptor (Smooth
+Overlap of Atomic Positions, Bartok, Kondor and Csanyi 2013), which resolves the triangle, lowers
+the error of a carbon-shift model by a third, and a SOAP restricted to its two-body part does not.
+
+This module resolves the triangle in the terms of this program.  For an environment whose first
+atom is the centre, with `r_a` the distance of atom *a* from the centre and `d_ab` the distance
+between atoms *a* and *b*, the descriptor is
+
+    Phi_fg(k, k', m) = sum over atoms a, b of
+                       w_af w_bg R_k(r_a) R_k'(r_b) D_m(d_ab),
+
+with `R_k` a Gaussian window on a grid of radii from the centre and `D_m` one on a grid of
+distances.  A triangle is fixed by its three sides, so this carries the same information as the
+SOAP power spectrum, which resolves the two radii and the angle between them; the basis differs
+and nothing else.  The channels of the two-point descriptor are the sum of these over the two
+radii.
+
+**Channels.**  The sum is symmetric under swapping (a, f, k) with (b, g, k'), so one channel is
+kept for each unordered pair of (field type, radial window) labels and the two orderings are
+added, as the two-point descriptor adds a pair both ways round.  The channels come in blocks, one
+per pair of field types, in the order of `cmfqsar.invariant.field_pairs`; a block of one
+field type with itself holds the radial pairs `k <= k'` and a block of two different types holds
+all of them.  Before the cosine-normalised linear kernel is taken the blocks are scaled, by
+default per field (`block_scales`): the two-point kernel's scaling per pair of fields gives
+a block of two rare channels the weight of a block of two common ones, and with element channels
+that costs accuracy.  `triangle_kernel` can raise the kernel to an integer power, which is
+what SOAP does with its exponent zeta; a power above one has no finite feature map, so it is for
+the dual form only.
+
+**The channels are the fields.**  SOAP has one density per element; this descriptor has one
+weight per field, so the channels are the charges, the steric bulk, the hydrophobicity and the
+hydrogen-bond strengths of the atoms around the centre, and a channel pair says which two
+properties, at which two radii and which distance apart, the model reads.  An element indicator
+is itself a field, so SOAP's channels are one setting of this descriptor and the two can be mixed.
+
+**Cost.**  One pass over the atom pairs of the environment, with a window product per pair and
+grid point: for forty atoms, nine radii and seventeen distances it is a few milliseconds.  The
+number of channels grows as the square of (fields times radii), which is why the radial grid is
+coarse and the cutoff short; the cross-validation of `cmfqsar.localenv` works in the dual
+and does not mind.
+
+**What is not resolved.**  Three distances fix a triangle up to its mirror image, so an
+environment and its reflection give the same channels.  That is the blind spot plan item C5
+measured on whole molecules, and it is unchanged here.
+
+### `class TriangleSpec  (dataclass)`
+
+The two grids the three-distance autocorrelation is evaluated on.
+
+`r_max` is how far from the centre the radial grid reaches, in angstrom, and is the cutoff of
+the descriptor; the distance grid reaches twice as far, which is the longest side a triangle
+inside the cutoff can have.  `step` is the spacing of both grids and `sigma` the width of the
+Gaussian window on every grid point.  Atoms further than `r_max + reach * sigma` from the
+centre contribute less than `exp(-reach^2 / 2)` of a window and are left out of the pair
+sum.
+
+Attributes:
+
+- `r_max: float` = `4.0`
+- `step: float` = `0.5`
+- `sigma: float` = `0.35`
+- `include_self: bool` = `True`
+- `reach: float` = `4.0`
+
+#### `TriangleSpec.radii` -> np.ndarray  (property)
+
+#### `TriangleSpec.distances` -> np.ndarray  (property)
+
+#### `TriangleSpec.n_radii` -> int  (property)
+
+#### `TriangleSpec.n_distances` -> int  (property)
+
+#### `TriangleSpec.cutoff` -> float  (property)
+
+Beyond this distance from the centre an atom is not in the sum.
+
+#### `TriangleSpec.radial_pairs(same: bool) -> List[Tuple[int, int]]`
+
+The (k, k') radial windows of one block: `k <= k'` for a field type with itself.
+
+#### `TriangleSpec.block_sizes(n_fields: int) -> List[int]`
+
+Channels per block, one block per pair of field types.
+
+#### `TriangleSpec.n_channels(n_fields: int) -> int`
+
+### `triangle_features(env: MoleculeFields, spec: TriangleSpec=TriangleSpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None) -> np.ndarray`
+
+The three-distance autocorrelation of one environment, flattened.
+
+The first atom of `env` is the centre, as `cmfqsar.localenv.environment` builds it;
+radii are measured from it.  The result depends on the arrangement of the atoms about the
+centre and on nothing else: not on where the environment sits or how it is turned.
+
+### `triangle_feature_matrix(envs: Sequence[MoleculeFields], spec: TriangleSpec=TriangleSpec(), n_fields: Optional[int]=None, progress=None) -> np.ndarray`
+
+Three-distance features of a list of environments, one row each.
+
+### `block_scales(rms: Sequence[float], n_fields: int, blocks: Sequence[int], scaling: str='field') -> np.ndarray`
+
+One scale per channel from the root mean square of every block.
+
+`"pair"` divides every block by its own root mean square, as
+`cmfqsar.invariant.channel_scale` does for the two-point kernel.  `"field"` divides
+the block of fields f and g by the geometric mean of the root mean squares of the blocks of f
+with itself and of g with itself, which is the same as giving every field unit scale and
+scaling nothing else.  `"none"` leaves the channels as they are.
+
+The difference matters when the channels differ greatly in how much they carry.  With one
+indicator per element the block of two rare elements holds a few pairs and the block of two
+carbons holds most of the molecule; scaled per pair the rare block counts as much as the
+carbon block and the kernel is mostly noise, which on the aromatic carbons of
+`benchmarks/run_triangles.py` costs 0.4 ppm.  Per field, every element is given the same
+weight as an atom and the pairs keep their proportions; that is the default.  For the
+physico-chemical fields, whose units differ, per-field and per-pair scaling are close and
+no scaling is worse.
+
+### `triangle_scale(train: np.ndarray, spec: TriangleSpec, n_fields: int, scaling: str='field') -> np.ndarray`
+
+The channel scales a training set gives, to apply to its test rows as well.
+
+### `triangle_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, *, spec: TriangleSpec=TriangleSpec(), n_fields: int, scale: Optional[np.ndarray]=None, scaling: str='field', power: int=1, normalize: bool=True) -> np.ndarray`
+
+Cosine-normalised linear kernel on the three-distance features, to an integer power.
+
+The blocks are scaled by `scaling` (see `block_scales`) unless `scale` is given, and
+the normalisation is of the joint kernel.  `power` above one is the exponent SOAP calls zeta:
+it sharpens the kernel, keeps it positive definite, and leaves no finite feature map, so the
+primal route of `cmfqsar.locallarge` needs `power=1`.
+
+### `triangle_kernel_matrix(envs: Sequence[MoleculeFields], spec: TriangleSpec=TriangleSpec(), n_fields: Optional[int]=None, power: int=1, chunk: int=500, scaling: str='field', progress=None) -> np.ndarray`
+
+The kernel of a set of environments among themselves, in two passes over the set.
+
+The same number as `triangle_kernel(triangle_feature_matrix(envs))`, to single precision,
+without ever holding the features in double precision: the first pass collects the block
+scales, the second builds the scaled and normalised rows in single precision, chunk by chunk,
+and the kernel is their product.  With many fields and a long cutoff the feature matrix is
+the largest thing in the computation, and this halves it.
+
+### `triangle_labels(fieldset: FieldSet, spec: TriangleSpec=TriangleSpec()) -> List[str]`
+
+One label per channel: the two field types, their two radii and the distance between.
+
+### `with_weights(env: MoleculeFields, weights: np.ndarray, name: str='') -> MoleculeFields`
+
+The same environment with other field weights, for channels that are not the fields.
+
+The weights of an environment already carry the envelope factor of each atom; weights given
+here are taken as they are, so a caller that wants the envelope multiplies it in
+(`envelope_factors`).
+
+### `envelope_factors(env: MoleculeFields, rho: float) -> np.ndarray`
+
+The envelope factor `exp(-rho r^2)` of every atom of an environment, from its radius.
+
+### `element_weights(env: MoleculeFields, elements: Sequence[str], rho: Optional[float]=None, other: bool=True) -> np.ndarray`
+
+One indicator weight per element, which makes the descriptor SOAP's channels.
+
+`elements` are the symbols that get a channel of their own; with `other`, every other symbol
+shares one more.  With `rho` the envelope factor is multiplied in, as the field weights of an
+environment carry it.
 
 ## cmfqsar.validation
 

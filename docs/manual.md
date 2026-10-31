@@ -6460,8 +6460,76 @@ aromatic carbons the best SOAP is better than the posed overlap kernel of the ne
 (+0.031 [+0.015, +0.052]), with no frame at all. So the part the local descriptor lacks is
 the angle at the centre. A CMF form of it would resolve each neighbour pair over its two
 distances from the centre as well as the distance between them, with the field weights as
-the channels in place of the elements. That form is not built; the table is the measurement
-that says it should be.
+the channels in place of the elements. The next section builds that form and measures it.
+
+**The three-distance autocorrelation: the angle at the centre, with the fields as channels.**
+`cmfqsar/triangles.py` resolves every pair of atoms in the environment over three distances:
+the distance of each atom from the centre and the distance between the two. Three sides fix a
+triangle, so this carries what the SOAP power spectrum carries, in a different basis, and it
+keeps the closed pair sum of the two-point descriptor: for every pair of fields, every pair of
+radial windows and every distance window, the sum over atom pairs of the two field weights
+times the three windows. Its channels are the fields. Where SOAP has one density per element,
+this descriptor has one weight per field, so a channel says which two atomic properties, at
+which two distances from the centre and how far apart, the model reads. An element indicator is
+itself a field, so SOAP's channels are one setting of the same code, and the two kinds of
+channel can be mixed. `cmf local --triangles` selects it; `--r-max` is the cutoff and the reach
+of the radial grid, `--grid-step` the spacing of both grids, `--grid-sigma` the window width,
+`--scaling` how the channel blocks are scaled before the kernel (per field, per pair of fields
+as the two-point kernel does, or not at all) and `--power` an integer exponent on the
+cosine-normalised kernel, which is what SOAP calls zeta. It works with `--primal` too, at
+power 1. An environment and its mirror image give the same channels: three distances fix a
+triangle up to reflection, which is the blind spot measured on whole molecules under plan item
+C5, and it is unchanged here.
+
+`benchmarks/run_triangles.py` measures it on the carbons, ridge grid and folds of the SOAP
+gate above, with the element indicators of hydrogen, carbon, nitrogen and oxygen as a second
+set of channels through the same code, and both sets together. The settings below were chosen
+on the sets: cutoff 5 Å, grid step 0.5 Å, window 0.35 Å, kernel power 1, envelope width
+parameter 0.5 on the 5096 carbons and 0.1 on the aromatic carbons. Errors are root-mean-square
+out of fold, in ppm.
+
+| descriptor and channels | 5096 carbons | 1225 aromatic carbons |
+| --- | ---: | ---: |
+| two-point field autocorrelation, best envelope width | 8.82 | 5.19 |
+| SOAP, best of the gate | 5.72 | 3.50 |
+| three-distance, five fields, scaled per field | 5.45 | 4.13 |
+| three-distance, four elements, scaled per field | 5.47 | 3.93 |
+| three-distance, four elements, no scaling | 5.58 | 3.67 |
+| three-distance, fields and elements, scaled per field | 4.96 | 3.86 |
+| three-distance, fields and elements, no scaling | 4.83 | 3.81 |
+
+Three things follow, each with its interval in q2, bootstrapped over molecules. **The basis
+reproduces SOAP.** With the element channels the three-distance descriptor is SOAP within the
+interval on both sets (+0.001 [-0.001, +0.003] on the 5096 carbons, -0.007 [-0.015, +0.001]
+on the aromatic ones), so the angular term the gate asked for is in the program. **The fields
+are a good set of channels on the broad set.** The five fields alone match SOAP there (+0.001
+[-0.001, +0.003]) and improve on the two-point kernel by +0.017 [+0.014, +0.020]; put together
+with the elements they give 4.83 ppm, better than SOAP (+0.003 [+0.002, +0.005]) and than
+either set of channels on its own (+0.002 [+0.001, +0.004] against each). **On the aromatic
+carbons the fields carry less than the elements.** They improve on the two-point kernel by
+more (+0.056 [+0.033, +0.079]) but stay behind SOAP (-0.027 [-0.050, -0.010]) and behind the
+element channels in the same basis (-0.020 [-0.042, -0.001]), and adding them to the elements
+gains nothing (-0.006 [-0.035, +0.011]). The aromatic shift follows the substitution pattern
+of the ring, and the element channels state that pattern more directly than the field weights,
+which are smooth functions of it, do; on the broad set, where the carbons differ in
+hybridisation and neighbours, the field weights add information the elements do not have.
+
+The smaller choices: a window of 0.35 Å is better than 0.5 or 0.7 Å on both sets; a kernel
+power above one, which SOAP needs, gains nothing here (5.46 ppm at power 2 against 5.45);
+scaling the channel blocks per field is best for the field channels and no scaling is best for
+the element channels, which is why the option exists. The cost is in the channel count, which
+grows as the square of fields times radii: 32 340 channels for five fields at the 5 Å cutoff
+and 128 205 for ten, and ten to twenty-five minutes per ten-fold cross-validation on the 5096
+carbons against one minute for the two-point kernel. The default cutoff is 4 Å, which halves
+the count and loses 0.02 ppm on the shift set and nothing on the aromatic carbons. The command
+of the best shift model is
+
+```
+cmf local examples/local/shifts_cdcl3.sdf --target shift --rho 0.5 --triangles --r-max 5 --reference
+```
+
+The element channels of the benchmark are built in Python with `element_weights` of the
+module; the command line offers the fields. Results in `benchmarks/results/triangles/`.
 
 ## A co-field around one atom: the local alignment
 

@@ -2295,16 +2295,35 @@ def cmd_local(args):
                                   local_features, local_kernel, paired_interval,
                                   top_k_accuracy, types_of)
     from cmfqsar.locallarge import choose_lam_primal, normalised_rows
+    from cmfqsar.triangles import (TriangleSpec, triangle_feature_matrix, triangle_kernel,
+                                   triangle_scale)
 
-    def fit(features, name, n_bins=1, flat=False):
+    def fit(features, name, n_bins=1, flat=False, triangles=False):
         """One model on one feature matrix, by whichever route was asked for."""
+        blocks = tri.block_sizes(n_fields) if triangles else None
         if args.primal:
+            if triangles and args.power != 1:
+                raise SystemExit("--primal needs --power 1: a power of the kernel has no "
+                                 "finite feature map")
             scale = np.ones(features.shape[1]) if flat else None
-            rows, _s = normalised_rows(features, scale=scale, n_bins=n_bins)
+            if triangles:
+                scale = triangle_scale(features, tri, n_fields, args.scaling)
+            rows, _s = normalised_rows(features, scale=scale, n_bins=n_bins, blocks=blocks)
             return choose_lam_primal(rows, t, folds=args.folds, seed=args.seed, name=name)
-        k = (count_kernel(features) if flat
-             else local_kernel(features))
+        if flat:
+            k = count_kernel(features)
+        elif triangles:
+            k = triangle_kernel(features, spec=tri, n_fields=n_fields, power=args.power,
+                                scaling=args.scaling)
+        else:
+            k = local_kernel(features)
         return choose_lam(k, t, folds=args.folds, seed=args.seed, name=name)
+
+    def describe(envs, rho):
+        """The feature rows of the environments, and the name of the model on them."""
+        if args.triangles:
+            return triangle_feature_matrix(envs, tri), f"three-distance field, rho {rho:g}"
+        return local_features(envs), f"local field, rho {rho:g}"
 
     ds = load_dataset(args.dataset, activity_prop=args.activity)
     t = ds.set_atom_activity(args.target)
@@ -2320,6 +2339,12 @@ def cmd_local(args):
     fieldset = FieldSet.create(physchem=physchem, atom_properties=atom_props, cif_types=cif,
                                charge_model=args.charges, param_scheme=args.param)
     fields = [build_fields(m, fieldset, name=n) for m, n in zip(ds.mols, ds.names)]
+    n_fields = len(fieldset.specs)
+    tri = TriangleSpec(r_max=args.r_max, step=args.grid_step, sigma=args.grid_sigma)
+    if args.triangles:
+        print(f"  three-distance autocorrelation: {tri.n_radii} radii to {tri.r_max:g} A, "
+              f"{tri.n_distances} distances, {tri.n_channels(n_fields)} channels scaled per "
+              f"{args.scaling}, kernel power {args.power}")
 
     reference = None
     if args.reference:
@@ -2337,14 +2362,14 @@ def cmd_local(args):
             envs = [ensemble_environment(members[int(t.molecule[k])][0], int(t.atom[k]), rho,
                                          weights=members[int(t.molecule[k])][1])
                     for k in range(len(t))]
-            r = fit(local_features(envs), f"local field, rho {rho:g}",
-                    n_bins=LOCAL_SPEC.n_bins)
+            X, name = describe(envs, rho)
+            r = fit(X, name, n_bins=LOCAL_SPEC.n_bins, triangles=args.triangles)
             used, extra = t, (f"{np.mean([e.n_atoms for e in envs]):.1f} atoms per sample over "
                               f"{np.mean([e.n_conformers for e in envs]):.1f} conformations")
         else:
             envs = environments(fields, t, rho=rho)
-            r = fit(local_features(envs), f"local field, rho {rho:g}",
-                    n_bins=LOCAL_SPEC.n_bins)
+            X, name = describe(envs, rho)
+            r = fit(X, name, n_bins=LOCAL_SPEC.n_bins, triangles=args.triangles)
             used, extra = t, f"{np.mean([e.n_atoms for e in envs]):.1f} atoms per sample"
         kept = float(np.mean([kept_share(fields[int(used.molecule[i])], int(used.atom[i]), rho)
                               for i in range(len(used))]))
@@ -4803,6 +4828,29 @@ def main(argv=None):
                    help="solve in the space of the 255 features instead of the space of the "
                         "samples: the same model, but memory that grows with the samples rather "
                         "than with their square (needed above about ten thousand atoms)")
+    lo.add_argument("--triangles", action="store_true",
+                    help="resolve every neighbour pair over its two distances from the centre "
+                         "as well as the distance between them (the three-distance "
+                         "autocorrelation of cmfqsar.triangles). It carries the angle at "
+                         "the centre, which the two-point descriptor does not, and its "
+                         "channels are the fields")
+    lo.add_argument("--r-max", type=float, default=4.0, metavar="R",
+                    help="with --triangles: how far from the centre the radial grid reaches, "
+                         "in A, which is the cutoff of the descriptor (default 4)")
+    lo.add_argument("--grid-step", type=float, default=0.5, metavar="S",
+                    help="with --triangles: spacing of the radial and the distance grid, in "
+                         "A (default 0.5)")
+    lo.add_argument("--grid-sigma", type=float, default=0.35, metavar="W",
+                    help="with --triangles: width of the Gaussian window on every grid "
+                         "point, in A (default 0.35)")
+    lo.add_argument("--scaling", default="field", choices=["field", "pair", "none"],
+                    help="with --triangles: how the channel blocks are scaled before the "
+                         "kernel: per field, per pair of fields as the two-point kernel "
+                         "does, or not at all (default field)")
+    lo.add_argument("--power", type=int, default=1, metavar="P",
+                    help="with --triangles: raise the cosine-normalised kernel to this "
+                         "integer power, which sharpens it (the exponent SOAP calls zeta); "
+                         "not with --primal (default 1)")
     lo.add_argument("--rank", action="store_true",
                    help="for a target that is one on the atom and zero elsewhere, also report "
                         "the share of molecules whose true atom is among the first and the "
