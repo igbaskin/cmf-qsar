@@ -6534,9 +6534,23 @@ out periodic.
 
 It also draws the isosurfaces itself, reading that cube file back as an outside viewer would,
 which is both the picture and a check that the file says what it is meant to say
-(`run_periodic_overlap.py --stage isosurface`, `cofields.isosurface` for the marching cubes):
+(`run_periodic_overlap.py --stage isosurface`, `cofields.isosurface` for the marching cubes).
 
-![The steric co-field of the formation energy in the perovskite cell, as isosurfaces at plus and minus 45 % of its largest value: red raises the predicted formation energy per unit of field, blue lowers it. The atoms are the cell the cube file carries, PbRuO$_3$, with the periodic images that fall on the cell: lead at the eight corners, ruthenium at the centre and the six oxygens of the octahedron, whose arms are drawn. The blue surface wraps the B site and the oxygens; the red lobes sit in the faces, away from every site. Read back from `cofield_steric.cube` by `benchmarks/run_periodic_overlap.py`.](benchmarks/results/periodic_overlap/cofield_3d.png)
+**Two overlays, and they are not the same picture.** The field can be drawn *around* the atoms,
+as a surface, and *at* the atoms, as one number per site: decomposition rule 3 splits the
+prediction over the sites of the cell exactly as it splits it over the atoms of a molecule,
+because the periodic kernel is the overlap kernel with the images summed in. The second is the
+crystal form of the atom-contribution figure of *Reading the model*.
+
+![Two overlays of one co-field on one cell. Left, the field **around** the atoms: isosurfaces of the steric co-field at plus and minus 45 % of its largest value, red where field raises the predicted formation energy and blue where it lowers it, with the atoms the cube file carries -- lead at the eight corners, ruthenium at the centre, and the six oxygens of the octahedron with its arms drawn. Right, the field **at** the atoms: one sphere per site, its area the size of that site's contribution and its colour the sign. They say the same thing twice: the blue surface wraps the B site and the oxygens on the left, and those are the sites whose contributions are negative on the right. Drawn by `benchmarks/run_periodic_overlap.py`.](benchmarks/results/periodic_overlap/cofield_3d.png)
+
+For the cell drawn there, PbRuO$_3$, the sites contribute Pb $+3.10$, Ru $-7.09$ and the three
+oxygens $-3.70$, $-3.67$ and $-4.20$ eV per atom, which with the bias of $+16.84$ add up to the
+prediction of $+1.28$ -- rule 3, in a crystal. The application draws the same two things in its
+3D view, because a model fitted with `pbc_overlap=True` is still the overlap kernel:
+`atom_contributions` returns one number per site and the viewer colours the sites by it. The
+periodic **autocorrelation** kernel can do neither; it has no frame and no atom split, which is
+what this kernel was added for.
 
 What a cube of a periodic co-field costs is worth knowing before asking for a fine one. The work
 is the number of grid points times the Gaussians each point sees, and the basis of this model is

@@ -475,8 +475,19 @@ def cofield(frame: str = "one lattice", alpha: float = 2.0, lam: float = 1e-3,
             log(f"  {fs.specs[f].name} on the plane {name}: {len(centres)} Gaussians, "
                 f"{time.time() - t2:.0f} s")
         planes[name] = per_field
+    # the cell the cube file carries, with one contribution per site: the same decomposition
+    # as the table above, kept per atom so that it can be drawn on the structure
+    ref = table.molecules[0]
+    ref_c = model.atom_contributions(ref)
+    reference = {"name": ref.name, "symbols": list(ref.symbols),
+                 "coords": np.asarray(ref.coords, float).tolist(),
+                 "sites": site_labels(ref), "contributions": np.asarray(ref_c, float).tolist(),
+                 "bias": float(model.bias), "prediction": float(model.predict(
+                     table.subset([0]))[0])}
+    log(f"  the reference cell {ref.name}: "
+        + ", ".join(f"{st} {v:+.2f}" for st, v in zip(reference["sites"], ref_c)))
     cubes = export_cubes(model, fs, table, spacing=cube_spacing) if cube else []
-    out = {"cubes": cubes,
+    out = {"cubes": cubes, "reference": reference,
            "frame": frame, "alpha": alpha, "lam": lam, "n": int(table.n_mol),
            "sites_sampled": int(len(sample)),
            "r2_fitted": float(r2_score(y, pred)), "per_site": per_site,
@@ -518,6 +529,50 @@ ISO_LEVEL = 0.45
 ISO_VIEW = (20.0, -62.0)
 
 
+def site_panel(ax, rec: dict, a: float) -> None:
+    """The field *at* the atoms: one sphere per site, from decomposition rule 3.
+
+    The area is the size of the contribution and the colour its sign, which is how the
+    atom-contribution figure of a molecule is drawn; the means of the whole set are in the
+    table, and this is one cell of it, the cell the cube file carries.
+    """
+    ref = rec.get("reference")
+    if not ref:
+        ax.set_axis_off()
+        return
+    xyz = np.asarray(ref["coords"], float)
+    c = np.asarray(ref["contributions"], float)
+    shifts = np.array([[i, j, k] for i in (0, 1) for j in (0, 1) for k in (0, 1)], float) * a
+    biggest = max(float(np.abs(c).max()), 1e-12)
+    for s0, s1 in ((0, 1), (0, 2), (0, 4), (1, 3), (1, 5), (2, 3), (2, 6),
+                   (3, 7), (4, 5), (4, 6), (5, 7), (6, 7)):
+        p0 = np.array([(s0 >> k) & 1 for k in range(3)], float) * a
+        p1 = np.array([(s1 >> k) & 1 for k in range(3)], float) * a
+        ax.plot(*zip(p0, p1), color="0.25", lw=0.9)
+    centre = np.array([0.5, 0.5, 0.5]) * a
+    for p, value, sym, site in zip(xyz, c, ref["symbols"], ref["sites"]):
+        for t in shifts:
+            q = p + t
+            if not (np.all(q <= 1.02 * a) and np.all(q >= -0.02 * a)):
+                continue
+            ax.scatter(*q, s=40 + 460 * abs(value) / biggest,
+                       c="#c0392b" if value > 0 else "#2471a3",
+                       edgecolors="0.2", linewidths=0.6, depthshade=False, alpha=0.9)
+            d = float(np.linalg.norm(q - centre))
+            if 0.1 < d < 0.6 * a:
+                ax.plot(*zip(centre, q), color="0.3", lw=0.9, zorder=0)
+        ax.text(p[0], p[1], p[2] + 0.3, f"{sym} ({site}) {value:+.1f}", fontsize=8)
+    ax.set_xlim(0, a)
+    ax.set_ylim(0, a)
+    ax.set_zlim(0, a)
+    ax.set_box_aspect((1, 1, 1))
+    ax.view_init(elev=ISO_VIEW[0], azim=ISO_VIEW[1])
+    ax.set_axis_off()
+    ax.set_title("the field at the atoms: rule 3, one contribution per site\n"
+                 f"{ref['name']}, in eV per atom; they sum with the bias to the prediction",
+                 fontsize=10)
+
+
 def isosurface_figure(cube: str = "", out: str = "", level: float = ISO_LEVEL) -> str:
     """The co-field as two isosurfaces around the cell, read back from the cube file.
 
@@ -545,8 +600,8 @@ def isosurface_figure(cube: str = "", out: str = "", level: float = ISO_LEVEL) -
     log(f"{os.path.basename(cube)}: {volume.shape} points, |value| up to {peak:.3g}, "
         f"{len(c.numbers)} atoms")
 
-    fig = plt.figure(figsize=(7.2, 6.4))
-    ax = fig.add_subplot(111, projection="3d")
+    fig = plt.figure(figsize=(12.4, 6.2))
+    ax = fig.add_subplot(121, projection="3d")
     for sign, colour in ((+1.0, "#c0392b"), (-1.0, "#2471a3")):
         got = isosurface(volume, sign * level * peak, grid)
         if got is None:
@@ -593,10 +648,13 @@ def isosurface_figure(cube: str = "", out: str = "", level: float = ISO_LEVEL) -
     ax.set_box_aspect((1, 1, 1))
     ax.view_init(elev=ISO_VIEW[0], azim=ISO_VIEW[1])
     ax.set_axis_off()
-    ax.set_title(f"The steric co-field of the formation energy in the perovskite cell, "
-                 f"isosurfaces at ±{level:.0%} of the peak\n"
-                 f"red raises the energy, blue lowers it", fontsize=10)
-    fig.tight_layout()
+    ax.set_title(f"the field around the atoms: steric co-field, isosurfaces at "
+                 f"±{level:.0%} of the peak", fontsize=10)
+    site_panel(fig.add_subplot(122, projection="3d"), rec, a)
+    fig.suptitle("The co-field of the formation energy in the perovskite cell: red raises the "
+                 "predicted energy, blue lowers it", fontsize=11, y=0.99)
+    # the panel titles of a three-dimensional axis sit high, so the figure keeps room for both
+    fig.tight_layout(rect=(0.0, 0.0, 1.0, 0.93))
     out = out or result("cofield_3d.png")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     fig.savefig(out, dpi=170)
