@@ -2423,6 +2423,79 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   repeat length or the surface area, and the slab case needs the height channels of the surface
   kernel (`SurfaceSpec` in `cmfqsar/invariant.py`). Opens surface energies, work functions and
   facet-dependent adsorption. Measure on a slab set against the surface kernel alone.
+  **Done 31 October 2026: the background per area or repeat length, the images that read the
+  flags, and the height channels of a layer; measured on the 1,103 JARVIS-DFT 2D monolayers.**
+  **What was built.** In `cmfqsar/periodic.py` the uniform background is the pair histogram of
+  the same weights spread uniformly over the *periodic* directions alone, every atom keeping its
+  place across the others: `(1/M) sum_lm w_lf w_mg J_d(h_lm)` with `M` the volume, area or
+  repeat length (`periodic_measure`, `CrystalFields.measure`), `h_lm` the separation of the pair
+  across the non-periodic directions and `J_d` the shell integral (crystal), the tail of the
+  ring integral from `h` (layer: pairs at distance r between atoms a height h apart lie on a
+  ring of radius sqrt(r^2 - h^2), so their count is 2 pi r dr for r >= h) or the axis integral
+  (chain: 2 du in the axial coordinate), tabulated once per spec in `_background_profile` and
+  read by interpolation; the l = m terms and the second moments of a disordered site (M2) are
+  in it as before. For a crystal the code path and the numbers are unchanged (the existing tests
+  compare against the shell integral to 1e-9). `image_translations` and `cell_images` make no
+  translation along a non-periodic direction, so the periodic overlap kernel of a layer does
+  not see its own copy across the vacuum. `slab_autocorrelation` is the second half: with
+  `z_max > 0` in `PeriodicSpec` (`pbc_z_max`, `pbc_z_step`, `pbc_oriented` on the model;
+  `--heights`, `--height-step`, `--oriented` on `build-crystals`) the descriptor of a layer is
+  the in-plane distance of each pair resolved by the heights of both atoms above the mean plane
+  of the layer, images and self term included, with the background removed per unit area
+  exactly (the ring integral times the product of the height-weighted sums), both orders of a
+  pair of different field types summed as the surface kernel sums them, the second moments of
+  disordered sites kept, and the result averaged over the two faces unless `oriented`. It
+  refuses a structure not periodic in exactly two directions. `centre_layer` gathers a layer
+  that a file leaves split across the cell boundary; `--pbc ab` sets the flags that a POSCAR
+  or CIF does not carry; `lattice_spread` reports the area of a layer. `benchmarks/run_jarvis2d.py`
+  is the measurement and is registered in `run_all.py`.
+  **Tests** (`tests/test_periodic_layers.py`, 17): a MoS2 layer gives the same channels with 5
+  and 25 A of vacuum, under an in-plane supercell, a rotation of the whole frame, a shift along
+  the normal and a leaning third lattice vector, with and without the height channels, while
+  the same file flagged as a crystal changes with the vacuum; atoms spread at random over a
+  plane at random heights give subtracted channels that are noise about zero and a subtracted
+  term equal to the formula (the ring integral checked against a simulation), and a random tube
+  around a chain axis the same; a chain does not see its box; the images stop at the vacuum and
+  the periodic overlap kernel of a layer does not change with it; a split layer is gathered to
+  the same descriptor; MoSSe is told from its mirror image by the oriented descriptor and not
+  by the default, which is the mean of the two; the height sum recovers the in-plane distance
+  distribution with images; a model with height channels fits, predicts, survives a save and a
+  load and the command line takes a layer.
+  **Measurement** (`benchmarks/run_jarvis2d.py`; `benchmarks/results/jarvis2d/table.md`): the
+  1,103 JARVIS-DFT 2D monolayers, band gap, formation energy and exfoliation energy per atom,
+  5 outer folds, width/regularisation/Gaussian scale chosen in 10 inner folds. Flagged as
+  crystals the channels change by a median 50 % when the vacuum is
+  doubled, flagged as layers by 1e-15; the crystal flags lose no accuracy within
+  the set because JARVIS uses nearly one vacuum (median 20.6 Å, nine in ten within 15-25 Å). The
+  per-area background does not improve the linear model (gap 0.82 /
+  0.819 / 0.829 eV for crystal flags / layer flags kept / layer flags
+  per area, mean predictor 1.05; formation 0.329 /
+  0.349 / 0.37 eV/atom; exfoliation 66.4 /
+  68.3 / 74.7 meV/atom): it removes the areal density of each pair of
+  field types, as the phonons measurement found for the volume background. With the Gaussian
+  layer: 0.68 eV, 0.283 eV/atom,
+  56.1 meV/atom per area, against 0.67 /
+  0.269 / 53.5 on the crystal flags and
+  0.668 / 0.274 / 53.7 kept.
+  Under the Gaussian layer the three are within the fold spread: the gain is the kernel's. With
+  the 66 fields the per-area background still costs under it (gap
+  0.719 against 0.67 eV, formation
+  0.312 against 0.269 eV/atom), so
+  `--no-background` is worth trying on a layer as on a crystal, and it keeps the invariance to
+  the vacuum. The height channels (+/- 3 Å every 1 Å, four fields, 10290 channels)
+  gain on every target with the linear kernel (0.785 eV, 0.349
+  eV/atom, 63.7 meV/atom) and, with the Gaussian layer, on the exfoliation energy
+  (51.2 against 56.1 meV/atom, R²
+  0.30 against 0.14; the best result on that target,
+  the crystal flags under the same kernel giving 53.5 and R²
+  0.24) but not on the gap or the formation energy; oriented = symmetric
+  within the fold spread. The
+  66-field models: 0.679 eV / 0.271 eV/atom /
+  67 meV/atom with the background kept, 0.732 /
+  0.311 / 64.3 per area, no gain from the Gaussian layer.
+  **Open:** heights with the element indicator fields (memory), nanotubes (NT4), a molecule on a
+  periodic slab (EC6), a second monolayer set (C2DB) to measure the transfer across vacuum
+  conventions that the crystal flags cannot make.
 * **M2. Partial occupancy and configurational ensembles.** Solid solutions and disordered sites
   need the field weights multiplied by the site occupancy; `structures_from_matbench` takes the
   majority species today. Special quasirandom structures and MD snapshots are the periodic

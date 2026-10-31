@@ -554,6 +554,15 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_matbench_phonons").report(_r("matbench_phonons/table.md")),
                   tables=["matbench_phonons/table.md"],
                   readme=["Crystals: the periodic autocorrelation"]),
+        Benchmark("jarvis2d", "two-dimensional materials: the periodic autocorrelation of the "
+                  "1,103 JARVIS-DFT 2D monolayers, flagged as crystals against flagged as layers "
+                  "(background per area, no pair across the vacuum) and with the height channels "
+                  "of plan item M1, on the band gap, the formation energy and the exfoliation "
+                  "energy (downloads the 8 MB data file into benchmarks/cache on the first run)",
+                  "run_jarvis2d.py", "jarvis2d", compute=[["--force"]], minutes="60",
+                  report=lambda: _mod("run_jarvis2d").report(_r("jarvis2d/table.md")),
+                  tables=["jarvis2d/table.md"],
+                  readme=["Crystals: the periodic autocorrelation"]),
         Benchmark("compas", "the HOMO-LUMO gap of the polybenzenoid hydrocarbons of COMPAS-1D in a "
                   "frame given by rule: steric, electrostatic, atom-class, ring-class, Clar-sextet and "
                   "HOMA ring fields, the Gaussian kernel layer, baselines, co-fields and per-ring "

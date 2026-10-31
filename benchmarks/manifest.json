@@ -1,6 +1,6 @@
 {
- "commit": "382199305040a090a2528a524f4d6c374725a03c",
- "created": "2026-10-31T21:55:22",
+ "commit": "78d52762a3120a8968fa327df7f0472ade5a5b3d",
+ "created": "2026-11-01T00:41:55",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -222,6 +222,18 @@
    "bytes": 428165,
    "sha256": "c9ded31f8ccabd4e7ab09be022aab14f03cae9f0bdcae5e5dbf4bd51bfdd020f"
   },
+  "examples/corrosion_fe110/node161_experiments.csv": {
+   "bytes": 123827,
+   "sha256": "79a8b705b8a1187248accad4cfe72bba6b2f8c2a6703324e2f10b141496d816a"
+  },
+  "examples/corrosion_fe110/node4_experiments.csv": {
+   "bytes": 248776,
+   "sha256": "6c9537305ad1b54a289e7d2afd73d54e33aeba6b41221133057c1b0f170e863c"
+  },
+  "examples/corrosion_fe110/node7_experiments.csv": {
+   "bytes": 275987,
+   "sha256": "e7781a0a385fa704b5381060d8750b6d3f7d9d43451bd2eb2fab8b6e55eef26c"
+  },
   "examples/corrosion_fe110/oc20_Cu.npz": {
    "bytes": 51865,
    "sha256": "aeb3ad1c654c777405bccc79e57643a6dfe517bcd3a9dc465271dcfeaa07c3db"
@@ -286,6 +298,26 @@
    "bytes": 226,
    "sha256": "4d6aa5966bf711c518a655d752d4b1462163befb644f44dfdfbe7994200f2f4e"
   },
+  "examples/corrosion_fe110/potency_reliability.csv": {
+   "bytes": 1389,
+   "sha256": "70b4aa56735309d1552b4b2c311eecd21dd75eb9f8023f0799dc4a44f75b4384"
+  },
+  "examples/corrosion_fe110/potency_reliability.py": {
+   "bytes": 6252,
+   "sha256": "2f5d84064590cc1833205676b44b4f8b9352986851d7f0b263d45371f2e4635d"
+  },
+  "examples/corrosion_fe110/potency_reliability_pairs.csv": {
+   "bytes": 13028,
+   "sha256": "df9961b363e352db767d3db8b826ce08d6e0f3b4fe01dab3f1b3781e381a9e38"
+  },
+  "examples/corrosion_fe110/potency_reliability_pairs_shared_hcl_experiments.csv": {
+   "bytes": 39526,
+   "sha256": "af83fb311ebbeb5539da760327144ec32ad543694082f04af6913d5e5a285717"
+  },
+  "examples/corrosion_fe110/potency_reliability_shared_hcl_experiments.csv": {
+   "bytes": 781,
+   "sha256": "f1d6e43683af266b5127e3341cc5e983e4797baf7315a1ea093efbc7aa8dff1d"
+  },
   "examples/corrosion_fe110/potency_series.csv": {
    "bytes": 917,
    "sha256": "806ba34b89c59785606de10735eec0c4a8f24317edce775ea6fae9ef611e1140"
@@ -317,6 +349,14 @@
   "examples/corrosion_fe110/quantum_fields_eads.py": {
    "bytes": 7339,
    "sha256": "f8fedc4c86dfc7f3963b4aa091b357d0e477b78c402c21723e9072e0ab4df6ac"
+  },
+  "examples/corrosion_fe110/shared_hcl_compounds.csv": {
+   "bytes": 8742,
+   "sha256": "83a4022ccb64ac3114e30da82e447e6a4a53adbf919219dea16835975d0d2c26"
+  },
+  "examples/corrosion_fe110/shared_hcl_experiments.csv": {
+   "bytes": 956367,
+   "sha256": "2982e9963e0cb15a97e0f7bfbbbd2d57288b2853d4d6fe41bf34c174ea4b1342"
   },
   "examples/corrosion_fe110/surface_channels_eads.png": {
    "bytes": 92636,
@@ -1662,6 +1702,22 @@
    "bytes": 204851,
    "sha256": "56b2f5e4303c685b60ad6c2169ca6c0e7f2d5a918717f4c59d83e871d7e612bd"
   },
+  "examples/sac/README.md": {
+   "bytes": 3346,
+   "sha256": "14c12030e0d3c2ee5d03cfedfb965d7d6c99d63c4d838fbbcd26ae656a7a285f"
+  },
+  "examples/sac/gas_references.json": {
+   "bytes": 673,
+   "sha256": "a7e17c34b09c7334418a1c472f65e7e811d22e145cf6265b93ecf78d75c1a1da"
+  },
+  "examples/sac/sac_hoer.csv": {
+   "bytes": 22587,
+   "sha256": "0b3c9f6dd90fd6517bdc908896365597bfd688c8a8e8c97b4aa08176b644a33e"
+  },
+  "examples/sac/substrates.extxyz": {
+   "bytes": 1906349,
+   "sha256": "35bdcf42ef7dca68b933636b27c3bc1b7c318ecfe60a2de120acf59d1993e2de"
+  },
   "examples/scaffold_tree_export.py": {
    "bytes": 26503,
    "sha256": "353392a4b4950487d87297cdf282fed5aabd053eceb381ec1b190a80bbd6d047"
@@ -1783,7 +1839,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "packages": {
   "PyOpenGL": "3.1.10",
   "PySide6": "6.11.1",
@@ -2201,6 +2257,52 @@
   "benchmarks/results/increments/fit_THER.json": "253f094cb036d29371f190e6cb393e207d35f6f21c35c968393e32af73d1abd1",
   "benchmarks/results/increments/fit_THR.json": "9139076596732502f5ecc289749d0b6e0e5a82cb4fe7bbb89d3ff1a004416f53",
   "benchmarks/results/increments/table.md": "9b4636871329e755237af0146743b1a3fbf4aab5c751ee83581b7efa49161609",
+  "benchmarks/results/jarvis2d/exfoliation_all-crystal-bg-gauss.json": "9284bc1236e2ecc135b82132432799fc2f86453f1d102f11c3309117b6100e4f",
+  "benchmarks/results/jarvis2d/exfoliation_all-crystal-bg.json": "56083941e3693cb50627c791290f5955d8bd82784bf9ef1b326a57f076722341",
+  "benchmarks/results/jarvis2d/exfoliation_all-layer-bg-gauss.json": "5aea239a5fceaecdb89cb77498dbe6201f6f08609d9fe51aa3e67199b5ad42b3",
+  "benchmarks/results/jarvis2d/exfoliation_all-layer-bg.json": "b0ec7ae3b82f69a79552ab80b767a0c1de2d28bfa22af2af0cf4ca179606a5be",
+  "benchmarks/results/jarvis2d/exfoliation_all-nobg-gauss.json": "3c2690e5b368c9ea2936880f97be1bd0adc10eac53177cff03c49b0205b0749b",
+  "benchmarks/results/jarvis2d/exfoliation_all-nobg.json": "2e6bbf26115eeead5d03f8d3f9403e9670d139954c086dcae367432e25295e0b",
+  "benchmarks/results/jarvis2d/exfoliation_crystal-bg-gauss.json": "658123026f2ddb1c05e2068bc01336b55fcde10ace2252abb149628d42c4d680",
+  "benchmarks/results/jarvis2d/exfoliation_crystal-bg.json": "a093c85723c67513ff0be515e1af29e49eb8c7a0b4c9ec477653a4d8795fb241",
+  "benchmarks/results/jarvis2d/exfoliation_heights-gauss.json": "a9c2a0a192b8545a16c2c3261908e17cb392de5b8eb16018662aa4e8345b31b6",
+  "benchmarks/results/jarvis2d/exfoliation_heights-oriented.json": "dd486b2c8db168fb9e4041a3e381f10811ca2e219a0f3859e7f1a3eecfd4e52d",
+  "benchmarks/results/jarvis2d/exfoliation_heights.json": "9bd5c8bb791aa7c41940d725f06ee43b71068c3d0138df7431db9eec1afe4b7d",
+  "benchmarks/results/jarvis2d/exfoliation_layer-bg-gauss.json": "cf602dbd834a72d1c3388af5f5a750d9e31a6320561badbe01c19beeda6471f0",
+  "benchmarks/results/jarvis2d/exfoliation_layer-bg.json": "819c70481828f325a1490001721a2e3916f085a7f94c14bc55aac7be17821247",
+  "benchmarks/results/jarvis2d/exfoliation_nobg-gauss.json": "4b441d01a96a7ed65a2381f76951f87b5fee2557da42c8134ece817be13b1eae",
+  "benchmarks/results/jarvis2d/exfoliation_nobg.json": "ba851927614fed68beb8add33011efb89b44790879a6b6026e67063026897638",
+  "benchmarks/results/jarvis2d/formation_all-crystal-bg-gauss.json": "78acddb2ee71a42b190448dd5608018f464f5a9e05eeedc9dbe70ea5b227938f",
+  "benchmarks/results/jarvis2d/formation_all-crystal-bg.json": "11c2bfab8448d90e4f00b94305466542bba126407825da15dde7887af07aa75e",
+  "benchmarks/results/jarvis2d/formation_all-layer-bg-gauss.json": "1d3777e5cd7fbd6c6341a0036fb913ac07f3aaae8366e60c0c1221a6071f13b8",
+  "benchmarks/results/jarvis2d/formation_all-layer-bg.json": "6805080be66cc020b5b902dca738d1453f58f4a3eb2428e9da73f7ee38b736fa",
+  "benchmarks/results/jarvis2d/formation_all-nobg-gauss.json": "9651e9234362d97e374d0599ba911402b1896dd2f4bf303ee41ad4bee388c0f1",
+  "benchmarks/results/jarvis2d/formation_all-nobg.json": "801f9110a44c146b7a7f641d897f7b620521230e802774414a6c2f092e6f2e43",
+  "benchmarks/results/jarvis2d/formation_crystal-bg-gauss.json": "2a6f533017dd2febf2f10f1760dec877546b779ae4d745c9bbd2070fa32452ca",
+  "benchmarks/results/jarvis2d/formation_crystal-bg.json": "5763501144399e9b4b0ca57adc57b5f03f337f799fac83e60f54d474e352a898",
+  "benchmarks/results/jarvis2d/formation_heights-gauss.json": "8c9f3a1de61679267cb98f6b35cb289e037a68087695e95c57337a70a32a4756",
+  "benchmarks/results/jarvis2d/formation_heights-oriented.json": "37e42b980f588acee0a122dd593172f4045fd5d142a03e1cd0ebf318851833d1",
+  "benchmarks/results/jarvis2d/formation_heights.json": "f497c07bfa04f64dfcd550db3da017f76f6e8fe802b14d55b52a686f6ac51e1d",
+  "benchmarks/results/jarvis2d/formation_layer-bg-gauss.json": "00bfda40f2dffeb027ff5eecc3e9deda0832d1a6ae40001f7ad8fc9809b98923",
+  "benchmarks/results/jarvis2d/formation_layer-bg.json": "e2e6616d26398aaf8a73094b8b75363e8471f92abb47103650b68f4542e58c83",
+  "benchmarks/results/jarvis2d/formation_nobg-gauss.json": "89eae2637b89decbb9b1fe2eed55a21956ea9711c7b4fbbd6bf9ff3c6612c801",
+  "benchmarks/results/jarvis2d/formation_nobg.json": "0307f83d24a2cdbf342cfb9eeb075c8c8a2e0c835b6d91140cbfe278769a78ea",
+  "benchmarks/results/jarvis2d/gap_all-crystal-bg-gauss.json": "c5e8b92a78d45651050cc88487e62320921d94ce96ac1f084b696a87633a7cb8",
+  "benchmarks/results/jarvis2d/gap_all-crystal-bg.json": "4de100c2e45b1f40af60c1c67e11b6127b32560fabbcdb37d044452fa86d00a8",
+  "benchmarks/results/jarvis2d/gap_all-layer-bg-gauss.json": "a2032f86ebb31f61213d19d8e805ec1aa9dfb8ee2a8d711929c9b9b7de566e6f",
+  "benchmarks/results/jarvis2d/gap_all-layer-bg.json": "8fb0439400d9711508d8b2a1df0e5c40c29c5fcc2ee2811b518b058fc42eb185",
+  "benchmarks/results/jarvis2d/gap_all-nobg-gauss.json": "45a536180ef5e77452cebd871bca3d0131847dbd578d7a83556b1969f7c806ad",
+  "benchmarks/results/jarvis2d/gap_all-nobg.json": "b8bea1d59c9d00599483b1a6056b535f47b5756406d831ec060fe57bf0dbd3ed",
+  "benchmarks/results/jarvis2d/gap_crystal-bg-gauss.json": "fea6284f3b7b1b5e7b5e691ae7868542665038f226d8dda8a622fc700e1e3c45",
+  "benchmarks/results/jarvis2d/gap_crystal-bg.json": "b108db22bd05e72afd5c02a840fbf6e59cc22915d6e9c2af210c40bc2509649c",
+  "benchmarks/results/jarvis2d/gap_heights-gauss.json": "121ec40d518d17dc2ca3bff82a7683beaf5678fad1a5cbcb7ddcd108068e34ca",
+  "benchmarks/results/jarvis2d/gap_heights-oriented.json": "40048868ae733f22d3522b094f8e8b7cf9b0218324f80bf5fea3a4b06426ac0b",
+  "benchmarks/results/jarvis2d/gap_heights.json": "edd6aa9357ecc05bceb395fdd999188b4b8bd2372c9138d8c456495e9a1667b6",
+  "benchmarks/results/jarvis2d/gap_layer-bg-gauss.json": "5c3fdf827b07ebfdc8efbf34d76edf6bdf6dfed7037778025f76b152e5fe0eeb",
+  "benchmarks/results/jarvis2d/gap_layer-bg.json": "196323349527c02fd5f57b2acf66a9293a9a43a125ca270552fd08b88f906f05",
+  "benchmarks/results/jarvis2d/gap_nobg-gauss.json": "19f99596262a82b2e10d3ff9f6902c44a9cad3968ef0ab72cd65bfbe2b81b634",
+  "benchmarks/results/jarvis2d/gap_nobg.json": "4e3673573a631ce18225d60acdb02a791bdb5dadc605e289cbc3eadeaf70b508",
+  "benchmarks/results/jarvis2d/table.md": "aac5852c49d46e83fc82eef8af3e457b8fd28c00451070ab9ac258dbde810808",
   "benchmarks/results/kcca/ACE.json": "9c5c8f2fd0943aa1aa10c810aee3d69e51a92a4b30d5489929204a7984e85a0b",
   "benchmarks/results/kcca/AChE.json": "f7dc9dcc2c0f784cc465e5c7087897c0365c6d2075c1bd8b9364158ce3c8c7e8",
   "benchmarks/results/kcca/BZR.json": "7b028546f8a827cb6c6c943e4ecb2611b5243e0260019b2bd16717fbdd6a0199",
@@ -2711,6 +2813,10 @@
   "benchmarks/results/restriction/pairs_DHFR.json": "cc8e4ac042228100724473aec804ce2d21d5b08f384409d5f3a805dab22f87d8",
   "benchmarks/results/restriction/pairs_THR.json": "dbc5592179cb3209835e4ea3517302e9c575757674fb605416388b707697a8ab",
   "benchmarks/results/restriction/table.md": "cce2d85cfd3d38b9866af569ae256704d9ca020d6f49fea91fe20b1284f4e870",
+  "benchmarks/results/sac/cofields.png": "28c2963f0a267649b76a4e173613c607f64acbadeb8514d40a3308939a3b21c7",
+  "benchmarks/results/sac/cv_scatter.png": "1e98a3b7c694926a89afcf44bf791b8cf8e4c7829036a8db4234a76eb677fd94",
+  "benchmarks/results/sac/results.json": "16f5d98b93b73dd4e919c29b76cc4106116790a143195cfda19fcc20e5030da0",
+  "benchmarks/results/sac/table.md": "f626d91aecb48d338c022fbbc6f04e583d9104c91a0b909dc8e2f00a914d0016",
   "benchmarks/results/screening/ESR1_ant.json": "7aa3723b49ea5b1bb242bac49d54cc09ee31f22aa8305a1f01d823b86333a88a",
   "benchmarks/results/screening/TP53.json": "07c2e41df74c98853924f02d0d42030b89a90e6773c0a046e9ed62b902cfd468",
   "benchmarks/results/screening/TP53_similar.json": "0490e2b39f264e936551e721979150c463f9d642b44990e3027a8061636cde61",
@@ -2740,6 +2846,9 @@
   "benchmarks/results/selectivity/file_Delta.json": "50c0da4f33ca29dc6d3ad0516cdacdff87ea360e996800e8a046cb3a5997413c",
   "benchmarks/results/selectivity/file_glycine.json": "fdf29ea54573147755c4d75dbfd4a682d611b9eebdee82cf3c777d38c20041fe",
   "benchmarks/results/selectivity/table.md": "457c99257ba10154d192e7b780653e30544f9a1992b1c2b516c00b2fa3848597",
+  "benchmarks/results/soap_gate/aromatic.json": "65ce91eb6439dbef0d1f8e93b8e9ed7e684e84b27a4b53811d1ef39dc08285ef",
+  "benchmarks/results/soap_gate/shifts.json": "1ca3b9456da3e5b92c9c6df6a15b37369812ae2b0c049b130aef32a052160ce3",
+  "benchmarks/results/soap_gate/table.md": "326e8bb3eb62bb2927d4eb669904847e77f623a93d5ea9d160e57ad253ac6301",
   "benchmarks/results/solvent/hif2a.json": "3e9d432b00bd2565b22c702fad0c082b6a94dfb845760f70348f21c673b94f94",
   "benchmarks/results/solvent/hif2a_count.json": "55828ad52eb965a891fe8d712deca1e6cea7dfd7a657b07b0f1d26de5a7be30d",
   "benchmarks/results/solvent/hif2a_rule.json": "9404ea950497e86d6bfe5906cf352e819a2e47b0b5a2ff74f1ac7e5ecd676516",
@@ -2828,6 +2937,9 @@
   "benchmarks/results/transfer/table.md": "77ca59a29119b86055101ced6e9b3460a1f0a5dcd2690cc53c1b7bed8060a1ba",
   "benchmarks/results/transformfield/summary.json": "4cc13d266a1e1be388cb2ade5677032354437eaed85baed7acebe9ab8dd99ad5",
   "benchmarks/results/transformfield/table.md": "ef70a463d1ba32a12de0db2981d30caf9accafb903ea199b4a4d911629ab073b",
+  "benchmarks/results/triangles/aromatic.json": "87ccdd7fe7b1da64c6e401da718416383323218f00e25d7afca55632e28c35f2",
+  "benchmarks/results/triangles/shifts.json": "8e8bb0f0628e33668d1c3122e121e50dd02bb492a5aeff12d8b1934cbf415fc4",
+  "benchmarks/results/triangles/table.md": "c0a7015713c68d9d29fccfb9fb27e4d9c0776c43c6a79aa6937c05789bd9a959",
   "benchmarks/results/two_endpoints/alpha_gamma.json": "036e3c03477b1cff0cca8df464e18ca20b49d9c9db5fab5c9648564442b7f021",
   "benchmarks/results/two_endpoints/beta_alpha.json": "239ad59370f8e366083c746b985c928ce2d10e2a48653eb83f01bbc37fa98617",
   "benchmarks/results/two_endpoints/beta_gamma.json": "14562c3e8d10bceb40c1b2be759246a4ca0b51d2c6f18e24bc057252fb2aeaa8",

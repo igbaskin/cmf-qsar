@@ -59,6 +59,35 @@ second moments and :func:`periodic_autocorrelation` uses them, so that the descr
 exact mean over the configurations as well, per expected atom of the cell.  A structure without disorder carries none of this and goes through the
 same code unchanged.
 
+Layers and chains (plan item M1)
+--------------------------------
+A structure periodic in two directions (a monolayer, a slab) or in one (a polymer chain, a
+nanowire) goes through the same neighbour list, which respects the periodicity flags of the
+structure (``pbc``), so no pair is counted across the vacuum whatever its width.  Two things do
+depend on the number of periodic directions, and both read the flags:
+
+* **The uniform background.**  What is subtracted is the pair histogram of the same weights
+  spread uniformly over the *periodic* directions only; across the others every atom keeps its
+  place.  For a crystal that is the shell integral over the cell volume; for a layer the count
+  of pairs at distance r between two atoms a height h apart grows as a ring, 2 pi r dr over the
+  cell area, for r >= h; for a chain as 2 r dr / sqrt(r^2 - t^2) over the repeat length, with t
+  the separation from the axis.  :func:`_background_profile` holds those integrals per channel
+  and :attr:`CrystalFields.measure` the volume, area or length that divides them.  The
+  descriptor then does not change with the vacuum, with an in-plane supercell or with a shift
+  of the layer along the normal.
+
+* **The height channels of a layer.**  The distance descriptor cannot see the normal.  With
+  ``z_max > 0`` in the spec the descriptor of a layer is resolved by the in-plane distance and
+  the heights of both atoms above the layer's mean plane, as the surface kernel of
+  ``invariant.py`` resolves a molecule above a surface, with the background removed per unit
+  area.  A free-standing layer has no physical "up", so the descriptor is averaged over the two
+  faces unless the spec says ``oriented``; an oriented spec keeps the file's own up (the third
+  lattice vector) and tells a Janus layer from its mirror image.
+
+:func:`centre_layer` gathers a layer that a database file leaves split across the cell boundary.
+The images of the periodic overlap kernel (:func:`image_translations`) read the same flags, so
+a layer is never compared with its own copy across the vacuum.
+
 ASE is needed for the neighbour list and to read structure files; pymatgen is needed for the
 oxidation-state guess, the electronegativities and the reading of partial occupancies and
 nothing else.  Both are imported lazily, so that the rest of the program does not depend on
@@ -99,10 +128,36 @@ class PeriodicSpec:
     background: bool = True          # subtract the uniform-density term of every field pair
     taper: float = 2.0               # width of the cosine taper below r_max (0: hard cutoff)
     chirality: bool = False          # always False; see the class docstring
+    #: height channels of a layer (plan item M1): with ``z_max > 0`` the descriptor of a
+    #: structure periodic in two directions is resolved by the in-plane distance and the heights
+    #: of both atoms above the mean plane of the layer, on a grid from -z_max to z_max every
+    #: z_step; 0 keeps the plain distance descriptor
+    z_max: float = 0.0
+    z_step: float = 1.0
+    z_sigma: float = 0.0             # width of the height channels; 0 takes z_step
+    #: True when the normal has a physical direction (the third lattice vector of the file is
+    #: "up"); False averages the descriptor over the two faces of the layer
+    oriented: bool = False
 
     @property
     def d_max(self) -> float:
         return self.r_max
+
+    @property
+    def has_heights(self) -> bool:
+        return self.z_max > 0
+
+    @property
+    def heights(self) -> np.ndarray:
+        """The height channels, symmetric about the mean plane; one channel at 0 without them."""
+        if not self.has_heights:
+            return np.zeros(1)
+        n = max(int(round(self.z_max / self.z_step)), 0)
+        return np.arange(-n, n + 1, dtype=float) * self.z_step
+
+    @property
+    def height_sigma(self) -> float:
+        return float(self.z_sigma) if self.z_sigma > 0 else float(self.z_step)
 
     @property
     def centres(self) -> np.ndarray:
@@ -111,7 +166,10 @@ class PeriodicSpec:
 
     @property
     def n_bins(self) -> int:
-        return len(self.centres)
+        """Channels per pair of field types: the distances, times the heights squared for a
+        layer with height channels."""
+        n = len(self.centres)
+        return n * len(self.heights) ** 2 if self.has_heights else n
 
     def window(self, r: np.ndarray) -> np.ndarray:
         """1 inside the sphere, a half-cosine over the last ``taper`` angstrom, 0 beyond."""
@@ -132,6 +190,15 @@ class PeriodicSpec:
         r = np.linspace(0.0, self.r_max, int(n_points))
         g = np.exp(-((r[:, None] - self.centres[None, :]) ** 2) / (2.0 * self.sigma ** 2))
         f = 4.0 * np.pi * r[:, None] ** 2 * g * self.window(r)[:, None]
+        return np.trapezoid(f, r, axis=0)
+
+    def ring_integral(self, n_points: int = 4000) -> np.ndarray:
+        """``∫ 2π ρ exp(-(ρ - d_k)² / 2σ²) w(ρ) dρ`` for every channel: the in-plane analogue of
+        the shell integral, the pair count a unit density spread over a plane puts into each
+        channel of the in-plane distance."""
+        r = np.linspace(0.0, self.r_max, int(n_points))
+        g = np.exp(-((r[:, None] - self.centres[None, :]) ** 2) / (2.0 * self.sigma ** 2))
+        f = 2.0 * np.pi * r[:, None] * g * self.window(r)[:, None]
         return np.trapezoid(f, r, axis=0)
 
 
@@ -182,6 +249,19 @@ class CrystalFields:
     def volume(self) -> float:
         return float(abs(np.linalg.det(self.cell)))
 
+    @property
+    def n_periodic(self) -> int:
+        """How many lattice directions are periodic: 3 for a crystal, 2 for a layer, 1 for a
+        chain, 0 for a molecule in a box."""
+        return int(sum(bool(p) for p in self.pbc))
+
+    @property
+    def measure(self) -> Optional[float]:
+        """The size of the cell along its periodic directions: the volume of a crystal, the area
+        of a layer, the repeat length of a chain; None for a structure with no periodic
+        direction, which has no uniform background to remove."""
+        return periodic_measure(self.cell, self.pbc)
+
     def to_atoms(self):
         from ase import Atoms
         return Atoms(symbols=list(self.symbols), positions=np.asarray(self.coords, float),
@@ -193,6 +273,168 @@ def _shell_integral(spec: PeriodicSpec) -> np.ndarray:
     """The shell integral of a spec, computed once: it does not depend on the structure."""
     out = spec.shell_integral()
     out.flags.writeable = False
+    return out
+
+
+@functools.lru_cache(maxsize=32)
+def _ring_integral(spec: PeriodicSpec) -> np.ndarray:
+    out = spec.ring_integral()
+    out.flags.writeable = False
+    return out
+
+
+def _pbc_of(crystal) -> Tuple[bool, bool, bool]:
+    pbc = getattr(crystal, "pbc", (True, True, True))
+    return tuple(bool(p) for p in pbc)
+
+
+def periodic_measure(cell, pbc) -> Optional[float]:
+    """The volume, area or repeat length of a cell along its periodic directions; None when
+    no direction is periodic."""
+    A = np.asarray(cell, float).reshape(3, 3)
+    axes = [k for k in range(3) if pbc[k]]
+    if len(axes) == 3:
+        return float(abs(np.linalg.det(A)))
+    if len(axes) == 2:
+        return float(np.linalg.norm(np.cross(A[axes[0]], A[axes[1]])))
+    if len(axes) == 1:
+        return float(np.linalg.norm(A[axes[0]]))
+    return None
+
+
+def layer_normal(cell, pbc) -> np.ndarray:
+    """The unit normal of a structure periodic in two directions, pointing along the
+    non-periodic lattice vector: the file's own "up"."""
+    A = np.asarray(cell, float).reshape(3, 3)
+    axes = [k for k in range(3) if pbc[k]]
+    if len(axes) != 2:
+        raise ValueError(f"a layer is periodic in two directions; this structure is periodic in "
+                         f"{len(axes)} (pbc={tuple(bool(p) for p in pbc)})")
+    open_axis = [k for k in range(3) if not pbc[k]][0]
+    n = np.cross(A[axes[0]], A[axes[1]])
+    if float(n @ A[open_axis]) < 0:
+        n = -n
+    return n / max(float(np.linalg.norm(n)), 1e-12)
+
+
+def _normal_separations(coords, cell, pbc) -> np.ndarray:
+    """The separation of every ordered pair of atoms across the non-periodic directions, (N, N):
+    zero for a crystal, the height difference for a layer, the distance between the two atoms'
+    projections on the plane normal to the chain for a chain."""
+    X = np.asarray(coords, float)
+    A = np.asarray(cell, float).reshape(3, 3)
+    axes = [k for k in range(3) if pbc[k]]
+    if len(axes) == 3:
+        return np.zeros((len(X), len(X)))
+    if len(axes) == 2:
+        z = X @ layer_normal(cell, pbc)
+        return np.abs(z[:, None] - z[None, :])
+    if len(axes) == 1:
+        a = A[axes[0]] / max(float(np.linalg.norm(A[axes[0]])), 1e-12)
+        D = X[:, None, :] - X[None, :, :]
+        D = D - (D @ a)[..., None] * a[None, None, :]
+        return np.linalg.norm(D, axis=-1)
+    return np.linalg.norm(X[:, None, :] - X[None, :, :], axis=-1)
+
+
+@functools.lru_cache(maxsize=32)
+def _background_profile(spec: PeriodicSpec, n_periodic: int) -> Tuple[np.ndarray, np.ndarray]:
+    """``(h, J)``: the pair count that a unit density spread uniformly over the periodic
+    directions puts into every channel, for a pair of atoms separated by ``h`` across the
+    non-periodic ones.  ``J[a, k]`` belongs to ``h[a]`` and channel ``k``.
+
+    Three periodic directions: ``h`` is 0 alone and ``J`` the shell integral, ``∫ 4π r² G_k w dr``.
+    Two: the pairs at distance r lie on a ring of radius sqrt(r² - h²) in the plane, so the
+    count is 2π r dr for r >= h and ``J(h) = ∫_h^{r_max} 2π r G_k w dr``.  One: the two points of
+    the axis at distance r are ±sqrt(r² - h²) along it, so the count is 2 r dr / sqrt(r² - h²),
+    which is ``2 du`` in the axial coordinate u: ``J(h) = ∫_0^{sqrt(r_max² - h²)} 2 G_k(sqrt(u² + h²)) w du``.
+    """
+    if n_periodic == 3:
+        J = np.array(spec.shell_integral())[None, :]
+        h = np.zeros(1)
+    elif n_periodic == 2:
+        n_points = 4000
+        r = np.linspace(0.0, spec.r_max, n_points)
+        g = (np.exp(-((r[:, None] - spec.centres[None, :]) ** 2) / (2.0 * spec.sigma ** 2))
+             * spec.window(r)[:, None])
+        f = 2.0 * np.pi * r[:, None] * g
+        seg = 0.5 * (f[1:] + f[:-1]) * (r[1] - r[0])
+        tail = np.concatenate([seg[::-1].cumsum(axis=0)[::-1], np.zeros((1, f.shape[1]))], axis=0)
+        h, J = r, tail
+    elif n_periodic == 1:
+        h = np.linspace(0.0, spec.r_max, 401)
+        J = np.zeros((len(h), spec.centres.size))
+        for a, t in enumerate(h):
+            U = float(np.sqrt(max(spec.r_max ** 2 - t ** 2, 0.0)))
+            if U <= 0.0:
+                continue
+            u = np.linspace(0.0, U, 2000)
+            rr = np.sqrt(u * u + t * t)
+            gg = (np.exp(-((rr[:, None] - spec.centres[None, :]) ** 2) / (2.0 * spec.sigma ** 2))
+                  * spec.window(rr)[:, None])
+            J[a] = np.trapezoid(2.0 * gg, u, axis=0)
+    else:
+        raise ValueError("a structure with no periodic direction has no uniform background")
+    h = np.array(h, float)
+    J = np.array(J, float)
+    h.flags.writeable = False
+    J.flags.writeable = False
+    return h, J
+
+
+def _background_rows(crystal, spec: PeriodicSpec, W: np.ndarray, cov: np.ndarray,
+                     fi: np.ndarray, gi: np.ndarray, mult: np.ndarray) -> Optional[np.ndarray]:
+    """The uniform background of every pair of field types, (n_pairs, n_bins), before the
+    division by the number of atoms; None for a structure with no periodic direction."""
+    pbc = _pbc_of(crystal)
+    measure = periodic_measure(crystal.cell, pbc)
+    if measure is None or measure <= 0:
+        return None
+    n_periodic = int(sum(pbc))
+    h, J = _background_profile(spec, n_periodic)
+    if n_periodic == 3:
+        S = W.sum(axis=0)
+        return (mult * (S[fi] * S[gi] + cov[fi, gi]) / measure)[:, None] * J[0][None, :]
+    H = _normal_separations(crystal.coords, crystal.cell, pbc)
+    n_fields = W.shape[1]
+    T = np.zeros((n_fields, J.shape[1], n_fields))
+    flat = H.ravel()
+    for k in range(J.shape[1]):
+        Jk = np.interp(flat, h, J[:, k]).reshape(H.shape)
+        T[:, k, :] = W.T @ Jk @ W
+    # H is symmetric, so the two orders of a pair of different types are equal: mult counts both
+    rows = T[fi, :, gi] + cov[fi, gi][:, None] * J[0][None, :]
+    return mult[:, None] * rows / measure
+
+
+def centre_layer(atoms):
+    """A copy of `atoms` with the structure gathered and centred along every non-periodic
+    lattice direction.
+
+    A layer read from a database may sit across the cell boundary along the normal, one part at
+    the bottom of the cell and the rest at the top, which breaks the heights and the neighbour
+    list of an open direction.  Along each non-periodic direction the atoms are shifted so that
+    the widest empty gap of the fractional coordinate, taken around the cycle, straddles the
+    boundary, and the structure sits at the middle of the cell.  A structure periodic in every
+    direction is returned unchanged.
+    """
+    out = atoms.copy()
+    pbc = [bool(p) for p in out.get_pbc()]
+    if all(pbc) or len(out) == 0:
+        return out
+    frac = np.array(out.get_scaled_positions(wrap=False), float)
+    for k in range(3):
+        if pbc[k]:
+            continue
+        f = np.mod(frac[:, k], 1.0)
+        order = np.argsort(f)
+        fs = f[order]
+        gaps = np.diff(np.concatenate([fs, [fs[0] + 1.0]]))
+        m = int(np.argmax(gaps))
+        start = fs[(m + 1) % len(fs)] if m + 1 < len(fs) else fs[0]
+        shifted = np.mod(f - start, 1.0)
+        frac[:, k] = shifted + 0.5 * gaps[m]
+    out.set_scaled_positions(frac)
     return out
 
 
@@ -218,7 +460,17 @@ def periodic_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec = Period
     volume and I_k the shell integral of the spec.  The sum runs over ordered pairs, so a pair of
     different field types is counted in both orders, as the molecular descriptor counts it; the
     background of such a pair is accordingly 2 S_f S_g / V * I_k.
+
+    For a structure periodic in fewer than three directions the pair sum is the same (the
+    neighbour list respects the periodicity flags) and the background is the one of a uniform
+    spread over the periodic directions alone,
+    ``(1/M) sum_{l,m} w_lf w_mg J_k(h_lm)``, with M the area or repeat length of the cell, h_lm
+    the separation of the pair across the non-periodic directions and J_k the ring or axis
+    integral of :func:`_background_profile`; it reduces to the form above for a crystal.  With
+    height channels in the spec (``z_max > 0``) a layer gets :func:`slab_autocorrelation`.
     """
+    if spec.has_heights:
+        return slab_autocorrelation(crystal, spec, pairs)
     W = np.asarray(crystal.weights, float)
     n_atoms, n_fields = W.shape
     pairs = list(pairs) if pairs is not None else field_pairs(n_fields)
@@ -232,9 +484,6 @@ def periodic_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec = Period
     else:
         B = np.zeros((0, len(centres)))
     self_row = np.exp(-(centres ** 2) / inv) if spec.include_self else np.zeros(len(centres))
-    shell = _shell_integral(spec) if spec.background else None
-    S = W.sum(axis=0)
-    V = crystal.volume
     # T[f, k, g] = sum over ordered pairs of w_if B_pk w_jg, for every pair of field types at once
     T = np.zeros((n_fields, len(centres), n_fields))
     if len(d):
@@ -269,9 +518,114 @@ def periodic_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec = Period
     mult = np.where(diag, 1.0, 2.0)                        # a pair of different types, both ways
     rows = T[fi, :, gi] + np.where(diag[:, None], 0.0, T[gi, :, fi])
     rows = rows + (mult * G[fi, gi])[:, None] * self_row[None, :]
-    if shell is not None and V > 0:
-        rows = rows - (mult * (S[fi] * S[gi] + cov[fi, gi]) / V)[:, None] * shell[None, :]
+    if spec.background:
+        bg = _background_rows(crystal, spec, W, cov, fi, gi, mult)
+        if bg is not None:
+            rows = rows - bg
     return (rows / max(n_norm, 1e-12)).ravel()
+
+
+def slab_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec,
+                         pairs: Optional[Sequence[Tuple[int, int]]] = None) -> np.ndarray:
+    """The descriptor of a layer resolved by height: (n_pairs * n_rho * n_z * n_z,) flattened.
+
+    For a pair of field types (f, g), an in-plane distance channel rho_k and two height
+    channels z_a, z_b,     ::
+
+        Phi_fg(rho_k, z_a, z_b) = (1/N) [ sum_l sum_{m: rho_lm < r_max} w_lf w_mg
+                                              exp(-(rho_lm - rho_k)^2 / 2 sigma^2) w(rho_lm)
+                                              Z_a(z_l) Z_b(z_m)
+                                        - (R_k / A) sum_l w_lf Z_a(z_l) sum_m w_mg Z_b(z_m) ],
+
+    with rho_lm the in-plane distance of atom l to atom or image m, z_l the height of atom l
+    above the mean plane of the layer, Z_a a Gaussian of width ``height_sigma`` about the
+    height channel z_a, R_k the ring integral of the spec and A the area of the cell.  The
+    background is exact: a uniform spread over the plane puts 2 pi rho d rho / A pairs at every
+    in-plane distance whatever the heights.  A pair of different field types is summed in both
+    orders, f at z_a with g at z_b and g at z_a with f at z_b, as the surface kernel of
+    ``invariant.py`` sums it; the l = m terms are kept where ``include_self`` is set; a
+    disordered site enters with its second moments as in :func:`periodic_autocorrelation`.
+    Unless the spec is ``oriented`` the result is the mean over the two faces of the layer,
+    which is the same descriptor with both height axes reversed.  It is invariant to the
+    choice of cell, origin and in-plane rotation, to the vacuum and to a shift of the layer
+    along the normal, and it carries strictly more than the distance descriptor: the distance
+    is a function of the in-plane distance and the two heights.
+    """
+    W = np.asarray(crystal.weights, float)
+    n_atoms, n_fields = W.shape
+    pbc = _pbc_of(crystal)
+    if sum(pbc) != 2:
+        raise ValueError(f"{crystal.name or 'this structure'} is periodic in {sum(pbc)} "
+                         f"directions; the height channels are defined for a layer, periodic in "
+                         f"two: set the periodicity flags so that the normal is the open direction")
+    centres, heights = spec.centres, spec.heights
+    nb, nz = len(centres), len(heights)
+    pairs = list(pairs) if pairs is not None else field_pairs(n_fields)
+    if n_atoms == 0:
+        return np.zeros(len(pairs) * nb * nz * nz)
+    n = layer_normal(crystal.cell, pbc)
+    X = np.asarray(crystal.coords, float)
+    occ = (np.asarray(crystal.occupancy, float) if crystal.occupancy is not None
+           else np.ones(n_atoms))
+    z = X @ n
+    z = z - float(np.sum(occ * z) / max(float(np.sum(occ)), 1e-12))
+    thickness = float(z.max() - z.min())
+    # every pair inside the in-plane cutoff is within r_max + thickness in space
+    from ase.neighborlist import neighbor_list
+    i, j, D = neighbor_list("ijD", crystal.to_atoms(), float(spec.r_max) + thickness)
+    i, j = np.asarray(i, int), np.asarray(j, int)
+    D = np.asarray(D, float).reshape(-1, 3)
+    rho = np.linalg.norm(D - (D @ n)[:, None] * n[None, :], axis=1)
+    keep = rho < spec.r_max
+    i, j, rho = i[keep], j[keep], rho[keep]
+    inv = 2.0 * spec.sigma ** 2
+    sz = spec.height_sigma
+    Z = np.exp(-((z[:, None] - heights[None, :]) ** 2) / (2.0 * sz ** 2))          # (N, nz)
+    U = (W[:, :, None] * Z[:, None, :]).reshape(n_atoms, n_fields * nz)           # (field, height)
+    if len(rho):
+        B = np.exp(-((rho[:, None] - centres[None, :]) ** 2) / inv) * spec.window(rho)[:, None]
+    else:
+        B = np.zeros((0, nb))
+    self_row = np.exp(-(centres ** 2) / inv) if spec.include_self else np.zeros(nb)
+    width = n_fields * nz
+    T = np.zeros((nb, width, width))
+    for k in range(nb):                                       # one BLAS product per channel
+        T[k] = (U[i] * B[:, k:k + 1]).T @ U[j]
+    if crystal.second_moments is not None:
+        # disordered sites (M2): a site meets itself, in the self term, in the pairs with its
+        # own images and in the background, with E[w_f w_g] rather than the product of means
+        E = np.asarray(crystal.second_moments, float)
+        Dm = E - W[:, :, None] * W[:, None, :]
+        own = i == j
+        if own.any():
+            for l in np.unique(i[own]):
+                b_l = B[own & (i == l)].sum(axis=0)                           # (nb,)
+                C_l = np.einsum("fg,a,b->fagb", Dm[l], Z[l], Z[l]).reshape(width, width)
+                T += b_l[:, None, None] * C_l[None]
+        G = np.einsum("lfg,la,lb->fagb", E, Z, Z).reshape(width, width)
+        C_self = np.einsum("lfg,la,lb->fagb", Dm, Z, Z).reshape(width, width)
+        n_norm = float(np.sum(occ))
+    else:
+        G = U.T @ U
+        C_self = None
+        n_norm = float(n_atoms)
+    T += self_row[:, None, None] * G[None]
+    if spec.background:
+        area = periodic_measure(crystal.cell, pbc)
+        if area and area > 0:
+            s = U.sum(axis=0)
+            bg = np.outer(s, s) + (C_self if C_self is not None else 0.0)
+            T -= (_ring_integral(spec)[:, None, None] / area) * bg[None]
+    T5 = T.reshape(nb, n_fields, nz, n_fields, nz)                           # [k, f, a, g, b]
+    out = np.empty((len(pairs), nb, nz, nz))
+    for p, (f, g) in enumerate(pairs):
+        t = T5[:, f, :, g, :]
+        if f != g:
+            t = t + T5[:, g, :, f, :]
+        out[p] = t
+    if not spec.oriented:
+        out = 0.5 * (out + out[:, :, ::-1, ::-1])
+    return (out / max(n_norm, 1e-12)).ravel()
 
 
 def periodic_feature_matrix(crystals: Sequence[CrystalFields],
@@ -300,8 +654,19 @@ def periodic_block_sizes(spec: PeriodicSpec, n_fields: int) -> List[int]:
 
 
 def periodic_channel_labels(fieldset: FieldSet, spec: PeriodicSpec) -> List[str]:
-    """One label per feature: which pair of field types, at which distance."""
-    return channel_labels(fieldset, spec)
+    """One label per feature: which pair of field types, at which distance; for a layer with
+    height channels, at which in-plane distance and which two heights."""
+    if not spec.has_heights:
+        return channel_labels(fieldset, spec)
+    names = [s.label for s in fieldset.specs]
+    out = []
+    for f, g in field_pairs(len(names)):
+        pair = names[f] if f == g else f"{names[f]} x {names[g]}"
+        for d in spec.centres:
+            for zi in spec.heights:
+                for zj in spec.heights:
+                    out.append(f"{pair} @ rho {d:.2f} A, z {zi:+.1f} / {zj:+.1f} A")
+    return out
 
 
 # --------------------------------------------------------------------------- #
@@ -335,12 +700,15 @@ def periodic_channel_labels(fieldset: FieldSet, spec: PeriodicSpec) -> List[str]
 # :func:`periodic_overlap_kernels` is a true similarity between two structures on one lattice.
 
 
-def image_translations(cell: np.ndarray, r_max: float) -> np.ndarray:
+def image_translations(cell: np.ndarray, r_max: float,
+                       pbc: Sequence[bool] = (True, True, True)) -> np.ndarray:
     """Every lattice translation that can bring an atom of the cell within `r_max` of the cell.
 
     The bound is the perpendicular width of the cell along each axis: a translation further than
     ``r_max`` plus the cell's own diameter cannot reach it.  The translations are generated, not
-    searched, and :func:`cell_images` then drops the ones whose atoms stay too far away.
+    searched, and :func:`cell_images` then drops the ones whose atoms stay too far away.  No
+    translation is made along a direction that is not periodic (`pbc`), so a layer is never
+    paired with its own copy across the vacuum.
     """
     A = np.asarray(cell, float).reshape(3, 3)
     volume = abs(float(np.linalg.det(A)))
@@ -351,7 +719,8 @@ def image_translations(cell: np.ndarray, r_max: float) -> np.ndarray:
     widths = np.array([volume / max(np.linalg.norm(np.cross(A[(k + 1) % 3], A[(k + 2) % 3])), 1e-12)
                        for k in range(3)])
     n = np.ceil(reach / widths).astype(int)
-    ranges = [np.arange(-int(n[k]), int(n[k]) + 1) for k in range(3)]
+    ranges = [np.arange(-int(n[k]), int(n[k]) + 1) if pbc[k] else np.zeros(1, int)
+              for k in range(3)]
     grid = np.stack(np.meshgrid(*ranges, indexing="ij"), axis=-1).reshape(-1, 3)
     return grid @ A
 
@@ -381,7 +750,7 @@ def cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarr
                         [1, 1, 0], [1, 0, 1], [0, 1, 1], [1, 1, 1]], float) @ A
     lo, hi = corners.min(axis=0), corners.max(axis=0)
     out_x, out_w, out_r = [coords], [weights], [radii]
-    for T in image_translations(A, float(r_max)):
+    for T in image_translations(A, float(r_max), _pbc_of(crystal)):
         if not np.any(T):
             continue
         moved = coords + T[None, :]
@@ -539,7 +908,11 @@ def lattice_spread(table: AtomTable) -> Dict[str, float]:
              if getattr(m, "cell", None) is not None]
     if not cells:
         return {"n": 0.0}
-    vols = np.array([abs(float(np.linalg.det(A))) for A in cells])
+    # the volume of a crystal, the area of a layer, the length of a chain: the vacuum of an
+    # open direction is not part of the lattice
+    vols = np.array([periodic_measure(A, _pbc_of(m)) or abs(float(np.linalg.det(A)))
+                     for A, m in zip(cells, [m for m in table.molecules
+                                             if getattr(m, "cell", None) is not None])])
     lens = np.array([np.linalg.norm(A, axis=1) for A in cells])
     mean_len = lens.mean(axis=0)
     return {"n": float(len(cells)), "volume_mean": float(vols.mean()),

@@ -743,6 +743,20 @@ Enantiomorphs and homometric structures look the same to a pair-distance kernel,
 anything beyond the cutoff: a property set by local bonding is the right target, a property set by
 long-range periodicity is not.
 
+**Layers and chains.** A monolayer, a slab or a polymer chain is periodic in two directions or
+one, and the structure's periodicity flags say which (`--pbc ab` on the command line for a layer
+with the vacuum along c; `atoms.pbc` in the library). The neighbour list then stops at the vacuum
+and the uniform background is taken per unit area or repeat length, with the height difference of
+each pair in it, so the descriptor does not depend on how wide the vacuum was made, on an in-plane
+supercell or on where the layer sits in the cell; `centre_layer` gathers a layer that a database
+file leaves split across the cell boundary. A layer can also be described by its **height
+channels** (`--heights Z`, `PeriodicSpec(z_max=Z)`): the in-plane distance of each pair resolved
+by the heights of both atoms above the mean plane of the layer, with the background removed per
+unit area, averaged over the two faces unless `--oriented` says the file's third lattice vector is
+a physical up. The images of the periodic overlap kernel read the same flags, so a layer is never
+compared with its own copy across the vacuum. The measurement on the 1,103 JARVIS-DFT 2D
+monolayers is in `benchmarks/results/jarvis2d/table.md` and in the manual.
+
 With the indicator fields alone the real-space side of this kernel is the partial radial
 distribution function of Schütt et al. (2014) and the Valle–Oganov fingerprint of USPEX; with the
 molecular transform of Soltzberg and Wilkins (1977) and 3D-MoRSE on the molecular side, the idea has

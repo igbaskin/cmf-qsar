@@ -1192,6 +1192,13 @@ class CMFModel:
     # (ac_d_max is the cutoff radius, ac_sigma the width and spacing; see periodic.py)
     pbc_background: bool = True             # periodic: subtract the uniform-density term
     pbc_taper: float = 2.0                  # periodic: width of the cosine taper below the cutoff
+    # the height channels of a layer (plan item M1): with pbc_z_max > 0 a structure periodic in
+    # two directions is described by the in-plane distance and the heights of both atoms above
+    # the layer's mean plane, every pbc_z_step from -pbc_z_max to pbc_z_max; the two faces are
+    # averaged unless pbc_oriented says the third lattice vector is a physical "up"
+    pbc_z_max: float = 0.0
+    pbc_z_step: float = 1.0
+    pbc_oriented: bool = False
     # the *overlap* kernel of crystals (plan item M4): the fields of the cell compared point by
     # point with the periodic images summed in, which needs the structures to stand on one parent
     # lattice and gives a co-field inside the cell.  It is the "fields" kernel source with the
@@ -1427,6 +1434,8 @@ class CMFModel:
                         surf_z_min=self.surf_z_min, surf_z_max=self.surf_z_max,
                         surf_z_step=self.surf_z_step, pbc_background=self.pbc_background,
                         pbc_taper=self.pbc_taper, pbc_overlap=self.pbc_overlap,
+                        pbc_z_max=self.pbc_z_max, pbc_z_step=self.pbc_z_step,
+                        pbc_oriented=self.pbc_oriented,
                         pbc_overlap_r_max=self.pbc_overlap_r_max,
                         ac_block_weights=(dict(self.ac_block_weights)
                                           if isinstance(self.ac_block_weights, dict)
@@ -1451,7 +1460,7 @@ class CMFModel:
             from .periodic import PeriodicSpec
             return PeriodicSpec(r_max=float(self.ac_d_max), step=float(self.ac_sigma),
                                 sigma=float(self.ac_sigma), background=bool(self.pbc_background),
-                                taper=float(self.pbc_taper))
+                                taper=float(self.pbc_taper), z_max=float(self.pbc_z_max), z_step=float(self.pbc_z_step), oriented=bool(self.pbc_oriented))
         if self.on_surface:
             return SurfaceSpec(d_max=float(self.ac_d_max), step=float(self.ac_sigma),
                                sigma=float(self.ac_sigma), z_min=float(self.surf_z_min),
@@ -2509,6 +2518,9 @@ class CMFModel:
             "surf_z_step": self.surf_z_step,
             "pbc_background": self.pbc_background,
             "pbc_taper": self.pbc_taper,
+            "pbc_z_max": self.pbc_z_max,
+            "pbc_z_step": self.pbc_z_step,
+            "pbc_oriented": self.pbc_oriented,
             "pbc_overlap": self.pbc_overlap,
             "pbc_overlap_r_max": self.pbc_overlap_r_max,
             "ac_train": getattr(self, "ac_train_", None),
@@ -2550,6 +2562,9 @@ class CMFModel:
         m.surf_z_step = float(st.get("surf_z_step", 1.0))
         m.pbc_background = bool(st.get("pbc_background", True))
         m.pbc_taper = float(st.get("pbc_taper", 2.0))
+        m.pbc_z_max = float(st.get("pbc_z_max", 0.0))
+        m.pbc_z_step = float(st.get("pbc_z_step", 1.0))
+        m.pbc_oriented = bool(st.get("pbc_oriented", False))
         m.pbc_overlap = bool(st.get("pbc_overlap", False))
         r = st.get("pbc_overlap_r_max")
         m.pbc_overlap_r_max = None if r is None else float(r)

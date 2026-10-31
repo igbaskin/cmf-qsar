@@ -1111,10 +1111,18 @@ def _fit_second_endpoint(model, ds, tr, train, y, args):
 def cmd_build_crystals(args):
     """A model on periodic structures: the periodic field autocorrelation of cmfqsar/periodic.py."""
     from cmfqsar.dataio import read_activities_csv
-    from cmfqsar.periodic import (crystal_table, elements_in, inorganic_fieldset,
+    from cmfqsar.periodic import (centre_layer, crystal_table, elements_in, inorganic_fieldset,
                                   periodic_channel_labels, read_structures, top_channels)
     t0 = time.time()
     atoms = read_structures(args.dataset)
+    if args.pbc:
+        letters = args.pbc.lower().replace("x", "a").replace("y", "b").replace("z", "c")
+        flags = tuple(ax in letters for ax in "abc")
+        for a in atoms:
+            a.set_pbc(flags)
+    if any(not all(a.get_pbc()) for a in atoms):
+        # a layer or chain that a file leaves split across the cell boundary is gathered
+        atoms = [centre_layer(a) for a in atoms]
     names = [str(a.info.get("name", f"{a.get_chemical_formula()}_{i}")) for i, a in enumerate(atoms)]
     if args.target_file:
         tab = read_activities_csv(args.target_file)
@@ -1151,6 +1159,8 @@ def cmd_build_crystals(args):
     model = CMFModel(fieldset=fs, method=args.method, normalize=True, kernel_source="periodic",
                      ac_sigma=args.sigma, ac_d_max=args.cutoff, pbc_taper=args.taper,
                      pbc_background=not args.no_background, kernel_layer=args.kernel_layer,
+                     pbc_z_max=args.heights, pbc_z_step=args.height_step,
+                     pbc_oriented=args.oriented,
                      ac_block_weights=_block_weights(args.block_weights),
                      ac_block_groups=_block_groups(args.block_groups, fs),
                      ac_block_rho=args.block_rho)
@@ -1159,6 +1169,17 @@ def cmd_build_crystals(args):
           f"{args.sigma:g} A, {taper}, background {'kept' if args.no_background else 'removed'}; "
           f"per atom of the cell. Invariant to the choice of cell, origin and orientation; no "
           f"co-fields, but a co-pattern over the channels.")
+    words = {3: "three directions (crystals): the background is per unit volume",
+             2: "two directions (layers): the background is per unit area and no pair crosses "
+                "the vacuum",
+             1: "one direction (chains): the background is per repeat length",
+             0: "no direction (molecules in a box): no background"}
+    dims = sorted({int(sum(bool(p) for p in a.get_pbc())) for a in atoms})
+    print("  structures periodic in " + "; ".join(words[d] for d in dims))
+    if args.heights > 0:
+        print(f"  height channels every {args.height_step:g} A from -{args.heights:g} to "
+              f"{args.heights:g} A about the mean plane of the layer, "
+              f"{'oriented: the third lattice vector is up' if args.oriented else 'the two faces averaged'}")
     seed = None if args.cv_no_shuffle else args.seed
 
     def prog(msg, fr):
@@ -4104,6 +4125,20 @@ def main(argv=None):
                     help="width of the cosine taper below the cutoff; 0 for a hard cutoff")
     bc.add_argument("--no-background", action="store_true",
                     help="keep the uniform-density term instead of subtracting it")
+    bc.add_argument("--pbc", default=None, metavar="AXES",
+                    help="which lattice directions are periodic, as letters: 'abc' for a crystal "
+                         "(the default of most files), 'ab' for a layer with the vacuum along c, "
+                         "'a' for a chain. The background is then taken per unit volume, area or "
+                         "length and no pair is counted across the vacuum; a layer split across "
+                         "the cell boundary is gathered")
+    bc.add_argument("--heights", type=float, default=0.0, metavar="Z",
+                    help="layers only: resolve the channels by the heights of both atoms above the "
+                         "mean plane of the layer, from -Z to Z angstrom (0: distances only)")
+    bc.add_argument("--height-step", type=float, default=1.0, metavar="DZ",
+                    help="spacing and width of the height channels (angstrom)")
+    bc.add_argument("--oriented", action="store_true",
+                    help="the third lattice vector is a physical 'up' (a layer on a substrate, a "
+                         "Janus layer with a known face); otherwise the two faces are averaged")
     bc.add_argument("--block-weights", default=None, metavar="W",
                     help="mixing coefficients of the channel blocks (one per pair of field "
                          "types): 'balanced' gives the physico-chemical pairs, the indicator "

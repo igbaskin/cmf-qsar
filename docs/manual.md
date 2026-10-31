@@ -333,7 +333,7 @@ hyper-parameter search is not a model: the arithmetic is the lesson here, not th
 | Nonlinear kernel layer | the joint kernel is passed through $\exp(-\gamma d^2)$ or an arc-cosine function first; the prediction formula is unchanged, the co-field identity is lost |
 | Autocorrelation source | the kernel row comes from the rotation-invariant distance profiles instead of the overlap integrals; everything downstream is identical |
 | Surface source | for molecules over a surface at $z = 0$: the in-plane distance profiles resolved by the heights of both atoms, invariant in the plane and to rotation about the normal only; heights and tilts are kept, no in-plane alignment is needed (command line: `--kernel surface --surface-z ZMIN ZMAX ZSTEP`) |
-| Periodic source | for crystals: the distance profiles summed over the neighbour list of the cell with its images, per atom, background removed, cutoff tapered; invariant to the choice of cell, origin and orientation (command line: `build-crystals`) |
+| Periodic source | for crystals: the distance profiles summed over the neighbour list of the cell with its images, per atom, background removed, cutoff tapered; invariant to the choice of cell, origin and orientation (command line: `build-crystals`). For layers and chains the same, with the background per unit area or repeat length and no pair across the vacuum (`--pbc ab`); a layer can be resolved by the heights of both atoms above its mean plane (`--heights`) |
 | Two endpoints | the same formula once per endpoint, with coefficients tied through a task correlation; the difference of the two coefficient vectors gives the selectivity co-field |
 
 ## What has to match between fitting and predicting
@@ -6389,6 +6389,161 @@ nearest to charge balance, with every known state tried when the common ones can
 mixed-valence titanium phosphate). What this allows is in the section on migration paths: the
 garnets, perovskites, LGPS, NASICON and LISICON of a solid-electrolyte study, whose Li
 sublattices are never fully occupied.
+
+### Layers and chains: periodicity in fewer than three directions
+
+A monolayer, a slab or a polymer chain comes in a cell like a crystal's, with vacuum along the
+directions that do not repeat, and the structure's periodicity flags (`pbc` in ASE; `--pbc ab`
+on the command line for a layer with the vacuum along $c$, `--pbc a` for a chain) say which
+directions do. Before plan item M1 the program read those flags in the neighbour list only. The
+background term divided by the volume of the cell, vacuum included, so the descriptor of a layer
+changed with a number the data set had chosen, the width of the vacuum; and the images of the
+periodic overlap kernel were generated along every lattice vector, so a layer close to a face of
+its cell was compared with its own copy across the vacuum. Both now read the flags.
+
+**The background per area or per repeat length.** What is subtracted is the pair histogram of the
+same weights spread uniformly over the *periodic* directions alone; across the others every atom
+keeps its place. For a crystal that is the shell integral over the volume, as above. For a layer
+the pairs at distance $r$ between two atoms a height $h$ apart lie on a ring of radius
+$\sqrt{r^2 - h^2}$ in the plane, so their count grows as $2\pi r\,\mathrm{d}r$ over the area $A$ for
+$r \ge h$; for a chain the two points of the axis at distance $r$ from an atom a distance $t$ off
+the axis are $\pm\sqrt{r^2 - t^2}$ along it, so the count is $2\,\mathrm{d}u$ in the axial
+coordinate over the repeat length $L$. The background of a pair of field types is then a sum over
+the atom pairs of the cell,
+
+$$
+\Phi^{\mathrm{bg}}_{fg}(d) = \dfrac{1}{N M} \sum_{l}\sum_{m} w_{lf}\, w_{mg}\, J_d(h_{lm}),
+\qquad
+J_d(h) = \int_{h}^{r_{\max}} 2\pi r\, \omega(r)\, e^{-(r-d)^2/2\sigma^2}\, \mathrm{d}r
+\quad\text{(layer)},
+$$
+
+with $M$ the area or the repeat length, $h_{lm}$ the separation of the pair across the
+non-periodic directions and, for a chain, $J_d(t) = \int_0^{\sqrt{r_{\max}^2 - t^2}} 2\,
+\omega(r)\, e^{-(r-d)^2/2\sigma^2}\, \mathrm{d}u$ with $r = \sqrt{u^2 + t^2}$. The $l = m$ terms
+are in the sum, as $S_f S_g$ contains them for a crystal, and a disordered site enters with its
+second moment there (M2). The integrals are tabulated once per spec
+(`periodic._background_profile`) and read by interpolation; `CrystalFields.measure` is $M$,
+`periodic_measure` computes it from the cell and the flags. The tests check that a layer of atoms
+spread at random over the plane, at random heights within a slab, gives subtracted channels that
+are noise about zero and a subtracted term equal to the formula, and the same for a tube of atoms
+around a chain axis; and that the descriptor of a MoS$_2$ layer does not change when the vacuum
+goes from 5 to 25 Å, under an in-plane supercell, a rotation of the whole frame, a shift of the
+layer along the normal or a leaning third lattice vector -- while the same file flagged as a
+crystal changes with the vacuum, which is the defect this removes. A structure with no periodic
+direction has no background to remove and goes through as a molecule in a box.
+
+**The height channels of a layer.** A pair-distance descriptor cannot see the normal, and for a
+layer the normal is physical: which atoms sit on the faces and which inside is what an adsorbate,
+a substrate or a Janus layer feels. With `--heights Z` (`PeriodicSpec(z_max=Z, z_step=...)`,
+`pbc_z_max` on the model) the descriptor of a layer is resolved by the in-plane distance $\rho$
+and the heights of both atoms above the mean plane of the layer, as the surface kernel of the
+chapter on molecules on a surface resolves a molecule above $z = 0$:
+
+$$
+\Phi_{fg}(\rho_k, z_a, z_b) = \dfrac{1}{N}\left[\ \sum_{l}\sum_{m:\, \rho_{lm} < r_{\max}}
+w_{lf} w_{mg}\, \omega(\rho_{lm})\, e^{-(\rho_{lm} - \rho_k)^2 / 2\sigma^2}\,
+Z_a(z_l)\, Z_b(z_m)
+\;-\; \dfrac{R_k}{A} \left(\sum_l w_{lf} Z_a(z_l)\right)\left(\sum_m w_{mg} Z_b(z_m)\right) \right],
+$$
+
+with $Z_a$ a Gaussian of width `--height-step` about the height channel $z_a$ on a grid from $-Z$
+to $Z$, and $R_k = \int 2\pi\rho\, \omega(\rho)\, e^{-(\rho - \rho_k)^2/2\sigma^2}\, \mathrm{d}\rho$ the
+ring integral: a uniform spread over the plane puts $2\pi\rho\,\mathrm{d}\rho / A$ pairs at every
+in-plane distance whatever the heights, so this background is exact. The sum runs over the
+neighbour list with the in-plane images, both orders of a pair of different field types are
+counted, and the self term is kept. A free-standing layer has no physical up, so the descriptor
+is the mean over the two faces (the same channels with both height axes reversed) unless
+`--oriented` says that the third lattice vector of the file is up, as it is for a layer on a
+substrate or a Janus layer with a known face: the tests show MoSSe told from its mirror image by
+the oriented descriptor and not by the default one, and the default equal to the mean of the two.
+The distance is a function of the in-plane distance and the two heights, so these channels carry
+strictly more than the distance channels, at the price of a block per pair of field types that is
+the number of height channels squared times larger: 49 times at $Z = 3$ Å every 1 Å, which is why
+the measurement below runs them on the four physico-chemical fields and not on the element
+indicator fields. Summed over both height axes with a wide grid they reduce to the in-plane
+distance distribution of the weights, which is a test. The height channels refuse a structure
+that is not periodic in exactly two directions.
+
+**Reading a layer.** `read_structures` keeps the flags of the file, and a POSCAR or CIF has none,
+so `--pbc` sets them; a database export may leave a layer split across the cell boundary along
+the normal, one part at the bottom of the cell and the rest at the top, and `centre_layer` gathers
+it (the widest empty gap of the fractional coordinate, taken around the cycle, is put at the
+boundary and the structure at the middle of the cell), which `build-crystals` does for every
+structure with an open direction. `lattice_spread` reports the area of a layer where it reported
+the volume of a crystal. The periodic overlap kernel of a series of layers on one lattice works
+as for crystals and does not see the vacuum either (a test). What this does not yet do is put a
+molecule on a periodic slab, which is the surface kernel with the slab as the receptor (item EC6
+of the plan), and nanotubes have not been measured (NT4).
+
+**What the measurement shows** (`benchmarks/run_jarvis2d.py`, the full table and the
+co-patterns in `benchmarks/results/jarvis2d/table.md`). The set is the 1,103 monolayers of
+JARVIS-DFT 2D (the file of 12 December 2022, downloaded on the first run), with three targets:
+the OptB88vdW band gap, the formation energy per atom and the exfoliation energy per atom
+(748 values). Five shuffled folds; the width of the channels (0.5 or 0.75 Å), the
+regularisation and, for the Gaussian layer, its scale are chosen by ten-fold cross-validation
+inside every training fold; cutoff 10 Å, taper 2 Å; the fields are the four physico-chemical ones
+of the phonons measurement above (electrostatic, steric, electronegativity, inverse square root of
+the mass; 210 channels) or those with the indicator fields of the elements present in at least
+ten structures (66 fields); the height channels run every 1 Å from -3 to 3 Å (the
+median layer is 3.8 Å thick; 10290 channels on the four fields). Every structure is run twice,
+once flagged as a crystal and once as a layer, and the vacuum sensitivity of a variant is the
+median relative change of its channel vector when the vacuum of every cell is doubled.
+
+*The vacuum.* Flagged as a crystal, the descriptor changes by a median 50 %
+(at most 145 %) when the vacuum is doubled; flagged as a layer, with the
+background per area or kept, by 1e-15 -- the rounding error. The accuracy of the
+crystal flags does not suffer within this set, because JARVIS builds its cells alike (nine in ten
+have between 15 and 25 Å of vacuum, median 20.6 Å), so the dependence is nearly a constant factor
+across the set and the model learns it; it would not carry to a set built with another convention,
+to a slab model with a different vacuum or to the same layer in a supercell of another height,
+and that is what the flags remove.
+
+*The background.* With the linear kernel the three pair-distance descriptors are alike on the band
+gap (0.82, 0.819 and 0.829 eV for the crystal flags,
+the layer flags with the background kept and the layer flags with the background per area; the
+mean predictor 1.05 eV), and the background per area costs on the formation energy
+(0.329, 0.349, 0.37 eV/atom; mean predictor
+0.70) and on the exfoliation energy (66.4, 68.3,
+74.7 meV/atom; mean predictor 71). The loss is spread over all
+thicknesses and not in the thick layers; what the subtraction removes is the areal density of every
+pair of field types, the same information whose removal hurt the phonons model above, and a linear
+model on the cosine-normalised kernel cannot put it back. The Gaussian layer on the same
+channels does better everywhere (0.68 eV, 0.283 eV/atom,
+56.1 meV/atom with the background per area), and its controls, the same
+kernel on the crystal flags (0.67, 0.269,
+53.5) and with the background kept (0.668,
+0.274, 53.7), are within the fold spread of it: the gain is
+the kernel's, and on the four fields the Gaussian layer recovers what the per-area background
+removed. With the element indicator
+fields the linear model reaches 0.679 eV, 0.271 eV/atom and
+67 meV/atom with the background kept, against 0.732,
+0.311 and 64.3 with it removed per area; the Gaussian
+layer does not improve the 66-field model (0.719,
+0.312, 63.3 per area;
+0.67, 0.269, 62.6 kept;
+0.675, 0.259,
+61.1 crystal flags), and there the per-area background still costs
+on the gap and the formation energy. For a layer the switch `--no-background` is therefore worth
+trying as it is for a crystal, and it keeps the invariance to the vacuum.
+
+*The height channels.* On the four fields with the linear kernel they gain on every target over
+the distance channels with the same background: 0.785 against 0.829
+eV, 0.349 against 0.37 eV/atom, 63.7 against
+74.7 meV/atom. With the Gaussian layer they gain on the exfoliation energy
+(51.2 against 56.1 meV/atom, R² 0.30
+against 0.14), the best result on that target here (the crystal flags with
+the same kernel reach 53.5 meV/atom, R² 0.24; the
+margin in MAE is within one fold spread, the margin in R² is not), and not on the band gap
+(0.692 against 0.68 eV) or the formation energy
+(0.286 against 0.283 eV/atom). The exfoliation energy is
+a property of the faces, which the heights see and the distances do not; the gap and the formation
+energy are properties of the bonding, which the distances already carry. The oriented descriptor
+is the symmetric one within the fold spread (63.9 against
+63.7 meV/atom), as it should be on a set of mostly symmetric layers. What remains
+open: the height channels with the element indicator fields (a block per element pair times 49
+is more memory than this measurement allowed), nanotubes (NT4), a molecule on a periodic slab
+(EC6) and a second monolayer set such as C2DB for the transfer across vacuum conventions.
 
 ## A series on one lattice: the periodic overlap kernel
 

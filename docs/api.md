@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 95 modules, 182 classes with 590 public methods, and 876 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 95 modules, 182 classes with 596 public methods, and 881 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1572,9 +1572,20 @@ The largest value the mask takes at one of its own centres.
 
 Rectangular grid enclosing `coords` with a margin; the spacing is coarsened if needed.
 
+### `points_per_chunk(points: np.ndarray, tree, cutoff: float, chunk: int, sample: int=16) -> int`
+
+How many points to put in one neighbour list, from how many centres a point sees.
+
+The count is measured on a few points rather than assumed, because it is the one quantity
+that differs by orders of magnitude between a molecular co-field and a periodic one.
+
 ### `evaluate_gaussians(points: np.ndarray, centers: np.ndarray, coeffs: np.ndarray, widths: np.ndarray, eps: float=1e-05, chunk: int=20000) -> np.ndarray`
 
 `sum_m coeffs[m] exp(-widths[m]/2 |p - centers[m]|^2)` for every point p (sparse evaluation).
+
+`chunk` is an upper bound on the points evaluated at once; the real one is
+`MAX_PAIRS`, which bounds the neighbour list of a chunk and so the memory this needs,
+whatever the density of the centres.
 
 ### `cofield_volume(model: CMFModel, f: int, grid: Grid, include_scale: bool=False) -> np.ndarray`
 
@@ -8401,6 +8412,9 @@ Attributes:
 - `surf_z_step: float` = `1.0`
 - `pbc_background: bool` = `True`
 - `pbc_taper: float` = `2.0`
+- `pbc_z_max: float` = `0.0`
+- `pbc_z_step: float` = `1.0`
+- `pbc_oriented: bool` = `False`
 - `pbc_overlap: bool` = `False`
 - `pbc_overlap_r_max: Optional[float]` = `None`
 - `ac_block_weights: Union[None, str, Dict[str, float]]` = `None`
@@ -8588,10 +8602,16 @@ is off by default because, measured, it gains no sharpness on these sets.
 
 Fit in the space of the landmarks instead of the space of the molecules (item B6).
 
+
+
 The model keeps the landmarks and one weight per feature instead of one coefficient per
+
 training molecule, and everything a prediction needs follows from those: see
+
 `cmfqsar.lowrank`.  The training table is still kept, because it is linear in the
+
 number of molecules and the provenance and the contract are read off it; what is never
+
 built is the n by n kernel.
 
 #### `CMFModel.is_low_rank` -> bool  (property)
@@ -10259,6 +10279,35 @@ second moments and `periodic_autocorrelation` uses them, so that the descriptor 
 exact mean over the configurations as well, per expected atom of the cell.  A structure without disorder carries none of this and goes through the
 same code unchanged.
 
+Layers and chains (plan item M1)
+--------------------------------
+A structure periodic in two directions (a monolayer, a slab) or in one (a polymer chain, a
+nanowire) goes through the same neighbour list, which respects the periodicity flags of the
+structure (`pbc`), so no pair is counted across the vacuum whatever its width.  Two things do
+depend on the number of periodic directions, and both read the flags:
+
+* **The uniform background.**  What is subtracted is the pair histogram of the same weights
+  spread uniformly over the *periodic* directions only; across the others every atom keeps its
+  place.  For a crystal that is the shell integral over the cell volume; for a layer the count
+  of pairs at distance r between two atoms a height h apart grows as a ring, 2 pi r dr over the
+  cell area, for r >= h; for a chain as 2 r dr / sqrt(r^2 - t^2) over the repeat length, with t
+  the separation from the axis.  `_background_profile` holds those integrals per channel
+  and `CrystalFields.measure` the volume, area or length that divides them.  The
+  descriptor then does not change with the vacuum, with an in-plane supercell or with a shift
+  of the layer along the normal.
+
+* **The height channels of a layer.**  The distance descriptor cannot see the normal.  With
+  `z_max > 0` in the spec the descriptor of a layer is resolved by the in-plane distance and
+  the heights of both atoms above the layer's mean plane, as the surface kernel of
+  `invariant.py` resolves a molecule above a surface, with the background removed per unit
+  area.  A free-standing layer has no physical "up", so the descriptor is averaged over the two
+  faces unless the spec says `oriented`; an oriented spec keeps the file's own up (the third
+  lattice vector) and tells a Janus layer from its mirror image.
+
+`centre_layer` gathers a layer that a database file leaves split across the cell boundary.
+The images of the periodic overlap kernel (`image_translations`) read the same flags, so
+a layer is never compared with its own copy across the vacuum.
+
 ASE is needed for the neighbour list and to read structure files; pymatgen is needed for the
 oxidation-state guess, the electronegativities and the reading of partial occupancies and
 nothing else.  Both are imported lazily, so that the rest of the program does not depend on
@@ -10282,12 +10331,27 @@ Attributes:
 - `background: bool` = `True`
 - `taper: float` = `2.0`
 - `chirality: bool` = `False`
+- `z_max: float` = `0.0`
+- `z_step: float` = `1.0`
+- `z_sigma: float` = `0.0`
+- `oriented: bool` = `False`
 
 #### `PeriodicSpec.d_max` -> float  (property)
+
+#### `PeriodicSpec.has_heights` -> bool  (property)
+
+#### `PeriodicSpec.heights` -> np.ndarray  (property)
+
+The height channels, symmetric about the mean plane; one channel at 0 without them.
+
+#### `PeriodicSpec.height_sigma` -> float  (property)
 
 #### `PeriodicSpec.centres` -> np.ndarray  (property)
 
 #### `PeriodicSpec.n_bins` -> int  (property)
+
+Channels per pair of field types: the distances, times the heights squared for a
+layer with height channels.
 
 #### `PeriodicSpec.window(r: np.ndarray) -> np.ndarray`
 
@@ -10299,6 +10363,12 @@ Attributes:
 
 The pair count a uniform distribution of unit density puts into each channel.  It depends
 on the grid, the width and the window only, so it is computed once per spec.
+
+#### `PeriodicSpec.ring_integral(n_points: int=4000) -> np.ndarray`
+
+`∫ 2π ρ exp(-(ρ - d_k)² / 2σ²) w(ρ) dρ` for every channel: the in-plane analogue of
+the shell integral, the pair count a unit density spread over a plane puts into each
+channel of the in-plane distance.
 
 ### `class CrystalFields  (dataclass)`
 
@@ -10337,7 +10407,40 @@ Attributes:
 
 #### `CrystalFields.volume` -> float  (property)
 
+#### `CrystalFields.n_periodic` -> int  (property)
+
+How many lattice directions are periodic: 3 for a crystal, 2 for a layer, 1 for a
+chain, 0 for a molecule in a box.
+
+#### `CrystalFields.measure` -> Optional[float]  (property)
+
+The size of the cell along its periodic directions: the volume of a crystal, the area
+of a layer, the repeat length of a chain; None for a structure with no periodic
+direction, which has no uniform background to remove.
+
 #### `CrystalFields.to_atoms()`
+
+### `periodic_measure(cell, pbc) -> Optional[float]`
+
+The volume, area or repeat length of a cell along its periodic directions; None when
+no direction is periodic.
+
+### `layer_normal(cell, pbc) -> np.ndarray`
+
+The unit normal of a structure periodic in two directions, pointing along the
+non-periodic lattice vector: the file's own "up".
+
+### `centre_layer(atoms)`
+
+A copy of `atoms` with the structure gathered and centred along every non-periodic
+lattice direction.
+
+A layer read from a database may sit across the cell boundary along the normal, one part at
+the bottom of the cell and the rest at the top, which breaks the heights and the neighbour
+list of an open direction.  Along each non-periodic direction the atoms are shifted so that
+the widest empty gap of the fractional coordinate, taken around the cycle, straddles the
+boundary, and the structure sits at the middle of the cell.  A structure periodic in every
+direction is returned unchanged.
 
 ### `periodic_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec=PeriodicSpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None) -> np.ndarray`
 
@@ -10354,6 +10457,40 @@ volume and I_k the shell integral of the spec.  The sum runs over ordered pairs,
 different field types is counted in both orders, as the molecular descriptor counts it; the
 background of such a pair is accordingly 2 S_f S_g / V * I_k.
 
+For a structure periodic in fewer than three directions the pair sum is the same (the
+neighbour list respects the periodicity flags) and the background is the one of a uniform
+spread over the periodic directions alone,
+`(1/M) sum_{l,m} w_lf w_mg J_k(h_lm)`, with M the area or repeat length of the cell, h_lm
+the separation of the pair across the non-periodic directions and J_k the ring or axis
+integral of `_background_profile`; it reduces to the form above for a crystal.  With
+height channels in the spec (`z_max > 0`) a layer gets `slab_autocorrelation`.
+
+### `slab_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec, pairs: Optional[Sequence[Tuple[int, int]]]=None) -> np.ndarray`
+
+The descriptor of a layer resolved by height: (n_pairs * n_rho * n_z * n_z,) flattened.
+
+For a pair of field types (f, g), an in-plane distance channel rho_k and two height
+channels z_a, z_b,
+
+    Phi_fg(rho_k, z_a, z_b) = (1/N) [ sum_l sum_{m: rho_lm < r_max} w_lf w_mg
+                                          exp(-(rho_lm - rho_k)^2 / 2 sigma^2) w(rho_lm)
+                                          Z_a(z_l) Z_b(z_m)
+                                    - (R_k / A) sum_l w_lf Z_a(z_l) sum_m w_mg Z_b(z_m) ],
+
+with rho_lm the in-plane distance of atom l to atom or image m, z_l the height of atom l
+above the mean plane of the layer, Z_a a Gaussian of width `height_sigma` about the
+height channel z_a, R_k the ring integral of the spec and A the area of the cell.  The
+background is exact: a uniform spread over the plane puts 2 pi rho d rho / A pairs at every
+in-plane distance whatever the heights.  A pair of different field types is summed in both
+orders, f at z_a with g at z_b and g at z_a with f at z_b, as the surface kernel of
+`invariant.py` sums it; the l = m terms are kept where `include_self` is set; a
+disordered site enters with its second moments as in `periodic_autocorrelation`.
+Unless the spec is `oriented` the result is the mean over the two faces of the layer,
+which is the same descriptor with both height axes reversed.  It is invariant to the
+choice of cell, origin and in-plane rotation, to the vacuum and to a shift of the layer
+along the normal, and it carries strictly more than the distance descriptor: the distance
+is a function of the in-plane distance and the two heights.
+
 ### `periodic_feature_matrix(crystals: Sequence[CrystalFields], spec: PeriodicSpec=PeriodicSpec(), n_fields: Optional[int]=None, progress=None) -> np.ndarray`
 
 Periodic autocorrelation features of a set of structures, one row each.
@@ -10362,15 +10499,18 @@ Periodic autocorrelation features of a set of structures, one row each.
 
 ### `periodic_channel_labels(fieldset: FieldSet, spec: PeriodicSpec) -> List[str]`
 
-One label per feature: which pair of field types, at which distance.
+One label per feature: which pair of field types, at which distance; for a layer with
+height channels, at which in-plane distance and which two heights.
 
-### `image_translations(cell: np.ndarray, r_max: float) -> np.ndarray`
+### `image_translations(cell: np.ndarray, r_max: float, pbc: Sequence[bool]=(True, True, True)) -> np.ndarray`
 
 Every lattice translation that can bring an atom of the cell within `r_max` of the cell.
 
 The bound is the perpendicular width of the cell along each axis: a translation further than
 `r_max` plus the cell's own diameter cannot reach it.  The translations are generated, not
-searched, and `cell_images` then drops the ones whose atoms stay too far away.
+searched, and `cell_images` then drops the ones whose atoms stay too far away.  No
+translation is made along a direction that is not periodic (`pbc`), so a layer is never
+paired with its own copy across the vacuum.
 
 ### `cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
 
