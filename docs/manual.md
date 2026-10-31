@@ -1157,7 +1157,7 @@ together +0.762.
 
 Where the stage does pay is a property that *is* electronic. On the 95 substituents of the Hammett
 series (`benchmarks/results/hammett/table.md`) Hirshfeld charges in place of the Gasteiger ones
-take q² for sigma-meta from 0.70 to 0.75, and to 0.79 once the charges are symmetrised over the
+take q² for sigma-meta from 0.70 to 0.76, and to 0.79 once the charges are symmetrised over the
 equivalent positions. A substituent constant is a statement about resonance, and resonance is what
 a Gasteiger charge does not know. Spend the hours where the activity is electronic; on an
 adsorption potency the five ordinary fields already carry what there is.
@@ -4206,6 +4206,133 @@ Two cautions. Use cosine-normalised kernels, or the leading components follow mo
 CMF kernel between molecules that share no frame is meaningless, so a map spanning several series
 would partly be showing alignment quality — unless you use the pose-free count kernel of
 *Working without an alignment*, which separates three targets' ligands cleanly with no alignment at all.
+
+## The pre-image kernel PCA lacks: a decoder of pseudo-atoms
+
+The map above runs kernel PCA on the CMF kernel, which is functional principal component
+analysis of the fields. It can place a molecule and it can reconstruct a field -- but the
+reconstruction is a weighted sum of training fields. That sum can be drawn on a grid, and it is
+not a set of atoms: nothing can be sampled from it, and no design step can take it as a target.
+Plan item E11 adds a decoder whose output *is* a set of atoms.
+
+**The three pieces** (`cmfqsar.fieldae`, PyTorch, `pip install -e .[fieldae]`):
+
+| piece | what it is |
+|---|---|
+| encoder | a molecule to a code of a few dimensions. Its input is the whitened kernel against a few hundred landmarks, the feature vector of *Fitting in the space of the landmarks*, so it sees a molecule exactly as the kernel does: no grid, no atom order, no fixed atom count |
+| decoder | a code to a fixed number of **pseudo-atoms**, each with a position and one weight per field. That is the form every other field in this program has, so a decoded field goes straight into the overlap kernel, a co-field reader or a matcher |
+| loss | the squared distance between the two fields in the field Hilbert space, `k(f,f) - 2 k(f,f') + k(f',f')` |
+
+All three terms of the loss are sums of overlap integrals of atom-centred Gaussians -- the same
+closed form as every kernel in this manual -- so the loss is exact and differentiable in the
+positions and the weights of the pseudo-atoms, and **no grid enters the training**. The
+derivative comes from automatic differentiation of that formula, and the test suite holds it to
+central finite differences of the ordinary NumPy kernel, which stays the reference.
+
+**The activity model does not change.** The autoencoder is never the regressor. A code that
+enters a prediction enters it as one more kernel view, so the model stays a kernel model and the
+co-field, the Shapley values and every interpretation tool are untouched. This is why the item is
+not the convolutional network that the plan's *What is not planned* excludes: there a grid
+replaces the kernel and a network replaces the model, while here the loss *is* the closed-form
+kernel.
+
+```python
+from cmfqsar import fieldae
+
+geom = fieldae.geometry(fieldset, scale=fieldae.field_scales(table, fieldset))
+tens = fieldae.tensors(table, fieldset, geom)
+feats, low = fieldae.landmark_features(table, fieldset, n_landmarks=256)
+ae = fieldae.FieldAutoencoder(geom, feats.shape[1], code=8, n_pseudo=32)
+fieldae.fit(ae, feats, tens, train_rows, valid_rows)
+print(fieldae.relative_errors(ae, feats, tens, test_rows).mean())
+mf = ae.pre_image(ae.codes(feats[[0]])[0])      # the field as a set of atoms
+fieldae.export_decoded("decoded.cube", mf, geom, f=0)
+```
+
+**Measured on 8,678 molecules.** The item cannot be judged on a series of thirty, where kernel PCA
+has as many components as it needs and any network is underdetermined, so the measurement is on
+COMPAS-1D: the polybenzenoid hydrocarbons of *A frame by rule*, with the field set, the
+attenuations, the field scaling and the random0 split of the model of record there -- 6,942
+training, 868 validation and 868 held-out molecules. The closed-form self-overlap of this module
+agrees with the diagonal of that benchmark's stored kernel to 7e-08 relative over all 8,678
+molecules, which is the precision of the stored kernel and not of the formula.
+
+The first gate of the item is a stopping rule: if the nonlinear decoder cannot reconstruct better
+than kernel PCA with the same number of latent dimensions, there is nothing to use.
+(`benchmarks/results/fieldae/table.md`, relative reconstruction error `||f - f'|| / ||f||` on the
+held-out part, 32 pseudo-atoms; lower is better.)
+
+| latent dimensions | the decoder | kernel PCA | the decoder gains |
+|---:|---:|---:|---:|
+| 2 | **0.291** | 0.340 | 0.049 |
+| 4 | **0.217** | 0.285 | 0.068 |
+| 8 | **0.132** | 0.216 | 0.083 |
+| 16 | **0.083** | 0.145 | 0.062 |
+| 32 | **0.070** | 0.082 | 0.012 |
+
+**The gate passes at every width, and the margin says why.** The decoder is ahead everywhere, by
+most at eight dimensions, and by least at thirty-two, where kernel PCA has enough components to
+describe the set almost as well. The comparison is not even, and the unevenness favours kernel
+PCA: it gets the training mean for free on top of its components, and its reconstruction need not
+be a set of atoms. That a few dozen pseudo-atoms beat it is the result the item was asking for.
+
+**Where the limit is: the floor.** Fitting pseudo-atoms to one molecule directly, with no code in
+between (`fieldae.fit_pseudo_atoms`), gives the best that that many pseudo-atoms can do on a
+field of this set. It separates the two ways a decoder can fail.
+
+| pseudo-atoms | the floor | the decoder at code 8 | what limits it |
+|---:|---:|---:|---|
+| 8 | 0.188 | 0.200 | the pseudo-atoms: the decoder is already at the floor |
+| 16 | 0.092 | 0.147 | both |
+| 32 | 0.043 | 0.132 | the code |
+| 64 | 0.073 | 0.136 | neither: the direct fit itself stops improving |
+
+With eight pseudo-atoms the decoder is within 0.012 of what eight pseudo-atoms can represent at
+all, so nothing is left for a wider code to find; with thirty-two the floor is three times lower
+than the decoder reaches, so the code of eight is the bottleneck. Beyond thirty-two the direct
+fit stops improving as well, which is the optimiser and not the representation: a field of
+fifty-six atoms is described by about thirty pseudo-atoms, and more of them collapse onto each
+other (`fieldae.min_pseudo_distance` reports that, and a repulsion term keeps it in check).
+
+**Where the reconstruction fails, and why.** The figure
+`benchmarks/results/fieldae/decoded.png` draws the ring field of a held-out molecule beside the
+field its code decodes to. For the median molecule the two are the same picture. The worst case
+of the whole held-out part is **benzene**, at a relative error of 1.68 -- the one molecule of one
+ring in a part where 652 of 868 molecules have ten. A decoder has a fixed number of pseudo-atoms
+and places thirty-two of them around a single ring, which is far more than that field needs.
+Among the sizes the set is actually made of the error is steady and rises only mildly with size
+(0.09 at seven rings, 0.14 at ten; rank correlation with the number of rings +0.25). A set with
+one extreme outlier in size will have that outlier as its worst reconstruction.
+
+**The second gate fails, and the failure is the informative half.** Item E11 also asks whether
+the reconstruction error is a good applicability-domain score: whether a molecule the decoder
+reconstructs badly is one the model predicts badly. Scored against the errors the model of
+record actually made on the held-out part, under the protocol of *Three estimates of the error,
+compared*:
+
+| estimate | rank correlation with the error | risk-coverage efficiency |
+|---|---:|---:|
+| distance to the centre of the training set | **+0.120** | **+0.566** |
+| one-class SVM | +0.052 | +0.531 |
+| distance from the principal subspace (kernel PCA) | +0.001 | +0.519 |
+| distance to the fifth nearest training molecule | +0.061 | +0.507 |
+| one-class Gaussian process | +0.050 | +0.497 |
+| **the autoencoder's reconstruction error** | **-0.059** | +0.467 |
+
+The reconstruction error is the worst of the seven, and its rank correlation is slightly
+negative. The reason is the same property that makes the decoder win gate (a): it is trained to
+reconstruct *every* molecule in the field space, and a nonlinear decoder generalises that ability
+to molecules unlike the training set, so a good reconstruction stops being evidence of being
+near the training set. A one-class score measures that distance and nothing else, and on this
+task even the best of them is weak (rank correlation +0.120, and the efficiency of the five is
+between 0.50 and 0.57 where 0.5 is no better than ignoring the estimate). **Use the one-class
+scores for the applicability domain; use the decoder for the pre-image.**
+
+What the construction is for, then: a decoded field is a target a design step can aim at.
+`pre_image` returns one as ordinary `MoleculeFields`, `export_decoded` writes it as a cube file
+for the viewer, and `sample` draws codes around the training codes and decodes them -- which is a
+hypothesis field, not a molecule, and this manual labels it as such. The variational form that
+would make that sampling principled is version (iii) of the item and is not built.
 
 # Classification and virtual screening
 

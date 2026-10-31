@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty-one subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `hops`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1618 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `hops`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1645 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -1928,6 +1928,65 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   pseudo-atom where no atom could stand, inside another, and the design use of (iii) must filter
   such fields before matching. The whole item depends on PyTorch, which is the first such
   dependency in the library and must stay optional.
+  **Version (i) built and measured 31 October 2026, and gate (a) passes at every width, which is
+  what keeps the item open.** `cmfqsar/fieldae.py`: `FieldGeometry` and `geometry` (what the
+  closed-form overlap needs to know about a field set), `overlap` (the Gaussian pair overlap of
+  `kernels.py` written for PyTorch tensors, grouped by width exactly as `atom_kernel_block`
+  groups it), `FieldTensors`/`tensors` (every molecule as padded arrays -- a padded atom carries
+  zero weight and a zero-weight atom contributes nothing, so a batch of molecules of different
+  size needs no mask), `LandmarkEncoder`, `PseudoAtomDecoder` (positions as `box * tanh`, so a
+  pseudo-atom cannot leave the frame), `FieldAutoencoder` with `codes`, `pre_image` and `sample`,
+  `fit`, `relative_errors`, `fit_pseudo_atoms` (the floor), `kpca_errors` (what it is compared
+  with), `decoded_volume` and `export_decoded` (the grid export the item asks for, through the
+  cube writer `cofields.py` already had). PyTorch is optional in the way Numba is: the module
+  imports without it, `fieldae.available()` is false, and `pyproject.toml` carries a `fieldae`
+  extra.
+  **The measurement** (`benchmarks/run_fieldae.py`, `results/fieldae/table.md`): COMPAS-1D with
+  the field set, attenuations, field scaling and random0 split of the model of record of
+  `run_compas.py` (6,942 / 868 / 868). The module's closed-form self-overlap agrees with the
+  diagonal of that benchmark's stored kernel to 7e-08 relative over all 8,678 molecules, which is
+  the precision of the stored float32 kernel. Gate (a), the relative reconstruction error on the
+  held-out part at 32 pseudo-atoms, decoder against kernel PCA at the same number of latent
+  dimensions: **2 dimensions 0.291 against 0.340; 4: 0.217 against 0.285; 8: 0.132 against 0.216;
+  16: 0.083 against 0.145; 32: 0.070 against 0.082.** The decoder is ahead at every width, by
+  most at eight, by least at thirty-two where kernel PCA has components enough; and the
+  comparison favours kernel PCA, which gets the training mean free on top of its components and
+  need not produce atoms.
+  **The floor, which the item did not ask for and the gate cannot be read without.**
+  `fit_pseudo_atoms` fits pseudo-atoms to one molecule directly, with no code: 8 pseudo-atoms
+  reach 0.188, 16 reach 0.092, 32 reach 0.043 and 64 reach 0.073 on 40 held-out molecules of 56
+  atoms. So at 8 pseudo-atoms the decoder (0.200) is at the floor and the pseudo-atoms are the
+  limit; at 32 (0.132 against 0.043) the code is the limit; and beyond 32 the direct fit itself
+  stops improving, which is the optimiser, not the representation -- the risk the item names
+  about pseudo-atoms collapsing, for which `min_pseudo_distance` is the diagnostic and the
+  repulsion term of `_repulsion` the remedy.
+  **Gate (b) fails, and it is the more informative of the two.** The reconstruction error as an
+  applicability-domain score, against the five one-class scores of `cmfqsar/oneclass.py` under
+  the protocol of E5 (`cmfqsar/errorpred.py`), scored on the errors the model of record of
+  `run_compas.py` made on its own held-out part (R2 +0.593, RMSE 0.263 eV): rank correlation
+  **-0.059** for the autoencoder against +0.120 for the distance to the centre of the training
+  set, +0.061 for the fifth nearest neighbour, +0.052 for the 1-SVM, +0.050 for the one-class
+  Gaussian process and +0.001 for the kernel PCA distance; risk-coverage efficiency 0.467 against
+  0.566 for the best. The autoencoder is last of the seven. The explanation is the property that
+  wins gate (a): the decoder is trained to reconstruct every molecule of the field space and a
+  nonlinear decoder generalises that to molecules unlike the training set, so reconstructing well
+  stops being evidence of being near it. Note also that on this task every estimate is weak --
+  the best rank correlation is +0.120 and the efficiencies lie between 0.50 and 0.57 -- so what
+  the gate establishes is an ordering, not that any of them works well.
+  **What the worst case is.** The single worst reconstruction of the held-out part is benzene, at
+  a relative error of 1.68: the one molecule of one ring where 652 of the 868 have ten. The
+  number of pseudo-atoms is fixed, so a molecule far smaller than the set gets many more of them
+  than its field needs. Within the sizes the set is made of the error is steady and grows mildly
+  (0.09 at seven rings, 0.14 at ten, rank correlation with the ring count +0.25). A decoder whose
+  pseudo-atom count follows the size of the molecule is the obvious remedy and is not built.
+  **Not done:** versions (ii) denoising, (iii) variational and (iv) semi-supervised, so gates (c)
+  and (d) are not approached and `sample` draws from a Gaussian fitted to the training codes
+  rather than from a variational prior -- it is the pre-image entry point the design items need
+  and is labelled as what it is; no subcommand and no panel, which rule 5 now allows since gate
+  (a) passes; the loss is minimised in single precision, which is reliable while the relative
+  error is above about 1e-3 (two orders of magnitude below anything measured here) and would
+  need double precision below that; and continuous integration does not exercise the module,
+  because installing PyTorch there costs a large download for one optional module.
 
 ## F. Interpretation (months 4 to 9)
 

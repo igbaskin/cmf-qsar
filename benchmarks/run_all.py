@@ -335,6 +335,14 @@ def registry() -> List[Benchmark]:
                   minutes="25",
                   report=lambda: _mod("run_lowrank").write_table(_r("lowrank")),
                   tables=["lowrank/table.md"]),
+        Benchmark("fieldae",
+                  "a decoder of pseudo-atoms against kernel PCA: can a nonlinear autoencoder "
+                  "reconstruct a molecular field, and is its error an applicability domain "
+                  "(needs PyTorch and the stored COMPAS-1D kernels of the compas benchmark)",
+                  "run_fieldae.py", "fieldae", compute=[[]],
+                  minutes="90",
+                  report=lambda: _mod("run_fieldae").report(),
+                  tables=["fieldae/table.md"]),
         Benchmark("solvent",
                   "is a ligand's water worth a field of its own",
                   "run_solvent.py", "solvent", compute=[[]],

@@ -1,0 +1,89 @@
+{
+ "aurc_oracle": 0.06295418827871814,
+ "aurc_random": 0.26304834007070754,
+ "autoencoder": {
+  "epochs": 150,
+  "test_mean": 0.1323755367826413,
+  "valid": 0.13073465736660128
+ },
+ "code": 8,
+ "n_oneclass_train": 6942,
+ "n_test": 868,
+ "n_train": 6942,
+ "pseudo": 32,
+ "r2_of_record": 0.592521200082694,
+ "r2_stored": 0.592521200082694,
+ "rmse_of_record": 0.26304834007070754,
+ "scores": [
+  {
+   "constant": false,
+   "efficiency": 0.5658938039999659,
+   "kendall": 0.07894163357942799,
+   "name": "Distance to the centre of the actives (similarity ensemble)",
+   "rmse_doubted": 0.34191540357831396,
+   "rmse_trusted": 0.14656983053748773,
+   "spearman": 0.11977128092455158
+  },
+  {
+   "constant": false,
+   "efficiency": 0.5307080399178982,
+   "kendall": 0.03544719595618134,
+   "name": "One-class SVM (1-SVM)",
+   "rmse_doubted": 0.33794245448631016,
+   "rmse_trusted": 0.15551127252928446,
+   "spearman": 0.051769787207314844
+  },
+  {
+   "constant": false,
+   "efficiency": 0.5186121216200774,
+   "kendall": 0.0008398046125471062,
+   "name": "Distance from the principal subspace (kernel PCA)",
+   "rmse_doubted": 0.33736491815314124,
+   "rmse_trusted": 0.15676023228942193,
+   "spearman": 0.001264257578182759
+  },
+  {
+   "constant": false,
+   "efficiency": 0.5066763357039633,
+   "kendall": 0.041905187122287246,
+   "name": "Distance to the k-th nearest active",
+   "rmse_doubted": 0.33905746973770473,
+   "rmse_trusted": 0.15306498829900528,
+   "spearman": 0.06108274829071821
+  },
+  {
+   "constant": false,
+   "efficiency": 0.4967943382170767,
+   "kendall": 0.032773640765604156,
+   "name": "One-class Gaussian process",
+   "rmse_doubted": 0.3364612351781224,
+   "rmse_trusted": 0.15869056572563292,
+   "spearman": 0.049987782030095754
+  },
+  {
+   "constant": false,
+   "efficiency": 0.4672696685972405,
+   "kendall": -0.03917316452197578,
+   "name": "field autoencoder, relative",
+   "rmse_doubted": 0.332406219986025,
+   "rmse_trusted": 0.16701785336457767,
+   "spearman": -0.05941177553204776
+  },
+  {
+   "constant": false,
+   "efficiency": 0.4657122223497066,
+   "kendall": -0.03651555498859886,
+   "name": "field autoencoder, absolute",
+   "rmse_doubted": 0.33292717974515607,
+   "rmse_trusted": 0.16597696049405697,
+   "spearman": -0.055624122289281853
+  }
+ ],
+ "seconds": {
+  "ocgp": 5.354959487915039,
+  "ocknn": 0.494922399520874,
+  "ockpca": 24.318798303604126,
+  "ocmean": 0.0314183235168457,
+  "ocsvm": 0.6145064830780029
+ }
+}

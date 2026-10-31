@@ -1,0 +1,57 @@
+{
+ "alphas": {
+  "A": 0.5,
+  "B": 0.1,
+  "C": 0.1,
+  "D": 0.1
+ },
+ "atoms": 637387,
+ "box": [
+  14.223330000000002,
+  10.312940000000001,
+  5.53751
+ ],
+ "cache": "C:\\Users\\baski\\work\\claude\\cmf\\benchmarks\\cache\\fieldae\\1D_ABCD.npz",
+ "features": [
+  8678,
+  1915
+ ],
+ "fields": [
+  "steric",
+  "prop:q_xtb",
+  "cif:C.H",
+  "cif:C.2r",
+  "ring:terminal",
+  "ring:linear",
+  "ring:angular",
+  "ring:branched"
+ ],
+ "groups": "ABCD",
+ "landmark_atoms": 256,
+ "landmarks": 1915,
+ "max_atoms": 76,
+ "n_molecules": 8678,
+ "scale": [
+  0.0016757698145923006,
+  2.099875095637924,
+  2.772355937994859e-05,
+  3.389453575442191e-05,
+  0.0013847542870446654,
+  0.0015646367780533677,
+  0.0005427893818364879,
+  0.004626925567938223
+ ],
+ "seconds": 37.68489646911621,
+ "self_overlap_vs_stored_kernel": 7.19075319464153e-08,
+ "set": "1D",
+ "weight_scale": [
+  0.107,
+  0.0430746582,
+  1.0,
+  1.0,
+  1.0,
+  1.0,
+  1.0,
+  1.0
+ ]
+}

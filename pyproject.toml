@@ -53,8 +53,13 @@ fast = ["numba>=0.59"]
 # Either reader will do and the module checks which is there; MDAnalysis also carries the
 # force-field charges of a topology, which mdtraj does not.
 md = ["mdtraj>=1.9"]
+# cmfqsar/fieldae.py: the field autoencoder, whose decoder is trained by gradient descent on the
+# closed-form field distance.  Without it the module imports, `fieldae.available()` is false and
+# nothing else in the program changes: no model and no kernel needs it.  The processor build is
+# enough -- the networks are small and the batches are a few hundred atoms.
+fieldae = ["torch>=2.0"]
 # everything, for a working checkout
-all = ["cmfqsar[gui,docs,tutorials,dev,examples,crystals,fast,md]"]
+all = ["cmfqsar[gui,docs,tutorials,dev,examples,crystals,fast,md,fieldae]"]
 
 [project.scripts]
 cmf = "cmfqsar.cli:main"

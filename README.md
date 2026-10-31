@@ -1571,6 +1571,34 @@ which is a warning about that data set, and agrees with what the alignment-free 
 about it elsewhere. Use them to *test* a model rather than to improve it: if adding them changes
 nothing, the geometry is carrying the model; if they take it over, the 3D part contributed nothing.
 
+### A pre-image for kernel PCA: a decoder of pseudo-atoms
+
+Kernel PCA on the CMF kernel reconstructs a field as a weighted sum of training fields, which can be
+drawn and is not a set of atoms. `cmfqsar.fieldae` (plan item E11, PyTorch optional) trains a decoder
+whose output is a fixed number of **pseudo-atoms**, each with a position and one weight per field, on
+the closed-form field distance `k(f,f) - 2 k(f,f') + k(f',f')`: the loss is exact, differentiable in
+the pseudo-atoms, and uses no grid. On the 8,678 molecules of COMPAS-1D, held-out relative
+reconstruction error `||f - f'||/||f||` with 32 pseudo-atoms against kernel PCA at the same number of
+latent dimensions (`benchmarks/results/fieldae/table.md`):
+
+| latent dimensions | 2 | 4 | 8 | 16 | 32 |
+|---|---:|---:|---:|---:|---:|
+| the decoder | **0.291** | **0.217** | **0.132** | **0.083** | **0.070** |
+| kernel PCA | 0.340 | 0.285 | 0.216 | 0.145 | 0.082 |
+
+The decoder wins at every width, by most at eight dimensions. Fitting pseudo-atoms to one molecule
+directly says what limits it: with 8 pseudo-atoms the decoder is at that floor (0.200 against 0.188),
+with 32 it is far above it (0.132 against 0.043), so there the code and not the representation is the
+bottleneck. The activity model is untouched -- a code enters a prediction as one more kernel -- and
+the decoded field is a target a design step can aim at, exported as a cube file for the viewer.
+
+The item's second gate **fails**, and that is the useful half: as an applicability-domain score the
+reconstruction error is the worst of seven (rank correlation with the model's actual errors -0.059
+against +0.120 for the plain distance to the centre of the training set). The property that wins
+gate (a) is what loses gate (b) -- a decoder trained to reconstruct every field generalises that to
+molecules unlike the training set, so reconstructing well stops meaning being near it. Use the
+one-class scores of `cmfqsar.oneclass` for the domain and the decoder for the pre-image.
+
 ### GRID-like probe fields
 
 *Probe fields* (`--probes water,carbonyl`) add a field per probe: what a water, methyl, carbonyl

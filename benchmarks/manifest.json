@@ -1,6 +1,6 @@
 {
- "commit": "57694abd0467cca35c340c8909fdb00ba3136dd7",
- "created": "2026-10-31T13:05:55",
+ "commit": "4afd8b07ed2223696f34b64d4de04b3bb05205ac",
+ "created": "2026-10-31T19:54:19",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2129,6 +2129,12 @@
   "benchmarks/results/fe110/cofields_quinoline.png": "c33c6f8432c9d744bbbf44748fd71cbbda5f95ed9367730e8110f39035a120f4",
   "benchmarks/results/fe110/quinoline.json": "42b978b78b99741229afd40781652cd87150c40429b6b47740c32986d28e629d",
   "benchmarks/results/fe110/table.md": "a242a6bc7ecfc6cc8729e71ee6f053532dde25780db5092c03ac1fa2dde01a58",
+  "benchmarks/results/fieldae/decoded.png": "daf6a8545891978a17a1c5beb700ad9685f2c3e975a918a5ef808eaabb255058",
+  "benchmarks/results/fieldae/floor.json": "a0035fe6610b2fb8fe1a6644b1f5a54ade3da231deadbe651ed67a8568d18bc8",
+  "benchmarks/results/fieldae/gate_a.json": "29107642575cd62899b73da906635d41c06b9d5ce57117ad4d600b89244c7954",
+  "benchmarks/results/fieldae/gate_b.json": "3ff05b97209ff69492cc79524809b218bf4fe2ed774a4806298383c6d9cb52af",
+  "benchmarks/results/fieldae/prepared.json": "8cfcef0694a907fd8d8bf534ce282561aba4ef4f553264c52930518c6d59bf1d",
+  "benchmarks/results/fieldae/table.md": "5fb96530e8a640ebd4f7a74eeb162f3764e6d9c099353eba37c2523c6828bf73",
   "benchmarks/results/fluctuation/GPB.json": "a3d43e90ca0b192ac9c0841efece7944238b97c67493a5d412bf4878d34cf74d",
   "benchmarks/results/fluctuation/THR.json": "ff89959e81b62714f93e55598e43e5c18d3dcaef8cc561b5cf02f738584771e2",
   "benchmarks/results/fluctuation/steroids.json": "f334ce7afee1517955b57b9462f59e94f6e45a9474d489e4c44266eca32b3a9f",
