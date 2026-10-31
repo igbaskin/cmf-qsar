@@ -2632,9 +2632,63 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   plot, no site colouring. It belongs to G, and it is what makes the materials side usable by
   someone other than the author. It waits for M4 and M5, which decide what there is to draw.
 
+* **M14. A vacancy series on one host lattice: the data the periodic overlap kernel needs**
+  (added 31 October 2026, out of what M4 measured). M4 built the kernel and measured it on
+  `matbench_perovskites`, where it does not beat the periodic autocorrelation, and the
+  measurement says why: that set is 18,928 *different compounds*, so it has no frame, and the
+  rescaling that gives it one takes the lattice constant -- a strong predictor of a formation
+  energy -- out of the kernel. The kernel is for a series where the frame is free, and the
+  repository has no such series with enough members. This item is that data set, and it is the
+  difference between a section of paper 14 and a paper of its own.
+  **What the series is.** One host, one supercell, one lattice: the 2x2x2 cell of beta-Li3PO4
+  that the Li3PO4/Li3BP2O8/LiBO2 interface study already relaxed (128 atoms, 48 lithium sites).
+  A trivalent cation on a lithium site -- Al3+ or Ga3+ for 3 Li+, the substitution LISICON and
+  LLZO chemistry both use -- leaves two lithium vacancies per dopant, and the configurations of
+  those two vacancies around the dopant are the series: the same lattice, the same composition,
+  a different arrangement. That is a congeneric series in the crystal sense, which is exactly
+  what the overlap kernel asks for and what the molecular side of this program has had all
+  along. The target is the total energy of the configuration, or equivalently the binding energy
+  of the vacancy pair to the dopant, which is the quantity the conductivity literature argues
+  about.
+  **How many cells, and what they cost.** Enumerate the symmetry-distinct (dopant, vacancy,
+  vacancy) configurations within about 6 A of the dopant with `pymatgen`'s enumeration, which
+  gives of the order of thirty to forty after symmetry reduction -- enough for the interval of
+  rule 4 and for leave-one-shell-out. The cost is measured, not estimated: that study's own
+  vacancy relaxations in cells of this size took **1 h 47 to 3 h 25 each** at 8 MPI ranks on this
+  desktop, about an hour each on a 32-core node, under 3 GB of memory, fixed cell, 24 to 95 ionic
+  steps (`work/claude/li-graded-interface/README.md`, section 6). Thirty-five cells is therefore
+  **two nights of this workstation with two concurrent 8-rank runners**, or a day of one node.
+  Nothing in it needs a cluster.
+  **Look for it before running it.** A public DFT-labelled defect set on one host lattice would
+  cost nothing and the plan has already noted that it could not find one for the barriers (BT7's
+  "no DFT-labelled public set" for the barriers). Check the Materials Project defect database and the published
+  LISICON and LLZO dopant studies first; run the enumeration only if none of them gives thirty
+  cells on one lattice.
+  **Needed:** a script under `examples/` that builds the cells from the relaxed host, as rule 6
+  requires, so that the series travels with the repository and not with another project; the
+  VASP runner of `cmfqsar/vasp.py`, which the hop model already uses; and the loader that turns
+  the finished cells into a `crystal_table`.
+  **Gate, four parts.** (a) The periodic overlap kernel beats the periodic autocorrelation on
+  these cells by more than the interval of rule 4 -- the half of M4's gate that the perovskites
+  could not test, now on a set with a frame. (b) The co-field inside the cell names the oxygens
+  that coordinate the vacancy and the lithium neighbours, which is M4's other half and the
+  reading the grant paragraph wants. (c) The per-site contributions of rule 3 put their largest
+  magnitudes on the sites that coordinate the vacancy, which is a check against the chemistry
+  and not against the model. (d) Leave-one-distance-shell-out: train on the configurations with
+  the vacancies near the dopant and predict the far ones, which is the extrapolation a dopant
+  study actually makes.
+  **Risks.** The configurations may be too similar to separate -- thirty-five cells of one
+  composition differing by where two vacancies sit is a narrow series, and a narrow series is
+  where a kernel method is strongest and a graph network weakest, which is the argument for the
+  paper but also the way it could fail. The relaxation moves the atoms, so the frame is only as
+  fixed as the relaxation leaves it; `periodic.overlap_asymmetry` and `lattice_spread` measure
+  that and both must be reported. And a referee will ask for the comparison with a graph network
+  on the same cells, which is a day of someone else's software and should be in the plan.
+
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
-by those three. M9 and M12 only after M6 has reported.
+by those three. M9 and M12 only after M6 has reported. M14 is the data M4 turned out to need, and
+nothing else in this part waits for it.
 
 ### Nanotechnology: the extensions a particle, a tube, a sheet and a coated surface ask for (26 October 2026)
 

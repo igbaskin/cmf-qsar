@@ -484,11 +484,33 @@ point (the slab is kept rigid), has no dispersion (the poses are docked before t
 relaxed), and its energies are learnable at q² 0.5 by the overlap kernel in the surface frame
 but say nothing about inhibition (paper 6).
 
+Added since: the **periodic overlap kernel** of item M4 and the co-field it gives inside the
+cell, which is the one thing this tier could not do before -- an autocorrelation is a distance
+distribution and cannot say *where*. Measured on 1,500 cells of `matbench_perovskites` (a second
+Matbench task, so the formation-energy row of the list below is partly answered): R² +0.479 on
+one lattice against +0.497 for the autocorrelation, +0.350 in the cells as they come. The frame
+is the whole finding -- it is worth +0.129 to the overlap kernel, nothing to the invariant one
+and -0.069 to the same overlap without the images -- and the kernel does not beat the
+autocorrelation, because giving 18,928 different compounds a common lattice takes the lattice
+constant out of the kernel. **The section this supports is "the co-field in the cell, and what a
+frame costs a set that has none"; "better" is again not the claim.** The MAE is 0.38 eV per
+five-atom cell against about 0.03 for the leaderboard, on 8 % of the set and four fields, and
+that comparison has to be stated rather than avoided.
+
 Before submission: two more Matbench tasks (formation energy and band gap are the natural ones)
-so the kernel is placed on the leaderboard rather than on one task; a DFT anchor on the
-benzimidazole structures themselves (VASP single points on eight to ten UMA geometries), since
-OC20's fragments could not supply one; a co-author from materials science for the reading of
-the co-patterns.
+so the kernel is placed on the leaderboard rather than on one task, and the perovskite task on
+the **whole** 18,928 cells rather than 1,500, since the present number cannot be compared with a
+leaderboard; a DFT anchor on the benzimidazole structures themselves (VASP single points on
+eight to ten UMA geometries), since OC20's fragments could not supply one; a co-author from
+materials science for the reading of the co-patterns.
+
+What would make the periodic overlap kernel a paper of its own rather than a section of this
+one is **item M14**: a vacancy series on one host lattice, where the frame is free and nothing
+has to be rescaled to get it. Thirty-five configurations of two lithium vacancies around a
+trivalent dopant in the 2x2x2 cell of beta-Li3PO4, at the measured cost of two nights of one
+workstation, would let the gate M4 could not test be tested -- and the co-field of a vacancy
+energy, read on the oxygens that coordinate it, is the figure the grant paragraph of the
+Li3PO4/Li3BP2O8/LiBO2 study needs anyway.
 
 ### 15. Review
 
