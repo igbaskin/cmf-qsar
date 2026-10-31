@@ -6140,6 +6140,43 @@ remedy: with the background kept, the aligned weights take the 59-field model fr
 do not make it better than the four physico-chemical fields alone. The full table and the
 co-patterns are in `benchmarks/results/matbench_phonons/table.md`.
 
+### Partial occupancy: the mean field of a disordered site
+
+A disordered site, a Li site occupied in 54 % of the cells or a site shared by Zr and Ta, is a
+configurational ensemble, and this program treats an ensemble by its mean field (plan item M2;
+the mean-map kernel of the ensembles chapter). When the sites are occupied independently of one
+another the mean field over all configurations is exact and costs nothing: the weight of every
+field at a site is the occupancy-weighted mean of the weights of the species that share it,
+
+$$
+\bar w_{f} = \sum_s p_s\, w_f(s),
+$$
+
+which is what `crystal_fields` computes when a structure carries its site species
+(`periodic.site_species`; `periodic.read_disordered` reads a CIF with partial occupancies
+through pymatgen, and `read_structures` hands such a CIF to it). The overlap kernel is bilinear
+in the fields, so the kernel of two mean fields **is** the mean of the kernel over the two
+ensembles, with nothing approximated. The periodic autocorrelation is quadratic in one field,
+and its mean over the ensemble differs from the descriptor of the mean field wherever a site
+meets itself: in the self term at zero distance, in the pairs of a site with its own periodic
+images (a site is occupied in every cell or in none) and in the uniform background. There the
+mean of a product is not the product of the means, and the second moment of each site,
+
+$$
+\overline{w_f w_g} = \sum_s p_s\, w_f(s)\, w_g(s),
+$$
+
+takes its place. `CrystalFields` carries those second moments and `periodic_autocorrelation`
+uses them, so that the descriptor is the exact mean over the configurations too, per expected
+atom of the cell. The tests enumerate every configuration of a small disordered cell and check
+both statements to 1e-10; a structure without disorder carries none of this and goes through
+the same code unchanged. The oxidation states of a fractional composition, which a refined
+structure rarely balances to the last hundredth, come from the combination of common states
+nearest to charge balance, with every known state tried when the common ones cannot balance (a
+mixed-valence titanium phosphate). What this allows is in the section on migration paths: the
+garnets, perovskites, LGPS, NASICON and LISICON of a solid-electrolyte study, whose Li
+sublattices are never fully occupied.
+
 ## An atom instead of a molecule: the local invariant kernel
 
 Every model so far predicts one number per molecule. A carbon shift, an acidity, a local
@@ -6396,6 +6433,35 @@ aromatic carbons of that section it works very well: 200 landmarks of 1225 sampl
 | 200 | 0.000 | +0.899 | 4.203 |
 | 400 | 0.000 | +0.898 | 4.231 |
 | 800 | 0.000 | +0.899 | 4.217 |
+
+**What the descriptor still lacks, measured with SOAP.** The learning curve above said the
+local model is limited by its descriptor. `benchmarks/run_soap_gate.py` asks which part is
+missing, by computing a descriptor that has it on the same carbons, with the same ridge and
+the same folds: SOAP (Smooth Overlap of Atomic Positions), the power spectrum of one Gaussian
+density per element around the atom, from the dscribe package. The autocorrelation of this
+section is a two-point quantity. It resolves the distance between two neighbours of the
+centre and not their distances from it, so the triangle the three atoms form stays open.
+SOAP at angular order 0 resolves the distances from the centre alone and is two-body as
+well; each higher order adds the angle at the centre.
+
+| descriptor | 5096 carbons, error (ppm) | 1225 aromatic carbons, error (ppm) |
+| --- | ---: | ---: |
+| atom-centred counts | 20.46 | 6.38 |
+| field autocorrelation, best envelope width | 8.82 | 5.19 |
+| posed overlap kernel (next section) | -- | 4.22 |
+| SOAP, angular order 0 | 8.15 | 4.94 |
+| SOAP, angular order 8, same density width and kernel exponent | 6.62 | 3.81 |
+| SOAP, angular order 8, best density width and kernel exponent | 5.72 | 3.50 |
+
+The two-body SOAP matches the autocorrelation (+0.004 [-0.001, +0.008] in q2 on the 5096
+carbons, bootstrapped over molecules). The angular orders are what lowers the error:
++0.008 [+0.006, +0.011] there and +0.057 [+0.045, +0.070] on the aromatic carbons. On the
+aromatic carbons the best SOAP is better than the posed overlap kernel of the next section
+(+0.031 [+0.015, +0.052]), with no frame at all. So the part the local descriptor lacks is
+the angle at the centre. A CMF form of it would resolve each neighbour pair over its two
+distances from the centre as well as the distance between them, with the field weights as
+the channels in place of the elements. That form is not built; the table is the measurement
+that says it should be.
 
 ## A co-field around one atom: the local alignment
 
@@ -6794,6 +6860,48 @@ chemistry, and the chemistry the public set has is that of the Materials Project
 cathodes. The DFT values are lower than the bond-valence ones by about 0.4 eV, as a relaxed
 vacancy hop against a rigid landscape should be, and the order of the two hops is the same in
 every column.
+
+**The disordered conductors (plan item M2).** The thirteen structures of
+`examples/hops/disordered/` are the families a solid-electrolyte study is about, read with the
+partial occupancies their refinements report: 6408 hops between sites the Li ion can
+hold, 298 distinct, 298 with a bond-valence barrier of the ordered
+framework. The public model applied as it stands gives q2 -1.075, correlation
++0.273 and an error of 1.438 eV. A model cross-validated within the set, one
+structure held out at a time, gives -0.064 for the frame kernel and +0.166
+for the counts, -0.230 [-0.886, +0.143] between them.
+
+| structure (COD) | what is disordered | hops | distinct | mean barrier (eV) | correlation with the public model | E_1D / E_2D / E_3D of the labelled network (eV) | of the public model's network |
+| --- | --- | ---: | ---: | ---: | ---: | --- | --- |
+| LLZO:Ta cubic (Li6.5La3Zr1.5Ta0.5O12) | Li sites 0.38/0.62, Zr/Ta shared | 1728 | 18 | 0.22 | -0.09 | -- | -- |
+| LLZO:Ta cubic (Li6.2La3Zr1.2Ta0.8O12) | Li sites 0.28/0.96, Zr/Ta shared | 1824 | 19 | 0.25 | -0.06 | -- | -- |
+| LLZO:Ta tetragonal | ordered | 416 | 13 | 1.53 | +0.61 | -- | -- |
+| LLTO rhombohedral (La0.5Li0.5TiO3) | Li sites 0.16 | 252 | 7 | 1.86 | -0.32 | -- | -- |
+| LLTO tetragonal (La0.56Li0.33TiO3) | La/Li shared sites | 12 | 4 | 4.00 | -0.76 | -- | -- |
+| LGPS (Li10GeP2S12) | Li sites 0.47 to 0.89, Ge/P shared | 416 | 26 | 0.40 | +0.52 | -- | -- |
+| LiTi2(PO4)3 NASICON | ordered | 0 | 0 | nan | -- | inf / inf / inf | inf / inf / inf |
+| Li3.18Ti2(PO4)3 NASICON | Li sites 0.34/0.72 | 216 | 12 | 0.62 | +0.84 | -- | -- |
+| Li2.92N | Li site 0.96 | 72 | 9 | 0.14 | +0.06 | -- | -- |
+| LISICON (Li13.7Zn1.2Ge4O16) | Li sites 0.16 to 0.98, Li/Zn shared | 416 | 55 | 0.52 | +0.23 | -- | -- |
+| Li3PO4 (Pmnb) | ordered | 144 | 18 | 0.35 | +0.69 | -- | -- |
+| beta-Li3PS4 | Li sites 0.3/0.7 | 152 | 19 | 0.39 | +0.18 | -- | -- |
+| Li3.16Zn0.24GeO4 | Li sites 0.06 to 0.92, Li/Zn shared | 760 | 98 | 0.29 | +0.50 | -- | -- |
+
+**What the table says.** The percolation thresholds of the hop network agree with those of the
+bond-valence grid wherever the Li sublattice is the disordered part: cubic LLZO 0.40 against
+0.41 eV, LGPS 0.53 to 0.59 against 0.57 to 0.60, beta-Li3PS4 0.25 to 0.40 against 0.27 to 0.42,
+Li2.92N 0.16 against 0.16, LISICON 0.45 to 0.49 against 0.47 to 0.52. That is the check that
+the hops between 1.5 and 4.5 A are the paths the landscape uses, and it holds for the
+families the item was built for. The ordered NASICON has no pair of Li sites in that window,
+because its M2 sites are empty and not in the file, so it has no hops; the tetragonal garnet
+and Li3PO4 differ from the grid because the network measures from the lowest site and the
+grid from its own minimum. The model is a different matter. The public model does not carry
+over (correlation +0.27 over all hops; +0.84 on the lithiated NASICON, +0.69 on Li3PO4, +0.52
+on LGPS, nothing on the two cubic garnets whose eighteen distinct hops span 0.1 eV), and within
+the set the frame kernel is behind the counts, inside an interval that reaches from -0.9 to
++0.1: twelve labelled structures, one of them with 98 distinct hops, and barriers up to 15 eV
+where a straight path runs through an atom, are not a set a model can be measured on. What the
+item delivers is the data model that lets these structures in, exact and at no cost; a result on
+conductors needs the DFT-labelled set the previous section asks for.
 
 ## Which atom is attacked: a site of metabolism
 

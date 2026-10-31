@@ -31,6 +31,7 @@ from cmfqsar.hops import (CENTRE_SYMBOL, Hop, HopSet, bottleneck, enumerate_hops
 from cmfqsar.invariant import autocorrelation  # noqa: E402
 from cmfqsar.localenv import LOCAL_SPEC, envelope_radius  # noqa: E402
 from cmfqsar.periodic import crystal_fields, inorganic_fieldset  # noqa: E402
+from cmfqsar.periodic import oxidation_states  # noqa: E402
 
 
 @pytest.fixture(scope="module")
@@ -429,3 +430,191 @@ def test_the_command_line_lists_the_hops_of_a_structure(tmp_path, capsys):
     text = capsys.readouterr().out
     assert "14 hops" in text and "2 distinct" in text
     assert "bottleneck" in text
+
+
+# ------------------------------------------------------------ partial occupancy (plan item M2)
+
+
+def _disordered_rocksalt(a=5.13, occ=(0.5, 0.75)):
+    """A 2 x 1 x 1 rocksalt LiCl cell whose two Li sites are partly occupied."""
+    cell = bulk("LiCl", "rocksalt", a=a).repeat((2, 1, 1))
+    species = []
+    k = 0
+    for s in cell.get_chemical_symbols():
+        if s == "Li":
+            species.append({"Li": float(occ[k])})
+            k += 1
+        else:
+            species.append({"Cl": 1.0})
+    cell.info["site_species"] = species
+    cell.set_array("occupancy", np.array([sum(d.values()) for d in species]))
+    return cell
+
+
+def _configurations(cell):
+    """Every configuration of the partly occupied sites with its probability."""
+    import itertools
+    from ase import Atoms
+    from cmfqsar.periodic import site_species
+    species = site_species(cell)
+    partial = [i for i, d in enumerate(species) if abs(sum(d.values()) - 1.0) > 1e-9 or len(d) > 1]
+    out = []
+    for choice in itertools.product(*[list(species[i].items()) + [("", 1.0 - sum(species[i].values()))]
+                                      for i in partial]):
+        p = 1.0
+        keep, symbols = [], []
+        for j, s in enumerate(cell.get_chemical_symbols()):
+            if j in partial:
+                el, prob = choice[partial.index(j)]
+                p *= prob
+                if el:
+                    keep.append(j)
+                    symbols.append(el)
+            else:
+                keep.append(j)
+                symbols.append(s)
+        if p <= 0:
+            continue
+        a = Atoms(symbols=symbols, positions=cell.get_positions()[keep], cell=cell.get_cell(),
+                  pbc=True)
+        out.append((p, a))
+    assert abs(sum(p for p, _ in out) - 1.0) < 1e-12
+    return out
+
+
+def _neutral_fieldset():
+    """The fields whose weights depend on the species alone: the exactness of the mean field is
+    a property of the kernel's bilinearity, and a charge guess that changes with the composition
+    of each configuration would hide it."""
+    return inorganic_fieldset(["Li", "Cl"], physchem=("steric", "prop:electronegativity"))
+
+
+def test_the_disordered_fields_are_the_mean_over_the_configurations(world):
+    from cmfqsar.periodic import PeriodicSpec, periodic_autocorrelation, site_species
+    fs = _neutral_fieldset()
+    cell = _disordered_rocksalt()
+    assert site_species(cell) is not None
+    c = crystal_fields(cell, fs)
+    assert c.is_disordered and c.second_moments is not None
+    li = [i for i, s in enumerate(cell.get_chemical_symbols()) if s == "Li"]
+    assert np.allclose(c.occupancy[li], [0.5, 0.75])
+    confs = _configurations(cell)
+    assert len(confs) == 4
+    # the mean field: the occupancy-weighted weights, on the sites that may be occupied
+    full = crystal_fields(bulk("LiCl", "rocksalt", a=5.13).repeat((2, 1, 1)), fs)
+    assert np.allclose(c.weights[li[0]], 0.5 * full.weights[li[0]])
+    assert np.allclose(c.weights[li[1]], 0.75 * full.weights[li[1]])
+    # the descriptor: its mean over the configurations equals the disordered descriptor exactly,
+    # which needs the second moments in the self term
+    spec = PeriodicSpec(r_max=8.0)
+    # the pair sums of the configurations, averaged, per expected atom of the cell
+    mean = sum(p * periodic_autocorrelation(crystal_fields(a, fs), spec) * len(a)
+               for p, a in confs) / float(c.occupancy.sum())
+    ours = periodic_autocorrelation(c, spec)
+    assert np.allclose(ours, mean, atol=1e-10)
+    # without the second moments the self term and the background are wrong
+    plain = crystal_fields(cell, fs)
+    plain.second_moments = None
+    assert not np.allclose(periodic_autocorrelation(plain, spec) * len(cell) / c.occupancy.sum(),
+                           mean, atol=1e-6)
+
+
+def test_the_overlap_kernel_of_the_mean_field_is_the_mean_kernel(world):
+    """The hop environment of a disordered cell against a fixed probe: the kernel of the mean
+    field equals the mean of the kernels of the configurations (the mean-map kernel)."""
+    from cmfqsar.fields import AtomTable
+    from cmfqsar.kernels import kernel_matrices
+    _fs, licl, _ = world
+    fs = _neutral_fieldset()
+    cell = _disordered_rocksalt()
+    c = crystal_fields(cell, fs)
+    centre = np.array([1.0, 0.4, -0.3])
+    probe = point_environment(crystal_fields(licl, fs), np.array([0.2, 0.1, 0.0]), rho=0.25,
+                              r_max=5.0)
+    env = point_environment(c, centre, rho=0.25, r_max=5.0)
+    K = kernel_matrices(AtomTable.from_molecules([env]), AtomTable.from_molecules([probe]),
+                        fs.specs)[:, 0, 0]
+    mean = np.zeros_like(K)
+    for p, a in _configurations(cell):
+        e = point_environment(crystal_fields(a, fs), centre, rho=0.25, r_max=5.0)
+        mean += p * kernel_matrices(AtomTable.from_molecules([e]),
+                                    AtomTable.from_molecules([probe]), fs.specs)[:, 0, 0]
+    assert np.allclose(K, mean, atol=1e-10)
+
+
+def test_an_ordered_structure_goes_through_unchanged(world):
+    from cmfqsar.periodic import PeriodicSpec, periodic_autocorrelation, site_species
+    fs, licl, _ = world
+    plain = crystal_fields(licl, fs)
+    marked = licl.copy()
+    marked.info["site_species"] = [{s: 1.0} for s in licl.get_chemical_symbols()]
+    assert site_species(marked) is None
+    c = crystal_fields(marked, fs)
+    assert not c.is_disordered and c.second_moments is None
+    assert np.allclose(c.weights, plain.weights)
+    assert np.allclose(periodic_autocorrelation(c, PeriodicSpec()),
+                       periodic_autocorrelation(plain, PeriodicSpec()))
+
+
+def test_a_cif_with_partial_occupancies_is_read_with_its_species(tmp_path, world):
+    from pymatgen.core import Lattice, Structure
+    from pymatgen.io.cif import CifWriter
+    from cmfqsar.periodic import read_disordered, read_structures, site_species
+    st = Structure(Lattice.cubic(4.0), [{"Li": 0.5}, {"La": 0.3, "Li": 0.2}, "O"],
+                   [[0, 0, 0], [0.5, 0.5, 0.5], [0.5, 0, 0]])
+    path = str(tmp_path / "dis.cif")
+    CifWriter(st).write_file(path)
+    atoms = read_disordered(path)
+    sp = site_species(atoms)
+    assert sp is not None and len(sp) == 3
+    assert sp[0] == {"Li": 0.5} and abs(sp[1]["La"] - 0.3) < 1e-9 and sp[2] == {"O": 1.0}
+    assert atoms.get_chemical_symbols()[1] == "La"           # the majority species
+    assert np.allclose(atoms.arrays["occupancy"], [0.5, 0.5, 1.0])
+    back = read_structures(path)
+    assert site_species(back[0]) is not None
+
+
+def test_hops_start_from_every_site_the_mobile_ion_can_hold(world):
+    from cmfqsar.hops import mobile_occupancy
+    fs, _, _ = world
+    cell = _disordered_rocksalt()
+    occ = mobile_occupancy(cell, "Li")
+    assert np.allclose(sorted(occ[occ > 0]), [0.5, 0.75])
+    hops = enumerate_hops(cell, "Li")
+    assert hops and all(h.occupancy_a > 0 and h.occupancy_b > 0 for h in hops)
+    assert {round(h.occupancy_a, 2) for h in hops} == {0.5, 0.75}
+    hs = HopSet.build([cell], ["dis"], "Li")
+    reps = hs.annotate(hs.crystals(fs))
+    # a hop from the half-filled site and one from the three-quarter-filled site are different
+    assert len({round(hs.hops[r].occupancy_a, 2) for r in reps}) == 2
+    assert "partial occupancies" in hs.describe()
+    r = hops[0].reversed()
+    assert (r.occupancy_a, r.occupancy_b) == (hops[0].occupancy_b, hops[0].occupancy_a)
+
+
+def test_the_bond_valence_landscape_of_a_disordered_sublattice(world):
+    pytest.importorskip("bvlain")
+    from cmfqsar.hops import bvse_barriers
+    fs, _, _ = world
+    cell = _disordered_rocksalt()
+    hs = HopSet.build([cell], ["dis"], "Li")
+    reps = hs.annotate(hs.crystals(fs))
+    bvse_barriers(hs, rows=reps, resolution=0.3, grid_percolation=False,
+                  oxidation={"Li": 1.0, "Cl": -1.0})
+    assert all(np.isfinite(hs.hops[r].y) and hs.hops[r].y > 0 for r in reps)
+
+
+def test_the_electrostatic_weight_of_a_partly_occupied_site_is_its_share_of_the_charge(world):
+    from cmfqsar.periodic import oxidation_states, composition_of
+    fs, _, _ = world
+    cell = _disordered_rocksalt(occ=(0.5, 0.5))          # Li1Cl2: not neutral, the balance guess
+    comp = composition_of(cell)                           # refuses and the proxy takes over
+    assert oxidation_states(cell.get_chemical_symbols(), comp) is None
+    cell = _disordered_rocksalt(occ=(0.5, 0.5))
+    cell.info["site_species"][1] = {"Cl": 0.5}            # Li1Cl1.5: within a tenth, Li +1 Cl -1
+    cell.info["site_species"][3] = {"Cl": 0.5}
+    comp = composition_of(cell)
+    assert oxidation_states(cell.get_chemical_symbols(), comp) == {"Cl": -1.0, "Li": 1.0}
+    c = crystal_fields(cell, fs)
+    li = [i for i, s in enumerate(cell.get_chemical_symbols()) if s == "Li"]
+    assert np.allclose(c.weights[li, 0], 0.5)              # half an ion: half a charge

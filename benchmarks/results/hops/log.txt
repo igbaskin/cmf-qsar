@@ -26,3 +26,29 @@
   counts about the midpoint: q2 -0.115, error 0.190, mean absolute error 0.158 over 48 atoms in 3 molecules, 3 folds, ridge 1
   phosphate       34 ->   0 (2.98 A): DFT 0.287, bond-valence 0.732, predicted 0.798 eV
   borophosphate   18 ->   8 (2.64 A): DFT 0.003, bond-valence 0.393, predicted 0.561 eV
+
+rebuilding the public model at rho 0.25 on 1732 hops (ridge 0.01)
+1040 hops of Li in 3 structures (144 to 640 per structure), 1040 distinct by symmetry, 1040 with a barrier
+  transfer of the public model to the hosts' 48 distinct hops: q2 -1.415, error 0.279 eV, r +0.683
+  rotation-averaged overlap, leave one host out: q2 -0.120, error 0.190, mean absolute error 0.158 over 48 atoms in 3 molecules, 3 folds, ridge 1
+  counts about the midpoint: q2 -0.115, error 0.190, mean absolute error 0.158 over 48 atoms in 3 molecules, 3 folds, ridge 1
+  phosphate       34 ->   0 (2.98 A): DFT 0.287, bond-valence 0.732, predicted 0.798 eV
+  borophosphate   18 ->   8 (2.64 A): DFT 0.003, bond-valence 0.393, predicted 0.561 eV
+6408 hops of Li in 13 structures (0 to 1824 per structure, 10 with partial occupancies), 6408 distinct by symmetry, 6408 with a barrier
+  transfer of the public model to 298 distinct hops of 13 structures: q2 -1.075, error 1.438 eV, r +0.273
+  rotation-averaged overlap, leave one structure out: q2 -0.064, error 1.030, mean absolute error 0.466 over 298 atoms in 12 molecules, 12 folds, ridge 1
+  counts about the midpoint: q2 +0.166, error 0.912, mean absolute error 0.426 over 298 atoms in 12 molecules, 12 folds, ridge 0.001
+    against the counts -0.230 [-0.886, +0.143]
+  LLZO:Ta cubic (Li6.5La3Zr1.5Ta0.5O12)      1728 hops  18 distinct, r -0.09, mean barrier 0.22 eV
+  LLZO:Ta cubic (Li6.2La3Zr1.2Ta0.8O12)      1824 hops  19 distinct, r -0.06, mean barrier 0.25 eV
+  LLZO:Ta tetragonal                          416 hops  13 distinct, r +0.61, mean barrier 1.53 eV
+  LLTO rhombohedral (La0.5Li0.5TiO3)          252 hops   7 distinct, r -0.32, mean barrier 1.86 eV
+  LLTO tetragonal (La0.56Li0.33TiO3)           12 hops   4 distinct, r -0.76, mean barrier 4.00 eV
+  LGPS (Li10GeP2S12)                          416 hops  26 distinct, r +0.52, mean barrier 0.40 eV
+  LiTi2(PO4)3 NASICON                           0 hops   0 distinct, r +nan, mean barrier nan eV, E_1D/2D/3D inf/inf/inf
+  Li3.18Ti2(PO4)3 NASICON                     216 hops  12 distinct, r +0.84, mean barrier 0.62 eV
+  Li2.92N                                      72 hops   9 distinct, r +0.06, mean barrier 0.14 eV
+  LISICON (Li13.7Zn1.2Ge4O16)                 416 hops  55 distinct, r +0.23, mean barrier 0.52 eV
+  Li3PO4 (Pmnb)                               144 hops  18 distinct, r +0.69, mean barrier 0.35 eV
+  beta-Li3PS4                                 152 hops  19 distinct, r +0.18, mean barrier 0.39 eV
+  Li3.16Zn0.24GeO4                            760 hops  98 distinct, r +0.50, mean barrier 0.29 eV

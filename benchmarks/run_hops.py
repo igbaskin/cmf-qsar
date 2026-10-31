@@ -23,6 +23,15 @@ Two measurements, both with folds that hold out whole structures.
    next to the bond-valence and the predicted value.  Three structures are too few for a q2 of
    their own; what is measured is the transfer.
 
+3. **The disordered conductors** (``examples/hops/disordered``, plan item M2): thirteen
+   structures of the Crystallography Open Database from the families a solid-electrolyte study
+   is about -- garnets, perovskites, LGPS, NASICON, LISICON, thio-phosphates, lithium nitride --
+   ten of them with partly occupied or shared sites, read with their occupancies.  Their hops
+   are labelled with the bond-valence barrier of the ordered framework, the public model is
+   applied to them as it stands, a model is cross-validated within the set with folds that hold
+   out whole structures, and the percolation thresholds of the labelled and the predicted
+   networks are listed per structure.
+
 Usage
 -----
     python benchmarks/run_hops.py                     # both parts
@@ -58,6 +67,21 @@ RESULTS = os.path.join(HERE, "results", "hops")
 PREPARED = os.path.join(RESULTS, "prepared_mp.json")
 EXAMPLES = os.path.join(ROOT, "examples", "hops")
 HOSTS = ("phosphate", "borophosphate", "borate")
+DISORDERED = os.path.join(EXAMPLES, "disordered")
+#: the COD entries of the disordered set, with a short name and what is disordered in each
+COD = (("1545083", "LLZO:Ta cubic (Li6.5La3Zr1.5Ta0.5O12)", "Li sites 0.38/0.62, Zr/Ta shared"),
+       ("1552152", "LLZO:Ta cubic (Li6.2La3Zr1.2Ta0.8O12)", "Li sites 0.28/0.96, Zr/Ta shared"),
+       ("1545085", "LLZO:Ta tetragonal", "ordered"),
+       ("1525568", "LLTO rhombohedral (La0.5Li0.5TiO3)", "Li sites 0.16"),
+       ("1000437", "LLTO tetragonal (La0.56Li0.33TiO3)", "La/Li shared sites"),
+       ("7215190", "LGPS (Li10GeP2S12)", "Li sites 0.47 to 0.89, Ge/P shared"),
+       ("7222155", "LiTi2(PO4)3 NASICON", "ordered"),
+       ("7222156", "Li3.18Ti2(PO4)3 NASICON", "Li sites 0.34/0.72"),
+       ("4002499", "Li2.92N", "Li site 0.96"),
+       ("1524557", "LISICON (Li13.7Zn1.2Ge4O16)", "Li sites 0.16 to 0.98, Li/Zn shared"),
+       ("9011044", "Li3PO4 (Pmnb)", "ordered"),
+       ("1570310", "beta-Li3PS4", "Li sites 0.3/0.7"),
+       ("1529523", "Li3.16Zn0.24GeO4", "Li sites 0.06 to 0.92, Li/Zn shared"))
 RHOS = (0.05, 0.1, 0.25)
 R_MAX = 6.0
 PROFILE_Z = (-2.0, -1.0, 0.0, 1.0, 2.0)
@@ -270,6 +294,29 @@ def run_public(args, log) -> dict:
     return out, (hs, fs, model, cyl, rho)
 
 
+def rebuild_public_model(args, log):
+    """The public model at the stored best width, without the rest of part 1.
+
+    Parts 2 and 3 need the fitted public model; with ``--reuse-public`` the stored
+    ``public.json`` supplies the width and the ridge and only that one kernel is computed.
+    """
+    pub = json.load(open(os.path.join(RESULTS, "public.json")))
+    rho = pub["best_rho"]
+    best = next(m for m in pub["models"] if m["name"].startswith("rotation") and m["rho"] == rho)
+    hs = load_prepared(args.prepared, args.max_structures, args.max_per_structure, args.seed)
+    fs = fieldset_for(hs, "file")
+    crystals = hs.crystals(fs)
+    reps = [i for i, h in enumerate(hs.hops) if h.representative == i and np.isfinite(h.y)]
+    t = hs.targets(reps)
+    log(f"rebuilding the public model at rho {rho} on {len(t)} hops (ridge {best['lam']:g})")
+    fr = framed_environments(hs, crystals, rows=t.atom, rho=rho, r_max=args.r_max)
+    model = HopModel.build(fr, fs, n_jobs=args.jobs).fit(t.y, lam=best["lam"])
+    cyl = LocalResult(name=best["name"], predicted=np.zeros(len(t)), q2=best["q2"],
+                      error=best["rmse"], mae=best["mae"], lam=best["lam"], n_samples=len(t),
+                      n_molecules=t.n_measured_molecules, folds=pub["folds"])
+    return hs, fs, model, cyl, rho
+
+
 def run_hosts(args, log, trained) -> dict:
     hs = load_hosts()
     public, fs_public, model, cyl, rho = trained
@@ -334,6 +381,96 @@ def run_hosts(args, log, trained) -> dict:
             log(f"  {row['structure']:14s} {h.a:3d} -> {h.b:3d} ({h.length:.2f} A): DFT "
                 f"{float(row['barrier']):.3f}, bond-valence {h.y:.3f}, predicted {p:.3f} eV")
     out["dft_hops"] = listing
+    return out
+
+
+def load_disordered() -> HopSet:
+    """The disordered conductors with their bond-valence labels, as a HopSet."""
+    from cmfqsar.periodic import read_structures
+    structures, names = [], []
+    for cid, name, _what in COD:
+        path = os.path.join(DISORDERED, f"cod_{cid}.cif")
+        if os.path.exists(path):
+            structures.append(read_structures(path)[0])
+            names.append(f"cod_{cid}")
+    hs = HopSet.build(structures, names, "Li")
+    labels = os.path.join(DISORDERED, "hops_bvse.csv")
+    if os.path.exists(labels):
+        read_hop_labels(labels, hs)
+        spread_labels(hs)
+    return hs
+
+
+def run_disordered(args, log, trained) -> dict:
+    hs = load_disordered()
+    if not hs.structures:
+        log("  no disordered set (examples/hops/disordered is empty)")
+        return {}
+    public, fs_public, model, cyl, rho = trained
+    log(hs.describe())
+    fs = inorganic_fieldset([s.name[4:] for s in fs_public.specs if s.is_cif
+                             and s.name != "cif:other"],
+                            physchem=PHYSCHEM, charge_model="oxidation",
+                            other=any(s.name == "cif:other" for s in fs_public.specs))
+    crystals = hs.crystals(fs)
+    reps = hs.annotate(crystals)
+    rows = [r for r in reps if np.isfinite(hs.hops[r].y)]
+    out = {"n_structures": len(hs.structures), "n_hops": len(hs.hops), "n_distinct": len(reps),
+           "n_labelled": len(rows), "structures": []}
+    if not rows:
+        log("  no bond-valence labels (examples/hops/disordered/hops_bvse.csv missing)")
+        return out
+    fr = framed_environments(hs, crystals, rows=rows, rho=rho, r_max=args.r_max)
+    pred = model.predict(fr)
+    y = np.array([hs.hops[r].y for r in rows])
+    out["transfer"] = {"q2": r2_score(y, pred), "rmse": rmse(y, pred),
+                       "r": float(np.corrcoef(y, pred)[0, 1]), "rho": rho}
+    log(f"  transfer of the public model to {len(rows)} distinct hops of {len(hs.structures)} "
+        f"structures: q2 {out['transfer']['q2']:+.3f}, error {out['transfer']['rmse']:.3f} eV, "
+        f"r {out['transfer']['r']:+.3f}")
+    t = hs.targets(rows)
+    own = HopModel.build(fr, fs, n_jobs=args.jobs)
+    loo = cross_validate_hop_model(own, t, folds=len(hs.structures), seed=args.seed,
+                                   name="rotation-averaged overlap, leave one structure out")
+    envs = hs.environments(crystals, rows=rows, rho=rho, r_max=args.r_max)
+    ref = choose_lam(count_kernel(hop_count_features(envs, hop_types(envs, 5))), t,
+                     folds=len(hs.structures), seed=args.seed, name="counts about the midpoint")
+    log("  " + loo.summary())
+    log("  " + ref.summary())
+    d, lo, hi = paired_interval(loo, ref, t, runs=args.bootstrap, seed=args.seed)
+    out["leave_one_out"] = [_entry(loo, rho), _entry(ref)]
+    out["leave_one_out_pair"] = {"diff": d, "low": lo, "high": hi}
+    log(f"    against the counts {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
+    predicted_public = {int(r): float(p) for r, p in zip(rows, pred)}
+    predicted_loo = {int(a): float(p) for a, p in zip(t.atom, loo.predicted)}
+    for pr in (predicted_public, predicted_loo):
+        for i, h in enumerate(hs.hops):
+            if i not in pr and h.representative in pr:
+                pr[i] = pr[h.representative]
+    what = {cid: (name, w) for cid, name, w in COD}
+    for k, label in enumerate(hs.names):
+        cid = label[4:]
+        sel = [i for i, r in enumerate(rows) if hs.hops[r].structure == k]
+        srows = hs.of_structure(k)
+        full = all(np.isfinite(hs.hops[i].saddle) for i in srows)
+        entry = {"cod": cid, "name": what[cid][0], "disorder": what[cid][1],
+                 "n_hops": len(srows), "n_distinct": len([r for r in reps
+                                                          if hs.hops[r].structure == k]),
+                 "n_labelled": len(sel),
+                 "r_public": float(np.corrcoef(y[sel], pred[sel])[0, 1]) if len(sel) > 2 else float("nan"),
+                 "mae_public": float(np.mean(np.abs(y[sel] - pred[sel]))) if sel else float("nan"),
+                 "mean_barrier": float(np.mean(y[sel])) if sel else float("nan"),
+                 "percolation": {}}
+        if full:
+            entry["percolation"] = {
+                "labelled": structure_percolation(hs, k),
+                "public": structure_percolation(hs, k, saddle_from_barrier(hs, predicted_public)),
+                "within": structure_percolation(hs, k, saddle_from_barrier(hs, predicted_loo))}
+        out["structures"].append(entry)
+        p = entry["percolation"].get("labelled", {})
+        log(f"  {entry['name']:42s} {entry['n_hops']:4d} hops {entry['n_distinct']:3d} distinct, "
+            f"r {entry['r_public']:+.2f}, mean barrier {entry['mean_barrier']:.2f} eV"
+            + (f", E_1D/2D/3D {p['E_1D']:.2f}/{p['E_2D']:.2f}/{p['E_3D']:.2f}" if p else ""))
     return out
 
 
@@ -441,6 +578,44 @@ def write_table(results_dir: str = RESULTS) -> str:
                      "relaxed vacancy, so they are lower bounds and include the relaxation the "
                      "rigid bond-valence landscape does not; the columns are not expected to "
                      "agree in value, only in order.\n")
+    dis_path = os.path.join(results_dir, "disordered.json")
+    dis = json.load(open(dis_path)) if os.path.exists(dis_path) else None
+    if dis and dis.get("structures"):
+        L.append("## The disordered conductors (plan item M2)\n")
+        tr = dis.get("transfer", {})
+        L.append(f"{dis['n_structures']} structures of the Crystallography Open Database, "
+                 f"{dis['n_hops']} hops, {dis['n_distinct']} distinct, {dis['n_labelled']} with a "
+                 f"bond-valence barrier. The public model applied as it stands: q2 {_fmt(tr.get('q2'))}, "
+                 f"error {tr.get('rmse', float('nan')):.3f} eV, correlation {_fmt(tr.get('r'))}.")
+        for m in dis.get("leave_one_out", []):
+            L.append(f"- leave one structure out, {m['name']}: q2 {_fmt(m['q2'])}, error "
+                     f"{m['rmse']:.3f} eV")
+        pr = dis.get("leave_one_out_pair")
+        if pr:
+            L.append(f"- the frame kernel against the counts, leave one structure out: "
+                     f"{_fmt(pr['diff'])} [{_fmt(pr['low'])}, {_fmt(pr['high'])}]")
+        L.append("")
+        L.append("| structure | what is disordered | hops | distinct | mean barrier (eV) | "
+                 "correlation with the public model | E_1D / E_2D / E_3D labelled (eV) | "
+                 "public model | within the set |")
+        L.append("| --- | --- | ---: | ---: | ---: | ---: | --- | --- | --- |")
+
+        def trio(d):
+            if not d:
+                return "--"
+            return " / ".join("inf" if not np.isfinite(d[k]) else f"{d[k]:.2f}"
+                              for k in ("E_1D", "E_2D", "E_3D"))
+
+        for e in dis["structures"]:
+            p = e.get("percolation", {})
+            L.append(f"| {e['name']} (COD {e['cod']}) | {e['disorder']} | {e['n_hops']} | "
+                     f"{e['n_distinct']} | {e['mean_barrier']:.2f} | {_fmt(e['r_public'], 2)} | "
+                     f"{trio(p.get('labelled'))} | {trio(p.get('public'))} | {trio(p.get('within'))} |")
+        L.append("")
+        L.append("The bond-valence landscape of a disordered structure is that of its ordered "
+                 "framework (the sites not held by Li, each with its majority species); the "
+                 "fields see every site at its occupancy. A threshold of inf means the hops "
+                 "between 1.5 and 4.5 A do not connect through the cell in that many directions.\n")
     text = "\n".join(L)
     with open(os.path.join(results_dir, "table.md"), "w", encoding="utf-8") as fh:
         fh.write(text)
@@ -463,6 +638,9 @@ def main():
     ap.add_argument("--bootstrap", type=int, default=1000)
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--no-hosts", action="store_true")
+    ap.add_argument("--reuse-public", action="store_true",
+                    help="keep the stored results of the public set and recompute only the "
+                         "best model, then run the hosts and the disordered conductors")
     args = ap.parse_args()
     os.makedirs(RESULTS, exist_ok=True)
     if args.report:
@@ -476,13 +654,19 @@ def main():
 
     if not os.path.exists(args.prepared):
         raise SystemExit(f"{args.prepared} is missing: run benchmarks/prepare_hops.py first")
-    public, trained = run_public(args, log)
-    json.dump(public, open(os.path.join(RESULTS, "public.json"), "w"), indent=1)
+    if args.reuse_public:
+        trained = rebuild_public_model(args, log)
+    else:
+        public, trained = run_public(args, log)
+        json.dump(public, open(os.path.join(RESULTS, "public.json"), "w"), indent=1)
     if not args.no_hosts:
         hosts = run_hosts(args, log, trained)
         json.dump(hosts, open(os.path.join(RESULTS, "hosts.json"), "w"), indent=1)
-    with open(os.path.join(RESULTS, "log.txt"), "w", encoding="utf-8") as fh:
-        fh.write("\n".join(lines))
+        dis = run_disordered(args, log, trained)
+        json.dump(dis, open(os.path.join(RESULTS, "disordered.json"), "w"), indent=1)
+    mode = "a" if args.reuse_public else "w"
+    with open(os.path.join(RESULTS, "log.txt"), mode, encoding="utf-8") as fh:
+        fh.write(("\n\n" if mode == "a" else "") + "\n".join(lines))
     print(write_table(RESULTS))
 
 

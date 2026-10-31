@@ -43,6 +43,17 @@ one, two and three independent directions, which is what the effective activatio
 conductor is read from.  The model predicts per hop; this is the step that turns those
 predictions into a number per structure.
 
+**Disorder (plan item M2).**  A conductor's Li sublattice is usually partly occupied, and the
+sites of its framework may be shared by two species.  A structure that carries its site species
+(:func:`cmfqsar.periodic.site_species`, read from a CIF by
+:func:`cmfqsar.periodic.read_disordered`) gives occupancy-weighted fields, which is the exact
+mean field of the configurational ensemble, so the environment of a hop sees the *other* Li
+sites at their occupancy, as a migrating ion does on average.  Every site that holds the mobile
+species at any occupancy is a site a hop can start from or end at, and the hop records both
+occupancies.  The bond-valence landscape needs an ordered framework, so it is built from the
+sites not held by the mobile species, each with its majority species, which is exact when only
+the Li sublattice is disordered and an approximation when the framework is.
+
 **The bottleneck.**  :func:`bottleneck` finds the point of least free space on the straight
 path, in the spirit of the free-space test of :mod:`cmfqsar.complementarity`, and names the
 atoms that form it; it is reported with every hop and is a check that the environment the model
@@ -61,7 +72,7 @@ import numpy as np
 from .atomtargets import AtomTargets
 from .fields import FieldSet, MoleculeFields, combine_members
 from .localenv import ENVELOPE_FLOOR, envelope_radius, shell_counts
-from .periodic import CrystalFields, crystal_fields
+from .periodic import CrystalFields, composition_of, crystal_fields, site_species
 
 #: default envelope width parameter for a hop, in A^-2: the envelope falls to 1/e at 3.2 A,
 #: which reaches the bottleneck atoms and the next shell and not much beyond
@@ -196,6 +207,9 @@ class Hop:
     representative: int = -1
     multiplicity: int = 1
     name: str = ""
+    #: the occupancy of the mobile species on the two sites (1 in an ordered structure)
+    occupancy_a: float = 1.0
+    occupancy_b: float = 1.0
 
     @property
     def length(self) -> float:
@@ -215,6 +229,7 @@ class Hop:
         return Hop(self.structure, self.b, self.a, off,
                    start=self.end - np.asarray(self.shift, float),
                    vector=-np.asarray(self.vector, float), shift=-np.asarray(self.shift, float),
+                   occupancy_a=self.occupancy_b, occupancy_b=self.occupancy_a,
                    y=self.y_reverse, y_reverse=self.y,
                    site_a=self.site_b, site_b=self.site_a, saddle=self.saddle,
                    bottleneck=self.bottleneck, bottleneck_at=1.0 - self.bottleneck_at,
@@ -234,28 +249,43 @@ def enumerate_hops(atoms, mobile: str = "Li", d_min: float = HOP_MIN, d_max: flo
     unordered pair gives two hops, because the barrier has a direction.
     """
     from ase.neighborlist import neighbor_list
-    sym = np.asarray(atoms.get_chemical_symbols())
-    where = np.where(sym == mobile)[0]
-    if len(where) == 0:
+    occ = mobile_occupancy(atoms, mobile)
+    if not np.any(occ > 0):
         raise ValueError(f"{atoms.get_chemical_formula()} has no {mobile}")
     i, j, d, D, S = neighbor_list("ijdDS", atoms, float(d_max))
     pos = np.asarray(atoms.get_positions(), float)
     cell = np.asarray(atoms.get_cell()[:], float)
     out: List[Hop] = []
     for k in range(len(i)):
-        if sym[i[k]] != mobile or sym[j[k]] != mobile or d[k] < d_min:
+        if occ[i[k]] <= 0 or occ[j[k]] <= 0 or d[k] < d_min:
             continue
         out.append(Hop(structure, int(i[k]), int(j[k]), tuple(int(x) for x in S[k]),
                        start=pos[i[k]].copy(), vector=np.asarray(D[k], float),
-                       shift=np.asarray(S[k], float) @ cell))
+                       shift=np.asarray(S[k], float) @ cell,
+                       occupancy_a=float(occ[i[k]]), occupancy_b=float(occ[j[k]])))
     out.sort(key=lambda h: (h.a, h.b, h.offset))
     return out
+
+
+def mobile_occupancy(atoms, mobile: str = "Li") -> np.ndarray:
+    """The occupancy of the mobile species on every site: 1 or 0 in an ordered structure, the
+    site's share of that species where sites are partly occupied or shared (plan item M2)."""
+    species = site_species(atoms)
+    if species is None:
+        return np.array([1.0 if s == mobile else 0.0 for s in atoms.get_chemical_symbols()])
+    return np.array([float(d.get(mobile, 0.0)) for d in species])
 
 
 def hop_environment(crystal: CrystalFields, hop: Hop, rho: float = DEFAULT_RHO,
                     floor: float = ENVELOPE_FLOOR, r_max: Optional[float] = None,
                     name: str = "") -> MoleculeFields:
-    """The environment of a hop: the cell seen from the midpoint, without the migrating ion."""
+    """The environment of a hop: the cell seen from the midpoint, without the migrating ion.
+
+    The two sites of the hop are left out whole.  On a site the mobile species shares with
+    another (a La/Li site of a perovskite), that other species leaves with it, which is the one
+    approximation of the disordered case; such sites are rare and the hop records their
+    occupancies.
+    """
     return point_environment(crystal, hop.midpoint, rho, floor, r_max,
                              exclude=[(hop.a, (0, 0, 0)), (hop.b, hop.offset)],
                              name=name or hop.name)
@@ -356,35 +386,56 @@ def bottleneck(env: MoleculeFields, vector: Sequence[float], n_points: int = 41,
 
 
 def fingerprint(env: MoleculeFields, vector: Sequence[float], reach: float = 5.0,
-                decimals: int = 2) -> Tuple:
+                decimals: int = 2, occupancy: Optional[np.ndarray] = None) -> Tuple:
     """What a hop looks like up to a rotation about its axis: the sorted (symbol, distance from
-    the midpoint, position along the hop) of the atoms within `reach`.
+    the midpoint, position along the hop, occupancy) of the atoms within `reach`.
 
     Two hops related by a symmetry of the structure have the same fingerprint; a hop and its
     reverse have different ones unless the two sites are equivalent, which is as it should be,
-    since their barriers then differ.
+    since their barriers then differ.  `occupancy` is the site occupancy of every atom of the
+    environment (the marker first), when the structure has partial occupancies.
     """
     z = np.asarray(vector, float)
     z = z / max(float(np.linalg.norm(z)), 1e-12)
     coords = np.asarray(env.coords, float)[1:]
     d = np.linalg.norm(coords, axis=1)
     keep = d <= float(reach)
+    occ = (np.ones(env.n_atoms) if occupancy is None
+           else np.asarray(occupancy, float).reshape(-1))
     rows = [(env.symbols[1 + i], round(float(d[i]), decimals),
-             round(float(coords[i] @ z), decimals)) for i in np.where(keep)[0]]
+             round(float(coords[i] @ z), decimals), round(float(occ[1 + i]), 2))
+            for i in np.where(keep)[0]]
     return (round(float(np.linalg.norm(vector)), decimals), tuple(sorted(rows)))
 
 
-def reduce_by_symmetry(hops: Sequence[Hop], envs: Sequence[MoleculeFields]) -> List[int]:
+def environment_occupancy(env: MoleculeFields, crystal: CrystalFields) -> Optional[np.ndarray]:
+    """The site occupancy of every atom of an environment, from the cell it was cut from, or
+    None when the structure is ordered."""
+    if crystal.occupancy is None or env.member_atom_map is None:
+        return None
+    idx = np.asarray(env.member_atom_map, int)
+    out = np.ones(len(idx))
+    ok = idx >= 0
+    out[ok] = np.asarray(crystal.occupancy, float)[idx[ok]]
+    return out
+
+
+def reduce_by_symmetry(hops: Sequence[Hop], envs: Sequence[MoleculeFields],
+                       crystals: Optional[Sequence[CrystalFields]] = None) -> List[int]:
     """Mark equivalent hops of one structure and return the indices of the representatives.
 
     Equivalence is equality of :func:`fingerprint`.  Every hop gets its `representative` and the
     representative its `multiplicity`, so that a prediction for the representative can be spread
-    back to all the hops it stands for, which the percolation step needs.
+    back to all the hops it stands for, which the percolation step needs.  With `crystals` the
+    occupancies enter the fingerprint, so that two hops that differ only in how full their
+    surroundings are stay apart.
     """
     seen: Dict[Tuple, int] = {}
     reps: List[int] = []
     for k, (h, e) in enumerate(zip(hops, envs)):
-        key = (h.structure, fingerprint(e, h.vector))
+        occ = environment_occupancy(e, crystals[h.structure]) if crystals is not None else None
+        key = (h.structure, fingerprint(e, h.vector, occupancy=occ),
+               round(h.occupancy_a, 2), round(h.occupancy_b, 2))
         if key in seen:
             r = seen[key]
             h.representative = r
@@ -455,7 +506,7 @@ class HopSet:
         envs = self.environments(crystals, rho=rho, floor=floor, r_max=r_max)
         for h, e in zip(self.hops, envs):
             h.bottleneck, h.bottleneck_at, h.bottleneck_atoms = bottleneck(e, h.vector)
-        return reduce_by_symmetry(self.hops, envs)
+        return reduce_by_symmetry(self.hops, envs, crystals)
 
     def targets(self, rows: Optional[Sequence[int]] = None, which: str = "forward",
                 name: str = "barrier") -> AtomTargets:
@@ -478,8 +529,10 @@ class HopSet:
         reps = self.representatives()
         labelled = sum(1 for h in self.hops if np.isfinite(h.y))
         per = [len(self.of_structure(k)) for k in range(len(self.structures))]
+        dis = sum(1 for a in self.structures if site_species(a) is not None)
         return (f"{len(self.hops)} hops of {self.mobile} in {len(self.structures)} structures "
-                f"({min(per) if per else 0} to {max(per) if per else 0} per structure), "
+                f"({min(per) if per else 0} to {max(per) if per else 0} per structure"
+                + (f", {dis} with partial occupancies" if dis else "") + f"), "
                 f"{len(reps)} distinct by symmetry, {labelled} with a barrier")
 
 
@@ -508,19 +561,29 @@ def bvse_calculator(atoms, mobile: str = "Li", oxidation: Optional[Dict[str, flo
     from .periodic import oxidation_states
 
     plain = atoms.copy()
+    species = site_species(atoms)
+    if species is not None:
+        # the landscape needs an ordered framework: the sites the mobile species does not hold
+        # (by majority), each with its majority species.  Exact when only the mobile sublattice
+        # is disordered; an approximation where the framework is shared.
+        keep = [i for i, d in enumerate(species) if max(d, key=d.get) != mobile]
+        plain = plain[keep]
+        plain.set_chemical_symbols([max(species[i], key=species[i].get) for i in keep])
+        plain.info = {}
     for key in list(plain.arrays):
         if key not in ("numbers", "positions"):
             del plain.arrays[key]
     st = AseAtomsAdaptor.get_structure(plain)
     symbols = list(atoms.get_chemical_symbols())
-    if oxidation is None and "oxi_states" in atoms.arrays:
+    if oxidation is None and "oxi_states" in atoms.arrays and species is None:
         st.add_oxidation_state_by_site([float(x) for x in atoms.arrays["oxi_states"]])
     else:
-        ox = oxidation if oxidation is not None else oxidation_states(symbols)
+        ox = oxidation if oxidation is not None else oxidation_states(symbols, composition_of(atoms))
         if ox is None:
             raise ValueError(f"no oxidation states for {atoms.get_chemical_formula()}: pass "
                              f"them, or put an 'oxi_states' array on the structure")
-        st.add_oxidation_state_by_element({k: int(round(v)) for k, v in ox.items()})
+        st.add_oxidation_state_by_element({k: int(round(v)) for k, v in ox.items()
+                                           if k in set(st.symbol_set)})
     q = _mobile_charge(atoms, mobile, oxidation)
     calc = Lain(verbose=False)
     calc.read_structure(st, oxi_check=False)
@@ -686,6 +749,7 @@ def spread_labels(hopset: HopSet) -> int:
 # --------------------------------------------------------------------------- #
 
 HOP_COLUMNS = ("structure", "a", "b", "offset_x", "offset_y", "offset_z", "length",
+               "occupancy_a", "occupancy_b",
                "barrier", "barrier_reverse", "site_a", "site_b", "saddle", "bottleneck",
                "bottleneck_atoms", "representative", "multiplicity", "predicted")
 
@@ -738,6 +802,7 @@ def write_hops(path: str, hopset: HopSet, predicted: Optional[Dict[int, float]] 
         w.writerow(HOP_COLUMNS)
         for i, h in enumerate(hopset.hops):
             w.writerow([hopset.names[h.structure], h.a, h.b, *h.offset, f"{h.length:.4f}",
+                        f"{h.occupancy_a:.3f}", f"{h.occupancy_b:.3f}",
                         _num(h.y), _num(h.y_reverse), _num(h.site_a), _num(h.site_b),
                         _num(h.saddle), _num(h.bottleneck), " ".join(h.bottleneck_atoms),
                         h.representative, h.multiplicity, _num(predicted.get(i, float("nan")))])

@@ -2303,6 +2303,20 @@ barriers reproduce whether each structure percolates in every case and the thres
 +0.78) and does not carry the scale over, which is what the negative q2 says: the public set is
 cathode chemistry, and a model for electrolytes wants a set of their own.
 
+**Partial occupancy is exact and free (plan item M2).** A disordered site is a configurational
+ensemble, and for independently occupied sites its mean field is closed form: every site gets
+the occupancy-weighted weights of the species that share it, the overlap kernel of two mean
+fields is the mean kernel of the two ensembles exactly, and the periodic autocorrelation keeps
+the second moments of each site where a site meets itself (`cmfqsar/periodic.py`;
+`read_disordered` reads a CIF with occupancies). Tests enumerate every configuration of a small
+cell and check it to 1e-10. With it the hop model reads the garnets, perovskites, LGPS, NASICON
+and LISICON of `examples/hops/disordered/` as their refinements report them: {dis['n_hops']}
+hops, {dis['n_distinct']} distinct, and percolation thresholds of the hop network that agree with
+the bond-valence grid (cubic LLZO 0.40 against 0.41 eV, LGPS 0.53 to 0.59 against 0.57 to 0.60,
+Li3PS4 0.25 to 0.40 against 0.27 to 0.42). The model does not carry over to them (q2
+{f(tr['q2'])}, correlation {f(tr['r'])}) and cannot be measured within thirteen structures;
+what the item delivers is the data model, not a result on conductors.
+
 ```bash
 cmf hops examples/hops/phosphate.extxyz examples/hops/borophosphate.extxyz examples/hops/borate.extxyz \
     --charges file --bvse --reference --invariant --profile --percolate --out hops.csv

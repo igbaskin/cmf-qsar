@@ -1,0 +1,214 @@
+{
+ "n_structures": 13,
+ "n_hops": 6408,
+ "n_distinct": 298,
+ "n_labelled": 298,
+ "structures": [
+  {
+   "cod": "1545083",
+   "name": "LLZO:Ta cubic (Li6.5La3Zr1.5Ta0.5O12)",
+   "disorder": "Li sites 0.38/0.62, Zr/Ta shared",
+   "n_hops": 1728,
+   "n_distinct": 18,
+   "n_labelled": 18,
+   "r_public": -0.08991224891429349,
+   "mae_public": 1.6664707001462888,
+   "mean_barrier": 0.22254444444444443,
+   "percolation": {}
+  },
+  {
+   "cod": "1552152",
+   "name": "LLZO:Ta cubic (Li6.2La3Zr1.2Ta0.8O12)",
+   "disorder": "Li sites 0.28/0.96, Zr/Ta shared",
+   "n_hops": 1824,
+   "n_distinct": 19,
+   "n_labelled": 19,
+   "r_public": -0.06483613717814109,
+   "mae_public": 1.3697885977945552,
+   "mean_barrier": 0.25111578947368424,
+   "percolation": {}
+  },
+  {
+   "cod": "1545085",
+   "name": "LLZO:Ta tetragonal",
+   "disorder": "ordered",
+   "n_hops": 416,
+   "n_distinct": 13,
+   "n_labelled": 13,
+   "r_public": 0.6149024216054239,
+   "mae_public": 1.4988727583526098,
+   "mean_barrier": 1.5272230769230768,
+   "percolation": {}
+  },
+  {
+   "cod": "1525568",
+   "name": "LLTO rhombohedral (La0.5Li0.5TiO3)",
+   "disorder": "Li sites 0.16",
+   "n_hops": 252,
+   "n_distinct": 7,
+   "n_labelled": 7,
+   "r_public": -0.31734884851793693,
+   "mae_public": 1.6107030156673523,
+   "mean_barrier": 1.8625857142857143,
+   "percolation": {}
+  },
+  {
+   "cod": "1000437",
+   "name": "LLTO tetragonal (La0.56Li0.33TiO3)",
+   "disorder": "La/Li shared sites",
+   "n_hops": 12,
+   "n_distinct": 4,
+   "n_labelled": 4,
+   "r_public": -0.7636223246705217,
+   "mae_public": 5.191456497700406,
+   "mean_barrier": 3.9975,
+   "percolation": {}
+  },
+  {
+   "cod": "7215190",
+   "name": "LGPS (Li10GeP2S12)",
+   "disorder": "Li sites 0.47 to 0.89, Ge/P shared",
+   "n_hops": 416,
+   "n_distinct": 26,
+   "n_labelled": 26,
+   "r_public": 0.5171163116871018,
+   "mae_public": 1.104277451595432,
+   "mean_barrier": 0.4020346153846154,
+   "percolation": {}
+  },
+  {
+   "cod": "7222155",
+   "name": "LiTi2(PO4)3 NASICON",
+   "disorder": "ordered",
+   "n_hops": 0,
+   "n_distinct": 0,
+   "n_labelled": 0,
+   "r_public": NaN,
+   "mae_public": NaN,
+   "mean_barrier": NaN,
+   "percolation": {
+    "labelled": {
+     "E_1D": Infinity,
+     "E_2D": Infinity,
+     "E_3D": Infinity
+    },
+    "public": {
+     "E_1D": Infinity,
+     "E_2D": Infinity,
+     "E_3D": Infinity
+    },
+    "within": {
+     "E_1D": Infinity,
+     "E_2D": Infinity,
+     "E_3D": Infinity
+    }
+   }
+  },
+  {
+   "cod": "7222156",
+   "name": "Li3.18Ti2(PO4)3 NASICON",
+   "disorder": "Li sites 0.34/0.72",
+   "n_hops": 216,
+   "n_distinct": 12,
+   "n_labelled": 12,
+   "r_public": 0.8448912777938603,
+   "mae_public": 0.7587499307832654,
+   "mean_barrier": 0.6168916666666667,
+   "percolation": {}
+  },
+  {
+   "cod": "4002499",
+   "name": "Li2.92N",
+   "disorder": "Li site 0.96",
+   "n_hops": 72,
+   "n_distinct": 9,
+   "n_labelled": 9,
+   "r_public": 0.05892911178086,
+   "mae_public": 1.8929629155352532,
+   "mean_barrier": 0.14473333333333335,
+   "percolation": {}
+  },
+  {
+   "cod": "1524557",
+   "name": "LISICON (Li13.7Zn1.2Ge4O16)",
+   "disorder": "Li sites 0.16 to 0.98, Li/Zn shared",
+   "n_hops": 416,
+   "n_distinct": 55,
+   "n_labelled": 55,
+   "r_public": 0.23219462330039223,
+   "mae_public": 0.44036786809718603,
+   "mean_barrier": 0.5223854545454546,
+   "percolation": {}
+  },
+  {
+   "cod": "9011044",
+   "name": "Li3PO4 (Pmnb)",
+   "disorder": "ordered",
+   "n_hops": 144,
+   "n_distinct": 18,
+   "n_labelled": 18,
+   "r_public": 0.6945978646692191,
+   "mae_public": 0.17213579935205214,
+   "mean_barrier": 0.3503055555555556,
+   "percolation": {}
+  },
+  {
+   "cod": "1570310",
+   "name": "beta-Li3PS4",
+   "disorder": "Li sites 0.3/0.7",
+   "n_hops": 152,
+   "n_distinct": 19,
+   "n_labelled": 19,
+   "r_public": 0.1773345902517924,
+   "mae_public": 1.6117131662828392,
+   "mean_barrier": 0.39151052631578953,
+   "percolation": {}
+  },
+  {
+   "cod": "1529523",
+   "name": "Li3.16Zn0.24GeO4",
+   "disorder": "Li sites 0.06 to 0.92, Li/Zn shared",
+   "n_hops": 760,
+   "n_distinct": 98,
+   "n_labelled": 98,
+   "r_public": 0.5026279038292353,
+   "mae_public": 0.7120897809756187,
+   "mean_barrier": 0.2875438775510204,
+   "percolation": {}
+  }
+ ],
+ "transfer": {
+  "q2": -1.0754578785734155,
+  "rmse": 1.437750793629696,
+  "r": 0.27300763816310253,
+  "rho": 0.25
+ },
+ "leave_one_out": [
+  {
+   "name": "rotation-averaged overlap, leave one structure out",
+   "q2": -0.06437756727575294,
+   "rmse": 1.0296141691100493,
+   "mae": 0.4662590199316958,
+   "lam": 1.0,
+   "n": 298,
+   "structures": 12,
+   "folds": 12,
+   "rho": 0.25
+  },
+  {
+   "name": "counts about the midpoint",
+   "q2": 0.16572160033857253,
+   "rmse": 0.911553480843094,
+   "mae": 0.4261998367070668,
+   "lam": 0.001,
+   "n": 298,
+   "structures": 12,
+   "folds": 12
+  }
+ ],
+ "leave_one_out_pair": {
+  "diff": -0.23009916761432547,
+  "low": -0.8857161850838214,
+  "high": 0.1432951977815679
+ }
+}

@@ -165,3 +165,28 @@ The public model applied to the 48 distinct hops of Li3PO4, Li3BP2O8 and LiBO2 (
 | borophosphate | 18 -> 8 | 2.64 | 0.003 | 0.276 | 0.393 | 0.347 | 0.561 | 1.48 (O O) |
 
 The DFT barriers are plain elastic-band values for a vacancy hop into a relaxed vacancy, so they are lower bounds and include the relaxation the rigid bond-valence landscape does not; the columns are not expected to agree in value, only in order.
+
+## The disordered conductors (plan item M2)
+
+13 structures of the Crystallography Open Database, 6408 hops, 298 distinct, 298 with a bond-valence barrier. The public model applied as it stands: q2 -1.075, error 1.438 eV, correlation +0.273.
+- leave one structure out, rotation-averaged overlap, leave one structure out: q2 -0.064, error 1.030 eV
+- leave one structure out, counts about the midpoint: q2 +0.166, error 0.912 eV
+- the frame kernel against the counts, leave one structure out: -0.230 [-0.886, +0.143]
+
+| structure | what is disordered | hops | distinct | mean barrier (eV) | correlation with the public model | E_1D / E_2D / E_3D labelled (eV) | public model | within the set |
+| --- | --- | ---: | ---: | ---: | ---: | --- | --- | --- |
+| LLZO:Ta cubic (Li6.5La3Zr1.5Ta0.5O12) (COD 1545083) | Li sites 0.38/0.62, Zr/Ta shared | 1728 | 18 | 0.22 | -0.09 | -- | -- | -- |
+| LLZO:Ta cubic (Li6.2La3Zr1.2Ta0.8O12) (COD 1552152) | Li sites 0.28/0.96, Zr/Ta shared | 1824 | 19 | 0.25 | -0.06 | -- | -- | -- |
+| LLZO:Ta tetragonal (COD 1545085) | ordered | 416 | 13 | 1.53 | +0.61 | -- | -- | -- |
+| LLTO rhombohedral (La0.5Li0.5TiO3) (COD 1525568) | Li sites 0.16 | 252 | 7 | 1.86 | -0.32 | -- | -- | -- |
+| LLTO tetragonal (La0.56Li0.33TiO3) (COD 1000437) | La/Li shared sites | 12 | 4 | 4.00 | -0.76 | -- | -- | -- |
+| LGPS (Li10GeP2S12) (COD 7215190) | Li sites 0.47 to 0.89, Ge/P shared | 416 | 26 | 0.40 | +0.52 | -- | -- | -- |
+| LiTi2(PO4)3 NASICON (COD 7222155) | ordered | 0 | 0 | nan | -- | inf / inf / inf | inf / inf / inf | inf / inf / inf |
+| Li3.18Ti2(PO4)3 NASICON (COD 7222156) | Li sites 0.34/0.72 | 216 | 12 | 0.62 | +0.84 | -- | -- | -- |
+| Li2.92N (COD 4002499) | Li site 0.96 | 72 | 9 | 0.14 | +0.06 | -- | -- | -- |
+| LISICON (Li13.7Zn1.2Ge4O16) (COD 1524557) | Li sites 0.16 to 0.98, Li/Zn shared | 416 | 55 | 0.52 | +0.23 | -- | -- | -- |
+| Li3PO4 (Pmnb) (COD 9011044) | ordered | 144 | 18 | 0.35 | +0.69 | -- | -- | -- |
+| beta-Li3PS4 (COD 1570310) | Li sites 0.3/0.7 | 152 | 19 | 0.39 | +0.18 | -- | -- | -- |
+| Li3.16Zn0.24GeO4 (COD 1529523) | Li sites 0.06 to 0.92, Li/Zn shared | 760 | 98 | 0.29 | +0.50 | -- | -- | -- |
+
+The bond-valence landscape of a disordered structure is that of its ordered framework (the sites not held by Li, each with its majority species); the fields see every site at its occupancy. A threshold of inf means the hops between 1.5 and 4.5 A do not connect through the cell in that many directions.

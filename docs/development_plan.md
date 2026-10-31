@@ -9,11 +9,11 @@ to prove before it is allowed to stay. File references point at the code the wor
 The repository holds, as of 30 October 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 90 modules and about 47,600 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with thirty subcommands (`build`, `build-crystals`, `diagnose`,
+* A library of 92 modules and about 49,500 lines (`cmfqsar/`), a PySide6 application, a
+  command-line tool with thirty-one subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1611 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `hops`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1618 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2367,6 +2367,46 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   generalised by D4's `combine_members` to members with their own atoms. The fourth-dimension verdict says to
   expect little; measure once, on a solid-solution set, and keep the mode only if it is exact and
   costs nothing when unused.
+  **Done 31 October 2026, exact and free when unused, and it opens the conductor families to
+  BT7.** The ensemble is treated by its mean field, which is what the mean-map kernel does, and
+  for independently occupied sites that mean is closed form: `crystal_fields` gives every site
+  the occupancy-weighted weights of the species that share it (`periodic.site_species`,
+  `read_disordered` for a CIF with partial occupancies, `read_structures` hands such a CIF to
+  it), the overlap kernel of two mean fields is the mean kernel of the two ensembles exactly,
+  and the periodic autocorrelation keeps the second moments of each site for the three places
+  where a site meets itself (the self term, its own periodic images, the background), so that
+  the descriptor is the exact mean over the configurations too. Tests enumerate every
+  configuration of a small disordered cell and check both to 1e-10; an ordered structure goes
+  through the same code with identical results. The oxidation states of a fractional composition
+  come from the combination of common states nearest to charge balance, every known state when
+  those cannot (mixed valence). In `hops.py` every site the mobile ion holds at any occupancy is
+  a site a hop can start from, the hop records both occupancies, the fingerprint of the symmetry
+  reduction includes them, and the bond-valence landscape is built from the ordered framework
+  (the sites the ion does not hold, each with its majority species), which is exact when only
+  the mobile sublattice is disordered. No special quasirandom structures and no snapshots: the
+  independent-site mean makes them unnecessary for the kernel, and correlated occupancy is what
+  they would add, which this item did not measure.
+  **Measured** on thirteen structures of the Crystallography Open Database
+  (`examples/hops/disordered/`: Ta-doped cubic and tetragonal garnets, two perovskites, LGPS,
+  two NASICON phases, Li2.92N, two LISICON phases, Li3PO4, beta-Li3PS4), ten with partly occupied
+  or shared sites: 6408 hops, 298 distinct, 298 with a
+  bond-valence barrier. The percolation thresholds of the hop network agree with those of
+  `bvlain`'s own grid where the Li sublattice is the disordered part (cubic LLZO 0.40 against
+  0.41 eV, LGPS 0.53 to 0.59 against 0.57 to 0.60, beta-Li3PS4 0.25 to 0.40 against 0.27 to
+  0.42, Li2.92N 0.16 against 0.16, LISICON 0.45 to 0.49 against 0.47 to 0.52), which is the
+  check that the hops between 1.5 and 4.5 A are the paths the landscape uses; the ordered
+  NASICON has no Li pair in that window, and the tetragonal garnet and Li3PO4 differ because the
+  network measures from the lowest site and the grid from its own minimum. The model is a
+  different matter: the public model gives q2 -1.075 (correlation +0.273, error
+  1.438 eV) on these hops, and within the set, one structure out at a time, the frame
+  kernel gives -0.064 against +0.166 for the counts,
+  -0.230 [-0.886, +0.143]: twelve labelled structures dominated by
+  one garnet with 98 distinct hops, and barriers up to 15 eV where a straight path runs through
+  an atom, are not a set a model can be measured on. The table is in
+  `benchmarks/results/hops/table.md` and in the manual's section on migration paths.
+  **Not done:** correlated occupancy (a pair of sites never occupied together), which the
+  independent mean cannot express and a snapshot ensemble would; the shared La/Li site of the
+  perovskites leaves with the migrating ion when it is a hop's end; no GUI.
 * **M3. DFT arrays as fields without hand-made files.** Bader charges and magnetic moments enter
   as per-atom arrays (`prop:<name>`); a reader for VASP outputs (ACF.dat, OUTCAR magmoms,
   OSZICAR energies) feeds the kernel from the Li interface and Fe(110) runs directly. No new
@@ -3127,6 +3167,24 @@ on the same folds.
   landmarks here approximate the kernel and are then used in the ordinary ridge, which is enough
   to measure what the approximation costs but is not a sparse GP with its own variance. No proton
   shifts and no DFT shift sets, and so no comparison with ShiftML on its own ground.
+  **The gate for the richer descriptor, run 31 October 2026, and it passes.**
+  `benchmarks/run_soap_gate.py` computes the SOAP power spectrum (Smooth Overlap of Atomic
+  Positions; one Gaussian density per element around the atom, from the dscribe package) on
+  the same carbons and puts it through the same ridge on the same folds. SOAP resolves the
+  triangle of the centre and two neighbours; the two-point kernel here resolves only its
+  third side. On the 5096 carbons, SOAP at angular order 0, which is two-body like ours,
+  matches the two-point kernel (+0.004 [-0.001, +0.008] in q2); the angular orders then take
+  the error from 8.15 to 6.62 ppm at the same density width and kernel exponent (+0.008
+  [+0.006, +0.011]), and a narrower density with a higher exponent to 5.72 ppm, against 8.82
+  for the two-point kernel. That is a larger gain than the 1.99 ppm two halvings of the
+  distance bins gave at 6000 molecules, on one fifteenth of the data. On the 1225 aromatic
+  carbons of LP3 the sequence over angular order is the same (4.94 to 3.81 ppm; +0.057
+  [+0.045, +0.070]) and the best SOAP, 3.50 ppm, is better than the posed overlap kernel in
+  its frame, 4.22 ppm (+0.031 [+0.015, +0.052]). **The angular term is the missing piece.**
+  The next step is a CMF form of it: the pair sum of the environment resolved over the two
+  distances from the centre as well as the distance between the pair, with the field weights
+  as the channels in place of the elements. That is what this program would add to SOAP, and
+  the gate did not measure it. Results in `benchmarks/results/soap_gate/`.
 
 **Order.** LP1 first and shared with M5. LP2 next, invariant kernel and pKa by difference field,
 because it needs no alignment and settles whether the environment field carries the property.
@@ -4147,7 +4205,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 to M3 as they are needed, M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, BT7 after M5; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

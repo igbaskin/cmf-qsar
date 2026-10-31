@@ -4837,7 +4837,9 @@ def main(argv=None):
                                      "the field around a hop against a count around it")
     ho.add_argument("structures", nargs="+",
                     help="structure files ASE reads (CIF, POSCAR, extended XYZ) or VASP run "
-                         "directories (CONTCAR with ACF.dat and OUTCAR)")
+                         "directories (CONTCAR with ACF.dat and OUTCAR); a CIF with partial "
+                         "occupancies is read with them, and every site the mobile ion can hold "
+                         "is a site a hop can start from (plan item M2)")
     ho.add_argument("--mobile", default="Li", help="the mobile species (default Li)")
     ho.add_argument("--min-hop", type=float, default=1.5, help="shortest hop, A (default 1.5)")
     ho.add_argument("--max-hop", type=float, default=4.5, help="longest hop, A (default 4.5)")

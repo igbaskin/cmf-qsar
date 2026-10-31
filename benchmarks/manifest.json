@@ -1,6 +1,6 @@
 {
- "commit": "3e20e9cb18b3f16dda549f4e2b774546d56929eb",
- "created": "2026-10-31T00:41:13",
+ "commit": "45b1120760476baa7f3b3f3b6c2dc46ab77271ba",
+ "created": "2026-10-31T08:11:28",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -603,8 +603,8 @@
    "sha256": "35dd1fa383fa1c204b299ca6ed9b5b338258c5d574f6d7f8d0dfaac9fc15b457"
   },
   "examples/hops/README.md": {
-   "bytes": 2986,
-   "sha256": "c8fd2744770eacd4bdd1d649ed3e916b9356dd69a9a23e1965737b8d51f3abbe"
+   "bytes": 5524,
+   "sha256": "8df4265f2914d50937eb5083c03960ae49df4a525de57e93ef0b2fcdd4d9a85b"
   },
   "examples/hops/borate.extxyz": {
    "bytes": 13826,
@@ -617,6 +617,66 @@
   "examples/hops/dft_barriers.csv": {
    "bytes": 139,
    "sha256": "b1b1526695b7ea5b949f2cddcad1951c09faa21f3c5235629421a5f73d529779"
+  },
+  "examples/hops/disordered/cli_run.txt": {
+   "bytes": 4000,
+   "sha256": "de71e9a8332ed5329464e7eefce0b770ff930d4307e19c6c769b5e85961abb08"
+  },
+  "examples/hops/disordered/cod_1000437.cif": {
+   "bytes": 2610,
+   "sha256": "2a562c6ad1193e9978c63e5e1f994425feb6529643a98375ffc7d0b05f68bec5"
+  },
+  "examples/hops/disordered/cod_1524557.cif": {
+   "bytes": 2322,
+   "sha256": "c86d5afb5d22212956ce62a6a963bb8b9736c8f45f46da21f8069fed37926239"
+  },
+  "examples/hops/disordered/cod_1525568.cif": {
+   "bytes": 2755,
+   "sha256": "77607fa246dc66137da418681ef7e1e8f0710a07a874ebffa84a9fae3abfd081"
+  },
+  "examples/hops/disordered/cod_1529523.cif": {
+   "bytes": 2431,
+   "sha256": "3f5a2a546968375e5f18bc7c4c5663e3bf853a9aeae58ee4d25da1439e75b312"
+  },
+  "examples/hops/disordered/cod_1545083.cif": {
+   "bytes": 4344,
+   "sha256": "cbcb4f83b3ee0be0ce7a4e05a9e02bf429f8bb5aee317690678af02939c92ba3"
+  },
+  "examples/hops/disordered/cod_1545085.cif": {
+   "bytes": 3183,
+   "sha256": "52061b5fc932fec2cf52de74868397f9a450a7db5b0f60a3c2fff7cf778d0412"
+  },
+  "examples/hops/disordered/cod_1552152.cif": {
+   "bytes": 4382,
+   "sha256": "02b35bfab741f5720a0bb34190ef42a245f0d47c1f043908ab9e304a61cd4432"
+  },
+  "examples/hops/disordered/cod_1570310.cif": {
+   "bytes": 2670,
+   "sha256": "dd3c0ed902098a72ba4e0f488991773bfc062cde6e1b20c60325cfc3039287c8"
+  },
+  "examples/hops/disordered/cod_4002499.cif": {
+   "bytes": 2245,
+   "sha256": "7b34d6f5ef4d8d1d6a4730c8654a4ecd0f7e442642270ee07c7ebed83f363d05"
+  },
+  "examples/hops/disordered/cod_7215190.cif": {
+   "bytes": 18768,
+   "sha256": "14511aa27e9af69e96bd67bb255530a98e6e44a31b783dbc630a25cccbddc1a6"
+  },
+  "examples/hops/disordered/cod_7222155.cif": {
+   "bytes": 2627,
+   "sha256": "3cd9414315f2a53627b0715f50188031d603b99afd62b3533c6f4409af540a1f"
+  },
+  "examples/hops/disordered/cod_7222156.cif": {
+   "bytes": 2400,
+   "sha256": "67428a64c95d7b6c7e244171cbdcc4bd5d4ddb394db01167b0ca3203cf0a57a2"
+  },
+  "examples/hops/disordered/cod_9011044.cif": {
+   "bytes": 2370,
+   "sha256": "26bb9ae482b74f9609ccced01de8158da35559930f7e1591f5cd873a0f2affdb"
+  },
+  "examples/hops/disordered/hops_bvse.csv": {
+   "bytes": 678177,
+   "sha256": "baecf56ccabc5312efe35247e446f959898e3522fe752cd2724b22edd8b6e068"
   },
   "examples/hops/hops_bvse.csv": {
    "bytes": 92828,
@@ -2108,6 +2168,12 @@
   "benchmarks/results/hammett/summary_ens_qm_q_hirshfeld_boltzmann.csv": "f9af77a66cca718eb69d76b8cdae976107f85c795031fbd7c48719ce7bf0b90d",
   "benchmarks/results/hammett/summary_qm_sym_q_hirshfeld.csv": "92f478c416c9bbb248aff861f9ca7753058da86320d08977803fb448736da13e",
   "benchmarks/results/hammett/table.md": "551f9505ec6519fd6ce3b331cc378799a36a1cb7f0217a7e6c12271465a8d145",
+  "benchmarks/results/hops/disordered.json": "24a8c99833f3e4f93630cada8ad646fca98797d7c00a45adbc406b60ce9c1338",
+  "benchmarks/results/hops/hosts.json": "e0f3608007516d354c9e17f33e75d9cc477d45b377fbf90054b1edd662f13087",
+  "benchmarks/results/hops/log.txt": "37d6672d6e0ff482b04398809412de23e95d585b654ebc142a861a7c8075037b",
+  "benchmarks/results/hops/prepared_mp.json": "f23ea0151086fe27a466e6cf91dde25268af0a7810d4135d60621ea553ec4fe1",
+  "benchmarks/results/hops/public.json": "fe34099c65e26d5b5f2c66fce51112abe5ea7187ff6e82247edaea7ba1b1f90c",
+  "benchmarks/results/hops/table.md": "d62773b17813e4f0a551c1adf03bb7545cfcecf8c062e0ebb4b6ddd82e4bcbf0",
   "benchmarks/results/host_pocket/alpha.json": "f38a43d1db67a5c74b1c8b3c1faf8a838562b51304989bb58b83a85c8100c18b",
   "benchmarks/results/host_pocket/beta.json": "d6d702a8e58f7d69c6bcc8907ab875634ff8e11194ef7e9c5be4910838b90e75",
   "benchmarks/results/host_pocket/gamma.json": "dccd5645c076ff58d0cb781dc556b07cb723980df894fd5fb7a59bb52517821c",

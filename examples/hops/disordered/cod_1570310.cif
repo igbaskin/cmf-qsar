@@ -1,0 +1,79 @@
+#------------------------------------------------------------------------------
+#$Date: 2023-11-15 14:40:42 +0200 (Wed, 15 Nov 2023) $
+#$Revision: 287615 $
+#$URL: file:///home/coder/svn-repositories/_RELOADED_COD/cod-reloaded/cif/1/57/03/1570310.cif $
+#------------------------------------------------------------------------------
+#
+# This file is available in the Crystallography Open Database (COD),
+# http://www.crystallography.net/
+#
+# All data on this site have been placed in the public domain by the
+# contributors.
+#
+data_1570310
+loop_
+_publ_author_name
+'Homma, Kenji'
+'Yonemura, Masao'
+'Kobayashi, Takeshi'
+'Nagao, Miki'
+'Hirayama, Masaaki'
+'Kanno, Ryoji'
+_publ_section_title
+;
+ Crystal structure and phase transitions of the lithium ionic conductor
+ Li3PS4
+;
+_journal_issue                   1
+_journal_name_full               'Solid State Ionics'
+_journal_page_first              53
+_journal_page_last               58
+_journal_paper_doi               10.1016/j.ssi.2010.10.001
+_journal_volume                  182
+_journal_year                    2011
+_chemical_formula_sum            'Li3 P S4'
+_chemical_formula_weight         180.037
+_chemical_name_common            'Lithium tetrasulfidophosphate(V)'
+_chemical_name_systematic        'Lithium tetrasulfidophosphate(V)'
+_space_group_IT_number           62
+_space_group_name_Hall           '-P 2ac 2n'
+_space_group_name_H-M_alt        'P n m a'
+_cell_angle_alpha                90.000000
+_cell_angle_beta                 90.000000
+_cell_angle_gamma                90.000000
+_cell_formula_units_Z            4
+_cell_length_a                   12.8190(5)
+_cell_length_b                   8.2195(4)
+_cell_length_c                   6.1236(2)
+_cell_measurement_temperature    637
+_cell_volume                     645.22(5)
+_cod_data_source_file            beta-Li3PS4.cif
+_cod_data_source_block           1
+_cod_original_cell_volume        645.23(5)
+_cod_database_code               1570310
+loop_
+_space_group_symop_operation_xyz
+'x, y, z'
+'-x, -y, -z'
+'-x+1/2, -y, z+1/2'
+'x+1/2, y, -z+1/2'
+'-x, y+1/2, -z'
+'x, -y+1/2, z'
+'x+1/2, -y+1/2, -z+1/2'
+'-x+1/2, y+1/2, z+1/2'
+loop_
+_atom_site_label
+_atom_site_occupancy
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_adp_type
+_atom_site_B_iso_or_equiv
+_atom_site_type_symbol
+Li1 1.0 0.3562(9) 0.013(19) 0.439(2) Biso 7.7(2) Li
+Li2 0.70(16) 0.000000 0.000000 0.500000 Biso 7.7(2) Li
+Li3 0.30(16) 0.999(6) 0.250000 0.889(11) Biso 7.7(2) Li
+P1 1.0 0.0872(2) 0.250000 0.1719(5) Biso 1.62(5) P
+S1 1.0 0.1551(13) 0.0458(2) 0.2852(4) Biso 2.61(4) S
+S2 1.0 0.9346(2) 0.250000 0.2574(7) Biso 2.61(4) S
+S3 1.0 0.1068(2) 0.250000 0.8366(4) Biso 2.61(4) S

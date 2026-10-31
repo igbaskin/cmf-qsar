@@ -39,9 +39,30 @@ measures.  :func:`inorganic_fieldset` builds such a set and :func:`crystal_field
 weights for one structure.  Any per-atom array a structure file carries (Bader charges, magnetic
 moments, ...) can be a field as ``prop:<name>``.
 
+Partial occupancy (plan item M2)
+-------------------------------
+A disordered site -- a Li site occupied in 54 % of the cells, a site shared by Zr and Ta -- is
+a configurational ensemble, and the kernels of this program treat an ensemble by its mean field
+(the mean-map kernel of :func:`cmfqsar.fields.combine_members`).  When the sites are occupied
+independently of each other, the mean field over all configurations is exact and costs nothing:
+the weight of every field at a site is the occupancy-weighted mean of the weights of the species
+that share it, ``w_f = sum_s p_s w_f(s)``, which is what :func:`crystal_fields` computes when a
+structure carries its site species (:func:`site_species`; :func:`read_disordered` reads a CIF
+with partial occupancies through pymatgen).  The overlap kernel is bilinear in the fields, so
+the kernel of two mean fields is the mean of the kernel over the two ensembles, exactly.  The
+periodic autocorrelation is quadratic in one field, so its mean over the ensemble differs from
+the descriptor of the mean field where a site meets itself: in the self term at zero distance,
+in the pairs of a site with its own periodic images and in the background, where the mean of a
+product is not the product of the means,
+``E[w_f w_g] = sum_s p_s w_f(s) w_g(s)`` on each site.  :class:`CrystalFields` carries those
+second moments and :func:`periodic_autocorrelation` uses them, so that the descriptor is the
+exact mean over the configurations as well, per expected atom of the cell.  A structure without disorder carries none of this and goes through the
+same code unchanged.
+
 ASE is needed for the neighbour list and to read structure files; pymatgen is needed for the
-oxidation-state guess and the electronegativities and nothing else.  Both are imported lazily, so
-that the rest of the program does not depend on them.
+oxidation-state guess, the electronegativities and the reading of partial occupancies and
+nothing else.  Both are imported lazily, so that the rest of the program does not depend on
+them.
 """
 from __future__ import annotations
 
@@ -136,6 +157,14 @@ class CrystalFields:
     atoms_per_conformer: int = 0
     descriptors: Optional[np.ndarray] = None
     probe_coeffs: Dict[str, np.ndarray] = field(default_factory=dict)
+    #: total occupancy of every site, or None for an ordered structure (plan item M2)
+    occupancy: Optional[np.ndarray] = None
+    #: the species sharing every site with their occupancies, or None
+    site_species: Optional[List[Dict[str, float]]] = None
+    #: (N, F, F) the mean of w_f w_g over the species of every site, or None: the self term of
+    #: the periodic autocorrelation needs it, because the mean of a product is not the product
+    #: of the means on a disordered site
+    second_moments: Optional[np.ndarray] = None
 
     @property
     def n_atoms(self) -> int:
@@ -144,6 +173,10 @@ class CrystalFields:
     @property
     def is_ensemble(self) -> bool:
         return False
+
+    @property
+    def is_disordered(self) -> bool:
+        return self.site_species is not None
 
     @property
     def volume(self) -> float:
@@ -208,7 +241,28 @@ def periodic_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec = Period
         Wi, Wj = W[i], W[j]
         for k in range(len(centres)):                      # one BLAS product per channel
             T[:, k, :] = (Wi * B[:, k:k + 1]).T @ Wj
-    G = W.T @ W                                            # the self terms, sum_l w_lf w_lg
+        if crystal.second_moments is not None:
+            # a site and its own periodic image are occupied together or not at all, so that
+            # pair carries E[w_f w_g] of the site and not the product of the means (M2)
+            own = i == j
+            if own.any():
+                Mo = np.asarray(crystal.second_moments, float)[i[own]]
+                D = Mo - W[i[own]][:, :, None] * W[i[own]][:, None, :]
+                T += np.einsum("pfg,pk->fkg", D, B[own])
+    if crystal.second_moments is not None:
+        # disordered sites (M2): the self term and the background need E[w_f w_g] on each site,
+        # not the product of the means, and so does the pair of a site with its own periodic
+        # image (handled above); the pair term between different sites is exact as it is,
+        # because independent sites make the mean of a product the product of the means.
+        # The descriptor is per expected atom, so that a supercell of the same disorder gives
+        # the same channels, as it does for an ordered cell.
+        G = np.asarray(crystal.second_moments, float).sum(axis=0)
+        cov = G - W.T @ W                                  # sum over sites of the covariance
+        n_norm = float(np.sum(crystal.occupancy)) if crystal.occupancy is not None else n_atoms
+    else:
+        G = W.T @ W                                        # the self terms, sum_l w_lf w_lg
+        cov = np.zeros_like(G)
+        n_norm = n_atoms
     fi = np.array([f for f, _ in pairs], int)
     gi = np.array([g for _, g in pairs], int)
     diag = fi == gi
@@ -216,8 +270,8 @@ def periodic_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec = Period
     rows = T[fi, :, gi] + np.where(diag[:, None], 0.0, T[gi, :, fi])
     rows = rows + (mult * G[fi, gi])[:, None] * self_row[None, :]
     if shell is not None and V > 0:
-        rows = rows - (mult * S[fi] * S[gi] / V)[:, None] * shell[None, :]
-    return (rows / n_atoms).ravel()
+        rows = rows - (mult * (S[fi] * S[gi] + cov[fi, gi]) / V)[:, None] * shell[None, :]
+    return (rows / max(n_norm, 1e-12)).ravel()
 
 
 def periodic_feature_matrix(crystals: Sequence[CrystalFields],
@@ -309,15 +363,18 @@ def electronegativity(symbol: str) -> float:
     return _EN_CACHE[symbol]
 
 
-def oxidation_states(symbols: Sequence[str]) -> Optional[Dict[str, float]]:
+def oxidation_states(symbols: Sequence[str],
+                     composition: Optional[Dict[str, float]] = None) -> Optional[Dict[str, float]]:
     """A charge-balanced assignment of common oxidation states for the composition, or None.
 
     pymatgen's ``oxi_state_guesses`` on the reduced composition; the first guess is taken,
-    which is the one with the most common states.  Elemental solids get zero.
+    which is the one with the most common states.  Elemental solids get zero.  `composition`
+    gives the amounts of the elements directly, which a disordered structure needs, since its
+    composition is fractional and not a count of its symbols.
     """
     from collections import Counter
-    counts = Counter(symbols)
-    key = " ".join(f"{el}{n}" for el, n in sorted(counts.items()))
+    counts = Counter(symbols) if composition is None else dict(composition)
+    key = " ".join(f"{el}{n:g}" for el, n in sorted(counts.items()))
     if key in _OXI_CACHE:
         return _OXI_CACHE[key]
     result: Optional[Dict[str, float]] = None
@@ -331,8 +388,44 @@ def oxidation_states(symbols: Sequence[str]) -> Optional[Dict[str, float]]:
                 result = {el: float(v) for el, v in guesses[0].items()}
         except Exception:
             result = None
+        if result is None and composition is not None:
+            result = _nearest_balance(counts)
     _OXI_CACHE[key] = result
     return result
+
+
+def _nearest_balance(composition: Dict[str, float], limit: int = 20000) -> Optional[Dict[str, float]]:
+    """Common oxidation states that come closest to charge balance for a fractional composition.
+
+    A refined structure with partial occupancies is rarely neutral to the last hundredth, so the
+    exact search of pymatgen finds nothing.  This tries every combination of the common states of
+    the elements present and keeps the one with the smallest residual charge per atom, the most
+    common states first among ties; it refuses when the residual is more than a tenth of a charge
+    per atom, which is not an oxide with a misprinted occupancy but a different compound.
+    """
+    import itertools
+    from pymatgen.core import Element
+    elements = sorted(composition)
+    total = float(sum(composition.values()))
+    if total <= 0:
+        return None
+    # the common states first; every known state only when those cannot balance, which is the
+    # mixed-valence case (Ti(III)/Ti(IV) in a lithiated phosphate)
+    for attr in ("common_oxidation_states", "oxidation_states"):
+        options = [list(getattr(Element(el), attr)) or [0] for el in elements]
+        n = 1
+        for o in options:
+            n *= len(o)
+        if n > limit:
+            continue
+        best, best_res = None, float("inf")
+        for combo in itertools.product(*options):
+            res = abs(sum(float(composition[el]) * q for el, q in zip(elements, combo))) / total
+            if res < best_res - 1e-12:
+                best, best_res = combo, res
+        if best is not None and best_res <= 0.1:
+            return {el: float(q) for el, q in zip(elements, best)}
+    return None
 
 
 def _electronegativity_charges(symbols: Sequence[str]) -> np.ndarray:
@@ -363,13 +456,134 @@ def crystal_charges(atoms, model: str = "oxidation") -> Tuple[np.ndarray, str]:
     raise ValueError(f"unknown charge model for solids: {model!r}")
 
 
+def site_species(atoms) -> Optional[List[Dict[str, float]]]:
+    """The species sharing every site with their occupancies, or None for an ordered structure.
+
+    Two conventions are read: ``atoms.info["site_species"]``, one dictionary per site, which
+    :func:`read_disordered` writes, and ASE's own CIF convention, ``atoms.info["occupancy"]``
+    keyed by the ``spacegroup_kinds`` of the atoms.  A structure in which every site holds one
+    species at full occupancy is ordered and gives None, whichever convention it came with.
+    """
+    n = len(atoms)
+    out: Optional[List[Dict[str, float]]] = None
+    if "site_species" in atoms.info:
+        out = [{str(k): float(v) for k, v in d.items()} for d in atoms.info["site_species"]]
+        if len(out) != n:
+            raise ValueError(f"{len(out)} site species for {n} atoms")
+    elif "occupancy" in atoms.info and "spacegroup_kinds" in atoms.arrays:
+        occ = atoms.info["occupancy"]
+        kinds = np.asarray(atoms.arrays["spacegroup_kinds"]).reshape(-1)
+        out = [{str(k): float(v) for k, v in occ[str(int(kind))].items()}
+               if str(int(kind)) in occ else {} for kind in kinds]
+    if out is None:
+        return None
+    symbols = list(atoms.get_chemical_symbols())
+    for i, d in enumerate(out):
+        if not d:
+            out[i] = {symbols[i]: 1.0}
+    ordered = all(len(d) == 1 and abs(next(iter(d.values())) - 1.0) < 1e-9
+                  and next(iter(d)) == symbols[i] for i, d in enumerate(out))
+    return None if ordered else out
+
+
+def composition_of(atoms) -> Dict[str, float]:
+    """The amounts of the elements in the cell, occupancies included."""
+    species = site_species(atoms)
+    out: Dict[str, float] = {}
+    if species is None:
+        for s in atoms.get_chemical_symbols():
+            out[s] = out.get(s, 0.0) + 1.0
+    else:
+        for d in species:
+            for el, p in d.items():
+                out[el] = out.get(el, 0.0) + float(p)
+    return out
+
+
+def read_disordered(path: str, occupancy_tolerance: float = 1.05,
+                    site_tolerance: float = 1e-3):
+    """A CIF with partial occupancies as an ASE ``Atoms`` carrying its site species (M2).
+
+    pymatgen reads the occupancies; every site gets its majority species as the symbol, its
+    total occupancy in ``arrays["occupancy"]`` and the species that share it with their
+    occupancies in ``info["site_species"]``, which :func:`crystal_fields` turns into
+    occupancy-weighted field weights.  `site_tolerance` is kept small so that split positions a
+    fraction of an angstrom apart stay separate sites instead of being merged into one with an
+    occupancy above one; `occupancy_tolerance` is what a site may sum to before the file is
+    refused.  An ordered CIF comes back as an ordinary structure.
+    """
+    from ase import Atoms
+    from pymatgen.io.cif import CifParser
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        parser = CifParser(path, occupancy_tolerance=float(occupancy_tolerance),
+                           site_tolerance=float(site_tolerance))
+        st = parser.parse_structures(primitive=False)[0]
+    symbols, species, occ = [], [], []
+    for site in st:
+        comp = {sp.symbol: float(v) for sp, v in site.species.items()}
+        symbols.append(max(comp, key=comp.get))
+        species.append(comp)
+        occ.append(sum(comp.values()))
+    atoms = Atoms(symbols=symbols, positions=np.asarray(st.cart_coords, float),
+                  cell=np.asarray(st.lattice.matrix, float), pbc=True)
+    if not st.is_ordered:
+        atoms.set_array("occupancy", np.asarray(occ, float))
+        atoms.info["site_species"] = species
+    atoms.info["source"] = str(path)
+    return atoms
+
+
+def _species_columns(fieldset: FieldSet, species: Dict[str, float], charges_of: Dict[str, float],
+                     listed: set, name: str) -> np.ndarray:
+    """The field weights of one site occupied by `species` with the given occupancies:
+    (n_species, F), one row per species, each row the weights of that species alone."""
+    from ase.data import atomic_masses, atomic_numbers, covalent_radii
+    rows = []
+    for el in species:
+        cols = []
+        for sp in fieldset.specs:
+            if sp.name == "electrostatic":
+                cols.append(charges_of[el])
+            elif sp.name == "steric":
+                cols.append(covalent_radii[atomic_numbers[el]] ** 3)
+            elif sp.name == "prop:electronegativity":
+                x = electronegativity(el)
+                cols.append(x if np.isfinite(x) else 0.0)
+            elif sp.name == "prop:mass":
+                cols.append(atomic_masses[atomic_numbers[el]])
+            elif sp.name == "prop:inverse_sqrt_mass":
+                cols.append(atomic_masses[atomic_numbers[el]] ** -0.5)
+            elif sp.name.startswith("prop:"):
+                raise ValueError(f"structure {name}: the field {sp.name} reads a per-atom array, "
+                                 f"which a site shared by several species does not have")
+            elif sp.is_cif:
+                target = sp.name[4:]
+                cols.append((0.0 if el in listed else 1.0) if target == OTHER_ELEMENT
+                            else (1.0 if el == target else 0.0))
+            else:
+                raise ValueError(f"the field {sp.name!r} is not defined for a periodic solid; "
+                                 f"use electrostatic, steric, prop:<array> or cif:<element>")
+        rows.append(cols)
+    return np.asarray(rows, float).reshape(len(species), -1)
+
+
 def crystal_fields(atoms, fieldset: FieldSet, name: str = "") -> CrystalFields:
-    """Evaluate the field weights of one periodic structure (an ASE ``Atoms``)."""
+    """Evaluate the field weights of one periodic structure (an ASE ``Atoms``).
+
+    A structure with partial occupancies (:func:`site_species`) gets the occupancy-weighted mean
+    of the weights of the species sharing each site, and the second moments the self term of the
+    periodic autocorrelation needs; see the module docstring.
+    """
     from ase.data import atomic_masses, atomic_numbers, covalent_radii
     symbols = list(atoms.get_chemical_symbols())
     n = len(symbols)
     radii = np.array([covalent_radii[atomic_numbers[s]] for s in symbols], float)
     listed = {sp.name[4:] for sp in fieldset.specs if sp.is_cif and sp.name[4:] != OTHER_ELEMENT}
+    species = site_species(atoms)
+    if species is not None:
+        return _disordered_fields(atoms, fieldset, species, radii, listed, name)
     charges, source = None, ""
     cols = []
     for sp in fieldset.specs:
@@ -413,6 +627,58 @@ def crystal_fields(atoms, fieldset: FieldSet, name: str = "") -> CrystalFields:
                          charges=charges, charge_source=source, atom_types=list(symbols))
 
 
+def _disordered_fields(atoms, fieldset: FieldSet, species: List[Dict[str, float]],
+                       radii: np.ndarray, listed: set, name: str) -> CrystalFields:
+    """The occupancy-weighted fields and their second moments (plan item M2)."""
+    from ase.data import atomic_numbers, covalent_radii
+    symbols = list(atoms.get_chemical_symbols())
+    n = len(symbols)
+    label = name or atoms.get_chemical_formula()
+    needs_charges = any(sp.name == "electrostatic" for sp in fieldset.specs)
+    charges_of: Dict[str, float] = {}
+    source = ""
+    if needs_charges:
+        model = fieldset.charge_model
+        if model == "file":
+            q, source = crystal_charges(atoms, "file")          # one charge per site, as given
+        else:
+            ox = oxidation_states(symbols, composition_of(atoms)) if model == "oxidation" else None
+            if ox is not None:
+                charges_of, source = dict(ox), "oxidation"
+            else:
+                elements = sorted({el for d in species for el in d})
+                x = {el: electronegativity(el) for el in elements}
+                mean = float(np.nanmean([v for v in x.values()]))
+                charges_of = {el: (mean - v if np.isfinite(v) else 0.0) for el, v in x.items()}
+                source = "electronegativity"
+    F = fieldset.n_fields
+    W = np.zeros((n, F))
+    M = np.zeros((n, F, F))
+    q_out = np.zeros(n)
+    for i, d in enumerate(species):
+        if needs_charges and fieldset.charge_model == "file":
+            local = {el: float(q[i]) for el in d}               # the site's charge, whatever shares it
+        else:
+            local = charges_of
+        rows = _species_columns(fieldset, d, local, listed, label)
+        p = np.array([d[el] for el in d], float)
+        W[i] = p @ rows
+        M[i] = (rows * p[:, None]).T @ rows
+        if needs_charges:
+            f = [k for k, sp in enumerate(fieldset.specs) if sp.name == "electrostatic"][0]
+            q_out[i] = W[i, f]
+        # one radius per site, for the width of the steric field: the occupancy-weighted mean
+        radii[i] = float(sum(d[el] * covalent_radii[atomic_numbers[el]] for el in d)
+                         / max(sum(d.values()), 1e-12))
+    return CrystalFields(name=label, coords=np.asarray(atoms.get_positions(), float), weights=W,
+                         radii=radii, symbols=symbols, cell=np.asarray(atoms.get_cell()[:], float),
+                         pbc=tuple(bool(p) for p in atoms.get_pbc()),
+                         charges=q_out if needs_charges else None, charge_source=source,
+                         atom_types=list(symbols),
+                         occupancy=np.array([sum(d.values()) for d in species], float),
+                         site_species=species, second_moments=M)
+
+
 def crystal_table(structures: Sequence, fieldset: FieldSet,
                   names: Optional[Sequence[str]] = None) -> AtomTable:
     """An :class:`fields.AtomTable` of periodic structures, which the model takes like any other."""
@@ -425,10 +691,20 @@ def crystal_table(structures: Sequence, fieldset: FieldSet,
 # Input
 # --------------------------------------------------------------------------- #
 def read_structures(path: str, index: str = ":") -> list:
-    """Every structure of an ASE-readable file (CIF, POSCAR, extended XYZ, ASE JSON, ...)."""
+    """Every structure of an ASE-readable file (CIF, POSCAR, extended XYZ, ASE JSON, ...).
+
+    A CIF whose sites carry partial occupancies is read through :func:`read_disordered`, so that
+    the occupancies reach the fields; every other file goes through ASE as it is.
+    """
     from ase.io import read
     out = read(path, index=index)
-    return list(out) if isinstance(out, (list, tuple)) else [out]
+    out = list(out) if isinstance(out, (list, tuple)) else [out]
+    if str(path).lower().endswith(".cif") and any(site_species(a) is not None for a in out):
+        try:
+            return [read_disordered(path)]
+        except Exception:
+            return out
+    return out
 
 
 def structures_from_matbench(table: dict, target: Optional[str] = None):

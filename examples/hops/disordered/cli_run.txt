@@ -1,0 +1,33 @@
+C:\Users\baski\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\ase\io\cif.py:411: UserWarning: crystal system 'tetragonal' is not interpreted for space group Spacegroup(123, setting=1). This may result in wrong setting!
+  warnings.warn(
+C:\Users\baski\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\ase\io\cif.py:411: UserWarning: crystal system 'tetragonal' is not interpreted for space group Spacegroup(137, setting=1). This may result in wrong setting!
+  warnings.warn(
+C:\Users\baski\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\bvlain\potentials.py:80: RuntimeWarning: divide by zero encountered in divide
+  energy = 14.4 * (q1 * q2 / (n1 * n2) ** (1/2)) * (1 / (r)) * erfc(r / (f * (rc1 + rc2)))
+C:\Users\baski\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\bvlain\potentials.py:80: RuntimeWarning: invalid value encountered in multiply
+  energy = 14.4 * (q1 * q2 / (n1 * n2) ** (1/2)) * (1 / (r)) * erfc(r / (f * (rc1 + rc2)))
+6408 hops of Li in 13 structures (0 to 1824 per structure, 10 with partial occupancies), 298 distinct by symmetry, 0 with a barrier
+  fields: electrostatic, steric, prop:electronegativity, cif:Ge, cif:La, cif:Li, cif:N, cif:O, cif:P, cif:S, cif:Ti, cif:Zr
+  bond-valence barriers of the distinct hops in 214 s
+  'barrier': 298 hops measured in 12 of 13 structures, 24.8 per molecule (from 4 to 98); values 0.002 to 15.169, mean 0.495
+  counts about the midpoint: q2 +0.172, error 0.908, mean absolute error 0.414 over 298 atoms in 12 molecules, 10 folds, ridge 0.01
+  invariant local, rho 0.25: q2 +0.061, error 0.967, mean absolute error 0.423 over 298 atoms in 12 molecules, 10 folds, ridge 1
+  rotation-averaged overlap, rho 0.25: q2 -0.204, error 1.095, mean absolute error 0.554 over 298 atoms in 12 molecules, 10 folds, ridge 1
+    102 atoms per environment
+    invariant local, rho 0.25 against the counts -0.111 [-0.437, +0.030]: it is no better than them
+    rotation-averaged overlap, rho 0.25 against the counts -0.376 [-2.146, -0.172]: it loses to them
+  percolation thresholds per structure, eV above the lowest site: from the bond-valence saddles / from the out-of-fold predictions
+    cod_1000437          E_1D: 0.82/0.79  E_2D: 0.82/1.01  E_3D: 15.17/1.01   (landscape grid: 0.82, 0.82, inf)
+    cod_1524557          E_1D: 0.45/0.36  E_2D: 0.45/0.36  E_3D: 0.49/0.46   (landscape grid: 0.47, 0.48, 0.52)
+    cod_1525568          E_1D: 1.76/0.07  E_2D: 1.89/1.89  E_3D: 1.89/1.89   (landscape grid: 1.77, 1.95, 1.95)
+    cod_1529523          E_1D: 0.40/0.11  E_2D: 0.40/0.12  E_3D: 0.46/0.16   (landscape grid: 0.44, 0.45, 0.47)
+    cod_1545083          E_1D: 0.40/0.30  E_2D: 0.40/0.30  E_3D: 0.40/0.30   (landscape grid: 0.41, 0.41, 0.41)
+    cod_1545085          E_1D: 1.45/-0.02  E_2D: 1.45/0.24  E_3D: 2.93/0.24   (landscape grid: 1.95, 2.01, 3.41)
+    cod_1552152          E_1D: 0.39/0.36  E_2D: 0.39/0.36  E_3D: 0.39/0.36   (landscape grid: 0.42, 0.42, 0.42)
+    cod_1570310          E_1D: 0.25/0.30  E_2D: 0.27/0.59  E_3D: 0.40/1.38   (landscape grid: 0.27, 0.29, 0.42)
+    cod_4002499          E_1D: 0.16/0.21  E_2D: 0.16/0.21  E_3D: 0.17/0.21   (landscape grid: 0.16, 0.16, 0.17)
+    cod_7215190          E_1D: 0.53/-0.57  E_2D: 0.59/-0.57  E_3D: 0.59/-0.57   (landscape grid: 0.57, 0.60, 0.60)
+    cod_7222155          E_1D: inf/inf  E_2D: inf/inf  E_3D: inf/inf
+    cod_7222156          E_1D: 0.47/1.54  E_2D: 0.47/1.54  E_3D: 0.47/1.54   (landscape grid: 0.47, 0.47, 0.47)
+    cod_9011044          E_1D: 0.31/-0.51  E_2D: 0.32/-0.49  E_3D: 0.63/-0.46   (landscape grid: 0.42, 0.42, 0.75)
+  6408 hops written to examples/hops/disordered/hops_bvse.csv with their labels and out-of-fold predictions

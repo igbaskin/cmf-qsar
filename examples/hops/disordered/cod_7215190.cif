@@ -1,0 +1,625 @@
+#------------------------------------------------------------------------------
+#$Date: 2016-02-16 03:10:39 +0200 (Tue, 16 Feb 2016) $
+#$Revision: 176453 $
+#$URL: file:///home/coder/svn-repositories/_RELOADED_COD/cod-reloaded/cif/7/21/51/7215190.cif $
+#------------------------------------------------------------------------------
+#
+# This file is available in the Crystallography Open Database (COD),
+# http://www.crystallography.net/
+#
+# All data on this site have been placed in the public domain by the
+# contributors.
+#
+data_7215190
+loop_
+_publ_author_name
+'Kuhn, Alexander'
+'K\"ohler, J\"urgen'
+'Lotsch, Bettina V.'
+_publ_section_title
+;
+ Single-crystal X-ray structure analysis of the superionic conductor
+ Li10GeP2S12.
+;
+_journal_issue                   28
+_journal_name_full               'Physical chemistry chemical physics : PCCP'
+_journal_page_first              11620
+_journal_page_last               11622
+_journal_paper_doi               10.1039/c3cp51985f
+_journal_volume                  15
+_journal_year                    2013
+_chemical_formula_moiety         'Li10 Ge P2 S12'
+_chemical_formula_sum            'Ge Li10 P2 S12'
+_chemical_formula_weight         588.66
+_chemical_name_systematic
+; 
+ ? 
+;
+_space_group_IT_number           137
+_symmetry_cell_setting           tetragonal
+_symmetry_Int_Tables_number      137
+_symmetry_space_group_name_Hall  'P 4n 2n -1n'
+_symmetry_space_group_name_H-M   'P 42/n m c :1'
+_atom_sites_solution_hydrogens   geom
+_atom_sites_solution_primary     direct
+_atom_sites_solution_secondary   difmap
+_audit_creation_method           SHELXL-97
+_cell_angle_alpha                90.00
+_cell_angle_beta                 90.00
+_cell_angle_gamma                90.00
+_cell_formula_units_Z            2
+_cell_length_a                   8.652(3)
+_cell_length_b                   8.652(3)
+_cell_length_c                   12.582(4)
+_cell_measurement_temperature    273(2)
+_cell_volume                     941.9(6)
+_computing_structure_refinement  'SHELXL-97 (Sheldrick, 1997)'
+_computing_structure_solution    'SHELXS-97 (Sheldrick, 1990)'
+_diffrn_ambient_temperature      100(2)
+_diffrn_measured_fraction_theta_full 0.998
+_diffrn_measured_fraction_theta_max 0.998
+_diffrn_measurement_device_type  'SMART APEX II, Bruker AXS'
+_diffrn_measurement_method       \wscan
+_diffrn_radiation_monochromator  graphite
+_diffrn_radiation_probe          x-ray
+_diffrn_radiation_type           MoK\a
+_diffrn_radiation_wavelength     0.71073
+_diffrn_reflns_av_R_equivalents  0.0468
+_diffrn_reflns_av_sigmaI/netI    0.0202
+_diffrn_reflns_limit_h_max       12
+_diffrn_reflns_limit_h_min       -12
+_diffrn_reflns_limit_k_max       12
+_diffrn_reflns_limit_k_min       -12
+_diffrn_reflns_limit_l_max       17
+_diffrn_reflns_limit_l_min       -17
+_diffrn_reflns_number            10274
+_diffrn_reflns_theta_full        30.65
+_diffrn_reflns_theta_max         30.65
+_diffrn_reflns_theta_min         2.86
+_diffrn_source                   'fine-focus sealed tube'
+_exptl_absorpt_coefficient_mu    3.097
+_exptl_absorpt_correction_T_max  0.6214
+_exptl_absorpt_correction_T_min  0.3940
+_exptl_absorpt_correction_type   multi-scan
+_exptl_crystal_colour            'translucent yellowish'
+_exptl_crystal_density_diffrn    2.076
+_exptl_crystal_density_method    'not measured'
+_exptl_crystal_description       block
+_exptl_crystal_F_000             548
+_exptl_crystal_size_max          200
+_exptl_crystal_size_mid          150
+_exptl_crystal_size_min          100
+_refine_diff_density_max         1.170
+_refine_diff_density_min         -0.532
+_refine_diff_density_rms         0.118
+_refine_ls_abs_structure_details 'Flack H D (1983), Acta Cryst. A39, 876-881'
+_refine_ls_abs_structure_Flack   -10(10)
+_refine_ls_extinction_method     none
+_refine_ls_goodness_of_fit_ref   1.154
+_refine_ls_hydrogen_treatment    mixed
+_refine_ls_matrix_type           full
+_refine_ls_number_parameters     51
+_refine_ls_number_reflns         820
+_refine_ls_number_restraints     1
+_refine_ls_restrained_S_all      1.154
+_refine_ls_R_factor_all          0.0514
+_refine_ls_R_factor_gt           0.0355
+_refine_ls_shift/su_max          0.002
+_refine_ls_shift/su_mean         0.000
+_refine_ls_structure_factor_coef Fsqd
+_refine_ls_weighting_details
+'calc w=1/[\s^2^(Fo^2^)+(0.0539P)^2^+1.0798P] where P=(Fo^2^+2Fc^2^)/3'
+_refine_ls_weighting_scheme      calc
+_refine_ls_wR_factor_gt          0.0880
+_refine_ls_wR_factor_ref         0.1056
+_reflns_number_gt                647
+_reflns_number_total             820
+_reflns_threshold_expression     >2sigma(I)
+_cod_data_source_file            c3cp51985f.cif
+_cod_data_source_block           100k_20li
+_cod_original_cell_volume        941.8(5)
+_cod_original_sg_symbol_H-M      P4_2/nmc:1
+_cod_original_formula_sum        'Li10 Ge P2 S12'
+_cod_database_code               7215190
+loop_
+_symmetry_equiv_pos_as_xyz
+'x, y, z'
+'-x, -y, z'
+'-y+1/2, x+1/2, z+1/2'
+'y+1/2, -x+1/2, z+1/2'
+'-x+1/2, y+1/2, -z+1/2'
+'x+1/2, -y+1/2, -z+1/2'
+'y, x, -z'
+'-y, -x, -z'
+'-x+1/2, -y+1/2, -z+1/2'
+'x+1/2, y+1/2, -z+1/2'
+'y, -x, -z'
+'-y, x, -z'
+'x, -y, z'
+'-x, y, z'
+'-y+1/2, -x+1/2, z+1/2'
+'y+1/2, x+1/2, z+1/2'
+loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_U_iso_or_equiv
+_atom_site_adp_type
+_atom_site_occupancy
+_atom_site_symmetry_multiplicity
+_atom_site_calc_flag
+_atom_site_refinement_flags
+Li1 Li+ 0.257(2) 0.2699(19) 0.1869(16) 0.077(6) Uani 0.474(16) 1 d P
+Li2 Li+ 0.0000 0.5000 0.9469(9) 0.039(4) Uani 0.89(5) 4 d SP
+Li3 Li+ 0.2471(15) 0.2471(15) 0.0000 0.149(16) Uani 0.72(4) 2 d SP
+Li4 Li+ 0.0000 0.0000 0.2510(16) 0.076(9) Uani 0.77(6) 4 d SP
+Ge1 Ge 0.0000 0.5000 0.69003(5) 0.0203(2) Uani 0.50 4 d SP
+P1 P 0.0000 0.5000 0.69003(5) 0.0203(2) Uani 0.50 4 d SP
+P2 P 0.0000 0.0000 0.5000 0.0188(3) Uani 1 8 d S
+S1 S 0.0000 0.18954(11) 0.40664(8) 0.0335(3) Uani 1 2 d S
+S2 S 0.0000 0.29440(12) 0.09561(7) 0.0283(2) Uani 1 2 d S
+S3 S 0.0000 0.69990(11) 0.79051(7) 0.0266(2) Uani 1 2 d S
+loop_
+_atom_site_aniso_label
+_atom_site_aniso_U_11
+_atom_site_aniso_U_22
+_atom_site_aniso_U_33
+_atom_site_aniso_U_23
+_atom_site_aniso_U_13
+_atom_site_aniso_U_12
+Li1 0.060(11) 0.035(8) 0.137(17) -0.008(10) 0.015(11) 0.011(7)
+Li2 0.036(7) 0.051(8) 0.030(7) 0.000 0.000 0.000
+Li3 0.084(11) 0.084(11) 0.28(4) -0.106(17) 0.106(17) -0.050(12)
+Li4 0.032(10) 0.14(2) 0.052(12) 0.000 0.000 0.000
+Ge1 0.0251(4) 0.0206(4) 0.0151(3) 0.000 0.000 0.000
+P1 0.0251(4) 0.0206(4) 0.0151(3) 0.000 0.000 0.000
+P2 0.0187(5) 0.0187(5) 0.0190(7) 0.000 0.000 0.000
+S1 0.0483(6) 0.0208(4) 0.0314(5) 0.0038(4) 0.000 0.000
+S2 0.0262(4) 0.0353(5) 0.0232(4) -0.0009(4) 0.000 0.000
+S3 0.0295(5) 0.0251(5) 0.0253(4) 0.0013(3) 0.000 0.000
+loop_
+_atom_type_symbol
+_atom_type_description
+_atom_type_scat_dispersion_real
+_atom_type_scat_dispersion_imag
+_atom_type_scat_source
+Li Li+ -0.0003 0.0001 'International Tables Vol C Tables 4.2.6.8 and 6.1.1.4'
+Ge Ge 0.1547 1.8001 'International Tables Vol C Tables 4.2.6.8 and 6.1.1.4'
+P P 0.1023 0.0942 'International Tables Vol C Tables 4.2.6.8 and 6.1.1.4'
+S S 0.1246 0.1234 'International Tables Vol C Tables 4.2.6.8 and 6.1.1.4'
+loop_
+_geom_angle_atom_site_label_1
+_geom_angle_atom_site_label_2
+_geom_angle_atom_site_label_3
+_geom_angle
+_geom_angle_site_symmetry_1
+_geom_angle_site_symmetry_3
+Li1 Li1 Li3 161.8(17) 9 .
+Li1 Li1 S3 71.8(11) 9 8_656
+Li3 Li1 S3 92.4(7) . 8_656
+Li1 Li1 S3 68.6(11) 9 4_454
+Li3 Li1 S3 126.5(8) . 4_454
+S3 Li1 S3 140.5(9) 8_656 4_454
+Li1 Li1 S1 124.5(17) 9 6
+Li3 Li1 S1 64.0(6) . 6
+S3 Li1 S1 93.7(6) 8_656 6
+S3 Li1 S1 108.5(7) 4_454 6
+Li1 Li1 S2 113.4(15) 9 .
+Li3 Li1 S2 61.3(6) . .
+S3 Li1 S2 106.0(7) 8_656 .
+S3 Li1 S2 89.8(6) 4_454 .
+S1 Li1 S2 122.1(8) 6 .
+Li1 Li1 Ge1 94.1(13) 9 3_554
+Li3 Li1 Ge1 92.4(6) . 3_554
+S3 Li1 Ge1 140.2(8) 8_656 3_554
+S3 Li1 Ge1 45.2(3) 4_454 3_554
+S1 Li1 Ge1 123.6(7) 6 3_554
+S2 Li1 Ge1 44.8(3) . 3_554
+Li1 Li1 P1 94.1(13) 9 3_554
+Li3 Li1 P1 92.4(6) . 3_554
+S3 Li1 P1 140.2(8) 8_656 3_554
+S3 Li1 P1 45.2(3) 4_454 3_554
+S1 Li1 P1 123.6(7) 6 3_554
+S2 Li1 P1 44.8(3) . 3_554
+Ge1 Li1 P1 0.00(3) 3_554 3_554
+Li1 Li1 Li4 86.5(14) 9 5
+Li3 Li1 Li4 109.9(9) . 5
+S3 Li1 Li4 120.7(7) 8_656 5
+S3 Li1 Li4 57.3(4) 4_454 5
+S1 Li1 Li4 54.9(5) 6 5
+S2 Li1 Li4 133.1(7) . 5
+Ge1 Li1 Li4 94.4(5) 3_554 5
+P1 Li1 Li4 94.4(5) 3_554 5
+Li1 Li1 Li4 64.2(12) 9 .
+Li3 Li1 Li4 99.1(8) . .
+S3 Li1 Li4 52.2(3) 8_656 .
+S3 Li1 Li4 108.0(7) 4_454 .
+S1 Li1 Li4 142.8(7) 6 .
+S2 Li1 Li4 65.0(5) . .
+Ge1 Li1 Li4 88.1(5) 3_554 .
+P1 Li1 Li4 88.1(5) 3_554 .
+Li4 Li1 Li4 150.7(7) 5 .
+S2 Li2 S2 87.1(4) 2_566 1_556
+S2 Li2 S3 177.8(3) 2_566 2_565
+S2 Li2 S3 95.13(4) 1_556 2_565
+S2 Li2 S3 95.13(4) 2_566 .
+S2 Li2 S3 177.8(3) 1_556 .
+S3 Li2 S3 82.6(3) 2_565 .
+S2 Li2 S1 97.71(15) 2_566 4_455
+S2 Li2 S1 97.71(15) 1_556 4_455
+S3 Li2 S1 82.0(2) 2_565 4_455
+S3 Li2 S1 82.0(2) . 4_455
+S2 Li2 S1 97.71(15) 2_566 3
+S2 Li2 S1 97.71(15) 1_556 3
+S3 Li2 S1 82.0(2) 2_565 3
+S3 Li2 S1 82.0(2) . 3
+S1 Li2 S1 158.7(5) 4_455 3
+S2 Li2 P1 43.54(18) 2_566 3
+S2 Li2 P1 43.54(18) 1_556 3
+S3 Li2 P1 138.68(17) 2_565 3
+S3 Li2 P1 138.68(17) . 3
+S1 Li2 P1 100.7(2) 4_455 3
+S1 Li2 P1 100.7(2) 3 3
+S2 Li2 Ge1 43.54(18) 2_566 3
+S2 Li2 Ge1 43.54(18) 1_556 3
+S3 Li2 Ge1 138.68(17) 2_565 3
+S3 Li2 Ge1 138.68(17) . 3
+S1 Li2 Ge1 100.7(2) 4_455 3
+S1 Li2 Ge1 100.7(2) 3 3
+P1 Li2 Ge1 0.0 3 3
+S2 Li2 Li3 50.5(2) 2_566 11_566
+S2 Li2 Li3 109.1(3) 1_556 11_566
+S3 Li2 Li3 128.4(3) 2_565 11_566
+S3 Li2 Li3 72.48(18) . 11_566
+S1 Li2 Li3 135.3(3) 4_455 11_566
+S1 Li2 Li3 50.8(3) 3 11_566
+P1 Li2 Li3 77.7(2) 3 11_566
+Ge1 Li2 Li3 77.7(2) 3 11_566
+S2 Li2 Li3 109.1(3) 2_566 12_556
+S2 Li2 Li3 50.5(2) 1_556 12_556
+S3 Li2 Li3 72.48(18) 2_565 12_556
+S3 Li2 Li3 128.4(3) . 12_556
+S1 Li2 Li3 50.8(3) 4_455 12_556
+S1 Li2 Li3 135.3(3) 3 12_556
+P1 Li2 Li3 77.7(2) 3 12_556
+Ge1 Li2 Li3 77.7(2) 3 12_556
+Li3 Li2 Li3 155.3(4) 11_566 12_556
+S2 Li2 Li3 50.5(2) 2_566 2_566
+S2 Li2 Li3 109.1(3) 1_556 2_566
+S3 Li2 Li3 128.4(3) 2_565 2_566
+S3 Li2 Li3 72.48(18) . 2_566
+S1 Li2 Li3 50.8(3) 4_455 2_566
+S1 Li2 Li3 135.3(3) 3 2_566
+P1 Li2 Li3 77.7(2) 3 2_566
+Ge1 Li2 Li3 77.7(2) 3 2_566
+Li3 Li2 Li3 86.1(7) 11_566 2_566
+Li3 Li2 Li3 88.6(7) 12_556 2_566
+S2 Li2 Li3 109.1(3) 2_566 1_556
+S2 Li2 Li3 50.5(2) 1_556 1_556
+S3 Li2 Li3 72.48(18) 2_565 1_556
+S3 Li2 Li3 128.4(3) . 1_556
+S1 Li2 Li3 135.3(3) 4_455 1_556
+S1 Li2 Li3 50.8(3) 3 1_556
+P1 Li2 Li3 77.7(2) 3 1_556
+Ge1 Li2 Li3 77.7(2) 3 1_556
+Li3 Li2 Li3 88.6(7) 11_566 1_556
+Li3 Li2 Li3 86.1(7) 12_556 1_556
+Li3 Li2 Li3 155.3(4) 2_566 1_556
+Li1 Li3 Li1 170.3(12) . 7
+Li1 Li3 S2 123.2(5) . 7
+Li1 Li3 S2 62.4(5) 7 7
+Li1 Li3 S2 62.4(5) . .
+Li1 Li3 S2 123.2(5) 7 .
+S2 Li3 S2 121.1(7) 7 .
+Li1 Li3 S1 59.4(5) . 6
+Li1 Li3 S1 112.4(7) 7 6
+S2 Li3 S1 105.50(15) 7 6
+S2 Li3 S1 118.7(2) . 6
+Li1 Li3 S1 112.4(7) . 3_554
+Li1 Li3 S1 59.4(5) 7 3_554
+S2 Li3 S1 118.7(2) 7 3_554
+S2 Li3 S1 105.50(15) . 3_554
+S1 Li3 S1 80.9(5) 6 3_554
+Li1 Li3 P2 85.1(6) . 3_554
+Li1 Li3 P2 85.1(6) 7 3_554
+S2 Li3 P2 119.4(4) 7 3_554
+S2 Li3 P2 119.4(4) . 3_554
+S1 Li3 P2 40.5(3) 6 3_554
+S1 Li3 P2 40.5(3) 3_554 3_554
+Li1 Li3 Li2 100.3(5) . 1_554
+Li1 Li3 Li2 79.6(5) 7 1_554
+S2 Li3 Li2 127.6(4) 7 1_554
+S2 Li3 Li2 53.23(17) . 1_554
+S1 Li3 Li2 122.4(5) 6 1_554
+S1 Li3 Li2 56.46(13) 3_554 1_554
+P2 Li3 Li2 89.4(3) 3_554 1_554
+Li1 Li3 Li2 79.6(5) . 7_556
+Li1 Li3 Li2 100.3(5) 7 7_556
+S2 Li3 Li2 53.23(17) 7 7_556
+S2 Li3 Li2 127.6(4) . 7_556
+S1 Li3 Li2 56.46(13) 6 7_556
+S1 Li3 Li2 122.4(5) 3_554 7_556
+P2 Li3 Li2 89.4(3) 3_554 7_556
+Li2 Li3 Li2 178.7(7) 1_554 7_556
+S1 Li4 S1 79.9(6) . 2
+S1 Li4 S3 98.7(3) . 7_456
+S1 Li4 S3 98.7(3) 2 7_456
+S1 Li4 S3 98.7(3) . 8_656
+S1 Li4 S3 98.7(3) 2 8_656
+S3 Li4 S3 157.2(8) 7_456 8_656
+S1 Li4 Li1 51.2(4) . 9
+S1 Li4 Li1 103.1(6) 2 9
+S3 Li4 Li1 137.6(3) 7_456 9
+S3 Li4 Li1 50.5(3) 8_656 9
+S1 Li4 Li1 103.1(6) . 10_445
+S1 Li4 Li1 51.2(4) 2 10_445
+S3 Li4 Li1 50.5(3) 7_456 10_445
+S3 Li4 Li1 137.6(3) 8_656 10_445
+Li1 Li4 Li1 149.8(10) 9 10_445
+S1 Li4 Li1 103.1(6) . 5_545
+S1 Li4 Li1 51.2(4) 2 5_545
+S3 Li4 Li1 137.6(3) 7_456 5_545
+S3 Li4 Li1 50.5(3) 8_656 5_545
+Li1 Li4 Li1 83.2(7) 9 5_545
+Li1 Li4 Li1 89.0(7) 10_445 5_545
+S1 Li4 Li1 51.2(4) . 6_455
+S1 Li4 Li1 103.1(6) 2 6_455
+S3 Li4 Li1 50.5(3) 7_456 6_455
+S3 Li4 Li1 137.6(3) 8_656 6_455
+Li1 Li4 Li1 89.0(7) 9 6_455
+Li1 Li4 Li1 83.2(7) 10_445 6_455
+Li1 Li4 Li1 149.8(10) 5_545 6_455
+S1 Li4 Li1 129.6(6) . 2
+S1 Li4 Li1 74.6(3) 2 2
+S3 Li4 Li1 45.3(3) 7_456 2
+S3 Li4 Li1 127.5(5) 8_656 2
+Li1 Li4 Li1 177.0(6) 9 2
+Li1 Li4 Li1 29.3(7) 10_445 2
+Li1 Li4 Li1 93.77(18) 5_545 2
+Li1 Li4 Li1 93.47(18) 6_455 2
+S1 Li4 Li1 74.6(3) . .
+S1 Li4 Li1 129.6(6) 2 .
+S3 Li4 Li1 127.5(5) 7_456 .
+S3 Li4 Li1 45.3(3) 8_656 .
+Li1 Li4 Li1 29.3(7) 9 .
+Li1 Li4 Li1 177.0(6) 10_445 .
+Li1 Li4 Li1 93.47(18) 5_545 .
+Li1 Li4 Li1 93.77(18) 6_455 .
+Li1 Li4 Li1 151.9(10) 2 .
+S1 Li4 Li1 74.6(3) . 14
+S1 Li4 Li1 129.6(6) 2 14
+S3 Li4 Li1 45.3(3) 7_456 14
+S3 Li4 Li1 127.5(5) 8_656 14
+Li1 Li4 Li1 93.77(18) 9 14
+Li1 Li4 Li1 93.47(18) 10_445 14
+Li1 Li4 Li1 177.0(6) 5_545 14
+Li1 Li4 Li1 29.3(7) 6_455 14
+Li1 Li4 Li1 89.2(6) 2 14
+Li1 Li4 Li1 84.0(6) . 14
+S1 Li4 Li1 129.6(6) . 13
+S1 Li4 Li1 74.6(3) 2 13
+S3 Li4 Li1 127.5(5) 7_456 13
+S3 Li4 Li1 45.3(3) 8_656 13
+Li1 Li4 Li1 93.47(18) 9 13
+Li1 Li4 Li1 93.77(18) 10_445 13
+Li1 Li4 Li1 29.3(7) 5_545 13
+Li1 Li4 Li1 177.0(6) 6_455 13
+Li1 Li4 Li1 84.0(6) 2 13
+Li1 Li4 Li1 89.2(6) . 13
+Li1 Li4 Li1 151.9(10) 14 13
+S2 Ge1 S2 112.53(6) 4_455 3
+S2 Ge1 S3 109.13(2) 4_455 .
+S2 Ge1 S3 109.13(2) 3 .
+S2 Ge1 S3 109.13(2) 4_455 2_565
+S2 Ge1 S3 109.13(2) 3 2_565
+S3 Ge1 S3 107.67(6) . 2_565
+S2 Ge1 Li1 55.8(4) 4_455 4_455
+S2 Ge1 Li1 123.2(4) 3 4_455
+S3 Ge1 Li1 127.5(4) . 4_455
+S3 Ge1 Li1 53.6(4) 2_565 4_455
+S2 Ge1 Li1 123.2(4) 4_455 3
+S2 Ge1 Li1 55.8(4) 3 3
+S3 Ge1 Li1 53.6(4) . 3
+S3 Ge1 Li1 127.5(4) 2_565 3
+Li1 Ge1 Li1 178.5(8) 4_455 3
+S2 Ge1 Li1 123.2(4) 4_455 15
+S2 Ge1 Li1 55.8(4) 3 15
+S3 Ge1 Li1 127.5(4) . 15
+S3 Ge1 Li1 53.6(4) 2_565 15
+Li1 Ge1 Li1 83.6(7) 4_455 15
+Li1 Ge1 Li1 96.3(7) 3 15
+S2 Ge1 Li1 55.8(4) 4_455 16_455
+S2 Ge1 Li1 123.2(4) 3 16_455
+S3 Ge1 Li1 53.6(4) . 16_455
+S3 Ge1 Li1 127.5(4) 2_565 16_455
+Li1 Ge1 Li1 96.3(7) 4_455 16_455
+Li1 Ge1 Li1 83.6(7) 3 16_455
+Li1 Ge1 Li1 178.5(8) 15 16_455
+S2 Ge1 Li2 56.27(3) 4_455 3_554
+S2 Ge1 Li2 56.27(3) 3 3_554
+S3 Ge1 Li2 126.16(3) . 3_554
+S3 Ge1 Li2 126.16(3) 2_565 3_554
+Li1 Ge1 Li2 89.3(4) 4_455 3_554
+Li1 Ge1 Li2 89.3(4) 3 3_554
+Li1 Ge1 Li2 89.3(4) 15 3_554
+Li1 Ge1 Li2 89.3(4) 16_455 3_554
+S2 Ge1 Li2 123.73(3) 4_455 .
+S2 Ge1 Li2 123.73(3) 3 .
+S3 Ge1 Li2 53.84(3) . .
+S3 Ge1 Li2 53.84(3) 2_565 .
+Li1 Ge1 Li2 90.7(4) 4_455 .
+Li1 Ge1 Li2 90.7(4) 3 .
+Li1 Ge1 Li2 90.7(4) 15 .
+Li1 Ge1 Li2 90.7(4) 16_455 .
+Li2 Ge1 Li2 180.000(2) 3_554 .
+S1 P2 S1 109.82(3) 2 7_556
+S1 P2 S1 108.77(6) 2 .
+S1 P2 S1 109.82(3) 7_556 .
+S1 P2 S1 109.82(3) 2 8_556
+S1 P2 S1 108.77(6) 7_556 8_556
+S1 P2 S1 109.82(3) . 8_556
+S1 P2 Li3 125.089(16) 2 9
+S1 P2 Li3 54.911(16) 7_556 9
+S1 P2 Li3 54.911(16) . 9
+S1 P2 Li3 125.089(16) 8_556 9
+S1 P2 Li3 54.911(16) 2 10_445
+S1 P2 Li3 125.089(16) 7_556 10_445
+S1 P2 Li3 125.089(16) . 10_445
+S1 P2 Li3 54.911(16) 8_556 10_445
+Li3 P2 Li3 180.0(3) 9 10_445
+S1 P2 Li3 125.089(16) 2 4_455
+S1 P2 Li3 125.089(16) 7_556 4_455
+S1 P2 Li3 54.911(16) . 4_455
+S1 P2 Li3 54.911(16) 8_556 4_455
+Li3 P2 Li3 90.0 9 4_455
+Li3 P2 Li3 90.0 10_445 4_455
+S1 P2 Li3 54.911(16) 2 3_545
+S1 P2 Li3 54.911(16) 7_556 3_545
+S1 P2 Li3 125.089(16) . 3_545
+S1 P2 Li3 125.089(16) 8_556 3_545
+Li3 P2 Li3 90.0 9 3_545
+Li3 P2 Li3 90.0 10_445 3_545
+Li3 P2 Li3 180.0 4_455 3_545
+P2 S1 Li1 113.5(4) . 9
+P2 S1 Li1 113.5(4) . 6_455
+Li1 S1 Li1 119.4(10) 9 6_455
+P2 S1 Li3 84.6(3) . 9
+Li1 S1 Li3 56.6(5) 9 9
+Li1 S1 Li3 159.2(5) 6_455 9
+P2 S1 Li3 84.6(3) . 4_455
+Li1 S1 Li3 159.2(5) 9 4_455
+Li1 S1 Li3 56.6(5) 6_455 4_455
+Li3 S1 Li3 118.71(9) 9 4_455
+P2 S1 Li4 85.7(3) . .
+Li1 S1 Li4 73.9(5) 9 .
+Li1 S1 Li4 73.9(5) 6_455 .
+Li3 S1 Li4 119.50(6) 9 .
+Li3 S1 Li4 119.50(6) 4_455 .
+P2 S1 Li2 133.7(2) . 3_554
+Li1 S1 Li2 87.0(4) 9 3_554
+Li1 S1 Li2 87.0(4) 6_455 3_554
+Li3 S1 Li2 72.7(2) 9 3_554
+Li3 S1 Li2 72.7(2) 4_455 3_554
+Li4 S1 Li2 140.6(4) . 3_554
+P1 S2 Ge1 0.00(3) 3_554 3_554
+P1 S2 Li3 113.9(4) 3_554 12
+Ge1 S2 Li3 113.9(4) 3_554 12
+P1 S2 Li3 113.9(4) 3_554 .
+Ge1 S2 Li3 113.9(4) 3_554 .
+Li3 S2 Li3 118.6(5) 12 .
+P1 S2 Li1 79.4(4) 3_554 .
+Ge1 S2 Li1 79.4(4) 3_554 .
+Li3 S2 Li1 165.6(5) 12 .
+Li3 S2 Li1 56.4(5) . .
+P1 S2 Li1 79.4(4) 3_554 14
+Ge1 S2 Li1 79.4(4) 3_554 14
+Li3 S2 Li1 56.4(5) 12 14
+Li3 S2 Li1 165.6(5) . 14
+Li1 S2 Li1 124.6(9) . 14
+P1 S2 Li2 80.19(18) 3_554 1_554
+Ge1 S2 Li2 80.19(18) 3_554 1_554
+Li3 S2 Li2 76.27(18) 12 1_554
+Li3 S2 Li2 76.27(18) . 1_554
+Li1 S2 Li2 112.9(4) . 1_554
+Li1 S2 Li2 112.9(4) 14 1_554
+Ge1 S3 Li1 101.3(5) . 11_566
+Ge1 S3 Li1 101.3(5) . 8_566
+Li1 S3 Li1 157.3(10) 11_566 8_566
+Ge1 S3 Li1 81.3(5) . 16_455
+Li1 S3 Li1 146.6(2) 11_566 16_455
+Li1 S3 Li1 39.5(9) 8_566 16_455
+Ge1 S3 Li1 81.3(5) . 3
+Li1 S3 Li1 39.5(9) 11_566 3
+Li1 S3 Li1 146.6(2) 8_566 3
+Li1 S3 Li1 110.0(9) 16_455 3
+Ge1 S3 Li2 84.84(17) . .
+Li1 S3 Li2 90.8(5) 11_566 .
+Li1 S3 Li2 90.8(5) 8_566 .
+Li1 S3 Li2 122.5(4) 16_455 .
+Li1 S3 Li2 122.5(4) 3 .
+Ge1 S3 Li4 132.5(4) . 7_566
+Li1 S3 Li4 82.6(5) 11_566 7_566
+Li1 S3 Li4 82.6(5) 8_566 7_566
+Li1 S3 Li4 72.2(5) 16_455 7_566
+Li1 S3 Li4 72.2(5) 3 7_566
+Li2 S3 Li4 142.7(5) . 7_566
+loop_
+_geom_bond_atom_site_label_1
+_geom_bond_atom_site_label_2
+_geom_bond_distance
+_geom_bond_site_symmetry_2
+Li1 Li1 1.63(4) 9
+Li1 Li3 2.36(2) .
+Li1 S3 2.382(17) 8_656
+Li1 S3 2.430(17) 4_454
+Li1 S1 2.434(18) 6
+Li1 S2 2.51(2) .
+Li1 Ge1 2.986(17) 3_554
+Li1 P1 2.986(17) 3_554
+Li1 Li4 2.998(19) 5
+Li1 Li4 3.324(19) .
+Li2 S2 2.582(8) 2_566
+Li2 S2 2.582(8) 1_556
+Li2 S3 2.619(9) 2_565
+Li2 S3 2.619(9) .
+Li2 S1 2.733(2) 4_455
+Li2 S1 2.733(2) 3
+Li2 P1 3.059(12) 3
+Li2 Ge1 3.059(12) 3
+Li2 Li3 3.131(3) 11_566
+Li2 Li3 3.131(3) 12_556
+Li2 Li3 3.131(3) 2_566
+Li2 Li3 3.131(3) 1_556
+Li3 Li1 2.36(2) 7
+Li3 S2 2.487(9) 7
+Li3 S2 2.487(9) .
+Li3 S1 2.543(14) 6
+Li3 S1 2.543(14) 3_554
+Li3 P2 3.094(18) 3_554
+Li3 Li2 3.131(3) 1_554
+Li3 Li2 3.131(3) 7_556
+Li4 S1 2.554(15) .
+Li4 S1 2.554(15) 2
+Li4 S3 2.649(4) 7_456
+Li4 S3 2.649(4) 8_656
+Li4 Li1 2.998(19) 9
+Li4 Li1 2.998(19) 10_445
+Li4 Li1 2.998(19) 5_545
+Li4 Li1 2.998(19) 6_455
+Li4 Li1 3.324(19) 2
+Li4 Li1 3.324(19) 14
+Li4 Li1 3.324(19) 13
+Ge1 S2 2.1390(12) 4_455
+Ge1 S2 2.1390(12) 3
+Ge1 S3 2.1423(11) .
+Ge1 S3 2.1423(11) 2_565
+Ge1 Li1 2.986(17) 4_455
+Ge1 Li1 2.986(17) 3
+Ge1 Li1 2.986(17) 15
+Ge1 Li1 2.986(17) 16_455
+Ge1 Li2 3.059(12) 3_554
+P2 S1 2.0172(11) 2
+P2 S1 2.0172(11) 7_556
+P2 S1 2.0172(11) .
+P2 S1 2.0172(11) 8_556
+P2 Li3 3.094(19) 9
+P2 Li3 3.094(19) 10_445
+P2 Li3 3.094(18) 4_455
+P2 Li3 3.094(18) 3_545
+S1 Li1 2.434(19) 9
+S1 Li1 2.434(19) 6_455
+S1 Li3 2.543(14) 9
+S1 Li3 2.543(14) 4_455
+S1 Li2 2.733(2) 3_554
+S2 P1 2.1390(12) 3_554
+S2 Ge1 2.1390(12) 3_554
+S2 Li3 2.487(9) 12
+S2 Li1 2.51(2) 14
+S2 Li2 2.582(8) 1_554
+S3 Li1 2.382(17) 11_566
+S3 Li1 2.382(17) 8_566
+S3 Li1 2.430(17) 16_455
+S3 Li1 2.430(17) 3
+S3 Li4 2.649(4) 7_566

@@ -48,6 +48,7 @@ column says.
 | `local/carboxylic_pka.sdf` (2.5 MB) | 912 carboxylic acids with the acidity of the carboxyl group on its carbon; conformations generated here | Baltruschat & Czodrowski 2020, `AvLiLuMoVe.sdf` and `combined_training_datasets_unique.sdf` | free (CC BY 4.0, attribution; the terms and the changes are in `local/README.md`) | `make_local_examples.py --pka-dir` | `run_local.py` |
 | `hops/` (3 extended-XYZ files and 2 tables, 0.1 MB) | the three hosts of the Li interface study (beta-Li3PO4, Li3BP2O8, alpha-LiBO2) as DFT-relaxed supercells with net Bader charges per atom, the bond-valence barriers of their 1040 Li hops and two DFT elastic-band barriers | the author's own VASP runs (October 2026), read by `cmfqsar.vasp` | free | none (written by `cmf hops ... --out`) | `run_hops.py` |
 | `benchmarks/results/hops/prepared_mp.json` (not under `examples/`) | ternary compounds of lithium and oxygen (Li, O and one more element) of the Materials Project within 0.05 eV/atom of the hull, with every Li hop of 1.5 to 4.5 A and the bond-valence barrier of up to 12 distinct hops per structure | Materials Project through its OPTIMADE interface (no key), structures and energies above the hull | free (CC BY 4.0; the structures carry their `mp-` identifiers) | `benchmarks/prepare_hops.py` | `run_hops.py` |
+| `hops/disordered/` (13 CIF files and 1 table, 0.2 MB) | thirteen solid-electrolyte structure types (garnets, perovskites, LGPS, NASICON, LISICON, thio-phosphate, lithium nitride, Li3PO4) with the partial occupancies their refinements report, and the bond-valence barriers of their Li hops | Crystallography Open Database, one entry per file, named by its COD number | free (CC0) | none (the CIFs as downloaded; the table by `cmf hops ... --out`) | `run_hops.py` |
 Sizes are of the tracked files. The whole of `examples/` is 73 MB, of which the three items of
 unclear status and the two that inherit it are 12 MB, and `mittal/`, derived, is 15 MB.
 
@@ -309,7 +310,10 @@ fetched through its OPTIMADE interface, which needs no key, with every symmetry-
 and its bond-valence site-energy barrier computed here with `bvlain`. The Materials Project
 distributes its data under **CC BY 4.0**, so the prepared file is free to redistribute with
 attribution, which the `mp-` identifier on every structure gives; `benchmarks/prepare_hops.py`
-rebuilds it from the network in about an hour.
+rebuilds it from the network in about an hour. `examples/hops/disordered/` holds thirteen
+conductors of the **Crystallography Open Database** with their partial occupancies (plan item
+M2); COD is public domain (CC0), and `examples/hops/README.md` lists the entries and what is
+disordered in each.
 
 ## What is not in the repository
 

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 92 modules, 172 classes with 558 public methods, and 825 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 92 modules, 172 classes with 559 public methods, and 830 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -5052,6 +5052,17 @@ one, two and three independent directions, which is what the effective activatio
 conductor is read from.  The model predicts per hop; this is the step that turns those
 predictions into a number per structure.
 
+**Disorder (plan item M2).**  A conductor's Li sublattice is usually partly occupied, and the
+sites of its framework may be shared by two species.  A structure that carries its site species
+(`cmfqsar.periodic.site_species`, read from a CIF by
+`cmfqsar.periodic.read_disordered`) gives occupancy-weighted fields, which is the exact
+mean field of the configurational ensemble, so the environment of a hop sees the *other* Li
+sites at their occupancy, as a migrating ion does on average.  Every site that holds the mobile
+species at any occupancy is a site a hop can start from or end at, and the hop records both
+occupancies.  The bond-valence landscape needs an ordered framework, so it is built from the
+sites not held by the mobile species, each with its majority species, which is exact when only
+the Li sublattice is disordered and an approximation when the framework is.
+
 **The bottleneck.**  `bottleneck` finds the point of least free space on the straight
 path, in the spirit of the free-space test of `cmfqsar.complementarity`, and names the
 atoms that form it; it is reported with every hop and is a check that the environment the model
@@ -5081,6 +5092,8 @@ Attributes:
 - `representative: int` = `-1`
 - `multiplicity: int` = `1`
 - `name: str` = `''`
+- `occupancy_a: float` = `1.0`
+- `occupancy_b: float` = `1.0`
 
 #### `Hop.length` -> float  (property)
 
@@ -5207,9 +5220,19 @@ Every pair of sites of the mobile species between `d_min` and `d_max` apart, bot
 Periodic images count, so a hop from an atom to its own image in a small cell is a hop.  Each
 unordered pair gives two hops, because the barrier has a direction.
 
+### `mobile_occupancy(atoms, mobile: str='Li') -> np.ndarray`
+
+The occupancy of the mobile species on every site: 1 or 0 in an ordered structure, the
+site's share of that species where sites are partly occupied or shared (plan item M2).
+
 ### `hop_environment(crystal: CrystalFields, hop: Hop, rho: float=DEFAULT_RHO, floor: float=ENVELOPE_FLOOR, r_max: Optional[float]=None, name: str='') -> MoleculeFields`
 
 The environment of a hop: the cell seen from the midpoint, without the migrating ion.
+
+The two sites of the hop are left out whole.  On a site the mobile species shares with
+another (a La/Li site of a perovskite), that other species leaves with it, which is the one
+approximation of the disordered case; such sites are rare and the hop records their
+occupancies.
 
 ### `hop_axis_frame(vector: Sequence[float], reference: Optional[Sequence[float]]=None) -> np.ndarray`
 
@@ -5241,22 +5264,30 @@ bottleneck.  `position` is the fraction of the path at which it occurs (0.5 is t
 and `atoms` are the symbols of the atoms within `margin` angstrom of that nearest distance,
 which is the ring the ion has to pass through.
 
-### `fingerprint(env: MoleculeFields, vector: Sequence[float], reach: float=5.0, decimals: int=2) -> Tuple`
+### `fingerprint(env: MoleculeFields, vector: Sequence[float], reach: float=5.0, decimals: int=2, occupancy: Optional[np.ndarray]=None) -> Tuple`
 
 What a hop looks like up to a rotation about its axis: the sorted (symbol, distance from
-the midpoint, position along the hop) of the atoms within `reach`.
+the midpoint, position along the hop, occupancy) of the atoms within `reach`.
 
 Two hops related by a symmetry of the structure have the same fingerprint; a hop and its
 reverse have different ones unless the two sites are equivalent, which is as it should be,
-since their barriers then differ.
+since their barriers then differ.  `occupancy` is the site occupancy of every atom of the
+environment (the marker first), when the structure has partial occupancies.
 
-### `reduce_by_symmetry(hops: Sequence[Hop], envs: Sequence[MoleculeFields]) -> List[int]`
+### `environment_occupancy(env: MoleculeFields, crystal: CrystalFields) -> Optional[np.ndarray]`
+
+The site occupancy of every atom of an environment, from the cell it was cut from, or
+None when the structure is ordered.
+
+### `reduce_by_symmetry(hops: Sequence[Hop], envs: Sequence[MoleculeFields], crystals: Optional[Sequence[CrystalFields]]=None) -> List[int]`
 
 Mark equivalent hops of one structure and return the indices of the representatives.
 
 Equivalence is equality of `fingerprint`.  Every hop gets its `representative` and the
 representative its `multiplicity`, so that a prediction for the representative can be spread
-back to all the hops it stands for, which the percolation step needs.
+back to all the hops it stands for, which the percolation step needs.  With `crystals` the
+occupancies enter the fingerprint, so that two hops that differ only in how full their
+surroundings are stay apart.
 
 ### `bvse_calculator(atoms, mobile: str='Li', oxidation: Optional[Dict[str, float]]=None, resolution: float=0.25, r_cut: float=10.0)`
 
@@ -9652,9 +9683,30 @@ measures.  `inorganic_fieldset` builds such a set and `crystal_fields` evaluates
 weights for one structure.  Any per-atom array a structure file carries (Bader charges, magnetic
 moments, ...) can be a field as `prop:<name>`.
 
+Partial occupancy (plan item M2)
+-------------------------------
+A disordered site -- a Li site occupied in 54 % of the cells, a site shared by Zr and Ta -- is
+a configurational ensemble, and the kernels of this program treat an ensemble by its mean field
+(the mean-map kernel of `cmfqsar.fields.combine_members`).  When the sites are occupied
+independently of each other, the mean field over all configurations is exact and costs nothing:
+the weight of every field at a site is the occupancy-weighted mean of the weights of the species
+that share it, `w_f = sum_s p_s w_f(s)`, which is what `crystal_fields` computes when a
+structure carries its site species (`site_species`; `read_disordered` reads a CIF
+with partial occupancies through pymatgen).  The overlap kernel is bilinear in the fields, so
+the kernel of two mean fields is the mean of the kernel over the two ensembles, exactly.  The
+periodic autocorrelation is quadratic in one field, so its mean over the ensemble differs from
+the descriptor of the mean field where a site meets itself: in the self term at zero distance,
+in the pairs of a site with its own periodic images and in the background, where the mean of a
+product is not the product of the means,
+`E[w_f w_g] = sum_s p_s w_f(s) w_g(s)` on each site.  `CrystalFields` carries those
+second moments and `periodic_autocorrelation` uses them, so that the descriptor is the
+exact mean over the configurations as well, per expected atom of the cell.  A structure without disorder carries none of this and goes through the
+same code unchanged.
+
 ASE is needed for the neighbour list and to read structure files; pymatgen is needed for the
-oxidation-state guess and the electronegativities and nothing else.  Both are imported lazily, so
-that the rest of the program does not depend on them.
+oxidation-state guess, the electronegativities and the reading of partial occupancies and
+nothing else.  Both are imported lazily, so that the rest of the program does not depend on
+them.
 
 ### `class PeriodicSpec  (dataclass)`
 
@@ -9717,10 +9769,15 @@ Attributes:
 - `atoms_per_conformer: int` = `0`
 - `descriptors: Optional[np.ndarray]` = `None`
 - `probe_coeffs: Dict[str, np.ndarray]` = `field(default_factory=dict)`
+- `occupancy: Optional[np.ndarray]` = `None`
+- `site_species: Optional[List[Dict[str, float]]]` = `None`
+- `second_moments: Optional[np.ndarray]` = `None`
 
 #### `CrystalFields.n_atoms` -> int  (property)
 
 #### `CrystalFields.is_ensemble` -> bool  (property)
+
+#### `CrystalFields.is_disordered` -> bool  (property)
 
 #### `CrystalFields.volume` -> float  (property)
 
@@ -9772,20 +9829,51 @@ The element symbols present in at least `min_structures` of the structures, sort
 
 Pauling electronegativity (pymatgen's table); NaN where none is defined (noble gases).
 
-### `oxidation_states(symbols: Sequence[str]) -> Optional[Dict[str, float]]`
+### `oxidation_states(symbols: Sequence[str], composition: Optional[Dict[str, float]]=None) -> Optional[Dict[str, float]]`
 
 A charge-balanced assignment of common oxidation states for the composition, or None.
 
 pymatgen's `oxi_state_guesses` on the reduced composition; the first guess is taken,
-which is the one with the most common states.  Elemental solids get zero.
+which is the one with the most common states.  Elemental solids get zero.  `composition`
+gives the amounts of the elements directly, which a disordered structure needs, since its
+composition is fractional and not a count of its symbols.
 
 ### `crystal_charges(atoms, model: str='oxidation') -> Tuple[np.ndarray, str]`
 
 Per-atom charges for the electrostatic field of a solid, and where they came from.
 
+### `site_species(atoms) -> Optional[List[Dict[str, float]]]`
+
+The species sharing every site with their occupancies, or None for an ordered structure.
+
+Two conventions are read: `atoms.info["site_species"]`, one dictionary per site, which
+`read_disordered` writes, and ASE's own CIF convention, `atoms.info["occupancy"]`
+keyed by the `spacegroup_kinds` of the atoms.  A structure in which every site holds one
+species at full occupancy is ordered and gives None, whichever convention it came with.
+
+### `composition_of(atoms) -> Dict[str, float]`
+
+The amounts of the elements in the cell, occupancies included.
+
+### `read_disordered(path: str, occupancy_tolerance: float=1.05, site_tolerance: float=0.001)`
+
+A CIF with partial occupancies as an ASE `Atoms` carrying its site species (M2).
+
+pymatgen reads the occupancies; every site gets its majority species as the symbol, its
+total occupancy in `arrays["occupancy"]` and the species that share it with their
+occupancies in `info["site_species"]`, which `crystal_fields` turns into
+occupancy-weighted field weights.  `site_tolerance` is kept small so that split positions a
+fraction of an angstrom apart stay separate sites instead of being merged into one with an
+occupancy above one; `occupancy_tolerance` is what a site may sum to before the file is
+refused.  An ordered CIF comes back as an ordinary structure.
+
 ### `crystal_fields(atoms, fieldset: FieldSet, name: str='') -> CrystalFields`
 
 Evaluate the field weights of one periodic structure (an ASE `Atoms`).
+
+A structure with partial occupancies (`site_species`) gets the occupancy-weighted mean
+of the weights of the species sharing each site, and the second moments the self term of the
+periodic autocorrelation needs; see the module docstring.
 
 ### `crystal_table(structures: Sequence, fieldset: FieldSet, names: Optional[Sequence[str]]=None) -> AtomTable`
 
@@ -9794,6 +9882,9 @@ An `fields.AtomTable` of periodic structures, which the model takes like any oth
 ### `read_structures(path: str, index: str=':') -> list`
 
 Every structure of an ASE-readable file (CIF, POSCAR, extended XYZ, ASE JSON, ...).
+
+A CIF whose sites carry partial occupancies is read through `read_disordered`, so that
+the occupancies reach the fields; every other file goes through ASE as it is.
 
 ### `structures_from_matbench(table: dict, target: Optional[str]=None)`
 
