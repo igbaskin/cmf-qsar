@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 94 modules, 176 classes with 573 public methods, and 847 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 95 modules, 182 classes with 590 public methods, and 876 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -62,6 +62,7 @@ for.
 | [cmfqsar.evidence](#cmfqsarevidence) | Choosing alpha and lambda by the evidence instead of by cross-validation. |
 | [cmfqsar.exposure](#cmfqsarexposure) | Solvent exposure as a weight on the fields: the claim of the surface methods, without a surface. |
 | [cmfqsar.fastkernel](#cmfqsarfastkernel) | A compiled, threaded atom-pair loop for the field kernels (plan item B5). |
+| [cmfqsar.fieldae](#cmfqsarfieldae) | A field autoencoder with an analytic decoder (plan item E11). |
 | [cmfqsar.fielddiff](#cmfqsarfielddiff) | What one molecule's fields have that another's do not. |
 | [cmfqsar.fieldgraph](#cmfqsarfieldgraph) | Field-point graphs: an alignment that needs neither a common substructure nor a model. |
 | [cmfqsar.fields](#cmfqsarfields) | Parameterisation of continuous molecular fields. |
@@ -3442,6 +3443,377 @@ Compile the loop on a two-atom problem, so the first real call is not the compil
 
 Returns False when Numba is not installed.  The compiled function is cached on disk, so this
 costs about a second once per machine and nothing afterwards.
+
+## cmfqsar.fieldae
+
+Source: `cmfqsar/fieldae.py`
+
+A field autoencoder with an analytic decoder (plan item E11).
+
+Kernel principal component analysis on the CMF kernel is the linear autoencoder of the field
+space, and this program already has it twice: as the coordinates of the generative topographic
+map (`cmfqsar.gtm`) and as the `ockpca` applicability-domain score of
+`cmfqsar.oneclass`.  What kernel PCA cannot give is a **pre-image**.  A field reconstructed
+from its principal components is a weighted sum of training fields.  It can be drawn on a grid,
+but it is not a set of atoms, nothing can be sampled from it, and no design step can take it as
+a target.  This module adds a nonlinear autoencoder that never leaves the field space and whose
+output *is* a set of atoms.
+
+The three pieces
+----------------
+**The encoder** maps a molecule to a code of a few dimensions.  Its input is the whitened kernel
+against a few hundred landmarks -- the feature vector of `cmfqsar.lowrank`, built here by
+`landmark_features` -- so the encoder sees a molecule exactly as the kernel does and needs
+neither a grid nor an atom order nor a fixed atom count.
+
+**The decoder** maps a code to a fixed number of *pseudo-atoms*, each with a position and one
+weight per field type.  That is the same form as every other field in the program, so a decoded
+field can be handed to the overlap kernel, to a co-field reader or to a matcher without any
+conversion (`FieldAutoencoder.pre_image`).
+
+**The loss** is the squared distance between the input field and the decoded field in the field
+Hilbert space:
+
+    ||f - f'||^2 = k(f, f) - 2 k(f, f') + k(f', f')
+
+and all three terms are sums of overlap integrals of atom-centred Gaussians, the same closed
+form as every kernel in `cmfqsar.kernels`.  The loss is therefore exact and differentiable
+in the positions and the weights of the pseudo-atoms, and **rule 3 holds: no grid enters the
+training**.  `overlap` is that formula written for PyTorch tensors, and
+`tests/test_fieldae.py` holds it to `cmfqsar.kernels.kernel_matrices`, which stays the
+reference.
+
+What does not change: the activity model
+----------------------------------------
+The autoencoder is never the regressor.  A code that enters a prediction enters it as one more
+kernel view, so the predictive model stays a kernel model, rule 2 holds, and the co-field, the
+Shapley values and every interpretation tool are untouched.  That is why this is not the
+convolutional network that the plan's "What is not planned" excludes: there a grid replaces the
+kernel and a network replaces the model; here the loss *is* the closed-form kernel and the model
+is the one the program already has.
+
+What is measured, and what is not
+---------------------------------
+`benchmarks/run_fieldae.py` measures version (i) of the item, the plain autoencoder, against the
+two gates that decide whether the nonlinearity is worth anything:
+
+(a) the relative reconstruction error `||f - f'|| / ||f||` on held-out molecules, against
+    kernel PCA with the same number of latent dimensions (`kpca_relative_errors`);
+(b) the reconstruction error as an applicability-domain score, against the five scores of
+    `cmfqsar.oneclass` under the protocol of item E5 (`cmfqsar.errorpred`).
+
+Versions (ii) denoising, (iii) variational and (iv) semi-supervised are not here.
+`FieldAutoencoder.sample` draws a code from the Gaussian fitted to the training codes,
+which is the pre-image entry point the design items need; it is not the variational prior of
+version (iii), and it is labelled as what it is.
+
+Using it
+--------
+PyTorch is an optional dependency, in the way Numba, ORCA and xTB are: this module imports
+without it, `available` is then false and `fit` raises with a message that says what
+to install.  Install it with `pip install torch` or `pip install -e .[fieldae]`.
+
+    >>> from cmfqsar import fieldae
+    >>> geom = fieldae.geometry(fieldset, scale=fieldae.field_scales(table, fieldset))
+    >>> tens = fieldae.tensors(table, geom)
+    >>> feats, low = fieldae.landmark_features(table, fieldset, n_landmarks=256)
+    >>> ae = fieldae.FieldAutoencoder(geom, feats.shape[1], code=8, n_pseudo=32)
+    >>> hist = fieldae.fit(ae, feats, tens, train_rows, valid_rows)
+    >>> err = fieldae.relative_errors(ae, feats, tens, test_rows)
+
+### `class FieldGeometry  (dataclass)`
+
+What the overlap of two sets of Gaussian atoms needs to know about a field set.
+
+`kinds` is "gauss" (one width for every atom, `b = alpha`) or "steric" (a width per atom,
+`b = alpha / R^2`).  `scale` is the constant in front of each field in the joint kernel,
+`h_f` times whatever field scaling the caller uses; `field_scales` gives the
+convention of this program, one over the mean self-kernel of the field over the whole set.
+
+Attributes:
+
+- `names: List[str]`
+- `kinds: List[str]`
+- `alphas: np.ndarray`
+- `scale: np.ndarray`
+
+#### `FieldGeometry.n_fields` -> int  (property)
+
+#### `FieldGeometry.groups() -> Tuple[Dict[float, List[int]], List[int]]`
+
+The fields of shared width grouped by that width, and the radius-scaled ones.
+
+The grouping is what makes the overlap one pass over the distance block per distinct
+width rather than one per field, exactly as `cmfqsar.kernels.atom_kernel_block`
+does it.
+
+### `class FieldTensors  (dataclass)`
+
+Every molecule of a table as padded arrays, plus its own field norm.
+
+A padded atom carries zero weight in every field, and a zero-weight atom contributes nothing
+to an overlap, so a batch of molecules of different size needs **no mask**: the padding is
+exact.  Its position is set to the origin and its radius to one, because a radius of zero
+would divide by zero in the width of the steric field.
+
+Attributes:
+
+- `coords: np.ndarray`
+- `weights: np.ndarray`
+- `radii: np.ndarray`
+- `self_k: np.ndarray`
+- `counts: np.ndarray`
+- `names: List[str]`
+
+#### `FieldTensors.n_mol` -> int  (property)
+
+#### `FieldTensors.max_atoms` -> int  (property)
+
+#### `FieldTensors.box(margin: float=1.1) -> np.ndarray`
+
+Half the extent of the frame along each axis, which bounds the pseudo-atoms.
+
+#### `FieldTensors.weight_scale(quantile: float=0.99) -> np.ndarray`
+
+A typical size of an atom weight in each field, used to condition the decoder.
+
+### `class LandmarkEncoder(n_features: int, code: int, hidden: Sequence[int]=(256, 256))  — bases: _Base`
+
+The whitened landmark kernel of a molecule, mapped to a code of a few dimensions.
+
+The input columns are standardised by the training mean and spread, held as buffers so that
+they travel with the fitted model; without it the columns of a whitened kernel differ by
+orders of magnitude and the first layer cannot see the small ones.
+
+#### `LandmarkEncoder.set_standardisation(features: np.ndarray) -> None`
+
+#### `LandmarkEncoder.forward(features)`
+
+### `class PseudoAtomDecoder(code: int, n_pseudo: int, n_fields: int, hidden: Sequence[int]=(256, 256), box: Sequence[float]=(10.0, 10.0, 5.0), weight_scale: Optional[Sequence[float]]=None)  — bases: _Base`
+
+A code, mapped to a fixed number of pseudo-atoms with a position and a weight per field.
+
+The positions are `box * tanh(raw)`, so a pseudo-atom cannot be pushed out of the frame
+the training molecules occupy; the weights are a per-field scale times a linear output, of
+either sign, because a charge field has both.
+
+#### `PseudoAtomDecoder.forward(code)`
+
+### `class FieldAutoencoder(geom: FieldGeometry, n_features: int, code: int=8, n_pseudo: int=32, hidden: Sequence[int]=(256, 256), radius: float=PSEUDO_RADIUS, box: Sequence[float]=(10.0, 10.0, 5.0), weight_scale: Optional[Sequence[float]]=None, seed: int=0)  — bases: _Base`
+
+The encoder, the decoder and the field geometry that makes the loss closed form.
+
+#### `FieldAutoencoder.n_pseudo` -> int  (property)
+
+#### `FieldAutoencoder.forward(features)`
+
+(positions, weights) of the pseudo-atoms of every row of `features`.
+
+#### `FieldAutoencoder.squared_error(features, coords, weights, radii, self_k)`
+
+`||f - f'||^2` of every molecule of the batch, in the field Hilbert space.
+
+The three terms are each of the size of `k(f, f)` and their sum is much smaller, so the
+subtraction loses precision as the reconstruction improves: in single precision the
+result is reliable while the *relative* error is above about 1e-3, which is two orders
+of magnitude below anything measured here.  A fit that has to go below that must be run
+in double precision.
+
+#### `FieldAutoencoder.relative_error(features, coords, weights, radii, self_k)`
+
+`||f - f'|| / ||f||`, the quantity gate (a) of the item compares.
+
+#### `FieldAutoencoder.codes(features, batch: int=512) -> np.ndarray`
+
+The code of every row of `features`, with no gradient.
+
+#### `FieldAutoencoder.pre_image(code: Sequence[float], name: str='pseudo') -> MoleculeFields`
+
+The pseudo-atoms a code decodes to, as fields the rest of the program can read.
+
+#### `FieldAutoencoder.set_code_distribution(codes: np.ndarray) -> None`
+
+Remember the mean and the spread of the training codes, for `sample`.
+
+#### `FieldAutoencoder.sample(n: int=1, seed: Optional[int]=0, spread: float=1.0) -> List[MoleculeFields]`
+
+`n` decoded fields from codes drawn around the training codes.
+
+This is **not** the variational prior of version (iii) of the item: the codes are drawn
+from an independent Gaussian fitted to the training codes, which says nothing about
+whether the region between two codes decodes to anything sensible.  It is the pre-image
+entry point the design items need, and it is labelled as what it is.
+
+### `class Training  (dataclass)`
+
+What a fit did: the error after every epoch and the state that was kept.
+
+Attributes:
+
+- `epochs: int` = `0`
+- `best_epoch: int` = `0`
+- `train_error: float` = `float('nan')`
+- `valid_error: float` = `float('nan')`
+- `history: List[Dict[str, float]]` = `_field(default_factory=list)`
+- `seconds: float` = `0.0`
+- `min_distance: float` = `float('nan')`
+- `stopped_early: bool` = `False`
+
+### `available() -> bool`
+
+Whether PyTorch is installed, so that the autoencoder can be built and fitted.
+
+### `require() -> None`
+
+Raise with an installation message when PyTorch is missing.
+
+### `geometry(fieldset: FieldSet, scale: Optional[Sequence[float]]=None) -> FieldGeometry`
+
+The `FieldGeometry` of an enabled field set.
+
+Probe fields and descriptor blocks are refused rather than ignored: a probe field puts
+several Gaussians on every atom and a descriptor block is not a field at all, so neither can
+be reproduced by pseudo-atoms that carry one weight per field.
+
+### `field_scales(table: AtomTable, fieldset: FieldSet) -> np.ndarray`
+
+One over the mean self-kernel of every field over the whole table.
+
+This is the field-scaling convention of the program: each field kernel is brought to unit
+mean diagonal, so that fields of very different magnitude -- a steric field and a charge
+field -- enter the joint kernel on comparable terms.
+
+### `joint_kernel(P: AtomTable, Q: AtomTable, fieldset: FieldSet, geom: FieldGeometry, symmetric: Optional[bool]=None) -> np.ndarray`
+
+The scaled joint kernel of two tables, `sum_f scale_f K_f`, from the NumPy kernels.
+
+### `joint_self(table: AtomTable, fieldset: FieldSet, geom: FieldGeometry) -> np.ndarray`
+
+`k(f, f)` of every molecule of the table, in the same scaling.
+
+### `tensors(table: AtomTable, fieldset: FieldSet, geom: FieldGeometry) -> FieldTensors`
+
+Pad every molecule of `table` to the largest atom count and take its field norm.
+
+### `overlap(xa, wa, ra, xb, wb, rb, geom: FieldGeometry)`
+
+The joint overlap integral of two sets of Gaussian atoms, in closed form.
+
+`xa` is (..., Na, 3), `wa` is (..., Na, F), `ra` is (..., Na), and the same for the second
+set, with one shared batch shape.  Returns (...,): `sum_f scale_f K_f`, the same number
+`joint_kernel` gives for two tables.
+
+The distances are formed by subtraction rather than by `torch.cdist`, whose gradient is
+not defined where two atoms coincide -- which is exactly where a pseudo-atom may be pushed.
+
+### `pseudo_table(positions: np.ndarray, weights: np.ndarray, radius: float=PSEUDO_RADIUS, name: str='pseudo') -> AtomTable`
+
+One set of pseudo-atoms as a one-molecule `cmfqsar.fields.AtomTable`.
+
+This is what lets the NumPy kernels be the reference for the formula above, and what lets a
+decoded field be used by anything in the program that takes a table.
+
+### `pre_image_fields(positions: np.ndarray, weights: np.ndarray, radius: float=PSEUDO_RADIUS, name: str='pseudo') -> MoleculeFields`
+
+One set of pseudo-atoms as `cmfqsar.fields.MoleculeFields`.
+
+It is not a molecule: the pseudo-atoms have no elements and no bonds, and their weights can
+be of either sign in any field.  It is the field a molecule would have to place.
+
+### `landmark_features(table: AtomTable, fieldset: FieldSet, n_landmarks: int=256, seed: int=0, molecules: int=24, block: int=256, progress: Optional[Callable[[str, float], None]]=None)`
+
+(features, the feature map) of every molecule, from the landmarks of item B6.
+
+The landmarks are the atoms of a few training molecules, thinned so that no two stand on top
+of each other (`cmfqsar.lowrank.landmark_atoms`).  That is the kind of landmark a
+narrow field wants, and it keeps the feature vector to a few hundred columns per field
+whatever the size of the set.
+
+### `min_pseudo_distance(positions: np.ndarray) -> float`
+
+The smallest distance between two pseudo-atoms of a set, which says whether they collapsed.
+
+### `fit(ae: 'FieldAutoencoder', features: np.ndarray, tens: FieldTensors, train_rows: Sequence[int], valid_rows: Optional[Sequence[int]]=None, epochs: int=200, batch: int=128, lr: float=0.001, weight_decay: float=0.0, repulsion: float=0.0, min_distance: float=0.75, patience: int=20, loss: str='relative', seed: int=0, progress: Optional[Callable[[str, float], None]]=None) -> Training`
+
+Fit the autoencoder by Adam on the closed-form reconstruction loss.
+
+`loss` is "relative" -- the mean of `||f - f'||^2 / ||f||^2` -- or "absolute", the mean of
+`||f - f'||^2` as the item writes it.  The relative form is the default because the
+molecules of a large set differ in size by an order of magnitude, so an absolute loss is
+almost entirely the largest molecules, and because the relative error is what gate (a)
+measures.  `repulsion` weights the penalty of `_repulsion`, which keeps pseudo-atoms
+from collapsing onto one position.
+
+The state of the best epoch on `valid_rows` is restored at the end, so the returned model is
+the one the validation part chose and not the one the last epoch left.
+
+### `relative_errors(ae: 'FieldAutoencoder', features: np.ndarray, tens: FieldTensors, rows: Optional[Sequence[int]]=None, batch: int=256) -> np.ndarray`
+
+`||f - f'|| / ||f||` of every molecule, with no gradient.
+
+### `decode_rows(ae: 'FieldAutoencoder', features: np.ndarray, rows: Sequence[int], batch: int=256) -> Tuple[np.ndarray, np.ndarray]`
+
+The pseudo-atom positions and weights of several molecules, as NumPy arrays.
+
+### `fit_pseudo_atoms(tens: FieldTensors, rows: Sequence[int], geom: FieldGeometry, n_pseudo: int=32, steps: int=400, lr: float=0.05, repulsion: float=0.0, min_distance: float=0.75, seed: int=0, progress: Optional[Callable[[str, float], None]]=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+Fit pseudo-atoms to each of several fields directly, with no code in between.
+
+This is the **floor** of the autoencoder: the reconstruction error that `n_pseudo`
+pseudo-atoms can reach for one field when nothing is shared between molecules and no
+bottleneck restricts them.  It separates the two ways a decoder can fail -- the code is too
+narrow, or the pseudo-atoms cannot represent the field at all -- and the plan's gate (a)
+cannot be read without it.
+
+It is also useful on its own: it is the pre-image of a *given* field, so it answers "what
+set of atoms would place this field?" for a co-field or a decoded field as well as for a
+molecule.
+
+Returns (relative errors, positions, weights).  The positions start on the molecule's own
+atoms, which is the best starting point available and keeps the fit from having to find the
+molecule before it can fit it.  With at least as many pseudo-atoms as atoms the start is the
+molecule itself, the spare pseudo-atoms carrying no weight, so the error starts at zero for
+every field of shared width and the fit has only to keep it there.
+
+### `field_width(geom: FieldGeometry, f: int, radius: float=PSEUDO_RADIUS) -> float`
+
+The Gaussian width `b` of field `f` for a pseudo-atom of this radius.
+
+### `decoded_volume(mf: MoleculeFields, geom: FieldGeometry, f: int, grid) -> np.ndarray`
+
+Field `f` of a set of pseudo-atoms (or of a molecule) on a grid, for display only.
+
+A grid never enters the loss -- that is rule 3 -- but a chemist has to see the field, and
+this is the same evaluation `cmfqsar.cofields` uses for a co-field.
+
+### `export_decoded(path: str, mf: MoleculeFields, geom: FieldGeometry, f: int, spacing: float=0.5, margin: float=3.0, title: str='CMF decoded field') -> str`
+
+Write field `f` of a decoded set of pseudo-atoms as a Gaussian cube file.
+
+The pseudo-atoms are written as dummy atoms of atomic number zero, because they are not
+elements; a viewer shows them as points with the field around them.
+
+### `kpca_errors(K_train: np.ndarray, K_test: np.ndarray, k_self: np.ndarray, components: Sequence[int]) -> Dict[int, np.ndarray]`
+
+`kpca_relative_errors` for several numbers of components, from one eigendecomposition.
+
+The eigendecomposition of the centred training kernel is the whole cost of kernel PCA -- a
+minute and a half on seven thousand molecules -- and it does not depend on how many
+components are then kept, so a comparison over a grid of latent dimensions must do it once.
+
+### `kpca_relative_errors(K_train: np.ndarray, K_test: np.ndarray, k_self: np.ndarray, components: int) -> np.ndarray`
+
+`||f - f'|| / ||f||` of kernel PCA with `components` latent dimensions.
+
+The reconstruction is the training mean plus the projection on the first `components`
+principal directions of the centred training kernel (Hoffmann 2007, the `ockpca` score of
+`cmfqsar.oneclass` without its offset).  This is the number gate (a) of item E11
+compares the decoder with, and the comparison is not quite even: kernel PCA gets the
+training mean for free on top of its `components` directions, and its reconstruction is a
+sum of training fields, which is not a set of atoms and cannot be sampled from.
+
+`K_train` is the training kernel, `K_test` the test-against-training block, `k_self` the
+test molecules' own `k(x, x)`; all in one scaling.
 
 ## cmfqsar.fielddiff
 
@@ -8029,6 +8401,8 @@ Attributes:
 - `surf_z_step: float` = `1.0`
 - `pbc_background: bool` = `True`
 - `pbc_taper: float` = `2.0`
+- `pbc_overlap: bool` = `False`
+- `pbc_overlap_r_max: Optional[float]` = `None`
 - `ac_block_weights: Union[None, str, Dict[str, float]]` = `None`
 - `ac_block_groups: Optional[Dict[str, str]]` = `None`
 - `ac_block_rho: float` = `1.0`
@@ -8214,16 +8588,10 @@ is off by default because, measured, it gains no sharpness on these sets.
 
 Fit in the space of the landmarks instead of the space of the molecules (item B6).
 
-
-
 The model keeps the landmarks and one weight per feature instead of one coefficient per
-
 training molecule, and everything a prediction needs follows from those: see
-
 `cmfqsar.lowrank`.  The training table is still kept, because it is linear in the
-
 number of molecules and the provenance and the contract are read off it; what is never
-
 built is the n by n kernel.
 
 #### `CMFModel.is_low_rank` -> bool  (property)
@@ -9995,6 +10363,88 @@ Periodic autocorrelation features of a set of structures, one row each.
 ### `periodic_channel_labels(fieldset: FieldSet, spec: PeriodicSpec) -> List[str]`
 
 One label per feature: which pair of field types, at which distance.
+
+### `image_translations(cell: np.ndarray, r_max: float) -> np.ndarray`
+
+Every lattice translation that can bring an atom of the cell within `r_max` of the cell.
+
+The bound is the perpendicular width of the cell along each axis: a translation further than
+`r_max` plus the cell's own diameter cannot reach it.  The translations are generated, not
+searched, and `cell_images` then drops the ones whose atoms stay too far away.
+
+### `cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(coordinates, weights, radii) of the atoms of one cell and of every image within `r_max`.
+
+"Within `r_max`" is measured from the box the cell spans, not from the atoms of this
+structure, so the same expansion serves every structure of the series: an image that is
+needed by a neighbour's atom is kept even where this structure has no atom near it.
+
+### `overlap_cutoff(specs: Sequence[FieldSpec], radii_max: float=2.0) -> float`
+
+The radius beyond which no field of `specs` contributes to an overlap.
+
+It is the cutoff rule of plan item B2, read from `cmfqsar.kernels`: the distance at
+which a Gaussian pair overlap has fallen to 1e-6 of its peak, for the widest Gaussian any
+field in the set puts on an atom.  Using it as the image radius makes the periodic sum as
+exact as the open-boundary kernel with the same cutoff, and no more expensive than it has
+to be.
+
+### `expanded_cell_table(table: AtomTable, r_max: float) -> AtomTable`
+
+`table` with the periodic images of every cell added, as one table of the same molecules.
+
+The molecule boundaries are kept, so the kernel of a structure against this table is summed
+per structure exactly as against the cells themselves.  The expansion is cached on the table,
+because a grid search asks for it once per attenuation and it does not depend on one.
+
+### `periodic_overlap_kernels(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec], r_max: Optional[float]=None, cutoff=None, engine=None, symmetrise: bool=True, progress=None, cancel=None) -> np.ndarray`
+
+Per-field periodic overlap kernels of two tables of crystals: shape (F, nP, nQ).
+
+The atoms of `P` stay in their cell and those of `Q` are expanded over the periodic images
+within `r_max` (by default `overlap_cutoff`, the radius at which the widest field of
+the set has fallen to 1e-6 of a peak overlap).  Everything else is
+`cmfqsar.kernels.kernel_matrices`, so `cutoff` and `engine` mean what they mean there.
+
+The two sets must stand on one parent lattice: the kernel compares the fields point by point
+inside the cell, and two different lattices put the same site at different places, which is
+the frame problem of a molecular series in another guise (`lattice_spread` reports how
+far from one lattice a set is).
+
+**Why the result is symmetrised.**  The integral runs over the cell of the row and the images
+of the column, so with two different cells the two orders integrate over different domains
+and do not agree; the average of the two is the symmetric form, and it is what a kernel has
+to be.  On one lattice the two orders are equal and the average changes nothing, so the size
+of the correction is a measure of how far the set is from one lattice
+(`overlap_asymmetry` reports it).  `symmetrise=False` returns the one-sided sum and
+costs half as much for a block of two different tables.
+
+### `overlap_asymmetry(table: AtomTable, specs: Sequence[FieldSpec], r_max: Optional[float]=None, **kw) -> float`
+
+The largest relative disagreement between the two orders of the periodic overlap.
+
+Zero on one lattice.  It grows with the spread of the cells, because the integral of the
+row's cell and the integral of the column's cell are then not the same integral, and it says
+how much of the kernel is an artefact of that spread rather than of the structures.
+
+### `periodic_self_overlaps(table: AtomTable, specs: Sequence[FieldSpec], r_max: Optional[float]=None) -> np.ndarray`
+
+`K_f(i, i)` of every crystal of `table` under the periodic overlap: shape (F, n).
+
+This is what the cosine normalisation divides by, and it is where the cell size goes: a
+supercell of the same structure has a proportionally larger self-overlap, so the normalised
+kernel does not know which cell was chosen.
+
+### `lattice_spread(table: AtomTable) -> Dict[str, float]`
+
+How far a set of crystals is from standing on one lattice.
+
+Returns the mean cell volume and the largest relative deviation from the mean of the volume
+and of each lattice vector's length.  The periodic overlap kernel is a point-by-point
+comparison inside the cell, so a set whose lattice constants differ by more than a few per
+cent is being compared in a frame that does not quite exist -- the crystal form of a bad
+alignment, and a number a benchmark should state rather than assume.
 
 ### `inorganic_fieldset(elements: Sequence[str]=(), physchem: Sequence[str]=INORGANIC_FIELDS, charge_model: str='oxidation', other: bool=True, alpha: float=1.0) -> FieldSet`
 

@@ -13,7 +13,7 @@ kept current; the counts are the ones the repository gives today):
   command-line tool with thirty-one subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `hops`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1645 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `hops`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1696 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
@@ -2498,6 +2498,82 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   basis and the co-field is what the grant paragraph needs to show. Gate: the co-field of the
   vacancy energy must name the coordinating oxygens and the Li neighbours, and the model must beat
   the periodic autocorrelation on the same cells.
+  **Built and measured 31 October 2026. The kernel is built and its properties are exact; the
+  half of the gate that asks it to beat the autocorrelation is not met on the only public set
+  large enough to try it on, and the measurement says why.**
+  **What was built.** `cmfqsar/periodic.py`: `image_translations` and `cell_images` (the images
+  of a cell out to a radius, measured from the box the cell spans so that one expansion serves
+  every structure of a series), `expanded_cell_table` (the same for a whole table, cached on it
+  because a grid search asks for it once per attenuation), `overlap_cutoff` (the radius at which
+  the widest field of the set has fallen to 1e-6 of a peak overlap -- the cutoff rule of item B2,
+  read from `kernels.py`), `periodic_overlap_kernels`, `periodic_self_overlaps`,
+  `overlap_asymmetry` and `lattice_spread`. The kernel is the ordinary kernel evaluated against
+  the image-expanded table, so the grouping by width, the cutoff and the compiled loop of item B5
+  carry over untouched. In `cmfqsar/model.py` it is the `fields` kernel source with
+  `pbc_overlap=True`, which routes `_pair_kernels`, `_self_overlaps`, `_training_side` and
+  `cofield_basis` through the images: the normalisation, the scaling, the learners, the co-field
+  and the per-site contributions are then the same code for a crystal as for a molecule, and the
+  co-field drawn on a grid is periodic, which `cofields.py` could not do with open boundaries.
+  22 tests, each on a property rather than a number: the open-boundary limit (with a box far
+  larger than the fields reach the kernel *equals* `kernel_matrices` exactly), writing the atoms
+  outside the cell instead of inside it (unchanged, while the open-boundary kernel of the same
+  atoms moves by more than 1 %), the supercell (the raw integral multiplies, the cosine kernel
+  does not), decomposition rule 3 (the per-site contributions plus the bias are the prediction to
+  1e-6), the periodicity of the co-field, and the equivalence of the three oxygens of a cubic
+  cell.
+  **Two limits the tests pin down rather than hide.** The integral runs over the cell of the row
+  and the images of the column, so with cells of different size the two orders are different
+  integrals and the kernel is their average; `overlap_asymmetry` reports the disagreement, which
+  is 7e-09 on one lattice and 17 % across a 2.5 % lattice mismatch, and is the number that says
+  whether a set really is one lattice. And the image sum is truncated like the open-boundary
+  kernel, so the invariances hold to that truncation and improve as the radius grows.
+  **The measurement** (`benchmarks/run_periodic_overlap.py`, `results/periodic_overlap/table.md`):
+  1,500 cells of `matbench_perovskites` with their formation energy -- the largest public set
+  whose members share a cell topology -- five Matbench folds, the same four fields (the three of
+  `INORGANIC_FIELDS` and the inverse square root of the mass, chosen by measuring the
+  autocorrelation with three, four and seventeen fields: R2 +0.370, +0.495, +0.587) and the same
+  ridge grid for every row. The cells are relaxed, so their lattice constants differ by up to
+  82 % in volume, which is a frame error for a point-by-point comparison; the second frame gives
+  every cell the mean lattice constant and keeps its fractional coordinates, which puts the set
+  on one lattice exactly (spread 0, asymmetry 0).
+  R2, and MAE in eV/atom: **autocorrelation as given +0.497 (0.384)**, autocorrelation on one
+  lattice +0.494 (0.405), **periodic overlap on one lattice +0.479 (0.407)**, overlap with the
+  images left out, as given, +0.448 (0.404), the same on one lattice +0.379 (0.435), **periodic
+  overlap as given +0.350 (0.449)**.
+  **What the table says.** The frame does to each kernel what it should: nothing to the
+  autocorrelation (+0.497 against +0.494), which is invariant; **+0.129 to the periodic
+  overlap**, the largest effect in the table and exactly what a kernel that compares fields point
+  by point must show; and -0.069 to the same overlap with the images left out, which without them
+  compares five atoms as a cluster that the rescaling only distorts. The overlap kernel does not
+  beat the autocorrelation, and the reason is in the same column: the operation that gives it a
+  frame takes the lattice constant out of it, and for a formation energy that is a strong
+  predictor on its own. On a set of different compounds there is no frame to be had for free. So
+  the kernel is for the series the item names -- one host lattice with a substitution, a vacancy
+  or a dopant moved from site to site -- where the frame is given and nothing has to be rescaled
+  to get it.
+  **The co-field, which is the other half of the gate and the reason for the kernel.** Drawn
+  inside the cell (`results/periodic_overlap/cofield.png`, the planes z = 0 and z = a/2 of a
+  model on all 1,500 cells, R2 +0.483 on its own training set) it is periodic and its strongest
+  features sit on the sites: the steric co-field has a deep negative lobe at the B site and at
+  the oxygen and a positive one at the A site. The per-site form of rule 3, over a sample of 150
+  cells: A +2.37 +- 0.58, B -6.16 +- 0.81, X -3.87 +- 0.55 eV per atom, where the means carry a
+  constant the bias cancels and the spread is the information -- the B site varies most. So the
+  kernel does name sites, which is what the gate asks of the co-field; it names them on
+  perovskites rather than on the Li vacancy cells, and the item's own gate is written for the
+  latter. The asymmetry of the two orders of the integral over this set is 0.0 % on one lattice
+  and 200 % in the cells as they come -- in the raw cells the two orders of one overlap can have
+  opposite signs, which is the sharpest way to say that those cells are not a frame.
+  **Not done:** the vacancy cells of the Li3PO4/Li3BP2O8/LiBO2 study themselves, which is where
+  the item points the kernel and where the first half of the gate belongs: they live in another
+  project and rule 6 wants them prepared by a script under `examples/` first, and the six sites
+  computed so far carry no interval. No background subtraction of the kind the autocorrelation
+  has (the overlap of two cells is dominated by the product of the mean fields, which carries
+  composition and not structure; subtracting `V m_f^i m_f^j` would leave the fluctuation
+  correlation and needs the same term in the per-site decomposition to keep rule 3). The training
+  kernel is computed in full rather than by triangle, because the two tables differ in size, so
+  it costs twice what a symmetric variant would. Probe fields are refused and the Shapley
+  decomposition over sites with them. And there is no subcommand and no panel: rule 5 keeps them
+  until a gate is passed.
 * **M5. Site-resolved models.** The periodic channel sum is a sum over the atoms of the cell, so it
   splits exactly into one contribution per site, as the atom contributions split the overlap
   kernel. That gives a local co-pattern (which site carries the property) and a route to per-site

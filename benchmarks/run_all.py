@@ -335,6 +335,15 @@ def registry() -> List[Benchmark]:
                   minutes="25",
                   report=lambda: _mod("run_lowrank").write_table(_r("lowrank")),
                   tables=["lowrank/table.md"]),
+        Benchmark("periodic_overlap",
+                  "the periodic overlap kernel of crystals against the periodic "
+                  "autocorrelation, and the co-field inside the cell: 1,500 perovskite cells of "
+                  "matbench_perovskites, in the cells as they come and on one lattice "
+                  "(downloads about 30 MB into benchmarks/cache on the first run)",
+                  "run_periodic_overlap.py", "periodic_overlap", compute=[["--limit", "1500"]],
+                  minutes="40",
+                  report=lambda: _mod("run_periodic_overlap").report(),
+                  tables=["periodic_overlap/table.md"]),
         Benchmark("fieldae",
                   "a decoder of pseudo-atoms against kernel PCA: can a nonlinear autoencoder "
                   "reconstruct a molecular field, and is its error an applicability domain "

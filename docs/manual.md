@@ -6374,6 +6374,119 @@ mixed-valence titanium phosphate). What this allows is in the section on migrati
 garnets, perovskites, LGPS, NASICON and LISICON of a solid-electrolyte study, whose Li
 sublattices are never fully occupied.
 
+## A series on one lattice: the periodic overlap kernel
+
+The autocorrelation above is invariant to rotation, which is what a set of unrelated crystals
+needs, and the price of that invariance is the co-field: a distance distribution can say which
+pair of field types at which distance matters, never *where* in the cell. A doped, substituted or
+defective series on **one parent lattice** is the other case. There the cells share a frame,
+exactly as the molecules of a congeneric series do, and the overlap integral -- this program's
+own kernel -- applies with one change: the integral runs over one cell and the fields are
+periodic.
+
+Writing the field of a cell as the lattice sum of its atoms' Gaussians, the overlap over one
+cell is
+
+```
+K_f(i, j) = INT_cell rho_f^i rho_f^j dr
+          = sum_{l in cell i} sum_{m in cell j} sum_T k_f(|r_l - r_m - T|)
+```
+
+with `k_f` the same closed-form Gaussian pair overlap as everywhere else: one atom stays in the
+reference cell and the other runs over every periodic image. So the periodic kernel *is* the
+ordinary kernel evaluated against an image-expanded table, and every shortcut of the kernel code
+-- the grouping by width, the cutoff of plan item B2, the compiled threaded loop -- carries over
+untouched (`cmfqsar.periodic.periodic_overlap_kernels`).
+
+Switch it on with `pbc_overlap=True`:
+
+```python
+from cmfqsar import periodic
+from cmfqsar.model import CMFModel
+
+fs = periodic.inorganic_fieldset(elements=["Li", "P", "O"], alpha=2.0)
+table = periodic.crystal_table(structures, fs, names)
+model = CMFModel(fieldset=fs, method="krr", params={"lam": 1e-3},
+                 normalize=True, pbc_overlap=True, engine="auto")
+model.fit(table, y, cv_folds=10)
+print(periodic.lattice_spread(table))        # how far the set is from one lattice
+print(model.atom_contributions(table.molecules[0]))   # one number per site of the cell
+```
+
+It is the `fields` kernel source with the images added, so nothing above it changes: the cosine
+normalisation, the field scaling, the learners, the co-field and the per-site contributions are
+the same code for a crystal as for a molecule. The co-field drawn on a grid is then periodic,
+which is what the grid code could not do with open boundaries.
+
+**Three properties, and the test suite holds the kernel to each.** With a box far larger than the
+fields reach, the periodic kernel equals the open-boundary one exactly. Writing the atoms outside
+the cell instead of inside it changes nothing, while it changes the open-boundary kernel of the
+same atoms by more than one per cent -- a crystal is its lattice sum and does not care which
+atoms were called the cell. A supercell multiplies the raw integral and leaves the
+cosine-normalised kernel unchanged.
+
+**Two things it cannot do.** The integral runs over the cell of one structure and the images of
+the other, so when two cells differ in size the two orders are different integrals; the kernel is
+their average, and `periodic.overlap_asymmetry` reports the disagreement -- 7e-09 on one lattice
+and 17 % across a 2.5 % lattice mismatch, which is the number that says whether a set really is
+one lattice. And a coalition of sites is not a structure (removing a site removes it from every
+image), so the Shapley decomposition is refused for this kernel while the co-field and the
+per-site contributions, which are sums and not coalitions, are exact.
+
+**Measured against the autocorrelation.** `benchmarks/results/periodic_overlap/table.md`: 1,500
+cells of `matbench_perovskites` with their formation energy, five Matbench folds, the same
+fields and the same ridge grid for every row. The cells are relaxed, so their lattice constants
+differ by up to 82 % in volume: a frame error for a point-by-point comparison. The second frame
+gives every cell the mean lattice constant and keeps its fractional coordinates, which puts the
+set on one lattice exactly.
+
+| kernel | frame | R² | MAE, eV/atom |
+|---|---|---:|---:|
+| periodic autocorrelation | as given | **+0.497** | **0.384** |
+| periodic autocorrelation | one lattice | +0.494 | 0.405 |
+| **periodic overlap** | one lattice | +0.479 | 0.407 |
+| overlap, images left out | as given | +0.448 | 0.404 |
+| overlap, images left out | one lattice | +0.379 | 0.435 |
+| **periodic overlap** | as given | +0.350 | 0.449 |
+
+Read the table by what the frame does to each row. The autocorrelation does not notice it
+(+0.497 against +0.494), which it must not, since it is invariant. The periodic overlap gains
+**+0.129** from being given a frame, which is the largest effect in the table and is exactly what
+a kernel that compares fields point by point should show. The open-boundary overlap *loses* from
+the same operation, because without the images it compares five atoms as a cluster and the
+rescaling only distorts them.
+
+And it does not beat the autocorrelation. The reason is in the same column: the operation that
+gives the overlap kernel its frame takes the lattice constant out of it, and for a formation
+energy the lattice constant is a strong predictor on its own. On a set of different compounds
+there is no frame to be had for free. **The overlap kernel for crystals is therefore for the
+series the item names -- one host lattice with a substitution, a vacancy or a dopant moved from
+site to site -- where the frame is given and nothing has to be rescaled to get it.**
+
+The same measurement says how far the two frames are apart in the kernel's own terms. The
+disagreement between the two orders of the integral, which is zero when the cells are identical,
+is **0.0 % on one lattice and 200 % in the cells as they come** -- that is, in the raw cells the
+two orders of the same overlap can have opposite signs, so those cells are not a frame at all.
+It is worth computing `periodic.overlap_asymmetry` on any new series before trusting a number
+from it.
+
+**What the co-field says.** This is what the kernel is for, and no autocorrelation can produce
+it: `benchmarks/results/periodic_overlap/cofield.png` draws the co-field of the formation energy
+inside the perovskite cell, in the plane of the A site and the equatorial oxygens (z = 0) and in
+the plane of the B site (z = a/2). It is periodic, and its strongest features sit on the sites:
+the steric co-field has a deep negative lobe exactly at the B site and at the oxygen, and a
+positive one at the A site, so steric weight at the B and X sites lowers the predicted formation
+energy while steric weight at the A site raises it. The electrostatic, electronegativity and mass
+co-fields oscillate with the lattice instead of sitting on the sites, and are correspondingly
+harder to read -- which is itself worth seeing, and is the kind of thing a picture shows and a
+channel weight does not.
+
+Decomposition rule 3 gives the same reading as numbers, one contribution per site of every cell
+(a sample of 150 cells): A +2.37 ± 0.58, B -6.16 ± 0.81, X -3.87 ± 0.55 eV per atom. The means
+carry a large constant that the bias cancels, so what they say is in the spread: **the B site's
+contribution varies most from compound to compound**, which is the site the chemistry of a
+perovskite turns on.
+
 ## An atom instead of a molecule: the local invariant kernel
 
 Every model so far predicts one number per molecule. A carbon shift, an acidity, a local

@@ -305,6 +305,251 @@ def periodic_channel_labels(fieldset: FieldSet, spec: PeriodicSpec) -> List[str]
 
 
 # --------------------------------------------------------------------------- #
+# The periodic overlap kernel (plan item M4)
+# --------------------------------------------------------------------------- #
+#
+# The autocorrelation above is invariant to rotation, which is what a set of unrelated crystals
+# needs and what costs it the co-field: a distance distribution can say which pair of field types
+# at which distance matters, never *where* in the cell.  A doped, substituted or defective series
+# on **one parent lattice** is the other case.  There the cells share a frame, exactly as the
+# molecules of a congeneric series do, and the overlap integral of the fields -- the program's own
+# kernel -- applies with one change: the integral runs over one cell and the fields are periodic.
+#
+# Writing the field of a cell as the lattice sum of its atoms' Gaussians,
+#
+#     rho_f(r) = sum_{l in cell} sum_T w_lf g_f(|r - r_l - T|),
+#
+# the overlap over one cell is
+#
+#     K_f(i, j) = INT_cell rho_f^i rho_f^j dr = sum_{l in cell i} sum_{m in cell j} sum_T k_f(|r_l - r_m - T|),
+#
+# with k_f the same closed-form Gaussian pair overlap as :mod:`cmfqsar.kernels`: one atom stays in
+# the reference cell and the other runs over every periodic image.  So the periodic kernel is the
+# ordinary kernel evaluated against an **image-expanded** table, and every shortcut of
+# `kernels.py` -- the grouping by width, the cutoff, the compiled loop -- carries over untouched.
+#
+# The raw value is an integral over one cell, so it grows with the cell: a supercell of the same
+# structure gives a multiple of it.  The cosine normalisation removes that factor exactly, which
+# is why a model on this kernel requires ``normalize=True``; with it, a set expressed in
+# supercells gives the same kernel as the same set in primitive cells, and
+# :func:`periodic_overlap_kernels` is a true similarity between two structures on one lattice.
+
+
+def image_translations(cell: np.ndarray, r_max: float) -> np.ndarray:
+    """Every lattice translation that can bring an atom of the cell within `r_max` of the cell.
+
+    The bound is the perpendicular width of the cell along each axis: a translation further than
+    ``r_max`` plus the cell's own diameter cannot reach it.  The translations are generated, not
+    searched, and :func:`cell_images` then drops the ones whose atoms stay too far away.
+    """
+    A = np.asarray(cell, float).reshape(3, 3)
+    volume = abs(float(np.linalg.det(A)))
+    if volume <= 0:
+        raise ValueError("the cell is singular: three independent lattice vectors are needed")
+    diameter = float(np.linalg.norm(A.sum(axis=0)))
+    reach = float(r_max) + diameter
+    widths = np.array([volume / max(np.linalg.norm(np.cross(A[(k + 1) % 3], A[(k + 2) % 3])), 1e-12)
+                       for k in range(3)])
+    n = np.ceil(reach / widths).astype(int)
+    ranges = [np.arange(-int(n[k]), int(n[k]) + 1) for k in range(3)]
+    grid = np.stack(np.meshgrid(*ranges, indexing="ij"), axis=-1).reshape(-1, 3)
+    return grid @ A
+
+
+def _box_distance(points: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> np.ndarray:
+    """Distance from every point to an axis-aligned box, zero inside it."""
+    d = np.maximum(np.maximum(lo[None, :] - points, points - hi[None, :]), 0.0)
+    return np.sqrt((d * d).sum(axis=1))
+
+
+def cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """(coordinates, weights, radii) of the atoms of one cell and of every image within `r_max`.
+
+    "Within `r_max`" is measured from the box the cell spans, not from the atoms of this
+    structure, so the same expansion serves every structure of the series: an image that is
+    needed by a neighbour's atom is kept even where this structure has no atom near it.
+    """
+    coords = np.asarray(crystal.coords, float)
+    weights = np.asarray(crystal.weights, float)
+    radii = np.asarray(crystal.radii, float)
+    cell = getattr(crystal, "cell", None)
+    if cell is None:
+        raise ValueError(f"{crystal.name or 'this structure'} carries no unit cell; the periodic "
+                         f"overlap kernel needs crystals built by cmfqsar.periodic.crystal_fields")
+    A = np.asarray(cell, float).reshape(3, 3)
+    corners = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1],
+                        [1, 1, 0], [1, 0, 1], [0, 1, 1], [1, 1, 1]], float) @ A
+    lo, hi = corners.min(axis=0), corners.max(axis=0)
+    out_x, out_w, out_r = [coords], [weights], [radii]
+    for T in image_translations(A, float(r_max)):
+        if not np.any(T):
+            continue
+        moved = coords + T[None, :]
+        keep = _box_distance(moved, lo, hi) <= float(r_max)
+        if keep.any():
+            out_x.append(moved[keep])
+            out_w.append(weights[keep])
+            out_r.append(radii[keep])
+    return (np.concatenate(out_x, axis=0), np.concatenate(out_w, axis=0),
+            np.concatenate(out_r, axis=0))
+
+
+def overlap_cutoff(specs: Sequence[FieldSpec], radii_max: float = 2.0) -> float:
+    """The radius beyond which no field of `specs` contributes to an overlap.
+
+    It is the cutoff rule of plan item B2, read from :mod:`cmfqsar.kernels`: the distance at
+    which a Gaussian pair overlap has fallen to 1e-6 of its peak, for the widest Gaussian any
+    field in the set puts on an atom.  Using it as the image radius makes the periodic sum as
+    exact as the open-boundary kernel with the same cutoff, and no more expensive than it has
+    to be.
+    """
+    from .kernels import _compiled_cutoff
+
+    r = _compiled_cutoff([s for s in specs if s.enabled], True, float(radii_max))
+    return float(r) if r else 12.0
+
+
+def expanded_cell_table(table: AtomTable, r_max: float) -> AtomTable:
+    """`table` with the periodic images of every cell added, as one table of the same molecules.
+
+    The molecule boundaries are kept, so the kernel of a structure against this table is summed
+    per structure exactly as against the cells themselves.  The expansion is cached on the table,
+    because a grid search asks for it once per attenuation and it does not depend on one.
+    """
+    key = round(float(r_max), 6)
+    cached = getattr(table, "_pbc_images", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    if not table.molecules:
+        raise ValueError("the periodic overlap kernel needs a table built from crystals, which "
+                         "carry their cell; this table carries no structures")
+    xs, ws, rs = [], [], []
+    offsets = [0]
+    for mol in table.molecules:
+        x, w, r = cell_images(mol, key)
+        xs.append(x)
+        ws.append(w)
+        rs.append(r)
+        offsets.append(offsets[-1] + len(x))
+    out = AtomTable(coords=np.concatenate(xs, axis=0), weights=np.concatenate(ws, axis=0),
+                    radii=np.concatenate(rs, axis=0), offsets=np.array(offsets, int),
+                    names=list(table.names), molecules=[])
+    table._pbc_images = (key, out)
+    return out
+
+
+def periodic_overlap_kernels(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec],
+                             r_max: Optional[float] = None, cutoff=None, engine=None,
+                             symmetrise: bool = True, progress=None, cancel=None) -> np.ndarray:
+    """Per-field periodic overlap kernels of two tables of crystals: shape (F, nP, nQ).
+
+    The atoms of `P` stay in their cell and those of `Q` are expanded over the periodic images
+    within `r_max` (by default :func:`overlap_cutoff`, the radius at which the widest field of
+    the set has fallen to 1e-6 of a peak overlap).  Everything else is
+    :func:`cmfqsar.kernels.kernel_matrices`, so `cutoff` and `engine` mean what they mean there.
+
+    The two sets must stand on one parent lattice: the kernel compares the fields point by point
+    inside the cell, and two different lattices put the same site at different places, which is
+    the frame problem of a molecular series in another guise (:func:`lattice_spread` reports how
+    far from one lattice a set is).
+
+    **Why the result is symmetrised.**  The integral runs over the cell of the row and the images
+    of the column, so with two different cells the two orders integrate over different domains
+    and do not agree; the average of the two is the symmetric form, and it is what a kernel has
+    to be.  On one lattice the two orders are equal and the average changes nothing, so the size
+    of the correction is a measure of how far the set is from one lattice
+    (:func:`overlap_asymmetry` reports it).  ``symmetrise=False`` returns the one-sided sum and
+    costs half as much for a block of two different tables.
+    """
+    from .kernels import kernel_matrices
+
+    enabled = [s for s in specs if s.enabled]
+    probe = [s.name for s in enabled if getattr(s, "is_probe", False)]
+    if probe:
+        raise ValueError(f"a probe field carries its Gaussians on the molecules of the table, "
+                         f"which the image expansion does not copy, so it cannot be used with "
+                         f"the periodic overlap kernel: {', '.join(probe)}")
+    radii_max = max(float(np.max(Q.radii)) if len(Q.radii) else 2.0,
+                    float(np.max(P.radii)) if len(P.radii) else 2.0)
+    r = overlap_cutoff(enabled, radii_max) if r_max is None else float(r_max)
+    K = kernel_matrices(P, expanded_cell_table(Q, r), enabled, progress=progress, cancel=cancel,
+                        symmetric=False, cutoff=cutoff, engine=engine)
+    if not symmetrise:
+        return K
+    if P is Q:
+        return 0.5 * (K + np.swapaxes(K, 1, 2))
+    K2 = kernel_matrices(Q, expanded_cell_table(P, r), enabled, cancel=cancel,
+                         symmetric=False, cutoff=cutoff, engine=engine)
+    return 0.5 * (K + np.swapaxes(K2, 1, 2))
+
+
+def overlap_asymmetry(table: AtomTable, specs: Sequence[FieldSpec],
+                      r_max: Optional[float] = None, **kw) -> float:
+    """The largest relative disagreement between the two orders of the periodic overlap.
+
+    Zero on one lattice.  It grows with the spread of the cells, because the integral of the
+    row's cell and the integral of the column's cell are then not the same integral, and it says
+    how much of the kernel is an artefact of that spread rather than of the structures.
+    """
+    K = periodic_overlap_kernels(table, table, specs, r_max=r_max, symmetrise=False, **kw)
+    out = 0.0
+    for f in range(K.shape[0]):
+        d = np.abs(K[f] - K[f].T)
+        s = np.maximum(np.abs(K[f]) + np.abs(K[f].T), 1e-300)
+        out = max(out, float(np.max(2.0 * d / s)))
+    return out
+
+
+def periodic_self_overlaps(table: AtomTable, specs: Sequence[FieldSpec],
+                           r_max: Optional[float] = None) -> np.ndarray:
+    """``K_f(i, i)`` of every crystal of `table` under the periodic overlap: shape (F, n).
+
+    This is what the cosine normalisation divides by, and it is where the cell size goes: a
+    supercell of the same structure has a proportionally larger self-overlap, so the normalised
+    kernel does not know which cell was chosen.
+    """
+    from .kernels import atom_kernel_block
+
+    enabled = [s for s in specs if s.enabled]
+    radii_max = float(np.max(table.radii)) if len(table.radii) else 2.0
+    r = overlap_cutoff(enabled, radii_max) if r_max is None else float(r_max)
+    images = expanded_cell_table(table, r)
+    out = np.zeros((len(enabled), table.n_mol))
+    for i in range(table.n_mol):
+        sl = table.slice(i)
+        lo, hi = int(images.offsets[i]), int(images.offsets[i + 1])
+        one = AtomTable(coords=images.coords[lo:hi], weights=images.weights[lo:hi],
+                        radii=images.radii[lo:hi], offsets=np.array([0, hi - lo], int),
+                        names=[table.names[i]], molecules=[])
+        blk = atom_kernel_block(table.coords[sl], table.weights[sl], table.radii[sl], one, enabled)
+        out[:, i] = blk.sum(axis=1)[:, 0]
+    return out
+
+
+def lattice_spread(table: AtomTable) -> Dict[str, float]:
+    """How far a set of crystals is from standing on one lattice.
+
+    Returns the mean cell volume and the largest relative deviation from the mean of the volume
+    and of each lattice vector's length.  The periodic overlap kernel is a point-by-point
+    comparison inside the cell, so a set whose lattice constants differ by more than a few per
+    cent is being compared in a frame that does not quite exist -- the crystal form of a bad
+    alignment, and a number a benchmark should state rather than assume.
+    """
+    cells = [np.asarray(m.cell, float).reshape(3, 3) for m in table.molecules
+             if getattr(m, "cell", None) is not None]
+    if not cells:
+        return {"n": 0.0}
+    vols = np.array([abs(float(np.linalg.det(A))) for A in cells])
+    lens = np.array([np.linalg.norm(A, axis=1) for A in cells])
+    mean_len = lens.mean(axis=0)
+    return {"n": float(len(cells)), "volume_mean": float(vols.mean()),
+            "volume_spread": float(np.max(np.abs(vols - vols.mean())) / max(vols.mean(), 1e-12)),
+            "length_spread": float(np.max(np.abs(lens - mean_len[None, :])
+                                          / np.maximum(mean_len[None, :], 1e-12))),
+            "atoms_mean": float(np.mean([len(m.coords) for m in table.molecules]))}
+
+
+# --------------------------------------------------------------------------- #
 # Fields for solids
 # --------------------------------------------------------------------------- #
 def inorganic_fieldset(elements: Sequence[str] = (), physchem: Sequence[str] = INORGANIC_FIELDS,

@@ -652,6 +652,32 @@ What the model loses with the frame, it says so: `cofield_coefficients` and `ato
 raise rather than return something meaningless, while the contributions of the training molecules
 — the dual form, which needs no frame — still add up to the prediction.
 
+### A series on one lattice: the periodic overlap kernel
+
+For a doped, substituted or defective series on one parent lattice the cells share a frame, so the
+overlap integral applies with the integral taken over one cell and the periodic images summed in
+(`periodic.periodic_overlap_kernels`, plan item M4; `CMFModel(..., pbc_overlap=True)`). It is the
+ordinary kernel evaluated against an image-expanded table, so the normalisation, the learners, the
+per-site contributions and the co-field are the same code as for a molecule -- and the co-field is
+then periodic, which is what an autocorrelation can never give: it says *where* in the cell.
+
+Measured on 1,500 cells of `matbench_perovskites`
+(`benchmarks/results/periodic_overlap/table.md`), five Matbench folds: the autocorrelation reaches
+R² +0.497, the periodic overlap +0.479 once every cell is put on one lattice and +0.350 in the
+cells as they come. The frame is the whole story -- it is worth +0.129 to the overlap kernel,
+nothing to the autocorrelation (which is invariant) and -0.069 to the same overlap with the images
+left out. The overlap kernel does not beat the autocorrelation here, because giving a set of
+different compounds a common lattice takes the lattice constant out of the kernel, and that is a
+strong predictor of a formation energy. It is the kernel for a series where the lattice is fixed
+by construction, and there it brings the co-field with it.
+
+That co-field is the thing an autocorrelation cannot give. Drawn inside the perovskite cell
+(`benchmarks/results/periodic_overlap/cofield.png`) it is periodic and its strongest features sit
+on the sites: the steric co-field is deeply negative at the B site and at the oxygen and positive
+at the A site. The per-site form of decomposition rule 3 says the same in numbers -- A +2.37 ±
+0.58, B -6.16 ± 0.81, X -3.87 ± 0.55 eV per atom over 150 cells -- where the spread is the part
+that carries information: the B site's contribution varies most from compound to compound.
+
 ### Crystals: the periodic autocorrelation
 
 The autocorrelation above is the real-space counterpart of a reciprocal-space object. Averaged over

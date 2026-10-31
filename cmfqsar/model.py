@@ -1192,6 +1192,16 @@ class CMFModel:
     # (ac_d_max is the cutoff radius, ac_sigma the width and spacing; see periodic.py)
     pbc_background: bool = True             # periodic: subtract the uniform-density term
     pbc_taper: float = 2.0                  # periodic: width of the cosine taper below the cutoff
+    # the *overlap* kernel of crystals (plan item M4): the fields of the cell compared point by
+    # point with the periodic images summed in, which needs the structures to stand on one parent
+    # lattice and gives a co-field inside the cell.  It is the "fields" kernel source with the
+    # images added, so the co-field, the per-site contributions and the learners are unchanged.
+    # The raw integral is over one cell and so grows with it, which the cosine normalisation
+    # removes: this kernel requires normalize=True.
+    pbc_overlap: bool = False
+    # how far the images reach; None takes the radius at which the widest field of the set has
+    # fallen to 1e-6 of a peak overlap (cmfqsar.periodic.overlap_cutoff)
+    pbc_overlap_r_max: Optional[float] = None
     # mixing coefficients over the channel blocks of the three invariant sources, the analogue of
     # the per-field h_f of the overlap kernel (invariant.py, "Mixing coefficients over the channel
     # blocks"): None keeps every block at one; "balanced" gives every kind of block -- within a
@@ -1262,29 +1272,49 @@ class CMFModel:
             return None
         return (np.array(c_lo), lo_specs), (np.array(c_hi), hi_specs if any(c > 0 for c in c_hi) else None)
 
+    def _pair_kernels(self, P: AtomTable, Q: AtomTable, specs, progress=None,
+                      cancel=None) -> np.ndarray:
+        """The overlap kernels of two tables: open boundaries, or periodic ones (item M4).
+
+        The periodic form is the same integral with the images of `Q` summed in, so everything
+        above this method -- the normalisation, the scaling, the learners, the co-field -- is
+        the same code for a crystal as for a molecule.
+        """
+        if not self.pbc_overlap:
+            return kernel_matrices(P, Q, specs, progress=progress, cancel=cancel,
+                                   cutoff=self.cutoff, engine=self.engine)
+        from .periodic import periodic_overlap_kernels
+        return periodic_overlap_kernels(P, Q, specs, r_max=self.pbc_overlap_r_max,
+                                        cutoff=self.cutoff, engine=self.engine,
+                                        progress=progress, cancel=cancel)
+
     def _raw_kernels(self, P: AtomTable, Q: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """Per-field kernels at the current alphas (interpolated between grid alphas if needed)."""
         it = self._interp_specs()
-        cut, eng = self.cutoff, self.engine
         if it is None:
-            return kernel_matrices(P, Q, self.fieldset.specs, progress=progress, cancel=cancel,
-                                   cutoff=cut, engine=eng)
+            return self._pair_kernels(P, Q, self.fieldset.specs, progress=progress, cancel=cancel)
         (c_lo, lo), (c_hi, hi) = it
-        K = c_lo[:, None, None] * kernel_matrices(P, Q, lo, progress=progress, cancel=cancel,
-                                                  cutoff=cut, engine=eng)
+        K = c_lo[:, None, None] * self._pair_kernels(P, Q, lo, progress=progress, cancel=cancel)
         if hi is not None:
-            K += c_hi[:, None, None] * kernel_matrices(P, Q, hi, progress=progress, cancel=cancel,
-                                                       cutoff=cut, engine=eng)
+            K += c_hi[:, None, None] * self._pair_kernels(P, Q, hi, progress=progress,
+                                                          cancel=cancel)
         return K
+
+    def _self_overlaps(self, P: AtomTable, specs) -> np.ndarray:
+        """``K_f(i, i)`` of every structure: open boundaries, or periodic ones (item M4)."""
+        if not self.pbc_overlap:
+            return self_kernels(P, specs)
+        from .periodic import periodic_self_overlaps
+        return periodic_self_overlaps(P, specs, r_max=self.pbc_overlap_r_max)
 
     def _self_kernels(self, P: AtomTable) -> np.ndarray:
         it = self._interp_specs()
         if it is None:
-            return self_kernels(P, self.fieldset.specs)
+            return self._self_overlaps(P, self.fieldset.specs)
         (c_lo, lo), (c_hi, hi) = it
-        d = c_lo[:, None] * self_kernels(P, lo)
+        d = c_lo[:, None] * self._self_overlaps(P, lo)
         if hi is not None:
-            d += c_hi[:, None] * self_kernels(P, hi)
+            d += c_hi[:, None] * self._self_overlaps(P, hi)
         return d
 
     def _atom_block(self, mol: MoleculeFields) -> np.ndarray:
@@ -1297,16 +1327,34 @@ class CMFModel:
         """
         ci = mol.probe_coeffs or None
         it = self._interp_specs()
+        side = self._training_side()
         if it is None:
-            return atom_kernel_block(mol.coords, mol.weights, mol.radii, self.train,
+            return atom_kernel_block(mol.coords, mol.weights, mol.radii, side,
                                      self.fieldset.specs, ci=ci)
         (c_lo, lo), (c_hi, hi) = it
         blk = c_lo[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii,
-                                                      self.train, lo, ci=ci)
+                                                      side, lo, ci=ci)
         if hi is not None:
             blk += c_hi[:, None, None] * atom_kernel_block(mol.coords, mol.weights, mol.radii,
-                                                           self.train, hi, ci=ci)
+                                                           side, hi, ci=ci)
         return blk
+
+    def _training_side(self) -> AtomTable:
+        """The training table a kernel pairs against: its cells, or their periodic images (M4).
+
+        For an ordinary model this is the training table itself.  For the periodic overlap the
+        images carry the same weights as the atoms they repeat, so an atom contribution and a
+        co-field are the same sums with more Gaussians in them.
+        """
+        if not self.pbc_overlap:
+            return self.train
+        from .periodic import expanded_cell_table, overlap_cutoff
+
+        r = self.pbc_overlap_r_max
+        if r is None:
+            radii_max = float(np.max(self.train.radii)) if len(self.train.radii) else 2.0
+            r = overlap_cutoff([s for s in self.fieldset.specs if s.enabled], radii_max)
+        return expanded_cell_table(self.train, float(r))
 
     def _atom_self_block(self, mol: MoleculeFields) -> np.ndarray:
         """Kernels between the atoms of one molecule and each other: shape (F, N, N).
@@ -1315,6 +1363,12 @@ class CMFModel:
         self-kernel of any subset is the sum of this block over the subset. Used by the Shapley
         decomposition, which needs K(X_S, X_S) for coalitions S of atoms.
         """
+        if self.pbc_overlap:
+            raise ValueError(
+                "a coalition of atoms of a periodic cell is not a structure: removing one site "
+                "removes it from every image of the cell as well, so the self-kernel of a subset "
+                "is not the kernel of anything this model was fitted on. The co-field and the "
+                "per-site contributions are defined and are what to read instead.")
         n = mol.n_atoms
         singles = AtomTable(coords=mol.coords, weights=mol.weights, radii=mol.radii,
                             offsets=np.arange(n + 1), names=[str(i) for i in range(n)],
@@ -1372,7 +1426,8 @@ class CMFModel:
                         ac_chirality=self.ac_chirality, ac_chirality_shells=self.ac_chirality_shells,
                         surf_z_min=self.surf_z_min, surf_z_max=self.surf_z_max,
                         surf_z_step=self.surf_z_step, pbc_background=self.pbc_background,
-                        pbc_taper=self.pbc_taper,
+                        pbc_taper=self.pbc_taper, pbc_overlap=self.pbc_overlap,
+                        pbc_overlap_r_max=self.pbc_overlap_r_max,
                         ac_block_weights=(dict(self.ac_block_weights)
                                           if isinstance(self.ac_block_weights, dict)
                                           else self.ac_block_weights),
@@ -1657,6 +1712,11 @@ class CMFModel:
     # ---------------------------------------------------------------- fitting
     def prepare_training_kernels(self, train: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """Compute (and cache) the per-field training kernel matrices for the current alphas."""
+        if self.pbc_overlap and not self.normalize:
+            raise ValueError(
+                "the periodic overlap kernel is an integral over one cell, so its raw value "
+                "grows with the cell and ranks structures by how large a cell they were written "
+                "in. Fit it with normalize=True, which divides that out exactly.")
         self.train = train
         self.self_diag = self._self_kernels(train) if self.normalize else None
         self.K_fields_train = self._field_kernels(train, train, self.self_diag, self.self_diag,
@@ -2275,7 +2335,9 @@ class CMFModel:
         self._require_linear("co-fields")
         self._require_fields("co-fields")
         spec = self.fieldset.specs[f]
-        tr = self.train
+        # for the periodic overlap the basis is the images as well as the cell, so that the
+        # co-field drawn on a grid is periodic: the field of a cell is its lattice sum (item M4)
+        tr = self._training_side()
         n = tr.n_mol
         s = np.ones(n)
         if self.normalize:
@@ -2447,6 +2509,8 @@ class CMFModel:
             "surf_z_step": self.surf_z_step,
             "pbc_background": self.pbc_background,
             "pbc_taper": self.pbc_taper,
+            "pbc_overlap": self.pbc_overlap,
+            "pbc_overlap_r_max": self.pbc_overlap_r_max,
             "ac_train": getattr(self, "ac_train_", None),
             "ac_scale": getattr(self, "ac_scale_", None),
             "ac_blocks": getattr(self, "ac_blocks_", None),
@@ -2486,6 +2550,9 @@ class CMFModel:
         m.surf_z_step = float(st.get("surf_z_step", 1.0))
         m.pbc_background = bool(st.get("pbc_background", True))
         m.pbc_taper = float(st.get("pbc_taper", 2.0))
+        m.pbc_overlap = bool(st.get("pbc_overlap", False))
+        r = st.get("pbc_overlap_r_max")
+        m.pbc_overlap_r_max = None if r is None else float(r)
         m.ac_train_ = st.get("ac_train")
         m.ac_scale_ = st.get("ac_scale")
         m.ac_blocks_ = st.get("ac_blocks")
