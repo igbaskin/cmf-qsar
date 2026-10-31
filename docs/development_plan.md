@@ -2536,7 +2536,8 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   82 % in volume, which is a frame error for a point-by-point comparison; the second frame gives
   every cell the mean lattice constant and keeps its fractional coordinates, which puts the set
   on one lattice exactly (spread 0, asymmetry 0).
-  R2, and MAE in eV/atom: **autocorrelation as given +0.497 (0.384)**, autocorrelation on one
+  R2, and MAE in eV for the whole five-atom cell, which is what Matbench's target is:
+  **autocorrelation as given +0.497 (0.384)**, autocorrelation on one
   lattice +0.494 (0.405), **periodic overlap on one lattice +0.479 (0.407)**, overlap with the
   images left out, as given, +0.448 (0.404), the same on one lattice +0.379 (0.435), **periodic
   overlap as given +0.350 (0.449)**.
@@ -2556,7 +2557,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   model on all 1,500 cells, R2 +0.483 on its own training set) it is periodic and its strongest
   features sit on the sites: the steric co-field has a deep negative lobe at the B site and at
   the oxygen and a positive one at the A site. The per-site form of rule 3, over a sample of 150
-  cells: A +2.37 +- 0.58, B -6.16 +- 0.81, X -3.87 +- 0.55 eV per atom, where the means carry a
+  cells: A +2.37 +- 0.58, B -6.16 +- 0.81, X -3.87 +- 0.55 eV, where the means carry a
   constant the bias cancels and the spread is the information -- the B site varies most. So the
   kernel does name sites, which is what the gate asks of the co-field; it names them on
   perovskites rather than on the Li vacancy cells, and the item's own gate is written for the

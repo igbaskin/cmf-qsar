@@ -347,7 +347,7 @@ def fit(kinds=KERNELS, frames=FRAMES, limit: int = LIMIT, engine: str = "auto",
                     tables[frame].subset(np.arange(min(40, len(y)))),
                     [s for s in fs.specs if s.enabled])
             done[key] = out
-            log(f"  {key}: R2 {out['r2']:+.4f}, MAE {out['mae']:.4f} eV/atom, "
+            log(f"  {key}: R2 {out['r2']:+.4f}, MAE {out['mae']:.4f} eV per cell, "
                 f"{out['seconds']:.0f} s")
             jdump(done, path)
     return done
@@ -451,7 +451,7 @@ def cofield(frame: str = "one lattice", alpha: float = 2.0, lam: float = 1e-3,
                 for s, v in sums.items() if len(v)}
     log(f"  the per-site decomposition of {len(sample)} cells: {time.time() - t1:.0f} s")
     for s, v in per_site.items():
-        log(f"  site {s}: {v['mean']:+.4f} +- {v['sd']:.4f} eV/atom over {v['n']} sites")
+        log(f"  site {s}: {v['mean']:+.4f} +- {v['sd']:.4f} eV over {v['n']} sites")
 
     # the co-field in the two planes of the cell that carry the sites
     cell = np.asarray(table.molecules[0].cell, float)
@@ -484,7 +484,7 @@ def cofield(frame: str = "one lattice", alpha: float = 2.0, lam: float = 1e-3,
                  "sites": site_labels(ref), "contributions": np.asarray(ref_c, float).tolist(),
                  "bias": float(model.bias), "prediction": float(model.predict(
                      table.subset([0]))[0])}
-    log(f"  the reference cell {ref.name}: "
+    log(f"  the reference cell {ref.name}, in eV: "
         + ", ".join(f"{st} {v:+.2f}" for st, v in zip(reference["sites"], ref_c)))
     cubes = export_cubes(model, fs, table, spacing=cube_spacing) if cube else []
     out = {"cubes": cubes, "reference": reference,
@@ -569,7 +569,7 @@ def site_panel(ax, rec: dict, a: float) -> None:
     ax.view_init(elev=ISO_VIEW[0], azim=ISO_VIEW[1])
     ax.set_axis_off()
     ax.set_title("the field at the atoms: rule 3, one contribution per site\n"
-                 f"{ref['name']}, in eV per atom; they sum with the bias to the prediction",
+                 f"{ref['name']}, in eV; they sum with the bias to the prediction of the cell",
                  fontsize=10)
 
 
@@ -711,8 +711,10 @@ def report(out: str = "") -> str:
     if prep:
         sg = prep["lattice_spread_as_given"]
         lines += [f"`matbench_perovskites`: {prep['n']} ABO3 cells of "
-                  f"{prep['atoms_per_cell']:.0f} atoms, formation energy in eV/atom "
-                  f"(mean {prep['y_mean']:+.3f}, spread {prep['y_sd']:.3f}). Fields: "
+                  f"{prep['atoms_per_cell']:.0f} atoms, formation energy of the whole cell "
+                  f"in eV (the target of Matbench v0.1, from Castelli et al. 2012; mean "
+                  f"{prep['y_mean']:+.3f}, spread {prep['y_sd']:.3f}, which is "
+                  f"{prep['y_mean'] / 5:+.3f} per atom). Fields: "
                   f"{', '.join('`' + f + '`' for f in prep['fields'])}, charges from "
                   f"{prep['charges']} differences.", "",
                   f"**How far the set is from one lattice.** The relaxed cells have a mean "
@@ -725,7 +727,7 @@ def report(out: str = "") -> str:
         lines += ["## What each kernel predicts", "",
                   "Five Matbench folds, the setting and the ridge chosen by ten-fold "
                   "cross-validation inside each training part. Lower MAE is better.", "",
-                  "| kernel | frame | R2 | RMSE, eV/atom | MAE, eV/atom | settings chosen |",
+                  "| kernel | frame | R2 | RMSE, eV | MAE, eV | settings chosen |",
                   "|---|---|---:|---:|---:|---|"]
         for key in sorted(fits):
             r = fits[key]
@@ -747,7 +749,7 @@ def report(out: str = "") -> str:
                   f"on its own training set, which is not a validation). Decomposition rule 3 "
                   f"gives one contribution per site of every cell; the mean over a sample of "
                   f"{cof.get('sites_sampled', cof['n'])} cells, by kind of site:", "",
-                  "| site | mean contribution, eV/atom | spread | sites |", "|---|---:|---:|---:|"]
+                  "| site | mean contribution, eV | spread | sites |", "|---|---:|---:|---:|"]
         for s in SITES:
             v = cof["per_site"].get(s)
             if v:

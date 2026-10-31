@@ -6457,13 +6457,14 @@ image), so the Shapley decomposition is refused for this kernel while the co-fie
 per-site contributions, which are sums and not coalitions, are exact.
 
 **Measured against the autocorrelation.** `benchmarks/results/periodic_overlap/table.md`: 1,500
-cells of `matbench_perovskites` with their formation energy, five Matbench folds, the same
-fields and the same ridge grid for every row. The cells are relaxed, so their lattice constants
+cells of `matbench_perovskites` with their formation energy -- the target of Matbench v0.1, the
+energy of the whole five-atom cell in eV, from Castelli et al. (2012) -- five Matbench folds,
+the same fields and the same ridge grid for every row. The cells are relaxed, so their lattice constants
 differ by up to 82 % in volume: a frame error for a point-by-point comparison. The second frame
 gives every cell the mean lattice constant and keeps its fractional coordinates, which puts the
 set on one lattice exactly.
 
-| kernel | frame | R² | MAE, eV/atom |
+| kernel | frame | R² | MAE, eV |
 |---|---|---:|---:|
 | periodic autocorrelation | as given | **+0.497** | **0.384** |
 | periodic autocorrelation | one lattice | +0.494 | 0.405 |
@@ -6506,7 +6507,7 @@ lattice instead of sitting on the sites, and are correspondingly harder to read 
 itself worth seeing, and is the kind of thing a picture shows and a channel weight does not.
 
 Decomposition rule 3 gives the same reading as numbers, one contribution per site of every cell
-(a sample of 150 cells): A +2.37 ± 0.58, B -6.16 ± 0.81, X -3.87 ± 0.55 eV per atom. The means
+(a sample of 150 cells): A +2.37 ± 0.58, B -6.16 ± 0.81, X -3.87 ± 0.55 eV. The means
 carry a large constant that the bias cancels, so what they say is in the spread: **the B site's
 contribution varies most from compound to compound**, which is the site the chemistry of a
 perovskite turns on.
@@ -6545,8 +6546,8 @@ crystal form of the atom-contribution figure of *Reading the model*.
 ![Two overlays of one co-field on one cell. Left, the field **around** the atoms: isosurfaces of the steric co-field at plus and minus 45 % of its largest value, red where field raises the predicted formation energy and blue where it lowers it, with the atoms the cube file carries -- lead at the eight corners, ruthenium at the centre, and the six oxygens of the octahedron with its arms drawn. Right, the field **at** the atoms: one sphere per site, its area the size of that site's contribution and its colour the sign. They say the same thing twice: the blue surface wraps the B site and the oxygens on the left, and those are the sites whose contributions are negative on the right. Drawn by `benchmarks/run_periodic_overlap.py`.](benchmarks/results/periodic_overlap/cofield_3d.png)
 
 For the cell drawn there, PbRuO$_3$, the sites contribute Pb $+3.10$, Ru $-7.09$ and the three
-oxygens $-3.70$, $-3.67$ and $-4.20$ eV per atom, which with the bias of $+16.84$ add up to the
-prediction of $+1.28$ -- rule 3, in a crystal. The application draws the same two things in its
+oxygens $-3.70$, $-3.67$ and $-4.20$ eV, which with the bias of $+16.84$ add up to the
+prediction of $+1.28$ eV for the cell -- rule 3, in a crystal. The application draws the same two things in its
 3D view, because a model fitted with `pbc_overlap=True` is still the overlap kernel:
 `atom_contributions` returns one number per site and the viewer colours the sites by it. The
 periodic **autocorrelation** kernel can do neither; it has no frame and no atom split, which is

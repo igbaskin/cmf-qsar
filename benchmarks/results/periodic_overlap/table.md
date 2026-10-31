@@ -1,6 +1,6 @@
 # The periodic overlap kernel against the periodic autocorrelation (item M4)
 
-`matbench_perovskites`: 1500 ABO3 cells of 5 atoms, formation energy in eV/atom (mean +1.437, spread 0.723). Fields: `electrostatic`, `steric`, `prop:electronegativity`, `prop:inverse_sqrt_mass`, charges from electronegativity differences.
+`matbench_perovskites`: 1500 ABO3 cells of 5 atoms, formation energy of the whole cell in eV (the target of Matbench v0.1, from Castelli et al. 2012; mean +1.437, spread 0.723, which is +0.287 per atom). Fields: `electrostatic`, `steric`, `prop:electronegativity`, `prop:inverse_sqrt_mass`, charges from electronegativity differences.
 
 **How far the set is from one lattice.** The relaxed cells have a mean volume of 72.4 A^3, and the largest deviation from the mean is 135 % in volume and 34 % in a lattice vector. The overlap integral compares the two cells point by point, so that spread is a frame error; the one-lattice frame removes it, and scales the bond lengths instead.
 
@@ -8,7 +8,7 @@
 
 Five Matbench folds, the setting and the ridge chosen by ten-fold cross-validation inside each training part. Lower MAE is better.
 
-| kernel | frame | R2 | RMSE, eV/atom | MAE, eV/atom | settings chosen |
+| kernel | frame | R2 | RMSE, eV | MAE, eV | settings chosen |
 |---|---|---:|---:|---:|---|
 | autocorrelation | as given | +0.497 | 0.5124 | 0.3839 | sigma 0.5, sigma 0.75 |
 | autocorrelation | one lattice | +0.494 | 0.5138 | 0.4050 | sigma 0.5, sigma 0.75 |
@@ -23,7 +23,7 @@ Five Matbench folds, the setting and the ridge chosen by ten-fold cross-validati
 
 One overlap model on all 1500 cells (frame: one lattice, attenuation 2, ridge 0.001; R2 +0.483 on its own training set, which is not a validation). Decomposition rule 3 gives one contribution per site of every cell; the mean over a sample of 150 cells, by kind of site:
 
-| site | mean contribution, eV/atom | spread | sites |
+| site | mean contribution, eV | spread | sites |
 |---|---:|---:|---:|
 | A | +2.3737 | 0.5823 | 150 |
 | B | -6.1553 | 0.8119 | 149 |

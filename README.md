@@ -675,7 +675,7 @@ That co-field is the thing an autocorrelation cannot give. Drawn inside the pero
 (`benchmarks/results/periodic_overlap/cofield.png`) it is periodic and its strongest features sit
 on the sites: the steric co-field is deeply negative at the B site and at the oxygen and positive
 at the A site. The per-site form of decomposition rule 3 says the same in numbers -- A +2.37 ±
-0.58, B -6.16 ± 0.81, X -3.87 ± 0.55 eV per atom over 150 cells -- where the spread is the part
+0.58, B -6.16 ± 0.81, X -3.87 ± 0.55 eV over 150 cells -- where the spread is the part
 that carries information: the B site's contribution varies most from compound to compound.
 
 ### Crystals: the periodic autocorrelation
