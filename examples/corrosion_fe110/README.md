@@ -765,6 +765,80 @@ rows in 1 M HCl with a MWILA from 36 papers).  The three scripts take `--node 15
   not contradicted where it cannot (node 158).  A third node with several shared compounds
   (benzothiazole, 20 compounds, or thiadiazole) would be the natural next check.
 
+## Reproducibility of the literature potency on three more nodes (2026-10-31)
+
+Per-experiment exports from the parent session for the three nodes of `examples/corrosion`
+with the most compounds shared between papers: `node161_experiments.csv` (benzothiazole),
+`node4_experiments.csv` (1,2,4-triazole), `node7_experiments.csv` (1,3,4-thiadiazole).  No UMA
+run exists for these nodes, so only the data-only part of the potency analysis was repeated:
+`potency_reliability.py` (any node; tables `potency_reliability.csv` and
+`potency_reliability_pairs.csv`, log `potency_reliability.log`).  All numbers below are from
+the 1 M HCl rows with a MWILA.
+
+| quantity | 157 benzimidazole | 158 quinoline | 161 benzothiazole | 4 triazole | 7 thiadiazole |
+|---|---|---|---|---|---|
+| rows / compounds / papers | 1210 / 73 / 48 | 1008 / 65 / 36 | 339 / 20 / 15 | 508 / 40 / 25 | 744 / 29 / 28 |
+| sd of the compound medians | 1.87 | 1.85 | 1.95 | 1.60 | 1.63 |
+| within-paper sd of a compound | 1.23 | 1.88 | 0.70 | 1.00 | 0.79 |
+| slope of MWILA against ln C | -0.61 | -0.81 | -0.42 | -0.60 | -0.16 |
+| compounds in 2 or more papers | 20 | 3 | 2 | 4 | 6 |
+| papers with 3 or more compounds (largest) | 15 (18) | 5 (4) | 5 (4) | 7 (5) | 3 (4) |
+
+**Repeat measurements of one compound by two papers**, pooled over the five nodes (250 pairs
+of papers over 35 compounds), split by whether the two papers have the same first author:
+
+| pairs | n pairs | compounds | median difference | between-paper sd | reliability of one paper's value |
+|---|---|---|---|---|---|
+| same first author | 45 | 15 | 0.52 | 0.63 | - |
+| different first authors, all nodes | 205 | 29 | 1.13 | 1.19 | 0.59 |
+| different first authors, node 157 only | 182 | 18 | - | 1.17 | 0.61 |
+| different first authors, nodes 158, 161, 4, 7 | 23 | 11 | - | 1.34 | 0.46 |
+
+| different first authors, cross-chemotype export | 332 | 30 | 1.18 | 1.19 | 0.69 (sd of medians 2.15) |
+
+(reliability = 1 - between-paper variance / variance of the compound medians; the between-paper
+sd is the root mean square pair difference divided by the square root of 2.)
+
+The last row is the parent session's export `shared_hcl_experiments.csv`: every compound of the
+database measured in 1 M HCl by three or more papers regardless of scaffold (35 compounds, 78
+papers, 1443 rows; `shared_hcl_compounds.csv` lists them with their per-compound between-paper
+sd).  Its own split-half reliability is r 0.78 (`potency_reliability_shared_hcl.log`).
+Outside the benzimidazole and imidazole group no scaffold node has more than two shared
+compounds, so node 157 is the one place where a reliability can be estimated within a
+chemotype.  Note that 2-mercaptobenzimidazole (11 papers) is not in node 157's file: the
+scaffold tree holds it as the thione tautomer, so the node is not the complete benzimidazole set.
+
+- **The shared compounds of the new nodes are mostly one laboratory publishing twice.**  Of the
+  12 compounds shared on nodes 161, 4 and 7, the pairs for 6 of them come from one group (the
+  Lille group's bis-aryl thiadiazoles under the first authors Bentiss and Lebrini, Habeeb
+  2018/2018/2022, two Ansari 2012 papers with identical values, two Wang papers with identical
+  values); the Bentiss/Lebrini pairs count as different first authors in the table, so the
+  estimate for the small nodes is, if anything, too favourable.  Such pairs agree
+  to 0.5 units, half the between-laboratory spread.  The split-half r of 0.93 that node 7
+  shows on its 6 shared compounds is this within-laboratory agreement, not reproducibility.
+- **Where different laboratories measured the same compound, the spread is the same as on the
+  benzimidazoles.**  1,3-Benzothiazole in six papers from three groups: 6.35, 6.74, 7.52,
+  7.74, 8.26, 8.64 (range 2.3 units, node sd 1.95).  Over the 29 compounds with such pairs in
+  all five nodes, the between-paper sd is 1.19 against a node sd of about 1.8, a reliability
+  of 0.6, and the estimate without node 157 (11 compounds) is 0.46.  The three quinoline pairs
+  alone disagree by more than the node sd.
+- **The between-paper spread is a constant of the literature, about 1.2 units of ln K_ads.**
+  It is the same on node 157 (1.17), pooled over the five nodes (1.19) and over the 35
+  compounds measured by three or more papers in any chemotype (1.19), and the same-author
+  spread is half of it in all three sets (0.63, 0.64).  What changes with the compound set is
+  the spread of the medians, so the reliability of one paper's value is about 0.6 within a node
+  (medians sd 1.6-1.9) and about 0.7 across chemotypes (medians sd 2.15, from imidazole at 3.9
+  to a bis-aryl triazole at 13.4).
+- **Reading for paper 6.**  The ceiling of about q2 0.6 for any model of the pooled medians of
+  a node is not a property of the benzimidazoles: it is what a single paper's value of a
+  compound is worth, and a model across chemotypes gains only what the wider target range gives.  The concentration dependence (slopes -0.16 to -0.81
+  per ln C) is also general.  None of the five nodes gives a second series of ten compounds
+  from one laboratory, so the within-series result (Hu 2011, q2 0.66) stays a single case; the
+  cross-chemotype export confirms the reliability estimate but adds no such series.  Running the UMA
+  tier on a third node would test the field models again on a target whose ceiling is already
+  known to be about 0.6 and whose series are three to five compounds; it is not needed for the
+  claim of paper 6.
+
 ## Follow-ups
 
 - Dispersion: fairchem provides a D3 wrapper (`fairchem.core.calculate.dftd3_calculator`,
