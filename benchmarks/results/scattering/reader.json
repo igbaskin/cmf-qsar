@@ -1,0 +1,12 @@
+{
+ "folder": "C:\\Users\\baski\\work\\claude\\cmf\\benchmarks\\cache\\scattering\\written",
+ "header_read": {
+  "density": 0.050267,
+  "q_max": 20.0
+ },
+ "matched_its_own_structure": 25,
+ "mean_kernel_with_its_own": 0.8910303495948985,
+ "mean_kernel_with_the_others": 0.000524015714221182,
+ "n": 25,
+ "task": "log_kvrh"
+}

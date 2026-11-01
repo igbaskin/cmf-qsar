@@ -898,6 +898,45 @@ resolution it is: accuracy falls steadily as the field widens (+0.785 to +0.587)
 at most 0.002 when the sum over `G` is taken half as far again. The identity agrees to one part
 in 1e13 over 120 real crystals.
 
+### A measured curve as the sample: no structure needed
+
+A diffraction experiment on a powder, a glass or a nanoparticle gives one curve and no
+coordinates, and that curve is the **untyped** version of the descriptor this program already
+computes (`cmfqsar/scattering.py`, plan item M12). Every descriptor above has one channel block
+per pair of field types; an experiment cannot separate them, because every atom scatters into
+the same detector. What it measures is the single block of one field whose weight is the atom's
+scattering length, and the reduced pair distribution function is that block divided by `r`, by
+the mean scattering length squared and by the integral of the channel's Gaussian — the
+background term of the descriptor is exactly the `-4 pi r rho_0` the standard definition
+subtracts. `read_curve` reads the two-column text the common programs write, `curve_kernel`
+compares a measured curve with computed ones, and `measured_like` puts a computed curve through
+what an instrument does to it: a finite range in Q, counting noise, an error in the number
+density, a limited range in r.
+
+**What the typing is worth, measured.** On the three Matbench tasks of the section above, 600
+structures each and the same folds, the typed descriptor reaches R² +0.771 on the bulk modulus,
++0.684 on the shear modulus and +0.418 on the perovskite formation energies; the one X-ray curve
+of the same structures reaches +0.303, +0.192 and +0.012, a difference of -0.469, -0.492 and
+-0.406 whose 95 % intervals are all far from zero. On the formation energies the curve alone is
+no better than predicting the mean, so this is a route to materials without a structure and not a
+cheaper descriptor for materials with one.
+
+**Two readings that matter for anyone who tries it.** First, a curve as computed is too sharp for
+a kernel to compare: at a channel 0.05 Å wide the 20 Å curve predicts nothing (R² +0.003 on the
+bulk modulus), and cutting the transform at Q_max = 20 1/A, which broadens every peak by about
+0.16 Å, raises the same curve to +0.327. The resolution of the instrument is a width the
+comparison needs. Second, a model fitted on computed curves cannot predict measured ones: over
+36 settings of the degradation stage the transfer R² never reaches +0.06. The computed curves
+must go through `measured_like` at the instrument's resolution before the model is fitted. Of the
+instrument effects, counting noise is the one that costs accuracy (10 % takes the bulk modulus
+from +0.327 to +0.150); an error of 10 % in the number density costs nothing measurable. 25
+curves written as a two-column file and read back all match the structure they came from, with a
+kernel of 0.891 against their own and 0.001 against the others.
+
+No experimental data is used here and none is implied: there is no public set of measured curves
+with measured properties to fit, so the measurement says how good an instrument would have to be,
+not that an instrument worked.
+
 ### Topomer fields: a frame that comes from the topology
 
 The alignment-free kernel above throws the frame away. The topomer construction of
@@ -5216,6 +5255,7 @@ cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrel
 cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solids, the co-pattern, the periodic overlap kernel, a defect series under the host symmetry
 cmfqsar/sites.py        a site of a periodic cell as the sample: the split of the autocorrelation, per-site targets, a cell model read site by site
 cmfqsar/reciprocal.py   reciprocal-space channels of a crystal: the typed structure factors, the resolution reading, the identity with the real-space sum
+cmfqsar/scattering.py   a measured scattering curve as the sample: G(r) and F(Q) as the untyped descriptor, the readers, what an instrument does
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field, and the query formats that carry them out of the program
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule

@@ -224,25 +224,56 @@ def reciprocal_cell(cell: np.ndarray) -> np.ndarray:
     return 2.0 * np.pi * np.linalg.inv(A).T
 
 
-def reciprocal_vectors(cell: np.ndarray, q_max: float,
-                       include_zero: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+def count_reciprocal_vectors(cell: np.ndarray, q_max: float) -> float:
+    """About how many reciprocal-lattice vectors lie inside ``q_max``.
+
+    The reciprocal lattice has ``V / (2 pi)^3`` points per unit volume, so the count is that
+    density times the volume of the sphere.  It grows with the cell and with the cube of the
+    cutoff, which is what makes a large cell at a high cutoff expensive, and this is the cheap
+    way to find out before paying.
+    """
+    volume = float(abs(np.linalg.det(np.asarray(cell, float))))
+    return (4.0 / 3.0) * np.pi * float(q_max) ** 3 * volume / (2.0 * np.pi) ** 3
+
+
+def reciprocal_vectors(cell: np.ndarray, q_max: float, include_zero: bool = False,
+                       max_vectors: int = 4_000_000) -> Tuple[np.ndarray, np.ndarray]:
     """The reciprocal-lattice vectors with ``|G| <= q_max``, and their lengths.
 
     A vector ``G = sum_i h_i b_i`` has ``h_i = G . a_i / 2 pi``, so ``|h_i| <= q_max |a_i| / 2 pi``
-    bounds the search exactly, whatever the shape of the cell.
+    bounds the search exactly, whatever the shape of the cell.  The search runs one plane of
+    indices at a time and keeps only what is inside the sphere: holding the whole box of indices
+    would cost the volume of the box, which for a large cell at a high cutoff is many times the
+    sphere and can be gigabytes.  ``max_vectors`` refuses a request whose result would be larger
+    than that, rather than letting it exhaust the machine.
     """
     A = np.asarray(cell, float)
     B = reciprocal_cell(A)
+    expected = count_reciprocal_vectors(A, q_max)
+    if expected > float(max_vectors):
+        raise ValueError(
+            f"a cell of {abs(float(np.linalg.det(A))):.0f} A^3 holds about {expected:.0f} "
+            f"reciprocal-lattice vectors below q = {float(q_max):g} 1/A, more than the "
+            f"{max_vectors} this call allows. Lower q_max (the count grows as its cube), or "
+            f"raise max_vectors if the memory is there.")
     lengths = np.linalg.norm(A, axis=1)
     n = np.floor(float(q_max) * lengths / (2.0 * np.pi) + 1e-9).astype(int)
-    ranges = [np.arange(-k, k + 1) for k in np.maximum(n, 0)]
-    h = np.stack(np.meshgrid(*ranges, indexing="ij"), axis=-1).reshape(-1, 3).astype(float)
-    G = h @ B
-    q = np.linalg.norm(G, axis=1)
-    keep = q <= float(q_max)
-    if not include_zero:
-        keep &= q > 1e-9
-    return G[keep], q[keep]
+    n = np.maximum(n, 0)
+    k, l = np.meshgrid(np.arange(-n[1], n[1] + 1), np.arange(-n[2], n[2] + 1), indexing="ij")
+    plane = (k.ravel()[:, None] * B[1][None, :] + l.ravel()[:, None] * B[2][None, :])
+    kept_G, kept_q = [], []
+    for h in range(-int(n[0]), int(n[0]) + 1):
+        G = plane + h * B[0][None, :]
+        q = np.linalg.norm(G, axis=1)
+        keep = q <= float(q_max)
+        if not include_zero:
+            keep &= q > 1e-9
+        if keep.any():
+            kept_G.append(G[keep])
+            kept_q.append(q[keep])
+    if not kept_G:
+        return np.zeros((0, 3)), np.zeros(0)
+    return np.concatenate(kept_G), np.concatenate(kept_q)
 
 
 def structure_factors(crystal, G: np.ndarray, weights: Optional[np.ndarray] = None) -> np.ndarray:

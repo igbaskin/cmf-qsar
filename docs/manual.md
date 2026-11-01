@@ -7293,6 +7293,114 @@ sites the way the pair sum can), and a site record is refused for that reason. A
 of a reflection is the same for a structure and its mirror image, so these channels share the one
 blindness of every two-point descriptor.
 
+## A measured curve as the sample: the untyped descriptor
+
+A diffraction experiment on a powder, a glass or a nanoparticle gives one curve and no
+coordinates. That curve is not a different object from the descriptors above. It is the
+**untyped** one (plan item M12, `cmfqsar/scattering.py`).
+
+Every descriptor so far is *typed*: one channel block per pair of field types. An experiment
+cannot separate the types, because every atom scatters into the same detector. What it measures
+is the single block of one field whose weight is the atom's **scattering length** -- the neutron
+value $b$, or for X-rays the atomic number $Z$. Writing $\rho_0$ for the number density and
+$\langle b \rangle$ for the mean scattering length, the reduced pair distribution function is
+
+$$
+G(r) \;=\; \dfrac{\Phi_{bb}(r)}{\sigma\sqrt{2\pi}\; r \; \langle b \rangle^{2}}
+$$
+<!-- #eq:pair-distribution -->
+
+where $\Phi_{bb}$ is the periodic autocorrelation of that one field with the uniform background
+kept and the self term dropped. Every piece of the standard definition is already there: the
+background term of the descriptor *is* the $-4\pi r \rho_0$ that the definition subtracts, and
+$\sigma\sqrt{2\pi}$ is the integral of the channel's Gaussian. The identity is exact as the
+channel narrows, and `pair_distribution_residual` measures the difference against a direct sum
+over the neighbour list.
+
+The same holds in reciprocal space, which is the other thing an experiment reports. The
+Faber-Ziman total structure factor is the one-field channel of the previous section divided by
+$\langle b \rangle^2$, and $F(Q) = Q\,[S(Q) - 1]$ and $G(r)$ are a sine transform apart. The
+*distinct* scattering is what enters: the term an atom gives with itself is taken out, so that
+$S$ approaches 1 and $F$ approaches zero at large $Q$. Leaving it in would add a straight line
+$(\langle b^2\rangle/\langle b\rangle^2 - 1)\,Q$ to the curve of every structure with more than
+one element.
+
+**What this gains.** A sample where there is no structure. `read_curve` reads the two-column text
+the common measurement programs write, `resample` puts it on the grid a model uses, and
+`curve_kernel` compares it with computed curves -- so a model fitted on structures can be asked
+about a measurement, and materials whose atomic structure nobody knows become describable.
+
+**What it costs: the typing.** That cost is a question about data and not about code, and
+`benchmarks/run_scattering.py` measures it on the three Matbench tasks of the previous section,
+with the same folds.
+
+**What a measurement is not.** A computed curve is sharper and cleaner than any measurement.
+Four things separate them, and `measured_like` applies all four so that a model can be tested
+against them before any experiment is trusted: a finite range in $Q$, which puts ripples of
+period $2\pi/Q_{\max}$ around every peak; counting noise on $F(Q)$; an error in the number
+density, which adds a straight line to $G(r)$ because $\rho_0$ is what the baseline is drawn
+from; and a limited range in $r$.
+
+![What a detector sums away. One cell of cubic BaTiO3, five atoms, described three ways by `benchmarks/run_scattering.py --stage concept`. (a) What the program computes: 15 typed channel blocks, one per pair of field types, of which the six with the largest values are drawn. (b) What a detector can measure: the reduced pair distribution function G(r), one curve, with the types summed away by the weighting that scattering applies. (c) The same curve as an instrument would report it, from a transform cut at Q = 20 angstrom^-1, with 5 % counting noise and the number density wrong by 5 %. The kernel between the computed curve and the measured one is 0.8543: the gap in (c) is what the measurement section below measures the cost of.](benchmarks/results/scattering/concept.png)
+
+**What the measurement says.** `benchmarks/run_scattering.py` ran the three Matbench tasks of the
+previous section, 600 structures of each, with the same five published folds; the numbers are in
+`benchmarks/results/scattering/table.md`. It reports five things.
+
+*The identity holds to the accuracy the derivation promises.* The curve from the descriptor and
+the curve summed over the neighbour list differ by 8.2e-05 of the curve at a channel width of
+0.05 Å (median over 30 structures of each task; worst case 3.2e-04) and by 5.5e-06 at 0.02 Å. The
+difference falls with the channel width, as it must.
+
+*Summing away the types costs most of the accuracy.* The typed descriptor reaches R² +0.771 on the
+bulk modulus, +0.684 on the shear modulus and +0.418 on the perovskite formation energies. The one
+X-ray curve of the same structures reaches +0.303, +0.192 and +0.012: a difference of -0.469
+[-0.560, -0.389], -0.492 [-0.579, -0.414] and -0.406 [-0.498, -0.311], with the interval from
+2,000 bootstrap resamples of the structures. On the formation energies the curve alone is no
+better than predicting the mean. The neutron curve is worse than the X-ray one on the structures
+its table covers, +0.093, +0.086 and +0.101 (78 % of the elasticity sets and 96.5 % of the
+perovskites have a tabulated scattering length for every element). The likely reason is that the
+X-ray weight, the atomic number, orders the elements, while the neutron scattering lengths of
+neighbouring elements are irregular and change sign, so one weighted sum separates the structures
+less well. Both curves were offered at two ranges, 10 and 20 Å, and all 30 folds chose the
+shorter one.
+
+*A computed curve is too sharp to compare, and what an instrument does to it is what makes the
+kernel work.* As computed, with a channel 0.05 Å wide, the 20 Å curve predicts nothing: R² +0.003
+on the bulk modulus, -0.050 on the shear modulus and -0.001 on the formation energies. Cutting
+the transform at $Q_{\max} = 20$ Å⁻¹, which broadens every peak by about $\pi/Q_{\max} = 0.16$ Å,
+raises the same curve to +0.327, +0.235 and +0.030, and at $Q_{\max} = 10$ Å⁻¹ to +0.432, +0.344
+and +0.050. Two Gaussians 0.05 Å wide and 0.2 Å apart barely overlap, so a kernel over sharp
+curves sees two structures as unrelated however their peaks moved; the resolution of the
+instrument is a width the comparison needs.
+
+*Of the other instrument effects, counting noise is the one that matters.* Noise of 2 % leaves the
+bulk modulus at +0.324 against +0.327 without it, and 10 % cuts it to +0.150 and the shear modulus
+to +0.040. An error of 10 % in the number density costs nothing measurable (+0.336), because it
+adds a straight line that the kernel largely ignores. Dropping the curve below 2 Å costs a little
+(+0.260), and dropping it above 10 Å gains (+0.438), which is the same reading as the fit stage's
+choice of the shorter range.
+
+*A model must be fitted at the resolution of the measurement.* Fitting on the computed curves and
+then predicting the degraded ones -- what someone with a structure database and one measurement in
+hand would do -- never reaches R² +0.06 in any of the 36 settings tried and is negative in 15 of
+them, against +0.327 for the same curves when the model is fitted on curves degraded alike. The
+two are not the same object: one is sharp and the other is broad. The remedy is `measured_like`:
+put the computed curves through the instrument's $Q_{\max}$ and noise first, and fit on those.
+
+*A curve written to a file finds its structure again.* 25 curves of the bulk modulus set, written
+in the two-column form with a header, degraded as above and read back, all match the structure
+they came from best; the kernel with their own structure is 0.891 and with the others 0.001.
+
+**The limits.** No experimental data is used in any of this and none is implied: there is no
+public set of measured curves with measured properties to fit, so what the measurement reports
+is how good an instrument would have to be, not that an instrument worked. A disordered cell is
+refused, because the mean over the species is right for the pair term and not for the self term
+that the total curve keeps. The X-ray weight is the atomic number, the $Q \to 0$ limit of the
+form factor, rather than the form factor itself. And a neutron scattering length is taken from a
+table that leaves out the elements whose value depends strongly on the wavelength; a structure
+containing one of those is refused rather than guessed at.
+
 ## An atom instead of a molecule: the local invariant kernel
 
 Every model so far predicts one number per molecule. A carbon shift, an acidity, a local

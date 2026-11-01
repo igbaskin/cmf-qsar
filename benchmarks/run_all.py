@@ -389,6 +389,15 @@ def registry() -> List[Benchmark]:
                   minutes="70",
                   report=lambda: _mod("run_reciprocal").report(),
                   tables=["reciprocal/table.md"]),
+        Benchmark("scattering",
+                  "a measured scattering curve as the sample: the reduced pair distribution "
+                  "function as the untyped version of the periodic autocorrelation, what "
+                  "summing away the field types costs on three Matbench tasks, and how much of "
+                  "an instrument's blurring, noise and baseline error the model survives",
+                  "run_scattering.py", "scattering", compute=[[]],
+                  minutes="120",
+                  report=lambda: _mod("run_scattering").report(),
+                  tables=["scattering/table.md"]),
         Benchmark("fieldae",
                   "a decoder of pseudo-atoms against kernel PCA: can a nonlinear autoencoder "
                   "reconstruct a molecular field, and is its error an applicability domain "

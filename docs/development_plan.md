@@ -2815,7 +2815,10 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   the item said it was, and the Parseval test holds to one part in 1e13 on real structures.**
   **What was built.** `cmfqsar/reciprocal.py`: `ReciprocalSpec` lays out channels in |G| like the
   distance channels, `structure_factors` and `reciprocal_vectors` build the typed structure
-  factors of one cell over the reciprocal lattice out to `q_max`, and
+  factors of one cell over the reciprocal lattice out to `q_max` (one plane of indices at a
+  time, because the whole box of indices is many times the sphere it contains and a large cell at
+  a high cutoff would cost gigabytes; `count_reciprocal_vectors` says what a request will cost
+  and the call refuses one above a stated limit), and
   `reciprocal_autocorrelation` makes the channels -- the intensity of a pair of field types
   averaged over the directions of G, per atom of the cell. Three properties are exact rather than
   approximate: the uniform background is the G = 0 term and is left out, so no integral is
@@ -2915,6 +2918,72 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   typed ones would allow models on amorphous and nanocrystalline materials where no atomic
   structure exists. Exploratory; no commitment until M6 has shown that the reciprocal channels
   carry signal.
+  **Done 1 November 2026. The identity the item rests on is exact, the reader works, and the
+  accuracy cost of losing the types is large: the one curve an experiment can measure reaches
+  R² +0.303 where the typed descriptor reaches +0.771 (bulk modulus) and +0.192 where it reaches
+  +0.684 (shear modulus), and on the formation energies the curve is no better than the mean. Two results were not expected and matter more than that number: a curve as
+  computed is too sharp for a kernel to compare, so the finite range of the instrument is what
+  makes the comparison work, and a model fitted on computed curves cannot predict measured ones
+  at all. The route to amorphous materials is open, but only with curves computed at the
+  resolution of the measurement.**
+  **What was built.** `cmfqsar/scattering.py`. `pair_distribution` computes G(r) as the one-field
+  periodic autocorrelation of `periodic.py`, with the uniform background kept and the self term
+  dropped, divided by r, by the mean scattering length squared and by the integral of the
+  channel's Gaussian; the background term of the descriptor is exactly the -4 pi r rho_0 that the
+  standard definition subtracts, so no new sum is written. `structure_function` gives F(Q) =
+  Q[S(Q) - 1] by two routes, the sine transform of G(r) and the one-field reciprocal channel of
+  M6 divided by the mean scattering length squared, which tests them against each other. The
+  Faber-Ziman convention is what the self term is for: with it left in, S approaches
+  <b²>/<b>² instead of 1 and a straight line in Q is added to every curve of more than one
+  element. `scattering_record` builds the one field, with the X-ray weight the atomic number and
+  the neutron weight a tabulated scattering length (Sears 1992; the elements whose value depends
+  strongly on the wavelength are left out and a structure containing one is refused).
+  `measured_like` applies the four things that separate a computed curve from a measured one: a
+  finite range in Q, counting noise on F(Q), an error in the number density and a limited range
+  in r. `read_curve` reads the two-column text the common measurement programs write, with the
+  header keys they use, `resample` puts a curve on the grid a model uses, and `curve_kernel`
+  compares measured curves with computed ones. `pair_distribution_residual` is the test of the
+  identity against a direct sum over the neighbour list.
+  **Tests** (`tests/test_scattering.py`, 22): the X-ray weight is the atomic number and the
+  neutron weight the tabulated value; an untabulated element, a disordered cell and an unknown
+  source are refused; the descriptor route equals the definition and the difference falls as the
+  channel narrows; the peaks of NaCl sit at 2.82 and 3.99 Å; a supercell gives the same curve;
+  the two routes to F(Q) agree, F approaches zero at large Q and the sine transform round trip
+  returns the curve (correlation above +0.99); every degradation of `measured_like` does what it
+  says; a written file reads back to 1e-05 with its header, and odd files (comments, blank lines,
+  three columns) read correctly; curves are usable as samples in a kernel and the cross kernel
+  picks the structure a curve came from.
+  **Measurement** (`benchmarks/run_scattering.py`; `benchmarks/results/scattering/table.md`).
+  The three Matbench tasks of M6, 600 structures of each, the same five published folds, the
+  curve range and the ridge chosen inside every training fold. *The identity:* 8.2e-05 of the
+  curve at a 0.05 Å channel (median; worst 3.2e-04) and 5.5e-06 at 0.02 Å. *What the typing is
+  worth:* the typed descriptor R² +0.771 on the bulk modulus, +0.684 on the shear modulus and
+  +0.418 on the perovskite formation energies, against +0.303, +0.192 and +0.012 for the X-ray
+  curve -- a difference of -0.469 [-0.560, -0.389], -0.492 [-0.579, -0.414] and -0.406 [-0.498,
+  -0.311] from 2,000 bootstrap resamples. The neutron curve, on the 78 % and 96.5 % of structures
+  its table covers and against a typed baseline on the same structures, is worse still (+0.093,
+  +0.086, +0.101), and the likely reason is that the atomic number orders the elements while the
+  neutron scattering lengths of neighbours are irregular and change sign. All 30 folds chose the
+  10 Å curve over the 20 Å one. *What an instrument does:* the curve as computed predicts nothing
+  (+0.003, -0.050, -0.001), cutting the transform at Q_max = 20 1/A raises it to +0.327, +0.235
+  and +0.030 and at 10 1/A to +0.432, +0.344 and +0.050, because a kernel over curves 0.05 Å wide
+  cannot see two structures as related; 10 % counting noise costs most of that gain (+0.150,
+  +0.040) and a 10 % error in the number density costs nothing measurable (+0.336). *Transfer:*
+  a model fitted on computed curves and asked about degraded ones never reaches +0.06 over the 36
+  settings and is negative in 15, so the computed curves must be degraded to the instrument's
+  resolution before fitting. *The reader:* 25 curves written, degraded and read back all match
+  their own structure, kernel 0.891 against their own and 0.001 against the others. A concept
+  stage (`--stage concept`) draws one cell of BaTiO3 as its 15 typed channel blocks, as the one
+  curve a detector can measure, and as an instrument would report it.
+  **What is open.** No experimental data, and that is the item's own gate: there is no public set
+  of measured curves with measured properties to fit, so the next step is one such set, from a
+  collaborator or from a repository that holds both. A partial structure factor per pair of
+  elements, which a neutron experiment with isotope substitution does measure, would sit between
+  the total curve and the typed descriptor and is not built. The X-ray weight is the atomic
+  number rather than the form factor, which is right at low Q and too strong at high Q. A
+  disordered cell is refused. And the one thing the measurement asks for is a fitting mode that
+  computes the training curves at a stated resolution, so that a measured curve and the computed
+  ones are the same object; `measured_like` can do it today but no subcommand does it.
 * **M13. The application.** None of this is visible in the GUI: no cell viewer, no co-pattern
   plot, no site colouring. It belongs to G, and it is what makes the materials side usable by
   someone other than the author. It waits for M4 and M5, which decide what there is to draw.
@@ -3044,7 +3113,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
 
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
-by those three. M9 and M12 only after M6 has reported. M14 is the data M4 turned out to need, and
+by those three. M9 after M6 has reported; ~~M12~~ **done 1 November 2026**, and what it now needs is a measured data set and not more code. M14 is the data M4 turned out to need, and
 nothing else in this part waits for it.
 
 ### Nanotechnology: the extensions a particle, a tube, a sheet and a coated surface ask for (26 October 2026)
@@ -4855,7 +4924,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~ and ~~M6~~ **done 1 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

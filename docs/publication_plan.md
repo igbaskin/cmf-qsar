@@ -570,6 +570,29 @@ back without growing in number. That is the honest case for reciprocal space in 
 not more accuracy, but long-range order at a fixed cost -- and it is also what makes the
 scattering item M12 worth starting.
 
+**Item M12 is done (1 November 2026)**, and what it adds to this paper is a section and a
+warning, not a result on measured data. The section is **"the measured curve is the untyped
+descriptor"**: the reduced pair distribution function G(r) is the one-field periodic
+autocorrelation of the same program, with the uniform background kept and the self term dropped,
+divided by r, by the mean scattering length squared and by the integral of the channel's
+Gaussian, and the background term of the descriptor is exactly the -4 pi r rho_0 that the
+standard definition subtracts. The difference against a direct sum is 8.2e-05 of the curve at a
+0.05 Å channel and falls with the channel width. That makes a measurement a sample and gives the
+program a route to amorphous and nanocrystalline materials, which is worth stating on its own.
+The cost is large and must be stated with it: on the three Matbench tasks the one curve an
+experiment can measure reaches R² +0.303 and +0.192 on the two elastic moduli against +0.771 and
++0.684 for the typed descriptor, and +0.012 against +0.418 on the perovskite formation energies,
+where the curve alone is no better than the mean. The warning is the part a reader will need
+most, and it was not expected: a curve as computed, at a channel 0.05 Å wide, carries nothing a
+kernel can use (+0.003 on the bulk modulus), while the same curve cut at Q_max = 20 1/A reaches
++0.327 -- the finite resolution of the instrument is what makes two curves comparable -- and a
+model fitted on computed curves cannot predict measured ones at all (transfer R² below +0.06 in
+all 36 settings tried). Anyone who fits a model to measured curves must compute the training
+curves at the resolution of the measurement. **No experimental data is used**, and the paper must
+say so: there is no public set of measured curves with measured properties, so this section
+reports how good a measurement would have to be, and finding or making that set is the next step
+of the item.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to
