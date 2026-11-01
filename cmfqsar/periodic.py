@@ -233,6 +233,11 @@ class CrystalFields:
     #: of the means on a disordered site
     second_moments: Optional[np.ndarray] = None
 
+    #: the site this record stands for (plan item M5), or None for the whole cell.  The periodic
+    #: autocorrelation of a record with a centre is the profile of that site alone
+    #: (:func:`cmfqsar.sites.site_autocorrelation`), so a site is a sample like any structure.
+    centre: Optional[int] = None
+
     @property
     def n_atoms(self) -> int:
         return len(self.coords)
@@ -469,6 +474,10 @@ def periodic_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec = Period
     integral of :func:`_background_profile`; it reduces to the form above for a crystal.  With
     height channels in the spec (``z_max > 0``) a layer gets :func:`slab_autocorrelation`.
     """
+    if getattr(crystal, "centre", None) is not None:
+        # a site record (plan item M5): the sum over pairs belongs to the site that stands first
+        from .sites import site_autocorrelation
+        return site_autocorrelation(crystal, spec, pairs)[int(crystal.centre)]
     if spec.has_heights:
         return slab_autocorrelation(crystal, spec, pairs)
     W = np.asarray(crystal.weights, float)

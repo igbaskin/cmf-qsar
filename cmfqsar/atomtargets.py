@@ -143,6 +143,27 @@ class AtomTargets:
         return cls(molecule=np.asarray(mol_i, int), atom=np.asarray(atom_i, int),
                    y=np.asarray(vals, float), n_mol=len(mols), name=name, per_molecule=per)
 
+    @classmethod
+    def from_arrays(cls, per_structure: Sequence[Sequence[float]], name: str = "") -> "AtomTargets":
+        """The same index from one array per structure, not a number where the atom or site was
+        not measured.
+
+        :meth:`from_molecules` reads the values from the molecules themselves, which a periodic
+        cell cannot carry: a crystal site takes its target from a table instead (plan item M5,
+        :mod:`cmfqsar.sites`).  Everything after this point -- the folds, the subsets, the
+        scatter back over the structures -- is the same for an atom and for a site.
+        """
+        per, mol_i, atom_i, vals = [], [], [], []
+        for k, row in enumerate(per_structure):
+            v = np.asarray(row, float).ravel()
+            per.append(v)
+            for i in np.where(np.isfinite(v))[0]:
+                mol_i.append(k)
+                atom_i.append(int(i))
+                vals.append(float(v[i]))
+        return cls(molecule=np.asarray(mol_i, int), atom=np.asarray(atom_i, int),
+                   y=np.asarray(vals, float), n_mol=len(per), name=name, per_molecule=per)
+
     def subset(self, rows: Sequence[int]) -> "AtomTargets":
         rows = np.asarray(rows, int)
         return AtomTargets(self.molecule[rows], self.atom[rows], self.y[rows], self.n_mol,

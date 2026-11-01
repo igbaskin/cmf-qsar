@@ -2425,6 +2425,54 @@ weakens all three alike. The GP interval covers 84 to 93 % at the nominal 95 % a
 ranks the errors only weakly, so it is not yet an acquisition rule. The table, the co-field maps
 in the plane of the sheet and the scatter plots are in `benchmarks/results/sac/`.
 
+### A site of a cell as the sample, without cutting it out
+
+The pilot above cuts the site out of the sheet. It does not have to. The periodic autocorrelation
+is a sum over ordered pairs of the cell, so it splits exactly into one row per site, and the row
+of a site is the typed radial profile around it with the periodic images summed in
+(`cmfqsar/sites.py`, plan item M5). Nothing is cut and nothing is terminated, and the mean of the
+rows is the descriptor of the whole cell to machine precision. A site is then an ordinary sample:
+`site_fields` names the site in the record, `site_table` builds the table, and
+`CMFModel(kernel_source="periodic")` fits it with the code a set of cells already uses. The
+targets are the per-atom data model of plan item LP1, one array per cell with blanks where a site
+was not measured, and its folds, which hold out whole structures.
+
+**On the catalysts above it does what the cut does, without cutting, and nothing more.** The same
+139 sheets (104 with targets, six bare sheets having been recomputed since the pilot ran, so
+every reference is recomputed here as well), the same three fold designs, every descriptor a
+family that chooses its settings in an inner cross-validation of the same kind: mean q² over the
+four endpoints +0.792 with random catalysts, +0.721 with a metal held out and +0.755 with a motif
+held out, against +0.801 / +0.739 / +0.712 for the invariant kernel of the cut cluster,
++0.782 / +0.695 / +0.724 for its overlap kernel, +0.794 / +0.756 / +0.744 for the autocorrelation
+of the whole cell and +0.758 / +0.096 / +0.749 for counts in shells around the site. In the
+twelve paired comparisons the site profile is level with every descriptor built from fields --
+two better and one worse against the cut-cluster overlap, one better against its invariant
+kernel, one better and two worse against the whole cell -- and clearly better only than the
+counts, in five. So the site resolution saves cutting and terminating a cluster, which is worth
+having where a site cannot be cut out cleanly, and buys no accuracy here. The counts are the
+other lesson of that table: a descriptor made of element labels collapses when the metal is new,
+where every descriptor built from fields keeps most of its accuracy. The set is small enough to
+move -- one recomputed sheet took every method's OOH q² from about +0.93 to about +0.77 between
+two runs -- so the differences are worth reading and the absolute values are not.
+
+**Where it fails, it fails for a reason the folds make.** The second set is the bond-valence site
+energy of all 104 lithium sites of the three electrolytes of `examples/hops`, where a fold is a
+whole compound. The model cannot place an unseen compound on the energy scale -- the offsets are
+-0.12, +0.04 and +0.13 eV, and the overall q² is negative for every method including the mean of
+the other compounds -- because with three compounds nearly all of the variance is between them.
+Inside a compound it ranks the sites: Spearman +0.78, +0.84 and +0.55, and q² about the compound's
+own mean +0.60 and +0.77 for the two whose sites differ at all.
+
+**The other direction: a whole-cell model read site by site.** A model on the whole-cell
+descriptor is linear in the channels and a cell's channels are the mean of its site rows, so its
+prediction minus the bias is a sum of one number per site, exactly (`sites.site_contributions`;
+rule 3 for the autocorrelation kernel). It is the local reading that kernel could not give: not
+only which pair of field types at which distance raises the property, but which site carries it.
+On a model of the OH binding over the 104 catalysts (q² +0.893 in five folds) the metal site
+carries 8.9 % of the weight, eleven times an even share, the metal with its four neighbours 16.0
+% against 3.9 %, and the channels at the metal name the d electron count for Pt@C4 and the
+electrostatic field at 2.0 Å for Fe@N4. The table and the map are in `benchmarks/results/sites/`.
+
 ### Which atom is attacked: a site of metabolism
 
 Blocking a metabolic position is a standard move in medicinal chemistry and a question about one
@@ -5036,6 +5084,7 @@ cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
 cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrelation)
 cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solids, the co-pattern
+cmfqsar/sites.py        a site of a periodic cell as the sample: the split of the autocorrelation, per-site targets, a cell model read site by site
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field, and the query formats that carry them out of the program
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule

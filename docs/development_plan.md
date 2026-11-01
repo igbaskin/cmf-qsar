@@ -2655,6 +2655,86 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   Bader charges. Needs site-centred features (the row of `T` for one atom), per-site targets in the
   data model and the decomposition in `top_channels`. Measured first on the Fe(110) adsorption
   energies resolved by site and on vacancy energies by site from M4's cells.
+  **Done 1 November 2026, on two sets that were already in the repository rather than on the
+  Fe(110) adsorption energies, which still need runs nobody has made. The split is exact; on the
+  single-atom catalysts the site profile is level with cutting the site out of the sheet and
+  level with the whole cell, which answers the question EC8 left open with "the cut is not
+  needed" and not with "better"; and the local reading of a whole-cell model puts eleven times
+  an even share of the weight on the metal site.**
+  **What was built.** `cmfqsar/sites.py`: `site_autocorrelation` splits the periodic
+  autocorrelation of a cell into one row per site by grouping the ordered pairs on the atom that
+  stands first, with the self term, the second moments of a disordered site (M2) and the uniform
+  background of each site in it; the mean of the rows is the descriptor of the cell to machine
+  precision, for a crystal, a layer and a chain alike. The rows are not divided by the atom
+  count, so a site profile does not change when the site is written in a larger supercell.
+  `site_fields` makes a site a **sample**: a `CrystalFields` whose new `centre` field names the
+  site, which `periodic.periodic_autocorrelation` answers with that site's row alone (the only
+  change in `periodic.py`: four lines and a dataclass field), so `site_table` plus
+  `CMFModel(kernel_source="periodic")` fits a set of sites with no new model code -- the
+  normalisation, the block weights, the learners, the grid search and the file format are the
+  ones a set of cells uses. One split per cell serves all of its sites (a one-entry cache keyed
+  by the cell and the spec). `atomtargets.AtomTargets.from_arrays` is the data model of LP1 for a
+  target that a structure file cannot carry: one array per cell, *not a number* where a site was
+  not measured, with the folds of LP1 unchanged, which hold out whole structures.
+  `shell_count_features` is the reference under rule 1 (the element at the site and the counts of
+  each element in distance shells around it), and `site_contributions` reads a **whole-cell**
+  model site by site: the cell's channels are the mean of its site rows and the linear layer is
+  linear, so the prediction minus the bias is a sum of one number per site, exactly, which is
+  rule 3 for the autocorrelation kernel; `site_top_channels` splits one site's number over the
+  channels.
+  **Tests** (`tests/test_sites.py`, 19): the mean of the site rows is the cell descriptor for a
+  crystal, a layer, a chain, a supercell and a disordered cell, with and without the background;
+  a site record's autocorrelation is its row; equivalent sites of a supercell get the same
+  profile and the two kinds of site do not; a supercell, an origin shift and a rotation of the
+  frame change nothing; the vacuum of a layer changes nothing; a change beyond the cutoff changes
+  nothing while the same change inside it does; the folds hold out whole structures; a model on a
+  site table fits, predicts and survives a file; the contributions of a whole-cell model sum to
+  its prediction, for an ordered and for a disordered cell, and are equal for equivalent sites;
+  the channels of one site sum to its contribution; a nonlinear layer is refused, as are the
+  height channels of a layer; one cell is split once however many of its sites are asked for.
+  **Measurement** (`benchmarks/run_sites.py`; `benchmarks/results/sites/table.md`), three parts.
+  **The single-atom catalysts of EC8**, where one site of every cell is measured: 139 M@C(4-x)Nx
+  sheets, the binding energies of H, O and OH on 104 of them and of OOH on 91 (six bare sheets
+  have been recomputed with plain PBE since the pilot ran and more are being recomputed, so the
+  pilot's numbers are not comparable and every reference is recomputed here), the pilot's three
+  fold designs, every descriptor a family choosing its settings in an inner cross-validation of
+  the same kind. Mean q² over the four endpoints, random / one metal held out / one motif held
+  out: **the site profile +0.792 / +0.721 / +0.755**, the invariant kernel of the cut cluster
+  (LP2) +0.801 / +0.739 / +0.712, its overlap kernel (EC8) +0.782 / +0.695 / +0.724, the
+  autocorrelation of the whole cell +0.794 / +0.756 / +0.744, counts in shells around the site
+  +0.758 / +0.096 / +0.749. In the twelve paired comparisons (four endpoints by three designs,
+  the catalysts resampled) the site profile is level with every descriptor built from fields: two
+  better and one worse against the cut-cluster overlap, one better and none worse against its
+  invariant kernel, one better (the OH binding with a motif held out, +0.066) and two worse (the
+  O and the OOH binding with a metal held out, -0.046 and -0.085) against the whole cell. It is
+  clearly better only than the counts, in five of the twelve. **So the site resolution of the
+  periodic kernel does the work that cutting a cluster out of the sheet does -- which is what
+  EC8's gate asked, and the cut is not where the pilot's accuracy came from -- and it buys no
+  accuracy over the whole cell on a set whose cells differ only at one site.** The counts
+  collapse to +0.096 when the metal is new, as the one-hot did in the pilot, while every
+  descriptor built from fields keeps most of its accuracy. The set is small enough to move: one
+  recomputed sheet, added between two runs of this benchmark, took every method's OOH q² from
+  about +0.93 to about +0.77, so the differences between the methods are what this measurement
+  gives and the absolute values are not. **The lithium sites**, where many sites of a cell are
+  measured: the bond-valence site energy of all 104 Li sites of the three electrolytes of
+  `examples/hops`, a fold being a whole compound. The model cannot place an unseen compound on
+  the energy scale (offsets -0.12, +0.04 and +0.13 eV; the overall q² is negative for every
+  method, the mean of the other compounds included, because with three compounds nearly all of
+  the variance is between them) and inside a compound it ranks the sites (Spearman +0.78, +0.84
+  and +0.55; q² about the compound's own mean +0.60 and +0.77 for the two whose sites differ by
+  more than 0.01 eV). **A whole-cell model read site by site**: on the OH binding energy of the
+  104 catalysts (q² +0.893 in five folds, 0.51 eV) the metal site carries 8.9 % of the weight,
+  11.3 times what an even spread over the 127 sites would give, the metal with its four
+  neighbours 16.0 % against 3.9 %, and everything beyond 5 Å about half an even share; the
+  channels at the metal name the d electron count for Pt@C4 and the electrostatic field at 2.0 Å
+  for Fe@N4. The figure is `benchmarks/results/sites/contributions.png`.
+  **What is open.** The height channels of a layer (M1) have no site split, so a site of a slab
+  is described by distances alone and cannot tell a neighbour above the plane from one below it;
+  the Fe(110) adsorption energies by site, which the item names first, still need the UMA or VASP
+  runs, and so do defect energies by site; a set with many measured sites per cell **and** more
+  than a handful of cells is the measurement the lithium set could not be, since three compounds
+  cannot separate the offset from the ranking; and per-site targets have no subcommand and no
+  panel, which rule 5 keeps until a gate is passed.
 * **M6. Explicit reciprocal-space channels.** Order beyond the cutoff is invisible to a pair kernel.
   The low-|G| part of the typed structure factors, with the Gaussian form factor as the resolution
   cutoff, added as extra channels in the manner of the reciprocal half of an Ewald sum, restores
@@ -4571,7 +4651,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; M4 to M6 (periodic overlap kernel, site-resolved models, reciprocal-space channels) first, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026** and ~~M5~~ **done 1 November 2026**, M6 (reciprocal-space channels) next, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

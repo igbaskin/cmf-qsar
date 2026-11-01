@@ -350,6 +350,15 @@ def registry() -> List[Benchmark]:
                   minutes="40",
                   report=lambda: _mod("run_periodic_overlap").report(),
                   tables=["periodic_overlap/table.md"]),
+        Benchmark("sites",
+                  "a site of a periodic cell as the sample, and a whole-cell model read site by "
+                  "site: the split of the periodic autocorrelation against the cut cluster of "
+                  "the single-atom catalysts and against counts, and on the Li site energies of "
+                  "the three electrolytes",
+                  "run_sites.py", "sites", compute=[[]],
+                  minutes="20",
+                  report=lambda: _mod("run_sites").report(),
+                  tables=["sites/table.md"]),
         Benchmark("fieldae",
                   "a decoder of pseudo-atoms against kernel PCA: can a nonlinear autoencoder "
                   "reconstruct a molecular field, and is its error an applicability domain "

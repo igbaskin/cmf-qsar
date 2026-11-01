@@ -512,6 +512,26 @@ workstation, would let the gate M4 could not test be tested -- and the co-field 
 energy, read on the oxygens that coordinate it, is the figure the grant paragraph of the
 Li3PO4/Li3BP2O8/LiBO2 study needs anyway.
 
+**Item M5 is done (1 November 2026)**, and it gives this tier the reading it was missing:
+which **site** of the cell carries the property. The autocorrelation of a cell is a sum over
+ordered pairs, so it splits exactly into one row per site; a linear model on the whole cell
+therefore splits into one number per site with nothing attributed, which is rule 3 for an
+invariant kernel. On the single-atom catalysts of item EC8 a model of the OH binding energy
+(q² +0.893) puts 8.9 % of its weight on the metal site, 11.3 times an even share of the 127
+sites of the sheet, and the channels at that site name the d electron count of the metal and the
+electrostatic field in the first shell: a figure for the interpretation section that no
+autocorrelation could draw. The same split makes a site a **sample**, and on those catalysts the
+site profile taken inside the periodic cell, with nothing cut out of it, is level with the cut
+cluster of the pilot and with the whole cell (mean q² over the four endpoints +0.792, +0.721 and
++0.755 in the three fold designs, against +0.801 / +0.739 / +0.712 for the invariant kernel of
+the cut cluster, +0.782 / +0.695 / +0.724 for its overlap kernel and +0.794 / +0.756 / +0.744
+for the whole cell; of the twelve paired comparisons one is clear of zero in its favour against
+the whole cell and two against it). **The section this supports is "reading a crystal model site
+by site"**, and what the site model itself supports is "the cut is not needed", not "better".
+The per-site model is not a claim of its own yet: it needs a set with many measured sites in
+each of many cells, which neither the catalysts (one site per cell) nor the three lithium
+electrolytes (three cells) can be.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

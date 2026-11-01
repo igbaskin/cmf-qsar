@@ -6725,6 +6725,129 @@ training set, since that is what sets the number of Gaussians. The memory is bou
 the density: `evaluate_gaussians` cuts its chunk from the neighbour count it measures, so one
 neighbour list stays under `cofields.MAX_PAIRS`.
 
+## A site of the cell as the sample: the split of the autocorrelation
+
+The pair histogram $P_{fg}$ of the periodic autocorrelation above is a sum over ordered pairs of
+atoms of one cell, and such a sum can be grouped by the atom that stands first in each pair. The
+grouping is exact and costs nothing: the same neighbour list, read one row at a time. Writing
+$G_k(r)$ for the Gaussian of channel $d_k$ times the taper,
+
+$$
+\Phi_{fg}(d_k) = \frac{1}{N}\sum_{l\,\in\,\mathrm{cell}} s_l(f,g,d_k),
+\qquad
+s_l(f,g,d_k) = w_{lf}\sum_{m}\;\sum_{\mathbf{T}} w_{mg}\,G_k\!\left(|\mathbf{r}_l-\mathbf{r}_m-\mathbf{T}|\right)
+$$
+<!-- #eq:site-split -->
+
+with the second order $s_l(g,f,d_k)$ added for a pair of different field types, the $l=m$ term
+where the spec keeps it, and the uniform background of that site subtracted, exactly as the whole
+cell has them. The row $s_l$ is the **profile of site $l$**: which field type stands how far from
+it, with the periodic images summed in. It is the periodic counterpart of the atom-centred
+environment of the next section, with two differences. Nothing is cut out of the solid, so a site
+deep in a crystal is described as it is and not as the middle of a cluster; and the profile is
+one-centred -- pairs that start at the site -- rather than all pairs inside an envelope.
+
+`cmfqsar/sites.py` (plan item M5) holds it. `site_autocorrelation` returns the rows, and their
+mean is the descriptor of the cell to machine precision, which is the property the module is
+tested on. The rows are not divided by the number of atoms, so a site profile does not change
+when the same site is written in a larger supercell.
+
+**A site is a sample.** `site_fields(crystal, site)` returns the cell with that site as its
+centre, and the periodic autocorrelation of such a record is that site's row. Everything else
+follows without new machinery: `site_table` builds the table, `CMFModel(kernel_source="periodic")`
+fits it, and the targets are the ones `cmfqsar/atomtargets.py` already holds -- one array per
+structure, *not a number* where a site was not measured. The folds hold out whole **structures**:
+two sites of one cell, one in the training set and one in the test set, would let the model see
+the cell it is being tested on.
+
+The descriptor needs no alignment, because it is built from distances. Its pair term is local --
+only neighbours inside the cutoff enter it -- but its background is not, being the mean field of
+the whole cell times the shell integral, so two cells of different composition have different
+backgrounds at the same site. With `background=False` the profile depends on nothing beyond the
+cutoff.
+
+**What a site profile is worth.** The first set is the single-atom catalysts of the EC8 pilot
+(`benchmarks/run_sac.py`, which cuts the site out of the sheet and is the thing to be level
+with): the metal site of 139 M@C(4-x)Nx sheets, with the binding energies of H, O and OH on 104
+of them and of OOH on 91. Six bare sheets have been recomputed with plain PBE since the pilot
+ran and more are being recomputed, so these numbers are not comparable with the pilot's own and
+every reference here is recomputed on the same catalysts. Three designs of folds, as the pilot
+used: random catalysts, a whole metal held out, a whole motif held out. Every descriptor is a
+family -- three field sets by three cutoffs for the site profile and for the whole cell, the
+widths and attenuations of the pilot for the cut cluster -- and each family chooses inside an
+inner cross-validation of the same kind as the outer folds, so the comparison favours none. Mean
+q² over the four endpoints:
+
+| Descriptor | Random catalysts | One metal held out | One motif held out |
+| --- | ---: | ---: | ---: |
+| **site profile of the cell (M5)** | **+0.792** | **+0.721** | **+0.755** |
+| the cut cluster, invariant (LP2) | +0.801 | +0.739 | +0.712 |
+| the cut cluster, overlap kernel (EC8) | +0.782 | +0.695 | +0.724 |
+| the whole cell, autocorrelation | +0.794 | +0.756 | +0.744 |
+| counts in shells around the site | +0.758 | +0.096 | +0.749 |
+
+**The site profile does what cutting the site out of the sheet does, without cutting it, and
+nothing more.** Of the twelve paired comparisons (four endpoints by three designs, the catalysts
+resampled) it is level with everything built from fields: against the cut cluster better in two
+and worse in one for the overlap kernel, better in one and worse in none for the invariant one;
+against the whole cell better in one (the OH binding with a motif held out, +0.066) and worse in
+two (the O and OOH binding with a metal held out, -0.046 and -0.085). It is clearly better only
+than the counts, in five of the twelve, never losing to them. So the site resolution saves the
+cut and the termination of a cluster, which is worth having on a site that cannot be cut out
+cleanly, and it buys no accuracy on this set. The counts are the other reading of that table:
+they hold their own when the metals are known and collapse to +0.096 when a metal is new, which
+is what a descriptor made of element labels does, while every descriptor built from fields keeps
+most of its accuracy. The set is small enough to move: the recomputed sheet added between two
+runs of this benchmark took every method's OOH q² from about +0.93 to about +0.77, so the
+differences between the methods are worth reading and their absolute values are not. The full
+table is in `benchmarks/results/sites/table.md` (`benchmarks/run_sites.py`).
+
+**Many sites in one cell.** The second set is the bond-valence site energy of every lithium site
+of the three solid electrolytes of `examples/hops`: 104 sites in beta-Li3PO4, Li3BP2O8 and
+alpha-LiBO2, where a fold is a whole compound the model has never seen. There the site profile
+**fails as an absolute predictor and works as a ranking**. It cannot place a compound it has not
+seen on the energy scale: the offsets are -0.12, +0.04 and +0.13 eV and the overall q² is
+negative for every method, the counts and the mean of the other compounds included, because with
+three compounds almost all of the variance is between them. Inside a compound it orders the sites
+-- Spearman +0.78, +0.84 and +0.55, and q² about the compound's own mean +0.60 for the phosphate
+and +0.77 for the borophosphate. The borate is the third case: its sites differ by 0.007 eV,
+which is nothing to predict.
+
+**A whole-cell model read site by site.** The split works in the other direction as well. A model
+on the whole-cell descriptor is linear in the channels, the channels of a cell are the mean of
+its site profiles, so the prediction minus the bias is a sum of one number per site:
+
+$$
+\hat{y}(i) - b = \sum_{l\,\in\,\mathrm{cell}\,i} c_l,
+\qquad
+c_l = \frac{1}{N}\;\frac{\left(\boldsymbol{\sigma}\odot\mathbf{s}_l\right)\cdot\mathbf{w}}{\|\boldsymbol{\sigma}\odot\mathbf{x}_i\|}
+$$
+<!-- #eq:site-contrib -->
+
+with $\boldsymbol{\sigma}$ the channel scale, $\mathbf{x}_i$ the cell's channels and $\mathbf{w}$
+the co-pattern of the fitted linear model (`periodic.channel_weights`). Nothing is attributed:
+this is rule 3 for the autocorrelation kernel, and `sites.site_contributions` returns the
+numbers. That is the local reading the autocorrelation could not give. A distance distribution
+says which pair of field types at which distance raises the property; the split says **which site
+of the cell** carries it.
+
+On a model of the OH binding energy over the 104 catalysts (q² +0.893 in five folds, 0.51 eV) the
+weight falls where a chemist would put it: the metal site carries 8.9 % of it, which is 11.3
+times what an even spread over the 127 sites of the sheet would put there, and the metal with its
+four neighbours carries 16.0 % against 3.9 %. Beyond 5 Å from the metal every site carries about
+half of an even share. The channels of the metal site say what the model reads there: for Pt@C4
+the d electron count at the site itself, for Fe@N4 the electrostatic field at 2.0 Å, which is the
+first shell.
+
+![What each site of the sheet adds to the predicted OH binding energy of a whole-cell model, for Fe@N4 and Pt@C4: red raises the binding energy, blue lowers it, the circled atom is the metal and the labelled ones its four neighbours. The right panel is the weight per site by distance from the metal, divided by the weight an even spread over the sites would give; the dashed line is that even spread. The metal site carries eleven times its share and everything beyond 5 Å about half. Drawn by `benchmarks/run_sites.py`.](benchmarks/results/sites/contributions.png)
+
+**The limits.** The height channels of a layer have no site split in this version: a site profile
+of a slab is taken with `z_max = 0` and does not tell a neighbour above the plane from one below
+it at the same distance. The contributions are defined for the linear kernel layer, as the
+co-pattern is. And the background of a site profile is a property of the whole cell, so a set of
+unrelated cells carries their compositions in it; a series on one host lattice does not have that
+difficulty.
+
 ## An atom instead of a molecule: the local invariant kernel
 
 Every model so far predicts one number per molecule. A carbon shift, an acidity, a local
