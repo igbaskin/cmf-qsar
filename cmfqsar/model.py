@@ -1204,11 +1204,18 @@ class CMFModel:
     # lattice and gives a co-field inside the cell.  It is the "fields" kernel source with the
     # images added, so the co-field, the per-site contributions and the learners are unchanged.
     # The raw integral is over one cell and so grows with it, which the cosine normalisation
-    # removes: this kernel requires normalize=True.
+    # removes: this kernel requires normalize=True, except on a table of difference fields
+    # (cmfqsar.periodic.defect_table, plan item M14), whose rows are the changed sites only and
+    # whose pristine cell is the empty difference with a norm of zero.
     pbc_overlap: bool = False
     # how far the images reach; None takes the radius at which the widest field of the set has
     # fallen to 1e-6 of a peak overlap (cmfqsar.periodic.overlap_cutoff)
     pbc_overlap_r_max: Optional[float] = None
+    # the symmetry operations of the host lattice, (rotations, translations) in fractional
+    # coordinates (cmfqsar.periodic.host_symmetry): the periodic overlap is then averaged over
+    # them, so that two arrangements of the same defects related by a symmetry of the host are
+    # the same structure to the kernel (plan item M14).  None keeps the fixed frame.
+    pbc_symmetry: Optional[Tuple[np.ndarray, np.ndarray]] = None
     # mixing coefficients over the channel blocks of the three invariant sources, the analogue of
     # the per-field h_f of the overlap kernel (invariant.py, "Mixing coefficients over the channel
     # blocks"): None keeps every block at one; "balanced" gives every kind of block -- within a
@@ -1293,7 +1300,8 @@ class CMFModel:
         from .periodic import periodic_overlap_kernels
         return periodic_overlap_kernels(P, Q, specs, r_max=self.pbc_overlap_r_max,
                                         cutoff=self.cutoff, engine=self.engine,
-                                        progress=progress, cancel=cancel)
+                                        progress=progress, cancel=cancel,
+                                        symmetry=self.pbc_symmetry)
 
     def _raw_kernels(self, P: AtomTable, Q: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """Per-field kernels at the current alphas (interpolated between grid alphas if needed)."""
@@ -1312,7 +1320,8 @@ class CMFModel:
         if not self.pbc_overlap:
             return self_kernels(P, specs)
         from .periodic import periodic_self_overlaps
-        return periodic_self_overlaps(P, specs, r_max=self.pbc_overlap_r_max)
+        return periodic_self_overlaps(P, specs, r_max=self.pbc_overlap_r_max,
+                                      symmetry=self.pbc_symmetry)
 
     def _self_kernels(self, P: AtomTable) -> np.ndarray:
         it = self._interp_specs()
@@ -1334,6 +1343,10 @@ class CMFModel:
         """
         ci = mol.probe_coeffs or None
         it = self._interp_specs()
+        if it is None and not ci and self.pbc_overlap and self.pbc_symmetry is not None:
+            blk = self._compiled_atom_block(mol)
+            if blk is not None:
+                return blk
         side = self._training_side()
         if it is None:
             return atom_kernel_block(mol.coords, mol.weights, mol.radii, side,
@@ -1346,6 +1359,66 @@ class CMFModel:
                                                            side, hi, ci=ci)
         return blk
 
+    def _compiled_atom_block(self, mol: MoleculeFields) -> Optional[np.ndarray]:
+        """The block of :meth:`_atom_block` for a symmetry-averaged periodic model, by the
+        compiled loop (plan item M14).
+
+        Every atom of `mol` is taken as a structure of its own against the training cells,
+        averaged over the host operations at the nearest image.  That is the sum the prediction
+        uses, so the contributions add up to the prediction to rounding, where the
+        image-expanded training side of the reference path agrees only to its truncation -- and
+        it costs milliseconds per cell where the reference path costs seconds.  None when the
+        compiled loop is not available or the cells differ; the caller then takes the
+        reference path.
+        """
+        from dataclasses import fields as dc_fields, replace
+        from .periodic import _compiled_symmetry_average, overlap_cutoff
+
+        specs = self.fieldset.specs
+        on = [f for f, s in enumerate(specs) if s.enabled]
+        enabled = [specs[f] for f in on]
+        if mol.n_atoms == 0:
+            return np.zeros((len(specs), 0, self.train.n_mol))
+        r = self.pbc_overlap_r_max
+        if r is None:
+            radii_max = max(float(np.max(self.train.radii)) if len(self.train.radii) else 2.0,
+                            float(np.max(mol.radii)) if len(mol.radii) else 2.0)
+            r = overlap_cutoff(enabled, radii_max)
+        # the record may be a MoleculeFields or a CrystalFields (its own dataclass, with the
+        # cell): only the fields the record has are replaced, and every per-atom one is sliced
+        names = {f.name for f in dc_fields(mol)}
+        extra = {k: v for k, v in vars(mol).items() if k not in names}
+        n = mol.n_atoms
+        singles = []
+        for i in range(n):
+            def one_atom(v):
+                return v[i:i + 1] if v is not None and hasattr(v, "__len__") and len(v) == n \
+                    else v
+            changes = {"name": f"{mol.name}[{i}]", "coords": mol.coords[i:i + 1],
+                       "weights": mol.weights[i:i + 1], "radii": mol.radii[i:i + 1],
+                       "symbols": [mol.symbols[i]], "atom_types": one_atom(mol.atom_types),
+                       "bonds": np.zeros((0, 2), dtype=int), "charges": one_atom(mol.charges),
+                       "n_conformers": 1, "conformer_weights": None, "atoms_per_conformer": 0,
+                       "member_sizes": None, "member_atom_map": None, "descriptors": None,
+                       "probe_coeffs": {},
+                       "occupancy": one_atom(getattr(mol, "occupancy", None)),
+                       "site_species": one_atom(getattr(mol, "site_species", None)),
+                       "second_moments": one_atom(getattr(mol, "second_moments", None))}
+            one = replace(mol, **{k: v for k, v in changes.items() if k in names})
+            for k, v in extra.items():
+                setattr(one, k, v)
+            singles.append(one)
+        try:
+            got = _compiled_symmetry_average(AtomTable.from_molecules(singles), self.train,
+                                             enabled, self.pbc_symmetry, float(r), self.engine)
+        except ValueError:
+            return None
+        if got is None:
+            return None
+        out = np.zeros((len(specs), mol.n_atoms, self.train.n_mol))
+        out[on] = got
+        return out
+
     def _training_side(self) -> AtomTable:
         """The training table a kernel pairs against: its cells, or their periodic images (M4).
 
@@ -1355,13 +1428,24 @@ class CMFModel:
         """
         if not self.pbc_overlap:
             return self.train
-        from .periodic import expanded_cell_table, overlap_cutoff
+        from .periodic import expanded_cell_table, overlap_cutoff, symmetry_expanded_table
 
         r = self.pbc_overlap_r_max
         if r is None:
             radii_max = float(np.max(self.train.radii)) if len(self.train.radii) else 2.0
             r = overlap_cutoff([s for s in self.fieldset.specs if s.enabled], radii_max)
-        return expanded_cell_table(self.train, float(r))
+        side = self.train
+        if self.pbc_symmetry is not None:
+            from .periodic import nearest_image_cutoff
+            # the kernel of a symmetry-averaged model is evaluated at the nearest image with
+            # the cutoff capped at half the cell; the images of the training side reach the
+            # same radius, so that the contributions and the prediction agree to its truncation
+            try:
+                r = nearest_image_cutoff(side, float(r))
+            except ValueError:
+                pass
+            side = symmetry_expanded_table(side, *self.pbc_symmetry)
+        return expanded_cell_table(side, float(r))
 
     def _atom_self_block(self, mol: MoleculeFields) -> np.ndarray:
         """Kernels between the atoms of one molecule and each other: shape (F, N, N).
@@ -1437,6 +1521,7 @@ class CMFModel:
                         pbc_z_max=self.pbc_z_max, pbc_z_step=self.pbc_z_step,
                         pbc_oriented=self.pbc_oriented,
                         pbc_overlap_r_max=self.pbc_overlap_r_max,
+                        pbc_symmetry=self.pbc_symmetry,
                         ac_block_weights=(dict(self.ac_block_weights)
                                           if isinstance(self.ac_block_weights, dict)
                                           else self.ac_block_weights),
@@ -1651,7 +1736,12 @@ class CMFModel:
         """Diagonal of the linear joint kernel, i.e. K(x, x) for every molecule of `table`."""
         if not self.uses_fields:
             return np.ones(table.n_mol)          # the autocorrelation kernel is cosine-normalised
-        d = self_kernels(table, self.fieldset.specs)
+        # open boundaries, or the periodic self-overlaps with the host symmetry (items M4 and
+        # M14), which the training diagonal was built from and which matters whenever the
+        # diagonal is not replaced by one, that is for a model that is not normalised.  At the
+        # attenuation itself, not interpolated between grid points: the gradients take the
+        # self-kernel there too (tests/test_gradients.py), and the two must agree.
+        d = self._self_overlaps(table, self.fieldset.specs)
         if self.normalize:
             # the cosine-normalised self-kernel is 1, except for a field that is identically
             # zero for that molecule (no donor, no charge, ...), which normalisation leaves at 0
@@ -1722,10 +1812,14 @@ class CMFModel:
     def prepare_training_kernels(self, train: AtomTable, progress=None, cancel=None) -> np.ndarray:
         """Compute (and cache) the per-field training kernel matrices for the current alphas."""
         if self.pbc_overlap and not self.normalize:
-            raise ValueError(
-                "the periodic overlap kernel is an integral over one cell, so its raw value "
-                "grows with the cell and ranks structures by how large a cell they were written "
-                "in. Fit it with normalize=True, which divides that out exactly.")
+            from .periodic import is_difference_table
+            if not is_difference_table(train):
+                raise ValueError(
+                    "the periodic overlap kernel is an integral over one cell, so its raw value "
+                    "grows with the cell and ranks structures by how large a cell they were "
+                    "written in. Fit it with normalize=True, which divides that out exactly. "
+                    "(A table of difference fields, cmfqsar.periodic.defect_table, is exempt: "
+                    "a difference is local and does not grow with the cell.)")
         self.train = train
         self.self_diag = self._self_kernels(train) if self.normalize else None
         self.K_fields_train = self._field_kernels(train, train, self.self_diag, self.self_diag,
@@ -1955,85 +2049,85 @@ class CMFModel:
         dQ = self._self_kernels(test) if self.normalize else None
         return self._field_kernels(test, self.train, dQ, self.self_diag, progress=progress, cancel=cancel)
 
-    # ----------------------------------------------------------------- low rank
-
-    def fit_low_rank(self, train: AtomTable, y: Sequence[float], landmarks: AtomTable,
-                     lam: Optional[float] = None, kind: str = "landmarks",
-                     folds: int = 10, seed: Optional[int] = 0, block: int = 256,
-                     progress=None) -> "CMFModel":
-        """Fit in the space of the landmarks instead of the space of the molecules (item B6).
-
-        The model keeps the landmarks and one weight per feature instead of one coefficient per
-        training molecule, and everything a prediction needs follows from those: see
-        :mod:`cmfqsar.lowrank`.  The training table is still kept, because it is linear in the
-        number of molecules and the provenance and the contract are read off it; what is never
-        built is the n by n kernel.
-        """
-        from . import lowrank as LR
-        from .model import r2_score, rmse          # local, to keep the import graph flat
-
-        self._require_linear("the low-rank path")
-        if not self.uses_fields:
-            raise ValueError("the low-rank path is for the overlap kernel; the invariant "
-                             "kernel already has explicit features, which cmfqsar.locallarge "
-                             "fits directly")
-        y = np.asarray(y, float).ravel()
-        lam = float(self.params.get("lam", 1.0) if lam is None else lam)
-        self.params["lam"] = lam
-        specs = [s for s in self.fieldset.specs if s.enabled]
-        if self.normalize or not self.scale_fields:
-            scale = np.ones(len(specs))
-        else:
-            d = np.asarray(self_kernels(train, specs), float)
-            scale = np.array([1.0 / m if m > 1e-300 else 0.0 for m in d.mean(axis=1)])
-        self.scale = scale
-        low = LR.build(landmarks, self.fieldset, scale=scale, normalize=self.normalize,
-                       kind=kind)
-        g = LR.gram(low, train, y, block=block, progress=progress)
-        w, b = LR.fit(g, lam, fit_bias=self.fit_bias)
-        self.low_rank_ = low
-        self.low_gram_ = g
-        self.low_weights_ = np.asarray(w, float)
-        self.coef = None
-        self.bias = float(b)
-        self.train, self.y = train, y
-        self.self_diag = np.asarray(self_kernels(train, specs), float)
-        pred, _which = LR.cross_validate(low, train, y, lam, folds=folds, seed=seed,
-                                         fit_bias=self.fit_bias, block=block)
-        fitted = LR.predict(low.transform(train, block=block), w, b)
-        self.stats = ModelStats(n_train=len(y), r2=float(r2_score(y, fitted)),
-                                rmse_fit=float(rmse(y, fitted)),
-                                q2=float(r2_score(y, pred)), rmse_cv=float(rmse(y, pred)),
-                                cv_folds=int(folds))
-        self.stats.extra["y_cv"] = pred
-        self.stats.extra["y_fit"] = fitted
-        self.stats.extra["low_rank"] = dict(kind=kind, landmarks=int(landmarks.n_mol),
-                                            rank=int(low.rank))
-        return self
-
-    @property
-    def is_low_rank(self) -> bool:
-        """True when this model was fitted in the space of its landmarks."""
-        return getattr(self, "low_rank_", None) is not None
-
-    def low_rank_features(self, test: AtomTable, block: int = 256, progress=None) -> np.ndarray:
-        if not self.is_low_rank:
-            raise RuntimeError("this model was not fitted in the space of landmarks")
-        return self.low_rank_.transform(test, block=block, progress=progress)
-
-    def _low_rank_self(self, test: AtomTable) -> np.ndarray:
-        """The joint self-kernel of the molecules, which the variance keeps exact."""
-        specs = [s for s in self.fieldset.specs if s.enabled]
-        d = np.asarray(self_kernels(test, specs), float)
-        if self.normalize:
-            d = np.ones_like(d)
-        h = np.asarray(self.fieldset.mixing_vector(), float)[:len(specs)]
-        return (d.T * (h * np.asarray(self.scale, float)[:len(specs)])).sum(axis=1)
-
-    def predict(self, test: AtomTable, return_fields: bool = False, progress=None, cancel=None):
-        if self.is_low_rank:
-            yp = (self.low_rank_.transform(test, progress=progress) @ self.low_weights_
-                  + self.bias)
+    # ----------------------------------------------------------------- low rank
+
+    def fit_low_rank(self, train: AtomTable, y: Sequence[float], landmarks: AtomTable,
+                     lam: Optional[float] = None, kind: str = "landmarks",
+                     folds: int = 10, seed: Optional[int] = 0, block: int = 256,
+                     progress=None) -> "CMFModel":
+        """Fit in the space of the landmarks instead of the space of the molecules (item B6).
+
+        The model keeps the landmarks and one weight per feature instead of one coefficient per
+        training molecule, and everything a prediction needs follows from those: see
+        :mod:`cmfqsar.lowrank`.  The training table is still kept, because it is linear in the
+        number of molecules and the provenance and the contract are read off it; what is never
+        built is the n by n kernel.
+        """
+        from . import lowrank as LR
+        from .model import r2_score, rmse          # local, to keep the import graph flat
+
+        self._require_linear("the low-rank path")
+        if not self.uses_fields:
+            raise ValueError("the low-rank path is for the overlap kernel; the invariant "
+                             "kernel already has explicit features, which cmfqsar.locallarge "
+                             "fits directly")
+        y = np.asarray(y, float).ravel()
+        lam = float(self.params.get("lam", 1.0) if lam is None else lam)
+        self.params["lam"] = lam
+        specs = [s for s in self.fieldset.specs if s.enabled]
+        if self.normalize or not self.scale_fields:
+            scale = np.ones(len(specs))
+        else:
+            d = np.asarray(self_kernels(train, specs), float)
+            scale = np.array([1.0 / m if m > 1e-300 else 0.0 for m in d.mean(axis=1)])
+        self.scale = scale
+        low = LR.build(landmarks, self.fieldset, scale=scale, normalize=self.normalize,
+                       kind=kind)
+        g = LR.gram(low, train, y, block=block, progress=progress)
+        w, b = LR.fit(g, lam, fit_bias=self.fit_bias)
+        self.low_rank_ = low
+        self.low_gram_ = g
+        self.low_weights_ = np.asarray(w, float)
+        self.coef = None
+        self.bias = float(b)
+        self.train, self.y = train, y
+        self.self_diag = np.asarray(self_kernels(train, specs), float)
+        pred, _which = LR.cross_validate(low, train, y, lam, folds=folds, seed=seed,
+                                         fit_bias=self.fit_bias, block=block)
+        fitted = LR.predict(low.transform(train, block=block), w, b)
+        self.stats = ModelStats(n_train=len(y), r2=float(r2_score(y, fitted)),
+                                rmse_fit=float(rmse(y, fitted)),
+                                q2=float(r2_score(y, pred)), rmse_cv=float(rmse(y, pred)),
+                                cv_folds=int(folds))
+        self.stats.extra["y_cv"] = pred
+        self.stats.extra["y_fit"] = fitted
+        self.stats.extra["low_rank"] = dict(kind=kind, landmarks=int(landmarks.n_mol),
+                                            rank=int(low.rank))
+        return self
+
+    @property
+    def is_low_rank(self) -> bool:
+        """True when this model was fitted in the space of its landmarks."""
+        return getattr(self, "low_rank_", None) is not None
+
+    def low_rank_features(self, test: AtomTable, block: int = 256, progress=None) -> np.ndarray:
+        if not self.is_low_rank:
+            raise RuntimeError("this model was not fitted in the space of landmarks")
+        return self.low_rank_.transform(test, block=block, progress=progress)
+
+    def _low_rank_self(self, test: AtomTable) -> np.ndarray:
+        """The joint self-kernel of the molecules, which the variance keeps exact."""
+        specs = [s for s in self.fieldset.specs if s.enabled]
+        d = np.asarray(self_kernels(test, specs), float)
+        if self.normalize:
+            d = np.ones_like(d)
+        h = np.asarray(self.fieldset.mixing_vector(), float)[:len(specs)]
+        return (d.T * (h * np.asarray(self.scale, float)[:len(specs)])).sum(axis=1)
+
+    def predict(self, test: AtomTable, return_fields: bool = False, progress=None, cancel=None):
+        if self.is_low_rank:
+            yp = (self.low_rank_.transform(test, progress=progress) @ self.low_weights_
+                  + self.bias)
             return (yp, None) if return_fields else yp
         oc = getattr(self.learner_, "oc_", None) if self.learner_ is not None else None
         if self.coef is None and oc is None:
@@ -2330,7 +2424,9 @@ class CMFModel:
                 f"{what} are defined only for the linear kernel: with the '{self.kernel_layer}' layer "
                 f"the prediction is no longer an overlap integral of a co-field with the molecular "
                 f"field, so the primal form does not exist. Use the linear kernel to interpret the "
-                f"model (the contributions of the training molecules remain valid for any kernel).")
+                f"model, or the local co-field of cmfqsar.nonlinearity, which is the co-field of "
+                f"the linear model tangent to this one at a given molecule (the contributions of "
+                f"the training molecules remain valid for any kernel).")
 
     def cofield_basis(self, f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """The Gaussians of every training molecule's field f, before the dual coefficients.
@@ -2342,7 +2438,17 @@ class CMFModel:
         is built from the same numbers rather than from a second copy of them.
         """
         self._require_linear("co-fields")
-        self._require_fields("co-fields")
+        return self.training_field_basis(f)
+
+    def training_field_basis(self, f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """The same four arrays as :meth:`cofield_basis`, with no condition on the kernel layer.
+
+        The basis describes the normalised training fields, not the model, so it exists for
+        every model that has fields.  :mod:`cmfqsar.nonlinearity` builds the local co-field of
+        a model with a nonlinear layer from it; :meth:`cofield_basis` is this method behind
+        the check that the ordinary co-field is defined.
+        """
+        self._require_fields("the training field basis")
         spec = self.fieldset.specs[f]
         # for the periodic overlap the basis is the images as well as the cell, so that the
         # co-field drawn on a grid is periodic: the field of a cell is its lattice sum (item M4)
@@ -2445,38 +2551,38 @@ class CMFModel:
                   "rdkit": rdBase.rdkitVersion})
         return p
 
-    def _low_rank_state(self) -> Optional[dict]:
-        """The landmarks, the whitening and the weights, or None for an ordinary model."""
-        if not self.is_low_rank:
-            return None
-        low = self.low_rank_
-        g = self.low_gram_
-        return dict(landmarks=low.landmarks, whiteners=low.whiteners, weights=low.weights,
-                    normalize=low.normalize, self_landmarks=low.self_landmarks, kind=low.kind,
-                    w=self.low_weights_,
-                    gram=dict(PtP=g.PtP, Pty=g.Pty, Pt1=g.Pt1, n=g.n, sum_y=g.sum_y,
-                              yty=g.yty) if g is not None else None)
-
-    def _set_low_rank_state(self, st: Optional[dict]) -> None:
-        """Rebuild the low-rank state of a model read from a file."""
-        if not st:
-            self.low_rank_ = None
-            self.low_gram_ = None
-            self.low_weights_ = None
-            return
-        from .lowrank import Gram, LowRank
-        specs = [s for s in self.fieldset.specs if s.enabled]
-        self.low_rank_ = LowRank(landmarks=st["landmarks"], specs=specs,
-                                 whiteners=list(st["whiteners"]), weights=st["weights"],
-                                 normalize=bool(st.get("normalize", True)),
-                                 self_landmarks=st.get("self_landmarks"),
-                                 kind=str(st.get("kind", "landmarks")))
-        self.low_weights_ = np.asarray(st["w"], float)
-        g = st.get("gram")
-        self.low_gram_ = (Gram(PtP=g["PtP"], Pty=g["Pty"], Pt1=g["Pt1"], n=int(g["n"]),
-                               sum_y=float(g["sum_y"]), yty=float(g["yty"]))
-                          if g else None)
-
+    def _low_rank_state(self) -> Optional[dict]:
+        """The landmarks, the whitening and the weights, or None for an ordinary model."""
+        if not self.is_low_rank:
+            return None
+        low = self.low_rank_
+        g = self.low_gram_
+        return dict(landmarks=low.landmarks, whiteners=low.whiteners, weights=low.weights,
+                    normalize=low.normalize, self_landmarks=low.self_landmarks, kind=low.kind,
+                    w=self.low_weights_,
+                    gram=dict(PtP=g.PtP, Pty=g.Pty, Pt1=g.Pt1, n=g.n, sum_y=g.sum_y,
+                              yty=g.yty) if g is not None else None)
+
+    def _set_low_rank_state(self, st: Optional[dict]) -> None:
+        """Rebuild the low-rank state of a model read from a file."""
+        if not st:
+            self.low_rank_ = None
+            self.low_gram_ = None
+            self.low_weights_ = None
+            return
+        from .lowrank import Gram, LowRank
+        specs = [s for s in self.fieldset.specs if s.enabled]
+        self.low_rank_ = LowRank(landmarks=st["landmarks"], specs=specs,
+                                 whiteners=list(st["whiteners"]), weights=st["weights"],
+                                 normalize=bool(st.get("normalize", True)),
+                                 self_landmarks=st.get("self_landmarks"),
+                                 kind=str(st.get("kind", "landmarks")))
+        self.low_weights_ = np.asarray(st["w"], float)
+        g = st.get("gram")
+        self.low_gram_ = (Gram(PtP=g["PtP"], Pty=g["Pty"], Pt1=g["Pt1"], n=int(g["n"]),
+                               sum_y=float(g["sum_y"]), yty=float(g["yty"]))
+                          if g else None)
+
     def state(self) -> dict:
         return {
             "version": self.FILE_VERSION,
@@ -2523,6 +2629,9 @@ class CMFModel:
             "pbc_oriented": self.pbc_oriented,
             "pbc_overlap": self.pbc_overlap,
             "pbc_overlap_r_max": self.pbc_overlap_r_max,
+            "pbc_symmetry": (None if self.pbc_symmetry is None else
+                             {"rotations": np.asarray(self.pbc_symmetry[0], float).tolist(),
+                              "translations": np.asarray(self.pbc_symmetry[1], float).tolist()}),
             "ac_train": getattr(self, "ac_train_", None),
             "ac_scale": getattr(self, "ac_scale_", None),
             "ac_blocks": getattr(self, "ac_blocks_", None),
@@ -2568,6 +2677,9 @@ class CMFModel:
         m.pbc_overlap = bool(st.get("pbc_overlap", False))
         r = st.get("pbc_overlap_r_max")
         m.pbc_overlap_r_max = None if r is None else float(r)
+        sym = st.get("pbc_symmetry")
+        m.pbc_symmetry = None if sym is None else (np.asarray(sym["rotations"], float),
+                                                   np.asarray(sym["translations"], float))
         m.ac_train_ = st.get("ac_train")
         m.ac_scale_ = st.get("ac_scale")
         m.ac_blocks_ = st.get("ac_blocks")

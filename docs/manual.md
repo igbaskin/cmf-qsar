@@ -330,7 +330,7 @@ hyper-parameter search is not a model: the arithmetic is the lesson here, not th
 | Kernel Fisher discriminant | the same formula gives the position along the discriminant direction, in units of the within-class spread; the bias is the threshold chosen out of fold, and a logistic map turns the score into a probability |
 | Kernel logistic regression | the same formula gives the latent function, and the probability is the likelihood at it, $1/(1+e^{-f})$, with no variance averaged in; the boundary is $f = 0$, which is $p = 0.5$ |
 | One-class methods | a score built from the same kernel row, but also from the molecule's own self-kernel: distance to the centroid, to the k-th nearest active, to the principal subspace, or the 1-SVM decision value |
-| Nonlinear kernel layer | the joint kernel is passed through $\exp(-\gamma d^2)$ or an arc-cosine function first; the prediction formula is unchanged, the co-field identity is lost |
+| Nonlinear kernel layer | the joint kernel is passed through $\exp(-\gamma d^2)$ or an arc-cosine function first; the prediction formula is unchanged, the co-field identity is lost; the derivative of the prediction at one molecule is still a field, the local co-field |
 | Autocorrelation source | the kernel row comes from the rotation-invariant distance profiles instead of the overlap integrals; everything downstream is identical |
 | Surface source | for molecules over a surface at $z = 0$: the in-plane distance profiles resolved by the heights of both atoms, invariant in the plane and to rotation about the normal only; heights and tilts are kept, no in-plane alignment is needed (command line: `--kernel surface --surface-z ZMIN ZMAX ZSTEP`) |
 | Periodic source | for crystals: the distance profiles summed over the neighbour list of the cell with its images, per atom, background removed, cutoff tapered; invariant to the choice of cell, origin and orientation (command line: `build-crystals`). For layers and chains the same, with the background per unit area or repeat length and no pair across the vacuum (`--pbc ab`); a layer can be resolved by the heights of both atoms above its mean plane (`--heights`) |
@@ -2933,9 +2933,12 @@ A layer on top of the CMF kernel makes the model more expressive than an overlap
 Gaussian layer, $\exp(-\gamma d^2)$ with $d^2 = K(i,i) + K(j,j) - 2K(i,j)$, or one or two
 arc-cosine layers,
 the kernel of an infinitely wide neural network [14]. The cost is interpretability: the
-model is then no longer linear in the field, so co-fields and atom contributions are unavailable.
-The similarity decomposition stays valid, and the **Shapley tab** decomposes the prediction
-instead, which is why it exists.
+model is then no longer linear in the field, so the co-field and the atom contributions of the
+linear model are unavailable. What takes the co-field's place is a co-field per molecule, the
+derivative of the prediction with respect to the field at that molecule, with the spread of those
+over the training set as a map of where the model is not additive and a non-linearity index per
+field (*The co-field of a nonlinear model: one per molecule*). The similarity decomposition stays
+valid, and the **Shapley tab** decomposes the prediction instead, which is why it exists.
 
 Multiple kernel learning chooses the mixing coefficients $h_f$ rather than leaving them at 1,
 either by coordinate descent on the cross-validated error, by centred kernel alignment
@@ -3649,6 +3652,218 @@ compares two places with the covariance between them taken into account, which m
 points a few angstrom apart are built from the same training fields and their errors are far from
 independent. Plan item LP3 uses all of this to read a co-field at the ortho, meta and para
 positions of a ring; nothing in it is specific to that use.
+
+### The co-field of a nonlinear model: one per molecule
+
+A model with a kernel layer (*Nonlinear kernel layers and multiple kernel learning*) predicts
+
+$$
+y(X) = \sum_j a_j\, g\left(K(X, X_j),\, K(X, X),\, K(X_j, X_j)\right) + b,
+$$
+
+where $K$ is the linear joint kernel of Eq. (#eq:prediction) and $g$ is the layer: the
+identity for the linear model, $\exp(-\gamma d^2)$ for the Gaussian layer, the arc-cosine
+function for the arc-cosine layers. The prediction is no longer the overlap of the field with
+one fixed co-field, which is why the program refuses to draw one. It is still a differentiable
+function of the field, and its derivative with respect to the normalised field of type $f$,
+taken at molecule $X$, is a field:
+
+$$
+C_{f,X}(\mathbf{r}) = \sum_j a_j\, g_s(X, X_j)\, s_{fj} X_{fj}(\mathbf{r}) \;+\; 2 \left[ \sum_j a_j\, g_n(X, X_j) \right] s_{fX} X_f(\mathbf{r}),
+$$
+<!-- #eq:localcofield -->
+
+with $g_s = \partial g / \partial K(X, X_j)$ and $g_n = \partial g / \partial K(X, X)$. This is the
+**local co-field**: the co-field of the linear model tangent to the nonlinear one at $X$. The
+prediction of a molecule close to $X$ changes by the overlap of $C_{f,X}$ with the change of
+its normalised field, summed over the field types with the usual factors $h_f c_f$, and nothing
+else. The two derivatives are closed forms:
+
+| layer | $g_s$ | $g_n$ |
+|---|---|---|
+| linear | 1 | 0 |
+| Gaussian, $g = e^{-\gamma d^2}$ | $2\gamma g$ | $-\gamma g$ |
+| arc-cosine, $\cos\theta = K(X,X_j)/\sqrt{K(X,X)K(X_j,X_j)}$ | $(\pi - \theta)/\pi$ | $\sqrt{K(X_j,X_j)/K(X,X)}\,\sin\theta / 2\pi$ |
+
+For the linear layer Eq. (#eq:localcofield) is the ordinary co-field whatever $X$ is. For the
+Gaussian layer it is the ordinary co-field with every training molecule weighted by its kernel
+similarity to $X$, and with the field taken relative to $X$'s own: the model reads a molecule
+through the training molecules that resemble it. The second term lies along $X$'s own field.
+With cosine-normalised kernels, which are the default, $K(X, X)$ does not change when the
+normalised field moves, so the term has no effect on any prediction and is left out, as the
+ordinary co-field leaves out the dependence of the normalisation on the field; without
+normalisation it is kept. The unit test moves one atom's weight by a small amount and checks
+that the prediction moves by the overlap of Eq. (#eq:localcofield) with the change of the
+normalised field, for every layer and both conventions.
+
+Two things are built on the local co-fields of the training molecules:
+
+- **the spread.** Their mean, point by point, is the one co-field to draw for a nonlinear
+  model; their standard deviation is a map of where the effect of field depends on the rest of
+  the molecule. It is zero everywhere for a linear model and large where the model is not
+  additive. Both are read off the same matrix the noise band of the previous section uses, the
+  normalised fields of the training molecules at the grid points, so the cost is that of one
+  co-field with a matrix product per block of points;
+- **the non-linearity index** of a field type,
+
+$$
+\nu_f = 1 - \frac{\| \bar{C}_f \|^2}{\frac{1}{n} \sum_X \| C_{f,X} \|^2},
+$$
+
+  the share of the mean squared norm of the local co-fields that their spread around the mean
+  makes up: 0 for a linear model, 1 when the local co-fields have nothing in common. The norms
+  are overlap integrals, and the local co-fields are combinations of the training fields, so
+  the index is read off the Gram matrix $\mathbf{B} \mathbf{K}_f \mathbf{B}^{\mathrm{T}}$ with
+  $\mathbf{B}$ the coefficient matrix of Eq. (#eq:localcofield) and $\mathbf{K}_f$ the training
+  kernel of the field, which the model keeps; nothing is evaluated on a grid. The mean cosine
+  between the local co-fields of two training molecules is reported beside it, and a joint
+  index takes all the fields together, weighted as the joint kernel weighs them.
+
+`cmf cofield --kind local --molecule FILE` writes the local co-field at that molecule as cube
+files, and `--kind spread` writes the spread and the mean (`<prefix>_spread_<field>.cube` and
+`<prefix>_spreadmean_<field>.cube`) and prints the index of every field; in Python the three
+are `cmfqsar.nonlinearity.local_cofield_coefficients`, `cofield_spread` and
+`nonlinearity_indices`. The application does not draw them yet.
+
+**What it measures, and what it does not.** The maps describe the tangent models, not the
+chemistry by themselves. The Gaussian layer makes every model nonlinear to a degree set by its
+bandwidth, so the spread is nonzero even when the measured relation is additive, as long as
+$\gamma$ is finite. Three checks go with the maps: the linear model's $q^2$ beside the layered
+one (if the linear kernel predicts as well, the spread is a property of the kernel), the
+stability of the maps under refitting on part of the set, and a target made non-additive on
+purpose, whose index must come out higher. Second derivatives, how the effect of field at one
+place depends on the field at another, are a function of two points and not a field; they are
+not drawn here.
+
+**Measured** (`benchmarks/run_nonlinearity.py`, `results/nonlinearity/`), on the Hammett set of
+`benchmarks/run_hammett.py`, the substituted benzenes in one frame: one conformer per
+substituent, Gasteiger charges, the five
+physicochemical fields, $\alpha$, $\lambda$ and $\gamma$ by 10-fold cross-validation. The fourth
+target is $\sigma_p \cdot \pi$ on the 69 substituents that have both, a product of two constants
+and therefore quadratic in the fields if each factor is linear in them.
+
+| target | n | q² linear | q² Gaussian layer | γ | index, joint | index, electrostatic | spread map, stability | mean map, stability |
+|---|---|---|---|---|---|---|---|---|
+| σm | 95 | 0.70 | 0.80 | 1 | 0.20 | 0.18 | 1.00 | 0.99 |
+| σp | 95 | 0.66 | 0.78 | 0.5 | 0.10 | 0.08 | 0.99 | 0.99 |
+| π | 69 | 0.72 | 0.88 | 1 | 0.32 | 0.41 | 0.87 | 0.54 |
+| σp · π | 69 | 0.19 | 0.44 | 1 | 0.41 | 0.42 | 0.96 | 0.80 |
+
+Stability is the mean correlation between the maps of five refits on random four-fifths of the
+set. Four things follow. The index orders the targets as it should: the product made
+non-additive on purpose has the largest index, 0.41, and $\sigma_p$ the smallest, 0.10, with a
+mean cosine of 0.94 between its local co-fields, so its model is close to additive and its mean
+local co-field is the linear co-field with slightly sharper lobes (figure). The constants
+themselves are not linear in the *normalised* field: the Gaussian layer gains 0.10 to 0.16 in
+$q^2$ on all three, most on $\pi$. One likely reason, not tested here, is that $\pi$ grows with
+the size of the substituent while a cosine-normalised kernel does not see size. The spread maps
+survive refitting on three of the four targets at a correlation of 0.96 or better; on $\pi$ the
+chosen $\lambda$ is $10^{-4}$, the fit is close to interpolation and the mean map changes from
+refit to refit (0.54), which is the stability check doing its job: that map should not be read.
+And the spread of $\sigma_p$ sits at the ipso carbon and the first atom of the substituent,
+which says that the effect of charge there depends on what the rest of the substituent is, while
+for the product it covers the whole substituent region.
+
+![The electrostatic field in the ring plane, for σp (top) and for the product σp · π (bottom): the co-field of the linear model, the mean of the local co-fields of the Gaussian layer, and their spread over the 95 (69) training molecules. For σp the mean local co-field is the linear co-field, slightly sharpened, and the spread is confined to the ipso position; for the target made non-additive on purpose the mean map differs from the linear one and the spread covers the substituent.](docs/figures/nonlinearity_maps.png)
+
+### Second derivatives: the pair-interaction field and the interaction modes
+
+The local co-field says what more field at one place does. Whether that depends on the field
+at another place is a second derivative. Taken with respect to the field at two points it is a
+function of two points, not a field, and on its diagonal it carries a Dirac delta; so the program
+takes it with respect to the amplitudes of **probe atoms** instead: Gaussians of the field's own
+width added to the molecule's raw field, one at each place, with amplitudes $\varepsilon_k$.
+With $X_f + \sum_k \varepsilon_k p_k$ in place of the field, the prediction is an ordinary
+function of the amplitudes, and the chain rule through the layer gives
+
+$$
+\frac{\partial y}{\partial \varepsilon_k} = \sum_j a_j \left[ g_s S_{jk} + g_n n_k \right],
+\qquad
+\frac{\partial^2 y}{\partial \varepsilon_k \, \partial \varepsilon_l} = \sum_j a_j \left[ g_{ss} S_{jk} S_{jl} + g_{sn} \left( S_{jk} n_l + n_k S_{jl} \right) + g_{nn} n_k n_l + g_s S_{jkl} + g_n n_{kl} \right],
+$$
+<!-- #eq:probehessian -->
+
+where $S_{jk}$ and $S_{jkl}$ are the derivatives of the linear joint kernel $K(X, X_j)$ with
+respect to the amplitudes, $n_k$ and $n_{kl}$ those of the self-kernel $K(X, X)$, and the
+$g$'s the derivatives of the layer. All of them are closed forms in three overlap integrals: the
+probe with the molecule's own field, the probe with each training field, and probe with probe
+(the docstring of `cmfqsar/nonlinearity.py` writes them out). The normalisation of the kernels
+is differentiated exactly rather than argued away, and the unit tests check the result against
+second differences of the prediction, with the probes on the molecule's own atoms and at
+arbitrary points in space, for both conventions. Three things follow from the formula. A linear
+model without normalisation has no second derivative at all. With cosine normalisation even
+the linear model has one, because a normalised field cannot grow without bound: that is a
+non-additivity of the kernel, not of the data, and the maps show it. The arc-cosine layers are
+refused: their kernel has a cusp where a molecule meets a training molecule, and the second
+derivative diverges there.
+
+Three readings of Eq. (#eq:probehessian) are implemented:
+
+- the **pair-interaction field** (`cmf cofield --kind pair --molecule FILE --probe-atom K`,
+  `nonlinearity.pair_interaction_field`): one probe fixed on atom $K$ of the molecule, carrying
+  that atom's weight in the field, the other scanned over the grid. The value at $\mathbf{r}$ is
+  how much adding field there changes what the fixed atom does: positive where the two reinforce
+  each other, negative where one undoes part of the other, zero where the model treats the two
+  places additively. `--probe-field` puts the fixed probe in another field type than the one
+  drawn;
+- the **curvature field** (`--kind curvature`, `nonlinearity.curvature_field`), the diagonal:
+  the second derivative along one probe, negative where the model saturates and positive where
+  it accelerates. Its first-derivative companion `nonlinearity.gradient_field` is what one unit
+  of a probe adds, the `atom_effect` of a linear model generalised to a layer;
+- the **atom interaction matrix** and its **modes** (`--kind modes`,
+  `nonlinearity.atom_interactions`, `nonlinearity.interaction_modes`): the second derivatives
+  with respect to the weights of every pair of the molecule's own atoms -- two partial charges,
+  say -- beside the first derivatives, which under a layer take the place of the atom
+  contributions. The eigenvectors of the matrix are patterns of atoms whose weights the model
+  reads together; the eigenvalue is the curvature along the pattern, positive when the changes
+  in it reinforce one another, negative when they saturate. The command prints the leading
+  modes with the atoms that carry them and writes the matrix with `--csv`.
+
+All three are in the units of the activity per unit of amplitude squared, so a pair term is
+judged by multiplying it by two realistic amplitudes -- two partial charges, two indicator
+weights of one -- and comparing the product with what the first derivatives give for the same
+changes. Where the product is small against that, the model is additive there for every
+practical purpose, whatever the map looks like.
+
+**Measured** (`benchmarks/run_interactions.py`, `results/interactions/`). No measured set in the
+repository has a known non-additive pair, so the benchmark makes one: 105 para-disubstituted
+benzenes X-C$_6$H$_4$-Y from 14 substituents, built in the frame of the Hammett example, with an
+additive activity $\sigma_p(X) + \sigma_p(Y)$ and an interacting one that adds
+$1.5\,\sigma_p(X)\,\sigma_p(Y)$, both with 0.02 units of noise; five fields, unnormalised
+kernels, the Gaussian layer, $\alpha$, $\lambda$ and $\gamma$ by 10-fold cross-validation. The
+pair term costs the linear kernel 0.17 in $q^2$ (0.99 to 0.82) and the layer recovers most of it
+(0.95). The interacting activity has an exact second derivative: with $c_k$ the sensitivity of
+$\sigma$ to the charge of atom $k$, the cross derivative between an atom of X and an atom of Y
+is $1.5\,c_k c_l$ and there is none within a group; the additive activity has none anywhere.
+Reading $c_k$ off the additive model's first derivatives, every cross pair of every molecule
+(78 molecules with X and Y both other than H and different) has a designed value, and the
+fitted values are regressed on it through the origin:
+
+| model | slope, atom pairs | correlation | slope, pair field near Y | correlation | within-group RMS over the designed cross RMS |
+|---|---|---|---|---|---|
+| additive | 0.06 | 0.30 | 0.08 | 0.42 | 0.35 |
+| interacting | 1.87 | 0.73 | 1.43 | 0.67 | 2.39 |
+
+The pair field near Y is the field with the probe fixed on the first heavy atom of X, within 2 Å
+of the Y group, against its designed shape, $1.5\,c_k$ times the fixed atom's charge times the
+additive model's first-derivative field there. Three things follow. The designed pair term is
+recovered where there is one and absent where there is none: slopes of 1.9 and 1.4 against 0.06
+and 0.08, correlations of 0.7 against 0.3 to 0.4, and the pair field of one molecule is stable
+under refitting on four-fifths of the set (correlation 0.97). The size is overstated by a factor
+of 1.4 to 1.9, and the within-group block of the interacting model, which should be zero, is
+2.4 times the designed cross block in root mean square: a Gaussian layer that has learnt a pair
+term is curved within the groups too. And *where* the curvature sits does not tell the two
+models apart: the share of the atom matrix between the two groups is 0.10 for the additive model
+and 0.09 for the interacting one (0.07 for the share of pairs), and the share of the pair field
+near Y is 0.32 against 0.28 (0.08 of the volume) -- the layer puts curvature where the training
+fields are, whatever the target. The signal of a pair term is the *size* of the second
+derivative, which is why the figure draws the two models on one colour scale and why the advice
+above is to judge a pair term by its product with realistic amplitudes. Between two sites the
+sign and the order of magnitude can be read; within one site the values are mostly the kernel's
+own curvature, and a reference model of an additive quantity, when one exists, is the right thing
+to subtract.
+
+![The pair-interaction field of the electrostatic field in the ring plane for OCH3-C6H4-NO2, the fixed probe (green ring) on the oxygen of the methoxy group, the nitro group on the far side: the model of the additive activity, the model of the interacting one, and their difference, on one colour scale. The additive model's field is small everywhere; the interacting model's is large, negative over the nitro group and around the probe, positive beyond the methoxy group.](docs/figures/pair_fields.png)
 
 ## Shapley values
 
@@ -6725,6 +6940,90 @@ training set, since that is what sets the number of Gaussians. The memory is bou
 the density: `evaluate_gaussians` cuts its chunk from the neighbour count it measures, so one
 neighbour list stays under `cofields.MAX_PAIRS`.
 
+### A defect series on one host: the host symmetry and the arrangement kernel
+
+The perovskites above are different compounds forced onto one lattice. The series the kernel was
+built for is the other case (plan item M14): one host, one supercell, and cells that differ only
+by which sites are changed -- a vacancy here, a substitution there. Two things are added for it.
+
+**Difference fields.** A cell of the series is the host plus a change on a few sites, and the
+field of the cell is the field of the host plus the field of that change: a vacancy is the host
+atom with its weights negated, a substitution is that row and the new species on the same site
+(`periodic.defect_fields`, `periodic.defect_table`; `periodic.match_sites` finds the site of
+every atom at the nearest image). The kernel is bilinear, so the kernel of two difference fields
+is the kernel of the two whole cells minus terms that are the same for every pair, and a model
+with a bias on the differences is the model on the whole cells -- the tests check it to 1e-7 on
+real cells. The differences are small tables, a few rows per cell instead of two hundred, and
+they are not normalised: the pristine cell is the empty difference, and its norm is zero.
+
+**The host symmetry.** Two arrangements of the same defects that differ by a symmetry operation
+of the host -- the same vacancy pair two sites along -- have the same energy, but in a fixed
+frame their fields do not overlap at all. The kernel is therefore averaged over the space group
+of the host, read from spglib (`periodic.host_symmetry`; 768 operations for an 8 x 8 supercell
+of a monolayer, 64 translations times 12 point operations):
+
+$$
+\bar{K}(P, Q) = \frac{1}{|G|} \sum_{g \in G} K(P, gQ)
+$$
+
+which is the kernel of the orbit-averaged fields and so a kernel in its own right. Averaged this
+way, the **linear** overlap turns out to be a count kernel: the orbit mean of a defect's field is
+the same wherever the defect sits, so the average is additive over the defects and blind to their
+arrangement. That is a useful baseline and not the kernel the series needs. The arrangement
+survives when the **Gaussian layer** is averaged over the group instead,
+
+$$
+\bar{K}_{\gamma}(P, Q) = \frac{1}{|G|} \sum_{g \in G} \exp\!\left(-\gamma\,[K(P,P) + K(Q,Q) - 2K(P, gQ)]\right),
+$$
+
+which is the orbit mean in the layer's feature space, positive semidefinite for the same reason
+(`periodic.symmetry_averaged_kernels`; `CMFModel(..., pbc_overlap=True, pbc_symmetry=...)`). A
+compiled loop (`fastkernel.defect_kernels`) takes every atom pair at its nearest image in
+fractional coordinates, with the cutoff capped at half the cell, and sums both averages at once:
+125 s for 2,000 cells and 768 operations, against hours for the image-expanded reference, which
+the tests keep for agreement. The per-atom contributions of rule 3 go through the same loop.
+
+**Measured** on 2DMD (Huang et al. 2023): one to three vacancies and substitutions on the 8 x 8
+supercell of MoS2 and of WSe2, the DFT formation energy of the cell, 2,000 random cells per
+material and then all 5,933, five random folds with the attenuation, the bandwidth and the ridge
+chosen inside each training
+part (`benchmarks/run_2dmd.py`, `benchmarks/results/2dmd/table.md`). All 5,933 cells of each
+material are distinct under the host group, so every test cell is an arrangement the model has
+not seen. The error per defect site, which is what the literature on this set reports:
+
+| kernel | MoS2, 2,000 cells | WSe2, 2,000 cells | MoS2, all 5,933 | WSe2, all 5,933 |
+|---|---:|---:|---:|---:|
+| fixed frame, no symmetry | 60 | 57 | 42 | 42 |
+| counts (the linear symmetry average) | 41 | 42 | 41 | 41 |
+| periodic autocorrelation | 8.3 | 15.7 | 3.0 | 6.0 |
+| **arrangement** (the symmetry-averaged layer) | **1.8** | **5.2** | **1.9** | **4.4** |
+
+On 2,000 cells the arrangement kernel beats the autocorrelation by 6.5 [5.3, 7.7] and 10.5 [9.1,
+12.1] meV per site (paired bootstrap over the cells, 95 %) -- the half of the gate of the previous
+section that the perovskites could not test -- and the fixed frame and the counts lose to it by 26
+to 52 meV: the symmetry average is what makes the overlap kernel work on a series, and the layer
+is what makes it see the arrangement. On all 5,933 cells the autocorrelation gains most from the
+extra training cells and the lead of the arrangement kernel shrinks to 1.0 [0.8, 1.2] and 1.5
+[1.3, 1.9] meV per site, still with intervals that exclude zero; the fixed frame reaches the
+counts, because with enough cells it learns the orbit from the data. The published errors on this
+set, on the authors' own split of all 5,933 cells, are 2.6 and 4.8 meV for a sparse graph network
+and 11.8 and 14.7 for gradient boosting on descriptors (Kazeev et al. 2023). Trained on the 131
+cells with one or two defects and predicting those with three (1,869 in the 2,000-cell sample,
+5,802 in the full set), the arrangement kernel reaches 4.3 and 4.7 meV per site on MoS2 and 54 and
+38 on WSe2, where the additive count kernel gives 38 on both; the autocorrelation does not
+extrapolate at all (R² near zero), and the fixed frame reaches R² 0.6 to 0.8.
+
+**What each kind of defect costs.** The per-defect contributions of the symmetry-averaged linear
+model (rule 3) are one number per kind of defect, the same to four decimals in every cell, as the
+symmetry requires -- and they are the chemistry the data hold. In MoS2 a sulfur vacancy costs
+2.59 eV, a molybdenum vacancy 6.98, selenium for sulfur 0.31 and tungsten for molybdenum 0.19,
+against the four single-defect cells of the set at 2.65, 7.12, 0.28 and 0.17 eV; in WSe2 a
+selenium vacancy 2.62, a tungsten vacancy 5.09, sulfur for selenium -0.41 and molybdenum for
+tungsten -0.42, against 2.70, 5.30, -0.38 and -0.41. The difference is the mean interaction of
+the three defects in the cells the model was fitted on. The co-field is not the reading for this
+series: averaged over the host group it is one value per site type and says which species, not
+where, and the arrangement model has a layer, so rule 3 does not apply to it.
+
 ## A site of the cell as the sample: the split of the autocorrelation
 
 The pair histogram $P_{fg}$ of the periodic autocorrelation above is a sum over ordered pairs of
@@ -8152,6 +8451,15 @@ the activities and a class label carries none, so `--z` is reported as ignored a
 unmasked. The map itself is the same expression for every learner whose score is a kernel
 expansion, the kernel Fisher discriminant included.
 
+A model with a nonlinear kernel layer has no single co-field, and `--kind cofield` says so. Five
+kinds serve it instead (*The co-field of a nonlinear model: one per molecule* and the section
+after it): `--kind local --molecule FILE` is the co-field of the linear model tangent to it at
+that molecule; `--kind spread` writes the mean of those over the training molecules and their
+standard deviation, and prints the non-linearity index of every field; `--kind pair --molecule
+FILE --probe-atom K` is the pair-interaction field with the fixed probe on atom K; `--kind
+curvature` the second derivative along one probe at every point; `--kind modes` prints the atom
+interaction matrix of the molecule as its leading modes and writes it with `--csv`.
+
 ## The benchmarks from the tool: `cmf benchmark`
 
 `benchmarks/run_all.py` is the one entry point for every measurement in this manual, and
@@ -8625,7 +8933,9 @@ posed in the training frame; cross-target decoys are separable by almost anythin
 
 **Co-fields are unavailable.** A nonlinear kernel layer or the autocorrelation kernel source is
 selected, and neither is linear in the field, so the co-field does not exist. Use the *Shapley* tab
-instead.
+instead; for a kernel layer, `cmf cofield --kind local` and `--kind spread` draw the co-field of
+the tangent model at one molecule and how far those differ over the training set (*The co-field
+of a nonlinear model: one per molecule*).
 
 **It is slow.** Kernel cost grows with the square of the total atom count, so the expensive sets are
 those with many large molecules. Cut the α grid first, since each α needs its own kernel, and
@@ -8777,7 +9087,11 @@ The terms this manual uses in a particular sense, with the chapter that treats e
 | **joblib** | the serialisation library a saved `.cmf` model is written with. A `.cmf` file is therefore a Python object graph, not an interchange format: it is read by this program and not meant to be read by another. *Saving and reusing* |
 | **joint kernel**, $K(A,B)$ | the sum of the normalised, scaled field kernels with their mixing coefficients: the single similarity the learner sees. *Mixing the fields* |
 | **Kabsch superposition** | the least-squares rotation and translation that best superimposes two sets of matched points. It is the second half of an MCS alignment -- the substructure search finds the correspondence, this places the molecule -- and the pose benchmark measures how far the result lands from the crystal pose. *Alignment*; *Judging an alignment, and aligning flexibly* |
-| **kernel layer** | a nonlinear function applied to the joint kernel — Gaussian or arc-cosine — after which there is no co-field, because the prediction is no longer linear in the fields. *Nonlinear kernel layers and multiple kernel learning* |
+| **kernel layer** | a nonlinear function applied to the joint kernel — Gaussian or arc-cosine — after which there is no single co-field, because the prediction is no longer linear in the fields; a local co-field per molecule remains. *Nonlinear kernel layers and multiple kernel learning* |
+| **local co-field** | the derivative of a layered model's prediction with respect to the normalised field, taken at one molecule: the co-field of the linear model tangent to it there. For the linear kernel it is the ordinary co-field for every molecule. *The co-field of a nonlinear model: one per molecule* |
+| **non-linearity index** | the share of the mean squared norm of the local co-fields of the training molecules that their spread around the mean makes up: 0 for a linear model, 1 when they have nothing in common. *The co-field of a nonlinear model: one per molecule* |
+| **pair-interaction field** | the second derivative of a prediction with respect to the amplitudes of two probe atoms, one fixed on an atom of the molecule and the other scanned over space: how much adding field at a point changes what the fixed atom does. Zero everywhere for a linear model without normalisation. *Second derivatives: the pair-interaction field and the interaction modes* |
+| **interaction modes** | the eigenvectors of the atom interaction matrix, the second derivatives with respect to the weights of every pair of a molecule's atoms: patterns of atoms whose weights the model reads together, with the curvature along the pattern as eigenvalue. *Second derivatives: the pair-interaction field and the interaction modes* |
 | **MCS alignment** | superimposing molecules on their maximum common substructure. The conventional frame, and the baseline every pose method here is measured against. *Alignment* |
 | **MKL** | multiple kernel learning: deriving the mixing coefficients from the kernels and the activities by centred kernel alignment rather than setting them. *Nonlinear kernel layers and multiple kernel learning* |
 | **nested cross-validation** | choosing the hyper-parameters inside each training fold and scoring outside it, so that the reported figure has not seen the molecules the choice was made for. *Validation* |

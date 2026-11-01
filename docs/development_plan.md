@@ -1635,7 +1635,6 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   GUI reading of the intervals, and a `--mkl pooled` flag (there is no reason to add one until
   a collection is found where the weights matter).
 
-
 * **E7. Kernel partial least squares.** CoMFA's learner, in its kernel form, on the continuous
   field: with the linear kernel it is PLS in the space of the fields, so a CoMFA-against-CMF
   comparison then differs in the representation alone. Regularised by the number of components,
@@ -2301,6 +2300,45 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   **Not done:** the cross-target form of the pocket pairing, which is the alignment problem of
   part C; the feature-space solver for B6's landmarks, since every set here fits the n by n form;
   and the GUI.
+* **F7. The co-field of a nonlinear model.** A kernel layer (D-series, `kernel_layer`) made the
+  program refuse the co-field, and the Shapley values were the only map left. But the layered
+  prediction `Σ a_j g(K(X, X_j), K(X, X), K(X_j, X_j))` is a differentiable function of the field,
+  and its derivative at one molecule is a field: `C_fX = Σ a_j g_s(X, X_j) x_fj` plus, without
+  normalisation, a term along X's own field, with `g_s` the layer's derivative (`2γg` for the
+  Gaussian layer, `(π − θ)/π` for the arc-cosine one, both closed forms). It is the co-field of
+  the linear model tangent to the nonlinear one at X, and it reduces to the ordinary co-field for
+  the linear layer. On top of it: the spread of the local co-fields over the training molecules
+  (mean and standard deviation on a grid, read off the same per-molecule field matrix the noise
+  band of F2 uses) and a non-linearity index per field, the share of the local co-fields' squared
+  norm that their spread makes up, from the Gram matrix `B K_f B^T` without a grid.
+  **Done 1 November 2026.** `cmfqsar/nonlinearity.py`; `CMFModel.training_field_basis` (the
+  co-field basis without the linearity check); `cmf cofield --kind local|spread`;
+  `tests/test_nonlinearity.py`, whose decisive test moves one atom's weight and checks the
+  prediction moves by the overlap of the local co-field with the change of the normalised field,
+  for all three layers and both normalisation conventions; manual section *The co-field of a
+  nonlinear model: one per molecule*. Measured on the Hammett set
+  (`benchmarks/run_nonlinearity.py`): the index is 0.10 for σp, 0.20 for σm, 0.32 for π and 0.41
+  for σp·π, a target made non-additive on purpose; the Gaussian layer gains 0.10 to 0.16 in q² on
+  the three constants, so they are not linear in the normalised field (π grows with the size of
+  the substituent, which a cosine-normalised kernel does not see — a likely reason, not tested);
+  the spread maps are stable under refitting on four-fifths of the set (r ≥ 0.96) except on π
+  (0.87; its mean map 0.54 at λ = 10⁻⁴).
+  **Second derivatives, done the same day.** Taken with respect to the amplitudes of probe atoms
+  (finite, and the kernel normalisation differentiated exactly; `Tangent` in the same module), as
+  the pair-interaction field (`pair_interaction_field`, `cmf cofield --kind pair`), the curvature
+  field, the gradient field, and the atom interaction matrix with its eigenmodes
+  (`atom_interactions`, `interaction_modes`, `--kind modes`); checked against second differences
+  of the prediction with probes on the atoms and in free space, both conventions, linear and
+  Gaussian layers; the arc-cosine layers are refused (cusp). Validated on a set made for it
+  (`benchmarks/run_interactions.py`: 105 para-disubstituted benzenes, σ(X) + σ(Y) against the
+  same plus 1.5 σ(X) σ(Y)): the fitted cross derivative regressed on the designed one has slope
+  1.87 (r 0.73) for the interacting activity and 0.06 (r 0.30) for the additive one, the pair
+  field near Y 1.43 against 0.08, stable under refits (0.97); the layer overstates the pair term
+  and is curved within a group too (2.4 times the designed cross RMS), and where the curvature
+  sits does not separate the two activities — the signal is the size.
+  **Not done:** the interaction modes in the span of the training fields (the n by n eigenproblem
+  of the field-space Hessian), which the atom-weight modes replace; the chain rule to atom
+  positions; the arc-cosine layers; and the GUI, which still shows the refusal.
 ## G. The application and the tool (continuous)
 
 * **G1. Subcommands.** Alignment is spread over flags of `build` and `predict` and the `hetero`
@@ -2864,6 +2902,76 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   fixed as the relaxation leaves it; `periodic.overlap_asymmetry` and `lattice_spread` measure
   that and both must be reported. And a referee will ask for the comparison with a graph network
   on the same cells, which is a day of someone else's software and should be in the plan.
+  **Done 1 November 2026, on a public set and without a VASP run.** The search the item asked
+  for found one: 2DMD (Huang et al., npj 2D Mater. Appl. 2023; Kazeev et al., npj Comput.
+  Mater. 2023), one to three point defects -- vacancies and substitutions -- on the 8 x 8
+  supercell of a MoS2 or a WSe2 monolayer, 5,933 cells per material with the DFT formation
+  energy of the cell, all on the ideal unrelaxed supercell, so every cell stands on one lattice
+  exactly. The beta-Li3PO4 enumeration was not run.
+  **What was built** (`cmfqsar/periodic.py`, `cmfqsar/fastkernel.py`,
+  `CMFModel(pbc_symmetry=...)`). (i) Difference fields: `defect_fields` writes a cell as the
+  host plus a signed change on the changed sites (a vacancy is the host row with its weights
+  negated, a substitution is that row and the new species on the same site). The kernel is
+  bilinear, so the kernel of the differences is exact (8.7e-11 relative on real cells), and a
+  model with a bias on the differences is the model on the whole cells; `defect_table` builds
+  the series and `normalize=False` is allowed for it. (ii) The host symmetry: `host_symmetry`
+  takes the space-group operations of the host from spglib (768 for the 8 x 8 supercell, 64
+  translations times 12 point operations) and the kernel is averaged over them. The linear
+  average turns out to be a count kernel: additive over the defects and blind to their
+  arrangement, because the orbit mean of a field is the same for every arrangement of the same
+  defects. The arrangement survives only when the Gaussian layer is averaged over the group
+  (`symmetry_averaged_kernels`), which is the orbit mean in the layer's feature space and so
+  positive semidefinite. (iii) A compiled loop (`fastkernel.defect_kernels`): every atom pair at
+  its nearest image in fractional coordinates, the cutoff capped at half the cell, the mean over
+  the operations of the linear kernels and of the layer -- 1.4 s per 100 cells against 153 s
+  for the numpy reference, agreement to 1e-6, 125 s for 2,000 cells and 768 operations. The
+  per-atom contributions of the model take the same loop (`_compiled_atom_block`): 30 s for 400
+  cells, where the image-expanded path took three hours. (iv) `benchmarks/run_2dmd.py`: five
+  random folds with the setting and the ridge chosen inside each training part, the paired
+  interval of rule 4 against the periodic autocorrelation, the extrapolation from the cells with
+  one or two defects to those with three, and the per-defect reading. The arrangement classes of
+  the cells under the host group are labelled, and all 5,933 cells of each material are
+  distinct, so every test cell is an arrangement the model has not seen.
+  **Measured** on 2,000 random cells per material (all 131 with one or two defects, the rest
+  with three), `benchmarks/results/2dmd/table.md`. MAE of the formation energy per defect site
+  in meV, MoS2 / WSe2: fixed frame 60 / 57, counts 41 / 42, periodic autocorrelation 8.3 / 15.7,
+  symmetry-averaged arrangement kernel 1.8 / 5.2. **Gate (a) passes:** against the
+  autocorrelation the arrangement kernel is better by 6.5 [5.3, 7.7] meV per site on MoS2 and
+  10.5 [9.1, 12.1] on WSe2 (paired bootstrap, 95 %), while the fixed frame and the counts are
+  worse by 26 to 52 meV; the R2 of both is above 0.999 and does not separate them. Published on
+  this set, on the authors' own split of all 5,933 cells (not these folds): sparse graph network
+  2.6 / 4.8 meV, gradient boosting on descriptors 11.8 / 14.7, whole-structure graph networks 31
+  to 55. **Gate (d) passes on MoS2 and half on WSe2:** trained on the 131 cells with one or two
+  defects and predicting the 1,869 with three, the arrangement kernel gives 4.3 meV per site
+  (R2 1.000) on MoS2 and 54 meV (R2 0.996) on WSe2, where the additive count kernel gives 38;
+  the autocorrelation does not extrapolate (R2 -0.02 and +0.06, 1.1 to 1.2 eV per site) and
+  the fixed frame reaches R2 0.8. **Gates (b) and (c), the reading:** the per-defect
+  contributions of the symmetry-averaged linear model (rule 3, 400 cells) are one number per
+  kind of defect to four decimals, as the symmetry requires, and they are the chemistry the data
+  hold. MoS2: a sulfur vacancy 2.59 eV, a molybdenum vacancy 6.98, selenium for sulfur 0.31,
+  tungsten for molybdenum 0.19, against the four single-defect cells of the set at 2.65, 7.12,
+  0.28 and 0.17 eV. WSe2: a selenium vacancy 2.62, a tungsten vacancy 5.09, sulfur for selenium
+  -0.41, molybdenum for tungsten -0.42, against 2.70, 5.30, -0.38 and -0.41. The co-field was
+  not drawn: the orbit-averaged co-field of a host lattice is one value per site type and says
+  which species, not where; the per-defect contribution is the reading this series has.
+  **Measured on all 5,933 cells** (the same folds and protocol, the reduced grid of attenuation
+  1 and 2, bandwidth 0.125 and 0.25, width 0.35 and 0.75 A; 10 h on this machine, 8.9 GB at the
+  peak): fixed frame 42 / 42, counts 41 / 41, periodic autocorrelation 3.0 / 6.0, arrangement
+  kernel 1.9 / 4.4 meV per site. With three times the training cells the autocorrelation gains
+  most, and the lead of the arrangement kernel shrinks to 1.0 [0.8, 1.2] meV per site on MoS2
+  and 1.5 [1.3, 1.9] on WSe2. The intervals still exclude zero, so gate (a) holds on the full
+  set, but by a small margin instead of a factor of three to four. The fixed frame reaches the
+  counts (42 meV) where it stood at 60 on 2,000 cells: with enough cells it learns the orbit
+  from the data. Trained on the same 131 cells and predicting the 5,802 with three defects, the
+  arrangement kernel gives 4.7 meV per site on MoS2 and 37.7 on WSe2 against 38.3 for the
+  counts, so on WSe2 it is level with the additive model rather than behind it; the
+  autocorrelation stays at R2 near zero (1.1 to 1.3 eV per site) and the fixed frame at R2 0.6.
+  **Not done:** the full grid on all 5,933 cells (the full-set run searched two values of each
+  setting), the comparison with a graph network under these folds, a Shapley
+  reading of the arrangement model (its layer is not linear, so rule 3 does not apply), the
+  correlated-occupancy case, and the beta-Li3PO4 series itself, which this set makes
+  unnecessary for the gate but which remains the series the conductivity literature argues
+  about.
 
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed

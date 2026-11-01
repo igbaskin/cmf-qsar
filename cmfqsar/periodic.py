@@ -232,7 +232,14 @@ class CrystalFields:
     #: the periodic autocorrelation needs it, because the mean of a product is not the product
     #: of the means on a disordered site
     second_moments: Optional[np.ndarray] = None
-
+    #: for a difference field (:func:`defect_fields`): the number of sites that changed, which
+    #: the rows alone do not give (a vacancy and an added atom are one row each, a substitution
+    #: two rows on one site)
+    n_defects: Optional[int] = None
+    #: the name of the host this structure is a difference from (:func:`defect_fields`), or ""
+    #: for a structure whose field is its own.  A difference carries only the sites that changed,
+    #: with the sign of the change, and is an exact representation under a bilinear kernel.
+    relative_to: str = ""
     #: the site this record stands for (plan item M5), or None for the whole cell.  The periodic
     #: autocorrelation of a record with a centre is the profile of that site alone
     #: (:func:`cmfqsar.sites.site_autocorrelation`), so a site is a sample like any structure.
@@ -818,7 +825,8 @@ def expanded_cell_table(table: AtomTable, r_max: float) -> AtomTable:
 
 def periodic_overlap_kernels(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec],
                              r_max: Optional[float] = None, cutoff=None, engine=None,
-                             symmetrise: bool = True, progress=None, cancel=None) -> np.ndarray:
+                             symmetrise: bool = True, progress=None, cancel=None,
+                             symmetry=None) -> np.ndarray:
     """Per-field periodic overlap kernels of two tables of crystals: shape (F, nP, nQ).
 
     The atoms of `P` stay in their cell and those of `Q` are expanded over the periodic images
@@ -838,6 +846,16 @@ def periodic_overlap_kernels(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSp
     of the correction is a measure of how far the set is from one lattice
     (:func:`overlap_asymmetry` reports it).  ``symmetrise=False`` returns the one-sided sum and
     costs half as much for a block of two different tables.
+
+    **The host symmetry** (plan item M14).  `symmetry` is the pair ``(rotations, translations)``
+    of :func:`host_symmetry`: the operations of the space group of the host lattice, in
+    fractional coordinates.  With it the kernel is the average of ``K(P, g Q)`` over the
+    operations ``g``, which is the kernel of the orbit-averaged fields and so a kernel in its
+    own right.  It is needed for a series on one host, because two arrangements of the same
+    defects that differ by a symmetry operation of the host -- the same vacancy pair two sites
+    along -- have the same property but, in a fixed frame, fields that do not overlap at all.
+    The average makes them identical, and leaves every arrangement that is not equivalent as
+    distinct as the fields make it.  Without `symmetry` the kernel is the fixed-frame one.
     """
     from .kernels import kernel_matrices
 
@@ -850,15 +868,67 @@ def periodic_overlap_kernels(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSp
     radii_max = max(float(np.max(Q.radii)) if len(Q.radii) else 2.0,
                     float(np.max(P.radii)) if len(P.radii) else 2.0)
     r = overlap_cutoff(enabled, radii_max) if r_max is None else float(r_max)
-    K = kernel_matrices(P, expanded_cell_table(Q, r), enabled, progress=progress, cancel=cancel,
+    if symmetry is not None:
+        compiled = _compiled_symmetry_average(P, Q, enabled, symmetry, r, engine)
+        if compiled is not None:
+            return compiled
+    Qs = Q if symmetry is None else symmetry_expanded_table(Q, *symmetry)
+    K = kernel_matrices(P, expanded_cell_table(Qs, r), enabled, progress=progress, cancel=cancel,
                         symmetric=False, cutoff=cutoff, engine=engine)
     if not symmetrise:
         return K
     if P is Q:
         return 0.5 * (K + np.swapaxes(K, 1, 2))
-    K2 = kernel_matrices(Q, expanded_cell_table(P, r), enabled, cancel=cancel,
+    Ps = P if symmetry is None else symmetry_expanded_table(P, *symmetry)
+    K2 = kernel_matrices(Q, expanded_cell_table(Ps, r), enabled, cancel=cancel,
                          symmetric=False, cutoff=cutoff, engine=engine)
     return 0.5 * (K + np.swapaxes(K2, 1, 2))
+
+
+def _compiled_symmetry_average(P: AtomTable, Q: AtomTable, enabled: Sequence[FieldSpec],
+                               symmetry, r: float, engine,
+                               cutoff: Optional[float] = None) -> Optional[np.ndarray]:
+    """The linear symmetry average by the compiled loop of :mod:`cmfqsar.fastkernel`, or None
+    when that loop is not available, the engine is "numpy", or the tables do not share one cell.
+
+    The loop takes every atom pair at its nearest-image displacement with the cutoff capped
+    by :func:`nearest_image_cutoff`, so it agrees with the image sum of the reference path to
+    the truncation at that radius (see :func:`symmetry_averaged_kernels`).  `cutoff` gives
+    that cap directly, for a caller that has computed it on a larger table than it passes
+    here -- the self-overlaps of one structure at a time must be truncated where the kernel
+    of the whole table is, or the diagonal of the kernel and the self-overlap differ.
+    """
+    from .kernels import use_compiled
+    from . import fastkernel
+
+    # the reference path copies every cell over the whole group, hundreds of times the work,
+    # so the compiled loop is taken whenever it is installed; "numpy" asks for the reference
+    if not (use_compiled("auto" if engine is None else engine) and fastkernel.available()):
+        return None
+    try:
+        A = _shared_cell(P)
+        if Q is not P and np.max(np.abs(_shared_cell(Q) - A)) > 1e-6:
+            return None
+    except ValueError:
+        return None
+    if cutoff is None:
+        cut = nearest_image_cutoff(P, r)
+        if Q is not P:
+            cut = min(cut, nearest_image_cutoff(Q, r))
+    else:
+        cut = float(cutoff)
+    zeros = np.zeros(len(enabled))
+    got = fastkernel.defect_kernels(P, Q, enabled, A, symmetry[0], symmetry[1], zeros,
+                                    np.zeros(P.n_mol), np.zeros(Q.n_mol), [], cutoff=cut,
+                                    symmetric=Q is P)
+    if got is None:
+        return None
+    lin = got[0]
+    if Q is P:
+        iu = np.triu_indices(P.n_mol, 1)
+        for f in range(lin.shape[0]):
+            lin[f][(iu[1], iu[0])] = lin[f][iu]
+    return lin
 
 
 def overlap_asymmetry(table: AtomTable, specs: Sequence[FieldSpec],
@@ -879,19 +949,33 @@ def overlap_asymmetry(table: AtomTable, specs: Sequence[FieldSpec],
 
 
 def periodic_self_overlaps(table: AtomTable, specs: Sequence[FieldSpec],
-                           r_max: Optional[float] = None) -> np.ndarray:
+                           r_max: Optional[float] = None, symmetry=None) -> np.ndarray:
     """``K_f(i, i)`` of every crystal of `table` under the periodic overlap: shape (F, n).
 
     This is what the cosine normalisation divides by, and it is where the cell size goes: a
     supercell of the same structure has a proportionally larger self-overlap, so the normalised
-    kernel does not know which cell was chosen.
+    kernel does not know which cell was chosen.  `symmetry` is as in
+    :func:`periodic_overlap_kernels`: the self-overlap is then that of the orbit-averaged field.
     """
     from .kernels import atom_kernel_block
 
     enabled = [s for s in specs if s.enabled]
     radii_max = float(np.max(table.radii)) if len(table.radii) else 2.0
     r = overlap_cutoff(enabled, radii_max) if r_max is None else float(r_max)
-    images = expanded_cell_table(table, r)
+    if symmetry is not None:
+        # one structure at a time through the compiled loop, with the cutoff cap of the whole
+        # table, so that the self-overlap is the diagonal of the kernel the same loop gives
+        try:
+            cut = nearest_image_cutoff(table, r)
+        except ValueError:
+            cut = r
+        parts = [_compiled_symmetry_average(table.subset([i]), table.subset([i]), enabled,
+                                            symmetry, r, None, cutoff=cut)
+                 for i in range(table.n_mol)]
+        if all(p is not None for p in parts):
+            return np.stack([p[:, 0, 0] for p in parts], axis=1)
+    images = expanded_cell_table(table if symmetry is None
+                                 else symmetry_expanded_table(table, *symmetry), r)
     out = np.zeros((len(enabled), table.n_mol))
     for i in range(table.n_mol):
         sl = table.slice(i)
@@ -929,6 +1013,397 @@ def lattice_spread(table: AtomTable) -> Dict[str, float]:
             "length_spread": float(np.max(np.abs(lens - mean_len[None, :])
                                           / np.maximum(mean_len[None, :], 1e-12))),
             "atoms_mean": float(np.mean([len(m.coords) for m in table.molecules]))}
+
+
+# --------------------------------------------------------------------------- #
+# A series on one host: difference fields and the host symmetry (plan item M14)
+# --------------------------------------------------------------------------- #
+def host_symmetry(atoms, symprec: float = 1e-3) -> Tuple[np.ndarray, np.ndarray]:
+    """The symmetry operations of a host cell: ``(rotations, translations)`` in fractional
+    coordinates, shapes (G, 3, 3) and (G, 3), from spglib.
+
+    For a supercell they include the translations by the vectors of the primitive cell, so the
+    group of an 8 x 8 cell of a monolayer with twelve point operations has 768 members.  The
+    identity is always among them.
+    """
+    import spglib
+
+    cell = (np.asarray(atoms.get_cell()[:], float), np.asarray(atoms.get_scaled_positions(), float),
+            np.asarray(atoms.get_atomic_numbers(), int))
+    sym = spglib.get_symmetry(cell, symprec=float(symprec))
+    if sym is None:
+        raise ValueError(f"spglib found no symmetry for {atoms.get_chemical_formula()}; is the "
+                         f"cell singular?")
+    return np.asarray(sym["rotations"], float), np.asarray(sym["translations"], float)
+
+
+def _transformed_structure(mol: CrystalFields, rotations: np.ndarray,
+                           translations: np.ndarray) -> CrystalFields:
+    """`mol` with its atoms copied under every operation, each copy at 1/G of the weight."""
+    G = len(rotations)
+    A = np.asarray(mol.cell, float).reshape(3, 3)
+    if mol.n_atoms == 0:
+        return mol
+    frac = np.asarray(mol.coords, float) @ np.linalg.inv(A)
+    moved = np.einsum("gij,nj->gni", rotations, frac) + translations[:, None, :]
+    moved = np.mod(moved, 1.0).reshape(-1, 3) @ A
+    kw = {f.name: getattr(mol, f.name) for f in dataclasses.fields(mol)}
+    kw.update(coords=moved, weights=np.tile(np.asarray(mol.weights, float), (G, 1)) / G,
+              radii=np.tile(np.asarray(mol.radii, float), G),
+              symbols=list(mol.symbols) * G, atom_types=list(mol.atom_types) * G,
+              charges=None if mol.charges is None else np.tile(np.asarray(mol.charges), G),
+              bonds=np.zeros((0, 2), dtype=int), occupancy=None, site_species=None,
+              second_moments=None)
+    return CrystalFields(**kw)
+
+
+def symmetry_expanded_table(table: AtomTable, rotations: np.ndarray,
+                            translations: np.ndarray) -> AtomTable:
+    """`table` with every structure replaced by the mean of its images under the operations.
+
+    Every atom is copied once per operation at 1/G of its weight, so the field of the new
+    structure is the orbit average of the old one, and the overlap of a structure with it is
+    the average of the overlaps with the G transformed copies.  The structure boundaries are
+    kept, and the expansion is cached on the table, because a grid search asks for it once per
+    attenuation and it does not depend on one.
+    """
+    rotations = np.asarray(rotations, float).reshape(-1, 3, 3)
+    translations = np.asarray(translations, float).reshape(-1, 3)
+    if len(rotations) != len(translations):
+        raise ValueError(f"{len(rotations)} rotations but {len(translations)} translations")
+    key = (len(rotations), hash(rotations.tobytes()), hash(translations.tobytes()))
+    cached = getattr(table, "_pbc_symmetry", None)
+    if cached is not None and cached[0] == key:
+        return cached[1]
+    if not table.molecules:
+        raise ValueError("the symmetry expansion needs a table built from crystals, which "
+                         "carry their cell; this table carries no structures")
+    out = AtomTable.from_molecules([_transformed_structure(m, rotations, translations)
+                                    for m in table.molecules])
+    table._pbc_symmetry = (key, out)
+    return out
+
+
+def _shared_cell(table: AtomTable) -> np.ndarray:
+    """The one cell every structure of `table` stands in, or an error naming the spread."""
+    cells = [np.asarray(m.cell, float).reshape(3, 3) for m in table.molecules]
+    A = cells[0]
+    worst = max(float(np.max(np.abs(c - A))) for c in cells)
+    if worst > 1e-6:
+        raise ValueError(f"the structures do not share one cell: lattice vectors differ by up "
+                         f"to {worst:.3g} A, and a symmetry operation in fractional coordinates "
+                         f"is then a different operation in every cell")
+    return A
+
+
+def _transformed_table(table: AtomTable, A: np.ndarray, R: np.ndarray, t: np.ndarray,
+                       r_max: float, images: np.ndarray) -> AtomTable:
+    """`table` under one operation (fractional `R`, `t` in the cell `A`), with the periodic
+    images within `r_max` of the cell added, built for the whole table at once.
+
+    `images` are the lattice translations of :func:`image_translations`.  The result has no
+    molecule objects; it is the right-hand table of one kernel evaluation and nothing else.
+    """
+    inv = np.linalg.inv(A)
+    frac = np.mod((table.coords @ inv) @ R.T + t[None, :], 1.0)
+    base = frac @ A
+    mol_of = np.repeat(np.arange(table.n_mol), np.diff(table.offsets))
+    corners = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1],
+                        [1, 1, 0], [1, 0, 1], [0, 1, 1], [1, 1, 1]], float) @ A
+    lo, hi = corners.min(axis=0), corners.max(axis=0)
+    xs, ws, rs, ms = [base], [table.weights], [table.radii], [mol_of]
+    for T in images:
+        if not np.any(T):
+            continue
+        moved = base + T[None, :]
+        keep = _box_distance(moved, lo, hi) <= r_max
+        if keep.any():
+            xs.append(moved[keep])
+            ws.append(table.weights[keep])
+            rs.append(table.radii[keep])
+            ms.append(mol_of[keep])
+    x = np.concatenate(xs, axis=0)
+    w = np.concatenate(ws, axis=0)
+    r = np.concatenate(rs, axis=0)
+    m = np.concatenate(ms)
+    order = np.argsort(m, kind="stable")
+    counts = np.bincount(m, minlength=table.n_mol)
+    offsets = np.zeros(table.n_mol + 1, int)
+    offsets[1:] = np.cumsum(counts)
+    return AtomTable(coords=x[order], weights=w[order], radii=r[order], offsets=offsets,
+                     names=list(table.names), molecules=[])
+
+
+def nearest_image_cutoff(table: AtomTable, r: float, spread: float = 0.25) -> float:
+    """The largest cutoff at which the nearest image of a pair is the only one within reach.
+
+    The compiled path of :func:`symmetry_averaged_kernels` takes every atom pair at its
+    nearest-image displacement instead of summing over the images, which is exact when no
+    second image lies within the cutoff: the cutoff must then stay under half the cell's width
+    along every axis the atoms span.  An axis the atoms do not span -- the vacuum direction of
+    a slab, where their fractional spread is below `spread` -- puts no limit, because the
+    nearest image along it is the atom itself.  Returns `r` capped accordingly.
+    """
+    A = _shared_cell(table)
+    volume = abs(float(np.linalg.det(A)))
+    frac = np.mod(table.coords @ np.linalg.inv(A), 1.0) if len(table.coords) else np.zeros((0, 3))
+    cap = float(r)
+    for k in range(3):
+        width = volume / max(np.linalg.norm(np.cross(A[(k + 1) % 3], A[(k + 2) % 3])), 1e-12)
+        spans = len(frac) and float(np.ptp(frac[:, k])) > spread
+        if spans:
+            cap = min(cap, 0.5 * width)
+    return cap
+
+
+def symmetry_averaged_kernels(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec], symmetry,
+                              gammas: Sequence[float] = (), mixing: Optional[np.ndarray] = None,
+                              r_max: Optional[float] = None, engine=None,
+                              self_p: Optional[np.ndarray] = None,
+                              self_q: Optional[np.ndarray] = None,
+                              progress=None) -> Tuple[np.ndarray, np.ndarray]:
+    """The periodic overlap of two tables of difference fields averaged over the host
+    symmetry, in both forms at once: ``(K_lin, K_layer)``.
+
+    ``K_lin``, shape (F, nP, nQ), is ``mean_g K_f(P_i, g Q_j)``: the linear average, the kernel
+    of the orbit-averaged fields, which :func:`periodic_overlap_kernels` with `symmetry` also
+    gives.  It is additive over the defects -- a vacancy pair is two single vacancies wherever
+    they sit -- so it carries the counts of each kind of defect and nothing else.
+
+    ``K_layer``, shape (len(gammas), nP, nQ), is the Gaussian layer averaged instead:
+    ``mean_g exp(-gamma (K(P_i, P_i) + K(Q_j, Q_j) - 2 sum_f mixing_f K_f(P_i, g Q_j)))``.
+    This is the kernel that sees the *arrangement* of a defect series: the layer is not
+    additive, so the pair and triple structure survives the average, and the average is still
+    a kernel, the inner product of orbit-averaged features in the layer's own feature space.
+
+    `mixing` are the per-field coefficients of the joint kernel (the field heights divided by
+    the field scales, as the model forms them); None weights the fields equally after scaling
+    each by its mean self-overlap over `P`.  `gammas` are in absolute units of the joint
+    kernel's squared distance; :func:`cmfqsar.model.median_gamma_scale` gives the
+    median-distance unit.  `self_p`, `self_q` are the joint self-kernels, the same under every
+    operation, computed here when not given.  The structures of `P` and `Q` must share one
+    cell, and `r_max` is the image radius (by default :func:`overlap_cutoff`).
+
+    Two implementations agree to the truncation of the image sum: the compiled loop of
+    :mod:`cmfqsar.fastkernel` (every atom pair at its nearest-image displacement, the cutoff
+    capped by :func:`nearest_image_cutoff`), which is the one for a set of thousands, and the
+    NumPy reference, one kernel evaluation per operation on the image-expanded table, which
+    `engine="numpy"` selects.
+    """
+    from .kernels import kernel_matrices, use_compiled
+    from . import fastkernel
+
+    rotations = np.asarray(symmetry[0], float).reshape(-1, 3, 3)
+    translations = np.asarray(symmetry[1], float).reshape(-1, 3)
+    enabled = [s for s in specs if s.enabled]
+    radii_max = max(float(np.max(Q.radii)) if len(Q.radii) else 2.0,
+                    float(np.max(P.radii)) if len(P.radii) else 2.0)
+    r = overlap_cutoff(enabled, radii_max) if r_max is None else float(r_max)
+    A = _shared_cell(P)
+    if Q is not P:
+        AQ = _shared_cell(Q)
+        if np.max(np.abs(AQ - A)) > 1e-6:
+            raise ValueError("the two tables do not stand in one cell")
+    if mixing is None:
+        d = periodic_self_overlaps(P, enabled, r_max=r)
+        mixing = np.array([1.0 / max(float(np.mean(d[f])), 1e-300) for f in range(len(enabled))])
+    mixing = np.asarray(mixing, float)
+
+    def joint_self(T):
+        d = periodic_self_overlaps(T, enabled, r_max=r)
+        return np.tensordot(mixing, d, axes=(0, 0))
+
+    dp = joint_self(P) if self_p is None else np.asarray(self_p, float)
+    dq = dp if (Q is P and self_q is None) else (joint_self(Q) if self_q is None
+                                                 else np.asarray(self_q, float))
+    gammas = np.asarray(list(gammas), float).reshape(-1)
+    compiled = None
+    if use_compiled(engine) and fastkernel.available():
+        cut = nearest_image_cutoff(P, r)
+        if Q is not P:
+            cut = min(cut, nearest_image_cutoff(Q, r))
+        compiled = fastkernel.defect_kernels(P, Q, enabled, A, rotations, translations, mixing,
+                                             dp, dq, gammas, cutoff=cut, symmetric=Q is P)
+    if compiled is not None:
+        lin, lay = compiled
+        if Q is P:
+            iu = np.triu_indices(P.n_mol, 1)
+            for M in (lin, lay):
+                for k in range(M.shape[0]):
+                    M[k][(iu[1], iu[0])] = M[k][iu]
+        return lin, lay
+    images = image_translations(A, r)
+    lin = np.zeros((len(enabled), P.n_mol, Q.n_mol))
+    lay = np.zeros((len(gammas), P.n_mol, Q.n_mol))
+    base = dp[:, None] + dq[None, :]
+    G = len(rotations)
+    for g in range(G):
+        side = _transformed_table(Q, A, rotations[g], translations[g], r, images)
+        Kf = kernel_matrices(P, side, enabled, symmetric=False, engine=engine)
+        lin += Kf
+        d2 = np.maximum(base - 2.0 * np.tensordot(mixing, Kf, axes=(0, 0)), 0.0)
+        for k, gamma in enumerate(gammas):
+            lay[k] += np.exp(-gamma * d2)
+        if progress is not None:
+            progress(g + 1, G)
+    lin /= G
+    lay /= G
+    if Q is P:
+        lin = 0.5 * (lin + np.swapaxes(lin, 1, 2))
+        lay = 0.5 * (lay + np.swapaxes(lay, 1, 2))
+    return lin, lay
+
+
+def symmetry_layer_kernel(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec], symmetry,
+                          gammas: Sequence[float], **kw) -> np.ndarray:
+    """``K_layer`` of :func:`symmetry_averaged_kernels`: shape (len(gammas), nP, nQ)."""
+    return symmetry_averaged_kernels(P, Q, specs, symmetry, gammas=gammas, **kw)[1]
+
+
+def match_sites(atoms, host, tol: float = 0.1) -> np.ndarray:
+    """For every atom of `atoms`, the index of the site of `host` it sits on, or -1.
+
+    Distances are taken in the cell of `host` with the minimum-image rule, so an atom written
+    on the other side of the cell still finds its site.  Two atoms on one site is an error,
+    because a difference field would then count that site twice.
+    """
+    A = np.asarray(host.cell, float).reshape(3, 3)
+    inv = np.linalg.inv(A)
+    fa = np.asarray(atoms.get_positions(), float) @ inv
+    fh = np.asarray(host.coords, float) @ inv
+    d = fa[:, None, :] - fh[None, :, :]
+    d -= np.round(d)
+    dist = np.linalg.norm(d @ A, axis=2)
+    nearest = np.argmin(dist, axis=1)
+    out = np.where(dist[np.arange(len(fa)), nearest] <= float(tol), nearest, -1)
+    taken = out[out >= 0]
+    if len(np.unique(taken)) != len(taken):
+        dup = int(np.bincount(taken).argmax())
+        raise ValueError(f"two atoms of {atoms.get_chemical_formula()} sit on site {dup} of the "
+                         f"host {host.name} within {tol} A")
+    return out
+
+
+def defect_fields(atoms, host: CrystalFields, fieldset: FieldSet, name: str = "",
+                  tol: float = 0.1) -> CrystalFields:
+    """The field of `atoms` minus the field of its `host`, as a structure of the sites that
+    changed: a vacancy is the host's atom with its weights negated, a substitution is that and
+    the new atom with its own weights, an added atom is the new atom alone.
+
+    The overlap kernel is bilinear, so the kernel of two differences, plus terms that depend on
+    one structure at a time, is the kernel of the two whole cells; a model with a bias on the
+    differences is therefore the same model as one on the cells, at a cost that depends on the
+    number of defects and not on the size of the supercell.  The charge of an atom that
+    replaces another is the host's charge for the site it occupies, so that the electrostatic
+    difference is local, as the structural one is; an atom on no site of the host takes the
+    oxidation state of its element in the host's composition, or zero when none is assigned.
+
+    `host` is the :class:`CrystalFields` of the pristine cell on the same lattice
+    (:func:`crystal_fields`); `atoms` must stand on that lattice within `tol` Angstrom.
+    """
+    from ase import Atoms
+
+    site = match_sites(atoms, host, tol)
+    symbols = list(atoms.get_chemical_symbols())
+    hsym = list(host.symbols)
+    removed = sorted(set(range(host.n_atoms)) - set(int(s) for s in site if s >= 0))
+    changed = [i for i, s in enumerate(site) if s >= 0 and symbols[i] != hsym[int(s)]]
+    added = [i for i, s in enumerate(site) if s < 0]
+    removed += [int(site[i]) for i in changed]
+    new = changed + added
+    F = host.weights.shape[1]
+    coords = [np.asarray(host.coords, float)[removed]]
+    weights = [-np.asarray(host.weights, float)[removed]]
+    radii = [np.asarray(host.radii, float)[removed]]
+    charges = [None if host.charges is None else -np.asarray(host.charges, float)[removed]]
+    syms = [hsym[j] for j in removed]
+    types = [f"-{hsym[j]}" for j in removed]
+    if new:
+        q = np.zeros(len(new))
+        if host.charges is not None:
+            hq = np.asarray(host.charges, float)
+            ox = None
+            if added:
+                # the states of the host with the added atoms in it: the exact balance when
+                # there is one, the nearest balance when there is not, which is the usual case
+                # for one extra atom in a cell
+                from collections import Counter
+                comp = Counter(hsym + [symbols[i] for i in added])
+                ox = oxidation_states(list(comp.elements()), composition=dict(comp))
+            for k, i in enumerate(new):
+                if site[i] >= 0:
+                    q[k] = float(hq[int(site[i])])
+                elif symbols[i] in hsym:
+                    q[k] = float(np.mean(hq[[j for j, s in enumerate(hsym) if s == symbols[i]]]))
+                elif ox is not None:
+                    q[k] = float(ox.get(symbols[i], 0.0))
+        small = Atoms(symbols=[symbols[i] for i in new],
+                      positions=np.asarray(atoms.get_positions(), float)[new],
+                      cell=np.asarray(host.cell, float), pbc=host.pbc)
+        # as a per-atom array, which the "file" charge model reads as it is; initial charges
+        # are read only when one of them is not zero, and a zero charge is a legitimate value
+        # here (an element of an elemental host, an atom the balance leaves neutral)
+        small.set_array("charges", q)
+        fs = fieldset.copy()
+        fs.charge_model = "file"
+        part = crystal_fields(small, fs, name)
+        coords.append(part.coords)
+        weights.append(part.weights)
+        radii.append(part.radii)
+        charges.append(None if host.charges is None else q)
+        syms += list(part.symbols)
+        types += [f"+{s}" for s in part.symbols]
+    coords = np.concatenate(coords, axis=0) if coords else np.zeros((0, 3))
+    weights = np.concatenate(weights, axis=0) if weights else np.zeros((0, F))
+    radii = np.concatenate(radii) if radii else np.zeros(0)
+    ch = None if host.charges is None else np.concatenate([c for c in charges if c is not None])
+    return CrystalFields(name=name or atoms.get_chemical_formula(), coords=coords.reshape(-1, 3),
+                         weights=weights.reshape(-1, F), radii=radii, symbols=syms,
+                         cell=np.asarray(host.cell, float), pbc=host.pbc, charges=ch,
+                         charge_source=host.charge_source, atom_types=types,
+                         relative_to=host.name or "host", n_defects=len(removed) + len(added))
+
+
+def defect_table(structures: Sequence, host, fieldset: FieldSet,
+                 names: Optional[Sequence[str]] = None, tol: float = 0.1) -> AtomTable:
+    """An :class:`fields.AtomTable` of difference fields (:func:`defect_fields`) of a series on
+    one host.  `host` is an ASE ``Atoms`` of the pristine cell or its :class:`CrystalFields`."""
+    if not isinstance(host, CrystalFields):
+        host = crystal_fields(host, fieldset, getattr(host, "name", "") or "host")
+    names = list(names) if names is not None else [""] * len(structures)
+    table = AtomTable.from_molecules([defect_fields(a, host, fieldset, nm, tol)
+                                      for a, nm in zip(structures, names)])
+    table.host = host
+    return table
+
+
+def is_difference_table(table: AtomTable) -> bool:
+    """True when every structure of `table` is a difference from a host."""
+    return bool(table.molecules) and all(getattr(m, "relative_to", "") for m in table.molecules)
+
+
+def defect_count(table: AtomTable) -> np.ndarray:
+    """The number of sites that changed in every structure of a difference table: a vacancy
+    or an added atom counts one, a substitution one (its two rows share a site).
+
+    :func:`defect_fields` records the number; for a record without it the rows are counted,
+    where a ``+`` row at the coordinate of a ``-`` row is a substitution and shares its site.
+    """
+    out = np.zeros(table.n_mol, int)
+    for i, m in enumerate(table.molecules):
+        n = getattr(m, "n_defects", None)
+        if n is not None:
+            out[i] = int(n)
+            continue
+        minus = [k for k, t in enumerate(m.atom_types) if t.startswith("-")]
+        plus = [k for k, t in enumerate(m.atom_types) if t.startswith("+")]
+        xyz = np.asarray(m.coords, float)
+        shared = 0
+        if minus and plus:
+            d = np.linalg.norm(xyz[plus][:, None, :] - xyz[minus][None, :, :], axis=2)
+            shared = int(np.sum(np.min(d, axis=1) < 1e-6))
+        out[i] = len(minus) + len(plus) - shared
+    return out
 
 
 # --------------------------------------------------------------------------- #

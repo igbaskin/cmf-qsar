@@ -664,7 +664,9 @@ def cmd_build(args):
               f"them.")
     if args.kernel_layer != "linear":
         print(f"Nonlinear kernel layer '{args.kernel_layer}': co-fields and atom contributions "
-              "are not available for this model (the model is no longer linear in the field).")
+              "are not available for this model (the model is no longer linear in the field). "
+              "`cmf cofield --kind local` draws the co-field of the linear model tangent to it at "
+              "one molecule, and `--kind spread` how far those differ over the training set.")
 
     def prog(msg, fr):
         print(f"\r  [{fr * 100:5.1f}%] {msg:<70}", end="", flush=True)
@@ -1711,9 +1713,23 @@ def cmd_cofield(args):
     import numpy as np
     from cmfqsar.cofields import (cofield_volume, cofield_with_error, export_cube, make_grid,
                                   molfield_volume, noise_level, overlap_volume)
+    from cmfqsar.nonlinearity import (atom_interactions, cofield_spread, curvature_field,
+                                      interaction_modes, local_cofield_volume,
+                                      nonlinearity_indices, pair_interaction_field)
 
     model, _extra = load_model(args.model)
-    model._require_linear("co-fields")
+    if args.kind in ("cofield", "overlap"):
+        try:
+            model._require_linear("co-fields")
+        except ValueError as e:
+            if model.is_linear:
+                raise
+            raise SystemExit(
+                f"{e}\n--kind local draws the co-field of the linear model tangent to this one "
+                f"at --molecule, and --kind spread the mean of those over the training molecules "
+                f"and how far they differ (manual: The co-field of a nonlinear model).")
+    else:
+        model._require_fields("co-fields")
     if model.train is None:
         raise SystemExit("the model file carries no training molecules, so it has no grid")
     endpoint = getattr(args, "endpoint", "primary") or "primary"
@@ -1755,10 +1771,27 @@ def cmd_cofield(args):
     if args.z > 0:
         sigma, src = noise_level(model)
         print(f"  masking below {args.z:g} standard deviations, noise level {sigma:.3f} ({src})")
+    if args.kind == "modes":
+        if mol is None:
+            raise SystemExit("--kind modes needs --molecule FILE")
+        _print_modes(args, model, mol, names, wanted, atom_interactions, interaction_modes)
+        return
     rows = []
+    indices = {}
+    if args.kind == "spread":
+        try:
+            idx = nonlinearity_indices(model)
+        except ValueError as e:
+            raise SystemExit(str(e))
+        indices = {i.field: i.spread for i in idx}
+        print("  non-linearity index: the share of the local co-fields' squared norm that is "
+              "their spread over the training molecules (0 = linear)")
+        for i in idx:
+            print(f"    {i}")
     for f, name in enumerate(names):
         if name not in wanted:
             continue
+        spread_mean = None
         if args.kind == "molecule":
             if mol is None:
                 raise SystemExit("--kind molecule needs --molecule FILE")
@@ -1767,6 +1800,36 @@ def cmd_cofield(args):
             if mol is None:
                 raise SystemExit("--kind overlap needs --molecule FILE")
             vol = overlap_volume(model, mol, f, grid)
+        elif args.kind == "local":
+            if mol is None:
+                raise SystemExit("--kind local needs --molecule FILE")
+            vol = local_cofield_volume(model, f, mol, grid)
+        elif args.kind in ("pair", "curvature"):
+            if mol is None:
+                raise SystemExit(f"--kind {args.kind} needs --molecule FILE")
+            try:
+                if args.kind == "curvature":
+                    vol = curvature_field(model, mol, f, grid)
+                else:
+                    if args.probe_atom is None:
+                        raise SystemExit("--kind pair needs --probe-atom K, the atom of "
+                                         "--molecule the fixed probe sits on (0-based)")
+                    k = int(args.probe_atom)
+                    if not 0 <= k < mol.n_atoms:
+                        raise SystemExit(f"--probe-atom {k}: {mol.name} has {mol.n_atoms} atoms")
+                    fp = f if not args.probe_field else names.index(args.probe_field)
+                    vol = pair_interaction_field(model, mol, f, mol.coords[k], grid, f_probe=fp,
+                                                 weight=float(mol.weights[k, fp]))
+                    print(f"  fixed probe on atom {k} ({mol.symbols[k]}) of {mol.name}, field "
+                          f"{names[fp]}, weight {float(mol.weights[k, fp]):+.4f}")
+            except ValueError as e:
+                raise SystemExit(str(e))
+        elif args.kind == "spread":
+            # the standard deviation of the local co-fields is the map this kind is named
+            # after; their mean is written beside it, because it is the co-field to look at
+            # for a model with a nonlinear layer
+            sp = cofield_spread(model, f, grid)
+            vol, spread_mean = sp.sd, sp.mean
         else:
             vol = cofield_volume(model, f, grid)
         kept = float("nan")
@@ -1778,23 +1841,38 @@ def cmd_cofield(args):
             vol = ce.masked
         peak = float(np.max(np.abs(vol))) if vol.size else 0.0
         signed = float(vol.flat[int(np.argmax(np.abs(vol)))]) if vol.size else 0.0
-        rows.append((name, peak, signed, kept))
-        print(f"  {name:16s} peak {peak:10.4f} (signed {signed:+10.4f})"
-              + (f"   {kept:.0%} of the covered grid above {args.z:g} sd"
-                 if kept == kept else ""))
+        nl = float("nan")
+        if spread_mean is not None:
+            # the spread relative to the mean map, and the closed-form index of the field
+            nl = indices.get(name, float("nan"))
+            mpeak = float(np.max(np.abs(spread_mean))) if spread_mean.size else 0.0
+            rows.append((name, peak, mpeak, kept, nl))
+            print(f"  {name:16s} spread peak {peak:10.4f}   mean peak {mpeak:10.4f}   "
+                  f"non-linearity index {nl:.3f}")
+        else:
+            rows.append((name, peak, signed, kept, nl))
+            print(f"  {name:16s} peak {peak:10.4f} (signed {signed:+10.4f})"
+                  + (f"   {kept:.0%} of the covered grid above {args.z:g} sd"
+                     if kept == kept else ""))
         if args.out_prefix:
             path = f"{args.out_prefix}_{args.kind}_{name.replace(':', '_')}.cube"
             export_cube(path, grid, vol, mol,
                         title=f"CMF {args.kind} {name} of {os.path.basename(args.model)}")
             print(f"    written {path}")
+            if spread_mean is not None:
+                path = f"{args.out_prefix}_spreadmean_{name.replace(':', '_')}.cube"
+                export_cube(path, grid, spread_mean, mol,
+                            title=f"CMF mean local co-field {name} of {os.path.basename(args.model)}")
+                print(f"    written {path}")
     if args.csv:
         import csv as _csv
         with open(args.csv, "w", encoding="utf-8", newline="") as fh:
             w = _csv.writer(fh)
-            w.writerow(["field", "peak", "signed_peak", "share_above_z"])
+            w.writerow(["field", "peak", "signed_peak", "share_above_z", "nonlinearity"])
             for r in rows:
                 w.writerow([r[0], f"{r[1]:.6g}", f"{r[2]:.6g}",
-                            "" if r[3] != r[3] else f"{r[3]:.4f}"])
+                            "" if r[3] != r[3] else f"{r[3]:.4f}",
+                            "" if r[4] != r[4] else f"{r[4]:.4f}"])
         print(f"written {args.csv}")
     if not args.out_prefix and not args.csv:
         print("Nothing written: give --out-prefix for cube files or --csv for the table.")
@@ -2487,6 +2565,40 @@ def _local_aligned(args, ds, fields, targets, fieldset, rho, members=None):
     if args.cofield:
         _write_local_cofield(args, model, table, envs, used, r.lam)
     return r, used, extra
+
+
+def _print_modes(args, model, mol, names, wanted, atom_interactions, interaction_modes):
+    """The atom interaction matrix of one molecule, as its leading modes and as a table."""
+    import csv as _csv
+    import numpy as np
+    rows = []
+    for f, name in enumerate(names):
+        if name not in wanted:
+            continue
+        try:
+            H, g = atom_interactions(model, mol, f)
+            modes = interaction_modes(model, mol, f, k=args.modes)
+        except ValueError as e:
+            print(f"  {name:16s} {e}")
+            continue
+        off = H - np.diag(np.diag(H))
+        print(f"  {name}: {mol.n_atoms} atoms, largest first-order effect {np.abs(g).max():.4g} "
+              f"per unit of weight, largest curvature {np.abs(np.diag(H)).max():.4g}, largest "
+              f"pair term {np.abs(off).max():.4g}")
+        for i, md in enumerate(modes, 1):
+            top = np.argsort(-np.abs(md.vector))[:6]
+            atoms = ", ".join(f"{mol.symbols[k]}{k}:{md.vector[k]:+.2f}" for k in top)
+            print(f"    mode {i}: curvature {md.value:+.4g}   {atoms}")
+        for i in range(mol.n_atoms):
+            for j in range(mol.n_atoms):
+                rows.append((name, i, j, H[i, j]))
+    if args.csv:
+        with open(args.csv, "w", encoding="utf-8", newline="") as fh:
+            w = _csv.writer(fh)
+            w.writerow(["field", "atom_i", "atom_j", "value"])
+            for r in rows:
+                w.writerow([r[0], r[1], r[2], f"{r[3]:.8g}"])
+        print(f"written {args.csv}")
 
 
 def _write_local_cofield(args, model, table, envs, targets, lam):
@@ -4707,12 +4819,34 @@ def main(argv=None):
                     help="write <prefix>_<kind>_<field>.cube for every field")
     cf.add_argument("--csv", default=None, metavar="FILE",
                     help="write the peak of every field as a table")
-    cf.add_argument("--kind", default="cofield", choices=["cofield", "molecule", "overlap"],
+    cf.add_argument("--kind", default="cofield",
+                    choices=["cofield", "molecule", "overlap", "local", "spread", "pair",
+                             "curvature", "modes"],
                     help="cofield: the model's own map. molecule: one molecule's field in the "
                          "model's frame. overlap: that molecule's field weighted by the co-field, "
-                         "which is where it agrees with the model")
+                         "which is where it agrees with the model. local: the co-field of the "
+                         "linear model tangent to this one at --molecule, which is the co-field "
+                         "a model with a nonlinear kernel layer has at that molecule. spread: "
+                         "the standard deviation of those over the training molecules, a map of "
+                         "where the model is not additive, with their mean written beside it; "
+                         "for the spread kind the peak column is the spread's and signed_peak "
+                         "the mean map's largest absolute value. pair: the pair-interaction "
+                         "field of --molecule, the second derivative of its prediction with "
+                         "respect to a probe fixed on atom --probe-atom and a probe at every "
+                         "grid point. curvature: the second derivative along one probe at every "
+                         "point. modes: the atom interaction matrix of --molecule and its "
+                         "leading eigenmodes, printed (and written with --csv); no cube")
+    cf.add_argument("--probe-atom", type=int, default=None, metavar="K",
+                    help="for --kind pair: the atom of --molecule (0-based) the fixed probe sits "
+                         "on; it carries that atom's weight in the probe field")
+    cf.add_argument("--probe-field", default=None, metavar="NAME",
+                    help="for --kind pair: the field of the fixed probe (default: the field "
+                         "being drawn)")
+    cf.add_argument("--modes", type=int, default=3, metavar="K",
+                    help="for --kind modes: how many leading modes to print per field")
     cf.add_argument("--molecule", default=None, metavar="FILE",
-                    help="a structure file whose first molecule --kind molecule and overlap use")
+                    help="a structure file whose first molecule --kind molecule, overlap and "
+                         "local use")
     cf.add_argument("--fields", default=None, help="only these fields (default: all of them)")
     cf.add_argument("--spacing", type=float, default=0.5, metavar="A")
     cf.add_argument("--margin", type=float, default=3.0, metavar="A")

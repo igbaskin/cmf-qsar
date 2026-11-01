@@ -1,0 +1,16 @@
+name,E_sub_pbe,steps,converged,seconds
+4N4_Fe_substrate,-.11721134E+04,1,0,8246
+4N4_Co_substrate,-.11715076E+04,1,0,7210
+4N4_Ni_substrate,-.11705190E+04,1,0,1845
+4N4_Mn_substrate,-.11738807E+04,1,0,1794
+4N4_Cr_substrate,-.11743046E+04,1,0,1243
+4N4_V_substrate,-.11733443E+04,1,0,2363
+4N4_Mo_substrate,-.11728955E+04,1,0,2810
+2N2_Fe_substrate,-.11716882E+04,1,0,13198
+2N2_Co_substrate,-.11707785E+04,1,0,12827
+2N2_Ni_substrate,-.11698546E+04,1,0,3075
+2N2_Mn_substrate,-.11729315E+04,1,0,2750
+2N2_Cr_substrate,-.11731479E+04,1,0,2627
+2N2_V_substrate,-.11726908E+04,1,0,2924
+2N2_Mo_substrate,-.11733172E+04,1,0,2455
+0N0_Fe_substrate,-.11709377E+04,1,0,3106

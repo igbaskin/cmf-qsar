@@ -143,6 +143,16 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_hammett").report(_r("hammett")),
                   tables=["hammett/table.md"],
                   readme=["A field-based Hammett equation (two tables)"]),
+        Benchmark("nonlinearity", "the molecule-dependent co-field of the Gaussian layer: its "
+                  "spread and the non-linearity index on the Hammett set",
+                  "run_nonlinearity.py", "nonlinearity", compute=[[]], minutes="3",
+                  report=lambda: _mod("run_nonlinearity").report(_r("nonlinearity")),
+                  tables=["nonlinearity/table.md"]),
+        Benchmark("interactions", "second derivatives of the Gaussian layer on para-disubstituted "
+                  "benzenes with a known pair term: is the pair-interaction field on the pair",
+                  "run_interactions.py", "interactions", compute=[[]], minutes="5",
+                  report=lambda: _mod("run_interactions").report(_r("interactions")),
+                  tables=["interactions/table.md"]),
         Benchmark("am_eu", "the Am/Eu separation set: classic, indicator and quantum fields",
                   "run_am_eu.py", "am_eu",
                   compute=[["--stage", "fields"], ["--stage", "orca"], ["--stage", "quantum"],
@@ -350,6 +360,16 @@ def registry() -> List[Benchmark]:
                   minutes="40",
                   report=lambda: _mod("run_periodic_overlap").report(),
                   tables=["periodic_overlap/table.md"]),
+        Benchmark("2dmd",
+                  "a defect series on one host lattice: the periodic overlap of difference "
+                  "fields with the host symmetry against the periodic autocorrelation, on "
+                  "2,000 point-defect configurations each of MoS2 and WSe2 from the 2DMD set "
+                  "(downloads 5 MB into benchmarks/cache on the first run; needs Numba for the "
+                  "symmetry average at this size)",
+                  "run_2dmd.py", "2dmd", compute=[["--limit", "2000", "--engine", "numba"]],
+                  minutes="120",
+                  report=lambda: _mod("run_2dmd").report(),
+                  tables=["2dmd/table.md"]),
         Benchmark("sites",
                   "a site of a periodic cell as the sample, and a whole-cell model read site by "
                   "site: the split of the periodic autocorrelation against the cut cluster of "

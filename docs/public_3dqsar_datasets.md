@@ -69,13 +69,24 @@ every CI job.
 (r2SCAN-3c single points) carried by the `_qm` files; the `_sym` and `_ens` files are the symmetry
 images and the MMFF conformer ensembles of the same molecules. All of that is this work. The
 constants σ_m and σ_p are the measured values compiled by Hansch, Leo and Taft (Chem. Rev. 91
-(1991) 165, Table I). They were first written down from memory of that table. **Checked against
-the paper on 25 October 2026**: 39 of the 95 substituents were matched to a row of Table I and
-38 agreed to the last digit; the one that did not, CH2OCH3, was written here as σ_m 0.02 /
-σ_p 0.03 and is given by row 223 as **0.08 / 0.01**, which was confirmed on the page image before
-the value was changed in the script and in all five SDF files. The other 56 could not be matched
-automatically — the scan's character recognition distorts the substituent names, Cl coming out as
-"c1" and SO2Me as "SOIMe" — and remain only as reliable as the memory they were written from.
+(1991) 165, Table I). They were first written down from memory of that table. **All 95 have now
+been checked against the paper, on 31 October 2026, and 92 agree to the last digit.** Each
+substituent was found in the printed table by reading the page images of the scan, because its
+character recognition distorts the substituent names (Cl comes out as "c1", SO2Me as "SOIMe") and
+loses most of them on the last four of the eight table pages, 79 names of 234 rows surviving
+there against 263 of 297 on the first four; the two values of every row were then
+read twice, once from the image and once from the text layer, which decides the column of a
+number by its position on the page. Three disagreed and were corrected in the script and in all
+six SDF files:
+
+| substituent | row of Table I | written here | Table I |
+|---|---|---|---|
+| CH2OCH3 | 223 | σ_m 0.02 / σ_p 0.03 | **0.08 / 0.01** |
+| i-C3H7 | 288 | σ_m −0.07 | **−0.04** |
+| N(CF3)2 | 169 | σ_m 0.47 | **0.40** |
+
+The review puts brackets round a value it suspects of being inaccurate. One value used here is
+bracketed in the paper: the σ_p of O-i-C3H7 (row 293, −0.45).
 
 **π is not from that paper.** The 1991 review tabulates σ, F and R and mentions π only in its
 introduction; the hydrophobic constants here come from the Hansch–Leo compilations and have not
@@ -354,9 +365,10 @@ disordered in each.
    goes public.**
 2. `mittal/` is derived and can stay, with the sentence above about what in it is the paper's.
 3. Add the per-compound references to the corrosion exports, or deposit the database.
-4. ~~Check the Hammett constants against the table.~~ Done 25 October 2026 for σ_m and σ_p,
-   as far as the scan allows: 39 of 95 checked, one corrected, 56 unmatched. π is unchecked and
-   its attribution is corrected.
+4. ~~Check the Hammett constants against the table.~~ Done for σ_m and σ_p: 39 of 95 on
+   25 October 2026, the remaining 56 on 31 October 2026 by reading the page images, so all 95
+   are now checked and three are corrected (CH2OCH3, i-C3H7, N(CF3)2). π is not in that paper,
+   remains unchecked, and its attribution is corrected.
 5. Item A4 of the plan adds the hashes of every file here to the manifest of the benchmark
    results, so that a changed data set is distinguished from a changed program.
 

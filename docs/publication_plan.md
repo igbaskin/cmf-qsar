@@ -198,6 +198,14 @@ substituents and Taft's σ_I and σ_R; one other scaffold (pyridine or naphthale
 with published DFT-based σ predictions. The ensemble result is in hand and is one paragraph:
 the conformer ensemble changes nothing, and the measurement says why.
 
+The constants themselves are no longer a risk. All 95 σ_m and σ_p values were checked against
+Table I of the 1991 review on 31 October 2026 by reading its page images row by row: 92 agree to
+the last digit, and three were corrected in the data and the benchmark (CH2OCH3 row 223,
+i-C3H7 row 288, N(CF3)2 row 169). One value the paper itself brackets as suspected of being
+inaccurate is in the set, the σ_p of O-i-C3H7, and the paper will say so. The 69 hydrophobic
+constants π are not in that review at all and are still traced to no page: they are the one
+provenance gap left, and the paper either cites the compilation they do come from or drops them.
+
 Papers 10 and 16 give this paper two more readings: the local co-field around an aromatic
 carbon is the same construction applied to a shift, and the ring-centred fields of COMPAS-1 are
 the same construction applied to a gap. The three cite each other and share no table.
@@ -504,13 +512,25 @@ leaderboard; a DFT anchor on the benzimidazole structures themselves (VASP singl
 eight to ten UMA geometries), since OC20's fragments could not supply one; a co-author from
 materials science for the reading of the co-patterns.
 
-What would make the periodic overlap kernel a paper of its own rather than a section of this
-one is **item M14**: a vacancy series on one host lattice, where the frame is free and nothing
-has to be rescaled to get it. Thirty-five configurations of two lithium vacancies around a
-trivalent dopant in the 2x2x2 cell of beta-Li3PO4, at the measured cost of two nights of one
-workstation, would let the gate M4 could not test be tested -- and the co-field of a vacancy
-energy, read on the oxygens that coordinate it, is the figure the grant paragraph of the
-Li3PO4/Li3BP2O8/LiBO2 study needs anyway.
+**Item M14 is done (1 November 2026) on a public set**, and it is what makes the periodic
+overlap kernel a paper of its own rather than a section of this one: 2DMD, one to three point
+defects on the 8 x 8 supercell of MoS2 and of WSe2, 5,933 DFT-labelled cells per material on
+one lattice, where the frame is free and nothing has to be rescaled to get it. With the kernel
+averaged over the 768 operations of the host the arrangement kernel reaches 1.8 and 5.2 meV per
+defect site on 2,000 cells against 8.3 and 15.7 for the periodic autocorrelation, 41 for the
+count kernel and 60 for the fixed frame, and 1.9 and 4.4 against 3.0 and 6.0 on all 5,933 cells
+(the paired intervals exclude zero at both sizes; the lead is a factor of three to four at
+2,000 cells and 1.0 and 1.5 meV at 5,933); it extrapolates
+from one and two defects to three where the autocorrelation does not; and its per-defect
+contributions are the single-defect energies of the set to 0.2 eV. The published errors on this
+set are 2.6 and 4.8 meV for a sparse graph network and 11.8 and 14.7 for gradient boosting on
+descriptors, on the authors' own split. **The section this supports is "a congeneric series in
+the crystal sense": the symmetry average makes a count kernel of the linear overlap and an
+arrangement kernel of the layer, and the comparison with the graph networks has to be made under
+one split before "better" is claimed.** The beta-Li3PO4 vacancy series remains the case the
+conductivity literature argues about, and can be a case study of the same paper at the measured
+cost of two nights of one workstation; the co-field of a vacancy energy read on the oxygens that
+coordinate it is still the figure the grant paragraph of the Li3PO4/Li3BP2O8/LiBO2 study needs.
 
 **Item M5 is done (1 November 2026)**, and it gives this tier the reading it was missing:
 which **site** of the cell carries the property. The autocorrelation of a cell is a sum over
@@ -636,7 +656,7 @@ three. If time runs out, the papers that fold into others are 12 (into 8), 13 (i
 |---|---|---|
 | 0 | Public release, Zenodo DOI, PyPI, a reproduction run on another machine | days |
 | 1 | Figure of the application; nothing else | days |
-| 2 | Taft constants, one more scaffold, published DFT σ predictions as the reference | one to two weeks of runs |
+| 2 | Taft constants, one more scaffold, published DFT σ predictions as the reference, a source for the π values | one to two weeks of runs |
 | 3 | Plain 2D baseline on 86 sets, Wilcoxon tests, paired-difference figure | days |
 | 4 | Nothing; the enantiomer limitation is stated | none |
 | 5 | Bootstrap intervals on the corrosion comparisons; the seven helped series read | days |

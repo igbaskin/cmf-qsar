@@ -1,0 +1,4 @@
+maps,cross_share,cross_expected,near_y,near_y_volume,mode_spans_both
+additive model,0.103,0.074,0.3247,0.0769,0.3077
+interacting model,0.0899,0.074,0.2826,0.0769,0.141
+interacting − additive,0.0882,0.074,0.2804,0.0769,0.1154

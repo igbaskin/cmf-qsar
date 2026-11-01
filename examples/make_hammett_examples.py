@@ -24,14 +24,21 @@ and the field has the symmetry of the problem.
 The constants
 -------------
 sigma_m and sigma_p are those of Hansch, Leo and Taft, Chem. Rev. 1991, 91, 165, Table I.  They
-were first written down here from memory of that table; **39 of the 95 have since been checked
-against the paper itself** -- the rows were recovered from the scan by the coordinates of its
-words, since its text layer comes out column by column -- and 38 agreed to the last digit.  The
-one that did not was CH2OCH3, written as 0.02 / 0.03 and given by Table I (row 223) as
-0.08 / 0.01, confirmed on the page image before it was changed.  The remaining 56 could not be
-matched to a row automatically, because the scan's optical character recognition corrupts the
-substituent names (Cl comes out as "c1", SO2Me as "SOIMe"), and they are still only as good as
-the memory they came from.
+were first written down here from memory of that table; **all 95 have since been checked against
+the paper itself** and 92 agreed to the last digit.  Each substituent was found in the printed
+table by reading the page images of the scan, because its text layer distorts the substituent
+names (Cl comes out as "c1", SO2Me as "SOIMe") and loses most of them on the last four of the
+eight table pages, where 79 names of 234 rows survive; the two values
+of every row were then read twice, once from the image and once from the text layer, which gives
+the column of a number by its position on the page.  The three that disagreed were corrected to
+the printed values:
+
+    CH2OCH3   row 223   0.02 / 0.03 written, Table I gives 0.08 / 0.01
+    i-C3H7    row 288   sigma_m -0.07 written, Table I gives -0.04
+    N(CF3)2   row 169   sigma_m  0.47 written, Table I gives  0.40
+
+The review puts brackets round a value it suspects of being inaccurate.  One value used here is
+bracketed in the paper: the sigma_p of O-i-C3H7 (row 293, -0.45).
 
 The hydrophobic constant pi is **not** from that paper.  The 1991 review tabulates sigma, F and R
 and mentions pi only in its introduction; the pi values here come from the Hansch and Leo
@@ -73,7 +80,7 @@ RDLogger.DisableLog("rdApp.*")
 
 OUT_DIR = os.path.join(HERE, "hammett")
 SOURCE = ("Hammett sigma_m / sigma_p after Hansch, Leo & Taft, Chem. Rev. 1991, 91, 165, Table I "
-          "(39 of 95 checked against the paper, one correction); Hansch pi from the Hansch-Leo "
+          "(all 95 checked against the paper, three corrections); Hansch pi from the Hansch-Leo "
           "substituent compilations, unchecked; structures X-C6H5 built with RDKit ETKDG + "
           "MMFF94 and placed with the ring "
           "centroid at the origin, the ipso carbon on +x and the ring in the xy plane "
@@ -86,7 +93,7 @@ SUBSTITUENTS: List[Tuple[str, str, float, float, Optional[float]]] = [
     ("CH3", "C", -0.07, -0.17, 0.56),
     ("C2H5", "CC", -0.07, -0.15, 1.02),
     ("n-C3H7", "CCC", -0.06, -0.13, 1.55),
-    ("i-C3H7", "C(C)C", -0.07, -0.15, 1.53),
+    ("i-C3H7", "C(C)C", -0.04, -0.15, 1.53),
     ("n-C4H9", "CCCC", -0.08, -0.16, 2.13),
     ("t-C4H9", "C(C)(C)C", -0.10, -0.20, 1.98),
     ("cyclopropyl", "C1CC1", -0.07, -0.21, 1.14),
@@ -158,7 +165,7 @@ SUBSTITUENTS: List[Tuple[str, str, float, float, Optional[float]]] = [
     ("NHCONH2", "NC(N)=O", -0.03, -0.24, -1.30),
     ("NHSO2CH3", "NS(C)(=O)=O", 0.20, 0.03, -1.18),
     ("N(CH3)COCH3", "N(C)C(C)=O", 0.31, 0.26, None),
-    ("N(CF3)2", "N(C(F)(F)F)C(F)(F)F", 0.47, 0.53, None),
+    ("N(CF3)2", "N(C(F)(F)F)C(F)(F)F", 0.40, 0.53, None),
     ("NO2", "[N+](=O)[O-]", 0.71, 0.78, -0.28),
     ("NO", "N=O", 0.62, 0.91, None),
     ("N3", "N=[N+]=[N-]", 0.37, 0.08, 0.46),

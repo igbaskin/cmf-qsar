@@ -54,7 +54,7 @@ structure, which the data set brings with it and which needs no superposition.*
 | Validation | k-fold cross-validation, external (nested) CV with repeats, and, for a series of several scaffolds, **leave-one-chemotype-out** folds that never put a molecule's own scaffold-mates in the training part, with an alignment-free fragment model as the baseline that the aligned model has to beat (see below). |
 | Model selection | Grid search over α (shared) and λ (or C/ε/ν) minimising RMSE in k-fold cross-validation (shuffled or interleaved folds), optional continuous Brent minimisation over λ as in the 2013 scripts; optional coordinate-descent optimisation of the mixing coefficients `h_f` or their choice by **centred kernel alignment** (multiple kernel learning), and a grid over the bandwidth of the Gaussian kernel layer; **external (nested) cross-validation** with repeats (q²ex, RMSEcvex), kernels computed once per α and sliced for the outer folds. |
 | Statistics | Regression: r², RMSE (fit); q², RMSEcv (internal CV); R²pred, RMSEpred (test set, both variance conventions); q²ex, RMSEcvex (external CV). Classification: accuracy, balanced accuracy, sensitivity, specificity, Matthews correlation, AUC and ROC curves, for the fit, the cross-validation and the test set. |
-| Interpretation | **Molecular co-fields** `C_f(r) = Σ_j a_j X_fj(r)` (Eq. 9) rendered as ± isosurfaces; molecular field `X_f(r)` of any molecule in the same colours, with or without a model (co-fields are drawn as solid surfaces and molecular fields as a mesh by default; both styles are switchable); overlap `C·X` whose integral is the field's contribution to the prediction (Eq. 7); the three decomposition rules of the 2019 paper: training-molecule contributions `a_j K(X,X_j)` and **atom contributions** (Eq. 14 of the 2015 paper) shown as red/blue spheres; **Shapley values** over atoms, substituents or field types, which replace the co-field when a nonlinear kernel layer is used and reproduce the atom contributions exactly when it is not, with second-order interaction indices. |
+| Interpretation | **Molecular co-fields** `C_f(r) = Σ_j a_j X_fj(r)` (Eq. 9) rendered as ± isosurfaces; molecular field `X_f(r)` of any molecule in the same colours, with or without a model (co-fields are drawn as solid surfaces and molecular fields as a mesh by default; both styles are switchable); overlap `C·X` whose integral is the field's contribution to the prediction (Eq. 7); the three decomposition rules of the 2019 paper: training-molecule contributions `a_j K(X,X_j)` and **atom contributions** (Eq. 14 of the 2015 paper) shown as red/blue spheres; **Shapley values** over atoms, substituents or field types, which replace the co-field when a nonlinear kernel layer is used and reproduce the atom contributions exactly when it is not, with second-order interaction indices; for a nonlinear kernel layer also the **local co-field** (the co-field of the tangent linear model at one molecule), the **spread** of those over the training set and a **non-linearity index** per field. |
 | Tools | **Protein binding sites** fetched from the PDB or read from a local file and drawn behind the molecules and their fields, with atom codes on the molecule and residue names on the alpha carbons; **field complementarity** of the molecules and of the co-fields with the pocket, as numbers, as a coloured surface and **resolved by receptor residue** into an interaction profile that can be compared with a reference ligand's or with the pattern a series conserves (see below); the **field difference** from a reference molecule, by the cosine or by Tversky's asymmetric index, which is what a fragment of that reference needs (see below); MCS-based alignment to a reference molecule, optional pose refinement by maximising the CMF kernel similarity (the alignment criterion proposed in the 2013 paper), **alignment by prediction confidence** (see below), **alignment by matching the typed extrema of the fields themselves**, which needs no common substructure, no overlapping starting pose and no model (see below), 3D generation from SMILES, model save/load, CSV/SDF/Gaussian-cube export, screenshots. |
 
 ### Conformational ensembles: the fourth dimension
@@ -678,6 +678,48 @@ at the A site. The per-site form of decomposition rule 3 says the same in number
 0.58, B -6.16 ± 0.81, X -3.87 ± 0.55 eV over 150 cells -- where the spread is the part
 that carries information: the B site's contribution varies most from compound to compound.
 
+### A defect series on one host: the host symmetry and the arrangement kernel
+
+The perovskites are different compounds forced onto one lattice. A defect series is the case the
+kernel was built for (plan item M14): one host, one supercell, cells that differ by which sites
+are changed. Two things are added for it in [periodic.py](cmfqsar/periodic.py). A cell is
+written as the host plus a signed change on the changed sites (`defect_fields`, `defect_table`):
+the kernel is bilinear, so the kernel of the differences is exact, and a model with a bias on
+them is the model on the whole cells. And the kernel is averaged over the space-group operations
+of the host (`host_symmetry`, from spglib; `CMFModel(..., pbc_symmetry=...)`), because two
+arrangements of the same defects that differ by a host operation have the same energy but, in a
+fixed frame, fields that do not overlap. The linear average is a count kernel: additive over the
+defects and blind to their arrangement. The arrangement is kept by averaging the Gaussian layer
+over the group instead (`symmetry_averaged_kernels`), which is the orbit mean in the layer's
+feature space and so a kernel in its own right. A compiled loop takes every atom pair at its
+nearest image, and the 768-operation average of an 8 x 8 supercell costs 125 s for 2,000 cells.
+
+Measured on 2DMD (Huang et al. 2023): one to three vacancies and substitutions on the 8 x 8
+supercell of MoS2 and of WSe2, DFT formation energy of the cell, 2,000 random cells per material
+and then all 5,933, five random folds (`benchmarks/results/2dmd/table.md`). MAE per defect site
+in meV:
+
+| kernel | MoS2, 2,000 cells | WSe2, 2,000 cells | MoS2, all 5,933 | WSe2, all 5,933 |
+|---|---:|---:|---:|---:|
+| fixed frame, no symmetry | 60 | 57 | 42 | 42 |
+| counts (the linear symmetry average) | 41 | 42 | 41 | 41 |
+| periodic autocorrelation | 8.3 | 15.7 | 3.0 | 6.0 |
+| arrangement (the symmetry-averaged layer) | 1.8 | 5.2 | 1.9 | 4.4 |
+
+The arrangement kernel beats the autocorrelation by 6.5 [5.3, 7.7] and 10.5 [9.1, 12.1] meV per
+site on 2,000 cells (paired bootstrap, 95 %), which is the half of the M4 gate the perovskites
+could not test. On all 5,933 cells the autocorrelation gains most from the extra training cells
+and the lead shrinks to 1.0 [0.8, 1.2] and 1.5 [1.3, 1.9] meV per site, still with intervals that
+exclude zero. The published errors on this set, on the authors' own split of all 5,933 cells, are
+2.6 / 4.8 meV for a sparse graph network and 11.8 / 14.7 for gradient boosting on descriptors.
+Trained on the 131 cells with one or two defects and predicting those with three (1,869 in the
+2,000-cell sample, 5,802 in the full set), the arrangement kernel reaches 4.3 and 4.7 meV per
+site on MoS2 and 54 and 38 on WSe2, where the additive count kernel gives 38 on both, and the
+autocorrelation does not extrapolate at all (R² near zero). The per-defect
+contributions of the linear model (decomposition rule 3) are one number per kind of defect, to
+four decimals, and match the single-defect cells of the set to 0.2 eV: a sulfur vacancy in MoS2
+costs 2.59 eV against 2.65 measured, a molybdenum vacancy 6.98 against 7.12.
+
 ### Crystals: the periodic autocorrelation
 
 The autocorrelation above is the real-space counterpart of a reciprocal-space object. Averaged over
@@ -1111,12 +1153,51 @@ phosphorylase. A second arc-cosine layer is worth almost nothing over the first,
 kernels: depth beyond one layer adds little when the base kernel is already rich.
 
 The cost is interpretation. With a layer active the model is no longer linear in the molecular field,
-so there is no co-field and no decomposition into atoms; the application refuses to compute them and
-says why, rather than drawing quantities that no longer mean what they claim. What does survive is
+so there is no single co-field and no decomposition into atoms; the application refuses to compute them
+and says why, rather than drawing quantities that no longer mean what they claim. What does survive is
 decomposition rule 2, the contributions `a_j K(X, X_j)` of the individual training molecules, which is
-defined for any kernel and is still shown in the Contributions tab. The recommended use is therefore to
-keep the linear model for interpretation and to report the nonlinear one beside it when prediction is
-the goal.
+defined for any kernel and is still shown in the Contributions tab.
+
+**The co-field of a nonlinear model is one per molecule** (`cmfqsar/nonlinearity.py`). The layered
+prediction is still a differentiable function of the field, and its derivative at molecule X is a
+field: `C_fX(r) = Σ_j a_j g_s(X, X_j) x_fj(r)` plus, without cosine normalisation, a term along X's
+own field, with `g_s` the derivative of the layer (`2γg` for the Gaussian layer, `(π − θ)/π` for the
+arc-cosine one). It is the co-field of the linear model tangent to the nonlinear one at X: a molecule
+close to X is predicted by the overlap of its field change with it. For the linear kernel it is the
+ordinary co-field for every X; for the Gaussian layer it is the ordinary co-field with the training
+molecules weighted by their similarity to X. Built on it: the **spread** of the local co-fields over
+the training set (their mean is the one co-field to draw for such a model, their standard deviation a
+map of where the model is not additive) and a **non-linearity index** per field, the share of the
+local co-fields' squared norm that their spread makes up, 0 for a linear model, computed from the
+training kernel matrix without a grid. `cmf cofield --kind local --molecule FILE` and `--kind spread`
+write them as cube files. Measured on the Hammett set (`benchmarks/run_nonlinearity.py`): the index
+orders the targets as it should, 0.10 for σp, 0.20 for σm, 0.32 for π and 0.41 for the product σp·π
+made non-additive on purpose; the spread maps survive refitting on four-fifths of the set at a
+correlation of 0.96 or better except on π, whose near-interpolating fit (λ = 10⁻⁴) also makes its mean
+map unstable (0.54), which is what the stability check is for. Second derivatives, how the effect of
+field at one place depends on the field at another, are a two-point function and are not drawn. The
+recommended use is still to keep the linear model for interpretation and to report the nonlinear one
+beside it when prediction is the goal, now with the spread map saying where the two differ.
+
+**Second derivatives: the pair-interaction field and the interaction modes.** Whether the effect of
+field at one place depends on the field at another is a second derivative. The same module takes it
+with respect to the amplitudes of probe atoms (Gaussians of the field's own width added to the raw
+field), which keeps it finite and differentiates the kernel normalisation exactly; the unit tests
+check it against second differences of the prediction. Three readings: the **pair-interaction
+field** (`cmf cofield --kind pair --molecule FILE --probe-atom K`), one probe fixed on an atom and the
+other scanned over the grid; the **curvature field** (`--kind curvature`), its diagonal; and the
+**atom interaction matrix** with its eigenmodes (`--kind modes`), the second derivatives between the
+weights of every pair of the molecule's atoms, beside the first derivatives that take the place of
+the atom contributions under a layer. A linear model without normalisation has none of this; the
+arc-cosine layers are refused (a cusp where two molecules coincide). Measured on a set made for it
+(`benchmarks/run_interactions.py`: 105 para-disubstituted benzenes with an additive activity
+σ(X) + σ(Y) and one that adds 1.5 σ(X) σ(Y)), the fitted cross derivative between the two
+substituents regressed on the designed one has slope 1.9 (correlation 0.73) for the interacting
+activity and 0.06 (0.30) for the additive one, and the pair field near the second substituent slope
+1.4 against 0.08; the maps are stable under refitting (0.97). Two cautions came with it: the layer
+overstates the pair term and is curved within a substituent too (2.4 times the designed cross term),
+and *where* the curvature sits does not separate the two activities — the signal is the size of the
+second derivative, to be judged by its product with realistic amplitudes.
 
 **Multiple kernel learning** keeps the kernel linear. The joint kernel is a weighted sum of the per-field
 kernels, `K = Σ_f h_f c_f K_f`, so choosing `h_f` *is* the multiple-kernel-learning problem, and the
@@ -3708,7 +3789,7 @@ ten minutes for the set six at a time), q²:
 
 | constant | all five, Hirshfeld | Hirshfeld alone | all five, Gasteiger |
 |---|---|---|---|
-| σ_m | **0.79** (RMSEcv 0.12) | 0.66 | 0.70 |
+| σ_m | **0.79** (RMSEcv 0.12) | 0.65 | 0.70 |
 | σ_p | **0.78** (RMSEcv 0.18) | 0.71 | 0.69 |
 | π | 0.74 | 0.33 | 0.71 |
 
@@ -4762,7 +4843,9 @@ one obtains q² ≈ 0.87 and R²pred ≈ 0.84 (noise ceiling ≈ 0.94).
 
 `examples/hammett/hammett.sdf`, `hammett_sym.sdf` — 95 monosubstituted benzenes with the Hammett
 constants `sigma_m` and `sigma_p` (and the Hansch `pi` for 69) of Hansch, Leo & Taft, Chem. Rev. 91
-(1991) 165, transcribed from memory of that table (check a single number against it before quoting),
+(1991) 165, first written down from memory of that table and since checked row by row against it
+(all 95 checked on 31 October 2026, 92 agreed, three corrected: CH2OCH3, i-C3H7 and N(CF3)2; π is
+not in that paper and remains unchecked),
 placed with the ring centroid at the origin, the ipso carbon on +x and the ring in the xy plane by
 `examples/make_hammett_examples.py`; the `_sym` file carries the four symmetry images of every
 molecule as conformers for the ensemble mode (`--ensemble-by name --conformations ensemble`). See
@@ -5094,7 +5177,7 @@ cmfqsar/mil.py          multi-instance learning: the model chooses the conformat
 cmfqsar/docking.py      rigid-body placement of conformations in the pocket
 cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grouped folds
 cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrelation)
-cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solids, the co-pattern
+cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solids, the co-pattern, the periodic overlap kernel, a defect series under the host symmetry
 cmfqsar/sites.py        a site of a periodic cell as the sample: the split of the autocorrelation, per-site targets, a cell model read site by site
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field, and the query formats that carry them out of the program
