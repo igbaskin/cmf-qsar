@@ -1169,6 +1169,309 @@ def fig_laplacian(path):
     save(fig, path)
 
 
+def fig_probe(path):
+    """Chapter 7: three GRID-like probe fields of cortisol in the mean plane of the steroid
+    series, beside the built-in hydrogen-bond acceptor field."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.fields import FieldSet, build_fields
+    s, c = steroids(), cofield_model()
+    ds, frame, xs, ys = s["ds"], c["frame"], c["xs"], c["ys"]
+    i = ds.names.index("cortisol")
+    probes = ("water", "carbonyl", "amine")
+    fs = FieldSet.create(alpha=1.0, probes=list(probes))
+    mol = build_fields(ds.mols[i], fs, ds.names[i])
+    # read 2 A above the mean plane: in the plane itself every probe sits at the bottom of its
+    # well on top of the atoms, and the map is one flat blob
+    height = 2.0
+    pts, shape = plane_points(frame, xs, ys, offset=height)
+    panels = [(f"probe:{p}", f"{p} probe") for p in probes] + [("hba", "H-bond acceptor field")]
+    fig, axes = plt.subplots(1, 4, figsize=(WIDTH, 1.75))
+    for ax, (name, title) in zip(axes, panels):
+        f = fs.names.index(name)
+        Z = field_slice(mol, fs.specs[f], f, pts).reshape(shape)
+        if fs.specs[f].is_probe:
+            # a probe field is never positive, so the scale runs from its deepest value to zero
+            im = ax.imshow(Z, origin="lower", extent=(xs[0], xs[-1], ys[0], ys[-1]), cmap="Blues_r",
+                           vmin=Z.min(), vmax=0.0, aspect="equal", interpolation="bilinear")
+        else:
+            im = signed_map(ax, Z, xs, ys)
+        draw_skeleton(ax, mol, frame)
+        ax.set_title(title, fontsize=8)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        fig.colorbar(im, ax=ax, shrink=0.75, pad=0.03).ax.tick_params(labelsize=6)
+    fig.suptitle(f"cortisol, {height:g} Å above the mean plane: what a probe would gain at each "
+                 "point (darker: more), and a built-in field", fontsize=8, y=0.99)
+    fig.tight_layout(rect=(0, 0, 1, 0.88))
+    print(f"  probe fields of {mol.name}: " + ", ".join(
+        f"{p} {field_slice(mol, fs.specs[fs.names.index('probe:' + p)], fs.names.index('probe:' + p), pts).min():+.2f}"
+        for p in probes))
+    save(fig, path)
+
+
+def fig_chemspace(path):
+    """Chapter 8: the two projections of the steroid set: the GTM activity landscape with the
+    molecules on it, and the kernel-PCA score plot the GTM is fitted on."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.fields import AtomTable
+    from cmfqsar.gtm import CMFMap
+    s, c = steroids(), cofield_model()
+    ds, mf, fs = s["ds"], c["mf"], c["fs"]
+    train, test = list(s["train_idx"]), list(ds.test_indices)
+    # ten components, a 15 by 15 grid and three wide basis functions a side: twenty components
+    # on 21 molecules leave the GTM a singular system, and sharper responsibilities an empty map
+    cmap = CMFMap(n_components=10, grid=15, rbf=3, rbf_width=1.5, n_iter=100, seed=0).fit(
+        AtomTable.from_molecules([mf[i] for i in train]), fs)
+    # every node that carries any responsibility gets a value; with 21 molecules the default
+    # density floor would leave most of the map empty
+    land = cmap.as_image(cmap.activity_landscape(s["y"], min_density=1e-9))
+    coords_test, _ = cmap.project(AtomTable.from_molecules([mf[i] for i in test]))
+    scores_train = cmap.scores()
+    scores_test = cmap.kpca.transform(cmap._kernel(AtomTable.from_molecules([mf[i] for i in test]),
+                                                   cmap.train_))[:, :2]
+    ratio = cmap.kpca.explained_variance_ratio
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.9))
+    ax = axes[0]
+    im = ax.imshow(land.T, origin="lower", extent=(-1, 1, -1, 1), cmap="viridis",
+                   interpolation="bilinear")
+    ax.scatter(cmap.coords_[:, 0], cmap.coords_[:, 1], c=s["y"], cmap="viridis", s=30,
+               edgecolor="black", linewidth=0.5, vmin=land[np.isfinite(land)].min(),
+               vmax=land[np.isfinite(land)].max(), label="training")
+    ax.scatter(coords_test[:, 0], coords_test[:, 1], facecolor="white", edgecolor="black", s=30,
+               linewidth=0.8, label="test, projected")
+    ax.set_title("GTM activity landscape", fontsize=9)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.legend(frameon=False, fontsize=7, loc="lower left")
+    fig.colorbar(im, ax=ax, shrink=0.8, pad=0.03, label="pK").ax.tick_params(labelsize=7)
+    ax = axes[1]
+    ax.scatter(scores_train[:, 0], scores_train[:, 1], c=s["y"], cmap="viridis", s=30,
+               edgecolor="black", linewidth=0.5)
+    ax.scatter(scores_test[:, 0], scores_test[:, 1], facecolor="white", edgecolor="black", s=30,
+               linewidth=0.8)
+    ax.set_xlabel(f"component 1 ({100 * ratio[0]:.0f} % of the variance)")
+    ax.set_ylabel(f"component 2 ({100 * ratio[1]:.0f} %)")
+    ax.set_title("kernel PCA score plot", fontsize=9)
+    ax.set_aspect("equal")
+    ax.tick_params(length=2)
+    fig.tight_layout()
+    print(f"  chemical space map: {len(train)} training and {len(test)} test steroids, "
+          f"components explain {100 * ratio[0]:.1f} and {100 * ratio[1]:.1f} %")
+    save(fig, path)
+
+
+def fig_gradient(path):
+    """Chapter 9: the gradient of one prediction: the derivative with respect to every atom
+    position, drawn as arrows, and with respect to the atom's charge, drawn as colour."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.gradients import prediction_gradient
+    s, c = steroids(), cofield_model()
+    ds, mf, model, frame, fs = s["ds"], c["mf"], c["model"], c["frame"], c["fs"]
+    i = ds.names.index("19-norprogesterone")
+    mol = mf[i]
+    g = prediction_gradient(model, mol)
+    heavy = np.array([sym != "H" for sym in mol.symbols])
+    xy = project(frame, mol.coords)
+    origin, e1, e2, e3 = frame
+    d_xy = np.column_stack([g.coords @ e1, g.coords @ e2])
+    f = fs.names.index("electrostatic")
+    dq = g.weights[:, f]
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.25))
+    for ax in axes:
+        draw_skeleton(ax, mol, frame, colour="0.55")
+        ax.set_aspect("equal")
+        ax.set_xticks([])
+        ax.set_yticks([])
+    ax = axes[0]
+    size = np.linalg.norm(d_xy[heavy], axis=1)
+    scale = 2.6 / size.max()
+    ax.quiver(xy[heavy, 0], xy[heavy, 1], d_xy[heavy, 0] * scale, d_xy[heavy, 1] * scale,
+              angles="xy", scale_units="xy", scale=1, width=0.006, color="C3", zorder=5)
+    ax.set_title("move each atom this way to raise the prediction\n"
+                 f"longest arrow: {size.max():.2f} pK units per Å", fontsize=8)
+    ax = axes[1]
+    vmax = np.abs(dq[heavy]).max()
+    sc = ax.scatter(xy[heavy, 0], xy[heavy, 1], c=dq[heavy], cmap="RdBu_r", vmin=-vmax, vmax=vmax,
+                    s=90, edgecolor="black", linewidth=0.4, zorder=5)
+    ax.set_title("derivative with respect to each atom's charge\npK units per unit charge",
+                 fontsize=8)
+    fig.colorbar(sc, ax=ax, shrink=0.65, pad=0.03).ax.tick_params(labelsize=7)
+    fig.suptitle(f"{mol.name}: prediction {g.value:.2f}, observed {ds.activity[i]:.2f}", fontsize=9,
+                 y=0.99)
+    fig.tight_layout(rect=(0, 0, 1, 0.87))
+    k, _ = g.largest_coordinate_terms(1)[0]
+    print(f"  gradient of {mol.name}: value {g.value:.3f}; largest position derivative "
+          f"{size.max():.3f} per A on atom {k} ({mol.symbols[k]}); largest charge derivative "
+          f"{dq[heavy].max():+.3f}/{dq[heavy].min():+.3f}")
+    save(fig, path)
+
+
+def fig_metabolism(path):
+    """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
+    coloured by its out-of-fold score, the measured sites ringed."""
+    import matplotlib.pyplot as plt
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+    sys.path.insert(0, os.path.join(ROOT, "benchmarks"))
+    import run_metabolism as rm
+    from cmfqsar.localenv import LOCAL_SPEC, count_features, environments, local_features, types_of
+    from cmfqsar.locallarge import choose_lam_primal, normalised_rows
+    mols, fields, targets = rm.read()
+    types = types_of(fields, min_atoms=10)
+    Z_count, _ = normalised_rows(count_features(fields, targets, types), scale=np.ones(len(types) * 0 + count_features(fields, targets, types).shape[1]))
+    rho = 0.25
+    Z_field, _ = normalised_rows(local_features(environments(fields, targets, rho=rho)),
+                                 n_bins=LOCAL_SPEC.n_bins)
+    Z = np.hstack([Z_count, Z_field]) / np.sqrt(2.0)
+    res = choose_lam_primal(Z, targets, lams=(0.01,), folds=10, seed=0, name="count and field")
+    pred, y = np.asarray(res.predicted, float), np.asarray(targets.y, float)
+    molecule, atom = np.asarray(targets.molecule, int), np.asarray(targets.atom, int)
+    # one molecule whose top-ranked atom is a site and one where neither of the top two is
+    picks = {}
+    for m in range(len(mols)):
+        rows = np.where(molecule == m)[0]
+        if len(rows) < 14 or len(rows) > 24 or y[rows].sum() == 0:
+            continue
+        order = rows[np.argsort(-pred[rows])]
+        if "hit" not in picks and y[order[0]] > 0:
+            picks["hit"] = m
+        if "miss" not in picks and y[order[0]] == 0 and y[order[1]] == 0:
+            picks["miss"] = m
+        if len(picks) == 2:
+            break
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.7))
+    for ax, (what, m) in zip(axes, sorted(picks.items())):
+        rows = np.where(molecule == m)[0]
+        rd = Chem.Mol(mols[m])
+        rdDepictor.Compute2DCoords(rd)
+        xy = rd.GetConformer().GetPositions()[:, :2]
+        heavy = [a.GetIdx() for a in rd.GetAtoms() if a.GetAtomicNum() > 1]
+        for b in rd.GetBonds():
+            p, q = b.GetBeginAtomIdx(), b.GetEndAtomIdx()
+            if p in heavy and q in heavy:
+                ax.plot(xy[[p, q], 0], xy[[p, q], 1], color="0.55", lw=1.2, zorder=1)
+        score = pred[rows]
+        sc = ax.scatter(xy[atom[rows], 0], xy[atom[rows], 1], c=score, cmap="viridis", s=70,
+                        edgecolor="black", linewidth=0.4, zorder=3)
+        sites = rows[y[rows] > 0]
+        ax.scatter(xy[atom[sites], 0], xy[atom[sites], 1], s=190, facecolor="none",
+                   edgecolor="C3", linewidth=1.8, zorder=4)
+        top = rows[np.argsort(-score)[:2]]
+        for rank, r in enumerate(top, 1):
+            ax.annotate(str(rank), xy[atom[r]], xytext=(7, 7), textcoords="offset points",
+                        fontsize=8, fontweight="bold")
+        for a in heavy:
+            sym = rd.GetAtomWithIdx(a).GetSymbol()
+            if sym != "C":
+                ax.annotate(sym, xy[a], xytext=(-7, -9), textcoords="offset points", fontsize=6.5,
+                            color="0.3")
+        ax.set_aspect("equal")
+        ax.axis("off")
+        ax.set_title(f"{targets.names[m] if hasattr(targets, 'names') else rd.GetProp('_Name')}: "
+                     + ("a site is ranked first" if what == "hit" else "the two top atoms are not sites"),
+                     fontsize=8)
+        fig.colorbar(sc, ax=ax, shrink=0.75, pad=0.02).ax.tick_params(labelsize=6.5)
+    fig.suptitle("out-of-fold score of every heavy atom; red ring: a measured site of metabolism; "
+                 "1, 2: the atoms ranked highest", fontsize=8.5)
+    fig.tight_layout(rect=(0, 0, 1, 0.92))
+    hits = rm.per_molecule_hits(targets, pred, 2)
+    print(f"  metabolism: count and field at rho {rho}, top-2 hit rate {hits.mean():.3f}; "
+          f"drawn {picks}")
+    save(fig, path)
+
+
+def fig_pharmacophore(path):
+    """Chapter 8: the pharmacophore read out of the steroid co-fields, drawn over the two
+    co-field maps as circles of the features' tolerance radii."""
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle
+    from cmfqsar.pharmacophore import colour_of, extract
+    s, c = steroids(), cofield_model()
+    fs, mf, model, frame, xs, ys = c["fs"], c["mf"], c["model"], c["frame"], c["xs"], c["ys"]
+    ref = mf[s["train_idx"][int(np.argmax(s["y"]))]]
+    feats = extract(model, level=0.5, max_features=8)
+    origin, e1, e2, e3 = frame
+    pts, shape = plane_points(frame, xs, ys)
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.7))
+    seen = {}
+    for ax, name in zip(axes, ("electrostatic", "steric")):
+        f = fs.names.index(name)
+        Z = cofield_slice(model, f, pts).reshape(shape)
+        im = signed_map(ax, Z, xs, ys)
+        draw_skeleton(ax, ref, frame, colour="0.3")
+        for ft in feats:
+            cx, cy = project(frame, ft.centre[None, :])[0]
+            height = abs(float((ft.centre - origin) @ e3))
+            alpha = max(0.3, 1.0 - height / 3.0)
+            patch = Circle((cx, cy), ft.radius, fill=False, edgecolor=colour_of(ft), lw=1.6,
+                           ls="--" if ft.kind == "exclusion" else "-", alpha=alpha, zorder=6)
+            ax.add_patch(patch)
+            seen.setdefault(ft.kind, colour_of(ft))
+        ax.set_title(f"{fs.specs[f].label} co-field", fontsize=9)
+        axes_in_angstrom(ax, ylabel=ax is axes[0])
+        fig.colorbar(im, ax=ax, shrink=0.7, pad=0.03).ax.tick_params(labelsize=7)
+    names = {"donor_bad": "donor disfavoured", "acceptor_bad": "acceptor disfavoured",
+             "hydrophobic_bad": "hydrophobe disfavoured", "exclusion": "exclusion volume"}
+    handles = [plt.Line2D([], [], color=col, lw=1.6, ls="--" if kind == "exclusion" else "-",
+                          label=names.get(kind, kind)) for kind, col in seen.items()]
+    fig.legend(handles=handles, loc="lower center", ncol=3, frameon=False, fontsize=7,
+               bbox_to_anchor=(0.5, -0.01))
+    fig.suptitle("the pharmacophore read out of the steroid co-fields, over two of them",
+                 fontsize=9, y=0.99)
+    fig.tight_layout(rect=(0, 0.12, 1, 0.95))
+    print(f"  pharmacophore: {len(feats)} features: " + "; ".join(
+        f"{ft.kind} ({ft.field}) r {ft.radius:.1f}" for ft in feats))
+    save(fig, path)
+
+
+def fig_pocket(path):
+    """Chapter 12: the electrostatic field of the most active CDK8 ligand and of its pocket in
+    the ligand's mean plane, and where their product says the two are complementary."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.complementarity import complementarity, pocket_fields
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.fields import FieldSet, build_fields
+    from cmfqsar.protein import read_pdb
+    ds = load_dataset(os.path.join(ROOT, "examples", "openff", "cdk8.sdf"))
+    protein = read_pdb(os.path.join(ROOT, "examples", "pockets", "openff", "cdk8.pdb"))
+    fs = FieldSet.create()
+    pocket = pocket_fields(protein, fs)
+    i = int(np.nanargmax(ds.activity))
+    lig = build_fields(ds.mols[i], fs, ds.names[i])
+    comp = complementarity(lig, pocket, fs)
+    f = fs.names.index("electrostatic")
+    frame = plane_of([lig])
+    xy = project(frame, lig.coords)
+    lo, hi = xy.min(axis=0) - 4.0, xy.max(axis=0) + 4.0
+    xs, ys = np.arange(lo[0], hi[0], 0.15), np.arange(lo[1], hi[1], 0.15)
+    pts, shape = plane_points(frame, xs, ys)
+    X = field_slice(lig, fs.specs[f], f, pts).reshape(shape)
+    P = field_slice(pocket, fs.specs[f], f, pts).reshape(shape)
+    origin, e1, e2, e3 = frame
+    near = np.abs((np.asarray(pocket.coords) - origin) @ e3) < 1.5
+    pxy = project(frame, np.asarray(pocket.coords)[near])
+    inside = (pxy[:, 0] > xs[0]) & (pxy[:, 0] < xs[-1]) & (pxy[:, 1] > ys[0]) & (pxy[:, 1] < ys[-1])
+    pxy = pxy[inside]
+    panels = [(X, "ligand field $X_f$"), (P, "pocket field"), (-X * P, "$-X_f \\times$ pocket: complementary where red")]
+    fig, axes = plt.subplots(1, 3, figsize=(WIDTH, 2.15))
+    for ax, (Z, title) in zip(axes, panels):
+        im = signed_map(ax, Z, xs, ys)
+        ax.scatter(pxy[:, 0], pxy[:, 1], s=6, color="0.35", zorder=2)
+        draw_skeleton(ax, lig, frame)
+        ax.set_xlim(xs[0], xs[-1])
+        ax.set_ylim(ys[0], ys[-1])
+        ax.set_title(title, fontsize=8)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        fig.colorbar(im, ax=ax, shrink=0.75, pad=0.03).ax.tick_params(labelsize=6)
+    fig.suptitle(f"CDK8, {lig.name} (pAffinity {ds.activity[i]:.1f}) in its pocket: the "
+                 "electrostatic field of each side in the ligand's mean plane\n"
+                 "grey: pocket atoms within 1.5 Å of the plane", fontsize=8, y=0.99)
+    fig.tight_layout(rect=(0, 0, 1, 0.84))
+    print(f"  pocket: {pocket.n_atoms} pocket atoms, ligand {lig.name}; {comp.describe()[:160]}")
+    save(fig, path)
+
+
 def fig_scatter(path):
     """Chapter 7: observed against predicted for the steroid model, cross-validation and test set.
 
@@ -1409,6 +1712,12 @@ FIGURES = {
     "topomer.svg": fig_topomer,
     "confidence.svg": fig_confidence,
     "laplacian.svg": fig_laplacian,
+    "probe.png": fig_probe,
+    "chemspace.png": fig_chemspace,
+    "gradient.png": fig_gradient,
+    "metabolism.svg": fig_metabolism,
+    "pharmacophore.png": fig_pharmacophore,
+    "pocket.png": fig_pocket,
     "scatter.svg": fig_scatter,
     "rule1.png": fig_rule1,
     "rule2.svg": fig_rule2,

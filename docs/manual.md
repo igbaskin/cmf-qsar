@@ -2059,6 +2059,8 @@ GRID itself rather than shapes. Adding a probe is one entry in `PROBES` in
 [probes.py](cmfqsar/probes.py); the fitting, the kernel, the drawing and both interfaces read that
 dictionary, so a new one appears everywhere at once.
 
+![Three probe fields of cortisol read 2 Å above the mean plane of the steroid series, where a probe can sit, beside the built-in hydrogen-bond acceptor field read at the same height. A probe field is what the probe would gain at each point and is never positive, so its scale runs from the deepest value to zero; the water and the amine probe gain most over the hydroxyl and carbonyl groups, the carbonyl probe where there is a donor to meet, and all three gain something over the whole skeleton from dispersion, which the built-in field, a sum of atom-centred Gaussians, does not carry.](docs/figures/probe.png)
+
 The obstacle is arithmetic, not conceptual: a Lennard-Jones term is not a Gaussian, has no
 closed-form overlap, and diverges at the atom, so the integral of its square does not exist. The
 solution is to fit each atom's contribution by a few Gaussians, which keeps every kernel in the
@@ -3895,6 +3897,8 @@ controls to clear it.
 This is the bridge from a CMF model to a screening query: the model is continuous and needs an
 alignment, the pharmacophore is discrete and does not.
 
+![The pharmacophore extracted from the steroid model of chapter 8 at half height, drawn over the electrostatic and the steric co-field in the mean plane with the most active training molecule: each feature is a circle of its tolerance radius at its centre, fainter the further it lies from the plane, coloured by its kind, and an exclusion volume is dashed. The favourable lobes of each field have become typed points, the unfavourable steric lobes exclusion volumes, and that set of spheres is what the query files of the next part carry.](docs/figures/pharmacophore.png)
+
 ### Taking the query out of the program
 
 ```bash
@@ -4419,6 +4423,8 @@ of the kernel variance its component explains — on the steroid set, 32.9 % and
 *where the activity is*; ask the score plot *whether this series is one cluster or three*, and
 how much of the kernel a flat picture of it can genuinely show. The score plot needs no EM fit, so
 it also costs a fraction of the time.
+
+![The two projections of the steroid set under the model of chapter 8. Left: the GTM activity landscape on a 15 by 15 grid, the mean affinity the responsibilities assign to each node, with the 21 training molecules at their mean positions and the 10 test molecules projected onto the fitted map. Right: the kernel PCA score plot the GTM is fitted on, with the share of the kernel variance each axis carries. The map spreads the set over the square; the score plot keeps the kernel's own distances, and shows the set as two groups rather than one.](docs/figures/chemspace.png)
 
 From the responsibilities follow the **activity landscape** (responsibility-weighted mean activity
 per node), the **class landscape** (the fraction of actives) and the **data density**, which is a
@@ -5618,6 +5624,8 @@ own position, smoothed by the atom's own Gaussian, summed over the fields. `cofi
 evaluates that gradient anywhere, with or without the smoothing, and needs no molecule -- only a
 place to stand. A design rule that was a picture (*put something electronegative in the red
 lobe*) becomes a force.
+
+![The gradient of one prediction, for a test molecule of the steroid set under the model of chapter 8. Left: the derivative with respect to every atom position as an arrow, the direction in which moving that atom raises the predicted affinity; the two oxygens carry nearly all of it and the arrows on the carbons are below drawing size. Right: the derivative with respect to every atom's partial charge, red where more positive charge raises the prediction. Both come from one closed-form evaluation, and the first is what the flexible alignment and the generative uses of the next paragraph follow.](docs/figures/gradient.png)
 
 **Three uses.** A three-dimensional generative model proposes atom positions, and a gradient lets
 a fitted CMF model steer that proposal instead of only judging the result. A pose or a
@@ -8221,6 +8229,8 @@ the model ranks highest**. The ranking happens inside each molecule, so the scal
 molecule's predictions cannot help or hurt another, and a molecule with no site asks no question.
 `localenv.top_hits` and `localenv.top_k_accuracy` are that measure.
 
+![The site-of-metabolism model read on two molecules of the set, with every heavy atom coloured by its out-of-fold score under the best model of the table below, the count and the local field together; a red ring marks a measured site and 1 and 2 the two atoms the model ranks highest. Left, a molecule where the first-ranked atom is a site; right, one where neither of the two is, the kind of miss the hit rate counts. The scores are the model's own, so this is what `cmf local --rank` prints, drawn.](docs/figures/metabolism.svg)
+
 **The baseline the item names** is a model with no geometry: the same atom types, counted over
 **bonds** instead of over distance. `localenv.topological_counts` builds it -- the type of the
 centre, and the types one, two, three and four bonds away -- which is what an atom's topological
@@ -8409,6 +8419,8 @@ protein's, and the overlap of two Gaussian fields has the same closed form on ei
   agreement, cosine or correlation. This is the strongest external check a CMF model can be given:
   the co-field was fitted to activities and never saw the protein.
 - **Which residues say so** — the same scores, resolved by receptor residue.
+
+![The electrostatic field of the most active CDK8 ligand of `examples/openff` and of its pocket, both in the ligand's mean plane with the pocket atoms near that plane in grey, and their product with the sign convention of the complementarity score: red where a positive region of one side meets a negative region of the other. The two fields are built by the same parameterisation, and the overlap of the third panel over all of space, divided by the two norms, is the electrostatic term of the score.](docs/figures/pocket.png)
 
 ### Which residues say so
 
