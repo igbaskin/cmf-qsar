@@ -3572,6 +3572,10 @@ an atom of that type is favoured at that position.
 
 ![The electrostatic and the steric co-field of a model of the steroid training set (α = 1, λ = 1, q² = 0.79), cut in the mean plane of the series, with corticosterone, the most active training molecule, drawn over them. Red marks a region where more of that field raises the predicted affinity: positive charge for the electrostatic field, bulk for the steric one. The lobes sit at the two ends of the skeleton, which is where the series varies.](docs/figures/cofield.png)
 
+**Isosurfaces and plane cuts.** The 3D view, like the figures of the papers, draws a field as two closed surfaces, the places where it equals plus and minus the iso level, and everything weaker than that level is left invisible. The maps of this manual cut the same function with one plane and colour every point of the plane by its value, so weak regions are visible and anything off the plane is not. The two are the same object drawn two ways; the figure below shows the electrostatic co-field of the previous figure both ways, and the dashed lines on the map are where the two isosurfaces cross the plane. A weak but wide lobe that a map shows may fall below the iso level in the 3D view, and lowering the level with the slider brings it back.
+
+![The same electrostatic co-field as the previous figure, drawn as the application draws it and as this manual draws it. Left: the isosurfaces at plus and minus 30 per cent of the largest absolute value, red positive and blue negative, with corticosterone inside them and the mean plane of the series marked; the lobes are the regions the iso level encloses, and nothing weaker is shown. Right: the cut of that plane through the same function, coloured by value, with the dashed lines where the two isosurfaces meet the plane. The map shows the whole plane, the surfaces show the whole space above one level.](docs/figures/isosurface.png)
+
 Two further maps use the same grid, for the molecule currently shown:
 
 - the **molecular field** $X_f(\mathbf{r})$ of that molecule, in the same colours. The two share a

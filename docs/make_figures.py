@@ -823,6 +823,84 @@ def fig_hopcofield(path):
     save(fig, path)
 
 
+def fig_isosurface(path):
+    """Chapter 8: the same co-field drawn both ways: as the two isosurfaces at plus and minus
+    one level, which is how the application and the literature draw a field, and as the cut of
+    one plane through it, which is how the maps of this manual draw it."""
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d.art3d import Line3DCollection, Poly3DCollection
+    from skimage import measure
+    from cmfqsar.cofields import evaluate_gaussians
+    s, c = steroids(), cofield_model()
+    fs, mf, model, frame = c["fs"], c["mf"], c["model"], c["frame"]
+    ref = mf[s["train_idx"][int(np.argmax(s["y"]))]]      # the most active training molecule
+    f = fs.names.index("electrostatic")
+    origin, e1, e2, e3 = frame
+    step = 0.3
+    xs = np.arange(c["xs"][0], c["xs"][-1] + 1e-9, step)
+    ys = np.arange(c["ys"][0], c["ys"][-1] + 1e-9, step)
+    zs = np.arange(-4.0, 4.0 + 1e-9, step)
+    X, Y, Z = np.meshgrid(xs, ys, zs, indexing="ij")
+    pts = origin + X.ravel()[:, None] * e1 + Y.ravel()[:, None] * e2 + Z.ravel()[:, None] * e3
+    centres, coeffs, widths = model.cofield_coefficients(f)
+    vol = evaluate_gaussians(pts, centres, coeffs, widths).reshape(X.shape)
+    vol *= float(fs.specs[f].h) * float(model.scale[f])
+    vmax = float(np.abs(vol).max())
+    fraction = 0.3                                          # the iso level of the application
+    level = fraction * vmax
+    # the molecule in the coordinates of the frame
+    local = (np.asarray(ref.coords, float) - origin) @ np.stack([e1, e2, e3]).T
+    heavy = np.array([sym != "H" for sym in ref.symbols])
+    segments = [(local[a], local[b]) for a, b in ref.bonds if heavy[a] and heavy[b]]
+
+    fig = plt.figure(figsize=(WIDTH, 3.0))
+    ax3 = fig.add_axes([-0.06, -0.05, 0.54, 1.06], projection="3d")
+    padded = np.pad(vol, 1, mode="constant", constant_values=0.0)
+    for sign, colour in ((1, "#c0392b"), (-1, "#2e6db4")):
+        verts, faces, _, _ = measure.marching_cubes(padded, level=sign * level, spacing=(step,) * 3)
+        verts = verts + np.array([xs[0], ys[0], zs[0]]) - step
+        poly = Poly3DCollection(verts[faces], facecolors=colour, alpha=0.6, shade=True)
+        poly.set_edgecolor("none")
+        ax3.add_collection3d(poly)
+    ax3.add_collection3d(Line3DCollection(segments, colors="black", linewidths=1.1))
+    ax3.scatter(local[heavy, 0], local[heavy, 1], local[heavy, 2], s=6, color="black",
+                depthshade=False)
+    plane = [[xs[0], ys[0], 0], [xs[-1], ys[0], 0], [xs[-1], ys[-1], 0], [xs[0], ys[-1], 0]]
+    ax3.add_collection3d(Poly3DCollection([plane], facecolor="0.5", edgecolor="0.25", alpha=0.12,
+                                          linewidths=0.8, linestyles="--"))
+    ax3.set_xlim(xs[0], xs[-1])
+    ax3.set_ylim(ys[0], ys[-1])
+    ax3.set_zlim(zs[0], zs[-1])
+    ax3.set_box_aspect((xs[-1] - xs[0], ys[-1] - ys[0], zs[-1] - zs[0]))
+    ax3.view_init(elev=24, azim=-57)
+    ax3.set_xticks(np.arange(-8, 9, 4))
+    ax3.set_yticks(np.arange(-4, 5, 4))
+    ax3.set_zticks(np.arange(-4, 5, 4))
+    for axis in (ax3.xaxis, ax3.yaxis, ax3.zaxis):
+        axis.set_tick_params(labelsize=6, pad=-2)
+    ax3.set_xlabel("x / Å", fontsize=7, labelpad=-5)
+    ax3.set_ylabel("y / Å", fontsize=7, labelpad=-5)
+    ax3.set_zlabel("z / Å", fontsize=7, labelpad=-7)
+    ax3.set_title(f"isosurfaces at ±{100 * fraction:.0f} % of the largest value\n"
+                  "with the plane z = 0 marked", fontsize=8.5, y=0.97)
+    # right: the plane cut, with the lines where the two isosurfaces meet the plane
+    ax2 = fig.add_axes([0.645, 0.22, 0.29, 0.56])
+    cax = fig.add_axes([0.945, 0.30, 0.012, 0.40])
+    k0 = int(np.argmin(np.abs(zs)))
+    cut = vol[:, :, k0].T
+    im = signed_map(ax2, cut, xs, ys, vmax=vmax)
+    ax2.contour(xs, ys, cut, levels=[-level, level], colors=["#2e6db4", "#c0392b"],
+                linewidths=1.0, linestyles="--")
+    draw_skeleton(ax2, ref, frame)
+    axes_in_angstrom(ax2)
+    ax2.set_title("the same co-field cut by the plane z = 0\ndashed: where the isosurfaces meet it",
+                  fontsize=8)
+    fig.colorbar(im, cax=cax).ax.tick_params(labelsize=6.5)
+    print(f"  isosurface figure: electrostatic co-field of the steroid model on {vol.shape} points, "
+          f"level ±{level:.3f} ({100 * fraction:.0f} % of {vmax:.3f}), drawn with {ref.name}")
+    save(fig, path)
+
+
 def fig_scatter(path):
     """Chapter 7: observed against predicted for the steroid model, cross-validation and test set.
 
@@ -1065,6 +1143,7 @@ FIGURES = {
     "roc.svg": fig_roc,
     "errorpred.svg": fig_errorpred,
     "cofield.png": fig_cofield,
+    "isosurface.png": fig_isosurface,
     "overlapmap.png": fig_overlapmap,
     "oneclass.png": fig_oneclass,
     "kfda.png": fig_kfda,
