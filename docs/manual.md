@@ -748,6 +748,8 @@ The tools, in increasing order of sophistication:
   mutual arrangement. Randomise, realign, and see how much comes back; the program remembers the
   poses from before and reports the recovery.
 
+![The confidence criterion on one test molecule of the steroid set under the model of chapter 8: the posterior variance of its prediction as the molecule is turned away from its aligned pose about the normal of the mean plane and about the long axis of the series, and the prediction itself. The variance is lowest at the aligned pose and rises within a few tens of degrees, so the aligned pose can be found from the variance without using the activity, and the prediction is closest to the observed value there; a half turn about the long axis costs less than a quarter turn in the plane, because the skeleton is nearly flat.](docs/figures/confidence.svg)
+
 ## Judging an alignment, and aligning flexibly
 
 Everything in this manual says the alignment decides more than the kernel, the learner or the
@@ -2759,7 +2761,9 @@ its `--neighbours` closest neighbours (10 by default). Without that truncation e
 neighbour of every other and the penalty asks the prediction to be flat over the whole set instead
 of smooth along it.
 
-**The assumption, which is the whole of it.** $\gamma g^{T} L g$ says the activity varies smoothly
+![The neighbour graph the Laplacian is built from, for the 31 steroids with five neighbours each, drawn in the first two kernel principal components: an edge joins two molecules whose fields are among each other's closest, the training molecules are coloured by their affinity and the test molecules, which carry no activity, are the unlabelled ones. The penalty asks the prediction to change little along an edge, so the unlabelled molecules pass the information of their labelled neighbours on, and a molecule with no edge to a labelled one is left to the kernel alone.](docs/figures/laplacian.svg)
+
+**The assumption, which is the whole of it.** $\gamma\, \mathbf{g}^{\mathrm{T}}\mathbf{L}\,\mathbf{g}$ says the activity varies smoothly
 along the data. An **activity cliff** — two molecules whose fields are nearly the same and whose
 activities are not — says it does not, and where there is one the penalty pulls both predictions
 towards their average.
@@ -5993,6 +5997,8 @@ $$
 as a function of interatomic distance $d$, which is invariant under rotation and translation by
 construction.
 
+![The autocorrelation channels of two steroids, the most and the least active of the training set, for the electrostatic and the steric field: one value per distance, every 0.75 Å, smoothed with a width of 0.75 Å. The black dashed line is the first molecule after an arbitrary rotation and translation, and it lies exactly on the red one: the channels depend on the conformation and on nothing else. The electrostatic channels change sign with distance because the charges do; the steric ones are a smoothed histogram of the interatomic distances weighted by bulk.](docs/figures/autocorr.svg)
+
 **Where the two molecules are.** That equation describes *one* molecule: both sums run over its own
 atoms, which is what makes it an autocorrelation. It is a descriptor, not a kernel — one number per
 channel $c$, a channel being one pair of field types at one distance — and the kernel is the
@@ -6516,6 +6522,7 @@ each field pair removed and the cutoff tapered:
 $$
 \Phi_{fg}(d) = \dfrac{1}{N}\left[\, P_{fg}(d) \;-\; \dfrac{S_f S_g}{V}\, B(d) \,\right]
 $$
+<!-- #eq:periodic -->
 
 The first term is the tapered pair histogram of the two fields, over every atom $l$ of the cell
 and every neighbour $m$ inside the cutoff, periodic images included:
@@ -6549,6 +6556,8 @@ It is invariant to the choice of cell, origin and orientation, so a supercell is
 material. Averaged over orientations it is the sine
 transform of the product of the typed structure factors, which makes the pair products of the
 element indicator fields the partial structure factors a diffraction experiment measures.
+
+![The three terms of Eq. (#eq:periodic) for the oxygen–oxygen and the lithium–oxygen pair of Li3PO4, the host of the hop section: the tapered pair histogram of the cell with its periodic images, the histogram the same atoms would give spread uniformly through the cell, and their difference, which is the channel the kernel sees. The histogram grows with the shell volume and falls under the taper; the difference keeps only the structure, the shells of neighbours at their distances, and says nothing about how dense the crystal is.](docs/figures/periodic.svg)
 
 The fields of a solid are built by `inorganic_fieldset`: electrostatic (oxidation states guessed
 from the composition, or the `oxi_states`/`charges` array of the file), steric (atomic volume),
@@ -8181,6 +8190,8 @@ seed, every rotatable torsion set to 180°, the attachment atom at the origin wi
 along −x, and the remaining roll fixed by the principal axis of the heavy atoms. The same R-group
 is then always placed in the same position, whatever molecule it came from — a test asserts the
 coordinates are identical, not merely close.
+
+![The topomer cut, on two N-phenylbenzamides of `examples/benzamides_synthetic.sdf` that share an isopropyl group at the same position. Top: the two molecules with the core in grey, the substituents coloured by the core atom they hang from and the cut bonds dashed. Bottom: the same substituents rebuilt by the rule, each at its own attachment point with the open valence along −x, the first molecule's solid and the second's dashed. The shared group falls on the same atoms in both, which is what lets a fragment library be tabulated once; the groups the second molecule carries at two further positions occupy regions of their own.](docs/figures/topomer.svg)
 
 Two things make this fit CMF better than it fits CoMFA. There is no grid, so a fragment's field is
 just its atoms and a fragment–fragment kernel is an analytic number, which means the fragment

@@ -901,6 +901,274 @@ def fig_isosurface(path):
     save(fig, path)
 
 
+def rotation_matrix(axis, degrees):
+    """The rotation by `degrees` about the unit vector `axis` (Rodrigues' formula)."""
+    k = np.asarray(axis, float)
+    k = k / np.linalg.norm(k)
+    t = np.radians(degrees)
+    K = np.array([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
+    return np.eye(3) * np.cos(t) + np.sin(t) * K + (1 - np.cos(t)) * np.outer(k, k)
+
+
+def fig_autocorr(path):
+    """Chapter 11: the autocorrelation channels of two steroids, and of one of them turned and
+    moved, which leaves every channel where it was."""
+    import copy
+    import matplotlib.pyplot as plt
+    from cmfqsar.invariant import AutocorrelationSpec, autocorrelation
+    s = steroids()
+    fs, mf, idx, y = s["fs"], s["mf"], s["train_idx"], s["y"]
+    a, b = mf[idx[int(np.argmax(y))]], mf[idx[int(np.argmin(y))]]
+    spec = AutocorrelationSpec()
+    moved = copy.copy(a)
+    moved.coords = np.asarray(a.coords, float) @ rotation_matrix([1, 2, 3], 117).T + [5.0, -3.0, 2.0]
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.5))
+    for ax, name in zip(axes, ("electrostatic", "steric")):
+        f = fs.names.index(name)
+        for mol, colour in ((a, "C3"), (b, "C0")):
+            ax.plot(spec.centres, autocorrelation(mol, spec, pairs=[(f, f)]), "o-", ms=3, lw=1.1,
+                    color=colour, label=mol.name)
+        ax.plot(spec.centres, autocorrelation(moved, spec, pairs=[(f, f)]), "--", lw=1.0,
+                color="black", label=f"{a.name}, turned and moved")
+        ax.axhline(0, color="0.6", lw=0.5)
+        ax.set_xlabel("distance d / Å")
+        ax.set_title(f"{fs.specs[f].label} autocorrelation", fontsize=9)
+        ax.tick_params(length=2)
+    axes[0].set_ylabel("channel value $\\Phi_{ff}(d)$")
+    axes[0].legend(frameon=False, fontsize=7)
+    fig.tight_layout()
+    print(f"  autocorrelation channels of {a.name} and {b.name}, step {spec.step} A, sigma {spec.sigma} A")
+    save(fig, path)
+
+
+def fig_periodic(path):
+    """Chapter 11: the periodic autocorrelation of Li3PO4: the pair histogram, the uniform
+    background and their difference, for the oxygen-oxygen and the lithium-oxygen pair."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.periodic import PeriodicSpec, periodic_autocorrelation
+    p = phosphate_hop()
+    fs = p["fs"]
+    crystal = p["hs"].crystals(fs)[0]
+    fo, fli = fs.names.index("cif:O"), fs.names.index("cif:Li")
+    raw, full = PeriodicSpec(background=False), PeriodicSpec(background=True)
+    d = raw.centres
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.5))
+    for ax, pair, title in zip(axes, ((fo, fo), (fli, fo)), ("oxygen–oxygen", "lithium–oxygen")):
+        P = periodic_autocorrelation(crystal, raw, pairs=[pair])
+        Phi = periodic_autocorrelation(crystal, full, pairs=[pair])
+        ax.plot(d, P, "o-", ms=3, lw=1.1, color="0.4", label="pair histogram $P_{fg}(d)/N$")
+        ax.plot(d, P - Phi, ":", lw=1.4, color="C1", label="uniform background")
+        ax.plot(d, Phi, "o-", ms=3, lw=1.3, color="C0", label="difference $\\Phi_{fg}(d)$")
+        ax.axhline(0, color="0.6", lw=0.5)
+        ax.set_xlabel("distance d / Å")
+        ax.set_title(f"{title} pair in Li$_3$PO$_4$", fontsize=9)
+        ax.tick_params(length=2)
+    axes[0].set_ylabel("channel value per atom of the cell")
+    axes[0].legend(frameon=False, fontsize=7)
+    fig.tight_layout()
+    print(f"  periodic autocorrelation of Li3PO4, {crystal.n_atoms} atoms, cutoff {raw.r_max} A, "
+          f"step {raw.step} A")
+    save(fig, path)
+
+
+def fig_topomer(path):
+    """Chapter 11: the topomer cut of two benzamides that share one substituent: the molecules
+    with the core marked, and their substituents rebuilt in the topomer pose, where the shared
+    group lands on the same atoms whichever molecule it came from."""
+    import matplotlib.pyplot as plt
+    from rdkit import Chem
+    from rdkit.Chem import rdDepictor
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.topomer import choose_core, substituents, topomer_pose
+    ds = load_dataset(os.path.join(ROOT, "examples", "benzamides_synthetic.sdf"))
+    core, how = choose_core(ds.mols)
+    # the molecules carry explicit hydrogens, so a hydrogen on the core is a substituent too;
+    # only the groups with a heavy atom are drawn
+    table = [{Chem.MolToSmiles(f): f for f in substituents(m, core)
+              if any(at.GetAtomicNum() > 1 for at in f.GetAtoms())} for m in ds.mols]
+
+    def one_cut(frags):
+        """True when every substituent hangs from one core atom, which the pose rule needs."""
+        return all(sum(1 for at in f.GetAtoms() if at.GetAtomicNum() == 0) == 1
+                   for f in frags.values())
+
+    pick = None
+    for i, fa in enumerate(table):
+        for smi, frag in fa.items():
+            heavy = sum(1 for at in frag.GetAtoms() if at.GetAtomicNum() > 1)
+            if heavy < 3 or len(fa) < 2 or not one_cut(fa):
+                continue
+            for j, fb in enumerate(table):
+                if j != i and smi in fb and set(fb) != set(fa) and len(fb) >= 2 and one_cut(fb):
+                    pick = (i, j, smi)
+                    break
+            if pick:
+                break
+        if pick:
+            break
+    i, j, shared = pick
+    print(f"  topomer: core by {how}; {ds.names[i]} and {ds.names[j]} share {shared}")
+    palette = {}
+
+    def colour_of(key):
+        if key not in palette:
+            palette[key] = f"C{len(palette)}"
+        return palette[key]
+
+    fig = plt.figure(figsize=(WIDTH, 4.1))
+    top = [fig.add_axes([0.02, 0.56, 0.47, 0.40]), fig.add_axes([0.51, 0.56, 0.47, 0.40])]
+    bottom = fig.add_axes([0.06, 0.07, 0.90, 0.42])
+    for ax, k in zip(top, (i, j)):
+        mol = Chem.RemoveHs(ds.mols[k])
+        rdDepictor.Compute2DCoords(mol)
+        xy = mol.GetConformer().GetPositions()[:, :2]
+        match = mol.GetSubstructMatch(core)
+        in_core = {a: n for n, a in enumerate(match)}
+        # every atom outside the core belongs to the core atom its branch hangs from
+        owner = {}
+        for a0 in match:
+            for nb in mol.GetAtomWithIdx(a0).GetNeighbors():
+                if nb.GetIdx() in in_core:
+                    continue
+                stack = [nb.GetIdx()]
+                while stack:
+                    a = stack.pop()
+                    if a in owner or a in in_core:
+                        continue
+                    owner[a] = in_core[a0]
+                    stack += [n.GetIdx() for n in mol.GetAtomWithIdx(a).GetNeighbors()]
+        for bond in mol.GetBonds():
+            a, b = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+            if a in in_core and b in in_core:
+                style = dict(color="0.55", lw=2.2)
+            elif a in in_core or b in in_core:
+                style = dict(color=colour_of(owner.get(a, owner.get(b))), lw=1.4, ls="--")
+            else:
+                style = dict(color=colour_of(owner[a]), lw=1.6)
+            ax.plot(xy[[a, b], 0], xy[[a, b], 1], solid_capstyle="round", **style)
+        for a in range(mol.GetNumAtoms()):
+            sym = mol.GetAtomWithIdx(a).GetSymbol()
+            if sym != "C":
+                ax.text(xy[a, 0], xy[a, 1], sym, fontsize=7, ha="center", va="center",
+                        bbox=dict(boxstyle="circle,pad=0.05", fc="white", ec="none"))
+        ax.set_aspect("equal")
+        ax.axis("off")
+        ax.set_title(ds.names[k], fontsize=9)
+    # the substituents in their topomer poses, each attachment point in its own region
+    keys = sorted({at.GetIsotope() for fr in list(table[i].values()) + list(table[j].values())
+                   for at in fr.GetAtoms() if at.GetAtomicNum() == 0})
+    slot = {key: 5.0 * n for n, key in enumerate(keys)}
+    for k, ls, lw in ((i, "-", 1.6), (j, "--", 1.6)):
+        for frag in table[k].values():
+            key = next(at.GetIsotope() for at in frag.GetAtoms() if at.GetAtomicNum() == 0)
+            posed = topomer_pose(frag)
+            xyz = posed.GetConformer().GetPositions()
+            # an oblique view: x across, and y and z both tilted into the vertical
+            uv = np.column_stack([xyz[:, 0] + slot[key], 0.8 * xyz[:, 1] + 0.6 * xyz[:, 2]])
+            heavy = [at.GetIdx() for at in posed.GetAtoms() if at.GetAtomicNum() > 1]
+            dummy = next(at.GetIdx() for at in posed.GetAtoms() if at.GetAtomicNum() == 0)
+            colour = colour_of(key)
+            for bond in posed.GetBonds():
+                a, b = bond.GetBeginAtomIdx(), bond.GetEndAtomIdx()
+                if a in heavy and b in heavy:
+                    bottom.plot(uv[[a, b], 0], uv[[a, b], 1], ls=ls, lw=lw, color=colour,
+                                solid_capstyle="round")
+                elif dummy in (a, b) and (a in heavy or b in heavy):
+                    bottom.plot(uv[[a, b], 0], uv[[a, b], 1], ls=":", lw=1.0, color="0.5")
+            bottom.plot([uv[dummy, 0]], [uv[dummy, 1]], marker="o", mfc="white", mec=colour,
+                        ms=7, lw=0)
+    for key in keys:
+        bottom.text(slot[key], -2.9, f"core atom {key}", ha="center", fontsize=7.5,
+                    color=colour_of(key))
+    bottom.set_aspect("equal")
+    bottom.set_xlim(min(slot.values()) - 3.0, max(slot.values()) + 3.0)
+    bottom.set_ylim(-3.3, 2.8)
+    bottom.axis("off")
+    bottom.set_title(f"the substituents rebuilt by the rule: {ds.names[i]} solid, {ds.names[j]} "
+                     "dashed; open circle: the open valence, along −x; an oblique view", fontsize=8.5)
+    save(fig, path)
+
+
+def fig_confidence(path):
+    """Chapter 5: the posterior variance of the steroid model for one test molecule turned away
+    from its pose about two axes, with the prediction beside it."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.varalign import VarianceAligner
+    s, c = steroids(), cofield_model()
+    ds, mf, model, frame = s["ds"], c["mf"], c["model"], c["frame"]
+    i = ds.names.index("19-norprogesterone")
+    mol, observed = mf[i], float(ds.activity[i])
+    va = VarianceAligner(model, max_rmsd=None)
+    coords = np.asarray(mol.coords, float)
+    heavy = np.array([sym != "H" for sym in mol.symbols])
+    centre = coords[heavy].mean(axis=0)
+    angles = np.arange(-180, 181, 5)
+    origin, e1, e2, e3 = frame
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.5))
+    for axis, label, colour in ((e3, "about the normal of the plane", "C0"),
+                                (e1, "about the long axis", "C3")):
+        turned = [(coords - centre) @ rotation_matrix(axis, a).T + centre for a in angles]
+        var = [va.variance(mol, x) for x in turned]
+        pred = [va.predict(mol, x) for x in turned]
+        axes[0].plot(angles, var, lw=1.3, color=colour, label=label)
+        axes[1].plot(angles, pred, lw=1.3, color=colour, label=label)
+        print(f"  confidence: {mol.name} {label}: variance {min(var):.3f} at "
+              f"{angles[int(np.argmin(var))]:+d} deg, {max(var):.3f} at most")
+    axes[1].axhline(observed, color="black", lw=0.8, ls=":", label="observed")
+    for ax in axes:
+        ax.axvline(0, color="0.6", lw=0.6)
+        ax.set_xlabel("rotation from the aligned pose / degrees")
+        ax.set_xticks(np.arange(-180, 181, 90))
+        ax.tick_params(length=2)
+    axes[0].set_ylabel("posterior variance")
+    axes[1].set_ylabel("predicted pK")
+    axes[0].set_title(f"{mol.name}: the model's confidence", fontsize=9)
+    axes[1].set_title("and its prediction", fontsize=9)
+    axes[1].legend(frameon=False, fontsize=7)
+    fig.tight_layout()
+    save(fig, path)
+
+
+def fig_laplacian(path):
+    """Chapter 9: the neighbour graph of the Laplacian-regularised ridge over the 31 steroids,
+    in kernel-PCA coordinates: training molecules coloured by activity, test molecules as the
+    unlabelled ones."""
+    import matplotlib.pyplot as plt
+    from cmfqsar import CMFModel
+    from cmfqsar.fields import AtomTable
+    from cmfqsar.gtm import KernelPCA
+    from cmfqsar.spectral import knn_laplacian
+    s, c = steroids(), cofield_model()
+    ds, mf = s["ds"], c["mf"]
+    neighbours = 5
+    K = CMFModel(fieldset=c["fs"], method="krr", normalize=True).training_kernel(
+        AtomTable.from_molecules(mf))
+    L = knn_laplacian(K, neighbours=neighbours)
+    A = np.abs(L) > 1e-12
+    np.fill_diagonal(A, False)
+    xy = KernelPCA(n_components=2).fit(K).transform()
+    train = np.zeros(len(mf), bool)
+    train[list(s["train_idx"])] = True
+    fig, ax = plt.subplots(figsize=(WIDTH * 0.72, 3.3))
+    for a in range(len(mf)):
+        for b in range(a + 1, len(mf)):
+            if A[a, b] or A[b, a]:
+                ax.plot(xy[[a, b], 0], xy[[a, b], 1], color="0.75", lw=0.6, zorder=1)
+    sc = ax.scatter(xy[train, 0], xy[train, 1], c=ds.activity[train], cmap="viridis", s=36,
+                    edgecolor="black", linewidth=0.4, zorder=3, label="labelled (training set)")
+    ax.scatter(xy[~train, 0], xy[~train, 1], facecolor="white", edgecolor="black", s=36,
+               linewidth=0.8, zorder=3, label="unlabelled (test set)")
+    ax.set_xlabel("first kernel principal component")
+    ax.set_ylabel("second")
+    ax.set_title(f"the neighbour graph of the 31 steroids, {neighbours} neighbours each", fontsize=9)
+    ax.legend(frameon=False, fontsize=7, loc="lower left")
+    ax.tick_params(length=2)
+    fig.colorbar(sc, ax=ax, shrink=0.8, pad=0.03, label="pK").ax.tick_params(labelsize=7)
+    fig.tight_layout()
+    print(f"  Laplacian graph: {int(np.sum(np.triu(A | A.T, 1)))} edges among {len(mf)} molecules")
+    save(fig, path)
+
+
 def fig_scatter(path):
     """Chapter 7: observed against predicted for the steroid model, cross-validation and test set.
 
@@ -1136,6 +1404,11 @@ FIGURES = {
     "parent.svg": fig_parent,
     "hop.png": fig_hop,
     "hopcofield.png": fig_hopcofield,
+    "autocorr.svg": fig_autocorr,
+    "periodic.svg": fig_periodic,
+    "topomer.svg": fig_topomer,
+    "confidence.svg": fig_confidence,
+    "laplacian.svg": fig_laplacian,
     "scatter.svg": fig_scatter,
     "rule1.png": fig_rule1,
     "rule2.svg": fig_rule2,
