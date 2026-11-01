@@ -43,6 +43,29 @@ number improves, and prediction does not move.  The same caution applies here an
 ``benchmarks/run_mixing.py`` measures it.  What a posterior over the weights is *for* is the
 interpretation question -- which fields this series needs -- and that question has no
 cross-validated answer to be checked against.
+
+Pooling the weights across series
+---------------------------------
+
+A single series of thirty molecules cannot say much about five weights, which is why the
+intervals above are wide and why a point estimate fitted on one series is noisy.  Other series
+can help.  The prior above is centred at equal shares with one fixed spread; the pooled form
+lets other series set both:
+
+    u_s ~ N(mu, tau^2 I)    for every series s,
+
+with `u_s` the centred log-shares of series s, `mu` the log-shares a typical series needs and
+`tau` how much series differ from each other.  `mu` and `tau` are chosen by empirical Bayes,
+that is, to maximise the probability of all the series together (:func:`pool_priors`).  The
+posterior draws of each series under the fixed prior are all that is needed: the probability of
+a series under the pooled prior is the average over its draws of the ratio of the two priors
+(importance reweighting), so no new sampling is done.  A series then gets its weights from
+:func:`evidence_mixing` with ``prior_mean=mu`` and ``prior_sd=tau``: a small series is pulled
+towards what the others need, a large series keeps its own weights, and `tau` decides where the
+balance lies.  With `tau` near zero the weights are the population's and nothing is fitted on
+the series; with `tau` large the pooled prior is the fixed one again.
+``benchmarks/run_pooled_mixing.py`` measures whether this predicts better, with every series'
+prior learned from the other series only.
 """
 from __future__ import annotations
 
@@ -113,15 +136,23 @@ class MixingPosterior:
 
 
 def _log_posterior(u: np.ndarray, log_lam: float, K_fields: np.ndarray, y: np.ndarray,
-                   scale: np.ndarray, log_lam0: float, prior_sd: float, fit_bias: bool) -> float:
-    """Log evidence of the weights plus their prior; -inf where the kernel is not valid."""
+                   scale: np.ndarray, log_lam0: float, prior_sd: float, fit_bias: bool,
+                   prior_mean: Optional[np.ndarray] = None) -> float:
+    """Log evidence of the weights plus their prior; -inf where the kernel is not valid.
+
+    The prior on the log-shares is ``N(prior_mean, prior_sd^2 I)``; a mean of None is zero,
+    which is equal shares.
+    """
     p = _softmax(u)
     h = p * len(p)
     K = np.tensordot(h * scale, K_fields, axes=(0, 0))
     ev = log_evidence(K, y, float(np.exp(log_lam)), fit_bias=fit_bias)
     if not np.isfinite(ev):
         return -np.inf
-    lp = -0.5 * float(np.sum((np.asarray(u, float) / prior_sd) ** 2))
+    d = np.asarray(u, float)
+    if prior_mean is not None:
+        d = d - np.asarray(prior_mean, float)
+    lp = -0.5 * float(np.sum((d / prior_sd) ** 2))
     lp -= 0.5 * ((log_lam - log_lam0) / LAM_PRIOR_SD) ** 2
     return float(ev + lp)
 
@@ -147,14 +178,33 @@ def _prepare(K_fields, y, scale, enabled):
     return K_fields, np.asarray(y, float), scale, on, idx
 
 
+def _prior_mean_for(prior_mean, idx: np.ndarray) -> Optional[np.ndarray]:
+    """The prior mean over the enabled fields, centred, since only the spread of the
+    log-shares is meaningful."""
+    if prior_mean is None:
+        return None
+    m = np.asarray(prior_mean, float)[idx]
+    return m - m.mean()
+
+
+def centred_log_shares(shares: np.ndarray) -> np.ndarray:
+    """Shares (rows summing to one) as centred log-shares, the coordinates the prior acts on."""
+    u = np.log(np.clip(np.asarray(shares, float), 1e-12, None))
+    return u - u.mean(axis=-1, keepdims=True)
+
+
 def evidence_mixing(K_fields: np.ndarray, y: np.ndarray, scale: Optional[np.ndarray] = None,
                     enabled: Optional[Sequence[bool]] = None, fit_bias: bool = True,
-                    prior_sd: float = PRIOR_SD, maxiter: int = 400) -> np.ndarray:
+                    prior_sd: float = PRIOR_SD, maxiter: int = 400,
+                    prior_mean: Optional[Sequence[float]] = None) -> np.ndarray:
     """The mixing coefficients that maximise the evidence (with the prior above), on the simplex.
 
     Returned in the same convention as :func:`cmfqsar.model.align_mixing`: one number per field,
     zero where the field is disabled, scaled so that the joint kernel has the mean diagonal it
     would have with h = 1, which keeps the lambda grid comparable.
+
+    ``prior_mean`` (centred log-shares, one per field) and ``prior_sd`` together are the pooled
+    prior of :func:`pool_priors`; by default the prior is centred at equal shares.
     """
     from scipy.optimize import minimize
 
@@ -169,12 +219,13 @@ def evidence_mixing(K_fields: np.ndarray, y: np.ndarray, scale: Optional[np.ndar
     sub = K_fields[idx]
     ssub = scale[idx]
     log_lam0 = _start(sub, y, ssub, fit_bias)
+    mean = _prior_mean_for(prior_mean, idx)
 
     def neg(theta):
         return -_log_posterior(theta[:-1], float(theta[-1]), sub, y, ssub, log_lam0, prior_sd,
-                               fit_bias)
+                               fit_bias, mean)
 
-    x0 = np.concatenate([np.zeros(idx.size), [log_lam0]])
+    x0 = np.concatenate([np.zeros(idx.size) if mean is None else mean, [log_lam0]])
     # the simplex is given explicitly: Nelder-Mead builds its own by perturbing each coordinate
     # by a fraction of its value, and every coordinate here starts at zero, so its own simplex
     # would be 2.5e-4 wide and it would report convergence on the first iteration
@@ -243,7 +294,7 @@ def sample_mixing(K_fields: np.ndarray, y: np.ndarray, names: Optional[Sequence[
                   scale: Optional[np.ndarray] = None, enabled: Optional[Sequence[bool]] = None,
                   draws: int = 400, burn: int = 100, thin: int = 1, seed: int = 0,
                   fit_bias: bool = True, prior_sd: float = PRIOR_SD,
-                  progress=None) -> MixingPosterior:
+                  progress=None, prior_mean: Optional[Sequence[float]] = None) -> MixingPosterior:
     """The posterior over the fields' shares, by slice sampling the log-shares and log lambda."""
     K_fields, y, scale, on, idx = _prepare(K_fields, y, scale, enabled)
     F = K_fields.shape[0]
@@ -257,13 +308,14 @@ def sample_mixing(K_fields: np.ndarray, y: np.ndarray, names: Optional[Sequence[
     sub = K_fields[idx]
     ssub = scale[idx]
     log_lam0 = _start(sub, y, ssub, fit_bias)
+    mean = _prior_mean_for(prior_mean, idx)
 
     def logp(theta):
         return _log_posterior(theta[:-1], float(theta[-1]), sub, y, ssub, log_lam0, prior_sd,
-                              fit_bias)
+                              fit_bias, mean)
 
     rng = np.random.default_rng(seed)
-    x = np.concatenate([np.zeros(idx.size), [log_lam0]])
+    x = np.concatenate([np.zeros(idx.size) if mean is None else mean, [log_lam0]])
     chain, lams, posts = [], [], []
     best = (-np.inf, x)
     total = int(burn) + int(draws) * int(thin)
@@ -326,3 +378,208 @@ def _best_evidence(K_fields: np.ndarray, y: np.ndarray, scale: np.ndarray, on: n
         if np.isfinite(e):
             best = max(best, e)
     return best
+
+
+@dataclass
+class PooledPrior:
+    """The prior over the log-shares that a collection of series supports."""
+
+    mean: np.ndarray            # (F,) centred log-shares of a typical series
+    sd: float                   # how far one series' log-shares sit from the mean, as a rule
+    names: List[str]
+    n_series: int
+    ess: np.ndarray             # (n_series,) effective number of draws behind each series' term
+    log_marginal: float         # the pooled log probability at the optimum, up to a constant
+    note: str = ""
+    method: str = "gaussian"
+
+    @property
+    def shares(self) -> np.ndarray:
+        """The shares a typical series gives the fields."""
+        return _softmax(self.mean)
+
+    def h(self) -> np.ndarray:
+        """The population weights in the convention of :func:`evidence_mixing` (mean one)."""
+        return shares_to_h(self.shares, len(self.mean))
+
+    def describe(self) -> str:
+        rows = [f"  pooled over {self.n_series} series; spread of the log-shares between series "
+                f"tau = {self.sd:.3f} (the fixed prior has {PRIOR_SD})",
+                f"  {'field':18s} {'typical share':>14s}"]
+        for name, s in zip(self.names, self.shares):
+            rows.append(f"  {name:18s} {s:14.3f}")
+        rows.append(f"  equal shares would be {1.0 / len(self.mean):.3f}"
+                    + (f"; smallest effective sample size {float(np.min(self.ess)):.0f} draws"
+                       if self.method == "importance" else ""))
+        if self.note:
+            rows.append("  " + self.note)
+        return "\n".join(rows)
+
+
+#: the spread of the pooled prior is kept in this range: below it the prior pins the weights
+#: of every series to the population's, above it the prior is wider than the fixed one by a
+#: factor of two and nothing is being pooled
+POOLED_SD_RANGE = (0.05, 2.0 * PRIOR_SD)
+#: the smallest effective number of draws a series may contribute with under
+#: ``method="importance"``; see :func:`pool_priors`
+MIN_ESS = 25.0
+
+
+def _centred_basis(F: int) -> np.ndarray:
+    """An orthonormal basis (F, F - 1) of the vectors whose entries sum to zero."""
+    q, _ = np.linalg.qr(np.eye(F) - np.full((F, F), 1.0 / F))
+    # the last column of q spans the constant direction up to round-off; the first F - 1 span
+    # the centred subspace, which is what is needed
+    return q[:, :F - 1]
+
+
+def _gaussian_summaries(zs: Sequence[np.ndarray], prior_sd: float):
+    """For every series, the Gaussian picture of its likelihood in the centred coordinates.
+
+    The posterior draws give a mean `m` and a covariance `S`; the likelihood then has precision
+    ``Lambda = S^-1 - I / prior_sd^2`` (the prior's precision removed) and ``Lambda c = S^-1 m``
+    for its centre `c`.  Lambda is returned by its eigenvalues `w` (negative ones, which are
+    round-off or a posterior wider than the prior, set to zero) and eigenvectors `V`, with the
+    components of ``Lambda c`` in that basis.
+    """
+    out = []
+    d = zs[0].shape[1]
+    for z in zs:
+        m = z.mean(axis=0)
+        S = np.cov(z, rowvar=False) + 1e-9 * np.eye(d)
+        P = np.linalg.inv(S)
+        w, V = np.linalg.eigh(P - np.eye(d) / prior_sd ** 2)
+        g = V.T @ (P @ m)
+        # a direction whose likelihood is wider than twice the prior is one the series says
+        # nothing about; the precision left there is sampling noise of the covariance
+        keep = w > 0.25 / prior_sd ** 2
+        w = np.where(keep, w, 0.0)
+        g = np.where(keep, g, 0.0)
+        out.append((w, V, g))
+    return out
+
+
+def pool_priors(shares_by_series: Sequence[np.ndarray], names: Optional[Sequence[str]] = None,
+                prior_sd: float = PRIOR_SD, sd_range: Tuple[float, float] = POOLED_SD_RANGE,
+                method: str = "gaussian", min_ess: float = MIN_ESS,
+                maxiter: int = 2000) -> PooledPrior:
+    """The population prior ``N(mu, tau^2 I)`` over the centred log-shares, by empirical Bayes.
+
+    ``shares_by_series`` holds, for every series, the posterior draws of its shares under the
+    fixed prior (``MixingPosterior.samples``), all with the same fields.  `mu` and `tau` are
+    chosen to maximise the probability of all the series together, each series' probability
+    being its likelihood integrated against the candidate prior.  Two series are enough to run
+    it; the result is only as good as the number of them.
+
+    Two ways to get at a series' likelihood from its draws:
+
+    * ``method="gaussian"`` (the default) summarises the draws by their mean and covariance,
+      removes the fixed prior's precision, and treats what is left as a Gaussian likelihood.
+      The integral against the candidate prior is then in closed form.  This is the
+      random-effects model of meta-analysis, with each series' weights as the estimate and its
+      posterior covariance as the uncertainty.  A direction in which the series says nothing
+      has zero precision and contributes nothing, as it should.
+    * ``method="importance"`` takes the log of the average, over the draws, of the ratio of the
+      candidate prior to the fixed one (importance reweighting), and needs no Gaussian
+      assumption.  A narrow candidate prior gives almost all the weight to the few draws nearest
+      its mean, and the optimiser, left alone, finds such a prior and reports a spread far too
+      small.  So every series must keep an effective sample size (the number of equally
+      weighted draws its average is worth) of at least ``min_ess``.  With a few hundred draws
+      this stops the spread at around a fifth of ``prior_sd``, and the result is noisier than
+      the Gaussian one; it is kept as the check that the Gaussian assumption is not doing the
+      work.
+
+    The draws must come from the prior of width ``prior_sd`` centred at equal shares, which is
+    what :func:`sample_mixing` uses by default.
+    """
+    from scipy.optimize import minimize
+    from scipy.special import logsumexp
+
+    us = [centred_log_shares(np.atleast_2d(s)) for s in shares_by_series]
+    if len(us) < 2:
+        raise ValueError("pooling needs at least two series")
+    F = us[0].shape[1]
+    if any(u.shape[1] != F for u in us):
+        raise ValueError("every series must have the same fields")
+    if method not in ("gaussian", "importance"):
+        raise ValueError("method must be 'gaussian' or 'importance'")
+    names = list(names) if names is not None else [f"field {f + 1}" for f in range(F)]
+    dim = F - 1                                 # the centred log-shares live in F - 1 dimensions
+    B = _centred_basis(F)
+    zs = [u @ B for u in us]
+    draws = np.array([len(u) for u in us], float)
+    lo, hi = float(sd_range[0]), float(sd_range[1])
+
+    if method == "gaussian":
+        summaries = _gaussian_summaries(zs, prior_sd)
+
+        def terms(mu, tau):
+            mz = B.T @ mu
+            out = []
+            for w, V, g in summaries:
+                mk = V.T @ mz
+                a = 1.0 + tau ** 2 * w
+                on = w > 0
+                q = np.sum((g[on] ** 2 / w[on] - 2.0 * g[on] * mk[on] + w[on] * mk[on] ** 2)
+                           / a[on])
+                out.append(-0.5 * float(np.sum(np.log(a))) - 0.5 * float(q))
+            return np.asarray(out), draws
+    else:
+        base = [0.5 * np.sum(z ** 2, axis=1) / prior_sd ** 2 for z in zs]
+
+        def terms(mu, tau):
+            """log mean importance ratio per series, and the effective sample sizes."""
+            mz = B.T @ mu
+            out, ess = [], []
+            for z, b in zip(zs, base):
+                lw = (dim * np.log(prior_sd / tau)
+                      - 0.5 * np.sum((z - mz) ** 2, axis=1) / tau ** 2 + b)
+                m = logsumexp(lw)
+                out.append(float(m - np.log(len(lw))))
+                ess.append(float(np.exp(2.0 * m - logsumexp(2.0 * lw))))
+            return np.asarray(out), np.asarray(ess)
+
+    def unpack(theta):
+        mu = np.asarray(theta[:-1], float)
+        mu = mu - mu.mean()
+        # a logistic map keeps tau inside the range without a constrained optimiser
+        tau = lo + (hi - lo) / (1.0 + np.exp(-float(theta[-1])))
+        return mu, tau
+
+    def neg(theta):
+        mu, tau = unpack(theta)
+        lm, ess = terms(mu, tau)
+        val = -float(np.sum(lm))
+        if method == "importance":
+            short = float(min_ess - np.min(ess))
+            # a steep but continuous penalty keeps the search in the region where the averages
+            # are worth something
+            if short > 0:
+                val += 50.0 * short
+        return val
+
+    means = np.stack([u.mean(axis=0) for u in us])
+    mu0 = means.mean(axis=0)
+    tau0 = float(np.clip(np.sqrt(np.mean((means - mu0) ** 2)), lo * 1.5, hi / 1.5))
+    t0 = np.log((tau0 - lo) / (hi - tau0))
+    x0 = np.concatenate([mu0, [t0]])
+    step = np.full(F + 1, 0.5)
+    simplex = np.vstack([x0] + [x0 + np.eye(F + 1)[i] * step[i] for i in range(F + 1)])
+    res = minimize(neg, x0, method="Nelder-Mead",
+                   options={"maxiter": int(maxiter), "xatol": 1e-4, "fatol": 1e-6,
+                            "initial_simplex": simplex})
+    mu, tau = unpack(res.x)
+    lm, ess = terms(mu, tau)
+    note = ""
+    if method == "gaussian" and all(not np.any(w > 0) for w, _, _ in summaries):
+        note = "no series carries information about the weights: the prior is arbitrary"
+        mu, tau = np.zeros(F), prior_sd
+    elif tau <= lo * 1.05:
+        note = "tau is at the lower limit: the series agree and the weights are the population's"
+    elif tau >= hi / 1.05:
+        note = "tau is at the upper limit: the series do not agree and nothing is pooled"
+    elif method == "importance" and float(np.min(ess)) <= 1.2 * min_ess:
+        note = (f"tau is held up by the effective sample size ({float(np.min(ess)):.0f} draws): "
+                "more draws per series could allow a narrower prior")
+    return PooledPrior(mean=mu, sd=float(tau), names=names, n_series=len(us), ess=ess,
+                       log_marginal=float(np.sum(lm)), note=note, method=method)

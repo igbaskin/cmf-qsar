@@ -1606,8 +1606,35 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   alignment's included -- is claiming a precision the data do not support. That is what the
   posterior adds, and it is an argument against trusting any of the point estimates rather than
   for replacing them.
-  **Not done:** the same treatment of the attenuations (D6 settled that by measurement), and a
-  GUI reading of the intervals.
+  **Pooled across series, 1 November 2026.** The one reading of "hierarchical kernel model"
+  that could help prediction is a second level over the series: a series of thirty molecules
+  cannot set five weights, but the collection it belongs to can say what a typical series needs
+  and how much series differ. `pool_priors` in `cmfqsar/mixing.py` learns `u_s ~ N(mu, tau^2 I)`
+  over the centred log-shares by empirical Bayes from the posterior draws of many series (a
+  Gaussian summary of each series' likelihood, which is the random-effects model of
+  meta-analysis; an importance-reweighting estimate is kept as the check), and
+  `evidence_mixing(prior_mean=mu, prior_sd=tau)` gives a series its weights under that prior.
+  **Measured on the 38 Mittal sets** (`benchmarks/run_pooled_mixing.py`), each set's prior
+  learned from the other 37, ten 70/30 splits per set. The collection does have an opinion:
+  a typical series gives the steric field 0.49 of the kernel, the hydrophobic 0.25, the
+  electrostatic 0.11, the acceptor 0.10 and the donor 0.06, with a spread between series of
+  tau = 0.76 in the log-shares (the fixed prior has 1.5), and both estimators agree on it.
+  Prediction does not follow: pooled against equal weights is **-0.003** in R2pred with a 95 %
+  interval of [-0.027, +0.017] over the sets, +0.009 [-0.021, +0.042] on the 15 sets below
+  forty molecules where a prior should matter most, and the population weights alone are
+  +0.010 [-0.014, +0.032]. What pooling does do is repair the per-series fit: the evidence
+  optimum on the series alone is -0.025 [-0.055, -0.001] against equal weights on this
+  collection, and the pooled weights are +0.022 [+0.002, +0.047] against it, better on 25 of
+  the 38 sets. So the hierarchy removes the variance that fitting five weights on one series
+  adds, and ends where equal weights already were. The reason is the one the intervals gave:
+  the field kernels of a congeneric series are so correlated that the weights hardly change
+  the prediction, so no prior over them, however well informed, can move it. One set is an
+  outlier in the other direction: ACE has a clearly different answer (its own evidence weights
+  gain +0.075), and the prior learned without it is the only one with tau = 0.32.
+  **Not done:** the same treatment of the attenuations (D6 settled that by measurement), a
+  GUI reading of the intervals, and a `--mkl pooled` flag (there is no reason to add one until
+  a collection is found where the weights matter).
+
 
 * **E7. Kernel partial least squares.** CoMFA's learner, in its kernel form, on the continuous
   field: with the linear kernel it is PLS in the space of the fields, so a CoMFA-against-CMF

@@ -1166,6 +1166,17 @@ weights themselves are informative, and that is arguably the better reason to us
 H-bond donor field receives four times the weight of the others, which agrees with what the co-field of
 that series shows.
 
+A second level over the weights does not change this. `pool_priors` (`cmfqsar/mixing.py`) learns from
+the posteriors of many series what a typical series needs and how much series differ (a two-level
+prior over the log-shares, fitted by empirical Bayes), and a series then takes its weights from the
+evidence under that prior. On the 38 Mittal sets, each set's prior learned from the other 37
+([benchmarks/run_pooled_mixing.py](benchmarks/run_pooled_mixing.py)), the collection's answer is
+clear (steric 0.49 of the kernel, hydrophobic 0.25, electrostatic 0.11, the two hydrogen-bond fields
+0.16 together) and prediction does not move: pooled weights are -0.003 in R²pred against equal
+weights (95 % interval [-0.027, +0.017]), +0.009 on the fifteen sets below forty molecules. Against
+the weights fitted on the series alone they gain +0.022 [+0.002, +0.047], which is the variance of
+fitting five weights on one series removed, and nothing more.
+
 ### Shapley decomposition: interpretation that survives a nonlinear kernel
 
 The decomposition rules of the papers are exact, but rule 3 splits a prediction into atoms only

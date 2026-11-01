@@ -13,7 +13,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from cmfqsar.mixing import (PRIOR_SD, _log_posterior, _slice_sample, _softmax, _start,  # noqa: E402
-                            drop_one, evidence_mixing, sample_mixing)
+                            drop_one, evidence_mixing, pool_priors, sample_mixing)
 from cmfqsar.model import align_mixing  # noqa: E402
 
 
@@ -134,3 +134,75 @@ def test_the_shares_are_a_softmax_of_the_log_shares():
     p = _softmax(u)
     assert p.sum() == pytest.approx(1.0)
     assert np.allclose(_softmax(u + 5.0), p)           # the level does not matter, the spread does
+
+
+# --- the prior pooled across series ---------------------------------------------------------
+
+
+def _shares_of(u):
+    p = np.exp(u - u.mean(axis=1, keepdims=True))
+    return p / p.sum(axis=1, keepdims=True)
+
+
+def _population(mu, tau, n_series, draws, post_sd, seed):
+    """Synthetic posteriors: the centre of every series' likelihood scatters around the
+    population mean by tau and is measured with standard deviation post_sd; the draws are from
+    the posterior that the fixed prior gives such a likelihood."""
+    rng = np.random.default_rng(seed)
+    F = len(mu)
+    var = 1.0 / (1.0 / post_sd ** 2 + 1.0 / PRIOR_SD ** 2)
+    out = []
+    for _ in range(n_series):
+        u = mu + rng.normal(scale=tau, size=F)
+        c = u + rng.normal(scale=post_sd, size=F)      # what this series' data say
+        m = var * c / post_sd ** 2
+        out.append(_shares_of(m + rng.normal(scale=np.sqrt(var), size=(draws, F))))
+    return out
+
+
+def test_a_prior_mean_holds_the_weights_when_the_data_do_not_care():
+    rng = np.random.default_rng(1)
+    K, _ = _world()
+    y = rng.normal(size=K.shape[1])            # unrelated to either kernel
+    h = evidence_mixing(K, y, prior_mean=[1.0, -1.0], prior_sd=0.5)
+    p = h / h.sum()
+    want = np.exp([1.0, -1.0]) / np.exp([1.0, -1.0]).sum()
+    assert abs(p[0] - want[0]) < 0.15
+
+
+def test_the_pooled_prior_shrinks_towards_the_other_series_and_no_further():
+    """The posterior mode is a balance: between the series' own optimum and what the other
+    series say, and with a prior of ordinary width a clear answer survives."""
+    K, y = _world()
+    free = evidence_mixing(K, y)
+    pooled = evidence_mixing(K, y, prior_mean=[-1.0, 1.0], prior_sd=1.0)
+    prior_h = 2.0 * np.exp([-1.0, 1.0]) / np.exp([-1.0, 1.0]).sum()
+    assert prior_h[0] < pooled[0] < free[0]
+    assert pooled[0] > pooled[1]
+
+
+@pytest.mark.parametrize("method", ["gaussian", "importance"])
+def test_pool_priors_recovers_the_population(method):
+    mu = np.array([1.0, 0.5, 0.0, -0.5, -1.0])
+    sets = _population(mu, tau=0.4, n_series=40, draws=300, post_sd=0.5, seed=0)
+    prior = pool_priors(sets, method=method)
+    assert np.max(np.abs(prior.mean - mu)) < 0.25
+    assert 0.2 < prior.sd < 0.7
+    assert prior.shares.argmax() == 0 and prior.shares.argmin() == 4
+
+
+def test_pool_priors_says_when_the_series_know_nothing():
+    rng = np.random.default_rng(2)
+    sets = [_shares_of(rng.normal(scale=PRIOR_SD, size=(1000, 5))) for _ in range(8)]
+    prior = pool_priors(sets)
+    assert "no series carries information" in prior.note
+    assert prior.sd == PRIOR_SD
+
+
+def test_the_two_pooling_estimators_agree_where_both_are_valid():
+    mu = np.array([0.8, 0.0, -0.8])
+    sets = _population(mu, tau=0.5, n_series=30, draws=400, post_sd=0.3, seed=3)
+    a = pool_priors(sets, method="gaussian")
+    b = pool_priors(sets, method="importance")
+    assert np.max(np.abs(a.mean - b.mean)) < 0.2
+    assert abs(a.sd - b.sd) < 0.2

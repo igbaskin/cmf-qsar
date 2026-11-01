@@ -413,6 +413,12 @@ def registry() -> List[Benchmark]:
                   minutes="30",
                   report=lambda: _mod("run_mixing").report(_r("mixing")),
                   tables=["mixing/table.md"]),
+        Benchmark("pooled_mixing", "the field weights of a series learned from the other "
+                  "series (a prior pooled across the Mittal sets)",
+                  "run_pooled_mixing.py", "pooled_mixing", compute=[[]],
+                  minutes="40",
+                  report=lambda: _mod("run_pooled_mixing").report(_r("pooled_mixing")),
+                  tables=["pooled_mixing/table.md"]),
         Benchmark("transfer", "does the co-field cosine say whether the SAR transfers",
                   "run_transfer.py", "transfer", compute=[[]],
                   minutes="15",
