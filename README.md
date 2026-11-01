@@ -862,6 +862,42 @@ ASE is needed for the neighbour list and to read structure files, pymatgen for t
 states and electronegativities (`pip install cmfqsar[crystals]`); both are imported lazily, and the
 tests that need them skip where they are missing.
 
+### Order a cutoff cannot reach: the structure factors of a cell
+
+The autocorrelation above stops at its cutoff radius. The quantity that does not is the typed
+structure factor, `S_f(G) = sum_l w_lf exp(i G . r_l)`: a sum over the atoms of **one cell**, with
+no neighbour list, which is the Fourier transform of the field of the whole infinite crystal at a
+reciprocal-lattice vector `G` and the intensity a diffraction experiment measures
+(`cmfqsar/reciprocal.py`, plan item M6). Binned by the length of `G` it gives one channel block
+per pair of field types, as the distance channels do, and
+`CMFModel(kernel_source="reciprocal")` fits them with the code a set of cells already uses. Three
+properties come with the definition rather than as approximations: the uniform background is the
+`G = 0` term and is simply left out; the descriptor is independent of the choice of cell exactly,
+because the one quantity that does not depend on `G` is added from its integral and not summed
+over the grid; and the width of the Gaussian field is a **resolution**, `exp(-a^2 q^2)`, so a
+wide field keeps only the first few reflections. A channel at `q` describes the structure on the
+scale `2 pi / q`.
+
+The two descriptions are one object, which is testable: the real-space lattice sum of a Gaussian
+and the sum over the reciprocal lattice are the same number (Poisson summation, the identity an
+Ewald sum is built on), and `parseval_residual` computes both sides from the two independent
+pieces of code — the neighbour list and the structure factors.
+
+**What it measured.** On three Matbench tasks (1,200 structures each, the five published folds,
+`benchmarks/run_reciprocal.py`) the reciprocal channels alone are level with the best real-space
+cutoff — R² +0.518 against +0.528 on the formation energy of the perovskites, +0.778 against
++0.773 on the bulk modulus, +0.728 against +0.735 on the shear modulus, every interval
+containing zero. Added to the real-space descriptor as a second kernel they gain +0.066
+[+0.045, +0.090] on the formation energy, +0.015 [+0.002, +0.027] on the shear modulus and
+nothing on the bulk modulus. The useful result is the third one: taking the real-space cutoff
+from 4 to 10 Å *loses* about 0.10 of R² on both moduli, because a longer sum adds many weakly
+informative distance channels, and adding the reciprocal channels to that 10 Å descriptor gives
+it back (+0.102 and +0.076). Long-range information is worth having, and the number of
+reciprocal channels does not grow with the range. The width of the field behaves as the
+resolution it is: accuracy falls steadily as the field widens (+0.785 to +0.587) and changes by
+at most 0.002 when the sum over `G` is taken half as far again. The identity agrees to one part
+in 1e13 over 120 real crystals.
+
 ### Topomer fields: a frame that comes from the topology
 
 The alignment-free kernel above throws the frame away. The topomer construction of
@@ -5179,6 +5215,7 @@ cmfqsar/chemotypes.py   heterogeneous series: scaffold clusters, placement, grou
 cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrelation)
 cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solids, the co-pattern, the periodic overlap kernel, a defect series under the host symmetry
 cmfqsar/sites.py        a site of a periodic cell as the sample: the split of the autocorrelation, per-site targets, a cell model read site by site
+cmfqsar/reciprocal.py   reciprocal-space channels of a crystal: the typed structure factors, the resolution reading, the identity with the real-space sum
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field, and the query formats that carry them out of the program
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule

@@ -379,6 +379,16 @@ def registry() -> List[Benchmark]:
                   minutes="20",
                   report=lambda: _mod("run_sites").report(),
                   tables=["sites/table.md"]),
+        Benchmark("reciprocal",
+                  "reciprocal-space channels of a crystal against the real-space "
+                  "autocorrelation: the typed structure factors added to a short and a long "
+                  "cutoff, on the formation energy of the perovskites and the two elastic "
+                  "moduli of Matbench, with the identity that ties the two descriptions "
+                  "together and the width of the field read as a resolution",
+                  "run_reciprocal.py", "reciprocal", compute=[[]],
+                  minutes="70",
+                  report=lambda: _mod("run_reciprocal").report(),
+                  tables=["reciprocal/table.md"]),
         Benchmark("fieldae",
                   "a decoder of pseudo-atoms against kernel PCA: can a nonlinear autoencoder "
                   "reconstruct a molecular field, and is its error an applicability domain "

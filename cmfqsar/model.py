@@ -1177,7 +1177,8 @@ class CMFModel:
     engine: Optional[str] = None
     # where the kernel comes from: the overlap integrals of the fields, which needs the molecules
     # to share a frame, or the rotation-invariant autocorrelation of those fields, which does not
-    kernel_source: str = "fields"           # "fields" | "autocorrelation" | "surface" | "periodic"
+    kernel_source: str = "fields"           # "fields" | "autocorrelation" | "surface" |
+                                            # "periodic" | "reciprocal"
     ac_sigma: float = 0.75                  # autocorrelation: width along the distance axis (A)
     ac_d_max: float = 12.0                  # autocorrelation: longest distance resolved (A)
     ac_chirality: bool = False              # autocorrelation: add the three-point signed block
@@ -1199,6 +1200,14 @@ class CMFModel:
     pbc_z_max: float = 0.0
     pbc_z_step: float = 1.0
     pbc_oriented: bool = False
+    # "reciprocal": the typed structure factors of a crystal, binned by the length of the
+    # reciprocal-lattice vector (plan item M6; see reciprocal.py).  It is a sum over the atoms of
+    # one cell with no neighbour list, so it carries order of any range, and rec_form_sigma --
+    # the width of the Gaussian field -- sets how much of the fine detail reaches it.
+    rec_q_max: float = 8.0                  # longest reciprocal length resolved (1/angstrom)
+    rec_step: float = 0.25                  # spacing and width of the channels (1/angstrom)
+    rec_form_sigma: float = 0.3             # width of the Gaussian field (angstrom): the resolution
+    rec_self: bool = True                   # keep the self-scattering term (the composition)
     # the *overlap* kernel of crystals (plan item M4): the fields of the cell compared point by
     # point with the periodic images summed in, which needs the structures to stand on one parent
     # lattice and gives a co-field inside the cell.  It is the "fields" kernel source with the
@@ -1539,8 +1548,19 @@ class CMFModel:
         """True for the periodic kernel: crystals, summed over the neighbour list of the cell."""
         return self.kernel_source == "periodic"
 
+    @property
+    def is_reciprocal(self) -> bool:
+        """True for the reciprocal-space channels: the typed structure factors of a crystal."""
+        return self.kernel_source == "reciprocal"
+
     def _ac_spec(self):
         from .invariant import AutocorrelationSpec, SurfaceSpec
+        if self.is_reciprocal:
+            from .reciprocal import ReciprocalSpec
+            return ReciprocalSpec(q_max=float(self.rec_q_max), step=float(self.rec_step),
+                                  sigma=float(self.rec_step),
+                                  form_sigma=float(self.rec_form_sigma),
+                                  include_self=bool(self.rec_self))
         if self.is_periodic:
             from .periodic import PeriodicSpec
             return PeriodicSpec(r_max=float(self.ac_d_max), step=float(self.ac_sigma),
@@ -1563,6 +1583,10 @@ class CMFModel:
 
     def _ac_features(self, table: AtomTable) -> np.ndarray:
         from .invariant import feature_matrix, surface_feature_matrix
+        if self.is_reciprocal:
+            from .reciprocal import reciprocal_feature_matrix
+            return reciprocal_feature_matrix(table.molecules, self._ac_spec(),
+                                             n_fields=table.weights.shape[1])
         if self.is_periodic:
             from .periodic import periodic_feature_matrix
             fn = periodic_feature_matrix
@@ -1584,7 +1608,8 @@ class CMFModel:
         names = [sp.name for sp in self.fieldset.specs]
         if len(names) != n_fields:
             names = [f"field{i}" for i in range(n_fields)]
-        chir = bool(self.ac_chirality) and not (self.on_surface or self.is_periodic)
+        chir = bool(self.ac_chirality) and not (self.on_surface or self.is_periodic
+                                                or self.is_reciprocal)
         return block_group_keys(names, self.ac_block_groups, chirality=chir)
 
     def _derive_block_weights(self, X_scaled: np.ndarray, y: Optional[np.ndarray],
@@ -1634,7 +1659,8 @@ class CMFModel:
                                      train.descriptors)
         from .invariant import autocorrelation_kernel, channel_scale
         if progress:
-            progress("Periodic autocorrelation" if self.is_periodic else
+            progress("Reciprocal channels" if self.is_reciprocal else
+                     "Periodic autocorrelation" if self.is_periodic else
                      "Surface autocorrelation" if self.on_surface else "Field autocorrelation", 0.2)
         n_fields = train.weights.shape[1]
         if not (reuse and self.train is train and getattr(self, "ac_train_", None) is not None
@@ -2627,6 +2653,10 @@ class CMFModel:
             "pbc_z_max": self.pbc_z_max,
             "pbc_z_step": self.pbc_z_step,
             "pbc_oriented": self.pbc_oriented,
+            "rec_q_max": self.rec_q_max,
+            "rec_step": self.rec_step,
+            "rec_form_sigma": self.rec_form_sigma,
+            "rec_self": self.rec_self,
             "pbc_overlap": self.pbc_overlap,
             "pbc_overlap_r_max": self.pbc_overlap_r_max,
             "pbc_symmetry": (None if self.pbc_symmetry is None else
@@ -2674,6 +2704,10 @@ class CMFModel:
         m.pbc_z_max = float(st.get("pbc_z_max", 0.0))
         m.pbc_z_step = float(st.get("pbc_z_step", 1.0))
         m.pbc_oriented = bool(st.get("pbc_oriented", False))
+        m.rec_q_max = float(st.get("rec_q_max", 8.0))
+        m.rec_step = float(st.get("rec_step", 0.25))
+        m.rec_form_sigma = float(st.get("rec_form_sigma", 0.3))
+        m.rec_self = bool(st.get("rec_self", True))
         m.pbc_overlap = bool(st.get("pbc_overlap", False))
         r = st.get("pbc_overlap_r_max")
         m.pbc_overlap_r_max = None if r is None else float(r)

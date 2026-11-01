@@ -2807,6 +2807,75 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   co-pattern, the α-as-resolution reading and the Parseval test that the publication plan's theory
   section needs. Measure on the elastic moduli and formation-energy tasks, where long-range order
   should matter, against the real-space kernel with the same cutoff.
+  **Done 1 November 2026. The channels carry what the item claimed: alone they are level with
+  the best real-space cutoff on all three tasks with no neighbour list at all, added to it they
+  gain clearly on one task of the three, and -- the result worth keeping -- they carry long-range
+  order at a cost that does not grow with the range, where lengthening the real-space cutoff
+  costs about 0.10 of R² on both elastic moduli. The width of the field behaves as the resolution
+  the item said it was, and the Parseval test holds to one part in 1e13 on real structures.**
+  **What was built.** `cmfqsar/reciprocal.py`: `ReciprocalSpec` lays out channels in |G| like the
+  distance channels, `structure_factors` and `reciprocal_vectors` build the typed structure
+  factors of one cell over the reciprocal lattice out to `q_max`, and
+  `reciprocal_autocorrelation` makes the channels -- the intensity of a pair of field types
+  averaged over the directions of G, per atom of the cell. Three properties are exact rather than
+  approximate: the uniform background is the G = 0 term and is left out, so no integral is
+  approximated to remove it; the descriptor does not change with the choice of cell, because the
+  one quantity that does not depend on G (the self scattering, and the second moments of a
+  disordered site, M2) is added from its integral over the channel instead of being summed over a
+  grid that a supercell makes denser; and the form factor exp(-a² q²) makes the width of the
+  Gaussian field a resolution rather than a cutoff, since every atom enters every channel whatever
+  the distances. `parseval_residual` is the identity the theory section needs: the real-space
+  lattice sum of a Gaussian against the sum over the reciprocal lattice, computed by the
+  neighbour list of `periodic.py` and by the structure factors of this module, so it tests the
+  two against each other. `reciprocal_pattern` and `pattern_table` read a fitted model as weight
+  times the spread of the channel, the ranking `top_channels` uses. `joint_features` puts the two
+  descriptions in one matrix. The hook is `kernel_source="reciprocal"` in `model.py` (four
+  options, a spec, a feature branch and the file format) and one dispatch in
+  `periodic_channel_labels`; no model code is new.
+  **Tests** (`tests/test_reciprocal.py`, 28): the reciprocal lattice is complete and bounded
+  correctly for any shape of cell; the structure factor at G = 0 is the sum of the weights; the
+  Parseval identity holds for a primitive cell and two supercells and at three widths; a
+  supercell, another primitive cell of the same lattice, a shift of the origin and a rotation
+  change nothing to 1e-12, while a different structure does change the channels; two cells whose
+  substituted sites are 5.4 and 10.9 Å apart are identical to the real-space descriptor with a
+  4 Å cutoff and different to these channels, and with 10.9 and 21.7 Å they are identical to it
+  with a 10 Å cutoff as well -- which is the cutoff the benchmarks of this program use; the form
+  factor falls with q and faster for a wider field; dropping the self term changes only a smooth
+  curve and keeping G = 0 adds the forward scattering to the lowest channels; a disordered cell
+  uses its second moments and is still independent of the choice of cell; a layer, a site record
+  (M5) and a set built from two field sets are refused; the blocks and the labels line up and the
+  shared helper of `periodic.py` hands a reciprocal spec to this module; a model fits, predicts,
+  survives a file and reads back.
+  **Measurement** (`benchmarks/run_reciprocal.py`; `benchmarks/results/reciprocal/table.md`).
+  Three Matbench tasks -- the formation energy of `matbench_perovskites` and the two elastic
+  moduli `matbench_log_kvrh` and `matbench_log_gvrh` -- 1,200 structures of each, the five
+  published folds, the descriptor setting, the mixing weight and the ridge chosen inside every
+  training fold, the two descriptions combined as `K = (1-t) K_real + t K_reciprocal`.
+  *Alone:* R² +0.518 against +0.528 for the best real-space cutoff (formation energy), +0.778
+  against +0.773 (bulk modulus), +0.728 against +0.735 (shear modulus); all three differences
+  have an interval containing zero. *Added to the best real-space cutoff:* +0.066
+  [+0.045, +0.090] on the formation energy, +0.015 [+0.002, +0.027] on the shear modulus,
+  +0.008 [-0.005, +0.022] on the bulk modulus; the folds give the reciprocal kernel a weight of
+  0.25 to 0.55. *The cost of range:* taking the real-space cutoff from 4 to 10 Å loses 0.102 and
+  0.099 of R² on the two moduli, and adding these channels to the 10 Å descriptor gives back
+  +0.102 [+0.052, +0.172] and +0.076 [+0.051, +0.103]; the number of reciprocal channels does not
+  grow with the range. *Resolution:* on the bulk modulus, R² +0.785 at a = 0.15 Å falling to
+  +0.587 at 0.7 Å, and at most 0.002 of change when the sum over G is taken to 12 Å⁻¹ instead of
+  8 -- once the form factor has decided what is visible, summing further changes nothing.
+  *The identity:* about 1e-13 over 120 crystals of the three tasks, worst case 2e-11. *Reading
+  the model:* on the bulk modulus the channels that move the prediction most sit at q = 2 to
+  3.5 Å⁻¹, a spacing of 1.8 to 3.1 Å. A fourth stage draws the concept on two cells built for the
+  purpose (`--stage concept`): two substituted sites 5.4 and 10.9 Å apart give a real-space kernel
+  of 1.000000 at a 4 Å cutoff and 0.9550 in reciprocal space.
+  **What is open.** Three periodic directions only: a layer or a chain has a reciprocal lattice of
+  lower dimension and the intensity then depends on the direction across the vacuum, so M1's
+  structures are refused rather than approximated, and that is the first thing to add. No site
+  split (M5), because a structure factor is a sum over the whole cell. The channels are blind to
+  a mirror image, like every two-point descriptor, which is M10. The gain was measured against
+  the autocorrelation on one field set of four property fields; indicator fields per element
+  would make these channels the partial structure factors a diffraction experiment measures and
+  were not affordable in the same comparison. And M12 (learning from measured G(r) and S(Q)) was
+  held until this item reported: it carries signal, so M12 is now open.
 * **M7. Rigid hosts as pockets.** `cmfqsar/protein.py` and `cmfqsar/complementarity.py` read a PDB
   protein; zeolite and MOF frameworks come as CIF files with periodic images and want a
   pore-centred frame. Once in, guest uptake and selectivity follow the ligand path, residue
@@ -4786,7 +4855,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026** and ~~M5~~ **done 1 November 2026**, M6 (reciprocal-space channels) next, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~ and ~~M6~~ **done 1 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

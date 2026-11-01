@@ -552,6 +552,24 @@ The per-site model is not a claim of its own yet: it needs a set with many measu
 each of many cells, which neither the catalysts (one site per cell) nor the three lithium
 electrolytes (three cells) can be.
 
+**Item M6 is done (1 November 2026)**, and it gives the theory section of this paper the piece
+it was missing. The periodic autocorrelation and the typed structure factors are one object: the
+real-space lattice sum of a Gaussian and the sum over the reciprocal lattice are equal by Poisson
+summation, which `parseval_residual` checks to one part in 1e13 on 120 crystals of three Matbench
+tasks. **The section this supports is "one descriptor, two resolutions"**: the width of the
+Gaussian field is a resolution limit in reciprocal space, exp(-a² q²), and the measurement shows
+it behaving as one -- accuracy falls steadily as the field widens (R² +0.785 to +0.587) and
+changes by at most 0.002 when the sum over G is taken half as far again. What the channels buy
+for prediction is smaller and should be stated as it is: alone they are level with the best
+real-space cutoff on all three tasks, with no neighbour list; added to it they gain +0.066
+[+0.045, +0.090] on the formation energy of the perovskites, +0.015 [+0.002, +0.027] on the shear
+modulus and nothing on the bulk modulus. The result for the methods section is the third one:
+taking the real-space cutoff from 4 to 10 Å *loses* about 0.10 of R² on both moduli, because a
+longer sum adds many weakly informative distance channels, while the reciprocal channels give it
+back without growing in number. That is the honest case for reciprocal space in this program --
+not more accuracy, but long-range order at a fixed cost -- and it is also what makes the
+scattering item M12 worth starting.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

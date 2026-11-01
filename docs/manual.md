@@ -7147,6 +7147,139 @@ co-pattern is. And the background of a site profile is a property of the whole c
 unrelated cells carries their compositions in it; a series on one host lattice does not have that
 difficulty.
 
+## Order the cutoff cannot reach: the reciprocal-space channels
+
+Everything above is a sum over a neighbour list, so a crystal is described out to $r_{\max}$ and
+no further. A superstructure with a long repeat, a modulation, the long-range part of the
+electrostatic interaction: none of them reaches the descriptor. The channels that do cost nothing
+for the distance, because they are sums over the atoms of **one cell** with no neighbour list at
+all (plan item M6, `cmfqsar/reciprocal.py`).
+
+For a field $f$ and a vector $\mathbf{G}$ of the reciprocal lattice -- the lattice of vectors with
+$\mathbf{G}\cdot\mathbf{T} = 2\pi n$ for every lattice translation $\mathbf{T}$ -- the **typed
+structure factor** is
+
+$$
+S_f(\mathbf{G}) = \sum_{l\,\in\,\mathrm{cell}} w_{lf}\, \exp\!\left(i\,\mathbf{G}\cdot\mathbf{r}_l\right)
+$$
+<!-- #eq:structure-factor -->
+
+It is the Fourier transform of the field of the whole infinite crystal at $\mathbf{G}$, and it is
+what a diffraction experiment measures: $|S_f(\mathbf{G})|^2$ is the intensity of the Bragg
+reflection at $\mathbf{G}$ when field $f$ is the scattering power. One value of $S_f$ already
+holds information about the whole structure, however far the order extends, which is why these
+channels have no cutoff radius.
+
+The channel at the reciprocal length $q_k$ for a pair of field types is the intensity of that
+pair, averaged over the directions of $\mathbf{G}$:
+
+$$
+\Psi_{fg}(q_k) = \dfrac{1}{N}\left[\, \dfrac{(2\pi)^3}{V\,I_k} \sum_{\mathbf{G} \neq 0} A_{fg}(\mathbf{G})\, F(|\mathbf{G}|)\, B_k(|\mathbf{G}|) \;+\; \left(e_{fg} - c_{fg}\right) \langle F \rangle_k \,\right]
+$$
+<!-- #eq:reciprocal-channel -->
+
+with $A_{fg} = |S_f|^2$ for one field type and $2\,\mathrm{Re}\,[S_f \overline{S_g}]$ for two,
+which counts a pair of different types in both orders as the real-space descriptor does;
+$B_k(q) = \omega(q)\exp(-(q-q_k)^2/2\sigma^2)$ the channel with the same tapered window as the
+real-space cutoff; $I_k = \int 4\pi q^2 B_k(q)\,\mathrm{d}q$ its shell integral, which is how
+many reciprocal-lattice points the channel is expected to hold; $V$ the volume of the cell and
+$N$ its atoms. The term outside the sum is the part of $A_{fg}$ that comes from an atom with
+itself, $c_{fg} = \sum_l w_{lf} w_{lg}$ from the weights and $e_{fg}$ the same sum of the second
+moments of a disordered site. The two are equal for an ordered structure, so that term vanishes
+there; where they differ it is the correction partial occupancy asks for. Neither is summed over
+the lattice: a quantity that does not depend on $\mathbf{G}$ contributes $\langle F \rangle_k$,
+the mean of the form factor over the channel, and taking it from that integral instead of from
+the grid is what makes the descriptor independent of the choice of cell **exactly** -- a cell with
+few atoms holds few reciprocal-lattice points per channel, and a sum would estimate a constant
+differently in a supercell of the same structure.
+
+**The width of the field is a resolution.** $F(q) = \exp(-a^2 q^2)$ is the form factor: the two
+fields are Gaussians of width $a$, so their product in reciprocal space carries this factor. It
+falls with $q$, so $a$ decides how much fine detail reaches the descriptor -- a wide field sees
+only the first few reflections. This is the same width the real-space descriptor uses along the
+distance axis, read in reciprocal space, and it is a resolution and not a cutoff: every atom of
+the cell enters every channel whatever the distances in the structure. A channel at $q$ describes
+the structure on the scale $2\pi/q$, which is how these channels are compared with a cutoff
+radius.
+
+**Two things the real-space form has only as approximations.** The uniform background is the
+$\mathbf{G} = 0$ term, $A_{fg}(0) = (\sum_l w_{lf})(\sum_l w_{lg})$, the forward scattering: here
+it is one term of the sum, left out, with no integral to approximate. And the two descriptions are
+one object. Summing the field in real space and summing it over the reciprocal lattice give the
+same number -- Poisson summation, the identity an Ewald sum is built on -- so for any width $u$,
+
+$$
+\sum_{l,m}\sum_{\mathbf{T}} w_{lf} w_{mg} \exp\!\left(-\dfrac{|\mathbf{r}_l - \mathbf{r}_m - \mathbf{T}|^2}{2u^2}\right) = \dfrac{(2\pi u^2)^{3/2}}{V} \sum_{\mathbf{G}} A_{fg}(\mathbf{G})\, \exp\!\left(-\dfrac{u^2 |\mathbf{G}|^2}{2}\right)
+$$
+<!-- #eq:parseval -->
+
+`parseval_residual` computes both sides. The left side is this program's neighbour list and the
+right side is the sum over the reciprocal lattice, so the identity tests the two pieces of code
+against each other, and it is the statement that the reciprocal channels are the same descriptor
+at a different resolution rather than a second one.
+
+![What a reciprocal-space channel adds. (a) Two cells of a silicon host with two substituted sites, 5.4 angstrom apart in one and 10.9 in the other: the same composition and the same local environment around every atom. (b) The real-space channel of the substituted pair. Everything that separates the two structures lies outside a 4 angstrom cutoff, so the descriptor with that cutoff gives them a kernel of 1.000000 -- for it they are one structure -- while a 12 angstrom cutoff reaches the first peak and gives 0.947. (c) The reciprocal channels of the same pair, which have no cutoff: the two profiles differ from the lowest reciprocal length upwards, and the kernel is 0.955. The dotted curves are the form factor for three widths of the field, which is the resolution; the second axis gives the length 2 pi / q that each channel describes. (d) The identity of equation (#eq:parseval): the lattice sum over the images and the sum over the reciprocal lattice, as the width of the Gaussian is varied, agree to one part in 1e13. Drawn by `benchmarks/run_reciprocal.py`.](benchmarks/results/reciprocal/concept.png)
+
+**Using them.** `reciprocal_feature_matrix` builds the channels of a set and
+`CMFModel(kernel_source="reciprocal")` fits them with the machinery the periodic autocorrelation
+already uses -- the per-block scaling, the cosine normalisation, the learners, the file format.
+`joint_features` puts the two descriptions side by side in one matrix, and
+`reciprocal_pattern` reads a fitted model the way the co-pattern reads the real-space one: which
+pair of field types at which reciprocal length, that is, at which spacing of planes.
+
+**What it measured.** Three Matbench tasks, 1,200 structures of each, the five published folds,
+the setting of the descriptor and the ridge chosen inside every training fold
+(`benchmarks/run_reciprocal.py`; the table is `benchmarks/results/reciprocal/table.md`). The
+reciprocal channels were measured alone and added to the real-space descriptor as a second
+kernel, `K = (1-t) K_real + t K_reciprocal`, with the weight $t$ chosen in the training fold.
+Three things came out of it.
+
+**They carry as much as the real-space descriptor, with no neighbour list.** Alone they reach
+R² +0.518 on the formation energy of the perovskites against +0.528 for the best real-space
+cutoff, +0.778 against +0.773 on the bulk modulus and +0.728 against +0.735 on the shear
+modulus. All three differences have an interval that contains zero. A descriptor built only from
+sums over the atoms of one cell is level with a tuned pair-distance descriptor, which is the
+first thing worth knowing about it.
+
+**Added to the real-space descriptor they gain on one task of the three.** Against the best
+real-space cutoff: +0.066 [+0.045, +0.090] on the formation energy, +0.015 [+0.002, +0.027] on
+the shear modulus and +0.008 [-0.005, +0.022] on the bulk modulus, the intervals from 2,000
+bootstrap resamples of the structures. So the gain is clear on one set, small on the second and
+absent on the third. The mixing weight the folds chose is 0.25 to 0.55, so the training sets do
+put real weight there.
+
+**Reaching further in real space costs accuracy; reaching further in reciprocal space does
+not.** On both moduli, taking the real-space cutoff from 4 to 10 Å *loses* about 0.10 of R²
+(+0.773 to +0.671 and +0.735 to +0.635): the longer sum adds many weakly informative distance
+channels that dilute the kernel. Adding the reciprocal channels to that 10 Å descriptor gives
+back +0.102 [+0.052, +0.172] and +0.076 [+0.051, +0.103]. Long-range information is worth
+having, and this is the cheap way to carry it: the number of reciprocal channels does not grow
+with the range at all.
+
+**The width of the field is the resolution, and the cutoff in q is not a parameter.** On the
+bulk modulus the accuracy of the reciprocal channels falls steadily as the field widens, R²
++0.785 at $a$ = 0.15 Å down to +0.587 at 0.7 Å, and changes by at most 0.002 when the sum over
+$\mathbf{G}$ is taken to 12 Å⁻¹ instead of 8. Once the form factor has decided what is visible,
+summing further changes nothing, which is what the word resolution means here.
+
+**The identity holds on real structures.** Over 120 crystals of the three tasks the two sides of
+equation (#eq:parseval) agree to about one part in $10^{13}$, worst case $2\times10^{-11}$.
+
+**What a model reads there.** On the bulk modulus the channels that move the prediction most sit
+at $q$ = 2 to 3.5 Å⁻¹, which is a spacing of 1.8 to 3.1 Å -- the nearest-neighbour scale that
+sets an elastic constant -- with the electronegativity and inverse-square-root-mass fields and
+their products carrying them. Neighbouring channels are strongly correlated, so single weights
+alternate in sign and it is the envelope over $q$ that carries the reading;
+`benchmarks/results/reciprocal/pattern.png` draws it.
+
+**The limits.** The channels need a structure periodic in all three directions; a layer or a
+chain has a reciprocal lattice of lower dimension, and the intensity then depends on the
+direction across the vacuum, which these channels do not resolve. There is no site split of them
+(a structure factor is a sum over the whole cell, so the intensity cannot be divided among the
+sites the way the pair sum can), and a site record is refused for that reason. And the intensity
+of a reflection is the same for a structure and its mirror image, so these channels share the one
+blindness of every two-point descriptor.
+
 ## An atom instead of a molecule: the local invariant kernel
 
 Every model so far predicts one number per molecule. A carbon shift, an acidity, a local
