@@ -45,7 +45,7 @@ import json
 import os
 import sys
 import time
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 
@@ -315,6 +315,27 @@ def rebuild_public_model(args, log):
                       error=best["rmse"], mae=best["mae"], lam=best["lam"], n_samples=len(t),
                       n_molecules=t.n_measured_molecules, folds=pub["folds"])
     return hs, fs, model, cyl, rho
+
+
+#: the (z, r) grid of the fine co-field profile the figures of the manual are drawn from
+FINE_Z = tuple(float(z) for z in np.round(np.arange(-3.0, 3.01, 0.25), 2))
+FINE_R = tuple(float(r) for r in np.round(np.arange(0.0, 4.01, 0.2), 2))
+
+
+def write_fine_profile(trained, log, path: Optional[str] = None) -> str:
+    """The co-field of the public model on a fine (z, r) grid, with its standard deviation,
+    for every field, written as ``profile_fine.json``; docs/make_figures.py draws it."""
+    hs, fs, model, cyl, rho = trained
+    out = {"rho": rho, "lam": cyl.lam, "q2": cyl.q2, "sigma": cyl.error, "n_samples": len(model.coef),
+           "z": list(FINE_Z), "r": list(FINE_R), "fields": {}}
+    for f, name in enumerate(fs.names):
+        v, sd = model.profile(f, FINE_Z, FINE_R, sigma=cyl.error)
+        out["fields"][name] = {"value": v.tolist(), "sd": sd.tolist()}
+    path = path or os.path.join(RESULTS, "profile_fine.json")
+    json.dump(out, open(path, "w"), indent=0)
+    log(f"fine co-field profile of {len(fs.names)} fields on {len(FINE_Z)} x {len(FINE_R)} "
+        f"points written to {path}")
+    return path
 
 
 def run_hosts(args, log, trained) -> dict:
@@ -641,6 +662,10 @@ def main():
     ap.add_argument("--reuse-public", action="store_true",
                     help="keep the stored results of the public set and recompute only the "
                          "best model, then run the hosts and the disordered conductors")
+    ap.add_argument("--fine-profile", action="store_true",
+                    help="recompute the best public model and write its co-field on a fine "
+                         "(z, r) grid to results/hops/profile_fine.json, for the figures of the "
+                         "manual; nothing else is run")
     args = ap.parse_args()
     os.makedirs(RESULTS, exist_ok=True)
     if args.report:
@@ -654,6 +679,9 @@ def main():
 
     if not os.path.exists(args.prepared):
         raise SystemExit(f"{args.prepared} is missing: run benchmarks/prepare_hops.py first")
+    if args.fine_profile:
+        write_fine_profile(rebuild_public_model(args, log), log)
+        return
     if args.reuse_public:
         trained = rebuild_public_model(args, log)
     else:

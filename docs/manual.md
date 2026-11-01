@@ -7705,6 +7705,8 @@ block per field divided by its diagonal and summed with the mixing coefficients,
 regression on it; the rotation-invariant local kernel of the atom sections applies to the same
 environments unchanged and is the frame-free comparison.
 
+![A hop as the sample, for the hop of Li3PO4 the interface study computed with DFT, site 34 into site 0. Left: the environment cut from the cell, every atom within 6 Å of the midpoint with the two positions of the migrating ion removed (dashed circles), projected onto a plane through the hop axis, which is z; the dotted circles are where the envelope has fallen to 0.5, 0.1 and 0.01, and an atom is drawn fainter as its weight falls. The oxygen with the black edge forms the bottleneck, the point of least free space on the straight path. Right: the electrostatic field of the same environment averaged about the hop axis, as a function of the position along the hop and the distance from its axis, with the atoms at their (z, r) and the two sites on the axis; this is the view the rotation-averaged kernel of Eq. (#eq:hopkernel) and the co-field profile take.](docs/figures/hop.png)
+
 **The co-field is a profile.** Averaged about the axis, the co-field depends on the position
 along the hop and the distance from its axis, so `HopModel.profile` reads it as a table in
 $(z, r)$: where along the path, and how far from it, an atom of a given field raises or lowers
@@ -7856,6 +7858,8 @@ cobalt (+3.1 at the midpoint) and manganese (+1.8 beside a site) from nickel (-1
 midpoint), with the caution the local alignment section gives: the fields overlap in what they
 describe, so the twelve co-fields are one effect decomposed over twelve bases and not twelve
 statements, and an element read alone is partly the oxygen coordination that comes with it.
+
+![The co-field of the public hop model as a profile in the hop frame: the position along the hop against the distance from its axis, for the electrostatic field, the steric field and the oxygen indicator, on a finer grid than the tables above. Red raises the barrier per unit of field, blue lowers it; inside the dashed line the value is more than two standard deviations from zero. Anything on the axis raises the barrier, an oxygen about 2 Å from the axis at the midpoint lowers it, and a positive charge about 3 Å from the axis beside a site raises it. Drawn from `benchmarks/results/hops/profile_fine.json`, written by `benchmarks/run_hops.py --fine-profile`.](docs/figures/hopcofield.png)
 
 **From hops to conduction.** The out-of-fold barriers of every hop (the equivalent hops taking
 their representative's value) were run through the percolation step and compared with the

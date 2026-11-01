@@ -667,6 +667,162 @@ def fig_parent(path):
           f"the amine ring")
 
 
+ELEMENT_COLOURS = {"Li": "#8e6fd8", "O": "#d62728", "P": "#ff7f0e", "B": "#e8a0b0"}
+HOP_RHO, HOP_R_MAX = 0.25, 6.0          # the public hop model: envelope width 2 A, reach 6 A
+
+
+def phosphate_hop():
+    """The environment of the Li hop of Li3PO4 the interface study computed with DFT, site 34
+    into site 0, in its hop frame: z along the hop, the midpoint at the origin."""
+    if "phosphate_hop" in _CACHE:
+        return _CACHE["phosphate_hop"]
+    sys.path.insert(0, os.path.join(ROOT, "benchmarks"))
+    import run_hops as rh
+    from cmfqsar.hops import framed_environments, bottleneck
+    hs = rh.load_hosts()
+    fs = rh.fieldset_for(hs, "file")
+    crystals = hs.crystals(fs)
+    row = next(i for i, h in enumerate(hs.hops)
+               if h.structure == 0 and h.a == 34 and h.b == 0 and tuple(h.offset) == (0, 0, 0))
+    hop = hs.hops[row]
+    env = framed_environments(hs, crystals, rows=[row], rho=HOP_RHO, r_max=HOP_R_MAX)[0]
+    gap, where, ring = bottleneck(env, hop.vector)
+    out = {"hs": hs, "fs": fs, "hop": hop, "env": env, "gap": gap, "ring": ring}
+    _CACHE["phosphate_hop"] = out
+    print(f"  Li3PO4 hop {hop.a} -> {hop.b}: length {hop.length:.2f} A, {env.n_atoms - 1} atoms "
+          f"within {HOP_R_MAX:g} A, bottleneck {gap:.2f} A ({' '.join(ring)}), "
+          f"bond-valence barrier {hop.y:.2f} eV")
+    return out
+
+
+def averaged_field(env, f, b, zs, rs):
+    """The field `f` of a hop environment averaged about the hop axis, on the (z, r) grid:
+    each Gaussian of width `b` becomes exp(-b/2 [(z - z_l)^2 + (r - rho_l)^2]) e^-x I_0(x) with
+    x = b r rho_l, the same closed form the kernel of the hop model uses."""
+    from scipy.special import i0e
+    c = np.asarray(env.coords, float)
+    rho_l, z_l = np.hypot(c[:, 0], c[:, 1]), c[:, 2]
+    w = np.asarray(env.weights, float)[:, f]
+    Z, R = np.meshgrid(zs, rs, indexing="ij")
+    out = np.zeros(Z.shape)
+    for k in np.nonzero(np.abs(w) > 1e-12)[0]:
+        out += w[k] * np.exp(-0.5 * b * ((Z - z_l[k]) ** 2 + (R - rho_l[k]) ** 2)) * i0e(b * R * rho_l[k])
+    return out
+
+
+def fig_hop(path):
+    """Chapter 11: a hop as the sample. Left, the environment of one hop of Li3PO4 cut from the
+    cell under the envelope and seen in the hop frame; right, its electrostatic field averaged
+    about the hop axis, which is the view the rotation-averaged kernel and the co-field take."""
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle
+    p = phosphate_hop()
+    env, hop, fs = p["env"], p["hop"], p["fs"]
+    c = np.asarray(env.coords, float)[1:]            # atom 0 is the marker at the midpoint
+    symbols = list(env.symbols)[1:]
+    radii = np.asarray(env.radii, float)[1:]
+    d = np.linalg.norm(c, axis=1)
+    envelope = np.exp(-HOP_RHO * d * d)
+    half = 0.5 * hop.length
+    colours = [ELEMENT_COLOURS.get(s, "0.5") for s in symbols]
+    # the ring of the bottleneck: the atoms nearest to the path at its narrowest point
+    pts = np.linspace(-half, half, 41)
+    dist = np.sqrt((c[:, 0] ** 2 + c[:, 1] ** 2)[None, :] + (pts[:, None] - c[:, 2][None, :]) ** 2)
+    k = int(np.argmin(dist.min(axis=1)))
+    ring = np.where(dist[k] <= dist[k].min() + 0.3)[0]
+
+    fig = plt.figure(figsize=(WIDTH, 3.1))
+    ax1 = fig.add_axes([0.06, 0.08, 0.42, 0.84])
+    ax2 = fig.add_axes([0.55, 0.14, 0.37, 0.70])
+    cax = fig.add_axes([0.935, 0.30, 0.012, 0.38])
+    # left: the projection onto the x-z plane of the frame, depth-sorted, faded by the envelope
+    order = np.argsort(c[:, 1])
+    for i in order:
+        ax1.add_patch(Circle((c[i, 2], c[i, 0]), 0.32 * radii[i], facecolor=colours[i],
+                             edgecolor="black" if i in ring else "none",
+                             linewidth=1.2 if i in ring else 0,
+                             alpha=0.15 + 0.85 * envelope[i], zorder=2 + envelope[i]))
+    for level in (0.5, 0.1, 0.01):
+        rad = np.sqrt(-np.log(level) / HOP_RHO)
+        ax1.add_patch(Circle((0, 0), rad, fill=False, edgecolor="0.4", linestyle=":", lw=0.8, zorder=1))
+        ax1.text(-rad * 0.72, rad * 0.72, f"{level:g}", fontsize=6.5, color="0.35", ha="center",
+                 va="center", zorder=5)
+    for z in (-half, half):
+        ax1.add_patch(Circle((z, 0), 0.55, fill=False, edgecolor=ELEMENT_COLOURS["Li"],
+                             linestyle="--", lw=1.2, zorder=6))
+    ax1.plot([-half, half], [0, 0], color="black", lw=1.0, ls="--", zorder=5)
+    ax1.plot([0], [0], marker="x", color="black", ms=6, zorder=7)
+    ax1.annotate("site a", (-half, 0), xytext=(-half, -1.1), fontsize=7, ha="center")
+    ax1.annotate("site b", (half, 0), xytext=(half, -1.1), fontsize=7, ha="center")
+    ax1.annotate("z", (3.0, 0), xytext=(5.6, 0.15), fontsize=8, ha="center", style="italic")
+    ax1.set_xlim(-HOP_R_MAX - 0.4, HOP_R_MAX + 0.4)
+    ax1.set_ylim(-HOP_R_MAX - 0.4, HOP_R_MAX + 0.4)
+    ax1.set_aspect("equal")
+    ax1.set_xlabel("z along the hop / Å")
+    ax1.set_ylabel("x / Å")
+    ax1.set_title(f"the environment of a hop in Li$_3$PO$_4$\n{env.n_atoms - 1} atoms within "
+                  f"{HOP_R_MAX:g} Å, envelope width {1 / np.sqrt(HOP_RHO):g} Å", fontsize=8)
+    ax1.tick_params(length=2)
+    # right: the electrostatic field averaged about the axis, in (z, r)
+    f = fs.names.index("electrostatic")
+    zs, rs = np.arange(-3.5, 3.51, 0.1), np.arange(0.0, 4.01, 0.1)
+    X = averaged_field(env, f, float(fs.specs[f].alpha), zs, rs)
+    vmax = np.abs(X).max()
+    im = ax2.imshow(X.T, origin="lower", extent=(zs[0], zs[-1], rs[0], rs[-1]), cmap="RdBu_r",
+                    vmin=-vmax, vmax=vmax, aspect="equal", interpolation="bilinear")
+    rho_l = np.hypot(c[:, 0], c[:, 1])
+    inside = (np.abs(c[:, 2]) <= 3.5) & (rho_l <= 4.0)
+    ax2.scatter(c[inside, 2], rho_l[inside], s=4 + 26 * envelope[inside],
+                color=np.array(colours)[inside], edgecolor="black", linewidth=0.3, zorder=4)
+    ax2.plot([-half, half], [0, 0], color="black", lw=1.0, ls="--", zorder=3)
+    ax2.plot([-half, half], [0, 0], marker="o", mfc="white", mec=ELEMENT_COLOURS["Li"], ms=6,
+             lw=0, zorder=5, clip_on=False)
+    ax2.set_xlabel("z along the hop / Å")
+    ax2.set_ylabel("r from the axis / Å")
+    ax2.set_title("electrostatic field, averaged\nabout the hop axis", fontsize=8)
+    ax2.tick_params(length=2)
+    fig.colorbar(im, cax=cax).ax.tick_params(labelsize=6.5)
+    handles = [plt.Line2D([], [], marker="o", ls="", color=ELEMENT_COLOURS[s], label=s, ms=6)
+               for s in ("Li", "O", "P")]
+    ax1.legend(handles=handles, loc="upper right", frameon=False, fontsize=7, handletextpad=0.2)
+    save(fig, path)
+
+
+def fig_hopcofield(path):
+    """Chapter 11: the co-field of the public hop model as a profile in (z, r), for the
+    electrostatic field, the steric field and the oxygen indicator, from
+    benchmarks/results/hops/profile_fine.json."""
+    import matplotlib.pyplot as plt
+    d = json.load(open(os.path.join(RESULTS, "hops", "profile_fine.json"), encoding="utf-8"))
+    zs, rs = np.asarray(d["z"], float), np.asarray(d["r"], float)
+    panels = [("electrostatic", "electrostatic co-field"), ("steric", "steric co-field"),
+              ("cif:O", "oxygen indicator co-field")]
+    fig, axes = plt.subplots(1, 3, figsize=(WIDTH, 2.05))
+    for ax, (name, title) in zip(axes, panels):
+        V = np.asarray(d["fields"][name]["value"], float)
+        SD = np.asarray(d["fields"][name]["sd"], float)
+        vmax = np.abs(V).max()
+        im = ax.imshow(V.T, origin="lower", extent=(zs[0], zs[-1], rs[0], rs[-1]), cmap="RdBu_r",
+                       vmin=-vmax, vmax=vmax, aspect="equal", interpolation="bilinear")
+        # inside the dashed line the co-field is more than two standard deviations from zero
+        ax.contour(zs, rs, (np.abs(V) / np.maximum(SD, 1e-12)).T, levels=[2.0], colors="black",
+                   linewidths=0.7, linestyles="--")
+        ax.axvline(0, color="0.3", lw=0.5)
+        ax.set_title(title, fontsize=8)
+        ax.set_xlabel("z along the hop / Å")
+        if ax is axes[0]:
+            ax.set_ylabel("r from the axis / Å")
+        ax.tick_params(length=2)
+        fig.colorbar(im, ax=ax, shrink=0.75, pad=0.03).ax.tick_params(labelsize=6.5)
+    fig.suptitle(f"co-field of the hop model fitted to {d['n_samples']} hops of the public set, "
+                 f"envelope width {1 / np.sqrt(d['rho']):g} Å, q² = {d['q2']:.2f}" + chr(10)
+                 + "inside the dashed line the value is more than two standard deviations from zero",
+                 fontsize=8, y=0.99)
+    fig.tight_layout(rect=(0, 0, 1, 0.85))
+    print(f"  hop co-field: rho {d['rho']}, lambda {d['lam']}, q2 {d['q2']:.3f}, sigma {d['sigma']:.3f}")
+    save(fig, path)
+
+
 def fig_scatter(path):
     """Chapter 7: observed against predicted for the steroid model, cross-validation and test set.
 
@@ -900,6 +1056,8 @@ FIGURES = {
     "overlap.svg": fig_overlap,
     "search.svg": fig_search,
     "parent.svg": fig_parent,
+    "hop.png": fig_hop,
+    "hopcofield.png": fig_hopcofield,
     "scatter.svg": fig_scatter,
     "rule1.png": fig_rule1,
     "rule2.svg": fig_rule2,
