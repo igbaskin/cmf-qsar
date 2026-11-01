@@ -3060,6 +3060,8 @@ optimum, so what a search costs matters more than which point it selects. That i
 makes a finer grid — a separate α per field, say — affordable for the first time, and the next
 section uses the saved time for exactly that and reports what it gained, which was nothing.
 
+![The two criteria over the same grid of the steroid training set: the cross-validated q² of the search figure, and the log marginal likelihood with the bias marginalised and the amplitude profiled out, written relative to its maximum, the best point of each in bold. Both surfaces are flat along α and steep along λ, and the two best points differ by one step of λ at the same α, where the q² values differ in the second decimal; a candidate on the right costs one factorisation, on the left ten.](docs/figures/evidence.svg)
+
 The evidence is not a cross-validated score and does not pretend to be. It answers *how probable
 are these activities under this model*, not *how well would this model predict a molecule it has
 not seen*, and the two can disagree when the kernel is misspecified, which for molecular
@@ -3159,6 +3161,8 @@ number mislead:
   **+0.32** once the search is allowed to pick the grid point that best fits the noise, while the real
   value stays at +0.78. The kernels do not depend on the activities, so they are computed once
   and the extra cost is one cross-validation per grid point per shuffle.
+
+![y-randomisation of the steroid model of the search figure of *Attenuation, regularisation and the grids*: the cross-validated q² of 199 shuffles of the activities, with the real value as the red line. Left, the hyper-parameters held at the point the search chose; right, the whole search over the grid repeated inside every shuffle. The search finds the grid point that fits each shuffle best, so the shuffled values move up and spread less, and the largest of them rises; the real value stays where it is, and the distance between the two is the test. The mean, the largest shuffled value and the permutation p-value are in the titles.](docs/figures/scramble.svg)
 
 ## Where does the model apply?
 

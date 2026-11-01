@@ -1472,6 +1472,109 @@ def fig_pocket(path):
     save(fig, path)
 
 
+def steroid_kernels():
+    """The joint training kernel of the steroid training set at every attenuation of the search
+    grid, built once: [(alpha, K)]."""
+    if "steroid_kernels" in _CACHE:
+        return _CACHE["steroid_kernels"]
+    from cmfqsar import CMFModel
+    from cmfqsar.fields import AtomTable, FieldSet, build_fields
+    s = steroids()
+    alphas = sorted({r["alpha"] for r in s["search"].table})
+    out = []
+    for a in alphas:
+        fs = FieldSet.create(alpha=a)
+        table = AtomTable.from_molecules([build_fields(s["ds"].mols[i], fs, s["ds"].names[i])
+                                          for i in s["train_idx"]])
+        out.append((a, CMFModel(fieldset=fs, method="krr", normalize=True).training_kernel(table)))
+    _CACHE["steroid_kernels"] = out
+    return out
+
+
+def fig_scramble(path):
+    """Chapter 7: y-randomisation of the steroid model, with the hyper-parameters held fixed and
+    with the search repeated inside every shuffle."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.validation import scramble_kernel, scramble_selection
+    s = steroids()
+    y, model = s["y"], s["model"]
+    kernels = steroid_kernels()
+    alpha, lam = float(s["fs"].specs[0].alpha), float(model.params["lam"])
+    lams = sorted({r["lam"] for r in s["search"].table})
+    K_best = next(K for a, K in kernels if a == alpha)
+    runs = 199
+    fixed = scramble_kernel(K_best, y, "krr", {"lam": lam}, folds=10, runs=runs, seed=0)
+    redone = scramble_selection([K for _, K in kernels], y, "krr",
+                                param_grid=[{"lam": l} for l in lams], folds=10, runs=runs, seed=0)
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.5), sharex=True)
+    for ax, res, title in zip(axes, (fixed, redone),
+                              (f"hyper-parameters fixed at α = {alpha:g}, λ = {lam:g}",
+                               f"the search over {len(kernels)} × {len(lams)} grid points redone")):
+        above = int(np.sum(res.scrambled >= res.observed))
+        p = (above + 1) / (res.runs + 1)
+        ax.hist(res.scrambled, bins=25, color="0.6", edgecolor="white")
+        ax.axvline(res.observed, color="C3", lw=1.5)
+        ax.text(res.observed - 0.03, ax.get_ylim()[1] * 0.95, f"real q² = {res.observed:.2f}",
+                color="C3", ha="right", va="top", fontsize=7.5)
+        ax.set_title(f"{title}\nshuffled: mean {res.scrambled.mean():+.2f}, largest "
+                     f"{res.scrambled.max():+.2f}, p = {p:.3f}", fontsize=8)
+        ax.set_xlabel("cross-validated q² of the shuffled activities")
+        ax.tick_params(length=2)
+        plain = title.replace("α", "alpha").replace("λ", "lambda").replace("×", "x")
+        print(f"  y-randomisation ({plain}): observed {res.observed:.3f}, {res.runs} shuffles, "
+              f"mean {res.scrambled.mean():+.3f}, sd {res.scrambled.std():.3f}, "
+              f"largest {res.scrambled.max():+.3f}, p {p:.3f}")
+    axes[0].set_ylabel(f"shuffles out of {runs}")
+    fig.tight_layout()
+    save(fig, path)
+
+
+def fig_evidence(path):
+    """Chapter 7: the two criteria over the same grid of the steroid training set, the
+    cross-validated q² and the log marginal likelihood."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.evidence import evidence_grid
+    s = steroids()
+    table = s["search"].table
+    alphas = sorted({r["alpha"] for r in table})
+    lams = sorted({r["lam"] for r in table})
+    Q = np.full((len(lams), len(alphas)), np.nan)
+    for r in table:
+        Q[lams.index(r["lam"]), alphas.index(r["alpha"])] = r["q2"]
+    a_best, l_best, surface = evidence_grid(steroid_kernels(), s["y"], lams)
+    E = np.full_like(Q, np.nan)
+    for (a, l), e in surface.items():
+        E[lams.index(l), alphas.index(a)] = e
+    E = E - np.nanmax(E)                                   # relative to the best point
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.7))
+    for ax, Z, title, fmt, floor in zip(axes, (Q, E), ("cross-validated q²",
+                                                        "log evidence, relative to its maximum"),
+                                        ("{:+.2f}", "{:.0f}"), (-0.5, -30.0)):
+        vmin = max(np.nanmin(Z), floor)
+        im = ax.imshow(Z, origin="lower", cmap="viridis", vmin=vmin, vmax=np.nanmax(Z), aspect="auto")
+        ax.set_xticks(range(len(alphas)), [f"{a:g}" for a in alphas], fontsize=6.5)
+        ax.set_yticks(range(len(lams)), [f"{l:g}" for l in lams], fontsize=6.5)
+        ax.set_xlabel("attenuation α")
+        if ax is axes[0]:
+            ax.set_ylabel("ridge λ")
+        best = np.unravel_index(np.nanargmax(Z), Z.shape)
+        for i in range(len(lams)):
+            for j in range(len(alphas)):
+                if np.isfinite(Z[i, j]):
+                    colour = "white" if Z[i, j] < vmin + 0.6 * (np.nanmax(Z) - vmin) else "black"
+                    label = fmt.format(max(Z[i, j], floor)).replace("-0", "0")
+                    ax.text(j, i, label, ha="center", va="center", fontsize=5.5, color=colour,
+                            fontweight="bold" if (i, j) == best else "normal")
+        ax.set_title(title, fontsize=9)
+        fig.colorbar(im, ax=ax, shrink=0.85, pad=0.03).ax.tick_params(labelsize=6.5)
+    q_best = np.unravel_index(np.nanargmax(Q), Q.shape)
+    print(f"  evidence: best by q2 alpha {alphas[q_best[1]]:g}, lambda {lams[q_best[0]]:g}; "
+          f"best by evidence alpha {a_best:g}, lambda {l_best:g}; "
+          f"q2 there {Q[lams.index(l_best), alphas.index(a_best)]:+.3f}")
+    fig.tight_layout()
+    save(fig, path)
+
+
 def fig_scatter(path):
     """Chapter 7: observed against predicted for the steroid model, cross-validation and test set.
 
@@ -1718,6 +1821,8 @@ FIGURES = {
     "metabolism.svg": fig_metabolism,
     "pharmacophore.png": fig_pharmacophore,
     "pocket.png": fig_pocket,
+    "scramble.svg": fig_scramble,
+    "evidence.svg": fig_evidence,
     "scatter.svg": fig_scatter,
     "rule1.png": fig_rule1,
     "rule2.svg": fig_rule2,
