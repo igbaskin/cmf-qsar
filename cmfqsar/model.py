@@ -1178,7 +1178,7 @@ class CMFModel:
     # where the kernel comes from: the overlap integrals of the fields, which needs the molecules
     # to share a frame, or the rotation-invariant autocorrelation of those fields, which does not
     kernel_source: str = "fields"           # "fields" | "autocorrelation" | "surface" |
-                                            # "periodic" | "reciprocal"
+                                            # "periodic" | "reciprocal" | "threebody"
     ac_sigma: float = 0.75                  # autocorrelation: width along the distance axis (A)
     ac_d_max: float = 12.0                  # autocorrelation: longest distance resolved (A)
     ac_chirality: bool = False              # autocorrelation: add the three-point signed block
@@ -1208,6 +1208,16 @@ class CMFModel:
     rec_step: float = 0.25                  # spacing and width of the channels (1/angstrom)
     rec_form_sigma: float = 0.3             # width of the Gaussian field (angstrom): the resolution
     rec_self: bool = True                   # keep the self-scattering term (the composition)
+    # "threebody": the three-body channels of a crystal (plan item M10; see threebody.py).  Every
+    # atom of the cell is a centre, and the channels say how much field weight sits at two radii
+    # from it and how far apart those two neighbours are.  It separates structures that share
+    # their distance histogram, which no two-point descriptor can; with tb_chirality on, the
+    # signed-volume block separates a structure from its mirror image as well.
+    tb_r_max: float = 4.0                   # how far from a centre the radial grid reaches (A)
+    tb_step: float = 0.5                    # spacing of the radial and the distance grid (A)
+    tb_sigma: float = 0.35                  # width of the window on every grid point (A)
+    tb_chirality: bool = False              # add the handedness block
+    tb_chirality_shells: int = 4            # radial windows the handedness is resolved over
     # the *overlap* kernel of crystals (plan item M4): the fields of the cell compared point by
     # point with the periodic images summed in, which needs the structures to stand on one parent
     # lattice and gives a co-field inside the cell.  It is the "fields" kernel source with the
@@ -1553,8 +1563,18 @@ class CMFModel:
         """True for the reciprocal-space channels: the typed structure factors of a crystal."""
         return self.kernel_source == "reciprocal"
 
+    @property
+    def is_threebody(self) -> bool:
+        """True for the three-body channels of a crystal: the triangles around every atom."""
+        return self.kernel_source == "threebody"
+
     def _ac_spec(self):
         from .invariant import AutocorrelationSpec, SurfaceSpec
+        if self.is_threebody:
+            from .threebody import ThreeBodySpec
+            return ThreeBodySpec(r_max=float(self.tb_r_max), step=float(self.tb_step),
+                                 sigma=float(self.tb_sigma), chirality=bool(self.tb_chirality),
+                                 chirality_shells=int(self.tb_chirality_shells))
         if self.is_reciprocal:
             from .reciprocal import ReciprocalSpec
             return ReciprocalSpec(q_max=float(self.rec_q_max), step=float(self.rec_step),
@@ -1579,10 +1599,17 @@ class CMFModel:
     def _ac_blocks(self, n_fields: int):
         from .invariant import block_sizes, surface_block_sizes
         spec = self._ac_spec()
+        if self.is_threebody:
+            from .threebody import threebody_block_sizes
+            return threebody_block_sizes(spec, n_fields)
         return surface_block_sizes(spec, n_fields) if self.on_surface else block_sizes(spec, n_fields)
 
     def _ac_features(self, table: AtomTable) -> np.ndarray:
         from .invariant import feature_matrix, surface_feature_matrix
+        if self.is_threebody:
+            from .threebody import threebody_feature_matrix
+            return threebody_feature_matrix(table.molecules, self._ac_spec(),
+                                            n_fields=table.weights.shape[1])
         if self.is_reciprocal:
             from .reciprocal import reciprocal_feature_matrix
             return reciprocal_feature_matrix(table.molecules, self._ac_spec(),
@@ -1608,6 +1635,9 @@ class CMFModel:
         names = [sp.name for sp in self.fieldset.specs]
         if len(names) != n_fields:
             names = [f"field{i}" for i in range(n_fields)]
+        if self.is_threebody:
+            return block_group_keys(names, self.ac_block_groups,
+                                    chirality=bool(self.tb_chirality))
         chir = bool(self.ac_chirality) and not (self.on_surface or self.is_periodic
                                                 or self.is_reciprocal)
         return block_group_keys(names, self.ac_block_groups, chirality=chir)
@@ -1659,7 +1689,8 @@ class CMFModel:
                                      train.descriptors)
         from .invariant import autocorrelation_kernel, channel_scale
         if progress:
-            progress("Reciprocal channels" if self.is_reciprocal else
+            progress("Three-body channels" if self.is_threebody else
+                     "Reciprocal channels" if self.is_reciprocal else
                      "Periodic autocorrelation" if self.is_periodic else
                      "Surface autocorrelation" if self.on_surface else "Field autocorrelation", 0.2)
         n_fields = train.weights.shape[1]
@@ -2657,6 +2688,11 @@ class CMFModel:
             "rec_step": self.rec_step,
             "rec_form_sigma": self.rec_form_sigma,
             "rec_self": self.rec_self,
+            "tb_r_max": self.tb_r_max,
+            "tb_step": self.tb_step,
+            "tb_sigma": self.tb_sigma,
+            "tb_chirality": self.tb_chirality,
+            "tb_chirality_shells": self.tb_chirality_shells,
             "pbc_overlap": self.pbc_overlap,
             "pbc_overlap_r_max": self.pbc_overlap_r_max,
             "pbc_symmetry": (None if self.pbc_symmetry is None else
@@ -2708,6 +2744,11 @@ class CMFModel:
         m.rec_step = float(st.get("rec_step", 0.25))
         m.rec_form_sigma = float(st.get("rec_form_sigma", 0.3))
         m.rec_self = bool(st.get("rec_self", True))
+        m.tb_r_max = float(st.get("tb_r_max", 4.0))
+        m.tb_step = float(st.get("tb_step", 0.5))
+        m.tb_sigma = float(st.get("tb_sigma", 0.35))
+        m.tb_chirality = bool(st.get("tb_chirality", False))
+        m.tb_chirality_shells = int(st.get("tb_chirality_shells", 4))
         m.pbc_overlap = bool(st.get("pbc_overlap", False))
         r = st.get("pbc_overlap_r_max")
         m.pbc_overlap_r_max = None if r is None else float(r)

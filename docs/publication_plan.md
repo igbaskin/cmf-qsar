@@ -593,6 +593,28 @@ say so: there is no public set of measured curves with measured properties, so t
 reports how good a measurement would have to be, and finding or making that set is the next step
 of the item.
 
+**Item M10 is done (2 November 2026)**, and it gives this paper the result that the periodic
+sections were missing: a case where the standard description of a crystal does not merely lose
+accuracy but fails, and a cheap block that repairs it. Every descriptor of the program so far
+counts field weight at a distance from field weight, so two structures with the same multiset of
+distances are one structure for it, and a mirror image is indistinguishable from its original.
+The three-body block resolves the triangle around every atom -- two distances to a pair of
+neighbours and the distance between them -- and the handedness block is the determinant of three
+field-weighted vector sums about each centre, which changes sign under a reflection. **The
+section this supports is "what a histogram of distances cannot see"**, and its measurement is on
+the defect series of M14: trained on the cells with one or two defects and asked about the cells
+with three, the two-point description is no better than predicting the mean (R² -0.015, 1,222 meV
+per site on MoS2; +0.060 and 1,096 on WSe2) and the three-body channels hold (+0.940 and 240 meV
+per site; +0.954 and 198). On ordinary property tasks the gain must be stated as small: +0.089
+[+0.041, +0.140] on the perovskite formation energies, where the cells differ by a tilt angle,
+and nothing measurable on the two elastic moduli. Two side results belong in the methods section.
+The plan expected the handedness block to cost a sum over triples of atoms; with the centre atom
+as the origin the factorisation survives the lattice sum, so both blocks cost one pass over the
+pairs of neighbours. And the mixed kernel, which fails on the extrapolation split although its
+three-body part alone succeeds, is a clean example of a general trap: a setting chosen on a
+random inner split cannot see the failure an extrapolating test asks about. **No chiral crystal
+set is used**, so the handedness block is reported as tested and not as measured.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

@@ -2906,6 +2906,88 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   structure; the factorisation trick of the molecular block does not survive the lattice sum.
   Measure on structure-type classification first, where the deficiency is visible, before any
   property.
+  **Done 2 November 2026. Both blind spots are real and both blocks close them, and the item is
+  cheaper than this entry assumed: with the centre atom as the origin, the factorisation of the
+  molecular chirality block does survive the lattice sum, because a determinant is linear in each
+  of its three arguments. No cubic sum is needed; both blocks cost one pass over the pairs of
+  neighbours of each atom. The result that justifies the item is on the defect series of M14.
+  Trained on the cells with one or two defects and asked about the cells with three, the two-point
+  description fails (R² -0.015 and 1,222 meV per site on MoS2, +0.060 and 1,096 on WSe2) and the
+  three-body channels hold (+0.940 and 240 meV per site, +0.954 and 198). On ordinary property
+  tasks the gain is small and depends on the task: +0.089 [+0.041, +0.140] on the perovskite
+  formation energies, where the signal is a tilt angle, and nothing measurable on the two elastic
+  moduli. The handedness block is tested only on constructed structures, because the repository
+  holds no set of chiral crystals with a measured property; that set is what the block now needs.**
+  **What was built.** `cmfqsar/threebody.py`. `threebody_autocorrelation` takes every atom of the
+  cell as a centre, builds the neighbourhood from the ASE neighbour list (the centre itself at
+  radius zero, so its own field types enter the channels, and every periodic image within the
+  cutoff), and sums over pairs of neighbours the product of two Gaussian radial windows and one
+  window on the distance between the two neighbours -- the three sides of the triangle, which fix
+  it. Dividing by the atoms in the cell makes a supercell give exactly the same channels. The
+  channel layout is the one of `cmfqsar/triangles.py` (item C5), so a model needs no new block
+  bookkeeping and `block_group_keys` works unchanged. `periodic_chirality` is the handedness
+  block: per centre and per radial window, the vector sum of the field-weighted neighbour
+  directions, and then the determinant of three such vectors, one per field type. It is off by
+  default. The module states when it is empty: a weight that depends only on the species makes
+  every vector a combination of one vector per species, so fewer than three species give
+  coplanar vectors and every channel is zero, and a rotation axis through the centre gives zero
+  as well. `threebody_features` and `threebody_feature_matrix` build rows for a model,
+  `threebody_channel_labels` names the channels, `channel_spread` and `pattern_table` rank them
+  for interpretation, and a site record (item M5) gives the channels of one centre, whose mean
+  over the centres is the whole-cell row. The model hook is `kernel_source="threebody"` with
+  `tb_r_max`, `tb_step`, `tb_sigma`, `tb_chirality` and `tb_chirality_shells`.
+  **Tests** (`tests/test_threebody.py`, 26): the neighbourhood holds the centre at radius zero
+  and the 1 + 6 + 12 shells of rocksalt, and a layer has no neighbour across the open direction;
+  a supercell, a shift of the origin and a rotation change no channel by more than 1e-12; the
+  homometric pair gives a two-point kernel that differs from one by less than 1e-12 and a
+  three-body kernel below 0.99; a mirror image leaves the three-body channels unchanged and
+  negates every handedness channel; a centrosymmetric cell gives handedness below 1e-20 and a
+  two-species cell gives handedness that is noise against the four-species value; the layout,
+  the labels and the block sizes agree with each other; `include_self` moves the channels it
+  should; a site record averages to the cell; a model fits, predicts and survives a file round
+  trip; the pattern table ranks the channels; a disordered cell, two field sets, too many
+  channels and an empty structure are refused.
+  **Measurement** (`benchmarks/run_threebody.py`; `benchmarks/results/threebody/table.md`).
+  *The concept stage* is the two blind spots: the homometric pair of five atoms on a ring of
+  twelve sites gives a two-point kernel of 1.00000000 and a three-body kernel of 0.9372; a cell
+  of four species with no symmetry and its mirror image agree in the three-body channels to
+  6.9e-16 of the largest channel and have handedness channels of the same size and the opposite
+  sign (kernel -1.000000); rocksalt gives 2.5e-45 in every handedness channel. *The property
+  stage* is the three Matbench tasks of M6, 600 structures of each, the five published folds, the
+  setting and the ridge chosen inside every training fold: R² +0.453 / +0.781 / +0.699 for the
+  two-point descriptor, +0.542 / +0.789 / +0.727 for the three-body channels and +0.515 / +0.799
+  / +0.721 for the two kernels mixed, so the three-body gain is +0.089 [+0.041, +0.140] on the
+  formation energies and inside the noise on both moduli (+0.009 [-0.022, +0.041], +0.028
+  [-0.003, +0.065]). *The defect stage* is the series of M14, 2,000 cells of MoS2 and of WSe2,
+  191 atoms per cell, with the two splits of that item. On random folds the two-point description
+  is better (8.3 and 15.7 meV per site against 36.0 and 38.3), because it reaches 10 Å where the
+  three-body channels reach four to five; on the split from one and two defects to three the
+  two-point description fails and the three-body channels hold, as the paragraph above reports.
+  The overlap kernel of M14 is better than both (4 and 54 meV per site on the second split) but
+  needs one shared lattice and supercell, which the three-body channels do not. *The mixed row*
+  is between the two on random folds (25.6 and 23.8 meV per site) and fails with the two-point
+  row on the second split (+0.021 and +0.091), although its three-body part alone succeeds there.
+  The random folds all chose a quarter of the weight for the three-body kernel and the
+  extrapolation split chose three quarters, so the failure is not a matter of too little weight;
+  the likely reason is that the two-point kernel is close to one for every pair of cells of one
+  lattice, so what it adds is nearly constant and compresses the differences the three-body part
+  supplies. A second reading is a lesson about model selection and not about this descriptor --
+  the weight and the layer are chosen on a random inner split, where both descriptions look
+  nearly perfect, so the choice cannot see the failure that the outer split tests for. *The cost:* a cell of 191 atoms takes 0.26 s for the 14,112 channels
+  of the first setting, and the two feature matrices of 2,000 cells are 0.11 and 0.23 GB; one
+  host's three-body row -- the features of both settings, twelve kernels over five folds and the
+  second split -- took 35 minutes, and its mixed row eleven.
+  **What is open.** A set of chiral crystals with a measured property, which is the handedness
+  block's own gate: today the block is tested on constructed structures only, and nothing says
+  whether a measured property follows it. Inside the program, three things are left. The channel
+  count grows as the square of (field types times radial windows), which is what holds the cutoff
+  at four to five angstrom; a selection of channels by `channel_spread`, or a random projection,
+  would let the block reach further and is not built. The mixed kernel asks for an inner split
+  that matches the question the outer split asks -- an extrapolating inner split for an
+  extrapolating test -- which belongs to the model-selection code and not here. And a disordered
+  cell is refused, because the mean over the species sharing a site is not the mean of the
+  product of three weights; the correction needs the pair and triple occupancy correlations,
+  which the structure format does not carry.
 * **M11. Inverse design on prototypes.** The co-pattern says which pair at which distance to add.
   Making that usable for design needs a candidate generator over prototype structures with substitutions,
   ranking by the lower confidence bound of the GP view (`benchmarks/run_bound.py` measures it), and a
@@ -3113,7 +3195,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
 
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
-by those three. M9 after M6 has reported; ~~M12~~ **done 1 November 2026**, and what it now needs is a measured data set and not more code. M14 is the data M4 turned out to need, and
+by those three. M9 after M6 has reported; ~~M10~~ **done 2 November 2026**, and what it now needs is a set of chiral crystals with a measured property and not more code; ~~M12~~ **done 1 November 2026**, and what it now needs is a measured data set and not more code. M14 is the data M4 turned out to need, and
 nothing else in this part waits for it.
 
 ### Nanotechnology: the extensions a particle, a tube, a sheet and a coated surface ask for (26 October 2026)
@@ -4924,7 +5006,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

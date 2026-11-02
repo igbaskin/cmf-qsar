@@ -1,0 +1,20 @@
+{
+ "2dmd r4 step0.75": {
+  "atoms": 191.0,
+  "channels": 14112,
+  "gigabytes_per_1000": 0.056448,
+  "seconds_per_cell": 0.25527143478393555
+ },
+ "matbench r4 step0.5": {
+  "atoms": 3.6666666666666665,
+  "channels": 11322,
+  "gigabytes_per_1000": 0.090576,
+  "seconds_per_cell": 0.045229434967041016
+ },
+ "matbench r5 step0.75": {
+  "atoms": 3.6666666666666665,
+  "channels": 7392,
+  "gigabytes_per_1000": 0.059136,
+  "seconds_per_cell": 0.037555853525797524
+ }
+}

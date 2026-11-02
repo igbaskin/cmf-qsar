@@ -898,6 +898,37 @@ resolution it is: accuracy falls steadily as the field widens (+0.785 to +0.587)
 at most 0.002 when the sum over `G` is taken half as far again. The identity agrees to one part
 in 1e13 over 120 real crystals.
 
+### Three atoms at a time: what a histogram of distances cannot see
+
+Every descriptor of a crystal above counts how much field weight sits at each distance from how
+much other field weight, and two limitations follow from that alone (`cmfqsar/threebody.py`,
+plan item M10). Two structures can have exactly the same multiset of distances without being the
+same structure — they are called **homometric** — and a mirror image has the same distances as
+the structure it reflects. The three-body block resolves the triangle around every atom of the
+cell: the two distances to a pair of neighbours and the distance between them. The handedness
+block is the signed volume spanned by three field-weighted vectors about each centre, which
+changes sign under a reflection and vanishes for a centrosymmetric structure.
+
+Both blocks cost one pass over the pairs of neighbours of each atom. The development plan
+expected the handedness block to need a sum over triples, because the factorisation used for a
+molecule needs an origin and a periodic structure has no centroid; with the centre atom as that
+origin the factorisation survives in full.
+
+**What the measurement says** (`benchmarks/run_threebody.py`). On constructed structures: a
+homometric pair of cells gets a two-point kernel of 1.00000000 and a three-body kernel of 0.9372;
+a cell of four species and its mirror image get a handedness kernel of -1.000000, and a
+centrosymmetric structure gives zero. On three Matbench tasks of 600 structures, the three-body
+channels reach R² +0.542 on the perovskite formation energies against +0.453 for the two-point
+descriptor, a gain of +0.089 [+0.041, +0.140], and are level on the bulk and shear moduli.
+
+The result the item was built for is on the 2DMD defect series, where one lattice carries a
+different arrangement of one to three defects in every cell. Trained on the cells with one or two
+defects and asked about the cells with three, the two-point description fails (R² -0.015 and 1,222
+meV per site on MoS2, +0.060 and 1,096 on WSe2) and the three-body channels hold (+0.940 and 240
+meV per site, +0.954 and 198). Mixing the two kernels fails with the two-point one, because the
+weight is chosen inside the training fold on a random split, where both descriptions look nearly
+perfect.
+
 ### A measured curve as the sample: no structure needed
 
 A diffraction experiment on a powder, a glass or a nanoparticle gives one curve and no
@@ -5255,6 +5286,7 @@ cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrel
 cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solids, the co-pattern, the periodic overlap kernel, a defect series under the host symmetry
 cmfqsar/sites.py        a site of a periodic cell as the sample: the split of the autocorrelation, per-site targets, a cell model read site by site
 cmfqsar/reciprocal.py   reciprocal-space channels of a crystal: the typed structure factors, the resolution reading, the identity with the real-space sum
+cmfqsar/threebody.py    three-body channels and handedness for a crystal: the triangle around every atom, and the signed volume that separates a mirror image
 cmfqsar/scattering.py   a measured scattering curve as the sample: G(r) and F(Q) as the untyped descriptor, the readers, what an instrument does
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field, and the query formats that carry them out of the program

@@ -7413,6 +7413,166 @@ form factor, rather than the form factor itself. And a neutron scattering length
 table that leaves out the elements whose value depends strongly on the wavelength; a structure
 containing one of those is refused rather than guessed at.
 
+## Three atoms at a time: what a histogram of distances cannot see
+
+Every descriptor of a crystal above is a **two-point** one. It counts how much field weight sits
+at each distance from how much other field weight, and that is all it knows. Two limitations
+follow, and both belong to the description and not to the data (plan item M10,
+`cmfqsar/threebody.py`).
+
+The first is that two structures can have exactly the same multiset of distances and not be the
+same structure. Such a pair is called **homometric**. It is not a curiosity of mathematics: a
+defect series on one lattice holds many arrangements whose distance histograms are equal or very
+nearly so, and the two-point kernel then gives them a kernel of one and the model cannot tell
+them apart. The second is that a mirror image has the same distances as the structure it
+reflects, so no two-point descriptor can tell a left-handed crystal from a right-handed one.
+
+**The three-body block.** Take every atom of the cell as a centre in turn. Two neighbours and the
+centre form a triangle, and a triangle is fixed by its three sides: the two distances from the
+centre and the distance between the two neighbours. Writing $r_a$ for the distance of neighbour
+$a$ from the centre, $d_{ab}$ for the distance between two neighbours and $N$ for the atoms in
+the cell,
+
+$$
+\Phi_{fg}(k, k', m) \;=\; \frac{1}{N} \sum_{l} \sum_{a, b \in \mathcal{N}(l)}
+   w_{af}\, w_{bg}\, R_k(r_a)\, R_{k'}(r_b)\, D_m(d_{ab})
+$$
+<!-- #eq:threebody -->
+
+with $R_k$ a Gaussian window on a grid of radii from the centre and $D_m$ one on a grid of
+distances between neighbours. The neighbourhood $\mathcal{N}(l)$ holds the centre itself, at
+radius zero, so its own field types enter the channels, and every atom of every periodic image
+within the cutoff. Dividing by $N$ makes a supercell give exactly the same channels as the cell
+it repeats, as it does for the two-point descriptor. The channel layout is the one of the
+triangle block that `cmfqsar/triangles.py` builds around one atom of a molecule: one block per
+pair of field types, and inside a block one column per pair of radial windows and distance
+window.
+
+**The handedness block.** Three distances fix a triangle only up to its mirror image, so the
+block above is still blind to a reflection. The signed quantity that is not is the triple product
+of three vectors. About each centre,
+
+$$
+X_{fgh}(s) \;=\; \frac{1}{N} \sum_{l} \det[\, A_f(l, s),\; A_g(l, s),\; A_h(l, s) \,],
+\qquad A_f(l, s) \;=\; \sum_{a \in \mathcal{N}(l)} w_{af}\, G_s(r_a)\, (\mathbf{r}_a -
+\mathbf{r}_l)
+$$
+<!-- #eq:handedness -->
+
+with $G_s$ a Gaussian window on a grid of radii, which keeps the handedness resolved by distance
+from the centre instead of reduced to one number for the whole structure. Under a proper rotation
+all three vectors turn together and the determinant does not change; under a reflection it
+changes sign; a centrosymmetric neighbourhood gives zero, as an achiral environment must.
+
+**The cost, and a correction to what the plan expected.** The development plan assumed this block
+would need a sum over triples of atoms, because the factorisation that the molecular chirality
+block uses needs an origin and a periodic structure has no centroid to use. With the centre atom
+as that origin the factorisation survives in full: a determinant is linear in each of its three
+arguments, so the sum over triples of neighbours **is** the determinant of three summed vectors.
+Both blocks therefore cost one pass over the pairs of neighbours of each atom, and nothing cubic
+is summed.
+
+**When the handedness block is empty**, which is a property of the block and not a fault. A
+determinant of three vectors is zero whenever they lie in a plane. A field weight that depends
+only on the species of the atom makes every $A_f$ a combination of one vector per species, so a
+structure of two species gives vectors in a plane at most and every channel is zero; three
+species are the minimum. A site with a rotation axis through it also gives zero, because a sum
+that the rotation leaves unchanged can only lie along the axis. The block is a sharp test for
+handedness rather than a general descriptor, and it is off by default.
+
+![The two blind spots of a two-point descriptor, drawn by `benchmarks/run_threebody.py --stage concept`. (a) Two cells of five atoms on a ring of twelve sites, at 0, 1, 2, 4, 7 and at 0, 1, 3, 5, 6: every distance occurs as often in one as in the other. (b) Every two-point channel of structure A against the same channel of structure B. Every point lies on the line, so for that descriptor the two cells are one structure: kernel 1.00000000. (c) The same plot for the three-body channels. The points leave the line and the kernel falls to 0.9372, so the arrangement is resolved and not only the distances. (d) The handedness channels of a cell of four species with no symmetry against those of its mirror image: the same size and the opposite sign, kernel -1.000000, while the three-body channels of that same pair agree to 6.9e-16 of the largest channel.](benchmarks/results/threebody/concept.png)
+
+**What the measurement says.** `benchmarks/run_threebody.py` ran three stages: the two blind spots
+on constructed structures, three Matbench tasks of 600 structures each with the same five
+published folds as the sections above, and the defect series of plan item M14. The numbers are in
+`benchmarks/results/threebody/table.md`.
+
+*Both blind spots are real, and the two blocks close them.* Two cells of five atoms on a ring of
+twelve sites, at positions 0, 1, 2, 4, 7 and at 0, 1, 3, 5, 6, have the same multiset of
+distances. The two-point channels give them a kernel of 1.00000000: for that description they are
+one structure. The three-body channels give 0.9372. A cell of four species with no symmetry and
+its mirror image agree in the three-body channels to 6.9e-16 of the largest channel, as every
+description built from distances must, while their handedness channels have the same size and the
+opposite sign (kernel -1.000000). Rocksalt, which is centrosymmetric, gives 2.5e-45 in every
+handedness channel.
+
+*On a property, the triangles gain where an angle is the signal.* The three Matbench tasks were
+run with the two descriptions alone and with their kernels mixed as
+$K = (1-t)\,K_\text{two-point} + t\,K_\text{three-body}$, with $t$ chosen inside every training
+fold. R² over the five folds:
+
+| Descriptor | formation energy | bulk modulus | shear modulus |
+|---|---:|---:|---:|
+| the two-point descriptor | +0.453 | +0.781 | +0.699 |
+| the three-body channels | +0.542 | +0.789 | +0.727 |
+| the two kernels mixed | +0.515 | +0.799 | +0.721 |
+
+The perovskite set is compounds of one composition type whose cells differ mainly by how the
+octahedra tilt, which is an angle and not a distance. There the three-body channels gain +0.089,
+with a 95 % interval of [+0.041, +0.140] from 2,000 bootstrap resamples of the structures. On the
+two elastic moduli the gains are +0.009 [-0.022, +0.041] and +0.028 [-0.003, +0.065]: both
+intervals include zero, so on those tasks the two descriptions are level. The mixture is the best
+of the three on the bulk modulus, but its gain there is +0.018 [-0.006, +0.044], which includes
+zero as well, and on the formation energies the mixture is worse than the three-body channels
+alone. Mixing adds a setting to choose and, on these three tasks, no accuracy.
+
+*On a set where the arrangement is the whole signal, the triangles do what a two-point description
+cannot.* The 2DMD defect series (plan item M14) is one host lattice and one supercell with one to
+three point defects placed differently in every cell. Two splits were run over 2,000 cells of each
+of two hosts, with the same folds, the same ridge grid and the same Gaussian layers as the
+two-point rows. Energies are given as the mean absolute error per site of the 191-atom cell.
+
+| The set | Descriptor | random folds: R² | meV per site | one and two defects to three: R² | meV per site |
+|---|---|---:|---:|---:|---:|
+| MoS2 | two-point, 10 Å | +0.9997 | 8.3 | -0.015 | 1222 |
+| MoS2 | overlap of M14, 10 Å | +1.0000 | 1.8 | +1.000 | 4 |
+| MoS2 | three-body, 4 to 5 Å | +0.9972 | 36.0 | +0.940 | 240 |
+| MoS2 | the two kernels mixed | +0.9988 | 25.6 | +0.021 | 1201 |
+| WSe2 | two-point, 10 Å | +0.9989 | 15.7 | +0.060 | 1096 |
+| WSe2 | overlap of M14, 10 Å | +0.9998 | 5.2 | +0.996 | 54 |
+| WSe2 | three-body, 4 to 5 Å | +0.9861 | 38.3 | +0.954 | 198 |
+| WSe2 | the two kernels mixed | +0.9977 | 23.8 | +0.091 | 1078 |
+
+On random folds, where the training set holds arrangements much like the tested one, the
+two-point description is the better of the two, because it reaches 10 Å and the three-body
+channels only four to five. The second split is the one the item was built for: it trains on the
+131 cells with one or two defects and predicts the cells with three, so every tested arrangement
+is new. There the two-point description fails -- R² -0.015 on MoS2, an error of 1,222 meV per site,
+which is no better than predicting the mean -- and the three-body channels hold, at +0.940 and 240
+meV per site. The overlap kernel of M14 is better still, but it needs every cell to share one
+lattice and one supercell, which is what it uses to put two cells in a common frame; the
+three-body channels assume nothing about the set and work on structures that have nothing in
+common.
+
+*A mixed kernel does not inherit what the three-body one can do.* The mixture lies between the two
+descriptions on random folds and fails with the two-point one on the extrapolation split, at R²
++0.021 and +0.091. Its weight is chosen inside the training fold: on the random folds every fold
+gave the three-body kernel a quarter of the weight, and on the extrapolation split the choice
+fell on three quarters, so the mixture failed even where the three-body kernel carried most of
+it. The likely reason is that the two-point kernel is close to one for every pair of these cells,
+which share a lattice and differ in a few sites, so what it adds to the mixture is nearly
+constant and compresses the differences that the three-body part supplies. A second reading is
+about model selection and not about this descriptor: the weight and the kernel layer were chosen
+on a random inner split, where both descriptions look nearly perfect, so the choice could not see
+the failure that the outer split tests for. A model that is meant to extrapolate needs an inner
+split that extrapolates too.
+
+*The cost.* A cell of 191 atoms takes 0.26 s for the 14,112 channels of the first setting, so the
+2,000 cells of one host take about nine minutes, and their feature matrix is 0.11 GB; the second
+setting has 29,120 channels and 0.23 GB. The whole three-body row of one host -- the features of
+both settings, then twelve kernels over five folds and the second split -- took 35 minutes, and
+the mixed row eleven.
+
+**The limits.** A disordered cell is refused: a three-body channel is a product of three weights,
+and the mean of that product over the species sharing a site is not the product of their means,
+which is all the module has. No uniform background is subtracted, unlike the two-point
+descriptor, so these channels carry how dense the structure is as well as how it is arranged; a
+cosine-normalised kernel removes most of that, and the two-point channels are there to carry the
+density properly. The number of channels grows as the square of (fields times radii), so the
+radial grid is coarse and the cutoff short -- four to five angstrom, against the ten a two-point
+descriptor reaches cheaply. The two are complements and not alternatives, which is what the
+measurement says as well.
+
 ## An atom instead of a molecule: the local invariant kernel
 
 Every model so far predicts one number per molecule. A carbon shift, an acidity, a local

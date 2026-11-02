@@ -398,6 +398,15 @@ def registry() -> List[Benchmark]:
                   minutes="120",
                   report=lambda: _mod("run_scattering").report(),
                   tables=["scattering/table.md"]),
+        Benchmark("threebody",
+                  "three atoms at a time: the triangle around every atom of a cell and the "
+                  "signed volume that separates a mirror image, measured on a pair of "
+                  "structures a distance histogram cannot tell apart, on three Matbench tasks "
+                  "and on the 2DMD defect series where the arrangement is the signal",
+                  "run_threebody.py", "threebody", compute=[[]],
+                  minutes="90",
+                  report=lambda: _mod("run_threebody").report(),
+                  tables=["threebody/table.md"]),
         Benchmark("fieldae",
                   "a decoder of pseudo-atoms against kernel PCA: can a nonlinear autoencoder "
                   "reconstruct a molecular field, and is its error an applicability domain "

@@ -672,10 +672,14 @@ def periodic_block_sizes(spec: PeriodicSpec, n_fields: int) -> List[int]:
 def periodic_channel_labels(fieldset: FieldSet, spec: PeriodicSpec) -> List[str]:
     """One label per feature: which pair of field types, at which distance; for a layer with
     height channels, at which in-plane distance and which two heights; for the reciprocal-space
-    channels of plan item M6, at which reciprocal length."""
+    channels of plan item M6, at which reciprocal length; for the three-body channels of plan
+    item M10, at which two radii from a centre and how far apart."""
     from .reciprocal import ReciprocalSpec, reciprocal_channel_labels
+    from .threebody import ThreeBodySpec, threebody_channel_labels
     if isinstance(spec, ReciprocalSpec):
         return reciprocal_channel_labels(fieldset, spec)
+    if isinstance(spec, ThreeBodySpec):
+        return threebody_channel_labels(fieldset, spec)
     if not spec.has_heights:
         return channel_labels(fieldset, spec)
     names = [s.label for s in fieldset.specs]

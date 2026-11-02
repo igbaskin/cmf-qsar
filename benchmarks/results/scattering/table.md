@@ -57,3 +57,9 @@ The same curves (xray) put through what an instrument does to them. **Matched** 
 
 ![A curve and the same curve measured](reader.png)
 
+## What a detector sums away
+
+One cell of BaTiO3 described three ways: the 15 typed channel blocks the program computes, the one curve a detector can measure, and that curve as an instrument would report it (Q to 20 1/A, 5 % counting noise, the number density wrong by 5 %). The kernel between the computed curve and the measured one is 0.8543.
+
+![What a detector sums away](concept.png)
+
