@@ -140,6 +140,20 @@ has been tested once. The version is 1.0.0 in `cmfqsar/__init__.py` and `CITATIO
 release should carry the commit the manifest records. The supported interface of nine names
 (`tests/test_stable_surface.py`) is what the release promises to keep.
 
+**The steps are written out in `docs/release_checklist.md`, in the order that works** (2 November
+2026). Done there: the manual names every benchmark and its PDF is current, the four data items of
+unclear licence status are decided with the reason written down, `.zenodo.json` supplies the
+archive's metadata, the package builds and passes `twine check` (1.6 MB source distribution,
+993 kB wheel, neither carrying the examples), the name `cmfqsar` is free on PyPI, and
+`.github/workflows/reproduce.yml` is the reproduction run: the 60 benchmarks of 30 minutes or less
+that need no outside file, 15.2 hours in four groups, each group rebuilding every table from its
+new result files and failing if one differs. Open, and in this order: regenerate the manifest at
+the commit to be tagged with nothing uncommitted; make the repository public; connect Zenodo;
+tag `v1.0.0` and attach the manual; write the DOI into `CITATION.cff` (whose `date-released` is
+still 22 October 2026) and `README.md`; upload to TestPyPI and then PyPI; run the reproduction
+workflow and record in `docs/public_3dqsar_datasets.md` which tables were reproduced elsewhere and
+which stayed here.
+
 ## The papers
 
 | # | Paper, with its one-sentence claim | Source material | Venue | Status |
