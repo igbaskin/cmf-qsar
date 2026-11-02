@@ -407,6 +407,16 @@ def registry() -> List[Benchmark]:
                   minutes="90",
                   report=lambda: _mod("run_threebody").report(),
                   tables=["threebody/table.md"]),
+        Benchmark("prototypes",
+                  "inverse design on prototypes: a candidate generator over a prototype cell, a "
+                  "test for which candidates are the same structure, and a loop that proposes, "
+                  "computes and refits -- measured on a published pool of perovskites, on the "
+                  "2DMD defect series, with the model's ranking ability beside it, and as a "
+                  "closed loop with a calculator",
+                  "run_prototypes.py", "prototypes", compute=[[]],
+                  minutes="60",
+                  report=lambda: _mod("run_prototypes").report(),
+                  tables=["prototypes/table.md"]),
         Benchmark("fieldae",
                   "a decoder of pseudo-atoms against kernel PCA: can a nonlinear autoencoder "
                   "reconstruct a molecular field, and is its error an applicability domain "

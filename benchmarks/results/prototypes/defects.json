@@ -1,0 +1,5026 @@
+{
+ "MoS2 | three-body | 2000 | start 100": {
+  "budget": 100,
+  "descriptor": "three-body",
+  "ei": {
+   "beat_start_median": 48.0,
+   "beat_start_runs": 7,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.27151331899995057,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 48.0,
+   "reached_top_runs": 7,
+   "runs": [
+    {
+     "beat_start": 48,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 48,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": 94,
+     "best": 0.27895908000004965,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 94,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": 14,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 14,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 26,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 39,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": 60,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 60,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": 57,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 57,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": null,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": 30,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 30,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "greedy": {
+   "beat_start_median": 26.0,
+   "beat_start_runs": 1,
+   "best_best": 0.4689448199999333,
+   "best_mean": 0.5130954759999667,
+   "of_runs": 10,
+   "rank_median": 9.5,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": null,
+     "best": 0.5808171599999241,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 26,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": null,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": null,
+     "best": 0.46917460999998184,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "limit": 2000,
+  "material": "MoS2",
+  "maxmin": {
+   "beat_start_median": 89.0,
+   "beat_start_runs": 5,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.4030200379999542,
+   "of_runs": 10,
+   "rank_median": 7.5,
+   "reached_top_median": 68.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 96,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 2,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 74,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": 59,
+     "best": 0.5780156900000293,
+     "calls": 100,
+     "rank": 18,
+     "reached_top": 68,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 15,
+     "best": 0.5780156900000293,
+     "calls": 100,
+     "rank": 18,
+     "reached_top": 58,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": 68,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": 71,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 71,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 61,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": 89,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 89,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": 95,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 62,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "pool": {
+   "best": 0.16668858999992153,
+   "cut": 0.5789780381999071,
+   "mean": 6.302804238835022,
+   "n": 2000,
+   "sd": 3.793334661953179
+  },
+  "random": {
+   "beat_start_median": 28.5,
+   "beat_start_runs": 4,
+   "best_best": 0.4689448199999333,
+   "best_mean": 0.47193237399994814,
+   "of_runs": 10,
+   "rank_median": 5.0,
+   "reached_top_median": 38.0,
+   "reached_top_runs": 6,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 53,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": 3,
+     "best": 0.46917460999998184,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": 3,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 42,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 42,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": 56,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": 19,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 5,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": 38,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 34,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "seconds": 805.5583465099335,
+  "seeds": 10,
+  "start": 100,
+  "ucb": {
+   "beat_start_median": 26.0,
+   "beat_start_runs": 1,
+   "best_best": 0.4689448199999333,
+   "best_mean": 0.5130954759999667,
+   "of_runs": 10,
+   "rank_median": 9.5,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": null,
+     "best": 0.5808171599999241,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 26,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": null,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": null,
+     "best": 0.46917460999998184,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "variance": {
+   "beat_start_median": 43.5,
+   "beat_start_runs": 2,
+   "best_best": 0.4689448199999333,
+   "best_mean": 0.4938049869999759,
+   "of_runs": 10,
+   "rank_median": 9.5,
+   "reached_top_median": 86.0,
+   "reached_top_runs": 5,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 86,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": 38,
+     "best": 0.5780156900000293,
+     "calls": 100,
+     "rank": 18,
+     "reached_top": 60,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 49,
+     "best": 0.5780156900000293,
+     "calls": 100,
+     "rank": 18,
+     "reached_top": 73,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 88,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 100,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": null,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": null,
+     "best": 0.46917460999998184,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  }
+ },
+ "MoS2 | three-body | 2000 | start 25": {
+  "budget": 100,
+  "descriptor": "three-body",
+  "ei": {
+   "beat_start_median": 11.0,
+   "beat_start_runs": 7,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.5015688520000368,
+   "of_runs": 10,
+   "rank_median": 6.0,
+   "reached_top_median": 81.0,
+   "reached_top_runs": 3,
+   "runs": [
+    {
+     "beat_start": 1,
+     "best": 0.7687844800000221,
+     "calls": 100,
+     "rank": 43,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 16,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 9,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 11,
+     "best": 0.27895908000004965,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 81,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 7,
+     "best": 0.27895908000004965,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 94,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 28,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": 59,
+     "best": 0.27895908000004965,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 63,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "greedy": {
+   "beat_start_median": 33.0,
+   "beat_start_runs": 7,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.6293362290000232,
+   "of_runs": 10,
+   "rank_median": 37.0,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": 1,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 33,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 78,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 4,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 33,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 6,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": 87,
+     "best": 0.578978159999906,
+     "calls": 100,
+     "rank": 21,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "limit": 2000,
+  "material": "MoS2",
+  "maxmin": {
+   "beat_start_median": 5.0,
+   "beat_start_runs": 7,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.4318289540000251,
+   "of_runs": 10,
+   "rank_median": 16.0,
+   "reached_top_median": 5.0,
+   "reached_top_runs": 9,
+   "runs": [
+    {
+     "beat_start": 4,
+     "best": 0.47237508000011985,
+     "calls": 100,
+     "rank": 16,
+     "reached_top": 4,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 4,
+     "best": 0.47237508000011985,
+     "calls": 100,
+     "rank": 16,
+     "reached_top": 4,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 12,
+     "best": 0.578978159999906,
+     "calls": 100,
+     "rank": 21,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": 5,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 5,
+     "best": 0.47237508000011985,
+     "calls": 100,
+     "rank": 16,
+     "reached_top": 5,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 9,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 80,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 76,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 5,
+     "best": 0.47237508000011985,
+     "calls": 100,
+     "rank": 16,
+     "reached_top": 5,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": 5,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": 87,
+     "best": 0.5780156900000293,
+     "calls": 100,
+     "rank": 18,
+     "reached_top": 100,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "pool": {
+   "best": 0.16668858999992153,
+   "cut": 0.5789780381999071,
+   "mean": 6.302804238835022,
+   "n": 2000,
+   "sd": 3.793334661953179
+  },
+  "random": {
+   "beat_start_median": 27.0,
+   "beat_start_runs": 7,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.4827835079999659,
+   "of_runs": 10,
+   "rank_median": 10.0,
+   "reached_top_median": 46.0,
+   "reached_top_runs": 7,
+   "runs": [
+    {
+     "beat_start": 4,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": 44,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 53,
+     "best": 0.4697019000000182,
+     "calls": 100,
+     "rank": 14,
+     "reached_top": 78,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 10,
+     "best": 0.768247810000048,
+     "calls": 100,
+     "rank": 38,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": 46,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 27,
+     "best": 0.5800444899998638,
+     "calls": 100,
+     "rank": 25,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 81,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": 81,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 3,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 12,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": 6,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": 46,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": 46,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "seconds": 268.7604477405548,
+  "seeds": 10,
+  "start": 25,
+  "ucb": {
+   "beat_start_median": 13.0,
+   "beat_start_runs": 7,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.6293924980000384,
+   "of_runs": 10,
+   "rank_median": 37.0,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": 1,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 13,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 80,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 6,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 17,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 5,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": 52,
+     "best": 0.578978159999906,
+     "calls": 100,
+     "rank": 21,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "variance": {
+   "beat_start_median": 37.5,
+   "beat_start_runs": 6,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.5220725769999717,
+   "of_runs": 10,
+   "rank_median": 35.0,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": 14,
+     "best": 0.5903123499999765,
+     "calls": 100,
+     "rank": 36,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 41,
+     "best": 0.5903123499999765,
+     "calls": 100,
+     "rank": 36,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 28,
+     "best": 0.5903123499999765,
+     "calls": 100,
+     "rank": 36,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 46,
+     "best": 0.5903123499999765,
+     "calls": 100,
+     "rank": 36,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 42,
+     "best": 0.5903123499999765,
+     "calls": 100,
+     "rank": 36,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 34,
+     "best": 0.5832400799999959,
+     "calls": 100,
+     "rank": 34,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": null,
+     "best": 0.5808171599999241,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  }
+ },
+ "MoS2 | two-point | 2000 | start 100": {
+  "budget": 100,
+  "descriptor": "two-point",
+  "ei": {
+   "beat_start_median": 74.5,
+   "beat_start_runs": 4,
+   "best_best": 0.27895908000004965,
+   "best_mean": 0.4449533949999932,
+   "of_runs": 10,
+   "rank_median": 7.5,
+   "reached_top_median": 78.0,
+   "reached_top_runs": 3,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": 71,
+     "best": 0.27895908000004965,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 71,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 48,
+     "best": 0.7690242700000454,
+     "calls": 100,
+     "rank": 47,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": 78,
+     "best": 0.27895908000004965,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 78,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": null,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": 93,
+     "best": 0.27895908000004965,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 93,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "greedy": {
+   "beat_start_median": 22.0,
+   "beat_start_runs": 1,
+   "best_best": 0.4689448199999333,
+   "best_mean": 0.513185991999967,
+   "of_runs": 10,
+   "rank_median": 9.5,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": null,
+     "best": 0.5808171599999241,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 22,
+     "best": 0.7690242700000454,
+     "calls": 100,
+     "rank": 47,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": null,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": null,
+     "best": 0.46917460999998184,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "limit": 2000,
+  "material": "MoS2",
+  "maxmin": {
+   "beat_start_median": 1.0,
+   "beat_start_runs": 1,
+   "best_best": 0.4689448199999333,
+   "best_mean": 0.513151744999982,
+   "of_runs": 10,
+   "rank_median": 9.5,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": null,
+     "best": 0.5808171599999241,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 1,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": null,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": null,
+     "best": 0.46917460999998184,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "pool": {
+   "best": 0.16668858999992153,
+   "cut": 0.5789780381999071,
+   "mean": 6.302804238835022,
+   "n": 2000,
+   "sd": 3.793334661953179
+  },
+  "random": {
+   "beat_start_median": 28.5,
+   "beat_start_runs": 4,
+   "best_best": 0.4689448199999333,
+   "best_mean": 0.47193237399994814,
+   "of_runs": 10,
+   "rank_median": 5.0,
+   "reached_top_median": 38.0,
+   "reached_top_runs": 6,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 53,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": 3,
+     "best": 0.46917460999998184,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": 3,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 42,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 42,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": 56,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": 19,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 5,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": 38,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 34,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "seconds": 803.816792011261,
+  "seeds": 10,
+  "start": 100,
+  "ucb": {
+   "beat_start_median": 20.0,
+   "beat_start_runs": 1,
+   "best_best": 0.4689448199999333,
+   "best_mean": 0.5131862679999812,
+   "of_runs": 10,
+   "rank_median": 9.5,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": null,
+     "best": 0.5808171599999241,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 20,
+     "best": 0.7690270300001885,
+     "calls": 100,
+     "rank": 48,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": null,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": null,
+     "best": 0.46917460999998184,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  },
+  "variance": {
+   "beat_start_median": 68.0,
+   "beat_start_runs": 2,
+   "best_best": 0.4689448199999333,
+   "best_mean": 0.4943339389999437,
+   "of_runs": 10,
+   "rank_median": 9.5,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943360999989636,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.46943360999989636
+    },
+    {
+     "beat_start": 82,
+     "best": 0.5806604499998684,
+     "calls": 100,
+     "rank": 29,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.5808171599999241
+    },
+    {
+     "beat_start": 54,
+     "best": 0.5806604499998684,
+     "calls": 100,
+     "rank": 29,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.769098890000123
+    },
+    {
+     "beat_start": null,
+     "best": 0.46943940999994993,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.46943940999994993
+    },
+    {
+     "beat_start": null,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.49707394999995813
+    },
+    {
+     "beat_start": null,
+     "best": 0.46921143999998094,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.46921143999998094
+    },
+    {
+     "beat_start": null,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.4689448199999333
+    },
+    {
+     "beat_start": null,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4695292100000188
+    },
+    {
+     "beat_start": null,
+     "best": 0.46917460999998184,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.46917460999998184
+    }
+   ]
+  }
+ },
+ "MoS2 | two-point | 2000 | start 25": {
+  "budget": 100,
+  "descriptor": "two-point",
+  "ei": {
+   "beat_start_median": 9.0,
+   "beat_start_runs": 7,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.5995021760000554,
+   "of_runs": 10,
+   "rank_median": 37.0,
+   "reached_top_median": 96.0,
+   "reached_top_runs": 1,
+   "runs": [
+    {
+     "beat_start": 1,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 22,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 9,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 30,
+     "best": 0.7685696000000917,
+     "calls": 100,
+     "rank": 39,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 8,
+     "best": 0.7687844800000221,
+     "calls": 100,
+     "rank": 43,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 4,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": 96,
+     "best": 0.27895908000004965,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 96,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "greedy": {
+   "beat_start_median": 2.5,
+   "beat_start_runs": 6,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.6298092530000531,
+   "of_runs": 10,
+   "rank_median": 37.0,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": 1,
+     "best": 0.7687844800000221,
+     "calls": 100,
+     "rank": 43,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 1,
+     "best": 0.7690270300001885,
+     "calls": 100,
+     "rank": 48,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 40,
+     "best": 0.7694370600002003,
+     "calls": 100,
+     "rank": 57,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 1,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 27,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 4,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": null,
+     "best": 0.5808171599999241,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "limit": 2000,
+  "material": "MoS2",
+  "maxmin": {
+   "beat_start_median": 5.0,
+   "beat_start_runs": 6,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.6298014740001008,
+   "of_runs": 10,
+   "rank_median": 40.0,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": 4,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 7,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 5,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 5,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 2,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 7,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": null,
+     "best": 0.5808171599999241,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "pool": {
+   "best": 0.16668858999992153,
+   "cut": 0.5789780381999071,
+   "mean": 6.302804238835022,
+   "n": 2000,
+   "sd": 3.793334661953179
+  },
+  "random": {
+   "beat_start_median": 27.0,
+   "beat_start_runs": 7,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.4827835079999659,
+   "of_runs": 10,
+   "rank_median": 10.0,
+   "reached_top_median": 46.0,
+   "reached_top_runs": 7,
+   "runs": [
+    {
+     "beat_start": 4,
+     "best": 0.49707394999995813,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": 44,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 53,
+     "best": 0.4697019000000182,
+     "calls": 100,
+     "rank": 14,
+     "reached_top": 78,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 10,
+     "best": 0.768247810000048,
+     "calls": 100,
+     "rank": 38,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": 46,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 27,
+     "best": 0.5800444899998638,
+     "calls": 100,
+     "rank": 25,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 81,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": 81,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 3,
+     "best": 0.4689448199999333,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 12,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": 6,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": 46,
+     "best": 0.4695292100000188,
+     "calls": 100,
+     "rank": 13,
+     "reached_top": 46,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "seconds": 275.5323464870453,
+  "seeds": 10,
+  "start": 25,
+  "ucb": {
+   "beat_start_median": 8.0,
+   "beat_start_runs": 7,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.6295880480000505,
+   "of_runs": 10,
+   "rank_median": 38.0,
+   "reached_top_median": 38.0,
+   "reached_top_runs": 1,
+   "runs": [
+    {
+     "beat_start": 1,
+     "best": 0.7687844800000221,
+     "calls": 100,
+     "rank": 43,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 8,
+     "best": 0.7681191100000433,
+     "calls": 100,
+     "rank": 37,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 41,
+     "best": 0.7689709300000231,
+     "calls": 100,
+     "rank": 45,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 1,
+     "best": 0.7685696000000917,
+     "calls": 100,
+     "rank": 39,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 27,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 4,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": 38,
+     "best": 0.5789659800000209,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 38,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  },
+  "variance": {
+   "beat_start_median": 16.0,
+   "beat_start_runs": 6,
+   "best_best": 0.16668858999992153,
+   "best_mean": 0.6297580750000862,
+   "of_runs": 10,
+   "rank_median": 39.0,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": 4,
+     "best": 0.768247810000048,
+     "calls": 100,
+     "rank": 38,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": 0.7733254500001294
+    },
+    {
+     "beat_start": 4,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": 0.7707820300001913
+    },
+    {
+     "beat_start": 19,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": 0.7701514500001849
+    },
+    {
+     "beat_start": null,
+     "best": 0.46923207000008915,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": 0.46923207000008915
+    },
+    {
+     "beat_start": 16,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": 0.7705671200001234
+    },
+    {
+     "beat_start": 16,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": 0.7695489300001555
+    },
+    {
+     "beat_start": null,
+     "best": 0.16668858999992153,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": 0.16668858999992153
+    },
+    {
+     "beat_start": 26,
+     "best": 0.7686818000001949,
+     "calls": 100,
+     "rank": 40,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": 0.7701218400000016
+    },
+    {
+     "beat_start": null,
+     "best": 0.4691861199999039,
+     "calls": 100,
+     "rank": 5,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": 0.4691861199999039
+    },
+    {
+     "beat_start": null,
+     "best": 0.5808171599999241,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": 0.5808171599999241
+    }
+   ]
+  }
+ },
+ "WSe2 | three-body | 2000 | start 100": {
+  "budget": 100,
+  "descriptor": "three-body",
+  "ei": {
+   "beat_start_median": 41.0,
+   "beat_start_runs": 9,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1771935729999996,
+   "of_runs": 10,
+   "rank_median": 3.5,
+   "reached_top_median": 45.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 41,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 41,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 42,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 73,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 49,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 71,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 67,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.1773981799999547,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 72,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": 49,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 49,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 24,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 24,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 39,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 39,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 34,
+     "best": -1.1771928600001047,
+     "calls": 100,
+     "rank": 4,
+     "reached_top": 34,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": 41,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 18,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "greedy": {
+   "beat_start_median": 29.0,
+   "beat_start_runs": 9,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1776802860000088,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 37.5,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 13,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 13,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 41,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 60,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 29,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 30,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 29,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 45,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.1773981799999547,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 53,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": 31,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 19,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 25,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 27,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 47,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 47,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 80,
+     "best": -1.1758872400000655,
+     "calls": 100,
+     "rank": 16,
+     "reached_top": 80,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": 29,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 16,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "limit": 2000,
+  "material": "WSe2",
+  "maxmin": {
+   "beat_start_median": 31.5,
+   "beat_start_runs": 6,
+   "best_best": -1.1773981799999547,
+   "best_mean": -1.1759554960000287,
+   "of_runs": 10,
+   "rank_median": 20.0,
+   "reached_top_median": 42.0,
+   "reached_top_runs": 3,
+   "runs": [
+    {
+     "beat_start": 42,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 42,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 30,
+     "best": -1.1754714600001535,
+     "calls": 100,
+     "rank": 27,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 33,
+     "best": -1.1754714600001535,
+     "calls": 100,
+     "rank": 27,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 27,
+     "best": -1.1754714600001535,
+     "calls": 100,
+     "rank": 27,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.1773981799999547,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": null,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 40,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 40,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 27,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 43,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.175780799999984,
+     "calls": 100,
+     "rank": 19,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": null,
+     "best": -1.1759055699999408,
+     "calls": 100,
+     "rank": 15,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "pool": {
+   "best": -1.1779396800000086,
+   "cut": -1.1756794880000188,
+   "mean": 4.485071427385019,
+   "n": 2000,
+   "sd": 3.4479581530489156
+  },
+  "random": {
+   "beat_start_median": 51.5,
+   "beat_start_runs": 6,
+   "best_best": -1.1773981799999547,
+   "best_mean": -1.1762567070000387,
+   "of_runs": 10,
+   "rank_median": 11.5,
+   "reached_top_median": 38.5,
+   "reached_top_runs": 6,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": -1.1755607000000055,
+     "calls": 100,
+     "rank": 24,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 36,
+     "best": -1.176220320000084,
+     "calls": 100,
+     "rank": 12,
+     "reached_top": 36,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 64,
+     "best": -1.175268189999997,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 38,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": 38,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.1773981799999547,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 12,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": null,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 91,
+     "best": -1.1763152700000319,
+     "calls": 100,
+     "rank": 11,
+     "reached_top": 91,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 39,
+     "best": -1.1758680100001584,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": 39,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 76,
+     "best": -1.1763152700000319,
+     "calls": 100,
+     "rank": 11,
+     "reached_top": 76,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": null,
+     "best": -1.1759055699999408,
+     "calls": 100,
+     "rank": 15,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "seconds": 808.6828007698059,
+  "seeds": 10,
+  "start": 100,
+  "ucb": {
+   "beat_start_median": 29.0,
+   "beat_start_runs": 9,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1776802860000088,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 38.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 20,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 20,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 41,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 60,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 29,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 30,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 46,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.1773981799999547,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 80,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": 9,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 9,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 13,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 13,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 47,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 47,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 80,
+     "best": -1.1758872400000655,
+     "calls": 100,
+     "rank": 16,
+     "reached_top": 80,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": 29,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 16,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "variance": {
+   "beat_start_median": 37.0,
+   "beat_start_runs": 5,
+   "best_best": -1.1773981799999547,
+   "best_mean": -1.1759110360000022,
+   "of_runs": 10,
+   "rank_median": 21.0,
+   "reached_top_median": 67.0,
+   "reached_top_runs": 1,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": -1.1755607000000055,
+     "calls": 100,
+     "rank": 24,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 19,
+     "best": -1.175268189999997,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 37,
+     "best": -1.175268189999997,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 13,
+     "best": -1.175582439999971,
+     "calls": 100,
+     "rank": 23,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.1773981799999547,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": null,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 67,
+     "best": -1.176220320000084,
+     "calls": 100,
+     "rank": 12,
+     "reached_top": 67,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 38,
+     "best": -1.175268189999997,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.175780799999984,
+     "calls": 100,
+     "rank": 19,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": null,
+     "best": -1.1759055699999408,
+     "calls": 100,
+     "rank": 15,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  }
+ },
+ "WSe2 | three-body | 2000 | start 25": {
+  "budget": 100,
+  "descriptor": "three-body",
+  "ei": {
+   "beat_start_median": 10.0,
+   "beat_start_runs": 10,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1777189870000029,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 59.5,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 5,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 83,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 56,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 73,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 2,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 62,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": 10,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 10,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 33,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 58,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": 95,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 62,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 2,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 61,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": 25,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 25,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 10,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 10,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 3,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 51,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "greedy": {
+   "beat_start_median": 17.0,
+   "beat_start_runs": 10,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1773815490000061,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 28.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 2,
+     "best": -1.1758872400000655,
+     "calls": 100,
+     "rank": 16,
+     "reached_top": 32,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 52,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 53,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 2,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 19,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": 27,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 19,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 28,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 55,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": 44,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 18,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 13,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 81,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": 10,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 10,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 21,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 24,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 1,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 45,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "limit": 2000,
+  "material": "WSe2",
+  "maxmin": {
+   "beat_start_median": 38.0,
+   "beat_start_runs": 7,
+   "best_best": -1.1767348200000924,
+   "best_mean": -1.1758982290000177,
+   "of_runs": 10,
+   "rank_median": 20.0,
+   "reached_top_median": 60.0,
+   "reached_top_runs": 7,
+   "runs": [
+    {
+     "beat_start": 11,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 60,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 38,
+     "best": -1.1754772700001013,
+     "calls": 100,
+     "rank": 25,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 43,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 60,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": null,
+     "best": -1.1763152700000319,
+     "calls": 100,
+     "rank": 11,
+     "reached_top": 56,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 20,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 60,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": null,
+     "best": -1.1763197200000377,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 44,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 59,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": null,
+     "best": -1.1767348200000924,
+     "calls": 100,
+     "rank": 8,
+     "reached_top": 58,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 39,
+     "best": -1.1754714600001535,
+     "calls": 100,
+     "rank": 27,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 10,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 61,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "pool": {
+   "best": -1.1779396800000086,
+   "cut": -1.1756794880000188,
+   "mean": 4.485071427385019,
+   "n": 2000,
+   "sd": 3.4479581530489156
+  },
+  "random": {
+   "beat_start_median": 30.0,
+   "beat_start_runs": 8,
+   "best_best": -1.1774754000000485,
+   "best_mean": -1.175970434000078,
+   "of_runs": 10,
+   "rank_median": 14.5,
+   "reached_top_median": 31.0,
+   "reached_top_runs": 6,
+   "runs": [
+    {
+     "beat_start": 33,
+     "best": -1.1748871300001156,
+     "calls": 100,
+     "rank": 47,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 6,
+     "best": -1.176220320000084,
+     "calls": 100,
+     "rank": 12,
+     "reached_top": 83,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 25,
+     "best": -1.1747321800000918,
+     "calls": 100,
+     "rank": 57,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": 85,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 15,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 84,
+     "best": -1.1749392100000478,
+     "calls": 100,
+     "rank": 44,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": null,
+     "best": -1.1763197200000377,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": 17,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 28,
+     "best": -1.175792730000012,
+     "calls": 100,
+     "rank": 18,
+     "reached_top": 80,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": null,
+     "best": -1.1767348200000924,
+     "calls": 100,
+     "rank": 8,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 32,
+     "best": -1.1767348200000924,
+     "calls": 100,
+     "rank": 8,
+     "reached_top": 32,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 10,
+     "best": -1.1758680100001584,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": 30,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "seconds": 277.0311255455017,
+  "seeds": 10,
+  "start": 25,
+  "ucb": {
+   "beat_start_median": 12.0,
+   "beat_start_runs": 10,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1773517470000114,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 19.5,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 2,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 18,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 53,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 54,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 2,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 13,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": 29,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 21,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 31,
+     "best": -1.1758872400000655,
+     "calls": 100,
+     "rank": 16,
+     "reached_top": 38,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": 44,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 18,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 3,
+     "best": -1.175732749999952,
+     "calls": 100,
+     "rank": 20,
+     "reached_top": 55,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 14,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 10,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 10,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 1,
+     "best": -1.1763197200000377,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": 34,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "variance": {
+   "beat_start_median": 23.0,
+   "beat_start_runs": 7,
+   "best_best": -1.1767348200000924,
+   "best_mean": -1.1758113950000506,
+   "of_runs": 10,
+   "rank_median": 23.0,
+   "reached_top_median": null,
+   "reached_top_runs": 0,
+   "runs": [
+    {
+     "beat_start": 25,
+     "best": -1.175582439999971,
+     "calls": 100,
+     "rank": 23,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 23,
+     "best": -1.1754714600001535,
+     "calls": 100,
+     "rank": 27,
+     "reached_top": null,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 13,
+     "best": -1.1754714600001535,
+     "calls": 100,
+     "rank": 27,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": null,
+     "best": -1.1763152700000319,
+     "calls": 100,
+     "rank": 11,
+     "reached_top": null,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 20,
+     "best": -1.1754714600001535,
+     "calls": 100,
+     "rank": 27,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": null,
+     "best": -1.1763197200000377,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 31,
+     "best": -1.175582439999971,
+     "calls": 100,
+     "rank": 23,
+     "reached_top": null,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": null,
+     "best": -1.1767348200000924,
+     "calls": 100,
+     "rank": 8,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 30,
+     "best": -1.175582439999971,
+     "calls": 100,
+     "rank": 23,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 4,
+     "best": -1.175582439999971,
+     "calls": 100,
+     "rank": 23,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  }
+ },
+ "WSe2 | two-point | 2000 | start 100": {
+  "budget": 100,
+  "descriptor": "two-point",
+  "ei": {
+   "beat_start_median": 16.0,
+   "beat_start_runs": 10,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1776486500000147,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 16.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 2,
+     "best": -1.1771455000000515,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 2,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 23,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 31,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 20,
+     "best": -1.1771455000000515,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 27,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 14,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 54,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 50,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": 29,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 24,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 18,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 18,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 7,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 8,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 14,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": 4,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 4,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "greedy": {
+   "beat_start_median": 18.0,
+   "beat_start_runs": 9,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1774952960000065,
+   "of_runs": 10,
+   "rank_median": 1.5,
+   "reached_top_median": 24.5,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 2,
+     "best": -1.1771455000000515,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 2,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 27,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 31,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 19,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 44,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 62,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 62,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.1773981799999547,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 61,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": 65,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 62,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 18,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 18,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 7,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 8,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 14,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": 4,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 4,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "limit": 2000,
+  "material": "WSe2",
+  "maxmin": {
+   "beat_start_median": 9.0,
+   "beat_start_runs": 10,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1779396800000086,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 9.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 10,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 10,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 9,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 9,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 12,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 12,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 6,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 6,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 21,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 13,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": 11,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 11,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 4,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 4,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 8,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 8,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 1,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 1,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": 9,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 9,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "pool": {
+   "best": -1.1779396800000086,
+   "cut": -1.1756794880000188,
+   "mean": 4.485071427385019,
+   "n": 2000,
+   "sd": 3.4479581530489156
+  },
+  "random": {
+   "beat_start_median": 51.5,
+   "beat_start_runs": 6,
+   "best_best": -1.1773981799999547,
+   "best_mean": -1.1762567070000387,
+   "of_runs": 10,
+   "rank_median": 11.5,
+   "reached_top_median": 38.5,
+   "reached_top_runs": 6,
+   "runs": [
+    {
+     "beat_start": null,
+     "best": -1.1755607000000055,
+     "calls": 100,
+     "rank": 24,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 36,
+     "best": -1.176220320000084,
+     "calls": 100,
+     "rank": 12,
+     "reached_top": 36,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 64,
+     "best": -1.175268189999997,
+     "calls": 100,
+     "rank": 30,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 38,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": 38,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.1773981799999547,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 12,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": null,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": null,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 91,
+     "best": -1.1763152700000319,
+     "calls": 100,
+     "rank": 11,
+     "reached_top": 91,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 39,
+     "best": -1.1758680100001584,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": 39,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 76,
+     "best": -1.1763152700000319,
+     "calls": 100,
+     "rank": 11,
+     "reached_top": 76,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": null,
+     "best": -1.1759055699999408,
+     "calls": 100,
+     "rank": 15,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "seconds": 809.114180803299,
+  "seeds": 10,
+  "start": 100,
+  "ucb": {
+   "beat_start_median": 18.0,
+   "beat_start_runs": 9,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.177627490000009,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 22.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 2,
+     "best": -1.1771455000000515,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 2,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 24,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 27,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 19,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 48,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 18,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 26,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.1773981799999547,
+     "calls": 100,
+     "rank": 3,
+     "reached_top": 62,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": 37,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 27,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 18,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 18,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 7,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 8,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 14,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": 4,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 4,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  },
+  "variance": {
+   "beat_start_median": 27.0,
+   "beat_start_runs": 8,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1772293510000054,
+   "of_runs": 10,
+   "rank_median": 3.5,
+   "reached_top_median": 26.0,
+   "reached_top_runs": 8,
+   "runs": [
+    {
+     "beat_start": 48,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 48,
+     "seed": 0,
+     "start_best": -1.1755607000000055
+    },
+    {
+     "beat_start": 28,
+     "best": -1.1771455000000515,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 28,
+     "seed": 1,
+     "start_best": -1.1747957100001258
+    },
+    {
+     "beat_start": 18,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 42,
+     "seed": 2,
+     "start_best": -1.174994149999975
+    },
+    {
+     "beat_start": 22,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 22,
+     "seed": 3,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 72,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 17,
+     "seed": 4,
+     "start_best": -1.1773981799999547
+    },
+    {
+     "beat_start": 26,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 24,
+     "seed": 5,
+     "start_best": -1.1768577800000912
+    },
+    {
+     "beat_start": 6,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 6,
+     "seed": 6,
+     "start_best": -1.175582439999971
+    },
+    {
+     "beat_start": 65,
+     "best": -1.1771455000000515,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 89,
+     "seed": 7,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": null,
+     "best": -1.175780799999984,
+     "calls": 100,
+     "rank": 19,
+     "reached_top": null,
+     "seed": 8,
+     "start_best": -1.175780799999984
+    },
+    {
+     "beat_start": null,
+     "best": -1.1759055699999408,
+     "calls": 100,
+     "rank": 15,
+     "reached_top": null,
+     "seed": 9,
+     "start_best": -1.1759055699999408
+    }
+   ]
+  }
+ },
+ "WSe2 | two-point | 2000 | start 25": {
+  "budget": 100,
+  "descriptor": "two-point",
+  "ei": {
+   "beat_start_median": 15.5,
+   "beat_start_runs": 10,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.177575346000026,
+   "of_runs": 10,
+   "rank_median": 2.0,
+   "reached_top_median": 17.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 9,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 10,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 12,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 12,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 1,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 9,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": 54,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 9,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 34,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 34,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": 34,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 23,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 3,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 53,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": 19,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 19,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 22,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 22,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 2,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 15,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "greedy": {
+   "beat_start_median": 17.0,
+   "beat_start_runs": 9,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1770047190000468,
+   "of_runs": 10,
+   "rank_median": 6.5,
+   "reached_top_median": 28.5,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 2,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": 30,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 17,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 36,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 4,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 9,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": null,
+     "best": -1.1763152700000319,
+     "calls": 100,
+     "rank": 11,
+     "reached_top": 17,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 38,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 38,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": 67,
+     "best": -1.1771455000000515,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 67,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 3,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 56,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": 66,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": 27,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 27,
+     "best": -1.1758872400000655,
+     "calls": 100,
+     "rank": 16,
+     "reached_top": 27,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 1,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 11,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "limit": 2000,
+  "material": "WSe2",
+  "maxmin": {
+   "beat_start_median": 11.5,
+   "beat_start_runs": 10,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1779396800000086,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 12.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 9,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 13,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 13,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 13,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 14,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": 22,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 11,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 8,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 17,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": 17,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 17,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 8,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 8,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": 16,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 7,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 10,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 10,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 3,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 5,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "pool": {
+   "best": -1.1779396800000086,
+   "cut": -1.1756794880000188,
+   "mean": 4.485071427385019,
+   "n": 2000,
+   "sd": 3.4479581530489156
+  },
+  "random": {
+   "beat_start_median": 30.0,
+   "beat_start_runs": 8,
+   "best_best": -1.1774754000000485,
+   "best_mean": -1.175970434000078,
+   "of_runs": 10,
+   "rank_median": 14.5,
+   "reached_top_median": 31.0,
+   "reached_top_runs": 6,
+   "runs": [
+    {
+     "beat_start": 33,
+     "best": -1.1748871300001156,
+     "calls": 100,
+     "rank": 47,
+     "reached_top": null,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 6,
+     "best": -1.176220320000084,
+     "calls": 100,
+     "rank": 12,
+     "reached_top": 83,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 25,
+     "best": -1.1747321800000918,
+     "calls": 100,
+     "rank": 57,
+     "reached_top": null,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": 85,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 15,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 84,
+     "best": -1.1749392100000478,
+     "calls": 100,
+     "rank": 44,
+     "reached_top": null,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": null,
+     "best": -1.1763197200000377,
+     "calls": 100,
+     "rank": 10,
+     "reached_top": 17,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 28,
+     "best": -1.175792730000012,
+     "calls": 100,
+     "rank": 18,
+     "reached_top": 80,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": null,
+     "best": -1.1767348200000924,
+     "calls": 100,
+     "rank": 8,
+     "reached_top": null,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 32,
+     "best": -1.1767348200000924,
+     "calls": 100,
+     "rank": 8,
+     "reached_top": 32,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 10,
+     "best": -1.1758680100001584,
+     "calls": 100,
+     "rank": 17,
+     "reached_top": 30,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "seconds": 274.56258392333984,
+  "seeds": 10,
+  "start": 25,
+  "ucb": {
+   "beat_start_median": 24.0,
+   "beat_start_runs": 9,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1772717250000369,
+   "of_runs": 10,
+   "rank_median": 2.0,
+   "reached_top_median": 27.0,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 2,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": 30,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 24,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 36,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 3,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 9,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": null,
+     "best": -1.1763152700000319,
+     "calls": 100,
+     "rank": 11,
+     "reached_top": 8,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 38,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 38,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": 66,
+     "best": -1.1771455000000515,
+     "calls": 100,
+     "rank": 6,
+     "reached_top": 23,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 3,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 29,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": 27,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 27,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 27,
+     "best": -1.1774754000000485,
+     "calls": 100,
+     "rank": 2,
+     "reached_top": 27,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 1,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 11,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  },
+  "variance": {
+   "beat_start_median": 17.5,
+   "beat_start_runs": 10,
+   "best_best": -1.1779396800000086,
+   "best_mean": -1.1776992960000143,
+   "of_runs": 10,
+   "rank_median": 1.0,
+   "reached_top_median": 25.5,
+   "reached_top_runs": 10,
+   "runs": [
+    {
+     "beat_start": 12,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 12,
+     "seed": 0,
+     "start_best": -1.1723436199999924
+    },
+    {
+     "beat_start": 18,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 18,
+     "seed": 1,
+     "start_best": -1.1748866499999622
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 33,
+     "seed": 2,
+     "start_best": -1.1746160500001679
+    },
+    {
+     "beat_start": 26,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 26,
+     "seed": 3,
+     "start_best": -1.1763152700000319
+    },
+    {
+     "beat_start": 14,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 23,
+     "seed": 4,
+     "start_best": -1.1740019500000471
+    },
+    {
+     "beat_start": 80,
+     "best": -1.1766177399999833,
+     "calls": 100,
+     "rank": 9,
+     "reached_top": 62,
+     "seed": 5,
+     "start_best": -1.1763197200000377
+    },
+    {
+     "beat_start": 17,
+     "best": -1.1768577800000912,
+     "calls": 100,
+     "rank": 7,
+     "reached_top": 65,
+     "seed": 6,
+     "start_best": -1.1739766200000759
+    },
+    {
+     "beat_start": 25,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 25,
+     "seed": 7,
+     "start_best": -1.1767348200000924
+    },
+    {
+     "beat_start": 21,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 34,
+     "seed": 8,
+     "start_best": -1.1752296199999819
+    },
+    {
+     "beat_start": 3,
+     "best": -1.1779396800000086,
+     "calls": 100,
+     "rank": 1,
+     "reached_top": 11,
+     "seed": 9,
+     "start_best": -1.1718399700000646
+    }
+   ]
+  }
+ }
+}

@@ -7573,6 +7573,148 @@ radial grid is coarse and the cutoff short -- four to five angstrom, against the
 descriptor reaches cheaply. The two are complements and not alternatives, which is what the
 measurement says as well.
 
+## Designing a crystal: a prototype, a budget and a loop
+
+Every section above asks how well a model predicts. A design study asks the other question: with
+a budget of calculations, can the model find a better structure than the ones it was fitted on?
+For molecules that question has the sections on which compound to make next; for crystals it
+needs a way to propose candidates, because there is no parent molecule to substitute on (plan
+item M11, `cmfqsar/prototypes.py`).
+
+**A prototype is a cell with site classes.** One cell, its sites grouped into classes, and a
+list of the elements each class may take. Two modes cover what a materials study asks for. In
+*composition* mode every site of a class takes the same element, which is the ABO3 case: one
+prototype, many compositions. In *arrangement* mode a fixed number of the sites of a class take
+a substituent and the rest keep what the prototype has, which is the point-defect case: one
+composition, many arrangements. The element name `vac` removes the atom instead of replacing it,
+so a vacancy series is an arrangement series.
+
+The number of candidates is a product of the choices and grows quickly, so nothing is built
+until it is asked for. `Prototype.n_candidates` counts them, `candidate_at` builds the one with
+a given index, and `candidates` either walks the enumeration or draws a sample from it without
+replacement. A pool of a few thousand can therefore be taken from an enumeration of millions
+without building the candidates that are left out.
+
+**Two candidates can be one structure.** Any symmetry operation of the prototype that maps the
+substituted sites onto each other gives the same structure a second index. `site_permutations`
+reads those operations from spglib and turns them into permutations of the substitutable sites,
+and `unique` keeps one candidate per orbit. The other test is the descriptor itself:
+`channel_keys` gives each candidate the key of its channels, and two candidates with the same key
+are one structure *for the model*, whatever their coordinates say. The two tests do not agree, and
+the measurement below says what that costs.
+
+**An oracle is what computes the property.** A design loop has to evaluate what it proposes.
+`LookupOracle` reads the value from a table, which is how the loop is measured on a published
+set, and it counts the calls, because a budget is counted in calls. `CalculatorOracle` runs any
+ASE calculator and relaxes the cell first if asked; the same interface takes a machine-learned
+potential or a VASP calculator, and what changes is the cost of a call, not the loop.
+
+**The loop.** `design_loop` is given a pool, an oracle, a start set and a budget. At every step
+it fits the kernel model on what the oracle has answered so far, chooses the ridge by the
+evidence of plan item B4, scores every candidate that is left by one of the rules of
+`cmfqsar/active.py`, and asks the oracle about the best-scoring one. It never looks at a value
+it has not asked for and never asks twice about the same candidate, so the budget it reports is
+the budget a study would pay. A formation energy is to be made small and every rule in that
+module prefers a large score, so `maximise=False` negates the target inside the loop; with that,
+`ucb` reads as the lower confidence bound of the section on which molecule to make next -- a
+candidate is proposed only when the model is both optimistic and sure.
+
+**How large a design space is, and how much of it is already computed.** The five-atom cubic ABO3
+prototype with the 52 A elements and 52 B elements of `matbench_perovskites` allows 2,704
+candidates, and that set already holds a computed formation energy for 2,661 of them: 98.4 % of the
+space, with 43 candidates left. One more site class changes that. The doubled cell with its two B
+sites free of each other (A2BB'O6) allows 140,608 candidates, and the repository holds a computed
+formation energy for none of them. Counting the space is therefore the first step of a design
+study, and it is what tells a materials project whether the generator is needed at all.
+
+**Which candidates are one structure.** On the 16 sites of an fcc supercell, one substituted site
+gives 16 placements and 1 arrangement, two give 120 and 5, and three give 560 and 10. The
+descriptor's own test is the weaker of the two: of those 10 arrangements, both descriptors give 8
+channel sets at every reach tried -- the two-point channels at 6 and at 14 Å, the three-body
+channels at 5 and at 9 Å. The two merged pairs are not the same structure. ASE's symmetry
+comparator separates them, their space groups are 25 and 25 with different Wyckoff positions in
+one pair and 25 and 65 in the other, and an EMT calculation on the unrelaxed cells puts the two
+energies of each pair 0.6 meV per atom apart. That difference is an error no model built on these
+channels can avoid, and it is the limit of the whole family: a loop can be told that two
+candidates are one structure only as far as its channels see.
+
+**The gate.** The pool is 4,000 cells of `matbench_perovskites`, the target is the formation
+energy and is to be made small, the oracle reads the tabulated value, and the budget is 100 calls
+after the start set. Ten start sets are drawn, every rule begins from the same ones, and two
+start sizes are run, because the model is what ranks the candidates. Two rules meet the gate,
+and both of them act on the prediction. With the three-body kernel and 100 computed cells the
+greedy rule reaches the best cell of the 4,000 (median rank 1) and improves on its start set in 7 of the 10 runs -- one of the ten start sets
+already held the best cell of the pool, so 9 runs could improve at all -- and it enters the best
+one per cent of the pool in 8 of 10 runs after a median of 8 calls; the lower confidence bound
+improves on its start set in 7 of 10 runs as well and reaches median rank 9. With 25 computed
+cells it
+still reaches median rank 1 with the three-body kernel, and only rank 15 with the two-point
+kernel: this is the one place in the study where the three-body channels of plan item M10 decide
+the outcome. Random choice reaches median rank 27 with 125 computed cells and 14 with 200, which
+is what chance gives (the median best rank of 125 and 200 draws from 4,000 is 22 and 14), and the
+rules that explore do no better here -- median rank 28 to 82 for `variance` and `maxmin` and 28
+to 40 for `ei`, and they improve on their start set in 1 to 4 of the 10 runs against 5 of 10 for
+random choice.
+
+**Where the arrangement is the signal.** The second measurement is the question a defect study
+asks: of 2,000 arrangements of one to three point defects on the 8 x 8 supercell of MoS2 and of
+WSe2 (the data of plan item M14), which arrangement is the most stable. The kernels are the ones
+items M14 and M10 already cached, so this stage costs minutes. On WSe2 the loop does what a
+design study hopes for: `greedy` and the lower confidence bound reach median rank 1 of 2,000 and
+enter the best one per cent in 10 of 10 runs after 20 to 38 calls, with either descriptor and
+either start size. On MoS2 the same two rules fail: median rank 10 of 2,000 with 100 computed
+cells and 37 with 25, and the best one per cent reached in 0 of 10 runs, while random choice
+reaches median rank 5 and enters the best one per cent in 6 of 10. There the rules that explore
+are the ones that work: on the three-body kernel with 100 computed cells `ei` reaches median rank
+1 and `maxmin` enters the best one per cent in 10 of 10 runs.
+
+**A model that predicts well can still be useless for design.** The stage that explains this
+(`--stage ordering`) fits the same model on the same start sets and asks where it puts the best
+candidate of the pool. On MoS2 the model is accurate: rank correlation +0.87 and R² +0.84 on the
+cells it has not computed, which is far above anything the perovskite pool reaches (+0.53 and +0.31
+with 100 computed cells). Yet it puts the best candidate of the pool at place 894 of the 1,900 left
+out, so a rule that proposes the best-predicted candidate does not come near it. On WSe2 the same
+model at the same accuracy (+0.93 and +0.88) puts the best candidate at place 59. The difference is
+in the pools and not in the models. On WSe2 the best one per cent of the arrangements lies within
+0.002 eV of the best one, so a rule that lands anywhere in that group has found what the study
+wants. On MoS2 the best arrangement lies 0.41 eV below the boundary of the best one per cent: it is
+an isolated candidate, and a kernel ridge model shrinks an isolated value toward the mean along
+with everything else. Two things follow. The number to report for a design loop is not the accuracy
+of the model but the place it gives the best candidate, and that place is measured before the loop
+starts, while the loop refits after every answer -- on the perovskites the best cell starts at
+place 227 of 3,900 and `greedy` still reaches it, because each answer improves a model that began
+weak, while on MoS2 the model is already as good as it will get and the 100 further answers do not
+move the best candidate forward. Three pools are too few for a general rule, but they are enough to
+show that the accuracy of a model does not say whether a design loop will work.
+
+**A closed loop, with a calculator instead of a table.** The last stage computes
+every value inside the loop, so that nothing is read from a table anywhere. Eight of the 32 sites
+of an fcc copper cell take gold: one composition and 10,518,300 arrangements. A sample of 3,000
+placements leaves 2,459 distinct candidates after the symmetry reduction, and 400 of those are
+the pool. The oracle is an ASE EMT calculator that relaxes the cell in every call, at 0.22 s per
+call, which is cheap enough to compute the whole pool exhaustively as well (88 s) and make the
+rank of what the loop found exact. The energies run from +0.0480 to +0.0805 eV per atom, a spread
+of 33 meV per atom. With 10 computed candidates to start, a budget of 100 calls and five start
+sets, every rule that uses the model -- `greedy`, `ucb`, `ei`, `variance` and `maxmin` -- finds
+the best candidate of the 400 in 5 of 5 runs, the greedy rule already at its first call, while
+random choice reaches median rank 3 and finds the best candidate in 1 of 5 runs. The budget is a
+quarter of the pool here, so this stage shows that the loop runs from end to end with a
+calculator and that using the model is better than not using it; it is too easy a search to say
+by how much. Replacing EMT with a machine-learned potential or with VASP changes the cost of a
+call and nothing else in the loop, and that is the step this item has not measured.
+
+**The limits.** The generator substitutes on a fixed cell: it does not relax what it proposes, so
+the structure the model sees is the prototype's geometry with other elements on it, and the
+relaxation is the oracle's business. That is how a screening study works, but it means the
+descriptor of a candidate is not the descriptor of the relaxed structure the oracle returns, and
+the difference grows as the substituted ions differ more in size. The loop takes one pool and does not
+grow it, so a space too large to enumerate must be sampled first; a generator that proposes near
+what the model likes, rather than from a fixed pool, is not built. The gate above is met by the
+two rules that act on the prediction and by none of the three that only explore, and the defect
+series shows those same two rules failing on one of two materials, so the rule has to be chosen
+for the pool and not once for the program. And the loop is only as good as
+the model that ranks for it, which is the measurement this section ends with.
+
 ## An atom instead of a molecule: the local invariant kernel
 
 Every model so far predicts one number per molecule. A carbon shift, an acidity, a local

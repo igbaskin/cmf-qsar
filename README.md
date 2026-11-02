@@ -898,6 +898,36 @@ resolution it is: accuracy falls steadily as the field widens (+0.785 to +0.587)
 at most 0.002 when the sum over `G` is taken half as far again. The identity agrees to one part
 in 1e13 over 120 real crystals.
 
+### Designing a crystal: a prototype, a budget and a loop
+
+Every measurement above asks how well a model predicts. A design study asks whether the model can
+find a better structure than the ones it was fitted on, within a budget of calculations
+(`cmfqsar/prototypes.py`, plan item M11). A **prototype** is a cell whose sites are grouped into
+classes, each with the elements it may take; substituting them enumerates candidates, in
+composition mode (every site of a class takes the same element) or in arrangement mode (a fixed
+number of sites take a substituent, which is the point-defect case). Symmetry operations of the
+prototype say which candidates are one structure. An **oracle** computes the property of a
+proposal: a table for a retrospective test, or any ASE calculator -- a machine-learned potential
+or VASP -- for a real one. The **loop** fits the model on what the oracle has answered, scores the
+candidates by one of the rules of `cmfqsar/active.py`, asks about the best one and refits.
+
+**What is measured.** On 4,000 cells of `matbench_perovskites`, with 100 calls after a start set of
+100 computed cells, the greedy rule reaches the best cell of the pool (median rank 1 of 4,000) and
+improves on its start set in 7 of 10 runs; with a start set of 25 it still reaches median rank 1
+with the three-body kernel of item M10 and only rank 15 with the two-point kernel. Random choice
+reaches median rank 27 and 14, which is what chance gives for the number of cells it computes. On
+the 2DMD defect series the same loop reaches median rank 1 of 2,000 on WSe2 in 10 of 10 runs and
+**fails** on MoS2 (median rank 10, the best one per cent reached in 0 of 10 runs, worse than random
+choice), and the stage that measures how the model orders the candidates says why: on MoS2 the
+model is accurate (rank correlation +0.87, R² +0.84) but puts the best arrangement at place 894 of
+1,900, because that arrangement lies 0.41 eV below the rest of the best one per cent, while on WSe2
+the best one per cent lies within 0.002 eV of the best cell. For a design loop the number that
+matters is not the accuracy of the model but the place it gives the best candidate. A third stage
+closes the loop with an ASE EMT calculator instead of a table: 8 of the 32 sites of an fcc copper
+cell take gold (10,518,300 arrangements, a pool of 400 drawn and reduced by symmetry), every value
+is computed inside the loop at 0.22 s per call, and every rule that uses the model finds the best
+candidate of the pool in 5 of 5 runs against 1 of 5 for random choice.
+
 ### Three atoms at a time: what a histogram of distances cannot see
 
 Every descriptor of a crystal above counts how much field weight sits at each distance from how
@@ -5286,6 +5316,7 @@ cmfqsar/invariant.py    alignment-free, geometry-aware kernels (field autocorrel
 cmfqsar/periodic.py     crystals: the periodic autocorrelation, fields for solids, the co-pattern, the periodic overlap kernel, a defect series under the host symmetry
 cmfqsar/sites.py        a site of a periodic cell as the sample: the split of the autocorrelation, per-site targets, a cell model read site by site
 cmfqsar/reciprocal.py   reciprocal-space channels of a crystal: the typed structure factors, the resolution reading, the identity with the real-space sum
+cmfqsar/prototypes.py   inverse design on prototypes: a candidate generator over a prototype cell, a test for which candidates are the same structure, an oracle and the loop
 cmfqsar/threebody.py    three-body channels and handedness for a crystal: the triangle around every atom, and the signed volume that separates a mirror image
 cmfqsar/scattering.py   a measured scattering curve as the sample: G(r) and F(Q) as the untyped descriptor, the readers, what an instrument does
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed

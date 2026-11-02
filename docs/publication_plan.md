@@ -615,6 +615,31 @@ three-body part alone succeeds, is a clean example of a general trap: a setting 
 random inner split cannot see the failure an extrapolating test asks about. **No chiral crystal
 set is used**, so the handedness block is reported as tested and not as measured.
 
+**Item M11 is done (2 November 2026)**, and it turns the acquisition sections of this
+program into a crystal design section with a result that is partly a warning. The generator is
+the piece that was missing: a prototype cell with site classes, composition or arrangement
+substitution, indexing that builds one candidate from one integer so a sample can be drawn from an
+enumeration of millions, and the symmetry of the prototype as the test for which candidates are
+one structure. **The section this supports is "a budget, a prototype and a loop"**, and its gate
+is met: on 4,000 cells of `matbench_perovskites`, with 100 calls after a start set of 100, the
+greedy rule reaches the best cell of the pool (median rank 1 of 4,000, the best one per cent after
+a median of 8 calls) and improves on its start set in 7 of the 10 runs, where one of the ten start
+sets already held the best cell. Random choice is at chance (median rank 27 and 14 for the 125 and
+200 cells it computes). The result that should lead the section, though, is the failure next to it:
+on the 2DMD defect series the same rule reaches median rank 1 of 2,000 on WSe2 in 10 of 10 runs and
+is worse than random choice on MoS2 (median rank 10, the best one per cent in 0 of 10), and the
+reason is not the accuracy of the model. On MoS2 the model orders the candidates it has not
+computed with rank correlation +0.87 and R² +0.84, above the perovskite pool at its best, and still
+puts the best arrangement at place 894 of 1,900, because that arrangement lies 0.41 eV below the
+rest of the best one per cent, while on WSe2 the best one per cent lies within 0.002 eV of the best
+cell. **The sentence the section exists for: for a design loop the number to report is where the
+model puts the best candidate, not how well it predicts on average, and the rule must be chosen
+for the pool.** Two limits must be stated with it. **No DFT or machine-learned-potential oracle was
+run** -- the closed loop is measured with an EMT calculator, which is why the whole pool could also
+be computed exhaustively and the rank made exact -- and the perovskite composition space is already
+98.4 % computed in the published set, so a design claim worth making needs a space nobody has
+enumerated, for which the A2BB'O6 prototype (140,608 candidates, none computed) is ready.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

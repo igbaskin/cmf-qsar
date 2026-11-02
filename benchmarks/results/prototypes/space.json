@@ -1,0 +1,251 @@
+{
+ "channel_check": {
+  "arrangements": 10,
+  "merged_pairs": [
+   {
+    "energies": [
+     0.046030502678567675,
+     0.04546817476647308
+    ],
+    "equivalent_structures": false,
+    "members": [
+     "Cu:Au@0,1,8",
+     "Cu:Au@0,3,4"
+    ],
+    "same_wyckoff": false,
+    "space_groups": [
+     25,
+     25
+    ],
+    "spread_mev": 0.5623279120945956
+   },
+   {
+    "energies": [
+     0.04506420493902258,
+     0.044473747876764225
+    ],
+    "equivalent_structures": false,
+    "members": [
+     "Cu:Au@0,1,12",
+     "Cu:Au@0,3,12"
+    ],
+    "same_wyckoff": false,
+    "space_groups": [
+     25,
+     65
+    ],
+    "spread_mev": 0.5904570622583538
+   }
+  ],
+  "reaches": {
+   "three-body 5 A": {
+    "distinct_by_channels": 8,
+    "distinct_by_symmetry": 10,
+    "merged": [
+     [
+      3,
+      5
+     ],
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   "three-body 9 A": {
+    "distinct_by_channels": 8,
+    "distinct_by_symmetry": 10,
+    "merged": [
+     [
+      3,
+      5
+     ],
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   "two-point 14 A": {
+    "distinct_by_channels": 8,
+    "distinct_by_symmetry": 10,
+    "merged": [
+     [
+      3,
+      5
+     ],
+     [
+      4,
+      6
+     ]
+    ]
+   },
+   "two-point 6 A": {
+    "distinct_by_channels": 8,
+    "distinct_by_symmetry": 10,
+    "merged": [
+     [
+      3,
+      5
+     ],
+     [
+      4,
+      6
+     ]
+    ]
+   }
+  }
+ },
+ "defect_prototype": {
+  "rows": [
+   {
+    "count": 1,
+    "distinct": 1,
+    "duplicates": 15,
+    "operations": 255,
+    "placements": 16
+   },
+   {
+    "count": 2,
+    "distinct": 5,
+    "duplicates": 115,
+    "operations": 255,
+    "placements": 120
+   },
+   {
+    "count": 3,
+    "distinct": 10,
+    "duplicates": 550,
+    "operations": 255,
+    "placements": 560
+   }
+  ],
+  "sites": 16
+ },
+ "double_perovskite": {
+  "candidates": 140608,
+  "computed": 0,
+  "sites": 10,
+  "small_candidates": 64,
+  "small_distinct": 64,
+  "small_duplicates": 0,
+  "small_elements": 4
+ },
+ "perovskites": {
+  "a_elements": 52,
+  "a_list": [
+   "Ag",
+   "Al",
+   "As",
+   "Au",
+   "B",
+   "Ba",
+   "Be",
+   "Bi",
+   "Ca",
+   "Cd",
+   "Co",
+   "Cr",
+   "Cs",
+   "Cu",
+   "Fe",
+   "Ga",
+   "Ge",
+   "Hf",
+   "Hg",
+   "In",
+   "Ir",
+   "K",
+   "La",
+   "Li",
+   "Mg",
+   "Mn",
+   "Mo",
+   "Na",
+   "Nb",
+   "Ni",
+   "Os",
+   "Pb",
+   "Pd",
+   "Pt",
+   "Rb",
+   "Re",
+   "Rh",
+   "Ru",
+   "Sb",
+   "Sc",
+   "Si",
+   "Sn",
+   "Sr",
+   "Ta",
+   "Te",
+   "Ti",
+   "Tl",
+   "V",
+   "W",
+   "Y",
+   "Zn",
+   "Zr"
+  ],
+  "b_elements": 52,
+  "b_list": [
+   "Ag",
+   "Al",
+   "As",
+   "Au",
+   "B",
+   "Ba",
+   "Be",
+   "Bi",
+   "Ca",
+   "Cd",
+   "Co",
+   "Cr",
+   "Cs",
+   "Cu",
+   "Fe",
+   "Ga",
+   "Ge",
+   "Hf",
+   "Hg",
+   "In",
+   "Ir",
+   "K",
+   "La",
+   "Li",
+   "Mg",
+   "Mn",
+   "Mo",
+   "Na",
+   "Nb",
+   "Ni",
+   "Os",
+   "Pb",
+   "Pd",
+   "Pt",
+   "Rb",
+   "Re",
+   "Rh",
+   "Ru",
+   "Sb",
+   "Sc",
+   "Si",
+   "Sn",
+   "Sr",
+   "Ta",
+   "Te",
+   "Ti",
+   "Tl",
+   "V",
+   "W",
+   "Y",
+   "Zn",
+   "Zr"
+  ],
+  "candidates": 2704,
+  "cells": 18928,
+  "distinct_pairs": 2661,
+  "fraction_computed": 0.9840976331360947,
+  "not_computed": 43
+ }
+}

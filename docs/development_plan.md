@@ -2994,6 +2994,67 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   loop that proposes, computes with VASP or UMA, and refits. The GP exists; the enumerator and the
   loop do not. Gate: the loop must find, on a held-out Matbench task, a structure better than the
   training maximum within a fixed budget of calculations.
+  **Done 2 November 2026. The gate is met by the two rules that act on the prediction, and the
+  measurement that matters most was not the gate.** On 4,000 cells of `matbench_perovskites`, with the formation
+  energy to be made small, a budget of 100 calls after the start set and ten start sets shared by
+  every rule, the greedy rule reaches the best cell of the pool (median rank 1 of 4,000) and
+  improves on its start set in 7 of the 10 runs; one of the ten start sets already held the best
+  cell, so 9 runs could improve at all. It enters the best one per cent after a median of 8 calls.
+  The lower confidence bound improves on its start set in 7 of 10 runs as well, at median rank 9,
+  while random choice improves in 5 of 10 and the rules that only explore in 1 to 4 of 10.
+  With 25 computed cells instead of 100 the three-body kernel of M10 still reaches median rank 1
+  and the two-point kernel reaches rank 15, which is the one place in this study where those
+  channels decide the outcome. Random choice gives median rank 27 and 14 for the 125 and 200 cells
+  it computes, which is chance (22 and 14 expected), and the rules that explore are no better than
+  chance on this pool. **The finding to carry forward is the failure.** On the 2DMD defect series
+  of M14 the same loop reaches median rank 1 of 2,000 on WSe2 in 10 of 10 runs and fails on MoS2:
+  median rank 10 with 100 computed cells, the best one per cent reached in 0 of 10 runs, worse than
+  random choice, while the rules that explore do reach it (`ei` median rank 1, `maxmin` in the best
+  one per cent in 10 of 10). A stage added for the explanation (`--stage ordering`) measures how
+  well the model orders the candidates it has not computed: on MoS2 it is accurate, rank
+  correlation +0.87 and R² +0.84, better than the perovskite pool at its best (+0.53 and +0.31),
+  and it still puts the best candidate at place 894 of 1,900. On WSe2, at +0.93 and +0.88, the best
+  candidate is at place 59. The pools differ, not the models: the best one per cent of WSe2 lies
+  within 0.002 eV of the best arrangement, while on MoS2 the best arrangement lies 0.41 eV below
+  the rest of the best one per cent, and a kernel ridge model shrinks an isolated value toward the
+  mean. **For a design loop the number to report is not the accuracy of the model but the place it
+  gives the best candidate**, and the rule has to be chosen for the pool.
+  **The closed loop.** A third stage computes every value inside the loop: 8 of the 32 sites of an
+  fcc copper cell take gold (one composition, 10,518,300 arrangements; a sample of 3,000 leaves
+  2,459 distinct candidates and 400 of them are the pool), an ASE EMT calculator relaxes each
+  proposal at 0.22 s per call, and the whole pool is also computed exhaustively (88 s) so the rank
+  is exact. Every rule that uses the model finds the best candidate of the 400 in 5 of 5 runs,
+  `greedy` at its first call, against 1 of 5 and median rank 3 for random choice. The budget is a
+  quarter of the pool, so the stage shows that the loop runs end to end and that the model helps,
+  not by how much. The first version of this stage let three elements take four sites, and that
+  search was solved by random choice in 3 of 5 runs because the composition carried almost all of
+  the energy difference; fixing the composition is what made it a test of the arrangement.
+  **What was built.** `cmfqsar/prototypes.py`. A `Prototype` is a cell plus `SiteClass` groups,
+  each with the elements its sites may take; a class with no count is a composition choice (every
+  site takes the same element) and a class with a count is an arrangement choice (that many sites
+  take a substituent), and the element name `vac` removes the atom. Nothing is built until it is
+  asked for: `n_candidates` is a product of binomial coefficients, `candidate_at` decodes one index
+  into one structure, and `candidates` draws a sample without replacement from an enumeration too
+  large to walk. `site_permutations` turns the spglib operations of the prototype into permutations
+  of the substitutable sites and `unique` keeps one candidate per orbit; `channel_keys` and
+  `unique_by_channels` are the descriptor's own, weaker test. `LookupOracle` and `CalculatorOracle`
+  are the two oracles, both counting calls, the second relaxing with any ASE calculator.
+  `design_loop` is the loop: choose the ridge by evidence (B4), fit with the helper of the
+  acquisition study (E2), score with its rules, ask the oracle, refit. `benchmarks/run_prototypes.py`
+  has five stages (`space`, `loop`, `defects`, `ordering`, `closed`) and `tests/test_prototypes.py`
+  has 36 tests.
+  **What is open.** The pool is fixed: a space too large to enumerate must be sampled before the
+  loop starts, and a generator that proposes near what the model likes is the next step. The
+  generator substitutes on a fixed cell, so the candidate the model sees is not the relaxed
+  structure the oracle returns, and the difference grows as the ions differ more in size. Both tests of
+  which candidates are one structure disagree with each other, and the descriptor's test is the
+  weaker one: of 10 symmetry-distinct arrangements on 16 fcc sites both descriptors give 8 channel
+  sets at every reach tried, and the merged pairs differ by 0.6 meV per atom, which is an error no
+  model on these channels can avoid. No DFT oracle was run: VASP and UMA plug into
+  `CalculatorOracle` unchanged, but the cost of a real design study was not measured. And the
+  perovskite composition space is 98.4 % computed already in `matbench_perovskites`, so the next
+  measurement this item needs is a space whose candidates nobody has computed -- the A2BB'O6
+  prototype (140,608 candidates, none computed) is the obvious one.
 * **M12. Learning from scattering data.** Because the kernel is the Debye transform, a measured pair
   distribution function or structure factor is a total, untyped version of the same object. A
   reader for experimental G(r) and S(Q) and a kernel that compares measured curves with computed
@@ -3195,7 +3256,7 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
 
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
-by those three. M9 after M6 has reported; ~~M10~~ **done 2 November 2026**, and what it now needs is a set of chiral crystals with a measured property and not more code; ~~M12~~ **done 1 November 2026**, and what it now needs is a measured data set and not more code. M14 is the data M4 turned out to need, and
+by those three. M9 after M6 has reported; ~~M10~~ and ~~M11~~ **done 2 November 2026**, and what they now need is data and not more code -- a set of chiral crystals with a measured property for M10, and a design space whose candidates are not already computed for M11; ~~M12~~ **done 1 November 2026**, and what it now needs is a measured data set and not more code. M14 is the data M4 turned out to need, and
 nothing else in this part waits for it.
 
 ### Nanotechnology: the extensions a particle, a tube, a sheet and a coated surface ask for (26 October 2026)
@@ -5006,7 +5067,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

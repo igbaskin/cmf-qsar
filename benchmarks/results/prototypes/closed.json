@@ -1,0 +1,337 @@
+{
+ "best": 0.04798595147152901,
+ "budget": 100,
+ "count": 8,
+ "elements": [
+  "Au"
+ ],
+ "placements": 10518300,
+ "pool": 400,
+ "reference_seconds": 87.843914270401,
+ "rules": {
+  "ei": {
+   "best_mean": 0.04798595147152901,
+   "found_global_runs": 5,
+   "of_runs": 5,
+   "rank_median": 1.0,
+   "runs": [
+    {
+     "beat_start": 4,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 0,
+     "start_best": 0.0550426310501923
+    },
+    {
+     "beat_start": 6,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 1,
+     "start_best": 0.05008406385060099
+    },
+    {
+     "beat_start": 3,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 2,
+     "start_best": 0.05500902902413368
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 3,
+     "start_best": 0.05588155847240084
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 4,
+     "start_best": 0.06079714945042289
+    }
+   ]
+  },
+  "greedy": {
+   "best_mean": 0.04798595147152901,
+   "found_global_runs": 5,
+   "of_runs": 5,
+   "rank_median": 1.0,
+   "runs": [
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 0,
+     "start_best": 0.0550426310501923
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 1,
+     "start_best": 0.05008406385060099
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 2,
+     "start_best": 0.05500902902413368
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 3,
+     "start_best": 0.05588155847240084
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 4,
+     "start_best": 0.06079714945042289
+    }
+   ]
+  },
+  "maxmin": {
+   "best_mean": 0.04798595147152901,
+   "found_global_runs": 5,
+   "of_runs": 5,
+   "rank_median": 1.0,
+   "runs": [
+    {
+     "beat_start": 2,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 0,
+     "start_best": 0.0550426310501923
+    },
+    {
+     "beat_start": 20,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 1,
+     "start_best": 0.05008406385060099
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 2,
+     "start_best": 0.05500902902413368
+    },
+    {
+     "beat_start": 2,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 3,
+     "start_best": 0.05588155847240084
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 4,
+     "start_best": 0.06079714945042289
+    }
+   ]
+  },
+  "random": {
+   "best_mean": 0.04965659870705577,
+   "found_global_runs": 1,
+   "of_runs": 5,
+   "rank_median": 3.0,
+   "runs": [
+    {
+     "beat_start": 32,
+     "best": 0.050070992737716286,
+     "calls": 110,
+     "found_global": false,
+     "rank": 3,
+     "seed": 0,
+     "start_best": 0.0550426310501923
+    },
+    {
+     "beat_start": 35,
+     "best": 0.050070992737716286,
+     "calls": 110,
+     "found_global": false,
+     "rank": 3,
+     "seed": 1,
+     "start_best": 0.05008406385060099
+    },
+    {
+     "beat_start": 6,
+     "best": 0.050070992737716286,
+     "calls": 110,
+     "found_global": false,
+     "rank": 3,
+     "seed": 2,
+     "start_best": 0.05500902902413368
+    },
+    {
+     "beat_start": 10,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 3,
+     "start_best": 0.05588155847240084
+    },
+    {
+     "beat_start": 4,
+     "best": 0.05008406385060099,
+     "calls": 110,
+     "found_global": false,
+     "rank": 4,
+     "seed": 4,
+     "start_best": 0.06079714945042289
+    }
+   ]
+  },
+  "ucb": {
+   "best_mean": 0.04798595147152901,
+   "found_global_runs": 5,
+   "of_runs": 5,
+   "rank_median": 1.0,
+   "runs": [
+    {
+     "beat_start": 4,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 0,
+     "start_best": 0.0550426310501923
+    },
+    {
+     "beat_start": 6,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 1,
+     "start_best": 0.05008406385060099
+    },
+    {
+     "beat_start": 3,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 2,
+     "start_best": 0.05500902902413368
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 3,
+     "start_best": 0.05588155847240084
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 4,
+     "start_best": 0.06079714945042289
+    }
+   ]
+  },
+  "variance": {
+   "best_mean": 0.04798595147152901,
+   "found_global_runs": 5,
+   "of_runs": 5,
+   "rank_median": 1.0,
+   "runs": [
+    {
+     "beat_start": 4,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 0,
+     "start_best": 0.0550426310501923
+    },
+    {
+     "beat_start": 6,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 1,
+     "start_best": 0.05008406385060099
+    },
+    {
+     "beat_start": 4,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 2,
+     "start_best": 0.05500902902413368
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 3,
+     "start_best": 0.05588155847240084
+    },
+    {
+     "beat_start": 1,
+     "best": 0.04798595147152901,
+     "calls": 110,
+     "found_global": true,
+     "rank": 1,
+     "seed": 4,
+     "start_best": 0.06079714945042289
+    }
+   ]
+  }
+ },
+ "seconds_per_call": 0.2196097856760025,
+ "seeds": 5,
+ "sites": 32,
+ "spread": 0.03254605074576131,
+ "start": 10,
+ "worst": 0.08053200221729032
+}
