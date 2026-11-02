@@ -1,0 +1,43 @@
+{
+ "title": "cmfqsar: Continuous Molecular Fields for 3D-QSAR",
+ "upload_type": "software",
+ "access_right": "open",
+ "license": "MIT",
+ "version": "1.0.0",
+ "description": "<p>An implementation of the Continuous Molecular Fields (CMF) approach to 3D-QSAR: molecular fields as sums of atom-centred Gaussians, kernels as analytic overlap integrals, kernel ridge regression, support-vector and Gaussian-process learners, molecular co-fields and their decompositions, with a desktop application, a command-line tool and a library. The package also covers crystals and surfaces through periodic and invariant kernels, atoms as samples through the local kernel, and the checks around a cross-validated q&sup2;.</p><p>The manual (<code>docs/CMF_manual.pdf</code>) documents the method and every measurement; <code>benchmarks/run_all.py</code> rebuilds every table in it.</p>",
+ "creators": [
+  {
+   "name": "Baskin, Igor I."
+  }
+ ],
+ "keywords": [
+  "3D-QSAR",
+  "continuous molecular fields",
+  "molecular co-fields",
+  "kernel methods",
+  "cheminformatics",
+  "Gaussian process regression",
+  "crystal structure",
+  "interpretable machine learning"
+ ],
+ "related_identifiers": [
+  {
+   "identifier": "10.1007/s10822-013-9656-4",
+   "relation": "cites",
+   "resource_type": "publication-article",
+   "scheme": "doi"
+  },
+  {
+   "identifier": "10.1007/s10822-014-9818-z",
+   "relation": "cites",
+   "resource_type": "publication-article",
+   "scheme": "doi"
+  },
+  {
+   "identifier": "10.4155/fmc-2018-0360",
+   "relation": "cites",
+   "resource_type": "publication-article",
+   "scheme": "doi"
+  }
+ ]
+}

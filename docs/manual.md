@@ -3022,6 +3022,25 @@ optimum, or any other — is claiming a precision the data do not support. That 
 for integrating rather than optimising here, and it is the reason `--mkl evidence` exists as an
 option rather than as a default.
 
+**A prior pooled across series, and what it repairs.** One series cannot say much about five
+weights; a collection of series can. `benchmarks/run_pooled_mixing.py` learns a two-level prior
+over the shares from 38 Mittal sets and applies it to a thirty-ninth, never using that set itself
+(`cmfqsar.mixing.pool_priors`, 300 posterior draws per set; the table is
+`results/pooled_mixing/table.md`). What the collection says is that the fields are not equal: the
+typical shares are steric 0.488, hydrophobic 0.246, electrostatic 0.109, H-bond acceptor 0.100 and
+H-bond donor 0.056, where equal shares would be 0.200. The spread of the log-shares between series
+is τ = 0.76, against the 1.5 of the fixed prior above, so the series differ from one another less
+than that prior allows; an estimate that makes no Gaussian assumption gives τ = 0.86.
+
+The measurement says the same as the rest of this section. Against equal weights the pooled
+weights are **-0.003** in R²pred, 95 % interval [-0.027, +0.017], which contains zero. Against the
+weights a series fits for itself by its own evidence they gain **+0.022** [+0.002, +0.047]. The
+prior from the other series therefore repairs the damage that fitting five weights on one series
+does, and does not improve on leaving the weights equal. On the 15 sets below 40 molecules, where
+a prior should matter most, pooled against equal is +0.009 [-0.022, +0.042]. Equal weights stay
+the default, and the pooled prior is the answer to *what do these series have in common*, not a
+way to predict better.
+
 
 ## Choosing α and λ without holding anything out
 

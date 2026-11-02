@@ -363,6 +363,19 @@ disordered in each.
    openly. The plan's rule says the second; the decision is the author's. **Decided 22 October
    2026: the copies stay while the repository is private; the choice is made again before it
    goes public.**
+   **Decided again on 2 November 2026, for the public release: the copies stay.** The reason is
+   written here so that a reader can judge it. The three distributors state no licence and none
+   of them forbids redistribution; the files are the supporting information of papers published
+   between 1988 and 2004, they have been passed between research groups for twenty years, and the
+   UCI Machine Learning Repository serves the Sutherland sets openly today. Removing the copies
+   would cost the reader rather than the author: the tables of `run_topomer.py`,
+   `run_alignment.py` and `docs/benchmark.md` could then only be reproduced after a manual
+   download, and 12 MB of the examples would leave the manifest, so a changed file could no
+   longer be told from a changed program. Every one of the four items keeps its row in the table
+   above, which names the origin, the paper the facts belong to and the script that rebuilds the
+   copy from the original distribution. If a distributor asks for a copy to be removed, that
+   script is what stays, and the row says where the original is downloaded from. The status word
+   in the table stays **unclear**, because it describes the licence and not this decision.
 2. `mittal/` is derived and can stay, with the sentence above about what in it is the paper's.
 3. Add the per-compound references to the corrosion exports, or deposit the database.
 4. ~~Check the Hammett constants against the table.~~ Done for σ_m and σ_p: 39 of 95 on
