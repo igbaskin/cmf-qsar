@@ -8532,6 +8532,106 @@ where a straight path runs through an atom, are not a set a model can be measure
 item delivers is the data model that lets these structures in, exact and at no cost; a result on
 conductors needs the DFT-labelled set the previous section asks for.
 
+## The voltage of an insertion electrode: the cell against its composition
+
+A cathode is judged by its **average voltage**: the work per electron of taking the working ion
+out of the host. For the insertion of $(y-x)$ lithium into $\mathrm{Li}_x\mathrm{Host}$ the
+average voltage over that interval is the change in energy per electron, referred to lithium
+metal,
+
+$$
+V = -\frac{E(\mathrm{Li}_y\mathrm{Host}) - E(\mathrm{Li}_x\mathrm{Host})
+ - (y-x)\,E(\mathrm{Li})}{y-x},
+$$
+
+with the energies per host formula unit and in electronvolts. Plan item BT3 makes that pair the
+sample (`cmfqsar/battery.py`), and the benchmark asks what an electrode paper asks: does the
+**arrangement** of the atoms say anything about the voltage that the **composition** does not
+already say? Composition is a strong baseline here, because the voltage is mostly decided by
+which metal is reduced and by how much.
+
+**The data need no account.** The Materials Project serves its structures and their formation
+energies through OPTIMADE without an API key, and a formation energy already carries the
+elemental reference: it is the energy of the cell minus the energies of the elements it is made
+of. Elemental lithium is one of those elements, so it cancels in the difference above and the
+voltage follows from the two formation energies alone. One query per chemical system, the phases
+within 0.03 eV per atom of the convex hull kept, each cell reduced to its **host
+framework** (its composition with the lithium removed, divided by the common factor) and its
+**lithium content per host formula unit**, and neighbouring steps of one framework's ladder
+paired. The official insertion-electrode documents, with topotactic pairs and the corrections a
+battery database applies, need a free key and the `mp-api` package; `insertion_electrodes`
+fetches them when a key is given.
+
+**The reconstruction is checked before it is used** (`python benchmarks/run_battery.py --stage
+check`). Over the first insertion, up to one lithium per host formula unit:
+
+| cathode | published, V | reconstructed, V |
+|---|---:|---:|
+| LiCoO2, layered | 4.10 | 3.77 |
+| LiFePO4, olivine | 3.45 | 3.33 |
+| LiMn2O4, spinel | 4.00 | 3.23 |
+| LiNiO2, layered | 3.80 | 3.47 |
+
+The reconstruction is **0.39 V low on average, and low every
+time**. Both reasons are limits of the data and not of the kernel: the energies are the published
+GGA/GGA+U ones without the corrections a battery database applies, and the average here runs over
+the intermediate phases of the ladder, which a two-phase measurement does not see. The window
+above the hull was chosen on that table. At 0.01, 0.02 and 0.03 eV per atom the agreement is the
+same, 0.39 V, while the set grows from 83 to
+303 pairs; at 0.08 it is worse, 0.57 V. So
+0.03 is the default, and the table is in `results/battery/table.md` so the choice can be read
+rather than taken on trust.
+
+**The protocol.** 303 insertion pairs over 157 host frameworks, the discharged cell
+describing the pair, 23 fields. Five folds keep a framework together: two steps of
+one ladder share a framework, a chemistry and most of their structure, so a model that has seen
+one of them has been told most of the answer for the other. The ridge and the width of the
+Gaussians are chosen inside the training part by ten-fold cross-validation. The composition model
+is a linear kernel on the element fractions of the cell and the crystal descriptors of item BT2.
+
+| model | mean absolute error, V | spread over the folds | R² |
+|---|---:|---:|---:|
+| the mean voltage of the set | 1.203 | - | 0.000 |
+| composition | 0.569 | 0.115 | +0.728 |
+| fields | 0.650 | 0.146 | +0.624 |
+| fields and composition | 0.582 | 0.117 | +0.684 |
+
+The voltages of the set average 2.77 V and predicting that mean costs
+1.203 V, so every model here is well inside the question.
+
+**What the numbers say.** **The composition decides this property and the arrangement adds
+nothing.** The field kernel is 0.081 V worse than the composition baseline and the two together
+0.013 V worse, both inside the fold-to-fold spread of 0.146 V, which under rule 4 is not a result.
+That is the answer the data support for an average voltage: it is a thermodynamic quantity of a
+composition, and the geometry enters only through which phase that composition takes. The item is
+kept under rule 5 because it is the loader and the baseline every other battery item needs, and
+because a negative result measured against a baseline is worth more than an unmeasured kernel.
+
+By family of hosts, for the model that uses both kernels:
+
+| family | pairs | mean absolute error, V | mean voltage, V |
+|---|---:|---:|---:|
+| phosphate | 113 | 0.509 | 3.61 |
+| oxide | 105 | 0.664 | 2.83 |
+| other | 51 | 0.603 | 0.34 |
+| fluoride | 21 | 0.678 | 4.23 |
+| sulfide | 10 | 0.466 | 1.86 |
+| silicate | 3 | 0.178 | 2.81 |
+
+The family called *other* is the lithium alloys: Li-Mg, Li-Sn, Li-Ag, Li-Ga, Li-Si, Li-Pb, Li-Zn
+and Li-Al, whose voltages run from -0.25 to 1.18 V with a mean of 0.34 V. They are anode materials
+rather than cathodes, and they are kept because the voltage of an alloying reaction is the same
+quantity measured the same way. They are also most of what makes the set wide, and so most of the
+reason that predicting its mean costs 1.203 V.
+
+**The limits.** The pairs are matched by host *composition* and not by host *structure*: two cells
+with the same framework formula and different frameworks can be paired, which a topotactic
+criterion would refuse. The target carries the 0.39 V offset of the
+check above, so an error below that is not a claim about measured voltages but about reproducing
+these energies. And 303 pairs is a large set for this program and a small one for a materials
+benchmark: the same code reaches 528 pairs at a hull window of 0.05 eV per atom,
+at the cost of a worse agreement with the published values.
+
 ## Which atom is attacked: a site of metabolism
 
 Blocking a metabolic position is one of the standard moves in medicinal chemistry, and the

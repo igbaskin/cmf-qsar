@@ -3568,11 +3568,41 @@ values and a computed oxidation potential is a descriptor, not a target.
   fallback that spreads the charge over the mixed-valence species, and Bader charges taken in
   preference once M3 is done, are needed before any cathode series builds. Test: the charges of
   Li_xCoO₂ for x in {1, 0.75, 0.5} sum to zero and vary monotonically on Co.
+  **Done 3 November 2026.** Two faults, one of them silent. `oxidation_states` now checks that
+  pymatgen's guess leaves the cell neutral and drops it when it does not: for Li(0.5)FePO4 the
+  guess was Fe(II), which leaves half a charge over, and the field was built from it without a
+  word. And when no assignment in whole oxidation states exists, the remainder is spread over the
+  redox-active metal: `_mixed_valence_balance` holds every other element at one of its common
+  states and divides what is left by the amount of the last one, so Li(0.5)CoO2 is Co(+3.5) and
+  Li(0.5)FePO4 is Fe(+2.5), where before the first gave nothing and the electronegativity proxy
+  took over. Only a transition metal, a post-transition metal, a lanthanide or an actinide may
+  carry the mixed valence; otherwise the arithmetic is happy to make the oxygen of Li(0.5)CoO2
+  O(-1.75) or the chlorine of a half-occupied LiCl2 rock salt Cl(-0.5), both of which balance and
+  neither of which is chemistry. A cell with no such element is refused as before. The charge
+  model `"dft"` is new beside `"oxidation"`, `"electronegativity"` and `"file"`: it reads
+  `bader_charges` first, then the other per-atom arrays, and falls back to the formal states, so a
+  series of computed cells uses what the calculation gave (item M3) without naming a file, and no
+  existing benchmark changes because the default is untouched. The test the item asked for is in
+  `tests/test_battery.py`: Li_xCoO2 for x = 1, 0.75 and 0.5 is neutral to a millionth of a charge
+  and its cobalt goes +3.0, +3.25, +3.5.
 * **BT2. Battery descriptors.** The descriptor block has no computed sources for crystals. The
   theoretical capacity from the formula, the Li content, the volume per formula unit and the
   density as per-structure descriptors; the coordination number and the mean Li–O distance as
   per-complex descriptors for the shells of BT4. Simple once the computed-descriptor registry of
   `cmfqsar/descriptors.py` accepts an ASE `Atoms` as well as an RDKit molecule.
+  **Done 3 November 2026.** `descriptors.CRYSTAL` holds eight names under the same `calc:` prefix
+  -- `capacity`, `ion_count`, `ion_fraction`, `volume_per_formula`, `volume_per_atom`, `density`,
+  `ion_coordination` and `ion_oxygen_distance` -- and `compute` sends an ASE `Atoms` to them
+  instead of to RDKit, so one registry serves a molecule and a cell. The working ion is lithium
+  unless the name says otherwise: `calc:capacity@Na`. `ion_count` is per *host* formula unit,
+  which is the x of Li_xHost and not the formula unit of the cell, so Li2Co4O8 reads 0.5. The two
+  shell descriptors use the periodic neighbour list with a cutoff of one and a half times the sum
+  of the covalent radii, so a shell across the cell boundary counts and nothing of the second
+  shell comes in. `read_values` reads any name that is not a `calc:` one from `atoms.info`, where
+  a loader leaves the numbers that came with the structure, and `crystal_fields` fills the
+  descriptor row of a cell, so the descriptor block of the kernel works for a crystal as it does
+  for a molecule. Checked against the textbook capacities: lithium metal 3862 mAh/g, LiCoO2
+  274 mAh/g.
 * **BT3. A battery data loader.** `read_structures` reads files through ASE and
   `structures_from_matbench` reads one table. Electrode data from the Materials Project battery
   explorer come as charged and discharged structure pairs with the average voltage, the volume
@@ -3581,6 +3611,53 @@ values and a computed oxidation potential is a descriptor, not a target.
   battery benchmark of thousands of entries, which no molecular series has. Measure the
   autocorrelation kernel on the average voltage against a composition baseline, by chemistry
   (oxides, phosphates, sulfides) as the Sutherland sets are measured by size.
+  **Done 3 November 2026, and the gate it sets itself is not met: the composition decides the
+  voltage.** `cmfqsar/battery.py` and `benchmarks/run_battery.py` (three stages: `fetch`, `check`,
+  `voltage`), with 303 pairs measured and 34 tests in
+  `tests/test_battery.py`.
+
+  **The data, without an account.** The item assumed the OPTIMADE route would serve the battery
+  explorer's pairs. It does not: OPTIMADE serves structures, and the insertion-electrode documents
+  need a free API key, which this machine has none of. The way round it is better than the
+  original plan. OPTIMADE does serve the **formation energy** of every structure, and a formation
+  energy carries the elemental reference, so elemental lithium cancels in the voltage and
+  V = -[E_f(Li_yHost) - E_f(Li_xHost)] / (y - x) per host formula unit. One query per chemical
+  system (the ternary lithium-metal-oxygen systems, and the phosphates, sulfides, fluorides and
+  silicates of the eleven redox metals: 73 systems, 19,412 structures, 58 MB of cache, four
+  minutes), the phases within 0.03 eV per atom of the hull kept, every cell reduced to
+  its host framework and its lithium content per host formula unit, neighbouring steps paired.
+  `insertion_electrodes` fetches the official documents when a key is given, so the official pairs
+  are one environment variable away.
+
+  **Checked before it was used.** Over the first insertion the four textbook cathodes come out
+  0.39 V low on average and low every time: LiCoO2
+  3.77 against 4.10, LiFePO4
+  3.33 against 3.45, LiMn2O4
+  3.23 against 4.00, LiNiO2
+  3.47 against 3.80. The energies carry none of
+  the corrections a battery database applies, and the average here runs over the intermediate
+  phases of the ladder. The hull window was chosen on that table: the agreement is
+  0.39 V at 0.01, 0.02 and 0.03 eV per atom while the set grows
+  from 83 to 303 pairs, and 0.57 V
+  at 0.08.
+
+  **The measurement.** 303 pairs over 157 frameworks, five folds that keep a framework
+  together (two steps of one ladder share most of their structure), the ridge and the width chosen
+  inside the training part. Mean absolute error over the folds: the mean of the set
+  1.203 V, composition 0.569 +/- 0.115 V,
+  fields 0.650 +/- 0.146 V, the two together
+0.582 +/- 0.117 V. **The composition decides this property and the arrangement adds nothing.** The
+  field kernel is 0.081 V worse than the composition baseline and the two together 0.013 V worse,
+  both inside the fold-to-fold spread of 0.146 V, which under rule 4 is not a result. That is the
+  answer the data support for an average voltage: it is a thermodynamic quantity of a composition,
+  and the geometry enters only through which phase that composition takes. The item is kept under
+  rule 5 because it is the loader and the baseline every other battery item needs, and because a
+  negative result measured against a baseline is worth more than an unmeasured kernel.
+
+  **Not done:** no topotactic test of a pair (the frameworks are matched by composition, not by
+  structure), no official insertion-electrode documents (they need the key), no volume change or
+  stability as a second target although the loader carries both, and no cathode series of its own
+  -- the set is public phases, not the materials a group is working on.
 
 **Medium (one to two weeks each)**
 
@@ -3680,9 +3757,10 @@ values and a computed oxidation potential is a descriptor, not a target.
   benchmark on battery surfaces and for the SEI question (which solvent reduces first on lithium).
   Script code under rule 6, not a module.
 
-**Order.** BT1 and BT3 first: days each, and together they give the periodic kernel a battery
-benchmark on the voltages before any new kernel is written. BT4 next, since BT5 is empty without a
-complex that builds and aligns, and BT2 as BT3 and BT4 need it. BT6 with M4, ~~BT7 after M5~~ (BT7 is done by the local route, 30 October 2026, and did not
+**Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
+the benchmark they give says the composition decides an average voltage. BT4 next, since BT5 is
+empty without a complex that builds and aligns. BT6 with M4, ~~BT7 after M5~~ (BT7 is done by the
+local route, 30 October 2026, and did not
 need M5), BT5 only after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
@@ -5067,7 +5145,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; BT1 and BT3 (crystal charges for fractional compositions, the battery data loader) with M4 to give the periodic kernel its voltage benchmark, BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~ and ~~BT3~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it), BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

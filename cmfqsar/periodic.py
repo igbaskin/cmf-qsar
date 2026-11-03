@@ -1429,7 +1429,9 @@ def inorganic_fieldset(elements: Sequence[str] = (), physchem: Sequence[str] = I
     of each atom's Pauling electronegativity from the mean over the cell, with the sign of a
     charge (an electronegative atom is negative); ``"file"`` reads ``oxi_states``, ``charges`` or
     ``bader_charges`` (what :mod:`cmfqsar.vasp` writes) from the structure's per-atom arrays, or
-    its initial charges, and refuses when there are none.
+    its initial charges, and refuses when there are none; ``"dft"`` reads the same arrays, taking
+    ``bader_charges`` first, and falls back to ``"oxidation"`` when the structure carries none,
+    which is what a series of computed cells wants (plan item BT1).
     """
     specs = []
     for name in physchem:
@@ -1498,10 +1500,93 @@ def oxidation_states(symbols: Sequence[str],
                 result = {el: float(v) for el, v in guesses[0].items()}
         except Exception:
             result = None
+        if result is not None and not _is_neutral(counts, result):
+            result = None            # a guess that does not balance is worse than no guess
+        if result is None:
+            result = _mixed_valence_balance(counts)
         if result is None and composition is not None:
             result = _nearest_balance(counts)
     _OXI_CACHE[key] = result
     return result
+
+
+def _is_neutral(composition: Dict[str, float], states: Dict[str, float],
+                tol: float = 1e-6) -> bool:
+    """Does this assignment leave the cell neutral, to a millionth of a charge per atom?"""
+    total = float(sum(composition.values()))
+    if total <= 0:
+        return False
+    net = sum(float(n) * float(states.get(el, 0.0)) for el, n in composition.items())
+    return abs(net) <= tol * total
+
+
+def _mixed_valence_balance(composition: Dict[str, float],
+                           limit: int = 200000) -> Optional[Dict[str, float]]:
+    """Charge balance with one element in mixed valence, its charge the average over its sites.
+
+    A partly delithiated cathode has no assignment in whole oxidation states: in Li(0.5)CoO2 half
+    the cobalt is Co(III) and half is Co(IV), so the average charge of a cobalt site is +3.5, and
+    the electrostatic field of the cell needs that average.  Every element but one is held at one
+    of its common oxidation states, and the charge left over is divided by the amount of the last
+    element, which gives its average.  The assignment is neutral by construction.
+
+    The element allowed to be mixed is a transition metal, a post-transition metal, a lanthanide
+    or an actinide: the redox-active one.  A cell with no such element gets nothing, and the
+    caller falls back to the electronegativity proxy as before.  Without that rule the arithmetic
+    would be happy to make the oxygen of Li(0.5)CoO2 O(-1.75) and leave the cobalt at Co(III), or
+    the chlorine of a half-occupied Li(1)Cl(2) rock salt Cl(-0.5): both balance and neither is
+    chemistry.  Among the candidates the one whose average lies closest to a state it is commonly
+    found in wins, and the states of the other elements are taken as common as possible.
+    """
+    import itertools
+    from pymatgen.core import Element
+    elements = sorted(composition)
+    total = float(sum(composition.values()))
+    if total <= 0 or len(elements) < 2:
+        return None
+
+    def states_of(el: str):
+        e = Element(el)
+        common = [float(q) for q in e.common_oxidation_states] or [0.0]
+        known = [float(q) for q in e.oxidation_states] or common
+        return common, known
+
+    table = {el: states_of(el) for el in elements}
+    redox = [el for el in elements
+             if Element(el).is_transition_metal or Element(el).is_post_transition_metal
+             or Element(el).is_lanthanoid or Element(el).is_actinoid]
+    candidates = redox
+    best, best_score = None, None
+    for mixed in candidates:
+        if float(composition[mixed]) <= 0:
+            continue
+        others = [el for el in elements if el != mixed]
+        options = [table[el][0] for el in others]
+        size = 1
+        for o in options:
+            size *= len(o)
+        if size > limit:
+            continue
+        common, known = table[mixed]
+        for combo in itertools.product(*options):
+            rest = sum(float(composition[el]) * q for el, q in zip(others, combo))
+            q_mixed = -rest / float(composition[mixed])
+            if not (min(known) - 1e-9 <= q_mixed <= max(known) + 1e-9):
+                continue
+            # how far the average is from a state the element is commonly found in, then how
+            # common the states of the other elements are, then the symbol, so the choice is
+            # the same on every machine
+            score = (min(abs(q_mixed - q) for q in common),
+                     sum(table[el][0].index(q) for el, q in zip(others, combo)),
+                     mixed)
+            if best_score is None or score < best_score:
+                best, best_score = (mixed, q_mixed, dict(zip(others, combo))), score
+    if best is None:
+        return None
+    mixed, q_mixed, rest = best
+    out = {el: float(q) for el, q in rest.items()}
+    out[mixed] = float(q_mixed)
+    return out
 
 
 def _nearest_balance(composition: Dict[str, float], limit: int = 20000) -> Optional[Dict[str, float]]:
@@ -1556,9 +1641,20 @@ def crystal_charges(atoms, model: str = "oxidation") -> Tuple[np.ndarray, str]:
             return np.asarray(q, float), "initial_charges"
         raise ValueError(f"structure {atoms.get_chemical_formula()} carries no per-atom "
                          f"'oxi_states' or 'charges' array and no initial charges")
+    if model == "dft":
+        # what a calculation gave comes first (plan item BT1): Bader charges before the formal
+        # states, since a mixed-valence metal has one average charge in the formal model and a
+        # charge per site in the calculation
+        for key in ("bader_charges", "oxi_states", "charges"):
+            if key in atoms.arrays:
+                return np.asarray(atoms.arrays[key], float), key
+        q = atoms.get_initial_charges()
+        if np.any(q != 0):
+            return np.asarray(q, float), "initial_charges"
+        return crystal_charges(atoms, "oxidation")
     if model == "oxidation":
-        ox = oxidation_states(symbols)
-        if ox is not None:
+        ox = oxidation_states(symbols, composition_of(atoms))
+        if ox is not None and all(s in ox for s in symbols):
             return np.array([ox[s] for s in symbols], float), "oxidation"
         return _electronegativity_charges(symbols), "electronegativity"
     if model == "electronegativity":
@@ -1679,6 +1775,19 @@ def _species_columns(fieldset: FieldSet, species: Dict[str, float], charges_of: 
     return np.asarray(rows, float).reshape(len(species), -1)
 
 
+def _cell_descriptors(atoms, fieldset: FieldSet):
+    """The non-field descriptors of a cell, in the order the field set names them (item BT2).
+
+    The same reader as a molecule's: a ``calc:`` name is computed from the cell (the capacity, the
+    volume per formula unit, the coordination of the working ion) and any other name is looked up
+    in ``atoms.info``, where a loader leaves the numbers that came with the structure.
+    """
+    if not getattr(fieldset, "descriptors", ()):
+        return None
+    from .descriptors import read_values
+    return read_values(atoms, fieldset.descriptors)
+
+
 def crystal_fields(atoms, fieldset: FieldSet, name: str = "") -> CrystalFields:
     """Evaluate the field weights of one periodic structure (an ASE ``Atoms``).
 
@@ -1734,7 +1843,8 @@ def crystal_fields(atoms, fieldset: FieldSet, name: str = "") -> CrystalFields:
                          coords=np.asarray(atoms.get_positions(), float), weights=W, radii=radii,
                          symbols=symbols, cell=np.asarray(atoms.get_cell()[:], float),
                          pbc=tuple(bool(p) for p in atoms.get_pbc()),
-                         charges=charges, charge_source=source, atom_types=list(symbols))
+                         charges=charges, charge_source=source, atom_types=list(symbols),
+                         descriptors=_cell_descriptors(atoms, fieldset))
 
 
 def _disordered_fields(atoms, fieldset: FieldSet, species: List[Dict[str, float]],
@@ -1785,6 +1895,7 @@ def _disordered_fields(atoms, fieldset: FieldSet, species: List[Dict[str, float]
                          pbc=tuple(bool(p) for p in atoms.get_pbc()),
                          charges=q_out if needs_charges else None, charge_source=source,
                          atom_types=list(symbols),
+                         descriptors=_cell_descriptors(atoms, fieldset),
                          occupancy=np.array([sum(d.values()) for d in species], float),
                          site_species=species, second_moments=M)
 

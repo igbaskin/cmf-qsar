@@ -654,6 +654,35 @@ be computed exhaustively and the rank made exact -- and the perovskite compositi
 98.4 % computed in the published set, so a design claim worth making needs a space nobody has
 enumerated, for which the A2BB'O6 prototype (140,608 candidates, none computed) is ready.
 
+**Items BT1 to BT3 are done (3 November 2026)**, and what they add to this paper is a
+measured negative result with a baseline strong enough to make it one, which is what rule 3 of
+this plan asks for. The property is the **average voltage** of an insertion electrode, and the
+data route is worth a methods paragraph of its own: the Materials Project serves structures and
+formation energies through OPTIMADE without an account, a formation energy carries the elemental
+reference, so elemental lithium cancels in the voltage and V follows from two formation energies
+per host formula unit. 303 insertion pairs over 157 host frameworks were built that way,
+from 19,412 public structures in four minutes of fetching, with no key and no licence question.
+Before the set was used, the reconstruction was checked against four textbook cathodes: it is
+0.39 V low on average and low every time (LiCoO2
+3.77 against 4.10, LiFePO4
+3.33 against 3.45), because the energies carry
+none of the corrections a battery database applies. On five folds that keep a host framework
+together, the mean absolute error is 0.569 +/- 0.115 V for a
+linear kernel on the element fractions and the crystal descriptors of item BT2,
+0.650 +/- 0.146 V for the periodic autocorrelation kernel of
+the fields and 0.582 +/- 0.117 V for the two together, against
+1.203 V for predicting the mean voltage of the set. **The sentence the
+section exists for: an average voltage is a thermodynamic property of a composition, and on this
+set the arrangement of the atoms adds nothing to the composition that the fold-to-fold spread
+does not cover.** Three things must be stated with it: the target carries the
+0.39 V offset above, the pairs are matched by host *composition* and
+not by host *structure*, so a topotactic criterion would refuse some of them, and the set holds
+lithium alloys (Li-Mg, Li-Sn, Li-Si and the rest, mean voltage 0.34 V) beside the oxide and
+phosphate cathodes. Item BT1 is the repair this measurement needed on the way: a part-delithiated
+composition had no charge-balanced assignment of oxidation states, so its electrostatic field was
+built from the electronegativity proxy without a word, and one guess (Li(0.5)FePO4 as Fe(II)) was
+returned although it leaves half a charge over.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

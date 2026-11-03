@@ -54,9 +54,141 @@ COMPUTED: Dict[str, Tuple[str, str]] = {
 }
 
 
+#: descriptors a periodic structure can offer, under the same ``calc:`` prefix (plan item BT2).
+#: They are the quantities an electrode series is compared on and that no field carries, because
+#: they are properties of the composition and the cell rather than functions of space.  The
+#: working ion is lithium unless the name says otherwise: ``calc:capacity@Na`` is the capacity for
+#: sodium.
+CRYSTAL: Dict[str, str] = {
+    "capacity": "theoretical specific capacity for the working ion, mAh/g",
+    "ion_count": "working-ion atoms per host formula unit: the x of Li_x Host",
+    "ion_fraction": "working-ion atoms as a fraction of all atoms in the cell",
+    "volume_per_formula": "cell volume per formula unit, cubic angstrom",
+    "volume_per_atom": "cell volume per atom, cubic angstrom",
+    "density": "density, g/cm3",
+    "ion_coordination": "oxygen neighbours of a working-ion site, mean over the sites",
+    "ion_oxygen_distance": "distance from a working-ion site to its oxygen neighbours, angstrom, "
+                           "mean over the sites",
+}
+
+#: the working ion of the crystal descriptors when the name does not say which
+WORKING_ION = "Li"
+
+
 def computed_names() -> List[str]:
     """The computed descriptors, as they are written in a field set: ``calc:mw`` and so on."""
     return [f"calc:{k}" for k in COMPUTED]
+
+
+def crystal_names() -> List[str]:
+    """The crystal descriptors, as they are written in a field set: ``calc:capacity`` and so on."""
+    return [f"calc:{k}" for k in CRYSTAL]
+
+
+def is_structure(obj) -> bool:
+    """Is this an ASE structure rather than an RDKit molecule?"""
+    return hasattr(obj, "get_chemical_symbols") and hasattr(obj, "get_positions")
+
+
+def _formula_units(symbols: Sequence[str]) -> int:
+    """How many formula units the cell holds: the common divisor of the element counts."""
+    from collections import Counter
+    from math import gcd
+    counts = list(Counter(symbols).values())
+    z = 0
+    for c in counts:
+        z = gcd(z, int(c))
+    return max(z, 1)
+
+
+def _host_units(symbols: Sequence[str], ion: str) -> float:
+    """How many host formula units the cell holds, the working ion left out of the count.
+
+    This is the denominator of the *x* in Li_x Host, and it is not the formula unit of the whole
+    cell: a cell of Li2Co4O8 holds two formula units of itself and four of the host CoO2, so its
+    lithium content is 0.5 and not 1.
+    """
+    from collections import Counter
+    from math import gcd
+    counts = Counter(s for s in symbols if s != ion)
+    if not counts:
+        return float(len(list(symbols)))
+    g = 0
+    for c in counts.values():
+        g = gcd(g, int(c))
+    g = max(g, 1)
+    return float(min(n / (int(n) // g) for n in counts.values()))
+
+
+def _ion_shell(atoms, ion: str, anion: str = "O"):
+    """The oxygen neighbours of every working-ion site: their count and their distances.
+
+    The cutoff is one and a half times the sum of the two covalent radii, which holds the first
+    shell of an oxide (2.9 angstrom for lithium and oxygen, 3.5 for sodium) and leaves the second
+    one out.  The neighbour list is the periodic one, so a shell across the cell boundary counts.
+    """
+    import numpy as np
+    from ase.data import atomic_numbers, covalent_radii
+    from ase.neighborlist import neighbor_list
+    symbols = list(atoms.get_chemical_symbols())
+    ions = [i for i, s in enumerate(symbols) if s == ion]
+    if not ions or anion not in symbols:
+        return np.zeros(0), np.zeros(0)
+    cutoff = 1.5 * (covalent_radii[atomic_numbers[ion]] + covalent_radii[atomic_numbers[anion]])
+    i_idx, j_idx, dist = neighbor_list("ijd", atoms, cutoff)
+    keep = np.array([symbols[i] == ion and symbols[j] == anion for i, j in zip(i_idx, j_idx)],
+                    dtype=bool)
+    if not keep.any():
+        return np.zeros(len(ions)), np.zeros(0)
+    i_keep, d_keep = i_idx[keep], dist[keep]
+    counts = np.array([float(np.count_nonzero(i_keep == i)) for i in ions], float)
+    return counts, d_keep
+
+
+def compute_crystal(atoms, name: str) -> float:
+    """One crystal descriptor of one periodic structure; NaN where the cell cannot give it.
+
+    ``name`` is the short name, with an optional working ion after an ``@``: ``capacity@Na``.
+    """
+    import numpy as np
+    key, _, ion = name.partition("@")
+    ion = ion or WORKING_ION
+    if key not in CRYSTAL:
+        import difflib
+        near = difflib.get_close_matches(key, list(CRYSTAL), n=4)
+        raise KeyError(f"unknown crystal descriptor {key!r}"
+                       + (f"; did you mean {', '.join(near)}?" if near else
+                          f"; the crystal descriptors are {', '.join(CRYSTAL)}"))
+    symbols = list(atoms.get_chemical_symbols())
+    n_ion = float(sum(1 for s in symbols if s == ion))
+    mass = float(np.sum(atoms.get_masses()))                 # g/mol of the whole cell
+    try:
+        volume = float(atoms.get_volume())
+    except Exception:                                        # noqa: BLE001 - an open structure
+        volume = float("nan")
+    z = _formula_units(symbols)
+    if key == "capacity":
+        # n F / M, with F / 3.6 = 26801.5 mAh per mole of charge; one electron per working ion
+        return float("nan") if mass <= 0 else 26801.5 * n_ion / mass
+    if key == "ion_count":
+        # per host formula unit, so that Li2Co4O8 reads 0.5 and not 1: this is the x of Li_x Host
+        host = _host_units(symbols, ion)
+        return n_ion / host if host > 0 else float("nan")
+    if key == "ion_fraction":
+        return n_ion / len(symbols) if symbols else float("nan")
+    if key == "volume_per_formula":
+        return volume / z
+    if key == "volume_per_atom":
+        return volume / len(symbols) if symbols else float("nan")
+    if key == "density":
+        # 1 amu per cubic angstrom is 1.66054 g/cm3
+        return float("nan") if not np.isfinite(volume) or volume <= 0 else 1.66054 * mass / volume
+    counts, dist = _ion_shell(atoms, ion)
+    if key == "ion_coordination":
+        return float(np.mean(counts)) if len(counts) else float("nan")
+    if key == "ion_oxygen_distance":
+        return float(np.mean(dist)) if len(dist) else float("nan")
+    raise AssertionError(key)                                # unreachable: CRYSTAL is checked
 
 
 def rdkit_descriptors() -> Dict[str, object]:
@@ -94,6 +226,13 @@ def compute(mol, name: str) -> float:
     which is why there is no list here to keep up to date.
     """
     key = name[5:] if name.startswith("calc:") else name
+    if is_structure(mol):                             # a periodic structure, not a molecule (BT2)
+        try:
+            return float(compute_crystal(mol, key))
+        except KeyError:
+            raise
+        except Exception:                             # noqa: BLE001 - one descriptor, not the set
+            return float("nan")
     fn = _resolve(key)
     try:
         return float(fn(mol))
@@ -119,13 +258,28 @@ def available(mols: Sequence) -> List[str]:
 
 
 def read_values(mol, names: Sequence[str]) -> np.ndarray:
-    """The descriptor vector of one molecule; anything missing or unreadable becomes NaN."""
+    """The descriptor vector of one molecule or one periodic structure; anything missing is NaN.
+
+    A molecule's own properties are read from the file's tags, a structure's from
+    ``atoms.info``, which is where a loader puts the numbers that came with the structure
+    (plan item BT2).
+    """
     out = np.full(len(names), np.nan)
     if mol is None:
         return out
+    structure = is_structure(mol)
     for k, name in enumerate(names):
         if name.startswith("calc:"):
             out[k] = compute(mol, name)
+            continue
+        if structure:
+            value = mol.info.get(name)
+            if value is None:
+                continue
+            try:
+                out[k] = float(value)
+            except (ValueError, TypeError):
+                continue
             continue
         if not mol.HasProp(name):
             continue

@@ -3862,6 +3862,29 @@ other, and a frame from the skeleton is the next thing to try. Measured on the w
 COMPAS-1D molecules are twisted by more than 0.5 Å (a fjord in most ten-ring isomers), the frame
 is defined for them, and a mirror image lands in the mirrored frame.
 
+### The voltage of an insertion electrode
+
+The average voltage of a lithium insertion is the change in energy per electron, referred to
+lithium metal. `cmfqsar/battery.py` (plan items BT1 to BT3) builds the pairs out of public data
+with no account anywhere: the Materials Project serves structures and formation energies through
+OPTIMADE without a key, and a formation energy already carries the elemental reference, so
+elemental lithium cancels and the voltage follows from two formation energies. Every cell is
+reduced to its host framework and its lithium content per host formula unit, and neighbouring
+steps of one framework's ladder make a pair. The reconstruction is checked against four textbook
+cathodes before it is used and comes out 0.39 V low on average
+(LiCoO2 3.77 V against 4.10 published, LiFePO4
+3.33 against 3.45), because the energies carry
+none of the corrections a battery database applies.
+
+**What is measured.** 303 pairs over 157 frameworks, five folds that keep a framework
+together, three models: a linear kernel on the element fractions and the crystal descriptors of
+item BT2 (0.569 V mean absolute error), the periodic autocorrelation kernel of
+the fields (0.650 V), and the two together (0.582 V).
+Predicting the mean voltage of the set would cost 1.203 V. The composition decides this property
+and the arrangement adds nothing. The field kernel is 0.081 V worse than the composition baseline
+and the two together 0.013 V worse, both inside the fold-to-fold spread of 0.146 V, which under
+rule 4 is not a result.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed
@@ -5319,6 +5342,7 @@ cmfqsar/reciprocal.py   reciprocal-space channels of a crystal: the typed struct
 cmfqsar/prototypes.py   inverse design on prototypes: a candidate generator over a prototype cell, a test for which candidates are the same structure, an oracle and the loop
 cmfqsar/threebody.py    three-body channels and handedness for a crystal: the triangle around every atom, and the signed volume that separates a mirror image
 cmfqsar/scattering.py   a measured scattering curve as the sample: G(r) and F(Q) as the untyped descriptor, the readers, what an instrument does
+cmfqsar/battery.py      insertion electrodes: the pairs of a lithiation ladder from public formation energies, the average voltage between two steps, and the families of hosts
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field, and the query formats that carry them out of the program
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule

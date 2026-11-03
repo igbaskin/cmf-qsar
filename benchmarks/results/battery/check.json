@@ -1,0 +1,85 @@
+{
+ "hull": 0.03,
+ "mean_absolute_error": 0.3879966335467012,
+ "rows": [
+  {
+   "error": -0.3251540291286714,
+   "framework": "CoO2",
+   "label": "LiCoO2, layered",
+   "published": 4.1,
+   "steps": 5,
+   "voltage": 3.7748459708713282,
+   "x_covered": 0.952381
+  },
+  {
+   "error": -0.12314782916666633,
+   "framework": "FeO4P",
+   "label": "LiFePO4, olivine",
+   "published": 3.45,
+   "steps": 3,
+   "voltage": 3.326852170833334,
+   "x_covered": 1.0
+  },
+  {
+   "error": -0.772430814489165,
+   "framework": "MnO2",
+   "label": "LiMn2O4, spinel",
+   "published": 4.0,
+   "steps": 13,
+   "voltage": 3.227569185510835,
+   "x_covered": 1.0
+  },
+  {
+   "error": -0.3312538614023022,
+   "framework": "NiO2",
+   "label": "LiNiO2, layered",
+   "published": 3.8,
+   "steps": 10,
+   "voltage": 3.4687461385976976,
+   "x_covered": 0.5
+  }
+ ],
+ "sensitivity": [
+  {
+   "cathodes": 4,
+   "frameworks": 51,
+   "hull": 0.01,
+   "mean_absolute_error": 0.3879955678948531,
+   "pairs": 83,
+   "pairs_first_insertion": 46
+  },
+  {
+   "cathodes": 4,
+   "frameworks": 112,
+   "hull": 0.02,
+   "mean_absolute_error": 0.3879961222238094,
+   "pairs": 197,
+   "pairs_first_insertion": 102
+  },
+  {
+   "cathodes": 4,
+   "frameworks": 157,
+   "hull": 0.03,
+   "mean_absolute_error": 0.3879966335467012,
+   "pairs": 303,
+   "pairs_first_insertion": 153
+  },
+  {
+   "cathodes": 4,
+   "frameworks": 276,
+   "hull": 0.05,
+   "mean_absolute_error": 0.42062367447667104,
+   "pairs": 528,
+   "pairs_first_insertion": 254
+  },
+  {
+   "cathodes": 4,
+   "frameworks": 391,
+   "hull": 0.08,
+   "mean_absolute_error": 0.5652881672050886,
+   "pairs": 789,
+   "pairs_first_insertion": 342
+  }
+ ],
+ "window": 1.0
+}

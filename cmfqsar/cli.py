@@ -4226,9 +4226,12 @@ def main(argv=None):
                     help="indicator fields: 'auto' (one per element in at least --min-structures "
                          "training structures, plus one for the rest), 'none', or a list Na,Cl,O")
     bc.add_argument("--min-structures", type=int, default=5, metavar="N")
-    bc.add_argument("--charges", default="oxidation", choices=["oxidation", "electronegativity", "file"],
+    bc.add_argument("--charges", default="oxidation",
+                    choices=["oxidation", "electronegativity", "file", "dft"],
                     help="electrostatic weights: oxidation states guessed from the composition, the "
-                         "electronegativity proxy, or the 'oxi_states'/'charges' array of the file")
+                         "electronegativity proxy, the 'oxi_states'/'charges' array of the file, or "
+                         "'dft', which takes the Bader charges of a calculation where the structure "
+                         "carries them and the guess where it does not")
     bc.add_argument("--cutoff", type=float, default=10.0, metavar="R",
                     help="neighbours are summed out to this radius (angstrom)")
     bc.add_argument("--sigma", type=float, default=0.5, metavar="S",
@@ -5081,10 +5084,11 @@ def main(argv=None):
     ho.add_argument("--no-cif", action="store_true",
                     help="no indicator field per element (one per element is the default)")
     ho.add_argument("--charges", default="oxidation",
-                    choices=["oxidation", "file", "electronegativity"],
+                    choices=["oxidation", "file", "electronegativity", "dft"],
                     help="where the electrostatic weights come from: an oxidation-state guess, "
-                         "the structure's own arrays (Bader charges from a VASP run), or the "
-                         "electronegativity proxy")
+                         "the structure's own arrays (Bader charges from a VASP run), the "
+                         "electronegativity proxy, or 'dft', which prefers the arrays and falls "
+                         "back to the guess")
     ho.add_argument("--invariant", action="store_true",
                     help="also fit the rotation-invariant local kernel, which needs no frame")
     ho.add_argument("--reference", action="store_true",
