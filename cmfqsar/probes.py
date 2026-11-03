@@ -40,6 +40,26 @@ a reproduction of GRID's numbers, and the directional part of GRID's hydrogen-bo
 represented at all.  The place for that, if it is ever wanted, is Gaussians on lone-pair
 extension points rather than on the heteroatom, which this framework can carry, since they are
 merely more centres with their own weights.
+
+Ion probes, and what they are and are not
+-----------------------------------------
+Plan item EC7 asks for a cation probe: the field of an ionophore or an electrolyte solvent read as
+the energy a lithium, sodium, potassium or magnesium ion would feel in it.  Four such probes are
+defined below.  What distinguishes them deserves to be said plainly, because it is less than the
+four names suggest.
+
+An ion carries no hydrogen bond and its dispersion well is negligible beside its charge, so for a
+singly charged ion :func:`attraction` reduces to the electrostatic term, which is the molecule's
+electrostatic potential under this module's distance-dependent screening.  The three +1 probes
+therefore differ from one another in **one** quantity, the distance at which that potential is
+sampled: the contact distance of the probe with each atom, which for the lithium probe is the
+coordination distance measured on the relaxed complexes of ``examples/ether/``.  That is a real
+difference -- a potassium ion cannot reach the inside of a small cavity that a lithium ion fits --
+and it is the whole of the difference.  The magnesium probe adds its charge of +2, which
+multiplies the field by two; every kernel in this program is normalised by the self-overlap, so a
+constant factor on a field is invisible to it, and the magnesium probe is in consequence the
+lithium probe at a slightly shorter distance.  A model that needs more than this needs
+polarisation, which a fixed probe charge cannot carry.
 """
 from __future__ import annotations
 
@@ -71,6 +91,20 @@ class Probe:
     hbond: float = 0.0     # +1 donor, -1 acceptor, 0 neither
 
 
+#: the dispersion well used for every ion probe, kcal/mol.  Published Lennard-Jones parameters for
+#: alkali cations disagree by two orders of magnitude between force fields, and the term does not
+#: matter here: at the contact distance of a lithium ion and an ether oxygen the electrostatic
+#: term of :func:`attraction` is about -7 kcal/mol and the dispersion well -0.14, so the well sets
+#: a correction of two per cent, well inside the error of the Gaussian expansion itself.
+ION_WELL = 0.10
+#: Measured on the 1,050 relaxed Li(+)-ether complexes of ``examples/ether/`` (plan item EC7):
+#: the oxygens within 2.6 A of the ion sit at 2.01 +/- 0.11 A, and ``vdw_params("O")`` gives the
+#: oxygen a radius of 1.52 A, so a lithium probe whose contact distance is the measured one has a
+#: radius of 0.49 A.  The other three follow from Shannon's six-coordinate ionic radii, which give
+#: Na(+) 0.26 A and K(+) 0.62 A more than Li(+) and Mg(2+) 0.04 A less, because no relaxed
+#: geometries of those complexes are distributed with the set.
+ION_RADII = {"lithium": 0.49, "sodium": 0.75, "potassium": 1.11, "magnesium": 0.45}
+
 #: the probes offered; deliberately few, because a probe nobody can interpret is of no use
 PROBES: Dict[str, Probe] = {
     "water": Probe("water", "Water probe (OH2)", radius=1.7, well=0.15, charge=0.0, hbond=0.5),
@@ -80,7 +114,18 @@ PROBES: Dict[str, Probe] = {
     "amine": Probe("amine", "Amine N probe (donor)", radius=1.75, well=0.16, charge=0.4,
                    hbond=1.0),
     "cation": Probe("cation", "Cation probe (+1)", radius=1.5, well=0.10, charge=1.0, hbond=0.0),
+    "lithium": Probe("lithium", "Lithium ion probe (Li+)", radius=ION_RADII["lithium"],
+                     well=ION_WELL, charge=1.0, hbond=0.0),
+    "sodium": Probe("sodium", "Sodium ion probe (Na+)", radius=ION_RADII["sodium"],
+                    well=ION_WELL, charge=1.0, hbond=0.0),
+    "potassium": Probe("potassium", "Potassium ion probe (K+)", radius=ION_RADII["potassium"],
+                       well=ION_WELL, charge=1.0, hbond=0.0),
+    "magnesium": Probe("magnesium", "Magnesium ion probe (Mg2+)", radius=ION_RADII["magnesium"],
+                       well=ION_WELL, charge=2.0, hbond=0.0),
 }
+
+#: the ion probes, in the order of the ionic radius
+ION_PROBES = ("magnesium", "lithium", "sodium", "potassium")
 
 
 def probe_names() -> List[str]:

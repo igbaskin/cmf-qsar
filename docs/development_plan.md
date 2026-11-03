@@ -3472,6 +3472,83 @@ for anything molecular.
   the set can be made rather than found), against the electrostatic field; selectivity between
   cations is a multi-task problem and the first electrochemical application of E1's task
   descriptors.
+  **Done 4 November 2026**, and no set had to be computed: the ether series of Wang, Yang, Harris
+  and Gomez-Bombarelli (Chem. Commun. 56 (2020) 8920) is public, holds 1,085 saturated acyclic
+  ethers with the binding energy of Li(+), Na(+) and Mg(2+) at wB97X-D3/def2-TZVP, and carries the
+  relaxed geometry of 1,050 lithium complexes, which a flexible glyme needs, since a conformer
+  from a generator is not the conformer the number belongs to. `examples/make_ether_examples.py
+  --fetch` prepares it (`examples/ether/`, status *unclear*: the distributor states no licence, so
+  the hashes are checked and `upstream/` is not redistributed) and `benchmarks/run_ether.py`
+  measures it in three stages.
+
+  Four probes were added to `cmfqsar/probes.py`: `lithium`, `sodium`, `potassium`, `magnesium`.
+  The lithium radius, 0.49 angstrom, is measured rather than assumed: it is the one that puts the
+  probe's contact with an oxygen at 2.01 angstrom, which is where the oxygens of those 1,050
+  complexes sit (2.007 +/- 0.113 angstrom, 4.16 +/- 0.97 of them within 2.6 angstrom). The others
+  follow Shannon's six-coordinate radii. **What separates them is one quantity.** An ion carries
+  no hydrogen bond and its dispersion well is two per cent of its electrostatic term, so a +1 ion
+  probe is the molecule's electrostatic potential sampled at that ion's contact distance, and the
+  three +1 probes differ in the distance alone; the +2 probe multiplies the field by two, which a
+  self-overlap-normalised kernel cannot see, so the magnesium probe is the lithium probe at a
+  shorter distance. A test holds each of these statements.
+
+  **A fault found and repaired on the way.** A probe field keeps its weights per Gaussian term and
+  not per atom, so its atom weight column is zero; the alignment-free kernel of
+  `cmfqsar/invariant.py` read that column and returned a kernel of zeros, which states that every
+  molecule is alike, and nothing refused it. `expanded_weights` now spreads a probe field over its
+  terms as one channel each, which is exact, `feature_matrix` needs the field set whenever a probe
+  field is present and refuses without it, and `CMFModel` passes it, so `--kernel autocorrelation
+  --probes lithium` works from the command line and the GUI.
+
+  **Where the ion sits: the gate no regression is needed for.** A probe field is a map of an
+  energy, so its deepest point is a prediction of the ion's position. Over the 1,050 complexes it
+  lies 0.36 +/- 0.55 angstrom from the lithium the relaxation placed and within 1.0 angstrom in
+  97 per cent of them, against 0.65 +/- 0.74 angstrom (86 per cent) for the centroid of the
+  oxygens and 0.67 +/- 0.80 (82 per cent) for the centroid of the heavy atoms.
+
+  **The binding energy: the gate is passed.** Nested cross-validation, five outer folds, the ridge
+  and the field width chosen inside each fold, no frame anywhere. Mean absolute error in eV for
+  Li(+), Na(+) and Mg(2+): predicting the mean of the set 0.454, 0.449, 1.235; the oxygen count
+  with the carbon-to-oxygen ratio and the heavy-atom count 0.296, 0.279, 0.505; the same with the
+  molecule's HOMO energy 0.254, 0.246, 0.444; the electrostatic field alone 0.209, 0.248, 0.557;
+  the five fields 0.124, 0.181, 0.266; the matching ion probe alone 0.140, 0.193, 0.321; the five
+  fields and the probe 0.117, 0.171, 0.254 (R2 +0.910, +0.706, +0.856). Paired over the same
+  molecules, the ion probe beats the electrostatic field alone -- the comparison this item names --
+  by 0.069 eV [0.060, 0.078] on lithium, 0.055 [0.046, 0.063] on sodium and 0.236 [0.210, 0.263]
+  on magnesium, and the five fields beat the counts by 0.172 eV [0.152, 0.191] on lithium. The
+  probe alone is a little behind the five fields (+0.015 eV [+0.009, +0.022]). With one oxygen
+  count held out at a time the fields and the probe give 0.129, 0.204, 0.279 against 0.284, 0.291,
+  0.571 for the counts. This is the first measurement of the battery and electrochemistry series
+  in which the arrangement of the atoms beats what the composition already says.
+
+  **The selectivity: measured, small, and explained.** The lithium-minus-sodium difference over
+  the 980 molecules that carry both has a spread of 0.364 eV and a correlation of -0.049 with the
+  oxygen count, so the formula says nothing about it (q2 +0.006). Predicting its mean costs
+  0.190 eV; the five fields and the probe reach 0.171 (q2 +0.218) and the two ion probes 0.176.
+  The field models are ahead of the counts by 0.012 eV [0.003, 0.022], a real and small
+  difference. Adding the sodium probe to the lithium probe changes nothing (+0.001 eV
+  [-0.000, +0.003]), which is what the probe definitions above predict, and is the measured form
+  of the statement that selectivity needs polarisation.
+
+  **The three ions as three endpoints (item E1 applied to ions).** 3,010 measurements over 1,048
+  molecules on one kernel: independent endpoints cost 0.204 eV, one shared correlation of 0.5
+  gives 0.198, and a covariance taken from the ion's radius, charge and polarisability 0.188, with
+  q2 +0.893, +0.698, +0.852. The covariance relates lithium to magnesium (0.46) more closely than
+  to sodium (0.27), so what decides which endpoint helps another is the size of the ion (Li+ 0.76,
+  Mg2+ 0.72, Na+ 1.02 angstrom) and not its charge. **An ion that was never measured cannot be
+  predicted on this set**: magnesium is refused by construction, because the mean of an endpoint
+  is a linear function of the charge and two monovalent ions do not determine it at +2, and
+  lithium and sodium give 1.484 and 0.539 eV against their own means of 0.454 and 0.449. They beat
+  every reference available without the ion (the mean of the measured ions is 3.5 and 4.7 eV away)
+  and the part that fails is the mean: lithium's is -3.84 eV and the model places it at -2.36.
+  Three endpoints carry one descriptor column, which is a limit of the set.
+
+  **Not done:** the potassium probe has no data here, so it is defined and unmeasured; the
+  crown-ether and calixarene log K series this item also names needs the Izatt tabulations, for
+  which no machine-readable open copy was found on 4 November 2026 (the NIST stability-constant
+  database is licensed), so that half of the item stays with SC5, which needs the same data and
+  the cavity frame; and the targets here are gas-phase one-to-one complexes, not solvation free
+  energies.
 
 **Large (a month or more each)**
 
@@ -3530,8 +3607,8 @@ for anything molecular.
 **Order.** EC2 was first and is done: it gives the surface frame and the co-field in it, and
 it found that the relaxed frames carry the relaxation's outcome, which changes what the Fe(110)
 numbers mean. EC1 next, days on modules already in the repository. EC4 after that, since EC3, EC5,
-EC8 and EC9 are empty without a catalyst series that loads. EC6 after M1, EC7 on its own, EC8
-after M5, EC9 and EC10 last. The EC2 result also says what EC6 must do differently: a slab as
+EC8 and EC9 are empty without a catalyst series that loads. EC6 after M1, ~~EC7~~ **done
+4 November 2026, and its gate is passed**, EC8 after M5, EC9 and EC10 last. The EC2 result also says what EC6 must do differently: a slab as
 the receptor has to decide the face and the tilt by complementarity, since no rule and no
 reference does.
 
@@ -4281,10 +4358,15 @@ the numbers above; on a series of hosts, the five-field aligned model.
   has its origin at the centroid of the donor atoms and its z axis along the principal axis of
   the donor ring. `cmfqsar/align.py` should offer it as a `cavity` frame beside the substructure
   and field superpositions, so that a host series is aligned by its cavity and not by a scaffold
-  that differs between hosts. The cation-specific radii of EC7 are the remaining part of the
-  probe. Measure on log K of Na⁺ and K⁺ for crown ethers and cryptands in methanol from the Izatt
+  that differs between hosts. **The cation-specific radii of EC7 are done (4 November 2026)**, so
+  what is left here is the frame convention and the data.
+  Measure on log K of Na⁺ and K⁺ for crown ethers and cryptands in methanol from the Izatt
   tabulations, the electrostatic field against the probe field, and the Na⁺/K⁺ selectivity with
-  SC1. A host series has a physical frame, which few drug series have, so the co-field is
+  SC1. No machine-readable open copy of those tabulations was found on 4 November 2026 (the NIST
+  stability-constant database is licensed), so this item begins with entering log K from the
+  papers by hand. EC7 also measured what to expect of the selectivity half: on an ether series the
+  difference between two monovalent ions was barely predictable, and a second +1 probe beside the
+  first carried no information the first did not. A host series has a physical frame, which few drug series have, so the co-field is
   expected to be readable. Gate: the co-field of the K⁺ constant names the cavity size and the
   donor positions.
 * **SC6. What an invariant model says about a guest.** The invariant kernel has no co-field, so a
@@ -5195,7 +5277,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), BT4 (solvation complexes) after EC7, ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), ~~EC7~~ **done 4 November 2026** (an ion probe, measured: it finds the ion to 0.36 angstrom and beats the electrostatic field on the binding energy, while the selectivity between two ions stays nearly unpredictable), BT4 (solvation complexes) after EC7, which is now free, ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

@@ -244,9 +244,55 @@ def block_sizes(spec: AutocorrelationSpec, n_fields: int) -> List[int]:
     return out
 
 
+def expanded_field_labels(fieldset: FieldSet) -> List[str]:
+    """The field labels this module works with: a probe field becomes one label per term.
+
+    An ordinary field puts one number on every atom, which is what the autocorrelation above
+    needs.  A probe field does not: it puts a short sum of Gaussians of different widths on every
+    atom (see :mod:`cmfqsar.probes`), so its atom weight column is empty and an autocorrelation
+    taken from that column alone is identically zero.  The expansion below treats each term of
+    the sum as a field of its own, which is exact -- the field is the sum of those terms -- and
+    gives the kernel the probe's chemistry as several channels instead of none.
+    """
+    out = []
+    for s in fieldset.specs:
+        if not s.is_probe:
+            out.append(s.label)
+            continue
+        for k in range(int(getattr(fieldset, "probe_terms", 4))):
+            out.append(f"{s.label} term {k + 1}")
+    return out
+
+
+def expanded_field_count(fieldset: FieldSet) -> int:
+    """How many field columns :func:`expanded_weights` produces."""
+    return len(expanded_field_labels(fieldset))
+
+
+def expanded_weights(mol: MoleculeFields, fieldset: FieldSet) -> np.ndarray:
+    """``(n_atoms, n_expanded)``: the atom weights with every probe field spread over its terms."""
+    cols = []
+    for k, s in enumerate(fieldset.specs):
+        if not s.is_probe:
+            cols.append(np.asarray(mol.weights, float)[:, k])
+            continue
+        C = mol.probe_coeffs.get(s.name)
+        if C is None:
+            raise ValueError(f"{mol.name or 'a molecule'} carries no expansion of the probe "
+                             f"field {s.name!r}; build its fields from this field set")
+        C = np.asarray(C, float)
+        n_terms = int(getattr(fieldset, "probe_terms", 4))
+        if C.shape[1] != n_terms:
+            raise ValueError(f"{mol.name or 'a molecule'}: the probe field {s.name!r} has "
+                             f"{C.shape[1]} terms and the field set says {n_terms}")
+        for t in range(n_terms):
+            cols.append(C[:, t])
+    return np.column_stack(cols) if cols else np.zeros((len(mol.coords), 0))
+
+
 def channel_labels(fieldset: FieldSet, spec: AutocorrelationSpec) -> List[str]:
     """One label per feature: which field types, and at which distance or radius."""
-    names = [s.label for s in fieldset.specs]
+    names = expanded_field_labels(fieldset)
     out = []
     for f, g in field_pairs(len(names)):
         pair = names[f] if f == g else f"{names[f]} x {names[g]}"
@@ -259,7 +305,7 @@ def channel_labels(fieldset: FieldSet, spec: AutocorrelationSpec) -> List[str]:
 
 def chirality_labels(fieldset: FieldSet, spec: AutocorrelationSpec) -> List[str]:
     """One label per chirality feature: which three field types, in which radial shell."""
-    names = [s.label for s in fieldset.specs]
+    names = expanded_field_labels(fieldset)
     out = []
     for f, g, h in chirality_triples(len(names)):
         trio = f"{names[f]} x {names[g]} x {names[h]}"
@@ -317,13 +363,17 @@ def chirality(mol: MoleculeFields, spec: AutocorrelationSpec = AutocorrelationSp
 
 
 def autocorrelation(mol: MoleculeFields, spec: AutocorrelationSpec = AutocorrelationSpec(),
-                    pairs: Optional[Sequence[Tuple[int, int]]] = None) -> np.ndarray:
+                    pairs: Optional[Sequence[Tuple[int, int]]] = None,
+                    weights: Optional[np.ndarray] = None) -> np.ndarray:
     """Field autocorrelation of one molecule, flattened: (n_pairs * n_bins,).
 
     The result depends on the molecule's conformation and on nothing else: not on where it sits,
     not on how it is turned, not on any other molecule.
+
+    `weights` replaces the molecule's own atom weights, which is how a probe field enters: see
+    :func:`expanded_weights`.
     """
-    W = np.asarray(mol.weights, float)                       # (n_atoms, n_fields)
+    W = np.asarray(mol.weights if weights is None else weights, float)   # (n_atoms, n_fields)
     n_atoms, n_fields = W.shape
     pairs = list(pairs) if pairs is not None else field_pairs(n_fields)
     centres = spec.centres
@@ -348,16 +398,36 @@ def autocorrelation(mol: MoleculeFields, spec: AutocorrelationSpec = Autocorrela
 def feature_matrix(mols: Sequence[MoleculeFields],
                    spec: AutocorrelationSpec = AutocorrelationSpec(),
                    n_fields: Optional[int] = None,
-                   progress=None) -> np.ndarray:
-    """Autocorrelation features of a set of molecules, one row each."""
+                   progress=None,
+                   fieldset: Optional[FieldSet] = None) -> np.ndarray:
+    """Autocorrelation features of a set of molecules, one row each.
+
+    `fieldset` is required when the fields include a probe field, because a probe field carries
+    its weights per Gaussian term rather than per atom and has to be expanded first
+    (:func:`expanded_weights`).  Without it the probe field's channels would all be zero, so this
+    function refuses instead of returning a kernel that silently says every molecule is alike.
+    """
     if not len(mols):
         return np.zeros((0, 0))
+    probes = [s.name for s in fieldset.specs if s.is_probe] if fieldset is not None else []
+    if fieldset is None and getattr(mols[0], "probe_coeffs", None):
+        raise ValueError(
+            f"{mols[0].name or 'the first molecule'} carries the probe field(s) "
+            f"{sorted(mols[0].probe_coeffs)}, whose weights are not on the atoms. Pass "
+            f"fieldset= so that they can be expanded into their Gaussian terms; the "
+            f"autocorrelation of the atom weights alone would be zero for every one of them.")
+    if probes:
+        if spec.chirality:
+            raise ValueError("the signed channels are computed from the atom weights, which a "
+                             "probe field does not have; use chirality=False with a probe field")
+        n_fields = expanded_field_count(fieldset)
     n_fields = n_fields if n_fields is not None else mols[0].weights.shape[1]
     pairs = field_pairs(n_fields)
     width = sum(block_sizes(spec, n_fields))
     out = np.zeros((len(mols), width))
     for i, m in enumerate(mols):
-        row = autocorrelation(m, spec, pairs)
+        W = expanded_weights(m, fieldset) if probes else None
+        row = autocorrelation(m, spec, pairs, weights=W)
         if len(row) != width:
             # padding or truncating here would quietly put one molecule's channels in another's
             # columns, which is worse than refusing: every molecule must carry the same fields

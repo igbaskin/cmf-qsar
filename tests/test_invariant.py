@@ -560,3 +560,52 @@ def test_the_search_and_the_nested_cross_validation_keep_the_block_weights(world
     alone = CMFModel(fieldset=fs_q, method="krr", normalize=True, kernel_source="autocorrelation")
     assert np.allclose(nested_cv(table, y, only, **kw).y_pred,
                        nested_cv(table_q, y, alone, **kw).y_pred, atol=1e-8)
+
+
+# --------------------------------------------------------------------------- probe fields
+
+
+def _probe_mols(n=5):
+    return [_mol(SMILES[i], seed=i + 1, name=f"m{i}") for i in range(n)]
+
+
+def test_a_probe_field_needs_the_field_set_to_be_expanded():
+    """It used to give a kernel of zeros, which says every molecule is alike."""
+    fs = FieldSet.create(physchem=[], probes=["lithium"], alpha=0.5)
+    mf = [build_fields(m, fs, m.GetProp("_Name")) for m in _probe_mols(3)]
+    with pytest.raises(ValueError, match="probe field"):
+        feature_matrix(mf, AutocorrelationSpec())
+
+
+def test_the_expanded_probe_field_carries_the_terms_of_its_expansion():
+    from cmfqsar.invariant import expanded_field_count, expanded_field_labels, expanded_weights
+    fs = FieldSet.create(physchem=["steric"], probes=["lithium"], alpha=0.5, probe_terms=4)
+    mf = build_fields(_probe_mols(1)[0], fs, "m0")
+    W = expanded_weights(mf, fs)
+    assert W.shape == (len(mf.coords), 5), "one steric column and four probe terms"
+    assert np.allclose(W[:, 0], mf.weights[:, 0])
+    assert np.allclose(W[:, 1:], mf.probe_coeffs["probe:lithium"])
+    assert expanded_field_count(fs) == 5
+    assert expanded_field_labels(fs)[1].endswith("term 1")
+
+
+def test_the_probe_kernel_distinguishes_molecules_once_expanded():
+    fs = FieldSet.create(physchem=[], probes=["lithium"], alpha=0.5, probe_terms=4)
+    mols = _probe_mols(5)
+    mf = [build_fields(m, fs, m.GetProp("_Name")) for m in mols]
+    spec = AutocorrelationSpec()
+    F = feature_matrix(mf, spec, fieldset=fs)
+    from cmfqsar.invariant import expanded_field_count
+    assert F.shape == (5, sum(block_sizes(spec, expanded_field_count(fs))))
+    K = autocorrelation_kernel(F, n_bins=spec.n_bins,
+                               blocks=block_sizes(spec, expanded_field_count(fs)))
+    off = K[np.triu_indices_from(K, k=1)]
+    assert np.all(np.diag(K) > 0.999), "the kernel is cosine-normalised"
+    assert off.std() > 1e-3, "a kernel of one constant would say the molecules are alike"
+
+
+def test_passing_the_field_set_changes_nothing_without_a_probe():
+    fs = FieldSet.create(physchem=["electrostatic", "steric"], alpha=0.5)
+    mf = [build_fields(m, fs, m.GetProp("_Name")) for m in _probe_mols(3)]
+    spec = AutocorrelationSpec()
+    assert np.allclose(feature_matrix(mf, spec), feature_matrix(mf, spec, fieldset=fs))

@@ -7,8 +7,8 @@ from rdkit.Chem import AllChem
 from cmfqsar.fields import AtomTable, FieldSet, build_fields
 from cmfqsar.kernels import kernel_matrices
 from cmfqsar.model import CMFModel
-from cmfqsar.probes import (PROBES, attraction, basis_widths, coefficients, fit, probe,
-                            probe_names)
+from cmfqsar.probes import (ION_PROBES, ION_RADII, PROBES, attraction, basis_widths,
+                            coefficients, fit, probe, probe_names)
 
 
 def _mol(smiles, seed=7, name="m"):
@@ -124,6 +124,45 @@ def test_a_probe_field_fits_a_model_and_keeps_its_co_field():
 def test_an_unknown_probe_is_named_rather_than_guessed():
     with pytest.raises(KeyError, match="unknown probe"):
         probe("plutonium")
+
+
+def test_the_ion_probes_sample_the_potential_at_their_own_contact_distance():
+    """The one quantity that separates the three singly charged ion probes (plan item EC7)."""
+    r_oxygen = 1.52                                     # vdw_params("O")[0]
+    contact = {name: r_oxygen + probe(name).radius for name in ION_PROBES}
+    assert contact["lithium"] == pytest.approx(2.01, abs=0.01), \
+        "the lithium contact distance is the one measured on the relaxed complexes"
+    assert (contact["magnesium"] < contact["lithium"] < contact["sodium"]
+            < contact["potassium"]), "the order is the order of the ionic radii"
+    # a larger ion is held further out, so it feels less of the same potential
+    depths = [attraction(np.linspace(0.5, 9.0, 400), probe(n), "O", charge=-0.35).min()
+              for n in ("lithium", "sodium", "potassium")]
+    assert depths[0] < depths[1] < depths[2] < 0.0
+
+
+def test_the_ion_probe_field_is_the_electrostatic_term_and_little_else():
+    """Said in the module docstring, held here: on a neutral atom an ion probe barely binds."""
+    r = np.linspace(0.5, 9.0, 400)
+    charged = attraction(r, probe("lithium"), "O", charge=-0.35).min()
+    neutral = attraction(r, probe("lithium"), "O", charge=0.0).min()
+    assert charged < -5.0, "the charge is what the probe reports"
+    assert abs(neutral) < 0.2, "dispersion alone is a two per cent correction to that"
+    assert abs(neutral / charged) < 0.05
+
+
+def test_doubling_the_probe_charge_only_rescales_the_field():
+    """So a +2 probe is a +1 probe at its own distance, as far as a normalised kernel can tell."""
+    r = np.linspace(0.5, 9.0, 400)
+    one = attraction(r, PROBES["lithium"], "O", charge=-0.35)
+    two = attraction(r, PROBES["magnesium"], "O", charge=-0.35)
+    # put the two probes at the same distance, leaving the charge as the only difference
+    same = PROBES["magnesium"].__class__(name="test", label="t", radius=ION_RADII["lithium"],
+                                         well=PROBES["magnesium"].well, charge=2.0, hbond=0.0)
+    doubled = attraction(r, same, "O", charge=-0.35)
+    scale = float(np.dot(doubled, one) / np.dot(one, one))
+    assert scale == pytest.approx(2.0, rel=0.02), "the electrostatic term is linear in the charge"
+    assert np.allclose(doubled / scale, one, atol=0.02), "and the shape is unchanged"
+    assert two.min() < one.min(), "the magnesium probe differs by its distance as well"
 
 
 def test_coefficients_are_one_row_per_atom():

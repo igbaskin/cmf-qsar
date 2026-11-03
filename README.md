@@ -3893,6 +3893,50 @@ and the arrangement adds nothing. The field kernel is 0.081 V worse than the com
 and the two together 0.013 V worse, both inside the fold-to-fold spread of 0.146 V, which under
 rule 4 is not a result.
 
+### An ion as the probe: where a cation sits, and what it gains
+
+A GRID-like probe field says what a small group would gain at every point around a molecule.
+With an ion as the probe (`cmfqsar/probes.py`, plan item EC7) that is the quantity an electrolyte
+is designed for, and it can be checked against computed numbers. Four ion probes were added,
+Li+, Na+, K+ and Mg2+; the lithium radius of 0.49 angstrom is the one that puts the probe's
+contact with an oxygen at 2.01 angstrom, where the oxygens sit in 1,050 relaxed Li+-ether
+complexes, and the others follow Shannon's ionic radii. An ion carries no hydrogen bond and its
+dispersion well is small beside its charge, so the three singly charged probes differ in one
+quantity only: the distance at which they sample the molecule's electrostatic potential.
+
+The set is `examples/ether/` (`make_ether_examples.py --fetch`): 1,085 saturated acyclic ethers
+with the binding energy of Li+, Na+ and Mg2+ at wB97X-D3/def2-TZVP, 1,050 of them in the relaxed
+geometry of the lithium complex, from Wang et al., Chem. Commun. 56 (2020) 8920.
+
+**Where the ion sits**, with no model and no fitting: the deepest point of the lithium probe field
+is 0.36 +/- 0.55 angstrom from the lithium the relaxation placed, and within 1.0 angstrom in 97 %
+of the 1,050 complexes, against 0.65 +/- 0.74 for the centroid of the oxygens and 0.67 +/- 0.80
+for the centroid of the heavy atoms.
+
+**What it gains**, by nested cross-validation with no frame anywhere (`benchmarks/run_ether.py`),
+mean absolute error in eV on Li+, Na+ and Mg2+: predicting the mean of the set costs 0.454, 0.449
+and 1.235; the oxygen count with the carbon-to-oxygen ratio gives 0.296, 0.279 and 0.505; the
+electrostatic field alone 0.209, 0.248 and 0.557; the five fields 0.124, 0.181 and 0.266; the
+matching ion probe alone 0.140, 0.193 and 0.321; the five fields and the probe together 0.117,
+0.171 and 0.254 (R2 +0.91, +0.71, +0.86). Paired over the same molecules, the ion probe beats the
+electrostatic field alone by 0.069 eV [0.060, 0.078] on lithium, which is the comparison the item
+names, and the fields beat the counts by 0.172 eV [0.152, 0.191]. With one oxygen count held out
+at a time the fields and the probe give 0.129, 0.204 and 0.279 against 0.284, 0.291 and 0.571 for
+the counts. **This is the first measurement in the battery and electrochemistry area of this
+program where the arrangement of the atoms beats what the formula already says.**
+
+**The selectivity is the hard part.** The lithium-minus-sodium difference has a spread of 0.36 eV
+and no relation to the oxygen count (correlation -0.05). Predicting its mean costs 0.190 eV and
+the best field model 0.171 (R2 +0.22), ahead of the counts by 0.012 eV [0.003, 0.022]. Adding the
+sodium probe beside the lithium one changes nothing (+0.001 eV [-0.000, +0.003]), as the probe
+definitions predict. Over the three ions as three endpoints of one kernel (3,010 measurements,
+plan item E1), a covariance taken from the ion's radius, charge and polarisability gives 0.188 eV
+against 0.204 for fitting them independently, and it relates lithium more closely to magnesium
+(0.46) than to sodium (0.27): the size of the ion decides which endpoint helps another, not its
+charge. An ion removed entirely cannot be predicted: magnesium is refused by construction, since
+the mean of an endpoint is a linear function of the charge and two monovalent ions do not
+determine it at +2.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

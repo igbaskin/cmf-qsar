@@ -2040,7 +2040,7 @@ Goodford's GRID describes a molecule by the energy a small probe — a water, a 
 oxygen — would feel at every point around it. That is a field in exactly this program's sense, and
 it says something the built-in fields do not: not "there is hydrophobic character here" but "a
 probe placed here would be bound". *Probe fields* in the model panel (`--probes water,carbonyl`)
-adds one such field per probe. Five are defined:
+adds one such field per probe. Nine are defined:
 
 | name | what it stands for | R (Å) | well (kcal/mol) | charge | hydrogen bonding |
 |---|---|---:|---:|---:|---|
@@ -2049,6 +2049,10 @@ adds one such field per probe. Five are defined:
 | `carbonyl` | a carbonyl oxygen | 1.60 | 0.20 | −0.40 | accepts |
 | `amine` | an amine nitrogen | 1.75 | 0.16 | +0.40 | donates |
 | `cation` | a generic +1 cation | 1.50 | 0.10 | +1.00 | neither |
+| `lithium` | a lithium ion, Li⁺ | 0.49 | 0.10 | +1.00 | neither |
+| `sodium` | a sodium ion, Na⁺ | 0.75 | 0.10 | +1.00 | neither |
+| `potassium` | a potassium ion, K⁺ | 1.11 | 0.10 | +1.00 | neither |
+| `magnesium` | a magnesium ion, Mg²⁺ | 0.45 | 0.10 | +2.00 | neither |
 
 Those four numbers are the whole definition of a probe: the radius and well depth enter the
 dispersion term through the usual combining rules, the charge the electrostatic term, and the
@@ -2058,6 +2062,28 @@ being taken from a published GRID table, which matters if you ever want to compa
 GRID itself rather than shapes. Adding a probe is one entry in `PROBES` in
 [probes.py](cmfqsar/probes.py); the fitting, the kernel, the drawing and both interfaces read that
 dictionary, so a new one appears everywhere at once.
+
+**The four ion probes, and how little separates them.** An ion carries no hydrogen bond, and its
+dispersion well is small beside its charge: at the contact distance of a lithium ion and an ether
+oxygen the electrostatic term is about −7 kcal/mol and the dispersion term −0.14. So an ion probe
+field is the molecule's electrostatic potential, sampled at one distance, and the three singly
+charged probes differ in that distance alone. The distance is not a guess: the lithium radius of
+0.49 Å is the one that puts the probe's contact with an oxygen at 2.01 Å, which is where the
+oxygens sit in the 1,050 relaxed Li⁺–ether complexes of `examples/ether/`. The sodium and
+potassium radii add Shannon's six-coordinate differences, 0.26 Å and 0.62 Å, because no relaxed
+complexes of those ions are available to measure. The magnesium probe differs by its charge of
++2 as well, which multiplies the field by two; every kernel here is normalised by the
+self-overlap, so a constant factor is invisible to it, and the magnesium probe is in practice the
+lithium probe at a slightly shorter distance. A probe cannot represent polarisation, and the
+difference between a hard and a soft cation of the same size and charge is polarisation.
+
+**A probe field and the alignment-free kernel.** A probe field puts a short sum of Gaussians of
+different widths on every atom instead of one number, so its atom weight column is empty. The
+rotation-invariant kernel of `cmfqsar/invariant.py` therefore expands each term of that sum into
+a channel of its own, which is exact, because the field is the sum of the terms. Before 4 November
+2026 it did not: a probe field passed to that kernel gave a matrix of zeros, which says that every
+molecule is alike, and nothing refused it. `feature_matrix` now needs the field set whenever a
+probe field is present and refuses without it.
 
 ![Three probe fields of cortisol read 2 Å above the mean plane of the steroid series, where a probe can sit, beside the built-in hydrogen-bond acceptor field read at the same height. A probe field is what the probe would gain at each point and is never positive, so its scale runs from the deepest value to zero; the water and the amine probe gain most over the hydroxyl and carbonyl groups, the carbonyl probe where there is a donor to meet, and all three gain something over the whole skeleton from dispersion, which the built-in field, a sum of atom-centred Gaussians, does not carry.](docs/figures/probe.png)
 
@@ -8680,6 +8706,94 @@ check above, so an error below that is not a claim about measured voltages but a
 these energies. And 303 pairs is a large set for this program and a small one for a materials
 benchmark: the same code reaches 528 pairs at a hull window of 0.05 eV per atom,
 at the cost of a worse agreement with the published values.
+
+## An ion as the probe: where a cation sits, and what it gains
+
+A probe field answers "what would this group gain by sitting here?". With an ion as the probe the
+answer is the quantity an electrolyte or an ionophore is designed for, and it can be checked
+against a number that was computed rather than fitted. `examples/ether/` holds the set that makes
+the check possible: 1,085 saturated acyclic ethers -- glymes and their branched relatives -- with
+the binding energy of Li⁺, Na⁺ and Mg²⁺ at wB97X-D3/def2-TZVP, and 1,050 of them in the relaxed
+geometry of the lithium complex, from the distribution of Wang et al. (Chem. Commun. 56 (2020)
+8920). `examples/make_ether_examples.py --fetch` downloads it and checks the hashes; the
+distributor states no licence, so the status of the copy is *unclear* in the sense of
+[public_3dqsar_datasets.md](docs/public_3dqsar_datasets.md). `benchmarks/run_ether.py` is the
+measurement (plan item EC7).
+
+**Where the ion sits.** A probe field is a map of an energy, so its deepest point is a prediction
+of where the ion goes, and it needs no model and no fitting at all. On the 1,050 relaxed
+complexes, with the ion removed and its position kept, the deepest point of the lithium probe
+field lies 0.36 ± 0.55 Å from the lithium the DFT relaxation placed, and within 1.0 Å in 97 % of
+the complexes. Two references that also need no model: the centroid of the molecule's oxygens is
+0.65 ± 0.74 Å away (86 % within 1.0 Å) and the centroid of its heavy atoms 0.67 ± 0.80 Å (82 %).
+The probe field is thus a usable guess of the binding site in a flexible chain, which is the one
+thing a docking program would otherwise be needed for.
+
+**The binding energy.** Nested cross-validation, five outer folds, the ridge and the field width
+chosen inside each fold, no frame anywhere (the alignment-free kernel). Mean absolute error in eV,
+folds drawn at random:
+
+| model | Li⁺ (1048) | Na⁺ (980) | Mg²⁺ (982) |
+|---|---:|---:|---:|
+| predicting the mean of the set | 0.454 | 0.449 | 1.235 |
+| oxygen count, C:O ratio, heavy atoms | 0.296 | 0.279 | 0.505 |
+| the same with the molecule's HOMO energy | 0.254 | 0.246 | 0.444 |
+| the electrostatic field alone | 0.209 | 0.248 | 0.557 |
+| the five fields | **0.124** | **0.181** | **0.266** |
+| the matching ion probe field alone | 0.140 | 0.193 | 0.321 |
+| the five fields and the probe field | **0.117** | **0.171** | **0.254** |
+
+Paired over the same molecules, with a bootstrap interval: the ion probe beats the counts by
+0.156 eV [0.139, 0.175] on lithium, and it beats *the electrostatic field alone* -- which is the
+comparison the plan item names -- by 0.069 eV [0.060, 0.078] on lithium, 0.055 on sodium and
+0.236 on magnesium, every interval clear of zero. The probe field is slightly behind the five
+fields together (+0.015 eV [+0.009, +0.022] on lithium) and the two together are ahead of either.
+With one oxygen count held out at a time, which asks for a chain length the model has not seen,
+the five fields and the probe reach 0.129, 0.204 and 0.279 eV against 0.284, 0.291 and 0.571 for
+the counts. **This is the first measurement in this part of the manual where the arrangement of
+the atoms beats what the formula already says**, and by about a factor of two: the voltage of an
+insertion electrode went the other way.
+
+**The selectivity between two ions is a much harder quantity.** The difference between the
+lithium and the sodium energy is what an ionophore is designed for. Over the 980 molecules that
+carry both it has a mean of −1.07 eV and a spread of 0.36, and the oxygen count tells one nothing
+about it (correlation −0.05, q² +0.01). Predicting its mean costs 0.190 eV; the five fields and
+the probe together reach 0.171 eV (q² +0.22) and the two ion probes 0.176. The field models are
+ahead of the counts by 0.012 eV [0.003, 0.022], which is a real difference and a small one. Adding
+the sodium probe to the lithium probe changes nothing at all (+0.001 eV [−0.000, +0.003]), which
+is what the probe definitions predict: two singly charged probes report the same potential at two
+distances, and that is not enough to separate two ions. **Selectivity needs what a fixed probe
+charge cannot carry**, namely the polarisation of the ion and of the donor atoms.
+
+**Three ions as three endpoints.** The three columns are the multi-task problem of plan item E1
+with descriptors of the endpoint rather than a label: 3,010 measurements over 1,048 molecules, one
+kernel, and the covariance between the endpoints taken from the ion's radius, charge and
+polarisability. Fitting the endpoints independently costs 0.204 eV; one shared correlation of 0.5
+gives 0.198 and the descriptor covariance 0.188, with q² +0.893, +0.698 and +0.852 for Li⁺, Na⁺
+and Mg²⁺. The covariance it chooses is worth reading: lithium is more closely related to
+magnesium (0.46) than to sodium (0.27), and sodium and magnesium least of all (0.20). What decides
+which endpoint helps another is therefore the size of the ion -- Li⁺ 0.76 Å, Mg²⁺ 0.72, Na⁺ 1.02 --
+and not its charge.
+
+**An ion that was never measured cannot be predicted here.** Each ion in turn was removed
+entirely and predicted from the other two. Magnesium is refused before any arithmetic: the mean
+of an endpoint is a linear function of the charge, and with two monovalent ions left that function
+cannot be evaluated at charge +2, so the design matrix has two identical rows. Lithium and sodium
+can be evaluated and both fail: 1.484 eV and 0.539 eV against their own means of 0.454 and 0.449.
+They are far better than every reference a model that never saw the ion has -- the mean of the
+measured ions is 3.5 and 4.7 eV away -- and still much worse than knowing the removed ion's own
+average. The part that fails is the mean: lithium's is −3.84 eV and the model, which may use only
+the charge to place it, predicts −2.36. Three endpoints are too few for more than one descriptor
+column, so this is a limit of the set and not of the method.
+
+**The limits.** The coordinates are the relaxed *lithium* complexes, so the sodium and magnesium
+models are built on a lithium-shaped conformation; the three energies correlate (+0.80 and +0.85),
+which hides the error in a single-ion model but limits what the selectivity may be read as. The
+targets are computed energies of a one-to-one complex in the gas phase, not solvation free
+energies, so nothing here is a statement about a real electrolyte, where a lithium ion is
+surrounded by four or five molecules. And the published model of this set is a neural network
+potential trained by active learning, which is a different object from a kernel on a field: the
+comparison made here is against the formula and against the electrostatic field, not against it.
 
 ## Which atom is attacked: a site of metabolism
 

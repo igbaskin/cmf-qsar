@@ -1596,13 +1596,30 @@ class CMFModel:
                                    chirality=bool(self.ac_chirality),
                                    chirality_shells=int(self.ac_chirality_shells))
 
+    def _ac_field_count(self, n_fields: int) -> int:
+        """Field columns the autocorrelation works with.
+
+        A probe field has no atom weight column of its own: it is expanded into one channel per
+        Gaussian term (:func:`cmfqsar.invariant.expanded_weights`), so a field set with probes
+        has more channels than the atom table has columns.
+        """
+        fs = getattr(self, "fieldset", None)
+        if (fs is not None and not self.is_threebody and not self.is_reciprocal
+                and not self.is_periodic and not self.on_surface
+                and any(s.is_probe for s in fs.specs)):
+            from .invariant import expanded_field_count
+            return expanded_field_count(fs)
+        return int(n_fields)
+
     def _ac_blocks(self, n_fields: int):
         from .invariant import block_sizes, surface_block_sizes
         spec = self._ac_spec()
         if self.is_threebody:
             from .threebody import threebody_block_sizes
             return threebody_block_sizes(spec, n_fields)
-        return surface_block_sizes(spec, n_fields) if self.on_surface else block_sizes(spec, n_fields)
+        if self.on_surface:
+            return surface_block_sizes(spec, n_fields)
+        return block_sizes(spec, self._ac_field_count(n_fields))
 
     def _ac_features(self, table: AtomTable) -> np.ndarray:
         from .invariant import feature_matrix, surface_feature_matrix
@@ -1618,7 +1635,13 @@ class CMFModel:
             from .periodic import periodic_feature_matrix
             fn = periodic_feature_matrix
         else:
-            fn = surface_feature_matrix if self.on_surface else feature_matrix
+            if self.on_surface:
+                fn = surface_feature_matrix
+            else:
+                # the field set is needed only to expand a probe field into its Gaussian terms
+                return feature_matrix(table.molecules, self._ac_spec(),
+                                      n_fields=table.weights.shape[1],
+                                      fieldset=getattr(self, "fieldset", None))
         return fn(table.molecules, self._ac_spec(), n_fields=table.weights.shape[1])
 
     # ----------------------------------------------- mixing coefficients of the channel blocks
@@ -1632,7 +1655,11 @@ class CMFModel:
     def _ac_block_keys(self, n_fields: int) -> List[str]:
         """The kind of every channel block (which groups of fields it joins), in layout order."""
         from .invariant import block_group_keys
-        names = [sp.name for sp in self.fieldset.specs]
+        names = []
+        for sp in self.fieldset.specs:
+            # a probe field occupies one column per Gaussian term, and every one of them belongs
+            # to the same group, so its name is repeated rather than numbered
+            names += [sp.name] * (int(self.fieldset.probe_terms) if sp.is_probe else 1)
         if len(names) != n_fields:
             names = [f"field{i}" for i in range(n_fields)]
         if self.is_threebody:
@@ -1704,7 +1731,7 @@ class CMFModel:
         self.scale = np.ones(1)
         spec = self._ac_spec()
         self.ac_scale_ = channel_scale(self.ac_train_, spec.n_bins, blocks=self.ac_blocks_)
-        self.ac_block_keys_ = self._ac_block_keys(n_fields)
+        self.ac_block_keys_ = self._ac_block_keys(self._ac_field_count(n_fields))
         self.ac_block_weights_ = self._derive_block_weights(
             self.ac_train_ * self.ac_scale_, None if y is None else np.asarray(y, float),
             self.ac_blocks_, self.ac_block_keys_)

@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 103 modules, 198 classes with 646 public methods, and 1008 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 103 modules, 198 classes with 646 public methods, and 1011 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -6398,6 +6398,25 @@ How many columns each channel block occupies, in the order the features are laid
 The pair blocks all have `n_bins` columns and the chirality blocks `n_shells`, so the blocks
 are no longer of one size once chirality is on and the scaling has to be told where they are.
 
+### `expanded_field_labels(fieldset: FieldSet) -> List[str]`
+
+The field labels this module works with: a probe field becomes one label per term.
+
+An ordinary field puts one number on every atom, which is what the autocorrelation above
+needs.  A probe field does not: it puts a short sum of Gaussians of different widths on every
+atom (see `cmfqsar.probes`), so its atom weight column is empty and an autocorrelation
+taken from that column alone is identically zero.  The expansion below treats each term of
+the sum as a field of its own, which is exact -- the field is the sum of those terms -- and
+gives the kernel the probe's chemistry as several channels instead of none.
+
+### `expanded_field_count(fieldset: FieldSet) -> int`
+
+How many field columns `expanded_weights` produces.
+
+### `expanded_weights(mol: MoleculeFields, fieldset: FieldSet) -> np.ndarray`
+
+`(n_atoms, n_expanded)`: the atom weights with every probe field spread over its terms.
+
 ### `channel_labels(fieldset: FieldSet, spec: AutocorrelationSpec) -> List[str]`
 
 One label per feature: which field types, and at which distance or radius.
@@ -6432,16 +6451,24 @@ number per field triple describes the handedness of the molecule as a whole and 
 at which radius it is located.  The windows depend on `|r_l - c|`, which is itself reflection-
 invariant, so every channel keeps the sign behaviour above.
 
-### `autocorrelation(mol: MoleculeFields, spec: AutocorrelationSpec=AutocorrelationSpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None) -> np.ndarray`
+### `autocorrelation(mol: MoleculeFields, spec: AutocorrelationSpec=AutocorrelationSpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None, weights: Optional[np.ndarray]=None) -> np.ndarray`
 
 Field autocorrelation of one molecule, flattened: (n_pairs * n_bins,).
 
 The result depends on the molecule's conformation and on nothing else: not on where it sits,
 not on how it is turned, not on any other molecule.
 
-### `feature_matrix(mols: Sequence[MoleculeFields], spec: AutocorrelationSpec=AutocorrelationSpec(), n_fields: Optional[int]=None, progress=None) -> np.ndarray`
+`weights` replaces the molecule's own atom weights, which is how a probe field enters: see
+`expanded_weights`.
+
+### `feature_matrix(mols: Sequence[MoleculeFields], spec: AutocorrelationSpec=AutocorrelationSpec(), n_fields: Optional[int]=None, progress=None, fieldset: Optional[FieldSet]=None) -> np.ndarray`
 
 Autocorrelation features of a set of molecules, one row each.
+
+`fieldset` is required when the fields include a probe field, because a probe field carries
+its weights per Gaussian term rather than per atom and has to be expanded first
+(`expanded_weights`).  Without it the probe field's channels would all be zero, so this
+function refuses instead of returning a kernel that silently says every molecule is alike.
 
 ### `channel_scale(train: np.ndarray, n_bins: int, blocks: Optional[Sequence[int]]=None) -> np.ndarray`
 
@@ -12221,6 +12248,26 @@ a reproduction of GRID's numbers, and the directional part of GRID's hydrogen-bo
 represented at all.  The place for that, if it is ever wanted, is Gaussians on lone-pair
 extension points rather than on the heteroatom, which this framework can carry, since they are
 merely more centres with their own weights.
+
+Ion probes, and what they are and are not
+-----------------------------------------
+Plan item EC7 asks for a cation probe: the field of an ionophore or an electrolyte solvent read as
+the energy a lithium, sodium, potassium or magnesium ion would feel in it.  Four such probes are
+defined below.  What distinguishes them deserves to be said plainly, because it is less than the
+four names suggest.
+
+An ion carries no hydrogen bond and its dispersion well is negligible beside its charge, so for a
+singly charged ion `attraction` reduces to the electrostatic term, which is the molecule's
+electrostatic potential under this module's distance-dependent screening.  The three +1 probes
+therefore differ from one another in **one** quantity, the distance at which that potential is
+sampled: the contact distance of the probe with each atom, which for the lithium probe is the
+coordination distance measured on the relaxed complexes of `examples/ether/`.  That is a real
+difference -- a potassium ion cannot reach the inside of a small cavity that a lithium ion fits --
+and it is the whole of the difference.  The magnesium probe adds its charge of +2, which
+multiplies the field by two; every kernel in this program is normalised by the self-overlap, so a
+constant factor on a field is invisible to it, and the magnesium probe is in consequence the
+lithium probe at a slightly shorter distance.  A model that needs more than this needs
+polarisation, which a fixed probe charge cannot carry.
 
 ### `class Probe  (dataclass)`
 

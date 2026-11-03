@@ -689,6 +689,33 @@ composition had no charge-balanced assignment of oxidation states, so its electr
 built from the electronegativity proxy without a word, and one guess (Li(0.5)FePO4 as Fe(II)) was
 returned although it leaves half a charge over.
 
+**Item EC7 is done (4 November 2026) and it is the positive result this section needs.** The
+property is not the electrode but the electrolyte: the energy a cation gains from a solvent
+molecule. The set is public and needed no computing of our own -- 1,085 saturated acyclic ethers
+with the binding energy of Li(+), Na(+) and Mg(2+) at wB97X-D3/def2-TZVP and the relaxed geometry
+of 1,050 lithium complexes, from Wang, Yang, Harris and Gomez-Bombarelli, Chem. Commun. 56 (2020)
+8920. Three results belong in the paper. **First, a prediction that needs no model at all**: a
+probe field is a map of an energy, so its deepest point is where the ion should sit, and the
+lithium probe field puts it 0.36 +/- 0.55 angstrom from the lithium the DFT relaxation placed,
+within 1.0 angstrom in 97 per cent of the complexes, against 0.65 +/- 0.74 angstrom for the
+centroid of the oxygens. **Second, the arrangement beats the composition here**, which is the
+opposite of what the voltage section above reports: by nested cross-validation with no frame, the
+mean absolute error on Li(+), Na(+) and Mg(2+) is 0.117, 0.171 and 0.254 eV for the five fields
+with the ion probe, against 0.296, 0.279 and 0.505 eV for the oxygen count with the
+carbon-to-oxygen ratio, and 0.454, 0.449 and 1.235 eV for predicting the mean. The ion probe beats
+the electrostatic field alone by 0.069 eV [0.060, 0.078] on lithium, which is the comparison the
+plan item set. **Third, the selectivity between two ions is nearly unpredictable and the reason is
+in the probe's own definition**: the lithium-minus-sodium difference has a spread of 0.364 eV, no
+relation to the oxygen count (-0.049), and the best field model reaches q2 +0.218; a second
+singly charged probe beside the first adds nothing (+0.001 eV [-0.000, +0.003]), because an ion
+probe is the electrostatic potential sampled at one distance and two monovalent ions differ by
+their polarisation, which a fixed probe charge cannot carry. The three ions as three endpoints of
+one kernel (item E1) add a readable covariance: lithium is related to magnesium (0.46) more
+closely than to sodium (0.27), so the size of the ion decides which endpoint helps another, not
+its charge. Two limits must be stated: the geometries are the lithium complexes, so the sodium and
+magnesium models stand on a lithium-shaped conformation, and the targets are gas-phase
+one-to-one complexes rather than solvation free energies.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to
