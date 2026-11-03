@@ -678,7 +678,13 @@ does not cover.** Three things must be stated with it: the target carries the
 0.39 V offset above, the pairs are matched by host *composition* and
 not by host *structure*, so a topotactic criterion would refuse some of them, and the set holds
 lithium alloys (Li-Mg, Li-Sn, Li-Si and the rest, mean voltage 0.34 V) beside the oxide and
-phosphate cathodes. Item BT1 is the repair this measurement needed on the way: a part-delithiated
+phosphate cathodes. Item BT6, done the same day, closes the question from the other side: the
+difference of the two cells' fields is itself a field in the cell, 42 of the 303 pairs have the
+single lattice a difference needs, and over those the difference field is +0.090 V [-0.034, +0.216]
+against the lithiated cell alone and +0.134 V [+0.004, +0.273] against the element fractions, so
+the pair as the sample changes nothing. What it does give the paper is a measured geometric fact:
+the inserted ion sits in 5.0 +/- 1.1 oxygens at 2.22 +/- 0.13 angstrom over 33 hosts. Item BT1 is
+the repair this measurement needed on the way: a part-delithiated
 composition had no charge-balanced assignment of oxidation states, so its electrostatic field was
 built from the electronegativity proxy without a word, and one guess (Li(0.5)FePO4 as Fe(II)) was
 returned although it leaves half a charge over.

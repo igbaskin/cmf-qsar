@@ -8624,6 +8624,55 @@ rather than cathodes, and they are kept because the voltage of an alloying react
 quantity measured the same way. They are also most of what makes the set wide, and so most of the
 reason that predicting its mean costs 1.203 V.
 
+**The difference of the two cells, as a field (item BT6).** A voltage is a property of a pair and
+not of a structure, and the fields are linear in the atoms, so the difference of the two cells'
+fields is itself an ordinary field in the cell: the atoms of the lithiated cell with their weights,
+and the atoms of the delithiated one with their weights negated (`cmfqsar/celldiff.py`). Where the
+two cells agree -- most of the host -- the two contributions cancel, and what is left is the
+inserted ions and the relaxation their arrival caused. Two things do not cancel, and neither is a
+fault: the formal charge of the metal, which item BT1 makes Co(+3.5) at half lithiation and Co(+3)
+at full, and the electronegativity proxy, which is a deviation from the mean over the cell and so
+moves when lithium enters it. Because a field difference is a field, every kernel takes it
+unchanged; it is bilinear in the weights and nothing has to be re-derived for signed ones.
+
+**What the construction costs.** A difference is defined only when the two cells stand on one
+lattice and hold the same host atoms, and two cells relaxed separately do not: their lattice
+constants differ by the volume change of the insertion, which is a quantity a battery paper reports
+in its own right. Of the 303 pairs, **42 have cell lengths within 5% of each other and the same
+host atoms**, over 33 frameworks; the other 261 are refused, with the reason recorded for each, so
+what the frame costs is reported and not hidden.
+
+**What it gives, and what it does not.** The reading the item asked for comes out of the
+construction rather than out of a model: over the 42 pairs the inserted ion sits in **5.0 +/- 1.1
+oxygens at 2.22 +/- 0.13 angstrom**, which is the first shell of a lithium in an oxide. The model
+is another matter. On the same five folds, grouped by framework:
+
+| model | mean absolute error, V | spread over the folds | R² |
+|---|---:|---:|---:|
+| the mean voltage of these pairs | 0.791 | - | 0.000 |
+| composition | 0.656 | 0.100 | +0.228 |
+| the discharged cell alone | 0.699 | 0.143 | +0.138 |
+| the difference field | 0.797 | 0.083 | +0.014 |
+| the difference field and the composition | 0.680 | 0.118 | +0.250 |
+
+**The gate the item set itself is not met.** Paired over the same samples, the difference field is
++0.090 V against the discharged cell alone, with an interval of [-0.034, +0.216] that contains
+zero, so the two are indistinguishable here; against the composition it is +0.134 V [+0.004,
++0.273], which does not contain zero, so on this set the difference field is **worse** than the
+element fractions. The set is the reason to be careful either way: 42 pairs over 33 frameworks
+leave about eight pairs per fold, and every model sits within 0.135 V of simply predicting the mean
+voltage. What the numbers do support is the conclusion of the stage before them, now with the pair
+itself as the sample: the voltage follows the composition, and the arrangement does not add to it.
+
+The co-field in the cell the item promised is not here, and the reason is worth stating. A co-field
+needs every sample in one frame, which for cells means one parent lattice for the whole set; 33
+different hosts do not have one, so the kernel used here is the autocorrelation, whose reading is a
+co-pattern over distance channels rather than a map. With R² +0.014 that co-pattern has nothing to
+say, and the channels it names are element indicators of single frameworks, which means the model
+is recognising hosts and not geometry. The map needs a ladder of one host on one lattice -- which
+is the beta-Li3PO4 vacancy series the conductivity literature argues about, and the one case this
+program still has to compute for itself.
+
 **The limits.** The pairs are matched by host *composition* and not by host *structure*: two cells
 with the same framework formula and different frameworks can be paired, which a topotactic
 criterion would refuse. The target carries the 0.39 V offset of the

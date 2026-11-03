@@ -337,6 +337,158 @@ def measure(pairs, frame="discharged", hull=HULL):
     return out
 
 
+def paired_interval(a, b, seed=0, draws=2000):
+    """The paired difference of two models' absolute errors, with a bootstrap interval.
+
+    ``a`` and ``b`` are the absolute errors of the two models on the same samples, so the
+    difference is paired and the interval is the one rule 4 of the development plan asks for
+    before a difference is called a result.
+    """
+    d = np.asarray(a, float) - np.asarray(b, float)
+    rng = np.random.default_rng(seed)
+    boot = np.array([np.mean(d[rng.integers(0, len(d), len(d))]) for _ in range(draws)])
+    lo, hi = np.percentile(boot, [2.5, 97.5])
+    return {"mean": float(np.mean(d)), "low": float(lo), "high": float(hi),
+            "excludes_zero": bool(lo > 0 or hi < 0)}
+
+
+def difference(hull=HULL, tol=None, seeds=None):
+    """Plan item BT6: the field difference of a pair against the lithiated cell alone.
+
+    The difference field is built by :mod:`cmfqsar.celldiff` and is an ordinary field in the cell,
+    so the kernel is the periodic autocorrelation this file already uses.  Three models on the
+    same folds and the same samples: the difference field, the discharged cell alone (which is
+    what the item asks it to beat) and the composition baseline of the voltage stage.
+    """
+    from cmfqsar import celldiff
+    tol = celldiff.LATTICE_TOL if tol is None else float(tol)
+    pairs = load_pairs(hull)
+    structures_all = [p.discharged for p in pairs]
+    elements = sorted(elements_in(structures_all))
+    fs = inorganic_fieldset(elements, physchem=INORGANIC_FIELDS, charge_model="oxidation")
+    kept, refused = celldiff.usable_pairs(pairs, fs, tol=tol)
+    if len(kept) < 20:
+        raise SystemExit(f"only {len(kept)} pairs can carry a difference field")
+    y = np.array([k.target for k in kept], float)
+    groups = [k.group for k in kept]
+    names = [k.name for k in kept]
+    shells = [celldiff.shell_of_the_inserted_ion(k) for k in kept]
+    print(f"  {len(kept)} of {len(pairs)} pairs carry a difference field "
+          f"({len(set(groups))} frameworks, lattice lengths within {tol:.0%}), "
+          f"{len(refused)} refused")
+    coord = np.array([s["coordination"] for s in shells], float)
+    dist = np.array([s["distance"] for s in shells], float)
+    print(f"  the inserted ion sits in {np.nanmean(coord):.1f} oxygens at "
+          f"{np.nanmean(dist):.2f} angstrom on average")
+
+    specs = {s: PeriodicSpec(r_max=R_MAX, step=s, sigma=s, taper=TAPER) for s in SIGMAS}
+    diff_feats, cell_feats = {}, {}
+    for s, spec in specs.items():
+        t0 = time.time()
+        diff_feats[s] = periodic_feature_matrix([k.fields for k in kept], spec,
+                                                n_fields=fs.n_fields)
+        cell_feats[s] = periodic_feature_matrix(
+            [crystal_fields(k.discharged, fs, k.name) for k in kept], spec, n_fields=fs.n_fields)
+        print(f"  features at sigma {s}: {diff_feats[s].shape}, {time.time() - t0:.0f} s",
+              flush=True)
+    X = composition_features([k.discharged for k in kept], elements)
+    folds = grouped_folds(groups)
+
+    out = {"n": len(kept), "n_pairs": len(pairs), "hull": hull, "tol": tol,
+           "frameworks": len(set(groups)), "refused": refused[:40],
+           "n_refused": len(refused),
+           "shell": {"coordination": float(np.nanmean(coord)),
+                     "coordination_sd": float(np.nanstd(coord)),
+                     "distance": float(np.nanmean(dist)),
+                     "distance_sd": float(np.nanstd(dist)),
+                     "n_inserted_median": float(np.median([k.n_inserted for k in kept]))},
+           "baseline": {"mean_voltage": float(y.mean()),
+                        "mae_of_the_mean": float(np.mean(np.abs(y - y.mean())))},
+           "fields": [sp.label for sp in fs.specs], "n_fields": fs.n_fields}
+    errors = {}
+    for model in ("composition", "discharged", "difference", "difference+composition"):
+        feats = diff_feats if "difference" in model else cell_feats
+        pred = np.full(len(y), np.nan)
+        per_fold = []
+        for k, (tr, te) in enumerate(folds):
+            Xs_tr = np.nan_to_num(standardise(X[tr], X[tr]), nan=0.0)
+            Xs_te = np.nan_to_num(standardise(X[tr], X[te]), nan=0.0)
+            best = None
+            for s in (SIGMAS if model != "composition" else (SIGMAS[0],)):
+                spec = specs[s]
+                blocks = periodic_block_sizes(spec, fs.n_fields)
+                F = feats[s]
+                sc = channel_scale(F[tr], spec.n_bins, blocks=blocks)
+                K_field = autocorrelation_kernel(F[tr], scale=sc, n_bins=spec.n_bins,
+                                                 blocks=blocks)
+                K_comp = linear_kernel(Xs_tr)
+                K_tr = (K_comp if model == "composition" else
+                        K_field if model in ("discharged", "difference") else K_field + K_comp)
+                for lam in LAMS:
+                    p = cv_predict(K_tr, y[tr], "krr", {"lam": lam}, folds=INNER, seed=0)
+                    err = rmse(y[tr], p)
+                    if best is None or err < best[0]:
+                        best = (err, s, lam, sc, blocks)
+            err, s, lam, sc, blocks = best
+            spec, F = specs[s], feats[s]
+            K_f_tr = autocorrelation_kernel(F[tr], scale=sc, n_bins=spec.n_bins, blocks=blocks)
+            K_f_te = autocorrelation_kernel(F[tr], F[te], scale=sc, n_bins=spec.n_bins,
+                                            blocks=blocks)
+            K_c_tr, K_c_te = linear_kernel(Xs_tr), linear_kernel(Xs_tr, Xs_te)
+            if model == "composition":
+                K_tr, K_te = K_c_tr, K_c_te
+            elif model in ("discharged", "difference"):
+                K_tr, K_te = K_f_tr, K_f_te
+            else:
+                K_tr, K_te = K_f_tr + K_c_tr, K_f_te + K_c_te
+            learner = _Learner("krr", {"lam": lam}, True).fit(K_tr, y[tr])
+            pred[te] = learner.predict(K_te)
+            per_fold.append({"fold": k, "sigma": s, "lam": lam, "n_test": int(len(te)),
+                             "mae": float(np.mean(np.abs(pred[te] - y[te])))})
+        maes = np.array([f["mae"] for f in per_fold])
+        errors[model] = np.abs(pred - y)
+        out[model] = {"model": model, "mae_mean": float(maes.mean()),
+                      "mae_sd": float(maes.std(ddof=0)),
+                      "mae_pooled": float(np.mean(np.abs(pred - y))),
+                      "rmse_pooled": float(rmse(y, pred)), "r2_pooled": float(r2_score(y, pred)),
+                      "per_fold": per_fold, "y": [float(v) for v in y],
+                      "y_pred": [float(v) for v in pred], "names": names, "groups": groups}
+        print(f"  {model:<24} MAE {maes.mean():.3f} +/- {maes.std():.3f} V, "
+              f"R2 {out[model]['r2_pooled']:+.3f}")
+    out["paired"] = {
+        "difference minus discharged": paired_interval(errors["difference"],
+                                                       errors["discharged"]),
+        "difference minus composition": paired_interval(errors["difference"],
+                                                        errors["composition"])}
+    for key, rec in out["paired"].items():
+        print(f"  {key}: {rec['mean']:+.3f} V [{rec['low']:+.3f}, {rec['high']:+.3f}]"
+              + ("" if rec["excludes_zero"] else ", which includes zero"))
+    out["co_pattern"] = co_pattern(kept, diff_feats, specs, fs, y)
+    return out
+
+
+def co_pattern(kept, feats, specs, fs, y, top=12):
+    """The channels of the difference field that move the prediction most, on the whole set.
+
+    An autocorrelation has no map in the cell, so this is the reading the kernel allows: which
+    pair of field types, at which distance inside the difference field, carries the voltage.
+    """
+    s = SIGMAS[0]
+    spec, F = specs[s], feats[s]
+    blocks = periodic_block_sizes(spec, fs.n_fields)
+    sc = channel_scale(F, spec.n_bins, blocks=blocks)
+    K = autocorrelation_kernel(F, scale=sc, n_bins=spec.n_bins, blocks=blocks)
+    learner = _Learner("krr", {"lam": 1e-3}, True).fit(K, y)
+    Z = F * sc
+    Z = Z / np.sqrt(np.maximum(np.sum(Z * Z, axis=1, keepdims=True), 1e-300))
+    w = Z.T @ learner.alpha_
+    sd = Z.std(axis=0)
+    labels = periodic_channel_labels(fs, spec)
+    order = np.argsort(-np.abs(w) * sd)
+    return {"sigma": s, "lam": 1e-3,
+            "top": [{"channel": labels[c], "effect": float(w[c] * sd[c])} for c in order[:top]]}
+
+
 def by_chemistry(y, pred, chem):
     """The error inside every family of hosts, since a family may be easy and another hard."""
     rows = []
@@ -408,6 +560,40 @@ def report(path=RESULTS):
             out.append(f"| {row['chemistry']} | {row['n']} | {row['mae']:.3f} | "
                        f"{row['r2']:+.3f} | {row['mean_voltage']:.2f} |")
         out.append("")
+    diff = _read(os.path.join(path, "difference.json"))
+    if diff:
+        shell = diff["shell"]
+        out += ["## The difference of the two cells as a field (plan item BT6)", "",
+                f"A field difference needs the two cells of a pair on one lattice and with the "
+                f"same host atoms. {diff['n']} of the {diff['n_pairs']} pairs have that, over "
+                f"{diff['frameworks']} frameworks, with the cell lengths within "
+                f"{diff['tol']:.0%}; the other {diff['n_refused']} are refused, almost all of "
+                f"them because the two cells relaxed to lattices too far apart. Measured on the "
+                f"discharged cell of the pair, the inserted ion sits in "
+                f"{shell['coordination']:.1f} +/- {shell['coordination_sd']:.1f} oxygens at "
+                f"{shell['distance']:.2f} +/- {shell['distance_sd']:.2f} angstrom.", "",
+                "| model | MAE, V | spread over the folds | R2 |", "|---|---:|---:|---:|",
+                f"| the mean voltage of these pairs | "
+                f"{diff['baseline']['mae_of_the_mean']:.3f} | - | 0.000 |"]
+        for model in ("composition", "discharged", "difference", "difference+composition"):
+            rec = diff.get(model)
+            if rec:
+                out.append(f"| {model} | {rec['mae_mean']:.3f} | {rec['mae_sd']:.3f} | "
+                           f"{rec['r2_pooled']:+.3f} |")
+        out += ["", "Paired differences of the absolute errors, with a bootstrap interval:", "",
+                "| comparison | mean, V | 95 % interval |", "|---|---:|---|"]
+        for key, rec in (diff.get("paired") or {}).items():
+            out.append(f"| {key} | {rec['mean']:+.3f} | "
+                       f"[{rec['low']:+.3f}, {rec['high']:+.3f}]"
+                       f"{'' if rec['excludes_zero'] else ', includes zero'} |")
+        top = (diff.get("co_pattern") or {}).get("top") or []
+        if top:
+            out += ["", "The channels of the difference field that move the prediction most "
+                        "(weight times spread):", "",
+                    "| effect | channel |", "|---:|---|"]
+            for row in top[:8]:
+                out.append(f"| {row['effect']:+.2f} | {row['channel']} |")
+        out.append("")
     return "\n".join(out) + "\n"
 
 
@@ -443,7 +629,10 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--stage", default="voltage",
-                    choices=["fetch", "check", "voltage", "report"])
+                    choices=["fetch", "check", "voltage", "difference", "report"])
+    ap.add_argument("--tol", type=float, default=None,
+                    help="how far the cell lengths of a pair may differ for the difference "
+                         "stage, as a fraction (default 0.05)")
     ap.add_argument("--hull", type=float, default=HULL,
                     help="eV per atom above the convex hull a phase may lie (default 0.01)")
     ap.add_argument("--frame", default="discharged", choices=["discharged", "charged", "both"],
@@ -461,6 +650,9 @@ def main(argv=None):
         if len(pairs) < 20:
             raise SystemExit(f"only {len(pairs)} pairs: run --stage fetch first")
         _write(measure(pairs, frame=args.frame, hull=args.hull), "voltage.json")
+        return 0
+    if args.stage == "difference":
+        _write(difference(args.hull, args.tol), "difference.json")
         return 0
     write_table()
     return 0

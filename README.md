@@ -3876,6 +3876,14 @@ cathodes before it is used and comes out 0.39 V low on average
 3.33 against 3.45), because the energies carry
 none of the corrections a battery database applies.
 
+The difference between the two cells of a pair is itself a field in the cell, since the fields are
+linear in the atoms: the lithiated cell's atoms with their weights and the delithiated cell's with
+theirs negated (`cmfqsar/celldiff.py`, plan item BT6). The host cancels and the inserted ions and
+their relaxation are what is left. It needs the two cells on one lattice, which 42 of the 303 pairs
+have, and over those the inserted ion sits in 5.0 +/- 1.1 oxygens at 2.22 +/- 0.13 angstrom. As a
+model it does not pay: 0.797 V against 0.699 V for the discharged cell alone (paired +0.090 V,
+interval [-0.034, +0.216], which contains zero) and 0.656 V for the composition.
+
 **What is measured.** 303 pairs over 157 frameworks, five folds that keep a framework
 together, three models: a linear kernel on the element fractions and the crystal descriptors of
 item BT2 (0.569 V mean absolute error), the periodic autocorrelation kernel of
@@ -5343,6 +5351,7 @@ cmfqsar/prototypes.py   inverse design on prototypes: a candidate generator over
 cmfqsar/threebody.py    three-body channels and handedness for a crystal: the triangle around every atom, and the signed volume that separates a mirror image
 cmfqsar/scattering.py   a measured scattering curve as the sample: G(r) and F(Q) as the untyped descriptor, the readers, what an instrument does
 cmfqsar/battery.py      insertion electrodes: the pairs of a lithiation ladder from public formation energies, the average voltage between two steps, and the families of hosts
+cmfqsar/celldiff.py     the difference between two cells of one ladder as a field in the cell: the signed stack, the pairs a difference is defined for, and the shell the inserted ion takes
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
 cmfqsar/pharmacophore.py  typed features with tolerance spheres, read out of the co-field, and the query formats that carry them out of the program
 cmfqsar/fielddiff.py    what a candidate's fields are missing against a reference molecule

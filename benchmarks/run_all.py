@@ -254,8 +254,9 @@ def registry() -> List[Benchmark]:
                   "the average voltage of an insertion electrode from the cell, against a "
                   "composition baseline",
                   "run_battery.py", "battery",
-                  compute=[["--stage", "fetch"], ["--stage", "check"], ["--stage", "voltage"]],
-                  minutes="90",
+                  compute=[["--stage", "fetch"], ["--stage", "check"], ["--stage", "voltage"],
+                           ["--stage", "difference"]],
+                  minutes="120",
                   report=lambda: _mod("run_battery").write_table(_r("battery")),
                   tables=["battery/table.md"]),
         Benchmark("sac",

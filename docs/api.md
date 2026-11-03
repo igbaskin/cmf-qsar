@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 102 modules, 197 classes with 646 public methods, and 1000 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 103 modules, 198 classes with 646 public methods, and 1008 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -45,6 +45,7 @@ for.
 | [cmfqsar.battery](#cmfqsarbattery) | Electrode data for the periodic kernel: insertion pairs, and the voltage between them. |
 | [cmfqsar.bioisostere](#cmfqsarbioisostere) | Which groups are interchangeable here? |
 | [cmfqsar.cdft](#cmfqsarcdft) | Conceptual-DFT fields on a grid, and what atom-centred Gaussians can and cannot make of them. |
+| [cmfqsar.celldiff](#cmfqsarcelldiff) | The difference between two cells of one ladder as a field in the cell (plan item BT6). |
 | [cmfqsar.chemotypes](#cmfqsarchemotypes) | Heterogeneous series: several chemotypes, no single common substructure. |
 | [cmfqsar.cli](#cmfqsarcli) | Command-line interface for building CMF 3D-QSAR models (no GUI needed). |
 | [cmfqsar.coalign](#cmfqsarcoalign) | Co-alignment of a training set, treated as what it is: expectation-maximisation over poses. |
@@ -1218,6 +1219,129 @@ ORCA 6 has no `%plot` input block -- it is rejected outright -- so the cube can 
 from the separate program, which is menu-driven and is therefore driven by its menu.  The box
 is the one orca_plot chooses from the geometry, which is what makes the three states of a
 molecule share a grid exactly.
+
+## cmfqsar.celldiff
+
+Source: `cmfqsar/celldiff.py`
+
+The difference between two cells of one ladder as a field in the cell (plan item BT6).
+
+An intercalation voltage is not a property of a structure but of a **pair**: the energy of the
+lithiated cell minus the energy of the delithiated one, per electron.  The fields of this program
+are linear in the atoms, so the same difference can be taken of the fields themselves,
+
+    dX_f(r) = X_f(Li_y Host)(r) - X_f(Li_x Host)(r),
+
+and the result is an ordinary field in the cell: the atoms of the lithiated cell with their
+weights and the atoms of the delithiated one with their weights negated.  Where the two cells
+agree -- most of the host -- the two contributions cancel, and what is left is the inserted ions
+and the relaxation the insertion caused.  That is the object the voltage is a property of, and it
+is what `difference_fields` builds.
+
+Because a field difference is a field, every kernel in the program takes it unchanged: it is
+bilinear in the weights, so nothing has to be re-derived for signed ones.  Two kernels are
+available and the set decides which:
+
+* **the periodic autocorrelation** (`cmfqsar.periodic`), which needs no common frame between
+  *pairs* and so works across host frameworks.  This is what a collection of different hosts
+  allows, and what `benchmarks/run_battery.py --stage difference` measures.
+* **the periodic overlap kernel** of plan item M4, which compares fields point by point and so
+  needs every pair on one parent lattice.  On a ladder of one host it is available and gives a
+  co-field in the cell; across hosts it is not.
+
+**What the two cells of a pair need, and why most pairs do not have it.** A difference is only
+defined when the two cells stand on one lattice and hold the same host atoms.  Two cells relaxed
+separately do not: their lattice constants differ by the volume change of the insertion, which is
+the quantity a battery paper reports.  `difference_fields` therefore rebuilds the
+delithiated cell in the lattice of the lithiated one, keeping its fractional coordinates, and
+refuses a pair whose cell lengths differ by more than `tol` or whose host atom counts do not
+match.  The refusal is not a failure of the method: it says the two cells are too far apart for a
+difference to mean anything, and `usable_pairs` reports how much of a set survives it.
+
+The scale of a difference field is not a free parameter but it does not matter either: the field
+kernels of this program are cosine-normalised, so a difference field of two inserted ions and one
+of one inserted ion are compared by their shape and not by their size.
+
+### `class PairDifference  (dataclass)`
+
+One pair that can carry a difference field, with what the construction found.
+
+Attributes:
+
+- `name: str`
+- `fields: CrystalFields`
+- `target: float`
+- `group: str`
+- `lattice_mismatch: float`
+- `n_inserted: int`
+- `inserted: np.ndarray` = `None`
+- `discharged: object` = `None`
+- `info: dict` = `None`
+
+### `lattice_mismatch(a, b) -> float`
+
+How far two cells are from one lattice: the largest relative difference of their lengths.
+
+The lengths are sorted before they are compared, so the same lattice written with its vectors
+in another order counts as the same lattice.  The angles are not compared, because a pair that
+passes the length test and fails an angle test has not been seen in practice and the number
+reported here should mean one thing.
+
+### `host_counts(atoms, ion: str) -> dict`
+
+The atoms of the cell by element, the working ion left out.
+
+### `on_lattice(atoms, cell)`
+
+The same structure in another lattice: its fractional coordinates, the given cell.
+
+This is how the two cells of a pair are brought together.  It moves every atom by the
+difference of the two lattices, which for a pair that passes `lattice_mismatch` is a
+fraction of an angstrom, and it is the only honest way to subtract two fields: a field
+difference taken between two different cells would measure the lattices and not the
+insertion.
+
+### `can_difference(charged, discharged, ion: str='Li', tol: float=LATTICE_TOL) -> Tuple[bool, str]`
+
+Can these two cells carry a difference field, and if not, which test failed?
+
+### `difference_fields(charged, discharged, fieldset: FieldSet, name: str='', ion: str='Li', tol: float=LATTICE_TOL) -> CrystalFields`
+
+The field difference of one pair, as a `cmfqsar.periodic.CrystalFields`.
+
+The atoms of the discharged cell keep their weights and the atoms of the charged cell, moved
+into the discharged cell's lattice, carry theirs negated.  Radii, symbols and the cell come
+with them, so every kernel and every feature matrix of the program takes the result as it
+takes any other structure.  The charges of the two cells are computed in their own cells
+first, which matters: the formal charge of the metal is not the same before and after the
+insertion (plan item BT1), and that change is part of what the difference field carries.
+
+### `inserted_positions(charged, discharged, ion: str='Li', tol: float=0.5) -> np.ndarray`
+
+Where the working ions went in: the sites of the discharged cell with no partner.
+
+Every ion of the charged cell is matched to the nearest ion of the discharged cell within
+`tol` angstrom, the minimum image taken; the discharged sites left over are the inserted
+ones.  It is a reading of the pair, not part of the kernel, and it is what a figure of the
+difference field is centred on.
+
+### `usable_pairs(pairs: Sequence, fieldset: FieldSet, tol: float=LATTICE_TOL, ion: str='Li', target=lambda p: p.voltage, group=lambda p: p.framework) -> Tuple[List[PairDifference], List[dict]]`
+
+Every pair of a set that can carry a difference field, and why the others cannot.
+
+`pairs` are the insertion pairs of `cmfqsar.battery`, or anything with `charged` and
+`discharged` attributes; `target` and `group` say what is being predicted and what holds
+the folds together.  The second list is the refusals, one record each, so a benchmark can
+report how much of its set the frame costs instead of quietly dropping it.
+
+### `shell_of_the_inserted_ion(pair: PairDifference, anion: str='O', cutoff: float=3.0) -> dict`
+
+What surrounds the sites the ions went into: how many anions, and how far.
+
+This is the reading the item asks for, as far as a set of different hosts allows one: the
+coordination of the site the working ion takes, measured on the discharged cell itself rather
+than read off a model.  A co-field in the cell needs every pair on one lattice, which a
+collection of different hosts does not give.
 
 ## cmfqsar.chemotypes
 

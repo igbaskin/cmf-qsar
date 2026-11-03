@@ -3689,6 +3689,53 @@ values and a computed oxidation potential is a descriptor, not a target.
   the inserted lithium wants. Small once M4 exists; listed here because BT3 supplies the pairs it
   runs on. Measure on the BT3 voltages against the autocorrelation kernel on the discharged cell
   alone.
+  **Done 3 November 2026, and the gate is not met.** `cmfqsar/celldiff.py` with 18 tests in
+  `tests/test_celldiff.py`, measured by `benchmarks/run_battery.py --stage difference`.
+
+  **The construction.** `difference_fields` returns the field difference of a pair as an ordinary
+  `CrystalFields`: the discharged cell's atoms with their weights, the charged cell's atoms moved
+  into the discharged cell's lattice with their weights negated. The host cancels where the two
+  cells agree, and what is left is the inserted ions and the relaxation. Two things do not cancel
+  and should not: the formal charge of the metal, which item BT1 makes Co(+3.5) at half lithiation
+  against Co(+3) at full, and the electronegativity proxy, which is a deviation from the mean over
+  the cell. Every kernel takes the result unchanged, since each is bilinear in the weights.
+  `can_difference` is the gate on a pair (one lattice within a tolerance, the same host atoms,
+  more of the working ion in the discharged cell) and `usable_pairs` returns both the pairs that
+  pass and a record for every refusal, so a benchmark reports what the frame costs.
+  `inserted_positions` matches the ions of the two cells and returns the sites with no partner,
+  and `shell_of_the_inserted_ion` measures what surrounds them.
+
+  **What the frame costs.** 42 of the 303 pairs of item BT3 have their two cells
+  within 5% in cell length with the same host atoms, over 33
+  frameworks; 261 are refused, almost every one because the two cells relaxed to
+  lattices too far apart -- which is the volume change of the insertion, a quantity a battery
+  paper reports rather than an error.
+
+  **The measurement**, five folds grouped by framework, mean absolute error in volts: the mean
+  voltage of these pairs 0.791, composition
+  0.656 +/- 0.100, the discharged cell alone
+  0.699 +/- 0.143, the difference field
+  0.797 +/- 0.083, the difference field with the composition
+  0.680 +/- 0.118. Paired over the same samples the difference
+  field is +0.090 V against the discharged cell
+  [-0.034, +0.216], an interval that contains zero, and
+  +0.134 V against the composition
+  [+0.004, +0.273], which does not. **The item asked the difference
+  kernel to beat the autocorrelation on the discharged cell alone; it does not, and it loses to
+  the element fractions.** With 42 pairs over 33 frameworks the set resolves
+  only large differences, and it agrees with item BT3: a voltage follows the composition.
+
+  **What it gives instead.** The geometric reading, measured on the pairs rather than read off a
+  model: the inserted ion sits in 5.0 +/- 1.1
+  oxygens at 2.22 +/- 0.13 angstrom, the first shell of
+  a lithium in an oxide, over 33 hosts.
+
+  **Not done:** the co-field in the cell, which is the reading the item promised. It needs one
+  parent lattice for the whole set, and 33 hosts have none, so the kernel here is
+  the autocorrelation and its co-pattern has nothing to read at R² +0.014. The
+  map needs a ladder of one host on one lattice, which is the beta-Li3PO4 vacancy series this
+  program still has to compute for itself; the overlap kernel of item M4 is ready for it and
+  `difference_fields` feeds it unchanged.
 
 **Large (a month or more)**
 
@@ -3758,8 +3805,11 @@ values and a computed oxidation potential is a descriptor, not a target.
   Script code under rule 6, not a module.
 
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
-the benchmark they give says the composition decides an average voltage. BT4 next, since BT5 is
-empty without a complex that builds and aligns. BT6 with M4, ~~BT7 after M5~~ (BT7 is done by the
+the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
+same day**, and it does not pay: the difference of the two cells is
+indistinguishable from the lithiated cell alone and behind the element fractions. BT4 next, since
+BT5 is empty without a complex that builds and aligns. BT6 with M4, ~~BT7 after M5~~ (BT7 is done
+by the
 local route, 30 October 2026, and did not
 need M5), BT5 only after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
 
@@ -5145,7 +5195,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~ and ~~BT3~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it), BT4 (solvation complexes) after EC7, BT6 with M4, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), BT4 (solvation complexes) after EC7, ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;
