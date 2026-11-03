@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 95 modules, 182 classes with 596 public methods, and 881 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 102 modules, 197 classes with 646 public methods, and 1000 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -42,6 +42,7 @@ for.
 | [cmfqsar.anisotropic](#cmfqsaranisotropic) | Atom functions with a direction: Gaussians times a linear factor (plan item D1). |
 | [cmfqsar.atomtargets](#cmfqsaratomtargets) | A target that belongs to an atom rather than to a molecule (plan item LP1). |
 | [cmfqsar.atomtypes](#cmfqsaratomtypes) | Atom typing (Tripos/Sybyl-like) and van der Waals parameters. |
+| [cmfqsar.battery](#cmfqsarbattery) | Electrode data for the periodic kernel: insertion pairs, and the voltage between them. |
 | [cmfqsar.bioisostere](#cmfqsarbioisostere) | Which groups are interchangeable here? |
 | [cmfqsar.cdft](#cmfqsarcdft) | Conceptual-DFT fields on a grid, and what atom-centred Gaussians can and cannot make of them. |
 | [cmfqsar.chemotypes](#cmfqsarchemotypes) | Heterogeneous series: several chemotypes, no single common substructure. |
@@ -92,6 +93,7 @@ for.
 | [cmfqsar.multiobjective](#cmfqsarmultiobjective) | A design loop with more than one objective (plan item MC11). |
 | [cmfqsar.multitask](#cmfqsarmultitask) | Two endpoints at once, so that selectivity is a co-field rather than a ratio. |
 | [cmfqsar.neldermead](#cmfqsarneldermead) | Nelder-Mead simplex minimiser, a direct port of R's `nmmin` (`optim(method = "Nelder-Mead")`, R 2.x-4.x), which the original CMF R scripts use to optimise the attenuation factor alpha and the regularisation parameter gamma simultaneously (`cmf_krr_train_mem` with `alpha_grid_search = FALSE`). |
+| [cmfqsar.nonlinearity](#cmfqsarnonlinearity) | The co-field of a model with a nonlinear kernel layer: one per molecule, and how far they differ. |
 | [cmfqsar.oneclass](#cmfqsaroneclass) | One-class scores on a precomputed kernel: four geometries besides the 1-SVM's ball. |
 | [cmfqsar.orca](#cmfqsarorca) | Quantum-chemical properties from ORCA: per-atom quantities that become fields, per-molecule ones that become descriptors. |
 | [cmfqsar.pbh](#cmfqsarpbh) | Polybenzenoid hydrocarbons: a planar frame, ring classes, ring-centred fields and per-ring contributions. |
@@ -106,16 +108,21 @@ for.
 | [cmfqsar.project](#cmfqsarproject) | Projects (plan item G2): a session that can be saved and reopened, the poses before every alignment step so that a step can be undone, and two models compared on one set of molecules. |
 | [cmfqsar.protein](#cmfqsarprotein) | Protein structures for display behind the molecules, their fields and the co-fields. |
 | [cmfqsar.protonation](#cmfqsarprotonation) | Protonation ensembles: one molecule as the weighted mean of its ionisation states (item D4). |
+| [cmfqsar.prototypes](#cmfqsarprototypes) | Inverse design on prototypes: candidates, an oracle and a loop (plan item M11). |
 | [cmfqsar.pu](#cmfqsarpu) | Learning from positives and unlabelled molecules (part of plan item E4). |
 | [cmfqsar.ranking](#cmfqsarranking) | Learning to order molecules instead of to reproduce their numbers. |
+| [cmfqsar.reciprocal](#cmfqsarreciprocal) | Reciprocal-space channels of a crystal: the typed structure factors (plan item M6). |
 | [cmfqsar.report](#cmfqsarreport) | One HTML file that says what a model is, how well it works and what it says (plan item F4). |
 | [cmfqsar.restriction](#cmfqsarrestriction) | Scoring a conformational restriction (plan item MC9). |
+| [cmfqsar.scattering](#cmfqsarscattering) | Measured scattering curves as samples: the total, untyped descriptor (plan item M12). |
 | [cmfqsar.screen](#cmfqsarscreen) | Screening a library without holding it in memory (plan item B3). |
 | [cmfqsar.shapley](#cmfqsarshapley) | Shapley decomposition of a CMF prediction. |
+| [cmfqsar.sites](#cmfqsarsites) | Site-resolved models of a periodic structure (plan item M5). |
 | [cmfqsar.solvent](#cmfqsarsolvent) | Solvent as a field: where a ligand's water sits, as a CMF field (plan item D9). |
 | [cmfqsar.spectral](#cmfqsarspectral) | Clustering a set by its fields rather than by its scaffolds. |
 | [cmfqsar.stereo](#cmfqsarstereo) | Handedness as a property of a centre, not of a shape. |
 | [cmfqsar.tautomers](#cmfqsartautomers) | Tautomer ensembles: the other half of plan item D4. |
+| [cmfqsar.threebody](#cmfqsarthreebody) | Three-body channels and handedness for a periodic cell (plan item M10). |
 | [cmfqsar.topomer](#cmfqsartopomer) | Topomer fields: a frame that comes from the topology, not from a superposition. |
 | [cmfqsar.trajectory](#cmfqsartrajectory) | A molecular-dynamics trajectory as a conformational ensemble (plan item D7). |
 | [cmfqsar.transfer](#cmfqsartransfer) | Comparing two models by their co-fields (plan item F3). |
@@ -553,6 +560,16 @@ Attributes:
 
 Read the target from every molecule and build the index of what was measured.
 
+#### `AtomTargets.from_arrays(per_structure: Sequence[Sequence[float]], name: str='') -> 'AtomTargets'`  (class method)
+
+The same index from one array per structure, not a number where the atom or site was
+not measured.
+
+`from_molecules` reads the values from the molecules themselves, which a periodic
+cell cannot carry: a crystal site takes its target from a table instead (plan item M5,
+`cmfqsar.sites`).  Everything after this point -- the folds, the subsets, the
+scatter back over the structures -- is the same for an atom and for a site.
+
 #### `AtomTargets.subset(rows: Sequence[int]) -> 'AtomTargets'`
 
 #### `AtomTargets.of_molecule(k: int) -> np.ndarray`
@@ -646,6 +663,177 @@ Return a list with one atom type string per atom in `mol`.
 
 If the molecule carries pre-assigned types in the atom property `_TriposAtomType`
 (e.g. read from a MOL2 file) and `scheme == "sybyl"` these are used directly.
+
+## cmfqsar.battery
+
+Source: `cmfqsar/battery.py`
+
+Electrode data for the periodic kernel: insertion pairs, and the voltage between them.
+
+A cathode is measured by its **average voltage**: the work per electron of taking the working ion
+out of the host.  For the insertion reaction
+
+    Li_x Host  +  (y - x) Li  ->  Li_y Host
+
+the average voltage over that interval is
+
+    V = - [ E(Li_y Host) - E(Li_x Host) - (y - x) E(Li metal) ] / (y - x),
+
+with the energies per host formula unit and in electronvolts, so that V comes out in volts.  The
+reference to lithium metal is what makes the number a voltage against a lithium anode.
+
+This module builds those pairs out of public data, without an account anywhere.  The Materials
+Project serves its structures and their **formation energies** through OPTIMADE, which needs no
+API key, and a formation energy already carries the elemental reference: it is the energy of the
+cell minus the energies of the elements it is made of.  Elemental lithium is one of those
+elements, so in the difference above it cancels, and
+
+    V = - [ E_f(Li_y Host) - E_f(Li_x Host) ] / (y - x)
+
+with E_f the formation energy per host formula unit.  Nothing else is needed, and the result is
+the same quantity the battery databases publish, up to the corrections they apply (see
+*What this is not*).
+
+**How a pair is formed.**  One query per chemical system (`Li`, one metal, `O` -- the ternary
+lithium-metal-oxygen systems) returns every structure of that system, the lithium-free host
+included.  Each structure is reduced to its **host framework** (its composition with the working
+ion removed, divided by the common factor) and its **lithium content per host formula unit**.
+Structures that share a framework form a ladder in that content; the lowest structure above the
+convex hull is kept at each step, and neighbouring steps make a pair.
+
+**What this is not.**  The pairs are matched by host *composition*, not by host *structure*: two
+cells with the same framework formula and different frameworks can be paired, which a topotactic
+criterion would refuse.  The energies are the Materials Project's GGA/GGA+U values without the
+corrections a battery database applies to them, so a voltage here can differ from the published
+one by of the order of 0.1 V.  Both limits are measured rather than argued in
+`benchmarks/run_battery.py`, which checks the lithium cobalt oxide and lithium iron phosphate
+voltages against the published ones before it uses the set for anything.
+
+The official insertion-electrode documents, with topotactic pairs and the corrections, need a
+free Materials Project API key and the `mp-api` package; `insertion_electrodes` fetches
+them when a key is given, and the benchmark uses them in place of the reconstructed pairs if it
+finds one.
+
+### `class InsertionPair  (dataclass)`
+
+Two steps of one host's ladder and the average voltage between them.
+
+Attributes:
+
+- `framework: str`
+- `charged: object`
+- `discharged: object`
+- `x_charged: float`
+- `x_discharged: float`
+- `voltage: float`
+- `volume_change: float` = `float('nan')`
+- `hull_charged: float` = `float('nan')`
+- `hull_discharged: float` = `float('nan')`
+- `ion: str` = `WORKING_ION`
+- `info: Dict[str, object]` = `field(default_factory=dict)`
+
+#### `InsertionPair.name` -> str  (property)
+
+A label a table can carry: the framework and the two contents.
+
+#### `InsertionPair.capacity` -> float  (property)
+
+The specific capacity of the interval, mAh per gram of the discharged cell.
+
+### `fetch_system(elements: Sequence[str], endpoint: str=MP_OPTIMADE, page_limit: int=100, max_pages: int=100, timeout: float=90.0) -> List[dict]`
+
+Every structure whose elements are among those named, as OPTIMADE entries.
+
+`elements HAS ONLY` is the OPTIMADE way of asking for one chemical system: the lithium-free
+host, the fully lithiated phase and everything between them come back in one answer, which is
+what a ladder needs.
+
+### `insertion_electrodes(key: Optional[str]=None, working_ion: str=WORKING_ION, limit: int=10000) -> List[dict]`
+
+The Materials Project's own insertion-electrode documents, which need a free API key.
+
+The key is taken from the argument, then from `MP_API_KEY` or `PMG_MAPI_KEY` in the
+environment.  Without one this raises, and the caller falls back to the pairs this module
+reconstructs from formation energies, which need no key.
+
+### `write_records(records: Sequence[dict], path: str) -> str`
+
+Keep the fetched entries, so that a measurement does not depend on a service being up.
+
+### `read_records(path: str) -> List[dict]`
+
+The entries written by `write_records`.
+
+### `atoms_from_optimade(entry: dict)`
+
+One OPTIMADE entry as an ASE `Atoms`, carrying its identifier and its energies.
+
+What travels in `atoms.info`: `id`, `formation_energy_per_atom` and
+`energy_above_hull` in eV, and `functional`, the name of the calculation they came from.
+The descriptor reader of `cmfqsar.descriptors` looks there, so any of them can enter a
+model as a non-field descriptor.
+
+### `host_framework(atoms, ion: str=WORKING_ION) -> Tuple[Tuple[str, int], ...]`
+
+The composition of the cell with the working ion removed, divided by its common factor.
+
+Two cells of one ladder share this: `CoO2` for both `LiCoO2` and `Li0.5CoO2`, however
+large the cell each was computed in.
+
+### `host_units(atoms, ion: str=WORKING_ION) -> float`
+
+How many host formula units the cell holds.
+
+### `ion_content(atoms, ion: str=WORKING_ION) -> float`
+
+Working ions per host formula unit: the *x* of Li_x Host.
+
+### `formation_energy_per_host(atoms, ion: str=WORKING_ION) -> float`
+
+The formation energy of the cell divided by the number of host formula units, in eV.
+
+### `average_voltage(charged, discharged, ion: str=WORKING_ION) -> float`
+
+The average voltage between two steps of one ladder, in volts.
+
+`charged` is the cell with less of the working ion in it.  Both formation energies are taken
+per host formula unit, so the cells need not be the same size.
+
+### `framework_label(framework: Sequence[Tuple[str, int]]) -> str`
+
+`(("Co", 1), ("O", 2))` as `CoO2`.
+
+### `ladders(structures: Sequence, ion: str=WORKING_ION, tol: float=1e-06) -> Dict[str, Dict[float, object]]`
+
+Group the structures by host framework and keep the most stable cell at each content.
+
+The key of the inner mapping is the working-ion content per host formula unit, rounded to six
+decimals so that two cells of the same stoichiometry in different cell sizes meet.  The cell
+kept is the one lowest above the convex hull, which is the phase a measurement would see.
+
+### `insertion_pairs(structures: Sequence, ion: str=WORKING_ION, min_delta: float=0.001, max_voltage: float=6.0, min_voltage: float=-1.0) -> List[InsertionPair]`
+
+Every neighbouring pair of every ladder, with its average voltage.
+
+A pair is refused when the two steps hold the same amount of the working ion, when either
+formation energy is missing, or when the voltage falls outside `min_voltage` to
+`max_voltage`: outside that range the pair is not an insertion electrode but two unrelated
+phases that happen to share a framework formula.
+
+### `pair_table(pairs: Sequence[InsertionPair], frame: str='discharged')`
+
+The structures, the voltages and the labels of a set of pairs, ready for `crystal_table`.
+
+`frame` says which cell of the pair describes it: `"discharged"` (the lithiated one),
+`"charged"`, or `"both"`, which returns the two cells of every pair in order, each with
+the pair's voltage, so a kernel sees the ladder from both ends.
+
+### `chemistry(pair: InsertionPair) -> str`
+
+Which family the host belongs to: an oxide, a phosphate, a sulfide, and so on.
+
+The families are the ones an electrode review groups by, and a pair that is in none of them is
+reported as `other` rather than forced into one.
 
 ## cmfqsar.bioisostere
 
@@ -2657,6 +2845,20 @@ Standardised descriptors; a missing value becomes the training mean, i.e. zero.
 
 The computed descriptors, as they are written in a field set: `calc:mw` and so on.
 
+### `crystal_names() -> List[str]`
+
+The crystal descriptors, as they are written in a field set: `calc:capacity` and so on.
+
+### `is_structure(obj) -> bool`
+
+Is this an ASE structure rather than an RDKit molecule?
+
+### `compute_crystal(atoms, name: str) -> float`
+
+One crystal descriptor of one periodic structure; NaN where the cell cannot give it.
+
+`name` is the short name, with an optional working ion after an `@`: `capacity@Na`.
+
 ### `rdkit_descriptors() -> Dict[str, object]`
 
 Every descriptor RDKit exposes, by its own name: about 200 of them, as a lookup table.
@@ -2675,7 +2877,11 @@ The molecule properties that are numeric on at least one molecule, in file order
 
 ### `read_values(mol, names: Sequence[str]) -> np.ndarray`
 
-The descriptor vector of one molecule; anything missing or unreadable becomes NaN.
+The descriptor vector of one molecule or one periodic structure; anything missing is NaN.
+
+A molecule's own properties are read from the file's tags, a structure's from
+`atoms.info`, which is where a loader puts the numbers that came with the structure
+(plan item BT2).
 
 ### `descriptor_kernel(Z_rows: np.ndarray, Z_cols: np.ndarray, normalize: bool=False) -> np.ndarray`
 
@@ -3428,6 +3634,17 @@ True when the compiled path can be used at all.
 ### `threads() -> int`
 
 How many threads the compiled loop will use.
+
+### `defect_kernels(P, Q, specs: Sequence, cell: np.ndarray, rotations: np.ndarray, translations: np.ndarray, mixing: np.ndarray, dp: np.ndarray, dq: np.ndarray, gammas: Sequence[float], cutoff=None, symmetric: bool=False) -> Optional[Tuple[np.ndarray, np.ndarray]]`
+
+`(K_lin, K_layer)` of `_defect_kernels` for two tables of difference fields that
+stand in one `cell`, or None when the compiled loop cannot take the field set.
+
+`rotations` and `translations` are in fractional coordinates; `mixing` are the per-field
+coefficients of the joint kernel; `dp` and `dq` the joint self-kernels of the two tables;
+`cutoff` a radius in angstroms, which should not exceed half the cell's smallest width,
+because the displacement is taken to the nearest image only.  The caller mirrors the result
+when `symmetric`.
 
 ### `plan(specs: Sequence, cutoff=None, tol: float=1e-06) -> Optional[Tuple]`
 
@@ -8130,6 +8347,29 @@ number improves, and prediction does not move.  The same caution applies here an
 interpretation question -- which fields this series needs -- and that question has no
 cross-validated answer to be checked against.
 
+Pooling the weights across series
+---------------------------------
+
+A single series of thirty molecules cannot say much about five weights, which is why the
+intervals above are wide and why a point estimate fitted on one series is noisy.  Other series
+can help.  The prior above is centred at equal shares with one fixed spread; the pooled form
+lets other series set both:
+
+    u_s ~ N(mu, tau^2 I)    for every series s,
+
+with `u_s` the centred log-shares of series s, `mu` the log-shares a typical series needs and
+`tau` how much series differ from each other.  `mu` and `tau` are chosen by empirical Bayes,
+that is, to maximise the probability of all the series together (`pool_priors`).  The
+posterior draws of each series under the fixed prior are all that is needed: the probability of
+a series under the pooled prior is the average over its draws of the ratio of the two priors
+(importance reweighting), so no new sampling is done.  A series then gets its weights from
+`evidence_mixing` with `prior_mean=mu` and `prior_sd=tau`: a small series is pulled
+towards what the others need, a large series keeps its own weights, and `tau` decides where the
+balance lies.  With `tau` near zero the weights are the population's and nothing is fitted on
+the series; with `tau` large the pooled prior is the fixed one again.
+`benchmarks/run_pooled_mixing.py` measures whether this predicts better, with every series'
+prior learned from the other series only.
+
 ### `class MixingPosterior  (dataclass)`
 
 The posterior over the share of the kernel each field carries.
@@ -8157,11 +8397,40 @@ Fields whose whole interval lies below 1/F: the series needs them least.
 
 #### `MixingPosterior.describe(level: float=0.9) -> str`
 
+### `class PooledPrior  (dataclass)`
+
+The prior over the log-shares that a collection of series supports.
+
+Attributes:
+
+- `mean: np.ndarray`
+- `sd: float`
+- `names: List[str]`
+- `n_series: int`
+- `ess: np.ndarray`
+- `log_marginal: float`
+- `note: str` = `''`
+- `method: str` = `'gaussian'`
+
+#### `PooledPrior.shares` -> np.ndarray  (property)
+
+The shares a typical series gives the fields.
+
+#### `PooledPrior.h() -> np.ndarray`
+
+The population weights in the convention of `evidence_mixing` (mean one).
+
+#### `PooledPrior.describe() -> str`
+
 ### `shares_to_h(p: Sequence[float], n_fields: int) -> np.ndarray`
 
 Shares that sum to one, written as weights that average one.
 
-### `evidence_mixing(K_fields: np.ndarray, y: np.ndarray, scale: Optional[np.ndarray]=None, enabled: Optional[Sequence[bool]]=None, fit_bias: bool=True, prior_sd: float=PRIOR_SD, maxiter: int=400) -> np.ndarray`
+### `centred_log_shares(shares: np.ndarray) -> np.ndarray`
+
+Shares (rows summing to one) as centred log-shares, the coordinates the prior acts on.
+
+### `evidence_mixing(K_fields: np.ndarray, y: np.ndarray, scale: Optional[np.ndarray]=None, enabled: Optional[Sequence[bool]]=None, fit_bias: bool=True, prior_sd: float=PRIOR_SD, maxiter: int=400, prior_mean: Optional[Sequence[float]]=None) -> np.ndarray`
 
 The mixing coefficients that maximise the evidence (with the prior above), on the simplex.
 
@@ -8169,7 +8438,10 @@ Returned in the same convention as `cmfqsar.model.align_mixing`: one number per 
 zero where the field is disabled, scaled so that the joint kernel has the mean diagonal it
 would have with h = 1, which keeps the lambda grid comparable.
 
-### `sample_mixing(K_fields: np.ndarray, y: np.ndarray, names: Optional[Sequence[str]]=None, scale: Optional[np.ndarray]=None, enabled: Optional[Sequence[bool]]=None, draws: int=400, burn: int=100, thin: int=1, seed: int=0, fit_bias: bool=True, prior_sd: float=PRIOR_SD, progress=None) -> MixingPosterior`
+`prior_mean` (centred log-shares, one per field) and `prior_sd` together are the pooled
+prior of `pool_priors`; by default the prior is centred at equal shares.
+
+### `sample_mixing(K_fields: np.ndarray, y: np.ndarray, names: Optional[Sequence[str]]=None, scale: Optional[np.ndarray]=None, enabled: Optional[Sequence[bool]]=None, draws: int=400, burn: int=100, thin: int=1, seed: int=0, fit_bias: bool=True, prior_sd: float=PRIOR_SD, progress=None, prior_mean: Optional[Sequence[float]]=None) -> MixingPosterior`
 
 The posterior over the fields' shares, by slice sampling the log-shares and log lambda.
 
@@ -8182,6 +8454,37 @@ activities are much more probable with the field than without it, and a number n
 or below it -- means the field is carrying nothing the others do not already carry. This is
 the sharpest form of the question and the cheapest to answer, since it needs one optimisation
 per field rather than a posterior.
+
+### `pool_priors(shares_by_series: Sequence[np.ndarray], names: Optional[Sequence[str]]=None, prior_sd: float=PRIOR_SD, sd_range: Tuple[float, float]=POOLED_SD_RANGE, method: str='gaussian', min_ess: float=MIN_ESS, maxiter: int=2000) -> PooledPrior`
+
+The population prior `N(mu, tau^2 I)` over the centred log-shares, by empirical Bayes.
+
+`shares_by_series` holds, for every series, the posterior draws of its shares under the
+fixed prior (`MixingPosterior.samples`), all with the same fields.  `mu` and `tau` are
+chosen to maximise the probability of all the series together, each series' probability
+being its likelihood integrated against the candidate prior.  Two series are enough to run
+it; the result is only as good as the number of them.
+
+Two ways to get at a series' likelihood from its draws:
+
+* `method="gaussian"` (the default) summarises the draws by their mean and covariance,
+  removes the fixed prior's precision, and treats what is left as a Gaussian likelihood.
+  The integral against the candidate prior is then in closed form.  This is the
+  random-effects model of meta-analysis, with each series' weights as the estimate and its
+  posterior covariance as the uncertainty.  A direction in which the series says nothing
+  has zero precision and contributes nothing, as it should.
+* `method="importance"` takes the log of the average, over the draws, of the ratio of the
+  candidate prior to the fixed one (importance reweighting), and needs no Gaussian
+  assumption.  A narrow candidate prior gives almost all the weight to the few draws nearest
+  its mean, and the optimiser, left alone, finds such a prior and reports a spread far too
+  small.  So every series must keep an effective sample size (the number of equally
+  weighted draws its average is worth) of at least `min_ess`.  With a few hundred draws
+  this stops the spread at around a fifth of `prior_sd`, and the result is noisier than
+  the Gaussian one; it is kept as the check that the Gaussian assumption is not doing the
+  work.
+
+The draws must come from the prior of width `prior_sd` centred at equal shares, which is
+what `sample_mixing` uses by default.
 
 ## cmfqsar.mmd
 
@@ -8415,8 +8718,18 @@ Attributes:
 - `pbc_z_max: float` = `0.0`
 - `pbc_z_step: float` = `1.0`
 - `pbc_oriented: bool` = `False`
+- `rec_q_max: float` = `8.0`
+- `rec_step: float` = `0.25`
+- `rec_form_sigma: float` = `0.3`
+- `rec_self: bool` = `True`
+- `tb_r_max: float` = `4.0`
+- `tb_step: float` = `0.5`
+- `tb_sigma: float` = `0.35`
+- `tb_chirality: bool` = `False`
+- `tb_chirality_shells: int` = `4`
 - `pbc_overlap: bool` = `False`
 - `pbc_overlap_r_max: Optional[float]` = `None`
+- `pbc_symmetry: Optional[Tuple[np.ndarray, np.ndarray]]` = `None`
 - `ac_block_weights: Union[None, str, Dict[str, float]]` = `None`
 - `ac_block_groups: Optional[Dict[str, str]]` = `None`
 - `ac_block_rho: float` = `1.0`
@@ -8458,6 +8771,14 @@ True for the surface kernel: in-plane invariant, height kept.
 #### `CMFModel.is_periodic` -> bool  (property)
 
 True for the periodic kernel: crystals, summed over the neighbour list of the cell.
+
+#### `CMFModel.is_reciprocal` -> bool  (property)
+
+True for the reciprocal-space channels: the typed structure factors of a crystal.
+
+#### `CMFModel.is_threebody` -> bool  (property)
+
+True for the three-body channels of a crystal: the triangles around every atom.
 
 #### `CMFModel.block_weights_aligned` -> bool  (property)
 
@@ -8602,16 +8923,10 @@ is off by default because, measured, it gains no sharpness on these sets.
 
 Fit in the space of the landmarks instead of the space of the molecules (item B6).
 
-
-
 The model keeps the landmarks and one weight per feature instead of one coefficient per
-
 training molecule, and everything a prediction needs follows from those: see
-
 `cmfqsar.lowrank`.  The training table is still kept, because it is linear in the
-
 number of molecules and the provenance and the contract are read off it; what is never
-
 built is the n by n kernel.
 
 #### `CMFModel.is_low_rank` -> bool  (property)
@@ -8710,6 +9025,15 @@ contributes `x_j(r) = s_fj sum_m w_fjm exp(-b_jm/2 |r - r_jm|^2)`, so that the c
 is `C_f(r) = sum_j a_j x_j(r)` and anything else linear in the same basis -- the
 variance of the co-field under noise in the activities, say (`cmfqsar.cofields`) --
 is built from the same numbers rather than from a second copy of them.
+
+#### `CMFModel.training_field_basis(f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]`
+
+The same four arrays as `cofield_basis`, with no condition on the kernel layer.
+
+The basis describes the normalised training fields, not the model, so it exists for
+every model that has fields.  `cmfqsar.nonlinearity` builds the local co-field of
+a model with a nonlinear layer from it; `cofield_basis` is this method behind
+the check that the ordinary co-field is defined.
 
 #### `CMFModel.cofield_coefficients(f: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
 
@@ -9573,6 +9897,282 @@ when `alpha` lies outside the grid), as `cmf_kernels_interpolate` of the origina
 R scripts: kernel matrices are only available on the alpha grid and are interpolated
 linearly in between, with the end values used beyond the ends.
 
+## cmfqsar.nonlinearity
+
+Source: `cmfqsar/nonlinearity.py`
+
+The co-field of a model with a nonlinear kernel layer: one per molecule, and how far they differ.
+
+A model with a kernel layer (`CMFModel.kernel_layer`) predicts
+
+    y(x) = sum_j a_j g( K(x, x_j), K(x, x), K(x_j, x_j) ) + b,                              (1)
+
+where K is the linear joint kernel -- the overlap integrals of the normalised fields, mixed over
+the field types -- and g is the layer: the identity for the linear model, exp(-gamma d^2) for
+the Gaussian layer, the arc-cosine function of Cho and Saul for the arc-cosine layers.  The
+prediction is then no longer the overlap of the field with one fixed co-field, which is why
+`CMFModel.cofield_coefficients` refuses such a model.  It is still a differentiable
+function of the field, and its derivative with respect to the normalised field of type f, taken
+at molecule x, is a field:
+
+    C_fx(r) = sum_j a_j g_s(x, j) x_fj(r)  +  2 [ sum_j a_j g_n(x, j) ] x_fx(r),              (2)
+
+with g_s = dg/dK(x, x_j), g_n = dg/dK(x, x), x_fj the normalised field of training molecule j
+(the basis of the ordinary co-field, `CMFModel.training_field_basis`) and x_fx the
+normalised field of x itself.  This is the **local co-field**: the co-field of the linear model
+tangent to (1) at x.  The prediction of a molecule close to x changes by the overlap of C_fx
+with the change of the normalised field, summed over the field types with the usual factors
+h_f c_f.  For the linear layer g_s = 1 and g_n = 0, and (2) is the ordinary co-field whatever x
+is; for the Gaussian layer g_s = 2 gamma g and g_n = -gamma g, so the training molecules are
+weighted by their kernel similarity to x and the field is taken relative to x's own.
+
+The second term of (2) lies along x's own field.  With cosine-normalised kernels (the default)
+K(x, x) does not change when the normalised field moves, so the term has no effect on any
+prediction and is left out -- as the ordinary co-field leaves out the dependence of the
+normalisation on the field.  Without normalisation it is kept.
+
+Two readings of (2) are built on top of the map itself:
+
+* the **spread** of the local co-fields over the training molecules (`cofield_spread`):
+  their mean, which is the one co-field to draw for a nonlinear model, and their standard
+  deviation point by point, which is a map of where the effect of field depends on the rest of
+  the molecule -- zero where the model is additive, large where it is not;
+* a **non-linearity index** per field type (`nonlinearity_indices`), the share of the
+  squared norm of the local co-fields that their differences from the mean make up, computed in
+  closed form from the training kernel matrix: 0 for a linear model, 1 when the local co-fields
+  have nothing in common.  The mean pairwise cosine between them is reported beside it.
+
+What the maps are not.  They describe the tangent models, not the chemistry by themselves: the
+Gaussian layer makes every model nonlinear to a degree set by its bandwidth, and the spread is
+nonzero even when the measured relation is additive, as long as the bandwidth is finite.  Read
+the spread against the linear model's cross-validated error (if the linear kernel predicts as
+well, the spread is a property of the kernel) and check that it survives the folds, as the noise
+band of `cmfqsar.cofields` is checked.
+
+Second derivatives -- how the effect of field at one place depends on the field at another --
+are a function of two places, not a field.  The second half of this module takes them with
+respect to the amplitudes of probe atoms, which keeps them finite and exact under the kernel
+normalisation: the **pair-interaction field** (one probe fixed, the other scanned over a grid),
+the **curvature field** (its diagonal), and the **atom interaction matrix** of one molecule with
+its eigenmodes, the patterns of atoms the model reads together.
+
+### `class CofieldSpread  (dataclass)`
+
+The local co-fields of the training molecules, summarised point by point.
+
+Attributes:
+
+- `mean: np.ndarray`
+- `sd: np.ndarray`
+- `n: int`
+
+### `class NonlinearityIndex  (dataclass)`
+
+How far the local co-fields of one field type differ over the training molecules.
+
+Attributes:
+
+- `field: str`
+- `spread: float`
+- `cosine: float`
+- `n: int`
+
+### `class ProbeSet  (dataclass)`
+
+Probe atoms of one field type: Gaussians added to the molecule's raw field.
+
+`centres` (P, 3), `widths` (P,) the exponents b of exp(-b/2 |r - c|^2), and `weights`
+(P,) the amount of field one unit of the probe's amplitude puts there: one for an indicator
+field, a charge for the electrostatic field.  The derivatives below are per unit amplitude.
+
+Attributes:
+
+- `field: int`
+- `centres: np.ndarray`
+- `widths: np.ndarray`
+- `weights: np.ndarray`
+
+### `class Tangent(model: CMFModel, mol: MoleculeFields)`
+
+The derivatives of one model's prediction at one molecule, to second order.
+
+Holding the layer's derivatives, the kernel row and the molecule's self-overlaps, it answers
+for any set of probes: what each probe adds per unit amplitude (`gradient`), and how
+the effect of one depends on the amplitude of another (`hessian`).  The maps and the
+modes below are built on these two.
+
+#### `Tangent.second()`
+
+#### `Tangent.check_field(f: int) -> None`
+
+#### `Tangent.A_tilde(f: int) -> np.ndarray`
+
+<X_f, x_fj> over the training molecules, with x_fj the (normalised) basis field.
+
+#### `Tangent.terms(p: ProbeSet) -> Tuple[np.ndarray, np.ndarray]`
+
+V (n_train, P): <p_k, x_fj>; u (P,): <p_k, X_f>, the molecule's own raw field.
+
+#### `Tangent.first(p: ProbeSet, V: np.ndarray, u: np.ndarray) -> Tuple[np.ndarray, np.ndarray]`
+
+S (n_train, P) = dS_j/de_k and n1 (P,) = dn/de_k.
+
+#### `Tangent.gradient(p: ProbeSet) -> np.ndarray`
+
+dy/de_k: what one unit of each probe adds to the prediction, to first order.
+
+#### `Tangent.hessian(a: ProbeSet, b: Optional[ProbeSet]=None, terms_a: Optional[tuple]=None) -> np.ndarray`
+
+d2y/de_k de_l between the probes of `a` (rows) and `b` (columns; `a` when None).
+
+#### `Tangent.diagonal(b: ProbeSet) -> np.ndarray`
+
+d2y/de_k^2 for every probe: the curvature along each probe alone.
+
+### `class InteractionMode  (dataclass)`
+
+One eigenpair of the atom interaction matrix.
+
+Attributes:
+
+- `value: float`
+- `vector: np.ndarray`
+
+### `layer_derivatives(model: CMFModel, K: np.ndarray, diag_p: np.ndarray, diag_q: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+The layer g on a block of the linear kernel, and its derivatives g_s and g_n of Eq. (2).
+
+`K` holds the linear joint kernel between the rows (the molecules the derivative is taken
+at, self-kernels `diag_p`) and the columns (the training molecules, self-kernels `diag_q`).
+The first array equals `model.apply_layer(K, diag_p, diag_q)`; the second is the
+derivative with respect to the entry K(x, x_j); the third the derivative with respect to the
+row's own self-kernel K(x, x), the other arguments held fixed.
+
+### `local_duals(model: CMFModel, table: Optional[AtomTable]=None) -> Tuple[np.ndarray, np.ndarray]`
+
+The coefficients of Eq. (2) for the molecules of `table`, or for the training set.
+
+Returns `(B, b0)`: `B[x, j] = a_j g_s(x, j)` weighs the normalised field of training
+molecule j in the local co-field at x, and `b0[x] = 2 sum_j a_j g_n(x, j)` weighs x's own
+normalised field.  `b0` is zero for a model with normalised kernels (see the module
+docstring) and for the linear layer, where `B` has the dual coefficients in every row.
+The same two arrays serve every field type, because the layer acts on the joint kernel.
+
+### `local_cofield_coefficients(model: CMFModel, f: int, mol: MoleculeFields) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+Centres, coefficients and widths of the Gaussians composing the local co-field C_fx.
+
+The same three arrays `CMFModel.cofield_coefficients` returns, in the same
+convention: the field-scaling constant c_f and the mixing coefficient h_f are not included.
+For a linear model the result is the ordinary co-field whatever `mol` is.  Without
+normalisation the molecule's own Gaussians are appended with the weight `b0` of Eq. (2).
+
+### `local_cofield_volume(model: CMFModel, f: int, mol: MoleculeFields, grid, include_scale: bool=False) -> np.ndarray`
+
+C_fx on a grid (shape = grid.shape); with `include_scale`, multiplied by h_f c_f.
+
+### `local_cofield_at_points(model: CMFModel, f: int, mol: MoleculeFields, points: np.ndarray, include_scale: bool=True) -> np.ndarray`
+
+C_fx at a list of points rather than on a grid.
+
+### `cofield_spread(model: CMFModel, f: int, grid, include_scale: bool=False, chunk: int=0) -> CofieldSpread`
+
+Mean and standard deviation of the local co-fields C_fx over the training molecules x.
+
+Both are read off the same matrix the co-field noise band uses -- the normalised fields of
+the training molecules at the grid points -- multiplied by the coefficient matrix of
+`local_duals`, one block of points at a time.  For a linear model the standard
+deviation is zero everywhere and the mean is the co-field.
+
+### `nonlinearity_indices(model: CMFModel, joint: bool=True) -> List[NonlinearityIndex]`
+
+The non-linearity index of every enabled field type, and of all of them together.
+
+The local co-fields of the training molecules are combinations of the training fields,
+`C_x = sum_j Bt[x, j] x_j`, so their Gram matrix in the Hilbert space of the fields is
+`Bt K_f Bt^T` with `K_f` the (normalised) training kernel of field f, which the model
+keeps.  The index is read off that matrix: the mean squared norm is the mean of its
+diagonal, the squared norm of the mean local co-field is the mean of all its entries, and
+the spread is one minus their ratio.  Nothing is evaluated on a grid.  With `joint` a last
+entry named `joint` takes all the fields together, weighted as the joint kernel weighs
+them, which is the index of the model as a whole.
+
+### `layer_second_derivatives(model: CMFModel, K: np.ndarray, diag_p: np.ndarray, diag_q: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(g_ss, g_sn, g_nn): the second derivatives of the layer, as `layer_derivatives`.
+
+Defined for the linear kernel (all zero) and the Gaussian layer.  The arc-cosine layers are
+refused: their kernel has a cusp where a molecule meets a training molecule (the angle is
+zero), and the second derivative diverges there, so a training molecule has no
+pair-interaction field under them.
+
+### `probe_set(model: CMFModel, f: int, centres, widths=None, weights=None, radius: float=1.7) -> ProbeSet`
+
+Probes in field `f` at `centres`, with the field's own width unless `widths` is given.
+
+A field with one Gaussian per atom (`kind == "gauss"`) has the width `alpha`; the steric
+kind scales it by the atom's radius, for which `radius` stands in.
+
+### `atom_probes(model: CMFModel, f: int, mol: MoleculeFields) -> ProbeSet`
+
+The atoms of `mol` as probes of field `f`: a unit change of each atom's weight.
+
+### `probe_gradient(model: CMFModel, mol: MoleculeFields, probes: ProbeSet) -> np.ndarray`
+
+What one unit of each probe adds to the prediction of `mol`, to first order.
+
+### `probe_hessian(model: CMFModel, mol: MoleculeFields, a: ProbeSet, b: Optional[ProbeSet]=None) -> np.ndarray`
+
+How the effect of each probe of `a` depends on the amplitude of each probe of `b`.
+
+### `pair_interaction_field(model: CMFModel, mol: MoleculeFields, f: int, centre, grid, f_probe: Optional[int]=None, width: Optional[float]=None, weight: float=1.0, chunk: int=0) -> np.ndarray`
+
+The pair-interaction field: one probe fixed at `centre`, the other scanned over the grid.
+
+The value at r is the second derivative of the prediction with respect to the amplitude of a
+probe of field `f_probe` (default `f`) at `centre` and of a probe of field `f` at r: how
+much adding field at r changes what the fixed probe does.  Positive where the two reinforce
+each other, negative where one undoes part of the other, zero where the model treats the two
+places additively.  With the fixed probe on an atom of `mol`, `weight` set to that atom's
+weight gives the field for *that atom*; with weight one it is per unit of field.
+
+### `gradient_field(model: CMFModel, mol: MoleculeFields, f: int, grid, chunk: int=0) -> np.ndarray`
+
+What one unit of a probe of field `f` adds to the prediction of `mol`, at every point.
+
+The first-derivative companion of the maps below: under a nonlinear layer it is what
+`cmfqsar.cofields.atom_effect` is for a linear model, the local co-field convolved
+with the probe's own Gaussian, in the units of the activity.
+
+### `curvature_field(model: CMFModel, mol: MoleculeFields, f: int, grid, chunk: int=0) -> np.ndarray`
+
+The diagonal of the pair-interaction field: the second derivative along one probe.
+
+Negative where the model saturates (a second unit of field there adds less than the first),
+positive where it accelerates.  For a linear model without normalisation it is zero; with
+cosine normalisation it is not, because the normalisation itself saturates.
+
+### `atom_interactions(model: CMFModel, mol: MoleculeFields, f: int) -> Tuple[np.ndarray, np.ndarray]`
+
+The interaction matrix of the atoms of `mol` in field `f`, and their first-order effects.
+
+`H[k, l]` is the second derivative of the prediction with respect to the weights of atoms k
+and l in that field (two partial charges, say), `g[k]` the first derivative: what a unit
+more of weight on atom k adds, which under a nonlinear layer takes the place of the atom
+contribution.  `H` is symmetric; its diagonal is the curvature along one atom, its
+off-diagonal part says which atoms the model reads together rather than one by one.
+
+### `interaction_modes(model: CMFModel, mol: MoleculeFields, f: int, k: int=3) -> List[InteractionMode]`
+
+The `k` eigenpairs of `atom_interactions` of largest absolute eigenvalue.
+
+A mode is a pattern of weight changes over the atoms whose effect on the prediction is pure
+curvature: changing the weights along it by t moves the prediction by value t^2 / 2 beyond
+the linear term.  A positive value means the changes in the pattern reinforce one another,
+a negative one that they saturate.  The patterns of the largest absolute values are where
+the model is least additive; a mode spread over two sites is a pair the model reads
+together.
+
 ## cmfqsar.oneclass
 
 Source: `cmfqsar/oneclass.py`
@@ -10398,6 +10998,9 @@ Attributes:
 - `occupancy: Optional[np.ndarray]` = `None`
 - `site_species: Optional[List[Dict[str, float]]]` = `None`
 - `second_moments: Optional[np.ndarray]` = `None`
+- `n_defects: Optional[int]` = `None`
+- `relative_to: str` = `''`
+- `centre: Optional[int]` = `None`
 
 #### `CrystalFields.n_atoms` -> int  (property)
 
@@ -10500,7 +11103,9 @@ Periodic autocorrelation features of a set of structures, one row each.
 ### `periodic_channel_labels(fieldset: FieldSet, spec: PeriodicSpec) -> List[str]`
 
 One label per feature: which pair of field types, at which distance; for a layer with
-height channels, at which in-plane distance and which two heights.
+height channels, at which in-plane distance and which two heights; for the reciprocal-space
+channels of plan item M6, at which reciprocal length; for the three-body channels of plan
+item M10, at which two radii from a centre and how far apart.
 
 ### `image_translations(cell: np.ndarray, r_max: float, pbc: Sequence[bool]=(True, True, True)) -> np.ndarray`
 
@@ -10538,7 +11143,7 @@ The molecule boundaries are kept, so the kernel of a structure against this tabl
 per structure exactly as against the cells themselves.  The expansion is cached on the table,
 because a grid search asks for it once per attenuation and it does not depend on one.
 
-### `periodic_overlap_kernels(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec], r_max: Optional[float]=None, cutoff=None, engine=None, symmetrise: bool=True, progress=None, cancel=None) -> np.ndarray`
+### `periodic_overlap_kernels(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec], r_max: Optional[float]=None, cutoff=None, engine=None, symmetrise: bool=True, progress=None, cancel=None, symmetry=None) -> np.ndarray`
 
 Per-field periodic overlap kernels of two tables of crystals: shape (F, nP, nQ).
 
@@ -10560,6 +11165,16 @@ of the correction is a measure of how far the set is from one lattice
 (`overlap_asymmetry` reports it).  `symmetrise=False` returns the one-sided sum and
 costs half as much for a block of two different tables.
 
+**The host symmetry** (plan item M14).  `symmetry` is the pair `(rotations, translations)`
+of `host_symmetry`: the operations of the space group of the host lattice, in
+fractional coordinates.  With it the kernel is the average of `K(P, g Q)` over the
+operations `g`, which is the kernel of the orbit-averaged fields and so a kernel in its
+own right.  It is needed for a series on one host, because two arrangements of the same
+defects that differ by a symmetry operation of the host -- the same vacancy pair two sites
+along -- have the same property but, in a fixed frame, fields that do not overlap at all.
+The average makes them identical, and leaves every arrangement that is not equivalent as
+distinct as the fields make it.  Without `symmetry` the kernel is the fixed-frame one.
+
 ### `overlap_asymmetry(table: AtomTable, specs: Sequence[FieldSpec], r_max: Optional[float]=None, **kw) -> float`
 
 The largest relative disagreement between the two orders of the periodic overlap.
@@ -10568,13 +11183,14 @@ Zero on one lattice.  It grows with the spread of the cells, because the integra
 row's cell and the integral of the column's cell are then not the same integral, and it says
 how much of the kernel is an artefact of that spread rather than of the structures.
 
-### `periodic_self_overlaps(table: AtomTable, specs: Sequence[FieldSpec], r_max: Optional[float]=None) -> np.ndarray`
+### `periodic_self_overlaps(table: AtomTable, specs: Sequence[FieldSpec], r_max: Optional[float]=None, symmetry=None) -> np.ndarray`
 
 `K_f(i, i)` of every crystal of `table` under the periodic overlap: shape (F, n).
 
 This is what the cosine normalisation divides by, and it is where the cell size goes: a
 supercell of the same structure has a proportionally larger self-overlap, so the normalised
-kernel does not know which cell was chosen.
+kernel does not know which cell was chosen.  `symmetry` is as in
+`periodic_overlap_kernels`: the self-overlap is then that of the orbit-averaged field.
 
 ### `lattice_spread(table: AtomTable) -> Dict[str, float]`
 
@@ -10585,6 +11201,112 @@ and of each lattice vector's length.  The periodic overlap kernel is a point-by-
 comparison inside the cell, so a set whose lattice constants differ by more than a few per
 cent is being compared in a frame that does not quite exist -- the crystal form of a bad
 alignment, and a number a benchmark should state rather than assume.
+
+### `host_symmetry(atoms, symprec: float=0.001) -> Tuple[np.ndarray, np.ndarray]`
+
+The symmetry operations of a host cell: `(rotations, translations)` in fractional
+coordinates, shapes (G, 3, 3) and (G, 3), from spglib.
+
+For a supercell they include the translations by the vectors of the primitive cell, so the
+group of an 8 x 8 cell of a monolayer with twelve point operations has 768 members.  The
+identity is always among them.
+
+### `symmetry_expanded_table(table: AtomTable, rotations: np.ndarray, translations: np.ndarray) -> AtomTable`
+
+`table` with every structure replaced by the mean of its images under the operations.
+
+Every atom is copied once per operation at 1/G of its weight, so the field of the new
+structure is the orbit average of the old one, and the overlap of a structure with it is
+the average of the overlaps with the G transformed copies.  The structure boundaries are
+kept, and the expansion is cached on the table, because a grid search asks for it once per
+attenuation and it does not depend on one.
+
+### `nearest_image_cutoff(table: AtomTable, r: float, spread: float=0.25) -> float`
+
+The largest cutoff at which the nearest image of a pair is the only one within reach.
+
+The compiled path of `symmetry_averaged_kernels` takes every atom pair at its
+nearest-image displacement instead of summing over the images, which is exact when no
+second image lies within the cutoff: the cutoff must then stay under half the cell's width
+along every axis the atoms span.  An axis the atoms do not span -- the vacuum direction of
+a slab, where their fractional spread is below `spread` -- puts no limit, because the
+nearest image along it is the atom itself.  Returns `r` capped accordingly.
+
+### `symmetry_averaged_kernels(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec], symmetry, gammas: Sequence[float]=(), mixing: Optional[np.ndarray]=None, r_max: Optional[float]=None, engine=None, self_p: Optional[np.ndarray]=None, self_q: Optional[np.ndarray]=None, progress=None) -> Tuple[np.ndarray, np.ndarray]`
+
+The periodic overlap of two tables of difference fields averaged over the host
+symmetry, in both forms at once: `(K_lin, K_layer)`.
+
+`K_lin`, shape (F, nP, nQ), is `mean_g K_f(P_i, g Q_j)`: the linear average, the kernel
+of the orbit-averaged fields, which `periodic_overlap_kernels` with `symmetry` also
+gives.  It is additive over the defects -- a vacancy pair is two single vacancies wherever
+they sit -- so it carries the counts of each kind of defect and nothing else.
+
+`K_layer`, shape (len(gammas), nP, nQ), is the Gaussian layer averaged instead:
+`mean_g exp(-gamma (K(P_i, P_i) + K(Q_j, Q_j) - 2 sum_f mixing_f K_f(P_i, g Q_j)))`.
+This is the kernel that sees the *arrangement* of a defect series: the layer is not
+additive, so the pair and triple structure survives the average, and the average is still
+a kernel, the inner product of orbit-averaged features in the layer's own feature space.
+
+`mixing` are the per-field coefficients of the joint kernel (the field heights divided by
+the field scales, as the model forms them); None weights the fields equally after scaling
+each by its mean self-overlap over `P`.  `gammas` are in absolute units of the joint
+kernel's squared distance; `cmfqsar.model.median_gamma_scale` gives the
+median-distance unit.  `self_p`, `self_q` are the joint self-kernels, the same under every
+operation, computed here when not given.  The structures of `P` and `Q` must share one
+cell, and `r_max` is the image radius (by default `overlap_cutoff`).
+
+Two implementations agree to the truncation of the image sum: the compiled loop of
+`cmfqsar.fastkernel` (every atom pair at its nearest-image displacement, the cutoff
+capped by `nearest_image_cutoff`), which is the one for a set of thousands, and the
+NumPy reference, one kernel evaluation per operation on the image-expanded table, which
+`engine="numpy"` selects.
+
+### `symmetry_layer_kernel(P: AtomTable, Q: AtomTable, specs: Sequence[FieldSpec], symmetry, gammas: Sequence[float], **kw) -> np.ndarray`
+
+`K_layer` of `symmetry_averaged_kernels`: shape (len(gammas), nP, nQ).
+
+### `match_sites(atoms, host, tol: float=0.1) -> np.ndarray`
+
+For every atom of `atoms`, the index of the site of `host` it sits on, or -1.
+
+Distances are taken in the cell of `host` with the minimum-image rule, so an atom written
+on the other side of the cell still finds its site.  Two atoms on one site is an error,
+because a difference field would then count that site twice.
+
+### `defect_fields(atoms, host: CrystalFields, fieldset: FieldSet, name: str='', tol: float=0.1) -> CrystalFields`
+
+The field of `atoms` minus the field of its `host`, as a structure of the sites that
+changed: a vacancy is the host's atom with its weights negated, a substitution is that and
+the new atom with its own weights, an added atom is the new atom alone.
+
+The overlap kernel is bilinear, so the kernel of two differences, plus terms that depend on
+one structure at a time, is the kernel of the two whole cells; a model with a bias on the
+differences is therefore the same model as one on the cells, at a cost that depends on the
+number of defects and not on the size of the supercell.  The charge of an atom that
+replaces another is the host's charge for the site it occupies, so that the electrostatic
+difference is local, as the structural one is; an atom on no site of the host takes the
+oxidation state of its element in the host's composition, or zero when none is assigned.
+
+`host` is the `CrystalFields` of the pristine cell on the same lattice
+(`crystal_fields`); `atoms` must stand on that lattice within `tol` Angstrom.
+
+### `defect_table(structures: Sequence, host, fieldset: FieldSet, names: Optional[Sequence[str]]=None, tol: float=0.1) -> AtomTable`
+
+An `fields.AtomTable` of difference fields (`defect_fields`) of a series on
+one host.  `host` is an ASE `Atoms` of the pristine cell or its `CrystalFields`.
+
+### `is_difference_table(table: AtomTable) -> bool`
+
+True when every structure of `table` is a difference from a host.
+
+### `defect_count(table: AtomTable) -> np.ndarray`
+
+The number of sites that changed in every structure of a difference table: a vacancy
+or an added atom counts one, a substitution one (its two rows share a site).
+
+`defect_fields` records the number; for a record without it the rows are counted,
+where a `+` row at the coordinate of a `-` row is a substitution and shares its site.
 
 ### `inorganic_fieldset(elements: Sequence[str]=(), physchem: Sequence[str]=INORGANIC_FIELDS, charge_model: str='oxidation', other: bool=True, alpha: float=1.0) -> FieldSet`
 
@@ -10597,7 +11319,9 @@ when no assignment exists; `"electronegativity"` uses that proxy throughout: the
 of each atom's Pauling electronegativity from the mean over the cell, with the sign of a
 charge (an electronegative atom is negative); `"file"` reads `oxi_states`, `charges` or
 `bader_charges` (what `cmfqsar.vasp` writes) from the structure's per-atom arrays, or
-its initial charges, and refuses when there are none.
+its initial charges, and refuses when there are none; `"dft"` reads the same arrays, taking
+`bader_charges` first, and falls back to `"oxidation"` when the structure carries none,
+which is what a series of computed cells wants (plan item BT1).
 
 ### `elements_in(structures: Iterable, min_structures: int=5) -> List[str]`
 
@@ -11872,6 +12596,233 @@ The ensembles of a whole series, in order.
 
 What share of a series is a real mixture at this pH, which is what the ensemble can change.
 
+## cmfqsar.prototypes
+
+Source: `cmfqsar/prototypes.py`
+
+Inverse design on prototypes: candidates, an oracle and a loop (plan item M11).
+
+A co-pattern says which pair of field types at which distance a crystal should gain. Acting on
+that needs three things this module provides.
+
+**A candidate generator.** A *prototype* is one cell whose sites are grouped into classes, with a
+list of the elements each class may take. Substituting them enumerates candidate structures.
+Two modes cover what the materials items ask for:
+
+* *composition*: every site of a class takes the same element, which is the ABO3 case -- one
+  prototype, many compositions;
+* *arrangement*: a fixed number of the sites of a class take a substituent and the others keep
+  what the prototype has, which is the point-defect case -- one composition, many arrangements.
+  The element name `"vac"` removes the atom instead of replacing it, so a vacancy series is an
+  arrangement series.
+
+The number of candidates is a product and grows quickly, so nothing is built until it is asked
+for: `Prototype.n_candidates` counts them, `candidate_at` builds one from its index, and
+`candidates` either walks them all or draws a sample without replacement.
+
+**A test for duplicates.** Two assignments that a symmetry operation of the prototype maps onto
+each other are one structure. `site_permutations` reads those operations from spglib and turns
+them into permutations of the substitutable sites; `unique` keeps one assignment per orbit. Where
+spglib finds no symmetry, `unique_by_channels` compares the descriptor channels instead, which is
+also the honest test: two cells with the same channels are the same structure for the model,
+whatever their coordinates say.
+
+**An oracle and a loop.** The oracle is what computes the property of a proposed structure.
+`LookupOracle` reads it from a table, which is how the loop is measured on a published set;
+`CalculatorOracle` runs any ASE calculator, with or without a relaxation, which is how a real
+loop runs -- the same interface takes a UMA model or a VASP calculator. `design_loop` then
+proposes, computes and refits: at every step it fits the kernel model on what the oracle has
+answered so far, chooses the ridge by the evidence, scores every candidate by one of the rules of
+`cmfqsar/active.py` and asks the oracle about the best one. The loop never looks at a value the
+oracle has not been asked for, and never asks twice about the same candidate.
+
+Minimising is the usual materials goal (a formation energy), and the rules of `active.py` all
+maximise, so `design_loop(maximise=False)` negates the target inside. With that, `"ucb"` is the
+lower confidence bound of plan item E6: a candidate is proposed only when the model is both
+optimistic and sure.
+
+### `class SiteClass  (dataclass)`
+
+One group of sites of a prototype and the elements they may take.
+
+`count` is what separates the two modes. `None` means every site of the class takes the
+same element, so the class contributes one candidate per element. An integer *k* means
+exactly *k* of the sites take one of `elements` and the rest keep what the prototype has, so
+the class contributes one candidate per element and per choice of *k* sites.
+
+Attributes:
+
+- `name: str`
+- `sites: Tuple[int, ...]`
+- `elements: Tuple[str, ...]`
+- `count: Optional[int]` = `None`
+
+#### `SiteClass.n_options` -> int  (property)
+
+How many assignments this class alone allows.
+
+#### `SiteClass.option_at(index: int) -> Tuple[str, Tuple[int, ...]]`
+
+The `index`-th assignment: the element, and the sites that take it.
+
+### `class Candidate  (dataclass)`
+
+One proposed structure: where it came from, what it is called, and its cell.
+
+Attributes:
+
+- `index: int`
+- `label: str`
+- `assignment: Tuple[Tuple[str, Tuple[int, ...]], ...]`
+- `atoms: Any`
+
+#### `Candidate.formula` -> str  (property)
+
+The composition, where the structure can give one, and the label otherwise.
+
+A candidate the generator built holds an ASE cell; a candidate taken from a published set
+may hold the field record the descriptor was computed from, which has no formula.
+
+### `class Prototype  (dataclass)`
+
+One cell, its site classes, and everything the generator needs.
+
+Attributes:
+
+- `atoms: Any`
+- `classes: Tuple[SiteClass, ...]`
+- `name: str` = `''`
+
+#### `Prototype.by_symbol(atoms, choices: Mapping[str, Sequence[str]], counts: Optional[Mapping[str, Optional[int]]]=None, name: str='') -> 'Prototype'`  (static method)
+
+A prototype whose classes are the elements of `atoms`: `{"Sr": ["Ca", "Ba"], ...}`.
+
+`counts` gives the class of an element an arrangement count, as `SiteClass.count`.
+
+#### `Prototype.n_candidates` -> int  (property)
+
+How many candidates the classes allow, counted and not built.
+
+#### `Prototype.sites` -> Tuple[int, ...]  (property)
+
+Every substitutable site, in order.
+
+#### `Prototype.assignment_at(index: int) -> Tuple[Tuple[str, Tuple[int, ...]], ...]`
+
+The `index`-th assignment of elements to sites, as one entry per class.
+
+#### `Prototype.candidate_at(index: int) -> Candidate`
+
+Build the `index`-th candidate.
+
+#### `Prototype.site_codes(index: int) -> Tuple[int, ...]`
+
+The assignment as one number per substitutable site, for the duplicate test.
+
+### `class LookupOracle(values: Mapping[int, float] | Sequence[float], name: str='lookup')`
+
+The property of a candidate, read from a table rather than computed.
+
+This is what a retrospective measurement uses: the pool is a published set, the values are
+its published labels, and the loop may not see a value it has not asked for. `calls` counts
+the questions, which is the budget the gate of plan item M11 is stated in.
+
+### `class CalculatorOracle(make: Callable[[], Any], relax: bool=True, fmax: float=0.05, steps: int=60, per_atom: bool=True, name: str='calculator')`
+
+The energy of a candidate from an ASE calculator, with an optional relaxation.
+
+`make` is called with no arguments and returns a fresh calculator, so that a calculator that
+keeps state cannot carry it from one candidate to the next. The same interface takes a
+machine-learned potential or a VASP calculator; what changes is the cost of a call and not
+the loop.
+
+### `as_candidates(structures: Sequence[Any], labels: Optional[Sequence[str]]=None) -> List[Candidate]`
+
+A pool of candidates from structures that are already built.
+
+This is what a retrospective measurement needs: the pool is a published set, every candidate
+keeps its row as its index, and the loop cannot tell it from a pool the generator proposed.
+
+### `cubic_perovskite(a: float=3.9, a_site: str='Sr', b_site: str='Ti', anion: str='O')`
+
+The five-atom cubic ABO3 cell, which is the prototype the measurement of M11 uses.
+
+A at the corner, B at the body centre and the three anions at the face centres. ASE does not
+build this structure, and writing it out keeps the site order fixed, which the site classes
+of a prototype depend on.
+
+### `candidates(proto: Prototype, limit: Optional[int]=None, seed: int=0, indices: Optional[Sequence[int]]=None) -> List[Candidate]`
+
+Every candidate of a prototype, or a sample of `limit` of them without replacement.
+
+A sample is drawn over the index range, so a pool of a few thousand can be taken from an
+enumeration of billions without building the ones left out.
+
+### `site_permutations(proto: Prototype, symprec: float=0.001, tol: float=0.001) -> np.ndarray`
+
+How the symmetry operations of the prototype permute its substitutable sites.
+
+Shape (G, S): row *g* holds, for every substitutable site, the site that operation *g* sends
+it to. Operations that send a substitutable site onto a site of another class, or onto no
+site at all, are left out, because they do not map the set of candidates onto itself. The
+identity is always the first row.
+
+### `unique(proto: Prototype, pool: Sequence[Candidate], perms: Optional[np.ndarray]=None) -> Tuple[List[Candidate], int]`
+
+One candidate per symmetry orbit, and how many were dropped as duplicates.
+
+### `channel_keys(crystals: Sequence[Any], spec, n_fields: int, decimals: int=8) -> List[Tuple]`
+
+One hashable key per structure from its descriptor channels, rounded to `decimals`.
+
+Two structures with the same key are the same structure for a model built on that
+descriptor, which is the test that matters: a two-point descriptor gives one key to a
+homometric pair, and the three-body channels of plan item M10 give them two.
+
+### `unique_by_channels(crystals: Sequence[Any], spec, n_fields: int, decimals: int=8) -> Tuple[List[int], int]`
+
+The rows to keep so that no two structures share their channels, and how many were
+dropped.
+
+### `feature_matrix(crystals: Sequence[Any], spec, n_fields: int, dtype=float) -> np.ndarray`
+
+The feature matrix of a pool under whichever periodic descriptor `spec` names.
+
+### `block_sizes(spec, n_fields: int) -> List[int]`
+
+The channel block widths of whichever descriptor `spec` names.
+
+### `pool_kernel(F: np.ndarray, blocks: Sequence[int]) -> np.ndarray`
+
+The cosine-normalised linear kernel of a pool, each channel block on its own scale.
+
+### `design_loop(pool: Sequence[Candidate], oracle: Callable[[Candidate], float], *, start: Sequence[int], budget: int, kernel: Optional[np.ndarray]=None, spec=None, n_fields: Optional[int]=None, rule: str='ucb', beta: float=1.0, xi: float=0.0, lams: Sequence[float]=(0.001, 0.01, 0.1, 1.0), maximise: bool=True, fit_bias: bool=True, seed: int=0, log: Optional[Callable[[str], None]]=None) -> dict`
+
+Propose, compute and refit, until the budget of oracle calls is spent.
+
+`start` are positions in `pool` whose values the oracle is asked for before the loop begins;
+they are the calculations a design study starts from. `budget` is how many further calls the
+loop may make. The kernel over the pool is given or built from `spec`, and nothing about the
+pool changes while the loop runs, so a candidate the loop never proposes costs nothing beyond
+its descriptor.
+
+With `maximise` false the target is negated inside, so that every rule still prefers a larger
+score and `"ucb"` reads as the lower confidence bound.
+
+Returns the record: one entry per step with what was proposed and what the oracle answered,
+the best value found, and which candidate holds it.
+
+### `first_better(record: dict, threshold: float) -> Optional[int]`
+
+The step at which the loop first found a candidate past `threshold`, or None.
+
+"Past" means above for a loop that maximises and below for one that minimises, so the same
+call reads a formation energy and a figure of merit.
+
+### `summarise(record: dict) -> str`
+
+One line for a log: what the loop spent and what it found.
+
 ## cmfqsar.pu
 
 Source: `cmfqsar/pu.py`
@@ -12044,6 +12995,288 @@ The fraction of comparable pairs the score puts in the correct order; ties count
 ### `rank_scores(y_true: Sequence[float], score: Sequence[float], gap: float=0.0, groups: Optional[Sequence]=None) -> Dict[str, float]`
 
 Spearman's rho, Kendall's tau and the share of pairs ordered correctly.
+
+## cmfqsar.reciprocal
+
+Source: `cmfqsar/reciprocal.py`
+
+Reciprocal-space channels of a crystal: the typed structure factors (plan item M6).
+
+The periodic autocorrelation of `periodic.py` is a sum over a neighbour list, so it stops at
+the cutoff radius `r_max`.  Order that extends further -- a superstructure with a long repeat,
+the long-range part of the electrostatic interaction, a modulation -- leaves no mark on it.  This
+module adds the channels that do carry such order, and it pays nothing for the distance: they are
+sums over the atoms of **one cell** with no neighbour list at all.
+
+The structure factor
+--------------------
+For a field f with weight `w_lf` on atom l at position `r_l`, and a vector **G** of the
+reciprocal lattice (the lattice of vectors with `G . T = 2 pi n` for every lattice translation
+T), the *typed structure factor* is the sum over the atoms of one cell
+
+    S_f(G) = sum_l w_lf exp(i G . r_l).
+
+It is the Fourier transform of the field of the whole infinite crystal, evaluated at G, and it
+is exactly what a diffraction experiment measures: `|S_f(G)|^2` is the intensity of the Bragg
+reflection at G when field f is the scattering power.  A single value of S_f(G) already holds
+information about the whole structure, however far the order extends, which is why this
+descriptor has no cutoff radius.
+
+The channels
+------------
+For a pair of field types (f, g) and a channel at the length `q_k`,
+
+    Psi_fg(q_k) = (1/N) { (2 pi)^3 / (V I_k) sum_{G != 0} A_fg(G) F(|G|) B_k(|G|)
+                          + (e_fg - c_fg) <F>_k },
+
+with
+
+* `A_fg(G) = |S_f(G)|^2` for one field type and `2 Re[S_f(G) conj(S_g(G))]` for two, which
+  counts a pair of different types in both orders exactly as the real-space descriptor does;
+* `c_fg` the part of `A_fg` that comes from an atom with itself, `sum_l w_lf w_lg` times
+  the same factor, and `e_fg` the same sum of the *second moments* of a disordered site.  The
+  two are equal for an ordered structure, so the term vanishes there; where they differ it is
+  the correction that partial occupancy asks for (plan item M2).  Neither is summed over the
+  reciprocal lattice: a quantity that does not depend on G contributes `<F>_k`, the mean of
+  the form factor over the channel, and taking it from that integral rather than from the grid
+  is what makes the descriptor independent of the choice of cell *exactly* (see
+  `ReciprocalSpec.form_average`).  `include_self=False` subtracts the self scattering
+  altogether, which leaves the distinct scattering of Faber and Ziman;
+* `F(q) = exp(-a^2 q^2)` is the *form factor*: the two fields are Gaussians of width `a`
+  (`form_sigma`), so their product in reciprocal space carries this factor.  It falls with q,
+  which makes `a` a **resolution**: a wide field sees only the first few reflections, a narrow
+  one sees fine detail.  This is the reciprocal-space reading of the width that the real-space
+  descriptor uses along the distance axis;
+* `B_k(q) = exp(-(q - q_k)^2 / 2 sigma^2) w(q)` is the channel, a Gaussian about `q_k` with
+  the same tapered window as the real-space cutoff, and `I_k` its shell integral
+  `INT 4 pi q^2 B_k(q) dq`;
+* `V` is the volume of the cell and `N` the number of atoms in it (the total occupancy for a
+  disordered cell).
+
+Dividing by `V I_k / (2 pi)^3` -- the number of reciprocal-lattice points a channel is
+expected to contain -- makes the channel the *spherical average of the intensity*, which is the
+powder diffraction profile of that pair of field types.  It also makes the descriptor exactly
+independent of the choice of cell: a supercell has as many times more reciprocal-lattice points
+as it has cells, and the new ones carry no intensity, so numerator and denominator grow by the
+same factor.  Nothing here depends on the origin or the orientation either, so the descriptor
+has the same invariances as the real-space one and adds no new assumption.
+
+Two further things follow from the definition and are worth stating, because the real-space
+module needs both and has them only as approximations:
+
+* **The uniform background is the G = 0 term.**  `A_fg(0) = (sum_l w_lf)(sum_l w_lg)`, the
+  forward scattering, and that is the quantity the real-space descriptor subtracts as the
+  uniform-density term.  Here it is one term of the sum, left out by `include_zero=False`, and
+  no integral has to be approximated to remove it.
+* **The two descriptions are one object.**  Summing the field of the crystal in real space and
+  summing it over the reciprocal lattice give the same number (Poisson summation, the identity
+  an Ewald sum is built on): for any width `u`,
+
+      sum_{l, m, T} w_lf w_mg exp(-|r_l - r_m - T|^2 / 2 u^2)
+          = (2 pi u^2)^{3/2} / V  sum_G A_fg(G) exp(-u^2 |G|^2 / 2).
+
+  `parseval_residual` computes both sides and their difference.  The left side is this
+  program's real-space pair sum and the right side is this module's sum over G, so the identity
+  is a test of the two pieces of code against each other, and it is the statement that the
+  reciprocal channels are the same descriptor read at a different resolution rather than a new
+  one.
+
+What this adds and what it does not
+-----------------------------------
+A reciprocal channel at small `q` describes the structure on a length scale `2 pi / q`, so
+the low-q channels carry exactly what a real-space cutoff cannot reach.  A cell with few atoms
+has few reciprocal-lattice points below `q_max`, and its profile is a short series of sharp
+peaks whose positions are set by the lattice metric; a large cell gives a dense profile.  The
+descriptor still cannot tell a structure from its mirror image, because the intensity of a
+reflection is the same for both: that deficiency is shared with every two-point descriptor and
+is the subject of plan item M10.
+
+Only structures periodic in all three directions are accepted.  A layer or a chain has a
+reciprocal lattice of lower dimension, and the intensity then depends on the component of G
+across the non-periodic directions as well, which these channels do not resolve.
+
+### `class ReciprocalSpec  (dataclass)`
+
+The grid of reciprocal-space channels: where they sit, how wide they are, and the
+resolution the form factor sets.
+
+The layout matches `cmfqsar.periodic.PeriodicSpec`, so the block and label helpers of
+`invariant.py` accept this spec unchanged: channels at 0, `step`, 2 `step`, ... up to
+`q_max`, one block per pair of field types.  `chirality` exists only for those helpers
+and is always False.
+
+Attributes:
+
+- `q_max: float` = `8.0`
+- `step: float` = `0.25`
+- `sigma: float` = `0.25`
+- `form_sigma: float` = `0.3`
+- `include_self: bool` = `True`
+- `include_zero: bool` = `False`
+- `taper: float` = `1.0`
+- `chirality: bool` = `False`
+
+#### `ReciprocalSpec.d_max` -> float  (property)
+
+The spec's own extent, for the helpers that ask every spec for one.
+
+#### `ReciprocalSpec.has_heights` -> bool  (property)
+
+#### `ReciprocalSpec.centres` -> np.ndarray  (property)
+
+#### `ReciprocalSpec.n_bins` -> int  (property)
+
+#### `ReciprocalSpec.window(q: np.ndarray) -> np.ndarray`
+
+1 below q_max, a half-cosine over the last `taper`, 0 beyond.
+
+#### `ReciprocalSpec.form_factor(q: np.ndarray) -> np.ndarray`
+
+`exp(-a^2 q^2)`: the product of the two Gaussian fields in reciprocal space.
+
+#### `ReciprocalSpec.shell_integral(n_points: int=4000) -> np.ndarray`
+
+`INT 4 pi q^2 exp(-(q - q_k)^2 / 2 sigma^2) w(q) dq` for every channel.
+
+The number of reciprocal-lattice points a channel is expected to hold, per unit density
+of those points.  It depends on the grid, the width and the window only, so it is
+computed once per spec.
+
+#### `ReciprocalSpec.form_average(n_points: int=4000) -> np.ndarray`
+
+The mean of the form factor over every channel: the shell integral with `F` in it,
+divided by the shell integral without.
+
+It is what a quantity that does not depend on the direction or the length of G
+contributes to a channel, and the self-scattering term is such a quantity.  Computing
+that contribution from this integral rather than by summing it over the
+reciprocal-lattice points is what makes the descriptor exactly independent of the choice
+of cell: a small cell has few points per channel, so the sum would estimate a constant
+badly and differently for a supercell of the same structure.
+
+### `reciprocal_cell(cell: np.ndarray) -> np.ndarray`
+
+The reciprocal lattice vectors as rows: `b_i . a_j = 2 pi delta_ij`.
+
+### `count_reciprocal_vectors(cell: np.ndarray, q_max: float) -> float`
+
+About how many reciprocal-lattice vectors lie inside `q_max`.
+
+The reciprocal lattice has `V / (2 pi)^3` points per unit volume, so the count is that
+density times the volume of the sphere.  It grows with the cell and with the cube of the
+cutoff, which is what makes a large cell at a high cutoff expensive, and this is the cheap
+way to find out before paying.
+
+### `reciprocal_vectors(cell: np.ndarray, q_max: float, include_zero: bool=False, max_vectors: int=4000000) -> Tuple[np.ndarray, np.ndarray]`
+
+The reciprocal-lattice vectors with `|G| <= q_max`, and their lengths.
+
+A vector `G = sum_i h_i b_i` has `h_i = G . a_i / 2 pi`, so `|h_i| <= q_max |a_i| / 2 pi`
+bounds the search exactly, whatever the shape of the cell.  The search runs one plane of
+indices at a time and keeps only what is inside the sphere: holding the whole box of indices
+would cost the volume of the box, which for a large cell at a high cutoff is many times the
+sphere and can be gigabytes.  `max_vectors` refuses a request whose result would be larger
+than that, rather than letting it exhaust the machine.
+
+### `structure_factors(crystal, G: np.ndarray, weights: Optional[np.ndarray]=None) -> np.ndarray`
+
+`S_f(G)` for every vector of `G` and every field: a complex `(len(G), n_fields)`.
+
+`weights` overrides the field weights of the structure, which is what the Parseval test
+and the per-field sums need.
+
+### `reciprocal_autocorrelation(crystal, spec: ReciprocalSpec=ReciprocalSpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None) -> np.ndarray`
+
+Reciprocal-space channels of one structure, flattened: `(n_pairs * n_bins,)`.
+
+The formula is the one in the module docstring.  The sum runs over the reciprocal-lattice
+vectors of the cell out to `q_max` and over the atoms of one cell; there is no neighbour
+list and no cutoff in real space.
+
+### `reciprocal_feature_matrix(crystals: Sequence, spec: ReciprocalSpec=ReciprocalSpec(), n_fields: Optional[int]=None, progress=None) -> np.ndarray`
+
+Reciprocal-space channels of a set of structures, one row each.
+
+### `reciprocal_block_sizes(spec: ReciprocalSpec, n_fields: int) -> List[int]`
+
+### `reciprocal_channel_labels(fieldset: FieldSet, spec: ReciprocalSpec) -> List[str]`
+
+One label per feature: which pair of field types, at which reciprocal length.
+
+### `joint_features(crystals: Sequence, real_spec, spec: ReciprocalSpec=ReciprocalSpec(), n_fields: Optional[int]=None, progress=None) -> Tuple[np.ndarray, List[int]]`
+
+The real-space and reciprocal-space channels side by side, and the block widths.
+
+The two descriptions of the same structure in one feature matrix: the pair blocks of the
+periodic autocorrelation first, then the pair blocks of this module.  Each block keeps its
+own scale (`cmfqsar.invariant.channel_scale` takes the widths), so neither description
+dominates the kernel by its units.  Mixing the two as separate *kernels* is the other way,
+and the one the benchmark uses when it wants to measure how much weight each deserves.
+
+### `joint_labels(fieldset: FieldSet, real_spec, spec: ReciprocalSpec) -> List[str]`
+
+The labels of `joint_features`, in the same order.
+
+### `gaussian_lattice_sum(crystal, width: float, pairs: Optional[Sequence[Tuple[int, int]]]=None, r_cut: float=8.0) -> np.ndarray`
+
+`sum_{l, m, T} w_lf w_mg exp(-|r_l - r_m - T|^2 / 2 u^2)` for every pair of field types.
+
+The real-space side of the identity in the module docstring: a sum over the neighbour list of
+the cell, with the atom-with-itself term at distance zero added, out to `r_cut` widths.
+
+### `gaussian_reciprocal_sum(crystal, width: float, pairs: Optional[Sequence[Tuple[int, int]]]=None, q_cut: float=8.0) -> np.ndarray`
+
+`(2 pi u^2)^{3/2} / V sum_G A_fg(G) exp(-u^2 |G|^2 / 2)` for every pair of field types.
+
+The reciprocal side of the same identity, over the reciprocal lattice out to `q_cut / u`.
+
+### `parseval_residual(crystal, width: float=0.5, pairs: Optional[Sequence[Tuple[int, int]]]=None, cut: float=8.0) -> dict`
+
+The two sides of the identity of the module docstring, and how far apart they are.
+
+Returns the real-space sum, the reciprocal-space sum and the largest relative difference
+over the pairs of field types.  The two are the same quantity computed by two independent
+pieces of code -- a neighbour list over the images, and a sum over the reciprocal lattice --
+so a small residual is evidence that both are right, and it is the test the theory section
+of the publication plan asks for.
+
+### `channel_spread(model) -> np.ndarray`
+
+The standard deviation of every scaled, normalised channel over the training structures.
+
+A weight only matters where the channel varies, so this is the other half of reading a
+fitted model; `cmfqsar.periodic.top_channels` is where the program defines it.
+
+### `reciprocal_pattern(model, n_fields: Optional[int]=None, spec: Optional[ReciprocalSpec]=None, effect: bool=False) -> np.ndarray`
+
+The reciprocal channels of a fitted model read back: `(n_pairs, n_bins)`.
+
+The co-pattern of the real-space descriptor says which pair of field types at which distance
+raises the property.  This is the same reading in reciprocal space: which pair of field types
+at which reciprocal length, that is, at which spacing of planes in the structure.  A positive
+value at `q` means that more intensity there raises the property.
+
+`effect=True` multiplies each weight by the spread of its channel over the training
+structures, which is how much that channel actually moves the prediction and is how the
+program ranks channels elsewhere.  The weights themselves change sign from one channel to
+the next, because neighbouring channels of a Gaussian grid are strongly correlated and a
+ridge splits a single feature among them; the product with the spread is the quantity to
+read.
+
+### `pattern_table(model, fieldset: FieldSet, spec: Optional[ReciprocalSpec]=None, n: int=10) -> List[Tuple[str, float, float]]`
+
+The `n` reciprocal channels that move the prediction most.
+
+(label, weight times the spread of the channel, the reciprocal length q), ranked by the
+size of the first, which is the ranking `cmfqsar.periodic.top_channels` uses.
+
+### `spacings(spec: ReciprocalSpec) -> np.ndarray`
+
+The plane spacing `2 pi / q` of every channel, in angstrom; infinity for the first.
+
+What a channel means as a length: a channel at `q` describes the structure on the scale of
+`2 pi / q`, which is how the reciprocal channels are compared with the cutoff radius of the
+real-space descriptor.
 
 ## cmfqsar.report
 
@@ -12273,6 +13506,213 @@ The two shares of one pair.
 ### `correlation(x: Sequence[float], y: Sequence[float], runs: int=2000, seed: int=0) -> Tuple[float, float, float]`
 
 Pearson correlation of two columns with a bootstrap interval over the pairs.
+
+## cmfqsar.scattering
+
+Source: `cmfqsar/scattering.py`
+
+Measured scattering curves as samples: the total, untyped descriptor (plan item M12).
+
+A diffraction experiment on a powder, a glass or a nanoparticle does not give atomic
+coordinates.  It gives one curve: the total structure function `F(Q)`, or its sine transform
+the reduced pair distribution function `G(r)`.  This module connects that curve to the
+descriptors of this program, so that a model can be fitted where no structure is known.
+
+The curve is one channel block of the descriptor
+------------------------------------------------
+The periodic autocorrelation of `periodic.py` is a *typed* pair-distance distribution: one
+block per pair of field types.  An experiment cannot separate the types, because every atom
+scatters into the same detector.  What it measures is the single block of one field whose weight
+is the atom's **scattering length** -- the neutron scattering length `b`, or for X-rays the
+atomic number `Z`.  Written out, with `N` atoms in the cell, number density `rho_0` and
+`<b>` the mean scattering length,
+
+    G(r) = Phi_bb(r) / ( sigma sqrt(2 pi) * r * <b>^2 ),
+
+where `Phi_bb` is `cmfqsar.periodic.periodic_autocorrelation` of that one field, with
+the uniform background kept and the self term dropped.  The background term of the descriptor is
+exactly the `- 4 pi r rho_0` of the standard definition, and the factor
+`sigma sqrt(2 pi)` is the integral of the channel's Gaussian.  The identity is exact as the
+channel narrows: the error is of order `(sigma / r)^2`, and `pair_distribution_residual`
+measures it against a direct sum over the neighbour list.
+
+The same holds in reciprocal space.  The Faber-Ziman total structure factor is the one-field
+channel of `reciprocal.py` divided by `<b>^2`,
+
+    S(Q) = Psi_bb(Q) / <b>^2,        F(Q) = Q [ S(Q) - 1 ],
+
+with the form factor switched off, and `G` and `F` are a sine transform apart,
+`G(r) = (2/pi) INT F(Q) sin(Qr) dQ`.  So the two things an experiment can report and the two
+descriptions this program already had are one object seen four ways.
+
+What this buys, and what it costs
+---------------------------------
+It buys a sample where there is no structure: a measured curve is a feature row like any other,
+so a model fitted on computed curves can predict for a measured one, and curves of amorphous or
+nanocrystalline materials become usable.  It costs the typing.  Whether that cost is affordable
+is a question about the data and not about the code, and `benchmarks/run_scattering.py` measures
+it: the total curve against the typed descriptor on the same structures and the same folds.
+
+A measured curve is also not a computed one.  Four things separate them, and
+`measured_like` applies all four to a computed curve so that a model can be tested against
+them before any experiment is trusted:
+
+* **a finite range in Q.**  The transform runs to the largest Q the instrument reached, which
+  puts ripples of period `2 pi / Q_max` around every peak;
+* **counting noise** on `F(Q)`;
+* **an error in the number density**, which adds a straight line `-4 pi r delta rho` to
+  `G(r)`, because `rho_0` is what the baseline is drawn from;
+* **a limited range in r**: the low-r region is dominated by termination ripples and the high-r
+  region by the instrument's resolution.
+
+Reading a measured file
+-----------------------
+`read_curve` reads the two-column text that PDFgetX3, diffpy and the other common programs
+write: comment lines starting with `#`, then `r` and `G` (or `Q` and `F`, or `Q` and
+`S`), with any further columns ignored.  Values the header happens to carry -- `qmax`,
+`rho0`, `composition` -- are returned beside the curve when they are there.
+
+### `class CurveSpec  (dataclass)`
+
+The grids a curve is reported on: `r` for `G(r)` and `Q` for `F(Q)`.
+
+`sigma` is the width of the channel the pair distribution is computed with, which stands
+for the resolution of the instrument in real space.  The identity with the descriptor is
+exact as `sigma` falls, so a narrow channel is the honest setting and a wide one is the
+statement that the measurement is blurred.
+
+Attributes:
+
+- `r_min: float` = `1.0`
+- `r_max: float` = `20.0`
+- `r_step: float` = `0.05`
+- `sigma: float` = `0.05`
+- `q_min: float` = `0.5`
+- `q_max: float` = `25.0`
+- `q_step: float` = `0.05`
+- `margin: float` = `6.0`
+
+#### `CurveSpec.r` -> np.ndarray  (property)
+
+#### `CurveSpec.q` -> np.ndarray  (property)
+
+#### `CurveSpec.periodic_spec()`
+
+The descriptor spec whose one-field channels are this curve.
+
+#### `CurveSpec.reciprocal_spec()`
+
+The reciprocal spec whose one-field channels are this structure factor.
+
+The form factor is switched off (`form_sigma` 0): a scattering experiment carries its
+own, and putting a second one in would damp the curve twice.
+
+### `scattering_lengths(symbols: Sequence[str], source: str='xray') -> np.ndarray`
+
+The scattering length of every atom: the atomic number, or the neutron value.
+
+For X-rays this is the Q -> 0 limit of the form factor.  A real X-ray form factor falls with
+Q, which is why X-ray pair distribution work divides by the average form factor; taking the
+limit instead is the usual approximation and is stated here rather than hidden.
+
+### `scattering_record(crystal, source: str='xray')`
+
+The same structure carrying one field: how each of its atoms scatters.
+
+Everything else -- the coordinates, the cell, the periodicity flags -- is shared with the
+structure it came from, so this costs nothing but the weights.
+
+### `pair_distribution(crystal, spec: CurveSpec=CurveSpec(), source: str='xray') -> Tuple[np.ndarray, np.ndarray]`
+
+`(r, G(r))`: the reduced pair distribution function of one structure.
+
+`G(r) = 4 pi r rho_0 [g(r) - 1]` in the usual convention, computed as the one-field
+periodic autocorrelation divided by `r`, by the mean scattering length squared and by the
+integral of the channel's Gaussian (see the module docstring).
+
+### `structure_function(crystal, spec: CurveSpec=CurveSpec(), source: str='xray', route: str='transform') -> Tuple[np.ndarray, np.ndarray]`
+
+`(Q, F(Q))` with `F(Q) = Q [S(Q) - 1]`: the reduced total structure function.
+
+`S(Q)` is the Faber-Ziman total: the *distinct* scattering, with the term an atom gives
+with itself taken out, so that `S` approaches 1 at large Q and `F` approaches zero.
+Leaving that term in would add `(<b^2>/<b>^2 - 1) Q`, a straight line growing with Q, to
+every curve of a structure with more than one element.
+
+Two routes, because they are the same quantity and not the same computation:
+
+* `"transform"` (the default) is the sine transform of the computed `G(r)`, which is the
+  operational definition and the one that matches the `G` this module returns, truncation
+  at `r_max` included -- exactly as a measured `F` matches the measured `G` it was
+  made from;
+* `"reciprocal"` sums over the reciprocal lattice (`reciprocal.py`).  That is what the
+  structure factor *is*, and for an infinite crystal it is a set of sharp reflections, which
+  a channel grid of finite width samples rather than resolves.  It is the right route for a
+  cell whose reflections are dense, and the wrong one for a small cell with a few sharp ones.
+
+### `pair_distribution_residual(crystal, spec: CurveSpec=CurveSpec(), source: str='xray') -> dict`
+
+How far the descriptor route is from the definition of `G(r)`.
+
+The definition is a sum over the neighbour list, smeared by a normalised Gaussian; the
+descriptor route is the one-field autocorrelation.  They are the same in the limit of a
+narrow channel, so the residual says how narrow is narrow enough.
+
+### `sine_transform(q: np.ndarray, f: np.ndarray, r: np.ndarray) -> np.ndarray`
+
+`G(r) = (2/pi) INT F(Q) sin(Qr) dQ`, by the trapezium rule on the given grid.
+
+### `inverse_sine_transform(r: np.ndarray, g: np.ndarray, q: np.ndarray) -> np.ndarray`
+
+`F(Q) = INT G(r) sin(Qr) dr`, the other direction of the same transform.
+
+### `measured_like(spec: CurveSpec, r: np.ndarray, g: np.ndarray, q_max: Optional[float]=None, noise: float=0.0, density_error: float=0.0, density: float=0.0, seed: int=0) -> np.ndarray`
+
+A computed `G(r)` put through what a real measurement does to it.
+
+`q_max` transforms the curve to `F(Q)`, cuts it there and transforms back, which is what
+an instrument of that range would have reported, ripples and all.  `noise` adds Gaussian
+noise to `F(Q)` with that standard deviation, in units of the root mean square of `F`.
+`density_error` is the relative error in the number density used to draw the baseline, and
+adds `-4 pi r rho_0 * density_error` to the curve; it needs `density`, the number of
+atoms per cubic angstrom of the structure.  Each is optional and they compose in that order.
+
+### `read_curve(path: str) -> dict`
+
+A measured curve from the two-column text the common programs write.
+
+Returns `{"x", "y", "path", "header"}` and whatever of `HEADER_KEYS` the comments
+carried.  Lines beginning with `#` are comments, a line of two or more numbers is data, and
+columns after the second (the uncertainties) are ignored.  The file says in its own units
+what `x` is: `r` in angstrom for a `.gr`, `Q` in inverse angstrom for a `.fq` or
+`.sq`; this reader does not guess, it only reads.
+
+### `resample(curve: dict, grid: np.ndarray, fill: float=0.0) -> np.ndarray`
+
+A measured curve put on the grid a model uses, with the range it does not cover filled.
+
+A measurement that stops at 20 angstrom cannot say what happens at 30, and the fill value is
+what the model is told instead; 0 is the right one for `G(r)`, which oscillates about zero.
+
+### `computed_curves(crystals: Sequence, spec: CurveSpec=CurveSpec(), source: str='xray', progress=None) -> np.ndarray`
+
+`G(r)` of every structure of a set, one row each, on the spec's grid.
+
+### `curve_matrix(curves: Sequence[dict], grid: np.ndarray, fill: float=0.0) -> np.ndarray`
+
+Measured curves on one grid, one row each: the feature matrix of a set of measurements.
+
+### `curve_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, normalize: bool=True) -> np.ndarray`
+
+The cosine-normalised linear kernel of a set of curves, computed or measured.
+
+It is `cmfqsar.invariant.autocorrelation_kernel` with one channel block, which is what
+a total curve is.  Because the grid is the only thing the two sides share, a measured curve
+and a computed one can be compared with it directly.
+
+### `curve_labels(spec: CurveSpec) -> List[str]`
+
+One label per column of a curve matrix: the distance it reports.
 
 ## cmfqsar.screen
 
@@ -12509,6 +13949,163 @@ Group the atoms outside the core into connected substituents, with readable labe
 ### `scaffold_decomposition(model, mol: MoleculeFields, rdmol, references: Sequence, **kwargs) -> ShapleyResult`
 
 Shapley values of the substituents of a congeneric series over their common scaffold.
+
+## cmfqsar.sites
+
+Source: `cmfqsar/sites.py`
+
+Site-resolved models of a periodic structure (plan item M5).
+
+The periodic autocorrelation of `cmfqsar.periodic` is a sum over ordered pairs of atoms of
+one cell, so it splits exactly into one contribution per **site**: the term of a pair belongs to
+the atom that stands first in it.  That one observation gives two things the whole-cell descriptor
+cannot.
+
+**A sample that is a site.**  The row of the split that belongs to site *l* is the typed radial
+profile of the cell as seen *from that site*: for every pair of field types (f, g) and every
+distance channel d_k,
+
+    s_l(f, g, d_k) = w_lf * sum_m w_mg G_k(r_lm) + w_lg * sum_m w_mf G_k(r_lm)   (f != g)
+
+with the sum over the atoms of the cell and their periodic images inside the cutoff, the self
+term where the spec keeps it, and the uniform background of the site removed.  The pair term is
+local: only the neighbours of site *l* inside `r_max` enter it.  The uniform background is not, because it is
+the mean field of the whole cell, so two cells of different composition give different
+backgrounds at the same site; a profile that depends on nothing beyond the cutoff is taken with
+`background=False`.  The profile needs no alignment,
+because it is built from distances alone, and it is the periodic counterpart of the atom-centred
+environment of `cmfqsar.localenv` (plan item LP2), with two differences: the images of the
+cell are summed in, so nothing has to be cut out of the solid, and the profile is one-centred
+(pairs from the site to its neighbours) instead of all-pairs inside an envelope.
+
+A site record is an ordinary structure as far as the rest of the program is concerned:
+`site_fields` returns a `cmfqsar.periodic.CrystalFields` whose `centre` is the
+site, and `cmfqsar.periodic.periodic_autocorrelation` of such a record is that site's row.
+So `cmfqsar.model.CMFModel` with `kernel_source="periodic"` fits a set of sites exactly
+as it fits a set of cells, and the targets of that shape are the ones
+`cmfqsar.atomtargets` already holds (plan item LP1), down to the folds, which hold out whole
+**structures**: two sites of one cell, one in the training set and one in the test set, would let
+the model see the cell it is being tested on.
+
+**A local reading of a whole-cell model.**  For a cell-level model on the same kernel the split is
+exact in the other direction: the cell descriptor is the mean of its site rows, the linear layer
+is linear, so the prediction minus the bias is the sum of one number per site
+(`site_contributions`).  That is the local co-pattern the autocorrelation kernel could not
+give: not only which pair of field types at which distance raises the property, but *which site*
+of the cell carries it.  It is the same decomposition rule as the atom contributions of the
+overlap kernel (rule 3 of the plan), and it is exact to machine precision rather than attributed.
+
+**The reference under rule 1.**  The simplest thing that could predict a per-site property is a
+count: which element stands at the site, and how many atoms of each element lie in each distance
+shell around it.  `shell_count_features` builds exactly that from the same cells, the same
+sites and the same images, so that the only difference between the two numbers is the descriptor.
+
+**What is not here.**  The height channels of a layer (plan item M1, `z_max > 0`) have no site
+split in this version: `site_autocorrelation` refuses a spec that carries them, because the
+descriptor of a site would then need the two height axes of the pair and the averaging over the
+two faces, which is a second code path and not yet measured.  A site model of a slab therefore
+uses the plain distance profile, which does not tell a neighbour above the surface from one below
+it at the same distance.
+
+### `site_autocorrelation(crystal: CrystalFields, spec: PeriodicSpec=SITE_SPEC, pairs: Optional[Sequence[Tuple[int, int]]]=None) -> np.ndarray`
+
+The periodic autocorrelation of one cell split over its sites: `(n_atoms, width)`.
+
+Row *l* is the profile of site *l* described above, in the layout of
+`cmfqsar.periodic.periodic_autocorrelation`, and the rows are **not** divided by the
+number of atoms, so that a site profile does not depend on how large a cell the site was
+written in.  The mean of the rows is the descriptor of the cell:
+`site_autocorrelation(c, spec).mean(0) == periodic_autocorrelation(c, spec)` for an ordered
+cell, and the sum over the rows divided by the expected atom count for a disordered one.
+
+### `site_width(spec: PeriodicSpec=SITE_SPEC, n_fields: int=1) -> int`
+
+How many channels one site profile carries.
+
+### `site_fields(crystal: CrystalFields, site: int, name: str='') -> CrystalFields`
+
+The cell as one sample centred on `site`: a record whose `centre` is that site.
+
+The arrays are shared with `crystal`, not copied; a site record is a view of the cell with a
+centre, and `cmfqsar.periodic.periodic_autocorrelation` of it is that site's profile.
+
+### `site_structures(crystals: Sequence[CrystalFields], targets: AtomTargets, names: Optional[Sequence[str]]=None) -> List[CrystalFields]`
+
+One site record per measured sample of `targets`, in the order of its rows.
+
+### `site_table(crystals: Sequence[CrystalFields], targets: AtomTargets) -> AtomTable`
+
+An `cmfqsar.fields.AtomTable` whose structures are the measured sites, which
+`cmfqsar.model.CMFModel` with `kernel_source="periodic"` takes like any other.
+
+### `site_names(crystals: Sequence[CrystalFields], targets: AtomTargets) -> List[str]`
+
+`name#index element` of every sample: what a table of predictions is read by.
+
+### `site_features(crystals: Sequence[CrystalFields], targets: AtomTargets, spec: PeriodicSpec=SITE_SPEC, progress=None) -> np.ndarray`
+
+The site profiles of every measured sample, one row each.
+
+The split of one cell gives every one of its sites at once, so each cell is featurised once
+however many of its sites were measured.
+
+### `site_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, n_bins: int=1, blocks: Optional[Sequence[int]]=None) -> np.ndarray`
+
+The cosine-normalised linear kernel of the site profiles: the same kernel the whole-cell
+autocorrelation uses, so that only the descriptor differs between the two.
+
+### `site_targets(values: Sequence[Sequence[float]], name: str='') -> AtomTargets`
+
+The target index of a per-site property: one value per site of every cell, not a number
+where the site was not measured.
+
+### `one_site_targets(sites: Sequence[int], values: Sequence[float], n_sites: Sequence[int], name: str='') -> AtomTargets`
+
+The target index of a set where one site of every cell is measured: the site of each cell,
+its value, and how many sites that cell has.
+
+### `elements_of(crystals: Sequence[CrystalFields], min_sites: int=1) -> List[str]`
+
+The elements that appear in the set, in alphabetical order.
+
+### `shell_counts(crystal: CrystalFields, site: int, elements: Sequence[str], shells: Sequence[float]=SHELLS) -> np.ndarray`
+
+`(1 + n_shells, n_elements)` flattened: the element of the site itself, then how many
+atoms of every element lie in each distance shell around it, images included.
+
+### `shell_count_features(crystals: Sequence[CrystalFields], targets: AtomTargets, elements: Optional[Sequence[str]]=None, shells: Sequence[float]=SHELLS) -> np.ndarray`
+
+The count reference of every measured sample, one row each.
+
+### `count_labels(elements: Sequence[str], shells: Sequence[float]=SHELLS) -> List[str]`
+
+One label per column of the count reference.
+
+### `cell_norm(crystal: CrystalFields) -> float`
+
+What the cell descriptor divides its site rows by: the number of atoms, or the expected
+number on a disordered cell (plan item M2).
+
+### `site_contributions(model, crystal: CrystalFields, spec: Optional[PeriodicSpec]=None) -> np.ndarray`
+
+One number per site of `crystal`: what that site adds to the prediction of a fitted
+whole-cell model on the periodic autocorrelation.
+
+The sum of the numbers is the prediction minus the bias, exactly.  The kernel is the dot
+product of the scaled, unit-normalised channels, the cell's channels are the mean of its
+site profiles, and a linear layer is linear, so the decomposition needs nothing attributed:
+it is rule 3 of the plan for the autocorrelation kernel.  Defined for the linear layer only.
+
+### `site_contribution_table(model, crystal: CrystalFields, n: int=10, spec: Optional[PeriodicSpec]=None) -> List[Tuple[str, float]]`
+
+The `n` sites that move the prediction most, as (`index element`, contribution).
+
+### `site_top_channels(model, crystal: CrystalFields, site: int, labels: Sequence[str], n: int=10, spec: Optional[PeriodicSpec]=None) -> List[Tuple[str, float]]`
+
+The `n` channels of one site's profile that move the prediction most, as (label, amount).
+
+The amounts sum to the contribution of that site, so this says which pair of field types at
+which distance *from this site* raises the property and which lowers it.
 
 ## cmfqsar.solvent
 
@@ -12867,6 +14464,206 @@ The tautomer ensembles of a whole series, in order.
 ### `ambiguous_share(ensembles: Sequence[Ensemble]) -> float`
 
 What share of a series has more than one form, which is what the ensemble can change.
+
+## cmfqsar.threebody
+
+Source: `cmfqsar/threebody.py`
+
+Three-body channels and handedness for a periodic cell (plan item M10).
+
+The periodic autocorrelation of `cmfqsar.periodic` is a **two-point** descriptor: it counts
+how much field weight sits at each distance from how much other field weight.  Two structures
+with the same multiset of interatomic distances therefore give exactly the same channels, however
+differently their atoms are arranged.  Two such structures are called **homometric**, and they are
+not a curiosity: a defect series on one host lattice is full of arrangements that share their
+distance histogram, which is why `benchmarks/run_2dmd.py` finds the autocorrelation near the
+accuracy of guessing on a set where the arrangement of the defects is the whole of the signal.
+A mirror image is the other blind spot: reflecting a structure leaves every distance unchanged, so
+no two-point descriptor can tell a left-handed crystal from a right-handed one.
+
+This module closes both, in the terms of this program.
+
+**The three-body block.**  Every atom of the cell is taken as a centre in turn.  Around a centre,
+two neighbours and the centre form a triangle, and a triangle is fixed by its three sides: the two
+distances from the centre and the distance between the neighbours.  Writing `r_a` for the
+distance of neighbour *a* from the centre and `d_ab` for the distance between two neighbours:
+
+    Phi_fg(k, k', m) = (1/N) sum over centres l of
+                       sum over neighbours a, b of l of
+                       w_af w_bg R_k(r_a) R_k'(r_b) D_m(d_ab),
+
+with `R_k` a Gaussian window on a grid of radii from the centre, `D_m` one on a grid of
+distances between neighbours, and `N` the atoms in the cell.  The neighbourhood of a centre holds
+the centre itself (at radius zero, so its own field types enter the channels) and every atom of
+every periodic image within the cutoff.  The channel layout is the one of
+`cmfqsar.triangles`, which builds the same block around one atom of a molecule (plan item C5):
+one block per pair of field types, and inside a block one column per pair of radial windows and
+distance window.  Dividing by `N` makes a supercell give exactly the same channels as the cell it
+repeats.
+
+**The handedness block.**  Three distances fix a triangle only up to its mirror image, so the block
+above is still blind to a reflection.  The signed quantity that is not is the triple product of
+three vectors.  Around a centre:
+
+    X_fgh(s) = (1/N) sum over centres l of det[ A_f(l, s), A_g(l, s), A_h(l, s) ],
+    A_f(l, s) = sum over neighbours a of l of w_af G_s(r_a) (r_a - r_l),
+
+with `G_s` a Gaussian window on a grid of radii, which keeps the handedness resolved by distance
+from the centre rather than reduced to one number.  The development plan expected this block to
+cost a sum over triples of atoms, because the factorisation that `cmfqsar.invariant.chirality`
+uses for a molecule needs an origin, and a periodic structure has no centroid to use.  With the
+centre atom as that origin the factorisation survives in full: the determinant is linear in each of
+its three arguments, so the sum over triples of neighbours **is** the determinant of three summed
+vectors, and the block costs one pass over the neighbour list, not a cubic sum.  Under a proper
+rotation all three vectors turn together and the determinant does not change; under a reflection it
+changes sign; a centrosymmetric neighbourhood gives zero, as an achiral environment must.
+
+**When the handedness block is empty.**  A determinant of three vectors is zero whenever they lie
+in a plane, and this is not a rare case.  A field weight that depends only on the species of the
+atom makes every `A_f` a combination of one vector per species, so a structure of two species
+gives vectors in a plane at most and the whole block is identically zero; three species are the
+minimum, and their vector sums must not be coplanar.  A site with a rotation axis through it also
+gives zero, because a sum that is unchanged by the rotation can only lie along the axis.  The
+block is therefore a sharp test for handedness and not a general-purpose descriptor: it is off by
+default, and a structure that gives zero in every channel is telling the truth about itself.
+
+**What it costs.**  One pass over the pairs of neighbours of every atom.  Measured by
+`benchmarks/run_threebody.py --probe`: a cell of four atoms with a 4 angstrom reach and a
+0.5 angstrom grid takes about 0.05 seconds and gives 11,322 channels, and a defect supercell of
+191 atoms with a 0.75 angstrom grid takes about 0.26 seconds and gives 14,112.  The number of
+channels grows as the square of (fields times radii), so the radial grid is coarse and the cutoff
+short; the kernel works in the dual and does not mind the width.
+
+**What is not covered.**  A disordered cell is refused: the mean of a product of three weights on
+one site is not the product of their means, and this module tabulates no third moments.  No uniform
+background is subtracted, unlike the two-point descriptor, so these channels carry how dense the
+structure is as well as how it is arranged; a cosine-normalised kernel removes most of that, and
+the two-point channels are there to carry the density properly.  The cutoff is sharp in the sense
+that an atom beyond `r_max + reach * sigma` is left out, where it contributes less than
+`exp(-reach^2 / 2)` of a window.
+
+### `class ThreeBodySpec  (dataclass)`
+
+The grids the three-body channels of a cell are evaluated on.
+
+`r_max` is how far from a centre the radial grid reaches, in angstrom, and is the cutoff of the
+descriptor; the grid of distances between two neighbours reaches twice as far, which is the
+longest third side a triangle inside the cutoff can have.  `step` is the spacing of both grids
+and `sigma` the width of the Gaussian window on every grid point.  `include_self` keeps the
+terms in which the two neighbours are the same atom, which carry the radial density itself.
+With `chirality` on, the handedness block is added, resolved over `chirality_shells` radial
+windows of width `chirality_sigma` about the centre.
+
+Attributes:
+
+- `r_max: float` = `4.0`
+- `step: float` = `0.5`
+- `sigma: float` = `0.35`
+- `include_self: bool` = `True`
+- `reach: float` = `DEFAULT_REACH`
+- `chirality: bool` = `False`
+- `chirality_shells: int` = `4`
+- `chirality_sigma: float` = `0.5`
+
+#### `ThreeBodySpec.triangle` -> TriangleSpec  (property)
+
+The channel layout of `cmfqsar.triangles`, which this block shares.
+
+#### `ThreeBodySpec.radii` -> np.ndarray  (property)
+
+#### `ThreeBodySpec.distances` -> np.ndarray  (property)
+
+#### `ThreeBodySpec.n_radii` -> int  (property)
+
+#### `ThreeBodySpec.n_distances` -> int  (property)
+
+#### `ThreeBodySpec.cutoff` -> float  (property)
+
+Beyond this distance from a centre an atom is not in the sum.
+
+#### `ThreeBodySpec.n_bins` -> int  (property)
+
+The width of the innermost grid, which is the grid of distances between neighbours.
+
+The helpers that scale the channels and build the kernel
+(`cmfqsar.invariant.channel_scale`, `cmfqsar.invariant.autocorrelation_kernel`)
+ask a spec for one block width to fall back on.  The blocks of this descriptor are not all
+of one width, so they are always passed explicitly and this value is only the fallback.
+
+#### `ThreeBodySpec.n_shells` -> int  (property)
+
+Radial windows the handedness block is resolved over; one for a single number.
+
+#### `ThreeBodySpec.shell_centres` -> np.ndarray  (property)
+
+Where the windows of the handedness block sit, measured from the centre atom.
+
+#### `ThreeBodySpec.radial_pairs(same: bool) -> List[Tuple[int, int]]`
+
+#### `ThreeBodySpec.block_sizes(n_fields: int) -> List[int]`
+
+Channels per block: the pair blocks first, then the handedness blocks.
+
+#### `ThreeBodySpec.n_channels(n_fields: int) -> int`
+
+### `neighbourhoods(crystal, cutoff: float) -> List[Tuple[np.ndarray, np.ndarray]]`
+
+For every atom of the cell, the vectors to its neighbours and their field weights.
+
+The neighbourhood of an atom holds the atom itself, at the vector zero, and every atom of
+every periodic image whose distance is below `cutoff`.  The vectors are measured from the
+centre, so they do not change when the structure is moved, and they turn with it when it is
+turned.  The periodicity flags of the cell are respected: a layer has neighbours in two
+directions and a chain in one.
+
+### `threebody_autocorrelation(crystal, spec: ThreeBodySpec=ThreeBodySpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None) -> np.ndarray`
+
+The three-body channels of one cell, flattened: `(n_pair_blocks * channels,)`.
+
+The sum runs over the atoms of the cell as centres and over ordered pairs of their
+neighbours, so a pair of different field types is counted both ways round, as the two-point
+descriptor counts it.  For a site record (plan item M5) only that site is a centre, and the
+channels are the three-body profile of that one site.
+
+### `periodic_chirality(crystal, spec: ThreeBodySpec=ThreeBodySpec(), triples: Optional[Sequence[Tuple[int, int, int]]]=None) -> np.ndarray`
+
+The handedness channels of one cell, flattened: `(n_triples * n_shells,)`.
+
+Each channel is the signed volume spanned by three field-weighted vectors, summed over the
+atoms of the cell as centres and divided by their number.  A structure and its mirror image
+give the same number with the opposite sign, and a centrosymmetric structure gives zero.
+
+### `threebody_features(crystal, spec: ThreeBodySpec=ThreeBodySpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None, triples: Optional[Sequence[Tuple[int, int, int]]]=None) -> np.ndarray`
+
+The channels of one cell: the three-body block, and the handedness block after it.
+
+### `threebody_feature_matrix(crystals: Sequence, spec: ThreeBodySpec=ThreeBodySpec(), n_fields: Optional[int]=None, progress=None, dtype=float) -> np.ndarray`
+
+Three-body features of a list of cells, one row each.
+
+### `threebody_block_sizes(spec: ThreeBodySpec, n_fields: int) -> List[int]`
+
+How many columns each channel block takes, in the order the features are laid out.
+
+### `threebody_channel_labels(fieldset: FieldSet, spec: ThreeBodySpec) -> List[str]`
+
+One label per channel: which two field types, at which two radii and how far apart.
+
+### `channel_spread(features: np.ndarray, blocks: Optional[Sequence[int]]=None) -> np.ndarray`
+
+The standard deviation of every channel over a set of structures.
+
+A ridge weight alone says nothing: a channel that hardly varies can carry a large weight and
+move no prediction.  What a reading needs is the weight times the spread, which is the
+convention `cmfqsar.periodic.top_channels` uses.
+
+### `pattern_table(weights: Sequence[float], features: np.ndarray, labels: Sequence[str], top: int=20) -> List[Dict[str, float]]`
+
+The channels that move the prediction most, largest first.
+
+Each row carries the label of the channel, the weight the model gives it, the spread of the
+channel over the structures and their product, which is how much of the prediction that
+channel accounts for.
 
 ## cmfqsar.topomer
 
