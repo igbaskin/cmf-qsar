@@ -1,0 +1,191 @@
+{
+ "n": 62,
+ "compositions": 22,
+ "solvents": {
+  "DEC": 15,
+  "PC": 19,
+  "DMC": 19,
+  "EC": 41,
+  "MA": 12,
+  "EMC": 25
+ },
+ "ids": [
+  "LiPF6_DEC20_PC80_m0p282",
+  "LiPF6_DEC20_PC80_m0p892",
+  "LiPF6_DEC20_PC80_m2p373",
+  "LiPF6_DEC40_PC60_m0p320",
+  "LiPF6_DEC40_PC60_m0p802",
+  "LiPF6_DEC40_PC60_m1p741",
+  "LiPF6_DEC50_PC50_m0p271",
+  "LiPF6_DEC50_PC50_m0p386",
+  "LiPF6_DEC50_PC50_m0p465",
+  "LiPF6_DEC60_PC40_m0p245",
+  "LiPF6_DEC60_PC40_m0p539",
+  "LiPF6_DEC60_PC40_m0p750",
+  "LiPF6_DEC70_PC30_m0p259",
+  "LiPF6_DEC70_PC30_m0p550",
+  "LiPF6_DEC70_PC30_m0p898",
+  "LiPF6_DMC100_m0p500",
+  "LiPF6_DMC100_m1p500",
+  "LiPF6_DMC100_m2p000",
+  "LiPF6_DMC50_EC30_MA20_m0p491",
+  "LiPF6_DMC50_EC30_MA20_m1p500",
+  "LiPF6_DMC50_EC30_MA20_m2p000",
+  "LiPF6_DMC60_EC30_MA10_m0p500",
+  "LiPF6_DMC60_EC30_MA10_m1p491",
+  "LiPF6_DMC60_EC30_MA10_m1p982",
+  "LiPF6_DMC70_EC25_EMC05_m1p200",
+  "LiPF6_DMC70_EC30_m0p491",
+  "LiPF6_DMC70_EC30_m1p000",
+  "LiPF6_DMC70_EC30_m2p000",
+  "LiPF6_DMC80_EC20_m0p500",
+  "LiPF6_DMC80_EC20_m1p500",
+  "LiPF6_DMC80_EC20_m2p000",
+  "LiPF6_DMC90_EC10_m0p500",
+  "LiPF6_DMC90_EC10_m1p500",
+  "LiPF6_DMC90_EC10_m2p000",
+  "LiPF6_EC10_EMC90_m0p500",
+  "LiPF6_EC10_EMC90_m1p500",
+  "LiPF6_EC10_EMC90_m2p000",
+  "LiPF6_EC15_PC85_m0p446",
+  "LiPF6_EC20_EMC80_m0p454",
+  "LiPF6_EC20_EMC80_m1p110",
+  "LiPF6_EC20_EMC80_m2p000",
+  "LiPF6_EC30_EMC50_MA20_m0p508",
+  "LiPF6_EC30_EMC50_MA20_m1p492",
+  "LiPF6_EC30_EMC50_MA20_m1p992",
+  "LiPF6_EC30_EMC60_MA10_m0p570",
+  "LiPF6_EC30_EMC60_MA10_m1p596",
+  "LiPF6_EC30_EMC60_MA10_m2p105",
+  "LiPF6_EC30_EMC70_m0p443",
+  "LiPF6_EC30_EMC70_m1p110",
+  "LiPF6_EC30_EMC70_m2p009",
+  "LiPF6_EC40_EMC60_m0p428",
+  "LiPF6_EC40_EMC60_m1p077",
+  "LiPF6_EC40_EMC60_m1p574",
+  "LiPF6_EC50_EMC50_m0p540",
+  "LiPF6_EC50_EMC50_m1p212",
+  "LiPF6_EC50_EMC50_m1p806",
+  "LiPF6_EC60_PC40_m0p450",
+  "LiPF6_EC60_PC40_m0p813",
+  "LiPF6_EC60_PC40_m2p102",
+  "LiPF6_EMC100_m0p500",
+  "LiPF6_EMC100_m1p500",
+  "LiPF6_EMC100_m2p000"
+ ],
+ "log10_k_298": {
+  "min": 0.1686,
+  "max": 1.1721,
+  "mean": 0.8570548387096776,
+  "sd": 0.20100822972909843,
+  "mean_model_mae": 0.14602226847034339
+ },
+ "ea_298": {
+  "min": 5.486,
+  "max": 37.776,
+  "mean": 13.416274193548386,
+  "sd": 5.549189263393568,
+  "mean_model_mae": 3.53486680541103
+ },
+ "molality": {
+  "min": 0.245,
+  "max": 2.373
+ },
+ "complex_shapes": {
+  "distinct": 12,
+  "shared": 9,
+  "shapes": {
+   "DEC:1 PC:3": [
+    "DEC0.20+PC0.80",
+    "DEC0.40+PC0.60"
+   ],
+   "DEC:2 PC:2": [
+    "DEC0.50+PC0.50",
+    "DEC0.60+PC0.40"
+   ],
+   "DEC:3 PC:1": [
+    "DEC0.70+PC0.30"
+   ],
+   "DMC:4": [
+    "DMC0.90+EC0.10",
+    "DMC1.00"
+   ],
+   "DMC:2 EC:1 MA:1": [
+    "DMC0.50+EC0.30+MA0.20",
+    "DMC0.60+EC0.30+MA0.10"
+   ],
+   "DMC:3 EC:1": [
+    "DMC0.70+EC0.25+EMC0.05",
+    "DMC0.70+EC0.30",
+    "DMC0.80+EC0.20"
+   ],
+   "EMC:4": [
+    "EC0.10+EMC0.90",
+    "EMC1.00"
+   ],
+   "EC:1 PC:3": [
+    "EC0.15+PC0.85"
+   ],
+   "EC:1 EMC:3": [
+    "EC0.20+EMC0.80",
+    "EC0.30+EMC0.70"
+   ],
+   "EC:1 EMC:2 MA:1": [
+    "EC0.30+EMC0.50+MA0.20",
+    "EC0.30+EMC0.60+MA0.10"
+   ],
+   "EC:2 EMC:2": [
+    "EC0.40+EMC0.60",
+    "EC0.50+EMC0.50"
+   ],
+   "EC:3 PC:1": [
+    "EC0.60+PC0.40"
+   ]
+  }
+ },
+ "mean_molecules": {
+  "mean": 4.256253428087656,
+  "sd": 0.34768659304960575,
+  "min": 3.7155,
+  "max": 4.980666666666667
+ },
+ "mean_coordination": {
+  "mean": 6.953647059921273,
+  "sd": 0.3987111679666532,
+  "min": 5.834888888888889,
+  "max": 7.4309473684210525
+ },
+ "ion_pair_share": {
+  "mean": 0.7227266125136742,
+  "sd": 0.198576330326793,
+  "min": 0.2222222222222222,
+  "max": 0.9783076923076923
+ },
+ "density": {
+  "mean": 1.20462640222925,
+  "sd": 0.08078895196015212,
+  "min": 1.0575060204618891,
+  "max": 1.4447144048220666
+ },
+ "shells": {
+  "mean": 13427.41935483871,
+  "sd": 7716.157520985277,
+  "min": 3500.0,
+  "max": 31000.0
+ },
+ "block_error": {
+  "mean": 0.00018968173815359316,
+  "sd": 0.0003700741854900493,
+  "min": 3.0618902538553385e-05,
+  "max": 0.0025325701225329153
+ },
+ "thinning_error": {
+  "mean": 0.006521375074587894,
+  "sd": 0.007017761549908947,
+  "min": 0.0010178679094282606,
+  "max": 0.03939255013218601
+ },
+ "ion_pair_share_vs_molality": 0.7285926623108505,
+ "mean_coordination_vs_molality": 0.7690088878252274,
+ "thinning_error_vs_molality": 0.2795613695724485
+}

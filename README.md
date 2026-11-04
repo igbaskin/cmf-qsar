@@ -3971,6 +3971,101 @@ molecules around Li+. Fluorination weakens the donor (FEC binds 0.29 eV less tha
 fluorinated ethers hold the fourth molecule weakly (desolvation 0.02 to 0.33 eV against 0.92 to
 1.35 for the carbonates), which is what a diluent is chosen to do.
 
+### A distribution of shells instead of one: sampling a bulk electrolyte
+
+The section above optimises one complex. A liquid holds a distribution of them, and the quantity an
+experiment measures is an average over it. `cmfqsar/electrolyte.py` (plan item BT5) builds and runs
+one bulk box per formulation -- packmol, GAFF-2.11 with graph-network AM1-BCC charges, the Amber
+ion parameters for Li+, OpenMM with particle-mesh Ewald at 298.15 K and 1 bar, 150 ps of
+equilibration and 1,000 ps of production -- and `cmfqsar/shells.py` cuts out every molecule with a
+donor atom within 2.613 angstrom of a lithium ion, repairs the two periodic-boundary faults item D7
+already met (a molecule split across a face, a shell a box length from its ion), thins the shells
+to 16 representatives by shape, and hands them to the ensemble builder of item D4 as members with
+their own atoms.
+
+**Why this needs almost no new kernel code.** A field is a sum of Gaussian functions on atoms and
+the kernel is bilinear, so the weighted mean field of a set of shells is itself a field: its atoms
+are all the shells' atoms with their weights multiplied by the shell weights. The kernel of two
+such mean fields is exactly the weighted mean of the shell-to-shell kernels, the matrix stays
+positive definite, and the model stays linear in that mean field, so the co-field and the Shapley
+decomposition keep their meaning. The weights are populations and never Boltzmann factors: an
+equilibrated trajectory has already sampled the distribution, and weighting it again would count
+the energy twice.
+
+**Two convergence numbers, not one** (plan item D8 asks for the sampling error next to the
+accuracy). `convergence` reports the **block error of the mean field**, which is how far the mean
+field of a block of frames lies from that of the whole run and which falls as the trajectory grows,
+and separately the **cost of keeping 16 members**, which is the price of the thinning and does not.
+Both are computed exactly from one shell-to-shell overlap matrix. Measuring the first on the
+thinned ensemble, as the first version did, made it rise with more sampling (0.055 at 40 frames,
+0.145 at 500), because thinning noise is larger than sampling noise.
+
+**The series**: 62 LiPF6 formulations over 22 solvent compositions, from 0.245 to 2.373 mol/kg,
+with measured conductivities from CALiSol-23 (CC BY 4.0). The target is measured and only the
+descriptor is computed, so the force field is not tested against itself. Two targets per
+formulation, read off a fit of log10 k = a + b/T + c/T^2 to that formulation's own measurements:
+log10 of the conductivity at 298.15 K (predicting the mean costs 0.146) and the activation energy
+there (predicting the mean costs 3.535 kJ/mol). LiBF4 and LiBOB, the larger part of that
+collection, are refused by name, because GAFF has no boron. The 62 boxes take 191 +/- 17 s each
+and none failed.
+
+**The concentration axis is where the two descriptors differ.** The share of shells holding the
+anion rises with the molality (+0.729), from 0.222 to 0.978. A single four-molecule complex cannot
+express that: the 22 compositions give only 12 distinct complexes, 9 of them shared by more than
+one composition, because rounding a mixture to four molecules makes nearby compositions identical.
+
+**The gate** -- do the sampled shells beat the single optimised complex -- **is met on the
+activation energy and not on the conductivity**, and only without the cation frame. Seven models,
+five folds, the ridge and the field width chosen inside each fold, each field kernel mixed in equal
+parts with the kernel on the molality at a fixed weight (item M10's trap: a free weight lets every
+model discard its own field). The complex and the shells each appear twice, framed and
+alignment-free, because item BT4 measured the alignment-free kernel as the better of the two for
+its descriptor, so a comparison in one kernel only would answer nothing.
+
+Activation energy at 298 K, mean absolute error in kJ/mol, random folds and by-composition folds
+(predicting the mean costs 3.535):
+
+| Model | random | by composition |
+|---|---:|---:|
+| molality alone | 2.983 | 3.035 |
+| molality and solvent weight fractions | 1.374 | 1.429 |
+| free solvents, alignment-free | 1.726 | 2.023 |
+| one optimised complex, framed | 2.001 | 2.424 |
+| one optimised complex, alignment-free | 1.934 | 2.232 |
+| sampled shells, framed | 2.156 | 2.585 |
+| sampled shells, alignment-free | **1.456** | **1.589** |
+
+Paired, the sampled shells gain 0.480 kJ/mol [0.096, 0.960] on random folds and 0.639
+[0.231, 1.129] on by-composition folds over the optimised complex, and both survive the kernel
+weight being chosen inside the fold. On the conductivity there is no gain: -0.013 [-0.034, +0.008]
+and +0.006 [-0.013, +0.027]. That difference between the targets was predicted before the
+measurement -- an ion moves by leaving one shell and entering the next, so the barrier is the
+quantity a distribution of shells has a claim on, while a conductivity at one temperature is set by
+how much salt is dissolved and how viscous the mixture is.
+
+Three readings go with it. **The frame costs much more for an ensemble than for one complex**:
+0.694 kJ/mol [0.363, 1.042] and 1.015 [0.536, 1.492] against 0.068 with an interval containing
+zero, because sixteen shells have sixteen coordination polyhedra and one frame cannot hold them
+all. **The composition is still not beaten** -- the shell field only draws level with it on the
+activation energy (-0.081 [-0.397, +0.256]) and is behind it on the conductivity -- which is the
+fourth battery item in a row where that is true. **Against free solvent molecules the gain is not
+established** (+0.276 [-0.110, +0.765]), and those need no simulation at all.
+
+**The co-field** belongs to the framed model, the one that costs accuracy, since the alignment-free
+kernel has no co-field. The donor atoms of these shells sit 2.14 +/- 0.17 angstrom from the ion,
+and three of the four fields that carry weight peak within 1.3 angstrom of a coordinating atom: the
+hydrophobic field 0.41 from one, the hydrogen-bond acceptor field 1.12, the electrostatic field
+1.22 (0.69 angstrom from the ion, between it and its donors). The steric field is the exception at
+4.91 angstrom from the ion, which is the molecule tails. The hydrogen-bond donor field is the
+control that costs nothing: a carbonate has no donor, that field carries exactly zero weight, and
+the point it is reported at is a corner of the box.
+
+One note on how this was reached: the alignment-free complex was added after the first run showed
+the framed comparison failing, and it is the model that turns the gate from unmet into met. The
+reason for adding it does not depend on the result, but the decision came after the first numbers,
+and the gain holding in both fold schemes and under a free kernel weight is what argues against it
+being a lucky choice.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

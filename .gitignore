@@ -69,3 +69,6 @@ docs/sphinx/_autosummary/
 
 # the distribution the ether set is built from states no licence: the maker fetches it
 examples/ether/upstream/
+
+# the conductivity table the electrolyte set is derived from: the maker fetches it
+examples/electrolyte/upstream/

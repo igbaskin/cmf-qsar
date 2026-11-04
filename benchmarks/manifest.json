@@ -618,6 +618,278 @@
    "bytes": 112344,
    "sha256": "f86e64e92680ca7f579614de3c22613b5039f407246ec4ed57917145f6bb77d4"
   },
+  "examples/electrolyte/README.md": {
+   "bytes": 3979,
+   "sha256": "22c876cee2c6ed5a19a4456efd9fc5e06eefb85da7f368421da5dfc79babd6e7"
+  },
+  "examples/electrolyte/formulations.csv": {
+   "bytes": 8289,
+   "sha256": "87a563b335a9ad7fc686a75887fb222f9732fabf3f977cb5fc973e3ee75bc293"
+  },
+  "examples/electrolyte/shells.json": {
+   "bytes": 73846,
+   "sha256": "4076e653df5c2effc05d51f87f15e151155a4f41a6374d18d24bd5fa5d1cdabd"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC20_PC80_m0p282.sdf": {
+   "bytes": 92597,
+   "sha256": "0e5971a09ac4705c20e8ae706b1cdb0fea06fce6d2376bab26e906e9d33d62e3"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC20_PC80_m0p892.sdf": {
+   "bytes": 83405,
+   "sha256": "3178c0cb7881537a173048901b40dcf193acc442282179ac86fa1eacbe62ed01"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC20_PC80_m2p373.sdf": {
+   "bytes": 61478,
+   "sha256": "d452be58e7efa394a74e036966e9cf2e6116bde99ccc9b04201d768b6625128c"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC40_PC60_m0p320.sdf": {
+   "bytes": 91867,
+   "sha256": "3bc6675d6f825a530f5b05f7ace0aa0064412283d20f6b23083a563fc5f7cd91"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC40_PC60_m0p802.sdf": {
+   "bytes": 84013,
+   "sha256": "88962a85824822e3d6335090dc6230a06ff68ca2dac91c53e8d0c2dede131fc8"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC40_PC60_m1p741.sdf": {
+   "bytes": 73667,
+   "sha256": "be35e3bc069996fc2bbd7f988a8e2da5e09b3b614df935de2b6ca74aaf99f66a"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC50_PC50_m0p271.sdf": {
+   "bytes": 94161,
+   "sha256": "b4d602d0ab83b0542fa45b2ee601bfa093ee24de64276c6c5c138399ce1979df"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC50_PC50_m0p386.sdf": {
+   "bytes": 88407,
+   "sha256": "90f1b43fab6a272a01847da2222d135e21ff3f1c0f73d065d65a5f8278dab6a3"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC50_PC50_m0p465.sdf": {
+   "bytes": 91022,
+   "sha256": "399b91ea6e69aec89d51f341f0196745dc4b9e2e6f367dbc078013ac992c93a4"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC60_PC40_m0p245.sdf": {
+   "bytes": 89769,
+   "sha256": "51bf7a2c999cd5543f83dd9e2b9536f77b0283099829021cc181fd5b3c7eeb48"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC60_PC40_m0p539.sdf": {
+   "bytes": 81585,
+   "sha256": "994f707b4e205ba74d819d0e20fffd872f4fcf885998c1a34b0ec724a56ab37d"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC60_PC40_m0p750.sdf": {
+   "bytes": 85063,
+   "sha256": "dbcaa0e689af9e3cbdf0f584ae22d824a01293bba0ade8cf92ccaa21d057ceb2"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC70_PC30_m0p259.sdf": {
+   "bytes": 98164,
+   "sha256": "95307d78e21a030081c70ccad2e9e8ffc244908d23ea37f1400c3975be8dc2dc"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC70_PC30_m0p550.sdf": {
+   "bytes": 87198,
+   "sha256": "735fb7d1c6347515ef998aa9425d7bb4d6ef6437ef37e022a359bf460e980983"
+  },
+  "examples/electrolyte/shells/LiPF6_DEC70_PC30_m0p898.sdf": {
+   "bytes": 78930,
+   "sha256": "82678e6a3adc6b6c6dfde013f9debc25703e30bf1f088e0f4d3c0bcb4784557d"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC100_m0p500.sdf": {
+   "bytes": 61979,
+   "sha256": "20b3e9db57fab6e6626575e4099f175852c51900222c2193bd10b1ecabc152ab"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC100_m1p500.sdf": {
+   "bytes": 61967,
+   "sha256": "5dc52ec7209b5688bf41c651454d3f747f2d4fa6c321bd7fa3ec6b4809af89b7"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC100_m2p000.sdf": {
+   "bytes": 61565,
+   "sha256": "9933b4b2c90efecedb1e5a51c9b1f7f7a8c616602fba2da7c8bcd937ecd64310"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC50_EC30_MA20_m0p491.sdf": {
+   "bytes": 72744,
+   "sha256": "64aee1d1da844a2c805628c2b0923e5ecd8423ca90674179a0fe116ce3be5429"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC50_EC30_MA20_m1p500.sdf": {
+   "bytes": 60877,
+   "sha256": "7415ed8e62697f97909fea20dd2c1bfb2ce5cc57c39a2e9e6e31aef79f7f0677"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC50_EC30_MA20_m2p000.sdf": {
+   "bytes": 56727,
+   "sha256": "71a2fa41285f8fd2730aa6f3d76b1b3a8a023b55a4ac76a2c786814cfab8aa0b"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC60_EC30_MA10_m0p500.sdf": {
+   "bytes": 74462,
+   "sha256": "7d39dfdc6322780134089d2fc1cf3deb39ccb117ca0ecf273f47eb6a4c36322c"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC60_EC30_MA10_m1p491.sdf": {
+   "bytes": 60502,
+   "sha256": "c949244fa623b00f01e4a64d41c7246217143db9fa91a7493b4bd4cb551bf9f3"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC60_EC30_MA10_m1p982.sdf": {
+   "bytes": 56454,
+   "sha256": "4fbca9fff77d5bfc5db322772ad9dc641b1ee54dd6b764b7139758c76ec7c2bd"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC70_EC25_EMC05_m1p200.sdf": {
+   "bytes": 63426,
+   "sha256": "d8f427ba4db85994477444ec8f0458b6c47f5235e71fe536528862c19da9837e"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC70_EC30_m0p491.sdf": {
+   "bytes": 77943,
+   "sha256": "a598940d6a793bfef57f03d2ba48a1c9d40a330aca46e19369c30a6f438da595"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC70_EC30_m1p000.sdf": {
+   "bytes": 65130,
+   "sha256": "81843744b1277cf5c5865f999348c9f720729739db3778d0570b05c2c764276c"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC70_EC30_m2p000.sdf": {
+   "bytes": 59611,
+   "sha256": "2dd64ce6c7b622efc9bdabe39b7803f2aa29e99444b143c96bdfe0fa60828bd2"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC80_EC20_m0p500.sdf": {
+   "bytes": 67739,
+   "sha256": "58509a82d10b22a331479ecba62b9e888a2ab0922385570f0465f1193540aef6"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC80_EC20_m1p500.sdf": {
+   "bytes": 59685,
+   "sha256": "72887f2930042f82962a0ffb681a75296298930a1c13101856e5b17f1520727a"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC80_EC20_m2p000.sdf": {
+   "bytes": 58720,
+   "sha256": "bd0747662e6c5f7a4dc7645e0c365c3036fe16b524c9e896df88192fc2742450"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC90_EC10_m0p500.sdf": {
+   "bytes": 65321,
+   "sha256": "55bd0efef77f9db93e44e19273e882d244644cf1331ec47f7cdf1acab6fddbad"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC90_EC10_m1p500.sdf": {
+   "bytes": 57347,
+   "sha256": "925732359fe754488e10e729a8961f2c4549fd4d5ab57d7ee681267e0bba76d7"
+  },
+  "examples/electrolyte/shells/LiPF6_DMC90_EC10_m2p000.sdf": {
+   "bytes": 60625,
+   "sha256": "f9c1d1ca8a3ac014aa5eaaff7c09c3e8100c6542c9219f6051b6e0978e9c0188"
+  },
+  "examples/electrolyte/shells/LiPF6_EC10_EMC90_m0p500.sdf": {
+   "bytes": 77887,
+   "sha256": "e8baafee4ab4b6b480325d7e6b4656af903a44146a40c5ce12414b3bf5f67453"
+  },
+  "examples/electrolyte/shells/LiPF6_EC10_EMC90_m1p500.sdf": {
+   "bytes": 62698,
+   "sha256": "d996a2a0da3bac157349ee7a645ae488ea7637883544bad6dcc1bdcd1c1d84be"
+  },
+  "examples/electrolyte/shells/LiPF6_EC10_EMC90_m2p000.sdf": {
+   "bytes": 65647,
+   "sha256": "bdd67529a2755df0a834a01abe58fce3039c9952adacea5d30cf31392a326c70"
+  },
+  "examples/electrolyte/shells/LiPF6_EC15_PC85_m0p446.sdf": {
+   "bytes": 84530,
+   "sha256": "0aad600359177cdd741d15e0ff5d549701d6a225cd9e52c2da0d9e00c294cbe7"
+  },
+  "examples/electrolyte/shells/LiPF6_EC20_EMC80_m0p454.sdf": {
+   "bytes": 73404,
+   "sha256": "cb4cd22d78751c9cab8c1694e7098810f6654d4ea198ad1fbdb6acf6e2603ac8"
+  },
+  "examples/electrolyte/shells/LiPF6_EC20_EMC80_m1p110.sdf": {
+   "bytes": 69018,
+   "sha256": "85c8952ecb160c099dc73b29d59575fdf46b6169aceee0d97452966ec371c5f5"
+  },
+  "examples/electrolyte/shells/LiPF6_EC20_EMC80_m2p000.sdf": {
+   "bytes": 64997,
+   "sha256": "77a50fca6197b20fd8507e90d1bce776dbea20db42f56f8740b16d686e27fb8b"
+  },
+  "examples/electrolyte/shells/LiPF6_EC30_EMC50_MA20_m0p508.sdf": {
+   "bytes": 76801,
+   "sha256": "c849611ad306c1ec0ef3e9a39157225133a838d5baba7219d84bfba58924693f"
+  },
+  "examples/electrolyte/shells/LiPF6_EC30_EMC50_MA20_m1p492.sdf": {
+   "bytes": 58773,
+   "sha256": "b1b1ca51a9e8af858696389dd7ee9852aac6a6087af1a5c0bc67e41484800488"
+  },
+  "examples/electrolyte/shells/LiPF6_EC30_EMC50_MA20_m1p992.sdf": {
+   "bytes": 60719,
+   "sha256": "a5cd593518c71d09b293e24ed1ec6841559d05b7d26976700b6047be71a75860"
+  },
+  "examples/electrolyte/shells/LiPF6_EC30_EMC60_MA10_m0p570.sdf": {
+   "bytes": 78495,
+   "sha256": "3a8db753838ff4f696c674190dcc40daf4b7847b15d71ab0806c2aca387433a4"
+  },
+  "examples/electrolyte/shells/LiPF6_EC30_EMC60_MA10_m1p596.sdf": {
+   "bytes": 62064,
+   "sha256": "f54dfd35f5169fbd8c8f8f63715492ce7f51be83220b48ac9adeec1846a83feb"
+  },
+  "examples/electrolyte/shells/LiPF6_EC30_EMC60_MA10_m2p105.sdf": {
+   "bytes": 62780,
+   "sha256": "9682e2e4815ea1bdee340a29b387f432de3044c9bacf9da095c40e8808b5d886"
+  },
+  "examples/electrolyte/shells/LiPF6_EC30_EMC70_m0p443.sdf": {
+   "bytes": 83423,
+   "sha256": "536a7ced118348613c94587ba48112bbb7506622b9d645c6b1cebbd7116091f2"
+  },
+  "examples/electrolyte/shells/LiPF6_EC30_EMC70_m1p110.sdf": {
+   "bytes": 67907,
+   "sha256": "6180c8a02bd166eca7e58c03b642a0bee6c187d9c9aadbd199fd6b07103014b6"
+  },
+  "examples/electrolyte/shells/LiPF6_EC30_EMC70_m2p009.sdf": {
+   "bytes": 59920,
+   "sha256": "4d03baa89ebb48ecb5dbb57de1096b9527668f0213bbceead9d1a8d8e5ab86ea"
+  },
+  "examples/electrolyte/shells/LiPF6_EC40_EMC60_m0p428.sdf": {
+   "bytes": 79239,
+   "sha256": "17531106d278d04945a2e9472fca263c97140a1031102b53d84bc08d4d41d9d8"
+  },
+  "examples/electrolyte/shells/LiPF6_EC40_EMC60_m1p077.sdf": {
+   "bytes": 65419,
+   "sha256": "5c7a1797eda1c92a7bde121041454b534971d89a06ebe0a1382d329f9bdf42cc"
+  },
+  "examples/electrolyte/shells/LiPF6_EC40_EMC60_m1p574.sdf": {
+   "bytes": 65607,
+   "sha256": "66805982b8bb7c5fc2c498f0fe76e7a39b681329662348cd141a3c6baf9871f6"
+  },
+  "examples/electrolyte/shells/LiPF6_EC50_EMC50_m0p540.sdf": {
+   "bytes": 76497,
+   "sha256": "ef930bd1b8328600b173e5fea461186054a2b7ce28b61231e67c5f3bfcea25c7"
+  },
+  "examples/electrolyte/shells/LiPF6_EC50_EMC50_m1p212.sdf": {
+   "bytes": 71171,
+   "sha256": "5be2c89da927757c7030209d1f01ef6c2437001b6859794b22392db0a39b776d"
+  },
+  "examples/electrolyte/shells/LiPF6_EC50_EMC50_m1p806.sdf": {
+   "bytes": 59903,
+   "sha256": "ef7aa303e7fe53b25194ba07b73ba794ce8e7672f17cf2a4d9aaaf545aa4c60f"
+  },
+  "examples/electrolyte/shells/LiPF6_EC60_PC40_m0p450.sdf": {
+   "bytes": 78216,
+   "sha256": "976cd3f0b70af65382a046ec8340000e8b691ddae18e13c22d18ddf385aa97f4"
+  },
+  "examples/electrolyte/shells/LiPF6_EC60_PC40_m0p813.sdf": {
+   "bytes": 68831,
+   "sha256": "74c3e31d9f3d19491e104f19d90c97b15107498c7c2ee496007736f5fc48c6fb"
+  },
+  "examples/electrolyte/shells/LiPF6_EC60_PC40_m2p102.sdf": {
+   "bytes": 59035,
+   "sha256": "5e1b28ae42dd3beecf2ecfb8585bf28968eec7864dbc93c06f781f98089c507d"
+  },
+  "examples/electrolyte/shells/LiPF6_EMC100_m0p500.sdf": {
+   "bytes": 73676,
+   "sha256": "b02b570cef270c28c623b5d4176cc768ace519b77b3d40f2b8d9b251e382d517"
+  },
+  "examples/electrolyte/shells/LiPF6_EMC100_m1p500.sdf": {
+   "bytes": 70466,
+   "sha256": "b878eed7f3643ec34d5290ab4c1c01cb9448f258e2942849268b08e5926dfc9d"
+  },
+  "examples/electrolyte/shells/LiPF6_EMC100_m2p000.sdf": {
+   "bytes": 66738,
+   "sha256": "04de7a38a2a3b0adf945d9c392055f60aac0ddee488c4bdb2fb5eab0537a1d48"
+  },
+  "examples/ether/README.md": {
+   "bytes": 2551,
+   "sha256": "3a62b6154b527eef3f7c400a17a57a6fa2e810d46fccbac16f3fff436e2ac983"
+  },
+  "examples/ether/ether_ions.csv": {
+   "bytes": 194181,
+   "sha256": "c4d6d022cf6a0fa534169f50c3277f94922c4419a478377f27849d39dc04591e"
+  },
+  "examples/ether/geometries.sdf": {
+   "bytes": 4389302,
+   "sha256": "e336c399ee00d48ac1670f05d29a7b3fb30077f932b5ac17698a3f3bda88c3f6"
+  },
   "examples/hammett/hammett.sdf": {
    "bytes": 214394,
    "sha256": "2d13239231a89056e16622acddb6e7fc90f8cff94e3b34c40e7e0e066a4d509a"
@@ -777,6 +1049,14 @@
   "examples/make_docked_poses.py": {
    "bytes": 15002,
    "sha256": "99e2612fb3a8fc24c0be798a82b24b3666f1428852f5ffa0e270de3208405f96"
+  },
+  "examples/make_electrolyte_shells.py": {
+   "bytes": 25453,
+   "sha256": "496326fcad8ead3ce28c48a695e4d25686278b8f248202b992018dddf0793d6a"
+  },
+  "examples/make_ether_examples.py": {
+   "bytes": 18386,
+   "sha256": "be27b4bbbde1a74899bfcc6cefb88a0f915972e5b35340d71ffc96da7d833b85"
   },
   "examples/make_example_dataset.py": {
    "bytes": 6052,
@@ -2175,6 +2455,10 @@
   "benchmarks/results/errorpred/THER.json": "85c79922ce4e77a8dfea4acfa511f1df06f71ad7936cf6671b3aecd82b157bbc",
   "benchmarks/results/errorpred/THR.json": "a4478368c9a0735ad17b3098b529f6fbc57197e70295a8f3a9977d8f2506cd51",
   "benchmarks/results/errorpred/table.md": "3d202d00cf55425b7596317ed01c62077ed9189c6ef539ab93eb61c685c0b225",
+  "benchmarks/results/ether/bind.json": "d2409b553077b8544a0a5b55bcc16f1746e6cefefcf49b6f17415b782f80e9d0",
+  "benchmarks/results/ether/probe.json": "1e3c8beca684be2ec5fbc378fbd1867a9bcb619523aa3cb006b5843128e7dade",
+  "benchmarks/results/ether/select.json": "2ca11ee9db23bebdddc1ed84a2fae62f25e7aa8d9010646dd7b1a717843a6ddb",
+  "benchmarks/results/ether/table.md": "5083a41453736a25756087b5b2f4c1f004f164800e847179a45a7c1ae6f803ba",
   "benchmarks/results/evidence/ACE.json": "1361e7063c2cb7ff99226310a046eaa9bac37d7863ff98146181e07cf452bfae",
   "benchmarks/results/evidence/AChE.json": "f0126a14d4a9db8a0cc87433a1a57cd97fdde9612cc51b9790235c53b1ec4d60",
   "benchmarks/results/evidence/BZR.json": "bc932d4e74063704231bb34a954abb03c2d33d18358bc592d72e2645b5535ae4",
@@ -2939,6 +3223,11 @@
   "benchmarks/results/selectivity/file_Delta.json": "50c0da4f33ca29dc6d3ad0516cdacdff87ea360e996800e8a046cb3a5997413c",
   "benchmarks/results/selectivity/file_glycine.json": "fdf29ea54573147755c4d75dbfd4a682d611b9eebdee82cf3c777d38c20041fe",
   "benchmarks/results/selectivity/table.md": "457c99257ba10154d192e7b780653e30544f9a1992b1c2b516c00b2fa3848597",
+  "benchmarks/results/shells/cofield.json": "1cd2794ba8ddda4e7114cb836946da2c2f0ac22b15e06804113033b7e3bc2877",
+  "benchmarks/results/shells/data.json": "546644029a24a3604880a0173113c716dee1898952000b063f4222216e1a51db",
+  "benchmarks/results/shells/gate.json": "0f16e93a2cacd395c305972f291dd2ab5da2e52e989327648ba06fd17ddc420e",
+  "benchmarks/results/shells/gate_mix_selected.json": "502c6ea98b47ebc932928a80686796e801a04a47d7325fa7f59e7dee979b072e",
+  "benchmarks/results/shells/table.md": "ed1ec458cf14611b53110b305078c1d972911583a096c12492475f1c47b4ee09",
   "benchmarks/results/sites/contributions.json": "6dcf22d7ac81022004b35d123e88cf17b4fec6c653de1675a24e3a7df43334c7",
   "benchmarks/results/sites/contributions.png": "ead3744963cf3a5e83bc73b985a69b0c5fae51b701bde2bf4bf0be865069de78",
   "benchmarks/results/sites/lithium.json": "ad16ed73a7f8037f39710012957088517a15ade254873feb91fc16516e3f7a85",

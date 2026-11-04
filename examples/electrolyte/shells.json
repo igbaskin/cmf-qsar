@@ -1,0 +1,3495 @@
+{
+ "settings": {
+  "temperature": 298.15,
+  "pressure": 1.0,
+  "timestep_fs": 2.0,
+  "cutoff_nm": 1.0,
+  "n_solvent": 250,
+  "min_ions": 4,
+  "equilibration_ps": 150.0,
+  "production_ps": 1000.0,
+  "frame_ps": 2.0,
+  "seed": 1,
+  "platform": "CUDA",
+  "charge_model": "openff-gnn-am1bcc-0.1.0-rc.3.pt",
+  "small_molecule_forcefield": "gaff-2.11",
+  "ion_forcefield": "amber14/tip3p.xml",
+  "extra": {}
+ },
+ "max_members": 16,
+ "blocks": 5,
+ "runs": [
+  {
+   "id": "LiPF6_DEC20_PC80_m0p282",
+   "atoms": 3526,
+   "frames": 500,
+   "realised_molality": 0.2668889012420324,
+   "density": 1.1804534830003934,
+   "start_density": 1.1507100881488737,
+   "final_side": 33.734608856678676,
+   "ns_per_day": 396.8647280605791,
+   "run_seconds": 217.7064220905304,
+   "read_seconds": 5.216662406921387,
+   "build_seconds": 3.53713059425354,
+   "shells": 3500,
+   "members": 16,
+   "mean_coordination": 6.106571428571429,
+   "mean_molecules": 4.972285714285714,
+   "ion_pair_share": 0.3314285714285714,
+   "composition": [
+    [
+     "ANI:1 PC:3",
+     0.3017142857142857
+    ],
+    [
+     "DEC:1 PC:4",
+     0.26171428571428573
+    ],
+    [
+     "DEC:1 PC:5",
+     0.24257142857142858
+    ],
+    [
+     "PC:6",
+     0.053142857142857144
+    ],
+    [
+     "PC:5",
+     0.05228571428571428
+    ],
+    [
+     "ANI:1 PC:4",
+     0.028
+    ],
+    [
+     "DEC:2 PC:3",
+     0.019428571428571427
+    ],
+    [
+     "DEC:1 PC:3",
+     0.015714285714285715
+    ]
+   ],
+   "block_error": 8.202200881178349e-05,
+   "thinning_error": 0.004957053843879455,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC20_PC80_m0p282.sdf"
+  },
+  {
+   "id": "LiPF6_DEC20_PC80_m0p892",
+   "atoms": 3654,
+   "frames": 500,
+   "realised_molality": 0.876920675509535,
+   "density": 1.2213656473917556,
+   "start_density": 1.1507100881488737,
+   "final_side": 34.31574053621048,
+   "ns_per_day": 400.06140309155285,
+   "run_seconds": 215.96684741973877,
+   "read_seconds": 11.393279790878296,
+   "build_seconds": 3.351447820663452,
+   "shells": 11500,
+   "members": 16,
+   "mean_coordination": 6.6968695652173915,
+   "mean_molecules": 4.5277391304347825,
+   "ion_pair_share": 0.5849565217391305,
+   "composition": [
+    [
+     "ANI:1 PC:3",
+     0.3457391304347826
+    ],
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.12782608695652173
+    ],
+    [
+     "DEC:1 PC:4",
+     0.09582608695652174
+    ],
+    [
+     "PC:6",
+     0.0771304347826087
+    ],
+    [
+     "PC:5",
+     0.07547826086956522
+    ],
+    [
+     "ANI:2 PC:1",
+     0.06556521739130435
+    ],
+    [
+     "DEC:2 PC:4",
+     0.05660869565217391
+    ],
+    [
+     "DEC:1 PC:5",
+     0.03139130434782609
+    ]
+   ],
+   "block_error": 9.378071999833091e-05,
+   "thinning_error": 0.0030367955451007234,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC20_PC80_m0p892.sdf"
+  },
+  {
+   "id": "LiPF6_DEC20_PC80_m2p373",
+   "atoms": 3966,
+   "frames": 500,
+   "realised_molality": 2.3638731252865726,
+   "density": 1.3463676317382522,
+   "start_density": 1.1507100881488737,
+   "final_side": 35.29386871699178,
+   "ns_per_day": 386.5907725307395,
+   "run_seconds": 223.49214243888855,
+   "read_seconds": 29.53709650039673,
+   "build_seconds": 2.9437122344970703,
+   "shells": 31000,
+   "members": 16,
+   "mean_coordination": 7.264612903225807,
+   "mean_molecules": 3.8409677419354837,
+   "ion_pair_share": 0.8538387096774194,
+   "composition": [
+    [
+     "ANI:1 PC:3",
+     0.2501935483870968
+    ],
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.18038709677419354
+    ],
+    [
+     "ANI:2 PC:1",
+     0.1222258064516129
+    ],
+    [
+     "ANI:2",
+     0.10487096774193548
+    ],
+    [
+     "DEC:1 PC:4",
+     0.05790322580645161
+    ],
+    [
+     "ANI:2 PC:2",
+     0.04048387096774193
+    ],
+    [
+     "PC:5",
+     0.035258064516129034
+    ],
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.028967741935483873
+    ]
+   ],
+   "block_error": 0.0004890173593535676,
+   "thinning_error": 0.011480274579946603,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC20_PC80_m2p373.sdf"
+  },
+  {
+   "id": "LiPF6_DEC40_PC60_m0p320",
+   "atoms": 3777,
+   "frames": 500,
+   "realised_molality": 0.33355368878321595,
+   "density": 1.1292279619248962,
+   "start_density": 1.1011012183692597,
+   "final_side": 34.6739421439941,
+   "ns_per_day": 402.84357413959395,
+   "run_seconds": 214.47530889511108,
+   "read_seconds": 8.172188997268677,
+   "build_seconds": 4.341723680496216,
+   "shells": 4500,
+   "members": 15,
+   "mean_coordination": 5.834888888888889,
+   "mean_molecules": 4.980666666666667,
+   "ion_pair_share": 0.2222222222222222,
+   "composition": [
+    [
+     "DEC:2 PC:3",
+     0.32866666666666666
+    ],
+    [
+     "DEC:2 PC:4",
+     0.19133333333333333
+    ],
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.11066666666666666
+    ],
+    [
+     "ANI:1 PC:3",
+     0.11044444444444444
+    ],
+    [
+     "DEC:1 PC:4",
+     0.10422222222222222
+    ],
+    [
+     "PC:5",
+     0.07
+    ],
+    [
+     "PC:6",
+     0.036222222222222225
+    ],
+    [
+     "DEC:2 PC:2",
+     0.021555555555555557
+    ]
+   ],
+   "block_error": 4.944738512250835e-05,
+   "thinning_error": 0.0033632273628508846,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC40_PC60_m0p320.sdf"
+  },
+  {
+   "id": "LiPF6_DEC40_PC60_m0p802",
+   "atoms": 3881,
+   "frames": 500,
+   "realised_molality": 0.8153534614700835,
+   "density": 1.1894641949336415,
+   "start_density": 1.1011012183692597,
+   "final_side": 34.85204042777339,
+   "ns_per_day": 417.3117786179194,
+   "run_seconds": 207.03944730758667,
+   "read_seconds": 12.332154035568237,
+   "build_seconds": 3.9590022563934326,
+   "shells": 11000,
+   "members": 16,
+   "mean_coordination": 6.844181818181818,
+   "mean_molecules": 4.3611818181818185,
+   "ion_pair_share": 0.611909090909091,
+   "composition": [
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.23363636363636364
+    ],
+    [
+     "DEC:2 PC:3",
+     0.149
+    ],
+    [
+     "ANI:1 PC:3",
+     0.13490909090909092
+    ],
+    [
+     "ANI:2 DEC:1 PC:1",
+     0.07836363636363636
+    ],
+    [
+     "DEC:1 PC:4",
+     0.07609090909090908
+    ],
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.07281818181818182
+    ],
+    [
+     "DEC:3 PC:2",
+     0.06127272727272727
+    ],
+    [
+     "ANI:2",
+     0.045454545454545456
+    ]
+   ],
+   "block_error": 8.431765021964433e-05,
+   "thinning_error": 0.009657966990215594,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC40_PC60_m0p802.sdf"
+  },
+  {
+   "id": "LiPF6_DEC40_PC60_m1p741",
+   "atoms": 4081,
+   "frames": 500,
+   "realised_molality": 1.7418914858679055,
+   "density": 1.269843225965577,
+   "start_density": 1.1011012183692597,
+   "final_side": 35.468498999051285,
+   "ns_per_day": 436.64323619726684,
+   "run_seconds": 197.87321281433105,
+   "read_seconds": 23.004058599472046,
+   "build_seconds": 3.7171342372894287,
+   "shells": 23500,
+   "members": 16,
+   "mean_coordination": 7.268468085106383,
+   "mean_molecules": 3.9813617021276597,
+   "ion_pair_share": 0.8408510638297872,
+   "composition": [
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.2374468085106383
+    ],
+    [
+     "ANI:2 DEC:1 PC:1",
+     0.1314468085106383
+    ],
+    [
+     "ANI:1 PC:3",
+     0.12434042553191489
+    ],
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.10434042553191489
+    ],
+    [
+     "ANI:2",
+     0.06408510638297872
+    ],
+    [
+     "ANI:1 DEC:1 PC:1",
+     0.05238297872340426
+    ],
+    [
+     "DEC:1 PC:4",
+     0.04902127659574468
+    ],
+    [
+     "DEC:1 PC:5",
+     0.031446808510638295
+    ]
+   ],
+   "block_error": 0.0001249590918990818,
+   "thinning_error": 0.003969811955896074,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC40_PC60_m1p741.sdf"
+  },
+  {
+   "id": "LiPF6_DEC50_PC50_m0p271",
+   "atoms": 3886,
+   "frames": 500,
+   "realised_molality": 0.25563083518464846,
+   "density": 1.1018395200528197,
+   "start_density": 1.0778669724770642,
+   "final_side": 34.99882767843465,
+   "ns_per_day": 424.51541614866744,
+   "run_seconds": 203.52617764472961,
+   "read_seconds": 8.057409524917603,
+   "build_seconds": 4.696509122848511,
+   "shells": 3500,
+   "members": 15,
+   "mean_coordination": 6.064571428571429,
+   "mean_molecules": 4.956857142857143,
+   "ion_pair_share": 0.30257142857142855,
+   "composition": [
+    [
+     "DEC:2 PC:3",
+     0.2757142857142857
+    ],
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.15257142857142858
+    ],
+    [
+     "ANI:1 PC:3",
+     0.1422857142857143
+    ],
+    [
+     "DEC:3 PC:3",
+     0.11714285714285715
+    ],
+    [
+     "DEC:2 PC:4",
+     0.07428571428571429
+    ],
+    [
+     "DEC:3 PC:2",
+     0.06657142857142857
+    ],
+    [
+     "DEC:1 PC:5",
+     0.04257142857142857
+    ],
+    [
+     "PC:6",
+     0.038
+    ]
+   ],
+   "block_error": 9.76122932868653e-05,
+   "thinning_error": 0.002880335962899605,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC50_PC50_m0p271.sdf"
+  },
+  {
+   "id": "LiPF6_DEC50_PC50_m0p386",
+   "atoms": 3918,
+   "frames": 500,
+   "realised_molality": 0.4017055981473047,
+   "density": 1.1152542021765124,
+   "start_density": 1.0778669724770642,
+   "final_side": 35.104374511365904,
+   "ns_per_day": 437.0776530633512,
+   "run_seconds": 197.67654418945312,
+   "read_seconds": 6.554051876068115,
+   "build_seconds": 3.559093713760376,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 6.7592727272727275,
+   "mean_molecules": 4.48,
+   "ion_pair_share": 0.6363636363636364,
+   "composition": [
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.30072727272727273
+    ],
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.2429090909090909
+    ],
+    [
+     "DEC:2 PC:3",
+     0.10018181818181818
+    ],
+    [
+     "ANI:1 PC:3",
+     0.09054545454545454
+    ],
+    [
+     "DEC:3 PC:2",
+     0.08763636363636364
+    ],
+    [
+     "DEC:3 PC:3",
+     0.056545454545454545
+    ],
+    [
+     "PC:6",
+     0.040545454545454544
+    ],
+    [
+     "PC:5",
+     0.025272727272727273
+    ]
+   ],
+   "block_error": 6.957374291458045e-05,
+   "thinning_error": 0.004001446722047275,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC50_PC50_m0p386.sdf"
+  },
+  {
+   "id": "LiPF6_DEC50_PC50_m0p465",
+   "atoms": 3934,
+   "frames": 500,
+   "realised_molality": 0.4747429796286328,
+   "density": 1.1153739243198941,
+   "start_density": 1.0778669724770642,
+   "final_side": 35.22504680017043,
+   "ns_per_day": 442.6671234466808,
+   "run_seconds": 195.1805214881897,
+   "read_seconds": 7.9782469272613525,
+   "build_seconds": 2.8879637718200684,
+   "shells": 6500,
+   "members": 16,
+   "mean_coordination": 6.382461538461539,
+   "mean_molecules": 4.539846153846153,
+   "ion_pair_share": 0.6103076923076923,
+   "composition": [
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.31353846153846154
+    ],
+    [
+     "DEC:2 PC:3",
+     0.20307692307692307
+    ],
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.17876923076923076
+    ],
+    [
+     "ANI:2 DEC:1 PC:1",
+     0.07153846153846154
+    ],
+    [
+     "DEC:3 PC:3",
+     0.06476923076923077
+    ],
+    [
+     "DEC:2 PC:4",
+     0.054461538461538464
+    ],
+    [
+     "ANI:1 DEC:1 PC:3",
+     0.023846153846153847
+    ],
+    [
+     "DEC:3 PC:2",
+     0.02353846153846154
+    ]
+   ],
+   "block_error": 7.85514100843183e-05,
+   "thinning_error": 0.002642630752020425,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC50_PC50_m0p465.sdf"
+  },
+  {
+   "id": "LiPF6_DEC60_PC40_m0p245",
+   "atoms": 4011,
+   "frames": 500,
+   "realised_molality": 0.2519407264091793,
+   "density": 1.0790152337693457,
+   "start_density": 1.0555929919137466,
+   "final_side": 35.408748209289904,
+   "ns_per_day": 445.1023897083635,
+   "run_seconds": 194.1126401424408,
+   "read_seconds": 5.554118394851685,
+   "build_seconds": 3.0559029579162598,
+   "shells": 3500,
+   "members": 15,
+   "mean_coordination": 6.352,
+   "mean_molecules": 4.723714285714285,
+   "ion_pair_share": 0.42857142857142855,
+   "composition": [
+    [
+     "DEC:2 PC:3",
+     0.3222857142857143
+    ],
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.14285714285714285
+    ],
+    [
+     "ANI:1 PC:3",
+     0.14257142857142857
+    ],
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.142
+    ],
+    [
+     "DEC:2 PC:4",
+     0.09514285714285714
+    ],
+    [
+     "DEC:3 PC:3",
+     0.07857142857142857
+    ],
+    [
+     "DEC:3 PC:2",
+     0.05057142857142857
+    ],
+    [
+     "DEC:2 PC:2",
+     0.015714285714285715
+    ]
+   ],
+   "block_error": 4.6329649629147835e-05,
+   "thinning_error": 0.002448759309079618,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC60_PC40_m0p245.sdf"
+  },
+  {
+   "id": "LiPF6_DEC60_PC40_m0p539",
+   "atoms": 4075,
+   "frames": 500,
+   "realised_molality": 0.539872985162527,
+   "density": 1.1022390355014409,
+   "start_density": 1.0555929919137466,
+   "final_side": 35.64521116966584,
+   "ns_per_day": 440.53617829518186,
+   "run_seconds": 196.12464141845703,
+   "read_seconds": 8.403964519500732,
+   "build_seconds": 2.5116868019104004,
+   "shells": 7500,
+   "members": 16,
+   "mean_coordination": 7.2192,
+   "mean_molecules": 4.039466666666667,
+   "ion_pair_share": 0.6668,
+   "composition": [
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.39413333333333334
+    ],
+    [
+     "ANI:2",
+     0.1808
+    ],
+    [
+     "DEC:3 PC:2",
+     0.0808
+    ],
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.06666666666666667
+    ],
+    [
+     "DEC:1 PC:4",
+     0.0592
+    ],
+    [
+     "DEC:4 PC:1",
+     0.058666666666666666
+    ],
+    [
+     "DEC:1 PC:5",
+     0.04493333333333333
+    ],
+    [
+     "DEC:3 PC:3",
+     0.04413333333333333
+    ]
+   ],
+   "block_error": 5.3503434436168056e-05,
+   "thinning_error": 0.0024726269142247848,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC60_PC40_m0p539.sdf"
+  },
+  {
+   "id": "LiPF6_DEC60_PC40_m0p750",
+   "atoms": 4123,
+   "frames": 500,
+   "realised_molality": 0.7558221792275378,
+   "density": 1.139990763825233,
+   "start_density": 1.0555929919137466,
+   "final_side": 35.599970895935485,
+   "ns_per_day": 448.22462984271084,
+   "run_seconds": 192.76049160957336,
+   "read_seconds": 10.163833141326904,
+   "build_seconds": 3.5875139236450195,
+   "shells": 10500,
+   "members": 16,
+   "mean_coordination": 6.526190476190476,
+   "mean_molecules": 4.372571428571429,
+   "ion_pair_share": 0.5435238095238095,
+   "composition": [
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.18828571428571428
+    ],
+    [
+     "DEC:3 PC:2",
+     0.11466666666666667
+    ],
+    [
+     "DEC:2 PC:3",
+     0.10085714285714285
+    ],
+    [
+     "DEC:1 PC:4",
+     0.09942857142857142
+    ],
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.09533333333333334
+    ],
+    [
+     "ANI:2 DEC:2",
+     0.06180952380952381
+    ],
+    [
+     "ANI:2",
+     0.051333333333333335
+    ],
+    [
+     "ANI:1 DEC:3",
+     0.04742857142857143
+    ]
+   ],
+   "block_error": 7.725487242763101e-05,
+   "thinning_error": 0.002809643888913249,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC60_PC40_m0p750.sdf"
+  },
+  {
+   "id": "LiPF6_DEC70_PC30_m0p259",
+   "atoms": 4141,
+   "frames": 500,
+   "realised_molality": 0.24821435479639323,
+   "density": 1.060675652997024,
+   "start_density": 1.0342209507042253,
+   "final_side": 35.78248093430443,
+   "ns_per_day": 447.0075884521275,
+   "run_seconds": 193.28530931472778,
+   "read_seconds": 5.288061141967773,
+   "build_seconds": 2.5264735221862793,
+   "shells": 3500,
+   "members": 16,
+   "mean_coordination": 6.388285714285714,
+   "mean_molecules": 4.746,
+   "ion_pair_share": 0.42857142857142855,
+   "composition": [
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.19171428571428573
+    ],
+    [
+     "DEC:3 PC:3",
+     0.16142857142857142
+    ],
+    [
+     "DEC:2 PC:3",
+     0.152
+    ],
+    [
+     "ANI:1 PC:3",
+     0.14057142857142857
+    ],
+    [
+     "DEC:3 PC:2",
+     0.12257142857142857
+    ],
+    [
+     "DEC:2 PC:4",
+     0.061714285714285715
+    ],
+    [
+     "ANI:2 DEC:2",
+     0.05914285714285714
+    ],
+    [
+     "DEC:4 PC:1",
+     0.040285714285714286
+    ]
+   ],
+   "block_error": 8.999044542042964e-05,
+   "thinning_error": 0.002838688615243501,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC70_PC30_m0p259.sdf"
+  },
+  {
+   "id": "LiPF6_DEC70_PC30_m0p550",
+   "atoms": 4213,
+   "frames": 500,
+   "realised_molality": 0.5673470966774702,
+   "density": 1.0895606246360248,
+   "start_density": 1.0342209507042253,
+   "final_side": 36.007290717342215,
+   "ns_per_day": 445.9464491591264,
+   "run_seconds": 193.7452359199524,
+   "read_seconds": 7.534900665283203,
+   "build_seconds": 3.2133116722106934,
+   "shells": 8000,
+   "members": 16,
+   "mean_coordination": 6.75475,
+   "mean_molecules": 4.2635,
+   "ion_pair_share": 0.63275,
+   "composition": [
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.25125
+    ],
+    [
+     "ANI:1 DEC:3",
+     0.241625
+    ],
+    [
+     "DEC:2 PC:3",
+     0.10425
+    ],
+    [
+     "DEC:3 PC:2",
+     0.078625
+    ],
+    [
+     "ANI:2",
+     0.04725
+    ],
+    [
+     "DEC:2 PC:4",
+     0.047
+    ],
+    [
+     "ANI:2 DEC:1",
+     0.046375
+    ],
+    [
+     "DEC:4 PC:1",
+     0.04075
+    ]
+   ],
+   "block_error": 0.0002624667963275331,
+   "thinning_error": 0.010761100964795323,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC70_PC30_m0p550.sdf"
+  },
+  {
+   "id": "LiPF6_DEC70_PC30_m0p898",
+   "atoms": 4285,
+   "frames": 500,
+   "realised_molality": 0.8864798385585473,
+   "density": 1.1279749848633784,
+   "start_density": 1.0342209507042253,
+   "final_side": 36.115644741738095,
+   "ns_per_day": 450.1728945401889,
+   "run_seconds": 191.92625999450684,
+   "read_seconds": 10.526897668838501,
+   "build_seconds": 2.7072155475616455,
+   "shells": 12500,
+   "members": 16,
+   "mean_coordination": 7.3424,
+   "mean_molecules": 4.01656,
+   "ion_pair_share": 0.87832,
+   "composition": [
+    [
+     "ANI:1 DEC:2 PC:1",
+     0.44288
+    ],
+    [
+     "ANI:1 DEC:1 PC:2",
+     0.2
+    ],
+    [
+     "ANI:2 DEC:1",
+     0.09928
+    ],
+    [
+     "ANI:2 DEC:1 PC:1",
+     0.04344
+    ],
+    [
+     "DEC:2 PC:3",
+     0.04176
+    ],
+    [
+     "ANI:1 DEC:3",
+     0.03984
+    ],
+    [
+     "DEC:3 PC:3",
+     0.03064
+    ],
+    [
+     "DEC:3 PC:2",
+     0.024
+    ]
+   ],
+   "block_error": 5.539291267076527e-05,
+   "thinning_error": 0.003085672622657243,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DEC70_PC30_m0p898.sdf"
+  },
+  {
+   "id": "LiPF6_DMC100_m0p500",
+   "atoms": 3088,
+   "frames": 500,
+   "realised_molality": 0.4884655520770889,
+   "density": 1.0991831604551159,
+   "start_density": 1.069,
+   "final_side": 33.184928873255856,
+   "ns_per_day": 458.0838179476333,
+   "run_seconds": 188.6117706298828,
+   "read_seconds": 5.350452423095703,
+   "build_seconds": 1.5667011737823486,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 7.246727272727273,
+   "mean_molecules": 4.020545454545455,
+   "ion_pair_share": 0.972909090909091,
+   "composition": [
+    [
+     "ANI:1 DMC:3",
+     0.9065454545454545
+    ],
+    [
+     "ANI:2 DMC:2",
+     0.03509090909090909
+    ],
+    [
+     "ANI:1 DMC:4",
+     0.018545454545454546
+    ],
+    [
+     "DMC:4",
+     0.01509090909090909
+    ],
+    [
+     "ANI:1 DMC:2",
+     0.011636363636363636
+    ],
+    [
+     "DMC:5",
+     0.01109090909090909
+    ],
+    [
+     "ANI:2 DMC:3",
+     0.0009090909090909091
+    ],
+    [
+     "DMC:6",
+     0.0009090909090909091
+    ]
+   ],
+   "block_error": 0.0001718784161958796,
+   "thinning_error": 0.006062431105210875,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC100_m0p500.sdf"
+  },
+  {
+   "id": "LiPF6_DMC100_m1p500",
+   "atoms": 3272,
+   "frames": 500,
+   "realised_molality": 1.509802615511002,
+   "density": 1.2192849902647467,
+   "start_density": 1.069,
+   "final_side": 33.53193583961644,
+   "ns_per_day": 457.8392633654253,
+   "run_seconds": 188.7125174999237,
+   "read_seconds": 14.865638494491577,
+   "build_seconds": 2.002772569656372,
+   "shells": 17000,
+   "members": 16,
+   "mean_coordination": 7.114235294117647,
+   "mean_molecules": 3.969294117647059,
+   "ion_pair_share": 0.8834117647058823,
+   "composition": [
+    [
+     "ANI:1 DMC:3",
+     0.6575882352941177
+    ],
+    [
+     "ANI:2 DMC:2",
+     0.11276470588235295
+    ],
+    [
+     "DMC:5",
+     0.08605882352941177
+    ],
+    [
+     "ANI:2 DMC:1",
+     0.05111764705882353
+    ],
+    [
+     "DMC:4",
+     0.03052941176470588
+    ],
+    [
+     "ANI:1 DMC:2",
+     0.027529411764705882
+    ],
+    [
+     "ANI:2",
+     0.024176470588235296
+    ],
+    [
+     "ANI:1 DMC:4",
+     0.01023529411764706
+    ]
+   ],
+   "block_error": 0.00016551497076202216,
+   "thinning_error": 0.019789528813800694,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC100_m1p500.sdf"
+  },
+  {
+   "id": "LiPF6_DMC100_m2p000",
+   "atoms": 3360,
+   "frames": 500,
+   "realised_molality": 1.998268167588091,
+   "density": 1.2773320325351143,
+   "start_density": 1.069,
+   "final_side": 33.66741652917989,
+   "ns_per_day": 458.1577404278132,
+   "run_seconds": 188.5813386440277,
+   "read_seconds": 20.815659046173096,
+   "build_seconds": 1.6685302257537842,
+   "shells": 22500,
+   "members": 16,
+   "mean_coordination": 7.334044444444444,
+   "mean_molecules": 3.924888888888889,
+   "ion_pair_share": 0.9535555555555556,
+   "composition": [
+    [
+     "ANI:1 DMC:3",
+     0.6794222222222223
+    ],
+    [
+     "ANI:2 DMC:2",
+     0.16213333333333332
+    ],
+    [
+     "DMC:5",
+     0.038844444444444445
+    ],
+    [
+     "ANI:1 DMC:2",
+     0.03551111111111111
+    ],
+    [
+     "ANI:2",
+     0.03248888888888889
+    ],
+    [
+     "ANI:2 DMC:1",
+     0.028622222222222223
+    ],
+    [
+     "ANI:1 DMC:4",
+     0.014533333333333334
+    ],
+    [
+     "DMC:4",
+     0.007466666666666667
+    ]
+   ],
+   "block_error": 0.00011623805749220801,
+   "thinning_error": 0.0030112866493718915,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC100_m2p000.sdf"
+  },
+  {
+   "id": "LiPF6_DMC50_EC30_MA20_m0p491",
+   "atoms": 2884,
+   "frames": 500,
+   "realised_molality": 0.5129546701957949,
+   "density": 1.1539776496830705,
+   "start_density": 1.0996021816877852,
+   "final_side": 32.16008753653026,
+   "ns_per_day": 590.3551591788867,
+   "run_seconds": 146.3525788784027,
+   "read_seconds": 9.099081993103027,
+   "build_seconds": 2.655205249786377,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 6.692181818181818,
+   "mean_molecules": 4.661272727272728,
+   "ion_pair_share": 0.55,
+   "composition": [
+    [
+     "ANI:1 DMC:1 EC:1 MA:1",
+     0.2029090909090909
+    ],
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.16945454545454544
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.09018181818181818
+    ],
+    [
+     "ANI:1 DMC:2 MA:1",
+     0.07854545454545454
+    ],
+    [
+     "DMC:2 EC:3",
+     0.06636363636363636
+    ],
+    [
+     "DMC:3 EC:3",
+     0.06436363636363636
+    ],
+    [
+     "DMC:3 EC:2",
+     0.062
+    ],
+    [
+     "DMC:2 EC:4",
+     0.06127272727272727
+    ]
+   ],
+   "block_error": 3.554265674523097e-05,
+   "thinning_error": 0.0016596870263168029,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC50_EC30_MA20_m0p491.sdf"
+  },
+  {
+   "id": "LiPF6_DMC50_EC30_MA20_m1p500",
+   "atoms": 3052,
+   "frames": 500,
+   "realised_molality": 1.4922317678423125,
+   "density": 1.2563475045847265,
+   "start_density": 1.0996021816877852,
+   "final_side": 32.638293840666186,
+   "ns_per_day": 452.31545205868133,
+   "run_seconds": 191.01713109016418,
+   "read_seconds": 19.251473903656006,
+   "build_seconds": 2.712629556655884,
+   "shells": 16000,
+   "members": 16,
+   "mean_coordination": 7.4059375,
+   "mean_molecules": 4.16875,
+   "ion_pair_share": 0.8498125,
+   "composition": [
+    [
+     "ANI:1 DMC:2 MA:1",
+     0.219625
+    ],
+    [
+     "ANI:1 DMC:1 EC:1 MA:1",
+     0.16975
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.1411875
+    ],
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.097
+    ],
+    [
+     "ANI:1 EC:1 MA:2",
+     0.0903125
+    ],
+    [
+     "DMC:2 EC:2 MA:2",
+     0.027
+    ],
+    [
+     "ANI:2 EC:2",
+     0.02425
+    ],
+    [
+     "ANI:2",
+     0.0215625
+    ]
+   ],
+   "block_error": 0.0006216061730738234,
+   "thinning_error": 0.002731308827533585,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC50_EC30_MA20_m1p500.sdf"
+  },
+  {
+   "id": "LiPF6_DMC50_EC30_MA20_m2p000",
+   "atoms": 3140,
+   "frames": 500,
+   "realised_molality": 2.0051864380381073,
+   "density": 1.2981981337246824,
+   "start_density": 1.0996021816877852,
+   "final_side": 32.95331011335729,
+   "ns_per_day": 454.67923737259656,
+   "run_seconds": 190.0240716934204,
+   "read_seconds": 21.7890522480011,
+   "build_seconds": 2.7281830310821533,
+   "shells": 21500,
+   "members": 16,
+   "mean_coordination": 7.306325581395349,
+   "mean_molecules": 3.988325581395349,
+   "ion_pair_share": 0.9041860465116279,
+   "composition": [
+    [
+     "ANI:1 DMC:1 EC:1 MA:1",
+     0.18786046511627907
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.09525581395348837
+    ],
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.0893953488372093
+    ],
+    [
+     "ANI:1 DMC:3",
+     0.06827906976744186
+    ],
+    [
+     "ANI:1 DMC:2 MA:1",
+     0.06362790697674418
+    ],
+    [
+     "ANI:1 EC:2 MA:1",
+     0.056
+    ],
+    [
+     "ANI:2 DMC:1 EC:1",
+     0.05353488372093023
+    ],
+    [
+     "ANI:1 EC:1 MA:2",
+     0.04655813953488372
+    ]
+   ],
+   "block_error": 0.00011452723641122666,
+   "thinning_error": 0.0037185293908869044,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC50_EC30_MA20_m2p000.sdf"
+  },
+  {
+   "id": "LiPF6_DMC60_EC30_MA10_m0p500",
+   "atoms": 2908,
+   "frames": 500,
+   "realised_molality": 0.5025509026956375,
+   "density": 1.171923477215959,
+   "start_density": 1.1164838351880984,
+   "final_side": 32.198614250865894,
+   "ns_per_day": 586.2108895638212,
+   "run_seconds": 147.38723134994507,
+   "read_seconds": 5.297494649887085,
+   "build_seconds": 2.2839598655700684,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 6.602,
+   "mean_molecules": 4.690181818181818,
+   "ion_pair_share": 0.5321818181818182,
+   "composition": [
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.2569090909090909
+    ],
+    [
+     "ANI:1 DMC:1 EC:1 MA:1",
+     0.09036363636363637
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.09018181818181818
+    ],
+    [
+     "ANI:1 DMC:2 MA:1",
+     0.08927272727272727
+    ],
+    [
+     "DMC:3 EC:2 MA:1",
+     0.06672727272727273
+    ],
+    [
+     "DMC:2 EC:3 MA:1",
+     0.06545454545454546
+    ],
+    [
+     "DMC:3 EC:1 MA:1",
+     0.061454545454545456
+    ],
+    [
+     "DMC:4 EC:1",
+     0.056545454545454545
+    ]
+   ],
+   "block_error": 9.700329096728818e-05,
+   "thinning_error": 0.0010178679094282606,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC60_EC30_MA10_m0p500.sdf"
+  },
+  {
+   "id": "LiPF6_DMC60_EC30_MA10_m1p491",
+   "atoms": 3084,
+   "frames": 500,
+   "realised_molality": 1.5076527080869127,
+   "density": 1.2561219732320845,
+   "start_density": 1.1164838351880984,
+   "final_side": 32.88485495385934,
+   "ns_per_day": 446.3558770068159,
+   "run_seconds": 193.5675196647644,
+   "read_seconds": 15.095653772354126,
+   "build_seconds": 1.5041694641113281,
+   "shells": 16500,
+   "members": 16,
+   "mean_coordination": 7.257818181818182,
+   "mean_molecules": 4.172545454545454,
+   "ion_pair_share": 0.7275757575757575,
+   "composition": [
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.24709090909090908
+    ],
+    [
+     "ANI:2",
+     0.08721212121212121
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.07284848484848484
+    ],
+    [
+     "ANI:1 DMC:3",
+     0.06066666666666667
+    ],
+    [
+     "ANI:2 DMC:1 EC:1",
+     0.05745454545454545
+    ],
+    [
+     "DMC:4 EC:1",
+     0.04787878787878788
+    ],
+    [
+     "ANI:1 EC:3",
+     0.03424242424242424
+    ],
+    [
+     "DMC:4 EC:2",
+     0.030363636363636363
+    ]
+   ],
+   "block_error": 6.717826818571543e-05,
+   "thinning_error": 0.005309548691532884,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC60_EC30_MA10_m1p491.sdf"
+  },
+  {
+   "id": "LiPF6_DMC60_EC30_MA10_m1p982",
+   "atoms": 3164,
+   "frames": 500,
+   "realised_molality": 1.964517165082947,
+   "density": 1.3207758953980249,
+   "start_density": 1.1164838351880984,
+   "final_side": 32.93685709745553,
+   "ns_per_day": 454.30355255109663,
+   "run_seconds": 190.18121147155762,
+   "read_seconds": 16.918675422668457,
+   "build_seconds": 2.270279884338379,
+   "shells": 21500,
+   "members": 16,
+   "mean_coordination": 7.321906976744186,
+   "mean_molecules": 3.9965116279069766,
+   "ion_pair_share": 0.8244186046511628,
+   "composition": [
+    [
+     "ANI:1 DMC:2 MA:1",
+     0.13767441860465116
+    ],
+    [
+     "ANI:1 DMC:1 EC:1 MA:1",
+     0.09097674418604651
+    ],
+    [
+     "ANI:2 DMC:2",
+     0.08609302325581396
+    ],
+    [
+     "ANI:1 DMC:3",
+     0.07865116279069767
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.07451162790697674
+    ],
+    [
+     "ANI:2",
+     0.06265116279069767
+    ],
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.04302325581395349
+    ],
+    [
+     "DMC:2 EC:3",
+     0.037767441860465115
+    ]
+   ],
+   "block_error": 0.00011176872692973782,
+   "thinning_error": 0.005644428354726783,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC60_EC30_MA10_m1p982.sdf"
+  },
+  {
+   "id": "LiPF6_DMC70_EC25_EMC05_m1p200",
+   "atoms": 3121,
+   "frames": 500,
+   "realised_molality": 1.1976168489254697,
+   "density": 1.214293173995246,
+   "start_density": 1.1189179417658857,
+   "final_side": 33.15278565946884,
+   "ns_per_day": 456.9534659978897,
+   "run_seconds": 189.0783338546753,
+   "read_seconds": 14.834211111068726,
+   "build_seconds": 1.3177146911621094,
+   "shells": 13500,
+   "members": 16,
+   "mean_coordination": 7.365851851851851,
+   "mean_molecules": 4.011851851851852,
+   "ion_pair_share": 0.8388888888888889,
+   "composition": [
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.3057037037037037
+    ],
+    [
+     "ANI:1 DMC:3",
+     0.1814074074074074
+    ],
+    [
+     "ANI:1 DMC:1 EC:1 EMC:1",
+     0.11118518518518518
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.09866666666666667
+    ],
+    [
+     "ANI:2",
+     0.09333333333333334
+    ],
+    [
+     "DMC:3 EC:2",
+     0.053259259259259256
+    ],
+    [
+     "DMC:4 EC:1",
+     0.02837037037037037
+    ],
+    [
+     "DMC:4 EC:2",
+     0.024592592592592593
+    ]
+   ],
+   "block_error": 8.177571165321786e-05,
+   "thinning_error": 0.0025498196844018217,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC70_EC25_EMC05_m1p200.sdf"
+  },
+  {
+   "id": "LiPF6_DMC70_EC30_m0p491",
+   "atoms": 2936,
+   "frames": 500,
+   "realised_molality": 0.4918116929928997,
+   "density": 1.1875830547752804,
+   "start_density": 1.133891922273968,
+   "final_side": 32.27179309938875,
+   "ns_per_day": 602.5967341402611,
+   "run_seconds": 143.37946939468384,
+   "read_seconds": 5.474406719207764,
+   "build_seconds": 2.345414638519287,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 6.245272727272727,
+   "mean_molecules": 4.861090909090909,
+   "ion_pair_share": 0.36654545454545456,
+   "composition": [
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.2710909090909091
+    ],
+    [
+     "DMC:3 EC:2",
+     0.1318181818181818
+    ],
+    [
+     "DMC:3 EC:3",
+     0.11418181818181818
+    ],
+    [
+     "DMC:4 EC:1",
+     0.10654545454545454
+    ],
+    [
+     "DMC:4 EC:2",
+     0.1050909090909091
+    ],
+    [
+     "DMC:5",
+     0.09509090909090909
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.09018181818181818
+    ],
+    [
+     "DMC:2 EC:3",
+     0.03272727272727273
+    ]
+   ],
+   "block_error": 4.034726001590319e-05,
+   "thinning_error": 0.0012968599320647423,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC70_EC30_m0p491.sdf"
+  },
+  {
+   "id": "LiPF6_DMC70_EC30_m1p000",
+   "atoms": 3024,
+   "frames": 500,
+   "realised_molality": 0.9836233859857993,
+   "density": 1.2278488869587145,
+   "start_density": 1.133891922273968,
+   "final_side": 32.638109915075304,
+   "ns_per_day": 463.6842332385531,
+   "run_seconds": 186.3337025642395,
+   "read_seconds": 8.831032514572144,
+   "build_seconds": 2.0851128101348877,
+   "shells": 11000,
+   "members": 16,
+   "mean_coordination": 7.148454545454546,
+   "mean_molecules": 4.285,
+   "ion_pair_share": 0.7886363636363637,
+   "composition": [
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.3511818181818182
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.23218181818181818
+    ],
+    [
+     "ANI:1 DMC:3",
+     0.1920909090909091
+    ],
+    [
+     "DMC:3 EC:2",
+     0.08536363636363636
+    ],
+    [
+     "DMC:3 EC:3",
+     0.04472727272727273
+    ],
+    [
+     "DMC:2 EC:4",
+     0.03154545454545454
+    ],
+    [
+     "DMC:2 EC:3",
+     0.02881818181818182
+    ],
+    [
+     "DMC:4 EC:1",
+     0.009909090909090909
+    ]
+   ],
+   "block_error": 4.8463493079085605e-05,
+   "thinning_error": 0.005767380311475612,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC70_EC30_m1p000.sdf"
+  },
+  {
+   "id": "LiPF6_DMC70_EC30_m2p000",
+   "atoms": 3208,
+   "frames": 500,
+   "realised_molality": 2.0119569258800443,
+   "density": 1.3258456060186072,
+   "start_density": 1.133891922273968,
+   "final_side": 33.193713813539674,
+   "ns_per_day": 456.05526167377775,
+   "run_seconds": 189.45072507858276,
+   "read_seconds": 18.134904384613037,
+   "build_seconds": 2.4328625202178955,
+   "shells": 22500,
+   "members": 16,
+   "mean_coordination": 7.1908,
+   "mean_molecules": 4.0793333333333335,
+   "ion_pair_share": 0.8304888888888889,
+   "composition": [
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.3404
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.12804444444444443
+    ],
+    [
+     "ANI:1 DMC:3",
+     0.1248
+    ],
+    [
+     "ANI:2 DMC:2",
+     0.08284444444444444
+    ],
+    [
+     "DMC:3 EC:2",
+     0.06088888888888889
+    ],
+    [
+     "ANI:2",
+     0.041911111111111114
+    ],
+    [
+     "DMC:4 EC:1",
+     0.0404
+    ],
+    [
+     "ANI:2 DMC:1",
+     0.03551111111111111
+    ]
+   ],
+   "block_error": 4.407283736303849e-05,
+   "thinning_error": 0.002144001137335594,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC70_EC30_m2p000.sdf"
+  },
+  {
+   "id": "LiPF6_DMC80_EC20_m0p500",
+   "atoms": 2986,
+   "frames": 500,
+   "realised_molality": 0.49070594027198683,
+   "density": 1.1603675242551525,
+   "start_density": 1.1114032740437587,
+   "final_side": 32.544863654635684,
+   "ns_per_day": 620.602185600497,
+   "run_seconds": 139.2196192741394,
+   "read_seconds": 5.074695825576782,
+   "build_seconds": 1.9417121410369873,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 6.823636363636363,
+   "mean_molecules": 4.306363636363637,
+   "ion_pair_share": 0.7732727272727272,
+   "composition": [
+    [
+     "ANI:1 DMC:3",
+     0.34763636363636363
+    ],
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.3209090909090909
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.09072727272727273
+    ],
+    [
+     "DMC:4 EC:1",
+     0.07818181818181819
+    ],
+    [
+     "DMC:3 EC:2",
+     0.060909090909090906
+    ],
+    [
+     "DMC:4 EC:2",
+     0.05381818181818182
+    ],
+    [
+     "DMC:3 EC:3",
+     0.02327272727272727
+    ],
+    [
+     "ANI:1 DMC:3 EC:1",
+     0.005636363636363636
+    ]
+   ],
+   "block_error": 0.00016931407087817063,
+   "thinning_error": 0.0020694336595183938,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC80_EC20_m0p500.sdf"
+  },
+  {
+   "id": "LiPF6_DMC80_EC20_m1p500",
+   "atoms": 3170,
+   "frames": 500,
+   "realised_molality": 1.5167274517497775,
+   "density": 1.2504331760955099,
+   "start_density": 1.1114032740437587,
+   "final_side": 33.20995078812984,
+   "ns_per_day": 455.987494260125,
+   "run_seconds": 189.4788806438446,
+   "read_seconds": 12.997342109680176,
+   "build_seconds": 2.2351491451263428,
+   "shells": 17000,
+   "members": 16,
+   "mean_coordination": 7.258470588235294,
+   "mean_molecules": 4.048529411764706,
+   "ion_pair_share": 0.88,
+   "composition": [
+    [
+     "ANI:1 DMC:3",
+     0.29594117647058826
+    ],
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.2660588235294118
+    ],
+    [
+     "ANI:2 DMC:2",
+     0.12347058823529412
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.08735294117647059
+    ],
+    [
+     "DMC:3 EC:2",
+     0.03870588235294117
+    ],
+    [
+     "DMC:4 EC:1",
+     0.033823529411764704
+    ],
+    [
+     "ANI:2",
+     0.02911764705882353
+    ],
+    [
+     "ANI:1 DMC:2",
+     0.028529411764705883
+    ]
+   ],
+   "block_error": 0.0025325701225329153,
+   "thinning_error": 0.004545557974080516,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC80_EC20_m1p500.sdf"
+  },
+  {
+   "id": "LiPF6_DMC80_EC20_m2p000",
+   "atoms": 3258,
+   "frames": 500,
+   "realised_molality": 2.007433392021764,
+   "density": 1.2973202254326233,
+   "start_density": 1.1114032740437587,
+   "final_side": 33.45446351879792,
+   "ns_per_day": 420.84929241518967,
+   "run_seconds": 205.2991452217102,
+   "read_seconds": 19.607948780059814,
+   "build_seconds": 2.850785255432129,
+   "shells": 22500,
+   "members": 16,
+   "mean_coordination": 7.2776,
+   "mean_molecules": 3.920933333333333,
+   "ion_pair_share": 0.8688,
+   "composition": [
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.23142222222222222
+    ],
+    [
+     "ANI:1 DMC:3",
+     0.22342222222222222
+    ],
+    [
+     "ANI:2 DMC:2",
+     0.15453333333333333
+    ],
+    [
+     "ANI:2",
+     0.07382222222222222
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.06564444444444445
+    ],
+    [
+     "DMC:3 EC:2",
+     0.04631111111111111
+    ],
+    [
+     "ANI:2 DMC:1",
+     0.03942222222222222
+    ],
+    [
+     "ANI:2 DMC:1 EC:1",
+     0.03164444444444445
+    ]
+   ],
+   "block_error": 8.981143504188797e-05,
+   "thinning_error": 0.0027546396636661807,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC80_EC20_m2p000.sdf"
+  },
+  {
+   "id": "LiPF6_DMC90_EC10_m0p500",
+   "atoms": 3036,
+   "frames": 500,
+   "realised_molality": 0.48960514858091964,
+   "density": 1.1431866363835448,
+   "start_density": 1.0897893193394041,
+   "final_side": 32.729887746414335,
+   "ns_per_day": 471.8587951107474,
+   "run_seconds": 183.10562586784363,
+   "read_seconds": 5.7420384883880615,
+   "build_seconds": 1.8919801712036133,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 7.201818181818182,
+   "mean_molecules": 4.1134545454545455,
+   "ion_pair_share": 0.9098181818181819,
+   "composition": [
+    [
+     "ANI:1 DMC:3",
+     0.7250909090909091
+    ],
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.09127272727272727
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.09
+    ],
+    [
+     "DMC:4 EC:1",
+     0.04872727272727273
+    ],
+    [
+     "DMC:4 EC:2",
+     0.02509090909090909
+    ],
+    [
+     "DMC:3 EC:2",
+     0.014363636363636363
+    ],
+    [
+     "DMC:3 EC:1",
+     0.0012727272727272728
+    ],
+    [
+     "ANI:1 DMC:2",
+     0.001090909090909091
+    ]
+   ],
+   "block_error": 5.7387239073027445e-05,
+   "thinning_error": 0.002294754178169933,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC90_EC10_m0p500.sdf"
+  },
+  {
+   "id": "LiPF6_DMC90_EC10_m1p500",
+   "atoms": 3220,
+   "frames": 500,
+   "realised_molality": 1.5133250047046607,
+   "density": 1.226241709738599,
+   "start_density": 1.0897893193394041,
+   "final_side": 33.447268514178916,
+   "ns_per_day": 470.6469238320813,
+   "run_seconds": 183.57710552215576,
+   "read_seconds": 16.86076021194458,
+   "build_seconds": 2.6134274005889893,
+   "shells": 17000,
+   "members": 16,
+   "mean_coordination": 7.237647058823529,
+   "mean_molecules": 3.9973529411764708,
+   "ion_pair_share": 0.9226470588235294,
+   "composition": [
+    [
+     "ANI:1 DMC:3",
+     0.39776470588235296
+    ],
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.2771764705882353
+    ],
+    [
+     "ANI:2 DMC:2",
+     0.13064705882352942
+    ],
+    [
+     "ANI:2 DMC:1",
+     0.03535294117647059
+    ],
+    [
+     "ANI:2",
+     0.029
+    ],
+    [
+     "DMC:3 EC:2",
+     0.02658823529411765
+    ],
+    [
+     "ANI:1 DMC:2",
+     0.022647058823529412
+    ],
+    [
+     "DMC:4 EC:2",
+     0.019058823529411763
+    ]
+   ],
+   "block_error": 0.0001154871403444045,
+   "thinning_error": 0.0054957261047295924,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC90_EC10_m1p500.sdf"
+  },
+  {
+   "id": "LiPF6_DMC90_EC10_m2p000",
+   "atoms": 3308,
+   "frames": 500,
+   "realised_molality": 2.0029301532855803,
+   "density": 1.297140108353908,
+   "start_density": 1.0897893193394041,
+   "final_side": 33.475215122991116,
+   "ns_per_day": 453.4126228422912,
+   "run_seconds": 190.5549066066742,
+   "read_seconds": 18.286677360534668,
+   "build_seconds": 2.8281099796295166,
+   "shells": 22500,
+   "members": 16,
+   "mean_coordination": 7.155333333333333,
+   "mean_molecules": 3.9952444444444444,
+   "ion_pair_share": 0.9356,
+   "composition": [
+    [
+     "ANI:1 DMC:3",
+     0.4485777777777778
+    ],
+    [
+     "ANI:2 DMC:2",
+     0.21946666666666667
+    ],
+    [
+     "ANI:1 DMC:2 EC:1",
+     0.15733333333333333
+    ],
+    [
+     "ANI:1 DMC:2",
+     0.051333333333333335
+    ],
+    [
+     "DMC:4 EC:1",
+     0.033555555555555554
+    ],
+    [
+     "ANI:2 DMC:1",
+     0.029066666666666668
+    ],
+    [
+     "ANI:1 DMC:1 EC:2",
+     0.021822222222222222
+    ],
+    [
+     "DMC:3 EC:2",
+     0.012533333333333334
+    ]
+   ],
+   "block_error": 6.148345038140086e-05,
+   "thinning_error": 0.002012520591350264,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_DMC90_EC10_m2p000.sdf"
+  },
+  {
+   "id": "LiPF6_EC10_EMC90_m0p500",
+   "atoms": 3709,
+   "frames": 500,
+   "realised_molality": 0.5085872412753133,
+   "density": 1.0851037784086206,
+   "start_density": 1.031519075682382,
+   "final_side": 34.79831394263195,
+   "ns_per_day": 455.37422781843946,
+   "run_seconds": 189.73405766487122,
+   "read_seconds": 6.175518751144409,
+   "build_seconds": 1.4509785175323486,
+   "shells": 6500,
+   "members": 16,
+   "mean_coordination": 6.767384615384615,
+   "mean_molecules": 4.2756923076923075,
+   "ion_pair_share": 0.7021538461538461,
+   "composition": [
+    [
+     "ANI:1 EMC:3",
+     0.37246153846153846
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.1523076923076923
+    ],
+    [
+     "EC:1 EMC:4",
+     0.15215384615384617
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.136
+    ],
+    [
+     "EC:2 EMC:3",
+     0.10846153846153846
+    ],
+    [
+     "EC:2 EMC:4",
+     0.026307692307692306
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.026153846153846153
+    ],
+    [
+     "ANI:1 EMC:2",
+     0.013846153846153847
+    ]
+   ],
+   "block_error": 3.0618902538553385e-05,
+   "thinning_error": 0.0030247035130916977,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC10_EMC90_m0p500.sdf"
+  },
+  {
+   "id": "LiPF6_EC10_EMC90_m1p500",
+   "atoms": 3909,
+   "frames": 500,
+   "realised_molality": 1.4866396283432235,
+   "density": 1.1835478512757636,
+   "start_density": 1.031519075682382,
+   "final_side": 35.293106197824976,
+   "ns_per_day": 460.7245137350473,
+   "run_seconds": 187.53072047233582,
+   "read_seconds": 17.228728532791138,
+   "build_seconds": 3.2945618629455566,
+   "shells": 19000,
+   "members": 16,
+   "mean_coordination": 7.4309473684210525,
+   "mean_molecules": 3.8124736842105262,
+   "ion_pair_share": 0.9460526315789474,
+   "composition": [
+    [
+     "ANI:1 EMC:3",
+     0.3815789473684211
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.1376842105263158
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.11136842105263157
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.07305263157894737
+    ],
+    [
+     "ANI:2",
+     0.06278947368421052
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.05826315789473684
+    ],
+    [
+     "ANI:1 EMC:2",
+     0.035
+    ],
+    [
+     "ANI:2 EC:1 EMC:1",
+     0.02636842105263158
+    ]
+   ],
+   "block_error": 4.238768344827721e-05,
+   "thinning_error": 0.029642427860628318,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC10_EMC90_m1p500.sdf"
+  },
+  {
+   "id": "LiPF6_EC10_EMC90_m2p000",
+   "atoms": 4013,
+   "frames": 500,
+   "realised_molality": 1.995226869618537,
+   "density": 1.242653535645201,
+   "start_density": 1.031519075682382,
+   "final_side": 35.439107384487635,
+   "ns_per_day": 464.21113656595116,
+   "run_seconds": 186.12220430374146,
+   "read_seconds": 23.517383575439453,
+   "build_seconds": 3.103898525238037,
+   "shells": 25500,
+   "members": 16,
+   "mean_coordination": 7.37278431372549,
+   "mean_molecules": 3.7798039215686274,
+   "ion_pair_share": 0.908235294117647,
+   "composition": [
+    [
+     "ANI:1 EMC:3",
+     0.2549411764705882
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.21062745098039215
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.12070588235294118
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.08027450980392156
+    ],
+    [
+     "ANI:2",
+     0.07458823529411765
+    ],
+    [
+     "ANI:1 EMC:2",
+     0.04784313725490196
+    ],
+    [
+     "ANI:2 EC:1",
+     0.043372549019607846
+    ],
+    [
+     "EC:1 EMC:4",
+     0.037450980392156864
+    ]
+   ],
+   "block_error": 0.0001739344950244183,
+   "thinning_error": 0.0028953647375741243,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC10_EMC90_m2p000.sdf"
+  },
+  {
+   "id": "LiPF6_EC15_PC85_m0p446",
+   "atoms": 3212,
+   "frames": 500,
+   "realised_molality": 0.44118031617067044,
+   "density": 1.2366355004345575,
+   "start_density": 1.2210839214482971,
+   "final_side": 32.93454811335669,
+   "ns_per_day": 455.1013599483009,
+   "run_seconds": 189.84781765937805,
+   "read_seconds": 5.6733129024505615,
+   "build_seconds": 2.676170587539673,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 6.612909090909091,
+   "mean_molecules": 4.874727272727273,
+   "ion_pair_share": 0.45454545454545453,
+   "composition": [
+    [
+     "ANI:1 PC:3",
+     0.3810909090909091
+    ],
+    [
+     "EC:1 PC:5",
+     0.14454545454545453
+    ],
+    [
+     "EC:2 PC:4",
+     0.10290909090909091
+    ],
+    [
+     "EC:1 PC:4",
+     0.08327272727272728
+    ],
+    [
+     "ANI:1 EC:1 PC:2",
+     0.07181818181818182
+    ],
+    [
+     "EC:2 PC:3",
+     0.05709090909090909
+    ],
+    [
+     "PC:5",
+     0.054
+    ],
+    [
+     "PC:6",
+     0.05272727272727273
+    ]
+   ],
+   "block_error": 0.000114066186358707,
+   "thinning_error": 0.0032293713609452546,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC15_PC85_m0p446.sdf"
+  },
+  {
+   "id": "LiPF6_EC20_EMC80_m0p454",
+   "atoms": 3553,
+   "frames": 500,
+   "realised_molality": 0.43804109773258404,
+   "density": 1.0983906885717634,
+   "start_density": 1.0572619615323475,
+   "final_side": 34.33858355923824,
+   "ns_per_day": 440.42894436829505,
+   "run_seconds": 196.1723930835724,
+   "read_seconds": 5.765675067901611,
+   "build_seconds": 2.32668399810791,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 6.718181818181818,
+   "mean_molecules": 4.256363636363637,
+   "ion_pair_share": 0.6436363636363637,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.22745454545454546
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.18127272727272728
+    ],
+    [
+     "EC:1 EMC:4",
+     0.108
+    ],
+    [
+     "EC:2 EMC:3",
+     0.10527272727272727
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.07636363636363637
+    ],
+    [
+     "EC:3 EMC:3",
+     0.061454545454545456
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.05709090909090909
+    ],
+    [
+     "ANI:2",
+     0.04654545454545454
+    ]
+   ],
+   "block_error": 3.105259821856492e-05,
+   "thinning_error": 0.0035040655711188196,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC20_EMC80_m0p454.sdf"
+  },
+  {
+   "id": "LiPF6_EC20_EMC80_m1p110",
+   "atoms": 3689,
+   "frames": 500,
+   "realised_molality": 1.1150137033193048,
+   "density": 1.1788457699230077,
+   "start_density": 1.0572619615323475,
+   "final_side": 34.583938239723764,
+   "ns_per_day": 433.47229189114495,
+   "run_seconds": 199.32069849967957,
+   "read_seconds": 15.499746799468994,
+   "build_seconds": 2.7081925868988037,
+   "shells": 14000,
+   "members": 16,
+   "mean_coordination": 7.032642857142857,
+   "mean_molecules": 4.0709285714285715,
+   "ion_pair_share": 0.8736428571428572,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.48035714285714287
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.224
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.08135714285714286
+    ],
+    [
+     "EC:2 EMC:3",
+     0.07785714285714286
+    ],
+    [
+     "ANI:2",
+     0.03571428571428571
+    ],
+    [
+     "EMC:4",
+     0.024
+    ],
+    [
+     "ANI:1 EMC:4",
+     0.022785714285714284
+    ],
+    [
+     "ANI:1 EC:1 EMC:3",
+     0.01757142857142857
+    ]
+   ],
+   "block_error": 0.00044579495679353726,
+   "thinning_error": 0.004895058698149102,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC20_EMC80_m1p110.sdf"
+  },
+  {
+   "id": "LiPF6_EC20_EMC80_m2p000",
+   "atoms": 3865,
+   "frames": 500,
+   "realised_molality": 1.9910958987844731,
+   "density": 1.249495227423381,
+   "start_density": 1.0572619615323475,
+   "final_side": 35.16021401629095,
+   "ns_per_day": 429.9284077845577,
+   "run_seconds": 200.96369171142578,
+   "read_seconds": 25.93932056427002,
+   "build_seconds": 2.901380777359009,
+   "shells": 25000,
+   "members": 16,
+   "mean_coordination": 7.296,
+   "mean_molecules": 3.89056,
+   "ion_pair_share": 0.86496,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.23816
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.1606
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.109
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.08368
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.08216
+    ],
+    [
+     "EC:2 EMC:3",
+     0.06616
+    ],
+    [
+     "ANI:2 EC:1 EMC:1",
+     0.05432
+    ],
+    [
+     "ANI:2",
+     0.0426
+    ]
+   ],
+   "block_error": 0.0004840705321480887,
+   "thinning_error": 0.013496177726996628,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC20_EMC80_m2p000.sdf"
+  },
+  {
+   "id": "LiPF6_EC30_EMC50_MA20_m0p508",
+   "atoms": 3208,
+   "frames": 500,
+   "realised_molality": 0.5237136675825258,
+   "density": 1.1134442126849864,
+   "start_density": 1.065851178901929,
+   "final_side": 33.28925465815424,
+   "ns_per_day": 425.7135426373614,
+   "run_seconds": 202.95337438583374,
+   "read_seconds": 8.21375823020935,
+   "build_seconds": 2.226820230484009,
+   "shells": 6000,
+   "members": 16,
+   "mean_coordination": 6.369166666666667,
+   "mean_molecules": 4.655,
+   "ion_pair_share": 0.5445,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.15733333333333333
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.1025
+    ],
+    [
+     "ANI:1 EMC:2 MA:1",
+     0.0795
+    ],
+    [
+     "EC:2 EMC:2 MA:1",
+     0.07733333333333334
+    ],
+    [
+     "ANI:1 EC:1 MA:2",
+     0.068
+    ],
+    [
+     "ANI:1 EC:1 EMC:1 MA:1",
+     0.058
+    ],
+    [
+     "EC:3 EMC:2 MA:1",
+     0.05683333333333333
+    ],
+    [
+     "EC:1 EMC:4",
+     0.052
+    ]
+   ],
+   "block_error": 0.0005068839038796686,
+   "thinning_error": 0.017078494986846993,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC30_EMC50_MA20_m0p508.sdf"
+  },
+  {
+   "id": "LiPF6_EC30_EMC50_MA20_m1p492",
+   "atoms": 3384,
+   "frames": 500,
+   "realised_molality": 1.483855391483823,
+   "density": 1.217338530474511,
+   "start_density": 1.065851178901929,
+   "final_side": 33.70812229020324,
+   "ns_per_day": 437.9286019716097,
+   "run_seconds": 197.29243445396423,
+   "read_seconds": 15.760622262954712,
+   "build_seconds": 2.6661839485168457,
+   "shells": 17000,
+   "members": 16,
+   "mean_coordination": 7.087941176470588,
+   "mean_molecules": 4.175764705882353,
+   "ion_pair_share": 0.8209411764705883,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:1 MA:1",
+     0.15564705882352942
+    ],
+    [
+     "ANI:1 EMC:2 MA:1",
+     0.11035294117647058
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.09676470588235295
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.08964705882352941
+    ],
+    [
+     "ANI:1 EC:1 MA:2",
+     0.08852941176470588
+    ],
+    [
+     "ANI:1 EC:2 MA:1",
+     0.03935294117647059
+    ],
+    [
+     "ANI:2 EC:2",
+     0.034529411764705885
+    ],
+    [
+     "ANI:1 EC:3",
+     0.028941176470588234
+    ]
+   ],
+   "block_error": 4.812596318330191e-05,
+   "thinning_error": 0.03939255013218601,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC30_EMC50_MA20_m1p492.sdf"
+  },
+  {
+   "id": "LiPF6_EC30_EMC50_MA20_m1p992",
+   "atoms": 3480,
+   "frames": 500,
+   "realised_molality": 2.007569059066349,
+   "density": 1.2676418613677753,
+   "start_density": 1.065851178901929,
+   "final_side": 33.96084994815435,
+   "ns_per_day": 435.14876930548,
+   "run_seconds": 198.55278491973877,
+   "read_seconds": 19.391302824020386,
+   "build_seconds": 2.4413015842437744,
+   "shells": 23000,
+   "members": 16,
+   "mean_coordination": 7.374652173913043,
+   "mean_molecules": 3.9149565217391302,
+   "ion_pair_share": 0.8406086956521739,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:1 MA:1",
+     0.139
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.12965217391304348
+    ],
+    [
+     "ANI:2",
+     0.10217391304347827
+    ],
+    [
+     "ANI:1 EC:1 MA:2",
+     0.07030434782608695
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.06508695652173913
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.05669565217391304
+    ],
+    [
+     "ANI:1 EC:2 MA:1",
+     0.04552173913043478
+    ],
+    [
+     "ANI:1 EMC:2 MA:1",
+     0.042434782608695654
+    ]
+   ],
+   "block_error": 0.0001942345518862823,
+   "thinning_error": 0.006471733359736054,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC30_EMC50_MA20_m1p992.sdf"
+  },
+  {
+   "id": "LiPF6_EC30_EMC60_MA10_m0p570",
+   "atoms": 3329,
+   "frames": 500,
+   "realised_molality": 0.5890784435790136,
+   "density": 1.1548930257325782,
+   "start_density": 1.0750075623104813,
+   "final_side": 33.39085490700563,
+   "ns_per_day": 435.55438435899526,
+   "run_seconds": 198.36788034439087,
+   "read_seconds": 6.528538227081299,
+   "build_seconds": 2.219930410385132,
+   "shells": 7000,
+   "members": 16,
+   "mean_coordination": 6.602,
+   "mean_molecules": 4.684571428571428,
+   "ion_pair_share": 0.5042857142857143,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.14257142857142857
+    ],
+    [
+     "EC:3 EMC:2 MA:1",
+     0.07871428571428571
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.07128571428571429
+    ],
+    [
+     "ANI:1 EC:2 MA:1",
+     0.07128571428571429
+    ],
+    [
+     "ANI:1 EC:3",
+     0.07057142857142858
+    ],
+    [
+     "EC:2 EMC:2 MA:1",
+     0.06442857142857143
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.062142857142857146
+    ],
+    [
+     "ANI:1 EC:1 EMC:1 MA:1",
+     0.05657142857142857
+    ]
+   ],
+   "block_error": 3.134038234645206e-05,
+   "thinning_error": 0.0017170143793316939,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC30_EMC60_MA10_m0p570.sdf"
+  },
+  {
+   "id": "LiPF6_EC30_EMC60_MA10_m1p596",
+   "atoms": 3521,
+   "frames": 500,
+   "realised_molality": 1.5989272040001798,
+   "density": 1.2395206896864028,
+   "start_density": 1.0750075623104813,
+   "final_side": 34.076895424842135,
+   "ns_per_day": 435.34331577427474,
+   "run_seconds": 198.4640555381775,
+   "read_seconds": 16.634626865386963,
+   "build_seconds": 2.781834840774536,
+   "shells": 19000,
+   "members": 16,
+   "mean_coordination": 7.3053684210526315,
+   "mean_molecules": 3.955052631578947,
+   "ion_pair_share": 0.9217894736842105,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.23442105263157895
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.1453684210526316
+    ],
+    [
+     "ANI:1 EC:1 EMC:1 MA:1",
+     0.11557894736842106
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.07852631578947368
+    ],
+    [
+     "ANI:2",
+     0.07794736842105263
+    ],
+    [
+     "ANI:1 EC:2 MA:1",
+     0.057
+    ],
+    [
+     "ANI:1 EC:2 EMC:2",
+     0.04005263157894737
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.03368421052631579
+    ]
+   ],
+   "block_error": 0.00013966583333014097,
+   "thinning_error": 0.003761867731393864,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC30_EMC60_MA10_m1p596.sdf"
+  },
+  {
+   "id": "LiPF6_EC30_EMC60_MA10_m2p105",
+   "atoms": 3617,
+   "frames": 500,
+   "realised_molality": 2.103851584210763,
+   "density": 1.2753680545472144,
+   "start_density": 1.0750075623104813,
+   "final_side": 34.435115780045884,
+   "ns_per_day": 430.48721959499085,
+   "run_seconds": 200.70282244682312,
+   "read_seconds": 25.16349744796753,
+   "build_seconds": 2.5002524852752686,
+   "shells": 25000,
+   "members": 16,
+   "mean_coordination": 7.19108,
+   "mean_molecules": 3.94732,
+   "ion_pair_share": 0.85388,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.16592
+    ],
+    [
+     "ANI:1 EC:1 EMC:1 MA:1",
+     0.1488
+    ],
+    [
+     "ANI:2",
+     0.09944
+    ],
+    [
+     "ANI:2 EC:1 EMC:1",
+     0.07968
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.0788
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.07824
+    ],
+    [
+     "EC:2 EMC:2 MA:1",
+     0.04028
+    ],
+    [
+     "ANI:1 EMC:2 MA:1",
+     0.03748
+    ]
+   ],
+   "block_error": 5.486546431989511e-05,
+   "thinning_error": 0.017890817634284684,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC30_EMC60_MA10_m2p105.sdf"
+  },
+  {
+   "id": "LiPF6_EC30_EMC70_m0p443",
+   "atoms": 3418,
+   "frames": 500,
+   "realised_molality": 0.4457296225180662,
+   "density": 1.1482878202296531,
+   "start_density": 1.08432262797522,
+   "final_side": 33.650430865027964,
+   "ns_per_day": 435.47489646318775,
+   "run_seconds": 198.40408873558044,
+   "read_seconds": 6.797581911087036,
+   "build_seconds": 1.7438812255859375,
+   "shells": 5500,
+   "members": 16,
+   "mean_coordination": 6.257454545454546,
+   "mean_molecules": 4.7149090909090905,
+   "ion_pair_share": 0.4567272727272727,
+   "composition": [
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.2712727272727273
+    ],
+    [
+     "EC:2 EMC:3",
+     0.20654545454545453
+    ],
+    [
+     "EC:3 EMC:3",
+     0.0910909090909091
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.09072727272727273
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.09054545454545454
+    ],
+    [
+     "EC:1 EMC:4",
+     0.059454545454545454
+    ],
+    [
+     "EC:5 EMC:1",
+     0.04309090909090909
+    ],
+    [
+     "EC:3 EMC:2",
+     0.04127272727272727
+    ]
+   ],
+   "block_error": 3.7689347968355266e-05,
+   "thinning_error": 0.0017630428904539253,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC30_EMC70_m0p443.sdf"
+  },
+  {
+   "id": "LiPF6_EC30_EMC70_m1p110",
+   "atoms": 3546,
+   "frames": 500,
+   "realised_molality": 1.0940636189079807,
+   "density": 1.1969846325962163,
+   "start_density": 1.08432262797522,
+   "final_side": 34.17830594725331,
+   "ns_per_day": 427.3769571144209,
+   "run_seconds": 202.1634497642517,
+   "read_seconds": 11.501799583435059,
+   "build_seconds": 2.630676746368408,
+   "shells": 13500,
+   "members": 16,
+   "mean_coordination": 6.978074074074074,
+   "mean_molecules": 4.2038518518518515,
+   "ion_pair_share": 0.7973333333333333,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.3980740740740741
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.1582962962962963
+    ],
+    [
+     "EC:2 EMC:3",
+     0.07681481481481481
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.07437037037037036
+    ],
+    [
+     "ANI:1 EC:3",
+     0.07355555555555555
+    ],
+    [
+     "EC:3 EMC:3",
+     0.05414814814814815
+    ],
+    [
+     "EC:3 EMC:2",
+     0.03674074074074074
+    ],
+    [
+     "ANI:2",
+     0.03607407407407407
+    ]
+   ],
+   "block_error": 8.006200775299492e-05,
+   "thinning_error": 0.002085239073128964,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC30_EMC70_m1p110.sdf"
+  },
+  {
+   "id": "LiPF6_EC30_EMC70_m2p009",
+   "atoms": 3730,
+   "frames": 500,
+   "realised_molality": 2.0260437387184824,
+   "density": 1.2840385039888198,
+   "start_density": 1.08432262797522,
+   "final_side": 34.68755301144092,
+   "ns_per_day": 438.0542453119987,
+   "run_seconds": 197.2358467578888,
+   "read_seconds": 20.81793236732483,
+   "build_seconds": 2.9105751514434814,
+   "shells": 25000,
+   "members": 16,
+   "mean_coordination": 7.20184,
+   "mean_molecules": 3.8786,
+   "ion_pair_share": 0.8936,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.24172
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.19164
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.09916
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.09336
+    ],
+    [
+     "ANI:2",
+     0.05732
+    ],
+    [
+     "EC:3 EMC:2",
+     0.03796
+    ],
+    [
+     "ANI:1 EC:3",
+     0.03556
+    ],
+    [
+     "ANI:2 EC:1 EMC:1",
+     0.0348
+    ]
+   ],
+   "block_error": 0.0015338342014438006,
+   "thinning_error": 0.008918694626042,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC30_EMC70_m2p009.sdf"
+  },
+  {
+   "id": "LiPF6_EC40_EMC60_m0p428",
+   "atoms": 3280,
+   "frames": 500,
+   "realised_molality": 0.4121753294929586,
+   "density": 1.142949076916223,
+   "start_density": 1.1128049188556133,
+   "final_side": 33.45837144305914,
+   "ns_per_day": 443.00828595407455,
+   "run_seconds": 195.03021216392517,
+   "read_seconds": 5.5018885135650635,
+   "build_seconds": 2.276463270187378,
+   "shells": 5000,
+   "members": 16,
+   "mean_coordination": 6.641,
+   "mean_molecules": 4.6946,
+   "ion_pair_share": 0.5116,
+   "composition": [
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.3058
+    ],
+    [
+     "EC:2 EMC:3",
+     0.1692
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.1428
+    ],
+    [
+     "EC:3 EMC:3",
+     0.0796
+    ],
+    [
+     "ANI:1 EC:3",
+     0.057
+    ],
+    [
+     "EC:3 EMC:2",
+     0.0506
+    ],
+    [
+     "EC:5 EMC:1",
+     0.0478
+    ],
+    [
+     "EC:4 EMC:2",
+     0.0354
+    ]
+   ],
+   "block_error": 8.619189897201948e-05,
+   "thinning_error": 0.002867461696339335,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC40_EMC60_m0p428.sdf"
+  },
+  {
+   "id": "LiPF6_EC40_EMC60_m1p077",
+   "atoms": 3408,
+   "frames": 500,
+   "realised_molality": 1.0716558566816923,
+   "density": 1.2116562960484447,
+   "start_density": 1.1128049188556133,
+   "final_side": 33.81396001783125,
+   "ns_per_day": 437.602240767553,
+   "run_seconds": 197.4395740032196,
+   "read_seconds": 10.360363483428955,
+   "build_seconds": 2.8933043479919434,
+   "shells": 13000,
+   "members": 16,
+   "mean_coordination": 7.304615384615385,
+   "mean_molecules": 4.045923076923077,
+   "ion_pair_share": 0.79,
+   "composition": [
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.31361538461538463
+    ],
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.22476923076923078
+    ],
+    [
+     "ANI:2",
+     0.10792307692307693
+    ],
+    [
+     "EC:2 EMC:3",
+     0.08623076923076924
+    ],
+    [
+     "ANI:1 EC:3",
+     0.0756923076923077
+    ],
+    [
+     "EC:3 EMC:3",
+     0.04038461538461539
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.03923076923076923
+    ],
+    [
+     "EC:3 EMC:2",
+     0.02876923076923077
+    ]
+   ],
+   "block_error": 0.00011874216596115473,
+   "thinning_error": 0.015343029144673781,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC40_EMC60_m1p077.sdf"
+  },
+  {
+   "id": "LiPF6_EC40_EMC60_m1p574",
+   "atoms": 3504,
+   "frames": 500,
+   "realised_molality": 1.5662662520732427,
+   "density": 1.27453586479231,
+   "start_density": 1.1128049188556133,
+   "final_side": 33.94969973997458,
+   "ns_per_day": 439.95878312572,
+   "run_seconds": 196.38203239440918,
+   "read_seconds": 15.394068717956543,
+   "build_seconds": 2.4665637016296387,
+   "shells": 19000,
+   "members": 16,
+   "mean_coordination": 7.322157894736842,
+   "mean_molecules": 3.9871052631578947,
+   "ion_pair_share": 0.8819473684210526,
+   "composition": [
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.2796842105263158
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.2094736842105263
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.07431578947368421
+    ],
+    [
+     "ANI:2 EC:1 EMC:1",
+     0.06978947368421053
+    ],
+    [
+     "ANI:1 EC:3",
+     0.06273684210526316
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.051157894736842104
+    ],
+    [
+     "ANI:2 EC:1",
+     0.04042105263157895
+    ],
+    [
+     "EC:2 EMC:3",
+     0.03757894736842105
+    ]
+   ],
+   "block_error": 6.215991846658969e-05,
+   "thinning_error": 0.008102296628935357,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC40_EMC60_m1p574.sdf"
+  },
+  {
+   "id": "LiPF6_EC50_EMC50_m0p540",
+   "atoms": 3179,
+   "frames": 500,
+   "realised_molality": 0.5448347673314562,
+   "density": 1.177095001589699,
+   "start_density": 1.1428238831615118,
+   "final_side": 33.155052022641414,
+   "ns_per_day": 449.2277082009762,
+   "run_seconds": 192.33007764816284,
+   "read_seconds": 6.211175441741943,
+   "build_seconds": 2.249401330947876,
+   "shells": 6500,
+   "members": 16,
+   "mean_coordination": 6.850615384615384,
+   "mean_molecules": 4.489076923076923,
+   "ion_pair_share": 0.5384615384615384,
+   "composition": [
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.2296923076923077
+    ],
+    [
+     "EC:3 EMC:3",
+     0.16415384615384615
+    ],
+    [
+     "EC:2 EMC:3",
+     0.15615384615384614
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.1529230769230769
+    ],
+    [
+     "EC:3 EMC:2",
+     0.07753846153846154
+    ],
+    [
+     "ANI:2",
+     0.07692307692307693
+    ],
+    [
+     "ANI:1 EC:3",
+     0.07661538461538461
+    ],
+    [
+     "EC:4 EMC:2",
+     0.031538461538461536
+    ]
+   ],
+   "block_error": 6.276147815178285e-05,
+   "thinning_error": 0.0031120575127955297,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC50_EMC50_m0p540.sdf"
+  },
+  {
+   "id": "LiPF6_EC50_EMC50_m1p212",
+   "atoms": 3307,
+   "frames": 500,
+   "realised_molality": 1.2154006348163253,
+   "density": 1.246619365987186,
+   "start_density": 1.1428238831615118,
+   "final_side": 33.5164471847574,
+   "ns_per_day": 439.60831000052906,
+   "run_seconds": 196.5385959148407,
+   "read_seconds": 11.672723531723022,
+   "build_seconds": 2.3821098804473877,
+   "shells": 14500,
+   "members": 16,
+   "mean_coordination": 7.013862068965517,
+   "mean_molecules": 4.336758620689655,
+   "ion_pair_share": 0.6848275862068965,
+   "composition": [
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.32675862068965517
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.23875862068965517
+    ],
+    [
+     "EC:3 EMC:2",
+     0.08979310344827586
+    ],
+    [
+     "EC:4 EMC:1",
+     0.05875862068965517
+    ],
+    [
+     "EC:4 EMC:2",
+     0.05758620689655172
+    ],
+    [
+     "EC:3 EMC:3",
+     0.038206896551724136
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.034482758620689655
+    ],
+    [
+     "EC:2 EMC:3",
+     0.03427586206896552
+    ]
+   ],
+   "block_error": 7.544964027425269e-05,
+   "thinning_error": 0.003183597687988593,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC50_EMC50_m1p212.sdf"
+  },
+  {
+   "id": "LiPF6_EC50_EMC50_m1p806",
+   "atoms": 3419,
+   "frames": 500,
+   "realised_molality": 1.8021457688655858,
+   "density": 1.3183424524174272,
+   "start_density": 1.1428238831615118,
+   "final_side": 33.70244061470852,
+   "ns_per_day": 441.45235173233124,
+   "run_seconds": 195.71761178970337,
+   "read_seconds": 17.28594422340393,
+   "build_seconds": 2.5809218883514404,
+   "shells": 21500,
+   "members": 16,
+   "mean_coordination": 7.234186046511628,
+   "mean_molecules": 4.107116279069768,
+   "ion_pair_share": 0.7965116279069767,
+   "composition": [
+    [
+     "ANI:1 EC:2 EMC:1",
+     0.24609302325581395
+    ],
+    [
+     "ANI:1 EC:3",
+     0.14469767441860465
+    ],
+    [
+     "ANI:1 EC:1 EMC:2",
+     0.1272093023255814
+    ],
+    [
+     "EC:2 EMC:3",
+     0.07167441860465117
+    ],
+    [
+     "ANI:2 EC:2",
+     0.04683720930232558
+    ],
+    [
+     "ANI:1 EMC:3",
+     0.0447906976744186
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.041255813953488374
+    ],
+    [
+     "ANI:2 EC:1 EMC:1",
+     0.03604651162790698
+    ]
+   ],
+   "block_error": 0.00012653858773820187,
+   "thinning_error": 0.0039039520658926685,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC50_EMC50_m1p806.sdf"
+  },
+  {
+   "id": "LiPF6_EC60_PC40_m0p450",
+   "atoms": 2853,
+   "frames": 500,
+   "realised_molality": 0.42933275207403154,
+   "density": 1.2966766803764314,
+   "start_density": 1.2720193383410578,
+   "final_side": 31.67285015286542,
+   "ns_per_day": 589.5468429367502,
+   "run_seconds": 146.55324006080627,
+   "read_seconds": 4.940617561340332,
+   "build_seconds": 1.178657054901123,
+   "shells": 5000,
+   "members": 16,
+   "mean_coordination": 6.4838,
+   "mean_molecules": 4.9196,
+   "ion_pair_share": 0.3,
+   "composition": [
+    [
+     "EC:3 PC:3",
+     0.2062
+    ],
+    [
+     "EC:2 PC:4",
+     0.1534
+    ],
+    [
+     "ANI:1 EC:2 PC:1",
+     0.1308
+    ],
+    [
+     "EC:2 PC:3",
+     0.1282
+    ],
+    [
+     "ANI:2",
+     0.0982
+    ],
+    [
+     "ANI:2 EC:2",
+     0.0554
+    ],
+    [
+     "EC:1 PC:4",
+     0.0478
+    ],
+    [
+     "EC:3 PC:2",
+     0.0462
+    ]
+   ],
+   "block_error": 0.0001432978461348403,
+   "thinning_error": 0.012348065030878486,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC60_PC40_m0p450.sdf"
+  },
+  {
+   "id": "LiPF6_EC60_PC40_m0p813",
+   "atoms": 2925,
+   "frames": 500,
+   "realised_molality": 0.81573222894066,
+   "density": 1.3181084248638024,
+   "start_density": 1.2720193383410578,
+   "final_side": 32.06850928799536,
+   "ns_per_day": 593.3921673531195,
+   "run_seconds": 145.6035397052765,
+   "read_seconds": 8.833108901977539,
+   "build_seconds": 2.056550979614258,
+   "shells": 9500,
+   "members": 16,
+   "mean_coordination": 6.8464210526315785,
+   "mean_molecules": 4.513052631578947,
+   "ion_pair_share": 0.6841052631578948,
+   "composition": [
+    [
+     "ANI:1 EC:2 PC:1",
+     0.36210526315789476
+    ],
+    [
+     "ANI:1 EC:3",
+     0.242
+    ],
+    [
+     "ANI:1 EC:1 PC:2",
+     0.06294736842105263
+    ],
+    [
+     "EC:4 PC:2",
+     0.043789473684210524
+    ],
+    [
+     "EC:5 PC:1",
+     0.042210526315789476
+    ],
+    [
+     "EC:3 PC:3",
+     0.040210526315789474
+    ],
+    [
+     "EC:1 PC:5",
+     0.040105263157894734
+    ],
+    [
+     "EC:4 PC:1",
+     0.03147368421052631
+    ]
+   ],
+   "block_error": 8.427517938136156e-05,
+   "thinning_error": 0.007055382010525135,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC60_PC40_m0p813.sdf"
+  },
+  {
+   "id": "LiPF6_EC60_PC40_m2p102",
+   "atoms": 3165,
+   "frames": 500,
+   "realised_molality": 2.1037304851627545,
+   "density": 1.4447144048220666,
+   "start_density": 1.2720193383410578,
+   "final_side": 32.812128086119685,
+   "ns_per_day": 444.47053117020073,
+   "run_seconds": 194.38859033584595,
+   "read_seconds": 21.717776775360107,
+   "build_seconds": 2.6363985538482666,
+   "shells": 24500,
+   "members": 16,
+   "mean_coordination": 7.112938775510204,
+   "mean_molecules": 4.071959183673469,
+   "ion_pair_share": 0.8228163265306122,
+   "composition": [
+    [
+     "ANI:1 EC:2 PC:1",
+     0.24575510204081633
+    ],
+    [
+     "ANI:1 EC:3",
+     0.1303673469387755
+    ],
+    [
+     "ANI:1 EC:1 PC:2",
+     0.08126530612244898
+    ],
+    [
+     "ANI:2",
+     0.06326530612244897
+    ],
+    [
+     "ANI:2 PC:2",
+     0.058244897959183674
+    ],
+    [
+     "ANI:2 EC:2",
+     0.05722448979591837
+    ],
+    [
+     "ANI:2 EC:1 PC:1",
+     0.04840816326530612
+    ],
+    [
+     "ANI:1 PC:3",
+     0.04073469387755102
+    ]
+   ],
+   "block_error": 0.0002664392287031989,
+   "thinning_error": 0.005705547236377395,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EC60_PC40_m2p102.sdf"
+  },
+  {
+   "id": "LiPF6_EMC100_m0p500",
+   "atoms": 3854,
+   "frames": 500,
+   "realised_molality": 0.4994957014552618,
+   "density": 1.0575060204618891,
+   "start_density": 1.007,
+   "final_side": 35.29500166242962,
+   "ns_per_day": 442.41430444636626,
+   "run_seconds": 195.29205799102783,
+   "read_seconds": 6.39781379699707,
+   "build_seconds": 2.3883607387542725,
+   "shells": 6500,
+   "members": 16,
+   "mean_coordination": 7.005076923076923,
+   "mean_molecules": 4.018769230769231,
+   "ion_pair_share": 0.9601538461538461,
+   "composition": [
+    [
+     "ANI:1 EMC:3",
+     0.7996923076923077
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.11861538461538461
+    ],
+    [
+     "EMC:4",
+     0.026
+    ],
+    [
+     "ANI:1 EMC:4",
+     0.023230769230769232
+    ],
+    [
+     "EMC:5",
+     0.013846153846153847
+    ],
+    [
+     "ANI:1 EMC:2",
+     0.012923076923076923
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.005384615384615384
+    ],
+    [
+     "ANI:1 EMC:5",
+     0.00015384615384615385
+    ]
+   ],
+   "block_error": 0.0001789504536584507,
+   "thinning_error": 0.004042803927078675,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EMC100_m0p500.sdf"
+  },
+  {
+   "id": "LiPF6_EMC100_m1p500",
+   "atoms": 4062,
+   "frames": 500,
+   "realised_molality": 1.4984871043657855,
+   "density": 1.1703513008379949,
+   "start_density": 1.007,
+   "final_side": 35.65633394852783,
+   "ns_per_day": 435.7478811663041,
+   "run_seconds": 198.27979373931885,
+   "read_seconds": 18.63873267173767,
+   "build_seconds": 2.9587972164154053,
+   "shells": 19500,
+   "members": 16,
+   "mean_coordination": 7.333846153846154,
+   "mean_molecules": 3.8834871794871795,
+   "ion_pair_share": 0.9783076923076923,
+   "composition": [
+    [
+     "ANI:1 EMC:3",
+     0.5794871794871795
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.24246153846153845
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.0802051282051282
+    ],
+    [
+     "ANI:1 EMC:2",
+     0.062461538461538464
+    ],
+    [
+     "EMC:5",
+     0.017384615384615384
+    ],
+    [
+     "ANI:3 EMC:1",
+     0.006666666666666667
+    ],
+    [
+     "ANI:1 EMC:4",
+     0.004820512820512821
+    ],
+    [
+     "EMC:4",
+     0.0043076923076923075
+    ]
+   ],
+   "block_error": 4.0613778232785444e-05,
+   "thinning_error": 0.005953981653136542,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EMC100_m1p500.sdf"
+  },
+  {
+   "id": "LiPF6_EMC100_m2p000",
+   "atoms": 4166,
+   "frames": 500,
+   "realised_molality": 1.9979828058210471,
+   "density": 1.204041359912685,
+   "start_density": 1.007,
+   "final_side": 36.033799841920796,
+   "ns_per_day": 441.0333202228219,
+   "run_seconds": 195.9035656452179,
+   "read_seconds": 23.912630081176758,
+   "build_seconds": 3.730212688446045,
+   "shells": 26000,
+   "members": 16,
+   "mean_coordination": 7.3883846153846156,
+   "mean_molecules": 3.7155,
+   "ion_pair_share": 0.9476923076923077,
+   "composition": [
+    [
+     "ANI:1 EMC:3",
+     0.4523846153846154
+    ],
+    [
+     "ANI:2 EMC:2",
+     0.21415384615384617
+    ],
+    [
+     "ANI:2 EMC:1",
+     0.14976923076923077
+    ],
+    [
+     "ANI:1 EMC:2",
+     0.07019230769230769
+    ],
+    [
+     "ANI:2",
+     0.052423076923076926
+    ],
+    [
+     "EMC:5",
+     0.03238461538461539
+    ],
+    [
+     "EMC:4",
+     0.019923076923076922
+    ],
+    [
+     "ANI:1 EMC:4",
+     0.007076923076923077
+    ]
+   ],
+   "block_error": 7.003024947856009e-05,
+   "thinning_error": 0.022659109712548142,
+   "sampled_for_convergence": 200.0,
+   "sdf": "shells/LiPF6_EMC100_m2p000.sdf"
+  }
+ ]
+}

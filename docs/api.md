@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 104 modules, 201 classes with 649 public methods, and 1026 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 106 modules, 207 classes with 667 public methods, and 1054 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -60,6 +60,7 @@ for.
 | [cmfqsar.design](#cmfqsardesign) | The last step of the design cycle: what to put at a position, ranked by the model (E3). |
 | [cmfqsar.diagnose](#cmfqsardiagnose) | What to ask of a data set before modelling it, and which route it should take. |
 | [cmfqsar.docking](#cmfqsardocking) | Place conformations inside the pocket instead of in the gas phase. |
+| [cmfqsar.electrolyte](#cmfqsarelectrolyte) | Bulk electrolyte simulations, for plan item BT5. |
 | [cmfqsar.errorpred](#cmfqsarerrorpred) | Which of the things that claim to know when a prediction is bad actually knows (plan item E5). |
 | [cmfqsar.evidence](#cmfqsarevidence) | Choosing alpha and lambda by the evidence instead of by cross-validation. |
 | [cmfqsar.exposure](#cmfqsarexposure) | Solvent exposure as a weight on the fields: the claim of the surface methods, without a surface. |
@@ -118,6 +119,7 @@ for.
 | [cmfqsar.scattering](#cmfqsarscattering) | Measured scattering curves as samples: the total, untyped descriptor (plan item M12). |
 | [cmfqsar.screen](#cmfqsarscreen) | Screening a library without holding it in memory (plan item B3). |
 | [cmfqsar.shapley](#cmfqsarshapley) | Shapley decomposition of a CMF prediction. |
+| [cmfqsar.shells](#cmfqsarshells) | Solvation shells cut from a bulk electrolyte trajectory (plan item BT5). |
 | [cmfqsar.sites](#cmfqsarsites) | Site-resolved models of a periodic structure (plan item M5). |
 | [cmfqsar.solvation](#cmfqsarsolvation) | A cation with its first solvation shell as one molecule, built, optimised and framed. |
 | [cmfqsar.solvent](#cmfqsarsolvent) | Solvent as a field: where a ligand's water sits, as a CMF field (plan item D9). |
@@ -3456,6 +3458,204 @@ kept, which is how a docking program would return its best poses.
 Dock the conformations of a whole series; returns the molecules and every pose result.
 
 ### `summarise(results: Sequence[DockResult]) -> dict`
+
+## cmfqsar.electrolyte
+
+Source: `cmfqsar/electrolyte.py`
+
+Bulk electrolyte simulations, for plan item BT5.
+
+`cmfqsar.shells` cuts solvation shells out of a bulk trajectory. This module produces the
+trajectories it cuts them from, so that the question of item BT5 can be asked: does an ensemble
+of shells sampled from a liquid model an electrolyte better than the single optimised complex of
+item BT4?
+
+`cmfqsar.md` does the same service for item D8, a ligand inside a protein. An electrolyte is
+a different system and needs a different recipe, so it gets its own module rather than another
+mode of that one.
+
+What one run is, and why each choice was made.
+
+**A box of a named formulation.** The input is a salt, the solvents with their weight fractions
+and the molality, which is what a conductivity table reports. Weight fractions and molality fix
+the number of molecules exactly, with no density needed: the mass of the solvent follows from the
+molecule counts and the molar masses, and the salt count follows from the mass. A table that gives
+volume fractions or molarity would need a density and so an assumption; this module takes the
+first kind and says so, and the realised molality is reported next to the one asked for, because
+rounding the ion count to a whole number changes it by a per cent or two.
+
+**Packed with packmol, closed by the barostat.** The starting box is built at a slightly low
+density, which packmol can fill without overlaps, and the pressure coupling then closes it to the
+liquid's own density. The density that comes out is reported: it is the first check that the force
+field describes the liquid at all, and a box ten per cent off is a result about the force field
+rather than about the electrolyte.
+
+**GAFF with graph-network charges.** The solvents and the anion are typed with GAFF-2.11, as item
+D8's ligands are. Their partial charges come from the OpenFF graph network, which reproduces
+AM1-BCC charges in under a second per species, so no semi-empirical calculation is needed for
+each of them. The cation is the Amber ion parameter set, because GAFF has no lithium. Three
+consequences are worth stating: boron is outside GAFF, so the borate salts of a conductivity
+table cannot be run here and are refused by name; a fixed-charge force field has no polarisation,
+which is known to overbind a small cation to a carbonate; and the shells this produces are
+therefore a model of the liquid, not a measurement of it.
+
+**The topology is built here and not read back.** packmol writes coordinates without bond records,
+and a force field matched to a bondless topology silently fails to find a template or, worse,
+finds the wrong one. The topology is therefore assembled from the same molecule templates the box
+was packed from, in the same order, and the packed file supplies coordinates only. The atom count
+is checked against it.
+
+### `class ElectrolyteError  — bases: RuntimeError`
+
+A formulation cannot be built, or the simulation stack is not here.
+
+### `class Formulation  (dataclass)`
+
+One electrolyte as a conductivity table reports it.
+
+`solvents` maps a name in `SOLVENTS` to its weight fraction of the solvent, and
+`molality` is moles of salt per kilogram of solvent.
+
+Attributes:
+
+- `salt: str`
+- `solvents: Dict[str, float]`
+- `molality: float`
+- `temperature: float` = `298.15`
+- `name: str` = `''`
+
+#### `Formulation.label() -> str`
+
+A short name that says what the formulation is, usable as a file name.
+
+#### `Formulation.cation` -> str  (property)
+
+#### `Formulation.anion_smiles` -> str  (property)
+
+#### `Formulation.molar_masses() -> Dict[str, float]`
+
+#### `Formulation.counts(n_solvent: int=250, min_ions: int=4) -> Dict[str, int]`
+
+How many molecules of each species the box holds, and how many ion pairs.
+
+The solvent counts follow from the weight fractions and the molar masses, the ion count
+from the molality and the solvent mass. Both are whole numbers, so the realised molality
+differs a little from the one asked for; `realised_molality` reports it.
+
+#### `Formulation.realised_molality(counts: Dict[str, int]) -> float`
+
+The molality the whole-number counts actually give.
+
+#### `Formulation.mass(counts: Dict[str, int]) -> float`
+
+The mass of the box in grams, times Avogadro's number.
+
+#### `Formulation.start_density() -> float`
+
+The solvent mixture's density by ideal mixing, g/cm3.
+
+#### `Formulation.box_side(counts: Dict[str, int], loosen: float=1.1) -> float`
+
+The side of the starting cube in angstrom, a little larger than the liquid's.
+
+### `class Settings  (dataclass)`
+
+What one run does. The defaults are the ones item BT5's measurement used.
+
+Attributes:
+
+- `temperature: float` = `298.15`
+- `pressure: float` = `1.0`
+- `timestep_fs: float` = `2.0`
+- `cutoff_nm: float` = `1.0`
+- `n_solvent: int` = `250`
+- `min_ions: int` = `4`
+- `equilibration_ps: float` = `150.0`
+- `production_ps: float` = `1000.0`
+- `frame_ps: float` = `5.0`
+- `seed: int` = `1`
+- `platform: str` = `'CUDA'`
+- `charge_model: str` = `'openff-gnn-am1bcc-0.1.0-rc.3.pt'`
+- `small_molecule_forcefield: str` = `'gaff-2.11'`
+- `ion_forcefield: str` = `'amber14/tip3p.xml'`
+- `extra: Dict[str, float]` = `field(default_factory=dict)`
+
+#### `Settings.production_steps` -> int  (property)
+
+#### `Settings.equilibration_steps` -> int  (property)
+
+#### `Settings.frame_steps` -> int  (property)
+
+### `tools_on_path() -> List[str]`
+
+Put the running interpreter's own directory on PATH, and say what that added.
+
+GAFF atom types come from AmberTools' `antechamber`, which the template generator calls as
+a program. In a conda environment that program sits beside the interpreter, and running the
+interpreter by its full path does not put it on PATH -- which is the usual reason a machine
+that has every package still cannot type a molecule. The fix is small enough to make here so
+that the failure cannot happen, and `require` reports what is still missing.
+
+### `available() -> Dict[str, bool]`
+
+Which parts of the stack can be used here.
+
+### `require() -> None`
+
+### `molar_mass(smiles: str) -> float`
+
+The molar mass of a SMILES, hydrogens included, computed rather than transcribed.
+
+### `template(smiles: str, residue: str, seed: int=0) -> Chem.Mol`
+
+One species as an RDKit molecule with a conformation and PDB residue information.
+
+The same object serves three purposes: packmol packs copies of it, the topology is assembled
+from its bonds, and `cmfqsar.shells` uses it to give a cut-out shell its bond orders.
+That is why the atom order must never be changed between them.
+
+### `templates(form: Formulation, seed: int=0) -> Dict[str, Chem.Mol]`
+
+A template per species of the formulation, keyed by its residue name.
+
+The cation has no template: it is one atom and the force field types it as an ion.
+
+### `ion_pdb(path: str, ion: str) -> None`
+
+A one-atom PDB of the bare cation, for packmol to place.
+
+### `species_order(form: Formulation, counts: Dict[str, int]) -> List[Tuple[str, int]]`
+
+The species and their counts in the order the box is packed and the topology is built.
+
+Fixing this order in one place is what lets the packed coordinates and the assembled
+topology be matched atom for atom.
+
+### `pack(form: Formulation, counts: Dict[str, int], workdir: str, *, seed: int=1, tolerance: float=2.2, loosen: float=1.1) -> Tuple[str, float]`
+
+Write the species' PDB files, run packmol, and return (packed PDB, box side).
+
+### `build(form: Formulation, counts: Dict[str, int], packed_pdb: str, side: float, settings: Settings)`
+
+(topology, system, positions) for one packed box.
+
+### `net_charge(system) -> float`
+
+The sum of the partial charges of a built system, which has to be zero.
+
+### `run(form: Formulation, workdir: str, settings: Optional[Settings]=None, progress=None) -> Dict[str, object]`
+
+Pack, equilibrate and run one formulation; returns what was done and where it is.
+
+The result holds the paths of the topology PDB and the DCD of production frames, the
+realised molality, the density the barostat settled at, and the speed, so that a later
+reading of the trajectory can report the cost of producing it.
+
+### `shell_templates(form: Formulation) -> Dict[str, Chem.Mol]`
+
+The templates `cmfqsar.shells` needs to turn a cut-out shell into a molecule.
+
+The same objects the box was packed from, keyed by the residue name the topology carries.
 
 ## cmfqsar.errorpred
 
@@ -14121,6 +14321,252 @@ Group the atoms outside the core into connected substituents, with readable labe
 ### `scaffold_decomposition(model, mol: MoleculeFields, rdmol, references: Sequence, **kwargs) -> ShapleyResult`
 
 Shapley values of the substituents of a congeneric series over their common scaffold.
+
+## cmfqsar.shells
+
+Source: `cmfqsar/shells.py`
+
+Solvation shells cut from a bulk electrolyte trajectory (plan item BT5).
+
+Item BT4 builds one cation complex and optimises it: a single geometry, the lowest the builder
+could find. A real electrolyte is not that. At a given moment one lithium ion sits in a shell of
+four carbonate molecules, the next in a shell of three and an anion, and a moment later they have
+exchanged. The quantities an electrolyte is judged by -- conductivity, the transference number,
+the diffusion coefficient -- are averages over that distribution, so a descriptor that is one
+geometry may be describing the wrong object.
+
+This module takes the other route. It reads a bulk simulation through `cmfqsar.trajectory`,
+cuts out every cation with the molecules that touch it, and hands the collection to the ensemble
+builder of plan item D4 (`cmfqsar.fields.combine_members`) as members with their own atoms.
+The result is one field per electrolyte, the mean field of its solvation shells, which the model
+then uses exactly as it uses the field of a molecule. Nothing in the kernel changes: a CMF field
+is a sum of atom-centred Gaussians and the kernel is bilinear in the field, so the mean field of
+a distribution of shells is itself a field.
+
+What the three steps are, and why each is done this way.
+
+**The cut.** A molecule belongs to the shell when one of its donor atoms -- an oxygen, nitrogen,
+fluorine, sulfur or chlorine -- lies within the coordination distance of the ion. The distance is
+the one item BT4 measured on relaxed geometries, `ION_OXYGEN_DISTANCE` times
+`DEFAULT_SHELL_FACTOR`, so a shell here and a coordination number there mean the same thing.
+An anion that comes that close is kept like any other molecule, because a contact ion pair is a
+real state of the electrolyte and leaving it out would bias the ensemble towards free ions.
+
+**The periodic boundary.** A simulation is written with every atom wrapped into the cell, so a
+molecule that straddles a face arrives in two pieces a box length apart, and a shell beside a
+cation at the edge of the cell arrives on the other side of the box. Both faults are silent: they
+produce a geometry, not an error. Item D7 met them already and `cmfqsar.trajectory.make_whole`
+and `cmfqsar.trajectory.reimage` are the repairs; this module calls them for every molecule
+of every shell before anything is measured.
+
+**The thinning.** A two-nanosecond box with fifteen cations and two hundred frames gives three
+thousand shells, and the kernel costs the square of the atoms kept, so the ensemble has to be
+reduced to a few dozen members. The reduction is done in two stages. Shells are grouped by
+composition first -- which species, how many of each -- because the composition is what a model
+of an electrolyte can act on, and the groups are then thinned to representatives in proportion to
+their population. Inside a group the thinning uses a measure that does not depend on how the
+molecules happen to be numbered: the sorted distances from the ion to its donors and the sorted
+distances between donors. A field is a sum over atoms and so is already blind to that numbering,
+which is why no superposition is attempted here.
+
+**The error of the mean.** An ensemble read from a simulation carries sampling error, and
+unconverged sampling error looks like chemistry. Item D8 requires that it be reported, so
+`block_error` splits the frames into blocks, builds the mean field of each block on its own,
+and returns the standard error of the mean over the blocks as a share of the field's own size. A
+value near zero says the frames were enough; a large one says the difference between two
+electrolytes may be sampling noise.
+
+### `class ShellError  — bases: RuntimeError`
+
+A shell could not be cut, or could not be turned into a molecule.
+
+### `class Shell  (dataclass)`
+
+One cation with the molecules that touch it, in one frame of one trajectory.
+
+`atoms` indexes the source trajectory and starts with the ion. `coords` holds the same atoms
+in the same order, repaired across the periodic boundary and moved to the image beside the
+ion. `species` names the residue of each molecule, in the order the molecules appear after
+the ion, and `sizes` says how many atoms each of them has.
+
+Attributes:
+
+- `frame: int`
+- `ion_atom: int`
+- `ion: str`
+- `atoms: np.ndarray`
+- `coords: np.ndarray`
+- `species: Tuple[str, ...]` = `()`
+- `sizes: Tuple[int, ...]` = `()`
+- `donor_distances: Tuple[float, ...]` = `()`
+- `note: str` = `''`
+
+#### `Shell.n_molecules` -> int  (property)
+
+#### `Shell.n_atoms` -> int  (property)
+
+#### `Shell.composition` -> Tuple[Tuple[str, int], ...]  (property)
+
+Which species are in the shell and how many of each, in a fixed order.
+
+#### `Shell.coordination` -> int  (property)
+
+Donor atoms inside the cutoff, which is the coordination number of item BT4.
+
+#### `Shell.molecule_slice(i: int) -> slice`
+
+Where molecule `i` sits in `atoms` and `coords`; the ion is atom 0.
+
+#### `Shell.fingerprint() -> np.ndarray`
+
+A description of the shape that does not depend on how the atoms are numbered.
+
+The sorted ion-to-donor distances followed by the sorted donor-to-donor distances. Two
+shells of the same composition whose fingerprints are close are the same arrangement,
+whatever order their molecules were written in. A field is a sum over atoms and is blind
+to that order in the same way, which is why this and not a superposition is what the
+thinning uses.
+
+### `class ShellEnsemble  (dataclass)`
+
+The mean field of a set of shells, with what it was built from.
+
+Attributes:
+
+- `fields: MoleculeFields`
+- `members: List[Chem.Mol]` = `_field(default_factory=list)`
+- `chosen: List[Shell]` = `_field(default_factory=list)`
+- `weights: np.ndarray` = `_field(default_factory=lambda: np.zeros(0))`
+- `composition: List[Tuple[Tuple[Tuple[str, int], ...], float]]` = `_field(default_factory=list)`
+- `mean_coordination: float` = `float('nan')`
+- `n_shells: int` = `0`
+- `note: str` = `''`
+
+### `ion_atoms(traj: Trajectory, ion: str='Li') -> np.ndarray`
+
+Indices of every atom of element `ion` in the trajectory.
+
+### `residue_groups(traj: Trajectory) -> List[np.ndarray]`
+
+The atoms of each residue, in the order the residues first appear.
+
+A molecule in a bulk simulation is one residue, which is how every packer and every topology
+writer produces it; the groups are what the shell cut moves and repairs as single pieces.
+
+### `shell_cutoff(ion: str='Li', factor: float=DEFAULT_SHELL_FACTOR) -> float`
+
+The shell cutoff in angstrom: the coordination distance of item BT4 times `factor`.
+
+### `shell_at(traj: Trajectory, frame: int, ion_atom: int, groups: Optional[Sequence[np.ndarray]]=None, *, ion: str='Li', cutoff: Optional[float]=None, donor_elements: Sequence[str]=DONOR_ELEMENTS, max_molecules: int=0) -> Shell`
+
+The shell of one ion in one frame, repaired across the periodic boundary.
+
+`max_molecules` above zero keeps only the molecules whose nearest donor is closest to the
+ion, which bounds the cost when a cutoff happens to catch an extra molecule.
+
+### `extract_shells(traj: Trajectory, ion: str='Li', *, cutoff: Optional[float]=None, stride: int=1, donor_elements: Sequence[str]=DONOR_ELEMENTS, max_molecules: int=0, min_molecules: int=1, progress: Optional[Callable[[int, int], None]]=None) -> List[Shell]`
+
+Every shell of every ion in every frame taken, as a flat list.
+
+`stride` takes every n-th frame. A shell with fewer than `min_molecules` molecules is
+dropped, which removes the few frames in which an ion sits in a gap of the liquid.
+
+### `shell_molecule(shell: Shell, templates: Dict[str, Chem.Mol]) -> Chem.Mol`
+
+One shell as an RDKit molecule, with the ion as atom 0.
+
+A trajectory topology carries bonds but no bond orders, so the species are supplied as
+templates: one molecule per residue name, with its hydrogens explicit and its atoms in the
+order the simulation writes them. That is the order a packed box has, because the box was
+packed from those same files. The template is checked element by element, so a mismatch is an
+error here and not a wrong bond order downstream.
+
+### `check_templates(traj: Trajectory, templates: Dict[str, Chem.Mol]) -> None`
+
+Raise unless every residue of the trajectory matches its template element by element.
+
+Called once per trajectory rather than once per shell, because the check is about the
+topology and not about a frame.
+
+### `composition_table(shells: Sequence[Shell]) -> List[Tuple[Tuple[Tuple[str, int], ...], float]]`
+
+Each composition and the share of shells that have it, most common first.
+
+### `cluster_shells(shells: Sequence[Shell], *, max_members: int=DEFAULT_MAX_MEMBERS, radius: float=DEFAULT_CLUSTER_RADIUS) -> Tuple[List[int], np.ndarray]`
+
+Representative shells and their weights.
+
+Shells are grouped by composition, the groups are given representatives in proportion to how
+many shells they hold, and inside a group the representatives are leaders of a clustering on
+`Shell.fingerprint`. The weights are populations: the share of all shells that the
+representative stands for. They are never Boltzmann factors of a frame energy, for the reason
+item D7 gives -- a trajectory has already sampled the distribution once, and weighting it
+again squares it.
+
+The first representative returned is the one from the composition with the most distinct
+species, so that the atom map of the ensemble has as few gaps as possible.
+
+### `atom_maps(reps: Sequence[Shell], templates: Dict[str, Chem.Mol]) -> List[np.ndarray]`
+
+For each representative, the atom of the first representative each atom corresponds to.
+
+The ion maps to the ion. An atom of a solvent or anion molecule maps to the same atom of the
+*first* molecule of its own species in the first representative, so a per-atom reading of the
+model is per atom of a species, summed over however many molecules of that species the shell
+holds. Where the first representative has no molecule of that species the atoms map to -1,
+which is how `cmfqsar.fields.combine_members` marks an atom with no counterpart.
+
+### `shell_ensemble(shells: Sequence[Shell], templates: Dict[str, Chem.Mol], fieldset: FieldSet, *, max_members: int=DEFAULT_MAX_MEMBERS, radius: float=DEFAULT_CLUSTER_RADIUS, name: str='', frame: bool=True) -> ShellEnsemble`
+
+The mean field of a collection of shells, as one `MoleculeFields`.
+
+With `frame` set, every member is put in the cation frame of item BT4 first: the origin on
+the ion and the axes on the donor polyhedron. The aligned kernel needs that; the
+alignment-free kernel does not care, and the frame does not change what it reports.
+
+### `member_properties(shell: Shell, weight: float) -> Dict[str, str]`
+
+What has to be written beside a member so that the ensemble can be rebuilt.
+
+A trajectory is too large to keep in a repository and the members are not conformations of
+one molecule, so the usual multi-conformer file cannot hold them: each member has its own
+atoms. These three properties are what `ensemble_from_molecules` needs instead.
+
+### `ensemble_from_molecules(mols: Sequence[Chem.Mol], fieldset: FieldSet, name: str='') -> MoleculeFields`
+
+The mean field of members read back from a file, in the order the file has them.
+
+Each molecule carries the three properties of `member_properties`. The first molecule
+is the one every other member's atoms are mapped onto, which is why the writer puts the
+member with the most species first.
+
+### `convergence(shells: Sequence[Shell], templates: Dict[str, Chem.Mol], fieldset: FieldSet, *, n_blocks: int=5, sample: int=200, max_members: int=DEFAULT_MAX_MEMBERS, radius: float=DEFAULT_CLUSTER_RADIUS) -> Dict[str, float]`
+
+How well the mean field is sampled, and what the thinning to members costs.
+
+Two numbers, both as a share of the field's own size, and both exact rather than measured on
+a thinned ensemble:
+
+`block_error`
+    The frames are split into `n_blocks` consecutive blocks, the same number of shells is
+    taken from each, and the number returned is the standard error of the mean over the
+    blocks of the distance from a block's mean field to the mean field of all of them. Item
+    D8 requires this beside any accuracy taken from a simulation: an unconverged trajectory
+    gives a mean field whose sampling error would otherwise read as chemistry.
+
+`thinning_error`
+    The distance from the thinned ensemble of `max_members` representatives to the mean field
+    of every sampled shell. This is the price of the thinning, which the kernel cost makes
+    necessary, and it has to be separated from the sampling error above: thinning more
+    finely cannot fix an unconverged trajectory, and a longer trajectory cannot fix a
+    thinning that is too coarse.
+
+`sample` is the total number of shells the overlap matrix is built on. The cost is quadratic
+in it, so it is a setting rather than a constant.
+
+### `block_error(shells: Sequence[Shell], templates: Dict[str, Chem.Mol], fieldset: FieldSet, *, n_blocks: int=5, sample: int=200, max_members: int=DEFAULT_MAX_MEMBERS, radius: float=DEFAULT_CLUSTER_RADIUS) -> float`
+
+The block-averaged error of the mean field alone; see `convergence`.
 
 ## cmfqsar.sites
 

@@ -741,6 +741,56 @@ ethers adds two readings a reviewer can check against the literature: FEC binds 
 EC, and the fluorinated ethers hold their fourth molecule at a desolvation energy of 0.02 to
 0.33 eV against 0.92 to 1.35 eV for the carbonates, which is why they are used as diluents.
 
+**Item BT5 is done (4 November 2026) and it settles the fourth-dimension question for an
+electrolyte**: is a distribution of solvation shells worth sampling, or is one optimised complex
+enough? `cmfqsar/electrolyte.py` runs one bulk box per formulation and `cmfqsar/shells.py` cuts
+every molecule with a donor atom within 2.613 angstrom of a lithium ion out of the trajectory,
+repairs the periodic boundary, thins the shells to 16 representatives weighted by population, and
+hands them to the ensemble builder of item D4. Four results belong in the paper.
+
+**A distribution of shells is one field, which is why this costs almost nothing.** The field is a
+sum of Gaussian functions on atoms and the kernel is bilinear, so the weighted mean field of a set
+of shells is itself a field whose atoms are all the shells' atoms. The kernel of two such mean
+fields is exactly the weighted mean of the shell-to-shell kernels, the matrix stays positive
+definite, and the model stays linear in the mean field, so the co-field and the Shapley
+decomposition keep their meaning. This is a general statement about the method and not about
+electrolytes, and it is the part of the item most worth writing down.
+
+**The answer depends on the target, in the way predicted in advance.** On 62 LiPF6 formulations
+over 22 solvent compositions, with measured conductivities from CALiSol-23 and only the descriptor
+computed, the sampled shells beat the single optimised complex on the activation energy at 298 K by
+0.480 kJ/mol [0.096, 0.960] on random folds and 0.639 kJ/mol [0.231, 1.129] on folds grouped by
+composition, where predicting the mean costs 3.535 kJ/mol; on the conductivity at the same
+temperature there is no gain at all (-0.013 [-0.034, +0.008] and +0.006 [-0.013, +0.027]). The
+reason was stated before the measurement: an ion moves by leaving one shell and entering the next,
+so the barrier is the quantity a distribution of shells has a claim on, while a conductivity at one
+temperature is set largely by how much salt is dissolved and how viscous the mixture is. A paper
+can therefore say what the fourth dimension is for, rather than whether it works.
+
+**An ensemble pays for a frame in a way a single complex does not.** The cation frame of item BT4
+costs the sampled shells 0.694 kJ/mol [0.363, 1.042] and 1.015 [0.536, 1.492], against 0.068 kJ/mol
+with an interval containing zero for one complex. Sixteen shells have sixteen coordination
+polyhedra, and one frame cannot hold them all. This is the sharpest statement in the battery tier
+about the cost of the co-field, because the co-field needs the frame: the picture and the
+prediction are in competition here, and the paper should present both readings rather than the
+better one. The co-field itself is readable -- with the donor atoms at 2.14 +/- 0.17 angstrom from
+the ion, the hydrophobic field peaks 0.41 angstrom from a coordinating atom, the hydrogen-bond
+acceptor field 1.12 and the electrostatic field 1.22, while the hydrogen-bond donor field, which a
+carbonate cannot fill, carries exactly zero weight.
+
+**The composition is still the baseline that is not beaten**, as in items BT1 to BT3 and BT6. The
+shell field draws level with the molality and the solvent weight fractions on the activation energy
+(-0.081 [-0.397, +0.256]) and is behind them on the conductivity. Four battery items now say the
+same thing, and the honest framing for the paper is that a field describes one object while these
+targets are averages over a whole liquid.
+
+Two limits must be stated. The force field is not polarisable, so the 6.95 +/- 0.40 donor atoms at
+the ion are above the 4.24 oxygens item BT4 measured on complexes relaxed with density functional
+theory; and the alignment-free comparison model for the optimised complex was added after the
+framed comparison was seen to fail, so the gate's pass rests on a model chosen for a stated reason
+but after the first numbers, which the gain holding in both fold schemes and under a free kernel
+weight supports but does not erase.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

@@ -3824,6 +3824,130 @@ values and a computed oxidation potential is a descriptor, not a target.
   or measured transport data, against BT4's single optimised complex, and keep the route only if
   the sampled shells beat the optimised one by more than the interval. The block-averaged error of
   the mean field is reported next to the q², as D8 requires.
+  **Done 4 November 2026. The gate is met on the activation energy and not on the conductivity,
+  and only in the alignment-free kernel.** `cmfqsar/electrolyte.py` and `cmfqsar/shells.py` with
+  59 tests in `tests/test_electrolyte.py` and `tests/test_shells.py`, the data recipe in
+  `examples/make_electrolyte_shells.py`, measured by `benchmarks/run_shells.py` in four stages.
+
+  **What was built.** Two modules. `cmfqsar/electrolyte.py` builds and runs one bulk box per
+  formulation: a `Formulation` is a salt, a set of solvent weight fractions and a molality, and
+  from those three `counts` fixes the exact number of molecules, 250 solvents in the proportions
+  asked for plus the ion pairs that reproduce the molality, with no density assumed. packmol packs
+  the box, the OpenMM topology is then assembled from the same RDKit templates in a fixed species
+  order (packmol writes no bond records, so the packed file supplies coordinates only), the
+  solvents and the anion are typed with GAFF-2.11 and charged with the OpenFF NAGL graph network,
+  the cation takes the Amber ion parameters because GAFF has no lithium, and the run is 150 ps of
+  equilibration and 1,000 ps of production under a Monte Carlo barostat with particle-mesh Ewald.
+  The net charge is checked against zero before the run starts. `cmfqsar/shells.py` cuts the
+  shells: every molecule with a donor atom within 1.3 times the ion-donor coordination distance of
+  item BT4 (2.613 A for Li and oxygen), the counter-ion included, since a shell holding the anion
+  is a contact ion pair. Both periodic-boundary faults of item D7 are repaired, a molecule split
+  across a face by `make_whole` and a shell a box length from its ion by `reimage`, and the
+  selection is written to screen every donor atom of the frame at once under the minimum-image
+  convention and repair only the residues that pass, because a single electrolyte needs 3,500 to
+  31,000 shells and the first version, which repaired every residue first, was too slow to use.
+  `cluster_shells` thins the shells to 16 representatives by a fingerprint that does not depend on
+  the order the molecules were found in, weighted by the share of sampled shells each represents.
+
+  **Why this needed no new kernel.** A field is a sum of Gaussian functions on atoms and the
+  kernel is bilinear, so the weighted mean field of a set of shells is itself a field: its atoms
+  are all the shells' atoms, each weight multiplied by its shell's weight. `combine_members` in
+  `cmfqsar/fields.py`, written for item D4, already accepted members carrying their own atoms,
+  which is what shells are, since two shells need not hold the same molecules. Three things
+  follow: the kernel of two mean fields is exactly the weighted mean of the shell-to-shell
+  kernels, so a 16-member ensemble costs one kernel evaluation and not 256; the matrix stays
+  positive definite; and the model stays linear in the mean field, so the co-field and the Shapley
+  decomposition keep their meaning. The weights are populations and never Boltzmann factors, which
+  is item D7's rule: an equilibrated trajectory has already sampled the distribution, so weighting
+  it again would count the energy twice.
+
+  **The two convergence numbers item D8 asks for.** `convergence` reports them separately, both
+  computed exactly from one shell-to-shell overlap matrix with no model fitted: the **block error
+  of the mean field**, how far the mean field of a block of frames lies from that of the whole run,
+  which falls as the trajectory grows, and the **cost of keeping 16 members**, how far the thinned
+  ensemble lies from all the shells, which does not. The first version measured the block error on
+  the thinned ensemble and so mixed the two: it rose with more sampling, 0.055 at 40 frames to
+  0.145 at 500, because thinning noise is larger than sampling noise and more frames give more
+  distinct shapes to discard. A diagnostic that gets worse as the data get better is reporting the
+  wrong quantity.
+
+  **What was measured.** `benchmarks/run_shells.py` in four stages (`data`, `gate`, `cofield`,
+  `report`) on 62 LiPF6 formulations over 22 solvent compositions, from 0.245 to 2.373 mol/kg,
+  with measured conductivities from CALiSol-23 (CC BY 4.0), so that the target is measured and
+  only the descriptor is computed. Two targets per formulation, read off a fit of
+  log10 k = a + b/T + c/T^2 to that formulation's own measurements: log10 of the conductivity at
+  298.15 K and the activation energy there. Every selection rule is in
+  `examples/make_electrolyte_shells.py`, the sharpest being that LiBF4 and LiBOB, the larger part
+  of that collection, are refused by name because GAFF has no boron. Seven models, two fold
+  schemes (random, and grouped so that no solvent composition is in both the training and the test
+  set), the ridge and the field width chosen inside each fold, each field kernel mixed in equal
+  parts with the kernel on the molality at a fixed weight, with a separate reading at a weight
+  chosen inside the fold. The complex and the shells each appear twice, in the overlap kernel in
+  the cation frame and in the alignment-free kernel, because the kernel is not part of the item's
+  question and item BT4 measured the alignment-free one as the better of the two for its own
+  descriptor.
+
+  **The gate is met on the activation energy and not on the conductivity.** On the activation
+  energy, where predicting the mean costs 3.535 kJ/mol, the sampled shells reach 1.456 kJ/mol
+  against the single optimised complex's 1.934 on random folds and 1.589 against 2.232 on the
+  grouped folds, both in the alignment-free kernel. Paired, that is a gain of 0.480 kJ/mol
+  [0.096, 0.960] and 0.639 kJ/mol [0.231, 1.129], both clear of zero, and both survive the kernel
+  weight being chosen inside the fold (0.436 [0.057, 0.889] and 0.586 [0.133, 1.163]). On the
+  conductivity, where predicting the mean costs 0.146 in log10 mS/cm, there is no gain:
+  -0.013 [-0.034, +0.008] and +0.006 [-0.013, +0.027]. The difference between the two targets is
+  the one `examples/make_electrolyte_shells.py` predicted before the measurement: an ion moves by
+  leaving one shell and entering the next, so the barrier is the quantity a distribution of shells
+  has a claim on, while a conductivity at one temperature is set largely by how much salt is
+  dissolved and how viscous the mixture is.
+
+  **Three readings beside the gate.** *The frame costs an ensemble far more than it costs one
+  complex*: in the cation frame the shells are 0.694 kJ/mol [0.363, 1.042] and 1.015
+  [0.536, 1.492] worse than their own alignment-free version, while for the single complex the
+  same frame costs 0.068 kJ/mol with an interval containing zero. Sixteen shells have sixteen
+  coordination polyhedra and one frame cannot hold them all, so the accuracy and the co-field,
+  which needs the frame, pull against each other in this item. *The composition is still not
+  beaten*: the shell field draws level with the molality and the solvent weight fractions on the
+  activation energy (-0.081 [-0.397, +0.256] and -0.159 [-0.502, +0.221]) and is behind them on
+  the conductivity, which makes this the fourth battery item in a row where a composition
+  descriptor is at least as good as a field. *Against free solvent molecules the gain is not
+  established*: +0.276 [-0.110, +0.765] and +0.439 [-0.006, +0.970], and free solvents need no
+  simulation at all.
+
+  **The co-field is readable.** The donor atoms of these shells sit 2.14 +/- 0.17 A from the ion,
+  and three of the four fields that carry any weight have their largest magnitude within 1.3 A of
+  a coordinating atom: the hydrophobic field 0.41 A from one, the hydrogen-bond acceptor field
+  1.12 A, the electrostatic field 1.22 A (and 0.69 A from the ion, so between the ion and its
+  donors). The steric field is the exception at 4.91 A from the ion, which is the molecule tails
+  and the second shell. The hydrogen-bond donor field is the control that costs nothing: a
+  carbonate and an ester have no donor, that field carries exactly zero weight, and the point it
+  is reported at is a corner of the box 16 A away. The distance to the nearest donor atom was
+  added to this reading because the distance from the ion cannot be interpreted without it: 0.69 A
+  from the ion is inside the first shell but is not where any atom is.
+
+  **What item D8 asks for, reported next to the accuracy.** Over the 62 electrolytes the block
+  error of the mean field is 0.00019 +/- 0.00037 and the cost of keeping 16 members
+  0.00652 +/- 0.00702. The two are reported separately on purpose, because the first falls as the
+  trajectory grows and the second does not.
+
+  **How this reading was reached, which belongs in the record.** The alignment-free complex model
+  was added after the first run showed the framed comparison failing, and it is the model that
+  turns the gate from unmet into met. The reason for adding it does not depend on the result --
+  comparing a framed ensemble only against a framed complex leaves out the better of item BT4's
+  two models -- but the decision came after the first numbers were seen. What argues against it
+  being a lucky choice is that the gain holds in both fold schemes, holds with the kernel weight
+  chosen inside the fold, and runs in the direction the item predicted in advance.
+
+  **The cost.** 62 bulk boxes of 3,500 +/- 398 atoms, 150 ps of equilibration and 1,000 ps of
+  production each, at 456 +/- 49 ns per day, 191 +/- 17 s per box including the shell extraction,
+  no failures: about three and a half hours in all on one CUDA device. The trajectories are 1.2 GB
+  and are not kept; the 16 representative shells per electrolyte are, at 4.4 MB in all.
+
+  **Not done:** a polarisable force field, so the 6.95 +/- 0.40 donor atoms at the ion are above
+  the 4.24 oxygens item BT4 measured on complexes relaxed with density functional theory, and the
+  number is recorded rather than corrected; transference numbers and diffusion coefficients, which
+  the item also names and for which the trajectories here are too short; a frame that an ensemble
+  of different shapes can actually use, which is what would make the co-field cheap instead of
+  expensive; and the salts GAFF cannot parameterise, which is the larger part of CALiSol-23.
 * **BT6. Difference kernels on the cell.** The intercalation voltage is the energy difference
   between the lithiated and delithiated cells, and the field-difference module
   (`cmfqsar/fielddiff.py`) has no periodic counterpart. Once M4 gives the periodic overlap kernel
@@ -3956,7 +4080,10 @@ co-field rather than accuracy). BT4 was next, since
 BT5 is empty without a complex that builds and aligns. BT6 with M4, ~~BT7 after M5~~ (BT7 is done
 by the
 local route, 30 October 2026, and did not
-need M5), BT5 now that BT4 has reported, as soon as D4 and D7 are there to build on, BT8
+need M5), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte do beat BT4's
+single optimised complex on the activation energy, by 0.48 to 0.64 kJ/mol, and do not beat it on
+the conductivity; the cation frame costs an ensemble 0.7 to 1.0 kJ/mol, far more than it costs one
+complex, so the co-field and the accuracy pull against each other), BT8
 whenever EC6 is ready for it.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
@@ -5346,7 +5473,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), ~~EC7~~ **done 4 November 2026** (an ion probe, measured: it finds the ion to 0.36 angstrom and beats the electrostatic field on the binding energy, while the selectivity between two ions stays nearly unpredictable), ~~BT4~~ **done 4 November 2026** (a solvation-complex builder, its gate met by a small margin), ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), ~~EC7~~ **done 4 November 2026** (an ion probe, measured: it finds the ion to 0.36 angstrom and beats the electrostatic field on the binding energy, while the selectivity between two ions stays nearly unpredictable), ~~BT4~~ **done 4 November 2026** (a solvation-complex builder, its gate met by a small margin), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte, the gate met on the activation energy and not on the conductivity), ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

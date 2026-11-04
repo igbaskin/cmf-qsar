@@ -58,6 +58,13 @@ md = ["mdtraj>=1.9"]
 # nothing else in the program changes: no model and no kernel needs it.  The processor build is
 # enough -- the networks are small and the batches are a few hundred atoms.
 fieldae = ["torch>=2.0"]
+# cmfqsar/electrolyte.py: building and running a bulk electrolyte box, for the sampled shells of
+# plan item BT5.  This is deliberately not a pip extra, because its parts are conda packages and
+# programs rather than wheels: openmm, openmmforcefields, openff-toolkit, openff-nagl, ambertools
+# (which supplies the antechamber program) and packmol.  `electrolyte.available()` reports which
+# of them are present and `electrolyte.require()` raises an error that names the missing ones.
+# Without them the module still imports and nothing else in the program changes: the shells it
+# would produce are kept in examples/electrolyte/, so benchmarks/run_shells.py needs none of it.
 # everything, for a working checkout
 all = ["cmfqsar[gui,docs,tutorials,dev,examples,crystals,fast,md,fieldae]"]
 
