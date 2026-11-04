@@ -3937,6 +3937,40 @@ charge. An ion removed entirely cannot be predicted: magnesium is refused by con
 the mean of an endpoint is a linear function of the charge and two monovalent ions do not
 determine it at +2.
 
+### The ion with its shell: a solvation complex
+
+For an electrolyte the object that carries the property is the complex, not the solvent molecule.
+`cmfqsar/solvation.py` (plan item BT4) places one to four solvent molecules, and optionally an
+anion, around a cation on the polyhedron of that coordination number, optimises the complex with
+GFN2-xTB through the cached quantum stage, and puts it in the frame its own coordination
+polyhedron fixes: the origin on the ion, the axes along the principal axes of the donor set, the
+remaining rotation of a regular polyhedron settled by the heavy atoms. `wrap_ion` covers the other
+case, one chain that folds around the ion with several of its own oxygens.
+
+**The builder against a published relaxation** (`benchmarks/run_solvation.py`, on 150 of the 1,050
+DFT-relaxed Li+-ether complexes of `examples/ether/`): the builder reaches 3.81 +/- 0.84 of the
+4.24 +/- 0.87 oxygens that touch the ion and a mean Li-O distance of 1.926 against 1.995 angstrom.
+Its binding energies correlate +0.555 with the published ones, while re-optimising the published
+geometry with the same method correlates +0.907 and overbinds by 1.323 eV. The two numbers say
+different things: GFN2-xTB ranks these complexes well and must not be quoted absolutely, and the
+builder loses the longer chains because the five starting conformers of one molecule spread
+1.52 +/- 0.71 eV, so what it lacks is a conformational search.
+
+**The gate** the item set -- does a model on the complex beat the five-field model on the free
+solvent -- is met by a small margin. On the 1,048 complexes, five folds, mean absolute error in
+eV: the solvent alone through the alignment-free kernel 0.124, the complex through the same kernel
+0.114, paired gain 0.010 eV [0.004, 0.016]. Predicting the mean costs 0.454 eV. The overlap kernel
+in the cation frame gives 0.145, which is 0.018 eV [0.010, 0.027] worse, and inside that frame the
+ion adds nothing (+0.002 eV [-0.003, +0.008]). **The frame does not buy accuracy; it buys the
+co-field**, which the alignment-free kernel cannot have: the electrostatic co-field has its largest
+magnitude 1.37 angstrom from the ion and 1.37 from the nearest donor oxygen, inside the first
+shell, while the hydrogen-bond donor field, which an ether cannot fill, points 12.5 angstrom away.
+
+**The series computed here**: 19 carbonates, ethers and fluorinated ethers with one to four
+molecules around Li+. Fluorination weakens the donor (FEC binds 0.29 eV less than EC) and the
+fluorinated ethers hold the fourth molecule weakly (desolvation 0.02 to 0.33 eV against 0.92 to
+1.35 for the carbonates), which is what a diluent is chosen to do.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

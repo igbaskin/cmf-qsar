@@ -418,6 +418,10 @@ Further extras, only needed for particular work:
 - `examples` — `dimorphite_dl`, protonation states when importing SMILES for a given pH;
 - a local ORCA or VASP installation if you intend to compute per-atom quantum properties to use as
   fields (see *Preparing the data* and appendix A); these are programs, not packages.
+- a local xtb installation to build and optimise solvation complexes (`cmfqsar/solvation.py`,
+  *The ion with its shell as the molecule*). `cmfqsar/xtb.py` finds it by the `XTB_EXE`
+  environment variable, on the path, or at its built-in default; it is also a program and not a
+  package.
 
 `pip install -r requirements.txt` installs the working checkout, `.[gui,docs,dev]`.
 `requirements-lock.txt` pins the exact versions the benchmark tables were produced with:
@@ -8794,6 +8798,111 @@ energies, so nothing here is a statement about a real electrolyte, where a lithi
 surrounded by four or five molecules. And the published model of this set is a neural network
 potential trained by active learning, which is a different object from a kernel on a field: the
 comparison made here is against the formula and against the electrostatic field, not against it.
+
+## The ion with its shell as the molecule: a solvation complex
+
+The section above models the solvent molecule. For almost every property of an electrolyte the
+object that carries the property is not the solvent but the complex: the ion together with the
+molecules that touch it. `cmfqsar/solvation.py` builds one (plan item BT4), and it does three
+separate things so that each can be checked on its own.
+
+**It places.** A donor atom is an oxygen or a nitrogen with a lone pair, and the direction of that
+lone pair is the reverse of the sum of the atom's bond directions — the bisector for an ether
+oxygen, the C=O axis for a carbonyl. `place_shell` puts the ion at the origin, takes as many
+directions as there are molecules from the polyhedron of that coordination number (linear,
+trigonal, tetrahedral, and the bipyramid and octahedron above that), turns each molecule so its
+lone pair points back at the ion, and sets the donor at the coordination distance — 2.01 Å for
+Li⁺ and oxygen, the distance measured in the relaxed complexes of `examples/ether/`. Each molecule
+is then spun about its own ion–donor axis to the angle that leaves the most room. An anion may
+join the shell, which makes a contact ion pair, and the total charge follows from the fragments.
+`wrap_ion` is the other case: one molecule that wraps the ion with several of its own oxygens, as
+a glyme does.
+
+**It optimises.** GFN2-xTB through `cmfqsar.xtb`, which caches by molecule, charge, method and
+starting geometry, so a run resumes where it stopped. A complex of fifty atoms takes under a
+second. The binding energy is E(complex) − E(ion) − ΣE(solvent) and the desolvation energy
+E(n−1) + E(solvent) − E(n), both written out in the functions that compute them.
+
+**It frames.** This is what the complex gives that the free solvent cannot. A series of glymes has
+no scaffold to superimpose, but a series of complexes has one atom in common, and the polyhedron
+of its donors fixes the orientation: `cation_frame` puts the origin on the ion, the axes along the
+principal axes of the donor set, and resolves the four proper sign choices by the third moments of
+the donors. Where two moments are equal — a regular polyhedron — the axes inside that plane are
+taken from the heavy atoms of the whole complex instead, and `frame_quality` reports the moment
+ratios so that a caller can see when the frame still leaves a rotation free. With a frame there is
+an overlap kernel, and with an overlap kernel there is a co-field.
+
+### What the builder is worth, measured against a published relaxation
+
+`benchmarks/run_solvation.py` measures the builder on 150 of the 1,050 Li⁺–ether complexes of
+`examples/ether/`, which were relaxed with density functional theory. Three runs per molecule: the
+free solvent, the published complex re-optimised with xTB, and the complex the builder makes from
+five generated starting conformers, each optimised, the lowest kept.
+
+| Quantity | The published relaxation | xTB from that geometry | The builder's own complex |
+|---|---:|---:|---:|
+| oxygens reaching the ion | 4.24 ± 0.87 | 4.38 | 3.81 ± 0.84 |
+| nearest oxygen (Å) | 1.935 | 1.874 | 1.856 |
+| mean oxygen distance (Å) | 1.995 ± 0.068 | — | 1.926 ± 0.088 |
+| binding energy, correlation with the published one | — | **+0.907** | +0.555 |
+| binding energy, mean error (eV) | — | −1.323 | −0.919 |
+
+Two statements follow, and they are about different things. **The method overbinds**: GFN2-xTB
+puts a lithium ion about 1.3 eV deeper into an ether than wB97X-D3 does, and gets the ordering
+right while doing it (+0.91). It ranks and it must not be quoted as an absolute number.
+**The builder loses the longer chains**: it reaches 3.81 of the 4.24 oxygens and its correlation
+with the published energy is +0.555, not +0.907. The reason is measured rather than guessed: the
+five starting conformers of one molecule spread 1.52 ± 0.71 eV, so which conformer the builder
+starts from decides the answer, and five of them are not enough for a chain with five oxygens.
+What the builder lacks is a conformational search, not a better placing rule.
+
+### The gate: does the shell carry what the solvent alone does not
+
+Item BT4 asks that question, and the 1,048 complexes with a published binding energy answer it.
+Five outer folds, the ridge and the field width chosen inside each fold. Predicting the mean of
+the set costs 0.454 eV.
+
+| Model | MAE (eV) | R² |
+|---|---:|---:|
+| the solvent alone, alignment-free kernel (the model of the section above) | 0.124 ± 0.016 | +0.894 |
+| the complex, alignment-free kernel | **0.114 ± 0.013** | **+0.914** |
+| the complex, overlap kernel in the cation frame | 0.145 ± 0.018 | +0.868 |
+| the solvent again, overlap kernel in the same frame | 0.143 ± 0.009 | +0.886 |
+
+**The gate is met, and by a small margin.** Paired over the same molecules, putting the ion back
+gains 0.010 eV [0.004, 0.016], an interval clear of zero and eight per cent of the error. The
+shell does carry something the solvent alone does not, and it is not much: the solvent in the
+geometry it holds in the complex already says most of what there is to say.
+
+**The frame costs accuracy.** The overlap kernel in the cation frame is 0.018 eV [0.010, 0.027]
+worse than the alignment-free kernel on the same molecules, and inside that frame the ion adds
+nothing at all (+0.002 eV [−0.003, +0.008]). The two models were run precisely to separate the
+ion from the frame, and the separation says the gain above belongs to the ion. The frame is not
+useless, but what it buys is not accuracy.
+
+**What it buys is the co-field**, which the alignment-free kernel cannot have at all. Fitted on
+every complex and evaluated on a grid, the largest magnitude of the electrostatic co-field lies
+1.37 Å from the ion and 1.37 Å from the nearest donor oxygen, and that of the hydrogen-bond
+acceptor field 1.03 Å from the ion. Both sit inside the first shell, which is where the chemistry
+is, so the item's reading gate is met. The hydrogen-bond donor field is the control that costs
+nothing: an ether has no donor, that field carries no weight anywhere, and its largest magnitude
+lands 12.5 Å away, in the corner of the box.
+
+### The series computed here: carbonates, ethers and fluorinated ethers
+
+Nineteen solvents with one to four molecules around Li⁺, every complex placed and optimised by
+this module (75 complexes, one failure). At one solvent molecule the carbonates bind
+−2.49 ± 0.12 eV, the ethers −3.01 ± 1.08 and the fluorinated ethers −2.91 ± 0.61. The wide spread
+of the ethers is not noise: twelve of the nineteen solvents give a complex in which the ion
+touches one oxygen, and those twelve agree closely (−2.36 ± 0.18 eV), while the other seven are
+chains that fold and donate two or three oxygens at once, so their "one molecule" is already a
+three-coordinate complex. Two numbers from the table are worth reading on their own.
+**Fluorination weakens the donor**: FEC binds 0.29 eV less than EC, which is the effect those
+additives are used for. **The fluorinated ethers hold the fourth molecule weakly**: the
+desolvation energy at four solvents is 0.92 to 1.35 eV for the carbonates and 0.02 to 0.33 eV for
+the fluorinated ethers, which is what a diluent is chosen to do. Two of the 56 desolvation
+energies are negative, meaning the optimiser did not find a bound complex at that size, and the
+table names them.
 
 ## Which atom is attacked: a site of metabolism
 

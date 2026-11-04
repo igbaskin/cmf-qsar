@@ -3749,6 +3749,72 @@ values and a computed oxidation potential is a descriptor, not a target.
   measured low-temperature or rate data where a series has them. Gate: the model on the complex
   beats the five-field model on the free solvent, which is the test of whether the shell carries
   what the solvent alone does not; the co-field names the donor oxygens.
+  **Done 4 November 2026. The gate is met by a small margin, the co-field reading passes, and the
+  frame the item expected to pay does not.** `cmfqsar/solvation.py` with 27 tests in
+  `tests/test_solvation.py`, measured by `benchmarks/run_solvation.py` in three stages.
+
+  **What was built.** `place_shell` puts one to six molecules, and optionally an anion for a
+  contact ion pair, on the polyhedron of that coordination number: each molecule turned so that
+  its donor's lone pair points at the ion, the donor set at the coordination distance (2.01 A for
+  Li and oxygen, the distance measured on the complexes of item EC7), each molecule spun about its
+  own ion-donor axis to the angle that leaves the most room. `wrap_ion` is the intramolecular case
+  of a glyme. The optimiser is GFN2-xTB through `cmfqsar.xtb`, which already cached by molecule,
+  charge, method and starting geometry, so nothing new was needed there and a complex of fifty
+  atoms takes under a second. `cation_frame` is the frame the item promised: the origin on the
+  ion, the axes along the principal axes of the donor set, the four proper sign choices decided by
+  the donors' third moments, and the rotation that a regular polyhedron leaves free settled by the
+  heavy atoms of the whole complex; `frame_quality` reports the moment ratios, so a caller can see
+  when the frame is not fixed (0.3 per cent of the reference complexes).
+
+  **The builder against a published relaxation**, on 150 of the 1,050 DFT-relaxed Li(+)-ether
+  complexes of `examples/ether/`, three xTB runs per molecule and five starting conformers for the
+  builder's own complex: oxygens reaching the ion 4.24 +/- 0.87 in the published relaxation,
+  4.38 when xTB re-optimises that geometry, 3.81 +/- 0.84 for the builder; mean Li-O distance
+  1.995 +/- 0.068 A against 1.926 +/- 0.088; binding energy correlation with the published values
+  +0.907 for xTB on the published geometry (mean error -1.323 eV) and +0.555 for the builder's own
+  complex (-0.919 eV). Two separate statements: **GFN2-xTB overbinds a lithium ion to an ether by
+  about 1.3 eV and still ranks the complexes well**, so it is a ranking method here and not an
+  absolute one; and **the builder loses the longer chains**, for a measured reason -- the five
+  starting conformers of one molecule spread 1.52 +/- 0.71 eV, so the start decides the answer and
+  five are not enough for a chain with five oxygens. What is missing is a conformational search,
+  not a better placing rule.
+
+  **The gate.** 1,048 complexes with a published binding energy, five outer folds, the ridge and
+  the field width chosen inside each fold; predicting the mean costs 0.454 eV. Mean absolute error
+  in eV: the solvent alone through the alignment-free kernel (the model of item EC7) 0.124
+  +/- 0.016, the complex through the same kernel 0.114 +/- 0.013, the complex through the overlap
+  kernel in the cation frame 0.145 +/- 0.018, and the solvent again in that same frame
+  0.143 +/- 0.009. Paired over the same molecules, **putting the ion back gains 0.010 eV
+  [0.004, 0.016]**, an interval clear of zero and eight per cent of the error: the gate is met,
+  and the margin says that the solvent in the geometry it holds inside the complex already carries
+  most of what there is to carry. The fourth model exists to separate the ion from the frame, and
+  the separation is clear: **the frame costs 0.018 eV [0.010, 0.027]** against the alignment-free
+  kernel, and inside the frame the ion adds nothing (+0.002 eV [-0.003, +0.008]).
+
+  **The co-field reading passes.** A frame is what a co-field needs, and this is what the frame is
+  for, since it does not buy accuracy. Fitted on every complex and evaluated on a grid, the
+  largest magnitude of the electrostatic co-field lies 1.37 A from the ion and 1.37 A from the
+  nearest donor oxygen, and that of the hydrogen-bond acceptor field 1.03 A from the ion: both
+  inside the first shell. The hydrogen-bond donor field is the control that costs nothing, since
+  an ether cannot fill it, and its largest magnitude lands 12.5 A away in the corner of the box.
+
+  **The series the item names, computed here.** 19 carbonates, ethers and fluorinated ethers with
+  one to four molecules around Li(+), 75 complexes, one failure. At one molecule the carbonates
+  bind -2.49 +/- 0.12 eV, the ethers -3.01 +/- 1.08 and the fluorinated ethers -2.91 +/- 0.61; the
+  ethers' spread is chemistry and not noise, because 12 of the 19 solvents give a complex in which
+  the ion touches one oxygen (those 12 agree at -2.36 +/- 0.18 eV) while the other 7 fold and
+  donate two or three at once. Two readings worth keeping: fluorination weakens the donor, FEC
+  binding 0.29 eV less than EC, and the fluorinated ethers hold the fourth molecule weakly, with a
+  desolvation energy of 0.02 to 0.33 eV against 0.92 to 1.35 eV for the carbonates, which is what
+  a diluent is chosen to do. Two of the 56 desolvation energies are negative, which means the
+  optimiser found no bound complex at that size, and `series.json` names them.
+
+  **Not done:** the conformational search the builder needs; the measured low-temperature or rate
+  data the item also names, for which no machine-readable series was looked for here; ORCA as the
+  engine (the function refuses any program but xTB with a message that says so); and a target
+  other than the binding energy, since the desolvation energies and coordination numbers computed
+  here are data and not yet a measurement. Item BT5 is the next one: it asks whether shells sampled
+  from a trajectory beat this single optimised complex, and this item is the baseline it needs.
 * **BT5. Solvation shells from a bulk trajectory.** D7 reads a ligand trajectory in a pocket. An
   electrolyte simulation is a periodic box with many cations, so a shell extractor that cuts the
   molecules within a cutoff of each Li⁺, unwraps the periodic boundary, and hands the shells to
@@ -3884,11 +3950,14 @@ values and a computed oxidation potential is a descriptor, not a target.
 **Order.** ~~BT1 and BT3 first, with BT2 as they need it~~: **all three done 3 November 2026**, and
 the benchmark they give says the composition decides an average voltage. ~~BT6 with M4~~ **done the
 same day**, and it does not pay: the difference of the two cells is
-indistinguishable from the lithiated cell alone and behind the element fractions. BT4 next, since
+indistinguishable from the lithiated cell alone and behind the element fractions. ~~BT4~~ **done
+4 November 2026** (the builder works, the gate is met by 0.010 eV, and the cation frame buys the
+co-field rather than accuracy). BT4 was next, since
 BT5 is empty without a complex that builds and aligns. BT6 with M4, ~~BT7 after M5~~ (BT7 is done
 by the
 local route, 30 October 2026, and did not
-need M5), BT5 only after BT4 has reported and D4 and D7 exist, BT8 whenever EC6 is ready for it.
+need M5), BT5 now that BT4 has reported, as soon as D4 and D7 are there to build on, BT8
+whenever EC6 is ready for it.
 
 ### Local atomic properties: the extensions a per-atom target asks for (25 October 2026)
 
@@ -5277,7 +5346,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), ~~EC7~~ **done 4 November 2026** (an ion probe, measured: it finds the ion to 0.36 angstrom and beats the electrostatic field on the binding energy, while the selectivity between two ions stays nearly unpredictable), BT4 (solvation complexes) after EC7, which is now free, ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), ~~EC7~~ **done 4 November 2026** (an ion probe, measured: it finds the ion to 0.36 angstrom and beats the electrostatic field on the binding energy, while the selectivity between two ions stays nearly unpredictable), ~~BT4~~ **done 4 November 2026** (a solvation-complex builder, its gate met by a small margin), ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

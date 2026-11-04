@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 103 modules, 198 classes with 646 public methods, and 1011 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 104 modules, 201 classes with 649 public methods, and 1026 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -119,6 +119,7 @@ for.
 | [cmfqsar.screen](#cmfqsarscreen) | Screening a library without holding it in memory (plan item B3). |
 | [cmfqsar.shapley](#cmfqsarshapley) | Shapley decomposition of a CMF prediction. |
 | [cmfqsar.sites](#cmfqsarsites) | Site-resolved models of a periodic structure (plan item M5). |
+| [cmfqsar.solvation](#cmfqsarsolvation) | A cation with its first solvation shell as one molecule, built, optimised and framed. |
 | [cmfqsar.solvent](#cmfqsarsolvent) | Solvent as a field: where a ligand's water sits, as a CMF field (plan item D9). |
 | [cmfqsar.spectral](#cmfqsarspectral) | Clustering a set by its fields rather than by its scaffolds. |
 | [cmfqsar.stereo](#cmfqsarstereo) | Handedness as a property of a centre, not of a shape. |
@@ -14277,6 +14278,206 @@ The `n` channels of one site's profile that move the prediction most, as (label,
 
 The amounts sum to the contribution of that site, so this says which pair of field types at
 which distance *from this site* raises the property and which lowers it.
+
+## cmfqsar.solvation
+
+Source: `cmfqsar/solvation.py`
+
+A cation with its first solvation shell as one molecule, built, optimised and framed.
+
+Plan item BT4.  For every property of an electrolyte -- the energy a lithium ion gains from a
+solvent, what it costs to strip one molecule off again, how many molecules fit around the ion --
+the object that carries the property is not the solvent molecule.  It is the complex: the ion with
+the molecules that touch it.  Nothing in this program built one, and this module does.
+
+Three steps, and each is separate so that each can be checked on its own.
+
+**Placing.**  A donor atom is an oxygen or a nitrogen with a lone pair pointing somewhere, and
+`donor_direction` says where: away from the bisector of an ether oxygen's two bonds, along
+the C=O axis of a carbonyl, along the lone pair of a nitrile.  `place_shell` puts the ion at
+the origin, chooses as many directions as there are molecules from the polyhedron of that
+coordination number (linear, trigonal, tetrahedral), and for each molecule rotates it so that its
+donor's lone pair points back at the ion and translates it so the donor sits at the coordination
+distance.  Each molecule is then spun about its own ion-donor axis to the angle that leaves the
+most room, which is a starting geometry and not a result: the optimiser decides the rest.
+
+**Optimising.**  GFN2-xTB through `cmfqsar.xtb`, which caches per molecule, per charge, per
+method and per starting geometry, so an interrupted run resumes.  ORCA through
+`cmfqsar.orca` is the other engine and is far slower on a complex of fifty atoms.  The
+energies this module returns are total energies in eV; a binding energy is a difference of three
+of them and a desolvation energy a difference of three others, both written out in the functions
+that compute them, because a sign error in either is invisible in the number.
+
+**Framing.**  This is what the complex gives that the free solvent cannot.  A series of free
+solvent molecules has no common frame -- a glyme has no scaffold to superimpose -- but a series of
+complexes does: the ion is one atom in every one of them, and the polyhedron of its donors fixes
+the orientation.  `cation_frame` puts the origin on the ion, the axes along the principal
+axes of the donor set, and resolves the four proper sign choices by the third moments of the
+donors.  With that frame the overlap kernel applies, and with the overlap kernel there is a
+co-field: a map in space of where binding is gained, which for a solvation complex is a statement
+about the donor oxygens.
+
+**What the module does not do.**  It does not search conformations.  A glyme wraps a lithium ion
+with four or five of its own oxygens, and `wrap_ion` offers the intramolecular case -- the
+ion placed at the centroid of the donors that already lie closest together, then optimised -- but
+the fold it finds is the fold the starting conformer was near. `benchmarks/run_solvation.py`
+measures how far that gets against 1,050 complexes relaxed with density functional theory, which
+is the honest way to state the limit of a builder.
+
+### `class SolvationError  — bases: ValueError`
+
+A complex that cannot be built or framed, with the reason in the message.
+
+### `class Complex  (dataclass)`
+
+A cation with its shell: the molecule, the ion's atom index and what went into it.
+
+Attributes:
+
+- `mol: Chem.Mol`
+- `ion_index: int`
+- `ion: str`
+- `solvents: Tuple[str, ...]` = `()`
+- `donors: Tuple[int, ...]` = `()`
+- `charge: int` = `0`
+- `energy_ev: float` = `float('nan')`
+- `optimised: bool` = `False`
+- `note: str` = `''`
+
+#### `Complex.n_solvents` -> int  (property)
+
+#### `Complex.coordination(cutoff: Optional[float]=None) -> Tuple[np.ndarray, np.ndarray]`
+
+### `class Engine  (dataclass)`
+
+How the complexes are optimised: GFN2-xTB by default, ORCA on request.
+
+Attributes:
+
+- `program: str` = `'xtb'`
+- `workdir: str` = `'solvation_work'`
+- `opt: bool` = `True`
+- `solvent: str` = `''`
+- `accuracy: float` = `1.0`
+- `timeout: Optional[float]` = `1800.0`
+- `orca_keywords: str` = `'B3LYP D3BJ def2-SVP'`
+- `energies: Dict[str, float]` = `field(default_factory=dict)`
+
+#### `Engine.level() -> str`
+
+### `donor_atoms(mol: Chem.Mol) -> List[Tuple[int, str]]`
+
+`[(atom index, kind)]` of every atom that can point a lone pair at a cation.
+
+An atom matched by more than one pattern keeps the first kind it matched, and the list is in
+the order of the atom indices so that it does not depend on the order of the patterns.
+
+### `donor_direction(mol: Chem.Mol, index: int, coords: Optional[np.ndarray]=None) -> np.ndarray`
+
+The unit vector along which a cation should approach the donor `index`.
+
+It points away from the atoms the donor is bonded to: the reverse of the sum of the bond
+directions, which is the bisector for two bonds and the bond axis itself for one.  A donor
+with no bonds at all -- a bare fluoride -- has no direction, and any direction will do, so
+`+z` is returned.
+
+### `best_donor(mol: Chem.Mol, charges: Optional[Sequence[float]]=None) -> int`
+
+The donor a cation would choose: the most negative one, or the first carbonyl or ether.
+
+`charges` are partial charges, one per atom, when the caller has them (from xTB, say).
+Without them the order of `DONOR_SMARTS` decides, which puts a carbonyl oxygen before
+an ether oxygen, as their basicity does.
+
+### `place_shell(solvents: Sequence[Chem.Mol], ion: str='Li', distance: Optional[float]=None, seed: int=0, spins: int=12, anion: Optional[Chem.Mol]=None) -> Complex`
+
+Put `solvents` (and an `anion`, for a contact ion pair) around one `ion`.
+
+The ion goes at the origin, the molecules on the directions of the polyhedron for their
+number, each turned so that its donor's lone pair points at the ion and each spun about the
+ion-donor axis to the angle that leaves the largest smallest interatomic distance.  The result
+is a starting geometry for an optimiser.
+
+### `wrap_ion(solvent: Chem.Mol, ion: str='Li', n_donors: int=0, seed: int=0) -> Complex`
+
+Put the ion inside one molecule: the intramolecular case of a glyme or a crown ether.
+
+The ion is placed at the centroid of the `n_donors` donor atoms that lie closest together in
+the conformer given, or of every donor when `n_donors` is 0, and then pushed out to the
+coordination distance from the nearest of them if it landed too close.  No conformational
+search is done: the fold this gives is the fold of the conformer it was handed.
+
+### `ion_index(mol: Chem.Mol, ion: str='Li') -> int`
+
+Where the cation is. Raises when there is not exactly one.
+
+### `coordination(mol: Chem.Mol, index: int, ion: str='Li', cutoff: Optional[float]=None) -> Tuple[np.ndarray, np.ndarray]`
+
+`(atom indices, distances)` of the donor atoms inside `cutoff` of the ion.
+
+The default cutoff is 1.3 times the coordination distance of the ion, which for lithium and
+oxygen is 2.6 A -- the value the first shell of the relaxed complexes of `examples/ether/`
+is counted with.
+
+### `cation_frame(mol: Chem.Mol, index: Optional[int]=None, ion: str='Li', cutoff: Optional[float]=None) -> np.ndarray`
+
+The coordinates of the complex in the frame its own coordination polyhedron defines.
+
+The origin is the ion.  The axes are the principal axes of the donor atoms inside the cutoff,
+ordered by their moment, smallest first, which makes the longest extent of the polyhedron the
+x axis.  Four sign choices leave those axes and the handedness alone, and the one with the
+largest third moments of the donors, taken in the order x, y, z, is chosen; a polyhedron
+symmetric enough for all three to vanish is one whose fields are the same in either frame.
+A single donor fixes only one direction: the x axis is put along it and the other two are any
+perpendicular pair, which is stated in the return of `frame_quality`.
+
+### `frame_quality(mol: Chem.Mol, index: Optional[int]=None, ion: str='Li', cutoff: Optional[float]=None) -> Dict[str, float]`
+
+How well the polyhedron fixes the frame: the number of donors and the moment ratios.
+
+Two equal moments leave a rotation free, and the ratios say how near that is.  A caller that
+needs one frame per complex should refuse a complex whose two smallest moments agree to
+within a per cent or so, or accept that its orientation about that axis is arbitrary.
+
+### `with_frame(mol: Chem.Mol, index: Optional[int]=None, ion: str='Li', cutoff: Optional[float]=None) -> Chem.Mol`
+
+A copy of the complex whose conformer is the one `cation_frame` gives.
+
+### `optimise(mol: Chem.Mol, name: str, engine: Optional[Engine]=None, index: int=1) -> Tuple[Chem.Mol, float]`
+
+Optimise one molecule or complex and return it with its total energy in eV.
+
+The call is cached by `cmfqsar.xtb` on the molecule, its charge, the method and the
+starting geometry, so running this again costs nothing and an interrupted series resumes.
+
+### `ion_energy(ion: str='Li', engine: Optional[Engine]=None) -> float`
+
+The total energy of the bare cation in eV, which every binding energy needs.
+
+### `binding_energy(complex_ev: float, ion_ev: float, solvent_evs: Sequence[float]) -> float`
+
+`E(complex) - E(ion) - sum E(solvent)`, in eV: negative when the complex is bound.
+
+The solvent energies are those of the free molecules at their own optimised geometries, so
+this is the binding energy with the deformation of the molecules included, which is how the
+reference set of `examples/ether/` defines it as well.
+
+### `best_wrapped_complex(solvent: Chem.Mol, name: str, ion: str='Li', n_donors: int=0, conformers: int=5, engine: Optional[Engine]=None, index: int=1) -> Tuple[Complex, float, List[float]]`
+
+Wrap the ion in several conformers, optimise each, and keep the one of lowest energy.
+
+`wrap_ion` does no conformational search, so the fold it finds is the fold of the
+conformer it was handed, and for a chain that wraps a cation with four of its own oxygens
+that is usually not enough. This is the smallest honest remedy: a few starting conformers,
+each optimised, the lowest kept. Returns the complex, its energy in eV and every energy
+tried, so that the spread over the starts can be reported rather than hidden.
+
+### `desolvation_energy(complex_n_ev: float, complex_n_minus_one_ev: float, solvent_ev: float) -> float`
+
+What it costs to take one molecule out of the shell, in eV, positive when it costs energy.
+
+`E(n-1 complex) + E(free solvent) - E(n complex)`: the two products against the one
+reactant, both at their own optimised geometries.
 
 ## cmfqsar.solvent
 

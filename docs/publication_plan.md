@@ -716,6 +716,31 @@ its charge. Two limits must be stated: the geometries are the lithium complexes,
 magnesium models stand on a lithium-shaped conformation, and the targets are gas-phase
 one-to-one complexes rather than solvation free energies.
 
+**Item BT4 is done (4 November 2026) and it answers the question item EC7 leaves open**: is the
+solvent molecule the right object, or is the complex? `cmfqsar/solvation.py` places one to six
+solvent molecules, and optionally an anion, around a cation, optimises the complex with GFN2-xTB
+and frames it on the ion with the coordination polyhedron fixing the orientation. Three results
+belong in the paper, and one of them is a method caveat worth stating for its own sake.
+**The builder works where the molecule is small and loses the longer chains.** Measured against
+150 of the 1,050 DFT-relaxed Li(+)-ether complexes: it reaches 3.81 +/- 0.84 of the 4.24 +/- 0.87
+oxygens that touch the ion, with a mean Li-O distance of 1.926 against 1.995 angstrom, and its
+binding energies correlate +0.555 with the published ones, while xTB re-optimising the published
+geometry correlates +0.907. The reason is measured: the five starting conformers of one molecule
+spread 1.52 +/- 0.71 eV, so the start decides. **GFN2-xTB overbinds a lithium ion to an ether by
+1.323 eV and still ranks the complexes at +0.907**, which is a sentence any paper using
+tight-binding energies for this chemistry should carry. **The gate is met by a small margin:**
+on 1,048 complexes the alignment-free model of the complex gives 0.114 +/- 0.013 eV against
+0.124 +/- 0.016 for the free solvent, a paired gain of 0.010 eV [0.004, 0.016] on a set where
+predicting the mean costs 0.454 eV. The frame, which was the item's structural promise, costs
+0.018 eV [0.010, 0.027] and lets the ion add nothing (+0.002 eV [-0.003, +0.008]); what it buys
+is the co-field, which the alignment-free kernel cannot have, and that co-field passes its own
+reading gate -- the electrostatic one has its largest magnitude 1.37 angstrom from the ion and
+1.37 from the nearest donor oxygen, while the hydrogen-bond donor field, which an ether cannot
+fill, points 12.5 angstrom away. A computed series of 19 carbonates, ethers and fluorinated
+ethers adds two readings a reviewer can check against the literature: FEC binds 0.29 eV less than
+EC, and the fluorinated ethers hold their fourth molecule at a desolvation energy of 0.02 to
+0.33 eV against 0.92 to 1.35 eV for the carbonates, which is why they are used as diluents.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to
