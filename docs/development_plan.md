@@ -1375,6 +1375,34 @@ to RMSD for clustering conformations; and the per-residue complementarity profil
 `cmfqsar/complementarity.py` evaluated frame by frame, which is a field-based interaction
 fingerprint along the trajectory. Both are reported, not measured, under rule 5.
 
+**Small (one to three days, but it moves published tables)**
+
+* **D11. A charge model that no element can void (5 November 2026).** The Gasteiger scheme has no
+  parameters for some elements, and one such atom makes RDKit return "not a number" for *every*
+  atom of the molecule, so the electrostatic field of that molecule is identically zero: not an
+  error, not a warning, and not a field. Item EC4 found this for the d-block metals and repaired
+  it there, by computing the charges with the metal atoms removed and giving each metal its formal
+  charge. Item EC3 then found the same fault outside the d block, on the selenomethyl substituent
+  of the Hammett series.
+  *The scope is measured, not guessed.* The elements the scheme cannot do at all are **selenium,
+  tellurium, arsenic, tin, lithium and zinc** (each tested on a small molecule: every atom comes
+  back "not a number"). They occur in `examples/corrosion/0_c1ccccc1.csv` and its `corrosion_hcl`
+  twin, which is the 244-molecule root series of the scaffold tree; in several
+  `examples/cyclodextrin/` tables; in `examples/electrolyte/shells/`; and once in
+  `examples/hammett/`. So this is not a local repair: it reaches the corrosion, cyclodextrin and
+  Hammett families, whose tables are published.
+  *What to build.* Generalise EC4's repair to any atom the scheme cannot do: compute the charges
+  with those atoms removed and give each of them its formal charge, reporting the source as
+  something other than `gasteiger` so that a model fitted before and after cannot be confused.
+  The electrolyte shells may need nothing, since they read charges from their files; that has to
+  be checked rather than assumed.
+  *Gate, and it is a reporting gate rather than an accuracy one.* The repair is correct by
+  construction -- a field that was identically zero becomes a field -- so what has to be measured
+  is **what it moves**: every affected benchmark re-run, and the before-and-after reported in the
+  same table. A table that moves is re-measured and said to have moved, never quietly rewritten;
+  rule 6 is the reason this cannot be folded into another item's commit, and it is why this item
+  exists separately instead of being done in passing.
+
 ## E. Learning (months 4 to 10)
 
 * **E1. Multi-task beyond two tasks.** After A6: a free-form low-rank task covariance for several
@@ -5781,14 +5809,64 @@ LP2. MC11 last, after E1, MC2 and MC4.
 
 ## Sequence
 
-| When | What |
-|---|---|
-| Months 0 to 3 | A (platform), A6 first; B1 and B2 as they are needed by the benchmarks |
-| Months 2 to 6 | ~~B1~~, ~~B2~~, ~~B3~~, ~~B4 (evidence)~~ and ~~B5~~ **done**, ~~D6~~ **done (negative result)**, ~~C1 (the protocol) and C2 (flexible alignment)~~ **both done**; ~~F2 (co-field uncertainty)~~ **done** |
-| Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
-| Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
-| Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; ~~EC1~~ **done 5 November 2026** and ~~EC4~~ **done the same day (the fields of a complex beat its composition on 2216 iron redox potentials and beat the population analysis on 25 congeneric nickel complexes)**, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), ~~EC7~~ **done 4 November 2026** (an ion probe, measured: it finds the ion to 0.36 angstrom and beats the electrostatic field on the binding energy, while the selectivity between two ions stays nearly unpredictable), ~~BT4~~ **done 4 November 2026** (a solvation-complex builder, its gate met by a small margin), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte, the gate met on the activation energy and not on the conductivity), ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+**How to read this.** The table says what the *entries* say, and nothing else. An item records
+its own completion in bold with a date -- "Done 27 October 2026", "Built 27 October 2026",
+"measured 1 November 2026" -- so an item named below as not finished is one whose entry carries no
+such statement, and one marked *partly* carries a date for a part of itself and says in its entry
+what is left. Five entries do not follow that convention and were read by hand: E11 (version (i)
+of four measured), EC8 (a pilot measured, without the cut-and-terminate step and without M5), SC5
+(the radii of EC7 are done and the frame convention and the data are left), and PBH1 and PBH2,
+which record completion in their titles.
+
+The previous version of this table was written by hand and had drifted far enough to mislead: 29
+items whose entries record a completion date were still listed in it as pending. It is now
+generated from the entries by `docs/plan_status.py`, which prints exactly the rows below, so the
+way to keep it true is to regenerate it rather than to edit it:
+
+    python docs/plan_status.py            # these rows, ready to paste
+    python docs/plan_status.py open       # only what is not finished, item by item
+
+That script also records the two things that make reading the file by machine unreliable: the
+**Order.** paragraph at the end of each section names every item's completion date, so an item's
+own text has to stop before it, and five entries state their status in a form of their own.
+
+| Part | Items | Finished | Not finished |
+|---|---|---|---|
+| A. The platform | 6 | 6 | -- |
+| B. Scale and speed | 6 | 6 | -- |
+| C. The alignment problem | 7 | 7 | -- |
+| D. Fields and kernels | 11 | 10 | D11 |
+| E. Learning | 11 | 10 | E11 (partly) |
+| F. Interpretation | 7 | 7 | -- |
+| G. The application and the tool | 5 | 4 | G5 |
+| H. Materials and periodicity | 14 | 10 | M7, M8, M9, M13 |
+| H. Nanotechnology | 12 | 0 | NT1 to NT12 |
+| H. Electrochemistry | 10 | 7 | EC8 (partly), EC9, EC10 |
+| H. Battery science | 8 | 7 | BT8 |
+| H. Local properties | 5 | 5 | -- |
+| H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
+| H. Physical organic | 7 | 6 | PBH6 |
+| H. Deep learning | 16 | 0 | ND1 to ND13 |
+| I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
+
+**144 items: 98 finished, 3 partly, 43 open.** Parts A to F and the battery, local-property and
+periodicity work are substantially done; what is left falls into three kinds, and they are not
+equally blocked.
+
+* **Waiting for data, not for code.** EC8 and EC9 need a measured catalytic property, MC3 a series
+  in which both enantiomers are measured, SC4 a host-guest set curated by conditions, and NT12 the
+  structure sets the nanotechnology part would be judged on. Four items in a row have now recorded
+  that no machine-readable series could be found for the catalytic case; the search is written up
+  in `docs/public_3dqsar_datasets.md` and should not be repeated blind.
+* **Waiting for the application.** G5, M13, EC10, NT8, NT9 and NT11 are the same work seen from
+  five sides: nothing of the periodic, surface or particle side is visible in the window. They are
+  the largest untouched block in the plan and none of them needs a new measurement.
+* **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, PBH6, MC10, E11's remaining three
+  versions, and the whole deep-learning part ND1 to ND13, which has not been started.
+* **A known defect with its own item.** D11 is the charge model that any of six elements can void,
+  found by EC4 inside the d block and by EC3 outside it. It is three days of work and it moves
+  published tables, which is why it is an item and not a tidy-up.
+
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

@@ -2426,6 +2426,43 @@ than chemisorption, where the image term is the right size rather than a hundred
 Neither case has a measured series here, and after this item that is the only open question left
 in it — the machinery has been measured on everything the repository holds.
 
+## Three tests to run before you build a new field or a new score
+
+The chapter that follows diagnoses a *data set*. This short section diagnoses a *proposal*: a new
+field, a new kernel, a new score you are about to spend a week on. Three items of this manual each
+paid for an answer the hard way, and each left a test that costs minutes. They are gathered here
+because they are the most transferable thing in the book, and because each of them was learned
+after the expensive version had already been built.
+
+**1. Correlate your new kernel with the one the model already has.** If the two order the pairs of
+your series the same way, nothing you do with the new one can change a prediction. The
+electric-field kernel of the section *The field a reaction centre feels* is exact, physically
+better motivated than the scalar field it replaces, and correlates **+0.980** with it over the
+4371 pairs of the Hammett series. Every model result followed from that number: nothing gained
+where it was added, accuracy lost where it displaced nothing. One cosine kernel, one correlation,
+five minutes.
+
+**2. Do not read the same test off the best of many columns.** A descriptor block is not a kernel,
+and the maximum correlation over its columns is not a prediction. In *Reading a few places instead
+of all of them* the best anchored column reaches **|r| = 0.85** with a nickel redox potential; the
+block then gives **R² = −0.88** under nested cross-validation. The difference is selection: a
+kernel correlation is one number computed once, the best of 60 columns on 25 molecules is a
+maximum over 60 tries. Report a best-of-N correlation as a ceiling on what the columns could
+carry, never as a forecast of what they will.
+
+**3. Report a pose-dependent score at a pose your method can produce.** If the geometry you score
+came from the calculation that produced your target, the score can read the answer off its input.
+In *A metal surface as the receptor* the burial score predicts an adsorption energy with a
+leave-one-out q² of **+0.638** at the relaxed pose — beating the obvious control — and **+0.115**
+at a pose the program produces itself. The gap is the size of the leak, and the better the score
+looks at the given pose, the more of the input it is carrying. The same applies to a score used as
+its own docking objective: optimising a quantity makes it nearly constant across a series, and a
+quantity that no longer varies cannot discriminate.
+
+All three are instances of one habit. Before measuring whether a new description predicts, measure
+whether it *can*: whether it differs from what you have, whether its apparent signal survives the
+search that found it, and whether its inputs already contain the answer.
+
 # Before you model: `cmf diagnose`
 
 Every expensive mistake recorded in this manual was visible before the model was built, in a
