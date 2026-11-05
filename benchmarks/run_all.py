@@ -293,6 +293,15 @@ def registry() -> List[Benchmark]:
                   minutes="3",
                   report=lambda: _mod("run_phenazine").write_table(_r("phenazine")),
                   tables=["phenazine/table.md"]),
+        Benchmark("anchors",
+                  "the field and its gradient read at a few anchored points of a shared frame, "
+                  "against the field model that reads them everywhere, on the Hammett constants "
+                  "and on 25 nickel complexes",
+                  "run_anchors.py", "anchors",
+                  compute=[["--stage", "check"], ["--stage", "hammett"], ["--stage", "nickel"]],
+                  minutes="2",
+                  report=lambda: _mod("run_anchors").write_table(_r("anchors")),
+                  tables=["anchors/table.md"]),
         Benchmark("efield",
                   "the electric-field kernel, which pairs two molecules by the gradients of "
                   "their fields, against the scalar electrostatic kernel on the Hammett "

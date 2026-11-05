@@ -3495,6 +3495,54 @@ for anything molecular.
   electric field of the electrostatic-catalysis literature, so it arrives with a physical unit.
   Measure first on the Hammett sets, where the through-space component of σ has a literature,
   against the field model alone; the catalyst use waits for EC4.
+  **Done 5 November 2026. The machinery works and the gate is not passed, and not narrowly:
+  reading a few places loses to reading everywhere on every target measured.**
+  *Built:* `field_at_points`, `field_gradient_at_points`, `coulomb_at_points`, `anchor_names`,
+  `anchored_row` and `anchored_matrix` in `cmfqsar/descriptors.py`, `tests/test_anchors.py`
+  (17 tests), `benchmarks/run_anchors.py` with `benchmarks/results/anchors/table.md`, and the
+  manual section *Reading a few places instead of all of them*. The reading is exact — every atom
+  contributes, unlike `evaluate_gaussians`, which drops Gaussians below 1e-5 of their peak and is
+  the routine that draws a field on a grid. The gradient is checked against a finite difference of
+  the value at every anchored point of every field, on real molecules, inside the benchmark as
+  well as in the tests: it agrees to 1e-11.
+  *Two sources, because the item's "physical unit" claim needs one.* The Gaussian field of a field
+  set is not a Coulomb potential, so the gradient of the Gaussian electrostatic field is
+  proportional to an electric field near the atoms and is not one in volts per angstrom.
+  `source="coulomb"` reads the true point-charge potential and its gradient from the same charges,
+  in e/angstrom and e/angstrom^2. The distance-dependent dielectric of
+  `cmfqsar.complementarity.coulomb_potential` is deliberately not offered, because its gradient is
+  not the physical field.
+  *The places are given and not chosen.* For the Hammett series the frame is a rule, so the ring
+  positions are exact: the ipso carbon, the centroid, 1.7 angstrom above the face, and 1.5 angstrom
+  beyond the meta and para carbons, which is where the reacting group of the sigma definition sits.
+  For the nickel complexes of EC4 the metal is at the origin by the alignment, and the two
+  substituent points are where EC5's vector co-field put its strongest arrows.
+  *The gate.* Mean absolute error against the five-field model: sigma_m 0.132 against 0.097,
+  a difference of -0.035 [-0.066, -0.008]; sigma_p 0.214 against 0.154, -0.060 [-0.119, -0.015];
+  pi 0.784 against 0.313, -0.473 [-0.637, -0.327]; nickel E_red 0.044 V against 0.029 V,
+  -0.015 V [-0.023, -0.006]; nickel E_ox 0.280 V against 0.150 V, -0.130 V [-0.418, +0.034].
+  Every interval but the last excludes zero, and the last excludes it under neither design. Added
+  to the five fields the block ties on sigma_m (-0.0029 [-0.0190, +0.0127]) and loses elsewhere.
+  The reaction-centre points on their own are the worst model in the table, with a negative R2 on
+  four targets of five: at 2.9 angstrom from the ring centre the Gaussian field is small, and eight
+  columns of small numbers overfit.
+  *What survives.* The true Coulomb potential is the better anchored descriptor, by
+  +0.0235 units on sigma_m [+0.0031, +0.0478], which is the item's physical argument confirmed in
+  the one place it could show. And the field model's advantage is not that it has more numbers: the
+  anchored block has 100 columns on 95 substituents and still loses.
+  *The methodological result, which is the most useful part.* Item EC5's diagnostic -- ask, before
+  fitting, whether a new description can differ from the one the model has -- **misled here**. The
+  best single anchored column reaches |r| 0.85 with the nickel oxidation potential and 0.83 with
+  sigma_p; the block then gives R2 -0.88 and +0.12 under nested cross-validation. The difference is
+  selection: a correlation between two whole kernels is one number computed once, while the best of
+  60 columns on 25 molecules is a maximum over 60 tries. A whole-kernel correlation is a fair
+  diagnostic and a best-of-N column correlation is not, and this item is the measurement that says
+  so.
+  **Not done:** the catalyst use waits on data and not on code, since no series with a measured
+  catalytic property was found in machine-readable form (EC4 records that search); the application
+  has no way to place points in a frame, so the block is available to a script and not to the
+  window; and the block cannot be named like the other computed descriptors, because it needs the
+  field set and the points as well as the molecule.
 
 **Medium (one to two weeks each)**
 
@@ -3800,8 +3848,12 @@ series, because the added electron goes to the same place in every member.** ~~E
 parameters, the electrostatic field of a complex is no longer identically zero, and the gate is
 passed — on 25 congeneric nickel complexes the five fields beat the population analysis of the
 calculation that produced the target. The catalyst series the item named are not in
-machine-readable form, so EC3, EC8 and EC9 still have no measured catalytic property to aim
-at, even though a complex now loads.** ~~EC5~~ **done 5 November 2026: the vector kernel is exact
+machine-readable form, so EC8 and EC9 still have no measured catalytic property to aim
+at, even though a complex now loads.** ~~EC3~~ **done 5 November 2026: the field and its gradient
+at anchored points of a shared frame are readable, exactly, from the Gaussian field or as a true
+point-charge potential, and reading a few places loses to reading everywhere on every target
+measured; its lasting result is that a best-of-N column correlation is not the fair diagnostic
+that a whole-kernel correlation is.** ~~EC5~~ **done 5 November 2026: the vector kernel is exact
 and is a near-copy of the scalar one (the two cosine kernels correlate +0.980), so it changes
 nothing where it is added and costs accuracy on the one series where it does anything; kept under
 rule 5 as a substitute for the electrostatic field and for its arrow co-field.** EC6 after M1, ~~EC7~~ **done

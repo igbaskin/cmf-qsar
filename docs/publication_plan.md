@@ -897,6 +897,29 @@ named — that the vector kernel should win on cationic porphyrins — is tested
 complexes, because no machine-readable porphyrin series was found, and there it wins under
 leave-one-out (+0.0299 V [+0.0144, +0.0459]) and not under random folds.
 
+**Item EC3 is done (5 November 2026) and its contribution to a paper is a warning about
+diagnostics.** The item reads a field and its gradient at a few anchored points of a shared frame
+— for the electrostatic field, the oriented electric field the catalysis literature is about — and
+offers both the field set's Gaussian field and the true point-charge potential, since a Gaussian
+field is not a Coulomb potential and only the latter is in e/angstrom. Reading a few places loses
+to reading everywhere on every target measured: against the five-field model, -0.035 units on
+sigma_m [-0.066, -0.008], -0.060 on sigma_p [-0.119, -0.015], -0.473 on pi and -0.015 V on a
+nickel reduction potential, with 100 anchored columns against 95 substituents, so the field
+model's advantage is not that it has more numbers. One secondary result is worth a sentence: the
+true Coulomb potential is the better anchored descriptor (+0.0235 units on sigma_m
+[+0.0031, +0.0478]), which is what the physics says and what a reader would want confirmed.
+
+The warning is the part a methods paper should carry, and it pairs with item EC5. EC5 established
+a cheap test: before building a new field, correlate its cosine kernel with the kernels the model
+already has, and a correlation near one says the new field cannot change anything. That test
+predicted EC5's own result exactly. The same question asked of a *descriptor block* misleads. The
+best single anchored column here reaches |r| = 0.85 with the nickel oxidation potential and 0.83
+with sigma_p, which looks like a model waiting to be fitted; the block gives R2 = -0.88 and +0.12
+under nested cross-validation. The difference is selection: a kernel correlation is one number
+computed once, while the best of 60 columns on 25 molecules is a maximum over 60 tries. A paper
+that recommends the first diagnostic should say plainly that the second is not the same thing,
+because the two look alike and one of them is a selection effect.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

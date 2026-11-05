@@ -74,6 +74,145 @@ CRYSTAL: Dict[str, str] = {
 #: the working ion of the crystal descriptors when the name does not say which
 WORKING_ION = "Li"
 
+# --------------------------------------------------------------------------- #
+# Fields at anchored points (plan item EC3)
+# --------------------------------------------------------------------------- #
+#
+# A field is a function of space, and a kernel compares two of them everywhere.  Sometimes the
+# question is about one place: what does the reacting group of a Hammett series feel where it
+# sits, what does a metal site feel from the second coordination sphere.  A series in a shared
+# frame has such places, and the field and its gradient there are ordinary numbers, so they go in
+# as descriptors beside the fields rather than as fields of their own.
+#
+# Two readings are offered at every point and they are different quantities.  ``value`` is the
+# field itself; the gradient components are the direction and strength with which it changes, and
+# for the electrostatic field the gradient is the oriented electric field that the
+# electrostatic-catalysis literature is about.  A value can be large where the gradient is zero
+# and the other way round, which is the whole reason for having both.
+#
+# Which field, though?  The Gaussian field of a CMF field set is not a Coulomb potential: its
+# atom-centred Gaussians fall off far faster than 1/r, which is what makes the kernel a closed
+# form and what the module's own measurement says represents long-range tails badly.  So the
+# gradient of the Gaussian electrostatic field is *proportional* to an electric field near the
+# atoms and is not one in volts per angstrom.  ``source="coulomb"`` therefore offers the true
+# point-charge potential and its gradient instead, in units of e/angstrom and e/angstrom^2, which
+# is the physical quantity the literature names.  Both are offered because they are different
+# descriptions and the benchmark compares them.
+
+#: the readings one anchored point offers for one field
+ANCHOR_KINDS = ("value", "gx", "gy", "gz", "grad")
+#: where the numbers at a point come from: the field set's Gaussian field, or the true
+#: point-charge potential of the same charges
+ANCHOR_SOURCES = ("field", "coulomb")
+
+
+def anchor_names(field_names: Sequence[str], labels: Sequence[str],
+                 kinds: Sequence[str] = ("value", "grad")) -> List[str]:
+    """The column names of an anchored-point descriptor block, in the order the matrix has them.
+
+    A name says the place, the field and the reading: ``at:para_site:electrostatic:gx``.  The
+    place comes first because a reader of a model's contributions asks "what does this point
+    carry" before "which field".
+    """
+    bad = [k for k in kinds if k not in ANCHOR_KINDS]
+    if bad:
+        raise ValueError(f"unknown anchor reading {bad}; use any of {ANCHOR_KINDS}")
+    return [f"at:{label}:{name}:{kind}"
+            for label in labels for name in field_names for kind in kinds]
+
+
+def _widths_and_weights(mol, spec, f: int):
+    from .cofields import _centres_and_widths
+    return _centres_and_widths(mol, spec, f)
+
+
+def field_at_points(points: np.ndarray, mol, spec, f: int) -> np.ndarray:
+    """The value of one field of one molecule at each point.  Exact: every atom contributes."""
+    centres, weights, widths = _widths_and_weights(mol, spec, f)
+    pts = np.asarray(points, float).reshape(-1, 3)
+    if len(centres) == 0:
+        return np.zeros(len(pts))
+    d2 = ((pts[:, None, :] - np.asarray(centres, float)[None, :, :]) ** 2).sum(axis=2)
+    return (np.asarray(weights, float)[None, :]
+            * np.exp(-0.5 * np.asarray(widths, float)[None, :] * d2)).sum(axis=1)
+
+
+def field_gradient_at_points(points: np.ndarray, mol, spec, f: int) -> np.ndarray:
+    """The gradient of one field of one molecule at each point.  Shape (n_points, 3)."""
+    from .cofields import evaluate_gaussian_gradients
+    centres, weights, widths = _widths_and_weights(mol, spec, f)
+    return evaluate_gaussian_gradients(np.asarray(points, float).reshape(-1, 3),
+                                       centres, weights, widths)
+
+
+def coulomb_at_points(points: np.ndarray, coords: np.ndarray, charges: np.ndarray,
+                      eps: float = 1.0, min_distance: float = 0.5):
+    """The potential and the electric field of point charges at each point.
+
+    Returns ``(phi, E)`` with ``phi = sum_i q_i / (eps r_i)`` and ``E = -grad phi``, so that phi
+    is in e/angstrom and E in e/angstrom^2 (multiply by 14.4 for volts and volts per angstrom).
+    The dielectric is a constant: the distance-dependent form of
+    :func:`cmfqsar.complementarity.coulomb_potential` damps the long range usefully for a
+    complementarity score, but its gradient is not the physical field, so it is not offered here.
+
+    `min_distance` keeps a point that lands on an atom finite; a point closer than this to a
+    nucleus is held at that distance, and the benchmark places its points away from atoms.
+    """
+    pts = np.asarray(points, float).reshape(-1, 3)
+    q = np.asarray(charges, float)
+    xyz = np.asarray(coords, float)
+    keep = np.abs(q) > 1e-12
+    if not keep.any() or len(pts) == 0:
+        return np.zeros(len(pts)), np.zeros((len(pts), 3))
+    diff = pts[:, None, :] - xyz[keep][None, :, :]
+    d = np.sqrt((diff ** 2).sum(axis=2))
+    d = np.maximum(d, float(min_distance))
+    phi = (q[keep][None, :] / (eps * d)).sum(axis=1)
+    field = (q[keep][None, :, None] * diff / (eps * d[:, :, None] ** 3)).sum(axis=1)
+    return phi, field
+
+
+def anchored_row(mol, fieldset, points: np.ndarray, kinds: Sequence[str] = ("value", "grad"),
+                 source: str = "field") -> np.ndarray:
+    """The anchored-point descriptors of one molecule, in the order :func:`anchor_names` gives.
+
+    `mol` is a :class:`cmfqsar.fields.MoleculeFields`, so the weights are the ones the field set
+    built.  With ``source="coulomb"`` the charges of the field set's electrostatic field are used
+    as point charges and the field set's other fields are ignored.
+    """
+    if source not in ANCHOR_SOURCES:
+        raise ValueError(f"unknown anchor source {source!r}; use one of {ANCHOR_SOURCES}")
+    pts = np.asarray(points, float).reshape(-1, 3)
+    out: List[float] = []
+    if source == "coulomb":
+        names = [s.name for s in fieldset.specs]
+        if "electrostatic" not in names:
+            raise ValueError("the coulomb source needs the electrostatic field in the field set")
+        f = names.index("electrostatic")
+        phi, field = coulomb_at_points(pts, mol.coords, mol.weights[:, f])
+        for p in range(len(pts)):
+            out.extend(_readings(phi[p], field[p], kinds))
+        return np.asarray(out, float)
+    for p in range(len(pts)):
+        for f, spec in enumerate(fieldset.specs):
+            value = field_at_points(pts[p:p + 1], mol, spec, f)[0]
+            grad = field_gradient_at_points(pts[p:p + 1], mol, spec, f)[0]
+            out.extend(_readings(value, grad, kinds))
+    return np.asarray(out, float)
+
+
+def _readings(value: float, grad: np.ndarray, kinds: Sequence[str]) -> List[float]:
+    table = {"value": float(value), "gx": float(grad[0]), "gy": float(grad[1]),
+             "gz": float(grad[2]), "grad": float(np.linalg.norm(grad))}
+    return [table[k] for k in kinds]
+
+
+def anchored_matrix(mols, fieldset, points: np.ndarray,
+                    kinds: Sequence[str] = ("value", "grad"),
+                    source: str = "field") -> np.ndarray:
+    """The anchored-point descriptor block of a series.  Shape (molecules, columns)."""
+    return np.vstack([anchored_row(m, fieldset, points, kinds, source) for m in mols])
+
 
 def computed_names() -> List[str]:
     """The computed descriptors, as they are written in a field set: ``calc:mw`` and so on."""

@@ -2198,6 +2198,93 @@ scheme does not know are still affected. This is left as it is rather than repai
 a general repair would change the published Hammett tables, and such a change belongs to its own
 item with its own measurement.
 
+## Reading a few places instead of all of them
+
+A kernel compares two fields over all space. Some questions are about one place. A Hammett
+constant is defined by what a reacting group feels where it sits; a molecular electrocatalyst is
+discussed in terms of what the metal centre feels from the second coordination sphere. A series in
+a shared frame has such places, and the field and its gradient there are ordinary numbers, so they
+can go into the model as descriptors beside the fields.
+
+`cmfqsar/descriptors.py` reads them. `field_at_points` gives the value of any field of the field
+set at any list of points, exactly — every atom contributes, unlike the routine that draws a field
+on a grid, which drops Gaussians below a tolerance. `field_gradient_at_points` gives the gradient,
+and for the electrostatic field that gradient is the oriented electric field the
+electrostatic-catalysis literature is about. `anchored_matrix` builds the block and `anchor_names`
+names its columns by place, field and reading: `at:para_site:electrostatic:gx`. The gradient was
+checked against a finite difference of the value at every anchored point of every field on real
+molecules, and agrees to 1e-11.
+
+**Which field, though.** The Gaussian field of a CMF field set is not a Coulomb potential: its
+atom-centred Gaussians fall off far faster than 1/r, which is what makes the kernel a closed form
+and what this manual's own measurement says represents long-range tails badly. So the gradient of
+the Gaussian electrostatic field is proportional to an electric field near the atoms and is not
+one in volts per ångström. `source="coulomb"` therefore reads the true point-charge potential and
+its gradient instead, in e/Å and e/Å², from the same charges. Both are offered because they are
+different descriptions, and the measurement below compares them.
+
+### The places
+
+For the Hammett series the frame is a rule, so the places are exact rather than read off a
+molecule: the ring is a regular hexagon of radius 1.395 Å in the z = 0 plane with the ipso carbon
+on +x. The points are the ipso carbon, the ring centroid, a point 1.7 Å above the ring face, and —
+1.5 Å beyond the meta and para carbons along the same radius — the two places where the reacting
+group of the σ definition sits. For the nickel complexes of item EC4, which are aligned on the
+metal and its first coordination sphere, the points are the metal itself and the two positions
+where item EC5's vector co-field put its strongest arrows, which are the two substituent positions
+of the ligand. So the places are either given by the rule that made the frame or by an earlier
+measurement, and not chosen to suit the answer.
+
+### The result: reading everywhere wins, everywhere
+
+`benchmarks/run_anchors.py` measures the anchored block against the field model with the usual
+protocol — five outer folds, ten inner folds for the ridge and the field width, and a paired
+bootstrap interval on the per-sample absolute errors.
+
+| target | five fields | anchored, all points | anchored, reaction centre | true Coulomb |
+|---|---|---|---|---|
+| σ_m | **0.0972** | 0.1322 | 0.2328 | 0.1087 |
+| σ_p | **0.1541** | 0.2138 | 0.3588 | 0.1801 |
+| π | **0.3129** | 0.7841 | 0.9958 | 0.8985 |
+| nickel E_ox (V) | **0.1501** | 0.2801 | 0.4718 | 0.4375 |
+| nickel E_red (V) | 0.0293 | 0.0440 | 0.0362 | 0.0487 |
+
+**The gate is not passed, and it is not close.** Against the field model the anchored block loses
+by 0.035 units on σ_m [−0.066, −0.008], 0.060 on σ_p [−0.119, −0.015], 0.473 on π
+[−0.637, −0.327] and 0.015 V on the nickel reduction potential [−0.023, −0.006], every interval
+excluding zero. Added to the five fields it does not help either: a tie on σ_m
+(−0.0029 [−0.0190, +0.0127]) and a loss everywhere else. The reaction-centre points alone are the
+worst model in the table, with a negative R² on four targets of five — at 2.9 Å from the ring
+centre the Gaussian field is small, and eight columns of small numbers with a ridge chosen inside
+the fold overfit.
+
+Two things in the table are worth keeping. The **true Coulomb potential is the better anchored
+descriptor**, by +0.0235 units on σ_m [+0.0031, +0.0478], which is the physical argument of the
+item confirmed in the one place it could show: if you are going to read a potential at a point,
+read the real one and not a sum of Gaussians. And the field model's advantage is not that it has
+more numbers — the anchored block has 100 columns on 95 substituents and still loses.
+
+### The lesson about diagnostics, which is the most useful thing here
+
+Item EC5 learned to ask, before fitting anything, whether a new description can differ from the one
+the model has. There it was one number — the correlation between two whole kernels — and it
+predicted the result exactly. The same question was asked here and the answer **misled**. The best
+single anchored column reaches |r| = 0.85 with the nickel oxidation potential and |r| = 0.83 with
+σ_p, which looks like a model waiting to be fitted; under nested cross-validation the same block
+gives R² = −0.88 and 0.12. The difference is selection: a correlation between two kernels is one
+number computed once, while the best of 60 columns on 25 molecules is a maximum over 60 tries and
+is inflated by exactly that. A whole-kernel correlation is a fair diagnostic; a best-of-N column
+correlation is not, and this measurement is what says so.
+
+### What this does not cover
+
+The item's catalyst use is still waiting on data, not on code: the anchored reading of a metal site
+is exactly what a molecular-electrocatalyst series would be modelled with, and no series with a
+measured catalytic property was found in machine-readable form (item EC4 records the search). The
+application has no way to place points in a frame, so the block is available to a script and not
+to the window. And the block cannot be asked for by a `calc:` name like the other computed
+descriptors, because it needs the field set and the points as well as the molecule.
+
 # Before you model: `cmf diagnose`
 
 Every expensive mistake recorded in this manual was visible before the model was built, in a

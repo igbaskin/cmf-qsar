@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 107 modules, 209 classes with 669 public methods, and 1073 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 107 modules, 209 classes with 669 public methods, and 1079 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -3163,6 +3163,47 @@ Descriptors that do not vary over the training set, and so contribute nothing.
 Standardised descriptors; a missing value becomes the training mean, i.e. zero.
 
 #### `DescriptorScaler.describe() -> str`
+
+### `anchor_names(field_names: Sequence[str], labels: Sequence[str], kinds: Sequence[str]=('value', 'grad')) -> List[str]`
+
+The column names of an anchored-point descriptor block, in the order the matrix has them.
+
+A name says the place, the field and the reading: `at:para_site:electrostatic:gx`.  The
+place comes first because a reader of a model's contributions asks "what does this point
+carry" before "which field".
+
+### `field_at_points(points: np.ndarray, mol, spec, f: int) -> np.ndarray`
+
+The value of one field of one molecule at each point.  Exact: every atom contributes.
+
+### `field_gradient_at_points(points: np.ndarray, mol, spec, f: int) -> np.ndarray`
+
+The gradient of one field of one molecule at each point.  Shape (n_points, 3).
+
+### `coulomb_at_points(points: np.ndarray, coords: np.ndarray, charges: np.ndarray, eps: float=1.0, min_distance: float=0.5)`
+
+The potential and the electric field of point charges at each point.
+
+Returns `(phi, E)` with `phi = sum_i q_i / (eps r_i)` and `E = -grad phi`, so that phi
+is in e/angstrom and E in e/angstrom^2 (multiply by 14.4 for volts and volts per angstrom).
+The dielectric is a constant: the distance-dependent form of
+`cmfqsar.complementarity.coulomb_potential` damps the long range usefully for a
+complementarity score, but its gradient is not the physical field, so it is not offered here.
+
+`min_distance` keeps a point that lands on an atom finite; a point closer than this to a
+nucleus is held at that distance, and the benchmark places its points away from atoms.
+
+### `anchored_row(mol, fieldset, points: np.ndarray, kinds: Sequence[str]=('value', 'grad'), source: str='field') -> np.ndarray`
+
+The anchored-point descriptors of one molecule, in the order `anchor_names` gives.
+
+`mol` is a `cmfqsar.fields.MoleculeFields`, so the weights are the ones the field set
+built.  With `source="coulomb"` the charges of the field set's electrostatic field are used
+as point charges and the field set's other fields are ignored.
+
+### `anchored_matrix(mols, fieldset, points: np.ndarray, kinds: Sequence[str]=('value', 'grad'), source: str='field') -> np.ndarray`
+
+The anchored-point descriptor block of a series.  Shape (molecules, columns).
 
 ### `computed_names() -> List[str]`
 

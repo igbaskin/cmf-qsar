@@ -2,6 +2,22 @@
  "commit": "85e58f3c360584614350b1e6553f64288d07c01e",
  "created": "2026-11-01T18:21:50",
  "data": {
+  "benchmarks/results/anchors/check.json": {
+   "bytes": 3133,
+   "sha256": "a4ea4462e9e2e4ae9747d294d3c089c6b8286cc0fcd7cf15cd18998f80b357cf"
+  },
+  "benchmarks/results/anchors/hammett.json": {
+   "bytes": 75602,
+   "sha256": "bb016ba474c9d5f281202b1f6d4f77ee0c8d203558985d26861184169be02573"
+  },
+  "benchmarks/results/anchors/nickel.json": {
+   "bytes": 91820,
+   "sha256": "f51654fc301cf562ba78d358080b0cb8d6b3bca3f8dfa5bee487be30e70526b3"
+  },
+  "benchmarks/results/anchors/table.md": {
+   "bytes": 7619,
+   "sha256": "87c3308f6733a0c133f39ba76c33f10d5a020604a4f44d4b080e0fcca579830b"
+  },
   "benchmarks/results/efield/check.json": {
    "bytes": 780,
    "sha256": "bbac59631cfd4f2a674e82c7933c1309a0f672ca68fe595392e82f21838ada36"
@@ -53,6 +69,10 @@
   "benchmarks/results/phenazine/table.md": {
    "bytes": 3975,
    "sha256": "09ab77d1d25fcd4179f26f290e8dc902a94a6f8318b79f33a1207d3243aeb0a8"
+  },
+  "benchmarks/run_anchors.py": {
+   "bytes": 24244,
+   "sha256": "869461d24638597c8ecf5ba7b37bc7288605f281d3a530e747ee909241c46f9f"
   },
   "benchmarks/run_efield.py": {
    "bytes": 25172,

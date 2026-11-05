@@ -4165,6 +4165,31 @@ labelled, because it is exact, it is a working substitute, and its co-field is a
 on the nickel series the strongest arrows sit 5.6 to 6.6 Å from the metal and point inward,
 towards it.
 
+### Reading a few places instead of all of them, and a lesson about diagnostics
+
+A Hammett constant is defined by what a reacting group feels where it sits; a molecular
+electrocatalyst is discussed in terms of what the metal centre feels. So `cmfqsar/descriptors.py`
+can read any field and its gradient at any list of points of a shared frame — exactly, with every
+atom contributing — and for the electrostatic field that gradient is the oriented electric field.
+Because a Gaussian field is not a Coulomb potential, the true point-charge potential and field are
+offered as a second source, in e/Å and e/Å².
+
+Reading everywhere wins, everywhere. Against the five-field model the anchored block loses by
+0.035 units on σ_m [−0.066, −0.008], 0.060 on σ_p [−0.119, −0.015], 0.473 on π and 0.015 V on a
+nickel reduction potential, every interval excluding zero, and adding it to the five fields does
+not help. Two results survive: the **true Coulomb potential is the better anchored descriptor**
+(+0.0235 units on σ_m [+0.0031, +0.0478]) — if you read a potential at a point, read the real one;
+and the field model's advantage is not that it has more numbers, since the anchored block has 100
+columns on 95 substituents and still loses.
+
+The useful part is a lesson about diagnostics. Item EC5 asks, before fitting, whether a new
+description can differ from the one the model already has, and there one number — the correlation
+between two whole kernels — predicted the result exactly. Here the same question misled: the best
+single anchored column reaches |r| = 0.85 with the nickel oxidation potential, and the block then
+gives R² = −0.88 under nested cross-validation. A correlation between two kernels is one number
+computed once; the best of 60 columns on 25 molecules is a maximum over 60 tries. Whole-kernel
+correlation is a fair diagnostic, best-of-N column correlation is not.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed
