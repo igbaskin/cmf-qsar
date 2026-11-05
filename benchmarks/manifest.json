@@ -70,6 +70,22 @@
    "bytes": 3975,
    "sha256": "09ab77d1d25fcd4179f26f290e8dc902a94a6f8318b79f33a1207d3243aeb0a8"
   },
+  "benchmarks/results/slab/pose.json": {
+   "bytes": 4447,
+   "sha256": "af8fffe8dfedac3ae40bee12421aee1df4ad816cac148bbf105a844e149b6f0c"
+  },
+  "benchmarks/results/slab/receptor.json": {
+   "bytes": 2041,
+   "sha256": "853f0ce5213a47aa336bece30a79984abb877070821be87879edd8988c623910"
+  },
+  "benchmarks/results/slab/score.json": {
+   "bytes": 2586,
+   "sha256": "58b4438ce2706d675a5b5109c7ffc6bd9956be9aace45b17f790c64a4a86c06f"
+  },
+  "benchmarks/results/slab/table.md": {
+   "bytes": 3639,
+   "sha256": "fed37e09735184ee68809b4c3ab1e27c224d643fe9ef302276efc15d29123f8b"
+  },
   "benchmarks/run_anchors.py": {
    "bytes": 24244,
    "sha256": "869461d24638597c8ecf5ba7b37bc7288605f281d3a530e747ee909241c46f9f"
@@ -85,6 +101,10 @@
   "benchmarks/run_phenazine.py": {
    "bytes": 31164,
    "sha256": "a1315109cec5d083ce5f3c519d20af79b4b2db6ac98796416778166d7041d744"
+  },
+  "benchmarks/run_slab.py": {
+   "bytes": 23369,
+   "sha256": "660b2577ca6f9ca0065a5d831c80abbfdab357cbafc6f77f272443fc57a35598"
   },
   "examples/_matched_decoys.py": {
    "bytes": 4852,

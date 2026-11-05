@@ -1,0 +1,103 @@
+{
+ "slab": {
+  "element": "Fe",
+  "nx": 6,
+  "ny": 6,
+  "layers": 4,
+  "a": 2.78,
+  "vacuum": 15.0
+ },
+ "slab_atoms": 144,
+ "layer_heights": [
+  0.0,
+  -1.966,
+  -3.932,
+  -5.897
+ ],
+ "top_layer_atoms": 36,
+ "receptor_atoms": 1080,
+ "image_cutoff": 12.0,
+ "cell": [
+  [
+   16.68,
+   0.0
+  ],
+  [
+   0.0,
+   11.794541110191613
+  ]
+ ],
+ "nonzero_fields": [
+  "steric"
+ ],
+ "zero_fields": [
+  "electrostatic",
+  "hydrophobic",
+  "hba",
+  "hbd"
+ ],
+ "image": {
+  "at_its_pose_eV": -0.03279374506140779,
+  "after_an_in_plane_shift_eV": -0.03279374506140783,
+  "after_a_turn_about_the_normal_eV": -0.0327937450614078,
+  "three_angstrom_higher_eV": -0.0030155199682916946,
+  "in_plane_change": 4.163336342344337e-17,
+  "turn_change": 1.3877787807814457e-17
+ },
+ "sites": {
+  "bridge": 89,
+  "hollow": 54,
+  "top": 36
+ },
+ "examples": [
+  {
+   "node": "benzimidazole",
+   "name": "Benzimidazole",
+   "burial": 0.14704439499045988,
+   "image_eV": -0.03279374506140779,
+   "height": 1.7212,
+   "sites": {
+    "bridge": 0.23994300499679494,
+    "hollow": 0.22566234041389036,
+    "top": 0.27082108540735733
+   }
+  },
+  {
+   "node": "benzimidazole",
+   "name": "2-Methylbenzimidazole",
+   "burial": 0.12283580624512906,
+   "image_eV": -0.011764941565283106,
+   "height": 1.9113,
+   "sites": {
+    "bridge": 0.27506622732617547,
+    "hollow": 0.2670317561744924,
+    "top": 0.2877779134162963
+   }
+  },
+  {
+   "node": "quinoline",
+   "name": "Oxyquinoline",
+   "burial": 0.14715643881267684,
+   "image_eV": -0.024701615667242445,
+   "height": 1.9233,
+   "sites": {
+    "bridge": 0.21258552919508733,
+    "hollow": 0.2006125285049576,
+    "top": 0.24400228184423536
+   }
+  },
+  {
+   "node": "quinoline",
+   "name": "(Quinolin-8-yloxy)-acetic acid [1-(2-hydroxy-phenyl)-meth-(E)-ylidene]-hydrazide",
+   "burial": 0.014086753754093814,
+   "image_eV": -0.005865749310741409,
+   "height": 4.3754,
+   "sites": {
+    "bridge": 0.017232598370226518,
+    "hollow": 0.01796738111693168,
+    "top": 0.01574568079901899
+   }
+  }
+ ],
+ "seconds": 0.14215612411499023
+}

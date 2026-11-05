@@ -2285,6 +2285,103 @@ application has no way to place points in a frame, so the block is available to 
 to the window. And the block cannot be asked for by a `calc:` name like the other computed
 descriptors, because it needs the field set and the points as well as the molecule.
 
+## A metal surface as the receptor, and a score that needs the answer to compute
+
+A protein pocket and an electrode are the same problem with different receptors. `cmfqsar/slab.py`
+turns the top layers of a slab, with their periodic images out to a cutoff, into the same
+`MoleculeFields` a pocket becomes, so everything downstream — the complementarity scores, the
+docking, the site profiles — applies to a surface without changes. A slab is read from a POSCAR or
+CIF, or built: `bcc110_slab()` gives the 6 × 6 × 4 Fe(110) slab at a = 2.78 Å that the reference
+poses of `examples/corrosion_fe110` were computed on, with its top layer at z = 0.
+
+### What a clean metal surface offers, which is less than a protein does
+
+Four of the five physicochemical fields are **identically zero** on a one-element metal slab, and
+not for want of parameters. A one-element cell has no electronegativity differences, so every
+charge model in the program gives it zero charges; the hydrophobic and hydrogen-bond increments
+are fitted to organic fragments and a metal carries none, which item EC4 made explicit rather than
+leaving a default in place. Only the steric field survives, from the van der Waals parameters EC4
+added. All four complementary pairs of `cmfqsar/complementarity.py` therefore vanish against a
+clean metal, and a complementarity score of a molecule on a metal surface **is a shape score**.
+The benchmark prints that list rather than leaving a reader to work it out.
+
+What a metal has instead is its image charge, and `image_charge_energy` computes it in closed
+form: the interaction of the molecule's charges with their mirror through the surface plane,
+−½ Σᵢⱼ qᵢqⱼ/|rᵢ − rⱼ*|, which for one charge at height h is the textbook −q²/4h. Two measured
+facts about it decide how it can be used.
+
+- It is **invariant to translation in the plane and to rotation about the normal** — 4×10⁻¹⁷ eV
+  and 1×10⁻¹⁷ eV on a real molecule. A conductor is homogeneous, so the image term can set a
+  height and a tilt and can never say where on the lattice a molecule sits. Only shape can.
+- It is **small**: −0.033 eV, about −3 kJ/mol, for benzimidazole at its relaxed pose, against
+  adsorption energies spanning ±200 kJ/mol. It is the right physics for the physisorption of a
+  polar molecule and two orders of magnitude too small to describe chemisorption on iron.
+
+So `dock_on_surface` optimises the four freedoms a surface leaves — height, tilt, rotation about
+the normal, translation in the plane — with the tilt bounded, and it uses shape alone by default,
+because a term that cannot place a molecule laterally should not be mixed into the search that
+does.
+
+### The pose: docking does not place these molecules either
+
+Median in-plane error against the relaxed pose, over the two Fe(110) nodes
+(`benchmarks/run_slab.py`):
+
+| start | benzimidazole | quinoline |
+|---|---|---|
+| EC2's flat rule pose | 2.46 Å | 3.45 Å |
+| that pose docked against the slab | 2.50 Å | 3.66 Å |
+| docked, both faces tried | **2.37 Å** | **3.23 Å** |
+| docked with the image term on | 2.45 Å | 3.78 Å |
+| from a conformer of the SMILES, docked | 2.74 Å | 3.73 Å |
+
+Refining the rule pose against the slab does not improve it: on its own it is slightly worse, and
+trying both faces gains 0.09 Å and 0.22 Å, which takes the share within 1 Å from 0 % to 7 % and
+from 3 % to 5 %. The image term changes nothing, as its invariance says it must not. **Shape
+complementarity with the slab does not decide the face or the in-plane placement either**, which
+is item EC2's finding reached from the other side: EC2 found no rule and no reference decides the
+face, and this says complementarity does not decide it.
+
+### The energy: the score beats EC2's control, and only where the answer already is
+
+Leave-one-out q² of a straight line on each term against the adsorption energy. The control is
+item EC2's: a line on the lowest heavy-atom height of the relaxed pose.
+
+| term | benzimidazole | quinoline |
+|---|---|---|
+| burial at the relaxed pose | **+0.638** | **+0.624** |
+| burial and the image term | +0.661 | +0.647 |
+| control: the relaxed pose's height | +0.472 | +0.423 |
+| control: the chemisorbed flag | +0.345 | +0.328 |
+| burial at the **docked** pose | +0.115 | +0.049 |
+| burial and the image term, docked | +0.108 | +0.010 |
+
+Read the two halves of that table together, because separately each is misleading. Evaluated on
+the relaxed pose the burial score is a better readout of the relaxation than the height is —
+q² 0.64 against 0.47, and 0.62 against 0.42 — and it has the right sign (r = −0.81: more burial,
+stronger adsorption). Evaluated on a pose the program produces itself, the same score is worth
++0.115 and +0.049, which is nothing. The score does not predict the adsorption energy; it reads
+off how close and how flat the relaxation left the molecule, and it reads that off better than the
+height does.
+
+**The gate is not passed**, and it fails on both halves for the same reason. The pose half fails
+outright. The energy half passes only when it is given the pose it was supposed to find, which is
+not a prediction. Item EC2 warned that the relaxed frame carries the outcome of the relaxation;
+this item measures that the burial in that frame carries *more* of the outcome than the height
+does, which makes the trap worse rather than better: a score of 0.64 looks like a model and is a
+measurement of the input.
+
+### What was built, and what the slab receptor is good for
+
+The machinery is correct and reusable: the receptor with its images, the image-charge term in
+closed form, the constrained pose search, and the surface-site profile — top, bridge and hollow
+sites from a Delaunay triangulation of the top layer, so the three kinds are found for any surface
+and not only the one lattice the module builds. For the iron sets it says what the surface cannot
+do. Where it should earn its place is a surface that offers more than shape: an oxide or a
+passivated metal, where the electrostatic and hydrogen-bond fields are not zero, and physisorption
+rather than chemisorption, where the image term is the right size. Neither case has a measured
+series here.
+
 # Before you model: `cmf diagnose`
 
 Every expensive mistake recorded in this manual was visible before the model was built, in a

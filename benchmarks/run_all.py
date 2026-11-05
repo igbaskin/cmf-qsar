@@ -293,6 +293,15 @@ def registry() -> List[Benchmark]:
                   minutes="3",
                   report=lambda: _mod("run_phenazine").write_table(_r("phenazine")),
                   tables=["phenazine/table.md"]),
+        Benchmark("slab",
+                  "a metal slab as the receptor: does docking constrained to the surface recover "
+                  "the UMA-relaxed poses, and does a complementarity score track the adsorption "
+                  "energy",
+                  "run_slab.py", "slab",
+                  compute=[["--stage", "receptor"], ["--stage", "pose"], ["--stage", "score"]],
+                  minutes="14",
+                  report=lambda: _mod("run_slab").write_table(_r("slab")),
+                  tables=["slab/table.md"]),
         Benchmark("anchors",
                   "the field and its gradient read at a few anchored points of a shared frame, "
                   "against the field model that reads them everywhere, on the Hammett constants "

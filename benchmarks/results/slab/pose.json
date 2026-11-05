@@ -1,0 +1,155 @@
+{
+ "variants": [
+  "rule",
+  "docked",
+  "docked-both-faces",
+  "docked-with-image",
+  "conformer-rule",
+  "conformer-docked"
+ ],
+ "nodes": {
+  "benzimidazole": {
+   "n": 72,
+   "rule": {
+    "n": 72,
+    "n_bound": 54,
+    "in_plane_median": 2.4577308043948305,
+    "height_median": 1.7877910479835166,
+    "within_1A": 0.0,
+    "in_plane_median_bound": 2.410769946013024,
+    "height_median_bound": 1.3116870185339815,
+    "within_1A_bound": 0.0,
+    "seconds": 0.01577281951904297
+   },
+   "docked": {
+    "n": 72,
+    "n_bound": 54,
+    "in_plane_median": 2.502552314443215,
+    "height_median": 1.9058751331862473,
+    "within_1A": 0.0,
+    "in_plane_median_bound": 2.3910875286855853,
+    "height_median_bound": 1.2568083866591369,
+    "within_1A_bound": 0.0,
+    "seconds": 65.52575755119324
+   },
+   "docked-both-faces": {
+    "n": 72,
+    "n_bound": 54,
+    "in_plane_median": 2.3744564625483155,
+    "height_median": 1.7680238756904743,
+    "within_1A": 0.06944444444444445,
+    "in_plane_median_bound": 2.197533061886324,
+    "height_median_bound": 1.211156015096325,
+    "within_1A_bound": 0.09259259259259259,
+    "seconds": 132.4596643447876
+   },
+   "docked-with-image": {
+    "n": 72,
+    "n_bound": 54,
+    "in_plane_median": 2.4474959150101148,
+    "height_median": 1.8908611705117024,
+    "within_1A": 0.0,
+    "in_plane_median_bound": 2.399089078387021,
+    "height_median_bound": 1.2859667105700168,
+    "within_1A_bound": 0.0,
+    "seconds": 70.62072896957397
+   },
+   "conformer-rule": {
+    "n": 72,
+    "n_bound": 54,
+    "in_plane_median": 2.4657820586129837,
+    "height_median": 1.6234946884297554,
+    "within_1A": 0.125,
+    "in_plane_median_bound": 2.1676415292487543,
+    "height_median_bound": 1.2037874040235341,
+    "within_1A_bound": 0.16666666666666666,
+    "skipped": 0,
+    "seconds": 1.3771140575408936
+   },
+   "conformer-docked": {
+    "n": 72,
+    "n_bound": 54,
+    "in_plane_median": 2.735708222347446,
+    "height_median": 1.8457262951500168,
+    "within_1A": 0.1388888888888889,
+    "in_plane_median_bound": 2.302250412569718,
+    "height_median_bound": 1.0988591033238126,
+    "within_1A_bound": 0.18518518518518517,
+    "skipped": 0,
+    "seconds": 67.41690492630005
+   }
+  },
+  "quinoline": {
+   "n": 63,
+   "rule": {
+    "n": 63,
+    "n_bound": 31,
+    "in_plane_median": 3.453399620483997,
+    "height_median": 2.6454003690107766,
+    "within_1A": 0.031746031746031744,
+    "in_plane_median_bound": 3.152224660736977,
+    "height_median_bound": 1.81590045590929,
+    "within_1A_bound": 0.06451612903225806,
+    "seconds": 0.012666463851928711
+   },
+   "docked": {
+    "n": 63,
+    "n_bound": 31,
+    "in_plane_median": 3.6615001628390127,
+    "height_median": 2.781917444915332,
+    "within_1A": 0.015873015873015872,
+    "in_plane_median_bound": 3.147640867575371,
+    "height_median_bound": 2.3839258542401747,
+    "within_1A_bound": 0.03225806451612903,
+    "seconds": 55.30733346939087
+   },
+   "docked-both-faces": {
+    "n": 63,
+    "n_bound": 31,
+    "in_plane_median": 3.232779204670857,
+    "height_median": 2.8758268714503474,
+    "within_1A": 0.047619047619047616,
+    "in_plane_median_bound": 3.147640867575371,
+    "height_median_bound": 2.194088999983461,
+    "within_1A_bound": 0.0967741935483871,
+    "seconds": 121.91457223892212
+   },
+   "docked-with-image": {
+    "n": 63,
+    "n_bound": 31,
+    "in_plane_median": 3.784972562886635,
+    "height_median": 2.817751409539297,
+    "within_1A": 0.015873015873015872,
+    "in_plane_median_bound": 3.2262264256309607,
+    "height_median_bound": 2.40917099611971,
+    "within_1A_bound": 0.03225806451612903,
+    "seconds": 64.41008639335632
+   },
+   "conformer-rule": {
+    "n": 63,
+    "n_bound": 31,
+    "in_plane_median": 3.5896006231715245,
+    "height_median": 2.5550835758675654,
+    "within_1A": 0.07936507936507936,
+    "in_plane_median_bound": 3.194309417148324,
+    "height_median_bound": 2.119739386206082,
+    "within_1A_bound": 0.16129032258064516,
+    "skipped": 0,
+    "seconds": 1.3887155055999756
+   },
+   "conformer-docked": {
+    "n": 63,
+    "n_bound": 31,
+    "in_plane_median": 3.7325140047246044,
+    "height_median": 2.7094345670266557,
+    "within_1A": 0.07936507936507936,
+    "in_plane_median_bound": 3.2997025852944697,
+    "height_median_bound": 2.3398729265654135,
+    "within_1A_bound": 0.16129032258064516,
+    "skipped": 0,
+    "seconds": 64.7584867477417
+   }
+  }
+ },
+ "seconds": 645.3275191783905
+}

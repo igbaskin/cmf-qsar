@@ -3699,6 +3699,47 @@ for anything molecular.
   gate, the constrained docking recovers the UMA-relaxed poses and the complementarity score
   tracks `E_ads_kJmol` across the set. Shares the slab reader with M1 and the site resolution
   with M5; M7 is the same item for a pore.
+  **Done 5 November 2026. The machinery works and the gate is not passed on either half: docking
+  against the slab does not place the molecules, and the score that tracks the energy needs the
+  pose it was supposed to find.**
+  *Built:* `cmfqsar/slab.py` -- `bcc110_slab` and `read_slab`, `slab_receptor` (the top layers
+  with their periodic images as a `MoleculeFields`, so the pocket machinery applies unchanged),
+  `image_charge_energy`, `surface_transform` and `dock_on_surface` (height, tilt, rotation about
+  the normal, translation in the plane, with the tilt bounded and the face a choice),
+  `surface_sites` and `site_profile` (top, bridge and hollow sites from a Delaunay triangulation
+  of the top layer, so any surface is covered), `surface_score`; `tests/test_slab.py` (18 tests),
+  `benchmarks/run_slab.py` with `benchmarks/results/slab/table.md`, and the manual section *A
+  metal surface as the receptor*.
+  *What a clean metal offers, measured.* Four of the five physicochemical fields are identically
+  zero on a one-element slab and not for want of parameters: no electronegativity differences, so
+  every charge model gives zero, and the hydrophobic and hydrogen-bond increments are fitted to
+  organic fragments (item EC4 made that explicit). All four complementary pairs therefore vanish
+  and a complementarity score against a clean metal is a shape score. The image charge is what a
+  metal has instead, in closed form, and two measured facts bound its use: it is invariant to
+  translation in the plane and to rotation about the normal (4e-17 and 1e-17 eV on a real
+  molecule), so it can set a height and a tilt and never a position; and it is -0.033 eV for
+  benzimidazole at its relaxed pose against adsorption energies spanning 200 kJ/mol, so it is the
+  right physics for physisorption of a polar molecule and two orders of magnitude too small for
+  chemisorption on iron.
+  *The pose half fails.* Median in-plane error against the relaxed pose, benzimidazole and
+  quinoline: EC2's flat rule pose 2.46 and 3.45 angstrom; that pose docked against the slab 2.50
+  and 3.66; docked with both faces tried 2.37 and 3.23 (the share within 1 angstrom goes from 0 %
+  to 7 % and from 3 % to 5 %); docked with the image term on 2.45 and 3.78; from a conformer of
+  the SMILES, docked, 2.74 and 3.73. Shape complementarity with the slab decides neither the face
+  nor the in-plane placement, which is EC2's finding reached from the other side.
+  *The energy half passes only when it is given the answer.* Leave-one-out q2 of a line on the
+  burial at the relaxed pose: +0.638 and +0.624, against EC2's controls of +0.472 and +0.423 (the
+  relaxed pose's height) and +0.345 and +0.328 (the chemisorbed flag), with the right sign
+  (r = -0.81). Adding the image term gives +0.661 and +0.647. At a pose the program produces
+  itself the same score is +0.115 and +0.049. So the burial in the relaxed frame is a *better*
+  readout of the relaxation than the height is, which makes EC2's warning worse rather than
+  better: a q2 of 0.64 looks like a model and is a measurement of the input.
+  **Not done:** no surface that offers more than shape was measured -- an oxide or a passivated
+  metal, where the electrostatic and hydrogen-bond fields are not zero, and physisorption rather
+  than chemisorption, where the image term is the right size, are where this machinery should
+  earn its place and neither has a measured series here; the slab is rigid and its own relaxation
+  is not modelled; the site profile is computed and never used as a descriptor; and M7, the same
+  item for a pore, is untouched.
 * **EC7. A cation probe.** The probe module (`cmfqsar/probes.py`) carries water, methyl and
   carbonyl probes fitted as Gaussians. A Li⁺, Na⁺ or K⁺ probe, Coulomb plus repulsion with the
   module's own caveat about the wall, makes the field of an ionophore or an electrolyte solvent
@@ -3856,10 +3897,15 @@ measured; its lasting result is that a best-of-N column correlation is not the f
 that a whole-kernel correlation is.** ~~EC5~~ **done 5 November 2026: the vector kernel is exact
 and is a near-copy of the scalar one (the two cosine kernels correlate +0.980), so it changes
 nothing where it is added and costs accuracy on the one series where it does anything; kept under
-rule 5 as a substitute for the electrostatic field and for its arrow co-field.** EC6 after M1, ~~EC7~~ **done
-4 November 2026, and its gate is passed**, EC8 after M5, EC9 and EC10 last. The EC2 result also says what EC6 must do differently: a slab as
-the receptor has to decide the face and the tilt by complementarity, since no rule and no
-reference does.
+rule 5 as a substitute for the electrostatic field and for its arrow co-field.** ~~EC6~~ **done
+5 November 2026 after M1: a slab is a receptor the pocket machinery takes unchanged, and on the
+Fe(110) sets the gate fails on both halves -- docking against the slab does not place the
+molecules, and the burial score that beats EC2's height control does so only at the relaxed pose
+it was supposed to find.** ~~EC7~~ **done
+4 November 2026, and its gate is passed**, EC8 after M5, EC9 and EC10 last. The EC2 result said
+what EC6 had to do differently: a slab as the receptor has to decide the face and the tilt by
+complementarity, since no rule and no reference does. EC6 measured that complementarity does not
+decide them either.
 
 ### Battery science: the extensions the cell and the solvation shell ask for (25 October 2026)
 

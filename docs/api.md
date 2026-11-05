@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 107 modules, 209 classes with 669 public methods, and 1079 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 108 modules, 212 classes with 674 public methods, and 1090 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -122,6 +122,7 @@ for.
 | [cmfqsar.shapley](#cmfqsarshapley) | Shapley decomposition of a CMF prediction. |
 | [cmfqsar.shells](#cmfqsarshells) | Solvation shells cut from a bulk electrolyte trajectory (plan item BT5). |
 | [cmfqsar.sites](#cmfqsarsites) | Site-resolved models of a periodic structure (plan item M5). |
+| [cmfqsar.slab](#cmfqsarslab) | A metal slab as the receptor (plan item EC6). |
 | [cmfqsar.solvation](#cmfqsarsolvation) | A cation with its first solvation shell as one molecule, built, optimised and framed. |
 | [cmfqsar.solvent](#cmfqsarsolvent) | Solvent as a field: where a ligand's water sits, as a CMF field (plan item D9). |
 | [cmfqsar.spectral](#cmfqsarspectral) | Clustering a set by its fields rather than by its scaffolds. |
@@ -15026,6 +15027,224 @@ The `n` channels of one site's profile that move the prediction most, as (label,
 
 The amounts sum to the contribution of that site, so this says which pair of field types at
 which distance *from this site* raises the property and which lowers it.
+
+## cmfqsar.slab
+
+Source: `cmfqsar/slab.py`
+
+A metal slab as the receptor (plan item EC6).
+
+`cmfqsar.protein` reads a protein and `cmfqsar.complementarity` scores a molecule
+against it, residue by residue.  An electrode is the same problem with a different receptor: a
+slab, periodic in the two directions of the surface, with no residues and no side chains.  This
+module supplies the three pieces that item EC6 asks for.
+
+**The receptor.**  `slab_receptor` turns a slab into a
+`cmfqsar.fields.MoleculeFields`, which is what everything downstream already takes: the
+atoms of its top layers, together with their periodic images out to a cutoff, so that a molecule
+near the edge of the cell sees the surface continue rather than end.  A slab is read from a POSCAR
+or CIF with `read_slab`, or built with `bcc110_slab`.
+
+**What a clean metal surface actually offers, which is less than a protein does.**  The five
+physicochemical fields of this program describe an organic molecule.  On a one-element metal slab
+three of them are identically zero and the reason is not a gap in the parameters:
+
+* the **electrostatic** field is zero because every atom of a one-element cell has the same
+  electronegativity, so every charge model this program has gives it zero;
+* the **hydrophobic** field and both **hydrogen-bond** fields are zero because the published
+  increments are fitted to organic fragments and a metal carries none (plan item EC4 made that
+  explicit rather than leaving a default in place);
+* the **steric** field is real, from the van der Waals parameters item EC4 added.
+
+Of the four complementary pairs of `cmfqsar.complementarity`, therefore, *all four* are
+identically zero against a clean metal slab, and what is left is burial — the steric overlap.  So
+a complementarity score of a molecule against a metal surface, built from the fields the program
+has, is a shape score and nothing more.  That is stated here rather than discovered later.
+
+**What a metal offers instead: its image charge.**  A conductor responds to a molecule's own
+charges, and that response is the physics the fields miss.  `image_charge_energy` computes
+it in closed form: the interaction of the charge distribution with its mirror image through the
+surface plane, `-(1/2) sum_ij q_i q_j / |r_i - r_j*|`, which for one charge at height h is the
+textbook `-q^2 / 4h`.  It needs no parameters beyond the plane, and it is the term that makes a
+polar molecule prefer a metal.
+
+One property of it is worth stating because it decides what a pose search can do: the image
+energy of a charge distribution above an infinite plane is **invariant to translation in the plane
+and to rotation about the normal**.  It can set a molecule's height and its tilt and it cannot say
+where on the lattice the molecule sits.  Only the shape term can do that.
+
+**The pose.**  `dock_on_surface` optimises the four degrees of freedom a surface leaves —
+height, tilt, rotation about the normal, translation in the plane — instead of the six of a free
+rigid body, with the tilt bounded so that a molecule that arrives lying flat is not turned over.
+Item EC2 found that the face a planar molecule presents is a mirror no rule and no reference
+decides; here it is a choice the caller makes with `both_faces`.
+
+**The sites.**  `surface_sites` lists the top, bridge and hollow sites of the top layer and
+`site_profile` reports how much of a molecule sits over each kind, which is the surface's
+answer to a residue profile.
+
+### `class SurfaceDock  (dataclass)`
+
+What happened to one pose on the surface.
+
+Attributes:
+
+- `score_before: float`
+- `score_after: float`
+- `burial_before: float`
+- `burial_after: float`
+- `image_before: float`
+- `image_after: float`
+- `clash_after: float`
+- `height_before: float`
+- `height_after: float`
+- `moved: float`
+- `tilt_deg: float`
+- `turn_deg: float`
+- `flipped: bool` = `False`
+- `starts_used: int` = `0`
+
+### `class SurfaceScorer(mol: MoleculeFields, slab: MoleculeFields, fieldset: FieldSet, image_weight: float=0.0, clash_weight: float=1.0, clash_tolerance: float=0.4, plane_z: float=0.0, cutoff: float=12.0)`
+
+Scores a pose against a slab: burial, the image charge, and a clash penalty.
+
+`image_weight` is how many units of burial one electron volt of image attraction is worth.
+It defaults to zero, so that the pose a search finds is decided by shape alone: the image term
+is invariant to translation in the plane and to rotation about the normal, so it cannot place
+a molecule laterally, and letting it set the height while the shape sets the position mixes
+two things that are better measured apart.  The term is always reported.
+
+#### `SurfaceScorer.burial(coords: np.ndarray) -> float`
+
+The steric overlap of the molecule with the surface, as a cosine in [0, 1].
+
+#### `SurfaceScorer.image(coords: np.ndarray) -> float`
+
+#### `SurfaceScorer.clash(coords: np.ndarray) -> float`
+
+#### `SurfaceScorer.score(coords: np.ndarray) -> float`
+
+### `class SurfaceScore  (dataclass)`
+
+What a molecule's placement on a surface is worth, term by term.
+
+Attributes:
+
+- `name: str`
+- `burial: float` = `float('nan')`
+- `image_eV: float` = `float('nan')`
+- `clash: float` = `0.0`
+- `height: float` = `float('nan')`
+- `sites: Dict[str, float]` = `_field(default_factory=dict)`
+
+#### `SurfaceScore.describe() -> str`
+
+### `bcc110_slab(element: str='Fe', nx: int=6, ny: int=6, layers: int=4, a: float=2.78, vacuum: float=15.0)`
+
+A body-centred cubic (110) slab, in the frame this program uses for a surface.
+
+The defaults are the slab the Fe(110) reference poses of `examples/corrosion_fe110` were
+computed on: `a = 2.78` angstrom, the minimum of the UMA oc20 head for bcc iron rather than
+the experimental 2.87, a 6 x 6 orthogonal surface cell and four layers.  The slab is shifted
+so that its **top layer sits at z = 0**, which is the frame those poses are given in.
+
+Needs ASE.
+
+### `read_slab(path: str, top_at_zero: bool=True)`
+
+A slab read from any file ASE understands (POSCAR, CIF, extended XYZ).
+
+With `top_at_zero` the structure is shifted along z so that its highest atom is at z = 0,
+which is the surface frame of this program: the normal along z and the top layer at the
+origin.
+
+### `layer_heights(atoms, tolerance: float=0.5) -> List[float]`
+
+The distinct layer heights of a slab, highest first.
+
+Two atoms are in the same layer when their heights differ by less than `tolerance`, which is
+far below a layer spacing (1.97 angstrom for bcc Fe(110) at a = 2.78) and far above the
+numerical spread of a flat layer.
+
+### `top_layer_indices(atoms, top_layers: int=2, tolerance: float=0.5) -> np.ndarray`
+
+The atoms of the top `top_layers` layers of a slab.
+
+### `slab_receptor(atoms, fieldset: FieldSet, top_layers: int=2, cutoff: float=10.0, tolerance: float=0.5, name: str='slab') -> MoleculeFields`
+
+The top layers of a slab, with their periodic images, as fields.
+
+`cutoff` is how far beyond the primary surface cell the images are carried, in angstrom: a
+molecule anywhere in the cell then sees the surface continue for at least that far in every
+direction.  Only the two surface directions are repeated; a slab is not periodic along its
+normal and its images along z are vacuum.
+
+The weights are not perceived from a molecule, because there is no molecule: every field of
+the field set is zero except the steric one, which carries the van der Waals well depth of
+the element, and an element indicator field `cif:<symbol>`, which carries one.  The
+docstring of this module says why the others are zero.
+
+### `image_charge_energy(coords: np.ndarray, charges: np.ndarray, plane_z: float=0.0, min_height: float=MIN_IMAGE_HEIGHT) -> float`
+
+The interaction of a charge distribution with its image in a conducting plane, in eV.
+
+`E = -(1/2) sum_i sum_j q_i q_j / |r_i - r_j*|` with `r*` the mirror of `r` through the
+plane.  The one-half is the linear-response factor of an induced charge, and the diagonal term
+is a charge with its own image: for a single charge at height h it gives the textbook
+`-q^2 / 4h`.  The result is negative (attractive) for any distribution, which is why a
+conductor attracts a neutral polar molecule as well as an ion.
+
+Heights are measured from `plane_z`, and a charge closer to it than `min_height` is held at
+that height: the point-charge expression diverges at contact, which is an artefact.
+
+### `surface_transform(coords: np.ndarray, p: Sequence[float], centre: Optional[np.ndarray]=None) -> np.ndarray`
+
+Move a molecule by the four freedoms a surface leaves.
+
+`p = (dx, dy, dz, psi, tilt, azimuth)`: a turn of `psi` about the surface normal, a tilt of
+`tilt` about the in-plane axis at angle `azimuth`, and a translation.  The tilt and the turn
+are applied about `centre`, which defaults to the centroid, so that a bounded tilt moves the
+molecule's own orientation and not its position.
+
+### `dock_on_surface(mol: MoleculeFields, slab: MoleculeFields, fieldset: FieldSet, starts: int=8, seed: int=0, max_iter: int=300, max_shift: float=3.0, max_tilt_deg: float=25.0, min_height: float=1.2, max_height: float=6.0, image_weight: float=0.0, clash_weight: float=1.0, plane_z: float=0.0, both_faces: bool=False) -> Tuple[np.ndarray, SurfaceDock]`
+
+Place one molecule on the surface, using the four freedoms a surface leaves.
+
+The search is over translation in the plane, height, rotation about the normal and a bounded
+tilt.  Rotation about the normal is the one freedom with no good starting guess -- a flat
+molecule may sit at any angle to the lattice -- so the starts are spread uniformly over it.
+The height is bounded between `min_height` and `max_height`, measured as the lowest heavy
+atom above the plane, which keeps the optimiser from either burying the molecule in the metal
+or letting it drift into the vacuum where every term is flat.
+
+`both_faces` tries the molecule the other way up as well and keeps the better score.  Item
+EC2 measured that the face is a mirror no rule decides, so whether to search it is the
+caller's decision and is reported in the result.
+
+### `surface_sites(atoms, tolerance: float=0.5, height: float=0.0)`
+
+The top, bridge and hollow sites of the top layer, as labels and positions.
+
+A top site is above a surface atom, a bridge site above the midpoint of two neighbours, and a
+hollow site above the centre of a triangle of them.  The neighbours and the triangles come
+from a Delaunay triangulation of the top layer in the plane, so the three kinds are found for
+any surface and not only for the one lattice this module can build.
+
+### `site_profile(coords: np.ndarray, radii: np.ndarray, labels: Sequence[str], points: np.ndarray, alpha: float=1.0) -> Dict[str, float]`
+
+How much of a molecule sits over each kind of surface site.
+
+The molecule's steric field is evaluated at every site position and the values are summed by
+kind and divided by the number of sites of that kind, so the three numbers are comparable
+whatever the lattice offers.  This is the surface's answer to a residue profile: it says
+whether a molecule sits over the metal atoms or between them.
+
+### `surface_score(mol: MoleculeFields, slab: MoleculeFields, fieldset: FieldSet, plane_z: float=0.0, sites=None, alpha: float=1.0) -> SurfaceScore`
+
+Score one placed molecule against the surface, term by term.
+
+`sites` is the pair that `surface_sites` returns; when it is given, the score carries
+the site profile as well.
 
 ## cmfqsar.solvation
 

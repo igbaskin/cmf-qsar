@@ -4190,6 +4190,29 @@ gives R² = −0.88 under nested cross-validation. A correlation between two ker
 computed once; the best of 60 columns on 25 molecules is a maximum over 60 tries. Whole-kernel
 correlation is a fair diagnostic, best-of-N column correlation is not.
 
+### A metal surface as the receptor, and a score that needs the answer to compute
+
+`cmfqsar/slab.py` turns the top layers of a slab, with their periodic images, into the same
+`MoleculeFields` a protein pocket becomes, adds the image-charge term a conductor answers with,
+and docks a molecule with the four freedoms a surface leaves — height, tilt, rotation about the
+normal, translation in the plane. Two measurements say what a metal surface can and cannot do.
+
+Four of the five fields are **identically zero** on a one-element metal: no electronegativity
+differences means no charges, and the hydrophobic and hydrogen-bond increments are fitted to
+organic fragments. All four complementary pairs vanish, so a complementarity score on a clean
+metal is a shape score. The image charge is what a metal has instead, and it is invariant to
+translation in the plane and rotation about the normal (4×10⁻¹⁷ eV), so it can set a height and
+never a position — and at −0.033 eV for benzimidazole it is two orders of magnitude too small for
+chemisorption on iron.
+
+On the Fe(110) sets with their UMA-relaxed reference poses, docking against the slab does not
+place the molecules: 2.50 Å and 3.66 Å in-plane against the rule pose's 2.46 Å and 3.45 Å, with
+0.09 Å and 0.22 Å gained by trying both faces. And the energy half is a trap worth knowing about.
+Evaluated at the relaxed pose, burial predicts the adsorption energy with a leave-one-out q² of
++0.638 and +0.624 against item EC2's height control at +0.472 and +0.423 — it looks like a model.
+Evaluated at a pose the program produces itself, the same score gives +0.115 and +0.049. The score
+reads off how the relaxation left the molecule, better than the height does, and predicts nothing.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

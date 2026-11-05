@@ -920,6 +920,33 @@ computed once, while the best of 60 columns on 25 molecules is a maximum over 60
 that recommends the first diagnostic should say plainly that the second is not the same thing,
 because the two look alike and one of them is a selection effect.
 
+**Item EC6 is done (5 November 2026) and it supplies the paper's cleanest example of a score that
+measures its own input.** A slab becomes the same receptor object a protein pocket becomes, so the
+complementarity machinery applies to an electrode unchanged, and the Fe(110) sets give what no
+protein set does: a relaxed reference pose for every molecule, from a machine-learned potential,
+with its adsorption energy.
+
+Two findings are worth stating before the main one, because they bound what any field method can
+do on a metal. Four of the five physicochemical fields are identically zero on a one-element metal
+slab — no electronegativity differences means no charges, and the hydrophobic and hydrogen-bond
+increments are fitted to organic fragments — so all four complementary pairs vanish and a
+complementarity score on a clean metal is a shape score. And the image charge, which is the term a
+conductor answers with, is invariant to translation in the plane and to rotation about the normal
+(measured at 4e-17 eV), so it can set a height and never a position; at -0.033 eV for
+benzimidazole it is also two orders of magnitude smaller than the chemisorption energies of the
+series.
+
+The main finding is a trap. Evaluated at the relaxed pose, the burial score predicts the adsorption
+energy with a leave-one-out q2 of +0.638 and +0.624 on the two nodes, against the straight-line
+control on the pose's own height at +0.472 and +0.423: it looks like a model, and it beats the
+control a careful reader would ask for. Evaluated at a pose the method produces itself, the same
+score gives +0.115 and +0.049. The score reads off how close and how flat the relaxation left the
+molecule, and reads it off better than the height does. Item EC2 had already found that a relaxed
+frame carries the outcome of the relaxation; EC6 measures that the better the score, the more of
+that outcome it carries. For a methods paper that is the sharpest available argument for a rule the
+field has not adopted: a pose-dependent score must be reported at a pose the method can produce,
+and the gap between the two numbers is the size of the leak.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to
