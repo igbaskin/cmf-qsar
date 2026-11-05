@@ -1,0 +1,42 @@
+{
+ "argv": [
+  "--sdf",
+  "examples/hammett/hammett_ens_qm.sdf",
+  "--charges-prop",
+  "q_hirshfeld",
+  "--weighting",
+  "boltzmann"
+ ],
+ "tag": "_ens_qm_q_hirshfeld_boltzmann",
+ "dataset": "examples/hammett/hammett_ens_qm.sdf",
+ "ensemble": true,
+ "charges": "prop:q_hirshfeld",
+ "weighting": "boltzmann",
+ "kt": 0.6,
+ "targets": [
+  "sigma_m",
+  "sigma_p",
+  "pi"
+ ],
+ "folds": 10,
+ "alphas": [
+  0.3,
+  0.5,
+  0.8,
+  1.2,
+  2.0,
+  3.0
+ ],
+ "lams": [
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0,
+  10.0
+ ],
+ "ablation": true,
+ "rows": 21,
+ "written": "2026-11-05 19:58:56",
+ "seconds_fitting": 82.2
+}

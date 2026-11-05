@@ -30,13 +30,16 @@ Usage
     python benchmarks/run_hammett.py --single              # one conformer per molecule instead
     python benchmarks/run_hammett.py --sdf examples/hammett/hammett_qm_sym.sdf --charges-prop q_hirshfeld
 
-Results go to ``benchmarks/results/hammett/`` (summary.csv, predictions_<target>.csv,
-cofields.png, cv_scatter.png).
+Every file a run writes carries that run's tag, so two runs never write the same file:
+``summary<tag>.csv``, ``run<tag>.json`` (the command that produced it),
+``predictions_<target><tag>.csv``, ``cofields<tag>.png`` and ``cv_scatter<tag>.png`` in
+``benchmarks/results/hammett/``.  The default run has the empty tag.
 """
 from __future__ import annotations
 
 import argparse
 import csv
+import json
 import os
 import sys
 import time
@@ -185,25 +188,83 @@ def plot_scatter(results: Dict[str, Tuple[np.ndarray, np.ndarray, List[str]]], p
     plt.close(fig)
 
 
+def run_tag(a) -> str:
+    """The name of one run of this script, used for every file that run writes.
+
+    Two rules. Two runs whose numbers differ must never write the same file, so every option that
+    changes a number enters the tag. And two ways of naming one input must give one tag, so
+    ``--single`` and ``--sdf examples/hammett/hammett.sdf`` are both ``_single``: they are the same
+    data set. The default data set has the empty tag, which is why `summary.csv` has no suffix.
+    """
+    tag = ""
+    path = a.sdf or (SINGLE_SDF if a.single else DEFAULT_SDF)
+    ref = os.path.abspath(path)
+    if ref == os.path.abspath(SINGLE_SDF):
+        tag += "_single"
+    elif ref != os.path.abspath(DEFAULT_SDF):
+        stem = os.path.splitext(os.path.basename(path))[0]
+        tag += "_" + (stem[len("hammett_"):] if stem.startswith("hammett_") else stem)
+    if a.charges_prop:
+        tag += f"_{a.charges_prop}"
+    if a.weighting != "uniform":
+        tag += f"_{a.weighting}" + (f"_kt{a.kt:g}" if a.kt != 0.6 else "")
+    # The protocol options. A run over one target, or over another grid, or with the single-field
+    # fits left out, holds fewer or different rows; without these suffixes it would write over the
+    # summary of the full run, and the table built from that file would then show less than it
+    # claims to show. The exact grid is in the provenance file, so `_grid` need not carry it.
+    if [t.strip() for t in a.targets.split(",") if t.strip()] != list(TARGETS):
+        tag += "_" + "-".join(t.strip() for t in a.targets.split(",") if t.strip())
+    if a.folds != 10:
+        tag += f"_folds{a.folds}"
+    if ([float(x) for x in a.alphas.split(",") if x.strip()] != list(ALPHAS)
+            or [float(x) for x in a.lams.split(",") if x.strip()] != list(LAMS)):
+        tag += "_grid"
+    if a.no_ablation:
+        tag += "_noablation"
+    return tag
+
+
+def run_provenance(out_dir: str, tag: str) -> Optional[dict]:
+    """What the run with this tag was asked to do, or ``None`` if the run did not record it."""
+    path = os.path.join(out_dir, f"run{tag}.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
 def report(out_dir: str = OUT_DIR, path: Optional[str] = None) -> str:
     """One table per summary file: every target and field combination with its q² and RMSEcv.
 
-    The summary files are ``summary<tag>.csv``, one per run of this script, the tag naming the
-    data file and the weighting (``_ens``, ``_qm_q_hirshfeld``, ...); the table carries the tag
-    so that the runs can be told apart.
+    The summary files are ``summary<tag>.csv``, one per run of this script, and ``run<tag>.json``
+    holds the command that produced each one. The table prints that command above each table, so
+    that a reader can repeat any block and so that a stored result with no command is visible as
+    such.
     """
     import csv
     files = sorted(f for f in os.listdir(out_dir) if f.startswith("summary") and f.endswith(".csv"))
     lines = ["# A field-based Hammett equation", "",
-             "One table per run of `benchmarks/run_hammett.py`, named by the tag of its summary "
-             "file: no tag is `hammett.sdf` with one conformer and Gasteiger charges; `_ens` the "
-             "conformer ensemble; `_q_hirshfeld` the Hirshfeld charges of the quantum stage; "
-             "`_sym` the four symmetry images; `_boltzmann` Boltzmann instead of uniform weights. "
-             "q² and RMSEcv by 10-fold cross-validation, α and λ chosen on it.", ""]
+             "One table per run of `benchmarks/run_hammett.py`, with the command that produced it. "
+             "The tag of the summary file names the run: no tag is `hammett_sym.sdf`, one conformer "
+             "per substituent with its four symmetry images and Gasteiger charges; `_single` the "
+             "same conformers without the images; `_ens` the conformer ensemble; `_q_hirshfeld` the "
+             "Hirshfeld charges of the quantum stage; `_boltzmann` Boltzmann instead of uniform "
+             "weights. q² and RMSEcv by 10-fold cross-validation, α and λ chosen on it.", ""]
     for f in files:
-        tag = f[len("summary"):-4] or "(single conformer, Gasteiger charges)"
-        lines += [f"## `{tag}`", "",
-                  "| target | fields | n | α | λ | q² | RMSEcv | r² fit | sd(y) |",
+        tag = f[len("summary"):-4]
+        prov = run_provenance(out_dir, tag)
+        lines += [f"## `{tag}`" if tag else "## The default data set", ""]
+        if prov:
+            cmd = " ".join(["python benchmarks/run_hammett.py"] + list(prov["argv"]))
+            if "dataset" in prov:
+                weights = ("" if not prov.get("ensemble") else
+                           f", {prov['weighting']} weights over the records of each substituent")
+                lines += [f"Data set `{prov['dataset']}`, charges {prov['charges']}{weights}, "
+                          f"{prov['folds']}-fold cross-validation.", ""]
+            lines += [f"`{cmd}`", ""]
+        else:
+            lines += ["The command that produced this file was not recorded.", ""]
+        lines += ["| target | fields | n | α | λ | q² | RMSEcv | r² fit | sd(y) |",
                   "|---|---|---|---|---|---|---|---|---|"]
         for r in csv.DictReader(open(os.path.join(out_dir, f), encoding="utf-8")):
             lines.append(f"| {r['target']} | {r['fields']} | {r['n']} | {float(r['alpha']):g} | "
@@ -218,7 +279,7 @@ def report(out_dir: str = OUT_DIR, path: Optional[str] = None) -> str:
     return text
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--sdf", default=None, help=f"data set (default {os.path.relpath(DEFAULT_SDF, ROOT)})")
     ap.add_argument("--single", action="store_true",
@@ -236,7 +297,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--out-dir", default=OUT_DIR)
     ap.add_argument("--report", action="store_true",
                     help="only rebuild results/hammett/table.md from the summary files")
-    a = ap.parse_args(argv)
+    return ap
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    a = build_parser().parse_args(argv)
     if a.report:
         report(a.out_dir)
         return 0
@@ -247,14 +312,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     lams = [float(x) for x in a.lams.split(",") if x.strip()]
     targets = [t.strip() for t in a.targets.split(",") if t.strip()]
     os.makedirs(a.out_dir, exist_ok=True)
-    tag = ""
-    if a.sdf and os.path.abspath(a.sdf) not in (os.path.abspath(DEFAULT_SDF), os.path.abspath(SINGLE_SDF)):
-        stem = os.path.splitext(os.path.basename(a.sdf))[0]
-        tag += "_" + (stem[len("hammett_"):] if stem.startswith("hammett_") else stem)
-    tag += f"_{a.charges_prop}" if a.charges_prop else ""
-    tag += "_single" if a.single else ""
-    if a.weighting != "uniform":
-        tag += f"_{a.weighting}" + (f"_kt{a.kt:g}" if a.kt != 0.6 else "")
+    tag = run_tag(a)
 
     combos: List[List[str]] = [PHYSCHEM]
     if not a.no_ablation:
@@ -303,6 +361,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         w = csv.DictWriter(fh, fieldnames=list(rows[0]))
         w.writeheader()
         w.writerows(rows)
+    # The command next to its numbers: rule 6 asks that one command rebuild every table, and that
+    # is only checkable if each stored file says which command wrote it.
+    with open(os.path.join(a.out_dir, f"run{tag}.json"), "w", encoding="utf-8", newline="\n") as fh:
+        json.dump({"argv": list(argv) if argv is not None else sys.argv[1:],
+                   "tag": tag,
+                   "dataset": os.path.relpath(path, ROOT).replace(os.sep, "/"),
+                   "ensemble": ensemble,
+                   "charges": f"prop:{a.charges_prop}" if a.charges_prop else "gasteiger",
+                   "weighting": a.weighting, "kt": a.kt,
+                   "targets": targets, "folds": a.folds, "alphas": alphas, "lams": lams,
+                   "ablation": not a.no_ablation, "rows": len(rows),
+                   "written": time.strftime("%Y-%m-%d %H:%M:%S"),
+                   "seconds_fitting": round(time.time() - t0, 1)}, fh, indent=1)
+        fh.write("\n")
     plot_scatter(scatter, os.path.join(a.out_dir, f"cv_scatter{tag}.png"))
     sig = {t: m for t, m in full_models.items() if t.startswith("sigma")}
     if sig:

@@ -163,10 +163,15 @@ def test_small_model_runs_end_to_end(tmp_path):
     rc = rh.main(["--sdf", str(sdf), "--targets", "sigma_p", "--alphas", "1.0", "--lams", "0.1,1",
                   "--folds", "4", "--no-ablation", "--out-dir", str(out)])
     assert rc == 0
-    # a data set other than the shipped ones names the outputs after its file
-    assert (out / "summary_small_sym.csv").exists() and (out / "predictions_sigma_p_small_sym.csv").exists()
-    assert (out / "cofields_small_sym.png").exists() and (out / "cv_scatter_small_sym.png").exists()
-    lines = (out / "predictions_sigma_p_small_sym.csv").read_text().strip().splitlines()
+    # The outputs are named after the data file and after every option that changes a number: one
+    # target of three, four folds instead of ten, another (alpha, lambda) grid and no single-field
+    # fits.  Without those suffixes this run would write over the summary of a full run (plan item
+    # G6).
+    tag = "_small_sym_sigma_p_folds4_grid_noablation"
+    assert (out / f"summary{tag}.csv").exists() and (out / f"predictions_sigma_p{tag}.csv").exists()
+    assert (out / f"cofields{tag}.png").exists() and (out / f"cv_scatter{tag}.png").exists()
+    assert (out / f"run{tag}.json").exists()
+    lines = (out / f"predictions_sigma_p{tag}.csv").read_text().strip().splitlines()
     assert len(lines) == 1 + len(keep)
     # the ensemble of four images gives a co-field symmetric in y and z
     mols_, names, y = rh.load(str(sdf), "sigma_p", ensemble=True)

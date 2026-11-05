@@ -4326,11 +4326,11 @@ the twisted amide and its mirror image are symmetry images in this frame. q²:
 
 | constant | single conformer | ensemble, uniform | ensemble, Boltzmann (kT 0.6) |
 |---|---|---|---|
-| σ_m, Gasteiger | 0.70 | 0.70 | 0.70 |
+| σ_m, Gasteiger | 0.70 | 0.69 | 0.70 |
 | σ_p, Gasteiger | 0.69 | 0.69 | 0.69 |
-| σ_m, Hirshfeld | 0.79 | 0.75 | 0.79 |
+| σ_m, Hirshfeld | 0.79 | 0.76 | 0.79 |
 | σ_p, Hirshfeld | 0.78 | 0.80 | 0.79 |
-| π, Gasteiger | 0.71 | 0.71 | 0.70 |
+| π, Gasteiger | 0.72 | 0.71 | 0.71 |
 
 Every difference is within the interval of a 95-compound q², the co-fields are the same pictures,
 and the amides move by a few hundredths (CONH2 0.58, N(CH3)COCH3 0.15 under Boltzmann weights). So
@@ -4342,9 +4342,18 @@ where the frame is beyond doubt, which removes the one excuse those sets had.
 ```bash
 python examples/make_hammett_examples.py --ensemble 8
 python examples/make_hammett_examples.py --ensemble 8 --atom-props-from examples/hammett/hammett_qm.sdf
+python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens.sdf
 python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens.sdf --weighting boltzmann
+python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens_qm.sdf --charges-prop q_hirshfeld
 python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens_qm.sdf --charges-prop q_hirshfeld --weighting boltzmann
 ```
+
+Each run writes its own files, named by a tag that carries every option which changes a number
+(`summary_ens_boltzmann.csv`, `run_ens_boltzmann.json` and so on), and `run<tag>.json` holds the
+command that produced them, which `benchmarks/results/hammett/table.md` prints above each table.
+Six `run_hammett.py` commands make the six stored summary files: the plain one at the start of this
+section, the Hirshfeld one, and the four ensemble ones here. Those six are what the registry runs,
+so `cmf benchmark --compute hammett` rebuilds exactly what the repository keeps.
 
 ### A kinetic selectivity as the activity: chiral phosphoric acid catalysts
 

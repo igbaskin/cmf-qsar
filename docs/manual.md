@@ -10527,6 +10527,21 @@ two builds of one source are different files. `python docs/make_manual.py` there
 --check` compares that hash with the file as it stands. The question it answers is the useful one:
 has the manual been edited since the PDF was made?
 
+**One command per stored result.** Some benchmark scripts are run several times with different
+options: `benchmarks/run_hammett.py` is run six times, once per charge model, conformer set and
+conformer weighting. For
+such a script, two rules keep the results traceable (plan item G6). Every option that changes a
+number enters the names of the files that run writes, as a tag: `summary_ens_boltzmann.csv` is the
+conformer ensemble with Boltzmann weights, and a run over one target writes
+`summary_sigma_m.csv`, so no run writes over another's numbers. And the run writes its own command
+to `run<tag>.json` beside the summary, which the result table prints above each table, so a reader
+can repeat any block and a stored file whose command is unknown says so.
+`tests/test_hammett_runs.py` holds the registry in `benchmarks/run_all.py` and the stored files to
+these rules: one documented command per stored summary file, no two commands writing the same file,
+and no stored summary without a command. Before this was checked, two of the four commands the
+registry listed for that benchmark were the same command, one wrote a file the repository does not
+keep, and four of the six stored results came from commands the registry did not list.
+
 **The working rule.** A feature lands with its manual section and its benchmark script in the same
 commit (plan item G4). Nothing can check that a section was *written*, and these two checks make
 the omissions that matter visible: a measurement nobody can find, and a PDF that disagrees with

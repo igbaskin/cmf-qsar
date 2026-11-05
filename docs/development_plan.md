@@ -1447,7 +1447,9 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   done. And the Hammett benchmark's four documented compute runs overwrite each other's output
   files -- two of them write `summary.csv`, and one variant's summary was missing from the
   committed results entirely -- which is a fault in that benchmark's own bookkeeping and not in
-  the charges.
+  the charges. **Item G6 took the second one on 5 November 2026** and found it to be larger than
+  this paragraph says: the registry rebuilt three of the six stored results. It also recomputed the
+  two ensemble variants that this item had left with the old charges.
 
 ## E. Learning (months 4 to 10)
 
@@ -2514,6 +2516,45 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   minutes) nor to `docs/api.md` (`make_api.py --check` regenerates it, which is cheap and exact).
 * **G5. Other platforms.** The application has been run on Windows only. Linux and macOS through A2
   first, then the high-DPI and OpenGL differences the 3D view will meet there.
+
+* **G6. One documented command per stored result (5 November 2026).** Rule 6 says that one command
+  rebuilds every table. For a script that is run once this holds by construction; for a script run
+  several times with different options it holds only if two things are true, and for
+  `benchmarks/run_hammett.py` neither was. The fault was found while item D11 re-ran the
+  benchmarks its charge repair touched.
+  **Done 5 November 2026.** The two rules are now stated, implemented and tested. First, every
+  option that changes a number enters the tag that names the files a run writes. The tag used to
+  leave out the whole protocol -- the targets, the fold count, the α and λ grids and the
+  single-field fits -- so a run over one target wrote its seven rows over the twenty-one rows of the
+  full run and the table then showed less than it claimed. It also exempted
+  `examples/hammett/hammett.sdf` from the tag, so naming the single-conformer set by its path wrote
+  over the default run's `summary.csv`, while `--single`, which is the same data set, did not. The
+  tag now covers the protocol and gives one name to the two ways of naming that set.
+  Second, the registry lists one command per stored summary file. It had listed four, of which two
+  were the same command (the default and `--sdf examples/hammett/hammett_sym.sdf`, which *is* the
+  default), one wrote `summary_qm_q_hirshfeld.csv`, a file the repository does not keep, and four of
+  the six stored summaries came from commands only the README showed, two of them from no document
+  at all. So `cmf benchmark --compute hammett` rebuilt three of the six stored results, added a
+  seventh the table then grew a block for, and left four untouched. The registry now lists the six.
+  Each run also writes `run<tag>.json`, its own command and options, and `table.md` prints that
+  command above each table; a stored file with no command says so instead of looking documented.
+  `tests/test_hammett_runs.py` has 17 tests and reads the stored file names from `git ls-files`, so
+  a file left behind by an exploratory run cannot pass as a stored result.
+  *What re-running the six found.* Four of the six came out byte for byte identical, which is worth
+  recording in itself: the two with Hirshfeld charges, which the charge repair of D11 cannot touch,
+  and the default run, which D11 had already recomputed. The two Gasteiger **ensemble** variants had
+  not been recomputed after D11, because D11 restricted its Hammett re-run to the one command whose
+  output it could attribute, and they moved by small amounts: with the five fields, uniform weights
+  give $q^2$ 0.6982 to 0.6949 for $\sigma_m$, 0.6864 to 0.6890 for $\sigma_p$ and 0.7054 to 0.7115
+  for $\pi$, and Boltzmann weights 0.7000 to 0.6981, 0.6855 to 0.6884 and 0.7042 to 0.7104. No
+  verdict changes: the conformer ensembles still change nothing on this series.
+  *And the comparison table in the README was wrong in four cells*, which is what a table built by
+  hand from six files costs. One cell was stale: D11 moved the single-conformer $\pi$ value from
+  0.7091 to 0.7154 and left 0.71 in the README, where 0.72 belongs. One was a rounding mistake made
+  when the table was written: 0.7567 was entered as 0.75. The other two are the ensemble numbers
+  above, 0.6949 and 0.7104, which were entered as 0.70 for $\sigma_m$ and 0.70 for $\pi$. All four
+  are corrected. The table itself stays hand-written, so this remains possible; `table.md` is the
+  generated record and the README quotes a selection from it.
 
 ## H. Beyond medicinal chemistry (year 2)
 
@@ -5933,7 +5974,7 @@ own text has to stop before it, and five entries state their status in a form of
 | D. Fields and kernels | 11 | 11 | -- |
 | E. Learning | 11 | 10 | E11 (partly) |
 | F. Interpretation | 7 | 7 | -- |
-| G. The application and the tool | 5 | 4 | G5 |
+| G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 14 | 10 | M7, M8, M9, M13 |
 | H. Nanotechnology | 12 | 0 | NT1 to NT12 |
 | H. Electrochemistry | 10 | 7 | EC8 (partly), EC9, EC10 |
@@ -5944,7 +5985,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 16 | 0 | ND1 to ND13 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**145 items: 100 finished, 3 partly, 42 open.**
+**146 items: 101 finished, 3 partly, 42 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
