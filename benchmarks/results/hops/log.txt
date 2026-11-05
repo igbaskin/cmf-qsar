@@ -4,13 +4,13 @@
   counts about the midpoint: q2 +0.491, error 0.576, mean absolute error 0.403 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01
   hop length and bottleneck: q2 +0.103, error 0.765, mean absolute error 0.510 over 1732 atoms in 459 molecules, 10 folds, ridge 1
   invariant local, rho 0.05: q2 +0.553, error 0.540, mean absolute error 0.357 over 1732 atoms in 459 molecules, 10 folds, ridge 0.1
-  rotation-averaged overlap, rho 0.05: q2 +0.630, error 0.491, mean absolute error 0.335 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 610 s, 89 atoms per environment)
+  rotation-averaged overlap, rho 0.05: q2 +0.630, error 0.491, mean absolute error 0.335 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 1129 s, 89 atoms per environment)
     overlap against invariant at the same width +0.076 [-0.002, +0.145]
   invariant local, rho 0.1: q2 +0.624, error 0.495, mean absolute error 0.327 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01
-  rotation-averaged overlap, rho 0.1: q2 +0.649, error 0.478, mean absolute error 0.325 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 614 s, 89 atoms per environment)
+  rotation-averaged overlap, rho 0.1: q2 +0.649, error 0.478, mean absolute error 0.325 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 671 s, 89 atoms per environment)
     overlap against invariant at the same width +0.024 [-0.049, +0.099]
   invariant local, rho 0.25: q2 +0.657, error 0.473, mean absolute error 0.307 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01
-  rotation-averaged overlap, rho 0.25: q2 +0.662, error 0.469, mean absolute error 0.322 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 625 s, 89 atoms per environment)
+  rotation-averaged overlap, rho 0.25: q2 +0.662, error 0.469, mean absolute error 0.322 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 629 s, 89 atoms per environment)
     overlap against invariant at the same width +0.005 [-0.060, +0.071]
     learning curve: 25 structures, q2 +0.078 +- 0.167
     learning curve: 50 structures, q2 +0.153 +- 0.134
@@ -26,19 +26,11 @@
   counts about the midpoint: q2 -0.115, error 0.190, mean absolute error 0.158 over 48 atoms in 3 molecules, 3 folds, ridge 1
   phosphate       34 ->   0 (2.98 A): DFT 0.287, bond-valence 0.732, predicted 0.798 eV
   borophosphate   18 ->   8 (2.64 A): DFT 0.003, bond-valence 0.393, predicted 0.561 eV
-
-rebuilding the public model at rho 0.25 on 1732 hops (ridge 0.01)
-1040 hops of Li in 3 structures (144 to 640 per structure), 1040 distinct by symmetry, 1040 with a barrier
-  transfer of the public model to the hosts' 48 distinct hops: q2 -1.415, error 0.279 eV, r +0.683
-  rotation-averaged overlap, leave one host out: q2 -0.120, error 0.190, mean absolute error 0.158 over 48 atoms in 3 molecules, 3 folds, ridge 1
-  counts about the midpoint: q2 -0.115, error 0.190, mean absolute error 0.158 over 48 atoms in 3 molecules, 3 folds, ridge 1
-  phosphate       34 ->   0 (2.98 A): DFT 0.287, bond-valence 0.732, predicted 0.798 eV
-  borophosphate   18 ->   8 (2.64 A): DFT 0.003, bond-valence 0.393, predicted 0.561 eV
 6408 hops of Li in 13 structures (0 to 1824 per structure, 10 with partial occupancies), 6408 distinct by symmetry, 6408 with a barrier
-  transfer of the public model to 298 distinct hops of 13 structures: q2 -1.075, error 1.438 eV, r +0.273
+  transfer of the public model to 298 distinct hops of 13 structures: q2 -1.075, error 1.437 eV, r +0.273
   rotation-averaged overlap, leave one structure out: q2 -0.064, error 1.030, mean absolute error 0.466 over 298 atoms in 12 molecules, 12 folds, ridge 1
   counts about the midpoint: q2 +0.166, error 0.912, mean absolute error 0.426 over 298 atoms in 12 molecules, 12 folds, ridge 0.001
-    against the counts -0.230 [-0.886, +0.143]
+    against the counts -0.230 [-0.884, +0.143]
   LLZO:Ta cubic (Li6.5La3Zr1.5Ta0.5O12)      1728 hops  18 distinct, r -0.09, mean barrier 0.22 eV
   LLZO:Ta cubic (Li6.2La3Zr1.2Ta0.8O12)      1824 hops  19 distinct, r -0.06, mean barrier 0.25 eV
   LLZO:Ta tetragonal                          416 hops  13 distinct, r +0.61, mean barrier 1.53 eV

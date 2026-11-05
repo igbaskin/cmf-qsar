@@ -1,5 +1,7 @@
 # A migration path as the sample: the barrier of a Li hop from the field around it
 
+`python benchmarks/run_hops.py`, reading `benchmarks/results/hops/prepared_mp.json` (written by `python benchmarks/prepare_hops.py`), seed 0, 1000 bootstrap draws.
+
 Public set: 472 ternary compounds of lithium and oxygen (Li, O and one more element) of the Materials Project within 0.05 eV/atom of the hull, 24004 Li hops of 1.5 to 4.5 A, 1732 distinct by symmetry and labelled with the bond-valence site-energy barrier; 10 folds holding out whole structures; environments within 6.0 A of the midpoint. Fields: electrostatic, steric, prop:electronegativity, cif:Co, cif:Cr, cif:Li, cif:Mn, cif:Ni, cif:O, cif:Ti, cif:V, cif:other.
 
 | descriptor | envelope width rho | q2 | error (eV) | mean absolute error (eV) | ridge | against the counts | against length and bottleneck |
@@ -141,6 +143,8 @@ Values in eV of barrier per unit of normalised field, with the standard deviatio
 | +1 | +1.28 (0.74) | +0.05 (0.46) | -0.41 (0.32) | -0.01 (0.27) | -0.02 (0.24) |
 | +2 | +0.22 (0.43) | +0.03 (0.40) | +0.40 (0.33) | +0.18 (0.26) | -0.19 (0.21) |
 
+The same co-field on a finer grid is `profile_fine.json`, written by `python benchmarks/run_hops.py --fine-profile`; the manual draws it as a figure.
+
 ## From hops to conduction: percolation thresholds of the predicted network
 
 | direction | structures with a finite threshold in both | correlation | mean absolute difference (eV) | finite or not agrees |
@@ -168,10 +172,10 @@ The DFT barriers are plain elastic-band values for a vacancy hop into a relaxed 
 
 ## The disordered conductors (plan item M2)
 
-13 structures of the Crystallography Open Database, 6408 hops, 298 distinct, 298 with a bond-valence barrier. The public model applied as it stands: q2 -1.075, error 1.438 eV, correlation +0.273.
+13 structures of the Crystallography Open Database, 6408 hops, 298 distinct, 298 with a bond-valence barrier. The public model applied as it stands: q2 -1.075, error 1.437 eV, correlation +0.273.
 - leave one structure out, rotation-averaged overlap, leave one structure out: q2 -0.064, error 1.030 eV
 - leave one structure out, counts about the midpoint: q2 +0.166, error 0.912 eV
-- the frame kernel against the counts, leave one structure out: -0.230 [-0.886, +0.143]
+- the frame kernel against the counts, leave one structure out: -0.230 [-0.884, +0.143]
 
 | structure | what is disordered | hops | distinct | mean barrier (eV) | correlation with the public model | E_1D / E_2D / E_3D labelled (eV) | public model | within the set |
 | --- | --- | ---: | ---: | ---: | ---: | --- | --- | --- |

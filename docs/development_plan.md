@@ -2517,7 +2517,7 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
 * **G5. Other platforms.** The application has been run on Windows only. Linux and macOS through A2
   first, then the high-DPI and OpenGL differences the 3D view will meet there.
 
-* **G6. One documented command per stored result (5 November 2026).** Rule 6 says that one command
+* **G6. One documented command per stored result (5 and 6 November 2026).** Rule 6 says that one command
   rebuilds every table. For a script that is run once this holds by construction; for a script run
   several times with different options it holds only if two things are true, and for
   `benchmarks/run_hammett.py` neither was. The fault was found while item D11 re-ran the
@@ -2555,6 +2555,28 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   above, 0.6949 and 0.7104, which were entered as 0.70 for $\sigma_m$ and 0.70 for $\pi$. All four
   are corrected. The table itself stays hand-written, so this remains possible; `table.md` is the
   generated record and the README quotes a selection from it.
+  **The same two rules on the hop benchmark, 6 November 2026.** `benchmarks/run_hops.py` had the
+  fault in a different form, found while asking whether item BT7 was completely implemented. Every
+  run wrote the same file names, so the quick look the script's own usage lines offer,
+  `--max-structures 60`, wrote its small numbers over the stored measurement; and the registry
+  listed one command where the repository keeps the results of two, so `profile_fine.json`, the
+  fine co-field profile the manual draws as a figure, was rebuilt by no documented command. The
+  tag now covers which prepared set is read, how much of it, the envelope widths, the radius of
+  the environment, the folds, the seed and the number of bootstrap draws; the options that only
+  choose which parts of a run are done leave the tag alone, because they change no stored number.
+  Each run writes `run<tag>.json` and `table.md` prints that command. The registry lists both
+  commands, and a new field of the registry names the command that prepares an input a benchmark
+  only reads: `prepare_hops.py`, which `--compute` does not run, because it needs the network and
+  its result is kept in the repository. `tests/test_hops_runs.py` has 22 tests.
+  *What re-running the two commands found.* Nothing stale, in contrast to the Hammett set, which
+  is itself worth recording: the re-run passes the stored results through every change the library
+  has had since 31 October, the charge repair of item D11 included. `hosts.json` and
+  `profile_fine.json` came out byte for byte identical. Every number of `public.json` is
+  identical and only the recorded run time differs. The disordered conductors moved in the fourth
+  decimal (the transfer correlation +0.2730 against +0.2733, the frame kernel leaving one
+  structure out $q^2$ -0.0644 against -0.0643), which is the order of the kernel's own summation
+  and changes no reading. What the re-run did correct is the cost the registry states: 30 minutes,
+  against the 67 and 40 minutes the two commands take on this machine.
 
 ## H. Beyond medicinal chemistry (year 2)
 
@@ -4525,13 +4547,24 @@ values and a computed oxidation potential is a descriptor, not a target.
   Li3BP2O8 0.00 eV) sit next to bond-valence values of 0.73 and
   0.39 eV and predictions of 0.80 and 0.56 eV:
   vacancy hops with full relaxation against a rigid landscape, listed and not compared.
-  **The gate as written could not be applied**: there is no M5 model to beat, so the reference
-  is the count and the two chemist's numbers, and the co-profile is read as the gate asks. What
-  it says is in the manual's section *A migration path as the sample*.
+  **Since M2** (31 October 2026, the day after this item) the benchmark has a third part: partly
+  occupied sites are read as they are refined, and thirteen disordered conductors of the
+  Crystallography Open Database are measured -- garnets, perovskites, LGPS, NASICON, LISICON, a
+  thio-phosphate and Li3N. What that measurement says, including that the public model does not
+  transfer to them, is in M2's entry, which added it.
+  **The gate as written could not be applied when the item was done**: there was no M5 model to
+  beat, so the reference is the count and the two chemist's numbers, and the co-profile is read
+  as the gate asks. What it says is in the manual's section *A migration path as the sample*.
+  M5 was done two days later, on 1 November 2026, but not on these cells with these labels: it
+  resolves the bond-valence site **energy** of the 104 Li sites of the three hosts, not the
+  **barrier** of a hop between two of them on the public set. The comparison the gate asks for is
+  therefore still open, and it is a measurement of its own: the site features of the two end
+  sites of each hop, on the 1732 labelled hops and the same folds, against the hop kernel.
   **Not done:** no DFT-labelled public set (the LLZO, NASICON and argyrodite barriers the item
-  names are scattered over papers and not in one table), no polarisability field, no disorder
-  (M2) and so no argyrodites or garnets, no relaxed path (the bottleneck is on the straight
-  line), and no panel in the application.
+  names are scattered over papers and not in one table), no polarisability field, no argyrodite
+  among the thirteen disordered conductors, no relaxed path (the bottleneck is on the straight
+  line), no panel in the application, and the gate's own comparison against a site-resolved
+  model of the same hops.
 
 **Outside the library**
 

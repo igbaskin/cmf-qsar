@@ -34,9 +34,16 @@ Two measurements, both with folds that hold out whole structures.
 
 Usage
 -----
-    python benchmarks/run_hops.py                     # both parts
-    python benchmarks/run_hops.py --max-structures 60 # a quick look
+    python benchmarks/run_hops.py                     # all three parts
+    python benchmarks/run_hops.py --fine-profile      # the co-field on a fine grid, for the manual
+    python benchmarks/run_hops.py --max-structures 60 # a quick look, under its own file names
     python benchmarks/run_hops.py --report            # the table from the stored results
+
+Every option that changes a number enters the tag that names the files a run writes, so that two
+runs whose numbers differ never write the same file: ``public<tag>.json``, ``hosts<tag>.json``,
+``disordered<tag>.json``, ``log<tag>.txt``, ``table<tag>.md`` and ``run<tag>.json``, which holds
+the command that produced them.  ``--fine-profile`` writes ``profile_fine<tag>.json`` and
+``run_fine_profile<tag>.json``.  The stored measurement has the empty tag.
 """
 from __future__ import annotations
 
@@ -84,9 +91,75 @@ COD = (("1545083", "LLZO:Ta cubic (Li6.5La3Zr1.5Ta0.5O12)", "Li sites 0.38/0.62,
        ("1529523", "Li3.16Zn0.24GeO4", "Li sites 0.06 to 0.92, Li/Zn shared"))
 RHOS = (0.05, 0.1, 0.25)
 R_MAX = 6.0
+#: distinct hops kept per structure in the sample; the rest stay in the network
+MAX_PER_STRUCTURE = 6
+FOLDS = 10
+BOOTSTRAP = 1000
 PROFILE_Z = (-2.0, -1.0, 0.0, 1.0, 2.0)
 PROFILE_R = (0.0, 1.0, 2.0, 3.0, 4.0)
 PHYSCHEM = ("electrostatic", "steric", "prop:electronegativity")
+
+
+# ------------------------------------------------------------------- one run and what it wrote
+
+
+def run_tag(a) -> str:
+    """The name of one run of this script, used for every file that run writes.
+
+    Two rules. Two runs whose numbers differ must never write the same file, so every option that
+    changes a number enters the tag: which prepared set is read, how much of it, the envelope
+    widths, the radius of the environment, the folds, the seed and the number of bootstrap draws.
+    And two ways of naming one input must give one tag, so ``--prepared`` pointing at the stored
+    set gives the empty tag; that is why ``public.json`` has no suffix. The options that only
+    choose which parts of the run are done (``--no-hosts``, ``--reuse-public``, ``--fine-profile``)
+    and the number of processes (``--jobs``) leave the tag alone, because they change no stored
+    number; ``--fine-profile`` writes files of its own name instead.
+    """
+    tag = ""
+    if os.path.abspath(a.prepared) != os.path.abspath(PREPARED):
+        stem = os.path.splitext(os.path.basename(a.prepared))[0]
+        tag += "_" + (stem[len("prepared_"):] if stem.startswith("prepared_") else stem)
+    if a.max_structures:
+        tag += f"_n{a.max_structures}"
+    if a.max_per_structure != MAX_PER_STRUCTURE:
+        tag += f"_per{a.max_per_structure}"
+    if list(a.rho) != list(RHOS):
+        tag += "_rho" + "-".join(f"{r:g}" for r in a.rho)
+    if a.r_max != R_MAX:
+        tag += f"_r{a.r_max:g}"
+    if a.folds != FOLDS:
+        tag += f"_folds{a.folds}"
+    if a.seed != 0:
+        tag += f"_seed{a.seed}"
+    if a.bootstrap != BOOTSTRAP:
+        tag += f"_boot{a.bootstrap}"
+    return tag
+
+
+def run_provenance(results_dir: str = RESULTS, tag: str = "", name: str = "run") -> Optional[dict]:
+    """What the run with this tag was asked to do, or ``None`` if the run did not record it."""
+    path = os.path.join(results_dir, f"{name}{tag}.json")
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def write_provenance(args, tag: str, argv: Optional[List[str]] = None, name: str = "run",
+                     **extra) -> str:
+    """The command of this run and every option that changes a number, next to its results."""
+    out = {"argv": list(argv) if argv is not None else sys.argv[1:], "tag": tag,
+           "prepared": os.path.relpath(args.prepared, ROOT).replace(os.sep, "/"),
+           "max_structures": args.max_structures, "max_per_structure": args.max_per_structure,
+           "rho": [float(r) for r in args.rho], "r_max": args.r_max, "folds": args.folds,
+           "seed": args.seed, "bootstrap": args.bootstrap,
+           "written": time.strftime("%Y-%m-%d %H:%M:%S")}
+    out.update(extra)
+    path = os.path.join(RESULTS, f"{name}{tag}.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(out, fh, indent=1)
+        fh.write("\n")
+    return path
 
 
 # ----------------------------------------------------------------------------- the data
@@ -300,7 +373,7 @@ def rebuild_public_model(args, log):
     Parts 2 and 3 need the fitted public model; with ``--reuse-public`` the stored
     ``public.json`` supplies the width and the ridge and only that one kernel is computed.
     """
-    pub = json.load(open(os.path.join(RESULTS, "public.json")))
+    pub = json.load(open(os.path.join(RESULTS, f"public{run_tag(args)}.json")))
     rho = pub["best_rho"]
     best = next(m for m in pub["models"] if m["name"].startswith("rotation") and m["rho"] == rho)
     hs = load_prepared(args.prepared, args.max_structures, args.max_per_structure, args.seed)
@@ -504,12 +577,24 @@ def _fmt(x, nd=3, sign=True):
     return f"{x:+.{nd}f}" if sign else f"{x:.{nd}f}"
 
 
-def write_table(results_dir: str = RESULTS) -> str:
-    pub = json.load(open(os.path.join(results_dir, "public.json")))
-    hosts_path = os.path.join(results_dir, "hosts.json")
+def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
+    """The table of one run, from the result files that carry its tag.
+
+    ``run<tag>.json`` holds the command that produced those files; the table prints it, so that a
+    reader can repeat the run and so that a stored result with no command is visible as such.
+    """
+    pub = json.load(open(os.path.join(results_dir, f"public{tag}.json")))
+    hosts_path = os.path.join(results_dir, f"hosts{tag}.json")
     hosts = json.load(open(hosts_path)) if os.path.exists(hosts_path) else None
     L = []
     L.append("# A migration path as the sample: the barrier of a Li hop from the field around it\n")
+    prov = run_provenance(results_dir, tag)
+    if prov:
+        L.append("`" + " ".join(["python benchmarks/run_hops.py"] + list(prov["argv"])) + "`, "
+                 f"reading `{prov['prepared']}` (written by `python benchmarks/prepare_hops.py`), "
+                 f"seed {prov['seed']}, {prov['bootstrap']} bootstrap draws.\n")
+    else:
+        L.append("The command that produced these result files was not recorded.\n")
     L.append(f"Public set: {pub['n_structures']} ternary compounds of lithium and oxygen (Li, O and one more element) of the Materials Project "
              f"within {pub['hull']} eV/atom of the hull, {pub['n_hops']} Li hops of 1.5 to 4.5 A, "
              f"{pub['n_samples']} distinct by symmetry and labelled with the bond-valence "
@@ -561,6 +646,10 @@ def write_table(results_dir: str = RESULTS) -> str:
                 L.append(f"| {z:+.0f} | " + " | ".join(f"{x:+.2f} ({s:.2f})" for x, s in zip(row, srow))
                          + " |")
             L.append("")
+        if os.path.exists(os.path.join(results_dir, f"profile_fine{tag}.json")):
+            L.append(f"The same co-field on a finer grid is `profile_fine{tag}.json`, written by "
+                     "`python benchmarks/run_hops.py --fine-profile`; the manual draws it as a "
+                     "figure.\n")
     L.append("## From hops to conduction: percolation thresholds of the predicted network\n")
     L.append("| direction | structures with a finite threshold in both | correlation | "
              "mean absolute difference (eV) | finite or not agrees |")
@@ -599,7 +688,7 @@ def write_table(results_dir: str = RESULTS) -> str:
                      "relaxed vacancy, so they are lower bounds and include the relaxation the "
                      "rigid bond-valence landscape does not; the columns are not expected to "
                      "agree in value, only in order.\n")
-    dis_path = os.path.join(results_dir, "disordered.json")
+    dis_path = os.path.join(results_dir, f"disordered{tag}.json")
     dis = json.load(open(dis_path)) if os.path.exists(dis_path) else None
     if dis and dis.get("structures"):
         L.append("## The disordered conductors (plan item M2)\n")
@@ -638,25 +727,26 @@ def write_table(results_dir: str = RESULTS) -> str:
                  "fields see every site at its occupancy. A threshold of inf means the hops "
                  "between 1.5 and 4.5 A do not connect through the cell in that many directions.\n")
     text = "\n".join(L)
-    with open(os.path.join(results_dir, "table.md"), "w", encoding="utf-8") as fh:
+    with open(os.path.join(results_dir, f"table{tag}.md"), "w", encoding="utf-8") as fh:
         fh.write(text)
     return text
 
 
-def main():
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--prepared", default=PREPARED)
     ap.add_argument("--max-structures", type=int, default=0)
-    ap.add_argument("--max-per-structure", type=int, default=6,
-                    help="distinct hops kept per structure in the sample (default 6); the rest "
-                         "stay in the network for the percolation step")
+    ap.add_argument("--max-per-structure", type=int, default=MAX_PER_STRUCTURE,
+                    help=f"distinct hops kept per structure in the sample (default "
+                         f"{MAX_PER_STRUCTURE}); the rest stay in the network for the "
+                         f"percolation step")
     ap.add_argument("--jobs", type=int, default=8,
                     help="processes for the rotation-averaged kernel (default 8)")
     ap.add_argument("--rho", nargs="*", type=float, default=list(RHOS))
     ap.add_argument("--r-max", type=float, default=R_MAX)
-    ap.add_argument("--folds", type=int, default=10)
+    ap.add_argument("--folds", type=int, default=FOLDS)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--bootstrap", type=int, default=1000)
+    ap.add_argument("--bootstrap", type=int, default=BOOTSTRAP)
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--no-hosts", action="store_true")
     ap.add_argument("--reuse-public", action="store_true",
@@ -664,13 +754,19 @@ def main():
                          "best model, then run the hosts and the disordered conductors")
     ap.add_argument("--fine-profile", action="store_true",
                     help="recompute the best public model and write its co-field on a fine "
-                         "(z, r) grid to results/hops/profile_fine.json, for the figures of the "
-                         "manual; nothing else is run")
-    args = ap.parse_args()
+                         "(z, r) grid to results/hops/profile_fine<tag>.json, for the figures of "
+                         "the manual; nothing else is run")
+    return ap
+
+
+def main(argv: Optional[List[str]] = None):
+    args = build_parser().parse_args(argv)
+    tag = run_tag(args)
     os.makedirs(RESULTS, exist_ok=True)
     if args.report:
-        print(write_table(RESULTS))
+        print(write_table(RESULTS, tag))
         return
+    t0 = time.time()
     lines = []
 
     def log(s):
@@ -680,22 +776,31 @@ def main():
     if not os.path.exists(args.prepared):
         raise SystemExit(f"{args.prepared} is missing: run benchmarks/prepare_hops.py first")
     if args.fine_profile:
-        write_fine_profile(rebuild_public_model(args, log), log)
+        path = os.path.join(RESULTS, f"profile_fine{tag}.json")
+        write_fine_profile(rebuild_public_model(args, log), log, path)
+        write_provenance(args, tag, argv, name="run_fine_profile",
+                         minutes=round((time.time() - t0) / 60, 1))
         return
     if args.reuse_public:
         trained = rebuild_public_model(args, log)
     else:
         public, trained = run_public(args, log)
-        json.dump(public, open(os.path.join(RESULTS, "public.json"), "w"), indent=1)
+        json.dump(public, open(os.path.join(RESULTS, f"public{tag}.json"), "w"), indent=1)
     if not args.no_hosts:
         hosts = run_hosts(args, log, trained)
-        json.dump(hosts, open(os.path.join(RESULTS, "hosts.json"), "w"), indent=1)
+        json.dump(hosts, open(os.path.join(RESULTS, f"hosts{tag}.json"), "w"), indent=1)
         dis = run_disordered(args, log, trained)
-        json.dump(dis, open(os.path.join(RESULTS, "disordered.json"), "w"), indent=1)
+        json.dump(dis, open(os.path.join(RESULTS, f"disordered{tag}.json"), "w"), indent=1)
     mode = "a" if args.reuse_public else "w"
-    with open(os.path.join(RESULTS, "log.txt"), mode, encoding="utf-8") as fh:
+    with open(os.path.join(RESULTS, f"log{tag}.txt"), mode, encoding="utf-8") as fh:
         fh.write(("\n\n" if mode == "a" else "") + "\n".join(lines))
-    print(write_table(RESULTS))
+    if args.reuse_public or args.no_hosts:
+        # A part of the run rebuilds a part of the files, with the numbers the whole run gives.
+        # The recorded command stays the one that rebuilds all of them.
+        print(f"  run{tag}.json left as it is: this run rebuilt only a part of the results")
+    else:
+        write_provenance(args, tag, argv, minutes=round((time.time() - t0) / 60, 1))
+    print(write_table(RESULTS, tag))
 
 
 if __name__ == "__main__":

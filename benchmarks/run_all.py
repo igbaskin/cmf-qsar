@@ -71,6 +71,9 @@ class Benchmark:
     report: Optional[Callable[[], None]] = None  # rebuilds results/<name>/table.md
     tables: List[str] = field(default_factory=list)          # files --tables writes
     readme: List[str] = field(default_factory=list)          # README sections written by hand from it
+    prepare: List[str] = field(default_factory=list)         # the command that fetches or builds
+    # the input the script reads, as a command line under benchmarks/.  It is not run by
+    # --compute: it needs the network or hours, and its result is kept in the repository.
 
 
 def _mod(name):
@@ -259,8 +262,13 @@ def registry() -> List[Benchmark]:
                   tables=["triangles/table.md"]),
         Benchmark("hops",
                   "does the field around a Li hop predict its barrier, across structure types",
-                  "run_hops.py", "hops", compute=[[]],
-                  minutes="30",
+                  "run_hops.py", "hops",
+                  # One command per stored result file, and no two of them write the same file:
+                  # the first writes public.json, hosts.json and disordered.json, the second the
+                  # fine co-field profile the manual draws.
+                  compute=[[], ["--fine-profile"]],
+                  prepare=["prepare_hops.py"],
+                  minutes="110",                 # measured: 67 for the first, 40 for the second
                   report=lambda: _mod("run_hops").write_table(_r("hops")),
                   tables=["hops/table.md"]),
         Benchmark("battery",
@@ -997,6 +1005,9 @@ def list_benchmarks():
         have = all(os.path.exists(_r(t)) for t in b.tables)
         print(f"{b.name:16s} {n:8d} {'yes' if have else 'no':>6s}  {b.needs or '-':10s} "
               f"{b.minutes:>7s}  {b.what}")
+        if b.prepare:
+            print(f"{'':16s} {'':8s} {'':6s}  input prepared by: python benchmarks/"
+                  + " ".join(b.prepare) + " (not run by --compute)")
         for r in b.readme:
             print(f"{'':16s} {'':8s} {'':6s}  README: {r}")
     print("\nresult tables: " + ", ".join(f"results/{t}" for b in registry() for t in b.tables))
