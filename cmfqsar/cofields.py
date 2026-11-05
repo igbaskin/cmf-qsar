@@ -13,7 +13,7 @@ Primal form of the model (Eq. 7):  y = sum_f h_f  INT C_f(r) X_f(r) d^3r + b
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 from scipy.spatial import cKDTree
@@ -128,6 +128,67 @@ def cofield_volume(model: CMFModel, f: int, grid: Grid, include_scale: bool = Fa
     return v.reshape(grid.shape)
 
 
+def evaluate_gaussian_gradients(points: np.ndarray, centers: np.ndarray, coeffs: np.ndarray,
+                                widths: np.ndarray) -> np.ndarray:
+    """The gradient of ``sum_j c_j exp(-w_j |r - r_j|^2 / 2)`` at every point.  Shape (n, 3).
+
+    This is what the electric-field kind of plan item EC5 asks to see: its kernel pairs the
+    gradients of two fields, so the quantity with a reading is the gradient of the co-field, not
+    the co-field itself.  An arrow at a point says which way the model wants the field to change
+    there, and how strongly.
+    """
+    points = np.asarray(points, float)
+    centers = np.asarray(centers, float)
+    coeffs = np.asarray(coeffs, float)
+    widths = np.asarray(widths, float)
+    out = np.zeros((len(points), 3))
+    if len(centers) == 0:
+        return out
+    for j in range(len(centers)):
+        if coeffs[j] == 0.0:
+            continue
+        diff = points - centers[j]
+        d2 = np.einsum("ij,ij->i", diff, diff)
+        g = coeffs[j] * np.exp(-0.5 * widths[j] * d2)
+        out -= (widths[j] * g)[:, None] * diff
+    return out
+
+
+def cofield_gradient(model: CMFModel, f: int, grid: Grid,
+                     include_scale: bool = False) -> np.ndarray:
+    """The gradient of the co-field of field `f` on the grid.  Shape (3, *grid.shape)."""
+    centers, coeffs, widths = model.cofield_coefficients(f)
+    v = evaluate_gaussian_gradients(grid.points(), centers, coeffs, widths)
+    if include_scale:
+        v = v * (model.fieldset.specs[f].h * model.scale[f])
+    return np.stack([v[:, k].reshape(grid.shape) for k in range(3)])
+
+
+def cofield_arrows(model: CMFModel, f: int, grid: Grid, count: int = 20,
+                   min_separation: float = 1.5):
+    """The strongest arrows of the co-field gradient, for drawing or for a table.
+
+    Returns ``(points, vectors, lengths)``.  The points are taken in order of decreasing arrow
+    length, and a point is skipped when it lies within `min_separation` angstrom of one already
+    taken, so that the answer spreads over the molecule instead of crowding one peak.
+    """
+    g = cofield_gradient(model, f, grid)
+    pts = grid.points()
+    vec = np.stack([g[k].ravel() for k in range(3)], axis=1)
+    length = np.linalg.norm(vec, axis=1)
+    order = np.argsort(length)[::-1]
+    chosen: List[int] = []
+    for idx in order:
+        if len(chosen) >= count:
+            break
+        p = pts[idx]
+        if any(np.linalg.norm(p - pts[k]) < min_separation for k in chosen):
+            continue
+        chosen.append(int(idx))
+    chosen_arr = np.asarray(chosen, dtype=int)
+    return pts[chosen_arr], vec[chosen_arr], length[chosen_arr]
+
+
 def _centres_and_widths(mol: MoleculeFields, spec, f: int, coeff=None):
     """(centres, coefficients, widths) of the Gaussians one field of one molecule is made of.
 
@@ -150,7 +211,7 @@ def _centres_and_widths(mol: MoleculeFields, spec, f: int, coeff=None):
             # a per-atom coefficient (an atom contribution, say) multiplies all of its terms
             weights = weights * np.repeat(np.asarray(coeff, float), n_terms)
         return centres, weights, widths
-    widths = (np.full(mol.n_atoms, spec.alpha) if spec.kind == "gauss"
+    widths = (np.full(mol.n_atoms, spec.alpha) if spec.kind in ("gauss", "efield")
               else spec.alpha / mol.radii ** 2)
     weights = mol.weights[:, f] if coeff is None else np.asarray(coeff, float)
     return mol.coords, weights, widths

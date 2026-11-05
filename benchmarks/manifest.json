@@ -2,6 +2,22 @@
  "commit": "85e58f3c360584614350b1e6553f64288d07c01e",
  "created": "2026-11-01T18:21:50",
  "data": {
+  "benchmarks/results/efield/check.json": {
+   "bytes": 780,
+   "sha256": "bbac59631cfd4f2a674e82c7933c1309a0f672ca68fe595392e82f21838ada36"
+  },
+  "benchmarks/results/efield/hammett.json": {
+   "bytes": 53927,
+   "sha256": "5852d7e02f1a31e9de2c02eb1893c027f7bb5d04ff114927bc54b3e77725f0c4"
+  },
+  "benchmarks/results/efield/nickel.json": {
+   "bytes": 67864,
+   "sha256": "bef3237e9997a25ca2009a998708d0189b7151ea2399ceb17d9444602b07a0fc"
+  },
+  "benchmarks/results/efield/table.md": {
+   "bytes": 6037,
+   "sha256": "7f5621d29aab832459fa6a7f95690d833c25684c27c4dd25ee404a2fe1c19254"
+  },
   "benchmarks/results/metal/cofield.json": {
    "bytes": 3187,
    "sha256": "f28ada61c2526cd88222e5a363b873b152b784d9bd7967807459519d1c181753"
@@ -37,6 +53,10 @@
   "benchmarks/results/phenazine/table.md": {
    "bytes": 3975,
    "sha256": "09ab77d1d25fcd4179f26f290e8dc902a94a6f8318b79f33a1207d3243aeb0a8"
+  },
+  "benchmarks/run_efield.py": {
+   "bytes": 25172,
+   "sha256": "611c4c4b294afc0c331c33493682db108cb8fb44a02beb175187a6aa99cc29d8"
   },
   "benchmarks/run_metal.py": {
    "bytes": 34945,

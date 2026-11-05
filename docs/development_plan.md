@@ -3590,6 +3590,57 @@ for anything molecular.
   scalar electrostatic kernel; the item is justified only where the vector kernel beats the
   scalar one by more than the interval, which the through-space catalysis literature says it
   should on the cationic porphyrins.
+  **Done 5 November 2026. The machinery works, it is exact, and the gate is not passed: the
+  vector kernel is a near-copy of the scalar one, and added to the five fields it costs accuracy
+  rather than adding any.**
+  *Built:* the field kind `efield` in `cmfqsar/fields.py` (same charges, different kernel, not one
+  of the five defaults and asked for by name), `efield_pair_factor` and the kernel, gradient and
+  self-kernel paths in `cmfqsar/kernels.py`, `evaluate_gaussian_gradients`, `cofield_gradient` and
+  `cofield_arrows` in `cmfqsar/cofields.py`, `tests/test_efield.py` (26 tests),
+  `benchmarks/run_efield.py` with `benchmarks/results/efield/table.md`, and the manual section
+  *The field a reaction centre feels*.
+  *The closed form.* The pair integral of two Gaussians of the shared width is the ordinary
+  overlap times `3 alpha / 2 - alpha^2 d^2 / 4`. The item's own text calls this the second
+  derivative of the overlap with respect to the pair distance; it is the negative *Laplacian* with
+  respect to the separation of the two centres, which is not the same thing, and the formula here
+  is the one that matches a grid integral — to 0.000 % on two real molecules with 2.7 million
+  points, and exactly on single pairs in the unit tests. It is the only pair integral in the
+  program that changes sign: zero at `d = sqrt(6/alpha)`, 2.45 angstrom at alpha = 1, and 72 % of
+  the atom pairs of the Hammett series lie beyond it. The kernel matrix is still positive
+  semidefinite, since it is an inner product of two vector fields, and that is tested rather than
+  asserted.
+  *The reading that predicted the result, used in advance this time.* The cosine-normalised vector
+  and scalar kernels correlate **+0.980** over the 4371 pairs of the Hammett series. A description
+  that orders a series almost exactly as one already in the model cannot change it much, which is
+  the lesson item EC1 learned after the fact.
+  *The gate.* Added to the five fields: sigma_m +0.0005 [-0.0037, +0.0051], sigma_p
+  +0.0068 [-0.0045, +0.0190], nickel E_ox **-0.0138 V [-0.0342, -0.0005]** and
+  -0.0136 V [-0.0307, -0.0017] under leave-one-out, so on the one series where it does anything
+  measurable it makes the model worse, which is what a sixth nearly collinear field should do.
+  Used *in place of* the electrostatic field it ties the five-field model everywhere (nickel E_ox
+  +0.0019 V [-0.0031, +0.0077]), so it is a substitute at the same price. Alone against the scalar
+  field alone it wins on the nickel oxidation potential under leave-one-out
+  (+0.0299 V [+0.0144, +0.0459]) and not under random folds (+0.0057 V [-0.0072, +0.0194]); that
+  is the only measurement consistent with the through-space argument, on the only cationic series
+  available, and it is too design-dependent to carry the item. The apparent win on pi
+  (+0.0620 [+0.0238, +0.1084], vector alone against scalar alone) is a difference between two bad
+  models of a target that is not electrostatic: both score R2 below 0.2 where the five fields
+  reach 0.86.
+  *The arrows.* `cofield_arrows` returns the strongest arrows of the co-field gradient with a
+  minimum separation. On the nickel oxidation potential they sit 5.6 to 6.6 angstrom from the
+  metal, among the substituents where item EC4's scalar co-field also put its weight, and point
+  inward towards the metal.
+  **Kept and labelled under rule 5**, because it is exact, cheap, a working substitute for the
+  electrostatic field, and the only field whose co-field is a direction.
+  **Not done:** the compiled kernel loop (`cmfqsar/fastkernel.py`) does not implement the kind, so
+  a field set containing it falls back to NumPy and the iron series of EC4 was not measured; the
+  cationic porphyrins the item names were not available in machine-readable form (see EC4), so the
+  through-space prediction is tested only on 25 nickel complexes; the arrows are returned as
+  numbers and the viewer does not draw them; and the measurement uncovered a fault it did not fix
+  — one of the 95 Hammett molecules (the selenomethyl substituent) has an electrostatic field that
+  is identically zero, because the Gasteiger scheme has no parameters for selenium and EC4's
+  repair covers the d-block metals only. A general repair would move the published Hammett tables
+  and belongs to its own item.
 * **EC6. A slab as the receptor.** `cmfqsar/protein.py` reads a PDB or mmCIF protein by residue;
   an electrode is a POSCAR or CIF slab with periodic images. A reader that builds the fields of
   the top layers as a `MoleculeFields` with the images inside the cutoff (the inorganic field set
@@ -3749,8 +3800,11 @@ series, because the added electron goes to the same place in every member.** ~~E
 parameters, the electrostatic field of a complex is no longer identically zero, and the gate is
 passed — on 25 congeneric nickel complexes the five fields beat the population analysis of the
 calculation that produced the target. The catalyst series the item named are not in
-machine-readable form, so EC3, EC5, EC8 and EC9 still have no measured catalytic property to aim
-at, even though a complex now loads.** EC6 after M1, ~~EC7~~ **done
+machine-readable form, so EC3, EC8 and EC9 still have no measured catalytic property to aim
+at, even though a complex now loads.** ~~EC5~~ **done 5 November 2026: the vector kernel is exact
+and is a near-copy of the scalar one (the two cosine kernels correlate +0.980), so it changes
+nothing where it is added and costs accuracy on the one series where it does anything; kept under
+rule 5 as a substitute for the electrostatic field and for its arrow co-field.** EC6 after M1, ~~EC7~~ **done
 4 November 2026, and its gate is passed**, EC8 after M5, EC9 and EC10 last. The EC2 result also says what EC6 must do differently: a slab as
 the receptor has to decide the face and the tilt by complementarity, since no rule and no
 reference does.

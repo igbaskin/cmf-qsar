@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 107 modules, 209 classes with 669 public methods, and 1069 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 107 modules, 209 classes with 669 public methods, and 1073 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1924,6 +1924,27 @@ whatever the density of the centres.
 ### `cofield_volume(model: CMFModel, f: int, grid: Grid, include_scale: bool=False) -> np.ndarray`
 
 C_f(r) on the grid (shape = grid.shape).  If include_scale, multiply by h_f c_f.
+
+### `evaluate_gaussian_gradients(points: np.ndarray, centers: np.ndarray, coeffs: np.ndarray, widths: np.ndarray) -> np.ndarray`
+
+The gradient of `sum_j c_j exp(-w_j |r - r_j|^2 / 2)` at every point.  Shape (n, 3).
+
+This is what the electric-field kind of plan item EC5 asks to see: its kernel pairs the
+gradients of two fields, so the quantity with a reading is the gradient of the co-field, not
+the co-field itself.  An arrow at a point says which way the model wants the field to change
+there, and how strongly.
+
+### `cofield_gradient(model: CMFModel, f: int, grid: Grid, include_scale: bool=False) -> np.ndarray`
+
+The gradient of the co-field of field `f` on the grid.  Shape (3, *grid.shape).
+
+### `cofield_arrows(model: CMFModel, f: int, grid: Grid, count: int=20, min_separation: float=1.5)`
+
+The strongest arrows of the co-field gradient, for drawing or for a table.
+
+Returns `(points, vectors, lengths)`.  The points are taken in order of decreasing arrow
+length, and a point is skipped when it lies within `min_separation` angstrom of one already
+taken, so that the answer spreads over the molecule instead of crowding one peak.
 
 ### `field_volume(mol: MoleculeFields, spec, f: int, grid: Grid) -> np.ndarray`
 
@@ -7407,6 +7428,27 @@ Squared distances from the atoms of one molecule to the atoms of table Q.
 The only part of a field kernel that does not depend on the attenuation, which is why
 `kernel_matrices_multi` computes it once for a whole grid of alphas.  `first_mol`
 restricts the columns to the molecules from that index onwards.
+
+### `efield_pair_factor(alpha: float, d2: np.ndarray) -> np.ndarray`
+
+The pair integral of the electric-field kind (plan item EC5).
+
+For two atom-centred Gaussians of the shared width that `alpha` names, this is
+
+    integral of grad g_i . grad g_j over space
+        = (pi / alpha) ** 1.5 * exp(-alpha d^2 / 4) * (3 alpha / 2 - alpha^2 d^2 / 4),
+
+which is the ordinary overlap of the same two Gaussians multiplied by
+`3 alpha / 2 - alpha^2 d^2 / 4`.  It is the negative Laplacian of the overlap with respect
+to the separation of the two centres, so it needs no quadrature and rule 3 of the plan is
+kept.  The derivation and a check against a grid integral are in
+`tests/test_efield.py`.
+
+Unlike every other pair integral in this module this one **changes sign**: it is positive for
+two close atoms, zero at `d^2 = 6 / alpha` and negative beyond, because two charges far
+apart have gradients that point against each other.  The kernel matrix is still positive
+semidefinite, since it is an inner product of two vector fields; the sign only means that a
+single atom pair may lower the kernel.
 
 ### `atom_kernel_block(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable, specs: Sequence[FieldSpec], ci=None, cq=None, first_mol: int=0, D2: Optional[np.ndarray]=None, cutoff=None, tol: float=CUTOFF_TOL) -> np.ndarray`
 

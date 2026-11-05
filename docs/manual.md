@@ -2099,6 +2099,105 @@ sources themselves warn against pooling. Both targets here are computed rather t
 the electrostatic field of a complex still uses the charges of the free ligands, so the first step
 for anyone extending this is a calculated charge per atom.
 
+## The field a reaction centre feels: a vector kernel, and why it changes almost nothing
+
+Every field in this program is a scalar, and the kernel of two molecules is the overlap of two
+scalars. The quantity a reaction centre actually feels is not the potential but its gradient, the
+electric field. The two are not the same description: a molecule can have a large potential and
+no field at a point, and the oriented-electric-field literature on catalysis is about the vector.
+
+A field type `efield` supplies the vector kernel. It carries the same charges as the electrostatic
+field, and what differs is the integral:
+
+    K(A, B) = integral of grad phi_A(r) . grad phi_B(r) over all space
+
+For atom-centred Gaussians this is in closed form. The pair integral of two Gaussians of the
+shared width α is the ordinary overlap multiplied by `3α/2 − α²d²/4`, which is the negative
+Laplacian of the overlap with respect to the separation of the two centres. So the new kernel
+needs no quadrature, rule 3 of the plan holds, and the co-field and the Shapley decomposition are
+unchanged. The closed form was checked against a grid integral of 2.7 million points on two real
+molecules and agreed to 0.000 %.
+
+One property is unlike every other pair integral here: **it changes sign**. It is positive for two
+close atoms, zero at d = sqrt(6/α) — 2.45 Å at α = 1 — and negative beyond, because two charges
+far apart have gradients that point against each other. On the Hammett series 72 % of the atom
+pairs lie beyond that distance, so most pairs contribute a negative term. The kernel matrix is
+still positive semidefinite, because it is an inner product of two vector fields; a single pair
+may lower the kernel, and the diagonal cannot be negative.
+
+### The reading that predicts the result
+
+Before any model is fitted, one number says what to expect. The cosine-normalised vector kernel
+and the cosine-normalised scalar kernel **correlate +0.980** over the 4371 pairs of the Hammett
+series. Two molecules are 0.312 ± 0.314 alike through the scalar kernel and 0.302 ± 0.312 through
+the vector one. The vector kernel orders the pairs of this series almost exactly as the scalar one
+does, and a model cannot do much with a description that is a near-copy of one it already has.
+This is the same reading that explained the spin field of item EC1, used in advance this time
+rather than afterwards.
+
+### What was measured
+
+Two series where an overlap kernel is the right tool, which means a series with a shared frame:
+the 95 substituted benzenes of the Hammett sets, in one frame by rule, and the 25 nickel complexes
+of item EC4, which share one ligand skeleton and one N3O3 coordination sphere. The iron series of
+item EC4 is left out, because that item measured an overlap kernel of any kind to be behind the
+kernel that needs no frame there, and because the compiled kernel loop does not implement this
+field kind.
+
+| target | five fields | five + efield | efield alone | electrostatic alone |
+|---|---|---|---|---|
+| σ_m | 0.0972 | 0.0967 | 0.0963 | 0.0977 |
+| σ_p | 0.1541 | 0.1473 | 0.1624 | 0.1582 |
+| π | 0.3129 | 0.3187 | 0.7762 | 0.8373 |
+| nickel E_ox (V) | 0.1501 | 0.1638 | 0.2176 | 0.2234 |
+| nickel E_red (V) | 0.0293 | 0.0282 | 0.0312 | 0.0294 |
+
+**The gate is not passed.** Added to the five fields, the vector kernel changes nothing on σ_m
+(+0.0005 [−0.0037, +0.0051]) and on σ_p (+0.0068 [−0.0045, +0.0190]), and on the nickel oxidation
+potential it makes the model *worse* by −0.0138 V [−0.0342, −0.0005], an interval that excludes
+zero in both fold designs. That last result is the clearest statement in the table: a sixth field
+that is a near-copy of the first costs accuracy rather than adding any, which is what a kernel
+with two nearly collinear blocks should do.
+
+Two places where it does something are worth recording. Used *in place of* the electrostatic field
+rather than beside it, the vector kernel ties the five-field model everywhere (nickel E_ox
++0.0019 V [−0.0031, +0.0077]), so it is a legitimate substitute at the same price. And on the
+nickel oxidation potential, the vector kernel alone beats the scalar field alone by
++0.0299 V [+0.0144, +0.0459] under leave-one-out, though not under five random folds
+(+0.0057 V [−0.0072, +0.0194]). That is the one measurement consistent with the through-space
+catalysis argument, on the one cationic series available, and it is too small and too
+design-dependent to carry the item.
+
+The apparent win on π — the vector kernel alone beats the scalar field alone by
++0.0620 [+0.0238, +0.1084] — is a difference between two bad models. Hydrophobicity is not an
+electrostatic quantity, both models score R² below 0.2 where the five fields reach 0.86, and
+nothing should be concluded from which of two failures fails less.
+
+### What the arrows say
+
+The co-field of a scalar field is a value at a place. The co-field of this kind is an arrow field:
+at each point it says which way the model wants the field to change, and `cofield_arrows` returns
+the strongest arrows with a minimum separation so that they spread over the molecule instead of
+crowding one peak. On the nickel oxidation potential the strongest arrows sit 5.6 to 6.6 Å from
+the metal — out among the substituents, where item EC4's scalar co-field also put its weight — and
+they point *inward*, towards the metal. The model wants the field to rise towards the metal from
+the substituent positions, which is the second-sphere statement in the form the vector kernel is
+able to make.
+
+**Kept and labelled under rule 5.** The field type stays: it is exact, it costs no quadrature, it
+is a working substitute for the electrostatic field, and it gives the arrow reading that no scalar
+field can. It is not one of the five default fields and has to be asked for by name.
+
+### One fault this measurement uncovered and did not fix
+
+One of the 95 Hammett molecules, the selenomethyl substituent, has an electrostatic field that is
+identically zero. The cause is the one item EC4 found for metals: the Gasteiger scheme has no
+parameters for selenium, and one such atom makes it return "not a number" for every atom of the
+molecule. EC4's repair covers the d-block metals only, so selenium and the other elements the
+scheme does not know are still affected. This is left as it is rather than repaired here, because
+a general repair would change the published Hammett tables, and such a change belongs to its own
+item with its own measurement.
+
 # Before you model: `cmf diagnose`
 
 Every expensive mistake recorded in this manual was visible before the model was built, in a

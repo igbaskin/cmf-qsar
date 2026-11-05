@@ -2925,7 +2925,8 @@ def cmd_explain(args):
         if args.cube and res.player_fields is not None:
             from cmfqsar.cofields import export_cube, make_grid, shapley_volume
             vals = res.field_atom_values(mol.n_atoms, model.fieldset.n_fields)
-            widths = [s.alpha if s.kind == "gauss" else s.alpha / float(mol.radii.max()) ** 2
+            widths = [s.alpha if s.kind in ("gauss", "efield")
+                      else s.alpha / float(mol.radii.max()) ** 2
                       for s in model.fieldset.specs]
             grid = make_grid(mol.coords, margin=max(3.0, 2.5 / np.sqrt(max(min(widths), 1e-3))),
                              spacing=args.cube_spacing)

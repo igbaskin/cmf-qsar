@@ -55,8 +55,17 @@ from .increments import tripos_increments
 
 PHYSCHEM_FIELDS = ("electrostatic", "steric", "hydrophobic", "hba", "hbd")
 
+#: the electric-field kind of plan item EC5.  It is not one of the five default fields: it
+#: carries the same charges as the electrostatic field and differs in its kernel, which
+#: integrates the gradients of the two fields instead of the fields themselves, so it is
+#: offered beside the five and asked for by name.
+EFIELD_FIELD = "efield"
+#: every physicochemical field name a field set accepts
+PHYSCHEM_AVAILABLE = PHYSCHEM_FIELDS + (EFIELD_FIELD,)
+
 FIELD_LABELS = {
     "electrostatic": "Electrostatic",
+    "efield": "Electric field (vector)",
     "steric": "Steric",
     "hydrophobic": "Hydrophobic",
     "hba": "H-bond acceptor",
@@ -201,7 +210,7 @@ class FieldSet:
                tautomer_forms: int = 8) -> "FieldSet":
         specs = []
         for name in physchem:
-            kind = "steric" if name == "steric" else "gauss"
+            kind = {"steric": "steric", "efield": "efield"}.get(name, "gauss")
             specs.append(FieldSpec(name=name, kind=kind, alpha=alpha))
         for t in cif_types:
             specs.append(FieldSpec(name=f"cif:{t}", kind="gauss", alpha=alpha))
@@ -1005,7 +1014,8 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
     # a probe field weighs dispersion, electrostatics and hydrogen bonding together, so it
     # needs the charges and the donor/acceptor character whether or not those fields are on
     charges, charge_source = (_partial_charges(mol, fieldset.charge_model)
-                              if ("electrostatic" in need or probes) else (np.zeros(n), ""))
+                              if (need & {"electrostatic", "efield"} or probes)
+                              else (np.zeros(n), ""))
     hydro = acc = don = None
     pharm = None            # the six pharmacophore features, assigned once if any field asks
     want_hb = bool(need & {"hydrophobic", "hba", "hbd"}) or bool(probes)
@@ -1022,7 +1032,9 @@ def build_fields(mol: Chem.Mol, fieldset: FieldSet, name: str = "",
 
     W = np.zeros((n, fieldset.n_fields))
     for k, spec in enumerate(fieldset.specs):
-        if spec.name == "electrostatic":
+        if spec.name in ("electrostatic", "efield"):
+            # the electric-field kind carries the same charges: it is the same potential, and
+            # what differs is that its kernel integrates the gradients (plan item EC5)
             W[:, k] = charges
         elif spec.name == "steric":
             W[:, k] = evdw

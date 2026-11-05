@@ -868,6 +868,35 @@ literature describes. The limits are the usual two and must be stated: both targ
 rather than measured, and neither series varies the metal, so nothing here supports a claim about
 transferring a model between metals.
 
+**Item EC5 is done (5 November 2026) and it is a negative result that was predicted before it was
+measured.** The electric-field kernel pairs two molecules by the integral of their field
+*gradients*, which is the quantity the oriented-electric-field literature on catalysis is about,
+and for atom-centred Gaussians that integral is the ordinary overlap multiplied by
+`3 alpha / 2 - alpha^2 d^2 / 4`. So it is exact, costs no quadrature, and keeps the co-field and
+the Shapley decomposition. It is also the only pair integral in the method that changes sign, at
+2.45 angstrom for alpha = 1, beyond which 72 % of a real series' atom pairs lie; the kernel matrix
+stays positive semidefinite because it is an inner product of two vector fields.
+
+The paper's use of this item is methodological and it is the diagnostic, not the model. One number
+computed before any fitting says what the vector kernel can do: it correlates **+0.980** with the
+scalar kernel over the 4371 pairs of the Hammett series. The models then behave exactly as that
+number predicts — nothing on sigma_m (+0.0005 [-0.0037, +0.0051]) or sigma_p
+(+0.0068 [-0.0045, +0.0190]), and on a nickel redox potential the sixth field makes the model
+*worse* by -0.0138 V [-0.0342, -0.0005]. Two nearly collinear kernel blocks cost accuracy, which
+is a statement about kernel methods rather than about electrostatics, and the kernel correlation
+is the cheap test that tells a reader in advance which new field is worth adding. That is the
+transferable claim: before building a new field, correlate its cosine kernel with the kernels
+already in the model.
+
+The item also leaves two smaller statements. Used in place of the electrostatic field rather than
+beside it, the vector kernel ties the five-field model, so it is a legitimate substitute at the
+same price; and its co-field is a direction rather than a value, which on the nickel series puts
+the strongest arrows 5.6 to 6.6 angstrom from the metal pointing inward, the second-sphere
+statement in the only form a vector kernel can make it. The through-space prediction the item
+named — that the vector kernel should win on cationic porphyrins — is tested only on 25 nickel
+complexes, because no machine-readable porphyrin series was found, and there it wins under
+leave-one-out (+0.0299 V [+0.0144, +0.0459]) and not under random folds.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

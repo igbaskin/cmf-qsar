@@ -97,7 +97,7 @@ def _compiled_cutoff(specs: Sequence[FieldSpec], cutoff, radii_max: float):
         return None
     if isinstance(cutoff, (int, float)) and cutoff is not True:
         return float(cutoff)
-    gauss, steric, _probe = _group_fields(specs)
+    gauss, steric, _probe, efield = _group_fields(specs)
     radii = []
     for alpha in gauss:
         radii.append(cutoff_radius(0.25 * alpha))
@@ -107,18 +107,27 @@ def _compiled_cutoff(specs: Sequence[FieldSpec], cutoff, radii_max: float):
 
 
 def _group_fields(specs: Sequence[FieldSpec]):
-    """Fields by the shape of their Gaussians: shared width, per-atom width, or an expansion."""
+    """Fields by the integral their pairs need.
+
+    Returns ``(gauss, steric, probe, efield)``: fields whose Gaussians share one width, fields
+    whose width is scaled by the atom's radius, fields expanded into several Gaussians per atom,
+    and the electric-field kind of plan item EC5, which shares the width of an ordinary field but
+    integrates the *gradients* of the two fields against each other.
+    """
     gauss = {}
     steric = []
     probe = []
+    efield = {}
     for f, s in enumerate(specs):
         if getattr(s, "is_probe", False):
             probe.append((f, s.name))
         elif s.kind == "gauss":
             gauss.setdefault(float(s.alpha), []).append(f)
+        elif s.kind == "efield":
+            efield.setdefault(float(s.alpha), []).append(f)
         else:
             steric.append((f, float(s.alpha)))
-    return gauss, steric, probe
+    return gauss, steric, probe, efield
 
 
 #: which implementation of the atom-pair sum to use (plan item B5).  "numpy" is the default and
@@ -227,6 +236,31 @@ def pair_distances(xi: np.ndarray, Q: AtomTable, first_mol: int = 0) -> np.ndarr
     return cdist(xi, Q.coords[int(Q.offsets[first_mol]):], "sqeuclidean")
 
 
+def efield_pair_factor(alpha: float, d2: np.ndarray) -> np.ndarray:
+    """The pair integral of the electric-field kind (plan item EC5).
+
+    For two atom-centred Gaussians of the shared width that ``alpha`` names, this is
+
+        integral of grad g_i . grad g_j over space
+            = (pi / alpha) ** 1.5 * exp(-alpha d^2 / 4) * (3 alpha / 2 - alpha^2 d^2 / 4),
+
+    which is the ordinary overlap of the same two Gaussians multiplied by
+    ``3 alpha / 2 - alpha^2 d^2 / 4``.  It is the negative Laplacian of the overlap with respect
+    to the separation of the two centres, so it needs no quadrature and rule 3 of the plan is
+    kept.  The derivation and a check against a grid integral are in
+    ``tests/test_efield.py``.
+
+    Unlike every other pair integral in this module this one **changes sign**: it is positive for
+    two close atoms, zero at ``d^2 = 6 / alpha`` and negative beyond, because two charges far
+    apart have gradients that point against each other.  The kernel matrix is still positive
+    semidefinite, since it is an inner product of two vector fields; the sign only means that a
+    single atom pair may lower the kernel.
+    """
+    d2 = np.asarray(d2, float)
+    return ((np.pi / alpha) ** 1.5 * np.exp(-0.25 * alpha * d2)
+            * (1.5 * alpha - 0.25 * alpha * alpha * d2))
+
+
 def atom_kernel_block(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable,
                       specs: Sequence[FieldSpec], ci=None, cq=None, first_mol: int = 0,
                       D2: Optional[np.ndarray] = None, cutoff=None,
@@ -254,7 +288,7 @@ def atom_kernel_block(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTab
     a0 = int(Q.offsets[first_mol])
     nQ = Q.n_mol - first_mol
     out = np.zeros((F, Ni, nQ))
-    gauss, steric, probe = _group_fields(specs)
+    gauss, steric, probe, efield = _group_fields(specs)
     wq = Q.weights[a0:]
     starts = Q.offsets[first_mol:-1] - a0
     coords = Q.coords[a0:]
@@ -292,6 +326,20 @@ def atom_kernel_block(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTab
         E *= (np.pi / alpha) ** 1.5
         for f in fids:
             M = (wi[:, f][:, None] * E) * wq[:, f][None, :]          # (Ni, AQ)
+            out[f] = np.add.reduceat(M, starts, axis=1)
+    for alpha, fids in efield.items():
+        # The electric-field kind of plan item EC5.  Its kernel is the integral of the two
+        # fields' *gradients* against each other, and for atom-centred Gaussians that integral is
+        # in closed form: it is the negative Laplacian of the ordinary overlap with respect to
+        # the separation of the two atoms (:func:`efield_pair_factor`).  Rule 3 is kept.
+        #
+        # No neighbour list is used here.  The factor below grows with the separation before the
+        # exponential wins, so the cutoff radius of an ordinary field is too short for it, and an
+        # exact dense sum is cheaper than deriving a second radius.
+        dense_D2 = dense() if dense_D2 is None else dense_D2
+        E = efield_pair_factor(alpha, dense_D2)
+        for f in fids:
+            M = (wi[:, f][:, None] * E) * wq[:, f][None, :]
             out[f] = np.add.reduceat(M, starts, axis=1)
     for f, alpha in steric:
         rq = Q.radii[a0:]
@@ -579,7 +627,7 @@ def kernel_gradient(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable
     """
     grad = np.zeros((len(xi), 3))
     u_atom = np.repeat(np.asarray(u, dtype=float), np.diff(Q.offsets), axis=1)   # (F, AQ)
-    gauss, steric, probe = _group_fields(specs)
+    gauss, steric, probe, efield = _group_fields(specs)
     if probe:
         from .probes import basis_widths
         cq_all = Q.probe_coeffs
@@ -596,6 +644,14 @@ def kernel_gradient(xi: np.ndarray, wi: np.ndarray, ri: np.ndarray, Q: AtomTable
             E = np.exp(-0.25 * alpha * D2) * (np.pi / alpha) ** 1.5
             for f in fids:
                 M = (wi[:, f][:, None] * E) * (Q.weights[sl, f] * u_atom[f, sl])[None, :]
+                grad += (-0.5 * alpha) * np.einsum("lm,lmk->lk", M, diff)
+        for alpha, fids in efield.items():
+            # d/dD2 of the pair factor above: the overlap's own derivative times the factor,
+            # plus the overlap times the factor's derivative
+            E = (np.pi / alpha) ** 1.5 * np.exp(-0.25 * alpha * D2)
+            fac = E * (1.5 * alpha - 0.25 * alpha * alpha * D2 + alpha)
+            for f in fids:
+                M = (wi[:, f][:, None] * fac) * (Q.weights[sl, f] * u_atom[f, sl])[None, :]
                 grad += (-0.5 * alpha) * np.einsum("lm,lmk->lk", M, diff)
         for f, alpha in steric:
             bi = alpha / ri ** 2

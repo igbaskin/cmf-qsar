@@ -4142,6 +4142,29 @@ the population analysis of the same calculation that produced the target, a diff
 7.3 Å from the nickel atom, out among the substituents rather than at the metal or its donors,
 which is the second-sphere effect the plan item asked to look for.
 
+### The field a reaction centre feels: a vector kernel that is a near-copy of the scalar one
+
+What a reaction centre feels is not the potential but its gradient. A field type `efield` pairs
+two molecules by the integral of `grad phi_A . grad phi_B` over space, which for atom-centred
+Gaussians is the ordinary overlap multiplied by `3α/2 − α²d²/4` — the negative Laplacian of the
+overlap with respect to the separation of the two centres. So it is exact and costs no quadrature,
+and the closed form agreed with a 2.7-million-point grid integral to 0.000 %. It is the only pair
+integral here that changes sign: zero at 2.45 Å for α = 1 and negative beyond, which 72 % of the
+atom pairs of a real series are, while the kernel matrix stays positive semidefinite.
+
+One number, measured before any model, says what to expect: the vector and scalar cosine kernels
+**correlate +0.980** over the 4371 pairs of the Hammett series. They order the series almost
+identically, and the models confirm it. Added to the five fields the vector kernel changes nothing
+on σ_m (+0.0005 [−0.0037, +0.0051]) or σ_p (+0.0068 [−0.0045, +0.0190]), and on the nickel
+oxidation potential of item EC4 it makes the model worse by −0.0138 V [−0.0342, −0.0005]: a sixth
+field that is a near-copy of the first costs accuracy. Used in place of the electrostatic field it
+ties the five-field model, so it is a substitute at the same price, and on that nickel series the
+vector kernel alone beats the scalar field alone by +0.0299 V [+0.0144, +0.0459] under
+leave-one-out but not under random folds. The gate is not passed; the field type is kept and
+labelled, because it is exact, it is a working substitute, and its co-field is an arrow field —
+on the nickel series the strongest arrows sit 5.6 to 6.6 Å from the metal and point inward,
+towards it.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

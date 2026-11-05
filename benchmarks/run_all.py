@@ -293,6 +293,15 @@ def registry() -> List[Benchmark]:
                   minutes="3",
                   report=lambda: _mod("run_phenazine").write_table(_r("phenazine")),
                   tables=["phenazine/table.md"]),
+        Benchmark("efield",
+                  "the electric-field kernel, which pairs two molecules by the gradients of "
+                  "their fields, against the scalar electrostatic kernel on the Hammett "
+                  "constants and on 25 nickel complexes",
+                  "run_efield.py", "efield",
+                  compute=[["--stage", "check"], ["--stage", "hammett"], ["--stage", "nickel"]],
+                  minutes="2",
+                  report=lambda: _mod("run_efield").write_table(_r("efield")),
+                  tables=["efield/table.md"]),
         Benchmark("metal",
                   "the fields of a coordination complex against its composition and its "
                   "population analysis, on 2216 iron redox potentials and on 25 nickel "
