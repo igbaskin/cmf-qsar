@@ -340,6 +340,190 @@ def score_stage() -> Dict[str, object]:
     return out
 
 
+# ------------------------------------------------------------------------------- the measured sets
+
+#: one CSV per scaffold-tree node of the iron corrosion-inhibitor database: SMILES, the MWILA
+#: potency as ``activity``, and the Langmuir adsorption free energy as ``dG_ads``.  Unlike the
+#: Fe(110) sets both targets are **measured**, which is what the Fe(110) half of this item could
+#: not offer: there the target came from the same relaxation that produced the pose.
+CORROSION = os.path.join(ROOT, "examples", "corrosion")
+CORROSION_TARGETS = ("activity", "dG_ads")
+#: a series smaller than this cannot carry a ten-fold cross-validation
+CORROSION_MIN_ROWS = 15
+#: the grids and the fold count of ``benchmarks/run_corrosion.py``, so that the numbers here can
+#: be read against its published table (atom-type counts +0.189, the aligned five-field model
+#: +0.269, the invariant kernel +0.278, means over the 23 series).  That convention chooses
+#: (alpha, lambda) on the cross-validation it reports, which makes every model in the comparison
+#: optimistic in the same way.
+CORR_ALPHAS = (0.1, 0.3, 0.5, 1.0, 2.0, 5.0)
+CORR_LAMS = (1e-3, 1e-2, 0.1, 1.0, 10.0)
+CORR_FOLDS = 10
+#: the terms the slab receptor contributes, in the order the descriptor block has them
+SURFACE_TERMS = ("burial", "image_eV", "height", "over_top", "over_bridge", "over_hollow")
+
+
+def _standardise(train: np.ndarray, other: Optional[np.ndarray] = None) -> np.ndarray:
+    mean, sd = train.mean(axis=0), train.std(axis=0)
+    sd = np.where(sd > 1e-12, sd, 1.0)
+    rows = train if other is None else other
+    return (rows - mean) / sd
+
+
+def _descriptor_kernel(Z: np.ndarray) -> np.ndarray:
+    """The linear kernel of a descriptor block, scaled to a mean diagonal of one.
+
+    Scaled rather than cosine-normalised, for the reason :mod:`cmfqsar.descriptors` gives: a
+    molecule sitting at the mean in every column would otherwise become a zero row.
+    """
+    A = _standardise(np.asarray(Z, float))
+    K = A @ A.T
+    scale = float(np.mean(np.diag(K)))
+    return K / (scale if scale > 1e-12 else 1.0)
+
+
+def _unit_diagonal(K: np.ndarray) -> np.ndarray:
+    d = np.sqrt(np.clip(np.diag(np.asarray(K, float)), 1e-12, None))
+    return np.asarray(K, float) / np.outer(d, d)
+
+
+def _best_q2(kernels, y: np.ndarray):
+    """The best ten-fold q2 over the kernels offered, in the convention of run_corrosion.py."""
+    from cmfqsar.model import cv_predict
+    best = None
+    for key, K in kernels.items():
+        for lam in CORR_LAMS:
+            pred = cv_predict(np.asarray(K, float), y, "krr", {"lam": float(lam)},
+                              folds=min(CORR_FOLDS, len(y)), seed=SEED)
+            q2 = r2_score(y, pred)
+            if best is None or q2 > best[0]:
+                best = (float(q2), key, float(lam))
+    return best
+
+
+def _surface_block(mols, names, rec, fs, sites) -> np.ndarray:
+    """The slab receptor's terms for every molecule, at a pose this program produces itself.
+
+    Each molecule is embedded, laid flat by the rule of item EC2 and then refined against the
+    slab, which is the whole pipeline a user without a slab calculation has.  The Fe(110) half of
+    this item measured that a score read at the *relaxed* pose carries the relaxation's own
+    outcome, so there is no relaxed pose to fall back on here and none is wanted.
+    """
+    rows = []
+    for mol, name in zip(mols, names):
+        coords, _anchor = rule_pose(mol, "flat", height=RULE_HEIGHT)
+        posed = build_fields(_posed(mol, coords), fs, name)
+        docked, res = dock_on_surface(posed, rec, fs, starts=8, seed=SEED)
+        sc = surface_score(build_fields(_posed(mol, docked), fs, name), rec, fs, sites=sites)
+        rows.append([res.burial_after, res.image_after, res.height_after,
+                     sc.sites.get("top", 0.0), sc.sites.get("bridge", 0.0),
+                     sc.sites.get("hollow", 0.0)])
+    return np.asarray(rows, float)
+
+
+def corrosion_stage(limit_series: int = 0, min_rows: int = CORROSION_MIN_ROWS) -> Dict[str, object]:
+    """Do the slab receptor's terms predict a *measured* adsorption, and do they add anything?
+
+    The Fe(110) half of this item has a target that came from the same relaxation as the pose, so
+    a score read at that pose cannot be told apart from a readout of the relaxation.  The
+    corrosion sets have no such circularity: 23 congeneric series of iron corrosion inhibitors
+    with a measured potency in acid and, for most of them, a measured Langmuir adsorption free
+    energy.  The controls are the ones this repository already published on these very sets --
+    atom-type counts with no geometry at all, and the five fields in a frame the program invents.
+    """
+    from cmfqsar.chemotypes import count_kernel
+    from cmfqsar.dataio import load_dataset
+    from cmfqsar.fields import AtomTable
+    from cmfqsar.kernels import kernel_matrices
+    import glob
+
+    slab, rec = receptor()
+    fs = fieldset()
+    sites = surface_sites(slab)
+    paths = sorted(glob.glob(os.path.join(CORROSION, "*.csv")))
+    if limit_series:
+        paths = paths[:limit_series]
+    out: Dict[str, object] = {"n_series_offered": len(paths), "min_rows": min_rows,
+                              "targets": list(CORROSION_TARGETS), "terms": list(SURFACE_TERMS),
+                              "folds": CORR_FOLDS, "series": {}}
+    for path in paths:
+        tag = os.path.splitext(os.path.basename(path))[0]
+        ds = load_dataset(path, activity_prop="activity")
+        mols, names = ds.mols, ds.names
+        if len(mols) < min_rows:
+            continue
+        t0 = time.time()
+        Z = _surface_block(mols, names, rec, fs, sites)
+        k_surface = {"surface": _descriptor_kernel(Z)}
+        k_counts = {"counts": count_kernel(mols, names)}
+        k_fields, k_both = {}, {}
+        for alpha in CORR_ALPHAS:
+            fs_a = fieldset(alpha)
+            mf = [build_fields(_posed(m, rule_pose(m, "flat", height=RULE_HEIGHT)[0]), fs_a, n)
+                  for m, n in zip(mols, names)]
+            table = AtomTable.from_molecules(mf)
+            K = _unit_diagonal(kernel_matrices(table, table, fs_a.specs).sum(axis=0))
+            k_fields[alpha] = K
+            k_both[alpha] = K + k_surface["surface"]
+        rec_series: Dict[str, object] = {"n": len(mols), "seconds": time.time() - t0}
+        print(f"  === {tag}: {len(mols)} molecules ({rec_series['seconds']:.0f} s of posing)",
+              flush=True)
+        for target in CORROSION_TARGETS:
+            values = np.array([float(m.GetProp(target))
+                               if m.HasProp(target) and str(m.GetProp(target)).strip() else np.nan
+                               for m in mols])
+            keep = np.flatnonzero(np.isfinite(values))
+            if len(keep) < min_rows:
+                continue
+            y = values[keep]
+            sub = {"counts": k_counts["counts"][np.ix_(keep, keep)],
+                   "surface": k_surface["surface"][np.ix_(keep, keep)]}
+            rec_target: Dict[str, object] = {"n": int(len(keep))}
+            for label, kernels in (("counts", {"counts": sub["counts"]}),
+                                   ("surface", {"surface": sub["surface"]}),
+                                   ("fields", {a: K[np.ix_(keep, keep)]
+                                               for a, K in k_fields.items()}),
+                                   ("fields+surface", {a: K[np.ix_(keep, keep)]
+                                                       for a, K in k_both.items()})):
+                q2, key, lam = _best_q2(kernels, y)
+                rec_target[label] = {"q2": q2, "alpha": None if key in ("counts", "surface")
+                                     else float(key), "lam": lam}
+            # which of the six terms carries the target on its own, as a correlation
+            best_term, best_r = None, 0.0
+            for k, name in enumerate(SURFACE_TERMS):
+                col = Z[keep, k]
+                if col.std() > 1e-12:
+                    r = abs(float(np.corrcoef(col, y)[0, 1]))
+                    if r > best_r:
+                        best_term, best_r = name, r
+            rec_target["best_term"] = best_term
+            rec_target["best_term_abs_r"] = best_r
+            print(f"    {target:<9} n {len(keep):3d}  counts {rec_target['counts']['q2']:+.3f}  "
+                  f"fields {rec_target['fields']['q2']:+.3f}  "
+                  f"surface {rec_target['surface']['q2']:+.3f}  "
+                  f"fields+surface {rec_target['fields+surface']['q2']:+.3f}   "
+                  f"(best term {best_term} |r| {best_r:.2f})", flush=True)
+            rec_series[target] = rec_target
+        out["series"][tag] = rec_series
+    # the means over the series, which is how run_corrosion.py reports
+    out["means"] = {}
+    for target in CORROSION_TARGETS:
+        rows = [s[target] for s in out["series"].values() if target in s]
+        if not rows:
+            continue
+        means = {label: float(np.mean([r[label]["q2"] for r in rows]))
+                 for label in ("counts", "fields", "surface", "fields+surface")}
+        wins = {label: int(sum(1 for r in rows if r[label]["q2"] > r["counts"]["q2"]))
+                for label in ("fields", "surface", "fields+surface")}
+        adds = int(sum(1 for r in rows if r["fields+surface"]["q2"] > r["fields"]["q2"]))
+        out["means"][target] = {"n_series": len(rows), "q2": means,
+                                "beats_counts": wins, "surface_adds_to_fields": adds}
+        print(f"  --- {target}: over {len(rows)} series, counts {means['counts']:+.3f}, "
+              f"fields {means['fields']:+.3f}, surface {means['surface']:+.3f}, "
+              f"fields+surface {means['fields+surface']:+.3f}; the surface block beats counts in "
+              f"{wins['surface']} series and adds to the fields in {adds}", flush=True)
+    return out
+
+
 # ------------------------------------------------------------------------------- the table
 
 def _read(base: str, name: str):
@@ -351,6 +535,7 @@ def write_table(path: Optional[str] = None) -> str:
     base = path or RESULTS
     os.makedirs(base, exist_ok=True)
     rec, pose, score = _read(base, "receptor"), _read(base, "pose"), _read(base, "score")
+    corrosion = _read(base, "corrosion")
     out: List[str] = ["# A metal slab as the receptor", "",
                       "Plan item EC6. The Fe(110) sets hold the relaxed adsorbed pose and the",
                       "adsorption energy of every molecule from the UMA potential, so this item",
@@ -418,6 +603,40 @@ def write_table(path: Optional[str] = None) -> str:
                 out.append(f"| {key} | {block[key]['loo_q2']:+.3f} | "
                            + (f"{r:+.3f} |" if r is not None else "|"))
             out += [""]
+    if corrosion:
+        out += ["## The measured sets: 23 corrosion-inhibitor series", "",
+                "The Fe(110) target came from the same relaxation as the pose, so a score read",
+                "there cannot be told from a readout of the relaxation. These series have no such",
+                "circularity: a measured potency in acid and, for most molecules, a measured",
+                "Langmuir adsorption free energy. The slab terms are read at a pose this program",
+                "produces itself: embedded, laid flat by the rule of item EC2, then refined",
+                "against the slab. `counts` is atom-type counts with no geometry at all, and the",
+                "grids, the fold count and the selection convention are those of",
+                "`run_corrosion.py`, whose published means over these series are counts +0.189,",
+                "the aligned five-field model +0.269 and the invariant kernel +0.278.", ""]
+        for target, m in corrosion.get("means", {}).items():
+            out += [f"### {target} ({m['n_series']} series)", "",
+                    "| model | mean q2 over the series | series where it beats counts |",
+                    "|---|---|---|"]
+            for label in ("counts", "fields", "surface", "fields+surface"):
+                beat = m["beats_counts"].get(label)
+                out.append(f"| {label} | {m['q2'][label]:+.3f} | "
+                           + (f"{beat} of {m['n_series']} |" if beat is not None else "|"))
+            out += ["", f"The surface block adds to the five fields in "
+                    f"{m['surface_adds_to_fields']} of {m['n_series']} series.", ""]
+        out += ["### Every series", "",
+                "| series | n | target | counts | fields | surface | fields+surface | "
+                "best single term |", "|---|---|---|---|---|---|---|"]
+        for tag, block in corrosion["series"].items():
+            for target in corrosion["targets"]:
+                if target not in block:
+                    continue
+                r = block[target]
+                out.append(f"| {tag} | {r['n']} | {target} | {r['counts']['q2']:+.3f} | "
+                           f"{r['fields']['q2']:+.3f} | {r['surface']['q2']:+.3f} | "
+                           f"{r['fields+surface']['q2']:+.3f} | {r['best_term']} "
+                           f"({r['best_term_abs_r']:.2f}) |")
+        out += [""]
     text = "\n".join(out) + "\n"
     dest = os.path.join(base, "table.md")
     with open(dest, "w", encoding="utf-8", newline="\n") as fh:
@@ -426,13 +645,15 @@ def write_table(path: Optional[str] = None) -> str:
     return text
 
 
-STAGES = ("receptor", "pose", "score")
+STAGES = ("receptor", "pose", "score", "corrosion")
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
     ap.add_argument("--stage", choices=STAGES + ("all",), default="all")
     ap.add_argument("--limit", type=int, default=0, help="only the first N molecules of a node")
+    ap.add_argument("--limit-series", type=int, default=0,
+                    help="only the first N corrosion series")
     ap.add_argument("--report", action="store_true", help="only rebuild the table")
     args = ap.parse_args(argv)
     os.makedirs(RESULTS, exist_ok=True)
@@ -442,8 +663,12 @@ def main(argv=None):
     for stage in (STAGES if args.stage == "all" else (args.stage,)):
         print(f"[{stage}]", flush=True)
         t0 = time.time()
-        res = (pose_stage(limit=args.limit) if stage == "pose"
-               else {"receptor": receptor_stage, "score": score_stage}[stage]())
+        if stage == "pose":
+            res = pose_stage(limit=args.limit)
+        elif stage == "corrosion":
+            res = corrosion_stage(limit_series=args.limit_series)
+        else:
+            res = {"receptor": receptor_stage, "score": score_stage}[stage]()
         res["seconds"] = time.time() - t0
         with open(os.path.join(RESULTS, f"{stage}.json"), "w", encoding="utf-8",
                   newline="\n") as fh:

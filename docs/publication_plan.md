@@ -947,6 +947,17 @@ that outcome it carries. For a methods paper that is the sharpest available argu
 field has not adopted: a pose-dependent score must be reported at a pose the method can produce,
 and the gap between the two numbers is the size of the leak.
 
+A fourth stage removes the last way out of that argument, because a referee could answer that the
+leak is an artefact of a computed target. The same six slab terms were measured on 23 congeneric
+series of iron corrosion inhibitors with a **measured** potency in acid and 830 **measured**
+Langmuir adsorption free energies, at poses the program produces itself. Over the series the five
+ordinary fields reach q2 +0.279 on the potency and atom-type counts +0.189 -- reproducing exactly
+the number this work had already published for them, which is the check that the comparison is the
+same one -- while the slab terms reach +0.032 and drag the field model down to +0.190 when added
+to it. On the measured free energy they are -0.057. The conclusion therefore holds on a measured
+target and at an honest pose: on a clean metal a slab receptor adds nothing, and the q2 of 0.64
+was the relaxation talking.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

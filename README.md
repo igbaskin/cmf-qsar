@@ -4213,6 +4213,14 @@ Evaluated at the relaxed pose, burial predicts the adsorption energy with a leav
 Evaluated at a pose the program produces itself, the same score gives +0.115 and +0.049. The score
 reads off how the relaxation left the molecule, better than the height does, and predicts nothing.
 
+A fourth stage closes the question on **measured** targets, where nothing is circular: 23
+congeneric series of iron corrosion inhibitors, 997 molecules, with a measured potency in acid and
+830 measured Langmuir adsorption free energies, posed by the program itself. Over the 23 series
+the five fields reach q² +0.279 on the potency and atom-type counts +0.189 — which reproduces the
+value this repository had already published for them — while the six slab terms reach +0.032 and
+drag the field model down to +0.190 when added to it. On the measured free energy they are −0.057.
+On iron, at a pose the method can produce, a slab receptor adds nothing.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

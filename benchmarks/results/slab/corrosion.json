@@ -1,0 +1,1169 @@
+{
+ "n_series_offered": 23,
+ "min_rows": 15,
+ "targets": [
+  "activity",
+  "dG_ads"
+ ],
+ "terms": [
+  "burial",
+  "image_eV",
+  "height",
+  "over_top",
+  "over_bridge",
+  "over_hollow"
+ ],
+ "folds": 10,
+ "series": {
+  "0_c1ccccc1": {
+   "n": 244,
+   "seconds": 297.17848348617554,
+   "activity": {
+    "n": 244,
+    "counts": {
+     "q2": 0.43714660389114435,
+     "alpha": null,
+     "lam": 0.001
+    },
+    "surface": {
+     "q2": 0.1344608271744019,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "fields": {
+     "q2": 0.36311621569647134,
+     "alpha": 1.0,
+     "lam": 1.0
+    },
+    "fields+surface": {
+     "q2": 0.357570292811225,
+     "alpha": 1.0,
+     "lam": 1.0
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.3817264012736221
+   },
+   "dG_ads": {
+    "n": 207,
+    "counts": {
+     "q2": 0.10488567360909906,
+     "alpha": null,
+     "lam": 0.001
+    },
+    "surface": {
+     "q2": 0.06529952584704779,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.09104869249302416,
+     "alpha": 0.1,
+     "lam": 1.0
+    },
+    "fields+surface": {
+     "q2": 0.0900847326713059,
+     "alpha": 5.0,
+     "lam": 10.0
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.255795245539611
+   }
+  },
+  "11_c1c_nH_c_nH_1": {
+   "n": 23,
+   "seconds": 23.408402919769287,
+   "activity": {
+    "n": 23,
+    "counts": {
+     "q2": 0.447586192628996,
+     "alpha": null,
+     "lam": 0.1
+    },
+    "surface": {
+     "q2": -0.14605285493202502,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.3688000585417095,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.21000058920837894,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.3108983276693581
+   },
+   "dG_ads": {
+    "n": 22,
+    "counts": {
+     "q2": 0.3577856328462917,
+     "alpha": null,
+     "lam": 0.1
+    },
+    "surface": {
+     "q2": -0.03126871407126952,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.3464193804941038,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.1831792205736933,
+     "alpha": 1.0,
+     "lam": 1.0
+    },
+    "best_term": "over_hollow",
+    "best_term_abs_r": 0.20919969723963092
+   }
+  },
+  "12_c1ccoc1": {
+   "n": 28,
+   "seconds": 18.559657335281372,
+   "activity": {
+    "n": 28,
+    "counts": {
+     "q2": 0.3389766507632105,
+     "alpha": null,
+     "lam": 0.01
+    },
+    "surface": {
+     "q2": -0.1121450058721789,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.15242523733386404,
+     "alpha": 5.0,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.11152781684706803,
+     "alpha": 5.0,
+     "lam": 0.1
+    },
+    "best_term": "height",
+    "best_term_abs_r": 0.34188991191456886
+   }
+  },
+  "13_c1c_nH_nn1": {
+   "n": 25,
+   "seconds": 30.941694974899292,
+   "activity": {
+    "n": 25,
+    "counts": {
+     "q2": 0.3292863132688726,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": 0.05195289294993388,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.7882079847106046,
+     "alpha": 0.1,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": 0.3450146982189739,
+     "alpha": 0.1,
+     "lam": 0.001
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.6118611586113477
+   },
+   "dG_ads": {
+    "n": 23,
+    "counts": {
+     "q2": 0.8640876941128706,
+     "alpha": null,
+     "lam": 0.01
+    },
+    "surface": {
+     "q2": -0.040967294145716204,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.294412427679991,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.12225428999925025,
+     "alpha": 5.0,
+     "lam": 1.0
+    },
+    "best_term": "over_hollow",
+    "best_term_abs_r": 0.30569153227167184
+   }
+  },
+  "14_O_c1cc_nH_c_O_nH_1": {
+   "n": 24,
+   "seconds": 27.21659517288208,
+   "activity": {
+    "n": 24,
+    "counts": {
+     "q2": 0.7367913372446526,
+     "alpha": null,
+     "lam": 0.001
+    },
+    "surface": {
+     "q2": -0.04425288500936819,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.35402639725170026,
+     "alpha": 1.0,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": 0.436793660582496,
+     "alpha": 0.1,
+     "lam": 0.001
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.4001181990226718
+   }
+  },
+  "157_c1ccc2_nH_cnc2c1": {
+   "n": 73,
+   "seconds": 67.90645170211792,
+   "activity": {
+    "n": 73,
+    "counts": {
+     "q2": 0.26805066954303525,
+     "alpha": null,
+     "lam": 0.001
+    },
+    "surface": {
+     "q2": 0.12361969859245281,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "fields": {
+     "q2": 0.27218128609325565,
+     "alpha": 1.0,
+     "lam": 1.0
+    },
+    "fields+surface": {
+     "q2": 0.21764124685827035,
+     "alpha": 2.0,
+     "lam": 1.0
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.4699556938701875
+   },
+   "dG_ads": {
+    "n": 59,
+    "counts": {
+     "q2": 0.03788644118097273,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": 0.04335772394286164,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.14044314626682075,
+     "alpha": 0.1,
+     "lam": 1.0
+    },
+    "fields+surface": {
+     "q2": 0.0721702869524733,
+     "alpha": 1.0,
+     "lam": 10.0
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.36714589062871583
+   }
+  },
+  "158_c1ccc2ncccc2c1": {
+   "n": 65,
+   "seconds": 62.66661190986633,
+   "activity": {
+    "n": 65,
+    "counts": {
+     "q2": 0.03173964012009922,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": -0.07736301629158793,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.31597775641094195,
+     "alpha": 1.0,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.24071716829866507,
+     "alpha": 1.0,
+     "lam": 0.1
+    },
+    "best_term": "height",
+    "best_term_abs_r": 0.14513567819100978
+   },
+   "dG_ads": {
+    "n": 63,
+    "counts": {
+     "q2": 0.09482082110449808,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": -0.023634237472413,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.45237402961455264,
+     "alpha": 0.1,
+     "lam": 0.01
+    },
+    "fields+surface": {
+     "q2": 0.3388094736847792,
+     "alpha": 0.1,
+     "lam": 0.01
+    },
+    "best_term": "height",
+    "best_term_abs_r": 0.25919966802545324
+   }
+  },
+  "159_C_Nc1ccccc1_c1ccccc1": {
+   "n": 28,
+   "seconds": 29.57440185546875,
+   "activity": {
+    "n": 28,
+    "counts": {
+     "q2": -0.08630881129787671,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": -0.0696507828058861,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.22946499653188168,
+     "alpha": 1.0,
+     "lam": 1.0
+    },
+    "fields+surface": {
+     "q2": 0.12511221719670507,
+     "alpha": 1.0,
+     "lam": 1.0
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.3511139451175099
+   },
+   "dG_ads": {
+    "n": 21,
+    "counts": {
+     "q2": -0.1310998379098327,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": -0.2744356333520257,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": -0.10943534350034212,
+     "alpha": 0.1,
+     "lam": 1.0
+    },
+    "fields+surface": {
+     "q2": -0.26708800639392805,
+     "alpha": 0.3,
+     "lam": 10.0
+    },
+    "best_term": "image_eV",
+    "best_term_abs_r": 0.24950541415107375
+   }
+  },
+  "160_c1ccc2ccccc2c1": {
+   "n": 15,
+   "seconds": 17.10438847541809,
+   "activity": {
+    "n": 15,
+    "counts": {
+     "q2": -0.21745405783668947,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": -0.18201021341462797,
+     "alpha": null,
+     "lam": 0.01
+    },
+    "fields": {
+     "q2": -0.005181905014092214,
+     "alpha": 5.0,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": -0.20805310321064852,
+     "alpha": 5.0,
+     "lam": 10.0
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.3961975185472194
+   }
+  },
+  "161_c1ccc2scnc2c1": {
+   "n": 20,
+   "seconds": 15.251140832901001,
+   "activity": {
+    "n": 20,
+    "counts": {
+     "q2": 0.04294781573780149,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": 0.08829798209298878,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "fields": {
+     "q2": 0.1308587029380608,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.08237801986561877,
+     "alpha": 0.1,
+     "lam": 1.0
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.479268759249811
+   },
+   "dG_ads": {
+    "n": 16,
+    "counts": {
+     "q2": 0.13080841944231925,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": 0.07409551774227108,
+     "alpha": null,
+     "lam": 0.1
+    },
+    "fields": {
+     "q2": 0.42483666447343527,
+     "alpha": 0.5,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.423020324873454,
+     "alpha": 2.0,
+     "lam": 0.001
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.4499241365741692
+   }
+  },
+  "165_O_c1cc_nH_n1_c1ccccc1": {
+   "n": 15,
+   "seconds": 17.14062738418579,
+   "activity": {
+    "n": 15,
+    "counts": {
+     "q2": -0.11111027791687733,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": -0.06754550994059572,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.2997798526508525,
+     "alpha": 2.0,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": -0.04013573335981513,
+     "alpha": 2.0,
+     "lam": 10.0
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.5242312744340135
+   },
+   "dG_ads": {
+    "n": 15,
+    "counts": {
+     "q2": 0.1823964683104572,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": -0.001500480294902573,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.3994853929441925,
+     "alpha": 0.1,
+     "lam": 0.01
+    },
+    "fields+surface": {
+     "q2": 0.0892618328367254,
+     "alpha": 0.1,
+     "lam": 0.001
+    },
+    "best_term": "image_eV",
+    "best_term_abs_r": 0.5776963798408838
+   }
+  },
+  "17_c1nnco1": {
+   "n": 17,
+   "seconds": 12.753470420837402,
+   "activity": {
+    "n": 17,
+    "counts": {
+     "q2": 0.3457574528667807,
+     "alpha": null,
+     "lam": 0.1
+    },
+    "surface": {
+     "q2": -0.09389178146850297,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.07073100705255653,
+     "alpha": 1.0,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": -0.05694862693716707,
+     "alpha": 5.0,
+     "lam": 1.0
+    },
+    "best_term": "image_eV",
+    "best_term_abs_r": 0.3753575096336953
+   },
+   "dG_ads": {
+    "n": 15,
+    "counts": {
+     "q2": 0.06759103997194893,
+     "alpha": null,
+     "lam": 0.1
+    },
+    "surface": {
+     "q2": -0.2212999748585267,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": -0.0019818054042921585,
+     "alpha": 5.0,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.1503516396490775,
+     "alpha": 1.0,
+     "lam": 0.1
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.248568600741376
+   }
+  },
+  "1_c1ccncc1": {
+   "n": 109,
+   "seconds": 95.29806113243103,
+   "activity": {
+    "n": 109,
+    "counts": {
+     "q2": 0.07217293157765792,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": 0.028467726271063865,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.32703398680487494,
+     "alpha": 0.3,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.29095244587134417,
+     "alpha": 0.5,
+     "lam": 0.1
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.2903950470042625
+   },
+   "dG_ads": {
+    "n": 102,
+    "counts": {
+     "q2": 0.017711715221705338,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": 0.023994155471278034,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.16903635647116655,
+     "alpha": 0.3,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.15267605134267948,
+     "alpha": 0.3,
+     "lam": 0.1
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.3258748247920394
+   }
+  },
+  "20_O_c1cc_nH_nH_1": {
+   "n": 15,
+   "seconds": 17.26467800140381,
+   "activity": {
+    "n": 15,
+    "counts": {
+     "q2": -0.11111027791687733,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": -0.06754550994059572,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.2997798526508525,
+     "alpha": 2.0,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": -0.04013573335981513,
+     "alpha": 2.0,
+     "lam": 10.0
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.5242312744340135
+   },
+   "dG_ads": {
+    "n": 15,
+    "counts": {
+     "q2": 0.1823964683104572,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": -0.001500480294902573,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.3994853929441925,
+     "alpha": 0.1,
+     "lam": 0.01
+    },
+    "fields+surface": {
+     "q2": 0.0892618328367254,
+     "alpha": 0.1,
+     "lam": 0.001
+    },
+    "best_term": "image_eV",
+    "best_term_abs_r": 0.5776963798408838
+   }
+  },
+  "21_O_C1CCN1": {
+   "n": 17,
+   "seconds": 19.676941394805908,
+   "activity": {
+    "n": 17,
+    "counts": {
+     "q2": 0.030388767797847716,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": -0.1726633298289475,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.24696745355993444,
+     "alpha": 2.0,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": -0.12879486331057288,
+     "alpha": 2.0,
+     "lam": 10.0
+    },
+    "best_term": "height",
+    "best_term_abs_r": 0.10659659893214497
+   },
+   "dG_ads": {
+    "n": 17,
+    "counts": {
+     "q2": 0.1212197945548108,
+     "alpha": null,
+     "lam": 0.01
+    },
+    "surface": {
+     "q2": -0.19460575191868434,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": -0.10059464447130373,
+     "alpha": 0.1,
+     "lam": 1.0
+    },
+    "fields+surface": {
+     "q2": -0.1930399387250008,
+     "alpha": 0.1,
+     "lam": 10.0
+    },
+    "best_term": "over_top",
+    "best_term_abs_r": 0.2775236714951574
+   }
+  },
+  "22_C1CNOC1": {
+   "n": 16,
+   "seconds": 23.109909057617188,
+   "activity": {
+    "n": 16,
+    "counts": {
+     "q2": -0.003898231909111871,
+     "alpha": null,
+     "lam": 0.001
+    },
+    "surface": {
+     "q2": -0.04742078776752856,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.2881104694707628,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": -0.004477379619797217,
+     "alpha": 0.5,
+     "lam": 10.0
+    },
+    "best_term": "image_eV",
+    "best_term_abs_r": 0.35383000377369456
+   }
+  },
+  "2_c1c_nH_cn1": {
+   "n": 96,
+   "seconds": 81.79877066612244,
+   "activity": {
+    "n": 96,
+    "counts": {
+     "q2": 0.3353642289060964,
+     "alpha": null,
+     "lam": 0.001
+    },
+    "surface": {
+     "q2": 0.2594115990746726,
+     "alpha": null,
+     "lam": 0.001
+    },
+    "fields": {
+     "q2": 0.5211674166427424,
+     "alpha": 0.5,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.5216328026853936,
+     "alpha": 0.5,
+     "lam": 0.1
+    },
+    "best_term": "over_bridge",
+    "best_term_abs_r": 0.39143974962411254
+   },
+   "dG_ads": {
+    "n": 72,
+    "counts": {
+     "q2": 0.0893623042652707,
+     "alpha": null,
+     "lam": 0.01
+    },
+    "surface": {
+     "q2": 0.0886174300421847,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.3221807076752581,
+     "alpha": 0.3,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": 0.2718712638710922,
+     "alpha": 0.3,
+     "lam": 0.01
+    },
+    "best_term": "over_bridge",
+    "best_term_abs_r": 0.2902769633543491
+   }
+  },
+  "3_c1cscn1": {
+   "n": 27,
+   "seconds": 19.362546682357788,
+   "activity": {
+    "n": 27,
+    "counts": {
+     "q2": 0.1579733506603046,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": 0.0920464465166062,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "fields": {
+     "q2": 0.45180568136878785,
+     "alpha": 5.0,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": 0.5019291008543934,
+     "alpha": 2.0,
+     "lam": 0.001
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.4737506740755646
+   },
+   "dG_ads": {
+    "n": 21,
+    "counts": {
+     "q2": -0.15401929297768002,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": -0.25574807400107025,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.48161213053973695,
+     "alpha": 0.5,
+     "lam": 0.01
+    },
+    "fields+surface": {
+     "q2": -0.09968462410487233,
+     "alpha": 0.5,
+     "lam": 0.001
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.45530467117755163
+   }
+  },
+  "4_c1nnc_nH_1": {
+   "n": 40,
+   "seconds": 35.20684099197388,
+   "activity": {
+    "n": 40,
+    "counts": {
+     "q2": 0.4846384679777491,
+     "alpha": null,
+     "lam": 0.1
+    },
+    "surface": {
+     "q2": 0.007401616238156716,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "fields": {
+     "q2": 0.27648068179158214,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.2703548639766359,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.3927047734454401
+   },
+   "dG_ads": {
+    "n": 34,
+    "counts": {
+     "q2": 0.6287812122885508,
+     "alpha": null,
+     "lam": 0.1
+    },
+    "surface": {
+     "q2": -0.02407354872826839,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": 0.253538045013591,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.1621508428981029,
+     "alpha": 0.1,
+     "lam": 0.1
+    },
+    "best_term": "image_eV",
+    "best_term_abs_r": 0.3213677993134253
+   }
+  },
+  "5_c1cncnc1": {
+   "n": 16,
+   "seconds": 10.860915422439575,
+   "activity": {
+    "n": 16,
+    "counts": {
+     "q2": -0.08195160596166873,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": 0.5440248791049398,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "fields": {
+     "q2": 0.16088358438967698,
+     "alpha": 5.0,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": 0.5936602672785329,
+     "alpha": 5.0,
+     "lam": 0.01
+    },
+    "best_term": "over_top",
+    "best_term_abs_r": 0.7351776838707293
+   }
+  },
+  "7_c1nncs1": {
+   "n": 29,
+   "seconds": 20.440951824188232,
+   "activity": {
+    "n": 29,
+    "counts": {
+     "q2": -0.04403576577464752,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": 0.03179100151332015,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "fields": {
+     "q2": 0.0384018446342157,
+     "alpha": 5.0,
+     "lam": 0.1
+    },
+    "fields+surface": {
+     "q2": 0.10040058346443692,
+     "alpha": 5.0,
+     "lam": 1.0
+    },
+    "best_term": "image_eV",
+    "best_term_abs_r": 0.4401970236514548
+   },
+   "dG_ads": {
+    "n": 25,
+    "counts": {
+     "q2": -0.06660124689832458,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": -0.10578815303943867,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": -0.050660748236453834,
+     "alpha": 2.0,
+     "lam": 1.0
+    },
+    "fields+surface": {
+     "q2": -0.08939656114072281,
+     "alpha": 5.0,
+     "lam": 10.0
+    },
+    "best_term": "over_hollow",
+    "best_term_abs_r": 0.28734956540162365
+   }
+  },
+  "8_c1cn_nH_c1": {
+   "n": 30,
+   "seconds": 25.633604764938354,
+   "activity": {
+    "n": 30,
+    "counts": {
+     "q2": 0.6440319396310177,
+     "alpha": null,
+     "lam": 0.001
+    },
+    "surface": {
+     "q2": 0.5206858632375871,
+     "alpha": null,
+     "lam": 0.01
+    },
+    "fields": {
+     "q2": 0.5149921464747282,
+     "alpha": 0.3,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": 0.5012453212850863,
+     "alpha": 2.0,
+     "lam": 0.1
+    },
+    "best_term": "burial",
+    "best_term_abs_r": 0.4675135330850921
+   },
+   "dG_ads": {
+    "n": 21,
+    "counts": {
+     "q2": -0.15486395308894418,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": 0.005414600771126654,
+     "alpha": null,
+     "lam": 0.01
+    },
+    "fields": {
+     "q2": 0.21561535778314134,
+     "alpha": 0.3,
+     "lam": 0.001
+    },
+    "fields+surface": {
+     "q2": 0.09906748222575412,
+     "alpha": 0.3,
+     "lam": 0.001
+    },
+    "best_term": "image_eV",
+    "best_term_abs_r": 0.13806368079614834
+   }
+  },
+  "9_c1nc_nH_n1": {
+   "n": 25,
+   "seconds": 23.927204132080078,
+   "activity": {
+    "n": 25,
+    "counts": {
+     "q2": 0.28915474904943705,
+     "alpha": null,
+     "lam": 1.0
+    },
+    "surface": {
+     "q2": -0.07069945192974103,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": -0.048337413348297886,
+     "alpha": 0.1,
+     "lam": 10.0
+    },
+    "fields+surface": {
+     "q2": -0.06475539045467515,
+     "alpha": 0.1,
+     "lam": 10.0
+    },
+    "best_term": "image_eV",
+    "best_term_abs_r": 0.22507078167248085
+   },
+   "dG_ads": {
+    "n": 20,
+    "counts": {
+     "q2": -0.09656006490945757,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "surface": {
+     "q2": -0.15170043400281208,
+     "alpha": null,
+     "lam": 10.0
+    },
+    "fields": {
+     "q2": -0.11029895287410763,
+     "alpha": 5.0,
+     "lam": 10.0
+    },
+    "fields+surface": {
+     "q2": -0.15194475086448422,
+     "alpha": 5.0,
+     "lam": 10.0
+    },
+    "best_term": "over_top",
+    "best_term_abs_r": 0.2214334057703157
+   }
+  }
+ },
+ "means": {
+  "activity": {
+   "n_series": 23,
+   "q2": {
+    "counts": 0.18852774274134584,
+    "fields": 0.2790292736798986,
+    "surface": 0.03177910450280601,
+    "fields+surface": 0.18972305500220574
+   },
+   "beats_counts": {
+    "fields": 15,
+    "surface": 7,
+    "fields+surface": 12
+   },
+   "surface_adds_to_fields": 5
+  },
+  "dG_ads": {
+   "n_series": 18,
+   "q2": {
+    "counts": 0.12647718274638964,
+    "fields": 0.20097312388370595,
+    "surface": -0.05698576790907,
+    "fields+surface": 0.08016696628811694
+   },
+   "beats_counts": {
+    "fields": 11,
+    "surface": 3,
+    "fields+surface": 8
+   },
+   "surface_adds_to_fields": 1
+  }
+ },
+ "seconds": 1065.4951746463776
+}

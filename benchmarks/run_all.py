@@ -298,8 +298,9 @@ def registry() -> List[Benchmark]:
                   "the UMA-relaxed poses, and does a complementarity score track the adsorption "
                   "energy",
                   "run_slab.py", "slab",
-                  compute=[["--stage", "receptor"], ["--stage", "pose"], ["--stage", "score"]],
-                  minutes="14",
+                  compute=[["--stage", "receptor"], ["--stage", "pose"], ["--stage", "score"],
+                           ["--stage", "corrosion"]],
+                  minutes="32",
                   report=lambda: _mod("run_slab").write_table(_r("slab")),
                   tables=["slab/table.md"]),
         Benchmark("anchors",

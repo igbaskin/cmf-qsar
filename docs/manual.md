@@ -2371,16 +2371,60 @@ this item measures that the burial in that frame carries *more* of the outcome t
 does, which makes the trap worse rather than better: a score of 0.64 looks like a model and is a
 measurement of the input.
 
+### The measured sets: the same terms where nothing is circular
+
+The Fe(110) target came from the same relaxation as the pose, so the first measurement could not
+separate a score from a readout of its input. The corrosion sets have no such circularity. They
+hold 23 congeneric series of iron corrosion inhibitors, 997 molecules, with a **measured** potency
+in acid and, for 830 of them, a **measured** Langmuir adsorption free energy. The slab terms are
+read at a pose this program produces itself — embedded from SMILES, laid flat by the rule of item
+EC2, then refined against the slab — and there is no relaxed pose to fall back on.
+
+Six terms go in as a descriptor block: burial, the image energy, the height, and how much of the
+molecule sits over the top, bridge and hollow sites. The controls are the ones this repository
+published on these very sets, with the same grids, the same ten folds and the same selection
+convention, which is worth stating because the agreement is exact: atom-type counts come out at
+**+0.189**, the value already in `benchmarks/results/corrosion/table.md`.
+
+| model | measured potency (23 series) | measured ΔG_ads (18 series) |
+|---|---|---|
+| atom-type counts, no geometry | +0.189 | +0.126 |
+| the five fields in the rule frame | **+0.279** | **+0.201** |
+| the six slab terms | +0.032 | −0.057 |
+| the five fields and the slab terms | +0.190 | +0.080 |
+
+The slab terms carry almost nothing on their own and **make the field model worse** when added to
+it: +0.279 down to +0.190, and +0.201 down to +0.080. They beat the no-geometry control in 7 of
+the 23 series on the potency and 3 of 18 on ΔG_ads, and they add to the five fields in 5 and 1.
+So on a measured target, at a pose the program can produce, the slab receptor's terms do not pay.
+That closes the question the Fe(110) half had to leave open.
+
+One series looks like an exception and should be read with item EC3's lesson in hand: on a
+16-molecule series the slab terms alone reach +0.544 and the combination +0.594, against counts
+at −0.082, with `over_top` correlating |r| 0.74 with the potency. With 23 series tried, one strong
+hit is what selection produces, and nothing here distinguishes it from chance.
+
+Two smaller findings came out of this stage. The measured ΔG_ads is **harder** than the measured
+potency for every model, counts included (+0.126 against +0.189), although it is nominally the
+adsorption quantity and the potency is a rate: whatever is reproducible in these series is not
+mainly the adsorption free energy. And the site profile, which this item computed and had not
+used, is the term that most often carries what little signal there is — `over_top` and
+`over_bridge` appear as the best single term in several series. That is the only encouragement in
+the table and it is weak.
+
 ### What was built, and what the slab receptor is good for
 
 The machinery is correct and reusable: the receptor with its images, the image-charge term in
 closed form, the constrained pose search, and the surface-site profile — top, bridge and hollow
 sites from a Delaunay triangulation of the top layer, so the three kinds are found for any surface
-and not only the one lattice the module builds. For the iron sets it says what the surface cannot
-do. Where it should earn its place is a surface that offers more than shape: an oxide or a
-passivated metal, where the electrostatic and hydrogen-bond fields are not zero, and physisorption
-rather than chemisorption, where the image term is the right size. Neither case has a measured
-series here.
+and not only the one lattice the module builds. On iron it says what the surface cannot do, on
+both a computed and a measured target.
+
+Where it should earn its place is a surface that offers more than shape: an oxide or a passivated
+metal, where the electrostatic and hydrogen-bond fields are not zero, and physisorption rather
+than chemisorption, where the image term is the right size rather than a hundred times too small.
+Neither case has a measured series here, and after this item that is the only open question left
+in it — the machinery has been measured on everything the repository holds.
 
 # Before you model: `cmf diagnose`
 

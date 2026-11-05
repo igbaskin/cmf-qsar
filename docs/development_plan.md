@@ -3734,12 +3734,32 @@ for anything molecular.
   itself the same score is +0.115 and +0.049. So the burial in the relaxed frame is a *better*
   readout of the relaxation than the height is, which makes EC2's warning worse rather than
   better: a q2 of 0.64 looks like a model and is a measurement of the input.
+  *A fourth stage settles it on measured targets.* The Fe(110) target came from the same
+  relaxation as the pose, so that half could not separate a score from a readout of its input. The
+  corrosion sets have no such circularity: 23 congeneric series, 997 molecules, with a measured
+  potency in acid and 830 measured Langmuir adsorption free energies. Six slab terms go in as a
+  descriptor block -- burial, the image energy, the height, and the share of the molecule over the
+  top, bridge and hollow sites -- read at a pose the program produces itself (embedded from SMILES,
+  laid flat by EC2's rule, refined against the slab), with the grids, folds and selection
+  convention of `run_corrosion.py`. The agreement of the control is exact: atom-type counts come
+  out at +0.189, the value already published for them in
+  `benchmarks/results/corrosion/table.md`. Mean q2 over the series, measured potency then
+  measured dG_ads: counts +0.189 and +0.126, the five fields in the rule frame +0.279 and +0.201,
+  the six slab terms +0.032 and -0.057, the two together +0.190 and +0.080. The slab terms beat
+  the no-geometry control in 7 of 23 series and 3 of 18, and add to the five fields in 5 and 1, so
+  adding them *lowers* the field model. One 16-molecule series looks like an exception (the slab
+  terms alone +0.544, `over_top` at |r| 0.74) and with 23 series tried that is what selection
+  produces -- item EC3's lesson applies. Two smaller findings: the measured dG_ads is harder than
+  the measured potency for every model including counts, although it is nominally the adsorption
+  quantity; and the site profile, which this item had computed and not used, is the term that most
+  often carries what little signal there is.
   **Not done:** no surface that offers more than shape was measured -- an oxide or a passivated
   metal, where the electrostatic and hydrogen-bond fields are not zero, and physisorption rather
   than chemisorption, where the image term is the right size, are where this machinery should
-  earn its place and neither has a measured series here; the slab is rigid and its own relaxation
-  is not modelled; the site profile is computed and never used as a descriptor; and M7, the same
-  item for a pore, is untouched.
+  earn its place and neither has a measured series here. That is now the only open question in
+  the item: the machinery has been measured against everything the repository holds, computed and
+  measured. The slab is also rigid and its own relaxation is not modelled, and M7, the same item
+  for a pore, is untouched.
 * **EC7. A cation probe.** The probe module (`cmfqsar/probes.py`) carries water, methyl and
   carbonyl probes fitted as Gaussians. A Li⁺, Na⁺ or K⁺ probe, Coulomb plus repulsion with the
   module's own caveat about the wall, makes the field of an ionophore or an electrolyte solvent
