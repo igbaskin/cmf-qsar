@@ -2049,14 +2049,17 @@ field wins. Items BT1 to BT3 found the opposite on a battery voltage, where the 
 every field. The difference is what the target is: an average voltage is set by what the cell is
 made of, while a reduction potential of one complex is set by what sits around its metal and how.
 
-The frame decides whether the overlap kernel works at all. On a random 800 of the complexes, the
-overlap kernel in the frame the file happens to carry scores 0.524 V — exactly the training-mean
-error, R² = +0.005, a model that has learned nothing. The same kernel after each complex is put in
-its own metal-and-principal-axes frame scores 0.321 V, R² = +0.596: the frame is worth
-+0.203 V [+0.176, +0.231]. But the rule frame only brings the overlap kernel up to the
-composition's level (−0.008 V [−0.028, +0.011], an interval holding zero) and leaves it behind the
-frameless kernel (+0.055 V [+0.037, +0.074]). On a series whose members share nothing but the
-metal, a rule frame is better than no frame and worse than not needing one.
+The frame decides whether the overlap kernel works at all. In the frame each file happens to
+carry, the overlap kernel scores 0.490 V against a training-mean error of 0.523 V, R² = +0.083: a
+model that has learned almost nothing. The same kernel after each complex is put in its own
+metal-and-principal-axes frame scores 0.302 V, R² = +0.588, so the frame is worth
++0.188 V [+0.173, +0.202]. That lifts the overlap kernel just past the composition
+(+0.012 V [+0.001, +0.022], an interval that excludes zero by little) and leaves it behind the
+frameless kernel (+0.049 V [+0.039, +0.058]). Holding the coordination spheres out of training
+says the same, and a little more strongly: the frame is worth +0.182 V [+0.167, +0.197] and the
+margin over the composition grows to +0.022 V [+0.009, +0.033]. On a series whose members share
+nothing but the metal, a rule frame is far better than no frame, slightly better than no geometry
+at all, and worse than not needing a frame.
 
 ### The nickel series: the gate, and what the co-field reads
 

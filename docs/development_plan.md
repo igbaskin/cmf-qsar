@@ -3558,10 +3558,15 @@ for anything molecular.
   spheres out. This is the first inorganic target in this repository where a field beats a
   composition; items BT1 to BT3 found the opposite on an average cell voltage, and the difference
   is what the target is. And the frame decides whether the overlap kernel works at all: in the
-  frame the file happens to carry it scores the training-mean error exactly (R² = +0.005), and in
-  the metal-and-principal-axes rule frame it scores 0.321 V (R² = +0.596), so the frame is worth
-  +0.203 V [+0.176, +0.231] — and still leaves the overlap kernel level with the composition and
-  behind the kernel that needs no frame.
+  frame each file happens to carry it scores 0.490 V, barely better than the training mean
+  (R² = +0.083), and in the metal-and-principal-axes rule frame it scores 0.302 V (R² = +0.588),
+  so the frame is worth +0.188 V [+0.173, +0.202]. That lifts the overlap kernel just past the
+  composition (+0.012 V [+0.001, +0.022], and +0.022 V [+0.009, +0.033] with the coordination
+  spheres held out) and leaves it behind the kernel that needs no frame
+  (+0.049 V [+0.039, +0.058]). Measuring this on a random 800 of the complexes instead, which was
+  tried first because the overlap kernel costs most of the stage's hour, made the rule frame tie
+  the composition rather than pass it, so the subset answered a different question and every
+  model is measured on all 2216.
   *What the two frames are worth.* Matching the first coordination spheres onto a reference
   complex, over every assignment that pairs donors of the same element, puts the nickel donors
   0.03 ± 0.04 Å apart. The principal-axes rule puts the same donors 1.82 Å from where the match
@@ -3574,10 +3579,8 @@ for anything molecular.
   electrocatalytic property was found in machine-readable form, so the catalysis claim the item
   wanted is not made; the electrostatic field of a complex still uses the charges of the free
   ligands, which understates the donor atoms, and a calculated charge per atom is the first
-  extension; the overlap kernel was measured on a random 800 of the iron complexes rather than
-  all 2216, because its cost grows faster than the square of the number of complexes; and the
-  spin state of EC1 is stored on a complex and never used, because both series are measured at
-  one state each.
+  extension; and the spin state of EC1 is stored on a complex and never used, because both series
+  are measured at one state each.
 * **EC5. The electric-field kernel.** Every field in the program is a scalar; the quantity a
   reaction centre feels is the vector ∇φ. The integral of ∇φ_A·∇φ_B over space, for φ the sum of
   atom-centred Gaussians, is the second derivative of the overlap of `cmfqsar/kernels.py` with

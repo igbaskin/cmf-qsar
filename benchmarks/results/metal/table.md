@@ -37,9 +37,9 @@ shared frame. The rule frame of the principal axes puts the same donors
 A mean near one means the field has nearly the same shape in every complex
 and cannot separate two of them.
 
-## Iron: every complex of the series
+## Iron: 2216 complexes that share only the metal
 
-2216 complexes. Only the models that cost little are measured on the whole series; the overlap kernel is measured on the subset below.
+2216 complexes, every model on all of them. `overlap-raw` is the overlap kernel in the frame each file happens to carry and `overlap-rule` the same kernel after every complex is put in the frame of its own metal and principal axes, so the difference between the two is what the frame is worth.
 
 ### random folds (training-mean error 0.523 V)
 
@@ -48,10 +48,15 @@ and cannot separate two of them.
 | composition | 0.3132 | 0.0103 | +0.566 |
 | site | 0.3590 | 0.0109 | +0.447 |
 | invariant | 0.2530 | 0.0128 | +0.690 |
+| overlap-raw | 0.4896 | 0.0091 | +0.083 |
+| overlap-rule | 0.3015 | 0.0082 | +0.588 |
 
 | comparison | difference (V) | 95 % interval |
 |---|---|---|
 | invariant vs composition | +0.0602 | [+0.0493, +0.0713] |
+| overlap-rule vs composition | +0.0117 | [+0.0008, +0.0224] |
+| overlap-rule vs overlap-raw | +0.1881 | [+0.1732, +0.2022] |
+| invariant vs overlap-rule | +0.0485 | [+0.0390, +0.0583] |
 | composition vs site | +0.0458 | [+0.0374, +0.0547] |
 
 ### unseen-sphere folds (training-mean error 0.523 V)
@@ -61,51 +66,16 @@ and cannot separate two of them.
 | composition | 0.3364 | 0.0267 | +0.507 |
 | site | 0.3976 | 0.0320 | +0.348 |
 | invariant | 0.2840 | 0.0227 | +0.630 |
+| overlap-raw | 0.4986 | 0.0157 | +0.043 |
+| overlap-rule | 0.3165 | 0.0236 | +0.550 |
 
 | comparison | difference (V) | 95 % interval |
 |---|---|---|
 | invariant vs composition | +0.0554 | [+0.0437, +0.0676] |
+| overlap-rule vs composition | +0.0215 | [+0.0094, +0.0332] |
+| overlap-rule vs overlap-raw | +0.1815 | [+0.1667, +0.1966] |
+| invariant vs overlap-rule | +0.0339 | [+0.0239, +0.0441] |
 | composition vs site | +0.0604 | [+0.0516, +0.0694] |
-
-## Iron: a random subset, with the overlap kernel
-
-800 complexes. The overlap kernel is measured on this random subset and not on the whole series, because its cost grows faster than the square of the number of complexes: one field width took 16 s at 800 complexes and 62 s at 1200.
-
-### random folds (training-mean error 0.528 V)
-
-| model | MAE (V) | standard deviation | R2 |
-|---|---|---|---|
-| composition | 0.3127 | 0.0247 | +0.603 |
-| site | 0.3578 | 0.0216 | +0.476 |
-| invariant | 0.2659 | 0.0212 | +0.702 |
-| overlap-raw | 0.5235 | 0.0268 | +0.005 |
-| overlap-rule | 0.3207 | 0.0200 | +0.596 |
-
-| comparison | difference (V) | 95 % interval |
-|---|---|---|
-| invariant vs composition | +0.0468 | [+0.0276, +0.0655] |
-| overlap-rule vs composition | -0.0080 | [-0.0283, +0.0108] |
-| overlap-rule vs overlap-raw | +0.2029 | [+0.1763, +0.2311] |
-| invariant vs overlap-rule | +0.0548 | [+0.0367, +0.0736] |
-| composition vs site | +0.0451 | [+0.0311, +0.0603] |
-
-### unseen-sphere folds (training-mean error 0.535 V)
-
-| model | MAE (V) | standard deviation | R2 |
-|---|---|---|---|
-| composition | 0.3420 | 0.0272 | +0.546 |
-| site | 0.3869 | 0.0516 | +0.408 |
-| invariant | 0.2968 | 0.0217 | +0.661 |
-| overlap-raw | 0.5316 | 0.0819 | -0.022 |
-| overlap-rule | 0.3493 | 0.0185 | +0.543 |
-
-| comparison | difference (V) | 95 % interval |
-|---|---|---|
-| invariant vs composition | +0.0493 | [+0.0292, +0.0694] |
-| overlap-rule vs composition | -0.0061 | [-0.0276, +0.0151] |
-| overlap-rule vs overlap-raw | +0.1845 | [+0.1570, +0.2127] |
-| invariant vs overlap-rule | +0.0554 | [+0.0364, +0.0752] |
-| composition vs site | +0.0485 | [+0.0335, +0.0649] |
 
 ## Nickel: 25 complexes in a shared frame
 

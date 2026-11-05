@@ -11,16 +11,16 @@
    "sha256": "d271bb98f61a2b7ce3713d2f3fa9cbf21ced71e3686d06d914a20d04871446ca"
   },
   "benchmarks/results/metal/iron.json": {
-   "bytes": 616180,
-   "sha256": "4ab86666f701599922cf498fd2872047755b5ab6993c5e67bea485dd1b23eee4"
+   "bytes": 601509,
+   "sha256": "2ec7d2391367acfa7a665f00a71aa60bfe7350390b6584b790f6b16312eadb62"
   },
   "benchmarks/results/metal/nickel.json": {
    "bytes": 77806,
    "sha256": "ee43456cbf4de3b2bb417490169d8134c9ef63c5f5d04a0b4a1885b059593cae"
   },
   "benchmarks/results/metal/table.md": {
-   "bytes": 7733,
-   "sha256": "8f4631b92cb1f8d359d9850997ad9b065a38d145812b90bca87d426d2e5e2715"
+   "bytes": 6792,
+   "sha256": "b40773d20744cd42ff5c77a93aa30ee1f36d1a752c825a6f50c860bc4b715009"
   },
   "benchmarks/results/phenazine/cofield.json": {
    "bytes": 2496,
@@ -39,8 +39,8 @@
    "sha256": "09ab77d1d25fcd4179f26f290e8dc902a94a6f8318b79f33a1207d3243aeb0a8"
   },
   "benchmarks/run_metal.py": {
-   "bytes": 36323,
-   "sha256": "7ce148fa7a7115444ffb47dbc708f0e515ffc9b5ea3384e164ec2db617be8ce3"
+   "bytes": 34945,
+   "sha256": "472be2d65938a5b656e7e39f075d8285ce15dd58e864ce45c4882d149325ae35"
   },
   "benchmarks/run_phenazine.py": {
    "bytes": 31164,

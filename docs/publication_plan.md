@@ -848,14 +848,15 @@ its metal and how. A paper can put the two side by side and name the boundary ra
 method is better in general.
 
 The second finding is about the frame, and it is quantitative. The overlap kernel on the same
-complexes in the frame their file happens to carry scores exactly the training-mean error
-(R² = +0.005): with no shared frame, that kernel learns nothing at all. Putting each complex in
-the frame of its own metal and principal axes is worth +0.203 V [+0.176, +0.231], and still leaves
-it level with the composition and behind the kernel that needs no frame. On a congeneric nickel
-series, where the first coordination spheres can be matched onto each other to 0.03 angstrom, the
-same principal-axes rule puts the donors 1.82 angstrom from where the match puts them. So a rule
-frame is better than no frame, worse than a matched frame, and worse than not needing one — three
-statements a referee can check from one table.
+complexes in the frame their file happens to carry scores 0.490 V against a training-mean error of
+0.523 V (R² = +0.083): with no shared frame, that kernel learns almost nothing. Putting each
+complex in the frame of its own metal and principal axes is worth +0.188 V [+0.173, +0.202], which
+lifts it just past the composition (+0.012 V [+0.001, +0.022]) and still leaves it behind the
+kernel that needs no frame (+0.049 V [+0.039, +0.058]). On a congeneric nickel series, where the
+first coordination spheres can be matched onto each other to 0.03 angstrom, the same
+principal-axes rule puts the donors 1.82 angstrom from where the match puts them. So a rule frame
+is far better than no frame, barely better than no geometry at all, worse than a matched frame,
+and worse than not needing one — four statements a referee can check from one table.
 
 The gate of the item is passed on that nickel series: 25 substituted triaqua
 nickel–bis(pyrazolyl)pyridine complexes, where the five ordinary fields reach 0.150 V on the

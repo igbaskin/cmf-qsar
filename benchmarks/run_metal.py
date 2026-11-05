@@ -104,17 +104,14 @@ NICKEL_QUANTUM = ("npa_charge_Ni", "npa_charge_BPP", "npa_charge_subst", "npa_ch
                   "npa_spin_Ni", "npa_spin_BPP", "npa_spin_waters", "s2_after")
 
 IRON_MODELS = ("composition", "site", "invariant", "overlap-raw", "overlap-rule")
-#: the models cheap enough to run on the whole iron series
-IRON_MODELS_FULL = ("composition", "site", "invariant")
 NICKEL_MODELS = ("quantum", "site", "invariant", "overlap-rule", "physchem")
 
-#: how many complexes the overlap kernel is measured on.  The overlap kernel is a sum over every
-#: pair of atoms of every pair of molecules, and its cost grows faster than the square of the
-#: number of complexes: on this series one field width took 16 s at 800 complexes and 62 s at
-#: 1200, so all 2216 cost minutes for each of the four widths and each of the two frames.  The
-#: descriptor models and the frameless kernel are cheap, so they are measured on the whole series
-#: as well, which shows whether the subset changed the answer.
-IRON_SUBSET = 800
+# Every model is measured on the whole iron series.  The overlap kernel is a sum over every pair
+# of atoms of every pair of molecules, and its cost grows faster than the square of the number of
+# complexes -- one field width took 16 s at 800 complexes and 62 s at 1200 -- so the two overlap
+# models are most of the stage's hour.  Running them on a subset was tried and rejected: at 800
+# complexes the rule-framed overlap kernel only ties the composition, and on the whole series it
+# passes it, so the subset answered a different question.
 
 #: the comparisons each gate is read from.  "a vs b" is positive when b has the smaller error,
 #: that is when b is the better model.
@@ -484,22 +481,10 @@ def iron_stage() -> Dict[str, object]:
     mols, names, ys = load(IRON_SDF, [IRON_TARGET])
     y = ys[IRON_TARGET]
     spheres = [m.GetProp("donors") for m in mols]
-    out: Dict[str, object] = {"n": len(y), "target": IRON_TARGET, "subset_n": IRON_SUBSET}
-    print(f"  === all {len(y)} complexes, the models that cost little", flush=True)
     designs = {"random": random_folds(len(y)), "unseen-sphere": sphere_folds(spheres)}
-    pairs_full = {k: v for k, v in IRON_PAIRS.items()
-                  if all(m in IRON_MODELS_FULL for m in v)}
-    out["full"] = measure(mols, names, y, designs, IRON_MODELS_FULL, pairs_full)
-    idx = np.sort(np.random.RandomState(SEED).choice(len(y), size=min(IRON_SUBSET, len(y)),
-                                                     replace=False))
-    sub = [mols[i] for i in idx]
-    sub_names = [names[i] for i in idx]
-    sub_spheres = [spheres[i] for i in idx]
-    print(f"  === a random {len(idx)} of them, every model including the overlap kernel",
-          flush=True)
-    sub_designs = {"random": random_folds(len(idx)), "unseen-sphere": sphere_folds(sub_spheres)}
-    out["subset"] = measure(sub, sub_names, y[idx], sub_designs, IRON_MODELS, IRON_PAIRS)
-    out["subset"]["indices"] = [int(i) for i in idx]
+    out: Dict[str, object] = measure(mols, names, y, designs, IRON_MODELS, IRON_PAIRS)
+    out["n"] = len(y)
+    out["target"] = IRON_TARGET
     return out
 
 
@@ -622,20 +607,13 @@ def write_table(path: Optional[str] = None) -> str:
             out.append(f"| {name} | {s['mean']:.3f} | {s['sd']:.3f} | {s['min']:.3f} |")
         out += ["", "A mean near one means the field has nearly the same shape in every complex",
                 "and cannot separate two of them.", ""]
-    for title, part in (("## Iron: every complex of the series", "full"),
-                        ("## Iron: a random subset, with the overlap kernel", "subset")):
-        if not iron or part not in iron:
-            continue
-        block = iron[part]
-        out += [title, "",
-                f"{block['designs']['random']['models'][block['models'][0]]['n']} complexes. "
-                + ("The overlap kernel is measured on this random subset and not on the whole "
-                   "series, because its cost grows faster than the square of the number of "
-                   "complexes: one field width took 16 s at 800 complexes and 62 s at 1200."
-                   if part == "subset" else
-                   "Only the models that cost little are measured on the whole series; the "
-                   "overlap kernel is measured on the subset below."),
-                ""]
+    if iron:
+        block = iron
+        out += [f"## Iron: {iron['n']} complexes that share only the metal", "",
+                f"{iron['n']} complexes, every model on all of them. `overlap-raw` is the overlap "
+                "kernel in the frame each file happens to carry and `overlap-rule` the same "
+                "kernel after every complex is put in the frame of its own metal and principal "
+                "axes, so the difference between the two is what the frame is worth.", ""]
         for dname, rec in block["designs"].items():
             out += [f"### {dname} folds (training-mean error {rec['baseline_mae']:.3f} V)", "",
                     "| model | MAE (V) | standard deviation | R2 |", "|---|---|---|---|"]

@@ -300,7 +300,7 @@ def registry() -> List[Benchmark]:
                   "run_metal.py", "metal",
                   compute=[["--stage", "data"], ["--stage", "iron"], ["--stage", "nickel"],
                            ["--stage", "cofield"]],
-                  minutes="25",
+                  minutes="60",
                   report=lambda: _mod("run_metal").write_table(_r("metal")),
                   tables=["metal/table.md"]),
         Benchmark("sac",

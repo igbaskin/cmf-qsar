@@ -4129,10 +4129,11 @@ metal site at 0.313 V and a training-mean error of 0.523 V: the fields win by
 +0.060 V [+0.049, +0.071], and the ranking holds when whole coordination spheres are held out.
 This is the first inorganic target here where a field beats a composition; the battery items BT1
 to BT3 found the opposite on an average cell voltage. The frame decides whether the *overlap*
-kernel works at all: in the frame the file happens to carry it scores the training-mean error
-exactly (R² = +0.005), and after each complex is put in its own metal-and-principal-axes frame it
-scores 0.321 V (R² = +0.596) — the frame is worth +0.203 V [+0.176, +0.231], and still leaves the
-overlap kernel behind the kernel that needs no frame.
+kernel works at all: in the frame each file happens to carry it scores 0.490 V, barely better than
+the training mean (R² = +0.083), and after each complex is put in its own metal-and-principal-axes
+frame it scores 0.302 V (R² = +0.588) — the frame is worth +0.188 V [+0.173, +0.202]. That lifts it
+just past the composition (+0.012 V [+0.001, +0.022]) and still leaves it behind the kernel that
+needs no frame (+0.049 V [+0.039, +0.058]).
 
 On **25 substituted nickel complexes** that share one ligand skeleton and one N3O3 coordination
 sphere, the five ordinary fields reach 0.150 V on the Ni(III)/Ni(II) potential against 0.345 V for
