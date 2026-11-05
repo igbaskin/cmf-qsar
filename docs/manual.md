@@ -2459,6 +2459,63 @@ than chemisorption, where the image term is the right size rather than a hundred
 Neither case has a measured series here, and after this item that is the only open question left
 in it — the machinery has been measured on everything the repository holds.
 
+## A kinetic selectivity as the activity: a catalyst series in the frame of its reaction centre
+
+A rate constant across a congeneric series is a free-energy difference, as a binding constant
+is, so the method applies to kinetics under its usual condition: a shared frame, and one
+mechanism across the series. The program's first measured catalytic series is the screen of
+Zahrt, Henle, Rose, Wang, Darrow and Denmark (Science 363 (2019) eaau5631): 43 BINOL-derived
+chiral phosphoric acids, each run on the 25 combinations of 5 N-acyl imines and 5 thiols, 1,075
+N,S-acetal formations with their enantiomeric excess. The target is
+ΔΔG‡ = RT ln((1 + ee)/(1 − ee)) at 298.15 K, the free-energy difference between the two
+diastereomeric transition states, which is the difference of two rate constants.
+
+**The frame is the reaction centre.** Every catalyst is the same phosphoric acid on one of two
+binaphthyl scaffolds with one substituent at both 3 and 3' positions. The builder
+(`examples/make_denmark_examples.py --fetch`) assembles each catalyst from the published
+fragments, keeps the lowest of 30 MMFF conformers, gives all 43 the same axial configuration
+(a 2D file does not carry it, and the conformer generator assigns it at random), and puts the
+phosphorus at the origin with the acid oxygens on +z, so that the substituents flank the pocket
+in which the substrates meet. The catalyst has a C2 axis along z; both images are written as the
+conformers of an ensemble, which gives the field the symmetry of the molecule.
+
+**The model** is the multi-endpoint model of the selectivity co-field with 25 endpoints: one
+kernel over the catalysts from the five physico-chemical fields, one covariance between the
+substrate combinations (a shared correlation of 0.95, chosen by the evidence: the endpoints are
+mostly the catalyst's own selectivity), and the pair kernel. The benchmark
+(`benchmarks/run_denmark.py`) holds out each catalyst in turn, each reaction, each substrate
+combination, each imine and each thiol, and scores every split against the baseline that
+predicts the same thing without a field, in kcal/mol:
+
+| Held out | Field model, MAD (q²) | Baseline, MAD (q²) | Published |
+|---|---|---|---|
+| each catalyst in turn | 0.224 (0.82) | endpoint mean, 0.458 (0.17) | 0.211 on 19 catalysts held out |
+| reactions, 10-fold | 0.148 to 0.164 (0.89 to 0.91) | additive effects, 0.183 (0.87) | 0.161 on new substrate combinations |
+| each substrate combination in turn | 0.158 (0.90) | additive effects, 0.186 (0.87) | |
+| each thiol in turn | 0.406 (0.53) | additive effects, 0.399 (0.54) | |
+
+The field model is at the published accuracy on both kinds of split the paper reports. What the
+paper could not measure, and this program can, is what the frame is worth: on the catalyst
+holdout the steric field alone gives q² 0.76, the hydrophobic 0.63, the electrostatic 0.41, and
+the same five fields compared without a frame, through the rotation-invariant kernel, 0.26. The
+selectivity is steric, and the frame is most of the result.
+
+**Reading the co-field.** Averaged over the 25 endpoints and drawn in the acid's frame
+(`benchmarks/results/denmark/cofields.png`), the steric co-field is positive at the 3,3' ipso
+carbons on either side of the acid and negative 3 to 5 Å above the phosphorus, over the pocket:
+bulk that flanks the acid raises the selectivity, bulk that reaches over the pocket lowers it.
+That is a map a chemist can design against, and it is what the published grid descriptor, a
+steric occupancy without a learned sign, does not give.
+
+**What it does not do.** A thiol no catalyst was run on is not predicted, because the substrate
+side of the model is a one-hot descriptor that knows nothing about an unseen thiol, and the
+aliphatic and aromatic thiols differ by 0.6 kcal/mol in their means; a field of the substrate
+aligned on its reacting group is the form that could carry it. The two worst catalysts have a
+methylene or a silicon between the scaffold and the aryl group, so the group's position is a
+conformer choice the lowest MMFF structure makes once. And the condition of one mechanism holds
+here because the screen was designed for it; on a series whose rate-determining step changes,
+the co-field of the mixture means nothing, and a curved Hammett plot is the warning sign.
+
 ## Three tests to run before you build a new field or a new score
 
 The chapter that follows diagnoses a *data set*. This short section diagnoses a *proposal*: a new

@@ -176,6 +176,7 @@ which stayed here.
 | 16 | **The gap of a benzenoid in a frame given by rule.** On 8,678 polybenzenoid hydrocarbons the HOMO-LUMO gap is topology: ring-centred fields carry it, and they are the one representation that extrapolates to larger molecules | `results/compas/` (`table.md`, `REPORT.md`, `NOTES.md`), `cmfqsar/pbh.py`, `benchmarks/run_compas.py`, manual "A frame by rule" | J. Chem. Inf. Model., J. Phys. Chem. A or Phys. Chem. Chem. Phys. | Results done; the gap to the equivariant networks must be stated |
 | 17 | **The barrier of a lithium hop from the field around the path.** The hop is the sample, the rotation about it is averaged in closed form, and the field beats the counts and the geometric descriptors on 1732 hops in 472 oxides | `results/hops/`, `cmfqsar/hops.py`, `vasp.py`, `examples/hops/` | Chem. Mater., J. Mater. Chem. A or npj Comput. Mater. | Labels are bond-valence site energies; needs a DFT-labelled subset |
 | 18 | **The fourth dimension, measured.** Conformer ensembles, protonation ensembles, a trajectory in the crystal site and the water as a field: none beats one well-posed conformation, and where the pose is unknown the ensemble is worse | README "The verdict on the fourth dimension", `results/protonation/`, `md/`, `solvent/`, `trajectory/`, `examples/md/`, the Hammett ensemble rows | J. Comput.-Aided Mol. Des. or J. Chem. Inf. Model. | Results done |
+| 20 | **A kinetic selectivity as the activity.** On 1,075 catalysed N,S-acetal formations the chiral phosphoric acid in the frame of its own reaction centre predicts the enantioselectivity at the published accuracy, and the same fields without the frame lose three quarters of the explained variance | `results/denmark/`, `examples/make_denmark_examples.py`, `benchmarks/run_denmark.py`, manual "A kinetic selectivity as the activity" | ACS Catalysis, J. Org. Chem. or J. Chem. Inf. Model. | Results done; a substrate field for the unseen-thiol case |
 
 Short communication, written only if a journal asks for a separate note: increments fitted to
 the data, which improve the number they are fitted on and nothing else (`results/increments/`);
@@ -1043,6 +1044,33 @@ weights with the co-field kept exportable, field values as node attributes of an
 network) have a plan and no measurement. The paper exists when ND1 and ND2 are measured on
 COMPAS-1 against paper 16's model and the published networks; until then it is not counted.
 
+### 20. A kinetic selectivity as the activity: the frame measured on a catalyst series
+
+The claim: a measured enantioselectivity is a free-energy difference between two transition
+states, and a congeneric catalyst series with the reaction centre as its frame is a CMF problem
+like any binding series. On the 1,075 N,S-acetal formations of Zahrt et al. (Science 2019), the
+field model of the 43 chiral phosphoric acids, with the 25 substrate combinations as endpoints of
+one multi-task model, reaches the published accuracy on both of the paper's splits (0.224
+kcal/mol on a catalyst it has not seen, 0.148 to 0.164 on a reaction of one it has; published
+0.211 and 0.161). The result worth a paper is the second table: the same fields through the
+rotation-invariant kernel give q² 0.26 where the framed kernel gives 0.82, so the shared frame,
+which the binding sets can never isolate because their alignment is itself uncertain, is here
+measured directly and is most of the result. The co-field is a map of where bulk helps and where it
+hurts in the acid's own frame, which the published steric-occupancy descriptor cannot draw.
+
+Source material: `results/denmark/` (`table.md`, `cofields.png`), `examples/make_denmark_examples.py`,
+`benchmarks/run_denmark.py`, manual section *A kinetic selectivity as the activity*. Venue:
+ACS Catalysis, J. Org. Chem. or J. Chem. Inf. Model.
+
+The limitations that decide the venue. The thiol holdout fails (0.406 against a baseline of
+0.399) because the substrate side is one-hot; a substrate field aligned on the reacting group is
+the one addition the paper needs, and it is a week of work. The axial configuration of the 43
+catalysts is consistent but not known to be (R) or (S) from the source files, so the co-field is
+drawn for "the enantiomer of the screen"; the paper's supplementary material settles it. The
+data files are the paper's supplementary material fetched from a public copy, so the paper
+cites them and redistributes nothing. Paper 2 is the same construction on constants; the two cite
+each other and share no table.
+
 ## Sequence
 
 | Tier | When | Papers | Why these first |
@@ -1084,6 +1112,7 @@ three. If time runs out, the papers that fold into others are 12 (into 8), 13 (i
 | 16 | Skeleton frame, plane-flip kernel, NICS field; the collaborating group's reading | one to two weeks, and the group |
 | 17 | A DFT-labelled subset of hops (NEB), the polarisability field, a co-author in solid-state ionics | weeks, and a co-author |
 | 18 | Nothing | none |
+| 20 | A substrate field aligned on the reacting group, for the thiol no catalyst was run on; the (R)/(S) label from the paper's supplementary material | one week |
 
 ## Risks
 

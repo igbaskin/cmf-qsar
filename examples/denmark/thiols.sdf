@@ -1,0 +1,252 @@
+A
+     RDKit          3D
+
+ 13 13  0  0  0  0  0  0  0  0999 V2000
+    1.0455   -0.2965   -0.1490 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1107   -1.3351   -0.1262 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2519   -1.0530   -0.0071 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6852    0.2687    0.0851 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7575    1.3089    0.0558 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6056    1.0276   -0.0630 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7778   -0.6698   -0.3093 S   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4349   -2.3705   -0.2002 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9741   -1.8652    0.0117 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7460    0.4880    0.1763 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0953    2.3400    0.1222 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3142    1.8512   -0.0927 H   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2213    0.3057    0.4965 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  1  7  1  0
+  2  8  1  0
+  3  9  1  0
+  4 10  1  0
+  5 11  1  0
+  6 12  1  0
+  7 13  1  0
+M  END
+>  <force_field>  (1) 
+MMFF94
+
+>  <thiol>  (1) 
+A
+
+>  <smiles>  (1) 
+Sc1ccccc1
+
+>  <mmff_energy>  (1) 
+12.911643104646547
+
+>  <source>  (1) 
+Zahrt, Henle, Rose, Wang, Darrow & Denmark, Science 363 (2019) eaau5631, supplementary data as redistributed at github.com/bm2-lab/DeepReac (Data/DatasetC); catalysts assembled from the scaffold and substituent fragments, embedded with RDKit ETKDG + MMFF94, lowest conformer, one axial configuration, phosphorus at the origin and the acid oxygens on +z (examples/make_denmark_examples.py)
+
+$$$$
+B
+     RDKit          3D
+
+  9  8  0  0  0  0  0  0  0  0999 V2000
+    0.1567   -0.6962    0.0260 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8100    0.4729    0.0404 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6893   -0.2727    0.8993 S   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4024   -0.9722   -1.0039 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2954   -1.5656    0.5127 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0847    0.7549    1.0625 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7307    0.2013   -0.4866 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3882    1.3502   -0.4617 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0604    0.7274    0.0864 H   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  1  3  1  0
+  1  4  1  0
+  1  5  1  0
+  2  6  1  0
+  2  7  1  0
+  2  8  1  0
+  3  9  1  0
+M  END
+>  <force_field>  (2) 
+MMFF94
+
+>  <thiol>  (2) 
+B
+
+>  <smiles>  (2) 
+CCS
+
+>  <mmff_energy>  (2) 
+-0.93409894858254927
+
+>  <source>  (2) 
+Zahrt, Henle, Rose, Wang, Darrow & Denmark, Science 363 (2019) eaau5631, supplementary data as redistributed at github.com/bm2-lab/DeepReac (Data/DatasetC); catalysts assembled from the scaffold and substituent fragments, embedded with RDKit ETKDG + MMFF94, lowest conformer, one axial configuration, phosphorus at the origin and the acid oxygens on +z (examples/make_denmark_examples.py)
+
+$$$$
+C
+     RDKit          3D
+
+ 19 19  0  0  0  0  0  0  0  0999 V2000
+    0.5762   -0.8957   -0.7747 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7096   -2.3247   -0.8331 S   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3169    0.3417   -0.2590 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3747    1.5398   -0.1437 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8443    1.2173    0.7158 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5770   -0.0226    0.2112 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6396   -1.2246    0.0968 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2409   -0.7103   -1.8021 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9811   -2.3656    0.4798 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7557    0.1437    0.7279 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1425    0.6023   -0.9327 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9135    2.3919    0.2859 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0453    1.8422   -1.1455 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5285    2.0732    0.7212 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5263    1.0556    1.7532 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0197    0.1890   -0.7700 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4036   -0.2636    0.8891 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3213   -1.5190    1.1056 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1961   -2.0704   -0.3256 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  6  7  1  0
+  7  1  1  0
+  1  8  1  0
+  2  9  1  0
+  3 10  1  0
+  3 11  1  0
+  4 12  1  0
+  4 13  1  0
+  5 14  1  0
+  5 15  1  0
+  6 16  1  0
+  6 17  1  0
+  7 18  1  0
+  7 19  1  0
+M  END
+>  <force_field>  (3) 
+MMFF94
+
+>  <thiol>  (3) 
+C
+
+>  <smiles>  (3) 
+SC1CCCCC1
+
+>  <mmff_energy>  (3) 
+3.2938830509190877
+
+>  <source>  (3) 
+Zahrt, Henle, Rose, Wang, Darrow & Denmark, Science 363 (2019) eaau5631, supplementary data as redistributed at github.com/bm2-lab/DeepReac (Data/DatasetC); catalysts assembled from the scaffold and substituent fragments, embedded with RDKit ETKDG + MMFF94, lowest conformer, one axial configuration, phosphorus at the origin and the acid oxygens on +z (examples/make_denmark_examples.py)
+
+$$$$
+D
+     RDKit          3D
+
+ 17 17  0  0  0  0  0  0  0  0999 V2000
+    2.0405   -0.3053   -0.0264 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.7685   -0.7245    0.0078 S   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5783    0.7647   -0.7935 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2153    1.0746   -0.8135 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6995    0.3203   -0.0748 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2382   -0.7534    0.6864 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1269   -1.0652    0.7078 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9989    0.7313   -0.1838 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9705   -0.0088    0.5445 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.2367    0.5266   -0.1077 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2639    1.3651   -1.3855 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1376    1.9103   -1.4132 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9099   -1.3702    1.2739 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4682   -1.9079    1.3050 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0105   -1.0491    0.2050 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.9485    0.4422    0.3507 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7848    0.0493    1.6221 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  7  1  0
+  7  1  2  0
+  5  8  1  0
+  8  9  1  0
+  2 10  1  0
+  3 11  1  0
+  4 12  1  0
+  6 13  1  0
+  7 14  1  0
+  9 15  1  0
+  9 16  1  0
+  9 17  1  0
+M  END
+>  <force_field>  (4) 
+MMFF94
+
+>  <thiol>  (4) 
+D
+
+>  <smiles>  (4) 
+COc1ccc(S)cc1
+
+>  <mmff_energy>  (4) 
+15.909514745747357
+
+>  <source>  (4) 
+Zahrt, Henle, Rose, Wang, Darrow & Denmark, Science 363 (2019) eaau5631, supplementary data as redistributed at github.com/bm2-lab/DeepReac (Data/DatasetC); catalysts assembled from the scaffold and substituent fragments, embedded with RDKit ETKDG + MMFF94, lowest conformer, one axial configuration, phosphorus at the origin and the acid oxygens on +z (examples/make_denmark_examples.py)
+
+$$$$
+E
+     RDKit          3D
+
+ 16 16  0  0  0  0  0  0  0  0999 V2000
+   -0.1252    0.9374    0.4256 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2558    2.2292    0.9231 S   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2469    1.2115    0.5110 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1889    0.2542    0.1340 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7666   -0.9868   -0.3306 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4034   -1.2721   -0.4154 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5587   -0.3195   -0.0376 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0156   -0.6801   -0.1396 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9145    2.2955   -0.2426 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5941    2.1767    0.8733 H   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2499    0.4786    0.2045 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4978   -1.7356   -0.6246 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0949   -2.2509   -0.7775 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5221   -0.0261   -0.8566 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1507   -1.7106   -0.4857 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5000   -0.6014    0.8389 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  7  1  1  0
+  7  8  1  0
+  2  9  1  0
+  3 10  1  0
+  4 11  1  0
+  5 12  1  0
+  6 13  1  0
+  8 14  1  0
+  8 15  1  0
+  8 16  1  0
+M  END
+>  <force_field>  (5) 
+MMFF94
+
+>  <thiol>  (5) 
+E
+
+>  <smiles>  (5) 
+Cc1ccccc1S
+
+>  <mmff_energy>  (5) 
+17.712851162036696
+
+>  <source>  (5) 
+Zahrt, Henle, Rose, Wang, Darrow & Denmark, Science 363 (2019) eaau5631, supplementary data as redistributed at github.com/bm2-lab/DeepReac (Data/DatasetC); catalysts assembled from the scaffold and substituent fragments, embedded with RDKit ETKDG + MMFF94, lowest conformer, one axial configuration, phosphorus at the origin and the acid oxygens on +z (examples/make_denmark_examples.py)
+
+$$$$

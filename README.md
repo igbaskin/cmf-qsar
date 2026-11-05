@@ -4346,6 +4346,103 @@ python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens.sdf --weight
 python benchmarks/run_hammett.py --sdf examples/hammett/hammett_ens_qm.sdf --charges-prop q_hirshfeld --weighting boltzmann
 ```
 
+### A kinetic selectivity as the activity: chiral phosphoric acid catalysts
+
+Everything above models a binding constant or a computed property. A rate constant across a
+congeneric series is the same kind of number, a free-energy difference, and the Hammett constants
+are in fact rate ratios; but no series in the repository had a measured catalytic property as its
+activity, and four plan items in a row recorded that none could be found in machine-readable form.
+The screen of Zahrt, Henle, Rose, Wang, Darrow and Denmark (Science 363 (2019) eaau5631) is one:
+43 BINOL-derived chiral phosphoric acids, each run on the 25 combinations of 5 N-acyl imines and
+5 thiols, forming N,S-acetals, with the enantiomeric excess of all 1,075 reactions. The published
+target is ΔΔG‡ = RT ln((1 + ee)/(1 − ee)) at 298.15 K, the free-energy difference between the two
+diastereomeric transition states, which is the difference of two rate constants: a kinetic
+selectivity. It runs from −0.42 to +3.14 kcal/mol (standard deviation 0.70).
+
+The series fits the method the way the Hammett series does: every catalyst is the same phosphoric
+acid on one of two binaphthyl scaffolds with one substituent at both 3 and 3' positions, so the
+reaction centre gives the frame by construction. `examples/make_denmark_examples.py --fetch`
+assembles each catalyst from the published fragments, keeps the lowest of 30 MMFF conformers,
+reflects every conformer so that all 43 have the same axial configuration (a 2D file does not
+carry it, and ETKDG assigns it at random), and places the phosphorus at the origin with the acid
+oxygens on +z, so that the 3,3'-substituents flank the +z pocket where the imine and the thiol
+meet. The catalyst has a C2 axis along z, and the two images are written as the conformers of an
+ensemble, as the Hammett ring's reflections were. The data files are the paper's supplementary
+material, fetched from a public copy and not redistributed (`examples/denmark/README.md`).
+
+**The model** (`benchmarks/run_denmark.py`) is the two-endpoint model of the selectivity co-field
+with 25 endpoints: one kernel over the catalysts from the five physico-chemical fields, one
+covariance between the substrate combinations, and the pair kernel K(catalyst, catalyst')
+T(endpoint, endpoint'). Alpha, lambda and the covariance are chosen by the marginal likelihood on
+the whole table (alpha 0.8, lambda 0.1, and a shared correlation of 0.95: the 25 endpoints are
+mostly the catalyst's own selectivity). A second covariance is read off the substrates (one-hot
+imine and thiol through a radial kernel); it is the form that gives a substrate combination no
+catalyst was run on a row. Each split is scored against the baseline that predicts the same thing
+without a field, with a bootstrap interval over the catalysts, in kcal/mol:
+
+| Held out | Field model, MAD (q²) | Baseline, MAD (q²) | Difference [95 %] | Published |
+|---|---|---|---|---|
+| each catalyst in turn (42 train) | 0.224 (0.82) | endpoint mean 0.458 (0.17) | −0.236 [−0.340, −0.142] | 0.211, 19 catalysts held out, 24 trained |
+| reactions, 10-fold | 0.164 (0.89); 0.148 (0.91) with the substrate covariance | catalyst + endpoint effects 0.183 (0.87) | −0.035 [−0.057, −0.015] | 0.161, new substrate combinations |
+| each substrate combination in turn | 0.158 (0.90) | catalyst + imine + thiol effects 0.186 (0.87) | −0.027 [−0.049, −0.007] | |
+| each imine in turn (5 endpoints) | 0.167 (0.88) | 0.185 (0.87) | −0.018 [−0.039, −0.000] | |
+| each thiol in turn (5 endpoints) | 0.406 (0.53) | 0.399 (0.54) | +0.007 [+0.004, +0.010] | |
+
+The published model (a support-vector regression on the average steric occupancy of the
+catalyst's conformers over a grid and on electronic descriptors, trained on 600 reactions of 24
+catalysts) reached 0.211 kcal/mol on the 19 catalysts it had not seen and 0.161 on new substrate
+combinations of the catalysts it had. The field model, with 42 training catalysts rather than 24,
+reaches 0.224 on a catalyst it has not seen and 0.148 to 0.164 on a reaction of a catalyst it
+has; the first is the same accuracy on a related but not identical split, the second is the
+same accuracy on the same kind of split. The reading that matters is what the frame is worth,
+measured on the catalyst holdout one kernel at a time:
+
+| Kernel | MAD | q² |
+|---|---|---|
+| all five fields | 0.224 | 0.82 |
+| steric alone | 0.249 | 0.76 |
+| hydrophobic alone | 0.289 | 0.63 |
+| electrostatic alone | 0.376 | 0.41 |
+| hydrogen-bond donor alone | 0.490 | 0.19 |
+| the invariant autocorrelation kernel, no frame | 0.419 | 0.26 |
+
+The selectivity is steric, as the published descriptor said, and the frame is most of the result:
+the same five fields compared without a frame, through the rotation-invariant kernel that the
+host–guest and crystal sections use, lose three quarters of the explained variance. On the
+Hammett series the frame was beyond doubt and the question was which field; here the frame is
+the claim, and it is measured. The hydrogen-bond acceptor field alone is worse than the mean
+(q² −3.4): every catalyst has the same four oxygens, so its kernel is nearly constant and the ridge
+chosen by the evidence lets it fit noise.
+
+**What the co-field says** (`benchmarks/results/denmark/cofields.png`, the mean over the 25
+endpoints, drawn in the acid's frame): the steric co-field is positive in two lobes at x ≈ ±4.5 Å
+and z ≈ −1 Å, the region of the 3,3' ipso carbons on either side of the acid, and negative 3 to
+5 Å above the phosphorus, over the pocket. Bulk that flanks the acid raises the selectivity; bulk
+that reaches over the pocket lowers it. The most selective catalysts (the 3,5-tricyclohexylphenyl
+166 at a mean ΔΔG‡ of 2.40, the bis(trifluoromethyl)terphenyl 182) are those with wide, flat
+groups in the first region, and the triphenylsilyl 245 (mean 0.12) puts a tetrahedral group in
+the second. The electrostatic co-field is small and dipolar around the same ipso carbons; it adds
+0.06 to the q² of the steric field.
+
+**Where it fails**, and what the failures are. The two worst catalysts on the holdout are the
+3,5-bis(trifluoromethyl)benzyl 210 (measured mean 0.12, predicted 0.68) and the methyldiphenylsilyl
+223 (0.62 against 0.19): a methylene or a silicon between the scaffold and the aryl group, so the
+group's position is a conformer choice the lowest MMFF structure makes once, which is the
+fourth-dimension question the ensemble sections measure. A thiol no catalyst was run on cannot be
+predicted (0.406 against a baseline of 0.399): the two aliphatic thiols average 0.54 and 0.67
+kcal/mol and the three aromatic ones 1.24 to 1.25, and a one-hot descriptor knows nothing about a
+thiol it has not seen; the imines differ by 0.05 between their means, so holding one out costs
+nothing. A field of the substrate itself, aligned on its reacting group, is the form that could
+carry a new thiol, and it is the next measurement.
+
+The build takes 9 minutes (30 conformers of 43 catalysts of up to 93 heavy atoms) and the
+benchmark 4.5 minutes.
+
+```bash
+python examples/make_denmark_examples.py --fetch
+python benchmarks/run_denmark.py
+```
+
 ### Several endpoints on one kernel: the selectivity co-field
 
 A separation problem is not one property but two. An extractant has an affinity for americium

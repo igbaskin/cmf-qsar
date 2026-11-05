@@ -67,6 +67,8 @@ SECTIONS = OrderedDict([
     ("PBH", "H. Physical organic"), ("ND", "H. Deep learning"),
     ("MC", "I. Medicinal chemistry"),
 ])
+#: prefixes that belong to a section listed under another prefix
+ALIASES = {"PO": "PBH"}       # PO1, the catalyst series, is in the physical organic chemistry section
 
 
 def statuses(path: str = PLAN) -> "OrderedDict[str, str]":
@@ -96,6 +98,7 @@ def table(status: "OrderedDict[str, str]") -> List[str]:
     groups: "OrderedDict[str, List[str]]" = OrderedDict((k, []) for k in SECTIONS)
     for name in status:
         key = re.match(r"([A-Z]{1,3})", name).group(1)
+        key = ALIASES.get(key, key)
         if key not in groups:
             raise SystemExit(f"{name} belongs to no section listed in SECTIONS")
         groups[key].append(name)

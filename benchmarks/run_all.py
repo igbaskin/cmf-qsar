@@ -143,6 +143,12 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_hammett").report(_r("hammett")),
                   tables=["hammett/table.md"],
                   readme=["A field-based Hammett equation (two tables)"]),
+        Benchmark("denmark",
+                  "a kinetic selectivity as the activity: 43 chiral phosphoric acids on 25 "
+                  "substrate combinations, the frame measured against the invariant kernel",
+                  "run_denmark.py", "denmark", compute=[[]], minutes="5",
+                  tables=["denmark/table.md"],
+                  readme=["A kinetic selectivity as the activity (two tables)"]),
         Benchmark("nonlinearity", "the molecule-dependent co-field of the Gaussian layer: its "
                   "spread and the non-linearity index on the Hammett set",
                   "run_nonlinearity.py", "nonlinearity", compute=[[]], minutes="3",

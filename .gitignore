@@ -85,3 +85,7 @@ examples/phenazine/qm_work/
 # again with --fetch, and the built SDF beside them is what the benchmark reads
 examples/complexes_fe/upstream/
 examples/complexes_ni/upstream/
+
+# the Denmark catalyst fragments and table (plan item PO1): the maker downloads them again
+# with --fetch, and the built files beside them are what the benchmark reads
+examples/denmark/upstream/

@@ -5170,6 +5170,39 @@ What it leaves open, in order:
   reflection although the gap is. A kernel averaged over the two faces (the z-flip of one
   molecule) is one line and was not run.
 
+* **PO1. A catalytic series with a shared frame, done 5 November 2026.** The catalysis bullet of
+  H named ligand libraries with a shared frame and a rate or a selectivity as the activity, and
+  EC4, EC8 and EC9 recorded that no such series could be found in machine-readable form. One
+  was: the screen of Zahrt, Henle, Rose, Wang, Darrow and Denmark (Science 363 (2019) eaau5631),
+  43 BINOL-derived chiral phosphoric acids on 25 imine–thiol combinations, 1,075 N,S-acetal
+  formations with their enantiomeric excess, public in the DeepReac repository
+  (`docs/public_3dqsar_datasets.md`). The target is ΔΔG‡ at 298.15 K, the difference of two
+  rate constants, so this is the first measured kinetic selectivity in the repository.
+  `examples/make_denmark_examples.py` assembles the catalysts from the published fragments,
+  gives all 43 the same axial configuration and places the phosphoric acid in a frame (phosphorus
+  at the origin, acid oxygens on +z, the two C2 images as an ensemble); `benchmarks/run_denmark.py`
+  is the two-endpoint model of SC1 with 25 endpoints, the covariance by the evidence, and the
+  baseline that predicts the same thing without a field on every split. **Measured:** each
+  catalyst held out in turn, MAD 0.224 kcal/mol (q² 0.82) against an endpoint-mean baseline of
+  0.458 (0.17), difference −0.236 [−0.340, −0.142] over 1000 catalyst bootstraps; reactions
+  10-fold, 0.148 to 0.164 against the additive catalyst + endpoint model at 0.183; each substrate
+  combination held out, 0.158 against 0.186. The published model reached 0.211 on 19 held-out
+  catalysts trained on 24 and 0.161 on new substrate combinations, so the field model is at the
+  published accuracy on both kinds of split. **The frame is the result:** on the catalyst holdout
+  the steric field alone gives q² 0.76, the hydrophobic 0.63, the electrostatic 0.41, and the same
+  fields through the rotation-invariant kernel 0.26; the co-field, averaged over the endpoints,
+  puts positive steric weight at the 3,3' ipso carbons flanking the acid and negative weight 3 to
+  5 Å over the pocket (manual section *A kinetic selectivity as the activity*, README of the
+  same name). **Not done:** a thiol no catalyst was run on is not predicted (0.406 against a
+  baseline of 0.399), because the one-hot substrate descriptors know nothing about an unseen
+  thiol and the aliphatic and aromatic thiols differ by 0.6 kcal/mol in their means; a field of
+  the substrate aligned on its reacting group is the form that could carry it. The two worst
+  catalysts have a methylene or a silicon between the scaffold and the aryl group, a conformer
+  choice the lowest MMFF structure makes once; the ensemble of D8 on this series is one command
+  (`--ensemble`, not yet written for this builder). The sign of the axial configuration is
+  consistent across the 43 but not known to be (R) or (S); a co-field drawn for a design would
+  need the enantiomer stated. EC9's potential-dependent target is not touched: this series has one
+  condition.
 ### CMF–neural device integration (30 October 2026)
 
 **Goal.** Reuse the Continuous Molecular Fields representation inside the GNN/QSPR framework
@@ -5907,19 +5940,22 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Battery science | 8 | 7 | BT8 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
-| H. Physical organic | 7 | 6 | PBH6 |
+| H. Physical organic | 8 | 7 | PBH6 |
 | H. Deep learning | 16 | 0 | ND1 to ND13 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**144 items: 99 finished, 3 partly, 42 open.** Parts A to F and the battery, local-property and
+**145 items: 100 finished, 3 partly, 42 open.**
+ Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
 
-* **Waiting for data, not for code.** EC8 and EC9 need a measured catalytic property, MC3 a series
-  in which both enantiomers are measured, SC4 a host-guest set curated by conditions, and NT12 the
-  structure sets the nanotechnology part would be judged on. Four items in a row have now recorded
-  that no machine-readable series could be found for the catalytic case; the search is written up
-  in `docs/public_3dqsar_datasets.md` and should not be repeated blind.
+* **Waiting for data, not for code.** EC9 needs a measured catalytic property at more than one
+  potential, EC8 one at a periodic site, MC3 a series in which both enantiomers are measured, SC4
+  a host-guest set curated by conditions, and NT12 the structure sets the nanotechnology part
+  would be judged on. Four items in a row had recorded that no machine-readable series could be
+  found for the catalytic case; PO1 found one on 5 November 2026, a measured enantioselectivity
+  on 43 molecular catalysts at one condition, which answers the molecular case and not EC8's or
+  EC9's. The search is written up in `docs/public_3dqsar_datasets.md`.
 * **Waiting for the application.** G5, M13, EC10, NT8, NT9 and NT11 are the same work seen from
   five sides: nothing of the periodic, surface or particle side is visible in the window. They are
   the largest untouched block in the plan and none of them needs a new measurement.
