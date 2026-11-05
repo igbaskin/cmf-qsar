@@ -8,7 +8,7 @@ lambda) on the CV it reports.
 
 | series | n | scaffold | fit RMSD | q2 aligned | q2 topomer | q2 invariant | q2 invariant, aligned blocks | q2 counts | cuttable |
 |---|---|---|---|---|---|---|---|---|---|
-| 0_c1ccccc1 | 244 | `c1ccccc1` | 0.01 A | +0.413 | +0.496 | +0.431 | +0.387 | +0.439 | 232/244 |
+| 0_c1ccccc1 | 244 | `c1ccccc1` | 0.01 A | +0.415 | +0.496 | +0.430 | +0.389 | +0.439 | 232/244 |
 | 1_c1ccncc1 | 109 | `c1ccncc1` | 0.03 A | +0.341 | -0.046 | +0.205 | +0.190 | +0.067 | 42/109 |
 | 2_c1c_nH_cn1 | 96 | `c1c[nH]cn1` | 0.02 A | +0.502 | +0.547 | +0.481 | +0.432 | +0.355 | 20/96 |
 | 157_c1ccc2_nH_cnc2c1 | 73 | `c1ccc2[nH]cnc2c1` | 0.01 A | +0.346 | +0.526 | +0.360 | +0.358 | +0.263 | 73/73 |
@@ -36,7 +36,7 @@ On the 17 series with enough cuttable molecules, measured on exactly those molec
 
 | series | whole molecules | substituents, as aligned | substituents, posed by rule | the cut costs | the pose costs |
 |---|---|---|---|---|---|
-| 0_c1ccccc1 | +0.437 | +0.391 | +0.496 | +0.046 | -0.105 |
+| 0_c1ccccc1 | +0.440 | +0.391 | +0.496 | +0.049 | -0.105 |
 | 1_c1ccncc1 | -0.093 | -0.055 | -0.046 | -0.038 | -0.009 |
 | 2_c1c_nH_cn1 | +0.563 | +0.376 | +0.547 | +0.186 | -0.171 |
 | 157_c1ccc2_nH_cnc2c1 | +0.346 | +0.421 | +0.526 | -0.074 | -0.106 |

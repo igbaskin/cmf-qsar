@@ -8,7 +8,7 @@ lambda) on the CV it reports.
 
 | series | n | scaffold | fit RMSD | q2 aligned | q2 topomer | q2 invariant | q2 invariant, aligned blocks | q2 counts | cuttable |
 |---|---|---|---|---|---|---|---|---|---|
-| 0_c1ccccc1 | 244 | `c1ccccc1` | 0.02 A | +0.386 | +0.478 | +0.376 | +0.386 | +0.437 | 232/244 |
+| 0_c1ccccc1 | 244 | `c1ccccc1` | 0.02 A | +0.388 | +0.479 | +0.375 | +0.392 | +0.437 | 232/244 |
 | 1_c1ccncc1 | 109 | `c1ccncc1` | 0.02 A | +0.363 | -0.042 | +0.352 | +0.364 | +0.072 | 42/109 |
 | 2_c1c_nH_cn1 | 96 | `c1c[nH]cn1` | 0.01 A | +0.460 | +0.156 | +0.435 | +0.425 | +0.335 | 20/96 |
 | 157_c1ccc2_nH_cnc2c1 | 73 | `c1ccc2[nH]cnc2c1` | 0.01 A | +0.344 | +0.362 | +0.238 | +0.203 | +0.268 | 73/73 |
@@ -36,7 +36,7 @@ On the 17 series with enough cuttable molecules, measured on exactly those molec
 
 | series | whole molecules | substituents, as aligned | substituents, posed by rule | the cut costs | the pose costs |
 |---|---|---|---|---|---|
-| 0_c1ccccc1 | +0.388 | +0.346 | +0.478 | +0.042 | -0.132 |
+| 0_c1ccccc1 | +0.390 | +0.345 | +0.479 | +0.045 | -0.133 |
 | 1_c1ccncc1 | -0.051 | -0.014 | -0.042 | -0.037 | +0.027 |
 | 2_c1c_nH_cn1 | +0.518 | +0.448 | +0.156 | +0.069 | +0.292 |
 | 157_c1ccc2_nH_cnc2c1 | +0.344 | +0.328 | +0.362 | +0.016 | -0.033 |
@@ -54,6 +54,6 @@ On the 17 series with enough cuttable molecules, measured on exactly those molec
 | 165_O_c1cc_nH_n1_c1ccccc1 | +0.011 | +0.187 | +0.236 | -0.175 | -0.049 |
 | 20_O_c1cc_nH_nH_1 | +0.104 | +0.242 | +0.266 | -0.138 | -0.024 |
 
-Mean q2: aligned +0.248, topomer +0.307 (difference -0.059); topomer wins 12 of 17. Mean cost of the cut +0.024, of the pose -0.083.
+Mean q2: aligned +0.248, topomer +0.307 (difference -0.059); topomer wins 12 of 17. Mean cost of the cut +0.025, of the pose -0.083.
 
 Over all 23 series: aligned +0.269, invariant +0.278, counts +0.189; the invariant kernel wins 9, the aligned model 14.

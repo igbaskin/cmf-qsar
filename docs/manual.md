@@ -1016,6 +1016,39 @@ The electrostatic field needs charges: Gasteiger (the default), MMFF94, or **rea
 which is what you want with the Sutherland sets and their MNDO ESP-fit charges, or with anything
 you computed yourself.
 
+### What the Gasteiger scheme cannot do, and what the program does about it
+
+The scheme covers **fourteen elements** — H, B, C, N, O, F, Mg, Al, Si, P, S, Cl, Br and I. That
+list was measured rather than read from a paper: a two-atom molecule C–X was built for every
+element up to radon and the charges asked for. Magnesium and aluminium are in and lithium and
+sodium are out, which is not a pattern anyone would guess.
+
+Outside that list the scheme does not refuse, it answers "not a number", and it does so in two
+different ways:
+
+* an **element** it has no parameters for voids *every atom of the molecule*, so the molecule has
+  no electrostatic field at all;
+* a **valence state** it has no parameters for voids *that atom alone*. The phosphorus of
+  hexafluorophosphate is the case that matters, because phosphorus is in the covered list.
+
+Both used to become a charge of zero, which is not an error message and not a charge. A
+coordination complex therefore had no electrostatic field (item EC4 found that), a selenoether in
+the corrosion series had none (item EC3 found the same fault outside the d block), and — worst,
+because it is silent rather than empty — a neutral LiPF₆ solvation shell presented a **net charge
+of +1** to the field, because the anion's phosphorus had been zeroed while the lithium kept its
++1.
+
+What the program does now (item D11): it asks the plain scheme first, so every molecule the scheme
+can do is answered exactly as before. Only a molecule that comes back with a "not a number" is
+repaired, by computing the charges with the uncovered atoms removed and giving each of those atoms
+its formal charge, and the source is then reported as `gasteiger+formal` rather than `gasteiger`,
+so a model fitted on one cannot be confused with a model fitted on the other.
+
+The repair has one approximation worth knowing. Removing a *bonded* atom leaves its neighbours an
+open valence, so the remaining fragment is charged as a radical and the total comes out near the
+molecule's formal charge rather than exactly on it — within 0.25 of an electron on the cases
+measured. Where that matters, compute the charges properly and read them from the file.
+
 Beyond that, any per-atom number can become a field of its own. `prop:<name>` reads the atomic
 weights from a property of the molecule — a quantum charge, a Fukui index, a local softness, an
 atomic polarisability, even a per-atom embedding — and that field then behaves exactly like a
@@ -9765,15 +9798,24 @@ fixed one, and it says how much of each result survives that freedom.
 | `solvent` | 1.726 | 2.023 |
 | `complex` | 2.001 | 2.424 |
 | `complex-free` | 1.934 | 2.232 |
-| `shells` | 2.156 | 2.585 |
-| `shells-free` | **1.456** | **1.589** |
+| `shells` | 2.236 | 2.903 |
+| `shells-free` | **1.612** | **1.685** |
 
 Paired over the same electrolytes, **the sampled shells beat the single optimised complex by
-0.480 kJ/mol [0.096, 0.960] on random folds and by 0.639 kJ/mol [0.231, 1.129] on the harder
-by-composition folds**, in the alignment-free kernel. Both intervals are clear of zero, and both
-survive the weight being chosen in the fold (0.436 [0.057, 0.889] and 0.586 [0.133, 1.163]). That
-is the item's gate, and it is met on this target. The gain is about a quarter of the complex's own
-error.
+0.323 kJ/mol [-0.082, +0.786] on random folds and by 0.546 kJ/mol [+0.137, +1.038] on the harder
+by-composition folds**, in the alignment-free kernel. The by-composition interval is clear of zero
+and the random-fold one is not, and both of the variants with the kernel weight chosen inside the
+fold are clear of it (0.436 [0.057, 0.889] and 0.586 [0.133, 1.163]). So the item's gate is met on
+this target in three readings of four.
+
+These numbers were revised by item D11, and the revision is instructive. Until then 72 % of these
+shells carried a **net charge of +1** in the electrostatic field: the phosphorus of the
+hexafluorophosphate anion is a valence state the Gasteiger scheme has no parameters for, so it was
+given a charge of zero while the lithium kept its +1. Correcting it makes the shell model slightly
+*worse* -- 1.456 to 1.612 kJ/mol on random folds -- and takes the random-fold gain over the single
+complex from 0.480 [0.096, 0.960], clear of zero, to 0.323 [-0.082, +0.786], which is not. The
+variants that choose the kernel weight inside the fold barely moved at all (0.436 to 0.436, 0.586
+to 0.586), which says the weight search was already absorbing part of the fault.
 
 The difference between the two targets was predicted before any of it was measured, and that is
 the strongest statement the item supports. The activation energy is the barrier an ion meets as it
@@ -9782,13 +9824,15 @@ on. The conductivity at one temperature is set largely by how much salt is disso
 viscous the mixture is, and a shell geometry carries neither.
 
 **The conductivity, where the gate is not met.** Predicting the mean costs 0.146 in log₁₀ mS/cm.
-The shells reach 0.106 against the complex's 0.094 on random folds, and 0.097 against 0.103 on
-by-composition folds, and the paired interval contains zero both ways: −0.013 [−0.034, +0.008] and
-+0.006 [−0.013, +0.027]. There is no gain here to keep.
+The shells reach 0.109 against the complex's 0.094 on random folds, and 0.103 against 0.103 on
+by-composition folds, and the paired interval contains zero both ways: −0.016 [−0.036, +0.004] and
++0.000 [−0.018, +0.019]. There is no gain here to keep. One comparison on this target did change
+sign of verdict under item D11's correction: against the free-solvent model on by-composition
+folds the shells are now worse by 0.021 [0.002, 0.039], where the interval had held zero.
 
 **The frame costs accuracy, and it costs the ensemble much more than the single complex.** In the
-cation frame the sampled shells are 0.694 kJ/mol [0.363, 1.042] worse than their own
-alignment-free version on random folds, and 1.015 [0.536, 1.492] worse on by-composition folds.
+cation frame the sampled shells are 0.621 kJ/mol [0.223, 1.003] worse than their own
+alignment-free version on random folds, and 1.230 [0.697, 1.792] worse on by-composition folds.
 For the single complex the same frame costs 0.068 kJ/mol, with an interval containing zero. This
 is the same direction item BT4 found and a much larger size. The reason is geometric: one complex
 has one coordination polyhedron and sits in the frame that polyhedron fixes, while sixteen shells
@@ -9803,8 +9847,8 @@ row in which a simple composition descriptor is at least as good as a field, and
 as a property of these targets rather than of the implementation: a conductivity is an average
 over a whole liquid, and a field describes one object in it.
 
-**Against the free solvent molecules the gain is not established**: +0.276 kJ/mol
-[−0.110, +0.765] and +0.439 [−0.006, +0.970]. The shells beat the optimised complex, which is what
+**Against the free solvent molecules the gain is not established**: +0.118 kJ/mol
+[−0.284, +0.583] and +0.346 [−0.100, +0.870]. The shells beat the optimised complex, which is what
 the item asked, but an ensemble of free solvent molecules, which needs no simulation at all, is not
 clearly behind them.
 
@@ -9826,19 +9870,26 @@ the number the last column is read against.
 
 | Field | Largest magnitude | Distance from the ion (Å) | Distance from the nearest donor atom (Å) |
 |---|---:|---:|---:|
-| electrostatic | +3.62 | 0.69 | 1.22 |
-| steric | −0.61 | 4.91 | 2.69 |
-| hydrophobic | +3.11 | 2.55 | 0.41 |
-| hydrogen-bond acceptor | −1.53 | 3.33 | 1.12 |
+| electrostatic | −3.51 | 3.03 | 0.81 |
+| steric | −0.41 | 5.04 | 2.85 |
+| hydrophobic | −1.54 | 5.00 | 2.86 |
+| hydrogen-bond acceptor | −1.23 | 4.22 | 1.92 |
 | hydrogen-bond donor | +0.00 | 16.12 | 13.72 |
 
 The second distance is what makes the first one readable, and it was added for that reason. A
-point 0.69 Å from the ion and a point 2.14 Å from it are both inside the first shell, but only the
-second is where an atom actually is. Read together, three of the four fields that carry any weight
-have their largest magnitude within 1.3 Å of a coordinating atom: the hydrophobic field sits almost
-exactly on one (0.41 Å), the hydrogen-bond acceptor field just outside the donor shell, and the
-electrostatic field between the ion and its donors. The steric field is the exception and peaks
-4.91 Å out, which is the molecule tails and the second shell rather than the coordination sphere.
+point 3.03 Å from the ion and a point 2.14 Å from it are both inside the first shell, but only the
+second is where an atom actually is. Read together, the electrostatic field has its largest
+magnitude 0.81 Å from a coordinating atom and the hydrogen-bond acceptor field 1.92 Å from one,
+while the steric and hydrophobic fields peak 5 Å out, which is the molecule tails and the second
+shell rather than the coordination sphere.
+
+This reading was revised by item D11 and the revision is the point of that item. With the
+hexafluorophosphate anion carrying no charge, the electrostatic co-field peaked **+3.62 at 0.69 Å
+from the ion** -- on the cation itself -- and the hydrophobic field peaked +3.11 almost exactly on
+a donor atom. With the anion's charge restored the electrostatic peak is **−3.51 at 3.03 Å from
+the ion and 0.81 Å from a donor**: negative, and on the coordinating atoms rather than on the
+metal. The second reading is the chemically sensible one, and the first was an artefact of a
+charge the program had quietly set to zero.
 The hydrogen-bond donor field is the control that costs nothing: a carbonate and an ester have no
 hydrogen-bond donor, that field carries no weight anywhere, its largest magnitude is exactly zero,
 and the point it is reported at is a corner of the box 16 Å away.
@@ -9848,9 +9899,10 @@ and the point it is reported at is a corner of the box 16 Å away.
 * **The route works and is cheap.** A distribution of shells is one field, the kernel needs no new
   closed form, and 62 bulk simulations with their shell extraction cost three and a half hours.
 * **It is kept for the temperature dependence and not for the conductivity.** The gate is met on
-  the activation energy, in the alignment-free kernel, on both fold schemes, and it is not met on
-  the conductivity on either.
-* **The co-field needs the frame, and the frame costs 0.7 to 1.0 kJ/mol here.** A caller who wants
+  the activation energy, in the alignment-free kernel, on the by-composition folds and in both
+  fold-chosen-weight variants, and not on the random folds after item D11 corrected the charges;
+  it is not met on the conductivity under any reading.
+* **The co-field needs the frame, and the frame costs 0.6 to 1.2 kJ/mol here.** A caller who wants
   the picture should expect to pay for it; a caller who wants the prediction should use the
   alignment-free kernel.
 * **A composition descriptor remains the baseline to beat on a property of a whole electrolyte**,

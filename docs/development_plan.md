@@ -1408,11 +1408,46 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   be checked rather than assumed.
   *Gate, and it is a reporting gate rather than an accuracy one.* The repair is correct by
   construction -- a field that was identically zero becomes a field -- so what has to be measured
-  is **what it moves**: the corrosion, cyclodextrin and Hammett benchmarks re-run, and the
-  before-and-after reported in the same table, including when the answer is "nothing moved", which
-  on five molecules is the likely one. A table that moves is re-measured and said to have moved,
-  never quietly rewritten; rule 6 is the reason this cannot be folded into another item's commit,
-  and it is why this item exists separately instead of being done in passing.
+  is **what it moves**. A table that moves is re-measured and said to have moved, never quietly
+  rewritten; rule 6 is the reason this cannot be folded into another item's commit.
+  **Done 5 November 2026, and the gate's answer is not the one this entry predicted.** The repair
+  is in `cmfqsar/fields.py`: the plain scheme is asked first, so every molecule it can do is
+  answered exactly as before, and only a molecule that comes back "not a number" is repaired.
+  `GASTEIGER_ELEMENTS` is the measured list of fourteen, `_gasteiger_with_unknown_atoms` removes
+  the atoms outside it and gives each its formal charge, and an atom left over -- an uncovered
+  valence state -- keeps its formal charge too. `tests/test_charges.py` has 22 tests, including one
+  that demonstrates the fault in the scheme itself, so the repair cannot outlive the thing it
+  repairs.
+  *What moved, benchmark by benchmark.* Five of six affected measurements moved by almost nothing,
+  as five molecules should: Hammett sigma_m with the electrostatic field alone +0.66 to +0.67 q2
+  (and the chosen attenuation 0.5 to 0.3, the fitted r2 0.82 to 0.80); the corrosion root series,
+  1 of 23, aligned +0.386 to +0.388 and the invariant kernel +0.478 to +0.479, with the series
+  means unchanged; the same series in `corrosion_hcl`, +0.413 to +0.415; the beta-cyclodextrin
+  host, 1 of 7, invariant +0.447 to +0.451; and the slab benchmark's corrosion stage not at all.
+  No verdict in any of them changed.
+  *And item BT5 moved a great deal, which is why this item earned its place.* 717 of its 989
+  solvation shells carried a **net charge of +1** in the electrostatic field, because the
+  phosphorus of hexafluorophosphate is a valence state the scheme cannot do and was being set to
+  zero while the lithium kept its +1. The corrected cosine kernel correlates only **+0.507** with
+  the old one, so the electrostatic description of those shells was substantially wrong rather
+  than slightly. Three of BT5's 80 paired comparisons change their verdict, all against the
+  shells, and one of them is its headline: the gain of sampled shells over one optimised complex
+  on the activation energy goes from +0.480 kJ/mol [0.096, 0.960] to +0.323 [-0.082, +0.786] on
+  random folds, which no longer excludes zero. The grouped-fold reading survives (+0.546
+  [+0.137, +1.038]) and both fold-chosen-weight variants did not move at all, which says the
+  weight search had been absorbing part of the fault. BT5's co-field reading improved: its
+  electrostatic peak was +3.62 at 0.69 angstrom from the ion, which is on the cation itself, and
+  is now -3.51 at 3.03 angstrom from the ion and 0.81 from a donor atom. BT5's entry, its manual
+  section, the README and the publication plan were revised with these numbers and say that D11
+  revised them.
+  *Two things found in passing and left for their own items.* The repair's approximation: removing
+  a bonded atom leaves its neighbours an open valence, so the remaining fragment is charged as a
+  radical and the total comes out within about 0.25 of an electron of the molecule's formal charge
+  rather than exactly on it; capping the open valence with hydrogen would fix that and was not
+  done. And the Hammett benchmark's four documented compute runs overwrite each other's output
+  files -- two of them write `summary.csv`, and one variant's summary was missing from the
+  committed results entirely -- which is a fault in that benchmark's own bookkeeping and not in
+  the charges.
 
 ## E. Learning (months 4 to 10)
 
@@ -4241,21 +4276,36 @@ values and a computed oxidation potential is a descriptor, not a target.
   question and item BT4 measured the alignment-free one as the better of the two for its own
   descriptor.
 
-  **The gate is met on the activation energy and not on the conductivity.** On the activation
-  energy, where predicting the mean costs 3.535 kJ/mol, the sampled shells reach 1.456 kJ/mol
-  against the single optimised complex's 1.934 on random folds and 1.589 against 2.232 on the
-  grouped folds, both in the alignment-free kernel. Paired, that is a gain of 0.480 kJ/mol
-  [0.096, 0.960] and 0.639 kJ/mol [0.231, 1.129], both clear of zero, and both survive the kernel
-  weight being chosen inside the fold (0.436 [0.057, 0.889] and 0.586 [0.133, 1.163]). On the
-  conductivity, where predicting the mean costs 0.146 in log10 mS/cm, there is no gain:
-  -0.013 [-0.034, +0.008] and +0.006 [-0.013, +0.027]. The difference between the two targets is
+  **The gate is met on the activation energy, in three readings of four, and not on the
+  conductivity.** On the activation energy, where predicting the mean costs 3.535 kJ/mol, the
+  sampled shells reach 1.612 kJ/mol against the single optimised complex's 1.934 on random folds
+  and 1.685 against 2.232 on the grouped folds, both in the alignment-free kernel. Paired, that is
+  a gain of 0.323 kJ/mol [-0.082, +0.786] and 0.546 kJ/mol [+0.137, +1.038]: the grouped-fold
+  interval is clear of zero and the random-fold one is not, while both variants with the kernel
+  weight chosen inside the fold stay clear of it (0.436 [0.057, 0.889] and 0.586 [0.133, 1.163]).
+  On the conductivity, where predicting the mean costs 0.146 in log10 mS/cm, there is no gain:
+  -0.016 [-0.036, +0.004] and +0.000 [-0.018, +0.019].
+  **Revised 5 November 2026 by item D11, which corrected the charges these numbers rest on.**
+  Until then 72 % of these shells carried a net charge of +1 in the electrostatic field: the
+  phosphorus of the hexafluorophosphate anion is a valence state the Gasteiger scheme has no
+  parameters for, so it was set to zero while the lithium kept its +1. Correcting it makes the
+  shell model slightly worse on the activation energy (1.456 to 1.612 kJ/mol on random folds) and
+  takes the random-fold gain from 0.480 [0.096, 0.960], clear of zero, to 0.323 [-0.082, +0.786],
+  which is not; the two fold-chosen-weight variants did not move at all, which says the weight
+  search had been absorbing part of the fault. Two further verdicts changed, both against the
+  shells: against the free-solvent model on grouped conductivity folds they are now worse by
+  0.021 [0.002, 0.039], and against the framed complex on grouped activation-energy folds by
+  0.493 [0.099, 0.903]. The co-field reading changed with them, and for the better: the
+  electrostatic peak was +3.62 at 0.69 angstrom from the ion, which is on the cation itself, and
+  is now -3.51 at 3.03 angstrom from the ion and 0.81 from a donor atom, which is where the
+  coordinating atoms are. The difference between the two targets is
   the one `examples/make_electrolyte_shells.py` predicted before the measurement: an ion moves by
   leaving one shell and entering the next, so the barrier is the quantity a distribution of shells
   has a claim on, while a conductivity at one temperature is set largely by how much salt is
   dissolved and how viscous the mixture is.
 
   **Three readings beside the gate.** *The frame costs an ensemble far more than it costs one
-  complex*: in the cation frame the shells are 0.694 kJ/mol [0.363, 1.042] and 1.015
+  complex*: in the cation frame the shells are 0.621 kJ/mol [0.223, 1.003] and 1.230
   [0.536, 1.492] worse than their own alignment-free version, while for the single complex the
   same frame costs 0.068 kJ/mol with an interval containing zero. Sixteen shells have sixteen
   coordination polyhedra and one frame cannot hold them all, so the accuracy and the co-field,
@@ -4435,7 +4485,8 @@ BT5 is empty without a complex that builds and aligns. BT6 with M4, ~~BT7 after 
 by the
 local route, 30 October 2026, and did not
 need M5), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte do beat BT4's
-single optimised complex on the activation energy, by 0.48 to 0.64 kJ/mol, and do not beat it on
+single optimised complex on the activation energy, by 0.32 to 0.55 kJ/mol after item D11's charge
+correction, clear of zero in three readings of four, and do not beat it on
 the conductivity; the cation frame costs an ensemble 0.7 to 1.0 kJ/mol, far more than it costs one
 complex, so the co-field and the accuracy pull against each other), BT8
 whenever EC6 is ready for it.
@@ -5846,7 +5897,7 @@ own text has to stop before it, and five entries state their status in a form of
 | A. The platform | 6 | 6 | -- |
 | B. Scale and speed | 6 | 6 | -- |
 | C. The alignment problem | 7 | 7 | -- |
-| D. Fields and kernels | 11 | 10 | D11 |
+| D. Fields and kernels | 11 | 11 | -- |
 | E. Learning | 11 | 10 | E11 (partly) |
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 5 | 4 | G5 |
@@ -5860,7 +5911,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 16 | 0 | ND1 to ND13 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**144 items: 98 finished, 3 partly, 43 open.** Parts A to F and the battery, local-property and
+**144 items: 99 finished, 3 partly, 42 open.** Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
 
@@ -5874,9 +5925,10 @@ equally blocked.
   the largest untouched block in the plan and none of them needs a new measurement.
 * **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, PBH6, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND13, which has not been started.
-* **A known defect with its own item.** D11 is the charge model that any of six elements can void,
-  found by EC4 inside the d block and by EC3 outside it. It is three days of work and it moves
-  published tables, which is why it is an item and not a tidy-up.
+* **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
+  void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published
+  conclusion: 72 % of item BT5's solvation shells had carried a spurious net charge of +1, and
+  correcting it cost BT5 its headline interval on random folds.
 
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol

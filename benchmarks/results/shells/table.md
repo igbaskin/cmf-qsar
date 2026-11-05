@@ -24,20 +24,20 @@
 | solvent | 0.090 +/- 0.036 | +0.460 |
 | complex | 0.100 +/- 0.037 | +0.422 |
 | complex-free | 0.094 +/- 0.040 | +0.462 |
-| shells | 0.112 +/- 0.045 | +0.380 |
-| shells-free | 0.106 +/- 0.043 | +0.429 |
+| shells | 0.115 +/- 0.042 | +0.375 |
+| shells-free | 0.109 +/- 0.040 | +0.419 |
 
 | Comparison | Gain of the first model | 95 per cent interval |
 |---|---|---|
-| shells vs complex | -0.0123 | [-0.0323, +0.0074] |
-| shells-free vs complex-free | -0.0125 | [-0.0337, +0.0079] |
-| shells vs solvent | -0.0221 | [-0.0415, -0.0010] |
-| shells-free vs solvent | -0.0166 | [-0.0387, +0.0068] |
-| shells-free vs composition | -0.0439 | [-0.0636, -0.0253] |
-| shells vs composition | -0.0493 | [-0.0697, -0.0297] |
-| shells vs conditions | +0.0243 | [+0.0018, +0.0484] |
+| shells vs complex | -0.0154 | [-0.0341, +0.0028] |
+| shells-free vs complex-free | -0.0155 | [-0.0358, +0.0035] |
+| shells vs solvent | -0.0251 | [-0.0422, -0.0065] |
+| shells-free vs solvent | -0.0195 | [-0.0394, +0.0025] |
+| shells-free vs composition | -0.0468 | [-0.0656, -0.0285] |
+| shells vs composition | -0.0524 | [-0.0717, -0.0339] |
+| shells vs conditions | +0.0212 | [+0.0040, +0.0391] |
 | complex vs conditions | +0.0366 | [+0.0153, +0.0581] |
-| the frame on the shells | -0.0055 | [-0.0216, +0.0117] |
+| the frame on the shells | -0.0056 | [-0.0233, +0.0130] |
 | the frame on the complex | -0.0056 | [-0.0138, +0.0028] |
 
 ## log10 conductivity at 298 K (log10 mS/cm), by-composition folds
@@ -49,20 +49,20 @@
 | solvent | 0.082 +/- 0.038 | +0.460 |
 | complex | 0.103 +/- 0.031 | +0.352 |
 | complex-free | 0.103 +/- 0.043 | +0.337 |
-| shells | 0.116 +/- 0.035 | +0.297 |
-| shells-free | 0.097 +/- 0.044 | +0.450 |
+| shells | 0.113 +/- 0.031 | +0.348 |
+| shells-free | 0.103 +/- 0.041 | +0.428 |
 
 | Comparison | Gain of the first model | 95 per cent interval |
 |---|---|---|
-| shells vs complex | -0.0130 | [-0.0323, +0.0068] |
-| shells-free vs complex-free | +0.0063 | [-0.0130, +0.0265] |
-| shells vs solvent | -0.0336 | [-0.0512, -0.0169] |
-| shells-free vs solvent | -0.0151 | [-0.0351, +0.0056] |
-| shells-free vs composition | -0.0229 | [-0.0427, -0.0046] |
-| shells vs composition | -0.0414 | [-0.0637, -0.0201] |
-| shells vs conditions | +0.0218 | [+0.0022, +0.0416] |
+| shells vs complex | -0.0101 | [-0.0299, +0.0099] |
+| shells-free vs complex-free | +0.0001 | [-0.0181, +0.0192] |
+| shells vs solvent | -0.0308 | [-0.0493, -0.0125] |
+| shells-free vs solvent | -0.0213 | [-0.0388, -0.0020] |
+| shells-free vs composition | -0.0291 | [-0.0474, -0.0104] |
+| shells vs composition | -0.0386 | [-0.0591, -0.0177] |
+| shells vs conditions | +0.0246 | [+0.0045, +0.0444] |
 | complex vs conditions | +0.0348 | [+0.0132, +0.0568] |
-| the frame on the shells | -0.0186 | [-0.0385, +0.0014] |
+| the frame on the shells | -0.0095 | [-0.0250, +0.0055] |
 | the frame on the complex | +0.0007 | [-0.0096, +0.0107] |
 
 ## activation energy at 298 K (kJ/mol), random folds
@@ -74,20 +74,20 @@
 | solvent | 1.726 +/- 0.341 | +0.674 |
 | complex | 2.001 +/- 0.355 | +0.677 |
 | complex-free | 1.934 +/- 0.533 | +0.662 |
-| shells | 2.156 +/- 0.773 | +0.686 |
-| shells-free | 1.456 +/- 0.367 | +0.833 |
+| shells | 2.236 +/- 0.843 | +0.673 |
+| shells-free | 1.612 +/- 0.312 | +0.804 |
 
 | Comparison | Gain of the first model | 95 per cent interval |
 |---|---|---|
-| shells vs complex | -0.1453 | [-0.5064, +0.2205] |
-| shells-free vs complex-free | +0.4804 | [+0.0956, +0.9596] |
-| shells vs solvent | -0.4181 | [-0.7797, -0.0288] |
-| shells-free vs solvent | +0.2757 | [-0.1104, +0.7654] |
-| shells-free vs composition | -0.0805 | [-0.3966, +0.2563] |
-| shells vs composition | -0.7743 | [-1.1628, -0.4069] |
-| shells vs conditions | +0.8274 | [+0.3086, +1.4326] |
+| shells vs complex | -0.2300 | [-0.6559, +0.1869] |
+| shells-free vs complex-free | +0.3227 | [-0.0824, +0.7861] |
+| shells vs solvent | -0.5028 | [-0.9170, -0.0441] |
+| shells-free vs solvent | +0.1181 | [-0.2839, +0.5831] |
+| shells-free vs composition | -0.2381 | [-0.5727, +0.1078] |
+| shells vs composition | -0.8590 | [-1.2803, -0.4426] |
+| shells vs conditions | +0.7427 | [+0.2071, +1.3789] |
 | complex vs conditions | +0.9728 | [+0.5166, +1.4384] |
-| the frame on the shells | -0.6938 | [-1.0417, -0.3634] |
+| the frame on the shells | -0.6209 | [-1.0031, -0.2232] |
 | the frame on the complex | -0.0681 | [-0.2178, +0.0874] |
 
 ## activation energy at 298 K (kJ/mol), by-composition folds
@@ -99,20 +99,20 @@
 | solvent | 2.023 +/- 0.935 | +0.584 |
 | complex | 2.424 +/- 0.574 | +0.588 |
 | complex-free | 2.232 +/- 0.419 | +0.625 |
-| shells | 2.585 +/- 1.176 | +0.494 |
-| shells-free | 1.589 +/- 0.379 | +0.826 |
+| shells | 2.903 +/- 0.991 | +0.399 |
+| shells-free | 1.685 +/- 0.321 | +0.825 |
 
 | Comparison | Gain of the first model | 95 per cent interval |
 |---|---|---|
-| shells vs complex | -0.1846 | [-0.6243, +0.2892] |
-| shells-free vs complex-free | +0.6395 | [+0.2307, +1.1288] |
-| shells vs solvent | -0.5752 | [-0.9980, -0.0865] |
-| shells-free vs solvent | +0.4393 | [-0.0055, +0.9700] |
-| shells-free vs composition | -0.1586 | [-0.5017, +0.2205] |
-| shells vs composition | -1.1731 | [-1.7235, -0.6524] |
-| shells vs conditions | +0.4356 | [-0.1321, +1.1193] |
+| shells vs complex | -0.4934 | [-0.9025, -0.0987] |
+| shells-free vs complex-free | +0.5464 | [+0.1371, +1.0377] |
+| shells vs solvent | -0.8841 | [-1.2327, -0.5570] |
+| shells-free vs solvent | +0.3462 | [-0.1002, +0.8700] |
+| shells-free vs composition | -0.2517 | [-0.5883, +0.1150] |
+| shells vs composition | -1.4820 | [-2.0401, -0.9504] |
+| shells vs conditions | +0.1268 | [-0.3301, +0.6004] |
 | complex vs conditions | +0.6202 | [+0.0914, +1.1675] |
-| the frame on the shells | -1.0145 | [-1.4920, -0.5359] |
+| the frame on the shells | -1.2303 | [-1.7916, -0.6968] |
 | the frame on the complex | -0.1905 | [-0.3720, -0.0050] |
 
 ## The same comparison with the mixture chosen inside each fold
@@ -168,8 +168,8 @@ The donor atoms of these shells sit 2.14 +/- 0.17 A from the ion, which is what 
 
 | Field | Largest magnitude | Distance from the ion, A | Distance from the nearest donor atom, A |
 |---|---|---|---|
-| Electrostatic | +3.6244 | 0.69 | 1.22 |
-| Steric | -0.6052 | 4.91 | 2.69 |
-| Hydrophobic | +3.1052 | 2.55 | 0.41 |
-| H-bond acceptor | -1.5286 | 3.33 | 1.12 |
+| Electrostatic | -3.5054 | 3.03 | 0.81 |
+| Steric | -0.4050 | 5.04 | 2.85 |
+| Hydrophobic | -1.5414 | 5.00 | 2.86 |
+| H-bond acceptor | -1.2302 | 4.22 | 1.92 |
 | H-bond donor | +0.0000 | 16.12 | 13.72 |

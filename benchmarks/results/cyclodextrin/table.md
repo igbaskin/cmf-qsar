@@ -19,7 +19,7 @@ alpha and lambda grids and the same 10-fold CV as
 | hp_beta | 135 | +0.288 | +0.571 | +0.410 | 7 | 15 |
 | gamma | 292 | +0.451 | +0.485 | +0.363 | 9 | 19 |
 | alpha | 827 | +0.336 | +0.323 | +0.178 | 5 | 12 |
-| beta | 1162 | +0.329 | +0.447 | +0.318 | 8 | 14 |
+| beta | 1162 | +0.329 | +0.451 | +0.318 | 8 | 14 |
 
 Mean q2 over the 7 hosts measured: aligned +0.341, invariant +0.446, counts +0.323.
 
@@ -43,9 +43,9 @@ carry a formal charge there.
 | hp_beta | 135 | 47 | +0.288 | +0.347 | +0.571 | +0.499 | +0.410 | +0.437 |
 | gamma | 292 | 122 | +0.451 | +0.441 | +0.485 | +0.437 | +0.363 | +0.382 |
 | alpha | 827 | 444 | +0.336 | +0.303 | +0.323 | +0.340 | +0.178 | +0.186 |
-| beta | 1162 | 601 | +0.329 | +0.335 | +0.447 | +0.490 | +0.318 | +0.329 |
+| beta | 1162 | 601 | +0.329 | +0.336 | +0.451 | +0.492 | +0.318 | +0.329 |
 
-Mean q2 at pH 7: aligned +0.323, invariant +0.429, counts +0.331.
+Mean q2 at pH 7: aligned +0.323, invariant +0.430, counts +0.331.
 
 Protonating the guests is not settled by this measurement. The invariant kernel improves on 4 of
 the 7 hosts (methyl_beta, sbe_beta, alpha, beta) and loses elsewhere, so the mean barely moves.

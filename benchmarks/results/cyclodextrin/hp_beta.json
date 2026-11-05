@@ -35,10 +35,10 @@
   "heavy_atoms_median": 15.0,
   "mcs_failed": 15,
   "charged": 4,
-  "align_seconds": 1.267331838607788,
+  "align_seconds": 1.405797004699707,
   "aligned": {
-   "q2": 0.2882556198536873,
-   "rmse_cv": 0.6897633500406123,
+   "q2": 0.28825561985368797,
+   "rmse_cv": 0.6897633500406121,
    "alpha": 2.0,
    "lam": 0.1
   },
@@ -53,7 +53,7 @@
    "rmse_cv": 0.6280236275165949,
    "lam": 0.001
   },
-  "seconds": 5.61762261390686
+  "seconds": 4.12341046333313
  },
  "ph7": {
   "file": "examples/cyclodextrin/ph7/hydroxypropyl_beta_cyclodextrin.csv",
@@ -66,10 +66,10 @@
   "heavy_atoms_median": 15.0,
   "mcs_failed": 15,
   "charged": 47,
-  "align_seconds": 1.256927728652954,
+  "align_seconds": 1.3723373413085938,
   "aligned": {
-   "q2": 0.3474712489730264,
-   "rmse_cv": 0.6604469172500518,
+   "q2": 0.3474712489730266,
+   "rmse_cv": 0.6604469172500517,
    "alpha": 2.0,
    "lam": 0.1
   },
@@ -84,7 +84,7 @@
    "rmse_cv": 0.6135768968665511,
    "lam": 0.001
   },
-  "seconds": 5.626791954040527
+  "seconds": 4.070148468017578
  },
- "seconds": 16.240419149398804
+ "seconds": 13.80722165107727
 }

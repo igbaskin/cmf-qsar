@@ -71,8 +71,8 @@
    "sha256": "09ab77d1d25fcd4179f26f290e8dc902a94a6f8318b79f33a1207d3243aeb0a8"
   },
   "benchmarks/results/slab/corrosion.json": {
-   "bytes": 22227,
-   "sha256": "e4a6440620c57f40c96d20a06be44a8a47bdf1b4a15ec362f2eccb661cee381e"
+   "bytes": 22230,
+   "sha256": "843e1462b42ed69c3222ad159fc30a7e1e25e8c17201f63a46acad67b4ba66e0"
   },
   "benchmarks/results/slab/pose.json": {
    "bytes": 4447,

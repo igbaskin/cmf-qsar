@@ -405,29 +405,48 @@ def _cap_dummies(mol: Chem.Mol) -> Chem.Mol:
     return out
 
 
-def _gasteiger_with_a_metal(mol: Chem.Mol) -> Optional[np.ndarray]:
-    """Gasteiger charges for a molecule that holds a transition metal (plan item EC4).
+#: The elements the Gasteiger scheme can do, measured rather than taken from a paper: a two-atom
+#: molecule C-X was built for every element up to radon and the charges asked for.  Exactly these
+#: fourteen come back with a number; for any other element **every atom of the molecule** comes
+#: back as "not a number", so one such atom leaves the whole molecule without an electrostatic
+#: field.  Magnesium and aluminium are in the scheme and lithium and sodium are not, which is not
+#: a pattern anyone would guess.  (Plan items EC4, EC3 and D11.)
+GASTEIGER_ELEMENTS = frozenset(("H", "B", "C", "N", "O", "F", "Mg", "Al", "Si", "P", "S",
+                                "Cl", "Br", "I"))
 
-    The Gasteiger scheme has no parameters for a d-block metal, and one metal atom makes RDKit
-    return "not a number" for *every* atom of the molecule, so the electrostatic field of a
-    coordination complex was identically zero and said nothing.  The charges are therefore
-    computed on the molecule with its metal atoms removed, which leaves the ligands as they are in
-    their free state, and each metal is given its formal charge.  For a complex read by
-    :mod:`cmfqsar.complexes` that formal charge is the oxidation state of the metal.
 
-    What this does not describe is the donation from the ligand to the metal: the ligand atoms
-    carry the charges of the free ligand, so the field understates the polarisation of the donor
-    atoms.  A calculated charge, placed in the per-atom property ``partial_charge`` and read with
-    ``charge_model="file"``, is the better description where one is available.
+def _gasteiger_with_unknown_atoms(mol: Chem.Mol) -> Optional[np.ndarray]:
+    """Gasteiger charges for a molecule holding an element the scheme cannot do (item D11).
 
-    Returns ``None`` when the molecule holds no metal, or when the charges still do not come out,
-    so that the caller can fall back to the ordinary route.
+    One atom of an element outside :data:`GASTEIGER_ELEMENTS` makes RDKit return "not a number"
+    for *every* atom of the molecule, so the electrostatic field of that molecule is identically
+    zero: not an error, not a warning, and not a field.  The charges are therefore computed on the
+    molecule with those atoms removed, which leaves every fragment as it is in its free state, and
+    each removed atom is given its formal charge.
+
+    The fault needs the element to be **bonded** into a fragment.  The scheme runs per connected
+    fragment, so a disconnected ion is not a problem for its neighbours; it is still routed
+    through here, and its charge comes out the same either way, because its formal charge is what
+    the scheme gives a lone ion anyway.
+
+    Item EC4 found this for the d-block metals of a coordination complex, where the removed atom
+    is the metal and its formal charge is the oxidation state; item EC3 found it again on the
+    selenomethyl substituent of the Hammett series, which is what showed the metal rule to be too
+    narrow.  What the repair does not describe is the donation between the removed atom and its
+    neighbours: those neighbours carry the charges of the free fragment, so the field understates
+    their polarisation.  A calculated charge, placed in the per-atom property ``partial_charge``
+    and read with ``charge_model="file"``, is the better description where one is available.
+
+    Returns ``None`` when every element of the molecule is one the scheme can do, or when the
+    charges still do not come out, so that the caller can fall back to the ordinary route.
     """
-    metals = [a.GetIdx() for a in mol.GetAtoms() if is_transition_metal(a.GetSymbol())]
-    if not metals:
+    unknown = [a.GetIdx() for a in mol.GetAtoms() if a.GetSymbol() not in GASTEIGER_ELEMENTS]
+    if not unknown:
         return None
+    if len(unknown) == mol.GetNumAtoms():             # nothing left to compute: a lone ion, say
+        return np.array([float(a.GetFormalCharge()) for a in mol.GetAtoms()])
     rw = Chem.RWMol(Chem.Mol(mol))
-    for i in sorted(metals, reverse=True):
+    for i in sorted(unknown, reverse=True):
         rw.RemoveAtom(i)
     free = rw.GetMol()
     try:
@@ -439,14 +458,14 @@ def _gasteiger_with_a_metal(mol: Chem.Mol) -> Optional[np.ndarray]:
                      else float("nan") for a in free.GetAtoms()])
     if not np.any(np.isfinite(vals)):
         return None
-    # the scheme also has no parameters for a few ligands written with formal charges, such as
-    # carbon monoxide as [C-]#[O+]; those atoms keep their formal charge, which leaves the net
-    # charge of the ligand right even though the charge inside it is only roughly placed
+    # the scheme also fails on a few groups written with formal charges, such as carbon monoxide
+    # as [C-]#[O+]; those atoms keep their formal charge, which leaves the net charge of the
+    # fragment right even though the charge inside it is only roughly placed
     formal = np.array([float(a.GetFormalCharge()) for a in free.GetAtoms()])
     vals = np.where(np.isfinite(vals), vals, formal)
     q = np.zeros(mol.GetNumAtoms())
-    q[[i for i in range(mol.GetNumAtoms()) if i not in set(metals)]] = vals
-    for i in metals:
+    q[[i for i in range(mol.GetNumAtoms()) if i not in set(unknown)]] = vals
+    for i in unknown:
         q[i] = float(mol.GetAtomWithIdx(i).GetFormalCharge())
     return q
 
@@ -484,14 +503,24 @@ def _partial_charges(mol: Chem.Mol, model: str) -> Tuple[np.ndarray, str]:
         except Exception:
             pass
         model = "gasteiger"
-    with_metal = _gasteiger_with_a_metal(capped)
-    if with_metal is not None:
-        return with_metal, "gasteiger+formal"
+    # The plain scheme first, so that every molecule it can do is answered exactly as before.
+    # Only a molecule it fails on is repaired, and a failure shows as "not a number" (plan item
+    # D11).  There are two causes and the repair handles both: an element the scheme has no
+    # parameters for at all, which voids every atom of the molecule, and a valence state it has
+    # none for, such as the phosphorus of hexafluorophosphate, which voids that atom alone.
     AllChem.ComputeGasteigerCharges(capped)
-    q = np.array([float(a.GetProp("_GasteigerCharge")) if a.HasProp("_GasteigerCharge") else 0.0
-                  for a in capped.GetAtoms()])
-    q[~np.isfinite(q)] = 0.0
-    return q, "gasteiger"
+    q = np.array([float(a.GetProp("_GasteigerCharge")) if a.HasProp("_GasteigerCharge")
+                  else float("nan") for a in capped.GetAtoms()])
+    if np.all(np.isfinite(q)):
+        return q, "gasteiger"
+    repaired = _gasteiger_with_unknown_atoms(capped)
+    if repaired is not None:
+        return repaired, "gasteiger+formal"
+    # no element is outside the scheme, so a valence state is to blame: those atoms keep their
+    # formal charge, which leaves the net charge of the fragment right.  Before item D11 they
+    # were set to zero, which made an ion look neutral to the electrostatic field.
+    formal = np.array([float(a.GetFormalCharge()) for a in capped.GetAtoms()])
+    return np.where(np.isfinite(q), q, formal), "gasteiger+formal"
 
 
 def _hydrophobic_weights(mol: Chem.Mol) -> np.ndarray:

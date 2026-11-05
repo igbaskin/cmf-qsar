@@ -759,16 +759,22 @@ electrolytes, and it is the part of the item most worth writing down.
 **The answer depends on the target, in the way predicted in advance.** On 62 LiPF6 formulations
 over 22 solvent compositions, with measured conductivities from CALiSol-23 and only the descriptor
 computed, the sampled shells beat the single optimised complex on the activation energy at 298 K by
-0.480 kJ/mol [0.096, 0.960] on random folds and 0.639 kJ/mol [0.231, 1.129] on folds grouped by
-composition, where predicting the mean costs 3.535 kJ/mol; on the conductivity at the same
-temperature there is no gain at all (-0.013 [-0.034, +0.008] and +0.006 [-0.013, +0.027]). The
+0.323 kJ/mol [-0.082, +0.786] on random folds and 0.546 kJ/mol [+0.137, +1.038] on folds grouped
+by composition, where predicting the mean costs 3.535 kJ/mol; on the conductivity at the same
+temperature there is no gain at all (-0.016 [-0.036, +0.004] and +0.000 [-0.018, +0.019]). Those
+numbers are the ones item D11 left behind: until the charge model was repaired, 72 % of these
+shells carried a spurious net charge of +1, and correcting it cost the shell model enough to take
+the random-fold interval off the clear-of-zero list while leaving the grouped-fold one and both
+fold-chosen-weight variants on it. A paper that reports the first set would be reporting an
+artefact, and the episode is itself the argument for the reporting rule of item EC6: a number is
+only as good as the inputs it was computed from, and both have to be re-measured together. The
 reason was stated before the measurement: an ion moves by leaving one shell and entering the next,
 so the barrier is the quantity a distribution of shells has a claim on, while a conductivity at one
 temperature is set largely by how much salt is dissolved and how viscous the mixture is. A paper
 can therefore say what the fourth dimension is for, rather than whether it works.
 
 **An ensemble pays for a frame in a way a single complex does not.** The cation frame of item BT4
-costs the sampled shells 0.694 kJ/mol [0.363, 1.042] and 1.015 [0.536, 1.492], against 0.068 kJ/mol
+costs the sampled shells 0.621 kJ/mol [0.223, 1.003] and 1.230 [0.697, 1.792], against 0.068 kJ/mol
 with an interval containing zero for one complex. Sixteen shells have sixteen coordination
 polyhedra, and one frame cannot hold them all. This is the sharpest statement in the battery tier
 about the cost of the co-field, because the co-field needs the frame: the picture and the

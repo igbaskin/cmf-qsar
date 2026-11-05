@@ -6,22 +6,22 @@ One table per run of `benchmarks/run_hammett.py`, named by the tag of its summar
 
 | target | fields | n | α | λ | q² | RMSEcv | r² fit | sd(y) |
 |---|---|---|---|---|---|---|---|---|
-| sigma_m | electrostatic+steric+hydrophobic+hba+hbd | 95 | 0.5 | 1 | 0.70 | 0.14 | 0.82 | 0.26 |
-| sigma_m | electrostatic | 95 | 1.2 | 1 | 0.66 | 0.15 | 0.73 | 0.26 |
+| sigma_m | electrostatic+steric+hydrophobic+hba+hbd | 95 | 0.3 | 1 | 0.70 | 0.14 | 0.80 | 0.26 |
+| sigma_m | electrostatic | 95 | 0.8 | 1 | 0.67 | 0.15 | 0.73 | 0.26 |
 | sigma_m | steric | 95 | 1.2 | 0.01 | 0.19 | 0.23 | 0.33 | 0.26 |
 | sigma_m | hydrophobic | 95 | 3 | 10 | -0.03 | 0.26 | 0.06 | 0.26 |
 | sigma_m | hba | 95 | 0.3 | 1 | 0.18 | 0.24 | 0.24 | 0.26 |
 | sigma_m | hbd | 95 | 0.3 | 10 | -0.02 | 0.26 | 0.03 | 0.26 |
 | sigma_m | electrostatic+steric | 95 | 2 | 1 | 0.68 | 0.15 | 0.77 | 0.26 |
 | sigma_p | electrostatic+steric+hydrophobic+hba+hbd | 95 | 0.5 | 1 | 0.69 | 0.21 | 0.82 | 0.38 |
-| sigma_p | electrostatic | 95 | 0.8 | 1 | 0.68 | 0.22 | 0.74 | 0.38 |
+| sigma_p | electrostatic | 95 | 0.8 | 1 | 0.68 | 0.22 | 0.75 | 0.38 |
 | sigma_p | steric | 95 | 1.2 | 0.01 | 0.14 | 0.36 | 0.30 | 0.38 |
 | sigma_p | hydrophobic | 95 | 3 | 10 | -0.01 | 0.39 | 0.07 | 0.38 |
 | sigma_p | hba | 95 | 3 | 1 | 0.23 | 0.34 | 0.40 | 0.38 |
 | sigma_p | hbd | 95 | 3 | 10 | 0.02 | 0.38 | 0.09 | 0.38 |
 | sigma_p | electrostatic+steric | 95 | 2 | 1 | 0.68 | 0.22 | 0.77 | 0.38 |
-| pi | electrostatic+steric+hydrophobic+hba+hbd | 69 | 0.3 | 1 | 0.71 | 0.59 | 0.82 | 1.09 |
-| pi | electrostatic | 69 | 1.2 | 0.01 | 0.38 | 0.86 | 0.74 | 1.09 |
+| pi | electrostatic+steric+hydrophobic+hba+hbd | 69 | 0.3 | 1 | 0.72 | 0.58 | 0.82 | 1.09 |
+| pi | electrostatic | 69 | 1.2 | 0.01 | 0.36 | 0.87 | 0.73 | 1.09 |
 | pi | steric | 69 | 0.5 | 0.001 | 0.30 | 0.91 | 0.48 | 1.09 |
 | pi | hydrophobic | 69 | 0.3 | 0.1 | 0.72 | 0.58 | 0.79 | 1.09 |
 | pi | hba | 69 | 0.5 | 1 | 0.27 | 0.93 | 0.34 | 1.09 |

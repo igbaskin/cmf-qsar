@@ -4015,7 +4015,8 @@ express that: the 22 compositions give only 12 distinct complexes, 9 of them sha
 one composition, because rounding a mixture to four molecules makes nearby compositions identical.
 
 **The gate** -- do the sampled shells beat the single optimised complex -- **is met on the
-activation energy and not on the conductivity**, and only without the cation frame. Seven models,
+activation energy in three readings of four and not on the conductivity**, and only without the
+cation frame. Seven models,
 five folds, the ridge and the field width chosen inside each fold, each field kernel mixed in equal
 parts with the kernel on the molality at a fixed weight (item M10's trap: a free weight lets every
 model discard its own field). The complex and the shells each appear twice, framed and
@@ -4032,19 +4033,24 @@ Activation energy at 298 K, mean absolute error in kJ/mol, random folds and by-c
 | free solvents, alignment-free | 1.726 | 2.023 |
 | one optimised complex, framed | 2.001 | 2.424 |
 | one optimised complex, alignment-free | 1.934 | 2.232 |
-| sampled shells, framed | 2.156 | 2.585 |
-| sampled shells, alignment-free | **1.456** | **1.589** |
+| sampled shells, framed | 2.236 | 2.903 |
+| sampled shells, alignment-free | **1.612** | **1.685** |
 
-Paired, the sampled shells gain 0.480 kJ/mol [0.096, 0.960] on random folds and 0.639
-[0.231, 1.129] on by-composition folds over the optimised complex, and both survive the kernel
-weight being chosen inside the fold. On the conductivity there is no gain: -0.013 [-0.034, +0.008]
+Paired, the sampled shells gain 0.323 kJ/mol [-0.082, +0.786] on random folds and 0.546
+[+0.137, +1.038] on by-composition folds over the optimised complex, and both variants with the
+kernel weight chosen inside the fold stay clear of zero (0.436 and 0.586). Item D11 revised these
+numbers: until it was found, 72 % of these shells carried a net charge of +1 in the electrostatic
+field, because the phosphorus of the hexafluorophosphate anion is a valence state the Gasteiger
+scheme cannot do and was being set to zero. Correcting it makes the shell model slightly worse and
+takes the random-fold gain off the clear-of-zero list, leaving the gate met in three readings of
+four. On the conductivity there is no gain: -0.013 [-0.034, +0.008]
 and +0.006 [-0.013, +0.027]. That difference between the targets was predicted before the
 measurement -- an ion moves by leaving one shell and entering the next, so the barrier is the
 quantity a distribution of shells has a claim on, while a conductivity at one temperature is set by
 how much salt is dissolved and how viscous the mixture is.
 
 Three readings go with it. **The frame costs much more for an ensemble than for one complex**:
-0.694 kJ/mol [0.363, 1.042] and 1.015 [0.536, 1.492] against 0.068 with an interval containing
+0.621 kJ/mol [0.223, 1.003] and 1.230 [0.697, 1.792] against 0.068 with an interval containing
 zero, because sixteen shells have sixteen coordination polyhedra and one frame cannot hold them
 all. **The composition is still not beaten** -- the shell field only draws level with it on the
 activation energy (-0.081 [-0.397, +0.256]) and is behind it on the conductivity -- which is the

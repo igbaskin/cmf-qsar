@@ -35,9 +35,9 @@
   "heavy_atoms_median": 15.0,
   "mcs_failed": 1,
   "charged": 4,
-  "align_seconds": 11.896634817123413,
+  "align_seconds": 12.094897031784058,
   "aligned": {
-   "q2": 0.32709680679501785,
+   "q2": 0.32709680679501774,
    "rmse_cv": 0.7018665929072466,
    "alpha": 2.0,
    "lam": 1.0
@@ -53,7 +53,7 @@
    "rmse_cv": 0.737347024498685,
    "lam": 1.0
   },
-  "seconds": 15.935677528381348
+  "seconds": 14.593134641647339
  },
  "ph7": {
   "file": "examples/cyclodextrin/ph7/sulfobutylether_beta_cyclodextrin.csv",
@@ -66,10 +66,10 @@
   "heavy_atoms_median": 15.0,
   "mcs_failed": 1,
   "charged": 27,
-  "align_seconds": 11.917284965515137,
+  "align_seconds": 20.0369291305542,
   "aligned": {
-   "q2": 0.2680590432864677,
-   "rmse_cv": 0.7320087993086699,
+   "q2": 0.26805904328646735,
+   "rmse_cv": 0.73200879930867,
    "alpha": 2.0,
    "lam": 1.0
   },
@@ -84,7 +84,7 @@
    "rmse_cv": 0.7366576473991738,
    "lam": 1.0
   },
-  "seconds": 15.952597379684448
+  "seconds": 35.1863477230072
  },
- "seconds": 36.74552345275879
+ "seconds": 64.69937252998352
 }
