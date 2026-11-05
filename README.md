@@ -2631,27 +2631,39 @@ on the +z side), and the four binding energies are the targets, one model each a
 together. The data are the 140 M@C(4-x)Nx catalysts of He, Wang and Ouyang (Chem. Mater. 2023),
 28 metals in five motifs (`examples/sac/`). The pilot found a fault in them and works around it:
 the bare sheets of eight metals were relaxed with DFT+U while every adsorbed state was relaxed
-without it, which puts their binding energies 10 eV off; those sheets are being recomputed with
-plain PBE, and until then 98 catalysts carry targets (`examples/sac/README.md`).
+without it, which puts their binding energies 10 eV off; 35 of those 40 sheets have since been
+recomputed with plain PBE (the five of tungsten cannot be, its pseudopotential is not on this
+machine), so 133 catalysts carry targets (`examples/sac/README.md`).
 
-**Measured on those 98, with folds that hold out random catalysts, a whole metal, or a whole
+**Measured on those 133, with folds that hold out random catalysts, a whole metal, or a whole
 motif:** the overlap kernel of the site with the inorganic fields and the tabulated properties
-of the atoms as fields gives mean q² +0.84, +0.74 and +0.82 over the four endpoints: OH and OOH
-to 0.4 eV, O to 0.7 eV, H to 0.7 eV (q² 0.58, the hard one). That does not beat the periodic
-autocorrelation of the whole cell (+0.84, +0.78, +0.83) or the tabulated properties of the metal
-with the nitrogen count (+0.82, +0.81, +0.82): every difference is inside its interval except O
-on unseen metals, where the site kernel is worse, and the invariant local kernel of the same
-environment matches the frame kernel everywhere. Sharing the four endpoints in one fit gains
-nothing. What the site kernel gives that the references cannot is the **two-reaction reading**:
-the difference dE_H - dE_OH is predicted with q² +0.82 (0.55 eV on an sd of 1.30 eV), the oxygen
-reduction overpotential derived from the out-of-fold energies ranks the sites with a rank
-correlation of +0.90 (+0.79 on unseen metals) and recovers 7 of the 10 best bifunctional sites,
-and the difference co-field places the lever where a chemist would look: the charge at the metal
-(an electropositive metal binds OH and OOH more and H about the same) and at its four neighbours
-(nitrogen in the first shell weakens OH binding more than H binding), while the size of the metal
-weakens all three alike. The GP interval covers 84 to 93 % at the nominal 95 % and its width
-ranks the errors only weakly, so it is not yet an acquisition rule. The table, the co-field maps
-in the plane of the sheet and the scatter plots are in `benchmarks/results/sac/`.
+of the atoms as fields gives mean q² +0.76, +0.68 and +0.71 over the four endpoints: OH to
+0.4 eV (q² 0.92), OOH and H to 0.7 eV (H at q² 0.52, the hard one), O to 0.8 eV. That does not
+beat the periodic autocorrelation of the whole cell (+0.80, +0.74, +0.74), the tabulated
+properties of the metal with the nitrogen count (+0.75, +0.74, +0.76) or the invariant local
+kernel of the same environment (+0.79, +0.74, +0.74): on O in every design, and on OH with a
+motif held out, the site kernel is worse than the references by 0.04 to 0.17 with the interval
+clear of zero, and every other difference is inside its interval, so the frame adds nothing.
+The gate is not passed, as it was not on the 98 catalysts of the pilot. The field set that is
+read is chosen by the mean over the three fold designs, because the random folds alone choose
+the indicator fields of the metal by a margin inside the interval, and those collapse on an
+unseen metal (q² +0.30) as a one-hot does. Sharing the four endpoints in one fit gains nothing
+(+0.78 shared against +0.78 apart). What the site kernel gives that the references cannot is
+the **two-reaction reading**: the difference dE_H - dE_OH is predicted with q² +0.81 (0.53 eV on
+an sd of 1.22 eV), the oxygen reduction overpotential derived from the out-of-fold energies
+ranks the sites with a rank correlation of +0.88 (+0.79 on unseen metals), and of the ten best
+bifunctional sites by DFT, now led by the cobalt sites the recompute brought in, the three
+designs recover 4 to 6. The GP interval covers 86 to 96 % at the nominal 95 % and its width does
+not rank the errors, so it is not an acquisition rule. **The co-field reading of the pilot is a
+property of a smooth kernel, not of the data:** at the pilot's kernel (envelope 0.2, attenuation
+0.5, raw overlap, ridge 0.1) the difference co-field of the electrostatic field at the metal is
++0.23 eV per unit on the 133 catalysts and +0.16 on the pilot's 98, the same sign at the same
+place, which says again that an electropositive metal binds OH more than H; at the sharper
+kernel the full set chooses by accuracy (attenuation 2, cosine overlap, ridge 0.001) the weights
+are ten times larger and change sign between the two subsets, so the maps the benchmark draws
+at that kernel are not readable. A co-field is read at a kernel smooth enough to be stable, and
+the accuracy does not choose that kernel. The table, the co-field maps in the plane of the sheet
+and the scatter plots are in `benchmarks/results/sac/`.
 
 ### A site of a cell as the sample, without cutting it out
 

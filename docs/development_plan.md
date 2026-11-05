@@ -2875,8 +2875,9 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   **Measurement** (`benchmarks/run_sites.py`; `benchmarks/results/sites/table.md`), three parts.
   **The single-atom catalysts of EC8**, where one site of every cell is measured: 139 M@C(4-x)Nx
   sheets, the binding energies of H, O and OH on 104 of them and of OOH on 91 (six bare sheets
-  have been recomputed with plain PBE since the pilot ran and more are being recomputed, so the
-  pilot's numbers are not comparable and every reference is recomputed here), the pilot's three
+  had been recomputed with plain PBE when this ran and 29 more since, so neither the pilot's
+  numbers nor the rerun of 5 November are comparable and every reference is recomputed here),
+  the pilot's three
   fold designs, every descriptor a family choosing its settings in an inner cross-validation of
   the same kind. Mean q² over the four endpoints, random / one metal held out / one motif held
   out: **the site profile +0.792 / +0.721 / +0.755**, the invariant kernel of the cut cluster
@@ -3977,9 +3978,11 @@ for anything molecular.
   the shared 8x8 template gives for free, on the 140 M@C(4-x)Nx catalysts of He, Wang and Ouyang
   (Chem. Mater. 2023) with their H, O, OH and OOH binding energies. The source data have a fault
   the pilot found and works around: the bare sheets of eight metals were relaxed with DFT+U while
-  every adsorbed state was relaxed without it, so 40 catalysts carry no binding energy until their
-  sheets are recomputed with plain PBE (a VASP queue in WSL, about 45 minutes per sheet, running);
-  15 OOH states dissociated and Os@C4's sheet is 7 eV off. On the 98 catalysts that remain, with
+  every adsorbed state was relaxed without it, so 40 catalysts carried no binding energy until
+  their sheets were recomputed with plain PBE (a VASP queue in WSL, about 45 minutes per sheet;
+  finished 5 November for 35 of the 40, tungsten's five excluded because its pseudopotential is
+  not on this machine); 15 OOH states dissociated and Os@C4's sheet is 7 eV off. On the 98
+  catalysts the pilot had, with
   gas references computed at the set's settings and three fold designs (random, one metal held
   out, one motif held out), the overlap kernel of the site with electrostatic, steric,
   electronegativity, d-count, valence, ionisation and radius fields gives mean q² +0.84, +0.74
@@ -4001,10 +4004,32 @@ for anything molecular.
   weakens OH binding more than H binding), while the size of the metal weakens all three alike.
   The GP interval covers 84 to 93 % at the nominal 95 % and its width ranks the errors weakly
   (rank correlation +0.06 to +0.34 on unseen metals), so the variance is not yet the acquisition
-  rule E2 would need. Next, in order: finish the sheet recompute and rerun on 138 catalysts
-  (one command); a frame averaged over the point symmetry of the site (the D2h of the
-  divacancy), which is the M14 device and is what the frame kernel lacks against the invariant
-  one; the EC4 metal types so that the same measurement runs on the molecular macrocycles.
+  rule E2 would need.
+  **Rerun on the full set, 5 November 2026** (133 catalysts with targets, the same command):
+  the site overlap kernel gives mean q² +0.76 / +0.68 / +0.71 over the four endpoints on the
+  random / metal-out / motif-out designs, against +0.80 / +0.74 / +0.74 for the periodic
+  autocorrelation, +0.75 / +0.74 / +0.76 for the metal properties with the nitrogen count and
+  +0.79 / +0.74 / +0.74 for the invariant kernel of the same environment; on O in every design
+  and on OH with a motif held out the site kernel is worse by 0.04 to 0.17 with the interval
+  clear of zero, every other difference is inside its interval. The gate stays failed. Two
+  things the full set changed. (1) The random folds alone now choose the indicator field set by
+  a margin inside the interval (+0.79 against +0.76), and that set collapses on an unseen metal
+  (q² +0.30), so the field set the deliverables read from is chosen by the mean over the three
+  designs (`run_sac.py`, the extended set wins at +0.72 against +0.64 and +0.61); choosing on
+  one design and reporting on another is the selection trap of M10 in a new form. (2) The
+  co-field reading is a property of the kernel's smoothness: at the pilot's kernel (envelope
+  0.2, attenuation 0.5, raw, ridge 0.1) the difference co-field of the electrostatic field at
+  the metal is +0.23 eV per unit on the 133 and +0.16 on the pilot's 98, the same reading; at
+  the sharper kernel the full set chooses by accuracy (attenuation 2, cosine, ridge 0.001) the
+  weights are ten times larger and change sign between the two subsets. The two-reaction
+  reading holds: dE_H - dE_OH at q² +0.81 (0.53 eV on an sd of 1.22), the ORR overpotential
+  ranked at +0.88 (+0.79 on unseen metals), 4 to 6 of the ten best bifunctional sites recovered
+  (the DFT top ten is now led by Co@N4, Co@CN3 and Co@C2N2, which the recompute brought in). The
+  GP interval covers 86 to 96 % and its width does not rank the errors. Next, in order: the
+  co-field drawn at a kernel whose smoothness is fixed rather than chosen by accuracy; a frame
+  averaged over the point symmetry of the site (the D2h of the divacancy), which is the M14
+  device and is what the frame kernel lacks against the invariant one; the EC4 metal types so
+  that the same measurement runs on the molecular macrocycles.
 * **EC9. Potential-dependent targets.** A catalyst is a curve, turnover frequency against
   overpotential, not a number. The descriptor block already admits the applied potential as a
   condition, which covers a fixed set of overpotentials; a product kernel over catalysts and

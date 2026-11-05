@@ -696,14 +696,21 @@ def run(args, log) -> dict:
                 results[(name, design, target)] = r
                 out["models"].append(r.entry())
                 log("  " + r.summary())
-    # the best overlap field set by the random design, mean over the targets
+    # the best overlap field set: mean q2 over the targets and over all three fold designs.
+    # Every design is an out-of-fold measurement. The random design alone chose the indicator
+    # fields on the full set (5 November 2026) by a margin inside the interval, and those fields
+    # collapse on an unseen metal as a one-hot does, so a choice made on random folds alone
+    # would hand every deliverable the one set that cannot generalise over metals.
     def mean_q2(name, design):
         return float(np.mean([results[(name, design, t)].q2 for t in TARGETS]))
-    best_kind = max(FIELDSETS, key=lambda k: mean_q2(f"site overlap, {k}", "random"))
+
+    def mean_all(name):
+        return float(np.mean([mean_q2(name, d) for d in designs]))
+    best_kind = max(FIELDSETS, key=lambda k: mean_all(f"site overlap, {k}"))
     best_name = f"site overlap, {best_kind}"
     out["best_overlap"] = best_name
-    log(f"  best overlap field set by the random design: {best_kind} "
-        f"(mean q2 {mean_q2(best_name, 'random'):+.3f})")
+    log("  best overlap field set by the mean over the fold designs: " + best_kind + " ("
+        + ", ".join(f"{k} {mean_all(f'site overlap, {k}'):+.3f}" for k in FIELDSETS) + ")")
     # paired intervals against every reference, per design and target
     refs = [m for m in methods if not m.startswith("site overlap")]
     for design in designs:
