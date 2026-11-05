@@ -4106,6 +4106,41 @@ correlated +0.77 with the target. It is also why the negative result is usable r
 disappointing: it says where the spin field *would* earn its cost, which is a series whose members
 reduce at **different places**, not one fixed core decorated differently.
 
+### A metal in the middle: coordination complexes, and the first inorganic target the field wins
+
+A coordination complex broke three things at once, and each broke quietly. A metal–ligand bond
+written as a single bond makes the donor atom one valence too high, so RDKit refused most
+complexes; the Gasteiger charge scheme has no parameters for a d-block metal, and one metal atom
+made it return "not a number" for *every* atom, so the electrostatic field of a complex was
+identically zero — 197 of 200 iron complexes checked lose their field this way; and the steric
+table stopped at the main group, so every metal got a default radius.
+
+`cmfqsar/complexes.py` reads a complex from coordinates with the metal–ligand bonds written as
+dative bonds, works out each ligand's bond orders at the charge the data set states, and gives
+the metal the charge the ligands leave, which is its oxidation state. The charge model computes
+the ligand charges with the metal removed and gives the metal its formal charge. The metals get
+van der Waals parameters from the universal force field, put on the scale of the Tripos radii
+(iron 1.285 Å against carbon's 1.70 Å) and no hydrophobic or hydrogen-bond increment at all.
+
+Two public series are measured (`benchmarks/run_metal.py`). On **2216 iron(II) complexes** from
+the structural database with a computed reduction potential, which share the metal and nothing
+else, the frameless field autocorrelation reaches 0.253 V against the element counts and the
+metal site at 0.313 V and a training-mean error of 0.523 V: the fields win by
++0.060 V [+0.049, +0.071], and the ranking holds when whole coordination spheres are held out.
+This is the first inorganic target here where a field beats a composition; the battery items BT1
+to BT3 found the opposite on an average cell voltage. The frame decides whether the *overlap*
+kernel works at all: in the frame the file happens to carry it scores the training-mean error
+exactly (R² = +0.005), and after each complex is put in its own metal-and-principal-axes frame it
+scores 0.321 V (R² = +0.596) — the frame is worth +0.203 V [+0.176, +0.231], and still leaves the
+overlap kernel behind the kernel that needs no frame.
+
+On **25 substituted nickel complexes** that share one ligand skeleton and one N3O3 coordination
+sphere, the five ordinary fields reach 0.150 V on the Ni(III)/Ni(II) potential against 0.345 V for
+the population analysis of the same calculation that produced the target, a difference of
++0.195 V [+0.068, +0.321]. The co-field says what the model reads: its largest weights sit 4.5 to
+7.3 Å from the nickel atom, out among the substituents rather than at the metal or its donors,
+which is the second-sphere effect the plan item asked to look for.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

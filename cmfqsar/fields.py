@@ -50,7 +50,7 @@ import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem, rdMolDescriptors
 
-from .atomtypes import assign_atom_types, vdw_params
+from .atomtypes import assign_atom_types, is_transition_metal, vdw_params
 from .increments import tripos_increments
 
 PHYSCHEM_FIELDS = ("electrostatic", "steric", "hydrophobic", "hba", "hbd")
@@ -396,6 +396,52 @@ def _cap_dummies(mol: Chem.Mol) -> Chem.Mol:
     return out
 
 
+def _gasteiger_with_a_metal(mol: Chem.Mol) -> Optional[np.ndarray]:
+    """Gasteiger charges for a molecule that holds a transition metal (plan item EC4).
+
+    The Gasteiger scheme has no parameters for a d-block metal, and one metal atom makes RDKit
+    return "not a number" for *every* atom of the molecule, so the electrostatic field of a
+    coordination complex was identically zero and said nothing.  The charges are therefore
+    computed on the molecule with its metal atoms removed, which leaves the ligands as they are in
+    their free state, and each metal is given its formal charge.  For a complex read by
+    :mod:`cmfqsar.complexes` that formal charge is the oxidation state of the metal.
+
+    What this does not describe is the donation from the ligand to the metal: the ligand atoms
+    carry the charges of the free ligand, so the field understates the polarisation of the donor
+    atoms.  A calculated charge, placed in the per-atom property ``partial_charge`` and read with
+    ``charge_model="file"``, is the better description where one is available.
+
+    Returns ``None`` when the molecule holds no metal, or when the charges still do not come out,
+    so that the caller can fall back to the ordinary route.
+    """
+    metals = [a.GetIdx() for a in mol.GetAtoms() if is_transition_metal(a.GetSymbol())]
+    if not metals:
+        return None
+    rw = Chem.RWMol(Chem.Mol(mol))
+    for i in sorted(metals, reverse=True):
+        rw.RemoveAtom(i)
+    free = rw.GetMol()
+    try:
+        Chem.SanitizeMol(free)
+        AllChem.ComputeGasteigerCharges(free)
+    except Exception:                                 # noqa: BLE001 - fall back to the plain route
+        return None
+    vals = np.array([float(a.GetProp("_GasteigerCharge")) if a.HasProp("_GasteigerCharge")
+                     else float("nan") for a in free.GetAtoms()])
+    if not np.any(np.isfinite(vals)):
+        return None
+    # the scheme also has no parameters for a few ligands written with formal charges, such as
+    # carbon monoxide as [C-]#[O+]; those atoms keep their formal charge, which leaves the net
+    # charge of the ligand right even though the charge inside it is only roughly placed
+    formal = np.array([float(a.GetFormalCharge()) for a in free.GetAtoms()])
+    vals = np.where(np.isfinite(vals), vals, formal)
+    q = np.zeros(mol.GetNumAtoms())
+    q[[i for i in range(mol.GetNumAtoms()) if i not in set(metals)]] = vals
+    for i in metals:
+        q[i] = float(mol.GetAtomWithIdx(i).GetFormalCharge())
+    return q
+
+
 def _partial_charges(mol: Chem.Mol, model: str) -> Tuple[np.ndarray, str]:
     """The partial charges and where they came from: "file", "mmff" or "gasteiger".
 
@@ -429,6 +475,9 @@ def _partial_charges(mol: Chem.Mol, model: str) -> Tuple[np.ndarray, str]:
         except Exception:
             pass
         model = "gasteiger"
+    with_metal = _gasteiger_with_a_metal(capped)
+    if with_metal is not None:
+        return with_metal, "gasteiger+formal"
     AllChem.ComputeGasteigerCharges(capped)
     q = np.array([float(a.GetProp("_GasteigerCharge")) if a.HasProp("_GasteigerCharge") else 0.0
                   for a in capped.GetAtoms()])
@@ -438,7 +487,14 @@ def _partial_charges(mol: Chem.Mol, model: str) -> Tuple[np.ndarray, str]:
 
 def _hydrophobic_weights(mol: Chem.Mol) -> np.ndarray:
     contribs = rdMolDescriptors._CalcCrippenContribs(mol)
-    return np.array([c[0] for c in contribs], dtype=float)
+    w = np.array([c[0] for c in contribs], dtype=float)
+    # a transition metal gets no hydrophobic weight (plan item EC4): the Crippen increments were
+    # fitted to organic molecules and give a metal the table's default, which is not a measured
+    # value for it.  The Tripos increments of cmfqsar.increments already give it zero.
+    for a in mol.GetAtoms():
+        if is_transition_metal(a.GetSymbol()):
+            w[a.GetIdx()] = 0.0
+    return w
 
 
 def _hydrogen_counts(mol: Chem.Mol, legacy: bool = False) -> np.ndarray:

@@ -1769,7 +1769,8 @@ class MainWindow(QMainWindow):
                   "decoy": "Add decoys (background molecules, presumed inactive)"}
         path, _ = QFileDialog.getOpenFileName(
             self, titles.get(kind, "Open"), "",
-            "Structure files (*.sdf *.sd *.mol *.mol2 *.smi *.csv *.tsv *.txt);;All files (*)")
+            "Structure files (*.sdf *.sd *.mol *.mol2 *.xyz *.smi *.csv *.tsv *.txt);;"
+            "All files (*)")
         if not path:
             return
         self.load_dataset_file(path, kind)

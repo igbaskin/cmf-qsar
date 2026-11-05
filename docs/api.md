@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 106 modules, 207 classes with 667 public methods, and 1058 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 107 modules, 209 classes with 669 public methods, and 1069 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -51,6 +51,7 @@ for.
 | [cmfqsar.coalign](#cmfqsarcoalign) | Co-alignment of a training set, treated as what it is: expectation-maximisation over poses. |
 | [cmfqsar.cofields](#cmfqsarcofields) | Molecular co-fields (fields of regression coefficients), molecular fields and their overlap evaluated on a rectangular grid for visualisation (isosurfaces) and export. |
 | [cmfqsar.complementarity](#cmfqsarcomplementarity) | Compatibility of molecular fields and co-fields with the fields of a protein pocket. |
+| [cmfqsar.complexes](#cmfqsarcomplexes) | Transition-metal complexes: reading one from coordinates, and the frame its metal gives. |
 | [cmfqsar.conformal](#cmfqsarconformal) | Prediction intervals with a coverage guarantee, for any learner and any kernel source. |
 | [cmfqsar.conformers](#cmfqsarconformers) | Conformational ensembles: the fourth dimension of the CMF approach. |
 | [cmfqsar.contract](#cmfqsarcontract) | What has to match between fitting and predicting, checked rather than assumed. |
@@ -642,6 +643,10 @@ Atom typing (Tripos/Sybyl-like) and van der Waals parameters.
 Sybyl atom types are used (a) for continuous indicator fields (CIFs) and
 (b) to look up Tripos force-field van der Waals parameters for the steric
 field (Baskin & Zhokhova 2013, Eq. 10-11).
+
+### `is_transition_metal(symbol: str) -> bool`
+
+Is this element symbol one of the d-block metals (plan item EC4)?
 
 ### `vdw_params(symbol: str, atom_type: Optional[str]=None)`
 
@@ -2387,6 +2392,162 @@ a threshold on them gives the conservative query: require the conserved contacts
 rest vary.  Requiring the union of every complex's contacts, which is the other obvious
 choice, makes a query that only close analogues of one reference can satisfy.
 
+## cmfqsar.complexes
+
+Source: `cmfqsar/complexes.py`
+
+Transition-metal complexes: reading one from coordinates, and the frame its metal gives.
+
+Plan item EC4.  A coordination complex breaks three assumptions the rest of the program makes
+about a molecule.  Its metal atom has no entry in the steric table, so the steric field used a
+default radius for it; the Gasteiger charge scheme has no parameters for a metal, and one metal
+atom made RDKit return "not a number" for *every* atom, so the electrostatic field of a complex
+was identically zero; and a metal-ligand bond is not a shared electron pair, so RDKit refuses to
+sanitise most complexes written with ordinary single bonds.  This module repairs the third point
+and `cmfqsar.atomtypes` and `cmfqsar.fields` repair the first two.
+
+What a reader has to decide, and how it is decided here:
+
+* **Which bonds the metal makes.**  They are found by distance (RDKit's own connectivity
+  perception) and written as *dative* bonds that point from the donor atom to the metal.  A
+  dative bond carries no electrons of the donor's own valence, so the donor keeps the valence it
+  has in the free ligand and the molecule sanitises.
+* **The bond orders of the ligands.**  The metal is taken out, which leaves the ligands as
+  separate fragments, and each fragment's bond orders are determined on its own with
+  `rdDetermineBonds`, the same algorithm the program uses for any set of coordinates.  A
+  fragment needs its charge before its bond orders can be found (a cyclopentadienyl ring is
+  aromatic at -1 and a radical at 0), so the charges are taken from the data set when it states
+  them, and otherwise tried in turn.
+* **The charge of the metal.**  It is the total charge of the complex minus the sum of the ligand
+  charges.  For a complex whose ligand charges are stated this is the oxidation state of the
+  metal, and it is written into the molecule as a formal charge, which is what the repaired
+  charge model then places on the metal.
+* **The frame.**  The metal is the one atom every member of a series has, so the frame is free in
+  the sense of plan item EC4: the metal goes to the origin, and the rotation is fixed either by
+  matching the first coordination sphere onto a reference complex (`align_on_first_sphere`)
+  or, when the members do not share a coordination sphere, by a rule
+  (`principal_metal_frame`).
+
+Nothing here computes a field.  The output is an ordinary RDKit molecule with one conformation,
+which `cmfqsar.fields.build_fields` reads like any other.
+
+### `class XyzFrame  (dataclass)`
+
+One block of an XYZ file: the elements, the coordinates and the comment line.
+
+The comment line of an XYZ file has no agreed format.  Two readings of it are offered and
+both are filled in, because a caller that knows its own file can use whichever fits:
+`tags` holds every `key=value` token (the extended-XYZ convention), and `parts` holds the
+comment split on the vertical bar, which several published data sets use to separate fields.
+
+Attributes:
+
+- `symbols: List[str]`
+- `coords: np.ndarray`
+- `comment: str` = `''`
+- `name: str` = `''`
+- `tags: Dict[str, str]` = `field(default_factory=dict)`
+- `parts: List[str]` = `field(default_factory=list)`
+
+#### `XyzFrame.n_atoms` -> int  (property)
+
+### `class ComplexReport  (dataclass)`
+
+What the builder did, so that a data set can be checked instead of trusted.
+
+Attributes:
+
+- `name: str` = `''`
+- `metal: str` = `''`
+- `metal_charge: Optional[int]` = `None`
+- `total_charge: int` = `0`
+- `donors: List[int]` = `field(default_factory=list)`
+- `donor_symbols: List[str]` = `field(default_factory=list)`
+- `ligand_charges: List[int]` = `field(default_factory=list)`
+- `ligands_matched: int` = `0`
+- `n_ligands: int` = `0`
+- `net_charge: Optional[int]` = `None`
+- `fault: str` = `''`
+
+#### `ComplexReport.ok` -> bool  (property)
+
+### `parse_comment(comment: str) -> Tuple[Dict[str, str], List[str]]`
+
+The `key=value` tokens of a comment line, and the line split on the vertical bar.
+
+### `read_xyz(path: str, limit: Optional[int]=None) -> List[XyzFrame]`
+
+Every block of a (possibly multi-block) XYZ file.
+
+The file is read literally: no bonds are perceived and no element is renamed.  `limit` stops
+after that many blocks, which is what a quick check of a large file needs.
+
+### `molecule_from_coordinates(symbols: Sequence[str], coords: np.ndarray) -> Chem.Mol`
+
+An RDKit molecule with the given elements and coordinates and no bonds at all.
+
+### `build_complex(symbols: Sequence[str], coords: np.ndarray, total_charge: int=0, ligand_charges: Optional[Sequence[int]]=None, ligand_smiles: Optional[Sequence[str]]=None, name: str='', multiplicity: Optional[int]=None, metal: Optional[str]=None) -> Tuple[Optional[Chem.Mol], ComplexReport]`
+
+Build one mononuclear complex from its coordinates, with dative metal-ligand bonds.
+
+`total_charge` is the charge of the whole complex.  `ligand_charges` are the charges of the
+ligands as the data set states them, in any order; they are matched to the fragments the
+coordinates give, and `ligand_smiles` (same order) lets the match be checked instead of
+guessed.  `multiplicity` is stored as a property and not used here, so that the quantum stage
+of plan item EC1 can pick the state up later.
+
+Returns the molecule and a report.  The molecule is `None` when the complex could not be
+built, and the report then says why; a data set is expected to lose a few members this way
+and the number lost is part of its description.
+
+### `metal_index(mol: Chem.Mol) -> Optional[int]`
+
+The index of the one transition-metal atom, or `None` when there is not exactly one.
+
+### `donor_indices(mol: Chem.Mol) -> List[int]`
+
+The atoms bonded to the metal: the first coordination sphere.
+
+### `coordination(mol: Chem.Mol) -> Dict[str, float]`
+
+Numbers that describe the metal site, for use as descriptors or as a check.
+
+`n_donors` is the coordination number, `donor_<element>` the number of donors of that
+element, `metal_charge` the formal charge the builder gave the metal, and `d_min`,
+`d_mean` and `d_max` the distances from the metal to its donors in angstrom.
+
+### `metal_origin(mol: Chem.Mol) -> Chem.Mol`
+
+The same molecule with its metal atom at the origin.
+
+### `align_on_first_sphere(mols: Sequence[Chem.Mol], ref_index: int=0, max_permutations: int=MAX_DONOR_PERMUTATIONS)`
+
+Put every complex in the frame of one of them, using the metal and its donors.
+
+The metal goes to the origin and the rotation is the one that brings the donor atoms closest
+to the reference complex's donor atoms.  Which donor answers to which reference donor is not
+known, and a coordination sphere is symmetric, so every assignment that pairs donors of the
+same element is tried and the best is kept.  Trying one arbitrary assignment instead would
+report several angstrom for two complexes that already lie on top of each other.
+
+Returns the aligned molecules and, for each, the root-mean-square distance between its donors
+and the reference donors in angstrom, or `None` when its coordination sphere holds a
+different set of elements from the reference's and there is nothing to match.
+
+### `principal_metal_frame(mol: Chem.Mol, degenerate_tolerance: float=0.05)`
+
+A frame for a complex that shares no coordination sphere with any other.
+
+The metal goes to the origin and the axes are the principal axes of the whole complex, with
+every atom weighted by its atomic number, in order of decreasing moment.  The sign of each
+axis is fixed by the third moment along it, which is the usual way to remove the remaining
+ambiguity: an axis and its opposite give the same second moment, but the heavier side of the
+molecule decides the sign.
+
+Returns the molecule in that frame and the relative gap between the two closest moments.  A
+small gap means the two axes are interchangeable and the frame is arbitrary in that plane, so
+the number is reported rather than hidden: it says how much of the frame is a real rule.
+
 ## cmfqsar.conformal
 
 Source: `cmfqsar/conformal.py`
@@ -2766,7 +2927,7 @@ are offered, since a field that exists for half a data set is not a field.
 
 ### `read_molecules(path: str, add_hs: bool=True)`
 
-Return (mols, names, property_names). Supports .sdf/.sd/.mol, .mol2, .smi/.csv/.txt.
+Return (mols, names, property_names). Supports .sdf/.sd/.mol, .mol2, .xyz, .smi/.csv/.txt.
 
 ### `numeric_properties(mols: Sequence[Chem.Mol], min_fraction: float=0.5) -> List[str]`
 

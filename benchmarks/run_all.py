@@ -293,6 +293,16 @@ def registry() -> List[Benchmark]:
                   minutes="3",
                   report=lambda: _mod("run_phenazine").write_table(_r("phenazine")),
                   tables=["phenazine/table.md"]),
+        Benchmark("metal",
+                  "the fields of a coordination complex against its composition and its "
+                  "population analysis, on 2216 iron redox potentials and on 25 nickel "
+                  "complexes in a shared frame",
+                  "run_metal.py", "metal",
+                  compute=[["--stage", "data"], ["--stage", "iron"], ["--stage", "nickel"],
+                           ["--stage", "cofield"]],
+                  minutes="25",
+                  report=lambda: _mod("run_metal").write_table(_r("metal")),
+                  tables=["metal/table.md"]),
         Benchmark("sac",
                   "the field around a single-atom site against its H, O, OH and OOH binding energies",
                   "run_sac.py", "sac", compute=[[]],

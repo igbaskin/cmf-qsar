@@ -1,0 +1,80 @@
+{
+ "iron": {
+  "n": 2216,
+  "target": "reduction_pot",
+  "y_mean": 0.5723499490072202,
+  "y_sd": 0.6587765303079126,
+  "y_min": -1.898473,
+  "y_max": 7.476727,
+  "atoms_mean": 50.085740072202164,
+  "dative_mean": 6.1922382671480145,
+  "dative_min": 2,
+  "dative_max": 12,
+  "n_spheres": 377,
+  "n_donors_median": 6.0,
+  "metal_charges": [
+   2
+  ],
+  "principal_gap_median": 0.16056609492353932,
+  "principal_gap_below_0.05": 0.11055956678700361,
+  "zero_electrostatic_without_repair": 197,
+  "zero_checked": 200
+ },
+ "nickel": {
+  "n": 25,
+  "targets": [
+   "E_ox_AN",
+   "E_red_AN"
+  ],
+  "y": {
+   "E_ox_AN": {
+    "mean": 1.9890228800000003,
+    "sd": 0.5563492081701434,
+    "min": 0.970279,
+    "max": 2.624109
+   },
+   "E_red_AN": {
+    "mean": -0.17987768000000004,
+    "sd": 0.06252230616010257,
+    "min": -0.372886,
+    "max": -0.085504
+   }
+  },
+  "spheres": [
+   "N3O3"
+  ],
+  "donor_rmsd_matched_mean": 0.030940000000000002,
+  "donor_rmsd_matched_max": 0.2313,
+  "donor_rmsd_rule_mean": 1.8209204803378294,
+  "donor_rmsd_rule_max": 3.4544719630724607,
+  "principal_gap_median": 0.27650548059538227,
+  "field_similarity": {
+   "electrostatic": {
+    "mean": 0.9532600776233634,
+    "sd": 0.032240517455303694,
+    "min": 0.8555266894219048
+   },
+   "steric": {
+    "mean": 0.9584343817998653,
+    "sd": 0.026642488000469557,
+    "min": 0.8491987942819148
+   },
+   "hydrophobic": {
+    "mean": 0.9071598463695754,
+    "sd": 0.052021707928230514,
+    "min": 0.7462460101588695
+   },
+   "hba": {
+    "mean": 0.876812917585658,
+    "sd": 0.08946203463258381,
+    "min": 0.6270332853522838
+   },
+   "hbd": {
+    "mean": 0.9928838299079572,
+    "sd": 0.01952461382512926,
+    "min": 0.9078261347733553
+   }
+  }
+ },
+ "seconds": 2.147031545639038
+}

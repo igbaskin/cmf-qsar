@@ -1958,6 +1958,144 @@ nitrogen — out where the substituents are, not on the core. The spin field's s
 the same place but a fifth of the size. The model is reading what the substituents do, which is
 what the ordinary fields were already telling it.
 
+## A metal in the middle: coordination complexes
+
+Everything up to this point assumed a molecule that RDKit can read. A coordination complex is not
+one, and three separate things break on it. Each of them breaks quietly, which is why each is
+stated here with the number that measures it.
+
+**The bonds.** A metal–ligand bond is not a shared electron pair. Written as an ordinary single
+bond it makes the donor atom one valence too high, and RDKit then refuses the molecule. The
+repair is a *dative* bond, which points from the donor to the metal and leaves the donor the
+valence it has in the free ligand. `cmfqsar/complexes.py` builds a complex from coordinates in
+four steps: find the bonds by distance; take the metal out, which leaves the ligands as separate
+fragments; work out each fragment's bond orders on its own; and put the metal back with one dative
+bond per donor. A fragment needs its charge before its bond orders can be found — a
+cyclopentadienyl ring is aromatic at −1 and a radical at 0 — so the charges are taken from the
+data set where it states them, and tried in turn where it does not. The charge left over goes on
+the metal, which for a data set that states its ligand charges is the oxidation state.
+
+One trap in that step cost a quarter of the iron series before it was found. A chloride, bromide
+or iodide ligand is a single atom with no bond to determine, and bond perception leaves it
+neutral whatever charge it is asked for. The charge that belonged to the halide was then given to
+the metal: the complex had the right total charge and the wrong charge inside it. The reader now
+writes the stated charge onto a one-atom ligand itself, and it refuses any complex whose formal
+charges do not add up to the stated total.
+
+**The charge.** The Gasteiger scheme has no parameters for a d-block metal, and one metal atom
+makes RDKit return "not a number" for *every* atom of the molecule. The electrostatic field of a
+complex was therefore identically zero: not an error, and not a field. Of 200 iron complexes
+checked, 197 lose their electrostatic field this way without the repair. The repair computes the
+charges with the metal atoms removed, which leaves each ligand with the charges of the free
+ligand, and gives each metal its formal charge; the charge source is then reported as
+`gasteiger+formal` rather than `gasteiger`, so a model fitted on one cannot be confused with a
+model fitted on the other. What this does **not** describe is the donation from the ligand to the
+metal, so the donor atoms are less polarised than they really are. A calculated charge, written
+into the per-atom property `partial_charge` and read with `charge_model="file"`, is the better
+description wherever one is available.
+
+**The size of the metal.** The Tripos table stops at the main group, so every metal used to get
+the default radius. The parameters now come from the universal force field, which covers the whole
+periodic table, with its van der Waals distance halved to a one-atom radius and put on the scale
+of the Tripos radii by the ratio of the two carbon values. Iron comes out at 1.285 Å against
+carbon's 1.70 Å, which is what a buried metal centre should be, and close to the 1.20 Å the Tripos
+table already uses for the alkali metals. The well depths are taken unchanged, because the two
+force fields agree on carbon. A metal carries no hydrophobic and no hydrogen-bond increment, since
+the published increments were fitted to organic molecules and have nothing to say about it.
+
+### The frame a metal gives, and what it is worth
+
+A complex has one atom that every member of a series shares: the metal. Two frames are built on
+it. `align_on_first_sphere` puts the metal at the origin and turns each complex so that its donor
+atoms sit closest to a reference complex's donor atoms. Which donor answers to which reference
+donor is not known, and a coordination sphere is symmetric, so every assignment that pairs donors
+of the same element is tried and the best is kept — the same trap the phenazine core showed, where
+one arbitrary matching reports several ångström for two molecules that lie exactly on top of each
+other. `principal_metal_frame` is the rule for a series whose members share no coordination
+sphere: the metal at the origin and the principal axes of the whole complex, with the signs fixed
+by the third moment, and it reports how close the two smallest moments are, because a small gap
+means the frame is arbitrary in that plane.
+
+The two are not interchangeable, and the nickel series below says so. Matching the first
+coordination spheres puts the donors 0.03 ± 0.04 Å apart (worst 0.23 Å), a real shared frame. The
+rule frame puts the same donors **1.82 Å** from where the matched frame puts them (worst 3.45 Å).
+A rule that uses the whole complex is pulled around by the substituents; matching the atoms that
+every member shares is not. On the iron series, where no match exists across the whole set, the
+rule frame is nearly degenerate for 11 % of the complexes.
+
+### Two series, and what they measure
+
+| series | what it is | why |
+|---|---|---|
+| `examples/complexes_fe/` | 2216 iron(II) complexes from the structural database with a computed Fe(III)/Fe(II) reduction potential | they share the metal and nothing else: 377 different first coordination spheres |
+| `examples/complexes_ni/` | 25 substituted triaqua nickel–bis(pyrazolyl)pyridine complexes with the computed potentials of two couples | one ligand skeleton, one N3O3 coordination sphere, and the population analysis of the same calculation as its own control |
+
+Both targets are computed, not measured, so both say how well a representation orders complexes
+that one calculation produced. `benchmarks/run_metal.py` measures them with five outer folds and
+ten inner folds. The iron series is measured twice: with five random folds, and with five folds
+built from the first coordination spheres, so that no sphere in a test fold was seen in training.
+
+### The iron series: the field beats the composition, and the frame decides everything
+
+Mean absolute error in volts, all 2216 complexes, against a training-mean error of 0.523 V:
+element counts and the metal site (`composition`) 0.313, the metal site alone (`site`) 0.359, and
+the frameless field autocorrelation (`invariant`) **0.253**. The paired difference is
++0.060 V [+0.049, +0.071], so the fields beat the composition and the interval excludes zero. With
+the coordination spheres held out the ranking is the same: 0.336, 0.398 and 0.284, difference
++0.055 V [+0.044, +0.068].
+
+This is worth stating plainly, because it is the first inorganic target in this manual where the
+field wins. Items BT1 to BT3 found the opposite on a battery voltage, where the composition beat
+every field. The difference is what the target is: an average voltage is set by what the cell is
+made of, while a reduction potential of one complex is set by what sits around its metal and how.
+
+The frame decides whether the overlap kernel works at all. On a random 800 of the complexes, the
+overlap kernel in the frame the file happens to carry scores 0.524 V — exactly the training-mean
+error, R² = +0.005, a model that has learned nothing. The same kernel after each complex is put in
+its own metal-and-principal-axes frame scores 0.321 V, R² = +0.596: the frame is worth
++0.203 V [+0.176, +0.231]. But the rule frame only brings the overlap kernel up to the
+composition's level (−0.008 V [−0.028, +0.011], an interval holding zero) and leaves it behind the
+frameless kernel (+0.055 V [+0.037, +0.074]). On a series whose members share nothing but the
+metal, a rule frame is better than no frame and worse than not needing one.
+
+### The nickel series: the gate, and what the co-field reads
+
+Here the series is congeneric and the frame is real. For the Ni(III)/Ni(II) couple, against a
+training-mean error of 0.488 V: the population analysis of the same calculation the target comes
+from (`quantum`) 0.345 V, the coordination geometry alone (`site`) 0.370 V, and the five ordinary
+fields in the shared frame (`physchem`) **0.150 V**, R² = +0.820. The fields beat the quantum
+descriptors by +0.195 V [+0.068, +0.321] and the site by +0.220 V [+0.085, +0.355], both intervals
+excluding zero, and leave-one-out says the same. This is the gate of the item, and it is passed:
+a five-field model of a metal complex beats the global quantum numbers of the calculation that
+produced its target.
+
+Two readings qualify it. The frameless kernel ties the aligned one (+0.004 V [−0.076, +0.068]), so
+the shared frame is not what the model needed, exactly as the cyclodextrin hosts found. And the
+other couple is much harder: the Ni(II)/Ni(I) potentials have a standard deviation of 0.06 V, and
+their training-mean error is 0.050 V, so there is little to predict. The fields reach
+0.029 V against the quantum descriptors' 0.043 V, which the random folds call a difference
+(+0.013 V [+0.006, +0.022]) and leave-one-out does not (+0.008 V [−0.000, +0.017]).
+
+**The co-field** says what the model is reading, and it is the second coordination sphere. For the
+oxidation potential the largest weights sit 4.5 to 7.3 Å from the nickel atom — the acceptor field
+−0.349 at 5.60 Å, the electrostatic field −0.201 at 6.70 Å, the hydrophobic field +0.179 at
+4.52 Å — which is out among the substituents, not at the metal and not on its donors. That is the
+right answer for this series: every member has the same metal and the same six donors, so nothing
+at the metal site can separate two of them, and what differs is what the substituents do. For the
+reduction potential the weights are five to ten times smaller and sit closer in, 2.6 to 4.7 Å,
+which fits a target that barely varies.
+
+### What this does not cover
+
+The metal identity is a descriptor the reader provides and neither series exercises it: one series
+is all iron and the other all nickel. The gate's own data sets — iron porphyrins with the turnover
+frequency and overpotential of catalytic Tafel-plot benchmarking, nickel diphosphines with their
+hydricities — were not used, because no machine-readable table of either was found; the published
+turnover frequencies come from different papers under different conditions and methods, which the
+sources themselves warn against pooling. Both targets here are computed rather than measured. And
+the electrostatic field of a complex still uses the charges of the free ligands, so the first step
+for anyone extending this is a calculated charge per atom.
+
 # Before you model: `cmf diagnose`
 
 Every expensive mistake recorded in this manual was visible before the model was built, in a

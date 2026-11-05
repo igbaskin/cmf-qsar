@@ -1,0 +1,131 @@
+{
+ "alpha": 1.0,
+ "lam": 0.1,
+ "spacing": 0.5,
+ "metal_spread": 0.0,
+ "E_ox_AN": [
+  {
+   "field": "Electrostatic",
+   "peak": -0.2011044201817631,
+   "distance_from_metal": 6.701663877502811,
+   "distance_from_nearest_nitrogen": 4.6041591828064545,
+   "distance_from_nearest_oxygen": 7.031976181415008,
+   "point": [
+    6.42398,
+    1.889951,
+    0.26993500000000026
+   ]
+  },
+  {
+   "field": "Steric",
+   "peak": -0.12492407758363791,
+   "distance_from_metal": 7.327680651271997,
+   "distance_from_nearest_nitrogen": 5.226799572131879,
+   "distance_from_nearest_oxygen": 7.645453167363332,
+   "point": [
+    -7.07602,
+    1.889951,
+    -0.23006499999999974
+   ]
+  },
+  {
+   "field": "Hydrophobic",
+   "peak": 0.17866918604986845,
+   "distance_from_metal": 4.518466745149952,
+   "distance_from_nearest_nitrogen": 2.418269170423549,
+   "distance_from_nearest_oxygen": 4.956569492536748,
+   "point": [
+    4.42398,
+    0.8899509999999999,
+    -0.23006499999999974
+   ]
+  },
+  {
+   "field": "H-bond acceptor",
+   "peak": -0.34866493449251734,
+   "distance_from_metal": 5.596152761230344,
+   "distance_from_nearest_nitrogen": 3.531503612802626,
+   "distance_from_nearest_oxygen": 5.9206149187384245,
+   "point": [
+    -5.57602,
+    0.38995099999999994,
+    0.26993500000000026
+   ]
+  },
+  {
+   "field": "H-bond donor",
+   "peak": 0.05602173261891532,
+   "distance_from_metal": 3.088559976271466,
+   "distance_from_nearest_nitrogen": 3.3476649743695974,
+   "distance_from_nearest_oxygen": 1.3736830545456986,
+   "point": [
+    0.9239800000000002,
+    -1.110049,
+    -2.7300649999999997
+   ]
+  }
+ ],
+ "E_red_AN": [
+  {
+   "field": "Electrostatic",
+   "peak": 0.04498074776142741,
+   "distance_from_metal": 3.609530818129415,
+   "distance_from_nearest_nitrogen": 2.102915067381705,
+   "distance_from_nearest_oxygen": 3.590951459299193,
+   "point": [
+    3.4239800000000002,
+    -1.110049,
+    0.26993500000000026
+   ]
+  },
+  {
+   "field": "Steric",
+   "peak": -0.021838334186766305,
+   "distance_from_metal": 4.433193513374529,
+   "distance_from_nearest_nitrogen": 3.428854293672742,
+   "distance_from_nearest_oxygen": 3.601686324909902,
+   "point": [
+    -3.5760199999999998,
+    -2.610049,
+    -0.23006499999999974
+   ]
+  },
+  {
+   "field": "Hydrophobic",
+   "peak": -0.026546802350706576,
+   "distance_from_metal": 4.7183582660736985,
+   "distance_from_nearest_nitrogen": 3.6042919943618608,
+   "distance_from_nearest_oxygen": 3.98310047363144,
+   "point": [
+    3.9239800000000002,
+    -2.610049,
+    -0.23006499999999974
+   ]
+  },
+  {
+   "field": "H-bond acceptor",
+   "peak": -0.03392074285286694,
+   "distance_from_metal": 3.046484322465159,
+   "distance_from_nearest_nitrogen": 2.141640905296217,
+   "distance_from_nearest_oxygen": 2.61273503881335,
+   "point": [
+    -2.5760199999999998,
+    -1.610049,
+    -0.23006499999999974
+   ]
+  },
+  {
+   "field": "H-bond donor",
+   "peak": -0.03239224425411875,
+   "distance_from_metal": 2.6474536307603196,
+   "distance_from_nearest_nitrogen": 2.6229812746640033,
+   "distance_from_nearest_oxygen": 1.580439300651246,
+   "point": [
+    -1.5760199999999998,
+    -2.110049,
+    0.26993500000000026
+   ]
+  }
+ ],
+ "seconds": 2.5826616287231445
+}

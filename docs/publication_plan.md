@@ -830,6 +830,43 @@ And with a source table held out, nothing separates at all: every model sits nea
 training mean of 0.285 V, so this series supports a statement about which fields are redundant and
 not about what any of them can extrapolate.
 
+**Item EC4 is done (5 November 2026) and it is the first inorganic target where a field beats a
+composition.** The item's contribution to a paper is two findings and one repair, and the repair
+is worth stating first because it is the kind of fault a reader can check for in their own code: a
+single d-block metal atom makes the Gasteiger charge scheme return "not a number" for *every* atom
+of a molecule, so the electrostatic field of a coordination complex was identically zero — 197 of
+200 iron complexes checked — which is not an error message and not a field.
+
+The first finding is a comparison that went the other way from the battery items. On 2216
+iron(II) complexes from the structural database with a computed Fe(III)/Fe(II) reduction potential,
+the frameless field autocorrelation reaches a mean absolute error of 0.253 V against 0.313 V for
+the element counts with the metal site, a paired difference of +0.060 V [+0.049, +0.071] that
+survives holding whole coordination spheres out of training. Items BT1 to BT3 found the composition
+ahead of every field on an average cell voltage; the difference is what the target is, since a
+voltage is set by what the cell is made of and the potential of one complex by what sits around
+its metal and how. A paper can put the two side by side and name the boundary rather than claim a
+method is better in general.
+
+The second finding is about the frame, and it is quantitative. The overlap kernel on the same
+complexes in the frame their file happens to carry scores exactly the training-mean error
+(R² = +0.005): with no shared frame, that kernel learns nothing at all. Putting each complex in
+the frame of its own metal and principal axes is worth +0.203 V [+0.176, +0.231], and still leaves
+it level with the composition and behind the kernel that needs no frame. On a congeneric nickel
+series, where the first coordination spheres can be matched onto each other to 0.03 angstrom, the
+same principal-axes rule puts the donors 1.82 angstrom from where the match puts them. So a rule
+frame is better than no frame, worse than a matched frame, and worse than not needing one — three
+statements a referee can check from one table.
+
+The gate of the item is passed on that nickel series: 25 substituted triaqua
+nickel–bis(pyrazolyl)pyridine complexes, where the five ordinary fields reach 0.150 V on the
+Ni(III)/Ni(II) potential against 0.345 V for the natural population analysis of the calculation
+that produced the target, a difference of +0.195 V [+0.068, +0.321]. The co-field places its
+largest weights 4.5 to 7.3 angstrom from the nickel atom, among the substituents rather than at
+the metal or its donors, which is the second-sphere effect the molecular-electrocatalysis
+literature describes. The limits are the usual two and must be stated: both targets are computed
+rather than measured, and neither series varies the metal, so nothing here supports a claim about
+transferring a model between metals.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

@@ -3512,6 +3512,72 @@ for anything molecular.
   known second-sphere effects: the pendant proton relay, the through-space cation, the steric
   shield. The data are dozens of compounds per reaction, so this is work for a Gaussian process with intervals,
   never SVR, and leave-one-chemotype-out applies.
+  **Done 5 November 2026. The machinery works and the gate is passed, on a different pair of
+  series from the two the item named, because no machine-readable table of either was found.**
+  *Built:* `cmfqsar/complexes.py` (reading a complex from coordinates with dative metal–ligand
+  bonds, the ligand charge assignment, the metal site as numbers, and two frames), van der Waals
+  parameters for all 29 d-block metals in `cmfqsar/atomtypes.py`, a charge model that survives a
+  metal and zero hydrophobic weight on it in `cmfqsar/fields.py`, `.xyz` support in
+  `read_molecules` and in the application's file dialog, `tests/test_complexes.py` (36 tests),
+  `examples/make_metal_examples.py`, `benchmarks/run_metal.py` with
+  `benchmarks/results/metal/table.md`, and the manual section *A metal in the middle:
+  coordination complexes*.
+  *Three faults found, each silent.* The Gasteiger scheme has no parameters for a d-block metal
+  and one metal atom makes RDKit return "not a number" for *every* atom, so the electrostatic
+  field of a complex was identically zero: 197 of 200 iron complexes checked. A one-atom ligand —
+  a chloride, bromide or iodide — is left neutral by bond perception whatever charge it is asked
+  for, so the charge that belonged to the halide went to the metal and a quarter of the iron
+  series had the right total charge and the wrong charge inside it. And the steric table stopped
+  at the main group, so every metal had the default radius; the parameters now come from the
+  universal force field, with its van der Waals distance halved and put on the scale of the
+  Tripos radii by the ratio of the two carbon values (iron 1.285 Å against carbon 1.70 Å).
+  *The data.* The item's own two series could not be used. The iron-porphyrin turnover
+  frequencies are spread over separate papers with different conditions and analysis methods,
+  which those papers themselves warn against pooling, and the complete hydricity table of the
+  nickel diphosphines sits in a publisher's supporting-information file rather than in a data
+  repository, and was not retrieved. Two public series
+  with clear licences were used instead: 2216 iron(II) complexes from the structural database
+  with a computed Fe(III)/Fe(II) reduction potential (MIT licence), which share the metal and
+  nothing else — 377 different first coordination spheres — and 25 substituted triaqua
+  nickel–bis(pyrazolyl)pyridine complexes with the computed potentials of two couples (CC BY 4.0),
+  which share one ligand skeleton and one N3O3 sphere and carry the natural population analysis
+  of the same calculation as their own control. Both targets are computed, not measured.
+  *The gate.* On the nickel series the five ordinary fields in the shared frame reach a mean
+  absolute error of 0.150 V on the Ni(III)/Ni(II) potential against 0.345 V for the population
+  analysis of the calculation that produced the target and 0.370 V for the coordination geometry
+  alone, with a training-mean error of 0.488 V; the paired differences are +0.195 V
+  [+0.068, +0.321] and +0.220 V [+0.085, +0.355], and leave-one-out agrees. The co-field reads
+  the second coordination sphere, as the item asked: its largest weights sit 4.5 to 7.3 Å from
+  the nickel atom, among the substituents rather than at the metal or its donors. The other
+  couple, Ni(II)/Ni(I), has a standard deviation of 0.06 V and little to predict: the fields
+  reach 0.029 V against 0.043 V, which the random folds call a difference and leave-one-out does
+  not.
+  *The iron series adds two results of its own.* The frameless field autocorrelation reaches
+  0.253 V against 0.313 V for the element counts with the metal site and a training-mean error of
+  0.523 V, a difference of +0.060 V [+0.049, +0.071] that survives holding whole coordination
+  spheres out. This is the first inorganic target in this repository where a field beats a
+  composition; items BT1 to BT3 found the opposite on an average cell voltage, and the difference
+  is what the target is. And the frame decides whether the overlap kernel works at all: in the
+  frame the file happens to carry it scores the training-mean error exactly (R² = +0.005), and in
+  the metal-and-principal-axes rule frame it scores 0.321 V (R² = +0.596), so the frame is worth
+  +0.203 V [+0.176, +0.231] — and still leaves the overlap kernel level with the composition and
+  behind the kernel that needs no frame.
+  *What the two frames are worth.* Matching the first coordination spheres onto a reference
+  complex, over every assignment that pairs donors of the same element, puts the nickel donors
+  0.03 ± 0.04 Å apart. The principal-axes rule puts the same donors 1.82 Å from where the match
+  puts them (worst 3.45 Å), so the rule is not a substitute for the match on a congeneric series;
+  on the iron series it is nearly degenerate for 11 % of the complexes. The matched frame is also
+  the one place the phenazine symmetry trap of EC1 reappears, and the search over assignments is
+  there for it.
+  **Not done:** the metal identity is a descriptor the reader provides and neither series
+  exercises it, since one is all iron and the other all nickel; no series with a measured
+  electrocatalytic property was found in machine-readable form, so the catalysis claim the item
+  wanted is not made; the electrostatic field of a complex still uses the charges of the free
+  ligands, which understates the donor atoms, and a calculated charge per atom is the first
+  extension; the overlap kernel was measured on a random 800 of the iron complexes rather than
+  all 2216, because its cost grows faster than the square of the number of complexes; and the
+  spin state of EC1 is stored on a complex and never used, because both series are measured at
+  one state each.
 * **EC5. The electric-field kernel.** Every field in the program is a scalar; the quantity a
   reaction centre feels is the vector ∇φ. The integral of ∇φ_A·∇φ_B over space, for φ the sum of
   atom-centred Gaussians, is the second derivative of the overlap of `cmfqsar/kernels.py` with
@@ -3675,8 +3741,13 @@ for anything molecular.
 it found that the relaxed frames carry the relaxation's outcome, which changes what the Fe(110)
 numbers mean. ~~EC1~~ **done 5 November 2026: the quantum stage now has the oxidation state, the
 spin state and the solvent, and the spin field it was built for gains nothing on a phenazine
-series, because the added electron goes to the same place in every member.** EC4 after that, since EC3, EC5,
-EC8 and EC9 are empty without a catalyst series that loads. EC6 after M1, ~~EC7~~ **done
+series, because the added electron goes to the same place in every member.** ~~EC4~~ **done
+5 November 2026: coordination complexes load with dative metal–ligand bonds, the metals have
+parameters, the electrostatic field of a complex is no longer identically zero, and the gate is
+passed — on 25 congeneric nickel complexes the five fields beat the population analysis of the
+calculation that produced the target. The catalyst series the item named are not in
+machine-readable form, so EC3, EC5, EC8 and EC9 still have no measured catalytic property to aim
+at, even though a complex now loads.** EC6 after M1, ~~EC7~~ **done
 4 November 2026, and its gate is passed**, EC8 after M5, EC9 and EC10 last. The EC2 result also says what EC6 must do differently: a slab as
 the receptor has to decide the face and the tilt by complementarity, since no rule and no
 reference does.
@@ -5542,7 +5613,7 @@ LP2. MC11 last, after E1, MC2 and MC4.
 | Months 3 to 9 | D1 to D5; ~~C3~~ **done (negative result)**, ~~C4~~ **done (negative result)**, ~~C5~~ **done (negative result)**, ~~C6~~ **done**, ~~C7~~ **built, gates passed**; ~~F1 (case studies)~~ **done, except the chemist** |
 | Months 4 to 10 | ~~E1~~ **done**, ~~E2~~ **done**, ~~E3~~ **done**, ~~E4~~ **done**, ~~E5~~ **done**, ~~E6~~ **done (no gain in accuracy)**, ~~E7~~ **done (ridge stays the default)**, ~~E8~~ **done (no gain in accuracy; kept for its co-field)**, ~~E9~~ **done (ties the GP classifier; its evidence calibrates better)**, ~~E10~~ **done (no gain; kept and labelled under rule 5)**; E11 (the field autoencoder) added 30 October 2026, after PBH1 and only on the large aligned sets; part E otherwise complete; ~~G1~~ and ~~G2~~ **done** |
 | Months 6 to 12 | ~~F3~~ **done**, ~~F4~~ **done**, ~~F5~~ **done**, ~~F6~~ **done (the fingerprint holds the activity)**; D7 and D8 (trajectories), D9 and D10 only if D8 says so; MC1 and MC2 (the bioisostere table, the batch rule) and the data tasks MC3 and MC4 beside them; H begins with separations |
-| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; EC1 (quantum-stage controls) next, then EC4 (metal complexes) before any other EC item, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), ~~EC7~~ **done 4 November 2026** (an ion probe, measured: it finds the ion to 0.36 angstrom and beats the electrostatic field on the binding energy, while the selectivity between two ions stays nearly unpredictable), ~~BT4~~ **done 4 November 2026** (a solvation-complex builder, its gate met by a small margin), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte, the gate met on the activation energy and not on the conductivity), ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
+| Year 2 | H; ~~M4~~ **done 31 October 2026**, ~~M5~~, ~~M6~~ and ~~M12~~ **done 1 November 2026**, ~~M10~~ and ~~M11~~ **done 2 November 2026**, M1 as it is needed (~~M2~~ **done 31 October 2026**, ~~M3~~ **done 30 October 2026**), M7 to M13 after; ~~EC2~~ **built, gates not passed, kept as a display tool**; ~~EC1~~ **done 5 November 2026** and ~~EC4~~ **done the same day (the fields of a complex beat its composition on 2216 iron redox potentials and beat the population analysis on 25 congeneric nickel complexes)**, EC6 with M1, EC8 after M5; ~~BT1~~, ~~BT2~~, ~~BT3~~ and ~~BT6~~ **done 3 November 2026** (the periodic kernel has its voltage benchmark, and the composition wins on it, the difference field included), ~~EC7~~ **done 4 November 2026** (an ion probe, measured: it finds the ion to 0.36 angstrom and beats the electrostatic field on the binding energy, while the selectivity between two ions stays nearly unpredictable), ~~BT4~~ **done 4 November 2026** (a solvation-complex builder, its gate met by a small margin), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte, the gate met on the activation energy and not on the conductivity), ~~BT6~~ **done**, ~~BT7~~ **done 30 October 2026 by the local route, without M5**; LP1 (per-atom targets) with M5 and LP2 (atom-centred environments, pKa and shifts) right after, LP3 to LP5 as their gates allow; NT1 to NT3 (the structure data model, open boundaries, size descriptors) with M1, NT8 (the viewer) with M13, NT5 (curved surfaces) and NT7 (sites on particles) after M5, NT12 alongside each; SC1 and SC4 (the two-endpoint command line, the host–guest sets) at once since they need no new science, SC5 (the cavity frame) with EC7, SC6 (per-atom contributions of the invariant kernel) with NT9 and M5, SC7 after SC6, SC8 is M7; MC5 (masked matching) once E3's missing construction is wanted and MC9 after D10, MC6 and MC7 at any time after MC1, MC8 with LP1 and LP2, MC10 after MC5 and MC9, MC11 after E1, MC2 and MC4; the review that ties the series together |
 
 The order inside a part follows the dependencies: nothing in C or E is judged without the protocol
 of C1 and the intervals of rule 4; D6 and E6 wait for B4; E3 waits for E2 and the topomer rule; E11 waits for the landmark features of B6 and the COMPAS tables of PBH1, and its gate (c) for the fragment libraries of E3 and MC7;

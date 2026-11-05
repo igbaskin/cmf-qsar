@@ -2,6 +2,26 @@
  "commit": "85e58f3c360584614350b1e6553f64288d07c01e",
  "created": "2026-11-01T18:21:50",
  "data": {
+  "benchmarks/results/metal/cofield.json": {
+   "bytes": 3187,
+   "sha256": "f28ada61c2526cd88222e5a363b873b152b784d9bd7967807459519d1c181753"
+  },
+  "benchmarks/results/metal/data.json": {
+   "bytes": 1753,
+   "sha256": "d271bb98f61a2b7ce3713d2f3fa9cbf21ced71e3686d06d914a20d04871446ca"
+  },
+  "benchmarks/results/metal/iron.json": {
+   "bytes": 616180,
+   "sha256": "4ab86666f701599922cf498fd2872047755b5ab6993c5e67bea485dd1b23eee4"
+  },
+  "benchmarks/results/metal/nickel.json": {
+   "bytes": 77806,
+   "sha256": "ee43456cbf4de3b2bb417490169d8134c9ef63c5f5d04a0b4a1885b059593cae"
+  },
+  "benchmarks/results/metal/table.md": {
+   "bytes": 7733,
+   "sha256": "8f4631b92cb1f8d359d9850997ad9b065a38d145812b90bca87d426d2e5e2715"
+  },
   "benchmarks/results/phenazine/cofield.json": {
    "bytes": 2496,
    "sha256": "46a652507d23d5fe63263dcef7bb5b577ea6966ed5c5cf27514004504e9fb2aa"
@@ -17,6 +37,10 @@
   "benchmarks/results/phenazine/table.md": {
    "bytes": 3975,
    "sha256": "09ab77d1d25fcd4179f26f290e8dc902a94a6f8318b79f33a1207d3243aeb0a8"
+  },
+  "benchmarks/run_metal.py": {
+   "bytes": 36323,
+   "sha256": "7ce148fa7a7115444ffb47dbc708f0e515ffc9b5ea3384e164ec2db617be8ce3"
   },
   "benchmarks/run_phenazine.py": {
    "bytes": 31164,
@@ -61,6 +85,14 @@
   "examples/case_studies.py": {
    "bytes": 22633,
    "sha256": "cd5e0742a3b6fc97f915bc078bae6f4f005aa6c5c0b34ead93c10e309665b98b"
+  },
+  "examples/complexes_fe/fe_redox.sdf": {
+   "bytes": 8325470,
+   "sha256": "404c7a22e6c2d81a99f83d0acdee0091253e4684e2cc7cff112481f6f1d6eec3"
+  },
+  "examples/complexes_ni/ni_bpp.sdf": {
+   "bytes": 96659,
+   "sha256": "1882f8bc77f9b0af502ad42e609b5f4e4ac56261770cdeb30dc035155c6a67f6"
   },
   "examples/corrosion/0_c1ccccc1.csv": {
    "bytes": 41685,
@@ -1105,6 +1137,10 @@
   "examples/make_md_trajectories.py": {
    "bytes": 25583,
    "sha256": "301982799011d613c2e96bb1cf386db7102c6e59343667d67c5114610405e676"
+  },
+  "examples/make_metal_examples.py": {
+   "bytes": 18932,
+   "sha256": "34adb4e536fa59b9f9012b63887b9b0bafce28bca2f2e58f85775b1c4b614dab"
   },
   "examples/make_mittal_examples.py": {
    "bytes": 10432,

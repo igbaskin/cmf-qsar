@@ -47,6 +47,47 @@ _TRIPOS_VDW_BY_TYPE = {
     "Li": (1.20, 0.400), "Na": (1.20, 0.400), "K": (1.20, 0.400), "Ca": (1.20, 0.600), "Al": (1.20, 0.042),
 }
 
+# Van der Waals parameters for the transition metals, which the Tripos 5.2 table does not hold
+# (plan item EC4).  They come from the universal force field (UFF: Rappe, Casewit, Colwell,
+# Goddard & Skiff, J. Am. Chem. Soc. 114 (1992) 10024), Table 1, which covers the whole periodic
+# table.  The two UFF columns used here are the van der Waals distance x (the separation of two
+# atoms of the same element at the minimum of the curve, in angstrom) and the well depth D (in
+# kcal/mol, the unit of the Tripos column).  One atom's radius is x / 2.
+#
+# UFF radii are about 13 % larger than the Tripos ones, because the two force fields split the
+# contact distance differently: carbon is 3.851 / 2 = 1.93 angstrom in UFF against 1.70 in
+# Tripos.  Every metal radius is therefore multiplied by the ratio of the two carbon radii, so
+# that a metal and a carbon atom of the same molecule are measured on one scale.  The well depths
+# are taken as they are, because the two force fields agree on carbon (0.105 against 0.107
+# kcal/mol).
+#
+# The entry chosen for each element is its most common oxidation state and coordination in the
+# UFF table (Fe3+2 and Fe6+2 share one pair of values, as do the other duplicated forms).
+_UFF_NONBONDED = {
+    "Sc": (3.295, 0.019), "Ti": (3.175, 0.017), "V": (3.144, 0.016), "Cr": (3.023, 0.015),
+    "Mn": (2.961, 0.013), "Fe": (2.912, 0.013), "Co": (2.872, 0.014), "Ni": (2.834, 0.015),
+    "Cu": (3.495, 0.005), "Zn": (2.763, 0.124),
+    "Y": (3.345, 0.072), "Zr": (3.124, 0.069), "Nb": (3.165, 0.059), "Mo": (3.052, 0.056),
+    "Tc": (2.998, 0.048), "Ru": (2.963, 0.056), "Rh": (2.929, 0.053), "Pd": (2.899, 0.048),
+    "Ag": (3.148, 0.036), "Cd": (2.848, 0.228),
+    "Hf": (3.141, 0.072), "Ta": (3.170, 0.081), "W": (3.069, 0.067), "Re": (2.954, 0.066),
+    "Os": (3.120, 0.037), "Ir": (2.840, 0.073), "Pt": (2.754, 0.080), "Au": (3.293, 0.039),
+    "Hg": (2.705, 0.385),
+}
+#: the factor that puts a UFF radius on the scale of the Tripos radii, from their carbon values
+UFF_RADIUS_SCALE = 1.70 / (3.851 / 2.0)
+_METAL_VDW = {sym: (round(x / 2.0 * UFF_RADIUS_SCALE, 3), d)
+              for sym, (x, d) in _UFF_NONBONDED.items()}
+
+#: the d-block metals for which this module carries parameters.  A complex of any other metal
+#: still loads, and its metal atom then falls back to the default radius and well depth.
+TRANSITION_METALS = frozenset(_METAL_VDW)
+
+
+def is_transition_metal(symbol: str) -> bool:
+    """Is this element symbol one of the d-block metals (plan item EC4)?"""
+    return symbol in TRANSITION_METALS
+
 
 def vdw_params(symbol: str, atom_type: Optional[str] = None):
     """Return (R_vdw, E_vdw) for an element symbol, or for a Sybyl atom type if given."""
@@ -56,7 +97,14 @@ def vdw_params(symbol: str, atom_type: Optional[str] = None):
             t = "S." + t.lower()[2:]
         if t in _TRIPOS_VDW_BY_TYPE:
             return _TRIPOS_VDW_BY_TYPE[t]
-    return _TRIPOS_VDW.get(symbol, _DEFAULT_VDW)
+        # a metal written by Sybyl carries its coordination in the type ("Co.oh", "Ti.th"), and
+        # the parameters belong to the element rather than to the coordination
+        base = t.split(".")[0]
+        if base in _METAL_VDW:
+            return _METAL_VDW[base]
+    if symbol in _TRIPOS_VDW:
+        return _TRIPOS_VDW[symbol]
+    return _METAL_VDW.get(symbol, _DEFAULT_VDW)
 
 
 # --------------------------------------------------------------------------- #

@@ -80,3 +80,8 @@ examples/phenazine/upstream/
 # the ORCA scratch directory of the phenazine quantum stage (1.8 GB of .gbw and .densities
 # files): the maker rebuilds it, and the annotated SDF beside it is what the benchmark reads
 examples/phenazine/qm_work/
+
+# the source files of the two metal-complex series (plan item EC4): the maker downloads them
+# again with --fetch, and the built SDF beside them is what the benchmark reads
+examples/complexes_fe/upstream/
+examples/complexes_ni/upstream/

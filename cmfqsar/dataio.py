@@ -308,7 +308,7 @@ def common_atom_properties(mols, limit: int = 25) -> List[str]:
 
 
 def read_molecules(path: str, add_hs: bool = True):
-    """Return (mols, names, property_names). Supports .sdf/.sd/.mol, .mol2, .smi/.csv/.txt."""
+    """Return (mols, names, property_names). Supports .sdf/.sd/.mol, .mol2, .xyz, .smi/.csv/.txt."""
     ext = os.path.splitext(path)[1].lower()
     mols: List[Chem.Mol] = []
     names: List[str] = []
@@ -335,6 +335,8 @@ def read_molecules(path: str, add_hs: bool = True):
             mols.append(m)
             nm = block.splitlines()[1].strip() if len(block.splitlines()) > 1 else ""
             names.append(nm or f"mol_{k + 1}")
+    elif ext == ".xyz":
+        mols, names, props = _read_xyz_file(path)
     elif ext in (".smi", ".smiles", ".csv", ".txt", ".tsv"):
         from .align import embed_3d
         rows = _read_smiles_table(path)
@@ -352,6 +354,66 @@ def read_molecules(path: str, add_hs: bool = True):
             names.append(name or f"mol_{k + 1}")
     else:
         raise ValueError(f"Unsupported file type: {ext}")
+    return mols, names, props
+
+
+def _read_xyz_file(path: str):
+    """Molecules from an XYZ file, with dative bonds where there is a metal (plan item EC4).
+
+    An XYZ file holds elements and coordinates and no bonds, so the bonds have to be perceived.
+    A block that holds a d-block metal is read by :func:`cmfqsar.complexes.build_complex`, which
+    writes the metal-ligand bonds as dative bonds; any other block is read by RDKit's own bond
+    perception.  The charge is taken from a ``charge=`` or ``q=`` token of the comment line when
+    there is one, and is otherwise zero, since an XYZ file does not state it.  A block whose
+    bonds cannot be worked out is skipped, and the caller sees a shorter list.
+    """
+    from rdkit.Chem import rdDetermineBonds
+
+    from .atomtypes import is_transition_metal
+    from .complexes import build_complex, molecule_from_coordinates, read_xyz
+
+    mols: List[Chem.Mol] = []
+    names: List[str] = []
+    props: List[str] = []
+    for k, frame in enumerate(read_xyz(path)):
+        name = frame.name or f"mol_{k + 1}"
+        charge = 0
+        for key in ("charge", "q", "total_charge"):
+            if key in frame.tags:
+                try:
+                    charge = int(round(float(frame.tags[key])))
+                except ValueError:
+                    pass
+                break
+        mult = None
+        if "multiplicity" in frame.tags:
+            try:
+                mult = int(round(float(frame.tags["multiplicity"])))
+            except ValueError:
+                mult = None
+        if any(is_transition_metal(s) for s in frame.symbols):
+            mol, _report = build_complex(frame.symbols, frame.coords, total_charge=charge,
+                                         name=name, multiplicity=mult)
+            if mol is None:
+                continue
+        else:
+            mol = molecule_from_coordinates(frame.symbols, frame.coords)
+            try:
+                rdDetermineBonds.DetermineBonds(mol, charge=charge, useHueckel=False)
+                Chem.SanitizeMol(mol)
+            except Exception:                         # noqa: BLE001 - a block that cannot be read
+                continue                              # is left out, like an unreadable SD record
+            mol.SetProp("_Name", name)
+            mol.SetProp("charge", str(charge))
+            if mult is not None:
+                mol.SetProp("multiplicity", str(mult))
+        for key, val in frame.tags.items():
+            if key not in ("charge", "q", "total_charge", "multiplicity") and not mol.HasProp(key):
+                mol.SetProp(key, val)
+                if key not in props:
+                    props.append(key)
+        mols.append(mol)
+        names.append(name)
     return mols, names, props
 
 
