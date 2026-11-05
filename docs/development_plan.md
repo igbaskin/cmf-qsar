@@ -1384,13 +1384,23 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   it there, by computing the charges with the metal atoms removed and giving each metal its formal
   charge. Item EC3 then found the same fault outside the d block, on the selenomethyl substituent
   of the Hammett series.
-  *The scope is measured, not guessed.* The elements the scheme cannot do at all are **selenium,
-  tellurium, arsenic, tin, lithium and zinc** (each tested on a small molecule: every atom comes
-  back "not a number"). They occur in `examples/corrosion/0_c1ccccc1.csv` and its `corrosion_hcl`
-  twin, which is the 244-molecule root series of the scaffold tree; in several
-  `examples/cyclodextrin/` tables; in `examples/electrolyte/shells/`; and once in
-  `examples/hammett/`. So this is not a local repair: it reaches the corrosion, cyclodextrin and
-  Hammett families, whose tables are published.
+  *The scope is measured, and it is smaller than the element list suggests.* The elements the
+  scheme cannot do at all are **selenium, tellurium, arsenic, tin, lithium and zinc** (each tested
+  on a small molecule: every atom comes back "not a number"). But the fault needs the element to
+  be **covalently bonded inside a fragment**: the scheme runs per connected fragment, so a
+  disconnected ion gets its formal charge and its neighbours are computed normally. That halves
+  the exposure and it was measured, not assumed:
+  * **voided**, 5 molecules in all: two selenoethers in `examples/corrosion/0_c1ccccc1.csv` and
+    the same two in its `corrosion_hcl` twin (of 244 each); a tetraphenylarsonium cation and an
+    arsenic-dithiol compound in `examples/cyclodextrin/beta_cyclodextrin.csv` and
+    `beta_with_alpha.csv` (of 1162 each); and the selenomethyl substituent of
+    `examples/hammett/` (of 95).
+  * **not affected**, although the element is present: `examples/electrolyte/shells/`, where the
+    lithium is a separate fragment. Its shells keep an electrostatic field of ordinary size, so
+    items BT4 and BT5 are not touched by this. That was worth checking rather than assuming,
+    because both use `charge_model="gasteiger"` on lithium-containing files.
+  So the repair reaches the corrosion, cyclodextrin and Hammett families, whose tables are
+  published, but through five molecules; the likely measured effect is in the third decimal.
   *What to build.* Generalise EC4's repair to any atom the scheme cannot do: compute the charges
   with those atoms removed and give each of them its formal charge, reporting the source as
   something other than `gasteiger` so that a model fitted before and after cannot be confused.
@@ -1398,10 +1408,11 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   be checked rather than assumed.
   *Gate, and it is a reporting gate rather than an accuracy one.* The repair is correct by
   construction -- a field that was identically zero becomes a field -- so what has to be measured
-  is **what it moves**: every affected benchmark re-run, and the before-and-after reported in the
-  same table. A table that moves is re-measured and said to have moved, never quietly rewritten;
-  rule 6 is the reason this cannot be folded into another item's commit, and it is why this item
-  exists separately instead of being done in passing.
+  is **what it moves**: the corrosion, cyclodextrin and Hammett benchmarks re-run, and the
+  before-and-after reported in the same table, including when the answer is "nothing moved", which
+  on five molecules is the likely one. A table that moves is re-measured and said to have moved,
+  never quietly rewritten; rule 6 is the reason this cannot be folded into another item's commit,
+  and it is why this item exists separately instead of being done in passing.
 
 ## E. Learning (months 4 to 10)
 
