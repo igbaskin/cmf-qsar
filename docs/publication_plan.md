@@ -176,7 +176,7 @@ which stayed here.
 | 16 | **The gap of a benzenoid in a frame given by rule.** On 8,678 polybenzenoid hydrocarbons the HOMO-LUMO gap is topology: ring-centred fields carry it, and they are the one representation that extrapolates to larger molecules | `results/compas/` (`table.md`, `REPORT.md`, `NOTES.md`), `cmfqsar/pbh.py`, `benchmarks/run_compas.py`, manual "A frame by rule" | J. Chem. Inf. Model., J. Phys. Chem. A or Phys. Chem. Chem. Phys. | Results done; the gap to the equivariant networks must be stated |
 | 17 | **The barrier of a lithium hop from the field around the path.** The hop is the sample, the rotation about it is averaged in closed form, and the field beats the counts and the geometric descriptors on 1732 hops in 472 oxides | `results/hops/`, `cmfqsar/hops.py`, `vasp.py`, `examples/hops/` | Chem. Mater., J. Mater. Chem. A or npj Comput. Mater. | Labels are bond-valence site energies; needs a DFT-labelled subset |
 | 18 | **The fourth dimension, measured.** Conformer ensembles, protonation ensembles, a trajectory in the crystal site and the water as a field: none beats one well-posed conformation, and where the pose is unknown the ensemble is worse | README "The verdict on the fourth dimension", `results/protonation/`, `md/`, `solvent/`, `trajectory/`, `examples/md/`, the Hammett ensemble rows | J. Comput.-Aided Mol. Des. or J. Chem. Inf. Model. | Results done |
-| 20 | **A kinetic selectivity as the activity.** On 1,075 catalysed N,S-acetal formations the chiral phosphoric acid in the frame of its own reaction centre predicts the enantioselectivity at the published accuracy, and the same fields without the frame lose three quarters of the explained variance | `results/denmark/`, `examples/make_denmark_examples.py`, `benchmarks/run_denmark.py`, manual "A kinetic selectivity as the activity" | ACS Catalysis, J. Org. Chem. or J. Chem. Inf. Model. | Results done; a substrate field for the unseen-thiol case |
+| 20 | **A kinetic selectivity as the activity.** On 1,075 catalysed N,S-acetal formations the chiral phosphoric acid in the frame of its own reaction centre predicts the enantioselectivity at the published accuracy, and the same fields without the frame lose three quarters of the explained variance | `results/denmark/`, `examples/make_denmark_examples.py`, `benchmarks/run_denmark.py`, manual "A kinetic selectivity as the activity" | J. Chem. Inf. Model. or J. Org. Chem. | Results on one series; a section of paper 2 until the published splits, a substrate field and a second catalytic series are in hand |
 
 Short communication, written only if a journal asks for a separate note: increments fitted to
 the data, which improve the number they are fitted on and nothing else (`results/increments/`);
@@ -223,7 +223,10 @@ provenance gap left, and the paper either cites the compilation they do come fro
 
 Papers 10 and 16 give this paper two more readings: the local co-field around an aromatic
 carbon is the same construction applied to a shift, and the ring-centred fields of COMPAS-1 are
-the same construction applied to a gap. The three cite each other and share no table.
+the same construction applied to a gap. The three cite each other and share no table. Paper 20,
+the catalyst series, is a section of this paper until it has its published splits, a substrate
+field and a second series (5 November 2026): a reaction centre gives the frame for free on a
+constant and on a selectivity alike, and on the selectivity the frame is measured directly.
 
 ### 3. Alignment, not the kernel
 
@@ -1060,16 +1063,32 @@ hurts in the acid's own frame, which the published steric-occupancy descriptor c
 
 Source material: `results/denmark/` (`table.md`, `cofields.png`), `examples/make_denmark_examples.py`,
 `benchmarks/run_denmark.py`, manual section *A kinetic selectivity as the activity*. Venue:
-ACS Catalysis, J. Org. Chem. or J. Chem. Inf. Model.
+J. Chem. Inf. Model. or J. Org. Chem.; ACS Catalysis would ask for a designed catalyst made
+and tested, which is outside this repository.
 
-The limitations that decide the venue. The thiol holdout fails (0.406 against a baseline of
-0.399) because the substrate side is one-hot; a substrate field aligned on the reacting group is
-the one addition the paper needs, and it is a week of work. The axial configuration of the 43
-catalysts is consistent but not known to be (R) or (S) from the source files, so the co-field is
-drawn for "the enantiomer of the screen"; the paper's supplementary material settles it. The
-data files are the paper's supplementary material fetched from a public copy, so the paper
-cites them and redistributes nothing. Paper 2 is the same construction on constants; the two cite
-each other and share no table.
+What stands in the way of a paper of its own, and what the judgement of 5 November 2026
+says. Matching the published accuracy is not news: this set has been modelled by at least six
+groups since 2019, and 0.15 to 0.22 kcal/mol is where every method lands, so the paper cannot
+lead with the error. The splits are not the paper's: leave-one-catalyst-out trains on 42
+catalysts where the published model trained on 24, so the fair comparison runs the published
+600/475 design and the DeepReac catalyst folds, both available, an afternoon of runs. The frame
+result is measured on one series, and "a frame beats no frame on a congeneric series" will be
+read as obvious unless it is shown twice; the Denmark group's expanded set of the same reaction
+(13 thiols, 2,795 reactions, in a 2025 preprint on Bayesian optimisation) is the near one and a
+Sigman-type ligand library the independent one. The thiol holdout fails (0.406 against a
+baseline of 0.399) because the substrate side is one-hot, so the model ranks catalysts and does
+not take a new substrate; a substrate field aligned on the reacting group is a week of work.
+Two cheap loose ends: the axial configuration of the 43 catalysts is consistent but not known to
+be (R) or (S) from the source files, which the paper's supplementary material settles, and the
+two worst catalysts (a benzyl and a silyl substituent) are a single conformer choice that the
+ensemble option would test.
+
+Until those are in hand the result is a section of paper 2, the Hammett paper, where the same
+construction on constants and on a selectivity make one argument: a reaction centre gives the
+frame for free, and the co-field is the sensitivity map of the reaction. With the published
+splits, the substrate field and a second series it becomes a paper of its own. The data files
+are the paper's supplementary material fetched from a public copy, so either paper cites them
+and redistributes nothing.
 
 ## Sequence
 
@@ -1112,7 +1131,7 @@ three. If time runs out, the papers that fold into others are 12 (into 8), 13 (i
 | 16 | Skeleton frame, plane-flip kernel, NICS field; the collaborating group's reading | one to two weeks, and the group |
 | 17 | A DFT-labelled subset of hops (NEB), the polarisability field, a co-author in solid-state ionics | weeks, and a co-author |
 | 18 | Nothing | none |
-| 20 | A substrate field aligned on the reacting group, for the thiol no catalyst was run on; the (R)/(S) label from the paper's supplementary material | one week |
+| 20 | The published 600/475 split and the DeepReac catalyst folds; a substrate field aligned on the reacting group; a second catalytic series (the expanded 2,795-reaction set, or a ligand library); the (R)/(S) label from the supplementary material | two to three weeks of runs, or a section of paper 2 now |
 
 ## Risks
 
