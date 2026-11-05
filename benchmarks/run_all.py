@@ -284,6 +284,15 @@ def registry() -> List[Benchmark]:
                   minutes="25",
                   report=lambda: _mod("run_shells").write_table(_r("shells")),
                   tables=["shells/table.md"]),
+        Benchmark("phenazine",
+                  "quantum fields (Hirshfeld charge, Fukui indices, the spin of the radical "
+                  "anion) against the five ordinary fields and against the global quantum "
+                  "numbers, on 69 phenazine reduction potentials",
+                  "run_phenazine.py", "phenazine",
+                  compute=[["--stage", "data"], ["--stage", "gate"], ["--stage", "cofield"]],
+                  minutes="3",
+                  report=lambda: _mod("run_phenazine").write_table(_r("phenazine")),
+                  tables=["phenazine/table.md"]),
         Benchmark("sac",
                   "the field around a single-atom site against its H, O, OH and OOH binding energies",
                   "run_sac.py", "sac", compute=[[]],

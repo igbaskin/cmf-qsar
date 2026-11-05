@@ -4066,6 +4066,46 @@ reason for adding it does not depend on the result, but the decision came after 
 and the gain holding in both fold schemes and under a free kernel weight is what argues against it
 being a lucky choice.
 
+### Where the added electron went: the spin field, and the series that does not need it
+
+A reduction potential is the energy of adding one electron. The spin population of an atom — the
+difference between the numbers of electrons of each spin direction on it — says how much of an
+unpaired electron sits there, so for the radical anion of a closed-shell molecule the spin
+populations say where the added electron went. That is one number per atom, which makes it a field,
+and it is the most direct description of a reduction that a field can be.
+
+Producing it needed three additions to the quantum stage (plan item EC1). The **charge and the spin
+state are now read from the record**, because nothing in a connection table says that an iron(II)
+complex is a quintet, and a multiplicity of the wrong parity for the electron count is refused
+rather than adjusted. A **continuum solvent** can be named, either one ORCA knows or one given by
+its dielectric constant and refractive index, because a potential measured in dimethoxyethane is
+not the gas-phase quantity. And the heavy level of theory names its **effective core potential**
+explicitly, so a calculation on a ruthenium complex does not fail silently. The spin populations of
+both ionic states then arrive as `prop:spin_anion` and `prop:spin_cation`.
+
+The test series is 69 substituted phenazines with a computed one-electron reduction potential
+(`examples/phenazine/`), all superimposed on the flat three-ring core to within 0.08 ± 0.07 Å. The
+populations check out: they sum to 1.0000 ± 0.0000, as a doublet must, and 34.5 ± 5.9 % of the
+unpaired electron sits on the two core nitrogens.
+
+**The result is negative, and the reason is measurable.** No quantum field improves on the five
+ordinary fields: the Hirshfeld charge field gains 0.006 V [−0.016, +0.028], the Fukui fields
+0.007 V [−0.012, +0.029], all of them together 0.007 V [−0.015, +0.031], every interval holding
+zero. The spin field alone predicts nothing at all — 0.290 V against the 0.285 V of the training
+mean. The kernel compares molecules by the overlap of their fields, and through the spin field any
+two members of this series are **91 % alike** (through the f⁺ field, 95 % alike), against 32 % for
+the electrostatic field and 34 % for the Hirshfeld charge field. The added electron always goes to
+the same place, so the field saying where it went is nearly a constant, and a model cannot separate
+two molecules by what they share. What differs between them is which substituent sits where, and
+the ordinary fields already describe that. The co-field agrees from the other side: the Hirshfeld
+charge field carries twice the weight of anything else, and its strongest point sits 2.87 Å from
+the nearest core nitrogen, out among the substituents.
+
+The control that makes this readable is the electron affinity on its own — one number, no geometry,
+correlated +0.77 with the target. It is also why the negative result is usable rather than just
+disappointing: it says where the spin field *would* earn its cost, which is a series whose members
+reduce at **different places**, not one fixed core decorated differently.
+
 ### A field-based Hammett equation: substituent constants
 
 A substituent constant is a property of a fragment attached to a fixed scaffold at a fixed

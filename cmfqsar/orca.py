@@ -51,16 +51,39 @@ RDLogger.DisableLog("rdApp.*")
 
 DEFAULT_LEVEL = "B3LYP D3BJ def2-SVP RIJCOSX def2/J TightSCF"
 FAST_LEVEL = "r2SCAN-3c TightSCF"
+#: a larger def2 basis with the matching effective core potential, which def2 defines for every
+#: element from rubidium on.  Naming ``def2-ECP`` changes nothing for a light molecule and makes
+#: the intent explicit for a transition-metal complex (plan item EC1).
+HEAVY_LEVEL = "B3LYP D3BJ def2-TZVP def2-ECP RIJCOSX def2/J TightSCF"
+#: elements for which a def2 basis uses an effective core potential: rubidium (37) and above.
+#: The original def2 sets cover hydrogen to radon but leave out the lanthanides, lanthanum to
+#: lutetium (57 to 71), which were published separately; a calculation on one of those needs a
+#: basis named by hand.
+ECP_FROM_Z = 37
 DEFAULT_ORCA = r"C:\ORCA_6.1.0\orca.exe"
 HARTREE_EV = 27.211386245988
 
+#: (dielectric constant, refractive index) of solvents ORCA's own CPCM list does not name.  A
+#: caller may also pass the pair directly.
+SOLVENT_CONSTANTS = {
+    "dme": (7.20, 1.3796),            # 1,2-dimethoxyethane (monoglyme)
+    "diglyme": (7.23, 1.4097),
+    "propylene carbonate": (64.0, 1.4209),
+    "ethylene carbonate": (89.78, 1.4158),
+    "dimethyl carbonate": (3.087, 1.3687),
+}
+
 # per-atom property names written to the SDF (atom double property lists)
 ATOM_PROPS_N = ["q_mulliken", "q_loewdin", "q_hirshfeld", "q_chelpg", "homo_pop", "lumo_pop"]
+#: Mulliken spin populations, written only when a state is open-shell (plan item EC1).  The name
+#: of the field a model builds from them is ``prop:spin``.
+ATOM_PROPS_SPIN = ["spin", "spin_anion", "spin_cation"]
 ATOM_PROPS_FUKUI = ["fukui_plus", "fukui_minus", "fukui_zero", "dual",
                     "softness_plus", "softness_minus", "local_electrophilicity",
                     "fukui_plus_mulliken", "fukui_minus_mulliken", "fukui_zero_mulliken",
                     "dual_mulliken"]
 MOL_PROPS_N = ["E_total", "E_homo", "E_lumo", "gap", "dipole", "charge", "multiplicity"]
+MOL_PROPS_SPIN = ["spin_total", "spin_total_anion", "spin_total_cation"]
 MOL_PROPS_FUKUI = ["IP", "EA", "hardness", "softness", "electrophilicity", "chemical_potential"]
 
 
@@ -114,14 +137,85 @@ def multiplicity_for(mol: Chem.Mol, charge: int) -> int:
     return 1 if electron_count(mol, charge) % 2 == 0 else 2
 
 
+def state_from_properties(mol: Chem.Mol) -> Tuple[int, int]:
+    """(charge, multiplicity) of a molecule, from its SD properties when it carries them.
+
+    A catalyst is Fe(II) or Fe(I) and a triplet or a quintet, and nothing in a connection table
+    says which; a radical electrolyte is a doublet.  So ``charge`` and ``multiplicity`` are read
+    from the SD properties of the record when they are given, and only otherwise taken from the
+    formal charges and the lowest spin state (plan item EC1).  A multiplicity whose parity does
+    not match the electron count is refused rather than silently corrected: it is a mistake in
+    the data file, and a wrong spin state gives a plausible number for the wrong state.
+    """
+    charge = None
+    for name in ("charge", "Charge", "total_charge"):
+        if mol.HasProp(name):
+            charge = int(round(float(mol.GetProp(name))))
+            break
+    if charge is None:
+        charge = Chem.GetFormalCharge(mol)
+    mult = None
+    for name in ("multiplicity", "Multiplicity", "spin_multiplicity"):
+        if mol.HasProp(name):
+            mult = int(round(float(mol.GetProp(name))))
+            break
+    if mult is None:
+        return charge, multiplicity_for(mol, charge)
+    if mult < 1:
+        raise OrcaError(f"multiplicity {mult} is not a spin state")
+    n_el = electron_count(mol, charge)
+    if (n_el - (mult - 1)) % 2 != 0:
+        raise OrcaError(f"multiplicity {mult} does not fit {n_el} electrons at charge {charge}")
+    return charge, mult
+
+
+def ion_multiplicity(mult: int) -> int:
+    """The spin state of a state with one electron more or fewer, given the parent's.
+
+    Adding or removing one electron flips the parity of the electron count, so it flips the
+    parity of the multiplicity.  The rule here is to pair the new electron where it can be
+    paired, that is to take ``mult - 1`` when that is still a spin state and ``mult + 1``
+    otherwise.  For a closed-shell parent this gives the doublet the Fukui functions have always
+    used; for a quintet parent it gives a quartet, which is the state a caller who wrote
+    ``multiplicity 5`` almost always means.
+    """
+    return mult - 1 if mult > 1 else mult + 1
+
+
+def needs_ecp(mol: Chem.Mol) -> bool:
+    """Whether this molecule holds an element for which a def2 basis uses a core potential."""
+    return any(a.GetAtomicNum() >= ECP_FROM_Z for a in mol.GetAtoms())
+
+
+def solvent_lines(solvent) -> Tuple[List[str], List[str]]:
+    """(keywords, input blocks) for a continuum solvent; ``([], [])`` for the gas phase.
+
+    `solvent` is the name of a solvent ORCA's CPCM list knows, a name in
+    :data:`SOLVENT_CONSTANTS`, or a (dielectric constant, refractive index) pair.  A name ORCA
+    knows becomes the keyword ``CPCM(name)``; the other two become an explicit ``%cpcm`` block,
+    because a solvent ORCA cannot name is still usable when its two constants are given.
+    """
+    if solvent is None:
+        return [], []
+    if isinstance(solvent, (tuple, list)):
+        eps, refrac = float(solvent[0]), float(solvent[1])
+    else:
+        key = str(solvent).strip().lower()
+        if key not in SOLVENT_CONSTANTS:
+            return [f"CPCM({str(solvent).strip()})"], []
+        eps, refrac = SOLVENT_CONSTANTS[key]
+    return ["CPCM"], ["%cpcm", f"  epsilon {eps}", f"  refrac {refrac}", "end"]
+
+
 def make_input(level: str, charge: int, mult: int, xyz_name: str, nprocs: int = 1,
                opt: bool = False, populations: bool = True, chelpg: bool = True,
-               maxcore: int = 2000) -> str:
+               maxcore: int = 2000, solvent=None) -> str:
     """Text of an ORCA input.
 
     `populations` adds the Hirshfeld analysis and the per-MO Mulliken atom populations; `chelpg`
     the CHELPG fit (needed for the N-electron state only).  An open-shell state is run
-    unrestricted; a geometry optimisation prints nothing but what it needs.
+    unrestricted; a geometry optimisation prints nothing but what it needs.  `solvent` puts the
+    molecule in a continuum solvent, as :func:`solvent_lines` describes (plan item EC1).
     """
     keywords = [level]
     if opt:
@@ -130,11 +224,14 @@ def make_input(level: str, charge: int, mult: int, xyz_name: str, nprocs: int = 
         keywords.append("UKS")
     if chelpg and not opt:
         keywords.append("CHELPG")
+    solv_keywords, solv_block = solvent_lines(solvent)
+    keywords += solv_keywords
     lines = ["! " + " ".join(keywords)]
     if nprocs > 1:
         lines.append(f"%pal nprocs {nprocs} end")
     lines.append(f"%maxcore {maxcore}")
     lines.append("%scf MaxIter 300 end")
+    lines += solv_block
     if populations and not opt:
         lines += ["%output", "  Print[P_Hirshfeld] 1", "  Print[P_AtPopMO_M] 1", "end"]
     lines.append(f"* xyzfile {charge} {mult} {xyz_name}")
@@ -156,12 +253,19 @@ def read_xyz(path: str) -> Tuple[List[str], np.ndarray]:
     return [r[0] for r in rows], np.array([[float(v) for v in r[1:4]] for r in rows])
 
 
-def cache_key(smiles: str, charge: int, level: str, opt: bool, coords: Optional[np.ndarray] = None) -> str:
+def cache_key(smiles: str, charge: int, level: str, opt: bool, coords: Optional[np.ndarray] = None,
+              solvent=None, mult: Optional[int] = None) -> str:
     """Identity of a computation: the molecule, its state, the level and the geometry.
 
     The SMILES is canonicalised so that the same compound written two ways shares a key; the
     coordinates (to 1e-3 A) are part of it because a different starting geometry is a different
     result even when nothing else changed.
+
+    `solvent` and `mult` are folded in only when they are given.  That keeps the key of a
+    gas-phase run at its lowest spin state exactly what it was before plan item EC1 added the
+    two, so the ORCA results already cached for the other benchmarks of this repository are not
+    thrown away.  A caller passes `mult` when it is not the lowest spin state, which is the only
+    case in which two runs of the same molecule in the same charge state differ.
     """
     m = Chem.MolFromSmiles(smiles)
     can = Chem.MolToSmiles(m) if m is not None else smiles
@@ -169,6 +273,10 @@ def cache_key(smiles: str, charge: int, level: str, opt: bool, coords: Optional[
     h.update(f"{can}|{charge}|{' '.join(level.split())}|{int(bool(opt))}".encode())
     if coords is not None:
         h.update(np.round(np.asarray(coords, float), 3).tobytes())
+    if solvent is not None:
+        h.update(f"|solvent={solvent}".encode())
+    if mult is not None:
+        h.update(f"|mult={int(mult)}".encode())
     return h.hexdigest()[:16]
 
 
@@ -177,6 +285,8 @@ def cache_key(smiles: str, charge: int, level: str, opt: bool, coords: Optional[
 # ----------------------------------------------------------------------------------------------
 
 _CHARGE_LINE = re.compile(r"^\s*(\d+)\s+([A-Za-z]{1,2})\s*:?\s+(-?\d+\.\d+)")
+#: the same line of an unrestricted run, which carries the spin population after the charge
+_SPIN_LINE = re.compile(r"^\s*(\d+)\s+([A-Za-z]{1,2})\s*:?\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s*$")
 _ORBITAL_LINE = re.compile(r"^\s*(\d+)\s+(\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)")
 _COORD_LINE = re.compile(r"^\s*([A-Za-z]{1,2})\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s*$")
 _FLOAT = re.compile(r"^-?\d+\.\d+$")
@@ -200,6 +310,31 @@ def _parse_charges(lines: List[str], header: str) -> Optional[np.ndarray]:
         m = _CHARGE_LINE.match(ln)
         if m:
             vals[int(m.group(1))] = float(m.group(3))
+        elif vals:
+            break
+    if not vals or sorted(vals) != list(range(len(vals))):
+        return None
+    return np.array([vals[i] for i in range(len(vals))])
+
+
+def _parse_spin(lines: List[str], header: str) -> Optional[np.ndarray]:
+    """Atomic spin populations from the last block headed `header`.
+
+    An unrestricted run prints two numbers on each atom's line, the charge and the spin
+    population, under the heading ``... CHARGES AND SPIN POPULATIONS``; a closed-shell run prints
+    one number and no spin.  So the second column is what is read here, and its absence is the
+    answer "this state has no spin density" rather than a failure (plan item EC1).
+    """
+    start = _last_block(lines, header)
+    if start is None:
+        return None
+    vals: Dict[int, float] = {}
+    for ln in lines[start:start + 20000]:
+        m = _SPIN_LINE.match(ln)
+        if m:
+            vals[int(m.group(1))] = float(m.group(4))
+        elif _CHARGE_LINE.match(ln):
+            return None                 # a charges-only block: this state is closed-shell
         elif vals:
             break
     if not vals or sorted(vals) != list(range(len(vals))):
@@ -304,6 +439,8 @@ class OrcaResult:
     loewdin: Optional[np.ndarray] = None
     hirshfeld: Optional[np.ndarray] = None
     chelpg: Optional[np.ndarray] = None
+    #: Mulliken spin populations; None for a closed-shell state (plan item EC1)
+    spin: Optional[np.ndarray] = None
     homo: float = float("nan")              # Eh
     lumo: float = float("nan")              # Eh
     homo_index: int = -1
@@ -338,6 +475,7 @@ def parse_orca_output(text: str) -> OrcaResult:
     r.loewdin = _parse_charges(lines, "LOEWDIN ATOMIC CHARGES")
     r.hirshfeld = _parse_charges(lines, "HIRSHFELD ANALYSIS")
     r.chelpg = _parse_charges(lines, "CHELPG Charges")
+    r.spin = _parse_spin(lines, "MULLIKEN ATOMIC CHARGES")
     alpha, beta = _parse_orbitals(lines)
     occ = ([(i, e) for i, (o, e) in enumerate(alpha) if o > 0.5]
            + [(i, e) for i, (o, e) in enumerate(beta) if o > 0.5])
@@ -383,6 +521,12 @@ def derive_properties(n: OrcaResult, np1: Optional[OrcaResult] = None, nm1: Opti
         "charge": float(charge),
         "multiplicity": float(mult),
     }
+    # The spin population is where the unpaired electron sits. For a closed-shell parent it is
+    # zero everywhere and is not written; for the radical ion of a redox series it is the field
+    # that says which atoms carry the added or removed electron (plan item EC1).
+    if n.spin is not None and len(n.spin) == na:
+        atom["spin"] = n.spin
+        mol["spin_total"] = float(np.sum(n.spin))
     if np1 is None or nm1 is None:
         return atom, mol
     for other, what in ((np1, "N+1"), (nm1, "N-1")):
@@ -408,6 +552,12 @@ def derive_properties(n: OrcaResult, np1: Optional[OrcaResult] = None, nm1: Opti
     })
     mol.update({"IP": ip, "EA": ea, "hardness": hardness, "softness": softness,
                 "electrophilicity": omega, "chemical_potential": mu})
+    # Both ionic states of a closed-shell molecule are radicals, so each has a spin density, and
+    # which atoms carry it is what a redox series is about.
+    for other, which in ((np1, "anion"), (nm1, "cation")):
+        if other.spin is not None and len(other.spin) == na:
+            atom[f"spin_{which}"] = other.spin
+            mol[f"spin_total_{which}"] = float(np.sum(other.spin))
     return atom, mol
 
 
@@ -467,6 +617,10 @@ class Config:
     level: str = DEFAULT_LEVEL
     opt: bool = False
     fukui: bool = True
+    #: a continuum solvent for every job: the name of one ORCA knows, a name in
+    #: :data:`SOLVENT_CONSTANTS`, or a (dielectric constant, refractive index) pair.  None is the
+    #: gas phase, which is what every benchmark before plan item EC1 used.
+    solvent: Optional[object] = None
     nprocs: int = 1
     maxcore: int = 2000
     timeout: Optional[float] = None
@@ -571,12 +725,13 @@ def run_molecule(mol: Chem.Mol, name: str, index: int, cfg: Config) -> MoleculeO
     key = None
     try:
         mol = prepare_molecule(mol)
-        charge = Chem.GetFormalCharge(mol)
-        mult = multiplicity_for(mol, charge)
+        charge, mult = state_from_properties(mol)
+        lowest = multiplicity_for(mol, charge)
         smiles = Chem.MolToSmiles(Chem.RemoveHs(mol))
         coords0 = mol.GetConformer().GetPositions()
         symbols = [a.GetSymbol() for a in mol.GetAtoms()]
-        key = cache_key(smiles, charge, cfg.level, cfg.opt, coords0)
+        key = cache_key(smiles, charge, cfg.level, cfg.opt, coords0, solvent=cfg.solvent,
+                        mult=None if mult == lowest else mult)
         jobdir = os.path.join(cfg.workdir, f"{index:03d}_{safe_name(name)}")
         status_path = os.path.join(jobdir, "status.json")
         status = {}
@@ -596,27 +751,35 @@ def run_molecule(mol: Chem.Mol, name: str, index: int, cfg: Config) -> MoleculeO
         coords = coords0
         if cfg.opt:
             inp = make_input(cfg.level, charge, mult, "geom.xyz", cfg.nprocs, opt=True,
-                             populations=False, chelpg=False, maxcore=cfg.maxcore)
+                             populations=False, chelpg=False, maxcore=cfg.maxcore,
+                             solvent=cfg.solvent)
             run_job(jobdir, "opt", inp, cfg, need_converged=True)
             osyms, coords = read_xyz(os.path.join(jobdir, "opt.xyz"))
             if [s.upper() for s in osyms] != [s.upper() for s in symbols]:
                 raise OrcaError("the optimised geometry lists different atoms")
             xyz = "opt.xyz"
         res_n = run_job(jobdir, "sp_n", make_input(cfg.level, charge, mult, xyz, cfg.nprocs,
-                                                   maxcore=cfg.maxcore), cfg)
+                                                   maxcore=cfg.maxcore, solvent=cfg.solvent), cfg)
         if res_n.n_atoms != len(symbols):
             raise OrcaError(f"ORCA reports {res_n.n_atoms} atoms, the molecule has {len(symbols)}")
         res_p = res_m = None
         if cfg.fukui:
+            # The ionic states take their spin from the parent's: for a closed-shell molecule
+            # that is the doublet the Fukui functions have always used, and for an open-shell
+            # parent it is the state one electron up or down from the one the caller asked for.
+            ion_mult = ion_multiplicity(mult)
             res_p = run_job(jobdir, "sp_np1",
-                            make_input(cfg.level, charge - 1, multiplicity_for(mol, charge - 1), xyz,
-                                       cfg.nprocs, chelpg=False, maxcore=cfg.maxcore), cfg)
+                            make_input(cfg.level, charge - 1, ion_mult, xyz,
+                                       cfg.nprocs, chelpg=False, maxcore=cfg.maxcore,
+                                       solvent=cfg.solvent), cfg)
             res_m = run_job(jobdir, "sp_nm1",
-                            make_input(cfg.level, charge + 1, multiplicity_for(mol, charge + 1), xyz,
-                                       cfg.nprocs, chelpg=False, maxcore=cfg.maxcore), cfg)
+                            make_input(cfg.level, charge + 1, ion_mult, xyz,
+                                       cfg.nprocs, chelpg=False, maxcore=cfg.maxcore,
+                                       solvent=cfg.solvent), cfg)
         atom_props, mol_props = derive_properties(res_n, res_p, res_m, charge=charge, mult=mult)
         extra = {"qm_level": cfg.level,
                  "qm_geometry": "orca-opt" if cfg.opt else "input",
+                 "qm_solvent": "gas" if cfg.solvent is None else str(cfg.solvent),
                  "qm_dir": os.path.basename(jobdir)}
         outcome.mol = annotate(mol, atom_props, mol_props, coords=coords if cfg.opt else None, extra=extra)
         outcome.seconds = time.time() - t0
@@ -628,6 +791,7 @@ def run_molecule(mol: Chem.Mol, name: str, index: int, cfg: Config) -> MoleculeO
         with open(status_path, "w") as fh:
             json.dump({"key": key, "status": "done", "name": name, "smiles": smiles, "charge": charge,
                        "multiplicity": mult, "level": cfg.level, "opt": cfg.opt,
+                       "solvent": "gas" if cfg.solvent is None else str(cfg.solvent),
                        "fukui": cfg.fukui, "seconds": seconds},
                       fh, indent=1)
     except Exception as exc:        # a failed molecule is reported, not fatal

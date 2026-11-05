@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 106 modules, 207 classes with 667 public methods, and 1054 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 106 modules, 207 classes with 667 public methods, and 1058 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -1203,12 +1203,19 @@ a FieldSet.  Two Gaussians of widths b1, b2 a distance D apart overlap by
 `(2 pi / (b1 + b2))^{3/2} exp(-b1 b2 D^2 / (2 (b1 + b2)))`; the rest is bookkeeping over
 pairs of centres and pairs of terms.
 
-### `cdft_fields(rho_n: Cube, rho_np1: Optional[Cube]=None, rho_nm1: Optional[Cube]=None, spin_np1: Optional[Cube]=None, spin_nm1: Optional[Cube]=None) -> dict`
+### `cdft_fields(rho_n: Cube, rho_np1: Optional[Cube]=None, rho_nm1: Optional[Cube]=None, spin_np1: Optional[Cube]=None, spin_nm1: Optional[Cube]=None, potential: Optional[Cube]=None) -> dict`
 
 The conceptual-DFT fields as arrays on the common grid of the cubes given.
 
 Finite differences at fixed geometry, which is what the condensed indices of
 `cmfqsar.orca` are made of as well -- the same quantities before they are condensed.
+
+`potential` is the electrostatic potential of the N-electron state (plan item EC1), in
+hartree per electron.  It is the one field here that is not a difference of densities, and it
+is offered for display and for a grid kernel rather than as a replacement for the
+atom-centred electrostatic field: this module's own measurement is that a few Gaussians per
+atom represent the long-range tail of a potential badly, so the CHELPG charges of
+`cmfqsar.orca` remain the first choice for a field built from the potential.
 
 ### `fit_cdft(cubes: dict, rho_n: Cube, names: Sequence[str]=CDFT_FIELDS, n_terms: int=4, rho_core: float=RHO_CORE, ridge: float=1e-06) -> dict`
 
@@ -1222,6 +1229,13 @@ ORCA 6 has no `%plot` input block -- it is rejected outright -- so the cube can 
 from the separate program, which is menu-driven and is therefore driven by its menu.  The box
 is the one orca_plot chooses from the geometry, which is what makes the three states of a
 molecule share a grid exactly.
+
+`kind` is `PLOT_DENSITY`, `PLOT_SPIN` or `PLOT_POTENTIAL`.  The potential is
+entry 43 of the menu of ORCA 6.1 and differs from the other two in one way that matters here:
+instead of offering the default density for the caller to accept, it lists the densities the
+job saved and asks for one by name, which is `<job>.scfp` for a single point.  Its cube is
+written as `<job>.scfp.esp.cube` and has the same header as the density cube, so
+`read_cube` reads all three unchanged.
 
 ## cmfqsar.celldiff
 
@@ -10676,6 +10690,7 @@ Attributes:
 - `loewdin: Optional[np.ndarray]` = `None`
 - `hirshfeld: Optional[np.ndarray]` = `None`
 - `chelpg: Optional[np.ndarray]` = `None`
+- `spin: Optional[np.ndarray]` = `None`
 - `homo: float` = `float('nan')`
 - `lumo: float` = `float('nan')`
 - `homo_index: int` = `-1`
@@ -10698,6 +10713,7 @@ Attributes:
 - `level: str` = `DEFAULT_LEVEL`
 - `opt: bool` = `False`
 - `fukui: bool` = `True`
+- `solvent: Optional[object]` = `None`
 - `nprocs: int` = `1`
 - `maxcore: int` = `2000`
 - `timeout: Optional[float]` = `None`
@@ -10729,25 +10745,67 @@ Whether this ORCA build can run `%pal` jobs (the serial build lacks the MPI help
 
 Lowest spin state: singlet for an even number of electrons, doublet for an odd one.
 
-### `make_input(level: str, charge: int, mult: int, xyz_name: str, nprocs: int=1, opt: bool=False, populations: bool=True, chelpg: bool=True, maxcore: int=2000) -> str`
+### `state_from_properties(mol: Chem.Mol) -> Tuple[int, int]`
+
+(charge, multiplicity) of a molecule, from its SD properties when it carries them.
+
+A catalyst is Fe(II) or Fe(I) and a triplet or a quintet, and nothing in a connection table
+says which; a radical electrolyte is a doublet.  So `charge` and `multiplicity` are read
+from the SD properties of the record when they are given, and only otherwise taken from the
+formal charges and the lowest spin state (plan item EC1).  A multiplicity whose parity does
+not match the electron count is refused rather than silently corrected: it is a mistake in
+the data file, and a wrong spin state gives a plausible number for the wrong state.
+
+### `ion_multiplicity(mult: int) -> int`
+
+The spin state of a state with one electron more or fewer, given the parent's.
+
+Adding or removing one electron flips the parity of the electron count, so it flips the
+parity of the multiplicity.  The rule here is to pair the new electron where it can be
+paired, that is to take `mult - 1` when that is still a spin state and `mult + 1`
+otherwise.  For a closed-shell parent this gives the doublet the Fukui functions have always
+used; for a quintet parent it gives a quartet, which is the state a caller who wrote
+`multiplicity 5` almost always means.
+
+### `needs_ecp(mol: Chem.Mol) -> bool`
+
+Whether this molecule holds an element for which a def2 basis uses a core potential.
+
+### `solvent_lines(solvent) -> Tuple[List[str], List[str]]`
+
+(keywords, input blocks) for a continuum solvent; `([], [])` for the gas phase.
+
+`solvent` is the name of a solvent ORCA's CPCM list knows, a name in
+`SOLVENT_CONSTANTS`, or a (dielectric constant, refractive index) pair.  A name ORCA
+knows becomes the keyword `CPCM(name)`; the other two become an explicit `%cpcm` block,
+because a solvent ORCA cannot name is still usable when its two constants are given.
+
+### `make_input(level: str, charge: int, mult: int, xyz_name: str, nprocs: int=1, opt: bool=False, populations: bool=True, chelpg: bool=True, maxcore: int=2000, solvent=None) -> str`
 
 Text of an ORCA input.
 
 `populations` adds the Hirshfeld analysis and the per-MO Mulliken atom populations; `chelpg`
 the CHELPG fit (needed for the N-electron state only).  An open-shell state is run
-unrestricted; a geometry optimisation prints nothing but what it needs.
+unrestricted; a geometry optimisation prints nothing but what it needs.  `solvent` puts the
+molecule in a continuum solvent, as `solvent_lines` describes (plan item EC1).
 
 ### `xyz_block(symbols: Sequence[str], coords: np.ndarray, comment: str='') -> str`
 
 ### `read_xyz(path: str) -> Tuple[List[str], np.ndarray]`
 
-### `cache_key(smiles: str, charge: int, level: str, opt: bool, coords: Optional[np.ndarray]=None) -> str`
+### `cache_key(smiles: str, charge: int, level: str, opt: bool, coords: Optional[np.ndarray]=None, solvent=None, mult: Optional[int]=None) -> str`
 
 Identity of a computation: the molecule, its state, the level and the geometry.
 
 The SMILES is canonicalised so that the same compound written two ways shares a key; the
 coordinates (to 1e-3 A) are part of it because a different starting geometry is a different
 result even when nothing else changed.
+
+`solvent` and `mult` are folded in only when they are given.  That keeps the key of a
+gas-phase run at its lowest spin state exactly what it was before plan item EC1 added the
+two, so the ORCA results already cached for the other benchmarks of this repository are not
+thrown away.  A caller passes `mult` when it is not the lowest spin state, which is the only
+case in which two runs of the same molecule in the same charge state differ.
 
 ### `parse_orca_output(text: str) -> OrcaResult`
 

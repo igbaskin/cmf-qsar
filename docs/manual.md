@@ -1845,6 +1845,119 @@ field machinery**, because by the plan's own test it has not earned its four-fol
 there for the case that would earn it: a series whose members differ in the *shape* of a frontier
 orbital rather than in where their atoms are.
 
+## Where the added electron went: the spin field, and the series that does not need it
+
+The previous section asked whether a Fukui function can be a field and answered no, for a reason
+about shape. This section asks a narrower question with a clearer answer. A reduction potential is
+the energy of adding one electron to a molecule. The **spin population** of an atom — the
+difference between the number of electrons of each spin direction on that atom — says how much of
+an unpaired electron sits there. For the radical anion of a closed-shell molecule, those
+populations say *where the added electron went*. That is one number per atom, so it is a `prop:`
+field, and it is the most direct description of a reduction a field can be.
+
+**What the quantum stage had to learn first.** Three things were missing (plan item EC1).
+
+* **The charge and the spin state come from the record.** `cmf` used to take the charge from the
+  connection table and the lowest spin state that fits the electron count. Nothing in a connection
+  table says that an iron(II) complex is a quintet, and a radical written as a neutral molecule
+  with an unpaired electron would have been computed as a closed shell, which is a different
+  substance. `charge` and `multiplicity` are now read from the SD properties when they are there.
+  A multiplicity of the wrong parity for the electron count is refused rather than adjusted,
+  because the likely cause is a mistake in the file.
+* **A continuum solvent.** A reduction potential measured in dimethoxyethane is not the gas-phase
+  quantity. `--solvent` names a solvent ORCA knows, which becomes a `CPCM(name)` keyword, or one
+  of a small table of solvents it does not know, which becomes a block with that solvent's
+  dielectric constant and refractive index. An (ε, n) pair may also be given directly.
+* **Heavier elements.** A def2 basis uses an effective core potential — a function standing in for
+  the inner electrons — from rubidium upward. The heavy level of theory names it explicitly, so
+  that a calculation on a ruthenium or iridium complex does not silently fail.
+
+The spin populations of both ionic states then arrive as the fields `prop:spin_anion` and
+`prop:spin_cation`, and `prop:spin` for a molecule that is open-shell to begin with. A closed-shell
+molecule has no spin density, so nothing is written for it, which is correct and not a gap.
+
+**The series.** 69 substituted phenazines with a computed one-electron reduction potential
+(`examples/phenazine/`, built by `examples/make_phenazine_examples.py`). A phenazine is a flat
+three-ring system with two nitrogens in the middle ring; it is the core of several organic
+electrode materials. The potentials run from −2.092 to −0.160 V, and the mean of the training set
+alone makes an error of 0.285 V, which is the number every model has to beat. All 69 are
+superimposed on the phenazine core, which they sit on to within 0.08 ± 0.07 Å, so the series has a
+frame and the overlap kernel applies.
+
+**The spin populations are right.** They sum to 1.0000 ± 0.0000 over every molecule, which is what
+a doublet must give and is therefore a check on the reading rather than a result. 34.5 ± 5.9 % of
+the unpaired electron sits on the two core nitrogens, and on average only 4 % of it leaves the core
+at all. The added electron goes where a chemist would put it.
+
+**What is circular here, said plainly.** The target is computed, not measured, and it comes from
+the same kind of calculation as the spin field. A good score for the spin field would therefore not
+be evidence that it predicts an experiment. It would be evidence that the field carries what an
+anion calculation knows. The control that separates the two readings is the **electron affinity**
+on its own: one number per molecule, no geometry, no field, correlated +0.77 with the target. A
+field that does not beat that number has not earned the ten hours of DFT that produced it.
+
+**The measurement** (`benchmarks/run_phenazine.py`, `benchmarks/results/phenazine/table.md`): the
+five ordinary fields, then the same with the Hirshfeld charge field in place of the Gasteiger one,
+then with the Fukui fields added, then with the spin field added, then with all of them, against
+the electron affinity alone and the nine global quantum numbers alone. Five random folds and the
+three source tables held out one at a time. Every model chooses its ridge and its field width
+inside each fold.
+
+| model | random folds | one source table held out |
+|---|---:|---:|
+| the electron affinity alone | 0.194 ± 0.023 | 0.238 ± 0.080 |
+| nine global quantum numbers | 0.181 ± 0.030 | 0.231 ± 0.096 |
+| the five ordinary fields | 0.158 ± 0.019 | 0.233 ± 0.102 |
+| with the Hirshfeld charge field | 0.153 ± 0.017 | 0.217 ± 0.107 |
+| with the Fukui fields | 0.151 ± 0.021 | 0.241 ± 0.104 |
+| with the spin field | 0.161 ± 0.021 | 0.230 ± 0.106 |
+| with all of the quantum fields | 0.151 ± 0.017 | 0.230 ± 0.120 |
+| the spin field alone | 0.290 ± 0.039 | 0.270 ± 0.100 |
+
+Mean absolute error in volts. **No quantum field improves on the five ordinary fields.** Every
+paired interval over the per-molecule errors holds zero: the Hirshfeld charge field gains
+0.006 V [−0.016, +0.028] on random folds, the Fukui fields 0.007 V [−0.012, +0.029], all of them
+together 0.007 V [−0.015, +0.031]. The spin field is the worst of the three, at −0.003 V
+[−0.008, +0.002]. **And the spin field alone predicts nothing**: 0.290 V against the 0.285 V of the
+mean, an r² of −0.006.
+
+**Why, measured rather than argued.** The kernel compares two molecules by the overlap of their
+fields, normalised, so a pair of molecules has a similarity between −1 and 1. The question is how
+much that similarity varies across the series when one field is used by itself:
+
+| field used alone | how alike two molecules are | smallest pair |
+|---|---:|---:|
+| `fukui_plus` | 0.953 ± 0.032 | +0.771 |
+| `spin_anion` | 0.910 ± 0.127 | −0.082 |
+| `steric` | 0.902 ± 0.057 | +0.702 |
+| `fukui_minus` | 0.701 ± 0.201 | +0.096 |
+| `q_hirshfeld` | 0.344 ± 0.182 | −0.323 |
+| `electrostatic` | 0.315 ± 0.168 | −0.105 |
+| `dual` | 0.308 ± 0.307 | −0.895 |
+
+Through the spin field, any two molecules of this series are 91 % alike; through the f⁺ field, 95 %
+alike. **The added electron always goes to the same place**, so the field that says where it went is
+nearly a constant, and a model cannot tell two molecules apart by something they share. What *does*
+differ between these molecules is which substituent sits at which ring position, and that is what
+the ordinary steric and electrostatic fields already describe. The electrostatic and Hirshfeld
+charge fields vary three times as much, which is why they are the fields that carry the model.
+
+This is not a fault in the spin field and not an argument against it. It is a statement about this
+series, and it says exactly where the field *would* be worth its cost: a series in which reduction
+happens at **different places** in different members — two or more competing redox centres, a
+family in which the electron moves from the ring to a substituent — rather than one fixed core
+decorated differently. The phenazines are the opposite of that case. Running the measurement on
+them was still the right thing to do, because the field was cheap once the quantum stage could
+produce it, and a negative result with a measured explanation is usable: it tells the next person
+which series not to try.
+
+**The co-field.** Fitted on all 69 with every quantum field, the co-field shows the same thing from
+the other side. The Hirshfeld charge field carries the largest weight by a factor of two
+(+0.201 against +0.122 for the next), and its strongest point sits 2.87 Å from the nearest core
+nitrogen — out where the substituents are, not on the core. The spin field's strongest point is at
+the same place but a fifth of the size. The model is reading what the substituents do, which is
+what the ordinary fields were already telling it.
+
 # Before you model: `cmf diagnose`
 
 Every expensive mistake recorded in this manual was visible before the model was built, in a

@@ -288,18 +288,26 @@ def overlap_kernel(coeffs: Sequence[np.ndarray], positions: Sequence[np.ndarray]
 # ----------------------------------------------------------------------------------------------
 
 #: name -> (how it is made from the three densities and the two spin densities)
-CDFT_FIELDS = ("rho", "fukui_plus", "fukui_minus", "fukui_zero", "dual", "parr_plus", "parr_minus")
+CDFT_FIELDS = ("rho", "fukui_plus", "fukui_minus", "fukui_zero", "dual", "parr_plus",
+               "parr_minus", "potential")
 
 
 def cdft_fields(rho_n: Cube, rho_np1: Optional[Cube] = None, rho_nm1: Optional[Cube] = None,
                 spin_np1: Optional[Cube] = None,
-                spin_nm1: Optional[Cube] = None) -> dict:
+                spin_nm1: Optional[Cube] = None, potential: Optional[Cube] = None) -> dict:
     """The conceptual-DFT fields as arrays on the common grid of the cubes given.
 
     Finite differences at fixed geometry, which is what the condensed indices of
     :mod:`cmfqsar.orca` are made of as well -- the same quantities before they are condensed.
+
+    `potential` is the electrostatic potential of the N-electron state (plan item EC1), in
+    hartree per electron.  It is the one field here that is not a difference of densities, and it
+    is offered for display and for a grid kernel rather than as a replacement for the
+    atom-centred electrostatic field: this module's own measurement is that a few Gaussians per
+    atom represent the long-range tail of a potential badly, so the CHELPG charges of
+    :mod:`cmfqsar.orca` remain the first choice for a field built from the potential.
     """
-    for other in (rho_np1, rho_nm1, spin_np1, spin_nm1):
+    for other in (rho_np1, rho_nm1, spin_np1, spin_nm1, potential):
         if other is not None and not rho_n.same_grid_as(other):
             raise ValueError("the cubes are on different grids; plot them at one geometry")
     out = {"rho": rho_n.values}
@@ -314,6 +322,8 @@ def cdft_fields(rho_n: Cube, rho_np1: Optional[Cube] = None, rho_nm1: Optional[C
         out["parr_plus"] = spin_np1.values
     if spin_nm1 is not None:
         out["parr_minus"] = spin_nm1.values
+    if potential is not None:
+        out["potential"] = potential.values
     return out
 
 
@@ -336,7 +346,12 @@ def fit_cdft(cubes: dict, rho_n: Cube, names: Sequence[str] = CDFT_FIELDS, n_ter
 
 #: orca_plot menu: plot type, then the density kind, then accept its name, then the resolution
 _PLOT_KEYS = "1\n{kind}\ny\n4\n{intervals}\n11\n12\n"
-PLOT_DENSITY, PLOT_SPIN = 2, 3
+#: the same menu for the electrostatic potential, which asks for the density by name instead of
+#: offering one to accept
+_PLOT_KEYS_POTENTIAL = "1\n{kind}\n{density}\n4\n{intervals}\n11\n12\n"
+PLOT_DENSITY, PLOT_SPIN, PLOT_POTENTIAL = 2, 3, 43
+#: the suffix orca_plot gives each cube, before ``.cube``
+_PLOT_SUFFIX = {PLOT_DENSITY: "eldens", PLOT_SPIN: "spindens", PLOT_POTENTIAL: "scfp.esp"}
 
 
 def run_orca_plot(gbw: str, kind: int = PLOT_DENSITY, intervals: int = 80,
@@ -348,14 +363,25 @@ def run_orca_plot(gbw: str, kind: int = PLOT_DENSITY, intervals: int = 80,
     from the separate program, which is menu-driven and is therefore driven by its menu.  The box
     is the one orca_plot chooses from the geometry, which is what makes the three states of a
     molecule share a grid exactly.
+
+    `kind` is :data:`PLOT_DENSITY`, :data:`PLOT_SPIN` or :data:`PLOT_POTENTIAL`.  The potential is
+    entry 43 of the menu of ORCA 6.1 and differs from the other two in one way that matters here:
+    instead of offering the default density for the caller to accept, it lists the densities the
+    job saved and asks for one by name, which is ``<job>.scfp`` for a single point.  Its cube is
+    written as ``<job>.scfp.esp.cube`` and has the same header as the density cube, so
+    :func:`read_cube` reads all three unchanged.
     """
     import subprocess
     exe = orca_plot or _default_orca_plot()
     base = gbw[:-4] if gbw.lower().endswith(".gbw") else gbw
-    out = f"{base}." + {PLOT_DENSITY: "eldens", PLOT_SPIN: "spindens"}[kind] + ".cube"
+    out = f"{base}.{_PLOT_SUFFIX[kind]}.cube"
     if reuse and os.path.isfile(out) and os.path.getmtime(out) >= os.path.getmtime(gbw):
         return out          # a cube costs minutes on a big molecule; it is worth keeping
-    keys = _PLOT_KEYS.format(kind=kind, intervals=int(intervals))
+    if kind == PLOT_POTENTIAL:
+        keys = _PLOT_KEYS_POTENTIAL.format(kind=kind, intervals=int(intervals),
+                                           density=os.path.basename(base) + ".scfp")
+    else:
+        keys = _PLOT_KEYS.format(kind=kind, intervals=int(intervals))
     subprocess.run([exe, os.path.basename(gbw), "-i"], cwd=os.path.dirname(os.path.abspath(gbw)),
                    input=keys, text=True, timeout=timeout,
                    stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)

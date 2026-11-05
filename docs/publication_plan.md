@@ -791,6 +791,45 @@ framed comparison was seen to fail, so the gate's pass rests on a model chosen f
 but after the first numbers, which the gain holding in both fold schemes and under a free kernel
 weight supports but does not erase.
 
+**Item EC1 is done (5 November 2026) and it is a negative result with a measured cause**, which is
+worth a short section rather than a paper. The quantum stage can now be told the oxidation state,
+the spin state and the solvent: `charge` and `multiplicity` are read from the record (a
+multiplicity of the wrong parity for the electron count is refused, not adjusted), a continuum
+solvent is named either by a name ORCA knows or by its dielectric constant and refractive index, a
+def2 effective core potential is named explicitly from rubidium upward, the Mulliken spin
+populations of both ionic states arrive as `prop:spin_anion` and `prop:spin_cation`, and
+`cdft.py` reads the electrostatic-potential cube. Two things make this publishable.
+
+**The spin population of a radical anion is a field, and on a series with one redox centre it is
+nearly a constant.** On 69 substituted phenazines with computed one-electron reduction potentials,
+the populations behave exactly as they should — they sum to 1.0000 +/- 0.0000, as a doublet must,
+and 34.5 +/- 5.9 % of the unpaired electron sits on the two core nitrogens — and the field built
+from them predicts nothing: 0.290 V against the 0.285 V of the training mean. Nor does any other
+quantum field improve on the five ordinary ones: Hirshfeld charge +0.006 V [-0.016, +0.028], the
+Fukui fields +0.007 [-0.012, +0.029], all of them together +0.007 [-0.015, +0.031]. The cause is
+measurable in one table. The kernel is a normalised field overlap, so what matters is how much a
+field varies across the series, and through the spin field two members are 0.910 +/- 0.127 alike,
+through f+ 0.953 +/- 0.032, against 0.315 for the electrostatic field and 0.344 for the Hirshfeld
+charge field. The added electron goes to the same place in every member, so the field that says
+where it went cannot separate two of them. The co-field confirms it: the Hirshfeld charge field
+carries twice the weight of anything else and peaks 2.87 angstrom from the nearest core nitrogen,
+among the substituents.
+
+**The general claim this supports** is about descriptors and not about electrochemistry: a
+physically correct description of the property being predicted is worthless to a kernel method
+when the series does not vary in it. That is a statement a referee can check from the similarity
+table, and it names the series the spin field is for — one whose members reduce at different
+places, such as a quinone with two competing centres — rather than one fixed core with different
+substituents.
+
+Two limits must be stated. The target is computed and not measured, and it comes from the same
+kind of calculation as the spin field, so the electron affinity alone (one number, no geometry,
+correlated +0.77 with the target) is the control that separates "the field predicts the potential"
+from "the field recovers the global number"; no field beats it with an interval excluding zero.
+And with a source table held out, nothing separates at all: every model sits near 0.23 V against a
+training mean of 0.285 V, so this series supports a statement about which fields are redundant and
+not about what any of them can extrapolate.
+
 ### 15. Review
 
 Year 2, after the first four tiers are in print: the CMF series from the 2009 Doklady paper to

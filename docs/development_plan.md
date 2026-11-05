@@ -3396,6 +3396,73 @@ for anything molecular.
   phenazine redox-potential series with Hirshfeld, Fukui and spin fields against the five fields
   and against the IP/EA descriptors alone; the conceptual-DFT result on corrosion says where not
   to expect a gain, and the Hammett result where to.
+  **Done 5 November 2026. The machinery works and the gate is not passed: no quantum field
+  improves on the five ordinary fields on this series, and the measurement says why.**
+  **What was built.** All five pieces the item lists. `state_from_properties` reads `charge` and
+  `multiplicity` from the SD properties (also capitalised, also `total_charge` /
+  `spin_multiplicity`), refusing a multiplicity below 1 or of the wrong parity for the electron
+  count rather than adjusting it, because the likely cause is a mistake in the file;
+  `ion_multiplicity` gives the two ionic states their own spin states, which is what makes a
+  Fukui index of an open-shell parent possible at all. `solvent_lines` takes either a name ORCA
+  knows (`CPCM(water)`) or one of `SOLVENT_CONSTANTS` or an (ε, n) pair, which becomes a `%cpcm`
+  block; `Config.solvent` passes it to every input of a molecule, and `qm_solvent` records it in
+  the file so a cached result cannot be mistaken for a gas-phase one. `HEAVY_LEVEL` names
+  `def2-ECP` explicitly (the threshold is rubidium, Z = 37, which `needs_ecp` reports). The
+  Mulliken spin populations are parsed from the fourth column of the open-shell charge block into
+  `prop:spin`, `prop:spin_anion` and `prop:spin_cation`, with `spin_total*` beside them. And
+  `cdft.py` reads the potential cube: `orca_plot` type 43, which unlike the density and spin plots
+  asks for the saved density **by name** rather than offering one, and writes
+  `<job>.scfp.esp.cube`, whose header is identical to the density cube's, so `read_cube` and
+  `same_grid_as` needed no change. Established by experiment on the running program, not from the
+  manual.
+  **The cache was protected.** `cache_key` folds the solvent and the multiplicity in only when
+  they are given, so a gas-phase lowest-spin key is byte-identical to the one it had, and the ORCA
+  results the other benchmarks have already paid for are not thrown away. A test asserts it.
+  **The data set.** 69 substituted phenazines with a computed one-electron reduction potential
+  (`examples/phenazine/`, `examples/make_phenazine_examples.py`), −2.092 to −0.160 V against a
+  training mean error of 0.285 V, superimposed on the core to 0.08 ± 0.07 Å. Three faults in the
+  source geometries were repaired and are reported by the recipe; one molecule was dropped by name
+  and reason. The quantum stage cost **10.73 hours** for 69 × 3 single points at
+  `B3LYP D3BJ def2-SVP` with CPCM at the constants of dimethoxyethane, 0 failures.
+  **The spin populations are correct**, which is a check and not a result: they sum to
+  1.0000 ± 0.0000 as a doublet must, 34.5 ± 5.9 % of the unpaired electron sits on the two core
+  nitrogens, and on average 4 % of it leaves the core.
+  **What was measured** (`benchmarks/run_phenazine.py`,
+  `benchmarks/results/phenazine/table.md`): eight descriptions under five random folds and under
+  the three source tables held out one at a time, each choosing its ridge and field width inside
+  each fold, compared by paired bootstrap intervals over the per-molecule absolute errors. Mean
+  absolute error in volts on random folds: the electron affinity alone 0.194, nine global quantum
+  numbers 0.181, the five ordinary fields 0.158, with the Hirshfeld charge field 0.153, with the
+  Fukui fields 0.151, with the spin field 0.161, with all of them 0.151, the spin field alone
+  0.290. **Every quantum-against-ordinary interval holds zero**: Hirshfeld +0.006
+  [−0.016, +0.028], Fukui +0.007 [−0.012, +0.029], all together +0.007 [−0.015, +0.031], spin
+  −0.003 [−0.008, +0.002]. With a source table held out, nothing separates at all and every model
+  sits near 0.23 V against a mean of 0.285.
+  **Why, measured rather than argued.** The kernel is a normalised overlap, so what matters is how
+  much a field varies across the series. Through the spin field alone two molecules of this series
+  are **0.910 ± 0.127** alike, and through f⁺ **0.953 ± 0.032**, against 0.315 for the
+  electrostatic field, 0.344 for the Hirshfeld charge field and 0.308 for the dual descriptor. The
+  added electron always goes to the same place, so the field that says where it went is nearly a
+  constant and cannot separate two molecules by what they share. The co-field says the same from
+  the other side: the Hirshfeld charge field carries twice the weight of anything else (+0.201
+  against +0.122) and its strongest point sits 2.87 Å from the nearest core nitrogen, among the
+  substituents.
+  **The circularity, and the control that handles it.** The target is computed and comes from the
+  same kind of calculation as the spin field, so a good score would not have been evidence about
+  an experiment. The electron affinity alone — one number, no geometry, correlated +0.77 with the
+  target — is what separates "the field predicts the potential" from "the field recovers the
+  global number". It is a strict control and no field beats it with an interval excluding zero
+  (the best, all the quantum fields together, gains +0.043 [−0.003, +0.090]).
+  **What this result is worth.** It names the series the spin field is *for*: one whose members
+  reduce at **different places** — competing redox centres, or an electron that moves between the
+  ring and a substituent — rather than one fixed core decorated differently. A phenazine series is
+  the opposite case. The field was cheap once the quantum stage could produce it, and a negative
+  result with a measured explanation tells the next person which series not to try.
+  **Not done:** the potential cube is read but not measured against the CHELPG field, which the
+  item's own text says should stay the first choice; no dialog in the application for the solvent
+  or the spin state (the ORCA dialog has neither); the `prop:spin` field of an open-shell *parent*
+  is implemented and tested but never exercised on a real radical series; and no quinone series,
+  which is the other data set the item names and the one where the two redox centres differ.
 * **EC2. Planar alignment.** Built 27 October 2026: `cmfqsar/planealign.py` (flat, flat-up,
   upright and auto poses, the refinement in the plane or with tilt, the in-plane and height
   RMSDs), `cmf align --by plane`, `tests/test_planealign.py`, `benchmarks/run_fe110.py` with
@@ -3606,7 +3673,9 @@ for anything molecular.
 
 **Order.** EC2 was first and is done: it gives the surface frame and the co-field in it, and
 it found that the relaxed frames carry the relaxation's outcome, which changes what the Fe(110)
-numbers mean. EC1 next, days on modules already in the repository. EC4 after that, since EC3, EC5,
+numbers mean. ~~EC1~~ **done 5 November 2026: the quantum stage now has the oxidation state, the
+spin state and the solvent, and the spin field it was built for gains nothing on a phenazine
+series, because the added electron goes to the same place in every member.** EC4 after that, since EC3, EC5,
 EC8 and EC9 are empty without a catalyst series that loads. EC6 after M1, ~~EC7~~ **done
 4 November 2026, and its gate is passed**, EC8 after M5, EC9 and EC10 last. The EC2 result also says what EC6 must do differently: a slab as
 the receptor has to decide the face and the tilt by complementarity, since no rule and no

@@ -2,6 +2,26 @@
  "commit": "85e58f3c360584614350b1e6553f64288d07c01e",
  "created": "2026-11-01T18:21:50",
  "data": {
+  "benchmarks/results/phenazine/cofield.json": {
+   "bytes": 2496,
+   "sha256": "46a652507d23d5fe63263dcef7bb5b577ea6966ed5c5cf27514004504e9fb2aa"
+  },
+  "benchmarks/results/phenazine/data.json": {
+   "bytes": 1914,
+   "sha256": "04bb4290da41063428f80ce644ff6a6c352951648c9ff28db0fcd04062f76daa"
+  },
+  "benchmarks/results/phenazine/gate.json": {
+   "bytes": 47797,
+   "sha256": "f028b6d556a50b82f0c5d02365a88aef201f1e226b31c5404f76d9ed9aa2aad2"
+  },
+  "benchmarks/results/phenazine/table.md": {
+   "bytes": 3975,
+   "sha256": "09ab77d1d25fcd4179f26f290e8dc902a94a6f8318b79f33a1207d3243aeb0a8"
+  },
+  "benchmarks/run_phenazine.py": {
+   "bytes": 31164,
+   "sha256": "a1315109cec5d083ce5f3c519d20af79b4b2db6ac98796416778166d7041d744"
+  },
   "examples/_matched_decoys.py": {
    "bytes": 4852,
    "sha256": "67c63a74438641491be51421bf8a591796c9724dc6c62b7d53cda25acdc3f63f"
@@ -1090,6 +1110,10 @@
    "bytes": 10432,
    "sha256": "0cc9df0c21689d5d102d05994ba1cb305a309cd7579d98e1d02e98e85239e250"
   },
+  "examples/make_phenazine_examples.py": {
+   "bytes": 21955,
+   "sha256": "1a3f5ecb4a71595b6a05cb3e2af9d229de4918dad3d981196ac7f2b639de0bd5"
+  },
   "examples/make_pocket_examples.py": {
    "bytes": 6800,
    "sha256": "341adcd6f02b9c88a731d87a83f1fe65ba3a1601f90900d9391a113aaf52038e"
@@ -1409,6 +1433,14 @@
   "examples/orca_atom_properties.py": {
    "bytes": 7094,
    "sha256": "b354a9f278bcf2ff08fc2f888ebe69b25c7767504514fa45cad9097878eaaecb"
+  },
+  "examples/phenazine/phenazine.sdf": {
+   "bytes": 220972,
+   "sha256": "28e87c6779f5379bf7d161bafbf66e6e5d2d74e7405e48fe2cdfdf39fd1bff3c"
+  },
+  "examples/phenazine/phenazine_qm.sdf": {
+   "bytes": 1160957,
+   "sha256": "bf937590eb1d580b71a5c8a91c042623ccf45d3854093f2a0feddc4456095e66"
   },
   "examples/pockets/README.md": {
    "bytes": 1789,
