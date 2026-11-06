@@ -3400,10 +3400,39 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   unnecessary for the gate but which remains the series the conductivity literature argues
   about.
 
+* **M15. What the cosine normalisation of the invariant kernel costs** (added 6 November 2026, out
+  of what BT7's external check measured). `cmfqsar.invariant.autocorrelation_kernel` rescales the
+  channels and then divides every feature row by its own length, so a kernel entry is the cosine
+  of the angle between two rows and the length of a row never reaches the model. Every kernel
+  built on that function inherits this: the local environment kernel, the count kernel, the site
+  profiles of M5, the structure factors of M6. The external check of item BT7 measured what it
+  costs on one task. Fitting a forest on exactly the rows the kernel is built from gives q2 +0.758
+  on the published hop barriers; handing the same forest the raw rows, so that it can also see how
+  large the features are, gives +0.844 and takes the mean absolute error from 0.488 to 0.374 eV.
+  The length carried about a third of what the fitting method and the length together added. The
+  same mechanism is already recorded as a caution for particles further down this plan -- the
+  per-atom normalisation removes the particle size, so size must enter as a separate descriptor
+  (NT3) -- which is this question in another setting.
+  **What the item is.** Measure, on the benchmarks that already exist rather than on new data,
+  what the row length is worth where that kernel is used: the defect series of M14, the site
+  profiles of M5, the hop environments of BT7, one molecular set. The row length is one number per
+  sample, so the cheapest form is the kernel as it stands plus that number as an extra channel, or
+  the kernel without the division where the samples are comparable in size (`normalize=False` is
+  already allowed for the defect differences of M14). Rule 1 and rule 4 decide it as usual, and
+  rule 6 means the answer arrives as a table.
+  **Why it is not simply switched off.** The normalisation is what makes the kernel comparable
+  between samples of different sizes, which is why it is there; a molecular set whose members
+  differ in atom count is the case it was written for. So the question is not whether to divide but
+  **when**, and the answer has to be measured per kind of data, not decided once. Until it is
+  measured, nothing changes: every stored table in this repository was produced with the division
+  in place.
+
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
 by those three. M9 after M6 has reported; ~~M10~~ and ~~M11~~ **done 2 November 2026**, and what they now need is data and not more code -- a set of chiral crystals with a measured property for M10, and a design space whose candidates are not already computed for M11; ~~M12~~ **done 1 November 2026**, and what it now needs is a measured data set and not more code. M14 is the data M4 turned out to need, and
-nothing else in this part waits for it.
+nothing else in this part waits for it. M15 came out of item BT7's external check on 6 November
+2026 and needs no new data: it is a measurement on the benchmarks that already exist, and it
+touches every kernel this part builds, so it comes before any further channel is added.
 
 ### Nanotechnology: the extensions a particle, a tube, a sheet and a coated surface ask for (26 October 2026)
 
@@ -4607,15 +4636,40 @@ values and a computed oxidation potential is a descriptor, not a target.
   that marks the hop midpoint with a dummy atom) and +0.94 at 0.26 eV (a gradient-boosted forest
   on Voronoi features of the hop). Three readings. **The ordering inside this program holds**:
   the field kernels are ahead of the count reference by +0.132 [+0.056, +0.209], so rule 1 is met
-  on a chemistry the program was not built on. **The distance to the published models is large
-  and is not the size of the training set**: between 200 and 393 training structures the model
-  gains +0.028 in q2 for every doubling, and the 4.5 doublings up to the 8,945 training
-  structures of the collection carry it to about +0.71 at that rate, short of +0.95. **And the
-  two findings of this item hold on the new set as well**: the hop frame is again worth nothing
-  in accuracy over the rotation-invariant kernel (-0.020 [-0.073, +0.039], as it was
-  +0.005 [-0.060, +0.071] on the public set), and the site-resolved descriptor falls from +0.446
-  on ternary lithium oxides to +0.114 here, so describing two end sites carries a barrier only
-  inside one chemistry.
+  on a chemistry the program was not built on. **The distance to the published models is not the
+  size of the training set**: between 200 and 393 training structures the model gains +0.028 in q2
+  for every doubling, and the 4.5 doublings up to the 8,945 training structures of the collection
+  carry it to about +0.71 at that rate, short of +0.95. **And the two findings of this item hold
+  on the new set as well**: the hop frame is again worth nothing in accuracy over the
+  rotation-invariant kernel (-0.020 [-0.073, +0.039], as it was +0.005 [-0.060, +0.071] on the
+  public set), and the site-resolved descriptor falls from +0.446 on ternary lithium oxides to
+  +0.114 here, so describing two end sites carries a barrier only inside one chemistry.
+
+  **What the distance is made of, same day.** The two published models closest to the graph
+  network are a random forest and a gradient-boosted forest on hand-made features, not kernel
+  models, so the comparison above mixes two questions: is the **description** of a hop behind, or
+  is fitting it with a **kernel**? `run_litraj.py` now answers them separately by fitting both
+  forests on this program's own descriptions, over the same hops and the same folds, and the
+  answer revises the reading above. Both kernels of this program divide every feature row by its
+  own length, so a forest given the raw rows would be given more than the kernel ever had; the
+  arms are therefore measured twice, on the kernel's own rows and on the raw rows. **On exactly
+  the kernel's rows the fitting method is worth a large part of the distance**: the boosted forest
+  reaches q2 +0.758 against the kernel's +0.600 on the identical description, and the mean
+  absolute error falls from 0.726 to 0.488 eV (+0.158 [+0.110, +0.212]; the random forest +0.742,
+  +0.142 [+0.091, +0.198]). The comparison favours the kernel, which is given the ridge that
+  maximises the same out-of-fold q2 it reports while the forests search for nothing. So **the
+  description of a hop was not what was behind the published models; fitting it with a kernel
+  was.** **And the cosine normalisation throws away something that carries the barrier**: adding
+  the raw row lengths back gains a further +0.086 and takes the mean absolute error to 0.374 eV
+  (q2 +0.844, the random forest), which the kernel cannot use by construction. That is a property
+  of `cmfqsar.invariant.autocorrelation_kernel`, not of the hop models, so it is worth testing
+  wherever that kernel is used; it is now open as item M15. Set beside the published numbers,
+  this program's description of a hop fitted with a forest reaches 0.374 eV on 1801 hops against
+  0.21 eV (graph network) and 0.26 eV (published forest) on 96,849 hops. The
+  forest also learns faster: +0.053 in q2 per doubling over the last step of its curve against
+  +0.028 for the overlap kernel. The run costs 46.5 minutes, of which the overlap kernel is 30.
+  Nothing here changes a default: the field kernels are what the co-field is read from, and the
+  co-field is the reason the frame model exists.
   **Not done:** no model fitted on DFT barriers. When this item was written the barriers it names
   were scattered over papers and not in one table; the collection above now supplies one,
   `nebDFT2k`, with 1681 nudged-elastic-band barriers of 876 structures under the same licence,
@@ -4645,7 +4699,8 @@ by the
 local route, 30 October 2026, and did not
 need M5; its gate was applied against an M5-style model of the same hops on 6 November 2026 and
 is passed, and the same day the models were measured against published numbers on a public
-benchmark of the same labels), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte do beat BT4's
+benchmark of the same labels, which found that the kernel and not the description is what the
+distance to those numbers is mostly made of and opened item M15), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte do beat BT4's
 single optimised complex on the activation energy, by 0.32 to 0.55 kJ/mol after item D11's charge
 correction, clear of zero in three readings of four, and do not beat it on
 the conductivity; the cation frame costs an ensemble 0.7 to 1.0 kJ/mol, far more than it costs one

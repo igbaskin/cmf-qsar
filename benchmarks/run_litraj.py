@@ -50,8 +50,8 @@ sys.path.insert(0, HERE)
 from cmfqsar.hops import (Hop, HopModel, HopSet, bottleneck,  # noqa: E402
                           cross_validate_hop_model, framed_environments, hop_count_features,
                           hop_types)
-from cmfqsar.localenv import (LAMS, choose_lam, count_kernel, local_features,  # noqa: E402
-                              local_kernel, paired_interval)
+from cmfqsar.localenv import (LAMS, LOCAL_SPEC, choose_lam, count_kernel,  # noqa: E402
+                              local_features, local_kernel, paired_interval)
 from cmfqsar.sites import site_kernel  # noqa: E402
 
 from run_hops import _entry, fieldset_for, site_pair_features  # noqa: E402
@@ -80,6 +80,16 @@ PUBLISHED = (("M3GNet (graph network, dummy atom at the hop midpoint)", 0.21, 0.
 #: numbers are measured on
 PUBLISHED_TRAIN = (96849, 8945)
 PUBLISHED_TEST = (13167, 1172)
+#: trees in the random forest of the forest arms, which ask whether the way a description is
+#: fitted explains the distance to the published models
+FOREST_TREES = 300
+#: the two fitting methods those arms use, as (name in the table, key in the result file)
+FORESTS = (("random forest", "rf"), ("boosted forest", "gb"))
+#: how the rows a forest arm is given are scaled.  Both kernels here divide every row by its own
+#: length, so the kernel never sees how large an environment's features are, only their
+#: direction; a forest given the raw rows sees both.  "as the kernel" is therefore the arm that
+#: compares the fitting methods on one description, and "raw" asks what the row length is worth.
+FOREST_ROWS = ("as the kernel", "raw")
 
 
 # ------------------------------------------------------------------- one run and what it wrote
@@ -175,6 +185,71 @@ def load_prepared(path: str = PREPARED, max_structures: int = 0) -> tuple:
     return HopSet(structures, names, hops, "Li"), doc
 
 
+# --------------------------------------------------------------- the fitting method on its own
+
+
+def kernel_rows(X: np.ndarray, n_bins: int = 1, scale: Optional[np.ndarray] = None) -> np.ndarray:
+    """The rows the cosine-normalised kernel of this program is really built from.
+
+    :func:`cmfqsar.invariant.autocorrelation_kernel` rescales the channels and then divides every
+    row by its own length, so a kernel entry is the cosine of the angle between two rows and the
+    length of a row is divided out.  A forest given the raw rows would therefore be given more
+    than the kernel has, and the comparison would not be about the fitting method alone.  This
+    returns the rows after both steps, so that a forest can be given exactly what the kernel got.
+    Trees do not care about a rescaling of a single column, so only the row lengths matter here.
+    """
+    from cmfqsar.invariant import channel_scale
+    A = np.asarray(X, float)
+    s = channel_scale(A, n_bins) if scale is None else np.asarray(scale, float)
+    A = A * s
+    d = np.sqrt(np.maximum(np.sum(A * A, axis=1), 1e-300))
+    return A / d[:, None]
+
+
+def forest_result(X: np.ndarray, targets, folds: int, seed: int, name: str,
+                  kind: str = "random forest"):
+    """Out-of-fold predictions of a forest, on the folds the kernel models are given.
+
+    The two published models that come closest to the graph network are a random forest and a
+    gradient-boosted forest on hand-made features of the hop, not kernel models.  So the table
+    above mixes two questions: whether this program's **description** of a hop is behind the
+    published one, or whether fitting a description with a **kernel** is.  Fitting a forest on
+    this program's own descriptions, over the same hops and the same folds, separates them.  If
+    the forest lands near the kernel, the fitting method is not what the distance is made of.
+
+    The random forest is the same kind of model the paper reports.  The boosted forest is the
+    histogram boosting of scikit-learn, which stands in for the paper's XGBoost: it is a
+    gradient-boosted forest of the same family, and it needs nothing this program does not
+    already install.  A forest has no ridge, so these rows report none; nothing is chosen on a
+    test fold.
+    """
+    from sklearn.ensemble import HistGradientBoostingRegressor, RandomForestRegressor
+
+    from cmfqsar.localenv import LocalResult, r2_score, rmse
+    X = np.asarray(X, float)
+    y = np.asarray(targets.y, float)
+    parts = targets.folds(folds, seed)
+    if not parts:
+        raise ValueError("there is nothing to cross-validate: no hop carries the barrier")
+    pred = np.full(len(y), np.nan)
+    for te in parts:
+        tr = np.setdiff1d(np.arange(len(y)), te)
+        if len(tr) < 2:
+            continue
+        if kind == "random forest":
+            m = RandomForestRegressor(n_estimators=FOREST_TREES, n_jobs=-1, random_state=seed)
+        else:
+            m = HistGradientBoostingRegressor(random_state=seed)
+        m.fit(X[tr], y[tr])
+        pred[te] = m.predict(X[te])
+    ok = np.isfinite(pred)
+    return LocalResult(name=name, predicted=pred, q2=r2_score(y[ok], pred[ok]),
+                       error=rmse(y[ok], pred[ok]),
+                       mae=float(np.mean(np.abs(y[ok] - pred[ok]))), lam=float("nan"),
+                       n_samples=int(ok.sum()), n_molecules=targets.n_measured_molecules,
+                       folds=len(parts), molecule=np.asarray(targets.molecule, int))
+
+
 # ----------------------------------------------------------------------------- the run
 
 
@@ -209,7 +284,8 @@ def run(args, log) -> dict:
         h = hs.hops[int(r)]
         h.bottleneck, h.bottleneck_at, h.bottleneck_atoms = bottleneck(e, h.vector)
     types = hop_types(envs0, min_atoms=20)
-    ref = choose_lam(count_kernel(hop_count_features(envs0, types)), t, folds=args.folds,
+    counts_features = hop_count_features(envs0, types)
+    ref = choose_lam(count_kernel(counts_features), t, folds=args.folds,
                      seed=args.seed, name="counts about the midpoint")
     log("  " + ref.summary())
     X = np.array([[hs.hops[r].length, hs.hops[r].bottleneck] for r in t.atom])
@@ -226,12 +302,22 @@ def run(args, log) -> dict:
                       _entry(sites, extra={"key": "sites", "site_r_max": float(args.site_r),
                                            "channels": int(sp.shape[1])})]
     results = {"counts": ref, "geometry": geo, "sites": sites}
+    # the feature matrix behind every kernel above, kept for the forest arms further down, both
+    # as it stands and as the kernel sees it.  The geometry kernel is a plain product of
+    # standardised columns and divides out no row length, so its two forms are the same matrix.
+    features = {"counts": counts_features, "geometry": X, "sites": sp}
+    kernel_features = {"counts": kernel_rows(counts_features,
+                                             scale=np.ones(counts_features.shape[1])),
+                       "geometry": X}
     # the two hop kernels of item BT7
     best = None
     for rho in args.rho:
         envs = envs0 if rho == args.rho[0] else hs.environments(crystals, rows=t.atom, rho=rho,
                                                                r_max=args.r_max)
-        inv = choose_lam(local_kernel(local_features(envs)), t, folds=args.folds, seed=args.seed,
+        local = local_features(envs)
+        features[f"invariant {rho}"] = local
+        kernel_features[f"invariant {rho}"] = kernel_rows(local, n_bins=LOCAL_SPEC.n_bins)
+        inv = choose_lam(local_kernel(local), t, folds=args.folds, seed=args.seed,
                          name=f"invariant local, rho {rho:g}")
         log("  " + inv.summary())
         fr = framed_environments(hs, crystals, rows=t.atom, rho=rho, r_max=args.r_max)
@@ -259,6 +345,36 @@ def run(args, log) -> dict:
             best = (cyl, rho, model)
     cyl, rho, model = best
     out["best_rho"] = rho
+    # the fitting method on its own: the same descriptions, fitted the way the published models
+    # are fitted.  The overlap kernel has no feature matrix of its own -- it is a kernel between
+    # two fields, not a list of numbers per hop -- so it has no forest arm.
+    out["forests"] = []
+    for key in ("counts", "geometry", f"invariant {rho}"):
+        forms = [("as the kernel", kernel_features[key])]
+        if features[key] is not kernel_features[key]:
+            forms.append(("raw", features[key]))     # the geometry kernel has only one form
+        for rows, M in forms:
+            for kind, short in FORESTS:
+                fr_name = f"{results[key].name}, {rows}, {kind}"
+                r = forest_result(M, t, args.folds, args.seed, fr_name, kind)
+                log("  " + r.summary())
+                fkey = f"{short} {key} {rows}"
+                out["forests"].append(_entry(r, extra={
+                    "key": fkey, "on": key, "method": kind, "rows": rows,
+                    "columns": int(M.shape[1]), "lam": None}))
+                results[fkey] = r
+                d, lo, hi = paired_interval(r, results[key], t, runs=args.bootstrap,
+                                            seed=args.seed)
+                out["pairs"].append({"a": fkey, "b": key, "diff": d, "low": lo, "high": hi})
+                log(f"    against the same description fitted with a kernel {d:+.3f} "
+                    f"[{lo:+.3f}, {hi:+.3f}]")
+    best_forest = max(out["forests"], key=lambda e: e["q2"])
+    d, lo, hi = paired_interval(results[best_forest["key"]], cyl, t, runs=args.bootstrap,
+                                seed=args.seed)
+    out["pairs"].append({"a": best_forest["key"], "b": f"overlap {rho}", "diff": d, "low": lo,
+                         "high": hi})
+    log(f"  the best forest against the best model of item BT7 {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
+    out["best_forest"] = best_forest["key"]
     # the learning curve of the best model, on the kernel already in hand: how much of the
     # distance to the published models is the size of the training set
     curve = []
@@ -283,11 +399,54 @@ def run(args, log) -> dict:
     curve.append({"structures": int(len(which)), "q2": cyl.q2, "spread": 0.0,
                   "rmse": cyl.error})
     out["learning_curve"] = curve
+    # the same curve for the best forest arm.  The draws are started from the same seed as the
+    # curve above, so the two curves are measured on the same subsets of structures and their
+    # rates can be set beside each other.
+    fkey = best_forest["key"]
+    fmat = (kernel_features if best_forest["rows"] == "as the kernel" else
+            features)[best_forest["on"]]
+    fcurve, rng = [], np.random.RandomState(args.seed)
+    for n_struct in CURVE:
+        if n_struct >= len(which):
+            break
+        q2s, errs = [], []
+        for rep in range(3):
+            drawn = set(rng.choice(which, n_struct, replace=False).tolist())
+            rows = np.array([i for i in range(len(t)) if int(t.molecule[i]) in drawn])
+            r = forest_result(fmat[rows], t.subset(rows), min(args.folds, n_struct),
+                              args.seed + rep, "subset", best_forest["method"])
+            q2s.append(r.q2)
+            errs.append(r.error)
+        fcurve.append({"structures": n_struct, "q2": float(np.mean(q2s)),
+                       "spread": float(np.std(q2s)), "rmse": float(np.mean(errs))})
+        log(f"    forest learning curve: {n_struct} structures, q2 {np.mean(q2s):+.3f} "
+            f"+- {np.std(q2s):.3f}, error {np.mean(errs):.3f} eV")
+    fcurve.append({"structures": int(len(which)), "q2": results[fkey].q2, "spread": 0.0,
+                   "rmse": results[fkey].error})
+    out["forest_curve"] = fcurve
     out["seconds"] = time.time() - t0
     return out
 
 
 # ----------------------------------------------------------------------------- the table
+
+
+def projection(curve: List[dict]) -> Optional[tuple]:
+    """(gain per doubling, doublings left, where that rate would arrive) for a learning curve.
+
+    The rate is read off the last step of the curve, and the doublings are counted from the end
+    of the curve up to the number of structures the published models are fitted on.  q2 cannot
+    pass 1, so a rate that would carry the model past it says only that the rate cannot hold that
+    far; the caller reports that case rather than printing an impossible number.
+    """
+    if len(curve) < 2:
+        return None
+    a, b = curve[-2], curve[-1]
+    if b["structures"] <= a["structures"] or b["structures"] >= PUBLISHED_TRAIN[1]:
+        return None
+    per = (b["q2"] - a["q2"]) / float(np.log2(b["structures"] / a["structures"]))
+    steps = float(np.log2(PUBLISHED_TRAIN[1] / b["structures"]))
+    return per, steps, b["q2"] + per * steps
 
 
 def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
@@ -380,19 +539,138 @@ def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
       "the one difference the protocol does not remove, so the learning curve is what says how "
       "much of the distance the size of the training set explains.")
     w("")
-    if len(curve) >= 2:
+    proj = projection(curve)
+    if proj:
+        per, steps, arrives = proj
         a, b = curve[-2], curve[-1]
-        steps = float(np.log2(PUBLISHED_TRAIN[1] / b["structures"]))
-        per = (b["q2"] - a["q2"]) / float(np.log2(b["structures"] / a["structures"]))
         w(f"Between {a['structures']} and {b['structures']} training structures the overlap model "
           f"gains {b['q2'] - a['q2']:+.3f} in q2, which is {per:+.3f} for every doubling of the "
           f"training set. The training part of the collection holds {PUBLISHED_TRAIN[1]} "
-          f"structures, {steps:.1f} doublings beyond this sample, so that rate carries the model "
-          f"to about q2 {b['q2'] + per * steps:+.2f}, short of the {PUBLISHED[0][3]:+.2f} the "
-          f"graph network reaches. A learning curve is not a law and may bend either way, but at "
-          f"the rate measured here the size of the training set does not account for the "
-          f"distance.")
+          f"structures, {steps:.1f} doublings beyond this sample.")
+        if arrives >= 0.99:
+            w(f"That rate would carry the model past q2 1.00 long before it got there, so the "
+              f"rate cannot hold over that distance and this curve says nothing about where the "
+              f"model would arrive. It is too short to read; the stored run draws it over "
+              f"{CURVE[-1]} structures.")
+        else:
+            w(f"That rate carries the model to about q2 {arrives:+.2f}, short of the "
+              f"{PUBLISHED[0][3]:+.2f} the graph network reaches. A learning curve is not a law "
+              f"and may bend either way, but at the rate measured here the size of the training "
+              f"set does not account for the distance.")
         w("")
+    forests = pub.get("forests") or []
+    if forests:
+        w("## The same descriptions, fitted the way the published models are fitted")
+        w("")
+        w("The two published models that come closest to the graph network are a random forest "
+          "and a gradient-boosted forest on hand-made features of the hop, not kernel models. "
+          "The table at the top therefore mixes two questions: whether this program's "
+          "**description** of a hop is behind, or whether fitting a description with a **kernel** "
+          "is. The rows below fit a forest on this program's own descriptions, over the same "
+          "hops and the same folds, which separates the two. The random forest is the same kind "
+          "of model the paper reports; the boosted forest is the histogram boosting of "
+          "scikit-learn, standing in for the paper's XGBoost.")
+        w("")
+        w("The comparison favours the kernel. Every kernel row above is given the ridge that "
+          "maximises the same out-of-fold q2 the row reports, so its figure is optimistic by "
+          "whatever that search is worth; the forests are fitted at fixed settings and search "
+          "for nothing.")
+        w("")
+        w("Both kernels here divide every feature row by its own length, so a kernel entry is "
+          "the cosine of the angle between two rows and the length of a row is divided out. A "
+          "forest handed the raw rows would be handed more than the kernel ever had, and the "
+          "comparison would no longer be about the fitting method. The **rows** column says "
+          "which was given: *as the kernel* is the arm that compares the two fitting methods on "
+          "one description, and *raw* asks separately what the row length is worth. The geometry "
+          "kernel divides out no row length, so it has only one form.")
+        w("")
+        w("| description | rows | columns | fitted with | q2 | error (eV) "
+          "| mean absolute error (eV) | against the same description fitted with a kernel |")
+        w("| --- | --- | ---: | --- | ---: | ---: | ---: | ---: |")
+        for m in forests:
+            p = pairs.get((m["key"], m["on"]))
+            cell = ("--" if p is None else
+                    f"{p['diff']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}]")
+            name = m["name"].split(",")[0]
+            w(f"| {name} | {m.get('rows', '--')} | {m.get('columns', 0)} | {m['method']} | "
+              f"{m['q2']:+.3f} | {m['rmse']:.3f} | {m['mae']:.3f} | {cell} |")
+        w("")
+        p = pairs.get((pub.get("best_forest"), f"overlap {pub['best_rho']}"))
+        if p:
+            w(f"The best of these forests against the best model of item BT7, the overlap in the "
+              f"hop frame: {p['diff']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}].")
+            w("")
+        # what the rows say, from the numbers themselves: the local description carries the
+        # finding, because it is the one the kernels of this program are built on
+        key = f"invariant {pub['best_rho']}"
+        kernel = next((m for m in pub["models"] if m.get("key") == key), None)
+        arms = [f for f in forests if f["on"] == key]
+        same = [f for f in arms if f.get("rows") == "as the kernel"]
+        raw = [f for f in arms if f.get("rows") == "raw"]
+        if kernel and same and raw:
+            a = max(same, key=lambda f: f["q2"])
+            b = max(raw, key=lambda f: f["q2"])
+            pa = pairs.get((a["key"], key))
+            w("**What these rows say.** The local description is the one the field kernels of "
+              "this program are built on, and it carries two findings, which the rows column "
+              "keeps apart.")
+            w("")
+            w(f"*The fitting method is worth a large part of the distance.* On exactly the rows "
+              f"the kernel is built from -- the same description, nothing added -- the "
+              f"{a['method']} reaches q2 {a['q2']:+.3f} where the kernel reaches "
+              f"{kernel['q2']:+.3f}, and the mean absolute error falls from {kernel['mae']:.3f} "
+              f"to {a['mae']:.3f} eV"
+              + ("" if pa is None else
+                 f" ({pa['diff']:+.3f} [{pa['low']:+.3f}, {pa['high']:+.3f}])")
+              + ". So this program's description of a hop was not what was behind the published "
+                "models on this set; fitting it with a kernel was.")
+            w("")
+            w(f"*The cosine normalisation throws away something that carries the barrier.* "
+              f"Handing the forest the raw rows as well, so that it can see how large an "
+              f"environment's features are and not only their direction, adds a further "
+              f"{b['q2'] - a['q2']:+.3f} in q2 and takes the mean absolute error down to "
+              f"{b['mae']:.3f} eV. The kernel cannot use that length by construction: it divides "
+              f"every row by it. This is a property of the kernel of this program, not of the "
+              f"hop models, so it is worth testing wherever that kernel is used.")
+            w("")
+            w(f"Set beside the published models, this program's description of a hop fitted with "
+              f"a forest reaches a mean absolute error of {b['mae']:.3f} eV on "
+              f"{pub['n_samples']} hops, against {PUBLISHED[0][1]:.2f} eV for the graph network "
+              f"and {PUBLISHED[1][1]:.2f} eV for the published forest, both fitted on "
+              f"{PUBLISHED_TRAIN[0]} hops.")
+            w("")
+    fcurve = pub.get("forest_curve") or []
+    if fcurve and curve:
+        shown = next((f for f in forests if f["key"] == pub.get("best_forest")), None)
+        which = "the best forest arm"
+        if shown:
+            which = (f"{shown['name'].split(',')[0]}, rows {shown.get('rows', '--')}, "
+                     f"{shown['method']}")
+        w("Both model classes learn at a rate of their own, and the rate is what the distance to "
+          "the published training set has to be crossed at. The two curves below are measured on "
+          "the same drawn subsets of structures:")
+        w("")
+        w(f"| training structures | q2, overlap in the hop frame | q2, {which} |")
+        w("| ---: | ---: | ---: |")
+        by_n = {c["structures"]: c for c in fcurve}
+        for c in curve:
+            f = by_n.get(c["structures"])
+            w(f"| {c['structures']} | {c['q2']:+.3f} | "
+              + ("--" if f is None else f"{f['q2']:+.3f}") + " |")
+        w("")
+        fproj = projection(fcurve)
+        if fproj:
+            per, steps, arrives = fproj
+            sentence = (f"The forest gains {per:+.3f} in q2 for every doubling of the training "
+                        f"set over the last step of its curve")
+            if proj:
+                sentence += f", against {proj[0]:+.3f} for the overlap model"
+            if arrives < 0.99:
+                sentence += (f". At that rate it reaches about q2 {arrives:+.2f} at the "
+                             f"{PUBLISHED_TRAIN[1]} structures the published models are fitted "
+                             f"on")
+            w(sentence + ".")
+            w("")
     text = "\n".join(lines)
     with open(os.path.join(results_dir, f"table{tag}.md"), "w", encoding="utf-8",
               newline="\n") as fh:

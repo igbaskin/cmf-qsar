@@ -2612,9 +2612,21 @@ forty times as many hops. The ordering inside this program holds on a chemistry 
 on (the field kernels are ahead of the counts by +0.132 [+0.056, +0.209]), the distance to the
 published model is not explained by the size of the training set (+0.028 in q2 for every doubling
 of it, and 4.5 doublings separate this sample from their 8,945 structures), and the hop frame is
-again worth nothing in accuracy over the invariant kernel
-(-0.020 [-0.073, +0.039]). On migration the field model offers its cost and its readable
-co-field, not the lowest error.
+again worth nothing in accuracy over the invariant kernel (-0.020 [-0.073, +0.039]).
+
+**What that distance is made of.** The published models closest to the graph network are forests
+on hand-made features, not kernel models, so the same run fits a forest on this program's own
+descriptions over the same hops and folds. On exactly the rows the kernel is built from -- the
+same description, nothing added -- a forest reaches q2 +0.758 and a mean absolute error of 0.488
+eV where the kernel reaches +0.600 and 0.726 eV (+0.158 [+0.110, +0.212]), and the comparison
+favours the kernel, which alone is given a ridge chosen on the same folds it reports. So the
+description of a hop was not what was behind; fitting it with a kernel ridge was. Handing the
+forest the raw rows as well, which the cosine normalisation of the kernel divides out, gains a
+further +0.086 and reaches 0.374 eV against the published 0.21 eV on fifty times as many hops.
+That normalisation is in every kernel built on `cmfqsar.invariant.autocorrelation_kernel`, so the
+plan opens it as item M15; no default changes until it is measured where that kernel is used. On
+migration the field model still offers its cost and its readable co-field rather than the lowest
+error, but the fields describe a hop better than the first table suggested.
 
 **Partial occupancy is exact and free (plan item M2).** A disordered site is a configurational
 ensemble, and for independently occupied sites its mean field is closed form: every site gets

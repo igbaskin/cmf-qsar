@@ -5,10 +5,35 @@
   hop length and bottleneck: q2 +0.179, error 1.725, mean absolute error 1.050 over 1801 atoms in 393 molecules, 10 folds, ridge 1
   the two end sites (M5), cutoff 6 A: q2 +0.114, error 1.793, mean absolute error 1.075 over 1801 atoms in 393 molecules, 10 folds, ridge 1
   invariant local, rho 0.25: q2 +0.600, error 1.204, mean absolute error 0.726 over 1801 atoms in 393 molecules, 10 folds, ridge 0.1
-  rotation-averaged overlap, rho 0.25: q2 +0.580, error 1.234, mean absolute error 0.730 over 1801 atoms in 393 molecules, 10 folds, ridge 1  (kernel 582 s, 79 atoms per environment)
+  rotation-averaged overlap, rho 0.25: q2 +0.580, error 1.234, mean absolute error 0.730 over 1801 atoms in 393 molecules, 10 folds, ridge 1  (kernel 1828 s, 79 atoms per environment)
     overlap against invariant at the same width -0.020 [-0.073, +0.039]
+  counts about the midpoint, as the kernel, random forest: q2 +0.559, error 1.264, mean absolute error 0.643 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel +0.091 [+0.024, +0.164]
+  counts about the midpoint, as the kernel, boosted forest: q2 +0.454, error 1.408, mean absolute error 0.797 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel -0.015 [-0.090, +0.079]
+  counts about the midpoint, raw, random forest: q2 +0.561, error 1.262, mean absolute error 0.626 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel +0.093 [+0.029, +0.166]
+  counts about the midpoint, raw, boosted forest: q2 +0.440, error 1.425, mean absolute error 0.809 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel -0.028 [-0.107, +0.066]
+  hop length and bottleneck, as the kernel, random forest: q2 +0.186, error 1.719, mean absolute error 0.916 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel +0.007 [-0.116, +0.103]
+  hop length and bottleneck, as the kernel, boosted forest: q2 +0.202, error 1.702, mean absolute error 0.916 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel +0.023 [-0.094, +0.119]
+  invariant local, rho 0.25, as the kernel, random forest: q2 +0.742, error 0.967, mean absolute error 0.481 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel +0.142 [+0.091, +0.198]
+  invariant local, rho 0.25, as the kernel, boosted forest: q2 +0.758, error 0.937, mean absolute error 0.488 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel +0.158 [+0.110, +0.212]
+  invariant local, rho 0.25, raw, random forest: q2 +0.844, error 0.753, mean absolute error 0.374 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel +0.243 [+0.188, +0.305]
+  invariant local, rho 0.25, raw, boosted forest: q2 +0.840, error 0.761, mean absolute error 0.379 over 1801 atoms in 393 molecules, 10 folds, ridge nan
+    against the same description fitted with a kernel +0.240 [+0.183, +0.305]
+  the best forest against the best model of item BT7 +0.263 [+0.212, +0.319]
     learning curve: 25 structures, q2 +0.284 +- 0.125, error 1.159 eV
     learning curve: 50 structures, q2 +0.220 +- 0.231, error 1.186 eV
     learning curve: 100 structures, q2 +0.435 +- 0.021, error 1.425 eV
     learning curve: 200 structures, q2 +0.553 +- 0.007, error 1.350 eV
-done in 10.5 minutes
+    forest learning curve: 25 structures, q2 +0.593 +- 0.149, error 0.851 eV
+    forest learning curve: 50 structures, q2 +0.486 +- 0.045, error 0.970 eV
+    forest learning curve: 100 structures, q2 +0.745 +- 0.020, error 0.959 eV
+    forest learning curve: 200 structures, q2 +0.792 +- 0.020, error 0.918 eV
+done in 46.5 minutes

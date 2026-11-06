@@ -213,9 +213,239 @@
    "diff": -0.019990845085650633,
    "low": -0.07349254660350531,
    "high": 0.03894573373377716
+  },
+  {
+   "a": "rf counts as the kernel",
+   "b": "counts",
+   "diff": 0.0908731195935969,
+   "low": 0.024399680174106562,
+   "high": 0.16396610639414913
+  },
+  {
+   "a": "gb counts as the kernel",
+   "b": "counts",
+   "diff": -0.014871681043444052,
+   "low": -0.09045308786218328,
+   "high": 0.07924227257854191
+  },
+  {
+   "a": "rf counts raw",
+   "b": "counts",
+   "diff": 0.09281514511151046,
+   "low": 0.028713105653548288,
+   "high": 0.165798746805911
+  },
+  {
+   "a": "gb counts raw",
+   "b": "counts",
+   "diff": -0.028462024224443327,
+   "low": -0.1071361598095972,
+   "high": 0.0660510975175387
+  },
+  {
+   "a": "rf geometry as the kernel",
+   "b": "geometry",
+   "diff": 0.006557276369870246,
+   "low": -0.11617601560720346,
+   "high": 0.10302821201906247
+  },
+  {
+   "a": "gb geometry as the kernel",
+   "b": "geometry",
+   "diff": 0.02258328892324335,
+   "low": -0.09352990845820884,
+   "high": 0.11944619171426021
+  },
+  {
+   "a": "rf invariant 0.25 as the kernel",
+   "b": "invariant 0.25",
+   "diff": 0.14201209900034029,
+   "low": 0.09130584450577713,
+   "high": 0.19803371660689886
+  },
+  {
+   "a": "gb invariant 0.25 as the kernel",
+   "b": "invariant 0.25",
+   "diff": 0.1575887107222932,
+   "low": 0.10959735146803615,
+   "high": 0.21192312361254717
+  },
+  {
+   "a": "rf invariant 0.25 raw",
+   "b": "invariant 0.25",
+   "diff": 0.2433833749670249,
+   "low": 0.18807704796908997,
+   "high": 0.3046000392854656
+  },
+  {
+   "a": "gb invariant 0.25 raw",
+   "b": "invariant 0.25",
+   "diff": 0.23991624602597883,
+   "low": 0.1832806144381643,
+   "high": 0.30456706022089947
+  },
+  {
+   "a": "rf invariant 0.25 raw",
+   "b": "overlap 0.25",
+   "diff": 0.2633742200526755,
+   "low": 0.21231772560400966,
+   "high": 0.3187419094091055
   }
  ],
  "best_rho": 0.25,
+ "forests": [
+  {
+   "name": "counts about the midpoint, as the kernel, random forest",
+   "q2": 0.5592965294127306,
+   "rmse": 1.2642906781776089,
+   "mae": 0.6427699080345427,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "rf counts as the kernel",
+   "on": "counts",
+   "method": "random forest",
+   "rows": "as the kernel",
+   "columns": 399
+  },
+  {
+   "name": "counts about the midpoint, as the kernel, boosted forest",
+   "q2": 0.4535517287756896,
+   "rmse": 1.4078235593759587,
+   "mae": 0.7967975347423687,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "gb counts as the kernel",
+   "on": "counts",
+   "method": "boosted forest",
+   "rows": "as the kernel",
+   "columns": 399
+  },
+  {
+   "name": "counts about the midpoint, raw, random forest",
+   "q2": 0.5612385549306441,
+   "rmse": 1.2615019599193014,
+   "mae": 0.6258107983083949,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "rf counts raw",
+   "on": "counts",
+   "method": "random forest",
+   "rows": "raw",
+   "columns": 399
+  },
+  {
+   "name": "counts about the midpoint, raw, boosted forest",
+   "q2": 0.43996138559469034,
+   "rmse": 1.425222555079746,
+   "mae": 0.8093056628411154,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "gb counts raw",
+   "on": "counts",
+   "method": "boosted forest",
+   "rows": "raw",
+   "columns": 399
+  },
+  {
+   "name": "hop length and bottleneck, as the kernel, random forest",
+   "q2": 0.18571533344185986,
+   "rmse": 1.718548641868017,
+   "mae": 0.9161114825026268,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "rf geometry as the kernel",
+   "on": "geometry",
+   "method": "random forest",
+   "rows": "as the kernel",
+   "columns": 2
+  },
+  {
+   "name": "hop length and bottleneck, as the kernel, boosted forest",
+   "q2": 0.20174134599523297,
+   "rmse": 1.7015531456945165,
+   "mae": 0.9158555206578866,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "gb geometry as the kernel",
+   "on": "geometry",
+   "method": "boosted forest",
+   "rows": "as the kernel",
+   "columns": 2
+  },
+  {
+   "name": "invariant local, rho 0.25, as the kernel, random forest",
+   "q2": 0.742292045622851,
+   "rmse": 0.9668021606601241,
+   "mae": 0.4810383882072828,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "rf invariant 0.25 as the kernel",
+   "on": "invariant 0.25",
+   "method": "random forest",
+   "rows": "as the kernel",
+   "columns": 2601
+  },
+  {
+   "name": "invariant local, rho 0.25, as the kernel, boosted forest",
+   "q2": 0.7578686573448039,
+   "rmse": 0.9371286289773805,
+   "mae": 0.4877383564237222,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "gb invariant 0.25 as the kernel",
+   "on": "invariant 0.25",
+   "method": "boosted forest",
+   "rows": "as the kernel",
+   "columns": 2601
+  },
+  {
+   "name": "invariant local, rho 0.25, raw, random forest",
+   "q2": 0.8436633215895356,
+   "rmse": 0.7530158901268929,
+   "mae": 0.37425070744425837,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "rf invariant 0.25 raw",
+   "on": "invariant 0.25",
+   "method": "random forest",
+   "rows": "raw",
+   "columns": 2601
+  },
+  {
+   "name": "invariant local, rho 0.25, raw, boosted forest",
+   "q2": 0.8401961926484895,
+   "rmse": 0.7613200397842812,
+   "mae": 0.3789207077552418,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "gb invariant 0.25 raw",
+   "on": "invariant 0.25",
+   "method": "boosted forest",
+   "rows": "raw",
+   "columns": 2601
+  }
+ ],
+ "best_forest": "rf invariant 0.25 raw",
  "learning_curve": [
   {
    "structures": 25,
@@ -248,5 +478,37 @@
    "rmse": 1.2338115281238757
   }
  ],
- "seconds": 632.1452569961548
+ "forest_curve": [
+  {
+   "structures": 25,
+   "q2": 0.5925601037267665,
+   "spread": 0.149361406133254,
+   "rmse": 0.8511307834985442
+  },
+  {
+   "structures": 50,
+   "q2": 0.486014925889603,
+   "spread": 0.045446759351565155,
+   "rmse": 0.9700856673679313
+  },
+  {
+   "structures": 100,
+   "q2": 0.7453549111828419,
+   "spread": 0.020209372623399086,
+   "rmse": 0.9592507460928238
+  },
+  {
+   "structures": 200,
+   "q2": 0.7923715160780899,
+   "spread": 0.019646669582263392,
+   "rmse": 0.9184939495749758
+  },
+  {
+   "structures": 393,
+   "q2": 0.8436633215895356,
+   "spread": 0.0,
+   "rmse": 0.7530158901268929
+  }
+ ],
+ "seconds": 2788.5278463363647
 }

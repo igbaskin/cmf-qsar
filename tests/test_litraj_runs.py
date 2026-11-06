@@ -170,3 +170,117 @@ def test_the_prepared_sample_names_its_source_and_licence():
     assert doc["licence"] == "MIT"
     assert "npj Comput. Mater." in doc["reference"]
     assert doc["n_index_hops"] == 122421
+
+
+# ------------------------------------------------------------------ the forest arms
+
+def test_the_forest_is_given_the_same_folds_as_the_kernel():
+    """The forest arms answer what the fitting method is worth, so only the fitting may differ."""
+    import numpy as np
+
+    from cmfqsar.atomtargets import AtomTargets
+    from cmfqsar.localenv import choose_lam
+    rng = np.random.RandomState(0)
+    mol = np.repeat(np.arange(12), 3)
+    X = rng.normal(size=(len(mol), 4))
+    y = 2.0 * X[:, 0] + X[:, 1]
+    t = AtomTargets(molecule=mol, atom=np.arange(len(mol)), y=y, n_mol=12, name="barrier")
+    forest = rl.forest_result(X, t, folds=4, seed=0, name="forest")
+    kernel = choose_lam(X @ X.T, t, folds=4, seed=0, name="kernel")
+    assert forest.folds == kernel.folds
+    assert forest.n_samples == kernel.n_samples == len(y)
+    assert np.array_equal(forest.molecule, kernel.molecule)
+    assert np.isnan(forest.lam), "a forest chooses no ridge"
+    assert np.isfinite(forest.predicted).all(), "every hop is predicted out of its own fold"
+
+
+def test_the_boosted_forest_is_a_second_fitting_method():
+    import numpy as np
+
+    from cmfqsar.atomtargets import AtomTargets
+    rng = np.random.RandomState(1)
+    mol = np.repeat(np.arange(10), 4)
+    X = rng.normal(size=(len(mol), 3))
+    y = X[:, 0] ** 2
+    t = AtomTargets(molecule=mol, atom=np.arange(len(mol)), y=y, n_mol=10, name="barrier")
+    a = rl.forest_result(X, t, folds=5, seed=0, name="a", kind="random forest")
+    b = rl.forest_result(X, t, folds=5, seed=0, name="b", kind="boosted forest")
+    assert not np.allclose(a.predicted, b.predicted), "the two methods are the same code path"
+
+
+def test_a_learning_curve_too_short_to_read_makes_no_claim():
+    """q2 cannot pass 1, so a rate that would carry the model past it says only that it cannot."""
+    assert rl.projection([{"structures": 200, "q2": 0.55}]) is None
+    per, steps, arrives = rl.projection([{"structures": 200, "q2": 0.50},
+                                         {"structures": 400, "q2": 0.53}])
+    assert per == pytest.approx(0.03)
+    assert arrives == pytest.approx(0.53 + 0.03 * steps)
+    assert rl.projection([{"structures": 25, "q2": 0.54},
+                          {"structures": 50, "q2": 0.80}])[2] > 1.0
+
+
+def test_the_table_does_not_print_an_impossible_q2(tmp_path):
+    out = tmp_path / "litraj"
+    out.mkdir()
+    with open(os.path.join(RESULTS, "public.json"), encoding="utf-8") as fh:
+        pub = json.load(fh)
+    pub["learning_curve"] = [{"structures": 25, "q2": 0.54, "rmse": 1.2},
+                             {"structures": 50, "q2": 0.80, "rmse": 1.0}]
+    with open(out / "public.json", "w", encoding="utf-8") as fh:
+        json.dump(pub, fh)
+    text = rl.write_table(str(out))
+    assert "too short to read" in text
+    assert "carries the model to about q2 +1" not in text
+
+
+def test_the_forest_is_handed_exactly_the_rows_the_kernel_sees():
+    """The arm that isolates the fitting method may not be handed more than the kernel had."""
+    import numpy as np
+
+    from cmfqsar.localenv import count_kernel
+    rng = np.random.RandomState(0)
+    X = np.abs(rng.normal(size=(6, 5)))
+    ones = np.ones(X.shape[1])
+    rows = rl.kernel_rows(X, scale=ones)
+    assert np.allclose(np.linalg.norm(rows, axis=1), 1.0), "every row is divided by its length"
+    assert np.allclose(rows @ rows.T, count_kernel(X)), \
+        "the product of these rows is the kernel itself, so a forest on them sees no more"
+    stretched = X.copy()
+    stretched[0] *= 3.0
+    assert np.allclose(rl.kernel_rows(stretched, scale=ones)[0], rows[0]), \
+        "the kernel cannot tell a row from a multiple of it, so neither may this"
+
+
+def test_every_description_is_fitted_both_ways():
+    """A forest arm for each description the table compares, and its paired interval beside it."""
+    with open(os.path.join(RESULTS, "public.json"), encoding="utf-8") as fh:
+        pub = json.load(fh)
+    forests = pub["forests"]
+    keys = {m["key"] for m in pub["models"]}
+    pairs = {(p["a"], p["b"]) for p in pub["pairs"]}
+    on = {f"invariant {pub['best_rho']}", "counts", "geometry"}
+    assert {f["on"] for f in forests} == on
+    for f in forests:
+        assert f["on"] in keys, "a forest arm names a description the table does not hold"
+        assert (f["key"], f["on"]) in pairs, "a forest arm has no paired interval"
+        assert f["lam"] is None
+        assert f["method"] in {name for name, _ in rl.FORESTS}
+        assert f["rows"] in rl.FOREST_ROWS
+    assert (pub["best_forest"], f"overlap {pub['best_rho']}") in pairs
+    for key in on:
+        arms = [f for f in forests if f["on"] == key]
+        assert {f["method"] for f in arms} == {name for name, _ in rl.FORESTS}
+        forms = {f["rows"] for f in arms}
+        assert "as the kernel" in forms, \
+            "without the kernel's own rows the arm does not separate the fitting method"
+        assert len(arms) == len(forms) * len(rl.FORESTS)
+    cosine = {f["rows"] for f in forests if f["on"].startswith("invariant")}
+    assert cosine == set(rl.FOREST_ROWS), \
+        "the local kernel divides out the row length, so both forms of its rows are measured"
+
+
+def test_the_stored_result_is_strict_json():
+    """A result file with a not-a-number in it cannot be read by anything but Python."""
+    with open(os.path.join(RESULTS, "public.json"), encoding="utf-8") as fh:
+        pub = json.load(fh)
+    json.dumps(pub, allow_nan=False)

@@ -9328,25 +9328,70 @@ at most six hops each, 1801 hops of 393 structures -- where the published models
 
 **Three things the table says.** The ordering inside this program holds on a chemistry it was not
 built on: the field kernels are ahead of the count reference by +0.132 [+0.056, +0.209], so rule
-1 is met here too. The distance to the published models is large, and the size of the training
-set does not account for it: between 200 and 393 training structures the model gains +0.028 in q2
-for every doubling, and the 4.5 doublings up to 8,945 structures carry it to about +0.71 at that
-rate, well short of +0.95. And the two findings of the sections above hold on the new set as
-well. The hop frame is again worth nothing in accuracy over the rotation-invariant kernel
+1 is met here too. The size of the training set does not account for the distance to the
+published models: between 200 and 393 training structures the model gains +0.028 in q2 for every
+doubling, and the 4.5 doublings up to 8,945 structures carry it to about +0.71 at that rate, well
+short of +0.95. And the two findings of the sections above hold on the new set as well. The hop
+frame is again worth nothing in accuracy over the rotation-invariant kernel
 (-0.020 [-0.073, +0.039] here, +0.005 [-0.060, +0.071] on the public set), so the frame earns its
 place by the co-field it makes readable and not by its predictions. The site-resolved descriptor
 falls from +0.446 on ternary lithium oxides to +0.114 here, so describing two end sites carries a
 barrier only inside one chemistry.
 
+#### What the distance to those numbers is made of
+
+The two published models closest to the graph network are a random forest and a gradient-boosted
+forest on hand-made features of the hop, not kernel models. The table above therefore mixes two
+questions: is this program's **description** of a hop behind, or is fitting that description with
+a **kernel**? They come apart by fitting both forests on this program's own descriptions, over
+the same hops and the same folds. One care is needed first. Both kernels here rescale the feature
+channels and then divide every row by its own length, so a kernel entry is the cosine of the
+angle between two rows and the row length never reaches the model; a forest handed the raw rows
+would be handed more than the kernel ever had. So each description is fitted twice, on the rows
+the kernel is built from and on the raw rows.
+
+| description | rows | fitted with | q2 | mean absolute error (eV) | against the kernel |
+| --- | --- | --- | ---: | ---: | ---: |
+| counts about the midpoint | as the kernel | random forest | +0.559 | 0.643 | +0.091 [+0.024, +0.164] |
+| hop length and bottleneck | as the kernel | boosted forest | +0.202 | 0.916 | +0.023 [-0.094, +0.119] |
+| rotation-invariant local | as the kernel | random forest | +0.742 | 0.481 | +0.142 [+0.091, +0.198] |
+| rotation-invariant local | as the kernel | boosted forest | +0.758 | 0.488 | +0.158 [+0.110, +0.212] |
+| rotation-invariant local | raw | random forest | +0.844 | 0.374 | +0.243 [+0.188, +0.305] |
+| rotation-invariant local | raw | boosted forest | +0.840 | 0.379 | +0.240 [+0.183, +0.305] |
+
+The comparison favours the kernel, which is given the ridge that maximises the same out-of-fold
+q2 it reports while the forests are fitted at fixed settings and search for nothing.
+
+**The fitting method is worth a large part of the distance.** On exactly the rows the kernel is
+built from -- the same description, nothing added -- a forest reaches q2 +0.758 where the kernel
+reaches +0.600, and the mean absolute error falls from 0.726 to 0.488 eV. So the description of a
+hop is not what was behind the published models here. Fitting it with a kernel ridge was.
+
+**And the cosine normalisation throws away something that carries the barrier.** Adding the raw
+row lengths back, so that the model can also see how large an environment's features are and not
+only their direction, gains a further +0.086 and takes the mean absolute error to 0.374 eV. The
+kernel cannot use that length by construction. This is a property of the invariant kernel of this
+program and not of the hop models, so it bears on every kernel built on
+`cmfqsar.invariant.autocorrelation_kernel`; the plan opens it as item M15, and nothing is changed
+until it has been measured where that kernel is used. The same mechanism is already recorded as a
+caution for particles, where the per-atom normalisation removes the particle size.
+
+Set beside the published numbers: this program's description of a hop, fitted with a forest,
+reaches a mean absolute error of 0.374 eV on 1801 hops, against 0.21 eV for the graph network and
+0.26 eV for the published forest, both fitted on 96,849 hops. The forest also learns faster,
++0.053 in q2 for every doubling of the training set against +0.028 for the overlap kernel.
+
 **What this means for the program.** On this task a graph network fitted on a hundred thousand
-barriers is three times more accurate than a field kernel fitted on two thousand, and the
-published work shows a further step: a machine-learned interatomic potential that runs the
-elastic band itself reaches a mean absolute error of 0.07 to 0.08 eV against DFT barriers on
-structures without a transition metal, and 0.11 eV over the whole set once fine-tuned on it,
-which is a different kind of accuracy from either. What the field model offers on migration is not the lowest error. It is the
-cost -- no relaxation at all, one field evaluation per hop -- and the co-field above, which says
-where along the path and at what distance from its axis the barrier is decided. Those are reasons
-to use it for screening and for reading, not for a number to quote.
+barriers is still the most accurate model, and the published work shows a further step: a
+machine-learned interatomic potential that runs the elastic band itself reaches a mean absolute
+error of 0.07 to 0.08 eV against DFT barriers on structures without a transition metal, and 0.11
+eV over the whole set once fine-tuned on it, which is a different kind of accuracy again. What
+the field model offers on migration is not the lowest error. It is the cost -- no relaxation at
+all, one field evaluation per hop -- and the co-field above, which says where along the path and
+at what distance from its axis the barrier is decided. Those are reasons to use it for screening
+and for reading, not for a number to quote. What the measurement above adds is that the fields
+themselves describe a hop better than those numbers suggested: it is the kernel ridge, and the
+row length it divides out, that gave away most of the distance.
 
 ## The voltage of an insertion electrode: the cell against its composition
 
