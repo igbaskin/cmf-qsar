@@ -505,6 +505,17 @@ def registry() -> List[Benchmark]:
                   minutes="3",
                   report=lambda: _mod("run_cell_view").write_table(_r("cell_view")),
                   tables=["cell_view/table.md"]),
+        Benchmark("surface_view",
+                  "the surface side of the application: what a patch of slab behind the "
+                  "molecules costs to draw, whether the height and the tilt the panel states "
+                  "agree with what the relaxation wrote, whether the arrows of the vector "
+                  "co-field stand on the largest gradients and how far their direction depends "
+                  "on the grid, and whether the co-pattern chart of a kernel without a "
+                  "co-field holds the same numbers as its channel table",
+                  "run_surface_view.py", "surface_view", compute=[[]],
+                  minutes="1",
+                  report=lambda: _mod("run_surface_view").write_table(_r("surface_view")),
+                  tables=["surface_view/table.md"]),
         Benchmark("reciprocal",
                   "reciprocal-space channels of a crystal against the real-space "
                   "autocorrelation: the typed structure factors added to a short and a long "

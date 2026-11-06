@@ -1,0 +1,94 @@
+{
+ "slab": {
+  "element": "Fe",
+  "nx": 6,
+  "ny": 6,
+  "layers": 4,
+  "a": 2.78,
+  "vacuum": 15.0
+ },
+ "slab_atoms": 144,
+ "layer_heights": [
+  0.0,
+  -1.966,
+  -3.932,
+  -5.897
+ ],
+ "build_seconds": 0.09668612480163574,
+ "receptor_atoms": 2520,
+ "radii": [
+  6.0,
+  10.0,
+  16.0,
+  24.0
+ ],
+ "molecules_timed": 5,
+ "sets": [
+  {
+   "set": "benzimidazole",
+   "n_molecules": 73,
+   "path": "examples/corrosion_fe110/157_benzimidazole_uma.sdf",
+   "highest_drawn_z": 0.0,
+   "share_in_receptor": 1.0,
+   "patches": [
+    {
+     "radius": 6.0,
+     "atoms_median": 93.0,
+     "cut_seconds": 0.0006978511810302734,
+     "draw_seconds": 0.0033910274505615234
+    },
+    {
+     "radius": 10.0,
+     "atoms_median": 196.0,
+     "cut_seconds": 0.0007746219635009766,
+     "draw_seconds": 0.004364490509033203
+    },
+    {
+     "radius": 16.0,
+     "atoms_median": 421.0,
+     "cut_seconds": 0.0009388923645019531,
+     "draw_seconds": 0.005971670150756836
+    },
+    {
+     "radius": 24.0,
+     "atoms_median": 845.0,
+     "cut_seconds": 0.0014138221740722656,
+     "draw_seconds": 0.010773181915283203
+    }
+   ]
+  },
+  {
+   "set": "quinoline",
+   "n_molecules": 65,
+   "path": "examples/corrosion_fe110/158_quinoline_uma.sdf",
+   "highest_drawn_z": 0.0,
+   "share_in_receptor": 1.0,
+   "patches": [
+    {
+     "radius": 6.0,
+     "atoms_median": 140.0,
+     "cut_seconds": 0.0007479190826416016,
+     "draw_seconds": 0.004676103591918945
+    },
+    {
+     "radius": 10.0,
+     "atoms_median": 259.0,
+     "cut_seconds": 0.0009415149688720703,
+     "draw_seconds": 0.0057027339935302734
+    },
+    {
+     "radius": 16.0,
+     "atoms_median": 513.0,
+     "cut_seconds": 0.0010144710540771484,
+     "draw_seconds": 0.008034706115722656
+    },
+    {
+     "radius": 24.0,
+     "atoms_median": 979.0,
+     "cut_seconds": 0.0017881393432617188,
+     "draw_seconds": 0.01328587532043457
+    }
+   ]
+  }
+ ]
+}

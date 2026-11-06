@@ -3575,6 +3575,34 @@ tests whether the target is reproducible between sources before any kernel is co
 * **NT9. The co-pattern as a plot.** The invariant kernels have no co-field. `top_channels` returns
   the ranked channels; the Results panel needs a chart of weight against distance for the chosen
   pair of field types, and the viewer needs site colouring by contribution (NT7). Three days.
+  **Done 6 November 2026.** `cmfqsar/copattern.py` turns a fitted model into one curve per pair
+  of field types: `copattern` returns the distance grid with the weight and the weight times the
+  spread, `copattern_rows` the same numbers as a table, `has_copattern` whether a model has one.
+  `cmfqsar/gui/copattern_panel.py` draws it, with boxes for the pair and for which of the two
+  quantities is on the y axis, in the new *Co-pattern* tab of the main window's Results panel and
+  beside the ranked table in the crystal window's *Reading* tab. The axis is whatever the kernel's
+  channels are indexed by and the label says which: the distance between two atoms
+  (molecular and periodic autocorrelation), the in-plane distance (surface kernel), the reciprocal
+  length q (M6). A kernel that resolves a distance **further** -- the surface kernel resolves it by
+  the heights of both atoms -- has a point that is the sum of the weights of the channels at that
+  distance, and the note under the chart says how many were summed; the sum is the right summary
+  because a prediction is a sum over channels, and the table beside it still names the individual
+  channels. Two kernels are refused with a reason instead of being drawn wrongly: the three-body
+  channels of M10 (two radii and a separation, not one distance) and the overlap kernel of the
+  fields, which has a co-field. The site colouring the entry also asks for was built by M13
+  (`crystal_window._draw_sites` for a cell, the atom contributions of rule 3 for a molecule), so
+  nothing of NT7 was needed.
+  **Measured** (`benchmarks/run_surface_view.py`, the `copattern` stage): on two kernels that have
+  no co-field, the identity that makes the weights a reading -- the bias plus the sum over every
+  channel of weight times channel is the prediction -- holds to 8e-14 on the periodic
+  autocorrelation of the thirteen COD electrolytes (target spread 16.3) and to 2e-12 on the
+  surface autocorrelation of the 73 Fe(110) adsorbates (spread 63.8 kJ/mol); both are rounding.
+  The leading pair is the electrostatic field with itself, 26 % of the reading, peaking at 8.0 A
+  on the conductors, and the electrostatic with the hydrophobic field, 28 %, peaking at 2.25 A in
+  the plane on the adsorbates. One curve costs 0.1 to 1.1 ms, so the chart follows the box with no
+  wait, even where a pair block is 612 channels.
+  **Not done:** one pair at a time and no overlay of two pairs; a chirality block is left out of
+  the curve rather than given an axis of its own.
 * **NT10. Complementarity with a porous host.** `cmfqsar/protein.py` and
   `cmfqsar/complementarity.py` read a PDB protein and resolve scores by residue. A framework read
   from CIF with periodic images, and scores resolved by framework atom type, extend the same dialog
@@ -4171,6 +4199,48 @@ for anything molecular.
 * **EC10. The application.** None of this is visible in the GUI: no slab behind the molecules
   (the protein viewer is the model), no vector co-field, no surface frame. It belongs to G and
   waits for EC2, EC5 and EC6, which decide what there is to draw.
+  **Done 6 November 2026**, on the window and the viewer item M13 built. Three pieces, each in
+  the main window rather than in a window of its own, because an adsorbate *is* a molecule and
+  the molecular view is the right place for it.
+  (i) *The slab behind the molecules.* `cmfqsar/gui/surface_view.py` reads a slab from a file or
+  builds a bcc(110) one with the defaults of the Fe(110) reference poses (*File -> Load a surface
+  slab* and *Build a bcc(110) surface slab*), and draws the top layers repeated over the surface
+  lattice and cut to the molecules **in the plane** -- not in space, so the surface stays a
+  surface under a molecule that sits high above it. The expansion is
+  `slab.slab_images`, factored out of `slab_receptor`, so the picture is the atoms the
+  complementarity receptor is made of and not a lookalike: 100 % of the drawn atoms are its own.
+  The top, bridge and hollow sites of `slab.surface_sites` are drawn too, translated to the
+  molecules over the surface lattice.
+  (ii) *The surface frame.* `Viewer3D.add_frame` draws the three axes at the origin in the
+  colours a cell's lattice vectors carry, and `planealign.pose_geometry` gives the two numbers
+  the surface kernel sees -- the height of the lowest heavy atom and the tilt of the molecule's
+  own plane -- for the legend under the view and for the *Surface poses* tab, which
+  *Tools -> Pose the molecules in the surface frame* fills by running `plane_align_dataset`. A
+  molecule with no plane is told apart rather than given a meaningless angle.
+  (iii) *The vector co-field.* The electric-field kind of EC5 is now a field in the Model panel
+  (unticked by default, because its value is a question per series), and `Viewer3D.add_arrows`
+  draws its co-field as arrows from `cofields.cofield_arrows`, scaled so the longest is 2.5 A on
+  screen with the legend stating what that length is in activity units per unit of the field per
+  angstrom. Ticking the box on a scalar field draws nothing and says why.
+  **Measured** (`benchmarks/run_surface_view.py`,
+  `benchmarks/results/surface_view/table.md`; the window is driven without a screen):
+  a 6 A patch of the Fe(110) slab is 93 surface atoms and a 24 A patch 845, chosen in 1 ms
+  either way, the whole view drawn in 3 to 14 ms. The height the panel states agrees with the
+  `height_A` column the relaxation wrote -- which the window never reads -- to **0.005 A** on all
+  138 molecules of the two nodes, which is the one check of the frame that does not rest on the
+  program's own arithmetic. The same stage measured what the relaxed poses are: heights 1.23 to
+  4.83 A, median tilt 18 and 27 degrees on the two nodes, and only 29 % and 14 % of the molecules
+  flat at all, so a molecule relaxed on iron is **not** lying flat and the flat rule pose differs
+  from the relaxed tilt by that median. Sixteen arrows on a 0.5 A grid of 21,600 points take
+  0.7 s; the longest arrow is the largest gradient the grid holds at every spacing tried, and the
+  weakest drawn is 40 to 50 % of the longest, which the gradient exceeds in 1.5 to 2.2 % of the
+  volume. One finding worth recording: refining the grid from 0.7 to 0.35 A turns the arrows by
+  **about 16 degrees** on average, because an arrow is taken at the grid point nearest a peak and
+  a finer grid has a nearer one, so an arrow states a direction to roughly fifteen degrees and not
+  better -- enough for which way the field should point, not enough to measure an angle off the
+  picture.
+  **Not done:** no docking from the window (the constrained pose search stays in `slab.py` and its
+  benchmark), one slab at a time, and the slab is not part of a project file.
 
 **Order.** EC2 was first and is done: it gives the surface frame and the co-field in it, and
 it found that the relaxed frames carry the relaxation's outcome, which changes what the Fe(110)
@@ -6332,8 +6402,8 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 14 | 11 | M7, M8, M9 |
-| H. Nanotechnology | 12 | 0 | NT1 to NT12 |
-| H. Electrochemistry | 10 | 7 | EC8 (partly), EC9, EC10 |
+| H. Nanotechnology | 12 | 1 | NT1 to NT8, NT10 to NT12 |
+| H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 8 | 7 | BT8 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
@@ -6341,7 +6411,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 16 | 0 | ND1 to ND13 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**146 items: 102 finished, 3 partly, 41 open.**
+**146 items: 104 finished, 3 partly, 39 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -6353,11 +6423,15 @@ equally blocked.
   found for the catalytic case; PO1 found one on 5 November 2026, a measured enantioselectivity
   on 43 molecular catalysts at one condition, which answers the molecular case and not EC8's or
   EC9's. The search is written up in `docs/public_3dqsar_datasets.md`.
-* **Waiting for the application.** G5, EC10, NT8, NT9 and NT11 are the same work seen from four
-  sides: nothing of the surface or particle side is visible in the window. None of them needs a
-  new measurement. M13 was the first of this block and is done: it closed the crystal side on
-  6 November 2026, and the window, the cell viewer and the panels it added are what the others
-  extend.
+* **Waiting for the application.** G5, NT8 and NT11 are what is left of this block: the
+  particle side of the window, where a structure that is neither a molecule nor a cell needs a
+  data model of its own (NT1), and the model panel and command line that would offer it. Neither
+  needs a new measurement. Three of the six are done. M13 closed the crystal side on
+  6 November 2026; **EC10 and NT9 closed the surface side and the reading on the same day** --
+  the slab behind the molecules, the surface frame with its two numbers, the vector co-field as
+  arrows, and the chart of channel weight against distance that the kernels without a co-field
+  are read by, in both windows. The window, the viewer and the panels those three added are what
+  G5, NT8 and NT11 extend.
 * **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, PBH6, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND13, which has not been started.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could

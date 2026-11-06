@@ -581,14 +581,15 @@ The view itself is an OpenGL scene: drag to orbit, the wheel to zoom, middle-dra
 to pan. *Reset view* reframes the whole scene, *Tools → Center view on current molecule* reframes
 the selected one, and *File → Save 3D view as image…* writes what you see to PNG.
 
-The control strip above the view is four rows, and everything on it redraws immediately:
+The control strip above the view is five rows, and everything on it redraws immediately:
 
 - **Molecules.** Drawing style (ball & stick, sticks, lines, space fill), *H atoms*, *Labels*
   (none, element + number, atom type, partial charge), *dark background*, *Reset view*.
 - **Maps.** *Field type* chooses which field the maps refer to; **Compute co-field** evaluates the
   co-fields on a grid around the training set; then the maps themselves — *co-field C(r)*,
   *molecular field X(r)*, *overlap C·X*, *Shapley field Φ(r)*, *atom contributions*, *difference
-  map*, *pharmacophore* — each with its own solid-or-mesh style where that applies. After a
+  map*, *pharmacophore*,
+  *vector co-field (arrows)* — each with its own solid-or-mesh style where that applies. After a
   two-endpoint fit an *Endpoint* box joins the row and chooses whose co-field the maps show:
   either endpoint, or their difference, the selectivity co-field.
 - **Levels.** *iso level*, the isosurface threshold as a percentage of the largest absolute value
@@ -597,6 +598,10 @@ The control strip above the view is four rows, and everything on it redraws imme
 - **Protein site.** *protein site* draws the residues within the chosen distance of the molecules
   on screen, as lines or sticks, with *H*, *waters* and residue labels optional, and
   *complementarity surface* paints the molecule's surface by how well it complements the pocket.
+- **Surface slab.** *surface slab* draws a patch of a loaded or built metal surface behind the
+  molecules, as balls or dots, with the *patch* radius, the *frame axes* of the surface frame and
+  the *surface sites* of the top layer. The section *A metal surface behind the molecules* is
+  about this row.
 
 Co-field colours are fixed, so that maps made in different sessions can be compared at a glance:
 
@@ -611,7 +616,7 @@ Co-field colours are fixed, so that maps made in different sessions can be compa
 
 ## The Results panel
 
-Twelve tabs, each filled by the work that produces it:
+Fourteen tabs, each filled by the work that produces it:
 
 | Tab | What it holds |
 |---|---|
@@ -623,6 +628,8 @@ Twelve tabs, each filled by the work that produces it:
 | Map | the kernel-GTM chemical-space map, with the activity, class and density landscapes, and a control for how the molecules themselves are drawn over it |
 | Hyper-parameter search | the whole grid — α, the other parameters, RMSEcv and q² — so that an optimum at the edge of the grid is visible rather than hidden |
 | Contributions | two tables for the selected molecule: the training molecules that make its prediction, with `a_j` and `a_j K(X, X_j)`, and its own atoms with their contributions |
+| Co-pattern | the reading of a kernel that has no co-field: the channel weight against distance, for one pair of field types at a time. See *The co-pattern as a chart* |
+| Surface poses | the height and the tilt of every molecule in the surface frame, filled by *Tools → Pose the molecules in the surface frame* |
 | Shapley | the Shapley decomposition, over atoms, substituents of the common scaffold or field types, with second-order interactions |
 | Complementarity | the field complementarity of the molecules and of the co-field with the pocket, by sign agreement, cosine or correlation |
 | Chemotypes | the Murcko scaffolds found in the set, their sizes, and the leave-one-chemotype-out result beside the alignment-free baseline |
@@ -633,7 +640,8 @@ Twelve tabs, each filled by the work that produces it:
 **File** — *Open training set…* (Ctrl+O), *Add test set…*, *Add decoys (background set)…*, *Import
 activities from CSV…*; *Crystals and other periodic structures…*, which opens the window of the
 section below; *Load protein structure (PDB/mmCIF)…*, *Fetch protein from the PDB…*,
-*Forget protein structure*; *Open project…* (Ctrl+Shift+O), *Save project* (Ctrl+Shift+S), *Save
+*Forget protein structure*; *Load a surface slab (POSCAR/CIF/XYZ)…*, *Build a bcc(110) surface
+slab…*, *Forget the surface slab*; *Open project…* (Ctrl+Shift+O), *Save project* (Ctrl+Shift+S), *Save
 project as…*; *Load model…* (Ctrl+L), *Save model…* (Ctrl+S); *Export predictions
 (CSV)…*, *Export aligned data set (SDF)…*, *Export current co-field (Gaussian cube)…*, *Export
 current Shapley field (Gaussian cube)…*, *Save 3D view as image…*; *Quit* (Ctrl+Q).
@@ -642,7 +650,7 @@ current Shapley field (Gaussian cube)…*, *Save 3D view as image…*; *Quit* (C
 matter more than the view, and *Restore default layout*.
 
 **Tools** — *Generate conformations (4D)…*; *Dock into the pocket…*; *Align data set to
-reference…*; *Align by prediction confidence (GP variance)…* and its cross-validated form for the
+reference…*; *Pose the molecules in the surface frame…*; *Align by prediction confidence (GP variance)…* and its cross-validated form for the
 training set; *Replace molecules by their topomer substituents…*; *Field difference from a
 reference molecule…*; *Extract pharmacophore from the co-field…*; *Model several endpoints (selectivity co-field)…*;
 *Chemical space map…*;
@@ -757,7 +765,10 @@ one that exists rather than both:
   of the model — the channels (a pair of fields at a distance) that move the prediction most,
   with the weight, its spread over the training set and their product, which is what
   `build-crystals` prints — and for either kernel the sites of the selected cell, largest
-  magnitude first, with their positions.
+  magnitude first, with their positions. Beside that table the same co-pattern is drawn as a
+  curve of weight against distance, one pair of field types at a time, so that the table says
+  which channel and the chart says what the profile over distance is; the section
+  *The co-pattern as a chart* is about it.
 
 A check the reading passes on its own: the property of the single-atom sheets used by the
 benchmark is the height of the metal above the sheet, and the largest per-site contribution of
@@ -804,6 +815,165 @@ site-resolved model, no difference fields of a defect series, no three-body or r
 channels, which stay in the library and the benchmarks. It draws one cell at a time. The images
 are dots and not spheres, because a cell with its images is thousands of atoms. And it keeps no
 project file: the model is saved, the structures are the files they came from.
+
+## A metal surface behind the molecules
+
+The 3D view draws a protein pocket behind a ligand. An electrode is the same problem with a
+different receptor: a slab, periodic in the two directions of the surface, with no residues and
+no edge. The section *A metal surface as the receptor* is about what such a receptor is worth;
+this one is about seeing it.
+
+**Loading one.** *File → Load a surface slab (POSCAR/CIF/XYZ)…* reads a slab from any structure
+file ASE reads and shifts it along $z$ so that its highest atom sits at $z = 0$. *Build a
+bcc(110) surface slab…* builds one instead, and its defaults are the slab the Fe(110) adsorption
+energies of `examples/corrosion_fe110` were relaxed on: iron, a $6 \times 6$ orthogonal surface
+cell, four layers, $a = 2.78$ Å, which is the minimum of the UMA potential for body-centred cubic
+iron rather than the experimental 2.87. *Forget the surface slab* takes it away. The slab is not
+part of a project file: it is the file it came from, or four numbers in a dialog.
+
+**The frame.** The surface frame of this program is the normal along $z$ with the top atomic
+layer at $z = 0$, which is the frame `examples/uma_fe110_adsorption.py` writes its poses in and
+the frame `cmfqsar/planealign.py` poses a molecule in. A frame that is not drawn is a frame the
+reader has to take on trust, so *frame axes* draws the three axes at the origin, red for $x$ and
+green for $y$ in the surface and blue for $z$ along the normal, the same colours the lattice
+vectors of a cell carry in the crystal window. If the molecules on screen reach below the top
+layer they are not in this frame, and the log says so when the slab is installed.
+
+**The patch.** A surface has no edge, so there is no cell to draw. What is drawn is the top two
+layers repeated over the surface lattice and then cut to the atoms whose distance to a molecule
+is at most the *patch* radius — measured **in the plane**, not in space, so the surface stays a
+surface under a molecule that sits high above it instead of thinning out to nothing. A small
+radius shows the patch under the molecule and a large one shows that the surface continues.
+`benchmarks/results/surface_view/table.md` measures the cost on both Fe(110) sets: on the
+benzimidazole set a 6 Å patch is 93 surface atoms and a 24 Å patch 845, chosen in 1 ms either
+way, and the whole view — the patch, the molecule, the frame — is drawn in 3 ms and 11 ms. Every
+drawn atom lies at or below $z = 0$, and all of them are atoms of the complementarity receptor
+`cmfqsar.slab.slab_receptor` builds, so the picture shows what a score against the surface is
+computed from and not something that merely looks like it.
+
+**The sites.** *surface sites* marks the top, bridge and hollow sites of the top layer as small
+spheres, yellow, cyan and magenta. They come from a Delaunay triangulation of the top layer, so
+they are found for any surface and not only for the lattice the program can build, and what a
+molecule sits over is the surface's answer to a residue profile.
+
+**The pose, in two numbers.** A molecule in the surface frame has four free motions and the
+surface kernel sees two of them: how high it sits and how far it is tilted. Where it sits in the
+plane and how it is turned about the normal are what that kernel is invariant to. So the line
+under the view states the two the kernel sees, for the selected molecule: the height of its
+lowest heavy atom above the surface, the height of its heavy-atom centroid, and the tilt — the
+angle between the molecule's own plane, spanned by its two longest principal axes, and the
+surface, so $0°$ is a molecule lying flat and $90°$ one standing on edge. A molecule with no
+plane to speak of is told apart rather than given a meaningless angle: the line then says how
+thick it is, and the *Surface poses* tab has a column for it.
+
+*Tools → Pose the molecules in the surface frame…* puts every molecule on $z = 0$ by rule — the
+rules of the section *Posed by rule: the surface frame without the slab* — and fills that tab
+with one row per molecule. The step moves the molecules rigidly, so it joins the pose history and
+*Undo last alignment step* takes it back.
+
+The two numbers are checked against something the window never reads. The relaxation that
+produced the Fe(110) poses wrote the height of each one into the data set as a column of its own;
+the window computes it from the coordinates, and on all 138 molecules of the two sets the two
+agree to 0.005 Å. The same measurement says what the poses are: the relaxed heights run from
+1.23 to 4.83 Å, the median tilt is 18° on the benzimidazole set and 27° on the quinoline set, and
+only 29 % and 14 % of the molecules have a flat plane at all. A molecule relaxed on iron is
+therefore not lying flat, and the flat rule pose differs from the relaxed tilt by that same
+median — which is the honest form of what the section on the rule poses says about them.
+
+**What this does not do.** It does not dock: the pose search constrained to a surface is
+`cmfqsar.slab.dock_on_surface` and is measured in the slab benchmark, not offered in a dialog.
+It draws one slab at a time. And the drawing says nothing about the fields: on a one-element
+metal four of the five physicochemical fields are identically zero, so a complementarity score
+against a clean metal is a shape score, and the section *What a clean metal surface offers*
+states why.
+
+## The vector co-field: a direction instead of a value
+
+Every field of this program is a scalar except one. The electric-field kind of the section
+*The field a reaction centre feels* carries the same charges as the electrostatic field and pairs
+two molecules by the overlap of the **gradients** of their fields rather than of the fields
+themselves. It is offered in the Model panel as *Electric field (vector)*, and it starts
+unticked, because whether it is worth adding is a question per series that
+`benchmarks/results/efield/table.md` answers.
+
+Its co-field cannot be an isosurface. The co-field of a scalar field is a value at a place and a
+surface at one value is the natural drawing of it; the co-field of this kind is a **vector** at a
+place, and what it says there is a direction: which way the molecule's own electric field should
+point to raise the predicted property. So it is drawn as arrows. Tick *vector co-field (arrows)*
+in the maps row, with *Compute co-field* already done and the *Field type* box on the
+electric-field kind, and the number beside the box says how many arrows are drawn: the longest
+ones, kept at least 1.5 Å apart so that they spread over the molecule instead of crowding one
+peak.
+
+The arrows are scaled so that the longest one is 2.5 Å on screen, and the legend states what that
+length stands for, in activity units per unit of the field per angstrom. A length scale on screen
+means nothing without that number, and a vector field drawn without its unit is a picture rather
+than a reading.
+
+`benchmarks/results/surface_view/table.md` measures the drawing on 95 Hammett benzenes with the
+electric-field kind as the only field and $\sigma_m$ as the property. Sixteen arrows on a 0.5 Å
+grid of 21,600 points take 0.7 s. The longest arrow is the largest gradient the grid holds, at
+every spacing tried, so the arrows do stand on the strongest places; the weakest arrow drawn is
+40 to 50 % of the longest, and the gradient is at least that strong in 1.5 to 2.2 % of the
+volume, so the drawing is the strong part of the reading and not a sample of all of it. One thing
+the measurement found is worth knowing before an angle is read off the screen: refining the grid
+from 0.7 Å to 0.35 Å turns the arrows by about 16° on average, because an arrow is taken at the
+grid point nearest a peak and a finer grid has a nearer one. An arrow states a direction to
+roughly fifteen degrees and not better. That is enough for the question it answers and not enough
+to measure an angle from the picture.
+
+Ticking the box while the *Field type* box is on a scalar field draws nothing and the legend says
+why: that field's co-field is a value at a place, and the isosurface is its drawing.
+
+## The co-pattern as a chart
+
+The invariant kernels have no co-field — the autocorrelation of a molecule, the surface
+autocorrelation of an adsorbate, the periodic autocorrelation of a cell, the reciprocal-space
+channels. They compare two structures by a distribution of distances, and a distribution of
+distances cannot say *where* in a structure anything is. What they have instead is the
+co-pattern: one weight per channel, a channel being one pair of field types at one distance.
+`periodic.top_channels` ranks those weights and the tables print them.
+
+Twenty ranked channels out of several thousand are a table, not a shape. The same numbers for one
+pair of field types, drawn against distance, are the shape: a positive part at 3 Å and a negative
+part at 6 Å says that the property wants those two fields close together and not far apart. The
+*Co-pattern* tab of the Results panel draws that curve in the main window, and in the crystal
+window the chart sits in the *Reading* tab beside the ranked table, so the table says which
+channel and the chart says what the profile over distance is.
+
+Two boxes above the chart: which **pair of field types** the curve is for, and whether the $y$
+axis is the **weight** — the model's own coefficient of the channel — or the **weight times
+spread**, the coefficient multiplied by how much that channel varies over the training
+structures, which is how much it actually moves a prediction and is the ranking the table uses. A
+weight at a distance no structure varies over means nothing, so the second is usually the one to
+read and the first is the one to quote.
+
+The $x$ axis is whatever the kernel's channels are indexed by, and the label says which: the
+distance between two atoms for the molecular and the periodic autocorrelation, the in-plane
+distance for the surface kernel, the reciprocal length $q$ for the reciprocal-space channels. Two
+kernels have no such axis and the chart says so instead of drawing something: the three-body
+channels of a cell index a channel by two radii and a separation, and the signed chirality
+channels by a radial shell. For the kernels that resolve a distance **further** — the surface
+kernel resolves it by the heights of both atoms — a point of the curve is the sum of the weights
+of the channels at that distance, and the note under the chart says how many were summed. The sum
+is the right summary because a prediction is a sum over channels, and the table beside the chart
+still names the individual height channels.
+
+What makes this a reading and not a picture is that the weights reproduce the prediction: the
+bias plus the sum over every channel of weight times channel is the prediction itself.
+`benchmarks/results/surface_view/table.md` measures the residual of that identity on two kernels
+that have no co-field — $8 \times 10^{-14}$ on the periodic autocorrelation of the thirteen COD
+electrolytes, whose property has a spread of 16.3, and $2 \times 10^{-12}$ on the surface
+autocorrelation of the 73 Fe(110) adsorbates, whose property has a spread of 63.8 kJ/mol. Both
+are rounding. The same table says what the chart opens on: on the thirteen conductors the leading
+pair is the electrostatic field with itself, 26 % of the whole reading, peaking at 8.0 Å; on the
+Fe(110) adsorbates it is the electrostatic field with the hydrophobic one, 28 %, peaking at
+2.25 Å in the plane. One curve costs between 0.1 and 1.1 ms to build, so the chart follows the
+box without a wait.
+
+The same numbers are available without the window. `cmfqsar.copattern.copattern` returns one
+curve and `copattern_rows` returns it as a table, with the distance, the weight, the spread and
+their product per row — which is what goes into a paper.
 
 ## Projects: a session that can be reopened, a step that can be undone
 
@@ -7174,7 +7344,10 @@ integral of a product of fields, so the prediction cannot be turned back into a 
 space. What it offers instead is the co-pattern — the weight of every channel of the fitted
 linear model, which names the pair of field types, the in-plane distance and the two heights that
 carry the signal, which `top_channels` ranks against the labels of
-`surface_channel_labels`. The measurements above come from `surface_kernel_eads.py`, in
+`surface_channel_labels`. The application draws it as a curve of weight against in-plane
+distance, one pair of field types at a time, in the *Co-pattern* tab of the Results panel; the
+section *The co-pattern as a chart* is about that chart and about what it may and may not be
+read for. The measurements above come from `surface_kernel_eads.py`, in
 `examples/corrosion_fe110`, which writes its table next to the script.
 
 ![The co-pattern of the surface model of the adsorption energies of 72 molecules on Fe(110), q² = 0.67: the mean contribution of every channel to the prediction, in kJ/mol, summed over the second height, by pair of field types, in-plane distance and height. Blue means stronger adsorption. The signal sits in a few channels, among them the electrostatic and the hydrogen-bond donor field at zero in-plane distance. Drawn by `surface_channels_eads.py` in `examples/corrosion_fe110`.](examples/corrosion_fe110/surface_channels_eads.png)

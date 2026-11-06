@@ -500,3 +500,79 @@ def rigid_rmsd(coords: np.ndarray, target: np.ndarray, mask: Optional[np.ndarray
     r = vt.T @ np.diag([1.0, 1.0, d if d != 0 else 1.0]) @ u.T
     moved = (a - ca) @ r.T + cb
     return float(np.sqrt(np.mean(np.sum((moved - b) ** 2, axis=1))))
+
+# --------------------------------------------------------------------------- #
+# Reading a pose back: the two numbers the surface frame is made of
+# --------------------------------------------------------------------------- #
+
+@dataclass
+class PoseGeometry:
+    """What a pose on a surface is, in two numbers, and what they were measured on.
+
+    A molecule in the surface frame has four free motions and the kernel sees only two of them:
+    how high it sits and how far it is tilted.  (Where it sits in the plane and how it is turned
+    about the normal are what the surface kernel is invariant to.)  Those two numbers are the
+    pose, so the application states them beside the picture.
+
+    * ``height`` is the lowest heavy atom above the surface plane, in angstrom.  This is the
+      height the Fe(110) reference poses report and the one the rule poses place.
+    * ``tilt`` is the angle, in degrees, between the molecule's own flat plane and the surface:
+      0 degrees is a molecule lying flat, 90 degrees one standing on edge.  The plane is the one
+      spanned by the two longest principal axes of the heavy atoms, so the normal is the
+      shortest axis.
+    * ``thickness`` is how far the heavy atoms spread along that shortest axis.  A flat molecule
+      has a thickness of a few tenths of an angstrom and its tilt means what it says; a bulky
+      one has no plane, ``flat`` is then false, and the tilt is only the direction of its
+      thinnest axis.
+    """
+    height: float
+    centre_height: float
+    tilt: float
+    thickness: float
+    flat: bool
+    n_heavy: int
+
+    def describe(self) -> str:
+        s = (f"lowest heavy atom {self.height:.2f} A above the surface, centroid "
+             f"{self.centre_height:.2f} A, tilt {self.tilt:.1f} deg")
+        if not self.flat:
+            s += f" (no flat plane: the molecule is {self.thickness:.2f} A thick)"
+        return s
+
+
+def pose_geometry(coords: np.ndarray, symbols: Optional[Sequence[str]] = None,
+                  plane_z: float = 0.0, flat_tolerance: float = 0.8) -> PoseGeometry:
+    """The height and the tilt of a posed molecule, measured in the surface frame.
+
+    `coords` are the coordinates of the molecule, `symbols` its element symbols (hydrogens are
+    left out when they are given, because a height is quoted on the heavy atoms), and `plane_z`
+    the height of the surface plane, which is 0 in the frame this program uses.  See
+    :class:`PoseGeometry` for what the numbers are.
+    """
+    xyz = np.asarray(coords, float).reshape(-1, 3)
+    if symbols is not None and len(symbols) == len(xyz):
+        keep = np.array([str(s).capitalize() != "H" for s in symbols], bool)
+        if keep.any():
+            xyz = xyz[keep]
+    if not len(xyz):
+        nan = float("nan")
+        return PoseGeometry(nan, nan, nan, nan, False, 0)
+    z = xyz[:, 2] - float(plane_z)
+    if len(xyz) < 3:
+        # a diatomic has no plane; its tilt is the angle of the bond with the surface
+        if len(xyz) == 2:
+            d = xyz[1] - xyz[0]
+            n = float(np.linalg.norm(d))
+            tilt = float(np.degrees(np.arcsin(min(abs(d[2]) / n, 1.0)))) if n > 1e-9 else 0.0
+        else:
+            tilt = 0.0
+        return PoseGeometry(float(z.min()), float(z.mean()), tilt, 0.0, True, len(xyz))
+    axes = principal_axes(xyz)
+    normal = axes[2]
+    along = (xyz - xyz.mean(axis=0)) @ normal
+    thickness = float(along.max() - along.min())
+    cos = min(abs(float(normal[2])), 1.0)
+    tilt = float(np.degrees(np.arccos(cos)))
+    return PoseGeometry(height=float(z.min()), centre_height=float(z.mean()), tilt=tilt,
+                        thickness=thickness, flat=bool(thickness <= float(flat_tolerance)),
+                        n_heavy=int(len(xyz)))

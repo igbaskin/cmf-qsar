@@ -17,19 +17,23 @@ from rdkit import Chem
 
 from .. import __version__
 from ..align import align_dataset
-from ..cofields import (Grid, cofield_variance, cofield_volume, export_cube, isosurface,
-                        make_grid, mask_noise, molfield_volume, noise_level, overlap_volume)
+from ..cofields import (Grid, cofield_arrows, cofield_variance, cofield_volume, export_cube,
+                        isosurface, make_grid, mask_noise, molfield_volume, noise_level,
+                        overlap_volume)
 from ..conformers import CONFORMER_ALIGNMENTS
 from ..contract import check_molecules, summary as model_summary
 from ..dataio import Dataset, load_dataset, load_model, numeric_properties, save_model, write_predictions_csv, write_sdf
 from ..fields import AtomTable, FieldSet, MoleculeFields, build_fields, cif_types_in
 from ..model import DEFAULT_COMPONENTS, CMFModel, grid_search, nested_cv
+from ..planealign import DOFS, POSES, plane_align_dataset
 from ..project import (PROJECT_EXTENSION, PoseHistory, Project, compare_models, is_project_file,
                        load_project, save_project)
 from ..protein import (binding_site, contact_distance, fetch_pdb, find_pocket,
                        read_structure, residue_anchors)
 from .panels import (DatasetPanel, ModelPanel, ResultsPanel, ViewerControls, apply_field_table,
                      apply_settings, capture_settings)
+from .surface_view import (FE110, build_bcc110, drawn_atoms, load_surface, pose_line,
+                           pose_table, site_points)
 from .viewer3d import Viewer3D, cofield_colors, color_name as _cname
 from .workers import TaskWorker
 
@@ -1492,11 +1496,140 @@ class ComparisonWindow(QDialog):
             self.cmp.to_csv(path)
 
 
+class SlabDialog(QDialog):
+    """Build a body-centred cubic (110) slab to put behind the molecules (plan item EC10).
+
+    The defaults are the slab the Fe(110) reference poses of ``examples/corrosion_fe110`` were
+    computed on, so a user who opens that series and accepts the defaults sees the surface those
+    adsorption energies belong to.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Build a surface slab")
+        lay = QVBoxLayout(self)
+        intro = QLabel(
+            "A body-centred cubic (110) slab, shifted so that its top atomic layer is at "
+            "z = 0, which is the surface frame this program uses. The defaults are the "
+            "Fe(110) slab the adsorption energies of examples/corrosion_fe110 were computed on.")
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
+        form = QFormLayout()
+        self.ed_element = QLineEdit(str(FE110["element"]))
+        self.spin_nx = QSpinBox()
+        self.spin_nx.setRange(1, 20)
+        self.spin_nx.setValue(int(FE110["nx"]))
+        self.spin_ny = QSpinBox()
+        self.spin_ny.setRange(2, 20)
+        self.spin_ny.setSingleStep(2)
+        self.spin_ny.setValue(int(FE110["ny"]))
+        self.spin_ny.setToolTip("An orthogonal (110) cell needs an even number of repeats in "
+                                "this direction; an odd number is rounded up")
+        self.spin_layers = QSpinBox()
+        self.spin_layers.setRange(1, 20)
+        self.spin_layers.setValue(int(FE110["layers"]))
+        self.spin_a = QDoubleSpinBox()
+        self.spin_a.setRange(2.0, 8.0)
+        self.spin_a.setDecimals(3)
+        self.spin_a.setSingleStep(0.01)
+        self.spin_a.setValue(float(FE110["a"]))
+        self.spin_a.setSuffix(" Å")
+        self.spin_a.setToolTip("The cubic lattice constant. 2.78 Å is the minimum of the UMA "
+                               "oc20 potential for bcc iron, which is what the reference poses "
+                               "were relaxed on; the experimental value is 2.87 Å.")
+        form.addRow("Element", self.ed_element)
+        form.addRow("Repeats along x", self.spin_nx)
+        form.addRow("Repeats along y (even)", self.spin_ny)
+        form.addRow("Atomic layers", self.spin_layers)
+        form.addRow("Lattice constant a", self.spin_a)
+        lay.addLayout(form)
+        bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        bb.accepted.connect(self.accept)
+        bb.rejected.connect(self.reject)
+        lay.addWidget(bb)
+
+    def values(self) -> dict:
+        return dict(element=self.ed_element.text().strip() or "Fe", nx=self.spin_nx.value(),
+                    ny=self.spin_ny.value(), layers=self.spin_layers.value(),
+                    a=self.spin_a.value(), vacuum=float(FE110["vacuum"]))
+
+
+class PlanePoseDialog(QDialog):
+    """Pose the molecules in the surface frame, by rule (plan items EC2 and EC10)."""
+
+    def __init__(self, names: List[str], parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Pose the molecules in the surface frame")
+        lay = QVBoxLayout(self)
+        intro = QLabel(
+            "Every molecule is placed on the plane z = 0 with the surface normal as z, by the "
+            "same rules the adsorption script uses for its starting poses. Nothing is relaxed "
+            "and no conformation is changed. The height and the tilt of each pose are listed "
+            "in the Results panel afterwards, and the 3D view shows the frame.")
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
+        form = QFormLayout()
+        self.cmb_pose = QComboBox()
+        self.cmb_pose.addItems([
+            "flat: the molecule's plane parallel to the surface, flattest face down",
+            "flat-up: the same, the other face down",
+            "upright: the most basic nitrogen (or S, or O) pointing at the surface",
+            "auto: whichever of the three is most similar in field to the reference"])
+        self.cmb_pose.setToolTip("Which rule places the molecule. 'auto' needs a reference "
+                                 "molecule, because it chooses by field similarity to it.")
+        self.spin_height = QDoubleSpinBox()
+        self.spin_height.setRange(0.5, 10.0)
+        self.spin_height.setSingleStep(0.1)
+        self.spin_height.setValue(2.2)
+        self.spin_height.setSuffix(" Å")
+        self.spin_anchor = QDoubleSpinBox()
+        self.spin_anchor.setRange(0.5, 10.0)
+        self.spin_anchor.setSingleStep(0.1)
+        self.spin_anchor.setValue(2.0)
+        self.spin_anchor.setSuffix(" Å")
+        self.cmb_ref = QComboBox()
+        self.cmb_ref.addItem("none (every molecule by the rule alone)", -1)
+        for i, nm in enumerate(names):
+            self.cmb_ref.addItem(nm, i)
+        self.cmb_ref.setToolTip("A molecule whose pose is trusted -- a relaxed or a measured "
+                                "one. It is left where it is and the others are compared with it.")
+        self.cmb_refine = QComboBox()
+        self.cmb_refine.addItems(["no refinement",
+                                  "plane: slide and turn in the surface",
+                                  "plane+tilt: also tilt and lift"])
+        self.cmb_refine.setToolTip("With a reference, each pose can be refined by the field "
+                                   "similarity to it, using only the motions a surface leaves "
+                                   "free")
+        form.addRow("Rule", self.cmb_pose)
+        form.addRow("Height of the lowest heavy atom", self.spin_height)
+        form.addRow("Height of the anchor atom (upright)", self.spin_anchor)
+        form.addRow("Reference pose", self.cmb_ref)
+        form.addRow("Refine against the reference", self.cmb_refine)
+        lay.addLayout(form)
+        bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        bb.accepted.connect(self.accept)
+        bb.rejected.connect(self.reject)
+        lay.addWidget(bb)
+
+    def values(self) -> dict:
+        ref = self.cmb_ref.currentData()
+        return dict(pose=POSES[self.cmb_pose.currentIndex()],
+                    height=self.spin_height.value(),
+                    anchor_height=self.spin_anchor.value(),
+                    ref_index=None if ref is None or int(ref) < 0 else int(ref),
+                    refine=[None, DOFS[0], DOFS[1]][self.cmb_refine.currentIndex()])
+
+
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, background: bool = True):
         super().__init__()
         self.setWindowTitle(f"CMF 3D-QSAR  –  Continuous Molecular Fields  (v{__version__})")
         self.resize(1500, 950)
+
+        #: run the long steps in a worker thread, as the application does.  A script or a test
+        #: that drives this window without an event loop sets it to False, and every step then
+        #: finishes before the call returns
+        self.background = bool(background)
 
         self.ds: Optional[Dataset] = None
         self.molfields: List[MoleculeFields] = []
@@ -1516,6 +1649,9 @@ class MainWindow(QMainWindow):
         self.field_reference = None         # molecule a candidate is compared with
         self.field_diff_rows = None
         self.protein = None                 # cmfqsar.protein.Protein behind the molecules
+        self.surface = None                 # gui.surface_view.Surface: a metal slab behind them
+        self._arrows = None                 # (field name, grid id, count, points, vectors)
+        self.plane_poses = None             # the poses the surface frame was built with
         self.complementarity = None         # scores of the series against the pocket
         self.chemotypes = None              # (labels, scaffold names) of a heterogeneous series
         self.chemotype_result = None
@@ -1604,6 +1740,10 @@ class MainWindow(QMainWindow):
         self._act(fm, "Fetch protein from the PDB…", self.fetch_protein)
         self._act(fm, "Forget protein structure", self.clear_protein)
         fm.addSeparator()
+        self._act(fm, "Load a surface slab (POSCAR/CIF/XYZ)…", self.load_surface_file)
+        self._act(fm, "Build a bcc(110) surface slab…", self.build_slab_dialog)
+        self._act(fm, "Forget the surface slab", self.clear_surface)
+        fm.addSeparator()
         self._act(fm, "Open project…", self.open_project_file, "Ctrl+Shift+O")
         self._act(fm, "Save project", self.save_project_file, "Ctrl+Shift+S")
         self._act(fm, "Save project as…", lambda: self.save_project_file(save_as=True))
@@ -1632,6 +1772,7 @@ class MainWindow(QMainWindow):
         self._act(tm, "Generate conformations (4D)…", self.generate_conformers_dialog)
         self._act(tm, "Dock into the pocket…", self.dock_dialog)
         self._act(tm, "Align data set to reference…", self.align_dataset_dialog)
+        self._act(tm, "Pose the molecules in the surface frame…", self.plane_pose_dialog)
         self._act(tm, "Align by prediction confidence (GP variance)…", self.variance_align_dialog)
         self._act(tm, "Align training set by prediction confidence (cross-validated)…",
                   self.train_align_dialog)
@@ -1719,10 +1860,23 @@ class MainWindow(QMainWindow):
         self.status_label.setText(text.splitlines()[0][:120])
 
     def error(self, text: str):
+        """Report a failure: a dialog in the application, the log alone in a script.
+
+        A modal dialog waits for a person, so a script or a test driving this window
+        (``background=False``) must never raise one.
+        """
         self.log("ERROR: " + text.splitlines()[0])
-        QMessageBox.critical(self, "Error", text)
+        if self.background:
+            QMessageBox.critical(self, "Error", text)
 
     def run_task(self, fn, on_done, label="Working"):
+        if not self.background:
+            # a script or a test drives the window without an event loop: every step then
+            # finishes before the call returns, as it does in the crystal window
+            self.status_label.setText(label)
+            on_done(fn(lambda msg, frac: self.status_label.setText(str(msg)[:120]),
+                       lambda: False))
+            return
         if self.worker is not None and self.worker.isRunning():
             QMessageBox.information(self, "Busy", "A computation is already running.")
             return
@@ -1855,8 +2009,12 @@ class MainWindow(QMainWindow):
         self.model = None
         self.volumes.clear()
         self._mol_volume_cache.clear()
+        self._arrows = None
+        self.plane_poses = None
         self.grid = None
         self.results_panel.clear_points()
+        self.results_panel.copattern.clear(
+            "Build a model on an invariant kernel to see its co-pattern.")
         self.refresh_fieldset()
         self.dataset_panel.select_index(0)
         all_coords = np.concatenate([m.coords for m in self.molfields])
@@ -2301,6 +2459,8 @@ class MainWindow(QMainWindow):
         else:
             rp.set_scores(ds.names, np.full(len(ds), np.nan))
             rp.set_enrichment(None)
+        # the co-pattern: the reading of a kernel that has no co-field (plan item NT9)
+        rp.copattern.set_model(m, m.fieldset)
         rp.tabs.setCurrentIndex(0)
 
     def run_nested_cv(self):
@@ -2564,9 +2724,12 @@ class MainWindow(QMainWindow):
         self.field_reference = self.field_diff_rows = None
         self.controls.chk_diff.setChecked(False)
         self.controls.chk_diff.setEnabled(False)
+        self._arrows = None
         if self.model is not None:
             self.model = None
             self.results_panel.clear_contributions(
+                "The model was discarded: the molecules it was fitted on have moved.")
+            self.results_panel.copattern.clear(
                 "The model was discarded: the molecules it was fitted on have moved.")
         self.schedule_display()
 
@@ -2792,6 +2955,201 @@ class MainWindow(QMainWindow):
         self.viewer.clear_group("protein")
         self.log("Protein structure forgotten")
         self.schedule_display()
+
+    # ------------------------------------------------------- the surface (EC10)
+    def load_surface_file(self, path: str = ""):
+        """Read a slab from a structure file and put it behind the molecules."""
+        if not path:
+            path, _ = QFileDialog.getOpenFileName(
+                self, "Load a surface slab", "",
+                "Periodic structures (*.cif *.vasp *.extxyz *.xyz *.traj POSCAR CONTCAR);;"
+                "All files (*)")
+        if not path:
+            return
+        try:
+            surface = load_surface(path)
+        except Exception as exc:                        # noqa: BLE001 - any reader can fail
+            self.error(f"The surface could not be read: {exc}")
+            return
+        self._install_surface(surface)
+
+    def build_slab_dialog(self):
+        dlg = SlabDialog(self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        try:
+            self._install_surface(build_bcc110(**dlg.values()))
+        except Exception as exc:                        # noqa: BLE001 - ASE refuses some sizes
+            self.error(f"The slab could not be built: {exc}")
+
+    def _install_surface(self, surface) -> None:
+        self.surface = surface
+        self.controls.set_slab_label(f"{surface.name}, {surface.n_atoms} atoms")
+        self.controls.chk_slab.setChecked(True)
+        self.log(f"Surface: {surface.describe()}")
+        if self.molfields:
+            lowest = min(float(m.coords[:, 2].min()) for m in self.molfields)
+            if lowest < -1.0:
+                self.log("The molecules reach below the top layer of the slab: they are not in "
+                         "the surface frame. Tools -> Pose the molecules in the surface frame "
+                         "puts them there.")
+        self.schedule_display()
+
+    def clear_surface(self):
+        self.surface = None
+        self.controls.set_slab_label("no surface loaded")
+        self.controls.chk_slab.setChecked(False)
+        for g in ("slab", "slabframe", "slabsites"):
+            self.viewer.clear_group(g)
+        self.log("Surface slab forgotten")
+        self.schedule_display()
+
+    def plane_pose_dialog(self):
+        if self.ds is None or not self.ds.mols:
+            QMessageBox.information(self, "No molecules", "Open a data set first.")
+            return
+        dlg = PlanePoseDialog(list(self.ds.names), self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        self.pose_on_plane(**dlg.values())
+
+    def pose_on_plane(self, pose: str = "flat", height: float = 2.2,
+                      anchor_height: float = 2.0, ref_index: Optional[int] = None,
+                      refine: Optional[str] = None):
+        """Pose every molecule on the plane z = 0, by rule, and report the poses.
+
+        This is the frame the surface kernel and the overlap kernel of an adsorbate need: the
+        normal along z, the top atomic layer at z = 0.  The molecules are moved rigidly, so the
+        step joins the pose history and can be undone like any other alignment.
+        """
+        if self.ds is None or not self.ds.mols:
+            QMessageBox.information(self, "No molecules", "Open a data set first.")
+            return
+        self._remember_poses("Pose in the surface frame")
+        mols, names = list(self.ds.mols), list(self.ds.names)
+        # a reference is only used through the fields, so the field set is passed with it
+        fs = self.fieldset if ref_index is not None else None
+
+        def task(progress, cancel):
+            return plane_align_dataset(mols, names, pose=pose, height=height,
+                                       anchor_height=anchor_height, ref_index=ref_index,
+                                       fieldset=fs, refine=refine,
+                                       progress=lambda i, n: progress(
+                                           f"Posing {i} of {n}", i / max(n, 1)))
+
+        def done(poses):
+            self.plane_poses = poses
+            kinds = {}
+            for p in poses:
+                kinds[p.label] = kinds.get(p.label, 0) + 1
+            self.log(f"{len(poses)} molecules posed in the surface frame ("
+                     + ", ".join(f"{v} {k}" for k, v in sorted(kinds.items())) + ")")
+            self.controls.chk_slab_frame.setChecked(True)
+            self._after_poses_changed()          # rebuilds the fields and drops the model
+            self._show_plane_poses()
+
+        self.run_task(task, done, "Posing in the surface frame")
+
+    def _show_plane_poses(self) -> None:
+        """List the height and the tilt of every pose in the Results panel."""
+        if not self.molfields:
+            return
+        cols, rows = pose_table([m.coords for m in self.molfields],
+                                [m.symbols for m in self.molfields], list(self.ds.names))
+        heights = np.array([float(r[1]) for r in rows])
+        tilts = np.array([float(r[3]) for r in rows])
+        header = (f"{len(rows)} molecules in the surface frame: the lowest heavy atom sits "
+                  f"{heights.min():.2f} to {heights.max():.2f} A above the surface and the tilt "
+                  f"runs from {tilts.min():.0f} to {tilts.max():.0f} degrees. The surface kernel "
+                  f"sees only these two numbers: where a molecule sits in the plane and how it "
+                  f"is turned about the normal are what it is invariant to.")
+        self.results_panel.set_surface_poses(header, cols, rows)
+
+    def _draw_surface(self, shown: List[int], cur: int) -> List[str]:
+        """Draw the slab, the frame axes and the surface sites; return the legend lines."""
+        vc = self.controls
+        lines: List[str] = []
+        if not vc.chk_slab.isChecked():
+            return lines
+        if self.surface is None:
+            return ["surface slab: load one or build one (File menu)"]
+        idx = shown or ([cur] if cur >= 0 else [])
+        pts = (np.concatenate([self.molfields[i].coords for i in idx]) if idx
+               else np.zeros((1, 3)))
+        radius = vc.slab_radius()
+        coords, symbols, radii = drawn_atoms(self.surface, pts, radius=radius)
+        if not len(coords):
+            return [f"surface slab: no atom within {radius:g} Å of the molecules in the plane"]
+        if vc.slab_style() == "balls":
+            self.viewer.add_atoms(coords, symbols, "slab", radii=radii, alpha=0.95)
+        else:
+            self.viewer.add_points(coords, symbols, "slab", size=7.0, alpha=0.85)
+        lines.append(f"{self.surface.name}: {len(coords)} surface atoms within {radius:g} Å of "
+                     f"the molecules in the plane, top layer at z = 0")
+        if vc.chk_slab_frame.isChecked():
+            span = float(np.ptp(coords[:, :2], axis=0).max()) if len(coords) > 1 else 6.0
+            self.viewer.add_frame(np.zeros(3), "slabframe", length=max(3.0, 0.3 * span))
+            lines.append("surface frame: x red and y green in the surface, z blue along the "
+                         "normal, origin in the top atomic layer")
+        if vc.chk_slab_sites.isChecked():
+            labels, points = site_points(self.surface, pts, radius=radius)
+            if len(points):
+                colour = {"top": (0.95, 0.85, 0.20), "bridge": (0.30, 0.85, 0.85),
+                          "hollow": (0.85, 0.40, 0.95)}
+                self.viewer.add_spheres(points, np.full(len(points), 0.18),
+                                        [colour.get(x, (0.7, 0.7, 0.7)) for x in labels],
+                                        "slabsites", alpha=0.6)
+                counts = {k: labels.count(k) for k in sorted(set(labels))}
+                lines.append("surface sites: top yellow, bridge cyan, hollow magenta ("
+                             + ", ".join(f"{v} {k}" for k, v in counts.items()) + ")")
+        if cur >= 0:
+            lines.append("pose of " + pose_line(self.molfields[cur].coords,
+                                                self.molfields[cur].symbols,
+                                                self.ds.names[cur]))
+        return lines
+
+    def _draw_arrows(self, fname: str, flabel: str) -> List[str]:
+        """Draw the vector co-field of the electric-field kind as arrows (plan item EC5).
+
+        The co-field of every other field type is a value at a place and an isosurface shows it.
+        The electric-field kind pairs two molecules by the overlap of the gradients of their
+        fields, so what the model has to say at a place is a direction, and the arrow says it:
+        it points the way the molecule's own electric field should point there to raise the
+        predicted property.
+        """
+        vc = self.controls
+        if not vc.chk_arrows.isChecked():
+            return []
+        model = self.model
+        if model is None or self.grid is None:
+            return ["vector co-field: build a model and click 'Compute co-field'"]
+        names = [s.name for s in model.fieldset.specs]
+        if fname not in names:
+            return [f"vector co-field: the model has no {flabel} field"]
+        f = names.index(fname)
+        if model.fieldset.specs[f].kind != "efield":
+            return [f"vector co-field: the {flabel} field is a scalar, so its co-field is a "
+                    f"value at a place and the isosurface is its drawing; the arrows are for "
+                    f"the 'Electric field (vector)' field type, whose co-field is a direction"]
+        count = vc.arrow_count()
+        key = (fname, id(self.grid), count)
+        if self._arrows is None or self._arrows[0] != key:
+            points, vectors, _lengths = cofield_arrows(model, f, self.grid, count=count,
+                                                       min_separation=1.5)
+            self._arrows = (key, points, vectors)
+        _key, points, vectors = self._arrows
+        if not len(points):
+            return [f"the {flabel} co-field is flat: there is no direction to draw"]
+        longest = float(np.linalg.norm(vectors, axis=1).max())
+        if longest <= 0:
+            return [f"the {flabel} co-field is flat: there is no direction to draw"]
+        scale = 2.5 / longest                     # the longest arrow is 2.5 Å on screen
+        self.viewer.add_arrows(points, vectors, "arrows", scale=scale,
+                               color=(0.98, 0.80, 0.10), alpha=0.95)
+        return [f"vector co-field {flabel}: {len(points)} arrows, each pointing the way the "
+                f"molecule's own electric field should point there to raise the property; "
+                f"length is 2.5 Å on screen for the longest, which is {longest:.3g} "
+                f"activity units per unit of the field per Å"]
 
     def _binding_site(self, points: np.ndarray):
         """The site around `points`, recomputed only when the request changes."""
@@ -3254,7 +3612,8 @@ class MainWindow(QMainWindow):
     def update_display(self):
         v = self.viewer
         for g in ("molecules", "current", "cofield", "molfield", "overlap", "contrib", "protein",
-                  "shapfield", "labels", "sitelabels", "compsurf"):
+                  "shapfield", "labels", "sitelabels", "compsurf", "slab", "slabframe",
+                  "slabsites", "arrows"):
             v.clear_group(g)
         v.set_dark(self.controls.chk_dark.isChecked())
         if self.ds is None or not self.molfields:
@@ -3331,6 +3690,9 @@ class MainWindow(QMainWindow):
                                      size=8, offset=0.15)
                         txt += " = " + ", ".join(res[:40]) + (" …" if len(res) > 40 else "")
                     legend.append(txt)
+
+        # --- the surface slab, behind everything else for the same reason the pocket is
+        legend += self._draw_surface(shown, cur)
         for i in shown:
             mol = self._display_mol(i, show_h)
             if i == cur:
@@ -3400,6 +3762,9 @@ class MainWindow(QMainWindow):
                                   f"negative = {_cname(neg_c)}, iso = ±{frac * amax:.3g}")
                 else:
                     legend.append(f"co-field {flabel} is zero everywhere")
+
+        # --- the vector co-field of the electric-field kind, as arrows (plan item EC5)
+        legend += self._draw_arrows(fname, flabel)
 
         # --- molecular field of the current molecule (no model needed)
         if vc.chk_molfield.isChecked():

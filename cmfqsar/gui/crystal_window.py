@@ -51,6 +51,7 @@ from ..model import CMFModel, grid_search
 from ..periodic import (crystal_fields, crystal_table, crystal_targets, elements_in,
                         inorganic_fieldset, overlap_cutoff, periodic_channel_labels,
                         read_crystal_set, top_channels)
+from .copattern_panel import CoPatternChart
 from .viewer3d import Viewer3D, cofield_colors, color_name as _cname, signed_spheres
 from .workers import TaskWorker
 
@@ -450,7 +451,13 @@ class CrystalWindow(QMainWindow):
         head.addWidget(self.cmb_reading)
         head.addStretch(1)
         wl.addLayout(head)
-        wl.addWidget(self.reading, 1)
+        # the ranked channels on the left, the same numbers as a curve on the right: the table
+        # says which channel, the chart says what the shape over distance is (plan item NT9)
+        split = QHBoxLayout()
+        split.addWidget(self.reading, 1)
+        self.chart = CoPatternChart()
+        split.addWidget(self.chart, 1)
+        wl.addLayout(split, 1)
         self.text_log = QTextBrowser()
         self.tabs.addTab(self.text_stats, "Statistics")
         self.tabs.addTab(wrap, "Reading")
@@ -808,11 +815,23 @@ class CrystalWindow(QMainWindow):
     def update_reading(self, *_):
         self.reading.setRowCount(0)
         if self.model is None or not self.model.is_linear:
+            self.chart.clear("Build a model on the periodic field autocorrelation to see its "
+                             "co-pattern.")
             return
         cur = self.current_index()
+        channels = (self.cmb_reading.currentIndex() == 0
+                    and not getattr(self.model, "pbc_overlap", False))
+        if channels:
+            self.chart.set_model(self.model, self.model.fieldset)
+        else:
+            self.chart.clear(
+                "The chart is the co-pattern of the model: choose 'the model: the co-pattern "
+                "over the channels' above."
+                if not getattr(self.model, "pbc_overlap", False) else
+                "The periodic overlap kernel has a co-field, which is the map in the 3D view; "
+                "the chart is for the kernel that has none.")
         try:
-            if self.cmb_reading.currentIndex() == 0 and not getattr(self.model, "pbc_overlap",
-                                                                    False):
+            if channels:
                 cols, rows = reading_rows(self.model, self.model.fieldset)
             elif cur < 0:
                 return

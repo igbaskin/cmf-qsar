@@ -1,0 +1,36 @@
+{
+ "models": [
+  {
+   "what": "periodic autocorrelation, 13 COD electrolytes",
+   "n_channels": 126,
+   "n_pairs": 6,
+   "points_per_curve": 21,
+   "grouped": 1,
+   "prediction_residual": 7.815970093361102e-14,
+   "y_sd": 16.33336832388769,
+   "seconds_per_curve": 7.478396097819011e-05,
+   "axis": "distance between the two atoms (A)",
+   "leading_pair": "Electrostatic",
+   "leading_share": 0.26409798270647183,
+   "leading_peak_at": 8.0,
+   "leading_peak": 3.258840675874863,
+   "n_structures": 13
+  },
+  {
+   "what": "surface autocorrelation, 73 Fe(110) adsorbates",
+   "n_channels": 3672,
+   "n_pairs": 6,
+   "points_per_curve": 17,
+   "grouped": 36,
+   "prediction_residual": 1.9539925233402755e-12,
+   "y_sd": 63.778291017725444,
+   "seconds_per_curve": 0.0010888973871866863,
+   "axis": "in-plane distance between the two atoms (A)",
+   "leading_pair": "Electrostatic x Hydrophobic",
+   "leading_share": 0.278969982905835,
+   "leading_peak_at": 2.25,
+   "leading_peak": 16.76193865475963,
+   "n_structures": 73
+  }
+ ]
+}

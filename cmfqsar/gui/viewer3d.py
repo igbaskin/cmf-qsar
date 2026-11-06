@@ -450,6 +450,79 @@ class Viewer3D(QWidget):
                              glOptions="translucent")
         self._add(group, item)
 
+    # -------------------------------------------------------------- arrows
+    def add_arrows(self, points: np.ndarray, vectors: np.ndarray, group: str,
+                   scale: float = 1.0, color=(0.95, 0.85, 0.20), alpha: float = 0.95,
+                   shaft_radius: float = 0.07, head_radius: float = 0.20,
+                   head_fraction: float = 0.35, min_length: float = 0.15) -> None:
+        """One arrow per point: a cylinder with a cone on its end, pointing along the vector.
+
+        This is how a field that is a **direction** is drawn.  The co-field of a scalar field is
+        a value at a place and is drawn as an isosurface; the co-field of the electric-field kind
+        (plan item EC5) is a vector at a place, and only an arrow can show it.  `scale` is
+        angstrom per unit of the vector, so the drawing's length scale is a number the caller
+        states in the legend; an arrow shorter than `min_length` angstrom after scaling is left
+        out, because a dot in the picture carries no direction.
+        """
+        pts = np.asarray(points, float).reshape(-1, 3)
+        vec = np.asarray(vectors, float).reshape(-1, 3)
+        if not len(pts):
+            return
+        cyl = MeshData.cylinder(rows=1, cols=10, radius=[1.0, 1.0], length=1.0)
+        cv, cf = cyl.vertexes(), cyl.faces()
+        cone = MeshData.cylinder(rows=1, cols=10, radius=[1.0, 0.0], length=1.0)
+        nv, nf = cone.vertexes(), cone.faces()
+        verts, faces, cols = [], [], []
+        off = 0
+        rgba = np.array(tuple(color[:3]) + (alpha,))
+        for p, d in zip(pts, vec):
+            L = float(np.linalg.norm(d)) * float(scale)
+            if L < float(min_length):
+                continue
+            R = _rotation_to(d / max(float(np.linalg.norm(d)), 1e-12))
+            head = L * float(head_fraction)
+            stem = max(L - head, 1e-6)
+            s = cv.copy()
+            s[:, :2] *= float(shaft_radius)
+            s[:, 2] *= stem
+            verts.append(s @ R.T + p)
+            faces.append(cf + off)
+            cols.append(np.tile(rgba, (len(cv), 1)))
+            off += len(cv)
+            h = nv.copy()
+            h[:, :2] *= float(head_radius)
+            h[:, 2] *= head
+            verts.append(h @ R.T + p + (R @ np.array([0.0, 0.0, stem])))
+            faces.append(nf + off)
+            cols.append(np.tile(rgba, (len(nv), 1)))
+            off += len(nv)
+        if not verts:
+            return
+        item = gl.GLMeshItem(vertexes=np.concatenate(verts), faces=np.concatenate(faces),
+                             vertexColors=np.concatenate(cols), smooth=True, shader="shaded",
+                             glOptions="translucent" if alpha < 1 else "opaque")
+        self._add(group, item)
+
+    def add_frame(self, origin, group: str, length: float = 4.0,
+                  labels: Sequence[str] = ("x", "y", "z"), alpha: float = 0.95) -> None:
+        """The three axes of a frame as arrows at `origin`, red, green and blue, with labels.
+
+        A surface frame is a convention -- the normal is z and the top atomic layer is z = 0 --
+        and a convention that is not drawn is a convention a reader has to take on trust.  The
+        colours are the same as the lattice vectors of a cell carry, so the two views agree.
+        """
+        o = np.asarray(origin, float).reshape(3)
+        colors = ((0.90, 0.25, 0.25), (0.30, 0.85, 0.30), (0.35, 0.50, 0.95))
+        for k in range(3):
+            d = np.zeros(3)
+            d[k] = 1.0
+            self.add_arrows(o[None, :], d[None, :] * float(length), group, scale=1.0,
+                            color=colors[k], alpha=alpha, shaft_radius=0.05, head_radius=0.16,
+                            head_fraction=0.22)
+        if labels:
+            pos = np.array([o + np.eye(3)[k] * float(length) * 1.12 for k in range(3)])
+            self.add_labels(pos, list(labels)[:3], group, color=(0.95, 0.95, 0.95), size=9)
+
     # -------------------------------------------------------- isosurfaces
     def add_isosurface(self, verts: np.ndarray, faces: np.ndarray, color, group: str,
                        alpha: float = 0.45, wireframe: bool = False, normals: Optional[np.ndarray] = None) -> None:
