@@ -224,11 +224,152 @@ def check_molecules(model: CMFModel, mf: Sequence[MoleculeFields]) -> List[Findi
     return out
 
 
+#: how far a cell's lattice vectors may differ from the training mean before the frame of the
+#: periodic overlap kernel is doubted, as a fraction.  The kernel compares two cells point by
+#: point, so it is the crystal form of the frame check above
+LATTICE_MARGIN = 0.10
+
+
+def check_crystals(model: CMFModel, crystals: Sequence) -> List[Finding]:
+    """Compare periodic structures about to be predicted with the training cells of the model.
+
+    A crystal is prepared differently from a molecule, so the questions are different ones: the
+    structure must carry a lattice, its elements must be ones the fields can see, the
+    electrostatic weights must come from where they came from in training, and -- for the
+    periodic overlap kernel, which compares two cells point by point -- the cells must stand on
+    about one lattice.  The levels mean what they mean for molecules: ``refuse`` is a prediction
+    that would be silently wrong, ``warn`` is one to look at, ``note`` is worth knowing.
+    """
+    from .periodic import lattice_spread
+
+    out: List[Finding] = []
+    prov = dict(getattr(model, "provenance", None) or {})
+    if not prov:
+        out.append(Finding("note", "no-provenance",
+                           "the model file records nothing about how its training cells were "
+                           "prepared; the checks below use the training structures stored in it"))
+    else:
+        from . import __version__
+        if prov.get("cmfqsar") and prov["cmfqsar"] != __version__:
+            out.append(Finding("note", "version",
+                               f"the model was written by cmfqsar {prov['cmfqsar']}; this is "
+                               f"{__version__}"))
+    if not crystals:
+        return out
+    train = list(getattr(model.train, "molecules", []) or [])
+
+    # 1. a lattice: without one there is no periodic field and no image sum
+    flat = [i for i, c in enumerate(crystals)
+            if getattr(c, "cell", None) is None
+            or abs(float(np.linalg.det(np.asarray(c.cell, float).reshape(3, 3)))) < 1e-9]
+    if flat:
+        out.append(Finding(
+            "refuse", "no-cell",
+            f"{len(flat)} of {len(crystals)} structures carry no usable unit cell "
+            f"({_names(crystals, flat)}): a periodic kernel sums over the images of the cell, "
+            f"so there is nothing to predict from. Read them from a CIF, a POSCAR or an "
+            f"extended-XYZ file that holds the lattice."))
+
+    # 2. the elements: one the field set does not name is invisible, or lands in 'other'
+    listed = {sp.name[4:] for sp in model.fieldset.specs if sp.is_cif and sp.enabled}
+    has_other = "other" in listed
+    seen = {s for c in train for s in c.symbols}
+    if listed - {"other"}:
+        unlisted = sorted({s for c in crystals for s in c.symbols} - listed)
+        if unlisted and has_other:
+            out.append(Finding(
+                "warn", "elements",
+                f"{len(unlisted)} elements of these structures have no indicator field of their "
+                f"own ({', '.join(unlisted)}): they share the field 'cif:other', so the model "
+                f"cannot tell them apart. Only the physico-chemical fields distinguish them."))
+        elif unlisted:
+            out.append(Finding(
+                "refuse", "elements",
+                f"{len(unlisted)} elements of these structures have no field at all "
+                f"({', '.join(unlisted)}): the field set names indicator fields and none of "
+                f"them, and no 'cif:other' field collects the rest, so those atoms carry no "
+                f"indicator weight. Refit with these elements listed."))
+    if seen:
+        unseen = sorted({s for c in crystals for s in c.symbols} - seen)
+        if unseen:
+            out.append(Finding(
+                "warn", "new-elements",
+                f"the training cells contain no {', '.join(unseen)}; a prediction for a "
+                f"structure made of elements the model has never seen is an extrapolation"))
+
+    # 3. the electrostatic weights: the same source as in training, or the field is another field
+    if any(sp.name == "electrostatic" and sp.enabled for sp in model.fieldset.specs):
+        want = {getattr(c, "charge_source", "") for c in train if getattr(c, "charge_source", "")}
+        got = {getattr(c, "charge_source", "") for c in crystals}
+        new = sorted(s for s in got - want if s)
+        if want and new:
+            out.append(Finding(
+                "warn", "charges",
+                f"the electrostatic field of the training cells came from "
+                f"{', '.join(sorted(want))} and these structures give it from "
+                f"{', '.join(new)}: the two are not the same field. Supply the same kind of "
+                f"charges, or refit."))
+
+    # 4. one lattice, for the kernel that needs one
+    if getattr(model, "pbc_overlap", False) and train:
+        from .fields import AtomTable
+        spread = lattice_spread(AtomTable.from_molecules(train))
+        mean_len = np.mean([np.linalg.norm(np.asarray(c.cell, float).reshape(3, 3), axis=1)
+                            for c in train], axis=0)
+        tol = max(float(spread.get("length_spread", 0.0)), LATTICE_MARGIN)
+        off = []
+        for i, c in enumerate(crystals):
+            if getattr(c, "cell", None) is None:
+                continue
+            lens = np.linalg.norm(np.asarray(c.cell, float).reshape(3, 3), axis=1)
+            if np.any(np.abs(lens - mean_len) / np.maximum(mean_len, 1e-12) > tol):
+                off.append(i)
+        if off:
+            out.append(Finding(
+                "warn", "lattice",
+                f"{len(off)} of {len(crystals)} cells lie further from the training lattice than "
+                f"the training set's own spread allows ({_names(crystals, off)}): their lattice "
+                f"vectors differ from the mean training cell by more than {100 * tol:.0f} %. The "
+                f"periodic overlap kernel compares two cells point by point, so a cell on "
+                f"another lattice is compared in a frame that does not exist, which is what a "
+                f"bad alignment is for molecules."))
+
+    # 5. partial occupancy: the exact mean field of a disordered site is not an ordered site
+    dis_train = sum(1 for c in train if getattr(c, "site_species", None) is not None)
+    dis_new = [i for i, c in enumerate(crystals) if getattr(c, "site_species", None) is not None]
+    if dis_new and not dis_train:
+        out.append(Finding(
+            "warn", "occupancy",
+            f"{len(dis_new)} of {len(crystals)} structures carry partly occupied sites "
+            f"({_names(crystals, dis_new)}) and no training cell does: their fields are the "
+            f"occupancy-weighted mean over the species of each site, which is a different "
+            f"quantity from the fields of an ordered cell"))
+    elif dis_train and not dis_new:
+        out.append(Finding(
+            "note", "occupancy",
+            f"{dis_train} of the {len(train)} training cells carry partly occupied sites and "
+            f"none of these structures does"))
+    return out
+
+
 def summary(model: CMFModel) -> str:
     """One line on how the model's training set was prepared, from its provenance."""
     p = dict(getattr(model, "provenance", None) or {})
     if not p:
         return "model file without provenance (written before version 1.0.0 recorded it)"
+    if bool(getattr(model, "pbc_overlap", False)) or model.kernel_source == "periodic":
+        # a crystal has no hydrogens to count and no increment scheme; what it has is a lattice,
+        # a set of elements and a source for the electrostatic weights
+        cells = list(getattr(model.train, "molecules", []) or [])
+        elements = sorted({s for c in cells for s in c.symbols})
+        atoms = np.mean([c.n_atoms for c in cells]) if cells else float("nan")
+        kernel = ("periodic overlap kernel" if getattr(model, "pbc_overlap", False)
+                  else "periodic field autocorrelation")
+        return (f"cmfqsar {p.get('cmfqsar', '?')}, {p.get('created', '?')[:10]}: "
+                f"{p.get('n_train', '?')} training cells, {len(p.get('fields', []))} fields, "
+                f"{kernel}, electrostatic weights from '{p.get('charge_model', '?')}', "
+                f"{atoms:.0f} atoms per cell on average, elements "
+                f"{', '.join(elements) if elements else 'unknown'}")
     charges = {"file": "charges from the file", "gasteiger": "Gasteiger charges",
                "mmff": "MMFF charges"}.get(p.get("charge_source"), "charges of unknown origin")
     h = p.get("explicit_hydrogens")

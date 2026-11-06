@@ -1,0 +1,69 @@
+{
+ "limit": 20,
+ "spacing": 0.5,
+ "models": [
+  {
+   "what": "periodic autocorrelation on 13 COD electrolytes",
+   "kernel": "autocorrelation",
+   "n_cells": 13,
+   "fields": [
+    "Electrostatic",
+    "Steric",
+    "electronegativity",
+    "CIF Ge",
+    "CIF La",
+    "CIF Li",
+    "CIF O",
+    "CIF P",
+    "CIF Ti",
+    "CIF Zr",
+    "CIF other"
+   ],
+   "fit_seconds": 3.7540242671966553,
+   "q2": 0.07131995105725131,
+   "rmse_cv": 15.740148068838044,
+   "target": "Li sites per cubic nanometre",
+   "cutoff": 10.0,
+   "split": "one contribution per site, from the split of the autocorrelation over the sites (plan item M5); they sum to the prediction less the bias",
+   "split_seconds": 0.3069981575012207,
+   "split_residual": 5.684341886080802e-14,
+   "lattice_spread": 1.1051957127069005,
+   "y_sd": 16.33336832388769
+  },
+  {
+   "what": "periodic overlap kernel on 20 single-atom sheets",
+   "kernel": "overlap",
+   "n_cells": 20,
+   "fields": [
+    "Steric",
+    "electronegativity",
+    "CIF C",
+    "CIF other"
+   ],
+   "fit_seconds": 2.1390349864959717,
+   "q2": 0.9903666022782671,
+   "rmse_cv": 0.0330631410885628,
+   "target": "sac_hoer.csv [height]",
+   "cutoff": 10.513043539513864,
+   "split": "one contribution per atom of the cell (decomposition rule 3 of the overlap kernel); they sum to the prediction less the bias",
+   "split_seconds": 0.0933119773864746,
+   "split_residual": 0.007320136616765338,
+   "lattice_spread": 0.0036490990691265433,
+   "y_sd": 0.336863816706466,
+   "cofield_seconds": 1.3584661483764648,
+   "cofield_field": "Steric",
+   "cofield_points": 30744,
+   "cofield_shape": [
+    61,
+    36,
+    14
+   ],
+   "cofield_spacing": 0.5,
+   "cofield_peak": 0.09142165339226804,
+   "truncation": 8.173066102744682e-15,
+   "truncation_cutoff": 10.513043539513864,
+   "largest_site": "Ag",
+   "largest_is_the_metal": true
+  }
+ ]
+}

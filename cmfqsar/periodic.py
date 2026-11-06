@@ -97,6 +97,7 @@ from __future__ import annotations
 
 import dataclasses
 import functools
+import os
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -755,16 +756,20 @@ def _box_distance(points: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> np.ndar
     return np.sqrt((d * d).sum(axis=1))
 
 
-def cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """(coordinates, weights, radii) of the atoms of one cell and of every image within `r_max`.
+def cell_image_indices(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray]:
+    """(coordinates, source index) of the atoms of one cell and of every image within `r_max`.
+
+    The first rows are the cell itself in its own order, and every later row is an image of the
+    atom whose index stands beside it.  Everything an image atom carries besides its position --
+    the field weights, the radius, the element -- is therefore read from the cell through that
+    index: :func:`cell_images` takes the weights and radii that way, and a viewer takes the
+    element and its colour.
 
     "Within `r_max`" is measured from the box the cell spans, not from the atoms of this
     structure, so the same expansion serves every structure of the series: an image that is
     needed by a neighbour's atom is kept even where this structure has no atom near it.
     """
     coords = np.asarray(crystal.coords, float)
-    weights = np.asarray(crystal.weights, float)
-    radii = np.asarray(crystal.radii, float)
     cell = getattr(crystal, "cell", None)
     if cell is None:
         raise ValueError(f"{crystal.name or 'this structure'} carries no unit cell; the periodic "
@@ -773,7 +778,8 @@ def cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarr
     corners = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1],
                         [1, 1, 0], [1, 0, 1], [0, 1, 1], [1, 1, 1]], float) @ A
     lo, hi = corners.min(axis=0), corners.max(axis=0)
-    out_x, out_w, out_r = [coords], [weights], [radii]
+    all_rows = np.arange(len(coords))
+    out_x, out_i = [coords], [all_rows]
     for T in image_translations(A, float(r_max), _pbc_of(crystal)):
         if not np.any(T):
             continue
@@ -781,10 +787,19 @@ def cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarr
         keep = _box_distance(moved, lo, hi) <= float(r_max)
         if keep.any():
             out_x.append(moved[keep])
-            out_w.append(weights[keep])
-            out_r.append(radii[keep])
-    return (np.concatenate(out_x, axis=0), np.concatenate(out_w, axis=0),
-            np.concatenate(out_r, axis=0))
+            out_i.append(all_rows[keep])
+    return np.concatenate(out_x, axis=0), np.concatenate(out_i, axis=0)
+
+
+def cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """(coordinates, weights, radii) of the atoms of one cell and of every image within `r_max`.
+
+    The expansion itself is :func:`cell_image_indices`; the weights and radii of an image are
+    those of the atom it is an image of.
+    """
+    coords, idx = cell_image_indices(crystal, r_max)
+    return (coords, np.asarray(crystal.weights, float)[idx],
+            np.asarray(crystal.radii, float)[idx])
 
 
 def overlap_cutoff(specs: Sequence[FieldSpec], radii_max: float = 2.0) -> float:
@@ -1926,6 +1941,107 @@ def read_structures(path: str, index: str = ":") -> list:
         except Exception:
             return out
     return out
+
+
+#: file name endings a folder of periodic structures is searched for, lower-cased.  A POSCAR or
+#: CONTCAR written by VASP has no ending at all, so those two names are taken as well.
+STRUCTURE_SUFFIXES: Tuple[str, ...] = (".cif", ".vasp", ".poscar", ".contcar", ".extxyz", ".xyz",
+                                      ".json", ".traj", ".cell", ".res", ".xsf", ".pwo")
+
+
+def structure_files(folder: str) -> List[str]:
+    """The structure files of a folder, sorted by name.
+
+    A file is taken when its name ends in one of :data:`STRUCTURE_SUFFIXES`, or when it is called
+    POSCAR or CONTCAR, which VASP writes without an ending.  Nothing is read here, so a folder
+    that also holds notes, CSV files and pictures costs nothing.
+    """
+    out = []
+    for entry in sorted(os.listdir(folder)):
+        path = os.path.join(folder, entry)
+        if not os.path.isfile(path):
+            continue
+        low = entry.lower()
+        if low.endswith(STRUCTURE_SUFFIXES) or low.split(".")[0] in ("poscar", "contcar"):
+            out.append(path)
+    return out
+
+
+def pbc_flags(letters: str) -> Tuple[bool, bool, bool]:
+    """Which lattice directions are periodic, from letters: ``abc``, ``ab``, ``a``, or ``xyz``.
+
+    ``abc`` is a crystal, ``ab`` a layer with the vacuum along the third vector, ``a`` a chain.
+    """
+    s = str(letters or "").lower().replace("x", "a").replace("y", "b").replace("z", "c")
+    return tuple(ax in s for ax in "abc")
+
+
+def read_crystal_set(path: str, pbc: Optional[str] = None,
+                     index: str = ":") -> Tuple[list, List[str]]:
+    """A set of periodic structures with a name for each: one file, or a folder of files.
+
+    A folder is read file by file (:func:`structure_files`) and every structure is named after
+    its file, which is how a set of CIFs downloaded from a database arrives.  A single file may
+    hold one structure or many; a structure that carries a ``name`` info key keeps it, and the
+    rest are named ``<formula>_<index>``.
+
+    ``pbc`` sets which lattice directions are periodic for every structure
+    (:func:`pbc_flags`); without it the files decide.  A structure that is not periodic in all
+    three directions is gathered about the middle of its cell (:func:`centre_layer`), because a
+    layer or a chain a file leaves split across the cell boundary has no mean plane.
+    """
+    if os.path.isdir(path):
+        files = structure_files(path)
+        if not files:
+            raise ValueError(f"{path} holds no structure file; the endings read are "
+                             f"{', '.join(STRUCTURE_SUFFIXES)}, POSCAR and CONTCAR")
+        atoms, names = [], []
+        for f in files:
+            got = read_structures(f, index=index)
+            stem = os.path.splitext(os.path.basename(f))[0]
+            for k, a in enumerate(got):
+                atoms.append(a)
+                names.append(stem if len(got) == 1 else f"{stem}_{k}")
+    else:
+        atoms = read_structures(path, index=index)
+        stem = os.path.splitext(os.path.basename(path))[0]
+        names = [str(a.info.get("name", stem if len(atoms) == 1
+                                else f"{a.get_chemical_formula()}_{k}"))
+                 for k, a in enumerate(atoms)]
+    if pbc:
+        flags = pbc_flags(pbc)
+        for a in atoms:
+            a.set_pbc(flags)
+    if any(not all(a.get_pbc()) for a in atoms):
+        atoms = [centre_layer(a) for a in atoms]
+    for a, nm in zip(atoms, names):
+        a.info.setdefault("name", nm)
+    return atoms, names
+
+
+def crystal_targets(structures: Sequence, names: Sequence[str], key: Optional[str] = None,
+                    csv: Optional[str] = None, column: Optional[str] = None) -> np.ndarray:
+    """The target value of every structure, from an info key of the files or from a CSV.
+
+    ``key`` reads ``info[key]`` of each structure, which is where an extended-XYZ or ASE JSON
+    file keeps a per-structure property; ``csv`` reads a table whose first column holds the
+    names and matches it on them, taking the second column or the one ``column`` names.  A
+    structure with no value gets NaN, and the caller decides what to do with it.
+    """
+    y = np.full(len(names), np.nan)
+    if csv:
+        from .dataio import read_activities_csv
+        table = read_activities_csv(csv, column=column)
+        for i, nm in enumerate(names):
+            if nm in table:
+                y[i] = float(table[nm])
+    elif key:
+        for i, a in enumerate(structures):
+            try:
+                y[i] = float(a.info[key])
+            except (KeyError, TypeError, ValueError):
+                y[i] = np.nan
+    return y
 
 
 def structures_from_matbench(table: dict, target: Optional[str] = None):

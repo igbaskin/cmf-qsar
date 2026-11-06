@@ -496,6 +496,14 @@ def registry() -> List[Benchmark]:
                   minutes="20",
                   report=lambda: _mod("run_sites").report(),
                   tables=["sites/table.md"]),
+        Benchmark("cell_view",
+                  "a periodic structure in the application: what one cell with its images "
+                  "costs to show, and whether the site colouring and the co-field inside the "
+                  "cell add up (the window is driven without a screen)",
+                  "run_cell_view.py", "cell_view", compute=[[]],
+                  minutes="3",
+                  report=lambda: _mod("run_cell_view").write_table(_r("cell_view")),
+                  tables=["cell_view/table.md"]),
         Benchmark("reciprocal",
                   "reciprocal-space channels of a crystal against the real-space "
                   "autocorrelation: the typed structure factors added to a short and a long "
