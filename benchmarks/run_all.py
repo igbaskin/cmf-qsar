@@ -908,6 +908,13 @@ def _sha256(path, block=1 << 20):
     return h.hexdigest()
 
 
+def _text_sha256(path):
+    """The hash of a text file with CRLF read as LF: what docs/make_manual.py records for the
+    manual, so that a Windows checkout and a Linux one agree on whether the PDF is current."""
+    with open(path, "rb") as fh:
+        return hashlib.sha256(fh.read().replace(b"\r\n", b"\n")).hexdigest()
+
+
 def _git(*args):
     try:
         return subprocess.check_output(["git", *args], cwd=ROOT, text=True,
@@ -1011,7 +1018,7 @@ def check_documents() -> List[str]:
     else:
         recorded = [ln.split()[0] for ln in _read(stamp).splitlines()
                     if ln.strip() and not ln.startswith("#")]
-        if not recorded or recorded[0] != _sha256(manual):
+        if not recorded or recorded[0] != _text_sha256(manual):
             problems.append("docs/CMF_manual.pdf was built from an older docs/manual.md: "
                             "run python docs/make_manual.py")
     return problems
