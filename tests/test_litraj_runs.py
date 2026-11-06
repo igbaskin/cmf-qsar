@@ -407,3 +407,69 @@ def test_the_flatness_evidence_covers_every_setting():
         "the row length item M15 asks about is one of the settings"
     for s in settings:
         assert s["channels"] > 0 and s["lam"] > 0
+
+
+# ------------------------------------------------------------------ the free volume
+
+def test_the_free_volume_is_a_voronoi_cell_volume():
+    """The claim is that this is the published feature, so it must be that volume exactly."""
+    import numpy as np
+    radius, step = 3.0, 0.15
+    ball = 4.0 / 3.0 * np.pi * radius ** 3
+    empty = rl.free_volume(np.zeros((0, 3)), np.zeros(0), 0.0, radius, step, (None,))[0]
+    assert empty == pytest.approx(ball, rel=0.01), "with no neighbour the cell fills the ball"
+    # six neighbours on the axes at distance d, every radius equal: the bisector planes sit at
+    # d/2 and the cell is the cube of side d
+    for d in (2.0, 3.0):
+        pos = np.array([[d, 0, 0], [-d, 0, 0], [0, d, 0], [0, -d, 0], [0, 0, d], [0, 0, -d]])
+        got = rl.free_volume(pos, np.zeros(6), 0.0, radius, step, (None,))[0]
+        assert got == pytest.approx(d ** 3, rel=0.08), f"the cell of six at {d} is not the cube"
+    # a larger radius on the centre moves the boundary outwards, which is what makes this the
+    # radical cell rather than the plain one
+    pos = np.array([[2.0, 0.0, 0.0]])
+    small = rl.free_volume(pos, np.array([0.0]), 0.0, radius, step, (None,))[0]
+    large = rl.free_volume(pos, np.array([0.0]), 0.8, radius, step, (None,))[0]
+    assert large > small, "the radii do not enter the cell"
+
+
+def test_the_field_free_volume_converges_to_the_cell():
+    """A field carries this quantity only if the narrow-width limit is the cell itself."""
+    import numpy as np
+    pos = np.array([[2.5, 0, 0], [-2.5, 0, 0], [0, 2.5, 0], [0, -2.5, 0], [0, 0, 2.5],
+                    [0, 0, -2.5]], float)
+    v = rl.free_volume(pos, np.zeros(6), 0.0, 3.0, 0.15, (None, 0.5, 8.0, 128.0))
+    cell, wide, mid, narrow = v
+    assert abs(narrow - cell) < abs(wide - cell), "the narrow width is not closer to the cell"
+    assert narrow == pytest.approx(cell, rel=0.02), "the limit is not the cell"
+    assert wide > cell, "a wide Gaussian shares a point between neighbours and overcounts"
+    assert mid > 0
+
+
+def test_the_free_volume_features_are_the_published_aggregates():
+    import numpy as np
+    v = np.array([[1.0, 2.0, 6.0], [4.0, 4.0, 4.0]])
+    A = rl.free_volume_features(v)
+    assert A.shape == (2, len(rl.FREE_AGGREGATES))
+    raw = np.column_stack([v.min(axis=1), v.max(axis=1), v.mean(axis=1), v[:, 1]])
+    assert np.allclose(raw[0], [1.0, 6.0, 3.0, 2.0]), "the midpoint is the middle site"
+    for j in range(A.shape[1]):
+        if raw[:, j].std() > 0:
+            assert A[:, j].std() == pytest.approx(1.0), "the columns are not standardised"
+
+
+def test_the_free_volume_arm_names_the_cell_and_the_field():
+    with open(os.path.join(RESULTS, "public.json"), encoding="utf-8") as fh:
+        pub = json.load(fh)
+    settings = {s["setting"] for s in pub["free_settings"]}
+    assert settings == {rl.free_volume_name(b) for b in rl.FREE_BETAS}
+    assert "Voronoi cell" in settings, "the published feature itself has to be one of the rows"
+    assert len([s for s in settings if s.startswith("field")]) >= 2, \
+        "at least two widths, or the comparison with the cell says nothing"
+    pairs = {(p["a"], p["b"]) for p in pub["pairs"]}
+    assert ("nested free volume", "counts") in pairs, "rule 1 applies to a new descriptor"
+    assert ("nested three-distance and free volume", "nested three-distance") in pairs, \
+        "what the published feature adds to this program's kernel is the point of the arm"
+    arms = {m["kernel"] for m in pub["free_volume"]}
+    assert arms == {"free volume", "free volume with hop length and bottleneck",
+                    "three-distance and free volume"}
+    assert 0.0 in rl.FREE_MIX_WEIGHTS, "the mixture must be able to fall back on no free volume"

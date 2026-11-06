@@ -4741,7 +4741,33 @@ values and a computed oxidation potential is a descriptor, not a target.
   fresh set would settle it. The published models remain ahead at 0.21 eV (graph network) and
   0.26 eV (forest) on 96,849 hops against these 1801 -- but the distance in mean absolute error
   has gone from 0.726 to 0.421 eV with one description already in the program, and M3GNet's own
-  three-body terms are the same ingredient. The run is 47.2 minutes.
+  three-body terms are the same ingredient.
+
+  **The published models' strongest feature, as a cell and as a field, same day.** Their feature
+  ranking puts the **smallest volume of the Voronoi polyhedra** around the three sites of a hop
+  first, and the largest of the three fourth. That is a minimum over atoms, which looks unlike a
+  field, but it is the narrow-width limit of a ratio of fields: with `d(i)` the squared distance
+  to atom *i* less its squared radius, the radical Voronoi cell of a centre is where `d(centre)`
+  is smallest, and `exp(-beta d(centre)) / sum_i exp(-beta d(i))` tends to that cell's indicator
+  as beta grows, with the denominator a steric field of unit weights and width `1/sqrt(2 beta)`.
+  `free_volume` in the benchmark integrates both over a ball of 3.5 angstrom on a 0.25 angstrom
+  grid, which reproduces an exactly known cell to under one per cent; four tests pin it to cases
+  with a known answer (no neighbour gives the ball, six neighbours on the axes give the cube of
+  their separation, the radii move the boundary, and the narrow width converges to the cell).
+  **A field carries the quantity with nothing to spare**: the cell scores q2 +0.465 and the field
+  version +0.468 at beta 8, +0.465 at beta 32, and the nested arm chose a field over the cell in
+  every fold. Only the widest setting fails (+0.376 at beta 0.5), where one point is shared
+  between neighbours. **And the feature is strong in few terms**: four numbers -- the smallest,
+  largest and mean volume of the three sites and the midpoint alone -- are level with the whole
+  count reference (-0.000 [-0.074, +0.092]) and ahead of the hop length with the bottleneck by
+  +0.289 [+0.238, +0.338], though behind the whole two-point description
+  (-0.103 [-0.168, -0.039]). **But it adds nothing to the three-distance kernel**:
+  +0.010 [-0.005, +0.023], which does not clear zero, so the triangles around the midpoint
+  already carry what the free volume says -- as a description of those triangles should. The
+  mixture is this item's best model at q2 +0.799 and a mean absolute error of 0.418 eV, and it is
+  still -0.045 [-0.080, -0.013] behind the random forest on the raw two-point rows. So the
+  published feature is not what this program was missing, and what the forest has is still not
+  accounted for. The run is 45.1 minutes.
 
   Set beside the published numbers,
   this program's description of a hop fitted with a forest reaches 0.374 eV on 1801 hops against

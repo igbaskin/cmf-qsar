@@ -139,6 +139,44 @@ The whole span of those settings is 0.036 in q2, so the gain does not rest on th
 
 **One caution about this section.** The range of the grid was placed after a first look at this same sample. Nothing was chosen on a test fold, but the grid itself is not independent of the data, so a fresh set would settle it; how flat the settings are is what makes this a small worry rather than a large one.
 
+### The free volume at the three sites, as a cell and as a field
+
+The strongest single feature of the published models on this benchmark is the **smallest volume of the Voronoi polyhedra** around the three sites of the hop -- its start, its midpoint and its end -- with the largest of the three next in their ranking. That quantity is a minimum over atoms, which looks unlike a field, but it is the narrow-width limit of a ratio of fields. Writing d(i) for the squared distance from a point to atom i less that atom's squared radius, the radical Voronoi cell of the centre is where d(centre) is smallest, and
+
+        w(r) = exp(-beta d(centre)) / sum over i of exp(-beta d(i))
+
+tends to the indicator function of that cell as beta grows. The denominator is a steric field of this program with unit weights and a Gaussian of width 1/sqrt(2 beta), so the volume is the integral of a ratio of fields and the cell is its sharp limit. Both are measured below: the cell is the published feature and a width is this program's version of it.
+
+Each setting on its own, on the four columns the three sites give (their smallest, largest and mean volume, and the midpoint alone). The ridge is chosen on the folds these rows report, so they are the optimistic kind:
+
+| setting | q2 | mean absolute error (eV) | mean volume at the midpoint (A^3) |
+| --- | ---: | ---: | ---: |
+| Voronoi cell | +0.465 | 0.824 | 18.22 |
+| field, beta 32 | +0.465 | 0.823 | 18.22 |
+| field, beta 8 | +0.468 | 0.820 | 18.20 |
+| field, beta 2 | +0.467 | 0.817 | 17.86 |
+| field, beta 0.5 | +0.376 | 0.894 | 15.20 |
+
+**Can a field carry it?** The cell scores +0.465 and the best field version +0.468 (field, beta 8), a difference of -0.003: the field version loses nothing worth having.
+
+With the width and the ridge chosen inside each training part:
+
+| description | q2 | error (eV) | mean absolute error (eV) | chosen inside the folds |
+| --- | ---: | ---: | ---: | --- |
+| free volume | +0.468 | 1.389 | 0.820 | field, beta 8 |
+| free volume with hop length and bottleneck | +0.489 | 1.362 | 0.805 | field, beta 8 |
+| three-distance and free volume | +0.799 | 0.854 | 0.418 | weight 0.1, weight 0.5 |
+
+* Four numbers of free volume against the counts reference of rule 1: **-0.000 [-0.074, +0.092]**
+* against the hop length with the bottleneck: **+0.289 [+0.238, +0.338]**
+* against the whole two-point description fitted the same way: **-0.103 [-0.168, -0.039]**
+* Adding the cell to the three-distance kernel: **+0.010 [-0.005, +0.023]**
+* That mixture against the random forest on the raw two-point rows: **-0.045 [-0.080, -0.013]**
+
+**What this says.** Four numbers of free volume are level with the counts reference of the first table, which has hundreds of channels (-0.000 [-0.074, +0.092]), so the published feature is a strong descriptor in few terms. But adding it to the three-distance kernel is worth +0.010 [-0.005, +0.023], which does not clear zero: the three-distance block already carries what the free volume says, which is what a description of the triangles around the midpoint should carry. So the published feature is not what this program was missing.
+
+**One caution.** The volumes are integrated on a cubic grid of 0.25 angstrom inside a ball of 3.5 angstrom, which reproduces an exactly known cell to under one per cent but leaves the sharp cell with a little grid noise that the smooth versions mostly avoid. That favours the field versions slightly, so a cell that wins anyway has won against the arrangement.
+
 Both model classes learn at a rate of their own, and the rate is what the distance to the published training set has to be crossed at. The two curves below are measured on the same drawn subsets of structures:
 
 | training structures | q2, overlap in the hop frame | q2, invariant local, rows raw, random forest |

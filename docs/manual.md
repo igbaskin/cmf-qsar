@@ -9467,6 +9467,47 @@ not, and a forest on the three-distance rows is the obvious next arm; it was not
 range of the three-distance grid was placed after a first look at this same sample, so while
 nothing was chosen on a test fold, the grid is not independent of the data.
 
+#### A Voronoi volume is a ratio of fields
+
+The published models' own feature ranking puts the **smallest volume of the Voronoi polyhedra**
+around the three sites of a hop -- its start, its midpoint and its end -- first, and the largest
+of the three fourth. A Voronoi cell is defined by a minimum over atoms, which looks unlike
+anything this program computes, but it is the narrow-width limit of a ratio of fields. With
+$d_i(\mathbf r)=|\mathbf r-\mathbf r_i|^2-R_i^2$ the squared distance to atom $i$ less its squared
+radius, the radical (power) Voronoi cell of a centre $c$ is where $d_c$ is the smallest, and
+
+$$w_c(\mathbf r)=\frac{e^{-\beta d_c(\mathbf r)}}{\sum_i e^{-\beta d_i(\mathbf r)}}$$
+
+tends to the indicator function of that cell as $\beta$ grows, everywhere except its boundary. The
+denominator is a steric field with unit weights and a Gaussian of width $1/\sqrt{2\beta}$, so the
+volume is an integral of a ratio of fields and the Voronoi cell is its sharp limit.
+
+Both are measured, on four columns from the three sites (their smallest, largest and mean volume,
+and the midpoint alone):
+
+| setting | q2 | mean absolute error (eV) |
+| --- | ---: | ---: |
+| the Voronoi cell itself | +0.465 | 0.824 |
+| the field version, $\beta$ = 32 | +0.465 | 0.823 |
+| the field version, $\beta$ = 8 | +0.468 | 0.820 |
+| the field version, $\beta$ = 2 | +0.467 | 0.817 |
+| the field version, $\beta$ = 0.5 | +0.376 | 0.894 |
+
+**A field carries the quantity with nothing to spare.** The cell and the field version are level,
+and the nested arm chose a field over the cell in every fold. Only the widest setting fails, where
+one point of space is shared between neighbours instead of belonging to the nearest.
+
+**The feature is strong in few terms, and it adds nothing here.** Those four numbers are level
+with the whole count reference (-0.000 [-0.074, +0.092]), which has hundreds of channels, and
+ahead of the hop length with the bottleneck by +0.289 [+0.238, +0.338]; they remain behind the
+whole two-point description (-0.103 [-0.168, -0.039]). But adding them to the three-distance
+kernel is worth +0.010 [-0.005, +0.023], which does not clear zero: the triangles around the
+midpoint already carry what the free volume says, as a description of those triangles should. That
+mixture is the best model of this section at q2 +0.799 and a mean absolute error of 0.418 eV, and
+it is still -0.045 [-0.080, -0.013] behind the random forest on the raw two-point rows. So the
+published models' strongest feature is not what this program was missing, and what the forest has
+is still not accounted for.
+
 **What this means for the program.** On this task a graph network fitted on a hundred thousand
 barriers is still the most accurate model, and the published work shows a further step: a
 machine-learned interatomic potential that runs the elastic band itself reaches a mean absolute

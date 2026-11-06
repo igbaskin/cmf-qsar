@@ -2648,6 +2648,17 @@ kernel, and past the random forest on the two-point rows (+0.047 [-0.004, +0.096
 linear kernel on fields, so the co-field survives. A forest on the **raw** two-point rows remains
 ahead by -0.055 [-0.090, -0.023], and a forest on the three-distance rows was not run.
 
+**A Voronoi volume is a ratio of fields.** The published models' strongest feature is the smallest
+volume of the Voronoi polyhedra around the three sites of a hop. A cell is a minimum over atoms,
+but it is the narrow-width limit of `exp(-beta d(centre)) / sum_i exp(-beta d(i))`, whose
+denominator is a steric field of unit weights -- so the volume is an integral of a ratio of
+fields. Measured both ways, the field version is level with the cell (q2 +0.468 against +0.465)
+and the nested arm chose a field over the cell in every fold, so this program's own terms carry
+the quantity. Four such numbers match the whole count reference (-0.000 [-0.074, +0.092]), but
+they add +0.010 [-0.005, +0.023] to the three-distance kernel, which does not clear zero: the
+triangles around the midpoint already hold it. That mixture is the best model here, q2 +0.799 at
+0.418 eV, still -0.045 [-0.080, -0.013] behind the forest on raw rows.
+
 **Partial occupancy is exact and free (plan item M2).** A disordered site is a configurational
 ensemble, and for independently occupied sites its mean field is closed form: every site gets
 the occupancy-weighted weights of the species that share it, the overlap kernel of two mean

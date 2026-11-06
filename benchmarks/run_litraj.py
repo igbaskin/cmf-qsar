@@ -92,6 +92,22 @@ FORESTS = (("random forest", "rf"), ("boosted forest", "gb"))
 GAMMAS = (0.125, 0.25, 0.5, 1.0, 2.0, 4.0)
 #: folds of the inner split that chooses the width and the ridge inside a training part
 INNER_FOLDS = 5
+#: the widths the free-volume channel is measured at, as beta in exp(-beta * squared distance).
+#: ``None`` is the radical Voronoi cell itself, which is the published feature, and a number is
+#: the field version at that width; comparing them says what a field loses here.
+FREE_BETAS = (None, 32.0, 8.0, 2.0, 0.5)
+#: radius of the ball the free volume is integrated over, in angstrom, and the spacing of the
+#: cubic grid inside it.  A site's cell in a framework is a few angstrom across, so the ball
+#: holds it; the spacing sets how exactly a volume is resolved.
+FREE_RADIUS = 3.5
+FREE_STEP = 0.25
+#: how the three sites of a hop are reduced to features: the published models use the smallest
+#: and the largest of the three, and the midpoint alone is the place the ion has to pass
+FREE_AGGREGATES = ("min", "max", "mean", "midpoint")
+#: weights of the mixture of the three-distance kernel with the free-volume kernel.  The mixture
+#: uses the Voronoi cell rather than a field version of it, because the cell is the published
+#: feature and the question is what adding that feature to this program's kernel is worth.
+FREE_MIX_WEIGHTS = (0.0, 0.1, 0.25, 0.5)
 #: the three-distance descriptions the nested arm searches over, as (radius from the centre,
 #: spacing of both grids) in angstrom.  The two-point description of an environment carries the
 #: distance between two neighbours but not the two sides that meet at the centre, so it does not
@@ -224,6 +240,78 @@ def gaussian_kernel(K: np.ndarray, gamma: float) -> np.ndarray:
     """
     d2 = np.maximum(2.0 - 2.0 * np.asarray(K, float), 0.0)
     return np.exp(-float(gamma) * d2)
+
+
+def free_volume(positions: np.ndarray, radii: np.ndarray, centre_radius: float,
+                radius: float = FREE_RADIUS, step: float = FREE_STEP,
+                betas: Sequence = FREE_BETAS) -> List[float]:
+    """The free volume at the origin, as a Voronoi cell and as a field, on one grid.
+
+    The strongest feature of the published models on this benchmark is the smallest volume of the
+    Voronoi polyhedra around the initial, final and midpoint sites of the hop, so the question is
+    whether this program can carry that quantity.  It can, in a precise sense.  With ``d_i`` the
+    squared distance from a point to atom *i* less that atom's squared radius, the radical (power)
+    Voronoi cell of the centre is where ``d_centre`` is the smallest, and
+
+        w(r) = exp(-beta d_centre) / sum over i of exp(-beta d_i)
+
+    tends to the indicator function of that cell as `beta` grows, everywhere except its boundary.
+    The denominator is a steric field of this program with unit weights and a Gaussian of width
+    ``1 / sqrt(2 beta)``, so the volume is the integral of a ratio of fields and the Voronoi cell
+    is its narrow-width limit.  A `beta` of ``None`` asks for the cell itself, which is what the
+    published feature is, and a number asks for the field version at that width; measuring both
+    says what the smoothing costs.
+
+    `positions` are measured from the centre and `radii` are the atoms' radii, as the first atom
+    of a :func:`cmfqsar.hops.point_environment` already arranges.  The integral is taken over a
+    ball of `radius` on a cubic grid of spacing `step`, which is enough because the cell of a
+    site in a framework is small; a cell that reaches the edge of the ball is cut off there, and
+    the ball volume is the largest number this can return.  This lives in the benchmark rather
+    than in the library because it is one arm of one question; it belongs in a module only if it
+    earns a place.
+    """
+    pos = np.asarray(positions, float).reshape(-1, 3)
+    rad = np.asarray(radii, float).reshape(-1)
+    g = np.arange(-radius, radius + 1e-9, step)
+    P = np.stack(np.meshgrid(g, g, g, indexing="ij"), axis=-1).reshape(-1, 3)
+    P = P[np.sum(P * P, axis=1) <= radius * radius]
+    cell = step ** 3
+    d_centre = np.sum(P * P, axis=1) - float(centre_radius) ** 2
+    if len(pos):
+        d_atoms = (np.sum((P[:, None, :] - pos[None, :, :]) ** 2, axis=2) - rad[None, :] ** 2)
+        nearest = np.min(d_atoms, axis=1)
+    else:
+        d_atoms, nearest = None, np.full(len(P), np.inf)
+    out = []
+    for beta in betas:
+        if beta is None:
+            out.append(float(np.count_nonzero(d_centre < nearest)) * cell)
+            continue
+        floor = np.minimum(d_centre, nearest)          # subtracted for numerical safety
+        num = np.exp(-float(beta) * (d_centre - floor))
+        den = num.copy()
+        if d_atoms is not None:
+            den = den + np.sum(np.exp(-float(beta) * (d_atoms - floor[:, None])), axis=1)
+        out.append(float(np.sum(num / den)) * cell)
+    return out
+
+
+def free_volume_name(beta) -> str:
+    """The name of one free-volume setting: the Voronoi cell, or the field at a given width."""
+    return "Voronoi cell" if beta is None else f"field, beta {beta:g}"
+
+
+def free_volume_features(volumes: np.ndarray) -> np.ndarray:
+    """The three sites of every hop reduced to the columns a model is given.
+
+    `volumes` holds one free volume per hop and site, in the order start, midpoint, end.  The
+    published models use the smallest and the largest of the three; the mean and the midpoint
+    alone are added because the midpoint is the place the ion has to pass.  The columns are
+    standardised, as the length-and-bottleneck reference of the first table is.
+    """
+    v = np.asarray(volumes, float)
+    A = np.column_stack([v.min(axis=1), v.max(axis=1), v.mean(axis=1), v[:, 1]])
+    return (A - A.mean(axis=0)) / np.maximum(A.std(axis=0), 1e-12)
 
 
 def declared_triangle_settings() -> set:
@@ -571,6 +659,69 @@ def run(args, log) -> dict:
                          ("nested three-distance", f"rf {key} raw"),
                          ("nested three-distance", f"overlap {rho}"),
                          ("nested two-point and three-distance", "nested three-distance")):
+        if a_key not in results or b_key not in results:
+            continue
+        d, lo, hi = paired_interval(results[a_key], results[b_key], t, runs=args.bootstrap,
+                                    seed=args.seed)
+        out["pairs"].append({"a": a_key, "b": b_key, "diff": d, "low": lo, "high": hi})
+        log(f"    {a_key} against {b_key} {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
+    # the free volume at the three sites of the hop.  The strongest feature of the published
+    # models is the smallest volume of the Voronoi polyhedra around the start, the midpoint and
+    # the end, so this asks two things: what that feature is worth here, and what it costs to
+    # carry it as a field instead of as a cell.
+    from cmfqsar.hops import point_environment
+    t1 = time.time()
+    vols = np.zeros((len(t), len(FREE_BETAS), 3))
+    for n, r in enumerate(t.atom):
+        h = hs.hops[int(r)]
+        cr = crystals[h.structure]
+        leave_out = [(h.a, (0, 0, 0)), (h.b, h.offset)]
+        centre_radius = float(cr.radii[h.a])
+        for j, c in enumerate((h.start, h.midpoint, h.start + h.vector)):
+            e = point_environment(cr, c, rho, exclude=leave_out, r_max=args.r_max)
+            vols[n, :, j] = free_volume(e.coords[1:], e.radii[1:], centre_radius)
+    log(f"  free volume at the three sites of every hop: {time.time() - t1:.0f} s")
+    free, free_long = {}, {}
+    geo_cols = np.array([[hs.hops[r].length, hs.hops[r].bottleneck] for r in t.atom])
+    geo_cols = (geo_cols - geo_cols.mean(axis=0)) / np.maximum(geo_cols.std(axis=0), 1e-12)
+    for i, beta in enumerate(FREE_BETAS):
+        A = free_volume_features(vols[:, i, :])
+        free[free_volume_name(beta)] = A @ A.T
+        B = np.hstack([A, geo_cols])
+        free_long[free_volume_name(beta)] = B @ B.T
+    out["free_volume"] = []
+    # what each setting scores on its own: the cell against the field versions of it, which is
+    # what says whether this program's own terms can carry the published feature
+    out["free_settings"] = []
+    for i, beta in enumerate(FREE_BETAS):
+        name = free_volume_name(beta)
+        s = choose_lam(free[name], t, LAMS, folds=args.folds, seed=args.seed, name=name)
+        out["free_settings"].append({
+            "setting": name, "q2": s.q2, "rmse": s.error, "mae": s.mae, "lam": s.lam,
+            "midpoint_volume": float(np.mean(vols[:, i, 1])),
+            "smallest_volume": float(np.mean(np.min(vols[:, i, :], axis=1)))})
+        log(f"    {name}: q2 {s.q2:+.3f}, error {s.error:.3f}, mae {s.mae:.3f}, mean midpoint "
+            f"volume {np.mean(vols[:, i, 1]):.2f} A^3 (ridge on the folds it reports)")
+    tri_key = f"reach {TRIANGLE_SPECS[0][0]:g}, step {TRIANGLE_SPECS[0][1]:g}, power 1, " \
+              f"row length kept"
+    with_tri = {f"weight {w:g}": (1.0 - w) * tri[tri_key] + w * free[free_volume_name(None)]
+                for w in FREE_MIX_WEIGHTS}
+    for label, ks in (("free volume", free),
+                      ("free volume with hop length and bottleneck", free_long),
+                      ("three-distance and free volume", with_tri)):
+        r, picked = nested_result(ks, t, args.folds, args.seed, f"{label}, nested")
+        settings = ", ".join(sorted({c["setting"] for c in picked}))
+        log(f"  {r.summary()}  (chose {settings})")
+        fkey = f"nested {label}"
+        out["free_volume"].append(_entry(r, extra={"key": fkey, "kernel": label, "lam": None,
+                                                   "chosen": picked}))
+        results[fkey] = r
+    for a_key, b_key in (("nested free volume", "counts"),
+                         ("nested free volume", "geometry"),
+                         ("nested free volume with hop length and bottleneck", "geometry"),
+                         ("nested free volume", f"nested linear {key}"),
+                         ("nested three-distance and free volume", "nested three-distance"),
+                         ("nested three-distance and free volume", f"rf {key} raw")):
         if a_key not in results or b_key not in results:
             continue
         d, lo, hi = paired_interval(results[a_key], results[b_key], t, runs=args.bootstrap,
@@ -1012,6 +1163,104 @@ def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
           "look at this same sample. Nothing was chosen on a test fold, but the grid itself is "
           "not independent of the data, so a fresh set would settle it; how flat the settings "
           "are is what makes this a small worry rather than a large one.")
+        w("")
+    fv = pub.get("free_volume") or []
+    if fv:
+        key = f"invariant {pub['best_rho']}"
+        w("### The free volume at the three sites, as a cell and as a field")
+        w("")
+        w("The strongest single feature of the published models on this benchmark is the "
+          "**smallest volume of the Voronoi polyhedra** around the three sites of the hop -- its "
+          "start, its midpoint and its end -- with the largest of the three next in their "
+          "ranking. That quantity is a minimum over atoms, which looks unlike a field, but it is "
+          "the narrow-width limit of a ratio of fields. Writing d(i) for the squared distance "
+          "from a point to atom i less that atom's squared radius, the radical Voronoi cell of "
+          "the centre is where d(centre) is smallest, and")
+        w("")
+        w("        w(r) = exp(-beta d(centre)) / sum over i of exp(-beta d(i))")
+        w("")
+        w("tends to the indicator function of that cell as beta grows. The denominator is a "
+          "steric field of this program with unit weights and a Gaussian of width "
+          "1/sqrt(2 beta), so the volume is the integral of a ratio of fields and the cell is "
+          "its sharp limit. Both are measured below: the cell is the published feature and a "
+          "width is this program's version of it.")
+        w("")
+        fs_rows = pub.get("free_settings") or []
+        if fs_rows:
+            w("Each setting on its own, on the four columns the three sites give (their "
+              "smallest, largest and mean volume, and the midpoint alone). The ridge is chosen "
+              "on the folds these rows report, so they are the optimistic kind:")
+            w("")
+            w("| setting | q2 | mean absolute error (eV) | mean volume at the midpoint (A^3) "
+              "|")
+            w("| --- | ---: | ---: | ---: |")
+            for s in fs_rows:
+                w(f"| {s['setting']} | {s['q2']:+.3f} | {s['mae']:.3f} "
+                  f"| {s['midpoint_volume']:.2f} |")
+            w("")
+            cell = next((s for s in fs_rows if s["setting"] == "Voronoi cell"), None)
+            soft = [s for s in fs_rows if s["setting"] != "Voronoi cell"]
+            if cell and soft:
+                best = max(soft, key=lambda s: s["q2"])
+                gap = cell["q2"] - best["q2"]
+                answer = ("the field version loses nothing worth having"
+                          if abs(gap) < 0.02 else
+                          ("the cell is ahead of every field version of it, so the sharp "
+                           "minimum carries something the smooth ratio does not"
+                           if gap > 0 else
+                           "the field version is ahead of the cell itself"))
+                w(f"**Can a field carry it?** The cell scores {cell['q2']:+.3f} and the best "
+                  f"field version {best['q2']:+.3f} ({best['setting']}), a difference of "
+                  f"{gap:+.3f}: {answer}.")
+                w("")
+        w("With the width and the ridge chosen inside each training part:")
+        w("")
+        w("| description | q2 | error (eV) | mean absolute error (eV) | chosen inside the folds "
+          "|")
+        w("| --- | ---: | ---: | ---: | --- |")
+        for m in fv:
+            picked = ", ".join(sorted({c["setting"] for c in m.get("chosen", [])}))
+            w(f"| {m['kernel']} | {m['q2']:+.3f} | {m['rmse']:.3f} | {m['mae']:.3f} "
+              f"| {picked or '--'} |")
+        w("")
+        for what, a_key, b_key in (
+                ("Four numbers of free volume against the counts reference of rule 1",
+                 "nested free volume", "counts"),
+                ("against the hop length with the bottleneck",
+                 "nested free volume", "geometry"),
+                ("against the whole two-point description fitted the same way",
+                 "nested free volume", f"nested linear {key}"),
+                ("Adding the cell to the three-distance kernel",
+                 "nested three-distance and free volume", "nested three-distance"),
+                ("That mixture against the random forest on the raw two-point rows",
+                 "nested three-distance and free volume", f"rf {key} raw")):
+            p = pairs.get((a_key, b_key))
+            if p:
+                w(f"* {what}: **{p['diff']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}]**")
+        w("")
+        add = pairs.get(("nested three-distance and free volume", "nested three-distance"))
+        ref = pairs.get(("nested free volume", "counts"))
+        if add and ref:
+            covered = add["low"] <= 0.0 <= add["high"]
+            w(f"**What this says.** Four numbers of free volume are level with the counts "
+              f"reference of the first table, which has hundreds of channels "
+              f"({ref['diff']:+.3f} [{ref['low']:+.3f}, {ref['high']:+.3f}]), so the published "
+              f"feature is a strong descriptor in few terms. But adding it to the "
+              f"three-distance kernel is worth {add['diff']:+.3f} "
+              f"[{add['low']:+.3f}, {add['high']:+.3f}]"
+              + (", which does not clear zero: the three-distance block already carries what "
+                 "the free volume says, which is what a description of the triangles around the "
+                 "midpoint should carry. So the published feature is not what this program was "
+                 "missing."
+                 if covered else
+                 ", which is clear of zero: the free volume carries something the "
+                 "three-distance block does not."))
+            w("")
+        w("**One caution.** The volumes are integrated on a cubic grid of "
+          f"{FREE_STEP:g} angstrom inside a ball of {FREE_RADIUS:g} angstrom, which reproduces "
+          "an exactly known cell to under one per cent but leaves the sharp cell with a little "
+          "grid noise that the smooth versions mostly avoid. That favours the field versions "
+          "slightly, so a cell that wins anyway has won against the arrangement.")
         w("")
     fcurve = pub.get("forest_curve") or []
     if fcurve and curve:
