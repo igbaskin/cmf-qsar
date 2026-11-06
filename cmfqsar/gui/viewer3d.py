@@ -268,7 +268,9 @@ class Viewer3D(QWidget):
             s = (sym or "C").capitalize()
             if s == "C":
                 return carbon_color
-            return CPK.get(s, CPK.get(s.upper(), (0.6, 0.6, 0.6)))
+            # element_color is the CPK table for the organic elements and the Jmol colour for
+            # everything else, so a bond in a crystal is coloured like its atoms are
+            return element_color(s)
 
         if style == "sticks" and len(bonds):
             verts, faces, cols = [], [], []
@@ -501,6 +503,32 @@ class Viewer3D(QWidget):
         item = gl.GLMeshItem(vertexes=np.concatenate(verts), faces=np.concatenate(faces),
                              vertexColors=np.concatenate(cols), smooth=True, shader="shaded",
                              glOptions="translucent" if alpha < 1 else "opaque")
+        self._add(group, item)
+
+    def add_polyhedra(self, verts: np.ndarray, faces: np.ndarray, group: str,
+                      color=(0.45, 0.65, 0.95), alpha: float = 0.35,
+                      wireframe: bool = False) -> None:
+        """Coordination polyhedra as one translucent mesh: the inorganic reading of a structure.
+
+        A metal atom gets no bonds here (a distance rule would give it twelve), so the shape of
+        its first coordination shell is what says how the structure is built -- a chain of
+        corner-sharing octahedra, a layer of edge-sharing tetrahedra.  Every polyhedron of a cell
+        is drawn as one mesh item, so a cell of hundreds costs one.
+        """
+        v = np.asarray(verts, float).reshape(-1, 3)
+        f = np.asarray(faces, int).reshape(-1, 3)
+        if not len(v) or not len(f):
+            return
+        if wireframe:
+            item = gl.GLMeshItem(vertexes=v, faces=f, drawFaces=False, drawEdges=True,
+                                 edgeColor=tuple(color[:3]) + (min(1.0, alpha + 0.45),),
+                                 glOptions="translucent")
+        else:
+            cols = np.tile(np.array(tuple(color[:3]) + (alpha,)), (len(v), 1))
+            item = gl.GLMeshItem(vertexes=v, faces=f, vertexColors=cols, smooth=False,
+                                 shader="shaded", drawEdges=True,
+                                 edgeColor=tuple(color[:3]) + (min(1.0, alpha + 0.35),),
+                                 glOptions="translucent")
         self._add(group, item)
 
     def add_frame(self, origin, group: str, length: float = 4.0,

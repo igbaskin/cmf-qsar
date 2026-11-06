@@ -1,0 +1,105 @@
+{
+ "sets": [
+  {
+   "set": "benzimidazole",
+   "n_molecules": 73,
+   "path": "examples/corrosion_fe110/157_benzimidazole_uma.sdf",
+   "exact_open": 72,
+   "exact_in_a_cell": 68,
+   "extra_bonds": 0,
+   "missing_bonds": 2,
+   "crossing_median": 14.0,
+   "open_ms": 0.09703636169433594,
+   "cell_ms": 0.8869171142578125,
+   "bonds_to_the_slab": 0,
+   "cell_edges": [
+    16.68,
+    11.794541110191613
+   ],
+   "fits_total": 65,
+   "fits_exact": 65,
+   "too_big_total": 8,
+   "too_big_exact": 3
+  },
+  {
+   "set": "quinoline",
+   "n_molecules": 65,
+   "path": "examples/corrosion_fe110/158_quinoline_uma.sdf",
+   "exact_open": 63,
+   "exact_in_a_cell": 58,
+   "extra_bonds": 3,
+   "missing_bonds": 8,
+   "crossing_median": 14.0,
+   "open_ms": 0.10275840759277344,
+   "cell_ms": 0.9295940399169922,
+   "bonds_to_the_slab": 0,
+   "cell_edges": [
+    16.68,
+    11.794541110191613
+   ],
+   "fits_total": 58,
+   "fits_exact": 57,
+   "too_big_total": 7,
+   "too_big_exact": 1
+  }
+ ],
+ "slab_atoms": 144,
+ "polyhedra": [
+  {
+   "what": "rock salt NaCl, 6-coordinate by construction",
+   "n_polyhedra": 4,
+   "coordination": [
+    6
+   ],
+   "expected": 6,
+   "seconds": 0.0049991607666015625,
+   "metals": 4
+  },
+  {
+   "what": "cod_1545083 (256 atoms, from the COD)",
+   "n_polyhedra": 64,
+   "coordination": [
+    4,
+    6,
+    8
+   ],
+   "expected": null,
+   "seconds": 0.02641749382019043,
+   "bonds": 0,
+   "bond_seconds": 0.0020627975463867188,
+   "shell_too_small": 96,
+   "metals": 160
+  },
+  {
+   "what": "cod_1552152 (256 atoms, from the COD)",
+   "n_polyhedra": 160,
+   "coordination": [
+    4,
+    6,
+    8
+   ],
+   "expected": null,
+   "seconds": 0.05086779594421387,
+   "bonds": 0,
+   "bond_seconds": 0.001978158950805664,
+   "shell_too_small": 0,
+   "metals": 160
+  },
+  {
+   "what": "cod_1545085 (192 atoms, from the COD)",
+   "n_polyhedra": 80,
+   "coordination": [
+    3,
+    4,
+    6,
+    8
+   ],
+   "expected": null,
+   "seconds": 0.03102397918701172,
+   "bonds": 0,
+   "bond_seconds": 0.0019485950469970703,
+   "shell_too_small": 16,
+   "metals": 96
+  }
+ ]
+}

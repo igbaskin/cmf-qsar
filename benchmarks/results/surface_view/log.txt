@@ -5,14 +5,20 @@ the slab is 144 atoms in 4 layers, built in 0.10 s; its receptor is 2520 atoms
   benzimidazole: patch   24 A ->   845 atoms, cut in 1 ms, drawn in 11 ms
   benzimidazole: the highest drawn atom is at z = +0.000 A and 100 % of the drawn atoms are atoms of the complementarity receptor
   quinoline: patch    6 A ->   140 atoms, cut in 1 ms, drawn in 5 ms
-  quinoline: patch   10 A ->   259 atoms, cut in 1 ms, drawn in 6 ms
-  quinoline: patch   16 A ->   513 atoms, cut in 1 ms, drawn in 8 ms
-  quinoline: patch   24 A ->   979 atoms, cut in 2 ms, drawn in 13 ms
+  quinoline: patch   10 A ->   259 atoms, cut in 1 ms, drawn in 7 ms
+  quinoline: patch   16 A ->   513 atoms, cut in 1 ms, drawn in 9 ms
+  quinoline: patch   24 A ->   979 atoms, cut in 2 ms, drawn in 15 ms
   quinoline: the highest drawn atom is at z = +0.000 A and 100 % of the drawn atoms are atoms of the complementarity receptor
 benzimidazole: 73 molecules, the window reads the relaxed height to 0.005 A of the value the relaxation wrote; the relaxed tilt has median 18.1 deg and the flat rule pose differs from it by 18.1 deg
 quinoline: 65 molecules, the window reads the relaxed height to 0.005 A of the value the relaxation wrote; the relaxed tilt has median 27.3 deg and the flat rule pose differs from it by 27.3 deg
-  spacing 0.70 A: 8740 points, gradient in 0.25 s, 16 arrows in 0.26 s; the longest is 0.2468 and the largest gradient on the grid is 0.2468
-  spacing 0.50 A: 21600 points, gradient in 0.65 s, 16 arrows in 0.66 s; the longest is 0.2502 and the largest gradient on the grid is 0.2502
-  spacing 0.35 A: 61560 points, gradient in 1.96 s, 16 arrows in 1.99 s; the longest is 0.2557 and the largest gradient on the grid is 0.2557
+  spacing 0.70 A: 8740 points, gradient in 0.27 s, 16 arrows in 0.26 s; the longest is 0.2468 and the largest gradient on the grid is 0.2468
+  spacing 0.50 A: 21600 points, gradient in 0.70 s, 16 arrows in 0.65 s; the longest is 0.2502 and the largest gradient on the grid is 0.2502
+  spacing 0.35 A: 61560 points, gradient in 1.96 s, 16 arrows in 2.02 s; the longest is 0.2557 and the largest gradient on the grid is 0.2557
 periodic autocorrelation, 13 COD electrolytes: 126 channels in 6 pairs, 21 points per curve (1 channels each); the weights reproduce the prediction to 7.8e-14; the leading pair is Electrostatic with 26 % of the reading, peaking at 8.00
 surface autocorrelation, 73 Fe(110) adsorbates: 3672 channels in 6 pairs, 17 points per curve (36 channels each); the weights reproduce the prediction to 2.0e-12; the leading pair is Electrostatic x Hydrophobic with 28 % of the reading, peaking at 2.25
+benzimidazole: the distance rule reproduces the bond table of 72 of 73 molecules in the open and of 68 of 73 in a cell that cuts them (0 bonds too many and 2 too few in all); of the molecules that fit in the cell, 65 of 65, and of those longer than its edge, 3 of 8; no bond reaches the 144-atom slab
+quinoline: the distance rule reproduces the bond table of 63 of 65 molecules in the open and of 58 of 65 in a cell that cuts them (3 bonds too many and 8 too few in all); of the molecules that fit in the cell, 57 of 58, and of those longer than its edge, 1 of 7; no bond reaches the 144-atom slab
+rock salt NaCl, 6-coordinate by construction: 4 polyhedra, coordination [6], expected 6, in 5 ms
+cod_1545083: 256 atoms, 0 bonds in 2 ms, 64 polyhedra of coordination [4, 6, 8] in 26 ms
+cod_1552152: 256 atoms, 0 bonds in 2 ms, 160 polyhedra of coordination [4, 6, 8] in 51 ms
+cod_1545085: 192 atoms, 0 bonds in 2 ms, 80 polyhedra of coordination [3, 4, 6, 8] in 31 ms

@@ -6,8 +6,8 @@
   {
    "spacing": 0.7,
    "points": 8740,
-   "gradient_seconds": 0.2509613037109375,
-   "arrow_seconds": 0.25997138023376465,
+   "gradient_seconds": 0.2686324119567871,
+   "arrow_seconds": 0.26343274116516113,
    "n_arrows": 16,
    "longest": 0.2467741167462392,
    "grid_maximum": 0.2467741167462392,
@@ -18,8 +18,8 @@
   {
    "spacing": 0.5,
    "points": 21600,
-   "gradient_seconds": 0.6524715423583984,
-   "arrow_seconds": 0.6636559963226318,
+   "gradient_seconds": 0.6993570327758789,
+   "arrow_seconds": 0.6513557434082031,
    "n_arrows": 16,
    "longest": 0.2502113274507367,
    "grid_maximum": 0.2502113274507367,
@@ -32,8 +32,8 @@
   {
    "spacing": 0.35,
    "points": 61560,
-   "gradient_seconds": 1.9615864753723145,
-   "arrow_seconds": 1.98911452293396,
+   "gradient_seconds": 1.955686330795288,
+   "arrow_seconds": 2.0209643840789795,
    "n_arrows": 16,
    "longest": 0.2556620053694836,
    "grid_maximum": 0.2556620053694836,

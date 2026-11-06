@@ -324,3 +324,82 @@ def test_a_set_that_is_not_one_lattice_is_said_to_be_one(window):
     window.chk_sites.setChecked(True)
     window.update_display()
     assert "do not stand exactly on one lattice" in window.legend.text()
+
+# --------------------------------------------------------------------------- #
+# How the atoms are drawn: the four representations, and the bonds
+# --------------------------------------------------------------------------- #
+def test_the_four_representations_are_offered(window):
+    from cmfqsar.gui.crystal_window import ATOM_STYLES
+    offered = [window.cmb_atoms.itemText(i) for i in range(window.cmb_atoms.count())]
+    assert offered == list(ATOM_STYLES)
+    assert offered == ["balls", "dots", "ball and stick", "sticks"]
+
+
+def test_the_unbonded_styles_draw_the_atoms_and_no_bonds(window):
+    window.table.setCurrentCell(0, 0)
+    for style in ("balls", "dots"):
+        window.cmb_atoms.setCurrentText(style)
+        window.update_display()
+        assert window.viewer.has_group("atoms"), style
+        assert not window.viewer.has_group("bonds"), style
+
+
+def test_a_cell_of_metal_atoms_gets_no_bonds_and_falls_back_to_balls(window):
+    """The rock-salt cells have only sodium, potassium and chlorine: no pair is close enough."""
+    window.table.setCurrentCell(0, 0)
+    window.cmb_atoms.setCurrentText("ball and stick")
+    window.update_display()
+    assert not window.viewer.has_group("bonds")
+    assert window.viewer.has_group("atoms")
+    assert "no bonds" in window.legend.text()
+    assert "drawn as balls instead" in window.legend.text()
+
+
+def test_the_polyhedra_box_draws_the_shell_of_every_metal(window):
+    """What a metal gets instead of bonds: the rock-salt cation is six-coordinate."""
+    window.table.setCurrentCell(0, 0)
+    window.chk_polyhedra.setChecked(True)
+    window.update_display()
+    assert window.viewer.has_group("polyhedra")
+    assert "6-coordinate" in window.legend.text()
+    window.chk_polyhedra.setChecked(False)
+    window.update_display()
+    assert not window.viewer.has_group("polyhedra")
+
+
+def test_an_organic_molecule_in_a_cell_is_drawn_with_its_bonds(app):
+    """The case the bonds exist for: a molecule whose rings a cloud of spheres cannot show."""
+    import math
+
+    from cmfqsar.gui.crystal_window import CrystalWindow
+    r = 1.39
+    ring = [(r * math.cos(k * math.pi / 3), r * math.sin(k * math.pi / 3), 4.0)
+            for k in range(6)]
+    at = Atoms(symbols=["C"] * 6, positions=np.array(ring) + np.array([4.0, 4.0, 0.0]),
+               cell=[8.0, 8.0, 8.0], pbc=True)
+    # the same ring put over the corner of the cell, so that the box cuts it in two
+    cut = Atoms(symbols=["C"] * 6, positions=np.array(ring) - np.array([0.0, 0.0, 4.0]),
+                cell=[8.0, 8.0, 8.0], pbc=True)
+    cut.wrap()
+    w = CrystalWindow(background=False)
+    try:
+        w.atoms = [at, cut]
+        w.names = ["benzene", "benzene over the corner"]
+        w.y = np.array([1.0, 2.0])
+        w.populate()
+        w.table.setCurrentCell(0, 0)
+        for style in ("ball and stick", "sticks"):
+            w.cmb_atoms.setCurrentText(style)
+            w.update_display()
+            assert w.viewer.has_group("bonds"), style
+            assert f"{style}: 6 bonds" in w.legend.text()
+            assert "perceived from the distances for drawing only" in w.legend.text()
+        assert "crossing the cell boundary" not in w.legend.text()
+        # the ring the box cuts is still a ring, and the image atoms it needs are drawn with it
+        w.table.setCurrentCell(1, 0)
+        w.update_display()
+        assert "6 bonds" in w.legend.text()
+        assert "crossing the cell boundary" in w.legend.text()
+        assert "image atoms drawn with them" in w.legend.text()
+    finally:
+        w.close()

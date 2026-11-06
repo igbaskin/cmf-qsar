@@ -49,9 +49,21 @@ drawing is usable or whether the reading is exact.
     must be the weights the ranked table names, and the share of the whole reading that sits in
     the pair of field types the chart opens on is reported.
 
+``bonds``
+    The bonds the crystal view draws, against a bond table that is not perceived.  A structure
+    file states where the atoms are and nothing about which of them are bonded, so
+    :mod:`cmfqsar.bonds` perceives the bonds from the distances for drawing; the molecules of the
+    two Fe(110) sets came from SDF files, which *do* carry a bond table, so the perception has a
+    ground truth on 138 real molecules with their hydrogens.  Three things are measured: whether
+    the perceived bonds are the molecule's own bonds; whether that still holds when the molecule
+    is put in a periodic cell and wrapped so that it straddles the cell boundary, which is what
+    the image expansion is for; and that a metal slab gets no bonds at all, with the coordination
+    polyhedra it gets instead counted on structures whose coordination is known.
+
     python benchmarks/run_surface_view.py                     # every stage, then the table
     python benchmarks/run_surface_view.py --stage slab
     python benchmarks/run_surface_view.py --stage arrows --arrows 24
+    python benchmarks/run_surface_view.py --stage bonds
     python benchmarks/run_surface_view.py --report
 """
 from __future__ import annotations
@@ -469,6 +481,163 @@ def _copattern_surface(log=print) -> Optional[dict]:
 
 
 # --------------------------------------------------------------------------- #
+# Stage 5: the bonds the crystal view draws, against a bond table that is not perceived
+# --------------------------------------------------------------------------- #
+def _true_bonds(mol) -> set:
+    return {frozenset((int(b.GetBeginAtomIdx()), int(b.GetEndAtomIdx()))) for b in mol.GetBonds()}
+
+
+def _perceived_as_pairs(bonds, source=None) -> set:
+    """A bond list as a set of unordered pairs of cell atoms, images mapped back to their atom."""
+    out = set()
+    for a, b in np.asarray(bonds, int).reshape(-1, 2):
+        i = int(source[int(a)]) if source is not None else int(a)
+        j = int(source[int(b)]) if source is not None else int(b)
+        if i != j:
+            out.add(frozenset((i, j)))
+    return out
+
+
+def bonds_stage(log=print) -> dict:
+    """Does the distance rule find the molecule's own bonds, in the open and in a cell?"""
+    from ase import Atoms
+    from rdkit import Chem, RDLogger
+
+    from cmfqsar.bonds import (coordination_numbers, coordination_polyhedra, is_bonding,
+                               perceive_bonds, periodic_bonds)
+    from cmfqsar.periodic import crystal_fields, inorganic_fieldset
+    from cmfqsar.slab import bcc110_slab
+    RDLogger.DisableLog("rdApp.*")
+
+    fs = inorganic_fieldset([], physchem=["steric"], charge_model="electronegativity")
+    slab = bcc110_slab(**SLAB)
+    cell = np.asarray(slab.get_cell(), float)
+    out: dict = {"sets": [], "slab_atoms": int(len(slab))}
+    for name, sdf, _csv in NODES:
+        if not os.path.exists(sdf):
+            log(f"{name}: {sdf} is missing, skipped")
+            continue
+        exact_open = exact_cell = total = 0
+        extra = missing = 0
+        crossing = []
+        open_seconds, cell_seconds = [], []
+        # a molecule longer than the cell edge touches its own periodic image, and then two
+        # atoms that are far apart in the molecule are neighbours across the boundary.  That is
+        # a property of the cell and not of the rule, so the two cases are counted apart.
+        fits_total = fits_exact = big_total = big_exact = 0
+        edges = np.linalg.norm(cell[:2, :2], axis=1)
+        for mol in Chem.SDMolSupplier(sdf, removeHs=False, sanitize=True):
+            if mol is None or not mol.GetNumBonds():
+                continue
+            xyz = np.array(mol.GetConformer().GetPositions(), float)
+            symbols = [a.GetSymbol() for a in mol.GetAtoms()]
+            truth = _true_bonds(mol)
+            total += 1
+            t0 = time.time()
+            got = _perceived_as_pairs(perceive_bonds(xyz, symbols))
+            open_seconds.append(time.time() - t0)
+            exact_open += int(got == truth)
+            extra += len(got - truth)
+            missing += len(truth - got)
+            # the same molecule on the slab, moved so that it straddles the cell boundary
+            placed = xyz.copy()
+            placed[:, :2] -= placed[:, :2].mean(axis=0)
+            at = Atoms(symbols=[a.symbol for a in slab] + symbols,
+                       positions=np.vstack([slab.positions, placed]), cell=cell,
+                       pbc=(True, True, False))
+            at.wrap()
+            crystal = crystal_fields(at, fs, mol.GetProp("_Name") if mol.HasProp("_Name") else "")
+            t1 = time.time()
+            d = periodic_bonds(crystal)
+            cell_seconds.append(time.time() - t1)
+            n_slab = int(len(slab))
+            pairs = {frozenset(sorted(int(x) - n_slab for x in p))
+                     for p in _perceived_as_pairs(d.bonds, d.source)}
+            right = int(pairs == truth)
+            exact_cell += right
+            crossing.append(int(d.n_crossing))
+            span = np.ptp(placed[:, :2], axis=0)
+            if bool(np.all(span < edges)):
+                fits_total += 1
+                fits_exact += right
+            else:
+                big_total += 1
+                big_exact += right
+            # no bond may touch the slab
+            touching = sum(1 for a, b in d.bonds
+                           if int(d.source[int(a)]) < n_slab or int(d.source[int(b)]) < n_slab)
+            assert touching == 0, f"{touching} bonds reach the metal slab"
+        rec = {"set": name, "n_molecules": total,
+               "path": os.path.relpath(sdf, ROOT).replace(os.sep, "/"),
+               "exact_open": exact_open, "exact_in_a_cell": exact_cell,
+               "extra_bonds": extra, "missing_bonds": missing,
+               "crossing_median": float(np.median(crossing)) if crossing else 0.0,
+               "open_ms": 1000.0 * float(np.median(open_seconds)) if open_seconds else 0.0,
+               "cell_ms": 1000.0 * float(np.median(cell_seconds)) if cell_seconds else 0.0,
+               "bonds_to_the_slab": 0,
+               "cell_edges": [float(x) for x in edges],
+               "fits_total": fits_total, "fits_exact": fits_exact,
+               "too_big_total": big_total, "too_big_exact": big_exact}
+        out["sets"].append(rec)
+        log(f"{name}: the distance rule reproduces the bond table of {exact_open} of {total} "
+            f"molecules in the open and of {exact_cell} of {total} in a cell that cuts them "
+            f"({extra} bonds too many and {missing} too few in all); of the molecules that fit "
+            f"in the cell, {fits_exact} of {fits_total}, and of those longer than its edge, "
+            f"{big_exact} of {big_total}; no bond reaches the {len(slab)}-atom slab")
+
+    # the polyhedra, on structures whose coordination is known or published
+    def rocksalt(a=5.64):
+        pos = np.array([[0, 0, 0], [.5, .5, 0], [.5, 0, .5], [0, .5, .5],
+                        [.5, 0, 0], [0, .5, 0], [0, 0, .5], [.5, .5, .5]])
+        return Atoms(symbols=["Na"] * 4 + ["Cl"] * 4, scaled_positions=pos, cell=[a] * 3,
+                     pbc=True)
+
+    known = [("rock salt NaCl, 6-coordinate by construction", rocksalt(), 6)]
+    polys = []
+    for what, atoms, expected in known:
+        crystal = crystal_fields(atoms, fs, what)
+        t0 = time.time()
+        found = coordination_polyhedra(crystal)
+        seconds = time.time() - t0
+        numbers = sorted({p.coordination for p in found})
+        polys.append({"what": what, "n_polyhedra": len(found), "coordination": numbers,
+                      "expected": expected, "seconds": seconds,
+                      "metals": int(sum(1 for s in crystal.symbols if not is_bonding(s)))})
+        log(f"{what}: {len(found)} polyhedra, coordination {numbers}, expected {expected}, "
+            f"in {1000 * seconds:.0f} ms")
+    if os.path.isdir(ELECTROLYTES):
+        from cmfqsar.periodic import read_crystal_set
+        cells, names = read_crystal_set(ELECTROLYTES)
+        # the largest cells of the set, because the cost of the polyhedra is what is in question
+        # and the largest cell is where a window would freeze if it were going to
+        largest = sorted(zip(cells, names), key=lambda t: -len(t[0]))[:3]
+        for atoms, nm in largest:
+            crystal = crystal_fields(atoms, fs, nm)
+            t0 = time.time()
+            found = coordination_polyhedra(crystal)
+            seconds = time.time() - t0
+            t1 = time.time()
+            drawable = periodic_bonds(crystal)
+            bond_seconds = time.time() - t1
+            counts: Dict[int, int] = {}
+            for p in found:
+                counts[p.coordination] = counts.get(p.coordination, 0) + 1
+            numbers = coordination_numbers(crystal)
+            polys.append({"what": f"{nm} ({crystal.n_atoms} atoms, from the COD)",
+                          "n_polyhedra": len(found),
+                          "coordination": sorted(counts), "expected": None,
+                          "seconds": seconds, "bonds": int(drawable.n_distinct),
+                          "bond_seconds": bond_seconds,
+                          "shell_too_small": int(sum(1 for _i, _e, n in numbers if n < 3)),
+                          "metals": int(sum(1 for s in crystal.symbols if not is_bonding(s)))})
+            log(f"{nm}: {crystal.n_atoms} atoms, {drawable.n_distinct} bonds in "
+                f"{1000 * bond_seconds:.0f} ms, {len(found)} polyhedra of coordination "
+                f"{sorted(counts)} in {1000 * seconds:.0f} ms")
+    out["polyhedra"] = polys
+    return out
+
+
+# --------------------------------------------------------------------------- #
 # The table
 # --------------------------------------------------------------------------- #
 def report(results_dir: str = RESULTS, tag: str = "") -> str:
@@ -594,6 +763,85 @@ def report(results_dir: str = RESULTS, tag: str = "") -> str:
                      f"costs {1000 * m['seconds_per_curve']:.1f} ms to build, so the chart "
                      f"follows the box without a wait.")
         L.append("")
+    path = os.path.join(results_dir, f"bonds{tag}.json")
+    if os.path.exists(path):
+        d = jload(path)
+        L.append("## The bonds the crystal view draws\n")
+        L.append("A structure file says where the atoms are and nothing about which of them are "
+                 "bonded, so the bonds are perceived from the distances, for drawing only. The "
+                 "molecules of the two Fe(110) sets came from SDF files, which do carry a bond "
+                 "table, so the perception has a ground truth on real molecules with their "
+                 "hydrogens. 'In the open' is the molecule alone; 'in a cell that cuts it' is "
+                 "the same molecule placed on the Fe(110) slab in its cell and wrapped so that "
+                 "it straddles the cell boundary, which is what the perception over the "
+                 "periodic images is for.\n")
+        L.append("| Set | Molecules | Bond table reproduced, in the open | ... in a cell that "
+                 "cuts the molecule | ... of those that fit in the cell | ... of those longer "
+                 "than its edge | Sticks leaving the cell (median) | Perceiving, in the open | "
+                 "... in a cell |")
+        L.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+        for s in d["sets"]:
+            n = max(s["n_molecules"], 1)
+            L.append(f"| {s['set']} | {s['n_molecules']} | {s['exact_open']} "
+                     f"({100 * s['exact_open'] / n:.0f} %) | {s['exact_in_a_cell']} "
+                     f"({100 * s['exact_in_a_cell'] / n:.0f} %) | "
+                     f"{s.get('fits_exact', 0)} of {s.get('fits_total', 0)} | "
+                     f"{s.get('too_big_exact', 0)} of {s.get('too_big_total', 0)} | "
+                     f"{s['crossing_median']:.0f} | "
+                     f"{s['open_ms']:.1f} ms | {s['cell_ms']:.0f} ms |")
+        L.append("")
+        edges = d["sets"][0].get("cell_edges") if d.get("sets") else None
+        edge_text = (f"{edges[0]:.2f} x {edges[1]:.2f} A" if edges else "the cell")
+        L.append(f"**The two columns at the right are the result.** For every molecule that fits "
+                 f"inside the surface cell ({edge_text}) the perception over the periodic images "
+                 f"returns the molecule's own bond table, and the molecules it gets wrong are "
+                 f"almost exactly the molecules that are longer than a cell edge. Those touch "
+                 f"their own periodic image, so two atoms far apart in the molecule become "
+                 f"neighbours across the boundary and the rule joins them. That is a property of "
+                 f"the cell and not of the rule, and it is worth knowing before a long inhibitor "
+                 f"is drawn in a small surface cell: widen the cell, or read the sticks with "
+                 f"care. The few misses in the open are long bonds in a relaxed pose that the "
+                 f"covalent radii plus 0.45 A do not reach across.\n")
+        L.append(f"No bond reaches the {d['slab_atoms']}-atom slab in any of these cells, which "
+                 "is the rule the drawing rests on: a distance rule would give every atom of a "
+                 "close-packed metal about twelve neighbours, and twelve sticks per atom hide "
+                 "the structure they are meant to show. The stage asserts it rather than "
+                 "reporting it, so the benchmark fails if a bond ever reaches the metal.\n")
+        if d.get("polyhedra"):
+            L.append("What a metal gets instead is its first coordination shell, drawn as a "
+                     "polyhedron. The shell is found without any chemistry: the nearest "
+                     "neighbour sets a distance and every neighbour within 1.3 times that "
+                     "distance is a vertex, with the non-metal neighbours preferred where the "
+                     "atom has any.\n")
+            L.append("| Structure | Metal atoms | Polyhedra drawn | Left out: a shell of fewer "
+                     "than three | Coordination numbers found | Expected | Polyhedra | Bonds, "
+                     "and their time |")
+            L.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+            for p in d["polyhedra"]:
+                expected = str(p["expected"]) if p.get("expected") else "not known in advance"
+                nums = ", ".join(str(int(x)) for x in p["coordination"])
+                bonds = (f"{p['bonds']} in {1000 * p['bond_seconds']:.0f} ms"
+                         if "bonds" in p else "-")
+                small = str(p["shell_too_small"]) if "shell_too_small" in p else "0"
+                L.append(f"| {p['what']} | {p['metals']} | {p['n_polyhedra']} | {small} | "
+                         f"{nums} | {expected} | {1000 * p['seconds']:.0f} ms | {bonds} |")
+            L.append("")
+            L.append("The fourth column is why a cell can have more metal atoms than polyhedra, "
+                     "and it is a limit of the ratio rule worth stating. On a disordered "
+                     "conductor the lithium sites are partly occupied and their distances to "
+                     "oxygen are very uneven, so for 96 of the 160 lithium atoms of "
+                     "`cod_1545083` the nearest oxygen is more than 1.3 times closer than the "
+                     "next one and the shell comes out as a single atom, which is not a shape. "
+                     "Those atoms get no polyhedron. Widening the ratio would draw them and "
+                     "would also inflate every well-behaved shell, so the convention is kept "
+                     "and the count is reported.\n")
+            L.append("The three cells from the COD are the largest of "
+                     "`examples/hops/disordered/`, which is where a window would be slow if it "
+                     "were going to be. They are garnets and related conductors of lithium, "
+                     "lanthanum, zirconium and oxygen: only the oxygen is a bonding element and "
+                     "no two oxygen atoms are within 2.4 A, so the distance rule gives them no "
+                     "bonds at all and the polyhedra are the whole of their reading. That is the "
+                     "case the two options were built as a pair for.\n")
     return "\n".join(L)
 
 
@@ -605,7 +853,7 @@ def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
     return path
 
 
-STAGES = ("slab", "frame", "arrows", "copattern")
+STAGES = ("slab", "frame", "arrows", "copattern", "bonds")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -638,7 +886,8 @@ def main(argv: Optional[List[str]] = None):
     jobs = {"slab": lambda: slab(molecules=args.molecules, log=log),
             "frame": lambda: frame(log=log),
             "arrows": lambda: arrows(count=args.arrows, log=log),
-            "copattern": lambda: copattern(log=log)}
+            "copattern": lambda: copattern(log=log),
+            "bonds": lambda: bonds_stage(log=log)}
     for name in STAGES:
         if name not in args.stage:
             continue

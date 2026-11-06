@@ -3572,6 +3572,32 @@ tests whether the target is reproducible between sources before any kernel is co
   molecule as spheres and bonds with a co-field as isosurfaces. It needs instanced drawing for ten
   thousand atoms, a unit cell outline with periodic images, and no bond perception for metals.
   One to two weeks of Qt and OpenGL work. M13 is the same item seen from the crystal side.
+  **Two of the three are done.** The cell outline with its periodic images came with M13
+  (6 November 2026). The bonds came on **7 November 2026**, asked for by the author, because a
+  crystal view that draws spheres alone cannot show an adsorbed organic molecule, which is the
+  case items EC2 and EC6 are about: `cmfqsar/bonds.py` perceives a bond list from the distances
+  over the cell *and* its periodic images (so a bond that crosses the cell boundary is drawn
+  rather than lost), the crystal window offers *ball and stick* and *sticks* beside *balls* and
+  *dots*, and **a metal atom gets no bonds**, which is this item's own rule: a distance rule
+  gives every atom of a close-packed metal about twelve neighbours, so a slab stays spheres while
+  the molecule on it gets its bonds. What a metal gets instead is
+  `bonds.coordination_polyhedra`, the first coordination shell as a polyhedron, which is how an
+  inorganic structure is read. The perception is display-only: no bond order, no sanitisation and
+  no charge, which is M8's work and not this.
+  **Measured** (`benchmarks/run_surface_view.py`, the `bonds` stage): the molecules of the two
+  Fe(110) sets came from SDF files, which carry a bond table, so the rule has a ground truth on
+  138 real molecules with their hydrogens. In the open it returns the molecule's own bonds for 72
+  of 73 and 63 of 65; placed on the Fe(110) slab in its 16.68 x 11.79 A cell and wrapped so the
+  box cuts the molecule in two, for **65 of the 65 and 57 of the 58 molecules that fit inside
+  that cell**. The ones it gets wrong are almost exactly the molecules longer than a cell edge,
+  which touch their own periodic image, so two atoms far apart in the molecule become neighbours
+  across the boundary -- a property of the cell and not of the rule, and the one caution to carry
+  into a picture. No bond ever reaches the slab, which the stage asserts. One molecule costs
+  0.1 ms in the open and about 1 ms in a cell; the polyhedra of a 48-atom COD cell take 19 ms,
+  and rock salt comes out 6-coordinate as it must.
+  **What is left of the item** is the first clause: instanced drawing for ten thousand atoms. The
+  images are still drawn as points and the spheres are still one mesh per call, so a particle of
+  that size is the open part.
 * **NT9. The co-pattern as a plot.** The invariant kernels have no co-field. `top_channels` returns
   the ranked channels; the Results panel needs a chart of weight against distance for the chosen
   pair of field types, and the viewer needs site colouring by contribution (NT7). Three days.
@@ -6402,7 +6428,7 @@ own text has to stop before it, and five entries state their status in a form of
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
 | H. Materials and periodicity | 14 | 11 | M7, M8, M9 |
-| H. Nanotechnology | 12 | 1 | NT1 to NT8, NT10 to NT12 |
+| H. Nanotechnology | 12 | 1 | NT1 to NT7, NT8 (partly), NT10 to NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 8 | 7 | BT8 |
 | H. Local properties | 5 | 5 | -- |
@@ -6411,7 +6437,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 16 | 0 | ND1 to ND13 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**146 items: 104 finished, 3 partly, 39 open.**
+**146 items: 104 finished, 4 partly, 38 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -6425,7 +6451,9 @@ equally blocked.
   EC9's. The search is written up in `docs/public_3dqsar_datasets.md`.
 * **Waiting for the application.** G5, NT8 and NT11 are what is left of this block: the
   particle side of the window, where a structure that is neither a molecule nor a cell needs a
-  data model of its own (NT1), and the model panel and command line that would offer it. Neither
+  data model of its own (NT1), and the model panel and command line that would offer it. Two of
+  NT8's three parts are already done (the cell outline with its images, and the bonds with the
+  metal rule); what it still asks for is instanced drawing for ten thousand atoms. Neither
   needs a new measurement. Three of the six are done. M13 closed the crystal side on
   6 November 2026; **EC10 and NT9 closed the surface side and the reading on the same day** --
   the slab behind the molecules, the surface frame with its two numbers, the vector co-field as

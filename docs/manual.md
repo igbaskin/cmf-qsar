@@ -710,6 +710,85 @@ example sets: a 256-atom cell of the garnet Li$_{6.5}$La$_3$Zr$_{1.5}$Ta$_{0.5}$
 836 images and draws in 3 ms. The thirteen CIF files of `examples/hops/disordered/` are read
 in half a second.
 
+**How the atoms are drawn, and the bonds.** The *Atoms* box offers four representations. *balls*
+is one sphere per atom, coloured by element and sized by its covalent radius, and *dots* is one
+point per atom, which stays fast for a cell of thousands. Those two show the atoms alone, which
+is the honest picture of a file that states where the atoms are and nothing about which of them
+are bonded. *ball and stick* and *sticks* add the bonds.
+
+The bonds are perceived from the distances, because no CIF or extended-XYZ file carries a bond
+table: a pair is bonded when its distance is below the sum of the two covalent radii plus
+0.45 Å, which is the rule the protein reader already applies, with no stick drawn longer than
+2.4 Å. Two things make it work for a periodic structure. The pairs are taken over the cell **and
+its periodic images**, so a ring that the file leaves split across the cell boundary is drawn as
+a ring, with the sticks leaving the box and the image atoms they end on drawn beside them; a bond
+that crosses the boundary is drawn from both of its ends, because both halves of it are inside
+the box, and the legend states the number of bonds and the number of sticks apart. And **a metal
+atom gets no bonds**: a distance rule gives every atom of a close-packed metal about twelve
+neighbours, and twelve sticks per atom hide the structure they are meant to show. So a slab stays
+spheres and the organic molecule adsorbed on it gets its bonds, which is the one picture an
+adsorbate study cannot do without. A cell whose atoms get no bonds at all falls back to *balls*
+and the legend says why rather than showing an empty box.
+
+This perception is **for drawing only**. No bond order is assigned, no molecule is sanitised and
+no charge is perceived from it; a stick on screen never reaches a field, a kernel or a
+prediction. Turning a periodic structure into a molecule is a different job (plan item M8) and
+this is not it.
+
+**What a metal gets instead: coordination polyhedra.** *Coordination polyhedra* draws the first
+coordination shell of every metal atom as a translucent polyhedron. The shell is found without
+any chemistry: the nearest neighbour of the atom sets a distance, and every neighbour within
+1.3 times that distance is a vertex, with the non-metal neighbours preferred where the atom has
+any, so the vertices of an ionic structure are its anions. Neighbours are taken over the periodic
+images, so a polyhedron at the edge of the cell is whole. A flat shell -- square-planar,
+trigonal-planar -- has no volume, so it is drawn as a polygon and the legend says how many were.
+A shell of fewer than three neighbours is not a shape and gets nothing, and the legend counts
+those atoms too: on a disordered conductor whose lithium sites are partly occupied, the nearest
+oxygen of a site can be more than 1.3 times closer than the next one, and then the rule leaves a
+shell of one atom. Widening the ratio would draw those and inflate every well-behaved shell as
+well, so the convention stays and the number is stated instead.
+This is how an inorganic structure is read: a chain of corner-sharing octahedra says more than
+any number of sticks would, and it is the reading the bonds deliberately do not offer for a
+metal.
+
+**What the drawing is worth, measured.** `benchmarks/results/surface_view/table.md` checks the
+perception against a bond table that was not perceived. The molecules of the two Fe(110) sets
+came from SDF files, which do carry one, so there is a ground truth on 138 real molecules with
+their hydrogens: in the open the rule returns the molecule's own bonds for 72 of 73 and 63 of 65
+of them, the misses being long bonds in a relaxed pose that the radii plus 0.45 Å do not reach
+across. Put each molecule on the Fe(110) slab in its 16.68 x 11.79 Å cell and wrap it so that the
+box cuts it in two, and the perception over the images returns the molecule's own bonds for
+**65 of the 65** and **57 of the 58** molecules that fit inside that cell. The ones it gets wrong
+are almost exactly the molecules longer than a cell edge: those touch their own periodic image,
+so two atoms far apart in the molecule become neighbours across the boundary and the rule joins
+them. That is a property of the cell and not of the rule, and it is the one caution to carry into
+a picture: a long inhibitor in a small surface cell needs a wider cell, or sticks read with care.
+No bond ever reaches the 144-atom slab, which the benchmark asserts rather than reports.
+Perceiving the bonds of one molecule costs 0.1 ms in the open and about 1 ms in a cell; on the
+largest cells of `examples/hops/disordered/`, 192 and 256 atoms, the bonds take 2 ms and the
+polyhedra 29 to 59 ms, so neither option makes the window wait. Those garnets are also the case
+the two options were built as a pair for: only their oxygen is a bonding element and no two
+oxygen atoms are within 2.4 A, so the distance rule gives them no bonds at all and the polyhedra
+are the whole of their reading.
+
+**An organic molecule on a surface, in the window.** This is the case the representations exist
+for, and it needs one file holding both the slab and the molecule -- which is what a relaxation
+of an adsorbed state writes, so anyone studying adsorption already has one: open the `CONTCAR`,
+the CIF or the extended-XYZ file of the relaxed state with *Open one structure file…*, set the
+periodic directions to *ab: a layer*, and choose *ball and stick*. The molecule comes out with
+its rings and the metal below it stays spheres. Without such a file, three lines of ASE make one
+from a slab and a posed molecule:
+
+```python
+from ase import Atoms
+from cmfqsar.slab import bcc110_slab
+slab = bcc110_slab()                      # the Fe(110) slab of examples/corrosion_fe110
+cell = Atoms(symbols=[a.symbol for a in slab] + symbols,
+             positions=list(slab.positions) + list(coords),   # coords in the surface frame
+             cell=slab.get_cell(), pbc=(True, True, False))
+cell.write("adsorbate.extxyz")
+```
+
 **Fitting a model.** The *Model* panel is the crystal form of the main window's: the fields
 (electrostatic, steric, electronegativity, mass, and one indicator field per element that occurs
 in at least the stated number of cells, plus one for the rest), where the electrostatic weights
@@ -813,7 +892,9 @@ is not a crystal model, and `predict` says so instead of guessing.
 **What the window does not do.** It fits the two whole-cell kernels and nothing else: no
 site-resolved model, no difference fields of a defect series, no three-body or reciprocal-space
 channels, which stay in the library and the benchmarks. It draws one cell at a time. The images
-are dots and not spheres, because a cell with its images is thousands of atoms. And it keeps no
+are dots and not spheres, because a cell with its images is thousands of atoms, and only the
+image atoms a bond ends on are drawn as atoms. The bonds it draws are perceived for the picture
+and are not a bond table the program will use for anything else. And it keeps no
 project file: the model is saved, the structures are the files they came from.
 
 ## A metal surface behind the molecules
