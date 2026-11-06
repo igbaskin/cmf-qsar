@@ -1,0 +1,252 @@
+{
+ "n_structures": 393,
+ "n_samples": 1801,
+ "fields": [
+  "electrostatic",
+  "steric",
+  "prop:electronegativity",
+  "cif:B",
+  "cif:C",
+  "cif:Co",
+  "cif:Cr",
+  "cif:F",
+  "cif:Fe",
+  "cif:Li",
+  "cif:Mn",
+  "cif:Ni",
+  "cif:O",
+  "cif:P",
+  "cif:Si",
+  "cif:V",
+  "cif:other"
+ ],
+ "r_max": 6.0,
+ "folds": 10,
+ "site_r": 6.0,
+ "y_mean": 1.448473526597872,
+ "y_sd": 1.904997036325133,
+ "lengths": [
+  2.143199317773464,
+  9.626680778517875
+ ],
+ "collection": {
+  "source": "https://github.com/AIRI-Institute/LiTraj",
+  "dataset": "nebBVSE122k",
+  "reference": "Dembitskiy et al., npj Comput. Mater. 11, 131 (2025)",
+  "licence": "MIT",
+  "n_index_hops": 122421,
+  "n_index_structures": 11290,
+  "n_index_chemsys": 1644,
+  "index_y_mean": 1.5446462872895335,
+  "index_y_sd": 1.9703482661620824,
+  "drawn": 400,
+  "max_per_structure": 6,
+  "dropped_hops": 9
+ },
+ "models": [
+  {
+   "name": "counts about the midpoint",
+   "q2": 0.46842340981913366,
+   "rmse": 1.3885343374893213,
+   "mae": 0.8121007224692308,
+   "lam": 0.01,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "counts",
+   "types": [
+    "Al",
+    "As",
+    "B",
+    "Ba",
+    "Be",
+    "Bi",
+    "Br",
+    "C",
+    "Ca",
+    "Cl",
+    "Co",
+    "Cr",
+    "Cs",
+    "Cu",
+    "F",
+    "Fe",
+    "Ga",
+    "Gd",
+    "Ge",
+    "In",
+    "K",
+    "La",
+    "Li",
+    "Lu",
+    "Mg",
+    "Mn",
+    "Mo",
+    "N",
+    "Na",
+    "Nb",
+    "Nd",
+    "Ni",
+    "O",
+    "P",
+    "Pb",
+    "Pd",
+    "Rb",
+    "Ru",
+    "S",
+    "Sb",
+    "Sc",
+    "Se",
+    "Si",
+    "Sm",
+    "Sn",
+    "Sr",
+    "Tb",
+    "Te",
+    "Th",
+    "Ti",
+    "Tl",
+    "U",
+    "V",
+    "W",
+    "Y",
+    "Zn"
+   ]
+  },
+  {
+   "name": "hop length and bottleneck",
+   "q2": 0.17915805707198962,
+   "rmse": 1.7254543365140957,
+   "mae": 1.0501251711955009,
+   "lam": 1.0,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "geometry"
+  },
+  {
+   "name": "the two end sites (M5), cutoff 6 A",
+   "q2": 0.1138401542776154,
+   "rmse": 1.7927912919559894,
+   "mae": 1.075397414636231,
+   "lam": 1.0,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "sites",
+   "site_r_max": 6.0,
+   "channels": 3978
+  },
+  {
+   "name": "invariant local, rho 0.25",
+   "q2": 0.6002799466225107,
+   "rmse": 1.2040698142597077,
+   "mae": 0.7260835554301946,
+   "lam": 0.1,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "rho": 0.25,
+   "key": "invariant 0.25",
+   "atoms": 79.29094947251527
+  },
+  {
+   "name": "rotation-averaged overlap, rho 0.25",
+   "q2": 0.5802891015368601,
+   "rmse": 1.2338115281238757,
+   "mae": 0.7295579247514518,
+   "lam": 1.0,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "rho": 0.25,
+   "key": "overlap 0.25",
+   "atoms": 79.29094947251527
+  }
+ ],
+ "pairs": [
+  {
+   "a": "invariant 0.25",
+   "b": "counts",
+   "diff": 0.13185653680337706,
+   "low": 0.05574456505855506,
+   "high": 0.20851556405508753
+  },
+  {
+   "a": "invariant 0.25",
+   "b": "geometry",
+   "diff": 0.4211218895505211,
+   "low": 0.3452590460152698,
+   "high": 0.4874283579734916
+  },
+  {
+   "a": "invariant 0.25",
+   "b": "sites",
+   "diff": 0.4864397923448953,
+   "low": 0.4126139921396748,
+   "high": 0.5485943833473708
+  },
+  {
+   "a": "overlap 0.25",
+   "b": "counts",
+   "diff": 0.11186569171772642,
+   "low": 0.03614597301590776,
+   "high": 0.19730172857263767
+  },
+  {
+   "a": "overlap 0.25",
+   "b": "geometry",
+   "diff": 0.40113104446487047,
+   "low": 0.34069766202040763,
+   "high": 0.4536829816807902
+  },
+  {
+   "a": "overlap 0.25",
+   "b": "sites",
+   "diff": 0.4664489472592447,
+   "low": 0.39664503084075736,
+   "high": 0.528828718271822
+  },
+  {
+   "a": "overlap 0.25",
+   "b": "invariant 0.25",
+   "diff": -0.019990845085650633,
+   "low": -0.07349254660350531,
+   "high": 0.03894573373377716
+  }
+ ],
+ "best_rho": 0.25,
+ "learning_curve": [
+  {
+   "structures": 25,
+   "q2": 0.28428451866570237,
+   "spread": 0.12454228325099637,
+   "rmse": 1.1594582597423342
+  },
+  {
+   "structures": 50,
+   "q2": 0.2199667132829154,
+   "spread": 0.23090475938863056,
+   "rmse": 1.1864502160895556
+  },
+  {
+   "structures": 100,
+   "q2": 0.43528802337695843,
+   "spread": 0.021370727097311044,
+   "rmse": 1.4252899501762422
+  },
+  {
+   "structures": 200,
+   "q2": 0.5529484596436335,
+   "spread": 0.007243447996284228,
+   "rmse": 1.349805004229539
+  },
+  {
+   "structures": 393,
+   "q2": 0.5802891015368601,
+   "spread": 0.0,
+   "rmse": 1.2338115281238757
+  }
+ ],
+ "seconds": 632.1452569961548
+}

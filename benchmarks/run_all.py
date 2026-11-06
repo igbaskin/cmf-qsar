@@ -271,6 +271,15 @@ def registry() -> List[Benchmark]:
                   minutes="110",                 # measured: 67 for the first, 40 for the second
                   report=lambda: _mod("run_hops").write_table(_r("hops")),
                   tables=["hops/table.md"]),
+        Benchmark("litraj",
+                  "the hop models on a published benchmark of the same labels: 122,421 "
+                  "bond-valence barriers of the LiTraj collection",
+                  "run_litraj.py", "litraj",
+                  compute=[[]],
+                  prepare=["prepare_litraj.py --fetch"],
+                  minutes="11",                  # measured: 10.5
+                  report=lambda: _mod("run_litraj").write_table(_r("litraj")),
+                  tables=["litraj/table.md"]),
         Benchmark("battery",
                   "the average voltage of an insertion electrode from the cell, against a "
                   "composition baseline",

@@ -2602,6 +2602,20 @@ barriers reproduce whether each structure percolates in every case and the thres
 +0.78) and does not carry the scale over, which is what the negative q2 says: the public set is
 cathode chemistry, and a model for electrolytes wants a set of their own.
 
+**Against published numbers on the same labels** (`benchmarks/run_litraj.py`). The nebBVSE122k
+part of the LiTraj collection (Dembitskiy et al., npj Comput. Mater. 11, 131 (2025), MIT licence)
+holds 122,421 bond-valence barriers of single Li hops over 1,644 chemical systems, and its split
+holds out whole structures as the folds here do. On a sample of it -- 1801 hops of 393 structures,
+which is what a kernel can hold -- the count reference gives q2 +0.468, the invariant kernel
++0.600 and the frame kernel +0.580, against +0.95 for the graph network of the paper, fitted on
+forty times as many hops. The ordering inside this program holds on a chemistry it was not built
+on (the field kernels are ahead of the counts by +0.132 [+0.056, +0.209]), the distance to the
+published model is not explained by the size of the training set (+0.028 in q2 for every doubling
+of it, and 4.5 doublings separate this sample from their 8,945 structures), and the hop frame is
+again worth nothing in accuracy over the invariant kernel
+(-0.020 [-0.073, +0.039]). On migration the field model offers its cost and its readable
+co-field, not the lowest error.
+
 **Partial occupancy is exact and free (plan item M2).** A disordered site is a configurational
 ensemble, and for independently occupied sites its mean field is closed form: every site gets
 the occupancy-weighted weights of the species that share it, the overlap kernel of two mean

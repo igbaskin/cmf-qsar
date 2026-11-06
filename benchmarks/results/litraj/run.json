@@ -1,0 +1,16 @@
+{
+ "argv": [],
+ "tag": "",
+ "prepared": "benchmarks/results/litraj/prepared.json",
+ "max_structures": 0,
+ "rho": [
+  0.25
+ ],
+ "r_max": 6.0,
+ "site_r": 6.0,
+ "folds": 10,
+ "seed": 0,
+ "bootstrap": 1000,
+ "written": "2026-11-06 07:03:06",
+ "minutes": 10.5
+}

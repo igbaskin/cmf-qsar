@@ -9296,6 +9296,58 @@ where a straight path runs through an atom, are not a set a model can be measure
 item delivers is the data model that lets these structures in, exact and at no cost; a result on
 conductors needs the DFT-labelled set the previous section asks for.
 
+### Against published numbers on the same labels
+
+Everything above measures this program against references built inside it. One published
+benchmark predicts the same quantity, so the models can be compared with other people's numbers:
+the nebBVSE122k part of the LiTraj collection (Dembitskiy et al., *npj Computational Materials*
+**11**, 131 (2025), MIT licence), which holds 122,421 bond-valence barriers of single Li hops in
+11,290 structures of the Materials Project over 1,644 chemical systems. Its label is the barrier
+of one hop on a rigid framework, as here, relaxed with the nudged elastic band method instead of
+taken as the minimax path on a grid. Its split holds out whole structures, which was read from
+its index rather than from the paper: none of its 1,172 test structures appears in its training
+part. So the protocol is the one used here, and the numbers are comparable in kind.
+
+Two differences remain. The collection covers every chemistry that holds lithium, so its barriers
+spread 2.4 times as widely as those of the public set above (standard deviation 1.97 eV against
+0.81 eV), and the same error in eV therefore gives a higher q2 on it. And a kernel holds one
+number per pair of samples, so `benchmarks/run_litraj.py` reads a sample -- 400 structures with
+at most six hops each, 1801 hops of 393 structures -- where the published models are fitted on
+96,849 hops of 8,945 structures.
+
+| model | q2 | error (eV) | mean absolute error (eV) |
+| --- | ---: | ---: | ---: |
+| counts about the midpoint (rule 1) | +0.468 | 1.389 | 0.812 |
+| hop length and bottleneck | +0.179 | 1.725 | 1.050 |
+| the two end sites, as item M5 describes a site (6 A) | +0.114 | 1.793 | 1.075 |
+| rotation-invariant local kernel, rho 0.25 | +0.600 | 1.204 | 0.726 |
+| overlap kernel in the hop frame, rho 0.25 | +0.580 | 1.234 | 0.730 |
+| *published:* M3GNet, a graph network marking the midpoint | +0.95 | 0.44 | 0.21 |
+| *published:* gradient-boosted forest on Voronoi features | +0.94 | 0.49 | 0.26 |
+| *published:* nearest neighbours on the same features | +0.92 | 0.58 | 0.27 |
+
+**Three things the table says.** The ordering inside this program holds on a chemistry it was not
+built on: the field kernels are ahead of the count reference by +0.132 [+0.056, +0.209], so rule
+1 is met here too. The distance to the published models is large, and the size of the training
+set does not account for it: between 200 and 393 training structures the model gains +0.028 in q2
+for every doubling, and the 4.5 doublings up to 8,945 structures carry it to about +0.71 at that
+rate, well short of +0.95. And the two findings of the sections above hold on the new set as
+well. The hop frame is again worth nothing in accuracy over the rotation-invariant kernel
+(-0.020 [-0.073, +0.039] here, +0.005 [-0.060, +0.071] on the public set), so the frame earns its
+place by the co-field it makes readable and not by its predictions. The site-resolved descriptor
+falls from +0.446 on ternary lithium oxides to +0.114 here, so describing two end sites carries a
+barrier only inside one chemistry.
+
+**What this means for the program.** On this task a graph network fitted on a hundred thousand
+barriers is three times more accurate than a field kernel fitted on two thousand, and the
+published work shows a further step: a machine-learned interatomic potential that runs the
+elastic band itself reaches a mean absolute error of 0.07 to 0.08 eV against DFT barriers on
+structures without a transition metal, and 0.11 eV over the whole set once fine-tuned on it,
+which is a different kind of accuracy from either. What the field model offers on migration is not the lowest error. It is the
+cost -- no relaxation at all, one field evaluation per hop -- and the co-field above, which says
+where along the path and at what distance from its axis the barrier is decided. Those are reasons
+to use it for screening and for reading, not for a number to quote.
+
 ## The voltage of an insertion electrode: the cell against its composition
 
 A cathode is judged by its **average voltage**: the work per electron of taking the working ion

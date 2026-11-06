@@ -2569,6 +2569,13 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   commands, and a new field of the registry names the command that prepares an input a benchmark
   only reads: `prepare_hops.py`, which `--compute` does not run, because it needs the network and
   its result is kept in the repository. `tests/test_hops_runs.py` has 23 tests.
+  `benchmarks/run_litraj.py`, the external check of item BT7 added the same day, was written to
+  both rules from the start: its tag covers the prepared sample, how much of it, the envelope
+  widths, the radius of the environment, the cutoff of the site-resolved reference, the folds, the
+  seed and the bootstrap draws, its one command is in the registry beside the command that
+  prepares its input (`prepare_litraj.py --fetch`, which downloads someone else's data and is not
+  run by `--compute`), and `tests/test_litraj_runs.py` has 22 tests, the last of which asks the
+  prepared sample to name the source and the licence of the labels it carries.
   *What re-running the two commands found.* Nothing stale, in contrast to the Hammett set, which
   is itself worth recording: the re-run passes the stored results through every change the library
   has had since 31 October, the charge repair of item D11 included. `hosts.json` and
@@ -4583,10 +4590,41 @@ values and a computed oxidation potential is a descriptor, not a target.
   any model here reaches. The site description therefore loses the barrier for want of the path
   between the sites, not for want of a way to tell two paths apart, which is the answer the item
   was written to get: the site resolution alone does not carry the barrier.
-  **Not done:** no DFT-labelled public set (the LLZO, NASICON and argyrodite barriers the item
-  names are scattered over papers and not in one table), no polarisability field, no argyrodite
-  among the thirteen disordered conductors, no relaxed path (the bottleneck is on the straight
-  line), and no panel in the application.
+  **Measured against published numbers, 6 November 2026** (`benchmarks/prepare_litraj.py`,
+  `benchmarks/run_litraj.py`, `benchmarks/results/litraj/`). The nebBVSE122k part of the LiTraj
+  collection (Dembitskiy et al., npj Comput. Mater. 11, 131 (2025), MIT licence) predicts the
+  same quantity this item predicts: 122,421 bond-valence barriers of single Li hops in 11,290
+  structures of the Materials Project over 1,644 chemical systems, relaxed with the nudged
+  elastic band method instead of taken as the minimax path on a grid. **Its split holds out whole
+  structures**, which was read from its index rather than from the paper: none of its 1,172 test
+  structures appears in its training part. A kernel holds one number per pair of samples, so the
+  run reads a sample of 400 structures with at most 6 hops each, 1801 hops of 393 structures, and
+  fits the same models with the same protocol as the public set above. The counts about the
+  midpoint give q2 +0.468 (error 1.389 eV), the hop length with the bottleneck +0.179, the two
+  end sites of M5 +0.114, the rotation-invariant local kernel +0.600 (1.204 eV, mean absolute
+  error 0.726 eV) and the overlap kernel in the hop frame +0.580 (1.234 eV). The published models
+  on the same labels reach q2 +0.95 at a mean absolute error of 0.21 eV (M3GNet, a graph network
+  that marks the hop midpoint with a dummy atom) and +0.94 at 0.26 eV (a gradient-boosted forest
+  on Voronoi features of the hop). Three readings. **The ordering inside this program holds**:
+  the field kernels are ahead of the count reference by +0.132 [+0.056, +0.209], so rule 1 is met
+  on a chemistry the program was not built on. **The distance to the published models is large
+  and is not the size of the training set**: between 200 and 393 training structures the model
+  gains +0.028 in q2 for every doubling, and the 4.5 doublings up to the 8,945 training
+  structures of the collection carry it to about +0.71 at that rate, short of +0.95. **And the
+  two findings of this item hold on the new set as well**: the hop frame is again worth nothing
+  in accuracy over the rotation-invariant kernel (-0.020 [-0.073, +0.039], as it was
+  +0.005 [-0.060, +0.071] on the public set), and the site-resolved descriptor falls from +0.446
+  on ternary lithium oxides to +0.114 here, so describing two end sites carries a barrier only
+  inside one chemistry.
+  **Not done:** no model fitted on DFT barriers. When this item was written the barriers it names
+  were scattered over papers and not in one table; the collection above now supplies one,
+  `nebDFT2k`, with 1681 nudged-elastic-band barriers of 876 structures under the same licence,
+  which nothing here has read yet. Measuring on it is the next step for this item, and the first
+  chance to fit the program on real migration barriers rather than on an empirical landscape; the
+  published reference there is a mean absolute error of 0.25 eV for the best structure-to-property
+  model and 0.07 to 0.11 eV for a machine-learned potential that runs the elastic band itself.
+  Also no polarisability field, no argyrodite among the thirteen disordered conductors, no
+  relaxed path (the bottleneck is on the straight line), and no panel in the application.
 
 **Outside the library**
 
@@ -4606,7 +4644,8 @@ BT5 is empty without a complex that builds and aligns. BT6 with M4, ~~BT7 after 
 by the
 local route, 30 October 2026, and did not
 need M5; its gate was applied against an M5-style model of the same hops on 6 November 2026 and
-is passed), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte do beat BT4's
+is passed, and the same day the models were measured against published numbers on a public
+benchmark of the same labels), ~~BT5~~ **done 4 November 2026** (shells sampled from a bulk electrolyte do beat BT4's
 single optimised complex on the activation energy, by 0.32 to 0.55 kJ/mol after item D11's charge
 correction, clear of zero in three readings of four, and do not beat it on
 the conductivity; the cation frame costs an ensemble 0.7 to 1.0 kJ/mol, far more than it costs one

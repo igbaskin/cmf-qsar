@@ -1,0 +1,14 @@
+1801 hops of Li in 393 structures (1 to 6 per structure), 1801 distinct by symmetry, 1801 with a barrier
+  the whole collection: 122421 hops of 11290 structures and 1644 chemical systems, barriers mean 1.545, standard deviation 1.970 eV
+  this sample: 1801 hops in 393 structures, barriers mean 1.448, standard deviation 1.905 eV; fields: electrostatic, steric, prop:electronegativity, cif:B, cif:C, cif:Co, cif:Cr, cif:F, cif:Fe, cif:Li, cif:Mn, cif:Ni, cif:O, cif:P, cif:Si, cif:V, cif:other
+  counts about the midpoint: q2 +0.468, error 1.389, mean absolute error 0.812 over 1801 atoms in 393 molecules, 10 folds, ridge 0.01
+  hop length and bottleneck: q2 +0.179, error 1.725, mean absolute error 1.050 over 1801 atoms in 393 molecules, 10 folds, ridge 1
+  the two end sites (M5), cutoff 6 A: q2 +0.114, error 1.793, mean absolute error 1.075 over 1801 atoms in 393 molecules, 10 folds, ridge 1
+  invariant local, rho 0.25: q2 +0.600, error 1.204, mean absolute error 0.726 over 1801 atoms in 393 molecules, 10 folds, ridge 0.1
+  rotation-averaged overlap, rho 0.25: q2 +0.580, error 1.234, mean absolute error 0.730 over 1801 atoms in 393 molecules, 10 folds, ridge 1  (kernel 582 s, 79 atoms per environment)
+    overlap against invariant at the same width -0.020 [-0.073, +0.039]
+    learning curve: 25 structures, q2 +0.284 +- 0.125, error 1.159 eV
+    learning curve: 50 structures, q2 +0.220 +- 0.231, error 1.186 eV
+    learning curve: 100 structures, q2 +0.435 +- 0.021, error 1.425 eV
+    learning curve: 200 structures, q2 +0.553 +- 0.007, error 1.350 eV
+done in 10.5 minutes
