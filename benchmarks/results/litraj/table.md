@@ -177,6 +177,26 @@ With the width and the ridge chosen inside each training part:
 
 **One caution.** The volumes are integrated on a cubic grid of 0.25 angstrom inside a ball of 3.5 angstrom, which reproduces an exactly known cell to under one per cent but leaves the sharp cell with a little grid noise that the smooth versions mostly avoid. That favours the field versions slightly, so a cell that wins anyway has won against the arrangement.
 
+### A forest on the window, which closes the description side
+
+Two things closed most of the distance to the published models in the sections above. One is the **description**: the angle at the midpoint, and the length of a row. The other is the **fitting method**: a forest instead of a linear kernel on the same rows. The best model so far mixes the two, being a forest given the raw two-point rows, so it is not clear which of them it owes its lead to. The rows below separate them by fitting a forest on the three-distance rows, over the same hops and the same folds. If the better description is worth to a forest what it was worth to the kernel, the description side is still open; if it is worth nothing, what is left is the fitting method alone.
+
+The rows are the ones the winning kernel of the last section is built from: the channels scaled as that kernel scales them, with the row length left in, which is the setting the nested arm chose in every fold. The normalised form is not measured here -- it would pair with a setting that was never chosen, and this feature matrix is 63036 columns wide, which costs hours per arm.
+
+| rows | fitting method | columns | q2 | error (eV) | mean absolute error (eV) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| raw | random forest | 63036 | +0.842 | 0.758 | 0.356 |
+| raw | boosted forest | 63036 | +0.846 | 0.746 | 0.354 |
+
+* Random forest on the rows raw, against the kernel on the same description: **+0.053 [+0.015, +0.091]**
+* Boosted forest on the rows raw, against the kernel on the same description: **+0.058 [+0.029, +0.089]**
+* The best of them against the random forest on the raw two-point rows: **+0.003 [-0.026, +0.028]**
+* The best of them against the best kernel model of this item: **+0.047 [+0.019, +0.083]**
+
+**What this says.** The best forest on the three-distance rows is +0.058 [+0.029, +0.089] against the kernel on the same rows, which is clear of zero: a forest still finds something in this description that a linear kernel on it does not, so the fitting method is part of what remains and resolving the angle at the midpoint has not closed it.
+
+**And the forest that was unaccounted for.** The best forest on these rows is +0.003 [-0.026, +0.028] against the random forest on the raw two-point rows, so the forest that was ahead of every kernel in the sections above is no longer ahead of a forest given this description.
+
 Both model classes learn at a rate of their own, and the rate is what the distance to the published training set has to be crossed at. The two curves below are measured on the same drawn subsets of structures:
 
 | training structures | q2, overlap in the hop frame | q2, invariant local, rows raw, random forest |

@@ -2646,7 +2646,7 @@ absolute error of 0.421 eV: **+0.217 [+0.159, +0.286]** over the same two-point 
 the same way, four times what a width was worth, +0.209 [+0.145, +0.274] over the frame overlap
 kernel, and past the random forest on the two-point rows (+0.047 [-0.004, +0.096]). It is still a
 linear kernel on fields, so the co-field survives. A forest on the **raw** two-point rows remains
-ahead by -0.055 [-0.090, -0.023], and a forest on the three-distance rows was not run.
+ahead by -0.055 [-0.090, -0.023]; two paragraphs below say what that forest has.
 
 **A Voronoi volume is a ratio of fields.** The published models' strongest feature is the smallest
 volume of the Voronoi polyhedra around the three sites of a hop. A cell is a minimum over atoms,
@@ -2656,8 +2656,19 @@ fields. Measured both ways, the field version is level with the cell (q2 +0.468 
 and the nested arm chose a field over the cell in every fold, so this program's own terms carry
 the quantity. Four such numbers match the whole count reference (-0.000 [-0.074, +0.092]), but
 they add +0.010 [-0.005, +0.023] to the three-distance kernel, which does not clear zero: the
-triangles around the midpoint already hold it. That mixture is the best model here, q2 +0.799 at
-0.418 eV, still -0.045 [-0.080, -0.013] behind the forest on raw rows.
+triangles around the midpoint already hold it. That mixture is the best kernel model here,
+q2 +0.799 at 0.418 eV, still -0.045 [-0.080, -0.013] behind the forest on raw rows.
+
+**And what the forest has is the fitting method, not the description.** The last arm gives a forest
+the three-distance rows, over the same hops, the same folds and the same forest settings as every
+other forest here. It reaches q2 +0.846 at a mean absolute error of 0.354 eV, this item's best
+model of any kind, and it is +0.058 [+0.029, +0.089] over the kernel on the same rows -- clear of
+zero, so a flexible learner still finds something a linear kernel on this description does not.
+But against the forest on the raw two-point rows it is +0.003 [-0.026, +0.028], which does not
+clear zero: the better description is worth nothing to a forest, while it was worth +0.217 to the
+kernel. So the description side of the distance to the published models is closed, and the
+remainder -- about +0.05 in q2 -- is the fitting method. The kernel keeps the co-field and a forest
+does not, so that is a trade rather than a loss.
 
 **Partial occupancy is exact and free (plan item M2).** A disordered site is a configurational
 ensemble, and for independently occupied sites its mean field is closed form: every site gets

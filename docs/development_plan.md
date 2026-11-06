@@ -4736,8 +4736,9 @@ values and a computed oxidation potential is a descriptor, not a target.
   three-distance one is there.
   **What is still ahead of it, and the caution.** A random forest on the raw two-point rows is
   still ahead by -0.055 [-0.090, -0.023], so a flexible learner is finding something a linear
-  kernel on triangles does not; a forest on the three-distance rows is the obvious next arm and
-  was not run. The range of the three-distance grid was placed after a first look at this same
+  kernel on triangles does not; the arm after the free volume below says what that is, and it is
+  the fitting method. The range of the three-distance grid was placed after a first look at this
+  same
   sample: nothing was chosen on a test fold, but the grid is not independent of the data, and a
   fresh set would settle it. The published models remain ahead at 0.21 eV (graph network) and
   0.26 eV (forest) on 96,849 hops against these 1801 -- but the distance in mean absolute error
@@ -4765,16 +4766,38 @@ values and a computed oxidation potential is a descriptor, not a target.
   (-0.103 [-0.168, -0.039]). **But it adds nothing to the three-distance kernel**:
   +0.010 [-0.005, +0.023], which does not clear zero, so the triangles around the midpoint
   already carry what the free volume says -- as a description of those triangles should. The
-  mixture is this item's best model at q2 +0.799 and a mean absolute error of 0.418 eV, and it is
-  still -0.045 [-0.080, -0.013] behind the random forest on the raw two-point rows. So the
-  published feature is not what this program was missing, and what the forest has is still not
-  accounted for. The run is 45.1 minutes.
+  mixture is this item's best kernel model at q2 +0.799 and a mean absolute error of 0.418 eV,
+  and it is still -0.045 [-0.080, -0.013] behind the random forest on the raw two-point rows. So
+  the published feature is not what this program was missing; what the forest has is accounted for
+  by the arm below.
+
+  **And what the forest has is the fitting method, not the description (6 November 2026).** The
+  last arm of this item gives a forest the three-distance rows: the same hops, the same folds and
+  the same forest settings as every other forest arm here. The random forest reaches q2 +0.842 at
+  a mean absolute error of 0.356 eV and the boosted one +0.846 at 0.354 eV, which is this item's
+  best model of any kind. **The reading is in two comparisons.** Against the kernel on the same
+  rows the two forests are +0.053 [+0.015, +0.091] and +0.058 [+0.029, +0.089], both clear of
+  zero, so a flexible learner still finds something a linear kernel on the same description does
+  not. But against the random forest on the raw two-point rows the best of them is
+  +0.003 [-0.026, +0.028], which does not clear zero: **the better description is worth nothing to
+  a forest, while it was worth +0.217 to the kernel.** So the description side of the distance is
+  closed. What a forest has over this program on this task is not a description of the hop that
+  the fields cannot express; it is the fitting method, and the remainder is about +0.05 in q2 or
+  0.06 eV, of which the Gaussian width above had already recovered 30 per cent. For the program
+  that is a trade and not a loss, because the field kernel keeps the co-field and a forest does
+  not, and it says that the place to look next for accuracy on this task is the fitting method and
+  no longer the description. **One row form was measured, not two**: the raw rows, because the
+  nested kernel chose the setting that keeps the row length in every fold, so those are the rows
+  of the model the forests are compared with, and the normalised form would pair with a setting
+  that was never chosen and would repeat the row-length question the two-point arms answered. The
+  two arms cost 39 and 27 minutes on 63,036 columns, which is why the set is two and not four.
 
   Set beside the published numbers,
-  this program's description of a hop fitted with a forest reaches 0.374 eV on 1801 hops against
+  this program's description of a hop fitted with a forest reaches 0.354 eV on 1801 hops against
   0.21 eV (graph network) and 0.26 eV (published forest) on 96,849 hops. The
   forest also learns faster: +0.053 in q2 per doubling over the last step of its curve against
-  +0.028 for the overlap kernel. The run costs 46.5 minutes, of which the overlap kernel is 30.
+  +0.028 for the overlap kernel. The whole run costs 124.7 minutes, of which the two forest arms
+  on the three-distance rows are 66 and the overlap kernel 30.
   Nothing here changes a default: the field kernels are what the co-field is read from, and the
   co-field is the reason the frame model exists.
   **Not done:** no model fitted on DFT barriers. When this item was written the barriers it names

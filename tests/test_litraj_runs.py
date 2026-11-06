@@ -473,3 +473,54 @@ def test_the_free_volume_arm_names_the_cell_and_the_field():
     assert arms == {"free volume", "free volume with hop length and bottleneck",
                     "three-distance and free volume"}
     assert 0.0 in rl.FREE_MIX_WEIGHTS, "the mixture must be able to fall back on no free volume"
+
+
+# ------------------------------------------------------------------ the forest on the window
+
+def test_the_forest_on_the_window_is_handed_exactly_the_rows_the_kernel_sees():
+    """The arm that closes the description side may not be handed more than its kernel had."""
+    import numpy as np
+
+    from cmfqsar.triangles import (TriangleSpec, triangle_feature_matrix, triangle_kernel,
+                                   triangle_scale)
+    from run_hops import fieldset_for
+    hs, _ = rl.load_prepared(max_structures=3)
+    fs = fieldset_for(hs, "file")
+    crystals = hs.crystals(fs)
+    t = hs.targets()
+    envs = hs.environments(crystals, rows=t.atom[:4], rho=0.25, r_max=5.0)
+    assert envs, "the prepared sample holds no hop in its first structures"
+    spec = TriangleSpec(r_max=3.0, step=1.0)
+    X = triangle_feature_matrix(envs, spec, len(fs.names))
+    K = triangle_kernel(X, spec=spec, n_fields=len(fs.names))
+    scaled = X * triangle_scale(X, spec, len(fs.names))
+    rows = rl.kernel_rows(scaled, scale=np.ones(scaled.shape[1]))
+    assert np.allclose(rows @ rows.T, K, atol=1e-8), \
+        "the product of these rows is the kernel itself, so a forest on them sees no more"
+    lengths = np.linalg.norm(scaled, axis=1)
+    assert lengths.max() > lengths.min() * (1.0 + 1e-6), \
+        "the rows have to differ in length, or the raw form keeps nothing the kernel gave away"
+
+
+def test_the_forest_on_the_window_is_compared_with_the_kernel_on_the_same_rows():
+    """A forest arm without that comparison answers nothing this section asks."""
+    with open(os.path.join(RESULTS, "public.json"), encoding="utf-8") as fh:
+        pub = json.load(fh)
+    arms = pub["triangle_forests"]
+    pairs = {(p["a"], p["b"]) for p in pub["pairs"]}
+    key = f"invariant {pub['best_rho']}"
+    assert {m["rows"] for m in arms} == {rl.TRIANGLE_FOREST_ROWS}, \
+        "the rows have to be the ones the kernel these forests are compared with was built from"
+    assert rl.TRIANGLE_FOREST_ROWS in rl.FOREST_ROWS
+    assert {m["method"] for m in arms} == {name for name, _ in rl.FORESTS}, \
+        "both fitting methods, as every other section of this item measures both"
+    for m in arms:
+        assert m["lam"] is None, "a forest has no ridge"
+        assert m["on"] == "nested three-distance"
+        assert m["columns"] > 0
+        assert (m["key"], "nested three-distance") in pairs, \
+            "a forest on the window has no comparison with the kernel on the same rows"
+    best = pub["best_triangle_forest"]
+    assert best in {m["key"] for m in arms}
+    assert (best, f"rf {key} raw") in pairs, \
+        "the forest this arm has to account for is the one on the raw two-point rows"

@@ -125,6 +125,14 @@ MIX_WEIGHTS = (0.0, 0.25, 0.5, 0.75, 1.0)
 #: direction; a forest given the raw rows sees both.  "as the kernel" is therefore the arm that
 #: compares the fitting methods on one description, and "raw" asks what the row length is worth.
 FOREST_ROWS = ("as the kernel", "raw")
+#: which of those row forms the forest arms on the three-distance description are given.  The
+#: nested three-distance arm chose the setting that keeps the row length in every fold, so the
+#: raw rows are the rows of the model those forests are compared with; the normalised form would
+#: pair with a setting that was never chosen and would only repeat the row-length question the
+#: two-point arms already answered.  It is left out for that reason and for its cost: the
+#: three-distance feature matrix is 24 times wider than the two-point one, and one forest arm on
+#: it takes hours.
+TRIANGLE_FOREST_ROWS = "raw"
 
 
 # ------------------------------------------------------------------- one run and what it wrote
@@ -728,6 +736,45 @@ def run(args, log) -> dict:
                                     seed=args.seed)
         out["pairs"].append({"a": a_key, "b": b_key, "diff": d, "low": lo, "high": hi})
         log(f"    {a_key} against {b_key} {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
+    # the fitting method on the window the ion passes through.  The best model so far is a
+    # forest given the raw two-point rows, which mixes a better description (the row length the
+    # kernel divides out) with a stronger fitting method, so it is not clear which of them it
+    # owes its lead to.  This arm separates them: a forest on the three-distance rows, over the
+    # same hops and the same folds.  If the better description is worth to a forest what it was
+    # worth to the kernel, the description side is still open; if it is worth nothing, the
+    # remainder belongs to the fitting method.
+    from cmfqsar.triangles import TriangleSpec, triangle_feature_matrix, triangle_scale
+    spec3 = TriangleSpec(r_max=TRIANGLE_SPECS[0][0], step=TRIANGLE_SPECS[0][1])
+    t1 = time.time()
+    F3 = triangle_feature_matrix(envs_best, spec3, len(fs.names))
+    F3 *= triangle_scale(F3, spec3, len(fs.names))      # the channel scale the kernel applies
+    row_form = TRIANGLE_FOREST_ROWS
+    M = F3 if row_form == "raw" else kernel_rows(F3, scale=np.ones(F3.shape[1]))
+    log(f"  the three-distance rows for the forest arms: {M.shape[1]} columns, rows "
+        f"{row_form}, {time.time() - t1:.0f} s")
+    out["triangle_forests"] = []
+    for kind, short in FORESTS:
+        t1 = time.time()
+        r = forest_result(M, t, args.folds, args.seed,
+                          f"three-distance, {row_form}, {kind}", kind)
+        log(f"  {r.summary()}  ({time.time() - t1:.0f} s)")
+        fkey = f"{short} three-distance {row_form}"
+        out["triangle_forests"].append(_entry(r, extra={
+            "key": fkey, "on": "nested three-distance", "method": kind, "rows": row_form,
+            "columns": int(M.shape[1]), "lam": None}))
+        results[fkey] = r
+    del M, F3
+    best_tri_forest = max(out["triangle_forests"], key=lambda e: e["q2"])
+    out["best_triangle_forest"] = best_tri_forest["key"]
+    for a_key, b_key in [(f["key"], "nested three-distance") for f in out["triangle_forests"]] \
+            + [(best_tri_forest["key"], f"rf {key} raw"),
+               (best_tri_forest["key"], "nested three-distance and free volume")]:
+        if a_key not in results or b_key not in results:
+            continue
+        d, lo, hi = paired_interval(results[a_key], results[b_key], t, runs=args.bootstrap,
+                                    seed=args.seed)
+        out["pairs"].append({"a": a_key, "b": b_key, "diff": d, "low": lo, "high": hi})
+        log(f"    {a_key} against {b_key} {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
     # the learning curve of the best model, on the kernel already in hand: how much of the
     # distance to the published models is the size of the training set
     curve = []
@@ -1262,6 +1309,78 @@ def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
           "grid noise that the smooth versions mostly avoid. That favours the field versions "
           "slightly, so a cell that wins anyway has won against the arrangement.")
         w("")
+    tf = pub.get("triangle_forests") or []
+    if tf:
+        key = f"invariant {pub['best_rho']}"
+        w("### A forest on the window, which closes the description side")
+        w("")
+        w("Two things closed most of the distance to the published models in the sections "
+          "above. One is the **description**: the angle at the midpoint, and the length of a "
+          "row. The other is the **fitting method**: a forest instead of a linear kernel on the "
+          "same rows. The best model so far mixes the two, being a forest given the raw "
+          "two-point rows, so it is not clear which of them it owes its lead to. The rows below "
+          "separate them by fitting a forest on the three-distance rows, over the same hops and "
+          "the same folds. If the better description is worth to a forest what it was worth to "
+          "the kernel, the description side is still open; if it is worth nothing, what is left "
+          "is the fitting method alone.")
+        w("")
+        w(f"The rows are the ones the winning kernel of the last section is built from: the "
+          f"channels scaled as that kernel scales them, with the row length left in, which is "
+          f"the setting the nested arm chose in every fold. The normalised form is not measured "
+          f"here -- it would pair with a setting that was never chosen, and this feature matrix "
+          f"is {tf[0]['columns']} columns wide, which costs hours per arm.")
+        w("")
+        w("| rows | fitting method | columns | q2 | error (eV) | mean absolute error (eV) |")
+        w("| --- | --- | ---: | ---: | ---: | ---: |")
+        for m in tf:
+            w(f"| {m['rows']} | {m['method']} | {m['columns']} | {m['q2']:+.3f} "
+              f"| {m['rmse']:.3f} | {m['mae']:.3f} |")
+        w("")
+        for m in tf:
+            p = pairs.get((m["key"], "nested three-distance"))
+            if p:
+                w(f"* {m['method'].capitalize()} on the rows {m['rows']}, against the kernel on "
+                  f"the same description: **{p['diff']:+.3f} [{p['low']:+.3f}, "
+                  f"{p['high']:+.3f}]**")
+        best = pub.get("best_triangle_forest")
+        for what, b_key in (("against the random forest on the raw two-point rows",
+                             f"rf {key} raw"),
+                            ("against the best kernel model of this item",
+                             "nested three-distance and free volume")):
+            p = pairs.get((best, b_key))
+            if p:
+                w(f"* The best of them {what}: **{p['diff']:+.3f} [{p['low']:+.3f}, "
+                  f"{p['high']:+.3f}]**")
+        w("")
+        gains = [pairs.get((m["key"], "nested three-distance")) for m in tf]
+        gains = [g for g in gains if g]
+        if gains:
+            top = max(gains, key=lambda g: g["diff"])
+            clear = top["low"] > 0.0
+            w("**What this says.** The best forest on the three-distance rows is "
+              f"{top['diff']:+.3f} [{top['low']:+.3f}, {top['high']:+.3f}] against the kernel "
+              "on the same rows"
+              + (", which is clear of zero: a forest still finds something in this description "
+                 "that a linear kernel on it does not, so the fitting method is part of what "
+                 "remains and resolving the angle at the midpoint has not closed it."
+                 if clear else
+                 ", which does not clear zero. On the two-point description the same comparison "
+                 "was a clear gain for the forest, so resolving the angle at the midpoint has "
+                 "closed the distance between the two fitting methods: there is nothing left "
+                 "here for a forest to find that the kernel on the same rows cannot reach."))
+            w("")
+        catch = pairs.get((pub.get("best_triangle_forest"), f"rf {key} raw"))
+        if catch:
+            behind = catch["high"] < 0.0
+            w("**And the forest that was unaccounted for.** The best forest on these rows is "
+              f"{catch['diff']:+.3f} [{catch['low']:+.3f}, {catch['high']:+.3f}] against the "
+              "random forest on the raw two-point rows"
+              + (", so that forest is still ahead of every model here and what it is using is "
+                 "still not accounted for."
+                 if behind else
+                 ", so the forest that was ahead of every kernel in the sections above is no "
+                 "longer ahead of a forest given this description."))
+            w("")
     fcurve = pub.get("forest_curve") or []
     if fcurve and curve:
         shown = next((f for f in forests if f["key"] == pub.get("best_forest")), None)

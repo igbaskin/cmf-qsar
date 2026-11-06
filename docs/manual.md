@@ -9463,9 +9463,10 @@ only the exponent moves the figure.
 
 Two cautions. A random forest on the raw two-point rows is still ahead of this kernel by
 -0.055 [-0.090, -0.023], so a flexible learner finds something a linear kernel on triangles does
-not, and a forest on the three-distance rows is the obvious next arm; it was not run. And the
-range of the three-distance grid was placed after a first look at this same sample, so while
-nothing was chosen on a test fold, the grid is not independent of the data.
+not; the second subsection below measures a forest on these same rows and says what that
+something is. And the range of the three-distance grid was placed after a first look at this
+same sample, so while nothing was chosen on a test fold, the grid is not independent of the
+data.
 
 #### A Voronoi volume is a ratio of fields
 
@@ -9473,10 +9474,10 @@ The published models' own feature ranking puts the **smallest volume of the Voro
 around the three sites of a hop -- its start, its midpoint and its end -- first, and the largest
 of the three fourth. A Voronoi cell is defined by a minimum over atoms, which looks unlike
 anything this program computes, but it is the narrow-width limit of a ratio of fields. With
-$d_i(\mathbf r)=|\mathbf r-\mathbf r_i|^2-R_i^2$ the squared distance to atom $i$ less its squared
+$d_i(\mathbf{r})=|\mathbf{r}-\mathbf{r}_i|^2-R_i^2$ the squared distance to atom $i$ less its squared
 radius, the radical (power) Voronoi cell of a centre $c$ is where $d_c$ is the smallest, and
 
-$$w_c(\mathbf r)=\frac{e^{-\beta d_c(\mathbf r)}}{\sum_i e^{-\beta d_i(\mathbf r)}}$$
+$$w_c(\mathbf{r})=\frac{e^{-\beta d_c(\mathbf{r})}}{\sum_i e^{-\beta d_i(\mathbf{r})}}$$
 
 tends to the indicator function of that cell as $\beta$ grows, everywhere except its boundary. The
 denominator is a steric field with unit weights and a Gaussian of width $1/\sqrt{2\beta}$, so the
@@ -9503,10 +9504,50 @@ ahead of the hop length with the bottleneck by +0.289 [+0.238, +0.338]; they rem
 whole two-point description (-0.103 [-0.168, -0.039]). But adding them to the three-distance
 kernel is worth +0.010 [-0.005, +0.023], which does not clear zero: the triangles around the
 midpoint already carry what the free volume says, as a description of those triangles should. That
-mixture is the best model of this section at q2 +0.799 and a mean absolute error of 0.418 eV, and
-it is still -0.045 [-0.080, -0.013] behind the random forest on the raw two-point rows. So the
-published models' strongest feature is not what this program was missing, and what the forest has
-is still not accounted for.
+mixture is the best kernel model of this section at q2 +0.799 and a mean absolute error of 0.418
+eV, and it is still -0.045 [-0.080, -0.013] behind the random forest on the raw two-point rows. So
+the published models' strongest feature is not what this program was missing; what the forest has
+is accounted for by the next subsection.
+
+#### The forest is the fitting method, not the description
+
+Two things closed most of the distance in the sections above. One is the **description**: the
+length of a row, which the kernel divides out, and the angle at the midpoint, which a two-point
+description cannot resolve. The other is the **fitting method**: a forest instead of a linear
+kernel on the same rows. The best model so far mixes the two -- it is a forest, and it is given the
+raw two-point rows -- so it is not clear which of them it owes its lead to. The arm below separates
+them by giving a forest the **three-distance** rows, with the same hops, the same folds and the
+same forest settings as every other forest in this section. If the better description is worth to
+a forest what it was worth to the kernel, the description side is still open; if it is worth
+nothing, what is left is the fitting method alone.
+
+| model | q2 | error (eV) | mean absolute error (eV) |
+| --- | ---: | ---: | ---: |
+| three-distance kernel, nested | +0.789 | 0.875 | 0.421 |
+| three-distance kernel with the free volume | +0.799 | 0.854 | 0.418 |
+| random forest on the two-point rows, raw | +0.844 | 0.753 | 0.374 |
+| random forest on the three-distance rows | +0.842 | 0.758 | 0.356 |
+| **boosted forest on the three-distance rows** | **+0.846** | **0.746** | **0.354** |
+
+The reading is in two comparisons. Against the kernel on the same rows the two forests are
++0.053 [+0.015, +0.091] and +0.058 [+0.029, +0.089], both clear of zero, so a flexible learner
+still finds something a linear kernel on this description does not. But against the random forest
+on the raw two-point rows the best of them is +0.003 [-0.026, +0.028], which does not clear zero:
+**the better description is worth nothing to a forest, while it was worth +0.217 to the kernel.**
+
+So the description side of the distance is closed. What a forest has over this program on this
+task is not a description of the hop that the fields cannot express. It is the fitting method: a
+model that can combine the rows in ways a linear kernel cannot. The Gaussian width above had
+already recovered about 30 per cent of that, and what is left is about +0.05 in q2, or 0.06 eV of
+mean absolute error. For this program that is a trade rather than a loss, because the field kernel
+keeps the co-field and a forest does not; and it says where to look next for accuracy on this
+task, which is the fitting method and no longer the description.
+
+One note on what was measured. The forests are given the rows the winning kernel is built from:
+the channels scaled as that kernel scales them, with the row length left in, which is the setting
+the nested arm chose in every fold. The normalised form of the same rows was not measured. It
+would pair with a setting that was never chosen, and this feature matrix is 63,036 columns wide,
+so one arm on it costs about half an hour.
 
 **What this means for the program.** On this task a graph network fitted on a hundred thousand
 barriers is still the most accurate model, and the published work shows a further step: a
@@ -9520,9 +9561,11 @@ and for reading, not for a number to quote.
 
 What the measurements above add is where the distance to those numbers came from, and it was
 mostly not the fields. Fitting the same description with a forest, keeping the row length the
-kernel divides out, and above all resolving the angle at the midpoint take the mean absolute error
-from 0.726 eV to 0.421 eV, and the last of those keeps the model a linear kernel on fields and so
-keeps the co-field. The published graph network reaches 0.21 eV, on fifty-four times as many
+kernel divides out, and resolving the angle at the midpoint take the mean absolute error from
+0.726 eV to 0.354 eV; the one of those that keeps the model a linear kernel on fields, and so
+keeps the co-field, takes it to 0.421 eV. The last arm says how the rest divides: the description
+side is closed, and what a forest still has over the kernel is the fitting method. The published
+graph network reaches 0.21 eV, on fifty-four times as many
 hops, and it carries three-body terms of its own -- which is the same ingredient that moved this
 model furthest.
 
