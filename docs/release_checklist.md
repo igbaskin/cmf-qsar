@@ -35,8 +35,21 @@ repository becomes public.
 
 ## 2. Make the repository public
 
-`github.com/igbaskin/cmf-qsar` is private today. This step is done in the GitHub web interface
-(Settings, *Change visibility*), or with an authenticated `gh`:
+**Done 6 November 2026.** `github.com/igbaskin/cmf-qsar` is public, changed with the command
+below. The step was brought forward, before the manifest of step 1, for a reason worth recording:
+continuous integration had stopped running. Actions minutes are metered for a private repository,
+with Linux counted once, Windows twice and macOS ten times, so one push of this seven-job workflow
+costs about 40 billed minutes; GitHub refused every job of three runs in a row, each job failing in
+two seconds with no step executed. A public repository uses free runners with no quota, so the
+refusal ends with this step rather than with a payment.
+
+Three checks were made before the change, and all three passed: no file that looks like a
+credential was ever added in the history (`.env`, `*.pem`, `id_rsa`, `netrc` and the rest), none of
+the 2,299 tracked files carries a token, key or private-key block, and `git ls-files '*.pdf'`
+prints `docs/CMF_manual.pdf` alone.
+
+This step is done in the GitHub web interface (Settings, *Change visibility*), or with an
+authenticated `gh`:
 
 ```bash
 gh repo edit igbaskin/cmf-qsar --visibility public --accept-visibility-change-consequences
