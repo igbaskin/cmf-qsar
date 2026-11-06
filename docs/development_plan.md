@@ -6331,7 +6331,7 @@ own text has to stop before it, and five entries state their status in a form of
 | E. Learning | 11 | 10 | E11 (partly) |
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
-| H. Materials and periodicity | 14 | 10 | M7, M8, M9, M13 |
+| H. Materials and periodicity | 14 | 11 | M7, M8, M9 |
 | H. Nanotechnology | 12 | 0 | NT1 to NT12 |
 | H. Electrochemistry | 10 | 7 | EC8 (partly), EC9, EC10 |
 | H. Battery science | 8 | 7 | BT8 |
@@ -6341,7 +6341,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 16 | 0 | ND1 to ND13 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**146 items: 101 finished, 3 partly, 42 open.**
+**146 items: 102 finished, 3 partly, 41 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -6353,9 +6353,11 @@ equally blocked.
   found for the catalytic case; PO1 found one on 5 November 2026, a measured enantioselectivity
   on 43 molecular catalysts at one condition, which answers the molecular case and not EC8's or
   EC9's. The search is written up in `docs/public_3dqsar_datasets.md`.
-* **Waiting for the application.** G5, M13, EC10, NT8, NT9 and NT11 are the same work seen from
-  five sides: nothing of the periodic, surface or particle side is visible in the window. They are
-  the largest untouched block in the plan and none of them needs a new measurement.
+* **Waiting for the application.** G5, EC10, NT8, NT9 and NT11 are the same work seen from four
+  sides: nothing of the surface or particle side is visible in the window. None of them needs a
+  new measurement. M13 was the first of this block and is done: it closed the crystal side on
+  6 November 2026, and the window, the cell viewer and the panels it added are what the others
+  extend.
 * **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, PBH6, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND13, which has not been started.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
