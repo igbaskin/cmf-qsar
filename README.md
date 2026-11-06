@@ -5752,6 +5752,7 @@ python -m sphinx -b html docs/sphinx docs/sphinx/_build/html   # the same refere
 python docs/tutorials/run_tutorials.py --check   # fail if a tutorial notebook no longer runs
 python docs/make_figures.py                 # docs/figures/: the computed figures of the manual
 python docs/make_figures.py --check         # fail if a figure differs from the committed one
+python docs/make_screenshot.py              # docs/figures/pocket_window.png: the application with a pocket on screen (needs a display)
 python benchmarks/run_all.py --compute all --data-root <Sutherland MOL2 folder> --orca
 ```
 

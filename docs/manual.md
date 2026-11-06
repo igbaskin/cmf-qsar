@@ -10455,6 +10455,8 @@ the residues within 8 Å of any ligand, taken whole, without waters and without 
 ligand. The *protein site* controls above the 3D view then draw the residues within a chosen
 distance as wire frame or sticks, with hydrogens, waters and residue labels optional.
 
+![The application with the CDK8 series of `examples/openff` and the binding site of its reference crystal structure, which the set brings with it from `examples/pockets`: the most active ligand in ball and stick, the residues within 5 Å of it as sticks, each labelled with its name and with what it contributes to the ligand's complementarity, green where it helps and red where it does not, and the electrostatic co-field of a kernel ridge model as isosurfaces. The line above the view lists the residues of the site and the largest contributions, and the status line names the contacts conserved across the series. Taken by `docs/make_screenshot.py`, which drives the application through these steps.](docs/figures/pocket_window.png)
+
 ## Complementarity as numbers
 
 A pocket is a set of atoms, so the same parameterisation that builds a ligand's fields builds the
