@@ -122,7 +122,8 @@ def _rows(pairs: Sequence[Sequence], numeric: Sequence[int] = ()) -> str:
 
 
 def _table(header: Sequence[str], rows: Sequence[Sequence], numeric: Sequence[int] = ()) -> str:
-    head = "".join(f'<th{" class=\"n\"" if i in numeric else ""}>{_e(h)}</th>'
+    numeric_class = ' class="n"'
+    head = "".join(f"<th{numeric_class if i in numeric else ''}>{_e(h)}</th>"
                    for i, h in enumerate(header))
     return (f"<table><thead><tr>{head}</tr></thead><tbody>\n"
             f"{_rows(rows, numeric)}\n</tbody></table>")
