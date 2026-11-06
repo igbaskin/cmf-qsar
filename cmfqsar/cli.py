@@ -1022,11 +1022,15 @@ def cmd_build(args):
     print(f"Elapsed {time.time() - t0:.1f} s")
 
 
-def _check_contract(model, mf, allow=False):
-    """Say how the model's training set was prepared, and stop if these molecules were not."""
-    from cmfqsar.contract import check_molecules, summary
+def _check_contract(model, mf, allow=False, crystals=False):
+    """Say how the model's training set was prepared, and stop if these samples were not.
+
+    ``crystals`` asks the questions a periodic structure raises instead of the ones a molecule
+    raises: the lattice, the elements the fields can see, and the frame of the overlap kernel.
+    """
+    from cmfqsar.contract import check_crystals, check_molecules, summary
     print("Model: " + summary(model))
-    findings = check_molecules(model, mf)
+    findings = check_crystals(model, mf) if crystals else check_molecules(model, mf)
     for f in findings:
         print(f"  {f}")
     refused = [f for f in findings if f.level == "refuse"]
@@ -1112,27 +1116,14 @@ def _fit_second_endpoint(model, ds, tr, train, y, args):
 
 def cmd_build_crystals(args):
     """A model on periodic structures: the periodic field autocorrelation of cmfqsar/periodic.py."""
-    from cmfqsar.dataio import read_activities_csv
-    from cmfqsar.periodic import (centre_layer, crystal_table, elements_in, inorganic_fieldset,
-                                  periodic_channel_labels, read_structures, top_channels)
+    from cmfqsar.periodic import (crystal_table, crystal_targets, elements_in, inorganic_fieldset,
+                                  periodic_channel_labels, read_crystal_set, top_channels)
     t0 = time.time()
-    atoms = read_structures(args.dataset)
-    if args.pbc:
-        letters = args.pbc.lower().replace("x", "a").replace("y", "b").replace("z", "c")
-        flags = tuple(ax in letters for ax in "abc")
-        for a in atoms:
-            a.set_pbc(flags)
-    if any(not all(a.get_pbc()) for a in atoms):
-        # a layer or chain that a file leaves split across the cell boundary is gathered
-        atoms = [centre_layer(a) for a in atoms]
-    names = [str(a.info.get("name", f"{a.get_chemical_formula()}_{i}")) for i, a in enumerate(atoms)]
-    if args.target_file:
-        tab = read_activities_csv(args.target_file)
-        y = np.array([tab.get(nm, np.nan) for nm in names], float)
-    elif args.target:
-        y = np.array([float(a.info.get(args.target, np.nan)) for a in atoms])
-    else:
+    if not (args.target or args.target_file):
         raise SystemExit("build-crystals needs --target KEY or --target-file CSV")
+    atoms, names = read_crystal_set(args.dataset, pbc=args.pbc)
+    y = crystal_targets(atoms, names, key=args.target, csv=args.target_file,
+                        column=args.target_column)
     ok = np.isfinite(y)
     print(f"Loaded {len(atoms)} structures from {args.dataset}; target: {args.target or args.target_file}")
     if ok.sum() < len(atoms):
@@ -1910,8 +1901,56 @@ def cmd_benchmark(args):
         sys.argv = saved
 
 
+def _is_crystal_model(model) -> bool:
+    """Does this model take a periodic structure as its sample? (plan item M13)
+
+    Two kernels do: the periodic field autocorrelation (``kernel_source="periodic"``) and the
+    periodic overlap kernel (``pbc_overlap``).  A site model is fitted on the first of them but
+    its samples are sites of a cell and not cells, which the stored records say.
+    """
+    return bool(getattr(model, "pbc_overlap", False)) or model.kernel_source == "periodic"
+
+
+def _is_site_model(model) -> bool:
+    """A model whose training samples are sites of a cell (plan item M5), not whole cells."""
+    mols = list(getattr(model.train, "molecules", []) or [])
+    return bool(mols) and all(getattr(m, "centre", None) is not None for m in mols)
+
+
+def _crystal_predict_inputs(args, model):
+    """The structures, targets and table of a crystal prediction: the periodic path of `predict`.
+
+    ``--activity`` names a per-structure info key of the file and ``--activity-file`` a
+    ``name,value`` CSV matched on the structure names, which is what `build-crystals` takes as
+    ``--target`` and ``--target-file``.
+    """
+    from cmfqsar.periodic import crystal_table, crystal_targets, read_crystal_set
+
+    if _is_site_model(model):
+        raise SystemExit("this model was fitted on sites of a cell (plan item M5), not on whole "
+                         "cells; `predict` has no site path. Use the library "
+                         "(cmfqsar.sites.site_table) to build the sites of the structures first")
+    if args.align_variance is not None or args.aligned_out or args.align_pocket:
+        raise SystemExit("a periodic model predicts a crystal, which has no pose to align: the "
+                         "--align-* options and --aligned-out apply to molecules only")
+    atoms, names = read_crystal_set(args.dataset, pbc=args.pbc)
+    y = crystal_targets(atoms, names, key=args.activity, csv=args.activity_file,
+                        column=args.activity_column)
+    kind = ("the periodic overlap kernel, which compares two cells point by point"
+            if getattr(model, "pbc_overlap", False)
+            else "the periodic field autocorrelation, which is invariant to the choice of cell, "
+                 "origin and orientation")
+    print(f"Read {len(atoms)} periodic structures from {args.dataset}; the model uses {kind}.")
+    table = crystal_table(atoms, model.fieldset, names)
+    _check_contract(model, table.molecules, allow=args.allow_mismatch, crystals=True)
+    return list(names), y, table
+
+
 def cmd_predict(args):
     model, extra = load_model(args.model)
+    if _is_crystal_model(model):
+        names, activity, table = _crystal_predict_inputs(args, model)
+        return _report_predictions(args, model, extra, names, activity, table)
     ds = load_dataset(args.dataset, activity_prop=args.activity, activity_file=args.activity_file)
     mf = [build_fields(m, model.fieldset, n) for m, n in zip(ds.mols, ds.names)]
     _check_contract(model, mf, allow=args.allow_mismatch)
@@ -1977,7 +2016,18 @@ def cmd_predict(args):
                 mm.SetProp("_Name", nm); w.write(mm)
             w.close()
             print(f"Aligned structures written to {args.aligned_out}")
-    table = AtomTable.from_molecules(mf)
+    return _report_predictions(args, model, extra, list(ds.names), ds.activity,
+                               AtomTable.from_molecules(mf))
+
+
+def _report_predictions(args, model, extra, names, activity, table):
+    """Predict `table`, print the predictions and write the CSV: the tail of `predict`.
+
+    The molecular path and the periodic one share it, because what is said about a
+    prediction -- the posterior variance, the confidence bound, the second endpoint, the
+    conformal interval, the statistics against measured values -- does not depend on whether
+    the sample was a molecule or a cell.
+    """
     if model.is_linear and model.method in ("krr", "gp"):
         if args.rank_bound:
             # rank by a confidence bound rather than by the point estimate: a library is mostly
@@ -1990,12 +2040,12 @@ def cmd_predict(args):
             print(f"Ranked by prediction {'-' if not args.smaller_is_better else '+'} "
                   f"{args.rank_bound:g} sd:")
             for i in order:
-                print(f"{ds.names[i]:30s} {score[i]:8.3f}   = {yp[i]:7.3f} "
+                print(f"{names[i]:30s} {score[i]:8.3f}   = {yp[i]:7.3f} "
                       f"{'-' if not args.smaller_is_better else '+'} "
                       f"{args.rank_bound:g} x {sd[i]:.3f}")
         else:
             yp, var = model.predict_with_variance(table)
-            for n, v, s in zip(ds.names, yp, var):
+            for n, v, s in zip(names, yp, var):
                 print(f"{n:30s} {v:8.3f}   (GP var {s:.3g})")
     else:
         # the posterior variance is defined for the linear kernel only
@@ -2003,7 +2053,7 @@ def cmd_predict(args):
             raise SystemExit("--rank-bound needs a posterior, so it needs the linear kernel and "
                              "the krr or gp method; this model has neither")
         yp, var = model.predict(table), None
-        for n, v in zip(ds.names, yp):
+        for n, v in zip(names, yp):
             print(f"{n:30s} {v:8.3f}")
     second = extra.get("second_endpoint") if isinstance(extra, dict) else None
     yp2 = sel = None
@@ -2020,10 +2070,10 @@ def cmd_predict(args):
         print()
         print(f"Both endpoints (correlation {second['rho']:+.3f}):")
         print(f"{'molecule':30s} {a[:12]:>12s} {b[:12]:>12s} {'difference':>12s}")
-        for n, v1, v2, d in zip(ds.names, yp, yp2, sel):
+        for n, v1, v2, d in zip(names, yp, yp2, sel):
             print(f"{n:30s} {v1:12.3f} {v2:12.3f} {d:+12.3f}")
-    if np.isfinite(ds.activity).sum() >= 2:
-        model.evaluate_test(table, ds.activity)
+    if np.isfinite(activity).sum() >= 2:
+        model.evaluate_test(table, activity)
         print(model.stats.summary())
     bounds = None
     conf = getattr(model, "conformal_", None)
@@ -2038,10 +2088,10 @@ def cmd_predict(args):
             _yp, lo, hi = model.predict_interval(table)
             bounds = (lo, hi)
             print(f"Conformal: {conf.describe()}")
-            for n, v, a, b in zip(ds.names, yp, lo, hi):
+            for n, v, a, b in zip(names, yp, lo, hi):
                 print(f"{n:30s} {v:8.3f}   [{a:7.3f}, {b:7.3f}]")
     if args.out:
-        write_predictions_csv(args.out, ds.names, ds.activity, yp, ["test"] * len(ds), var=var,
+        write_predictions_csv(args.out, names, activity, yp, ["test"] * len(names), var=var,
                               interval=bounds,
                               extra_columns=(None if yp2 is None else
                                              {second["names"][1]: yp2, "difference": sel}))
@@ -4212,12 +4262,17 @@ def main(argv=None):
     bc = sub.add_parser("build-crystals",
                         help="build a model on periodic structures (CIF, POSCAR, extended XYZ, "
                              "ASE JSON): the periodic field autocorrelation of cmfqsar/periodic.py")
-    bc.add_argument("dataset", help="an ASE-readable file with one or more structures")
+    bc.add_argument("dataset", help="an ASE-readable file with one or more structures, or a "
+                                    "folder of such files (one structure per file, named after "
+                                    "it)")
     bc.add_argument("--target", default=None, metavar="KEY",
                     help="per-structure info key with the property (extended XYZ / ASE JSON)")
     bc.add_argument("--target-file", default=None, metavar="CSV",
                     help="CSV 'name,value' with the property, matched on the structures' 'name' "
                          "info key (default name: <formula>_<index>)")
+    bc.add_argument("--target-column", default=None, metavar="TITLE",
+                    help="with --target-file, the title of the column to read instead of the "
+                         "second one, for a table that holds several properties")
     bc.add_argument("--fields", default="electrostatic,steric,prop:electronegativity",
                     help="physico-chemical fields: electrostatic (oxidation states), steric (atomic "
                          "volume), prop:electronegativity, prop:mass, prop:inverse_sqrt_mass (the "
@@ -4304,11 +4359,24 @@ def main(argv=None):
     dg.add_argument("--verbose", action="store_true")
     dg.set_defaults(func=cmd_diagnose)
 
-    q = sub.add_parser("predict", help="predict with a saved model")
+    q = sub.add_parser("predict", help="predict with a saved model, on molecules or on crystals")
     q.add_argument("model")
-    q.add_argument("dataset")
-    q.add_argument("--activity", default=None)
-    q.add_argument("--activity-file", default=None)
+    q.add_argument("dataset", help="the structures to predict: a molecule file, or -- for a "
+                                   "model fitted with `build-crystals` -- one structure file "
+                                   "(CIF, POSCAR, extended XYZ, ASE JSON) or a folder of them")
+    q.add_argument("--activity", default=None,
+                   help="where the measured value is, when the file carries one: an SD property "
+                        "of the molecules, or a per-structure info key of a crystal file")
+    q.add_argument("--activity-file", default=None,
+                   help="CSV 'name,value' with the measured values instead")
+    q.add_argument("--activity-column", default=None, metavar="TITLE",
+                   help="with --activity-file, the title of the column to read instead of the "
+                        "second one")
+    q.add_argument("--pbc", default=None, metavar="AXES",
+                   help="crystals only: which lattice directions are periodic, as letters "
+                        "('abc' for a crystal, 'ab' for a layer with the vacuum along c, 'a' "
+                        "for a chain); without it the files decide. Use the same setting the "
+                        "model was fitted with")
     q.add_argument("--out", default=None)
     q.add_argument("--align-variance", type=float, nargs="?", const=2.0, default=None, metavar="MAX_RMSD",
                    help="before predicting, align every molecule by minimising the posterior variance "

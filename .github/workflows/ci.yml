@@ -51,10 +51,12 @@ jobs:
             libfontconfig1 libglib2.0-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 \
             libxcb-shape0 libxcb-xkb1 libxcb-render-util0 libxcb-image0
 
+      # crystals: ase and pymatgen, which the periodic side of the program and its tests import;
+      # docs: matplotlib, which `cmf report` draws its figures with
       - name: Install the package with the application
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e ".[gui,dev]"
+          python -m pip install -e ".[gui,dev,crystals,docs]"
 
       - name: The two commands exist
         run: |

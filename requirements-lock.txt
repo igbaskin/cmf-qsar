@@ -19,5 +19,9 @@ PyOpenGL==3.1.10
 # [docs]
 reportlab==5.0.1
 matplotlib==3.10.8
+# [crystals]
+ase==3.28.0
+pymatgen==2025.10.7
+spglib==2.7.0
 # [dev]
 pytest==9.0.2

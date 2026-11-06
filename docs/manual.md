@@ -60,6 +60,7 @@ Three consequences follow, and they are what distinguishes the approach from CoM
 | Use the protein | fetch or load a pocket, draw it behind the fields, score field complementarity, dock |
 | Average over conformations | conformational ensembles (4D) and multi-instance learning |
 | Map a data set | kernel GTM chemical-space maps with activity, class and density landscapes |
+| Model crystals and layers | the periodic-structures window: the autocorrelation kernel for any cells, the overlap kernel with its co-field inside the cell for a series on one lattice, the sites coloured by their contributions; `cmf build-crystals` and `cmf predict` |
 
 ## How this manual is arranged
 
@@ -630,7 +631,8 @@ Twelve tabs, each filled by the work that produces it:
 ## The menus
 
 **File** — *Open training set…* (Ctrl+O), *Add test set…*, *Add decoys (background set)…*, *Import
-activities from CSV…*; *Load protein structure (PDB/mmCIF)…*, *Fetch protein from the PDB…*,
+activities from CSV…*; *Crystals and other periodic structures…*, which opens the window of the
+section below; *Load protein structure (PDB/mmCIF)…*, *Fetch protein from the PDB…*,
 *Forget protein structure*; *Open project…* (Ctrl+Shift+O), *Save project* (Ctrl+Shift+S), *Save
 project as…*; *Load model…* (Ctrl+L), *Save model…* (Ctrl+S); *Export predictions
 (CSV)…*, *Export aligned data set (SDF)…*, *Export current co-field (Gaussian cube)…*, *Export
@@ -654,6 +656,154 @@ part of the program implements.
 
 Every *Tools* entry opens a dialog that states what it is about to do and on which molecules, and
 each one runs in the background with the progress bar and the *Cancel* button live.
+
+## Crystals and other periodic structures
+
+Everything the program does with crystals — the periodic autocorrelation kernel, the periodic
+overlap kernel with its co-field inside the cell, the split of a prediction over the sites —
+lived on the command line and in the library until version 1.0. *File → Crystals and other
+periodic structures…* opens a window of its own for that side of the program. It is a window
+and not a mode of the main one, because a crystal is not a molecule with a box around it: it has
+a lattice instead of a pose, no bond table, and half of what its kernel sees lies outside the
+cell, in the periodic images. The two windows do not share a data set.
+
+**Opening a set.** *File → Open a folder of structures…* reads every structure file in a folder
+(CIF, POSCAR or CONTCAR, extended XYZ, ASE JSON, and the other formats ASE reads), one
+structure per file, named after its file; this is how a set downloaded from a database arrives.
+*Open one structure file…* reads a file that holds one structure or many, as `examples/sac/`
+and `examples/hops/` do. A CIF with partly occupied sites is read with its occupancies, as the
+section on partial occupancy describes. The *Structures* panel lists what came back with the
+measured value, the subset and the prediction of each cell, and the line under it says how many
+atoms the cells have.
+
+**The measured values.** *File → Read the measured values from a CSV…* takes a table whose first
+column holds the structure names as the panel shows them. A plain `name,value` file needs no
+further choice; a prepared table with one column per property asks which column is the property.
+A per-structure property stored in the file itself (the `info` key of an extended-XYZ file) is
+read with `--target KEY` on the command line and is not offered in the window.
+
+**What the view draws.** The cell is drawn as the twelve edges of its box, with the first,
+second and third lattice vectors in red, green and blue. Its atoms are spheres coloured by
+element, with the colours the molecular view uses for the organic elements and the standard Jmol
+colours for the rest. Outside the box, *Periodic images* draws every copy of the cell's atoms
+within the radius beside it, as dots: these are the atoms the periodic kernel sums over, and
+seeing them is how one checks that the cutoff reaches as far as it should. Once a model is
+fitted the radius is set to the kernel's own cutoff — the one of the neighbour list for the
+autocorrelation, the one the overlap kernel's Gaussians reach to for the overlap — and the line
+under the view says so. The legend also names the cell: its atoms, its lattice lengths, and in
+how many directions it is periodic. *Site numbers* writes the index and element of every site
+beside it, which is how a site in the Reading table is found in the picture.
+
+The images are cheap. `benchmarks/results/cell_view/table.md` measures the window on the three
+example sets: a 256-atom cell of the garnet Li$_{6.5}$La$_3$Zr$_{1.5}$Ta$_{0.5}$O$_{12}$ has
+6,581 image atoms within 14.9 Å, expanded in 6 ms and drawn, with the cell and its atoms, in
+11 ms; the 112- to 128-atom supercells of the three solid electrolytes of the hop section take
+10 to 13 ms; a 127-atom sheet of the single-atom catalysts, periodic in two directions, has
+836 images and draws in 3 ms. The thirteen CIF files of `examples/hops/disordered/` are read
+in half a second.
+
+**Fitting a model.** The *Model* panel is the crystal form of the main window's: the fields
+(electrostatic, steric, electronegativity, mass, and one indicator field per element that occurs
+in at least the stated number of cells, plus one for the rest), where the electrostatic weights
+come from (the oxidation-state guess, the electronegativity proxy, or the charges a calculation
+wrote into the file; the guess is exact for a small ionic cell and slow for a large cell of many
+elements), in how many directions the cells are periodic (a layer is summed only in its own
+plane, and the uniform background is taken per unit area), and the kernel:
+
+- **periodic field autocorrelation (any cells)** — the distance descriptor of the section
+  *Crystals: the periodic autocorrelation kernel*, with its cutoff, channel width, taper and
+  background switch. It needs no common frame, so it is the kernel for a set of different
+  structures, such as the thirteen conductors of the example folder.
+- **periodic overlap (cells on one lattice)** — the overlap integral over one cell with the
+  images summed in, from the section *A series on one lattice*. It compares two cells point by
+  point, so it is for a doped, substituted or defective series on one parent lattice, such as
+  the single-atom sheets of `examples/sac/`, and it is the kernel that has a co-field.
+
+The attenuation and the ridge are grids, as in the main window; *Build model* runs the search
+and the final fit in the background with the progress bar live, and the *Statistics* tab shows
+the summary. The fitted model is saved with *File → Save model…* and is the same file
+`build-crystals` writes, so `cmf predict` applies it to new cells.
+
+**Reading the model.** Which reading applies depends on the kernel, and the window offers the
+one that exists rather than both:
+
+- The **co-field inside the cell** exists for the overlap kernel. *Compute co-field* evaluates
+  $C_f(\mathbf{r})$ of the chosen field on a grid over the box of the selected cell (the grid is
+  cut to the atoms along a direction with vacuum, so a layer does not spend its points on empty
+  space), and the two isosurfaces are drawn in the fixed colours of the field at the chosen
+  percentage of the largest value, as the main window draws them: a positive lobe is a place
+  where more of that field raises the property, a negative lobe a place where it lowers it. The
+  co-field of a periodic model is a sum over the images of the training cells out to the
+  kernel's cutoff; the benchmark doubles that cutoff and finds that the images beyond it change
+  the co-field inside the cell by $8 \times 10^{-15}$ of its peak, so the sum is complete. On
+  twenty sheets of 127 atoms the steric co-field on 30,744 points at 0.5 Å takes 1.4 s. The
+  autocorrelation has no co-field, because a distribution of distances cannot say *where*; the
+  box is disabled for it, and clicking the button says why.
+- The **site contributions** exist for both kernels and are the same decomposition seen from two
+  sides. *Site contributions* draws one translucent sphere per site, red where the site adds to
+  the prediction and blue where it subtracts, its radius growing with the square root of the
+  magnitude so that the area on screen follows the value, and the colour scale on the control
+  strip states the value the largest sphere stands for, in the units of the property. For the
+  overlap kernel the numbers are the atom contributions of decomposition rule 3; for the
+  autocorrelation they are the split of the descriptor over the sites of plan item M5. In both
+  cases they sum to the prediction less the bias, and the legend says whether they do: for the
+  autocorrelation the residual is rounding ($6 \times 10^{-14}$ on the thirteen conductors);
+  for the overlap kernel the integral runs over the cell of one structure and the images of the
+  other, so the two orders agree only on exactly one lattice, and on the relaxed sheets, whose
+  lattice vectors differ by 0.4 %, the sum misses the prediction by 0.007 on a property whose
+  spread is 0.34. The legend reports that difference whenever it exceeds a tenth of a per cent
+  of the prediction, with the reason.
+- The **Reading** tab holds the same numbers as a table: for the autocorrelation the co-pattern
+  of the model — the channels (a pair of fields at a distance) that move the prediction most,
+  with the weight, its spread over the training set and their product, which is what
+  `build-crystals` prints — and for either kernel the sites of the selected cell, largest
+  magnitude first, with their positions.
+
+A check the reading passes on its own: the property of the single-atom sheets used by the
+benchmark is the height of the metal above the sheet, and the largest per-site contribution of
+the first cell is the metal itself, at −0.39 Å against a largest sphere of ±0.39. The colouring
+points at the atom the property belongs to.
+
+**A worked example.** Open `examples/hops/disordered/` with *Open a folder of structures…*,
+leave the periodic directions *as the files say*, choose the autocorrelation kernel, and build:
+the thirteen conductors have no common lattice and a measured property of your own goes in from
+a CSV. Then open `examples/sac/substrates.extxyz` with *Open one structure file…*, set the
+periodic directions to *ab: a layer*, read `examples/sac/sac_hoer.csv` and pick the column
+`height`, choose the overlap kernel, set the charges to *electronegativity* (a sheet of carbon
+with one metal has no oxidation states worth guessing), and build; then *Compute co-field* on
+any sheet and tick *Site contributions*. The benchmark's twenty sheets fit in 2 s with
+$q^2 = 0.99$ on three folds, which says only that the height of a metal above a sheet is an
+easy property for a field that sees the metal; the kernel costs grow with the square of the
+number of cells.
+
+**`cmf predict` on a crystal.** A model fitted with `build-crystals`, or saved from this window,
+is applied from the command line like any other:
+
+```bash
+python cmf_cli.py predict cells.cmf new_cells/ --activity-file values.csv --activity-column dG
+python cmf_cli.py predict sheets.cmf more_sheets.extxyz --pbc ab --out predictions.csv
+```
+
+The structures are read the way `build-crystals` reads them — one file or a folder of files,
+`--pbc` for the periodic directions — and the model decides the path: a periodic model takes
+crystals, a molecular model takes molecules, and the options that only mean something for a
+molecule (`--align-variance` and the rest) are refused for a crystal rather than ignored. The
+contract check of the section *What has to match between fitting and predicting* asks the
+questions a crystal raises instead of the ones a molecule raises: a structure without a lattice
+is refused; an element the field set has no indicator field for is reported, as a warning when
+it falls into the `cif:other` field and as a refusal when no field collects it; an element the
+training cells never contained is named as an extrapolation; electrostatic weights from another
+source than the training cells' are a warning; a cell whose lattice vectors differ from the
+training lattice by more than the training set's own spread, or 10 %, is a warning for the
+overlap kernel, which compares cells point by point; and partly occupied sites in a set fitted
+on ordered cells, or the reverse, are reported. A model fitted on sites of a cell (plan item M5)
+is not a crystal model, and `predict` says so instead of guessing.
+
+**What the window does not do.** It fits the two whole-cell kernels and nothing else: no
+site-resolved model, no difference fields of a defect series, no three-body or reciprocal-space
+channels, which stay in the library and the benchmarks. It draws one cell at a time. The images
+are dots and not spheres, because a cell with its images is thousands of atoms. And it keeps no
+project file: the model is saved, the structures are the files they came from.
 
 ## Projects: a session that can be reopened, a step that can be undone
 
@@ -7337,6 +7487,8 @@ electronegativity, one indicator field per element and one for the rest, and any
 `CMFModel` with a table from `crystal_table`. There is no co-field, but there is a co-pattern: the
 weight of every channel in the fitted linear model, which `top_channels` ranks by weight times
 spread, with the sign that says whether the pair at that distance raises or lowers the property.
+In the application the same model is fitted and read in the window of the section *Crystals
+and other periodic structures*, and `cmf predict` applies a saved one to new cells.
 
 On the Matbench `phonons` task (1,265 crystals, the top of the phonon density of states) the
 linear kernel on four fields -- electrostatic, steric, electronegativity and the inverse square
@@ -7587,6 +7739,10 @@ model.fit(table, y, cv_folds=10)
 print(periodic.lattice_spread(table))        # how far the set is from one lattice
 print(model.atom_contributions(table.molecules[0]))   # one number per site of the cell
 ```
+
+The application fits the same model from the *Crystals and other periodic structures* window
+of the application chapter, draws the co-field inside the cell and colours the sites by these
+contributions.
 
 It is the `fields` kernel source with the images added, so nothing above it changes: the cosine
 normalisation, the field scaling, the learners, the co-field and the per-site contributions are
@@ -10875,7 +11031,7 @@ not every option.
 | `build-crystals` | the same on periodic structures (CIF, POSCAR, extended XYZ) |
 | `diagnose` | ask a data set what it can support, before modelling it |
 | `align` | put a set in one frame: by substructure, by field similarity, by prediction confidence or in a pocket |
-| `predict` | predict with a saved model, optionally aligning by confidence first |
+| `predict` | predict with a saved model, optionally aligning by confidence first; a model fitted on crystals takes crystals |
 | `screen` | score a library against a saved model, reading it in blocks, so its size does not matter |
 | `report` | one self-contained HTML page describing a saved model |
 | `cofield` | the co-fields of a saved model as cube files and as numbers |

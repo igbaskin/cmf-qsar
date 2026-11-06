@@ -1,0 +1,23 @@
+  cod_1000437              10 atoms,   2345 images within 14.9 A, expanded in 20 ms, drawn in 22 ms
+  cod_1524557              40 atoms,   3879 images within 14.9 A, expanded in 10 ms, drawn in 15 ms
+  cod_1525568              48 atoms,   5303 images within 14.9 A, expanded in 17 ms, drawn in 21 ms
+  cod_1529523              48 atoms,   4650 images within 14.9 A, expanded in 12 ms, drawn in 14 ms
+  cod_1545083             256 atoms,   6581 images within 14.9 A, expanded in 6 ms, drawn in 11 ms
+disordered: 13 structures read in 0.5 s, 4 to 256 atoms per cell
+  borate                  128 atoms,   5599 images within 14.9 A, expanded in 6 ms, drawn in 10 ms
+  borophosphate           112 atoms,   5532 images within 14.9 A, expanded in 9 ms, drawn in 13 ms
+  phosphate               128 atoms,   4743 images within 14.9 A, expanded in 8 ms, drawn in 11 ms
+hosts: 3 structures read in 0.0 s, 112 to 128 atoms per cell
+  Ag@C4                   127 atoms,    836 images within 14.9 A, expanded in 1 ms, drawn in 3 ms
+  Au@C4                   127 atoms,    836 images within 14.9 A, expanded in 1 ms, drawn in 3 ms
+  Cd@C4                   127 atoms,    836 images within 14.9 A, expanded in 1 ms, drawn in 2 ms
+  Co@C4                   127 atoms,    852 images within 14.9 A, expanded in 1 ms, drawn in 2 ms
+  Cr@C4                   127 atoms,    852 images within 14.9 A, expanded in 1 ms, drawn in 3 ms
+sheets: 139 structures read in 0.1 s, 127 to 127 atoms per cell
+periodic autocorrelation on 13 COD electrolytes: fitted in 3.8 s, 0.071 q2 (3 folds)
+  the per-site split: 307 ms per cell, the sum differs from the prediction by at most 5.7e-14
+periodic overlap kernel on 20 single-atom sheets: fitted in 2.1 s, 0.990 q2 (3 folds)
+  the per-site split: 93 ms per cell, the sum differs from the prediction by at most 7.3e-03
+  the Steric co-field inside the cell: 30744 points at 0.50 A in 1.4 s
+  the images beyond 10.5 A change the co-field inside the cell by 8.2e-15 of its peak
+  the largest per-site contribution of Ag@C4 is site 1 (Ag): -0.388

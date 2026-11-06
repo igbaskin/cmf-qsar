@@ -832,11 +832,15 @@ def build(source_path, out_path):
 
 
 def source_sha256(source_path):
-    """The hash of the Markdown the PDF is built from."""
+    """The hash of the Markdown the PDF is built from, with its line endings normalised.
+
+    A checkout on Windows may hold the file with CRLF line endings while git stores it, and a
+    checkout on Linux reads it, with LF.  The text is the same manual either way, so the hash
+    must be the same too: every CRLF is read as LF before hashing.
+    """
     h = hashlib.sha256()
     with open(source_path, "rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
+        h.update(fh.read().replace(b"\r\n", b"\n"))
     return h.hexdigest()
 
 

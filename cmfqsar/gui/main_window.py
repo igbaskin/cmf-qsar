@@ -30,7 +30,7 @@ from ..protein import (binding_site, contact_distance, fetch_pdb, find_pocket,
                        read_structure, residue_anchors)
 from .panels import (DatasetPanel, ModelPanel, ResultsPanel, ViewerControls, apply_field_table,
                      apply_settings, capture_settings)
-from .viewer3d import Viewer3D, cofield_colors
+from .viewer3d import Viewer3D, cofield_colors, color_name as _cname
 from .workers import TaskWorker
 
 ABOUT_HTML = f"""
@@ -1598,6 +1598,8 @@ class MainWindow(QMainWindow):
         self._act(fm, "Add decoys (background set)…", lambda: self.open_dataset("decoy"))
         self._act(fm, "Import activities from CSV…", self.import_activities)
         fm.addSeparator()
+        self._act(fm, "Crystals and other periodic structures…", self.open_crystal_window)
+        fm.addSeparator()
         self._act(fm, "Load protein structure (PDB/mmCIF)…", self.load_protein_file)
         self._act(fm, "Fetch protein from the PDB…", self.fetch_protein)
         self._act(fm, "Forget protein structure", self.clear_protein)
@@ -1810,6 +1812,24 @@ class MainWindow(QMainWindow):
                 on_loaded()
 
         self.run_task(task, done, "Loading data set")
+
+    def open_crystal_window(self):
+        """Open the window for periodic structures (plan item M13).
+
+        A crystal is not a molecule: it has a lattice instead of a pose, no bond table, and its
+        kernel sums over the images of the cell.  So the periodic side of the program has a
+        window of its own rather than a mode of this one, and the two do not share a data set.
+        """
+        from .crystal_window import CrystalWindow
+        win = getattr(self, "_crystal_window", None)
+        if win is None:
+            win = CrystalWindow(self)
+            self._crystal_window = win
+        win.show()
+        win.raise_()
+        self.log("Opened the window for periodic structures: open a folder of CIF files or one "
+                 "structure file, read the measured values from a CSV, then build a model")
+        return win
 
     def _after_dataset_change(self):
         ds = self.ds
@@ -4915,10 +4935,3 @@ def molfield_wireframe(choice: str, cofield_drawn: bool) -> bool:
 CONTACT_DISTANCE = 4.5
 
 
-def _cname(c) -> str:
-    r, g, b = c
-    names = {(0.90, 0.15, 0.15): "red", (0.15, 0.30, 0.95): "blue", (0.15, 0.80, 0.20): "green",
-             (0.95, 0.85, 0.10): "yellow", (1.00, 0.55, 0.05): "orange", (0.45, 0.80, 1.00): "light blue",
-             (0.90, 0.20, 0.90): "magenta", (0.55, 0.05, 0.10): "dark red", (0.10, 0.85, 0.90): "cyan",
-             (0.55, 0.20, 0.80): "purple"}
-    return names.get((r, g, b), f"rgb({r:.1f},{g:.1f},{b:.1f})")

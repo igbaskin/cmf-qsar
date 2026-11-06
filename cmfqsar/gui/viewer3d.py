@@ -40,6 +40,72 @@ def cofield_colors(field_name: str):
     return COFIELD_COLORS.get(key, ((0.9, 0.2, 0.2), (0.2, 0.3, 0.9)))
 
 
+def color_name(c) -> str:
+    """The name of one of the fixed co-field colours, for a legend that has to be read.
+
+    A legend saying "positive = rgb(0.9,0.2,0.2)" tells the reader nothing; the colours of the
+    co-fields are fixed, so each one has a name.
+    """
+    r, g, b = c[:3]
+    names = {(0.90, 0.15, 0.15): "red", (0.15, 0.30, 0.95): "blue", (0.15, 0.80, 0.20): "green",
+             (0.95, 0.85, 0.10): "yellow", (1.00, 0.55, 0.05): "orange", (0.45, 0.80, 1.00): "light blue",
+             (0.90, 0.20, 0.90): "magenta", (0.55, 0.05, 0.10): "dark red", (0.10, 0.85, 0.90): "cyan",
+             (0.55, 0.20, 0.80): "purple"}
+    return names.get((r, g, b), f"rgb({r:.1f},{g:.1f},{b:.1f})")
+
+
+#: colours already asked for, element by element, so that a crystal of a thousand atoms does not
+#: look its colours up a thousand times
+_ELEMENT_COLORS: Dict[str, Tuple[float, float, float]] = {}
+
+
+def element_color(symbol: str, default=(0.6, 0.6, 0.6)) -> Tuple[float, float, float]:
+    """The colour of an element: the table above where it has one, else the Jmol colour.
+
+    The organic elements keep the colours the molecular views have always used, so that a
+    molecule looks the same beside a crystal.  Everything else -- the metals, the alkali ions,
+    the rare earths an inorganic structure is made of -- takes the standard Jmol colour from
+    ASE's table, which covers every element.  An element neither table knows is grey.
+    """
+    s = (symbol or "").capitalize()
+    if s in CPK:
+        return CPK[s]
+    if s in _ELEMENT_COLORS:
+        return _ELEMENT_COLORS[s]
+    try:
+        from ase.data import atomic_numbers
+        from ase.data.colors import jmol_colors
+        col = tuple(float(v) for v in jmol_colors[atomic_numbers[s]])
+    except Exception:                              # noqa: BLE001 - no ASE, or an unknown symbol
+        col = tuple(default)
+    _ELEMENT_COLORS[s] = col
+    return col
+
+
+#: radius of a drawn atom, as a fraction of its covalent radius
+ATOM_RADIUS_SCALE = 0.45
+
+
+def signed_spheres(values: Sequence[float], vmax: Optional[float] = None,
+                   min_radius: float = 0.12, max_radius: float = 0.85,
+                   positive=(0.95, 0.20, 0.20), negative=(0.20, 0.40, 0.95)):
+    """Radii and colours for one sphere per signed value: size by size, colour by sign.
+
+    Returns ``(radii, colours, vmax)``.  The radius grows as the square root of the magnitude,
+    so that the *area* a sphere shows on screen is about proportional to the value; `vmax` is the
+    value the largest sphere stands for and is returned so that a legend can state it.  This is
+    the convention the atom contributions of a molecule are drawn with, used here for the
+    per-site contributions of a cell.
+    """
+    v = np.asarray(values, float)
+    m = float(vmax) if vmax else float(np.abs(v[np.isfinite(v)]).max() if len(v) else 0.0)
+    if not np.isfinite(m) or m <= 0:
+        return np.zeros(len(v)), [positive] * len(v), 0.0
+    radii = min_radius + (max_radius - min_radius) * np.sqrt(np.clip(np.abs(v) / m, 0.0, 1.0))
+    cols = [positive if x > 0 else negative for x in v]
+    return radii, cols, m
+
+
 def _rotation_to(d: np.ndarray) -> np.ndarray:
     """Rotation matrix mapping the z axis onto unit vector d."""
     z = np.array([0.0, 0.0, 1.0])
@@ -250,6 +316,70 @@ class Viewer3D(QWidget):
         item = gl.GLLinePlotItem(pos=np.array(pos, float), color=np.array(cols, float),
                                  width=width, mode="lines", antialias=True,
                                  glOptions="translucent" if alpha < 1 else "opaque")
+        self._add(group, item)
+
+    # ------------------------------------------------------------- crystals
+    def add_cell(self, cell: np.ndarray, group: str, origin=(0.0, 0.0, 0.0),
+                 color=(0.70, 0.74, 0.82), alpha: float = 0.85, width: float = 1.6,
+                 axes: bool = True) -> None:
+        """The unit cell as the twelve edges of its box.
+
+        With `axes`, the three edges that leave the origin are drawn in red, green and blue for
+        the first, second and third lattice vector, which is the usual convention and says at a
+        glance which way the cell is turned.  The box is the frame everything periodic is drawn
+        in: the atoms inside it are one cell, and the images outside it are the same cell
+        translated.
+        """
+        A = np.asarray(cell, float).reshape(3, 3)
+        o = np.asarray(origin, float).reshape(3)
+        corner = {(i, j, k): o + i * A[0] + j * A[1] + k * A[2]
+                  for i in (0, 1) for j in (0, 1) for k in (0, 1)}
+        axis_colors = ((0.90, 0.25, 0.25), (0.30, 0.85, 0.30), (0.35, 0.50, 0.95))
+        pos, cols = [], []
+        for a in corner:
+            for d in range(3):
+                b = list(a)
+                if b[d]:
+                    continue
+                b[d] = 1
+                edge_from_origin = not any(a)
+                c = (axis_colors[d] if (axes and edge_from_origin) else tuple(color[:3]))
+                pos += [corner[a], corner[tuple(b)]]
+                cols += [c + (alpha,), c + (alpha,)]
+        item = gl.GLLinePlotItem(pos=np.array(pos, float), color=np.array(cols, float),
+                                 width=width, mode="lines", antialias=True,
+                                 glOptions="translucent")
+        self._add(group, item)
+
+    def add_atoms(self, coords: np.ndarray, symbols: Sequence[str], group: str,
+                  radii: Optional[Sequence[float]] = None, scale: float = ATOM_RADIUS_SCALE,
+                  alpha: float = 1.0) -> None:
+        """One sphere per atom, coloured by element and sized by its covalent radius.
+
+        A crystal has no bond table, so this draws the atoms alone.  `radii` are the covalent
+        radii a structure carries; without them every atom gets the same size.
+        """
+        coords = np.asarray(coords, float).reshape(-1, 3)
+        if not len(coords):
+            return
+        r = (np.asarray(radii, float) * scale if radii is not None
+             else np.full(len(coords), 0.35))
+        self.add_spheres(coords, r, [element_color(s) for s in symbols], group, alpha=alpha)
+
+    def add_points(self, coords: np.ndarray, symbols: Sequence[str], group: str,
+                   size: float = 6.0, alpha: float = 0.45) -> None:
+        """One dot per atom, coloured by element: the cheap drawing for the periodic images.
+
+        A cell with its images out to the kernel's cutoff is thousands of atoms, which is too
+        many for spheres and exactly what a scatter item is for.  The images are drawn
+        translucent so that the cell itself stays the thing one looks at.
+        """
+        coords = np.asarray(coords, float).reshape(-1, 3)
+        if not len(coords):
+            return
+        cols = np.array([element_color(s) + (alpha,) for s in symbols], float)
+        item = gl.GLScatterPlotItem(pos=coords, color=cols, size=float(size), pxMode=True)
+        item.setGLOptions("translucent")
         self._add(group, item)
 
     def add_scalar_surface(self, verts: np.ndarray, faces: np.ndarray, values: np.ndarray,

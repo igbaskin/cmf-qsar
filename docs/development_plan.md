@@ -3276,6 +3276,57 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
 * **M13. The application.** None of this is visible in the GUI: no cell viewer, no co-pattern
   plot, no site colouring. It belongs to G, and it is what makes the materials side usable by
   someone other than the author. It waits for M4 and M5, which decide what there is to draw.
+  **Done 6 November 2026.** A window of its own, `cmfqsar/gui/crystal_window.py`, opened from
+  *File -> Crystals and other periodic structures...* of the main window; a window and not a
+  mode, because a crystal has a lattice instead of a pose, no bond table, and a kernel that sums
+  over the images of the cell. (i) *The sample:* `periodic.read_crystal_set` reads one structure
+  file or a folder of them (one structure per file, named after the file, which is how a database
+  download arrives), with the periodic directions settable for the whole set and a layer gathered
+  about its cell; the measured values come from a CSV whose first column is the names, and a
+  table of several properties asks which column (`dataio.read_activities_csv(column=...)`,
+  `--target-column` / `--activity-column` on the command line). `build-crystals` reads a folder
+  the same way. (ii) *The cell viewer:* `Viewer3D.add_cell` draws the twelve edges of the box
+  with the lattice vectors in red, green and blue; `add_atoms` draws the atoms of the cell as
+  spheres coloured by element, the organic elements as the molecular view draws them and every
+  other element in its Jmol colour; `add_points` draws the periodic images as dots out to the
+  radius on the control strip, which is set to the fitted kernel's own cutoff
+  (`periodic.cell_image_indices`, the expansion the overlap kernel itself uses, refactored out of
+  `cell_images`). (iii) *The reading:* the co-field of the overlap kernel evaluated on a grid
+  over the box of the selected cell, cut to the atoms along a direction with vacuum, drawn as the
+  two isosurfaces of the main window; one sphere per site coloured by its contribution -- the
+  atom contributions of rule 3 for the overlap kernel, `sites.site_contributions` of M5 for the
+  autocorrelation -- with the scale on the control strip stating the value of the largest
+  sphere, and the legend saying whether the numbers sum to the prediction; the Reading tab with
+  the co-pattern over the channels and the sites of the selected cell. The autocorrelation has
+  no co-field and the window says why instead of offering it. (iv) *`cmf predict` on a crystal:*
+  the command decides the path from the model (`pbc_overlap` or `kernel_source="periodic"`), reads
+  the structures as `build-crystals` does, refuses the alignment options for a crystal and a
+  site model (M5) as a crystal model, and runs `contract.check_crystals`: no lattice is a
+  refusal; an element without an indicator field is a warning where `cif:other` collects it and a
+  refusal where nothing does; an element the training cells never held, electrostatic weights
+  from another source, a cell off the training lattice by more than the set's own spread or
+  10 % (overlap kernel), and partial occupancy on one side only are warnings. The tail of
+  `predict` is one function for both paths.
+  **Measured** (`benchmarks/run_cell_view.py`, `benchmarks/results/cell_view/table.md`; the window
+  driven without a screen, as its tests drive it). *What a cell costs to show:* the 256-atom
+  garnet cell of the COD set has 6,581 image atoms within 14.9 A, expanded in 6 ms and drawn in
+  11 ms; the 112- to 128-atom electrolyte supercells draw in 10 to 13 ms; a 127-atom single-atom
+  sheet, periodic in two directions, has 836 images and draws in 3 ms; the thirteen CIFs read in
+  0.5 s. *Whether the reading is exact:* the site split of the autocorrelation sums to the
+  prediction to 6e-14; the atom split of the overlap kernel on twenty relaxed sheets (lattice
+  spread 0.4 %) misses the prediction by 7e-3 on a property of spread 0.34, because the periodic
+  integral has two orders that agree only on exactly one lattice, and the window reports the
+  difference beside the colouring whenever it exceeds a tenth of a per cent. The co-field inside
+  a 127-atom cell takes 1.4 s on 30,744 points at 0.5 A, and the images beyond the kernel's
+  10.5 A cutoff change it by 8e-15 of its peak, so the image sum is complete. On the sheets with
+  the metal's height as the property, the largest per-site contribution of the first cell is the
+  metal itself (-0.39 of a scale of 0.39), which is the check the colouring passes on its own.
+  Tests: `tests/test_crystal_window.py` (20, offscreen Qt, `background=False` runs every step in
+  the calling thread), `tests/test_crystal_predict.py` (11), `tests/test_cell_view_runs.py` (4).
+  **What is open.** One cell at a time; the two whole-cell kernels only (no site-resolved model,
+  no difference fields of a defect series, no three-body or reciprocal channels in the window);
+  no project file for a crystal session; the images are dots, not spheres; and the main window
+  and this one share nothing, so a slab behind molecules (EC10) is still its own item.
 
 * **M14. A vacancy series on one host lattice: the data the periodic overlap kernel needs**
   (added 31 October 2026, out of what M4 measured). M4 built the kernel and measured it on

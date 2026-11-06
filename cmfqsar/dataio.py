@@ -625,17 +625,65 @@ def apply_activity_table(ds: Dataset, rows, use_subset: bool = True) -> int:
     return matched
 
 
-def read_activities_csv(path: str) -> Dict[str, float]:
-    """name,value CSV (header optional) -> dict."""
+def read_activities_csv(path: str, column: Optional[str] = None) -> Dict[str, float]:
+    """name,value CSV (header optional) -> dict.
+
+    With `column`, the value is taken from the column of that title instead of the second one,
+    which is what a prepared table of several properties needs: one file, one column per
+    property, the names in the first column.  A title that is not in the header, or a file with
+    no header, raises rather than quietly returning the second column.
+    """
     out: Dict[str, float] = {}
     with open(path, newline="", encoding="utf-8", errors="replace") as fh:
+        rows = list(csv.reader(fh))
+    which = 1
+    if column:
+        header = rows[0] if rows else []
+        titles = [c.strip() for c in header]
+        if column not in titles:
+            raise ValueError(f"{path} has no column {column!r}; it has "
+                             f"{', '.join(titles) if titles else 'no header'}")
+        which = titles.index(column)
+        rows = rows[1:]
+    for row in rows:
+        if len(row) <= which:
+            continue
+        try:
+            out[row[0].strip()] = float(row[which])
+        except ValueError:
+            continue
+    return out
+
+
+def activity_columns(path: str) -> List[str]:
+    """The titles of the columns of a CSV that hold numbers, for a chooser to offer.
+
+    The first column is the name, so it is never offered; a column is offered when the first
+    data row has a number in it.  An empty list means the file has no header, or no numeric
+    column, and :func:`read_activities_csv` should be used as it is.
+    """
+    with open(path, newline="", encoding="utf-8", errors="replace") as fh:
+        rows = []
         for row in csv.reader(fh):
-            if len(row) < 2:
-                continue
-            try:
-                out[row[0].strip()] = float(row[1])
-            except ValueError:
-                continue
+            rows.append(row)
+            if len(rows) >= 2:
+                break
+    if len(rows) < 2 or len(rows[0]) < 2:
+        return []
+    titles = [c.strip() for c in rows[0]]
+    try:
+        float(titles[1])
+        return []                                  # no header: the first line is already data
+    except ValueError:
+        pass
+    out = []
+    for k in range(1, min(len(titles), len(rows[1]))):
+        try:
+            float(rows[1][k])
+        except ValueError:
+            continue
+        if titles[k]:
+            out.append(titles[k])
     return out
 
 

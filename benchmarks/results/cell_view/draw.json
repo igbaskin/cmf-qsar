@@ -1,0 +1,161 @@
+{
+ "cells_timed": 5,
+ "sets": [
+  {
+   "set": "disordered",
+   "what": "thirteen COD solid electrolytes, thirteen different lattices",
+   "path": "examples/hops/disordered",
+   "n_structures": 13,
+   "read_seconds": 0.54062819480896,
+   "atoms_min": 4,
+   "atoms_max": 256,
+   "pbc": "from the files",
+   "cutoff": 14.867688755399353,
+   "cells": [
+    {
+     "name": "cod_1000437",
+     "atoms": 10,
+     "images": 2345,
+     "expand_seconds": 0.020127296447753906,
+     "draw_seconds": 0.021695375442504883,
+     "periodic": 3,
+     "volume": 116.25550830917905
+    },
+    {
+     "name": "cod_1524557",
+     "atoms": 40,
+     "images": 3879,
+     "expand_seconds": 0.010364055633544922,
+     "draw_seconds": 0.01457834243774414,
+     "periodic": 3,
+     "volume": 347.90515592
+    },
+    {
+     "name": "cod_1525568",
+     "atoms": 48,
+     "images": 5303,
+     "expand_seconds": 0.016933202743530273,
+     "draw_seconds": 0.021351099014282227,
+     "periodic": 3,
+     "volume": 347.46763357190235
+    },
+    {
+     "name": "cod_1529523",
+     "atoms": 48,
+     "images": 4650,
+     "expand_seconds": 0.011852025985717773,
+     "draw_seconds": 0.013777971267700195,
+     "periodic": 3,
+     "volume": 351.71861274038525
+    },
+    {
+     "name": "cod_1545083",
+     "atoms": 256,
+     "images": 6581,
+     "expand_seconds": 0.0057256221771240234,
+     "draw_seconds": 0.011076211929321289,
+     "periodic": 3,
+     "volume": 2170.7916109916423
+    }
+   ]
+  },
+  {
+   "set": "hosts",
+   "what": "three DFT-relaxed solid-electrolyte supercells",
+   "path": "examples/hops",
+   "n_structures": 3,
+   "read_seconds": 0.020726442337036133,
+   "atoms_min": 112,
+   "atoms_max": 128,
+   "pbc": "from the files",
+   "cutoff": 14.867688755399353,
+   "cells": [
+    {
+     "name": "borate",
+     "atoms": 128,
+     "images": 5599,
+     "expand_seconds": 0.005827903747558594,
+     "draw_seconds": 0.009737253189086914,
+     "periodic": 3,
+     "volume": 1238.8535865670622
+    },
+    {
+     "name": "borophosphate",
+     "atoms": 112,
+     "images": 5532,
+     "expand_seconds": 0.008979558944702148,
+     "draw_seconds": 0.012562036514282227,
+     "periodic": 3,
+     "volume": 1160.245290930845
+    },
+    {
+     "name": "phosphate",
+     "atoms": 128,
+     "images": 4743,
+     "expand_seconds": 0.007542610168457031,
+     "draw_seconds": 0.011253118515014648,
+     "periodic": 3,
+     "volume": 1270.7850184406902
+    }
+   ]
+  },
+  {
+   "set": "sheets",
+   "what": "139 single-atom sheets on one lattice, periodic in two directions",
+   "path": "examples/sac/substrates.extxyz",
+   "n_structures": 139,
+   "read_seconds": 0.08313131332397461,
+   "atoms_min": 127,
+   "atoms_max": 127,
+   "pbc": "ab",
+   "cutoff": 14.867688755399353,
+   "cells": [
+    {
+     "name": "Ag@C4",
+     "atoms": 127,
+     "images": 836,
+     "expand_seconds": 0.0008113384246826172,
+     "draw_seconds": 0.0027036666870117188,
+     "periodic": 2,
+     "volume": 10062.41141572117
+    },
+    {
+     "name": "Au@C4",
+     "atoms": 127,
+     "images": 836,
+     "expand_seconds": 0.0007867813110351562,
+     "draw_seconds": 0.002779245376586914,
+     "periodic": 2,
+     "volume": 10062.4119997501
+    },
+    {
+     "name": "Cd@C4",
+     "atoms": 127,
+     "images": 836,
+     "expand_seconds": 0.0007965564727783203,
+     "draw_seconds": 0.002489328384399414,
+     "periodic": 2,
+     "volume": 10062.41201174633
+    },
+    {
+     "name": "Co@C4",
+     "atoms": 127,
+     "images": 852,
+     "expand_seconds": 0.0007951259613037109,
+     "draw_seconds": 0.0024864673614501953,
+     "periodic": 2,
+     "volume": 10062.411530552035
+    },
+    {
+     "name": "Cr@C4",
+     "atoms": 127,
+     "images": 852,
+     "expand_seconds": 0.0007612705230712891,
+     "draw_seconds": 0.0025186538696289062,
+     "periodic": 2,
+     "volume": 10062.41148403366
+    }
+   ]
+  }
+ ]
+}
