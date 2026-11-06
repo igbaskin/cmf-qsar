@@ -702,6 +702,8 @@ under the view says so. The legend also names the cell: its atoms, its lattice l
 how many directions it is periodic. *Site numbers* writes the index and element of every site
 beside it, which is how a site in the Reading table is found in the picture.
 
+![The window for crystals with the thirteen solid electrolytes of `examples/hops/disordered` and a periodic-autocorrelation model fitted to the number of lithium sites per cubic nanometre, the target `benchmarks/run_cell_view.py` uses. On screen is the largest cell, the cubic garnet Li6.5La3Zr1.5Ta0.5O12 with 256 atoms: the cell box with its lattice vectors, the atoms as spheres coloured by element, the periodic images out to the kernel's cutoff as dots, and over every site the sphere of its contribution to the prediction, red where the site adds to it and blue where it subtracts. The line under the view names the cell and says that the contributions sum to the prediction. Taken by `docs/make_screenshot.py --what crystal`.](docs/figures/crystal_window.png)
+
 The images are cheap. `benchmarks/results/cell_view/table.md` measures the window on the three
 example sets: a 256-atom cell of the garnet Li$_{6.5}$La$_3$Zr$_{1.5}$Ta$_{0.5}$O$_{12}$ has
 6,581 image atoms within 14.9 Å, expanded in 6 ms and drawn, with the cell and its atoms, in
@@ -2727,6 +2729,10 @@ turns the top layers of a slab, with their periodic images out to a cutoff, into
 docking, the site profiles — applies to a surface without changes. A slab is read from a POSCAR or
 CIF, or built: `bcc110_slab()` gives the 6 × 6 × 4 Fe(110) slab at a = 2.78 Å that the reference
 poses of `examples/corrosion_fe110` were computed on, with its top layer at z = 0.
+
+![The Fe(110) slab of `examples/corrosion_fe110` with a benzimidazole molecule adsorbed flat on it, the pose relaxed with the UMA potential, in the window for crystals, read as a layer periodic in two directions: the four layers of the slab as spheres, the molecule on the top layer, the cell with its vacuum above the slab, and the periodic images of the cell within 5 Å as dots. This is the structure the slab receptor is cut from, seen whole. Taken by `docs/make_screenshot.py --what slab`.](docs/figures/slab_window.png)
+
+The molecule in that picture is drawn as spheres, which is what the *Atoms* box offers by default. *ball and stick* in the same window gives it its bonds while the slab stays spheres, because a metal atom gets none; the section *How the atoms are drawn, and the bonds* says why, and what the rule is worth on these very molecules.
 
 ### What a clean metal surface offers, which is less than a protein does
 
