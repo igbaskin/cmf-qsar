@@ -299,3 +299,73 @@ def test_a_centre_with_one_near_neighbour_is_counted_but_not_drawn(fieldset):
     cell = cell_of(at, fieldset)
     assert [n for _i, _e, n in coordination_numbers(cell)] == [1]
     assert coordination_polyhedra(cell) == []
+
+# --------------------------------------------------------------------------- #
+# The example file the manual tells a reader to open
+# --------------------------------------------------------------------------- #
+ADSORBATE_CELL = os.path.join(ROOT, "examples", "corrosion_fe110",
+                              "benzimidazole_on_fe110.extxyz")
+
+
+@pytest.mark.skipif(not os.path.exists(ADSORBATE_CELL), reason="the example cell is not built")
+def test_the_example_cell_is_a_slab_with_a_molecule_on_it(fieldset):
+    """`examples/corrosion_fe110/benzimidazole_on_fe110.extxyz`, which the manual opens.
+
+    It exists so that the surface side of the window can be opened without running a relaxation,
+    so the two things it has to be are checked here: the slab is in the surface frame, and the
+    molecule on it gets bonds while the iron gets none.
+    """
+    from cmfqsar.periodic import read_crystal_set
+
+    cells, names = read_crystal_set(ADSORBATE_CELL, pbc="ab")
+    assert len(cells) >= 8
+    assert names[0] == "Benzimidazole"
+    for atoms, name in zip(cells, names):
+        assert atoms.info.get("slab_atoms") == 144, name
+        assert float(atoms.info["E_ads_kJmol"]) < 0.0, name
+        iron = [i for i, s in enumerate(atoms.get_chemical_symbols()) if s == "Fe"]
+        assert len(iron) == 144, name
+        z = np.asarray(atoms.positions, float)[:, 2]
+        # every atom inside its cell, as a relaxation of an adsorbed state writes it, with the
+        # molecule above the top layer of the slab
+        assert z.min() >= -1e-6 and z.max() <= float(atoms.cell[2, 2]) + 1e-6, name
+        assert z[len(iron):].min() > z[iron].max(), name
+        assert tuple(bool(p) for p in atoms.pbc) == (True, True, False), name
+
+    crystal = cell_of(cells[0], fieldset, names[0])
+    d = periodic_bonds(crystal)
+    assert d.skipped_metals == 144
+    assert d.n_distinct == 16                      # benzimidazole with its hydrogens
+    for a, b in d.bonds:                           # and not one stick reaches the iron
+        assert int(d.source[int(a)]) >= 144 and int(d.source[int(b)]) >= 144
+
+
+@pytest.mark.skipif(not os.path.exists(ADSORBATE_CELL), reason="the example cell is not built")
+def test_the_script_rebuilds_the_example_cell_byte_for_byte(tmp_path):
+    """The file is derived, so the script that writes it must be the record of how."""
+    import subprocess
+    script = os.path.join(ROOT, "examples", "corrosion_fe110", "make_adsorbate_cell.py")
+    out = tmp_path / "again.extxyz"
+    subprocess.run([sys.executable, script, "--out", str(out)], check=True,
+                   capture_output=True)
+    with open(ADSORBATE_CELL, "rb") as fh:
+        shipped = fh.read().replace(b"\r\n", b"\n")
+    with open(out, "rb") as fh:
+        again = fh.read().replace(b"\r\n", b"\n")
+    assert again == shipped
+
+
+@pytest.mark.skipif(not os.path.exists(ADSORBATE_CELL), reason="the example cell is not built")
+def test_the_corner_placement_puts_a_bond_across_the_cell_boundary(fieldset, tmp_path):
+    """`--place corner` is what the manual names for seeing a bond leave the box."""
+    import subprocess
+    script = os.path.join(ROOT, "examples", "corrosion_fe110", "make_adsorbate_cell.py")
+    out = tmp_path / "corner.extxyz"
+    subprocess.run([sys.executable, script, "--place", "corner", "--count", "1",
+                    "--out", str(out)], check=True, capture_output=True)
+    from cmfqsar.periodic import read_crystal_set
+    cells, names = read_crystal_set(str(out), pbc="ab")
+    d = periodic_bonds(cell_of(cells[0], fieldset, names[0]))
+    assert d.n_distinct == 16                      # the same molecule, the same bonds
+    assert d.n_crossing > 0                        # but some of them leave the cell
+    assert d.n_images_drawn > 0

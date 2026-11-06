@@ -753,6 +753,13 @@ This is how an inorganic structure is read: a chain of corner-sharing octahedra 
 any number of sticks would, and it is the reading the bonds deliberately do not offer for a
 metal.
 
+What the polyhedra are *not* for is a metal slab. Every atom of a close-packed metal has twelve
+or fourteen neighbours, so its polyhedron says only that the metal is close-packed, which the
+spheres already showed; and on a slab with an adsorbate the few iron atoms under the molecule
+take its carbon and nitrogen atoms as their vertices, because non-metal neighbours are preferred,
+which is the rule working as written and not a reading worth having. The option is for an ionic
+or framework structure -- an oxide, a garnet, a zeolite -- and it is off until it is asked for.
+
 **What the drawing is worth, measured.** `benchmarks/results/surface_view/table.md` checks the
 perception against a bond table that was not perceived. The molecules of the two Fe(110) sets
 came from SDF files, which do carry one, so there is a ground truth on 138 real molecules with
@@ -774,22 +781,34 @@ oxygen atoms are within 2.4 A, so the distance rule gives them no bonds at all a
 are the whole of their reading.
 
 **An organic molecule on a surface, in the window.** This is the case the representations exist
-for, and it needs one file holding both the slab and the molecule -- which is what a relaxation
-of an adsorbed state writes, so anyone studying adsorption already has one: open the `CONTCAR`,
-the CIF or the extended-XYZ file of the relaxed state with *Open one structure file…*, set the
-periodic directions to *ab: a layer*, and choose *ball and stick*. The molecule comes out with
-its rings and the metal below it stays spheres. Without such a file, three lines of ASE make one
-from a slab and a posed molecule:
+for, and the repository ships the file to open:
 
-```python
-from ase import Atoms
-from cmfqsar.slab import bcc110_slab
-slab = bcc110_slab()                      # the Fe(110) slab of examples/corrosion_fe110
-cell = Atoms(symbols=[a.symbol for a in slab] + symbols,
-             positions=list(slab.positions) + list(coords),   # coords in the surface frame
-             cell=slab.get_cell(), pbc=(True, True, False))
-cell.write("adsorbate.extxyz")
+```bash
+cmf-app                 # File -> Crystals and other periodic structures -> Open one structure file
+#   examples/corrosion_fe110/benzimidazole_on_fe110.extxyz
+#   Periodic in: ab: a layer      Atoms: ball and stick
 ```
+
+It holds eight of the benzimidazoles of the Fe(110) study on the slab they were relaxed on: the
+6 x 6 x 4 Fe(110) slab of 144 atoms with one molecule at its relaxed pose, periodic in the two
+surface directions and open along the normal, with the adsorption energy of each in an info
+field, so *Read the measured values* is not even needed -- `--target E_ads_kJmol` on the command
+line reads it. With *ball and stick* the molecule comes out with its rings while the 144 iron
+atoms stay spheres, because a metal atom gets no perceived bonds. That picture is the whole point
+of the two representations.
+
+`examples/corrosion_fe110/make_adsorbate_cell.py` writes that file from the two halves the
+repository already had -- the relaxed poses in `157_benzimidazole_uma.sdf`, which hold the
+molecules alone, and `cmfqsar.slab.bcc110_slab` -- because a data set of adsorbates keeps the
+molecules alone and leaves out the slab every one of them shares. Two of its options matter here:
+`--count` writes more molecules, and `--place corner` keeps each pose where the SDF has it, which
+is about x = y = 0 and therefore at the corner of the slab's cell, so the molecule straddles the
+boundary. That is the file to open to see a bond drawn across the cell boundary with the image
+atoms it ends on beside it; the shipped file uses `--place centre`, a translation by half a cell
+that changes no distance and leaves the molecule in the middle of the picture.
+
+Your own relaxed state needs no script: one file holding a slab and an adsorbate is what a
+relaxation writes, so open its `CONTCAR`, CIF or extended-XYZ file directly.
 
 **Fitting a model.** The *Model* panel is the crystal form of the main window's: the fields
 (electrostatic, steric, electronegativity, mass, and one indicator field per element that occurs
