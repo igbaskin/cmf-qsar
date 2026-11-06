@@ -9097,18 +9097,27 @@ holding out whole structures; environments within 6 A of the midpoint; the
 fields are the electrostatic field with oxidation-state charges, the steric field, the
 electronegativity and one indicator field per element. The bond-valence barrier is a known
 function of the framework around the path, so the question is whether the kernel can learn such
-a function across structure types, and which descriptor it needs.
+a function across structure types, and which descriptor it needs. One of the descriptors is the
+**two end sites** of the hop, each described the way plan item M5 describes a single site of a
+cell: the row of the cell's periodic autocorrelation that belongs to that site
+(`cmfqsar.sites.site_autocorrelation`), with the two rows combined as their sum and the absolute
+value of their difference, so that the descriptor does not change when the hop is reversed. That
+is the site-resolved model the gate of plan item BT7 asks the path model to beat. It is taken at
+the three cutoffs of the site profile M5 chose between, 4, 6 and 8 A, where it gives
++0.439, +0.446 and +0.462; the row below is the one at 6 A, the radius the hop environments
+themselves use.
 
-| descriptor | envelope width (A) | q2 | error (eV) | against the counts | against length and bottleneck |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| counts of atoms in shells about the midpoint | -- | +0.491 | 0.576 | -- | -- |
-| hop length and bottleneck distance | -- | +0.103 | 0.765 | -- | -- |
-| invariant local kernel | 4.5 | +0.553 | 0.540 | +0.062 [-0.003, +0.170] | +0.451 [+0.321, +0.538] |
-| overlap kernel in the hop frame | 4.5 | +0.630 | 0.491 | +0.138 [+0.085, +0.219] | +0.527 [+0.402, +0.608] |
-| invariant local kernel | 3.2 | +0.624 | 0.495 | +0.133 [+0.066, +0.231] | +0.522 [+0.391, +0.609] |
-| overlap kernel in the hop frame | 3.2 | +0.649 | 0.478 | +0.158 [+0.096, +0.250] | +0.546 [+0.423, +0.628] |
-| invariant local kernel | 2.0 | +0.657 | 0.473 | +0.165 [+0.097, +0.266] | +0.554 [+0.421, +0.643] |
-| overlap kernel in the hop frame | 2.0 | +0.662 | 0.469 | +0.170 [+0.112, +0.265] | +0.559 [+0.432, +0.641] |
+| descriptor | envelope width (A) | q2 | error (eV) | against the counts | against length and bottleneck | against the two end sites |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| counts of atoms in shells about the midpoint | -- | +0.491 | 0.576 | -- | -- | -- |
+| hop length and bottleneck distance | -- | +0.103 | 0.765 | -- | -- | -- |
+| the two end sites, as item M5 describes a site (6 A) | -- | +0.446 | 0.601 | -0.045 [-0.142, +0.065] | +0.344 [+0.178, +0.452] | -- |
+| invariant local kernel | 4.5 | +0.553 | 0.540 | +0.062 [-0.003, +0.170] | +0.451 [+0.321, +0.538] | +0.107 [+0.030, +0.218] |
+| overlap kernel in the hop frame | 4.5 | +0.630 | 0.491 | +0.138 [+0.085, +0.219] | +0.527 [+0.402, +0.608] | +0.184 [+0.087, +0.298] |
+| invariant local kernel | 3.2 | +0.624 | 0.495 | +0.133 [+0.066, +0.231] | +0.522 [+0.391, +0.609] | +0.178 [+0.082, +0.289] |
+| overlap kernel in the hop frame | 3.2 | +0.649 | 0.478 | +0.158 [+0.096, +0.250] | +0.546 [+0.423, +0.628] | +0.203 [+0.102, +0.318] |
+| invariant local kernel | 2.0 | +0.657 | 0.473 | +0.165 [+0.097, +0.266] | +0.554 [+0.421, +0.643] | +0.211 [+0.117, +0.329] |
+| overlap kernel in the hop frame | 2.0 | +0.662 | 0.469 | +0.170 [+0.112, +0.265] | +0.559 [+0.432, +0.641] | +0.216 [+0.109, +0.334] |
 
 Overlap in the hop frame against the invariant kernel at the same width: 4.5 A: +0.076 [-0.002, +0.145]; 3.2 A: +0.024 [-0.049, +0.099]; 2.0 A: +0.005 [-0.060, +0.071]. Learning curve
 of the frame model, q2 against the number of training structures (three random draws each):
@@ -9130,6 +9139,23 @@ representation, is the limit. The error of 0.47 eV on barriers whose quartiles a
 1.13 eV is enough to rank hops and not to give a number; part of it is in the label, since a
 rigid landscape and a box around the straight path give some hops barriers of several eV that a
 relaxed path would not.
+
+**The path is worth more than its two ends, which is the gate of plan item BT7.** The hop as an
+object has to earn its place against the obvious alternative: describe the two sites the ion
+moves between, each as well as the site-resolved model of item M5 describes a site, and let the
+pair stand for the path. It does not reach the path model. The frame kernel is ahead of it by
++0.216 [+0.109, +0.334] at a site cutoff of 6 A, +0.222 [+0.134, +0.310] at 4 A and
++0.200 [+0.104, +0.322] at 8 A, clear of zero in all three, and the rotation-invariant kernel on
+the same hop environments is ahead by +0.211 [+0.117, +0.329]. The two end sites are also no
+better than the count of atoms in shells about the midpoint, -0.045 [-0.142, +0.065] at 6 A, so
+describing the two sites well is worth about what counting the neighbours of the midpoint is
+worth. The shortfall is not the descriptor confusing one hop with another: the two end sites
+name 1195 distinct pairs for the 1732 hops and 923 hops share their pair with another hop, since
+a hop and its reverse, and two hops through different images of the cell, get the same row, but
+predicting the mean barrier of each such group would still reach q2 +0.950 at an error of
+0.181 eV. The site description loses the barrier for want of the path between the sites, not for
+want of a way to tell two paths apart. That is the reason the hop is a sample of its own: where
+the bottleneck sits between the two sites is not a property of either of them.
 
 **The co-field is a profile along the hop and away from its axis.** Read at the midpoint and
 2 A either side of it, 0 to 4 A from the axis, with the standard deviation the out-of-fold error

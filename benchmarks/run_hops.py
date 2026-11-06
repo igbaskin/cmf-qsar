@@ -11,11 +11,13 @@ Two measurements, both with folds that hold out whole structures.
    framework around the path, so this asks whether the kernel can learn such a function across
    structure types, and which descriptor it needs: the count of atoms in shells about the
    midpoint (the reference of rule 1), two numbers a chemist would start from (the hop length
-   and the free space at the bottleneck), the rotation-invariant local kernel of plan item LP2,
-   or the overlap kernel in the frame of the hop averaged over the rotation about it, which is
-   the one that has a co-field.  The co-field is read along the hop and away from its axis,
-   and the out-of-fold barriers are run through the percolation step to see whether the
-   predicted network gives the percolation thresholds the labelled one does.
+   and the free space at the bottleneck), the two end sites of the hop described as plan item M5
+   describes a single site of a cell (the reference the gate of BT7 asks for), the
+   rotation-invariant local kernel of plan item LP2, or the overlap kernel in the frame of the
+   hop averaged over the rotation about it, which is the one that has a co-field.  The co-field
+   is read along the hop and away from its axis, and the out-of-fold barriers are run through the
+   percolation step to see whether the predicted network gives the percolation thresholds the
+   labelled one does.
 
 2. **The three hosts of the Li interface study** (``examples/hops``): Li3PO4, Li3BP2O8 and
    LiBO2 as DFT-relaxed supercells with Bader charges.  The model trained on the public set is
@@ -64,11 +66,13 @@ sys.path.insert(0, HERE)
 from cmfqsar.hops import (Hop, HopModel, HopSet, cross_validate_hop_model,  # noqa: E402
                           framed_environments, hop_count_features, hop_types, read_hop_labels,
                           saddle_from_barrier, spread_labels, structure_percolation)
+from cmfqsar.invariant import field_pairs  # noqa: E402
 from cmfqsar.localenv import (LAMS, LocalResult, choose_lam, count_kernel,  # noqa: E402
                               cross_validate_lams, local_features, local_kernel,
                               paired_interval)
 from cmfqsar.model import r2_score, rmse  # noqa: E402
-from cmfqsar.periodic import elements_in, inorganic_fieldset  # noqa: E402
+from cmfqsar.periodic import PeriodicSpec, elements_in, inorganic_fieldset  # noqa: E402
+from cmfqsar.sites import site_autocorrelation, site_kernel, site_width  # noqa: E402
 
 RESULTS = os.path.join(HERE, "results", "hops")
 PREPARED = os.path.join(RESULTS, "prepared_mp.json")
@@ -98,6 +102,13 @@ BOOTSTRAP = 1000
 PROFILE_Z = (-2.0, -1.0, 0.0, 1.0, 2.0)
 PROFILE_R = (0.0, 1.0, 2.0, 3.0, 4.0)
 PHYSCHEM = ("electrostatic", "steric", "prop:electronegativity")
+#: cutoffs of the site profile, in angstrom, at which the site-resolved reference of a hop is
+#: taken (plan item M5 measured its site model at these three).  The table compares the hop
+#: kernels against the one at ``R_MAX``, the radius their own environments use.
+SITE_R = (4.0, 6.0, 8.0)
+#: the step and the width of the Gaussian of that profile, as item M5 set them
+SITE_STEP = 0.5
+SITE_SIGMA = 0.5
 
 
 # ------------------------------------------------------------------- one run and what it wrote
@@ -108,7 +119,8 @@ def run_tag(a) -> str:
 
     Two rules. Two runs whose numbers differ must never write the same file, so every option that
     changes a number enters the tag: which prepared set is read, how much of it, the envelope
-    widths, the radius of the environment, the folds, the seed and the number of bootstrap draws.
+    widths, the radius of the environment, the cutoffs of the site-resolved reference, the folds,
+    the seed and the number of bootstrap draws.
     And two ways of naming one input must give one tag, so ``--prepared`` pointing at the stored
     set gives the empty tag; that is why ``public.json`` has no suffix. The options that only
     choose which parts of the run are done (``--no-hosts``, ``--reuse-public``, ``--fine-profile``)
@@ -133,6 +145,8 @@ def run_tag(a) -> str:
         tag += f"_seed{a.seed}"
     if a.bootstrap != BOOTSTRAP:
         tag += f"_boot{a.bootstrap}"
+    if list(a.site_r) != list(SITE_R):
+        tag += "_siter" + "-".join(f"{r:g}" for r in a.site_r)
     return tag
 
 
@@ -152,6 +166,7 @@ def write_provenance(args, tag: str, argv: Optional[List[str]] = None, name: str
            "prepared": os.path.relpath(args.prepared, ROOT).replace(os.sep, "/"),
            "max_structures": args.max_structures, "max_per_structure": args.max_per_structure,
            "rho": [float(r) for r in args.rho], "r_max": args.r_max, "folds": args.folds,
+           "site_r": [float(r) for r in args.site_r],
            "seed": args.seed, "bootstrap": args.bootstrap,
            "written": time.strftime("%Y-%m-%d %H:%M:%S")}
     out.update(extra)
@@ -252,6 +267,67 @@ def geometry_baseline(hopset: HopSet, targets, folds: int, seed: int) -> LocalRe
                       name="hop length and bottleneck")
 
 
+def site_pair_features(hs: HopSet, crystals, rows, r_max: float) -> np.ndarray:
+    """The site-resolved reference descriptor of a hop: the profiles of its two end sites.
+
+    Plan item M5 describes one **site** of a periodic cell by the row of the cell's periodic
+    autocorrelation that belongs to that site (:func:`cmfqsar.sites.site_autocorrelation`): the
+    typed radial profile of the cell as seen from the site, built from distances alone and
+    needing no alignment.  A hop has two end sites, so the obvious site-resolved descriptor of a
+    hop is the two rows of its ends put together.  They are combined as their sum and the
+    absolute value of their difference, which does not depend on which end is called first: the
+    sum is what the two ends share, the absolute difference is how far apart they are, and
+    neither changes when the hop is reversed.  That matters because the barrier of a hop and of
+    its reverse are different numbers measured on the same pair of sites.
+
+    What the descriptor cannot see is the hop itself.  It carries no direction, no length and no
+    bottleneck, so two hops that join the same pair of sites through different images of the cell
+    get the same row.  That is what a site-resolved model of a path is, and it is what the gate
+    of plan item BT7 asks to be compared against.
+    """
+    spec = PeriodicSpec(r_max=float(r_max), step=SITE_STEP, sigma=SITE_SIGMA)
+    n_fields = crystals[0].weights.shape[1]
+    pairs = field_pairs(n_fields)
+    width = site_width(spec, n_fields)
+    rows = [int(i) for i in rows]
+    out = np.zeros((len(rows), 2 * width))
+    where = {}
+    for n, i in enumerate(rows):
+        where.setdefault(hs.hops[i].structure, []).append(n)
+    for k in sorted(where):
+        profiles = site_autocorrelation(crystals[k], spec, pairs)   # one split per cell
+        for n in where[k]:
+            h = hs.hops[rows[n]]
+            a, b = profiles[h.a], profiles[h.b]
+            out[n, :width] = a + b
+            out[n, width:] = np.abs(a - b)
+    return out
+
+
+def site_pair_ceiling(hs: HopSet, targets) -> dict:
+    """The highest q2 a descriptor of the two end sites alone can reach on this sample.
+
+    Such a descriptor gives one row to every hop that joins the same unordered pair of sites of
+    one cell, so a hop and its reverse, and two hops that run through different images of the
+    cell, cannot be told apart.  The best any model on it can do for a group of hops with one
+    row is to predict their mean barrier, and ``1 - SS(within group) / SS(total)`` is that limit.
+    It says whether a site-resolved model that does badly does so because its description cannot
+    see the hop at all, or for some other reason.
+    """
+    y = np.asarray(targets.y, float)
+    groups: Dict[tuple, List[int]] = {}
+    for n, i in enumerate(targets.atom):
+        h = hs.hops[int(i)]
+        groups.setdefault((h.structure, min(h.a, h.b), max(h.a, h.b)), []).append(n)
+    within = sum(float(np.sum((y[v] - y[v].mean()) ** 2)) for v in groups.values())
+    total = float(np.sum((y - y.mean()) ** 2))
+    return {"pairs": len(groups),
+            "shared": sum(len(v) for v in groups.values() if len(v) > 1),
+            "largest": max(len(v) for v in groups.values()),
+            "q2": 1.0 - within / total if total else float("nan"),
+            "rmse": float(np.sqrt(within / max(len(y), 1)))}
+
+
 def run_public(args, log) -> dict:
     t0 = time.time()
     hs = load_prepared(args.prepared, args.max_structures, args.max_per_structure, args.seed)
@@ -274,8 +350,38 @@ def run_public(args, log) -> dict:
     log("  " + ref.summary())
     geo = geometry_baseline(hs, t, args.folds, args.seed)
     log("  " + geo.summary())
-    out["models"] += [_entry(ref, extra={"types": types}), _entry(geo)]
+    out["models"] += [_entry(ref, extra={"key": "counts", "types": types}),
+                      _entry(geo, extra={"key": "geometry"})]
     results = {"counts": ref, "geometry": geo}
+    # the site-resolved reference the gate of BT7 asks for: the two end sites of the hop,
+    # described as item M5 describes a site, at each cutoff of the site profile
+    site_keys = []
+    ceiling = site_pair_ceiling(hs, t)
+    out["site_pair_ceiling"] = ceiling
+    log(f"  the two end sites name {ceiling['pairs']} distinct pairs for {len(t)} hops, "
+        f"{ceiling['shared']} of which share their pair with another hop (largest group "
+        f"{ceiling['largest']}), so no descriptor of the two end sites alone can pass "
+        f"q2 {ceiling['q2']:+.3f} (error {ceiling['rmse']:.3f} eV)")
+    out["site_r"] = [float(r) for r in args.site_r]
+    out["site_ref"] = float(args.site_r[len(args.site_r) // 2])
+    for r in args.site_r:
+        if abs(float(r) - args.r_max) < 1e-9:
+            out["site_ref"] = float(r)      # the cutoff the hop environments themselves use
+    for r in args.site_r:
+        t1 = time.time()
+        X = site_pair_features(hs, crystals, t.atom, r)
+        sites = choose_lam(site_kernel(X), t, folds=args.folds, seed=args.seed,
+                           name=f"the two end sites (M5), cutoff {r:g} A")
+        log(f"  {sites.summary()}  ({X.shape[1]} channels, {time.time() - t1:.0f} s)")
+        key = f"sites {r:g}"
+        site_keys.append(key)
+        out["models"].append(_entry(sites, extra={"key": key, "site_r_max": float(r),
+                                                  "channels": int(X.shape[1])}))
+        results[key] = sites
+        for ref_name in ("counts", "geometry"):
+            d, lo, hi = paired_interval(sites, results[ref_name], t, runs=args.bootstrap,
+                                        seed=args.seed)
+            out["pairs"].append({"a": key, "b": ref_name, "diff": d, "low": lo, "high": hi})
     best = None
     for rho in args.rho:
         envs = envs0 if rho == RHOS[1] else hs.environments(crystals, rows=t.atom, rho=rho,
@@ -290,12 +396,13 @@ def run_public(args, log) -> dict:
                                        name=f"rotation-averaged overlap, rho {rho:g}")
         log(f"  {cyl.summary()}  (kernel {time.time() - t1:.0f} s, "
             f"{np.mean([e.n_atoms for e in envs]):.0f} atoms per environment)")
-        out["models"] += [_entry(inv, rho, {"atoms": float(np.mean([e.n_atoms for e in envs]))}),
-                          _entry(cyl, rho, {"atoms": float(np.mean([e.n_atoms for e in envs]))})]
+        atoms = float(np.mean([e.n_atoms for e in envs]))
+        out["models"] += [_entry(inv, rho, {"key": f"invariant {rho}", "atoms": atoms}),
+                          _entry(cyl, rho, {"key": f"overlap {rho}", "atoms": atoms})]
         results[f"invariant {rho}"] = inv
         results[f"overlap {rho}"] = cyl
         for name, r in ((f"invariant {rho}", inv), (f"overlap {rho}", cyl)):
-            for ref_name in ("counts", "geometry"):
+            for ref_name in ("counts", "geometry") + tuple(site_keys):
                 d, lo, hi = paired_interval(r, results[ref_name], t, runs=args.bootstrap,
                                             seed=args.seed)
                 out["pairs"].append({"a": name, "b": ref_name, "diff": d, "low": lo, "high": hi})
@@ -601,9 +708,29 @@ def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
              f"site-energy barrier; {pub['folds']} folds holding out whole structures; "
              f"environments within {pub['r_max']} A of the midpoint. Fields: "
              + ", ".join(pub["fields"]) + ".\n")
+    site_ref = pub.get("site_ref")
+    if pub.get("site_r"):
+        L.append("The site-resolved reference describes each of the two end sites of a hop by the "
+                 "row of the periodic autocorrelation of its cell that belongs to that site (plan "
+                 "item M5) and combines the two rows as their sum and the absolute value of their "
+                 "difference, so that the descriptor does not depend on which end is called "
+                 "first. Cutoffs of the site profile: "
+                 + ", ".join(f"{r:g}" for r in pub["site_r"])
+                 + f" A. The column *against the two end sites* compares with the one at "
+                   f"{site_ref:g} A, the radius the hop environments themselves use.\n")
+    ceiling = pub.get("site_pair_ceiling")
+    if ceiling:
+        L.append(f"The two end sites name {ceiling['pairs']} distinct pairs for "
+                 f"{pub['n_samples']} hops, and {ceiling['shared']} hops share their pair with "
+                 f"another hop (largest group {ceiling['largest']}): a hop and its reverse, and "
+                 f"two hops through different images of the cell, get one descriptor. Predicting "
+                 f"the mean barrier of every group is therefore the limit of any descriptor of "
+                 f"the two end sites alone, at q2 {_fmt(ceiling['q2'])} "
+                 f"(error {ceiling['rmse']:.3f} eV).\n")
     L.append("| descriptor | envelope width rho | q2 | error (eV) | mean absolute error (eV) | "
-             "ridge | against the counts | against length and bottleneck |")
-    L.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
+             "ridge | against the counts | against length and bottleneck | "
+             "against the two end sites |")
+    L.append("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
     pairs = {(p["a"], p["b"]): p for p in pub["pairs"]}
 
     def against(name, ref):
@@ -612,18 +739,26 @@ def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
 
     for m in pub["models"]:
         rho = m.get("rho")
-        key = (("invariant " if m["name"].startswith("invariant") else "overlap ") + f"{rho}"
-               if rho is not None else None)
+        key = m.get("key") or (("invariant " if m["name"].startswith("invariant")
+                                else "overlap ") + f"{rho}" if rho is not None else None)
+        site_col = against(key, f"sites {site_ref:g}") if key and site_ref is not None else "--"
         L.append(f"| {m['name']} | {rho if rho is not None else '--'} | {_fmt(m['q2'])} | "
                  f"{_fmt(m['rmse'], sign=False)} | {_fmt(m['mae'], sign=False)} | {m['lam']:g} | "
                  f"{against(key, 'counts') if key else '--'} | "
-                 f"{against(key, 'geometry') if key else '--'} |")
+                 f"{against(key, 'geometry') if key else '--'} | {site_col} |")
     L.append("")
     same = [p for p in pub["pairs"] if p["a"].startswith("overlap") and p["b"].startswith("invariant")]
     if same:
         L.append("Overlap in the hop frame against the invariant kernel at the same width: "
                  + "; ".join(f"rho {p['a'].split()[1]}: {_fmt(p['diff'])} [{_fmt(p['low'])}, "
                              f"{_fmt(p['high'])}]" for p in same) + ".\n")
+    for r in pub.get("site_r", []):
+        row = [q for q in pub["pairs"]
+               if q["a"].startswith("overlap") and q["b"] == f"sites {r:g}"]
+        if row:
+            L.append(f"Overlap in the hop frame against the two end sites at cutoff {r:g} A: "
+                     + "; ".join(f"rho {q['a'].split()[1]}: {_fmt(q['diff'])} "
+                                 f"[{_fmt(q['low'])}, {_fmt(q['high'])}]" for q in row) + ".\n")
     if pub.get("learning_curve"):
         L.append("Learning curve of the best overlap model (q2 against the number of training "
                  "structures, three random draws): "
@@ -744,6 +879,9 @@ def build_parser() -> argparse.ArgumentParser:
                     help="processes for the rotation-averaged kernel (default 8)")
     ap.add_argument("--rho", nargs="*", type=float, default=list(RHOS))
     ap.add_argument("--r-max", type=float, default=R_MAX)
+    ap.add_argument("--site-r", nargs="*", type=float, default=list(SITE_R),
+                    help="cutoffs in angstrom of the site profile the site-resolved reference is "
+                         "taken at (default " + ", ".join(f"{r:g}" for r in SITE_R) + ")")
     ap.add_argument("--folds", type=int, default=FOLDS)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--bootstrap", type=int, default=BOOTSTRAP)

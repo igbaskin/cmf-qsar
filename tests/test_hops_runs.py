@@ -90,6 +90,7 @@ def test_the_prepared_set_named_by_its_path_is_still_the_default():
     (["--folds", "5"], "_folds5"),
     (["--seed", "1"], "_seed1"),
     (["--bootstrap", "200"], "_boot200"),
+    (["--site-r", "6"], "_siter6"),
     (["--prepared", "benchmarks/results/hops/prepared_sulfides.json"], "_sulfides"),
 ])
 def test_an_option_that_changes_the_numbers_changes_the_tag(argv, expected):

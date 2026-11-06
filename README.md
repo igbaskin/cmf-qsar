@@ -2586,7 +2586,10 @@ bottleneck distance +0.103; the rotation-invariant local kernel +0.657; the
 overlap kernel in the hop frame +0.662 at a width of 2.0 A, an
 error of 0.469 eV, +0.170 [+0.112, +0.265] against the counts and
 +0.005 [-0.060, +0.071] against the invariant kernel at the same
-width. The predicted barriers, run through the percolation step, reproduce the percolation
+width. A site-resolved model of the same hops -- the two end sites, each described as plan item
+M5 describes a single site of a cell -- reaches +0.446, so the frame kernel is ahead of it by
++0.216 [+0.109, +0.334], which is the gate of the item.
+The predicted barriers, run through the percolation step, reproduce the percolation
 thresholds of the labelled network with a correlation of +0.808 in one
 direction and +0.754 in three. Applied unchanged to the three hosts of the Li
 interface study (`examples/hops/`) the model gives q2 -1.415. The frame kernel beats the counts by +0.170 [+0.112, +0.265] and matches the invariant kernel at

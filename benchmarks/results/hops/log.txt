@@ -3,14 +3,18 @@
   'barrier': 1732 hops measured in 459 of 472 structures, 3.8 per molecule (from 1 to 6); values 0.002 to 7.667, mean 0.894
   counts about the midpoint: q2 +0.491, error 0.576, mean absolute error 0.403 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01
   hop length and bottleneck: q2 +0.103, error 0.765, mean absolute error 0.510 over 1732 atoms in 459 molecules, 10 folds, ridge 1
+  the two end sites name 1195 distinct pairs for 1732 hops, 923 of which share their pair with another hop (largest group 6), so no descriptor of the two end sites alone can pass q2 +0.950 (error 0.181 eV)
+  the two end sites (M5), cutoff 4 A: q2 +0.439, error 0.604, mean absolute error 0.392 over 1732 atoms in 459 molecules, 10 folds, ridge 0.1  (1404 channels, 11 s)
+  the two end sites (M5), cutoff 6 A: q2 +0.446, error 0.601, mean absolute error 0.385 over 1732 atoms in 459 molecules, 10 folds, ridge 1  (2028 channels, 22 s)
+  the two end sites (M5), cutoff 8 A: q2 +0.462, error 0.592, mean absolute error 0.383 over 1732 atoms in 459 molecules, 10 folds, ridge 1  (2652 channels, 29 s)
   invariant local, rho 0.05: q2 +0.553, error 0.540, mean absolute error 0.357 over 1732 atoms in 459 molecules, 10 folds, ridge 0.1
-  rotation-averaged overlap, rho 0.05: q2 +0.630, error 0.491, mean absolute error 0.335 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 1129 s, 89 atoms per environment)
+  rotation-averaged overlap, rho 0.05: q2 +0.630, error 0.491, mean absolute error 0.335 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 1001 s, 89 atoms per environment)
     overlap against invariant at the same width +0.076 [-0.002, +0.145]
   invariant local, rho 0.1: q2 +0.624, error 0.495, mean absolute error 0.327 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01
-  rotation-averaged overlap, rho 0.1: q2 +0.649, error 0.478, mean absolute error 0.325 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 671 s, 89 atoms per environment)
+  rotation-averaged overlap, rho 0.1: q2 +0.649, error 0.478, mean absolute error 0.325 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 973 s, 89 atoms per environment)
     overlap against invariant at the same width +0.024 [-0.049, +0.099]
   invariant local, rho 0.25: q2 +0.657, error 0.473, mean absolute error 0.307 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01
-  rotation-averaged overlap, rho 0.25: q2 +0.662, error 0.469, mean absolute error 0.322 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 629 s, 89 atoms per environment)
+  rotation-averaged overlap, rho 0.25: q2 +0.662, error 0.469, mean absolute error 0.322 over 1732 atoms in 459 molecules, 10 folds, ridge 0.01  (kernel 894 s, 89 atoms per environment)
     overlap against invariant at the same width +0.005 [-0.060, +0.071]
     learning curve: 25 structures, q2 +0.078 +- 0.167
     learning curve: 50 structures, q2 +0.153 +- 0.134

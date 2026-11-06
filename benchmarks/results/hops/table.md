@@ -4,18 +4,31 @@
 
 Public set: 472 ternary compounds of lithium and oxygen (Li, O and one more element) of the Materials Project within 0.05 eV/atom of the hull, 24004 Li hops of 1.5 to 4.5 A, 1732 distinct by symmetry and labelled with the bond-valence site-energy barrier; 10 folds holding out whole structures; environments within 6.0 A of the midpoint. Fields: electrostatic, steric, prop:electronegativity, cif:Co, cif:Cr, cif:Li, cif:Mn, cif:Ni, cif:O, cif:Ti, cif:V, cif:other.
 
-| descriptor | envelope width rho | q2 | error (eV) | mean absolute error (eV) | ridge | against the counts | against length and bottleneck |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| counts about the midpoint | -- | +0.491 | 0.576 | 0.403 | 0.01 | -- | -- |
-| hop length and bottleneck | -- | +0.103 | 0.765 | 0.510 | 1 | -- | -- |
-| invariant local, rho 0.05 | 0.05 | +0.553 | 0.540 | 0.357 | 0.1 | +0.062 [-0.003, +0.170] | +0.451 [+0.321, +0.538] |
-| rotation-averaged overlap, rho 0.05 | 0.05 | +0.630 | 0.491 | 0.335 | 0.01 | +0.138 [+0.085, +0.219] | +0.527 [+0.402, +0.608] |
-| invariant local, rho 0.1 | 0.1 | +0.624 | 0.495 | 0.327 | 0.01 | +0.133 [+0.066, +0.231] | +0.522 [+0.391, +0.609] |
-| rotation-averaged overlap, rho 0.1 | 0.1 | +0.649 | 0.478 | 0.325 | 0.01 | +0.158 [+0.096, +0.250] | +0.546 [+0.423, +0.628] |
-| invariant local, rho 0.25 | 0.25 | +0.657 | 0.473 | 0.307 | 0.01 | +0.165 [+0.097, +0.266] | +0.554 [+0.421, +0.643] |
-| rotation-averaged overlap, rho 0.25 | 0.25 | +0.662 | 0.469 | 0.322 | 0.01 | +0.170 [+0.112, +0.265] | +0.559 [+0.432, +0.641] |
+The site-resolved reference describes each of the two end sites of a hop by the row of the periodic autocorrelation of its cell that belongs to that site (plan item M5) and combines the two rows as their sum and the absolute value of their difference, so that the descriptor does not depend on which end is called first. Cutoffs of the site profile: 4, 6, 8 A. The column *against the two end sites* compares with the one at 6 A, the radius the hop environments themselves use.
+
+The two end sites name 1195 distinct pairs for 1732 hops, and 923 hops share their pair with another hop (largest group 6): a hop and its reverse, and two hops through different images of the cell, get one descriptor. Predicting the mean barrier of every group is therefore the limit of any descriptor of the two end sites alone, at q2 +0.950 (error 0.181 eV).
+
+| descriptor | envelope width rho | q2 | error (eV) | mean absolute error (eV) | ridge | against the counts | against length and bottleneck | against the two end sites |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| counts about the midpoint | -- | +0.491 | 0.576 | 0.403 | 0.01 | -- | -- | -- |
+| hop length and bottleneck | -- | +0.103 | 0.765 | 0.510 | 1 | -- | -- | -- |
+| the two end sites (M5), cutoff 4 A | -- | +0.439 | 0.604 | 0.392 | 0.1 | -0.052 [-0.128, +0.054] | +0.337 [+0.204, +0.427] | -- |
+| the two end sites (M5), cutoff 6 A | -- | +0.446 | 0.601 | 0.385 | 1 | -0.045 [-0.142, +0.065] | +0.344 [+0.178, +0.452] | -- |
+| the two end sites (M5), cutoff 8 A | -- | +0.462 | 0.592 | 0.383 | 1 | -0.030 [-0.122, +0.068] | +0.359 [+0.186, +0.469] | -- |
+| invariant local, rho 0.05 | 0.05 | +0.553 | 0.540 | 0.357 | 0.1 | +0.062 [-0.003, +0.170] | +0.451 [+0.321, +0.538] | +0.107 [+0.030, +0.218] |
+| rotation-averaged overlap, rho 0.05 | 0.05 | +0.630 | 0.491 | 0.335 | 0.01 | +0.138 [+0.085, +0.219] | +0.527 [+0.402, +0.608] | +0.184 [+0.087, +0.298] |
+| invariant local, rho 0.1 | 0.1 | +0.624 | 0.495 | 0.327 | 0.01 | +0.133 [+0.066, +0.231] | +0.522 [+0.391, +0.609] | +0.178 [+0.082, +0.289] |
+| rotation-averaged overlap, rho 0.1 | 0.1 | +0.649 | 0.478 | 0.325 | 0.01 | +0.158 [+0.096, +0.250] | +0.546 [+0.423, +0.628] | +0.203 [+0.102, +0.318] |
+| invariant local, rho 0.25 | 0.25 | +0.657 | 0.473 | 0.307 | 0.01 | +0.165 [+0.097, +0.266] | +0.554 [+0.421, +0.643] | +0.211 [+0.117, +0.329] |
+| rotation-averaged overlap, rho 0.25 | 0.25 | +0.662 | 0.469 | 0.322 | 0.01 | +0.170 [+0.112, +0.265] | +0.559 [+0.432, +0.641] | +0.216 [+0.109, +0.334] |
 
 Overlap in the hop frame against the invariant kernel at the same width: rho 0.05: +0.076 [-0.002, +0.145]; rho 0.1: +0.024 [-0.049, +0.099]; rho 0.25: +0.005 [-0.060, +0.071].
+
+Overlap in the hop frame against the two end sites at cutoff 4 A: rho 0.05: +0.190 [+0.108, +0.273]; rho 0.1: +0.210 [+0.124, +0.292]; rho 0.25: +0.222 [+0.134, +0.310].
+
+Overlap in the hop frame against the two end sites at cutoff 6 A: rho 0.05: +0.184 [+0.087, +0.298]; rho 0.1: +0.203 [+0.102, +0.318]; rho 0.25: +0.216 [+0.109, +0.334].
+
+Overlap in the hop frame against the two end sites at cutoff 8 A: rho 0.05: +0.168 [+0.082, +0.277]; rho 0.1: +0.187 [+0.096, +0.297]; rho 0.25: +0.200 [+0.104, +0.322].
 
 Learning curve of the best overlap model (q2 against the number of training structures, three random draws): 25: +0.078; 50: +0.153; 100: +0.441; 200: +0.498; 400: +0.660; 459: +0.662.
 
