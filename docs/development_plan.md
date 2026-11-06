@@ -3284,7 +3284,8 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   rescaling that gives it one takes the lattice constant -- a strong predictor of a formation
   energy -- out of the kernel. The kernel is for a series where the frame is free, and the
   repository has no such series with enough members. This item is that data set, and it is the
-  difference between a section of paper 14 and a paper of its own.
+  difference between a section of paper 14 and a paper of its own. (It became that paper on
+  6 November 2026: paper 21 of `docs/publication_plan.md`, measured on the public 2DMD series.)
   **What the series is.** One host, one supercell, one lattice: the 2x2x2 cell of beta-Li3PO4
   that the Li3PO4/Li3BP2O8/LiBO2 interface study already relaxed (128 atoms, 48 lithium sites).
   A trivalent cation on a lithium site -- Al3+ or Ga3+ for 3 Li+, the substitution LISICON and
