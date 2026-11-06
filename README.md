@@ -2634,9 +2634,19 @@ distance is `2 - 2K`, so the whole family is a function of the matrix already co
 +0.052 [+0.023, +0.080] with its width and ridge chosen inside each training part, which is about
 30 per cent of the +0.171 between that kernel and the forest; the Gaussian kernel remains
 -0.119 [-0.170, -0.071] behind. On the counts the width is worth nothing. So the response being
-curved is part of the answer and not most of it; the reading for the rest is that one distance
-over 2601 columns dilutes the few that carry the barrier, which is the second half of item M15 and
-not yet measured.
+curved is part of the answer and not most of it.
+
+**The repair that works: the window the ion passes through.** A barrier is set by the narrowest
+place along the path, a window of three or four atoms, and the two-point description resolves the
+distance between two neighbours but not the two sides that meet at the centre -- so it does not
+know the angle at the midpoint. `cmfqsar.triangles` resolves it for an environment whose first
+atom is the centre, which a hop environment's marker at the midpoint is. With the reach, spacing,
+exponent and row length chosen inside each training part, that kernel reaches q2 +0.789 at a mean
+absolute error of 0.421 eV: **+0.217 [+0.159, +0.286]** over the same two-point description fitted
+the same way, four times what a width was worth, +0.209 [+0.145, +0.274] over the frame overlap
+kernel, and past the random forest on the two-point rows (+0.047 [-0.004, +0.096]). It is still a
+linear kernel on fields, so the co-field survives. A forest on the **raw** two-point rows remains
+ahead by -0.055 [-0.090, -0.023], and a forest on the three-distance rows was not run.
 
 **Partial occupancy is exact and free (plan item M2).** A disordered site is a configurational
 ensemble, and for independently occupied sites its mean field is closed form: every site gets

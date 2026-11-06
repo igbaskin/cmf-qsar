@@ -354,3 +354,56 @@ def test_the_nested_linear_arm_is_the_honest_form_of_a_first_table_row():
             "what the width is worth is the number this section exists for"
     widths = {c["setting"] for m in nested if m["kernel"] == "Gaussian" for c in m["chosen"]}
     assert widths <= {f"gamma {g:g}" for g in rl.GAMMAS}
+
+
+# ------------------------------------------------------------------ the three-distance arm
+
+def test_the_triangle_centre_is_the_hop_midpoint():
+    """The three-distance block resolves the angle at atom 0, so atom 0 must be the midpoint."""
+    import numpy as np
+
+    from cmfqsar.hops import CENTRE_SYMBOL
+    hs, _ = rl.load_prepared(max_structures=2)
+    from run_hops import fieldset_for
+    fs = fieldset_for(hs, "file")
+    crystals = hs.crystals(fs)
+    t = hs.targets()
+    envs = hs.environments(crystals, rows=t.atom[:3], rho=0.25, r_max=6.0)
+    assert envs, "the prepared sample holds no hop in its first structures"
+    for e in envs:
+        assert e.symbols[0] == CENTRE_SYMBOL, "atom 0 is not the marker at the centre"
+        assert np.allclose(e.coords[0], 0.0), "the marker is not at the origin"
+        assert np.allclose(e.weights[0], 0.0), "the marker carries field weight"
+
+
+def test_the_three_distance_arm_searches_the_declared_grid():
+    with open(os.path.join(RESULTS, "public.json"), encoding="utf-8") as fh:
+        pub = json.load(fh)
+    arms = pub["triangles"]
+    pairs = {(p["a"], p["b"]) for p in pub["pairs"]}
+    key = f"invariant {pub['best_rho']}"
+    assert {m["kernel"] for m in arms} == {"three-distance", "two-point and three-distance"}
+    declared = rl.declared_triangle_settings()
+    for m in arms:
+        assert m["lam"] is None
+        assert len(m["chosen"]) == m["folds"], "one choice per outer fold"
+        allowed = declared if m["kernel"] == "three-distance" else {
+            f"weight {w:g}" for w in rl.MIX_WEIGHTS}
+        assert {c["setting"] for c in m["chosen"]} <= allowed
+    assert ("nested three-distance", f"nested linear {key}") in pairs, \
+        "the comparison this section exists for is the same description fitted the same way"
+    assert ("nested three-distance", f"rf {key} as the kernel") in pairs
+    # the mixture grid has to reach both ends, so that it can fall back on either description
+    assert 0.0 in rl.MIX_WEIGHTS and 1.0 in rl.MIX_WEIGHTS
+
+
+def test_the_flatness_evidence_covers_every_setting():
+    """The claim that the gain does not rest on a tuned grid needs every setting measured."""
+    with open(os.path.join(RESULTS, "public.json"), encoding="utf-8") as fh:
+        pub = json.load(fh)
+    settings = pub["triangle_settings"]
+    assert {s["setting"] for s in settings} == rl.declared_triangle_settings()
+    assert any("row length kept" in s["setting"] for s in settings), \
+        "the row length item M15 asks about is one of the settings"
+    for s in settings:
+        assert s["channels"] > 0 and s["lam"] > 0

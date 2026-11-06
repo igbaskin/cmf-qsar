@@ -92,6 +92,18 @@ FORESTS = (("random forest", "rf"), ("boosted forest", "gb"))
 GAMMAS = (0.125, 0.25, 0.5, 1.0, 2.0, 4.0)
 #: folds of the inner split that chooses the width and the ridge inside a training part
 INNER_FOLDS = 5
+#: the three-distance descriptions the nested arm searches over, as (radius from the centre,
+#: spacing of both grids) in angstrom.  The two-point description of an environment carries the
+#: distance between two neighbours but not the two sides that meet at the centre, so it does not
+#: resolve the angle there; a barrier is set by the window the ion passes through, which is a
+#: relation among three atoms.  :mod:`cmfqsar.triangles` resolves it for an environment whose
+#: first atom is the centre, which is what the midpoint of a hop is.
+TRIANGLE_SPECS = ((4.0, 0.75), (3.0, 0.5), (5.0, 0.75))
+#: the exponents of the three-distance kernel the same arm searches over; this is SOAP's zeta
+TRIANGLE_POWERS = (1, 2)
+#: weights of the convex mixture of the two-point and three-distance kernels, 0 being the
+#: two-point kernel alone and 1 the three-distance kernel alone
+MIX_WEIGHTS = (0.0, 0.25, 0.5, 0.75, 1.0)
 #: how the rows a forest arm is given are scaled.  Both kernels here divide every row by its own
 #: length, so the kernel never sees how large an environment's features are, only their
 #: direction; a forest given the raw rows sees both.  "as the kernel" is therefore the arm that
@@ -212,6 +224,20 @@ def gaussian_kernel(K: np.ndarray, gamma: float) -> np.ndarray:
     """
     d2 = np.maximum(2.0 - 2.0 * np.asarray(K, float), 0.0)
     return np.exp(-float(gamma) * d2)
+
+
+def declared_triangle_settings() -> set:
+    """The names of every three-distance setting the nested arm is allowed to choose from.
+
+    The run builds these names and the test checks the stored result against them, so both read
+    one declaration and cannot drift apart.  The last one keeps the row length that every other
+    setting divides out, which is what item M15 of the plan asks about.
+    """
+    out = {f"reach {r:g}, step {s:g}, power {p}"
+           for r, s in TRIANGLE_SPECS for p in TRIANGLE_POWERS}
+    out.add(f"reach {TRIANGLE_SPECS[0][0]:g}, step {TRIANGLE_SPECS[0][1]:g}, "
+            f"power 1, row length kept")
+    return out
 
 
 def nested_result(kernels: dict, targets, folds: int, seed: int, name: str,
@@ -480,6 +506,77 @@ def run(args, log) -> dict:
                                         seed=args.seed)
             out["pairs"].append({"a": a_key, "b": b_key, "diff": d, "low": lo, "high": hi})
             log(f"    {a_key} against {b_key} {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
+    # the window the ion passes through: a three-distance description of the same environments,
+    # which resolves the angle at the midpoint that the two-point description leaves open
+    from cmfqsar.triangles import TriangleSpec, triangle_kernel_matrix
+    envs_best = envs0 if rho == args.rho[0] else hs.environments(crystals, rows=t.atom, rho=rho,
+                                                                r_max=args.r_max)
+    tri, channels = {}, {}
+    for reach, step in TRIANGLE_SPECS:
+        spec = TriangleSpec(r_max=reach, step=step)
+        t1 = time.time()
+        K3 = triangle_kernel_matrix(envs_best, spec, n_fields=len(fs.names))
+        for power in TRIANGLE_POWERS:
+            key = f"reach {reach:g}, step {step:g}, power {power}"
+            tri[key] = K3 if power == 1 else np.clip(K3, -1.0, 1.0) ** power
+            channels[key] = int(spec.n_channels(len(fs.names)))
+        log(f"  three-distance reach {reach:g} step {step:g}: "
+            f"{spec.n_channels(len(fs.names))} channels, {time.time() - t1:.0f} s")
+    # the same description with the row length left in, which is what item M15 asks about: the
+    # forest on the raw two-point rows is ahead of every normalised kernel here, and the length
+    # is what it has that they do not.  The overall scale is divided out by the mean diagonal,
+    # which is one constant for the whole matrix and takes no row's length away.
+    from cmfqsar.triangles import triangle_feature_matrix, triangle_kernel
+    reach, step = TRIANGLE_SPECS[0]
+    spec = TriangleSpec(r_max=reach, step=step)
+    t1 = time.time()
+    F3 = triangle_feature_matrix(envs_best, spec, len(fs.names))
+    Kl = triangle_kernel(F3, spec=spec, n_fields=len(fs.names), normalize=False)
+    Kl = Kl / max(float(np.mean(np.diag(Kl))), 1e-300)
+    key = f"reach {reach:g}, step {step:g}, power 1, row length kept"
+    tri[key] = Kl
+    channels[key] = int(spec.n_channels(len(fs.names)))
+    log(f"  three-distance reach {reach:g} step {step:g} with the row length kept: "
+        f"{time.time() - t1:.0f} s")
+    del F3
+    # what each setting scores on its own, so that the table can show whether the gain depends
+    # on the grid.  These are the optimistic kind -- the ridge is chosen on the folds they
+    # report -- and they are here as evidence of flatness, not as the result.
+    out["triangle_settings"] = []
+    for setting, K3 in tri.items():
+        s = choose_lam(K3, t, LAMS, folds=args.folds, seed=args.seed, name=setting)
+        out["triangle_settings"].append({"setting": setting, "q2": s.q2, "rmse": s.error,
+                                         "mae": s.mae, "lam": s.lam,
+                                         "channels": channels[setting]})
+        log(f"    {setting}: q2 {s.q2:+.3f}, error {s.error:.3f}, mae {s.mae:.3f} "
+            f"(ridge on the folds it reports)")
+    mix_key = (f"reach {TRIANGLE_SPECS[0][0]:g}, step {TRIANGLE_SPECS[0][1]:g}, power 1")
+    mixes = {f"weight {w:g}": (1.0 - w) * matrices[f"invariant {rho}"] + w * tri[mix_key]
+             for w in MIX_WEIGHTS}
+    out["triangles"] = []
+    for label, ks, extra in (("three-distance", tri, {"channels": channels}),
+                             ("two-point and three-distance", mixes, {"mixes": mix_key})):
+        r, picked = nested_result(ks, t, args.folds, args.seed, f"{label}, nested")
+        settings = ", ".join(sorted({c["setting"] for c in picked}))
+        log(f"  {r.summary()}  (chose {settings})")
+        tkey = f"nested {label}"
+        entry = {"key": tkey, "kernel": label, "lam": None, "chosen": picked}
+        entry.update(extra)
+        out["triangles"].append(_entry(r, extra=entry))
+        results[tkey] = r
+    key = f"invariant {rho}"
+    for a_key, b_key in (("nested three-distance", f"nested linear {key}"),
+                         ("nested three-distance", f"rf {key} as the kernel"),
+                         ("nested three-distance", f"gb {key} as the kernel"),
+                         ("nested three-distance", f"rf {key} raw"),
+                         ("nested three-distance", f"overlap {rho}"),
+                         ("nested two-point and three-distance", "nested three-distance")):
+        if a_key not in results or b_key not in results:
+            continue
+        d, lo, hi = paired_interval(results[a_key], results[b_key], t, runs=args.bootstrap,
+                                    seed=args.seed)
+        out["pairs"].append({"a": a_key, "b": b_key, "diff": d, "low": lo, "high": hi})
+        log(f"    {a_key} against {b_key} {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
     # the learning curve of the best model, on the kernel already in hand: how much of the
     # distance to the published models is the size of the training set
     curve = []
@@ -817,6 +914,105 @@ def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
               f"worth. Every kernel row of the first table is overstated by about that much and "
               f"the forest rows by nothing, so the forest's advantage there is understated.")
             w("")
+    tri = pub.get("triangles") or []
+    if tri:
+        key = f"invariant {pub['best_rho']}"
+        w("### The window the ion passes through")
+        w("")
+        w("A barrier is set by the narrowest place along the path: a window of three or four "
+          "framework atoms that the ion has to pass. The two-point description of an environment "
+          "carries the distance between two neighbours but not the two sides that meet at the "
+          "centre, so it does not resolve the angle there, and two different windows can leave "
+          "the same distance histogram. `cmfqsar.triangles` (plan item C5) resolves it for an "
+          "environment whose first atom is the centre, and the first atom of a hop environment "
+          "is a marker at the midpoint, so the triangles it builds are exactly the midpoint with "
+          "two framework atoms. This stays a linear kernel on the fields, so the co-field "
+          "survives, which a forest and a Gaussian width do not offer.")
+        w("")
+        w("The reach, the grid spacing and the exponent are chosen inside each training part, as "
+          "in the section above. The mixture row searches a convex sum of the two-point and "
+          "three-distance kernels whose grid includes both ends, so it can fall back on either.")
+        w("")
+        w("| description | q2 | error (eV) | mean absolute error (eV) | chosen inside the folds |")
+        w("| --- | ---: | ---: | ---: | --- |")
+        for m in tri:
+            picked = ", ".join(sorted({c["setting"] for c in m.get("chosen", [])}))
+            w(f"| {m['kernel']} | {m['q2']:+.3f} | {m['rmse']:.3f} | {m['mae']:.3f} "
+              f"| {picked or '--'} |")
+        w("")
+        rows = (("the two-point description, nested, on the same environments",
+                 f"nested linear {key}"),
+                ("the random forest on the two-point rows", f"rf {key} as the kernel"),
+                ("the boosted forest on the two-point rows", f"gb {key} as the kernel"),
+                ("the random forest on the **raw** two-point rows, which has the row length "
+                 "every normalised kernel here divides out", f"rf {key} raw"),
+                ("the overlap kernel in the hop frame, the best model of item BT7",
+                 f"overlap {pub['best_rho']}"))
+        lines_any = [(what, pairs.get(("nested three-distance", b))) for what, b in rows]
+        if any(p for _, p in lines_any):
+            w("The three-distance kernel against:")
+            w("")
+            for what, p in lines_any:
+                if p:
+                    w(f"* {what}: **{p['diff']:+.3f} "
+                      f"[{p['low']:+.3f}, {p['high']:+.3f}]**")
+            w("")
+        p = pairs.get(("nested two-point and three-distance", "nested three-distance"))
+        if p:
+            w(f"Mixing the two-point kernel back in is worth {p['diff']:+.3f} "
+              f"[{p['low']:+.3f}, {p['high']:+.3f}] over the three-distance kernel alone.")
+            w("")
+        gl = pairs.get(("nested three-distance", f"nested linear {key}"))
+        gw = pairs.get((f"nested Gaussian {key}", f"nested linear {key}"))
+        if gl and gw:
+            which = ("more" if gl["diff"] > gw["diff"] else "less")
+            w(f"**What this says.** Against the same two-point description fitted the same way, "
+              f"resolving the angle at the midpoint is worth {gl['diff']:+.3f} and putting a "
+              f"width on the kernel is worth {gw['diff']:+.3f}, so the angle is worth {which}. "
+              f"It is also the repair that keeps the model a linear kernel on fields, which a "
+              f"forest and a Gaussian width do not.")
+            w("")
+        settings = pub.get("triangle_settings") or []
+        if len(settings) > 1:
+            qs = [s["q2"] for s in settings]
+            spread = max(qs) - min(qs)
+            w(f"**Does the gain depend on the grid?** Each setting on its own, with the ridge "
+              f"chosen on the folds it reports, so these are the optimistic kind and are here "
+              f"only to show how flat the choice is:")
+            w("")
+            w("| setting | channels | q2 | mean absolute error (eV) |")
+            w("| --- | ---: | ---: | ---: |")
+            for s in settings:
+                w(f"| {s['setting']} | {s['channels']} | {s['q2']:+.3f} | {s['mae']:.3f} |")
+            w("")
+            w(f"The whole span of those settings is {spread:.3f} in q2, so the gain does not "
+              f"rest on the grid being tuned.")
+            w("")
+        kept = [s for s in settings if "row length kept" in s["setting"]]
+        plain = [s for s in settings if "row length kept" not in s["setting"]]
+        if kept and plain:
+            k, b = kept[0], max(plain, key=lambda s: s["q2"])
+            chose = any("row length kept" in c["setting"]
+                        for m in tri for c in m.get("chosen", []))
+            helps = k["q2"] > b["q2"]
+            reading = ("so the row length carries something here as well, and the two findings "
+                       "of this section and the last add together rather than replacing each "
+                       "other"
+                       if helps else
+                       "so on this description the row length adds nothing, and whatever the "
+                       "forest on the raw two-point rows is using, a three-distance kernel does "
+                       "not reach it by keeping the length")
+            w(f"**And the row length, which item M15 asks about.** The same description with the "
+              f"row length left in rather than divided out scores q2 {k['q2']:+.3f} against "
+              f"{b['q2']:+.3f} for the best normalised setting, and the nested arm "
+              + ("chose it in at least one fold" if chose else "never chose it") + " -- "
+              + reading + ".")
+            w("")
+        w("**One caution about this section.** The range of the grid was placed after a first "
+          "look at this same sample. Nothing was chosen on a test fold, but the grid itself is "
+          "not independent of the data, so a fresh set would settle it; how flat the settings "
+          "are is what makes this a small worry rather than a large one.")
+        w("")
     fcurve = pub.get("forest_curve") or []
     if fcurve and curve:
         shown = next((f for f in forests if f["key"] == pub.get("best_forest")), None)

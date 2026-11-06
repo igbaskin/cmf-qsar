@@ -9426,6 +9426,47 @@ linear kernel scores -0.029 [-0.048, -0.006] against the same kernel fitted with
 on the folds it reports, which is what that search is worth. So the kernel rows above are
 overstated by about that much and the forest rows by nothing.
 
+#### The window the ion passes through
+
+A barrier is set by the narrowest place along the path: a window of three or four framework atoms
+the ion has to pass. The two-point description of an environment carries the distance between two
+neighbours but not the two sides that meet at the centre, so it does not resolve the angle there,
+and two different windows can leave the same distance histogram. The section on the SOAP gate
+above measured what that costs on a carbon-shift model; here it is measured on a barrier.
+`cmfqsar.triangles` resolves the triangle for an environment whose first atom is the centre, and
+the first atom of a hop environment is a weightless marker at the midpoint, so its triangles are
+exactly the midpoint with two framework atoms. The reach, the grid spacing, the exponent and
+whether the row length is kept are all chosen inside each training part.
+
+| description | q2 | error (eV) | mean absolute error (eV) |
+| --- | ---: | ---: | ---: |
+| two-point, nested, same environments | +0.572 | 1.246 | 0.736 |
+| two-point with a Gaussian width, nested | +0.623 | 1.169 | 0.653 |
+| random forest on the two-point rows | +0.742 | 0.967 | 0.481 |
+| **three-distance, nested** | **+0.789** | **0.875** | **0.421** |
+
+The three-distance kernel against the two-point description fitted the same way is
++0.217 [+0.159, +0.286] -- four times what a Gaussian width was worth -- and +0.209 [+0.145,
++0.274] against the overlap kernel in the hop frame, which was the best model of the sections
+above. It passes the random forest on the two-point rows (+0.047 [-0.004, +0.096]) and the boosted
+forest (+0.031 [-0.022, +0.083]), so on this task a kernel is no longer behind a forest given the
+same description. **And it is still a linear kernel on fields, so the co-field survives**, which
+neither a forest nor a Gaussian width offers.
+
+Three further readings. The nested arm chose the setting that keeps the row length in every fold,
+so resolving the angle and keeping the length are different pieces of information that add
+together. Mixing the two-point kernel back in is worth -0.004 [-0.032, +0.028] and the arm chose
+the pure three-distance kernel in every fold, so the two-point description adds nothing once the
+three-distance one is there. And the gain does not rest on the grid: reaches of 3, 4 and 5
+angstrom with spacings of 0.5 and 0.75 land within 0.003 of each other at the first power, and
+only the exponent moves the figure.
+
+Two cautions. A random forest on the raw two-point rows is still ahead of this kernel by
+-0.055 [-0.090, -0.023], so a flexible learner finds something a linear kernel on triangles does
+not, and a forest on the three-distance rows is the obvious next arm; it was not run. And the
+range of the three-distance grid was placed after a first look at this same sample, so while
+nothing was chosen on a test fold, the grid is not independent of the data.
+
 **What this means for the program.** On this task a graph network fitted on a hundred thousand
 barriers is still the most accurate model, and the published work shows a further step: a
 machine-learned interatomic potential that runs the elastic band itself reaches a mean absolute
@@ -9434,9 +9475,15 @@ eV over the whole set once fine-tuned on it, which is a different kind of accura
 the field model offers on migration is not the lowest error. It is the cost -- no relaxation at
 all, one field evaluation per hop -- and the co-field above, which says where along the path and
 at what distance from its axis the barrier is decided. Those are reasons to use it for screening
-and for reading, not for a number to quote. What the measurement above adds is that the fields
-themselves describe a hop better than those numbers suggested: it is the kernel ridge, and the
-row length it divides out, that gave away most of the distance.
+and for reading, not for a number to quote.
+
+What the measurements above add is where the distance to those numbers came from, and it was
+mostly not the fields. Fitting the same description with a forest, keeping the row length the
+kernel divides out, and above all resolving the angle at the midpoint take the mean absolute error
+from 0.726 eV to 0.421 eV, and the last of those keeps the model a linear kernel on fields and so
+keeps the co-field. The published graph network reaches 0.21 eV, on fifty-four times as many
+hops, and it carries three-body terms of its own -- which is the same ingredient that moved this
+model furthest.
 
 ## The voltage of an insertion electrode: the cell against its composition
 

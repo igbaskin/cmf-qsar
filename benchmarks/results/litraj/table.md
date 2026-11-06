@@ -98,6 +98,47 @@ On the counts the width is worth nothing at all (-0.015 [-0.060, +0.032]), so th
 
 One number in passing. The nested linear kernel scores -0.029 [-0.048, -0.006] against the same kernel in the first table, which is what choosing the ridge on the folds it reports is worth. Every kernel row of the first table is overstated by about that much and the forest rows by nothing, so the forest's advantage there is understated.
 
+### The window the ion passes through
+
+A barrier is set by the narrowest place along the path: a window of three or four framework atoms that the ion has to pass. The two-point description of an environment carries the distance between two neighbours but not the two sides that meet at the centre, so it does not resolve the angle there, and two different windows can leave the same distance histogram. `cmfqsar.triangles` (plan item C5) resolves it for an environment whose first atom is the centre, and the first atom of a hop environment is a marker at the midpoint, so the triangles it builds are exactly the midpoint with two framework atoms. This stays a linear kernel on the fields, so the co-field survives, which a forest and a Gaussian width do not offer.
+
+The reach, the grid spacing and the exponent are chosen inside each training part, as in the section above. The mixture row searches a convex sum of the two-point and three-distance kernels whose grid includes both ends, so it can fall back on either.
+
+| description | q2 | error (eV) | mean absolute error (eV) | chosen inside the folds |
+| --- | ---: | ---: | ---: | --- |
+| three-distance | +0.789 | 0.875 | 0.421 | reach 4, step 0.75, power 1, row length kept |
+| two-point and three-distance | +0.784 | 0.884 | 0.466 | weight 1 |
+
+The three-distance kernel against:
+
+* the two-point description, nested, on the same environments: **+0.217 [+0.159, +0.286]**
+* the random forest on the two-point rows: **+0.047 [-0.004, +0.096]**
+* the boosted forest on the two-point rows: **+0.031 [-0.022, +0.083]**
+* the random forest on the **raw** two-point rows, which has the row length every normalised kernel here divides out: **-0.055 [-0.090, -0.023]**
+* the overlap kernel in the hop frame, the best model of item BT7: **+0.209 [+0.145, +0.274]**
+
+Mixing the two-point kernel back in is worth -0.004 [-0.032, +0.028] over the three-distance kernel alone.
+
+**What this says.** Against the same two-point description fitted the same way, resolving the angle at the midpoint is worth +0.217 and putting a width on the kernel is worth +0.052, so the angle is worth more. It is also the repair that keeps the model a linear kernel on fields, which a forest and a Gaussian width do not.
+
+**Does the gain depend on the grid?** Each setting on its own, with the ridge chosen on the folds it reports, so these are the optimistic kind and are here only to show how flat the choice is:
+
+| setting | channels | q2 | mean absolute error (eV) |
+| --- | ---: | ---: | ---: |
+| reach 4, step 0.75, power 1 | 63036 | +0.784 | 0.466 |
+| reach 4, step 0.75, power 2 | 63036 | +0.761 | 0.474 |
+| reach 3, step 0.5, power 1 | 92820 | +0.787 | 0.466 |
+| reach 3, step 0.5, power 2 | 92820 | +0.760 | 0.474 |
+| reach 5, step 0.75, power 1 | 130424 | +0.785 | 0.466 |
+| reach 5, step 0.75, power 2 | 130424 | +0.761 | 0.474 |
+| reach 4, step 0.75, power 1, row length kept | 63036 | +0.797 | 0.427 |
+
+The whole span of those settings is 0.036 in q2, so the gain does not rest on the grid being tuned.
+
+**And the row length, which item M15 asks about.** The same description with the row length left in rather than divided out scores q2 +0.797 against +0.787 for the best normalised setting, and the nested arm chose it in at least one fold -- so the row length carries something here as well, and the two findings of this section and the last add together rather than replacing each other.
+
+**One caution about this section.** The range of the grid was placed after a first look at this same sample. Nothing was chosen on a test fold, but the grid itself is not independent of the data, so a fresh set would settle it; how flat the settings are is what makes this a small worry rather than a large one.
+
 Both model classes learn at a rate of their own, and the rate is what the distance to the published training set has to be crossed at. The two curves below are measured on the same drawn subsets of structures:
 
 | training structures | q2, overlap in the hop frame | q2, invariant local, rows raw, random forest |

@@ -4709,7 +4709,39 @@ values and a computed oxidation potential is a descriptor, not a target.
   came out in passing: the nested linear kernel scores -0.029 [-0.048, -0.006] against the same
   kernel in the first table, which is what choosing the ridge on the folds it reports is worth, so
   every kernel row of that table is overstated by about that much and the forest rows by nothing.
-  The run is now 56.8 minutes.
+
+  **The window the ion passes through, same day, and it is the repair that works.** A barrier is
+  set by the narrowest place along the path: a window of three or four framework atoms. The
+  two-point description carries the distance between two neighbours but not the two sides that
+  meet at the centre, so it does not resolve the angle there and two different windows can leave
+  the same distance histogram -- which is what `benchmarks/run_soap_gate.py` already measured on a
+  carbon-shift model. `cmfqsar.triangles` (item C5) resolves it for an environment whose first
+  atom is the centre, and the first atom of a hop environment is a marker at the midpoint, so its
+  triangles are the midpoint with two framework atoms. The reach, the grid spacing, the exponent
+  and whether the row length is kept are chosen inside each training part. **The three-distance
+  kernel reaches q2 +0.789 at a mean absolute error of 0.421 eV**, against +0.572 and 0.736 eV for
+  the two-point description fitted the same way: **+0.217 [+0.159, +0.286]**, four times what a
+  Gaussian width was worth, and +0.209 [+0.145, +0.274] over the overlap kernel in the hop frame,
+  which was the best model of this item. It passes the random forest on the two-point rows
+  (+0.047 [-0.004, +0.096], and +0.031 [-0.022, +0.083] against the boosted one), so a kernel is
+  no longer behind a forest on the description it is given; and **it stays a linear kernel on
+  fields, so the co-field survives**, which neither a forest nor a Gaussian width offers. The
+  nested arm chose the setting that keeps the row length in every fold, so the two findings of the
+  day add together: resolving the angle and keeping the length are different pieces of
+  information. The gain does not rest on the grid -- reaches of 3, 4 and 5 angstrom and spacings
+  of 0.5 and 0.75 land within 0.003 of each other at power 1, and only the exponent moves the
+  figure. Mixing the two-point kernel back in is worth -0.004 [-0.032, +0.028] and the arm chose
+  pure three-distance in every fold, so the two-point description adds nothing once the
+  three-distance one is there.
+  **What is still ahead of it, and the caution.** A random forest on the raw two-point rows is
+  still ahead by -0.055 [-0.090, -0.023], so a flexible learner is finding something a linear
+  kernel on triangles does not; a forest on the three-distance rows is the obvious next arm and
+  was not run. The range of the three-distance grid was placed after a first look at this same
+  sample: nothing was chosen on a test fold, but the grid is not independent of the data, and a
+  fresh set would settle it. The published models remain ahead at 0.21 eV (graph network) and
+  0.26 eV (forest) on 96,849 hops against these 1801 -- but the distance in mean absolute error
+  has gone from 0.726 to 0.421 eV with one description already in the program, and M3GNet's own
+  three-body terms are the same ingredient. The run is 47.2 minutes.
 
   Set beside the published numbers,
   this program's description of a hop fitted with a forest reaches 0.374 eV on 1801 hops against

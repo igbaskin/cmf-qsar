@@ -218,7 +218,7 @@
    "a": "rf counts as the kernel",
    "b": "counts",
    "diff": 0.0908731195935969,
-   "low": 0.024399680174106566,
+   "low": 0.024399680174106562,
    "high": 0.16396610639414913
   },
   {
@@ -231,7 +231,7 @@
   {
    "a": "rf counts raw",
    "b": "counts",
-   "diff": 0.09281514511151046,
+   "diff": 0.09281514511151057,
    "low": 0.028713105653548288,
    "high": 0.165798746805911
   },
@@ -247,7 +247,7 @@
    "b": "geometry",
    "diff": 0.006557276369870357,
    "low": -0.11617601560720346,
-   "high": 0.10302821201906258
+   "high": 0.10302821201906247
   },
   {
    "a": "gb geometry as the kernel",
@@ -273,7 +273,7 @@
   {
    "a": "rf invariant 0.25 raw",
    "b": "invariant 0.25",
-   "diff": 0.2433833749670249,
+   "diff": 0.24338337496702478,
    "low": 0.18807704796908986,
    "high": 0.3046000392854656
   },
@@ -287,7 +287,7 @@
   {
    "a": "rf invariant 0.25 raw",
    "b": "overlap 0.25",
-   "diff": 0.2633742200526755,
+   "diff": 0.2633742200526754,
    "low": 0.21231772560400966,
    "high": 0.3187419094091055
   },
@@ -344,8 +344,50 @@
    "a": "nested Gaussian invariant 0.25",
    "b": "rf invariant 0.25 as the kernel",
    "diff": -0.1188828399250128,
-   "low": -0.1696587932679282,
+   "low": -0.1696587932679281,
    "high": -0.0709329920499567
+  },
+  {
+   "a": "nested three-distance",
+   "b": "nested linear invariant 0.25",
+   "diff": 0.2171734336200124,
+   "low": 0.15886562580269672,
+   "high": 0.2862513922988667
+  },
+  {
+   "a": "nested three-distance",
+   "b": "rf invariant 0.25 as the kernel",
+   "diff": 0.046620636640673396,
+   "low": -0.003694892565032256,
+   "high": 0.09557655822134174
+  },
+  {
+   "a": "nested three-distance",
+   "b": "gb invariant 0.25 as the kernel",
+   "diff": 0.031044024918720492,
+   "low": -0.02191381088271284,
+   "high": 0.08257681285827799
+  },
+  {
+   "a": "nested three-distance",
+   "b": "rf invariant 0.25 raw",
+   "diff": -0.0547506393260111,
+   "low": -0.0903146723564199,
+   "high": -0.02305093344595033
+  },
+  {
+   "a": "nested three-distance",
+   "b": "overlap 0.25",
+   "diff": 0.20862358072666431,
+   "low": 0.14481019288504057,
+   "high": 0.27403093788200533
+  },
+  {
+   "a": "nested two-point and three-distance",
+   "b": "nested three-distance",
+   "diff": -0.004471604590979172,
+   "low": -0.03162191056536373,
+   "high": 0.027866931714817918
   }
  ],
  "best_rho": 0.25,
@@ -382,8 +424,8 @@
   },
   {
    "name": "counts about the midpoint, raw, random forest",
-   "q2": 0.5612385549306441,
-   "rmse": 1.2615019599193014,
+   "q2": 0.5612385549306442,
+   "rmse": 1.2615019599193011,
    "mae": 0.6258107983083949,
    "lam": null,
    "n": 1801,
@@ -472,7 +514,7 @@
   },
   {
    "name": "invariant local, rho 0.25, raw, random forest",
-   "q2": 0.8436633215895356,
+   "q2": 0.8436633215895355,
    "rmse": 0.7530158901268929,
    "mae": 0.3742507074442584,
    "lam": null,
@@ -724,6 +766,184 @@
    ]
   }
  ],
+ "triangle_settings": [
+  {
+   "setting": "reach 4, step 0.75, power 1",
+   "q2": 0.7844410776725452,
+   "rmse": 0.8842126062333585,
+   "mae": 0.46608521397461294,
+   "lam": 0.1,
+   "channels": 63036
+  },
+  {
+   "setting": "reach 4, step 0.75, power 2",
+   "q2": 0.7608138931494648,
+   "rmse": 0.9314116709529958,
+   "mae": 0.47384975638019133,
+   "lam": 0.1,
+   "channels": 63036
+  },
+  {
+   "setting": "reach 3, step 0.5, power 1",
+   "q2": 0.787164237076191,
+   "rmse": 0.8786097184644752,
+   "mae": 0.46621701643401536,
+   "lam": 0.1,
+   "channels": 92820
+  },
+  {
+   "setting": "reach 3, step 0.5, power 2",
+   "q2": 0.7604188037774144,
+   "rmse": 0.9321806098765772,
+   "mae": 0.47433434012515807,
+   "lam": 0.1,
+   "channels": 92820
+  },
+  {
+   "setting": "reach 5, step 0.75, power 1",
+   "q2": 0.7848230232688689,
+   "rmse": 0.8834288974428937,
+   "mae": 0.4655625694923924,
+   "lam": 0.1,
+   "channels": 130424
+  },
+  {
+   "setting": "reach 5, step 0.75, power 2",
+   "q2": 0.7608388641286334,
+   "rmse": 0.9313630500928421,
+   "mae": 0.47397862291594806,
+   "lam": 0.1,
+   "channels": 130424
+  },
+  {
+   "setting": "reach 4, step 0.75, power 1, row length kept",
+   "q2": 0.7968387293601309,
+   "rmse": 0.8584087990898844,
+   "mae": 0.42671683425184687,
+   "lam": 1.0,
+   "channels": 63036
+  }
+ ],
+ "triangles": [
+  {
+   "name": "three-distance, nested",
+   "q2": 0.7889126822635244,
+   "rmse": 0.8749933879423266,
+   "mae": 0.4205874803772814,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "nested three-distance",
+   "kernel": "three-distance",
+   "chosen": [
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 0.1
+    },
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 1.0
+    },
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 0.1
+    },
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 1.0
+    },
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 1.0
+    },
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 0.1
+    },
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 1.0
+    },
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 1.0
+    },
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 0.1
+    },
+    {
+     "setting": "reach 4, step 0.75, power 1, row length kept",
+     "lam": 0.1
+    }
+   ],
+   "channels": {
+    "reach 4, step 0.75, power 1": 63036,
+    "reach 4, step 0.75, power 2": 63036,
+    "reach 3, step 0.5, power 1": 92820,
+    "reach 3, step 0.5, power 2": 92820,
+    "reach 5, step 0.75, power 1": 130424,
+    "reach 5, step 0.75, power 2": 130424,
+    "reach 4, step 0.75, power 1, row length kept": 63036
+   }
+  },
+  {
+   "name": "two-point and three-distance, nested",
+   "q2": 0.7844410776725452,
+   "rmse": 0.8842126062333585,
+   "mae": 0.46608521397461383,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "nested two-point and three-distance",
+   "kernel": "two-point and three-distance",
+   "chosen": [
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    },
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    },
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    },
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    },
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    },
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    },
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    },
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    },
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    },
+    {
+     "setting": "weight 1",
+     "lam": 0.1
+    }
+   ],
+   "mixes": "reach 4, step 0.75, power 1"
+  }
+ ],
  "learning_curve": [
   {
    "structures": 25,
@@ -760,19 +980,19 @@
   {
    "structures": 25,
    "q2": 0.5925601037267665,
-   "spread": 0.14936140613325413,
-   "rmse": 0.8511307834985442
+   "spread": 0.14936140613325416,
+   "rmse": 0.8511307834985441
   },
   {
    "structures": 50,
    "q2": 0.486014925889603,
-   "spread": 0.04544675935156531,
+   "spread": 0.045446759351565176,
    "rmse": 0.9700856673679313
   },
   {
    "structures": 100,
    "q2": 0.7453549111828419,
-   "spread": 0.020209372623399023,
+   "spread": 0.020209372623399086,
    "rmse": 0.9592507460928238
   },
   {
@@ -783,10 +1003,10 @@
   },
   {
    "structures": 393,
-   "q2": 0.8436633215895356,
+   "q2": 0.8436633215895355,
    "spread": 0.0,
    "rmse": 0.7530158901268929
   }
  ],
- "seconds": 3408.1124818325043
+ "seconds": 2834.880884885788
 }
