@@ -275,15 +275,16 @@ def registry() -> List[Benchmark]:
                   "the hop models on a published benchmark of the same labels: 122,421 "
                   "bond-valence barriers of the LiTraj collection, the same descriptions "
                   "fitted the way the published models are fitted, and what a width on the "
-                  "kernel, the angle at the midpoint and the published models' own strongest "
-                  "feature recover of the difference",
+                  "kernel, the angle at the midpoint, the published models' own strongest "
+                  "feature and the fitting method itself recover of the difference",
                   "run_litraj.py", "litraj",
                   compute=[[]],
                   prepare=["prepare_litraj.py --fetch"],
-                  # measured: 45.1, of which the overlap kernel took 30 minutes.  The same
-                  # kernel took 10 minutes for the same numbers on a quieter machine, so this
-                  # figure depends on what else is running.
-                  minutes="47",
+                  # measured: 124.7, of which the two forest arms on the three-distance rows
+                  # took 39 and 27 minutes and the overlap kernel 30.  The same kernel took 10
+                  # minutes for the same numbers on a quieter machine, so this figure depends on
+                  # what else is running.
+                  minutes="125",
                   report=lambda: _mod("run_litraj").write_table(_r("litraj")),
                   tables=["litraj/table.md"]),
         Benchmark("battery",

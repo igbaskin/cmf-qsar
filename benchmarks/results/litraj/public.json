@@ -218,7 +218,7 @@
    "a": "rf counts as the kernel",
    "b": "counts",
    "diff": 0.0908731195935969,
-   "low": 0.024399680174106566,
+   "low": 0.024399680174106455,
    "high": 0.16396610639414913
   },
   {
@@ -345,7 +345,7 @@
    "b": "rf invariant 0.25 as the kernel",
    "diff": -0.1188828399250128,
    "low": -0.1696587932679281,
-   "high": -0.0709329920499566
+   "high": -0.0709329920499568
   },
   {
    "a": "nested three-distance",
@@ -358,7 +358,7 @@
    "a": "nested three-distance",
    "b": "rf invariant 0.25 as the kernel",
    "diff": 0.046620636640673396,
-   "low": -0.003694892565032148,
+   "low": -0.003694892565032256,
    "high": 0.09557655822134184
   },
   {
@@ -373,7 +373,7 @@
    "b": "rf invariant 0.25 raw",
    "diff": -0.05475063932601121,
    "low": -0.0903146723564199,
-   "high": -0.023050933445950335
+   "high": -0.02305093344595033
   },
   {
    "a": "nested three-distance",
@@ -430,6 +430,34 @@
    "diff": -0.04458373622797818,
    "low": -0.08001964159153188,
    "high": -0.01346518835371914
+  },
+  {
+   "a": "rf three-distance raw",
+   "b": "nested three-distance",
+   "diff": 0.05266029656801863,
+   "low": 0.015446593363475869,
+   "high": 0.09091637224648252
+  },
+  {
+   "a": "gb three-distance raw",
+   "b": "nested three-distance",
+   "diff": 0.05753958527100189,
+   "low": 0.028646238142241875,
+   "high": 0.08910983948475568
+  },
+  {
+   "a": "gb three-distance raw",
+   "b": "rf invariant 0.25 raw",
+   "diff": 0.002788945944990684,
+   "low": -0.02562892895135989,
+   "high": 0.027776676646356628
+  },
+  {
+   "a": "gb three-distance raw",
+   "b": "nested three-distance and free volume",
+   "diff": 0.04737268217296886,
+   "low": 0.018824251032830922,
+   "high": 0.08253883312383051
   }
  ],
  "best_rho": 0.25,
@@ -498,7 +526,7 @@
    "name": "hop length and bottleneck, as the kernel, random forest",
    "q2": 0.18571533344185986,
    "rmse": 1.718548641868017,
-   "mae": 0.9161114825026266,
+   "mae": 0.9161114825026268,
    "lam": null,
    "n": 1801,
    "structures": 393,
@@ -1197,6 +1225,39 @@
    "smallest_volume": 14.768328795671144
   }
  ],
+ "triangle_forests": [
+  {
+   "name": "three-distance, raw, random forest",
+   "q2": 0.841572978831543,
+   "rmse": 0.7580333774105621,
+   "mae": 0.3560938781810048,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "rf three-distance raw",
+   "on": "nested three-distance",
+   "method": "random forest",
+   "rows": "raw",
+   "columns": 63036
+  },
+  {
+   "name": "three-distance, raw, boosted forest",
+   "q2": 0.8464522675345263,
+   "rmse": 0.7462690047437965,
+   "mae": 0.3537020090004862,
+   "lam": null,
+   "n": 1801,
+   "structures": 393,
+   "folds": 10,
+   "key": "gb three-distance raw",
+   "on": "nested three-distance",
+   "method": "boosted forest",
+   "rows": "raw",
+   "columns": 63036
+  }
+ ],
+ "best_triangle_forest": "gb three-distance raw",
  "learning_curve": [
   {
    "structures": 25,
@@ -1232,26 +1293,26 @@
  "forest_curve": [
   {
    "structures": 25,
-   "q2": 0.5925601037267664,
-   "spread": 0.1493614061332541,
-   "rmse": 0.8511307834985442
+   "q2": 0.5925601037267665,
+   "spread": 0.149361406133254,
+   "rmse": 0.8511307834985441
   },
   {
    "structures": 50,
-   "q2": 0.4860149258896031,
-   "spread": 0.04544675935156513,
+   "q2": 0.486014925889603,
+   "spread": 0.045446759351565155,
    "rmse": 0.9700856673679313
   },
   {
    "structures": 100,
-   "q2": 0.7453549111828419,
-   "spread": 0.020209372623399086,
-   "rmse": 0.9592507460928239
+   "q2": 0.745354911182842,
+   "spread": 0.020209372623399034,
+   "rmse": 0.9592507460928238
   },
   {
    "structures": 200,
    "q2": 0.7923715160780899,
-   "spread": 0.019646669582263406,
+   "spread": 0.019646669582263455,
    "rmse": 0.9184939495749758
   },
   {
@@ -1261,5 +1322,5 @@
    "rmse": 0.7530158901268929
   }
  ],
- "seconds": 2708.3225288391113
+ "seconds": 7481.055746793747
 }
