@@ -273,15 +273,16 @@ def registry() -> List[Benchmark]:
                   tables=["hops/table.md"]),
         Benchmark("litraj",
                   "the hop models on a published benchmark of the same labels: 122,421 "
-                  "bond-valence barriers of the LiTraj collection, and the same descriptions "
-                  "fitted the way the published models are fitted",
+                  "bond-valence barriers of the LiTraj collection, the same descriptions "
+                  "fitted the way the published models are fitted, and what a width on the "
+                  "kernel recovers of the difference",
                   "run_litraj.py", "litraj",
                   compute=[[]],
                   prepare=["prepare_litraj.py --fetch"],
-                  # measured: 46.5, of which the overlap kernel took 30 minutes.  The same
+                  # measured: 56.8, of which the overlap kernel took 30 minutes.  The same
                   # kernel took 10 minutes for the same numbers on a quieter machine, so this
                   # figure depends on what else is running.
-                  minutes="47",
+                  minutes="57",
                   report=lambda: _mod("run_litraj").write_table(_r("litraj")),
                   tables=["litraj/table.md"]),
         Benchmark("battery",

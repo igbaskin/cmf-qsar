@@ -77,6 +77,27 @@ The best of these forests against the best model of item BT7, the overlap in the
 
 Set beside the published models, this program's description of a hop fitted with a forest reaches a mean absolute error of 0.374 eV on 1801 hops, against 0.21 eV for the graph network and 0.26 eV for the published forest, both fitted on 96849 hops.
 
+### Can a kernel hold what the forests found?
+
+The kernels of this program are linear. `cmfqsar.invariant.autocorrelation_kernel` rescales the channels, divides every row by its own length and takes the inner product, so ridge regression on it is a linear model in the feature space, while a forest is not. The first guess is therefore that the barrier is not a linear function of these features. A Gaussian kernel on the same rows tests that guess and stays a kernel method: the rows are unit vectors, so the squared distance between two of them is 2 - 2K and the whole family is a function of the matrix already computed.
+
+These rows are fitted more honestly than the rows above. The width and the ridge are chosen inside each training part, on an inner split that holds out whole structures, and the test fold is touched once with the choice already made. The linear kernel is given the same treatment, so the pair can be compared without the ridge search of the first table favouring either. That is why a nested linear row can score below the same kernel in the first table: the first table chose its ridge on the folds it reports.
+
+| description | kernel | q2 | error (eV) | mean absolute error (eV) | widths chosen | against the same kernel in the first table |
+| --- | --- | ---: | ---: | ---: | --- | ---: |
+| counts about the midpoint | linear | +0.445 | 1.419 | 0.818 | linear | -0.024 [-0.070, +0.003] |
+| counts about the midpoint | Gaussian | +0.430 | 1.438 | 0.849 | gamma 0.125, gamma 0.25, gamma 0.5 | -0.038 [-0.080, +0.000] |
+| invariant local | linear | +0.572 | 1.246 | 0.736 | linear | -0.029 [-0.048, -0.006] |
+| invariant local | Gaussian | +0.623 | 1.169 | 0.653 | gamma 0.125, gamma 0.25, gamma 0.5, gamma 1 | +0.023 [-0.002, +0.053] |
+
+**The guess is part of the answer, and the smaller part.** On the local description the width is worth +0.052 [+0.023, +0.080] over the linear kernel given the same treatment, which is clear of zero but small: the whole distance from that kernel to the random forest on the very same rows is +0.171 in q2, so a curved response to these features accounts for about 30% of it. The Gaussian kernel is still -0.119 [-0.170, -0.071] behind that forest.
+
+On the counts the width is worth nothing at all (-0.015 [-0.060, +0.032]), so this is not a general gain from curving a kernel; it is specific to the description that has many columns.
+
+**What the rest is more likely to be: the metric.** A Gaussian kernel measures one distance over all the columns at once, so the few columns that carry the barrier are diluted by the many that do not, and no single width repairs that. A tree picks columns one at a time and ignores the rest. On this reading the question is which columns count and how they are weighted, which is a different repair from putting a width on the kernel, and it is a reading and not yet a measurement. Item M15 of the plan is where it is recorded.
+
+One number in passing. The nested linear kernel scores -0.029 [-0.048, -0.006] against the same kernel in the first table, which is what choosing the ridge on the folds it reports is worth. Every kernel row of the first table is overstated by about that much and the forest rows by nothing, so the forest's advantage there is understated.
+
 Both model classes learn at a rate of their own, and the rate is what the distance to the published training set has to be crossed at. The two curves below are measured on the same drawn subsets of structures:
 
 | training structures | q2, overlap in the hop frame | q2, invariant local, rows raw, random forest |

@@ -284,3 +284,73 @@ def test_the_stored_result_is_strict_json():
     with open(os.path.join(RESULTS, "public.json"), encoding="utf-8") as fh:
         pub = json.load(fh)
     json.dumps(pub, allow_nan=False)
+
+
+# ------------------------------------------------------------------ the nested kernel arms
+
+def test_the_gaussian_kernel_is_a_function_of_the_linear_one():
+    """The rows are unit vectors, so no feature matrix is needed to put a width on them."""
+    import numpy as np
+
+    from cmfqsar.localenv import count_kernel
+    rng = np.random.RandomState(0)
+    X = np.abs(rng.normal(size=(7, 4)))
+    K = count_kernel(X)
+    rows = rl.kernel_rows(X, scale=np.ones(X.shape[1]))
+    for gamma in (0.25, 1.0, 4.0):
+        G = rl.gaussian_kernel(K, gamma)
+        d2 = ((rows[:, None, :] - rows[None, :, :]) ** 2).sum(axis=2)
+        assert np.allclose(G, np.exp(-gamma * d2)), \
+            "2 - 2K is the squared distance only for rows of unit length"
+        assert np.allclose(np.diag(G), 1.0)
+        assert (G > 0).all() and (G <= 1.0 + 1e-12).all()
+
+
+def test_the_nested_arm_chooses_nothing_on_the_fold_it_reports():
+    """A width chosen on the test fold would make the Gaussian row meaningless."""
+    import numpy as np
+
+    from cmfqsar.atomtargets import AtomTargets
+    rng = np.random.RandomState(0)
+    mol = np.repeat(np.arange(20), 2)
+    X = rng.normal(size=(len(mol), 3))
+    y = 2.0 * X[:, 0] + X[:, 1]
+    t = AtomTargets(molecule=mol, atom=np.arange(len(mol)), y=y, n_mol=20, name="barrier")
+    K = X @ X.T
+    poisoned = K.copy()
+    held = t.folds(5, 0)[0]
+    # a setting that is useless everywhere except on one fold's own rows cannot be picked,
+    # because the choice is made before that fold is touched
+    arms = {"plain": K, "poisoned": poisoned}
+    poisoned[np.ix_(held, held)] += 1e6
+    r, picked = rl.nested_result(arms, t, folds=5, seed=0, name="nested", inner=3)
+    assert {c["setting"] for c in picked} <= set(arms)
+    assert len(picked) == r.folds
+    assert np.isnan(r.lam), "the ridge differs from fold to fold, so no single one is reported"
+    assert np.isfinite(r.predicted).all()
+    one, _ = rl.nested_result({"plain": K}, t, folds=5, seed=0, name="one", inner=3)
+    assert one.q2 > 0.9, "a linear target on a linear kernel is predicted well"
+
+
+def test_the_nested_linear_arm_is_the_honest_form_of_a_first_table_row():
+    """Choosing the ridge on the folds it reports is optimistic; the nested arm is not."""
+    with open(os.path.join(RESULTS, "public.json"), encoding="utf-8") as fh:
+        pub = json.load(fh)
+    nested = pub["nested"]
+    pairs = {(p["a"], p["b"]) for p in pub["pairs"]}
+    keys = {m["key"] for m in pub["models"]}
+    on = {f"invariant {pub['best_rho']}", "counts"}
+    assert {m["on"] for m in nested} == on
+    for m in nested:
+        assert m["on"] in keys
+        assert (m["key"], m["on"]) in pairs, "a nested arm has no paired interval"
+        assert m["lam"] is None
+        assert m["kernel"] in {"linear", "Gaussian"}
+        assert len(m["chosen"]) == m["folds"], "one choice per outer fold"
+        for c in m["chosen"]:
+            assert c["setting"] == "linear" or c["setting"].startswith("gamma ")
+    for key in on:
+        assert (f"nested Gaussian {key}", f"nested linear {key}") in pairs, \
+            "what the width is worth is the number this section exists for"
+    widths = {c["setting"] for m in nested if m["kernel"] == "Gaussian" for c in m["chosen"]}
+    assert widths <= {f"gamma {g:g}" for g in rl.GAMMAS}

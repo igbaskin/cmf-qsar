@@ -2628,6 +2628,16 @@ plan opens it as item M15; no default changes until it is measured where that ke
 migration the field model still offers its cost and its readable co-field rather than the lowest
 error, but the fields describe a hop better than the first table suggested.
 
+**Can a kernel hold what the forest found?** These kernels are linear, so kernel ridge on one is a
+linear model in the feature space. A Gaussian kernel on the same rows -- for unit rows the squared
+distance is `2 - 2K`, so the whole family is a function of the matrix already computed -- is worth
++0.052 [+0.023, +0.080] with its width and ridge chosen inside each training part, which is about
+30 per cent of the +0.171 between that kernel and the forest; the Gaussian kernel remains
+-0.119 [-0.170, -0.071] behind. On the counts the width is worth nothing. So the response being
+curved is part of the answer and not most of it; the reading for the rest is that one distance
+over 2601 columns dilutes the few that carry the barrier, which is the second half of item M15 and
+not yet measured.
+
 **Partial occupancy is exact and free (plan item M2).** A disordered site is a configurational
 ensemble, and for independently occupied sites its mean field is closed form: every site gets
 the occupancy-weighted weights of the species that share it, the overlap kernel of two mean

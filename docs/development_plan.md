@@ -3400,8 +3400,9 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   unnecessary for the gate but which remains the series the conductivity literature argues
   about.
 
-* **M15. What the cosine normalisation of the invariant kernel costs** (added 6 November 2026, out
-  of what BT7's external check measured). `cmfqsar.invariant.autocorrelation_kernel` rescales the
+* **M15. What the invariant kernel's treatment of the features costs: the row length it divides
+  out, and the columns it weighs alike** (added 6 November 2026, out of what BT7's external check
+  measured). `cmfqsar.invariant.autocorrelation_kernel` rescales the
   channels and then divides every feature row by its own length, so a kernel entry is the cosine
   of the angle between two rows and the length of a row never reaches the model. Every kernel
   built on that function inherits this: the local environment kernel, the count kernel, the site
@@ -3426,6 +3427,26 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   **when**, and the answer has to be measured per kind of data, not decided once. Until it is
   measured, nothing changes: every stored table in this repository was produced with the division
   in place.
+  **The second half of the item: which columns count** (added the same day, out of the Gaussian
+  arms of BT7's check). The row length is not the whole of what the kernel gives away. On the hop
+  barriers a forest beats the kernel by +0.171 in q2 on the kernel's own rows, and a Gaussian
+  kernel on those rows recovers only about 30 per cent of that (+0.052 [+0.023, +0.080]), so the
+  rest is not a curved response to the features. The reading, which this item has to test rather
+  than assume, is that the distance itself is wrong: one Euclidean distance over 2601 columns
+  dilutes the few columns that carry the barrier among the many that do not, while a tree reads
+  columns one at a time. The test is a weighted distance -- per channel, or per channel and
+  distance bin -- chosen inside the training part, against the same kernel with equal weights,
+  with rule 4's interval deciding it.
+  **What is already known about weighting, so that it is not measured twice.** The pooled mixing
+  pilot of 1 November 2026 learned field weights over 38 molecular sets and did **not** improve
+  prediction over equal weights; it repaired per-series fitting instead. So weight learning as a
+  route to accuracy has failed once already, on molecular sets with few channels and a target the
+  equal-weight kernel already fitted. This item is a different case in three ways and must say so
+  when it reports: 2601 columns rather than a handful of fields, a solid-state target, and a
+  measured gap to another learner on the identical rows that the earlier pilot never had. If it
+  fails here too, then the answer to "why does a forest win" is neither the length, nor the
+  curvature, nor the weights, and the item should say that plainly rather than look for a fourth
+  repair.
 
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
@@ -4663,7 +4684,34 @@ values and a computed oxidation potential is a descriptor, not a target.
   the raw row lengths back gains a further +0.086 and takes the mean absolute error to 0.374 eV
   (q2 +0.844, the random forest), which the kernel cannot use by construction. That is a property
   of `cmfqsar.invariant.autocorrelation_kernel`, not of the hop models, so it is worth testing
-  wherever that kernel is used; it is now open as item M15. Set beside the published numbers,
+  wherever that kernel is used; it is now open as item M15.
+
+  **Can a kernel hold what the forests found, same day.** The kernels of this program are linear
+  -- `autocorrelation_kernel` rescales the channels, divides every row by its own length and takes
+  the inner product -- so ridge regression on one is a linear model in the feature space while a
+  forest is not, and the first guess was that the barrier is not a linear function of these
+  features. A Gaussian kernel on the same rows tests that guess without leaving the kernel
+  framework, because the rows are unit vectors and the squared distance between two of them is
+  `2 - 2K`. These arms are fitted more honestly than the rows above: the width and the ridge are
+  chosen inside each training part on an inner split that holds out whole structures, as item
+  M14's benchmark does, and the linear kernel is given the same treatment. **The guess is the
+  smaller part of the answer.** The width is worth +0.052 [+0.023, +0.080] on the local
+  description (nested linear +0.572, nested Gaussian +0.623, mean absolute error 0.736 to
+  0.653 eV), which is clear of zero but covers about 30 per cent of the +0.171 between that
+  kernel and the random forest on the very same rows; the Gaussian kernel is still
+  -0.119 [-0.170, -0.071] behind the forest. On the counts the width is worth nothing
+  (-0.015 [-0.060, +0.032]), so this is not a general gain from curving a kernel but something
+  the description with many columns has. **The reading for the rest is the metric, and it is a
+  reading and not a measurement**: a Gaussian kernel measures one distance over all 2601 columns
+  at once, so the few that carry the barrier are diluted by the many that do not and no single
+  width repairs it, while a tree picks columns one at a time. That makes M15 a question about
+  which columns count and how they are weighted, not about linear against nonlinear. One number
+  came out in passing: the nested linear kernel scores -0.029 [-0.048, -0.006] against the same
+  kernel in the first table, which is what choosing the ridge on the folds it reports is worth, so
+  every kernel row of that table is overstated by about that much and the forest rows by nothing.
+  The run is now 56.8 minutes.
+
+  Set beside the published numbers,
   this program's description of a hop fitted with a forest reaches 0.374 eV on 1801 hops against
   0.21 eV (graph network) and 0.26 eV (published forest) on 96,849 hops. The
   forest also learns faster: +0.053 in q2 per doubling over the last step of its curve against

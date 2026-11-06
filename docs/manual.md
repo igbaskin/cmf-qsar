@@ -9381,6 +9381,51 @@ reaches a mean absolute error of 0.374 eV on 1801 hops, against 0.21 eV for the 
 0.26 eV for the published forest, both fitted on 96,849 hops. The forest also learns faster,
 +0.053 in q2 for every doubling of the training set against +0.028 for the overlap kernel.
 
+#### Can a kernel hold what the forest found?
+
+The kernels here are **linear** kernels: `autocorrelation_kernel` rescales the channels, divides
+every row by its own length and takes the inner product, so kernel ridge on one is a linear model
+in the feature space, while a forest is not. The first guess is therefore that the barrier is not
+a linear function of these features. A Gaussian kernel on the same rows tests that guess without
+leaving the kernel framework: the rows are unit vectors, so the squared distance between rows $i$
+and $j$ is $2 - 2K_{ij}$ and the whole family of widths is a function of the matrix already
+computed, with no field touched again.
+
+These arms are fitted more honestly than the table above. The width and the ridge are chosen
+inside each training part, on an inner split that holds out whole structures, and the test fold is
+touched once with the choice already made; the linear kernel is given the same treatment so the
+two can be set beside each other. That is why the nested linear row scores below the same kernel
+in the earlier table.
+
+| description | kernel | q2 | mean absolute error (eV) | against the first table |
+| --- | --- | ---: | ---: | ---: |
+| counts about the midpoint | linear, nested | +0.445 | 0.818 | -0.024 [-0.070, +0.003] |
+| counts about the midpoint | Gaussian, nested | +0.430 | 0.849 | -0.038 [-0.080, +0.000] |
+| rotation-invariant local | linear, nested | +0.572 | 0.736 | -0.029 [-0.048, -0.006] |
+| rotation-invariant local | Gaussian, nested | +0.623 | 0.653 | +0.023 [-0.002, +0.053] |
+
+**The guess is the smaller part of the answer.** On the local description the width is worth
++0.052 [+0.023, +0.080] over the linear kernel given the same treatment. That is clear of zero,
+but the whole distance from that kernel to the random forest on the very same rows is +0.171 in
+q2, so a curved response to these features covers about 30 per cent of it, and the Gaussian
+kernel is still -0.119 [-0.170, -0.071] behind the forest. On the counts the width is worth
+nothing at all (-0.015 [-0.060, +0.032]), so this is not a general gain from curving a kernel; it
+belongs to the description that has many columns.
+
+**What the rest is more likely to be: the metric.** A Gaussian kernel measures one distance over
+all 2601 columns at once, so the few columns that carry the barrier are diluted by the many that
+do not, and no single width repairs that; a tree reads columns one at a time and ignores the rest.
+On that reading the open question is which columns count and how they are weighted, which is a
+different repair from putting a width on a kernel. It is a reading and not a measurement, and the
+plan records it as the second half of item M15 -- together with the warning that learning weights
+has already failed once, in the pooled mixing pilot on molecular sets, so this case has to say why
+it differs before it claims anything.
+
+One number came out in passing and applies to every kernel row of the earlier table. The nested
+linear kernel scores -0.029 [-0.048, -0.006] against the same kernel fitted with the ridge chosen
+on the folds it reports, which is what that search is worth. So the kernel rows above are
+overstated by about that much and the forest rows by nothing.
+
 **What this means for the program.** On this task a graph network fitted on a hundred thousand
 barriers is still the most accurate model, and the published work shows a further step: a
 machine-learned interatomic potential that runs the elastic band itself reaches a mean absolute

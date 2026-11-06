@@ -85,6 +85,13 @@ PUBLISHED_TEST = (13167, 1172)
 FOREST_TREES = 300
 #: the two fitting methods those arms use, as (name in the table, key in the result file)
 FORESTS = (("random forest", "rf"), ("boosted forest", "gb"))
+#: widths of the Gaussian kernel the nested arms search over, as gamma in
+#: exp(-gamma * squared distance between two rows).  The rows are unit vectors, so a squared
+#: distance lies in [0, 4]; this grid covers the useful range around the median distance of both
+#: descriptions, and its ends are well past the width that does best.
+GAMMAS = (0.125, 0.25, 0.5, 1.0, 2.0, 4.0)
+#: folds of the inner split that chooses the width and the ridge inside a training part
+INNER_FOLDS = 5
 #: how the rows a forest arm is given are scaled.  Both kernels here divide every row by its own
 #: length, so the kernel never sees how large an environment's features are, only their
 #: direction; a forest given the raw rows sees both.  "as the kernel" is therefore the arm that
@@ -188,6 +195,71 @@ def load_prepared(path: str = PREPARED, max_structures: int = 0) -> tuple:
 # --------------------------------------------------------------- the fitting method on its own
 
 
+def gaussian_kernel(K: np.ndarray, gamma: float) -> np.ndarray:
+    """A Gaussian kernel on the rows whose cosine-normalised linear kernel is `K`.
+
+    The kernels of this program are linear: :func:`cmfqsar.invariant.autocorrelation_kernel`
+    rescales the channels, divides every row by its own length and takes the inner product, so
+    ridge regression on that kernel is a **linear** model in the feature space.  The forest arms
+    above beat it on identical rows, which says the barrier is not a linear function of those
+    features.  This is the kernel that asks whether a kernel method can hold that nonlinearity:
+    the rows are unit vectors, so the squared distance between rows i and j is ``2 - 2 K[i, j]``
+    and the whole Gaussian family is a function of the matrix already computed -- no feature
+    matrix and no field is touched again.
+
+    The identity needs unit rows, so the caller passes a normalised kernel; the clamp at zero
+    only removes rounding, since a squared distance cannot be negative.
+    """
+    d2 = np.maximum(2.0 - 2.0 * np.asarray(K, float), 0.0)
+    return np.exp(-float(gamma) * d2)
+
+
+def nested_result(kernels: dict, targets, folds: int, seed: int, name: str,
+                  inner: int = INNER_FOLDS, lams=LAMS) -> tuple:
+    """Out-of-fold predictions with the kernel and the ridge chosen **inside** each training part.
+
+    Every kernel row of the first table takes the ridge that maximises the very q2 it reports,
+    which is optimistic by whatever that search is worth.  Searching over kernel widths as well
+    would be more optimistic again, and a comparison against a forest that searches for nothing
+    would mean nothing.  So these arms are fitted the way item M14's benchmark is: inside each
+    training part the settings are chosen on an inner split that holds out whole structures, and
+    the test fold is touched once, with the choice already made.
+
+    `kernels` maps the name of a setting to its whole kernel matrix.  Passing a single entry
+    gives one kernel the same treatment, which is how the linear kernel earns a row that can be
+    set beside the Gaussian one.  Returns the result and what each outer fold chose.
+    """
+    from cmfqsar.localenv import LocalResult, cross_validate_lams, r2_score, rmse
+    from cmfqsar.model import krr_fit
+    y = np.asarray(targets.y, float)
+    parts = targets.folds(folds, seed)
+    if not parts:
+        raise ValueError("there is nothing to cross-validate: no hop carries the barrier")
+    pred = np.full(len(y), np.nan)
+    chosen = []
+    for te in parts:
+        tr = np.setdiff1d(np.arange(len(y)), te)
+        inside = targets.subset(tr)
+        best = None
+        for key, K in kernels.items():
+            for r in cross_validate_lams(K[np.ix_(tr, tr)], inside, lams, folds=inner,
+                                         seed=seed):
+                if best is None or r.q2 > best[0]:
+                    best = (r.q2, key, r.lam)
+        _, key, lam = best
+        chosen.append({"setting": key, "lam": float(lam)})
+        K = kernels[key]
+        a, b = krr_fit(K[np.ix_(tr, tr)], y[tr], float(lam))
+        pred[te] = K[np.ix_(te, tr)] @ a + b
+    ok = np.isfinite(pred)
+    out = LocalResult(name=name, predicted=pred, q2=r2_score(y[ok], pred[ok]),
+                      error=rmse(y[ok], pred[ok]),
+                      mae=float(np.mean(np.abs(y[ok] - pred[ok]))), lam=float("nan"),
+                      n_samples=int(ok.sum()), n_molecules=targets.n_measured_molecules,
+                      folds=len(parts), molecule=np.asarray(targets.molecule, int))
+    return out, chosen
+
+
 def kernel_rows(X: np.ndarray, n_bins: int = 1, scale: Optional[np.ndarray] = None) -> np.ndarray:
     """The rows the cosine-normalised kernel of this program is really built from.
 
@@ -285,7 +357,8 @@ def run(args, log) -> dict:
         h.bottleneck, h.bottleneck_at, h.bottleneck_atoms = bottleneck(e, h.vector)
     types = hop_types(envs0, min_atoms=20)
     counts_features = hop_count_features(envs0, types)
-    ref = choose_lam(count_kernel(counts_features), t, folds=args.folds,
+    counts_kernel = count_kernel(counts_features)
+    ref = choose_lam(counts_kernel, t, folds=args.folds,
                      seed=args.seed, name="counts about the midpoint")
     log("  " + ref.summary())
     X = np.array([[hs.hops[r].length, hs.hops[r].bottleneck] for r in t.atom])
@@ -309,6 +382,8 @@ def run(args, log) -> dict:
     kernel_features = {"counts": kernel_rows(counts_features,
                                              scale=np.ones(counts_features.shape[1])),
                        "geometry": X}
+    # the kernel matrices themselves, for the nested arms that put a width on them
+    matrices = {"counts": counts_kernel}
     # the two hop kernels of item BT7
     best = None
     for rho in args.rho:
@@ -317,7 +392,8 @@ def run(args, log) -> dict:
         local = local_features(envs)
         features[f"invariant {rho}"] = local
         kernel_features[f"invariant {rho}"] = kernel_rows(local, n_bins=LOCAL_SPEC.n_bins)
-        inv = choose_lam(local_kernel(local), t, folds=args.folds, seed=args.seed,
+        matrices[f"invariant {rho}"] = local_kernel(local)
+        inv = choose_lam(matrices[f"invariant {rho}"], t, folds=args.folds, seed=args.seed,
                          name=f"invariant local, rho {rho:g}")
         log("  " + inv.summary())
         fr = framed_environments(hs, crystals, rows=t.atom, rho=rho, r_max=args.r_max)
@@ -375,6 +451,35 @@ def run(args, log) -> dict:
                          "high": hi})
     log(f"  the best forest against the best model of item BT7 {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
     out["best_forest"] = best_forest["key"]
+    # can a kernel hold what the forests found?  The kernels of this program are linear, so the
+    # first guess is that the barrier is not a linear function of the features.  A Gaussian
+    # kernel on the same rows tests that guess, with its width and the ridge chosen inside the
+    # training part, and the linear kernel is given the same treatment so the two can be
+    # compared without the ridge search of the first table flattering either.
+    out["nested"] = []
+    for key in ("counts", f"invariant {rho}"):
+        arms = {"linear": {"linear": matrices[key]},
+                "Gaussian": {f"gamma {g:g}": gaussian_kernel(matrices[key], g) for g in GAMMAS}}
+        for label, ks in arms.items():
+            r, picked = nested_result(ks, t, args.folds, args.seed,
+                                      f"{results[key].name}, {label}, nested")
+            settings = ", ".join(sorted({c["setting"] for c in picked}))
+            log(f"  {r.summary()}  (chose {settings})")
+            nkey = f"nested {label} {key}"
+            out["nested"].append(_entry(r, extra={"key": nkey, "on": key, "kernel": label,
+                                                  "lam": None, "chosen": picked}))
+            results[nkey] = r
+            d, lo, hi = paired_interval(r, results[key], t, runs=args.bootstrap, seed=args.seed)
+            out["pairs"].append({"a": nkey, "b": key, "diff": d, "low": lo, "high": hi})
+        # what the width is worth, and whether it reaches the forest on the same rows
+        for a_key, b_key in ((f"nested Gaussian {key}", f"nested linear {key}"),
+                             (f"nested Gaussian {key}", f"rf {key} as the kernel")):
+            if b_key not in results:
+                continue
+            d, lo, hi = paired_interval(results[a_key], results[b_key], t, runs=args.bootstrap,
+                                        seed=args.seed)
+            out["pairs"].append({"a": a_key, "b": b_key, "diff": d, "low": lo, "high": hi})
+            log(f"    {a_key} against {b_key} {d:+.3f} [{lo:+.3f}, {hi:+.3f}]")
     # the learning curve of the best model, on the kernel already in hand: how much of the
     # distance to the published models is the size of the training set
     curve = []
@@ -638,6 +743,79 @@ def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
               f"{pub['n_samples']} hops, against {PUBLISHED[0][1]:.2f} eV for the graph network "
               f"and {PUBLISHED[1][1]:.2f} eV for the published forest, both fitted on "
               f"{PUBLISHED_TRAIN[0]} hops.")
+            w("")
+    nested = pub.get("nested") or []
+    if nested:
+        w("### Can a kernel hold what the forests found?")
+        w("")
+        w("The kernels of this program are linear. "
+          "`cmfqsar.invariant.autocorrelation_kernel` rescales the channels, divides every row "
+          "by its own length and takes the inner product, so ridge regression on it is a linear "
+          "model in the feature space, while a forest is not. The first guess is therefore that "
+          "the barrier is not a linear function of these features. A Gaussian kernel on the same "
+          "rows tests that guess and stays a kernel method: the rows are unit vectors, so the "
+          "squared distance between two of them is 2 - 2K and the whole family is a function of "
+          "the matrix already computed.")
+        w("")
+        w("These rows are fitted more honestly than the rows above. The width and the ridge are "
+          "chosen inside each training part, on an inner split that holds out whole structures, "
+          "and the test fold is touched once with the choice already made. The linear kernel is "
+          "given the same treatment, so the pair can be compared without the ridge search of the "
+          "first table favouring either. That is why a nested linear row can score below the "
+          "same kernel in the first table: the first table chose its ridge on the folds it "
+          "reports.")
+        w("")
+        w("| description | kernel | q2 | error (eV) | mean absolute error (eV) | widths chosen "
+          "| against the same kernel in the first table |")
+        w("| --- | --- | ---: | ---: | ---: | --- | ---: |")
+        for m in nested:
+            p = pairs.get((m["key"], m["on"]))
+            cell = ("--" if p is None else
+                    f"{p['diff']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}]")
+            picked = ", ".join(sorted({c["setting"] for c in m.get("chosen", [])}))
+            w(f"| {m['name'].split(',')[0]} | {m['kernel']} | {m['q2']:+.3f} | {m['rmse']:.3f} "
+              f"| {m['mae']:.3f} | {picked or '--'} | {cell} |")
+        w("")
+        key = f"invariant {pub['best_rho']}"
+        gl = pairs.get((f"nested Gaussian {key}", f"nested linear {key}"))
+        gf = pairs.get((f"nested Gaussian {key}", f"rf {key} as the kernel"))
+        cl = pairs.get(("nested Gaussian counts", "nested linear counts"))
+        lin = next((m for m in nested if m["key"] == f"nested linear {key}"), None)
+        forest = next((f for f in forests if f["key"] == f"rf {key} as the kernel"), None)
+        if gl and gf and lin and forest:
+            gap = forest["q2"] - lin["q2"]
+            share = gl["diff"] / gap if gap > 0 else float("nan")
+            w(f"**The guess is part of the answer, and the smaller part.** On the local "
+              f"description the width is worth {gl['diff']:+.3f} "
+              f"[{gl['low']:+.3f}, {gl['high']:+.3f}] over the linear kernel given the same "
+              f"treatment, which is clear of zero but small: the whole distance from that "
+              f"kernel to the random forest on the very same rows is {gap:+.3f} in q2, so a "
+              f"curved response to these features accounts for about {share:.0%} of it. The "
+              f"Gaussian kernel is still {gf['diff']:+.3f} "
+              f"[{gf['low']:+.3f}, {gf['high']:+.3f}] behind that forest.")
+            w("")
+            if cl:
+                w(f"On the counts the width is worth nothing at all "
+                  f"({cl['diff']:+.3f} [{cl['low']:+.3f}, {cl['high']:+.3f}]), so this is not a "
+                  f"general gain from curving a kernel; it is specific to the description that "
+                  f"has many columns.")
+                w("")
+            w("**What the rest is more likely to be: the metric.** A Gaussian kernel measures "
+              "one distance over all the columns at once, so the few columns that carry the "
+              "barrier are diluted by the many that do not, and no single width repairs that. A "
+              "tree picks columns one at a time and ignores the rest. On this reading the "
+              "question is which columns count and how they are weighted, which is a different "
+              "repair from putting a width on the kernel, and it is a reading and not yet a "
+              "measurement. Item M15 of the plan is where it is recorded.")
+            w("")
+        row = next((m for m in nested if m["key"] == f"nested linear {key}"), None)
+        p = pairs.get((f"nested linear {key}", key))
+        if row and p:
+            w(f"One number in passing. The nested linear kernel scores "
+              f"{p['diff']:+.3f} [{p['low']:+.3f}, {p['high']:+.3f}] against the same kernel in "
+              f"the first table, which is what choosing the ridge on the folds it reports is "
+              f"worth. Every kernel row of the first table is overstated by about that much and "
+              f"the forest rows by nothing, so the forest's advantage there is understated.")
             w("")
     fcurve = pub.get("forest_curve") or []
     if fcurve and curve:
