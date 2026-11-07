@@ -20,9 +20,13 @@ repository becomes public.
   `docs/CMF_manual.sha256` with it.
 * [x] The four data items of unclear licence status are decided and the reason is written down
   (`docs/public_3dqsar_datasets.md`, *Before the repository is public*).
-* [ ] **The manifest.** It records commit `85e58f3`, seven commits back, and `dirty: true`,
-  because it was written from a working tree with uncommitted changes. Regenerate it at the
-  commit that will be tagged, with nothing uncommitted in the working tree:
+* [x] **The manifest.** Regenerated on 7 November 2026 from a working tree with nothing
+  uncommitted. It records commit `abdcc4c`, the merge that brought in plan item PBH6, 545 data
+  files and 1,353 result files, and `dirty: false`. Two earlier states are worth recording,
+  because both would have gone into the archive unnoticed: the entry this replaced recorded
+  commit `fd43093`, twenty-one commits back, and was missing the eighteen result files of plan
+  item M15; the entry before that recorded `85e58f3` with `dirty: true`. Repeat the commands
+  below after anything is committed from here on:
 
   ```bash
   git status --short          # must print nothing
@@ -30,8 +34,11 @@ repository becomes public.
   python benchmarks/run_all.py --check
   ```
 
-  `--manifest` only hashes the 460 data files and the 1,235 result files, so it takes about a
-  minute and does not rerun any benchmark.
+  `--manifest` only hashes the files, so it takes about a minute and does not rerun any
+  benchmark. One thing to expect when reading the result: the manifest records the commit it was
+  built at, which is the parent of the commit that carries the manifest itself. The tag therefore
+  goes on the commit that stores the manifest, and that commit's own hash is one ahead of the one
+  written inside it. This is not a fault and `--check` does not test for it.
 
 ## 2. Make the repository public
 
