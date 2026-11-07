@@ -6904,11 +6904,14 @@ are the atoms of every conformation with their weights multiplied by that confor
 and the kernel of two ensembles comes out as
 
 $$
-K(A,B) = \sum_k \sum_l w_k^A w_l^B\, K\!\left(X_A^{(k)}, X_B^{(l)}\right)
+K(A,B) \;=\; \sum_{k=1}^{n_A} \; \sum_{l=1}^{n_B} \; w^{A}_{k}\, w^{B}_{l}\; K\left(X^{(k)}_{A},\, X^{(l)}_{B}\right)
 $$
 
-the mean-map kernel of the two conformational distributions, positive definite by construction. A
-test checks that identity against the pairwise kernels of the conformations. The model stays linear
+where the sums run over the $n_A$ conformations of ensemble $A$ and the $n_B$ conformations of
+ensemble $B$, each conformation $X$ enters with its weight $w$, and the weights of each ensemble
+sum to one. This is the mean-map kernel of the two conformational distributions, positive
+definite by construction. A test checks that identity against the pairwise kernels of the
+conformations. The model stays linear
 in that mean field, so **co-fields, the decomposition rules, Shapley values and the complementarity
 scores all keep working**; contributions arrive per atom per conformation and fold back onto the
 atoms by summation.
