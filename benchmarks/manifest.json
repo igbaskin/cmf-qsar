@@ -1,6 +1,6 @@
 {
- "commit": "fd43093475341b50f36bbe38cb97de26238d425b",
- "created": "2026-11-07T07:49:17",
+ "commit": "185bb3d447c61d7b3e94f1899a9dfc0081a9a1c2",
+ "created": "2026-11-07T12:12:22",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2183,7 +2183,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3408,6 +3408,16 @@
   "benchmarks/results/surface_view/run.json": "82fce5d96badc80964ce9f41e6095206cc590a057b21d6a4dbf89c1f7f68e57b",
   "benchmarks/results/surface_view/slab.json": "7597b1caf7dc7d14fa8f3d479899146a68e0e79bb652a632cdd0a88c7bd81eab",
   "benchmarks/results/surface_view/table.md": "e6367167e9fffca5d74e3d8ce940fcdcb55702297653da75bc5a2933218aba36",
+  "benchmarks/results/surrogate/ACE.json": "bfeb30d64cf8e44cf4b811e2240f603b71c6b8b10bc705c5b5973f191f97d4b6",
+  "benchmarks/results/surrogate/AChE.json": "f8ea5bc921a97420d7541bec015fa8fb45a29d45ab48865ea291548d5f42c6b2",
+  "benchmarks/results/surrogate/BZR.json": "7421dcd8e51881fbf3942d6960732f6d2f41e462854e8f34e8ed2c8958b0d8ae",
+  "benchmarks/results/surrogate/COX2.json": "5dcc4761165a3b39be5c0bd5be7ca801a1f112f2f4bc0876e85a6ff11cfb5053",
+  "benchmarks/results/surrogate/DHFR.json": "3de87a9f6c089c13980f40e8652a4ba4ee1fec42d4f087f8048968d66fbcb871",
+  "benchmarks/results/surrogate/GPB.json": "23242464d8410ac1f5e828c0ac57f2d1122a559b2426a40b88068def04f59d98",
+  "benchmarks/results/surrogate/THER.json": "c454afc62f7f04b5f57597d0fe68c6fae3b84d3778d690b75f7288f08d7d039f",
+  "benchmarks/results/surrogate/THR.json": "60b6f91dc969198393c71b8d98879f14966ff8fb930b6c394512aa3b5ead7645",
+  "benchmarks/results/surrogate/log.txt": "b73c6b08cb7843179e485b54fb05d34c67109b79fa8e5ab7a55120c1367e6ea3",
+  "benchmarks/results/surrogate/table.md": "456ea700c98b53e4e49e66e5fe8a03abcd9d459e27d9bedafb7495ae2b49c200",
   "benchmarks/results/table.md": "0412a5f8dfee7da0c635bfe37ff03adbcbdbe022e1ba255587dcfaa9cf3abfd7",
   "benchmarks/results/tasks/cold.json": "75a888cae2484d320185a07f3345237cf078a68acc69a5f6b1af4e7c52a0583a",
   "benchmarks/results/tasks/share.json": "e92ea52780763d2c4250caad713852de3e3a5105f9f490834a567a879ebd8ff8",
