@@ -1,0 +1,555 @@
+{
+ "blocks": 15,
+ "columns": 255,
+ "descriptor": "whole-molecule autocorrelation",
+ "file": "examples/cyclodextrin/beta_cyclodextrin.csv",
+ "folds": 10,
+ "forest_gap": 0.09570180167639752,
+ "forest_gap_with_length": 0.12434151200707233,
+ "inner": 5,
+ "lams": [
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0
+ ],
+ "n": 1162,
+ "pairs": [
+  {
+   "a": "block align",
+   "b": "equal weights",
+   "diff": 0.0235918129000795,
+   "high": 0.04265801400310135,
+   "low": 0.0034618189835631447
+  },
+  {
+   "a": "block alignf",
+   "b": "equal weights",
+   "diff": 0.0075736866914983825,
+   "high": 0.030421956241821625,
+   "low": -0.015488790082693268
+  },
+  {
+   "a": "column align",
+   "b": "equal weights",
+   "diff": 0.008048982135005267,
+   "high": 0.033882457648972235,
+   "low": -0.021067166198143063
+  },
+  {
+   "a": "best columns",
+   "b": "equal weights",
+   "diff": 0.01943950534179395,
+   "high": 0.0423516080526971,
+   "low": -0.005025324212037729
+  },
+  {
+   "a": "forest importances",
+   "b": "equal weights",
+   "diff": -0.016440910142461962,
+   "high": 0.003355166716884275,
+   "low": -0.03944952470661238
+  },
+  {
+   "a": "a forest on the scaled rows (the length kept)",
+   "b": "equal weights",
+   "diff": 0.12434151200707233,
+   "high": 0.15421105067565946,
+   "low": 0.09514662217834019
+  },
+  {
+   "a": "a forest on the kernel's own rows",
+   "b": "equal weights",
+   "diff": 0.09570180167639752,
+   "high": 0.12489764874664332,
+   "low": 0.06573161126770946
+  },
+  {
+   "a": "block align",
+   "b": "share of the forest's lead",
+   "diff": 0.24651378016739925,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "block alignf",
+   "b": "share of the forest's lead",
+   "diff": 0.0791383919511543,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "column align",
+   "b": "share of the forest's lead",
+   "diff": 0.08410481301304852,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "best columns",
+   "b": "share of the forest's lead",
+   "diff": 0.2031258032897433,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "forest importances",
+   "b": "share of the forest's lead",
+   "diff": -0.17179310999864597,
+   "high": NaN,
+   "low": NaN
+  }
+ ],
+ "rows": [
+  {
+   "arm": "equal weights",
+   "chosen": [
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4404946061368118,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4454744653140136,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4238106549733014,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4256678171645717,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.42418740364011576,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.41996117725250703,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4269774566747979,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.45082363047337926,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.43985065149623204,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.44043374064373797,
+     "lam": 0.1,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.4524122108839955,
+   "n": 1162,
+   "q2": 0.46079554132332534,
+   "rmse": 0.5967243925300708,
+   "seconds": 32.97010588645935
+  },
+  {
+   "arm": "block align",
+   "chosen": [
+    {
+     "columns_used": 255,
+     "inner_q2": 0.47904183374636244,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4740173004376925,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4468993817940544,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4661379808144027,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4511176530319716,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4586263007604069,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4566853146520795,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4850678746936886,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4685416402723216,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4632761546858518,
+     "lam": 0.1,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.4423663436034619,
+   "n": 1162,
+   "q2": 0.48438735422340484,
+   "rmse": 0.5835241487953559,
+   "seconds": 32.91750478744507
+  },
+  {
+   "arm": "block alignf",
+   "chosen": [
+    {
+     "columns_used": 170,
+     "inner_q2": 0.46324340163910926,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 187,
+     "inner_q2": 0.46432990469956903,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 187,
+     "inner_q2": 0.4306611026339152,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 170,
+     "inner_q2": 0.4499241894020699,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 187,
+     "inner_q2": 0.4368416087131727,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 187,
+     "inner_q2": 0.45016485093411207,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 187,
+     "inner_q2": 0.43959382658666113,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 187,
+     "inner_q2": 0.4654450654428779,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 170,
+     "inner_q2": 0.4521834802136838,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 187,
+     "inner_q2": 0.4463183047850041,
+     "lam": 0.1,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.44996716519783636,
+   "n": 1162,
+   "q2": 0.4683692280148237,
+   "rmse": 0.592518765249339,
+   "seconds": 35.446510791778564
+  },
+  {
+   "arm": "column align",
+   "chosen": [
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4734719875267023,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4611765132027148,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4400347326064805,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4548938775638891,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.44007296943703944,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4607342948936456,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4493044311383608,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.47503547552853775,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4560519912831268,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.45849784627389667,
+     "lam": 0.01,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.44662612264204554,
+   "n": 1162,
+   "q2": 0.4688445234583306,
+   "rmse": 0.5922538403644071,
+   "seconds": 25.674989223480225
+  },
+  {
+   "arm": "best columns",
+   "chosen": [
+    {
+     "columns_used": 153,
+     "inner_q2": 0.46505778639914974,
+     "lam": 0.01,
+     "share": 0.6
+    },
+    {
+     "columns_used": 153,
+     "inner_q2": 0.4640246002967706,
+     "lam": 0.01,
+     "share": 0.6
+    },
+    {
+     "columns_used": 153,
+     "inner_q2": 0.4516633547477644,
+     "lam": 0.01,
+     "share": 0.6
+    },
+    {
+     "columns_used": 153,
+     "inner_q2": 0.44817312536935117,
+     "lam": 0.01,
+     "share": 0.6
+    },
+    {
+     "columns_used": 153,
+     "inner_q2": 0.43054588665462434,
+     "lam": 0.1,
+     "share": 0.6
+    },
+    {
+     "columns_used": 153,
+     "inner_q2": 0.4683067904766649,
+     "lam": 0.01,
+     "share": 0.6
+    },
+    {
+     "columns_used": 153,
+     "inner_q2": 0.456359090100912,
+     "lam": 0.01,
+     "share": 0.6
+    },
+    {
+     "columns_used": 153,
+     "inner_q2": 0.4741153844921645,
+     "lam": 0.01,
+     "share": 0.6
+    },
+    {
+     "columns_used": 153,
+     "inner_q2": 0.46060106008877744,
+     "lam": 0.01,
+     "share": 0.6
+    },
+    {
+     "columns_used": 153,
+     "inner_q2": 0.465969233580216,
+     "lam": 0.01,
+     "share": 0.6
+    }
+   ],
+   "mae": 0.4421775643271327,
+   "n": 1162,
+   "q2": 0.4802350466651193,
+   "rmse": 0.5858690419594671,
+   "seconds": 112.42479372024536
+  },
+  {
+   "arm": "forest importances",
+   "chosen": [
+    {
+     "columns_used": 255,
+     "inner_q2": 0.44452592877178976,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4341212469481547,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.42086013305860026,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.42062854558625284,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4153909197587524,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4218193629548377,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.42430579672101865,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.44923081554153066,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.4389570079781254,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 255,
+     "inner_q2": 0.42166159329312247,
+     "lam": 0.1,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.46013770357382333,
+   "n": 1162,
+   "q2": 0.4443546311808634,
+   "rmse": 0.6057534595572039,
+   "seconds": 105.76138257980347
+  },
+  {
+   "arm": "a forest on the scaled rows (the length kept)",
+   "chosen": [],
+   "mae": 0.3868480771658062,
+   "n": 1162,
+   "q2": 0.5851370533303977,
+   "rmse": 0.5234188724093287,
+   "seconds": 46.98225927352905
+  },
+  {
+   "arm": "a forest on the kernel's own rows",
+   "chosen": [],
+   "mae": 0.4052670147160069,
+   "n": 1162,
+   "q2": 0.5564973429997229,
+   "rmse": 0.541184272140684,
+   "seconds": 16.28417992591858
+  }
+ ],
+ "series": "molecules",
+ "shares": [
+  0.02,
+  0.1,
+  0.3,
+  0.6
+ ],
+ "target": "log K",
+ "trees": 300
+}

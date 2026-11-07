@@ -7379,6 +7379,44 @@ is the stronger of the two ways where it works at all: adding it as a channel re
 the +0.144 on the hop environments. No default changes, and every stored table in this repository
 was produced with the division in place.
 
+### Which columns count, and how far a weighted distance goes
+
+The kernel measures one Euclidean distance over every channel at once. A forest on the very rows
+the kernel is built from does better than the kernel on some series, and the question is what it
+has that the kernel does not. On the hop environments of 1,801 lithium hops, 2,601 columns in 153
+blocks, a forest on those rows reaches $q^2$ +0.742 against the kernel's +0.572, a lead of +0.171
+with an interval of [+0.116, +0.226]. One explanation is that a single distance over 2,601 columns
+dilutes the few that carry the barrier among the many that do not, while a tree reads columns one
+at a time. `benchmarks/run_colweights.py` tests that explanation at four levels of detail, every
+weight computed inside the training part of each fold. The first two are the `--block-weights
+align` and `alignf` of the paragraph above, which the program already has; the other two are
+measured here and deliberately not added to it: one weight per column by the same alignment rule,
+and only the best columns with the rest set to zero, and a random forest's own importances as the
+weights.
+
+**The coarse weighting is the one that works, and it recovers about half of the lead.**
+`--block-weights align`, one weight per pair of field types, takes the hop environments from
++0.572 to +0.658, a gain of +0.086 [+0.042, +0.133], and the beta-cyclodextrin guests from +0.461
+to +0.484, +0.024 [+0.003, +0.043]. Every finer rule falls inside the interval on both of those
+series: one weight per column gives +0.040 [-0.007, +0.089] on the hops, the best columns alone
++0.029 [-0.031, +0.089], and a forest's own importances +0.056 [-0.001, +0.115]. So the forest's
+advantage is not simply that it knows which columns to read: handing the kernel the forest's own
+ranking does not reproduce it. That is also why nothing finer than a block weight is offered by
+the program.
+
+**On a short description the ordering reverses.** The site profiles of the single-atom catalysts
+have 78 columns in 6 blocks, and there every rule gains beyond the interval -- the best columns
+alone most of all, +0.044 [+0.013, +0.084] from 23 to 47 of the 78 columns -- while the forest is
+0.250 *behind* the kernel. Few columns and few samples is the regime where choosing among the
+columns is both possible and useful.
+
+**What to take from it.** Set `--block-weights align` on a long description before reaching for
+anything finer: it is closed form, it costs one pass over the training features, it is re-derived
+inside every fold, and it is the only level that pays there. Expect no more than half of what a
+forest on the same rows would give you on a solid-state series. Read the rest as still
+unexplained: it is not the row length, which the section above measures, not a curvature the
+Gaussian layer can hold, which item BT7 measured, and not the weighting of the columns.
+
 ### What the model says about one molecule
 
 The invariant kernel has no co-field, because it has no frame, but **it does have a

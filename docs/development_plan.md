@@ -3537,7 +3537,41 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   invariant kernel and therefore searches six copies of one kernel: its stored $q^2$ values are
   unaffected, but the alpha it records for that column means nothing and its sentence about the
   alpha grid does not hold for that one column.
-  **What is left of the item** is the second half above: the weighted distance over the columns.
+  **The second half is measured the same day: a weight per pair of field types recovers half of
+  the forest's lead, and nothing finer recovers anything.** `benchmarks/run_colweights.py` gives
+  the columns weights at four levels of detail, every weight derived inside the training part of
+  each outer fold, and reports a forest beside them. The first two levels are the
+  `--block-weights align` and `alignf` the program already has; the other two are measured and
+  deliberately not added to it.
+  *The gap, reproduced.* On the hop environments (1,801 hops, 2,601 columns in 153 blocks) a
+  forest on the rows the kernel is really built from reaches $q^2$ **+0.742** against the kernel's
+  +0.572, a lead of **+0.171 [+0.116, +0.226]**. That is the same +0.171 item BT7 measured, from a
+  different protocol, so the gap is not an artefact of either. A forest on the rows as they are,
+  which also keep the row length, reaches +0.845, a lead of +0.273, and the first half above
+  accounts for +0.144 of that.
+  *What the weights recover.* `align`, one weight per pair of field types, gives **+0.086 [+0.042,
+  +0.133]** on the hops, which is 51 per cent of the +0.171, and **+0.024 [+0.003, +0.043]** on the
+  1,162 beta-cyclodextrin guests. Every finer rule is inside the interval on both: one weight per
+  column +0.040 [-0.007, +0.089] on the hops, the best columns alone +0.029 [-0.031, +0.089], and
+  the forest's own importances as weights +0.056 [-0.001, +0.115]. Handing the kernel the forest's
+  own ranking of the columns therefore does not reproduce the forest.
+  *Where it reverses.* On the site profiles of the single-atom catalysts (139 sites, 78 columns in
+  6 blocks, held out by metal) every rule gains beyond the interval, the best columns alone most of
+  all (**+0.044 [+0.013, +0.084]**, from 23 to 47 of the 78 columns), and the forest is 0.250
+  *behind* the kernel. Few columns and few samples is where choosing among the columns is both
+  possible and useful.
+  *The answer to the item's question.* Weight learning does not fail here as it failed in the
+  pooled mixing pilot, and the difference is the level: the pilot learned a weight per field over
+  38 molecular sets and gained nothing, while a weight per *pair* of field types gains on two
+  series of three here. But it recovers only half of the lead on the one series where a forest is
+  clearly ahead, so the honest statement the item asked for stands for the remainder: it is
+  neither the row length, nor a curvature a Gaussian layer can hold, nor the weighting of the
+  columns, and what is left is still unexplained.
+  *What this changes.* Nothing by default, and one recommendation: the manual now tells a reader
+  to set `--block-weights align` on a long description, under *Which columns count, and how far a
+  weighted distance goes*. `tests/test_colweights.py` has 8 tests, including that the column rule
+  agrees with the library's block rule when a block is one column, that a weight of zero removes a
+  column exactly, and that no weight is ever computed from a row outside the training part.
 
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
@@ -6466,7 +6500,7 @@ own text has to stop before it, and five entries state their status in a form of
 | E. Learning | 11 | 10 | E11 (partly) |
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
-| H. Materials and periodicity | 15 | 11 | M7, M8, M9, M15 (partly) |
+| H. Materials and periodicity | 15 | 12 | M7, M8, M9 |
 | H. Nanotechnology | 12 | 1 | NT1, NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 8 | 7 | BT8 |
@@ -6476,7 +6510,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 16 | 0 | ND1 to ND13 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**147 items: 104 finished, 5 partly, 38 open.**
+**147 items: 105 finished, 4 partly, 38 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
