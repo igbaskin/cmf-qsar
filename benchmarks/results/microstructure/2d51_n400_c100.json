@@ -1,0 +1,4118 @@
+{
+ "tag": "2d51_n400_c100",
+ "dim": 2,
+ "grid": 51,
+ "n": 400,
+ "contrast": 100.0,
+ "solver": "finite volumes, harmonic-mean faces, one voxel pinned",
+ "solver_checks": [
+  "uniform phase 1: largest error 0.0e+00",
+  "laminate, layers across x: largest error 7.6e-13",
+  "random structure, asymmetry of the tensor 1.3e-15"
+ ],
+ "label_spread": {
+  "xx": {
+   "min": 1.3274551695877332,
+   "max": 68.1366685287797,
+   "sd": 17.60395615696136
+  },
+  "mean": {
+   "min": 1.7102280241509686,
+   "max": 61.389436117947426,
+   "sd": 15.526553689800812
+  }
+ },
+ "grid_searched": {
+  "smoothing": [
+   0.0,
+   1.0,
+   2.0,
+   3.0,
+   5.0
+  ],
+  "gammas": [
+   0.5,
+   1.0,
+   2.0
+  ],
+  "lams": [
+   1e-06,
+   1e-05,
+   0.0001,
+   0.001,
+   0.01,
+   0.1,
+   1.0
+  ],
+  "components": [
+   2,
+   3,
+   5,
+   10,
+   20
+  ],
+  "degrees": [
+   1,
+   2
+  ],
+  "ridges": [
+   1e-08,
+   0.0001,
+   0.01,
+   1.0
+  ]
+ },
+ "sizes": [
+  20,
+  50,
+  100,
+  200
+ ],
+ "repeats": 5,
+ "inner_folds": 5,
+ "minutes": 6.788344248135885,
+ "summary": {
+  "xx": {
+   "20": {
+    "phase fraction": {
+     "q2": 0.7385126738063337,
+     "q2_sd": 0.04774136576135412,
+     "rmse": 8.938094459958805,
+     "rmse_sd": 0.8323578623154845,
+     "smoothing": [],
+     "settings": [
+      "cubic in the fraction"
+     ],
+     "draws": 5
+    },
+    "two-point statistics + PCA": {
+     "q2": 0.8053336659498485,
+     "q2_sd": 0.03895420421995352,
+     "rmse": 7.701444111136839,
+     "rmse_sd": 0.7292859345137235,
+     "smoothing": [],
+     "settings": [
+      "10 components, degree 1, ridge 0.01",
+      "10 components, degree 1, ridge 1e-08",
+      "5 components, degree 1, ridge 1e-08"
+     ],
+     "draws": 5
+    },
+    "overlap, generating frame": {
+     "q2": 0.6569351877330017,
+     "q2_sd": 0.04229444505179717,
+     "rmse": 10.250421479962728,
+     "rmse_sd": 0.6396745849475866,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 5, gauss 0.5, lam 1e-06",
+      "s 5, gauss 1, lam 1e-06",
+      "s 5, gauss 2, lam 0.01",
+      "s 5, linear, lam 1"
+     ],
+     "draws": 5
+    },
+    "overlap, rotation-averaged": {
+     "q2": 0.6143675378623511,
+     "q2_sd": 0.06935893519848989,
+     "rmse": 10.851625323092083,
+     "rmse_sd": 1.0179558625190024,
+     "smoothing": [
+      2.0,
+      2.0,
+      2.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 2, gauss 0.5, lam 1e-06",
+      "s 2, gauss 2, lam 0.1",
+      "s 2, linear, lam 0.01",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, linear": {
+     "q2": 0.8110893174367735,
+     "q2_sd": 0.028039477491640232,
+     "rmse": 7.600318253495575,
+     "rmse_sd": 0.5816697597015976,
+     "smoothing": [
+      5.0,
+      1.0,
+      0.0,
+      5.0,
+      0.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 1e-06",
+      "s 0, linear, lam 0.1",
+      "s 1, gauss 0.5, lam 1e-06",
+      "s 5, linear, lam 0.001",
+      "s 5, linear, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, normalised": {
+     "q2": 0.7868847226560691,
+     "q2_sd": 0.05583785436047221,
+     "rmse": 8.031450264677499,
+     "rmse_sd": 1.1401799372560277,
+     "smoothing": [
+      3.0,
+      1.0,
+      0.0,
+      5.0,
+      0.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 0.01",
+      "s 0, linear, lam 0.1",
+      "s 1, gauss 0.5, lam 1e-06",
+      "s 3, gauss 0.5, lam 1e-06",
+      "s 5, linear, lam 0.001"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, lattice-rotation-averaged": {
+     "q2": 0.7132325310769849,
+     "q2_sd": 0.0613199063327161,
+     "rmse": 9.348266443544679,
+     "rmse_sd": 0.9911472239131885,
+     "smoothing": [
+      3.0,
+      5.0,
+      5.0,
+      5.0,
+      3.0
+     ],
+     "settings": [
+      "s 3, gauss 0.5, lam 0.01",
+      "s 3, gauss 1, lam 1e-06",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, radial": {
+     "q2": 0.6766999381247564,
+     "q2_sd": 0.07900472193448263,
+     "rmse": 9.902470091853514,
+     "rmse_sd": 1.2250418158589236,
+     "smoothing": [
+      2.0,
+      5.0,
+      5.0,
+      1.0,
+      5.0
+     ],
+     "settings": [
+      "s 1, linear, lam 0.01",
+      "s 2, gauss 1, lam 1e-06",
+      "s 5, gauss 0.5, lam 0.001",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    }
+   },
+   "50": {
+    "phase fraction": {
+     "q2": 0.7444798868326842,
+     "q2_sd": 0.023200858782364858,
+     "rmse": 8.82230404974574,
+     "rmse_sd": 0.38057948498803773,
+     "smoothing": [],
+     "settings": [
+      "cubic in the fraction"
+     ],
+     "draws": 5
+    },
+    "two-point statistics + PCA": {
+     "q2": 0.7878907962920976,
+     "q2_sd": 0.06343239504475709,
+     "rmse": 7.979382839298903,
+     "rmse_sd": 1.2221047018098175,
+     "smoothing": [],
+     "settings": [
+      "10 components, degree 1, ridge 0.01",
+      "10 components, degree 1, ridge 1e-08",
+      "2 components, degree 1, ridge 1e-08",
+      "20 components, degree 1, ridge 1"
+     ],
+     "draws": 5
+    },
+    "overlap, generating frame": {
+     "q2": 0.6940421274795017,
+     "q2_sd": 0.03443713347567359,
+     "rmse": 9.653145117118045,
+     "rmse_sd": 0.6273609513079467,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      3.0,
+      5.0
+     ],
+     "settings": [
+      "s 3, gauss 0.5, lam 1e-06",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, gauss 1, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "overlap, rotation-averaged": {
+     "q2": 0.6352311127051736,
+     "q2_sd": 0.0757411348409283,
+     "rmse": 10.505954400390916,
+     "rmse_sd": 1.0220401324063764,
+     "smoothing": [
+      3.0,
+      3.0,
+      0.0,
+      5.0,
+      0.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 0.1",
+      "s 3, gauss 0.5, lam 0.1",
+      "s 3, gauss 1, lam 1e-06",
+      "s 5, gauss 0.5, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, linear": {
+     "q2": 0.8272269386157849,
+     "q2_sd": 0.027963483475460727,
+     "rmse": 7.245184314593428,
+     "rmse_sd": 0.6324921242879187,
+     "smoothing": [
+      0.0,
+      0.0,
+      0.0,
+      2.0,
+      0.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 1e-06",
+      "s 0, linear, lam 0.01",
+      "s 0, linear, lam 0.1",
+      "s 2, linear, lam 0.001"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, normalised": {
+     "q2": 0.8208158066409201,
+     "q2_sd": 0.06837343169576912,
+     "rmse": 7.306065708650726,
+     "rmse_sd": 1.3810941824111043,
+     "smoothing": [
+      0.0,
+      0.0,
+      5.0,
+      0.0,
+      0.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 0.01",
+      "s 0, gauss 0.5, lam 0.1",
+      "s 0, gauss 1, lam 1e-06",
+      "s 5, linear, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, lattice-rotation-averaged": {
+     "q2": 0.6208039957647425,
+     "q2_sd": 0.3247902916366915,
+     "rmse": 10.163780294162635,
+     "rmse_sd": 3.7847099316041737,
+     "smoothing": [
+      2.0,
+      5.0,
+      0.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 0, linear, lam 0.01",
+      "s 2, gauss 0.5, lam 1e-05",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, radial": {
+     "q2": 0.6513647870892735,
+     "q2_sd": 0.25753072605617644,
+     "rmse": 9.879498690997082,
+     "rmse_sd": 3.169470193059681,
+     "smoothing": [
+      3.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 3, gauss 0.5, lam 0.0001",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    }
+   },
+   "100": {
+    "phase fraction": {
+     "q2": 0.7655996906146783,
+     "q2_sd": 0.01696258198750347,
+     "rmse": 8.567917483245598,
+     "rmse_sd": 0.3522793180401845,
+     "smoothing": [],
+     "settings": [
+      "cubic in the fraction"
+     ],
+     "draws": 5
+    },
+    "two-point statistics + PCA": {
+     "q2": 0.8764642987310071,
+     "q2_sd": 0.012142554609214568,
+     "rmse": 6.217586161803253,
+     "rmse_sd": 0.3471398775358028,
+     "smoothing": [],
+     "settings": [
+      "10 components, degree 1, ridge 1",
+      "10 components, degree 1, ridge 1e-08",
+      "20 components, degree 1, ridge 1"
+     ],
+     "draws": 5
+    },
+    "overlap, generating frame": {
+     "q2": 0.7561602654609835,
+     "q2_sd": 0.0195275209247823,
+     "rmse": 8.736935593663352,
+     "rmse_sd": 0.3663480089130986,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      2.0
+     ],
+     "settings": [
+      "s 2, gauss 0.5, lam 1e-06",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, gauss 0.5, lam 1"
+     ],
+     "draws": 5
+    },
+    "overlap, rotation-averaged": {
+     "q2": 0.7360403055985225,
+     "q2_sd": 0.02098541528215178,
+     "rmse": 9.09235607856141,
+     "rmse_sd": 0.4230403845970015,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, gauss 0.5, lam 1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, linear": {
+     "q2": 0.8930413425909947,
+     "q2_sd": 0.007894442722388035,
+     "rmse": 5.787284712713519,
+     "rmse_sd": 0.23016179090530464,
+     "smoothing": [
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 0.01",
+      "s 0, gauss 1, lam 0.01",
+      "s 0, linear, lam 0.01",
+      "s 1, linear, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, normalised": {
+     "q2": 0.8907835968433258,
+     "q2_sd": 0.016245160149003235,
+     "rmse": 5.839509569907517,
+     "rmse_sd": 0.4914676257536073,
+     "smoothing": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 0.01",
+      "s 0, gauss 0.5, lam 0.1",
+      "s 0, gauss 2, lam 0.001",
+      "s 1, gauss 0.5, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, lattice-rotation-averaged": {
+     "q2": 0.7846357038693365,
+     "q2_sd": 0.01863913687615653,
+     "rmse": 8.209803956778089,
+     "rmse_sd": 0.36222043366648615,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      3.0,
+      5.0
+     ],
+     "settings": [
+      "s 3, gauss 0.5, lam 0.1",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, radial": {
+     "q2": 0.7852013002202703,
+     "q2_sd": 0.01836555762343819,
+     "rmse": 8.199533073049786,
+     "rmse_sd": 0.3678737016952522,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 5, gauss 1, lam 0.1",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    }
+   },
+   "200": {
+    "phase fraction": {
+     "q2": 0.7785936025461015,
+     "q2_sd": 0.019950595617552684,
+     "rmse": 8.384493795162442,
+     "rmse_sd": 0.46415496883859675,
+     "smoothing": [],
+     "settings": [
+      "cubic in the fraction"
+     ],
+     "draws": 5
+    },
+    "two-point statistics + PCA": {
+     "q2": 0.8825640226265203,
+     "q2_sd": 0.00940119940106825,
+     "rmse": 6.104462114487733,
+     "rmse_sd": 0.24199291683898694,
+     "smoothing": [],
+     "settings": [
+      "10 components, degree 1, ridge 0.01",
+      "10 components, degree 1, ridge 1",
+      "20 components, degree 1, ridge 1"
+     ],
+     "draws": 5
+    },
+    "overlap, generating frame": {
+     "q2": 0.7945846302638937,
+     "q2_sd": 0.034183122059671285,
+     "rmse": 8.059466167874684,
+     "rmse_sd": 0.7375073442390897,
+     "smoothing": [
+      3.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 3, gauss 0.5, lam 0.1",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, gauss 0.5, lam 1"
+     ],
+     "draws": 5
+    },
+    "overlap, rotation-averaged": {
+     "q2": 0.7538440104990571,
+     "q2_sd": 0.02535966668254456,
+     "rmse": 8.83973151603304,
+     "rmse_sd": 0.5588936472618168,
+     "smoothing": [
+      0.0,
+      5.0,
+      5.0,
+      2.0,
+      5.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 1",
+      "s 2, gauss 0.5, lam 1",
+      "s 5, gauss 0.5, lam 1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, linear": {
+     "q2": 0.9024741323817821,
+     "q2_sd": 0.014336484733938252,
+     "rmse": 5.56167435125934,
+     "rmse_sd": 0.4981781128474092,
+     "smoothing": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 0.01",
+      "s 0, gauss 0.5, lam 0.1",
+      "s 0, gauss 1, lam 0.1",
+      "s 0, linear, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, normalised": {
+     "q2": 0.9065630058754834,
+     "q2_sd": 0.006487110699145704,
+     "rmse": 5.449722955075449,
+     "rmse_sd": 0.28182418004511905,
+     "smoothing": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 0.1",
+      "s 0, gauss 1, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, lattice-rotation-averaged": {
+     "q2": 0.7932991178865232,
+     "q2_sd": 0.024646215202577253,
+     "rmse": 8.092622593076923,
+     "rmse_sd": 0.4915787689107779,
+     "smoothing": [
+      0.0,
+      2.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 0, linear, lam 0.1",
+      "s 2, linear, lam 0.1",
+      "s 5, gauss 2, lam 0.1",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, radial": {
+     "q2": 0.7877585909903665,
+     "q2_sd": 0.02885628086989631,
+     "rmse": 8.194317866518839,
+     "rmse_sd": 0.5260078322025871,
+     "smoothing": [
+      0.0,
+      2.0,
+      5.0,
+      5.0,
+      3.0
+     ],
+     "settings": [
+      "s 0, linear, lam 0.1",
+      "s 2, linear, lam 0.01",
+      "s 3, linear, lam 0.1",
+      "s 5, gauss 2, lam 0.01",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    }
+   }
+  },
+  "mean": {
+   "20": {
+    "phase fraction": {
+     "q2": 0.9052672454595626,
+     "q2_sd": 0.0037003668555700975,
+     "rmse": 4.778961427161848,
+     "rmse_sd": 0.08333867425902293,
+     "smoothing": [],
+     "settings": [
+      "cubic in the fraction"
+     ],
+     "draws": 5
+    },
+    "two-point statistics + PCA": {
+     "q2": 0.8852106896699702,
+     "q2_sd": 0.023640895682753873,
+     "rmse": 5.239499645997713,
+     "rmse_sd": 0.5083061822956255,
+     "smoothing": [],
+     "settings": [
+      "2 components, degree 1, ridge 1e-08",
+      "2 components, degree 2, ridge 1",
+      "2 components, degree 2, ridge 1e-08",
+      "3 components, degree 2, ridge 1",
+      "5 components, degree 1, ridge 1e-08"
+     ],
+     "draws": 5
+    },
+    "overlap, generating frame": {
+     "q2": 0.8131416378064025,
+     "q2_sd": 0.05075238848982254,
+     "rmse": 6.668919423810886,
+     "rmse_sd": 0.9352014539454822,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 5, gauss 0.5, lam 0.001",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, gauss 0.5, lam 1e-06",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "overlap, rotation-averaged": {
+     "q2": 0.7839612194929008,
+     "q2_sd": 0.08021872178258241,
+     "rmse": 7.119584489151627,
+     "rmse_sd": 1.2872410683735958,
+     "smoothing": [
+      5.0,
+      3.0,
+      5.0,
+      5.0,
+      1.0
+     ],
+     "settings": [
+      "s 1, linear, lam 0.001",
+      "s 3, gauss 1, lam 0.001",
+      "s 5, gauss 0.5, lam 0.001",
+      "s 5, gauss 0.5, lam 0.01",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, linear": {
+     "q2": 0.8983286177050591,
+     "q2_sd": 0.011360259091012041,
+     "rmse": 4.945866407538334,
+     "rmse_sd": 0.27560316038492194,
+     "smoothing": [
+      1.0,
+      5.0,
+      0.0,
+      3.0,
+      1.0
+     ],
+     "settings": [
+      "s 0, linear, lam 0.01",
+      "s 1, gauss 1, lam 0.01",
+      "s 1, linear, lam 0.01",
+      "s 3, linear, lam 0.01",
+      "s 5, linear, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, normalised": {
+     "q2": 0.8625092944317017,
+     "q2_sd": 0.0340154606826886,
+     "rmse": 5.727545249412978,
+     "rmse_sd": 0.7284139632102297,
+     "smoothing": [
+      3.0,
+      5.0,
+      5.0,
+      3.0,
+      3.0
+     ],
+     "settings": [
+      "s 3, gauss 0.5, lam 1e-06",
+      "s 3, gauss 1, lam 0.01",
+      "s 3, linear, lam 0.01",
+      "s 5, gauss 0.5, lam 0.0001",
+      "s 5, linear, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, lattice-rotation-averaged": {
+     "q2": 0.8956034213659863,
+     "q2_sd": 0.011872883284617894,
+     "rmse": 5.012292777427905,
+     "rmse_sd": 0.29954760774971123,
+     "smoothing": [
+      3.0,
+      5.0,
+      5.0,
+      5.0,
+      3.0
+     ],
+     "settings": [
+      "s 3, gauss 0.5, lam 0.01",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, linear, lam 0.001"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, radial": {
+     "q2": 0.8848887768213783,
+     "q2_sd": 0.02758640575122037,
+     "rmse": 5.243974257723838,
+     "rmse_sd": 0.6429463362582944,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 5, gauss 0.5, lam 0.01",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, linear, lam 0.001",
+      "s 5, linear, lam 1e-06"
+     ],
+     "draws": 5
+    }
+   },
+   "50": {
+    "phase fraction": {
+     "q2": 0.9083259022820677,
+     "q2_sd": 0.011523202843565186,
+     "rmse": 4.636474867064519,
+     "rmse_sd": 0.2704934662385323,
+     "smoothing": [],
+     "settings": [
+      "cubic in the fraction"
+     ],
+     "draws": 5
+    },
+    "two-point statistics + PCA": {
+     "q2": 0.899362306790518,
+     "q2_sd": 0.0150889997947282,
+     "rmse": 4.853645710572105,
+     "rmse_sd": 0.35193489655324095,
+     "smoothing": [],
+     "settings": [
+      "10 components, degree 1, ridge 0.01",
+      "2 components, degree 1, ridge 1e-08",
+      "2 components, degree 2, ridge 0.01",
+      "2 components, degree 2, ridge 1e-08",
+      "3 components, degree 1, ridge 0.01"
+     ],
+     "draws": 5
+    },
+    "overlap, generating frame": {
+     "q2": 0.8646106472436763,
+     "q2_sd": 0.01969065554557014,
+     "rmse": 5.632549167848787,
+     "rmse_sd": 0.41618570665471444,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, gauss 0.5, lam 1e-06"
+     ],
+     "draws": 5
+    },
+    "overlap, rotation-averaged": {
+     "q2": 0.8635760437933607,
+     "q2_sd": 0.04592054810907321,
+     "rmse": 5.614686505670183,
+     "rmse_sd": 0.9020073940622342,
+     "smoothing": [
+      5.0,
+      3.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 3, gauss 0.5, lam 0.01",
+      "s 5, gauss 0.5, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, linear": {
+     "q2": 0.8903790943306712,
+     "q2_sd": 0.03269789895704778,
+     "rmse": 5.035995997988488,
+     "rmse_sd": 0.7085018516923209,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      0.0,
+      5.0
+     ],
+     "settings": [
+      "s 0, gauss 1, lam 0.1",
+      "s 5, linear, lam 0.0001",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, normalised": {
+     "q2": 0.8798473494431122,
+     "q2_sd": 0.044364874208084173,
+     "rmse": 5.250066627075759,
+     "rmse_sd": 0.9163811269533033,
+     "smoothing": [
+      5.0,
+      0.0,
+      5.0,
+      0.0,
+      2.0
+     ],
+     "settings": [
+      "s 0, gauss 0.5, lam 0.1",
+      "s 2, linear, lam 0.01",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 1e-05"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, lattice-rotation-averaged": {
+     "q2": 0.8765046580319596,
+     "q2_sd": 0.04467198051442165,
+     "rmse": 5.323212335198063,
+     "rmse_sd": 0.9593913740759861,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      2.0
+     ],
+     "settings": [
+      "s 2, gauss 2, lam 0.01",
+      "s 5, gauss 1, lam 0.01",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 0.1",
+      "s 5, linear, lam 1e-05"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, radial": {
+     "q2": 0.8467568871423256,
+     "q2_sd": 0.09655369029138915,
+     "rmse": 5.8019536483996195,
+     "rmse_sd": 1.7555431075727577,
+     "smoothing": [
+      0.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 0, linear, lam 0.0001",
+      "s 5, gauss 0.5, lam 0.001",
+      "s 5, gauss 1, lam 1e-05",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    }
+   },
+   "100": {
+    "phase fraction": {
+     "q2": 0.9137602200392813,
+     "q2_sd": 0.00626959304323177,
+     "rmse": 4.532928862352043,
+     "rmse_sd": 0.15161417055860416,
+     "smoothing": [],
+     "settings": [
+      "cubic in the fraction"
+     ],
+     "draws": 5
+    },
+    "two-point statistics + PCA": {
+     "q2": 0.9206404353532047,
+     "q2_sd": 0.006810214466183028,
+     "rmse": 4.347356830960893,
+     "rmse_sd": 0.17731539122028642,
+     "smoothing": [],
+     "settings": [
+      "2 components, degree 2, ridge 0.01",
+      "2 components, degree 2, ridge 1",
+      "2 components, degree 2, ridge 1e-08",
+      "3 components, degree 2, ridge 0.01",
+      "3 components, degree 2, ridge 1"
+     ],
+     "draws": 5
+    },
+    "overlap, generating frame": {
+     "q2": 0.882522975434966,
+     "q2_sd": 0.005985238094544474,
+     "rmse": 5.2939951390028686,
+     "rmse_sd": 0.19248206152428016,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 5, gauss 0.5, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "overlap, rotation-averaged": {
+     "q2": 0.8843356356976353,
+     "q2_sd": 0.027645514090000788,
+     "rmse": 5.221306377310606,
+     "rmse_sd": 0.5469131242255455,
+     "smoothing": [
+      5.0,
+      5.0,
+      3.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 3, gauss 0.5, lam 0.01",
+      "s 5, gauss 0.5, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, linear": {
+     "q2": 0.9014990125779725,
+     "q2_sd": 0.025212201138310984,
+     "rmse": 4.821762241702194,
+     "rmse_sd": 0.6452619759914447,
+     "smoothing": [
+      5.0,
+      5.0,
+      2.0,
+      2.0,
+      2.0
+     ],
+     "settings": [
+      "s 2, gauss 0.5, lam 0.01",
+      "s 2, gauss 1, lam 0.01",
+      "s 2, gauss 2, lam 1e-06",
+      "s 5, gauss 1, lam 0.1",
+      "s 5, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, normalised": {
+     "q2": 0.9018287339316133,
+     "q2_sd": 0.022599165094914775,
+     "rmse": 4.815001918033222,
+     "rmse_sd": 0.5781170818786822,
+     "smoothing": [
+      5.0,
+      5.0,
+      2.0,
+      3.0,
+      2.0
+     ],
+     "settings": [
+      "s 2, gauss 1, lam 0.01",
+      "s 2, gauss 2, lam 0.001",
+      "s 3, gauss 1, lam 0.01",
+      "s 5, gauss 1, lam 0.1",
+      "s 5, linear, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, lattice-rotation-averaged": {
+     "q2": 0.9097619485432382,
+     "q2_sd": 0.02116767375640702,
+     "rmse": 4.620118087217298,
+     "rmse_sd": 0.5837418770238222,
+     "smoothing": [
+      5.0,
+      5.0,
+      3.0,
+      5.0,
+      2.0
+     ],
+     "settings": [
+      "s 2, gauss 2, lam 0.01",
+      "s 3, gauss 0.5, lam 0.01",
+      "s 5, gauss 0.5, lam 0.01",
+      "s 5, linear, lam 0.0001",
+      "s 5, linear, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, radial": {
+     "q2": 0.9177120117893358,
+     "q2_sd": 0.0106558081843549,
+     "rmse": 4.421875108093515,
+     "rmse_sd": 0.26497581776808643,
+     "smoothing": [
+      5.0,
+      5.0,
+      1.0,
+      5.0,
+      3.0
+     ],
+     "settings": [
+      "s 1, gauss 0.5, lam 0.01",
+      "s 3, linear, lam 1e-06",
+      "s 5, gauss 0.5, lam 0.01",
+      "s 5, linear, lam 0.01",
+      "s 5, linear, lam 1e-05"
+     ],
+     "draws": 5
+    }
+   },
+   "200": {
+    "phase fraction": {
+     "q2": 0.9213815334652132,
+     "q2_sd": 0.008324458431314337,
+     "rmse": 4.351052359494768,
+     "rmse_sd": 0.19582380682113187,
+     "smoothing": [],
+     "settings": [
+      "cubic in the fraction"
+     ],
+     "draws": 5
+    },
+    "two-point statistics + PCA": {
+     "q2": 0.9282562561959663,
+     "q2_sd": 0.006152926271009511,
+     "rmse": 4.158441718649638,
+     "rmse_sd": 0.14843888773576522,
+     "smoothing": [],
+     "settings": [
+      "2 components, degree 2, ridge 0.01",
+      "2 components, degree 2, ridge 1",
+      "2 components, degree 2, ridge 1e-08",
+      "3 components, degree 2, ridge 1e-08"
+     ],
+     "draws": 5
+    },
+    "overlap, generating frame": {
+     "q2": 0.8954861894302795,
+     "q2_sd": 0.007993982464795702,
+     "rmse": 5.019921084971698,
+     "rmse_sd": 0.1303760015011436,
+     "smoothing": [
+      2.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 2, gauss 0.5, lam 0.1",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, gauss 0.5, lam 1"
+     ],
+     "draws": 5
+    },
+    "overlap, rotation-averaged": {
+     "q2": 0.91472648092924,
+     "q2_sd": 0.009419571510221715,
+     "rmse": 4.528655595273306,
+     "rmse_sd": 0.08023723707044246,
+     "smoothing": [
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 5, gauss 0.5, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, linear": {
+     "q2": 0.9289296638003774,
+     "q2_sd": 0.009609702831987142,
+     "rmse": 4.130348975313585,
+     "rmse_sd": 0.16954488203368173,
+     "smoothing": [
+      3.0,
+      3.0,
+      0.0,
+      0.0,
+      1.0
+     ],
+     "settings": [
+      "s 0, gauss 1, lam 0.1",
+      "s 0, gauss 1, lam 1",
+      "s 1, gauss 1, lam 0.1",
+      "s 3, gauss 1, lam 0.1",
+      "s 3, linear, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, normalised": {
+     "q2": 0.9295484715149518,
+     "q2_sd": 0.01017071260126909,
+     "rmse": 4.1108977709675845,
+     "rmse_sd": 0.1860980325272666,
+     "smoothing": [
+      1.0,
+      3.0,
+      5.0,
+      3.0,
+      3.0
+     ],
+     "settings": [
+      "s 1, gauss 0.5, lam 0.1",
+      "s 3, gauss 0.5, lam 0.1",
+      "s 3, gauss 1, lam 0.1",
+      "s 5, gauss 1, lam 0.1"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, lattice-rotation-averaged": {
+     "q2": 0.9304363074997426,
+     "q2_sd": 0.014470129524642805,
+     "rmse": 4.072476902714224,
+     "rmse_sd": 0.2615997661487351,
+     "smoothing": [
+      0.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0
+     ],
+     "settings": [
+      "s 0, linear, lam 0.1",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, gauss 1, lam 0.01",
+      "s 5, linear, lam 0.01"
+     ],
+     "draws": 5
+    },
+    "autocorrelation, radial": {
+     "q2": 0.9306403183826883,
+     "q2_sd": 0.014685388900058799,
+     "rmse": 4.065774487995906,
+     "rmse_sd": 0.27027892265593995,
+     "smoothing": [
+      2.0,
+      5.0,
+      5.0,
+      5.0,
+      3.0
+     ],
+     "settings": [
+      "s 2, linear, lam 0.1",
+      "s 3, gauss 0.5, lam 0.1",
+      "s 5, gauss 0.5, lam 0.1",
+      "s 5, gauss 1, lam 0.01",
+      "s 5, linear, lam 0.01"
+     ],
+     "draws": 5
+    }
+   }
+  }
+ },
+ "runs": {
+  "xx": {
+   "20": {
+    "phase fraction": [
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.6557011552064294,
+      "rmse": 10.36044433244316
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.770265737995969,
+      "rmse": 8.349675831669304
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.750889766129507,
+      "rmse": 8.826469191023602
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7446315732008126,
+      "rmse": 8.830554997546475
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7710751364989507,
+      "rmse": 8.323327947111478
+     }
+    ],
+    "two-point statistics + PCA": [
+     {
+      "setting": "5 components, degree 1, ridge 1e-08",
+      "components": 5,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 7.5104651774032405,
+      "q2": 0.82736558238298,
+      "rmse": 7.336252842758686
+     },
+     {
+      "setting": "10 components, degree 1, ridge 1e-08",
+      "components": 10,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 8.354601903269419,
+      "q2": 0.7458888858947039,
+      "rmse": 8.781497055811078
+     },
+     {
+      "setting": "5 components, degree 1, ridge 1e-08",
+      "components": 5,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 6.281894387890633,
+      "q2": 0.8260267561302498,
+      "rmse": 7.3761961240915275
+     },
+     {
+      "setting": "5 components, degree 1, ridge 1e-08",
+      "components": 5,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 5.194853826452872,
+      "q2": 0.7864662364704232,
+      "rmse": 8.074909738489572
+     },
+     {
+      "setting": "10 components, degree 1, ridge 0.01",
+      "components": 10,
+      "degree": 1,
+      "lam": 0.01,
+      "inner_rmse": 9.306634097329573,
+      "q2": 0.8409208688708856,
+      "rmse": 6.938364794533327
+     }
+    ],
+    "overlap, generating frame": [
+     {
+      "setting": "s 5, linear, lam 1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 1.0,
+      "inner_rmse": 13.805185600662716,
+      "q2": 0.6010546725142086,
+      "rmse": 11.152373100863223
+     },
+     {
+      "setting": "s 5, gauss 2, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 2",
+      "lam": 0.01,
+      "inner_rmse": 13.64691731083642,
+      "q2": 0.6243731567010058,
+      "rmse": 10.67665084067055
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1e-06",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 8.842551811813644,
+      "q2": 0.6937362517161125,
+      "rmse": 9.78676187822642
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1e-06",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 8.561225751938784,
+      "q2": 0.6946853636233798,
+      "rmse": 9.655576550743097
+     },
+     {
+      "setting": "s 5, gauss 1, lam 1e-06",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 1e-06,
+      "inner_rmse": 12.862088771148313,
+      "q2": 0.6708264941103022,
+      "rmse": 9.980745029310357
+     }
+    ],
+    "overlap, rotation-averaged": [
+     {
+      "setting": "s 2, linear, lam 0.01",
+      "smoothing": 2.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 9.91775174843949,
+      "q2": 0.5510800304911323,
+      "rmse": 11.830281021597607
+     },
+     {
+      "setting": "s 2, gauss 2, lam 0.1",
+      "smoothing": 2.0,
+      "layer": "gauss 2",
+      "lam": 0.1,
+      "inner_rmse": 14.271412624038597,
+      "q2": 0.6746264523362798,
+      "rmse": 9.936829800400993
+     },
+     {
+      "setting": "s 2, gauss 0.5, lam 1e-06",
+      "smoothing": 2.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 8.200540565587039,
+      "q2": 0.6266603978568774,
+      "rmse": 10.805459877475949
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.78474280033035,
+      "q2": 0.5341967570020243,
+      "rmse": 11.926297899546137
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 11.276083126441243,
+      "q2": 0.6852740516254419,
+      "rmse": 9.75925801643974
+     }
+    ],
+    "autocorrelation, linear": [
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.67250773520638,
+      "q2": 0.826356103108931,
+      "rmse": 7.35767093682314
+     },
+     {
+      "setting": "s 1, gauss 0.5, lam 1e-06",
+      "smoothing": 1.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 8.250503854098136,
+      "q2": 0.7844719566994436,
+      "rmse": 8.087394400158422
+     },
+     {
+      "setting": "s 0, linear, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 6.816277210630698,
+      "q2": 0.8033930142401202,
+      "rmse": 7.841347441232623
+     },
+     {
+      "setting": "s 5, linear, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.001,
+      "inner_rmse": 5.319162876755645,
+      "q2": 0.7892865240621584,
+      "rmse": 8.021407040280579
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 1e-06",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 8.455211238585024,
+      "q2": 0.8519389890732147,
+      "rmse": 6.693771448983116
+     }
+    ],
+    "autocorrelation, normalised": [
+     {
+      "setting": "s 3, gauss 0.5, lam 1e-06",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 7.768328323349929,
+      "q2": 0.7707068998946319,
+      "rmse": 8.454853597729757
+     },
+     {
+      "setting": "s 1, gauss 0.5, lam 1e-06",
+      "smoothing": 1.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 8.510238583867341,
+      "q2": 0.788829969690777,
+      "rmse": 8.005212614290238
+     },
+     {
+      "setting": "s 0, linear, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.414904253556786,
+      "q2": 0.781336267104725,
+      "rmse": 8.269506708118653
+     },
+     {
+      "setting": "s 5, linear, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.001,
+      "inner_rmse": 5.60892383825718,
+      "q2": 0.7193816725910326,
+      "rmse": 9.256832707044287
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 9.472311808483072,
+      "q2": 0.8741688039991791,
+      "rmse": 6.170845696204556
+     }
+    ],
+    "autocorrelation, lattice-rotation-averaged": [
+     {
+      "setting": "s 3, gauss 1, lam 1e-06",
+      "smoothing": 3.0,
+      "layer": "gauss 1",
+      "lam": 1e-06,
+      "inner_rmse": 8.386852880858989,
+      "q2": 0.6086516963849263,
+      "rmse": 11.045676675961102
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 11.92181876821695,
+      "q2": 0.7542541046410866,
+      "rmse": 8.635746121834519
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.036144204250822,
+      "q2": 0.7611035272988556,
+      "rmse": 8.643628516701822
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.70647964290568,
+      "q2": 0.7193576433303936,
+      "rmse": 9.25722902842199
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 9.840331713917221,
+      "q2": 0.7227956837296621,
+      "rmse": 9.159051874803964
+     }
+    ],
+    "autocorrelation, radial": [
+     {
+      "setting": "s 2, gauss 1, lam 1e-06",
+      "smoothing": 2.0,
+      "layer": "gauss 1",
+      "lam": 1e-06,
+      "inner_rmse": 8.114519658858017,
+      "q2": 0.6096217783952528,
+      "rmse": 11.031978059345628
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 11.929846537636339,
+      "q2": 0.7554965079722832,
+      "rmse": 8.6138888397055
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.007701185318747,
+      "q2": 0.7615438720162653,
+      "rmse": 8.635658680101477
+     },
+     {
+      "setting": "s 1, linear, lam 0.01",
+      "smoothing": 1.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.297323052995278,
+      "q2": 0.663045122850466,
+      "rmse": 10.14355696762666
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.001,
+      "inner_rmse": 9.554933694237448,
+      "q2": 0.5937924093895143,
+      "rmse": 11.087267912488308
+     }
+    ]
+   },
+   "50": {
+    "phase fraction": [
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7097170952847873,
+      "rmse": 9.30757755063882
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7338410042961816,
+      "rmse": 9.146492804550695
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7529897204904538,
+      "rmse": 8.613766364148063
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7691932100653542,
+      "rmse": 8.436018916996243
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7566584040266442,
+      "rmse": 8.607664612394878
+     }
+    ],
+    "two-point statistics + PCA": [
+     {
+      "setting": "10 components, degree 1, ridge 0.01",
+      "components": 10,
+      "degree": 1,
+      "lam": 0.01,
+      "inner_rmse": 7.099065201981494,
+      "q2": 0.8199319560251213,
+      "rmse": 7.33067991235449
+     },
+     {
+      "setting": "20 components, degree 1, ridge 1",
+      "components": 20,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 6.883204337261562,
+      "q2": 0.703167336441906,
+      "rmse": 9.65917127664526
+     },
+     {
+      "setting": "2 components, degree 1, ridge 1e-08",
+      "components": 2,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 7.284554477509993,
+      "q2": 0.7380724556925071,
+      "rmse": 8.870051881372678
+     },
+     {
+      "setting": "20 components, degree 1, ridge 1",
+      "components": 20,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 5.968336768775455,
+      "q2": 0.8303400751023836,
+      "rmse": 7.23274060289428
+     },
+     {
+      "setting": "10 components, degree 1, ridge 1e-08",
+      "components": 10,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 7.373957273917533,
+      "q2": 0.84794215819857,
+      "rmse": 6.8042705232278085
+     }
+    ],
+    "overlap, generating frame": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 9.781897675802464,
+      "q2": 0.6863930553843319,
+      "rmse": 9.67428258587609
+     },
+     {
+      "setting": "s 5, gauss 1, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 7.032018607011315,
+      "q2": 0.6560534340571551,
+      "rmse": 10.39751394084127
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 8.861586396169498,
+      "q2": 0.74663874155993,
+      "rmse": 8.723799552042792
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 1e-06",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 8.58809170084146,
+      "q2": 0.6755394060092625,
+      "rmse": 10.002170052539135
+     },
+     {
+      "setting": "s 5, gauss 1, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 9.34747492589717,
+      "q2": 0.7055860003868292,
+      "rmse": 9.46795945429094
+     }
+    ],
+    "overlap, rotation-averaged": [
+     {
+      "setting": "s 3, gauss 1, lam 1e-06",
+      "smoothing": 3.0,
+      "layer": "gauss 1",
+      "lam": 1e-06,
+      "inner_rmse": 7.898226178529503,
+      "q2": 0.5087088224589535,
+      "rmse": 12.108641353156903
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 7.7855621828177135,
+      "q2": 0.6422225306859654,
+      "rmse": 10.604507812691017
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 8.447206809799036,
+      "q2": 0.7065802292128598,
+      "rmse": 9.388155214323236
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 8.017739056900053,
+      "q2": 0.641452030412585,
+      "rmse": 10.514457944086859
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 7.8939850839434795,
+      "q2": 0.6771919507555043,
+      "rmse": 9.914009677696562
+     }
+    ],
+    "autocorrelation, linear": [
+     {
+      "setting": "s 0, gauss 0.5, lam 1e-06",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 6.004127310965269,
+      "q2": 0.8337086144546926,
+      "rmse": 7.044672521091235
+     },
+     {
+      "setting": "s 0, linear, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 6.838001478345287,
+      "q2": 0.7844988819237673,
+      "rmse": 8.230169628377565
+     },
+     {
+      "setting": "s 0, linear, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 6.84449376013186,
+      "q2": 0.823065337973875,
+      "rmse": 7.2902435082714305
+     },
+     {
+      "setting": "s 2, linear, lam 0.001",
+      "smoothing": 2.0,
+      "layer": "linear",
+      "lam": 0.001,
+      "inner_rmse": 5.936753043115115,
+      "q2": 0.8328294691996871,
+      "rmse": 7.179482069734194
+     },
+     {
+      "setting": "s 0, linear, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.147674175962737,
+      "q2": 0.8620323895269023,
+      "rmse": 6.481353845492712
+     }
+    ],
+    "autocorrelation, normalised": [
+     {
+      "setting": "s 0, gauss 1, lam 1e-06",
+      "smoothing": 0.0,
+      "layer": "gauss 1",
+      "lam": 1e-06,
+      "inner_rmse": 6.090576169873636,
+      "q2": 0.8560156646967613,
+      "rmse": 6.555163920415173
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 6.847328703362847,
+      "q2": 0.705648227929249,
+      "rmse": 9.618721488276018
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 6.953934319901297,
+      "q2": 0.8140169356981891,
+      "rmse": 7.4743300927871745
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 5.664200235460898,
+      "q2": 0.8781033841377945,
+      "rmse": 6.130686081451449
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 7.374701504550272,
+      "q2": 0.8502948207426058,
+      "rmse": 6.751426960323818
+     }
+    ],
+    "autocorrelation, lattice-rotation-averaged": [
+     {
+      "setting": "s 2, gauss 0.5, lam 1e-05",
+      "smoothing": 2.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-05,
+      "inner_rmse": 7.876474100472446,
+      "q2": 0.03993259076449629,
+      "rmse": 16.926875385211293
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.620067036791089,
+      "q2": 0.7550447277679472,
+      "rmse": 8.774601825653576
+     },
+     {
+      "setting": "s 0, linear, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.305082410319195,
+      "q2": 0.7659317157610913,
+      "rmse": 8.385073238814746
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.696907598419813,
+      "q2": 0.7736411909259391,
+      "rmse": 8.354336320567382
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 7.885571629454123,
+      "q2": 0.7694697536042391,
+      "rmse": 8.378014700566176
+     }
+    ],
+    "autocorrelation, radial": [
+     {
+      "setting": "s 3, gauss 0.5, lam 0.0001",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.0001,
+      "inner_rmse": 8.28242644684084,
+      "q2": 0.19087164429679027,
+      "rmse": 15.539414237903792
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.623023831043305,
+      "q2": 0.7543518972983936,
+      "rmse": 8.787002087222328
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.310072188047143,
+      "q2": 0.7668513735533062,
+      "rmse": 8.368584487607267
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.689851373482867,
+      "q2": 0.7738171155859198,
+      "rmse": 8.351089220397991
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 7.912026175883196,
+      "q2": 0.7709319047119572,
+      "rmse": 8.351403421854034
+     }
+    ]
+   },
+   "100": {
+    "phase fraction": [
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7553504663014741,
+      "rmse": 8.893391611544534
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7939574665430622,
+      "rmse": 7.970298746072691
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.75347444233463,
+      "rmse": 8.598909558005497
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7564118671107529,
+      "rmse": 8.729012433712859
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7688042107834718,
+      "rmse": 8.647975066892407
+     }
+    ],
+    "two-point statistics + PCA": [
+     {
+      "setting": "20 components, degree 1, ridge 1",
+      "components": 20,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 5.419675964374537,
+      "q2": 0.87308876092578,
+      "rmse": 6.405385354027794
+     },
+     {
+      "setting": "10 components, degree 1, ridge 1e-08",
+      "components": 10,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 8.276452610270692,
+      "q2": 0.897507443116545,
+      "rmse": 5.621371963454724
+     },
+     {
+      "setting": "10 components, degree 1, ridge 1",
+      "components": 10,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 5.879988713457221,
+      "q2": 0.8674829339566951,
+      "rmse": 6.304466076065785
+     },
+     {
+      "setting": "10 components, degree 1, ridge 1",
+      "components": 10,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 5.821945809118439,
+      "q2": 0.8750510274043959,
+      "rmse": 6.251775778697606
+     },
+     {
+      "setting": "20 components, degree 1, ridge 1",
+      "components": 20,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 6.5056369605580056,
+      "q2": 0.8691913282516193,
+      "rmse": 6.504931636770359
+     }
+    ],
+    "overlap, generating frame": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 8.078558224525262,
+      "q2": 0.7604713603617348,
+      "rmse": 8.799823151290234
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 9.853058296182537,
+      "q2": 0.7341401918983383,
+      "rmse": 9.053625017734275
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 8.979372083341156,
+      "q2": 0.7526932068160493,
+      "rmse": 8.612523683693947
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 7.818855837494786,
+      "q2": 0.7865673953617031,
+      "rmse": 8.170853634733168
+     },
+     {
+      "setting": "s 2, gauss 0.5, lam 1e-06",
+      "smoothing": 2.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 9.026614028956036,
+      "q2": 0.7469291728670915,
+      "rmse": 9.047852480865142
+     }
+    ],
+    "overlap, rotation-averaged": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 7.590233256479188,
+      "q2": 0.7282275965656118,
+      "rmse": 9.373416130304074
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 10.877382620786738,
+      "q2": 0.7620030796598508,
+      "rmse": 8.566074125051053
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 8.80024852341643,
+      "q2": 0.7430411431730681,
+      "rmse": 8.778982876498457
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 8.990221634002685,
+      "q2": 0.7052831205891691,
+      "rmse": 9.601510337949753
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 9.226554377373764,
+      "q2": 0.7416465880049132,
+      "rmse": 9.141796923003717
+     }
+    ],
+    "autocorrelation, linear": [
+     {
+      "setting": "s 0, gauss 0.5, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 5.324814955388604,
+      "q2": 0.8957877640212097,
+      "rmse": 5.804363165383102
+     },
+     {
+      "setting": "s 1, linear, lam 0.01",
+      "smoothing": 1.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 8.37504166494804,
+      "q2": 0.904887370847667,
+      "rmse": 5.415209374381672
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 5.375511136335878,
+      "q2": 0.8849168549030565,
+      "rmse": 5.87514063997415
+     },
+     {
+      "setting": "s 0, gauss 1, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "gauss 1",
+      "lam": 0.01,
+      "inner_rmse": 5.146133438851634,
+      "q2": 0.8924993052254637,
+      "rmse": 5.798860808338886
+     },
+     {
+      "setting": "s 0, linear, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 6.355588820028537,
+      "q2": 0.887115417957577,
+      "rmse": 6.042849575489782
+     }
+    ],
+    "autocorrelation, normalised": [
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.353593935896295,
+      "q2": 0.8910603136971644,
+      "rmse": 5.934556658137379
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 8.280412572068192,
+      "q2": 0.917474772896443,
+      "rmse": 5.044167778194222
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 5.427556545001544,
+      "q2": 0.8898984696965907,
+      "rmse": 5.7465750617058795
+     },
+     {
+      "setting": "s 0, gauss 2, lam 0.001",
+      "smoothing": 0.0,
+      "layer": "gauss 2",
+      "lam": 0.001,
+      "inner_rmse": 4.996795172886562,
+      "q2": 0.876696585722828,
+      "rmse": 6.210471884634839
+     },
+     {
+      "setting": "s 1, gauss 0.5, lam 0.01",
+      "smoothing": 1.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 6.515616497924176,
+      "q2": 0.8787878422036025,
+      "rmse": 6.2617764668652685
+     }
+    ],
+    "autocorrelation, lattice-rotation-averaged": [
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.199230041003414,
+      "q2": 0.7771288649187381,
+      "rmse": 8.488327605927855
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 10.163727301243078,
+      "q2": 0.8121342685488624,
+      "rmse": 7.610618340636522
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.369018628114703,
+      "q2": 0.7679992627588166,
+      "rmse": 8.341748437577092
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 7.275946110269971,
+      "q2": 0.7708183362084402,
+      "rmse": 8.466949759748292
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 8.206905595708907,
+      "q2": 0.7950977869118249,
+      "rmse": 8.141375640000684
+     }
+    ],
+    "autocorrelation, radial": [
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.185859729564921,
+      "q2": 0.7770824354027299,
+      "rmse": 8.489211723152861
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 10.154778308796027,
+      "q2": 0.8121061944010083,
+      "rmse": 7.6111869745253316
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 7.410317353876867,
+      "q2": 0.7731179905679793,
+      "rmse": 8.249211454735075
+     },
+     {
+      "setting": "s 5, gauss 1, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 7.271739242165357,
+      "q2": 0.7678693121142257,
+      "rmse": 8.52125041232204
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 8.220262384125434,
+      "q2": 0.7958305686154088,
+      "rmse": 8.12680480051362
+     }
+    ]
+   },
+   "200": {
+    "phase fraction": [
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.781951482907805,
+      "rmse": 8.257557356104021
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7764182714589638,
+      "rmse": 8.290707686189599
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7811602395174282,
+      "rmse": 8.134143943025256
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.7487683223830979,
+      "rmse": 9.19588631197324
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.8046696964632132,
+      "rmse": 8.044173678520089
+     }
+    ],
+    "two-point statistics + PCA": [
+     {
+      "setting": "20 components, degree 1, ridge 1",
+      "components": 20,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 6.047592504538341,
+      "q2": 0.8821301156088399,
+      "rmse": 6.07122682902219
+     },
+     {
+      "setting": "10 components, degree 1, ridge 0.01",
+      "components": 10,
+      "degree": 1,
+      "lam": 0.01,
+      "inner_rmse": 6.373158155148197,
+      "q2": 0.8765992442729119,
+      "rmse": 6.159314187046947
+     },
+     {
+      "setting": "20 components, degree 1, ridge 1",
+      "components": 20,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 6.304210424462927,
+      "q2": 0.8793055396046501,
+      "rmse": 6.040771479220959
+     },
+     {
+      "setting": "10 components, degree 1, ridge 1",
+      "components": 10,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 5.5954126505927,
+      "q2": 0.8759795620427577,
+      "rmse": 6.461048849903551
+     },
+     {
+      "setting": "20 components, degree 1, ridge 1",
+      "components": 20,
+      "degree": 1,
+      "lam": 1.0,
+      "inner_rmse": 6.590365349682248,
+      "q2": 0.8988056516034418,
+      "rmse": 5.789949227245016
+     }
+    ],
+    "overlap, generating frame": [
+     {
+      "setting": "s 3, gauss 0.5, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 8.223696562566133,
+      "q2": 0.7744948450847441,
+      "rmse": 8.397562933241412
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 8.734023777788154,
+      "q2": 0.7955489028928862,
+      "rmse": 7.9280826869834495
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 7.681087394461679,
+      "q2": 0.8080642507487842,
+      "rmse": 7.617749270863335
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 7.616192330481012,
+      "q2": 0.7522867616556369,
+      "rmse": 9.131266177893947
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 8.808673427356164,
+      "q2": 0.8425283909374173,
+      "rmse": 7.222669770391274
+     }
+    ],
+    "overlap, rotation-averaged": [
+     {
+      "setting": "s 0, gauss 0.5, lam 1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 9.092263612715014,
+      "q2": 0.7395338933777533,
+      "rmse": 9.025071253817304
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 8.886869224305064,
+      "q2": 0.7643008866158911,
+      "rmse": 8.512407835012695
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 9.102818375765894,
+      "q2": 0.7642475630197394,
+      "rmse": 8.44261205347063
+     },
+     {
+      "setting": "s 2, gauss 0.5, lam 1",
+      "smoothing": 2.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 7.96287467992827,
+      "q2": 0.7179449534466509,
+      "rmse": 9.743687158320354
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 9.391808176854017,
+      "q2": 0.7831927560352514,
+      "rmse": 8.474879279544227
+     }
+    ],
+    "autocorrelation, linear": [
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.741337196136922,
+      "q2": 0.8970920234016588,
+      "rmse": 5.672827135010841
+     },
+     {
+      "setting": "s 0, gauss 1, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 5.924017663234409,
+      "q2": 0.9102945842888291,
+      "rmse": 5.251492866878421
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 5.521767373365449,
+      "q2": 0.9143712744258967,
+      "rmse": 5.088133273733862
+     },
+     {
+      "setting": "s 0, linear, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 5.530754047879768,
+      "q2": 0.8796904115486515,
+      "rmse": 6.363653361270644
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 5.793215712461717,
+      "q2": 0.9109223682438747,
+      "rmse": 5.4322651194029365
+     }
+    ],
+    "autocorrelation, normalised": [
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.610748113931933,
+      "q2": 0.9007636547744541,
+      "rmse": 5.570708207954005
+     },
+     {
+      "setting": "s 0, gauss 1, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 5.845500020973719,
+      "q2": 0.9080345136834169,
+      "rmse": 5.317235360561819
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.612930230546909,
+      "q2": 0.9152419614937615,
+      "rmse": 5.062198687452618
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.547548214741182,
+      "q2": 0.8995016410483596,
+      "rmse": 5.816153760694825
+     },
+     {
+      "setting": "s 0, gauss 1, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 5.711981033475683,
+      "q2": 0.9092732583774252,
+      "rmse": 5.482318758713982
+     }
+    ],
+    "autocorrelation, lattice-rotation-averaged": [
+     {
+      "setting": "s 0, linear, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 8.249035421634959,
+      "q2": 0.8017874689235033,
+      "rmse": 7.873006025985189
+     },
+     {
+      "setting": "s 2, linear, lam 0.1",
+      "smoothing": 2.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 8.409710075030299,
+      "q2": 0.795361946896493,
+      "rmse": 7.931706692752565
+     },
+     {
+      "setting": "s 5, gauss 2, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 2",
+      "lam": 0.1,
+      "inner_rmse": 8.138846615773662,
+      "q2": 0.7710038619963986,
+      "rmse": 8.320756580342389
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.155188714473519,
+      "q2": 0.7692763716937842,
+      "rmse": 8.81256697532235
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 8.66838033282701,
+      "q2": 0.829065939922437,
+      "rmse": 7.525076690982124
+     }
+    ],
+    "autocorrelation, radial": [
+     {
+      "setting": "s 0, linear, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 8.241190229880269,
+      "q2": 0.8013663641703308,
+      "rmse": 7.881364733755278
+     },
+     {
+      "setting": "s 2, linear, lam 0.01",
+      "smoothing": 2.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 8.353832119434085,
+      "q2": 0.7815895129168662,
+      "rmse": 8.19426853301015
+     },
+     {
+      "setting": "s 5, gauss 2, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 2",
+      "lam": 0.01,
+      "inner_rmse": 8.06931049702799,
+      "q2": 0.7565103816020038,
+      "rmse": 8.58003308699508
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.156210859734541,
+      "q2": 0.7692691571384127,
+      "rmse": 8.812704755435872
+     },
+     {
+      "setting": "s 3, linear, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 8.64971066622788,
+      "q2": 0.830057539124219,
+      "rmse": 7.503218223397808
+     }
+    ]
+   }
+  },
+  "mean": {
+   "20": {
+    "phase fraction": [
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9114189105965943,
+      "rmse": 4.663758259095397
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.904723851391054,
+      "rmse": 4.770737312740724
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9014773577342666,
+      "rmse": 4.897301059860536
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.903803035576746,
+      "rmse": 4.796077859252669
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9049130719991529,
+      "rmse": 4.766932644859908
+     }
+    ],
+    "two-point statistics + PCA": [
+     {
+      "setting": "2 components, degree 2, ridge 1",
+      "components": 2,
+      "degree": 2,
+      "lam": 1.0,
+      "inner_rmse": 4.149588806701901,
+      "q2": 0.9082040650853228,
+      "rmse": 4.747634173951954
+     },
+     {
+      "setting": "2 components, degree 1, ridge 1e-08",
+      "components": 2,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 4.782797341092407,
+      "q2": 0.8979833124108708,
+      "rmse": 4.936612249591929
+     },
+     {
+      "setting": "5 components, degree 1, ridge 1e-08",
+      "components": 5,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 4.550542969597425,
+      "q2": 0.8832285784819757,
+      "rmse": 5.331593885224337
+     },
+     {
+      "setting": "3 components, degree 2, ridge 1",
+      "components": 3,
+      "degree": 2,
+      "lam": 1.0,
+      "inner_rmse": 4.549046438789396,
+      "q2": 0.8463059281477627,
+      "rmse": 6.062253588115297
+     },
+     {
+      "setting": "2 components, degree 2, ridge 1e-08",
+      "components": 2,
+      "degree": 2,
+      "lam": 1e-08,
+      "inner_rmse": 4.146155690405585,
+      "q2": 0.8903315642239191,
+      "rmse": 5.119404333105048
+     }
+    ],
+    "overlap, generating frame": [
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 6.94405063782172,
+      "q2": 0.7339875062110615,
+      "rmse": 8.081957082599219
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1e-06",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 5.123842195560668,
+      "q2": 0.8155948947190681,
+      "rmse": 6.637123175967503
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 9.008732469474902,
+      "q2": 0.8094925867569384,
+      "rmse": 6.809962457203174
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 9.440729497281817,
+      "q2": 0.873196916005153,
+      "rmse": 5.506434138096892
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.001,
+      "inner_rmse": 6.940995081165434,
+      "q2": 0.8334362853397908,
+      "rmse": 6.3091202651876355
+     }
+    ],
+    "overlap, rotation-averaged": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.001,
+      "inner_rmse": 5.127470900308937,
+      "q2": 0.7943138543629001,
+      "rmse": 7.106700980724766
+     },
+     {
+      "setting": "s 3, gauss 1, lam 0.001",
+      "smoothing": 3.0,
+      "layer": "gauss 1",
+      "lam": 0.001,
+      "inner_rmse": 4.587294035300285,
+      "q2": 0.822217082890031,
+      "rmse": 6.51686045238888
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 6.5670607730982375,
+      "q2": 0.8737889767050429,
+      "rmse": 5.542904825495511
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 7.717327860557961,
+      "q2": 0.7718314477612521,
+      "rmse": 7.3864104046493235
+     },
+     {
+      "setting": "s 1, linear, lam 0.001",
+      "smoothing": 1.0,
+      "layer": "linear",
+      "lam": 0.001,
+      "inner_rmse": 5.179592204258892,
+      "q2": 0.6576547357452777,
+      "rmse": 9.045045782499658
+     }
+    ],
+    "autocorrelation, linear": [
+     {
+      "setting": "s 1, linear, lam 0.01",
+      "smoothing": 1.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 4.913521963147424,
+      "q2": 0.9095823448095657,
+      "rmse": 4.711857446237022
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 4.953946810767838,
+      "q2": 0.8930944927624745,
+      "rmse": 5.0535136914650876
+     },
+     {
+      "setting": "s 0, linear, lam 0.01",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 4.237159680774553,
+      "q2": 0.8812472559111934,
+      "rmse": 5.376635616136532
+     },
+     {
+      "setting": "s 3, linear, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 4.799814934307684,
+      "q2": 0.9060072085109002,
+      "rmse": 4.740812889129797
+     },
+     {
+      "setting": "s 1, gauss 1, lam 0.01",
+      "smoothing": 1.0,
+      "layer": "gauss 1",
+      "lam": 0.01,
+      "inner_rmse": 4.336991665665686,
+      "q2": 0.9017117865311615,
+      "rmse": 4.84651239472323
+     }
+    ],
+    "autocorrelation, normalised": [
+     {
+      "setting": "s 3, gauss 0.5, lam 1e-06",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 5.018275467691713,
+      "q2": 0.8452895995536358,
+      "rmse": 6.163469876154114
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 5.08147288302445,
+      "q2": 0.8894409492251453,
+      "rmse": 5.139141292722377
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.0001",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.0001,
+      "inner_rmse": 5.297767832091786,
+      "q2": 0.812179754075979,
+      "rmse": 6.761763551196958
+     },
+     {
+      "setting": "s 3, linear, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 5.008270636264776,
+      "q2": 0.8716731802695342,
+      "rmse": 5.5394195149309935
+     },
+     {
+      "setting": "s 3, gauss 1, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "gauss 1",
+      "lam": 0.01,
+      "inner_rmse": 4.608869007880523,
+      "q2": 0.8939629890342136,
+      "rmse": 5.033932012060448
+     }
+    ],
+    "autocorrelation, lattice-rotation-averaged": [
+     {
+      "setting": "s 3, gauss 0.5, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 5.261390009360809,
+      "q2": 0.8967122936353975,
+      "rmse": 5.036047750591979
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.927540543109886,
+      "q2": 0.9071344627137355,
+      "rmse": 4.709997702792151
+     },
+     {
+      "setting": "s 5, linear, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.001,
+      "inner_rmse": 3.68801524283446,
+      "q2": 0.8770949519836261,
+      "rmse": 5.4698275967251355
+     },
+     {
+      "setting": "s 5, linear, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.001,
+      "inner_rmse": 4.741441038570097,
+      "q2": 0.8926265443096222,
+      "rmse": 5.067036191116298
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 3.906681037672964,
+      "q2": 0.9044488541875497,
+      "rmse": 4.778554645913961
+     }
+    ],
+    "autocorrelation, radial": [
+     {
+      "setting": "s 5, linear, lam 1e-06",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 1e-06,
+      "inner_rmse": 5.223231325775974,
+      "q2": 0.8404362568886898,
+      "rmse": 6.259398916992198
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.931616215673467,
+      "q2": 0.9070371811032428,
+      "rmse": 4.712464044138479
+     },
+     {
+      "setting": "s 5, linear, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.001,
+      "inner_rmse": 3.6670113906522372,
+      "q2": 0.8762510935027821,
+      "rmse": 5.4885732246789445
+     },
+     {
+      "setting": "s 5, linear, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.001,
+      "inner_rmse": 4.7279712253596,
+      "q2": 0.8968844961927334,
+      "rmse": 4.965551893610349
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 4.103758033419744,
+      "q2": 0.9038348564194434,
+      "rmse": 4.7938832091992225
+     }
+    ]
+   },
+   "50": {
+    "phase fraction": [
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.8902223062275232,
+      "rmse": 5.044844294559734
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9050526527622982,
+      "rmse": 4.758850123605634
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9115059512445541,
+      "rmse": 4.514054292226377
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9145081346375348,
+      "rmse": 4.511604937436075
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9203404665384279,
+      "rmse": 4.353020687494775
+     }
+    ],
+    "two-point statistics + PCA": [
+     {
+      "setting": "2 components, degree 2, ridge 0.01",
+      "components": 2,
+      "degree": 2,
+      "lam": 0.01,
+      "inner_rmse": 3.9003424262840576,
+      "q2": 0.8823427943044488,
+      "rmse": 5.2227589278447635
+     },
+     {
+      "setting": "3 components, degree 1, ridge 0.01",
+      "components": 3,
+      "degree": 1,
+      "lam": 0.01,
+      "inner_rmse": 4.986358350439875,
+      "q2": 0.9069718640994057,
+      "rmse": 4.7105082513417855
+     },
+     {
+      "setting": "2 components, degree 1, ridge 1e-08",
+      "components": 2,
+      "degree": 1,
+      "lam": 1e-08,
+      "inner_rmse": 4.978283432898393,
+      "q2": 0.8979506089335753,
+      "rmse": 4.847468039548014
+     },
+     {
+      "setting": "2 components, degree 2, ridge 1e-08",
+      "components": 2,
+      "degree": 2,
+      "lam": 1e-08,
+      "inner_rmse": 3.9460269395449292,
+      "q2": 0.9206255071595579,
+      "rmse": 4.347195268692131
+     },
+     {
+      "setting": "10 components, degree 1, ridge 0.01",
+      "components": 10,
+      "degree": 1,
+      "lam": 0.01,
+      "inner_rmse": 5.2268403633633875,
+      "q2": 0.8889207594556023,
+      "rmse": 5.140298065433834
+     }
+    ],
+    "overlap, generating frame": [
+     {
+      "setting": "s 5, gauss 0.5, lam 1e-06",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1e-06,
+      "inner_rmse": 6.329275774464203,
+      "q2": 0.8411642559970574,
+      "rmse": 6.068269162828614
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.221843007144838,
+      "q2": 0.8484972041984488,
+      "rmse": 6.011335030105831
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 6.738879850673451,
+      "q2": 0.8856318619009806,
+      "rmse": 5.131711951904152
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.465414724952177,
+      "q2": 0.8818730690753716,
+      "rmse": 5.303262533383062
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 6.5756733169684365,
+      "q2": 0.865886845046523,
+      "rmse": 5.648167161022278
+     }
+    ],
+    "overlap, rotation-averaged": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.035074971899173,
+      "q2": 0.8860968053113976,
+      "rmse": 5.138763937925341
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 4.4444223320585925,
+      "q2": 0.7816342241751055,
+      "rmse": 7.216936699037736
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 6.306169261847344,
+      "q2": 0.8872938624848887,
+      "rmse": 5.094288412506797
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.018954718137388,
+      "q2": 0.8840010734171073,
+      "rmse": 5.255277481028838
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 6.306674770599849,
+      "q2": 0.8788542535783044,
+      "rmse": 5.3681659978522
+     }
+    ],
+    "autocorrelation, linear": [
+     {
+      "setting": "s 5, linear, lam 0.0001",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.0001,
+      "inner_rmse": 3.8552238819160802,
+      "q2": 0.8378822487681645,
+      "rmse": 6.130642628092503
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 5.021357121686697,
+      "q2": 0.9105923097268179,
+      "rmse": 4.617937463460347
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 5.217724329400608,
+      "q2": 0.9129148516179516,
+      "rmse": 4.477976330116154
+     },
+     {
+      "setting": "s 0, gauss 1, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 4.061461797858656,
+      "q2": 0.9119375542097935,
+      "rmse": 4.57893035762242
+     },
+     {
+      "setting": "s 5, linear, lam 0.0001",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.0001,
+      "inner_rmse": 5.048854138635607,
+      "q2": 0.8785685073306281,
+      "rmse": 5.374493210651019
+     }
+    ],
+    "autocorrelation, normalised": [
+     {
+      "setting": "s 5, linear, lam 1e-05",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 1e-05,
+      "inner_rmse": 3.5357490724140206,
+      "q2": 0.8084331513324035,
+      "rmse": 6.664244046889657
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.935040069336949,
+      "q2": 0.8646054381834629,
+      "rmse": 5.682784929894579
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 5.468679550299962,
+      "q2": 0.9106561471676731,
+      "rmse": 4.535676629381762
+     },
+     {
+      "setting": "s 0, gauss 0.5, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.168580817851856,
+      "q2": 0.9117723536068615,
+      "rmse": 4.583223263752172
+     },
+     {
+      "setting": "s 2, linear, lam 0.01",
+      "smoothing": 2.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 5.376202263494848,
+      "q2": 0.9037696569251599,
+      "rmse": 4.784404265460618
+     }
+    ],
+    "autocorrelation, lattice-rotation-averaged": [
+     {
+      "setting": "s 5, linear, lam 1e-05",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 1e-05,
+      "inner_rmse": 3.8021413011865888,
+      "q2": 0.8428323702752436,
+      "rmse": 6.036320170123268
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 4.985580912484239,
+      "q2": 0.9114541475708098,
+      "rmse": 4.595626458834723
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 5.18969448678002,
+      "q2": 0.9150623512603991,
+      "rmse": 4.422418751917242
+     },
+     {
+      "setting": "s 5, gauss 1, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 0.01,
+      "inner_rmse": 3.8292653074362826,
+      "q2": 0.8974953298502013,
+      "rmse": 4.940154062380666
+     },
+     {
+      "setting": "s 2, gauss 2, lam 0.01",
+      "smoothing": 2.0,
+      "layer": "gauss 2",
+      "lam": 0.01,
+      "inner_rmse": 4.436419347686167,
+      "q2": 0.8156790912031449,
+      "rmse": 6.621542232734418
+     }
+    ],
+    "autocorrelation, radial": [
+     {
+      "setting": "s 0, linear, lam 0.0001",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.0001,
+      "inner_rmse": 3.6712969568905955,
+      "q2": 0.8258868775239457,
+      "rmse": 6.353403928376744
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 4.980292681624403,
+      "q2": 0.9116663106801868,
+      "rmse": 4.590117408261381
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 5.160402319058911,
+      "q2": 0.9147247241107055,
+      "rmse": 4.431199591776062
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.001",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.001,
+      "inner_rmse": 3.7707902663698865,
+      "q2": 0.8950346859362833,
+      "rmse": 4.999097089901823
+     },
+     {
+      "setting": "s 5, gauss 1, lam 1e-05",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 1e-05,
+      "inner_rmse": 4.887713927313095,
+      "q2": 0.6864718374605068,
+      "rmse": 8.635950223682089
+     }
+    ]
+   },
+   "100": {
+    "phase fraction": [
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9090459316035863,
+      "rmse": 4.713224830205906
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9223806562601664,
+      "rmse": 4.299076405538587
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9088291519574744,
+      "rmse": 4.548408300328595
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9100386461547161,
+      "rmse": 4.595494823839675
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.918506714220463,
+      "rmse": 4.508439951847454
+     }
+    ],
+    "two-point statistics + PCA": [
+     {
+      "setting": "3 components, degree 2, ridge 1",
+      "components": 3,
+      "degree": 2,
+      "lam": 1.0,
+      "inner_rmse": 3.2693627680282984,
+      "q2": 0.9176227788558601,
+      "rmse": 4.485497932595923
+     },
+     {
+      "setting": "2 components, degree 2, ridge 0.01",
+      "components": 2,
+      "degree": 2,
+      "lam": 0.01,
+      "inner_rmse": 5.073782693063359,
+      "q2": 0.9314572149842066,
+      "rmse": 4.039904080282531
+     },
+     {
+      "setting": "2 components, degree 2, ridge 1e-08",
+      "components": 2,
+      "degree": 2,
+      "lam": 1e-08,
+      "inner_rmse": 4.053016322852924,
+      "q2": 0.9151570389334476,
+      "rmse": 4.387724538834789
+     },
+     {
+      "setting": "2 components, degree 2, ridge 1",
+      "components": 2,
+      "degree": 2,
+      "lam": 1.0,
+      "inner_rmse": 3.9943339211418767,
+      "q2": 0.915831669328621,
+      "rmse": 4.445070433369547
+     },
+     {
+      "setting": "3 components, degree 2, ridge 0.01",
+      "components": 3,
+      "degree": 2,
+      "lam": 0.01,
+      "inner_rmse": 4.717726422754978,
+      "q2": 0.9231334746638884,
+      "rmse": 4.37858716972168
+     }
+    ],
+    "overlap, generating frame": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.508211645001736,
+      "q2": 0.8795738256803685,
+      "rmse": 5.423348802731795
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.8350873304299995,
+      "q2": 0.8741735634060586,
+      "rmse": 5.473638722646834
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.706867226729391,
+      "q2": 0.8862546386149768,
+      "rmse": 5.080404518150494
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.958141581398451,
+      "q2": 0.8896476705644852,
+      "rmse": 5.089733493064517
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.745618087985388,
+      "q2": 0.8829651789089407,
+      "rmse": 5.402850158420703
+     }
+    ],
+    "overlap, rotation-averaged": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.60771055049459,
+      "q2": 0.9019931333137576,
+      "rmse": 4.892550808415516
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.691747160176187,
+      "q2": 0.9068597949641193,
+      "rmse": 4.709326217190634
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 5.417221096074145,
+      "q2": 0.8384731603188953,
+      "rmse": 6.054158603617213
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.6951118833333245,
+      "q2": 0.8948724833173739,
+      "rmse": 4.967781579679113
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.025538898465479,
+      "q2": 0.8794796065740301,
+      "rmse": 5.482714677650553
+     }
+    ],
+    "autocorrelation, linear": [
+     {
+      "setting": "s 5, gauss 1, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 3.371511969921468,
+      "q2": 0.9157419765040002,
+      "rmse": 4.536414455485549
+     },
+     {
+      "setting": "s 5, linear, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 5.085285768004877,
+      "q2": 0.9263473324577031,
+      "rmse": 4.187785422276543
+     },
+     {
+      "setting": "s 2, gauss 0.5, lam 0.01",
+      "smoothing": 2.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 3.7437659275008373,
+      "q2": 0.8982295805419661,
+      "rmse": 4.805540352549484
+     },
+     {
+      "setting": "s 2, gauss 1, lam 0.01",
+      "smoothing": 2.0,
+      "layer": "gauss 1",
+      "lam": 0.01,
+      "inner_rmse": 3.7564598946258987,
+      "q2": 0.9067184520681391,
+      "rmse": 4.6795292053925355
+     },
+     {
+      "setting": "s 2, gauss 2, lam 1e-06",
+      "smoothing": 2.0,
+      "layer": "gauss 2",
+      "lam": 1e-06,
+      "inner_rmse": 4.321103121306185,
+      "q2": 0.8604577213180538,
+      "rmse": 5.899541772806855
+     }
+    ],
+    "autocorrelation, normalised": [
+     {
+      "setting": "s 5, gauss 1, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 3.464117391296723,
+      "q2": 0.9166172735453793,
+      "rmse": 4.512790139812777
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 5.153156178993051,
+      "q2": 0.9288415085979164,
+      "rmse": 4.11626708738857
+     },
+     {
+      "setting": "s 2, gauss 1, lam 0.01",
+      "smoothing": 2.0,
+      "layer": "gauss 1",
+      "lam": 0.01,
+      "inner_rmse": 3.9114466484612667,
+      "q2": 0.8877717630593607,
+      "rmse": 5.046409815202629
+     },
+     {
+      "setting": "s 3, gauss 1, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "gauss 1",
+      "lam": 0.01,
+      "inner_rmse": 3.6839060328472275,
+      "q2": 0.9039569595227677,
+      "rmse": 4.748290050729416
+     },
+     {
+      "setting": "s 2, gauss 2, lam 0.001",
+      "smoothing": 2.0,
+      "layer": "gauss 2",
+      "lam": 0.001,
+      "inner_rmse": 4.34260438084021,
+      "q2": 0.8719561649326426,
+      "rmse": 5.651252497032717
+     }
+    ],
+    "autocorrelation, lattice-rotation-averaged": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 3.1060368560104883,
+      "q2": 0.9128573624437719,
+      "rmse": 4.613414139260284
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 4.987381921955741,
+      "q2": 0.933077063762259,
+      "rmse": 3.9918818074266267
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.01",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 3.8318708617714257,
+      "q2": 0.9099177346331164,
+      "rmse": 4.521172691544201
+     },
+     {
+      "setting": "s 5, linear, lam 0.0001",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.0001,
+      "inner_rmse": 3.7485584410683064,
+      "q2": 0.9175286916856706,
+      "rmse": 4.400030957466019
+     },
+     {
+      "setting": "s 2, gauss 2, lam 0.01",
+      "smoothing": 2.0,
+      "layer": "gauss 2",
+      "lam": 0.01,
+      "inner_rmse": 4.616206369296382,
+      "q2": 0.875428890191373,
+      "rmse": 5.574090840389361
+     }
+    ],
+    "autocorrelation, radial": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 3.1306769382447874,
+      "q2": 0.9127160042607086,
+      "rmse": 4.617154441394174
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 4.984931629199755,
+      "q2": 0.9330603707679263,
+      "rmse": 3.992379636043154
+     },
+     {
+      "setting": "s 1, gauss 0.5, lam 0.01",
+      "smoothing": 1.0,
+      "layer": "gauss 0.5",
+      "lam": 0.01,
+      "inner_rmse": 3.882567326451396,
+      "q2": 0.9042190548426053,
+      "rmse": 4.661986432737634
+     },
+     {
+      "setting": "s 5, linear, lam 1e-05",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 1e-05,
+      "inner_rmse": 3.7615220006828913,
+      "q2": 0.9174573228835196,
+      "rmse": 4.401934389320935
+     },
+     {
+      "setting": "s 3, linear, lam 1e-06",
+      "smoothing": 3.0,
+      "layer": "linear",
+      "lam": 1e-06,
+      "inner_rmse": 4.725006105805703,
+      "q2": 0.9211073061919193,
+      "rmse": 4.435920640971679
+     }
+    ]
+   },
+   "200": {
+    "phase fraction": [
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9332111401724942,
+      "rmse": 4.156770582840063
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9172504546016991,
+      "rmse": 4.555653381287097
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9162690925346741,
+      "rmse": 4.206081454542274
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9133542472804388,
+      "rmse": 4.5661935613783795
+     },
+     {
+      "setting": "cubic in the fraction",
+      "q2": 0.9268227327367599,
+      "rmse": 4.270562817426024
+     }
+    ],
+    "two-point statistics + PCA": [
+     {
+      "setting": "2 components, degree 2, ridge 1e-08",
+      "components": 2,
+      "degree": 2,
+      "lam": 1e-08,
+      "inner_rmse": 4.63723088276616,
+      "q2": 0.9386836055194365,
+      "rmse": 3.9828352845494743
+     },
+     {
+      "setting": "2 components, degree 2, ridge 1",
+      "components": 2,
+      "degree": 2,
+      "lam": 1.0,
+      "inner_rmse": 4.242115289796808,
+      "q2": 0.9275809634786354,
+      "rmse": 4.261811492598581
+     },
+     {
+      "setting": "3 components, degree 2, ridge 1e-08",
+      "components": 3,
+      "degree": 2,
+      "lam": 1e-08,
+      "inner_rmse": 4.46173621686891,
+      "q2": 0.9238410800550285,
+      "rmse": 4.011392591806467
+     },
+     {
+      "setting": "2 components, degree 2, ridge 0.01",
+      "components": 2,
+      "degree": 2,
+      "lam": 0.01,
+      "inner_rmse": 4.373776533798077,
+      "q2": 0.9235246332626905,
+      "rmse": 4.2898436310939205
+     },
+     {
+      "setting": "2 components, degree 2, ridge 1",
+      "components": 2,
+      "degree": 2,
+      "lam": 1.0,
+      "inner_rmse": 4.423959808625069,
+      "q2": 0.9276509986640401,
+      "rmse": 4.2463255931997494
+     }
+    ],
+    "overlap, generating frame": [
+     {
+      "setting": "s 2, gauss 0.5, lam 0.1",
+      "smoothing": 2.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.333922295636499,
+      "q2": 0.897819080135296,
+      "rmse": 5.141489404619323
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 5.443221023787758,
+      "q2": 0.9021411749295207,
+      "rmse": 4.9541353030615145
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.2173538317984525,
+      "q2": 0.8856813573964012,
+      "rmse": 4.9146580883059485
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.108327270925692,
+      "q2": 0.8884982029219063,
+      "rmse": 5.179902811860445
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 1.0,
+      "inner_rmse": 5.586128301773005,
+      "q2": 0.9032911317682734,
+      "rmse": 4.909419817011261
+     }
+    ],
+    "overlap, rotation-averaged": [
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.253091418739965,
+      "q2": 0.9192382132619308,
+      "rmse": 4.570955575004382
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.006295388101122,
+      "q2": 0.9206412352629055,
+      "rmse": 4.461339920731294
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.141118758560724,
+      "q2": 0.8986854696134415,
+      "rmse": 4.626692622066608
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.042983483907109,
+      "q2": 0.9138938411452437,
+      "rmse": 4.551953174707765
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 5.274844729887547,
+      "q2": 0.9211736453626783,
+      "rmse": 4.43233668385648
+     }
+    ],
+    "autocorrelation, linear": [
+     {
+      "setting": "s 3, linear, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 4.744550473189521,
+      "q2": 0.9429775146387332,
+      "rmse": 3.8408479281066166
+     },
+     {
+      "setting": "s 3, gauss 1, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 4.244684883718538,
+      "q2": 0.9309540558286374,
+      "rmse": 4.161375934533165
+     },
+     {
+      "setting": "s 0, gauss 1, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 4.134424195353825,
+      "q2": 0.9171875000936032,
+      "rmse": 4.1829505210674345
+     },
+     {
+      "setting": "s 0, gauss 1, lam 1",
+      "smoothing": 0.0,
+      "layer": "gauss 1",
+      "lam": 1.0,
+      "inner_rmse": 4.305729113919835,
+      "q2": 0.9235480984134954,
+      "rmse": 4.289185448238446
+     },
+     {
+      "setting": "s 1, gauss 1, lam 0.1",
+      "smoothing": 1.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 4.410110632747596,
+      "q2": 0.9299811500274181,
+      "rmse": 4.177385044622264
+     }
+    ],
+    "autocorrelation, normalised": [
+     {
+      "setting": "s 1, gauss 0.5, lam 0.1",
+      "smoothing": 1.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.807108658663802,
+      "q2": 0.9432455857016256,
+      "rmse": 3.8318090977957806
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.291637220861452,
+      "q2": 0.9357921894131237,
+      "rmse": 4.012931953238098
+     },
+     {
+      "setting": "s 5, gauss 1, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 4.185757171144957,
+      "q2": 0.9169819021430349,
+      "rmse": 4.18813979161491
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.344347100400587,
+      "q2": 0.924843969042111,
+      "rmse": 4.252678937101028
+     },
+     {
+      "setting": "s 3, gauss 1, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "gauss 1",
+      "lam": 0.1,
+      "inner_rmse": 4.351330890443516,
+      "q2": 0.9268787112748637,
+      "rmse": 4.268929075088105
+     }
+    ],
+    "autocorrelation, lattice-rotation-averaged": [
+     {
+      "setting": "s 0, linear, lam 0.1",
+      "smoothing": 0.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 4.743205256000054,
+      "q2": 0.9457464947150382,
+      "rmse": 3.7464327618606443
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.305173053004645,
+      "q2": 0.929738867441062,
+      "rmse": 4.197835712475872
+     },
+     {
+      "setting": "s 5, gauss 1, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 0.01,
+      "inner_rmse": 4.100796642899616,
+      "q2": 0.9073446020789683,
+      "rmse": 4.424560548783431
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 4.360036699010608,
+      "q2": 0.9305845085445725,
+      "rmse": 4.087039915895588
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.48897281445651,
+      "q2": 0.9387670647190712,
+      "rmse": 3.9065155745555873
+     }
+    ],
+    "autocorrelation, radial": [
+     {
+      "setting": "s 2, linear, lam 0.1",
+      "smoothing": 2.0,
+      "layer": "linear",
+      "lam": 0.1,
+      "inner_rmse": 4.739558902343317,
+      "q2": 0.9456454589220499,
+      "rmse": 3.749919612494155
+     },
+     {
+      "setting": "s 5, gauss 0.5, lam 0.1",
+      "smoothing": 5.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.284003993830347,
+      "q2": 0.9294843680880176,
+      "rmse": 4.2054315250050704
+     },
+     {
+      "setting": "s 5, gauss 1, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "gauss 1",
+      "lam": 0.01,
+      "inner_rmse": 4.096799315079075,
+      "q2": 0.9073444227505839,
+      "rmse": 4.424564830503269
+     },
+     {
+      "setting": "s 5, linear, lam 0.01",
+      "smoothing": 5.0,
+      "layer": "linear",
+      "lam": 0.01,
+      "inner_rmse": 4.358199091676329,
+      "q2": 0.9304223529195697,
+      "rmse": 4.0918108244413265
+     },
+     {
+      "setting": "s 3, gauss 0.5, lam 0.1",
+      "smoothing": 3.0,
+      "layer": "gauss 0.5",
+      "lam": 0.1,
+      "inner_rmse": 4.4485651293277355,
+      "q2": 0.9403049892332205,
+      "rmse": 3.857145647535708
+     }
+    ]
+   }
+  }
+ }
+}

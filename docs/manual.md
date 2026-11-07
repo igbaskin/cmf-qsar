@@ -8862,6 +8862,63 @@ form factor, rather than the form factor itself. And a neutron scattering length
 table that leaves out the elements whose value depends strongly on the wavelength; a structure
 containing one of those is refused rather than guessed at.
 
+## A microstructure as the sample: the field on a voxel grid
+
+A micrograph has no atoms. A two-phase microstructure on a voxel grid is nevertheless a field --
+the indicator of each phase, one value per voxel, is one channel -- and the kernel of this program,
+the overlap integral of two fields, applies to it as it stands. What changes is only how the field
+is made: not from atom-centred Gaussians but from the voxels themselves, with the fast Fourier
+transform doing the overlaps on the periodic grid. This is the way into the hierarchical
+materials informatics of the Materials Knowledge Systems (MKS) of Kalidindi and co-workers, whose
+descriptor is the **two-point statistics** of the microstructure: the probability that two
+voxels a vector $r$ apart are in phases $a$ and $b$. That statistic is the translation-averaged
+self-overlap of the phase field with its own translate, which is to say the periodic
+autocorrelation of the chapter above with voxels in place of atoms. `benchmarks/run_microstructure.py`
+measures what the field kernels are worth against that workflow, on the smallest fair benchmark.
+
+**The data.** 400 synthetic two-phase cells on a periodic 51 x 51 grid (and 400 on a 21^3 grid),
+by the recipe of the `pymks` generator: Gaussian-filtered white noise cut at the quantile that
+gives the phase fraction. The fraction, the grain size, the elongation of the grains and their
+direction all vary from sample to sample. The label is the effective thermal conductivity of
+the cell from a finite-volume solver written in the script (`pymks` does not build on Python
+3.13, and its elastic solver needs a finite-element package); phase 0 conducts 1, phase 1
+conducts 10 or 100. Two labels: the component along $x$, which depends on the direction of the
+grains, and the mean over the directions, which does not.
+
+**The descriptions.** The plain kernel of this program -- the overlap of the smoothed phase
+fields at zero shift, in the frame the samples were generated in; the same averaged over the
+point group of the grid; the overlap of two samples' two-point autocorrelations, which is the
+invariant route and is also the overlap of their power spectra, raw and in the cosine form of
+the autocorrelation kernel, averaged over the point group, and binned by the length of $r$; and
+the MKS baseline, two-point statistics, principal components fitted on the training part and a
+polynomial of the scores. Every kernel is tried linear and under the Gaussian layer, with the
+Gaussian smoothing width of the field (0 to 5 voxels), the layer and the ridge chosen by
+cross-validation inside the training part. Training sets of 20, 50, 100 and 200 samples are
+drawn five times each and the rest of the set is held out.
+
+**What it says** (`benchmarks/results/microstructure/table.md`, with the notes beside it). On
+the direction-dependent label at contrast 10 the overlap of the autocorrelations reaches q2
+0.89 at 20 training samples, 0.97 at 100 and 0.98 at 200; the MKS baseline 0.93, 0.965 and 0.97;
+at contrast 100 the two are 0.81 against 0.81 at 20 samples and 0.90 against 0.88 at 200; on the
+3D cells 0.97 against 0.96 at 20 and 0.989 against 0.987 at 200. So the field-overlap kernel on
+the two-point statistics matches the baseline at 20 to 50 samples and is a little better from
+100 on, and the gain holds where the contrast makes the arrangement matter.
+The zero-shift overlap in the generating frame is poor, and should be: these samples share a
+grid and nothing else, so it compares two structures at a random relative shift, and what it
+keeps as the smoothing grows is the phase fractions. A rotation average loses the direction of
+the grains and with it the direction-dependent label, and recovers everything on the
+direction-free one. The phase fraction alone explains 0.87 to 0.98 of the variance, as it does
+in the published homogenisation examples, which is why the arrangement is a second-order
+signal here.
+
+**The length scale.** The smoothing width is the knob a multi-scale kernel would turn. The
+inner cross-validation sets it to zero for the autocorrelation kernels on the
+direction-dependent label -- the statistic wants its full resolution -- and to the widest
+width tried, 5 voxels, close to the grain size, for the zero-shift overlap and for the
+direction-free label, where the kernel then sees little beyond the fractions. A hierarchical
+model would therefore carry the fine width for the arrangement and the coarse one for the
+composition, which is what two field types with their own widths already do in this program.
+
 ## Three atoms at a time: what a histogram of distances cannot see
 
 Every descriptor of a crystal above is a **two-point** one. It counts how much field weight sits
