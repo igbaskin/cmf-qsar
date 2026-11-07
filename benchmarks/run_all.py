@@ -911,15 +911,48 @@ def rebuild_tables(quiet=True):
 
 # ----------------------------------------------------------------------------- the manifest
 
-def _sha256(path, block=1 << 20):
+def _is_binary(first_bytes) -> bool:
+    """Whether a file is binary, by the rule git itself uses: a zero byte near the start.
+
+    Git looks at the first 8000 bytes of a file and treats it as binary if one of them is zero.
+    The same rule decides here whether a file is hashed byte for byte or with its newlines
+    normalised, so the files whose newlines git converts are exactly the files normalised here.
+    """
+    return b"\0" in first_bytes[:8000]
+
+
+def _content_sha256(path, block=1 << 20):
+    """The hash of a file's content, with CRLF counted as LF in a text file.
+
+    Git stores a text file with LF newlines and checks it out with CRLF on Windows, so one commit
+    gives different bytes on different machines. A file written by a script keeps the newlines
+    that script wrote, whatever the platform. Hashing the raw bytes therefore records the history
+    of the working tree rather than the content of the commit, and no fresh clone reproduces it.
+    Counting CRLF as LF removes both differences: the hash of a text file is the same on every
+    platform and for every way the file arrived. A binary file is hashed byte for byte.
+
+    Returns the hash and the number of bytes hashed, which is the file's size with LF newlines.
+    """
     h = hashlib.sha256()
+    size = 0
     with open(path, "rb") as fh:
-        while True:
+        chunk = fh.read(max(block, 8000))
+        binary = _is_binary(chunk)
+        pending = b""                      # a CR held back: its LF may be in the next block
+        while chunk:
+            if binary:
+                piece = chunk
+            else:
+                chunk = pending + chunk
+                pending = b"\r" if chunk.endswith(b"\r") else b""
+                piece = (chunk[:-1] if pending else chunk).replace(b"\r\n", b"\n")
+            h.update(piece)
+            size += len(piece)
             chunk = fh.read(block)
-            if not chunk:
-                break
-            h.update(chunk)
-    return h.hexdigest()
+        if pending:                        # a CR at the end of the file is content, not a newline
+            h.update(pending)
+            size += 1
+    return h.hexdigest(), size
 
 
 def _text_sha256(path):
@@ -961,13 +994,17 @@ def versions():
 
 
 def build_manifest() -> dict:
-    data = {p: {"sha256": _sha256(os.path.join(ROOT, p)),
-                "bytes": os.path.getsize(os.path.join(ROOT, p))} for p in tracked("examples")}
+    data = {}
+    for p in tracked("examples"):
+        sha, size = _content_sha256(os.path.join(ROOT, p))
+        data[p] = {"sha256": sha, "bytes": size}
     results = {}
     for p in tracked("benchmarks/results"):
-        results[p] = _sha256(os.path.join(ROOT, p))
+        results[p] = _content_sha256(os.path.join(ROOT, p))[0]
     return {
         "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "hashes": "sha256 of the file content, with CRLF counted as LF in text files; "
+                  "'bytes' is the size with LF newlines",
         "commit": _git("rev-parse", "HEAD"),
         "dirty": bool(_git("status", "--porcelain", "--", "cmfqsar", "benchmarks", "examples")),
         "python": platform.python_version(),
@@ -995,7 +1032,7 @@ def check_manifest() -> List[str]:
     old = json.load(open(MANIFEST, encoding="utf-8"))
     problems = []
     for p in tracked("examples"):
-        h = _sha256(os.path.join(ROOT, p))
+        h = _content_sha256(os.path.join(ROOT, p))[0]
         if p not in old["data"]:
             problems.append(f"not in the manifest: {p}")
         elif old["data"][p]["sha256"] != h:
