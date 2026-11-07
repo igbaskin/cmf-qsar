@@ -2749,7 +2749,7 @@ docking, the site profiles — applies to a surface without changes. A slab is r
 CIF, or built: `bcc110_slab()` gives the 6 × 6 × 4 Fe(110) slab at a = 2.78 Å that the reference
 poses of `examples/corrosion_fe110` were computed on, with its top layer at z = 0.
 
-![The Fe(110) slab of `examples/corrosion_fe110` with a benzimidazole molecule adsorbed flat on it, the pose relaxed with the UMA potential, in the window for crystals, read as a layer periodic in two directions: the four layers of the slab as spheres, the molecule on the top layer, the cell with its vacuum above the slab, and the periodic images of the cell within 5 Å as dots. This is the structure the slab receptor is cut from, seen whole. Taken by `docs/make_screenshot.py --what slab`.](docs/figures/slab_window.png)
+![The Fe(110) slab of `examples/corrosion_fe110` with a benzimidazole molecule adsorbed flat on it, the pose relaxed with the UMA potential, in the window for crystals, read as a layer periodic in two directions and drawn in ball and stick: the four layers of the slab as spheres, the molecule on the top layer with its bonds, which the window perceives from the distances and gives to the organic atoms only, the cell with its vacuum above the slab, and the periodic images of the cell within 5 Å as dots. This is the structure the slab receptor is cut from, seen whole. Taken by `docs/make_screenshot.py --what slab`.](docs/figures/slab_window.png)
 
 The molecule in that picture is drawn as spheres, which is what the *Atoms* box offers by default. *ball and stick* in the same window gives it its bonds while the slab stays spheres, because a metal atom gets none; the section *How the atoms are drawn, and the bonds* says why, and what the rule is worth on these very molecules.
 
