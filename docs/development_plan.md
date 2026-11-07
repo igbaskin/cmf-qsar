@@ -6,14 +6,15 @@ to prove before it is allowed to stay. File references point at the code the wor
 
 ## Where the program stands
 
-The repository holds, as of 30 October 2026 (the lists below were written on 22 October and are
+The repository holds, as of 7 November 2026 (the lists below were written on 22 October and are
 kept current; the counts are the ones the repository gives today):
 
-* A library of 92 modules and about 49,500 lines (`cmfqsar/`), a PySide6 application, a
-  command-line tool with thirty-one subcommands (`build`, `build-crystals`, `diagnose`,
+* A library of 113 modules and about 64,900 lines (`cmfqsar/`, counting every line of its
+  `.py` files), of which a PySide6 application is 9 modules and 10,100 lines
+  (`cmfqsar/gui/`), a command-line tool with thirty-one subcommands (`build`, `build-crystals`, `diagnose`,
   `align`, `predict`, `screen`, `cofield`, `report`, `benchmark`, `unalign`, `map`, `compare`,
   `cluster`, `explain`, `mil`, `hetero`, `pharmacophore`, `difference`, `topomer`,
-  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `hops`, `restriction`, `isosteres`, `lowrank`, `kcca`), 1703 tests, a typeset manual and a
+  `complement`, `suggest`, `design`, `transfer`, `mixing`, `atoms`, `local`, `hops`, `restriction`, `isosteres`, `lowrank`, `kcca`), 2450 tests, a typeset manual and a
   README that doubles as the record of every measurement made so far.
 * Closed-form kernels for the five physico-chemical fields, the indicator fields, fields from any
   per-atom property, fitted probe fields, conformational, protonation and tautomer ensembles (mean-map kernels), the
