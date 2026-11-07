@@ -82,13 +82,38 @@ class XtbError(RuntimeError):
     pass
 
 
+WHERE_TO_GET_XTB = ("the Windows and Linux builds are released at "
+                    "https://github.com/grimme-lab/xtb/releases")
+
+
+def _resolve(cand: str) -> Optional[str]:
+    """`cand` as an executable: a file as it stands, or a bare name found on the path."""
+    if os.path.isfile(cand):
+        return cand
+    return shutil.which(cand)
+
+
 def find_xtb(explicit: Optional[str] = None) -> str:
-    """The xtb executable: the one given, then ``XTB_EXE``, then the path, then the default."""
-    for cand in (explicit, os.environ.get("XTB_EXE"), shutil.which("xtb"), DEFAULT_XTB):
+    """The xtb executable: the one given, then ``XTB_EXE``, then the path, then the default.
+
+    A path that was given -- as `explicit` or in ``XTB_EXE`` -- is used or refused, never
+    replaced. If it names neither a file nor a program on the path, the search stops there and
+    the error quotes it. Running a different xtb instead would produce numbers from a program
+    the caller did not ask for, and nothing in the result would say so.
+    """
+    for cand, source in ((explicit, "the path given for it"),
+                         (os.environ.get("XTB_EXE"), "XTB_EXE")):
+        if cand:
+            found = _resolve(cand)
+            if found:
+                return found
+            raise XtbError('xtb was not found at "%s", which is %s. Correct it, or leave '
+                           'it out to search the path; %s' % (cand, source, WHERE_TO_GET_XTB))
+    for cand in (shutil.which("xtb"), DEFAULT_XTB):
         if cand and os.path.isfile(cand):
             return cand
-    raise XtbError("xtb was not found. Give its path, set XTB_EXE, or put it on the path; the "
-                   "Windows build is released at https://github.com/grimme-lab/xtb/releases")
+    raise XtbError("xtb was not found. Give its path, set XTB_EXE, or put it on the path; "
+                   + WHERE_TO_GET_XTB)
 
 
 def xtb_version(exe: str) -> str:
