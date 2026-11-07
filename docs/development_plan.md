@@ -3499,6 +3499,45 @@ kept: MAE 92 cm⁻¹ on Matbench phonons) as the reference every item has to bea
   fails here too, then the answer to "why does a forest win" is neither the length, nor the
   curvature, nor the weights, and the item should say that plainly rather than look for a fourth
   repair.
+  **The first half is measured, 7 November 2026: the length is worth keeping where it goes with
+  the target, and nowhere else.** `cmfqsar.invariant.row_lengths` returns the number the kernel
+  divides out and `length_kernel` makes a kernel of it; `cmfqsar.sites.site_kernel` now takes
+  `normalize` as well. `benchmarks/run_rowlength.py` fits four arms -- the length divided out
+  (the reference), the length kept (`normalize=False`, the matrix divided by its own mean
+  diagonal, which takes no row's length away), the length added as one more channel with the
+  mixing weight chosen inside the training part, and the length alone -- over five series, each
+  on the samples, folds and ridge grid of the benchmark it comes from.
+  *Where it gains.* On the hop environments of item BT7 (1,801 hops of 393 structures) the
+  length correlates with the barrier at +0.601 and keeping it takes $q^2$ from **+0.572 to
+  +0.716**, a gain of **+0.144 [+0.096, +0.198]**, with the mean absolute error falling from
+  0.736 to 0.546 eV; the length alone reaches +0.354. So how crowded the environment is carries
+  a third of the barrier, and this is where most of the gap item BT7 measured against a forest
+  on the raw rows was hiding. On the defect series of item M14 (2,000 cells each of MoS2 and
+  WSe2) the length correlates with the formation energy at -0.882 and -0.925, $q^2$ is already
+  +0.9989 and moves by +0.0011 [+0.0009, +0.0012], and the error per defect site falls from
+  **36.5 to 2.4 meV** on MoS2 and from 30.8 to 6.3 meV on WSe2.
+  *Where it costs.* On the 1,162 beta-cyclodextrin guests, 2 to 42 heavy atoms, the length is 66
+  per cent of its own mean and tracks the heavy-atom count at +0.750, but tracks the constant at
+  only +0.112: keeping it loses **-0.043 [-0.073, -0.015]**. On the single-atom catalysts of item
+  EC8, twelve combinations of four targets and three designs, keeping it is behind the reference
+  beyond the interval in three and ahead in none. On the Li site energies of the three
+  electrolytes the length varies by 5 to 13 per cent and keeping it loses, although with three
+  compounds rule 4 can give no interval, so that series carries point differences only.
+  *The rule that comes out of it, and it is cheap.* What decides is the correlation between the
+  length and the target, not the spread of the length: the counts about a hop midpoint vary by 81
+  per cent of their mean and keeping that length still buys nothing (+0.017 [-0.030, +0.055]).
+  One correlation on the training part says which way a new series will go. Keeping the length is
+  the stronger of the two ways where it works at all -- as an extra channel the hop environments
+  gained +0.070 [+0.027, +0.114] of the +0.144. No default changes: every stored table was
+  produced with the division in place, and the manual says so under *What the row length is
+  worth, and when the division helps*.
+  *Found on the way, and not part of this item.* The autocorrelation features do not depend on
+  the field width alpha at all, because they are sums of products of atom weights and those
+  weights do not carry alpha. `benchmarks/run_cyclodextrin.py` searches six alphas for its
+  invariant kernel and therefore searches six copies of one kernel: its stored $q^2$ values are
+  unaffected, but the alpha it records for that column means nothing and its sentence about the
+  alpha grid does not hold for that one column.
+  **What is left of the item** is the second half above: the weighted distance over the columns.
 
 **Order.** M4, M5 and M6 first: together they give the most results per line of code and supply the theory
 section and two of the case studies of the publication plan. M1 and M3 are done as they are needed
@@ -6427,8 +6466,8 @@ own text has to stop before it, and five entries state their status in a form of
 | E. Learning | 11 | 10 | E11 (partly) |
 | F. Interpretation | 7 | 7 | -- |
 | G. The application and the tool | 6 | 5 | G5 |
-| H. Materials and periodicity | 14 | 11 | M7, M8, M9 |
-| H. Nanotechnology | 12 | 1 | NT1 to NT7, NT8 (partly), NT10 to NT12 |
+| H. Materials and periodicity | 15 | 11 | M7, M8, M9, M15 (partly) |
+| H. Nanotechnology | 12 | 1 | NT1, NT2, NT3, NT4, NT5, NT6, NT7, NT8 (partly), NT10, NT11, NT12 |
 | H. Electrochemistry | 10 | 8 | EC8 (partly), EC9 |
 | H. Battery science | 8 | 7 | BT8 |
 | H. Local properties | 5 | 5 | -- |
@@ -6437,7 +6476,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 16 | 0 | ND1 to ND13 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**146 items: 104 finished, 4 partly, 38 open.**
+**147 items: 104 finished, 5 partly, 38 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

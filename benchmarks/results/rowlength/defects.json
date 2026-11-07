@@ -1,0 +1,286 @@
+{
+ "descriptor": "whole-cell autocorrelation",
+ "inner": 5,
+ "lams": [
+  1e-08,
+  1e-07,
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1
+ ],
+ "lengths": {
+  "MoS2": {
+   "sigma 0.35": {
+    "max": 47.326705309839475,
+    "mean": 32.44482416460904,
+    "min": 25.02518740121314,
+    "n": 2000,
+    "pearson": -0.8819842927517191,
+    "sd": 5.228133981412636,
+    "spearman": -0.8620677768982175,
+    "spread_over_mean": 0.1611392299396558
+   },
+   "sigma 0.5": {
+    "max": 39.60194387392839,
+    "mean": 27.145993844117555,
+    "min": 20.935699797484265,
+    "n": 2000,
+    "pearson": -0.8821544780178441,
+    "sd": 4.369784687502562,
+    "spearman": -0.8616630278651852,
+    "spread_over_mean": 0.16097346490961056
+   },
+   "sigma 0.75": {
+    "max": 32.275751012590916,
+    "mean": 22.164936317545976,
+    "min": 17.09050330629579,
+    "n": 2000,
+    "pearson": -0.883034311895409,
+    "sd": 3.565893722355079,
+    "spearman": -0.8619694486018082,
+    "spread_over_mean": 0.16087994439813857
+   }
+  },
+  "WSe2": {
+   "sigma 0.35": {
+    "max": 48.36409848238356,
+    "mean": 32.44725805124879,
+    "min": 24.989858648266416,
+    "n": 2000,
+    "pearson": -0.9254913369868818,
+    "sd": 5.213007285211722,
+    "spearman": -0.9320540157125442,
+    "spread_over_mean": 0.16066094943918044
+   },
+   "sigma 0.5": {
+    "max": 40.609081134754064,
+    "mean": 27.14808628128885,
+    "min": 20.909433126931408,
+    "n": 2000,
+    "pearson": -0.9257344591411099,
+    "sd": 4.356766147464879,
+    "spearman": -0.9312267273066818,
+    "spread_over_mean": 0.16048151985091016
+   },
+   "sigma 0.75": {
+    "max": 33.29316203995322,
+    "mean": 22.166791080095464,
+    "min": 17.069944853877754,
+    "n": 2000,
+    "pearson": -0.9264612217786077,
+    "sd": 3.5543456797841264,
+    "spearman": -0.932603696150924,
+    "spread_over_mean": 0.16034552168336758
+   }
+  }
+ },
+ "limit": 2000,
+ "materials": [
+  "MoS2",
+  "WSe2"
+ ],
+ "n_samples": 4000,
+ "outer": 5,
+ "pairs": [
+  {
+   "a": "the length kept",
+   "b": "the length divided out",
+   "diff": 0.0010656708047588337,
+   "high": 0.0012069963823566343,
+   "low": 0.0009423051330861743,
+   "material": "MoS2"
+  },
+  {
+   "a": "the length as an extra channel",
+   "b": "the length divided out",
+   "diff": 0.0008040935956666884,
+   "high": 0.0009440514953616613,
+   "low": 0.0006742175985773424,
+   "material": "MoS2"
+  },
+  {
+   "a": "the length alone",
+   "b": "the length divided out",
+   "diff": -0.2195137142874516,
+   "high": -0.19819856921928053,
+   "low": -0.2427223401483975,
+   "material": "MoS2"
+  },
+  {
+   "a": "the length kept",
+   "b": "the length divided out",
+   "diff": 0.000986699712399286,
+   "high": 0.0011769733215973464,
+   "low": 0.000841004205587459,
+   "material": "WSe2"
+  },
+  {
+   "a": "the length as an extra channel",
+   "b": "the length divided out",
+   "diff": 0.0007318467963465247,
+   "high": 0.0008649368539596025,
+   "low": 0.0006148637601387618,
+   "material": "WSe2"
+  },
+  {
+   "a": "the length alone",
+   "b": "the length divided out",
+   "diff": -0.1406854424678462,
+   "high": -0.12599532987417786,
+   "low": -0.15654943456155948,
+   "material": "WSe2"
+  }
+ ],
+ "r_max": 10.0,
+ "rows": [
+  {
+   "arm": "the length divided out",
+   "descriptor": "whole-cell autocorrelation, MoS2",
+   "mae": 0.1043128327159134,
+   "mae_site": 0.03645419647463479,
+   "mae_site_unseen": 0.03645419647463479,
+   "material": "MoS2",
+   "n": 2000,
+   "q2": 0.9989161740724688,
+   "rmse": 0.12488231116272099,
+   "series": "defects",
+   "settings": [
+    "sigma 0.35",
+    "sigma 0.5",
+    "sigma 0.75"
+   ],
+   "target": "formation energy"
+  },
+  {
+   "arm": "the length kept",
+   "descriptor": "whole-cell autocorrelation, MoS2",
+   "mae": 0.006714175206449568,
+   "mae_site": 0.0023690137629381147,
+   "mae_site_unseen": 0.0023690137629381147,
+   "material": "MoS2",
+   "n": 2000,
+   "q2": 0.9999818448772276,
+   "rmse": 0.016162954654831096,
+   "series": "defects",
+   "settings": [
+    "sigma 0.35"
+   ],
+   "target": "formation energy"
+  },
+  {
+   "arm": "the length as an extra channel",
+   "descriptor": "whole-cell autocorrelation, MoS2",
+   "mae": 0.03574287266874011,
+   "mae_site": 0.013719660234719778,
+   "mae_site_unseen": 0.013719660234719778,
+   "material": "MoS2",
+   "n": 2000,
+   "q2": 0.9997202676681355,
+   "rmse": 0.06344428279602639,
+   "series": "defects",
+   "settings": [
+    "sigma 0.75, weight 0.1"
+   ],
+   "target": "formation energy"
+  },
+  {
+   "arm": "the length alone",
+   "descriptor": "whole-cell autocorrelation, MoS2",
+   "mae": 1.3237115863748599,
+   "mae_site": 0.4943019378927104,
+   "mae_site_unseen": 0.4943019378927104,
+   "material": "MoS2",
+   "n": 2000,
+   "q2": 0.7794024597850172,
+   "rmse": 1.7816463079355798,
+   "series": "defects",
+   "settings": [
+    "sigma 0.75"
+   ],
+   "target": "formation energy"
+  },
+  {
+   "arm": "the length divided out",
+   "descriptor": "whole-cell autocorrelation, WSe2",
+   "mae": 0.08881611698963597,
+   "mae_site": 0.0308435688394327,
+   "mae_site_unseen": 0.0308435688394327,
+   "material": "WSe2",
+   "n": 2000,
+   "q2": 0.9987761013883879,
+   "rmse": 0.12062427257041372,
+   "series": "defects",
+   "settings": [
+    "sigma 0.5",
+    "sigma 0.75"
+   ],
+   "target": "formation energy"
+  },
+  {
+   "arm": "the length kept",
+   "descriptor": "whole-cell autocorrelation, WSe2",
+   "mae": 0.017963444966570364,
+   "mae_site": 0.006282814724305562,
+   "mae_site_unseen": 0.006282814724305562,
+   "material": "WSe2",
+   "n": 2000,
+   "q2": 0.9997628011007872,
+   "rmse": 0.05310291001664427,
+   "series": "defects",
+   "settings": [
+    "sigma 0.35"
+   ],
+   "target": "formation energy"
+  },
+  {
+   "arm": "the length as an extra channel",
+   "descriptor": "whole-cell autocorrelation, WSe2",
+   "mae": 0.03463288990438062,
+   "mae_site": 0.013013589249373857,
+   "mae_site_unseen": 0.013013589249373857,
+   "material": "WSe2",
+   "n": 2000,
+   "q2": 0.9995079481847344,
+   "rmse": 0.07648343866870488,
+   "series": "defects",
+   "settings": [
+    "sigma 0.35, weight 0.1",
+    "sigma 0.5, weight 0.1",
+    "sigma 0.75, weight 0.5",
+    "sigma 0.75, weight 0.75"
+   ],
+   "target": "formation energy"
+  },
+  {
+   "arm": "the length alone",
+   "descriptor": "whole-cell autocorrelation, WSe2",
+   "mae": 0.9073412016760183,
+   "mae_site": 0.3448829702511534,
+   "mae_site_unseen": 0.3448829702511534,
+   "material": "WSe2",
+   "n": 2000,
+   "q2": 0.8580906589205417,
+   "rmse": 1.2988753594805253,
+   "series": "defects",
+   "settings": [
+    "sigma 0.75"
+   ],
+   "target": "formation energy"
+  }
+ ],
+ "series": "defects",
+ "sigmas": [
+  0.35,
+  0.5,
+  0.75
+ ],
+ "weights": [
+  0.1,
+  0.25,
+  0.5,
+  0.75
+ ]
+}

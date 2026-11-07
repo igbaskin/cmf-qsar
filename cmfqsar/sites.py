@@ -293,10 +293,16 @@ def site_features(crystals: Sequence[CrystalFields], targets: AtomTargets,
 
 
 def site_kernel(train: np.ndarray, test: Optional[np.ndarray] = None,
-                n_bins: int = 1, blocks: Optional[Sequence[int]] = None) -> np.ndarray:
+                n_bins: int = 1, blocks: Optional[Sequence[int]] = None,
+                normalize: bool = True) -> np.ndarray:
     """The cosine-normalised linear kernel of the site profiles: the same kernel the whole-cell
-    autocorrelation uses, so that only the descriptor differs between the two."""
-    return autocorrelation_kernel(train, test, n_bins=n_bins, blocks=blocks)
+    autocorrelation uses, so that only the descriptor differs between the two.
+
+    `normalize=False` keeps the length of each row, which the cosine kernel divides out. It is
+    here for the measurement of plan item M15 and changes no default.
+    """
+    return autocorrelation_kernel(train, test, n_bins=n_bins, blocks=blocks,
+                                  normalize=normalize)
 
 
 def site_targets(values: Sequence[Sequence[float]], name: str = "") -> AtomTargets:
