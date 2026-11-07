@@ -37,6 +37,8 @@ OUT = os.path.join(HERE, "figures")
 RESULTS = os.path.join(ROOT, "benchmarks", "results")
 sys.path.insert(0, ROOT)
 
+from cmfqsar.dataio import relative_path  # noqa: E402
+
 WIDTH = 6.3          # inches: the text width of the manual's page
 DPI = 150
 
@@ -1866,7 +1868,7 @@ def main(argv=None) -> int:
             if not same:
                 failed.append(name)
         else:
-            print(f"written {os.path.relpath(path, ROOT)}  ({os.path.getsize(path) // 1024} kB)")
+            print(f"written {relative_path(path, ROOT)}  ({os.path.getsize(path) // 1024} kB)")
     if failed:
         print(f"{len(failed)} figure(s) differ from docs/figures: run python docs/make_figures.py")
         return 1

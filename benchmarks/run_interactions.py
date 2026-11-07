@@ -66,6 +66,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(ROOT, "examples"))
 
 from cmfqsar.cofields import Grid, make_grid  # noqa: E402
+from cmfqsar.dataio import relative_path  # noqa: E402
 from cmfqsar.fields import AtomTable, FieldSet, MoleculeFields, build_fields  # noqa: E402
 from cmfqsar.model import CMFModel  # noqa: E402
 from cmfqsar.nonlinearity import (atom_interactions, gradient_field, nonlinearity_indices,  # noqa: E402
@@ -403,7 +404,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     grid_plane = plane_grid(0.0)
     panels: Dict[str, np.ndarray] = {}
     fits, measures, maps = [], [], {}
-    print(f"{len(mf)} molecules written to {os.path.relpath(a.out_dir, ROOT)}/pairs.sdf")
+    print(f"{len(mf)} molecules written to {relative_path(a.out_dir, ROOT)}/pairs.sdf")
     for target in TARGETS:
         y = np.array([m.GetDoubleProp(target) for m in mols])
         print(f"\n== {target}: sd(y) {np.std(y):.3f}")
@@ -445,7 +446,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             w.writerows(rows_)
     plot(panels, mf[shown], k_shown, os.path.join(a.out_dir, "pair_fields.png"))
     report(a.out_dir)
-    print(f"\nwritten to {os.path.relpath(a.out_dir, ROOT)} in {time.time() - t0:.0f} s")
+    print(f"\nwritten to {relative_path(a.out_dir, ROOT)} in {time.time() - t0:.0f} s")
     return 0
 
 

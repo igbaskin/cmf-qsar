@@ -62,7 +62,7 @@ from rdkit import RDLogger  # noqa: E402
 
 from cmfqsar.align import mcs_align  # noqa: E402
 from cmfqsar.chemotypes import count_kernel  # noqa: E402
-from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.dataio import load_dataset, relative_path  # noqa: E402
 from cmfqsar.fields import FieldSet, build_fields  # noqa: E402
 from cmfqsar.invariant import (AutocorrelationSpec, autocorrelation_kernel,  # noqa: E402
                                feature_matrix)
@@ -141,7 +141,7 @@ def measure(path, tag, max_guests=0):
     t0 = time.time()
     ref, matched = align_by_mcs(mols, y)
     heavy = [m.GetNumHeavyAtoms() for m in mols]
-    out = {"file": os.path.relpath(path, ROOT).replace("\\", "/"), "n": len(mols),
+    out = {"file": relative_path(path, ROOT).replace("\\", "/"), "n": len(mols),
            "reference": names[ref], "reference_heavy_atoms": heavy[ref],
            "mcs_atoms_median": float(np.median(matched)),
            "mcs_atoms_min": int(np.min(matched)), "mcs_atoms_max": int(np.max(matched)),

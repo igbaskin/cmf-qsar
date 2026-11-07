@@ -52,7 +52,7 @@ from rdkit.Chem import rdMolAlign  # noqa: E402
 import run_topomer as T  # noqa: E402  - the Sutherland/Mittal benchmark, reused in full
 
 from cmfqsar.chemotypes import count_kernel  # noqa: E402
-from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.dataio import load_dataset, relative_path  # noqa: E402
 from cmfqsar.fields import FieldSet, build_fields  # noqa: E402
 from cmfqsar.fields import AtomTable  # noqa: E402
 from cmfqsar.invariant import (AutocorrelationSpec, autocorrelation_kernel,  # noqa: E402
@@ -167,7 +167,7 @@ def run_set(path, results=RESULTS, force=False, min_molecules=15):
             frag.append((fs, [build_fields(found[i], fs, names[i]) for i in keep]))
         print(f"    alpha {alpha:g}: fields built ({time.time() - t0:.0f} s)", flush=True)
 
-    res = {"set": name, "file": os.path.relpath(path, ROOT), "n": len(mols),
+    res = {"set": name, "file": relative_path(path, ROOT), "n": len(mols),
            "core": Chem.MolToSmiles(core), "reference": names[ref_i],
            "align_rmsd_median": float(np.median(finite)) if finite else None,
            "sites": len(labels), "n_cuttable": len(sel),

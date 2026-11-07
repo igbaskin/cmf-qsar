@@ -7613,9 +7613,14 @@ and keeping the largest. Each of these changes sign under one of the flips, so a
 which all five vanish is symmetric under that flip and its field is the same in either frame.
 Benzene, triphenylene and the other molecules with a three-fold or higher axis have equal
 in-plane moments and no long axis; for them $x$ is put along the direction of the largest third
-moment, or the fourth or sixth when the lower ones do not depend on the direction. A molecule that
-is already in its frame stays where it is, a rotated or shifted copy lands on the same point set,
-and a mirror image lands on the mirrored one (`tests/test_pbh.py`). The alternative that [2]
+moment, or the fourth or sixth when the lower ones do not depend on the direction. That direction
+is solved for and not searched for: a maximum is flat, so comparing values of the moment over the
+angle cannot place the angle better than about 1e-8 radians, and the frame then depends on the
+machine at that level. The derivative of the moment is not flat at the maximum, so the program
+locates the angle by Newton's method on the derivative, which places it to the last digit. A
+molecule that is already in its frame stays where it is -- to 2e-15 A, which is what
+`tests/test_pbh.py` asks for -- a rotated or shifted copy lands on the same point set, and a
+mirror image lands on the mirrored one. The alternative that [2]
 offers — among the four candidate frames, the one whose field is most similar on average to
 the training set (`choose_frame_by_kernel`, alignment by prediction confidence) — is implemented
 and off by default, since the rule leaves nothing to choose for a planar molecule without symmetry.
@@ -11390,6 +11395,25 @@ commit (plan item G4). Nothing can check that a section was *written*, and these
 the omissions that matter visible: a measurement nobody can find, and a PDF that disagrees with
 the Markdown beside it. `tests/test_documents.py` runs both in the test suite, so the rule holds
 on every commit and not only when someone remembers to run the benchmarks.
+
+**What depends on the machine.** The test suite runs on Ubuntu, Windows and macOS, and the first
+runs on machines other than the author's showed which quantities a test may assert and which it
+may not (plan item A2). Three are worth knowing if you run the suite yourself or write a test.
+*An embedded conformer is not the same geometry everywhere.* RDKit's distance-geometry embedding
+takes a seed, but its random stream is not the same in every build, so a geometry built in a test
+is reproducible on one machine and not between machines. A test that measures a geometry therefore
+reads a stored structure; the width of the cavity of alpha-cyclodextrin, for example, ranged over
+the embedding seeds from 0.88 A to 3.14 A. *A maximum located by comparing values is worth half
+the digits.* Near a maximum a smooth function is flat, so an argument found by comparing values of
+the function carries about half of the available digits, that is eight and not sixteen. Where the
+answer has to be the same everywhere, as the canonical frame of a polybenzenoid hydrocarbon does,
+the program solves for the derivative instead. *A pseudo-inverse is exact up to the conditioning.*
+`nystrom_kernel` drops the eigenvalues below `NYSTROM_CUTOFF = 1e-12` of the largest, so with
+every molecule a landmark it reproduces the kernel to about `eps / NYSTROM_CUTOFF`, which is two
+parts in 1e5 and not the 1e-6 a test first asked for. A test of such a round trip takes its bound
+from the eigenvalues of the kernel it is given. What was *not* a cause, although it was the first
+guess: the linear-algebra library. The runners and the author's machine use the same OpenBLAS,
+which the numpy wheels carry.
 
 # Command-line reference
 

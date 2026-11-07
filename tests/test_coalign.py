@@ -38,16 +38,32 @@ def _fields(mols, names, fs):
 
 
 def test_the_objective_uses_no_activity_of_the_molecule_it_scores():
-    """Every molecule is predicted by a model fitted without it, so the error is a fair measure."""
+    """Every molecule is predicted by a model fitted without it, so the error is a fair measure.
+
+    The comparison is with the in-sample error of the same model fitted on every molecule, which
+    is what a leaky objective would report.  Measured: fold-out 0.204 against in-sample 0.086,
+    and the ratio stayed between 1.8 and 2.8 over four activity noise seeds, three fold counts
+    and coordinate shifts up to 0.1 A.
+
+    Scrambling the activities cannot be used for this comparison, although it looks like the
+    obvious test.  On twelve substituted benzenes this model predicts no better than the mean
+    activity -- fold-out error 0.204 against a standard deviation of the activity of 0.160 --
+    so there is nothing for scrambling to destroy: the scrambled error came out at 0.204 as
+    well, and over five scrambles it ranged from 0.146 to 0.219, that is on both sides of the
+    honest error.  The test passed here by 0.0002 and failed on every continuous-integration
+    runner, where a newer RDKit embeds the molecules slightly differently.
+    """
     mols, names, y = _set()
     fs = FieldSet.create(physchem=["steric", "electrostatic"], alpha=0.5)
     mf = _fields(mols, names, fs)
     err = leave_fold_out_error(mf, y, _template(fs), lam=0.1, folds=4, seed=0)
     assert np.isfinite(err) and err > 0
-    # scrambling the activities must destroy it, which a leaky implementation would not
-    shuffled = np.random.RandomState(0).permutation(y)
-    err_shuffled = leave_fold_out_error(mf, shuffled, _template(fs), lam=0.1, folds=4, seed=0)
-    assert err_shuffled > err
+    leaky = CMFModel(fieldset=fs, method="gp", normalize=True, params={"lam": 0.1})
+    table = AtomTable.from_molecules(mf)
+    leaky.fit(table, y, cv_folds=0)
+    in_sample = float(np.sqrt(np.mean((y - np.asarray(leaky.predict(table), float)) ** 2)))
+    assert in_sample > 0
+    assert err > 1.5 * in_sample
 
 
 def test_a_round_that_does_not_help_is_rolled_back_exactly():
