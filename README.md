@@ -5883,7 +5883,6 @@ cmfqsar/active.py       which molecule to make next: expected improvement and th
 cmfqsar/design.py       what to put at a position: enumerate, pose by rule, rank
 cmfqsar/errorpred.py    scoring the things that claim to know when a prediction is bad
 cmfqsar/surrogate.py    the model as the fast level of a hierarchy: a standard deviation in the units of the activity, its calibration, and the tolerance that sends a structure back to the fine level
-cmfqsar/surrogate.py    the model as the fast level of a hierarchy: a standard deviation in the units of the activity, its calibration, and the tolerance that sends a structure back to the fine level
 cmfqsar/evidence.py     the marginal likelihood, for choosing alpha and lambda
 cmfqsar/perfield.py     one attenuation per field, by coordinate descent on the evidence
 cmfqsar/report.py       one self-contained HTML page describing a model
