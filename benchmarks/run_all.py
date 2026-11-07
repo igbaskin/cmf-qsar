@@ -659,6 +659,12 @@ def registry() -> List[Benchmark]:
                   minutes="15",
                   report=lambda: _mod("run_errorpred").report(_r("errorpred")),
                   tables=["errorpred/table.md"]),
+        Benchmark("surrogate", "is the predictive standard deviation calibrated, and what "
+                  "a tolerance rule does: the model as the fast level of a hierarchy",
+                  "run_surrogate.py", "surrogate", compute=[[]],
+                  minutes="5",
+                  report=lambda: _mod("run_surrogate").report(_r("surrogate")),
+                  tables=["surrogate/table.md"]),
         Benchmark("perfield", "one attenuation per field, or one shared by all of them",
                   "run_perfield.py", "perfield", compute=[[]],
                   minutes="10",

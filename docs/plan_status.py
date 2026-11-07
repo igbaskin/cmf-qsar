@@ -65,6 +65,7 @@ SECTIONS = OrderedDict([
     ("EC", "H. Electrochemistry"), ("BT", "H. Battery science"),
     ("LP", "H. Local properties"), ("SC", "H. Supramolecular and host-guest"),
     ("PBH", "H. Physical organic"), ("ND", "H. Deep learning"),
+    ("MS", "H. Multiscale modelling"),
     ("MC", "I. Medicinal chemistry"),
 ])
 #: prefixes that belong to a section listed under another prefix

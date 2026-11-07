@@ -4570,6 +4570,90 @@ nothing like a per-molecule error bar. On one of the eight sets (THER) every est
 negative: an estimate of error is itself a model, and it can be wrong about a series. Use them to
 order molecules, and quote the conformal interval when a number has to be attached to one.
 
+## The model as the fast level of a hierarchy: a standard deviation in the units of the activity
+
+A multiscale scheme puts a CMF model between an electronic-structure method and a coarser model:
+the fine level labels a few hundred structures, the model answers for the thousands the coarse
+model needs, and the coarse model turns them into a material property. For that the model must say,
+per structure, whether its answer can be used. The posterior variance of the Gaussian process (the
+*Gaussian process* row of the learner table) is the right quantity, but as it stands it is not
+usable for the purpose, for three reasons.
+
+**It is in the units of the kernel.** The Gaussian process that matches the ridge fit has the prior
+covariance $s\,\mathbf{K}$ and the noise $s\lambda$, where $s$ is the one amplitude the evidence
+profiles out in closed form (the section *Choosing α and λ by the evidence*): the mean squared
+whitened residual of the training set, $s = \mathbf{r}^{\mathrm{T}}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{r}/(n-1)$
+with $\mathbf{r}$ the residual about the fitted constant. The predictive variance of a new
+*measurement* at $x$ is then
+
+$$\sigma^2(x) = s\left[K(x,x) - \mathbf{k}^{\mathrm{T}}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{k} + \frac{(1-\mathbf{k}^{\mathrm{T}}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{1})^2}{\mathbf{1}^{\mathrm{T}}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{1}} + \lambda\right]$$
+
+and its square root is in the units of the activity. The third term inside the bracket is the
+uncertainty of the constant mean that the ridge fits as its bias, marginalised under a flat prior
+(Rasmussen and Williams 2006, eq. 2.42 with one basis function); it is what makes a structure far
+from every training one uncertain about the *level* of the activity and not only about its shape.
+Without the last term, $\lambda$, the deviation is that of the underlying value rather than of a
+measurement, which is what two predictions of the same structure share.
+
+**Nobody had checked that it means what it says.** On the folds, the standardised out-of-fold
+residual $z = (y - \hat y)/\sigma$ should have a root mean square of one, and the interval of two
+standard deviations should hold about 95 % of the activities. The program reports both, and the
+factor that would make the root mean square one. A factor well above one says the model is surer
+than it should be, which is the usual finding when the kernel misses a part of the chemistry. The
+factor is reported and not applied.
+
+**A number is not a decision.** A tolerance in the units of the activity turns it into one: every
+structure whose standard deviation exceeds the tolerance is marked as one to pass to the fine level
+(a DFT calculation, a measurement) instead of using the model's answer. The share the fine level
+can afford goes the other way, to the tolerance that sends it that many.
+
+```bash
+python cmf_cli.py build data.sdf --charges file --test-fraction 0.3 --calibration --save model.cmf
+python cmf_cli.py predict model.cmf new.sdf --sd --tolerance 0.7 --out predictions.csv
+```
+
+`--calibration` prints the check on the folds and, when there is a test set, on it. `--sd` prints
+the prediction with its standard deviation and writes it to the CSV as `predicted_sd`;
+`--tolerance` adds the marks (`-> fine level` on the screen, a `defer` column of 0 and 1 in the
+CSV) and a line saying how many structures the model answers and, where the activities are known,
+the error on each side. In Python the same three things are `model.predict_with_sd(test)`,
+`model.calibration()` and `cmfqsar.surrogate.Handoff.of(sd, tolerance, y, mean)`; the deviation
+needs the linear kernel and the ridge learner, and a low-rank model refuses it, because the term of
+the mean needs the full training kernel.
+
+**Measured, the deviation is calibrated as it stands.** Eight Sutherland sets, five random 70/30
+splits each, α and λ by the evidence on the training part (`benchmarks/run_surrogate.py`):
+
+| set | n | test RMSE | mean σ | z rms, folds | z rms, test | inside 2σ |
+|---|---:|---:|---:|---:|---:|---:|
+| DHFR | 361 | 0.751 | 0.679 | 1.10 | 1.08 | 93 % |
+| COX2 | 282 | 0.811 | 0.825 | 0.97 | 0.99 | 93 % |
+| BZR | 147 | 0.610 | 0.620 | 1.03 | 0.98 | 94 % |
+| ACE | 114 | 1.512 | 1.378 | 0.99 | 1.15 | 89 % |
+| AChE | 111 | 0.809 | 0.830 | 1.05 | 0.96 | 94 % |
+| THR | 88 | 0.672 | 0.641 | 0.96 | 1.02 | 94 % |
+| THER | 76 | 1.635 | 1.605 | 1.03 | 1.07 | 93 % |
+| GPB | 66 | 0.767 | 0.722 | 0.99 | 1.10 | 92 % |
+| **mean** | | 0.946 | 0.912 | **1.02** | **1.05** | **93 %** |
+
+The root mean square of $z$ is 1.02 on the folds and 1.05 on the held-out molecules, and two
+standard deviations hold 93 % of them against the 95 % of a Gaussian. The mean deviation is within
+4 % of the error actually made on every set. So the scale that the evidence profiles out *is* the
+noise level of the series, and the correction factor, though reported, is not needed on these sets;
+applied to the held-out molecules it moves the root mean square from 1.05 to 1.03.
+
+**The tolerance rule does what it promises, and no more.** With the tolerance set to the
+cross-validated RMSE of the training part, the error the model claims for a typical molecule, the
+model answers **61 %** of the held-out molecules at an RMSE of **0.90** and defers the rest, whose
+RMSE is **1.03**; the mean tolerance is 0.92, so the answered share's error sits where the rule
+said it would. Sending a fixed quarter of the molecules to the fine level gives 0.88 against 1.08.
+The separation is modest, and it must be: the section above showed that the posterior variance is
+the distance to the training set in other units and captures about a fifth of what an oracle would.
+On THER the deferred molecules are *better* predicted than the answered ones, as every estimate of
+the error was on that set. What calibration adds is not a better ordering but a fair size: the
+error the fast level reports for the structures it answers is the error it makes, which is what a
+coarse model needs in order to carry it forward.
+
 ## What the model thinks the groups are: clustering the kernel
 
 Every grouped validation in this manual splits the molecules by their Bemis–Murcko scaffold, and
