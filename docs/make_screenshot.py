@@ -16,7 +16,8 @@ Three pictures, chosen with ``--what``:
   out to the kernel's cutoff and its sites coloured by their contribution to the prediction.
 * ``slab``: the same window with the Fe(110) slab of ``examples/corrosion_fe110`` and a
   benzimidazole molecule adsorbed flat on it, the pose relaxed with the UMA potential, read as a
-  layer periodic in two directions.
+  layer periodic in two directions and drawn in ball and stick, so the molecule has its bonds
+  and the iron atoms stay spheres.
 
 Grabbing a window renders the OpenGL view without the text it draws over the scene (the residue
 labels, the site numbers), so the view's own framebuffer is painted into the window image at the
@@ -201,7 +202,9 @@ def shoot_slab(app, args, then):
         # the path as given is what the window's log and status line show
         win.load(os.path.relpath(SLAB_FILE, os.getcwd()).replace(os.sep, "/"))
         win.table.setCurrentCell(0, 0)
-        win.cmb_atoms.setCurrentText("balls")
+        # bonds perceived from the distances: the molecule gets its sticks, the iron atoms,
+        # which the perception leaves without bonds, stay spheres
+        win.cmb_atoms.setCurrentText("ball and stick")
         win.chk_cell.setChecked(True)
         win.chk_images.setChecked(True)
         win.spin_images.setValue(5.0)

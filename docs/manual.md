@@ -679,8 +679,14 @@ cell, in the periodic images. The two windows do not share a data set.
 (CIF, POSCAR or CONTCAR, extended XYZ, ASE JSON, and the other formats ASE reads), one
 structure per file, named after its file; this is how a set downloaded from a database arrives.
 *Open one structure file…* reads a file that holds one structure or many, as `examples/sac/`
-and `examples/hops/` do. A CIF with partly occupied sites is read with its occupancies, as the
-section on partial occupancy describes. The *Structures* panel lists what came back with the
+and `examples/hops/` do. Both routes read through ASE, so any format ASE reads is accepted. A
+folder is searched for the file endings `.cif`, `.vasp`, `.poscar`, `.contcar`, `.extxyz`,
+`.xyz`, `.json` (an ASE database), `.traj` (an ASE trajectory), `.cell` (CASTEP), `.res`
+(SHELX), `.xsf` (XCrySDen) and `.pwo` (Quantum ESPRESSO output), and for files named `POSCAR`
+or `CONTCAR`, which VASP writes without an ending; a file with any other ending is left
+alone, so notes and tables may sit beside the structures. The file dialog lists the common
+endings; a file of another ASE format is opened through *All files*. A CIF with partly
+occupied sites is read with its occupancies, as the section on partial occupancy describes. The *Structures* panel lists what came back with the
 measured value, the subset and the prediction of each cell, and the line under it says how many
 atoms the cells have.
 
@@ -2752,7 +2758,7 @@ docking, the site profiles — applies to a surface without changes. A slab is r
 CIF, or built: `bcc110_slab()` gives the 6 × 6 × 4 Fe(110) slab at a = 2.78 Å that the reference
 poses of `examples/corrosion_fe110` were computed on, with its top layer at z = 0.
 
-![The Fe(110) slab of `examples/corrosion_fe110` with a benzimidazole molecule adsorbed flat on it, the pose relaxed with the UMA potential, in the window for crystals, read as a layer periodic in two directions: the four layers of the slab as spheres, the molecule on the top layer, the cell with its vacuum above the slab, and the periodic images of the cell within 5 Å as dots. This is the structure the slab receptor is cut from, seen whole. Taken by `docs/make_screenshot.py --what slab`.](docs/figures/slab_window.png)
+![The Fe(110) slab of `examples/corrosion_fe110` with a benzimidazole molecule adsorbed flat on it, the pose relaxed with the UMA potential, in the window for crystals, read as a layer periodic in two directions and drawn in ball and stick: the four layers of the slab as spheres, the molecule on the top layer with its bonds, which the window perceives from the distances and gives to the organic atoms only, the cell with its vacuum above the slab, and the periodic images of the cell within 5 Å as dots. This is the structure the slab receptor is cut from, seen whole. Taken by `docs/make_screenshot.py --what slab`.](docs/figures/slab_window.png)
 
 The molecule in that picture is drawn as spheres, which is what the *Atoms* box offers by default. *ball and stick* in the same window gives it its bonds while the slab stays spheres, because a metal atom gets none; the section *How the atoms are drawn, and the bonds* says why, and what the rule is worth on these very molecules.
 
@@ -6901,11 +6907,14 @@ are the atoms of every conformation with their weights multiplied by that confor
 and the kernel of two ensembles comes out as
 
 $$
-K(A,B) = \sum_k \sum_l w_k^A w_l^B\, K\!\left(X_A^{(k)}, X_B^{(l)}\right)
+K(A,B) \;=\; \sum_{k=1}^{n_A} \; \sum_{l=1}^{n_B} \; w^{A}_{k}\, w^{B}_{l}\; K\left(X^{(k)}_{A},\, X^{(l)}_{B}\right)
 $$
 
-the mean-map kernel of the two conformational distributions, positive definite by construction. A
-test checks that identity against the pairwise kernels of the conformations. The model stays linear
+where the sums run over the $n_A$ conformations of ensemble $A$ and the $n_B$ conformations of
+ensemble $B$, each conformation $X$ enters with its weight $w$, and the weights of each ensemble
+sum to one. This is the mean-map kernel of the two conformational distributions, positive
+definite by construction. A test checks that identity against the pairwise kernels of the
+conformations. The model stays linear
 in that mean field, so **co-fields, the decomposition rules, Shapley values and the complementarity
 scores all keep working**; contributions arrive per atom per conformation and fold back onto the
 atoms by summation.
@@ -11310,7 +11319,7 @@ not every option.
 | Subcommand | What it does |
 |---|---|
 | `build` | build, cross-validate, test and save a model |
-| `build-crystals` | the same on periodic structures (CIF, POSCAR, extended XYZ) |
+| `build-crystals` | the same on periodic structures (CIF, POSCAR, extended XYZ, and every other format ASE reads; the list is in the section on crystals of chapter 4) |
 | `diagnose` | ask a data set what it can support, before modelling it |
 | `align` | put a set in one frame: by substructure, by field similarity, by prediction confidence or in a pocket |
 | `predict` | predict with a saved model, optionally aligning by confidence first; a model fitted on crystals takes crystals |
