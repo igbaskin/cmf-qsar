@@ -182,15 +182,30 @@ def test_the_charge_carries_a_name_of_its_own():
 # ----------------------------------------------------------------------- the command line
 
 
-def test_the_command_carries_the_charge_and_the_spin():
-    args = QX.command(QX.Config(xtb="x"), "geom.xyz", charge=-1, mult=2)
+def _stand_in_exe(tmp_path):
+    """A file that stands in for the program.
+
+    Building an argument list needs a path, not a working xtb, so these tests make an empty file
+    and never run it. They used to pass the made-up name ``"x"``, which `find_xtb` quietly
+    replaced with the installed xtb, so they passed here and failed wherever xtb is absent.
+    """
+    exe = tmp_path / ("xtb.exe" if os.name == "nt" else "xtb")
+    exe.write_text("")
+    return str(exe)
+
+
+def test_the_command_carries_the_charge_and_the_spin(tmp_path):
+    exe = _stand_in_exe(tmp_path)
+    args = QX.command(QX.Config(xtb=exe), "geom.xyz", charge=-1, mult=2)
+    assert args[0] == exe, "the program given is the one the command names"
     assert "--chrg" in args and args[args.index("--chrg") + 1] == "-1"
     assert "--uhf" in args and args[args.index("--uhf") + 1] == "1"
     assert "--vfukui" in args and "--opt" not in args
 
 
-def test_the_options_reach_the_command():
-    cfg = QX.Config(xtb="x", gfn=1, opt=True, fukui=False, solvent="water", accuracy=0.5)
+def test_the_options_reach_the_command(tmp_path):
+    cfg = QX.Config(xtb=_stand_in_exe(tmp_path), gfn=1, opt=True, fukui=False, solvent="water",
+                    accuracy=0.5)
     args = QX.command(cfg, "geom.xyz", 0, 1)
     assert args[args.index("--gfn") + 1] == "1"
     assert args[args.index("--alpb") + 1] == "water"
@@ -210,6 +225,57 @@ def test_a_missing_executable_says_where_to_get_one(monkeypatch):
     monkeypatch.setattr(QX, "DEFAULT_XTB", os.path.join(HERE, "no_such_xtb.exe"))
     with pytest.raises(QX.XtbError, match="github.com/grimme-lab/xtb"):
         QX.find_xtb()
+
+
+def test_a_given_path_that_names_no_file_is_refused(monkeypatch, tmp_path):
+    """And is not replaced by another xtb, which is the point of the check.
+
+    The installed program is put where every fallback would find it, so the test fails if the
+    search walks past the path it was given instead of stopping at it.
+    """
+    installed = tmp_path / "installed_xtb"
+    installed.write_text("")
+    monkeypatch.setenv("XTB_EXE", str(installed))
+    # only the bare name is on the path, which is what `shutil.which` does with a path
+    monkeypatch.setattr(QX.shutil, "which",
+                        lambda name: str(installed) if name == "xtb" else None)
+    monkeypatch.setattr(QX, "DEFAULT_XTB", str(installed))
+
+    missing = str(tmp_path / "nowhere" / "xtb.exe")
+    with pytest.raises(QX.XtbError, match="nowhere"):
+        QX.find_xtb(missing)
+
+
+def test_a_wrong_xtb_exe_is_refused_too(monkeypatch, tmp_path):
+    """``XTB_EXE`` is also a path the user gave, so a stale one is an error, not a fallback."""
+    installed = tmp_path / "installed_xtb"
+    installed.write_text("")
+    monkeypatch.setenv("XTB_EXE", str(tmp_path / "stale" / "xtb.exe"))
+    # only the bare name is on the path, which is what `shutil.which` does with a path
+    monkeypatch.setattr(QX.shutil, "which",
+                        lambda name: str(installed) if name == "xtb" else None)
+    monkeypatch.setattr(QX, "DEFAULT_XTB", str(installed))
+    with pytest.raises(QX.XtbError, match="XTB_EXE"):
+        QX.find_xtb()
+
+
+def test_a_bare_name_is_looked_up_on_the_path(monkeypatch, tmp_path):
+    """`--xtb xtb` still works: a name that is not a file is searched for on the path."""
+    installed = tmp_path / "xtb"
+    installed.write_text("")
+    monkeypatch.setattr(QX.shutil, "which", lambda name: str(installed) if name == "xtb" else None)
+    assert QX.find_xtb("xtb") == str(installed)
+
+
+def test_a_path_that_exists_wins_over_the_environment(monkeypatch, tmp_path):
+    """The order is unchanged: the argument first, then ``XTB_EXE``, then the path."""
+    given = tmp_path / "given_xtb"
+    given.write_text("")
+    other = tmp_path / "other_xtb"
+    other.write_text("")
+    monkeypatch.setenv("XTB_EXE", str(other))
+    assert QX.find_xtb(str(given)) == str(given)
+    assert QX.find_xtb() == str(other)
 
 
 # ------------------------------------------------------------------------------- the runs
