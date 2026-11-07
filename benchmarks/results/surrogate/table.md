@@ -27,3 +27,19 @@ The tolerance rule, with the tolerance set to the cross-validated RMSE of the tr
 | THER | 1.551 | 50% | 1.721 | 1.596 | 1.633 | 1.564 |
 | GPB | 0.653 | 34% | 0.750 | 0.741 | 0.668 | 0.976 |
 | **mean** | 0.916 | 61% | **0.901** | **1.027** | **0.880** | **1.080** |
+
+## The hop sample of LiTraj: a barrier as the activity, a structure as the fold
+
+1801 hops in 393 structures of the nebBVSE122k sample (`benchmarks/run_litraj.py`), barriers with a standard deviation of 1.90 eV; 10 folds that hold out whole structures, the ridge and the width chosen on an inner split of 5 folds of the same kind. The fine level is the bond-valence calculation that labelled the hops.
+
+| kernel | q2 | held-out RMSE (eV) | mean sd (eV) | z rms, inner folds | z rms, held out | z rms, corrected | inside 2 sd | sd vs error (rho) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| linear | +0.572 | 1.246 | 1.136 | 1.04 | 1.05 | 1.02 | 95% | +0.20 |
+| Gaussian | +0.623 | 1.169 | 1.053 | 1.01 | 0.99 | 0.98 | 96% | +0.35 |
+
+The tolerance rule with the tolerance at the inner-fold RMSE of the training part (the error the model claims), and with a fixed 25% of the hops sent back to the calculation.
+
+| kernel | tolerance (eV) | answered | RMSE answered | RMSE deferred | RMSE answered at 25% deferred | RMSE of that 25% |
+|---|---:|---:|---:|---:|---:|---:|
+| linear | 1.242 | 87% | 1.123 | 1.856 | 1.063 | 1.681 |
+| Gaussian | 1.207 | 82% | 0.998 | 1.752 | 0.840 | 1.830 |

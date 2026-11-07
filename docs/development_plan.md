@@ -6163,11 +6163,17 @@ would discard the typed fields and the global kernel that are the method's own.
   and the correction factor is reported, not needed. The rule at a tolerance equal to the
   cross-validated RMSE answers 61 % of the held-out molecules at an RMSE of 0.90 against 1.03 for
   the deferred ones, the answered error sitting at the tolerance as promised; the separation is the
-  modest one E5 measured, and THER fails as it did there. *Open:* the same measurement on the hop
-  set of BT7 and LiTraj, where the fine level is a DFT barrier and the hierarchy is real; a series
-  where the kernel misses a part of the chemistry, which is where the factor should depart from
-  one; and the low-rank path, whose Woodbury variance exists in `cmfqsar/lowrank.py` without the
-  scale.
+  modest one E5 measured, and THER fails as it did there. *Measured on the hop sample
+  of LiTraj* the same day (`run_surrogate.py --hops`: 1,801 hops in 393 structures, folds that
+  hold out structures, the fine level a bond-valence barrier): calibrated again for the linear
+  and the Gaussian kernel (z rms 1.05 and 0.99, 95 % and 96 % inside two standard deviations),
+  and the rule separates by 1.8 rather than 1.1 — the Gaussian kernel answers 82 % of the hops at
+  1.00 eV and returns 18 % whose error would have been 1.75 eV — because a held-out structure is
+  often the only one of its chemical system, which is the situation a hierarchy is in. *Open:* a
+  set whose fine level is a DFT barrier rather than a bond-valence one (the nebDFT2k opening of
+  BT7's external check); a series where the kernel misses a part of the chemistry, which is where
+  the factor should depart from one; and the low-rank path, whose Woodbury variance exists in
+  `cmfqsar/lowrank.py` without the scale.
 
 * **MS2. A spatially resolved prediction as an output mode.** The global kernel returns one number
   per structure; a coarser model needs a map — a barrier per site, a reactivity per surface site, a

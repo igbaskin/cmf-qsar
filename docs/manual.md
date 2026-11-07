@@ -4657,6 +4657,35 @@ the error was on that set. What calibration adds is not a better ordering but a 
 error the fast level reports for the structures it answers is the error it makes, which is what a
 coarse model needs in order to carry it forward.
 
+**On a hop set, where the hierarchy is real, the rule earns more.** The sample of LiTraj used
+in the external check of the hop model — 1,801 hops of lithium ions in 393 crystals, each labelled
+by a bond-valence calculation, which is the fine level here — with ten folds that hold out whole
+structures and the ridge and the width of a Gaussian kernel chosen on an inner split of the same
+kind (`benchmarks/run_surrogate.py --hops`):
+
+| kernel | q² | held-out RMSE (eV) | mean σ (eV) | z rms, inner folds | z rms, held out | inside 2σ | σ against the error (ρ) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| linear, invariant local | +0.572 | 1.246 | 1.136 | 1.04 | 1.05 | 95 % | +0.20 |
+| Gaussian on the same rows | +0.623 | 1.169 | 1.053 | 1.01 | 0.99 | 96 % | +0.35 |
+
+| kernel | tolerance (eV) | answered | RMSE answered | RMSE deferred | answered at 25 % deferred | RMSE of that 25 % |
+|---|---:|---:|---:|---:|---:|---:|
+| linear | 1.242 | 87 % | 1.123 | 1.856 | 1.063 | 1.681 |
+| Gaussian | 1.207 | 82 % | 0.998 | 1.752 | 0.840 | 1.830 |
+
+The deviation is calibrated here as well, for both kernels, which is what the scale absorbing the
+units of the kernel promises: the root mean square of $z$ is 1.05 and 0.99, and two standard
+deviations hold 95 % and 96 % of the barriers. The rule now separates by a factor of 1.8 rather
+than 1.1: with the Gaussian kernel the model answers 82 % of the hops at an RMSE of 1.00 eV and
+sends back 18 % whose RMSE would have been 1.75 eV, and a fixed quarter sent back leaves 0.84 eV
+against 1.83 eV for the quarter. The reason is the data and not the method. A Sutherland series is
+congeneric, so every held-out molecule has close relatives in the training part and the deviations
+are all alike; the collection behind the hop sample covers every chemistry that holds lithium, so
+a held-out structure is often the only one of its chemical system, and the deviation says so. That
+is the situation a hierarchy is in, and it is where a calibrated deviation does its work: the hops
+the fast level keeps carry the error it claims, and the ones it returns are the ones the
+calculation was needed for.
+
 ## What the model thinks the groups are: clustering the kernel
 
 Every grouped validation in this manual splits the molecules by their Bemis–Murcko scaffold, and
