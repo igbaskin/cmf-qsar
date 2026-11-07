@@ -153,6 +153,30 @@ This is what the software paper needs, and nothing in the later parts should wai
     others: 7.2e-7 here, 1.5e-6 on the pinned-version job. The cut-off is now a named constant and
     the test derives its bound from the eigenvalues of the kernel it is given. The bound still
     fails by a wide margin if the pseudo-inverse is wrong, which is what the test is for.
+
+  **What the first run with a passing suite exposed, 7 November 2026.** With the six repaired,
+  every job reports 2,275 passed and 66 skipped -- the skips are the tests that need a program
+  the runners do not have, xtb and ORCA -- and two further faults became visible behind them.
+  Neither is a test.
+  * *The manual needs svglib and the lock file did not name it.* The job with the pinned versions
+    had never reached its own steps before. It now fails at `python docs/make_manual.py` with
+    "No module named 'svglib'": `pyproject.toml` lists `svglib` in the `docs` extra, but
+    `requirements-lock.txt`, which that job installs instead, pinned only reportlab and
+    matplotlib. `svglib==2.2.0` is added, which is the version the figures of the committed PDF
+    were embedded with. The rule the file states -- only the packages the program imports are
+    pinned -- covers it, since `docs/make_manual.py` imports it directly to place an SVG figure.
+  * *The test step ends non-zero after a clean run.* On five of the six suite jobs the summary
+    line reads 2,275 passed and the step still fails: on Ubuntu and macOS the process ends with
+    a segmentation fault and Qt prints "QObject: shared QObject was deleted directly. The program
+    is malformed and may crash."; on Windows it returns 1 with no message. It happens after the
+    last test, while the interpreter shuts down. Seven test modules each build their own
+    `QApplication.instance() or QApplication([])`, two of them without keeping the object, so the
+    only Python reference to the shared application can be dropped while Qt objects still live.
+    This is older than the six -- the run of 7 November before them crashed the same way on four
+    jobs -- and it does not show on Windows outside the runners, where the suite exits 0. It
+    needs a session-wide application the tests share and nothing destroys, which is a change to
+    the test set-up and not to the program, and it cannot be checked except on a runner.
+    **Still to do**, and it is the last thing between the suite and a green badge.
 * **A3. The data statement.** Done 22 October 2026 as the record: `docs/public_3dqsar_datasets.md`
   gives every set under `examples/` its origin, terms, script, size, users and a status (free,
   derived, unclear). Four items are of unclear status, `sutherland/`, `steroids_cbg.sdf` and the
