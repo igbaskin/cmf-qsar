@@ -1878,14 +1878,25 @@ def cmd_benchmark(args):
         raise SystemExit("the benchmarks are part of the source checkout and are not installed "
                          f"with the package; {path} is missing")
     argv = [path]
-    for flag in ("list", "check", "tables", "manifest", "readme"):
+    for flag in ("list", "check", "tables", "manifest"):
         if getattr(args, flag, False):
             argv.append("--" + flag)
+    if getattr(args, "readme", False):              # the spliced passages are part of --tables
+        argv.append("--tables")
     if args.data_root:
         argv += ["--data-root", args.data_root]
+    if getattr(args, "cif_root", None):
+        argv += ["--cif-root", args.cif_root]
     if args.orca:
         argv.append("--orca")
-    argv += list(args.name or [])
+    if getattr(args, "reproduce", None):
+        argv += ["--reproduce", str(args.reproduce)]
+    if args.name:                                   # the names are what --compute takes
+        argv += ["--compute", *args.name]
+        if getattr(args, "fresh", False):
+            argv.append("--fresh")
+        if not getattr(args, "rebuild", True):
+            argv.append("--no-rebuild")
     saved = list(sys.argv)
     sys.argv = argv
     sys.path.insert(0, os.path.join(root, "benchmarks"))
@@ -5186,10 +5197,23 @@ def main(argv=None):
     bm.add_argument("--tables", action="store_true", help="rebuild every table from its results")
     bm.add_argument("--manifest", action="store_true",
                     help="record the hashes of the data and result files")
-    bm.add_argument("--readme", action="store_true", help="refresh the spliced README blocks")
+    bm.add_argument("--readme", action="store_true",
+                    help="rebuild every table and refresh the passages spliced into the "
+                         "documents, the README among them: the same as --tables")
     bm.add_argument("--data-root", default=None, metavar="DIR",
                     help="where the data a benchmark needs but the repository does not ship is")
+    bm.add_argument("--cif-root", default=None, metavar="DIR",
+                    help="where the data of the 2015 CIF paper is")
     bm.add_argument("--orca", action="store_true", help="also run the benchmarks that need ORCA")
+    bm.add_argument("--fresh", action="store_true",
+                    help="measure the named benchmarks again instead of keeping the result "
+                         "files that are already there")
+    bm.add_argument("--no-rebuild", dest="rebuild", action="store_false",
+                    help="leave the tables and the manifest as they are, so that a --check "
+                         "afterwards compares them with what the new results give")
+    bm.add_argument("--reproduce", default=None, metavar="GROUP",
+                    help="measure one group of the reproduction run again and leave the "
+                         "comparison to a --check afterwards (see docs/release_checklist.md)")
     bm.set_defaults(func=cmd_benchmark)
 
     sc = sub.add_parser("screen", help="score a library against a saved model, reading it in "

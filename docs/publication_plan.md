@@ -171,9 +171,9 @@ release should carry the commit the manifest records. The supported interface of
 unclear licence status are decided with the reason written down, `.zenodo.json` supplies the
 archive's metadata, the package builds and passes `twine check` (1.6 MB source distribution,
 993 kB wheel, neither carrying the examples), the name `cmfqsar` is free on PyPI, and
-`.github/workflows/reproduce.yml` is the reproduction run: the 60 benchmarks of 30 minutes or less
-that need no outside file, 15.2 hours in four groups, each group rebuilding every table from its
-new result files and failing if one differs. **Released 7 November 2026.** The manifest was regenerated at the commit that carries it, with
+`.github/workflows/reproduce.yml` is the reproduction run: the benchmarks of 30 minutes or less
+that need no outside file -- 66 of 104, 16.7 hours in seven groups -- each group measuring its
+benchmarks again, rebuilding every table from its new result files and failing if one differs. **Released 7 November 2026.** The manifest was regenerated at the commit that carries it, with
 nothing uncommitted, and the regeneration found eighteen result files of plan item M15 that an
 additive patch had missed; the repository is public; Zenodo is connected; `v1.0.0` is tagged on
 commit `65ffa08` and released with the manual attached; the archive has concept DOI
@@ -182,6 +182,15 @@ commit `65ffa08` and released with the manual attached; the archive has concept 
 Two steps are left and neither blocks a submission that cites the DOI: upload to TestPyPI and
 then PyPI, which needs the account token; and run the reproduction workflow and record in
 `docs/public_3dqsar_datasets.md` which tables were reproduced elsewhere and which stayed here.
+
+**The reproduction run had to be repaired first** (7 November 2026). The first run was green in
+all four groups and had measured almost nothing: the scripts reused the result files the clone
+carries, and the check that was meant to compare the tables ran after the step that rewrites
+them. Both are repaired, a failing script now fails the run, the groups are computed from the
+rule instead of written out by hand -- which had quietly left seven benchmarks out of every
+reproduction run -- and the check now reports how far each table moved. Step 7 of
+`docs/release_checklist.md` records what the first run showed, `fluctuation` included, whose
+q2 on thrombin moved 0.302 to 0.278 because the runner generated other conformers.
 
 ## The papers
 

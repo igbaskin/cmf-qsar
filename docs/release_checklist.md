@@ -117,30 +117,85 @@ reversible: a released version number can be deleted but never reused.
 
 ## 7. One reproduction run on another machine
 
-`benchmarks/run_all.py` registers 89 benchmarks and 81.8 hours of computation, so this is not one
-continuous-integration job: a GitHub runner stops a job after six hours. The scope chosen for the
-release is **the 60 benchmarks that register 30 minutes or less and need no file the repository
-does not carry, 15.2 hours in all**. `.github/workflows/reproduce.yml` runs them on demand in four
-groups of about 3.8 hours, then rebuilds every table from the new result files and fails if a
-table differs from the one the repository carries. That comparison is the reproduction test.
+`benchmarks/run_all.py` registers 104 benchmarks and 93.7 hours of computation, so this is not one
+continuous-integration job: a GitHub runner stops a job after six hours. Which benchmarks a
+reproduction run measures follows from a rule in `benchmarks/run_all.py` rather than from a list
+of names: a benchmark joins the run when it registers 30 minutes or less (`REPRODUCE_MINUTES`) and
+needs no file or program the machine may not have (`needs`). `REPRODUCE_ALSO` names the one
+exception, `hops` at 110 minutes, because the barriers of a lithium hop are the only measurement
+this program has compared with published numbers on the same labels. The rule gives **66 of the
+104 benchmarks, 16.7 hours in all**, and `reproduce_groups()` splits them into **seven groups of
+about 2 hours 24 minutes**, so that a group fits twice over in the 330 minutes its job is allowed.
+`python benchmarks/run_all.py --list` prints the groups as they stand.
 
 ```bash
 gh workflow run reproduce.yml -f group=all        # or group=1 to run one group
 ```
 
-The 29 benchmarks left out are of three kinds. Twenty-seven are long: `poses` 16 h, `compas` 15 h,
-`corrosion_qm` 5 h, `am_eu` 3 h, `host_pocket` 2.8 h, `2dmd`, `scattering`, `xtb`, `threebody`,
-`topomer_mittal`, `anisotropic`, `increments` and `fieldae` between 1.5 and 2 h, and fourteen more
-between 35 and 70 minutes. Two need ORCA, which no runner has (`cdft_kernels`, and `corrosion_qm`,
-which is long as well). Two need files the repository does not carry and are started with
-`--data-root` (`sutherland` and `local_scale`).
+Each job measures its group again, then rebuilds every table from the new result files and fails
+if a table differs from the one the repository carries. That comparison is the reproduction test,
+and a red job is a result to read rather than a fault to repair.
+
+### What the first run showed, 7 November 2026
+
+**It measured almost nothing, and the workflow had to be repaired before the step could be
+attempted again.** Run 42410923206 was green in all four groups of the time, in 2 hours 15 minutes
+of runner time against the 15 hours the scope was supposed to cost. Four faults produced that, and
+each of them would have let the release claim a reproduction that had not been made.
+
+* **Nothing was measured again.** Most scripts keep the result files they find and compute only
+  what is missing, so in a clone that carries the results they printed `[skip]` and stopped.
+  `--fresh` now passes `--force` to every script that has the option; of the 60 benchmarks of the
+  time, 41 have it and the other 19 measure everything in any case.
+* **The comparison could not fail.** `--compute` rebuilt every table and rewrote the manifest when
+  it finished, so the `--check` after it compared the tables with files the same command had just
+  written. `--no-rebuild` leaves both as they are, and `--reproduce GROUP` is `--compute` with
+  both of these options, which is what each job now runs.
+* **A failed script would have looked like a measurement that did not move.** A script that exited
+  with an error left the committed results in place and said so in one line of the log.
+  `--compute` now fails when a script fails, after it has run the rest of the group.
+* **The groups had drifted from the scope they claimed.** They were a list of sixty names in the
+  workflow file. Seven benchmarks added to the registry after it was written -- `anchors`,
+  `cell_view`, `denmark`, `efield`, `phenazine`, `shells`, `surface_view` -- had never been part
+  of a reproduction run, and `hops` was in it although it is nearly four times the stated limit.
+  The groups are now computed from the rule, and `tests/test_reproduce_harness.py` fails when a
+  benchmark the rule admits is in no group.
+
+**What the run did show**, in the one step that was looking at the numbers: among the benchmarks
+that measure everything in any case, several moved. `fluctuation` moved most. On the thrombin set
+its q2 went from 0.302 to 0.278, and one row of the same table from 0.017 to 0.106. Its own result
+file says where that comes from: the mean number of pseudo-atoms per molecule is 2119.398 here and
+2120.648 on the runner, so the conformers the runner generated are not the conformers here.
+Whether a difference of that size matters is the question of rule 4, and the repaired check
+answers the part a program can: for every table that differs it reports how many of its numbers
+moved and the largest difference, so the log says what to read instead of leaving a diff to be
+read by eye.
+
+Two things to expect of the next run. A result file records the absolute path of the checkout it
+was written in, so result files always differ between machines and only the tables can be
+compared. And six of the 66 benchmarks name an external program somewhere in their source; they
+were skipped on 7 November, so the first real measurement may find that one of them needs more
+than a runner has. That is a `needs` entry to add, not a fault of the measurement.
+
+### What is covered
+
+**The 38 benchmarks left out** are of three kinds. Thirty are long, 64 hours together: `poses`
+16 h, `compas` 15 h, `host_pocket` 2.8 h, `litraj` 2.1 h, `scattering`, `battery` and `2dmd` 2 h
+each, `topomer_mittal`, `threebody`, `rowlength`, `increments` and `fieldae` 1.5 h each, and
+eighteen more between 32 and 70 minutes. Four need ORCA, which no runner has (`am_eu`,
+`anisotropic`, `cdft_kernels`, `corrosion_qm`). Two need xtb (`shells`, `xtb`), and two need files
+the repository does not carry and are started with `--data-root` (`sutherland`, `local_scale`).
 
 What is covered, by paper: the tables of papers 4, 7, 8, 12 and 18 in full, and most of papers 1,
 3, 9 and 13. Of what is left out, `host_pocket` belongs to paper 13, `pharmfields` and
 `pharmfields_mittal` to paper 3, `tasks` to paper 9, and the two reproduction tables of
-`docs/benchmark.md` to paper 1. The claim the release makes is then exactly what was tested: these
-tables were reproduced on a machine that is not the author's, those were not, and the data
-statement says which is which.
+`docs/benchmark.md` to paper 1. The seven benchmarks that the repair brought into the run add the
+application figures of paper 1 (`cell_view`, `surface_view`), two of the three diagnostics of
+paper 3 (`anchors`, `efield`), the catalyst series of paper 20 (`denmark`), the redox series of
+paper 22 (`phenazine`) and the hop barriers of paper 17 (`hops`); `shells` is the one of the seven
+that stays out, because it needs xtb. The claim the release makes is then exactly what was
+tested: these tables were reproduced on a machine that is not the author's, those were not, and
+the data statement says which is which.
 
 ## What the release promises
 

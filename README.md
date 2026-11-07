@@ -5759,6 +5759,8 @@ python docs/make_figures.py                 # docs/figures/: the computed figure
 python docs/make_figures.py --check         # fail if a figure differs from the committed one
 python docs/make_screenshot.py              # the three screenshots of the manual: a pocket, a crystal, a slab (needs a display)
 python benchmarks/run_all.py --compute all --data-root <Sutherland MOL2 folder> --orca
+python benchmarks/run_all.py --reproduce 3  # one group of the reproduction run: measure it again, and
+                                            # leave the tables and the manifest for --check to compare
 ```
 
 The two tables of `docs/benchmark.md` and the two-endpoint table above are spliced into the
@@ -5771,6 +5773,16 @@ not in the repository unless they are given (`--data-root`, `--cif-root`, `--orc
 every script builds are cached on disk by `benchmarks/kernel_cache.py`, keyed by the atoms and
 the field set exactly, so scripts that build the same set share them. The locked CI job runs
 `--check`.
+
+Most scripts keep the result files they find and compute only what is missing, so in a clone
+that carries the results `--compute` measures almost nothing. Two options are for the case
+where the measurement is the point: `--fresh` passes `--force` to every script that has it, and
+`--no-rebuild` leaves the tables and the manifest as they are, so that a `--check` afterwards
+compares them with what the new result files give instead of with files the same command has
+just written. `--reproduce GROUP` is both of them over one group of the reproduction run, and
+`.github/workflows/reproduce.yml` runs every group on a machine that is not the author's. The
+rule that decides which benchmarks a reproduction run can measure, and what each run found,
+are in `docs/release_checklist.md`, step 7.
 
 The tests verify the analytic kernels against numerical integration, the symmetry/positive
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition
