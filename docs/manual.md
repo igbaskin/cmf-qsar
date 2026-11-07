@@ -8919,6 +8919,41 @@ direction-free label, where the kernel then sees little beyond the fractions. A 
 model would therefore carry the fine width for the arrangement and the coarse one for the
 composition, which is what two field types with their own widths already do in this program.
 
+**The gate: the current baseline, a real micrograph set, two scales, and the map.** The pilot's
+margin over polynomial ridge regression on principal components was small and that baseline is
+old, so four more tests were run, reported in the notes beside the table. *First*, every method
+was given the same budget of 40 settings, twenty draws per training size, and the current MKS
+baseline was added: a Gaussian process on the principal-component scores with one length scale
+per score, fitted by the marginal likelihood; and the label of the published MKS benchmark,
+the effective elastic stiffness from the finite-element solver of PyMKS, was computed beside the
+conductivity (PyMKS needed three patches to run on a current Python and `sfepy`;
+`benchmarks/prepare_elastic.py` lists them). The two labels correlate at 0.98 to 0.995, so the
+pilot's conductivity was a fair stand-in. Read this way, the overlap of the two-point
+autocorrelations and the Gaussian process are the same model to within the noise of the draws
+from 100 samples on,
+and below 100 samples the kernel is the steadier of the two, ahead in 14 to 17 of 20 draws by
+0.02 to 0.15 in q2, where the GP's fit of twenty length scales on 16 to 40 points is the
+unstable step. *Second*, a real micrograph set, the 961 ultrahigh-carbon steel micrographs of DeCost and co-workers (2017) with seven microconstituent classes and the heat treatment of 598 of them: here the autocorrelation kernel of the grey level, computed with zero padding because a micrograph is one window on a medium that does not repeat, is the best of the second-order descriptions (accuracy 0.61 at 500 training images against 0.55 for the polynomial and 0.51 for the GP on the principal components) and is far behind the published route, features of a convolutional network with a linear model on top (0.87), in 0 of 20 draws ahead at any training size, because the classes are named after shapes that a second-order statistic does not carry; and when whole specimens are held out, every method loses 0.1 to 0.2 in accuracy and none predicts the treatment of a specimen it never saw. *Third*, a property that depends on two scales: phase 1 was
+given a defect concentration that sets its conductivity by a known law, and the cells were
+solved again. Each scale alone explains a third of the variance; the sum of an arrangement
+kernel and a descriptor kernel reaches 0.74; their product reaches 0.97, ahead of the MKS
+baseline with the descriptor appended in 19 or 20 of 20 draws. The kernel across scales is the
+product, because an effective property is close to the property of the conducting phase times
+a factor of the arrangement -- as two molecular fields that act together, not in turn. A second
+width of the same arrangement adds nothing. *Fourth*, the interpretation map: for the linear
+autocorrelation kernel the model is a linear function of the two-point statistics and its
+coefficient field over the lag vector is read straight from the dual coefficients
+(`benchmarks/results/microstructure/map_2d51_n400_c100.png`). For the conductivity along $x$
+it is a four-lobed figure that credits phase 1 found again 2 to 8 voxels away along the
+gradient, peaking at 3 to 4 voxels, and debits the same lags across it; for the direction-free
+mean it is a ring that credits every direction at the grain size, 5 voxels, and nothing larger.
+A principal-component regression has no such map, because its coefficients do not live on
+lags. The conclusion of the whole is scope rather than victory: a method built for molecules
+reaches microstructure informatics through its invariant route, lands on the established
+statistic with the same accuracy as the current baseline, is steadier below 100 samples,
+combines scales by a product, carries a continuous interpretation map, and shares the limit
+of that statistic on real micrographs, where a trained network sees more.
+
 ## Three atoms at a time: what a histogram of distances cannot see
 
 Every descriptor of a crystal above is a **two-point** one. It counts how much field weight sits
