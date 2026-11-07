@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 114 modules, 225 classes with 743 public methods, and 1128 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 114 modules, 225 classes with 743 public methods, and 1130 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -7223,6 +7223,35 @@ The normalisation is applied to the joint kernel, not block by block: normalisin
 of field types on its own would divide out the very magnitudes that distinguish molecules,
 the same source of error that affects the alignment-free count kernel when it is normalised
 field by field.
+
+### `row_lengths(features: np.ndarray, scale: Optional[np.ndarray]=None, n_bins: int=1, blocks: Optional[Sequence[int]]=None) -> np.ndarray`
+
+The length of each scaled feature row: the one number the cosine kernel divides out.
+
+`autocorrelation_kernel` rescales the channels and then divides every row by its own
+length, so a kernel entry is the cosine of the angle between two rows and the length never
+reaches the model.  The length is one number per sample.  It says how much field the sample
+carries in total, which for a cell is close to how large and how dense it is, and for a
+local environment is how crowded that environment is.  This returns that number, so that it
+can be measured as a descriptor of its own (plan item M15).
+
+`scale` is the channel scale the kernel used.  Without it the scale is taken from these rows,
+the way `autocorrelation_kernel` takes it, so the length is the length of the row the
+kernel really saw and not of the raw row.
+
+### `length_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, reference: Optional[float]=None) -> np.ndarray`
+
+A kernel on the row length alone, in units of the training root mean square length.
+
+This is the linear kernel of a single feature, the length of `row_lengths` divided by
+`reference`.  Dividing by that one number does not change what the kernel can fit, since a
+constant factor is taken up by the ridge, but it puts the entries near one, so the matrix can
+be added to a cosine kernel without a scale of its own:
+
+    K = (1 - w) * cosine + w * length,   0 <= w <= 1.
+
+`reference` defaults to the root mean square length of `train`.  Pass the value computed on
+the training part when the test part must not enter it.
 
 ### `block_fields(n_fields: int, chirality: bool=False) -> List[Tuple[int, ...]]`
 
@@ -15378,10 +15407,13 @@ The site profiles of every measured sample, one row each.
 The split of one cell gives every one of its sites at once, so each cell is featurised once
 however many of its sites were measured.
 
-### `site_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, n_bins: int=1, blocks: Optional[Sequence[int]]=None) -> np.ndarray`
+### `site_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, n_bins: int=1, blocks: Optional[Sequence[int]]=None, normalize: bool=True) -> np.ndarray`
 
 The cosine-normalised linear kernel of the site profiles: the same kernel the whole-cell
 autocorrelation uses, so that only the descriptor differs between the two.
+
+`normalize=False` keeps the length of each row, which the cosine kernel divides out. It is
+here for the measurement of plan item M15 and changes no default.
 
 ### `site_targets(values: Sequence[Sequence[float]], name: str='') -> AtomTargets`
 
@@ -17833,6 +17865,11 @@ Attributes:
 ### `find_xtb(explicit: Optional[str]=None) -> str`
 
 The xtb executable: the one given, then `XTB_EXE`, then the path, then the default.
+
+A path that was given -- as `explicit` or in `XTB_EXE` -- is used or refused, never
+replaced. If it names neither a file nor a program on the path, the search stops there and
+the error quotes it. Running a different xtb instead would produce numbers from a program
+the caller did not ask for, and nothing in the result would say so.
 
 ### `xtb_version(exe: str) -> str`
 

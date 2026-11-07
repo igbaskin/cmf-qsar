@@ -500,6 +500,49 @@ def autocorrelation_kernel(train: np.ndarray, test: Optional[np.ndarray] = None,
     return K / np.outer(db, da)
 
 
+def row_lengths(features: np.ndarray, scale: Optional[np.ndarray] = None, n_bins: int = 1,
+                blocks: Optional[Sequence[int]] = None) -> np.ndarray:
+    """The length of each scaled feature row: the one number the cosine kernel divides out.
+
+    :func:`autocorrelation_kernel` rescales the channels and then divides every row by its own
+    length, so a kernel entry is the cosine of the angle between two rows and the length never
+    reaches the model.  The length is one number per sample.  It says how much field the sample
+    carries in total, which for a cell is close to how large and how dense it is, and for a
+    local environment is how crowded that environment is.  This returns that number, so that it
+    can be measured as a descriptor of its own (plan item M15).
+
+    `scale` is the channel scale the kernel used.  Without it the scale is taken from these rows,
+    the way :func:`autocorrelation_kernel` takes it, so the length is the length of the row the
+    kernel really saw and not of the raw row.
+    """
+    A = np.asarray(features, float)
+    if scale is None:
+        scale = channel_scale(A, n_bins, blocks=blocks)
+    A = A * scale
+    return np.sqrt(np.maximum(np.sum(A * A, axis=1), 0.0))
+
+
+def length_kernel(train: np.ndarray, test: Optional[np.ndarray] = None,
+                  reference: Optional[float] = None) -> np.ndarray:
+    """A kernel on the row length alone, in units of the training root mean square length.
+
+    This is the linear kernel of a single feature, the length of :func:`row_lengths` divided by
+    `reference`.  Dividing by that one number does not change what the kernel can fit, since a
+    constant factor is taken up by the ridge, but it puts the entries near one, so the matrix can
+    be added to a cosine kernel without a scale of its own:
+
+        K = (1 - w) * cosine + w * length,   0 <= w <= 1.
+
+    `reference` defaults to the root mean square length of `train`.  Pass the value computed on
+    the training part when the test part must not enter it.
+    """
+    a = np.asarray(train, float)
+    b = a if test is None else np.asarray(test, float)
+    ref = float(np.sqrt(np.mean(a * a))) if reference is None else float(reference)
+    ref = ref if ref > 0 else 1.0
+    return np.outer(b / ref, a / ref)
+
+
 # --------------------------------------------------------------------------- #
 # Mixing coefficients over the channel blocks
 # --------------------------------------------------------------------------- #

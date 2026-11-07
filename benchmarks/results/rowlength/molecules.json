@@ -1,0 +1,290 @@
+{
+ "alpha": 0.5,
+ "descriptor": "whole-molecule autocorrelation",
+ "file": "examples/cyclodextrin/beta_cyclodextrin.csv",
+ "folds": 10,
+ "heavy_atoms": {
+  "max": 42.0,
+  "median": 14.0,
+  "min": 2.0
+ },
+ "length_against_heavy_atoms": 0.7501678305785235,
+ "lengths": {
+  "width 0.5 A": {
+   "max": 77.22962346631151,
+   "mean": 16.33763150303586,
+   "min": 1.3199122515466732,
+   "n": 1162,
+   "pearson": 0.10890613196154389,
+   "sd": 10.396239554329737,
+   "spearman": 0.12331400810477817,
+   "spread_over_mean": 0.6363370083599883
+  },
+  "width 0.75 A": {
+   "max": 64.26980163966735,
+   "mean": 13.343024725329522,
+   "min": 0.8905048758755619,
+   "n": 1162,
+   "pearson": 0.11232773054738411,
+   "sd": 8.772895256370333,
+   "spearman": 0.13200754760401387,
+   "spread_over_mean": 0.6574892452770805
+  },
+  "width 1 A": {
+   "max": 55.89314549494093,
+   "mean": 11.553045297924356,
+   "min": 0.6712717947353092,
+   "n": 1162,
+   "pearson": 0.11503594058434072,
+   "sd": 7.843924039924657,
+   "spearman": 0.1403115480600448,
+   "spread_over_mean": 0.6789486094487929
+  }
+ },
+ "n": 1162,
+ "pairs": [
+  {
+   "a": "the length kept",
+   "b": "the length divided out",
+   "diff": -0.042754922408202445,
+   "high": -0.01510573179619654,
+   "low": -0.07274029269723904
+  },
+  {
+   "a": "the length as an extra channel",
+   "b": "the length divided out",
+   "diff": -0.0034579286446461133,
+   "high": 0.00028605784625864637,
+   "low": -0.007141600155058642
+  },
+  {
+   "a": "the length alone",
+   "b": "the length divided out",
+   "diff": -0.4675104633316567,
+   "high": -0.4130779985752091,
+   "low": -0.5148420683812112
+  }
+ ],
+ "rows": [
+  {
+   "arm": "the length divided out",
+   "chosen": [
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    }
+   ],
+   "descriptor": "whole-molecule autocorrelation",
+   "mae": 0.44706379307967237,
+   "n": 1162,
+   "q2": 0.47747249680493276,
+   "rmse": 0.5874239251375784,
+   "series": "molecules",
+   "target": "log K"
+  },
+  {
+   "arm": "the length kept",
+   "chosen": [
+    {
+     "lam": 0.1,
+     "setting": "width 0.75 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.75 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.75 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.75 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.75 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.75 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.75 A"
+    }
+   ],
+   "descriptor": "whole-molecule autocorrelation",
+   "mae": 0.456780362128734,
+   "n": 1162,
+   "q2": 0.4347175743967303,
+   "rmse": 0.6109839410231556,
+   "series": "molecules",
+   "target": "log K"
+  },
+  {
+   "arm": "the length as an extra channel",
+   "chosen": [
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.25"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.1"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.25"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.5"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.5"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.1"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.5"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.1"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.25"
+    },
+    {
+     "lam": 0.1,
+     "setting": "width 0.5 A, weight 0.5"
+    }
+   ],
+   "descriptor": "whole-molecule autocorrelation",
+   "mae": 0.4472977163569626,
+   "n": 1162,
+   "q2": 0.47401456816028664,
+   "rmse": 0.5893644167829284,
+   "series": "molecules",
+   "target": "log K"
+  },
+  {
+   "arm": "the length alone",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "width 1 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "width 0.5 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "width 1 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "width 1 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "width 1 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "width 1 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "width 1 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "width 1 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "width 1 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "width 1 A"
+    }
+   ],
+   "descriptor": "whole-molecule autocorrelation",
+   "mae": 0.6387379806473084,
+   "n": 1162,
+   "q2": 0.009962033473276066,
+   "rmse": 0.8085799691528903,
+   "series": "molecules",
+   "target": "log K"
+  }
+ ],
+ "series": "molecules",
+ "weights": [
+  0.1,
+  0.25,
+  0.5,
+  0.75
+ ],
+ "widths": [
+  0.5,
+  0.75,
+  1.0
+ ]
+}

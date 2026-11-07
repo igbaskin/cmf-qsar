@@ -1,0 +1,754 @@
+{
+ "folds": 10,
+ "lengths": {
+  "counts about the midpoint": {
+   "counts": {
+    "max": 103.33043078348913,
+    "mean": 12.570625314579637,
+    "min": 4.33235095615477,
+    "n": 1801,
+    "pearson": 0.19443233840542248,
+    "sd": 10.147875600363339,
+    "spearman": 0.2349447786187899,
+    "spread_over_mean": 0.8072689580997733
+   }
+  },
+  "the hop environment (BT7)": {
+   "rho=0.25": {
+    "max": 251.5817187667636,
+    "mean": 41.66717511746431,
+    "min": 2.957034293788191,
+    "n": 1801,
+    "pearson": 0.6008479714660525,
+    "sd": 26.997157586134197,
+    "spearman": 0.5871036479712938,
+    "spread_over_mean": 0.6479238755693484
+   }
+  },
+  "the two end sites (M5)": {
+   "r=6 A": {
+    "max": 185.49735379387909,
+    "mean": 36.66913623060058,
+    "min": 13.729868511492272,
+    "n": 1801,
+    "pearson": 0.07597702371122694,
+    "sd": 16.074030238296057,
+    "spearman": 0.09783247432290032,
+    "spread_over_mean": 0.43835311901571866
+   }
+  }
+ },
+ "n_samples": 1801,
+ "n_structures": 393,
+ "pairs": [
+  {
+   "a": "the length kept",
+   "b": "the length divided out",
+   "descriptor": "counts about the midpoint",
+   "diff": 0.016593344989683234,
+   "high": 0.05524950873292912,
+   "low": -0.02972379525395081
+  },
+  {
+   "a": "the length as an extra channel",
+   "b": "the length divided out",
+   "descriptor": "counts about the midpoint",
+   "diff": 0.0023345994503652934,
+   "high": 0.009825535409640467,
+   "low": -0.005268826808120711
+  },
+  {
+   "a": "the length alone",
+   "b": "the length divided out",
+   "descriptor": "counts about the midpoint",
+   "diff": -0.5102105364312134,
+   "high": -0.4351030992712805,
+   "low": -0.5753097209513959
+  },
+  {
+   "a": "the length kept",
+   "b": "the length divided out",
+   "descriptor": "the two end sites (M5)",
+   "diff": -0.007871307741418532,
+   "high": 0.014458722027388994,
+   "low": -0.03471718026581521
+  },
+  {
+   "a": "the length as an extra channel",
+   "b": "the length divided out",
+   "descriptor": "the two end sites (M5)",
+   "diff": 0.015486958231527126,
+   "high": 0.03217358435905131,
+   "low": 0.0023721961497458342
+  },
+  {
+   "a": "the length alone",
+   "b": "the length divided out",
+   "descriptor": "the two end sites (M5)",
+   "diff": -0.11409740439172522,
+   "high": -0.07258464041071798,
+   "low": -0.15510316150583714
+  },
+  {
+   "a": "the length kept",
+   "b": "the length divided out",
+   "descriptor": "the hop environment (BT7)",
+   "diff": 0.14388851181850137,
+   "high": 0.1979248652385932,
+   "low": 0.09589584974460254
+  },
+  {
+   "a": "the length as an extra channel",
+   "b": "the length divided out",
+   "descriptor": "the hop environment (BT7)",
+   "diff": 0.069739594757398,
+   "high": 0.11411056380428217,
+   "low": 0.02746066720078412
+  },
+  {
+   "a": "the length alone",
+   "b": "the length divided out",
+   "descriptor": "the hop environment (BT7)",
+   "diff": -0.217565406932415,
+   "high": -0.12252457126844808,
+   "low": -0.3142443636536807
+  }
+ ],
+ "r_max": 6.0,
+ "rho": 0.25,
+ "rows": [
+  {
+   "arm": "the length divided out",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    }
+   ],
+   "descriptor": "counts about the midpoint",
+   "mae": 0.7260815304039642,
+   "n": 1801,
+   "q2": 0.5405440133786386,
+   "rmse": 1.2909090867970874,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length kept",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    }
+   ],
+   "descriptor": "counts about the midpoint",
+   "mae": 0.71449053640504,
+   "n": 1801,
+   "q2": 0.5571373583683218,
+   "rmse": 1.26738401028167,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length as an extra channel",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts, weight 0.1"
+    }
+   ],
+   "descriptor": "counts about the midpoint",
+   "mae": 0.7218067316999854,
+   "n": 1801,
+   "q2": 0.5428786128290038,
+   "rmse": 1.2876252099048433,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length alone",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    },
+    {
+     "lam": 1.0,
+     "setting": "counts"
+    }
+   ],
+   "descriptor": "counts about the midpoint",
+   "mae": 1.1155316518568907,
+   "n": 1801,
+   "q2": 0.030333476947425164,
+   "rmse": 1.8753610925347464,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length divided out",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    }
+   ],
+   "descriptor": "the two end sites (M5)",
+   "mae": 1.0753974146362306,
+   "n": 1801,
+   "q2": 0.1138401542776154,
+   "rmse": 1.7927912919559894,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length kept",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    }
+   ],
+   "descriptor": "the two end sites (M5)",
+   "mae": 1.0720206737377476,
+   "n": 1801,
+   "q2": 0.10596884653619687,
+   "rmse": 1.8007359160994358,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length as an extra channel",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.75"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.5"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.75"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.5"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.5"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.5"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.75"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.5"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.5"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A, weight 0.5"
+    }
+   ],
+   "descriptor": "the two end sites (M5)",
+   "mae": 1.0612578889955893,
+   "n": 1801,
+   "q2": 0.12932711250914253,
+   "rmse": 1.7770563972477658,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length alone",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1e-06,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 1.0,
+     "setting": "r=6 A"
+    }
+   ],
+   "descriptor": "the two end sites (M5)",
+   "mae": 1.1455086617513301,
+   "n": 1801,
+   "q2": -0.00025725011410981935,
+   "rmse": 1.904713037430177,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length divided out",
+   "chosen": [
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25"
+    }
+   ],
+   "descriptor": "the hop environment (BT7)",
+   "mae": 0.7357227240699682,
+   "n": 1801,
+   "q2": 0.571739248643512,
+   "rmse": 1.2463150453792784,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length kept",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    }
+   ],
+   "descriptor": "the hop environment (BT7)",
+   "mae": 0.5464377580683621,
+   "n": 1801,
+   "q2": 0.7156277604620134,
+   "rmse": 1.0155873895018466,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length as an extra channel",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25, weight 0.1"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25, weight 0.1"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25, weight 0.75"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25, weight 0.1"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25, weight 0.75"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25, weight 0.75"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25, weight 0.75"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25, weight 0.75"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25, weight 0.75"
+    },
+    {
+     "lam": 0.1,
+     "setting": "rho=0.25, weight 0.75"
+    }
+   ],
+   "descriptor": "the hop environment (BT7)",
+   "mae": 0.661751552538509,
+   "n": 1801,
+   "q2": 0.64147884340091,
+   "rmse": 1.1403314308475372,
+   "series": "hops",
+   "target": "barrier"
+  },
+  {
+   "arm": "the length alone",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 0.0001,
+     "setting": "rho=0.25"
+    },
+    {
+     "lam": 1.0,
+     "setting": "rho=0.25"
+    }
+   ],
+   "descriptor": "the hop environment (BT7)",
+   "mae": 0.868126676262617,
+   "n": 1801,
+   "q2": 0.354173841711097,
+   "rmse": 1.5304935943782354,
+   "series": "hops",
+   "target": "barrier"
+  }
+ ],
+ "series": "hops",
+ "site_r": 6.0,
+ "weights": [
+  0.1,
+  0.25,
+  0.5,
+  0.75
+ ],
+ "y_sd": 1.904997036325133
+}

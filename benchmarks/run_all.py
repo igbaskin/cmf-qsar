@@ -497,6 +497,19 @@ def registry() -> List[Benchmark]:
                   minutes="20",
                   report=lambda: _mod("run_sites").report(),
                   tables=["sites/table.md"]),
+        Benchmark("rowlength",
+                  "what the row length is worth, where the invariant kernel divides it out: the "
+                  "same kernel with the length divided out, with it kept, with it added as one "
+                  "more channel and on its own, over five series -- the Li site energies, the "
+                  "single-atom catalysts, the prepared hop sample of LiTraj, the 2DMD defect "
+                  "series and the beta-cyclodextrin guests (the defect stage reads the same "
+                  "cache as the 2dmd benchmark)",
+                  "run_rowlength.py", "rowlength",
+                  compute=[["--lithium"], ["--sac"], ["--molecules"], ["--hops"],
+                           ["--defects"]],
+                  minutes="90",
+                  report=lambda: _mod("run_rowlength").report(),
+                  tables=["rowlength/table.md"]),
         Benchmark("cell_view",
                   "a periodic structure in the application: what one cell with its images "
                   "costs to show, and whether the site colouring and the co-field inside the "

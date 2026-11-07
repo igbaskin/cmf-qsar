@@ -1,0 +1,176 @@
+{
+ "compounds": [
+  "phosphate",
+  "borophosphate",
+  "borate"
+ ],
+ "cutoffs": [
+  4.0,
+  6.0,
+  8.0
+ ],
+ "descriptor": "site profile (M5)",
+ "folds": 3,
+ "lengths": {
+  "r=4 A": {
+   "max": 14.562628686394408,
+   "mean": 14.053120906998869,
+   "min": 11.740981888627413,
+   "n": 104,
+   "pearson": -0.2116974820654961,
+   "sd": 0.713997740382482,
+   "spearman": -0.19824122460934704,
+   "spread_over_mean": 0.050807058809754495
+  },
+  "r=6 A": {
+   "max": 18.22595748551787,
+   "mean": 16.848518628445234,
+   "min": 11.897964194157218,
+   "n": 104,
+   "pearson": -0.2477196709744177,
+   "sd": 1.4585677999099098,
+   "spearman": -0.5313506031038672,
+   "spread_over_mean": 0.08656949801197479
+  },
+  "r=8 A": {
+   "max": 21.856542976734126,
+   "mean": 19.17393054977363,
+   "min": 15.318164158645725,
+   "n": 104,
+   "pearson": 0.47602022169936375,
+   "sd": 2.5219808231740246,
+   "spearman": 0.37162481641862183,
+   "spread_over_mean": 0.13153175957465849
+  }
+ },
+ "n_samples": 104,
+ "pairs": [
+  {
+   "a": "the length kept",
+   "b": "the length divided out",
+   "diff": -1.3473789422332505,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "the length as an extra channel",
+   "b": "the length divided out",
+   "diff": -0.04465818631650742,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "the length alone",
+   "b": "the length divided out",
+   "diff": -159.0469379823013,
+   "high": NaN,
+   "low": NaN
+  }
+ ],
+ "rows": [
+  {
+   "arm": "the length divided out",
+   "chosen": [
+    {
+     "lam": 1e-06,
+     "setting": "r=4 A"
+    },
+    {
+     "lam": 1e-05,
+     "setting": "r=8 A"
+    },
+    {
+     "lam": 1e-05,
+     "setting": "r=8 A"
+    }
+   ],
+   "descriptor": "site profile (M5)",
+   "mae": 0.06171702041014863,
+   "n": 104,
+   "q2": 0.4839888987275801,
+   "rmse": 0.0796488293897333,
+   "series": "lithium",
+   "target": "site energy"
+  },
+  {
+   "arm": "the length kept",
+   "chosen": [
+    {
+     "lam": 1e-06,
+     "setting": "r=4 A"
+    },
+    {
+     "lam": 1e-05,
+     "setting": "r=8 A"
+    },
+    {
+     "lam": 0.1,
+     "setting": "r=4 A"
+    }
+   ],
+   "descriptor": "site profile (M5)",
+   "mae": 0.1373097294871133,
+   "n": 104,
+   "q2": -0.8633900435056703,
+   "rmse": 0.15135673826539695,
+   "series": "lithium",
+   "target": "site energy"
+  },
+  {
+   "arm": "the length as an extra channel",
+   "chosen": [
+    {
+     "lam": 1e-06,
+     "setting": "r=4 A, weight 0.1"
+    },
+    {
+     "lam": 1e-05,
+     "setting": "r=8 A, weight 0.1"
+    },
+    {
+     "lam": 1e-05,
+     "setting": "r=8 A, weight 0.25"
+    }
+   ],
+   "descriptor": "site profile (M5)",
+   "mae": 0.07642863801058858,
+   "n": 104,
+   "q2": 0.4393307124110727,
+   "rmse": 0.08302392447117976,
+   "series": "lithium",
+   "target": "site energy"
+  },
+  {
+   "arm": "the length alone",
+   "chosen": [
+    {
+     "lam": 1.0,
+     "setting": "r=4 A"
+    },
+    {
+     "lam": 0.0001,
+     "setting": "r=6 A"
+    },
+    {
+     "lam": 0.001,
+     "setting": "r=4 A"
+    }
+   ],
+   "descriptor": "site profile (M5)",
+   "mae": 0.5982942909149814,
+   "n": 104,
+   "q2": -158.56294908357373,
+   "rmse": 1.4006057405827383,
+   "series": "lithium",
+   "target": "site energy"
+  }
+ ],
+ "series": "lithium",
+ "spread": 0.11087914663733513,
+ "weights": [
+  0.1,
+  0.25,
+  0.5,
+  0.75
+ ]
+}
