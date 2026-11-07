@@ -147,12 +147,14 @@ class Surrogate:
 
 
 def cross_validate(K: np.ndarray, y: Sequence[float], lam: float, folds: int = 10,
-                   seed: Optional[int] = 0, fit_bias: bool = True) -> Tuple[np.ndarray, np.ndarray]:
+                   seed: Optional[int] = 0, fit_bias: bool = True,
+                   parts: Optional[Sequence[Sequence[int]]] = None) -> Tuple[np.ndarray, np.ndarray]:
     """Out-of-fold (prediction, standard deviation) on a training kernel, in the units of ``y``.
 
     The folds are the ones the model's own cross-validation uses, so the predictions agree with
     the model's ``y_cv`` and the deviations are the ones a structure would have been given had
-    it been new.  The scale is fitted on the training part of each fold.
+    it been new.  The scale is fitted on the training part of each fold.  ``parts`` replaces the
+    random folds by given held-out index sets, for folds that hold out whole structures.
     """
     from .model import _cv_splits
 
@@ -161,7 +163,12 @@ def cross_validate(K: np.ndarray, y: Sequence[float], lam: float, folds: int = 1
     diag = np.diag(K)
     mean = np.full(len(y), np.nan)
     sd = np.full(len(y), np.nan)
-    for te, tr in _cv_splits(y, folds, seed):
+    if parts is not None:
+        splits = [(np.asarray(te, int), np.setdiff1d(np.arange(len(y)), np.asarray(te, int)))
+                  for te in parts]
+    else:
+        splits = _cv_splits(y, folds, seed)
+    for te, tr in splits:
         s = Surrogate.fit(K[np.ix_(tr, tr)], y[tr], lam, fit_bias)
         mean[te], sd[te] = s.predict(K[np.ix_(te, tr)], diag[te])
     return mean, sd

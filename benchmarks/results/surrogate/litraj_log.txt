@@ -1,0 +1,72 @@
+=== LiTraj sample: 1801 hops in 393 structures, barriers mean 1.448, sd 1.905 eV
+  kernel built in 21 s
+  linear fold 0: linear, lambda 0.1; inner RMSE 1.236 z rms 1.08; held-out RMSE 1.196 mean sd 1.157 z rms 0.95
+  linear fold 1: linear, lambda 1; inner RMSE 1.239 z rms 0.98; held-out RMSE 1.462 mean sd 1.223 z rms 1.10
+  linear fold 2: linear, lambda 1; inner RMSE 1.263 z rms 0.97; held-out RMSE 1.080 mean sd 1.225 z rms 0.87
+  linear fold 3: linear, lambda 1; inner RMSE 1.218 z rms 0.99; held-out RMSE 1.684 mean sd 1.173 z rms 1.38
+  linear fold 4: linear, lambda 0.1; inner RMSE 1.250 z rms 1.06; held-out RMSE 1.125 mean sd 1.164 z rms 0.93
+  linear fold 5: linear, lambda 0.1; inner RMSE 1.260 z rms 1.10; held-out RMSE 1.170 mean sd 1.108 z rms 0.98
+  linear fold 6: linear, lambda 1; inner RMSE 1.240 z rms 0.96; held-out RMSE 1.076 mean sd 1.215 z rms 0.88
+  linear fold 7: linear, lambda 0.1; inner RMSE 1.286 z rms 1.10; held-out RMSE 0.918 mean sd 1.069 z rms 0.84
+  linear fold 8: linear, lambda 0.1; inner RMSE 1.206 z rms 1.04; held-out RMSE 1.203 mean sd 1.035 z rms 1.17
+  linear fold 9: linear, lambda 0.1; inner RMSE 1.232 z rms 1.08; held-out RMSE 1.348 mean sd 1.025 z rms 1.24
+  linear: q2 +0.572, calibration on 1801 activities: RMSE 1.246, mean sd 1.136, z rms 1.05 (calibrated; multiply the sd by 1.05 to correct it), inside 1 sd 84% (68 % expected), inside 2 sd 95% (95 % expected), sd against |error| Spearman +0.20
+  linear: tolerance 1.242: the model answers 1560 of 1801 (87%), 241 go to the fine level; RMSE of the answered 1.123 (mean sd 1.077), of the deferred 1.856 (mean sd 1.522)
+  Gaussian fold 0: gamma 0.25, lambda 0.1; inner RMSE 1.205 z rms 1.01; held-out RMSE 1.155 mean sd 1.128 z rms 0.95
+  Gaussian fold 1: gamma 1, lambda 0.1; inner RMSE 1.189 z rms 1.01; held-out RMSE 1.441 mean sd 1.049 z rms 1.03
+  Gaussian fold 2: gamma 1, lambda 0.1; inner RMSE 1.213 z rms 1.00; held-out RMSE 0.979 mean sd 0.968 z rms 0.89
+  Gaussian fold 3: gamma 1, lambda 0.1; inner RMSE 1.176 z rms 1.03; held-out RMSE 1.572 mean sd 1.013 z rms 1.29
+  Gaussian fold 4: gamma 0.5, lambda 0.1; inner RMSE 1.210 z rms 1.00; held-out RMSE 1.017 mean sd 1.103 z rms 0.84
+  Gaussian fold 5: gamma 0.25, lambda 0.1; inner RMSE 1.256 z rms 1.06; held-out RMSE 1.151 mean sd 1.107 z rms 0.93
+  Gaussian fold 6: gamma 0.125, lambda 0.1; inner RMSE 1.217 z rms 0.99; held-out RMSE 1.017 mean sd 1.120 z rms 0.89
+  Gaussian fold 7: gamma 1, lambda 0.1; inner RMSE 1.246 z rms 1.01; held-out RMSE 0.797 mean sd 1.038 z rms 0.72
+  Gaussian fold 8: gamma 0.5, lambda 0.1; inner RMSE 1.168 z rms 0.98; held-out RMSE 1.159 mean sd 1.012 z rms 1.11
+  Gaussian fold 9: gamma 0.5, lambda 0.1; inner RMSE 1.199 z rms 1.02; held-out RMSE 1.178 mean sd 0.991 z rms 1.06
+  Gaussian: q2 +0.623, calibration on 1801 activities: RMSE 1.169, mean sd 1.053, z rms 0.99 (calibrated; multiply the sd by 0.99 to correct it), inside 1 sd 85% (68 % expected), inside 2 sd 96% (95 % expected), sd against |error| Spearman +0.35
+  Gaussian: tolerance 1.207: the model answers 1480 of 1801 (82%), 321 go to the fine level; RMSE of the answered 0.998 (mean sd 0.970), of the deferred 1.752 (mean sd 1.437)
+  171 s
+# The predictive standard deviation as a fast level sees it
+
+8 Sutherland sets, 5 random 70/30 splits each; alpha and lambda by the evidence on the training part. z rms is the root mean square of (measured - predicted) / sd, one for a calibrated deviation and above one for a model surer than it should be; 'corrected' multiplies the test deviations by the factor the folds of the training part gave.
+
+| set | n | test RMSE | mean sd | z rms, folds | z rms, test | z rms, corrected | inside 2 sd | sd vs error (rho) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| DHFR | 361 | 0.751 | 0.679 | 1.10 | 1.08 | 0.98 | 93% | +0.20 |
+| COX2 | 282 | 0.811 | 0.825 | 0.97 | 0.99 | 1.02 | 93% | +0.04 |
+| BZR | 147 | 0.610 | 0.620 | 1.03 | 0.98 | 0.96 | 94% | +0.15 |
+| ACE | 114 | 1.512 | 1.378 | 0.99 | 1.15 | 1.16 | 89% | +0.04 |
+| AChE | 111 | 0.809 | 0.830 | 1.05 | 0.96 | 0.92 | 94% | +0.28 |
+| THR | 88 | 0.672 | 0.641 | 0.96 | 1.02 | 1.06 | 94% | +0.21 |
+| THER | 76 | 1.635 | 1.605 | 1.03 | 1.07 | 1.04 | 93% | -0.12 |
+| GPB | 66 | 0.767 | 0.722 | 0.99 | 1.10 | 1.11 | 92% | +0.33 |
+| **mean** |  | 0.946 | 0.912 | **1.02** | **1.05** | **1.03** | 93% | +0.14 |
+
+The tolerance rule, with the tolerance set to the cross-validated RMSE of the training part (what the model claims as its typical error): the share of the held-out structures the model answers and the RMSE on each side.  The last columns send a fixed 25% of the structures to the fine level instead.
+
+| set | tolerance | answered | RMSE answered | RMSE deferred | RMSE answered at 25% deferred | RMSE of that 25% |
+|---|---:|---:|---:|---:|---:|---:|
+| DHFR | 0.805 | 80% | 0.678 | 0.989 | 0.671 | 0.944 |
+| COX2 | 0.797 | 58% | 0.779 | 0.854 | 0.793 | 0.852 |
+| BZR | 0.648 | 80% | 0.583 | 0.687 | 0.570 | 0.699 |
+| ACE | 1.380 | 56% | 1.451 | 1.557 | 1.408 | 1.728 |
+| AChE | 0.868 | 68% | 0.702 | 0.950 | 0.745 | 0.955 |
+| THR | 0.626 | 59% | 0.543 | 0.841 | 0.549 | 0.921 |
+| THER | 1.551 | 50% | 1.721 | 1.596 | 1.633 | 1.564 |
+| GPB | 0.653 | 34% | 0.750 | 0.741 | 0.668 | 0.976 |
+| **mean** | 0.916 | 61% | **0.901** | **1.027** | **0.880** | **1.080** |
+
+## The hop sample of LiTraj: a barrier as the activity, a structure as the fold
+
+1801 hops in 393 structures of the nebBVSE122k sample (`benchmarks/run_litraj.py`), barriers with a standard deviation of 1.90 eV; 10 folds that hold out whole structures, the ridge and the width chosen on an inner split of 5 folds of the same kind. The fine level is the bond-valence calculation that labelled the hops.
+
+| kernel | q2 | held-out RMSE (eV) | mean sd (eV) | z rms, inner folds | z rms, held out | z rms, corrected | inside 2 sd | sd vs error (rho) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| linear | +0.572 | 1.246 | 1.136 | 1.04 | 1.05 | 1.02 | 95% | +0.20 |
+| Gaussian | +0.623 | 1.169 | 1.053 | 1.01 | 0.99 | 0.98 | 96% | +0.35 |
+
+The tolerance rule with the tolerance at the inner-fold RMSE of the training part (the error the model claims), and with a fixed 25% of the hops sent back to the calculation.
+
+| kernel | tolerance (eV) | answered | RMSE answered | RMSE deferred | RMSE answered at 25% deferred | RMSE of that 25% |
+|---|---:|---:|---:|---:|---:|---:|
+| linear | 1.242 | 87% | 1.123 | 1.856 | 1.063 | 1.681 |
+| Gaussian | 1.207 | 82% | 0.998 | 1.752 | 0.840 | 1.830 |

@@ -1,6 +1,6 @@
 {
- "commit": "185bb3d447c61d7b3e94f1899a9dfc0081a9a1c2",
- "created": "2026-11-07T12:12:22",
+ "commit": "fe9b4f8b624262381d21a039a84e334c46cb2fc0",
+ "created": "2026-11-07T12:21:59",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3416,8 +3416,10 @@
   "benchmarks/results/surrogate/GPB.json": "23242464d8410ac1f5e828c0ac57f2d1122a559b2426a40b88068def04f59d98",
   "benchmarks/results/surrogate/THER.json": "c454afc62f7f04b5f57597d0fe68c6fae3b84d3778d690b75f7288f08d7d039f",
   "benchmarks/results/surrogate/THR.json": "60b6f91dc969198393c71b8d98879f14966ff8fb930b6c394512aa3b5ead7645",
+  "benchmarks/results/surrogate/litraj.json": "58259c47dde05e032e3a028232802aabde0f43abd6d617e03912b2a065ff2cdf",
+  "benchmarks/results/surrogate/litraj_log.txt": "d44cd5a57a2ab70f0bb7b8b23dbcc6fc6ac8f5908bf2de09686d7bcbc31aa3d6",
   "benchmarks/results/surrogate/log.txt": "b73c6b08cb7843179e485b54fb05d34c67109b79fa8e5ab7a55120c1367e6ea3",
-  "benchmarks/results/surrogate/table.md": "456ea700c98b53e4e49e66e5fe8a03abcd9d459e27d9bedafb7495ae2b49c200",
+  "benchmarks/results/surrogate/table.md": "1abab37510bea728bab8c7a062d803181a62555553496a9192e39d4d4868ffff",
   "benchmarks/results/table.md": "0412a5f8dfee7da0c635bfe37ff03adbcbdbe022e1ba255587dcfaa9cf3abfd7",
   "benchmarks/results/tasks/cold.json": "75a888cae2484d320185a07f3345237cf078a68acc69a5f6b1af4e7c52a0583a",
   "benchmarks/results/tasks/share.json": "e92ea52780763d2c4250caad713852de3e3a5105f9f490834a567a879ebd8ff8",

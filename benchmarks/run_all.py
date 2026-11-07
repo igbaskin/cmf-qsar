@@ -537,6 +537,17 @@ def registry() -> List[Benchmark]:
                   minutes="120",
                   report=lambda: _mod("run_scattering").report(),
                   tables=["scattering/table.md"]),
+        Benchmark("microstructure",
+                  "a microstructure as the sample: the field-overlap kernels on a periodic "
+                  "voxel grid (zero-shift, rotation-averaged, and the overlap of the two-point "
+                  "autocorrelations) against the two-point statistics, principal components "
+                  "and polynomial regression of the MKS homogenisation workflow, on the "
+                  "effective conductivity of synthetic two-phase cells at training sizes "
+                  "20 to 200 (the data are generated and solved by the script itself)",
+                  "run_microstructure.py", "microstructure", compute=[[]],
+                  minutes="15",
+                  report=lambda: _mod("run_microstructure").report(),
+                  tables=["microstructure/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "
@@ -661,8 +672,8 @@ def registry() -> List[Benchmark]:
                   tables=["errorpred/table.md"]),
         Benchmark("surrogate", "is the predictive standard deviation calibrated, and what "
                   "a tolerance rule does: the model as the fast level of a hierarchy",
-                  "run_surrogate.py", "surrogate", compute=[[]],
-                  minutes="5",
+                  "run_surrogate.py", "surrogate", compute=[[], ["--hops"]],
+                  minutes="10",
                   report=lambda: _mod("run_surrogate").report(_r("surrogate")),
                   tables=["surrogate/table.md"]),
         Benchmark("perfield", "one attenuation per field, or one shared by all of them",

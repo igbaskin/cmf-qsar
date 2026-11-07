@@ -146,6 +146,19 @@ def test_calibration_holds_on_activities_drawn_from_the_model():
     assert mean == pytest.approx(cv_predict(K, y, "krr", {"lam": lam}, folds=10, seed=0), abs=1e-8)
 
 
+def test_given_folds_hold_out_exactly_what_they_name():
+    """With `parts`, every structure is predicted by a fit that did not see it, and in the
+    order given; a sample in no part stays nan."""
+    _X, K, y = _world(n=40)
+    parts = [np.arange(0, 10), np.arange(10, 25), np.arange(25, 35)]
+    mean, sd = cross_validate(K, y, 0.2, parts=parts)
+    assert np.all(np.isfinite(mean[:35])) and np.all(np.isnan(mean[35:]))
+    tr = np.arange(10, 40)
+    s = Surrogate.fit(K[np.ix_(tr, tr)], y[tr], 0.2)
+    m0, s0 = s.predict(K[np.ix_(np.arange(10), tr)], np.diag(K)[:10])
+    assert mean[:10] == pytest.approx(m0) and sd[:10] == pytest.approx(s0)
+
+
 def test_a_model_that_is_too_sure_is_told_so_with_the_factor():
     rng = np.random.default_rng(4)
     y = rng.normal(size=200)
