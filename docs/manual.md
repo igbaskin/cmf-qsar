@@ -679,8 +679,14 @@ cell, in the periodic images. The two windows do not share a data set.
 (CIF, POSCAR or CONTCAR, extended XYZ, ASE JSON, and the other formats ASE reads), one
 structure per file, named after its file; this is how a set downloaded from a database arrives.
 *Open one structure file…* reads a file that holds one structure or many, as `examples/sac/`
-and `examples/hops/` do. A CIF with partly occupied sites is read with its occupancies, as the
-section on partial occupancy describes. The *Structures* panel lists what came back with the
+and `examples/hops/` do. Both routes read through ASE, so any format ASE reads is accepted. A
+folder is searched for the file endings `.cif`, `.vasp`, `.poscar`, `.contcar`, `.extxyz`,
+`.xyz`, `.json` (an ASE database), `.traj` (an ASE trajectory), `.cell` (CASTEP), `.res`
+(SHELX), `.xsf` (XCrySDen) and `.pwo` (Quantum ESPRESSO output), and for files named `POSCAR`
+or `CONTCAR`, which VASP writes without an ending; a file with any other ending is left
+alone, so notes and tables may sit beside the structures. The file dialog lists the common
+endings; a file of another ASE format is opened through *All files*. A CIF with partly
+occupied sites is read with its occupancies, as the section on partial occupancy describes. The *Structures* panel lists what came back with the
 measured value, the subset and the prediction of each cell, and the line under it says how many
 atoms the cells have.
 
@@ -11307,7 +11313,7 @@ not every option.
 | Subcommand | What it does |
 |---|---|
 | `build` | build, cross-validate, test and save a model |
-| `build-crystals` | the same on periodic structures (CIF, POSCAR, extended XYZ) |
+| `build-crystals` | the same on periodic structures (CIF, POSCAR, extended XYZ, and every other format ASE reads; the list is in the section on crystals of chapter 4) |
 | `diagnose` | ask a data set what it can support, before modelling it |
 | `align` | put a set in one frame: by substructure, by field similarity, by prediction confidence or in a pocket |
 | `predict` | predict with a saved model, optionally aligning by confidence first; a model fitted on crystals takes crystals |
