@@ -64,7 +64,7 @@ from rdkit import Chem, RDLogger  # noqa: E402
 import run_corrosion as C  # noqa: E402  - the alignment and the scaffold of each series
 import run_topomer as T  # noqa: E402  - the fields, the grids and the cross-validation
 
-from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.dataio import load_dataset, relative_path  # noqa: E402
 from cmfqsar.fields import FieldSet, build_fields, combine_members  # noqa: E402
 from cmfqsar.protonation import available, ensemble_table, mixture_share  # noqa: E402
 from cmfqsar.tautomers import ambiguous_share, forms_table, tautomer_fields  # noqa: E402
@@ -181,7 +181,7 @@ def run_set(path, ph=PH, results=RESULTS, force=False, min_molecules=MIN_MOLECUL
     forms = forms_table(prep["mols"], weighting=TAUTOMER_WEIGHTING)
     q_file = np.array([Chem.GetFormalCharge(m) for m in prep["mols"]], float)
     q_dom = np.array([e.main.charge for e in ens], float)
-    res = {"set": name, "file": os.path.relpath(path, ROOT), "n": len(y), "ph": ph,
+    res = {"set": name, "file": relative_path(path, ROOT), "n": len(y), "ph": ph,
            "core": Chem.MolToSmiles(prep["core"]), "reference": prep["reference"],
            "align_rmsd_median": prep["align_rmsd_median"],
            "mixture_share": mixture_share(ens),
@@ -334,7 +334,7 @@ def main():
         raise SystemExit("this benchmark needs Dimorphite-DL: pip install dimorphite-dl")
     os.makedirs(RESULTS, exist_ok=True)
     paths = series_files(a.sets)
-    print(f"{len(paths)} series in {os.path.relpath(DATA, ROOT)}")
+    print(f"{len(paths)} series in {relative_path(DATA, ROOT)}")
     scan_path = os.path.join(RESULTS, "ph_scan.json")
     if a.force or not os.path.exists(scan_path):
         scans = []

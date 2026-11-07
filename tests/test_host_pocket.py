@@ -25,6 +25,11 @@ ALPHA_CD = ("OC[C@H]1O[C@@H]2O[C@H]3[C@@H](O)[C@H](O)[C@@H](O[C@@H]4O[C@H](CO)[C
             "[C@H](CO)[C@@H](O[C@@H]6O[C@H](CO)[C@@H](O[C@@H]7O[C@H](CO)[C@@H](O[C@@H]1[C@H](O)"
             "[C@@H]2O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O)[C@H](O)[C@H]5O)[C@H](O)[C@H]4O)O[C@@H]3CO")
 
+#: the alpha-cyclodextrin host as it is stored with the data set; the width of the cavity is
+#: measured on this one, because an embedded conformer gives a different width on every build
+STORED_ALPHA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "examples", "cyclodextrin", "hosts", "alpha_cyclodextrin.sdf")
+
 
 def _embed(smiles, seed=1, macrocycle=True):
     m = Chem.AddHs(Chem.MolFromSmiles(smiles))
@@ -142,9 +147,20 @@ def test_the_cavity_frame_is_the_middle_of_the_ring_of_units(alpha):
     assert radial.mean() > 2.0 * along.mean()
 
 
-def test_the_cavity_is_a_hole(alpha):
-    """There has to be room at the centre, or it is not a pocket."""
-    host = host_from_molecule(alpha)
+def test_the_cavity_is_a_hole():
+    """There has to be room at the centre, or it is not a pocket.
+
+    Measured on the host as it is stored with the cyclodextrin data set, not on an embedded
+    conformer.  How much room an embedded alpha-cyclodextrin leaves depends on the conformer:
+    over the embedding seeds 1 to 5 the nearest heavy atom came out between 0.88 and 3.14 A
+    from the centre.  The embedding is seeded, but its random stream is not the same in every
+    RDKit build, so a bound on the embedded conformer measures the build and not the code; it
+    held here and failed on the Ubuntu and Windows runners with 1.87 A.  The stored host gives
+    2.80 A on every machine, and beta- and gamma-cyclodextrin 2.60 A and 3.97 A.
+    """
+    if not os.path.exists(STORED_ALPHA):
+        pytest.skip("the cyclodextrin examples are not present")
+    host = read_molecule_host(STORED_ALPHA)
     centre, _axis = cavity_frame(host)
     heavy = np.array([e != "H" for e in host.elements])
     d = np.linalg.norm(host.coords[heavy] - centre, axis=1)

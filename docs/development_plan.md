@@ -94,6 +94,65 @@ This is what the software paper needs, and nothing in the later parts should wai
   slowest tests are numerical integrations, not embeddings, so the shared fixture this item
   foresaw was not needed. Verified locally on Windows step by step; the Linux and macOS legs run
   for the first time on the first push.
+  **The six failures of the first runs on other machines, 7 November 2026.** Every job except the
+  author's own platform failed, on eight tests. Two were the xtb program path and were repaired
+  separately. The other six are repaired here, and none of them came from the linear algebra of
+  the runners: this machine and the runners use the same OpenBLAS 0.3.30, which the numpy wheels
+  carry, so the first guess was wrong. What the runners exposed was one path bug, one real
+  numerical instability, and four tests that asserted more than their input allows.
+  * *Two drives.* `tests/test_documents.py` and `tests/test_hammett_example.py` failed on Windows
+    with "path is on mount 'C:', start on mount 'D:'": the runner's temporary directory is on C:
+    and the working copy on D:, and `os.path.relpath` has no answer for two drives. A path written
+    relative to the repository is a convenience for the reader and must never stop a run, so
+    `cmfqsar.dataio.relative_path` returns the absolute path when there is no relative one. The
+    benchmark scripts and the figure and screenshot builders use it. `docs/make_manual.py`
+    carries its own copy of the three lines, because that builder uses nothing from the package:
+    it needs reportlab and the standard library only. Three files are left as they are.
+    `docs/make_api.py` and `benchmarks/run_all.py` use the standard library only as well, and
+    every path they print lies inside the working copy. The ten scripts under `examples/` still
+    call `os.path.relpath` directly, because the manifest records the content of every tracked
+    file under `examples/`: changing their text means rebuilding the manifest, which belongs in a
+    commit that has its own reason to rebuild it. No continuous-integration job runs them.
+  * *The frame of a molecule with a three-fold axis was not exact* (`tests/test_pbh.py`, triphenylene).
+    For such a molecule the two in-plane moments are equal and the direction of $x$ comes from the
+    largest third, fourth or sixth moment of the heavy atoms. That direction was found by a search
+    over the angle that compares values of the moment, and a maximum is flat: moving the angle by
+    1e-8 radians changes the moment by less than one part in 1e16, so no such search can place the
+    angle better than the square root of the machine precision. The frame therefore differed by up
+    to 5e-8 A between machines, and applying it twice was not the identity -- 3.9e-8 A on the
+    Windows runner against 8.5e-14 A here. The derivative of the moment is not flat at the
+    maximum, so `cmfqsar/pbh.py` now solves `derivative = 0` by Newton's method from the angle the
+    search found. Applying the frame twice is now the identity to 1.8e-15 A, and the test asks for
+    1e-10 instead of 1e-8. No stored number moves: of 1,500 molecules of each COMPAS set only two
+    or three have equal in-plane moments, the largest coordinate change is 3.5e-8 A on COMPAS-1x
+    and 1.1e-6 A on COMPAS-3D (coronene), and no sign choice of the frame changes.
+  * *The cavity of a cyclodextrin was measured on an embedded conformer* (`tests/test_host_pocket.py`).
+    The test asked for 2.0 A of room at the centre of the host and the runners gave 1.87 A. The
+    width is a property of the conformer, not of the code: over the embedding seeds 1 to 5 the
+    nearest heavy atom came out between 0.88 and 3.14 A from the centre. The embedding is seeded,
+    but its random stream is not the same in every RDKit build, so the bound measured the build.
+    The test now reads the stored host, `examples/cyclodextrin/hosts/alpha_cyclodextrin.sdf`,
+    which gives 2.80 A on every machine, and skips when the examples are absent.
+  * *Scrambling the activities does not have to raise the error* (`tests/test_coalign.py`). The
+    objective is a fold-out error and the test checked that it rises when the activities are
+    scrambled. On the twelve substituted benzenes of that test the model predicts no better than
+    the mean activity -- fold-out error 0.204 against a standard deviation of the activity of
+    0.160 -- so there was nothing for scrambling to destroy: the scrambled error came out at 0.204
+    as well, and over five scrambles it ranged from 0.146 to 0.219, that is on both sides of the
+    honest error. The test passed here by 0.0002 and failed on every runner. What the test claims
+    is that no molecule is predicted from its own activity, and the comparison that says so is
+    with the in-sample error of the same model fitted on every molecule, which is what a leaky
+    objective would report: 0.204 against 0.086, and the ratio stayed between 1.8 and 2.8 over
+    four activity noise seeds, three fold counts and coordinate shifts up to 0.1 A.
+  * *A pseudo-inverse is exact only up to the conditioning* (`tests/test_locallarge.py`). With
+    every molecule a landmark, the Nystrom approximation $K K^+ K$ is $K$ again, and the test
+    asked for a relative error below 1e-6. `nystrom_kernel` keeps the eigenvalues above
+    `NYSTROM_CUTOFF = 1e-12` of the largest, so the kept part of that kernel has a condition
+    number of 1e11 and dividing by its smallest kept eigenvalue loses about 2e-5 of relative
+    accuracy. A fixed bound of 1e-6 lies inside that range and so held on some machines and not on
+    others: 7.2e-7 here, 1.5e-6 on the pinned-version job. The cut-off is now a named constant and
+    the test derives its bound from the eigenvalues of the kernel it is given. The bound still
+    fails by a wide margin if the pseudo-inverse is wrong, which is what the test is for.
 * **A3. The data statement.** Done 22 October 2026 as the record: `docs/public_3dqsar_datasets.md`
   gives every set under `examples/` its origin, terms, script, size, users and a status (free,
   derived, unclear). Four items are of unclear status, `sutherland/`, `steroids_cbg.sdf` and the

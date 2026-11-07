@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 114 modules, 225 classes with 743 public methods, and 1127 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 114 modules, 225 classes with 743 public methods, and 1128 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -3198,6 +3198,15 @@ Molecules of the "decoy" subset are presumed inactive whatever their activity.
 #### `Dataset.append(other: 'Dataset', subset: str='test') -> None`
 
 #### `Dataset.remove(indices: Sequence[int]) -> None`
+
+### `relative_path(path: str, start: str) -> str`
+
+The path written relative to `start`, for a message or for a result file.
+
+Returns the absolute path when there is no relative form.  On Windows there is none when
+the two paths are on different drives: a temporary directory on `D:` cannot be written
+relative to a working copy on `C:`, and `os.path.relpath` raises `ValueError` there.
+A shorter path is only a convenience for the reader, so it must never stop the program.
 
 ### `mol_from_mol2_block(block: str) -> Optional[Chem.Mol]`
 

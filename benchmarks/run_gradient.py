@@ -47,7 +47,7 @@ sys.path.insert(0, HERE)
 
 from rdkit import RDLogger  # noqa: E402
 
-from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.dataio import load_dataset, relative_path  # noqa: E402
 from cmfqsar.fields import AtomTable, FieldSet, build_fields  # noqa: E402
 from cmfqsar.gradients import numerical_prediction_gradient, prediction_gradient  # noqa: E402
 from cmfqsar.model import CMFModel  # noqa: E402
@@ -261,7 +261,7 @@ def main() -> int:
             json.dump(results, fh, indent=1)
     with open(os.path.join(RESULTS, "table.md"), "w", encoding="utf-8") as fh:
         fh.write(table(results))
-    print(f"\nwritten to {os.path.relpath(RESULTS, ROOT)}")
+    print(f"\nwritten to {relative_path(RESULTS, ROOT)}")
     return 0
 
 

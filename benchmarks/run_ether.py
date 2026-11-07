@@ -74,6 +74,7 @@ sys.path.insert(0, HERE)
 from rdkit import Chem, RDLogger                                            # noqa: E402
 
 from cmfqsar.cofields import field_volume, make_grid                        # noqa: E402
+from cmfqsar.dataio import relative_path                                    # noqa: E402
 from cmfqsar.fields import FieldSet, build_fields                           # noqa: E402
 from cmfqsar.invariant import (AutocorrelationSpec, autocorrelation_kernel,  # noqa: E402
                                block_sizes, channel_scale, expanded_field_count, feature_matrix)
@@ -729,7 +730,7 @@ def main():
         return 0
 
     mols, names, rows = load(args.limit)
-    print(f"{len(mols)} molecules from {os.path.relpath(SDF, ROOT)}", flush=True)
+    print(f"{len(mols)} molecules from {relative_path(SDF, ROOT)}", flush=True)
     stages = ("probe", "bind", "select") if args.stage == "all" else (args.stage,)
 
     feats = None

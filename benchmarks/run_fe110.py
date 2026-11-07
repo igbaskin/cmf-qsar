@@ -53,7 +53,7 @@ from rdkit import Chem, RDLogger  # noqa: E402
 
 from cmfqsar.align import align_dataset, embed_3d, random_rigid_transform, set_coords  # noqa: E402
 from cmfqsar.cofields import evaluate_gaussians  # noqa: E402
-from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.dataio import load_dataset, relative_path  # noqa: E402
 from cmfqsar.fields import AtomTable, FieldSet, build_fields  # noqa: E402
 from cmfqsar.model import CMFModel, grid_search, nested_cv, r2_score  # noqa: E402
 from cmfqsar.planealign import (height_rmsd, in_plane_rmsd, plane_align_dataset, rigid_rmsd,  # noqa: E402
@@ -404,7 +404,7 @@ def cofields(frames, names, y, fs, node, planes=(2.0, 3.5), half_width=8.0, spac
         path = os.path.join(RESULTS, f"cofields_{node}.png")
         fig.savefig(path, dpi=130)
         plt.close(fig)
-        out["figure"] = os.path.relpath(path, ROOT)
+        out["figure"] = relative_path(path, ROOT)
     except Exception as exc:  # noqa: BLE001
         out["figure"] = f"not drawn: {exc}"
     return out
