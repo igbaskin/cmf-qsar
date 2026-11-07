@@ -93,7 +93,7 @@ from rdkit import Chem, RDLogger  # noqa: E402
 
 from cmfqsar import pbh  # noqa: E402
 from cmfqsar.align import set_coords  # noqa: E402
-from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.dataio import load_dataset, relative_path  # noqa: E402
 from cmfqsar.fields import AtomTable, FieldSet, FieldSpec, MoleculeFields  # noqa: E402
 from cmfqsar.kernels import kernel_matrices  # noqa: E402
 from cmfqsar.model import CMFModel, _kfold_indices, krr_fit, mae, r2_score, rmse  # noqa: E402
@@ -1394,10 +1394,10 @@ def interpret(set_key: str, groups: str = MAIN_SET, split_name: str = "random0",
     out = {
         "groups": groups, "split": split_name, "reference": ref_name,
         "reference_rings": meta["n_rings"][ref], "reference_gap": float(y[ref]),
-        "refit_check": check, "figure": os.path.relpath(fig_path, ROOT),
-        "ring_figure": os.path.relpath(os.path.join(figdir, ring_fig_name), ROOT),
-        "html": os.path.relpath(html_path, ROOT) if html_ok else "",
-        "cube": os.path.relpath(cube_path, ROOT), "extremes": extremes, "rule2": rule2,
+        "refit_check": check, "figure": relative_path(fig_path, ROOT),
+        "ring_figure": relative_path(os.path.join(figdir, ring_fig_name), ROOT),
+        "html": relative_path(html_path, ROOT) if html_ok else "",
+        "cube": relative_path(cube_path, ROOT), "extremes": extremes, "rule2": rule2,
         "molecules": [{k: v for k, v in it.items() if k not in ("mf", "rings")} for it in items],
         "narrative": narrative, "bias": float(model.bias),
         "alphas": {s.name: s.alpha for s in model.fieldset.specs},

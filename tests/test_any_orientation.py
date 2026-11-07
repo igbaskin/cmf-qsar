@@ -72,16 +72,12 @@ def test_the_protocol_asks_for_any_orientation_by_default():
     assert p["restarts"].default == 20
 
 
-def test_the_dialog_offers_it_and_sets_what_it_needs():
+def test_the_dialog_offers_it_and_sets_what_it_needs(qt_application):
     """Ticking the box in the application removes the guard and raises the restarts."""
-    pytest.importorskip("PySide6")
     pytest.importorskip("pyqtgraph")
-    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from PySide6.QtWidgets import QApplication
 
     from cmfqsar.gui.main_window import VarianceAlignDialog
 
-    _app = QApplication.instance() or QApplication([])
     dlg = VarianceAlignDialog(5, 5)
     assert dlg.any_orientation() is False
     assert dlg.max_rmsd() == 2.0

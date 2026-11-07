@@ -60,6 +60,8 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 
+from cmfqsar.dataio import relative_path  # noqa: E402
+
 # the window is a Qt window; it is driven here without a screen, as the GUI tests are
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -163,7 +165,7 @@ def draw(cells: int = DRAW_CELLS, log=print) -> dict:
                 f"expanded in {expand * 1000:.0f} ms, drawn in {drawn * 1000:.0f} ms")
         atoms = [len(a) for a in w.atoms]
         out["sets"].append({
-            "set": name, "what": what, "path": os.path.relpath(path, ROOT).replace(os.sep, "/"),
+            "set": name, "what": what, "path": relative_path(path, ROOT).replace(os.sep, "/"),
             "n_structures": n, "read_seconds": read_seconds,
             "atoms_min": int(min(atoms)), "atoms_max": int(max(atoms)),
             "pbc": pbc or "from the files", "cutoff": float(cutoff), "cells": rows})

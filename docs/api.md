@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 108 modules, 212 classes with 674 public methods, and 1090 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 113 modules, 222 classes with 730 public methods, and 1127 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -44,6 +44,7 @@ for.
 | [cmfqsar.atomtypes](#cmfqsaratomtypes) | Atom typing (Tripos/Sybyl-like) and van der Waals parameters. |
 | [cmfqsar.battery](#cmfqsarbattery) | Electrode data for the periodic kernel: insertion pairs, and the voltage between them. |
 | [cmfqsar.bioisostere](#cmfqsarbioisostere) | Which groups are interchangeable here? |
+| [cmfqsar.bonds](#cmfqsarbonds) | Bonds of a periodic structure, perceived from distances, for drawing only. |
 | [cmfqsar.cdft](#cmfqsarcdft) | Conceptual-DFT fields on a grid, and what atom-centred Gaussians can and cannot make of them. |
 | [cmfqsar.celldiff](#cmfqsarcelldiff) | The difference between two cells of one ladder as a field in the cell (plan item BT6). |
 | [cmfqsar.chemotypes](#cmfqsarchemotypes) | Heterogeneous series: several chemotypes, no single common substructure. |
@@ -55,6 +56,7 @@ for.
 | [cmfqsar.conformal](#cmfqsarconformal) | Prediction intervals with a coverage guarantee, for any learner and any kernel source. |
 | [cmfqsar.conformers](#cmfqsarconformers) | Conformational ensembles: the fourth dimension of the CMF approach. |
 | [cmfqsar.contract](#cmfqsarcontract) | What has to match between fitting and predicting, checked rather than assumed. |
+| [cmfqsar.copattern](#cmfqsarcopattern) | The co-pattern of an invariant kernel as a curve: weight against distance (plan item NT9). |
 | [cmfqsar.dataio](#cmfqsardataio) | Reading structure-activity data sets (SDF / MOL2 / SMILES), saving models and exporting results. |
 | [cmfqsar.decoys](#cmfqsardecoys) | Preparing a background (decoy) set for field-based virtual screening. |
 | [cmfqsar.descriptors](#cmfqsardescriptors) | Non-field descriptors: one number per molecule, beside the fields rather than instead of them. |
@@ -140,8 +142,11 @@ for.
 | [cmfqsar.xtb](#cmfqsarxtb) | A cheap quantum stage: per-atom properties from GFN2-xTB (plan item D3). |
 | [cmfqsar.gui](#cmfqsargui) | PySide6 desktop application for CMF 3D-QSAR. |
 | [cmfqsar.gui.app](#cmfqsarguiapp) | Application entry point. |
+| [cmfqsar.gui.copattern_panel](#cmfqsarguicopattern_panel) | The co-pattern chart: weight against distance for one pair of field types (plan item NT9). |
+| [cmfqsar.gui.crystal_window](#cmfqsarguicrystal_window) | A periodic structure as the sample, in the application (plan item M13). |
 | [cmfqsar.gui.main_window](#cmfqsarguimain_window) | Main window of the CMF 3D-QSAR desktop application. |
 | [cmfqsar.gui.panels](#cmfqsarguipanels) | Dock panels of the CMF application: data set table, model settings, results, viewer controls. |
+| [cmfqsar.gui.surface_view](#cmfqsarguisurface_view) | A surface behind the molecules, in the application (plan item EC10). |
 | [cmfqsar.gui.viewer3d](#cmfqsarguiviewer3d) | OpenGL 3D viewer (pyqtgraph.opengl) for molecules, co-field isosurfaces, molecular-field meshes and atom-contribution spheres. |
 | [cmfqsar.gui.workers](#cmfqsarguiworkers) | Background execution of long computations with progress reporting and cancellation. |
 
@@ -1033,6 +1038,152 @@ where two molecules carry the same group the first is kept.
 ### `biggest_core(subs: Sequence[Substituent], least: int=3) -> Optional[str]`
 
 The core carrying the most different groups, which is where a table is worth building.
+
+## cmfqsar.bonds
+
+Source: `cmfqsar/bonds.py`
+
+Bonds of a periodic structure, perceived from distances, for drawing only.
+
+A crystal read from a CIF or an extended-XYZ file has no bond table: a file of that kind states
+where the atoms are and nothing about which of them are bonded.  The molecular view of this
+program draws bonds because an RDKit molecule carries them; the crystal view drew spheres alone.
+For an inorganic framework that is the honest picture.  For an **organic molecule adsorbed on a
+surface**, which is the case items EC2 and EC6 are about, it is not: a reader cannot tell a ring
+from a chain in a cloud of spheres.
+
+This module supplies the missing list.  Everything here is **display-only perception**: it
+decides which pairs of atoms to draw a stick between and nothing else.  No molecule is
+sanitised, no bond order is assigned and no charge is perceived from it -- those belong to plan
+item M8, which turns a periodic structure into a molecule, and a bond drawn here never reaches a
+field, a kernel or a prediction.
+
+The rule, and the two things it gets right
+------------------------------------------
+A pair is bonded when `|r_ij| < R_i + R_j + tolerance` with covalent radii R and a tolerance of
+0.45 angstrom, which is the rule `cmfqsar.protein.covalent_bonds` already applies to a
+protein.  Two things are added for the periodic case:
+
+* **the images.**  The pairs are taken over the cell *and* its periodic images, so a bond that
+  crosses the cell boundary is found rather than lost.  A benzene ring that a file leaves split
+  across the boundary is drawn as a ring, with the sticks leaving the box on one side and the
+  image atoms they end on drawn with them.
+* **metals get no bonds.**  A distance rule gives every atom of a close-packed metal about twelve
+  neighbours, and twelve sticks per atom is noise, not information: it hides the structure it is
+  meant to show.  So the rule is applied to the non-metal atoms only (plan item NT8 states it as
+  "no bond perception for metals").  A slab therefore stays spheres and the organic molecule on
+  it gets its bonds, which is exactly the picture the adsorbate case needs.
+
+What a metal is told instead: `coordination_polyhedra` draws the first coordination shell
+of a metal atom as a polyhedron, which is how an inorganic structure is read -- a chain of
+corner-sharing octahedra says more than any number of sticks would.
+
+### `class DrawableStructure  (dataclass)`
+
+What a viewer needs to draw one cell with its bonds.
+
+The first `n_cell` rows are the atoms of the cell, **in the cell's own order**, so a site
+number in the Reading table still names the same row.  The rows after them are the image
+atoms that a bond reaches, and only those: an image that is bonded to nothing is not drawn,
+because the images have a drawing of their own.
+
+Attributes:
+
+- `coords: np.ndarray`
+- `symbols: List[str]`
+- `radii: np.ndarray`
+- `bonds: np.ndarray`
+- `n_cell: int`
+- `source: np.ndarray`
+- `skipped_metals: int` = `0`
+- `n_distinct: int` = `0`
+
+#### `DrawableStructure.n_images_drawn` -> int  (property)
+
+#### `DrawableStructure.n_crossing` -> int  (property)
+
+Sticks that leave the cell: one end in it, the other on an image atom.
+
+#### `DrawableStructure.metal_note(n_atoms: Optional[int]=None) -> str`
+
+How many atoms got no bonds because they are metal atoms.
+
+#### `DrawableStructure.describe() -> str`
+
+### `class Polyhedron  (dataclass)`
+
+The first coordination shell of one atom, as a closed surface to draw.
+
+Attributes:
+
+- `centre: int`
+- `element: str`
+- `vertices: np.ndarray`
+- `faces: np.ndarray`
+- `neighbours: List[str]` = `field(default_factory=list)`
+- `planar: bool` = `False`
+
+#### `Polyhedron.coordination` -> int  (property)
+
+#### `Polyhedron.label() -> str`
+
+### `covalent_radius(symbol: str) -> float`
+
+The covalent radius of an element in angstrom.
+
+The table of `cmfqsar.protein` first, because the organic elements should have the same
+radius in every part of the program; then ASE's table, which covers every element a crystal
+may hold; then `DEFAULT_RADIUS`.
+
+### `is_bonding(symbol: str) -> bool`
+
+Whether a stick may be drawn to an atom of this element.  A metal: no.
+
+### `perceive_bonds(coords: np.ndarray, symbols: Sequence[str], tolerance: float=BOND_TOLERANCE, max_bond: float=MAX_BOND, skip_metals: bool=True) -> np.ndarray`
+
+Bonded pairs of an open (non-periodic) set of atoms, as an (n, 2) array of indices.
+
+With `skip_metals` a pair counts only when **both** atoms are in
+`BONDING_ELEMENTS`; without it the distance rule is applied to every pair, which is
+what a reader asks for when the structure is a molecular crystal of a metal complex and the
+metal-ligand bonds are the point.
+
+### `periodic_bonds(crystal, tolerance: float=BOND_TOLERANCE, max_bond: float=MAX_BOND, skip_metals: bool=True) -> DrawableStructure`
+
+The bonds of one cell, with the images a bond reaches (display only).
+
+The images are expanded to `max_bond`, which is enough: no stick is longer than that, so any
+bonding partner outside the cell lies within `max_bond` of the box.  A pair of two image
+atoms is dropped -- it is a bond of a neighbouring cell and the cell's own copy of it is
+already drawn -- and a pair with one end in the cell is kept, so a bond that crosses the
+boundary is drawn leaving the box, with the atom it ends on drawn beside it.
+
+### `coordination_numbers(crystal, ratio: float=SHELL_RATIO, max_shell: float=3.6, centres: str='metals') -> List[Tuple[int, str, int]]`
+
+`(atom, element, coordination)` for every candidate centre, small shells included.
+
+`coordination_polyhedra` leaves out a shell too small to be a shape; this reports every
+centre, so that a count of the polyhedra drawn can be read against the number of atoms that
+could have had one.  The shell rule is the same one, shared, not repeated.
+
+### `coordination_polyhedra(crystal, ratio: float=SHELL_RATIO, max_shell: float=3.6, min_coordination: int=3, centres: str='metals', limit: int=MAX_POLYHEDRA) -> List[Polyhedron]`
+
+The first coordination shell of every metal atom of a cell, as polyhedra.
+
+The shell is found without any chemistry: the nearest neighbour of the centre sets a
+distance, and every neighbour within `ratio` times that distance is a vertex.  That is the
+usual rule, and it needs no parameter per element.  Neighbours are taken over the periodic
+images, so a polyhedron at the edge of the cell is whole; non-metal neighbours are preferred
+where the centre has any, which is what makes the vertices the anions of an ionic structure
+rather than the next cations out.
+
+`centres` is `"metals"` (the atoms that get no bonds, which is what a polyhedron is for),
+`"all"` or `"non-metals"`.  A shell of fewer than `min_coordination` neighbours is left
+out, and a flat shell is drawn as a polygon with `Polyhedron.planar` set.
+
+### `polyhedra_mesh(polyhedra: Sequence[Polyhedron]) -> Optional[Tuple[np.ndarray, np.ndarray]]`
+
+Every polyhedron as one mesh, so a cell of hundreds costs one drawing item.
 
 ## cmfqsar.cdft
 
@@ -2872,9 +3023,120 @@ Attributes:
 
 Compare molecules about to be predicted with how the model's training set was prepared.
 
+### `check_crystals(model: CMFModel, crystals: Sequence) -> List[Finding]`
+
+Compare periodic structures about to be predicted with the training cells of the model.
+
+A crystal is prepared differently from a molecule, so the questions are different ones: the
+structure must carry a lattice, its elements must be ones the fields can see, the
+electrostatic weights must come from where they came from in training, and -- for the
+periodic overlap kernel, which compares two cells point by point -- the cells must stand on
+about one lattice.  The levels mean what they mean for molecules: `refuse` is a prediction
+that would be silently wrong, `warn` is one to look at, `note` is worth knowing.
+
 ### `summary(model: CMFModel) -> str`
 
 One line on how the model's training set was prepared, from its provenance.
+
+## cmfqsar.copattern
+
+Source: `cmfqsar/copattern.py`
+
+The co-pattern of an invariant kernel as a curve: weight against distance (plan item NT9).
+
+An overlap kernel has a co-field: a map C(r) that says where more field raises the property.
+The invariant kernels of this program -- the molecular autocorrelation
+(`cmfqsar.invariant`), the surface autocorrelation of an adsorbate, the periodic
+autocorrelation of a cell (`cmfqsar.periodic`) and the reciprocal-space channels
+(`cmfqsar.reciprocal`) -- have none, because a distribution of distances cannot say
+*where* anything is.  What they have instead is a weight per channel, and a channel is one pair
+of field types at one distance.  `cmfqsar.periodic.channel_weights` computes those weights
+and `cmfqsar.periodic.top_channels` ranks them.
+
+A ranked list of twenty channels out of several thousand is hard to read as a shape.  The same
+numbers, drawn as a curve of weight against distance for one pair of field types, are the
+reading these kernels do have: a positive part at 3 angstrom and a negative part at 6 angstrom
+says that the property wants those two fields close together and not far apart.  This module
+builds that curve; `cmfqsar.gui.copattern_panel.CoPatternChart` draws it.
+
+What the curve is, exactly
+--------------------------
+A fitted linear model on an invariant kernel predicts
+
+    y = b + sum_c w_c phi_c(x),
+
+with `phi` the scaled and unit-normalised channels of the structure and `w` the weights.
+The channels are laid out in blocks, one block per unordered pair of field types, and inside a
+block the distances run in order.  The curve of one pair is that block, plotted against the
+distance grid of the kernel's own specification.
+
+Two kernels resolve a distance further and their curve is a **sum** over what is left:
+
+* the **surface** autocorrelation resolves the in-plane distance by the heights of both atoms,
+  so each in-plane distance carries `n_heights ** 2` channels;
+* the **periodic** autocorrelation of a layer does the same when height channels are on
+  (`z_max > 0`).
+
+For those, the point drawn at a distance is the sum of the weights of the height channels at
+that distance.  The sum is the right summary because the prediction is a sum over channels: the
+curve then says what the whole distance contributes, and the Reading table beside it still names
+the individual height channels.  `CoPattern.grouped` says how many channels went into each
+point, so a reader is never left guessing, and it is 1 whenever nothing was summed.
+
+Two kernels have no distance axis at all.  The three-body channels of plan item M10 index a
+channel by two radii and a separation, and the chirality channels of the molecular
+autocorrelation by a radial shell of a signed volume; neither is a curve of weight against one
+distance, so `copattern` refuses them and says so.
+
+### `class CoPattern  (dataclass)`
+
+One curve: the weights of one pair of field types against distance.
+
+`x` and `y` are what is drawn.  `weight` and `moved` are both carried whichever is
+drawn, so that a chart can switch between them without recomputing anything: `weight` is
+the coefficient and `moved` is the coefficient times the spread of the channel over the
+training structures.
+
+Attributes:
+
+- `pair: str`
+- `pair_index: int`
+- `x: np.ndarray`
+- `weight: np.ndarray`
+- `moved: np.ndarray`
+- `spread: np.ndarray`
+- `x_label: str`
+- `y_label: str`
+- `value: str`
+- `grouped: int`
+- `note: str`
+
+#### `CoPattern.y` -> np.ndarray  (property)
+
+#### `CoPattern.describe() -> str`
+
+### `pair_labels(model, fieldset: FieldSet) -> List[str]`
+
+The label of every pair of field types, in the order the channel blocks are laid out.
+
+Raises `ValueError` for a kernel that has no distance channels, with a message that says
+what to read instead.
+
+### `copattern(model, fieldset: FieldSet, pair_index: int=0, value: str='weight') -> CoPattern`
+
+The curve of one pair of field types: weight against distance.
+
+`pair_index` indexes `pair_labels`.  `value` is one of `VALUES`.
+
+### `copattern_rows(model, fieldset: FieldSet, pair_index: int=0, value: str='weight') -> Tuple[List[str], List[List[str]]]`
+
+The same curve as a table: the column titles and one row per point.
+
+The chart is the reading; this is what a reader copies into a paper or a spreadsheet.
+
+### `has_copattern(model, fieldset: Optional[FieldSet]=None) -> bool`
+
+Whether this model's channels can be drawn as weight against distance.
 
 ## cmfqsar.dataio
 
@@ -2936,6 +3198,15 @@ Molecules of the "decoy" subset are presumed inactive whatever their activity.
 
 #### `Dataset.remove(indices: Sequence[int]) -> None`
 
+### `relative_path(path: str, start: str) -> str`
+
+The path written relative to `start`, for a message or for a result file.
+
+Returns the absolute path when there is no relative form.  On Windows there is none when
+the two paths are on different drives: a temporary directory on `D:` cannot be written
+relative to a working copy on `C:`, and `os.path.relpath` raises `ValueError` there.
+A shorter path is only a convenience for the reader, so it must never stop the program.
+
 ### `mol_from_mol2_block(block: str) -> Optional[Chem.Mol]`
 
 Parse one MOL2 block with RDKit; fall back to the tolerant parser on failure.
@@ -2993,9 +3264,22 @@ Names are matched case-insensitively; if fewer than half of the molecules match 
 but the table has exactly one row per molecule, the rows are applied in order.
 Returns the number of molecules that received an activity.
 
-### `read_activities_csv(path: str) -> Dict[str, float]`
+### `read_activities_csv(path: str, column: Optional[str]=None) -> Dict[str, float]`
 
 name,value CSV (header optional) -> dict.
+
+With `column`, the value is taken from the column of that title instead of the second one,
+which is what a prepared table of several properties needs: one file, one column per
+property, the names in the first column.  A title that is not in the header, or a file with
+no header, raises rather than quietly returning the second column.
+
+### `activity_columns(path: str) -> List[str]`
+
+The titles of the columns of a CSV that hold numbers, for a chooser to offer.
+
+The first column is the name, so it is never offered; a column is offered when the first
+data row has a number in it.  An empty list means the file has no header, or no numeric
+column, and `read_activities_csv` should be used as it is.
 
 ### `save_model(path: str, model: CMFModel, extra: Optional[dict]=None) -> None`
 
@@ -6929,6 +7213,35 @@ The normalisation is applied to the joint kernel, not block by block: normalisin
 of field types on its own would divide out the very magnitudes that distinguish molecules,
 the same source of error that affects the alignment-free count kernel when it is normalised
 field by field.
+
+### `row_lengths(features: np.ndarray, scale: Optional[np.ndarray]=None, n_bins: int=1, blocks: Optional[Sequence[int]]=None) -> np.ndarray`
+
+The length of each scaled feature row: the one number the cosine kernel divides out.
+
+`autocorrelation_kernel` rescales the channels and then divides every row by its own
+length, so a kernel entry is the cosine of the angle between two rows and the length never
+reaches the model.  The length is one number per sample.  It says how much field the sample
+carries in total, which for a cell is close to how large and how dense it is, and for a
+local environment is how crowded that environment is.  This returns that number, so that it
+can be measured as a descriptor of its own (plan item M15).
+
+`scale` is the channel scale the kernel used.  Without it the scale is taken from these rows,
+the way `autocorrelation_kernel` takes it, so the length is the length of the row the
+kernel really saw and not of the raw row.
+
+### `length_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, reference: Optional[float]=None) -> np.ndarray`
+
+A kernel on the row length alone, in units of the training root mean square length.
+
+This is the linear kernel of a single feature, the length of `row_lengths` divided by
+`reference`.  Dividing by that one number does not change what the kernel can fit, since a
+constant factor is taken up by the ridge, but it puts the entries near one, so the matrix can
+be added to a cosine kernel without a scale of its own:
+
+    K = (1 - w) * cosine + w * length,   0 <= w <= 1.
+
+`reference` defaults to the root mean square length of `train`.  Pass the value computed on
+the training part when the test part must not enter it.
 
 ### `block_fields(n_fields: int, chirality: bool=False) -> List[Tuple[int, ...]]`
 
@@ -11355,6 +11668,22 @@ the per-atom contributions they were summed from, and what could not be placed (
 ring), which is zero for a benzenoid.  The per-ring sums plus the unplaced part equal the
 prediction minus the bias.
 
+### `ring_players(mf: MoleculeFields, rings: Sequence[Ring]) -> List[List[int]]`
+
+A partition of every atom of `mf` into one group per ring, for a Shapley reading.
+
+`ring_contributions` gives an atom that belongs to two rings half to each, which an
+exact decomposition of a linear model allows.  A Shapley game cannot share a player: a
+coalition either holds an atom or it does not.  So here an atom of two rings goes to the
+first of them, a hydrogen goes with the heavy atom it is bonded to, and the ring-centre
+pseudo-atom of ring *k* goes to ring *k*.
+
+Every atom of `mf` ends in exactly one group, which is what makes the reading add up: the
+coalition of all players is the whole molecule, so the values sum to its prediction minus the
+prediction of the empty molecule.  A model that is not linear in the field -- the Gaussian
+kernel layer, for one -- has no co-field and no exact per-atom decomposition, and this is how
+it is read instead (plan item PBH6).
+
 ### `count_names(atom_types: Sequence[str]=PBH_TYPES, ring_classes_: Sequence[str]=RING_CLASSES, ring_types: Sequence[str]=(), sextet: bool=True, homa: bool=False) -> Tuple[str, ...]`
 
 The names of `count_features` for the given classes.
@@ -11772,13 +12101,26 @@ searched, and `cell_images` then drops the ones whose atoms stay too far away.  
 translation is made along a direction that is not periodic (`pbc`), so a layer is never
 paired with its own copy across the vacuum.
 
-### `cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+### `cell_image_indices(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray]`
 
-(coordinates, weights, radii) of the atoms of one cell and of every image within `r_max`.
+(coordinates, source index) of the atoms of one cell and of every image within `r_max`.
+
+The first rows are the cell itself in its own order, and every later row is an image of the
+atom whose index stands beside it.  Everything an image atom carries besides its position --
+the field weights, the radius, the element -- is therefore read from the cell through that
+index: `cell_images` takes the weights and radii that way, and a viewer takes the
+element and its colour.
 
 "Within `r_max`" is measured from the box the cell spans, not from the atoms of this
 structure, so the same expansion serves every structure of the series: an image that is
 needed by a neighbour's atom is kept even where this structure has no atom near it.
+
+### `cell_images(crystal, r_max: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(coordinates, weights, radii) of the atoms of one cell and of every image within `r_max`.
+
+The expansion itself is `cell_image_indices`; the weights and radii of an image are
+those of the atom it is an image of.
 
 ### `overlap_cutoff(specs: Sequence[FieldSpec], radii_max: float=2.0) -> float`
 
@@ -12042,6 +12384,43 @@ Every structure of an ASE-readable file (CIF, POSCAR, extended XYZ, ASE JSON, ..
 
 A CIF whose sites carry partial occupancies is read through `read_disordered`, so that
 the occupancies reach the fields; every other file goes through ASE as it is.
+
+### `structure_files(folder: str) -> List[str]`
+
+The structure files of a folder, sorted by name.
+
+A file is taken when its name ends in one of `STRUCTURE_SUFFIXES`, or when it is called
+POSCAR or CONTCAR, which VASP writes without an ending.  Nothing is read here, so a folder
+that also holds notes, CSV files and pictures costs nothing.
+
+### `pbc_flags(letters: str) -> Tuple[bool, bool, bool]`
+
+Which lattice directions are periodic, from letters: `abc`, `ab`, `a`, or `xyz`.
+
+`abc` is a crystal, `ab` a layer with the vacuum along the third vector, `a` a chain.
+
+### `read_crystal_set(path: str, pbc: Optional[str]=None, index: str=':') -> Tuple[list, List[str]]`
+
+A set of periodic structures with a name for each: one file, or a folder of files.
+
+A folder is read file by file (`structure_files`) and every structure is named after
+its file, which is how a set of CIFs downloaded from a database arrives.  A single file may
+hold one structure or many; a structure that carries a `name` info key keeps it, and the
+rest are named `<formula>_<index>`.
+
+`pbc` sets which lattice directions are periodic for every structure
+(`pbc_flags`); without it the files decide.  A structure that is not periodic in all
+three directions is gathered about the middle of its cell (`centre_layer`), because a
+layer or a chain a file leaves split across the cell boundary has no mean plane.
+
+### `crystal_targets(structures: Sequence, names: Sequence[str], key: Optional[str]=None, csv: Optional[str]=None, column: Optional[str]=None) -> np.ndarray`
+
+The target value of every structure, from an info key of the files or from a CSV.
+
+`key` reads `info[key]` of each structure, which is where an extended-XYZ or ASE JSON
+file keeps a per-structure property; `csv` reads a table whose first column holds the
+names and matches it on them, taking the second column or the one `column` names.  A
+structure with no value gets NaN, and the caller decides what to do with it.
 
 ### `structures_from_matbench(table: dict, target: Optional[str]=None)`
 
@@ -12316,6 +12695,37 @@ Attributes:
 
 #### `PlanePose.describe() -> str`
 
+### `class PoseGeometry  (dataclass)`
+
+What a pose on a surface is, in two numbers, and what they were measured on.
+
+A molecule in the surface frame has four free motions and the kernel sees only two of them:
+how high it sits and how far it is tilted.  (Where it sits in the plane and how it is turned
+about the normal are what the surface kernel is invariant to.)  Those two numbers are the
+pose, so the application states them beside the picture.
+
+* `height` is the lowest heavy atom above the surface plane, in angstrom.  This is the
+  height the Fe(110) reference poses report and the one the rule poses place.
+* `tilt` is the angle, in degrees, between the molecule's own flat plane and the surface:
+  0 degrees is a molecule lying flat, 90 degrees one standing on edge.  The plane is the one
+  spanned by the two longest principal axes of the heavy atoms, so the normal is the
+  shortest axis.
+* `thickness` is how far the heavy atoms spread along that shortest axis.  A flat molecule
+  has a thickness of a few tenths of an angstrom and its tilt means what it says; a bulky
+  one has no plane, `flat` is then false, and the tilt is only the direction of its
+  thinnest axis.
+
+Attributes:
+
+- `height: float`
+- `centre_height: float`
+- `tilt: float`
+- `thickness: float`
+- `flat: bool`
+- `n_heavy: int`
+
+#### `PoseGeometry.describe() -> str`
+
 ### `anchor_atom(mol: Chem.Mol) -> Optional[int]`
 
 The atom that points at the surface in the upright pose: the most basic nitrogen, by a
@@ -12410,6 +12820,15 @@ RMSD of the heights alone.
 
 RMSD after the best rigid superposition in three dimensions: the floor a rigid pose of
 this conformation can reach, whatever the frame.
+
+### `pose_geometry(coords: np.ndarray, symbols: Optional[Sequence[str]]=None, plane_z: float=0.0, flat_tolerance: float=0.8) -> PoseGeometry`
+
+The height and the tilt of a posed molecule, measured in the surface frame.
+
+`coords` are the coordinates of the molecule, `symbols` its element symbols (hydrogens are
+left out when they are given, because a height is quoted on the heavy atoms), and `plane_z`
+the height of the surface plane, which is 0 in the frame this program uses.  See
+`PoseGeometry` for what the numbers are.
 
 ## cmfqsar.pocketalign
 
@@ -14970,10 +15389,13 @@ The site profiles of every measured sample, one row each.
 The split of one cell gives every one of its sites at once, so each cell is featurised once
 however many of its sites were measured.
 
-### `site_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, n_bins: int=1, blocks: Optional[Sequence[int]]=None) -> np.ndarray`
+### `site_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, n_bins: int=1, blocks: Optional[Sequence[int]]=None, normalize: bool=True) -> np.ndarray`
 
 The cosine-normalised linear kernel of the site profiles: the same kernel the whole-cell
 autocorrelation uses, so that only the descriptor differs between the two.
+
+`normalize=False` keeps the length of each row, which the cosine kernel divides out. It is
+here for the measurement of plan item M15 and changes no default.
 
 ### `site_targets(values: Sequence[Sequence[float]], name: str='') -> AtomTargets`
 
@@ -15169,6 +15591,18 @@ numerical spread of a flat layer.
 ### `top_layer_indices(atoms, top_layers: int=2, tolerance: float=0.5) -> np.ndarray`
 
 The atoms of the top `top_layers` layers of a slab.
+
+### `slab_images(atoms, top_layers: int=2, cutoff: float=10.0, tolerance: float=0.5) -> Tuple[np.ndarray, List[str]]`
+
+The top layers of a slab repeated over the surface, as plain coordinates and symbols.
+
+Returns `(coords, symbols)`.  Only the two surface directions are repeated, far enough
+that every point of the primary surface cell has the surface continuing for at least
+`cutoff` angstrom around it; a slab is not periodic along its normal, and its images along
+the normal are vacuum.
+
+This is the expansion `slab_receptor` turns into fields and the one the application
+draws, so the picture shows exactly the atoms the receptor is made of.
 
 ### `slab_receptor(atoms, fieldset: FieldSet, top_layers: int=2, cutoff: float=10.0, tolerance: float=0.5, name: str='slab') -> MoleculeFields`
 
@@ -17255,6 +17689,11 @@ Attributes:
 
 The xtb executable: the one given, then `XTB_EXE`, then the path, then the default.
 
+A path that was given -- as `explicit` or in `XTB_EXE` -- is used or refused, never
+replaced. If it names neither a file nor a program on the path, the search stops there and
+the error quotes it. Running a different xtb instead would produce numbers from a program
+the caller did not ask for, and nothing in the result would say so.
+
 ### `xtb_version(exe: str) -> str`
 
 The version string the program reports, for the provenance of a result file.
@@ -17307,6 +17746,170 @@ Source: `cmfqsar/gui/app.py`
 Application entry point.
 
 ### `main(argv=None)`
+
+## cmfqsar.gui.copattern_panel
+
+Source: `cmfqsar/gui/copattern_panel.py`
+
+The co-pattern chart: weight against distance for one pair of field types (plan item NT9).
+
+The invariant kernels have no co-field, so there is no map to look at.  What they have is a
+weight per channel, and a channel is one pair of field types at one distance.  A ranked list of
+twenty channels out of several thousand is a table; the same numbers for one pair of field
+types, drawn against distance, are a shape a reader can take in at once.
+`cmfqsar.copattern` computes the curve and this widget draws it.
+
+The chart is used in both windows, because both have kernels without a co-field: the molecular
+window (the autocorrelation kernel of a set with no common frame, and the surface kernel of an
+adsorbate) and the crystal window (the periodic autocorrelation of a cell).
+
+### `class CoPatternChart(parent=None)  — bases: QWidget`
+
+A chart of channel weight against distance, with the pair of field types to choose from.
+
+Call `set_model` after a fit and `clear` when there is nothing to show.  The
+widget keeps the model, so changing the pair or the quantity on the y axis costs nothing.
+
+#### `CoPatternChart.clear(message: str='') -> None`
+
+Empty the chart and say why it is empty.
+
+#### `CoPatternChart.set_model(model, fieldset=None) -> bool`
+
+Show the co-pattern of `model`.  Returns False, and says why, when it has none.
+
+#### `CoPatternChart.current_pair() -> int`
+
+#### `CoPatternChart.current_value() -> str`
+
+## cmfqsar.gui.crystal_window
+
+Source: `cmfqsar/gui/crystal_window.py`
+
+A periodic structure as the sample, in the application (plan item M13).
+
+Everything the program can do with crystals -- the periodic field autocorrelation, the periodic
+overlap kernel with its co-field inside the cell, the split of a prediction over the sites --
+lived on the command line and in the library only.  This window is that side of the program on
+screen: open a folder of CIF files or one structure file, give the structures their measured
+values, fit a model, and read it on the cell itself.
+
+What is drawn, and why it is not the molecular view
+---------------------------------------------------
+A crystal is not a molecule with a box around it.  It has no bond table, it has no single
+"molecule" to centre on, and half of what the kernel sees lies outside the cell, in the periodic
+images.  So the view has three parts the molecular view does not:
+
+* **the cell**, as the twelve edges of its box, with the three lattice vectors marked;
+* **the images**, every copy of the cell's atoms that comes within the kernel's own cutoff, drawn
+  as dots so that thousands of them cost nothing.  They are what makes the periodic kernel
+  periodic, and seeing them is how one checks that the cutoff reaches as far as it should;
+* **the reading**: the co-field inside the cell where the kernel has one, and one sphere per site
+  coloured by what that site adds to the prediction.
+
+Which reading applies depends on the kernel, and the window says so rather than offering both:
+
+* the **periodic overlap kernel** compares two cells point by point, so it has a co-field --
+  C(r) inside the cell, positive where more field raises the property -- and the prediction
+  splits over the sites by decomposition rule 3;
+* the **periodic field autocorrelation** is a distribution of distances and can never say
+  *where*, so it has no co-field.  Its reading is the co-pattern over the channels (which pair
+  of field types at which distance) and the per-site split of plan item M5, which is exact.
+
+### `class ColorScale(parent=None)  — bases: QWidget`
+
+The colour scale of the site contributions, with the value at each end written on it.
+
+A colouring with no scale beside it says only which site is red; with the scale it says how
+much, in the units of the activity, which is what makes it a reading rather than a picture.
+
+#### `ColorScale.set_range(vmax: float, unit: str='') -> None`
+
+Show ±`vmax`; a scale of zero means nothing is drawn and the labels say so.
+
+### `class CrystalWindow(parent=None, background: bool=True)  — bases: QMainWindow`
+
+A data set of periodic structures: open it, fit a model, read it on the cell.
+
+#### `CrystalWindow.log(text: str) -> None`
+
+#### `CrystalWindow.error(text: str) -> None`
+
+#### `CrystalWindow.run_task(fn, on_done, label='Working')`
+
+#### `CrystalWindow.cancel_worker()`
+
+#### `CrystalWindow.open_folder()`
+
+#### `CrystalWindow.open_file()`
+
+#### `CrystalWindow.load(path: str, target_file: Optional[str]=None, target_key: Optional[str]=None, target_column: Optional[str]=None)`
+
+Read a folder of structure files, or one file, and show what came back.
+
+#### `CrystalWindow.import_targets(path: str='', column: Optional[str]=None)`
+
+Read the measured values from a CSV whose first column holds the structure names.
+
+A table with several numeric columns -- which is what a prepared data set usually is --
+asks which column is the property; a plain `name,value` file asks nothing.
+
+#### `CrystalWindow.populate() -> None`
+
+#### `CrystalWindow.current_index() -> int`
+
+#### `CrystalWindow.build_model()`
+
+#### `CrystalWindow.update_reading(*_)`
+
+#### `CrystalWindow.compute_cofield()`
+
+Evaluate the co-field of the fitted model inside the selected cell.
+
+#### `CrystalWindow.center_current()`
+
+#### `CrystalWindow.update_display(*_)`
+
+#### `CrystalWindow.save_model_file()`
+
+#### `CrystalWindow.export_predictions()`
+
+#### `CrystalWindow.save_screenshot()`
+
+### `cell_grid(crystal, spacing: float=0.3, margin: float=3.0, max_points: int=MAX_GRID_POINTS) -> Grid`
+
+A rectangular grid over the box one cell spans, cut to the atoms where there is vacuum.
+
+The grid is axis-aligned, as every grid in this program is, so for a cell that is not
+rectangular it covers a little more than the cell.  That costs nothing to look at: the
+co-field of a periodic model is itself periodic, so the extra corners carry the field of the
+neighbouring cell and not noise.
+
+Where the structure is *not* periodic -- the vacuum above a layer, which is most of its cell
+-- the grid is cut to the atoms plus `margin`, because there is no field out there and the
+points would only be spent.  The spacing is then coarsened until the grid fits in
+`max_points`, so a large supercell is drawn more coarsely rather than not at all.
+
+### `site_contributions_of(model: CMFModel, crystal) -> Tuple[np.ndarray, str]`
+
+One number per site of `crystal`, and one line saying what the numbers are.
+
+The two periodic kernels split a prediction in two different ways, and both are exact:
+the overlap kernel over the atoms of the cell (decomposition rule 3), the autocorrelation
+over the sites of the cell (plan item M5).  The sum of the numbers is the prediction less
+the bias either way.
+
+### `reading_rows(model: CMFModel, fieldset: FieldSet, n: int=20) -> Tuple[List, List]`
+
+The table under the view: the co-pattern of the model, or the sites of one cell.
+
+Returns `(column titles, rows)`.  For the autocorrelation kernel the co-pattern over the
+channels is the model's own reading and does not depend on which structure is selected; the
+per-site split does, so both are offered and the window shows whichever the user asks for.
+
+### `site_rows(values: Sequence[float], crystal, n: int=20) -> Tuple[List, List]`
+
+The sites of one cell that move its prediction most, largest magnitude first.
 
 ## cmfqsar.gui.main_window
 
@@ -17445,7 +18048,23 @@ Which two models to score on the loaded molecules (plan item G2).
 
 The two models' predictions side by side, with the summary and a CSV export.
 
-### `class MainWindow()  — bases: QMainWindow`
+### `class SlabDialog(parent=None)  — bases: QDialog`
+
+Build a body-centred cubic (110) slab to put behind the molecules (plan item EC10).
+
+The defaults are the slab the Fe(110) reference poses of `examples/corrosion_fe110` were
+computed on, so a user who opens that series and accepts the defaults sees the surface those
+adsorption energies belong to.
+
+#### `SlabDialog.values() -> dict`
+
+### `class PlanePoseDialog(names: List[str], parent=None)  — bases: QDialog`
+
+Pose the molecules in the surface frame, by rule (plan items EC2 and EC10).
+
+#### `PlanePoseDialog.values() -> dict`
+
+### `class MainWindow(background: bool=True)  — bases: QMainWindow`
 
 #### `MainWindow.toggle_results_span(full_width: bool)`
 
@@ -17461,6 +18080,11 @@ vertically; otherwise the side panels run the full height.
 
 #### `MainWindow.error(text: str)`
 
+Report a failure: a dialog in the application, the log alone in a script.
+
+A modal dialog waits for a person, so a script or a test driving this window
+(`background=False`) must never raise one.
+
 #### `MainWindow.run_task(fn, on_done, label='Working')`
 
 #### `MainWindow.cancel_worker()`
@@ -17470,6 +18094,14 @@ vertically; otherwise the side panels run the full height.
 #### `MainWindow.open_dataset(kind: str='train')`
 
 #### `MainWindow.load_dataset_file(path: str, kind: str='train', activity: Optional[str]=None, on_loaded=None)`
+
+#### `MainWindow.open_crystal_window()`
+
+Open the window for periodic structures (plan item M13).
+
+A crystal is not a molecule: it has a lattice instead of a pose, no bond table, and its
+kernel sums over the images of the cell.  So the periodic side of the program has a
+window of its own rather than a mode of this one, and the two do not share a data set.
 
 #### `MainWindow.activity_changed(ix)`
 
@@ -17514,6 +18146,24 @@ Place every conformation of every molecule in the loaded pocket.
 #### `MainWindow.fetch_protein()`
 
 #### `MainWindow.clear_protein()`
+
+#### `MainWindow.load_surface_file(path: str='')`
+
+Read a slab from a structure file and put it behind the molecules.
+
+#### `MainWindow.build_slab_dialog()`
+
+#### `MainWindow.clear_surface()`
+
+#### `MainWindow.plane_pose_dialog()`
+
+#### `MainWindow.pose_on_plane(pose: str='flat', height: float=2.2, anchor_height: float=2.0, ref_index: Optional[int]=None, refine: Optional[str]=None)`
+
+Pose every molecule on the plane z = 0, by rule, and report the poses.
+
+This is the frame the surface kernel and the overlap kernel of an adsorbate need: the
+normal along z, the top atomic layer at z = 0.  The molecules are moved rigidly, so the
+step joins the pose history and can be undone like any other alignment.
 
 #### `MainWindow.compute_complementarity()`
 
@@ -17790,6 +18440,10 @@ Fill the by-residue table: one row per residue, one column per interaction type.
 is left blank, because a residue that does not touch this molecule has no interaction
 rather than a weak one.
 
+#### `ResultsPanel.set_surface_poses(header: str, columns, rows) -> None`
+
+Fill the Surface poses tab: one row per molecule, already formatted as text.
+
 #### `ResultsPanel.set_chemotypes(header: str, rows, per_group) -> None`
 
 Fill the Chemotypes tab: the three q² values, then every held-out chemotype.
@@ -17879,6 +18533,14 @@ Decomposition rule 3: the contribution of every atom of the selected molecule.
 
 #### `ViewerControls.set_protein_label(text: str) -> None`
 
+#### `ViewerControls.slab_style() -> str`
+
+#### `ViewerControls.slab_radius() -> float`
+
+#### `ViewerControls.arrow_count() -> int`
+
+#### `ViewerControls.set_slab_label(text: str) -> None`
+
 #### `ViewerControls.set_fields(names_labels)`
 
 #### `ViewerControls.current_field() -> Optional[str]`
@@ -17905,6 +18567,101 @@ Put captured values back; returns the keys that no longer match a widget.
 ### `apply_field_table(panel: 'ModelPanel', values: Dict[str, dict]) -> None`
 
 Set the enabled flag, alpha and h of the fields the table lists, by field name.
+
+## cmfqsar.gui.surface_view
+
+Source: `cmfqsar/gui/surface_view.py`
+
+A surface behind the molecules, in the application (plan item EC10).
+
+The electrochemistry items built three things the window could not show:
+
+* **the slab** (item EC6).  `cmfqsar.slab` turns the top layers of a metal slab, with their
+  periodic images, into the same object a protein pocket becomes, and
+  `cmfqsar.complementarity` scores a molecule against it.  The viewer already draws a
+  pocket behind a ligand; a slab is drawn the same way, with one difference that matters: a slab
+  has no edge, so what is drawn is the expansion around the molecules and not one cell.
+* **the surface frame** (item EC2).  `cmfqsar.planealign` poses a molecule on the plane
+  `z = 0` with the surface normal as z.  The frame is a convention, and a convention that is
+  not drawn is one the reader has to take on trust, so the axes are drawn and the two numbers
+  the frame is made of -- the height and the tilt -- are stated.
+* **the vector co-field** (item EC5).  The co-field of the electric-field kind is a direction at
+  a place rather than a value, so it is drawn as arrows; that part lives in
+  `cmfqsar.gui.viewer3d.Viewer3D.add_arrows` and in the main window.
+
+This module is the first two: reading a surface, choosing which of its atoms to draw, and saying
+in one line what is on screen.  Everything here is a plain function or a small dataclass, so the
+tests and `benchmarks/run_surface_view.py` drive it without a window.
+
+### `class Surface  (dataclass)`
+
+A slab in the surface frame: the normal along z, the top atomic layer at z = 0.
+
+Attributes:
+
+- `name: str`
+- `atoms: object`
+- `source: str` = `''`
+- `layers: List[float]` = `None`
+
+#### `Surface.n_atoms` -> int  (property)
+
+#### `Surface.elements` -> List[str]  (property)
+
+#### `Surface.cell2d` -> np.ndarray  (property)
+
+The two surface lattice vectors, as a 2 x 3 array.
+
+#### `Surface.spacing` -> float  (property)
+
+The distance between the first two layers, in angstrom; NaN for a single layer.
+
+#### `Surface.describe() -> str`
+
+### `load_surface(path: str, top_at_zero: bool=True) -> Surface`
+
+Read a slab from any file ASE understands (POSCAR, CIF, extended XYZ) into the frame.
+
+With `top_at_zero` the structure is shifted along z so that its highest atom sits at z = 0,
+which is the frame the reference poses of `examples/corrosion_fe110` are given in and the
+frame `cmfqsar.planealign` poses a molecule in.
+
+### `build_bcc110(element: str='Fe', nx: int=6, ny: int=6, layers: int=4, a: float=2.78, vacuum: float=15.0) -> Surface`
+
+A body-centred cubic (110) slab, built rather than read; the Fe(110) defaults are FE110.
+
+ASE needs an even number of repeats along the second surface direction for an orthogonal
+cell, so `ny` is rounded up to the next even number and the name says what was built.
+
+### `drawn_atoms(surface: Surface, points: np.ndarray, radius: float=8.0, top_layers: int=2, max_atoms: int=20000) -> Tuple[np.ndarray, List[str], np.ndarray]`
+
+The surface atoms worth drawing around `points`, as `(coords, symbols, radii)`.
+
+The top `top_layers` layers are repeated over the surface lattice and then cut to the atoms
+whose **in-plane** distance to the nearest of `points` is at most `radius`.  The cut is in
+the plane and not in space, so the surface stays a surface under a molecule that sits high
+above it instead of thinning out to nothing.
+
+`radius` is the only control a user needs: a small radius shows the patch under the molecule,
+a large one shows that the surface has no edge.  Beyond `max_atoms` the drawing would be slow
+with no gain, so the radius is reduced until the count fits and the caller is told by the
+number of atoms it gets back.
+
+### `site_points(surface: Surface, points: np.ndarray, radius: float=8.0, height: float=0.0) -> Tuple[List[str], np.ndarray]`
+
+The top, bridge and hollow sites of the top layer near `points`.
+
+`cmfqsar.slab.surface_sites` finds them in the primary surface cell; a molecule is
+rarely in that cell, so the sites are translated over the surface lattice to the molecules
+and then cut to `radius` in the plane, exactly as `drawn_atoms` cuts the atoms.
+
+### `pose_line(coords: np.ndarray, symbols: Sequence[str], name: str='', plane_z: float=0.0) -> str`
+
+One line for the panel: the height and the tilt of a molecule in the surface frame.
+
+### `pose_table(coords: Sequence[np.ndarray], symbols: Sequence[Sequence[str]], names: Sequence[str], plane_z: float=0.0) -> Tuple[List[str], List[List[str]]]`
+
+The pose of every molecule of a set, as the column titles and one row each.
 
 ## cmfqsar.gui.viewer3d
 
@@ -17933,6 +18690,31 @@ Unlike `add_molecule` this takes plain arrays, because a crystal structure is no
 sanitised molecule.  'lines' is a wire frame and is fast enough for thousands of atoms;
 'sticks' builds cylinders and should be kept for small sites.
 
+#### `Viewer3D.add_cell(cell: np.ndarray, group: str, origin=(0.0, 0.0, 0.0), color=(0.7, 0.74, 0.82), alpha: float=0.85, width: float=1.6, axes: bool=True) -> None`
+
+The unit cell as the twelve edges of its box.
+
+With `axes`, the three edges that leave the origin are drawn in red, green and blue for
+the first, second and third lattice vector, which is the usual convention and says at a
+glance which way the cell is turned.  The box is the frame everything periodic is drawn
+in: the atoms inside it are one cell, and the images outside it are the same cell
+translated.
+
+#### `Viewer3D.add_atoms(coords: np.ndarray, symbols: Sequence[str], group: str, radii: Optional[Sequence[float]]=None, scale: float=ATOM_RADIUS_SCALE, alpha: float=1.0) -> None`
+
+One sphere per atom, coloured by element and sized by its covalent radius.
+
+A crystal has no bond table, so this draws the atoms alone.  `radii` are the covalent
+radii a structure carries; without them every atom gets the same size.
+
+#### `Viewer3D.add_points(coords: np.ndarray, symbols: Sequence[str], group: str, size: float=6.0, alpha: float=0.45) -> None`
+
+One dot per atom, coloured by element: the cheap drawing for the periodic images.
+
+A cell with its images out to the kernel's cutoff is thousands of atoms, which is too
+many for spheres and exactly what a scatter item is for.  The images are drawn
+translucent so that the cell itself stays the thing one looks at.
+
 #### `Viewer3D.add_scalar_surface(verts: np.ndarray, faces: np.ndarray, values: np.ndarray, group: str, alpha: float=0.9, vmax: Optional[float]=None, negative=(0.95, 0.25, 0.2), positive=(0.25, 0.85, 0.35), neutral=(0.85, 0.85, 0.85)) -> None`
 
 A surface coloured per vertex by a signed value, red through grey to green.
@@ -17949,6 +18731,34 @@ site rather than for a whole structure.
 
 #### `Viewer3D.add_spheres(centers: np.ndarray, radii: Sequence[float], colors, group: str, alpha: float=0.55) -> None`
 
+#### `Viewer3D.add_arrows(points: np.ndarray, vectors: np.ndarray, group: str, scale: float=1.0, color=(0.95, 0.85, 0.2), alpha: float=0.95, shaft_radius: float=0.07, head_radius: float=0.2, head_fraction: float=0.35, min_length: float=0.15) -> None`
+
+One arrow per point: a cylinder with a cone on its end, pointing along the vector.
+
+This is how a field that is a **direction** is drawn.  The co-field of a scalar field is
+a value at a place and is drawn as an isosurface; the co-field of the electric-field kind
+(plan item EC5) is a vector at a place, and only an arrow can show it.  `scale` is
+angstrom per unit of the vector, so the drawing's length scale is a number the caller
+states in the legend; an arrow shorter than `min_length` angstrom after scaling is left
+out, because a dot in the picture carries no direction.
+
+#### `Viewer3D.add_polyhedra(verts: np.ndarray, faces: np.ndarray, group: str, color=(0.45, 0.65, 0.95), alpha: float=0.35, wireframe: bool=False) -> None`
+
+Coordination polyhedra as one translucent mesh: the inorganic reading of a structure.
+
+A metal atom gets no bonds here (a distance rule would give it twelve), so the shape of
+its first coordination shell is what says how the structure is built -- a chain of
+corner-sharing octahedra, a layer of edge-sharing tetrahedra.  Every polyhedron of a cell
+is drawn as one mesh item, so a cell of hundreds costs one.
+
+#### `Viewer3D.add_frame(origin, group: str, length: float=4.0, labels: Sequence[str]=('x', 'y', 'z'), alpha: float=0.95) -> None`
+
+The three axes of a frame as arrows at `origin`, red, green and blue, with labels.
+
+A surface frame is a convention -- the normal is z and the top atomic layer is z = 0 --
+and a convention that is not drawn is a convention a reader has to take on trust.  The
+colours are the same as the lattice vectors of a cell carry, so the two views agree.
+
 #### `Viewer3D.add_isosurface(verts: np.ndarray, faces: np.ndarray, color, group: str, alpha: float=0.45, wireframe: bool=False, normals: Optional[np.ndarray]=None) -> None`
 
 #### `Viewer3D.set_axes(on: bool, size: float=5.0) -> None`
@@ -17962,6 +18772,32 @@ site rather than for a whole structure.
 #### `Viewer3D.screenshot(path: str) -> None`
 
 ### `cofield_colors(field_name: str)`
+
+### `color_name(c) -> str`
+
+The name of one of the fixed co-field colours, for a legend that has to be read.
+
+A legend saying "positive = rgb(0.9,0.2,0.2)" tells the reader nothing; the colours of the
+co-fields are fixed, so each one has a name.
+
+### `element_color(symbol: str, default=(0.6, 0.6, 0.6)) -> Tuple[float, float, float]`
+
+The colour of an element: the table above where it has one, else the Jmol colour.
+
+The organic elements keep the colours the molecular views have always used, so that a
+molecule looks the same beside a crystal.  Everything else -- the metals, the alkali ions,
+the rare earths an inorganic structure is made of -- takes the standard Jmol colour from
+ASE's table, which covers every element.  An element neither table knows is grey.
+
+### `signed_spheres(values: Sequence[float], vmax: Optional[float]=None, min_radius: float=0.12, max_radius: float=0.85, positive=(0.95, 0.2, 0.2), negative=(0.2, 0.4, 0.95))`
+
+Radii and colours for one sphere per signed value: size by size, colour by sign.
+
+Returns `(radii, colours, vmax)`.  The radius grows as the square root of the magnitude,
+so that the *area* a sphere shows on screen is about proportional to the value; `vmax` is the
+value the largest sphere stands for and is returned so that a legend can state it.  This is
+the convention the atom contributions of a molecule are drawn with, used here for the
+per-site contributions of a cell.
 
 ### `molecule_mesh(mol: MoleculeFields, style: str='ballstick', carbon_color=None, alpha: float=1.0)`
 

@@ -9,14 +9,12 @@ pytest.importorskip("pyqtgraph")
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication                    # noqa: E402
-
 from cmfqsar.gui.panels import ResultsPanel                   # noqa: E402
 
 
 @pytest.fixture(scope="module")
-def app():
-    return QApplication.instance() or QApplication([])
+def app(qt_application):
+    return qt_application
 
 
 @pytest.fixture()

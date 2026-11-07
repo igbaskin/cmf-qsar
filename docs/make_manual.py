@@ -831,6 +831,20 @@ def build(source_path, out_path):
     raise RuntimeError("the contents refuses to settle")
 
 
+def relative_path(path, start):
+    """The path written relative to ``start``, for a message; the absolute path when there is none.
+
+    The same fallback as :func:`cmfqsar.dataio.relative_path`, repeated here because this builder
+    uses nothing from the package: it needs reportlab and the standard library only.  On Windows
+    there is no relative form when the two paths are on different drives, which happens when the
+    PDF is written to a temporary directory on one drive and the working copy is on another.
+    """
+    try:
+        return os.path.relpath(path, start)
+    except ValueError:
+        return os.path.abspath(path)
+
+
 def source_sha256(source_path):
     """The hash of the Markdown the PDF is built from, with its line endings normalised.
 
@@ -868,17 +882,17 @@ def check_stamp(source_path, out_path):
     """What is wrong between the source, the PDF and the stamp; an empty list when nothing is."""
     problems = []
     if not os.path.exists(out_path):
-        return [f"{os.path.relpath(out_path, ROOT)} does not exist: run python docs/make_manual.py"]
+        return [f"{relative_path(out_path, ROOT)} does not exist: run python docs/make_manual.py"]
     path = stamp_path(out_path)
     if not os.path.exists(path):
-        return [f"{os.path.relpath(path, ROOT)} does not exist: run python docs/make_manual.py"]
+        return [f"{relative_path(path, ROOT)} does not exist: run python docs/make_manual.py"]
     with open(path, encoding="utf-8") as fh:
         recorded = [ln.split()[0] for ln in fh if ln.strip() and not ln.startswith("#")]
     if not recorded:
-        problems.append(f"{os.path.relpath(path, ROOT)} records no hash")
+        problems.append(f"{relative_path(path, ROOT)} records no hash")
     elif recorded[0] != source_sha256(source_path):
         problems.append(
-            f"{os.path.relpath(out_path, ROOT)} was built from another "
+            f"{relative_path(out_path, ROOT)} was built from another "
             f"{os.path.basename(source_path)}: run python docs/make_manual.py")
     return problems
 

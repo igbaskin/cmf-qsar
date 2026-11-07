@@ -184,6 +184,13 @@ def learning_curve(Z: np.ndarray, targets: AtomTargets, sizes: Sequence[int],
     return out
 
 
+#: eigenvalues of the landmark kernel below this share of the largest one are dropped from the
+#: pseudo-inverse.  It also sets how exactly the approximation can reproduce a kernel whose
+#: landmarks are every molecule: dividing by the smallest kept eigenvalue loses about
+#: `eps / NYSTROM_CUTOFF` of relative accuracy, that is about 2e-4 in the worst case.
+NYSTROM_CUTOFF = 1e-12
+
+
 def nystrom_kernel(K_xz: np.ndarray, K_zz: np.ndarray) -> np.ndarray:
     """The rank-m approximation K(X, Z) K(Z, Z)^+ K(Z, X), for a kernel with no finite features.
 
@@ -196,7 +203,7 @@ def nystrom_kernel(K_xz: np.ndarray, K_zz: np.ndarray) -> np.ndarray:
     A = np.asarray(K_zz, float)
     A = 0.5 * (A + A.T)
     w, V = np.linalg.eigh(A)
-    keep = w > max(float(w.max()), 0.0) * 1e-12
+    keep = w > max(float(w.max()), 0.0) * NYSTROM_CUTOFF
     inv = (V[:, keep] / w[keep]) @ V[:, keep].T
     B = np.asarray(K_xz, float)
     return B @ inv @ B.T

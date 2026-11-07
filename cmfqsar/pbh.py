@@ -356,13 +356,34 @@ def inertial_frame(coords: np.ndarray, masses: Optional[np.ndarray] = None
 def _direction_moment(xy: np.ndarray, power: int, step_deg: float = 0.5
                       ) -> Tuple[float, float, float]:
     """The in-plane direction that maximises sum((x cos t + y sin t)^power): a grid over the
-    angle, then a bounded refinement around the best grid point.  Returns (angle, value, the
-    spread of the value over the angles relative to its mean magnitude); a spread near zero
-    means the moment does not depend on the direction and cannot fix it."""
+    angle, then a bounded refinement around the best grid point, then Newton steps on the
+    derivative.  Returns (angle, value, the spread of the value over the angles relative to its
+    mean magnitude); a spread near zero means the moment does not depend on the direction and
+    cannot fix it.
+
+    The last step is what makes the angle, and with it the frame, the same on every machine.  A
+    search that only compares values of the moment cannot do better than the square root of the
+    machine precision, about 1e-8 radians, because the moment is flat at its maximum: a change
+    of 1e-8 radians moves it by less than one part in 1e16.  The derivative is not flat there,
+    so solving ``derivative = 0`` by Newton's method places the angle to the last digit.  Before
+    this step the frame of a molecule with a three-fold axis differed by up to 5e-8 A between
+    runs on different machines, and applying the frame twice was not the identity.
+    """
     from scipy.optimize import minimize_scalar
 
+    def projections(t):
+        return (xy[:, 0] * math.cos(t) + xy[:, 1] * math.sin(t),
+                -xy[:, 0] * math.sin(t) + xy[:, 1] * math.cos(t))
+
     def value(t):
-        return float(((xy[:, 0] * math.cos(t) + xy[:, 1] * math.sin(t)) ** power).sum())
+        return float((projections(t)[0] ** power).sum())
+
+    def derivatives(t):
+        """The first two derivatives of the moment with respect to the angle."""
+        p, d = projections(t)
+        first = power * float((p ** (power - 1) * d).sum())
+        second = power * float(((power - 1) * p ** (power - 2) * d ** 2 - p ** power).sum())
+        return first, second
 
     t = np.radians(np.arange(0.0, 360.0, step_deg))
     proj = xy[:, 0][:, None] * np.cos(t)[None, :] + xy[:, 1][:, None] * np.sin(t)[None, :]
@@ -372,6 +393,19 @@ def _direction_moment(xy: np.ndarray, power: int, step_deg: float = 0.5
     res = minimize_scalar(lambda u: -value(u), bounds=(t[k] - step, t[k] + step), method="bounded",
                           options={"xatol": 1e-10})
     best = float(res.x) if res.success and -res.fun >= s[k] else float(t[k])
+    # Newton on the derivative, from the angle the search found.  A step is taken only while it
+    # points at a maximum (a negative second derivative) and stays inside the grid cell the
+    # search worked in, so a flat or badly behaved moment leaves the search result untouched.
+    for _ in range(8):
+        first, second = derivatives(best)
+        if not (second < 0.0) or not np.isfinite(first):
+            break
+        shift = -first / second
+        if not np.isfinite(shift) or abs(shift) > step:
+            break
+        best += shift
+        if abs(shift) < 1e-15:
+            break
     # the spread is measured against the largest value the moment could take, so that a moment
     # that vanishes by symmetry (the third of a centrosymmetric molecule) is not mistaken for a
     # direction-dependent one because of the noise in the coordinates

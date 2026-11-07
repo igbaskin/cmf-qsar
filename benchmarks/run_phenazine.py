@@ -76,6 +76,7 @@ from rdkit import Chem, RDLogger                                            # no
 import kernel_cache as KC                                                   # noqa: E402
 
 from cmfqsar.cofields import cofield_volume, make_grid                      # noqa: E402
+from cmfqsar.dataio import relative_path                                    # noqa: E402
 from cmfqsar.descriptors import read_values                                 # noqa: E402
 from cmfqsar.fields import AtomTable, FieldSet, build_fields                # noqa: E402
 from cmfqsar.model import CMFModel, _Learner, cv_predict, r2_score, rmse    # noqa: E402
@@ -182,7 +183,7 @@ def core_rmsd(mol: Chem.Mol, ref_xyz: np.ndarray) -> Optional[float]:
 
 def data_stage(mols, names, y, groups) -> Dict[str, object]:
     """What the series is: the target, the frame, and where the added electron sits."""
-    out: Dict[str, object] = {"n": len(mols), "target": TARGET, "sdf": os.path.relpath(SDF, ROOT)}
+    out: Dict[str, object] = {"n": len(mols), "target": TARGET, "sdf": relative_path(SDF, ROOT)}
     out["target_range"] = [float(y.min()), float(y.max())]
     out["target_mean"] = float(y.mean())
     out["target_sd"] = float(y.std())
