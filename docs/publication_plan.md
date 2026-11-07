@@ -173,12 +173,15 @@ archive's metadata, the package builds and passes `twine check` (1.6 MB source d
 993 kB wheel, neither carrying the examples), the name `cmfqsar` is free on PyPI, and
 `.github/workflows/reproduce.yml` is the reproduction run: the 60 benchmarks of 30 minutes or less
 that need no outside file, 15.2 hours in four groups, each group rebuilding every table from its
-new result files and failing if one differs. Open, and in this order: regenerate the manifest at
-the commit to be tagged with nothing uncommitted; make the repository public; connect Zenodo;
-tag `v1.0.0` and attach the manual; write the DOI into `CITATION.cff` (whose `date-released` is
-still 22 October 2026) and `README.md`; upload to TestPyPI and then PyPI; run the reproduction
-workflow and record in `docs/public_3dqsar_datasets.md` which tables were reproduced elsewhere and
-which stayed here.
+new result files and failing if one differs. **Released 7 November 2026.** The manifest was regenerated at the commit that carries it, with
+nothing uncommitted, and the regeneration found eighteen result files of plan item M15 that an
+additive patch had missed; the repository is public; Zenodo is connected; `v1.0.0` is tagged on
+commit `65ffa08` and released with the manual attached; the archive has concept DOI
+[10.5281/zenodo.24043660](https://doi.org/10.5281/zenodo.24043660), which papers cite, and version DOI
+[10.5281/zenodo.24043661](https://doi.org/10.5281/zenodo.24043661), both written into `CITATION.cff` and `README.md`.
+Two steps are left and neither blocks a submission that cites the DOI: upload to TestPyPI and
+then PyPI, which needs the account token; and run the reproduction workflow and record in
+`docs/public_3dqsar_datasets.md` which tables were reproduced elsewhere and which stayed here.
 
 ## The papers
 

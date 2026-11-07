@@ -15,7 +15,8 @@ authors:
     given-names: Igor
     email: igbaskin@gmail.com
 version: 1.0.0
-date-released: "2026-10-22"
+date-released: "2026-11-07"
+doi: 10.5281/zenodo.24043660
 license: MIT
 repository-code: "https://github.com/igbaskin/cmf-qsar"
 keywords:
