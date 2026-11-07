@@ -52,6 +52,10 @@ OVERRIDES: Dict[str, Tuple[str, str]] = {
     "E11": ("partly", "version (i) of four built and measured 31 October 2026"),
     "EC8": ("partly", "pilot measured 1 November 2026, without the cut step and without M5"),
     "SC5": ("partly", "the radii of EC7 are done; the frame convention and the data are left"),
+    "M15": ("partly", "the row length measured on five series 7 November 2026; the weighted "
+                      "distance over the columns is left"),
+    "NT8": ("partly", "the cell outline came with M13 and the bonds on 7 November 2026; "
+                      "instanced drawing for ten thousand atoms is left"),
     "PBH1": ("done", "the title records it: done on COMPAS-1x"),
     "PBH2": ("done", "the title records it: replaced by a geometric field and calibrated"),
 }

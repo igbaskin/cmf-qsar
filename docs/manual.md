@@ -7330,6 +7330,55 @@ $q^2$ never sees the left-out activities. The groups default to the continuous i
 names others. The fitted weights are printed by kind and stored with the model
 (`block_weight_report`).
 
+### What the row length is worth, and when the division helps
+
+The kernel above divides every feature row by its own length, so what reaches the model is the
+direction of the row and not how long it is. That length is one number per sample. For a molecule
+or a cell it says how much field the sample carries in total, which is close to how large and how
+dense it is; for a local environment it says how crowded that environment is. Dividing it out is
+what makes samples of different sizes comparable, and that is why it is there. It also means the
+kernel cannot tell a molecule from the same molecule carrying four times the field.
+
+`benchmarks/run_rowlength.py` measures what that costs, on five series that already exist and with
+no new data. Four arms are fitted on the same samples, the same folds and the same ridge grid,
+each with its setting chosen inside the training part:
+
+| arm | what the kernel is |
+|---|---|
+| the length divided out | the kernel as the program builds it: the reference |
+| the length kept | the same kernel without the division, divided instead by its own mean diagonal, which is one constant for the whole matrix and takes no row's length away |
+| the length as an extra channel | $(1-w)$ times the reference plus $w$ times a kernel on the length alone, with $w$ chosen inside the training part |
+| the length alone | the kernel on that one number, which says how much of the target the length by itself carries |
+
+**The answer depends on the series, and one number says which way it will go: how far the length
+goes with the target.** Not how much the length varies. On the environments of a lithium hop the
+length correlates with the barrier at +0.60, and keeping it raises $q^2$ from +0.572 to +0.716, a
+gain of +0.144 with an interval of [+0.096, +0.198]; the length by itself reaches +0.354 there, so
+how crowded the environment is carries a third of the barrier and the cosine kernel was throwing
+it away. On the 2,000-cell defect series of MoS2 and WSe2 the length correlates with the formation
+energy at -0.88 and -0.93, because it is close to what the cell contains; $q^2$ is already +0.9989
+and cannot show much, but the error falls from 36.5 to 2.4 meV per defect site on MoS2 and from
+30.8 to 6.3 meV on WSe2.
+
+**Where the samples differ in size, the division earns its place.** On the 1,162
+beta-cyclodextrin guests, 2 to 42 heavy atoms, the length is two thirds of its own mean and tracks
+the heavy-atom count at +0.750 — but it tracks the binding constant at only +0.112, and keeping it
+*costs* 0.043 in $q^2$ with an interval of [-0.073, -0.015]. The size of a guest is not its
+affinity. On the single-atom catalysts, twelve combinations of four targets and three designs,
+keeping the length is behind the reference in three of the twelve beyond the interval and ahead in
+none. On the counts about a hop midpoint the length varies by 81 per cent of its mean and still
+buys nothing (+0.017 [-0.030, +0.055]), which is the clearest sign that the spread of the length
+is not what decides.
+
+**So the question is not whether to divide but when, and it costs one line to ask.** Correlate the
+row length with the target on the training part before choosing: `cmfqsar.invariant.row_lengths`
+returns it. If that correlation is large, keep the length, with `normalize=False` in
+`cmfqsar.invariant.autocorrelation_kernel` or `cmfqsar.sites.site_kernel`, or add it as one more
+channel with `cmfqsar.invariant.length_kernel`. If it is small, divide it out. Keeping the length
+is the stronger of the two ways where it works at all: adding it as a channel recovered +0.070 of
+the +0.144 on the hop environments. No default changes, and every stored table in this repository
+was produced with the division in place.
+
 ### What the model says about one molecule
 
 The invariant kernel has no co-field, because it has no frame, but **it does have a
