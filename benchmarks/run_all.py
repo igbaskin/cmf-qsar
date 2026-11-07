@@ -801,8 +801,9 @@ def registry() -> List[Benchmark]:
                   readme=["Crystals: the periodic autocorrelation"]),
         Benchmark("compas", "the HOMO-LUMO gap of the polybenzenoid hydrocarbons of COMPAS-1D in a "
                   "frame given by rule: steric, electrostatic, atom-class, ring-class, Clar-sextet and "
-                  "HOMA ring fields, the Gaussian kernel layer, baselines, co-fields and per-ring "
-                  "contributions; Delta-learning from the GFN2-xTB gap; NICS(1) of the small molecules "
+                  "HOMA ring fields, the Gaussian kernel layer, baselines, co-fields, per-ring "
+                  "contributions and the Shapley reading of the layered model, which has no "
+                  "co-field; the layer-width grid measured below its own edge; Delta-learning from the GFN2-xTB gap; NICS(1) of the small molecules "
                   "(ORCA); the landmark model on COMPAS-1x; the peri-condensed set COMPAS-3D and a "
                   "10,000-molecule subset of the hetero-atom set COMPAS-2D (downloads about 400 MB of "
                   "COMPAS into benchmarks/cache on the first run; needs xtb for the charges, or "
@@ -815,6 +816,8 @@ def registry() -> List[Benchmark]:
                             "DELTA_eV", "--splits", "random0,random1,random2,size8,size9,size10"],
                            ["--stage", "baselines", "--force"],
                            ["--stage", "resolution"],
+                           ["--stage", "resolution", "--wide-gammas"],
+                           ["--stage", "ringshapley"],
                            ["--stage", "nics", "--jobs", "10"],
                            ["--stage", "scaling", "--set", "1x", "--jobs", "12"],
                            ["--set", "3D", "--stage", "prepare", "--jobs", "12"],

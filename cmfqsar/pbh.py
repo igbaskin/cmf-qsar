@@ -860,6 +860,49 @@ def ring_contributions(model, mf: MoleculeFields, rings: Sequence[Ring]
     return per_ring, contrib, float(lost)
 
 
+def ring_players(mf: MoleculeFields, rings: Sequence[Ring]) -> List[List[int]]:
+    """A partition of every atom of `mf` into one group per ring, for a Shapley reading.
+
+    :func:`ring_contributions` gives an atom that belongs to two rings half to each, which an
+    exact decomposition of a linear model allows.  A Shapley game cannot share a player: a
+    coalition either holds an atom or it does not.  So here an atom of two rings goes to the
+    first of them, a hydrogen goes with the heavy atom it is bonded to, and the ring-centre
+    pseudo-atom of ring *k* goes to ring *k*.
+
+    Every atom of `mf` ends in exactly one group, which is what makes the reading add up: the
+    coalition of all players is the whole molecule, so the values sum to its prediction minus the
+    prediction of the empty molecule.  A model that is not linear in the field -- the Gaussian
+    kernel layer, for one -- has no co-field and no exact per-atom decomposition, and this is how
+    it is read instead (plan item PBH6).
+    """
+    n_real = n_real_atoms(mf)
+    owner: Dict[int, int] = {}
+    for k, r in enumerate(rings):
+        for a in r.atoms:
+            owner.setdefault(int(a), k)
+    for a, b in np.asarray(mf.bonds, int).reshape(-1, 2):
+        a, b = int(a), int(b)
+        if mf.symbols[a] == "H" and mf.symbols[b] != "H" and b in owner:
+            owner.setdefault(a, owner[b])
+        elif mf.symbols[b] == "H" and mf.symbols[a] != "H" and a in owner:
+            owner.setdefault(b, owner[a])
+    players: List[List[int]] = [[] for _ in rings]
+    for a in range(n_real):
+        if a in owner:
+            players[owner[a]].append(a)
+    for k in range(len(mf.symbols) - n_real):
+        if k < len(rings):
+            players[k].append(n_real + k)
+    placed = sum(len(p) for p in players)
+    if placed != len(mf.symbols):
+        missing = sorted(set(range(len(mf.symbols))) - {a for p in players for a in p})
+        raise ValueError(
+            f"{mf.name or 'the molecule'} has {len(mf.symbols) - placed} atom(s) in no ring and "
+            f"bonded to none: {missing[:8]}. A Shapley reading over rings needs every atom in one "
+            f"group, so this molecule is not a benzenoid the reading applies to.")
+    return players
+
+
 # --------------------------------------------------------------------------- #
 # Count descriptors (the additivity baseline) and splits
 # --------------------------------------------------------------------------- #

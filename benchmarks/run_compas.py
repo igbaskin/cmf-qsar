@@ -132,7 +132,18 @@ LAMS = (1e-4, 3e-4, 1e-3, 3e-3, 1e-2, 3e-2, 0.1, 0.3, 1.0, 3.0)
 #: ridge, and the widths of the Gaussian kernel layer relative to the median squared distance
 ALPHAS_EXT = (0.02, 0.05, 0.1, 0.2, 0.35, 0.5, 0.7, 1.0, 2.0, 5.0, 10.0, 20.0)
 LAMS_FINE = (1e-6, 3e-6, 1e-5, 3e-5, 1e-4, 3e-4, 1e-3, 3e-3, 1e-2, 3e-2, 0.1, 0.3, 1.0)
+#: the layer widths, relative to the median squared distance. The first measurement chose the
+#: smallest point of the grid, 0.25, on nine of ten splits, and the smallest point is the widest
+#: layer: as gamma falls to zero the Gaussian layer tends to the linear kernel, which the
+#: `per-group` configuration measures. Three wider layers were therefore measured as well
+#: (``--stage resolution --wide-gammas``, stored in resolution_wide_<set>.json and reported
+#: beside this grid). They found no better width under the edge: the selection criterion is flat
+#: from 0.03 to 0.25 on all ten splits, and on the size-extrapolation splits the wider points
+#: make the choice worse, because there the criterion cannot tell the layer from the linear
+#: kernel while the held-out larger molecules can. The default grid therefore keeps its edge.
 GAMMAS = (0.25, 0.5, 1.0, 2.0, 4.0, 8.0)
+#: the default grid with three wider layers added, for the measurement described above
+WIDE_GAMMAS = (0.03, 0.06, 0.125) + GAMMAS
 SEEDS = (0, 1, 2, 3, 4)
 FOLDS = 5
 SUBSAMPLE = 2500                     # training molecules used to choose the attenuations
@@ -1455,7 +1466,7 @@ RESOLUTION_RUNS = (("ABCDE", "random0"), ("ABCDE", "random1"), ("ABCDE", "random
 
 
 def resolution(set_key: str = "1D", runs: Sequence[Tuple[str, str]] = RESOLUTION_RUNS,
-               engine: Optional[str] = "auto", force: bool = False) -> dict:
+               engine: Optional[str] = "auto", force: bool = False, wide: bool = False) -> dict:
     """How much of the gap to the published graph networks is resolution.
 
     The same protocol as the field stage with the attenuation grid extended below, between and
@@ -1463,6 +1474,11 @@ def resolution(set_key: str = "1D", runs: Sequence[Tuple[str, str]] = RESOLUTION
     (:data:`LAMS_FINE`), and a third configuration with the Gaussian kernel layer on top of the
     per-group kernel; on the random splits of the main field sets.  The extra kernels are built
     on demand.
+
+    With ``wide=True`` the layer-width grid is :data:`WIDE_GAMMAS` instead of :data:`GAMMAS`,
+    three points wider than the default edge, and the result is stored apart under
+    ``resolution_wide_<set>.json`` so that the two grids can be compared without either
+    overwriting the other (plan item PBH6).
     """
     check_krr_equivalence()
     groups_needed = "".join(sorted(set("".join(g for g, _s in runs))))
@@ -1470,7 +1486,7 @@ def resolution(set_key: str = "1D", runs: Sequence[Tuple[str, str]] = RESOLUTION
     ds, meta = load_prepared(set_key)
     store = KernelStore(set_key, max_loaded=6)
     splits = jload(results_path(set_key, "splits"))
-    path = results_path(set_key, "resolution")
+    path = results_path(set_key, "resolution_wide" if wide else "resolution")
     done = jload(path) if os.path.isfile(path) and not force else {}
     y = np.asarray(meta["gap"], float)
     for groups, sname in runs:
@@ -1479,7 +1495,7 @@ def resolution(set_key: str = "1D", runs: Sequence[Tuple[str, str]] = RESOLUTION
             continue
         split = dict(splits[sname], name=sname)
         res = evaluate_set(store, groups, split, y, alphas=ALPHAS_EXT, lams=LAMS_FINE,
-                           layer="gauss")
+                           layer="gauss", gammas=WIDE_GAMMAS if wide else GAMMAS)
         res["y_test"] = y[np.asarray(split["test"], int)]
         done[key] = res
         jdump(done, path)
@@ -1489,6 +1505,278 @@ def resolution(set_key: str = "1D", runs: Sequence[Tuple[str, str]] = RESOLUTION
                 f"mae {c['test']['mae']:.3f}")
         log(f"{key}: chosen {res['chosen']} ({res['seconds']:.0f} s)")
     return done
+
+
+def ring_shapley(set_key: str = "1D", groups: str = MAIN_SET, split_name: str = "random0",
+                 engine: Optional[str] = "auto", force: bool = False,
+                 samples: int = 400) -> dict:
+    """The per-ring reading of the layered model, which has no co-field (plan item PBH6).
+
+    The Gaussian layer halves the error of the field model on this series and gives up rule 2 for
+    it: a model that is not linear in the field has no co-field and no exact per-atom
+    decomposition.  What it does have is Shapley values, and `cmfqsar.shapley.atom_shapley` takes
+    groups of atoms as the players, so one ring is one player.  For a benzenoid of at most
+    fourteen rings the values are exact, every one of the 2**P coalitions being evaluated.
+
+    Three readings of the same molecules are stored side by side:
+
+      exact        `cmfqsar.pbh.ring_contributions` of the linear model, which is rule 3 summed
+                   per ring and adds up to the prediction minus the bias
+      linear       Shapley values of the same linear model, so that the two decompositions of one
+                   model can be compared and the Shapley reading can be judged
+      layered      Shapley values of the layered model, which is the reading the item asks for
+
+    The layered model is the linear model's kernel with the layer width and the ridge the
+    resolution stage chose, and its own test metrics are stored with it, so a reader can see what
+    the model being read is worth.
+    """
+    path = results_path(set_key, "ringshapley")
+    if os.path.isfile(path) and not force:
+        return jload(path)
+    from scipy.stats import spearmanr
+
+    from cmfqsar.shapley import atom_shapley
+    model, table, ds, meta, split, ring_cache, check = refit_model(set_key, groups, split_name,
+                                                                   engine)
+    y = np.asarray(meta["gap"], float)
+    idx_tr = np.asarray(split["train"], int)
+    idx_te = np.asarray(split["test"], int)
+    res_path = results_path(set_key, "resolution")
+    if not os.path.isfile(res_path):
+        raise SystemExit("run --stage resolution first: the layer width comes from it")
+    key = f"{TARGET}|{groups}|{split_name}"
+    done_res = jload(res_path)
+    if key not in done_res:
+        raise SystemExit(f"the resolution stage has no {key}")
+    cfg = done_res[key]["configs"]["gauss"]
+    t0 = time.time()
+    layered = CMFModel(fieldset=model.fieldset, method="krr", kernel_layer="gauss",
+                       params={"lam": float(cfg["lam"]), "gamma": float(cfg["gamma"])},
+                       scale_fields=False, engine=engine)
+    layered.fit(table.subset(idx_tr), y[idx_tr], cv_folds=0)
+    pt_lin = model.predict(table.subset(idx_te))
+    pt_lay = layered.predict(table.subset(idx_te))
+    log(f"the layered model: gamma {cfg['gamma']:g}, ridge {cfg['lam']:g}, fitted in "
+        f"{time.time() - t0:.0f} s; test mae {metrics(y[idx_te], pt_lay)['mae']:.4f} eV against "
+        f"{metrics(y[idx_te], pt_lin)['mae']:.4f} eV for the linear model")
+    ref = pick_reference(ds, meta, split)
+    big = [int(i) for i in idx_te if int(meta["n_rings"][i]) >= 4]
+    order = sorted(big, key=lambda i: y[i])
+    picks = [order[0], order[1], order[-2], order[-1]]
+    out = {"set": set_key, "groups": groups, "split": split_name,
+           "gamma": float(cfg["gamma"]), "lam": float(cfg["lam"]),
+           "samples": int(samples), "exact_limit": 14,
+           "test": {"linear": metrics(y[idx_te], pt_lin), "layered": metrics(y[idx_te], pt_lay)},
+           "molecules": []}
+    for i in [ref] + picks:
+        name = ds.names[i]
+        mf = table.molecules[i]
+        rings = ring_cache[name]
+        # every atom in exactly one ring's group, so the full coalition is the molecule
+        players = pbh.ring_players(mf, rings)
+        labels = [f"{k + 1} {r.cls}" for k, r in enumerate(rings)]
+        exact, _contrib, lost = pbh.ring_contributions(model, mf, rings)
+        t1 = time.time()
+        sh_lin = atom_shapley(model, mf, groups=players, labels=labels, samples=samples,
+                             exact_limit=14)
+        sh_lay = atom_shapley(layered, mf, groups=players, labels=labels, samples=samples,
+                             exact_limit=14)
+        row = {"name": name, "n_rings": len(rings), "classes": [r.cls for r in rings],
+               "y": float(y[i]), "rings_exact": exact.tolist(), "lost": float(lost),
+               "linear": {"values": sh_lin.values.tolist(), "baseline": float(sh_lin.baseline),
+                          "prediction": float(sh_lin.prediction), "exact": bool(sh_lin.exact),
+                          "evaluations": int(sh_lin.n_evaluations),
+                          "efficiency_error": float(sh_lin.efficiency_error)},
+               "layered": {"values": sh_lay.values.tolist(), "baseline": float(sh_lay.baseline),
+                           "prediction": float(sh_lay.prediction), "exact": bool(sh_lay.exact),
+                           "evaluations": int(sh_lay.n_evaluations),
+                           "efficiency_error": float(sh_lay.efficiency_error)},
+               "seconds": time.time() - t1}
+        if len(rings) > 2:
+            row["spearman_layered_against_exact"] = float(spearmanr(sh_lay.values, exact)[0])
+            row["spearman_linear_against_exact"] = float(spearmanr(sh_lin.values, exact)[0])
+            row["spearman_layered_against_linear"] = float(spearmanr(sh_lay.values,
+                                                                     sh_lin.values)[0])
+        out["molecules"].append(row)
+        log(f"{name}: {len(rings)} rings, {sh_lay.n_evaluations} coalitions, Spearman of the "
+            f"layered reading against the linear decomposition "
+            f"{row.get('spearman_layered_against_exact', float('nan')):+.3f} "
+            f"({row['seconds']:.0f} s)")
+    jdump(out, path)
+    return out
+
+
+def _cancellation(values, prediction: float, baseline: float) -> float:
+    """How much of a decomposition cancels: the absolute values over what they explain.
+
+    A reading of a prediction adds up to the prediction minus its baseline. If the single values
+    are much larger than that sum, they cancel, and each one says less about its own part of the
+    molecule than its size suggests. One means no cancellation.
+    """
+    total = float(np.sum(np.abs(np.asarray(values, float))))
+    explained = abs(float(prediction) - float(baseline))
+    return total / explained if explained > 0 else float("nan")
+
+
+def report_ring_shapley(set_key: str = "1D") -> List[str]:
+    """The lines of the ring-Shapley section of table.md (plan item PBH6)."""
+    path = results_path(set_key, "ringshapley")
+    if not os.path.isfile(path):
+        return []
+    d = jload(path)
+    rows = d["molecules"]
+    conv = [float(np.max(np.abs(np.asarray(m["linear"]["values"], float)
+                                - np.asarray(m["rings_exact"], float)))) for m in rows]
+    lines = ["### The per-ring reading of the layered model (Shapley values)", "",
+             f"The layered model of field set {{{','.join(d['groups'])}}} on split "
+             f"{d['split']}, layer width {d['gamma']:g} and ridge {d['lam']:g}: test MAE "
+             f"{d['test']['layered']['mae']:.4f} eV against "
+             f"{d['test']['linear']['mae']:.4f} eV for the linear model it is built on. The "
+             "layered model is not linear in the field, so it has no co-field and no exact "
+             "per-atom decomposition; Shapley values are its reading, with one ring as one "
+             "player, and for molecules of at most fourteen rings every coalition is evaluated, "
+             "so the values are exact. The baseline both readings start from is the prediction "
+             "for a molecule with no atoms.", "",
+             "For the linear model the Shapley values are not a different reading: they are "
+             "decomposition rule 3's own per-atom shares summed over the same players, which the "
+             "tests hold to 1e-10 eV. The only difference to the per-ring decomposition stored "
+             "elsewhere in this table is that rule 3 can give half of a shared atom to each of "
+             "two rings while a player cannot be shared, and the last column says what that "
+             "convention alone moves a ring's value by.", "",
+             "| molecule | rings | gap (eV) | coalitions | largest ring value, layered reading "
+             "(eV) | largest ring value, linear reading (eV) | cancellation, layered reading | "
+             "cancellation, linear reading | Spearman of the two readings | shift from the "
+             "shared-atom convention (eV) |",
+             "|---|---|---|---|---|---|---|---|---|---|"]
+    for m, cv in zip(rows, conv):
+        la = np.asarray(m["layered"]["values"], float)
+        li = np.asarray(m["linear"]["values"], float)
+        s2 = m.get("spearman_layered_against_linear")
+        lines.append(f"| {m['name']} | {m['n_rings']} | {m['y']:.3f} | "
+                     f"{m['layered']['evaluations']} | "
+                     f"{la[int(np.argmax(np.abs(la)))]:+.3f} | "
+                     f"{li[int(np.argmax(np.abs(li)))]:+.3f} | "
+                     f"{_cancellation(la, m['layered']['prediction'], m['layered']['baseline']):.1f} | "
+                     f"{_cancellation(li, m['linear']['prediction'], m['linear']['baseline']):.1f} | "
+                     f"{'--' if s2 is None else f'{s2:+.3f}'} | {cv:.3f} |")
+    lines.append("")
+    worst = max((m["layered"]["efficiency_error"] for m in rows), default=0.0)
+    cl = [_cancellation(m["layered"]["values"], m["layered"]["prediction"],
+                        m["layered"]["baseline"]) for m in rows]
+    cn = [_cancellation(m["linear"]["values"], m["linear"]["prediction"],
+                        m["linear"]["baseline"]) for m in rows]
+    sp = [m["spearman_layered_against_linear"] for m in rows
+          if m.get("spearman_layered_against_linear") is not None]
+    lines.append(f"Cancellation is the sum of the absolute ring values divided by what they "
+                 f"explain, which is the prediction minus the baseline; one means no "
+                 f"cancellation. The layered reading cancels {min(cl):.1f} to {max(cl):.1f} "
+                 f"times over, the linear one {min(cn):.1f} to {max(cn):.1f} times. That is the "
+                 "clearest result of this section: the linear model's per-ring values are far "
+                 "larger than the prediction they add up to, because a small ridge lets the "
+                 "coefficients grow and a ring counts positive or negative by its position in "
+                 "the frame, while the layered model's values stay close to what they explain. "
+                 f"The two readings agree only in part, Spearman {min(sp):+.2f} to "
+                 f"{max(sp):+.2f} over these molecules, so the layer changes which ring the "
+                 "model gives the gap to and not only how well it predicts. Every reading is "
+                 f"exact: the values add up to the prediction minus the baseline to "
+                 f"{worst:.1e} eV.")
+    lines.append("")
+    return lines
+
+
+def _criterion_by_width(record: dict) -> Dict[Optional[float], float]:
+    """The best cross-validated RMSE of the subsample at each layer width of one search.
+
+    The search trace holds one entry per (attenuations, width, ridge) tried.  The minimum over
+    everything else at a fixed width is the curve the width is chosen on, and ``None`` is the
+    linear kernel, which the search tries as well.
+    """
+    best: Dict[Optional[float], float] = {}
+    for row in record.get("search_trace", []):
+        g = row["gamma"]
+        err = float(row["rmse_cv_sub"])
+        if g not in best or err < best[g]:
+            best[g] = err
+    return best
+
+
+def report_resolution_wide(set_key: str = "1D") -> List[str]:
+    """The lines of the wider-layer section of table.md (plan item PBH6).
+
+    Nine of ten splits chose the smallest width of the default grid, which is its widest layer,
+    so the question was whether a better width lay under that edge.  This section answers it from
+    the two stored searches: the curve the width is chosen on, and what the choice is worth on the
+    held-out molecules.
+    """
+    wide_path = results_path(set_key, "resolution_wide")
+    base_path = results_path(set_key, "resolution")
+    if not (os.path.isfile(wide_path) and os.path.isfile(base_path)):
+        return []
+    wide, base = jload(wide_path), jload(base_path)
+    keys = [k for k in base if k in wide]
+    if not keys:
+        return []
+    added = [g for g in WIDE_GAMMAS if g not in GAMMAS]
+    lines = ["### Is a wider layer better? The grid below its own edge",
+             "",
+             f"The default width grid is {GAMMAS}, and nine of its ten searches chose its "
+             f"smallest point, which is its widest layer. The same searches were repeated with "
+             f"{tuple(added)} added below that point ({WIDE_GAMMAS}), stored apart. "
+             "The first two columns are the curve the width is chosen on: the cross-validated "
+             "error of the training subsample at the widest added layer and at the default edge, "
+             "in eV. The last two columns are what the choice is worth on the held-out "
+             "molecules.",
+             "",
+             "| field set and split | criterion at the widest added layer | criterion at the "
+             "default edge | width chosen, default grid | width chosen, wider grid | test MAE, "
+             "default grid (eV) | test MAE, wider grid (eV) |",
+             "|---|---|---|---|---|---|---|"]
+    moved, worse_of_moved, best_diff = 0, 0, 0.0
+    for k in keys:
+        gb = base[k]["configs"]["gauss"]
+        gw = wide[k]["configs"]["gauss"]
+        if gw["gamma"] < min(GAMMAS):
+            moved += 1
+            d = gw["test"]["mae"] - gb["test"]["mae"]
+            if d > 0:
+                worse_of_moved += 1
+            best_diff = max(best_diff, d)
+    for k in keys:
+        cw = _criterion_by_width(wide[k])
+        gb = base[k]["configs"]["gauss"]
+        gw = wide[k]["configs"]["gauss"]
+        lines.append(f"| {{{','.join(base[k]['groups'])}}} {base[k]['split']} | "
+                     f"{cw.get(min(added), float('nan')):.3f} | "
+                     f"{cw.get(min(GAMMAS), float('nan')):.3f} | {gb['gamma']:g} | "
+                     f"{gw['gamma']:g} | {gb['test']['mae']:.4f} | {gw['test']['mae']:.4f} |")
+    lines.append("")
+    flat = []
+    for k in keys:
+        cw = _criterion_by_width(wide[k])
+        inside = [cw[g] for g in WIDE_GAMMAS if g <= min(GAMMAS) and g in cw]
+        if len(inside) > 1:
+            flat.append(max(inside) - min(inside))
+    rise = []
+    for k in keys:
+        cw = _criterion_by_width(wide[k])
+        if min(GAMMAS) in cw and max(GAMMAS) in cw:
+            rise.append(cw[max(GAMMAS)] - cw[min(GAMMAS)])
+    all_worse = "every one of them" if worse_of_moved == moved else f"{worse_of_moved} of them"
+    lines.append(f"The criterion is flat under the edge: from the widest added layer to the "
+                 f"default edge it changes by at most {max(flat, default=float('nan')):.3f} eV, "
+                 f"while from that edge to the narrowest layer of the grid it grows by "
+                 f"{min(rise, default=float('nan')):.3f} to {max(rise, default=float('nan')):.3f} "
+                 f"eV. The wider grid moved the choice below the edge on {moved} of "
+                 f"{len(keys)} searches, and on {all_worse} the held-out error got worse, by up "
+                 f"to {best_diff:.3f} eV. So nothing better was hidden under the edge. On the "
+                 "size-extrapolation splits the two disagree by construction: the criterion is "
+                 "cross-validation inside the training sizes, which are the smaller molecules, "
+                 "and there a layer wide enough to be nearly the linear kernel loses little, "
+                 "while the held-out larger molecules are exactly what the layer is worth. The "
+                 "default grid therefore keeps its lower edge, and this measurement is the "
+                 "reason, not the limit of a grid.")
+    lines.append("")
+    return lines
 
 
 def report_resolution(set_key: str = "1D") -> List[str]:
@@ -1977,6 +2265,8 @@ def report(path: str, set_key: str = "1D") -> str:
         if name.startswith("scaling_") and name.endswith(".json"):
             rows.append(jload(os.path.join(RESULTS, name)))
     lines.extend(report_resolution(set_key))
+    lines.extend(report_resolution_wide(set_key))
+    lines.extend(report_ring_shapley(set_key))
     lines.append("### Nystroem approximation (landmark molecules)")
     lines.append("")
     if rows:
@@ -2099,7 +2389,14 @@ def write_notes(set_key: str = "1D") -> str:
                  "behind the graph networks. The layered model is no longer linear in the field: the "
                  "co-field and rule 3 belong to the linear model, and Shapley values are the reading of "
                  "the layered one. Its width came out at gamma = 0.25-0.5 of the median squared distance, "
-                 "the widest of the grid, and a wider grid of gammas is one more run. On the "
+                 "which is the smallest point of the grid and so its widest layer. Three wider layers were "
+                 "measured afterwards (--stage resolution --wide-gammas, stored in resolution_wide_1D.json) "
+                 "and nothing better was hidden under that edge: the criterion the width is chosen on "
+                 "changes by at most 0.016 eV between gamma 0.03 and 0.25 on all ten searches, and on the "
+                 "seven searches where the wider grid moved the choice the held-out error got worse, by up "
+                 "to 0.038 eV. On the size-extrapolation splits that is no surprise: the criterion is "
+                 "cross-validation inside the training sizes, which are the smaller molecules, so it "
+                 "cannot see what the layer is worth on the larger ones it is tested on. On the "
                  "size-extrapolation splits the layer gains as much: the five-group model trained on the "
                  "molecules of up to nine rings predicts the 6,408 ten-ring molecules with R2 0.92 and RMSE "
                  "0.113 eV (linear: 0.70 and 0.213), where the descriptor forest is negative.")
@@ -2182,7 +2479,8 @@ def write_notes(set_key: str = "1D") -> str:
 # Command line
 # --------------------------------------------------------------------------- #
 
-STAGES = ("prepare", "kernels", "fields", "baselines", "interpret", "scaling", "resolution", "nics",
+STAGES = ("prepare", "kernels", "fields", "baselines", "interpret", "scaling", "resolution",
+          "ringshapley", "nics",
           "report")
 
 
@@ -2203,6 +2501,9 @@ def main(argv=None) -> None:
                     help=f"molecules of COMPAS-2D to use (default {SUBSET_2D})")
     ap.add_argument("--engine", default="auto", help="kernel engine: auto, numba or numpy")
     ap.add_argument("--landmarks", default=",".join(str(m) for m in NYSTROEM_M))
+    ap.add_argument("--wide-gammas", action="store_true",
+                    help="resolution stage: three wider layers under the default grid's edge, "
+                         "stored apart (plan item PBH6)")
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--report", action="store_true", help="only rebuild table.md and NOTES.md")
     args = ap.parse_args(argv)
@@ -2239,7 +2540,10 @@ def main(argv=None) -> None:
                     ms=[int(m) for m in args.landmarks.split(",")], charges=args.charges,
                     jobs=args.jobs, engine=engine, force=args.force)
         elif stage == "resolution":
-            resolution(args.set, engine=engine, force=args.force)
+            resolution(args.set, engine=engine, force=args.force, wide=args.wide_gammas)
+        elif stage == "ringshapley":
+            chosen = args.sets.split(",")[0] if args.sets != ",".join(FIELD_SETS) else MAIN_SET
+            ring_shapley(args.set, groups=chosen or MAIN_SET, engine=engine, force=args.force)
         elif stage == "nics":
             nics(args.set, jobs=args.jobs, force=args.force)
         elif stage == "report":
