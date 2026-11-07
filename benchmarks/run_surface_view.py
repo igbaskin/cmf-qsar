@@ -82,6 +82,8 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 
+from cmfqsar.dataio import relative_path  # noqa: E402
+
 # the window is a Qt window; it is driven here without a screen, as the GUI tests are
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -221,7 +223,7 @@ def slab(molecules: int = DRAW_MOLECULES, log=print) -> dict:
         rec = {tuple(np.round(p, 4)) for p in receptor.coords}
         inside = sum(1 for p in coords if tuple(np.round(p, 4)) in rec)
         rows_set = {"set": name, "n_molecules": len(w.ds.names),
-                    "path": os.path.relpath(sdf, ROOT).replace(os.sep, "/"),
+                    "path": relative_path(sdf, ROOT).replace(os.sep, "/"),
                     "highest_drawn_z": above,
                     "share_in_receptor": float(inside / max(len(coords), 1)), "patches": rows}
         out["sets"].append(rows_set)
@@ -272,7 +274,7 @@ def frame(log=print) -> dict:
         rtilt = np.array([r["rule_tilt"] for r in rows])
         ok = np.isfinite(h) & np.isfinite(w)
         rec = {"set": name, "n": len(rows),
-               "path": os.path.relpath(sdf, ROOT).replace(os.sep, "/"),
+               "path": relative_path(sdf, ROOT).replace(os.sep, "/"),
                "height_min": float(h.min()), "height_max": float(h.max()),
                "tilt_median": float(np.median(tilt)),
                "tilt_90th": float(np.percentile(tilt, 90)),
@@ -568,7 +570,7 @@ def bonds_stage(log=print) -> dict:
                            if int(d.source[int(a)]) < n_slab or int(d.source[int(b)]) < n_slab)
             assert touching == 0, f"{touching} bonds reach the metal slab"
         rec = {"set": name, "n_molecules": total,
-               "path": os.path.relpath(sdf, ROOT).replace(os.sep, "/"),
+               "path": relative_path(sdf, ROOT).replace(os.sep, "/"),
                "exact_open": exact_open, "exact_in_a_cell": exact_cell,
                "extra_bonds": extra, "missing_bonds": missing,
                "crossing_median": float(np.median(crossing)) if crossing else 0.0,

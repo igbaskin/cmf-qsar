@@ -94,6 +94,121 @@ This is what the software paper needs, and nothing in the later parts should wai
   slowest tests are numerical integrations, not embeddings, so the shared fixture this item
   foresaw was not needed. Verified locally on Windows step by step; the Linux and macOS legs run
   for the first time on the first push.
+  **The six failures of the first runs on other machines, 7 November 2026.** Every job except the
+  author's own platform failed, on eight tests. Two were the xtb program path and were repaired
+  separately. The other six are repaired here, and none of them came from the linear algebra of
+  the runners: this machine and the runners use the same OpenBLAS 0.3.30, which the numpy wheels
+  carry, so the first guess was wrong. What the runners exposed was one path bug, one real
+  numerical instability, and four tests that asserted more than their input allows.
+  * *Two drives.* `tests/test_documents.py` and `tests/test_hammett_example.py` failed on Windows
+    with "path is on mount 'C:', start on mount 'D:'": the runner's temporary directory is on C:
+    and the working copy on D:, and `os.path.relpath` has no answer for two drives. A path written
+    relative to the repository is a convenience for the reader and must never stop a run, so
+    `cmfqsar.dataio.relative_path` returns the absolute path when there is no relative one. The
+    benchmark scripts and the figure and screenshot builders use it. `docs/make_manual.py`
+    carries its own copy of the three lines, because that builder uses nothing from the package:
+    it needs reportlab and the standard library only. Three files are left as they are.
+    `docs/make_api.py` and `benchmarks/run_all.py` use the standard library only as well, and
+    every path they print lies inside the working copy. The ten scripts under `examples/` still
+    call `os.path.relpath` directly, because the manifest records the content of every tracked
+    file under `examples/`: changing their text means rebuilding the manifest, which belongs in a
+    commit that has its own reason to rebuild it. No continuous-integration job runs them.
+  * *The frame of a molecule with a three-fold axis was not exact* (`tests/test_pbh.py`, triphenylene).
+    For such a molecule the two in-plane moments are equal and the direction of $x$ comes from the
+    largest third, fourth or sixth moment of the heavy atoms. That direction was found by a search
+    over the angle that compares values of the moment, and a maximum is flat: moving the angle by
+    1e-8 radians changes the moment by less than one part in 1e16, so no such search can place the
+    angle better than the square root of the machine precision. The frame therefore differed by up
+    to 5e-8 A between machines, and applying it twice was not the identity -- 3.9e-8 A on the
+    Windows runner against 8.5e-14 A here. The derivative of the moment is not flat at the
+    maximum, so `cmfqsar/pbh.py` now solves `derivative = 0` by Newton's method from the angle the
+    search found. Applying the frame twice is now the identity to 1.8e-15 A, and the test asks for
+    1e-10 instead of 1e-8. No stored number moves: of 1,500 molecules of each COMPAS set only two
+    or three have equal in-plane moments, the largest coordinate change is 3.5e-8 A on COMPAS-1x
+    and 1.1e-6 A on COMPAS-3D (coronene), and no sign choice of the frame changes.
+  * *The cavity of a cyclodextrin was measured on an embedded conformer* (`tests/test_host_pocket.py`).
+    The test asked for 2.0 A of room at the centre of the host and the runners gave 1.87 A. The
+    width is a property of the conformer, not of the code: over the embedding seeds 1 to 5 the
+    nearest heavy atom came out between 0.88 and 3.14 A from the centre. The embedding is seeded,
+    but its random stream is not the same in every RDKit build, so the bound measured the build.
+    The test now reads the stored host, `examples/cyclodextrin/hosts/alpha_cyclodextrin.sdf`,
+    which gives 2.80 A on every machine, and skips when the examples are absent.
+  * *Scrambling the activities does not have to raise the error* (`tests/test_coalign.py`). The
+    objective is a fold-out error and the test checked that it rises when the activities are
+    scrambled. On the twelve substituted benzenes of that test the model predicts no better than
+    the mean activity -- fold-out error 0.204 against a standard deviation of the activity of
+    0.160 -- so there was nothing for scrambling to destroy: the scrambled error came out at 0.204
+    as well, and over five scrambles it ranged from 0.146 to 0.219, that is on both sides of the
+    honest error. The test passed here by 0.0002 and failed on every runner. What the test claims
+    is that no molecule is predicted from its own activity, and the comparison that says so is
+    with the in-sample error of the same model fitted on every molecule, which is what a leaky
+    objective would report: 0.204 against 0.086, and the ratio stayed between 1.8 and 2.8 over
+    four activity noise seeds, three fold counts and coordinate shifts up to 0.1 A.
+  * *A pseudo-inverse is exact only up to the conditioning* (`tests/test_locallarge.py`). With
+    every molecule a landmark, the Nystrom approximation $K K^+ K$ is $K$ again, and the test
+    asked for a relative error below 1e-6. `nystrom_kernel` keeps the eigenvalues above
+    `NYSTROM_CUTOFF = 1e-12` of the largest, so the kept part of that kernel has a condition
+    number of 1e11 and dividing by its smallest kept eigenvalue loses about 2e-5 of relative
+    accuracy. A fixed bound of 1e-6 lies inside that range and so held on some machines and not on
+    others: 7.2e-7 here, 1.5e-6 on the pinned-version job. The cut-off is now a named constant and
+    the test derives its bound from the eigenvalues of the kernel it is given. The bound still
+    fails by a wide margin if the pseudo-inverse is wrong, which is what the test is for.
+
+  **What the first run with a passing suite exposed, 7 November 2026.** With the six repaired,
+  every job reports 2,275 passed and 66 skipped -- the skips are the tests that need a program
+  the runners do not have, xtb and ORCA -- and two further faults became visible behind them.
+  Neither is a test.
+  * *The manual needs svglib and the lock file did not name it.* The job with the pinned versions
+    had never reached its own steps before. It now fails at `python docs/make_manual.py` with
+    "No module named 'svglib'": `pyproject.toml` lists `svglib` in the `docs` extra, but
+    `requirements-lock.txt`, which that job installs instead, pinned only reportlab and
+    matplotlib. `svglib==2.2.0` is added, which is the version the figures of the committed PDF
+    were embedded with. The rule the file states -- only the packages the program imports are
+    pinned -- covers it, since `docs/make_manual.py` imports it directly to place an SVG figure.
+  * *The test step ends non-zero after a clean run.* On five of the six suite jobs the summary
+    line reads 2,275 passed and the step still fails: on Ubuntu and macOS the process ends with
+    a segmentation fault and Qt prints "QObject: shared QObject was deleted directly. The program
+    is malformed and may crash."; on Windows it returns 1 with no message. It happens after the
+    last test, while the interpreter shuts down. Seven test modules each build their own
+    `QApplication.instance() or QApplication([])`, two of them without keeping the object, so the
+    only Python reference to the shared application can be dropped while Qt objects still live.
+    This is older than the six -- the run of 7 November before them crashed the same way on four
+    jobs -- and it does not show on Windows outside the runners, where the suite exits 0.
+    **Done.** There is now one application for the whole run. `tests/conftest.py` holds it in a
+    module-level name and hands it out through a session fixture, the five module-scoped `app`
+    fixtures take it from there instead of building one, and the three tests that built one in
+    their own body take the fixture as an argument. The seven modules lost nothing: only the first
+    of those calls ever created an application, so there was never more than one -- what was wrong
+    was who owned it. A detail that follows: four modules no longer import `QApplication` at all,
+    and each already skips itself without Qt through `pytest.importorskip("PySide6")`.
+    The invariant is checked twice. `tests/test_qt_application.py` holds that the run has one
+    application, that `conftest` and not a fixture owns it, and that the C++ object behind the
+    wrapper exists; and `pytest_sessionfinish` in `conftest.py` asks the same question after the
+    last test and fails the run with the reason if the answer is no. That check belongs there and
+    not in a test, because the deletion happened after every test had finished, which is why
+    nothing in the suite noticed a crash on a run whose every test had passed. The check was
+    driven into failure on a plain `QObject` deleted through `shiboken6.delete`, since deleting
+    the real application would end the process.
+    That took five of the six suite jobs green, and the check is what explained the two that
+    stayed red: it found the application alive after the last test, so what fails is Python's own
+    shutdown afterwards. Holding the application in a module-level name does not reach that far,
+    because the names of a module are cleared during shutdown. Leaking a reference to it with
+    `Py_IncRef` was tried next and is not the answer either: Ubuntu with Python 3.10 then ended
+    with "Fatal Python error: none_dealloc: deallocating None" instead of a segmentation fault,
+    and Windows with Python 3.13 kept returning 1 with no message at all -- both after 2,279
+    tests had passed. Taking PySide6 apart at interpreter shutdown is simply not reliable on
+    every machine, and no test can catch what happens there, since it happens after the last one.
+    So the run ends with the status pytest arrived at: `pytest_unconfigure` in
+    `tests/conftest.py` flushes the output and ends the process. A failing run still fails,
+    because that status is what is passed on, and what is skipped is only what Python does after
+    the report is written. `CMF_TESTS_FULL_SHUTDOWN=1` keeps the ordinary shutdown, for a tool
+    that writes its output after the run, coverage for instance.
+    Two details worth keeping. The exit must not be done in `pytest_sessionfinish`: the terminal
+    reporter writes the summary in a hook *wrapper* around that hook, so a run ending there
+    printed its results nowhere -- which the first attempt did, and it was caught at once. And
+    the status this passes on is itself tested, in a run of its own: `conftest.py` is copied next
+    to one deliberately failing test and pytest is started on the pair as a subprocess, which
+    must return 1 and must print its summary. The suite is 2,437 passed and 4 skipped here.
 * **A3. The data statement.** Done 22 October 2026 as the record: `docs/public_3dqsar_datasets.md`
   gives every set under `examples/` its origin, terms, script, size, users and a status (free,
   derived, unclear). Four items are of unclear status, `sutherland/`, `steroids_cbg.sdf` and the

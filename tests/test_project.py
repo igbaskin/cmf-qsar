@@ -188,12 +188,9 @@ def _wait(app, win, timeout=120):
 
 
 @pytest.fixture(scope="module")
-def app():
-    pytest.importorskip("PySide6")
+def app(qt_application):
     pytest.importorskip("pyqtgraph")
-    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from PySide6.QtWidgets import QApplication
-    return QApplication.instance() or QApplication([])
+    return qt_application
 
 
 def _window(app):

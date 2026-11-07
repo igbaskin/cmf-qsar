@@ -36,6 +36,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
+from cmfqsar.dataio import relative_path  # noqa: E402
+
 FIGURES = os.path.join(HERE, "figures")
 POCKET_SET = os.path.join(ROOT, "examples", "openff", "cdk8.sdf")
 CRYSTAL_SET = os.path.join(ROOT, "examples", "hops", "disordered")
@@ -63,7 +65,7 @@ def capture(win, view, out: str) -> None:
     painter.drawImage(target, frame)
     painter.end()
     image.save(out)
-    print(f"written {os.path.relpath(out, ROOT)} ({image.width()} x {image.height()})")
+    print(f"written {relative_path(out, ROOT)} ({image.width()} x {image.height()})")
 
 
 def shoot_pocket(app, args, then):
@@ -150,7 +152,7 @@ def shoot_crystal(app, args, then):
     win = _crystal_window(args)
 
     def step_all():
-        win.load(os.path.relpath(CRYSTAL_SET, os.getcwd()).replace(os.sep, "/"))
+        win.load(relative_path(CRYSTAL_SET, os.getcwd()).replace(os.sep, "/"))
         # the target benchmarks/run_cell_view.py uses: a property of the cell that every one
         # of these conductors has and the fields can see, lithium sites per cubic nanometre
         y = []
@@ -200,7 +202,7 @@ def shoot_slab(app, args, then):
     def step_all():
         win.cmb_pbc.setCurrentIndex(2)                    # ab: a layer
         # the path as given is what the window's log and status line show
-        win.load(os.path.relpath(SLAB_FILE, os.getcwd()).replace(os.sep, "/"))
+        win.load(relative_path(SLAB_FILE, os.getcwd()).replace(os.sep, "/"))
         win.table.setCurrentCell(0, 0)
         # bonds perceived from the distances: the molecule gets its sticks, the iron atoms,
         # which the perception leaves without bonds, stay spheres

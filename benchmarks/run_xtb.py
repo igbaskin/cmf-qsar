@@ -67,7 +67,7 @@ from rdkit import Chem, RDLogger  # noqa: E402
 import kernel_cache as KC  # noqa: E402
 
 from cmfqsar import xtb as QX  # noqa: E402
-from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.dataio import load_dataset, relative_path  # noqa: E402
 from cmfqsar.descriptors import DescriptorScaler, descriptor_kernel, read_values  # noqa: E402
 from cmfqsar.fields import AtomTable, FieldSet, build_fields  # noqa: E402
 from cmfqsar.model import CMFModel, cv_predict, r2_score, rmse  # noqa: E402
@@ -233,7 +233,7 @@ def run_series(name, path, results=RESULTS, jobs=1, force=False, models=MODELS):
     for tag in rows:
         d, lo, hi = bootstrap_difference(y, np.asarray(rows[tag]["pred"], float), base)
         rows[tag].update(delta=d, lo=lo, hi=hi)
-    rec = {"set": name, "path": os.path.relpath(path, ROOT).replace(os.sep, "/"),
+    rec = {"set": name, "path": relative_path(path, ROOT).replace(os.sep, "/"),
            "n": int(len(y)), "failed": failed,
            "seconds_per_molecule": (float(np.mean(fresh)) if fresh else None),
            "wall_seconds": float(time.time() - t0), "models": rows}
