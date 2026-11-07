@@ -11425,6 +11425,15 @@ deleted directly" and the process crashes while shutting down, after the last te
 which is a failure no test can catch. `pytest_sessionfinish` asks after the last test whether the
 application is still there and fails the run with the reason if it is not.
 
+Taking Qt apart when Python shuts down is not reliable on every machine, and that is after the
+last test too: on some runners the process ended with a segmentation fault, on others with exit
+code 1 and no message, on a suite that had just reported every test passed. A run that has built
+a Qt application therefore **ends with the status pytest arrived at**, in `pytest_unconfigure`,
+instead of shutting Python down. A failing run still fails, since that status is what is passed
+on; what is skipped is only what Python does after the report is written. If you need the
+ordinary shutdown — for a tool that writes its output at the very end, such as coverage — set
+`CMF_TESTS_FULL_SHUTDOWN=1`.
+
 # Command-line reference
 
 Everything the application does is available without it, which is what makes the program scriptable

@@ -188,7 +188,27 @@ This is what the software paper needs, and nothing in the later parts should wai
     not in a test, because the deletion happened after every test had finished, which is why
     nothing in the suite noticed a crash on a run whose every test had passed. The check was
     driven into failure on a plain `QObject` deleted through `shiboken6.delete`, since deleting
-    the real application would end the process. The suite is 2,435 passed and 4 skipped here.
+    the real application would end the process.
+    That took five of the six suite jobs green, and the check is what explained the two that
+    stayed red: it found the application alive after the last test, so what fails is Python's own
+    shutdown afterwards. Holding the application in a module-level name does not reach that far,
+    because the names of a module are cleared during shutdown. Leaking a reference to it with
+    `Py_IncRef` was tried next and is not the answer either: Ubuntu with Python 3.10 then ended
+    with "Fatal Python error: none_dealloc: deallocating None" instead of a segmentation fault,
+    and Windows with Python 3.13 kept returning 1 with no message at all -- both after 2,279
+    tests had passed. Taking PySide6 apart at interpreter shutdown is simply not reliable on
+    every machine, and no test can catch what happens there, since it happens after the last one.
+    So the run ends with the status pytest arrived at: `pytest_unconfigure` in
+    `tests/conftest.py` flushes the output and ends the process. A failing run still fails,
+    because that status is what is passed on, and what is skipped is only what Python does after
+    the report is written. `CMF_TESTS_FULL_SHUTDOWN=1` keeps the ordinary shutdown, for a tool
+    that writes its output after the run, coverage for instance.
+    Two details worth keeping. The exit must not be done in `pytest_sessionfinish`: the terminal
+    reporter writes the summary in a hook *wrapper* around that hook, so a run ending there
+    printed its results nowhere -- which the first attempt did, and it was caught at once. And
+    the status this passes on is itself tested, in a run of its own: `conftest.py` is copied next
+    to one deliberately failing test and pytest is started on the pair as a subprocess, which
+    must return 1 and must print its summary. The suite is 2,437 passed and 4 skipped here.
 * **A3. The data statement.** Done 22 October 2026 as the record: `docs/public_3dqsar_datasets.md`
   gives every set under `examples/` its origin, terms, script, size, users and a status (free,
   derived, unclear). Four items are of unclear status, `sutherland/`, `steroids_cbg.sdf` and the

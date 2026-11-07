@@ -1,23 +1,31 @@
-"""What the whole test suite shares: the one Qt application of the run.
+"""What the whole test suite shares: the one Qt application of the run, and how the run ends.
 
-Seven test modules drive windows, panels and charts, and each of them used to build its own
-application with ``QApplication.instance() or QApplication([])``. Only the first of those calls
-creates one and the rest are handed that same object, so there was never more than one
+**One application.** Seven test modules drive windows, panels and charts, and each of them used
+to build its own with ``QApplication.instance() or QApplication([])``. Only the first of those
+calls creates one and the rest are handed that same object, so there was never more than one
 application -- but the fixture that created it was module-scoped, and a module-scoped fixture is
 torn down when its module is finished. With the last Python reference gone, Qt deleted the
-application under the modules that still needed it. Qt said so, once per run: "QObject: shared
-QObject was deleted directly. The program is malformed and may crash." The process then crashed
-as it shut down, after every test had passed -- a segmentation fault on the Ubuntu and macOS
-runners, exit code 1 on the Windows ones -- which made five of the six continuous-integration
-jobs red on a suite that reported 2,275 passed (plan item A2).
+application under the modules that still needed it, and said so once per run: "QObject: shared
+QObject was deleted directly. The program is malformed and may crash." The application lives
+here instead, in a session fixture that holds it in a module-level name for the whole run. It is
+not created eagerly: a run that asks for no window asks for no application.
 
-The application lives here instead. The session fixture below creates it at most once and keeps
-it in a module-level name for the rest of the run, so no module teardown can take it away, and
-it leaks one reference so that Python does not delete it when the interpreter shuts down either.
-It is not created eagerly: a run that asks for no window asks for no application.
+**How the run ends.** That alone did not make the runners green, and the check in
+:func:`pytest_sessionfinish` is what said why: the application was still there after the last
+test, so what crashes is Python's own shutdown afterwards. Taking PySide6 apart at that point is
+not reliable on every machine. With one application owned here, five of the six suite jobs went
+green and two still failed after a passing suite -- a segmentation fault on Ubuntu with Python
+3.10, with "Fatal Python error: none_dealloc: deallocating None", and exit code 1 with no
+message at all on Windows with Python 3.13 (plan item A2). None of it is a test, and no test can
+catch it: it happens after the last one, and the summary line on those jobs read 2,279 passed.
+
+So the process ends here, with the status pytest arrived at. A failing run still returns a
+failing status, because that status is what is passed on; what is skipped is only what Python
+does after the report is written. Set ``CMF_TESTS_FULL_SHUTDOWN=1`` to shut down normally
+instead, which a tool that writes its output after the run needs -- coverage, for instance.
 """
-import ctypes
 import os
+import sys
 
 import pytest
 
@@ -27,20 +35,11 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 #: the one application of the run, held for as long as the process lives
 _APPLICATION = None
 
+#: set it to let the interpreter shut down in the ordinary way, crash and all
+FULL_SHUTDOWN = "CMF_TESTS_FULL_SHUTDOWN"
 
-def _keep_past_the_interpreter(obj):
-    """Add one reference that the interpreter will never drop.
-
-    Holding the application in a module-level name keeps it alive while the tests run, but not
-    to the very end: the names of a module are cleared when Python shuts down, and the
-    application is then deleted from Python while the widgets of finished tests are still
-    wrapped. Qt tears its own internals down under them, in an order nobody controls, and the
-    process crashes as it exits -- which is what the runners showed on a suite whose every test
-    had passed. One reference is therefore leaked on purpose. The process is ending anyway and
-    the operating system reclaims the memory; what matters is that Qt is never taken apart
-    while Python still has Qt objects in its hands.
-    """
-    ctypes.pythonapi.Py_IncRef(ctypes.py_object(obj))
+#: the status pytest arrived at, handed from the end of the session to the end of the run
+_EXIT_STATUS = 0
 
 
 @pytest.fixture(scope="session")
@@ -56,7 +55,6 @@ def qt_application():
 
     if _APPLICATION is None:
         _APPLICATION = QApplication.instance() or QApplication([])
-        _keep_past_the_interpreter(_APPLICATION)
     return _APPLICATION
 
 
@@ -69,26 +67,42 @@ def _application_is_alive(app) -> bool:
     return bool(Shiboken.isValid(app))
 
 
+@pytest.hookimpl(trylast=True)
 def pytest_sessionfinish(session, exitstatus):
-    """Close what the windows left behind, and say so if the application was deleted under them.
-
-    The application itself is left alive on purpose: the process is ending, the operating system
-    reclaims it, and destroying it from Python while another Qt object is still wrapped is the
-    fault this file exists to avoid.
+    """Check that the application survived the run, and close the windows it left behind.
 
     The check belongs here and not in a test, because the deletion it looks for happened after
     the last module that used a window was finished -- which is to say after every test had run.
     That is why the symptom was a process that crashed while shutting down on a suite whose every
     test had passed, and why nothing in the suite noticed.
     """
+    global _EXIT_STATUS
+
+    _EXIT_STATUS = int(exitstatus)
     app = _APPLICATION
     if app is None:
         return
     if not _application_is_alive(app):
         print("\nthe Qt application was deleted while the suite was still running: a fixture "
               "owned the only reference to it (tests/conftest.py, plan item A2)")
+        _EXIT_STATUS = 1
         session.exitstatus = 1
         return
     for widget in list(app.topLevelWidgets()):
         widget.close()
     app.processEvents()
+
+
+def pytest_unconfigure(config):
+    """End the process with the status pytest arrived at, rather than shut Python down.
+
+    This is the last hook of a run, so the report and the summary are written by the time it is
+    called. It must not be done in :func:`pytest_sessionfinish`: the terminal reporter writes
+    the summary in a hook *wrapper* around that hook, so a run that ended there printed its
+    results and its reason for failing nowhere.
+    """
+    if _APPLICATION is None or os.environ.get(FULL_SHUTDOWN):
+        return
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(_EXIT_STATUS)
