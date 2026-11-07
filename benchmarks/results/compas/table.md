@@ -84,6 +84,41 @@ Size-extrapolation splits (train on fewer than N rings, test on N), the same thr
 | {A,B,C,D} | size9 | 0.531 / 0.274 | 0.570 / 0.262 | 0.809 / 0.175 | 0.132 | 0.25 |
 | {A,B,C,D} | size10 | 0.441 / 0.290 | 0.441 / 0.290 | 0.840 / 0.155 | 0.118 | 0.25 |
 
+### Is a wider layer better? The grid below its own edge
+
+The default width grid is (0.25, 0.5, 1.0, 2.0, 4.0, 8.0), and nine of its ten searches chose its smallest point, which is its widest layer. The same searches were repeated with (0.03, 0.06, 0.125) added below that point ((0.03, 0.06, 0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0)), stored apart. The first two columns are the curve the width is chosen on: the cross-validated error of the training subsample at the widest added layer and at the default edge, in eV. The last two columns are what the choice is worth on the held-out molecules.
+
+| field set and split | criterion at the widest added layer | criterion at the default edge | width chosen, default grid | width chosen, wider grid | test MAE, default grid (eV) | test MAE, wider grid (eV) |
+|---|---|---|---|---|---|---|
+| {A,B,C,D,E} random0 | 0.108 | 0.108 | 0.25 | 0.06 | 0.0575 | 0.0598 |
+| {A,B,C,D,E} random1 | 0.104 | 0.099 | 0.5 | 0.5 | 0.0515 | 0.0515 |
+| {A,B,C,D,E} random2 | 0.111 | 0.110 | 0.25 | 0.125 | 0.0584 | 0.0590 |
+| {A,B,C,D} random0 | 0.137 | 0.135 | 0.25 | 0.25 | 0.0732 | 0.0732 |
+| {A,B,C,D,E} size8 | 0.169 | 0.185 | 0.25 | 0.03 | 0.1451 | 0.1827 |
+| {A,B,C,D,E} size9 | 0.129 | 0.132 | 0.25 | 0.03 | 0.1001 | 0.1136 |
+| {A,B,C,D,E} size10 | 0.093 | 0.094 | 0.25 | 0.06 | 0.0856 | 0.0985 |
+| {A,B,C,D} size8 | 0.228 | 0.244 | 0.25 | 0.03 | 0.1792 | 0.1908 |
+| {A,B,C,D} size9 | 0.188 | 0.186 | 0.25 | 0.25 | 0.1323 | 0.1323 |
+| {A,B,C,D} size10 | 0.131 | 0.129 | 0.25 | 0.125 | 0.1176 | 0.1220 |
+
+The criterion is flat under the edge: from the widest added layer to the default edge it changes by at most 0.016 eV, while from that edge to the narrowest layer of the grid it grows by 0.053 to 0.211 eV. The wider grid moved the choice below the edge on 7 of 10 searches, and on every one of them the held-out error got worse, by up to 0.038 eV. So nothing better was hidden under the edge. On the size-extrapolation splits the two disagree by construction: the criterion is cross-validation inside the training sizes, which are the smaller molecules, and there a layer wide enough to be nearly the linear kernel loses little, while the held-out larger molecules are exactly what the layer is worth. The default grid therefore keeps its lower edge, and this measurement is the reason, not the limit of a grid.
+
+### The per-ring reading of the layered model (Shapley values)
+
+The layered model of field set {A,B,C,D} on split random0, layer width 0.25 and ridge 0.0001: test MAE 0.0725 eV against 0.1323 eV for the linear model it is built on. The layered model is not linear in the field, so it has no co-field and no exact per-atom decomposition; Shapley values are its reading, with one ring as one player, and for molecules of at most fourteen rings every coalition is evaluated, so the values are exact. The baseline both readings start from is the prediction for a molecule with no atoms.
+
+For the linear model the Shapley values are not a different reading: they are decomposition rule 3's own per-atom shares summed over the same players, which the tests hold to 1e-10 eV. The only difference to the per-ring decomposition stored elsewhere in this table is that rule 3 can give half of a shared atom to each of two rings while a player cannot be shared, and the last column says what that convention alone moves a ring's value by.
+
+| molecule | rings | gap (eV) | coalitions | largest ring value, layered reading (eV) | largest ring value, linear reading (eV) | cancellation, layered reading | cancellation, linear reading | Spearman of the two readings | shift from the shared-atom convention (eV) |
+|---|---|---|---|---|---|---|---|---|---|
+| hc_c26h16_0pent_13 | 6 | 3.427 | 66 | -1.222 | +3.218 | 1.8 | 4.5 | +0.657 | 3.303 |
+| hc_c42h24_0pent_6638 | 10 | 1.813 | 1026 | -0.967 | +9.978 | 1.7 | 60.7 | -0.152 | 8.468 |
+| hc_c42h24_0pent_6585 | 10 | 1.844 | 1026 | +0.912 | +9.131 | 1.7 | 36.0 | -0.152 | 8.200 |
+| hc_c30h18_0pent_20 | 7 | 4.003 | 130 | +0.808 | -7.667 | 3.1 | 8.8 | +0.357 | 6.179 |
+| hc_c26h16_0pent_1 | 6 | 4.046 | 66 | -0.653 | +4.914 | 2.1 | 5.9 | +0.600 | 6.301 |
+
+Cancellation is the sum of the absolute ring values divided by what they explain, which is the prediction minus the baseline; one means no cancellation. The layered reading cancels 1.7 to 3.1 times over, the linear one 4.5 to 60.7 times. That is the clearest result of this section: the linear model's per-ring values are far larger than the prediction they add up to, because a small ridge lets the coefficients grow and a ring counts positive or negative by its position in the frame, while the layered model's values stay close to what they explain. The two readings agree only in part, Spearman -0.15 to +0.66 over these molecules, so the layer changes which ring the model gives the gap to and not only how well it predicts. Every reading is exact: the values add up to the prediction minus the baseline to 4.7e-11 eV.
+
 ### Nystroem approximation (landmark molecules)
 
 | set | molecules | m landmarks | rank | q2 | test R2 | test RMSE (eV) | fit time (s) |

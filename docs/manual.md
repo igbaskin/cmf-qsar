@@ -7704,8 +7704,26 @@ attenuation grid extended to 0.02 to 20 Å⁻² and the ridge down to 10⁻⁶ c
 Gaussian kernel layer of the section *Nonlinear kernel layers and multiple kernel learning* on the
 same kernel halves the error to 0.056 ± 0.004 eV MAE (R² 0.964 ± 0.005 over three seeds), level
 with the annulation-string network and ahead of the descriptor forests, three to five times behind
-the graph networks. The resolution was the nonlinearity, not the width. The layered model is no
-longer linear in the field, so the co-field and the per-ring contributions of this section belong
+the graph networks. The resolution was the nonlinearity, not the width.
+
+The width itself then sat at the edge of its own grid: the chosen value, 0.25 of the median
+squared distance, was the smallest of the grid and so its widest layer, and a width going to
+zero is the linear kernel again. Three wider layers were therefore measured as well (`--stage
+resolution --wide-gammas`, stored apart and reported in its own table of
+`benchmarks/results/compas/table.md`). Nothing better was hidden under the edge. The
+cross-validated error the
+width is chosen on changes by at most 0.016 eV between 0.03 and 0.25, while from 0.25 to 8 it
+grows by 0.05 to 0.21 eV: the minimum is a broad plateau whose edge the first grid already
+reached. Where the wider grid moved the choice, which was seven of the ten searches, the held-
+out error got worse, by up to 0.038 eV. The size-extrapolation splits show why, and the reason
+is worth keeping in mind beyond this series: the width is chosen by cross-validation inside the
+training part, which holds the smaller molecules, and there a layer wide enough to be almost the
+linear kernel loses little, while what the layer is worth appears on the larger molecules that
+are held out. A selection rule that cannot measure the quantity it selects for will pick the
+wrong width whatever grid it is given.
+
+The layered model is no longer linear in the field, so the co-field and the per-ring
+contributions of this section belong
 to the linear model, and Shapley values are the reading of the layered one. On the
 size-extrapolation splits the layer gains as much: trained on the 2,270 molecules of up to nine
 rings, the layered five-group model predicts the 6,408 ten-ring molecules with R² 0.92 and RMSE
@@ -7723,10 +7741,32 @@ and which zones of the co-fields raise or lower the gap (`benchmarks/results/com
 The values are large and cancel: a ring on one side of the frame counts positive and one on the
 other side negative whatever its class, because a ridge of 10⁻⁴ lets the coefficients grow and
 the co-field acquires a smooth component across the frame. The sum is the prediction; the
-single values read position as much as chemistry, and a decomposition against a reference (the
-Shapley values of the section *Shapley values*) is the next thing to try on this series.
+single values read position as much as chemistry.
 
 ![Per-ring contributions to the gap (decomposition rule 3 summed per ring) of four test molecules: the two with the smallest and the two with the largest computed gap among the test molecules of four rings and more. Drawn by `benchmarks/run_compas.py`.](benchmarks/results/compas/figures/ring_contributions_gap.png)
+
+**The Shapley reading of the layered model.** The layered model predicts better and has neither a
+co-field nor an exact per-atom decomposition, so its reading is the Shapley values of the section
+*Shapley values*, with one ring as one player (`--stage ringshapley`, the table *The per-ring
+reading of the layered model* of `benchmarks/results/compas/table.md`). A benzenoid of up to
+fourteen rings has at most 16,384 coalitions, so the values are exact and not sampled.
+`cmfqsar.pbh.ring_players` builds the partition the game needs: an atom shared by two rings goes
+to the first of them, a hydrogen to its carbon, a ring centre to its own ring, because a player
+cannot be shared.
+
+Three things come out of it. The first is a control. For the linear model the Shapley values are
+not a second opinion but the same numbers as rule 3: its per-atom shares summed over the same
+players, equal to within 10⁻¹⁰ eV. The per-ring decomposition above differs from them only in giving
+half of a shared atom to each of two rings, and on these molecules that convention alone moves a
+ring's value by 3.3 to 8.5 eV. How much the linear reading depends on one bookkeeping choice is
+itself worth knowing. The second is that the layered reading cancels far less. The absolute ring
+values of the layered model sum to 1.7 to 3.1 times what they explain, against 4.5 to 61 times
+for the linear model, whose single values reach 10 eV on a prediction of 1.8 eV. The model that
+gives up the co-field has the more stable reading of the two. The third is that they are not the
+same reading: the rank correlation between them over the rings of one molecule runs from -0.15 to
++0.66, so the layer changes which ring the gap is attributed to, not only how well the gap is
+predicted. On this field set the layer is worth a test MAE of 0.0725 eV against 0.1323 eV for the
+linear model it is built on.
 
 What the study does not settle is written in `benchmarks/results/compas/NOTES.md`: the
 size-extrapolation splits train on few molecules; most molecules are twisted (89 % have a

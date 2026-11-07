@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 113 modules, 222 classes with 730 public methods, and 1126 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 113 modules, 222 classes with 730 public methods, and 1127 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -11667,6 +11667,22 @@ atom it is bonded to; a ring-centre pseudo-atom goes to its ring.  Returns the p
 the per-atom contributions they were summed from, and what could not be placed (atoms in no
 ring), which is zero for a benzenoid.  The per-ring sums plus the unplaced part equal the
 prediction minus the bias.
+
+### `ring_players(mf: MoleculeFields, rings: Sequence[Ring]) -> List[List[int]]`
+
+A partition of every atom of `mf` into one group per ring, for a Shapley reading.
+
+`ring_contributions` gives an atom that belongs to two rings half to each, which an
+exact decomposition of a linear model allows.  A Shapley game cannot share a player: a
+coalition either holds an atom or it does not.  So here an atom of two rings goes to the
+first of them, a hydrogen goes with the heavy atom it is bonded to, and the ring-centre
+pseudo-atom of ring *k* goes to ring *k*.
+
+Every atom of `mf` ends in exactly one group, which is what makes the reading add up: the
+coalition of all players is the whole molecule, so the values sum to its prediction minus the
+prediction of the empty molecule.  A model that is not linear in the field -- the Gaussian
+kernel layer, for one -- has no co-field and no exact per-atom decomposition, and this is how
+it is read instead (plan item PBH6).
 
 ### `count_names(atom_types: Sequence[str]=PBH_TYPES, ring_classes_: Sequence[str]=RING_CLASSES, ring_types: Sequence[str]=(), sextet: bool=True, homa: bool=False) -> Tuple[str, ...]`
 

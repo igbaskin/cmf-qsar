@@ -5826,7 +5826,7 @@ What it leaves open, in order:
   residual reaches 0.026 ± 0.002 eV RMSE and 0.018 ± 0.001 eV MAE (0.030 eV on the ten-ring
   molecules), inside the range of the published graph networks for one xTB calculation per
   molecule. The multi-task form (`cmfqsar/multitask.py`) was not run.
-* **PBH6. The grids, which is now the first item.** The published geometric graph networks
+* **PBH6. The grids (done 7 November 2026).** The published geometric graph networks
   (Weiss et al., J. Org. Chem. 2023, Table 1) reach a test MAE of 0.011 to 0.022 eV on the same
   8,678 molecules and a random split like ours; the sequence model on augmented annulation
   strings (Fite et al., J. Phys. Org. Chem. 2023) 0.05 eV; the field models here 0.11 to 0.13
@@ -5840,10 +5840,32 @@ What it leaves open, in order:
   resolution was the nonlinearity, not the width. On the size-extrapolation splits the layer
   gains as much: trained on the 2,270 molecules of up to nine rings, the layered five-group
   model predicts the 6,408 ten-ring molecules with R² 0.92 and RMSE 0.113 eV (linear 0.70 and
-  0.213 eV; the descriptor forest −0.16). The layered model gives up the co-field and rule 3;
-  what is left to measure is Shapley values as its per-ring reading and a wider grid of layer
-  widths (the chosen gamma sat at the widest end on every split). Nothing published measures
-  the size-extrapolation split, which stays the field model's own claim.
+  0.213 eV; the descriptor forest −0.16). Nothing published measures the size-extrapolation
+  split, which stays the field model's own claim. The two things left over were measured on 7
+  November 2026 and finish the item. **The wider grid of layer widths** (`--stage resolution
+  --wide-gammas`, stored apart in `resolution_wide_1D.json` and reported in its own table):
+  nothing better is hidden under the edge the first grid stopped at. The criterion the width is
+  chosen on changes by at most 0.016 eV between gamma 0.03 and 0.25, while from 0.25 to 8 it
+  grows by 0.05 to 0.21 eV, so the minimum is a broad plateau that the first grid already
+  reached. On the seven searches of ten where the wider grid moved the choice, the held-out
+  error got worse, by up to 0.038 eV; on {A,B,C,D,E} trained up to eight rings it picked gamma
+  0.03 and gave back the whole gain of the layer (test MAE 0.183 eV against 0.145 eV at 0.25,
+  and 0.181 eV for the linear model). The reason is general enough to keep: the width is chosen
+  by cross-validation inside the training part, which holds the smaller molecules, and there a
+  layer wide enough to be almost the linear kernel loses little, while what the layer is worth
+  shows on the larger molecules that are held out. The default grid therefore keeps its lower
+  edge, now as a measured choice. **The Shapley reading** (`--stage ringshapley`, one ring as
+  one player, every coalition evaluated, so the values are exact): for the linear model the
+  Shapley values are rule 3's own per-atom shares summed over the same players, equal to within
+  10⁻¹⁰ eV, so the stored per-ring decomposition differs from them only in giving half of a
+  shared atom to each of two rings — a convention that moves a ring's value by 3.3 to 8.5 eV on
+  these molecules. The layered reading cancels much less than the linear one: its absolute ring
+  values sum to 1.7 to 3.1 times what they explain, against 4.5 to 61 times, where single
+  values reach 10 eV on a prediction of 1.8 eV. And the two readings differ, rank correlation
+  −0.15 to +0.66, so the layer changes which ring the gap is attributed to and not only the
+  error. The model that gives up the co-field has the more stable reading of the two, which was
+  not the expected result. Open: a Shapley reading of the field groups rather than the rings,
+  and the same reading on a hetero-atom set, where a ring is not only a ring.
 * **PBH7. Planarity and reflection.** Measured on 30 October 2026: 89 % of the COMPAS-1D
   molecules have a heavy atom more than 0.5 Å from their best plane (median 1.48 Å), most
   ten-ring cata-condensed isomers holding a fjord; COMPAS-3D median 1.21 Å. The frame is defined
@@ -6621,11 +6643,11 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Battery science | 8 | 7 | BT8 |
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
-| H. Physical organic | 8 | 7 | PBH6 |
+| H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 16 | 0 | ND1 to ND13 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**147 items: 105 finished, 4 partly, 38 open.**
+**147 items: 106 finished, 4 partly, 37 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -6648,7 +6670,7 @@ equally blocked.
   arrows, and the chart of channel weight against distance that the kernels without a co-field
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
-* **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, PBH6, MC10, E11's remaining three
+* **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, MC10, E11's remaining three
   versions, and the whole deep-learning part ND1 to ND13, which has not been started.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published
