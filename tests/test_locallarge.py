@@ -21,9 +21,9 @@ from cmfqsar.fields import FieldSet, build_fields  # noqa: E402
 from cmfqsar.invariant import autocorrelation_kernel  # noqa: E402
 from cmfqsar.localenv import (LOCAL_SPEC, choose_lam, cross_validate,  # noqa: E402
                               environments, local_features, local_kernel)
-from cmfqsar.locallarge import (choose_lam_primal, cross_validate_primal,  # noqa: E402
-                                learning_curve, normalised_rows, nystrom_kernel, primal_fit,
-                                primal_predict)
+from cmfqsar.locallarge import (NYSTROM_CUTOFF, choose_lam_primal,  # noqa: E402
+                                cross_validate_primal, learning_curve, normalised_rows,
+                                nystrom_kernel, primal_fit, primal_predict)
 
 SMILES = ["CC(=O)Oc1ccccc1C(=O)O", "CCOc1ccccc1N", "CC(C)c1ccccc1O", "CCCCc1ccccc1",
           "CC(=O)Nc1ccc(O)cc1", "COc1ccc(C=O)cc1", "CCc1ccccc1C", "Clc1ccc(O)cc1"]
@@ -156,12 +156,24 @@ def test_a_size_with_nothing_in_it_is_skipped(built):
 
 
 def test_the_nystrom_kernel_is_exact_when_the_landmarks_are_everything(built):
-    """Up to the conditioning: the pseudo-inverse drops directions the kernel barely has."""
+    """Up to the conditioning: the pseudo-inverse drops directions the kernel barely has.
+
+    How exactly is set by the kernel and by `NYSTROM_CUTOFF`, not by the code.  The smallest
+    eigenvalue the cut-off keeps in this kernel is 4e-10 against a largest of 42, so the kept
+    part has a condition number of 1e11, and dividing by the smallest kept eigenvalue loses
+    about `eps * 1e11 = 2e-5` of relative accuracy.  A fixed bound of 1e-6 lies inside that
+    range and therefore held on some machines and not on others: the measured error is 7.2e-7
+    here and 1.5e-6 on the Ubuntu runner with the pinned versions.  The bound below is the one
+    the conditioning allows, and it still fails by a wide margin if the pseudo-inverse is wrong.
+    """
     _fields, _t, X = built
     K = local_kernel(X)
     back = nystrom_kernel(K, K)
-    assert np.linalg.norm(K - back) / np.linalg.norm(K) < 1e-6
-    assert back == pytest.approx(K, abs=1e-5)
+    w = np.linalg.eigvalsh(0.5 * (K + K.T))
+    kept = w[w > float(w.max()) * NYSTROM_CUTOFF]
+    allowed = float(np.finfo(float).eps * w.max() / kept.min())
+    assert np.linalg.norm(K - back) / np.linalg.norm(K) < allowed
+    assert back == pytest.approx(K, abs=allowed * float(np.abs(K).max()))
 
 
 def test_fewer_landmarks_approximate_and_more_landmarks_approximate_better(built):

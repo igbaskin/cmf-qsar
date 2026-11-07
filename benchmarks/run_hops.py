@@ -63,6 +63,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 
+from cmfqsar.dataio import relative_path  # noqa: E402
 from cmfqsar.hops import (Hop, HopModel, HopSet, cross_validate_hop_model,  # noqa: E402
                           framed_environments, hop_count_features, hop_types, read_hop_labels,
                           saddle_from_barrier, spread_labels, structure_percolation)
@@ -163,7 +164,7 @@ def write_provenance(args, tag: str, argv: Optional[List[str]] = None, name: str
                      **extra) -> str:
     """The command of this run and every option that changes a number, next to its results."""
     out = {"argv": list(argv) if argv is not None else sys.argv[1:], "tag": tag,
-           "prepared": os.path.relpath(args.prepared, ROOT).replace(os.sep, "/"),
+           "prepared": relative_path(args.prepared, ROOT).replace(os.sep, "/"),
            "max_structures": args.max_structures, "max_per_structure": args.max_per_structure,
            "rho": [float(r) for r in args.rho], "r_max": args.r_max, "folds": args.folds,
            "site_r": [float(r) for r in args.site_r],

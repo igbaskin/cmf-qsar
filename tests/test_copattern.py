@@ -257,14 +257,10 @@ def test_a_nonlinear_kernel_layer_has_no_channel_weights(fitted):
 # --------------------------------------------------------------------------- #
 # The chart in the window
 # --------------------------------------------------------------------------- #
-def test_the_chart_fills_its_boxes_and_draws_the_curve(fitted):
-    pytest.importorskip("PySide6")
+def test_the_chart_fills_its_boxes_and_draws_the_curve(fitted, qt_application):
     pytest.importorskip("pyqtgraph")
-    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from PySide6.QtWidgets import QApplication
 
     from cmfqsar.gui.copattern_panel import CoPatternChart
-    QApplication.instance() or QApplication([])
     model, fs, _table, _y = fitted
     chart = CoPatternChart()
     assert chart.set_model(model, fs) is True
@@ -283,14 +279,10 @@ def test_the_chart_fills_its_boxes_and_draws_the_curve(fitted):
     assert chart.note.text() == "nothing to show"
 
 
-def test_the_chart_says_why_an_overlap_model_has_none():
-    pytest.importorskip("PySide6")
+def test_the_chart_says_why_an_overlap_model_has_none(qt_application):
     pytest.importorskip("pyqtgraph")
-    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-    from PySide6.QtWidgets import QApplication
 
     from cmfqsar.gui.copattern_panel import CoPatternChart
-    QApplication.instance() or QApplication([])
     fs = FieldSet.create(physchem=["electrostatic", "steric"], alpha=1.0)
     mf = [build_fields(m, fs, f"m{i}") for i, m in enumerate(molecules())]
     model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": 1e-3})

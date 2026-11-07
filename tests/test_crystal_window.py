@@ -31,8 +31,6 @@ pytest.importorskip("ase", reason="the crystal path needs ASE")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from ase import Atoms                                                   # noqa: E402
-from PySide6.QtWidgets import QApplication                              # noqa: E402
-
 from cmfqsar import periodic                                            # noqa: E402
 from cmfqsar.gui.crystal_window import (CrystalWindow, cell_grid, reading_rows, site_rows,
                                         site_contributions_of)          # noqa: E402
@@ -43,8 +41,8 @@ CIFS = os.path.join(ROOT, "examples", "hops", "disordered")
 
 
 @pytest.fixture(scope="module")
-def app():
-    return QApplication.instance() or QApplication([])
+def app(qt_application):
+    return qt_application
 
 
 def rocksalt(a=4.2, cation="Na", anion="Cl"):

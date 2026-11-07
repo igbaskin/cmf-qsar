@@ -28,6 +28,20 @@ _MOL2_BOND_TYPES = {
 _MOL2_DUMMY_TYPES = {"du", "du.c", "lp", "any", "hev", "het", "hal"}
 
 
+def relative_path(path: str, start: str) -> str:
+    """The path written relative to ``start``, for a message or for a result file.
+
+    Returns the absolute path when there is no relative form.  On Windows there is none when
+    the two paths are on different drives: a temporary directory on ``D:`` cannot be written
+    relative to a working copy on ``C:``, and ``os.path.relpath`` raises ``ValueError`` there.
+    A shorter path is only a convenience for the reader, so it must never stop the program.
+    """
+    try:
+        return os.path.relpath(path, start)
+    except ValueError:
+        return os.path.abspath(path)
+
+
 def _try_sanitize(m: Chem.Mol) -> bool:
     """Full sanitisation, falling back to a partial one (no valence check / kekulisation)."""
     try:

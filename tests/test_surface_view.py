@@ -31,8 +31,6 @@ pytest.importorskip("ase", reason="a slab is an ASE structure")
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication                              # noqa: E402
-
 from cmfqsar.fields import FieldSet                                     # noqa: E402
 from cmfqsar.gui.surface_view import (build_bcc110, drawn_atoms, pose_line,  # noqa: E402
                                       pose_table, site_points)
@@ -46,8 +44,8 @@ HAMMETT = os.path.join(ROOT, "examples", "hammett", "hammett.sdf")
 
 
 @pytest.fixture(scope="module")
-def app():
-    return QApplication.instance() or QApplication([])
+def app(qt_application):
+    return qt_application
 
 
 @pytest.fixture(scope="module")

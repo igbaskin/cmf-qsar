@@ -52,6 +52,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
+from cmfqsar.dataio import relative_path  # noqa: E402
 from cmfqsar.periodic import oxidation_states  # noqa: E402
 
 CACHE = os.path.join(HERE, "cache", "litraj")
@@ -219,7 +220,7 @@ def main(argv=None):
     doc = {"source": SOURCE, "dataset": "nebBVSE122k", "archive": ARCHIVE,
            "reference": "Dembitskiy et al., npj Comput. Mater. 11, 131 (2025)",
            "licence": "MIT", "structures_source": BASE,
-           "index": os.path.relpath(index_path, ROOT).replace(os.sep, "/"),
+           "index": relative_path(index_path, ROOT).replace(os.sep, "/"),
            "prepared": time.strftime("%Y-%m-%d"),
            "n_index_hops": int(len(idx)), "n_index_structures": int(idx.material_id.nunique()),
            "n_index_chemsys": int(idx.chemsys.nunique()),

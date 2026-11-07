@@ -132,7 +132,12 @@ def test_frame_is_idempotent_and_rotation_invariant(name):
     c = m.GetConformer().GetPositions()
     symbols = [a.GetSymbol() for a in m.GetAtoms()]
     again = pbh.canonical_frame(m, coords=c)
-    assert np.abs(again - c).max() < 1e-8                   # already aligned: the identity
+    # already aligned: the identity.  The bound is 1e-10 and not 1e-8 because the angle of the
+    # frame of a molecule with a three-fold axis is now solved for, not searched for: before
+    # that, triphenylene came back 3.9e-8 A away on one runner and 8.5e-14 away here, since a
+    # search that only compares values of a flat maximum cannot place the angle better than
+    # 1e-8 radians.  Measured after the fix: 1.8e-15 for triphenylene, 7.5e-16 for the others.
+    assert np.abs(again - c).max() < 1e-10
     rot = Rotation.random(random_state=7).as_matrix()
     moved = pbh.canonical_frame(m, coords=c @ rot.T + np.array([3.0, -2.0, 11.0]))
     assert _same_point_set(c, moved, symbols, tol=1e-6)

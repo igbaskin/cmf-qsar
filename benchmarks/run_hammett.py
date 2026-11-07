@@ -52,7 +52,7 @@ ROOT = os.path.join(HERE, "..")
 sys.path.insert(0, ROOT)
 
 from cmfqsar.cofields import evaluate_gaussians  # noqa: E402
-from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.dataio import load_dataset, relative_path  # noqa: E402
 from cmfqsar.fields import AtomTable, FieldSet, build_fields  # noqa: E402
 from cmfqsar.model import CMFModel, grid_search, r2_score, rmse  # noqa: E402
 
@@ -281,7 +281,7 @@ def report(out_dir: str = OUT_DIR, path: Optional[str] = None) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--sdf", default=None, help=f"data set (default {os.path.relpath(DEFAULT_SDF, ROOT)})")
+    ap.add_argument("--sdf", default=None, help=f"data set (default {relative_path(DEFAULT_SDF, ROOT)})")
     ap.add_argument("--single", action="store_true",
                     help="one conformer per molecule, no symmetry images (examples/hammett/hammett.sdf)")
     ap.add_argument("--charges-prop", default=None, metavar="NAME",
@@ -322,7 +322,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     full_models: Dict[str, CMFModel] = {}
     scatter: Dict[str, Tuple[np.ndarray, np.ndarray, List[str]]] = {}
     t0 = time.time()
-    print(f"data set {os.path.relpath(path, ROOT)}, "
+    print(f"data set {relative_path(path, ROOT)}, "
           f"{'symmetrised ensembles' if ensemble else 'single conformers'}, "
           f"charges {'prop:' + a.charges_prop if a.charges_prop else 'Gasteiger'}, "
           f"{a.weighting + ' weights, ' if ensemble else ''}{a.folds}-fold CV")
@@ -366,7 +366,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     with open(os.path.join(a.out_dir, f"run{tag}.json"), "w", encoding="utf-8", newline="\n") as fh:
         json.dump({"argv": list(argv) if argv is not None else sys.argv[1:],
                    "tag": tag,
-                   "dataset": os.path.relpath(path, ROOT).replace(os.sep, "/"),
+                   "dataset": relative_path(path, ROOT).replace(os.sep, "/"),
                    "ensemble": ensemble,
                    "charges": f"prop:{a.charges_prop}" if a.charges_prop else "gasteiger",
                    "weighting": a.weighting, "kt": a.kt,
@@ -380,7 +380,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if sig:
         elec = f"prop:{a.charges_prop}" if a.charges_prop else "electrostatic"
         plot_cofields(sig, [elec, "steric"], os.path.join(a.out_dir, f"cofields{tag}.png"))
-    print(f"\nwritten to {os.path.relpath(a.out_dir, ROOT)} in {time.time() - t0:.0f} s")
+    print(f"\nwritten to {relative_path(a.out_dir, ROOT)} in {time.time() - t0:.0f} s")
     return 0
 
 

@@ -10,8 +10,6 @@ pytest.importorskip("pyqtgraph")
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication                      # noqa: E402
-
 from cmfqsar.complementarity import InteractionProfile          # noqa: E402
 from cmfqsar.gui.main_window import CONTACT_DISTANCE, MainWindow  # noqa: E402
 from cmfqsar.gui.panels import ResultsPanel                     # noqa: E402
@@ -21,8 +19,8 @@ RESIDUES = ["GLU81.A", "LEU83.A", "LYS200.A"]
 
 
 @pytest.fixture(scope="module")
-def app():
-    return QApplication.instance() or QApplication([])
+def app(qt_application):
+    return qt_application
 
 
 @pytest.fixture()

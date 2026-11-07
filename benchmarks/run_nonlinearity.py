@@ -47,7 +47,7 @@ sys.path.insert(0, ROOT)
 sys.path.insert(0, HERE)
 
 from cmfqsar.cofields import Grid, evaluate_gaussians  # noqa: E402
-from cmfqsar.dataio import load_dataset  # noqa: E402
+from cmfqsar.dataio import load_dataset, relative_path  # noqa: E402
 from cmfqsar.fields import AtomTable, FieldSet, build_fields  # noqa: E402
 from cmfqsar.model import CMFModel, grid_search  # noqa: E402
 from cmfqsar.nonlinearity import cofield_spread, nonlinearity_indices  # noqa: E402
@@ -251,7 +251,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if panels:
         plot(panels, os.path.join(a.out_dir, "maps.png"))
     report(a.out_dir)
-    print(f"\nwritten to {os.path.relpath(a.out_dir, ROOT)} in {time.time() - t0:.0f} s")
+    print(f"\nwritten to {relative_path(a.out_dir, ROOT)} in {time.time() - t0:.0f} s")
     return 0
 
 
