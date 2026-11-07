@@ -918,6 +918,20 @@ def cmd_build(args):
             got = _coverage(ds.activity[te], lo, hi)
             print(f"  on the {got['n']} test molecules it covered {got['coverage']:.0%}, "
                   f"mean width {got['mean_width']:.3f}")
+    if args.calibration:
+        from cmfqsar.surrogate import Calibration as _Calibration
+        try:
+            cal = model.calibration(folds=args.folds, seed=args.seed)
+        except (ValueError, RuntimeError) as exc:
+            raise SystemExit(f"--calibration: {exc}")
+        print("Predictive standard deviation, on the folds: " + cal.describe())
+        model.stats.extra["calibration"] = dict(vars(cal))
+        if te and "y_test_pred" in model.stats.extra:
+            table_te = AtomTable.from_molecules([mf[i] for i in te])
+            _yp_te, sd_te = model.predict_with_sd(table_te)
+            cal_te = _Calibration.of(ds.activity[te], model.stats.extra["y_test_pred"], sd_te)
+            print("  on the test set: " + cal_te.describe())
+            model.stats.extra["calibration_test"] = dict(vars(cal_te))
     if args.error_predictors:
         from cmfqsar.errorpred import compare as _ep_compare, estimates_for, table as _ep_table
         if not te or "y_test_pred" not in model.stats.extra:
@@ -2055,6 +2069,28 @@ def _report_predictions(args, model, extra, names, activity, table):
         yp, var = model.predict(table), None
         for n, v in zip(names, yp):
             print(f"{n:30s} {v:8.3f}")
+    sd_cols = None
+    if getattr(args, "sd", False) or getattr(args, "tolerance", None) is not None:
+        # the model as the fast level of a hierarchy (plan item MS1): the deviation in the units
+        # of the activity, and the structures a tolerance sends back to the fine level
+        from cmfqsar.surrogate import Handoff
+        try:
+            yp_sd, sd = model.predict_with_sd(table)
+        except (ValueError, RuntimeError) as exc:
+            raise SystemExit(f"--sd: {exc}")
+        tol = getattr(args, "tolerance", None)
+        flag = None if tol is None else sd > float(tol)
+        print()
+        print(f"Predictive standard deviation in the units of the activity (the fit attributes "
+              f"a noise of {model.surrogate().noise_sd:.3f} to one measurement):")
+        for i, n in enumerate(names):
+            mark = "" if flag is None else ("   -> fine level" if flag[i] else "")
+            print(f"{n:30s} {yp_sd[i]:8.3f} +/- {sd[i]:.3f}{mark}")
+        sd_cols = {"predicted_sd": sd}
+        if tol is not None:
+            h = Handoff.of(sd, float(tol), y=activity, mean=yp_sd)
+            print(h.describe())
+            sd_cols["defer"] = flag.astype(float)
     second = extra.get("second_endpoint") if isinstance(extra, dict) else None
     yp2 = sel = None
     if second is not None:
@@ -2091,10 +2127,13 @@ def _report_predictions(args, model, extra, names, activity, table):
             for n, v, a, b in zip(names, yp, lo, hi):
                 print(f"{n:30s} {v:8.3f}   [{a:7.3f}, {b:7.3f}]")
     if args.out:
+        extra_columns = {}
+        if yp2 is not None:
+            extra_columns.update({second["names"][1]: yp2, "difference": sel})
+        if sd_cols:
+            extra_columns.update(sd_cols)
         write_predictions_csv(args.out, names, activity, yp, ["test"] * len(names), var=var,
-                              interval=bounds,
-                              extra_columns=(None if yp2 is None else
-                                             {second["names"][1]: yp2, "difference": sel}))
+                              interval=bounds, extra_columns=extra_columns or None)
         print(f"Predictions written to {args.out}")
 
 
@@ -4232,6 +4271,10 @@ def main(argv=None):
     b.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
                    help="calibrate a prediction interval at this level (0.9) on the errors of "
                         "the cross-validation, and store it with the model")
+    b.add_argument("--calibration", action="store_true",
+                   help="check on the folds that the predictive standard deviation means what it "
+                        "says: the root mean square of the standardised residual, the shares "
+                        "inside one and two standard deviations, and the correction factor")
     b.add_argument("--error-predictors", action="store_true",
                    help="score the GP variance, the applicability domain and the conformal width "
                         "against the errors actually made on the test set, by rank correlation, "
@@ -4425,6 +4468,14 @@ def main(argv=None):
     q.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
                    help="report the model's calibrated interval at this level instead of the "
                         "one it was calibrated at; the model must carry a calibration")
+    q.add_argument("--sd", action="store_true",
+                   help="print the predictive standard deviation of every structure in the units "
+                        "of the activity (the GP variance put on the scale of the fit's noise) "
+                        "and write it to the CSV as predicted_sd")
+    q.add_argument("--tolerance", type=float, default=None, metavar="SD",
+                   help="mark every structure whose predictive standard deviation exceeds this "
+                        "value as one to pass to the fine level (a DFT calculation, a measurement) "
+                        "instead of using the model's answer; implies --sd")
     q.add_argument("--rank-bound", type=float, default=0.0, metavar="BETA",
                    help="rank the molecules by a confidence bound, prediction minus BETA "
                         "posterior standard deviations, instead of by the prediction itself. A "
