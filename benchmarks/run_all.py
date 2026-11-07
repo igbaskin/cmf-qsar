@@ -510,6 +510,17 @@ def registry() -> List[Benchmark]:
                   minutes="90",
                   report=lambda: _mod("run_rowlength").report(),
                   tables=["rowlength/table.md"]),
+        Benchmark("colweights",
+                  "which columns of the invariant kernel count: one weight per pair of field "
+                  "types, one per column, the best columns alone and a forest's own importances, "
+                  "each chosen inside the training part, against the equal weights the program "
+                  "uses, with a forest on the same rows as the gap to close -- on the hop "
+                  "environments, the beta-cyclodextrin guests and the single-atom catalysts",
+                  "run_colweights.py", "colweights",
+                  compute=[["--hops"], ["--molecules"], ["--sac"]],
+                  minutes="60",
+                  report=lambda: _mod("run_colweights").report(),
+                  tables=["colweights/table.md"]),
         Benchmark("cell_view",
                   "a periodic structure in the application: what one cell with its images "
                   "costs to show, and whether the site colouring and the co-field inside the "

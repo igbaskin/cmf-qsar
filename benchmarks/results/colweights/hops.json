@@ -1,0 +1,576 @@
+{
+ "blocks": 153,
+ "columns": 2601,
+ "descriptor": "the hop environment (BT7)",
+ "fields": [
+  "electrostatic",
+  "steric",
+  "prop:electronegativity",
+  "cif:B",
+  "cif:C",
+  "cif:Co",
+  "cif:Cr",
+  "cif:F",
+  "cif:Fe",
+  "cif:Li",
+  "cif:Mn",
+  "cif:Ni",
+  "cif:O",
+  "cif:P",
+  "cif:Si",
+  "cif:V",
+  "cif:other"
+ ],
+ "folds": 10,
+ "forest_gap": 0.1705527969793399,
+ "forest_gap_with_length": 0.2729117399081967,
+ "inner": 5,
+ "lams": [
+  1e-06,
+  1e-05,
+  0.0001,
+  0.001,
+  0.01,
+  0.1,
+  1.0
+ ],
+ "n": 1801,
+ "n_structures": 393,
+ "pairs": [
+  {
+   "a": "block align",
+   "b": "equal weights",
+   "diff": 0.08618634202820319,
+   "high": 0.1327363785062218,
+   "low": 0.04212508609815531
+  },
+  {
+   "a": "block alignf",
+   "b": "equal weights",
+   "diff": 0.03324767559350916,
+   "high": 0.07172158772855843,
+   "low": -0.004067651660638802
+  },
+  {
+   "a": "column align",
+   "b": "equal weights",
+   "diff": 0.04029245242028079,
+   "high": 0.08855204305240846,
+   "low": -0.006905293704474777
+  },
+  {
+   "a": "best columns",
+   "b": "equal weights",
+   "diff": 0.029009331702273045,
+   "high": 0.08884559746048137,
+   "low": -0.03145678589711737
+  },
+  {
+   "a": "forest importances",
+   "b": "equal weights",
+   "diff": 0.05625908973204696,
+   "high": 0.11457233864718998,
+   "low": -0.0008811729690022085
+  },
+  {
+   "a": "a forest on the scaled rows (the length kept)",
+   "b": "equal weights",
+   "diff": 0.2729117399081967,
+   "high": 0.3334560186700422,
+   "low": 0.21688589275617615
+  },
+  {
+   "a": "a forest on the kernel's own rows",
+   "b": "equal weights",
+   "diff": 0.1705527969793399,
+   "high": 0.2259193483034351,
+   "low": 0.11564260299547977
+  },
+  {
+   "a": "block align",
+   "b": "share of the forest's lead",
+   "diff": 0.5053352601343939,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "block alignf",
+   "b": "share of the forest's lead",
+   "diff": 0.19494066460567433,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "column align",
+   "b": "share of the forest's lead",
+   "diff": 0.2362462131017509,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "best columns",
+   "b": "share of the forest's lead",
+   "diff": 0.1700900379006222,
+   "high": NaN,
+   "low": NaN
+  },
+  {
+   "a": "forest importances",
+   "b": "share of the forest's lead",
+   "diff": 0.32986319033432193,
+   "high": NaN,
+   "low": NaN
+  }
+ ],
+ "r_max": 6.0,
+ "rho": 0.25,
+ "rows": [
+  {
+   "arm": "equal weights",
+   "chosen": [
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.5861923419152444,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.5503259439033261,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.5642115363630038,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.5447650663908216,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.586674099666141,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.55074611571556,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.5836873084046252,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.5700063398210394,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.6110869525797393,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2601,
+     "inner_q2": 0.5830723206638021,
+     "lam": 0.1,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.7357227240699694,
+   "n": 1801,
+   "q2": 0.5717392486435111,
+   "rmse": 1.2463150453792797,
+   "seconds": 25.567915439605713
+  },
+  {
+   "arm": "block align",
+   "chosen": [
+    {
+     "columns_used": 2414,
+     "inner_q2": 0.6478377112442402,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2431,
+     "inner_q2": 0.6023311495603467,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2448,
+     "inner_q2": 0.6220608326093634,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2465,
+     "inner_q2": 0.6063531955972545,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2431,
+     "inner_q2": 0.6460407864089992,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2448,
+     "inner_q2": 0.6273423055938976,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2448,
+     "inner_q2": 0.6368710873391008,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2465,
+     "inner_q2": 0.6399173876212825,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2465,
+     "inner_q2": 0.6570740698666853,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2448,
+     "inner_q2": 0.6404843302658639,
+     "lam": 0.1,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.6628331211826805,
+   "n": 1801,
+   "q2": 0.6579255906717143,
+   "rmse": 1.113868682142686,
+   "seconds": 24.976935863494873
+  },
+  {
+   "arm": "block alignf",
+   "chosen": [
+    {
+     "columns_used": 1904,
+     "inner_q2": 0.6033421490952493,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 1938,
+     "inner_q2": 0.5655106655855202,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 1989,
+     "inner_q2": 0.5857397229067163,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 1972,
+     "inner_q2": 0.572933492804409,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 1955,
+     "inner_q2": 0.5986162558418797,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 1955,
+     "inner_q2": 0.5708524146053524,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 1938,
+     "inner_q2": 0.5972254478399578,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 1938,
+     "inner_q2": 0.5800347254762038,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2006,
+     "inner_q2": 0.6068904775970542,
+     "lam": 1.0,
+     "share": 0.0
+    },
+    {
+     "columns_used": 1938,
+     "inner_q2": 0.5781025400996668,
+     "lam": 1.0,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.7081480104479021,
+   "n": 1801,
+   "q2": 0.6049869242370203,
+   "rmse": 1.1969594462134887,
+   "seconds": 26.191944360733032
+  },
+  {
+   "arm": "column align",
+   "chosen": [
+    {
+     "columns_used": 2347,
+     "inner_q2": 0.6045927076562095,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2360,
+     "inner_q2": 0.567174785242829,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2375,
+     "inner_q2": 0.5897177305411175,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2389,
+     "inner_q2": 0.5687286106429101,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2359,
+     "inner_q2": 0.6012104258888418,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2376,
+     "inner_q2": 0.5829683297438337,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2375,
+     "inner_q2": 0.6012987080674274,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2392,
+     "inner_q2": 0.6052543502125409,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2391,
+     "inner_q2": 0.6231084302680037,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2374,
+     "inner_q2": 0.5949071194389483,
+     "lam": 0.1,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.7063875667928394,
+   "n": 1801,
+   "q2": 0.6120317010637919,
+   "rmse": 1.1862379691372764,
+   "seconds": 25.498591661453247
+  },
+  {
+   "arm": "best columns",
+   "chosen": [
+    {
+     "columns_used": 52,
+     "inner_q2": 0.6185491244005277,
+     "lam": 0.01,
+     "share": 0.02
+    },
+    {
+     "columns_used": 52,
+     "inner_q2": 0.5836639936359247,
+     "lam": 0.1,
+     "share": 0.02
+    },
+    {
+     "columns_used": 52,
+     "inner_q2": 0.6051779292065256,
+     "lam": 0.01,
+     "share": 0.02
+    },
+    {
+     "columns_used": 52,
+     "inner_q2": 0.577446954107742,
+     "lam": 0.1,
+     "share": 0.02
+    },
+    {
+     "columns_used": 52,
+     "inner_q2": 0.6049894479643296,
+     "lam": 0.1,
+     "share": 0.02
+    },
+    {
+     "columns_used": 260,
+     "inner_q2": 0.5968422294621236,
+     "lam": 0.1,
+     "share": 0.1
+    },
+    {
+     "columns_used": 260,
+     "inner_q2": 0.6046074339199761,
+     "lam": 0.1,
+     "share": 0.1
+    },
+    {
+     "columns_used": 260,
+     "inner_q2": 0.5922634442299559,
+     "lam": 0.1,
+     "share": 0.1
+    },
+    {
+     "columns_used": 260,
+     "inner_q2": 0.6295997019167264,
+     "lam": 0.1,
+     "share": 0.1
+    },
+    {
+     "columns_used": 52,
+     "inner_q2": 0.6026302145512072,
+     "lam": 0.1,
+     "share": 0.02
+    }
+   ],
+   "mae": 0.7285709450364393,
+   "n": 1801,
+   "q2": 0.6007485803457842,
+   "rmse": 1.2033637786230902,
+   "seconds": 92.79074120521545
+  },
+  {
+   "arm": "forest importances",
+   "chosen": [
+    {
+     "columns_used": 2348,
+     "inner_q2": 0.6216773624927131,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2363,
+     "inner_q2": 0.591918933909777,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2378,
+     "inner_q2": 0.6143784693678627,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2378,
+     "inner_q2": 0.6103779786276697,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2366,
+     "inner_q2": 0.6268190051112736,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2365,
+     "inner_q2": 0.621679596806211,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2370,
+     "inner_q2": 0.6106221112665635,
+     "lam": 0.1,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2371,
+     "inner_q2": 0.6051989602828745,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2376,
+     "inner_q2": 0.6233215735540992,
+     "lam": 0.01,
+     "share": 0.0
+    },
+    {
+     "columns_used": 2372,
+     "inner_q2": 0.6256004050852313,
+     "lam": 0.01,
+     "share": 0.0
+    }
+   ],
+   "mae": 0.6637028397450908,
+   "n": 1801,
+   "q2": 0.6279983383755581,
+   "rmse": 1.1615720152035738,
+   "seconds": 198.60210704803467
+  },
+  {
+   "arm": "a forest on the scaled rows (the length kept)",
+   "chosen": [],
+   "mae": 0.37454648272308133,
+   "n": 1801,
+   "q2": 0.8446509885517078,
+   "rmse": 0.7506335084358764,
+   "seconds": 387.70133781433105
+  },
+  {
+   "arm": "a forest on the kernel's own rows",
+   "chosen": [],
+   "mae": 0.4810383882072828,
+   "n": 1801,
+   "q2": 0.742292045622851,
+   "rmse": 0.966802160660124,
+   "seconds": 96.7233419418335
+  }
+ ],
+ "series": "hops",
+ "shares": [
+  0.02,
+  0.1,
+  0.3,
+  0.6
+ ],
+ "target": "barrier",
+ "trees": 300
+}
