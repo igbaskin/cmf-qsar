@@ -11415,6 +11415,16 @@ from the eigenvalues of the kernel it is given. What was *not* a cause, although
 guess: the linear-algebra library. The runners and the author's machine use the same OpenBLAS,
 which the numpy wheels carry.
 
+One more thing a test that drives the window has to respect. Every window, panel and chart of the
+suite belongs to **one** Qt application, which `tests/conftest.py` creates once and holds for the
+whole run; a test that needs it asks for the `qt_application` fixture. A test must not build its
+own with `QApplication.instance() or QApplication([])`: that call returns the one application
+that already exists, and the fixture it is stored in then owns it, so the end of that module
+deletes the application under every module that follows. Qt reports it as "shared QObject was
+deleted directly" and the process crashes while shutting down, after the last test has passed,
+which is a failure no test can catch. `pytest_sessionfinish` asks after the last test whether the
+application is still there and fails the run with the reason if it is not.
+
 # Command-line reference
 
 Everything the application does is available without it, which is what makes the program scriptable

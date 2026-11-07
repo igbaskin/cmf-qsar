@@ -173,10 +173,22 @@ This is what the software paper needs, and nothing in the later parts should wai
     `QApplication.instance() or QApplication([])`, two of them without keeping the object, so the
     only Python reference to the shared application can be dropped while Qt objects still live.
     This is older than the six -- the run of 7 November before them crashed the same way on four
-    jobs -- and it does not show on Windows outside the runners, where the suite exits 0. It
-    needs a session-wide application the tests share and nothing destroys, which is a change to
-    the test set-up and not to the program, and it cannot be checked except on a runner.
-    **Still to do**, and it is the last thing between the suite and a green badge.
+    jobs -- and it does not show on Windows outside the runners, where the suite exits 0.
+    **Done.** There is now one application for the whole run. `tests/conftest.py` holds it in a
+    module-level name and hands it out through a session fixture, the five module-scoped `app`
+    fixtures take it from there instead of building one, and the three tests that built one in
+    their own body take the fixture as an argument. The seven modules lost nothing: only the first
+    of those calls ever created an application, so there was never more than one -- what was wrong
+    was who owned it. A detail that follows: four modules no longer import `QApplication` at all,
+    and each already skips itself without Qt through `pytest.importorskip("PySide6")`.
+    The invariant is checked twice. `tests/test_qt_application.py` holds that the run has one
+    application, that `conftest` and not a fixture owns it, and that the C++ object behind the
+    wrapper exists; and `pytest_sessionfinish` in `conftest.py` asks the same question after the
+    last test and fails the run with the reason if the answer is no. That check belongs there and
+    not in a test, because the deletion happened after every test had finished, which is why
+    nothing in the suite noticed a crash on a run whose every test had passed. The check was
+    driven into failure on a plain `QObject` deleted through `shiboken6.delete`, since deleting
+    the real application would end the process. The suite is 2,435 passed and 4 skipped here.
 * **A3. The data statement.** Done 22 October 2026 as the record: `docs/public_3dqsar_datasets.md`
   gives every set under `examples/` its origin, terms, script, size, users and a status (free,
   derived, unclear). Four items are of unclear status, `sutherland/`, `steroids_cbg.sdf` and the
