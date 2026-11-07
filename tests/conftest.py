@@ -12,9 +12,11 @@ runners, exit code 1 on the Windows ones -- which made five of the six continuou
 jobs red on a suite that reported 2,275 passed (plan item A2).
 
 The application lives here instead. The session fixture below creates it at most once and keeps
-it in a module-level name for the rest of the run, so no module teardown can take it away. It is
-not created eagerly: a run that asks for no window asks for no application either.
+it in a module-level name for the rest of the run, so no module teardown can take it away, and
+it leaks one reference so that Python does not delete it when the interpreter shuts down either.
+It is not created eagerly: a run that asks for no window asks for no application.
 """
+import ctypes
 import os
 
 import pytest
@@ -24,6 +26,21 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 #: the one application of the run, held for as long as the process lives
 _APPLICATION = None
+
+
+def _keep_past_the_interpreter(obj):
+    """Add one reference that the interpreter will never drop.
+
+    Holding the application in a module-level name keeps it alive while the tests run, but not
+    to the very end: the names of a module are cleared when Python shuts down, and the
+    application is then deleted from Python while the widgets of finished tests are still
+    wrapped. Qt tears its own internals down under them, in an order nobody controls, and the
+    process crashes as it exits -- which is what the runners showed on a suite whose every test
+    had passed. One reference is therefore leaked on purpose. The process is ending anyway and
+    the operating system reclaims the memory; what matters is that Qt is never taken apart
+    while Python still has Qt objects in its hands.
+    """
+    ctypes.pythonapi.Py_IncRef(ctypes.py_object(obj))
 
 
 @pytest.fixture(scope="session")
@@ -39,6 +56,7 @@ def qt_application():
 
     if _APPLICATION is None:
         _APPLICATION = QApplication.instance() or QApplication([])
+        _keep_past_the_interpreter(_APPLICATION)
     return _APPLICATION
 
 
