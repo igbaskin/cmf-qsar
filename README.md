@@ -1,5 +1,7 @@
 # CMF 3D-QSAR — desktop application for the Continuous Molecular Fields approach
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24043660.svg)](https://doi.org/10.5281/zenodo.24043660)
+
 A Python/Qt desktop application (plus a library and a command-line tool) that implements the
 **Continuous Molecular Fields (CMF)** approach to 3D-QSAR. The approach is described in the following
 publications; the three the program follows most closely are the 2013, 2015 and 2019 papers, which the
@@ -5315,7 +5317,10 @@ location or the path, and xtb through `--xtb`, `XTB_EXE` or the path. The extra 
 pip install -r requirements-lock.txt && pip install --no-deps -e .
 ```
 
-`CITATION.cff` carries the citation of the software and of the papers.
+`CITATION.cff` carries the citation of the software and of the papers. Every release is
+archived at Zenodo. Cite [doi:10.5281/zenodo.24043660](https://doi.org/10.5281/zenodo.24043660), which always points
+at the newest version; version 1.0.0 alone is
+[doi:10.5281/zenodo.24043661](https://doi.org/10.5281/zenodo.24043661).
 
 ## Running the application
 

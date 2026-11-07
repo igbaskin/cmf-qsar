@@ -67,31 +67,40 @@ allows only `docs/CMF_manual.pdf`, and `git ls-files '*.pdf'` must print that on
 
 ## 3. Connect Zenodo before tagging
 
-Zenodo archives a GitHub release only if the connection existed before the release was created.
-Sign in at zenodo.org with GitHub, open *GitHub* in the account menu, and switch the
-`igbaskin/cmf-qsar` repository on. `.zenodo.json` in the repository root supplies the title, the
-author, the licence and the keywords, so the archive does not depend on what GitHub guesses.
+**Done 7 November 2026.** Zenodo archives a GitHub release only if the connection existed before
+the release was created. Sign in at zenodo.org with GitHub, open *GitHub* in the account menu, and
+switch the `igbaskin/cmf-qsar` repository on. `.zenodo.json` in the repository root supplies the
+title, the author, the licence and the keywords, so the archive does not depend on what GitHub
+guesses. Two things that are easy to get wrong on that page: the repository appears in the list
+before it is switched on, so seeing it there is not the same as having enabled it; and private
+repositories are not supported, which is why step 2 comes first.
 
 ## 4. Tag and release
 
+**Done 7 November 2026.** The tag is on commit `65ffa08`, which is the commit that carries the
+regenerated manifest of step 1.
+
 ```bash
-git tag -a v1.0.0 -m "cmfqsar 1.0.0"
+git tag -a v1.0.0 <commit> -m "cmfqsar 1.0.0"
 git push origin v1.0.0
+gh release create v1.0.0 --title "cmfqsar 1.0.0" --notes-file <notes> docs/CMF_manual.pdf
 ```
 
-Then create the GitHub release from that tag and attach `docs/CMF_manual.pdf`, so the
-supplementary material of every paper is one file with a published checksum. Zenodo mints the DOI
-when the release is published.
+The manual is attached to the release, so the supplementary material of every paper is one file
+with a published checksum: 9,209,523 bytes, identical to the copy at the tagged commit. Zenodo
+mints the DOI when the release is published, which took under a minute here.
 
 ## 5. Write the DOI down
 
-The DOI arrives in two forms: one that always points at the newest version (the *concept* DOI)
-and one for 1.0.0. Papers cite the concept DOI.
+**Done 7 November 2026.** The DOI arrived in the two expected forms. Papers cite the concept DOI,
+which always points at the newest version.
 
-* `CITATION.cff`: add `doi:` and set `date-released` to the day of the release. It still says
-  `2026-10-22`.
-* `README.md`: the DOI badge and the citation line.
-* `docs/publication_plan.md`: item 0 is then done.
+* Concept DOI: [10.5281/zenodo.24043660](https://doi.org/10.5281/zenodo.24043660)
+* Version 1.0.0: [10.5281/zenodo.24043661](https://doi.org/10.5281/zenodo.24043661)
+
+Written into `CITATION.cff` (the `doi:` field, with `date-released` moved to the day of the
+release), `README.md` (the badge under the title and the citation paragraph) and
+`docs/publication_plan.md` (item 0).
 
 ## 6. The package on PyPI
 
