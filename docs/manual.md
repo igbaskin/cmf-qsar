@@ -2211,7 +2211,10 @@ two methods is worse than leaving the descriptor out.
 
 xtb is not part of this repository. Its Windows and Linux builds are released at
 <https://github.com/grimme-lab/xtb/releases> under LGPL-3.0; give the path with `--xtb`, or set
-`XTB_EXE`.
+`XTB_EXE`. A path you give must exist. If it names neither a file nor a program on the path,
+you get an error that quotes the path; it is never replaced by another xtb, because numbers
+from a program you did not ask for would not say where they came from. To search the path,
+leave `--xtb` out and leave `XTB_EXE` unset.
 
 ## Can a Fukui function be a field?
 
