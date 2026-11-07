@@ -139,19 +139,17 @@ def top_layer_indices(atoms, top_layers: int = 2, tolerance: float = 0.5) -> np.
     return np.flatnonzero(np.asarray(atoms.positions, float)[:, 2] >= cut)
 
 
-def slab_receptor(atoms, fieldset: FieldSet, top_layers: int = 2, cutoff: float = 10.0,
-                  tolerance: float = 0.5, name: str = "slab") -> MoleculeFields:
-    """The top layers of a slab, with their periodic images, as fields.
+def slab_images(atoms, top_layers: int = 2, cutoff: float = 10.0,
+                tolerance: float = 0.5) -> Tuple[np.ndarray, List[str]]:
+    """The top layers of a slab repeated over the surface, as plain coordinates and symbols.
 
-    `cutoff` is how far beyond the primary surface cell the images are carried, in angstrom: a
-    molecule anywhere in the cell then sees the surface continue for at least that far in every
-    direction.  Only the two surface directions are repeated; a slab is not periodic along its
-    normal and its images along z are vacuum.
+    Returns ``(coords, symbols)``.  Only the two surface directions are repeated, far enough
+    that every point of the primary surface cell has the surface continuing for at least
+    `cutoff` angstrom around it; a slab is not periodic along its normal, and its images along
+    the normal are vacuum.
 
-    The weights are not perceived from a molecule, because there is no molecule: every field of
-    the field set is zero except the steric one, which carries the van der Waals well depth of
-    the element, and an element indicator field ``cif:<symbol>``, which carries one.  The
-    docstring of this module says why the others are zero.
+    This is the expansion :func:`slab_receptor` turns into fields and the one the application
+    draws, so the picture shows exactly the atoms the receptor is made of.
     """
     pos = np.asarray(atoms.positions, float)
     cell = np.asarray(atoms.get_cell(), float)
@@ -166,10 +164,26 @@ def slab_receptor(atoms, fieldset: FieldSet, top_layers: int = 2, cutoff: float 
     coords, syms = [], []
     for i in range(-n1, n1 + 1):
         for j in range(-n2, n2 + 1):
-            shift = i * a1 + j * a2
-            coords.append(base + shift)
+            coords.append(base + i * a1 + j * a2)
             syms.extend(symbols)
-    coords = np.vstack(coords) if coords else np.zeros((0, 3))
+    return (np.vstack(coords) if coords else np.zeros((0, 3))), syms
+
+
+def slab_receptor(atoms, fieldset: FieldSet, top_layers: int = 2, cutoff: float = 10.0,
+                  tolerance: float = 0.5, name: str = "slab") -> MoleculeFields:
+    """The top layers of a slab, with their periodic images, as fields.
+
+    `cutoff` is how far beyond the primary surface cell the images are carried, in angstrom: a
+    molecule anywhere in the cell then sees the surface continue for at least that far in every
+    direction.  Only the two surface directions are repeated; a slab is not periodic along its
+    normal and its images along z are vacuum.
+
+    The weights are not perceived from a molecule, because there is no molecule: every field of
+    the field set is zero except the steric one, which carries the van der Waals well depth of
+    the element, and an element indicator field ``cif:<symbol>``, which carries one.  The
+    docstring of this module says why the others are zero.
+    """
+    coords, syms = slab_images(atoms, top_layers=top_layers, cutoff=cutoff, tolerance=tolerance)
     names = [s.name for s in fieldset.specs]
     weights = np.zeros((len(coords), len(names)))
     radii = np.array([vdw_params(s)[0] for s in syms]) if syms else np.zeros(0)
@@ -537,5 +551,5 @@ def surface_score(mol: MoleculeFields, slab: MoleculeFields, fieldset: FieldSet,
 __all__ = ["COULOMB_EV", "MIN_IMAGE_HEIGHT", "SLAB_NONZERO_FIELDS", "SurfaceDock",
            "SurfaceScore", "SurfaceScorer", "bcc110_slab", "dock_on_surface",
            "image_charge_energy", "layer_heights", "read_slab", "site_profile",
-           "slab_receptor", "surface_score", "surface_sites", "surface_transform",
-           "top_layer_indices"]
+           "slab_images", "slab_receptor", "surface_score", "surface_sites",
+           "surface_transform", "top_layer_indices"]

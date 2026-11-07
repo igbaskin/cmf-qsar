@@ -44,6 +44,8 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDockWid
                                QTableWidget, QTableWidgetItem, QTabWidget, QTextBrowser,
                                QVBoxLayout, QWidget)
 
+from ..bonds import (MANY_BONDS, MAX_POLYHEDRA, coordination_polyhedra, is_bonding,
+                     periodic_bonds, polyhedra_mesh)
 from ..cofields import Grid, cofield_volume, isosurface
 from ..dataio import save_model, write_predictions_csv
 from ..fields import FieldSet
@@ -51,7 +53,9 @@ from ..model import CMFModel, grid_search
 from ..periodic import (crystal_fields, crystal_table, crystal_targets, elements_in,
                         inorganic_fieldset, overlap_cutoff, periodic_channel_labels,
                         read_crystal_set, top_channels)
-from .viewer3d import Viewer3D, cofield_colors, color_name as _cname, signed_spheres
+from .copattern_panel import CoPatternChart
+from .viewer3d import (Viewer3D, cofield_colors, color_name as _cname, element_color,
+                       signed_spheres)
 from .workers import TaskWorker
 
 #: the file types the open dialog offers; a folder is opened with the other entry of the menu
@@ -62,6 +66,12 @@ PHYSCHEM = [("electrostatic", "Electrostatic (charges)"), ("steric", "Steric (at
             ("prop:electronegativity", "Electronegativity"), ("prop:mass", "Mass")]
 #: how many points the co-field grid over one cell may have before the spacing is coarsened
 MAX_GRID_POINTS = 400_000
+#: how the atoms of a cell can be drawn.  The first two show the atoms alone, which is what a
+#: structure file states; the last two add the bonds of :mod:`cmfqsar.bonds`, perceived from the
+#: distances for drawing only, which an organic molecule on a surface needs to be readable
+ATOM_STYLES = ("balls", "dots", "ball and stick", "sticks")
+#: radius of a drawn atom in the two bonded styles, as a fraction of its covalent radius
+BONDED_ATOM_SCALE = 0.26
 
 
 # --------------------------------------------------------------------------- #
@@ -211,6 +221,8 @@ class CrystalWindow(QMainWindow):
         self._display: Dict[Tuple[int, str], object] = {}   # (index, fieldset tag) -> CrystalFields
         self._volume = None            # (structure index, field name, volume, grid)
         self._contributions = None     # (structure index, values, how)
+        self._bonded = None            # (structure index, bonds.DrawableStructure)
+        self._polyhedra = None         # (structure index, [bonds.Polyhedron])
 
         central = QWidget()
         lay = QVBoxLayout(central)
@@ -258,15 +270,40 @@ class CrystalWindow(QMainWindow):
         self.spin_images.setValue(6.0)
         self.spin_images.setSuffix(" A")
         self.cmb_atoms = QComboBox()
-        self.cmb_atoms.addItems(["balls", "dots"])
+        self.cmb_atoms.addItems(ATOM_STYLES)
+        self.cmb_atoms.setToolTip("\n".join([
+            "How the atoms of the cell are drawn.",
+            "",
+            "'balls' and 'dots' show the atoms alone, which is the honest picture of a file that",
+            "states where the atoms are and nothing about which of them are bonded.",
+            "",
+            "'ball and stick' and 'sticks' add bonds perceived from the distances, over the",
+            "periodic images, so a bond that crosses the cell boundary is drawn rather than",
+            "lost. A metal atom gets no bonds, because a distance rule would give it about",
+            "twelve: a slab stays spheres and the organic molecule on it gets its bonds, which",
+            "is the picture an adsorbate needs. The bonds are for looking at only -- no bond",
+            "order, no charge and no field is read from them.",
+            "",
+            "What a metal gets instead is 'Coordination polyhedra' beside this box."]))
+        self.chk_polyhedra = QCheckBox("Coordination polyhedra")
+        self.chk_polyhedra.setToolTip("\n".join([
+            "The first coordination shell of every metal atom, drawn as a polyhedron.",
+            "",
+            "The shell is found without any chemistry: the nearest neighbour sets a distance and",
+            "every neighbour within 1.3 times that distance is a vertex, with the non-metal",
+            "neighbours preferred where the atom has any. Neighbours are taken over the periodic",
+            "images, so a polyhedron at the edge of the cell is whole.",
+            "",
+            "This is how an inorganic structure is read: a chain of corner-sharing octahedra",
+            "says more than any number of sticks would."]))
         self.chk_labels = QCheckBox("Site numbers")
         self.chk_dark = QCheckBox("Dark background")
         self.chk_dark.setChecked(True)
         btn_reset = QPushButton("Reset view")
         btn_reset.clicked.connect(self.viewer.reset_view)
         for widget in (self.chk_cell, self.chk_images, QLabel("to"), self.spin_images,
-                       QLabel("  Atoms:"), self.cmb_atoms, self.chk_labels, self.chk_dark,
-                       btn_reset):
+                       QLabel("  Atoms:"), self.cmb_atoms, self.chk_polyhedra, self.chk_labels,
+                       self.chk_dark, btn_reset):
             row1.addWidget(widget)
         row1.addStretch(1)
 
@@ -299,7 +336,7 @@ class CrystalWindow(QMainWindow):
         outer.addLayout(row1)
         outer.addLayout(row2)
         for box in (self.chk_cell, self.chk_images, self.chk_labels, self.chk_dark,
-                    self.chk_cofield, self.chk_sites):
+                    self.chk_cofield, self.chk_sites, self.chk_polyhedra):
             box.toggled.connect(self.update_display)
         self.spin_images.valueChanged.connect(self.update_display)
         self.spin_level.valueChanged.connect(self.update_display)
@@ -450,7 +487,13 @@ class CrystalWindow(QMainWindow):
         head.addWidget(self.cmb_reading)
         head.addStretch(1)
         wl.addLayout(head)
-        wl.addWidget(self.reading, 1)
+        # the ranked channels on the left, the same numbers as a curve on the right: the table
+        # says which channel, the chart says what the shape over distance is (plan item NT9)
+        split = QHBoxLayout()
+        split.addWidget(self.reading, 1)
+        self.chart = CoPatternChart()
+        split.addWidget(self.chart, 1)
+        wl.addLayout(split, 1)
         self.text_log = QTextBrowser()
         self.tabs.addTab(self.text_stats, "Statistics")
         self.tabs.addTab(wrap, "Reading")
@@ -619,6 +662,7 @@ class CrystalWindow(QMainWindow):
             self.predictions.clear()
             self._display.clear()
             self._volume = self._contributions = None
+            self._bonded = self._polyhedra = None
             self.cmb_field.clear()
             self.reading.setRowCount(0)
             self.text_stats.clear()
@@ -769,6 +813,7 @@ class CrystalWindow(QMainWindow):
         self.model, self.model_fieldset = out["model"], out["fieldset"]
         self._display.clear()
         self._volume = self._contributions = None
+        self._bonded = self._polyhedra = None
         res = out["res"]
         self.subset = ["train" if i in set(out["train"]) else
                        "test" if i in set(out["test"]) else "unused"
@@ -808,11 +853,23 @@ class CrystalWindow(QMainWindow):
     def update_reading(self, *_):
         self.reading.setRowCount(0)
         if self.model is None or not self.model.is_linear:
+            self.chart.clear("Build a model on the periodic field autocorrelation to see its "
+                             "co-pattern.")
             return
         cur = self.current_index()
+        channels = (self.cmb_reading.currentIndex() == 0
+                    and not getattr(self.model, "pbc_overlap", False))
+        if channels:
+            self.chart.set_model(self.model, self.model.fieldset)
+        else:
+            self.chart.clear(
+                "The chart is the co-pattern of the model: choose 'the model: the co-pattern "
+                "over the channels' above."
+                if not getattr(self.model, "pbc_overlap", False) else
+                "The periodic overlap kernel has a co-field, which is the map in the 3D view; "
+                "the chart is for the kernel that has none.")
         try:
-            if self.cmb_reading.currentIndex() == 0 and not getattr(self.model, "pbc_overlap",
-                                                                    False):
+            if channels:
                 cols, rows = reading_rows(self.model, self.model.fieldset)
             elif cur < 0:
                 return
@@ -902,7 +959,8 @@ class CrystalWindow(QMainWindow):
 
     def update_display(self, *_):
         v = self.viewer
-        for g in ("cell", "atoms", "images", "cofield", "sites", "labels"):
+        for g in ("cell", "atoms", "images", "cofield", "sites", "labels", "bonds",
+                  "polyhedra"):
             v.clear_group(g)
         v.set_dark(self.chk_dark.isChecked())
         cur = self.current_index()
@@ -918,10 +976,8 @@ class CrystalWindow(QMainWindow):
                          f"{c:.2f} A, periodic in "
                          f"{crystal.n_periodic} direction{'s' if crystal.n_periodic != 1 else ''} "
                          f"(a red, b green, c blue)")
-        if self.cmb_atoms.currentText() == "balls":
-            v.add_atoms(crystal.coords, crystal.symbols, "atoms", radii=crystal.radii)
-        else:
-            v.add_points(crystal.coords, crystal.symbols, "atoms", size=9.0, alpha=1.0)
+        lines += self._draw_atoms(cur, crystal)
+        lines += self._draw_polyhedra(cur, crystal)
         if self.chk_images.isChecked() and self.spin_images.value() > 0:
             from ..periodic import cell_image_indices
             coords, index = cell_image_indices(crystal, float(self.spin_images.value()))
@@ -941,6 +997,93 @@ class CrystalWindow(QMainWindow):
         lines += self._draw_cofield(cur)
         lines += self._draw_sites(cur, crystal)
         self.legend.setText("   |   ".join(lines))
+
+    def _drawable(self, index: int, crystal):
+        """The cell with its perceived bonds, kept so one cell is perceived once."""
+        if self._bonded is not None and self._bonded[0] == index:
+            return self._bonded[1]
+        drawable = periodic_bonds(crystal)
+        self._bonded = (int(index), drawable)
+        return drawable
+
+    def _draw_atoms(self, cur: int, crystal) -> List[str]:
+        """Draw the atoms of the cell in the chosen representation, and say what was drawn.
+
+        The two bonded styles draw the bonds of :mod:`cmfqsar.bonds` as well, and with them the
+        image atoms a bond ends on, so a bond that crosses the cell boundary is a bond on screen
+        and not a stick into nothing.  Atoms that have no bonds -- every metal atom, and a lone
+        ion -- are drawn as spheres in both styles, so a slab does not disappear when the sticks
+        are the only thing asked for.
+        """
+        v = self.viewer
+        style = self.cmb_atoms.currentText()
+        if style == "balls":
+            v.add_atoms(crystal.coords, crystal.symbols, "atoms", radii=crystal.radii)
+            return []
+        if style == "dots":
+            v.add_points(crystal.coords, crystal.symbols, "atoms", size=9.0, alpha=1.0)
+            return []
+        d = self._drawable(cur, crystal)
+        if not len(d.bonds):
+            # nothing to stick together: fall back to the spheres rather than an empty view
+            v.add_atoms(crystal.coords, crystal.symbols, "atoms", radii=crystal.radii)
+            return [f"bonds: {d.describe()}; the atoms are drawn as balls instead"]
+        many = len(d.bonds) > MANY_BONDS
+        if style == "ball and stick":
+            v.add_atoms(d.coords, d.symbols, "atoms", radii=d.radii, scale=BONDED_ATOM_SCALE)
+        else:
+            bonded = set(np.unique(d.bonds).tolist())
+            lone = np.array([i for i in range(len(d.coords)) if i not in bonded], dtype=int)
+            if len(lone):
+                v.add_atoms(d.coords[lone], [d.symbols[int(i)] for i in lone], "atoms",
+                            radii=d.radii[lone], scale=BONDED_ATOM_SCALE)
+        v.add_structure(d.coords, d.bonds, d.symbols, "bonds",
+                        style="lines" if many else "sticks",
+                        carbon_color=element_color("C"), radius=0.12, width=2.0)
+        text = f"{style}: {d.describe()}"
+        if d.n_images_drawn:
+            text += f"; {d.n_images_drawn} image atoms drawn with them"
+        if many:
+            text += (f"; more than {MANY_BONDS} sticks, so the bonds are drawn as lines")
+        text += ". The bonds are perceived from the distances for drawing only"
+        return [text]
+
+    def _draw_polyhedra(self, cur: int, crystal) -> List[str]:
+        if not self.chk_polyhedra.isChecked():
+            return []
+        if self._polyhedra is not None and self._polyhedra[0] == cur:
+            polys = self._polyhedra[1]
+        else:
+            polys = coordination_polyhedra(crystal)
+            self._polyhedra = (int(cur), polys)
+        if not polys:
+            return ["coordination polyhedra: no atom of this cell has a shell of three or more "
+                    "neighbours that gets none of the bonds"]
+        mesh = polyhedra_mesh(polys)
+        if mesh is None:
+            return []
+        self.viewer.add_polyhedra(mesh[0], mesh[1], "polyhedra",
+                                  alpha=float(self.spin_opacity.value()))
+        kinds: Dict[str, int] = {}
+        for p in polys:
+            kinds[p.label()] = kinds.get(p.label(), 0) + 1
+        shown = sorted(kinds.items(), key=lambda kv: -kv[1])[:4]
+        flat = sum(1 for p in polys if p.planar)
+        text = ("coordination polyhedra: "
+                + ", ".join(f"{v} x {k}" for k, v in shown)
+                + (" ..." if len(kinds) > len(shown) else ""))
+        if flat:
+            text += f"; {flat} of them flat, drawn as polygons"
+        # a cell can hold more metal atoms than polyhedra, and the reason is worth saying: on a
+        # disordered structure a site whose nearest neighbour is much closer than the next has a
+        # shell of one atom, which is not a shape
+        metals = sum(1 for s in crystal.symbols if not is_bonding(s))
+        if len(polys) >= MAX_POLYHEDRA:
+            text += f"; the first {MAX_POLYHEDRA} of {metals} metal atoms"
+        elif metals > len(polys):
+            text += (f"; {metals - len(polys)} of the {metals} metal atoms have a shell of fewer "
+                     f"than three neighbours, which is not a shape")
+        return [text]
 
     def _draw_cofield(self, cur: int) -> List[str]:
         if not self.chk_cofield.isChecked():

@@ -14,7 +14,8 @@ from PySide6.QtWidgets import (QCompleter, QAbstractItemView, QCheckBox, QComboB
                                QRadioButton, QSlider, QSpinBox, QTableWidget, QTableWidgetItem, QTabWidget,
                                QTextEdit, QVBoxLayout, QWidget, QSizePolicy)
 
-from ..fields import PHYSCHEM_FIELDS, FIELD_LABELS, FieldSet
+from ..fields import EFIELD_FIELD, PHYSCHEM_AVAILABLE, FIELD_LABELS, FieldSet
+from .copattern_panel import CoPatternChart
 
 
 _CHECK_ICON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "check.svg").replace("\\", "/")
@@ -462,9 +463,24 @@ class ModelPanel(QWidget):
         fl = QVBoxLayout(gb)
         self.chk_fields: Dict[str, QCheckBox] = {}
         row = QHBoxLayout()
-        for k, name in enumerate(PHYSCHEM_FIELDS):
+        for k, name in enumerate(PHYSCHEM_AVAILABLE):
             cb = QCheckBox(FIELD_LABELS[name])
-            cb.setChecked(True)
+            # the five ordinary fields are the default; the electric-field kind is an addition
+            # whose value is measured per series (plan item EC5), so it starts off
+            cb.setChecked(name != EFIELD_FIELD)
+            if name == EFIELD_FIELD:
+                cb.setToolTip("\n".join([
+                    "The electric field of the molecule, as a vector field.",
+                    "",
+                    "It carries the same charges as the electrostatic field, and the kernel is",
+                    "the overlap of the two gradients instead of the overlap of the two",
+                    "potentials: what a reaction centre feels is the field and not the",
+                    "potential. Its co-field is a direction at a place rather than a value, so",
+                    "it is drawn as arrows ('vector co-field' under the 3D view) and not as an",
+                    "isosurface.",
+                    "",
+                    "Whether it is worth adding is a question per series:",
+                    "benchmarks/results/efield/table.md has the measurement."]))
             cb.toggled.connect(self.fields_changed)
             self.chk_fields[name] = cb
             row.addWidget(cb)
@@ -1401,6 +1417,33 @@ class ResultsPanel(QWidget):
         cl.addLayout(tables)
         self.tabs.addTab(contrib_w, "Contributions")
 
+        # --- co-pattern: the reading of a kernel that has no co-field (plan item NT9)
+        self.copattern = CoPatternChart()
+        self.copattern.setToolTip(
+            "The weight of every channel of an invariant kernel, against distance, for one pair "
+            "of field types. These kernels compare two structures by a distribution of "
+            "distances, so they have no co-field and no map; this curve is the reading they do "
+            "have.")
+        self.tab_copattern = self.tabs.addTab(self.copattern, "Co-pattern")
+
+        # --- the pose of every molecule in the surface frame (plan item EC10)
+        pose_w = QWidget()
+        pw = QVBoxLayout(pose_w)
+        pw.setContentsMargins(4, 4, 4, 4)
+        self.lbl_poses = QLabel("Tools -> Pose the molecules in the surface frame puts the "
+                                "molecules on the plane z = 0 and lists their poses here.")
+        self.lbl_poses.setWordWrap(True)
+        pw.addWidget(self.lbl_poses)
+        self.tbl_poses = QTableWidget(0, 6)
+        self.tbl_poses.verticalHeader().setVisible(False)
+        self.tbl_poses.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tbl_poses.setToolTip(
+            "The height and the tilt of every molecule in the surface frame. These are the two "
+            "numbers a surface leaves: where a molecule sits in the plane and how it is turned "
+            "about the normal are what the surface kernel is invariant to.")
+        pw.addWidget(self.tbl_poses, 1)
+        self.tab_poses = self.tabs.addTab(pose_w, "Surface poses")
+
         # --- Shapley decomposition: works for any kernel, including a nonlinear layer
         shap_w = QWidget()
         sl = QVBoxLayout(shap_w)
@@ -1598,6 +1641,21 @@ class ResultsPanel(QWidget):
             t.setItem(r, len(columns) - 1,
                       _NumItem(-1.0, "") if conserved is None
                       else _NumItem(conserved, f"{100 * conserved:.0f}"))
+        t.setSortingEnabled(True)
+
+    def set_surface_poses(self, header: str, columns, rows) -> None:
+        """Fill the Surface poses tab: one row per molecule, already formatted as text."""
+        self.lbl_poses.setText(header)
+        t = self.tbl_poses
+        t.setSortingEnabled(False)
+        t.setRowCount(0)
+        t.setColumnCount(len(columns))
+        t.setHorizontalHeaderLabels(list(columns))
+        t.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        t.setRowCount(len(rows))
+        for r, row in enumerate(rows):
+            for c, text in enumerate(row):
+                t.setItem(r, c, QTableWidgetItem(str(text)))
         t.setSortingEnabled(True)
 
     def set_chemotypes(self, header: str, rows, per_group) -> None:
@@ -2135,6 +2193,27 @@ class ViewerControls(QWidget):
             "translucent spheres coloured by type. Untick to take them off the view; they are "
             "kept until the model is rebuilt or the molecules move.")
         self.chk_pharmacophore.setEnabled(False)
+        # the co-field of the electric-field kind is a direction at a place, not a value, so the
+        # only honest drawing of it is an arrow (plan items EC5 and EC10)
+        self.chk_arrows = QCheckBox("vector co-field (arrows)")
+        self.chk_arrows.setToolTip("\n".join([
+            "The co-field of the 'Electric field (vector)' field type, drawn as arrows.",
+            "",
+            "Every other field in this program is a scalar, so its co-field is a value at a",
+            "place and an isosurface shows it. The electric-field kind pairs two molecules by",
+            "the overlap of the gradients of their fields, so its co-field is a vector: at each",
+            "place it says which way the molecule's own electric field should point to raise the",
+            "predicted property. An arrow is the only drawing that can say that.",
+            "",
+            "Needs 'Compute co-field' and a model that carries the electric-field kind."]))
+        self.spin_arrows = QSpinBox()
+        self.spin_arrows.setRange(3, 60)
+        self.spin_arrows.setValue(16)
+        self.spin_arrows.setPrefix("n ")
+        self.spin_arrows.setToolTip("How many arrows are drawn: the longest ones, kept at least "
+                                    "1.5 Å apart so that they spread over the molecule instead "
+                                    "of crowding one peak")
+        self.spin_arrows.valueChanged.connect(self.changed)
         # the maps go on two rows of their own: on one line the labels were clipped to a few
         # letters and the tick boxes overlapped each other
         row3.addWidget(QLabel("Maps:"))
@@ -2148,11 +2227,14 @@ class ViewerControls(QWidget):
                 row3.addWidget(self.chk_cofield_noise)
             if cb is self.chk_molfield:
                 row3.addWidget(self.cmb_molfield_style)
-        for cb in (self.chk_shapfield, self.chk_atoms, self.chk_diff, self.chk_pharmacophore):
+        for cb in (self.chk_shapfield, self.chk_atoms, self.chk_diff, self.chk_pharmacophore,
+                   self.chk_arrows):
             cb.toggled.connect(self.changed)
             row3b.addWidget(cb)
             if cb is self.chk_shapfield:
                 row3b.addWidget(self.cmb_shapfield_style)
+            if cb is self.chk_arrows:
+                row3b.addWidget(self.spin_arrows)
         row3.addStretch(1)
         lay.addLayout(row3)
         row3b.addStretch(1)
@@ -2243,6 +2325,54 @@ class ViewerControls(QWidget):
         row4.addWidget(self.lbl_protein)
         row4.addStretch(1)
         lay.addLayout(row4)
+
+        # --- a metal slab behind the molecules: the surface's answer to the pocket above
+        row5 = QHBoxLayout()
+        self.chk_slab = QCheckBox("surface slab")
+        self.chk_slab.setToolTip("\n".join([
+            "Show the metal surface behind the molecules: the top layers of a loaded or built",
+            "slab, repeated over the surface lattice so that the surface has no edge.",
+            "",
+            "The surface frame is the normal along z and the top atomic layer at z = 0, which is",
+            "the frame the molecules have to be in for the picture to mean anything. File menu:",
+            "Load a surface slab, or Build a bcc(110) slab; Tools: Pose the molecules in the",
+            "surface frame."]))
+        self.chk_slab.toggled.connect(self.changed)
+        row5.addWidget(self.chk_slab)
+        self.cmb_slab_style = QComboBox()
+        self.cmb_slab_style.addItems(["balls", "dots"])
+        self.cmb_slab_style.setToolTip("'dots' is one point per atom and stays fast for a wide "
+                                       "patch of surface; 'balls' is one sphere per atom")
+        self.cmb_slab_style.currentIndexChanged.connect(self.changed)
+        row5.addWidget(self.cmb_slab_style)
+        self.spin_slab = QDoubleSpinBox()
+        self.spin_slab.setRange(2.0, 40.0)
+        self.spin_slab.setSingleStep(2.0)
+        self.spin_slab.setValue(10.0)
+        self.spin_slab.setPrefix("patch ")
+        self.spin_slab.setSuffix(" Å")
+        self.spin_slab.setToolTip("Surface atoms within this distance of a displayed molecule, "
+                                  "measured in the plane, are drawn")
+        self.spin_slab.valueChanged.connect(self.changed)
+        row5.addWidget(self.spin_slab)
+        self.chk_slab_frame = QCheckBox("frame axes")
+        self.chk_slab_frame.setChecked(True)
+        self.chk_slab_frame.setToolTip("The three axes of the surface frame at the origin: x and "
+                                       "y in the surface, z along the normal")
+        self.chk_slab_frame.toggled.connect(self.changed)
+        row5.addWidget(self.chk_slab_frame)
+        self.chk_slab_sites = QCheckBox("surface sites")
+        self.chk_slab_sites.setToolTip("The top, bridge and hollow sites of the top layer, as "
+                                       "small spheres; what a molecule sits over is the "
+                                       "surface's answer to a residue profile")
+        self.chk_slab_sites.toggled.connect(self.changed)
+        row5.addWidget(self.chk_slab_sites)
+        self.lbl_slab = QLabel("no surface loaded")
+        self.lbl_slab.setStyleSheet("color: palette(mid)")
+        row5.addWidget(self.lbl_slab)
+        row5.addStretch(1)
+        lay.addLayout(row5)
+
         self.lbl_legend = QLabel("")
         self.lbl_legend.setWordWrap(True)
         self.lbl_legend.setStyleSheet("color: palette(text); font-size: 9pt")
@@ -2268,6 +2398,18 @@ class ViewerControls(QWidget):
 
     def set_protein_label(self, text: str) -> None:
         self.lbl_protein.setText(text)
+
+    def slab_style(self) -> str:
+        return ["balls", "dots"][self.cmb_slab_style.currentIndex()]
+
+    def slab_radius(self) -> float:
+        return float(self.spin_slab.value())
+
+    def arrow_count(self) -> int:
+        return int(self.spin_arrows.value())
+
+    def set_slab_label(self, text: str) -> None:
+        self.lbl_slab.setText(text)
 
     def set_fields(self, names_labels):
         cur = self.cmb_field.currentData()

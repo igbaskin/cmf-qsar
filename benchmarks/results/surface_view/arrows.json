@@ -1,0 +1,47 @@
+{
+ "n_molecules": 95,
+ "target": "sigma_m",
+ "arrows": 16,
+ "spacings": [
+  {
+   "spacing": 0.7,
+   "points": 8740,
+   "gradient_seconds": 0.2686324119567871,
+   "arrow_seconds": 0.26343274116516113,
+   "n_arrows": 16,
+   "longest": 0.2467741167462392,
+   "grid_maximum": 0.2467741167462392,
+   "shortest_drawn": 0.1099369821819926,
+   "shortest_over_longest": 0.4454964063149383,
+   "volume_share_above_shortest": 0.017734553775743706
+  },
+  {
+   "spacing": 0.5,
+   "points": 21600,
+   "gradient_seconds": 0.6993570327758789,
+   "arrow_seconds": 0.6513557434082031,
+   "n_arrows": 16,
+   "longest": 0.2502113274507367,
+   "grid_maximum": 0.2502113274507367,
+   "shortest_drawn": 0.12596265160410117,
+   "shortest_over_longest": 0.5034250562812811,
+   "volume_share_above_shortest": 0.014583333333333334,
+   "matched_arrows": 16,
+   "direction_change_median_deg": 16.291791987560103
+  },
+  {
+   "spacing": 0.35,
+   "points": 61560,
+   "gradient_seconds": 1.955686330795288,
+   "arrow_seconds": 2.0209643840789795,
+   "n_arrows": 16,
+   "longest": 0.2556620053694836,
+   "grid_maximum": 0.2556620053694836,
+   "shortest_drawn": 0.10317452274021166,
+   "shortest_over_longest": 0.40355829404961246,
+   "volume_share_above_shortest": 0.02215724496426251,
+   "matched_arrows": 15,
+   "direction_change_median_deg": 16.049725444027562
+  }
+ ]
+}
