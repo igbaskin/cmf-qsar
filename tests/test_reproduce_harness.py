@@ -402,3 +402,19 @@ def test_the_run_has_what_the_two_benchmarks_that_failed_for_want_of_a_package_n
 def test_the_cli_passes_the_comparison_through(monkeypatch):
     assert benchmark_argv(monkeypatch, ["--check", "--against-commit"]) == \
         ["--check", "--against-commit"]
+
+
+def test_a_label_for_a_path_that_has_no_relative_form(monkeypatch):
+    """What broke the Windows jobs: two drives have no relative path between them.
+
+    pytest's ``tmp_path`` is on C: on a Windows runner and the checkout is on D:, so
+    ``os.path.relpath`` raises and every caller that only wanted something to print failed with
+    it. The raise is forced here, so the test asks the question on every platform.
+    """
+    def no_relative(path, start=None):
+        raise ValueError("path is on mount 'C:', start on mount 'D:'")
+
+    monkeypatch.setattr(run_all.os.path, "relpath", no_relative)
+    elsewhere = os.path.join(os.sep, "elsewhere", "table.md")
+    assert run_all._label(elsewhere) == elsewhere
+    assert run_all._label("results/table.md") == "results/table.md"

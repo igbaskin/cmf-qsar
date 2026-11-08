@@ -1078,8 +1078,18 @@ def _moved_numbers(before, after) -> str:
 
 
 def _label(path) -> str:
-    """A path to print: relative to the repository, or the text of a document marker."""
-    return os.path.relpath(path, ROOT) if os.path.isabs(path) else path
+    """A path to print: relative to the repository, or the text of a document marker.
+
+    A path that has no relative form is printed as it is. On Windows there is none between two
+    drives, which is the case when a test points the results somewhere else, and a label is only
+    ever printed: it must not be the thing that fails.
+    """
+    if not os.path.isabs(path):
+        return path
+    try:
+        return os.path.relpath(path, ROOT)
+    except ValueError:                     # another drive on Windows: no relative path exists
+        return path
 
 
 def rebuild_tables(quiet=True, baseline="disk"):
