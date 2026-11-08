@@ -2751,17 +2751,17 @@ targets are the per-atom data model of plan item LP1, one array per cell with bl
 was not measured, and its folds, which hold out whole structures.
 
 **On the catalysts above it does what the cut does, without cutting, and nothing more.** The same
-139 sheets (104 with targets, six bare sheets having been recomputed since the pilot ran, so
-every reference is recomputed here as well), the same three fold designs, every descriptor a
-family that chooses its settings in an inner cross-validation of the same kind: mean q² over the
-four endpoints +0.792 with random catalysts, +0.721 with a metal held out and +0.755 with a motif
-held out, against +0.801 / +0.739 / +0.712 for the invariant kernel of the cut cluster,
-+0.782 / +0.695 / +0.724 for its overlap kernel, +0.794 / +0.756 / +0.744 for the autocorrelation
-of the whole cell and +0.758 / +0.096 / +0.749 for counts in shells around the site. In the
-twelve paired comparisons the site profile is level with every descriptor built from fields --
-two better and one worse against the cut-cluster overlap, one better against its invariant
-kernel, one better and two worse against the whole cell -- and clearly better only than the
-counts, in five. So the site resolution saves cutting and terminating a cluster, which is worth
+139 sheets (133 with targets, thirty-five bare sheets having been recomputed since the pilot
+ran, so every reference is recomputed here as well), the same three fold designs, every
+descriptor a family that chooses its settings in an inner cross-validation of the same kind: mean
+q² over the four endpoints +0.786 with random catalysts, +0.695 with a metal held out and +0.763
+with a motif held out, against +0.802 / +0.738 / +0.725 for the invariant kernel of the cut
+cluster, +0.761 / +0.658 / +0.712 for its overlap kernel, +0.796 / +0.747 / +0.719 for the
+autocorrelation of the whole cell and +0.720 / +0.144 / +0.722 for counts in shells around the
+site. In the twelve paired comparisons the site profile is level with every descriptor built from
+fields -- four better and none worse against the cut-cluster overlap, two better and two worse
+against its invariant kernel, one better and two worse against the whole cell -- and clearly
+better than the counts in nine. So the site resolution saves cutting and terminating a cluster, which is worth
 having where a site cannot be cut out cleanly, and buys no accuracy here. The counts are the
 other lesson of that table: a descriptor made of element labels collapses when the metal is new,
 where every descriptor built from fields keeps most of its accuracy. The set is small enough to
@@ -2781,9 +2781,9 @@ descriptor is linear in the channels and a cell's channels are the mean of its s
 prediction minus the bias is a sum of one number per site, exactly (`sites.site_contributions`;
 rule 3 for the autocorrelation kernel). It is the local reading that kernel could not give: not
 only which pair of field types at which distance raises the property, but which site carries it.
-On a model of the OH binding over the 104 catalysts (q² +0.893 in five folds) the metal site
-carries 8.9 % of the weight, eleven times an even share, the metal with its four neighbours 16.0
-% against 3.9 %, and the channels at the metal name the d electron count for Pt@C4 and the
+On a model of the OH binding over the 133 catalysts (q² +0.908 in five folds) the metal site
+carries 8.6 % of the weight, nearly eleven times an even share, the metal with its four
+neighbours 16.4 % against 3.9 %, and the channels at the metal name the d electron count for Pt@C4 and the
 electrostatic field at 2.0 Å for Fe@N4. The table and the map are in `benchmarks/results/sites/`.
 
 ### Which atom is attacked: a site of metabolism

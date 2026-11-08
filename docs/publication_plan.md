@@ -757,14 +757,14 @@ which **site** of the cell carries the property. The autocorrelation of a cell i
 ordered pairs, so it splits exactly into one row per site; a linear model on the whole cell
 therefore splits into one number per site with nothing attributed, which is rule 3 for an
 invariant kernel. On the single-atom catalysts of item EC8 a model of the OH binding energy
-(q² +0.893) puts 8.9 % of its weight on the metal site, 11.3 times an even share of the 127
+(q² +0.908) puts 8.6 % of its weight on the metal site, 10.9 times an even share of the 127
 sites of the sheet, and the channels at that site name the d electron count of the metal and the
 electrostatic field in the first shell: a figure for the interpretation section that no
 autocorrelation could draw. The same split makes a site a **sample**, and on those catalysts the
 site profile taken inside the periodic cell, with nothing cut out of it, is level with the cut
-cluster of the pilot and with the whole cell (mean q² over the four endpoints +0.792, +0.721 and
-+0.755 in the three fold designs, against +0.801 / +0.739 / +0.712 for the invariant kernel of
-the cut cluster, +0.782 / +0.695 / +0.724 for its overlap kernel and +0.794 / +0.756 / +0.744
+cluster of the pilot and with the whole cell (mean q² over the four endpoints +0.786, +0.695 and
++0.763 in the three fold designs, against +0.802 / +0.738 / +0.725 for the invariant kernel of
+the cut cluster, +0.761 / +0.658 / +0.712 for its overlap kernel and +0.796 / +0.747 / +0.719
 for the whole cell; of the twelve paired comparisons one is clear of zero in its favour against
 the whole cell and two against it). **The section this supports is "reading a crystal model site
 by site"**, and what the site model itself supports is "the cut is not needed", not "better".

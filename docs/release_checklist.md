@@ -224,11 +224,76 @@ rewritten in every job although not one of its numbers had moved. It is committe
 like every other table, and a test fails if a table is committed with CRLF again. The
 comparisons count newlines as equal in any case.
 
-**What is left of step 7** is the reading of the 30 tables, which is rule 4 one table at a time:
-a difference inside the bootstrap interval of the quantity is not a result. Some columns cannot
-reproduce at all and have to be named as such -- `speed`'s table is timings throughout, and
-`fluctuation` records how many seconds its fields took -- and the data statement has to say
-which tables were reproduced elsewhere, which moved, and which are timings.
+### What the third run showed, 8 November 2026
+
+Run 42454303810 is the first run of the whole scope with a comparison that can fail. It measured
+everything: 85 script calls, every one exit 0, no `[skip]` line, 5 hours 23 minutes of runner
+time (107, 74, 39, 34, 24, 23 and 22 minutes per group). `protonation` and `trajectory` ran for
+the first time (6.6 and 7.1 minutes for the two pH values, 10.7 minutes for the trajectory), so
+the three packages added to `requirements-lock.txt` were what they needed.
+
+The check named **29 tables**. Comparing the tables of the seven result artifacts with the
+committed ones afterwards, newlines ignored, gives the same 29 with the same figures, so the
+comparison in the workflow can now be relied on.
+
+**The reading of those 29, one table at a time.** Rule 4 of the manual applies: a difference
+inside the interval of the quantity is not a result.
+
+**Nine tables record time, a date or a file path, so they can never reproduce.** `speed` is
+timings and ratios of timings throughout (its table also changed shape, 190 numbers against
+180); `klr` reports milliseconds; `nystrom` reports the seconds a kernel took, while its q2
+values are identical to four decimal places; `lowrank` said "8 times faster, 0.3 s against
+2.3 s" and now says "4 times faster, 0.2 s against 1.0 s"; `trajectory` needed 176 s here and
+140 s there; `sac` moved in its run time and nowhere else (1 number of 883); `evidence` moved in
+its two timing columns only; `cell_view` and `surface_view` print the command line and the date
+the table was written. `fe110` also prints two figure paths, which differ only in the separator
+Windows and Linux use.
+
+**Eighteen tables move because the conformers differ, or because a close choice flips.** Every
+difference that has a stated interval falls inside it. `fe110` is the clearest: its overlap row
+went from +0.089 +/- 0.064 to +0.097 +/- 0.062, and its largest move, -0.163 +/- 0.167 to
+-0.106 +/- 0.080, is a third of one interval. `matbench_phonons` has no conformers, and moves
+for the other reason: the five folds are fixed (`KFold` with the Matbench seed 18012019), but
+the inner selection chose sigma 0.35 instead of 0.75 in one fold, which moved the MAE of
+`physchem+mass` from 117.3 +/- 10.1 to 111.2 +/- 5.9 -- two intervals that cover each other.
+`md` and `fluctuation` each change the sign of a difference whose interval covers zero in both
+runs (`md`: -0.031 [-0.246, +0.433] against +0.202 [+0.035, +0.752]; `fluctuation`: -0.009
+[-0.079, +0.062] against +0.004 [-0.056, +0.070]), so neither run makes that difference a
+result. `restriction` finds 33 restricted pairs here and 38 there, on a grid of 12350 points
+against 13000, both of which follow from the conformers. The remaining tables move in the third
+decimal place or less: `topomer` 0.003, `kcca_pocket` 0.008, `transfer` 0.001, `anchors` 0.002,
+and `design`, `diagnose`, `nonlinearity`, `multitask`, `corrosion`, `corrosion_hcl`,
+`cyclodextrin`, `efield` and `solvent` (one number of 1039) likewise.
+
+**Two tables are stale, and finding them is what the run is for.** Neither difference has
+anything to do with the other machine.
+
+`ranking`. The committed result files were measured with five repeats (`"repeats": 5`, repeat
+numbers 0 to 4, which is the script's own default), and `benchmarks/run_all.py` registers the
+command as `run_ranking.py --repeats 10`. The committed table says "5 random 70/30 splits each"
+and the run says 10. So the committed numbers cannot be reproduced by the command the harness
+runs. It is measured again with the registered ten repeats, and the manual, which quotes these
+numbers, carries the new ones: on clean data Spearman's rho is +0.713 for kernel ridge against
++0.692 for the ranking SVM, ridge ahead on six of the eight sets instead of five, and told which
+molecules share a source the ranking SVM beats ridge by 0.098 on seven of the eight sets instead
+of 0.089 on six. The reading of the item does not change.
+
+`sites`. The committed table says "measured targets dE_H 104" and the run says 133. The reason
+is in the repository, not on the runner: `examples/sac/substrates_pbe.csv` gained 21 bare-sheet
+energies on 5 November (commit 08189d9), and `benchmarks/results/sites/table.md` has not been
+rebuilt since 1 November (commit 8cdb327). `sac` was measured again after that data arrived and
+`sites` was not. It is measured again here. On the larger set the model of the OH binding
+energy reaches q2 +0.908 at 0.444 eV on 133 catalysts, against +0.893 at 0.511 eV on 104, and the
+reading of the item does not change: the site profile is level with every descriptor built from
+fields and clearly better than the counts, now in nine of the twelve paired comparisons instead
+of five.
+
+Both repaired tables are byte for byte what the runner produced, so both benchmarks do reproduce
+exactly on another machine and the stale tables were the whole of the difference.
+
+**What is left of step 7** is the data statement: which tables another machine reproduced, which
+moved and for which of the reasons above, and which record timings and cannot be compared between
+machines at all.
 
 ### What is covered
 
