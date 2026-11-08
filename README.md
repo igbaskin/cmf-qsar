@@ -5781,8 +5781,11 @@ where the measurement is the point: `--fresh` passes `--force` to every script t
 compares them with what the new result files give instead of with files the same command has
 just written. `--reproduce GROUP` is both of them over one group of the reproduction run, and
 `.github/workflows/reproduce.yml` runs every group on a machine that is not the author's. The
-rule that decides which benchmarks a reproduction run can measure, and what each run found,
-are in `docs/release_checklist.md`, step 7.
+check of such a run takes a third option, `--check --against-commit`: a script writes its own
+table while it measures, so the file on disk is already the new table, and only a comparison
+with the table the repository carries asks the question a reproduction run asks. The rule that
+decides which benchmarks a reproduction run can measure, and what each run found, are in
+`docs/release_checklist.md`, step 7.
 
 The tests verify the analytic kernels against numerical integration, the symmetry/positive
 semi-definiteness of kernel matrices, the KRR bias system (with and without bias), the decomposition

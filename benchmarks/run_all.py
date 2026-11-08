@@ -15,6 +15,9 @@ them all and does four things:
     python benchmarks/run_all.py --check         # --tables, then fail if any table or document
                                                  # differs from what is committed, or any data
                                                  # file differs from the manifest
+                                                 #   --against-commit  compare every table with
+                                                 #                 the committed one, not with
+                                                 #                 the file on disk
     python benchmarks/run_all.py --compute NAME [NAME ...] | all   [--data-root D] [--cif-root C] [--orca]
                                                  #   --fresh       measure again instead of
                                                  #                 reusing the files on disk
@@ -46,6 +49,16 @@ difference, because a table whose timings moved and a table whose q2 moved are n
 finding.  ``--reproduce GROUP`` is that run for one group of
 ``reproduce_groups()`` below, and ``.github/workflows/reproduce.yml`` is every group on a
 machine that is not the author's.  A red job there is the finding, not a fault of the run.
+
+``--check --against-commit`` is the third option such a run needs, and the run of 7 November
+2026 showed why.  Most scripts write their own ``results/<name>/table.md`` while they measure,
+so by the time the check reads that file it is already the new table: the comparison is then
+the new numbers against themselves and cannot fail.  ``--against-commit`` compares every table
+with the one the repository carries -- what a reader of the repository has -- and walks
+``benchmarks/results`` as well, so that a table no ``report`` rebuilds is also compared.  In
+that run 30 of the 66 tables moved and the comparison against the files on disk named six.
+Newlines are counted as equal in all of these comparisons: the same table written on Windows
+and on Linux is the same table.
 
 The tables in the documents.  ``docs/benchmark.md`` carries two tables between markers
 (``<!-- TABLE -->`` and ``<!-- CIF-TABLE -->``) that are the Sutherland and CIF result tables
@@ -989,6 +1002,39 @@ def _read(path):
         return fh.read()
 
 
+def _norm(text: Optional[str]) -> Optional[str]:
+    """One newline style, so that a comparison is about content.
+
+    A table written on Windows ends its lines with CRLF and the same table written on Linux
+    with LF. Two tables that differ only in that are the same table, and a reproduction run
+    that reported the difference would be reporting the platform instead of the numbers.
+    """
+    return None if text is None else text.replace("\r\n", "\n")
+
+
+def _committed(path) -> Optional[str]:
+    """What the repository carries for `path`, or None when git cannot say.
+
+    None means the question cannot be asked: there is no git here, the path is outside this
+    checkout, or the file is not committed. A caller then falls back to the file on disk and
+    says so, because a silent fallback is the fault this function exists to remove.
+    """
+    try:
+        rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
+    except ValueError:                     # another drive on Windows: not in this checkout
+        return None
+    if rel.startswith(".."):
+        return None
+    try:
+        done = subprocess.run(["git", "-C", ROOT, "show", f"HEAD:{rel}"],
+                              stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    except OSError:                        # no git on this machine
+        return None
+    if done.returncode != 0:               # not a checkout, or the file is not committed
+        return None
+    return done.stdout.decode("utf-8", "replace")
+
+
 def splice(doc: str, tag: str, text: str) -> bool:
     """Put `text` between the markers of `tag` in `doc`; True when the document changed."""
     src = _read(doc)
@@ -1036,20 +1082,41 @@ def _label(path) -> str:
     return os.path.relpath(path, ROOT) if os.path.isabs(path) else path
 
 
-def rebuild_tables(quiet=True):
+def rebuild_tables(quiet=True, baseline="disk"):
     """Every table.md from its result files, then the documents.
 
     Returns ``(written, changed, moved)``: every file the rebuild wrote, those whose content is
-    not what was on disk before, and one line per changed file saying how far its numbers
+    not what it is compared with, and one line per changed file saying how far its numbers
     moved.  ``--check`` is the statement that the second list is empty: the committed tables
     and documents are what the result files give.
+
+    ``baseline`` says what the rebuilt table is compared with.  ``"disk"`` is the file as it
+    was before the rebuild, which is what an ordinary run asks: the developer has just measured
+    something and wants to know which tables the new results move.  ``"committed"`` is what the
+    repository carries, which is what a reproduction run asks: a script that measures writes
+    its own table, so the file on disk is already the new one and a comparison with it cannot
+    fail.  Newlines are counted as equal either way.
     """
+    if baseline not in ("disk", "committed"):
+        raise ValueError(f"baseline is \"disk\" or \"committed\", not {baseline!r}")
     written, changed, moved = [], [], {}
     devnull = open(os.devnull, "w", encoding="utf-8")
+
+    def _before(path):
+        """What a rebuilt table is compared with, and a line when that is not what was asked."""
+        if baseline == "committed":
+            text = _committed(path)
+            if text is not None:
+                return text
+            if os.path.exists(path):
+                print(f"  {_label(path)}: the repository carries no version of this table; "
+                      f"comparing with the file on disk")
+        return _read(path) if os.path.exists(path) else None
+
     for b in registry():
         if b.report is None:
             continue
-        before = {t: (_read(_r(t)) if os.path.exists(_r(t)) else None) for t in b.tables}
+        before = {t: _before(_r(t)) for t in b.tables}
         try:
             if quiet:
                 out, sys.stdout = sys.stdout, devnull
@@ -1064,7 +1131,7 @@ def rebuild_tables(quiet=True):
             continue
         for t in b.tables:
             written.append(_r(t))
-            if os.path.exists(_r(t)) and _read(_r(t)) != before[t]:
+            if os.path.exists(_r(t)) and _norm(_read(_r(t))) != _norm(before[t]):
                 changed.append(_r(t))
                 moved[_r(t)] = _moved_numbers(before[t], _read(_r(t)))
     for doc, tag, text in SPLICES:
@@ -1190,6 +1257,36 @@ def write_manifest():
     print(f"manifest: {len(m['data'])} data files, {len(m['results'])} result files, "
           f"commit {m['commit'] and m['commit'][:9]}, cmfqsar {m['packages'].get('cmfqsar')}")
     return m
+
+
+def check_tables(skip=()) -> List[str]:
+    """Every Markdown file under benchmarks/results that is not the committed one.
+
+    ``rebuild_tables`` compares the tables a benchmark's ``report`` builds, and that is most of
+    them.  A benchmark that registers no ``report`` has none, and the run of 7 November 2026
+    showed what that costs: its table can move and nothing says so.  This compares the files
+    themselves with what the repository carries, so that no table is outside the comparison.
+
+    ``skip`` is the labels ``rebuild_tables`` has already reported, so that a table is named
+    once.  A file git cannot speak for is left out: a table that is not committed yet is new
+    work, not a difference.
+    """
+    problems = []
+    for folder, _dirs, files in os.walk(RESULTS):
+        for name in sorted(files):
+            if not name.endswith(".md"):
+                continue
+            path = os.path.join(folder, name)
+            if _label(path) in skip:
+                continue
+            before = _committed(path)
+            if before is None:
+                continue
+            after = _read(path)
+            if _norm(after) != _norm(before):
+                problems.append(f"the table on disk is not the one the repository carries: "
+                                f"{_label(path)} -- {_moved_numbers(before, after)}")
+    return problems
 
 
 def check_manifest() -> List[str]:
@@ -1370,9 +1467,16 @@ def main(argv=None):
                     help="measure one group of the reproduction run again and leave the "
                          "tables and the manifest for a --check afterwards: --compute with "
                          "--fresh and --no-rebuild")
+    ap.add_argument("--against-commit", action="store_true",
+                    help="with --check: compare every table with the one the repository "
+                         "carries instead of with the file on disk, which is what a "
+                         "reproduction run asks, since a script rewrites its own table while "
+                         "it measures")
     args = ap.parse_args(argv)
     if (args.fresh or not args.rebuild) and not (args.compute or args.reproduce):
         ap.error("--fresh and --no-rebuild are options of --compute")
+    if args.against_commit and not args.check:
+        ap.error("--against-commit is an option of --check")
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(errors="replace")
     if args.reproduce:
@@ -1386,7 +1490,8 @@ def main(argv=None):
                 fresh=args.fresh, rebuild=args.rebuild)
     changed, moved = [], {}
     if args.tables or args.check:
-        written, changed, moved = rebuild_tables()
+        written, changed, moved = rebuild_tables(
+            baseline="committed" if args.against_commit else "disk")
         print("tables rebuilt: " + ", ".join(_label(w) for w in written))
         if changed:
             print("changed by the rebuild:")
@@ -1398,13 +1503,18 @@ def main(argv=None):
         problems = check_manifest() + check_documents()
         problems += [f"table or document was not what its result files give: {_label(c)}"
                      + (f" -- {moved[c]}" if moved.get(c) else "") for c in changed]
+        if args.against_commit:
+            problems += check_tables(skip={_label(c) for c in changed})
         if problems:
             print("CHECK FAILED")
             for p in problems:
                 print("  " + p)
             return 1
-        print("check passed: tables and documents match their result files, every benchmark is "
-              "named in the manual, the manual PDF is current, data matches the manifest")
+        passed = ("check passed: tables and documents match their result files, every benchmark "
+                  "is named in the manual, the manual PDF is current, data matches the manifest")
+        if args.against_commit:
+            passed += "; every table is the one the repository carries"
+        print(passed)
     if not (args.compute or args.reproduce or args.tables or args.manifest or args.check) \
             or args.list:
         list_benchmarks()

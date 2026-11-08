@@ -1891,6 +1891,8 @@ def cmd_benchmark(args):
         argv.append("--orca")
     if getattr(args, "reproduce", None):
         argv += ["--reproduce", str(args.reproduce)]
+    if getattr(args, "against_commit", False):
+        argv.append("--against-commit")
     if args.name:                                   # the names are what --compute takes
         argv += ["--compute", *args.name]
         if getattr(args, "fresh", False):
@@ -5214,6 +5216,11 @@ def main(argv=None):
     bm.add_argument("--reproduce", default=None, metavar="GROUP",
                     help="measure one group of the reproduction run again and leave the "
                          "comparison to a --check afterwards (see docs/release_checklist.md)")
+    bm.add_argument("--against-commit", action="store_true",
+                    help="with --check: compare every table with the one the repository "
+                         "carries instead of with the file on disk, which is what a "
+                         "reproduction run asks, since a script rewrites its own table "
+                         "while it measures")
     bm.set_defaults(func=cmd_benchmark)
 
     sc = sub.add_parser("screen", help="score a library against a saved model, reading it in "

@@ -244,3 +244,161 @@ def test_the_options_of_a_reproduction_run_are_passed_through(monkeypatch):
     assert benchmark_argv(monkeypatch, ["--reproduce", "3"]) == ["--reproduce", "3"]
     assert benchmark_argv(monkeypatch, ["alignment", "--fresh", "--no-rebuild"]) == \
         ["--compute", "alignment", "--fresh", "--no-rebuild"]
+
+
+# ------------------------------------------ the comparison with what the repository carries
+
+def test_the_committed_text_is_what_the_repository_carries():
+    text = run_all._committed(os.path.join(ROOT, "benchmarks", "run_all.py"))
+    if text is None:
+        pytest.skip("not a git checkout")
+    assert "def reproduce_groups" in text
+
+
+def test_a_file_the_repository_does_not_carry_has_no_committed_text(tmp_path):
+    assert run_all._committed(str(tmp_path / "nothing.md")) is None
+
+
+def test_the_rebuild_compares_with_the_commit_and_not_with_the_file_the_script_wrote(
+        tmp_path, monkeypatch):
+    """The fault the run of the night of 7 November 2026 showed.
+
+    Most scripts write their own results/<name>/table.md while they measure, so by the time the
+    check reads that file it is already the new table: a comparison with it compares the new
+    numbers with themselves. Thirty of the 66 tables moved in that run and the comparison with
+    the files on disk named six of them.
+    """
+    monkeypatch.setattr(run_all, "RESULTS", str(tmp_path))
+    monkeypatch.setattr(run_all, "SPLICES", [])
+    table = tmp_path / "fake" / "table.md"
+    table.parent.mkdir()
+    table.write_text("| q2 | 0.278 |\n", encoding="utf-8")   # the script has already run
+    bench = fake("fake", "run_fake.py", tables=["fake/table.md"],
+                 report=lambda: table.write_text("| q2 | 0.278 |\n", encoding="utf-8"))
+    monkeypatch.setattr(run_all, "registry", lambda: [bench])
+    monkeypatch.setattr(run_all, "_committed", lambda path: "| q2 | 0.300 |\n")
+    assert run_all.rebuild_tables()[1] == [], "the file on disk was its own baseline"
+    written, changed, moved = run_all.rebuild_tables(baseline="committed")
+    assert [os.path.basename(c) for c in changed] == ["table.md"]
+    assert "1 of 2 numbers moved" in moved[changed[0]], moved
+    assert "0.022" in moved[changed[0]], moved
+
+
+def test_a_baseline_the_rebuild_does_not_have_is_refused():
+    with pytest.raises(ValueError):
+        run_all.rebuild_tables(baseline="the last release")
+
+
+def test_the_rebuild_says_so_when_the_repository_carries_no_version_of_a_table(
+        tmp_path, monkeypatch, capsys):
+    """A silent fallback to the file on disk would be the fault this option removes."""
+    monkeypatch.setattr(run_all, "RESULTS", str(tmp_path))
+    monkeypatch.setattr(run_all, "SPLICES", [])
+    table = tmp_path / "fake" / "table.md"
+    table.parent.mkdir()
+    table.write_text("| q2 | 0.278 |\n", encoding="utf-8")
+    bench = fake("fake", "run_fake.py", tables=["fake/table.md"],
+                 report=lambda: table.write_text("| q2 | 0.278 |\n", encoding="utf-8"))
+    monkeypatch.setattr(run_all, "registry", lambda: [bench])
+    monkeypatch.setattr(run_all, "_committed", lambda path: None)
+    run_all.rebuild_tables(baseline="committed")
+    assert "carries no version of this table" in capsys.readouterr().out
+
+
+def test_check_tables_finds_a_table_that_is_not_the_one_the_repository_carries(
+        tmp_path, monkeypatch):
+    monkeypatch.setattr(run_all, "RESULTS", str(tmp_path))
+    (tmp_path / "fake").mkdir()
+    table = tmp_path / "fake" / "table.md"
+    table.write_text("| q2 | 0.278 |\n", encoding="utf-8")
+    monkeypatch.setattr(run_all, "_committed", lambda path: "| q2 | 0.300 |\n")
+    problems = run_all.check_tables()
+    assert len(problems) == 1 and "0.022" in problems[0], problems
+    assert run_all.check_tables(skip={run_all._label(str(table))}) == [], \
+        "a table rebuild_tables has already reported is reported twice"
+
+
+def test_a_table_that_differs_only_in_its_newlines_is_the_same_table(tmp_path, monkeypatch):
+    """The same table written on Windows and on Linux is one table.
+
+    benchmarks/results/threebody/table.md was committed with CRLF newlines, so on a Linux
+    runner it showed as changed in all seven jobs although not one of its numbers had moved.
+    """
+    monkeypatch.setattr(run_all, "RESULTS", str(tmp_path))
+    (tmp_path / "fake").mkdir()
+    (tmp_path / "fake" / "table.md").write_text("| q2 | 0.278 |\n", encoding="utf-8",
+                                                newline="\n")
+    monkeypatch.setattr(run_all, "_committed", lambda path: "| q2 | 0.278 |\r\n")
+    assert run_all.check_tables() == []
+
+
+def test_a_table_the_repository_does_not_carry_is_not_a_difference(tmp_path, monkeypatch):
+    monkeypatch.setattr(run_all, "RESULTS", str(tmp_path))
+    (tmp_path / "fake").mkdir()
+    (tmp_path / "fake" / "table.md").write_text("| q2 | 0.278 |\n", encoding="utf-8")
+    monkeypatch.setattr(run_all, "_committed", lambda path: None)
+    assert run_all.check_tables() == []
+
+
+def test_every_committed_table_has_the_same_newlines():
+    """What made the CRLF table of threebody show as changed in every job of the run.
+
+    Only the Markdown tables are compared as text, so only they have to agree on this.
+    """
+    try:
+        done = run_all.subprocess.run(
+            ["git", "-C", ROOT, "ls-files", "--eol", "benchmarks/results"],
+            stdout=run_all.subprocess.PIPE, stderr=run_all.subprocess.DEVNULL)
+    except OSError:
+        pytest.skip("no git here")
+    if done.returncode != 0:
+        pytest.skip("not a git checkout")
+    crlf = [ln.split("\t")[-1] for ln in done.stdout.decode("utf-8", "replace").splitlines()
+            if ln.startswith("i/crlf") and ln.rstrip().endswith(".md")]
+    assert crlf == [], ("these tables are committed with CRLF newlines, so a Linux runner "
+                        "rewrites them whole: " + ", ".join(crlf))
+
+
+def test_the_check_compares_with_the_commit_only_when_it_is_asked(monkeypatch):
+    seen = {}
+
+    def rebuild(*a, **kw):
+        seen["kw"] = kw
+        return [], [], {}
+
+    monkeypatch.setattr(run_all, "rebuild_tables", rebuild)
+    monkeypatch.setattr(run_all, "check_manifest", lambda: [])
+    monkeypatch.setattr(run_all, "check_documents", lambda: [])
+    monkeypatch.setattr(run_all, "check_tables", lambda skip=(): ["a table moved"])
+    assert run_all.main(["--check"]) == 0, "a plain --check asks its own question"
+    assert seen["kw"] == {"baseline": "disk"}
+    assert run_all.main(["--check", "--against-commit"]) == 1, \
+        "--against-commit did not reach the tables of benchmarks that rebuild none"
+    assert seen["kw"] == {"baseline": "committed"}
+
+
+def test_against_commit_is_an_option_of_the_check():
+    with pytest.raises(SystemExit):
+        run_all.main(["--against-commit"])
+
+
+def test_the_workflow_compares_the_tables_with_the_commit():
+    assert "--check --against-commit" in workflow(), \
+        "the workflow would compare the new tables with themselves"
+
+
+def test_the_run_has_what_the_two_benchmarks_that_failed_for_want_of_a_package_need():
+    """protonation needed Dimorphite-DL and trajectory a trajectory reader; neither was there.
+
+    Both are in the reproduction run, so the versions the run installs have to carry them.
+    """
+    names = [n for g in run_all.reproduce_groups().values() for n in g]
+    assert "protonation" in names and "trajectory" in names
+    lock = run_all._read(os.path.join(ROOT, "requirements-lock.txt")).lower()
+    for package in ("dimorphite-dl", "mdtraj", "mdanalysis"):
+        assert package in lock, f"the locked versions do not install {package}"
+
+
+def test_the_cli_passes_the_comparison_through(monkeypatch):
+    assert benchmark_argv(monkeypatch, ["--check", "--against-commit"]) == \
+        ["--check", "--against-commit"]

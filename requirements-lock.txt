@@ -24,5 +24,11 @@ matplotlib==3.10.8
 ase==3.28.0
 pymatgen==2025.10.7
 spglib==2.7.0
+# [examples] -- benchmarks/run_protonation.py needs it and nothing else does
+dimorphite-dl==2.1.0
+# [md] -- benchmarks/run_trajectory.py reads a trajectory with each of them and asks whether
+# the two readers agree, so the benchmark needs both
+mdtraj==1.11.1.post1
+MDAnalysis==2.10.0
 # [dev]
 pytest==9.0.2

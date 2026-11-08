@@ -18,6 +18,13 @@
 # after it comparing the tables with files the same command had just written. The run of
 # 7 November 2026 was green for both of those reasons and had measured almost nothing.
 #
+# The check itself runs with --against-commit, for a third reason the run of the night of
+# 7 November 2026 showed: most scripts write their own results/<name>/table.md while they
+# measure, so the file the check reads is already the new table and the comparison is the new
+# numbers against themselves. Thirty of the 66 tables moved in that run and a check without
+# --against-commit named six of them. --against-commit compares every table with the one the
+# repository carries, which is the question a reproduction run asks.
+#
 # It is started by hand (Actions, "reproduce", Run workflow), because it costs hours of runner
 # time and nothing in it changes between pushes.
 
@@ -95,7 +102,7 @@ jobs:
       # of its numbers moved and by how much.
       - name: Do the new result files give the tables the repository carries
         if: steps.want.outputs.run == 'yes'
-        run: python benchmarks/run_all.py --check
+        run: python benchmarks/run_all.py --check --against-commit
 
       - name: What moved, if anything
         if: ${{ always() && steps.want.outputs.run == 'yes' }}

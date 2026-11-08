@@ -171,11 +171,64 @@ answers the part a program can: for every table that differs it reports how many
 moved and the largest difference, so the log says what to read instead of leaving a diff to be
 read by eye.
 
-Two things to expect of the next run. A result file records the absolute path of the checkout it
-was written in, so result files always differ between machines and only the tables can be
-compared. And six of the 66 benchmarks name an external program somewhere in their source; they
-were skipped on 7 November, so the first real measurement may find that one of them needs more
-than a runner has. That is a `needs` entry to add, not a fault of the measurement.
+One thing holds for every run: a result file records the absolute path of the checkout it was
+written in, so result files always differ between machines and only the tables can be compared.
+
+### What the second run showed, the night of 7 November 2026
+
+Run 42421747146, the repaired workflow on `claude/reproduce-harness`, **measured for real**: no
+`[skip]` line appears in any of the seven logs, and the 66 benchmarks took 5 hours 14 minutes of
+runner time in all (73, 68, 27, 31, 16, 49 and 50 minutes per group). That is less than the
+16.7 hours they register, which are times measured on the author's machine; the runner is faster
+for most of these. All seven groups were red, for three different reasons.
+
+**Two groups stopped in the measuring step, for want of a package.** `protonation` needs
+Dimorphite-DL and `trajectory` needs mdtraj or MDAnalysis, and `requirements-lock.txt` pinned
+none of the three. Both are optional extras of the package (`examples` and `md`), and the
+reproduction run is the one place where every benchmark of the scope has to run, so the locked
+versions now install all three: `dimorphite-dl==2.1.0`, `mdtraj==1.11.1.post1` and
+`MDAnalysis==2.10.0`, the versions the committed results were measured with. `run_trajectory.py`
+needs both readers, because it asks whether the two agree. The alternative -- a `needs` entry
+that keeps the two out of the run -- would have cost two benchmarks of coverage for two
+`pip install` lines.
+
+**Five groups named a table difference**, which is what the run is for: `fe110`, 195 of 751
+numbers moved, the largest by 4.8 (88 -> 83.2); `corrosion`, 137 of 508, largest 1;
+`corrosion_hcl`, 134 of 509, largest 2; `cyclodextrin`, 44 of 136, largest 1; `topomer`, 10 of
+195, largest 0.003; and the README's spliced copy of the multitask table.
+
+**The check saw almost nothing of what moved.** Comparing the tables of the seven result
+artifacts with the committed ones, newlines ignored, **30 of the 66 tables moved and the check
+named six**. The reason is the fault of 7 November one level down: most scripts write their own
+`results/<name>/table.md` while they measure, so the file the check reads is already the new
+table and the comparison is the new numbers against themselves. A benchmark that registers no
+`report` has no comparison at all. `--check --against-commit` repairs both: every table is
+compared with the one the repository carries, and `check_tables()` walks
+`benchmarks/results` so that a table no `report` rebuilds is compared as well. Among the 24
+movements the earlier comparison passed over: `fluctuation` (on the 31 CBG steroids the q2 of
+the mean alone +0.794 -> +0.767), `matbench_phonons` (physchem+mass MAE 117.3 -> 111.2),
+`restriction` (33 -> 37 pairs, a grid of 12350 -> 13000 points), `nystrom`, `sites`, `anchors`,
+`efield`, `md`, `evidence`, `active`, `batch`, `transfer`, `klr`, `nonlinearity`, `sac`,
+`solvent`, `cell_view`, `surface_view`, `design`, `diagnose`, `ranking`, `lowrank`,
+`kcca_pocket`, and `speed`, whose table changed shape. The table of `multitask` moved as well
+and was caught only through the README's copy of it, which no script rewrites.
+
+One difference repeated itself exactly. `fluctuation` on thrombin gave q2 +0.302 on the author's
+machine, +0.278 on the runner of 7 November and +0.278 again on the runner that night, with
+2119 pseudo-atoms per variance field here and 2121 there. The conformers a runner generates are
+not the conformers generated here, and they are the same on both runners, so this is a
+systematic difference of the conformer generation and not noise of one run.
+
+`benchmarks/results/threebody/table.md` was committed with CRLF newlines, which made it show as
+rewritten in every job although not one of its numbers had moved. It is committed with LF now,
+like every other table, and a test fails if a table is committed with CRLF again. The
+comparisons count newlines as equal in any case.
+
+**What is left of step 7** is the reading of the 30 tables, which is rule 4 one table at a time:
+a difference inside the bootstrap interval of the quantity is not a result. Some columns cannot
+reproduce at all and have to be named as such -- `speed`'s table is timings throughout, and
+`fluctuation` records how many seconds its fields took -- and the data statement has to say
+which tables were reproduced elsewhere, which moved, and which are timings.
 
 ### What is covered
 

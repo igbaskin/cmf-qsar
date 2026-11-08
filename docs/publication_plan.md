@@ -188,9 +188,17 @@ all four groups and had measured almost nothing: the scripts reused the result f
 carries, and the check that was meant to compare the tables ran after the step that rewrites
 them. Both are repaired, a failing script now fails the run, the groups are computed from the
 rule instead of written out by hand -- which had quietly left seven benchmarks out of every
-reproduction run -- and the check now reports how far each table moved. Step 7 of
-`docs/release_checklist.md` records what the first run showed, `fluctuation` included, whose
-q2 on thrombin moved 0.302 to 0.278 because the runner generated other conformers.
+reproduction run -- and the check now reports how far each table moved.
+
+The second run, that night, measured for real: 66 benchmarks, 5 hours 14 minutes of runner time,
+and red in all seven groups. Two groups stopped for want of a package the locked versions did
+not install, five named a table difference, and the comparison itself turned out to see only a
+part of what moved: 30 of the 66 tables moved and the check named six, because a script writes
+its own table while it measures and the check was reading that file. `--check --against-commit`
+compares every table with the one the repository carries instead. Step 7 of
+`docs/release_checklist.md` records both runs table by table, `fluctuation` included, whose q2
+on thrombin moved 0.302 to 0.278 on both runners because a runner generates other conformers.
+What is left of the step is the reading of the 30 tables under rule 4.
 
 ## The papers
 
