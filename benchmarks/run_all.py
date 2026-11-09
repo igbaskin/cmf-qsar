@@ -827,6 +827,19 @@ def registry() -> List[Benchmark]:
                   minutes="15",
                   report=lambda: _mod("run_errorpred").report(_r("errorpred")),
                   tables=["errorpred/table.md"]),
+        Benchmark("gntk", "the graph neural tangent kernel of the bond graph as a kernel view "
+                  "under the weights of the evidence, against the fields alone and against the "
+                  "fields with the invariant kernel, on the eight Sutherland sets",
+                  "run_gntk.py", "gntk", compute=[[]],
+                  minutes="10",
+                  report=lambda: _mod("run_gntk").report(_r("gntk")),
+                  tables=["gntk/table.md"]),
+        Benchmark("gntk_compas",
+                  "the same view on a random subset of 2,000 molecules of COMPAS-1D",
+                  "run_gntk.py", "gntk_compas", compute=[["--compas"]],
+                  minutes="130",
+                  report=lambda: _mod("run_gntk").report(_r("gntk_compas")),
+                  tables=["gntk_compas/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

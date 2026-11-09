@@ -654,6 +654,40 @@ What the model loses with the frame, it says so: `cofield_coefficients` and `ato
 raise rather than return something meaningless, while the contributions of the training molecules
 — the dual form, which needs no frame — still add up to the prediction.
 
+### The bond graph as a kernel view: the graph neural tangent kernel
+
+The field kernel is the kernel of an infinitely wide radial-basis network on the aligned fields;
+the graph neural tangent kernel (Du et al., NeurIPS 2019) is the kernel of an infinitely wide
+graph network on the bond graph, computed in closed form with no training. [gntk.py](cmfqsar/gntk.py)
+(plan item ND7) computes it in a few hundred lines of NumPy -- atom types as one-hot features,
+two blocks of neighbourhood averaging and rectified units whose expectations are the arc-cosine
+terms, the sum over atom pairs normalised to a cosine -- and `mixing.with_views` stacks it under
+the field kernels, where the evidence gives it a weight like any field and `drop_one` the Bayes
+factor against it doing nothing. The model stays a kernel model; the graph knows which atom is
+bonded to which and not where any atom is, so the co-field is read from the field views alone.
+
+**Measured** on the eight Sutherland sets and 2,000 molecules of COMPAS-1D, ten folds, every variant
+under the weights of the evidence, against the fields alone and against the fields with the
+invariant kernel of item C5 (`benchmarks/run_gntk.py`). Against the fields alone the graph view
+changes q2 by +0.016 on average over the Sutherland sets and +0.470 [+0.438, +0.503] on COMPAS-1D;
+against the fields with the invariant kernel, -0.023 (1 set in its favour with an interval
+excluding zero, 3 against) and +0.004 [-0.002, +0.011]. The evidence gives it 25% of the joint
+kernel on average with a Bayes factor of +2.7 nats. Against the invariant kernel the graph view wins
+on DHFR and loses on COX2, BZR, ACE. On DHFR the evidence hands the graph 95% of the kernel with a
+Bayes factor of +17.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712
+against +0.641): that is the largest and most varied of the eight series, the one an alignment
+serves worst, and there the graph takes over from the fields rather than adding to them. Everywhere
+else the graph holds a few per cent of the kernel and changes q2 within its interval, and what the
+fields with the invariant kernel gain over the fields alone, the graph does not give. On COMPAS-1D
+the aligned fields are weak (q2 +0.439), the graph alone reaches q2 +0.908, the same as the
+invariant kernel (+0.004 [-0.002, +0.011]), and the two together gain +0.025 [+0.020, +0.030] over
+the invariant kernel alone, an interval well clear of zero. The gate asked for a gain the invariant
+kernel does not already give: it is met on the two largest series (DHFR with 361 molecules and
+COMPAS-1D with 2,000) and on none of the seven small ones. Whether the graph needs the molecules or
+the poor alignment these two series share, this benchmark cannot separate. The view stays in the
+library as one more term for the weights of item E6 to judge series by series, which is what they
+did here.
+
 ### A series on one lattice: the periodic overlap kernel
 
 For a doped, substituted or defective series on one parent lattice the cells share a frame, so the

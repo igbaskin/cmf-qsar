@@ -6040,6 +6040,22 @@ module is absent rather than broken when they are missing.
   COMPAS-1, the five fields plus the graph kernel against the five fields alone and against the
   five fields plus the invariant kernel of C5, with the interval of rule 4. A gain that the
   invariant kernel already gives is not a result.
+  Built and measured 9 November 2026. `cmfqsar/gntk.py` is the kernel: one-hot atom types as the
+  node features, two blocks of averaging over the bonded neighbourhood and a rectified layer whose
+  infinite-width expectations are the arc-cosine terms, the tangent kernel carried as the sum of
+  the covariance and the previous tangent kernel times the derivative term, the sum over atom
+  pairs normalised to a cosine; symmetric, positive definite, independent of the atom order and
+  of the coordinates, 0.07 ms per pair. `mixing.with_views` stacks any kernel view under the
+  field kernels with the scale convention of the fields, so `evidence_mixing`, `sample_mixing`
+  and `drop_one` treat it as one more term, and `mixing.joint_kernel` forms the kernel the ridge
+  is fitted on. Measured by `benchmarks/run_gntk.py` (results in `benchmarks/results/gntk/` and
+  `gntk_compas/`), checked by the 9 tests of `tests/test_gntk.py`, written up in the manual as a section of
+  *The rotation-invariant autocorrelation kernel*.
+  *Measured, and read as the gate asks.* Differences in q2 with their 95 % paired bootstrap intervals over the molecules. On the Sutherland sets the graph view changes q2 by +0.016 on average against the fields alone, with an interval that excludes zero on 2 of the eight sets in its favour and 0 against, and by -0.023 against the fields with the invariant kernel (1 in its favour, 3 against); added to the fields with the invariant kernel it changes q2 by +0.006 (1 in its favour, 0 against). The evidence gives the graph view 25% of the joint kernel on average, with a Bayes factor of +2.7 nats against it doing nothing. On the 2,000 molecules of COMPAS-1D the view changes q2 by +0.470 [+0.438, +0.503] against the fields and +0.004 [-0.002, +0.011] against the fields with the invariant kernel, holding 100% of the kernel with a Bayes factor of +1845.3. Against the invariant kernel the graph view wins on DHFR and loses on COX2, BZR, ACE. On DHFR the evidence hands the graph 95% of the kernel with a Bayes factor of +17.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712 against +0.641): that is the largest and most varied of the eight series, the one an alignment serves worst, and there the graph takes over from the fields rather than adding to them. Everywhere else the graph holds a few per cent of the kernel and changes q2 within its interval, and what the fields with the invariant kernel gain over the fields alone, the graph does not give. On COMPAS-1D the aligned fields are weak (q2 +0.439), the graph alone reaches q2 +0.908, the same as the invariant kernel (+0.004 [-0.002, +0.011]), and the two together gain +0.025 [+0.020, +0.030] over the invariant kernel alone, an interval well clear of zero. The gate asked for a gain the invariant kernel does not already give: it is met on the two largest series (DHFR with 361 molecules and COMPAS-1D with 2,000) and on none of the seven small ones. Whether the graph needs the molecules or the poor alignment these two series share, this benchmark cannot separate. The view stays in the library as one more term for the weights of item E6 to judge series by series, which is what they did here.
+  *Open:* the graph view inside `CMFModel` itself, which today takes the stacked kernel through
+  the library and not through `build`; node features beyond the atom type (bond orders, ring
+  membership); and the Shapley value of the graph view per molecule, which the item describes
+  and which needs the per-view Shapley machinery of F-part items on a stack of views.
 * **ND8. Pretrained 3D representations as a kernel view.** E11 (iv) trains an encoder on
   unlabelled molecules of the same frame, and E10 found that unlabelled molecules close to a
   congeneric series gain nothing. A pretrained equivariant model (Uni-Mol, or the representation
@@ -6082,10 +6098,10 @@ module is absent rather than broken when they are missing.
   replaces the point-charge electrostatic field only if it beats it on every set where the point
   charges were measured; otherwise it is a sixth view.
 
-**Order.** ND5 first, because it changes inputs the existing benchmarks score at once and gives
-ND4a its pretraining target. Then ND7, which is a few hundred lines of NumPy with no new
-dependency. Then ND6, the item that makes the method usable on a library. ND8 to ND10 wait for
-the larger sets and for the ND4a gate.
+**Order.** ND7 is done, taken before ND5 because it needed no computation beyond the kernels.
+ND5 next, because it changes inputs the existing benchmarks score at once and gives ND4a its
+pretraining target. Then ND6, the item that makes the method usable on a library. ND8 to ND10
+wait for the larger sets and for the ND4a gate.
 
 **ND11 to ND13. Normalizing flows (30 October 2026).** A normalizing flow is an invertible
 network with an exact likelihood and an exact inverse. CMF has one use for each of these two
@@ -6446,9 +6462,215 @@ would discard the typed fields and the global kernel that are the method's own.
   conductivity with an interval, against the measured one of at least three of the disordered
   conductors of M2.
 
+* **MS9. A parameter set for a cell model, with its deviations.** A cell-level continuum model
+  (the Doyle–Fuller–Newman model and its single-particle reductions, as PyBaMM implements them)
+  is a set of partial differential equations over the electrode thickness and the particle
+  radius, with time, boundary conditions and transport. It is not a model this program can be,
+  since the program has no time axis and no transport equation; it is a model the program can
+  feed. Its parameters are what the battery items predict: the open-circuit voltage from the
+  ladder of BT3, the solid diffusion coefficient from the hop barriers of BT7 through an Arrhenius
+  law and the percolation threshold of MS7's `BarrierTable`, the electrolyte conductivity and its
+  activation energy from the shells of BT5, and the effective transport parameters of the porous
+  electrode (tortuosity, effective conductivity) from a kernel on the tomographic phase field,
+  which the microstructure pilot measured on elastic and conductivity labels and which carries
+  the pilot's limit that a second-order statistic does not see percolation. The measured results
+  say what the program contributes here. On three of the four cell-level averages measured so far
+  the composition descriptor was not beaten, so the value is not a better parameter value. It is
+  the standard deviation of MS1 in the parameter's own units, and the tolerance rule that says
+  which parameter should go to DFT or molecular dynamics instead of to the model. The item has
+  three parts. A writer in `cmfqsar/interfaces.py` takes the predictions of one or several models,
+  converts each to the quantity and unit the cell model reads (a barrier to a diffusion
+  coefficient at a temperature, with the deviation carried through the exponential; a ladder to a
+  voltage-against-stoichiometry curve), and writes a parameter set in PyBaMM's form with a
+  deviation per parameter. A sampler draws parameter sets from those deviations and runs the cell
+  model once per draw, so the output is a distribution of capacity-against-cycle curves rather
+  than one curve. A report says which parameter's deviation moves the final number most, as the
+  share of the output variance attributed to each parameter by one-at-a-time sampling. *Gate:* on
+  one cell whose parameters are published (the graphite/NMC cell of the Chen 2020 parameter set
+  in PyBaMM is the usual reference), replace one parameter at a time by the model's prediction
+  with its deviation and report the capacity-fade interval against the curve from the published
+  value. The interval must contain the published curve for every parameter whose MS1 calibration
+  holds (z rms near 1), and the report must rank the solid diffusion coefficient and the exchange
+  current ahead of the voltage curve, as the cell-model literature does. What this item is not: a
+  surrogate of the cell model, which runs in seconds and needs none, and not a model of
+  degradation, whose dynamics stay in the cell model. A product kernel over materials and
+  cell-design parameters for optimisation over many evaluations is a later item, and only if MS9
+  shows that the materials kernel adds something a Gaussian process on the parameters alone does
+  not. Under rule 5 the benchmark script is `benchmarks/run_cellmodel.py`, with PyBaMM an optional
+  dependency as pymatgen is.
+
 **Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
 a gradient, the same deviation on the path that scales, and the interfaces that carry them out.
-MS4 after M6 is revisited; MS5 as its data arrive; MS8 last, since it needs all of the others.
+MS4 after M6 is revisited; MS5 as its data arrive; MS8 last among the hop items, since it needs
+all of the others. MS9 can run alongside MS8: both carry the deviation of MS1 through a coarser
+model, MS8 through a hop simulation to a conductivity and MS9 through a cell model to a capacity
+curve, and MS9 needs no new data because its reference parameter set is published.
+
+### Spectroscopy: a spectrum as the target, the sample and the bridge (9 November 2026)
+
+*Drafted 9 November 2026.* A spectrum meets the method in three roles, and the repository already
+holds a measurement in two of them. As a **target**, a spectroscopic observable is a property like
+any other: LP2 predicts 13C shifts from the local field (q² +0.973 and 8.8 ppm against +0.853 and
+20.5 ppm for an atom-centred count, with the best envelope width at 1.0 Å, which is the behaviour a
+short-range property should show), and the periodic kernel predicts the top of a phonon spectrum
+(MAE 92 cm⁻¹ on Matbench phonons, where the field that mattered was the inverse square root of the
+mass). As a **sample**, a measured curve is a function on an axis, and M12 showed that a measured
+pair distribution function can stand in for a structure (R² +0.303 where the typed descriptor
+reaches +0.771 on the bulk modulus), that a curve as computed is too sharp to compare until it is
+broadened to the resolution of the instrument, and that a model fitted on computed curves does not
+predict measured ones. As a **bridge**, a spectrum sits between the structure and the property, and
+the kernel CCA of `cmfqsar/kcca.py` is the tool that reads one against the other.
+
+The observation the items below rest on is simple. A spectrum of broadened lines is a sum of
+Gaussians (or Lorentzians) on one axis, which is a molecular field in one dimension. The overlap
+kernel between two such spectra is therefore closed form (rule 3), its width is the resolution of
+the instrument rather than a fitted parameter, and the co-field solver on a one-dimensional grid
+gives a *co-spectrum*: the regions of the axis where intensity raises or lowers the property. That
+is the interpretable object which partial least squares on spectra, the standard tool of
+chemometrics, does not give in this form. What the role of the sample loses is equally clear: a
+spectrum carries no frame, so the superposition and the three-dimensional co-field that are the
+method's own play no part in it. Two lessons of earlier items apply to everything here. From EC5, a
+new channel is judged by the correlation of its whole kernel with the structural kernel before any
+accuracy is measured, not by the best of many columns. From M15, the cosine form of the kernel is
+what divides the intensity scale (concentration, path length, sample mass) out of a measured curve.
+
+* **SP1. A spectrum as a one-dimensional field: the kernel and the co-spectrum.** A reader for a
+  stick spectrum (positions and intensities, as ORCA writes a vibrational spectrum and as
+  pymatgen's diffraction calculator writes a powder pattern) and for a measured curve on its
+  instrument grid, which is the reader of M12 with the axis generalised from r and Q to
+  wavenumber, 2θ, binding energy or ppm. The kernel of two stick spectra with positions x_i, y_j
+  and intensities a_i, b_j is Σ a_i b_j exp(−(x_i − y_j)² / 4σ²), the steric kernel in one
+  dimension; a measured curve enters as the same sum over its grid points. The cosine form is the
+  default, a sum over several widths follows MS4, and the co-spectrum comes from `cofields.py` on a
+  one-dimensional grid and is drawn as a curve over the axis. The spectral kernel joins the
+  structural kernel as one more block in the mixing of `cmfqsar/mixing.py` (`with_views`), so the
+  same fit can carry a computed structure and a measured spectrum together. The item has two
+  halves with two gates. *(a) Computed, no new data.* On the 1,265 crystals of Matbench phonons the
+  computed powder diffraction pattern is the sample, against the periodic kernel (MAE 92 cm⁻¹) on
+  the same folds. This is the question of M12 put in reciprocal space, where M6 says the untyped
+  structure factor sits; the expected outcome is the one M12 found, that losing the types costs
+  accuracy, and the measurement is worth making because the pattern is what an experiment
+  measures. *(b) Measured.* A set with measured spectra and a measured property, fitted on measured
+  curves only, as the second finding of M12 requires. No such set is in the repository. The search
+  goes into `docs/public_3dqsar_datasets.md` as the earlier searches did, with three candidates to
+  check first: the RRUFF collection (Raman, infrared and powder patterns of minerals, free for
+  research use) paired with a mineral property from another source; the infrared spectra of the
+  NIST Chemistry WebBook, whose terms of use for a bulk download have to be read; and the computed
+  vibrational spectra of the QM9 molecules, which can serve only the computed half. *Gate:* the
+  kernel correlation of the spectral block with the structural kernel is reported first. The item
+  is a result (rule 4) when the structural kernel with the spectral block beats the structural
+  kernel alone by more than the interval, or, where no atomic structure is available, when the
+  spectrum alone reaches the composition descriptor on the same folds. Under rule 5 the script is
+  `benchmarks/run_spectra.py`.
+* **SP2. A localised band position as a local target.** The analogue of LP2 for a vibrational
+  band. The carbonyl stretch of the substituted benzoic acids of the Hammett series
+  (`examples/hammett/`, `benchmarks/results/hammett/`, structures already in the repository) is
+  computed with ORCA through a frequency run added to `cmfqsar/orca.py` (harmonic frequencies with
+  the usual scaling factor; two to three minutes a molecule on the serial build, so the series
+  costs a few hours). The sample is the environment of the carbonyl carbon: the local field of LP2
+  with the width scanned, where the expectation is a best width near 1 Å as for the shift; the
+  reference under rule 1 is the shell count of LP2; the interpretation is the local co-field of LP3
+  around the carbonyl group. If a table of measured carbonyl bands for the series is found in the
+  literature, the measured values replace the computed ones and the computed ones become a second
+  column. *Gate:* the local field beats the count by more than the interval, and the local co-field
+  reproduces the meta/para picture of the Hammett co-fields from the band alone, as LP3 did from
+  the acidity. What this is not: a predictor of whole vibrational spectra, which needs the
+  thousands of spectra and the calculated geometries the dedicated programs use.
+* **SP3. The spectrum as the bridge: which part of the field moves a band, and which structure
+  fits a spectrum.** Two parts. *(a)* The kernel CCA of `cmfqsar/kcca.py` with the structural field
+  kernel as one view and the spectral kernel of SP1 as the other. The first pairs of directions
+  say which part of the field moves which region of the spectrum, read as a co-field on the
+  structural side and a co-spectrum on the spectral side. On the series of SP2 the first structural
+  direction should load on the neighbourhood of the carbonyl group and the first spectral direction
+  on the carbonyl band. *(b)* A structure from a spectrum among candidates. For a measured curve, or
+  a computed one broadened to the resolution of an instrument, the candidate structures (isomers,
+  conformers, polymorphs) are ranked by the kernel between the curve and each candidate's computed
+  spectrum at that resolution. This is the loop of M11 with a spectrum as the objective, and the
+  broadening rule of M12 is what makes the comparison work. *Gate:* on the series of SP2, a
+  spectrum computed at a second level of theory (or measured, where SP1(b) finds one) ranks its own
+  molecule first among the series in most cases, where a composition descriptor cannot tell the
+  isomers of the series apart at all.
+
+* **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an
+  LC-MS or GC×GC map and an excitation-emission fluorescence matrix are peak lists in two
+  dimensions, and a GC×GC-MS run is one in three. They are fields in the literal sense, and the
+  standard tools (PARAFAC, multivariate curve resolution) need them as dense arrays and assume
+  that the array factorises along its axes. The kernel of two peak lists is closed form over the
+  peaks and costs nothing for the grid: Σ a_i b_j exp(−Δx² / 4σ_x² − Δy² / 4σ_y²), with one width
+  per axis, as the height channels of the surface kernel (`SurfaceSpec` in `cmfqsar/invariant.py`)
+  already separate one direction from the others. The reader of SP1 gains a second and a third
+  axis, the co-field solver returns a map over the two axes (for an HSQC spectrum, a map over the
+  cross-peaks, each of which is one CH pair, so the map reads directly as an assignment), the
+  kernel Fisher discriminant of `cmfqsar/model.py` and the one-class scores of
+  `cmfqsar/oneclass.py` give the classification and the authentication case, and the difference of
+  co-fields of `cmfqsar/multitask.py` says which region separates two classes rather than one class
+  from the rest. Replicate spectra of one sample enter as an ensemble. *Data:* a public metabolomics
+  study with class labels and either NMR or LC-MS raw data (MetaboLights at EMBL-EBI holds such
+  studies under open licences; the first candidates are the studies the metabolomics papers use as
+  benchmarks), and for fluorescence the demonstration data of the drEEM toolbox, which is the
+  reference PARAFAC data set; both to be checked and written up in
+  `docs/public_3dqsar_datasets.md` before anything is fitted. *Reference under rule 1:* PLS
+  discriminant analysis on the binned grid, which is what the metabolomics literature reports, on
+  the same folds. *Gate:* the kernel correlation first; then the classifier on the peak-list kernel
+  matches or beats the binned PLS-DA within the interval (rule 4) at a cost independent of the bin
+  size, and the co-map names the cross-peaks the study's own paper names as its markers.
+* **SP5. Resolution mismatch and calibration transfer.** Two Gaussians of widths σ_1 and σ_2
+  overlap in closed form with the combined width σ_1² + σ_2², so a spectrum from one instrument and
+  a spectrum from another compare with each carrying its own width, and a model fitted on one
+  instrument reads the other's spectra without transfer standards for the resolution part. This is
+  the second finding of M12 used on purpose: a sharper curve is broadened to the coarser instrument
+  by the kernel itself. The reader of SP1 takes a width per spectrum, or per instrument, and the
+  co-spectrum is reported at the coarser width, which is the only one at which both instruments
+  carry information. What the width does not absorb is a wavelength shift between instruments and a
+  baseline; the shift is the alignment problem of part C in one dimension (a rigid shift and a
+  stretch, fitted on the standards the chemometric methods use, or the one-dimensional
+  autocorrelation kernel of SP1 when no standard is available), and the baseline is the background
+  subtraction the periodic kernel already has. *Data:* the two public calibration-transfer sets
+  every method in the literature is measured on, both near-infrared: the corn set (80 samples on
+  three instruments, with moisture, oil, protein and starch) and the pharmaceutical tablet set of
+  the 2002 shoot-out (655 tablets on two instruments, with the content of the active ingredient).
+  Both are broad-band spectra, where the plan expects the field to add little to PLS on one
+  instrument, so the comparison is not accuracy on one instrument but the loss when the model
+  crosses to the other. *Reference under rule 1:* PLS fitted on instrument A and applied to
+  instrument B with and without piecewise direct standardisation, the standard transfer method,
+  on the same samples. *Gate:* the kernel with per-instrument widths and the shift fitted loses
+  less on the crossing than PLS without standardisation by more than the interval, and comes within
+  the interval of PLS with standardisation while using no transfer standards. If the loss on the
+  crossing is a wavelength shift and not a resolution difference, which the corn set may show,
+  the item reports that and its gate moves to a pair of instruments that differ in resolution
+  (Raman at two gratings, or powder diffraction on two diffractometers, where RRUFF holds several
+  spectra of one mineral).
+* **SP6. Mixtures and quantification.** Beer–Lambert linearity says that the spectrum of a mixture
+  is the sum of the component spectra weighted by their concentrations, so the field of a mixture is
+  the weighted sum of the component fields and the identity MS5 rests on applies exactly: the kernel
+  of two mixtures is the concentration-weighted sum of the pairwise component kernels, which is
+  `combine_members` of `cmfqsar/fields.py` with the concentrations as the weights. A concentration
+  is then linear in the field, and the co-spectrum is the regression vector, read against the
+  component spectra; band broadening with concentration, matrix effects and saturation enter through
+  the nonlinear layer, with Shapley values in place of the co-spectrum under rule 2. One point of
+  care: the cosine form divides the total amount out, so it serves fractions and compositions, and
+  the raw kernel serves absolute amounts; the item reports both and says which the property asked
+  for. Two halves. *(a) Computed, no new data.* Mixture spectra are synthesised from the computed
+  spectra of the series of SP2 with known weights, with noise and a baseline added, and the model
+  has to recover the weights; this tests the identity and the reader before any measured mixture is
+  touched. *(b) Measured.* The tablet set of SP5 (the content of the active ingredient in a matrix
+  of excipients) and, if found, a public mid-infrared or Raman set of ternary mixtures with known
+  compositions. *Reference under rule 1:* PLS on the grid, the method quantification is done with
+  in practice. *Gate:* in (a) the weights are recovered to within the noise; in (b) the model is
+  within the interval of PLS on the linear case, which is the expected outcome and not a loss, and
+  beats it by more than the interval where the calibration curve is nonlinear, which is the only
+  place the item claims a gain. If no public set shows a nonlinear calibration, the item records that
+  the method matches PLS and adds the co-spectrum, and stops.
+
+**Order.** SP2 first: it needs only frequency runs on structures the repository already holds and
+reuses the local field, the count and the local co-field of LP2 and LP3 unchanged. SP1(a) alongside
+it, since it needs no fetch; SP1(b) when a set is found; SP3 after SP1 and SP2, because it needs
+the spectral kernel of the one and the series of the other. SP4 to SP6 after SP1, whose reader and
+kernel they extend: SP6(a) can run as soon as SP2's spectra exist, SP5 needs only the two public
+sets it names, and SP4 waits on the data search. Electronic spectra (absorption maxima, which
+depend on conjugation) are not among these items: the classical fields do not carry them, the
+state fields of EC1 are the input they would need, and the kernel-correlation test of EC5 on a
+series of absorption maxima is the check to run before an item is written for them.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
@@ -6959,11 +7181,12 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
-| H. Deep learning | 19 | 1 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND7, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
-| H. Multiscale modelling | 8 | 5 | MS4, MS5, MS8 |
+| H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
+| H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
+| H. Spectroscopy | 6 | 0 | SP1 to SP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**158 items: 112 finished, 4 partly, 42 open.**
+**165 items: 113 finished, 4 partly, 48 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

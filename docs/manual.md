@@ -7828,6 +7828,85 @@ adamantyl: within one guest the group does not stand out far above the spread of
 What is solid is the mean over hundreds of guests. Use the atom numbers to see what a model has
 learned from a table, not to decide where to put the next substituent on one compound.
 
+### The bond graph as a view: the graph neural tangent kernel
+
+The field kernel of this program is, as the chapter on nonlinear kernel layers puts it, the kernel of an infinitely
+wide radial-basis network on the aligned fields. The same limit exists for a network on the bond
+graph. The graph neural tangent kernel of Du and colleagues (NeurIPS 2019) is the kernel of an
+infinitely wide graph network *at initialisation*, computed in closed form from the graph with no
+training at all, and `cmfqsar.gntk` computes it (plan item ND7). Two molecules with $n$ and $m$
+atoms give an $n \times m$ matrix over their atom pairs. Each atom starts with a feature vector,
+one hot over its atom type (the Sybyl type the fields are built with, which says element,
+hybridisation and aromaticity at once), so the covariance of a pair starts at the inner product
+of the two. One *block* of the network does two things to every pair: it averages over the bonded
+neighbours on both sides, which is the adjacency with self-loops applied left and right, and it
+passes through a layer of rectified units, whose infinite-width expectations are the arc-cosine
+terms of Cho and Saul that the chapter *Nonlinear kernel layers and multiple kernel learning* also uses.
+The tangent kernel is carried through the same steps as the sum of the covariance and the
+previous tangent kernel times the derivative term. After two such blocks the kernel of the two
+molecules is the sum over every atom pair, normalised to a cosine so that it sits on the scale of
+the cosine-normalised field kernels.
+
+What the graph kernel knows is which atom is bonded to which; what it does not know is where any
+atom is. It therefore brings no co-field and no split in space, and a model that holds it reads
+its co-field from the field views alone. It enters as one more term of the sum of kernels under
+the weights of the chapter *Mixing the fields*: `mixing.with_views` stacks it under the field kernels,
+the evidence gives it a weight like any field, and `mixing.drop_one` gives the Bayes factor
+against *the graph view does nothing*, which is the question the plan asks of it.
+
+```python
+from cmfqsar.gntk import gntk_kernel
+from cmfqsar.mixing import evidence_mixing, joint_kernel, with_views
+
+K_graph = gntk_kernel(table)                            # (n, n), cosine-normalised
+stack, names, scale = with_views(K_fields, {"graph": K_graph}, names=field_names)
+h = evidence_mixing(stack, y, scale=scale)              # one weight per field, one for the graph
+K = joint_kernel(stack, h, scale)                       # the kernel the ridge is fitted on
+```
+
+**Measured** on the eight Sutherland sets and on 2,000 molecules of COMPAS-1D drawn at random,
+ten folds, the ridge by the evidence, every variant under the weights of the evidence: the five
+fields alone, the fields with the invariant autocorrelation kernel of item C5, the fields with
+the graph kernel, and the fields with both. The comparison the plan reads is the graph view
+against the invariant kernel, because a gain the invariant kernel already gives is not a result
+(`benchmarks/run_gntk.py`, `benchmarks/results/gntk/table.md` and
+`benchmarks/results/gntk_compas/table.md`).
+
+| set | n | q2, fields | + invariant | + graph | + both | graph share | Bayes factor | graph against fields | graph against invariant |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| DHFR | 361 | +0.641 | +0.667 | +0.712 | +0.683 | 95% | +17.1 | +0.071 [+0.036, +0.110] | +0.045 [+0.010, +0.083] |
+| COX2 | 282 | +0.565 | +0.599 | +0.566 | +0.601 | 7% | +0.7 | +0.001 [-0.002, +0.004] | -0.033 [-0.058, -0.009] |
+| BZR | 147 | +0.401 | +0.569 | +0.413 | +0.574 | 20% | +0.4 | +0.011 [-0.001, +0.025] | -0.156 [-0.243, -0.069] |
+| ACE | 114 | +0.688 | +0.720 | +0.692 | +0.726 | 24% | +2.1 | +0.004 [-0.011, +0.022] | -0.028 [-0.059, -0.002] |
+| AChE | 111 | +0.587 | +0.611 | +0.611 | +0.626 | 19% | +0.9 | +0.024 [+0.004, +0.049] | -0.001 [-0.031, +0.032] |
+| THR | 88 | +0.723 | +0.726 | +0.728 | +0.729 | 6% | +0.5 | +0.005 [-0.001, +0.012] | +0.003 [-0.007, +0.015] |
+| THER | 76 | +0.462 | +0.477 | +0.468 | +0.481 | 13% | -0.2 | +0.006 [-0.002, +0.014] | -0.009 [-0.025, +0.007] |
+| GPB | 66 | +0.604 | +0.610 | +0.605 | +0.610 | 17% | -0.0 | +0.001 [-0.003, +0.005] | -0.004 [-0.013, +0.007] |
+| COMPAS-1D | 2000 | +0.439 | +0.904 | +0.908 | +0.929 | 100% | +1845.3 | +0.470 [+0.438, +0.503] | +0.004 [-0.002, +0.011] |
+
+Differences in q2 with their 95 % paired bootstrap intervals over the molecules. On the Sutherland
+sets the graph view changes q2 by +0.016 on average against the fields alone, with an interval that
+excludes zero on 2 of the eight sets in its favour and 0 against, and by -0.023 against the fields
+with the invariant kernel (1 in its favour, 3 against); added to the fields with the invariant
+kernel it changes q2 by +0.006 (1 in its favour, 0 against). The evidence gives the graph view 25%
+of the joint kernel on average, with a Bayes factor of +2.7 nats against it doing nothing. On the
+2,000 molecules of COMPAS-1D the view changes q2 by +0.470 [+0.438, +0.503] against the fields and
++0.004 [-0.002, +0.011] against the fields with the invariant kernel, holding 100% of the kernel
+with a Bayes factor of +1845.3. Against the invariant kernel the graph view wins on DHFR and loses
+on COX2, BZR, ACE. On DHFR the evidence hands the graph 95% of the kernel with a Bayes factor of
++17.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712 against +0.641):
+that is the largest and most varied of the eight series, the one an alignment serves worst, and
+there the graph takes over from the fields rather than adding to them. Everywhere else the graph
+holds a few per cent of the kernel and changes q2 within its interval, and what the fields with the
+invariant kernel gain over the fields alone, the graph does not give. On COMPAS-1D the aligned
+fields are weak (q2 +0.439), the graph alone reaches q2 +0.908, the same as the invariant kernel
+(+0.004 [-0.002, +0.011]), and the two together gain +0.025 [+0.020, +0.030] over the invariant
+kernel alone, an interval well clear of zero. The gate asked for a gain the invariant kernel does
+not already give: it is met on the two largest series (DHFR with 361 molecules and COMPAS-1D with
+2,000) and on none of the seven small ones. Whether the graph needs the molecules or the poor
+alignment these two series share, this benchmark cannot separate. The view stays in the library as
+one more term for the weights of item E6 to judge series by series, which is what they did here.
+
 ## Molecules on a surface: the in-plane invariant kernel
 
 A molecule adsorbed on a surface has one direction that is not like the others. Its height above
