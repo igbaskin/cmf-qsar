@@ -4573,6 +4573,119 @@ nothing like a per-molecule error bar. On one of the eight sets (THER) every est
 negative: an estimate of error is itself a model, and it can be wrong about a series. Use them to
 order molecules, and quote the conformal interval when a number has to be attached to one.
 
+## The model as the fast level of a hierarchy: a standard deviation in the units of the activity
+
+A multiscale scheme puts a CMF model between an electronic-structure method and a coarser model:
+the fine level labels a few hundred structures, the model answers for the thousands the coarse
+model needs, and the coarse model turns them into a material property. For that the model must say,
+per structure, whether its answer can be used. The posterior variance of the Gaussian process (the
+*Gaussian process* row of the learner table) is the right quantity, but as it stands it is not
+usable for the purpose, for three reasons.
+
+**It is in the units of the kernel.** The Gaussian process that matches the ridge fit has the prior
+covariance $s\,\mathbf{K}$ and the noise $s\lambda$, where $s$ is the one amplitude the evidence
+profiles out in closed form (the section *Choosing α and λ by the evidence*): the mean squared
+whitened residual of the training set, $s = \mathbf{r}^{\mathrm{T}}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{r}/(n-1)$
+with $\mathbf{r}$ the residual about the fitted constant. The predictive variance of a new
+*measurement* at $x$ is then
+
+$$\sigma^2(x) = s\left[K(x,x) - \mathbf{k}^{\mathrm{T}}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{k} + \frac{(1-\mathbf{k}^{\mathrm{T}}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{1})^2}{\mathbf{1}^{\mathrm{T}}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{1}} + \lambda\right]$$
+
+and its square root is in the units of the activity. The third term inside the bracket is the
+uncertainty of the constant mean that the ridge fits as its bias, marginalised under a flat prior
+(Rasmussen and Williams 2006, eq. 2.42 with one basis function); it is what makes a structure far
+from every training one uncertain about the *level* of the activity and not only about its shape.
+Without the last term, $\lambda$, the deviation is that of the underlying value rather than of a
+measurement, which is what two predictions of the same structure share.
+
+**Nobody had checked that it means what it says.** On the folds, the standardised out-of-fold
+residual $z = (y - \hat y)/\sigma$ should have a root mean square of one, and the interval of two
+standard deviations should hold about 95 % of the activities. The program reports both, and the
+factor that would make the root mean square one. A factor well above one says the model is surer
+than it should be, which is the usual finding when the kernel misses a part of the chemistry. The
+factor is reported and not applied.
+
+**A number is not a decision.** A tolerance in the units of the activity turns it into one: every
+structure whose standard deviation exceeds the tolerance is marked as one to pass to the fine level
+(a DFT calculation, a measurement) instead of using the model's answer. The share the fine level
+can afford goes the other way, to the tolerance that sends it that many.
+
+```bash
+python cmf_cli.py build data.sdf --charges file --test-fraction 0.3 --calibration --save model.cmf
+python cmf_cli.py predict model.cmf new.sdf --sd --tolerance 0.7 --out predictions.csv
+```
+
+`--calibration` prints the check on the folds and, when there is a test set, on it. `--sd` prints
+the prediction with its standard deviation and writes it to the CSV as `predicted_sd`;
+`--tolerance` adds the marks (`-> fine level` on the screen, a `defer` column of 0 and 1 in the
+CSV) and a line saying how many structures the model answers and, where the activities are known,
+the error on each side. In Python the same three things are `model.predict_with_sd(test)`,
+`model.calibration()` and `cmfqsar.surrogate.Handoff.of(sd, tolerance, y, mean)`; the deviation
+needs the linear kernel and the ridge learner, and a low-rank model refuses it, because the term of
+the mean needs the full training kernel.
+
+**Measured, the deviation is calibrated as it stands.** Eight Sutherland sets, five random 70/30
+splits each, α and λ by the evidence on the training part (`benchmarks/run_surrogate.py`):
+
+| set | n | test RMSE | mean σ | z rms, folds | z rms, test | inside 2σ |
+|---|---:|---:|---:|---:|---:|---:|
+| DHFR | 361 | 0.751 | 0.679 | 1.10 | 1.08 | 93 % |
+| COX2 | 282 | 0.811 | 0.825 | 0.97 | 0.99 | 93 % |
+| BZR | 147 | 0.610 | 0.620 | 1.03 | 0.98 | 94 % |
+| ACE | 114 | 1.512 | 1.378 | 0.99 | 1.15 | 89 % |
+| AChE | 111 | 0.809 | 0.830 | 1.05 | 0.96 | 94 % |
+| THR | 88 | 0.672 | 0.641 | 0.96 | 1.02 | 94 % |
+| THER | 76 | 1.635 | 1.605 | 1.03 | 1.07 | 93 % |
+| GPB | 66 | 0.767 | 0.722 | 0.99 | 1.10 | 92 % |
+| **mean** | | 0.946 | 0.912 | **1.02** | **1.05** | **93 %** |
+
+The root mean square of $z$ is 1.02 on the folds and 1.05 on the held-out molecules, and two
+standard deviations hold 93 % of them against the 95 % of a Gaussian. The mean deviation is within
+4 % of the error actually made on every set. So the scale that the evidence profiles out *is* the
+noise level of the series, and the correction factor, though reported, is not needed on these sets;
+applied to the held-out molecules it moves the root mean square from 1.05 to 1.03.
+
+**The tolerance rule does what it promises, and no more.** With the tolerance set to the
+cross-validated RMSE of the training part, the error the model claims for a typical molecule, the
+model answers **61 %** of the held-out molecules at an RMSE of **0.90** and defers the rest, whose
+RMSE is **1.03**; the mean tolerance is 0.92, so the answered share's error sits where the rule
+said it would. Sending a fixed quarter of the molecules to the fine level gives 0.88 against 1.08.
+The separation is modest, and it must be: the section above showed that the posterior variance is
+the distance to the training set in other units and captures about a fifth of what an oracle would.
+On THER the deferred molecules are *better* predicted than the answered ones, as every estimate of
+the error was on that set. What calibration adds is not a better ordering but a fair size: the
+error the fast level reports for the structures it answers is the error it makes, which is what a
+coarse model needs in order to carry it forward.
+
+**On a hop set, where the hierarchy is real, the rule earns more.** The sample of LiTraj used
+in the external check of the hop model — 1,801 hops of lithium ions in 393 crystals, each labelled
+by a bond-valence calculation, which is the fine level here — with ten folds that hold out whole
+structures and the ridge and the width of a Gaussian kernel chosen on an inner split of the same
+kind (`benchmarks/run_surrogate.py --hops`):
+
+| kernel | q² | held-out RMSE (eV) | mean σ (eV) | z rms, inner folds | z rms, held out | inside 2σ | σ against the error (ρ) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| linear, invariant local | +0.572 | 1.246 | 1.136 | 1.04 | 1.05 | 95 % | +0.20 |
+| Gaussian on the same rows | +0.623 | 1.169 | 1.053 | 1.01 | 0.99 | 96 % | +0.35 |
+
+| kernel | tolerance (eV) | answered | RMSE answered | RMSE deferred | answered at 25 % deferred | RMSE of that 25 % |
+|---|---:|---:|---:|---:|---:|---:|
+| linear | 1.242 | 87 % | 1.123 | 1.856 | 1.063 | 1.681 |
+| Gaussian | 1.207 | 82 % | 0.998 | 1.752 | 0.840 | 1.830 |
+
+The deviation is calibrated here as well, for both kernels, which is what the scale absorbing the
+units of the kernel promises: the root mean square of $z$ is 1.05 and 0.99, and two standard
+deviations hold 95 % and 96 % of the barriers. The rule now separates by a factor of 1.8 rather
+than 1.1: with the Gaussian kernel the model answers 82 % of the hops at an RMSE of 1.00 eV and
+sends back 18 % whose RMSE would have been 1.75 eV, and a fixed quarter sent back leaves 0.84 eV
+against 1.83 eV for the quarter. The reason is the data and not the method. A Sutherland series is
+congeneric, so every held-out molecule has close relatives in the training part and the deviations
+are all alike; the collection behind the hop sample covers every chemistry that holds lithium, so
+a held-out structure is often the only one of its chemical system, and the deviation says so. That
+is the situation a hierarchy is in, and it is where a calibrated deviation does its work: the hops
+the fast level keeps carry the error it claims, and the ones it returns are the ones the
+calculation was needed for.
+
 ## What the model thinks the groups are: clustering the kernel
 
 Every grouped validation in this manual splits the molecules by their Bemis–Murcko scaffold, and
@@ -8749,6 +8862,98 @@ that the total curve keeps. The X-ray weight is the atomic number, the $Q \to 0$
 form factor, rather than the form factor itself. And a neutron scattering length is taken from a
 table that leaves out the elements whose value depends strongly on the wavelength; a structure
 containing one of those is refused rather than guessed at.
+
+## A microstructure as the sample: the field on a voxel grid
+
+A micrograph has no atoms. A two-phase microstructure on a voxel grid is nevertheless a field --
+the indicator of each phase, one value per voxel, is one channel -- and the kernel of this program,
+the overlap integral of two fields, applies to it as it stands. What changes is only how the field
+is made: not from atom-centred Gaussians but from the voxels themselves, with the fast Fourier
+transform doing the overlaps on the periodic grid. This is the way into the hierarchical
+materials informatics of the Materials Knowledge Systems (MKS) of Kalidindi and co-workers, whose
+descriptor is the **two-point statistics** of the microstructure: the probability that two
+voxels a vector $r$ apart are in phases $a$ and $b$. That statistic is the translation-averaged
+self-overlap of the phase field with its own translate, which is to say the periodic
+autocorrelation of the chapter above with voxels in place of atoms. `benchmarks/run_microstructure.py`
+measures what the field kernels are worth against that workflow, on the smallest fair benchmark.
+
+**The data.** 400 synthetic two-phase cells on a periodic 51 x 51 grid (and 400 on a 21^3 grid),
+by the recipe of the `pymks` generator: Gaussian-filtered white noise cut at the quantile that
+gives the phase fraction. The fraction, the grain size, the elongation of the grains and their
+direction all vary from sample to sample. The label is the effective thermal conductivity of
+the cell from a finite-volume solver written in the script (`pymks` does not build on Python
+3.13, and its elastic solver needs a finite-element package); phase 0 conducts 1, phase 1
+conducts 10 or 100. Two labels: the component along $x$, which depends on the direction of the
+grains, and the mean over the directions, which does not.
+
+**The descriptions.** The plain kernel of this program -- the overlap of the smoothed phase
+fields at zero shift, in the frame the samples were generated in; the same averaged over the
+point group of the grid; the overlap of two samples' two-point autocorrelations, which is the
+invariant route and is also the overlap of their power spectra, raw and in the cosine form of
+the autocorrelation kernel, averaged over the point group, and binned by the length of $r$; and
+the MKS baseline, two-point statistics, principal components fitted on the training part and a
+polynomial of the scores. Every kernel is tried linear and under the Gaussian layer, with the
+Gaussian smoothing width of the field (0 to 5 voxels), the layer and the ridge chosen by
+cross-validation inside the training part. Training sets of 20, 50, 100 and 200 samples are
+drawn five times each and the rest of the set is held out.
+
+**What it says** (`benchmarks/results/microstructure/table.md`, with the notes beside it). On
+the direction-dependent label at contrast 10 the overlap of the autocorrelations reaches q2
+0.89 at 20 training samples, 0.97 at 100 and 0.98 at 200; the MKS baseline 0.93, 0.965 and 0.97;
+at contrast 100 the two are 0.81 against 0.81 at 20 samples and 0.90 against 0.88 at 200; on the
+3D cells 0.97 against 0.96 at 20 and 0.989 against 0.987 at 200. So the field-overlap kernel on
+the two-point statistics matches the baseline at 20 to 50 samples and is a little better from
+100 on, and the gain holds where the contrast makes the arrangement matter.
+The zero-shift overlap in the generating frame is poor, and should be: these samples share a
+grid and nothing else, so it compares two structures at a random relative shift, and what it
+keeps as the smoothing grows is the phase fractions. A rotation average loses the direction of
+the grains and with it the direction-dependent label, and recovers everything on the
+direction-free one. The phase fraction alone explains 0.87 to 0.98 of the variance, as it does
+in the published homogenisation examples, which is why the arrangement is a second-order
+signal here.
+
+**The length scale.** The smoothing width is the knob a multi-scale kernel would turn. The
+inner cross-validation sets it to zero for the autocorrelation kernels on the
+direction-dependent label -- the statistic wants its full resolution -- and to the widest
+width tried, 5 voxels, close to the grain size, for the zero-shift overlap and for the
+direction-free label, where the kernel then sees little beyond the fractions. A hierarchical
+model would therefore carry the fine width for the arrangement and the coarse one for the
+composition, which is what two field types with their own widths already do in this program.
+
+**The gate: the current baseline, a real micrograph set, two scales, and the map.** The pilot's
+margin over polynomial ridge regression on principal components was small and that baseline is
+old, so four more tests were run, reported in the notes beside the table. *First*, every method
+was given the same budget of 40 settings, twenty draws per training size, and the current MKS
+baseline was added: a Gaussian process on the principal-component scores with one length scale
+per score, fitted by the marginal likelihood; and the label of the published MKS benchmark,
+the effective elastic stiffness from the finite-element solver of PyMKS, was computed beside the
+conductivity (PyMKS needed three patches to run on a current Python and `sfepy`;
+`benchmarks/prepare_elastic.py` lists them). The two labels correlate at 0.98 to 0.995, so the
+pilot's conductivity was a fair stand-in. Read this way, the overlap of the two-point
+autocorrelations and the Gaussian process are the same model to within the noise of the draws
+from 100 samples on,
+and below 100 samples the kernel is the steadier of the two, ahead in 14 to 17 of 20 draws by
+0.02 to 0.15 in q2, where the GP's fit of twenty length scales on 16 to 40 points is the
+unstable step. *Second*, a real micrograph set, the 961 ultrahigh-carbon steel micrographs of DeCost and co-workers (2017) with seven microconstituent classes and the heat treatment of 598 of them: here the autocorrelation kernel of the grey level, computed with zero padding because a micrograph is one window on a medium that does not repeat, is the best of the second-order descriptions (accuracy 0.61 at 500 training images against 0.55 for the polynomial and 0.51 for the GP on the principal components) and is far behind the published route, features of a convolutional network with a linear model on top (0.87), in 0 of 20 draws ahead at any training size, because the classes are named after shapes that a second-order statistic does not carry; and when whole specimens are held out, every method loses 0.1 to 0.2 in accuracy and none predicts the treatment of a specimen it never saw. *Third*, a property that depends on two scales: phase 1 was
+given a defect concentration that sets its conductivity by a known law, and the cells were
+solved again. Each scale alone explains a third of the variance; the sum of an arrangement
+kernel and a descriptor kernel reaches 0.74; their product reaches 0.97, ahead of the MKS
+baseline with the descriptor appended in 19 or 20 of 20 draws. The kernel across scales is the
+product, because an effective property is close to the property of the conducting phase times
+a factor of the arrangement -- as two molecular fields that act together, not in turn. A second
+width of the same arrangement adds nothing. *Fourth*, the interpretation map: for the linear
+autocorrelation kernel the model is a linear function of the two-point statistics and its
+coefficient field over the lag vector is read straight from the dual coefficients
+(`benchmarks/results/microstructure/map_2d51_n400_c100.png`). For the conductivity along $x$
+it is a four-lobed figure that credits phase 1 found again 2 to 8 voxels away along the
+gradient, peaking at 3 to 4 voxels, and debits the same lags across it; for the direction-free
+mean it is a ring that credits every direction at the grain size, 5 voxels, and nothing larger.
+A principal-component regression has no such map, because its coefficients do not live on
+lags. The conclusion of the whole is scope rather than victory: a method built for molecules
+reaches microstructure informatics through its invariant route, lands on the established
+statistic with the same accuracy as the current baseline, is steadier below 100 samples,
+combines scales by a product, carries a continuous interpretation map, and shares the limit
+of that statistic on real micrographs, where a trained network sees more.
 
 ## Three atoms at a time: what a histogram of distances cannot see
 

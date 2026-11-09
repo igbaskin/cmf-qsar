@@ -678,6 +678,30 @@ def registry() -> List[Benchmark]:
                   minutes="120",
                   report=lambda: _mod("run_scattering").report(),
                   tables=["scattering/table.md"]),
+        Benchmark("microstructure",
+                  "a microstructure as the sample: the field-overlap kernels on a periodic "
+                  "voxel grid (zero-shift, rotation-averaged, and the overlap of the two-point "
+                  "autocorrelations) against the two-point statistics, principal components "
+                  "and polynomial or Gaussian-process regression of the MKS homogenisation "
+                  "workflow, on the effective conductivity of synthetic two-phase cells at "
+                  "training sizes 20 to 200 (the data are generated and solved by the script "
+                  "itself; the PyMKS elastic label needs prepare_elastic.py in a PyMKS "
+                  "environment); then a property of two scales, the coefficient map over the "
+                  "lag vector, and the UHCS steel micrographs against CNN features (downloads "
+                  "270 MB into benchmarks/cache/uhcs on the first run; needs torchvision)",
+                  "run_microstructure.py", "microstructure",
+                  # the pilot (five draws), the gate (twenty draws, equal budgets, the GP
+                  # baseline, every label the cache holds), and the other three tests
+                  compute=[[],
+                           ["--protocol", "gate", "--jobs", "8"],
+                           ["--stage", "twoscale", "--protocol", "gate", "--jobs", "8"],
+                           ["--stage", "map"],
+                           ["--stage", "uhcs", "--protocol", "gate", "--jobs", "8"]],
+                  prepare=["prepare_elastic.py benchmarks/cache/microstructure/<set>.npz "
+                           "(inside the PyMKS environment)"],
+                  minutes="120",
+                  report=lambda: _mod("run_microstructure").report(),
+                  tables=["microstructure/table.md"]),
         Benchmark("threebody",
                   "three atoms at a time: the triangle around every atom of a cell and the "
                   "signed volume that separates a mirror image, measured on a pair of "
@@ -800,6 +824,12 @@ def registry() -> List[Benchmark]:
                   minutes="15",
                   report=lambda: _mod("run_errorpred").report(_r("errorpred")),
                   tables=["errorpred/table.md"]),
+        Benchmark("surrogate", "is the predictive standard deviation calibrated, and what "
+                  "a tolerance rule does: the model as the fast level of a hierarchy",
+                  "run_surrogate.py", "surrogate", compute=[[], ["--hops"]],
+                  minutes="10",
+                  report=lambda: _mod("run_surrogate").report(_r("surrogate")),
+                  tables=["surrogate/table.md"]),
         Benchmark("perfield", "one attenuation per field, or one shared by all of them",
                   "run_perfield.py", "perfield", compute=[[]],
                   minutes="10",

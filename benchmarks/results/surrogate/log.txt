@@ -1,0 +1,85 @@
+=== ACE: 114 molecules
+  split 0: alpha 1 lambda 0.1  test RMSE 1.411  mean sd 1.425  z rms folds 1.08 test 1.15 corrected 1.06  2 sd 88%  rule: answers 47% at 1.193, defers at 1.580
+  split 1: alpha 1 lambda 1  test RMSE 1.656  mean sd 1.332  z rms folds 0.99 test 1.26 corrected 1.28  2 sd 85%  rule: answers 62% at 1.679, defers at 1.619
+  split 2: alpha 0.5 lambda 1  test RMSE 1.384  mean sd 1.442  z rms folds 1.01 test 0.98 corrected 0.97  2 sd 100%  rule: answers 71% at 1.322, defers at 1.521
+  split 3: alpha 0.5 lambda 1  test RMSE 1.710  mean sd 1.298  z rms folds 0.94 test 1.28 corrected 1.36  2 sd 82%  rule: answers 53% at 1.327, defers at 2.058
+  split 4: alpha 1 lambda 1  test RMSE 1.396  mean sd 1.392  z rms folds 0.94 test 1.09 corrected 1.15  2 sd 88%  rule: answers 47% at 1.733, defers at 1.007
+  2 s
+=== AChE: 111 molecules
+  split 0: alpha 4 lambda 0.1  test RMSE 0.868  mean sd 0.830  z rms folds 1.07 test 1.02 corrected 0.96  2 sd 91%  rule: answers 73% at 0.655, defers at 1.271
+  split 1: alpha 1 lambda 0.1  test RMSE 0.773  mean sd 0.757  z rms folds 1.01 test 1.01 corrected 1.00  2 sd 97%  rule: answers 67% at 0.706, defers at 0.892
+  split 2: alpha 1 lambda 0.1  test RMSE 0.610  mean sd 0.819  z rms folds 1.06 test 0.77 corrected 0.73  2 sd 97%  rule: answers 79% at 0.652, defers at 0.419
+  split 3: alpha 4 lambda 0.1  test RMSE 0.917  mean sd 0.845  z rms folds 1.03 test 1.04 corrected 1.01  2 sd 91%  rule: answers 61% at 0.729, defers at 1.147
+  split 4: alpha 1 lambda 0.1  test RMSE 0.876  mean sd 0.898  z rms folds 1.06 test 0.97 corrected 0.92  2 sd 94%  rule: answers 61% at 0.768, defers at 1.020
+  3 s
+=== BZR: 147 molecules
+  split 0: alpha 0.5 lambda 1  test RMSE 0.650  mean sd 0.610  z rms folds 1.02 test 1.06 corrected 1.04  2 sd 91%  rule: answers 80% at 0.633, defers at 0.713
+  split 1: alpha 0.5 lambda 1  test RMSE 0.488  mean sd 0.660  z rms folds 1.02 test 0.75 corrected 0.73  2 sd 100%  rule: answers 82% at 0.508, defers at 0.387
+  split 2: alpha 0.5 lambda 1  test RMSE 0.750  mean sd 0.569  z rms folds 1.02 test 1.27 corrected 1.24  2 sd 86%  rule: answers 82% at 0.691, defers at 0.971
+  split 3: alpha 0.5 lambda 1  test RMSE 0.450  mean sd 0.675  z rms folds 1.04 test 0.68 corrected 0.65  2 sd 100%  rule: answers 82% at 0.455, defers at 0.428
+  split 4: alpha 0.5 lambda 1  test RMSE 0.710  mean sd 0.585  z rms folds 1.03 test 1.16 corrected 1.12  2 sd 93%  rule: answers 77% at 0.629, defers at 0.935
+  2 s
+=== COX2: 282 molecules
+  split 0: alpha 2 lambda 1  test RMSE 0.804  mean sd 0.812  z rms folds 0.97 test 1.00 corrected 1.02  2 sd 93%  rule: answers 66% at 0.787, defers at 0.835
+  split 1: alpha 4 lambda 1  test RMSE 0.940  mean sd 0.771  z rms folds 0.98 test 1.21 corrected 1.23  2 sd 88%  rule: answers 59% at 0.877, defers at 1.022
+  split 2: alpha 2 lambda 1  test RMSE 0.784  mean sd 0.848  z rms folds 0.99 test 0.94 corrected 0.95  2 sd 95%  rule: answers 65% at 0.726, defers at 0.882
+  split 3: alpha 4 lambda 1  test RMSE 0.784  mean sd 0.843  z rms folds 0.98 test 0.93 corrected 0.96  2 sd 94%  rule: answers 59% at 0.796, defers at 0.765
+  split 4: alpha 2 lambda 1  test RMSE 0.744  mean sd 0.853  z rms folds 0.94 test 0.88 corrected 0.94  2 sd 96%  rule: answers 40% at 0.709, defers at 0.767
+  9 s
+=== DHFR: 361 molecules
+  split 0: alpha 4 lambda 0.1  test RMSE 0.760  mean sd 0.631  z rms folds 1.08 test 1.15 corrected 1.07  2 sd 88%  rule: answers 79% at 0.699, defers at 0.954
+  split 1: alpha 4 lambda 0.1  test RMSE 0.774  mean sd 0.685  z rms folds 1.13 test 1.14 corrected 1.01  2 sd 91%  rule: answers 74% at 0.746, defers at 0.849
+  split 2: alpha 4 lambda 0.1  test RMSE 0.723  mean sd 0.708  z rms folds 1.12 test 1.05 corrected 0.94  2 sd 95%  rule: answers 80% at 0.653, defers at 0.949
+  split 3: alpha 4 lambda 0.1  test RMSE 0.731  mean sd 0.671  z rms folds 1.12 test 1.06 corrected 0.95  2 sd 94%  rule: answers 89% at 0.690, defers at 1.000
+  split 4: alpha 4 lambda 0.1  test RMSE 0.767  mean sd 0.698  z rms folds 1.08 test 1.01 corrected 0.94  2 sd 95%  rule: answers 79% at 0.602, defers at 1.195
+  16 s
+=== GPB: 66 molecules
+  split 0: alpha 4 lambda 0.1  test RMSE 0.788  mean sd 0.734  z rms folds 1.09 test 1.04 corrected 0.95  2 sd 90%  rule: answers 40% at 0.694, defers at 0.845
+  split 1: alpha 4 lambda 0.1  test RMSE 0.860  mean sd 0.634  z rms folds 0.99 test 1.39 corrected 1.41  2 sd 90%  rule: answers 50% at 1.048, defers at 0.616
+  split 2: alpha 4 lambda 1  test RMSE 0.538  mean sd 0.788  z rms folds 0.94 test 0.69 corrected 0.73  2 sd 100%  rule: answers 25% at 0.588, defers at 0.520
+  split 3: alpha 4 lambda 0.001  test RMSE 1.021  mean sd 0.674  z rms folds 1.00 test 1.62 corrected 1.63  2 sd 80%  rule: answers 35% at 0.935, defers at 1.065
+  split 4: alpha 4 lambda 1  test RMSE 0.628  mean sd 0.781  z rms folds 0.93 test 0.77 corrected 0.83  2 sd 100%  rule: answers 20% at 0.487, defers at 0.659
+  0 s
+=== THER: 76 molecules
+  split 0: alpha 1 lambda 1  test RMSE 1.342  mean sd 1.705  z rms folds 1.01 test 0.88 corrected 0.87  2 sd 100%  rule: answers 35% at 1.882, defers at 0.934
+  split 1: alpha 0.2 lambda 1  test RMSE 1.829  mean sd 1.520  z rms folds 1.04 test 1.19 corrected 1.14  2 sd 91%  rule: answers 70% at 1.720, defers at 2.057
+  split 2: alpha 4 lambda 1  test RMSE 1.973  mean sd 1.443  z rms folds 1.02 test 1.42 corrected 1.39  2 sd 83%  rule: answers 39% at 2.012, defers at 1.948
+  split 3: alpha 1 lambda 1  test RMSE 1.491  mean sd 1.620  z rms folds 1.00 test 0.95 corrected 0.94  2 sd 91%  rule: answers 48% at 1.403, defers at 1.568
+  split 4: alpha 1 lambda 1  test RMSE 1.539  mean sd 1.735  z rms folds 1.08 test 0.91 corrected 0.85  2 sd 100%  rule: answers 57% at 1.588, defers at 1.473
+  1 s
+=== THR: 88 molecules
+  split 0: alpha 0.5 lambda 0.1  test RMSE 0.669  mean sd 0.550  z rms folds 0.95 test 1.15 corrected 1.22  2 sd 85%  rule: answers 81% at 0.577, defers at 0.966
+  split 1: alpha 0.5 lambda 0.1  test RMSE 0.702  mean sd 0.715  z rms folds 0.99 test 1.07 corrected 1.07  2 sd 92%  rule: answers 50% at 0.629, defers at 0.768
+  split 2: alpha 0.5 lambda 0.1  test RMSE 0.729  mean sd 0.676  z rms folds 0.95 test 1.00 corrected 1.05  2 sd 96%  rule: answers 58% at 0.508, defers at 0.951
+  split 3: alpha 0.5 lambda 0.1  test RMSE 0.606  mean sd 0.653  z rms folds 0.97 test 0.88 corrected 0.90  2 sd 100%  rule: answers 65% at 0.488, defers at 0.781
+  split 4: alpha 2 lambda 0.1  test RMSE 0.653  mean sd 0.612  z rms folds 0.96 test 1.02 corrected 1.07  2 sd 96%  rule: answers 42% at 0.512, defers at 0.740
+  3 s
+# The predictive standard deviation as a fast level sees it
+
+8 Sutherland sets, 5 random 70/30 splits each; alpha and lambda by the evidence on the training part. z rms is the root mean square of (measured - predicted) / sd, one for a calibrated deviation and above one for a model surer than it should be; 'corrected' multiplies the test deviations by the factor the folds of the training part gave.
+
+| set | n | test RMSE | mean sd | z rms, folds | z rms, test | z rms, corrected | inside 2 sd | sd vs error (rho) |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| DHFR | 361 | 0.751 | 0.679 | 1.10 | 1.08 | 0.98 | 93% | +0.20 |
+| COX2 | 282 | 0.811 | 0.825 | 0.97 | 0.99 | 1.02 | 93% | +0.04 |
+| BZR | 147 | 0.610 | 0.620 | 1.03 | 0.98 | 0.96 | 94% | +0.15 |
+| ACE | 114 | 1.512 | 1.378 | 0.99 | 1.15 | 1.16 | 89% | +0.04 |
+| AChE | 111 | 0.809 | 0.830 | 1.05 | 0.96 | 0.92 | 94% | +0.28 |
+| THR | 88 | 0.672 | 0.641 | 0.96 | 1.02 | 1.06 | 94% | +0.21 |
+| THER | 76 | 1.635 | 1.605 | 1.03 | 1.07 | 1.04 | 93% | -0.12 |
+| GPB | 66 | 0.767 | 0.722 | 0.99 | 1.10 | 1.11 | 92% | +0.33 |
+| **mean** |  | 0.946 | 0.912 | **1.02** | **1.05** | **1.03** | 93% | +0.14 |
+
+The tolerance rule, with the tolerance set to the cross-validated RMSE of the training part (what the model claims as its typical error): the share of the held-out structures the model answers and the RMSE on each side.  The last columns send a fixed 25% of the structures to the fine level instead.
+
+| set | tolerance | answered | RMSE answered | RMSE deferred | RMSE answered at 25% deferred | RMSE of that 25% |
+|---|---:|---:|---:|---:|---:|---:|
+| DHFR | 0.805 | 80% | 0.678 | 0.989 | 0.671 | 0.944 |
+| COX2 | 0.797 | 58% | 0.779 | 0.854 | 0.793 | 0.852 |
+| BZR | 0.648 | 80% | 0.583 | 0.687 | 0.570 | 0.699 |
+| ACE | 1.380 | 56% | 1.451 | 1.557 | 1.408 | 1.728 |
+| AChE | 0.868 | 68% | 0.702 | 0.950 | 0.745 | 0.955 |
+| THR | 0.626 | 59% | 0.543 | 0.841 | 0.549 | 0.921 |
+| THER | 1.551 | 50% | 1.721 | 1.596 | 1.633 | 1.564 |
+| GPB | 0.653 | 34% | 0.750 | 0.741 | 0.668 | 0.976 |
+| **mean** | 0.916 | 61% | **0.901** | **1.027** | **0.880** | **1.080** |

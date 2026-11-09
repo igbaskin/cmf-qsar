@@ -6137,6 +6137,92 @@ because the fourth-dimension verdict says ensembles do not help, so it has nothi
 **Order.** ND11 first, because it runs on the existing sets and gates on the calibration the
 program already measures. ND12 after ND5 to ND7, on the larger sets. ND13 with ND9.
 
+### Multiscale modelling: the model as the fast level of a hierarchy (7 November 2026)
+
+*Drafted 7 November 2026.* A multiscale scheme uses a fitted model between an electronic-structure
+method and a coarser model: the fine level labels a few hundred structures, the model answers for
+the thousands the coarse model needs. The hop model of BT7 already runs that chain by hand. The
+program had the parts a hierarchy needs — the posterior variance (E2), the evidence with its
+profiled amplitude (B4), the conformal interval and the measurement that the three estimates of the
+error are one geometric fact (E5) — but not the form a hierarchy consumes them in. The items below
+add that form, in the order of their value per unit of work; what they do not do is turn the
+method into an interatomic potential, which is a field with larger data and engineering budgets and
+would discard the typed fields and the global kernel that are the method's own.
+
+* **MS1. A standard deviation in the units of the activity, its calibration, and the tolerance
+  rule.** The variance of the Gaussian process is in the units of the kernel. The process that
+  matches the ridge fit has the prior covariance $s\mathbf{K}$ and the noise $s\lambda$ with $s$ the
+  amplitude the evidence profiles out, so $s\,(v + \lambda)$ is the predictive variance of a new
+  measurement in the units of $y$, with the uncertainty of the marginalised constant mean added to
+  $v$. Built and measured 7 November 2026: `cmfqsar/surrogate.py` (`Surrogate`, `cross_validate`,
+  `Calibration`, `defer`, `tolerance_for_budget`, `Handoff`), `CMFModel.predict_with_sd` and
+  `calibration`, `cmf build --calibration`, `cmf predict --sd --tolerance`, and
+  `benchmarks/run_surrogate.py` with its table in the manual. *Measured* on the eight Sutherland
+  sets, five 70/30 splits each: the root mean square of the standardised residual is 1.02 on the
+  folds and 1.05 on the held-out molecules, two standard deviations hold 93 %, and the mean
+  deviation is within 4 % of the error made on every set — the deviation is calibrated as it stands
+  and the correction factor is reported, not needed. The rule at a tolerance equal to the
+  cross-validated RMSE answers 61 % of the held-out molecules at an RMSE of 0.90 against 1.03 for
+  the deferred ones, the answered error sitting at the tolerance as promised; the separation is the
+  modest one E5 measured, and THER fails as it did there. *Measured on the hop sample
+  of LiTraj* the same day (`run_surrogate.py --hops`: 1,801 hops in 393 structures, folds that
+  hold out structures, the fine level a bond-valence barrier): calibrated again for the linear
+  and the Gaussian kernel (z rms 1.05 and 0.99, 95 % and 96 % inside two standard deviations),
+  and the rule separates by 1.8 rather than 1.1 — the Gaussian kernel answers 82 % of the hops at
+  1.00 eV and returns 18 % whose error would have been 1.75 eV — because a held-out structure is
+  often the only one of its chemical system, which is the situation a hierarchy is in. *Open:* a
+  set whose fine level is a DFT barrier rather than a bond-valence one (the nebDFT2k opening of
+  BT7's external check); a series where the kernel misses a part of the chemistry, which is where
+  the factor should depart from one; and the low-rank path, whose Woodbury variance exists in
+  `cmfqsar/lowrank.py` without the scale.
+
+* **MS2. A spatially resolved prediction as an output mode.** The global kernel returns one number
+  per structure; a coarser model needs a map — a barrier per site, a reactivity per surface site, a
+  growth rate per patch. The co-field lives in space, so decomposing a prediction into the
+  contributions of atoms or regions is a projection and not a new model; M5 did it by hand with a
+  site as the sample. *Gate:* the per-site contributions of a cell model, summed, equal its
+  prediction, and the site ranking they give agrees with the site-resolved model of M5 on the SAC
+  set at Spearman ρ above +0.7.
+
+* **MS3. Analytic gradients with respect to the atom positions.** The overlap kernel is
+  differentiable in closed form, as EC5 showed for the field gradient. The gradient of a prediction
+  gives an effective force, which lets the co-field act as a potential of mean force in a
+  relaxation, a Monte Carlo move or the design loop of M11, without the model becoming a force
+  field. *Gate:* the analytic gradient agrees with finite differences to 1e-6 on every field type,
+  and a relaxation of a posed molecule under it ends at the pose the confidence aligner finds.
+
+* **MS4. A resolution-aware kernel.** A sum of kernels over several Gaussian widths, with the
+  mixture fixed by the evidence, lets one model see fine and coarse structure at once; the M6
+  finding that a longer cutoff costs accuracy is the symptom. The same machinery lets a
+  coarse-grained bead carry a wide Gaussian and an atom a narrow one. *Gate:* the kernel
+  correlation between the all-atom and a bead description of the same structures (the whole-kernel
+  criterion of EC5), and no loss of q² on the Sutherland sets against the single width.
+
+* **MS5. Ensembles as the normal input.** Equation 10.1 makes the kernel of two ensembles exact.
+  A trajectory or a sampled shell as the sample, with the single structure as the special case, is
+  how temperature enters a static field method; BT5 did it for solvation shells. *Gate:* the
+  ensemble path reproduces the BT5 numbers from the same frames through the general entry.
+
+* **MS6. A fit that scales.** A sparse Gaussian process or the Nyström form of B6 with the scale
+  of MS1 attached, so the surrogate level can be trained on the hundred thousand structures of a
+  public DFT set; LiTraj is the test case. *Gate:* the calibration of MS1 holds on the low-rank
+  path within 0.1 in the root mean square of z.
+
+* **MS7. Interfaces.** An ASE calculator wrapper for a model, the co-field written as a cube file,
+  and the site map of MS2 written as a table a kinetic Monte Carlo or phase-field code reads.
+  *Gate:* the hop simulation of BT7 reads the model through the wrapper and gives the numbers the
+  benchmark stores.
+
+* **MS8. One end-to-end chain with its error carried through.** DFT barriers, the model with its
+  deviation, the hop simulation, the measured conductivity, and a statement of how the deviation of
+  MS1 moves the final number. The hop model of BT7 is two thirds of this chain. *Gate:* the
+  conductivity with an interval, against the measured one of at least three of the disordered
+  conductors of M2.
+
+**Order.** MS1 is done. MS2 and MS3 next, because the hop set is ready for both; MS7 with them,
+because it is what makes them usable; MS4 after M6 is revisited; MS5 and MS6 as their data arrive;
+MS8 last, since it needs all of the others.
+
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
 *Drafted 26 October 2026. Parts A to G build the model and part H leaves medicinal chemistry for

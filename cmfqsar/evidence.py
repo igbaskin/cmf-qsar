@@ -136,3 +136,15 @@ def evidence_grid(kernels: Sequence[Tuple[float, np.ndarray]], y: Sequence[float
     if best is None:
         return float("nan"), float("nan"), surface
     return best[1], best[2], surface
+
+def noise_scale(K: np.ndarray, y: Sequence[float], lam: float, fit_bias: bool = True) -> float:
+    """The amplitude the evidence profiles out, as a number.
+
+    The Gaussian process that matches the ridge fit has the prior covariance ``s K`` and the
+    noise ``s lambda``; this is ``s``, the mean squared whitened residual of the training set.
+    :mod:`cmfqsar.surrogate` multiplies the posterior variance by it to put a standard deviation
+    in the units of the activity.
+    """
+    from .surrogate import Surrogate
+    return Surrogate.fit(K, y, lam, fit_bias).scale
+

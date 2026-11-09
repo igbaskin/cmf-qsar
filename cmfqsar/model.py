@@ -2003,6 +2003,7 @@ class CMFModel:
                                          reuse=reuse_kernels)
         self.y = y
         self.base_diag_ = np.diag(K_lin).copy()
+        self._surrogate = None
         self.gamma_scale_ = median_gamma_scale(K_lin) if self.kernel_layer == "gauss" else None
         K = self.apply_layer(K_lin, self.base_diag_, self.base_diag_)
         learner = _Learner(self.method, self.params, self.fit_bias)
@@ -2175,6 +2176,7 @@ class CMFModel:
         self.coef = None
         self.bias = float(b)
         self.train, self.y = train, y
+        self._surrogate = None
         self.self_diag = np.asarray(self_kernels(train, specs), float)
         pred, _which = LR.cross_validate(low, train, y, lam, folds=folds, seed=seed,
                                          fit_bias=self.fit_bias, block=block)
@@ -2300,6 +2302,60 @@ class CMFModel:
             learner = self.learner_
         var = learner.predict_variance(K, self.joint_self(test))
         return yp, var
+
+    # ------------------------------------------- the model as the fast level of a hierarchy
+    def surrogate(self):
+        """The Gaussian-process reading of this fit, with its scale in the units of the activity.
+
+        Plan item MS1.  It is kept on the model, because a library is predicted in blocks and the
+        factorisation of the training kernel is the whole cost; a refit discards it.
+        """
+        from .surrogate import Surrogate
+
+        if self.is_low_rank:
+            raise ValueError("the predictive standard deviation needs the n by n training "
+                             "kernel, which a low-rank model was fitted to avoid")
+        if not self.is_linear:
+            raise ValueError(
+                f"the predictive standard deviation is implemented for the linear CMF kernel; "
+                f"this model uses the '{self.kernel_layer}' layer")
+        if self.method not in ("krr", "gp"):
+            raise ValueError("the predictive standard deviation belongs to the ridge fit: "
+                             f"method krr or gp, not {self.method}")
+        if self.y is None or self.train is None:
+            raise RuntimeError("model is not fitted")
+        s = getattr(self, "_surrogate", None)
+        if s is None:
+            s = Surrogate.fit(self._linear_train_kernel(), self.y,
+                              float(self.params.get("lam", 1.0)), self.fit_bias)
+            self._surrogate = s
+        return s
+
+    def predict_with_sd(self, test: AtomTable, with_noise: bool = True) -> Tuple[np.ndarray, np.ndarray]:
+        """(prediction, predictive standard deviation) in the units of the activity.
+
+        The prediction is the model's own.  The standard deviation is the posterior deviation of
+        :meth:`predict_with_variance` put into the units of ``y`` by the noise scale of the fit,
+        with the uncertainty of the constant mean added; with ``with_noise`` it is the deviation
+        of a new measurement, which is what a tolerance on the answer should be compared with.
+        """
+        s = self.surrogate()
+        return s.predict(self.test_kernel(test), self.joint_self(test), with_noise=with_noise)
+
+    def calibration(self, folds: int = 10, seed: Optional[int] = 0):
+        """Whether the predictive standard deviation means what it says, on the folds.
+
+        Returns a :class:`cmfqsar.surrogate.Calibration`: the root mean square of the
+        standardised out-of-fold residual (one when calibrated), the shares inside one and two
+        standard deviations, and the factor that would correct the deviation.
+        """
+        from .surrogate import Calibration, cross_validate
+
+        self.surrogate()        # the same refusals
+        mean, sd = cross_validate(self._linear_train_kernel(), self.y,
+                                  float(self.params.get("lam", 1.0)), folds=folds, seed=seed,
+                                  fit_bias=self.fit_bias)
+        return Calibration.of(self.y, mean, sd)
 
     def rank_score(self, test: AtomTable, beta: float = 0.0,
                    larger_is_better: bool = True) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
