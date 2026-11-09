@@ -6489,6 +6489,99 @@ all of the others. MS9 can run alongside MS8: both carry the deviation of MS1 th
 model, MS8 through a hop simulation to a conductivity and MS9 through a cell model to a capacity
 curve, and MS9 needs no new data because its reference parameter set is published.
 
+### Spectroscopy: a spectrum as the target, the sample and the bridge (9 November 2026)
+
+*Drafted 9 November 2026.* A spectrum meets the method in three roles, and the repository already
+holds a measurement in two of them. As a **target**, a spectroscopic observable is a property like
+any other: LP2 predicts 13C shifts from the local field (q² +0.973 and 8.8 ppm against +0.853 and
+20.5 ppm for an atom-centred count, with the best envelope width at 1.0 Å, which is the behaviour a
+short-range property should show), and the periodic kernel predicts the top of a phonon spectrum
+(MAE 92 cm⁻¹ on Matbench phonons, where the field that mattered was the inverse square root of the
+mass). As a **sample**, a measured curve is a function on an axis, and M12 showed that a measured
+pair distribution function can stand in for a structure (R² +0.303 where the typed descriptor
+reaches +0.771 on the bulk modulus), that a curve as computed is too sharp to compare until it is
+broadened to the resolution of the instrument, and that a model fitted on computed curves does not
+predict measured ones. As a **bridge**, a spectrum sits between the structure and the property, and
+the kernel CCA of `cmfqsar/kcca.py` is the tool that reads one against the other.
+
+The observation the items below rest on is simple. A spectrum of broadened lines is a sum of
+Gaussians (or Lorentzians) on one axis, which is a molecular field in one dimension. The overlap
+kernel between two such spectra is therefore closed form (rule 3), its width is the resolution of
+the instrument rather than a fitted parameter, and the co-field solver on a one-dimensional grid
+gives a *co-spectrum*: the regions of the axis where intensity raises or lowers the property. That
+is the interpretable object which partial least squares on spectra, the standard tool of
+chemometrics, does not give in this form. What the role of the sample loses is equally clear: a
+spectrum carries no frame, so the superposition and the three-dimensional co-field that are the
+method's own play no part in it. Two lessons of earlier items apply to everything here. From EC5, a
+new channel is judged by the correlation of its whole kernel with the structural kernel before any
+accuracy is measured, not by the best of many columns. From M15, the cosine form of the kernel is
+what divides the intensity scale (concentration, path length, sample mass) out of a measured curve.
+
+* **SP1. A spectrum as a one-dimensional field: the kernel and the co-spectrum.** A reader for a
+  stick spectrum (positions and intensities, as ORCA writes a vibrational spectrum and as
+  pymatgen's diffraction calculator writes a powder pattern) and for a measured curve on its
+  instrument grid, which is the reader of M12 with the axis generalised from r and Q to
+  wavenumber, 2θ, binding energy or ppm. The kernel of two stick spectra with positions x_i, y_j
+  and intensities a_i, b_j is Σ a_i b_j exp(−(x_i − y_j)² / 4σ²), the steric kernel in one
+  dimension; a measured curve enters as the same sum over its grid points. The cosine form is the
+  default, a sum over several widths follows MS4, and the co-spectrum comes from `cofields.py` on a
+  one-dimensional grid and is drawn as a curve over the axis. The spectral kernel joins the
+  structural kernel as one more block in the mixing of `cmfqsar/mixing.py` (`with_views`), so the
+  same fit can carry a computed structure and a measured spectrum together. The item has two
+  halves with two gates. *(a) Computed, no new data.* On the 1,265 crystals of Matbench phonons the
+  computed powder diffraction pattern is the sample, against the periodic kernel (MAE 92 cm⁻¹) on
+  the same folds. This is the question of M12 put in reciprocal space, where M6 says the untyped
+  structure factor sits; the expected outcome is the one M12 found, that losing the types costs
+  accuracy, and the measurement is worth making because the pattern is what an experiment
+  measures. *(b) Measured.* A set with measured spectra and a measured property, fitted on measured
+  curves only, as the second finding of M12 requires. No such set is in the repository. The search
+  goes into `docs/public_3dqsar_datasets.md` as the earlier searches did, with three candidates to
+  check first: the RRUFF collection (Raman, infrared and powder patterns of minerals, free for
+  research use) paired with a mineral property from another source; the infrared spectra of the
+  NIST Chemistry WebBook, whose terms of use for a bulk download have to be read; and the computed
+  vibrational spectra of the QM9 molecules, which can serve only the computed half. *Gate:* the
+  kernel correlation of the spectral block with the structural kernel is reported first. The item
+  is a result (rule 4) when the structural kernel with the spectral block beats the structural
+  kernel alone by more than the interval, or, where no atomic structure is available, when the
+  spectrum alone reaches the composition descriptor on the same folds. Under rule 5 the script is
+  `benchmarks/run_spectra.py`.
+* **SP2. A localised band position as a local target.** The analogue of LP2 for a vibrational
+  band. The carbonyl stretch of the substituted benzoic acids of the Hammett series
+  (`examples/hammett/`, `benchmarks/results/hammett/`, structures already in the repository) is
+  computed with ORCA through a frequency run added to `cmfqsar/orca.py` (harmonic frequencies with
+  the usual scaling factor; two to three minutes a molecule on the serial build, so the series
+  costs a few hours). The sample is the environment of the carbonyl carbon: the local field of LP2
+  with the width scanned, where the expectation is a best width near 1 Å as for the shift; the
+  reference under rule 1 is the shell count of LP2; the interpretation is the local co-field of LP3
+  around the carbonyl group. If a table of measured carbonyl bands for the series is found in the
+  literature, the measured values replace the computed ones and the computed ones become a second
+  column. *Gate:* the local field beats the count by more than the interval, and the local co-field
+  reproduces the meta/para picture of the Hammett co-fields from the band alone, as LP3 did from
+  the acidity. What this is not: a predictor of whole vibrational spectra, which needs the
+  thousands of spectra and the calculated geometries the dedicated programs use.
+* **SP3. The spectrum as the bridge: which part of the field moves a band, and which structure
+  fits a spectrum.** Two parts. *(a)* The kernel CCA of `cmfqsar/kcca.py` with the structural field
+  kernel as one view and the spectral kernel of SP1 as the other. The first pairs of directions
+  say which part of the field moves which region of the spectrum, read as a co-field on the
+  structural side and a co-spectrum on the spectral side. On the series of SP2 the first structural
+  direction should load on the neighbourhood of the carbonyl group and the first spectral direction
+  on the carbonyl band. *(b)* A structure from a spectrum among candidates. For a measured curve, or
+  a computed one broadened to the resolution of an instrument, the candidate structures (isomers,
+  conformers, polymorphs) are ranked by the kernel between the curve and each candidate's computed
+  spectrum at that resolution. This is the loop of M11 with a spectrum as the objective, and the
+  broadening rule of M12 is what makes the comparison work. *Gate:* on the series of SP2, a
+  spectrum computed at a second level of theory (or measured, where SP1(b) finds one) ranks its own
+  molecule first among the series in most cases, where a composition descriptor cannot tell the
+  isomers of the series apart at all.
+
+**Order.** SP2 first: it needs only frequency runs on structures the repository already holds and
+reuses the local field, the count and the local co-field of LP2 and LP3 unchanged. SP1(a) alongside
+it, since it needs no fetch; SP1(b) when a set is found; SP3 after SP1 and SP2, because it needs
+the spectral kernel of the one and the series of the other. Electronic spectra (absorption maxima,
+which depend on conjugation) are not among these items: the classical fields do not carry them, the
+state fields of EC1 are the input they would need, and the kernel-correlation test of EC5 on a
+series of absorption maxima is the check to run before an item is written for them.
+
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
 *Drafted 26 October 2026. Parts A to G build the model and part H leaves medicinal chemistry for
@@ -7000,9 +7093,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 1 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND7, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
+| H. Spectroscopy | 3 | 0 | SP1, SP2, SP3 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**158 items: 112 finished, 4 partly, 42 open.**
+**162 items: 112 finished, 4 partly, 46 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
