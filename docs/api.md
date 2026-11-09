@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 117 modules, 231 classes with 771 public methods, and 1148 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 118 modules, 232 classes with 783 public methods, and 1153 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -143,6 +143,7 @@ for.
 | [cmfqsar.validation](#cmfqsarvalidation) | The three questions a 3D-QSAR model has to answer besides "how good is q²". |
 | [cmfqsar.varalign](#cmfqsarvaralign) | Alignment by prediction confidence: the pose of a molecule is chosen so that the posterior variance of its predicted activity is as small as possible. |
 | [cmfqsar.vasp](#cmfqsarvasp) | Per-atom arrays from a VASP run, read into an ASE structure (plan item M3). |
+| [cmfqsar.warp](#cmfqsarwarp) | A warped Gaussian process: a monotone transform of the activity, learned with the GP (plan item ND11). |
 | [cmfqsar.xtb](#cmfqsarxtb) | A cheap quantum stage: per-atom properties from GFN2-xTB (plan item D3). |
 | [cmfqsar.gui](#cmfqsargui) | PySide6 desktop application for CMF 3D-QSAR. |
 | [cmfqsar.gui.app](#cmfqsarguiapp) | Application entry point. |
@@ -9866,6 +9867,7 @@ Attributes:
 - `params: Dict[str, float]` = `field(default_factory=lambda: {'lam': 1.0, 'C': 1.0, 'epsilon': 0.1, 'nu': 0.5, 'components': 5})`
 - `normalize: bool` = `False`
 - `scale_fields: bool` = `True`
+- `warp: int` = `0`
 - `cutoff: Optional[object]` = `None`
 - `engine: Optional[str]` = `None`
 - `kernel_source: str` = `'fields'`
@@ -10061,6 +10063,16 @@ Install precomputed per-field training kernels (already normalised if `normalize
 
 #### `CMFModel.fit(train: AtomTable, y: np.ndarray, cv_folds: int=10, cv_seed: Optional[int]=0, progress: Optional[ProgressFn]=None, cancel: Optional[CancelFn]=None, reuse_kernels: bool=False) -> 'CMFModel'`
 
+#### `CMFModel.predict_warped_interval(test: AtomTable, level: float=0.9) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(median, lower, upper) of new molecules in the original units, from the warped
+process's own central interval at `level` (plan item ND11).
+
+The Gaussian process gives a mean and a deviation in the warped units; the prediction
+is the inverse of the mean, which is the median, and the interval is the inverse of the
+symmetric one, which is no longer symmetric about the prediction.  A model without a
+warp has `predict_interval` (conformal) and `predict_with_sd` instead.
+
 #### `CMFModel.calibrate_conformal(level: float=0.9, normalise: bool=False, beta: float=1.0)`
 
 Calibrate a prediction interval on the errors of the cross-validation already run.
@@ -10126,6 +10138,10 @@ factorisation of the training kernel is the whole cost; a refit discards it.
 #### `CMFModel.predict_with_sd(test: AtomTable, with_noise: bool=True) -> Tuple[np.ndarray, np.ndarray]`
 
 (prediction, predictive standard deviation) in the units of the activity.
+
+For a model with a warp of the activity (plan item ND11) both are in the *warped*
+units, where the process is Gaussian; `predict_warped_interval` carries an
+interval back to the original units.
 
 The prediction is the model's own.  The standard deviation is the posterior deviation of
 `predict_with_variance` put into the units of `y` by the noise scale of the fit,
@@ -18330,6 +18346,155 @@ The `bader_charges` array and the initial charges both come back from such a fil
 ### `describe_arrays(atoms) -> str`
 
 One line per per-atom array: its name, mean and range.
+
+## cmfqsar.warp
+
+Source: `cmfqsar/warp.py`
+
+A warped Gaussian process: a monotone transform of the activity, learned with the GP (plan
+item ND11).
+
+A Gaussian process assumes that the activity, less what the kernel explains, is Gaussian noise
+on one scale. A pIC50 series is often not like that: a skewed scale, a floor of inactive
+compounds, a handful of very active ones. Snelson, Ghahramani and Rasmussen (NIPS 2003) fit a
+monotone, invertible transform of the response *together with* the process, so that the
+transformed activity is what the GP models, and every prediction is carried back through the
+inverse. The transform has a handful of parameters, so it fits thirty molecules; the model stays
+linear in the field in the warped units, which is where the co-field and the decomposition rules
+are read, and the output says so.
+
+**The transform.** With `u = (y - centre) / width` the standardised activity,
+
+    g(y) = u + sum_i a_i tanh(b_i (u + c_i)),      a_i > 0, b_i > 0,
+
+a sum of a straight line and a few smooth steps: each term stretches the scale around `-c_i`
+and compresses it far away, which is what a skewed or a censored scale needs. `g'(y) > 0`
+everywhere, so the inverse exists, and it is found by bisection, which is exact to machine
+precision in sixty steps because the inverse lies within `sum_i a_i` of `z`.
+
+**The fit.** The parameters maximise the log marginal likelihood of the warped activities under
+the kernel, with the amplitude profiled out and the constant mean marginalised as
+`cmfqsar.evidence.log_evidence` does it, plus the Jacobian `sum_i log g'(y_i)` that makes
+it the likelihood of the *original* activities. Because the amplitude is profiled, the objective
+does not change when the whole transform is scaled, so the only freedom that is fitted is the
+shape. The identity (`a = 0`) is always a candidate, and `fit_warp` reports by how much
+the warp beat it, so a series whose activities are already close to normal can be left alone.
+
+**The reporting.** The GP gives a mean and a deviation in warped units. The prediction returned
+in the original units is the *median*, `g^-1(mean)`, which is what the inverse of a symmetric
+interval's centre is; an interval is `[g^-1(mean - k sd), g^-1(mean + k sd)]`, which is no
+longer symmetric about the prediction, and that asymmetry is the point.
+
+### `class Warp  (dataclass)`
+
+A monotone transform of the activity, `g(y) = u + sum a tanh(b (u + c))`.
+
+`centre` and `width` standardise the activity first (the median and a robust scale of
+the training activities), so that the term parameters live on one scale whatever the units.
+`gain` is the log marginal likelihood the fit gained over the identity transform, in nats;
+zero for the identity itself.
+
+Attributes:
+
+- `centre: float`
+- `width: float`
+- `a: np.ndarray` = `field(default_factory=lambda: np.zeros(0))`
+- `b: np.ndarray` = `field(default_factory=lambda: np.zeros(0))`
+- `c: np.ndarray` = `field(default_factory=lambda: np.zeros(0))`
+- `gain: float` = `0.0`
+
+#### `Warp.n_terms` -> int  (property)
+
+#### `Warp.is_identity` -> bool  (property)
+
+True when every term is too small to matter: the warp is the standardisation alone.
+
+#### `Warp.forward(y) -> np.ndarray`
+
+`g(y)`: the activity in warped units.
+
+#### `Warp.derivative(y) -> np.ndarray`
+
+`dg/dy`, positive everywhere.
+
+#### `Warp.inverse(z) -> np.ndarray`
+
+`g^-1(z)`: back to the original units, by bisection on the monotone transform.
+
+#### `Warp.log_jacobian(y) -> float`
+
+`sum log g'(y_i)`: what makes the warped likelihood the likelihood of `y`.
+
+#### `Warp.interval(mean_z: Sequence[float], sd_z: Sequence[float], level: float=0.9) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
+
+(median, lower, upper) in the original units from a mean and deviation in warped
+units: the central interval of the given level, carried back through the inverse.
+
+#### `Warp.describe() -> str`
+
+#### `Warp.to_dict() -> Dict[str, object]`
+
+#### `Warp.from_dict(d: Dict[str, object]) -> 'Warp'`  (class method)
+
+#### `Warp.identity(y: Sequence[float]) -> 'Warp'`  (class method)
+
+The standardisation alone, from the training activities.
+
+### `parameter_penalty(n: int, n_terms: int=DEFAULT_TERMS) -> float`
+
+The log evidence a warp has to gain before it is kept: half its parameter count times
+`log n`, the penalty of the Bayesian information criterion.
+
+Six free parameters gain a few nats on any series, Gaussian or not; on sixty activities drawn
+from a Gaussian the fit gains about four where this asks for twelve, so a series whose
+activities are already close to normal keeps the identity, which is what plan item ND11
+requires of it.
+
+### `warped_log_evidence(K: np.ndarray, y: Sequence[float], lam: float, warp: Warp, fit_bias: bool=True) -> float`
+
+The log marginal likelihood of the original activities under the warped process.
+
+`log p(y) = log N(g(y) | 0, s(K + lam I)) + sum log g'(y)` with the amplitude `s`
+profiled out and the constant mean marginalised, as `cmfqsar.evidence.log_evidence`
+computes the first term. Scaling `g` by a constant leaves this unchanged.
+
+### `fit_warp(K: np.ndarray, y: Sequence[float], lam: float, n_terms: int=DEFAULT_TERMS, fit_bias: bool=True, restarts: int=2, seed: Optional[int]=0, min_gain: Optional[float]=None) -> Warp`
+
+The transform that maximises the warped marginal likelihood on this kernel.
+
+Parameters
+----------
+K, y, lam : the training kernel, the activities and the ridge, as the GP fit has them.
+n_terms : how many tanh terms; two by default.
+restarts : how many random starting points are tried besides the deterministic one; the
+    objective has local optima when a term can sit on either side of the data.
+min_gain : the log evidence the warp must gain over the identity to be kept, in nats; by
+    default the parameter penalty of `parameter_penalty`, and `0.0` keeps any gain.
+    The identity is returned when the warp does not clear it, with `gain` set to what it
+    did gain, so the shortfall can still be read.
+
+The identity transform is always evaluated, and the result's `gain` says by how much the
+warp beat it, which is what the benchmark of this item reads.
+
+### `cross_validate_warped(K: np.ndarray, y: Sequence[float], lam: float, n_terms: int=DEFAULT_TERMS, folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, restarts: int=2, min_gain: Optional[float]=None) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]`
+
+Out-of-fold (prediction in the original units, mean in warped units, deviation in warped
+units, the held-out activities in the warped units of their own fold), with the warp
+refitted on the training part of every fold.
+
+The folds are those of the model's own cross-validation for the same seed, so the
+predictions compare with the plain fit's fold by fold. The deviation is the one
+`cmfqsar.surrogate.Surrogate` gives, in the warped units; an interval in the original
+units is `Warp.interval` applied fold by fold, which `cross_validate_intervals`
+does.
+
+### `cross_validate_intervals(K: np.ndarray, y: Sequence[float], lam: float, level: float=0.9, n_terms: int=DEFAULT_TERMS, folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, restarts: int=2, min_gain: Optional[float]=None) -> Dict[str, np.ndarray]`
+
+Out-of-fold intervals of the warped and the plain process at one level, in the original
+units, with the warp refitted on the training part of every fold.
+
+Returns a dictionary with `warped` and `plain` entries, each (prediction, lower, upper),
+and `gain`, the evidence the warp gained over the identity in every fold.
 
 ## cmfqsar.xtb
 

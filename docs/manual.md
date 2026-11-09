@@ -4511,6 +4511,74 @@ reachable rather than returning its widest error and calling it an interval.
 Regression only: conformal classification produces prediction *sets* rather than intervals, and is
 not implemented.
 
+### When the scale of the activity is the problem: a warped process
+
+The interval above, and the standard deviation of the chapter after this one, assume one thing
+about the activity: that what the kernel does not explain is Gaussian noise on one scale. A pIC50
+series is often not like that. The scale is skewed, a floor of inactive compounds sits at one
+value, a handful of very active ones stretch the top. A Gaussian process on such a series spends
+its noise on the shape of the scale instead of on the chemistry, and its interval is too wide at
+one end and too narrow at the other.
+
+The remedy of Snelson, Ghahramani and Rasmussen (NIPS 2003) is to learn a monotone transform of
+the response *together with* the process, so that the transformed activity is what the GP models
+and every prediction is carried back through the inverse. `cmfqsar.warp` does this (plan item
+ND11). With $u = (y - \text{centre}) / \text{width}$ the standardised activity,
+
+$$
+g(y) = u + \sum_{i=1}^{I} a_i \tanh(b_i (u + c_i)), \qquad a_i > 0, \; b_i > 0,
+$$
+<!-- #eq:warp -->
+
+a straight line plus a few smooth steps, each of which stretches the scale around one place and
+compresses it far away. Two terms are the default, six parameters, so it fits thirty molecules.
+The parameters maximise the log marginal likelihood of the warped activities under the kernel --
+with the amplitude profiled out and the constant mean marginalised, as the evidence of
+*Choosing the attenuation and the ridge by the evidence* is computed -- plus the Jacobian
+$\sum_i \log g'(y_i)$ that makes it the likelihood of the *original* activities. Because the
+amplitude is profiled, the objective does not change when the transform is scaled, so what is
+fitted is only its shape.
+
+**A series close to normal is left alone.** Six free parameters gain a few nats of evidence on
+any series. The transform is therefore kept only if it beats the penalty of the Bayesian
+information criterion for its parameters, half their number times $\log n$ -- about twelve nats
+on sixty molecules, where a Gaussian series gains four -- and the identity is used otherwise.
+The output says which happened and by how much.
+
+**What comes back.** The GP gives a mean and a deviation in the warped units. The prediction in
+the original units is the *median*, $g^{-1}(\text{mean})$, and an interval is
+$[g^{-1}(\text{mean} - k\,\text{sd}),\; g^{-1}(\text{mean} + k\,\text{sd})]$, which is no
+longer symmetric about the prediction -- that asymmetry is the point. The model stays linear in
+the field in the warped units: the co-field and the atom contributions are read there, and the
+output says so.
+
+```python
+model = CMFModel(fieldset=fs, method="krr", params={"lam": 0.1}, warp=2)
+model.fit(table, y)                                 # the transform is learned with the fit
+print(model.warp_.describe())                        # or "the identity", and why
+pred = model.predict(test)                           # the median, in the original units
+median, lo, hi = model.predict_warped_interval(test, level=0.9)
+```
+
+On the command line it is `cmf build --warp 2`; the transform travels with the saved model, so
+`predict` and the conformal interval report in the original units without being told.
+
+**Measured** on the eight Sutherland sets and on the 38 sets of the Mittal collection, five
+random 70/30 splits each, with alpha and lambda chosen by the evidence on the training part: the
+central 90 % interval of the warped process against the plain process's and the conformal
+interval calibrated on the plain fit's folds, on the held-out molecules
+(`benchmarks/run_warped.py`, `benchmarks/results/warped/table.md` and
+`benchmarks/results/warped_mittal/table.md`). Two of the collection's 38 sets are not in the table, APZ and RYR, which have 16 and 17 molecules, too few for a 70/30 split with an interval.
+
+| collection | sets | warp kept | q2, plain | q2, warped | coverage, plain GP | coverage, conformal | coverage, warped | width, plain GP | width, conformal | width, warped |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Sutherland | 8 | 32% of splits | +0.484 | +0.482 | 88% | 89% | 88% | 3.00 | 3.17 | 2.96 |
+| Mittal | 36 | 41% of splits | +0.102 | +0.057 | 88% | 90% | 87% | 4.93 | 5.73 | 4.83 |
+
+The last column of each coverage group is what the gate reads. Over the 44 series the warped interval is closer to the promised 90% than the plain process's on 8 and further on 14 (1 and 2 on the Sutherland sets, 7 and 12 on the collection). The paired differences over the sets, with their 95 % bootstrap intervals: on the Sutherland sets coverage -0.2% [-0.5%, -0.0%] against the plain GP and -1.8% [-3.6%, +0.3%] against the conformal interval, width -0.044 [-0.133, +0.013] and -0.213 [-0.345, -0.080], q2 -0.002 [-0.012, +0.007]; on the collection coverage -1.1% [-2.1%, -0.2%] and -3.1% [-4.6%, -1.8%], width -0.099 [-0.170, -0.041] and -0.904 [-2.107, -0.242], q2 -0.045 [-0.086, -0.016]. The transform was kept on 32% of the Sutherland splits and 41% of the collection's, gaining +10.3 and +16.3 nats of evidence over the identity on average; where it was kept, q2 moved by -0.004 [-0.024, +0.013] on the 4 Sutherland sets concerned and -0.065 [-0.122, -0.025] on the 25 of the collection, and coverage by -0.5% [-0.8%, -0.1%] and -1.6% [-2.9%, -0.3%]. Coverage does not improve on more series than it worsens, so the warp stays an option (`--warp`) and not a default, as the item's own rule says.
+
+**What writing it found.** Three sets of the collection -- PTC, DIAZEPAM and EV71 -- have no hydrogen-bond donor on any molecule, so the donor field is zero throughout. The choice of attenuation and ridge by the evidence that the error benchmarks share divided each field by the mean of its training diagonal, which is zero for such a field, so the kernel filled with NaN and the evidence was finite for nothing. The model's own rule, a scale of zero for a field that is zero everywhere, is now used there too; the Sutherland sets all have donors, so no stored number changed.
+
 ## Three estimates of the error, compared
 
 The program now offers three answers to *should I believe this number*, and they come from three
@@ -4694,28 +4762,28 @@ the space of a few hundred landmarks instead -- and until now that path could pr
 not say how sure it was: `surrogate()` refused it in those words. Plan item MS6 removes the
 refusal, and nothing of size $n$ is built to do it.
 
-The kernel of a low-rank model is $\mathbf{\Phi}\mathbf{\Phi}^{\mathsf T}$, with $\mathbf{\Phi}$
+The kernel of a low-rank model is $\Phi\Phi^T$, with $\Phi$
 the $n \times m$ matrix of features against the landmarks, and every quantity the surrogate
 computes has an $m \times m$ form through the Woodbury identity. With
-$\mathbf{A} = \mathbf{\Phi}^{\mathsf T}\mathbf{\Phi} + \lambda\mathbf{I}$ and $\mathbf{r}$ the
+$\mathbf{A} = \Phi^T\Phi + \lambda\mathbf{I}$ and $\mathbf{r}$ the
 residual about the fitted constant,
 
 $$
-\mathbf{r}^{\mathsf T}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{r}
-= \frac{\mathbf{r}^{\mathsf T}\mathbf{r} - (\mathbf{\Phi}^{\mathsf T}\mathbf{r})^{\mathsf T}\mathbf{A}^{-1}(\mathbf{\Phi}^{\mathsf T}\mathbf{r})}{\lambda},
+\mathbf{r}^T(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{r}
+= \frac{\mathbf{r}^T\mathbf{r} - (\Phi^T\mathbf{r})^T\mathbf{A}^{-1}(\Phi^T\mathbf{r})}{\lambda},
 \qquad
-\mathbf{1}^{\mathsf T}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{1}
-= \frac{n - (\mathbf{\Phi}^{\mathsf T}\mathbf{1})^{\mathsf T}\mathbf{A}^{-1}(\mathbf{\Phi}^{\mathsf T}\mathbf{1})}{\lambda},
+\mathbf{1}^T(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{1}
+= \frac{n - (\Phi^T\mathbf{1})^T\mathbf{A}^{-1}(\Phi^T\mathbf{1})}{\lambda},
 $$
 <!-- #eq:lowrank-scale -->
 
 so the scale $s$ is the same mean squared whitened residual as before, the term of the unknown
-mean is $(1 - \boldsymbol{\phi}^{\mathsf T}\mathbf{A}^{-1}\mathbf{\Phi}^{\mathsf T}\mathbf{1})^2$
+mean is $(1 - \boldsymbol{\phi}^T\mathbf{A}^{-1}\Phi^T\mathbf{1})^2$
 over the second quantity, and the posterior variance is the one the low-rank path already had,
 with the exact self-kernel kept so that it does not fall to zero where the landmarks span
-nothing. The Gram the fit stores -- $\mathbf{\Phi}^{\mathsf T}\mathbf{\Phi}$,
-$\mathbf{\Phi}^{\mathsf T}\mathbf{y}$, $\mathbf{\Phi}^{\mathsf T}\mathbf{1}$, $n$, $\sum y$ and
-$\mathbf{y}^{\mathsf T}\mathbf{y}$ -- holds everything these expressions need, which is why a
+nothing. The Gram the fit stores -- $\Phi^T\Phi$,
+$\Phi^T\mathbf{y}$, $\Phi^T\mathbf{1}$, $n$, $\sum y$ and
+$\mathbf{y}^T\mathbf{y}$ -- holds everything these expressions need, which is why a
 model read back from a file can give its deviation without its training set.
 
 ```python

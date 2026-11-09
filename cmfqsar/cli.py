@@ -630,7 +630,7 @@ def cmd_build(args):
               "lapkrr acts on the labelled molecules alone")
     y = target[tr]
     model = CMFModel(fieldset=fs, task=args.task, method=args.method, normalize=args.normalize,
-                     scale_fields=not args.raw_scale, fit_bias=not args.no_bias,
+                     scale_fields=not args.raw_scale, fit_bias=not args.no_bias, warp=args.warp,
                      kernel_layer=args.kernel_layer, kernel_source=args.kernel,
                      ac_sigma=args.ac_sigma, ac_d_max=args.ac_dmax,
                      ac_chirality=args.ac_chirality,
@@ -911,6 +911,12 @@ def cmd_build(args):
         if model.desc_scaler_.constant:
             print(f"  constant over the training set, so without effect: "
                   f"{', '.join(model.desc_scaler_.constant)}")
+    if getattr(model, "warp_", None) is not None:
+        print(model.warp_.describe())
+        if not model.warp_.is_identity:
+            print("  the model is linear in the field in the warped units: the co-field and the "
+                  "atom contributions are read there, and every prediction and interval is "
+                  "carried back to the original units")
     _report_validation(args, model, ds, mf, tr, te, target)
     conf = None
     if args.conformal is not None:
@@ -4426,6 +4432,15 @@ def main(argv=None):
     b.add_argument("--conformal", type=float, default=None, metavar="LEVEL",
                    help="calibrate a prediction interval at this level (0.9) on the errors of "
                         "the cross-validation, and store it with the model")
+    b.add_argument("--warp", type=int, default=0, metavar="TERMS",
+                   help="learn a monotone transform of the activity together with the fit "
+                        "(plan item ND11), with this many tanh terms; 2 is the usual choice and "
+                        "0 none. A skewed or floored activity scale is modelled in the warped "
+                        "units and every prediction and interval is carried back to the "
+                        "original ones; the co-field and the atom contributions are then read "
+                        "in the warped units, which the output says. The transform is kept only "
+                        "if its evidence beats the penalty for its parameters, so a series "
+                        "already close to normal is left alone")
     b.add_argument("--calibration", action="store_true",
                    help="check on the folds that the predictive standard deviation means what it "
                         "says: the root mean square of the standardised residual, the shares "

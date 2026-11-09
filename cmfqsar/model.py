@@ -1165,6 +1165,8 @@ class CMFModel:
                                                               "nu": 0.5, "components": 5})
     normalize: bool = False                 # cosine-normalise each field kernel
     scale_fields: bool = True               # scale each field kernel to unit mean diagonal
+    warp: int = 0                           # ND11: tanh terms of a monotone transform of the
+                                            # activity learned with the fit; 0 for none
     # how far apart two atoms may be and still be summed (plan item B2).  None computes every
     # pair, which is exact and is what every published table in this repository used; "auto" uses
     # a neighbour list for the fields and molecules where it is faster, which is large molecules
@@ -1532,6 +1534,7 @@ class CMFModel:
                         params=dict(self.params), normalize=self.normalize,
                         scale_fields=self.scale_fields, fit_bias=self.fit_bias,
                         kernel_layer=self.kernel_layer, kernel_source=self.kernel_source,
+                        warp=self.warp,
                         ac_sigma=self.ac_sigma, ac_d_max=self.ac_d_max,
                         ac_chirality=self.ac_chirality, ac_chirality_shells=self.ac_chirality_shells,
                         surf_z_min=self.surf_z_min, surf_z_max=self.surf_z_max,
@@ -2006,12 +2009,16 @@ class CMFModel:
         self._surrogate = None
         self.gamma_scale_ = median_gamma_scale(K_lin) if self.kernel_layer == "gauss" else None
         K = self.apply_layer(K_lin, self.base_diag_, self.base_diag_)
+        self.warp_ = self._fit_warp(K, y)          # None unless the model asks for one (ND11)
+        y_model = y if self.warp_ is None else self.warp_.forward(y)
         learner = _Learner(self.method, self.params, self.fit_bias)
         learner.groups_ = getattr(self, "rank_groups", None)
-        self.learner_ = learner.fit(K, y)
+        self.learner_ = learner.fit(K, y_model)
         self.coef = self.learner_.alpha_
         self.bias = self.learner_.b_
         yfit = self.learner_.predict(K)
+        if self.warp_ is not None:
+            yfit = self.warp_.inverse(yfit)         # every statistic is in the original units
         # a molecule without a measured activity (--method lapkrr) is part of the model and has
         # nothing to be scored against, so every statistic below is taken on the labelled ones
         lab = np.isfinite(y) if y is not None and y.size else np.zeros(0, bool)
@@ -2054,7 +2061,8 @@ class CMFModel:
             if cv_folds and cv_folds >= 2 and n_lab >= 3:
                 if progress:
                     progress("Cross-validation", 0.9)
-                ycv = self._cv_predictions(K, y, cv_folds, cv_seed)
+                ycv = (self._cv_predictions(K, y, cv_folds, cv_seed) if self.warp_ is None
+                       else self._cv_predictions_warped(K, y, cv_folds, cv_seed))
                 st.q2 = r2_score(y[lab], ycv[lab])
                 st.rmse_cv = rmse(y[lab], ycv[lab])
                 st.cv_folds = min(cv_folds, n_lab)
@@ -2066,6 +2074,66 @@ class CMFModel:
         return self
 
     # --------------------------------------------------------- conformal intervals
+    # ----------------------------------------- a monotone transform of the activity (ND11)
+    def _fit_warp(self, K: np.ndarray, y: Optional[np.ndarray]):
+        """The transform of the activity learned with this fit, or None when none is asked for.
+
+        It is for a regression with the ridge fit: the transform is learned by the marginal
+        likelihood of the Gaussian process that matches that fit (:mod:`cmfqsar.warp`).  The
+        ridge value ``warp_min_gain`` in ``params`` replaces the parameter penalty the transform
+        has to beat; it is for tests and measurements, not for use.
+        """
+        if not self.warp:
+            return None
+        if self.task != "regression" or self.method not in ("krr", "gp"):
+            raise ValueError(
+                "the warp of the activity is for a regression with the ridge fit (method krr or "
+                "gp): it is learned by the marginal likelihood of the Gaussian process that "
+                f"matches that fit, which '{self.method}' is not")
+        if self.mkl or getattr(self, "rank_groups", None) is not None:
+            raise ValueError(
+                "the warp of the activity cannot be combined with kernel alignment of the fields "
+                "or with rank groups, which re-derive their coefficients inside the folds on the "
+                "untransformed activities")
+        if y is None or not np.all(np.isfinite(np.asarray(y, float))):
+            raise ValueError("every training activity must be measured to learn a warp of the "
+                             "activity")
+        from .warp import fit_warp
+        return fit_warp(K, y, float(self.params.get("lam", 1.0)), n_terms=int(self.warp),
+                        fit_bias=self.fit_bias, min_gain=self.params.get("warp_min_gain"))
+
+    def _cv_predictions_warped(self, K: np.ndarray, y: np.ndarray, folds: int,
+                               seed: Optional[int]) -> np.ndarray:
+        """Cross-validated predictions in the original units, the warp refitted in every fold."""
+        from .warp import cross_validate_warped
+        pred, _mean, _sd, _z = cross_validate_warped(
+            K, y, float(self.params.get("lam", 1.0)), n_terms=int(self.warp), folds=folds,
+            seed=seed, fit_bias=self.fit_bias, min_gain=self.params.get("warp_min_gain"))
+        return pred
+
+    def _y_model(self) -> np.ndarray:
+        """The activities the coefficients were fitted on: warped, when the model has a warp."""
+        w = getattr(self, "warp_", None)
+        return self.y if w is None else w.forward(self.y)
+
+    def predict_warped_interval(self, test: AtomTable, level: float = 0.9
+                                ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """(median, lower, upper) of new molecules in the original units, from the warped
+        process's own central interval at `level` (plan item ND11).
+
+        The Gaussian process gives a mean and a deviation in the warped units; the prediction
+        is the inverse of the mean, which is the median, and the interval is the inverse of the
+        symmetric one, which is no longer symmetric about the prediction.  A model without a
+        warp has :meth:`predict_interval` (conformal) and :meth:`predict_with_sd` instead.
+        """
+        w = getattr(self, "warp_", None)
+        if w is None:
+            raise ValueError("this model has no warp of the activity (warp=0): its intervals are "
+                             "predict_interval, which is conformal, and predict_with_sd")
+        s = self.surrogate()
+        mean_z, sd_z = s.predict(self.test_kernel(test), self.joint_self(test))
+        return w.interval(mean_z, sd_z, level)
+
     def _linear_train_kernel(self) -> np.ndarray:
         """The joint training kernel before any nonlinear layer, recomputed if it was not kept."""
         if self.uses_fields:
@@ -2152,6 +2220,9 @@ class CMFModel:
         from .model import r2_score, rmse          # local, to keep the import graph flat
 
         self._require_linear("the low-rank path")
+        if self.warp:
+            raise ValueError("the warp of the activity (plan item ND11) is not implemented on the "
+                             "low-rank path: fit the exact model, or set warp=0")
         if not self.uses_fields:
             raise ValueError("the low-rank path is for the overlap kernel; the invariant "
                              "kernel already has explicit features, which cmfqsar.locallarge "
@@ -2242,6 +2313,8 @@ class CMFModel:
             yp = self.learner_.predict(K, self.self_after_layer(self.joint_self(test)))
         else:
             yp = K @ self.coef + self.bias
+        if getattr(self, "warp_", None) is not None:
+            yp = self.warp_.inverse(yp)             # back to the original units (plan item ND11)
         if return_fields:
             return yp, Kf
         return yp
@@ -2257,7 +2330,8 @@ class CMFModel:
             # the descriptor block out would be wrong rather than approximate
             raise ValueError("this model has non-field descriptors; predict from the atom "
                              "table instead of precomputed field kernels")
-        return self.joint_kernel(K_fields_test) @ self.coef + self.bias
+        yp = self.joint_kernel(K_fields_test) @ self.coef + self.bias
+        return yp if getattr(self, "warp_", None) is None else self.warp_.inverse(yp)
 
     def predict_with_covariance(self, test: AtomTable) -> Tuple[np.ndarray, np.ndarray]:
         """Prediction and the whole posterior covariance over the candidates (plan item MC2).
@@ -2348,13 +2422,17 @@ class CMFModel:
                 s = LowRankSurrogate.fit(self.low_gram_, float(self.params.get("lam", 1.0)),
                                          self.fit_bias)
             else:
-                s = Surrogate.fit(self._linear_train_kernel(), self.y,
+                s = Surrogate.fit(self._linear_train_kernel(), self._y_model(),
                                   float(self.params.get("lam", 1.0)), self.fit_bias)
             self._surrogate = s
         return s
 
     def predict_with_sd(self, test: AtomTable, with_noise: bool = True) -> Tuple[np.ndarray, np.ndarray]:
         """(prediction, predictive standard deviation) in the units of the activity.
+
+        For a model with a warp of the activity (plan item ND11) both are in the *warped*
+        units, where the process is Gaussian; :meth:`predict_warped_interval` carries an
+        interval back to the original units.
 
         The prediction is the model's own.  The standard deviation is the posterior deviation of
         :meth:`predict_with_variance` put into the units of ``y`` by the noise scale of the fit,
@@ -2378,6 +2456,14 @@ class CMFModel:
 
         self.surrogate()        # the same refusals
         lam = float(self.params.get("lam", 1.0))
+        if getattr(self, "warp_", None) is not None:
+            # in the warped units of each fold's own transform, which is where the process is
+            # Gaussian and a standardised residual means what it says
+            from .warp import cross_validate_warped
+            _pred, mean_z, sd_z, z_true = cross_validate_warped(
+                self._linear_train_kernel(), self.y, lam, n_terms=int(self.warp), folds=folds,
+                seed=seed, fit_bias=self.fit_bias, min_gain=self.params.get("warp_min_gain"))
+            return Calibration.of(z_true, mean_z, sd_z)
         if self.is_low_rank:
             from . import lowrank as LR
             mean, sd, _which = LR.cross_validate(self.low_rank_, self.train, self.y, lam,
@@ -2828,6 +2914,10 @@ class CMFModel:
             "conformal": getattr(self, "conformal_", None),
             # the landmarks and the weights over them, for a model fitted the low-rank way
             "low_rank": self._low_rank_state(),
+            # the transform of the activity, when the model has one (plan item ND11)
+            "warp": int(self.warp),
+            "warp_": (None if getattr(self, "warp_", None) is None
+                      else self.warp_.to_dict()),
         }
 
     @classmethod
@@ -2878,6 +2968,13 @@ class CMFModel:
         m.ac_block_weights_ = st.get("ac_block_weights_fitted")
         m.ac_block_keys_ = st.get("ac_block_keys")
         m.base_diag_ = st.get("base_diag")
+        m.warp = int(st.get("warp", 0) or 0)
+        w = st.get("warp_")
+        if w:
+            from .warp import Warp
+            m.warp_ = Warp.from_dict(w)
+        else:
+            m.warp_ = None
         m.gamma_scale_ = st.get("gamma_scale")
         m.train, m.y, m.coef, m.bias = st["train"], st["y"], st["coef"], st["bias"]
         m.conformal_ = st.get("conformal")

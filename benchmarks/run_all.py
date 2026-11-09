@@ -827,6 +827,19 @@ def registry() -> List[Benchmark]:
                   minutes="15",
                   report=lambda: _mod("run_errorpred").report(_r("errorpred")),
                   tables=["errorpred/table.md"]),
+        Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
+                  "coverage and width of its interval against the plain process and the "
+                  "conformal interval, on the eight Sutherland sets",
+                  "run_warped.py", "warped", compute=[[]],
+                  minutes="35",        # measured: 34, with the warp refitted in every fold
+                  report=lambda: _mod("run_warped").report(_r("warped")),
+                  tables=["warped/table.md"]),
+        Benchmark("warped_mittal",
+                  "the same transform on the 38 Mittal sets, 15 of them small",
+                  "run_warped.py", "warped_mittal", compute=[["--mittal"]],
+                  minutes="55",        # measured: 55, the warp refitted in every fold
+                  report=lambda: _mod("run_warped").report(_r("warped_mittal")),
+                  tables=["warped_mittal/table.md"]),
         Benchmark("surrogate", "is the predictive standard deviation calibrated, and what "
                   "a tolerance rule does: the model as the fast level of a hierarchy, and the "
                   "same deviation on the low-rank path that never builds the n by n kernel",
