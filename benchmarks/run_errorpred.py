@@ -80,7 +80,11 @@ def _choose(cache, y_tr, tr):
     best = None
     for a, (Kf, _sd) in cache.items():
         Ktr = Kf[:, tr][:, :, tr]
-        scale = np.array([1.0 / np.mean(np.diag(Ktr[f])) for f in range(Ktr.shape[0])])
+        # the model's own rule for the scale: a field that is zero for every molecule of the set
+        # (no donor anywhere, say) has a zero diagonal and gets a scale of zero, not a division
+        # by zero that fills the kernel with NaN and leaves the evidence finite for nothing
+        scale = np.array([1.0 / m if m > 1e-300 else 0.0
+                          for m in (np.mean(np.diag(Ktr[f])) for f in range(Ktr.shape[0]))])
         K = np.tensordot(scale, Ktr, axes=(0, 0))
         for lam in LAMS:
             e = log_evidence(K, y_tr, float(lam), fit_bias=True)

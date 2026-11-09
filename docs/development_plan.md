@@ -6106,6 +6106,32 @@ because the fourth-dimension verdict says ensembles do not help, so it has nothi
   interval, with the interval of rule 4; a series whose activities are already close to normal
   must lose nothing. The item is kept as a default only if coverage improves on more series
   than it worsens; otherwise it is an option, recorded under rule 5.
+  Built and measured 9 November 2026. `cmfqsar/warp.py` holds the transform -- a straight line
+  plus `warp` tanh terms on the standardised activity, two by default, monotone by construction,
+  inverted by bisection to machine precision -- and its fit by the warped marginal likelihood:
+  the evidence of B4 with the amplitude profiled and the mean marginalised, plus the Jacobian
+  that makes it the likelihood of the original activities. The transform is kept only if it
+  beats the parameter penalty of the Bayesian information criterion (half the parameter count
+  times log n), so a Gaussian series keeps the identity; the output says which happened and by
+  how much. `CMFModel(warp=N)` learns it with the fit, fits the coefficients on the warped
+  activities, computes every statistic and the cross-validated predictions in the original
+  units with the warp refitted in every fold, and carries `predict` back through the inverse,
+  so the conformal interval of E5 reports in the original units without being told;
+  `predict_warped_interval` is the process's own interval, carried back, and no longer symmetric
+  about the median it reports. `calibration` and `predict_with_sd` work in the warped units,
+  where the process is Gaussian, and say so. The transform travels with the model file and with
+  a fold model; `cmf build --warp N` is the option, and its report names the units the co-field
+  is read in. Measured by `benchmarks/run_warped.py` (results in `benchmarks/results/warped/`
+  and `warped_mittal/`), checked by the 18 tests of `tests/test_warp.py`, written up in the
+  manual under *How certain is one prediction?*.
+  *The collection is 38 sets, not 86.* The repository holds the 38 Mittal sets that the other
+  collection benchmarks use (15 of them under forty molecules); the gate was read on those and
+  on the eight Sutherland sets, 44 series in all, five 70/30 splits each. Two of the collection's 38 sets are not in the table, APZ and RYR, which have 16 and 17 molecules, too few for a 70/30 split with an interval.
+  *Measured, and the item's own rule makes it an option, not a default.* The last column of each coverage group is what the gate reads. Over the 44 series the warped interval is closer to the promised 90% than the plain process's on 8 and further on 14 (1 and 2 on the Sutherland sets, 7 and 12 on the collection). The paired differences over the sets, with their 95 % bootstrap intervals: on the Sutherland sets coverage -0.2% [-0.5%, -0.0%] against the plain GP and -1.8% [-3.6%, +0.3%] against the conformal interval, width -0.044 [-0.133, +0.013] and -0.213 [-0.345, -0.080], q2 -0.002 [-0.012, +0.007]; on the collection coverage -1.1% [-2.1%, -0.2%] and -3.1% [-4.6%, -1.8%], width -0.099 [-0.170, -0.041] and -0.904 [-2.107, -0.242], q2 -0.045 [-0.086, -0.016]. The transform was kept on 32% of the Sutherland splits and 41% of the collection's, gaining +10.3 and +16.3 nats of evidence over the identity on average; where it was kept, q2 moved by -0.004 [-0.024, +0.013] on the 4 Sutherland sets concerned and -0.065 [-0.122, -0.025] on the 25 of the collection, and coverage by -0.5% [-0.8%, -0.1%] and -1.6% [-2.9%, -0.3%]. Coverage does not improve on more series than it worsens, so the warp stays an option (`--warp`) and not a default, as the item's own rule says.
+  *What writing it found.* Three sets of the collection (PTC, DIAZEPAM, EV71) have no hydrogen-bond donor on any molecule, so the donor field is zero throughout, and the choice of attenuation and ridge by the evidence in `benchmarks/run_errorpred.py`, which the error benchmarks share, divided by the mean of that field's zero diagonal: the kernel filled with NaN and the evidence was finite for nothing. It now uses the model's own rule, a scale of zero for such a field; the Sutherland sets all have donors, so no stored number changed.
+  *Open:* the warped process on the low-rank path, which refuses it; a transform with a
+  learned number of terms rather than a fixed one; and the collection of 86 series the item
+  named, which is not in the repository.
 * **ND12. A flow on the landmark features as the density of a series in field space.** A flow
   on the landmark feature vector of B6, which has the fixed dimension a flow needs, learns the
   probability density of the training molecules in field space, and a new molecule gets a
@@ -6133,8 +6159,8 @@ because the fourth-dimension verdict says ensembles do not help, so it has nothi
   generators on the same series, plus the cost per accepted molecule; the two share one gate and
   the one that passes at the lower cost is kept, the other recorded under rule 5.
 
-**Order.** ND11 first, because it runs on the existing sets and gates on the calibration the
-program already measures. ND12 after ND5 to ND7, on the larger sets. ND13 with ND9.
+**Order.** ND11 is done, the first item of this part to be built. ND12 after ND5 to ND7, on the
+larger sets. ND13 with ND9.
 
 **ND14. The neural device of 1997 as the atom-level network (7 November 2026).** The neural
 device of Baskin, Palyulin and Zefirov (J. Chem. Inf. Comput. Sci. 37 (1997) 715) applies one
@@ -6932,11 +6958,11 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
-| H. Deep learning | 19 | 0 | ND1 to ND14c |
+| H. Deep learning | 19 | 1 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND7, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 8 | 5 | MS4, MS5, MS8 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**158 items: 111 finished, 4 partly, 43 open.**
+**158 items: 112 finished, 4 partly, 42 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

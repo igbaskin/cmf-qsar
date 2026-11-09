@@ -2489,6 +2489,30 @@ answer different questions -- the prediction moves a molecule towards the traini
 are active, confidence towards the training set as a whole -- so a pose meant for predicting from
 is still the confidence one, which uses no activity value of the molecule being placed.
 
+### A warped process: when the scale of the activity is the problem
+
+A Gaussian process assumes that what the kernel does not explain is Gaussian noise on one scale,
+and a pIC50 series often is not: a skewed scale, a floor of inactive compounds, a handful of very
+active ones. [warp.py](cmfqsar/warp.py) (plan item ND11) learns a monotone transform of the
+activity *together with* the process, as Snelson, Ghahramani and Rasmussen proposed in 2003 --
+a straight line plus two smooth tanh steps, six parameters, fitted by the marginal likelihood of
+the original activities -- models the transformed activity, and carries every prediction and
+interval back through the inverse. The prediction in the original units is the median and the
+interval is no longer symmetric about it, which is the point. The transform is kept only if its
+evidence beats the penalty for its parameters, so a series already close to normal is left alone;
+`cmf build --warp 2` reports which happened, and that the co-field is then read in the warped
+units.
+
+**Measured** on the eight Sutherland sets and the 38 Mittal sets, five 70/30 splits each, the
+central 90 % interval of the warped process against the plain process's and the conformal interval
+(`benchmarks/run_warped.py`; two sets of the collection, with fewer than twenty molecules, are left
+out). The warped interval is closer to the promised 90% than the plain process's on 8 of the 44
+series and further on 14; over the Sutherland sets it changes coverage by -0.2% [-0.5%, -0.0%] and
+q2 by -0.002 [-0.012, +0.007], over the collection by -1.1% [-2.1%, -0.2%] and -0.045 [-0.086,
+-0.016] (paired bootstrap over the sets). The transform was kept on 32% and 41% of the splits.
+Coverage does not improve on more series than it worsens, so the warp stays an option (`--warp`) and
+not a default, as the item's own rule says.
+
 ### A deviation that scales: the low-rank path reads its own uncertainty
 
 The standard deviation of plan item MS1 needed the training kernel, factorised once, and the
