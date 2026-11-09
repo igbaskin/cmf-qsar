@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 113 modules, 222 classes with 730 public methods, and 1127 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 114 modules, 225 classes with 743 public methods, and 1131 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -129,6 +129,7 @@ for.
 | [cmfqsar.solvent](#cmfqsarsolvent) | Solvent as a field: where a ligand's water sits, as a CMF field (plan item D9). |
 | [cmfqsar.spectral](#cmfqsarspectral) | Clustering a set by its fields rather than by its scaffolds. |
 | [cmfqsar.stereo](#cmfqsarstereo) | Handedness as a property of a centre, not of a shape. |
+| [cmfqsar.surrogate](#cmfqsarsurrogate) | The model as the fast level of a hierarchy: a standard deviation in the units of the activity, its calibration on the folds, and the rule that sends a structure back to the fine level (plan item MS1). |
 | [cmfqsar.tautomers](#cmfqsartautomers) | Tautomer ensembles: the other half of plan item D4. |
 | [cmfqsar.threebody](#cmfqsarthreebody) | Three-body channels and handedness for a periodic cell (plan item M10). |
 | [cmfqsar.topomer](#cmfqsartopomer) | Topomer fields: a frame that comes from the topology, not from a superposition. |
@@ -4354,6 +4355,15 @@ the same constant for every candidate.
 
 `kernels` is [(alpha, K)]; the evidence is comparable across both axes because the amplitude
 is profiled out of each.
+
+### `noise_scale(K: np.ndarray, y: Sequence[float], lam: float, fit_bias: bool=True) -> float`
+
+The amplitude the evidence profiles out, as a number.
+
+The Gaussian process that matches the ridge fit has the prior covariance `s K` and the
+noise `s lambda`; this is `s`, the mean squared whitened residual of the training set.
+`cmfqsar.surrogate` multiplies the posterior variance by it to put a standard deviation
+in the units of the activity.
 
 ## cmfqsar.exposure
 
@@ -9876,6 +9886,30 @@ may be unsure about *the same thing*, and only the covariance says so.
 #### `CMFModel.predict_with_variance(test: AtomTable) -> Tuple[np.ndarray, np.ndarray]`
 
 Prediction and GP posterior variance (only meaningful for method 'gp'/'krr').
+
+#### `CMFModel.surrogate()`
+
+The Gaussian-process reading of this fit, with its scale in the units of the activity.
+
+Plan item MS1.  It is kept on the model, because a library is predicted in blocks and the
+factorisation of the training kernel is the whole cost; a refit discards it.
+
+#### `CMFModel.predict_with_sd(test: AtomTable, with_noise: bool=True) -> Tuple[np.ndarray, np.ndarray]`
+
+(prediction, predictive standard deviation) in the units of the activity.
+
+The prediction is the model's own.  The standard deviation is the posterior deviation of
+`predict_with_variance` put into the units of `y` by the noise scale of the fit,
+with the uncertainty of the constant mean added; with `with_noise` it is the deviation
+of a new measurement, which is what a tolerance on the answer should be compared with.
+
+#### `CMFModel.calibration(folds: int=10, seed: Optional[int]=0)`
+
+Whether the predictive standard deviation means what it says, on the folds.
+
+Returns a `cmfqsar.surrogate.Calibration`: the root mean square of the
+standardised out-of-fold residual (one when calibrated), the shares inside one and two
+standard deviations, and the factor that would correct the deviation.
 
 #### `CMFModel.rank_score(test: AtomTable, beta: float=0.0, larger_is_better: bool=True) -> Tuple[np.ndarray, np.ndarray, np.ndarray]`
 
@@ -16179,6 +16213,165 @@ these fields can see.
 ### `stereo_matrix(mols: Sequence, spec: StereoSpec=StereoSpec(), n_fields: Optional[int]=None) -> Tuple[np.ndarray, dict]`
 
 The channels of a set of molecules, and how many centres they were read from.
+
+## cmfqsar.surrogate
+
+Source: `cmfqsar/surrogate.py`
+
+The model as the fast level of a hierarchy: a standard deviation in the units of the activity,
+its calibration on the folds, and the rule that sends a structure back to the fine level (plan
+item MS1).
+
+A multiscale scheme uses a fitted CMF model between an electronic-structure method and a coarser
+model: the fine level labels a few hundred structures, the model answers for the thousands the
+coarse model needs.  For that the model has to say, per structure, whether its answer can be
+used.  The posterior variance of `CMFModel.predict_with_variance` is the right quantity,
+but it is not usable as it stands, for three reasons this module removes.
+
+* **It is in the units of the kernel.**  The Gaussian process that matches the ridge fit has the
+  prior covariance `s K` and the noise `s lambda`, where `s` is the one amplitude the
+  evidence profiles out in closed form (`quad / dof`, the mean squared whitened residual of the
+  training set).  The predictive variance of a new *measurement* is therefore `s (v + lambda)`,
+  with `v` the posterior variance in kernel units, and its square root is in the units of
+  `y`.  The constant mean that the ridge fits as its bias is marginalised under a flat prior,
+  which adds `(1 - k^T A^{-1} 1)^2 / (1^T A^{-1} 1)` to `v` (Rasmussen and Williams 2006,
+  eq. 2.42 with one basis function); that term is what makes a structure far from every training
+  one uncertain about the *level* of the activity and not only about its shape.
+
+* **Nobody has checked that it means what it says.**  On the folds, the standardised residual
+  `z = (y - mean) / sd` should have a root mean square of one, and the interval of two standard
+  deviations should hold about 95 % of the activities.  `Calibration` reports both and the
+  factor that would make the root mean square one.  A factor well above one says the model is
+  surer than it should be, which is the usual finding when the kernel misses a part of the
+  chemistry; the factor is then the honest correction, and it is reported, not applied.
+
+* **A number is not a decision.**  A tolerance in the units of the activity turns it into one:
+  `defer` marks every structure whose standard deviation exceeds the tolerance, and
+  `Handoff` reports what the rule did, with the error on each side when the activities
+  are known.  `tolerance_for_budget` goes the other way, from the share of structures the
+  fine level can afford to the tolerance that sends it that many.
+
+The arithmetic is one Cholesky factorisation of the training kernel per fit and one triangular
+solve per structure, the same cost as the variance already paid.
+
+### `class Surrogate  (dataclass)`
+
+The Gaussian-process reading of a ridge fit, with its scale in the units of the activity.
+
+`scale` is `s`: the prior covariance is `s K` and the noise is `s lambda`, so a
+standard deviation this object returns is in the units of `y`.  The factor of the training
+kernel is kept, so that every later block of structures costs one triangular solve.
+
+Attributes:
+
+- `lam: float`
+- `fit_bias: bool`
+- `scale: float`
+- `dof: int`
+- `n_train: int`
+- `L: np.ndarray`
+- `alpha: np.ndarray`
+- `bias: float`
+- `u: Optional[np.ndarray]`
+- `denom: float`
+
+#### `Surrogate.fit(K: np.ndarray, y: Sequence[float], lam: float, fit_bias: bool=True) -> 'Surrogate'`  (class method)
+
+Fit on the training kernel `K` and the activities `y` with the ridge `lam`.
+
+The dual coefficients and the bias are those of `cmfqsar.model.krr_fit`: the
+bordered system it solves is the Gaussian process with the constant mean marginalised,
+so the predictive mean here is the model's own prediction.
+
+#### `Surrogate.predict(K_test_train: np.ndarray, k_test_self: Sequence[float], with_noise: bool=True) -> Tuple[np.ndarray, np.ndarray]`
+
+(prediction, standard deviation) of new structures, both in the units of the activity.
+
+`K_test_train` holds the kernels of the new structures against the training ones and
+`k_test_self` their self-kernels.  With `with_noise` the deviation is that of a new
+*measurement*, which includes the noise `s lambda`; without it, that of the underlying
+value, which is what two predictions of the same structure share.
+
+#### `Surrogate.noise_sd` -> float  (property)
+
+The standard deviation of the noise the fit attributes to one measurement.
+
+### `class Calibration  (dataclass)`
+
+Does the standard deviation mean what it says?  Measured on activities the fit did not see.
+
+`z_rms` is the root mean square of `(y - mean) / sd`: one for a calibrated deviation,
+above one when the model is surer than it should be.  `coverage_1sd` and `coverage_2sd`
+are the shares of the activities inside one and two standard deviations of the prediction,
+68 % and 95 % for a calibrated Gaussian.  `spearman` is the rank correlation between the
+deviation and the absolute error, which says whether the deviation at least *orders* the
+structures by their error when its size is off.
+
+Attributes:
+
+- `n: int`
+- `rmse: float`
+- `mean_sd: float`
+- `z_rms: float`
+- `coverage_1sd: float`
+- `coverage_2sd: float`
+- `spearman: float`
+
+#### `Calibration.of(y: Sequence[float], mean: Sequence[float], sd: Sequence[float]) -> 'Calibration'`  (class method)
+
+#### `Calibration.factor` -> float  (property)
+
+What to multiply the standard deviation by to make the root mean square of z one.
+
+#### `Calibration.describe() -> str`
+
+### `class Handoff  (dataclass)`
+
+What the tolerance rule did to one set of structures.
+
+`n_deferred` structures had a standard deviation above the tolerance and go to the fine
+level; the rest are answered by the model.  When the activities are known the root mean
+square error of each side is measured, so the rule can be judged: the answered side should
+be at or under the tolerance, and the deferred side worse.
+
+Attributes:
+
+- `tolerance: float`
+- `n: int`
+- `n_deferred: int`
+- `mean_sd_answered: float`
+- `mean_sd_deferred: float`
+- `rmse_answered: float`
+- `rmse_deferred: float`
+
+#### `Handoff.of(sd: Sequence[float], tolerance: float, y: Optional[Sequence[float]]=None, mean: Optional[Sequence[float]]=None) -> 'Handoff'`  (class method)
+
+#### `Handoff.n_answered` -> int  (property)
+
+#### `Handoff.fraction_answered` -> float  (property)
+
+#### `Handoff.describe() -> str`
+
+### `cross_validate(K: np.ndarray, y: Sequence[float], lam: float, folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, parts: Optional[Sequence[Sequence[int]]]=None) -> Tuple[np.ndarray, np.ndarray]`
+
+Out-of-fold (prediction, standard deviation) on a training kernel, in the units of `y`.
+
+The folds are the ones the model's own cross-validation uses, so the predictions agree with
+the model's `y_cv` and the deviations are the ones a structure would have been given had
+it been new.  The scale is fitted on the training part of each fold.  `parts` replaces the
+random folds by given held-out index sets, for folds that hold out whole structures.
+
+### `defer(sd: Sequence[float], tolerance: float) -> np.ndarray`
+
+True for every structure the fast level must pass to the fine one: `sd > tolerance`.
+
+### `tolerance_for_budget(sd: Sequence[float], fraction: float) -> float`
+
+The tolerance that sends at most this share of the structures to the fine level.
+
+`fraction` is the share the fine level can afford, between 0 and 1.  The answer is the
+quantile of the deviations at `1 - fraction`; `defer` at that tolerance marks about
+`fraction` of the structures.
 
 ## cmfqsar.tautomers
 
