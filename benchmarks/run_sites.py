@@ -29,6 +29,11 @@ autocorrelation of the cut environment (item LP2) and the overlap kernel of the 
 The pilot's own numbers are not comparable with these, because five bare sheets have been
 recomputed since it ran and its targets were 98 catalysts where these are 103.
 
+**A cell-level model read place by place (plan item MS2).**  The same split is also an output
+mode: `cmfqsar.sitemap` writes it as a map a coarser model reads, and `--agreement` asks whether
+the map ranks the sites of a cell as a model fitted on the sites themselves ranks them.  That
+comparison is the gate of item MS2 and it is measured out of fold.
+
 **A cell-level model read site by site.**  For a model on the whole-cell descriptor the split
 works in the other direction: the cell descriptor is the mean of its site rows and the linear
 layer is linear, so the prediction minus the bias is the sum of one number per site
@@ -44,6 +49,7 @@ Usage
     python benchmarks/run_sites.py --sac           # the catalysts alone
     python benchmarks/run_sites.py --lithium       # the Li site energies alone
     python benchmarks/run_sites.py --contributions # the site contributions and the figure
+    python benchmarks/run_sites.py --agreement     # the map against the site model (item MS2)
     python benchmarks/run_sites.py --report        # the table from the stored results
 """
 from __future__ import annotations
@@ -67,6 +73,8 @@ sys.path.insert(0, HERE)
 from cmfqsar import sites as S  # noqa: E402
 from cmfqsar.atomtargets import AtomTargets  # noqa: E402
 from cmfqsar.fields import AtomTable  # noqa: E402
+from cmfqsar import sitemap as SM  # noqa: E402
+from cmfqsar.bioisostere import spearman  # noqa: E402
 from cmfqsar.localenv import choose_lam, cross_validate_lams  # noqa: E402
 from cmfqsar.model import CMFModel, r2_score  # noqa: E402
 from cmfqsar.periodic import (PeriodicSpec, crystal_fields, inorganic_fieldset,  # noqa: E402
@@ -84,6 +92,11 @@ SEED = 0
 SHELLS = (2.0, 3.0, 4.5, 6.0)
 STEP = 0.5
 SIGMA = 0.5
+#: the settings of the two models the MS2 stage compares: the same kernel for both, so that only
+#: the sample differs
+MAP_D_MAX = 6.0
+MAP_LAM = 0.01
+MAP_FOLDS = 5
 
 
 def spec_for(r_max: float) -> PeriodicSpec:
@@ -366,6 +379,212 @@ def contributions_run(args, log) -> dict:
     return out
 
 
+# =========================================================================== #
+# The map of plan item MS2: a cell model read place by place, against the site model
+# =========================================================================== #
+def _fold_models(fs, crystals, metal, y, idx, name: str):
+    """A whole-cell model and a site model fitted on the same catalysts, with the same kernel.
+
+    Only the sample differs: a cell for the first, the measured site of a cell for the second.
+    """
+    cells = [crystals[i] for i in idx]
+    values = np.asarray([y[i] for i in idx], float)
+    cell = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="periodic",
+                    ac_sigma=SIGMA, ac_d_max=MAP_D_MAX, params={"lam": MAP_LAM})
+    cell.fit(AtomTable.from_molecules(cells), values, cv_folds=0)
+    index = S.one_site_targets([metal[i] for i in idx], values,
+                               [c.n_atoms for c in cells], name=name)
+    site = CMFModel(fieldset=fs, method="krr", normalize=True, kernel_source="periodic",
+                    ac_sigma=SIGMA, ac_d_max=MAP_D_MAX, params={"lam": MAP_LAM})
+    site.fit(S.site_table(cells, index), values, cv_folds=0)
+    return cell, site
+
+
+def _one_site_table(crystal, site: int, name: str):
+    """The table a site model takes for one site of one cell."""
+    row = np.full(int(crystal.n_atoms), np.nan)
+    row[int(site)] = 0.0
+    return S.site_table([crystal], AtomTargets.from_arrays([row], name=name))
+
+
+def agreement_run(args, log) -> dict:
+    """Does the split of a cell model's prediction rank the sites as the site model does?
+
+    This is the gate of plan item MS2, measured out of fold: for every fold a whole-cell model
+    and a site model are fitted on the other folds, and the held-out cells are both split and
+    predicted site by site.  Three questions are asked of the same numbers, and they do not have
+    the same answer.
+    """
+    import run_sac as R
+    data = R.load_set(lambda s: None)
+    fs = R.fieldset_for("extended", data.metals)
+    crystals = R.crystals_for(data, fs)
+    metal = [R._metal_index(a) for a in data.structures]
+    log(f"  {len(data)} catalysts, {crystals[0].n_atoms} sites each, "
+        f"{crystals[0].weights.shape[1]} fields")
+    out = {"n_sites": int(crystals[0].n_atoms), "folds": MAP_FOLDS, "sigma": SIGMA,
+           "d_max": MAP_D_MAX, "lam": MAP_LAM, "targets": {}}
+    for adsorbate in R.ADSORBATES:
+        name = f"dE_{adsorbate}"
+        y = data.dE[adsorbate]
+        ok = np.where(np.isfinite(y))[0]
+        rng = np.random.default_rng(SEED)
+        folds = np.array_split(rng.permutation(len(ok)), MAP_FOLDS)
+        t0 = time.time()
+        gaps, within, rank_of_metal = [], [], []
+        split_at_site, site_at_site, cell_of_cell, measured = [], [], [], []
+        share_of_metal = []
+        for f, held in enumerate(folds):
+            train = np.concatenate([folds[g] for g in range(MAP_FOLDS) if g != f])
+            cell_model, site_model = _fold_models(fs, crystals, metal, y,
+                                                  [ok[i] for i in train], name)
+            for i in held:
+                k = int(ok[i])
+                c, m = crystals[k], int(metal[k])
+                smap = SM.site_map(cell_model, c)
+                gaps.append(abs(smap.residual))
+                pmap = SM.site_predictions(site_model, c)
+                within.append(spearman(smap.values, pmap.values))
+                # where the split puts its weight: the rank of the metal among the sites, by size
+                order = np.argsort(-np.abs(smap.values))
+                rank_of_metal.append(int(np.nonzero(order == m)[0][0]) + 1)
+                share_of_metal.append(float(smap.share()[m]))
+                split_at_site.append(float(smap.values[m]))
+                site_at_site.append(float(pmap.values[m]))
+                cell_of_cell.append(float(smap.prediction))
+                measured.append(float(y[k]))
+        within = np.asarray(within, float)
+        ranks = np.asarray(rank_of_metal, int)
+        entry = {
+            "n": int(len(ok)), "seconds": float(time.time() - t0),
+            "largest_gap": float(max(gaps)),
+            "within": {"mean": float(np.nanmean(within)), "median": float(np.nanmedian(within)),
+                       "low": float(np.nanmin(within)), "high": float(np.nanmax(within)),
+                       "above": float(np.mean(within > 0.7))},
+            "metal": {"first": float(np.mean(ranks == 1)), "top3": float(np.mean(ranks <= 3)),
+                      "median_rank": float(np.median(ranks)),
+                      "share": float(np.mean(share_of_metal)),
+                      "even": float(1.0 / crystals[0].n_atoms)},
+            "across": {
+                "split_against_site": spearman(split_at_site, site_at_site),
+                "split_against_measured": spearman(split_at_site, measured),
+                "cell_against_site": spearman(cell_of_cell, site_at_site),
+                "cell_against_measured": spearman(cell_of_cell, measured),
+                "site_against_measured": spearman(site_at_site, measured)}}
+        out["targets"][name] = entry
+        log(f"  {name} on {entry['n']} catalysts, {entry['seconds']:.0f} s")
+        log(f"    the split adds up to the prediction: largest gap {entry['largest_gap']:.1e}")
+        log(f"    within a cell, over all {out['n_sites']} sites: mean rho "
+            f"{entry['within']['mean']:+.3f}, median {entry['within']['median']:+.3f}, "
+            f"above +0.7 on {100 * entry['within']['above']:.0f} % of the cells")
+        log(f"    the metal site is the largest of the split in "
+            f"{100 * entry['metal']['first']:.0f} % of the cells and among the first three in "
+            f"{100 * entry['metal']['top3']:.0f} %, carrying "
+            f"{100 * entry['metal']['share']:.1f} % of the weight against "
+            f"{100 * entry['metal']['even']:.1f} % for an even spread")
+        a = entry["across"]
+        log(f"    across the cells at the measured site: the split against the site model "
+            f"{a['split_against_site']:+.3f}; the cell model against the site model "
+            f"{a['cell_against_site']:+.3f}; against the measurement, the cell model "
+            f"{a['cell_against_measured']:+.3f} and the site model "
+            f"{a['site_against_measured']:+.3f}")
+    return out
+
+
+def table_agreement(res: dict) -> List[str]:
+    """The section of the table that reads the gate of plan item MS2."""
+    if not res:
+        return []
+    names = list(res["targets"])
+    lines = ["## The map of a cell model, against the site model (plan item MS2)", "",
+             f"A whole-cell model's prediction splits into one number per site, exactly. The "
+             f"question of this section is whether those numbers rank the sites as a model "
+             f"fitted on the sites themselves ranks them. Both models use the same kernel, the "
+             f"same cutoff ({res['d_max']:g} A) and the same ridge value ({res['lam']:g}); only "
+             f"the sample differs. Everything below is out of fold: for each of the "
+             f"{res['folds']} folds both models are fitted on the other folds and the held-out "
+             f"cells are split and predicted site by site. The data set has grown since the "
+             f"section below was last computed, so the two sections count different numbers of "
+             f"catalysts for the same target; the comparison here is internal to this section.",
+             "",
+             "**The split adds up to the prediction.** This is the first half of the gate, and "
+             "it is exact arithmetic rather than a measurement:", "",
+             "| Target | Catalysts | Largest difference between the sum and the prediction |",
+             "| --- | ---: | ---: |"]
+    for n in names:
+        e = res["targets"][n]
+        lines.append(f"| {n} | {e['n']} | {e['largest_gap']:.1e} |")
+    lines += ["",
+              "**Where the split puts its weight.** The binding energy of these catalysts is a "
+              "property of the metal site, so this has a known right answer. The split finds it:",
+              "",
+              "| Target | The metal is the largest place | Among the first three | Weight on the "
+              "metal | An even spread would give |",
+              "| --- | ---: | ---: | ---: | ---: |"]
+    for n in names:
+        m = res["targets"][n]["metal"]
+        lines.append(f"| {n} | {100 * m['first']:.0f} % | {100 * m['top3']:.0f} % | "
+                     f"{100 * m['share']:.1f} % | {100 * m['even']:.1f} % |")
+    lines += ["",
+              "**The ranking the gate asks about.** Within one cell the split and the site "
+              "model are compared over all "
+              f"{res['n_sites']} sites, which is the literal reading of the gate; across the "
+              "cells they are compared at the one site of each cell that was measured:", "",
+              "| Target | Within a cell, mean | Within a cell, median | Cells above +0.7 | "
+              "Across cells at the measured site |",
+              "| --- | ---: | ---: | ---: | ---: |"]
+    for n in names:
+        e = res["targets"][n]
+        lines.append(f"| {n} | {e['within']['mean']:+.3f} | {e['within']['median']:+.3f} | "
+                     f"{100 * e['within']['above']:.0f} % | "
+                     f"{e['across']['split_against_site']:+.3f} |")
+    lines += ["",
+              "**The two models, compared as models.** A contribution is a share of one "
+              "structure's answer and a prediction is an answer of its own, so the rows above "
+              "compare two different quantities. These rows compare the quantities that are "
+              "alike: what each model predicts, against the other and against the measurement.",
+              "",
+              "| Target | Cell model against site model | Cell model against the measurement | "
+              "Site model against the measurement |",
+              "| --- | ---: | ---: | ---: |"]
+    for n in names:
+        a = res["targets"][n]["across"]
+        lines.append(f"| {n} | {a['cell_against_site']:+.3f} | {a['cell_against_measured']:+.3f} "
+                     f"| {a['site_against_measured']:+.3f} |")
+    first = [100 * res["targets"][n]["metal"]["first"] for n in names]
+    share = [100 * res["targets"][n]["metal"]["share"] for n in names]
+    even = 100 * res["targets"][names[0]]["metal"]["even"]
+    mean = [res["targets"][n]["within"]["mean"] for n in names]
+    above = [100 * res["targets"][n]["within"]["above"] for n in names]
+    across = [res["targets"][n]["across"]["split_against_site"] for n in names]
+    passed = sum(1 for v in across if v > 0.7)
+    words = {0: "none", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five"}
+    lines += ["", "Rank correlations (Spearman).", "",
+              f"**The second half of the gate is not met, and the measurement says why.** What "
+              f"the split does do is locate the property. The metal site is the largest place of "
+              f"the split in {min(first):.0f} to {max(first):.0f} % of the cells, its median "
+              f"rank is 1 on every target, and it carries {min(share):.1f} to {max(share):.1f} % "
+              f"of the weight where an even spread over the {res['n_sites']} sites would give it "
+              f"{even:.1f} %, which is ten to fifteen times its share. What it does not do is "
+              f"reproduce the site model's ordering of all the sites of a cell: the mean rank "
+              f"correlation inside a cell is {min(mean):+.3f} to {max(mean):+.3f} and it passes "
+              f"+0.7 on at most {max(above):.0f} % of the cells. Across the cells, at the one "
+              f"site of each cell that was measured, it is {min(across):+.3f} to "
+              f"{max(across):+.3f}, which passes +0.7 on "
+              f"{words.get(passed, passed)} of the {words.get(len(names), len(names))} "
+              f"targets.", "",
+              "Two reasons, and neither is a fault in either model. First, the two quantities "
+              "differ: a contribution says how much of this cell's answer came from this place, "
+              "and a prediction says what would be measured at that place, so the places a cell "
+              "model leans on need not be the places that bind most strongly. Second, the site "
+              "model was fitted on the metal site of every cell and on no other site, so its "
+              "answers at the carbon and nitrogen sites are extrapolation; the gate compares the "
+              "split against a model that was never shown the places the comparison runs over. "
+              "The reading that stays inside both models' training data is the last table, where "
+              "the two predictions agree closely and both track the measurement.", ""]
+    return lines
+
+
 def figure(res: dict, log=print) -> None:
     """The contributions drawn on the sheet, and the weight by distance from the metal."""
     import matplotlib
@@ -422,6 +641,7 @@ def figure(res: dict, log=print) -> None:
 # =========================================================================== #
 def report(log=print) -> str:
     lines = ["# Site-resolved models of a periodic cell (plan item M5)", ""]
+    lines += table_agreement(_load("agreement.json") or {})
     sac = _load("sac.json")
     if sac:
         lines += ["## The single-atom catalysts: one measured site per cell", "",
@@ -526,6 +746,8 @@ def main():
     ap.add_argument("--lithium", action="store_true", help="the Li site energies")
     ap.add_argument("--contributions", action="store_true",
                     help="a whole-cell model read site by site")
+    ap.add_argument("--agreement", action="store_true",
+                    help="the map against the site model, out of fold (plan item MS2)")
     ap.add_argument("--report", action="store_true", help="the table from the stored results")
     ap.add_argument("--bootstrap", type=int, default=2000)
     args = ap.parse_args()
@@ -540,7 +762,7 @@ def main():
     if args.report:
         report(log)
         return
-    everything = not (args.sac or args.lithium or args.contributions)
+    everything = not (args.sac or args.lithium or args.contributions or args.agreement)
     t0 = time.time()
     log(f"=== {time.strftime('%Y-%m-%d %H:%M')} site-resolved models (plan item M5)")
     if args.lithium or everything:
@@ -552,6 +774,9 @@ def main():
     if args.sac or everything:
         log("The single-atom catalysts")
         _save("sac.json", sac_run(args, log))
+    if args.agreement or everything:
+        log("The map of a cell model, against the site model (plan item MS2)")
+        _save("agreement.json", agreement_run(args, log))
     report(log)
     log(f"=== {time.time() - t0:.0f} s")
 

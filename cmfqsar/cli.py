@@ -1942,8 +1942,8 @@ def _crystal_predict_inputs(args, model):
 
     if _is_site_model(model):
         raise SystemExit("this model was fitted on sites of a cell (plan item M5), not on whole "
-                         "cells; `predict` has no site path. Use the library "
-                         "(cmfqsar.sites.site_table) to build the sites of the structures first")
+                         "cells, so one structure has as many answers as it has sites. Use "
+                         "`cmf sites`, which writes one prediction per site (plan item MS2)")
     if args.align_variance is not None or args.aligned_out or args.align_pocket:
         raise SystemExit("a periodic model predicts a crystal, which has no pose to align: the "
                          "--align-* options and --aligned-out apply to molecules only")
@@ -2892,6 +2892,95 @@ def cmd_transfer(args):
             for i, n in enumerate(names):
                 w.writerow([n] + [f"{v:.4f}" if np.isfinite(v) else "" for v in M[i]])
         print(f"  matrix written to {args.out}")
+
+
+def cmd_sites(args):
+    """A spatially resolved prediction: one number per atom, site or region (item MS2)."""
+    from cmfqsar import sitemap as SM
+
+    model, extra = load_model(args.model)
+    periodic = _is_crystal_model(model)
+    if periodic:
+        from cmfqsar.periodic import crystal_table, read_crystal_set
+        atoms, names = read_crystal_set(args.dataset, pbc=args.pbc)
+        table = crystal_table(atoms, model.fieldset, names)
+        structures = list(table.molecules)
+        _check_contract(model, structures, allow=args.allow_mismatch, crystals=True)
+    else:
+        ds = load_dataset(args.dataset, activity_prop=None)
+        structures = [build_fields(m, model.fieldset, n) for m, n in zip(ds.mols, ds.names)]
+        names = list(ds.names)
+        _check_contract(model, structures, allow=args.allow_mismatch)
+    if args.structure:
+        want = {w.strip() for w in args.structure.split(",")}
+        keep = [i for i, n in enumerate(names) if n in want]
+        if not keep:
+            raise SystemExit(f"no structure named {args.structure} in {args.dataset}")
+        structures = [structures[i] for i in keep]
+        names = [names[i] for i in keep]
+
+    site_model = SM.is_site_model(model)
+    if site_model:
+        if not periodic:
+            raise SystemExit("this model was fitted on sites of a cell, so its input is a "
+                             "periodic structure file and not a molecule file")
+        print(f"This model was fitted on {model.train.n_mol} sites of a cell (plan item M5), so "
+              f"the map is one prediction per site, in the units of the property.")
+    else:
+        if not SM.splits_prediction(model):
+            # the refusal says which kernel this is and why it has no split
+            try:
+                SM._require_split(model)
+            except ValueError as exc:
+                raise SystemExit(str(exc))
+        print(f"Splitting the prediction of {len(structures)} "
+              f"{'cells over their sites' if periodic else 'molecules over their atoms'}. "
+              f"The numbers are in the units of the activity and, with the fitted constant, add "
+              f"up to the prediction.")
+    regions = None
+    if site_model and args.regions != "none":
+        raise SystemExit("a map of predictions cannot be grouped: its numbers are one answer per "
+                         "site and not shares of one answer, so adding them means nothing. "
+                         "--regions applies to the split of a prediction")
+    if args.regions == "elements":
+        print("Grouping the places by element.")
+    elif args.regions == "shells":
+        edges = [float(v) for v in args.shells.split(",") if v.strip()]
+        print(f"Grouping the places into shells around place {args.centre}, "
+              f"with edges {', '.join(f'{e:g}' for e in edges)} A.")
+    maps = []
+    for structure, name in zip(structures, names):
+        if site_model:
+            m = SM.site_predictions(model, structure, name=name)
+        else:
+            m = SM.site_map(model, structure, name=name, check=not args.no_check)
+            if args.regions == "elements":
+                regions = SM.by_element(structure)
+            elif args.regions == "shells":
+                regions = SM.shells_around(structure, args.centre,
+                                           [float(v) for v in args.shells.split(",")
+                                            if v.strip()])
+            if regions is not None:
+                m = SM.region_map(m, regions)
+        maps.append(m)
+        head = (f"\n{name}: {len(m)} places"
+                + ("" if site_model else f", prediction {m.prediction:+.4f}"
+                                         f" = {m.bias:+.4f} + the places below"))
+        print(head)
+        for label, v in m.top(args.top):
+            print(f"   {label:28s} {v:+10.4f}")
+        for note in m.notes:
+            print(f"   note: {note}")
+    if args.out:
+        SM.write_maps(maps, args.out)
+        rows = sum(len(m) for m in maps)
+        print(f"\nWrote {rows} places of {len(maps)} structures to {args.out}")
+    if args.json:
+        import json as _json
+        with open(args.json, "w", encoding="utf-8", newline="\n") as fh:
+            _json.dump([m.to_dict() for m in maps], fh, indent=1)
+            fh.write("\n")
+        print(f"Wrote the same maps as JSON to {args.json}")
 
 
 def cmd_mixing(args):
@@ -5407,6 +5496,41 @@ def main(argv=None):
     mx.add_argument("--quiet", action="store_true", help="no progress line")
     mx.add_argument("--out", default=None, metavar="FILE", help="CSV of the shares")
     mx.set_defaults(func=cmd_mixing)
+
+    st = sub.add_parser("sites",
+                        help="a spatially resolved prediction: one number per atom, site or "
+                             "region, as a coarser model reads it")
+    st.add_argument("model", help="a model saved with 'build --save' or 'build-crystals --save'")
+    st.add_argument("dataset", help="the structures to map: a molecule file, or one structure "
+                                    "file or a folder of them for a periodic model")
+    st.add_argument("--out", default=None, metavar="FILE",
+                    help="CSV of the map: one row per place, with where the place is")
+    st.add_argument("--json", default=None, metavar="FILE",
+                    help="the same maps as JSON, with every number and position")
+    st.add_argument("--structure", default=None, metavar="NAMES",
+                    help="map only these structures, by name, separated by commas")
+    st.add_argument("--regions", choices=("none", "elements", "shells"), default="none",
+                    help="group the places before reporting them: 'elements' collects each "
+                         "element, 'shells' collects them by distance from one place "
+                         "(--centre). The groups still add up to the prediction")
+    st.add_argument("--centre", type=int, default=0, metavar="INDEX",
+                    help="with --regions shells, the place the shells are measured from "
+                         "(default 0)")
+    st.add_argument("--shells", default="2.4,3.5,5.0", metavar="A",
+                    help="with --regions shells, the shell edges in angstrom, separated by "
+                         "commas (default 2.4,3.5,5.0)")
+    st.add_argument("--top", type=int, default=10, metavar="N",
+                    help="how many places to print per structure, largest first (default 10)")
+    st.add_argument("--no-check", action="store_true",
+                    help="do not verify that the places and the fitted constant add up to the "
+                         "prediction; the check is exact and costs one prediction")
+    st.add_argument("--pbc", default=None, metavar="AXES",
+                    help="periodic models only: which lattice directions are periodic, as "
+                         "letters ('abc', 'ab', 'a'); without it the files decide")
+    st.add_argument("--allow-mismatch", action="store_true",
+                    help="map even when the structures were not prepared the way the model's "
+                         "training set was")
+    st.set_defaults(func=cmd_sites)
 
     args = p.parse_args(argv)
     args.func(args)

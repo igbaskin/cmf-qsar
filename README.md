@@ -1396,6 +1396,51 @@ weights (95 % interval [-0.027, +0.017]), +0.009 on the fifteen sets below forty
 the weights fitted on the series alone they gain +0.022 [+0.002, +0.047], which is the variance of
 fitting five weights on one series removed, and nothing more.
 
+### A map instead of one number: the prediction place by place
+
+A model answers with one number per structure. A coarser model needs a map: a barrier per site, a
+reactivity per surface site, a growth rate per patch. [sitemap.py](cmfqsar/sitemap.py) (plan item
+MS2) writes one, and it holds two different maps behind one entry, because they must not be
+confused.
+
+**The split of one prediction.** `site_map(model, structure)` splits a molecule over its atoms by
+decomposition rule 3 and a periodic cell over its sites, so the caller does not have to know which
+kernel the model carries. It returns the numbers, where each place is, and the fitted constant as a
+place of its own, so the column adds up to the prediction exactly — `SiteMap.check()` verifies it
+and the entry runs it by default. `region_map` groups the places and sums them, which needs no new
+mathematics because a split is additive: by element, by distance from one place (through the images
+of a periodic cell), or by any grouping given. On the command line `cmf sites MODEL STRUCTURES
+--out map.csv` writes one row per place with its position, and `--regions elements` or `--regions
+shells --centre I` group them first. Four kernels are refused by name with the reason — the surface
+channels with their heights, the reciprocal-space structure factors, the three-body channels whose
+shares belong to triangles, and the periodic overlap kernel — as is a nonlinear layer, where the
+Shapley values take over.
+
+**A prediction per site.** The second map is not a split. A site model (plan item M5) takes one site
+of a cell as its sample, so `site_predictions` asks it about every site of a cell and returns one
+answer per site in the units of the property. A contribution is a share of one structure's answer; a
+prediction is an answer of its own. `check` refuses a map of predictions for that reason: it has no
+total.
+
+**Measured** on the single-atom catalyst set -- 133 catalysts with a measured value, 119 for OOH --
+in five folds, with both models fitted on the same cells and the same kernel so that only the
+sample differs (`benchmarks/results/sites/table.md`, `benchmarks/run_sites.py --agreement`). The
+arithmetic half of the gate holds exactly: the sum of the places and the constant differs from the
+prediction by at most **3.5e-13**. The split also locates the property. The binding energy of these
+catalysts belongs to the metal site, and the split puts its largest number there in **62 to 77 %**
+of the cells, giving it 8.1 to 11.7 % of the weight where an even spread over the 127 sites would
+give 0.8 %. What it does **not** do is reproduce the site model's ordering of all the sites of a
+cell: the mean rank correlation inside a cell is +0.025 to +0.476, above +0.7 on at most 13 % of
+the cells, and across the cells at the measured site it is -0.001 to +0.743, which passes +0.7 on
+one target of the four. Two reasons, and neither is a fault in either model. A contribution and a
+prediction are different quantities, so the places a cell model leans on need not be the places
+that bind most strongly; and the site model was fitted on the metal site of every cell and no
+other, so its answers at the carbon and nitrogen sites are extrapolation -- the gate compares the
+split against a model that was never shown the places the comparison runs over. Compared as
+models, where both stay inside their training data, the two predictions agree at +0.968 to +0.992
+and both track the measurement (+0.771 to +0.952 and +0.762 to +0.956). So the map is an output
+mode and an interpretation; a number per site to hand to a coarser model comes from a site model.
+
 ### Shapley decomposition: interpretation that survives a nonlinear kernel
 
 The decomposition rules of the papers are exact, but rule 3 splits a prediction into atoms only
