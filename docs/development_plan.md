@@ -6136,6 +6136,49 @@ because the fourth-dimension verdict says ensembles do not help, so it has nothi
 **Order.** ND11 first, because it runs on the existing sets and gates on the calibration the
 program already measures. ND12 after ND5 to ND7, on the larger sets. ND13 with ND9.
 
+**ND14. The neural device of 1997 as the atom-level network (7 November 2026).** The neural
+device of Baskin, Palyulin and Zefirov (J. Chem. Inf. Comput. Sci. 37 (1997) 715) applies one
+small network with shared weights to every atom and bond of the molecular graph, sums the
+per-atom outputs into one molecule vector, and maps that vector to the property with a second
+network. The sum over atoms makes the model independent of atom numbering. CMF has the same
+structure with a fixed atom function: a Gaussian in space with a per-atom amplitude, summed into
+a field, with the kernel the overlap of two such sums. When the Gaussian width goes to infinity
+the overlap becomes the product of the two summed amplitudes, which is the inner product of two
+device-style molecule vectors with one output unit. So the device is CMF with the spatial
+resolution removed, and CMF is the device with a spatial pooling of finite width and a fixed
+atom function; the invariant kernel of C5 sits between the two. This relation gives the device
+three places in the items above, ordered by how much of CMF each keeps.
+
+* **ND14a. The device supplies the atom amplitudes.** This is ND4a with the device in place of a
+  transformer: its first level produces the per-atom amplitudes of the steric, electrostatic
+  and hydrogen-bond fields, trained end to end through the differentiable ridge solution of the
+  landmark features. The kernel, the co-field and the Shapley values survive, because the device
+  only makes the field. The device is the better choice than a transformer on a congeneric
+  series, because it has far fewer parameters and was built for data of that size; the same
+  pretraining on xTB or ORCA charges and the same penalised correction to the MMFF values apply.
+  It is the one route that makes the ND4a question (do learned atom values beat the physics-based
+  ones inside the same kernel?) testable on a Sutherland set.
+* **ND14b. The device's molecule vector as a kernel view.** This is ND7 or ND8 with a trained
+  device instead of a tangent kernel or a pretrained model: the summed molecule vector of a
+  device trained on the series, or on a larger unlabelled set of the same chemistry, under a
+  Gaussian kernel in the mixing of E6. The kernel-correlation check of EC5 comes first; a view
+  whose kernel correlates near one with the five fields plus the invariant kernel adds nothing.
+* **ND14c. The co-field as an input feature of the device.** This is ND3 with the device as the
+  regressor: the co-field read at each atom's position in the aligned frame enters as one more
+  atom feature, and the device's second level replaces the ridge regression. It is the
+  fitting-method change that the external check of BT7 on LiTraj pointed to. It keeps the
+  alignment and gives up the linear co-field reading of the final model, so it belongs to the
+  large sets (LiTraj, COMPAS-1) and not to a congeneric series.
+
+*Needed:* `cmfqsar/device.py`, a shared per-atom network, a sum and a second network in PyTorch
+under the optional-dependency rule of E11, with the per-atom amplitudes as one output head and
+the molecule vector as another; `benchmarks/run_device.py`, with rows for the three routes.
+*Gate:* ND14a under the gate of ND4a, on one Sutherland set and on COMPAS-1; ND14b under the gate
+of ND7, after its kernel-correlation check; ND14c under the interval of rule 4 against the ridge
+regression on the same aligned fields, on LiTraj and COMPAS-1 only. *Order:* ND14a first,
+because it is the cheapest test of the ND4a question and keeps every interpretation tool; ND14b
+only if the correlation check leaves room; ND14c after ND14a, on the large sets.
+
 ### Multiscale modelling: the model as the fast level of a hierarchy (7 November 2026)
 
 *Drafted 7 November 2026.* A multiscale scheme uses a fitted model between an electronic-structure
@@ -6731,10 +6774,11 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
-| H. Deep learning | 16 | 0 | ND1 to ND13 |
+| H. Deep learning | 19 | 0 | ND1 to ND14c |
+| H. Multiscale modelling | 8 | 1 | MS2, MS3, MS4, MS5, MS6, MS7, MS8 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**147 items: 106 finished, 4 partly, 37 open.**
+**158 items: 107 finished, 4 partly, 47 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
@@ -6758,7 +6802,7 @@ equally blocked.
   are read by, in both windows. The window, the viewer and the panels those three added are what
   G5, NT8 and NT11 extend.
 * **Open on their own merits.** M7 to M9, NT1 to NT7, SC2, SC8, MC10, E11's remaining three
-  versions, and the whole deep-learning part ND1 to ND13, which has not been started.
+  versions, and the whole deep-learning part ND1 to ND14, which has not been started.
 * **Closed on 5 November 2026.** D11, the charge model that an element or a valence state could
   void, found by EC4 inside the d block and by EC3 outside it. Its gate moved one published
   conclusion: 72 % of item BT5's solvation shells had carried a spurious net charge of +1, and
