@@ -1,6 +1,6 @@
 {
- "commit": "242e6f81f27100d8547f2358554d7a64543ed75b",
- "created": "2026-11-09T16:01:10",
+ "commit": "0548a93256dc06ff057edf40ea98175ef114cc91",
+ "created": "2026-11-09T17:17:50",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3456,7 +3456,15 @@
   "benchmarks/results/surrogate/litraj.json": "58259c47dde05e032e3a028232802aabde0f43abd6d617e03912b2a065ff2cdf",
   "benchmarks/results/surrogate/litraj_log.txt": "d44cd5a57a2ab70f0bb7b8b23dbcc6fc6ac8f5908bf2de09686d7bcbc31aa3d6",
   "benchmarks/results/surrogate/log.txt": "b73c6b08cb7843179e485b54fb05d34c67109b79fa8e5ab7a55120c1367e6ea3",
-  "benchmarks/results/surrogate/table.md": "1abab37510bea728bab8c7a062d803181a62555553496a9192e39d4d4868ffff",
+  "benchmarks/results/surrogate/lowrank_ACE.json": "6433d4b7fac65ebb4fa88e2705c65fb9bb2a92bb24fd82b4b6be2464985e9362",
+  "benchmarks/results/surrogate/lowrank_AChE.json": "4aab6fb8204cf6ca1edefa2716cd194ccaff40e7eae2a7626391127ac51f6458",
+  "benchmarks/results/surrogate/lowrank_BZR.json": "df5b43ef6fc4d0b29980553af085805caca95f98b74b3bcfec394ec019e4909f",
+  "benchmarks/results/surrogate/lowrank_COX2.json": "70f9a0ce86cdf4d95196388922ab7e122ec03b48b739ec75bc63463986a28d69",
+  "benchmarks/results/surrogate/lowrank_DHFR.json": "2657babd3ba9b33403efdef5ab0ca6181027ebda394d708d594f2134a9a58187",
+  "benchmarks/results/surrogate/lowrank_GPB.json": "94b7ffdd2e1b642ab7abcc2b1754ec2182dfeaa753961c863575a9fe1e46e4fc",
+  "benchmarks/results/surrogate/lowrank_THER.json": "1c59ff74c125b9adcce387f7ab02fb90d8dfac1f4eee6a6aca9d9d44a97da986",
+  "benchmarks/results/surrogate/lowrank_THR.json": "5053ef6e9899aa1498b6b213ff2853acf359fc96d5d96cf26056890d96bb07e3",
+  "benchmarks/results/surrogate/table.md": "4592743ef2273d41196f3ca897ad466c1c9e5a39a527881597be005f8b3d7ab5",
   "benchmarks/results/table.md": "0412a5f8dfee7da0c635bfe37ff03adbcbdbe022e1ba255587dcfaa9cf3abfd7",
   "benchmarks/results/tasks/cold.json": "75a888cae2484d320185a07f3345237cf078a68acc69a5f6b1af4e7c52a0583a",
   "benchmarks/results/tasks/share.json": "e92ea52780763d2c4250caad713852de3e3a5105f9f490834a567a879ebd8ff8",
