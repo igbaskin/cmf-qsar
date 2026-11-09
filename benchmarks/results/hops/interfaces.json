@@ -1,0 +1,94 @@
+{
+ "rho": 0.25,
+ "lam": 0.01,
+ "r_max": 6.0,
+ "stored_q2": 0.6616870305111496,
+ "n_train": 1732,
+ "seconds_model": 759.939532995224,
+ "hosts": {
+  "n_paths": 1040,
+  "n_distinct": 48,
+  "n_compared": 48,
+  "largest_difference": 1.1823431123048067e-11,
+  "seconds_direct": 113.35605430603027,
+  "seconds_through": 105.61615085601807
+ },
+ "dft_hops": [
+  {
+   "structure": "phosphate",
+   "hop": "34 -> 0",
+   "stored": 0.7978867381433474,
+   "through": 0.7978867381433474,
+   "difference": 0.0,
+   "representative": 449,
+   "through_its_group": 0.7978867471846058,
+   "note": ""
+  },
+  {
+   "structure": "borophosphate",
+   "hop": "18 -> 8",
+   "stored": 0.5610485082354302,
+   "through": 0.5610485082354302,
+   "difference": 0.0,
+   "representative": 724,
+   "through_its_group": 0.5610485046634892,
+   "note": ""
+  }
+ ],
+ "percolation": [
+  {
+   "structure": "phosphate",
+   "direct": {
+    "E_1D": 0.40274921640488515,
+    "E_2D": 0.4515507240565455,
+    "E_3D": 0.7978867471846058
+   },
+   "through": {
+    "E_1D": 0.40274921640488515,
+    "E_2D": 0.4515507240565455,
+    "E_3D": 0.7978867471846058
+   },
+   "difference": {
+    "E_1D": 0.0,
+    "E_2D": 0.0,
+    "E_3D": 0.0
+   }
+  },
+  {
+   "structure": "borophosphate",
+   "direct": {
+    "E_1D": 0.5275082719238924,
+    "E_2D": 0.6537311441050804,
+    "E_3D": 1.5710187231141788
+   },
+   "through": {
+    "E_1D": 0.5275082719238924,
+    "E_2D": 0.6537311441050804,
+    "E_3D": 1.5710187231141788
+   },
+   "difference": {
+    "E_1D": 0.0,
+    "E_2D": 0.0,
+    "E_3D": 0.0
+   }
+  },
+  {
+   "structure": "borate",
+   "direct": {
+    "E_1D": 0.28054728413266616,
+    "E_2D": 0.4372981022887359,
+    "E_3D": Infinity
+   },
+   "through": {
+    "E_1D": 0.28054728412084273,
+    "E_2D": 0.4372981022887359,
+    "E_3D": Infinity
+   },
+   "difference": {
+    "E_1D": -1.1823431123048067e-11,
+    "E_2D": 0.0,
+    "E_3D": null
+   }
+  }
+ ]
+}

@@ -375,14 +375,16 @@ def registry() -> List[Benchmark]:
                   report=lambda: _mod("run_triangles").write_table(_r("triangles")),
                   tables=["triangles/table.md"]),
         Benchmark("hops",
-                  "does the field around a Li hop predict its barrier, across structure types",
+                  "does the field around a Li hop predict its barrier, across structure types, "
+                  "and does the same model read from another program give the same numbers",
                   "run_hops.py", "hops",
                   # One command per stored result file, and no two of them write the same file:
                   # the first writes public.json, hosts.json and disordered.json, the second the
-                  # fine co-field profile the manual draws.
-                  compute=[[], ["--fine-profile"]],
+                  # fine co-field profile the manual draws, the third the reading of the model
+                  # through the interfaces of plan item MS7.
+                  compute=[[], ["--fine-profile"], ["--interfaces"]],
                   prepare=["prepare_hops.py"],
-                  minutes="110",                 # measured: 67 for the first, 40 for the second
+                  minutes="135",       # measured: 67 for the first, 40 for the second, 25 third
                   report=lambda: _mod("run_hops").write_table(_r("hops")),
                   tables=["hops/table.md"]),
         Benchmark("litraj",

@@ -10542,6 +10542,130 @@ graph network reaches 0.21 eV, on fifty-four times as many
 hops, and it carries three-body terms of its own -- which is the same ingredient that moved this
 model furthest.
 
+## Reading the model from another program
+
+Everything above reads a model from inside this program: the window, the command line, the library.
+A multiscale scheme needs it the other way round -- the model as a component of somebody else's
+calculation, the fast level between an electronic-structure method and a coarse model. Three
+interfaces are what the other programs ask for, and they are in `cmfqsar.interfaces` (plan item
+MS7). None of them is a new model. Each is a way in to the one that is already fitted, and the
+measurement at the end of this chapter is the check that nothing changes on the way.
+
+### A model as an ASE calculator
+
+The Atomic Simulation Environment is how a structure reaches most of the atomistic tools in use.
+`CMFCalculator` makes a fitted model one of its calculators:
+
+```python
+from ase.optimize import BFGS
+from cmfqsar.interfaces import CMFCalculator
+
+atoms.calc = CMFCalculator(model, sign=-1.0)   # -1: move towards a *higher* prediction
+BFGS(atoms).run(fmax=0.02, steps=50)
+```
+
+What the calculator calls the energy is `sign` times the prediction, in the units of the activity
+and not in eV. An ASE optimiser minimises, so `sign=+1` drives the structure towards a lower
+prediction and `sign=-1` towards a higher one, which is the direction a design loop wants. Nothing
+converts units, because a predicted activity has no energy scale: the step sizes of the optimiser
+have to be chosen for the numbers the model gives.
+
+The forces are minus the gradient of the prediction, from the analytic derivative of the chapter
+*The gradient of a prediction*. They exist for the two kernels that derivative covers -- the
+overlap integral and the rotation-invariant autocorrelation -- and the calculator says so when
+they do not: it reports `energies only`, drops `forces` from the properties it offers, and the
+refusal names the kernel and the reason. A model with no gradient is still useful through this
+interface, because a single-point screen needs energies alone.
+
+One caution carries over from the gradient chapter, and it is the reason this is a component and
+not a force field: the gradient knows nothing about valence, and following it alone pulls bonds out
+of shape. Added to a force field, or used to turn a rigid body, it moves a structure towards what
+the model calls active. Used on its own, it will break the molecule and raise the number.
+
+A periodic model answers energies and refuses forces, and writing this interface is what found the
+reason. The periodic **overlap** kernel evaluates the ordinary overlap against an image-expanded
+table, so moving one atom moves every image of it, and that term is not in the derivative. It had
+not been refused before, because the refusals of the gradient chapter are written per kernel source
+and the periodic overlap carries the ordinary one. It is refused now, by name and with the reason,
+rather than answering with a number nobody has checked.
+
+### A barrier per migration path
+
+The hop model of the chapter above answers for a path, not for a structure, and a kinetic Monte
+Carlo or a percolation analysis asks about a structure. `HopBarriers` closes that gap: it
+enumerates the symmetry-distinct paths of the mobile ion, builds each environment the way the
+training set was built, predicts, and hands back a table.
+
+```python
+from cmfqsar.interfaces import HopBarriers
+
+reader = HopBarriers(model, fieldset, rho=0.25, r_max=6.0, mobile="Li")
+table = reader.table(atoms, name="Li3PO4")
+table.write_table("barriers.csv")        # one row per path, with where it is
+print(table.percolation())               # E_1D, E_2D, E_3D under the predicted barriers
+```
+
+The settings are arguments and not guesses. An environment built with another envelope width or
+another reach is a different descriptor, so the width, the reach, the mobile element and the path
+length limits have to be the ones the model was fitted with. The table carries each path's two end
+sites, its length, its midpoint, how many paths of the structure it stands for, and its predicted
+barrier; `barriers` maps every path of the structure, not only the distinct ones, because a
+percolation step needs the whole network. A caller who already has the network -- this program's
+own benchmark does -- passes it as `hopset=` and only the environments and the prediction are done
+here.
+
+### A field on a grid
+
+`write_cofield_cube` writes the co-field as a Gaussian cube file, which is what a visualiser or a
+grid-based code reads. For a molecular model this is the export the command line already had. What
+is new is the periodic case: for a model on one lattice the cube is one cell, with the **lattice
+vectors as the cube's own axes**, so the file is the periodic field itself and tiles to as much of
+the crystal as a viewer is asked for. The earlier export could only write a cubic cell, because a
+cube file was built from one spacing and three counts; a general cell needs general axes, which
+this writes. On the command line it is `cmf cofield MODEL --cell STRUCTURE`.
+
+The rotation-invariant kernels have no co-field at all -- their channels know no place -- and are
+refused by name rather than drawn. The map of `cmf sites` is what such a model offers instead.
+
+### Does the measurement survive the journey out?
+
+This is the gate of item MS7, and it is a reproduction rather than a new number: the public hop
+model is rebuilt at its stored width and ridge, and then read twice. Once by the route the
+benchmark script uses -- environments built in the script and handed to the model -- and once
+through `HopBarriers`, which is given a structure and does the rest itself. The structures are the
+three hosts of the lithium interface study, which the public model has never seen.
+
+| Paths of the hosts | Distinct by symmetry | Compared by both routes | Largest difference |
+| ---: | ---: | ---: | ---: |
+| 1040 | 48 | 48 | 1.2e-11 eV |
+
+The two routes agree to 1.2e-11 eV, which is round-off: the interface is a way in and not
+another model. The two paths the benchmark lists against a DFT elastic-band barrier come back as
+the stored table has them:
+
+| Host | Path | Stored | Through the interface |
+| --- | --- | ---: | ---: |
+| phosphate | 34 -> 0 | 0.7979 | 0.7979 |
+| borophosphate | 18 -> 8 | 0.5610 | 0.5610 |
+
+And so do the percolation thresholds, which is what a conductivity estimate starts from -- the
+lowest barrier at which the paths form a connected network in one, two and three dimensions:
+
+| Host | E_1D | E_2D | E_3D |
+| --- | --- | --- | --- |
+| phosphate | 0.403 / 0.403 | 0.452 / 0.452 | 0.798 / 0.798 |
+| borophosphate | 0.528 / 0.528 | 0.654 / 0.654 | 1.571 / 1.571 |
+| borate | 0.281 / 0.281 | 0.437 / 0.437 | none / none |
+
+In eV above the lowest site, by the script's route / through the interface. The full table is in
+`benchmarks/results/hops/table.md` (`benchmarks/run_hops.py --interfaces`).
+
+What this does not show is a faster calculation. Both routes pay for the same two things, the
+environments and the kernel against the training set, and the interface pays a little more because
+it works one structure at a time. What it shows is that the number a coarse model reads through the
+interface is the number this program measured, which is the only property a component of somebody
+else's calculation has to have.
+
 ## The voltage of an insertion electrode: the cell against its composition
 
 A cathode is judged by its **average voltage**: the work per electron of taking the working ion

@@ -39,7 +39,15 @@ Usage
     python benchmarks/run_hops.py                     # all three parts
     python benchmarks/run_hops.py --fine-profile      # the co-field on a fine grid, for the manual
     python benchmarks/run_hops.py --max-structures 60 # a quick look, under its own file names
+    python benchmarks/run_hops.py --interfaces        # the model read from outside (item MS7)
     python benchmarks/run_hops.py --report            # the table from the stored results
+
+4. **The model read from outside** (``--interfaces``, plan item MS7).  The public model is
+   rebuilt at the stored width and read twice: by the route this script uses, and through
+   ``cmfqsar.interfaces.HopBarriers``, which is handed a structure and builds the environments
+   itself.  What is compared is the barriers of the hosts' paths, the two barriers the stored
+   table lists against DFT, and the percolation thresholds a conductivity estimate starts from.
+   It writes ``interfaces<tag>.json``.
 
 Every option that changes a number enters the tag that names the files a run writes, so that two
 runs whose numbers differ never write the same file: ``public<tag>.json``, ``hosts<tag>.json``,
@@ -685,6 +693,210 @@ def _fmt(x, nd=3, sign=True):
     return f"{x:+.{nd}f}" if sign else f"{x:.{nd}f}"
 
 
+# =========================================================================== #
+# The model read through the interfaces of plan item MS7
+# =========================================================================== #
+def interfaces_run(args, log) -> dict:
+    """Does the stored measurement come out the same when the model is read from outside?
+
+    This is the gate of plan item MS7.  The public model is rebuilt at the stored width and ridge
+    and then read twice: by the route this script uses -- environments built here, passed to
+    ``HopModel.predict`` -- and through :class:`cmfqsar.interfaces.HopBarriers`, which is given a
+    structure and does the rest itself.  Three things are compared: the barriers of the hosts'
+    paths, the two barriers the stored table lists against DFT, and the percolation thresholds a
+    conductivity estimate starts from.
+    """
+    from cmfqsar.interfaces import HopBarriers
+
+    pub = json.load(open(os.path.join(RESULTS, f"public{run_tag(args)}.json")))
+    rho = pub["best_rho"]
+    best = next(m for m in pub["models"] if m["name"].startswith("rotation") and m["rho"] == rho)
+    out = {"rho": rho, "lam": best["lam"], "r_max": args.r_max, "stored_q2": best["q2"],
+           "n_train": best["n"]}
+    t0 = time.time()
+    hs_pub = load_prepared(args.prepared, args.max_structures, args.max_per_structure, args.seed)
+    fs_pub = fieldset_for(hs_pub, "file")
+    crystals = hs_pub.crystals(fs_pub)
+    reps = [i for i, h in enumerate(hs_pub.hops) if h.representative == i and np.isfinite(h.y)]
+    t = hs_pub.targets(reps)
+    log(f"  rebuilding the public model at rho {rho:g} on {len(t)} hops "
+        f"(ridge {best['lam']:g}); the kernel is the slow part")
+    fr = framed_environments(hs_pub, crystals, rows=t.atom, rho=rho, r_max=args.r_max)
+    model = HopModel.build(fr, fs_pub, n_jobs=args.jobs).fit(t.y, lam=best["lam"])
+    out["seconds_model"] = float(time.time() - t0)
+    log(f"  the public model is ready in {out['seconds_model'] / 60:.1f} min")
+
+    # --- the hosts, which the public model has never seen
+    hs = load_hosts()
+    fs = inorganic_fieldset([s.name[4:] for s in fs_pub.specs
+                             if s.is_cif and s.name != "cif:other"],
+                            physchem=PHYSCHEM, charge_model="oxidation",
+                            other=any(s.name == "cif:other" for s in fs_pub.specs))
+    host_crystals = hs.crystals(fs)
+    host_reps = hs.annotate(host_crystals)
+    rows = [r for r in host_reps if np.isfinite(hs.hops[r].y)]
+    log(f"  the three hosts: {len(hs.hops)} paths, {len(host_reps)} distinct, {len(rows)} "
+        f"with a bond-valence barrier")
+    # route A: the route this script uses
+    t1 = time.time()
+    direct = {int(r): float(v) for r, v in
+              zip(rows, model.predict(framed_environments(hs, host_crystals, rows=rows,
+                                                          rho=rho, r_max=args.r_max)))}
+    seconds_direct = time.time() - t1
+    # route B: the same model read through the interface, one structure at a time
+    hb = HopBarriers(model, fs, rho=rho, r_max=args.r_max, mobile=hs.mobile)
+    t1 = time.time()
+    through: Dict[int, float] = {}
+    tables = {}
+    for k, name in enumerate(hs.names):
+        # the network is handed over as it is, and the interface reports one of its structures
+        table = hb.table(hopset=hs, structure=k, name=name)
+        tables[name] = table
+        for row in table.rows:
+            if int(row["path"]) in direct:
+                through[int(row["path"])] = float(row["barrier"])
+    seconds_through = time.time() - t1
+    shared = sorted(set(direct) & set(through))
+    gaps = [abs(direct[i] - through[i]) for i in shared]
+    out["hosts"] = {
+        "n_paths": int(len(hs.hops)), "n_distinct": int(len(host_reps)),
+        "n_compared": int(len(shared)),
+        "largest_difference": float(max(gaps)) if gaps else float("nan"),
+        "seconds_direct": float(seconds_direct), "seconds_through": float(seconds_through)}
+    log(f"    {len(shared)} of the hosts' distinct paths were predicted by both routes: the "
+        f"largest difference is {out['hosts']['largest_difference']:.1e} eV "
+        f"({seconds_direct:.0f} s this script's way, {seconds_through:.0f} s through the "
+        f"interface)")
+
+    # --- the two barriers the stored table lists against DFT
+    stored = json.load(open(os.path.join(RESULTS, f"hosts{run_tag(args)}.json")))
+    listing = []
+    for row in stored.get("dft_hops", []):
+        a, b = (int(x) for x in row["hop"].split("->"))
+        table = tables.get(row["structure"])
+        if table is None:
+            continue
+        k = hs.names.index(row["structure"])
+        # the stored row names the path by its two sites and its length; the offset is not in it,
+        # and two paths can share the sites with different images
+        same = [i for i in hs.of_structure(k)
+                if hs.hops[i].a == a and hs.hops[i].b == b
+                and abs(hs.hops[i].length - float(row["length"])) < 1e-6]
+        if not same or int(same[0]) not in table.barriers:
+            listing.append({"structure": row["structure"], "hop": row["hop"],
+                            "stored": row["predicted"], "through": None,
+                            "difference": None, "representative": None,
+                            "note": "this path is not in the network the interface was given"})
+            continue
+        i = int(same[0])
+        # the stored number is this path's own prediction, so the interface is asked for this
+        # path and not for the one that stands for it
+        value = float(hb.table(hopset=hs, structure=k, paths=[i]).rows[0]["barrier"])
+        rep = int(hs.hops[i].representative)
+        grouped = float(table.barriers[i]) if i in table.barriers else float("nan")
+        listing.append({"structure": row["structure"], "hop": row["hop"],
+                        "stored": float(row["predicted"]), "through": value,
+                        "difference": value - float(row["predicted"]),
+                        "representative": None if rep == i else rep,
+                        "through_its_group": None if rep == i else grouped, "note": ""})
+        log(f"    {row['structure']:14s} {row['hop']:10s} stored {row['predicted']:.4f}, "
+            f"through the interface {value:.4f} eV"
+            + ("" if rep == i
+               else f"; the path that stands for it gives {grouped:.4f}, which is what the "
+                    f"network a simulation reads carries"))
+    out["dft_hops"] = listing
+
+    # --- the percolation thresholds: what a conductivity estimate starts from
+    perc = []
+    for k, name in enumerate(hs.names):
+        rows_k = hs.of_structure(k)
+        by_route = {int(i): direct.get(int(hs.hops[i].representative), float("nan"))
+                    for i in rows_k}
+        if not all(np.isfinite(v) for v in by_route.values()):
+            log(f"    {name}: not every path has a bond-valence barrier, so this script's "
+                f"route has no network to percolate; skipped")
+            continue
+        ref = structure_percolation(hs, k, saddle_from_barrier(hs, by_route))
+        mine = tables[name].percolation()
+        perc.append({"structure": name, "direct": ref, "through": mine,
+                     "difference": {d: (mine[d] - ref[d]) if np.isfinite(mine[d])
+                                    and np.isfinite(ref[d]) else None
+                                    for d in ("E_1D", "E_2D", "E_3D")}})
+        log(f"    {name:14s} " + "  ".join(
+            f"{d}: {ref[d]:.3f} / {mine[d]:.3f}" for d in ("E_1D", "E_2D", "E_3D")))
+    out["percolation"] = perc
+    return out
+
+
+def table_interfaces(res: dict) -> List[str]:
+    """The section of the table that reads the gate of plan item MS7."""
+    if not res:
+        return []
+    h = res["hosts"]
+    lines = ["## The model read through the interfaces (plan item MS7)", "",
+             f"The public model, rebuilt at the stored width (rho {res['rho']:g}) and ridge "
+             f"({res['lam']:g}) on {res['n_train']} paths, is read twice: by the route this "
+             f"script uses -- environments built here and handed to the model -- and through "
+             f"`cmfqsar.interfaces.HopBarriers`, which is given a structure and builds the "
+             f"environments itself. The structures are the three hosts of the lithium interface "
+             f"study, which the public model has never seen.", "",
+             "**The two routes give the same barriers.** The interface is a way in, not another "
+             "model:", "",
+             "| Paths of the hosts | Distinct by symmetry | Compared by both routes | Largest "
+             "difference |",
+             "| ---: | ---: | ---: | ---: |",
+             f"| {h['n_paths']} | {h['n_distinct']} | {h['n_compared']} | "
+             f"{h['largest_difference']:.1e} eV |", ""]
+    if res.get("dft_hops"):
+        lines += ["**The stored numbers come back.** The two paths the benchmark lists against a "
+                  "DFT elastic-band barrier, as the stored table has them and as the interface "
+                  "gives them:", "",
+                  "| Host | Path | Stored | Through the interface | Difference |",
+                  "| --- | --- | ---: | ---: | ---: |"]
+        spread = []
+        for row in res["dft_hops"]:
+            if row["through"] is None:
+                lines.append(f"| {row['structure']} | {row['hop']} | {row['stored']:.4f} | -- | "
+                             f"{row['note']} |")
+            else:
+                lines.append(f"| {row['structure']} | {row['hop']} | {row['stored']:.4f} | "
+                             f"{row['through']:.4f} | {row['difference']:+.1e} |")
+                if row.get("through_its_group") is not None:
+                    spread.append(abs(float(row["through_its_group"]) - float(row["through"])))
+        lines += ["", "In eV."]
+        if spread:
+            lines += ["", f"Both of these paths are equivalent by symmetry to another one of "
+                      f"their cell, so the network a simulation reads carries their group's "
+                      f"barrier rather than their own; the two differ by up to "
+                      f"{max(spread):.2f} eV, which is the error of the symmetry grouping and "
+                      f"not of the interface. A caller who wants one particular jump asks for "
+                      f"that path by name, which is what the column above reports."]
+        lines += [""]
+    if res.get("percolation"):
+        lines += ["**And so do the percolation thresholds**, which is what a conductivity "
+                  "estimate starts from: the lowest barrier at which the paths form a connected "
+                  "network in one, two and three dimensions, by this script's route and through "
+                  "the interface.", "",
+                  "| Host | E_1D | E_2D | E_3D |",
+                  "| --- | --- | --- | --- |"]
+        for row in res["percolation"]:
+            cells = []
+            for d in ("E_1D", "E_2D", "E_3D"):
+                a, b = row["direct"][d], row["through"][d]
+                cells.append(f"{a:.3f} / {b:.3f}" if np.isfinite(a) and np.isfinite(b)
+                             else ("none / none" if not np.isfinite(a) and not np.isfinite(b)
+                                   else f"{a:.3f} / {b:.3f}"))
+            lines.append(f"| {row['structure']} | " + " | ".join(cells) + " |")
+        lines += ["", "In eV above the lowest site, by this script's route / through the "
+                  "interface.", ""]
+    lines += [f"The interface took {h['seconds_through']:.0f} s on these paths against "
+              f"{h['seconds_direct']:.0f} s for the route inside this script. Both pay for the "
+              f"same two things, the environments and the kernel against the training set; the "
+              f"difference is that the interface works one structure at a time, so it evaluates "
+              f"the kernel in three blocks instead of one.", ""]
+    return lines
+
+
 def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
     """The table of one run, from the result files that carry its tag.
 
@@ -862,6 +1074,10 @@ def write_table(results_dir: str = RESULTS, tag: str = "") -> str:
                  "framework (the sites not held by Li, each with its majority species); the "
                  "fields see every site at its occupancy. A threshold of inf means the hops "
                  "between 1.5 and 4.5 A do not connect through the cell in that many directions.\n")
+    iface_path = os.path.join(results_dir, f"interfaces{tag}.json")
+    if os.path.exists(iface_path):
+        L.append("")
+        L += table_interfaces(json.load(open(iface_path)))
     text = "\n".join(L)
     with open(os.path.join(results_dir, f"table{tag}.md"), "w", encoding="utf-8") as fh:
         fh.write(text)
@@ -886,6 +1102,9 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--folds", type=int, default=FOLDS)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--bootstrap", type=int, default=BOOTSTRAP)
+    ap.add_argument("--interfaces", action="store_true",
+                    help="the model read through the interfaces of plan item MS7, against the "
+                         "numbers this script stores; nothing else is run")
     ap.add_argument("--report", action="store_true")
     ap.add_argument("--no-hosts", action="store_true")
     ap.add_argument("--reuse-public", action="store_true",
@@ -918,6 +1137,16 @@ def main(argv: Optional[List[str]] = None):
         path = os.path.join(RESULTS, f"profile_fine{tag}.json")
         write_fine_profile(rebuild_public_model(args, log), log, path)
         write_provenance(args, tag, argv, name="run_fine_profile",
+                         minutes=round((time.time() - t0) / 60, 1))
+        return
+    if args.interfaces:
+        # Only this stage's own two files are written, as --fine-profile does, so that no two
+        # commands of the registry write the same file. The table takes the new section up when
+        # it is next rebuilt (`--report`, or `run_all.py --tables`).
+        log("The model read through the interfaces of plan item MS7")
+        res = interfaces_run(args, log)
+        json.dump(res, open(os.path.join(RESULTS, f"interfaces{tag}.json"), "w"), indent=1)
+        write_provenance(args, tag, argv, name="run_interfaces",
                          minutes=round((time.time() - t0) / 60, 1))
         return
     if args.reuse_public:

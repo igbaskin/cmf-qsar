@@ -1716,6 +1716,10 @@ def cmd_restriction(args):
 def cmd_cofield(args):
     """The co-fields of a saved model on a grid, as cube files and as numbers."""
     import numpy as np
+
+    if getattr(args, "cell", None):
+        return _cofield_over_a_cell(args)
+
     from cmfqsar.cofields import (cofield_volume, cofield_with_error, export_cube, make_grid,
                                   molfield_volume, noise_level, overlap_volume)
     from cmfqsar.nonlinearity import (atom_interactions, cofield_spread, curvature_field,
@@ -2847,6 +2851,38 @@ def cmd_hops(args):
     if args.out:
         n = write_hops(args.out, hs, predicted)
         print(f"  {n} hops written to {args.out} with their labels and out-of-fold predictions")
+
+
+def _cofield_over_a_cell(args):
+    """`cofield --cell`: the periodic co-field inside one cell (plan item MS7)."""
+    from cmfqsar.interfaces import write_cofield_cube
+    from cmfqsar.periodic import read_crystal_set
+
+    model, _extra = load_model(args.model)
+    if not bool(getattr(model, "pbc_overlap", False)):
+        raise SystemExit(
+            "--cell is for a model on the periodic overlap kernel, a series on one lattice "
+            "(CMFModel(..., pbc_overlap=True)). This model uses "
+            + ("the periodic autocorrelation, whose channels are invariant to where the "
+               "structure sits, so it has no co-field at all; the map of `cmf sites` is what it "
+               "offers instead" if model.kernel_source == "periodic"
+               else f"the '{model.kernel_source or 'overlap'}' kernel, which is not periodic: "
+                    "leave --cell out"))
+    atoms, names = read_crystal_set(args.cell, pbc=None)
+    if not len(atoms):
+        raise SystemExit(f"no periodic structure was read from {args.cell}")
+    prefix = args.out_prefix or "cofield"
+    written = []
+    for f, spec in enumerate(s for s in model.fieldset.specs if s.enabled):
+        path = f"{prefix}_cell_{spec.name.replace(':', '_')}.cube"
+        write_cofield_cube(model, path, field=f, spacing=args.spacing,
+                           structure=atoms[0], name=names[0])
+        written.append((spec.name, path))
+        print(f"  {spec.name}: one cell of {names[0]} -> {path}")
+    if not written:
+        raise SystemExit("this model has no enabled field to draw")
+    print(f"{len(written)} cube files over one cell of {names[0]}; the cube axes are its "
+          f"lattice vectors, so each file is the periodic field itself.")
 
 
 def cmd_transfer(args):
@@ -5044,6 +5080,14 @@ def main(argv=None):
                     help="write <prefix>_<kind>_<field>.cube for every field")
     cf.add_argument("--csv", default=None, metavar="FILE",
                     help="write the peak of every field as a table")
+    cf.add_argument("--cell", default=None, metavar="STRUCTURE",
+                    help="for a model on the periodic overlap kernel, which is a series on one "
+                         "lattice (CMFModel(..., pbc_overlap=True) in the library; this command "
+                         "line cannot fit one yet): write the co-field over one cell of this "
+                         "structure (CIF, POSCAR, extended XYZ, ASE JSON) instead of a box "
+                         "around the training atoms. The cube's axes are the lattice vectors, so "
+                         "the file is the periodic field itself and tiles to as much of the "
+                         "crystal as a viewer is asked for")
     cf.add_argument("--kind", default="cofield",
                     choices=["cofield", "molecule", "overlap", "local", "spread", "pair",
                              "curvature", "modes"],

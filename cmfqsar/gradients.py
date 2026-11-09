@@ -102,9 +102,11 @@ gradient moves a conformation and not a pose (plan item MS3).
 The other invariant kernels -- the surface autocorrelation with its heights, the periodic one
 with its images and background, the reciprocal-space structure factors and the three-body
 channels -- are refused, because each builds its channels differently and needs a derivative of
-its own.  So are the one-class and data-fusion scores, whose decision is not a sum over the
-training molecules.  Every case that is not covered is refused with a reason rather than
-approximated.
+its own.  So is the periodic *overlap* kernel: it is this same overlap taken against an
+image-expanded table, so moving one atom moves every image of it, and that term is not here
+(found while writing the ASE calculator of plan item MS7).  So are the one-class and data-fusion
+scores, whose decision is not a sum over the training molecules.  Every case that is not covered
+is refused with a reason rather than approximated.
 
 Checked against finite differences
 ----------------------------------
@@ -192,6 +194,12 @@ def _check_model(model: CMFModel) -> None:
     """Refuse, with a reason, every model whose prediction this gradient does not describe."""
     if model.train is None or model.coef is None:
         raise RuntimeError("the model must be fitted before its gradient can be taken")
+    if bool(getattr(model, "pbc_overlap", False)):
+        raise ValueError(
+            "the periodic overlap kernel evaluates the overlap against an image-expanded table "
+            "(plan item M4), so moving one atom moves every image of it and the derivative gains "
+            "a term over the images that this one does not have. It is refused rather than "
+            "approximated, as the other periodic kernels are (plan item MS3).")
     if not model.uses_fields:
         _check_invariant_model(model)
     oc = getattr(model.learner_, "oc_", None) if model.learner_ is not None else None

@@ -295,6 +295,16 @@ def test_a_kernel_that_is_not_an_overlap_integral_is_refused():
         prediction_gradient(model, probe)
 
 
+def test_the_periodic_overlap_kernel_is_refused():
+    """It is the ordinary overlap against an image-expanded table (item M4), so moving one atom
+    moves every image of it; that term is not in this derivative, and silence would be worse
+    than a refusal.  Found while writing the ASE calculator of item MS7."""
+    model, _fs, probe = _fitted(method="krr", normalize=True, params={"lam": 0.1})
+    model.pbc_overlap = True
+    with pytest.raises(ValueError, match="image-expanded"):
+        prediction_gradient(model, probe)
+
+
 def test_a_one_class_score_is_refused_and_says_what_to_use_instead():
     model, _fs, probe = _fitted(task="oneclass", method="ocmean", normalize=True,
                                 params={"nu": 0.1})
