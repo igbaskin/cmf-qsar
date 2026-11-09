@@ -1,0 +1,94 @@
+{
+ "steroids": {
+  "molecule": "prednisolone",
+  "n_atoms": 54,
+  "measured": 7.512,
+  "start_rmsd": 1.640849805343062,
+  "rows": [
+   {
+    "guard": "2 A",
+    "value_start": 5.2614308471444575,
+    "value_driven": 9.92813487185214,
+    "value_plain": 9.928134871852237,
+    "evals_driven": 29,
+    "evals_plain": 2508,
+    "rmsd_driven": 1.8607241363193399,
+    "rmsd_plain": 1.8607242626845064,
+    "pose_gap_searches": 1.8756908167381003e-07,
+    "value_gap_searches": 9.592326932761353e-14,
+    "limited": false,
+    "variance_start": 1.9671167509250882,
+    "variance_aligned": 0.04095915892238988,
+    "variance_at_driven": 1.3361765717202916,
+    "value_at_aligned": 7.773202049673479,
+    "rmsd_aligned": 1.6104558056423155,
+    "pose_gap_objectives": 1.3297547085680952
+   },
+   {
+    "guard": "none",
+    "value_start": 5.2614308471444575,
+    "value_driven": 9.928134871852219,
+    "value_plain": 9.928131310454763,
+    "evals_driven": 31,
+    "evals_plain": 1375,
+    "rmsd_driven": 1.8607242423169112,
+    "rmsd_plain": 1.8608673067109993,
+    "pose_gap_searches": 0.0027243489485916485,
+    "value_gap_searches": 3.561397456053328e-06,
+    "limited": false,
+    "variance_start": 1.9671167509250882,
+    "variance_aligned": 0.040959158922231786,
+    "variance_at_driven": 1.336176643214574,
+    "value_at_aligned": 7.773202154724419,
+    "rmsd_aligned": 1.610455767908254,
+    "pose_gap_objectives": 1.3297547296364423
+   }
+  ]
+ },
+ "THR": {
+  "molecule": "01",
+  "n_atoms": 75,
+  "measured": 8.38,
+  "start_rmsd": 1.5665761615645064,
+  "rows": [
+   {
+    "guard": "2 A",
+    "value_start": 5.608436028346569,
+    "value_driven": 8.856536869933267,
+    "value_plain": 8.850840148521621,
+    "evals_driven": 87,
+    "evals_plain": 2116,
+    "rmsd_driven": 2.0003736964539707,
+    "rmsd_plain": 2.000368777858186,
+    "pose_gap_searches": 0.0892124739818957,
+    "value_gap_searches": 0.005696721411645456,
+    "limited": true,
+    "variance_start": 1.1621218764875172,
+    "variance_aligned": 0.07374746970880608,
+    "variance_at_driven": 0.8326562039640306,
+    "value_at_aligned": 7.447216573550497,
+    "rmsd_aligned": 1.5616090703259187,
+    "pose_gap_objectives": 0.9651455466303249
+   },
+   {
+    "guard": "none",
+    "value_start": 5.608436028346569,
+    "value_driven": 9.295404924090052,
+    "value_plain": 9.29540492408986,
+    "evals_driven": 81,
+    "evals_plain": 2041,
+    "rmsd_driven": 3.382671692541685,
+    "rmsd_plain": 3.382671629266541,
+    "pose_gap_searches": 2.4632484552029533e-07,
+    "value_gap_searches": 1.9184653865522705e-13,
+    "limited": false,
+    "variance_start": 1.1621218764875172,
+    "variance_aligned": 0.07374746970907875,
+    "variance_at_driven": 1.3610495770232562,
+    "value_at_aligned": 7.447216102190824,
+    "rmsd_aligned": 1.561609027625666,
+    "pose_gap_objectives": 2.1885937087778387
+   }
+  ]
+ }
+}

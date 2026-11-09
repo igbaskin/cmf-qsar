@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 114 modules, 225 classes with 743 public methods, and 1131 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 115 modules, 226 classes with 744 public methods, and 1135 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -117,6 +117,7 @@ for.
 | [cmfqsar.pu](#cmfqsarpu) | Learning from positives and unlabelled molecules (part of plan item E4). |
 | [cmfqsar.ranking](#cmfqsarranking) | Learning to order molecules instead of to reproduce their numbers. |
 | [cmfqsar.reciprocal](#cmfqsarreciprocal) | Reciprocal-space channels of a crystal: the typed structure factors (plan item M6). |
+| [cmfqsar.relax](#cmfqsarrelax) | Relaxation of a molecule under the gradient of its own predicted activity (plan item MS3). |
 | [cmfqsar.report](#cmfqsarreport) | One HTML file that says what a model is, how well it works and what it says (plan item F4). |
 | [cmfqsar.restriction](#cmfqsarrestriction) | Scoring a conformational restriction (plan item MC9). |
 | [cmfqsar.scattering](#cmfqsarscattering) | Measured scattering curves as samples: the total, untyped descriptor (plan item M12). |
@@ -6248,11 +6249,19 @@ Which models are covered
 ------------------------
 Any fitted model whose prediction is a sum over the training molecules plus a constant: the
 regression learners, the classifiers (the gradient is then of the decision value, not of the
-probability) and the ranking SVM, on the overlap-integral kernel.  The rotation-invariant,
-surface and periodic kernels are built from the distances *inside* each molecule and are not
-overlap integrals, so this gradient does not apply to them; neither do the one-class and
-data-fusion scores, whose decision is not of that form.  Every case that is not covered is
-refused with a reason rather than approximated.
+probability) and the ranking SVM, on either of two kernels.  On the overlap-integral kernel the
+derivative runs over the pairs of one atom of the molecule and one atom of a training molecule.
+On the rotation-invariant field autocorrelation, whose channels are built from the distances
+*inside* the molecule alone, the derivative runs over the pairs of its own atoms and through the
+row length the cosine normalisation divides out; a model on that kernel has no frame, so its
+gradient moves a conformation and not a pose (plan item MS3).
+
+The other invariant kernels -- the surface autocorrelation with its heights, the periodic one
+with its images and background, the reciprocal-space structure factors and the three-body
+channels -- are refused, because each builds its channels differently and needs a derivative of
+its own.  So are the one-class and data-fusion scores, whose decision is not a sum over the
+training molecules.  Every case that is not covered is refused with a reason rather than
+approximated.
 
 Checked against finite differences
 ----------------------------------
@@ -6260,7 +6269,9 @@ Checked against finite differences
 `cmfqsar.model.CMFModel.predict` itself, over the combinations that change the chain rule:
 normalised and unnormalised kernels, the steric field with its per-atom widths, probe fields,
 interpolated attenuations, the three nonlinear layers, a descriptor block and a conformational
-ensemble.  The remaining disagreement is that of the finite difference, not of the gradient.
+ensemble; and, on the invariant kernel, every field of the set, the three layers, the channel
+scale with fitted block weights, and the distance grid with and without its self terms.  The
+remaining disagreement is that of the finite difference, not of the gradient.
 
 ### `class PredictionGradient  (dataclass)`
 
@@ -7373,6 +7384,46 @@ The same split taken over the channel blocks instead of the atoms.
 One number per pair of field types -- "steric with steric", "electrostatic with hba" -- which
 says which kind of channel the prediction came from.  The numbers add up to the same total as
 `atom_contributions`.
+
+### `autocorrelation_gradient(mol: MoleculeFields, channel_grad: Sequence[float], spec: AutocorrelationSpec=AutocorrelationSpec(), pairs: Optional[Sequence[Tuple[int, int]]]=None, weights: Optional[np.ndarray]=None, wrt: str='both') -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]`
+
+The derivative of a weighted sum of the channels with respect to the atoms (item MS3).
+
+`channel_grad` holds one number per channel, and the pair returned is the derivative of
+
+    S(x) = sum over channels k of  g_k F_k(x)
+
+with respect to the atom positions, (n_atoms, 3), and with respect to the per-atom field
+weights, (n_atoms, n_fields); `wrt` chooses which of the two to compute, and the other is
+None.  A model on this kernel is one such sum once its length normalisation has been
+differentiated, which is what `cmfqsar.gradients.prediction_gradient` does with it.
+
+**The derivative.**  A pair channel is a double sum over the atoms,
+
+    F[(f,g), k] = sum over a, b of  W[a,f] B[a,b,k] W[b,g],
+    B[a,b,k] = exp(-(d_ab - c_k)^2 / 2 sigma^2),
+
+with d_ab the distance between two atoms and c_k the centre of the distance channel.  A
+position enters only through the distances of the pairs that contain that atom, so
+
+    dS/dr_l = sum over b other than l of  P[l,b] (r_l - r_b) / d_lb,
+    P[l,b] = sum over channels of  g_k (W[l,f] W[b,g] + W[b,f] W[l,g]) B'[l,b,k],
+    B'[a,b,k] = -((d_ab - c_k) / sigma^2) B[a,b,k].
+
+A self term (a = b) is a distance that no motion changes, so it drops out of the position
+derivative; it stays in the weight derivative, where the channel is bilinear in the weights
+and the derivative is the sum over the other atom of the pair.
+
+The field weights are held fixed while the positions move, exactly as the overlap kernel's
+gradient holds them: a weight that is itself a function of the geometry -- the envelope of a
+local environment, a charge recomputed after the atom moved -- is outside this derivative, so
+a caller that moves atoms far has to rebuild the fields.
+
+The signed three-point channels are a sum over triples rather than pairs.  They are refused
+here rather than silently dropped, as `atom_contributions` refuses them.
+
+The cost is one array of (n_pairs, n_atoms, n_atoms) for the position derivative, the same
+shape the channels themselves are built from.
 
 ## cmfqsar.kcca
 
@@ -14405,6 +14456,101 @@ The plane spacing `2 pi / q` of every channel, in angstrom; infinity for the fir
 What a channel means as a length: a channel at `q` describes the structure on the scale of
 `2 pi / q`, which is how the reciprocal channels are compared with the cutoff radius of the
 real-space descriptor.
+
+## cmfqsar.relax
+
+Source: `cmfqsar/relax.py`
+
+Relaxation of a molecule under the gradient of its own predicted activity (plan item MS3).
+
+`cmfqsar.gradients` makes a prediction a differentiable function of the atom positions, so a
+molecule can be *moved* by the model instead of being tried in one pose after another.  This
+module does the one motion that leaves the chemistry alone: the rigid motion.  Six parameters --
+a rotation vector and a translation, about the molecule's own centroid -- are optimised with the
+analytic gradient, so the conformation, the bond lengths and the field weights are exactly what
+they were and only the pose changes.
+
+Why the rigid motion and not the atoms
+--------------------------------------
+Following the gradient with every atom free raises the prediction faster, and it damages the
+molecule while doing so: the gradient knows nothing about valence, and
+`benchmarks/run_gradient.py` measures how far the bond lengths drift when the atoms are let go.
+A rigid motion cannot do that. It is also the motion a 3D-QSAR model is allowed to make a
+statement about, since the training poses define the frame and the kernel compares fields in it.
+
+The companion objective
+-----------------------
+`cmfqsar.varalign` moves a molecule by *confidence*: it minimises the posterior variance of
+the prediction, which puts the molecule where the model is sure of itself.  This module moves it
+by the *prediction*, which puts the molecule where the model says the activity is highest.  The
+two objectives are different questions and their answers need not be the same pose; which they
+are, on a real series, is measured by `benchmarks/run_gradient.py --stage relax`.  Confidence
+is the one to use when a pose is wanted for prospective prediction, because it uses no activity
+value of the molecule being placed; the prediction is the one to use when the question is where a
+molecule would have to sit for the model to call it active.
+
+What it cannot do
+-----------------
+The pose it finds is a statement of the model, not of the physics: nothing here knows about the
+receptor, the solvent or a steric clash with anything outside the training set.  The displacement
+guard (`max_rmsd`) is what keeps the answer near the pose the molecule arrived in, and a
+relaxation that ends at the guard is reported as `limited`, because its answer is the guard's and
+not the model's.
+
+### `class RelaxResult  (dataclass)`
+
+Outcome of `relax_pose` for one molecule.
+
+Attributes:
+
+- `name: str`
+- `coords: np.ndarray`
+- `value_before: float`
+- `value_after: float`
+- `rmsd: float`
+- `n_eval: int`
+- `limited: bool`
+- `converged: bool`
+- `message: str` = `''`
+
+#### `RelaxResult.gain` -> float  (property)
+
+How much the prediction rose (or fell, when the search was told to minimise).
+
+### `relax_pose(model: CMFModel, mol: MoleculeFields, max_rmsd: Optional[float]=2.0, penalty: float=50.0, maximise: bool=True, max_iter: int=200, gradient: bool=True, apply: bool=False, starts: Optional[Sequence[np.ndarray]]=None) -> RelaxResult`
+
+Move `mol` as a rigid body to the pose where the model predicts most (or least).
+
+Parameters
+----------
+model : a fitted model on the overlap-integral kernel.  An invariant kernel is refused: its
+    channels are built from the distances inside the molecule, so a rigid motion does not
+    change its prediction and there is nothing to relax.
+mol : the molecule, in the frame of the training set.
+max_rmsd : how far the atoms may move from the arriving pose, in angstroms, before a
+    quadratic penalty holds them back; None removes the guard.
+penalty : the weight of that penalty, as in `cmfqsar.varalign.VarianceAligner`.
+maximise : raise the prediction (the default) or lower it.
+gradient : drive the search with the analytic gradient (L-BFGS-B).  With False the same
+    objective is searched without it (Nelder-Mead), which is how the benchmark measures what
+    the gradient is worth; the pose should be the same and the number of evaluations larger.
+apply : write the pose back into `mol`.
+starts : rigid-body parameters to start from, six numbers each; the arriving pose by default.
+
+Returns
+-------
+`RelaxResult`
+
+### `relax_poses(model: CMFModel, mols: Sequence[MoleculeFields], **kwargs) -> List[RelaxResult]`
+
+`relax_pose` for every molecule of a list, in order.
+
+### `pose_rmsd(a: np.ndarray, b: np.ndarray) -> float`
+
+The root mean square distance between two poses of the same atoms, atom by atom.
+
+The atoms are compared where they are, without superposition: two poses of one molecule are
+being compared, and how far apart they sit is the whole question.
 
 ## cmfqsar.report
 

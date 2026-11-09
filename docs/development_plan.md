@@ -6232,6 +6232,42 @@ would discard the typed fields and the global kernel that are the method's own.
   relaxation, a Monte Carlo move or the design loop of M11, without the model becoming a force
   field. *Gate:* the analytic gradient agrees with finite differences to 1e-6 on every field type,
   and a relaxation of a posed molecule under it ends at the pose the confidence aligner finds.
+  Built and measured 9 November 2026. The overlap kernel already had its gradient in
+  `cmfqsar/gradients.py`; this item added the two pieces that were missing. The first is the
+  gradient on the **rotation-invariant** kernel, which has no training atom to overlap with:
+  `cmfqsar.invariant.autocorrelation_gradient` differentiates the distance channels of one
+  structure, and `cmfqsar.gradients` carries the chain through the cosine normalisation, where the
+  model collapses into one vector in channel space and the row length of item M15 appears as the
+  second term of the derivative. Any kernel layer and the fitted block weights are included. The
+  second is `cmfqsar/relax.py` (`relax_pose`, `relax_poses`, `pose_rmsd`): a rigid-body relaxation
+  of a pose under the gradient, six parameters about the molecule's own centroid, with the
+  displacement guard of `varalign`. Measured by `benchmarks/run_gradient.py --stage invariant` and
+  `--stage relax` (results in `benchmarks/results/gradient/`), checked by the 41 tests of
+  `tests/test_gradients.py` and the 9 of `tests/test_relax.py`, written up in the manual under
+  *The gradient of a prediction*.
+  *The first half of the gate is met.* On the invariant kernel the disagreement with central finite
+  differences falls as the square of the step over four decades and bottoms at 3.1e-9 on the
+  steroid set and 5.2e-9 on THR (five fields, 255 channels), and at 1.9e-8 on a local environment
+  of the public hop set (ten fields, 935 channels, 22 atoms) -- positions and atom weights
+  together, with every kernel layer. The analytic form is 414 to 565 times faster than the finite
+  difference it replaces.
+  *The second half is not met, and the measurement says why.* The relaxation itself is right: with
+  the gradient it reaches the same value of its objective as the same search without one, and it
+  gets there in 24 to 86 times fewer evaluations, the two searches stopping 0.00 to 0.09 A apart.
+  But the pose it reaches is not the pose the confidence aligner finds. The two end 0.97 to 2.19 A
+  apart, the posterior variance at the prediction's pose is 11 to 33 times the variance the aligner
+  reaches, and the prediction at the aligner's pose is 1.4 to 2.2 units lower. The gate asked two
+  different objectives to agree: raising the prediction moves a molecule towards the training
+  molecules that are active, while raising confidence moves it towards the training set as a whole
+  with redundant members down-weighted by the inverse kernel. Confidence remains the criterion for
+  a pose to predict from, because it uses no activity value of the molecule being placed; the
+  relaxation answers where a molecule would have to sit for the model to call it active.
+  *Open:* the derivative of the surface, periodic, reciprocal-space and three-body channels, each
+  of which builds its channels differently and is refused with that reason; the signed three-point
+  block of the invariant kernel, whose sum is over triples and not pairs; and a free-atom
+  relaxation with a term that keeps the geometry, which is what the steepest ascent of the
+  benchmark shows is needed, since it pulls bond lengths apart by up to 0.8 A. MS7 can now hand
+  forces to a simulation.
 
 * **MS4. A resolution-aware kernel.** A sum of kernels over several Gaussian widths, with the
   mixture fixed by the evidence, lets one model see fine and coarse structure at once; the M6
@@ -6261,9 +6297,10 @@ would discard the typed fields and the global kernel that are the method's own.
   conductivity with an interval, against the measured one of at least three of the disordered
   conductors of M2.
 
-**Order.** MS1 is done. MS2 and MS3 next, because the hop set is ready for both; MS7 with them,
-because it is what makes them usable; MS4 after M6 is revisited; MS5 and MS6 as their data arrive;
-MS8 last, since it needs all of the others.
+**Order.** MS1 and MS3 are done. MS2 next, because the hop set is ready for it and because it is
+the one of the two that a coarser model consumes directly; MS7 with it, because it is what makes
+them usable and because MS3 now gives it forces; MS4 after M6 is revisited; MS5 and MS6 as their
+data arrive; MS8 last, since it needs all of the others.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
@@ -6775,10 +6812,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 0 | ND1 to ND14c |
-| H. Multiscale modelling | 8 | 1 | MS2, MS3, MS4, MS5, MS6, MS7, MS8 |
+| H. Multiscale modelling | 8 | 2 | MS2, MS4, MS5, MS6, MS7, MS8 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**158 items: 107 finished, 4 partly, 47 open.**
+**158 items: 108 finished, 4 partly, 46 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
