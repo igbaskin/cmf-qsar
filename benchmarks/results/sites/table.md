@@ -1,5 +1,51 @@
 # Site-resolved models of a periodic cell (plan item M5)
 
+## The map of a cell model, against the site model (plan item MS2)
+
+A whole-cell model's prediction splits into one number per site, exactly. The question of this section is whether those numbers rank the sites as a model fitted on the sites themselves ranks them. Both models use the same kernel, the same cutoff (6 A) and the same ridge value (0.01); only the sample differs. Everything below is out of fold: for each of the 5 folds both models are fitted on the other folds and the held-out cells are split and predicted site by site. The data set has grown since the section below was last computed, so the two sections count different numbers of catalysts for the same target; the comparison here is internal to this section.
+
+**The split adds up to the prediction.** This is the first half of the gate, and it is exact arithmetic rather than a measurement:
+
+| Target | Catalysts | Largest difference between the sum and the prediction |
+| --- | ---: | ---: |
+| dE_H | 133 | 2.8e-13 |
+| dE_O | 133 | 3.5e-13 |
+| dE_OH | 133 | 2.0e-13 |
+| dE_OOH | 119 | 1.8e-13 |
+
+**Where the split puts its weight.** The binding energy of these catalysts is a property of the metal site, so this has a known right answer. The split finds it:
+
+| Target | The metal is the largest place | Among the first three | Weight on the metal | An even spread would give |
+| --- | ---: | ---: | ---: | ---: |
+| dE_H | 72 % | 84 % | 11.7 % | 0.8 % |
+| dE_O | 62 % | 76 % | 9.0 % | 0.8 % |
+| dE_OH | 77 % | 81 % | 8.1 % | 0.8 % |
+| dE_OOH | 69 % | 70 % | 8.6 % | 0.8 % |
+
+**The ranking the gate asks about.** Within one cell the split and the site model are compared over all 127 sites, which is the literal reading of the gate; across the cells they are compared at the one site of each cell that was measured:
+
+| Target | Within a cell, mean | Within a cell, median | Cells above +0.7 | Across cells at the measured site |
+| --- | ---: | ---: | ---: | ---: |
+| dE_H | +0.465 | +0.477 | 1 % | +0.219 |
+| dE_O | +0.476 | +0.526 | 13 % | +0.743 |
+| dE_OH | +0.350 | +0.444 | 3 % | +0.600 |
+| dE_OOH | +0.025 | +0.038 | 0 % | -0.001 |
+
+**The two models, compared as models.** A contribution is a share of one structure's answer and a prediction is an answer of its own, so the rows above compare two different quantities. These rows compare the quantities that are alike: what each model predicts, against the other and against the measurement.
+
+| Target | Cell model against site model | Cell model against the measurement | Site model against the measurement |
+| --- | ---: | ---: | ---: |
+| dE_H | +0.968 | +0.771 | +0.762 |
+| dE_O | +0.987 | +0.927 | +0.927 |
+| dE_OH | +0.992 | +0.952 | +0.956 |
+| dE_OOH | +0.971 | +0.883 | +0.862 |
+
+Rank correlations (Spearman).
+
+**The second half of the gate is not met, and the measurement says why.** What the split does do is locate the property. The metal site is the largest place of the split in 62 to 77 % of the cells, its median rank is 1 on every target, and it carries 8.1 to 11.7 % of the weight where an even spread over the 127 sites would give it 0.8 %, which is ten to fifteen times its share. What it does not do is reproduce the site model's ordering of all the sites of a cell: the mean rank correlation inside a cell is +0.025 to +0.476 and it passes +0.7 on at most 13 % of the cells. Across the cells, at the one site of each cell that was measured, it is -0.001 to +0.743, which passes +0.7 on one of the four targets.
+
+Two reasons, and neither is a fault in either model. First, the two quantities differ: a contribution says how much of this cell's answer came from this place, and a prediction says what would be measured at that place, so the places a cell model leans on need not be the places that bind most strongly. Second, the site model was fitted on the metal site of every cell and on no other site, so its answers at the carbon and nitrogen sites are extrapolation; the gate compares the split against a model that was never shown the places the comparison runs over. The reading that stays inside both models' training data is the last table, where the two predictions agree closely and both track the measurement.
+
 ## The single-atom catalysts: one measured site per cell
 
 139 catalysts; measured targets dE_H 133, dE_O 133, dE_OH 133, dE_OOH 119.

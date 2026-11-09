@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 115 modules, 226 classes with 744 public methods, and 1135 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 116 modules, 227 classes with 753 public methods, and 1147 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -124,6 +124,7 @@ for.
 | [cmfqsar.screen](#cmfqsarscreen) | Screening a library without holding it in memory (plan item B3). |
 | [cmfqsar.shapley](#cmfqsarshapley) | Shapley decomposition of a CMF prediction. |
 | [cmfqsar.shells](#cmfqsarshells) | Solvation shells cut from a bulk electrolyte trajectory (plan item BT5). |
+| [cmfqsar.sitemap](#cmfqsarsitemap) | A spatially resolved prediction: one number per atom, site or region (plan item MS2). |
 | [cmfqsar.sites](#cmfqsarsites) | Site-resolved models of a periodic structure (plan item M5). |
 | [cmfqsar.slab](#cmfqsarslab) | A metal slab as the receptor (plan item EC6). |
 | [cmfqsar.solvation](#cmfqsarsolvation) | A cation with its first solvation shell as one molecule, built, optimised and framed. |
@@ -1799,6 +1800,10 @@ The folds hold out whole structures.  Labels come from the bond-valence landscap
 ### `cmd_transfer(args)`
 
 How much two models ask the same thing of the chemistry: item F3 of the plan.
+
+### `cmd_sites(args)`
+
+A spatially resolved prediction: one number per atom, site or region (item MS2).
 
 ### `cmd_mixing(args)`
 
@@ -15469,6 +15474,181 @@ in it, so it is a setting rather than a constant.
 ### `block_error(shells: Sequence[Shell], templates: Dict[str, Chem.Mol], fieldset: FieldSet, *, n_blocks: int=5, sample: int=200, max_members: int=DEFAULT_MAX_MEMBERS, radius: float=DEFAULT_CLUSTER_RADIUS) -> float`
 
 The block-averaged error of the mean field alone; see `convergence`.
+
+## cmfqsar.sitemap
+
+Source: `cmfqsar/sitemap.py`
+
+A spatially resolved prediction: one number per atom, site or region (plan item MS2).
+
+A fitted model answers with one number per structure. A coarser model needs a map instead: a
+barrier per site, a reactivity per surface site, a growth rate per patch. Two different maps
+answer that question, and this module writes both in one form.
+
+**The split of one prediction.** The kernels of this program are sums over pairs of atoms, and a
+linear layer is linear, so a prediction splits into one number per atom, exactly and with nothing
+assigned by a rule of thumb: the numbers add up to the prediction minus its fitted constant. That
+is decomposition rule 3 of the development plan, which `cmfqsar.model.CMFModel.
+atom_contributions` gives for molecules and `cmfqsar.sites.site_contributions` for the sites
+of a periodic cell. This module puts the two behind one entry, carries the constant as a place of
+its own so that the column adds up to the prediction itself, and groups atoms into regions when a
+region and not an atom is what the coarser model steps on.
+
+**A prediction per site.** A site model (plan item M5) takes one site of a cell as its sample, so
+asking it about every site of a cell is a prediction and not a split. Those numbers are in the
+units of the property and are not shares of anything, so they do not add up to a total.
+
+Which of the two a map holds is recorded in its `quantity` field, because the two must not be
+confused. A contribution is a share of one structure's answer. A prediction is an answer of its
+own.
+
+What a map does not do is turn the model into a site-level model it was not fitted as. A split
+says where the answer came from; it does not promise that the same number would be measured at
+that place on its own.
+
+### `class SiteMap  (dataclass)`
+
+One number per place of one structure, with where each place is.
+
+`values` holds the numbers and `labels` names the places, both in the same order.
+`coords` is where each place is, in angstrom, or None when a place has no position.
+`quantity` says what the numbers are: `CONTRIBUTION`, shares of one prediction that
+add up to it, or `PREDICTION`, one answer per place in the units of the property.
+
+For a contribution map `bias` is the model's fitted constant, which belongs to no place,
+and `prediction` is the structure's own prediction, so that `total` equals it exactly.
+
+Attributes:
+
+- `name: str`
+- `labels: List[str]`
+- `values: np.ndarray`
+- `coords: Optional[np.ndarray]` = `None`
+- `quantity: str` = `CONTRIBUTION`
+- `bias: float` = `0.0`
+- `prediction: float` = `float('nan')`
+- `kind: str` = `'atom'`
+- `source: str` = `''`
+- `units: str` = `''`
+- `members: Optional[List[List[int]]]` = `None`
+- `notes: List[str]` = `field(default_factory=list)`
+
+#### `SiteMap.total` -> float  (property)
+
+The sum of the places and the fitted constant: the prediction, for a split.
+
+#### `SiteMap.residual` -> float  (property)
+
+How far the sum is from the prediction. Zero to round-off for a split.
+
+#### `SiteMap.check(tol: float=1e-08) -> float`
+
+Raise unless the places and the constant add up to the prediction.
+
+This is the first half of the gate of plan item MS2, and it is cheap enough to run every
+time a map is written. It returns the disagreement it accepted.
+
+#### `SiteMap.top(n: int=10) -> List[Tuple[str, float]]`
+
+The `n` places with the largest numbers, by size and not by sign.
+
+#### `SiteMap.share() -> np.ndarray`
+
+What part of the total size of the map each place carries, between 0 and 1.
+
+The sizes are used and not the signed numbers, because a split can hold values of both
+signs whose sum is small while each one is large.
+
+#### `SiteMap.rows(include_constant: bool=True) -> List[Dict[str, object]]`
+
+The map as one dictionary per row, which is what the writers below put in a file.
+
+#### `SiteMap.to_dict() -> Dict[str, object]`
+
+The whole map as plain data, for a JSON file or a stored result.
+
+#### `SiteMap.write_table(path: str, include_constant: bool=True) -> str`
+
+Write the map as a CSV table a coarse model reads. Returns the path.
+
+#### `SiteMap.write_json(path: str) -> str`
+
+### `write_maps(maps: Sequence[SiteMap], path: str, include_constant: bool=True) -> str`
+
+Write several maps as one CSV table, one row per place. Returns the path.
+
+The columns are `structure, place, label, atoms, x, y, z, quantity, value`. `place` is
+the index of the atom, site or region the row holds, or -1 for the fitted constant; the atoms
+a region covers are listed in `atoms`. A reader that steps on places keeps the rows whose
+`quantity` is `contribution` or `prediction`; a reader that wants the structure's own
+answer back adds the `value` column of one structure, constant included.
+
+### `splits_prediction(model) -> bool`
+
+Can a prediction of this model be split over places?
+
+### `atom_map(model, mol, name: Optional[str]=None, units: str='') -> SiteMap`
+
+The split of one molecule's prediction over its atoms (plan item MS2).
+
+The numbers are in the units of the activity and, with the fitted constant, add up to the
+prediction. Defined for the overlap kernel and for the rotation-invariant kernel.
+
+### `cell_map(model, crystal, spec=None, name: Optional[str]=None, units: str='') -> SiteMap`
+
+The split of one cell's prediction over its sites (plan items M5 and MS2).
+
+The cell's channels are the mean of its site profiles, so the prediction minus the fitted
+constant is the sum of one number per site, exactly.
+
+### `site_map(model, structure, spec=None, regions=None, name: Optional[str]=None, units: str='', check: bool=True, tol: float=1e-08) -> SiteMap`
+
+A spatially resolved prediction of one structure: the entry point of plan item MS2.
+
+A periodic cell is split over its sites and a molecule over its atoms, so the caller does not
+have to know which. `regions` groups the places afterwards, as `region_map` describes.
+With `check` the split is verified against the prediction before it is returned.
+
+### `site_maps(model, structures: Sequence, spec=None, regions=None, units: str='', check: bool=True, progress=None) -> List[SiteMap]`
+
+One map per structure, in the order given.
+
+### `region_map(smap: SiteMap, regions: Dict[str, Sequence[int]], rest: Optional[str]='the rest of the structure') -> SiteMap`
+
+Group the places of a map into regions, summing their numbers.
+
+`regions` maps a name to the places that belong to it. A place may belong to one region at
+most, because a split is shared out and not copied. Places left over are collected into one
+region named by `rest`, so the map still adds up to the prediction; `rest=None` drops them
+instead, and then the total no longer matches and `SiteMap.check` will say so.
+
+The position of a region is the mean position of its places, which is where a coarse model
+puts the value it reads.
+
+### `by_element(structure) -> Dict[str, List[int]]`
+
+Regions that collect the places of each element, in alphabetical order.
+
+### `shells_around(structure, centre: int, edges: Sequence[float]=(2.4, 3.5, 5.0)) -> Dict[str, List[int]]`
+
+Regions that collect the places by distance from one place of the structure.
+
+The first region is the centre itself, then one region per edge, named by the distance range
+it covers in angstrom. Distances of a periodic cell are measured through the images, so a
+neighbour across the cell boundary falls in the shell it really belongs to.
+
+### `is_site_model(model) -> bool`
+
+Was this model fitted on sites of a cell (plan item M5) rather than on whole cells?
+
+### `site_predictions(model, crystal, sites: Optional[Sequence[int]]=None, name: Optional[str]=None, units: str='') -> SiteMap`
+
+What a site model predicts at every site of one cell (plan items M5 and MS2).
+
+This is a prediction per place and not a split, so the numbers are in the units of the
+property and do not add up to a total. `sites` restricts the map to some of the sites; the
+cell is featurised once either way, because the periodic split gives all of its sites at
+once.
 
 ## cmfqsar.sites
 

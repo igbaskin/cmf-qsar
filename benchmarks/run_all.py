@@ -608,10 +608,11 @@ def registry() -> List[Benchmark]:
         Benchmark("sites",
                   "a site of a periodic cell as the sample, and a whole-cell model read site by "
                   "site: the split of the periodic autocorrelation against the cut cluster of "
-                  "the single-atom catalysts and against counts, and on the Li site energies of "
-                  "the three electrolytes",
+                  "the single-atom catalysts and against counts, on the Li site energies of "
+                  "the three electrolytes, and the split as a map against the site model's own "
+                  "ranking",
                   "run_sites.py", "sites", compute=[[]],
-                  minutes="20",
+                  minutes="30",
                   report=lambda: _mod("run_sites").report(),
                   tables=["sites/table.md"]),
         Benchmark("rowlength",

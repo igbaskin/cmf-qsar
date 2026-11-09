@@ -244,3 +244,58 @@ def test_benchmark_checks_the_tables(capsys):
     main(["benchmark", "--check"])
     text = capsys.readouterr().out
     assert "check passed" in text or "problem" in text.lower()
+
+
+# ----------------------------------------------------------------------------------- sites
+
+
+def test_sites_writes_a_map_that_adds_up_to_the_prediction(tmp_path, capsys):
+    """`cmf sites`: the spatially resolved prediction of plan item MS2."""
+    import csv
+    data, model = _model(tmp_path)
+    out = os.path.join(str(tmp_path), "map.csv")
+    main(["sites", model, data, "--out", out, "--top", "3"])
+    text = capsys.readouterr().out
+    assert "molecules over their atoms" in text
+    assert "add up to the prediction" in text
+    with open(out, encoding="utf-8", newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    assert {r["structure"] for r in rows} == {f"m{k}" for k in range(len(SMILES))}
+    # the value column of one structure adds up to the prediction printed for it
+    for name in (f"m{k}" for k in range(len(SMILES))):
+        mine = [r for r in rows if r["structure"] == name]
+        assert len(mine) > 1
+        total = sum(float(r["value"]) for r in mine)
+        assert f"{name}: " in text
+        line = [l for l in text.splitlines() if l.startswith(f"{name}: ")][0]
+        printed = float(line.split("prediction")[1].split("=")[0])
+        assert abs(total - printed) < 1e-3
+
+
+def test_sites_groups_the_places_by_element(tmp_path, capsys):
+    data, model = _model(tmp_path)
+    main(["sites", model, data, "--regions", "elements", "--structure", "m0", "--top", "9"])
+    text = capsys.readouterr().out
+    assert "Grouping the places by element" in text
+    for element in ("C", "H", "O"):
+        assert f"   {element} " in text
+
+
+def test_sites_groups_the_places_into_shells(tmp_path, capsys):
+    data, model = _model(tmp_path)
+    main(["sites", model, data, "--regions", "shells", "--centre", "0",
+          "--shells", "2.0,4.0", "--structure", "m0"])
+    text = capsys.readouterr().out
+    assert "shells around place 0" in text
+    assert "the centre" in text and "A from the centre" in text
+
+
+def test_sites_refuses_a_model_whose_kernel_has_no_split(tmp_path, capsys):
+    data, model = _model(tmp_path)
+    main(["build", data, "--activity", "activity", "--fields", "electrostatic",
+          "--alphas", "0.5", "--lams", "0.1", "--kernel-layer", "gauss",
+          "--save", os.path.join(str(tmp_path), "nl.cmf")])
+    capsys.readouterr()
+    with pytest.raises(SystemExit) as err:
+        main(["sites", os.path.join(str(tmp_path), "nl.cmf"), data])
+    assert "linear layer" in str(err.value)

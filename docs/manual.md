@@ -4864,7 +4864,7 @@ Here $X_{fk}$ is the part of the field of the molecule that atom $k$ carries, an
 
 ![Rule 3 for the two test molecules of the steroid set that the model of this chapter predicts highest and lowest, drawn as Figure 3 of [6]: one circle per atom, hydrogens included, red for a positive contribution and blue for a negative one, with an area proportional to the magnitude and the three largest values written out. The sums in the titles are the predictions minus the bias. The largest contributions sit on oxygen atoms, where the electrostatic co-field has its lobes.](docs/figures/rule3.svg)
 
-**What to do with the map.** An atom with a negative contribution is a candidate for removal or for replacement, an atom with a positive one is what to keep, and the sum over a substituent is what the model says that substituent is worth at its position. The predicted effect of exchanging one group for another at a position is the difference of the two sums, one integral per pair of groups and no refit: that is the measure behind the table of *Which groups are interchangeable: a bioisostere table*, `cmf design` in *Designing the next compound* ranks candidate groups by the prediction for the whole molecule, and on a series without a common frame the invariant route of that chapter reports how much of a candidate's prediction comes from the group that was put in. One caution: the contributions describe the molecule as it is posed in the model's frame. Taking a group away changes the normalisation of the field and may change the conformation, the alignment and the charges of what is left, so the map says where to act, and the prediction for the edited molecule says whether the action worked.
+**What to do with the map.** An atom with a negative contribution is a candidate for removal or for replacement, an atom with a positive one is what to keep, and the sum over a substituent is what the model says that substituent is worth at its position. The predicted effect of exchanging one group for another at a position is the difference of the two sums, one integral per pair of groups and no refit: that is the measure behind the table of *Which groups are interchangeable: a bioisostere table*, `cmf design` in *Designing the next compound* ranks candidate groups by the prediction for the whole molecule, and on a series without a common frame the invariant route of that chapter reports how much of a candidate's prediction comes from the group that was put in. One caution: the contributions describe the molecule as it is posed in the model's frame. Taking a group away changes the normalisation of the field and may change the conformation, the alignment and the charges of what is left, so the map says where to act, and the prediction for the edited molecule says whether the action worked. The same split written as a file for another program to read is *A map as an output mode* in *A site of the cell as the sample* below, which covers molecules and cells alike.
 
 The two sums are the same number: the contributions of the training molecules and the contributions of the atoms both add up to the prediction minus the bias, and a test asserts it. For a classification model the coefficients carry the sign of the class, $a_j = \alpha_j y_j$, and the three rules read the same way with the active class in place of the higher activity.
 
@@ -8710,6 +8710,105 @@ it at the same distance. The contributions are defined for the linear kernel lay
 co-pattern is. And the background of a site profile is a property of the whole cell, so a set of
 unrelated cells carries their compositions in it; a series on one host lattice does not have that
 difficulty.
+
+### A map as an output mode
+
+The split above is a reading for a person: red and blue spheres on a molecule, a number per site of
+a cell. A coarser model needs the same numbers as data — a barrier per site, a reactivity per
+surface site, a growth rate per patch — and that is an output mode rather than a figure. It is
+`cmfqsar.sitemap` (plan item MS2), and it holds two different maps behind one entry.
+
+**The split of one prediction.** `site_map(model, structure)` returns a `SiteMap`: one number per
+place, where each place is, the fitted constant as a place of its own, and the prediction the model
+itself made. A molecule is split over its atoms by rule 3 and a periodic cell over its sites by
+Eq. (#eq:site-contrib), so the caller does not have to know which kernel the model carries. The
+constant is kept apart because it belongs to no place, and with it the column adds up to the
+prediction exactly: `SiteMap.check()` verifies that, and the entry runs it by default.
+
+```python
+from cmfqsar.sitemap import by_element, region_map, site_map
+
+m = site_map(model, mol, units="log units")
+print(m.prediction, m.total, m.bias)    # the second is the first, to round-off
+m.write_table("map.csv")                # one row per place, with x, y, z
+region_map(m, by_element(mol))          # the same map, grouped
+```
+
+**Regions.** A place of a coarse model is rarely one atom. `region_map` groups the places and sums
+their numbers, which needs no new mathematics because a split is additive: `by_element` collects
+each element, `shells_around` collects them by distance from one place, measured through the images
+when the structure is periodic, and any grouping of indices can be given directly. A place may
+belong to one region at most, because a split is shared out and not copied, and the places left
+over are collected into one region so that the total still holds; dropping them instead is allowed
+and the map then says in a note that it no longer adds up.
+
+**A prediction per site.** The second map is not a split. A site model (the first part of this
+chapter) takes one site of a cell as its sample, so it can be asked about every site of a cell:
+`site_predictions(model, crystal)` returns one answer per site, in the units of the property. The
+two must not be confused, and a map says which it holds in its `quantity` field. A contribution is
+a share of one structure's answer; a prediction is an answer of its own. `SiteMap.check` refuses a
+map of predictions for exactly that reason: there is no total for it to check.
+
+**On the command line.** `cmf sites MODEL STRUCTURES --out map.csv` writes either map, choosing by
+what the model was fitted on, and `--regions elements` or `--regions shells --centre I` group the
+places first. The table has one row per place with the columns `structure, place, label, atoms, x,
+y, z, quantity, value`: a reader that steps on places keeps the rows it needs, and a reader that
+wants the structure's own answer back adds the `value` column of one structure, constant included.
+`--json` writes the same maps with every number.
+
+**What has no map.** Four kernels are refused by name, with the reason: the in-plane surface
+channels, whose places are columns of a slab rather than atoms; the reciprocal-space structure
+factors, which are sums over the cell as a whole; the three-body channels, whose shares belong to
+triangles and not to single atoms; and the periodic overlap kernel, where a place of one cell
+overlaps places of every image of the other. A nonlinear kernel layer is refused as well, as rule 3
+is, and the Shapley values take its place.
+
+**Does the map rank the sites as a site model ranks them?** This is the gate of item MS2 and the
+answer is in two parts. The arithmetic half holds exactly: on the single-atom catalyst set the sum
+of the places and the constant differs from the prediction by at most 3.5e-13, which is round-off.
+The ranking half does not hold, and the measurement says why. Both models are fitted on the same
+catalysts with the same kernel, the same cutoff and the same ridge value — only the sample differs,
+a cell for one and the measured site of a cell for the other — and everything below is out of
+fold. The catalyst set has grown since the numbers earlier in this chapter were computed, so the
+counts differ between the two; the comparison here is internal to it.
+
+| Target | Catalysts | The metal is the largest place | Weight on the metal | Within a cell, mean rho | At the measured site, across cells |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| dE_H | 133 | 72 % | 11.7 % | +0.465 | +0.219 |
+| dE_O | 133 | 62 % | 9.0 % | +0.476 | +0.743 |
+| dE_OH | 133 | 77 % | 8.1 % | +0.350 | +0.600 |
+| dE_OOH | 119 | 69 % | 8.6 % | +0.025 | -0.001 |
+
+The split locates the property. The binding energy of these catalysts belongs to the metal site,
+and the split puts its largest number there in 62 to 77 % of the cells -- its median rank is 1 on
+every target -- giving it 8.1 to 11.7 % of the weight where an even spread over the 127 sites of
+the sheet would give it 0.8 %, ten to fifteen times its share. What the split does not do is
+reproduce the site model's ordering of all the sites of a cell: the mean rank correlation inside a
+cell is +0.025 to +0.476 and it passes +0.7 on at most 13 % of the cells. Across the cells, at the
+one site of each cell that was measured, it is -0.001 to +0.743, which passes +0.7 on one target of
+the four.
+
+Two reasons, and neither is a fault in either model. The quantities differ: a contribution says how
+much of this cell's answer came from this place, and a prediction says what would be measured at
+that place, so the sites a cell model leans on need not be the sites that bind most strongly. And
+the site model was fitted on the metal site of every cell and on no other site, so its answers at
+the carbon and nitrogen sites are extrapolation — the gate compares the split against a model that
+was never shown the places the comparison runs over. The reading that stays inside both models'
+training data is the two predictions themselves, and there they agree closely:
+
+| Target | Cell model against site model | Cell model against the measurement | Site model against the measurement |
+| --- | ---: | ---: | ---: |
+| dE_H | +0.968 | +0.771 | +0.762 |
+| dE_O | +0.987 | +0.927 | +0.927 |
+| dE_OH | +0.992 | +0.952 | +0.956 |
+| dE_OOH | +0.971 | +0.883 | +0.862 |
+
+So the map is usable as an output mode — that is the first half of the gate, and the weight it puts
+on the metal — while the ordering it gives inside a cell is a statement about the cell model and
+not a site-level prediction. For a number per site to hand to a coarser model, fit a site model and
+use `site_predictions`; the split says which places the cell model read, which is what interpreting
+it needs. The full table is in `benchmarks/results/sites/table.md`
+(`benchmarks/run_sites.py --agreement`).
 
 ## Order the cutoff cannot reach: the reciprocal-space channels
 

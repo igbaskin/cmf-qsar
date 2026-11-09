@@ -6226,6 +6226,49 @@ would discard the typed fields and the global kernel that are the method's own.
   site as the sample. *Gate:* the per-site contributions of a cell model, summed, equal its
   prediction, and the site ranking they give agrees with the site-resolved model of M5 on the SAC
   set at Spearman ρ above +0.7.
+  Built and measured 9 November 2026. `cmfqsar/sitemap.py` is the output mode: `SiteMap` (the
+  numbers, where each place is, the fitted constant as a place of its own, the prediction, and
+  `check` for the sum), `site_map` and `site_maps` (a molecule split over its atoms by rule 3, a
+  cell over its sites by the M5 split, chosen by what the structure is), `region_map` with
+  `by_element` and `shells_around` (a group of places sums because a split is additive; the shells
+  of a periodic cell are measured through the images), `write_maps` and `write_json` (one row per
+  place with its position, in the form a kinetic Monte Carlo or phase-field code reads), and
+  `site_predictions` for the other map — what a **site model** answers at every site of a cell,
+  which is a prediction and not a share. `cmf sites` is the command, and it replaces the refusal
+  `predict` used to give a site model. Four kernels are refused by name with the reason: the
+  surface channels with their heights, the reciprocal-space structure factors, the three-body
+  channels whose shares belong to triangles, and the periodic overlap kernel. Measured by
+  `benchmarks/run_sites.py --agreement` (`benchmarks/results/sites/agreement.json`), checked by the
+  27 tests of `tests/test_sitemap.py` and four more in `tests/test_cli_subcommands.py`, written up
+  in the manual under *A site of the cell as the sample* and *The three decomposition rules*.
+  *The first half of the gate is met, exactly.* On the single-atom catalyst set the places and the
+  fitted constant differ from the model's own prediction by at most 3.5e-13 over all four targets,
+  which is round-off, and the same holds for the atom split of a molecule under both the overlap and
+  the rotation-invariant kernel.
+  *The second half is not met on the reading the gate states.* Both models are fitted on the same
+  catalysts with the same kernel, the same cutoff and the same ridge value — only the sample
+  differs — and everything is out of fold over five folds. Within one cell, over all 127 sites, the
+  rank correlation between the split and the site model's predictions is +0.025 to +0.476 on the four
+  targets, above +0.7 on at most 13 % of the cells. Across the cells, at the one site of each cell
+  that was measured, it is -0.001 to +0.743, so it passes +0.7 on one target of the four and not on the
+  others. What the split does do is locate the property: the metal site is the largest place of the
+  split in 62 to 77 % of the cells and carries 8.1 to 11.7 % of the weight where an even spread would
+  give it 0.8 %.
+  *Why, and what it means.* Two reasons, and neither is a fault in either model. The quantities
+  differ: a contribution says how much of this cell's answer came from this place, and a prediction
+  says what would be measured there, so the places a cell model leans on need not be the places
+  that bind most strongly. And the site model was fitted on the metal site of every cell and on no
+  other site, so its answers at the carbon and nitrogen sites are extrapolation — the gate compares
+  the split against a model that was never shown the places the comparison runs over. Compared as
+  models, where both stay inside their training data, the two predictions agree at +0.968 to +0.992 and
+  both track the measurement (+0.771 to +0.952 and +0.762 to +0.956). So the map is an output mode and an
+  interpretation; a number per site to hand to a coarser model comes from a site model, and MS7 can
+  now write either of the two maps as a table that model reads.
+  *Open:* the split of the four refused kernels, each of which needs its own derivation; a map of a
+  surface patch rather than a site, which waits for the surface split; and a site-level data set
+  with more than one measured site per cell, which is what would test the ranking without asking a
+  model about places it never saw — the lithium set of M5 has many sites per cell but no cell-level
+  target to split.
 
 * **MS3. Analytic gradients with respect to the atom positions.** The overlap kernel is
   differentiable in closed form, as EC5 showed for the field gradient. The gradient of a prediction
@@ -6298,10 +6341,9 @@ would discard the typed fields and the global kernel that are the method's own.
   conductivity with an interval, against the measured one of at least three of the disordered
   conductors of M2.
 
-**Order.** MS1 and MS3 are done. MS2 next, because the hop set is ready for it and because it is
-the one of the two that a coarser model consumes directly; MS7 with it, because it is what makes
-them usable and because MS3 now gives it forces; MS4 after M6 is revisited; MS5 and MS6 as their
-data arrive; MS8 last, since it needs all of the others.
+**Order.** MS1, MS2 and MS3 are done. MS7 next, because it is what makes them usable: MS3 gives it
+forces and MS2 gives it the site map to write. MS4 after M6 is revisited; MS5 and MS6 as their data
+arrive; MS8 last, since it needs all of the others.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
@@ -6813,10 +6855,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 0 | ND1 to ND14c |
-| H. Multiscale modelling | 8 | 2 | MS2, MS4, MS5, MS6, MS7, MS8 |
+| H. Multiscale modelling | 8 | 3 | MS4, MS5, MS6, MS7, MS8 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**158 items: 108 finished, 4 partly, 46 open.**
+**158 items: 109 finished, 4 partly, 45 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
