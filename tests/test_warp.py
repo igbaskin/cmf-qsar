@@ -108,8 +108,16 @@ def test_the_units_of_the_activity_do_not_matter():
     K, y = _world()
     a = fit_warp(K, np.exp(y), 0.1, seed=0)
     b = fit_warp(K, 3.0 * np.exp(y) + 7.0, 0.1, seed=0)
-    assert a.gain == pytest.approx(b.gain, rel=1e-4, abs=1e-3)
-    assert np.allclose(a.a, b.a, rtol=1e-3, atol=1e-4) and np.allclose(a.c, b.c, atol=1e-3)
+    assert a.gain == pytest.approx(b.gain, rel=1e-3, abs=1e-3)
+    # the transform is compared as a function, not parameter by parameter: two tanh terms can
+    # trade a little of their weight and centre against each other and give the same curve, and
+    # the optimiser's last steps differ between linear-algebra libraries (CI failed on one
+    # platform at a parameter tolerance of 1e-3 while every other platform passed)
+    za, zb = a.forward(np.exp(y)), b.forward(3.0 * np.exp(y) + 7.0)
+    assert np.allclose(za, zb, atol=1e-2)
+    # the slope in the original units is three times smaller on the stretched axis
+    assert np.allclose(a.derivative(np.exp(y)), 3.0 * b.derivative(3.0 * np.exp(y) + 7.0),
+                       rtol=1e-2, atol=1e-3)
 
 
 # ------------------------------------------------------------------ the fit
