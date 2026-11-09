@@ -6217,7 +6217,7 @@ would discard the typed fields and the global kernel that are the method's own.
   set whose fine level is a DFT barrier rather than a bond-valence one (the nebDFT2k opening of
   BT7's external check); a series where the kernel misses a part of the chemistry, which is where
   the factor should depart from one; and the low-rank path, whose Woodbury variance exists in
-  `cmfqsar/lowrank.py` without the scale.
+  `cmfqsar/lowrank.py` without the scale -- closed by MS6 on 9 November 2026.
 
 * **MS2. A spatially resolved prediction as an output mode.** The global kernel returns one number
   per structure; a coarser model needs a map — a barrier per site, a reactivity per surface site, a
@@ -6329,6 +6329,48 @@ would discard the typed fields and the global kernel that are the method's own.
   of MS1 attached, so the surrogate level can be trained on the hundred thousand structures of a
   public DFT set; LiTraj is the test case. *Gate:* the calibration of MS1 holds on the low-rank
   path within 0.1 in the root mean square of z.
+  Built and measured 9 November 2026. `LowRankSurrogate` in `cmfqsar/surrogate.py` is the
+  Gaussian-process reading of a fit made in the space of its landmarks: the scale, the posterior
+  variance and the term of the unknown mean all have an m by m form through the Woodbury
+  identity, and the Gram the low-rank fit already stores holds everything they need, so nothing
+  of size n is built and a model read back from a file gives its deviation without its training
+  set. `CMFModel.surrogate`, `predict_with_sd` and `calibration` reach it with the same calls as
+  the exact path -- the refusal `surrogate()` used to give a low-rank model is gone --
+  `lowrank.cross_validate` returns the out-of-fold deviation with `with_sd=True`, on the same
+  folds the exact path uses for the same seed, and `LowRank.joint_self` is the exact self-kernel
+  that keeps the deviation from falling to zero where the landmarks span nothing. Measured by
+  `benchmarks/run_surrogate.py --low-rank` (`benchmarks/results/surrogate/lowrank_*.json`),
+  checked by the 12 tests of `tests/test_lowrank_surrogate.py`, written up in the manual
+  under *The model as the fast level of a hierarchy*.
+  *The gate is met where the landmarks span the data.* On the stored splits of the eight Sutherland sets -- the same five splits,
+  attenuation and ridge as MS1, so only the path differs -- the root mean square of z on the
+  low-rank path differs from the exact path's by at most 1.1e-08 with the training
+  molecules as the landmarks (the same kernel computed another way, so this is round-off, and the
+  tests fix it), by at most 0.60 with half of them and 1.20 with a quarter,
+  on the folds and on the held-out molecules alike. So the gate holds where the landmarks span the data, which is the reading's own claim, and the approximation loosens it in one direction: with half the molecules as landmarks the root mean square of z falls below the exact path's on every split, by 0.07 on the folds and 0.11 on the held-out molecules on average, and with a quarter by 0.16 and 0.23 -- the deviation of the approximate model is larger than its error. That is the term which keeps the variance from falling to zero where the landmarks span nothing being conservative by construction, not an error in reading it; the largest single-split differences, 0.60 and 1.20, are both GPB, where 46 training molecules leave a quarter at twelve landmarks.
+  *What writing it found.* Two faults of the low-rank path, both older than this item and both
+  invisible on a set where every molecule carries every field. The exact fit scales each field by
+  one over the mean of its normalised training diagonal, which is 1 for a molecule whose field is
+  not identically zero and 0 for one whose field is, so the scale is above one on a set with
+  molecules that lack a donor or an acceptor; the low-rank path took one, and with the training
+  molecules themselves as landmarks its kernel missed the exact one by 1 % on the ACE set. And the
+  self-kernel it kept for the variance counted every field as one for every molecule, where the
+  normalisation leaves a zero field at zero, so such a molecule had its deviation inflated by that
+  field's whole share. Both are repaired in `fit_low_rank` and `LowRank.joint_self`, with a test
+  on a series of acids, esters and a nitrile that would have caught them; `cmf build --low-rank`
+  now uses the same scale when it chooses its ridge and reports `--calibration`, which it had
+  passed over without a word. B6's own benchmark does not go through the repaired code, so its
+  stored numbers stand.
+  *What is not measured.* The deviation on a set of a hundred thousand structures. The path can
+  compute it -- its memory is the rank squared whatever the number of molecules, as B6 measured
+  -- but the test case this item names is held in the repository as a sample of 1,801 hops, and
+  the hop model of that sample is the rotation-invariant local kernel, which has explicit
+  features and does not go through the low-rank path at all. The measurement needs the overlap
+  kernel on a large set in one frame.
+  *Open:* that measurement; the normalised conformal interval of E5 on the low-rank path, which
+  is still refused although the deviation it would divide by now exists; and a sparse
+  Gaussian process proper (inducing points fitted rather than drawn), which this item did not
+  need to meet its gate.
 
 * **MS7. Interfaces.** An ASE calculator wrapper for a model, the co-field written as a cube file,
   and the site map of MS2 written as a table a kinetic Monte Carlo or phase-field code reads.
@@ -6378,10 +6420,9 @@ would discard the typed fields and the global kernel that are the method's own.
   conductivity with an interval, against the measured one of at least three of the disordered
   conductors of M2.
 
-**Order.** MS1, MS2, MS3 and MS7 are done, which is the usable half of this part: a deviation in
-the units of the activity, a map, a gradient and the interfaces that carry all three out. MS4 after
-M6 is revisited; MS5 and MS6 as their data arrive -- MS6 is the one MS1 names as its own open end,
-the low-rank variance without a scale; MS8 last, since it needs all of the others.
+**Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
+a gradient, the same deviation on the path that scales, and the interfaces that carry them out.
+MS4 after M6 is revisited; MS5 as its data arrive; MS8 last, since it needs all of the others.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
@@ -6893,10 +6934,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 0 | ND1 to ND14c |
-| H. Multiscale modelling | 8 | 4 | MS4, MS5, MS6, MS8 |
+| H. Multiscale modelling | 8 | 5 | MS4, MS5, MS8 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**158 items: 110 finished, 4 partly, 44 open.**
+**158 items: 111 finished, 4 partly, 43 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

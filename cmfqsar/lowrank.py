@@ -205,6 +205,23 @@ class LowRank:
     def _self(self, part: AtomTable) -> np.ndarray:
         return np.asarray(self_kernels(part, self.specs), float)
 
+    def joint_self(self, table: AtomTable, block: int = BLOCK) -> np.ndarray:
+        """The exact joint self-kernel of every molecule, ``sum_f h_f c_f k_f(x, x)``.
+
+        This is what the variance keeps exact (plan item MS6): with it the deviation of a
+        molecule the landmarks do not span stays large instead of falling to zero. Under the
+        cosine normalisation a self-kernel is one, except for a field that is identically zero
+        for that molecule (no donor, no acceptor, no charge), which the normalisation leaves at
+        zero -- the same convention as :meth:`cmfqsar.model.CMFModel.joint_self`.
+        """
+        out = np.zeros(table.n_mol)
+        for lo, hi, part in _blocks(table, block):
+            d = self._self(part)
+            if self.normalize:
+                d = np.where(d > 1e-300, 1.0, 0.0)
+            out[lo:hi] = (d.T * np.asarray(self.weights, float)[:len(self.specs)]).sum(axis=1)
+        return out
+
 
 def _blocks(table: AtomTable, block: int):
     n = table.n_mol
@@ -397,14 +414,23 @@ def memory(n: int, m: int, n_fields: int, exact: bool = False) -> float:
 
 def cross_validate(low: LowRank, table: AtomTable, y: Sequence[float], lam: float,
                    folds: int = 10, seed: Optional[int] = 0, fit_bias: bool = True,
-                   block: int = BLOCK) -> Tuple[np.ndarray, np.ndarray]:
-    """(out-of-fold predictions, the fold of every molecule), the features built once."""
+                   block: int = BLOCK, with_sd: bool = False):
+    """(out-of-fold predictions, the fold of every molecule), the features built once.
+
+    With ``with_sd`` the result is (predictions, standard deviations, folds): each fold's
+    training part is read as a :class:`cmfqsar.surrogate.LowRankSurrogate`, so the deviations
+    are in the units of ``y`` and are the ones a molecule would have been given had it been new
+    (plan item MS6). The folds are those of :func:`cmfqsar.model._kfold_indices`, the same ones
+    the exact path uses for the same seed, so the two paths are compared like with like.
+    """
     from .model import _kfold_indices
 
     y = np.asarray(y, float).ravel()
     Phi = low.transform(table, block=block)
+    k_self = low.joint_self(table, block=block) if with_sd else None
     folds_of = _kfold_indices(len(y), folds, seed)
     pred = np.zeros(len(y))
+    sd = np.full(len(y), np.nan)
     which = np.zeros(len(y), int)
     for k, test in enumerate(folds_of):
         train = np.setdiff1d(np.arange(len(y)), test)
@@ -413,10 +439,15 @@ def cross_validate(low: LowRank, table: AtomTable, y: Sequence[float], lam: floa
         part = Phi[train]
         g = Gram(PtP=part.T @ part, Pty=part.T @ y[train], Pt1=part.sum(axis=0),
                  n=len(train), sum_y=float(y[train].sum()), yty=float(y[train] @ y[train]))
-        w, b = fit(g, lam, fit_bias)
-        pred[test] = predict(Phi[test], w, b)
+        if with_sd:
+            from .surrogate import LowRankSurrogate
+            s = LowRankSurrogate.fit(g, lam, fit_bias)
+            pred[test], sd[test] = s.predict(Phi[test], k_self[test])
+        else:
+            w, b = fit(g, lam, fit_bias)
+            pred[test] = predict(Phi[test], w, b)
         which[test] = k
-    return pred, which
+    return (pred, sd, which) if with_sd else (pred, which)
 
 
 # --------------------------------------------------------------------------- #
