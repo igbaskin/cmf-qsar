@@ -92,11 +92,19 @@ Which models are covered
 ------------------------
 Any fitted model whose prediction is a sum over the training molecules plus a constant: the
 regression learners, the classifiers (the gradient is then of the decision value, not of the
-probability) and the ranking SVM, on the overlap-integral kernel.  The rotation-invariant,
-surface and periodic kernels are built from the distances *inside* each molecule and are not
-overlap integrals, so this gradient does not apply to them; neither do the one-class and
-data-fusion scores, whose decision is not of that form.  Every case that is not covered is
-refused with a reason rather than approximated.
+probability) and the ranking SVM, on either of two kernels.  On the overlap-integral kernel the
+derivative runs over the pairs of one atom of the molecule and one atom of a training molecule.
+On the rotation-invariant field autocorrelation, whose channels are built from the distances
+*inside* the molecule alone, the derivative runs over the pairs of its own atoms and through the
+row length the cosine normalisation divides out; a model on that kernel has no frame, so its
+gradient moves a conformation and not a pose (plan item MS3).
+
+The other invariant kernels -- the surface autocorrelation with its heights, the periodic one
+with its images and background, the reciprocal-space structure factors and the three-body
+channels -- are refused, because each builds its channels differently and needs a derivative of
+its own.  So are the one-class and data-fusion scores, whose decision is not a sum over the
+training molecules.  Every case that is not covered is refused with a reason rather than
+approximated.
 
 Checked against finite differences
 ----------------------------------
@@ -104,7 +112,9 @@ Checked against finite differences
 :meth:`cmfqsar.model.CMFModel.predict` itself, over the combinations that change the chain rule:
 normalised and unnormalised kernels, the steric field with its per-atom widths, probe fields,
 interpolated attenuations, the three nonlinear layers, a descriptor block and a conformational
-ensemble.  The remaining disagreement is that of the finite difference, not of the gradient.
+ensemble; and, on the invariant kernel, every field of the set, the three layers, the channel
+scale with fitted block weights, and the distance grid with and without its self terms.  The
+remaining disagreement is that of the finite difference, not of the gradient.
 """
 from __future__ import annotations
 
@@ -183,12 +193,7 @@ def _check_model(model: CMFModel) -> None:
     if model.train is None or model.coef is None:
         raise RuntimeError("the model must be fitted before its gradient can be taken")
     if not model.uses_fields:
-        raise ValueError(
-            f"the gradient with respect to the atoms is defined for the overlap-integral kernel; "
-            f"this model uses the '{model.kernel_source}' kernel, which is built from the "
-            f"distances inside each molecule and has no atom of the training set to overlap "
-            f"with. Fit a model with kernel_source='fields' on aligned molecules to obtain "
-            f"gradients.")
+        _check_invariant_model(model)
     oc = getattr(model.learner_, "oc_", None) if model.learner_ is not None else None
     if oc is not None:
         raise ValueError(
@@ -308,6 +313,9 @@ def prediction_gradient(model: CMFModel, mol: MoleculeFields,
         raise ValueError(f"wrt must be 'coords', 'weights' or 'both', not {wrt!r}")
     want_coords = wrt in ("coords", "both")
     want_weights = wrt in ("weights", "both")
+    if not model.uses_fields:
+        # the invariant kernel has no training atom to overlap with: its own chain rule
+        return _invariant_prediction_gradient(model, mol, coords, weights, wrt)
 
     work = _working_copy(mol, coords, weights)
     one = AtomTable.from_molecules([work])
@@ -534,3 +542,76 @@ def cofield_gradient(model: CMFModel, f: int, points: np.ndarray, width: Optiona
     if include_scale:
         grad = grad * (model.fieldset.specs[f].h * model.scale[f])
     return grad
+
+
+# --------------------------------------------------------------------------- #
+# The rotation-invariant kernel (plan item MS3)
+# --------------------------------------------------------------------------- #
+
+def _check_invariant_model(model: CMFModel) -> None:
+    """The invariant sources this gradient covers, with a reason for each one it does not."""
+    if model.kernel_source != "autocorrelation":
+        raise ValueError(
+            f"the gradient of an invariant kernel is implemented for the field "
+            f"autocorrelation; this model uses the '{model.kernel_source}' kernel, whose "
+            f"channels are built differently -- the heights above a surface, the images and the "
+            f"uniform background of a periodic cell, the structure factors of reciprocal space, "
+            f"the angles of a triple -- and each of those needs a derivative of its own.")
+    if any(getattr(sp, "is_probe", False) for sp in model.fieldset.specs):
+        raise ValueError(
+            "a probe field carries its weights per Gaussian term and not per atom, and the "
+            "invariant channels are built from those expanded terms, so there is no one weight "
+            "per atom to differentiate. Fit the model without probe fields for its gradient.")
+    if getattr(model, "ac_train_", None) is None:
+        raise RuntimeError("the model carries no channel rows of its training set: refit it")
+
+
+def _invariant_prediction_gradient(model: CMFModel, mol: MoleculeFields,
+                                   coords: Optional[np.ndarray],
+                                   weights: Optional[np.ndarray],
+                                   wrt: str) -> PredictionGradient:
+    """The derivatives of a prediction made on the rotation-invariant autocorrelation kernel.
+
+    The kernel is the cosine of the angle between two scaled channel rows, so the prediction is
+
+        y(x) = sum_j a_j (u(x) . p_j) / (L(x) |p_j|) + b,    u(x) = s * F(x),  L = |u(x)|,
+
+    and the sum over the training molecules collapses into one vector in channel space,
+    c = sum_j a_j p_j / |p_j|, which is what :func:`cmfqsar.invariant.channel_coefficients`
+    returns.  The derivative in the channels is then
+
+        dy/dF_k = s_k [ c_k / L - (u . c) u_k / L^3 ],
+
+    where the second term is the row length the cosine divides out -- the one number plan item
+    M15 measured -- and the channels are differentiated with respect to the atoms by
+    :func:`cmfqsar.invariant.autocorrelation_gradient`.
+
+    A nonlinear kernel layer multiplies every dual coefficient by the layer's derivative at that
+    entry, so the collapse above holds with a reweighted dual vector.  The layer also depends on
+    the molecule's own self-kernel, which for a cosine kernel is one for every molecule and
+    therefore contributes nothing, exactly as it contributes nothing to a normalised overlap
+    kernel.
+    """
+    from .invariant import autocorrelation_gradient
+
+    work = _working_copy(mol, coords, weights)
+    one = AtomTable.from_molecules([work])
+    specs = list(model.fieldset.specs)
+
+    s = np.asarray(model.ac_column_scale, float)
+    u = np.asarray(model._ac_features(one), float)[0] * s
+    L = float(np.sqrt(max(float(u @ u), TINY)))
+    A = np.asarray(model.ac_train_, float) * s
+    na = np.sqrt(np.maximum(np.einsum("jc,jc->j", A, A), TINY))
+    A = A / na[:, None]                                  # the training rows the kernel sees
+
+    K_lin = A @ (u / L)                                  # (n_train,), the cosine kernel row
+    K_layer, dL_dK, _ = _layer_terms(model, K_lin, 1.0)
+    coef = np.asarray(model.coef, float)
+    value = float(K_layer @ coef + model.bias)
+
+    c = A.T @ (coef * dL_dK)
+    g_chan = s * (c / L - float(u @ c) * u / L ** 3)
+    g_coords, g_weights = autocorrelation_gradient(work, g_chan, spec=model._ac_spec(), wrt=wrt)
+    return PredictionGradient(value=value, coords=g_coords, weights=g_weights,
+                              field_names=[sp.name for sp in specs])

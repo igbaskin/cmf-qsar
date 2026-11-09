@@ -286,11 +286,12 @@ def test_an_unfitted_model_is_refused():
 
 
 def test_a_kernel_that_is_not_an_overlap_integral_is_refused():
-    """The invariant, surface and periodic kernels are built from the distances inside each
-    molecule, so there is no atom of the training set to overlap with."""
+    """The surface, periodic, reciprocal and three-body channels are each built in their own
+    way, so a derivative written for one of them does not describe the others.  The field
+    autocorrelation is the invariant kernel that is covered; see the MS3 tests below."""
     model, _fs, probe = _fitted(method="krr", normalize=True, params={"lam": 0.1})
-    model.kernel_source = "autocorrelation"
-    with pytest.raises(ValueError, match="overlap-integral kernel"):
+    model.kernel_source = "periodic"
+    with pytest.raises(ValueError, match="periodic"):
         prediction_gradient(model, probe)
 
 
@@ -355,3 +356,123 @@ def test_a_probe_field_reaches_the_atom_decomposition():
     per_field = model.atom_contributions(probe, per_field=True)
     assert per_field.shape == (3, probe.n_atoms)
     assert np.any(per_field[1] != 0.0), "the probe field contributed nothing"
+
+
+# --------------------------------------------------------------------------- #
+# The rotation-invariant kernel (plan item MS3)
+# --------------------------------------------------------------------------- #
+#: the invariant kernel on a short distance grid, which is what these molecules need
+AC = dict(kernel_source="autocorrelation", ac_d_max=6.0)
+#: the step the invariant comparison is best at: its channels are second-degree in the
+#: coordinates, so the curvature the central difference leaves behind is larger here than for
+#: the overlap kernel and the best step is correspondingly smaller
+AC_STEP = 1e-5
+
+
+def _moved(mol, coords):
+    """The same molecule at other positions, without touching the original."""
+    import dataclasses
+    return dataclasses.replace(mol, coords=np.asarray(coords, float))
+
+
+def _ac_args(layer=None, **extra):
+    args = dict(AC)
+    if layer:
+        args["kernel_layer"] = layer
+        if layer == "gauss":
+            args["params"] = {"gamma": 1.0, "lam": 0.01}
+    args.update(extra)
+    return args
+
+
+@pytest.mark.parametrize("layer", [None, "gauss", "arccos1", "arccos2"])
+def test_the_invariant_gradient_matches_finite_differences(layer):
+    """Every kernel layer, against the derivative of the prediction the program makes."""
+    model, fs, probe = _fitted(**_ac_args(layer))
+    coords, weights = _agree(model, probe, step=AC_STEP)
+    assert coords < TOL, coords
+    assert weights < TOL, weights
+
+
+def test_the_invariant_gradient_matches_finite_differences_for_every_field():
+    fields = ("steric", "electrostatic", "hbd", "hba", "hydrophobic")
+    model, fs, probe = _fitted(fields=fields, **_ac_args())
+    coords, weights = _agree(model, probe, step=AC_STEP)
+    assert coords < TOL, coords
+    assert weights < TOL, weights
+    g = prediction_gradient(model, probe)
+    assert g.coords.shape == (probe.n_atoms, 3)
+    assert g.weights.shape == (probe.n_atoms, len(fields))
+    assert g.field_names == list(fields)
+    # a field the molecule carries has to move the prediction; none of the columns is a stub
+    assert np.all(np.abs(g.weights).max(axis=0) > 0.0)
+
+
+def test_the_invariant_gradient_matches_finite_differences_with_block_weights():
+    """The channel scale carries the fitted block weights, which the gradient has to use."""
+    model, fs, probe = _fitted(**_ac_args(ac_block_weights="align"))
+    assert model.block_weight_report()                  # the weights are really fitted
+    coords, weights = _agree(model, probe, step=AC_STEP)
+    assert coords < TOL, coords
+    assert weights < TOL, weights
+
+
+def test_the_invariant_gradient_falls_as_the_square_of_the_step():
+    """A correct gradient disagrees by the square of the step, until round-off takes over."""
+    model, fs, probe = _fitted(**_ac_args())
+    coarse, _ = _agree(model, probe, step=1e-3)
+    fine, _ = _agree(model, probe, step=1e-4)
+    assert fine < coarse / 50.0, (coarse, fine)          # a decade of step is two of error
+    assert fine < 1e-7, fine                             # and the comparison really is close
+
+
+def test_the_invariant_channel_derivative_without_the_self_terms():
+    """`include_self=False` is not a model setting, so the channels are differentiated directly."""
+    from cmfqsar.invariant import (AutocorrelationSpec, autocorrelation,
+                                   autocorrelation_gradient)
+    model, fs, probe = _fitted(**_ac_args())
+    spec = AutocorrelationSpec(d_max=6.0, step=0.75, sigma=0.75, include_self=False)
+    rng = np.random.default_rng(7)
+    g = rng.normal(size=len(autocorrelation(probe, spec)))
+    analytic, _ = autocorrelation_gradient(probe, g, spec=spec, wrt="coords")
+    X0 = np.array(probe.coords, float)
+    h = 1e-5
+    for atom in (0, probe.n_atoms // 2, probe.n_atoms - 1):
+        for axis in range(3):
+            plus, minus = X0.copy(), X0.copy()
+            plus[atom, axis] += h
+            minus[atom, axis] -= h
+            num = (g @ autocorrelation(_moved(probe, plus), spec)
+                   - g @ autocorrelation(_moved(probe, minus), spec)) / (2.0 * h)
+            assert abs(analytic[atom, axis] - num) < 1e-6 * max(abs(num), 1.0)
+
+
+def test_the_invariant_gradient_turns_with_the_molecule():
+    """The kernel is invariant to rotation, so the gradient is a vector that rotates with it."""
+    model, fs, probe = _fitted(**_ac_args())
+    g = prediction_gradient(model, probe, wrt="coords")
+    angle = 0.7
+    c, s = np.cos(angle), np.sin(angle)
+    R = np.array([[c, -s, 0.0], [s, c, 0.0], [0.0, 0.0, 1.0]])
+    turned = prediction_gradient(model, _moved(probe, probe.coords @ R.T), wrt="coords")
+    assert abs(turned.value - g.value) < 1e-10
+    assert np.abs(turned.coords - g.coords @ R.T).max() < 1e-9
+
+
+def test_the_invariant_gradient_refuses_what_it_does_not_cover():
+    """The other invariant sources, the signed channels and a probe field, each with a reason."""
+    model, fs, probe = _fitted(**_ac_args())
+    for source in ("surface", "periodic", "reciprocal", "threebody"):
+        model.kernel_source = source
+        with pytest.raises(ValueError, match=source):
+            prediction_gradient(model, probe)
+    model.kernel_source = "autocorrelation"
+
+    chiral, fs2, probe2 = _fitted(fields=("steric", "electrostatic", "hbd"),
+                                  **_ac_args(ac_chirality=True, ac_chirality_shells=2))
+    with pytest.raises(ValueError, match="three-point"):
+        prediction_gradient(chiral, probe2)
+
+    with_probe, fs3, probe3 = _fitted(fieldset_args={"probes": ["water"]}, **_ac_args())
+    with pytest.raises(ValueError, match="probe"):
+        prediction_gradient(with_probe, probe3)

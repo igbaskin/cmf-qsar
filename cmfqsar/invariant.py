@@ -873,3 +873,115 @@ def pair_contributions(mol: MoleculeFields, coefficients: Sequence[float],
             name = f"{f} with {g}" if f != g else str(f)
         labels.append((name, float(per[i].sum())))
     return labels
+
+
+# --------------------------------------------------------------------------- #
+# The derivative of the channels with respect to the atoms (plan item MS3)
+# --------------------------------------------------------------------------- #
+
+def autocorrelation_gradient(mol: MoleculeFields, channel_grad: Sequence[float],
+                             spec: AutocorrelationSpec = AutocorrelationSpec(),
+                             pairs: Optional[Sequence[Tuple[int, int]]] = None,
+                             weights: Optional[np.ndarray] = None,
+                             wrt: str = "both") -> Tuple[Optional[np.ndarray],
+                                                         Optional[np.ndarray]]:
+    """The derivative of a weighted sum of the channels with respect to the atoms (item MS3).
+
+    `channel_grad` holds one number per channel, and the pair returned is the derivative of
+
+        S(x) = sum over channels k of  g_k F_k(x)
+
+    with respect to the atom positions, (n_atoms, 3), and with respect to the per-atom field
+    weights, (n_atoms, n_fields); `wrt` chooses which of the two to compute, and the other is
+    None.  A model on this kernel is one such sum once its length normalisation has been
+    differentiated, which is what :func:`cmfqsar.gradients.prediction_gradient` does with it.
+
+    **The derivative.**  A pair channel is a double sum over the atoms,
+
+        F[(f,g), k] = sum over a, b of  W[a,f] B[a,b,k] W[b,g],
+        B[a,b,k] = exp(-(d_ab - c_k)^2 / 2 sigma^2),
+
+    with d_ab the distance between two atoms and c_k the centre of the distance channel.  A
+    position enters only through the distances of the pairs that contain that atom, so
+
+        dS/dr_l = sum over b other than l of  P[l,b] (r_l - r_b) / d_lb,
+        P[l,b] = sum over channels of  g_k (W[l,f] W[b,g] + W[b,f] W[l,g]) B'[l,b,k],
+        B'[a,b,k] = -((d_ab - c_k) / sigma^2) B[a,b,k].
+
+    A self term (a = b) is a distance that no motion changes, so it drops out of the position
+    derivative; it stays in the weight derivative, where the channel is bilinear in the weights
+    and the derivative is the sum over the other atom of the pair.
+
+    The field weights are held fixed while the positions move, exactly as the overlap kernel's
+    gradient holds them: a weight that is itself a function of the geometry -- the envelope of a
+    local environment, a charge recomputed after the atom moved -- is outside this derivative, so
+    a caller that moves atoms far has to rebuild the fields.
+
+    The signed three-point channels are a sum over triples rather than pairs.  They are refused
+    here rather than silently dropped, as :func:`atom_contributions` refuses them.
+
+    The cost is one array of (n_pairs, n_atoms, n_atoms) for the position derivative, the same
+    shape the channels themselves are built from.
+    """
+    if wrt not in ("coords", "weights", "both"):
+        raise ValueError(f"wrt must be 'coords', 'weights' or 'both', not {wrt!r}")
+    W = np.asarray(mol.weights if weights is None else weights, float)
+    n_atoms, n_fields = W.shape
+    pairs = list(pairs) if pairs is not None else field_pairs(n_fields)
+    centres = spec.centres
+    n_bins = len(centres)
+    want_coords = wrt in ("coords", "both")
+    want_weights = wrt in ("weights", "both")
+    g_coords = np.zeros((n_atoms, 3)) if want_coords else None
+    g_weights = np.zeros((n_atoms, n_fields)) if want_weights else None
+    if n_atoms == 0:
+        return g_coords, g_weights
+
+    g = np.asarray(channel_grad, float)
+    need = len(pairs) * n_bins
+    if len(g) < need:
+        raise ValueError(f"the channels of this molecule need {need} numbers and "
+                         f"{len(g)} were given: the fields of the two do not match")
+    if len(g) > need:
+        raise ValueError("the derivative of the signed three-point channels is not implemented: "
+                         "build the model without the chirality channels to differentiate it")
+    G = g[:need].reshape(len(pairs), n_bins)
+    mult = np.array([2.0 if f != h else 1.0 for f, h in pairs])
+
+    X = np.asarray(mol.coords, float)
+    diff = X[:, None, :] - X[None, :, :]                      # (a, b, 3)
+    d = np.linalg.norm(diff, axis=-1)
+    gap = d[:, :, None] - centres[None, None, :]
+    B = np.exp(-(gap ** 2) / (2.0 * spec.sigma ** 2))
+    if not spec.include_self:
+        # the l = m terms, which carry the plain count of each type, are left out of the channels
+        B[np.arange(n_atoms), np.arange(n_atoms), :] = 0.0
+
+    if want_coords:
+        # B'[a,b,k], the derivative of the channel window in the distance itself.  The diagonal
+        # is set to zero rather than evaluated: the distance of an atom to itself is zero
+        # whatever the atom does, so a self term cannot enter a position derivative.
+        Bp = -(gap / spec.sigma ** 2) * B
+        Bp[np.arange(n_atoms), np.arange(n_atoms), :] = 0.0
+        # R[i,a,b] = sum_k G[i,k] B'[a,b,k]: what channel block i makes of that pair's distance
+        R = np.einsum("ik,abk->iab", G, Bp, optimize=True)
+        fs = np.array([f for f, _ in pairs], int)
+        hs = np.array([h for _, h in pairs], int)
+        Wf, Wh = W[:, fs], W[:, hs]                           # (n_atoms, n_pairs)
+        # T[i,a,b] = W[a,f_i] W[b,g_i] + W[b,f_i] W[a,g_i], the weight of the pair in block i
+        T = (np.einsum("ai,bi->iab", Wf, Wh, optimize=True)
+             + np.einsum("bi,ai->iab", Wf, Wh, optimize=True))
+        P = np.einsum("i,iab,iab->ab", mult, T, R, optimize=True)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            inv_d = np.where(d > 0.0, 1.0 / d, 0.0)
+        g_coords = np.einsum("ab,abc->ac", P * inv_d, diff, optimize=True)
+
+    if want_weights:
+        # T[k,a,f] = sum_b B[a,b,k] W[b,f]: what the rest of the molecule puts into channel k
+        T = np.einsum("abk,bf->kaf", B, W, optimize=True)
+        U = np.einsum("ik,kaf->iaf", G, T, optimize=True)      # (n_pairs, n_atoms, n_fields)
+        for i, (f, h) in enumerate(pairs):
+            g_weights[:, f] += mult[i] * U[i, :, h]
+            g_weights[:, h] += mult[i] * U[i, :, f]
+
+    return g_coords, g_weights

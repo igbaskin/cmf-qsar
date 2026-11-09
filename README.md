@@ -2422,6 +2422,28 @@ that enforces geometry, not an optimiser to run on its own; and the per-atom wei
 parameters of a real molecule, since the charges of one sum to its total charge and follow from
 its structure.
 
+**The same gradient without a frame** (plan item MS3). The rotation-invariant kernel is
+differentiable in the same closed form, with one term more: its channels are built from the
+distances inside one structure, so a position enters through the pairs that contain that atom, the
+model collapses into one vector in channel space, and the cosine normalisation contributes the
+derivative of the row length. Measured the same way, the closest agreement with finite differences
+is **3e-9** on the steroid set and **2e-8** on a local environment of the public hop set -- 935
+channels, ten fields, 22 atoms, which is the descriptor the lithium hop model uses -- and the
+analytic form is **414 to 565 times** faster. Because no channel knows where the structure sits,
+this gradient moves a conformation and never a pose. The surface, periodic, reciprocal-space and
+signed three-point channels each need their own derivative and are refused with that reason.
+
+**A relaxation under it.** `cmfqsar.relax.relax_pose` moves a molecule as a rigid body, six
+parameters about its own centroid, so the conformation and the field weights are untouched and
+only the pose changes. Driven by the analytic gradient it reaches the same value of its objective
+as the same search without one and needs **24 to 86 times fewer** evaluations. It does **not**
+reach the pose the confidence alignment finds: started from the same place, the two end 1.0 to
+2.2 Å apart, the posterior variance at the prediction's pose is 11 to 33 times the variance
+confidence reaches, and the prediction at the confidence pose is 1.4 to 2.2 units lower. The two
+answer different questions -- the prediction moves a molecule towards the training molecules that
+are active, confidence towards the training set as a whole -- so a pose meant for predicting from
+is still the confidence one, which uses no activity value of the molecule being placed.
+
 ### A macrocyclic host as a pocket
 
 `complement` read proteins. A cyclodextrin is a pocket too, and arrives as a molecule file with no

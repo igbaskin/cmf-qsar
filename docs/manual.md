@@ -6983,6 +6983,95 @@ training set at the same rate as the number is improving. And the bond lengths a
 by up to 0.8 A, because nothing in the gradient knows that a molecule has bonds. The same walk on
 a thrombin ligand gains 2.0 log units and distorts a bond by 0.44 A.
 
+### The same gradient without a frame
+
+Everything above compares the atoms of one molecule with the atoms of the training molecules,
+which is why it needs a common frame. The rotation-invariant kernel does not: its channels are
+the distance distribution of the field weights *inside* one structure, as the chapter on the
+rotation-invariant autocorrelation kernel describes. That kernel is differentiable in closed form
+as well, and the derivative is assembled in three steps.
+
+A channel is a double sum over pairs of the structure's own atoms, so a position enters only
+through the distances of the pairs that contain that atom, and the derivative of a channel is a
+sum over the other atom of each pair. The model is then one vector in channel space, because the
+kernel is a dot product of the scaled rows: the sum over the training molecules collapses into
+the same vector the atom-wise decomposition uses. And the cosine normalisation divides each row
+by its own length, which adds the one extra term the overlap kernel does not have -- the
+derivative of that length, the number item M15 of the development plan measured on its own.
+
+```python
+model = CMFModel(fieldset=fs, kernel_source="autocorrelation", ac_d_max=8.0, ac_sigma=0.5)
+model.fit(table, y)
+
+g = prediction_gradient(model, mol)     # the same call, the same two derivatives
+```
+
+Because no channel knows where the structure sits or how it is turned, this gradient moves a
+*conformation* and never a pose: turn the molecule and the gradient turns with it. A rigid motion
+leaves the prediction exactly where it was, which is why `cmfqsar.relax` refuses to relax a pose
+under an invariant model instead of returning zeros.
+
+| set | sample | atoms | fields | channels | closest agreement | analytic | finite differences | gain |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| steroids | prednisolone | 54 | 5 | 255 | 3.1e-09 | 14 ms | 6.1 s | 432 times |
+| THR | 01 | 75 | 5 | 255 | 5.2e-09 | 21 ms | 11.9 s | 565 times |
+| hop environments | one jump of mp-10620 | 22 | 10 | 935 | 1.9e-08 | 22 ms | 9.1 s | 414 times |
+
+The last row is the case this was wanted for. A hop environment is a cut-out of a crystal around
+the midpoint of a lithium jump, with its atoms weighted by an envelope; it has no frame of its
+own, which is why the hop model uses the invariant kernel. Its 935 channels and ten fields are
+differentiated as fast as the 255 channels of a molecular set, because the cost is set by the
+atom pairs and not by the channels.
+
+Four relatives of this kernel are **not** differentiated: the in-plane surface channels with
+their heights, the periodic channels with their images and their uniform background, the
+reciprocal-space structure factors, and the signed three-point channels, whose sum is over
+triples of atoms rather than pairs. Each builds its channels in its own way and needs its own
+derivative; each is refused with that reason rather than approximated.
+
+### Relaxing a pose under it
+
+A gradient is a direction, and a relaxation is what follows it to a stop. `cmfqsar.relax` does
+the one motion that leaves the chemistry untouched: the molecule is moved as a rigid body, six
+parameters about its own centroid, so every bond length and every field weight is what it was and
+only the pose changes.
+
+```python
+from cmfqsar.relax import relax_pose
+
+out = relax_pose(model, mol, max_rmsd=2.0)      # the pose where the model predicts most
+print(out.value_before, out.value_after, out.rmsd, out.limited)
+```
+
+`max_rmsd` is how far the atoms may move before a quadratic penalty holds them back, as in the
+confidence alignment; a relaxation that ends at the guard is reported as `limited`, because its
+answer is then the guard's and not the model's.
+
+**Does the gradient reach what the same objective reaches without it?** Yes, and it is the reason
+to have it. The same search driven by the analytic gradient and searched without one reach the
+same value to three decimals, and the gradient needs 24 to 86 times fewer evaluations of the
+objective: 29 against 2,508 on a steroid, 87 against 2,116 on a thrombin ligand.
+
+**Is that the pose the confidence aligner finds?** No, and the difference is the point. Started
+from the same pose, the prediction and the posterior variance move the same molecule to places
+one to two angstroms apart.
+
+| set | moved by | prediction | posterior variance | distance from the other pose |
+|---|---|---:|---:|---:|
+| steroids | the prediction | +9.93 | 1.34 | 1.33 A |
+| steroids | confidence | +7.77 | 0.04 | 1.33 A |
+| THR | the prediction | +9.30 | 1.36 | 2.19 A |
+| THR | confidence | +7.45 | 0.07 | 2.19 A |
+
+Neither column is wrong. Raising the prediction moves a molecule towards the training molecules
+that are *active*; raising confidence moves it towards the training set as a whole, with
+redundant members down-weighted by the inverse kernel. So the two answer different questions, and
+which one to ask is decided by what the pose is for. For a pose to predict from, use the
+confidence: it uses no activity value of the molecule being placed, so it is legitimate before
+anything is measured. The relaxation answers the other question -- where a molecule would have to
+sit for this model to call it active -- and its answer is a statement about the model, not about
+a receptor.
+
 ### What it cannot do
 
 **A weight is not a molecule.** The weight of an atom in the electrostatic field is its partial
