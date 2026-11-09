@@ -1,6 +1,6 @@
 {
- "commit": "020dda9a8f8f4103dab9ce44d3a275771632c9f4",
- "created": "2026-11-09T18:46:13",
+ "commit": "f98f54fe15cca089859dae179030289ed1be9554",
+ "created": "2026-11-09T21:22:31",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2585,6 +2585,17 @@
   "benchmarks/results/fusion/DHFR.json": "264a912812e17e82ba0f21b11385ebcb2867430dec94d9f73b8c99f2f1f517ce",
   "benchmarks/results/fusion/THR.json": "f3117ddac2aeaf5b8a9c9bddfc647ddde139e07acf086b206a92e12012d90ab5",
   "benchmarks/results/fusion/table.md": "c358c3340d388e25f327be9b196f22e9f5de356a86ff6a1f105bf015f0d27e22",
+  "benchmarks/results/gntk/ACE.json": "ca60099eb9138e9d4c5f6c81df630c93ea626eb6fe115028d2c8cd3e053df4bf",
+  "benchmarks/results/gntk/AChE.json": "d60cd459b22851ec87cebbb680bd16f43f88adfb88d4f8cf6b0f38ada5b27c2c",
+  "benchmarks/results/gntk/BZR.json": "f1f32a10423fcec88aaaafb0060023152c919bf67700194bf5ca504aebcfda3a",
+  "benchmarks/results/gntk/COX2.json": "1abf5ddeae80e5a6a2d5da349f7f94e7e66520d9218a4d78657b2e3d83c0d607",
+  "benchmarks/results/gntk/DHFR.json": "011db6238682b0a3823275cfb88e193e45e56751643699fe7e4cdf032210394e",
+  "benchmarks/results/gntk/GPB.json": "02b3d776043158c681bfe93e14f80baf1c6788ae85bf82a08faa9991cd8fb748",
+  "benchmarks/results/gntk/THER.json": "fe38d8bce3c1b56876b0ad64dc2fd90f3fd55b6154251d833289e406d345fa3a",
+  "benchmarks/results/gntk/THR.json": "49eac7de8d83f2645aac010ba25e23267e56a14471eaa12a49745aa18f6df9c4",
+  "benchmarks/results/gntk/table.md": "bd890c4815a8a41559c31447f41ae247fff1ec60a920069d144c8139207fc554",
+  "benchmarks/results/gntk_compas/compas_1D.json": "9db0396da8d767f5564ccdcac90a132fb5c6f30f9a921c170da29043101cbbf8",
+  "benchmarks/results/gntk_compas/table.md": "938f05e03f581d791f952dabfbb1bc9fac6dcf7f6a580e2455368ec783ceded6",
   "benchmarks/results/gradient/gradient.json": "5b68ca074c3409b81da1c4d0074540276991d905ee1828040c921213365d2fa7",
   "benchmarks/results/gradient/invariant.json": "9e2bc74df0cbb626a8d3e36719923d8a216cb2614145b7d41ce3b6186eea3ac1",
   "benchmarks/results/gradient/relax.json": "f3ac0a494b2d81be72a4ccb65d29df454c110b07e689bdac223cc5c530092594",
