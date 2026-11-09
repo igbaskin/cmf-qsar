@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 117 modules, 230 classes with 767 public methods, and 1148 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 117 modules, 231 classes with 771 public methods, and 1148 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -8924,6 +8924,16 @@ Attributes:
 
 The feature rows of every molecule of `table`, a block of molecules at a time.
 
+#### `LowRank.joint_self(table: AtomTable, block: int=BLOCK) -> np.ndarray`
+
+The exact joint self-kernel of every molecule, `sum_f h_f c_f k_f(x, x)`.
+
+This is what the variance keeps exact (plan item MS6): with it the deviation of a
+molecule the landmarks do not span stays large instead of falling to zero. Under the
+cosine normalisation a self-kernel is one, except for a field that is identically zero
+for that molecule (no donor, no acceptor, no charge), which the normalisation leaves at
+zero -- the same convention as `cmfqsar.model.CMFModel.joint_self`.
+
 ### `class Gram  (dataclass)`
 
 What a fit needs from the whole training set, in m by m memory.
@@ -9023,9 +9033,15 @@ are the exact function's, so the two values may be compared.
 
 Bytes the kernels of a fit need, for the exact form and for this one.
 
-### `cross_validate(low: LowRank, table: AtomTable, y: Sequence[float], lam: float, folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, block: int=BLOCK) -> Tuple[np.ndarray, np.ndarray]`
+### `cross_validate(low: LowRank, table: AtomTable, y: Sequence[float], lam: float, folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, block: int=BLOCK, with_sd: bool=False)`
 
 (out-of-fold predictions, the fold of every molecule), the features built once.
+
+With `with_sd` the result is (predictions, standard deviations, folds): each fold's
+training part is read as a `cmfqsar.surrogate.LowRankSurrogate`, so the deviations
+are in the units of `y` and are the ones a molecule would have been given had it been new
+(plan item MS6). The folds are those of `cmfqsar.model._kfold_indices`, the same ones
+the exact path uses for the same seed, so the two paths are compared like with like.
 
 ### `landmark_coefficients(low: LowRank, w: Sequence[float]) -> List[np.ndarray]`
 
@@ -16735,7 +16751,9 @@ but it is not usable as it stands, for three reasons this module removes.
   fine level can afford to the tolerance that sends it that many.
 
 The arithmetic is one Cholesky factorisation of the training kernel per fit and one triangular
-solve per structure, the same cost as the variance already paid.
+solve per structure, the same cost as the variance already paid.  A model fitted in the space of
+its landmarks (plan item B6) never has that kernel; `LowRankSurrogate` at the end of this
+module is the same reading in m by m form, through the Woodbury identity (plan item MS6).
 
 ### `class Surrogate  (dataclass)`
 
@@ -16834,6 +16852,62 @@ Attributes:
 #### `Handoff.fraction_answered` -> float  (property)
 
 #### `Handoff.describe() -> str`
+
+### `class LowRankSurrogate  (dataclass)`
+
+The Gaussian-process reading of a low-rank fit, with its scale in the units of the activity.
+
+A model fitted in the space of m landmarks (plan item B6, `cmfqsar.lowrank`) never
+builds the n by n kernel, which is why `Surrogate` could not read it. Every quantity
+that class computes has an m by m form through the Woodbury identity, because the kernel of
+that model *is* `Phi Phi^T`:
+
+* the residual about the marginalised mean, `r^T (K + lam I)^-1 r`, is
+  `(r^T r - (Phi^T r)^T A^-1 (Phi^T r)) / lam` with `A = Phi^T Phi + lam I`, and the
+  Gram of the fit holds `r^T r` and `Phi^T r` through `y^T y`, `Phi^T y`, `Phi^T 1`
+  and the bias;
+* the posterior variance is `cmfqsar.lowrank.variance`, with the exact self-kernel
+  kept so that it does not fall to zero far from the landmarks;
+* the term of the unknown mean, `(1 - k^T u)^2 / (1^T u)` with `u = (K + lam I)^-1 1`,
+  is `(1 - phi^T A^-1 Phi^T 1)^2` over `(n - (Phi^T 1)^T A^-1 Phi^T 1) / lam`.
+
+So the scale is the same `quad / dof` as the exact one, the deviation is in the units of
+`y`, and nothing of size n is ever held. When the landmarks are the training molecules
+themselves the two readings agree to round-off, which is what the tests fix; with fewer
+landmarks this is the reading of the approximate model, consistent with its own fit.
+
+Attributes:
+
+- `lam: float`
+- `fit_bias: bool`
+- `scale: float`
+- `dof: int`
+- `n_train: int`
+- `rank: int`
+- `L: np.ndarray`
+- `w: np.ndarray`
+- `bias: float`
+- `a1: Optional[np.ndarray]`
+- `denom: float`
+
+#### `LowRankSurrogate.fit(gram, lam: float, fit_bias: bool=True) -> 'LowRankSurrogate'`  (class method)
+
+Fit from the Gram of a low-rank fit (`cmfqsar.lowrank.gram`).
+
+The weights and the bias are those of `cmfqsar.lowrank.fit`, so the predictive
+mean here is the model's own prediction.
+
+#### `LowRankSurrogate.predict(Phi_test: np.ndarray, k_test_self: Sequence[float], with_noise: bool=True) -> Tuple[np.ndarray, np.ndarray]`
+
+(prediction, standard deviation) of new structures, both in the units of the activity.
+
+`Phi_test` holds the feature rows of the new structures (`LowRank.transform`) and
+`k_test_self` their exact self-kernels, which keep the variance from falling to zero
+where the landmarks span nothing. `with_noise` as for `Surrogate.predict`.
+
+#### `LowRankSurrogate.noise_sd` -> float  (property)
+
+The standard deviation of the noise the fit attributes to one measurement.
 
 ### `cross_validate(K: np.ndarray, y: Sequence[float], lam: float, folds: int=10, seed: Optional[int]=0, fit_bias: bool=True, parts: Optional[Sequence[Sequence[int]]]=None) -> Tuple[np.ndarray, np.ndarray]`
 

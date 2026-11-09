@@ -32,7 +32,9 @@ but it is not usable as it stands, for three reasons this module removes.
   fine level can afford to the tolerance that sends it that many.
 
 The arithmetic is one Cholesky factorisation of the training kernel per fit and one triangular
-solve per structure, the same cost as the variance already paid.
+solve per structure, the same cost as the variance already paid.  A model fitted in the space of
+its landmarks (plan item B6) never has that kernel; :class:`LowRankSurrogate` at the end of this
+module is the same reading in m by m form, through the Woodbury identity (plan item MS6).
 """
 from __future__ import annotations
 
@@ -308,3 +310,116 @@ class Handoff:
                   f"{self.mean_sd_answered:.3f}), of the deferred {self.rmse_deferred:.3f} "
                   f"(mean sd {self.mean_sd_deferred:.3f})")
         return s
+
+
+# --------------------------------------------------------------------------- #
+# The same reading of a fit made in the space of its landmarks (plan item MS6)
+# --------------------------------------------------------------------------- #
+@dataclass
+class LowRankSurrogate:
+    """The Gaussian-process reading of a low-rank fit, with its scale in the units of the activity.
+
+    A model fitted in the space of m landmarks (plan item B6, :mod:`cmfqsar.lowrank`) never
+    builds the n by n kernel, which is why :class:`Surrogate` could not read it. Every quantity
+    that class computes has an m by m form through the Woodbury identity, because the kernel of
+    that model *is* ``Phi Phi^T``:
+
+    * the residual about the marginalised mean, ``r^T (K + lam I)^-1 r``, is
+      ``(r^T r - (Phi^T r)^T A^-1 (Phi^T r)) / lam`` with ``A = Phi^T Phi + lam I``, and the
+      Gram of the fit holds ``r^T r`` and ``Phi^T r`` through ``y^T y``, ``Phi^T y``, ``Phi^T 1``
+      and the bias;
+    * the posterior variance is :func:`cmfqsar.lowrank.variance`, with the exact self-kernel
+      kept so that it does not fall to zero far from the landmarks;
+    * the term of the unknown mean, ``(1 - k^T u)^2 / (1^T u)`` with ``u = (K + lam I)^-1 1``,
+      is ``(1 - phi^T A^-1 Phi^T 1)^2`` over ``(n - (Phi^T 1)^T A^-1 Phi^T 1) / lam``.
+
+    So the scale is the same ``quad / dof`` as the exact one, the deviation is in the units of
+    ``y``, and nothing of size n is ever held. When the landmarks are the training molecules
+    themselves the two readings agree to round-off, which is what the tests fix; with fewer
+    landmarks this is the reading of the approximate model, consistent with its own fit.
+    """
+
+    lam: float
+    fit_bias: bool
+    scale: float
+    dof: int
+    n_train: int
+    rank: int
+    L: np.ndarray                 # the Cholesky factor of A = Phi^T Phi + lam I, m by m
+    w: np.ndarray                 # the weights over the features
+    bias: float
+    a1: Optional[np.ndarray]      # A^-1 Phi^T 1, or None without a fitted mean
+    denom: float                  # 1^T (K + lam I)^-1 1
+
+    @classmethod
+    def fit(cls, gram, lam: float, fit_bias: bool = True) -> "LowRankSurrogate":
+        """Fit from the Gram of a low-rank fit (:func:`cmfqsar.lowrank.gram`).
+
+        The weights and the bias are those of :func:`cmfqsar.lowrank.fit`, so the predictive
+        mean here is the model's own prediction.
+        """
+        from .lowrank import fit as low_fit
+
+        PtP = np.asarray(gram.PtP, float)
+        Pty = np.asarray(gram.Pty, float).ravel()
+        Pt1 = np.asarray(gram.Pt1, float).ravel()
+        n, m = int(gram.n), len(Pty)
+        if PtP.shape != (m, m) or len(Pt1) != m:
+            raise ValueError(f"the Gram is {PtP.shape} with {len(Pt1)} column sums for {m} "
+                             "features")
+        if n < 2:
+            raise ValueError("a scale needs at least two activities")
+        lam = float(lam)
+        L = _cholesky(PtP + lam * np.eye(m))
+
+        def solve(b):
+            return solve_triangular(L.T, solve_triangular(L, b, lower=True), lower=False)
+
+        w, bias = low_fit(gram, lam, fit_bias=fit_bias)
+        w = np.asarray(w, float).ravel()
+        bias = float(bias)
+        # the residual about the mean, r = y - bias, through the Woodbury identity
+        rr = float(gram.yty) - 2.0 * bias * float(gram.sum_y) + n * bias * bias
+        Ptr = Pty - bias * Pt1
+        quad = (rr - float(Ptr @ solve(Ptr))) / lam
+        if fit_bias:
+            a1 = solve(Pt1)
+            denom = (n - float(Pt1 @ a1)) / lam
+            if denom <= 0:
+                raise np.linalg.LinAlgError("the kernel leaves no room for a constant mean")
+            dof = n - 1
+        else:
+            a1, denom, dof = None, float("inf"), n
+        if dof < 1:
+            raise ValueError("a scale needs at least two activities")
+        scale = max(quad, 1e-300) / dof
+        return cls(lam=lam, fit_bias=bool(fit_bias), scale=float(scale), dof=int(dof),
+                   n_train=n, rank=m, L=L, w=w, bias=bias, a1=a1, denom=float(denom))
+
+    def predict(self, Phi_test: np.ndarray, k_test_self: Sequence[float],
+                with_noise: bool = True) -> Tuple[np.ndarray, np.ndarray]:
+        """(prediction, standard deviation) of new structures, both in the units of the activity.
+
+        ``Phi_test`` holds the feature rows of the new structures (``LowRank.transform``) and
+        ``k_test_self`` their exact self-kernels, which keep the variance from falling to zero
+        where the landmarks span nothing. ``with_noise`` as for :meth:`Surrogate.predict`.
+        """
+        P = np.atleast_2d(np.asarray(Phi_test, float))
+        k_self = np.asarray(k_test_self, float).ravel()
+        if P.shape[1] != self.rank or len(k_self) != P.shape[0]:
+            raise ValueError(f"expected {P.shape[0]} rows of {self.rank} features and as many "
+                             f"self-kernels, got {P.shape} and {len(k_self)}")
+        mean = P @ self.w + self.bias
+        V = solve_triangular(self.L, P.T, lower=True)           # L^-1 phi, one column each
+        v = k_self - np.sum(P * P, axis=1) + self.lam * np.sum(V * V, axis=0)
+        if self.fit_bias:
+            t = 1.0 - P @ self.a1
+            v = v + t * t / self.denom
+        v = np.maximum(v, 0.0)
+        var = self.scale * (v + (self.lam if with_noise else 0.0))
+        return mean, np.sqrt(var)
+
+    @property
+    def noise_sd(self) -> float:
+        """The standard deviation of the noise the fit attributes to one measurement."""
+        return float(np.sqrt(self.scale * self.lam))

@@ -281,7 +281,8 @@ def _build_low_rank(model, args, ds, mf, tr, te, train, y, target, seed, t0):
     alpha = (_floats(args.alphas) or [1.0])[0]
     model.fieldset.set_alpha(float(alpha))
     Z, kind, how = _landmarks_for(args, train, model.fieldset)
-    low = LR.build(Z, model.fieldset, normalize=model.normalize, kind=kind)
+    low = LR.build(Z, model.fieldset, scale=model._low_rank_scale(train),
+                   normalize=model.normalize, kind=kind)
     print(f"Low rank: {how}, {Z.n_mol} landmarks, {low.rank} columns of features at "
           f"alpha {alpha:g}")
     g = LR.gram(low, train, y, block=args.low_rank_block)
@@ -311,6 +312,22 @@ def _build_low_rank(model, args, ds, mf, tr, te, train, y, target, seed, t0):
     if te:
         model.evaluate_test(AtomTable.from_molecules([mf[i] for i in te]), target[te])
     print(model.stats.summary())
+
+    if args.calibration:
+        # the same report as the exact path gives, now that the low-rank path has its scale
+        # (plan item MS6); before, the option was passed over on this path without a word
+        from cmfqsar.surrogate import Calibration as _Calibration
+        try:
+            cal = model.calibration(folds=args.folds, seed=seed)
+        except (ValueError, RuntimeError) as exc:
+            raise SystemExit(f"--calibration: {exc}")
+        print("Predictive standard deviation, on the folds: " + cal.describe())
+        model.stats.extra["calibration"] = dict(vars(cal))
+        if te and "y_test_pred" in model.stats.extra:
+            _yp_te, sd_te = model.predict_with_sd(AtomTable.from_molecules([mf[i] for i in te]))
+            cal_te = _Calibration.of(target[te], model.stats.extra["y_test_pred"], sd_te)
+            print("  on the test set: " + cal_te.describe())
+            model.stats.extra["calibration_test"] = dict(vars(cal_te))
 
     conf = None
     if args.conformal is not None:

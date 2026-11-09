@@ -4686,6 +4686,87 @@ is the situation a hierarchy is in, and it is where a calibrated deviation does 
 the fast level keeps carry the error it claims, and the ones it returns are the ones the
 calculation was needed for.
 
+### The same deviation without the n by n kernel
+
+Everything above needs the training kernel, factorised once. A set of a hundred thousand
+structures has no such kernel -- that is why the low-rank path of *Large training sets* fits in
+the space of a few hundred landmarks instead -- and until now that path could predict but could
+not say how sure it was: `surrogate()` refused it in those words. Plan item MS6 removes the
+refusal, and nothing of size $n$ is built to do it.
+
+The kernel of a low-rank model is $\mathbf{\Phi}\mathbf{\Phi}^{\mathsf T}$, with $\mathbf{\Phi}$
+the $n \times m$ matrix of features against the landmarks, and every quantity the surrogate
+computes has an $m \times m$ form through the Woodbury identity. With
+$\mathbf{A} = \mathbf{\Phi}^{\mathsf T}\mathbf{\Phi} + \lambda\mathbf{I}$ and $\mathbf{r}$ the
+residual about the fitted constant,
+
+$$
+\mathbf{r}^{\mathsf T}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{r}
+= \frac{\mathbf{r}^{\mathsf T}\mathbf{r} - (\mathbf{\Phi}^{\mathsf T}\mathbf{r})^{\mathsf T}\mathbf{A}^{-1}(\mathbf{\Phi}^{\mathsf T}\mathbf{r})}{\lambda},
+\qquad
+\mathbf{1}^{\mathsf T}(\mathbf{K}+\lambda\mathbf{I})^{-1}\mathbf{1}
+= \frac{n - (\mathbf{\Phi}^{\mathsf T}\mathbf{1})^{\mathsf T}\mathbf{A}^{-1}(\mathbf{\Phi}^{\mathsf T}\mathbf{1})}{\lambda},
+$$
+<!-- #eq:lowrank-scale -->
+
+so the scale $s$ is the same mean squared whitened residual as before, the term of the unknown
+mean is $(1 - \boldsymbol{\phi}^{\mathsf T}\mathbf{A}^{-1}\mathbf{\Phi}^{\mathsf T}\mathbf{1})^2$
+over the second quantity, and the posterior variance is the one the low-rank path already had,
+with the exact self-kernel kept so that it does not fall to zero where the landmarks span
+nothing. The Gram the fit stores -- $\mathbf{\Phi}^{\mathsf T}\mathbf{\Phi}$,
+$\mathbf{\Phi}^{\mathsf T}\mathbf{y}$, $\mathbf{\Phi}^{\mathsf T}\mathbf{1}$, $n$, $\sum y$ and
+$\mathbf{y}^{\mathsf T}\mathbf{y}$ -- holds everything these expressions need, which is why a
+model read back from a file can give its deviation without its training set.
+
+```python
+model.fit_low_rank(train, y, landmarks, lam=0.1)
+mean, sd = model.predict_with_sd(test)     # the same call as for the exact model
+model.calibration(folds=10)                # on the same folds the exact path uses
+```
+
+`LowRankSurrogate` in `cmfqsar.surrogate` is the object behind it; `lowrank.cross_validate`
+returns the out-of-fold deviation with `with_sd=True`, and `lowrank.LowRank.joint_self` is the
+exact self-kernel of a table. The tests fix the claim the way the low-rank tests fix the fit:
+with the training molecules as the landmarks the kernel is reproduced exactly, so the scale, the
+mean, the deviation and the calibration must equal the exact path's to round-off, and they do.
+
+**Measured** on the stored splits of the eight Sutherland sets -- the same five 70/30 splits, the
+same attenuation and ridge as the table at the start of this chapter, so the only thing that
+differs is the path -- with three landmark sets: every training molecule (the exact kernel
+computed another way), half of them and a quarter of them, drawn at random
+(`benchmarks/run_surrogate.py --low-rank`, `benchmarks/results/surrogate/table.md`).
+
+| landmarks | rank | z rms, folds | exact | z rms, test | exact | inside 2 sd | largest difference from the exact path |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| molecules | 497 | 1.02 | 1.02 | 1.05 | 1.05 | 93% | 1.1e-08 |
+| half | 253 | 0.95 | 1.02 | 0.94 | 1.05 | 95% | 6.0e-01 |
+| quarter | 129 | 0.86 | 1.02 | 0.82 | 1.05 | 97% | 1.2e+00 |
+
+The averages are over the eight sets and five splits. The last column is what the gate reads: the largest difference from the exact path over every set and split, which is 1.1e-08 with the molecules as landmarks -- the same kernel computed another way, so round-off -- and 6.0e-01 and 1.2e+00 with half and a quarter of them. So the gate holds where the landmarks span the data, which is the reading's own claim, and the approximation loosens it in one direction: with half the molecules as landmarks the root mean square of z falls below the exact path's on every split, by 0.07 on the folds and 0.11 on the held-out molecules on average, and with a quarter by 0.16 and 0.23 -- the deviation of the approximate model is larger than its error. That is the term which keeps the variance from falling to zero where the landmarks span nothing being conservative by construction, not an error in reading it; the largest single-split differences, 0.60 and 1.20, are both GPB, where 46 training molecules leave a quarter at twelve landmarks.
+
+**What writing it found.** Two faults of the low-rank path, both older than this item and both
+invisible on a set where every molecule carries every field. The exact fit scales each field by one
+over the mean of its normalised training diagonal; that diagonal is 1 for a molecule whose field is
+not identically zero and 0 for one whose field is -- no donor, no acceptor, no charge -- so on a set
+that holds such molecules the scale is above one. The low-rank path took one, which made it another
+model on exactly those sets: with the training molecules themselves as landmarks its kernel missed
+the exact one by 1 % on the ACE set, where 13 of 80 training molecules have no hydrogen-bond donor.
+And the self-kernel it kept for the variance counted every field as one for every molecule, where
+the normalisation leaves a zero field at zero, so a molecule without a donor had its deviation
+inflated by that field's whole share. Both are repaired -- the scale is now the exact path's, and
+`LowRank.joint_self` is the one definition of the self-kernel -- and the test that would have caught
+them, a series with esters and a nitrile among the acids, is in `tests/test_lowrank_surrogate.py`.
+The repair also reaches `cmf build --low-rank`, which had used a scale of one for choosing its ridge,
+and which passed over `--calibration` without a word; it reports the calibration now.
+
+What this does not do is train on a hundred thousand structures. The path can -- its memory is
+the rank squared whatever the number of molecules, as *Large training sets* measured -- but the
+test case the plan names, the full LiTraj collection, is held in this repository as a sample of
+1,801 hops, and the hop model of that sample is the rotation-invariant local kernel, which has
+explicit features and does not go through this path at all. The deviation at that scale is
+therefore shown to be *computable* here and not yet *measured*; the measurement needs the
+overlap kernel on a large set in one frame, and it is recorded as open.
+
 ## What the model thinks the groups are: clustering the kernel
 
 Every grouped validation in this manual splits the molecules by their Bemis–Murcko scaffold, and

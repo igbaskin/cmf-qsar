@@ -2489,6 +2489,42 @@ answer different questions -- the prediction moves a molecule towards the traini
 are active, confidence towards the training set as a whole -- so a pose meant for predicting from
 is still the confidence one, which uses no activity value of the molecule being placed.
 
+### A deviation that scales: the low-rank path reads its own uncertainty
+
+The standard deviation of plan item MS1 needed the training kernel, factorised once, and the
+low-rank path of item B6 exists precisely to avoid building that kernel; until now it could
+predict but not say how sure it was. [surrogate.py](cmfqsar/surrogate.py) now holds
+`LowRankSurrogate` (plan item MS6): every quantity the exact reading computes -- the scale that
+puts the deviation in the units of the activity, the posterior variance, the term of the unknown
+mean -- has an m-by-m form through the Woodbury identity, and the Gram the fit already stores
+holds all of it. `predict_with_sd` and `calibration` are the same calls as for the exact model,
+nothing of size n is built, and a model read back from a file gives its deviation without its
+training set.
+
+**Measured** on the stored splits of the eight Sutherland sets, same attenuation and ridge, so the
+only thing that differs is the path (`benchmarks/run_surrogate.py --low-rank`). With the training
+molecules as landmarks the kernel is the same matrix computed another way, and the root mean square
+of z agrees with the exact path to **1.1e-08** on the folds and on the test set -- round-off, as the
+tests also fix. With half the molecules as landmarks the difference is at most 0.60, and with a
+quarter 1.20; the gate asked for 0.1. So the gate holds where the landmarks span the data, which is
+the reading's own claim, and the approximation loosens it in one direction: with half the molecules
+as landmarks the root mean square of z falls below the exact path's on every split, by 0.07 on the
+folds and 0.11 on the held-out molecules on average, and with a quarter by 0.16 and 0.23 -- the
+deviation of the approximate model is larger than its error. That is the term which keeps the
+variance from falling to zero where the landmarks span nothing being conservative by construction,
+not an error in reading it; the largest single-split differences, 0.60 and 1.20, are both GPB, where
+46 training molecules leave a quarter at twelve landmarks. What is not yet measured is the deviation
+on a set of a hundred thousand structures: the path can do it, but the large set the plan names is
+held here as a sample whose hop model uses the invariant kernel, which has explicit features and
+never goes through this path. Writing it found two faults in the low-rank path itself, both
+invisible on a set where every molecule carries every field: the path scaled every field by one
+where the exact fit scales a field by one over the mean of its normalised diagonal, which is above
+one when some molecules have that field identically zero (no donor, no acceptor), so its kernel
+missed the exact one by 1 % on ACE; and the self-kernel it kept for the variance counted a zero
+field as one, inflating the deviation of exactly those molecules. Both are repaired and tested, and
+`cmf build --low-rank --calibration`, which used to pass over the calibration without a word,
+reports it.
+
 ### The model as a component: reading it from another program
 
 A multiscale scheme needs the model inside somebody else's calculation, as the fast level between

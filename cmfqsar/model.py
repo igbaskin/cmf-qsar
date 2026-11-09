@@ -2160,11 +2160,7 @@ class CMFModel:
         lam = float(self.params.get("lam", 1.0) if lam is None else lam)
         self.params["lam"] = lam
         specs = [s for s in self.fieldset.specs if s.enabled]
-        if self.normalize or not self.scale_fields:
-            scale = np.ones(len(specs))
-        else:
-            d = np.asarray(self_kernels(train, specs), float)
-            scale = np.array([1.0 / m if m > 1e-300 else 0.0 for m in d.mean(axis=1)])
+        scale = self._low_rank_scale(train)
         self.scale = scale
         low = LR.build(landmarks, self.fieldset, scale=scale, normalize=self.normalize,
                        kind=kind)
@@ -2191,6 +2187,24 @@ class CMFModel:
                                             rank=int(low.rank))
         return self
 
+    def _low_rank_scale(self, train: AtomTable) -> np.ndarray:
+        """The per-field scale of the exact path, taken from the training set's self-kernels.
+
+        The exact fit divides every field by the mean of its training diagonal.  Under the cosine
+        normalisation that diagonal is 1 for a molecule whose field is not identically zero and
+        0 for one whose field is -- no donor, no acceptor, no charge -- so on a set that holds
+        such molecules the mean is below one and the scale above it.  The low-rank path used to
+        take one here, which made it another model on exactly those sets: plan item MS6 found
+        the difference (1 % of the joint kernel on the ACE set, with the molecules themselves as
+        the landmarks) and this is the repair.
+        """
+        specs = [s for s in self.fieldset.specs if s.enabled]
+        if not self.scale_fields:
+            return np.ones(len(specs))
+        d = np.asarray(self_kernels(train, specs), float)
+        diag = np.where(d > 1e-300, 1.0, 0.0) if self.normalize else d
+        return np.array([1.0 / m if m > 1e-300 else 0.0 for m in diag.mean(axis=1)])
+
     @property
     def is_low_rank(self) -> bool:
         """True when this model was fitted in the space of its landmarks."""
@@ -2202,13 +2216,14 @@ class CMFModel:
         return self.low_rank_.transform(test, block=block, progress=progress)
 
     def _low_rank_self(self, test: AtomTable) -> np.ndarray:
-        """The joint self-kernel of the molecules, which the variance keeps exact."""
-        specs = [s for s in self.fieldset.specs if s.enabled]
-        d = np.asarray(self_kernels(test, specs), float)
-        if self.normalize:
-            d = np.ones_like(d)
-        h = np.asarray(self.fieldset.mixing_vector(), float)[:len(specs)]
-        return (d.T * (h * np.asarray(self.scale, float)[:len(specs)])).sum(axis=1)
+        """The joint self-kernel of the molecules, which the variance keeps exact.
+
+        One definition, :meth:`cmfqsar.lowrank.LowRank.joint_self`.  It used to count every
+        field as one for every molecule under the normalisation; a field that is identically
+        zero for a molecule has a self-kernel of 0, as :meth:`joint_self` says, and the old value
+        inflated that molecule's variance by the field's whole share (plan item MS6).
+        """
+        return self.low_rank_.joint_self(test)
 
     def predict(self, test: AtomTable, return_fields: bool = False, progress=None, cancel=None):
         if self.is_low_rank:
@@ -2310,11 +2325,8 @@ class CMFModel:
         Plan item MS1.  It is kept on the model, because a library is predicted in blocks and the
         factorisation of the training kernel is the whole cost; a refit discards it.
         """
-        from .surrogate import Surrogate
+        from .surrogate import LowRankSurrogate, Surrogate
 
-        if self.is_low_rank:
-            raise ValueError("the predictive standard deviation needs the n by n training "
-                             "kernel, which a low-rank model was fitted to avoid")
         if not self.is_linear:
             raise ValueError(
                 f"the predictive standard deviation is implemented for the linear CMF kernel; "
@@ -2326,8 +2338,18 @@ class CMFModel:
             raise RuntimeError("model is not fitted")
         s = getattr(self, "_surrogate", None)
         if s is None:
-            s = Surrogate.fit(self._linear_train_kernel(), self.y,
-                              float(self.params.get("lam", 1.0)), self.fit_bias)
+            if self.is_low_rank:
+                # the same reading in the space of the landmarks (plan item MS6): the n by n
+                # kernel this model was fitted to avoid is never built
+                if getattr(self, "low_gram_", None) is None:
+                    raise RuntimeError(
+                        "this low-rank model carries no Gram of its training set, so its scale "
+                        "cannot be read; fit it again with fit_low_rank")
+                s = LowRankSurrogate.fit(self.low_gram_, float(self.params.get("lam", 1.0)),
+                                         self.fit_bias)
+            else:
+                s = Surrogate.fit(self._linear_train_kernel(), self.y,
+                                  float(self.params.get("lam", 1.0)), self.fit_bias)
             self._surrogate = s
         return s
 
@@ -2340,6 +2362,9 @@ class CMFModel:
         of a new measurement, which is what a tolerance on the answer should be compared with.
         """
         s = self.surrogate()
+        if self.is_low_rank:
+            return s.predict(self.low_rank_.transform(test), self._low_rank_self(test),
+                             with_noise=with_noise)
         return s.predict(self.test_kernel(test), self.joint_self(test), with_noise=with_noise)
 
     def calibration(self, folds: int = 10, seed: Optional[int] = 0):
@@ -2352,9 +2377,15 @@ class CMFModel:
         from .surrogate import Calibration, cross_validate
 
         self.surrogate()        # the same refusals
-        mean, sd = cross_validate(self._linear_train_kernel(), self.y,
-                                  float(self.params.get("lam", 1.0)), folds=folds, seed=seed,
-                                  fit_bias=self.fit_bias)
+        lam = float(self.params.get("lam", 1.0))
+        if self.is_low_rank:
+            from . import lowrank as LR
+            mean, sd, _which = LR.cross_validate(self.low_rank_, self.train, self.y, lam,
+                                                 folds=folds, seed=seed, fit_bias=self.fit_bias,
+                                                 with_sd=True)
+            return Calibration.of(self.y, mean, sd)
+        mean, sd = cross_validate(self._linear_train_kernel(), self.y, lam, folds=folds,
+                                  seed=seed, fit_bias=self.fit_bias)
         return Calibration.of(self.y, mean, sd)
 
     def rank_score(self, test: AtomTable, beta: float = 0.0,

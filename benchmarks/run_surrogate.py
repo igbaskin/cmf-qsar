@@ -24,10 +24,18 @@ Three questions, per split.
    it defers are reported; the rule works if the answered share's error is at or under the
    tolerance and the deferred share's error is above it.
 
+4. **Does the deviation survive the low-rank path?** (plan item MS6).  The same splits, the same
+   alpha and lambda, but the model fitted in the space of its landmarks (item B6), which never
+   builds the n by n kernel: once with the training molecules themselves as the landmarks, where
+   the kernel is reproduced exactly and every number must come back, and with half and a quarter
+   of them, where the model is an approximation and its deviation has to stay calibrated on its
+   own terms.  The gate is the root mean square of z within 0.1 of the exact path's.
+
 Usage
 -----
     python benchmarks/run_surrogate.py
     python benchmarks/run_surrogate.py --sets ACE GPB --repeats 3
+    python benchmarks/run_surrogate.py --low-rank          # item MS6, reading the stored splits
     python benchmarks/run_surrogate.py --report
 """
 from __future__ import annotations
@@ -139,7 +147,7 @@ def report(results=RESULTS):
     import glob
 
     files = sorted(f for f in glob.glob(os.path.join(results, "*.json"))
-                   if not os.path.basename(f).startswith("litraj"))
+                   if not os.path.basename(f).startswith(("litraj", "lowrank")))
     if not files:
         return "No surrogate results yet; run `python benchmarks/run_surrogate.py`."
     data = [json.load(open(f)) for f in files]
@@ -331,12 +339,159 @@ def report_hops(results: str = RESULTS) -> str:
     return "\n".join(lines)
 
 
+# --------------------------------------------------------------------------- #
+# The low-rank path (plan item MS6): the same reading without the n by n kernel
+# --------------------------------------------------------------------------- #
+LANDMARK_SHARES = (("molecules", 1.0), ("half", 0.5), ("quarter", 0.25))
+
+
+def run_lowrank(name, force=False, data=DATA, results=RESULTS):
+    """The deviation on the low-rank path, on the splits the exact arm stored.
+
+    The exact arm's file names the split (its seed), the attenuation and the ridge of every
+    repeat, so the low-rank fit is given exactly what the exact fit was given and the only thing
+    that differs is the path.  With the training molecules as the landmarks the two must agree
+    to round-off; with fewer landmarks the model is another model, and what is measured is
+    whether its deviation is still calibrated.
+    """
+    from cmfqsar import lowrank as LR
+    from cmfqsar.model import CMFModel
+    from cmfqsar.surrogate import tolerance_for_budget
+
+    os.makedirs(results, exist_ok=True)
+    out_path = os.path.join(results, f"lowrank_{name}.json")
+    if os.path.exists(out_path) and not force:
+        print(f"{name} (low rank): already done")
+        return json.load(open(out_path))
+    exact_path = os.path.join(results, f"{name}.json")
+    if not os.path.exists(exact_path):
+        raise SystemExit(f"{exact_path} is missing: run the exact arm first")
+    exact = json.load(open(exact_path))
+    t0 = time.time()
+    ds = load_dataset(os.path.join(data, f"{name}.sdf"))
+    y = np.asarray(ds.activity, float)
+    keep = np.isfinite(y)
+    mols = [m for m, k in zip(ds.mols, keep) if k]
+    names = [n for n, k in zip(ds.names, keep) if k]
+    y = y[keep]
+    n = len(y)
+    if n != exact["n"]:
+        raise SystemExit(f"{name}: {n} molecules now, {exact['n']} when the exact arm ran")
+    print(f"=== {name} (low rank): {n} molecules", flush=True)
+    rows = []
+    for row in exact["rows"]:
+        rep, alpha, lam = int(row["repeat"]), float(row["alpha"]), float(row["lam"])
+        rng = np.random.RandomState(rep)                       # the exact arm's split
+        order = rng.permutation(n)
+        n_te = max(5, int(round(0.3 * n)))
+        te, tr = np.sort(order[:n_te]), np.sort(order[n_te:])
+        fs = FieldSet.create(physchem=FIELDS, alpha=alpha, charge_model="file")
+        mf = [build_fields(m, fs, nm) for m, nm in zip(mols, names)]
+        train = AtomTable.from_molecules([mf[i] for i in tr])
+        test = AtomTable.from_molecules([mf[i] for i in te])
+        arms = {}
+        for label, share in LANDMARK_SHARES:
+            t1 = time.time()
+            if share >= 1.0:
+                Z = train
+            else:
+                Z, _rows = LR.landmark_molecules(train, max(5, int(round(share * len(tr)))),
+                                                 seed=rep)
+            model = CMFModel(fieldset=fs, method="krr", normalize=True)
+            model.fit_low_rank(train, y[tr], Z, lam=lam, kind="molecules", folds=10, seed=rep)
+            folds = model.calibration(folds=10, seed=rep)
+            pred, sd_te = model.predict_with_sd(test)
+            held = Calibration.of(y[te], pred, sd_te)
+            corrected = Calibration.of(y[te], pred, sd_te * folds.factor)
+            rmse_cv = float(model.stats.rmse_cv)
+            rule = Handoff.of(sd_te, rmse_cv, y=y[te], mean=pred)
+            budget = Handoff.of(sd_te, tolerance_for_budget(sd_te, BUDGET), y=y[te], mean=pred)
+            arms[label] = {"landmarks": int(Z.n_mol), "rank": int(model.low_rank_.rank),
+                           "r2": float(r2_score(y[te], pred)), "rmse_cv": rmse_cv,
+                           "noise_sd": float(model.surrogate().noise_sd),
+                           "folds": dict(vars(folds)), "test": dict(vars(held)),
+                           "corrected": dict(vars(corrected)), "rule": dict(vars(rule)),
+                           "budget": dict(vars(budget)), "seconds": time.time() - t1}
+            print(f"  split {rep} {label:9s} rank {model.low_rank_.rank:4d}: test RMSE "
+                  f"{held.rmse:.3f}  z rms folds {folds.z_rms:.2f} (exact "
+                  f"{row['folds']['z_rms']:.2f})  test {held.z_rms:.2f} (exact "
+                  f"{row['test']['z_rms']:.2f})", flush=True)
+        rows.append({"repeat": rep, "alpha": alpha, "lam": lam, "n_train": int(len(tr)),
+                     "n_test": int(len(te)),
+                     "exact": {"folds": row["folds"], "test": row["test"],
+                               "corrected": row["corrected"], "r2": row["r2"],
+                               "noise_sd": row["noise_sd"], "rmse_cv": row["rmse_cv"]},
+                     "arms": arms})
+    out = {"set": name, "n": n, "repeats": len(rows), "budget": BUDGET,
+           "shares": [list(s) for s in LANDMARK_SHARES], "rows": rows,
+           "seconds": time.time() - t0}
+    json.dump(out, open(out_path, "w"), indent=1)
+    print(f"  {time.time() - t0:.0f} s")
+    return out
+
+
+def report_lowrank(results=RESULTS) -> str:
+    import glob
+
+    files = sorted(glob.glob(os.path.join(results, "lowrank_*.json")))
+    if not files:
+        return ""
+    data = [json.load(open(f)) for f in files]
+    data.sort(key=lambda d: -d["n"])
+    labels = [s[0] for s in data[0]["shares"]]
+    lines = ["", "## The same deviation on the low-rank path (plan item MS6)", "",
+             "The same splits, the same attenuation and ridge as the table above, with the model "
+             "fitted in the space of its landmarks instead of the molecules (plan item B6), so the "
+             "n by n kernel is never built and the scale of the deviation is read from the m by m "
+             "Gram through the Woodbury identity. *molecules* takes every training molecule as a "
+             "landmark, which reproduces the exact kernel; *half* and *quarter* take that share "
+             "of them, drawn at random. z rms as above; the exact path's value is repeated for "
+             "the comparison, and the last columns are the largest difference from it over the "
+             "splits.", "",
+             "| set | n | landmarks | rank | z rms, folds | exact | z rms, test | exact | "
+             "inside 2 sd | largest difference, folds | largest difference, test |",
+             "|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    worst = {lab: [0.0, 0.0] for lab in labels}
+    for d in data:
+        for lab in labels:
+            zf = np.mean([r["arms"][lab]["folds"]["z_rms"] for r in d["rows"]])
+            zt = np.mean([r["arms"][lab]["test"]["z_rms"] for r in d["rows"]])
+            ef = np.mean([r["exact"]["folds"]["z_rms"] for r in d["rows"]])
+            et = np.mean([r["exact"]["test"]["z_rms"] for r in d["rows"]])
+            c2 = np.mean([r["arms"][lab]["test"]["coverage_2sd"] for r in d["rows"]])
+            df = max(abs(r["arms"][lab]["folds"]["z_rms"] - r["exact"]["folds"]["z_rms"])
+                     for r in d["rows"])
+            dt = max(abs(r["arms"][lab]["test"]["z_rms"] - r["exact"]["test"]["z_rms"])
+                     for r in d["rows"])
+            rank = int(np.mean([r["arms"][lab]["rank"] for r in d["rows"]]))
+            worst[lab][0] = max(worst[lab][0], df)
+            worst[lab][1] = max(worst[lab][1], dt)
+            lines.append(f"| {d['set']} | {d['n']} | {lab} | {rank} | {zf:.2f} | {ef:.2f} | "
+                         f"{zt:.2f} | {et:.2f} | {c2:.0%} | {df:.1e} | {dt:.1e} |")
+    lines += ["", "The gate of item MS6 is a root mean square of z within 0.1 of the exact "
+              "path's. Over every set and split, the largest difference is "
+              + "; ".join(f"{worst[lab][0]:.1e} on the folds and {worst[lab][1]:.1e} on the "
+                          f"test with the {lab}" for lab in labels)
+              + ". With the molecules as landmarks the difference is round-off, because the "
+              "kernel is the same matrix computed another way; with fewer landmarks the model "
+              "is another model, and the difference is what the approximation does to the "
+              "calibration of its own deviation. Its direction is the same everywhere: z rms "
+              "falls below one, so the deviation is larger than the error. That is the term "
+              "which keeps the variance from falling to zero where the landmarks span nothing "
+              "-- the exact self-kernel less the part the landmarks reproduce -- being "
+              "conservative by construction, and the largest single-split differences come "
+              "from the smallest sets, where a quarter of the molecules is a dozen landmarks."]
+    return "\n".join(lines)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--sets", nargs="*", default=list(SETS))
     ap.add_argument("--repeats", type=int, default=5)
     ap.add_argument("--hops", action="store_true",
                     help="the LiTraj hop sample instead of the Sutherland sets")
+    ap.add_argument("--low-rank", action="store_true",
+                    help="the low-rank path on the stored splits of the Sutherland sets (item MS6)")
     ap.add_argument("--max-structures", type=int, default=0,
                     help="with --hops, a quick look on this many structures, under its own file")
     ap.add_argument("--force", action="store_true")
@@ -344,10 +499,13 @@ def main():
     args = ap.parse_args()
     if args.hops and not args.report:
         run_hops(max_structures=args.max_structures, force=args.force)
+    elif args.low_rank and not args.report:
+        for name in args.sets:
+            run_lowrank(name, force=args.force)
     elif not args.report:
         for name in args.sets:
             run_set(name, repeats=args.repeats, force=args.force)
-    text = report() + "\n" + report_hops()
+    text = report() + "\n" + report_hops() + "\n" + report_lowrank()
     os.makedirs(RESULTS, exist_ok=True)
     with open(os.path.join(RESULTS, "table.md"), "w", encoding="utf-8") as fh:
         fh.write(text + "\n")
