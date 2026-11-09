@@ -6333,6 +6333,43 @@ would discard the typed fields and the global kernel that are the method's own.
   and the site map of MS2 written as a table a kinetic Monte Carlo or phase-field code reads.
   *Gate:* the hop simulation of BT7 reads the model through the wrapper and gives the numbers the
   benchmark stores.
+  Built and measured 9 November 2026. `cmfqsar/interfaces.py` holds the three ways in.
+  `CMFCalculator` is an ASE calculator: the prediction as the energy, minus the analytic gradient
+  of MS3 as the forces, and a `sign` that turns the objective round, because an ASE optimiser
+  minimises while a design loop wants the prediction raised. It reports `energies only`, and names
+  the kernel and the reason, for a model MS3 does not differentiate. `HopBarriers` takes a
+  structure, enumerates the symmetry-distinct paths of the mobile ion, builds each environment the
+  way the training set was built and returns a `BarrierTable` -- each path's end sites, length,
+  midpoint, how many paths it stands for, its predicted barrier, `write_table` and `percolation()`
+  -- with `hopset=` for a caller that already has the network. `write_cofield_cube` writes the
+  co-field as a cube file, and for a model on one lattice the cube is one cell with the lattice
+  vectors as its own axes, which the earlier export could not do (it needed a cubic cell);
+  `cmf cofield --cell STRUCTURE` is that on the command line. The site map of MS2 needed no new
+  interface and is re-exported from this module so that one import gives every way out. Measured
+  by `benchmarks/run_hops.py --interfaces` (`benchmarks/results/hops/interfaces.json`), checked by
+  the 18 tests of `tests/test_interfaces.py`, written up in the manual under *Reading the model
+  from another program*.
+  *The gate is met.* The public hop model was rebuilt at its stored width and ridge and read
+  twice: by the route the benchmark script uses, and through `HopBarriers`, which is handed a
+  structure and builds the environments itself. On the three hosts of the lithium interface study,
+  which that model has never seen, the two routes agree to 1.2e-11 eV over
+  48 distinct paths; the two barriers the stored table lists against a DFT
+  elastic-band calculation come back as stored (both to every digit the stored table keeps); and the percolation thresholds
+  of the three hosts, which is what a conductivity estimate starts from, come back as well. The
+  interface is a way in and not another model, which is the only property a component of somebody
+  else's calculation has to have. It is not faster: both routes pay for the same environments and
+  the same kernel against the training set, and the interface pays a little more because it works
+  one structure at a time.
+  *What writing it found.* The periodic **overlap** kernel had no refusal in the gradient of MS3,
+  because those refusals are written per kernel source and this kernel carries the ordinary one.
+  It evaluates the overlap against an image-expanded table, so moving one atom moves every image
+  of it and the derivative gains a term over the images. `cmfqsar/gradients.py` now refuses it by
+  name, with the reason, instead of answering with a number nobody has checked.
+  *Open:* the ASE calculator has no stress, since the derivative with respect to the cell is one
+  of the gradients MS3 left out; a `HopModel` is not written to a file, so the barrier interface
+  takes a model fitted in the same session rather than a saved one, which a command line of its
+  own would need; and the site map of a surface patch waits for the surface split of MS2. MS8 can
+  now read the chain through one interface.
 
 * **MS8. One end-to-end chain with its error carried through.** DFT barriers, the model with its
   deviation, the hop simulation, the measured conductivity, and a statement of how the deviation of
@@ -6340,9 +6377,10 @@ would discard the typed fields and the global kernel that are the method's own.
   conductivity with an interval, against the measured one of at least three of the disordered
   conductors of M2.
 
-**Order.** MS1, MS2 and MS3 are done. MS7 next, because it is what makes them usable: MS3 gives it
-forces and MS2 gives it the site map to write. MS4 after M6 is revisited; MS5 and MS6 as their data
-arrive; MS8 last, since it needs all of the others.
+**Order.** MS1, MS2, MS3 and MS7 are done, which is the usable half of this part: a deviation in
+the units of the activity, a map, a gradient and the interfaces that carry all three out. MS4 after
+M6 is revisited; MS5 and MS6 as their data arrive -- MS6 is the one MS1 names as its own open end,
+the low-rank variance without a scale; MS8 last, since it needs all of the others.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
@@ -6854,10 +6892,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 0 | ND1 to ND14c |
-| H. Multiscale modelling | 8 | 3 | MS4, MS5, MS6, MS7, MS8 |
+| H. Multiscale modelling | 8 | 4 | MS4, MS5, MS6, MS8 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**158 items: 109 finished, 4 partly, 45 open.**
+**158 items: 110 finished, 4 partly, 44 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

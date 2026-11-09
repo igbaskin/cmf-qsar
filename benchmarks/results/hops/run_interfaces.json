@@ -1,0 +1,27 @@
+{
+ "argv": [
+  "--interfaces",
+  "--jobs",
+  "8"
+ ],
+ "tag": "",
+ "prepared": "benchmarks/results/hops/prepared_mp.json",
+ "max_structures": 0,
+ "max_per_structure": 6,
+ "rho": [
+  0.05,
+  0.1,
+  0.25
+ ],
+ "r_max": 6.0,
+ "folds": 10,
+ "site_r": [
+  4.0,
+  6.0,
+  8.0
+ ],
+ "seed": 0,
+ "bootstrap": 1000,
+ "written": "2026-11-09 15:57:18",
+ "minutes": 16.5
+}

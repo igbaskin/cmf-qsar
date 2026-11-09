@@ -207,3 +207,37 @@ The DFT barriers are plain elastic-band values for a vacancy hop into a relaxed 
 | Li3.16Zn0.24GeO4 (COD 1529523) | Li sites 0.06 to 0.92, Li/Zn shared | 760 | 98 | 0.29 | +0.50 | -- | -- | -- |
 
 The bond-valence landscape of a disordered structure is that of its ordered framework (the sites not held by Li, each with its majority species); the fields see every site at its occupancy. A threshold of inf means the hops between 1.5 and 4.5 A do not connect through the cell in that many directions.
+
+
+## The model read through the interfaces (plan item MS7)
+
+The public model, rebuilt at the stored width (rho 0.25) and ridge (0.01) on 1732 paths, is read twice: by the route this script uses -- environments built here and handed to the model -- and through `cmfqsar.interfaces.HopBarriers`, which is given a structure and builds the environments itself. The structures are the three hosts of the lithium interface study, which the public model has never seen.
+
+**The two routes give the same barriers.** The interface is a way in, not another model:
+
+| Paths of the hosts | Distinct by symmetry | Compared by both routes | Largest difference |
+| ---: | ---: | ---: | ---: |
+| 1040 | 48 | 48 | 1.2e-11 eV |
+
+**The stored numbers come back.** The two paths the benchmark lists against a DFT elastic-band barrier, as the stored table has them and as the interface gives them:
+
+| Host | Path | Stored | Through the interface | Difference |
+| --- | --- | ---: | ---: | ---: |
+| phosphate | 34 -> 0 | 0.7979 | 0.7979 | +0.0e+00 |
+| borophosphate | 18 -> 8 | 0.5610 | 0.5610 | +0.0e+00 |
+
+In eV.
+
+Both of these paths are equivalent by symmetry to another one of their cell, so the network a simulation reads carries their group's barrier rather than their own; the two differ by up to 0.00 eV, which is the error of the symmetry grouping and not of the interface. A caller who wants one particular jump asks for that path by name, which is what the column above reports.
+
+**And so do the percolation thresholds**, which is what a conductivity estimate starts from: the lowest barrier at which the paths form a connected network in one, two and three dimensions, by this script's route and through the interface.
+
+| Host | E_1D | E_2D | E_3D |
+| --- | --- | --- | --- |
+| phosphate | 0.403 / 0.403 | 0.452 / 0.452 | 0.798 / 0.798 |
+| borophosphate | 0.528 / 0.528 | 0.654 / 0.654 | 1.571 / 1.571 |
+| borate | 0.281 / 0.281 | 0.437 / 0.437 | none / none |
+
+In eV above the lowest site, by this script's route / through the interface.
+
+The interface took 106 s on these paths against 113 s for the route inside this script. Both pay for the same two things, the environments and the kernel against the training set; the difference is that the interface works one structure at a time, so it evaluates the kernel in three blocks instead of one.

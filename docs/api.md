@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 116 modules, 227 classes with 753 public methods, and 1147 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 117 modules, 230 classes with 767 public methods, and 1148 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -81,6 +81,7 @@ for.
 | [cmfqsar.gtm](#cmfqsargtm) | Chemical space and activity landscapes from CMF kernels: kernel PCA + Generative Topographic Mapping. |
 | [cmfqsar.hops](#cmfqsarhops) | A migration path as the sample: the environment of a hop, its frame and its labels (BT7). |
 | [cmfqsar.increments](#cmfqsarincrements) | Atomic increments of the original CMF implementation (Baskin & Zhokhova 2013). |
+| [cmfqsar.interfaces](#cmfqsarinterfaces) | Reading a fitted model from another program (plan item MS7). |
 | [cmfqsar.invariant](#cmfqsarinvariant) | Alignment-free but geometry-aware kernels: autocorrelation of the molecular fields. |
 | [cmfqsar.kcca](#cmfqsarkcca) | Kernel canonical correlation analysis: what one view of the molecules sees that another does not (plan item F6). |
 | [cmfqsar.kernels](#cmfqsarkernels) | Molecular-field kernels. |
@@ -6264,9 +6265,11 @@ gradient moves a conformation and not a pose (plan item MS3).
 The other invariant kernels -- the surface autocorrelation with its heights, the periodic one
 with its images and background, the reciprocal-space structure factors and the three-body
 channels -- are refused, because each builds its channels differently and needs a derivative of
-its own.  So are the one-class and data-fusion scores, whose decision is not a sum over the
-training molecules.  Every case that is not covered is refused with a reason rather than
-approximated.
+its own.  So is the periodic *overlap* kernel: it is this same overlap taken against an
+image-expanded table, so moving one atom moves every image of it, and that term is not here
+(found while writing the ASE calculator of plan item MS7).  So are the one-class and data-fusion
+scores, whose decision is not a sum over the training molecules.  Every case that is not covered
+is refused with a reason rather than approximated.
 
 Checked against finite differences
 ----------------------------------
@@ -6987,6 +6990,160 @@ Increments of one atom of Sybyl type `syb` carrying `n_h` hydrogen atoms.
 Returns a dict with keys `hydrophobic` (logP increment), `hbd`
 (Abraham A, hydrogen-bond donor), `hba` (Abraham B, acceptor),
 `abraham_e` and `abraham_s`.
+
+## cmfqsar.interfaces
+
+Source: `cmfqsar/interfaces.py`
+
+Reading a fitted model from another program (plan item MS7).
+
+A multiscale scheme needs the model as a component, not as a report. Three interfaces are what
+the other programs ask for, and this module holds them.
+
+**An ASE calculator.** `CMFCalculator` answers an `ase.Atoms` object with the
+model's prediction as its energy and, where the kernel has an analytic gradient (plan item MS3),
+the negative gradient as its forces. Anything that drives atoms through the ASE interface -- a
+relaxation, a molecular-dynamics run, a nudged elastic band -- can then drive them with a fitted
+model. The prediction is an activity and not an energy, so what the calculator means by "energy"
+is said plainly below and controlled by one argument.
+
+**A barrier per migration path.** `HopBarriers` is the interface the hop model of plan item
+BT7 is read through: a periodic structure goes in, and out comes one predicted barrier per
+symmetry-distinct migration path of the mobile ion, with the path's two end sites and its length,
+in a table a kinetic Monte Carlo or a percolation analysis reads. The model is the fast level of
+the hierarchy and this is the form the coarse level consumes.
+
+**A field on a grid.** `write_cofield_cube` writes the co-field of a fitted model as a
+Gaussian cube file, which is what a visualiser or a grid-based code reads. For a model on one
+lattice (plan item M4) the cube is the cell itself, with the lattice vectors in its header, so
+the file is a periodic field and not a box cut out of one.
+
+The map of plan item MS2 needs no new interface: `cmfqsar.sitemap.write_maps` already writes
+one row per place. It is re-exported here so that one import gives every way out of a model.
+
+### `class CMFCalculator(model, sign: float=1.0, name: str='structure', forces: bool=True, label: Optional[str]=None)`
+
+A fitted model as an ASE calculator: the prediction as the energy (plan item MS7).
+
+What the calculator calls the energy is `sign` times the model's prediction, in the units of
+the activity and not in eV. With the default `sign=+1` an ASE optimiser, which minimises,
+moves the structure towards a *lower* prediction; `sign=-1` makes it move towards a higher
+one, which is the direction a design loop wants. Nothing here converts units, because a
+predicted activity has no energy scale: a relaxation under this calculator is a relaxation of
+the prediction, and the step sizes of the optimiser have to be chosen for it.
+
+Forces are `-sign` times the gradient of the prediction with respect to the atom positions,
+from `cmfqsar.gradients.prediction_gradient`. They exist for the kernels item MS3
+differentiates -- the overlap integral and the rotation-invariant autocorrelation -- and the
+others raise with the reason rather than returning zeros. A model with no gradient is still
+usable for energies alone, which is what a single-point screen needs.
+
+The gradient knows nothing about valence, as item MS3 measured: following it alone pulls bonds
+out of shape. This calculator is a term to add to a force field, not a force field.
+
+#### `CMFCalculator.get_potential_energy(atoms=None, force_consistent: bool=False) -> float`
+
+#### `CMFCalculator.get_potential_energies(atoms=None)`
+
+#### `CMFCalculator.get_forces(atoms=None) -> np.ndarray`
+
+#### `CMFCalculator.get_stress(atoms=None)`
+
+#### `CMFCalculator.get_property(name: str, atoms=None, allow_calculation: bool=True)`
+
+#### `CMFCalculator.calculate(atoms=None, properties=('energy',), system_changes=None)`
+
+The entry ASE's own machinery calls; it fills `results`.
+
+#### `CMFCalculator.check_state(atoms, tol: float=1e-15)`
+
+Nothing is cached between structures, so every call is a fresh calculation.
+
+#### `CMFCalculator.reset()`
+
+### `class BarrierTable  (dataclass)`
+
+One predicted barrier per symmetry-distinct migration path of one structure.
+
+`rows` holds a dictionary per path: the two end sites, the length in angstrom, the midpoint,
+how many paths of the structure that one stands for, and the predicted barrier in the units
+the model was fitted on. `hopset` is the path network itself, which the percolation step and
+a kinetic Monte Carlo both need, and `barriers` maps every path of the structure -- not only
+the distinct ones -- to its barrier, which is what those steps read.
+
+Attributes:
+
+- `name: str`
+- `rows: List[Dict[str, object]]`
+- `barriers: Dict[int, float]`
+- `hopset: object` = `None`
+- `units: str` = `''`
+- `structure: int` = `0`
+
+#### `BarrierTable.values` -> np.ndarray  (property)
+
+#### `BarrierTable.write_table(path: str) -> str`
+
+Write the table as CSV, one row per path. Returns the path.
+
+#### `BarrierTable.percolation(levels: Sequence[float]=()) -> Dict[str, float]`
+
+The percolation thresholds of this structure under the predicted barriers.
+
+The lowest barrier at which the paths form a connected network in one, two and three
+dimensions, which is the number a conductivity estimate starts from
+(`cmfqsar.hops.structure_percolation`).
+
+### `class HopBarriers(model, fieldset=None, rho: Optional[float]=None, r_max: Optional[float]=None, mobile: str='Li', d_min: Optional[float]=None, d_max: Optional[float]=None, units: str='eV', annotate_r_max: Optional[float]=None)`
+
+A fitted hop model read as a barrier per migration path (plan items BT7 and MS7).
+
+The model is a `cmfqsar.hops.HopModel`, fitted on the environments of migration paths
+in their own frames. This interface takes the structure instead of the environments: it
+enumerates the symmetry-distinct paths of the mobile ion, builds each environment the way the
+training set was built, and predicts.
+
+The settings have to be the ones the model was fitted with -- the envelope width `rho`, the
+reach `r_max`, the mobile element and the path length limits -- because an environment built
+differently is a different descriptor. They are arguments and not guesses, and a model file
+that records them should be read for them.
+
+#### `HopBarriers.hopset(atoms, name: str='')`
+
+The path network of one structure, with its paths reduced by symmetry.
+
+`cmfqsar.hops.HopSet.annotate` is what finds the bottleneck of every path and which
+paths are equivalent, and it is run here, because a path that stands for others has to
+carry their barrier in the network a simulation reads.
+
+#### `HopBarriers.table(atoms=None, name: str='', progress=None, hopset=None, structure: int=0, paths: Optional[Sequence[int]]=None) -> BarrierTable`
+
+The predicted barrier of every symmetry-distinct path of one structure.
+
+`hopset` is for a caller that already has the path network: it is taken as it is,
+`structure` says which of its structures to report, and only the environments and the
+prediction are done here. Nothing in the network is changed. Without it the network is
+built from `atoms`.
+
+`paths` asks for named paths of the network instead of the distinct ones, which is what a
+caller who wants one particular jump needs. Each is then predicted from its own
+environment, and nothing is filled in from a representative.
+
+#### `HopBarriers.percolation(atoms=None, name: str='', hopset=None, structure: int=0) -> Dict[str, float]`
+
+The percolation thresholds of one structure under the predicted barriers.
+
+### `write_cofield_cube(model, path: str, field: int=0, spacing: float=0.4, margin: float=3.0, structure=None, name: str='') -> str`
+
+Write the co-field of a fitted model as a Gaussian cube file. Returns the path.
+
+For a model on the overlap kernel the cube covers the training set's own frame, padded by
+`margin`; for a model on one lattice (`pbc_overlap=True`) it covers one cell of
+`structure`, with the lattice vectors as the cube's axes, so the file is the periodic field
+itself. `spacing` is the grid step in angstrom.
+
+The rotation-invariant kernels have no co-field at all -- their channels know no place -- and
+are refused rather than drawn, as the manual says of them.
 
 ## cmfqsar.invariant
 

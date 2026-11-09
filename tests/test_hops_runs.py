@@ -46,6 +46,8 @@ def files_of(argv):
     tag = rh.run_tag(a)
     if a.fine_profile:
         return {f"profile_fine{tag}.json", f"run_fine_profile{tag}.json"}
+    if a.interfaces:
+        return {f"interfaces{tag}.json", f"run_interfaces{tag}.json"}
     return {f"public{tag}.json", f"hosts{tag}.json", f"disordered{tag}.json",
             f"log{tag}.txt", f"table{tag}.md", f"run{tag}.json"}
 

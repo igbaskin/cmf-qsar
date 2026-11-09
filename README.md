@@ -2489,6 +2489,51 @@ answer different questions -- the prediction moves a molecule towards the traini
 are active, confidence towards the training set as a whole -- so a pose meant for predicting from
 is still the confidence one, which uses no activity value of the molecule being placed.
 
+### The model as a component: reading it from another program
+
+A multiscale scheme needs the model inside somebody else's calculation, as the fast level between
+an electronic-structure method and a coarse model. [interfaces.py](cmfqsar/interfaces.py) (plan
+item MS7) is the three ways in that other programs ask for. None of them is a new model.
+
+**An ASE calculator.** `CMFCalculator(model, sign=-1.0)` answers an `ase.Atoms` object with the
+prediction as its energy and minus the analytic gradient as its forces, so anything that drives
+atoms through the ASE interface -- a relaxation, a molecular-dynamics run, a nudged elastic band --
+can drive them with a fitted model. `sign` picks the direction, because an ASE optimiser minimises
+and a design loop wants the prediction raised. What the calculator calls the energy is in the units
+of the activity and not in eV; nothing converts, because a predicted activity has no energy scale.
+Forces exist for the two kernels the gradient covers and the calculator reports `energies only`
+for the rest, naming the kernel and the reason instead of returning zeros. Writing it found a real
+gap: the periodic **overlap** kernel evaluates the ordinary overlap against an image-expanded
+table, so moving one atom moves every image of it, and that term is not in the derivative. It was
+not refused before, because the refusals are written per kernel source and this kernel carries the
+ordinary one. It is refused now.
+
+**A barrier per migration path.** `HopBarriers` takes a structure, enumerates the
+symmetry-distinct paths of the mobile ion, builds each environment the way the training set was
+built, and returns a table: each path's end sites, length, midpoint, how many paths it stands for,
+and its predicted barrier, with `percolation()` for the thresholds a conductivity estimate starts
+from. The envelope width, the reach, the mobile element and the length limits are arguments, not
+guesses, because an environment built differently is a different descriptor.
+
+**A field on a grid.** `write_cofield_cube` writes the co-field as a Gaussian cube file. For a
+molecular model that is the export the command line already had; what is new is the periodic case,
+where the cube is one cell with the **lattice vectors as its own axes**, so the file is the
+periodic field itself rather than a box cut out of one. The earlier export could only write a cubic
+cell. On the command line: `cmf cofield MODEL --cell STRUCTURE`.
+
+**Measured** as a reproduction, which is what an interface has to pass
+(`benchmarks/run_hops.py --interfaces`). The public hop model is rebuilt at its stored width and
+ridge and read twice: by the route the benchmark script uses, and through `HopBarriers`, which is
+handed a structure. On the three hosts of the lithium interface study, which that model has never
+seen, the two routes agree to **1.2e-11 eV** over all 48 distinct paths; the two barriers the
+stored table lists against a DFT elastic-band calculation come back exactly, to every digit that
+table keeps (0.7979 and 0.5610 eV); and the percolation thresholds -- the lowest barrier at which
+the paths connect in one, two and three dimensions -- come back as well, on all three hosts and
+including the direction in which the borate does not connect at all. What this does not buy is
+speed: both routes pay for the same environments and the same kernel against the training set, 106
+seconds against 113. What it buys is that the number a coarse model reads through the interface is
+the number this program measured.
+
 ### A macrocyclic host as a pocket
 
 `complement` read proteins. A cyclodextrin is a pocket too, and arrives as a molecule file with no
