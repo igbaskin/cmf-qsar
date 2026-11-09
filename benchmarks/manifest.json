@@ -1,6 +1,6 @@
 {
- "commit": "d5a2511ab773416d918fb7c589e0d29699a06bd0",
- "created": "2026-11-09T14:44:06",
+ "commit": "242e6f81f27100d8547f2358554d7a64543ed75b",
+ "created": "2026-11-09T16:01:10",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2622,13 +2622,15 @@
   "benchmarks/results/hammett/table.md": "fa86f57fa0bf4e12b21459b3e961288423b15aaf4a84c25c0bd12e1f562b8ec7",
   "benchmarks/results/hops/disordered.json": "8b8df9ad20728973155af7bf4310b53917c60fc89914ba1c62c54c98b6439e34",
   "benchmarks/results/hops/hosts.json": "77d125542536face68a0befc02cda7db386fb9f096d9f5973fbc7e71d5317e51",
+  "benchmarks/results/hops/interfaces.json": "5444596ac487dbcab20c0febc64e9e6e2435af7304537a08a308db543f41094a",
   "benchmarks/results/hops/log.txt": "86332e2ec91f69109ce0564557041c9c7d9bd7c48e6be062d508d060d54ea809",
   "benchmarks/results/hops/prepared_mp.json": "f23ea0151086fe27a466e6cf91dde25268af0a7810d4135d60621ea553ec4fe1",
   "benchmarks/results/hops/profile_fine.json": "35a0b58f0aaec36e6722c491b6b277cc33a97dad7360f9ba5a312f3d11b659e3",
   "benchmarks/results/hops/public.json": "c51b10d5065bfb6a1f91d085ec25e180a2c4fe9b0336887a22b1d23344bd7c24",
   "benchmarks/results/hops/run.json": "0c3441c6228751684ac76055b007220e918940699624c08f2d123a2786fd844e",
   "benchmarks/results/hops/run_fine_profile.json": "67e975f3fefa435a52bdcd8dd6fd42aa5d1263db7651b34b5bc5f6322e8d88a0",
-  "benchmarks/results/hops/table.md": "1194b19bd5050cd219703cca759e52bf0b7791308dc8a55c36dd2c358d36d3dd",
+  "benchmarks/results/hops/run_interfaces.json": "0e2b8219e9c4bb172dec5c5890fb40918ad415768201e97b71b09ee4a032a355",
+  "benchmarks/results/hops/table.md": "1fd25cd37708a4fb3d20dba5df7228490fc4aa9c436790fa0e881d63bd3605a8",
   "benchmarks/results/host_pocket/alpha.json": "aa274d74acb8c04db6808adefb611328f69fb477564c64fc12c736e5a8756cad",
   "benchmarks/results/host_pocket/beta.json": "f7b76adb515241408fe237ad95507b09071d6dbd1cc786455ef1484cc4a2d1cb",
   "benchmarks/results/host_pocket/gamma.json": "b0a3b62310603e04566a59c4fa55060ae30acff0e81189fdf6c60d02b5706a38",
