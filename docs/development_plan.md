@@ -6574,11 +6574,84 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   molecule first among the series in most cases, where a composition descriptor cannot tell the
   isomers of the series apart at all.
 
+* **SP4. Multi-way spectra as two- and three-dimensional fields.** A 1H–13C HSQC spectrum, an
+  LC-MS or GC×GC map and an excitation-emission fluorescence matrix are peak lists in two
+  dimensions, and a GC×GC-MS run is one in three. They are fields in the literal sense, and the
+  standard tools (PARAFAC, multivariate curve resolution) need them as dense arrays and assume
+  that the array factorises along its axes. The kernel of two peak lists is closed form over the
+  peaks and costs nothing for the grid: Σ a_i b_j exp(−Δx² / 4σ_x² − Δy² / 4σ_y²), with one width
+  per axis, as the height channels of the surface kernel (`SurfaceSpec` in `cmfqsar/invariant.py`)
+  already separate one direction from the others. The reader of SP1 gains a second and a third
+  axis, the co-field solver returns a map over the two axes (for an HSQC spectrum, a map over the
+  cross-peaks, each of which is one CH pair, so the map reads directly as an assignment), the
+  kernel Fisher discriminant of `cmfqsar/model.py` and the one-class scores of
+  `cmfqsar/oneclass.py` give the classification and the authentication case, and the difference of
+  co-fields of `cmfqsar/multitask.py` says which region separates two classes rather than one class
+  from the rest. Replicate spectra of one sample enter as an ensemble. *Data:* a public metabolomics
+  study with class labels and either NMR or LC-MS raw data (MetaboLights at EMBL-EBI holds such
+  studies under open licences; the first candidates are the studies the metabolomics papers use as
+  benchmarks), and for fluorescence the demonstration data of the drEEM toolbox, which is the
+  reference PARAFAC data set; both to be checked and written up in
+  `docs/public_3dqsar_datasets.md` before anything is fitted. *Reference under rule 1:* PLS
+  discriminant analysis on the binned grid, which is what the metabolomics literature reports, on
+  the same folds. *Gate:* the kernel correlation first; then the classifier on the peak-list kernel
+  matches or beats the binned PLS-DA within the interval (rule 4) at a cost independent of the bin
+  size, and the co-map names the cross-peaks the study's own paper names as its markers.
+* **SP5. Resolution mismatch and calibration transfer.** Two Gaussians of widths σ_1 and σ_2
+  overlap in closed form with the combined width σ_1² + σ_2², so a spectrum from one instrument and
+  a spectrum from another compare with each carrying its own width, and a model fitted on one
+  instrument reads the other's spectra without transfer standards for the resolution part. This is
+  the second finding of M12 used on purpose: a sharper curve is broadened to the coarser instrument
+  by the kernel itself. The reader of SP1 takes a width per spectrum, or per instrument, and the
+  co-spectrum is reported at the coarser width, which is the only one at which both instruments
+  carry information. What the width does not absorb is a wavelength shift between instruments and a
+  baseline; the shift is the alignment problem of part C in one dimension (a rigid shift and a
+  stretch, fitted on the standards the chemometric methods use, or the one-dimensional
+  autocorrelation kernel of SP1 when no standard is available), and the baseline is the background
+  subtraction the periodic kernel already has. *Data:* the two public calibration-transfer sets
+  every method in the literature is measured on, both near-infrared: the corn set (80 samples on
+  three instruments, with moisture, oil, protein and starch) and the pharmaceutical tablet set of
+  the 2002 shoot-out (655 tablets on two instruments, with the content of the active ingredient).
+  Both are broad-band spectra, where the plan expects the field to add little to PLS on one
+  instrument, so the comparison is not accuracy on one instrument but the loss when the model
+  crosses to the other. *Reference under rule 1:* PLS fitted on instrument A and applied to
+  instrument B with and without piecewise direct standardisation, the standard transfer method,
+  on the same samples. *Gate:* the kernel with per-instrument widths and the shift fitted loses
+  less on the crossing than PLS without standardisation by more than the interval, and comes within
+  the interval of PLS with standardisation while using no transfer standards. If the loss on the
+  crossing is a wavelength shift and not a resolution difference, which the corn set may show,
+  the item reports that and its gate moves to a pair of instruments that differ in resolution
+  (Raman at two gratings, or powder diffraction on two diffractometers, where RRUFF holds several
+  spectra of one mineral).
+* **SP6. Mixtures and quantification.** Beer–Lambert linearity says that the spectrum of a mixture
+  is the sum of the component spectra weighted by their concentrations, so the field of a mixture is
+  the weighted sum of the component fields and the identity MS5 rests on applies exactly: the kernel
+  of two mixtures is the concentration-weighted sum of the pairwise component kernels, which is
+  `combine_members` of `cmfqsar/fields.py` with the concentrations as the weights. A concentration
+  is then linear in the field, and the co-spectrum is the regression vector, read against the
+  component spectra; band broadening with concentration, matrix effects and saturation enter through
+  the nonlinear layer, with Shapley values in place of the co-spectrum under rule 2. One point of
+  care: the cosine form divides the total amount out, so it serves fractions and compositions, and
+  the raw kernel serves absolute amounts; the item reports both and says which the property asked
+  for. Two halves. *(a) Computed, no new data.* Mixture spectra are synthesised from the computed
+  spectra of the series of SP2 with known weights, with noise and a baseline added, and the model
+  has to recover the weights; this tests the identity and the reader before any measured mixture is
+  touched. *(b) Measured.* The tablet set of SP5 (the content of the active ingredient in a matrix
+  of excipients) and, if found, a public mid-infrared or Raman set of ternary mixtures with known
+  compositions. *Reference under rule 1:* PLS on the grid, the method quantification is done with
+  in practice. *Gate:* in (a) the weights are recovered to within the noise; in (b) the model is
+  within the interval of PLS on the linear case, which is the expected outcome and not a loss, and
+  beats it by more than the interval where the calibration curve is nonlinear, which is the only
+  place the item claims a gain. If no public set shows a nonlinear calibration, the item records that
+  the method matches PLS and adds the co-spectrum, and stops.
+
 **Order.** SP2 first: it needs only frequency runs on structures the repository already holds and
 reuses the local field, the count and the local co-field of LP2 and LP3 unchanged. SP1(a) alongside
 it, since it needs no fetch; SP1(b) when a set is found; SP3 after SP1 and SP2, because it needs
-the spectral kernel of the one and the series of the other. Electronic spectra (absorption maxima,
-which depend on conjugation) are not among these items: the classical fields do not carry them, the
+the spectral kernel of the one and the series of the other. SP4 to SP6 after SP1, whose reader and
+kernel they extend: SP6(a) can run as soon as SP2's spectra exist, SP5 needs only the two public
+sets it names, and SP4 waits on the data search. Electronic spectra (absorption maxima, which
+depend on conjugation) are not among these items: the classical fields do not carry them, the
 state fields of EC1 are the input they would need, and the kernel-correlation test of EC5 on a
 series of absorption maxima is the check to run before an item is written for them.
 
@@ -7093,10 +7166,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 1 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND7, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
-| H. Spectroscopy | 3 | 0 | SP1, SP2, SP3 |
+| H. Spectroscopy | 6 | 0 | SP1 to SP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**162 items: 112 finished, 4 partly, 46 open.**
+**165 items: 112 finished, 4 partly, 49 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
