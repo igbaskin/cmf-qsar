@@ -6445,9 +6445,49 @@ would discard the typed fields and the global kernel that are the method's own.
   conductivity with an interval, against the measured one of at least three of the disordered
   conductors of M2.
 
+* **MS9. A parameter set for a cell model, with its deviations.** A cell-level continuum model
+  (the Doyle–Fuller–Newman model and its single-particle reductions, as PyBaMM implements them)
+  is a set of partial differential equations over the electrode thickness and the particle
+  radius, with time, boundary conditions and transport. It is not a model this program can be,
+  since the program has no time axis and no transport equation; it is a model the program can
+  feed. Its parameters are what the battery items predict: the open-circuit voltage from the
+  ladder of BT3, the solid diffusion coefficient from the hop barriers of BT7 through an Arrhenius
+  law and the percolation threshold of MS7's `BarrierTable`, the electrolyte conductivity and its
+  activation energy from the shells of BT5, and the effective transport parameters of the porous
+  electrode (tortuosity, effective conductivity) from a kernel on the tomographic phase field,
+  which the microstructure pilot measured on elastic and conductivity labels and which carries
+  the pilot's limit that a second-order statistic does not see percolation. The measured results
+  say what the program contributes here. On three of the four cell-level averages measured so far
+  the composition descriptor was not beaten, so the value is not a better parameter value. It is
+  the standard deviation of MS1 in the parameter's own units, and the tolerance rule that says
+  which parameter should go to DFT or molecular dynamics instead of to the model. The item has
+  three parts. A writer in `cmfqsar/interfaces.py` takes the predictions of one or several models,
+  converts each to the quantity and unit the cell model reads (a barrier to a diffusion
+  coefficient at a temperature, with the deviation carried through the exponential; a ladder to a
+  voltage-against-stoichiometry curve), and writes a parameter set in PyBaMM's form with a
+  deviation per parameter. A sampler draws parameter sets from those deviations and runs the cell
+  model once per draw, so the output is a distribution of capacity-against-cycle curves rather
+  than one curve. A report says which parameter's deviation moves the final number most, as the
+  share of the output variance attributed to each parameter by one-at-a-time sampling. *Gate:* on
+  one cell whose parameters are published (the graphite/NMC cell of the Chen 2020 parameter set
+  in PyBaMM is the usual reference), replace one parameter at a time by the model's prediction
+  with its deviation and report the capacity-fade interval against the curve from the published
+  value. The interval must contain the published curve for every parameter whose MS1 calibration
+  holds (z rms near 1), and the report must rank the solid diffusion coefficient and the exchange
+  current ahead of the voltage curve, as the cell-model literature does. What this item is not: a
+  surrogate of the cell model, which runs in seconds and needs none, and not a model of
+  degradation, whose dynamics stay in the cell model. A product kernel over materials and
+  cell-design parameters for optimisation over many evaluations is a later item, and only if MS9
+  shows that the materials kernel adds something a Gaussian process on the parameters alone does
+  not. Under rule 5 the benchmark script is `benchmarks/run_cellmodel.py`, with PyBaMM an optional
+  dependency as pymatgen is.
+
 **Order.** MS1, MS2, MS3, MS6 and MS7 are done: a deviation in the units of the activity, a map,
 a gradient, the same deviation on the path that scales, and the interfaces that carry them out.
-MS4 after M6 is revisited; MS5 as its data arrive; MS8 last, since it needs all of the others.
+MS4 after M6 is revisited; MS5 as its data arrive; MS8 last among the hop items, since it needs
+all of the others. MS9 can run alongside MS8: both carry the deviation of MS1 through a coarser
+model, MS8 through a hop simulation to a conductivity and MS9 through a cell model to a capacity
+curve, and MS9 needs no new data because its reference parameter set is published.
 
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
@@ -6959,7 +6999,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 1 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND7, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
-| H. Multiscale modelling | 8 | 5 | MS4, MS5, MS8 |
+| H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
 **158 items: 112 finished, 4 partly, 42 open.**
