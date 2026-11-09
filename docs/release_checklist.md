@@ -117,15 +117,15 @@ reversible: a released version number can be deleted but never reused.
 
 ## 7. One reproduction run on another machine
 
-`benchmarks/run_all.py` registers 104 benchmarks and 93.7 hours of computation, so this is not one
+`benchmarks/run_all.py` registers 106 benchmarks and 95.8 hours of computation, so this is not one
 continuous-integration job: a GitHub runner stops a job after six hours. Which benchmarks a
 reproduction run measures follows from a rule in `benchmarks/run_all.py` rather than from a list
 of names: a benchmark joins the run when it registers 30 minutes or less (`REPRODUCE_MINUTES`) and
 needs no file or program the machine may not have (`needs`). `REPRODUCE_ALSO` names the one
 exception, `hops` at 110 minutes, because the barriers of a lithium hop are the only measurement
-this program has compared with published numbers on the same labels. The rule gives **66 of the
-104 benchmarks, 16.7 hours in all**, and `reproduce_groups()` splits them into **seven groups of
-about 2 hours 24 minutes**, so that a group fits twice over in the 330 minutes its job is allowed.
+this program has compared with published numbers on the same labels. The rule gives **67 of the
+106 benchmarks, 16.9 hours in all**, and `reproduce_groups()` splits them into **seven groups of
+about 2 hours 25 minutes**, so that a group fits twice over in the 330 minutes its job is allowed.
 `python benchmarks/run_all.py --list` prints the groups as they stand.
 
 ```bash
@@ -297,12 +297,13 @@ machines at all.
 
 ### What is covered
 
-**The 38 benchmarks left out** are of three kinds. Thirty are long, 64 hours together: `poses`
-16 h, `compas` 15 h, `host_pocket` 2.8 h, `litraj` 2.1 h, `scattering`, `battery` and `2dmd` 2 h
-each, `topomer_mittal`, `threebody`, `rowlength`, `increments` and `fieldae` 1.5 h each, and
-eighteen more between 32 and 70 minutes. Four need ORCA, which no runner has (`am_eu`,
-`anisotropic`, `cdft_kernels`, `corrosion_qm`). Two need xtb (`shells`, `xtb`), and two need files
-the repository does not carry and are started with `--data-root` (`sutherland`, `local_scale`).
+**The 39 benchmarks left out** are of three kinds. Thirty-one are long, 66 hours together:
+`poses` 16 h, `compas` 15 h, `host_pocket` 2.8 h, `litraj` 2.1 h, `scattering`, `battery`,
+`2dmd` and `microstructure` 2 h each, `topomer_mittal`, `threebody`, `rowlength`, `increments`
+and `fieldae` 1.5 h each, and eighteen more between 32 and 70 minutes. Four need ORCA, which no
+runner has (`am_eu`, `anisotropic`, `cdft_kernels`, `corrosion_qm`). Two need xtb (`shells`,
+`xtb`), and two need files the repository does not carry and are started with `--data-root`
+(`sutherland`, `local_scale`).
 
 What is covered, by paper: the tables of papers 4, 7, 8, 12 and 18 in full, and most of papers 1,
 3, 9 and 13. Of what is left out, `host_pocket` belongs to paper 13, `pharmfields` and

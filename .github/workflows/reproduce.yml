@@ -3,12 +3,12 @@
 # compared with the tables the repository carries. A difference is the finding, not an error of
 # the run, so a red job here is a result and has to be read rather than repaired.
 #
-# Sixty-six of the 104 benchmarks run here: those that register 30 minutes or less and need no
+# Sixty-seven of the 106 benchmarks run here: those that register 30 minutes or less and need no
 # file or program a runner has not, plus the one named exception the rule allows. The rule, the
 # exception and the split into groups are in benchmarks/run_all.py (REPRODUCE_MINUTES,
 # REPRODUCE_ALSO, reproduce_groups), `run_all.py --list` prints the groups, and
 # docs/release_checklist.md says why each benchmark that is not among them is left out. The
-# whole run is about 16.7 hours of computing on the author's machine, in seven groups of about
+# whole run is about 16.9 hours of computing on the author's machine, in seven groups of about
 # 2.4 hours; a GitHub runner stops a job after six hours, so a group fits twice over.
 #
 # Each group runs `run_all.py --reproduce GROUP`, which is `--compute` with two options a
