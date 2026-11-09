@@ -6039,6 +6039,22 @@ module is absent rather than broken when they are missing.
   COMPAS-1, the five fields plus the graph kernel against the five fields alone and against the
   five fields plus the invariant kernel of C5, with the interval of rule 4. A gain that the
   invariant kernel already gives is not a result.
+  Built and measured 9 November 2026. `cmfqsar/gntk.py` is the kernel: one-hot atom types as the
+  node features, two blocks of averaging over the bonded neighbourhood and a rectified layer whose
+  infinite-width expectations are the arc-cosine terms, the tangent kernel carried as the sum of
+  the covariance and the previous tangent kernel times the derivative term, the sum over atom
+  pairs normalised to a cosine; symmetric, positive definite, independent of the atom order and
+  of the coordinates, 0.07 ms per pair. `mixing.with_views` stacks any kernel view under the
+  field kernels with the scale convention of the fields, so `evidence_mixing`, `sample_mixing`
+  and `drop_one` treat it as one more term, and `mixing.joint_kernel` forms the kernel the ridge
+  is fitted on. Measured by `benchmarks/run_gntk.py` (results in `benchmarks/results/gntk/` and
+  `gntk_compas/`), checked by the 9 tests of `tests/test_gntk.py`, written up in the manual as a section of
+  *The rotation-invariant autocorrelation kernel*.
+  *Measured, and read as the gate asks.* Differences in q2 with their 95 % paired bootstrap intervals over the molecules. On the Sutherland sets the graph view changes q2 by +0.016 on average against the fields alone, with an interval that excludes zero on 2 of the eight sets in its favour and 0 against, and by -0.023 against the fields with the invariant kernel (1 in its favour, 3 against); added to the fields with the invariant kernel it changes q2 by +0.006 (1 in its favour, 0 against). The evidence gives the graph view 25% of the joint kernel on average, with a Bayes factor of +2.7 nats against it doing nothing. On the 2,000 molecules of COMPAS-1D the view changes q2 by +0.470 [+0.438, +0.503] against the fields and +0.004 [-0.002, +0.011] against the fields with the invariant kernel, holding 100% of the kernel with a Bayes factor of +1845.3. Against the invariant kernel the graph view wins on DHFR and loses on COX2, BZR, ACE. On DHFR the evidence hands the graph 95% of the kernel with a Bayes factor of +17.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712 against +0.641): that is the largest and most varied of the eight series, the one an alignment serves worst, and there the graph takes over from the fields rather than adding to them. Everywhere else the graph holds a few per cent of the kernel and changes q2 within its interval, and what the fields with the invariant kernel gain over the fields alone, the graph does not give. On COMPAS-1D the aligned fields are weak (q2 +0.439), the graph alone reaches q2 +0.908, the same as the invariant kernel (+0.004 [-0.002, +0.011]), and the two together gain +0.025 [+0.020, +0.030] over the invariant kernel alone, an interval well clear of zero. The gate asked for a gain the invariant kernel does not already give: it is met on the two largest series (DHFR with 361 molecules and COMPAS-1D with 2,000) and on none of the seven small ones. Whether the graph needs the molecules or the poor alignment these two series share, this benchmark cannot separate. The view stays in the library as one more term for the weights of item E6 to judge series by series, which is what they did here.
+  *Open:* the graph view inside `CMFModel` itself, which today takes the stacked kernel through
+  the library and not through `build`; node features beyond the atom type (bond orders, ring
+  membership); and the Shapley value of the graph view per molecule, which the item describes
+  and which needs the per-view Shapley machinery of F-part items on a stack of views.
 * **ND8. Pretrained 3D representations as a kernel view.** E11 (iv) trains an encoder on
   unlabelled molecules of the same frame, and E10 found that unlabelled molecules close to a
   congeneric series gain nothing. A pretrained equivariant model (Uni-Mol, or the representation
@@ -6081,10 +6097,10 @@ module is absent rather than broken when they are missing.
   replaces the point-charge electrostatic field only if it beats it on every set where the point
   charges were measured; otherwise it is a sixth view.
 
-**Order.** ND5 first, because it changes inputs the existing benchmarks score at once and gives
-ND4a its pretraining target. Then ND7, which is a few hundred lines of NumPy with no new
-dependency. Then ND6, the item that makes the method usable on a library. ND8 to ND10 wait for
-the larger sets and for the ND4a gate.
+**Order.** ND7 is done, taken before ND5 because it needed no computation beyond the kernels.
+ND5 next, because it changes inputs the existing benchmarks score at once and gives ND4a its
+pretraining target. Then ND6, the item that makes the method usable on a library. ND8 to ND10
+wait for the larger sets and for the ND4a gate.
 
 **ND11 to ND13. Normalizing flows (30 October 2026).** A normalizing flow is an invertible
 network with an exact likelihood and an exact inverse. CMF has one use for each of these two
@@ -7164,12 +7180,12 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Local properties | 5 | 5 | -- |
 | H. Supramolecular and host-guest | 8 | 4 | SC2, SC4, SC5 (partly), SC8 |
 | H. Physical organic | 8 | 8 | -- |
-| H. Deep learning | 19 | 1 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND7, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
+| H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
 | H. Spectroscopy | 6 | 0 | SP1 to SP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**165 items: 112 finished, 4 partly, 49 open.**
+**165 items: 113 finished, 4 partly, 48 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.

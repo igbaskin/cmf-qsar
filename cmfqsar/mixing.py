@@ -84,6 +84,62 @@ LAM_PRIOR_SD = 2.0
 LAM_GRID = (1e-3, 1e-2, 0.1, 1.0, 10.0)
 
 
+def with_views(K_fields: np.ndarray, views: "Dict[str, np.ndarray]",
+               names: Optional[Sequence[str]] = None,
+               scale: Optional[np.ndarray] = None) -> Tuple[np.ndarray, List[str], np.ndarray]:
+    """The field kernels with other kernel views stacked under them, ready for the weights.
+
+    A *view* is a kernel over the same molecules that is not an overlap of fields: the graph
+    neural tangent kernel of the bond graph (plan item ND7, :mod:`cmfqsar.gntk`), the invariant
+    autocorrelation kernel of item C5, or any other ``(n, n)`` matrix. Once stacked, every
+    function of this module treats it as one more term of the sum ``K = sum_v h_v c_v K_v``:
+    :func:`evidence_mixing` gives it a weight, :func:`sample_mixing` an interval and
+    :func:`drop_one` the Bayes factor against *this view does nothing*, which is the question
+    item ND7 asks of the graph view.
+
+    Returns the stack ``(F + V, n, n)``, the names (the field names followed by the view
+    names) and the scale of every term, one over its mean diagonal, which a cosine-normalised
+    view leaves at one.
+    """
+    K_fields = np.asarray(K_fields, float)
+    if K_fields.ndim == 2:
+        K_fields = K_fields[None]
+    F, n, _ = K_fields.shape
+    field_names = list(names) if names is not None else [f"field {f}" for f in range(F)]
+    if len(field_names) != F:
+        raise ValueError(f"{len(field_names)} names for {F} field kernels")
+    stack = [K_fields[f] for f in range(F)]
+    all_names = list(field_names)
+    for name, K in views.items():
+        K = np.asarray(K, float)
+        if K.shape != (n, n):
+            raise ValueError(f"the view '{name}' is {K.shape}; the field kernels are over {n} "
+                             "molecules")
+        if name in all_names:
+            raise ValueError(f"a term named '{name}' is already in the stack")
+        stack.append(K)
+        all_names.append(str(name))
+    out = np.stack(stack)
+    if scale is None:
+        d = np.array([float(np.mean(np.diag(K))) for K in out])
+        scale = np.array([1.0 / m if m > 1e-300 else 0.0 for m in d])
+    else:
+        scale = np.asarray(scale, float)
+        if len(scale) == F:
+            extra = [float(np.mean(np.diag(K))) for K in out[F:]]
+            scale = np.concatenate([scale, [1.0 / m if m > 1e-300 else 0.0 for m in extra]])
+        if len(scale) != len(out):
+            raise ValueError(f"{len(scale)} scales for {len(out)} terms")
+    return out, all_names, scale
+
+
+def joint_kernel(stack: np.ndarray, h: Sequence[float], scale: Sequence[float]) -> np.ndarray:
+    """``sum_v h_v c_v K_v`` over a stack, the one kernel the ridge is fitted on."""
+    stack = np.asarray(stack, float)
+    w = np.asarray(h, float) * np.asarray(scale, float)
+    return np.tensordot(w, stack, axes=(0, 0))
+
+
 def _softmax(u: np.ndarray) -> np.ndarray:
     v = np.asarray(u, float) - np.max(u)
     e = np.exp(v)

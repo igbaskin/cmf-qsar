@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 118 modules, 232 classes with 783 public methods, and 1153 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 119 modules, 233 classes with 784 public methods, and 1161 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -76,6 +76,7 @@ for.
 | [cmfqsar.fluctuation](#cmfqsarfluctuation) | The variance of a field across the frames of an ensemble (plan item D10). |
 | [cmfqsar.fraggrow](#cmfqsarfraggrow) | Growing a bound fragment into the gap the pocket leaves (plan item MC7). |
 | [cmfqsar.fusion](#cmfqsarfusion) | Data fusion: one score from the similarities to several known actives. |
+| [cmfqsar.gntk](#cmfqsargntk) | The graph neural tangent kernel of the bond graph, as a kernel view (plan item ND7). |
 | [cmfqsar.gpc](#cmfqsargpc) | Gaussian-process classification by the Laplace approximation. |
 | [cmfqsar.gradients](#cmfqsargradients) | The derivative of a prediction with respect to the atoms of the molecule being predicted. |
 | [cmfqsar.gtm](#cmfqsargtm) | Chemical space and activity landscapes from CMF kernels: kernel PCA + Generative Topographic Mapping. |
@@ -6012,6 +6013,85 @@ molecule that could not be compared with anything out of the top of the list.
 
 Scorer for one of `FUSION_RULES`.
 
+## cmfqsar.gntk
+
+Source: `cmfqsar/gntk.py`
+
+The graph neural tangent kernel of the bond graph, as a kernel view (plan item ND7).
+
+The field kernel of this program is the kernel of an infinitely wide radial-basis network on
+the aligned fields. The same limit exists for a network on the bond graph: the graph neural
+tangent kernel (Du, Hou, Salakhutdinov, Poczos, Wang and Xu, NeurIPS 2019) is the kernel of an
+infinitely wide graph network *at initialisation*, computed in closed form from the graph with
+no training at all. Added to the field kernels as one more view, and weighed with them by the
+multiple kernel learning of item E6, it contributes what the bond graph knows and the aligned
+field does not -- which atom is bonded to which -- at no data cost, and the model stays a kernel
+model.
+
+**The recursion.** Two molecules with `n` and `m` atoms give an `n x m` matrix of atom
+pairs. Each atom starts with a feature vector (one hot over its atom type), so the covariance of
+the pair `(u, v)` starts at the inner product of their features. One *block* of the network
+does two things to every pair: it aggregates over the bonded neighbours of `u` and of `v`,
+which is the adjacency with self-loops applied on both sides, and it passes through a layer of
+rectified units, whose infinite-width expectations have the closed form of the arc-cosine kernel
+of Cho and Saul. The tangent kernel is carried through the same steps as the sum of the
+covariance and the previous tangent kernel times the derivative term, as for any network. After
+`blocks` such blocks the graph kernel is the sum over every atom pair, and it is normalised
+to a cosine so that it compares with the cosine-normalised field kernels of the model.
+
+The expectations need each atom's own variance at every step, which is the same recursion run
+on the molecule against itself; it is done once per molecule and reused for every pair.
+
+**What this is not.** A graph kernel knows nothing of where the atoms are, so it brings no
+co-field and no atom-wise split in space; the co-field of a mixed model is read from the field
+views alone, and the Shapley value of the graph view is per molecule. It is one more term under
+the weights of item E6, and the gate of item ND7 is whether that term adds anything the invariant
+kernel of item C5 does not already give.
+
+### `class Graph(features: np.ndarray, bonds: np.ndarray, name: str='')`
+
+The bond graph of one molecule: its adjacency with self-loops, scaled for the mean over
+the neighbourhood, and its atoms' features; with the within-molecule recursion cached.
+
+#### `Graph.self_terms(blocks: int) -> List[Tuple[np.ndarray, np.ndarray]]`
+
+The within-molecule recursion: (covariance, tangent kernel) of every atom pair of
+this molecule after each aggregation, whose diagonals the expectations need.
+
+### `graph_kernel(g: Graph, h: Graph, blocks: int=DEFAULT_BLOCKS) -> float`
+
+The unnormalised graph neural tangent kernel of two molecules: the sum of the tangent
+kernel over every atom pair after `blocks` blocks.
+
+### `atom_feature_table(types: Sequence[str]) -> Dict[str, int]`
+
+One column per atom type seen, in alphabetical order.
+
+### `graphs_of(table, blocks: int=DEFAULT_BLOCKS, columns: Optional[Dict[str, int]]=None) -> Tuple[List[Graph], Dict[str, int]]`
+
+One `Graph` per molecule of an `cmfqsar.fields.AtomTable`.
+
+The atom features are one hot over the atom types the table carries (the Sybyl types the
+fields are built with, which say element, hybridisation and aromaticity at once); `columns`
+fixes the columns to those of another table, so that a test set is featurised like the
+training set it is compared with, and a type the training set never saw gets no column.
+
+### `gntk_matrix(graphs_a: Sequence[Graph], graphs_b: Optional[Sequence[Graph]]=None, blocks: int=DEFAULT_BLOCKS, normalize: bool=True, progress=None) -> np.ndarray`
+
+The kernel matrix between two lists of graphs (or one list against itself).
+
+With `normalize` every entry is divided by the square root of the two self-kernels, which
+puts the view on the same scale as the cosine-normalised field kernels it is mixed with.
+
+### `gntk_kernel(table, blocks: int=DEFAULT_BLOCKS, normalize: bool=True, progress=None) -> np.ndarray`
+
+The graph neural tangent kernel over the molecules of one table, `(n, n)`.
+
+### `gntk_cross(train, test, blocks: int=DEFAULT_BLOCKS, normalize: bool=True) -> np.ndarray`
+
+The kernel of the molecules of `test` against those of `train`, `(n_test, n_train)`,
+with the test molecules featurised by the training table's atom types.
+
 ## cmfqsar.gpc
 
 Source: `cmfqsar/gpc.py`
@@ -9585,6 +9665,26 @@ The shares a typical series gives the fields.
 The population weights in the convention of `evidence_mixing` (mean one).
 
 #### `PooledPrior.describe() -> str`
+
+### `with_views(K_fields: np.ndarray, views: 'Dict[str, np.ndarray]', names: Optional[Sequence[str]]=None, scale: Optional[np.ndarray]=None) -> Tuple[np.ndarray, List[str], np.ndarray]`
+
+The field kernels with other kernel views stacked under them, ready for the weights.
+
+A *view* is a kernel over the same molecules that is not an overlap of fields: the graph
+neural tangent kernel of the bond graph (plan item ND7, `cmfqsar.gntk`), the invariant
+autocorrelation kernel of item C5, or any other `(n, n)` matrix. Once stacked, every
+function of this module treats it as one more term of the sum `K = sum_v h_v c_v K_v`:
+`evidence_mixing` gives it a weight, `sample_mixing` an interval and
+`drop_one` the Bayes factor against *this view does nothing*, which is the question
+item ND7 asks of the graph view.
+
+Returns the stack `(F + V, n, n)`, the names (the field names followed by the view
+names) and the scale of every term, one over its mean diagonal, which a cosine-normalised
+view leaves at one.
+
+### `joint_kernel(stack: np.ndarray, h: Sequence[float], scale: Sequence[float]) -> np.ndarray`
+
+`sum_v h_v c_v K_v` over a stack, the one kernel the ridge is fitted on.
 
 ### `shares_to_h(p: Sequence[float], n_fields: int) -> np.ndarray`
 
