@@ -306,14 +306,30 @@ def command(cfg: Config, xyz: str, charge: int, mult: int) -> List[str]:
     return args
 
 
+def _file_charges(res: XtbResult, jobdir: str) -> XtbResult:
+    """Replace the charges of `res` by the ones of the ``charges`` file of the job, which are
+    the same charges with more digits (8 decimals; the table of the output prints 3)."""
+    charges_file = os.path.join(jobdir, "charges")
+    if os.path.isfile(charges_file):
+        with open(charges_file) as fh:
+            vals = [float(x) for x in fh.read().split()]
+        if len(vals) == res.n_atoms:
+            res.charges = np.array(vals, float)
+    return res
+
+
 def run_job(jobdir: str, cfg: Config, charge: int, mult: int) -> XtbResult:
-    """Run xtb in `jobdir` on ``geom.xyz``, or reuse the output already there."""
+    """Run xtb in `jobdir` on ``geom.xyz``, or reuse the output already there.
+
+    A reused job gives the same numbers as its first run: the charges are read from the
+    ``charges`` file in both cases.
+    """
     out_path = os.path.join(jobdir, "xtb.out")
     if os.path.isfile(out_path):
         with open(out_path, encoding="utf-8", errors="replace") as fh:
             text = fh.read()
         if "normal termination of xtb" in text:
-            return parse_output(text)
+            return _file_charges(parse_output(text), jobdir)
     args = command(cfg, "geom.xyz", charge, mult)
     try:
         # xtb writes Greek letters and a middle dot, which the Windows code page cannot
@@ -328,14 +344,7 @@ def run_job(jobdir: str, cfg: Config, charge: int, mult: int) -> XtbResult:
     if "normal termination of xtb" not in text:
         tail = " / ".join(line.strip() for line in text.strip().splitlines()[-3:])
         raise XtbError(f"xtb failed (exit {proc.returncode}): {tail}")
-    res = parse_output(text)
-    charges_file = os.path.join(jobdir, "charges")
-    if os.path.isfile(charges_file):        # the same charges with more digits
-        with open(charges_file) as fh:
-            vals = [float(x) for x in fh.read().split()]
-        if len(vals) == res.n_atoms:
-            res.charges = np.array(vals, float)
-    return res
+    return _file_charges(parse_output(text), jobdir)
 
 
 @dataclass

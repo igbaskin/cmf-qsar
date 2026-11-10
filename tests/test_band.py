@@ -384,3 +384,268 @@ def test_the_report_adds_the_indicator_part_when_its_result_is_there(tmp_path):
     assert "## Indicator fields: one field per atom type" in text
     assert "whole substituents held out" in text and "**Reading of the indicator fields.**" in text
     assert "Hammett line" not in text and "one line" not in text
+
+
+# --------------------------------------------------------------------------- #
+# part 8: quantum charges
+# --------------------------------------------------------------------------- #
+
+def _write_quantum(path, mols, shift=0.0, skip=()):
+    """An SD file like the one the xtb stage writes: the same acids with three numbers on
+    every atom.  Returns the charge given to every atom, one array per acid."""
+    from rdkit import Chem
+
+    charges = []
+    writer = Chem.SDWriter(path)
+    for k, m in enumerate(mols):
+        s = Chem.Mol(m)
+        q = np.linspace(-0.5, 0.5, s.GetNumAtoms()) + 0.01 * k
+        charges.append(q)
+        for a in s.GetAtoms():
+            a.SetDoubleProp(run_band.QUANTUM_CHARGE, float(q[a.GetIdx()]))
+            for p in run_band.QUANTUM_FUKUI:
+                a.SetDoubleProp(p, 0.001 * a.GetIdx())
+        for p in (run_band.QUANTUM_CHARGE,) + tuple(run_band.QUANTUM_FUKUI):
+            Chem.CreateAtomDoublePropertyList(s, p)
+        if shift:
+            pos = s.GetConformer().GetPositions() + np.array([shift, 0.0, 0.0])
+            for i in range(s.GetNumAtoms()):
+                s.GetConformer().SetAtomPosition(i, [float(x) for x in pos[i]])
+        if m.GetProp("_Name") not in skip:
+            writer.write(s)
+    writer.close()
+    return charges
+
+
+def test_quantum_charges_are_set_on_copies_of_the_same_atoms(tmp_path):
+    from cmfqsar.fields import FieldSet, build_fields
+
+    mols, _targets, _carbon, _oxygen = _acids_with_set_bond_lengths([1.206, 1.212, 1.218])
+    names = [m.GetProp("_Name") for m in mols]
+    path = str(tmp_path / "quantum.sdf")
+    charges = _write_quantum(path, mols)
+    out = run_band.with_quantum_charges(mols, names, path)
+    for m, c, q in zip(mols, out, charges):
+        assert c is not m and not m.GetAtomWithIdx(0).HasProp("partial_charge")
+        got = [a.GetDoubleProp("partial_charge") for a in c.GetAtoms()]
+        assert np.allclose(got, q, atol=1e-6)
+        assert c.GetAtomWithIdx(3).GetDoubleProp("fukui_plus") == pytest.approx(0.003)
+        assert np.allclose(c.GetConformer().GetPositions(), m.GetConformer().GetPositions())
+    # a field set that reads its charges from the file builds its fields on these numbers
+    built = build_fields(out[1], FieldSet.create(physchem=("electrostatic",),
+                                                 charge_model="file"), name=names[1])
+    assert np.allclose(built.charges, charges[1], atol=1e-6)
+
+
+def test_quantum_charges_of_another_geometry_are_refused(tmp_path):
+    mols, _targets, _carbon, _oxygen = _acids_with_set_bond_lengths([1.206, 1.212])
+    names = [m.GetProp("_Name") for m in mols]
+    with pytest.raises(SystemExit, match="--xtb"):
+        run_band.with_quantum_charges(mols, names, str(tmp_path / "not_there.sdf"))
+    moved = str(tmp_path / "moved.sdf")
+    _write_quantum(moved, mols, shift=0.05)
+    with pytest.raises(SystemExit, match="differs by 0.050 A"):
+        run_band.with_quantum_charges(mols, names, moved)
+    # a shift below the tolerance is the rounding of the file, and is accepted
+    assert len(run_band.with_quantum_charges(mols, names, moved, tolerance=0.1)) == 2
+    short = str(tmp_path / "short.sdf")
+    _write_quantum(short, mols, skip=("acid1",))
+    with pytest.raises(SystemExit, match="no structure named acid1"):
+        run_band.with_quantum_charges(mols, names, short)
+
+
+def test_the_four_atoms_of_the_carboxyl_group():
+    mols, targets, carbon, oxygen = _acids_with_set_bond_lengths([1.206, 1.212])
+    found = run_band.carboxyl_atoms(mols[0], carbon)
+    assert found[:2] == (carbon, oxygen)
+    assert [mols[0].GetAtomWithIdx(i).GetSymbol() for i in found] == ["C", "O", "O", "H"]
+    assert mols[0].GetAtomWithIdx(found[2]).GetDegree() == 2
+    assert mols[0].GetBondBetweenAtoms(found[2], found[3]) is not None
+    ring = next(a.GetIdx() for a in mols[0].GetAtoms() if a.GetIsAromatic())
+    assert run_band.carboxyl_atoms(mols[0], ring) is None
+    assert len(run_band.CARBOXYL_ATOMS) == 4
+    # the charges of the four atoms, in that order, one line per sample
+    charges = [np.arange(m.GetNumAtoms()) + 100.0 * k for k, m in enumerate(mols)]
+    got = run_band.carboxyl_charges(mols, targets, charges)
+    assert got.shape == (2, 4)
+    for r in range(2):
+        k = int(targets.molecule[r])
+        assert np.array_equal(got[r], np.array(found, float) + 100.0 * k)
+    # a target on an atom that is not the carbon of a carboxyl group gives no charges
+    per = [np.where(np.arange(m.GetNumAtoms()) == ring, 1.0, np.nan) for m in mols]
+    other = AtomTargets.from_arrays(per, name="co_stretch")
+    assert np.all(np.isnan(run_band.carboxyl_charges(mols, other, charges)))
+
+
+def _linear_series(n=40, seed=0, noise=0.2):
+    rng = np.random.RandomState(seed)
+    x = rng.normal(size=(n, 3))
+    y = 1740.0 + x @ np.array([3.0, -2.0, 1.0]) + rng.normal(0, noise, n)
+    return x, AtomTargets.from_arrays([[v] for v in y], name="co_stretch")
+
+
+def test_a_regression_on_columns_predicts_out_of_fold():
+    x, targets = _linear_series()
+    y = np.asarray(targets.y, float)
+    res = run_band.regression_reference(x, targets, folds=5, seed=0, name="made up")
+    assert res.name == "made up" and res.q2 > 0.99
+    # every prediction comes from the equation fitted without the sample
+    for te in targets.folds(5, 0):
+        tr = np.setdiff1d(np.arange(len(y)), te)
+        coef = np.linalg.lstsq(np.c_[np.ones(len(tr)), x[tr]], y[tr], rcond=None)[0]
+        assert np.allclose(res.predicted[te], np.c_[np.ones(len(te)), x[te]] @ coef)
+    # one column is a simple linear regression, and it explains less than the three
+    one = run_band.regression_reference(x[:, 0], targets, folds=5, seed=0)
+    assert 0.3 < one.q2 < res.q2
+    # a sample without its numbers takes the mean of the band
+    holes = x.copy()
+    holes[4] = np.nan
+    gap = run_band.regression_reference(holes, targets, folds=5, seed=0)
+    assert gap.predicted[4] == pytest.approx(y.mean())
+    assert np.all(np.isfinite(gap.predicted))
+
+
+def test_the_choice_inside_the_folds_takes_the_kernel_that_predicts():
+    x, targets = _linear_series()
+    y = np.asarray(targets.y, float)
+    z = np.random.RandomState(5).normal(size=(len(y), 3))
+    kernels = {"informative": x @ x.T, "noise": z @ z.T}
+    res, picks = run_band.nested_choice(kernels, targets, lams=(1e-4, 1e-2), folds=5, seed=0,
+                                        inner=3, name="made up")
+    assert len(picks) == 5 and all(key == "informative" for key, _lam in picks)
+    assert all(lam in (1e-4, 1e-2) for _key, lam in picks)
+    assert res.q2 > 0.95 and "inside every training part" in res.note
+    # the held-out samples take no part in the choice or in the fit: another band on the
+    # samples of the first fold leaves the predictions for these samples as they were
+    first = targets.folds(5, 0)[0]
+    changed = y.copy()
+    changed[first] = 1700.0 + 50.0 * np.arange(len(first))
+    other = AtomTargets.from_arrays([[v] for v in changed], name="co_stretch")
+    again, _picks = run_band.nested_choice(kernels, other, lams=(1e-4, 1e-2), folds=5, seed=0,
+                                           inner=3)
+    assert np.allclose(again.predicted[first], res.predicted[first])
+    rest = np.setdiff1d(np.arange(len(y)), first)
+    assert not np.allclose(again.predicted[rest], res.predicted[rest])
+
+
+def test_the_largest_errors_and_the_score_without_some_samples():
+    targets, _table = _twins()
+    y = np.asarray(targets.y, float)
+    names = [f"acid{k}" for k in range(len(y))]
+    res = []
+    for seed in range(3):
+        pred = y + np.random.RandomState(seed).normal(0, 0.3, len(y))
+        pred[3] += 20.0
+        res.append(run_band._as_result("made up", pred, targets, 5))
+    top = run_band.largest_errors(res, y, names, n=2)
+    assert [t["name"] for t in top][0] == "acid3" and len(top) == 2
+    assert top[0]["error"] == pytest.approx(20.0, abs=1.0) and top[0]["share"] > 0.95
+    assert top[0]["share"] + top[1]["share"] <= 1.0
+    cut, sub = run_band.without_rows(res, targets, [3], folds=5)
+    assert len(sub) == len(y) - 1 and len(cut) == 3
+    keep = np.delete(np.arange(len(y)), 3)
+    # nothing is fitted again: the predictions of the other samples are the same numbers
+    assert np.array_equal(cut[0].predicted, np.asarray(res[0].predicted)[keep])
+    assert np.array_equal(sub.y, y[keep])
+    assert run_band.repeated_q2(cut, sub.y)[0] > 0.98 > run_band.repeated_q2(res, y)[0]
+
+
+def test_the_difference_between_the_para_acid_and_the_meta_acid():
+    targets, table = _twins()
+    y = np.asarray(targets.y, float)
+    pairs = run_band.twin_pairs(table)
+    assert pairs.shape == (12, 2)
+    pos, subs = np.array(table["position"]), np.array(table["substituent"])
+    assert set(pos[pairs[:, 0]]) == {"meta"} and set(pos[pairs[:, 1]]) == {"para"}
+    assert np.array_equal(subs[pairs[:, 0]], subs[pairs[:, 1]])
+    exact = run_band.twin_difference([run_band._as_result("exact", y, targets, 5)], targets,
+                                     table)
+    assert exact["n"] == 12 and exact["q2"] == pytest.approx(1.0)
+    assert exact["r"] == pytest.approx(1.0) and exact["error"] == pytest.approx(0.0)
+    assert exact["spread"] == pytest.approx(np.std(y[pairs[:, 1]] - y[pairs[:, 0]]))
+    # a model that gives both acids of a substituent the mean of the two bands predicts the
+    # band well and the difference not at all
+    mean = y.copy()
+    mean[pairs[:, 0]] = mean[pairs[:, 1]] = 0.5 * (y[pairs[:, 0]] + y[pairs[:, 1]])
+    flat = [run_band._as_result("pair mean", mean, targets, 5)]
+    d = run_band.twin_difference(flat, targets, table)
+    assert run_band.repeated_q2(flat, y)[0] > 0.9
+    assert d["q2"] <= 0.0 and d["r"] is None
+    # fewer than three pairs give no numbers
+    few = {k: v[:3] for k, v in table.items()}
+    none = run_band.twin_difference([run_band._as_result("exact", y[:3], targets.subset([0, 1, 2]),
+                                                         5)], targets.subset([0, 1, 2]), few)
+    assert none["n"] == 0 and none["q2"] is None
+
+
+def test_the_error_by_position():
+    targets, table = _twins()
+    y = np.asarray(targets.y, float)
+    pos = np.array(table["position"])
+    pred = y + np.where(pos == "meta", 2.0, 0.0)
+    e = run_band.position_errors([run_band._as_result("made up", pred, targets, 5)], y, table)
+    assert e["meta"] == pytest.approx(2.0) and e["para"] == pytest.approx(0.0)
+    only_para = {k: [v for v, p in zip(vals, pos) if p != "meta"] for k, vals in table.items()}
+    rows = np.where(pos != "meta")[0]
+    sub = targets.subset(rows)
+    e = run_band.position_errors([run_band._as_result("made up", pred[rows], sub, 5)], y[rows],
+                                 only_para)
+    assert e["meta"] is None and e["para"] == pytest.approx(0.0)
+
+
+def test_the_xtb_stage_writes_charges_that_the_benchmark_accepts(tmp_path):
+    """Stage 3 of the example builder on two acids: the same atoms at the same places, with a
+    charge on every atom whose sum is the charge of the acid."""
+    from rdkit import Chem
+
+    from cmfqsar import xtb
+
+    try:
+        xtb.find_xtb(None)
+    except xtb.XtbError:
+        pytest.skip("xtb is not installed here")
+    mb = _examples()
+    if not os.path.exists(mb.STRUCTURES):
+        pytest.skip("the start structures of the benzoic acids are not there")
+    out = str(tmp_path / "quantum.sdf")
+    said = []
+    failed = mb.run_xtb(mb.STRUCTURES, out, workdir=str(tmp_path / "work"), jobs=2, limit=2,
+                        log=said.append)
+    assert failed == 0 and "wrote 2 acids" in said[-1]
+    mols = [m for m in Chem.SDMolSupplier(mb.STRUCTURES, removeHs=False)][:2]
+    names = [m.GetProp("_Name") for m in mols]
+    got = run_band.with_quantum_charges(mols, names, out)
+    for c in got:
+        q = [a.GetDoubleProp("partial_charge") for a in c.GetAtoms()]
+        assert abs(sum(q)) < 1e-4 and max(abs(v) for v in q) > 0.2
+        assert all(a.HasProp("fukui_plus") and a.HasProp("fukui_minus") for a in c.GetAtoms())
+    # a second build reads the finished jobs and writes the same bytes
+    again = str(tmp_path / "again.sdf")
+    assert mb.run_xtb(mb.STRUCTURES, again, workdir=str(tmp_path / "work"), jobs=2, limit=2,
+                      log=said.append) == 0
+    with open(out, "rb") as a, open(again, "rb") as b:
+        assert a.read() == b.read()
+
+
+def test_the_report_adds_the_quantum_charge_part_when_its_result_is_there(tmp_path):
+    import shutil
+
+    stored = [_stored(n) for n in ("band.json", "indicator.json", "charges.json")]
+    if not all(os.path.exists(p) for p in stored):
+        pytest.skip("the stored results of the band benchmark are not there")
+    for p in stored[:2]:
+        shutil.copy(p, str(tmp_path / os.path.basename(p)))
+    without = run_band.report(str(tmp_path))
+    assert "Quantum charges" not in without
+    shutil.copy(stored[2], str(tmp_path / "charges.json"))
+    text = run_band.report(str(tmp_path))
+    with open(str(tmp_path / "table.md"), encoding="utf-8") as fh:
+        assert fh.read() == text
+    assert text.startswith(without)
+    assert "## Quantum charges: the electrostatic field from GFN2-xTB charges" in text
+    assert "width and ridge chosen inside the folds" in text
+    assert "**Reading of the quantum charges.**" in text and "**Answer.**" in text
+    assert "Hammett line" not in text and "one line" not in text
+    # the stored table is the one this report writes
+    with open(_stored("table.md"), encoding="utf-8") as fh:
+        assert fh.read() == text

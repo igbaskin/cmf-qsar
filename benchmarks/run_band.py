@@ -12,7 +12,7 @@ carbonyl carbon of each acid).  A band is a property of a bond, so the question 
 asked of the shift: does the field around the atom predict it better than a count of what is
 around the atom, and does a co-field around the atom say where the substituent acts?
 
-Seven things are measured, the first six on folds that hold out whole molecules.
+Eight things are measured, the first six on folds that hold out whole molecules.
 
 1. **The band against the Hammett constant.**  Before any field: the computed band against
    sigma, as a linear regression (the straight line band = a + rho * sigma, fitted by least
@@ -46,6 +46,16 @@ Seven things are measured, the first six on folds that hold out whole molecules.
    other folds, gives every number also for folds that hold out whole substituents (the
    series holds each substituent twice), and reads what one atom of a type adds to the
    band at the place of the first atom of the substituent.  It writes `indicator.json`.
+8. **Quantum charges** on the start geometries.  The default charges (Gasteiger) are computed
+   from the bonds alone and do not hold the effect of a substituent through the pi electrons
+   of the ring (resonance).  This part takes the charge of every atom from one GFN2-xTB
+   calculation on the start geometry, without optimisation
+   (`examples/spectra/benzoic_acids_xtb.sdf`), and builds the electrostatic field from it.  It
+   also adds two fields from the Fukui indices of the same calculation.  The cross-validation
+   is the one of part 7.  The width of the envelope and the ridge are chosen inside every
+   training part, because the width decides the result.  The references include the
+   regressions on the quantum charges of the carboxyl group, which show what the charges
+   hold without any field.  It writes `charges.json`.
 
 Usage
 -----
@@ -53,6 +63,7 @@ Usage
     python benchmarks/run_band.py --rho 0.1 0.25  # a shorter width scan
     python benchmarks/run_band.py --structures none   # without the start geometries
     python benchmarks/run_band.py --only indicator    # part 7 alone
+    python benchmarks/run_band.py --only charges      # part 8 alone
     python benchmarks/run_band.py --report        # the table from the stored results
 """
 from __future__ import annotations
@@ -79,12 +90,13 @@ from cmfqsar.atomtypes import assign_atom_types  # noqa: E402
 from cmfqsar.cofields import (atom_effect, atom_effect_covariance,  # noqa: E402
                               cofield_at_points, contrast_at, dual_covariance_factor)
 from cmfqsar.dataio import load_dataset  # noqa: E402
-from cmfqsar.fields import (FieldSet, atom_type_counts, build_fields,  # noqa: E402
-                            cif_types_in)
+from cmfqsar.fields import (FieldSet, atom_property, atom_type_counts,  # noqa: E402
+                            build_fields, cif_types_in)
 from cmfqsar.localalign import overlap_kernel, posed_environments, well_posed  # noqa: E402
 from cmfqsar.localenv import (LAMS, LocalResult, choose_lam, count_features,  # noqa: E402
-                              count_kernel, envelope_width, environment, local_features,
-                              local_kernel, paired_interval, types_of)
+                              count_kernel, cross_validate_lams, envelope_width, environment,
+                              local_features, local_kernel, paired_interval, types_of)
+from cmfqsar.model import krr_fit  # noqa: E402
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -639,15 +651,10 @@ def twin_correlation(targets, table):
     their bands and of their Hammett constants, over the substituents that occur twice."""
     y = np.asarray(targets.y, float)
     sigma = np.asarray(table["sigma"], float)
-    pos = list(table["position"])
-    rows = {}
-    for r, s in enumerate(table["substituent"]):
-        if pos[r] in ("meta", "para"):
-            rows.setdefault(s, {})[pos[r]] = r
-    pairs = [(v["meta"], v["para"]) for v in rows.values() if len(v) == 2]
+    pairs = twin_pairs(table)
     if len(pairs) < 3:
         return dict(n=len(pairs), r_band=float("nan"), r_sigma=float("nan"))
-    m, p = np.array(pairs, int).T
+    m, p = pairs.T
     return dict(n=len(pairs), r_band=float(np.corrcoef(y[m], y[p])[0, 1]),
                 r_sigma=float(np.corrcoef(sigma[m], sigma[p])[0, 1]))
 
@@ -971,6 +978,534 @@ def run_indicator(rhos=INDICATOR_RHOS, folds=FOLDS, seed=0, repeats=REPEATS, res
 
 
 # --------------------------------------------------------------------------- #
+# 8. quantum charges on the start geometries
+# --------------------------------------------------------------------------- #
+
+#: the start geometries with the GFN2-xTB charge and the Fukui functions of every atom, from
+#: one calculation per acid without an optimisation (`examples/make_band_examples.py --xtb`)
+QUANTUM = os.path.join(ROOT, "examples", "spectra", "benzoic_acids_xtb.sdf")
+QUANTUM_CHARGE = "q_xtb"
+QUANTUM_FUKUI = ("fukui_plus", "fukui_minus")
+#: the widths of the charge part: 10, 4.5, 2 and 1 A.  The conclusions are stated at 10 A, as
+#: in the indicator part.  At 1 A the envelope keeps the carboxyl group and little else.
+CHARGE_RHOS = (0.01, 0.05, 0.25, 1.0)
+CARBOXYL_ATOMS = ("carbonyl carbon", "carbonyl oxygen", "hydroxyl oxygen", "hydroxyl hydrogen")
+CHARGE_SETS = ("five", "es", "es_q", "five_q", "five_q_fukui", "five_q_indicator")
+CHARGE_REFERENCES = ("counts", "one_line", "two_lines", "oxygen_charge", "carboxyl_charges")
+#: the number of folds inside a training part, for the choice of the width and of the ridge
+INNER_FOLDS = 5
+
+
+def with_quantum_charges(mols, names, path, charge=QUANTUM_CHARGE, extra=QUANTUM_FUKUI,
+                         tolerance=1e-3):
+    """Copies of `mols` whose atoms carry the charges of the SD file `path`.
+
+    The charge of the file (atom property `charge`) is set on every atom as `partial_charge`,
+    which is the property a field set with `charge_model="file"` reads.  The properties
+    `extra` are set on every atom under their own names.
+
+    The file must hold the same atoms in the same order at the same places, to `tolerance`
+    in A.  A charge computed on another geometry would bring information about that geometry
+    into the description, which is the fault part 5 measures for the bond length.
+    """
+    if not os.path.exists(path):
+        raise SystemExit(f"{path} is missing: run examples/make_band_examples.py --xtb")
+    source = {m.GetProp("_Name"): m for m in Chem.SDMolSupplier(path, removeHs=False)
+              if m is not None}
+    out = []
+    for m, name in zip(mols, names):
+        s = source.get(name)
+        if s is None:
+            raise SystemExit(f"{path} has no structure named {name}")
+        if [a.GetAtomicNum() for a in s.GetAtoms()] != [a.GetAtomicNum() for a in m.GetAtoms()]:
+            raise SystemExit(f"{name}: the atoms of {path} are in another order")
+        moved = float(np.abs(s.GetConformer().GetPositions()
+                             - m.GetConformer().GetPositions()).max())
+        if moved > tolerance:
+            raise SystemExit(f"{name}: the geometry of {path} differs by {moved:.3f} A from "
+                             f"the geometry the fields are built on")
+        values = {p: atom_property(s, p, mol_name=name) for p in (charge,) + tuple(extra)}
+        c = Chem.Mol(m)
+        for a in c.GetAtoms():
+            a.SetDoubleProp("partial_charge", float(values[charge][a.GetIdx()]))
+            for p in extra:
+                a.SetDoubleProp(p, float(values[p][a.GetIdx()]))
+        out.append(c)
+    return out
+
+
+def carboxyl_atoms(mol, carbon):
+    """The numbers of the carbonyl carbon, the carbonyl oxygen, the hydroxyl oxygen and the
+    hydroxyl hydrogen of the carboxyl group at `carbon`, or None when it is not such a group."""
+    atom = mol.GetAtomWithIdx(int(carbon))
+    oxygens = [n for n in atom.GetNeighbors() if n.GetSymbol() == "O"]
+    one = [n for n in oxygens if n.GetDegree() == 1]
+    two = [n for n in oxygens if n.GetDegree() == 2]
+    if len(one) != 1 or len(two) != 1:
+        return None
+    h = [n for n in two[0].GetNeighbors() if n.GetSymbol() == "H"]
+    if len(h) != 1:
+        return None
+    return int(carbon), one[0].GetIdx(), two[0].GetIdx(), h[0].GetIdx()
+
+
+def carboxyl_charges(mols, targets, charges):
+    """The charges of the four atoms of the carboxyl group of every sample, in the order of
+    `CARBOXYL_ATOMS`.  `charges` holds one array per molecule.  NaN where the target atom is
+    not the carbon of a carboxyl group."""
+    out = np.full((len(targets), len(CARBOXYL_ATOMS)), np.nan)
+    for r in range(len(targets)):
+        k = int(targets.molecule[r])
+        idx = carboxyl_atoms(mols[k], targets.atom[r])
+        if idx is not None:
+            out[r] = np.asarray(charges[k], float)[list(idx)]
+    return out
+
+
+def regression_reference(X, targets, folds=FOLDS, seed=0, name="linear regression", note=""):
+    """The band as a linear regression on the columns of `X`, fitted by least squares on the
+    training acids of every fold and predicted for the acids the fold holds out.  With one
+    column it is a simple linear regression, with several a multiple linear regression."""
+    y = np.asarray(targets.y, float)
+    X = np.asarray(X, float).reshape(len(y), -1)
+    ok = np.all(np.isfinite(X), axis=1)
+    pred = np.full(len(y), np.nan)
+    for te in targets.folds(folds, seed):
+        tr = np.setdiff1d(np.arange(len(y)), te)
+        tr = tr[ok[tr]]
+        if len(tr) < X.shape[1] + 2:
+            continue
+        mean, scale = X[tr].mean(axis=0), X[tr].std(axis=0)
+        scale = np.where(scale > 0, scale, 1.0)
+        coef = np.linalg.lstsq(np.c_[np.ones(len(tr)), (X[tr] - mean) / scale], y[tr],
+                               rcond=None)[0]
+        rows = te[ok[te]]
+        pred[rows] = np.c_[np.ones(len(rows)), (X[rows] - mean) / scale] @ coef
+    pred = np.where(np.isfinite(pred), pred, np.nanmean(y))
+    return _as_result(name, pred, targets, folds, note=note)
+
+
+def nested_choice(kernels, targets, lams=WIDE_LAMS, folds=FOLDS, seed=0, inner=INNER_FOLDS,
+                  name="kernel"):
+    """Out-of-fold predictions with the kernel and the ridge chosen inside every training part.
+
+    `kernels` maps a key (here the decay of the envelope, which sets its width) to a kernel
+    over the same samples.  For every fold, the training part is divided again into `inner`
+    folds over the same unit as the outer folds (acids, or substituents).  The kernel and the
+    ridge with the lowest error on these inner folds are chosen, the model is fitted on the
+    whole training part, and the held-out samples are predicted.  The held-out samples take
+    no part in the choice, so the q2 is not raised by the search, as it is in
+    :func:`cmfqsar.localenv.choose_lam`.
+
+    Returns the result and the list of the choices, one (key, ridge) per fold.
+    """
+    y = np.asarray(targets.y, float)
+    keys, lams = list(kernels), [float(x) for x in lams]
+    pred = np.full(len(y), np.nan)
+    picks = []
+    for f, te in enumerate(targets.folds(folds, seed)):
+        tr = np.setdiff1d(np.arange(len(y)), te)
+        sub = targets.subset(tr)
+        best = None
+        for key in keys:
+            K = np.asarray(kernels[key], float)[np.ix_(tr, tr)]
+            for r in cross_validate_lams(K, sub, lams, inner, 1000 * (int(seed) + 1) + f):
+                if np.isfinite(r.q2) and (best is None or r.q2 > best[0]):
+                    best = (float(r.q2), key, float(r.lam))
+        if best is None:
+            continue
+        _q, key, lam = best
+        K = np.asarray(kernels[key], float)
+        a, b = krr_fit(K[np.ix_(tr, tr)], y[tr], lam)
+        pred[te] = K[np.ix_(te, tr)] @ a + b
+        picks.append((key, lam))
+    pred = np.where(np.isfinite(pred), pred, np.nanmean(y))
+    return _as_result(name, pred, targets, folds,
+                      note=f"the width and the ridge chosen on {inner} folds inside every "
+                           f"training part"), picks
+
+
+def twin_pairs(table):
+    """The rows of the meta acid and of the para acid of every substituent that occurs twice,
+    as an array with one pair per line."""
+    pos = list(table["position"])
+    rows = {}
+    for r, s in enumerate(table["substituent"]):
+        if pos[r] in ("meta", "para"):
+            rows.setdefault(s, {})[pos[r]] = r
+    pairs = [(v["meta"], v["para"]) for v in rows.values() if len(v) == 2]
+    return np.array(pairs, int).reshape(-1, 2)
+
+
+def _number(x):
+    """A float for the result file, or None where the value is not defined."""
+    return float(x) if x is not None and np.isfinite(x) else None
+
+
+def twin_difference(results, targets, table):
+    """How well a model predicts the difference between the para acid and the meta acid of one
+    substituent.
+
+    The two acids hold the same atoms.  They differ in the place of the substituent, and the
+    band differs because the effect of a substituent through the pi electrons of the ring
+    (resonance) reaches the para place and hardly the meta place.  The prediction of an acid
+    is its mean over the repeated cross-validations in `results`.  Returns the number of
+    substituents, the correlation between the predicted and the computed difference, the root
+    mean square error of the predicted difference, the q2 of the difference, and the standard
+    deviation of the computed difference.
+    """
+    y = np.asarray(targets.y, float)
+    pred = np.mean([np.asarray(r.predicted, float) for r in results], axis=0)
+    pairs = twin_pairs(table)
+    if len(pairs) < 3:
+        return dict(n=int(len(pairs)), r=None, error=None, q2=None, spread=None)
+    m, p = pairs.T
+    seen, got = y[p] - y[m], pred[p] - pred[m]
+    return dict(n=int(len(pairs)), r=_number(_corr(seen, got)), error=rmse_of(seen, got),
+                q2=_number(q2_of(seen, got)), spread=float(np.std(seen)))
+
+
+def position_errors(results, y, table):
+    """The root mean square error over the meta acids and over the para acids, from the
+    squared errors of the repeated cross-validations."""
+    err = squared_errors(results, y)
+    pos = np.asarray(table["position"])
+    return {p: float(np.sqrt(err[pos == p].mean())) if np.any(pos == p) else None
+            for p in ("meta", "para")}
+
+
+def largest_errors(results, y, names, n=3):
+    """The `n` samples with the largest squared error, as the mean over repeated
+    cross-validations: the name, the root mean square error of the sample, and the share of
+    the sample in the sum of the squared errors of all samples."""
+    err = squared_errors(results, y)
+    total = float(err.sum())
+    return [dict(name=str(names[r]), error=float(np.sqrt(err[r])),
+                 share=float(err[r] / total) if total > 0 else 0.0)
+            for r in np.argsort(-err)[:int(n)]]
+
+
+def without_rows(results, targets, rows, folds=FOLDS):
+    """The results and the targets over the samples that are not in `rows`.
+
+    Nothing is fitted again.  The predictions are the ones the cross-validation made with
+    every sample in its place, and only the score leaves the rows out.  This shows how much
+    of a q2 is decided by a few samples.
+    """
+    keep = np.setdiff1d(np.arange(len(targets)), np.asarray(rows, int))
+    sub = targets.subset(keep)
+    return [_as_result(r.name, np.asarray(r.predicted, float)[keep], sub, folds)
+            for r in results], sub
+
+
+def charge_statistics(Q, y, table):
+    """What the charges of the carboxyl group say about the band, atom by atom: mean and
+    standard deviation of the charge over the acids, its correlation with the band and with
+    the Hammett constant (all acids, meta acids, para acids), and the correlation of the
+    difference between the para acid and the meta acid of one substituent with the same
+    difference of the bands."""
+    y = np.asarray(y, float)
+    sigma = np.asarray(table["sigma"], float)
+    pos = np.asarray(table["position"])
+    pairs = twin_pairs(table)
+    out = {}
+    for j, label in enumerate(CARBOXYL_ATOMS):
+        q = Q[:, j]
+        ok = np.isfinite(q) & np.isfinite(sigma)
+        row = dict(mean=_number(np.nanmean(q)), sd=_number(np.nanstd(q)),
+                   r_band=_number(_corr(q[np.isfinite(q)], y[np.isfinite(q)])),
+                   r_sigma=_number(_corr(q[ok], sigma[ok])))
+        for p in ("meta", "para"):
+            row["r_sigma_" + p] = _number(_corr(q[ok & (pos == p)], sigma[ok & (pos == p)]))
+        if len(pairs) >= 3:
+            m, p = pairs.T
+            row["r_twin"] = _number(_corr(q[p] - q[m], y[p] - y[m]))
+        else:
+            row["r_twin"] = None
+        out[label] = row
+    return out
+
+
+def run_charges(rhos=CHARGE_RHOS, folds=FOLDS, seed=0, repeats=REPEATS, results=RESULTS,
+                data=DATA, structures=STRUCTURES, quantum=QUANTUM,
+                read_rho=INDICATOR_READ_RHO, runs=2000):
+    """The electrostatic field from quantum charges, on the start geometries.
+
+    The electrostatic field of the five fields is built from Gasteiger charges.  That scheme
+    moves charge along the sigma bonds only, so it does not hold the effect of a substituent
+    through the pi electrons of the ring (resonance).  Here the charges are taken from one
+    GFN2-xTB calculation per acid on the start geometry.  The geometry is not optimised, so
+    the description holds nothing about the geometry of the ORCA run that gives the band.
+
+    The charge of the carbonyl oxygen is one computed number that could hold the whole answer,
+    as the length of the C=O bond did in part 5.  The references therefore include the linear
+    regression on that charge and the multiple linear regression on the charges of the four
+    atoms of the carboxyl group.  A field with quantum charges that is no better than these
+    regressions has used the charges of the carboxyl group and not the field of the acid.
+
+    As in part 7, the cross-validation is repeated with other folds, and every number is given
+    for folds that hold out whole acids and for folds that hold out whole substituents.
+
+    The width of the envelope decides the result here, so it is not chosen by the result.  The
+    rows at one width keep the convention of the other parts (the ridge with the best q2).  A
+    second set of rows chooses the width and the ridge inside every training part
+    (:func:`nested_choice`), and these are the rows that the verdict reads.
+    """
+    t_all = time.time()
+    if not structures or not os.path.exists(structures):
+        raise SystemExit("the charge part is measured on the start geometries: give the SD "
+                         "file with --structures")
+    os.makedirs(results, exist_ok=True)
+    mols, names, fields5, targets, fs5, table = read(data, structures=structures)
+    qmols = with_quantum_charges(mols, names, quantum)
+    y = np.asarray(targets.y, float)
+    units = {"acids": targets, "substituents": substituent_targets(targets, table)}
+    seeds = [int(seed) + k for k in range(int(repeats))]
+    rhos = sorted({float(r) for r in rhos} | {float(read_rho)})
+    cif = cif_types_in(mols, "sybyl", min_molecules=INDICATOR_MIN_ACIDS)
+    es = ("electrostatic",)
+    sets = {"five": ("the five fields, Gasteiger charges", fs5, mols),
+            "es": ("the electrostatic field alone, Gasteiger charges",
+                   FieldSet.create(physchem=es), mols),
+            "es_q": ("the electrostatic field alone, quantum charges",
+                     FieldSet.create(physchem=es, charge_model="file"), qmols),
+            "five_q": ("the five fields, quantum charges",
+                       FieldSet.create(charge_model="file"), qmols),
+            "five_q_fukui": ("the five fields with quantum charges and the two Fukui fields",
+                             FieldSet.create(charge_model="file",
+                                             atom_properties=QUANTUM_FUKUI), qmols),
+            "five_q_indicator": (f"the five fields with quantum charges and {len(cif)} "
+                                 f"indicator fields",
+                                 FieldSet.create(charge_model="file", cif_types=cif), qmols)}
+    built = {"five": fields5}
+    for key, (label, fs, src) in sets.items():
+        if key not in built:
+            built[key] = [build_fields(m, fs, name=n) for m, n in zip(src, names)]
+        if fs.charge_model == "file":
+            bad = [n for n, f in zip(names, built[key]) if f.charge_source != "file"]
+            if bad:
+                raise SystemExit(f"{label}: the charges of {bad[0]} were not read from the "
+                                 f"file ({len(bad)} acids)")
+    q_g = carboxyl_charges(mols, targets, [f.charges for f in built["five"]])
+    q_x = carboxyl_charges(qmols, targets, [f.charges for f in built["five_q"]])
+    carboxyl = dict(gasteiger=charge_statistics(q_g, y, table),
+                    quantum=charge_statistics(q_x, y, table))
+    X4 = np.c_[np.ones(len(y)), q_x]
+    fit = y - X4 @ np.linalg.lstsq(X4, y, rcond=None)[0]
+    carboxyl["fit_r2_four_quantum"] = float(1.0 - np.sum(fit ** 2) / np.sum((y - y.mean()) ** 2))
+    twins = twin_correlation(targets, table)
+    _say(f"=== quantum charges on {len(targets)} acids ({units['substituents'].n_mol} "
+         f"substituents), start geometries, charges from "
+         f"{os.path.relpath(quantum, ROOT)}; {len(seeds)} repeats of {folds} folds")
+    for label in CARBOXYL_ATOMS:
+        x, g = carboxyl["quantum"][label], carboxyl["gasteiger"][label]
+        _say(f"  {label}: quantum charge {x['mean']:+.3f} (sd {x['sd']:.4f}), r with the band "
+             f"{_r(x['r_band'])}, with the Hammett constant {_r(x['r_sigma'])}; Gasteiger "
+             f"charge {g['mean']:+.3f} (sd {g['sd']:.4f}), r with the band {_r(g['r_band'])}")
+
+    count_k = count_kernel(count_features(fields5, targets, types_of(fields5, min_atoms=10)))
+    oxygen = CARBOXYL_ATOMS.index("carbonyl oxygen")
+    refs = {}
+    for unit, tg in units.items():
+        refs[unit] = {
+            "counts": _repeat(count_k, tg, folds, seeds, "atom-centred counts"),
+            "one_line": [hammett_reference(tg, table, folds, s, two_lines=False)
+                         for s in seeds],
+            "two_lines": [hammett_reference(tg, table, folds, s, two_lines=True)
+                          for s in seeds],
+            "oxygen_charge": [regression_reference(
+                q_x[:, oxygen], tg, folds, s,
+                "linear regression on the quantum charge of the carbonyl oxygen")
+                for s in seeds],
+            "carboxyl_charges": [regression_reference(
+                q_x, tg, folds, s,
+                "multiple linear regression on the quantum charges of the four atoms of the "
+                "carboxyl group") for s in seeds]}
+        for k, v in refs[unit].items():
+            q, sd, _e = repeated_q2(v, y)
+            _say(f"  whole {unit} held out, {v[0].name}: q2 {q:+.3f} (sd over the repeats "
+                 f"{sd:.3f})")
+
+    res, kern = {}, {}
+    for key, (label, fs, _src) in sets.items():
+        t0 = time.time()
+        fields = built[key]
+        for rho in rhos:
+            plain = [environment(fields[int(targets.molecule[r])], int(targets.atom[r]), rho)
+                     for r in range(len(targets))]
+            envs = posed_environments(fields, targets, rho=rho)
+            kern[key, rho] = {"invariant": local_kernel(local_features(plain)),
+                              "aligned": overlap_kernel(envs, fs)[2]}
+            for unit, tg in units.items():
+                for kind, K in kern[key, rho].items():
+                    res[key, rho, unit, kind] = _repeat(K, tg, folds, seeds,
+                                                        f"{kind}, {label}, rho {rho:g}")
+        _say(f"  {label}: {fs.n_fields} fields, {time.time() - t0:.0f} s")
+
+    t0 = time.time()
+    nest = {}
+    for key, (label, _fs, _src) in sets.items():
+        for unit, tg in units.items():
+            for kind in ("invariant", "aligned"):
+                by_rho = {rho: kern[key, rho][kind] for rho in rhos}
+                nest[key, unit, kind] = [nested_choice(by_rho, tg, WIDE_LAMS, folds, s,
+                                                       name=f"{kind}, {label}")
+                                         for s in seeds]
+    _say(f"  the width and the ridge chosen inside the folds: {time.time() - t0:.0f} s")
+
+    # The substituent that holds the largest part of the squared error of the five fields
+    # with quantum charges.  Every nested row and every reference is also scored without
+    # its acids, so that the table shows what one substituent decides.
+    sample = [names[int(m)] for m in targets.molecule]
+    subst = np.asarray([str(s) for s in table["substituent"]])
+    err = squared_errors([r for r, _p in nest["five_q", "substituents", "invariant"]], y)
+    share = {s: float(err[subst == s].sum() / err.sum()) for s in np.unique(subst)}
+    worst = max(share, key=share.get)
+    out_rows = np.where(subst == worst)[0]
+    top = np.array([float(np.max(f.charges)) for f in built["five_q"]])
+    top = top[np.asarray(targets.molecule, int)]
+    rest = np.setdiff1d(np.arange(len(y)), out_rows)
+    outlier = dict(substituent=worst, acids=[sample[r] for r in out_rows],
+                   share=share[worst], largest_charge=float(top[out_rows].max()),
+                   largest_charge_of_the_others=float(top[rest].max()),
+                   of_the_acid=sample[int(rest[np.argmax(top[rest])])])
+    _say(f"  the substituent with the largest part of the squared error of the five fields "
+         f"with quantum charges (whole substituents held out, width chosen inside the "
+         f"folds): {worst}, {100 * share[worst]:.0f} %; its largest quantum charge is "
+         f"{outlier['largest_charge']:+.2f} e, the largest of the other acids "
+         f"{outlier['largest_charge_of_the_others']:+.2f} e ({outlier['of_the_acid']})")
+
+    def score_without(rr, tg, ref=None):
+        cut, sub = without_rows(rr, tg, out_rows, folds)
+        q, sd, e = repeated_q2(cut, sub.y)
+        cell = dict(q2=q, sd=sd, error=e)
+        for other in (ref or ()):
+            cell["against_" + other] = paired_repeats(
+                cut, without_rows(refs_of[other], tg, out_rows, folds)[0], sub, runs, seed)
+        return cell
+
+    #: what each field set is compared with, besides the references
+    base = {"es_q": ("es",), "five_q": ("five",), "five_q_fukui": ("five", "five_q"),
+            "five_q_indicator": ("five", "five_q"), "es": ("five",)}
+    held = {}
+    for unit, tg in units.items():
+        refs_of = refs[unit]
+        rows = []
+        for key, (label, fs, _src) in sets.items():
+            for rho in rhos:
+                row = dict(fields=key, label=label, n_fields=int(fs.n_fields), rho=rho,
+                           width=float(envelope_width(rho)))
+                for kind in ("invariant", "aligned"):
+                    rr = res[key, rho, unit, kind]
+                    q, sd, err = repeated_q2(rr, y)
+                    cell = dict(q2=q, sd=sd, error=err, by_position=position_errors(rr, y, table),
+                                q2_by_repeat=[float(r.q2) for r in rr],
+                                lam=float(np.median([r.lam for r in rr])),
+                                twins=twin_difference(rr, tg, table))
+                    for other, ref in refs[unit].items():
+                        cell["against_" + other] = paired_repeats(rr, ref, tg, runs, seed)
+                    for other in base.get(key, ()):
+                        cell["against_" + other] = paired_repeats(
+                            rr, res[other, rho, unit, kind], tg, runs, seed)
+                    row[kind] = cell
+                rows.append(row)
+                if rho == float(read_rho):
+                    i, a = row["invariant"], row["aligned"]
+                    _say(f"  whole {unit} held out, {label}, width {row['width']:.2f} A: "
+                         f"invariant q2 {i['q2']:+.3f} ({i['sd']:.3f}), against the separate "
+                         f"Hammett regressions {_iv(i['against_two_lines'])}; posed q2 "
+                         f"{a['q2']:+.3f} ({a['sd']:.3f})")
+        chosen = []
+        for key, (label, fs, _src) in sets.items():
+            row = dict(fields=key, label=label, n_fields=int(fs.n_fields))
+            for kind in ("invariant", "aligned"):
+                rr = [r for r, _p in nest[key, unit, kind]]
+                picks = [p for _r, pp in nest[key, unit, kind] for p in pp]
+                q, sd, err = repeated_q2(rr, y)
+                cell = dict(q2=q, sd=sd, error=err, by_position=position_errors(rr, y, table),
+                            q2_by_repeat=[float(r.q2) for r in rr],
+                            lam=float(np.median([p[1] for p in picks])),
+                            widths={f"{envelope_width(rho):.2f}":
+                                    int(sum(1 for p in picks if p[0] == rho)) for rho in rhos},
+                            twins=twin_difference(rr, tg, table),
+                            largest=largest_errors(rr, y, sample),
+                            without=score_without(rr, tg, ("two_lines", "carboxyl_charges")))
+                for other, ref in refs[unit].items():
+                    cell["against_" + other] = paired_repeats(rr, ref, tg, runs, seed)
+                for other in base.get(key, ()):
+                    cell["against_" + other] = paired_repeats(
+                        rr, [r for r, _p in nest[other, unit, kind]], tg, runs, seed)
+                row[kind] = cell
+            chosen.append(row)
+            i, a = row["invariant"], row["aligned"]
+            _say(f"  whole {unit} held out, {label}, width chosen inside the folds: "
+                 f"invariant q2 {i['q2']:+.3f} ({i['sd']:.3f}), against the separate Hammett "
+                 f"regressions {_iv(i['against_two_lines'])}, widths {i['widths']}; posed q2 "
+                 f"{a['q2']:+.3f} ({a['sd']:.3f}), {_iv(a['against_two_lines'])}")
+            w = i["without"]
+            _say(f"    largest error {i['largest'][0]['name']} "
+                 f"({i['largest'][0]['error']:.1f} cm^-1, {100 * i['largest'][0]['share']:.0f} "
+                 f"% of the squared error); scored without {worst}: q2 {w['q2']:+.3f} "
+                 f"({w['sd']:.3f}), against the separate Hammett regressions "
+                 f"{_iv(w['against_two_lines'])}; posed, largest error "
+                 f"{a['largest'][0]['name']} ({a['largest'][0]['error']:.1f} cm^-1)")
+        ref_out = {}
+        for k, v in refs[unit].items():
+            q, sd, err = repeated_q2(v, y)
+            ref_out[k] = dict(name=v[0].name, q2=q, sd=sd, error=err,
+                              by_position=position_errors(v, y, table),
+                              q2_by_repeat=[float(q2_of(y, r.predicted)) for r in v],
+                              twins=twin_difference(v, tg, table),
+                              largest=largest_errors(v, y, sample),
+                              without=score_without(v, tg))
+        held[unit] = dict(n_units=int(len(np.unique(tg.molecule))), references=ref_out,
+                          rows=rows, chosen=chosen)
+
+    agreement = []
+    for rho in rhos:
+        row = dict(rho=rho, width=float(envelope_width(rho)))
+        for name, (a, b) in (("electrostatic", ("es_q", "es")), ("five", ("five_q", "five"))):
+            for kind in ("invariant", "aligned"):
+                row[f"{name}_{kind}"] = kernel_agreement(kern[a, rho][kind], kern[b, rho][kind])
+        agreement.append(row)
+        _say(f"  width {row['width']:.2f} A: the kernel with quantum charges against the kernel "
+             f"with Gasteiger charges, electrostatic field alone r "
+             f"{row['electrostatic_invariant']:+.2f}, five fields r "
+             f"{row['five_invariant']:+.2f} (invariant)")
+
+    sigma = np.asarray(table["sigma"], float)
+    pairs = twin_pairs(table)
+    if len(pairs) >= 3:
+        twins["r_sigma_band"] = _number(_corr(sigma[pairs[:, 1]] - sigma[pairs[:, 0]],
+                                              y[pairs[:, 1]] - y[pairs[:, 0]]))
+        twins["spread"] = float(np.std(y[pairs[:, 1]] - y[pairs[:, 0]]))
+        twins["mean"] = float(np.mean(y[pairs[:, 1]] - y[pairs[:, 0]]))
+    first = next(iter(Chem.SDMolSupplier(quantum, removeHs=False)))
+    level = first.GetProp("qm_level") if first is not None and first.HasProp("qm_level") else ""
+    out = dict(n_samples=len(targets), n_substituents=int(units["substituents"].n_mol),
+               folds=int(folds), seed=int(seed), repeats=len(seeds), runs=int(runs),
+               lams=[float(x) for x in WIDE_LAMS], target=TARGET,
+               structures=os.path.relpath(structures, ROOT).replace(os.sep, "/"),
+               quantum=os.path.relpath(quantum, ROOT).replace(os.sep, "/"),
+               quantum_level=level, charge=QUANTUM_CHARGE, fukui=list(QUANTUM_FUKUI),
+               read_rho=float(read_rho), read_width=float(envelope_width(read_rho)),
+               widths=[float(envelope_width(r)) for r in rhos], inner_folds=INNER_FOLDS,
+               types=list(cif), carboxyl=carboxyl, twins=twins, outlier=outlier,
+               held_out=held,
+               kernel_agreement=agreement, seconds=time.time() - t_all)
+    with io.open(os.path.join(results, "charges.json"), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, indent=1)
+    _say(f"  {out['seconds'] / 60:.1f} min")
+    return out
+
+
+def _r(value):
+    """A correlation for a message or a table: the number, or a dash where it is not defined
+    (a quantity that does not vary has no correlation)."""
+    return "-" if value is None else f"{value:+.3f}"
+
+
+# --------------------------------------------------------------------------- #
 # the table
 # --------------------------------------------------------------------------- #
 
@@ -1033,7 +1568,8 @@ def report(results=RESULTS, table=None):
     """The table of the stored result as Markdown text.  The text is also written to `table`,
     by default `table.md` in the results folder, so that `run_all.py` can rebuild the table
     from `band.json` and compare it with the committed one.  The part on the indicator
-    fields is added when `indicator.json` is in the results folder."""
+    fields is added when `indicator.json` is in the results folder, and the part on the
+    quantum charges when `charges.json` is there."""
     path = os.path.join(results, "band.json")
     if not os.path.exists(path):
         raise SystemExit(f"{path} is missing: run this script first")
@@ -1087,6 +1623,10 @@ def report(results=RESULTS, table=None):
     if os.path.exists(extra):
         with io.open(extra, encoding="utf-8") as fh:
             lines += _indicator_section(json.load(fh)) + [""]
+    extra = os.path.join(results, "charges.json")
+    if os.path.exists(extra):
+        with io.open(extra, encoding="utf-8") as fh:
+            lines += _charge_section(json.load(fh)) + [""]
     text = "\n".join(lines)
     with io.open(table or os.path.join(results, "table.md"), "w", encoding="utf-8",
                  newline="\n") as fh:
@@ -1337,6 +1877,374 @@ def _indicator_verdict(d):
     return " ".join(parts)
 
 
+def _opt(cell, key):
+    return _iv(cell[key]) if key in cell else ""
+
+
+def _picked(cell, widths):
+    return " / ".join(str(cell["widths"].get(f"{w:.2f}", 0)) for w in widths)
+
+
+def _largest(cell):
+    top = cell["largest"][0]
+    return f"{top['name']} ({top['error']:.1f}; {100 * top['share']:.0f} %)"
+
+
+def _charge_references(refs, worst):
+    lines = [f"| reference | q2 (sd over the repeats) | RMSE, cm^-1 | RMSE of the meta acids, "
+             f"cm^-1 | RMSE of the para acids, cm^-1 | acid with the largest error (its RMSE, "
+             f"cm^-1; its part of the squared error) | q2 scored without the acids of {worst} "
+             f"(sd over the repeats) |", "|---|---:|---:|---:|---:|---|---:|"]
+    for k in CHARGE_REFERENCES:
+        r, p = refs[k], refs[k]["by_position"]
+        lines.append(f"| {r['name']} | {_q(r)} | {r['error']:.2f} | {p['meta']:.2f} | "
+                     f"{p['para']:.2f} | {_largest(r)} | {_q(r['without'])} |")
+    return lines
+
+
+def _charge_chosen(chosen, widths, kind):
+    w = " / ".join(f"{x:.2f}" for x in widths)
+    lines = [f"| fields | number of fields | q2 (sd over the repeats) | number of folds that "
+             f"chose the width {w} A | RMSE of the meta acids, cm^-1 | RMSE of the para acids, "
+             f"cm^-1 | against the five fields with Gasteiger charges | against the five "
+             f"fields with quantum charges | against the Hammett regressions, meta and para "
+             f"separately | against the regression on the four charges of the carboxyl group |",
+             "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
+    for row in chosen:
+        c = row[kind]
+        p = c["by_position"]
+        lines.append(f"| {row['label']} | {row['n_fields']} | {_q(c)} | {_picked(c, widths)} | "
+                     f"{p['meta']:.2f} | {p['para']:.2f} | {_opt(c, 'against_five')} | "
+                     f"{_opt(c, 'against_five_q')} | {_iv(c['against_two_lines'])} | "
+                     f"{_iv(c['against_carboxyl_charges'])} |")
+    return lines
+
+
+def _charge_without(chosen, worst, kind):
+    lines = [f"| fields | acid with the largest error (its RMSE, cm^-1; its part of the "
+             f"squared error) | q2 scored without the acids of {worst} (sd over the repeats) | "
+             f"without them, against the Hammett regressions, meta and para separately | "
+             f"without them, against the regression on the four charges of the carboxyl "
+             f"group |", "|---|---|---:|---:|---:|"]
+    for row in chosen:
+        c = row[kind]
+        w = c["without"]
+        lines.append(f"| {row['label']} | {_largest(c)} | {_q(w)} | "
+                     f"{_iv(w['against_two_lines'])} | {_iv(w['against_carboxyl_charges'])} |")
+    return lines
+
+
+def _charge_scan(rows):
+    lines = ["| fields | width, A | invariant local q2 (sd over the repeats) | against the "
+             "five fields with Gasteiger charges | against the Hammett regressions, meta and "
+             "para separately | against the regression on the four charges of the carboxyl "
+             "group | posed overlap q2 (sd over the repeats) | posed overlap against the "
+             "Hammett regressions, meta and para separately |",
+             "|---|---:|---:|---:|---:|---:|---:|---:|"]
+    for row in rows:
+        i, a = row["invariant"], row["aligned"]
+        lines.append(f"| {row['label']} | {row['width']:.2f} | {_q(i)} | "
+                     f"{_opt(i, 'against_five')} | {_iv(i['against_two_lines'])} | "
+                     f"{_iv(i['against_carboxyl_charges'])} | {_q(a)} | "
+                     f"{_iv(a['against_two_lines'])} |")
+    return lines
+
+
+def _chosen_row(held, fields):
+    return next(r for r in held["chosen"] if r["fields"] == fields)
+
+
+def _charge_section(d):
+    """The part of the table that `charges.json` gives."""
+    widths = sorted(d["widths"], reverse=True)
+    cq, cg = d["carboxyl"]["quantum"], d["carboxyl"]["gasteiger"]
+    tw, worst = d["twins"], d["outlier"]["substituent"]
+    lines = ["## Quantum charges: the electrostatic field from GFN2-xTB charges, on the start "
+             "geometries", "",
+             f"The electrostatic field of the five fields is built from Gasteiger charges.  "
+             f"That scheme computes the charges from the bonds alone and moves charge along "
+             f"the sigma bonds only.  It does not hold the effect of a substituent through "
+             f"the pi electrons of the ring (resonance).  In this part the charge of every "
+             f"atom is taken from one calculation with the semi-empirical quantum method "
+             f"{d['quantum_level'] or 'GFN2-xTB'} (program xtb) on the start geometry.  The "
+             f"geometry is not optimised, so the description holds nothing about the geometry "
+             f"of the ORCA run that gives the band.  The charges are in `{d['quantum']}`.",
+             "",
+             f"The same calculation gives the two Fukui indices of every atom: the change of "
+             f"the charge of the atom when one electron is added to the molecule, and when "
+             f"one electron is removed.  One field set adds a field for each of the two "
+             f"indices ({', '.join(d['fukui'])}).  Another adds the {len(d['types'])} "
+             f"indicator fields of the part above.",
+             "",
+             f"The cross-validation is repeated {d['repeats']} times with other folds, with "
+             f"whole acids held out and with whole substituents held out, as in the part "
+             f"above.  A difference in q2 carries its 95 % bootstrap interval over the units "
+             f"that the folds hold out.",
+             "",
+             "### The charges of the four atoms of the carboxyl group", "",
+             "| atom | quantum charge, mean (sd over the acids), e | quantum charge: r with the "
+             "band | quantum charge: r with the Hammett constant | Gasteiger charge, mean (sd "
+             "over the acids), e | Gasteiger charge: r with the band |",
+             "|---|---:|---:|---:|---:|---:|"]
+    for atom in CARBOXYL_ATOMS:
+        x, g = cq[atom], cg[atom]
+        lines.append(f"| {atom} | {x['mean']:+.3f} ({x['sd']:.4f}) | {_r(x['r_band'])} | "
+                     f"{_r(x['r_sigma'])} | {g['mean']:+.3f} ({g['sd']:.4f}) | "
+                     f"{_r(g['r_band'])} |")
+    lines += ["", f"A multiple linear regression of the band on the four quantum charges, "
+                  f"fitted on all acids, has r2 {d['carboxyl']['fit_r2_four_quantum']:.3f}.  "
+                  f"The charges of the carboxyl group are computed numbers that could hold the "
+                  f"whole answer, as the length of the C=O bond did on the optimised "
+                  f"geometries.  The references below therefore include the linear regression "
+                  f"on the charge of the carbonyl oxygen and the multiple linear regression on "
+                  f"the four charges, both fitted inside the folds.  A field with quantum "
+                  f"charges that is no better than these regressions has used the charges of "
+                  f"the carboxyl group and not the field of the acid."]
+    for unit, title in (("acids", "whole acids held out"),
+                        ("substituents", "whole substituents held out (both acids of a "
+                                         "substituent together)")):
+        h = d["held_out"][unit]
+        lines += ["", f"### Quantum charges, {title}: the references", ""]
+        lines += _charge_references(h["references"], worst)
+        lines += ["", f"### Quantum charges, {title}: the width and the ridge chosen inside the "
+                      f"folds, invariant local kernel", "",
+                  f"Every training part is divided again into {d['inner_folds']} folds over "
+                  f"the same unit.  The width of the envelope (one of "
+                  f"{', '.join(f'{w:.2f}' for w in widths)} A) and the ridge are the pair with "
+                  f"the best q2 on these inner folds, so the held-out acids take no part in "
+                  f"the choice.  These are the rows that the reading below uses.", ""]
+        lines += _charge_chosen(h["chosen"], widths, "invariant")
+        lines += ["", f"Where the error of these rows is.  The last three columns score the "
+                      f"same predictions without the acids of the substituent {worst}; nothing "
+                      f"is fitted again.", ""]
+        lines += _charge_without(h["chosen"], worst, "invariant")
+        lines += ["", f"### Quantum charges, {title}: the width and the ridge chosen inside the "
+                      f"folds, posed overlap kernel", ""]
+        lines += _charge_chosen(h["chosen"], widths, "aligned")
+        lines += [""]
+        lines += _charge_without(h["chosen"], worst, "aligned")
+        lines += ["", f"### Quantum charges, {title}: every width", "",
+                  "Here the width is fixed and the ridge is the one with the best q2 on the "
+                  "folds of each repeat, as in the tables of the other parts.  A row of this "
+                  "table shows what a width holds.  The best row of a field set is not a "
+                  "result, because it was chosen by its q2.", ""]
+        lines += _charge_scan(h["rows"])
+    a, s = d["held_out"]["acids"], d["held_out"]["substituents"]
+    lines += ["", "### The difference between the para acid and the meta acid of one "
+                  "substituent", "",
+              f"Resonance is the part of a substituent effect that differs between the para "
+              f"and the meta position.  Over the {tw['n']} substituents that occur twice, the "
+              f"band of the para acid minus the band of the meta acid has a mean of "
+              f"{tw['mean']:+.1f} cm^-1 and a standard deviation of {tw['spread']:.1f} cm^-1, "
+              f"and it correlates with the difference of the two Hammett constants with r "
+              f"{_r(tw['r_sigma_band'])}.  The table gives how well each description predicts "
+              f"this difference from its out-of-fold predictions of the two acids (invariant "
+              f"local kernel, width and ridge chosen inside the folds).  A q2 below zero "
+              f"means that the description predicts the difference worse than its mean does.",
+              "",
+              "| description | whole acids held out: q2 of the predicted difference | whole "
+              "acids held out: RMSE of the difference, cm^-1 | whole substituents held out: "
+              "q2 of the predicted difference | whole substituents held out: RMSE of the "
+              "difference, cm^-1 |",
+              "|---|---:|---:|---:|---:|"]
+    for k in CHARGE_REFERENCES:
+        ta, ts = a["references"][k]["twins"], s["references"][k]["twins"]
+        lines.append(f"| {a['references'][k]['name']} | {ta['q2']:+.2f} | {ta['error']:.2f} | "
+                     f"{ts['q2']:+.2f} | {ts['error']:.2f} |")
+    for k in CHARGE_SETS:
+        ra, rs = _chosen_row(a, k), _chosen_row(s, k)
+        ta, ts = ra["invariant"]["twins"], rs["invariant"]["twins"]
+        lines.append(f"| {ra['label']} | {ta['q2']:+.2f} | {ta['error']:.2f} | "
+                     f"{ts['q2']:+.2f} | {ts['error']:.2f} |")
+    lines += ["", "### How alike the kernel with quantum charges and the kernel with Gasteiger "
+                  "charges are", "",
+              "The correlation between the off-diagonal elements of the two kernels, each "
+              "centred first.  Near 1, the change of the charges does not change which acids "
+              "the description finds alike.", "",
+              "| width, A | electrostatic field alone, invariant local kernel | electrostatic "
+              "field alone, posed overlap kernel | five fields, invariant local kernel | five "
+              "fields, posed overlap kernel |", "|---:|---:|---:|---:|---:|"]
+    for g in d["kernel_agreement"]:
+        lines.append(f"| {g['width']:.2f} | {g['electrostatic_invariant']:+.3f} | "
+                     f"{g['electrostatic_aligned']:+.3f} | {g['five_invariant']:+.3f} | "
+                     f"{g['five_aligned']:+.3f} |")
+    lines += ["", _charge_verdict(d)]
+    return lines
+
+
+def _passes(*intervals):
+    """True when every difference has its whole 95 % interval above zero."""
+    return all(iv[1] > 0 for iv in intervals)
+
+
+def _charge_verdict(d):
+    a, s = d["held_out"]["acids"], d["held_out"]["substituents"]
+    cq, cg = d["carboxyl"]["quantum"], d["carboxyl"]["gasteiger"]
+    out = d["outlier"]
+    ox = "carbonyl oxygen"
+    sd_g = max(cg[k]["sd"] for k in CARBOXYL_ATOMS)
+    parts = [f"**Reading of the quantum charges.** The Gasteiger charges of the four atoms of "
+             f"the carboxyl group are the same in every acid (the largest standard deviation "
+             f"is {sd_g:.4f} e), so the default electrostatic field holds a substituent only "
+             f"where the substituent is. The quantum charge of the {ox} varies (standard "
+             f"deviation {cq[ox]['sd']:.4f} e) and correlates with the band with r "
+             f"{_r(cq[ox]['r_band'])} and with the Hammett constant with r "
+             f"{_r(cq[ox]['r_sigma'])}."]
+    wide = max(d["widths"])
+
+    def at(held, key, width):
+        return next(r for r in held["rows"]
+                    if r["fields"] == key and abs(r["width"] - width) < 1e-9)["invariant"]
+
+    def best(held, key):
+        return max((r for r in held["rows"] if r["fields"] == key),
+                   key=lambda r: r["invariant"]["q2"])
+
+    bq, bg = best(a, "es_q"), best(a, "es")
+    narrow = bq["width"]
+    e1 = bq["invariant"]
+    parts.append(f"This changes what the width of the envelope does. With Gasteiger charges "
+                 f"the electrostatic field alone reaches q2 {at(a, 'es', narrow)['q2']:+.3f} "
+                 f"at {narrow:.2f} A and {at(a, 'es', wide)['q2']:+.3f} at {wide:.2f} A (whole "
+                 f"acids held out, ridge chosen by the q2), and its best width is "
+                 f"{bg['width']:.2f} A: the envelope has to reach the substituent. With "
+                 f"quantum charges it reaches {e1['q2']:+.3f} at {narrow:.2f} A and "
+                 f"{at(a, 'es_q', wide)['q2']:+.3f} at {wide:.2f} A. The regression on the "
+                 f"four charges of the carboxyl group reaches "
+                 f"{a['references']['carboxyl_charges']['q2']:+.3f}, and the difference of "
+                 f"the field at {narrow:.2f} A from it is "
+                 f"{_iv(e1['against_carboxyl_charges'])}. The quantum calculation has "
+                 f"carried the effect of the substituent to the atoms of the carboxyl group, "
+                 f"and a narrow field reads it there. The width therefore decides the "
+                 f"result. It is chosen inside the folds, and the statements below are made "
+                 f"for those rows and for the invariant local kernel.")
+    for h, what in ((a, "whole acids"), (s, "whole substituents")):
+        five, eg, eq, fq, ff, fi = (
+            _chosen_row(h, k)["invariant"]
+            for k in ("five", "es", "es_q", "five_q", "five_q_fukui", "five_q_indicator"))
+        two, four = h["references"]["two_lines"], h["references"]["carboxyl_charges"]
+        parts.append(f"With {what} held out, the Hammett regressions for meta and para "
+                     f"separately reach q2 {two['q2']:+.3f} and the regression on the four "
+                     f"charges of the carboxyl group reaches {four['q2']:+.3f}. The "
+                     f"electrostatic field alone reaches {eg['q2']:+.3f} with Gasteiger "
+                     f"charges and {eq['q2']:+.3f} with quantum charges (difference "
+                     f"{_iv(eq['against_es'])}). With quantum charges it is "
+                     f"{_iv(eq['against_two_lines'])} against the separate Hammett "
+                     f"regressions ({_against(eq['against_two_lines'])} them) and "
+                     f"{_iv(eq['against_carboxyl_charges'])} against the regression on the "
+                     f"four charges ({_against(eq['against_carboxyl_charges'])} it). The five "
+                     f"fields reach {five['q2']:+.3f} with Gasteiger charges and "
+                     f"{fq['q2']:+.3f} with quantum charges, with a standard deviation over "
+                     f"the repeats of {fq['sd']:.3f} (see the paragraph on one substituent "
+                     f"below). With the two Fukui fields added the q2 is {ff['q2']:+.3f}: "
+                     f"{_iv(ff['against_five'])} against the five fields with Gasteiger "
+                     f"charges ({_against(ff['against_five'])} them), "
+                     f"{_iv(ff['against_two_lines'])} against the separate Hammett regressions "
+                     f"({_against(ff['against_two_lines'])} them) and "
+                     f"{_iv(ff['against_carboxyl_charges'])} against the regression on the "
+                     f"four charges ({_against(ff['against_carboxyl_charges'])} it). With the "
+                     f"indicator fields added the q2 is {fi['q2']:+.3f} "
+                     f"({_iv(fi['against_five_q'])} against the five fields with quantum "
+                     f"charges, {_against(fi['against_five_q'])} them).")
+    qa, qs = (_chosen_row(h, "five_q")["invariant"] for h in (a, s))
+    top = qs["largest"][0]
+    wa, ws = (_chosen_row(h, "five_q_fukui")["invariant"]["without"] for h in (a, s))
+    posed = [row["aligned"]["largest"][0]["name"].endswith("-" + out["substituent"])
+             for h in (a, s) for row in h["chosen"]]
+    parts.append(f"**One substituent decides the result of the five fields with quantum "
+                 f"charges.** The acids of the substituent {out['substituent']} "
+                 f"({', '.join(out['acids'])}) hold {100 * out['share']:.0f} % of the squared "
+                 f"error of that row with whole substituents held out. The acid with the "
+                 f"largest error is {top['name']}, with a root mean square error of "
+                 f"{top['error']:.1f} cm^-1 over the repeats. The largest quantum charge of an "
+                 f"atom in these acids is {out['largest_charge']:+.2f} e. The largest in all "
+                 f"other acids is {out['largest_charge_of_the_others']:+.2f} e "
+                 f"({out['of_the_acid']}). When these acids are held out together, the "
+                 f"training part holds no acid like them. The inner folds then choose a "
+                 f"narrow width with a small ridge, and that model extrapolates far. Scored "
+                 f"without these acids, the same predictions give q2 "
+                 f"{qa['without']['q2']:+.3f} with whole acids held out and "
+                 f"{qs['without']['q2']:+.3f} with whole substituents held out "
+                 f"({_iv(qa['without']['against_two_lines'])} and "
+                 f"{_iv(qs['without']['against_two_lines'])} against the separate Hammett "
+                 f"regressions scored in the same way). The set with the two Fukui fields, "
+                 f"scored in the same way, gives {_iv(wa['against_two_lines'])} and "
+                 f"{_iv(ws['against_two_lines'])}. With the posed overlap kernel, an acid of "
+                 f"this substituent has the largest error in {sum(posed)} of the "
+                 f"{len(posed)} rows of the two tables. The substituent was found by its "
+                 f"error, after the result was known, so the scores without it describe the "
+                 f"failure and are not results. The tables with a fixed width do not show "
+                 f"this failure, because there the ridge is chosen by the q2 of the folds "
+                 f"that hold these acids out. A field from quantum charges therefore needs a "
+                 f"check that the charges of a new molecule are inside the range of the "
+                 f"training set. A tabulated Hammett constant needs no such check.")
+    ta, ts = (_chosen_row(h, "five")["invariant"]["twins"] for h in (a, s))
+    ea, es_ = (_chosen_row(h, "es_q")["invariant"]["twins"] for h in (a, s))
+    fa_, fs_ = (_chosen_row(h, "five_q_fukui")["invariant"]["twins"] for h in (a, s))
+    ha, hs = (h["references"]["two_lines"]["twins"] for h in (a, s))
+    ca, cs = (h["references"]["carboxyl_charges"]["twins"] for h in (a, s))
+    parts.append(f"**Resonance.** The difference between the para acid and the meta acid of "
+                 f"one substituent is the part of the band that resonance decides. The five "
+                 f"fields with Gasteiger charges predict it with q2 {ta['q2']:+.2f} (whole "
+                 f"acids held out) and {ts['q2']:+.2f} (whole substituents held out). The "
+                 f"electrostatic field alone with quantum charges reaches {ea['q2']:+.2f} and "
+                 f"{es_['q2']:+.2f}, and the five fields with quantum charges and the two "
+                 f"Fukui fields reach {fa_['q2']:+.2f} and {fs_['q2']:+.2f}. The separate "
+                 f"Hammett regressions reach {ha['q2']:+.2f} and {hs['q2']:+.2f}, and the "
+                 f"regression on the four charges of the carboxyl group {ca['q2']:+.2f} and "
+                 f"{cs['q2']:+.2f}.")
+    names = (("es_q", "The electrostatic field alone with quantum charges"),
+             ("five_q_fukui", "The five fields with quantum charges and the two Fukui fields"),
+             ("five_q", "The five fields with quantum charges alone"))
+    passed = [label for key, label in names
+              if _passes(_chosen_row(a, key)["invariant"]["against_two_lines"],
+                         _chosen_row(s, key)["invariant"]["against_two_lines"])]
+    answer = "**Answer.** With the width and the ridge chosen inside the folds, "
+    if passed:
+        answer += (f"these field sets pass the Hammett regressions for meta and para "
+                   f"separately on both kinds of folds: {'; '.join(passed).lower()}.")
+    else:
+        answer += ("no field set with quantum charges passes the Hammett regressions for meta "
+                   "and para separately on both kinds of folds.")
+    for key, label in names:
+        x, z = (_chosen_row(h, key)["invariant"]["against_two_lines"] for h in (a, s))
+        verb = "is" if key == "es_q" else "are"
+        answer += (f" {label} {verb} {_iv(x)} against them with whole acids held out "
+                   f"({_against(x)} them) and {_iv(z)} with whole substituents held out "
+                   f"({_against(z)} them).")
+    ba, bs = best(a, "five_q_fukui"), best(s, "five_q_fukui")
+    four = [_chosen_row(h, key)["invariant"]["against_carboxyl_charges"]
+            for h in (a, s) for key in ("es_q", "five_q_fukui")]
+    answer += (f" The interval of the last set is wide because of the substituent "
+               f"{out['substituent']}. In the table with a fixed width, the best width of "
+               f"the set with the Fukui fields ({ba['width']:.2f} A with whole acids held "
+               f"out, {bs['width']:.2f} A with whole substituents held out) gives "
+               f"{_iv(ba['invariant']['against_two_lines'])} and "
+               f"{_iv(bs['invariant']['against_two_lines'])} against the separate Hammett "
+               f"regressions. The difference between these numbers and the numbers above is "
+               f"what a choice of the width and the ridge by the result adds. Quantum "
+               f"charges do what "
+               f"Gasteiger charges cannot do on this series: they bring the fields to the "
+               f"level of the separate Hammett regressions, and they predict the difference "
+               f"between the para and the meta acid.")
+    if any(_passes(iv) for iv in four):
+        answer += (" At least one of the two best field sets is above the regression on the "
+                   "four charges of the carboxyl group on one kind of folds (see the tables).")
+    else:
+        answer += (" They do not bring the q2 of the fields above the regression on the "
+                   "four charges of the carboxyl group: every interval of that difference "
+                   "holds zero. So most of the gain is in the charges of the carboxyl group "
+                   "themselves. On the difference between the para and the meta acid the two "
+                   "best field sets reach a higher q2 than this regression (see the "
+                   "paragraph on resonance); no interval was computed for that difference.")
+    answer += (" The quantum charges come from a quantum calculation, as the band does. This "
+               "part therefore measures how much of a costly quantum result a quantum "
+               "calculation of a few seconds per acid already holds. It does not measure "
+               "what the structure alone predicts.")
+    parts.append(answer)
+    return "\n\n".join(parts)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--rho", nargs="*", type=float, default=list(RHOS),
@@ -1351,9 +2259,13 @@ def main():
     ap.add_argument("--structures", default=STRUCTURES,
                     help="the SD file with the start geometries of the same acids; 'none' "
                          "leaves that part out")
-    ap.add_argument("--only", choices=("all", "band", "indicator"), default="all",
+    ap.add_argument("--only", choices=("all", "band", "indicator", "charges"), default="all",
                     help="what to run: parts 1 to 6 (band), the indicator fields of part 7 "
-                         "(indicator), or both (all)")
+                         "(indicator), the quantum charges of part 8 (charges), or "
+                         "everything (all)")
+    ap.add_argument("--quantum", default=QUANTUM,
+                    help="the SD file with the start geometries and the quantum charge of "
+                         "every atom, for part 8")
     ap.add_argument("--repeats", type=int, default=REPEATS,
                     help="how many times the cross-validation of the indicator part is "
                          "repeated with other folds")
@@ -1369,6 +2281,10 @@ def main():
         if a.only == "indicator" or (a.only == "all" and structures):
             run_indicator(folds=a.folds, seed=a.seed, repeats=a.repeats, results=a.results,
                           data=a.data, structures=structures)
+        if a.only == "charges" or (a.only == "all" and structures
+                                   and os.path.exists(a.quantum)):
+            run_charges(folds=a.folds, seed=a.seed, repeats=a.repeats, results=a.results,
+                        data=a.data, structures=structures, quantum=a.quantum)
     if a.report in (None, "-"):
         path = os.path.join(a.results, "table.md")
     else:

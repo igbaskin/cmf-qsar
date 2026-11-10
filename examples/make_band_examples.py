@@ -10,7 +10,7 @@ group, which gives 189 acids (X = H is the same acid in both series and is kept 
 is the stretch of the carbonyl bond, the strongest band of an acid and the one whose shift with
 the substituent is textbook chemistry: an electron donor lowers it, an acceptor raises it.
 
-Two stages, both from this script.
+Three stages, all from this script.
 
 1. **The structures**, from SMILES: each acid is embedded with ETKDG, optimised with MMFF94, and
    the lowest-energy conformer with the carboxyl in its usual *syn* arrangement (the hydroxyl
@@ -28,11 +28,19 @@ Two stages, both from this script.
    carbon as ``atom.dprop.co_stretch`` and the details as molecule properties.  Every job is
    cached under `benchmarks/results/band/orca_work/`, so an interrupted run resumes.
 
+3. **Quantum atomic charges on the structures of stage 1**, with xtb (``--xtb``): one GFN2-xTB
+   single-point calculation per acid on the force-field geometry, without a geometry
+   optimisation, so that the description does not read the bond length the band depends on.
+   Written to `examples/spectra/benzoic_acids_xtb.sdf` with the same atoms in the same places
+   and three numbers on every atom: the Mulliken charge (``q_xtb``) and the two Fukui indices
+   (``fukui_plus``, ``fukui_minus``).  Part 8 of `benchmarks/run_band.py` reads this file.
+
 Usage
 -----
     python examples/make_band_examples.py                 # stage 1
     python examples/make_band_examples.py --orca --jobs 10   # stage 2, 10 molecules at a time
     python examples/make_band_examples.py --orca --limit 4   # a quick look at the first four
+    python examples/make_band_examples.py --xtb --jobs 8     # stage 3, 13 seconds in all
 
 On the serial ORCA build of this machine (one core per job) benzoic acid alone takes 5 minutes.
 With ten to twenty acids running at the same time one acid takes 16 to 69 minutes and about
@@ -66,7 +74,9 @@ RDLogger.DisableLog("rdApp.*")
 OUT_DIR = os.path.join(HERE, "spectra")
 STRUCTURES = os.path.join(OUT_DIR, "benzoic_acids.sdf")
 BANDS = os.path.join(OUT_DIR, "benzoic_acids_co.sdf")
+QUANTUM = os.path.join(OUT_DIR, "benzoic_acids_xtb.sdf")
 WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "orca_work")
+XTB_WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "xtb_work")
 
 #: the ring with the carboxyl group, written so that the substituent SMILES of the Hammett table
 #: attaches to the carbon named by the position
@@ -311,11 +321,31 @@ def run_orca(structures: str = STRUCTURES, out: str = BANDS, workdir: str = WORK
     return len(failed)
 
 
+def run_xtb(structures: str = STRUCTURES, out: str = QUANTUM, workdir: str = XTB_WORKDIR,
+            jobs: int = 8, limit: int = 0, log=print) -> int:
+    """Stage 3: GFN2-xTB charges and Fukui indices on the structures of stage 1, without a
+    geometry optimisation; returns the number of failures."""
+    from cmfqsar import xtb
+
+    cfg = xtb.Config(xtb=xtb.find_xtb(None), opt=False, fukui=True, workdir=workdir)
+    outcomes = xtb.process_dataset(structures, out, cfg, limit=limit or None,
+                                   jobs=max(1, jobs), log=log)
+    failed = [oc for oc in outcomes if oc.mol is None]
+    log(f"wrote {len(outcomes) - len(failed)} acids to {os.path.relpath(out, ROOT)}"
+        + (f"; {len(failed)} failed" if failed else ""))
+    return len(failed)
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--orca", action="store_true", help="stage 2: run ORCA on the structures")
-    ap.add_argument("--jobs", type=int, default=10, help="molecules at a time in stage 2")
-    ap.add_argument("--limit", type=int, default=0, help="stage 2 on the first N acids only")
+    ap.add_argument("--xtb", action="store_true",
+                    help="stage 3: GFN2-xTB charges and Fukui indices on the structures of "
+                         "stage 1, without a geometry optimisation")
+    ap.add_argument("--jobs", type=int, default=10,
+                    help="molecules at a time in stage 2 or stage 3")
+    ap.add_argument("--limit", type=int, default=0,
+                    help="stage 2 or stage 3 on the first N acids only")
     ap.add_argument("--level", default=None, help="level of theory (default r2SCAN-3c)")
     ap.add_argument("--no-retry", action="store_true",
                     help="stage 2 without the second optimisation of an acid that ended "
@@ -325,6 +355,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     a = ap.parse_args(argv)
     structures = os.path.join(a.out_dir, os.path.basename(STRUCTURES))
     bands = os.path.join(a.out_dir, os.path.basename(BANDS))
+    if a.xtb:
+        if not os.path.exists(structures):
+            raise SystemExit(f"{structures} is missing: run the script without --xtb first")
+        quantum = os.path.join(a.out_dir, os.path.basename(QUANTUM))
+        return 1 if run_xtb(structures, quantum, jobs=a.jobs, limit=a.limit) else 0
     if a.orca:
         if not os.path.exists(structures):
             raise SystemExit(f"{structures} is missing: run the script without --orca first")

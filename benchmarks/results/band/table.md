@@ -232,3 +232,235 @@ The posed overlap model with the five fields and the 15 indicator fields (q2 +0.
 Over the 22 pairs of a type and a place with at least 2 acids, the effects correlate with the mean shifts with r +0.85 and with the mean Hammett constants of those acids with r +0.59.
 
 **Reading of the indicator fields.** The statements are made at the width of 10.00 A, fixed before the measurement as the width where the five fields were best, and for the invariant local kernel. With whole acids held out the five fields reach q2 +0.741, the indicator fields alone +0.749 and both together +0.776. Both together are +0.036 [-0.047, +0.116] against the five fields (not separated from them) and -0.005 [-0.090, +0.072] against the Hammett regressions for meta and para separately, which reach +0.782 (not separated from them). Against the atom-centred counts (+0.650) the five fields are +0.091 [+0.017, +0.162] (above them) and both together +0.127 [+0.045, +0.199] (above them). With whole substituents held out the five fields reach q2 +0.676, the indicator fields alone +0.675 and both together +0.705. Both together are +0.029 [-0.130, +0.181] against the five fields (not separated from them) and -0.076 [-0.229, +0.033] against the Hammett regressions for meta and para separately, which reach +0.782 (not separated from them). Against the atom-centred counts (+0.623) the five fields are +0.053 [-0.097, +0.168] (not separated from them) and both together +0.082 [-0.027, +0.177] (not separated from them). The posed overlap with both field sets reaches q2 +0.718 with whole acids held out, against +0.707 with the five fields (+0.011 [-0.088, +0.083], not separated from them). The kernel of the indicator fields correlates with the kernel of the five fields with r +0.33 (invariant) and +0.38 (posed), so the indicator fields are a different description and not a copy of the five fields. Holding out whole substituents lowers the q2 of the five fields by 0.065 and of both field sets by 0.071. It does not change the Hammett regressions, because a Hammett constant is a measured value of the substituent, and a field model has to learn a substituent from the other substituents. The effects of single atoms follow the mean observed shifts by the type and the place of the first atom (r +0.85 over 22 pairs), so the model has stored the substituent effects by atom type and place. **Answer to the question of plan item SP2.** The five fields with the indicator fields do not pass the Hammett regressions for meta and para separately: the difference in q2 is -0.005 [-0.090, +0.072] with whole acids held out and -0.076 [-0.229, +0.033] with whole substituents held out.
+
+## Quantum charges: the electrostatic field from GFN2-xTB charges, on the start geometries
+
+The electrostatic field of the five fields is built from Gasteiger charges.  That scheme computes the charges from the bonds alone and moves charge along the sigma bonds only.  It does not hold the effect of a substituent through the pi electrons of the ring (resonance).  In this part the charge of every atom is taken from one calculation with the semi-empirical quantum method GFN2-xTB acc=1 (program xtb) on the start geometry.  The geometry is not optimised, so the description holds nothing about the geometry of the ORCA run that gives the band.  The charges are in `examples/spectra/benzoic_acids_xtb.sdf`.
+
+The same calculation gives the two Fukui indices of every atom: the change of the charge of the atom when one electron is added to the molecule, and when one electron is removed.  One field set adds a field for each of the two indices (fukui_plus, fukui_minus).  Another adds the 15 indicator fields of the part above.
+
+The cross-validation is repeated 10 times with other folds, with whole acids held out and with whole substituents held out, as in the part above.  A difference in q2 carries its 95 % bootstrap interval over the units that the folds hold out.
+
+### The charges of the four atoms of the carboxyl group
+
+| atom | quantum charge, mean (sd over the acids), e | quantum charge: r with the band | quantum charge: r with the Hammett constant | Gasteiger charge, mean (sd over the acids), e | Gasteiger charge: r with the band |
+|---|---:|---:|---:|---:|---:|
+| carbonyl carbon | +0.350 (0.0018) | +0.590 | +0.608 | +0.335 (0.0001) | -0.024 |
+| carbonyl oxygen | -0.418 (0.0083) | +0.875 | +0.909 | -0.246 (0.0000) | -0.067 |
+| hydroxyl oxygen | -0.378 (0.0041) | +0.797 | +0.869 | -0.478 (0.0000) | -0.067 |
+| hydroxyl hydrogen | +0.335 (0.0036) | +0.801 | +0.857 | +0.297 (0.0000) | -0.083 |
+
+A multiple linear regression of the band on the four quantum charges, fitted on all acids, has r2 0.805.  The charges of the carboxyl group are computed numbers that could hold the whole answer, as the length of the C=O bond did on the optimised geometries.  The references below therefore include the linear regression on the charge of the carbonyl oxygen and the multiple linear regression on the four charges, both fitted inside the folds.  A field with quantum charges that is no better than these regressions has used the charges of the carboxyl group and not the field of the acid.
+
+### Quantum charges, whole acids held out: the references
+
+| reference | q2 (sd over the repeats) | RMSE, cm^-1 | RMSE of the meta acids, cm^-1 | RMSE of the para acids, cm^-1 | acid with the largest error (its RMSE, cm^-1; its part of the squared error) | q2 scored without the acids of SF5 (sd over the repeats) |
+|---|---:|---:|---:|---:|---|---:|
+| atom-centred counts | +0.650 (0.017) | 2.65 | 2.45 | 2.83 | para-N(C2H5)2 (9.2; 6 %) | +0.649 (0.016) |
+| linear regression on the Hammett constant, all acids | +0.742 (0.002) | 2.27 | 2.30 | 2.23 | para-N(C2H5)2 (6.2; 4 %) | +0.738 (0.002) |
+| linear regression on the Hammett constant, meta and para separately | +0.782 (0.002) | 2.09 | 2.13 | 2.03 | meta-N(CH3)COCH3 (6.4; 5 %) | +0.778 (0.002) |
+| linear regression on the quantum charge of the carbonyl oxygen | +0.758 (0.003) | 2.20 | 1.96 | 2.40 | para-NHCH3 (6.4; 5 %) | +0.753 (0.003) |
+| multiple linear regression on the quantum charges of the four atoms of the carboxyl group | +0.786 (0.004) | 2.07 | 1.88 | 2.24 | para-SeCH3 (7.4; 7 %) | +0.790 (0.003) |
+
+### Quantum charges, whole acids held out: the width and the ridge chosen inside the folds, invariant local kernel
+
+Every training part is divided again into 5 folds over the same unit.  The width of the envelope (one of 10.00, 4.47, 2.00, 1.00 A) and the ridge are the pair with the best q2 on these inner folds, so the held-out acids take no part in the choice.  These are the rows that the reading below uses.
+
+| fields | number of fields | q2 (sd over the repeats) | number of folds that chose the width 10.00 / 4.47 / 2.00 / 1.00 A | RMSE of the meta acids, cm^-1 | RMSE of the para acids, cm^-1 | against the five fields with Gasteiger charges | against the five fields with quantum charges | against the Hammett regressions, meta and para separately | against the regression on the four charges of the carboxyl group |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| the five fields, Gasteiger charges | 5 | +0.718 (0.033) | 99 / 1 / 0 / 0 | 2.17 | 2.57 |  |  | -0.064 [-0.135, +0.000] | -0.068 [-0.129, -0.013] |
+| the electrostatic field alone, Gasteiger charges | 1 | +0.562 (0.044) | 22 / 78 / 0 / 0 | 3.01 | 2.91 | -0.156 [-0.290, -0.051] |  | -0.220 [-0.358, -0.117] | -0.224 [-0.357, -0.120] |
+| the electrostatic field alone, quantum charges | 1 | +0.824 (0.004) | 0 / 0 / 100 / 0 | 1.98 | 1.77 |  |  | +0.042 [-0.005, +0.093] | +0.038 [-0.001, +0.084] |
+| the five fields, quantum charges | 5 | +0.651 (0.238) | 0 / 21 / 75 / 4 | 3.08 | 2.12 | -0.066 [-0.414, +0.129] |  | -0.130 [-0.487, +0.064] | -0.135 [-0.486, +0.042] |
+| the five fields with quantum charges and the two Fukui fields | 7 | +0.837 (0.022) | 0 / 13 / 71 / 16 | 1.84 | 1.77 | +0.120 [+0.063, +0.184] | +0.186 [+0.024, +0.502] | +0.056 [-0.006, +0.120] | +0.052 [-0.003, +0.108] |
+| the five fields with quantum charges and 15 indicator fields | 20 | +0.692 (0.127) | 14 / 1 / 69 / 16 | 2.66 | 2.29 | -0.026 [-0.194, +0.099] | +0.040 [-0.082, +0.233] | -0.090 [-0.261, +0.034] | -0.094 [-0.263, +0.018] |
+
+Where the error of these rows is.  The last three columns score the same predictions without the acids of the substituent SF5; nothing is fitted again.
+
+| fields | acid with the largest error (its RMSE, cm^-1; its part of the squared error) | q2 scored without the acids of SF5 (sd over the repeats) | without them, against the Hammett regressions, meta and para separately | without them, against the regression on the four charges of the carboxyl group |
+|---|---|---:|---:|---:|
+| the five fields, Gasteiger charges | para-SeCH3 (8.1; 6 %) | +0.719 (0.035) | -0.059 [-0.129, +0.003] | -0.071 [-0.135, -0.015] |
+| the electrostatic field alone, Gasteiger charges | meta-C(CF3)3 (13.7; 11 %) | +0.555 (0.046) | -0.223 [-0.381, -0.122] | -0.235 [-0.386, -0.135] |
+| the electrostatic field alone, quantum charges | meta-CN (5.7; 5 %) | +0.822 (0.002) | +0.044 [-0.004, +0.095] | +0.032 [-0.006, +0.076] |
+| the five fields, quantum charges | meta-SF5 (24.0; 44 %) | +0.815 (0.011) | +0.036 [-0.014, +0.091] | +0.024 [-0.004, +0.054] |
+| the five fields with quantum charges and the two Fukui fields | meta-SF5 (7.6; 9 %) | +0.853 (0.007) | +0.075 [+0.016, +0.134] | +0.063 [+0.017, +0.110] |
+| the five fields with quantum charges and 15 indicator fields | meta-SF5 (16.4; 23 %) | +0.780 (0.030) | +0.001 [-0.061, +0.064] | -0.011 [-0.065, +0.041] |
+
+### Quantum charges, whole acids held out: the width and the ridge chosen inside the folds, posed overlap kernel
+
+| fields | number of fields | q2 (sd over the repeats) | number of folds that chose the width 10.00 / 4.47 / 2.00 / 1.00 A | RMSE of the meta acids, cm^-1 | RMSE of the para acids, cm^-1 | against the five fields with Gasteiger charges | against the five fields with quantum charges | against the Hammett regressions, meta and para separately | against the regression on the four charges of the carboxyl group |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| the five fields, Gasteiger charges | 5 | +0.688 (0.014) | 55 / 45 / 0 / 0 | 2.43 | 2.57 |  |  | -0.094 [-0.155, -0.033] | -0.098 [-0.164, -0.030] |
+| the electrostatic field alone, Gasteiger charges | 1 | +0.652 (0.009) | 0 / 99 / 1 / 0 | 2.45 | 2.82 | -0.036 [-0.084, +0.016] |  | -0.130 [-0.209, -0.046] | -0.134 [-0.208, -0.055] |
+| the electrostatic field alone, quantum charges | 1 | +0.484 (0.145) | 0 / 57 / 27 / 16 | 1.93 | 4.12 |  |  | -0.297 [-1.096, +0.066] | -0.302 [-1.083, +0.041] |
+| the five fields, quantum charges | 5 | +0.225 (0.268) | 0 / 84 / 16 / 0 | 1.81 | 5.27 | -0.463 [-1.958, +0.167] |  | -0.557 [-2.032, +0.072] | -0.561 [-2.019, +0.051] |
+| the five fields with quantum charges and the two Fukui fields | 7 | +0.709 (0.131) | 0 / 89 / 11 / 0 | 1.87 | 2.86 | +0.021 [-0.278, +0.196] | +0.484 [-0.037, +1.679] | -0.073 [-0.360, +0.102] | -0.077 [-0.346, +0.086] |
+| the five fields with quantum charges and 15 indicator fields | 20 | -0.293 (1.348) | 0 / 8 / 17 / 75 | 2.19 | 6.86 | -0.981 [-3.637, +0.105] | -0.518 [-1.682, -0.034] | -1.074 [-3.713, +0.013] | -1.079 [-3.721, -0.016] |
+
+| fields | acid with the largest error (its RMSE, cm^-1; its part of the squared error) | q2 scored without the acids of SF5 (sd over the repeats) | without them, against the Hammett regressions, meta and para separately | without them, against the regression on the four charges of the carboxyl group |
+|---|---|---:|---:|---:|
+| the five fields, Gasteiger charges | para-N(C2H5)2 (8.1; 6 %) | +0.682 (0.014) | -0.097 [-0.159, -0.036] | -0.109 [-0.173, -0.044] |
+| the electrostatic field alone, Gasteiger charges | para-N(C2H5)2 (9.4; 7 %) | +0.645 (0.009) | -0.133 [-0.215, -0.049] | -0.145 [-0.220, -0.068] |
+| the electrostatic field alone, quantum charges | para-SF5 (34.7; 62 %) | +0.813 (0.011) | +0.034 [-0.014, +0.092] | +0.022 [-0.007, +0.058] |
+| the five fields, quantum charges | para-SF5 (47.1; 76 %) | +0.810 (0.009) | +0.032 [-0.013, +0.085] | +0.020 [-0.019, +0.064] |
+| the five fields with quantum charges and the two Fukui fields | para-SF5 (20.9; 40 %) | +0.852 (0.007) | +0.074 [+0.030, +0.135] | +0.062 [+0.016, +0.120] |
+| the five fields with quantum charges and 15 indicator fields | para-SF5 (62.9; 81 %) | +0.754 (0.021) | -0.024 [-0.082, +0.033] | -0.036 [-0.074, -0.002] |
+
+### Quantum charges, whole acids held out: every width
+
+Here the width is fixed and the ridge is the one with the best q2 on the folds of each repeat, as in the tables of the other parts.  A row of this table shows what a width holds.  The best row of a field set is not a result, because it was chosen by its q2.
+
+| fields | width, A | invariant local q2 (sd over the repeats) | against the five fields with Gasteiger charges | against the Hammett regressions, meta and para separately | against the regression on the four charges of the carboxyl group | posed overlap q2 (sd over the repeats) | posed overlap against the Hammett regressions, meta and para separately |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| the five fields, Gasteiger charges | 10.00 | +0.741 (0.026) |  | -0.041 [-0.110, +0.022] | -0.045 [-0.101, +0.011] | +0.707 (0.006) | -0.074 [-0.132, -0.017] |
+| the five fields, Gasteiger charges | 4.47 | +0.701 (0.016) |  | -0.081 [-0.162, -0.012] | -0.085 [-0.164, -0.016] | +0.698 (0.008) | -0.083 [-0.146, -0.020] |
+| the five fields, Gasteiger charges | 2.00 | +0.227 (0.016) |  | -0.555 [-0.694, -0.449] | -0.559 [-0.683, -0.454] | +0.278 (0.065) | -0.504 [-0.597, -0.406] |
+| the five fields, Gasteiger charges | 1.00 | +0.164 (0.017) |  | -0.618 [-0.935, -0.423] | -0.622 [-0.921, -0.436] | +0.197 (0.019) | -0.585 [-0.785, -0.430] |
+| the electrostatic field alone, Gasteiger charges | 10.00 | +0.547 (0.011) | -0.194 [-0.337, -0.094] | -0.235 [-0.382, -0.129] | -0.239 [-0.379, -0.140] | +0.631 (0.007) | -0.151 [-0.240, -0.063] |
+| the electrostatic field alone, Gasteiger charges | 4.47 | +0.604 (0.026) | -0.097 [-0.179, -0.011] | -0.177 [-0.285, -0.086] | -0.182 [-0.285, -0.087] | +0.654 (0.008) | -0.128 [-0.206, -0.044] |
+| the electrostatic field alone, Gasteiger charges | 2.00 | +0.355 (0.025) | +0.128 [-0.156, +0.327] | -0.427 [-0.673, -0.263] | -0.431 [-0.678, -0.261] | +0.300 (0.077) | -0.482 [-0.702, -0.300] |
+| the electrostatic field alone, Gasteiger charges | 1.00 | +0.093 (0.037) | -0.070 [-0.175, +0.081] | -0.689 [-0.870, -0.545] | -0.693 [-0.852, -0.565] | +0.227 (0.057) | -0.554 [-0.776, -0.396] |
+| the electrostatic field alone, quantum charges | 10.00 | +0.612 (0.008) |  | -0.169 [-0.260, -0.096] | -0.174 [-0.259, -0.101] | +0.757 (0.011) | -0.024 [-0.101, +0.045] |
+| the electrostatic field alone, quantum charges | 4.47 | +0.709 (0.005) |  | -0.072 [-0.145, -0.016] | -0.077 [-0.149, -0.011] | +0.808 (0.009) | +0.026 [-0.028, +0.090] |
+| the electrostatic field alone, quantum charges | 2.00 | +0.825 (0.004) |  | +0.043 [-0.004, +0.094] | +0.039 [+0.000, +0.085] | +0.789 (0.010) | +0.007 [-0.055, +0.068] |
+| the electrostatic field alone, quantum charges | 1.00 | +0.764 (0.003) |  | -0.017 [-0.069, +0.037] | -0.022 [-0.049, +0.011] | +0.798 (0.005) | +0.016 [-0.034, +0.071] |
+| the five fields, quantum charges | 10.00 | +0.776 (0.008) | +0.035 [+0.002, +0.077] | -0.006 [-0.061, +0.053] | -0.010 [-0.055, +0.041] | +0.723 (0.014) | -0.058 [-0.129, +0.004] |
+| the five fields, quantum charges | 4.47 | +0.814 (0.010) | +0.114 [+0.060, +0.178] | +0.033 [-0.023, +0.088] | +0.029 [-0.012, +0.072] | +0.815 (0.005) | +0.034 [-0.012, +0.089] |
+| the five fields, quantum charges | 2.00 | +0.816 (0.006) | +0.589 [+0.486, +0.727] | +0.034 [-0.020, +0.094] | +0.030 [-0.010, +0.073] | +0.783 (0.013) | +0.001 [-0.073, +0.066] |
+| the five fields, quantum charges | 1.00 | +0.793 (0.008) | +0.630 [+0.440, +0.948] | +0.012 [-0.038, +0.066] | +0.007 [-0.015, +0.035] | +0.758 (0.008) | -0.024 [-0.079, +0.030] |
+| the five fields with quantum charges and the two Fukui fields | 10.00 | +0.829 (0.012) | +0.089 [+0.047, +0.141] | +0.048 [-0.003, +0.102] | +0.043 [-0.003, +0.094] | +0.774 (0.009) | -0.007 [-0.071, +0.053] |
+| the five fields with quantum charges and the two Fukui fields | 4.47 | +0.853 (0.007) | +0.152 [+0.097, +0.226] | +0.071 [+0.023, +0.127] | +0.067 [+0.020, +0.120] | +0.856 (0.003) | +0.075 [+0.027, +0.136] |
+| the five fields with quantum charges and the two Fukui fields | 2.00 | +0.862 (0.011) | +0.635 [+0.541, +0.762] | +0.080 [+0.025, +0.146] | +0.076 [+0.028, +0.132] | +0.824 (0.009) | +0.042 [-0.008, +0.101] |
+| the five fields with quantum charges and the two Fukui fields | 1.00 | +0.854 (0.010) | +0.690 [+0.500, +1.007] | +0.072 [+0.020, +0.133] | +0.068 [+0.029, +0.116] | +0.801 (0.010) | +0.019 [-0.045, +0.083] |
+| the five fields with quantum charges and 15 indicator fields | 10.00 | +0.791 (0.019) | +0.050 [-0.022, +0.128] | +0.009 [-0.066, +0.084] | +0.005 [-0.071, +0.080] | +0.722 (0.024) | -0.060 [-0.172, +0.035] |
+| the five fields with quantum charges and 15 indicator fields | 4.47 | +0.774 (0.017) | +0.074 [-0.029, +0.177] | -0.007 [-0.115, +0.079] | -0.011 [-0.118, +0.080] | +0.731 (0.026) | -0.051 [-0.162, +0.037] |
+| the five fields with quantum charges and 15 indicator fields | 2.00 | +0.814 (0.021) | +0.587 [+0.480, +0.727] | +0.032 [-0.027, +0.091] | +0.028 [-0.026, +0.082] | +0.758 (0.032) | -0.024 [-0.095, +0.035] |
+| the five fields with quantum charges and 15 indicator fields | 1.00 | +0.773 (0.004) | +0.610 [+0.419, +0.926] | -0.009 [-0.059, +0.045] | -0.013 [-0.039, +0.017] | +0.760 (0.007) | -0.022 [-0.078, +0.032] |
+
+### Quantum charges, whole substituents held out (both acids of a substituent together): the references
+
+| reference | q2 (sd over the repeats) | RMSE, cm^-1 | RMSE of the meta acids, cm^-1 | RMSE of the para acids, cm^-1 | acid with the largest error (its RMSE, cm^-1; its part of the squared error) | q2 scored without the acids of SF5 (sd over the repeats) |
+|---|---:|---:|---:|---:|---|---:|
+| atom-centred counts | +0.623 (0.009) | 2.74 | 2.39 | 3.06 | para-N(CH3)2 (9.9; 7 %) | +0.626 (0.008) |
+| linear regression on the Hammett constant, all acids | +0.742 (0.002) | 2.27 | 2.30 | 2.23 | para-N(C2H5)2 (6.3; 4 %) | +0.738 (0.002) |
+| linear regression on the Hammett constant, meta and para separately | +0.782 (0.002) | 2.09 | 2.14 | 2.03 | meta-N(CH3)COCH3 (6.4; 5 %) | +0.778 (0.002) |
+| linear regression on the quantum charge of the carbonyl oxygen | +0.760 (0.002) | 2.19 | 1.96 | 2.39 | para-NHCH3 (6.4; 4 %) | +0.754 (0.002) |
+| multiple linear regression on the quantum charges of the four atoms of the carboxyl group | +0.783 (0.011) | 2.08 | 1.88 | 2.25 | para-SeCH3 (7.9; 8 %) | +0.787 (0.010) |
+
+### Quantum charges, whole substituents held out (both acids of a substituent together): the width and the ridge chosen inside the folds, invariant local kernel
+
+Every training part is divided again into 5 folds over the same unit.  The width of the envelope (one of 10.00, 4.47, 2.00, 1.00 A) and the ridge are the pair with the best q2 on these inner folds, so the held-out acids take no part in the choice.  These are the rows that the reading below uses.
+
+| fields | number of fields | q2 (sd over the repeats) | number of folds that chose the width 10.00 / 4.47 / 2.00 / 1.00 A | RMSE of the meta acids, cm^-1 | RMSE of the para acids, cm^-1 | against the five fields with Gasteiger charges | against the five fields with quantum charges | against the Hammett regressions, meta and para separately | against the regression on the four charges of the carboxyl group |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| the five fields, Gasteiger charges | 5 | +0.640 (0.034) | 85 / 15 / 0 / 0 | 2.43 | 2.92 |  |  | -0.141 [-0.278, -0.043] | -0.143 [-0.274, -0.052] |
+| the electrostatic field alone, Gasteiger charges | 1 | +0.130 (0.127) | 9 / 91 / 0 / 0 | 4.28 | 4.07 | -0.510 [-1.275, -0.046] |  | -0.652 [-1.447, -0.173] | -0.653 [-1.439, -0.180] |
+| the electrostatic field alone, quantum charges | 1 | +0.799 (0.032) | 0 / 6 / 86 / 8 | 2.16 | 1.84 |  |  | +0.017 [-0.038, +0.074] | +0.016 [-0.014, +0.056] |
+| the five fields, quantum charges | 5 | +0.361 (0.324) | 0 / 11 / 88 / 1 | 4.27 | 2.72 | -0.279 [-1.418, +0.276] |  | -0.420 [-1.577, +0.089] | -0.422 [-1.566, +0.065] |
+| the five fields with quantum charges and the two Fukui fields | 7 | +0.823 (0.023) | 0 / 19 / 80 / 1 | 1.91 | 1.86 | +0.183 [+0.090, +0.316] | +0.462 [-0.042, +1.604] | +0.042 [-0.050, +0.115] | +0.040 [-0.013, +0.088] |
+| the five fields with quantum charges and 15 indicator fields | 20 | +0.611 (0.171) | 0 / 0 / 79 / 21 | 3.31 | 2.13 | -0.029 [-0.469, +0.248] | +0.250 [-0.072, +0.960] | -0.170 [-0.622, +0.054] | -0.172 [-0.609, +0.040] |
+
+Where the error of these rows is.  The last three columns score the same predictions without the acids of the substituent SF5; nothing is fitted again.
+
+| fields | acid with the largest error (its RMSE, cm^-1; its part of the squared error) | q2 scored without the acids of SF5 (sd over the repeats) | without them, against the Hammett regressions, meta and para separately | without them, against the regression on the four charges of the carboxyl group |
+|---|---|---:|---:|---:|
+| the five fields, Gasteiger charges | meta-B(OH)2 (10.2; 8 %) | +0.642 (0.036) | -0.136 [-0.275, -0.033] | -0.144 [-0.277, -0.050] |
+| the electrostatic field alone, Gasteiger charges | meta-C(CF3)3 (28.7; 25 %) | +0.119 (0.132) | -0.659 [-1.496, -0.173] | -0.668 [-1.513, -0.181] |
+| the electrostatic field alone, quantum charges | meta-SF5 (6.9; 6 %) | +0.807 (0.015) | +0.029 [-0.020, +0.083] | +0.021 [-0.011, +0.061] |
+| the five fields, quantum charges | meta-SF5 (37.7; 59 %) | +0.825 (0.010) | +0.046 [-0.002, +0.104] | +0.038 [+0.008, +0.074] |
+| the five fields with quantum charges and the two Fukui fields | meta-SeCH3 (9.7; 14 %) | +0.830 (0.029) | +0.052 [-0.034, +0.127] | +0.043 [-0.009, +0.097] |
+| the five fields with quantum charges and 15 indicator fields | meta-SF5 (24.6; 41 %) | +0.791 (0.019) | +0.013 [-0.046, +0.067] | +0.004 [-0.045, +0.053] |
+
+### Quantum charges, whole substituents held out (both acids of a substituent together): the width and the ridge chosen inside the folds, posed overlap kernel
+
+| fields | number of fields | q2 (sd over the repeats) | number of folds that chose the width 10.00 / 4.47 / 2.00 / 1.00 A | RMSE of the meta acids, cm^-1 | RMSE of the para acids, cm^-1 | against the five fields with Gasteiger charges | against the five fields with quantum charges | against the Hammett regressions, meta and para separately | against the regression on the four charges of the carboxyl group |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| the five fields, Gasteiger charges | 5 | +0.682 (0.027) | 72 / 28 / 0 / 0 | 2.42 | 2.63 |  |  | -0.100 [-0.173, -0.033] | -0.102 [-0.166, -0.035] |
+| the electrostatic field alone, Gasteiger charges | 1 | -0.573 (1.990) | 0 / 96 / 4 / 0 | 3.91 | 6.92 | -1.255 [-4.283, +0.002] |  | -1.355 [-4.369, -0.070] | -1.356 [-4.346, -0.087] |
+| the electrostatic field alone, quantum charges | 1 | +0.421 (0.403) | 0 / 59 / 21 / 20 | 1.81 | 4.47 |  |  | -0.361 [-1.355, +0.089] | -0.362 [-1.344, +0.068] |
+| the five fields, quantum charges | 5 | +0.224 (0.527) | 0 / 86 / 14 / 0 | 1.79 | 5.28 | -0.457 [-1.959, +0.177] |  | -0.557 [-2.023, +0.078] | -0.559 [-2.023, +0.066] |
+| the five fields with quantum charges and the two Fukui fields | 7 | +0.730 (0.054) | 0 / 87 / 12 / 1 | 1.75 | 2.79 | +0.048 [-0.274, +0.225] | +0.505 [+0.023, +1.678] | -0.052 [-0.362, +0.123] | -0.053 [-0.358, +0.122] |
+| the five fields with quantum charges and 15 indicator fields | 20 | -1.088 (1.451) | 6 / 1 / 23 / 70 | 2.46 | 8.82 | -1.769 [-6.398, +0.123] | -1.312 [-4.447, -0.031] | -1.869 [-6.461, +0.024] | -1.871 [-6.460, +0.005] |
+
+| fields | acid with the largest error (its RMSE, cm^-1; its part of the squared error) | q2 scored without the acids of SF5 (sd over the repeats) | without them, against the Hammett regressions, meta and para separately | without them, against the regression on the four charges of the carboxyl group |
+|---|---|---:|---:|---:|
+| the five fields, Gasteiger charges | para-N(C2H5)2 (7.9; 5 %) | +0.675 (0.027) | -0.104 [-0.175, -0.038] | -0.112 [-0.179, -0.046] |
+| the electrostatic field alone, Gasteiger charges | para-SF5 (61.1; 63 %) | +0.639 (0.010) | -0.139 [-0.231, -0.053] | -0.148 [-0.228, -0.069] |
+| the electrostatic field alone, quantum charges | para-SF5 (38.6; 68 %) | +0.822 (0.011) | +0.044 [-0.001, +0.102] | +0.035 [+0.003, +0.078] |
+| the five fields, quantum charges | para-SF5 (47.3; 76 %) | +0.816 (0.009) | +0.037 [-0.010, +0.089] | +0.029 [-0.011, +0.078] |
+| the five fields with quantum charges and the two Fukui fields | para-SF5 (20.5; 41 %) | +0.857 (0.014) | +0.078 [+0.033, +0.136] | +0.070 [+0.020, +0.133] |
+| the five fields with quantum charges and 15 indicator fields | para-SF5 (82.8; 87 %) | +0.756 (0.033) | -0.022 [-0.094, +0.038] | -0.031 [-0.091, +0.012] |
+
+### Quantum charges, whole substituents held out (both acids of a substituent together): every width
+
+Here the width is fixed and the ridge is the one with the best q2 on the folds of each repeat, as in the tables of the other parts.  A row of this table shows what a width holds.  The best row of a field set is not a result, because it was chosen by its q2.
+
+| fields | width, A | invariant local q2 (sd over the repeats) | against the five fields with Gasteiger charges | against the Hammett regressions, meta and para separately | against the regression on the four charges of the carboxyl group | posed overlap q2 (sd over the repeats) | posed overlap against the Hammett regressions, meta and para separately |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| the five fields, Gasteiger charges | 10.00 | +0.676 (0.015) |  | -0.106 [-0.243, -0.011] | -0.107 [-0.235, -0.019] | +0.703 (0.011) | -0.078 [-0.141, -0.016] |
+| the five fields, Gasteiger charges | 4.47 | +0.648 (0.017) |  | -0.133 [-0.238, -0.049] | -0.135 [-0.233, -0.053] | +0.695 (0.012) | -0.086 [-0.161, -0.022] |
+| the five fields, Gasteiger charges | 2.00 | +0.210 (0.043) |  | -0.572 [-0.830, -0.407] | -0.573 [-0.818, -0.416] | +0.114 (0.030) | -0.668 [-0.774, -0.561] |
+| the five fields, Gasteiger charges | 1.00 | +0.142 (0.065) |  | -0.639 [-0.878, -0.483] | -0.641 [-0.869, -0.484] | +0.182 (0.020) | -0.599 [-0.781, -0.462] |
+| the electrostatic field alone, Gasteiger charges | 10.00 | +0.323 (0.029) | -0.353 [-0.740, -0.127] | -0.458 [-0.857, -0.229] | -0.460 [-0.847, -0.238] | +0.627 (0.007) | -0.154 [-0.245, -0.065] |
+| the electrostatic field alone, Gasteiger charges | 4.47 | +0.517 (0.028) | -0.131 [-0.272, -0.014] | -0.265 [-0.449, -0.129] | -0.266 [-0.437, -0.135] | +0.648 (0.008) | -0.133 [-0.223, -0.048] |
+| the electrostatic field alone, Gasteiger charges | 2.00 | +0.362 (0.016) | +0.152 [-0.134, +0.461] | -0.420 [-0.672, -0.266] | -0.422 [-0.665, -0.262] | +0.134 (0.020) | -0.647 [-0.836, -0.501] |
+| the electrostatic field alone, Gasteiger charges | 1.00 | +0.022 (0.021) | -0.120 [-0.240, +0.050] | -0.760 [-0.853, -0.672] | -0.761 [-0.846, -0.672] | +0.100 (0.019) | -0.682 [-0.987, -0.494] |
+| the electrostatic field alone, quantum charges | 10.00 | +0.573 (0.021) |  | -0.209 [-0.353, -0.104] | -0.211 [-0.334, -0.125] | +0.771 (0.016) | -0.010 [-0.088, +0.059] |
+| the electrostatic field alone, quantum charges | 4.47 | +0.713 (0.008) |  | -0.068 [-0.144, -0.007] | -0.070 [-0.141, -0.009] | +0.817 (0.008) | +0.036 [-0.012, +0.099] |
+| the electrostatic field alone, quantum charges | 2.00 | +0.826 (0.003) |  | +0.045 [-0.003, +0.099] | +0.043 [+0.006, +0.091] | +0.800 (0.007) | +0.019 [-0.041, +0.082] |
+| the electrostatic field alone, quantum charges | 1.00 | +0.766 (0.003) |  | -0.016 [-0.068, +0.043] | -0.017 [-0.045, +0.018] | +0.804 (0.002) | +0.022 [-0.027, +0.080] |
+| the five fields, quantum charges | 10.00 | +0.745 (0.006) | +0.070 [+0.013, +0.152] | -0.036 [-0.112, +0.033] | -0.038 [-0.109, +0.028] | +0.731 (0.013) | -0.050 [-0.133, +0.019] |
+| the five fields, quantum charges | 4.47 | +0.796 (0.005) | +0.148 [+0.075, +0.249] | +0.014 [-0.033, +0.074] | +0.012 [-0.029, +0.063] | +0.823 (0.004) | +0.041 [-0.002, +0.093] |
+| the five fields, quantum charges | 2.00 | +0.815 (0.006) | +0.605 [+0.464, +0.831] | +0.034 [-0.026, +0.095] | +0.032 [-0.001, +0.075] | +0.793 (0.010) | +0.012 [-0.059, +0.078] |
+| the five fields, quantum charges | 1.00 | +0.792 (0.007) | +0.649 [+0.491, +0.891] | +0.010 [-0.042, +0.068] | +0.008 [-0.016, +0.043] | +0.764 (0.005) | -0.017 [-0.071, +0.041] |
+| the five fields with quantum charges and the two Fukui fields | 10.00 | +0.787 (0.006) | +0.111 [+0.045, +0.211] | +0.005 [-0.058, +0.066] | +0.004 [-0.059, +0.070] | +0.783 (0.013) | +0.002 [-0.062, +0.064] |
+| the five fields with quantum charges and the two Fukui fields | 4.47 | +0.836 (0.009) | +0.188 [+0.113, +0.288] | +0.054 [-0.001, +0.116] | +0.053 [+0.004, +0.112] | +0.861 (0.006) | +0.080 [+0.036, +0.135] |
+| the five fields with quantum charges and the two Fukui fields | 2.00 | +0.859 (0.004) | +0.649 [+0.499, +0.905] | +0.078 [+0.028, +0.131] | +0.076 [+0.042, +0.121] | +0.834 (0.008) | +0.052 [-0.003, +0.112] |
+| the five fields with quantum charges and the two Fukui fields | 1.00 | +0.830 (0.011) | +0.688 [+0.537, +0.931] | +0.048 [-0.004, +0.101] | +0.046 [+0.015, +0.084] | +0.808 (0.014) | +0.026 [-0.034, +0.085] |
+| the five fields with quantum charges and 15 indicator fields | 10.00 | +0.724 (0.013) | +0.048 [-0.106, +0.202] | -0.058 [-0.205, +0.052] | -0.059 [-0.203, +0.052] | +0.707 (0.016) | -0.074 [-0.210, +0.033] |
+| the five fields with quantum charges and 15 indicator fields | 4.47 | +0.736 (0.020) | +0.088 [-0.017, +0.194] | -0.045 [-0.162, +0.045] | -0.047 [-0.157, +0.042] | +0.727 (0.013) | -0.054 [-0.177, +0.044] |
+| the five fields with quantum charges and 15 indicator fields | 2.00 | +0.812 (0.013) | +0.602 [+0.437, +0.867] | +0.030 [-0.026, +0.082] | +0.029 [-0.027, +0.083] | +0.768 (0.024) | -0.013 [-0.090, +0.050] |
+| the five fields with quantum charges and 15 indicator fields | 1.00 | +0.769 (0.012) | +0.627 [+0.472, +0.858] | -0.013 [-0.069, +0.044] | -0.014 [-0.039, +0.017] | +0.768 (0.012) | -0.014 [-0.071, +0.045] |
+
+### The difference between the para acid and the meta acid of one substituent
+
+Resonance is the part of a substituent effect that differs between the para and the meta position.  Over the 94 substituents that occur twice, the band of the para acid minus the band of the meta acid has a mean of -2.6 cm^-1 and a standard deviation of 2.9 cm^-1, and it correlates with the difference of the two Hammett constants with r +0.665.  The table gives how well each description predicts this difference from its out-of-fold predictions of the two acids (invariant local kernel, width and ridge chosen inside the folds).  A q2 below zero means that the description predicts the difference worse than its mean does.
+
+| description | whole acids held out: q2 of the predicted difference | whole acids held out: RMSE of the difference, cm^-1 | whole substituents held out: q2 of the predicted difference | whole substituents held out: RMSE of the difference, cm^-1 |
+|---|---:|---:|---:|---:|
+| atom-centred counts | -0.27 | 3.30 | -0.17 | 3.16 |
+| linear regression on the Hammett constant, all acids | +0.02 | 2.89 | +0.05 | 2.85 |
+| linear regression on the Hammett constant, meta and para separately | +0.42 | 2.23 | +0.42 | 2.23 |
+| linear regression on the quantum charge of the carbonyl oxygen | -0.09 | 3.06 | -0.06 | 3.01 |
+| multiple linear regression on the quantum charges of the four atoms of the carboxyl group | +0.22 | 2.58 | +0.27 | 2.50 |
+| the five fields, Gasteiger charges | -0.30 | 3.33 | +0.18 | 2.65 |
+| the electrostatic field alone, Gasteiger charges | -0.41 | 3.47 | -0.10 | 3.06 |
+| the electrostatic field alone, quantum charges | +0.41 | 2.25 | +0.44 | 2.18 |
+| the five fields, quantum charges | +0.08 | 2.81 | +0.14 | 2.72 |
+| the five fields with quantum charges and the two Fukui fields | +0.42 | 2.22 | +0.60 | 1.84 |
+| the five fields with quantum charges and 15 indicator fields | +0.01 | 2.91 | -0.49 | 3.57 |
+
+### How alike the kernel with quantum charges and the kernel with Gasteiger charges are
+
+The correlation between the off-diagonal elements of the two kernels, each centred first.  Near 1, the change of the charges does not change which acids the description finds alike.
+
+| width, A | electrostatic field alone, invariant local kernel | electrostatic field alone, posed overlap kernel | five fields, invariant local kernel | five fields, posed overlap kernel |
+|---:|---:|---:|---:|---:|
+| 10.00 | +0.697 | +0.466 | +0.932 | +0.874 |
+| 4.47 | +0.493 | +0.490 | +0.897 | +0.895 |
+| 2.00 | +0.920 | +0.420 | +0.817 | +0.810 |
+| 1.00 | +0.657 | +0.259 | +1.000 | +1.000 |
+
+**Reading of the quantum charges.** The Gasteiger charges of the four atoms of the carboxyl group are the same in every acid (the largest standard deviation is 0.0001 e), so the default electrostatic field holds a substituent only where the substituent is. The quantum charge of the carbonyl oxygen varies (standard deviation 0.0083 e) and correlates with the band with r +0.875 and with the Hammett constant with r +0.909.
+
+This changes what the width of the envelope does. With Gasteiger charges the electrostatic field alone reaches q2 +0.355 at 2.00 A and +0.547 at 10.00 A (whole acids held out, ridge chosen by the q2), and its best width is 4.47 A: the envelope has to reach the substituent. With quantum charges it reaches +0.825 at 2.00 A and +0.612 at 10.00 A. The regression on the four charges of the carboxyl group reaches +0.786, and the difference of the field at 2.00 A from it is +0.039 [+0.000, +0.085]. The quantum calculation has carried the effect of the substituent to the atoms of the carboxyl group, and a narrow field reads it there. The width therefore decides the result. It is chosen inside the folds, and the statements below are made for those rows and for the invariant local kernel.
+
+With whole acids held out, the Hammett regressions for meta and para separately reach q2 +0.782 and the regression on the four charges of the carboxyl group reaches +0.786. The electrostatic field alone reaches +0.562 with Gasteiger charges and +0.824 with quantum charges (difference +0.262 [+0.166, +0.396]). With quantum charges it is +0.042 [-0.005, +0.093] against the separate Hammett regressions (not separated from them) and +0.038 [-0.001, +0.084] against the regression on the four charges (not separated from it). The five fields reach +0.718 with Gasteiger charges and +0.651 with quantum charges, with a standard deviation over the repeats of 0.238 (see the paragraph on one substituent below). With the two Fukui fields added the q2 is +0.837: +0.120 [+0.063, +0.184] against the five fields with Gasteiger charges (above them), +0.056 [-0.006, +0.120] against the separate Hammett regressions (not separated from them) and +0.052 [-0.003, +0.108] against the regression on the four charges (not separated from it). With the indicator fields added the q2 is +0.692 (+0.040 [-0.082, +0.233] against the five fields with quantum charges, not separated from them).
+
+With whole substituents held out, the Hammett regressions for meta and para separately reach q2 +0.782 and the regression on the four charges of the carboxyl group reaches +0.783. The electrostatic field alone reaches +0.130 with Gasteiger charges and +0.799 with quantum charges (difference +0.669 [+0.203, +1.461]). With quantum charges it is +0.017 [-0.038, +0.074] against the separate Hammett regressions (not separated from them) and +0.016 [-0.014, +0.056] against the regression on the four charges (not separated from it). The five fields reach +0.640 with Gasteiger charges and +0.361 with quantum charges, with a standard deviation over the repeats of 0.324 (see the paragraph on one substituent below). With the two Fukui fields added the q2 is +0.823: +0.183 [+0.090, +0.316] against the five fields with Gasteiger charges (above them), +0.042 [-0.050, +0.115] against the separate Hammett regressions (not separated from them) and +0.040 [-0.013, +0.088] against the regression on the four charges (not separated from it). With the indicator fields added the q2 is +0.611 (+0.250 [-0.072, +0.960] against the five fields with quantum charges, not separated from them).
+
+**One substituent decides the result of the five fields with quantum charges.** The acids of the substituent SF5 (para-SF5, meta-SF5) hold 73 % of the squared error of that row with whole substituents held out. The acid with the largest error is meta-SF5, with a root mean square error of 37.7 cm^-1 over the repeats. The largest quantum charge of an atom in these acids is +2.05 e. The largest in all other acids is +1.40 e (meta-SO2F). When these acids are held out together, the training part holds no acid like them. The inner folds then choose a narrow width with a small ridge, and that model extrapolates far. Scored without these acids, the same predictions give q2 +0.815 with whole acids held out and +0.825 with whole substituents held out (+0.036 [-0.014, +0.091] and +0.046 [-0.002, +0.104] against the separate Hammett regressions scored in the same way). The set with the two Fukui fields, scored in the same way, gives +0.075 [+0.016, +0.134] and +0.052 [-0.034, +0.127]. With the posed overlap kernel, an acid of this substituent has the largest error in 9 of the 12 rows of the two tables. The substituent was found by its error, after the result was known, so the scores without it describe the failure and are not results. The tables with a fixed width do not show this failure, because there the ridge is chosen by the q2 of the folds that hold these acids out. A field from quantum charges therefore needs a check that the charges of a new molecule are inside the range of the training set. A tabulated Hammett constant needs no such check.
+
+**Resonance.** The difference between the para acid and the meta acid of one substituent is the part of the band that resonance decides. The five fields with Gasteiger charges predict it with q2 -0.30 (whole acids held out) and +0.18 (whole substituents held out). The electrostatic field alone with quantum charges reaches +0.41 and +0.44, and the five fields with quantum charges and the two Fukui fields reach +0.42 and +0.60. The separate Hammett regressions reach +0.42 and +0.42, and the regression on the four charges of the carboxyl group +0.22 and +0.27.
+
+**Answer.** With the width and the ridge chosen inside the folds, no field set with quantum charges passes the Hammett regressions for meta and para separately on both kinds of folds. The electrostatic field alone with quantum charges is +0.042 [-0.005, +0.093] against them with whole acids held out (not separated from them) and +0.017 [-0.038, +0.074] with whole substituents held out (not separated from them). The five fields with quantum charges and the two Fukui fields are +0.056 [-0.006, +0.120] against them with whole acids held out (not separated from them) and +0.042 [-0.050, +0.115] with whole substituents held out (not separated from them). The five fields with quantum charges alone are -0.130 [-0.487, +0.064] against them with whole acids held out (not separated from them) and -0.420 [-1.577, +0.089] with whole substituents held out (not separated from them). The interval of the last set is wide because of the substituent SF5. In the table with a fixed width, the best width of the set with the Fukui fields (2.00 A with whole acids held out, 2.00 A with whole substituents held out) gives +0.080 [+0.025, +0.146] and +0.078 [+0.028, +0.131] against the separate Hammett regressions. The difference between these numbers and the numbers above is what a choice of the width and the ridge by the result adds. Quantum charges do what Gasteiger charges cannot do on this series: they bring the fields to the level of the separate Hammett regressions, and they predict the difference between the para and the meta acid. They do not bring the q2 of the fields above the regression on the four charges of the carboxyl group: every interval of that difference holds zero. So most of the gain is in the charges of the carboxyl group themselves. On the difference between the para and the meta acid the two best field sets reach a higher q2 than this regression (see the paragraph on resonance); no interval was computed for that difference. The quantum charges come from a quantum calculation, as the band does. This part therefore measures how much of a costly quantum result a quantum calculation of a few seconds per acid already holds. It does not measure what the structure alone predicts.

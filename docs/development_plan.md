@@ -6654,11 +6654,51 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   *Second rule that follows:* a series that holds each substituent at more than one position is
   validated on folds that hold out whole substituents, and a result is repeated over several
   sets of folds before a margin of 0.1 in q2 is quoted.
+  **Quantum charges in the electrostatic field, measured 10 November 2026** (part 8 of
+  `run_band.py`, `charges.json`; `examples/spectra/benzoic_acids_xtb.sdf` from stage `--xtb` of
+  the builder, 13 seconds). The question was whether a description that carries resonance and
+  needs no optimisation passes the separate Hammett regressions for meta and para. The charge
+  of every atom comes from one GFN2-xTB calculation on the start geometry. Gasteiger charges
+  are the same on the carboxyl group of every acid (standard deviation at most 0.0001 e); the
+  quantum charge of the carbonyl oxygen correlates with the band with r +0.875. The width (one
+  of 10, 4.47, 2 and 1 A) and the ridge are chosen inside the folds, ten repeats, invariant
+  local kernel.
+  *Result: reached, not passed.* With whole acids held out the electrostatic field alone goes
+  from q2 +0.562 (Gasteiger) to +0.824 (quantum), and the five fields with quantum charges and
+  the two Fukui fields reach +0.837. Against the separate Hammett regressions (+0.782) these
+  are +0.042 [-0.005, +0.093] and +0.056 [-0.006, +0.120]. With whole substituents held out
+  they reach +0.799 and +0.823 (+0.017 [-0.038, +0.074] and +0.042 [-0.050, +0.115]). The five
+  fields with Gasteiger charges, with the width chosen in the same way, give +0.718 and +0.640.
+  *Two references that this part added.* A linear regression on the quantum charge of the
+  carbonyl oxygen reaches +0.758 and +0.760, and a multiple linear regression on the quantum
+  charges of the four atoms of the carboxyl group reaches +0.786 and +0.783. No field set is
+  separated from the second one, so most of what the fields predict is in those four charges.
+  *Resonance.* The band of the para acid minus the band of the meta acid of one substituent
+  (94 substituents) is predicted with q2 +0.41 and +0.44 by the electrostatic field with
+  quantum charges, +0.42 and +0.60 by the set with the Fukui fields, +0.42 by the separate
+  Hammett regressions and -0.30 and +0.18 by the five fields with Gasteiger charges. These q2
+  have no intervals.
+  *What a choice by the result adds.* At a fixed width of 2 A with the ridge chosen by the q2
+  the set with the Fukui fields is +0.080 [+0.025, +0.146] and +0.078 [+0.028, +0.131] above
+  the separate Hammett regressions. Chosen inside the folds, the margin is +0.056 and +0.042
+  and the intervals hold zero.
+  *One substituent outside the range.* The five fields with quantum charges alone give +0.651
+  and +0.361, with a standard deviation over the repeats of 0.238 and 0.324. The two acids of
+  SF5 hold 73 % of the squared error on folds over substituents: the charge of the sulfur atom
+  is +2.05 e, and the largest charge in all other acids is +1.40 e. Scored without them, after
+  the result was known, the same predictions give +0.815 and +0.825.
+  *Third and fourth rule that follow:* when the description holds a number that the target
+  follows at one place, the width and the ridge are chosen inside the folds and the regression
+  on that number is a reference; and a field from quantum charges needs a check that the
+  charges of a new molecule are inside the range of the training set.
+  *Also repaired:* a job of `cmfqsar/xtb.py` that was read again from its directory gave
+  charges with 3 decimals where the first run gave 8, so a second build of a data file differed
+  from the first.
   *Open:* a table of measured carbonyl bands for the series, which would make the computed
-  column the second one; a description that carries resonance and needs no optimisation
-  (charges or an electron density from one quantum calculation on the start geometry), as the
-  next candidate for passing the separate Hammett regressions for meta and para; the width
-  chosen inside the folds; the same
+  column the second one; the check of the range of the charges before a prediction, which is
+  described and not written; intervals for the q2 of the difference between the para and the
+  meta acid; a field of the quantum electron density or of the quantum electrostatic potential
+  in place of charges on the atoms, and charges of a second quantum method; the same
   run on the acidity set's acids, where the band and the pKa of one carbon would be two targets
   of one sample; and the band of another bond (the O-H stretch, the C-O stretch),
   which the same code gives for another window.

@@ -335,6 +335,42 @@ def test_a_finished_job_is_not_rerun(tmp_path):
     assert second.reused and second.seconds < max(first.seconds, 0.02)
 
 
+def test_a_reused_job_gives_the_charges_of_its_first_run(tmp_path):
+    """The first run takes the charges from the ``charges`` file, which has 8 decimals; the
+    table of the output has 3.  A job that is read back from its directory must take them
+    from the same file, or the second build of a data file differs from the first."""
+    jobdir = str(tmp_path / "job")
+    os.makedirs(jobdir)
+    with open(os.path.join(jobdir, "xtb.out"), "w", encoding="utf-8") as fh:
+        fh.write(WATER_OUT)
+    cfg = QX.Config(xtb="no such program", workdir=str(tmp_path))
+    printed = QX.run_job(jobdir, cfg, 0, 1)
+    assert np.allclose(printed.charges, [-0.564, 0.282, 0.282])
+    with open(os.path.join(jobdir, "charges"), "w") as fh:
+        fh.write("-0.56412345\n0.28206172\n0.28206173\n")
+    reused = QX.run_job(jobdir, cfg, 0, 1)
+    assert np.array_equal(reused.charges, [-0.56412345, 0.28206172, 0.28206173])
+    # a file for another number of atoms is not this job's file
+    with open(os.path.join(jobdir, "charges"), "w") as fh:
+        fh.write("0.1\n0.2\n")
+    assert np.allclose(QX.run_job(jobdir, cfg, 0, 1).charges, [-0.564, 0.282, 0.282])
+
+
+@needs_xtb
+def test_a_finished_job_keeps_its_charges_when_it_is_read_again(tmp_path):
+    from cmfqsar.fields import atom_property
+
+    cfg = QX.Config(workdir=str(tmp_path / "work"))
+    first = QX.run_molecule(_water(), "water", 1, cfg)
+    second = QX.run_molecule(_water(), "water", 1, cfg)
+    assert second.reused
+    for name in ("q_xtb", "fukui_plus", "fukui_minus"):
+        assert np.array_equal(atom_property(first.mol, name), atom_property(second.mol, name))
+    # more digits than the table of the output prints
+    q = atom_property(first.mol, "q_xtb")
+    assert np.any(np.abs(q - np.round(q, 3)) > 1e-6)
+
+
 @needs_xtb
 def test_a_different_molecule_in_the_same_slot_is_computed_again(tmp_path):
     """The cache key is the molecule, so slot 1 holding another compound must not be reused."""
