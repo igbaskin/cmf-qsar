@@ -1,6 +1,6 @@
 {
- "commit": "e6cd0d40c24cc3a74d24f1a3850cbea113495a97",
- "created": "2026-11-10T22:34:00",
+ "commit": "2c2e5bb38e137d48104bc20e07f97bf97773c896",
+ "created": "2026-11-11T00:14:32",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1079,8 +1079,8 @@
    "sha256": "7a89f4385c6d91414959c36781dc8b1898fb63fff0bb48c7d6bac5a4545fe8ff"
   },
   "examples/make_band_examples.py": {
-   "bytes": 19178,
-   "sha256": "8c4ce5b1bfb1d5d15d709d02a2ce031404da2df97f7185e27a82468fd25b6e3d"
+   "bytes": 22508,
+   "sha256": "dc4ef8f994b4851e9f335a354d0b621786ead07c6cdfa6579396cbd38346df00"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -2135,8 +2135,8 @@
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
   "examples/spectra/README.md": {
-   "bytes": 7712,
-   "sha256": "0c3adb0dbf8ed74209f7a7df3023d22d1eaa4d12ff15fc0dd19a3b89e1f98814"
+   "bytes": 9354,
+   "sha256": "b464bc2f08b86e5ff5f0d4ed57b6a995ba862594b8e30b36857fc70ece79d182"
   },
   "examples/spectra/benzoic_acids.sdf": {
    "bytes": 457694,
@@ -2145,6 +2145,10 @@
   "examples/spectra/benzoic_acids_co.sdf": {
    "bytes": 592902,
    "sha256": "665e10693c3548fd9d93d073ce8cb846577c91415079fc4b90029b54e7c21601"
+  },
+  "examples/spectra/benzoic_acids_ir.json": {
+   "bytes": 181155,
+   "sha256": "ea5c6d212d73f491de0203a9d3477c8c3ef7220d03289915d160d000762f1724"
   },
   "examples/spectra/benzoic_acids_xtb.sdf": {
    "bytes": 986204,
@@ -3466,6 +3470,9 @@
   "benchmarks/results/spectra/cospectrum.png": "de714fa2cb0b40ca54c28e804d2b1a85ce844c8a3eca5dc77b006e09a78fd51a",
   "benchmarks/results/spectra/fit.json": "b49b7d16d0b059fda6fe7420c888d9204e6b0627bc385bcc01479e9f46aa7431",
   "benchmarks/results/spectra/table.md": "29d6f04770e78b255512d343b40920542349da14e509f256f83294bdd28cb6b3",
+  "benchmarks/results/spectra_ir/cospectrum.png": "2dcf0c25033b729bb12420c283f179c7626e27aa3cd339f034580ba77421ef3a",
+  "benchmarks/results/spectra_ir/ir.json": "c2fb81258436cf9aae40fd346b975e51643001d7f75e060b24e1262c7a653239",
+  "benchmarks/results/spectra_ir/table.md": "1c5a680d209227632710511e481cc839922c592207756b9724aecece69eb13f2",
   "benchmarks/results/speed/cutoff.json": "41740d5ba4ab40095fc5533522abf76b4bd1447f60c2c992ed033322c2e0bc51",
   "benchmarks/results/speed/engine.json": "ea538c75f7ee0f678fff900aa6db9564bc454725e9f2d933c255b275268ed4de",
   "benchmarks/results/speed/grid.json": "8e383cc21c803709fa35d4b599283497b77f7823d33c572ce17ba77ed1306988",
