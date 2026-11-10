@@ -6592,8 +6592,39 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   the result files of the two benchmarks changed.
   *Side result:* the structural kernel is not separated from the composition on this task
   (-4.9 [-14.0, +3.5]).
+  **Second measurement of half (a), 11 November 2026: a pair in which the spectrum holds the
+  answer** (`benchmarks/run_spectra_ir.py`, `benchmarks/results/spectra_ir/`,
+  `examples/spectra/benzoic_acids_ir.json` from stage `--ir` of the builder). The sample is the
+  infrared stick spectrum of each of the 189 benzoic acids of SP2, from its ORCA frequency job.
+  The target is the Hammett constant, a measured number that the calculation is not told. Ten
+  repeats of ten folds, every setting chosen inside the folds; the numbers are for whole
+  substituents held out.
+  *Result:* the spectrum reaches q2 +0.809, against +0.629 for the atom-centred counts, +0.697
+  for the five fields and +0.798 for the electrostatic field with quantum charges. It is
+  +0.111 [+0.023, +0.244] above the five fields, not separated from the field with quantum
+  charges (+0.010 [-0.063, +0.111]), and +0.067 [+0.015, +0.130] above a linear regression on
+  the position of the carbonyl band (+0.742). The region of the carbonyl stretch alone gives
+  +0.737 and the spectrum without it +0.661.
+  *The gate is met on this pair:* joined with the five fields the q2 is +0.831,
+  +0.134 [+0.056, +0.253] above the five fields alone; the spectrum alone is above the counts.
+  Joined with the field with quantum charges the spectrum adds nothing
+  (-0.007 [-0.071, +0.066]).
+  *The rule of the first measurement held:* the correlation of the kernel with the products of
+  the centred targets, before any fit, is +0.438 for the spectrum (+0.009 for the powder
+  pattern), +0.432 for the field with quantum charges and +0.199 for the five fields.
+  *The co-spectrum is read by region and out of fold:* no single grid point is above the
+  scramble null, but what a region adds to the prediction of a held-out acid correlates with
+  the constant at +0.82 (O-H stretch), +0.79 (C=O stretch), +0.67 (ring stretch), +0.55
+  (C-O stretch and O-H bend), against +0.20 at most for constants in random order.
+  *Limits:* the kernel reads the position of one line less exactly than a regression on the
+  position (the C=O length from the spectrum: q2 +0.858 against +0.973); the spectrum is
+  computed by a quantum program on its own optimised geometry, so its gain over the five
+  fields is what a quantum calculation knows, and no measured spectrum is used.
   *Open:* half (b), a set of measured spectra with a measured property, which has to be a pair
-  in which the experiment shows what decides the property; the Bayes factor of ND7 on
+  in which the experiment shows what decides the property, and which the second measurement
+  now justifies; a kernel that reads the position of a line as exactly as a regression does
+  (a co-spectrum of the derivative, or the positions of assigned lines as descriptors); the
+  Bayes factor of ND7 on
   COMPAS-1D, which is being computed again with the repaired search; the scattering
   vector as the axis of a pattern in place of the angle of one wavelength.
 * **SP2. A localised band position as a local target.** The analogue of LP2 for a vibrational
@@ -6830,7 +6861,8 @@ Hammett regressions on folds over acids and stay below them on folds over whole
 substituents. ~~SP1(a)
 next, since it needs no fetch~~ **done 10 November 2026**: the kernel, the co-spectrum
 and the readers, and the finding that a calculated powder pattern predicts the phonon
-frequency little better than the mean does; SP1(b)
+frequency little better than the mean does; on 11 November 2026 the infrared spectra of the
+acids of SP2 predicted the Hammett constant as well as the best structural description; SP1(b)
 when a set is found; SP3 after SP1, because it needs the spectral kernel of the one and the series
 SP2 now holds. The structural side of SP3 and SP6 uses the start geometries of that series, for
 the reason SP2 found: an optimised geometry carries the bond length that decides the band.

@@ -10909,8 +10909,8 @@ correlation of its kernel with the products of the centred targets is computed. 
 fit, and here it said what the fit then found. The second half of the item, a set of measured
 spectra with a measured property, has to be a pair in which the experiment shows what decides
 the property: a vibrational spectrum for a property of the bonds is such a pair, and a powder
-pattern for a phonon frequency is not. Items SP3 and SP6 use the vibrational spectra of the
-benzoic acids of the previous section with the reader of this one.
+pattern for a phonon frequency is not. The second measurement below takes such a pair, and
+items SP3 and SP6 use the same vibrational spectra with the reader of this section.
 
 **What is not done.** No measured spectrum is used; the search for a public set of measured
 spectra with a measured property is the second half of the item. Only one division into folds
@@ -10919,6 +10919,126 @@ it, so other divisions would not change a conclusion. The patterns are compared 
 axis of one wavelength, and not on the axis of the scattering vector. The run takes 3.5 hours
 on the author's machine while other jobs run on it; more than half of that are the two rows
 with the Gaussian kernel on top.
+
+### The second measurement: an infrared spectrum against the Hammett constant
+
+The powder pattern failed because a diffraction pattern does not show what decides a phonon
+frequency. The second measurement takes a pair in which the experiment should show it
+(`benchmarks/run_spectra_ir.py`, `benchmarks/results/spectra_ir/table.md`). The sample is the
+infrared spectrum of a substituted benzoic acid. The target is the Hammett constant of its
+substituent at its position.
+
+**The data.** The ORCA frequency jobs of the previous section give every normal mode of the
+189 acids with its infrared intensity, and that section kept one of them, the carbonyl stretch.
+Stage `--ir` of `examples/make_band_examples.py` writes all of them to
+`examples/spectra/benzoic_acids_ir.json` as stick spectra: the harmonic wavenumbers times the
+scaling factor of the level, and the intensities in km/mol. An acid has 43 sticks between 400
+and 4000 cm$^{-1}$ at the median. The Hammett constant is a measured number: for most
+substituents it is the measured shift of the pKa of this very acid against benzoic acid. So the
+spectrum is computed, the target is measured, and the calculation is not told the target.
+
+```
+python examples/make_band_examples.py --ir   # the stick spectra, from the ORCA outputs
+python benchmarks/run_spectra_ir.py          # the measurement, 50 minutes
+```
+
+**The protocol** is the one of parts 7 and 8 of the previous section: ten repeats of ten folds,
+with whole acids held out and with whole substituents held out. The second kind of folds
+matters more here than there. A spectrum shows the bands of the substituent itself, so with
+whole acids held out a model can recognise the substituent from the other acid of the pair.
+The numbers below are for whole substituents held out. The width of the broadening (2 to
+50 cm$^{-1}$), the power of the intensity and the ridge are chosen on five folds inside every
+training part.
+
+**A control with a known answer comes first.** The length of the C=O bond of the optimised
+geometry follows the carbonyl band (r -0.987), so a kernel that can read the position of a line
+has to predict it from the spectrum. It does, with q2 +0.858. A linear regression on the
+position of the band itself reaches +0.973, and the spectrum is -0.114 [-0.154, -0.084] below
+it. The lengths differ by a tenth of a picometre and the band moves by a few cm$^{-1}$; the
+kernel sees such a shift only as a small change of the overlap of two broadened lines. So the
+kernel reads the position of a line, but less exactly than a regression on the position does.
+
+| description | q2, whole substituents held out | q2, whole acids held out | q2 of the difference between the para and the meta acid, whole substituents held out |
+|---|---:|---:|---:|
+| atom-centred counts around the carbonyl carbon | +0.629 | +0.683 | -0.07 |
+| linear regression on the position of the carbonyl band | +0.742 | +0.743 | -0.03 |
+| the same regression, meta and para separately (two equations; it is told the position) | +0.771 | +0.771 | +0.32 |
+| structure: the five fields, Gasteiger charges | +0.697 | +0.778 | +0.08 |
+| structure: the electrostatic field alone, quantum charges | +0.798 | +0.835 | +0.47 |
+| infrared spectrum, 400 to 4000 cm$^{-1}$ | +0.809 | +0.847 | +0.37 |
+| infrared spectrum, Gaussian kernel on top | +0.808 | +0.860 | +0.46 |
+| infrared spectrum, the region of the carbonyl stretch alone | +0.737 | +0.753 | -0.07 |
+| infrared spectrum without the region of the carbonyl stretch | +0.661 | +0.735 | -0.03 |
+| structure (five fields) and infrared spectrum, joined | +0.831 | +0.875 | +0.48 |
+| structure (quantum charges) and infrared spectrum, joined | +0.791 | +0.824 | +0.40 |
+
+**The spectrum predicts the constant.** The kernel of the spectra reaches q2 +0.809. That is
++0.179 [+0.086, +0.293] above the atom-centred counts and +0.111 [+0.023, +0.244] above the
+five fields. It is not separated from the electrostatic field with quantum charges
+(+0.010 [-0.063, +0.111]), the best structural description of this series in the previous
+section. The number that needs no fit said so again: the correlation of the kernel with the
+products of the centred constants is +0.438 for the spectrum and +0.432 for the field with
+quantum charges, against +0.199 for the five fields and +0.228 for the counts. For the powder
+pattern it was +0.009.
+
+**The whole spectrum says more than its one known band.** A chemist would read the carbonyl
+stretch, and the linear regression on the position of that band reaches +0.742. The spectrum
+is +0.067 [+0.015, +0.130] above it. Against the two regressions for meta and para, which are
+told the position of the substituent, it is +0.037 [-0.015, +0.098], not separated. The region
+of the carbonyl stretch alone gives +0.737, the same as the regression on the band
+(-0.005 [-0.046, +0.031]). The spectrum without that region gives +0.661, which is
+-0.148 [-0.202, -0.101] below the whole spectrum and not separated from the counts. So the
+carbonyl band carries the largest part, the rest of the spectrum carries about what a count of
+the atoms carries, and the two together are worth more than either. The difference between the
+para and the meta acid of one substituent, the part of the constant that resonance decides,
+shows the same: the carbonyl region alone and the rest alone do not predict it (q2 -0.07 and
+-0.03), and the whole spectrum does (+0.37).
+
+**Beside the structure.** Joined with the five fields, with the share of the spectrum chosen
+inside the folds, the q2 is +0.831: +0.134 [+0.056, +0.253] above the five fields alone and
++0.022 [-0.003, +0.047] against the spectrum alone. Joined with the field with quantum
+charges, the spectrum adds nothing (-0.007 [-0.071, +0.066]).
+
+**The co-spectrum, read by region.** The place with the largest effect is at 1736 cm$^{-1}$
+with a positive sign, and below 1730 cm$^{-1}$ the sign is negative: intensity at the upper side
+of the carbonyl band raises the predicted constant, as the band itself rises with the constant.
+No single grid point is above the largest effect of models fitted to the constants in random
+order (0.028 against 0.057), so the co-spectrum cannot be read point by point. It can be read by
+region. The model is fitted without the substituent of an acid, the sum of weight times
+intensity inside a region is computed for that acid, and the sums of all acids are correlated
+with the constant:
+
+| region | cm$^{-1}$ | held-out correlation of what the region adds with the Hammett constant | the largest value in 50 models on constants in random order |
+|---|---|---:|---:|
+| O-H stretch | 3450 to 3800 | +0.82 | +0.13 |
+| C-H stretch | 2800 to 3200 | +0.44 | +0.18 |
+| C=O stretch | 1650 to 1800 | +0.79 | +0.20 |
+| ring stretch | 1550 to 1650 | +0.67 | +0.15 |
+| C-O stretch, O-H bend and ring modes | 1000 to 1550 | +0.55 | +0.19 |
+| out-of-plane bends and ring deformations | 400 to 1000 | +0.20 | +0.16 |
+
+The stretch of the O-H bond, which is the bond that an acid breaks, carries as much as the
+carbonyl stretch, and the model was not told either of them.
+
+![The infrared spectra of the 189 benzoic acids against the Hammett constant, at a width of 5 cm$^{-1}$. Top: the mean normalised spectrum. Middle: the weight of the model times the standard deviation of the intensity; the dashed lines are the largest value in 50 models fitted to the constants in random order. Bottom: the region of the carbonyl stretch, with the mean spectrum as a dotted line. The weight is positive on the upper side of the band and negative on the lower side.](benchmarks/results/spectra_ir/cospectrum.png)
+
+**The gate.** With whole substituents held out, the structural kernel with the spectrum is above
+the structural kernel alone by more than the interval when the structural kernel is the five
+fields, and it is not when it is the field with quantum charges. The spectrum alone is above
+the counts. The gate of the item is met on this pair.
+
+**What the result does and does not say.** The spectrum of this measurement is computed with a
+quantum program on a geometry that the program optimised, 33 minutes per acid. The five fields
+are built on a geometry of a force field with charges from the bond graph. The gain of the
+spectrum over the five fields is therefore what a quantum calculation knows about the acid, and
+the field with charges from one calculation of less than a second holds the same. What the
+result does say is that the kernel takes a property out of a spectrum that holds it: more than
+a regression on the one band that a chemist would read, and as much as the best structural
+description of this series. With the first measurement it also says when not to try: the
+correlation of the kernel with the target, computed before any fit, was +0.438 here and +0.009
+for the powder pattern. A measured spectrum would be the experiment itself and not a
+calculation, and none is used. That is the second half of the item, and this result is the
+reason to look for the data.
 
 ## A migration path as the sample: the barrier of a Li hop
 

@@ -10,7 +10,7 @@ group, which gives 189 acids (X = H is the same acid in both series and is kept 
 is the stretch of the carbonyl bond, the strongest band of an acid and the one whose shift with
 the substituent is textbook chemistry: an electron donor lowers it, an acceptor raises it.
 
-Three stages, all from this script.
+Four stages, all from this script.
 
 1. **The structures**, from SMILES: each acid is embedded with ETKDG, optimised with MMFF94, and
    the lowest-energy conformer with the carboxyl in its usual *syn* arrangement (the hydroxyl
@@ -35,12 +35,21 @@ Three stages, all from this script.
    and three numbers on every atom: the Mulliken charge (``q_xtb``) and the two Fukui indices
    (``fukui_plus``, ``fukui_minus``).  Part 8 of `benchmarks/run_band.py` reads this file.
 
+4. **The infrared spectrum of every acid** (``--ir``): the frequency job of stage 2 gives every
+   normal mode with its infrared intensity, and stage 2 keeps one of them, the carbonyl
+   stretch.  This stage reads all of them from the ORCA outputs under
+   `benchmarks/results/band/orca_work/` and writes them to
+   `examples/spectra/benzoic_acids_ir.json` as stick spectra: the wavenumbers, multiplied by
+   the scaling factor of the level, and the intensities in km/mol.  Nothing is computed.
+   `benchmarks/run_spectra_ir.py` reads this file.
+
 Usage
 -----
     python examples/make_band_examples.py                 # stage 1
     python examples/make_band_examples.py --orca --jobs 10   # stage 2, 10 molecules at a time
     python examples/make_band_examples.py --orca --limit 4   # a quick look at the first four
     python examples/make_band_examples.py --xtb --jobs 8     # stage 3, 13 seconds in all
+    python examples/make_band_examples.py --ir               # stage 4, a few seconds
 
 On the serial ORCA build of this machine (one core per job) benzoic acid alone takes 5 minutes.
 With ten to twenty acids running at the same time one acid takes 16 to 69 minutes and about
@@ -75,6 +84,7 @@ OUT_DIR = os.path.join(HERE, "spectra")
 STRUCTURES = os.path.join(OUT_DIR, "benzoic_acids.sdf")
 BANDS = os.path.join(OUT_DIR, "benzoic_acids_co.sdf")
 QUANTUM = os.path.join(OUT_DIR, "benzoic_acids_xtb.sdf")
+INFRARED = os.path.join(OUT_DIR, "benzoic_acids_ir.json")
 WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "orca_work")
 XTB_WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "xtb_work")
 
@@ -336,12 +346,59 @@ def run_xtb(structures: str = STRUCTURES, out: str = QUANTUM, workdir: str = XTB
     return len(failed)
 
 
+def write_infrared(bands: str = BANDS, out: str = INFRARED, workdir: str = WORKDIR,
+                   log=print) -> int:
+    """Stage 4: the infrared stick spectrum of every acid, read from the ORCA frequency job
+    that gave its band; returns the number of acids without a spectrum.
+
+    The file is JSON with one acid on a line: its name, the wavenumbers of its normal modes
+    in cm^-1 (harmonic, times the scaling factor of the level) and their infrared intensities
+    in km/mol.  The modes of translation and rotation and imaginary modes are left out.
+    """
+    import json
+
+    from cmfqsar import spectrum
+
+    rows, missing, scales, levels = [], [], set(), set()
+    for mol in read_sdf(bands):
+        name = mol.GetProp("_Name")
+        scale = float(mol.GetProp("frequency_scale"))
+        path = os.path.join(workdir, mol.GetProp("qm_dir"), mol.GetProp("qm_job") + ".out")
+        try:
+            sticks = spectrum.orca_sticks(path, scale=scale, name=name)
+        except (OSError, ValueError) as exc:
+            missing.append(name)
+            log(f"  {name}: no spectrum ({exc})")
+            continue
+        scales.add(scale)
+        levels.add(mol.GetProp("qm_level"))
+        rows.append({"name": name, "wavenumbers": [round(float(v), 3) for v in sticks.x],
+                     "intensities": [round(float(v), 3) for v in sticks.y]})
+    head = {"what": "infrared stick spectra of the substituted benzoic acids of "
+                    "benzoic_acids_co.sdf, from the ORCA frequency jobs of plan item SP2",
+            "axis": "wavenumber", "unit": "cm^-1", "intensity_unit": "km/mol",
+            "frequency_scale": sorted(scales), "qm_level": sorted(levels)}
+    with open(out, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("{\n")
+        for key, value in head.items():
+            fh.write(f" {json.dumps(key)}: {json.dumps(value)},\n")
+        fh.write(' "acids": [\n')
+        fh.write(",\n".join("  " + json.dumps(row) for row in rows))
+        fh.write("\n ]\n}\n")
+    log(f"wrote the spectra of {len(rows)} acids to {os.path.relpath(out, ROOT)}"
+        + (f"; {len(missing)} acids have none" if missing else ""))
+    return len(missing)
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--orca", action="store_true", help="stage 2: run ORCA on the structures")
     ap.add_argument("--xtb", action="store_true",
                     help="stage 3: GFN2-xTB charges and Fukui indices on the structures of "
                          "stage 1, without a geometry optimisation")
+    ap.add_argument("--ir", action="store_true",
+                    help="stage 4: write the infrared stick spectra from the ORCA outputs of "
+                         "stage 2")
     ap.add_argument("--jobs", type=int, default=10,
                     help="molecules at a time in stage 2 or stage 3")
     ap.add_argument("--limit", type=int, default=0,
@@ -355,6 +412,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     a = ap.parse_args(argv)
     structures = os.path.join(a.out_dir, os.path.basename(STRUCTURES))
     bands = os.path.join(a.out_dir, os.path.basename(BANDS))
+    if a.ir:
+        if not os.path.exists(bands):
+            raise SystemExit(f"{bands} is missing: run the script with --orca first")
+        infrared = os.path.join(a.out_dir, os.path.basename(INFRARED))
+        return 1 if write_infrared(bands, infrared) else 0
     if a.xtb:
         if not os.path.exists(structures):
             raise SystemExit(f"{structures} is missing: run the script without --xtb first")
