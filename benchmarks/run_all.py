@@ -791,9 +791,10 @@ def registry() -> List[Benchmark]:
                   "a vibrational band as a local target: the carbonyl stretch of substituted "
                   "benzoic acids from the field around the carbonyl carbon, against the "
                   "atom-centred count and a linear regression on the Hammett constant, with "
-                  "the co-field at the ring positions",
+                  "the co-field at the ring positions, and with one indicator field per atom "
+                  "type on folds that hold out whole acids or whole substituents",
                   "run_band.py", "band", compute=[[]],
-                  minutes="1",
+                  minutes="3",
                   report=lambda: _mod("run_band").report(_r("band")),
                   tables=["band/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "

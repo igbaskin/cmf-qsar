@@ -231,3 +231,156 @@ def test_the_report_writes_the_table_it_returns(tmp_path):
     assert "Hammett line" not in text and "one line" not in text
     other = str(tmp_path / "other.md")
     assert run_band.report(str(tmp_path), other) == text and os.path.exists(other)
+
+
+# --------------------------------------------------------------------------- #
+# part 7: the indicator fields
+# --------------------------------------------------------------------------- #
+
+def _twins(n=12, seed=0):
+    """A made-up series with every substituent twice, meta and para, and one acid without a
+    substituent.  The band of an acid follows the Hammett constant of its substituent."""
+    rng = np.random.RandomState(seed)
+    sigma = rng.uniform(-0.6, 0.8, n)
+    y = np.concatenate([[1740.0], 1740.0 + 10.0 * sigma, 1740.0 + 14.0 * sigma])
+    y = y + rng.normal(0, 0.3, len(y))
+    targets = AtomTargets.from_arrays([[v] for v in y], name="co_stretch")
+    names = [f"s{k}" for k in range(n)]
+    table = {"position": ["none"] + ["meta"] * n + ["para"] * n,
+             "sigma": [0.0] + list(sigma) + list(sigma),
+             "substituent": ["H"] + names + names}
+    return targets, table
+
+
+def test_folds_over_substituents_hold_out_both_acids_of_a_substituent():
+    targets, table = _twins()
+    grouped = run_band.substituent_targets(targets, table)
+    assert len(grouped) == len(targets) and grouped.n_mol == 13
+    assert np.array_equal(grouped.y, targets.y) and np.array_equal(grouped.atom, targets.atom)
+    subs = np.array(table["substituent"])
+    seen = []
+    for fold in grouped.folds(5, seed=0):
+        held = set(subs[fold])
+        # no substituent of the test rows is left in the training rows
+        assert not held & set(np.delete(subs, fold))
+        seen += list(fold)
+    assert sorted(seen) == list(range(len(targets)))
+    # the folds over acids do separate the two acids of a substituent
+    split = any(set(subs[f]) & set(np.delete(subs, f)) for f in targets.folds(5, seed=0))
+    assert split
+
+
+def test_twin_correlation_reads_the_pairs_of_a_substituent():
+    targets, table = _twins()
+    t = run_band.twin_correlation(targets, table)
+    assert t["n"] == 12
+    assert t["r_sigma"] == pytest.approx(1.0)
+    assert 0.9 < t["r_band"] < 1.0
+    only_meta = {k: v[:13] for k, v in table.items()}
+    few = run_band.twin_correlation(AtomTargets.from_arrays([[v] for v in targets.y[:13]]),
+                                    only_meta)
+    assert few["n"] == 0 and np.isnan(few["r_band"])
+
+
+def _results(targets, noise, seeds):
+    y = np.asarray(targets.y, float)
+    return [run_band._as_result("made up", y + np.random.RandomState(s).normal(0, noise, len(y)),
+                                targets, 5) for s in seeds]
+
+
+def test_the_q2_of_repeats_is_their_mean():
+    targets, _table = _twins()
+    y = np.asarray(targets.y, float)
+    res = _results(targets, 1.0, range(4))
+    q, sd, err = run_band.repeated_q2(res, y)
+    each = [run_band.q2_of(y, r.predicted) for r in res]
+    assert q == pytest.approx(np.mean(each)) and sd == pytest.approx(np.std(each, ddof=1))
+    e = run_band.squared_errors(res, y)
+    assert e.shape == y.shape and err == pytest.approx(np.sqrt(e.mean()))
+    # the mean q2 is one minus the summed mean squared errors over the total sum of squares
+    assert q == pytest.approx(1.0 - e.sum() / np.sum((y - y.mean()) ** 2))
+    one = run_band.repeated_q2(res[:1], y)
+    assert one[0] == pytest.approx(each[0]) and one[1] == 0.0
+
+
+def test_the_paired_interval_of_repeats():
+    targets, table = _twins(n=30)
+    y = np.asarray(targets.y, float)
+    good, poor = _results(targets, 0.5, range(5)), _results(targets, 3.0, range(10, 15))
+    d = run_band.paired_repeats(good, poor, targets, runs=300, seed=0)
+    assert d[0] == pytest.approx(run_band.repeated_q2(good, y)[0]
+                                 - run_band.repeated_q2(poor, y)[0])
+    assert 0 < d[1] < d[0] < d[2]
+    back = run_band.paired_repeats(poor, good, targets, runs=300, seed=0)
+    assert back[0] == pytest.approx(-d[0]) and back[2] < 0
+    same = run_band.paired_repeats(good, good, targets, runs=50, seed=0)
+    assert same == (0.0, 0.0, 0.0)
+    # the units of the bootstrap are the substituents when the copy of the targets is given
+    grouped = run_band.substituent_targets(targets, table)
+    g = run_band.paired_repeats(good, poor, grouped, runs=300, seed=0)
+    assert g[0] == pytest.approx(d[0]) and (g[1], g[2]) != (d[1], d[2])
+
+
+def test_kernel_agreement():
+    rng = np.random.RandomState(0)
+    x = rng.normal(size=(15, 4))
+    k = x @ x.T
+    assert run_band.kernel_agreement(k, 3.0 * k) == pytest.approx(1.0)
+    # a constant added to a kernel is removed by the centring
+    assert run_band.kernel_agreement(k, k + 5.0) == pytest.approx(1.0)
+    z = rng.normal(size=(15, 4))
+    assert abs(run_band.kernel_agreement(k, z @ z.T)) < 0.5
+
+
+def test_the_first_atom_of_a_substituent_is_found_with_its_type_and_place():
+    from rdkit import Chem
+    from rdkit.Chem import AllChem
+
+    from cmfqsar.fields import FieldSet, build_fields
+    from cmfqsar.localalign import posed_environments
+
+    mols, per = [], []
+    for smiles in ("OC(=O)c1ccccc1", "OC(=O)c1ccc(cc1)[N+](=O)[O-]", "OC(=O)c1cc(ccc1)Cl",
+                   "OC(=O)c1ccc(cc1)OC"):
+        m = Chem.AddHs(Chem.MolFromSmiles(smiles))
+        assert AllChem.EmbedMolecule(m, randomSeed=7) == 0
+        AllChem.MMFFOptimizeMolecule(m)
+        Chem.SanitizeMol(m)
+        carbon = m.GetSubstructMatch(Chem.MolFromSmarts("[CX3](=O)[OX2H1]"))[0]
+        v = np.full(m.GetNumAtoms(), np.nan)
+        v[carbon] = 1740.0 + len(mols)
+        mols.append(m)
+        per.append(v)
+    targets = AtomTargets.from_arrays(per, name="co_stretch")
+    fieldset = FieldSet.create()
+    fields = [build_fields(m, fieldset, name=f"m{k}") for k, m in enumerate(mols)]
+    envs = posed_environments(fields, targets, rho=0.01)
+    first = run_band.first_atoms(mols, targets, envs)
+    assert first[0] is None
+    assert first[1][:2] == ("N.pl3", "para") and first[3][:2] == ("O.3", "para")
+    assert first[2][0] == "Cl" and first[2][1] in ("meta (carbonyl side)", "meta (hydroxyl side)")
+    assert np.linalg.norm(first[1][2]) == pytest.approx(5.8, abs=0.2)
+    assert np.linalg.norm(first[2][2]) == pytest.approx(5.2, abs=0.3)
+
+
+def _stored(name):
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "benchmarks", "results", "band", name)
+
+
+def test_the_report_adds_the_indicator_part_when_its_result_is_there(tmp_path):
+    import shutil
+
+    if not (os.path.exists(_stored("band.json")) and os.path.exists(_stored("indicator.json"))):
+        pytest.skip("the stored results of the band benchmark are not there")
+    shutil.copy(_stored("band.json"), str(tmp_path / "band.json"))
+    without = run_band.report(str(tmp_path))
+    assert "Indicator fields" not in without
+    shutil.copy(_stored("indicator.json"), str(tmp_path / "indicator.json"))
+    text = run_band.report(str(tmp_path))
+    with open(str(tmp_path / "table.md"), encoding="utf-8") as fh:
+        assert fh.read() == text
+    assert text.startswith(without)
+    assert "## Indicator fields: one field per atom type" in text
+    assert "whole substituents held out" in text and "**Reading of the indicator fields.**" in text
+    assert "Hammett line" not in text and "one line" not in text

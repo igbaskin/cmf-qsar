@@ -10243,11 +10243,12 @@ share. The error of this choice is below 1 cm$^{-1}$, and no other acid of the s
 ```
 python examples/make_band_examples.py                    # the 189 acids, from SMILES
 python examples/make_band_examples.py --orca --jobs 10   # optimisation and frequencies, cached
-python benchmarks/run_band.py                            # the measurement below
+python benchmarks/run_band.py                            # the measurement below, 3 minutes
+python benchmarks/run_band.py --only indicator           # part 7 alone, 1 to 2 minutes
 ```
 
 **What is measured** (`benchmarks/run_band.py`, `benchmarks/results/band/table.md`). The
-benchmark has six parts.
+benchmark has seven parts.
 
 1. The computed band against the Hammett constant sigma, as a linear regression: the straight
    line band = a + b sigma, fitted by least squares. This is the plot of a physical organic
@@ -10273,6 +10274,11 @@ benchmark has six parts.
    charges of both runs are Gasteiger charges, which depend on the bond graph only, so the two
    runs differ in the coordinates and in nothing else.
 6. The differences in q2 with their 95 % bootstrap intervals over the molecules.
+7. The indicator fields of the previous section on the start geometries: one Gaussian field
+   per Sybyl atom type, alone and together with the five physico-chemical fields. This part
+   repeats the cross-validation ten times with other folds. It gives every number a second
+   time for folds that hold out whole substituents, because the series holds each substituent
+   twice. It writes `indicator.json`, and the table gains a part from it.
 
 **The band follows the Hammett constant.** The 189 bands lie between 1710.6 and
 1737.1 cm$^{-1}$, with a spread (standard deviation) of 4.5 cm$^{-1}$. A
@@ -10438,11 +10444,95 @@ above meta here: the two slopes are equal (+11.3 and
 +11.5), so one unit of sigma moves the band by the same
 amount from either position.
 
+**One field per atom type: the indicator fields.** The separate Hammett regressions are above
+every field model of the tables above. The five physico-chemical fields do not name the atom
+types, and fragment charges do not carry resonance. A continuous indicator field of an atom type
+is one Gaussian on every atom of that type, so a model with such fields can give every type an
+effect of its own. The previous section read the ring picture of the shifts with these fields.
+Part 7 of the benchmark measures them on the start geometries, at an envelope width of 10 A. The
+width was fixed before this measurement, as the width where the five fields were best. 15 Sybyl
+types occur in at least 10 acids, and each gets a field. A control gives a field to every type
+that occurs in at least 2 acids (25 types).
+
+Two things differ from the tables above. First, the cross-validation is repeated ten times with
+other folds. A q2 is the mean over the ten repeats, and the number in brackets is its standard
+deviation over the repeats. Second, every number is given for two kinds of folds. The series
+holds each substituent twice, meta and para to the carboxyl group. Over the 94 substituents that
+occur twice, the band of the meta acid and the band of the para acid correlate with r +0.80. A
+fold that holds out one acid therefore usually keeps the other acid of the same substituent in
+the training set. The second kind of fold holds out both acids of a substituent together (95
+substituents). The differences carry 95 % bootstrap intervals over the acids for the first kind
+of fold and over the substituents for the second. The table is for the invariant local kernel;
+the table of the benchmark has the posed overlap and three more widths.
+
+| descriptor | q2, whole acids held out | difference from the separate Hammett regressions, whole acids held out | q2, whole substituents held out | difference from the separate Hammett regressions, whole substituents held out |
+| --- | ---: | ---: | ---: | ---: |
+| atom-centred count | +0.650 (0.017) | | +0.623 (0.009) | |
+| Hammett regression | +0.742 (0.002) | | +0.742 (0.002) | |
+| separate Hammett regressions | +0.782 (0.002) | | +0.782 (0.002) | |
+| the five fields | +0.741 (0.026) | -0.041 [-0.110, +0.022] | +0.676 (0.015) | -0.106 [-0.243, -0.011] |
+| 15 indicator fields | +0.749 (0.022) | -0.033 [-0.122, +0.046] | +0.675 (0.014) | -0.106 [-0.262, +0.005] |
+| the five fields and 15 indicator fields | +0.776 (0.017) | -0.005 [-0.090, +0.072] | +0.705 (0.015) | -0.076 [-0.229, +0.033] |
+| the five fields and 25 indicator fields | +0.784 (0.018) | +0.003 [-0.086, +0.080] | +0.709 (0.015) | -0.073 [-0.238, +0.042] |
+
+With whole acids held out, the indicator fields alone equal the five fields (+0.749 and +0.741),
+and both together reach +0.776. The gain over the five fields is +0.036 [-0.047, +0.116], which
+is not resolved. The difference from the separate Hammett regressions is
+-0.005 [-0.090, +0.072]. So the field model reaches these regressions and does not pass them.
+The control with 25 types gives the same result (+0.784).
+
+With whole substituents held out, every field model loses about 0.07 in q2 (the five fields
++0.676, both field sets +0.705), and the Hammett regressions do not change. The reason is what a
+Hammett constant is: a measured value of the substituent. The regression receives this value for
+the acid that is held out. A field model has to learn a substituent from the other substituents.
+On these folds the five fields are below the separate Hammett regressions
+(-0.106 [-0.243, -0.011]), and both field sets are -0.076 [-0.229, +0.033] from them.
+
+The two descriptions are different ones. The correlation between the off-diagonal elements of
+the kernel of the indicator fields and of the kernel of the five fields, each centred first, is
++0.33 for the invariant kernel and +0.38 for the posed overlap at 10 A (+0.12 and +0.13 at
+3.2 A). Two descriptions that order the pairs of acids so differently reach the same q2, and
+together they add about +0.03. The posed overlap does not gain from the indicator fields: +0.718
+with both field sets against +0.707 with the five fields, whole acids held out
+(+0.011 [-0.088, +0.083]).
+
+The ten repeats also correct the margin of the five fields over the count. The tables above were
+read on one set of folds, and on those folds the count has its lowest q2 of the ten repeats
+(+0.616; the ten values lie between +0.616 and +0.666, with a mean of +0.650). Over the ten
+repeats the five fields are above the count by +0.091 [+0.017, +0.162] with whole acids held
+out, where the tables above gave +0.130. With whole substituents held out the margin is
++0.053 [-0.097, +0.168], which does not exclude zero.
+
+The posed model with both field sets also says what it has stored. For one atom of a type at a
+place, the atom effect of the previous section is what this atom adds to the band. The places
+are the mean positions of the first atom of the substituent: para (5.8 A from the carbonyl
+carbon) and meta on either side of the carboxyl group (5.0 and 5.1 A). The table gives the
+effects at the para place for the types with which at least six para substituents begin.
+
+| atom type of the first atom of the substituent | para acids | effect of one such atom at the para place, cm$^{-1}$ | mean band of these acids minus the band of benzoic acid, cm$^{-1}$ |
+| --- | ---: | ---: | ---: |
+| C.3 | 26 | -0.78 +- 0.51 | -1.2 |
+| C.2 | 11 | -0.53 +- 0.61 | +1.5 |
+| O.3 | 9 | -0.47 +- 0.54 | -4.7 |
+| N.am | 8 | -1.12 +- 1.07 | -3.9 |
+| S.3 | 8 | -3.97 +- 1.15 | -2.6 |
+| N.pl3 | 7 | -4.94 +- 1.05 | -9.0 |
+| S.O2 | 6 | +0.93 +- 1.49 | +5.3 |
+
+Over the 22 pairs of a type and a place with at least 2 acids, the effects correlate with the
+mean observed shifts with r +0.85. The model was fitted on these bands, so this is a check of
+what the model has stored and not a prediction. The effect of the first atom is smaller than the
+mean shift in five of the seven rows, because the other atoms of the substituent carry the rest
+(the oxygens of a sulfonyl group, for example: one O.2 oxygen at the para place adds
++2.71 +- 1.38).
+
 **The gate.** The plan set two conditions. The first is that the local field beats the count by
 more than the interval. On the optimised geometries it does so by +0.316,
 and this does not count, because the field reads the bond length. On the start geometries the
 invariant kernel at 7 and 10 A is above the count with an interval that excludes zero, so the
-condition is met, narrowly and with the three cautions above. The second condition is that the
+condition is met, narrowly and with the three cautions above. Over ten repeats of the folds
+the margin is +0.091 [+0.017, +0.162]. On folds that hold out whole substituents it is
++0.053 [-0.097, +0.168], and there the condition is not met. The second condition is that the
 co-field reproduces the meta and para picture of the Hammett co-fields. It is met in part: at the
 widths that keep the substituent the co-field has the place and the sign, and para above meta
 against the noise at 10 A; it is not resolved against the scramble, and at 3.2 A there is no
@@ -10456,11 +10546,18 @@ nothing, because the start geometries are stored, and `run_band.py` now runs it 
 shift set of the two previous sections is not affected: its shifts are measured and its
 geometries come from a force field.
 
+A second rule comes from part 7. A series that holds each substituent at more than one
+position has to be validated on folds that hold out whole substituents as well. On folds over
+single acids the model sees the same substituent at the other position, and its q2 is higher
+by about 0.07 here. A reference that is given a measured constant of the substituent, as the
+Hammett regressions are, does not have this difference.
+
 **What is not done.** Measured carbonyl bands were not collected; with them the computed band
-would become a second column beside the measured one. A description that carries resonance, such
-as the indicator fields of the previous section (one field per atom type), is the candidate for
-passing the separate Hammett regressions; it is not measured here. And the width is not chosen
-inside the folds, which is why the margin over the count is quoted with its cautions.
+would become a second column beside the measured one. The indicator fields reached the separate
+Hammett regressions and did not pass them. No other description that carries resonance was
+tried, for example charges or an electron density from one quantum calculation on the start
+geometry, without an optimisation. And the width is not chosen inside the folds: the width of
+part 7 was fixed before its measurement, but it was found on this same series in part 2.
 
 ## A migration path as the sample: the barrier of a Li hop
 

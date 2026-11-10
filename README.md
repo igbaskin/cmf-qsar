@@ -2803,9 +2803,23 @@ of field), which is the direction of the Hammett slope; at 3.2 A it cannot be re
 follows: a local target computed on its own optimised geometry is predicted from the start
 geometries.
 
+**One field per atom type reaches the separate Hammett regressions and does not pass them.**
+The last part of the benchmark adds the continuous indicator fields, one Gaussian field for
+each of 15 Sybyl atom types, on the force-field geometries at a width of 10 A. The
+cross-validation is repeated ten times with other folds. With whole acids held out the five
+fields give q2 +0.741, the indicator fields alone +0.749 and both together +0.776. The
+separate Hammett regressions give +0.782, and the difference is -0.005 [-0.090, +0.072].
+The series holds each substituent twice, meta and para, and the two bands of a substituent
+correlate with r +0.80. When both acids of a substituent are held out together, the five
+fields fall to +0.676 and both field sets to +0.705 (-0.076 [-0.229, +0.033] from the
+separate Hammett regressions). The Hammett regressions stay at +0.782, because the Hammett
+constant is a measured value of the substituent. Over the ten repeats the margin of the five
+fields over the count is +0.091 [+0.017, +0.162] with whole acids held out, and
++0.053 [-0.097, +0.168] with whole substituents held out, which does not exclude zero.
+
 ```bash
 python examples/make_band_examples.py --orca --jobs 10   # 189 acids, about 9 hours, cached
-python benchmarks/run_band.py                            # the measurement, 1 minute
+python benchmarks/run_band.py                            # the measurement, 3 minutes
 ```
 
 ### A migration path as the sample: the barrier of a Li hop
