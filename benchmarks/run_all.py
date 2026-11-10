@@ -843,8 +843,8 @@ def registry() -> List[Benchmark]:
         Benchmark("band",
                   "a vibrational band as a local target: the carbonyl stretch of substituted "
                   "benzoic acids from the field around the carbonyl carbon, against the "
-                  "atom-centred count and the Hammett line, with the co-field at the ring "
-                  "positions",
+                  "atom-centred count and a linear regression on the Hammett constant, with "
+                  "the co-field at the ring positions",
                   "run_band.py", "band", compute=[[]],
                   minutes="1",
                   report=lambda: _mod("run_band").report(_r("band")),
