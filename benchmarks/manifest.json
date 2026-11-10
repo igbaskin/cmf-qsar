@@ -1,6 +1,6 @@
 {
- "commit": "f98f54fe15cca089859dae179030289ed1be9554",
- "created": "2026-11-09T21:22:31",
+ "commit": "f116df34bf0b3d59216b07f42c6e77d5ce91dfa2",
+ "created": "2026-11-10T08:10:13",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1078,6 +1078,10 @@
    "bytes": 18379,
    "sha256": "7a89f4385c6d91414959c36781dc8b1898fb63fff0bb48c7d6bac5a4545fe8ff"
   },
+  "examples/make_band_examples.py": {
+   "bytes": 17041,
+   "sha256": "e207ab0112c314d84550f3f3cddf2b6b2041d247bda30a582791df8382cc13c2"
+  },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
    "sha256": "d907e0d56bb8cc513cf00b4f0d28ac8a72fd9b37b9e4c67fc97c7978252fe778"
@@ -2130,6 +2134,18 @@
    "bytes": 189864,
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
+  "examples/spectra/README.md": {
+   "bytes": 5895,
+   "sha256": "c599819d1111673ccd48419a6fde317a074e7d861a8cdc3812ac95239610638a"
+  },
+  "examples/spectra/benzoic_acids.sdf": {
+   "bytes": 457694,
+   "sha256": "ae513e5973244e4d81a12150bdd2dc6b5cfa52d18071b7bcdab3e2d11b356829"
+  },
+  "examples/spectra/benzoic_acids_co.sdf": {
+   "bytes": 592902,
+   "sha256": "665e10693c3548fd9d93d073ce8cb846577c91415079fc4b90029b54e7c21601"
+  },
   "examples/steroids_cbg.sdf": {
    "bytes": 148560,
    "sha256": "9f114e6e929f2657d2b05a93554cfd4871561574f0a5d3a06dff83e19c7309d2"
@@ -2280,6 +2296,14 @@
   "benchmarks/results/anisotropic/table.md": "48fd2162d1f1b8a58657e2a7bf21f0f4407ee1201439333cef783c5098cc4c75",
   "benchmarks/results/antitarget/summary.json": "2845bcd550b829431f1555e29ea47a33863cd2b688d219b79eb4304cd44f4d9a",
   "benchmarks/results/antitarget/table.md": "9716a347b2af4738b941d7080ecd3794cce6ca1e1b652da90c30b64e76e7fcf1",
+  "benchmarks/results/band/band.json": "286e931aad752d496fd20277a2932d131bd9832ddca96235df635d5477fc1158",
+  "benchmarks/results/band/cofield_rho_0p01.png": "1f61da82c612f7df7de293f53c24d400de7a3995a4f2d7cf9576bac83add910c",
+  "benchmarks/results/band/cofield_rho_0p05.png": "8d30536dacbf3d1125ca9bbb244c5b75af824850cd3e724bb6e5b0f837a1d35c",
+  "benchmarks/results/band/cofield_rho_0p1.png": "cafea2f81c46ebc3b798dda60df2f0c900b3dbdec5d6f53a920606cf5365e616",
+  "benchmarks/results/band/start_cofield_rho_0p01.png": "b9b6bc4e90a1b9ffb441f081d78b220a629705af9bfb68520f65cb95fbddb313",
+  "benchmarks/results/band/start_cofield_rho_0p05.png": "24283e182097195ff766d3461a940d3c485a735a62df6060653bea53ce3b5e5e",
+  "benchmarks/results/band/start_cofield_rho_0p1.png": "92bd5eb5719097f97e3321a57e7361f95734a56e7b955f4a0484c47196d77ef5",
+  "benchmarks/results/band/table.md": "089ed5b989e7e6eeb7718ef163bf0d53a32fa946dc241eee583b4bfd0f86e4f3",
   "benchmarks/results/batch/ACE.json": "226d393c9d0d95ca71afdfe46a55fdaabc746b581e7b8cd2611afcf59bc85b33",
   "benchmarks/results/batch/AChE.json": "4a476ab34285f69285d9af10339df6c46e8ed52060165a5e389dc4d82efb1c81",
   "benchmarks/results/batch/BZR.json": "69831e85d549741f0f7c6ca96232d7a446bc175b0b0f21675d02fa09cbfe46d8",
