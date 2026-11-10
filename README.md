@@ -2763,6 +2763,49 @@ cmf local examples/local/shifts_cdcl3.sdf --target shift --align --site ring --c
 ```
 
 
+### A vibrational band as the local target
+
+A band belongs to a bond, so it is a local target like a shift. Plan item SP2 computes the
+carbonyl stretch of 189 substituted benzoic acids (the 95 substituents of the Hammett set, meta
+and para to the carboxyl group) with ORCA at r2SCAN-3c
+([make_band_examples.py](examples/make_band_examples.py),
+[examples/spectra/](examples/spectra/README.md)). The frequency run is `orca.run_band`: a cached
+optimisation-and-frequencies job per molecule. The band is the normal mode that moves the two
+atoms of the bond apart most inside a window (`orca.bond_stretch_mode`), scaled by the
+conventional factor of the level and written on the carbonyl carbon as a per-atom property that
+`cmf local` reads like a shift. A molecule that ends with an imaginary frequency is moved along
+that mode and optimised once more (`orca.retry_band`), and a molecule whose optimisation breaks
+or makes a bond is reported as failed (`orca.changed_bonds`).
+[run_band.py](benchmarks/run_band.py) predicts the band from the field around the carbonyl
+carbon, with the invariant local kernel and the posed overlap kernel at eight envelope widths,
+against the atom-centred count, the Hammett line and a line on the C=O bond length. It does this
+twice: on the optimised geometries and on the force-field geometries the optimisation started
+from.
+
+**The optimised geometries give a result that does not count.** There the field at a width of
+1 A reaches q2 +0.978, but a straight line on the C=O bond length of the same
+geometries reaches +0.973: a shorter bond has a higher stretching
+frequency, and the optimisation that gives the band also gives the length. The field is above
+that line by +0.005 [+0.002, +0.009] only.
+
+**From the structure alone the field equals one Hammett line.** On the force-field geometries the
+narrow field falls to q2 +0.191 to +0.326. At a width of 7 to 10 A, which reaches the
+substituent (4.8 to 6.4 A from the carbonyl carbon), the invariant kernel reaches
++0.742 and +0.746. The count gives
++0.616 (the difference at 10 A is +0.130 [+0.043, +0.209]),
+one Hammett line +0.740 and two lines +0.781. The
+margin over the count is small and not robust: without the five acids that keep an imaginary
+frequency its interval begins at -0.005. The electrostatic co-field at 10 A is positive at
+the meta and para carbons (+3.68 and +5.01 cm⁻¹ per unit
+of field), which is the direction of the Hammett slope; at 3.2 A it cannot be read. The rule that
+follows: a local target computed on its own optimised geometry is predicted from the start
+geometries.
+
+```bash
+python examples/make_band_examples.py --orca --jobs 10   # 189 acids, about 9 hours, cached
+python benchmarks/run_band.py                            # the measurement, 1 minute
+```
+
 ### A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two
