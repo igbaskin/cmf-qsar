@@ -2817,9 +2817,37 @@ constant is a measured value of the substituent. Over the ten repeats the margin
 fields over the count is +0.091 [+0.017, +0.162] with whole acids held out, and
 +0.053 [-0.097, +0.168] with whole substituents held out, which does not exclude zero.
 
+**Quantum charges in the electrostatic field reach the separate Hammett regressions and do not
+pass them.** Gasteiger charges come from the bond graph. They are the same on the carboxyl
+group of every acid, and they do not hold the effect of a substituent through the pi electrons
+of the ring (resonance). Part 8 of the benchmark takes the charge of every atom from one
+GFN2-xTB calculation on the force-field geometry, without an optimisation (stage `--xtb` of
+the builder, 13 seconds; [benzoic_acids_xtb.sdf](examples/spectra/benzoic_acids_xtb.sdf)). The
+envelope width and the ridge are chosen inside the folds. With whole acids held out the
+electrostatic field alone goes from q2 +0.562 with Gasteiger charges to +0.824 with quantum
+charges, and the five fields with quantum charges and one field for each of the two Fukui
+indices reach +0.837. Against the separate Hammett regressions (+0.782) these two are
++0.042 [-0.005, +0.093] and +0.056 [-0.006, +0.120]. With whole substituents held out they
+reach +0.799 and +0.823 (+0.017 [-0.038, +0.074] and +0.042 [-0.050, +0.115]). No interval
+excludes zero. Both sets are also not separated from a multiple linear regression on the
+quantum charges of the four atoms of the carboxyl group (+0.786 and +0.783), so most of what
+they predict is in those four charges.
+
+The difference between the para acid and the meta acid of one substituent is the part of the
+band that resonance decides. The electrostatic field with quantum charges predicts it with
+q2 +0.41 and +0.44, the separate Hammett regressions with +0.42, and the five fields with
+Gasteiger charges with -0.30 and +0.18. Two cautions come from this part. At a width chosen by
+the result (2 A) the set with the Fukui fields would be +0.08 above the separate Hammett
+regressions with an interval that excludes zero; the choice inside the folds removes that
+margin. And the five fields with quantum charges alone fail (q2 +0.651 and +0.361) because of
+one substituent, SF5: the charge of its sulfur atom (+2.05 e) is outside the range of all
+other acids (at most +1.40 e). A field from quantum charges needs a check of that range before
+a prediction.
+
 ```bash
 python examples/make_band_examples.py --orca --jobs 10   # 189 acids, about 9 hours, cached
-python benchmarks/run_band.py                            # the measurement, 3 minutes
+python examples/make_band_examples.py --xtb --jobs 8     # GFN2-xTB charges, 13 seconds
+python benchmarks/run_band.py                            # the measurement, 8 minutes
 ```
 
 ### A migration path as the sample: the barrier of a Li hop

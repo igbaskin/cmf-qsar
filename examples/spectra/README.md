@@ -69,6 +69,29 @@ minutes (33 at the median) and about 200 MB of memory. The series took 8.7 hours
 the first run and 62 minutes for the second, which repeated the two SF5 acids from the repaired
 start geometry and optimised the 13 acids with an imaginary frequency once more.
 
+## `benzoic_acids_xtb.sdf` — the force-field geometries with quantum charges on the atoms
+
+Stage 3 of the same script (`--xtb`): one GFN2-xTB calculation per acid on the geometry of
+`benzoic_acids.sdf`, without a geometry optimisation (`cmfqsar.xtb`, program xtb 6.7.1,
+accuracy 1). GFN2-xTB is a semi-empirical quantum method. The atoms, their order and their
+coordinates are the ones of `benzoic_acids.sdf`, so the file holds nothing about the geometry
+of the ORCA run that gives the band.
+
+Per-atom properties: `q_xtb` (the partial charge, in e), `alpha_xtb` (the atomic
+polarisability), `fukui_plus` and `fukui_minus` (the change of the charge of the atom when one
+electron is added to the molecule, and when one electron is removed), `fukui_zero` (the mean of
+the two) and `dual` (`fukui_plus` minus `fukui_minus`). The molecule properties of
+`benzoic_acids.sdf` are kept, and the calculation adds its own (the total energy, the HOMO and
+LUMO energies, their gap and the dipole).
+
+The run takes 13 seconds for the series with 8 acids at a time. The jobs are cached under
+`benchmarks/results/band/xtb_work/`, which is not tracked. A second run reads the finished jobs
+and writes the same bytes.
+
+One acid group needs care. The charge of the sulfur atom of an SF5 group is +2.05 e. The largest
+charge of an atom in all other acids is +1.40 e (`meta-SO2F`). A model that has not seen an SF5
+acid predicts the two SF5 acids badly from these charges.
+
 ## What the set is for
 
 `benchmarks/run_band.py` (plan item SP2) predicts the band from the field around the carbonyl
@@ -78,6 +101,9 @@ linear regression on the C=O bond length,
 and reads the co-field at the ring positions. It does so twice: on the optimised geometries of
 `benzoic_acids_co.sdf` and on the force-field geometries of `benzoic_acids.sdf`, with the same
 bands. The second run is the one that counts, because an optimised geometry holds the C=O bond
-length, and that length alone predicts the band. A last part adds one indicator field per atom
+length, and that length alone predicts the band. Part 7 adds one indicator field per atom
 type on the force-field geometries, and folds that hold out both acids of a substituent
-together. The manual section *A vibrational band as the local target* has the results.
+together. Part 8 builds the electrostatic field from the quantum charges of
+`benzoic_acids_xtb.sdf` in place of Gasteiger charges, and chooses the envelope width and the
+ridge inside the folds. The manual section *A vibrational band as the local target* has the
+results.
