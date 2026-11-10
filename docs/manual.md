@@ -4168,9 +4168,9 @@ and the ridge only through their ratio. Until 10 November 2026 `drop_one` took t
 fixed ridges, 0.001 to 10. When the best ridge lay below 0.001, a sum with one more term, which
 has a larger scale, was nearer to the best ridge and gained from that alone. Plan item SP1
 found the fault: a kernel with a share of zero had a factor of +53.9, and it has -1.4 now. The
-Bayes factors of this section and of section *The bond graph as a view* on the eight Sutherland
-sets were computed again. They moved by 4.5 at most here and by 2.7 at most there, and no
-reading changed.
+Bayes factors of this section and of section *The bond graph as a view* were computed again.
+They moved by 4.5 at most here and by 2.7 at most on the eight Sutherland sets there; the
+factor on COMPAS-1D went from +1845.3 to +1857.5. No reading changed.
 
 ### What it is good for, measured
 
@@ -7900,7 +7900,7 @@ against the invariant kernel, because a gain the invariant kernel already gives 
 | THR | 88 | +0.723 | +0.726 | +0.728 | +0.729 | 6% | -0.0 | +0.005 [-0.001, +0.012] | +0.003 [-0.007, +0.015] |
 | THER | 76 | +0.462 | +0.477 | +0.468 | +0.481 | 13% | -0.1 | +0.006 [-0.002, +0.014] | -0.009 [-0.025, +0.007] |
 | GPB | 66 | +0.604 | +0.610 | +0.605 | +0.610 | 17% | +0.0 | +0.001 [-0.003, +0.005] | -0.004 [-0.013, +0.007] |
-| COMPAS-1D | 2000 | +0.439 | +0.904 | +0.908 | +0.929 | 100% | +1845.3 | +0.470 [+0.438, +0.503] | +0.004 [-0.002, +0.011] |
+| COMPAS-1D | 2000 | +0.439 | +0.904 | +0.908 | +0.929 | 100% | +1857.5 | +0.470 [+0.438, +0.503] | +0.004 [-0.002, +0.011] |
 
 Differences in q2 with their 95 % paired bootstrap intervals over the molecules. On the Sutherland
 sets the graph view changes q2 by +0.016 on average against the fields alone, with an interval that
@@ -7910,7 +7910,7 @@ kernel it changes q2 by +0.006 (1 in its favour, 0 against). The evidence gives 
 of the joint kernel on average, with a Bayes factor of +2.3 nats against it doing nothing. On the
 2,000 molecules of COMPAS-1D the view changes q2 by +0.470 [+0.438, +0.503] against the fields and
 +0.004 [-0.002, +0.011] against the fields with the invariant kernel, holding 100% of the kernel
-with a Bayes factor of +1845.3. (The number for COMPAS-1D is from before the ridge search of `drop_one` was repaired on 10 November 2026; it is being computed again.) Against the invariant kernel the graph view wins on DHFR and loses
+with a Bayes factor of +1857.5. Against the invariant kernel the graph view wins on DHFR and loses
 on COX2, BZR, ACE. On DHFR the evidence hands the graph 95% of the kernel with a Bayes factor of
 +16.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712 against +0.641):
 that is the largest and most varied of the eight series, the one an alignment serves worst, and
