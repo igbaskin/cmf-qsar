@@ -92,6 +92,26 @@ One acid group needs care. The charge of the sulfur atom of an SF5 group is +2.0
 charge of an atom in all other acids is +1.40 e (`meta-SO2F`). A model that has not seen an SF5
 acid predicts the two SF5 acids badly from these charges.
 
+## `benzoic_acids_ir.json` — the infrared stick spectrum of every acid
+
+Stage 4 of the same script (`--ir`). The frequency job of stage 2 gives every normal mode of an
+acid with its infrared intensity, and `benzoic_acids_co.sdf` keeps one of them, the carbonyl
+stretch. This file keeps all of them. Nothing is computed: the stage reads the ORCA outputs
+under `benchmarks/results/band/orca_work/`.
+
+The file is JSON. Its head gives the axis (`wavenumber`, in cm⁻¹), the unit of the intensity
+(km/mol), the scaling factor (0.97) and the level of theory. `acids` is a list with one acid on
+a line: `name` (the name of the acid in the SD files), `wavenumbers` (the harmonic wavenumbers
+of its normal modes times the scaling factor, in rising order) and `intensities` (one per
+wavenumber). The modes of translation and rotation are left out, and so is the imaginary mode
+of the five acids that keep one. An acid of N atoms therefore has 3N − 6 lines, or 3N − 7; the
+series has 39 to 105 lines per acid, and 43 at the median between 400 and 4000 cm⁻¹. The band
+of `benzoic_acids_co.sdf` is one of the lines of its acid.
+
+`cmfqsar.spectrum.Spectrum(wavenumbers, intensities)` makes a stick spectrum of an entry, and
+`benchmarks/run_spectra_ir.py` (plan item SP1) uses the spectra as samples: it predicts the
+Hammett constant of the substituent from the spectrum.
+
 ## What the set is for
 
 `benchmarks/run_band.py` (plan item SP2) predicts the band from the field around the carbonyl
@@ -107,3 +127,7 @@ together. Part 8 builds the electrostatic field from the quantum charges of
 `benzoic_acids_xtb.sdf` in place of Gasteiger charges, and chooses the envelope width and the
 ridge inside the folds. The manual section *A vibrational band as the local target* has the
 results.
+
+`benchmarks/run_spectra_ir.py` (plan item SP1) turns the question round. The sample is the
+infrared spectrum of `benzoic_acids_ir.json`, and the target is the Hammett constant, which is
+measured. The manual section *A spectrum as a one-dimensional field* has the results.

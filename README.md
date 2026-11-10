@@ -2891,9 +2891,35 @@ ridge here is 2.1e-05. `drop_one` now searches the ridge relative to the scale o
 and gives -1.4. The Bayes factors of the mixing benchmark and of the graph view on the
 Sutherland sets were computed again; they moved by 4.5 at most and no reading changed.
 
+**An infrared spectrum as the sample: the pair where the spectrum holds the answer.**
+[run_spectra_ir.py](benchmarks/run_spectra_ir.py) takes the infrared spectra of the 189 benzoic
+acids of the section above (every normal mode of the ORCA frequency job as a stick,
+[benzoic_acids_ir.json](examples/spectra/benzoic_acids_ir.json)) and predicts the Hammett
+constant of the substituent, which is a measured number that the calculation is not told. Ten
+repeats of ten folds, every setting chosen inside the folds. With whole substituents held out
+the spectrum reaches q2 +0.809. The atom-centred counts reach +0.629, the five fields +0.697
+and the electrostatic field with quantum charges +0.798. The spectrum is
++0.111 [+0.023, +0.244] above the five fields and not separated from the field with quantum
+charges. It is also +0.067 [+0.015, +0.130] above a linear regression on the position of the
+carbonyl band, the one band a chemist would read. Joined with the five fields the q2 is +0.831
+(+0.134 [+0.056, +0.253] above the five fields alone), so the gate of the item is met on this
+pair. The correlation of the kernel with the target before any fit was +0.438 here, against
++0.009 for the powder pattern.
+
+The co-spectrum cannot be read point by point, but it can be read by region, with the
+substituent of an acid held out: what the region of the O-H stretch adds to a prediction
+correlates with the constant at +0.82, the C=O stretch at +0.79 and the ring stretch at +0.67,
+against +0.20 at most in models on constants in random order. Two limits. The kernel reads the
+position of one line less exactly than a regression on that position does (the C=O bond length
+from the spectrum: q2 +0.858 against +0.973). And the spectrum here is computed by a quantum
+program, so its gain over the five fields is what a quantum calculation knows; no measured
+spectrum is used yet.
+
 ```bash
 python benchmarks/run_spectra.py          # the measurement, 3.5 hours with the two Gaussian rows
 python benchmarks/run_spectra.py --report
+python examples/make_band_examples.py --ir   # the infrared stick spectra of the 189 acids
+python benchmarks/run_spectra_ir.py       # the infrared spectra against the Hammett constant, 50 minutes
 ```
 
 ### A migration path as the sample: the barrier of a Li hop

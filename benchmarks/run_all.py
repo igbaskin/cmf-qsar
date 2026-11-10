@@ -926,6 +926,16 @@ def registry() -> List[Benchmark]:
                   minutes="210",
                   report=lambda: _mod("run_spectra").report(),
                   tables=["spectra/table.md"]),
+        Benchmark("spectra_ir",
+                  "an infrared spectrum as the sample: the computed stick spectra of the 189 "
+                  "benzoic acids against the Hammett constant, with whole acids and whole "
+                  "substituents held out, against the atom-centred counts, a linear "
+                  "regression on the carbonyl band and the structural kernels, the spectrum "
+                  "joined with the structure, and the co-spectrum read by region",
+                  "run_spectra_ir.py", "spectra_ir", compute=[[]],
+                  minutes="50",
+                  report=lambda: _mod("run_spectra_ir").report(),
+                  tables=["spectra_ir/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",
