@@ -429,6 +429,83 @@ def _parse_coords(lines: List[str]) -> Tuple[List[str], Optional[np.ndarray]]:
     return syms, (np.array(xyz) if xyz else None)
 
 
+_FREQUENCY_LINE = re.compile(r"^\s*(\d+):\s+(-?\d+\.\d+)\s+cm\*\*-1")
+_IR_LINE = re.compile(r"^\s*(\d+):\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)")
+
+
+def _parse_frequencies(lines: List[str]) -> Optional[np.ndarray]:
+    """The ``VIBRATIONAL FREQUENCIES`` block: one value per mode, in cm^-1 (plan item SP2)."""
+    start = _last_block(lines, "VIBRATIONAL FREQUENCIES")
+    if start is None:
+        return None
+    vals: Dict[int, float] = {}
+    for ln in lines[start:start + 20000]:
+        m = _FREQUENCY_LINE.match(ln)
+        if m:
+            vals[int(m.group(1))] = float(m.group(2))
+        elif vals:
+            break
+    if not vals or sorted(vals) != list(range(len(vals))):
+        return None
+    return np.array([vals[i] for i in range(len(vals))])
+
+
+def _parse_normal_modes(lines: List[str]) -> Optional[np.ndarray]:
+    """The ``NORMAL MODES`` block as a (3N, modes) array.
+
+    ORCA prints the modes in blocks of six columns: a line of mode numbers, then 3N lines of a
+    row index followed by one value per column.  The values are the mass-weighted Cartesian
+    displacements, normalised but not orthogonal, as the block's own header says.
+    """
+    start = _last_block(lines, "NORMAL MODES")
+    if start is None:
+        return None
+    cols: Dict[int, List[float]] = {}
+    header: Optional[List[int]] = None
+    for ln in lines[start:start + 400000]:
+        parts = ln.split()
+        if not parts:
+            if cols:
+                break
+            continue
+        if all(p.isdigit() for p in parts) and len(parts) <= 6:
+            header = [int(p) for p in parts]
+            continue
+        if (header is not None and parts[0].isdigit() and len(parts) == len(header) + 1
+                and all(_FLOAT.match(p) for p in parts[1:])):
+            for h, v in zip(header, parts[1:]):
+                cols.setdefault(h, []).append(float(v))
+            continue
+        if cols:
+            break
+    if not cols or sorted(cols) != list(range(len(cols))):
+        return None
+    n_rows = {len(v) for v in cols.values()}
+    if len(n_rows) != 1:
+        return None
+    return np.array([cols[k] for k in range(len(cols))], float).T
+
+
+def _parse_ir_intensities(lines: List[str], n_modes: int) -> Optional[np.ndarray]:
+    """The ``IR SPECTRUM`` block: the intensity in km/mol of every mode, zero where none is
+    printed (the translations and rotations)."""
+    start = _last_block(lines, "IR SPECTRUM")
+    if start is None:
+        return None
+    out = np.zeros(int(n_modes))
+    seen = False
+    for ln in lines[start:start + 20000]:
+        m = _IR_LINE.match(ln)
+        if m:
+            k = int(m.group(1))
+            if 0 <= k < n_modes:
+                out[k] = float(m.group(4))
+                seen = True
+        elif seen:
+            break
+    return out if seen else None
+
+
 @dataclass
 class OrcaResult:
     terminated: bool = False
@@ -448,6 +525,14 @@ class OrcaResult:
     mo_populations: Dict[int, Dict[int, float]] = field(default_factory=dict)
     symbols: List[str] = field(default_factory=list)
     coords: Optional[np.ndarray] = None
+    #: harmonic frequencies in cm^-1 as ORCA lists them, the zero ones of translation and
+    #: rotation included; None when the job computed none (plan item SP2)
+    frequencies: Optional[np.ndarray] = None
+    #: the normal modes, one column per frequency and 3N rows of mass-weighted Cartesian
+    #: displacement, in ORCA's normalisation
+    modes: Optional[np.ndarray] = None
+    #: infrared intensities in km/mol, one per frequency, zero where ORCA printed none
+    ir_intensities: Optional[np.ndarray] = None
 
     @property
     def n_atoms(self) -> int:
@@ -487,6 +572,12 @@ def parse_orca_output(text: str) -> OrcaResult:
         r.lumo_index, r.lumo = min(virt, key=lambda t: t[1])
     r.mo_populations, _ = _parse_mo_populations(lines)
     r.symbols, r.coords = _parse_coords(lines)
+    r.frequencies = _parse_frequencies(lines)
+    if r.frequencies is not None:
+        modes = _parse_normal_modes(lines)
+        if modes is not None and modes.shape[1] == len(r.frequencies):
+            r.modes = modes
+        r.ir_intensities = _parse_ir_intensities(lines, len(r.frequencies))
     return r
 
 
@@ -935,3 +1026,411 @@ def measured_seconds_per_job(workdir: str, fukui: bool = True) -> Optional[float
         jobs = (3 if st.get("fukui", fukui) else 1) + (1 if st.get("opt") else 0)
         times.append(float(st["seconds"]) / jobs)
     return float(np.mean(times)) if times else None
+
+
+# ----------------------------------------------------------------------------------------------
+# A vibrational band as a local target (plan item SP2)
+# ----------------------------------------------------------------------------------------------
+
+#: the factor a harmonic frequency is multiplied by before it is compared with a measured band,
+#: by the first keyword of the level of theory (case does not matter).  The values are the
+#: conventional ones for these methods, close to 0.97 for the composite r2SCAN-3c and 0.96 for
+#: B3LYP in a small basis; they correct the harmonic approximation and the method together.  A
+#: level not listed is not scaled.  The factor multiplies every band of a series by the same
+#: number, so no comparison between descriptors depends on it.
+FREQUENCY_SCALE = {"r2scan-3c": 0.97, "b3lyp": 0.96, "pbeh-3c": 0.95, "b97-3c": 0.98}
+
+
+def frequency_scale(level: str) -> float:
+    """The scaling factor of :data:`FREQUENCY_SCALE` for this level of theory, or 1."""
+    first = (level.split() or [""])[0].lower()
+    return float(FREQUENCY_SCALE.get(first, 1.0))
+
+
+def make_frequency_input(level: str, charge: int, mult: int, xyz_name: str, nprocs: int = 1,
+                         maxcore: int = 2000, solvent=None, opt: bool = True,
+                         calc_hess: bool = False, max_cycles: int = 0) -> str:
+    """Text of an ORCA input that computes the harmonic frequencies, after a geometry
+    optimisation unless `opt` is False.
+
+    A frequency on a geometry that is not a minimum of the same level is not defined, so the
+    optimisation is the default; a caller that already holds a minimum of this level passes
+    ``opt=False``.  `calc_hess` starts the optimisation from a computed Hessian instead of a
+    model one, and `max_cycles` replaces ORCA's limit of optimisation cycles; both are for a
+    molecule with a very soft motion, where the default optimisation does not settle.
+    """
+    keywords = [level] + (["Opt"] if opt else []) + ["Freq"]
+    if mult > 1:
+        keywords.append("UKS")
+    solv_keywords, solv_block = solvent_lines(solvent)
+    keywords += solv_keywords
+    lines = ["! " + " ".join(keywords)]
+    if nprocs > 1:
+        lines.append(f"%pal nprocs {nprocs} end")
+    lines.append(f"%maxcore {maxcore}")
+    lines.append("%scf MaxIter 300 end")
+    if opt and (calc_hess or max_cycles):
+        words = (["Calc_Hess true"] if calc_hess else []) \
+            + ([f"MaxIter {int(max_cycles)}"] if max_cycles else [])
+        lines.append("%geom " + " ".join(words) + " end")
+    lines += solv_block
+    lines.append(f"* xyzfile {charge} {mult} {xyz_name}")
+    return "\n".join(lines) + "\n"
+
+
+CONTINUE_CYCLES = 200       # the limit of cycles of a continued optimisation
+_CYCLE_LIMIT = "The optimization did not converge but reached the maximum"
+
+
+def optimisation_hit_cycle_limit(jobdir: str, job: str, inp: str) -> bool:
+    """True when the job `job` of `jobdir` was run with the input `inp` and its optimisation
+    stopped at ORCA's limit of cycles, with the last geometry on disk.
+
+    This is the one failure of an optimisation that is worth continuing, and only for a
+    molecule that is still whole: with a very soft motion (a nearly free rotation, for example)
+    the forces are small and the steps are not, and a model Hessian does not know how soft the
+    motion is.  A start geometry that is wrong reaches the same limit for another reason, and
+    more cycles do not repair it; :func:`changed_bonds` tells the two cases apart."""
+    paths = [os.path.join(jobdir, job + ext) for ext in (".inp", ".out", ".xyz")]
+    if not all(os.path.isfile(p) for p in paths):
+        return False
+    with open(paths[0]) as fh:
+        if fh.read() != inp:
+            return False
+    with open(paths[1], errors="replace") as fh:
+        return _CYCLE_LIMIT in fh.read()
+
+
+#: a bond is whole when its length is between these multiples of the sum of the covalent radii
+BOND_RATIO_LIMITS = (0.6, 1.5)
+
+
+def bond_length_ratios(mol: Chem.Mol, coords: Optional[np.ndarray] = None) -> np.ndarray:
+    """The length of every bond of `mol` divided by the sum of the covalent radii of its two
+    atoms, in the order of the bonds.  `coords` replaces the conformer of the molecule.
+
+    A single bond is near 1, a double or triple bond near 0.8.  A value far from 1 means that
+    the coordinates do not show the molecule the bond table describes."""
+    r = np.asarray(mol.GetConformer().GetPositions() if coords is None else coords, float)
+    table = Chem.GetPeriodicTable()
+    out = []
+    for b in mol.GetBonds():
+        a, c = b.GetBeginAtom(), b.GetEndAtom()
+        reference = table.GetRcovalent(a.GetAtomicNum()) + table.GetRcovalent(c.GetAtomicNum())
+        out.append(float(np.linalg.norm(r[a.GetIdx()] - r[c.GetIdx()])) / reference)
+    return np.asarray(out, float)
+
+
+def changed_bonds(mol: Chem.Mol, coords: Optional[np.ndarray] = None,
+                  low: float = BOND_RATIO_LIMITS[0],
+                  high: float = BOND_RATIO_LIMITS[1]) -> List[str]:
+    """The bonds of `mol` whose length is outside `low` to `high` times the sum of the covalent
+    radii, each as a text such as ``S1-F4 2.62``; an empty list when the molecule is whole.
+
+    The use is a check after a geometry optimisation.  An optimisation that starts from a wrong
+    geometry can end in another molecule or in fragments, and its frequencies are then not the
+    frequencies of the molecule that was asked for."""
+    ratios = bond_length_ratios(mol, coords)
+    out = []
+    for b, q in zip(mol.GetBonds(), ratios):
+        if not low <= q <= high:
+            a, c = b.GetBeginAtom(), b.GetEndAtom()
+            out.append(f"{a.GetSymbol()}{a.GetIdx() + 1}-{c.GetSymbol()}{c.GetIdx() + 1} {q:.2f}")
+    return out
+
+
+def bond_from_smarts(mol: Chem.Mol, smarts: str) -> Optional[Tuple[int, int]]:
+    """The first two atoms of the first match of `smarts`, as the bond whose stretch is wanted.
+
+    ``[CX3](=O)[OX2H1]`` names the carbonyl carbon and its oxygen of a carboxylic acid; the
+    first atom of the pattern is the one the band is written on.  None when nothing matches.
+    """
+    patt = Chem.MolFromSmarts(smarts)
+    if patt is None:
+        raise ValueError(f"not a SMARTS pattern: {smarts!r}")
+    if patt.GetNumAtoms() < 2:
+        raise ValueError("the pattern has to name at least two atoms")
+    match = mol.GetSubstructMatch(patt)
+    if not match:
+        return None
+    return int(match[0]), int(match[1])
+
+
+def bond_stretch_mode(result: OrcaResult, i: int, j: int, low: float = 0.0,
+                      high: float = float("inf")) -> Tuple[int, float, float, float]:
+    """The normal mode that stretches the bond between atoms `i` and `j` most, among the modes
+    whose frequency lies in ``[low, high]`` cm^-1.
+
+    A band is assigned by its motion and not by its position alone: the carbonyl stretch is the
+    mode in which the carbonyl carbon and oxygen move apart most, and the window only keeps a
+    far-away mode that happens to move them a little from being chosen.  Returns the mode index,
+    its frequency in cm^-1 (unscaled), its infrared intensity in km/mol and the *share*: half the
+    squared projection of the unit mode vector on the stretch of this bond, a number between 0
+    and 1 that is 1 when only these two atoms move and move exactly against each other, and
+    says how much of the mode is this bond.  Raises :class:`OrcaError` when the job computed no
+    modes or no mode lies in the window.
+    """
+    if result.frequencies is None or result.modes is None:
+        raise OrcaError("the job computed no normal modes")
+    if result.coords is None or max(i, j) >= len(result.coords):
+        raise OrcaError("the job's coordinates do not hold both atoms of the bond")
+    u = np.asarray(result.coords[j], float) - np.asarray(result.coords[i], float)
+    norm = float(np.linalg.norm(u))
+    if norm <= 0:
+        raise OrcaError("the two atoms of the bond coincide")
+    u = u / norm
+    best = None
+    for k, nu in enumerate(result.frequencies):
+        if not (float(low) <= float(nu) <= float(high)):
+            continue
+        d_i = result.modes[3 * i:3 * i + 3, k]
+        d_j = result.modes[3 * j:3 * j + 3, k]
+        s = 0.5 * float(np.dot(u, d_j - d_i)) ** 2
+        if best is None or s > best[3]:
+            inten = (float(result.ir_intensities[k]) if result.ir_intensities is not None
+                     else float("nan"))
+            best = (int(k), float(nu), inten, s)
+    if best is None:
+        raise OrcaError(f"no mode between {low:g} and {high:g} cm^-1")
+    return best
+
+
+@dataclass
+class BandOutcome:
+    """What the frequency run of one molecule gave: the annotated copy, or the error."""
+    index: int
+    name: str
+    mol: Optional[Chem.Mol] = None
+    error: str = ""
+    seconds: float = 0.0
+    reused: bool = False
+    frequency: float = float("nan")         # scaled, cm^-1
+    unscaled: float = float("nan")
+    intensity: float = float("nan")         # km/mol
+    share: float = float("nan")
+    mode: int = -1
+    n_imaginary: int = 0
+
+
+def run_band(mol: Chem.Mol, name: str, index: int, cfg: Config, bond: Tuple[int, int],
+             prop: str = "band", low: float = 0.0, high: float = float("inf"),
+             opt: bool = True) -> BandOutcome:
+    """Optimise one molecule, compute its harmonic frequencies and write the band of one bond on
+    the bond's first atom as a per-atom property (plan item SP2).
+
+    The chain is the one of :func:`run_molecule` with a different job: the same cache key with
+    the word ``Freq`` in the level, so that a property run and a frequency run on the same
+    molecule never share a directory; the same status file; the same rule that a failed molecule
+    is reported and never fatal.  The annotated copy carries the optimised geometry, the scaled
+    band in ``atom.dprop.<prop>`` on the first atom of the bond and nothing on the other atoms,
+    and as molecule properties the scaled and unscaled band, its intensity, its share, the mode
+    index, the number of imaginary frequencies (a minimum has none) and the scaling factor.
+
+    An optimisation that stops at ORCA's limit of cycles (:func:`optimisation_hit_cycle_limit`)
+    is continued once: a second job, ``freq_more``, starts from the last geometry of the first
+    with a computed Hessian and a limit of ``CONTINUE_CYCLES`` cycles.  The property ``qm_job``
+    names the job the result comes from.
+
+    The optimised geometry must still show the bonds of the molecule (:func:`changed_bonds`).
+    A molecule whose optimisation broke or made a bond is a failure, because its band would be
+    the band of another molecule.
+    """
+    t0 = time.time()
+    outcome = BandOutcome(index=index, name=name)
+    status_path = None
+    key = None
+    try:
+        mol = prepare_molecule(mol)
+        i, j = int(bond[0]), int(bond[1])
+        if not (0 <= i < mol.GetNumAtoms() and 0 <= j < mol.GetNumAtoms()) or i == j:
+            raise OrcaError(f"atoms {i} and {j} are not a bond of a molecule of "
+                            f"{mol.GetNumAtoms()} atoms")
+        charge, mult = state_from_properties(mol)
+        lowest = multiplicity_for(mol, charge)
+        smiles = Chem.MolToSmiles(Chem.RemoveHs(mol))
+        coords0 = mol.GetConformer().GetPositions()
+        symbols = [a.GetSymbol() for a in mol.GetAtoms()]
+        key = cache_key(smiles, charge, cfg.level + " Freq", bool(opt), coords0,
+                        solvent=cfg.solvent, mult=None if mult == lowest else mult)
+        jobdir = os.path.join(cfg.workdir, f"{index:03d}_{safe_name(name)}")
+        status_path = os.path.join(jobdir, "status.json")
+        status = {}
+        if os.path.isfile(status_path):
+            with open(status_path) as fh:
+                status = json.load(fh)
+        if status.get("key") != key and os.path.isdir(jobdir):
+            shutil.rmtree(jobdir)
+            status = {}
+        os.makedirs(jobdir, exist_ok=True)
+        with open(os.path.join(jobdir, "geom.xyz"), "w", newline="\n") as fh:
+            fh.write(xyz_block(symbols, coords0,
+                               f"{name} charge={charge} mult={mult} (input geometry)"))
+        outcome.reused = status.get("status") == "done"
+        inp = make_frequency_input(cfg.level, charge, mult, "geom.xyz", cfg.nprocs,
+                                   maxcore=cfg.maxcore, solvent=cfg.solvent, opt=opt)
+        job, res = "freq", None
+        if not (opt and optimisation_hit_cycle_limit(jobdir, job, inp)):
+            try:
+                res = run_job(jobdir, job, inp, cfg, need_converged=bool(opt))
+            except OrcaError:
+                if not (opt and optimisation_hit_cycle_limit(jobdir, job, inp)):
+                    raise
+        if res is None:
+            # the forces are small and the steps are not: go on from the last geometry with a
+            # computed Hessian, which knows how soft the soft motion is
+            job = "freq_more"
+            more = make_frequency_input(cfg.level, charge, mult, "freq.xyz", cfg.nprocs,
+                                        maxcore=cfg.maxcore, solvent=cfg.solvent, opt=True,
+                                        calc_hess=True, max_cycles=CONTINUE_CYCLES)
+            res = run_job(jobdir, job, more, cfg, need_converged=True)
+        if res.frequencies is None or res.modes is None:
+            raise OrcaError("ORCA printed no normal modes")
+        coords = coords0
+        if opt:
+            osyms, coords = read_xyz(os.path.join(jobdir, job + ".xyz"))
+            if [s.upper() for s in osyms] != [s.upper() for s in symbols]:
+                raise OrcaError("the optimised geometry lists different atoms")
+            wrong = changed_bonds(mol, coords)
+            if wrong:
+                raise OrcaError("the optimisation changed the bonds of the molecule (bond, "
+                                "length over the sum of the covalent radii): "
+                                + ", ".join(wrong[:6]))
+        if res.coords is None or len(res.coords) != len(symbols):
+            res.coords = np.asarray(coords, float)
+        k, nu, inten, share = bond_stretch_mode(res, i, j, low, high)
+        scale = frequency_scale(cfg.level)
+        n_imag = int(np.sum(res.frequencies < -5.0))
+        outcome.frequency, outcome.unscaled = nu * scale, nu
+        outcome.intensity, outcome.share, outcome.mode = inten, share, k
+        outcome.n_imaginary = n_imag
+        m = annotate(mol, {}, {prop: nu * scale, prop + "_unscaled": nu,
+                               prop + "_intensity": inten, prop + "_share": share,
+                               "E_total": res.energy},
+                     coords=coords if opt else None,
+                     extra={prop + "_mode": str(k), prop + "_atoms": f"{i} {j}",
+                            "n_imaginary": str(n_imag), "frequency_scale": f"{scale:.4f}",
+                            "qm_level": cfg.level,
+                            "qm_geometry": "orca-opt" if opt else "input",
+                            "qm_solvent": "gas" if cfg.solvent is None else str(cfg.solvent),
+                            "qm_dir": os.path.basename(jobdir), "qm_job": job})
+        m.GetAtomWithIdx(i).SetDoubleProp(prop, float(nu * scale))
+        Chem.CreateAtomDoublePropertyList(m, prop)
+        outcome.mol = m
+        outcome.seconds = time.time() - t0
+        seconds = status.get("seconds", outcome.seconds) if outcome.reused else outcome.seconds
+        with open(status_path, "w") as fh:
+            json.dump({"key": key, "status": "done", "name": name, "smiles": smiles,
+                       "charge": charge, "multiplicity": mult, "level": cfg.level, "opt": bool(opt),
+                       "freq": True, "bond": [i, j], "mode": k, "frequency": nu,
+                       "scaled": nu * scale, "intensity": inten, "share": share,
+                       "n_imaginary": n_imag,
+                       "solvent": "gas" if cfg.solvent is None else str(cfg.solvent),
+                       "seconds": seconds}, fh, indent=1)
+    except Exception as exc:        # a failed molecule is reported, not fatal
+        outcome.error = f"{type(exc).__name__}: {exc}"
+        outcome.seconds = time.time() - t0
+        if status_path:
+            try:
+                with open(status_path, "w") as fh:
+                    json.dump({"key": key, "status": "failed", "name": name,
+                               "error": outcome.error}, fh, indent=1)
+            except Exception:
+                pass
+    return outcome
+
+
+def displaced_along_mode(coords: np.ndarray, mode: np.ndarray, step: float = 0.2) -> np.ndarray:
+    """Coordinates moved along one normal mode: the atom that moves most moves by `step`
+    angstrom.  The use is a stationary point that is not a minimum, where a step along the mode
+    of the imaginary frequency followed by a new optimisation leads down to a minimum."""
+    r = np.asarray(coords, float)
+    d = np.asarray(mode, float).reshape(-1, 3)
+    if d.shape != r.shape:
+        raise ValueError(f"a mode of {len(d)} atoms on a geometry of {len(r)} atoms")
+    top = float(np.max(np.linalg.norm(d, axis=1)))
+    if top <= 0:
+        raise ValueError("the mode moves no atom")
+    return r + d * (float(step) / top)
+
+
+def retry_band(outcome: BandOutcome, cfg: Config, bond: Tuple[int, int], prop: str = "band",
+               low: float = 0.0, high: float = float("inf"), step: float = 0.2) -> BandOutcome:
+    """One more optimisation for a molecule whose first one ended with an imaginary frequency.
+
+    An optimisation stops at a stationary point, and a start geometry with a symmetric
+    substituent can stop on a saddle point: a methyl or trifluoromethyl group eclipsed with the
+    ring, for example.  The frequency run shows it as an imaginary frequency.  This function
+    moves the optimised geometry along the mode of the lowest frequency
+    (:func:`displaced_along_mode`) and repeats the job in a directory of its own, named after
+    the molecule with ``retry`` added.  The second result replaces the first when it has fewer
+    imaginary frequencies, or as many and a lower energy; it then carries the property
+    ``<prop>_retry`` with the first band, so that the size of the correction can be read.  A
+    molecule without an imaginary frequency, and one whose retry fails, is returned unchanged.
+    """
+    if outcome.mol is None or not outcome.n_imaginary:
+        return outcome
+    first = outcome.mol
+    jobdir = os.path.join(cfg.workdir, first.GetProp("qm_dir"))
+    job = first.GetProp("qm_job") if first.HasProp("qm_job") else "freq"
+    with open(os.path.join(jobdir, job + ".out"), errors="replace") as fh:
+        res = parse_orca_output(fh.read())
+    if res.frequencies is None or res.modes is None:
+        return outcome
+    k = int(np.argmin(res.frequencies))
+    start = Chem.Mol(first)
+    conf = start.GetConformer()
+    moved = displaced_along_mode(conf.GetPositions(), res.modes[:, k], step)
+    for a, (x, y, z) in enumerate(moved):
+        conf.SetAtomPosition(a, Point3D(float(x), float(y), float(z)))
+    second = run_band(start, outcome.name + " retry", outcome.index, cfg, bond, prop=prop,
+                      low=low, high=high, opt=True)
+    if second.mol is None:
+        return outcome
+    lower = float(second.mol.GetProp("E_total")) < float(first.GetProp("E_total"))
+    if not (second.n_imaginary < outcome.n_imaginary
+            or (second.n_imaginary == outcome.n_imaginary and lower)):
+        return outcome
+    second.name = outcome.name
+    second.seconds += outcome.seconds
+    if first.HasProp("_Name"):
+        second.mol.SetProp("_Name", first.GetProp("_Name"))
+    second.mol.SetProp(prop + "_retry", f"{outcome.frequency:.4f}")
+    return second
+
+
+def band_positions(mols: Sequence[Chem.Mol], names: Sequence[str], cfg: Config,
+                   bonds: Sequence[Optional[Tuple[int, int]]], prop: str = "band",
+                   low: float = 0.0, high: float = float("inf"), jobs: int = 1,
+                   opt: bool = True, progress=None, cancel=None, log=None) -> List[BandOutcome]:
+    """:func:`run_band` over a set, `jobs` molecules at a time, as :func:`annotate_molecules`
+    runs the property jobs.  A molecule whose entry of `bonds` is None is reported as skipped."""
+    cfg = replace(cfg, cancel=cancel) if cancel is not None else cfg
+    os.makedirs(cfg.workdir, exist_ok=True)
+    done = [0]
+    lock = threading.Lock()
+
+    def work(k: int) -> BandOutcome:
+        if cancel is not None and cancel():
+            return BandOutcome(index=k + 1, name=names[k], error="cancelled")
+        if bonds[k] is None:
+            oc = BandOutcome(index=k + 1, name=names[k], error="no bond matches the pattern")
+        else:
+            oc = run_band(mols[k], names[k], k + 1, cfg, bonds[k], prop=prop, low=low,
+                          high=high, opt=opt)
+        with lock:
+            done[0] += 1
+            state = ("failed: " + oc.error if oc.error else
+                     f"{'reused' if oc.reused else 'done'} in {oc.seconds:.0f} s, "
+                     f"{oc.frequency:.1f} cm^-1 (mode {oc.mode}, share {oc.share:.2f}"
+                     + (f", {oc.n_imaginary} imaginary" if oc.n_imaginary else "") + ")")
+            if log is not None:
+                log(f"[{done[0]}/{len(mols)}] {names[k]}: {state}")
+            if progress is not None:
+                progress(f"ORCA {done[0]}/{len(mols)}: {names[k]}", done[0] / max(len(mols), 1))
+        return oc
+
+    idx = list(range(len(mols)))
+    if jobs > 1:
+        with ThreadPoolExecutor(max_workers=jobs) as ex:
+            return list(ex.map(work, idx))
+    return [work(k) for k in idx]

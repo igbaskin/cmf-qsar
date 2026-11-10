@@ -10177,6 +10177,286 @@ its co-field instead of the molecule. There is none: the co-field comes out of `
 --cofield` as a cube file, which a viewer draws, and the application still knows only models whose
 sample is a molecule.
 
+## A vibrational band as the local target: the carbonyl stretch of the benzoic acids
+
+A shift and an acidity were the first two local targets. A vibrational band is a third. It
+belongs to a bond. It is computed here and not measured, so its noise is the numerical noise of
+the quantum program. And the series is the one Hammett defined his constants on. Plan item SP2
+asks two questions. Does the field around an atom predict such a band better than a count of what
+is around the atom? And does the co-field around the atom say where the substituent acts?
+
+The answer in short. On the geometries that the quantum program optimised, the field predicts the
+band almost exactly, and this result does not count: the field reads the length of the carbonyl
+bond, and that length comes from the same calculation as the band. On the force-field
+geometries the field predicts the band as well as one Hammett line and a little better than the
+count, and only with an envelope wide enough to reach the substituent.
+
+**The series and the band.** The 95 substituents of the Hammett set (`examples/hammett/`), each
+placed meta and para to the carboxyl group of benzoic acid, give 189 acids
+(`examples/make_band_examples.py`, `examples/spectra/`). Each is optimised and its harmonic
+frequencies are computed with ORCA at r2SCAN-3c; the carbonyl stretch is the normal mode between
+1600 and 1900 cm$^{-1}$ that moves the carbonyl carbon and oxygen apart most, which is how a band
+is assigned by its motion and not by its position alone (`orca.bond_stretch_mode`), and it is
+multiplied by the conventional scaling factor of the level (`orca.FREQUENCY_SCALE`). The band
+sits on the carbonyl carbon as `atom.dprop.co_stretch`, one number per acid, so `cmf local` and
+the benchmark read it as they read a shift. The frequency run itself is `orca.run_band`: the same
+cached job, the same status file and the same rule that a failed molecule is reported and never
+fatal as the property runs of the quantum stage.
+
+**A stationary point that is not a minimum.** An optimisation stops where the forces vanish, and
+that point can be a saddle point: a methyl group eclipsed with the ring, for example. The
+frequency run shows it as an imaginary frequency. `orca.retry_band` moves such a molecule along
+the mode of its lowest frequency (`orca.displaced_along_mode`; the atom that moves most moves
+0.2 A) and optimises it once more, in a job directory of its own. The second result replaces the
+first when it has fewer imaginary frequencies, or as many and a lower energy, and it keeps the
+first band as the property `co_stretch_retry`, so the size of the correction can be read.
+In this series 13 of the 189 acids ended the first optimisation with one imaginary frequency.
+Eleven of them took the result of the second optimisation: eight became minima, and three (meta-
+vinyl, para-SPh and meta-SPh) keep one imaginary frequency at a lower energy. For the two acids
+with an N=NPh group the second optimisation was not better, and the first result is kept. So 5
+acids keep one imaginary frequency, of 8 to 17 cm$^{-1}$. The second optimisation moved the band
+by 0.26 cm$^{-1}$ at the median and by 3.3 cm$^{-1}$ at most (para-OSO2CH3, from 1724.8 to
+1728.1), which is small beside the spread of the series (4.5 cm$^{-1}$).
+
+**A start geometry that is not the molecule.** The two acids with an SF5 group failed in the
+first run, and the reason was the start geometry. UFF, the only force field of RDKit with
+parameters for this group, left it far from an octahedron: S-F lengths from 1.25 to 2.17 A and
+F-S-F angles down to 25 degrees. The quantum optimisation then broke the group apart (one of the
+two acids kept one fluorine on the sulfur) and stopped at its limit of cycles. Two changes
+follow. The data script sets an SF5 group to a regular octahedron after the force field
+(`regular_sf5`; S-F 1.59 A, C-S 1.80 A, the four equatorial fluorines turned by 45 degrees from
+the ring plane). And a geometry is checked against the bond table: `orca.bond_length_ratios`
+divides every bond length by the sum of the covalent radii of its two atoms, and
+`orca.changed_bonds` lists the bonds outside 0.6 to 1.5. `run_band` reports a molecule whose
+optimised geometry has such a bond as a failure, because its band would be the band of another
+molecule. In the 187 acids without SF5 every ratio is between 0.79 and 1.03, before and after
+the optimisation. `run_band` can also continue an optimisation that stopped at the limit of
+cycles from its last geometry, with a computed Hessian (job `freq_more`); this helps a molecule
+with a very soft motion and does not help a wrong start geometry, and no acid of this series
+needed it.
+
+**One acid with two carboxyl groups.** In terephthalic acid (the substituent COOH in para) the two
+carbonyl stretches couple into two modes less than 2 cm$^{-1}$ apart, and each mode has about a
+third of its motion on the bond that is the target. The rule takes the mode with the larger
+share. The error of this choice is below 1 cm$^{-1}$, and no other acid of the series has it.
+
+```
+python examples/make_band_examples.py                    # the 189 acids, from SMILES
+python examples/make_band_examples.py --orca --jobs 10   # optimisation and frequencies, cached
+python benchmarks/run_band.py                            # the measurement below
+```
+
+**What is measured** (`benchmarks/run_band.py`, `benchmarks/results/band/table.md`). The
+benchmark has six parts.
+
+1. The computed band against the Hammett constant, as a straight line. This is the plot of a
+   physical organic chemist. Fitted inside each fold, the line is also a reference beside the
+   count: one line for all acids, or two lines, one for the meta and one for the para acids.
+2. The invariant local kernel (section *An atom instead of a molecule*) and the posed overlap
+   kernel (the previous section), at eight envelope widths from 0.7 to 10 A, against the
+   atom-centred shell count. Ten folds hold out whole molecules, and the ridge is chosen on the
+   same folds for every descriptor.
+3. The co-field at the ring positions in the frame of the carbonyl carbon, at three envelope
+   widths. The positions are read from the posed geometries themselves (ipso, ortho, meta and
+   para; the two ortho and the two meta carbons are told apart by the side of the carboxyl group
+   they lie on). Each value has the error that the noise in the bands allows and a y-scramble
+   null (the same reading on models fitted to bands in random order). A carbonyl carbon has one
+   carbon and two oxygens of different types bonded to it, so its frame is unique and nothing is
+   averaged.
+4. A straight line on the length of the C=O bond, as one more reference.
+5. Parts 2 to 4 a second time, on the start geometries: the force-field structures of
+   `examples/spectra/benzoic_acids.sdf`, from which the quantum optimisation started. The partial
+   charges of both runs are Gasteiger charges, which depend on the bond graph only, so the two
+   runs differ in the coordinates and in nothing else.
+6. The differences in q2 with their 95 % bootstrap intervals over the molecules.
+
+**The band follows the Hammett constant.** The 189 bands lie between 1710.6 and
+1737.1 cm$^{-1}$, with a spread (standard deviation) of 4.5 cm$^{-1}$. A
+substituent that withdraws electrons raises the band, by about 11.5 cm$^{-1}$ per unit of sigma, and
+the slope is the same for the meta and the para acids. Benzoic acid itself is counted in both
+lines.
+
+| acids | number | slope, cm$^{-1}$ per unit of sigma | correlation |
+| --- | ---: | ---: | ---: |
+| all | 189 | +11.7 | +0.866 |
+| meta | 95 | +11.3 | +0.817 |
+| para | 95 | +11.5 | +0.910 |
+
+**The references.** A descriptor has to be compared with what is known without it. The Hammett
+lines need no geometry. The count and the bond-length line are given on both geometry sets.
+
+| reference | geometries it uses | q2 | error (RMSE), cm$^{-1}$ |
+| --- | --- | ---: | ---: |
+| one Hammett line, band = a + b sigma | none | +0.740 | 2.28 |
+| two Hammett lines, one for meta and one for para | none | +0.781 | 2.09 |
+| atom-centred count | optimised | +0.662 | 2.60 |
+| atom-centred count | start | +0.616 | 2.77 |
+| one line on the length of the C=O bond | optimised | +0.973 | 0.74 |
+| one line on the length of the C=O bond | start | -0.014 | 4.50 |
+
+**On the optimised geometries the narrow field reads one bond length.** On the geometries of the
+quantum optimisation both kernels improve as the envelope gets narrower. They are best at a width
+of 1 A: q2 +0.976 for the invariant kernel and +0.978 for
+the posed overlap, against +0.662 for the count.
+
+| envelope width, A | invariant kernel, q2 | invariant against the count | posed overlap, q2 | posed against the count | posed against the bond-length line |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 10.00 | +0.743 | +0.081 [-0.000, +0.152] | +0.725 | +0.063 [-0.006, +0.132] | -0.248 [-0.312, -0.204] |
+| 7.07 | +0.750 | +0.088 [+0.012, +0.158] | +0.719 | +0.058 [-0.008, +0.124] | -0.253 [-0.307, -0.212] |
+| 4.47 | +0.770 | +0.108 [+0.031, +0.182] | +0.733 | +0.072 [+0.005, +0.139] | -0.239 [-0.309, -0.193] |
+| 3.16 | +0.863 | +0.202 [+0.131, +0.276] | +0.869 | +0.208 [+0.147, +0.274] | -0.103 [-0.142, -0.076] |
+| 2.00 | +0.929 | +0.268 [+0.147, +0.373] | +0.903 | +0.241 [+0.153, +0.331] | -0.070 [-0.145, -0.031] |
+| 1.41 | +0.960 | +0.298 [+0.240, +0.374] | +0.963 | +0.301 [+0.243, +0.377] | -0.010 [-0.032, +0.003] |
+| 1.00 | +0.976 | +0.314 [+0.257, +0.388] | +0.978 | +0.316 [+0.259, +0.390] | +0.005 [+0.002, +0.009] |
+| 0.71 | +0.974 | +0.312 [+0.254, +0.386] | +0.974 | +0.312 [+0.255, +0.386] | +0.001 [-0.000, +0.003] |
+
+This looks like the result the plan expected. It is not a prediction from the structure. The C=O
+bond of the optimised acids is between 1.2088 and 1.2160 A long, with a spread of 0.0012 A. A
+straight line on this one length, fitted in each fold, predicts the band with q2
++0.973; the correlation of the length with the band is -0.987. This is
+Badger's rule: a shorter bond is stiffer and has a higher stretching frequency. The field at 1 A
+is above that line by +0.003 [+0.001, +0.006] (invariant kernel) and by
++0.005 [+0.002, +0.009] (posed overlap). So nearly all of what the narrow field
+predicts is one bond length, read to a thousandth of an angstrom. That length is a result of the
+quantum optimisation, and the optimisation is the first half of the calculation that gives the
+band. A user who wants the band of a new acid does not have this length before the calculation
+is done.
+
+The force-field geometries confirm this. Their C=O lengths (1.2162 to 1.2683 A) have a
+correlation of -0.006 with the band, and the line on them predicts nothing
+(q2 -0.014).
+
+**From the structure alone the field equals one Hammett line.** The start geometries hold nothing
+from the quantum calculation.
+
+| envelope width, A | invariant kernel, q2 | invariant against the count | invariant against one Hammett line | posed overlap, q2 | posed against the count |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 10.00 | +0.746 | +0.130 [+0.043, +0.209] | +0.006 [-0.065, +0.077] | +0.702 | +0.087 [+0.002, +0.168] |
+| 7.07 | +0.742 | +0.126 [+0.046, +0.202] | +0.002 [-0.068, +0.074] | +0.698 | +0.082 [+0.004, +0.163] |
+| 4.47 | +0.707 | +0.092 [+0.000, +0.176] | -0.033 [-0.114, +0.040] | +0.691 | +0.075 [-0.004, +0.150] |
+| 3.16 | +0.650 | +0.034 [-0.063, +0.121] | -0.091 [-0.173, -0.011] | +0.663 | +0.047 [-0.033, +0.121] |
+| 2.00 | +0.254 | -0.362 [-0.485, -0.242] | -0.486 [-0.594, -0.381] | +0.326 | -0.290 [-0.399, -0.173] |
+| 1.41 | +0.279 | -0.336 [-0.478, -0.203] | -0.461 [-0.595, -0.331] | +0.259 | -0.357 [-0.444, -0.244] |
+| 1.00 | +0.191 | -0.425 [-0.719, -0.231] | -0.550 [-0.829, -0.363] | +0.231 | -0.385 [-0.523, -0.248] |
+| 0.71 | +0.218 | -0.398 [-0.533, -0.270] | -0.522 [-0.653, -0.399] | +0.191 | -0.424 [-0.723, -0.229] |
+
+At a width of 2 A or less both kernels are between q2 +0.191 and +0.326, far below the
+count (+0.616). A narrow envelope sees the carboxyl group and the nearest ring
+carbons, and these are the same atoms in every acid. From 4.5 A on the invariant kernel reaches
++0.707 to +0.746. At 7 and 10 A it is above the count by
++0.126 [+0.046, +0.202] and +0.130 [+0.043, +0.209]. Against
+one Hammett line the difference is +0.002 [-0.068, +0.074] and
++0.006 [-0.065, +0.077]: the two are equal. Two Hammett lines
+(q2 +0.781) are above every field model of this table. The posed overlap is
+a little lower than the invariant kernel (+0.691 to +0.702 at the three wide widths),
+and the lower end of its interval against the count is at zero.
+
+The Hammett constant is a measured quantity: it was defined from the ionisation of these same
+acids in water. A model that uses only the structure and equals the Hammett line has therefore
+recovered from the structure what the constant holds, and no more than that.
+
+Three cautions belong to the margin over the count. First, it is read at the best of eight
+widths. The neighbouring wide widths agree (+0.092 to +0.130), so the choice of
+the width does not make the result, but the lower end of the interval is close to zero. Second,
+the posed overlap has a smaller margin (+0.075 to +0.087). Third, the margin depends
+on a few acids. A control without the five acids that keep an imaginary frequency (184 acids;
+run once, not stored among the results) gave +0.092 [-0.005, +0.174] for the invariant kernel and
++0.090 [+0.015, +0.162] for the posed overlap at 10 A. The fair summary is a margin of about +0.1
+in q2 whose interval begins at zero.
+
+At the wide widths the two geometry sets agree: on the optimised geometries the invariant kernel
+is at +0.743 to +0.770 there. The quantum geometry adds something only where the envelope
+is narrow enough to resolve the bond length.
+
+**The width that works is the distance to the substituent.** The plan expected a best width near
+1 A, as for the shift. That expectation was wrong for this band. In the shift set the measured
+carbon is a ring carbon, and the substituents sit on it or next to it. Here the measured carbon is
+outside the ring. The ring carbons are 1.48 (ipso), 2.19 (ortho),
+3.58 (meta) and 4.29 A (para) from it. The first atom of the
+substituent is 5.0 A away in a meta acid (4.8 to
+5.5 A over the series) and 5.8 A in a para acid
+(5.6 to 6.4 A). The envelope gives an atom at the distance r
+the weight exp(-rho r$^2$), and the width is the distance at which this weight is 1/e:
+
+| envelope width, A | weight of the first atom of a meta substituent (5.0 A) | weight of the first atom of a para substituent (5.8 A) |
+| ---: | ---: | ---: |
+| 10.00 | 0.78 | 0.71 |
+| 7.07 | 0.61 | 0.51 |
+| 4.47 | 0.29 | 0.19 |
+| 3.16 | 0.08 | 0.03 |
+| 2.00 | 0.002 | below 0.001 |
+| 1.00 | below 0.001 | below 0.001 |
+
+A local target is local in where the property is. Its cause can be further away, and the envelope
+has to reach the cause.
+
+**The co-field.** The table gives the electrostatic co-field at the four ring positions: what one
+unit of the electrostatic field at that place adds to the band, in cm$^{-1}$, with the standard
+deviation that the noise in the bands allows. A positive value means that positive charge at that
+place raises the band. *Para minus meta* is the difference of the absolute values. *Para over
+meta* is that difference divided by the sum, with the mean and the standard deviation of the
+y-scramble null. The table of the benchmark has the other four fields.
+
+| geometries | envelope width, A | posed overlap, q2 | ipso | ortho | meta | para | para minus meta, with its z against the noise | para over meta, with the scramble null and its z |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| optimised | 10.00 | +0.725 | +0.277 +- 0.17 | +1.23 +- 0.26 | +3.58 +- 0.58 | +4.91 +- 0.59 | +1.33 +- 0.31 (z +4.3) | +0.16 (null +0.02 +- 0.46, z +0.3) |
+| optimised | 4.47 | +0.733 | -1.09 +- 1.1 | +3.24 +- 1.2 | +4.47 +- 2 | +6.5 +- 2.4 | +2.03 +- 1.3 (z +1.6) | +0.18 (null +0.10 +- 0.50, z +0.2) |
+| optimised | 3.16 | +0.869 | -3.39 +- 10 | +53.2 +- 8.2 | +2 +- 11 | -18 +- 12 | +16 +- 22 (z +0.7) | +0.80 (null +0.04 +- 0.44, z +1.7) |
+| start | 10.00 | +0.702 | +0.268 +- 0.18 | +1.11 +- 0.27 | +3.68 +- 0.59 | +5.01 +- 0.61 | +1.33 +- 0.31 (z +4.3) | +0.15 (null +0.03 +- 0.42, z +0.3) |
+| start | 4.47 | +0.691 | -0.45 +- 1.2 | +2.41 +- 1.3 | +5.32 +- 2.2 | +8.03 +- 2.6 | +2.71 +- 1.4 (z +1.9) | +0.20 (null +0.05 +- 0.49, z +0.3) |
+| start | 3.16 | +0.663 | -5.54 +- 6.1 | +7.19 +- 4.4 | -9.4 +- 6.7 | -8.86 +- 8.5 | -0.547 +- 5 (z -0.1) | -0.03 (null -0.00 +- 0.48, z -0.1) |
+
+At a width of 10 A the two geometry sets give the same map: +3.58 and
++3.68 at the meta carbon, +4.91 and
++5.01 at the para carbon, which is 6 and 8
+standard deviations from zero on the start geometries, and small values at ipso and ortho.
+Positive charge on the far side of the ring raises the band. That is the direction of the Hammett
+slope: a substituent that withdraws electrons raises the band. The para value is above the meta
+value by +1.33 +- 0.31,
+4.3 standard deviations of the noise. Against the y-scramble null this
+is not resolved (z +0.3): the ratio lies well inside the spread of the
+ratios that models fitted to scrambled bands give. At 4.5 A the signs are the same and the
+difference is 1.6 to 1.9 standard
+deviations. At 3.2 A, the width that the shift co-field of the previous section used, the map
+cannot be read. At the ipso, meta and para carbons the errors are as large as the values, and the
+two geometry sets give different maps (at the ortho carbon +53.2 +- 8.2 against
++7.19 +- 4.4). An envelope that gives the substituent a weight below 0.1 cannot say where
+the substituent acts.
+
+![The electrostatic and the steric co-field of the band model around the carbonyl carbon, at the origin, in the plane of the ring, on the start geometries at an envelope width of 10 A. The ring carbons are marked. Red raises the band per unit of field. The electrostatic co-field is positive at the meta and para carbons and beyond them, where the substituents are. Drawn by `benchmarks/run_band.py`.](benchmarks/results/band/start_cofield_rho_0p01.png)
+
+Two limits of this reading. The co-field gives the place (the meta and the para carbon and the
+space beyond them) and one sign. It does not separate a substituent that donates electrons by
+resonance from one that withdraws them, for the reason the previous section gave: fragment charges
+do not carry resonance. And the Hammett lines themselves give no strong reason to expect para
+above meta here: the two slopes are equal (+11.3 and
++11.5), so one unit of sigma moves the band by the same
+amount from either position.
+
+**The gate.** The plan set two conditions. The first is that the local field beats the count by
+more than the interval. On the optimised geometries it does so by +0.316,
+and this does not count, because the field reads the bond length. On the start geometries the
+invariant kernel at 7 and 10 A is above the count with an interval that excludes zero, so the
+condition is met, narrowly and with the three cautions above. The second condition is that the
+co-field reproduces the meta and para picture of the Hammett co-fields. It is met in part: at the
+widths that keep the substituent the co-field has the place and the sign, and para above meta
+against the noise at 10 A; it is not resolved against the scramble, and at 3.2 A there is no
+readable map.
+
+**What follows for other items.** A local target that a quantum program computes on its own
+optimised geometry has to be predicted from geometries the program did not make. Otherwise the
+bond lengths at the target carry the answer, and a narrow field will find them. The control costs
+nothing, because the start geometries are stored, and `run_band.py` now runs it by default
+(`--structures none` leaves it out) and gives the bond-length line as a reference. The shift set
+of the two previous sections is not affected: its shifts are measured and its geometries come from
+a force field.
+
+**What is not done.** Measured carbonyl bands were not collected; with them the computed band
+would become a second column beside the measured one. A description that carries resonance, such
+as the indicator fields of the previous section (one field per atom type), is the candidate for
+passing two Hammett lines; it is not measured here. And the width is not chosen inside the
+folds, which is why the margin over the count is quoted with its cautions.
+
 ## A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

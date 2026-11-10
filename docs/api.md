@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 119 modules, 233 classes with 784 public methods, and 1161 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 119 modules, 234 classes with 784 public methods, and 1172 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -11635,6 +11635,9 @@ Attributes:
 - `mo_populations: Dict[int, Dict[int, float]]` = `field(default_factory=dict)`
 - `symbols: List[str]` = `field(default_factory=list)`
 - `coords: Optional[np.ndarray]` = `None`
+- `frequencies: Optional[np.ndarray]` = `None`
+- `modes: Optional[np.ndarray]` = `None`
+- `ir_intensities: Optional[np.ndarray]` = `None`
 
 #### `OrcaResult.n_atoms` -> int  (property)
 
@@ -11667,6 +11670,25 @@ Attributes:
 - `error: str` = `''`
 - `seconds: float` = `0.0`
 - `reused: bool` = `False`
+
+### `class BandOutcome  (dataclass)`
+
+What the frequency run of one molecule gave: the annotated copy, or the error.
+
+Attributes:
+
+- `index: int`
+- `name: str`
+- `mol: Optional[Chem.Mol]` = `None`
+- `error: str` = `''`
+- `seconds: float` = `0.0`
+- `reused: bool` = `False`
+- `frequency: float` = `float('nan')`
+- `unscaled: float` = `float('nan')`
+- `intensity: float` = `float('nan')`
+- `share: float` = `float('nan')`
+- `mode: int` = `-1`
+- `n_imaginary: int` = `0`
 
 ### `find_orca(explicit: Optional[str]=None) -> str`
 
@@ -11814,6 +11836,117 @@ The mean time one ORCA job took in `workdir`, from the status files a previous r
 
 A dialog that has to warn about the cost is more convincing with a number measured on this
 machine than with a guess, and after one run the number is available.
+
+### `frequency_scale(level: str) -> float`
+
+The scaling factor of `FREQUENCY_SCALE` for this level of theory, or 1.
+
+### `make_frequency_input(level: str, charge: int, mult: int, xyz_name: str, nprocs: int=1, maxcore: int=2000, solvent=None, opt: bool=True, calc_hess: bool=False, max_cycles: int=0) -> str`
+
+Text of an ORCA input that computes the harmonic frequencies, after a geometry
+optimisation unless `opt` is False.
+
+A frequency on a geometry that is not a minimum of the same level is not defined, so the
+optimisation is the default; a caller that already holds a minimum of this level passes
+`opt=False`.  `calc_hess` starts the optimisation from a computed Hessian instead of a
+model one, and `max_cycles` replaces ORCA's limit of optimisation cycles; both are for a
+molecule with a very soft motion, where the default optimisation does not settle.
+
+### `optimisation_hit_cycle_limit(jobdir: str, job: str, inp: str) -> bool`
+
+True when the job `job` of `jobdir` was run with the input `inp` and its optimisation
+stopped at ORCA's limit of cycles, with the last geometry on disk.
+
+This is the one failure of an optimisation that is worth continuing, and only for a
+molecule that is still whole: with a very soft motion (a nearly free rotation, for example)
+the forces are small and the steps are not, and a model Hessian does not know how soft the
+motion is.  A start geometry that is wrong reaches the same limit for another reason, and
+more cycles do not repair it; `changed_bonds` tells the two cases apart.
+
+### `bond_length_ratios(mol: Chem.Mol, coords: Optional[np.ndarray]=None) -> np.ndarray`
+
+The length of every bond of `mol` divided by the sum of the covalent radii of its two
+atoms, in the order of the bonds.  `coords` replaces the conformer of the molecule.
+
+A single bond is near 1, a double or triple bond near 0.8.  A value far from 1 means that
+the coordinates do not show the molecule the bond table describes.
+
+### `changed_bonds(mol: Chem.Mol, coords: Optional[np.ndarray]=None, low: float=BOND_RATIO_LIMITS[0], high: float=BOND_RATIO_LIMITS[1]) -> List[str]`
+
+The bonds of `mol` whose length is outside `low` to `high` times the sum of the covalent
+radii, each as a text such as `S1-F4 2.62`; an empty list when the molecule is whole.
+
+The use is a check after a geometry optimisation.  An optimisation that starts from a wrong
+geometry can end in another molecule or in fragments, and its frequencies are then not the
+frequencies of the molecule that was asked for.
+
+### `bond_from_smarts(mol: Chem.Mol, smarts: str) -> Optional[Tuple[int, int]]`
+
+The first two atoms of the first match of `smarts`, as the bond whose stretch is wanted.
+
+`[CX3](=O)[OX2H1]` names the carbonyl carbon and its oxygen of a carboxylic acid; the
+first atom of the pattern is the one the band is written on.  None when nothing matches.
+
+### `bond_stretch_mode(result: OrcaResult, i: int, j: int, low: float=0.0, high: float=float('inf')) -> Tuple[int, float, float, float]`
+
+The normal mode that stretches the bond between atoms `i` and `j` most, among the modes
+whose frequency lies in `[low, high]` cm^-1.
+
+A band is assigned by its motion and not by its position alone: the carbonyl stretch is the
+mode in which the carbonyl carbon and oxygen move apart most, and the window only keeps a
+far-away mode that happens to move them a little from being chosen.  Returns the mode index,
+its frequency in cm^-1 (unscaled), its infrared intensity in km/mol and the *share*: half the
+squared projection of the unit mode vector on the stretch of this bond, a number between 0
+and 1 that is 1 when only these two atoms move and move exactly against each other, and
+says how much of the mode is this bond.  Raises `OrcaError` when the job computed no
+modes or no mode lies in the window.
+
+### `run_band(mol: Chem.Mol, name: str, index: int, cfg: Config, bond: Tuple[int, int], prop: str='band', low: float=0.0, high: float=float('inf'), opt: bool=True) -> BandOutcome`
+
+Optimise one molecule, compute its harmonic frequencies and write the band of one bond on
+the bond's first atom as a per-atom property (plan item SP2).
+
+The chain is the one of `run_molecule` with a different job: the same cache key with
+the word `Freq` in the level, so that a property run and a frequency run on the same
+molecule never share a directory; the same status file; the same rule that a failed molecule
+is reported and never fatal.  The annotated copy carries the optimised geometry, the scaled
+band in `atom.dprop.<prop>` on the first atom of the bond and nothing on the other atoms,
+and as molecule properties the scaled and unscaled band, its intensity, its share, the mode
+index, the number of imaginary frequencies (a minimum has none) and the scaling factor.
+
+An optimisation that stops at ORCA's limit of cycles (`optimisation_hit_cycle_limit`)
+is continued once: a second job, `freq_more`, starts from the last geometry of the first
+with a computed Hessian and a limit of `CONTINUE_CYCLES` cycles.  The property `qm_job`
+names the job the result comes from.
+
+The optimised geometry must still show the bonds of the molecule (`changed_bonds`).
+A molecule whose optimisation broke or made a bond is a failure, because its band would be
+the band of another molecule.
+
+### `displaced_along_mode(coords: np.ndarray, mode: np.ndarray, step: float=0.2) -> np.ndarray`
+
+Coordinates moved along one normal mode: the atom that moves most moves by `step`
+angstrom.  The use is a stationary point that is not a minimum, where a step along the mode
+of the imaginary frequency followed by a new optimisation leads down to a minimum.
+
+### `retry_band(outcome: BandOutcome, cfg: Config, bond: Tuple[int, int], prop: str='band', low: float=0.0, high: float=float('inf'), step: float=0.2) -> BandOutcome`
+
+One more optimisation for a molecule whose first one ended with an imaginary frequency.
+
+An optimisation stops at a stationary point, and a start geometry with a symmetric
+substituent can stop on a saddle point: a methyl or trifluoromethyl group eclipsed with the
+ring, for example.  The frequency run shows it as an imaginary frequency.  This function
+moves the optimised geometry along the mode of the lowest frequency
+(`displaced_along_mode`) and repeats the job in a directory of its own, named after
+the molecule with `retry` added.  The second result replaces the first when it has fewer
+imaginary frequencies, or as many and a lower energy; it then carries the property
+`<prop>_retry` with the first band, so that the size of the correction can be read.  A
+molecule without an imaginary frequency, and one whose retry fails, is returned unchanged.
+
+### `band_positions(mols: Sequence[Chem.Mol], names: Sequence[str], cfg: Config, bonds: Sequence[Optional[Tuple[int, int]]], prop: str='band', low: float=0.0, high: float=float('inf'), jobs: int=1, opt: bool=True, progress=None, cancel=None, log=None) -> List[BandOutcome]`
+
+`run_band` over a set, `jobs` molecules at a time, as `annotate_molecules`
+runs the property jobs.  A molecule whose entry of `bonds` is None is reported as skipped.
 
 ## cmfqsar.pbh
 

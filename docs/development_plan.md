@@ -6576,6 +6576,59 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   reproduces the meta/para picture of the Hammett co-fields from the band alone, as LP3 did from
   the acidity. What this is not: a predictor of whole vibrational spectra, which needs the
   thousands of spectra and the calculated geometries the dedicated programs use.
+  **Built and measured 9 and 10 November 2026.** One correction to the item as written: the
+  Hammett set of `examples/hammett/` holds X-C6H5, not benzoic acids, so the acids were built --
+  the 95 substituents meta and para to the carboxyl group, 189 acids,
+  `examples/make_band_examples.py` and `examples/spectra/`. `cmfqsar/orca.py` gains the
+  frequency run: `make_frequency_input` (optimisation and harmonic frequencies), parsers for the
+  frequencies, the normal modes and the infrared intensities, `bond_stretch_mode` (the mode that
+  moves the two atoms of a bond apart most inside a window, with the share of the mode that is
+  this bond), `FREQUENCY_SCALE` by level,
+  `run_band` and `band_positions` with the cache, the status file and the failure rule of the
+  property runs, and three safeguards: `retry_band` moves a molecule that ended with an imaginary
+  frequency along that mode and optimises it once more; `changed_bonds` compares every bond
+  length with the covalent radii, and `run_band` reports a molecule whose optimisation broke or
+  made a bond as a failure; and `run_band` continues an optimisation that stopped at ORCA's limit
+  of cycles from its last geometry with a computed Hessian. The bond check comes from a fault of
+  the first run: UFF left the SF5 group of two acids far from an octahedron (S-F from 1.25 to
+  2.17 A), ORCA broke the group apart, and the data script now builds SF5 as a regular
+  octahedron (`regular_sf5`). ORCA 6.1 at r2SCAN-3c, analytical Hessian, 14 to 100 minutes an acid
+  with ten to twenty acids running at the same time, 8.7 hours for the series (not the few hours
+  the item expected) and 0.9 GB of job files; the band written on the carbonyl carbon as
+  `atom.dprop.co_stretch`. 13 acids ended on a saddle point, 11 took the second optimisation, 5
+  keep one imaginary frequency of 8 to 17 cm⁻¹.
+  `benchmarks/run_band.py` measures the local invariant kernel and the posed overlap at eight
+  widths against the shell count, the Hammett line and a line on the C=O bond length, on the
+  optimised geometries and on the start geometries, and reads the co-field at the ring positions
+  at three widths with the noise error and a y-scramble null.
+  26 tests (`tests/test_orca_frequencies.py` on a real ORCA output, `tests/test_band.py`).
+  *Measured:* the bands span 1711 to 1737 cm⁻¹ (sd 4.5) and follow sigma
+  (r +0.87; in cross-validation one line q2 +0.740, two lines +0.781).
+  **The optimised geometries give a result that does not count.** There the field at 1 A reaches
+  q2 +0.978, but one line on the C=O bond length of those geometries reaches +0.973 (Badger's
+  rule), and the field is above it by +0.005 [+0.002, +0.009] only: the optimisation that
+  gives the band also gives the length. On the start (force-field) geometries the narrow field is
+  at q2 +0.191 to +0.326, far below the count (+0.616); at 7 and 10 A the invariant kernel
+  reaches +0.742 and +0.746, above the count by +0.130 [+0.043, +0.209] and equal to
+  one Hammett line (+0.006 [-0.065, +0.077]).
+  *Gate:* the first half is met narrowly and not robustly: the width is the best of eight, the
+  posed overlap's interval begins at +0.002, and without the five acids that keep an imaginary
+  frequency the invariant kernel's interval is [-0.005, +0.174] (a control that is not stored).
+  The expectation of a best width near 1 A was wrong: the first atom of the substituent is 4.8 to
+  6.4 A from the carbonyl carbon, and the envelope has to reach it. The second half is met in
+  part: at 10 A the electrostatic co-field is positive at meta and para (+3.68 and +5.01 cm⁻¹
+  per unit of field), the direction of the Hammett slope, and para is above meta by 4.3
+  standard deviations of the noise, but the ratio is inside the y-scramble null (z +0.3); at
+  3.2 A, the width LP3 used, the map cannot be read. One correction to the gate's wording: LP3
+  read the ring picture from the shifts, with the indicator fields, and drew no co-field from the
+  acidity. *Rule that follows:* a local target computed on its own optimised geometry is
+  predicted from the start geometries, and the bond-length line is one of its references.
+  *Open:* a table of measured carbonyl bands for the series, which would make the computed
+  column the second one; the indicator fields of LP3 (one field per atom type) on this series,
+  as the candidate for passing two Hammett lines; the width chosen inside the folds; the same
+  run on the acidity set's acids, where the band and the pKa of one carbon would be two targets
+  of one sample; and the band of another bond (the O-H stretch, the C-O stretch),
+  which the same code gives for another window.
 * **SP3. The spectrum as the bridge: which part of the field moves a band, and which structure
   fits a spectrum.** Two parts. *(a)* The kernel CCA of `cmfqsar/kcca.py` with the structural field
   kernel as one view and the spectral kernel of SP1 as the other. The first pairs of directions
@@ -6662,10 +6715,13 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   place the item claims a gain. If no public set shows a nonlinear calibration, the item records that
   the method matches PLS and adds the co-spectrum, and stops.
 
-**Order.** SP2 first: it needs only frequency runs on structures the repository already holds and
-reuses the local field, the count and the local co-field of LP2 and LP3 unchanged. SP1(a) alongside
-it, since it needs no fetch; SP1(b) when a set is found; SP3 after SP1 and SP2, because it needs
-the spectral kernel of the one and the series of the other. SP4 to SP6 after SP1, whose reader and
+**Order.** ~~SP2 first~~ **done 10 November 2026**: the frequency run, the series of 189 acids,
+and the finding that the field predicts the band from the structure as well as one Hammett line,
+and only at a width that reaches the substituent. SP1(a) next, since it needs no fetch; SP1(b)
+when a set is found; SP3 after SP1, because it needs the spectral kernel of the one and the series
+SP2 now holds. The structural side of SP3 and SP6 uses the start geometries of that series, for
+the reason SP2 found: an optimised geometry carries the bond length that decides the band.
+SP4 to SP6 after SP1, whose reader and
 kernel they extend: SP6(a) can run as soon as SP2's spectra exist, SP5 needs only the two public
 sets it names, and SP4 waits on the data search. Electronic spectra (absorption maxima, which
 depend on conjugation) are not among these items: the classical fields do not carry them, the
@@ -7183,10 +7239,10 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Physical organic | 8 | 8 | -- |
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
-| H. Spectroscopy | 6 | 0 | SP1 to SP6 |
+| H. Spectroscopy | 6 | 1 | SP1, SP3, SP4, SP5, SP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
-**165 items: 113 finished, 4 partly, 48 open.**
+**165 items: 114 finished, 4 partly, 47 open.**
  Parts A to F and the battery, local-property and
 periodicity work are substantially done; what is left falls into three kinds, and they are not
 equally blocked.
