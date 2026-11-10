@@ -915,6 +915,17 @@ def registry() -> List[Benchmark]:
                   minutes="8",
                   report=lambda: _mod("run_band").report(_r("band")),
                   tables=["band/table.md"]),
+        Benchmark("spectra",
+                  "a spectrum as a one-dimensional field: the calculated X-ray and neutron "
+                  "powder patterns of the 1,265 Matbench phonon crystals as the sample, "
+                  "against the structural kernel, the composition and the pair distribution "
+                  "function on the Matbench folds, the pattern as one more kernel beside the "
+                  "structure, and the co-spectrum (reads the task file that matbench_phonons "
+                  "downloads)",
+                  "run_spectra.py", "spectra", compute=[["--force"]],
+                  minutes="210",
+                  report=lambda: _mod("run_spectra").report(),
+                  tables=["spectra/table.md"]),
         Benchmark("warped", "a monotone transform of the activity learned with the GP: q2, "
                   "coverage and width of its interval against the plain process and the "
                   "conformal interval, on the eight Sutherland sets",

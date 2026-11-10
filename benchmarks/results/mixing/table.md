@@ -25,12 +25,12 @@ Each field's Bayes factor against *this field does nothing*, beside what actuall
 | field | mean share | 90 % interval | Bayes factor | ΔR²pred without it |
 |---|---:|---:|---:|---:|
 | Electrostatic | 0.179 | [0.024, 0.432] | +1.4 | -0.032 |
-| Steric | 0.337 | [0.091, 0.663] | +2.2 | -0.012 |
-| Hydrophobic | 0.184 | [0.021, 0.460] | +0.7 | -0.006 |
-| H-bond acceptor | 0.159 | [0.032, 0.385] | +1.6 | -0.018 |
+| Steric | 0.337 | [0.091, 0.663] | +2.8 | -0.012 |
+| Hydrophobic | 0.184 | [0.021, 0.460] | +1.1 | -0.006 |
+| H-bond acceptor | 0.159 | [0.032, 0.385] | +1.9 | -0.018 |
 | H-bond donor | 0.142 | [0.025, 0.349] | +1.5 | -0.003 |
 
-Over all 200 (set, split, field) cases the Bayes factor and the cost of removing the field correlate at Spearman ρ **+0.121** -- the sign is set so that positive means *the evidence was right*: a field it calls indispensable is one whose removal costs the held-out molecules.
+Over all 200 (set, split, field) cases the Bayes factor and the cost of removing the field correlate at Spearman ρ **+0.143** -- the sign is set so that positive means *the evidence was right*: a field it calls indispensable is one whose removal costs the held-out molecules.
 
 That is weaker than the interpretation claim deserves. The Bayes factor orders the fields by what the training activities say, and the held-out molecules do not fully agree; read it as what this training set can see rather than as a property of the chemistry.
 
