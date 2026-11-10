@@ -131,3 +131,104 @@ Figure: `start_cofield_rho_0p1.png`.
 | hbd | +0.00946 (0.024) | +0.00746 (0.017) | -0.291 (0.17) | -1.32 (0.66) | +1.03 (0.5, +2.0) | +0.64 | +0.52 +/- 0.31 | +0.4 |
 
 **Reading.** A linear regression on the Hammett constant, with one equation for all acids (the Hammett regression), predicts the band with q2 +0.740. On the geometries of the quantum optimisation the count reaches q2 +0.662; the invariant local kernel is best at a width of 1.00 A (q2 +0.976, against the count +0.314 [+0.257, +0.388]), the posed overlap at 1.00 A (q2 +0.978, against the count +0.316 [+0.259, +0.390]). A linear regression on the length of the C=O bond of the same geometries reaches q2 +0.973. The posed overlap at its best width is +0.005 [+0.002, +0.009] against that regression, so nearly all of what the narrow field predicts is one bond length. That length comes from the quantum optimisation, the calculation that also gives the band, so this is not a prediction from the structure. On the start geometries, which hold nothing from the quantum calculation, the count reaches q2 +0.616; the invariant local kernel is best at a width of 10.00 A (q2 +0.746, against the count +0.130 [+0.043, +0.209], against the Hammett regression +0.006 [-0.065, +0.077]), the posed overlap at 10.00 A (q2 +0.702, against the count +0.087 [+0.002, +0.168]). At a width of 1.00 A or less neither kernel is above q2 +0.231 there. The first half of the gate, the local field beating the count by more than the interval, is read on the start geometries and is met: the lower end of the interval is +0.043 for the invariant kernel and +0.002 for the posed overlap, each at a width chosen as the best of the scan. At a width of 10.00 A (posed q2 +0.702) the electrostatic co-field is +3.68 at meta and +5.01 at para, in cm^-1 per unit of field; para minus meta in absolute value is +1.33 with a z of +4.3 against the noise and +0.3 against the scramble. At a width of 4.47 A (posed q2 +0.691) the electrostatic co-field is +5.32 at meta and +8.03 at para, in cm^-1 per unit of field; para minus meta in absolute value is +2.71 with a z of +1.9 against the noise and +0.3 against the scramble. At a width of 3.16 A (posed q2 +0.663) the electrostatic co-field is -9.4 at meta and -8.86 at para, in cm^-1 per unit of field; para minus meta in absolute value is -0.547 with a z of -0.1 against the noise and -0.1 against the scramble.
+
+## Indicator fields: one field per atom type (plan item LP3), on the start geometries
+
+A continuous indicator field of an atom type is one Gaussian on every atom of that type.  15 Sybyl types occur in at least 10 acids (C.1, C.2, C.3, C.ar, Cl, F, H, N.1, N.am, N.pl3, O.2, O.3, O.co2, S.3, S.O2) and each gets a field.  The last field set of each table is a control with a field for every type that occurs in at least 2 acids (25 types; it adds B, Br, I, N.2, N.3, P.3, S.2, S.O, Se, Si).
+
+The cross-validation is repeated 10 times with other folds.  A q2 is the mean over the repeats, and the number in brackets is its standard deviation over the repeats.  The ridge is chosen on the folds of each repeat, for every descriptor alike.  A difference in q2 carries its 95 % bootstrap interval over the units that the folds hold out.
+
+The series holds each substituent twice, meta and para to the carboxyl group (95 substituents in 189 acids).  Over the 94 substituents that occur twice, the band of the meta acid and the band of the para acid correlate with r +0.80, and their Hammett constants with r +0.92.  A fold that holds out one acid therefore usually keeps the other acid of the same substituent in the training set.  The tables are given for both kinds of folds.
+
+The first repeat uses the folds of the tables above.  On those folds the atom-centred counts reach q2 +0.616; over the 10 repeats they lie between +0.616 and +0.666.  The invariant kernel of the five fields at the width of 10.00 A reaches +0.746 on the first repeat and lies between +0.692 and +0.767.  The margin of the five fields over the counts in the tables above is read on that one set of folds.  The column *against the atom-centred counts* below gives it over all repeats.
+
+### Indicator fields, whole acids held out
+
+| reference | q2 (sd over the repeats) | RMSE, cm^-1 |
+|---|---:|---:|
+| atom-centred counts | +0.650 (0.017) | 2.65 |
+| linear regression on the Hammett constant, all acids | +0.742 (0.002) | 2.27 |
+| linear regression on the Hammett constant, meta and para separately | +0.782 (0.002) | 2.09 |
+
+| fields | number of fields | width, A | invariant local q2 (sd over the repeats) | against the atom-centred counts | against the five fields | against the Hammett regression, all acids | against the Hammett regressions, meta and para separately | posed overlap q2 (sd over the repeats) | against the five fields | against the Hammett regressions, meta and para separately |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| the five physico-chemical fields | 5 | 10.00 | +0.741 (0.026) | +0.091 [+0.017, +0.162] |  | -0.002 [-0.075, +0.064] | -0.041 [-0.110, +0.022] | +0.707 (0.006) |  | -0.074 [-0.132, -0.017] |
+| the five physico-chemical fields | 5 | 7.07 | +0.735 (0.021) | +0.085 [+0.014, +0.154] |  | -0.008 [-0.075, +0.058] | -0.047 [-0.114, +0.015] | +0.699 (0.004) |  | -0.083 [-0.139, -0.024] |
+| the five physico-chemical fields | 5 | 4.47 | +0.701 (0.016) | +0.051 [-0.023, +0.120] |  | -0.042 [-0.123, +0.031] | -0.081 [-0.162, -0.012] | +0.698 (0.008) |  | -0.083 [-0.146, -0.020] |
+| the five physico-chemical fields | 5 | 3.16 | +0.664 (0.013) | +0.015 [-0.064, +0.090] |  | -0.078 [-0.161, -0.003] | -0.118 [-0.202, -0.045] | +0.670 (0.009) |  | -0.111 [-0.183, -0.045] |
+| 15 indicator fields | 15 | 10.00 | +0.749 (0.022) | +0.099 [+0.013, +0.173] | +0.008 [-0.080, +0.094] | +0.006 [-0.083, +0.085] | -0.033 [-0.122, +0.046] | +0.648 (0.027) | -0.059 [-0.194, +0.039] | -0.133 [-0.272, -0.028] |
+| 15 indicator fields | 15 | 7.07 | +0.738 (0.022) | +0.088 [-0.013, +0.171] | +0.003 [-0.102, +0.098] | -0.005 [-0.110, +0.085] | -0.044 [-0.149, +0.043] | +0.637 (0.029) | -0.062 [-0.220, +0.045] | -0.145 [-0.294, -0.033] |
+| 15 indicator fields | 15 | 4.47 | +0.685 (0.022) | +0.036 [-0.117, +0.145] | -0.015 [-0.172, +0.112] | -0.057 [-0.217, +0.060] | -0.096 [-0.257, +0.013] | +0.598 (0.029) | -0.100 [-0.262, +0.012] | -0.184 [-0.358, -0.063] |
+| 15 indicator fields | 15 | 3.16 | +0.618 (0.024) | -0.031 [-0.216, +0.089] | -0.046 [-0.222, +0.086] | -0.124 [-0.317, +0.007] | -0.164 [-0.357, -0.038] | +0.557 (0.029) | -0.114 [-0.290, +0.009] | -0.225 [-0.419, -0.092] |
+| the five fields and 15 indicator fields | 20 | 10.00 | +0.776 (0.017) | +0.127 [+0.045, +0.199] | +0.036 [-0.047, +0.116] | +0.034 [-0.053, +0.116] | -0.005 [-0.090, +0.072] | +0.718 (0.025) | +0.011 [-0.088, +0.083] | -0.064 [-0.166, +0.021] |
+| the five fields and 15 indicator fields | 20 | 7.07 | +0.767 (0.017) | +0.117 [+0.020, +0.197] | +0.032 [-0.065, +0.121] | +0.024 [-0.077, +0.114] | -0.015 [-0.116, +0.068] | +0.713 (0.025) | +0.015 [-0.104, +0.102] | -0.068 [-0.182, +0.025] |
+| the five fields and 15 indicator fields | 20 | 4.47 | +0.720 (0.018) | +0.071 [-0.068, +0.170] | +0.020 [-0.122, +0.138] | -0.022 [-0.172, +0.088] | -0.061 [-0.209, +0.043] | +0.673 (0.026) | -0.025 [-0.152, +0.065] | -0.109 [-0.251, -0.003] |
+| the five fields and 15 indicator fields | 20 | 3.16 | +0.634 (0.021) | -0.015 [-0.191, +0.103] | -0.030 [-0.202, +0.096] | -0.108 [-0.303, +0.020] | -0.148 [-0.339, -0.023] | +0.586 (0.030) | -0.084 [-0.251, +0.030] | -0.195 [-0.380, -0.069] |
+| the five fields and 25 indicator fields | 30 | 10.00 | +0.784 (0.018) | +0.135 [+0.049, +0.210] | +0.044 [-0.037, +0.123] | +0.042 [-0.050, +0.123] | +0.003 [-0.086, +0.080] | +0.700 (0.021) | -0.007 [-0.106, +0.067] | -0.082 [-0.187, +0.003] |
+| the five fields and 25 indicator fields | 30 | 7.07 | +0.775 (0.018) | +0.126 [+0.026, +0.208] | +0.040 [-0.062, +0.128] | +0.033 [-0.078, +0.122] | -0.007 [-0.114, +0.079] | +0.689 (0.025) | -0.010 [-0.126, +0.074] | -0.093 [-0.213, -0.003] |
+| the five fields and 25 indicator fields | 30 | 4.47 | +0.730 (0.019) | +0.081 [-0.070, +0.187] | +0.030 [-0.126, +0.154] | -0.012 [-0.177, +0.101] | -0.051 [-0.213, +0.059] | +0.651 (0.031) | -0.047 [-0.182, +0.050] | -0.130 [-0.288, -0.019] |
+| the five fields and 25 indicator fields | 30 | 3.16 | +0.658 (0.023) | +0.009 [-0.170, +0.131] | -0.006 [-0.184, +0.127] | -0.084 [-0.283, +0.045] | -0.123 [-0.316, +0.005] | +0.585 (0.033) | -0.086 [-0.258, +0.034] | -0.197 [-0.386, -0.067] |
+
+### Indicator fields, whole substituents held out (both acids of a substituent together)
+
+| reference | q2 (sd over the repeats) | RMSE, cm^-1 |
+|---|---:|---:|
+| atom-centred counts | +0.623 (0.009) | 2.74 |
+| linear regression on the Hammett constant, all acids | +0.742 (0.002) | 2.27 |
+| linear regression on the Hammett constant, meta and para separately | +0.782 (0.002) | 2.09 |
+
+| fields | number of fields | width, A | invariant local q2 (sd over the repeats) | against the atom-centred counts | against the five fields | against the Hammett regression, all acids | against the Hammett regressions, meta and para separately | posed overlap q2 (sd over the repeats) | against the five fields | against the Hammett regressions, meta and para separately |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| the five physico-chemical fields | 5 | 10.00 | +0.676 (0.015) | +0.053 [-0.097, +0.168] |  | -0.066 [-0.201, +0.031] | -0.106 [-0.243, -0.011] | +0.703 (0.011) |  | -0.078 [-0.141, -0.016] |
+| the five physico-chemical fields | 5 | 7.07 | +0.674 (0.023) | +0.051 [-0.076, +0.154] |  | -0.068 [-0.177, +0.019] | -0.108 [-0.221, -0.024] | +0.695 (0.009) |  | -0.086 [-0.146, -0.025] |
+| the five physico-chemical fields | 5 | 4.47 | +0.648 (0.017) | +0.025 [-0.088, +0.124] |  | -0.094 [-0.196, -0.006] | -0.133 [-0.238, -0.049] | +0.695 (0.012) |  | -0.086 [-0.161, -0.022] |
+| the five physico-chemical fields | 5 | 3.16 | +0.672 (0.016) | +0.048 [-0.054, +0.139] |  | -0.070 [-0.138, -0.005] | -0.110 [-0.185, -0.043] | +0.670 (0.008) |  | -0.111 [-0.187, -0.045] |
+| 15 indicator fields | 15 | 10.00 | +0.675 (0.014) | +0.052 [-0.060, +0.150] | -0.000 [-0.165, +0.160] | -0.066 [-0.214, +0.044] | -0.106 [-0.262, +0.005] | +0.630 (0.014) | -0.073 [-0.226, +0.039] | -0.151 [-0.312, -0.037] |
+| 15 indicator fields | 15 | 7.07 | +0.660 (0.016) | +0.036 [-0.089, +0.145] | -0.014 [-0.187, +0.135] | -0.082 [-0.253, +0.038] | -0.122 [-0.296, -0.001] | +0.621 (0.016) | -0.075 [-0.248, +0.049] | -0.161 [-0.345, -0.030] |
+| 15 indicator fields | 15 | 4.47 | +0.597 (0.017) | -0.026 [-0.209, +0.108] | -0.051 [-0.269, +0.108] | -0.145 [-0.375, +0.004] | -0.185 [-0.417, -0.037] | +0.586 (0.020) | -0.110 [-0.292, +0.012] | -0.196 [-0.412, -0.054] |
+| 15 indicator fields | 15 | 3.16 | +0.552 (0.015) | -0.071 [-0.283, +0.077] | -0.120 [-0.361, +0.035] | -0.190 [-0.448, -0.029] | -0.230 [-0.492, -0.072] | +0.553 (0.021) | -0.117 [-0.320, +0.010] | -0.229 [-0.464, -0.079] |
+| the five fields and 15 indicator fields | 20 | 10.00 | +0.705 (0.015) | +0.082 [-0.027, +0.177] | +0.029 [-0.130, +0.181] | -0.037 [-0.185, +0.073] | -0.076 [-0.229, +0.033] | +0.697 (0.015) | -0.006 [-0.120, +0.082] | -0.085 [-0.211, +0.015] |
+| the five fields and 15 indicator fields | 20 | 7.07 | +0.693 (0.017) | +0.070 [-0.052, +0.172] | +0.020 [-0.144, +0.154] | -0.049 [-0.212, +0.068] | -0.088 [-0.257, +0.028] | +0.689 (0.015) | -0.006 [-0.137, +0.095] | -0.092 [-0.235, +0.019] |
+| the five fields and 15 indicator fields | 20 | 4.47 | +0.645 (0.024) | +0.022 [-0.127, +0.136] | -0.003 [-0.184, +0.136] | -0.097 [-0.292, +0.034] | -0.137 [-0.337, -0.007] | +0.647 (0.016) | -0.048 [-0.199, +0.057] | -0.135 [-0.321, -0.007] |
+| the five fields and 15 indicator fields | 20 | 3.16 | +0.576 (0.015) | -0.047 [-0.250, +0.096] | -0.096 [-0.332, +0.051] | -0.166 [-0.420, -0.011] | -0.206 [-0.464, -0.052] | +0.568 (0.020) | -0.103 [-0.300, +0.023] | -0.214 [-0.447, -0.064] |
+| the five fields and 25 indicator fields | 30 | 10.00 | +0.709 (0.015) | +0.086 [-0.039, +0.188] | +0.033 [-0.135, +0.186] | -0.033 [-0.195, +0.082] | -0.073 [-0.238, +0.042] | +0.678 (0.012) | -0.025 [-0.146, +0.064] | -0.103 [-0.232, -0.011] |
+| the five fields and 25 indicator fields | 30 | 7.07 | +0.691 (0.017) | +0.068 [-0.076, +0.181] | +0.018 [-0.161, +0.159] | -0.051 [-0.235, +0.076] | -0.090 [-0.281, +0.036] | +0.662 (0.013) | -0.033 [-0.179, +0.070] | -0.120 [-0.271, -0.008] |
+| the five fields and 25 indicator fields | 30 | 4.47 | +0.636 (0.021) | +0.012 [-0.178, +0.150] | -0.012 [-0.231, +0.134] | -0.106 [-0.342, +0.045] | -0.146 [-0.383, +0.003] | +0.623 (0.019) | -0.073 [-0.251, +0.043] | -0.159 [-0.368, -0.017] |
+| the five fields and 25 indicator fields | 30 | 3.16 | +0.583 (0.016) | -0.040 [-0.253, +0.109] | -0.088 [-0.338, +0.062] | -0.159 [-0.416, +0.003] | -0.198 [-0.462, -0.037] | +0.571 (0.022) | -0.099 [-0.313, +0.030] | -0.210 [-0.456, -0.059] |
+
+### How alike the kernel of the indicator fields and the kernel of the five fields are
+
+The correlation between the off-diagonal elements of the two kernels, each centred first.  Near 1, the indicator fields would order the pairs of acids as the five fields do and could add little.
+
+| width, A | invariant local kernel | posed overlap kernel |
+|---:|---:|---:|
+| 10.00 | +0.333 | +0.377 |
+| 7.07 | +0.306 | +0.359 |
+| 4.47 | +0.211 | +0.272 |
+| 3.16 | +0.120 | +0.132 |
+
+### What one atom of a type adds to the band at the place of the first atom of the substituent, width 10.00 A
+
+The posed overlap model with the five fields and the 15 indicator fields (q2 +0.718, ridge 1).  The places are the mean positions of the first atom of the substituent in the frame of the carbonyl carbon: meta (carbonyl side), 5.01 A from the carbonyl carbon, 44 acids, envelope 0.78; meta (hydroxyl side), 5.10 A from the carbonyl carbon, 50 acids, envelope 0.77; para, 5.84 A from the carbonyl carbon, 94 acids, envelope 0.71.  *Effect* is what one atom of the type at that place adds to the band, in cm^-1, with the standard deviation that the noise in the bands allows.  *Acids* is the number of acids whose substituent starts with an atom of that type at that place, and *mean shift* is their mean band minus the band of the unsubstituted acid (1727.9 cm^-1).  The model was fitted on these bands, so the comparison is a check of what the model has stored and not a prediction.
+
+| atom type | effect, meta (carbonyl side) | acids | mean shift, cm^-1 | effect, meta (hydroxyl side) | acids | mean shift, cm^-1 | effect, para | acids | mean shift, cm^-1 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| C.1 | +2.29 (1.30) | 2 | +5.2 | -0.47 (1.75) | 0 |  | -0.07 (1.22) | 2 | +0.8 |
+| C.2 | +0.37 (0.50) | 6 | +3.8 | +0.27 (0.65) | 5 | +2.0 | -0.53 (0.61) | 11 | +1.5 |
+| C.3 | -0.17 (0.59) | 15 | -0.9 | -0.13 (0.57) | 11 | +0.9 | -0.78 (0.51) | 26 | -1.2 |
+| C.ar | -0.03 (0.11) | 1 | -1.0 | -0.14 (0.06) | 0 |  | -0.25 (0.12) | 1 | -3.9 |
+| Cl | +0.46 (1.16) | 0 |  | +1.63 (2.16) | 1 | +3.3 | +0.01 (2.11) | 1 | +0.3 |
+| F | +0.75 (0.84) | 0 |  | +1.12 (0.98) | 1 | +3.0 | +0.32 (0.83) | 1 | -0.5 |
+| H | -0.26 (0.15) | 0 |  | -0.53 (0.17) | 0 |  | -0.15 (0.21) | 0 |  |
+| N.1 | +4.26 (2.26) | 1 | +5.5 | +1.84 (1.90) | 0 |  | +2.97 (2.09) | 1 | +3.1 |
+| N.am | -2.72 (1.45) | 4 | -2.3 | +1.82 (1.40) | 4 | +3.1 | -1.12 (1.07) | 8 | -3.9 |
+| N.pl3 | -1.66 (1.32) | 4 | -3.1 | -0.42 (1.47) | 3 | +0.1 | -4.94 (1.05) | 7 | -9.0 |
+| O.2 | +2.74 (1.15) | 0 |  | +2.88 (1.44) | 0 |  | +2.71 (1.38) | 0 |  |
+| O.3 | -0.77 (0.52) | 3 | -3.0 | -0.04 (0.54) | 6 | +1.0 | -0.47 (0.54) | 9 | -4.7 |
+| O.co2 | +0.53 (0.16) | 0 |  | +1.04 (0.49) | 0 |  | +2.22 (0.48) | 0 |  |
+| S.3 | -1.30 (1.40) | 5 | -0.7 | +0.15 (1.68) | 3 | +3.2 | -3.97 (1.15) | 8 | -2.6 |
+| S.O2 | +3.74 (2.25) | 1 | +9.1 | +2.39 (1.45) | 5 | +5.0 | +0.93 (1.49) | 6 | +5.3 |
+
+Over the 22 pairs of a type and a place with at least 2 acids, the effects correlate with the mean shifts with r +0.85 and with the mean Hammett constants of those acids with r +0.59.
+
+**Reading of the indicator fields.** The statements are made at the width of 10.00 A, fixed before the measurement as the width where the five fields were best, and for the invariant local kernel. With whole acids held out the five fields reach q2 +0.741, the indicator fields alone +0.749 and both together +0.776. Both together are +0.036 [-0.047, +0.116] against the five fields (not separated from them) and -0.005 [-0.090, +0.072] against the Hammett regressions for meta and para separately, which reach +0.782 (not separated from them). Against the atom-centred counts (+0.650) the five fields are +0.091 [+0.017, +0.162] (above them) and both together +0.127 [+0.045, +0.199] (above them). With whole substituents held out the five fields reach q2 +0.676, the indicator fields alone +0.675 and both together +0.705. Both together are +0.029 [-0.130, +0.181] against the five fields (not separated from them) and -0.076 [-0.229, +0.033] against the Hammett regressions for meta and para separately, which reach +0.782 (not separated from them). Against the atom-centred counts (+0.623) the five fields are +0.053 [-0.097, +0.168] (not separated from them) and both together +0.082 [-0.027, +0.177] (not separated from them). The posed overlap with both field sets reaches q2 +0.718 with whole acids held out, against +0.707 with the five fields (+0.011 [-0.088, +0.083], not separated from them). The kernel of the indicator fields correlates with the kernel of the five fields with r +0.33 (invariant) and +0.38 (posed), so the indicator fields are a different description and not a copy of the five fields. Holding out whole substituents lowers the q2 of the five fields by 0.065 and of both field sets by 0.071. It does not change the Hammett regressions, because a Hammett constant is a measured value of the substituent, and a field model has to learn a substituent from the other substituents. The effects of single atoms follow the mean observed shifts by the type and the place of the first atom (r +0.85 over 22 pairs), so the model has stored the substituent effects by atom type and place. **Answer to the question of plan item SP2.** The five fields with the indicator fields do not pass the Hammett regressions for meta and para separately: the difference in q2 is -0.005 [-0.090, +0.072] with whole acids held out and -0.076 [-0.229, +0.033] with whole substituents held out.

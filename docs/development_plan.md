@@ -6602,7 +6602,7 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   regression on the C=O bond length, on the
   optimised geometries and on the start geometries, and reads the co-field at the ring positions
   at three widths with the noise error and a y-scramble null.
-  27 tests (`tests/test_orca_frequencies.py` on a real ORCA output, `tests/test_band.py`).
+  34 tests (`tests/test_orca_frequencies.py` on a real ORCA output, `tests/test_band.py`).
   *Measured:* the bands span 1711 to 1737 cm⁻¹ (sd 4.5) and follow sigma
   (r +0.87; in cross-validation the linear regression on sigma gives q2 +0.740 with one
   equation for all acids and +0.781 with separate equations for meta and para).
@@ -6625,9 +6625,39 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   read the ring picture from the shifts, with the indicator fields, and drew no co-field from the
   acidity. *Rule that follows:* a local target computed on its own optimised geometry is
   predicted from the start geometries, and the bond-length regression is one of its references.
+  **The indicator fields of LP3 on this series, measured 10 November 2026** (part 7 of
+  `run_band.py`, `indicator.json`). Start geometries, envelope width 10 A fixed beforehand, one
+  Gaussian field for each of the 15 Sybyl types that occur in at least ten acids, the
+  cross-validation repeated ten times with other folds, intervals by a paired bootstrap.
+  *With whole acids held out:* the five fields q2 +0.741, the indicator fields alone +0.749, both
+  together +0.776, the separate Hammett regressions +0.782. Both together are
+  +0.036 [-0.047, +0.116] from the five fields and -0.005 [-0.090, +0.072] from the separate
+  Hammett regressions: the regressions are reached and not passed. A field for every type in at
+  least two acids (25 types) gives +0.784. The posed overlap does not gain (+0.718 against
+  +0.707). The two kernels correlate with r +0.33 only, so the indicator fields are a different
+  description that reaches the same q2.
+  *The series holds each substituent twice, and this changes the reading of the item.* The meta
+  and the para band of a substituent correlate with r +0.80, and a fold over acids usually keeps
+  one of the two in the training set. With whole substituents held out (95 groups) the five
+  fields fall to +0.676, both field sets to +0.705 and the count to +0.623. The Hammett
+  regressions stay at +0.742 and +0.782, because sigma is a measured value of the substituent.
+  There the five fields are below the separate Hammett regressions (-0.106 [-0.243, -0.011]) and
+  both field sets are -0.076 [-0.229, +0.033] from them.
+  *Correction to the gate.* The margin over the count quoted above (+0.130) was read on one set
+  of folds, on which the count has its lowest q2 of ten repeats (+0.616; mean +0.650). Over the
+  ten repeats the margin is +0.091 [+0.017, +0.162] with whole acids held out and
+  +0.053 [-0.097, +0.168] with whole substituents held out. The first half of the gate is
+  therefore met on folds over acids and not met on folds over substituents.
+  *What the model stores:* the effects of one atom of a type at the place of the first atom of
+  the substituent follow the mean observed shifts (r +0.85 over 22 pairs of a type and a place),
+  as LP3 found for the shifts.
+  *Second rule that follows:* a series that holds each substituent at more than one position is
+  validated on folds that hold out whole substituents, and a result is repeated over several
+  sets of folds before a margin of 0.1 in q2 is quoted.
   *Open:* a table of measured carbonyl bands for the series, which would make the computed
-  column the second one; the indicator fields of LP3 (one field per atom type) on this series,
-  as the candidate for passing the separate Hammett regressions for meta and para; the width
+  column the second one; a description that carries resonance and needs no optimisation
+  (charges or an electron density from one quantum calculation on the start geometry), as the
+  next candidate for passing the separate Hammett regressions for meta and para; the width
   chosen inside the folds; the same
   run on the acidity set's acids, where the band and the pKa of one carbon would be two targets
   of one sample; and the band of another bond (the O-H stretch, the C-O stretch),
@@ -6720,7 +6750,10 @@ what divides the intensity scale (concentration, path length, sample mass) out o
 
 **Order.** ~~SP2 first~~ **done 10 November 2026**: the frequency run, the series of 189 acids,
 and the finding that the field predicts the band from the structure as well as a linear
-regression on the Hammett constant, and only at a width that reaches the substituent. SP1(a)
+regression on the Hammett constant, and only at a width that reaches the substituent. The
+indicator fields of LP3 were measured on the series the same day: they reach the separate
+Hammett regressions on folds over acids and stay below them on folds over whole
+substituents. SP1(a)
 next, since it needs no fetch; SP1(b)
 when a set is found; SP3 after SP1, because it needs the spectral kernel of the one and the series
 SP2 now holds. The structural side of SP3 and SP6 uses the start geometries of that series, for

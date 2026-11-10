@@ -78,5 +78,6 @@ linear regression on the C=O bond length,
 and reads the co-field at the ring positions. It does so twice: on the optimised geometries of
 `benzoic_acids_co.sdf` and on the force-field geometries of `benzoic_acids.sdf`, with the same
 bands. The second run is the one that counts, because an optimised geometry holds the C=O bond
-length, and that length alone predicts the band. The manual section *A vibrational band as the
-local target* has the results.
+length, and that length alone predicts the band. A last part adds one indicator field per atom
+type on the force-field geometries, and folds that hold out both acids of a substituent
+together. The manual section *A vibrational band as the local target* has the results.
