@@ -1,6 +1,6 @@
 {
- "commit": "2c2e5bb38e137d48104bc20e07f97bf97773c896",
- "created": "2026-11-11T00:14:32",
+ "commit": "e23d70de5981870ad75896a344d9ae0e70813eab",
+ "created": "2026-11-11T01:11:16",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2207,7 +2207,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -2628,8 +2628,8 @@
   "benchmarks/results/gntk/THER.json": "6c7ec0d1255d9a69d77bb2275dbcf40058a5ad95506aeb1370a8333e28b344f3",
   "benchmarks/results/gntk/THR.json": "6af81eb31c28145c7269a21da671ef10f1950694dda3a36061e3f3384e9ef521",
   "benchmarks/results/gntk/table.md": "27bdb8b47512d6c4dfaa09fc1fdb58d9b34b22effee5f272877cbc62c85208f5",
-  "benchmarks/results/gntk_compas/compas_1D.json": "9db0396da8d767f5564ccdcac90a132fb5c6f30f9a921c170da29043101cbbf8",
-  "benchmarks/results/gntk_compas/table.md": "938f05e03f581d791f952dabfbb1bc9fac6dcf7f6a580e2455368ec783ceded6",
+  "benchmarks/results/gntk_compas/compas_1D.json": "b56e232e3abe13700c2912f15fe76ea0cf705b738c17c53f692d808989624eba",
+  "benchmarks/results/gntk_compas/table.md": "f0bec357f4c3bfcaa1e17d4fbf671b69ee7f746b9afdc57e6e17412933117e89",
   "benchmarks/results/gradient/gradient.json": "5b68ca074c3409b81da1c4d0074540276991d905ee1828040c921213365d2fa7",
   "benchmarks/results/gradient/invariant.json": "9e2bc74df0cbb626a8d3e36719923d8a216cb2614145b7d41ce3b6186eea3ac1",
   "benchmarks/results/gradient/relax.json": "f3ac0a494b2d81be72a4ccb65d29df454c110b07e689bdac223cc5c530092594",
