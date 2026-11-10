@@ -117,6 +117,50 @@ def _mod(name):
     return importlib.import_module(name)
 
 
+def _write_table(name, text):
+    """Write `text` as `table.md` of the results folder `name`.
+
+    For a script whose `report` returns the text of its table and leaves the writing to its
+    `main`.  The line break at the end is the one that the script's `main` adds.
+    """
+    with open(_r(os.path.join(name, "table.md")), "w", encoding="utf-8") as fh:
+        fh.write(text + "\n")
+
+
+def _load(path):
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _report(b):
+    """Call the report of benchmark `b` and make sure that it wrote every table of `b.tables`.
+
+    Each table is moved aside before the call.  If the report leaves no file in its place, the
+    table is put back and an error is raised.  Without this, a report that only returns its
+    text would leave the committed table in place, and ``--check`` would compare the table
+    with itself and pass.
+    """
+    aside = {_r(t): _r(t) + ".before" for t in b.tables if os.path.exists(_r(t))}
+    for path, kept in aside.items():
+        os.replace(path, kept)
+    missing = []
+    try:
+        b.report()
+    finally:
+        for path, kept in aside.items():
+            if os.path.exists(path):
+                os.remove(kept)
+            else:                          # nothing was written: the table is put back
+                os.replace(kept, path)
+                missing.append(path)
+    if missing:
+        raise RuntimeError(
+            f"the report of benchmark '{b.name}' did not write "
+            + ", ".join(os.path.relpath(m, ROOT) for m in missing)
+            + ". The table cannot be compared with its result files. The report has to write "
+              "the table; returning its text is not enough.")
+
+
 def _r(path):
     return os.path.join(RESULTS, path)
 
@@ -271,6 +315,8 @@ def registry() -> List[Benchmark]:
                   "a kinetic selectivity as the activity: 43 chiral phosphoric acids on 25 "
                   "substrate combinations, the frame measured against the invariant kernel",
                   "run_denmark.py", "denmark", compute=[[]], minutes="5",
+                  report=lambda: _mod("run_denmark").write_table(
+                      _load(_r("denmark/summary.json")), _r("denmark/table.md")),
                   tables=["denmark/table.md"],
                   readme=["A kinetic selectivity as the activity (two tables)"]),
         Benchmark("nonlinearity", "the molecule-dependent co-field of the Gaussian layer: its "
@@ -315,34 +361,39 @@ def registry() -> List[Benchmark]:
                   "does complementarity with a cyclodextrin cavity predict the constant",
                   "run_host_pocket.py", "host_pocket", compute=[[]],
                   minutes="170",
-                  report=lambda: _mod("run_host_pocket").report(_r("host_pocket")),
+                  report=lambda: _write_table(
+                      "host_pocket", _mod("run_host_pocket").report(_r("host_pocket"))),
                   tables=["host_pocket/table.md"]),
         Benchmark("guest_design",
                   "does a model with no frame name the group worth making next",
                   "run_guest_design.py", "guest_design", compute=[[]],
                   minutes="5",
-                  report=lambda: _mod("run_guest_design").report(_r("guest_design")),
+                  report=lambda: _write_table(
+                      "guest_design", _mod("run_guest_design").report(_r("guest_design"))),
                   tables=["guest_design/table.md"]),
         Benchmark("two_endpoints",
                   "two cyclodextrin cavities in one model, and the selectivity between them",
                   "run_two_endpoints.py", "two_endpoints",
                   compute=[[], ["--pair", "beta", "gamma"], ["--pair", "alpha", "gamma"]],
                   minutes="5",
-                  report=lambda: _mod("run_two_endpoints").report(_r("two_endpoints")),
+                  report=lambda: _write_table(
+                      "two_endpoints", _mod("run_two_endpoints").report(_r("two_endpoints"))),
                   tables=["two_endpoints/table.md"]),
         Benchmark("selectivity",
                   "the AMPA / glycine-NMDA set of the 2003 selectivity-fields paper: the "
                   "difference of two affinities modelled directly, as a difference of models, "
                   "and as a two-task fit",
                   "run_selectivity.py", "selectivity", compute=[[]], minutes="1",
-                  report=lambda: _mod("run_selectivity").report(_r("selectivity")),
+                  report=lambda: _write_table(
+                      "selectivity", _mod("run_selectivity").report(_r("selectivity"))),
                   tables=["selectivity/table.md"],
                   readme=["Several endpoints on one kernel: the selectivity co-field"]),
         Benchmark("guest_atoms",
                   "does an alignment-free model name the group that enters the cavity",
                   "run_guest_atoms.py", "guest_atoms", compute=[[]],
                   minutes="5",
-                  report=lambda: _mod("run_guest_atoms").report(_r("guest_atoms")),
+                  report=lambda: _write_table(
+                      "guest_atoms", _mod("run_guest_atoms").report(_r("guest_atoms"))),
                   tables=["guest_atoms/table.md"]),
         Benchmark("local",
                   "does the field around an atom predict a shift or an acidity of that atom",
@@ -557,14 +608,16 @@ def registry() -> List[Benchmark]:
                   "do increments fitted on one series transfer to another",
                   "run_increments.py", "increments", compute=[[]],
                   minutes="90",
-                  report=lambda: _mod("run_increments").report(_r("increments")),
+                  report=lambda: _write_table(
+                      "increments", _mod("run_increments").report(_r("increments"))),
                   tables=["increments/table.md"]),
         Benchmark("protonation",
                   "does a pKa-weighted protonation ensemble beat one chosen state",
                   "run_protonation.py", "protonation",
                   compute=[["--ph", "0"], ["--ph", "3"]],
                   minutes="15",
-                  report=lambda: _mod("run_protonation").report(_r("protonation")),
+                  report=lambda: _write_table(
+                      "protonation", _mod("run_protonation").report(_r("protonation"))),
                   tables=["protonation/table.md"]),
         Benchmark("anisotropic", "can a direction on every atom represent a Fukui function",
                   "run_anisotropic.py", "anisotropic", compute=[[]],
@@ -832,13 +885,15 @@ def registry() -> List[Benchmark]:
                   "fields with the invariant kernel, on the eight Sutherland sets",
                   "run_gntk.py", "gntk", compute=[[]],
                   minutes="10",
-                  report=lambda: _mod("run_gntk").report(_r("gntk")),
+                  report=lambda: _write_table(
+                      "gntk", _mod("run_gntk").report(_r("gntk"))),
                   tables=["gntk/table.md"]),
         Benchmark("gntk_compas",
                   "the same view on a random subset of 2,000 molecules of COMPAS-1D",
                   "run_gntk.py", "gntk_compas", compute=[["--compas"]],
                   minutes="130",
-                  report=lambda: _mod("run_gntk").report(_r("gntk_compas")),
+                  report=lambda: _write_table(
+                      "gntk_compas", _mod("run_gntk").report(_r("gntk_compas"))),
                   tables=["gntk_compas/table.md"]),
         Benchmark("band",
                   "a vibrational band as a local target: the carbonyl stretch of substituted "
@@ -854,20 +909,23 @@ def registry() -> List[Benchmark]:
                   "conformal interval, on the eight Sutherland sets",
                   "run_warped.py", "warped", compute=[[]],
                   minutes="35",        # measured: 34, with the warp refitted in every fold
-                  report=lambda: _mod("run_warped").report(_r("warped")),
+                  report=lambda: _write_table(
+                      "warped", _mod("run_warped").report(_r("warped"))),
                   tables=["warped/table.md"]),
         Benchmark("warped_mittal",
                   "the same transform on the 38 Mittal sets, 15 of them small",
                   "run_warped.py", "warped_mittal", compute=[["--mittal"]],
                   minutes="55",        # measured: 55, the warp refitted in every fold
-                  report=lambda: _mod("run_warped").report(_r("warped_mittal")),
+                  report=lambda: _write_table(
+                      "warped_mittal", _mod("run_warped").report(_r("warped_mittal"))),
                   tables=["warped_mittal/table.md"]),
         Benchmark("surrogate", "is the predictive standard deviation calibrated, and what "
                   "a tolerance rule does: the model as the fast level of a hierarchy, and the "
                   "same deviation on the low-rank path that never builds the n by n kernel",
                   "run_surrogate.py", "surrogate", compute=[[], ["--hops"], ["--low-rank"]],
                   minutes="15",
-                  report=lambda: _mod("run_surrogate").report(_r("surrogate")),
+                  report=lambda: _write_table(
+                      "surrogate", _mod("run_surrogate").report_all(_r("surrogate"))),
                   tables=["surrogate/table.md"]),
         Benchmark("perfield", "one attenuation per field, or one shared by all of them",
                   "run_perfield.py", "perfield", compute=[[]],
@@ -1200,11 +1258,11 @@ def rebuild_tables(quiet=True, baseline="disk"):
             if quiet:
                 out, sys.stdout = sys.stdout, devnull
                 try:
-                    b.report()
+                    _report(b)
                 finally:
                     sys.stdout = out
             else:
-                b.report()
+                _report(b)
         except SystemExit as exc:          # a report with nothing to report says so and exits
             print(f"  {b.name}: {exc}")
             continue

@@ -484,6 +484,11 @@ def report_lowrank(results=RESULTS) -> str:
     return "\n".join(lines)
 
 
+def report_all(results=RESULTS) -> str:
+    """The text of `table.md`: the three reports of this script, one after the other."""
+    return report(results) + "\n" + report_hops(results) + "\n" + report_lowrank(results)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--sets", nargs="*", default=list(SETS))
@@ -505,7 +510,7 @@ def main():
     elif not args.report:
         for name in args.sets:
             run_set(name, repeats=args.repeats, force=args.force)
-    text = report() + "\n" + report_hops() + "\n" + report_lowrank()
+    text = report_all()
     os.makedirs(RESULTS, exist_ok=True)
     with open(os.path.join(RESULTS, "table.md"), "w", encoding="utf-8") as fh:
         fh.write(text + "\n")
