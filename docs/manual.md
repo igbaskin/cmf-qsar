@@ -10710,6 +10710,206 @@ GFN2-xTB; the charges of another method were not compared. And a field of the qu
 density or of the quantum electrostatic potential itself, in place of charges on the atoms, was
 not tried on this series.
 
+## A spectrum as a one-dimensional field: the kernel and the co-spectrum
+
+A spectrum is a function of one variable: an intensity over a wavenumber, over a diffraction
+angle, over a binding energy or over a chemical shift. The module `cmfqsar/spectrum.py` (plan
+item SP1) treats it as the rest of the program treats a molecule: as a field, here a field on a
+line. Two spectra have a kernel, and a fitted model gives back a weight over the line.
+
+**Two forms of a spectrum.** A *stick spectrum* is a list of positions and intensities. A
+quantum program writes a vibrational spectrum in this form, one stick per normal mode, and a
+calculated powder diffraction pattern has this form, one stick per reflection. A *measured
+curve* is a list of intensities on the grid of an instrument. The class `Spectrum` holds both;
+its `kind` is `"sticks"` or `"curve"`, and its `axis` names what the positions are
+(`wavenumber`, `two_theta`, `q`, `binding_energy`, `shift` and others).
+
+**The kernel.** Every stick is replaced by a Gaussian of standard deviation $\sigma$, the
+*width*. For two spectra with sticks $(x_i, a_i)$ and $(y_j, b_j)$ the overlap of the two
+broadened spectra has a closed form:
+
+$$
+k(A, B) \;=\; \sum_i \sum_j a_i\, b_j\, \exp\!\left(-\dfrac{(x_i - y_j)^2}{4\sigma^2}\right)
+$$
+<!-- #eq:spectrum-kernel -->
+
+This is the steric kernel of the molecular fields in one dimension: an atom becomes a stick,
+and the weight of the atom becomes the intensity. A measured curve enters as the same sum over
+its grid points, each point with the weight of its intensity times the part of the axis that it
+stands for. `stick_overlap` computes the sum directly. For a set of spectra it is cheaper to
+put every broadened spectrum on one grid (`feature_matrix`) and to take dot products of the
+rows (`spectrum_kernel`). With 2.5 grid points in one $\sigma$ the two ways agree to one part
+in a million, and a test checks it.
+
+The default is the cosine form: the kernel is divided by the square roots of the two
+self-overlaps. The total intensity of a spectrum depends on the amount of sample and on the
+instrument, and the cosine form removes it.
+
+The width says how far apart two lines may be and still count as the same line. Two single
+lines that are $d$ apart have the kernel $\exp(-d^2/4\sigma^2)$. The width is a hyper-parameter
+and is chosen by cross-validation. `multi_width_kernel` takes the mean of the kernels of several
+widths. A second hyper-parameter is the power of the intensity: 1 keeps the intensities, and 0.5
+takes their square root, which lowers the share of the strongest line.
+
+**The co-spectrum.** A kernel ridge model on the cosine kernel is linear in the normalised
+broadened spectrum $z(x)$. Its prediction for a spectrum is
+
+$$
+\hat y \;=\; b + \int w(x)\, z(x)\, \mathrm{d}x
+$$
+<!-- #eq:co-spectrum -->
+
+The weight $w(x)$ is the **co-spectrum** (`co_spectrum`). It is the analogue of the co-field in
+one dimension: a curve over the axis that is positive where intensity raises the predicted
+property and negative where it lowers it. `co_spectrum_effect` multiplies the weight by the
+standard deviation of the intensity over the set, because a large weight at a place where no
+spectrum has intensity moves no prediction.
+
+**Readers.** `read_sticks` and `read_measured` read two-column text. `orca_sticks` takes the
+infrared spectrum from an ORCA frequency job: one stick per normal mode with a positive
+frequency, at the wavenumber times the scaling factor of the level. `powder_sticks` calculates
+the powder diffraction pattern of a crystal with pymatgen, for X-rays or for neutrons, as sticks
+over the diffraction angle 2-theta.
+
+```python
+from cmfqsar import spectrum as SP
+
+a = SP.orca_sticks("acid_1/freq.out", scale=0.97)       # infrared sticks of an ORCA job
+b = SP.read_measured("sample.txt", axis="wavenumber")   # a measured curve
+K = SP.kernel([a, b], 400.0, 4000.0, sigma=10.0)        # cosine kernel, width 10 cm^-1
+
+pattern = SP.powder_sticks(atoms)                       # ASE Atoms or a pymatgen Structure
+```
+
+```
+python benchmarks/run_spectra.py                    # the measurement below, then the table
+python benchmarks/run_spectra.py --stage patterns   # the powder patterns alone, 6 minutes
+python benchmarks/run_spectra.py --report
+```
+
+**What is measured** (`benchmarks/run_spectra.py`, `benchmarks/results/spectra/table.md`). The
+item has two halves. This is the half that needs no new data: a calculated spectrum as the
+sample. The set is the Matbench phonons task of section *Crystals: the periodic autocorrelation
+kernel*: 1,265 inorganic crystals with the frequency of the highest peak of the phonon density
+of states (standard deviation 494 cm$^{-1}$). The powder diffraction pattern of every crystal
+is calculated from its structure, for X-rays (Cu K-alpha) and for neutrons of the same
+wavelength, between 5 and 90 degrees of 2-theta. A crystal has 48 reflections at the median.
+No measured pattern is used. A powder pattern is what a diffraction experiment gives when no
+structure is known, so the question is the one of section *A measured curve as the sample*, put
+in reciprocal space: what does the pattern say about a property without the types of the atoms?
+
+The protocol is the one of the phonon benchmark: the five Matbench folds, and inside every
+training part the settings are chosen by 10-fold cross-validation. For a pattern the settings
+are the width (0.05 to 10 degrees, eight values), the power of the intensity and the ridge. A
+difference in the mean absolute error (MAE) carries a 95 % bootstrap interval over the
+crystals. The references are the structural kernel with the lowest error in the phonon
+benchmark (the three physico-chemical fields and the mass field), the composition (a Gaussian
+kernel on the fractions of the elements), a linear regression on the inverse square root of the
+mass of the lightest atom, and the pair distribution function $G(r)$ of the previous sections,
+which holds the same untyped distances in real space.
+
+| description | MAE, cm$^{-1}$ (sd over the five folds) | R2 | MAE of the 62 crystals with hydrogen, cm$^{-1}$ | MAE of the crystals without hydrogen, cm$^{-1}$ |
+|---|---:|---:|---:|---:|
+| mean of the training part | 324.0 (17.7) | -0.001 | 1297.1 | 273.8 |
+| linear regression on the mass of the lightest atom | 226.5 (12.2) | +0.481 | 799.9 | 197.0 |
+| composition: the fractions of the elements | 97.6 (16.7) | +0.833 | 403.0 | 81.9 |
+| structure: the periodic autocorrelation kernel | 92.7 (4.5) | +0.918 | 273.3 | 83.4 |
+| pair distribution function $G(r)$, X-ray weights | 287.6 (17.3) | -0.119 | 1233.8 | 238.9 |
+| X-ray powder pattern | 294.2 (14.8) | +0.107 | 1193.1 | 247.9 |
+| neutron powder pattern | 278.3 (14.8) | +0.116 | 1252.7 | 228.0 |
+| X-ray powder pattern, Gaussian kernel on top | 257.4 (9.7) | +0.212 | 1164.6 | 210.6 |
+| neutron powder pattern, Gaussian kernel on top | 196.1 (13.7) | +0.466 | 878.8 | 160.9 |
+| composition and X-ray powder pattern | 97.0 (17.1) | +0.831 | 424.6 | 80.1 |
+| structure and X-ray powder pattern | 93.0 (4.8) | +0.916 | 266.7 | 84.1 |
+| structure, X-ray and neutron powder patterns | 92.1 (3.7) | +0.918 | 261.6 | 83.3 |
+
+**The kernels are compared first.** The gate of the item asks for the correlation of the kernel
+of the patterns with the structural kernel before any fit. It is +0.047 at the width that the
+folds choose and +0.203 at most, so the pattern is a different description. The useful number
+is another one: the correlation of a kernel with the products of the centred targets, which
+says how far crystals that the description finds alike have alike frequencies. It is +0.181 for
+the structural kernel, +0.140 for the composition, and +0.009 for the X-ray pattern (+0.020 at
+most over the widths). This number needs no fit, and it predicts the table.
+
+**The pattern alone predicts little.** The X-ray pattern has an MAE of 294.2 cm$^{-1}$, which is
+-29.8 [-37.7, -22.1] against the mean of the training part and +196.6 [+179.4, +214.8] against
+the composition. The neutron pattern is -16.0 [-23.9, -8.1] against the X-ray pattern. The pair
+distribution function gives 287.6, and the X-ray pattern is not separated from it
+(+6.6 [-12.1, +22.0]): the same information in real space and in reciprocal space predicts
+equally little. In every fold the choice inside the folds takes the widest broadening tried,
+10 degrees. A pattern broadened that far holds only how the intensity is spread over the angle,
+so the places of the single reflections give the model nothing that it can use. A Gaussian
+kernel on top of the pattern kernel, which makes the model nonlinear in the spectrum, lowers
+the error to 257.4 (X-ray) and 196.1 (neutron). The neutron pattern is then still
++98.4 [+84.2, +113.1] above the composition.
+
+**Why.** The 62 crystals with hydrogen have a median frequency of 1754 cm$^{-1}$, and the others
+443 cm$^{-1}$, and X-rays show hydrogen weakly. But hydrogen is not the whole reason. For the
+crystals without hydrogen the X-ray pattern has an MAE of 247.9, the mean of the training part
+273.8 and the composition 81.9. The frequency of the highest phonon peak depends on which
+elements the crystal holds, most of all on their masses: the regression on the mass of the
+lightest atom alone reaches R2 +0.481. A powder pattern holds the geometry of the lattice and
+the contrast of the scattering strengths. It does not name the elements.
+
+**The pattern beside another description adds nothing.** The kernel of the pattern joins the
+structural kernel as one more kernel in the mixing of `cmfqsar/mixing.py` (`with_views`), with
+weights that maximise the marginal likelihood of the training part. The MAE is then 93.0, which
+is +0.3 [-1.2, +1.7] against the structural kernel alone, and the pattern gets a share of 0.00.
+With equal weights the difference is +0.2 [-1.3, +1.6]. Beside the composition the pattern
+gives 97.0 (-0.6 [-2.5, +1.3] against the composition alone). A user who knows the composition
+of a sample and has its powder pattern gains nothing from the pattern for this property.
+
+**A caution about the Bayes factor of `mixing.drop_one`.** On all crystals `drop_one` gives a
+log Bayes factor of +53.9 for the pattern beside the structure, although the pattern has a
+share of 0.00. That number is not evidence for the pattern. `drop_one` tries five ridges, the
+lowest of them 0.001, and the best ridge of the structural kernel here is 1.8e-05. A joined
+kernel of two has twice the scale of one kernel, which acts as half the ridge, so the joined
+kernel is nearer to the best ridge and gains from that alone. With every marginal likelihood
+taken at its best ridge on a fine grid (1e-08 to 1), the joined kernel minus the structural
+kernel alone is -1.5 in the log, and the joined kernel minus the pattern alone is +1155.8. The
+benchmark reports these numbers.
+
+**The co-spectrum of this model cannot be read.** The model on all X-ray patterns reproduces the
+targets it was fitted on with R2 +0.120. Its largest effect at a grid point is 206 cm$^{-1}$,
+against at most 144 in 20 models fitted to the targets in random order, and the intensity of no
+band of 10 degrees correlates with the target above 0.20 in size. The weights of neighbouring
+grid points have opposite signs and cancel, because at a width of 10 degrees neighbouring
+points hold nearly the same intensity. The function is tested on a made series, in which one
+line carries the property and three lines carry nothing: there the largest effect is at that
+line.
+
+![The X-ray powder patterns of the 1,265 crystals at the width that the folds choose (10 degrees). Top: the mean normalised pattern. Middle: the co-spectrum, the weight of the model over the diffraction angle. Bottom: the weight times the standard deviation of the intensity; the dashed lines are the largest value found in 20 models fitted to the targets in random order.](benchmarks/results/spectra/cospectrum.png)
+
+**The gate.** The item is a result when the structural kernel with the spectrum has a lower
+error than the structural kernel alone by more than the interval, or when the spectrum alone
+reaches the composition. Neither condition is met. The plan expected that losing the types of
+the atoms costs accuracy, as section *A measured curve as the sample* found for the elastic
+moduli. Here the cost is nearly everything: without the types a calculated pattern predicts
+this property little better than the mean does.
+
+**A side result.** The structural kernel (92.7) is not separated from the Gaussian kernel on the
+fractions of the elements (97.6; the difference is -4.9 [-14.0, +3.5]). On this task the
+composition carries most of what the structural kernel predicts. The structural kernel differs
+by 0.6 cm$^{-1}$ from the 92.1 of the stored table of the phonon benchmark; the fields are
+computed again here with the present code.
+
+**What follows for other items.** Before a spectrum is used as the sample for a property, the
+correlation of its kernel with the products of the centred targets is computed. It costs no
+fit, and here it said what the fit then found. The second half of the item, a set of measured
+spectra with a measured property, has to be a pair in which the experiment shows what decides
+the property: a vibrational spectrum for a property of the bonds is such a pair, and a powder
+pattern for a phonon frequency is not. Items SP3 and SP6 use the vibrational spectra of the
+benzoic acids of the previous section with the reader of this one.
+
+**What is not done.** No measured spectrum is used; the search for a public set of measured
+spectra with a measured property is the second half of the item. Only one division into folds
+is run, the published one; the differences are either far from zero or within 3 cm$^{-1}$ of
+it, so other divisions would not change a conclusion. The patterns are compared on the angle
+axis of one wavelength, and not on the axis of the scattering vector. `mixing.drop_one` is not
+repaired, and the earlier Bayes factors that it gave are not checked. The run takes 3.5 hours
+on the author's machine while other jobs run on it; more than half of that are the two rows
+with the Gaussian kernel on top.
+
 ## A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

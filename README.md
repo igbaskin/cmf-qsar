@@ -2850,6 +2850,50 @@ python examples/make_band_examples.py --xtb --jobs 8     # GFN2-xTB charges, 13 
 python benchmarks/run_band.py                            # the measurement, 8 minutes
 ```
 
+### A spectrum as a one-dimensional field
+
+A spectrum is an intensity over one variable: a wavenumber, a diffraction angle, a binding
+energy, a chemical shift. `cmfqsar/spectrum.py` (plan item SP1) treats it as a field on a line.
+A stick spectrum (positions and intensities, as a quantum program writes a vibrational spectrum
+and as a calculated powder pattern is) or a measured curve on the grid of an instrument is a
+`Spectrum`. Every stick is replaced by a Gaussian of a chosen width, and the kernel of two
+spectra is the overlap of the two, `sum_ij a_i b_j exp(-(x_i - y_j)^2 / 4 sigma^2)`, divided by
+the norms of the two: the steric kernel of the molecular fields in one dimension. A kernel
+ridge model on it is linear in the broadened spectrum, and its weight over the axis is the
+**co-spectrum** (`co_spectrum`), the analogue of the co-field. `orca_sticks` reads the infrared
+spectrum of an ORCA frequency job, `powder_sticks` calculates an X-ray or a neutron powder
+pattern with pymatgen, and `read_sticks` and `read_measured` read two-column text.
+
+**A calculated powder pattern as the sample, measured.**
+[run_spectra.py](benchmarks/run_spectra.py) takes the 1,265 crystals of the Matbench phonons
+task (the frequency of the highest peak of the phonon density of states) and describes each by
+its calculated powder pattern alone, which is what a diffraction experiment gives when no
+structure is known. The folds are the five Matbench folds, and the width, the power of the
+intensity and the ridge are chosen inside them. The X-ray pattern has a mean absolute error of
+294.2 cm⁻¹ and the neutron pattern 278.3. The mean of the training part gives 324.0, the
+composition (the fractions of the elements) 97.6 and the structural kernel 92.7. A Gaussian
+kernel on top of the pattern kernel lowers the two errors to 257.4 and 196.1, which is still
++98.4 [+84.2, +113.1] above the composition. Joined with the structural kernel as one more
+kernel (`mixing.with_views`), the pattern gets a share of 0.00 and changes the error by
++0.3 [-1.2, +1.7]; joined with the composition it changes the error by -0.6 [-2.5, +1.3]. The
+gate of the item is not met.
+
+**Why, and what follows.** The frequency depends on which elements the crystal holds, most of
+all on their masses, and a powder pattern does not name the elements. Hydrogen is a part of the
+reason and not the whole: for the crystals without hydrogen the pattern has an error of 247.9
+against 273.8 for the mean and 81.9 for the composition. One number that needs no fit said this
+in advance: the correlation of a kernel with the products of the centred targets is +0.181 for
+the structural kernel, +0.140 for the composition and +0.009 for the pattern. Two cautions come
+from the run. The co-spectrum of a model that predicts this little cannot be read. And
+`mixing.drop_one` gave a log Bayes factor of +53.9 for a kernel with a share of 0.00, because
+its five ridges end at 0.001 and the best ridge here is 1.8e-05; with the ridge chosen on a
+fine grid the gain is -1.5.
+
+```bash
+python benchmarks/run_spectra.py          # the measurement, 3.5 hours with the two Gaussian rows
+python benchmarks/run_spectra.py --report
+```
+
 ### A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two
@@ -6172,6 +6216,7 @@ cmfqsar/reciprocal.py   reciprocal-space channels of a crystal: the typed struct
 cmfqsar/prototypes.py   inverse design on prototypes: a candidate generator over a prototype cell, a test for which candidates are the same structure, an oracle and the loop
 cmfqsar/threebody.py    three-body channels and handedness for a crystal: the triangle around every atom, and the signed volume that separates a mirror image
 cmfqsar/scattering.py   a measured scattering curve as the sample: G(r) and F(Q) as the untyped descriptor, the readers, what an instrument does
+cmfqsar/spectrum.py     a spectrum as a one-dimensional field: sticks and measured curves, the kernel of two spectra, the co-spectrum, readers for ORCA infrared spectra and calculated powder patterns
 cmfqsar/battery.py      insertion electrodes: the pairs of a lithiation ladder from public formation energies, the average voltage between two steps, and the families of hosts
 cmfqsar/celldiff.py     the difference between two cells of one ladder as a field in the cell: the signed stack, the pairs a difference is defined for, and the shell the inserted ion takes
 cmfqsar/topomer.py      topomer fields: substituents posed by rule instead of superimposed
