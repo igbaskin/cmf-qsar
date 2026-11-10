@@ -12422,7 +12422,7 @@ measurements say, and it answers five questions:
 
 | question | what fails it |
 |---|---|
-| Is every result table what its result files give? | a table rebuilt from the stored results differs from the committed one |
+| Is every result table what its result files give? | a table rebuilt from the stored results differs from the committed one, or the report of a benchmark does not write its table, so that the table cannot be rebuilt |
 | Is every spliced passage current? | a passage between `<!-- tag -->` markers in a document differs from what the result files give |
 | Does the manual name every measurement? | a benchmark is registered that the manual mentions nowhere, by name, by its results folder or by its script |
 | Is the typeset manual the manual? | `docs/manual.md` has been edited since `docs/CMF_manual.pdf` was built |
