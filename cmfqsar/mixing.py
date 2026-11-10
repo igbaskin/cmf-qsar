@@ -35,7 +35,9 @@ Three things come out, in increasing order of what they cost:
   default and the default will be wrong for their data.
 * :func:`drop_one` -- what the evidence loses when a field is removed outright, which is the
   Bayes factor against *this field does nothing*.  The sharpest form of the question, and the
-  cheapest to answer.
+  cheapest to answer.  Both evidences are taken at their best ridge
+  (:func:`best_ridge_evidence`), searched relative to the scale of the kernel, so that a kernel
+  is not credited for a change of scale.
 
 **What this does not promise.**  The evidence is not a held-out score, and item D6 measured what
 happens when it is given more freedom over the shape of the kernel: it takes the freedom, its own
@@ -80,8 +82,12 @@ from .evidence import log_evidence
 PRIOR_SD = 1.5
 #: standard deviation of the prior on log lambda, around the uniform-weight optimum
 LAM_PRIOR_SD = 2.0
-#: the lambdas tried when a starting point is needed
+#: the lambdas tried when a starting point is needed: the centre of the prior on log lambda
 LAM_GRID = (1e-3, 1e-2, 0.1, 1.0, 10.0)
+#: the range over which :func:`best_ridge_evidence` searches the ridge, as powers of ten times
+#: the mean diagonal of the kernel, and the number of grid values in one power of ten
+RIDGE_RANGE = (-10.0, 4.0)
+RIDGE_PER_DECADE = 4
 
 
 def with_views(K_fields: np.ndarray, views: "Dict[str, np.ndarray]",
@@ -405,6 +411,13 @@ def drop_one(K_fields: np.ndarray, y: np.ndarray, names: Optional[Sequence[str]]
     or below it -- means the field is carrying nothing the others do not already carry. This is
     the sharpest form of the question and the cheapest to answer, since it needs one optimisation
     per field rather than a posterior.
+
+    Each of the two evidences is taken at its own best ridge, searched relative to the scale
+    of its kernel (:func:`best_ridge_evidence`), so a field is not credited for the larger
+    scale of a sum with one more term.  The weights of the two sums come from
+    :func:`evidence_mixing`, whose prior on the ridge is centred on one of the fixed ridges of
+    :data:`LAM_GRID`.  A common factor on all kernels can therefore still move the number a
+    little: by 0.5 in a test with a factor of 37 and a number of 567.
     """
     K_fields, y, scale, on, idx = _prepare(K_fields, y, scale, enabled)
     names = list(names) if names is not None else [f"field {f + 1}" for f in range(K_fields.shape[0])]
@@ -420,20 +433,66 @@ def drop_one(K_fields: np.ndarray, y: np.ndarray, names: Optional[Sequence[str]]
     return out
 
 
+def best_ridge_evidence(K: np.ndarray, y: np.ndarray,
+                        fit_bias: bool = True) -> Tuple[float, float]:
+    """The largest log evidence of `y` under the kernel `K` over the ridge, and that ridge.
+
+    The amplitude of the kernel is profiled out of the evidence, so the evidence depends on
+    the kernel and the ridge only through their ratio: the kernel ``c K`` with the ridge
+    ``c lam`` gives the same value as ``K`` with ``lam``.  The ridge is therefore searched
+    relative to the mean diagonal of the kernel: first on a grid of :data:`RIDGE_PER_DECADE`
+    values per power of ten over :data:`RIDGE_RANGE`, then by a bounded search between the two
+    neighbours of the best grid value.  The result is the same for ``K`` and for ``c K``.
+
+    A fixed list of ridges does not have this property.  When the best ridge lies below the
+    list, a kernel with a larger scale is nearer to it and has a higher evidence for that
+    reason alone.  Until 10 November 2026 :func:`drop_one` used the five ridges of
+    :data:`LAM_GRID`, and a joined kernel of F terms has F times the scale of one term, so a
+    term that carried nothing could get a large Bayes factor (+53.9 for a kernel with a share
+    of zero in ``benchmarks/run_spectra.py``).
+    """
+    from scipy.optimize import minimize_scalar
+
+    K = np.asarray(K, float)
+    y = np.asarray(y, float)
+    level = float(np.mean(np.diag(K)))
+    if not np.isfinite(level) or level <= 0:
+        return float("-inf"), float("nan")
+
+    def value(u: float) -> float:
+        e = log_evidence(K, y, level * 10.0 ** float(u), fit_bias=fit_bias)
+        return float(e) if np.isfinite(e) else float("-inf")
+
+    lo, hi = RIDGE_RANGE
+    grid = np.linspace(lo, hi, int(round((hi - lo) * RIDGE_PER_DECADE)) + 1)
+    vals = np.array([value(u) for u in grid])
+    if not np.any(np.isfinite(vals)):
+        return float("-inf"), float("nan")
+    k = int(np.argmax(vals))
+    best, at = float(vals[k]), float(grid[k])
+    a, b = float(grid[max(k - 1, 0)]), float(grid[min(k + 1, len(grid) - 1)])
+    if b > a:
+        def cost(u: float) -> float:
+            e = value(u)
+            return -e if np.isfinite(e) else 1e300
+
+        res = minimize_scalar(cost, bounds=(a, b), method="bounded",
+                              options={"xatol": 1e-3})
+        if np.isfinite(res.fun) and -float(res.fun) > best:
+            best, at = -float(res.fun), float(res.x)
+    return best, level * 10.0 ** at
+
+
 def _best_evidence(K_fields: np.ndarray, y: np.ndarray, scale: np.ndarray, on: np.ndarray,
                    fit_bias: bool, prior_sd: float) -> float:
-    """The evidence at the best weights for the fields that are switched on."""
+    """The evidence at the best weights for the fields that are switched on, at its best
+    ridge (:func:`best_ridge_evidence`)."""
     idx = np.flatnonzero(on)
     if idx.size == 0:
         return -np.inf
     h = evidence_mixing(K_fields, y, scale, on, fit_bias=fit_bias, prior_sd=prior_sd)
     K = np.tensordot(h * scale, K_fields, axes=(0, 0))
-    best = -np.inf
-    for lam in LAM_GRID:
-        e = log_evidence(K, y, float(lam), fit_bias=fit_bias)
-        if np.isfinite(e):
-            best = max(best, e)
-    return best
+    return best_ridge_evidence(K, y, fit_bias=fit_bias)[0]
 
 
 @dataclass

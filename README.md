@@ -672,9 +672,9 @@ invariant kernel of item C5 (`benchmarks/run_gntk.py`). Against the fields alone
 changes q2 by +0.016 on average over the Sutherland sets and +0.470 [+0.438, +0.503] on COMPAS-1D;
 against the fields with the invariant kernel, -0.023 (1 set in its favour with an interval
 excluding zero, 3 against) and +0.004 [-0.002, +0.011]. The evidence gives it 25% of the joint
-kernel on average with a Bayes factor of +2.7 nats. Against the invariant kernel the graph view wins
+kernel on average with a Bayes factor of +2.3 nats. Against the invariant kernel the graph view wins
 on DHFR and loses on COX2, BZR, ACE. On DHFR the evidence hands the graph 95% of the kernel with a
-Bayes factor of +17.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712
+Bayes factor of +16.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712
 against +0.641): that is the largest and most varied of the eight series, the one an alignment
 serves worst, and there the graph takes over from the fields rather than adding to them. Everywhere
 else the graph holds a few per cent of the kernel and changes q2 within its interval, and what the
@@ -2883,11 +2883,13 @@ all on their masses, and a powder pattern does not name the elements. Hydrogen i
 reason and not the whole: for the crystals without hydrogen the pattern has an error of 247.9
 against 273.8 for the mean and 81.9 for the composition. One number that needs no fit said this
 in advance: the correlation of a kernel with the products of the centred targets is +0.181 for
-the structural kernel, +0.140 for the composition and +0.009 for the pattern. Two cautions come
-from the run. The co-spectrum of a model that predicts this little cannot be read. And
-`mixing.drop_one` gave a log Bayes factor of +53.9 for a kernel with a share of 0.00, because
-its five ridges end at 0.001 and the best ridge here is 1.8e-05; with the ridge chosen on a
-fine grid the gain is -1.5.
+the structural kernel, +0.140 for the composition and +0.009 for the pattern. Two more things
+come from the run. The co-spectrum of a model that predicts this little cannot be read. And the
+run found a fault in `mixing.drop_one`: it gave a log Bayes factor of +53.9 for a kernel with a
+share of 0.00, because it took the best of five fixed ridges that end at 0.001, and the best
+ridge here is 2.1e-05. `drop_one` now searches the ridge relative to the scale of the kernel
+and gives -1.4. The Bayes factors of the mixing benchmark and of the graph view on the
+Sutherland sets were computed again; they moved by 4.5 at most and no reading changed.
 
 ```bash
 python benchmarks/run_spectra.py          # the measurement, 3.5 hours with the two Gaussian rows

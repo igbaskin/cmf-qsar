@@ -1790,7 +1790,7 @@ fingerprint along the trajectory. Both are reported, not measured, under rule 5.
   fixing -- is wrong about accuracy.
   **The interpretation claim is the one that survives, in a qualified form.** Over the
   200 (set, split, field) cases the drop-one Bayes factor and the cost of actually
-  removing the field correlate at Spearman rho **+0.121**: the Bayes factor orders the fields by what the training activities can see, which is not the same as what the held-out molecules need.
+  removing the field correlate at Spearman rho **+0.143** (+0.121 before the repair of the ridge search on 10 November 2026, see SP1): the Bayes factor orders the fields by what the training activities can see, which is not the same as what the held-out molecules need.
   **The useful finding is the width of the intervals.** A field's 90 % interval spans
   0.42 of the unit simplex on average, where an equal share is 0.20:
   on a congeneric series the field kernels are strongly correlated, several quite different
@@ -6050,7 +6050,7 @@ module is absent rather than broken when they are missing.
   is fitted on. Measured by `benchmarks/run_gntk.py` (results in `benchmarks/results/gntk/` and
   `gntk_compas/`), checked by the 9 tests of `tests/test_gntk.py`, written up in the manual as a section of
   *The rotation-invariant autocorrelation kernel*.
-  *Measured, and read as the gate asks.* Differences in q2 with their 95 % paired bootstrap intervals over the molecules. On the Sutherland sets the graph view changes q2 by +0.016 on average against the fields alone, with an interval that excludes zero on 2 of the eight sets in its favour and 0 against, and by -0.023 against the fields with the invariant kernel (1 in its favour, 3 against); added to the fields with the invariant kernel it changes q2 by +0.006 (1 in its favour, 0 against). The evidence gives the graph view 25% of the joint kernel on average, with a Bayes factor of +2.7 nats against it doing nothing. On the 2,000 molecules of COMPAS-1D the view changes q2 by +0.470 [+0.438, +0.503] against the fields and +0.004 [-0.002, +0.011] against the fields with the invariant kernel, holding 100% of the kernel with a Bayes factor of +1845.3. Against the invariant kernel the graph view wins on DHFR and loses on COX2, BZR, ACE. On DHFR the evidence hands the graph 95% of the kernel with a Bayes factor of +17.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712 against +0.641): that is the largest and most varied of the eight series, the one an alignment serves worst, and there the graph takes over from the fields rather than adding to them. Everywhere else the graph holds a few per cent of the kernel and changes q2 within its interval, and what the fields with the invariant kernel gain over the fields alone, the graph does not give. On COMPAS-1D the aligned fields are weak (q2 +0.439), the graph alone reaches q2 +0.908, the same as the invariant kernel (+0.004 [-0.002, +0.011]), and the two together gain +0.025 [+0.020, +0.030] over the invariant kernel alone, an interval well clear of zero. The gate asked for a gain the invariant kernel does not already give: it is met on the two largest series (DHFR with 361 molecules and COMPAS-1D with 2,000) and on none of the seven small ones. Whether the graph needs the molecules or the poor alignment these two series share, this benchmark cannot separate. The view stays in the library as one more term for the weights of item E6 to judge series by series, which is what they did here.
+  *Measured, and read as the gate asks.* Differences in q2 with their 95 % paired bootstrap intervals over the molecules. On the Sutherland sets the graph view changes q2 by +0.016 on average against the fields alone, with an interval that excludes zero on 2 of the eight sets in its favour and 0 against, and by -0.023 against the fields with the invariant kernel (1 in its favour, 3 against); added to the fields with the invariant kernel it changes q2 by +0.006 (1 in its favour, 0 against). The evidence gives the graph view 25% of the joint kernel on average, with a Bayes factor of +2.3 nats against it doing nothing (+2.7 before the repair of the ridge search on 10 November 2026, see SP1). On the 2,000 molecules of COMPAS-1D the view changes q2 by +0.470 [+0.438, +0.503] against the fields and +0.004 [-0.002, +0.011] against the fields with the invariant kernel, holding 100% of the kernel with a Bayes factor of +1845.3. (The number for COMPAS-1D is from before the ridge search of `drop_one` was repaired on 10 November 2026; it is being computed again.) Against the invariant kernel the graph view wins on DHFR and loses on COX2, BZR, ACE. On DHFR the evidence hands the graph 95% of the kernel with a Bayes factor of +16.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712 against +0.641): that is the largest and most varied of the eight series, the one an alignment serves worst, and there the graph takes over from the fields rather than adding to them. Everywhere else the graph holds a few per cent of the kernel and changes q2 within its interval, and what the fields with the invariant kernel gain over the fields alone, the graph does not give. On COMPAS-1D the aligned fields are weak (q2 +0.439), the graph alone reaches q2 +0.908, the same as the invariant kernel (+0.004 [-0.002, +0.011]), and the two together gain +0.025 [+0.020, +0.030] over the invariant kernel alone, an interval well clear of zero. The gate asked for a gain the invariant kernel does not already give: it is met on the two largest series (DHFR with 361 molecules and COMPAS-1D with 2,000) and on none of the seven small ones. Whether the graph needs the molecules or the poor alignment these two series share, this benchmark cannot separate. The view stays in the library as one more term for the weights of item E6 to judge series by series, which is what they did here.
   *Open:* the graph view inside `CMFModel` itself, which today takes the stacked kernel through
   the library and not through `build`; node features beyond the atom type (bond orders, ring
   membership); and the Shapley value of the graph view per molecule, which the item describes
@@ -6581,15 +6581,20 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   *Rule that follows:* before a spectrum is used as the sample for a property, the correlation
   of its kernel with the products of the centred targets is computed. It needs no fit: here it
   is +0.009 for the pattern, +0.140 for the composition and +0.181 for the structural kernel.
-  *Fault found:* `mixing.drop_one` gave a log Bayes factor of +53.9 for a kernel with a share
-  of 0.00. Its five ridges end at 0.001, the best ridge is 1.8e-05, and a joined kernel of two
-  has twice the scale, which acts as half the ridge. With the ridge chosen on a fine grid the
-  gain is -1.5. The benchmark reports the second number; `drop_one` is not repaired.
+  *Fault found and repaired the same day:* `mixing.drop_one` gave a log Bayes factor of +53.9
+  for a kernel with a share of 0.00. It took the best of five fixed ridges that end at 0.001,
+  the best ridge is 2.1e-05, and a joined kernel of two has twice the scale, which acts as half
+  the ridge. `drop_one` now takes each evidence at its best ridge, searched relative to the
+  scale of the kernel (`mixing.best_ridge_evidence`), and gives -1.4. The Bayes factors of the
+  mixing benchmark (E6) and of the graph view on the eight Sutherland sets (ND7) were computed
+  again: they moved by 4.5 and by 2.7 at most, the Spearman correlation of E6 went from +0.121
+  to +0.143, the mean factor of ND7 from +2.7 to +2.3, and no reading changed. Nothing else in
+  the result files of the two benchmarks changed.
   *Side result:* the structural kernel is not separated from the composition on this task
   (-4.9 [-14.0, +3.5]).
   *Open:* half (b), a set of measured spectra with a measured property, which has to be a pair
-  in which the experiment shows what decides the property; the repair of `drop_one` and a check
-  of the Bayes factors that earlier items took from it (ND7, the mixing benchmark); the scattering
+  in which the experiment shows what decides the property; the Bayes factor of ND7 on
+  COMPAS-1D, which is being computed again with the repaired search; the scattering
   vector as the axis of a pattern in place of the angle of one wavelength.
 * **SP2. A localised band position as a local target.** The analogue of LP2 for a vibrational
   band. The carbonyl stretch of the substituted benzoic acids of the Hammett series

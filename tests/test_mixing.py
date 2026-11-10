@@ -206,3 +206,59 @@ def test_the_two_pooling_estimators_agree_where_both_are_valid():
     b = pool_priors(sets, method="importance")
     assert np.max(np.abs(a.mean - b.mean)) < 0.2
     assert abs(a.sd - b.sd) < 0.2
+
+
+# --------------------------------------------------------------------------- #
+# The ridge at which an evidence is taken
+# --------------------------------------------------------------------------- #
+def _exact_world(n=80, seed=0):
+    """A kernel that explains the activities almost without noise, so that the best ridge is
+    far below 0.001, and a kernel of noise."""
+    rng = np.random.default_rng(seed)
+    X = rng.normal(size=(n, 3))
+    y = X @ np.array([1.0, -2.0, 0.5]) + 0.001 * rng.normal(size=n)
+    Z = rng.normal(size=(n, 30))
+    return np.stack([X @ X.T / 3.0, Z @ Z.T / 30.0]), y
+
+
+def test_the_best_ridge_does_not_depend_on_the_scale_of_the_kernel():
+    from cmfqsar.evidence import log_evidence
+    from cmfqsar.mixing import LAM_GRID, best_ridge_evidence
+
+    K, y = _exact_world()
+    value, ridge = best_ridge_evidence(K[0], y)
+    scaled, scaled_ridge = best_ridge_evidence(1000.0 * K[0], y)
+    assert scaled == pytest.approx(value, abs=1e-5)
+    assert scaled_ridge == pytest.approx(1000.0 * ridge, rel=1e-2)
+    # the best ridge is below the fixed list, and no ridge of the list reaches the value
+    assert ridge < min(LAM_GRID)
+    assert value > max(log_evidence(K[0], y, lam) for lam in LAM_GRID) + 10.0
+    # it is a maximum: the neighbours on both sides are lower
+    for factor in (0.3, 3.0):
+        assert log_evidence(K[0], y, factor * ridge) < value
+    # a kernel that is not positive has no evidence
+    assert best_ridge_evidence(-K[0], y)[0] == float("-inf")
+
+
+def test_a_kernel_of_noise_is_not_credited_for_the_scale_of_the_sum():
+    """With five fixed ridges the sum of two kernels, which has twice the scale, was nearer
+    to the best ridge than the one kernel, and the kernel of noise got a factor of +25."""
+    from cmfqsar.evidence import log_evidence
+    from cmfqsar.mixing import LAM_GRID
+
+    K, y = _exact_world()
+
+    def on_the_fixed_ridges(on):
+        h = evidence_mixing(K, y, None, on)
+        joint = np.tensordot(h, K, axes=(0, 0))
+        return max(log_evidence(joint, y, lam) for lam in LAM_GRID)
+
+    before = on_the_fixed_ridges([True, True]) - on_the_fixed_ridges([True, False])
+    assert before > 10.0                                   # the fault
+    loss = drop_one(K, y, ["real", "noise"])
+    assert loss["noise"] < 1.0                             # the repair
+    assert loss["real"] > 100.0
+    # a common factor on every kernel moves the numbers little
+    scaled = drop_one(37.0 * K, y, ["real", "noise"])
+    assert scaled["noise"] == pytest.approx(loss["noise"], abs=2.0)
+    assert scaled["real"] == pytest.approx(loss["real"], rel=0.01)

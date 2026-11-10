@@ -4161,6 +4161,17 @@ share** names those whose whole interval lies below $1/F$. And the **Bayes facto
 field does nothing* — the log evidence lost when the field is removed outright and the others are
 re-weighted — is the sharpest and the cheapest form of the question.
 
+Each of the two evidences of a Bayes factor is taken at its best ridge. The ridge is searched
+relative to the scale of the kernel (`mixing.best_ridge_evidence`). The reason is that the
+amplitude of the kernel is profiled out of the evidence, so the evidence depends on the kernel
+and the ridge only through their ratio. Until 10 November 2026 `drop_one` took the best of five
+fixed ridges, 0.001 to 10. When the best ridge lay below 0.001, a sum with one more term, which
+has a larger scale, was nearer to the best ridge and gained from that alone. Plan item SP1
+found the fault: a kernel with a share of zero had a factor of +53.9, and it has -1.4 now. The
+Bayes factors of this section and of section *The bond graph as a view* on the eight Sutherland
+sets were computed again. They moved by 4.5 at most here and by 2.7 at most there, and no
+reading changed.
+
 ### What it is good for, measured
 
 Eight Sutherland sets, five 70/30 splits each. First, whether weighing the fields
@@ -4187,13 +4198,13 @@ molecules when that field is removed outright:
 | field | mean share | 90 % interval | Bayes factor | ΔR²pred without it |
 |---|---:|---:|---:|---:|
 | Electrostatic | 0.179 | [0.024, 0.432] | +1.4 | -0.032 |
-| Steric | 0.337 | [0.091, 0.663] | +2.2 | -0.012 |
-| Hydrophobic | 0.184 | [0.021, 0.460] | +0.7 | -0.006 |
-| H-bond acceptor | 0.159 | [0.032, 0.385] | +1.6 | -0.018 |
+| Steric | 0.337 | [0.091, 0.663] | +2.8 | -0.012 |
+| Hydrophobic | 0.184 | [0.021, 0.460] | +1.1 | -0.006 |
+| H-bond acceptor | 0.159 | [0.032, 0.385] | +1.9 | -0.018 |
 | H-bond donor | 0.142 | [0.025, 0.349] | +1.5 | -0.003 |
 
 Over all 200 (set, split, field) cases the Bayes factor and the cost of removing the
-field correlate at Spearman ρ **+0.121** (positive means the evidence was right). The two orderings barely agree: the Bayes factor says what the training activities can see, which is not the same as what the held-out molecules need, and it should be read as the first and not the second.
+field correlate at Spearman ρ **+0.143** (positive means the evidence was right). The two orderings barely agree: the Bayes factor says what the training activities can see, which is not the same as what the held-out molecules need, and it should be read as the first and not the second.
 
 **The intervals are wide, and that is the answer rather than a failure of the sampler.** On a
 congeneric series the field kernels are strongly correlated: several quite different mixtures
@@ -7881,14 +7892,14 @@ against the invariant kernel, because a gain the invariant kernel already gives 
 
 | set | n | q2, fields | + invariant | + graph | + both | graph share | Bayes factor | graph against fields | graph against invariant |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| DHFR | 361 | +0.641 | +0.667 | +0.712 | +0.683 | 95% | +17.1 | +0.071 [+0.036, +0.110] | +0.045 [+0.010, +0.083] |
-| COX2 | 282 | +0.565 | +0.599 | +0.566 | +0.601 | 7% | +0.7 | +0.001 [-0.002, +0.004] | -0.033 [-0.058, -0.009] |
-| BZR | 147 | +0.401 | +0.569 | +0.413 | +0.574 | 20% | +0.4 | +0.011 [-0.001, +0.025] | -0.156 [-0.243, -0.069] |
-| ACE | 114 | +0.688 | +0.720 | +0.692 | +0.726 | 24% | +2.1 | +0.004 [-0.011, +0.022] | -0.028 [-0.059, -0.002] |
+| DHFR | 361 | +0.641 | +0.667 | +0.712 | +0.683 | 95% | +16.1 | +0.071 [+0.036, +0.110] | +0.045 [+0.010, +0.083] |
+| COX2 | 282 | +0.565 | +0.599 | +0.566 | +0.601 | 7% | -0.3 | +0.001 [-0.002, +0.004] | -0.033 [-0.058, -0.009] |
+| BZR | 147 | +0.401 | +0.569 | +0.413 | +0.574 | 20% | +0.7 | +0.011 [-0.001, +0.025] | -0.156 [-0.243, -0.069] |
+| ACE | 114 | +0.688 | +0.720 | +0.692 | +0.726 | 24% | +1.3 | +0.004 [-0.011, +0.022] | -0.028 [-0.059, -0.002] |
 | AChE | 111 | +0.587 | +0.611 | +0.611 | +0.626 | 19% | +0.9 | +0.024 [+0.004, +0.049] | -0.001 [-0.031, +0.032] |
-| THR | 88 | +0.723 | +0.726 | +0.728 | +0.729 | 6% | +0.5 | +0.005 [-0.001, +0.012] | +0.003 [-0.007, +0.015] |
-| THER | 76 | +0.462 | +0.477 | +0.468 | +0.481 | 13% | -0.2 | +0.006 [-0.002, +0.014] | -0.009 [-0.025, +0.007] |
-| GPB | 66 | +0.604 | +0.610 | +0.605 | +0.610 | 17% | -0.0 | +0.001 [-0.003, +0.005] | -0.004 [-0.013, +0.007] |
+| THR | 88 | +0.723 | +0.726 | +0.728 | +0.729 | 6% | -0.0 | +0.005 [-0.001, +0.012] | +0.003 [-0.007, +0.015] |
+| THER | 76 | +0.462 | +0.477 | +0.468 | +0.481 | 13% | -0.1 | +0.006 [-0.002, +0.014] | -0.009 [-0.025, +0.007] |
+| GPB | 66 | +0.604 | +0.610 | +0.605 | +0.610 | 17% | +0.0 | +0.001 [-0.003, +0.005] | -0.004 [-0.013, +0.007] |
 | COMPAS-1D | 2000 | +0.439 | +0.904 | +0.908 | +0.929 | 100% | +1845.3 | +0.470 [+0.438, +0.503] | +0.004 [-0.002, +0.011] |
 
 Differences in q2 with their 95 % paired bootstrap intervals over the molecules. On the Sutherland
@@ -7896,12 +7907,12 @@ sets the graph view changes q2 by +0.016 on average against the fields alone, wi
 excludes zero on 2 of the eight sets in its favour and 0 against, and by -0.023 against the fields
 with the invariant kernel (1 in its favour, 3 against); added to the fields with the invariant
 kernel it changes q2 by +0.006 (1 in its favour, 0 against). The evidence gives the graph view 25%
-of the joint kernel on average, with a Bayes factor of +2.7 nats against it doing nothing. On the
+of the joint kernel on average, with a Bayes factor of +2.3 nats against it doing nothing. On the
 2,000 molecules of COMPAS-1D the view changes q2 by +0.470 [+0.438, +0.503] against the fields and
 +0.004 [-0.002, +0.011] against the fields with the invariant kernel, holding 100% of the kernel
-with a Bayes factor of +1845.3. Against the invariant kernel the graph view wins on DHFR and loses
+with a Bayes factor of +1845.3. (The number for COMPAS-1D is from before the ridge search of `drop_one` was repaired on 10 November 2026; it is being computed again.) Against the invariant kernel the graph view wins on DHFR and loses
 on COX2, BZR, ACE. On DHFR the evidence hands the graph 95% of the kernel with a Bayes factor of
-+17.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712 against +0.641):
++16.1, and the bond graph alone predicts better than the aligned fields (q2 +0.712 against +0.641):
 that is the largest and most varied of the eight series, the one an alignment serves worst, and
 there the graph takes over from the fields rather than adding to them. Everywhere else the graph
 holds a few per cent of the kernel and changes q2 within its interval, and what the fields with the
@@ -10859,15 +10870,15 @@ With equal weights the difference is +0.2 [-1.3, +1.6]. Beside the composition t
 gives 97.0 (-0.6 [-2.5, +1.3] against the composition alone). A user who knows the composition
 of a sample and has its powder pattern gains nothing from the pattern for this property.
 
-**A caution about the Bayes factor of `mixing.drop_one`.** On all crystals `drop_one` gives a
-log Bayes factor of +53.9 for the pattern beside the structure, although the pattern has a
-share of 0.00. That number is not evidence for the pattern. `drop_one` tries five ridges, the
-lowest of them 0.001, and the best ridge of the structural kernel here is 1.8e-05. A joined
-kernel of two has twice the scale of one kernel, which acts as half the ridge, so the joined
-kernel is nearer to the best ridge and gains from that alone. With every marginal likelihood
-taken at its best ridge on a fine grid (1e-08 to 1), the joined kernel minus the structural
-kernel alone is -1.5 in the log, and the joined kernel minus the pattern alone is +1155.8. The
-benchmark reports these numbers.
+**A fault that this run found in `mixing.drop_one`.** On all crystals the log Bayes factor
+against *the pattern adds nothing* is -1.4, and against *the structure adds nothing* it is
++1156.3. The first run of this benchmark gave +53.9 for the pattern, although the pattern had
+a share of 0.00. That number was not evidence for the pattern. `drop_one` then took the best of
+five fixed ridges, the lowest of them 0.001, and the best ridge of the structural kernel here
+is 2.1e-05. A joined kernel of two has twice the scale of one kernel, which acts as half the
+ridge, so the joined kernel was nearer to the best ridge and gained from that alone. `drop_one`
+now searches the ridge relative to the scale of the kernel (section *Which fields does this
+series need?*). The benchmark keeps both numbers, the old one as the record of the fault.
 
 **The co-spectrum of this model cannot be read.** The model on all X-ray patterns reproduces the
 targets it was fitted on with R2 +0.120. Its largest effect at a grid point is 206 cm$^{-1}$,
@@ -10905,8 +10916,7 @@ benzoic acids of the previous section with the reader of this one.
 spectra with a measured property is the second half of the item. Only one division into folds
 is run, the published one; the differences are either far from zero or within 3 cm$^{-1}$ of
 it, so other divisions would not change a conclusion. The patterns are compared on the angle
-axis of one wavelength, and not on the axis of the scattering vector. `mixing.drop_one` is not
-repaired, and the earlier Bayes factors that it gave are not checked. The run takes 3.5 hours
+axis of one wavelength, and not on the axis of the scattering vector. The run takes 3.5 hours
 on the author's machine while other jobs run on it; more than half of that are the two rows
 with the Gaussian kernel on top.
 

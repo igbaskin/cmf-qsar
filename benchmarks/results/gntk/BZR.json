@@ -60,7 +60,7 @@
     "hbd": 0.06134892899831451,
     "graph": 0.20184451214780383
    },
-   "bayes_factor_graph": 0.44573259123819753
+   "bayes_factor_graph": 0.7166960482052218
   },
   "fields + invariant + graph": {
    "lam": 0.1,
@@ -84,15 +84,15 @@
     "invariant": 0.0654757055743315,
     "graph": 0.05593257386449513
    },
-   "bayes_factor_graph": 1.0472603989201303
+   "bayes_factor_graph": 0.4534880944787858
   }
  },
  "seconds": {
-  "fields": 2.072005033493042,
-  "fields + invariant": 2.3454160690307617,
-  "fields + graph": 17.067315578460693,
-  "fields + invariant + graph": 6.877328395843506,
-  "total": 52.65583634376526
+  "fields": 0.23270440101623535,
+  "fields + invariant": 0.2625095844268799,
+  "fields + graph": 2.3722848892211914,
+  "fields + invariant + graph": 3.5789787769317627,
+  "total": 9.200797319412231
  },
  "pairs": [
   {
@@ -129,6 +129,6 @@
  "alpha": 1.0,
  "blocks": 2,
  "folds": 10,
- "seconds_graph": 10.525989294052124,
- "seconds_invariant": 0.7388732433319092
+ "seconds_graph": 1.0013689994812012,
+ "seconds_invariant": 0.08037734031677246
 }

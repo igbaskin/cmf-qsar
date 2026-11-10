@@ -386,20 +386,24 @@ def test_a_gaussian_kernel_on_top_of_a_description(bench):
 
 
 def test_the_marginal_likelihood_does_not_credit_a_kernel_for_its_scale(bench):
-    """A kernel of noise beside the kernel that predicts.  With every marginal likelihood
-    taken at its best ridge on a fine grid, the joined kernel gains nothing over the kernel
-    that predicts."""
+    """A kernel of noise beside a kernel that predicts almost without error, so that the best
+    ridge is far below 0.001.  The loss on five fixed ridges credits the noise; the loss of
+    ``mixing.drop_one`` does not."""
     rng = np.random.default_rng(6)
     n = 80
     X = rng.normal(size=(n, 3))
-    y = X @ np.array([1.0, -2.0, 0.5]) + 0.01 * rng.normal(size=n)
+    y = X @ np.array([1.0, -2.0, 0.5]) + 0.001 * rng.normal(size=n)
     noise = rng.normal(size=(n, 30))
-    lams = tuple(10.0 ** np.arange(-8.0, 0.01, 0.5))
-    part = bench.evidence_part(X @ X.T / 3.0, noise @ noise.T / 30.0, y,
-                               drop={"structure": 9.0, "xray": 7.0}, lams=lams)
+    part = bench.evidence_part(X @ X.T / 3.0, noise @ noise.T / 30.0, y)
     assert part["shares"]["structure"] > 0.9
+    assert part["drop_one_fixed_ridges"]["xray"] > 10.0        # the fault
+    assert part["drop_one"]["xray"] < 1.0                      # the repaired function
+    assert part["drop_one"]["structure"] > 100.0
     le = part["log_evidence"]
-    assert le["both"] - le["structure"] < 2.0
-    assert le["both"] - le["xray"] > 50.0
-    assert part["drop_one"] == {"structure": 9.0, "xray": 7.0}       # kept as given
-    assert part["ridges_tried"] == [1e-8, 1.0]
+    assert le["structure"] > le["xray"] + 100.0
+    assert part["ridge"]["structure"] < min(part["fixed_ridges"])
+    # a loss that is given is kept and not computed again
+    again = bench.evidence_part(X @ X.T / 3.0, noise @ noise.T / 30.0, y,
+                                fixed={"structure": 9.0, "xray": 7.0})
+    assert again["drop_one_fixed_ridges"] == {"structure": 9.0, "xray": 7.0}
+    assert again["drop_one"] == part["drop_one"]

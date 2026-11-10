@@ -62,7 +62,8 @@ sys.path.insert(0, HERE)
 from cmfqsar import spectrum as SP  # noqa: E402
 from cmfqsar.evidence import log_evidence  # noqa: E402
 from cmfqsar.invariant import autocorrelation_kernel, channel_scale  # noqa: E402
-from cmfqsar.mixing import drop_one, evidence_mixing, joint_kernel, with_views  # noqa: E402
+from cmfqsar.mixing import (LAM_GRID, best_ridge_evidence, drop_one,  # noqa: E402
+                            evidence_mixing, joint_kernel, with_views)
 from cmfqsar.model import _Learner, cv_predict, r2_score, rmse  # noqa: E402
 from cmfqsar.periodic import (PeriodicSpec, crystal_fields, inorganic_fieldset,  # noqa: E402
                               periodic_block_sizes, periodic_feature_matrix,
@@ -93,8 +94,6 @@ STRUCTURE_VARIANT = "physchem+mass-nobg"
 PAIR_SPEC = dict(r_min=1.0, r_max=10.0, r_step=0.05, sigma=0.05)
 RUNS = 2000
 SCRAMBLES = 20
-#: the ridges over which a marginal likelihood is maximised: four per decade, 1e-8 to 1
-EVIDENCE_LAMS = tuple(float(v) for v in 10.0 ** np.arange(-8.0, 0.01, 0.25))
 #: the bands of 2-theta, in degrees, over which the co-spectrum is summed for the table
 BAND = 10.0
 
@@ -472,39 +471,56 @@ def target_alignment(K: np.ndarray, y: np.ndarray) -> float:
     return float(np.corrcoef((h @ K @ h)[upper], np.outer(t, t)[upper])[0, 1])
 
 
-def best_log_evidence(K: np.ndarray, y: np.ndarray, lams=EVIDENCE_LAMS) -> Tuple[float, float]:
-    """The largest log marginal likelihood of the targets under one kernel over a grid of
-    ridges, and the ridge that gives it."""
-    values = [log_evidence(K, y, lam) for lam in lams]
-    k = int(np.nanargmax(values))
-    return float(values[k]), float(lams[k])
+def fixed_ridge_loss(stack: np.ndarray, y: np.ndarray, names: Sequence[str],
+                     scale: np.ndarray, lams=LAM_GRID) -> Dict[str, float]:
+    """What :func:`cmfqsar.mixing.drop_one` gave until 10 November 2026: the loss of log
+    marginal likelihood when one kernel is taken away, with every marginal likelihood taken at
+    the best of a few fixed ridges.  It is kept as the record of a fault: when the best ridge
+    is below the list, a sum of more kernels has a larger scale, is nearer to the best ridge
+    and gains from that alone."""
+    def best(on):
+        h = evidence_mixing(stack, y, scale, on)
+        K = joint_kernel(stack, h, scale)
+        return max(log_evidence(K, y, float(lam)) for lam in lams)
+
+    everything = np.ones(len(names), bool)
+    full = best(everything)
+    out = {}
+    for k, name in enumerate(names):
+        keep = everything.copy()
+        keep[k] = False
+        out[name] = float(full - best(keep))
+    return out
 
 
 def evidence_part(K_structure: np.ndarray, K_pattern: np.ndarray, y: np.ndarray,
-                  drop: Optional[Dict[str, float]] = None, lams=EVIDENCE_LAMS) -> dict:
+                  fixed: Optional[Dict[str, float]] = None) -> dict:
     """The structural kernel and the kernel of the patterns joined on all crystals.
 
     The weights maximise the marginal likelihood (:func:`cmfqsar.mixing.evidence_mixing`).
-    The log marginal likelihood of the joined kernel, of the structural kernel alone and of
-    the pattern kernel alone is then maximised over the same fine grid of ridges, so that the
-    three numbers can be compared.  ``drop_one`` holds what :func:`cmfqsar.mixing.drop_one`
-    gives for the same question on its own grid of five ridges.
+    ``drop_one`` is the loss of log marginal likelihood when one of the two kernels is taken
+    away (:func:`cmfqsar.mixing.drop_one`): the log Bayes factor against *this kernel adds
+    nothing*.  ``log_evidence`` holds the three log marginal likelihoods, each at its best
+    ridge.  ``drop_one_fixed_ridges`` is the same loss on five fixed ridges
+    (:func:`fixed_ridge_loss`); a value that is given is kept and not computed again.
     """
     stack, names, scale = with_views(K_structure[None], {"xray": K_pattern},
                                      names=["structure"])
     h = np.asarray(evidence_mixing(stack, y, scale=scale), float)
-    if drop is None:
-        drop = drop_one(stack, y, names, scale=scale)
-    both = best_log_evidence(joint_kernel(stack, h, scale), y, lams)
-    alone = {"structure": best_log_evidence(K_structure, y, lams),
-             "xray": best_log_evidence(K_pattern, y, lams)}
+    if fixed is None:
+        fixed = fixed_ridge_loss(stack, y, names, scale)
+    both = best_ridge_evidence(joint_kernel(stack, h, scale), y)
+    alone = {"structure": best_ridge_evidence(K_structure, y),
+             "xray": best_ridge_evidence(K_pattern, y)}
     return {"shares": {a: float(v) for a, v in zip(names, h / h.sum())},
             "log_evidence": {"both": both[0], "structure": alone["structure"][0],
                              "xray": alone["xray"][0]},
             "ridge": {"both": both[1], "structure": alone["structure"][1],
                       "xray": alone["xray"][1]},
-            "ridges_tried": [float(min(lams)), float(max(lams))],
-            "drop_one": {a: float(v) for a, v in drop.items()}}
+            "drop_one": {a: float(v) for a, v in
+                         drop_one(stack, y, names, scale=scale).items()},
+            "drop_one_fixed_ridges": {a: float(v) for a, v in fixed.items()},
+            "fixed_ridges": [float(v) for v in LAM_GRID]}
 
 
 def most_chosen(row: dict, key: str = "setting"):
@@ -662,7 +678,7 @@ def evidence(results: str = RESULTS) -> dict:
     full = {name: full_kernel(views[name], rec["chosen"][name], len(y)) for name in views}
     old = rec.get("evidence", {})
     rec["evidence"] = evidence_part(full["structure"], full["xray"], y,
-                                    drop=old.get("drop_one") or old.get("bayes_factor"))
+                                    fixed=old.get("drop_one_fixed_ridges"))
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(rec, fh, indent=1)
     return rec
@@ -925,20 +941,24 @@ def report(results: str = RESULTS) -> str:
               "(`cmfqsar/mixing.py`).  On all crystals the share of the structural kernel is "
               f"{ev['shares']['structure']:.2f} and the share of the pattern is "
               f"{ev['shares']['xray']:.2f}.  The log marginal likelihood, each at its best "
-              f"ridge between {ev['ridges_tried'][0]:g} and {ev['ridges_tried'][1]:g}, is "
-              f"{le['both']:.1f} for the joined kernel, {le['structure']:.1f} for the "
-              f"structural kernel alone and {le['xray']:.1f} for the pattern alone.  The "
-              f"joined kernel minus the structural kernel alone is "
-              f"{le['both'] - le['structure']:+.1f}: the pattern adds nothing to the marginal "
-              f"likelihood.  The joined kernel minus the pattern alone is "
-              f"{le['both'] - le['xray']:+.1f}.", "",
-              f"The function `mixing.drop_one` gives {ev['drop_one']['xray']:+.1f} for the "
-              "pattern on the same kernels.  That number is not evidence for the pattern.  The "
-              "function tries five ridges, the lowest of them 0.001, and the best ridge of "
-              f"the structural kernel is {ev['ridge']['structure']:.1e}.  The joined kernel "
-              "has "
-              "twice the scale of one kernel, which acts as half the ridge, so the joined "
-              "kernel is nearer to the best ridge and gains from that alone.", ""]
+              f"ridge, is {le['both']:.1f} for the joined kernel, {le['structure']:.1f} for "
+              f"the structural kernel alone and {le['xray']:.1f} for the pattern alone.  The "
+              "log Bayes factor against *the pattern adds nothing* (`mixing.drop_one`: the "
+              "loss of log marginal likelihood when the pattern is taken away) is "
+              f"{ev['drop_one']['xray']:+.1f}, and against *the structure adds nothing* it is "
+              f"{ev['drop_one']['structure']:+.1f}.  The pattern adds nothing to the marginal "
+              "likelihood either.", "",
+              "The same two numbers with every marginal likelihood taken at the best of five "
+              "fixed ridges (" + ", ".join(f"{v:g}" for v in ev["fixed_ridges"]) + "), as "
+              "`mixing.drop_one` computed them until 10 November 2026, are "
+              f"{ev['drop_one_fixed_ridges']['xray']:+.1f} and "
+              f"{ev['drop_one_fixed_ridges']['structure']:+.1f}.  The first of them is not "
+              "evidence for the pattern.  The best ridge of the structural kernel is "
+              f"{ev['ridge']['structure']:.1e}, below the lowest of the five.  The joined "
+              "kernel has twice the scale of one kernel, which acts as half the ridge, so the "
+              "joined kernel was nearer to the best ridge and gained from that alone.  This "
+              "run found the fault, and `drop_one` now searches the ridge relative to the "
+              "scale of the kernel.", ""]
     cpath = result("cospectrum.json", results)
     if os.path.isfile(cpath):
         with open(cpath, encoding="utf-8") as fh:

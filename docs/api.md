@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 119 modules, 234 classes with 784 public methods, and 1172 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 120 modules, 236 classes with 789 public methods, and 1188 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -132,6 +132,7 @@ for.
 | [cmfqsar.solvation](#cmfqsarsolvation) | A cation with its first solvation shell as one molecule, built, optimised and framed. |
 | [cmfqsar.solvent](#cmfqsarsolvent) | Solvent as a field: where a ligand's water sits, as a CMF field (plan item D9). |
 | [cmfqsar.spectral](#cmfqsarspectral) | Clustering a set by its fields rather than by its scaffolds. |
+| [cmfqsar.spectrum](#cmfqsarspectrum) | A spectrum as a one-dimensional field: the kernel and the co-spectrum (plan item SP1). |
 | [cmfqsar.stereo](#cmfqsarstereo) | Handedness as a property of a centre, not of a shape. |
 | [cmfqsar.surrogate](#cmfqsarsurrogate) | The model as the fast level of a hierarchy: a standard deviation in the units of the activity, its calibration on the folds, and the rule that sends a structure back to the fine level (plan item MS1). |
 | [cmfqsar.tautomers](#cmfqsartautomers) | Tautomer ensembles: the other half of plan item D4. |
@@ -9582,7 +9583,9 @@ Three things come out, in increasing order of what they cost:
   default and the default will be wrong for their data.
 * `drop_one` -- what the evidence loses when a field is removed outright, which is the
   Bayes factor against *this field does nothing*.  The sharpest form of the question, and the
-  cheapest to answer.
+  cheapest to answer.  Both evidences are taken at their best ridge
+  (`best_ridge_evidence`), searched relative to the scale of the kernel, so that a kernel
+  is not credited for a change of scale.
 
 **What this does not promise.**  The evidence is not a held-out score, and item D6 measured what
 happens when it is given more freedom over the shape of the kernel: it takes the freedom, its own
@@ -9718,6 +9721,31 @@ activities are much more probable with the field than without it, and a number n
 or below it -- means the field is carrying nothing the others do not already carry. This is
 the sharpest form of the question and the cheapest to answer, since it needs one optimisation
 per field rather than a posterior.
+
+Each of the two evidences is taken at its own best ridge, searched relative to the scale
+of its kernel (`best_ridge_evidence`), so a field is not credited for the larger
+scale of a sum with one more term.  The weights of the two sums come from
+`evidence_mixing`, whose prior on the ridge is centred on one of the fixed ridges of
+`LAM_GRID`.  A common factor on all kernels can therefore still move the number a
+little: by 0.5 in a test with a factor of 37 and a number of 567.
+
+### `best_ridge_evidence(K: np.ndarray, y: np.ndarray, fit_bias: bool=True) -> Tuple[float, float]`
+
+The largest log evidence of `y` under the kernel `K` over the ridge, and that ridge.
+
+The amplitude of the kernel is profiled out of the evidence, so the evidence depends on
+the kernel and the ridge only through their ratio: the kernel `c K` with the ridge
+`c lam` gives the same value as `K` with `lam`.  The ridge is therefore searched
+relative to the mean diagonal of the kernel: first on a grid of `RIDGE_PER_DECADE`
+values per power of ten over `RIDGE_RANGE`, then by a bounded search between the two
+neighbours of the best grid value.  The result is the same for `K` and for `c K`.
+
+A fixed list of ridges does not have this property.  When the best ridge lies below the
+list, a kernel with a larger scale is nearer to it and has a higher evidence for that
+reason alone.  Until 10 November 2026 `drop_one` used the five ridges of
+`LAM_GRID`, and a joined kernel of F terms has F times the scale of one term, so a
+term that carried nothing could get a large Bayes factor (+53.9 for a kernel with a share
+of zero in `benchmarks/run_spectra.py`).
 
 ### `pool_priors(shares_by_series: Sequence[np.ndarray], names: Optional[Sequence[str]]=None, prior_sd: float=PRIOR_SD, sd_range: Tuple[float, float]=POOLED_SD_RANGE, method: str='gaussian', min_ess: float=MIN_ESS, maxiter: int=2000) -> PooledPrior`
 
@@ -16887,6 +16915,223 @@ With `k` given it is used; otherwise the eigengap chooses it, over at most `k_ma
 
 Agreement of two partitions, corrected for chance: 1 identical, 0 as good as random.
 
+## cmfqsar.spectrum
+
+Source: `cmfqsar/spectrum.py`
+
+A spectrum as a one-dimensional field: the kernel and the co-spectrum (plan item SP1).
+
+A spectrum is a function of one variable: an intensity over a wavenumber, over a diffraction
+angle, over a binding energy or over a chemical shift.  This module treats it as the rest of
+the program treats a molecule: as a field, here a field on a line, with a kernel between two
+fields and a weight over the line that a fitted model gives back.
+
+Two forms of a spectrum
+-----------------------
+A **stick spectrum** is a list of positions and intensities.  A quantum program writes a
+vibrational spectrum in this form (one stick per normal mode), and a calculated powder
+diffraction pattern has this form (one stick per reflection).  A **measured curve** is a list of
+intensities on the grid of an instrument.  `Spectrum` holds both.
+
+The kernel
+----------
+Every stick is replaced by a Gaussian of standard deviation `sigma`, the *width*.  The
+overlap of two broadened spectra with sticks `(x_i, a_i)` and `(y_j, b_j)` has a closed
+form,
+
+    k(A, B) = SUM_ij a_i b_j exp( -(x_i - y_j)^2 / (4 sigma^2) ),
+
+which is the steric kernel of the molecular fields in one dimension: atoms become sticks, and
+the atom's weight becomes the intensity.  A measured curve enters as the same sum over its grid
+points, each point with the weight `y * dx`.  `stick_overlap` computes this sum
+directly.  For a set of spectra it is cheaper to put every broadened spectrum on one grid
+(`feature_matrix`) and to take dot products of the rows; with a grid step well below the
+width the two agree, because
+
+    INT g(x - x_i) g(x - y_j) dx = exp( -(x_i - y_j)^2 / (4 sigma^2) ) / (2 sigma sqrt(pi))
+
+for the normalised Gaussian `g` of standard deviation `sigma`.  The default kernel is the
+cosine form (`spectrum_kernel`): every spectrum is divided by its own norm, so the total
+intensity, which depends on the amount of sample and on the instrument, does not enter.
+
+The width says how far two peaks may be apart and still count as the same peak.  It is a
+hyper-parameter, chosen by cross-validation, and `multi_width_kernel` sums the kernels of
+several widths.
+
+The co-spectrum
+---------------
+A kernel ridge model on the cosine kernel is linear in the normalised broadened spectrum
+`z(x)`: its prediction is `b + INT w(x) z(x) dx`.  The weight `w` is the **co-spectrum**
+(`co_spectrum`), the one-dimensional analogue of the co-field: a curve over the axis that
+is positive where intensity raises the predicted property and negative where it lowers it.
+
+Readers
+-------
+`read_sticks` and `read_measured` read two-column text (the reader of
+`scattering.py` with the axis left to the caller).  `orca_sticks` takes the infrared
+spectrum from an ORCA frequency job.  `powder_sticks` computes the powder diffraction
+pattern of a crystal with pymatgen, for X-rays or for neutrons.
+
+### `class Spectrum  (dataclass)`
+
+One spectrum: positions `x` and intensities `y`, sorted by position.
+
+`kind` is `"sticks"` for a list of lines and `"curve"` for intensities on the grid of
+an instrument.  `axis` is one of `AXES` or any other name; it is carried for the
+labels and is not used in a calculation.
+
+Attributes:
+
+- `x: np.ndarray`
+- `y: np.ndarray`
+- `kind: str` = `'sticks'`
+- `axis: str` = `'wavenumber'`
+- `name: str` = `''`
+
+#### `Spectrum.unit` -> str  (property)
+
+The unit of the axis, or an empty string for an axis this module does not name.
+
+#### `Spectrum.lines() -> Tuple[np.ndarray, np.ndarray]`
+
+The spectrum as sticks: positions and weights.
+
+A stick spectrum is returned as it is.  A measured curve gives one stick per grid point
+with the weight `y * dx`, where `dx` is the part of the axis the point stands for,
+so that the sum over the sticks is the integral of the curve.
+
+#### `Spectrum.within(x_min: float, x_max: float) -> 'Spectrum'`
+
+The part of the spectrum between two positions of the axis.
+
+### `class Grid  (dataclass)`
+
+An even grid over a part of the axis, from `x_min` to `x_max` in steps of `step`.
+
+Attributes:
+
+- `x_min: float`
+- `x_max: float`
+- `step: float`
+
+#### `Grid.x` -> np.ndarray  (property)
+
+#### `Grid.for_width(x_min: float, x_max: float, sigma: float, points_per_sigma: float=2.5) -> 'Grid'`  (class method)
+
+A grid fine enough for the width `sigma`: `points_per_sigma` points in one sigma.
+With 2.5 points the dot product of two rows differs from the closed form by less
+than one part in a million.
+
+### `read_sticks(path: str, axis: str='wavenumber') -> Spectrum`
+
+A stick spectrum from two-column text: a position and an intensity on every line.
+
+Lines that begin with `#` or `;` are comments, and columns after the second are
+ignored, as in `cmfqsar.scattering.read_curve`.
+
+### `read_measured(path: str, axis: str='wavenumber') -> Spectrum`
+
+A measured curve from two-column text, on the grid of the instrument that wrote it.
+
+### `orca_sticks(source, scale: float=1.0, name: str='') -> Spectrum`
+
+The infrared spectrum of an ORCA frequency job as sticks.
+
+`source` is the path of an ORCA output file or a parsed `cmfqsar.orca.OrcaResult`.
+One stick per normal mode with a positive frequency: its position is the harmonic
+wavenumber in cm^-1 times `scale` (the scaling factor of the level of theory), and its
+intensity is the infrared intensity in km/mol.  The modes of translation and rotation
+(frequency zero) and imaginary modes (negative frequency) are left out.
+
+### `powder_sticks(crystal, source: str='xray', wavelength='CuKa', two_theta: Tuple[float, float]=(5.0, 90.0), name: str='') -> Spectrum`
+
+The calculated powder diffraction pattern of a crystal as sticks over 2-theta.
+
+`crystal` is an ASE `Atoms` object or a pymatgen `Structure`.  `source` is `"xray"`
+or `"neutron"`.  `wavelength` is in angstrom, or the name of an X-ray line that pymatgen
+knows (`"CuKa"`, `"MoKa"`).  One stick per reflection (reflections at the same angle
+are merged by pymatgen): its position is the diffraction angle 2-theta in degrees and its
+intensity is the calculated one, with the multiplicity and the Lorentz factor, not scaled
+to 100.  The pattern does not depend on the choice of the cell or on its orientation.
+
+### `stick_overlap(a: Spectrum, b: Spectrum, sigma: float, power: float=1.0) -> float`
+
+`SUM_ij a_i b_j exp(-(x_i - y_j)^2 / (4 sigma^2))`, the overlap of two spectra whose
+sticks are broadened to Gaussians of standard deviation `sigma`.
+
+The sum runs over all pairs of sticks, so it is the exact value and costs the product of
+the two numbers of sticks.  `power` is applied to the weights first (see `broaden`).
+
+### `exact_kernel(spectra: Sequence[Spectrum], sigma: float, others: Optional[Sequence[Spectrum]]=None, power: float=1.0, normalize: bool=True) -> np.ndarray`
+
+The kernel matrix of a set of spectra from `stick_overlap`, pair by pair.
+
+Rows are `others` (or `spectra` when `others` is not given) and columns are `spectra`.
+With `normalize` every element is divided by the square roots of the two self-overlaps
+(the cosine form).  This is the reference that `spectrum_kernel` is tested against;
+for more than a few hundred spectra use `feature_matrix` and `spectrum_kernel`.
+
+### `broaden(spectrum: Spectrum, grid: Grid, sigma: float, power: float=1.0) -> np.ndarray`
+
+The spectrum on a grid, every stick replaced by a normalised Gaussian of width `sigma`.
+
+A measured curve is treated as sticks at its own grid points (`Spectrum.lines`).
+With `sigma = 0` a measured curve is only interpolated onto the grid; sticks need a
+positive width.  `power` is applied to the weights before the broadening: 1 keeps the
+intensities, 0.5 takes their square root, which lowers the share of the strongest line.
+Sticks outside the grid add only the part of their Gaussian that reaches into it.
+
+### `feature_matrix(spectra: Sequence[Spectrum], grid: Grid, sigma: float, power: float=1.0) -> np.ndarray`
+
+The broadened spectra of a set on one grid, one row each.
+
+### `spectrum_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, normalize: bool=True) -> np.ndarray`
+
+The linear kernel of rows of `feature_matrix`, in the cosine form by default.
+
+Rows are `test` (or `train` when `test` is not given) and columns are `train`.  A spectrum
+with no intensity on the grid has a zero row; its kernel with every spectrum is zero.
+
+### `kernel(spectra: Sequence[Spectrum], x_min: float, x_max: float, sigma: float, others: Optional[Sequence[Spectrum]]=None, power: float=1.0, normalize: bool=True, points_per_sigma: float=2.5) -> np.ndarray`
+
+The kernel of a set of spectra at one width, through a grid made for that width.
+
+### `multi_width_kernel(spectra: Sequence[Spectrum], x_min: float, x_max: float, sigmas: Sequence[float], others: Optional[Sequence[Spectrum]]=None, power: float=1.0, weights: Optional[Sequence[float]]=None, points_per_sigma: float=2.5) -> np.ndarray`
+
+The weighted mean of the cosine kernels of several widths.
+
+A narrow width tells two spectra apart by the exact places of their lines, and a wide one
+by the regions that hold intensity.  The mean keeps both.  The weights default to equal
+ones and are scaled to sum to one, so the diagonal stays at one.
+
+### `co_spectrum(F: np.ndarray, alpha: np.ndarray, normalize: bool=True) -> np.ndarray`
+
+The weight over the axis of a kernel model fitted on the rows of `F`.
+
+`alpha` holds the dual coefficients of the training spectra (`_Learner.alpha_` of a
+kernel ridge fit).  With the cosine kernel the model predicts `b + w . z` for a new
+spectrum with the normalised row `z`, and this function returns `w`, one value per
+grid point.  The unit of `w` is the unit of the property per unit of normalised
+intensity.
+
+### `co_spectrum_effect(F: np.ndarray, w: np.ndarray, normalize: bool=True) -> np.ndarray`
+
+The weight times the spread of the intensity over the set, one value per grid point.
+
+A large weight at a place where no spectrum of the set has intensity moves no prediction.
+The product with the standard deviation of the (normalised) intensity is the change of the
+prediction that a typical difference between two spectra of the set causes at that place.
+
+### `strongest_regions(x: np.ndarray, curve: np.ndarray, n: int=6, separation: float=0.0) -> List[dict]`
+
+The `n` places where a curve over the axis is largest in size, at least `separation`
+apart, each with its position, its value and the index of its grid point.
+
+### `two_theta_to_d(two_theta: np.ndarray, wavelength: float) -> np.ndarray`
+
+The spacing of the lattice planes in angstrom that reflects at the angle 2-theta (in
+degrees) for the given wavelength in angstrom: Bragg's law, `d = lambda / (2 sin theta)`.
+
 ## cmfqsar.stereo
 
 Source: `cmfqsar/stereo.py`
@@ -18868,6 +19113,9 @@ The argument list for one molecule.
 ### `run_job(jobdir: str, cfg: Config, charge: int, mult: int) -> XtbResult`
 
 Run xtb in `jobdir` on `geom.xyz`, or reuse the output already there.
+
+A reused job gives the same numbers as its first run: the charges are read from the
+`charges` file in both cases.
 
 ### `run_molecule(mol: Chem.Mol, name: str, index: int, cfg: Config) -> MoleculeOutcome`
 
