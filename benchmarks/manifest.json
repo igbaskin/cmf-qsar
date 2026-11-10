@@ -1,6 +1,6 @@
 {
- "commit": "0444dda5bf52f17c984165a0dab7fc11a098e87e",
- "created": "2026-11-10T08:24:39",
+ "commit": "6ed1a0f07fa82f072f9b3d004b7ca31888dc7c66",
+ "created": "2026-11-10T09:35:49",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2135,8 +2135,8 @@
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
   "examples/spectra/README.md": {
-   "bytes": 5935,
-   "sha256": "6447273b1bfe7bd3f43a5ea2ee7b64e13372b9735396073d51e942f47acfef2a"
+   "bytes": 6079,
+   "sha256": "9fa9916c1cb88ff655cf3e87572cb52a2cf0dcfb0173010568b60fda32afe98e"
   },
   "examples/spectra/benzoic_acids.sdf": {
    "bytes": 457694,
@@ -2199,7 +2199,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -2300,10 +2300,11 @@
   "benchmarks/results/band/cofield_rho_0p01.png": "1f61da82c612f7df7de293f53c24d400de7a3995a4f2d7cf9576bac83add910c",
   "benchmarks/results/band/cofield_rho_0p05.png": "8d30536dacbf3d1125ca9bbb244c5b75af824850cd3e724bb6e5b0f837a1d35c",
   "benchmarks/results/band/cofield_rho_0p1.png": "cafea2f81c46ebc3b798dda60df2f0c900b3dbdec5d6f53a920606cf5365e616",
+  "benchmarks/results/band/indicator.json": "686cd661abc173de05291e02d64c41b6ca2dd06d025b9af4d85074fcedcba66c",
   "benchmarks/results/band/start_cofield_rho_0p01.png": "b9b6bc4e90a1b9ffb441f081d78b220a629705af9bfb68520f65cb95fbddb313",
   "benchmarks/results/band/start_cofield_rho_0p05.png": "24283e182097195ff766d3461a940d3c485a735a62df6060653bea53ce3b5e5e",
   "benchmarks/results/band/start_cofield_rho_0p1.png": "92bd5eb5719097f97e3321a57e7361f95734a56e7b955f4a0484c47196d77ef5",
-  "benchmarks/results/band/table.md": "cf0248838d6f11cc23652235851148eb782a75e928464ded28ececaa34678879",
+  "benchmarks/results/band/table.md": "de5fcdfb0162d58189b244c25c4c60e1d0439c3719903962c7618406a047fddf",
   "benchmarks/results/batch/ACE.json": "226d393c9d0d95ca71afdfe46a55fdaabc746b581e7b8cd2611afcf59bc85b33",
   "benchmarks/results/batch/AChE.json": "4a476ab34285f69285d9af10339df6c46e8ed52060165a5e389dc4d82efb1c81",
   "benchmarks/results/batch/BZR.json": "69831e85d549741f0f7c6ca96232d7a446bc175b0b0f21675d02fa09cbfe46d8",
