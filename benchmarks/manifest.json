@@ -1,6 +1,6 @@
 {
- "commit": "6ed1a0f07fa82f072f9b3d004b7ca31888dc7c66",
- "created": "2026-11-10T09:35:49",
+ "commit": "de51683008d86f4940d5658e1a642e6ed2686255",
+ "created": "2026-11-10T10:36:14",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1079,8 +1079,8 @@
    "sha256": "7a89f4385c6d91414959c36781dc8b1898fb63fff0bb48c7d6bac5a4545fe8ff"
   },
   "examples/make_band_examples.py": {
-   "bytes": 17041,
-   "sha256": "e207ab0112c314d84550f3f3cddf2b6b2041d247bda30a582791df8382cc13c2"
+   "bytes": 19178,
+   "sha256": "8c4ce5b1bfb1d5d15d709d02a2ce031404da2df97f7185e27a82468fd25b6e3d"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -2135,8 +2135,8 @@
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
   "examples/spectra/README.md": {
-   "bytes": 6079,
-   "sha256": "9fa9916c1cb88ff655cf3e87572cb52a2cf0dcfb0173010568b60fda32afe98e"
+   "bytes": 7712,
+   "sha256": "0c3adb0dbf8ed74209f7a7df3023d22d1eaa4d12ff15fc0dd19a3b89e1f98814"
   },
   "examples/spectra/benzoic_acids.sdf": {
    "bytes": 457694,
@@ -2145,6 +2145,10 @@
   "examples/spectra/benzoic_acids_co.sdf": {
    "bytes": 592902,
    "sha256": "665e10693c3548fd9d93d073ce8cb846577c91415079fc4b90029b54e7c21601"
+  },
+  "examples/spectra/benzoic_acids_xtb.sdf": {
+   "bytes": 986204,
+   "sha256": "d38d4c5ac530d86648abac1b387b8e41caabe36233715042d2ab611ccb9eebbb"
   },
   "examples/steroids_cbg.sdf": {
    "bytes": 148560,
@@ -2297,6 +2301,7 @@
   "benchmarks/results/antitarget/summary.json": "2845bcd550b829431f1555e29ea47a33863cd2b688d219b79eb4304cd44f4d9a",
   "benchmarks/results/antitarget/table.md": "9716a347b2af4738b941d7080ecd3794cce6ca1e1b652da90c30b64e76e7fcf1",
   "benchmarks/results/band/band.json": "fb8c2d04906715c355e6a41fd31131bcde5ecc214adc2502d197278d617db15f",
+  "benchmarks/results/band/charges.json": "e26d1c35e2bad1ad9a9cbf13cb736048b042a89f7e00aedde54f9bf71f264164",
   "benchmarks/results/band/cofield_rho_0p01.png": "1f61da82c612f7df7de293f53c24d400de7a3995a4f2d7cf9576bac83add910c",
   "benchmarks/results/band/cofield_rho_0p05.png": "8d30536dacbf3d1125ca9bbb244c5b75af824850cd3e724bb6e5b0f837a1d35c",
   "benchmarks/results/band/cofield_rho_0p1.png": "cafea2f81c46ebc3b798dda60df2f0c900b3dbdec5d6f53a920606cf5365e616",
@@ -2304,7 +2309,7 @@
   "benchmarks/results/band/start_cofield_rho_0p01.png": "b9b6bc4e90a1b9ffb441f081d78b220a629705af9bfb68520f65cb95fbddb313",
   "benchmarks/results/band/start_cofield_rho_0p05.png": "24283e182097195ff766d3461a940d3c485a735a62df6060653bea53ce3b5e5e",
   "benchmarks/results/band/start_cofield_rho_0p1.png": "92bd5eb5719097f97e3321a57e7361f95734a56e7b955f4a0484c47196d77ef5",
-  "benchmarks/results/band/table.md": "de5fcdfb0162d58189b244c25c4c60e1d0439c3719903962c7618406a047fddf",
+  "benchmarks/results/band/table.md": "7c47f51f5324f97e04a77f33905d92574e9fa3abb1e6b7d89f136fabf7462f45",
   "benchmarks/results/batch/ACE.json": "226d393c9d0d95ca71afdfe46a55fdaabc746b581e7b8cd2611afcf59bc85b33",
   "benchmarks/results/batch/AChE.json": "4a476ab34285f69285d9af10339df6c46e8ed52060165a5e389dc4d82efb1c81",
   "benchmarks/results/batch/BZR.json": "69831e85d549741f0f7c6ca96232d7a446bc175b0b0f21675d02fa09cbfe46d8",
