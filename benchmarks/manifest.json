@@ -1,6 +1,6 @@
 {
- "commit": "de51683008d86f4940d5658e1a642e6ed2686255",
- "created": "2026-11-10T10:36:14",
+ "commit": "91222ee3020b70dba47858eb948831bbdd6a071d",
+ "created": "2026-11-10T22:10:45",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -3462,6 +3462,10 @@
   "benchmarks/results/solvent/p38_rule.json": "80d7a34d6d1168d324fdfff3c410a555b5e40e4682f1ce7504b7049b49c22c75",
   "benchmarks/results/solvent/p38_sweep.json": "ce484aaa9c3c18a6c53611a5406537ee9a5f63ffe56f17b1ac60bcfb93ea5963",
   "benchmarks/results/solvent/table.md": "7621237add1ff678a87039d722c9308e2e1cf9e55bebde34578640eb1b3a0d82",
+  "benchmarks/results/spectra/cospectrum.json": "6eab85cc7b9174c5dd4b0c246e41e161a5ce3c0f202bc55491b1f5a3df3cad41",
+  "benchmarks/results/spectra/cospectrum.png": "de714fa2cb0b40ca54c28e804d2b1a85ce844c8a3eca5dc77b006e09a78fd51a",
+  "benchmarks/results/spectra/fit.json": "965610411fbd2c3010c79470638103e297185bff394d70bd6876f58ee8f16b0e",
+  "benchmarks/results/spectra/table.md": "763af20769a8074996ad976f67815e83d7d48f2a98061c46bfbf3fa4320a883b",
   "benchmarks/results/speed/cutoff.json": "41740d5ba4ab40095fc5533522abf76b4bd1447f60c2c992ed033322c2e0bc51",
   "benchmarks/results/speed/engine.json": "ea538c75f7ee0f678fff900aa6db9564bc454725e9f2d933c255b275268ed4de",
   "benchmarks/results/speed/grid.json": "8e383cc21c803709fa35d4b599283497b77f7823d33c572ce17ba77ed1306988",
