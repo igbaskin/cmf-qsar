@@ -132,6 +132,15 @@ def _load(path):
         return json.load(fh)
 
 
+def _shown(path):
+    """`path` relative to the repository, for a message.  A path on another drive (Windows)
+    has no relative form and is given as it is."""
+    try:
+        return os.path.relpath(path, ROOT)
+    except ValueError:
+        return path
+
+
 def _report(b):
     """Call the report of benchmark `b` and make sure that it wrote every table of `b.tables`.
 
@@ -156,7 +165,7 @@ def _report(b):
     if missing:
         raise RuntimeError(
             f"the report of benchmark '{b.name}' did not write "
-            + ", ".join(os.path.relpath(m, ROOT) for m in missing)
+            + ", ".join(_shown(m) for m in missing)
             + ". The table cannot be compared with its result files. The report has to write "
               "the table; returning its text is not enough.")
 
