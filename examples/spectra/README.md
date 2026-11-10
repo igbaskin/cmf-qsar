@@ -73,7 +73,8 @@ start geometry and optimised the 13 acids with an imaginary frequency once more.
 
 `benchmarks/run_band.py` (plan item SP2) predicts the band from the field around the carbonyl
 carbon — the local invariant kernel of LP2 and the posed overlap kernel of LP3 — against the
-atom-centred count of LP2, against the Hammett line and against a line on the C=O bond length,
+atom-centred count of LP2, against a linear regression on the Hammett constant and against a
+linear regression on the C=O bond length,
 and reads the co-field at the ring positions. It does so twice: on the optimised geometries of
 `benzoic_acids_co.sdf` and on the force-field geometries of `benzoic_acids.sdf`, with the same
 bands. The second run is the one that counts, because an optimised geometry holds the C=O bond

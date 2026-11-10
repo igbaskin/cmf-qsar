@@ -44,7 +44,7 @@
    "note": "17 atom types in 6 shells"
   },
   "bond_length": {
-   "name": "the length of the C=O bond (one line)",
+   "name": "linear regression on the length of the C=O bond",
    "q2": 0.9726308444171793,
    "error": 0.73938098729301,
    "mae": 0.5854296650291515,
@@ -52,7 +52,7 @@
    "note": "band = a + b * length, fitted in fold; r -0.987; lengths 1.2088 to 1.2160 A, spread (sd) 0.0012 A; against the counts +0.311 [+0.253, +0.386]"
   },
   "one_line": {
-   "name": "one Hammett line",
+   "name": "linear regression on the Hammett constant, all acids",
    "q2": 0.74023463902624,
    "error": 2.277866139595002,
    "mae": 1.8424281766296786,
@@ -60,7 +60,7 @@
    "note": "band = a + rho * sigma, fitted in fold"
   },
   "two_lines": {
-   "name": "two Hammett lines (meta, para)",
+   "name": "linear regression on the Hammett constant, meta and para separately",
    "q2": 0.7814207768100535,
    "error": 2.089498283342909,
    "mae": 1.6240400722943116,
@@ -1302,7 +1302,7 @@
     "note": "17 atom types in 6 shells"
    },
    "bond_length": {
-    "name": "the length of the C=O bond (one line)",
+    "name": "linear regression on the length of the C=O bond",
     "q2": -0.013845158273340097,
     "error": 4.500112752064548,
     "mae": 3.5430326307889057,

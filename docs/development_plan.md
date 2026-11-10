@@ -4218,8 +4218,8 @@ for anything molecular.
   to 7 % and from 3 % to 5 %); docked with the image term on 2.45 and 3.78; from a conformer of
   the SMILES, docked, 2.74 and 3.73. Shape complementarity with the slab decides neither the face
   nor the in-plane placement, which is EC2's finding reached from the other side.
-  *The energy half passes only when it is given the answer.* Leave-one-out q2 of a line on the
-  burial at the relaxed pose: +0.638 and +0.624, against EC2's controls of +0.472 and +0.423 (the
+  *The energy half passes only when it is given the answer.* Leave-one-out q2 of a linear regression on
+  the burial at the relaxed pose: +0.638 and +0.624, against EC2's controls of +0.472 and +0.423 (the
   relaxed pose's height) and +0.345 and +0.328 (the chemisorbed flag), with the right sign
   (r = -0.81). Adding the image term gives +0.661 and +0.647. At a pose the program produces
   itself the same score is +0.115 and +0.049. So the burial in the relaxed frame is a *better*
@@ -6597,19 +6597,21 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   `atom.dprop.co_stretch`. 13 acids ended on a saddle point, 11 took the second optimisation, 5
   keep one imaginary frequency of 8 to 17 cm⁻¹.
   `benchmarks/run_band.py` measures the local invariant kernel and the posed overlap at eight
-  widths against the shell count, the Hammett line and a line on the C=O bond length, on the
+  widths against the shell count, a linear regression on the Hammett constant and a linear
+  regression on the C=O bond length, on the
   optimised geometries and on the start geometries, and reads the co-field at the ring positions
   at three widths with the noise error and a y-scramble null.
-  26 tests (`tests/test_orca_frequencies.py` on a real ORCA output, `tests/test_band.py`).
+  27 tests (`tests/test_orca_frequencies.py` on a real ORCA output, `tests/test_band.py`).
   *Measured:* the bands span 1711 to 1737 cm⁻¹ (sd 4.5) and follow sigma
-  (r +0.87; in cross-validation one line q2 +0.740, two lines +0.781).
+  (r +0.87; in cross-validation the linear regression on sigma gives q2 +0.740 with one
+  equation for all acids and +0.781 with separate equations for meta and para).
   **The optimised geometries give a result that does not count.** There the field at 1 A reaches
-  q2 +0.978, but one line on the C=O bond length of those geometries reaches +0.973 (Badger's
-  rule), and the field is above it by +0.005 [+0.002, +0.009] only: the optimisation that
+  q2 +0.978, but a linear regression on the C=O bond length of those geometries reaches +0.973
+  (Badger's rule), and the field is above it by +0.005 [+0.002, +0.009] only: the optimisation that
   gives the band also gives the length. On the start (force-field) geometries the narrow field is
   at q2 +0.191 to +0.326, far below the count (+0.616); at 7 and 10 A the invariant kernel
   reaches +0.742 and +0.746, above the count by +0.130 [+0.043, +0.209] and equal to
-  one Hammett line (+0.006 [-0.065, +0.077]).
+  the regression on the Hammett constant with one equation (+0.006 [-0.065, +0.077]).
   *Gate:* the first half is met narrowly and not robustly: the width is the best of eight, the
   posed overlap's interval begins at +0.002, and without the five acids that keep an imaginary
   frequency the invariant kernel's interval is [-0.005, +0.174] (a control that is not stored).
@@ -6621,10 +6623,11 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   3.2 A, the width LP3 used, the map cannot be read. One correction to the gate's wording: LP3
   read the ring picture from the shifts, with the indicator fields, and drew no co-field from the
   acidity. *Rule that follows:* a local target computed on its own optimised geometry is
-  predicted from the start geometries, and the bond-length line is one of its references.
+  predicted from the start geometries, and the bond-length regression is one of its references.
   *Open:* a table of measured carbonyl bands for the series, which would make the computed
   column the second one; the indicator fields of LP3 (one field per atom type) on this series,
-  as the candidate for passing two Hammett lines; the width chosen inside the folds; the same
+  as the candidate for passing the separate Hammett regressions for meta and para; the width
+  chosen inside the folds; the same
   run on the acidity set's acids, where the band and the pKa of one carbon would be two targets
   of one sample; and the band of another bond (the O-H stretch, the C-O stretch),
   which the same code gives for another window.
@@ -6715,8 +6718,9 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   the method matches PLS and adds the co-spectrum, and stops.
 
 **Order.** ~~SP2 first~~ **done 10 November 2026**: the frequency run, the series of 189 acids,
-and the finding that the field predicts the band from the structure as well as one Hammett line,
-and only at a width that reaches the substituent. SP1(a) next, since it needs no fetch; SP1(b)
+and the finding that the field predicts the band from the structure as well as a linear
+regression on the Hammett constant, and only at a width that reaches the substituent. SP1(a)
+next, since it needs no fetch; SP1(b)
 when a set is found; SP3 after SP1, because it needs the spectral kernel of the one and the series
 SP2 now holds. The structural side of SP3 and SP6 uses the start geometries of that series, for
 the reason SP2 found: an optimised geometry carries the bond length that decides the band.

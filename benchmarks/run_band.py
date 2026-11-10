@@ -15,9 +15,10 @@ around the atom, and does a co-field around the atom say where the substituent a
 Six things are measured, on folds that hold out whole molecules.
 
 1. **The band against the Hammett constant.**  Before any field: the computed band against
-   sigma, as a straight line, which is what a physical organic chemist would plot first.  The
-   slope of that line for the meta and for the para acids is the picture the co-field is asked to
-   reproduce, and the cross-validated q2 of the line is a second reference beside the count.
+   sigma, as a linear regression (the straight line band = a + rho * sigma, fitted by least
+   squares), which is what a physical organic chemist would plot first.  The slope of that
+   regression for the meta and for the para acids is the picture the co-field is asked to
+   reproduce, and its cross-validated q2 is a second reference beside the count.
 2. **The invariant local kernel** of LP2 (`cmfqsar/localenv.py`) with the envelope width
    scanned, against the atom-centred shell count of LP2, the reference of rule 1.  The plan's
    expectation is a best width near 1 A, as for the shift.
@@ -31,8 +32,8 @@ Six things are measured, on folds that hold out whole molecules.
    envelope does not keep it.
 5. **The length of the C=O bond as a predictor.**  The geometries in the data file are the ones
    the quantum optimisation produced, and a shorter bond has a higher stretching frequency
-   (Badger's rule).  A straight line on this one length is therefore a control: a field
-   description that is no better than this line has read the bond length, which the quantum
+   (Badger's rule).  A linear regression on this one length is therefore a control: a field
+   description that is no better than this regression has read the bond length, which the quantum
    calculation supplied, and not the substituent.
 6. **Everything again on the start geometries.**  The same atoms, bonds and bands, with the
    coordinates of `examples/spectra/benzoic_acids.sdf`: the force-field geometries the quantum
@@ -197,7 +198,8 @@ def _as_result(name, pred, targets, folds, note=""):
 
 
 def hammett_reference(targets, table, folds=FOLDS, seed=0, two_lines=False):
-    """The Hammett line as a predictor, out of fold: one line over sigma, or one per position."""
+    """The linear regression on sigma as a predictor, out of fold: one equation for all acids,
+    or one equation per position."""
     y = np.asarray(targets.y, float)
     sigma = np.asarray(table["sigma"], float)
     pos = np.asarray(table["position"])
@@ -221,7 +223,8 @@ def hammett_reference(targets, table, folds=FOLDS, seed=0, two_lines=False):
                     pred[b] = v if not np.isfinite(pred[b]) else 0.5 * (pred[b] + v)
             pred[rows] = intercept + slope * sigma[rows]
     pred = np.where(np.isfinite(pred), pred, np.nanmean(y))
-    name = "two Hammett lines (meta, para)" if two_lines else "one Hammett line"
+    name = ("linear regression on the Hammett constant, meta and para separately" if two_lines
+            else "linear regression on the Hammett constant, all acids")
     return _as_result(name, pred, targets, folds, note="band = a + rho * sigma, fitted in fold")
 
 
@@ -244,10 +247,10 @@ def carbonyl_lengths(mols, targets):
 
 
 def bond_length_reference(mols, targets, folds=FOLDS, seed=0):
-    """The band as a straight line on the length of the C=O bond, out of fold.
+    """The band as a linear regression on the length of the C=O bond, out of fold.
 
     A shorter bond has a higher stretching frequency (Badger's rule).  On geometries from a
-    quantum optimisation this line is a control and not a competitor: the length comes from
+    quantum optimisation this regression is a control and not a competitor: the length comes from
     the calculation that also gives the band."""
     y = np.asarray(targets.y, float)
     d = carbonyl_lengths(mols, targets)
@@ -262,7 +265,7 @@ def bond_length_reference(mols, targets, folds=FOLDS, seed=0):
         pred[te] = intercept + slope * d[te]
     pred = np.where(np.isfinite(pred), pred, np.nanmean(y))
     r = float(np.corrcoef(d[ok], y[ok])[0, 1]) if ok.sum() > 2 and np.std(d[ok]) > 0 else 0.0
-    return _as_result("the length of the C=O bond (one line)", pred, targets, folds,
+    return _as_result("linear regression on the length of the C=O bond", pred, targets, folds,
                       note=f"band = a + b * length, fitted in fold; r {r:+.3f}; lengths "
                            f"{np.nanmin(d):.4f} to {np.nanmax(d):.4f} A, spread (sd) "
                            f"{np.nanstd(d):.4f} A")
@@ -592,8 +595,8 @@ def _reference_table(refs, keys):
 
 def _scan_table(rows):
     lines = ["| rho, 1/A^2 | width, A | atoms | invariant local q2 | against counts | "
-             "against one Hammett line | against the bond length | posed overlap q2 | "
-             "against counts | against one Hammett line | against the bond length | "
+             "against the Hammett regression | against the bond length | posed overlap q2 | "
+             "against counts | against the Hammett regression | against the bond length | "
              "posed against invariant |",
              "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|"]
     for row in rows:
@@ -632,7 +635,10 @@ def _cofield_tables(cofields, where):
     return lines
 
 
-def report(results=RESULTS):
+def report(results=RESULTS, table=None):
+    """The table of the stored result as Markdown text.  The text is also written to `table`,
+    by default `table.md` in the results folder, so that `run_all.py` can rebuild the table
+    from `band.json` and compare it with the committed one."""
     path = os.path.join(results, "band.json")
     if not os.path.exists(path):
         raise SystemExit(f"{path} is missing: run this script first")
@@ -682,7 +688,11 @@ def report(results=RESULTS):
     if s:
         lines += _cofield_tables(s["cofields"], "start geometries")
     lines += ["", _verdict(d), ""]
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    with io.open(table or os.path.join(results, "table.md"), "w", encoding="utf-8",
+                 newline="\n") as fh:
+        fh.write(text)
+    return text
 
 
 def _best(rows, kind):
@@ -694,18 +704,20 @@ def _verdict(d):
     ref, one, bond = refs["counts"], refs["one_line"], refs.get("bond_length")
     bi, ba = _best(d["rows"], "invariant"), _best(d["rows"], "aligned")
     di, da = bi["against_counts"]["invariant"], ba["against_counts"]["aligned"]
-    parts = [f"**Reading.** One Hammett line predicts the band with q2 {one['q2']:+.3f}. On the "
+    parts = [f"**Reading.** A linear regression on the Hammett constant, with one equation for "
+             f"all acids (the Hammett regression), predicts the band with q2 "
+             f"{one['q2']:+.3f}. On the "
              f"geometries of the quantum optimisation the count reaches q2 {ref['q2']:+.3f}; the "
              f"invariant local kernel is best at a width of {bi['width']:.2f} A (q2 "
              f"{bi['invariant']['q2']:+.3f}, against the count {_iv(di)}), the posed overlap at "
              f"{ba['width']:.2f} A (q2 {ba['aligned']['q2']:+.3f}, against the count {_iv(da)})."]
     top = max(bi["invariant"]["q2"], ba["aligned"]["q2"])
     if bond is not None:
-        parts.append(f"A straight line on the length of the C=O bond of the same geometries "
+        parts.append(f"A linear regression on the length of the C=O bond of the same geometries "
                      f"reaches q2 {bond['q2']:+.3f}.")
         if bond["q2"] >= top - 0.02 and ba.get("against_bond_length"):
             parts.append(f"The posed overlap at its best width is "
-                         f"{_iv(ba['against_bond_length']['aligned'])} against that line, so "
+                         f"{_iv(ba['against_bond_length']['aligned'])} against that regression, so "
                          f"nearly all of what the narrow field predicts "
                          f"is one bond length. That length comes from the quantum optimisation, "
                          f"the calculation that also gives the band, so this is not a "
@@ -722,8 +734,8 @@ def _verdict(d):
         parts.append(f"On the start geometries, which hold nothing from the quantum "
                      f"calculation, the count reaches q2 {rs['q2']:+.3f}; the invariant local "
                      f"kernel is best at a width of {si['width']:.2f} A (q2 "
-                     f"{si['invariant']['q2']:+.3f}, against the count {_iv(dsi)}, against one "
-                     f"Hammett line {_iv(si['against_one_line']['invariant'])}), the posed "
+                     f"{si['invariant']['q2']:+.3f}, against the count {_iv(dsi)}, against the "
+                     f"Hammett regression {_iv(si['against_one_line']['invariant'])}), the posed "
                      f"overlap at {sa['width']:.2f} A (q2 {sa['aligned']['q2']:+.3f}, against "
                      f"the count {_iv(dsa)}). At a width of 1.00 A or less neither kernel is "
                      f"above q2 {max(narrow):+.3f} there.")
@@ -770,13 +782,11 @@ def main():
         structures = None if str(a.structures).lower() == "none" else a.structures
         run(rhos=a.rho, cofield_rhos=a.cofield_rho, folds=a.folds, seed=a.seed,
             scrambles=a.scrambles, results=a.results, data=a.data, structures=structures)
-    text = report(a.results)
     if a.report in (None, "-"):
         path = os.path.join(a.results, "table.md")
     else:
         path = a.report
-    with io.open(path, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(text)
+    text = report(a.results, path)
     if a.report == "-":
         print(text)
     else:

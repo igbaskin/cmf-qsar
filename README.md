@@ -2778,22 +2778,24 @@ that mode and optimised once more (`orca.retry_band`), and a molecule whose opti
 or makes a bond is reported as failed (`orca.changed_bonds`).
 [run_band.py](benchmarks/run_band.py) predicts the band from the field around the carbonyl
 carbon, with the invariant local kernel and the posed overlap kernel at eight envelope widths,
-against the atom-centred count, the Hammett line and a line on the C=O bond length. It does this
-twice: on the optimised geometries and on the force-field geometries the optimisation started
-from.
+against the atom-centred count and against two linear regressions of the band: one on the
+Hammett constant and one on the C=O bond length. It does this twice: on the optimised
+geometries and on the force-field geometries the optimisation started from.
 
 **The optimised geometries give a result that does not count.** There the field at a width of
-1 A reaches q2 +0.978, but a straight line on the C=O bond length of the same
+1 A reaches q2 +0.978, but a linear regression on the C=O bond length of the same
 geometries reaches +0.973: a shorter bond has a higher stretching
 frequency, and the optimisation that gives the band also gives the length. The field is above
-that line by +0.005 [+0.002, +0.009] only.
+that regression by +0.005 [+0.002, +0.009] only.
 
-**From the structure alone the field equals one Hammett line.** On the force-field geometries the
+**From the structure alone the field equals the regression on the Hammett constant.** On the
+force-field geometries the
 narrow field falls to q2 +0.191 to +0.326. At a width of 7 to 10 A, which reaches the
 substituent (4.8 to 6.4 A from the carbonyl carbon), the invariant kernel reaches
 +0.742 and +0.746. The count gives
-+0.616 (the difference at 10 A is +0.130 [+0.043, +0.209]),
-one Hammett line +0.740 and two lines +0.781. The
++0.616 (the difference at 10 A is +0.130 [+0.043, +0.209]).
+The regression on the Hammett constant gives +0.740 with one equation for all acids, and
++0.781 with separate equations for the meta and the para acids. The
 margin over the count is small and not robust: without the five acids that keep an imaginary
 frequency its interval begins at -0.005. The electrostatic co-field at 10 A is positive at
 the meta and para carbons (+3.68 and +5.01 cm⁻¹ per unit
@@ -4099,7 +4101,7 @@ height removes it:
 | surface kernel, relaxed as written | 0.66 / 0.50 | 0.52 / 0.15 |
 | surface kernel, relaxed, lowered | 0.55 / 0.40 | 0.34 / 0.17 |
 | surface kernel, flat rule from a conformer | 0.31 / 0.28 | 0.00 / −0.03 |
-| a line on the lowest height alone (LOO) | 0.47 | 0.42 |
+| a linear regression on the lowest height alone (LOO) | 0.47 | 0.42 |
 
 - On the benzimidazoles the overlap kernel in the rule frame recovers exactly what it recovers in
   the relaxed frame once the outcome is removed, 0.27 against 0.27, from a conformer and no slab;

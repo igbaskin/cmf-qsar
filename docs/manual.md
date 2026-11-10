@@ -2813,7 +2813,7 @@ face, and this says complementarity does not decide it.
 ### The energy: the score beats EC2's control, and only where the answer already is
 
 Leave-one-out q² of a straight line on each term against the adsorption energy. The control is
-item EC2's: a line on the lowest heavy-atom height of the relaxed pose.
+item EC2's: a linear regression on the lowest heavy-atom height of the relaxed pose.
 
 | term | benzimidazole | quinoline |
 |---|---|---|
@@ -10187,8 +10187,9 @@ is around the atom? And does the co-field around the atom say where the substitu
 The answer in short. On the geometries that the quantum program optimised, the field predicts the
 band almost exactly, and this result does not count: the field reads the length of the carbonyl
 bond, and that length comes from the same calculation as the band. On the force-field
-geometries the field predicts the band as well as one Hammett line and a little better than the
-count, and only with an envelope wide enough to reach the substituent.
+geometries the field predicts the band as well as a linear regression on the Hammett constant
+and a little better than the count, and only with an envelope wide enough to reach the
+substituent.
 
 **The series and the band.** The 95 substituents of the Hammett set (`examples/hammett/`), each
 placed meta and para to the carboxyl group of benzoic acid, give 189 acids
@@ -10248,9 +10249,12 @@ python benchmarks/run_band.py                            # the measurement below
 **What is measured** (`benchmarks/run_band.py`, `benchmarks/results/band/table.md`). The
 benchmark has six parts.
 
-1. The computed band against the Hammett constant, as a straight line. This is the plot of a
-   physical organic chemist. Fitted inside each fold, the line is also a reference beside the
-   count: one line for all acids, or two lines, one for the meta and one for the para acids.
+1. The computed band against the Hammett constant sigma, as a linear regression: the straight
+   line band = a + b sigma, fitted by least squares. This is the plot of a physical organic
+   chemist. Fitted inside each fold, the regression is also a reference beside the count. It
+   has two forms: one equation for all acids, called the Hammett regression below, and two
+   equations, one for the meta and one for the para acids, called the separate Hammett
+   regressions.
 2. The invariant local kernel (section *An atom instead of a molecule*) and the posed overlap
    kernel (the previous section), at eight envelope widths from 0.7 to 10 A, against the
    atom-centred shell count. Ten folds hold out whole molecules, and the ridge is chosen on the
@@ -10262,7 +10266,8 @@ benchmark has six parts.
    null (the same reading on models fitted to bands in random order). A carbonyl carbon has one
    carbon and two oxygens of different types bonded to it, so its frame is unique and nothing is
    averaged.
-4. A straight line on the length of the C=O bond, as one more reference.
+4. A linear regression of the band on the length of the C=O bond, called the bond-length
+   regression below, as one more reference.
 5. Parts 2 to 4 a second time, on the start geometries: the force-field structures of
    `examples/spectra/benzoic_acids.sdf`, from which the quantum optimisation started. The partial
    charges of both runs are Gasteiger charges, which depend on the bond graph only, so the two
@@ -10272,8 +10277,8 @@ benchmark has six parts.
 **The band follows the Hammett constant.** The 189 bands lie between 1710.6 and
 1737.1 cm$^{-1}$, with a spread (standard deviation) of 4.5 cm$^{-1}$. A
 substituent that withdraws electrons raises the band, by about 11.5 cm$^{-1}$ per unit of sigma, and
-the slope is the same for the meta and the para acids. Benzoic acid itself is counted in both
-lines.
+the slope is the same for the meta and the para acids. Benzoic acid itself is counted in the
+meta and in the para regression.
 
 | acids | number | slope, cm$^{-1}$ per unit of sigma | correlation |
 | --- | ---: | ---: | ---: |
@@ -10282,23 +10287,24 @@ lines.
 | para | 95 | +11.5 | +0.910 |
 
 **The references.** A descriptor has to be compared with what is known without it. The Hammett
-lines need no geometry. The count and the bond-length line are given on both geometry sets.
+regressions need no geometry. The count and the bond-length regression are given on both
+geometry sets.
 
 | reference | geometries it uses | q2 | error (RMSE), cm$^{-1}$ |
 | --- | --- | ---: | ---: |
-| one Hammett line, band = a + b sigma | none | +0.740 | 2.28 |
-| two Hammett lines, one for meta and one for para | none | +0.781 | 2.09 |
+| Hammett regression, band = a + b sigma, one equation for all acids | none | +0.740 | 2.28 |
+| separate Hammett regressions, one equation for meta and one for para | none | +0.781 | 2.09 |
 | atom-centred count | optimised | +0.662 | 2.60 |
 | atom-centred count | start | +0.616 | 2.77 |
-| one line on the length of the C=O bond | optimised | +0.973 | 0.74 |
-| one line on the length of the C=O bond | start | -0.014 | 4.50 |
+| linear regression on the length of the C=O bond | optimised | +0.973 | 0.74 |
+| linear regression on the length of the C=O bond | start | -0.014 | 4.50 |
 
 **On the optimised geometries the narrow field reads one bond length.** On the geometries of the
 quantum optimisation both kernels improve as the envelope gets narrower. They are best at a width
 of 1 A: q2 +0.976 for the invariant kernel and +0.978 for
 the posed overlap, against +0.662 for the count.
 
-| envelope width, A | invariant kernel, q2 | invariant against the count | posed overlap, q2 | posed against the count | posed against the bond-length line |
+| envelope width, A | invariant kernel, q2 | invariant against the count | posed overlap, q2 | posed against the count | posed against the bond-length regression |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 10.00 | +0.743 | +0.081 [-0.000, +0.152] | +0.725 | +0.063 [-0.006, +0.132] | -0.248 [-0.312, -0.204] |
 | 7.07 | +0.750 | +0.088 [+0.012, +0.158] | +0.719 | +0.058 [-0.008, +0.124] | -0.253 [-0.307, -0.212] |
@@ -10311,10 +10317,10 @@ the posed overlap, against +0.662 for the count.
 
 This looks like the result the plan expected. It is not a prediction from the structure. The C=O
 bond of the optimised acids is between 1.2088 and 1.2160 A long, with a spread of 0.0012 A. A
-straight line on this one length, fitted in each fold, predicts the band with q2
+linear regression on this one length, fitted in each fold, predicts the band with q2
 +0.973; the correlation of the length with the band is -0.987. This is
 Badger's rule: a shorter bond is stiffer and has a higher stretching frequency. The field at 1 A
-is above that line by +0.003 [+0.001, +0.006] (invariant kernel) and by
+is above that regression by +0.003 [+0.001, +0.006] (invariant kernel) and by
 +0.005 [+0.002, +0.009] (posed overlap). So nearly all of what the narrow field
 predicts is one bond length, read to a thousandth of an angstrom. That length is a result of the
 quantum optimisation, and the optimisation is the first half of the calculation that gives the
@@ -10322,13 +10328,13 @@ band. A user who wants the band of a new acid does not have this length before t
 is done.
 
 The force-field geometries confirm this. Their C=O lengths (1.2162 to 1.2683 A) have a
-correlation of -0.006 with the band, and the line on them predicts nothing
+correlation of -0.006 with the band, and the regression on them predicts nothing
 (q2 -0.014).
 
-**From the structure alone the field equals one Hammett line.** The start geometries hold nothing
-from the quantum calculation.
+**From the structure alone the field equals the Hammett regression.** The start geometries hold
+nothing from the quantum calculation.
 
-| envelope width, A | invariant kernel, q2 | invariant against the count | invariant against one Hammett line | posed overlap, q2 | posed against the count |
+| envelope width, A | invariant kernel, q2 | invariant against the count | invariant against the Hammett regression | posed overlap, q2 | posed against the count |
 | ---: | ---: | ---: | ---: | ---: | ---: |
 | 10.00 | +0.746 | +0.130 [+0.043, +0.209] | +0.006 [-0.065, +0.077] | +0.702 | +0.087 [+0.002, +0.168] |
 | 7.07 | +0.742 | +0.126 [+0.046, +0.202] | +0.002 [-0.068, +0.074] | +0.698 | +0.082 [+0.004, +0.163] |
@@ -10344,15 +10350,15 @@ count (+0.616). A narrow envelope sees the carboxyl group and the nearest ring
 carbons, and these are the same atoms in every acid. From 4.5 A on the invariant kernel reaches
 +0.707 to +0.746. At 7 and 10 A it is above the count by
 +0.126 [+0.046, +0.202] and +0.130 [+0.043, +0.209]. Against
-one Hammett line the difference is +0.002 [-0.068, +0.074] and
-+0.006 [-0.065, +0.077]: the two are equal. Two Hammett lines
+the Hammett regression the difference is +0.002 [-0.068, +0.074] and
++0.006 [-0.065, +0.077]: the two are equal. The separate Hammett regressions
 (q2 +0.781) are above every field model of this table. The posed overlap is
 a little lower than the invariant kernel (+0.691 to +0.702 at the three wide widths),
 and the lower end of its interval against the count is at zero.
 
 The Hammett constant is a measured quantity: it was defined from the ionisation of these same
-acids in water. A model that uses only the structure and equals the Hammett line has therefore
-recovered from the structure what the constant holds, and no more than that.
+acids in water. A model that uses only the structure and equals the Hammett regression has
+therefore recovered from the structure what the constant holds, and no more than that.
 
 Three cautions belong to the margin over the count. First, it is read at the best of eight
 widths. The neighbouring wide widths agree (+0.092 to +0.130), so the choice of
@@ -10427,7 +10433,7 @@ the substituent acts.
 Two limits of this reading. The co-field gives the place (the meta and the para carbon and the
 space beyond them) and one sign. It does not separate a substituent that donates electrons by
 resonance from one that withdraws them, for the reason the previous section gave: fragment charges
-do not carry resonance. And the Hammett lines themselves give no strong reason to expect para
+do not carry resonance. And the Hammett regressions themselves give no strong reason to expect para
 above meta here: the two slopes are equal (+11.3 and
 +11.5), so one unit of sigma moves the band by the same
 amount from either position.
@@ -10446,15 +10452,15 @@ readable map.
 optimised geometry has to be predicted from geometries the program did not make. Otherwise the
 bond lengths at the target carry the answer, and a narrow field will find them. The control costs
 nothing, because the start geometries are stored, and `run_band.py` now runs it by default
-(`--structures none` leaves it out) and gives the bond-length line as a reference. The shift set
-of the two previous sections is not affected: its shifts are measured and its geometries come from
-a force field.
+(`--structures none` leaves it out) and gives the bond-length regression as a reference. The
+shift set of the two previous sections is not affected: its shifts are measured and its
+geometries come from a force field.
 
 **What is not done.** Measured carbonyl bands were not collected; with them the computed band
 would become a second column beside the measured one. A description that carries resonance, such
 as the indicator fields of the previous section (one field per atom type), is the candidate for
-passing two Hammett lines; it is not measured here. And the width is not chosen inside the
-folds, which is why the margin over the count is quoted with its cautions.
+passing the separate Hammett regressions; it is not measured here. And the width is not chosen
+inside the folds, which is why the margin over the count is quoted with its cautions.
 
 ## A migration path as the sample: the barrier of a Li hop
 

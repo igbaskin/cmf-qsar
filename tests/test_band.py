@@ -1,5 +1,6 @@
-"""The band benchmark's own arithmetic (plan item SP2): the Hammett lines and their use as a
-reference, on a made-up series where the band is a known function of sigma."""
+"""The band benchmark's own arithmetic (plan item SP2): the linear regressions on the Hammett
+constant and their use as a reference, on a made-up series where the band is a known function
+of sigma."""
 import os
 import sys
 
@@ -211,3 +212,22 @@ def test_start_geometries_replace_the_coordinates_and_keep_the_bands(tmp_path):
                        [1.206, 1.212, 1.218], atol=1e-6)
     with pytest.raises(SystemExit):
         run_band.with_start_geometries(mols, ["acid0", "acid1", "no such acid"], path)
+
+
+def test_the_report_writes_the_table_it_returns(tmp_path):
+    """`run_all.py` rebuilds a table by calling `report`; a report that only returned its text
+    would leave a stale table unnoticed."""
+    import shutil
+
+    stored = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                          "benchmarks", "results", "band", "band.json")
+    if not os.path.exists(stored):
+        pytest.skip("the stored result of the band benchmark is not there")
+    shutil.copy(stored, str(tmp_path / "band.json"))
+    text = run_band.report(str(tmp_path))
+    with open(str(tmp_path / "table.md"), encoding="utf-8") as fh:
+        assert fh.read() == text
+    assert "linear regression on the Hammett constant, all acids" in text
+    assert "Hammett line" not in text and "one line" not in text
+    other = str(tmp_path / "other.md")
+    assert run_band.report(str(tmp_path), other) == text and os.path.exists(other)
