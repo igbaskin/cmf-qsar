@@ -103,6 +103,16 @@ def test_the_rebuild_fails_on_a_report_that_does_not_write_its_table(monkeypatch
         run_all.main(["--check"])
 
 
+@pytest.mark.skipif(os.name != "nt", reason="only Windows has drives")
+def test_a_path_on_another_drive_is_shown_as_it_is():
+    """The message of the table guard names a path relative to the repository.  The
+    temporary folder of a test can be on another drive, where no relative path exists."""
+    drive = os.path.splitdrive(run_all.ROOT)[0].upper()
+    other = ("R:" if drive == "Q:" else "Q:") + "\\results\\table.md"
+    assert run_all._shown(other) == other
+    assert run_all._shown(os.path.join(run_all.ROOT, "README.md")) == "README.md"
+
+
 def test_the_rebuild_tells_a_current_table_from_a_stale_one(monkeypatch, tmp_path):
     table = _one_benchmark(monkeypatch, tmp_path,
                            lambda path: _write(path, "the committed table\n"))
