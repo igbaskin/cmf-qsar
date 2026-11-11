@@ -9480,6 +9480,35 @@ self-overlap of the phase field with its own translate, which is to say the peri
 autocorrelation of the chapter above with voxels in place of atoms. `benchmarks/run_microstructure.py`
 measures what the field kernels are worth against that workflow, on the smallest fair benchmark.
 
+**The phase field and its co-field.** The *phase field* of a cell is the set of the indicator
+functions of its phases: $m_a(\mathbf{x})$ is 1 where voxel $\mathbf{x}$ belongs to phase $a$
+and 0 elsewhere. A Gaussian of a chosen width may smooth it, as the attenuation does for an
+atom. The two-point statistics of two phases $a$ and $b$ are the mean of the product of the two
+indicators a lag vector $\mathbf{r}$ apart, over the $N$ voxels of the periodic cell:
+
+$$
+S_{ab}(\mathbf{r}) \;=\; \dfrac{1}{N} \sum_{\mathbf{x}}\, m_a(\mathbf{x})\, m_b(\mathbf{x} + \mathbf{r})
+$$
+<!-- #eq:two-point -->
+
+The cells of a set share a grid and no frame, so a co-field over the positions of the grid
+would say nothing: a grain is at a different place in every cell. The statistics of
+Eq. (#eq:two-point) do not depend on where a grain is. A linear model on them has a weight for
+every pair of phases and every lag vector, and its prediction is
+
+$$
+\hat{y} \;=\; b + \sum_{a,b}\, \sum_{\mathbf{r}}\, w_{ab}(\mathbf{r})\, S_{ab}(\mathbf{r})
+$$
+<!-- #eq:lag-cofield -->
+
+The weight $w_{ab}(\mathbf{r})$ is the co-field of this model. It is a field over the lag vector
+and not over the position: it says at which separation, and in which direction, finding phase
+$b$ again from phase $a$ raises the property. It is the weight vector of the section *Why a
+kernel is enough*, read from the dual coefficients as a co-field or a co-pattern is. The fourth
+test below reads it for two properties.
+
+![The phase field of a microstructure and the co-field of a model on it, on the 400 synthetic two-phase cells of `benchmarks/run_microstructure.py` in which phase 1 conducts 100 times better than phase 0. The property is the effective conductivity along x. Cells A and B are the two cells with a phase fraction between 0.45 and 0.55 that have the largest and the smallest conductivity. Left column: the cell. Middle column: its phase field, the indicator of phase 1 on the voxel grid. It is drawn smoothed with a Gaussian of 2 voxels to show what the width setting does; the model of this figure uses the indicator without smoothing, which is what cross-validation chooses for this kernel. Right column: its two-point statistics for phase 1 with phase 1, drawn over the lag vector. A streak along x says that the conductor continues along x. Bottom left: the co-field of the kernel ridge model, a weight for every lag vector, red where the statistics raise the predicted conductivity and blue where they lower it. Bottom middle and right: weight times statistics of the two cells, lag by lag, summed over the two phase pairs. The line above the panels writes the sums out. The model is linear in the statistics, and it reproduces cell A better than cell B. Drawn by `docs/make_figures.py`.](docs/figures/phasefield.png)
+
 **The data.** 400 synthetic two-phase cells on a periodic 51 x 51 grid (and 400 on a 21^3 grid),
 by the recipe of the `pymks` generator: Gaussian-filtered white noise cut at the quantile that
 gives the phase fraction. The fraction, the grain size, the elongation of the grains and their

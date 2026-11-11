@@ -1677,6 +1677,120 @@ def fig_featurespace(path):
     save(fig, path)
 
 
+def microstructure_set():
+    """The 400 synthetic two-phase cells of ``benchmarks/run_microstructure.py`` at contrast
+    100, generated again with the benchmark's own functions and seed, so that the figure does
+    not depend on the benchmark's cache.  About ten seconds."""
+    if "microstructure" not in _CACHE:
+        sys.path.insert(0, os.path.join(ROOT, "benchmarks"))
+        import run_microstructure as M
+        dim, grid, n, contrast = 2, 51, 400, 100.0
+        rng = np.random.default_rng(0)
+        phases = np.zeros((n, grid, grid), np.uint8)
+        params, tensors = np.zeros((n, 3)), np.zeros((n, dim, dim))
+        for i in range(n):                                   # the loop of M.build_data
+            fraction = rng.uniform(*M.FRACTION)
+            length = np.exp(rng.uniform(np.log(M.LENGTH[0]), np.log(M.LENGTH[1])))
+            aspect = np.exp(rng.uniform(np.log(M.ASPECT[0]), np.log(M.ASPECT[1])))
+            rot = M._rotation(dim, rng)
+            phases[i] = M.generate(dim, grid, fraction, length, aspect, rot, rng)
+            params[i] = (fraction, length, aspect)
+            tensors[i] = M.effective_conductivity(phases[i], contrast)
+        _CACHE["microstructure"] = dict(M=M, phase=phases, params=params, tensor=tensors,
+                                        tag=M.tag_of(dim, grid, n, contrast))
+    return _CACHE["microstructure"]
+
+
+def fig_phasefield(path):
+    """Chapter 11: the phase field of a microstructure and the co-field of a model on it.  A
+    two-phase cell becomes a field on the voxel grid, the field becomes its two-point statistics
+    over the lag vector, and the model is a weight over the same lags."""
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import ListedColormap
+    d = microstructure_set()
+    M, phase = d["M"], d["phase"]
+    y = d["tensor"][:, 0, 0].copy()                            # the conductivity along x
+    with open(os.path.join(RESULTS, "microstructure", "map_" + d["tag"] + ".json"),
+              encoding="utf-8") as fh:
+        lam = float(json.load(fh)["labels"]["xx"]["lam"])
+    # the linear model on the two-point statistics, as in M.coefficient_map
+    S = M.autocorrelations(M.smoothed_fields(phase, 0.0))       # (n, 2, grid, grid)
+    n, grid = S.shape[0], S.shape[-1]
+    A = S.reshape(n, -1)
+    K = A @ A.T
+    scale = float(np.mean(np.diag(K)))
+    learner = M._Learner("krr", {"lam": lam}, True).fit(K / scale, y)
+    w = (learner.alpha_ @ A / scale).reshape(S.shape[1:])        # the weight over the lags
+    bias = float(learner.b_)
+    predicted = bias + A @ w.ravel()
+    residual = float(np.abs(predicted - learner.predict(K / scale)).max())
+    # two cells of about the same composition and very different conductivity
+    fraction = d["params"][:, 0]
+    middle = np.where((fraction > 0.45) & (fraction < 0.55))[0]
+    shown = (int(middle[np.argmax(y[middle])]), int(middle[np.argmin(y[middle])]))
+    smooth = M.smoothed_fields(phase[list(shown)], 2.0)[:, 1]    # phase 1, width 2 voxels
+    half = grid // 2
+    lag = (-half - 0.5, half + 0.5, -half - 0.5, half + 0.5)
+    window = 15.5                                              # lags drawn, in voxels
+
+    def centred(a):
+        return np.fft.fftshift(a).T
+
+    fig, axes = plt.subplots(3, 3, figsize=(WIDTH, 6.4))
+    two_phase = ListedColormap(["#f1ede4", "#3b4252"])
+    for row, i in enumerate(shown):
+        ax = axes[row, 0]
+        ax.imshow(phase[i].T, origin="lower", cmap=two_phase, interpolation="nearest")
+        ax.set_ylabel(f"cell {'AB'[row]}\nconductivity along x: {y[i]:.1f}", fontsize=7.5)
+        ax = axes[row, 1]
+        ax.imshow(smooth[row].T, origin="lower", cmap="viridis", vmin=0.0, vmax=1.0)
+        ax = axes[row, 2]
+        im_s = ax.imshow(centred(S[i, 0]), origin="lower", extent=lag, cmap="magma",
+                         vmin=0.0, vmax=float(S[list(shown), 0].max()))
+    axes[0, 0].set_title("a two-phase cell\n(dark: phase 1, the conductor)", fontsize=7.5)
+    axes[0, 1].set_title("its phase field: the indicator of\nphase 1, smoothed over 2 voxels",
+                         fontsize=7.5)
+    axes[0, 2].set_title("its two-point statistics:\nphase 1 found again at a lag", fontsize=7.5)
+    lim = float(np.abs(centred(w[0])).max())
+    ax = axes[2, 0]
+    im_w = ax.imshow(centred(w[0]), origin="lower", extent=lag, cmap="RdBu_r", vmin=-lim,
+                     vmax=lim)
+    ax.set_title("the co-field of the model: a weight for\nevery lag (phase 1 with phase 1)",
+                 fontsize=7.5)
+    parts = [(w * S[i]).sum(axis=0) for i in shown]          # both phase pairs, lag by lag
+    plim = float(max(np.abs(p).max() for p in parts))
+    for col, (i, part) in enumerate(zip(shown, parts), start=1):
+        ax = axes[2, col]
+        im_p = ax.imshow(centred(part), origin="lower", extent=lag, cmap="RdBu_r", vmin=-plim,
+                         vmax=plim)
+        ax.set_title(f"weight × statistics of cell {'AB'[col - 1]}\n"
+                     f"sum over all lags: {part.sum():+.1f}".replace("-", "−"), fontsize=7.5)
+    for ax in list(axes[:2, 2]) + list(axes[2]):
+        ax.set_xlim(-window, window)
+        ax.set_ylim(-window, window)
+        ax.set_xlabel("lag along x / voxels", fontsize=7.5)
+        ax.tick_params(length=2, labelsize=7)
+    axes[2, 0].set_ylabel("lag along y / voxels", fontsize=7.5)
+    for ax in axes[:2, :2].ravel():
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+    def total(row):
+        i = shown[row]
+        rest = predicted[i] - bias
+        return (f"cell {'AB'[row]}: {bias:.1f} {'+' if rest >= 0 else '−'} {abs(rest):.1f} = "
+                f"{predicted[i]:.1f} (computed {y[i]:.1f})")
+
+    fig.suptitle("prediction = bias + sum over all lag vectors and both phase pairs of "
+                 "(weight × two-point statistics)\n" + total(0) + ";  " + total(1),
+                 fontsize=8, y=0.995)
+    fig.tight_layout(rect=(0, 0, 1, 1.02))
+    print(f"  phase field: {n} cells, ridge {lam:g}; the weights reproduce the prediction to "
+          f"{residual:.1e}; cell A {shown[0]} ({y[shown[0]]:.2f}), cell B {shown[1]} "
+          f"({y[shown[1]]:.2f})")
+    save(fig, path)
+
+
 def fig_metabolism(path):
     """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
     coloured by its out-of-fold score, the measured sites ringed."""
@@ -2193,6 +2307,7 @@ FIGURES = {
     "vectorcofield.png": fig_vectorcofield,
     "copattern.svg": fig_copattern,
     "cospectrum.svg": fig_cospectrum,
+    "phasefield.png": fig_phasefield,
     "metabolism.svg": fig_metabolism,
     "pharmacophore.png": fig_pharmacophore,
     "pocket.png": fig_pocket,
