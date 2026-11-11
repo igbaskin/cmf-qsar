@@ -1,6 +1,6 @@
 {
- "commit": "651d40b3672d307de47741e1ead33698cb8e6f77",
- "created": "2026-11-11T16:11:33",
+ "commit": "671382c4c153b933f4561c189d2dbb7ef5b8712c",
+ "created": "2026-11-11T16:51:17",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1142,6 +1142,10 @@
    "bytes": 10213,
    "sha256": "a6c154e059c44ca976278925265d751f9e370412340f83f7b85c0088524a56ef"
   },
+  "examples/make_mutant_examples.py": {
+   "bytes": 8558,
+   "sha256": "6041d1e352787b0a56831036aa91e3e9fded094c822777b50eddf71f383888c3"
+  },
   "examples/make_phenazine_examples.py": {
    "bytes": 21955,
    "sha256": "1a3f5ecb4a71595b6a05cb3e2af9d229de4918dad3d981196ac7f2b639de0bd5"
@@ -1373,6 +1377,58 @@
   "examples/mittal/YOPH.sdf": {
    "bytes": 122782,
    "sha256": "5e3e7e69e57970ca33563aa766ea73668389808ec06a8f18058d23d647bbcb7b"
+  },
+  "examples/mutants/1O6X/1O6X.pdb": {
+   "bytes": 92510,
+   "sha256": "51f585779a688436d5ca6ad01ce7abe994519087b4da40d21d82085df7640b10"
+  },
+  "examples/mutants/1O6X/mutants.csv": {
+   "bytes": 61626,
+   "sha256": "18bb9df0d3fe26621b738c7442c9ffd6385f27637610ac6a1c566f2bb6e4285b"
+  },
+  "examples/mutants/1O6X/wild_type.txt": {
+   "bytes": 118,
+   "sha256": "e474885ab8c47b11a4dab411523ef8bdfe698d85aac040454156e3a81aea1432"
+  },
+  "examples/mutants/1UFM/1UFM.pdb": {
+   "bytes": 89351,
+   "sha256": "e1fc79f4dd322256ae0c6a417e7bdca1fae5302c5d3306b94c66d2f64cf18f0f"
+  },
+  "examples/mutants/1UFM/mutants.csv": {
+   "bytes": 61464,
+   "sha256": "0f5918e9d3aa3ed24837f332292f80b25b4c7f2812f01a55b7a5074ec0d46d8f"
+  },
+  "examples/mutants/1UFM/wild_type.txt": {
+   "bytes": 118,
+   "sha256": "d7ecedbe0ddf68bcae409635413d2a9e26925d39eb7b5b70fc1ce05a5cec7c6e"
+  },
+  "examples/mutants/2K5N/2K5N.pdb": {
+   "bytes": 85544,
+   "sha256": "3f67507793e029829abadc09c5397c16e565e9370f923c0f9a7fb9cadc458aca"
+  },
+  "examples/mutants/2K5N/mutants.csv": {
+   "bytes": 56271,
+   "sha256": "57fb1b2d6605e07ed36afba32924ae6650283658b146eced799300e5c9e15dcf"
+  },
+  "examples/mutants/2K5N/wild_type.txt": {
+   "bytes": 113,
+   "sha256": "2867c4cd64fc8f93d69c9b5f2e560f619a556b9fc06663681645a023538f9676"
+  },
+  "examples/mutants/3ZGK/3ZGK.pdb": {
+   "bytes": 90566,
+   "sha256": "d98bcd053f1536b8b49403465af834dd5ebfbe807b48967b347e8aa8b2187003"
+  },
+  "examples/mutants/3ZGK/mutants.csv": {
+   "bytes": 59285,
+   "sha256": "791936273b94a20c38ac55ed860c0fe73f48dae1d0997ff9b53acae5842ab1c9"
+  },
+  "examples/mutants/3ZGK/wild_type.txt": {
+   "bytes": 114,
+   "sha256": "d95b92a5036fd17b847ec906a8a35c24fee904b719aa14ffb3704bf583c41e79"
+  },
+  "examples/mutants/README.md": {
+   "bytes": 4565,
+   "sha256": "a50c07a345c0e0064ee1cf0b5b71e4a5514b2bbd78f03bfc9bd8907805be3bcb"
   },
   "examples/openff/LICENSE_openff_protein-ligand-benchmark.txt": {
    "bytes": 1071,
@@ -2215,7 +2271,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": true,
+ "dirty": false,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -2978,6 +3034,9 @@
   "benchmarks/results/multitask/161_c1ccc2scnc2c1__activity__dG_ads.json": "32dfcf6dad06c171820e597af3e5b88639733f80a0e8d0a8089619a1c99a23c6",
   "benchmarks/results/multitask/2_c1c_nH_cn1__activity__dG_ads.json": "9d905b87215b62c91c914122fd47b9368ec8a7c33c2c974bc7826773e447dfe8",
   "benchmarks/results/multitask/table.md": "4c570360e2cf5a8e53ea135f5c88c2f0e3d0b8124335d1fe48eea9d8f7c47317",
+  "benchmarks/results/mutants/mutants.json": "0715bc37c528670928ad7bfffa017fdd00d4890200340ed7ab4d7535899caa8c",
+  "benchmarks/results/mutants/mutants_seed1.json": "8b627276fe260bbaba4fcf65d5f2ccd8698d25e3702edd649c4dfa3a63833688",
+  "benchmarks/results/mutants/table.md": "cb20a008bc0cda12b1e5a40c75e6a4a3e67fd41225c0c1738312e9cbc5fe6cbc",
   "benchmarks/results/nonlinearity/maps.png": "6222162e4be4dbcca85183d001549fe94ba868e30f44c4e11c08dc2e03e54d4e",
   "benchmarks/results/nonlinearity/summary.csv": "034a6115aef45a8f53271f5ac178cb248ee1e655b3c6be966812c6b6c27de9e4",
   "benchmarks/results/nonlinearity/table.md": "fd87668ad631badbca4cf541c53da340a6a3dc3b7ad76194b7488e13e9b2ebe6",
