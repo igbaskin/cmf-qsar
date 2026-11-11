@@ -1,6 +1,6 @@
 {
- "commit": "46a9a6e8d34a678bd9531277cda29ef9de57299b",
- "created": "2026-11-11T07:18:33",
+ "commit": "7aca5a1d643b494c5f7956bac1ef645d6b61a83f",
+ "created": "2026-11-11T14:56:00",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -1079,8 +1079,8 @@
    "sha256": "7a89f4385c6d91414959c36781dc8b1898fb63fff0bb48c7d6bac5a4545fe8ff"
   },
   "examples/make_band_examples.py": {
-   "bytes": 26162,
-   "sha256": "056a5dc3372d2b58108ae221d14d5807687668e515d2ed1ee6547d57f704fa4f"
+   "bytes": 29145,
+   "sha256": "efbe4f98511a8e218c317957bfd6c0c482d3259a28de7dfbacb76469acfd6ae0"
   },
   "examples/make_cyclodextrin_examples.py": {
    "bytes": 17067,
@@ -2135,8 +2135,8 @@
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
   "examples/spectra/README.md": {
-   "bytes": 10826,
-   "sha256": "00a0f6aa723a17da07ece04036b62470cd3da351bbf2d86027e45cbf6293655f"
+   "bytes": 11979,
+   "sha256": "44a7fb82c7390f3308255572e14ba245791e4ef06e992b03b680b154f54bae42"
   },
   "examples/spectra/benzoic_acids.sdf": {
    "bytes": 457694,
@@ -2149,6 +2149,10 @@
   "examples/spectra/benzoic_acids_ir.json": {
    "bytes": 181155,
    "sha256": "ea5c6d212d73f491de0203a9d3477c8c3ef7220d03289915d160d000762f1724"
+  },
+  "examples/spectra/benzoic_acids_ir_b97-3c.json": {
+   "bytes": 181393,
+   "sha256": "d36cbed299491ad7dbdd69d4084da73533672a480b31da6a8b242b62d57cf91b"
   },
   "examples/spectra/benzoic_acids_ir_xtb.json": {
    "bytes": 206354,
@@ -3474,8 +3478,8 @@
   "benchmarks/results/spectra/cospectrum.png": "de714fa2cb0b40ca54c28e804d2b1a85ce844c8a3eca5dc77b006e09a78fd51a",
   "benchmarks/results/spectra/fit.json": "b49b7d16d0b059fda6fe7420c888d9204e6b0627bc385bcc01479e9f46aa7431",
   "benchmarks/results/spectra/table.md": "29d6f04770e78b255512d343b40920542349da14e509f256f83294bdd28cb6b3",
-  "benchmarks/results/spectra_bridge/bridge.json": "3e2d814ab31e935e8b52a4a814a8e9997a4ed09a4be6c593b9e6b985bf7eba6b",
-  "benchmarks/results/spectra_bridge/table.md": "9ff28cd350a1ce259b651e323d9dc7974b7f763136e1555b6b3db45ad466cd08",
+  "benchmarks/results/spectra_bridge/bridge.json": "243f1020fed2877f54667fe08f8a4a8eddbdd723d9297a6ca079f77197679274",
+  "benchmarks/results/spectra_bridge/table.md": "cef8f4988708045c9a5907db86d7d9fc3353a177ced4f9cb339a2cfb3ad7cfd4",
   "benchmarks/results/spectra_ir/cospectrum.png": "2dcf0c25033b729bb12420c283f179c7626e27aa3cd339f034580ba77421ef3a",
   "benchmarks/results/spectra_ir/ir.json": "c2fb81258436cf9aae40fd346b975e51643001d7f75e060b24e1262c7a653239",
   "benchmarks/results/spectra_ir/table.md": "1c5a680d209227632710511e481cc839922c592207756b9724aecece69eb13f2",
