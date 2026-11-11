@@ -78,6 +78,29 @@ INSTRUMENT = {"sigma": 4.0, "step": 4.0, "noise": 0.02}
 CURVE_WIDTHS = (20.0, 50.0, 100.0, 200.0)
 CURVE_LOW = tuple(round(v, 3) for v in np.arange(0.975, 0.9951, 0.010))
 CURVE_HIGH = tuple(round(v, 3) for v in np.arange(1.040, 1.0701, 0.010))
+#: the factors tried for a second density functional, whose lines are near those of the first
+DFT_FACTOR = tuple(round(v, 3) for v in np.arange(0.980, 1.0201, 0.005))
+QUERIES_DFT = os.path.join(ROOT, "examples", "spectra", "benzoic_acids_ir_b97-3c.json")
+#: the levels of theory of the queries.  The library is always the ORCA r2SCAN-3c spectra.
+LEVELS = {
+    "xtb": {"path": QUERIES, "label": "GFN2-xTB",
+            "about": "a faster and rougher quantum method, with its own optimised geometry",
+            "one": ONE_FACTOR, "low": LOW_FACTOR, "high": HIGH_FACTOR,
+            "curve_widths": CURVE_WIDTHS, "curve_low": CURVE_LOW, "curve_high": CURVE_HIGH},
+    "b97-3c": {"path": QUERIES_DFT, "label": "B97-3c",
+               "about": "a second density functional, with its own optimised geometry and its "
+                        "own scaling factor of the wavenumbers (0.98)",
+               "one": DFT_FACTOR, "low": DFT_FACTOR, "high": DFT_FACTOR,
+               "curve_widths": (10.0, 20.0, 50.0, 100.0), "curve_low": DFT_FACTOR[::2],
+               "curve_high": DFT_FACTOR[::2]},
+}
+#: the control: GFN2-xTB spectra that start from the ORCA geometries, as the spectra of the
+#: second density functional do.  They are computed when the control is run and are not kept
+#: in the repository.
+CONTROL_CACHE = os.path.join(HERE, "cache", "spectra_bridge")
+LEVELS["xtb, ORCA geometry"] = dict(
+    LEVELS["xtb"], path=os.path.join(CONTROL_CACHE, "benzoic_acids_ir_xtb_orca_geometry.json"),
+    label="GFN2-xTB, optimised from the ORCA geometry")
 #: the region in which the carbonyl stretch of either level lies
 CARBONYL = (1650.0, 1850.0)
 #: part (a)
@@ -336,11 +359,12 @@ def summarise(rows: Sequence[dict]) -> dict:
     return out
 
 
-def part_b(repeats: int = REPEATS, results: str = RESULTS) -> dict:
+def part_b(repeats: int = REPEATS, results: str = RESULTS, level: str = "xtb") -> dict:
     t0 = time.time()
+    cfg = LEVELS[level]
     names, table = read_names()
     library = IR.read_spectra(LIBRARY, names)
-    queries = IR.read_spectra(QUERIES, names)
+    queries = IR.read_spectra(cfg["path"], names)
     twins = twin_rows(table)
     n = len(names)
     formulas = np.array(table["formula"])
@@ -353,19 +377,22 @@ def part_b(repeats: int = REPEATS, results: str = RESULTS) -> dict:
 
     shift = np.array([carbonyl(q) - carbonyl(l) for q, l in zip(queries, library)])
     high = np.array([float(q.x[-1]) - float(l.x[-1]) for q, l in zip(queries, library)])
-    out = {"n": n, "repeats": int(repeats), "split": SPLIT, "widths": list(WIDTHS),
+    out = {"level": level, "query": cfg["label"], "about": cfg["about"],
+           "n": n, "repeats": int(repeats), "split": SPLIT, "widths": list(WIDTHS),
            "powers": list(POWERS), "instrument": dict(INSTRUMENT),
            "carbonyl_shift": {"mean": float(shift.mean()), "sd": float(shift.std())},
            "highest_line_shift": {"mean": float(high.mean()), "sd": float(high.std())},
            "formula": formula_scores(table), "chance_top1": 1.0 / n,
            "n_twins": len(twins), "rows": {}}
-    log(f"=== part (b): {n} acids, the queries are GFN2-xTB spectra and the library is ORCA; "
+    log(f"=== part (b): {n} acids, the queries are {cfg['label']} spectra and the library is "
+        f"ORCA r2SCAN-3c; "
         f"the carbonyl band of a query is {shift.mean():+.1f} cm^-1 from that of its library "
         f"spectrum (sd {shift.std():.1f}), its highest line {high.mean():+.1f} "
         f"(sd {high.std():.1f})")
 
     centred_maps = [m + ", centred" for m in MAPS]
-    best = best_settings(library, queries, splits, twins, same, table)
+    best = best_settings(library, queries, splits, twins, same, table, one=cfg["one"],
+                         low=cfg["low"], high=cfg["high"])
     for name, rows in best.items():
         out["rows"][name] = summarise(rows)
     out["rows"]["chosen"] = summarise(chosen_map(best, centred_maps))
@@ -378,14 +405,15 @@ def part_b(repeats: int = REPEATS, results: str = RESULTS) -> dict:
     curves = [measured_like(q, INSTRUMENT["sigma"], INSTRUMENT["step"], INSTRUMENT["noise"],
                             rng) for q in queries]
     measured = best_settings(library, curves, splits, twins, same, table, centred=(True,),
-                             widths=CURVE_WIDTHS, low=CURVE_LOW, high=CURVE_HIGH)
+                             widths=cfg["curve_widths"], one=cfg["one"],
+                             low=cfg["curve_low"], high=cfg["curve_high"])
     out["rows"]["measured-like"] = summarise(chosen_map(measured, centred_maps))
     log(f"  measured-like curves, {time.time() - t1:.0f} s")
     # the other direction: an ORCA spectrum as the query, the GFN2-xTB spectra as the library
     back = best_settings(queries, library, splits, twins, same, table, centred=(True,),
-                         one=tuple(round(1.0 / v, 3) for v in ONE_FACTOR),
-                         low=tuple(round(1.0 / v, 3) for v in LOW_FACTOR[::2]),
-                         high=tuple(round(1.0 / v, 3) for v in HIGH_FACTOR[::2]))
+                         one=tuple(round(1.0 / v, 3) for v in cfg["one"]),
+                         low=tuple(round(1.0 / v, 3) for v in cfg["low"][::2]),
+                         high=tuple(round(1.0 / v, 3) for v in cfg["high"][::2]))
     out["rows"]["reverse"] = summarise(chosen_map(back, centred_maps))
     for name, row in out["rows"].items():
         log(f"  {name}: first in {100 * row['top1']['mean']:.1f} % of the test queries (sd "
@@ -395,6 +423,35 @@ def part_b(repeats: int = REPEATS, results: str = RESULTS) -> dict:
                f"{100 * row['top1_formula']['mean']:.1f} %" if "top1_formula" in row else ""))
     out["seconds"] = round(time.time() - t0, 1)
     return out
+
+
+def part_control(repeats: int = REPEATS, results: str = RESULTS) -> Optional[dict]:
+    """The control for the start geometry.  The spectra of the second density functional
+    start from the ORCA geometries of the library, and the GFN2-xTB spectra start from the
+    force-field geometries.  Here GFN2-xTB starts from the ORCA geometries too, and the same
+    protocol is run.  Returns None when xtb is not installed."""
+    from cmfqsar import xtb
+
+    sys.path.insert(0, os.path.join(ROOT, "examples"))
+    import make_band_examples as M
+
+    path = LEVELS["xtb, ORCA geometry"]["path"]
+    if not os.path.isfile(path):
+        try:
+            xtb.find_xtb(None)
+        except xtb.XtbError:
+            log("  the control needs xtb, which is not installed here; it is left out")
+            return None
+        os.makedirs(CONTROL_CACHE, exist_ok=True)
+        failed = M.write_infrared_xtb(M.BANDS, path, jobs=8, log=log,
+                                      workdir=os.path.join(CONTROL_CACHE, "xtb_work"))
+        if failed:
+            raise SystemExit(f"{failed} acids failed in the control run of xtb")
+    full = part_b(repeats, results, "xtb, ORCA geometry")
+    return {"query": full["query"], "repeats": full["repeats"],
+            "carbonyl_shift": full["carbonyl_shift"],
+            "rows": {k: full["rows"][k] for k in ("chosen", "none, centred", "measured-like")},
+            "seconds": full["seconds"]}
 
 
 # --------------------------------------------------------------------------- #
@@ -563,7 +620,13 @@ def run(part: str = "all", repeats: int = REPEATS, results: str = RESULTS) -> di
         with open(path, encoding="utf-8") as fh:
             out = json.load(fh)
     if part in ("all", "b"):
-        out["b"] = part_b(repeats, results)
+        out["b"] = part_b(repeats, results, "xtb")
+    if part in ("all", "dft") and os.path.isfile(QUERIES_DFT):
+        out["b_dft"] = part_b(repeats, results, "b97-3c")
+    if part in ("all", "control"):
+        control = part_control(repeats, results)
+        if control is not None:
+            out["b_control"] = control
     if part in ("all", "a"):
         out["a"] = part_a(results)
     with open(path, "w", encoding="utf-8") as fh:
@@ -597,6 +660,8 @@ def report(results: str = RESULTS) -> str:
              ""]
     if "b" in d:
         lines += _report_b(d["b"])
+    if "b_dft" in d:
+        lines += _report_b(d["b_dft"], again=True)
     if "a" in d:
         lines += _report_a(d["a"])
     if "a" in d and "b" in d:
@@ -624,22 +689,34 @@ B_ROWS = (("none", "spectrum kernel, the axis as it is"),
                    "between the two levels"))
 
 
-def _report_b(b: dict) -> List[str]:
+def _report_b(b: dict, again: bool = False) -> List[str]:
     f = b["formula"]
+    query = b.get("query", "GFN2-xTB")
+    about = b.get("about", "a faster and rougher quantum method, with its own optimised "
+                           "geometry")
+    places = ("The two levels put the lines at different places: the carbonyl band of a query "
+              f"is {b['carbonyl_shift']['mean']:+.1f} cm^-1 from that of its library spectrum "
+              f"(standard deviation {b['carbonyl_shift']['sd']:.1f}), and its highest line, "
+              "which is the O-H stretch in most acids, is "
+              f"{b['highest_line_shift']['mean']:+.1f} cm^-1 from it (standard deviation "
+              f"{b['highest_line_shift']['sd']:.1f}).")
+    head = ["| how the candidates are ranked | first, % of the queries | among the first "
+            "three, % | median rank | the right isomer above the other isomer of the same "
+            "substituent, % | first among the candidates with the composition of the query, "
+            "% | settings chosen most often |",
+            "|---|---:|---:|---:|---:|---:|---|"]
+    if again:
+        return ([f"## Part (b) again: a spectrum from {query} as the query", "",
+                 "The same library and the same protocol.  A query is now the spectrum of one "
+                 f"acid from {query}, {about}.  {places}", ""] + head + _rows_b(b))
     lines = ["## Part (b): which acid fits a spectrum", "",
              f"The {b['n']} substituted benzoic acids of plan item SP2.  The library holds one "
              "infrared spectrum for every acid, from ORCA (r2SCAN-3c, wavenumbers times "
-             "0.97).  A query is the spectrum of one acid from GFN2-xTB, a faster and "
-             "rougher quantum method, with its own optimised geometry.  The candidates are "
-             "ranked by the kernel between the query and their library spectra.  The rank of "
-             "the acid of the query is 1 when it is first.", "",
-             "The two levels put the lines at different places: the carbonyl band of a query "
-             f"is {b['carbonyl_shift']['mean']:+.1f} cm^-1 from that of its library spectrum "
-             f"(standard deviation {b['carbonyl_shift']['sd']:.1f}), and its highest line, "
-             f"which is the O-H stretch in most acids, is {b['highest_line_shift']['mean']:+.1f} "
-             f"cm^-1 from it (standard deviation {b['highest_line_shift']['sd']:.1f}).  The "
-             "axis of the query is therefore mapped first: not at all, by one factor, or by "
-             f"one factor below {b['split']:g} cm^-1 and another above it.", "",
+             f"0.97).  A query is the spectrum of one acid from {query}, {about}.  The "
+             "candidates are ranked by the kernel between the query and their library "
+             "spectra.  The rank of the acid of the query is 1 when it is first.", "",
+             places + "  The axis of the query is therefore mapped first: not at all, by one "
+             f"factor, or by one factor below {b['split']:g} cm^-1 and another above it.", "",
              "All acids share the bands of benzoic acid.  In the rows with centred spectra "
              "the mean normalised spectrum of each level is taken from its spectra before "
              "they are compared, which leaves what an acid has beyond those bands.", "",
@@ -658,16 +735,26 @@ def _report_b(b: dict) -> List[str]:
              "A measured-like query is the same spectrum as a curve on a grid of "
              f"{b['instrument']['step']:g} cm^-1, with every line broadened to a standard "
              f"deviation of {b['instrument']['sigma']:g} cm^-1 and with noise of "
-             f"{100 * b['instrument']['noise']:g} % of the largest value.", "",
-             "| how the candidates are ranked | first, % of the queries | among the first "
-             "three, % | median rank | the right isomer above the other isomer of the same "
-             "substituent, % | first among the candidates with the composition of the query, "
-             "% | settings chosen most often |",
-             "|---|---:|---:|---:|---:|---:|---|"]
-    lines.append(f"| by chance | {100 * b['chance_top1']:.1f} | | {(b['n'] + 1) / 2:.0f} | "
-                 "50.0 | | |")
-    lines.append(f"| by the composition (the molecular formula) | {100 * f['top1']:.1f} | | "
-                 f"{f['median']:.1f} | 50.0 | {100 * f['top1']:.1f} | |")
+             f"{100 * b['instrument']['noise']:g} % of the largest value.", ""]
+    lines += head + _rows_b(b)
+    lines += [f"{100 * (1 - f['share_unique']):.0f} % of the acids have the composition "
+              "of at least one other acid of the series (the meta and the para acid of one "
+              f"substituent, and other isomers; the largest group has {f['largest_group']} "
+              "acids).  The composition alone therefore puts the right acid first in "
+              f"{100 * f['top1']:.1f} % of the cases on average, by drawing among the acids "
+              "that it cannot tell apart.  The last number column is the practical case: the "
+              "composition is known, and the spectrum has to choose among the isomers.", ""]
+    return lines
+
+
+def _rows_b(b: dict) -> List[str]:
+    """The rows of the table of part (b) for one level of the queries, and an empty line."""
+    f = b["formula"]
+    query = b.get("query", "GFN2-xTB")
+    lines = [f"| by chance | {100 * b['chance_top1']:.1f} | | {(b['n'] + 1) / 2:.0f} | 50.0 "
+             "| | |",
+             f"| by the composition (the molecular formula) | {100 * f['top1']:.1f} | | "
+             f"{f['median']:.1f} | 50.0 | {100 * f['top1']:.1f} | |"]
     for key, label in B_ROWS:
         r = b["rows"][key]
         narrowed = _pct(r["top1_formula"]) if "top1_formula" in r else ""
@@ -676,17 +763,10 @@ def _report_b(b: dict) -> List[str]:
             chosen = ("map chosen: " + ", ".join(
                 f"{m.replace(', centred', '')} in {c} of {b['repeats']} splits"
                 for m, c in r["maps"].items()) + "; " + chosen)
-        lines.append(f"| {label} | {_pct(r['top1'])} | {_pct(r['top3'])} | "
-                     f"{r['median']['mean']:.1f} | {_pct(r['isomer'])} | {narrowed} | "
-                     f"{chosen} |")
-    lines += ["", f"{100 * (1 - f['share_unique']):.0f} % of the acids have the composition "
-              "of at least one other acid of the series (the meta and the para acid of one "
-              f"substituent, and other isomers; the largest group has {f['largest_group']} "
-              "acids).  The composition alone therefore puts the right acid first in "
-              f"{100 * f['top1']:.1f} % of the cases on average, by drawing among the acids "
-              "that it cannot tell apart.  The last number column is the practical case: the "
-              "composition is known, and the spectrum has to choose among the isomers.", ""]
-    return lines
+        lines.append(f"| {label.replace('GFN2-xTB', query)} | {_pct(r['top1'])} | "
+                     f"{_pct(r['top3'])} | {r['median']['mean']:.1f} | {_pct(r['isomer'])} | "
+                     f"{narrowed} | {chosen} |")
+    return lines + [""]
 
 
 def _report_a(a: dict) -> List[str]:
@@ -775,10 +855,58 @@ def _verdict(d: dict) -> List[str]:
            "the places of single lines do not matter.", "",
            "**The gate of the item.** A spectrum computed at a second level of theory has to "
            "rank its own acid first among the series in most cases, where the composition "
-           f"cannot tell the isomers apart.  Among the whole series the gate is "
-           f"{'met' if gate else 'not met'}.  Among the candidates with the composition of "
-           f"the query, which is the question of the isomers, it is "
-           f"{'met' if narrowed else 'not met'}.", ""]
+           f"cannot tell the isomers apart.  With GFN2-xTB as the second level the gate is "
+           f"{'met' if gate else 'not met'} among the whole series.  Among the candidates "
+           f"with the composition of the query, which is the question of the isomers, it is "
+           f"{'met' if narrowed else 'not met'}."
+           + (f"  With {d['b_dft']['query']} as the second level it is "
+              f"{'met' if d['b_dft']['rows']['chosen']['top1']['mean'] > 0.5 else 'not met'} "
+              "among the whole series." if "b_dft" in d else ""), ""]
+    if "b_dft" in d:
+        dft = d["b_dft"]
+        r2 = dft["rows"]["chosen"]
+        gate2 = r2["top1"]["mean"] > 0.5
+        out += [f"**Part (b) with a second density functional.** A spectrum from "
+                f"{dft['query']} has its carbonyl band "
+                f"{dft['carbonyl_shift']['mean']:+.1f} cm^-1 from that of the library "
+                f"(standard deviation {dft['carbonyl_shift']['sd']:.1f}; GFN2-xTB "
+                f"{b['carbonyl_shift']['mean']:+.1f}, {b['carbonyl_shift']['sd']:.1f}).  With "
+                f"the same protocol it ranks its own acid first in "
+                f"{100 * r2['top1']['mean']:.1f} % of the queries (GFN2-xTB "
+                f"{100 * best['top1']['mean']:.1f} %) and among the first three in "
+                f"{100 * r2['top3']['mean']:.1f} %.  It puts the right isomer above the other "
+                f"in {100 * r2['isomer']['mean']:.1f} %, and it is first among the candidates "
+                f"with the composition of the query in "
+                f"{100 * r2['top1_formula']['mean']:.1f} %.  The calibration chooses "
+                + " or ".join(shown(k) for k in r2.get("chosen", [])) + ".  A measured-like "
+                f"curve gives {100 * dft['rows']['measured-like']['top1']['mean']:.1f} %.  "
+                f"For this level the gate is {'met' if gate2 else 'not met'} among the whole "
+                "series.  "
+                + ("The share of GFN2-xTB was therefore a limit of that method and not of "
+                   "the kernel: with a second level that is near the first, the kernel finds "
+                   "the acid." if gate2 and not gate else
+                   "The second functional does not change the answer of the gate."), ""]
+        plain = dft["rows"]["none"]
+        out += [f"**What is needed with a near level.** Without a map of the axis and without "
+                f"centring the spectrum of the second functional is already first in "
+                f"{100 * plain['top1']['mean']:.1f} % of the queries.  The centring, which "
+                f"decided the result for GFN2-xTB, adds little here "
+                f"({100 * dft['rows']['none, centred']['top1']['mean']:.1f} %).  The position "
+                f"of the carbonyl band alone gives "
+                f"{100 * dft['rows']['band']['top1']['mean']:.1f} %, so it is the whole "
+                "spectrum that finds the acid and not one band.", ""]
+    if "b_control" in d:
+        c = d["b_control"]["rows"]["chosen"]
+        out += [f"**Control: the start geometry.** The spectra of the second functional start "
+                f"from the ORCA geometries of the library, and the GFN2-xTB spectra start "
+                f"from the force-field geometries.  With GFN2-xTB started from the ORCA "
+                f"geometries as well, the same protocol gives "
+                f"{100 * c['top1']['mean']:.1f} % of first places (from the force-field "
+                f"geometries {100 * best['top1']['mean']:.1f} %) and "
+                f"{100 * c['top1_formula']['mean']:.1f} % among the candidates with the "
+                f"composition of the query "
+                f"({100 * best['top1_formula']['mean']:.1f} %).  The start geometry is not "
+                "what separates the two levels; the method is.", ""]
     for key, v in a["views"].items():
         widths = v["widths"]
         narrow, wide = min(widths, key=lambda w: float(w.split()[0])), max(
@@ -823,7 +951,10 @@ def _verdict(d: dict) -> List[str]:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--part", default="all", choices=["all", "a", "b"])
+    ap.add_argument("--part", default="all", choices=["all", "a", "b", "dft", "control"],
+                    help="b: the GFN2-xTB queries; dft: the queries of a second density "
+                         "functional; control: GFN2-xTB queries that start from the ORCA "
+                         "geometries; a: the canonical correlation analysis")
     ap.add_argument("--repeats", type=int, default=REPEATS)
     ap.add_argument("--report", action="store_true", help="only write the table")
     a = ap.parse_args(argv)

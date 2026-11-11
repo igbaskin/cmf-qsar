@@ -11258,20 +11258,30 @@ from the geometry that xtb moves along the imaginary mode. Stage `--xtb-ir` of
 `examples/make_band_examples.py` does this for the 189 acids in less than a minute and writes
 `examples/spectra/benzoic_acids_ir_xtb.json`. Ten acids keep one imaginary mode.
 
+GFN2-xTB is a rough second level. A second density functional is a nearer one. Stage
+`--orca-ir` of the same script optimises every acid again with ORCA at B97-3c, from the
+geometry of the first functional, computes its frequencies and writes
+`examples/spectra/benzoic_acids_ir_b97-3c.json` (wavenumbers times 0.98, the scaling factor of
+that level). The 189 acids took 4.6 hours with 16 jobs at a time, and none failed.
+
 ```
-python examples/make_band_examples.py --xtb-ir --jobs 8   # the GFN2-xTB spectra
-python benchmarks/run_spectra_bridge.py                   # both parts, 5 minutes
+python examples/make_band_examples.py --xtb-ir --jobs 8    # the GFN2-xTB spectra, 1 minute
+python examples/make_band_examples.py --orca-ir --jobs 16  # the B97-3c spectra, hours, cached
+python benchmarks/run_spectra_bridge.py                    # all parts, 15 minutes
 ```
 
-The two levels do not put the lines at the same places, as a measured and a computed spectrum
-do not. The carbonyl band of the GFN2-xTB spectrum is 29.3 cm$^{-1}$ above that of the ORCA
+No two levels put the lines at the same places, as a measured and a computed spectrum do not.
+The carbonyl band of the GFN2-xTB spectrum is 29.3 cm$^{-1}$ above that of the library
 spectrum (standard deviation 4.4), and its highest line, the O-H stretch in most acids, is
-182 cm$^{-1}$ below (standard deviation 18.7).
+182 cm$^{-1}$ below (standard deviation 18.7). For B97-3c the two numbers are 4.8 cm$^{-1}$
+below (3.0) and 26.6 cm$^{-1}$ below (1.5), and the lines of the two functionals, taken in
+order, are 5.0 cm$^{-1}$ apart at the median.
 
 ### Part (b): which acid fits a spectrum
 
-The ORCA spectra are the library: one spectrum for every candidate acid. A GFN2-xTB spectrum is
-the query. The 189 candidates are ranked by the kernel between the query and their library
+The spectra of the first functional (ORCA, r2SCAN-3c) are the library: one spectrum for every
+candidate acid. A spectrum of a second level is the query, first from GFN2-xTB and then from
+B97-3c. The 189 candidates are ranked by the kernel between the query and their library
 spectra, and the question is where the acid of the query stands. Three things are chosen
 before a query is ranked, all on the acids of half of the substituents, for which the right
 answer is used (the *calibration acids*):
@@ -11301,13 +11311,38 @@ is fitted on one half and scored on the other.
 | the same, the query as a measured-like curve | 37.8 | 60.1 | 2.4 | 82.9 | 78.1 |
 | the same in the other direction (an ORCA query, the GFN2-xTB library) | 48.2 | 74.4 | 1.6 | 85.6 | 81.8 |
 
-**Among the whole series the gate is not met.** The gate asks that a spectrum of a second level
-ranks its own acid first in most cases. It does so in 42.3 % of the queries (standard deviation
-over the splits 3.2), and among the first three in 66.9 %; the median rank is 2. That is far
-above chance (0.5 %) and above the position of the carbonyl band alone (2.7 %), but it is not
-most cases.
+The rows above are for GFN2-xTB as the second level. With B97-3c as the second level, in the
+same protocol:
 
-**Among the isomers the gate is met.** The composition narrows the candidates to a few: 99 % of
+| how the candidates are ranked | first, % of the queries | among the first three, % | median rank | the right isomer above the other isomer of the same substituent, % | first among the candidates with the composition of the query, % |
+|---|---:|---:|---:|---:|---:|
+| the position of the carbonyl band alone | 6.4 | 17.2 | 13.1 | 83.1 | |
+| spectrum kernel, the axis as it is | 98.6 | 99.7 | 1.0 | 100.0 | 100.0 |
+| centred spectra, the map chosen inside the calibration acids | 99.6 | 99.7 | 1.0 | 100.0 | 100.0 |
+| the same, the query as a measured-like curve | 96.3 | 100.0 | 1.0 | 99.8 | 99.7 |
+| the same in the other direction (an r2SCAN-3c query, the B97-3c library) | 97.8 | 99.6 | 1.0 | 99.2 | 99.2 |
+
+**With a second density functional the gate is met.** The gate asks that a spectrum of a second
+level ranks its own acid first among the series in most cases. A B97-3c spectrum does so in
+99.6 % of the queries (standard deviation over the splits 0.5), and it never confuses the two
+isomers of a substituent. The position of the carbonyl band alone gives 6.4 %, so it is the
+whole spectrum that finds the acid and not one band. Nothing has to be repaired first: without
+a map of the axis and without centring the share is already 98.6 %, the calibration chooses no
+map in ten of ten splits, and the width it chooses is 10 to 20 cm$^{-1}$, at which single
+lines are compared.
+
+**With GFN2-xTB it is not met for the whole series.** A GFN2-xTB spectrum ranks its own acid
+first in 42.3 % of the queries (standard deviation over the splits 3.2), and among the first
+three in 66.9 %; the median rank is 2. That is far above chance (0.5 %) and above the position
+of the carbonyl band alone (2.7 %), but it is not most cases. So the 42 % is a limit of that
+method and not of the kernel.
+
+**The start geometry does not explain the difference.** The B97-3c spectra start from the
+geometries of the library, and the GFN2-xTB spectra start from the force-field geometries. As
+a control, GFN2-xTB is run from the geometries of the library as well. The same protocol then
+gives 43.3 % of first places, against 42.3 %.
+
+**Among the isomers GFN2-xTB is enough.** The composition narrows the candidates to a few: 99 % of
 the acids share their formula with at least one other acid, mostly the meta and the para acid
 of one substituent, and the composition alone is right in 45.0 % of the cases by drawing among
 them. This is the part that the gate names, because the composition cannot tell isomers apart.
@@ -11315,18 +11350,20 @@ When only the candidates with the composition of the query are ranked, the spect
 right acid first in 70.6 % of the queries, and it puts the right isomer above the other isomer
 of the same substituent in 74.9 %.
 
-**Three readings.** Centring matters most: without it the share of first places is 27.0 %,
+**Three readings for the rough level.** Centring matters most: without it the share of first
+places is 27.0 %,
 because the shared bands of benzoic acid fill the comparison. A map of the axis does not help:
 one factor gives the same as none, and two factors give less (36.0 %) although they fit the
 calibration acids better. And the calibration chooses a width of 50 or 100 cm$^{-1}$, at which
-regions of the spectrum are compared and not single lines. The two levels do not agree line by
-line. A map can move the carbonyl band and the O-H stretch onto their places, but the other
-lines stay tens of cm$^{-1}$ apart in a way that no smooth map repairs.
+regions of the spectrum are compared and not single lines. GFN2-xTB and the density functional
+do not agree line by line. A map can move the carbonyl band and the O-H stretch onto their
+places, but the other lines stay tens of cm$^{-1}$ apart in a way that no smooth map repairs.
 
 **A measured-like query.** The same query as a curve on a grid of 4 cm$^{-1}$, with every line
 broadened to a standard deviation of 4 cm$^{-1}$ and noise of 2 % of the largest value, gives
-37.8 % of first places and 78.1 % among the isomers. The resolution and the noise of an
-instrument are not what limits the result; the difference between the two levels is.
+96.3 % of first places for B97-3c and 37.8 % for GFN2-xTB (78.1 % among the isomers). The
+resolution and the noise of an instrument are not what limits the result. How near the level
+of the library is to the level of the query is.
 
 ### Part (a): which part of the structure moves which part of the spectrum
 
@@ -11363,14 +11400,16 @@ which are the same on the carboxyl group of every acid, it falls from +0.822 at 
 at 1 A: the direction has to reach the substituent. This is the finding of section *A
 vibrational band as the local target*, reached here without a target.
 
-**What is not done.** The second level is a semi-empirical method, which differs from the first
-more than a second density functional would, and probably more than a measurement differs from
-a scaled density-functional spectrum. A run of the series with a second functional is the
-check that would say whether the 42 % is a limit of the kernel or of GFN2-xTB. No measured
-spectrum is used. The pairs of part (a) are read against five properties and six regions; a
-co-field of a structural direction in space, which needs the posed kernel, is not drawn. And
-the candidates are the acids of the series only: ranking against a large library of other
-compounds is another question.
+**What is not done.** No measured spectrum is used. The two functionals compute the same
+object: the harmonic spectrum of one molecule in the gas phase, in the same conformer. A
+measured spectrum of a carboxylic acid differs from that in more than the places of the lines.
+In a solid or in a solution the acid forms hydrogen-bonded pairs, which moves the carbonyl
+band and makes the O-H band broad, and real bands are not harmonic. So the 99.6 % says that
+the kernel finds the right structure when the library is computed at a level near the query,
+and it does not say how near a computed library is to a measurement. The pairs of part (a) are
+read against five properties and six regions; a co-field of a structural direction in space,
+which needs the posed kernel, is not drawn. And the candidates are the acids of the series only:
+ranking against a large library of other compounds is another question.
 
 ## A migration path as the sample: the barrier of a Li hop
 

@@ -10,7 +10,7 @@ group, which gives 189 acids (X = H is the same acid in both series and is kept 
 is the stretch of the carbonyl bond, the strongest band of an acid and the one whose shift with
 the substituent is textbook chemistry: an electron donor lowers it, an acceptor raises it.
 
-Five stages, all from this script.
+Six stages, all from this script.
 
 1. **The structures**, from SMILES: each acid is embedded with ETKDG, optimised with MMFF94, and
    the lowest-energy conformer with the carboxyl in its usual *syn* arrangement (the hydroxyl
@@ -52,6 +52,14 @@ Five stages, all from this script.
    `benchmarks/run_spectra_bridge.py` (plan item SP3) asks whether the spectrum of one level
    finds its own acid among the spectra of the other.
 
+6. **The infrared spectrum of every acid at a second density functional** (``--orca-ir``):
+   every acid is optimised again with ORCA at B97-3c, from the geometry of stage 2, and its
+   frequencies are computed.  Written to `examples/spectra/benzoic_acids_ir_b97-3c.json` in
+   the layout of stage 4, with the wavenumbers times the scaling factor of that level.  The
+   jobs are cached under `benchmarks/results/band/orca_work_b97-3c/`.  Two density functionals
+   differ less than a density functional and GFN2-xTB do, so this is the nearer stand-in for a
+   measured spectrum.
+
 Usage
 -----
     python examples/make_band_examples.py                 # stage 1
@@ -60,6 +68,7 @@ Usage
     python examples/make_band_examples.py --xtb --jobs 8     # stage 3, 13 seconds in all
     python examples/make_band_examples.py --ir               # stage 4, a few seconds
     python examples/make_band_examples.py --xtb-ir --jobs 8  # stage 5, less than a minute
+    python examples/make_band_examples.py --orca-ir --jobs 16  # stage 6, hours, cached
 
 On the serial ORCA build of this machine (one core per job) benzoic acid alone takes 5 minutes.
 With ten to twenty acids running at the same time one acid takes 16 to 69 minutes and about
@@ -96,6 +105,8 @@ BANDS = os.path.join(OUT_DIR, "benzoic_acids_co.sdf")
 QUANTUM = os.path.join(OUT_DIR, "benzoic_acids_xtb.sdf")
 INFRARED = os.path.join(OUT_DIR, "benzoic_acids_ir.json")
 INFRARED_XTB = os.path.join(OUT_DIR, "benzoic_acids_ir_xtb.json")
+#: the second density functional of stage 6
+SECOND_LEVEL = "B97-3c TightSCF"
 XTB_IR_WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "xtb_ir_work")
 WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "orca_work")
 XTB_WORKDIR = os.path.join(ROOT, "benchmarks", "results", "band", "xtb_work")
@@ -358,8 +369,34 @@ def run_xtb(structures: str = STRUCTURES, out: str = QUANTUM, workdir: str = XTB
     return len(failed)
 
 
+def level_slug(level: str) -> str:
+    """The first keyword of a level of theory in lower case, for the name of a file."""
+    return (level.split() or ["level"])[0].lower()
+
+
+def write_infrared_level(level: str = SECOND_LEVEL, bands: str = BANDS, out: str = "",
+                         workdir: str = "", jobs: int = 10, limit: int = 0, log=print) -> int:
+    """Stage 6: the infrared stick spectrum of every acid at another level of theory.
+
+    Every acid is optimised again at `level`, from the optimised geometry of stage 2, and its
+    frequencies are computed, as in stage 2 (an acid that ends with an imaginary frequency is
+    moved along that mode and optimised once more).  The SD file with the bands of that level
+    is kept beside the jobs, and the spectra are written as in stage 4.  Returns the number of
+    acids that failed or have no spectrum.
+    """
+    slug = level_slug(level)
+    workdir = workdir or os.path.join(ROOT, "benchmarks", "results", "band", "orca_work_" + slug)
+    out = out or os.path.join(OUT_DIR, f"benzoic_acids_ir_{slug}.json")
+    os.makedirs(workdir, exist_ok=True)
+    sdf = os.path.join(workdir, f"benzoic_acids_{slug}.sdf")
+    failed = run_orca(bands, sdf, workdir, jobs=jobs, limit=limit, level=level, log=log)
+    what = (f"infrared stick spectra of the substituted benzoic acids, each optimised again "
+            f"at {level} from the geometry of benzoic_acids_co.sdf (plan item SP3)")
+    return failed + write_infrared(sdf, out, workdir, log=log, what=what)
+
+
 def write_infrared(bands: str = BANDS, out: str = INFRARED, workdir: str = WORKDIR,
-                   log=print) -> int:
+                   log=print, what: str = "") -> int:
     """Stage 4: the infrared stick spectrum of every acid, read from the ORCA frequency job
     that gave its band; returns the number of acids without a spectrum.
 
@@ -384,8 +421,9 @@ def write_infrared(bands: str = BANDS, out: str = INFRARED, workdir: str = WORKD
         levels.add(mol.GetProp("qm_level"))
         rows.append({"name": name, "wavenumbers": [round(float(v), 3) for v in sticks.x],
                      "intensities": [round(float(v), 3) for v in sticks.y]})
-    head = {"what": "infrared stick spectra of the substituted benzoic acids of "
-                    "benzoic_acids_co.sdf, from the ORCA frequency jobs of plan item SP2",
+    head = {"what": what or ("infrared stick spectra of the substituted benzoic acids of "
+                             "benzoic_acids_co.sdf, from the ORCA frequency jobs of plan "
+                             "item SP2"),
             "axis": "wavenumber", "unit": "cm^-1", "intensity_unit": "km/mol",
             "frequency_scale": sorted(scales), "qm_level": sorted(levels)}
     write_spectra(out, head, rows)
@@ -456,6 +494,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     ap.add_argument("--ir", action="store_true",
                     help="stage 4: write the infrared stick spectra from the ORCA outputs of "
                          "stage 2")
+    ap.add_argument("--orca-ir", action="store_true",
+                    help="stage 6: optimise every acid again with ORCA at a second density "
+                         "functional (B97-3c, or the level given with --level) and write "
+                         "its infrared stick spectrum")
     ap.add_argument("--xtb-ir", action="store_true",
                     help="stage 5: optimise every acid with GFN2-xTB and write its infrared "
                          "stick spectrum")
@@ -472,6 +514,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     a = ap.parse_args(argv)
     structures = os.path.join(a.out_dir, os.path.basename(STRUCTURES))
     bands = os.path.join(a.out_dir, os.path.basename(BANDS))
+    if a.orca_ir:
+        if not os.path.exists(bands):
+            raise SystemExit(f"{bands} is missing: run the script with --orca first")
+        level = a.level or SECOND_LEVEL
+        out = os.path.join(a.out_dir, f"benzoic_acids_ir_{level_slug(level)}.json")
+        return 1 if write_infrared_level(level, bands, out, jobs=a.jobs, limit=a.limit) else 0
     if a.xtb_ir:
         if not os.path.exists(structures):
             raise SystemExit(f"{structures} is missing: run the script without options first")

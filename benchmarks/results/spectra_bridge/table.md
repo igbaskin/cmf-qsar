@@ -31,6 +31,25 @@ A measured-like query is the same spectrum as a curve on a grid of 4 cm^-1, with
 
 99 % of the acids have the composition of at least one other acid of the series (the meta and the para acid of one substituent, and other isomers; the largest group has 4 acids).  The composition alone therefore puts the right acid first in 45.0 % of the cases on average, by drawing among the acids that it cannot tell apart.  The last number column is the practical case: the composition is known, and the spectrum has to choose among the isomers.
 
+## Part (b) again: a spectrum from B97-3c as the query
+
+The same library and the same protocol.  A query is now the spectrum of one acid from B97-3c, a second density functional, with its own optimised geometry and its own scaling factor of the wavenumbers (0.98).  The two levels put the lines at different places: the carbonyl band of a query is -4.8 cm^-1 from that of its library spectrum (standard deviation 3.0), and its highest line, which is the O-H stretch in most acids, is -26.6 cm^-1 from it (standard deviation 1.5).
+
+| how the candidates are ranked | first, % of the queries | among the first three, % | median rank | the right isomer above the other isomer of the same substituent, % | first among the candidates with the composition of the query, % | settings chosen most often |
+|---|---:|---:|---:|---:|---:|---|
+| by chance | 0.5 | | 95 | 50.0 | | |
+| by the composition (the molecular formula) | 45.0 | | 1.5 | 50.0 | 45.0 | |
+| spectrum kernel, the axis as it is | 98.6 (1.0) | 99.7 (0.5) | 1.0 | 100.0 (0.0) | 100.0 (0.0) | 20 cm^-1, power 0.5; 10 cm^-1, power 0.5 |
+| spectrum kernel, the axis times one factor | 98.6 (1.0) | 99.7 (0.5) | 1.0 | 100.0 (0.0) | 100.0 (0.0) | 20 cm^-1, power 0.5, factor 1.000; 10 cm^-1, power 0.5, factor 1.000 |
+| spectrum kernel, one factor below and one above 2300 cm^-1 | 97.6 (1.8) | 99.6 (0.5) | 1.0 | 99.7 (0.5) | 99.7 (0.5) | 20 cm^-1, power 0.5, factors 1.000 and 1.000; 20 cm^-1, power 0.5, factors 0.995 and 1.000 |
+| centred spectra, the axis as it is | 99.6 (0.5) | 99.7 (0.5) | 1.0 | 100.0 (0.0) | 100.0 (0.0) | 20 cm^-1, power 0.5; 10 cm^-1, power 0.5 |
+| centred spectra, the axis times one factor | 99.3 (0.9) | 99.7 (0.5) | 1.0 | 100.0 (0.0) | 100.0 (0.0) | 20 cm^-1, power 0.5, factor 1.000; 10 cm^-1, power 0.5, factor 1.000 |
+| centred spectra, one factor below and one above 2300 cm^-1 | 97.8 (2.0) | 99.7 (0.5) | 1.0 | 99.9 (0.3) | 99.9 (0.3) | 10 cm^-1, power 0.5, factors 1.000 and 1.000; 20 cm^-1, power 0.5, factors 0.990 and 1.000 |
+| centred spectra, the map of the axis chosen inside the calibration acids | 99.6 (0.5) | 99.7 (0.5) | 1.0 | 100.0 (0.0) | 100.0 (0.0) | map chosen: none in 10 of 10 splits; 20 cm^-1, power 0.5; 10 cm^-1, power 0.5 |
+| the same, the query as a measured-like curve | 96.3 (2.5) | 100.0 (0.0) | 1.0 | 99.8 (0.6) | 99.7 (0.7) | map chosen: none in 10 of 10 splits; 20 cm^-1, power 0.5; 10 cm^-1, power 0.5 |
+| the same in the other direction: an ORCA spectrum as the query, the B97-3c spectra as the library | 97.8 (2.9) | 99.6 (0.5) | 1.0 | 99.2 (0.9) | 99.2 (0.9) | map chosen: none in 6 of 10 splits, one factor in 3 of 10 splits, two factors in 1 of 10 splits; 20 cm^-1, power 0.5; 50 cm^-1, power 0.5 |
+| the position of the carbonyl band alone, after a linear regression between the two levels | 6.4 (3.3) | 17.2 (7.4) | 13.1 | 83.1 (6.0) |  |  |
+
 ## Part (a): which part of the structure moves which part of the spectrum
 
 A kernel canonical correlation analysis of a structural kernel and the kernel of the ORCA spectra (width 5 cm^-1, power 1).  It finds pairs of directions, one in each description, whose values over the acids (the variates) correlate most.  The correlation on the acids that the directions were fitted on is close to 1 whatever the two descriptions hold, so a pair is judged by its correlation on held-out acids: 10 folds that hold out whole substituents.  It is compared with 100 analyses in which the pairing of the two descriptions is shuffled.  The structural kernel is the invariant local kernel around the carbonyl carbon; the width of its envelope and the ridge are the ones with the highest held-out correlation.
@@ -105,7 +124,13 @@ Which region of the spectrum carries a pair: the correlation, over held-out acid
 
 **The width that is chosen.** The calibration chooses 50 cm^-1, power 0.5 or 100 cm^-1, power 0.5.  A width of this size compares regions of the spectrum and not single lines.  The two levels of theory do not agree line by line.  A map of the axis can move the carbonyl band and the O-H stretch onto their places, but the other lines stay tens of cm^-1 apart in a way that no smooth map repairs, and the calibration then prefers a width at which the places of single lines do not matter.
 
-**The gate of the item.** A spectrum computed at a second level of theory has to rank its own acid first among the series in most cases, where the composition cannot tell the isomers apart.  Among the whole series the gate is not met.  Among the candidates with the composition of the query, which is the question of the isomers, it is met.
+**The gate of the item.** A spectrum computed at a second level of theory has to rank its own acid first among the series in most cases, where the composition cannot tell the isomers apart.  With GFN2-xTB as the second level the gate is not met among the whole series.  Among the candidates with the composition of the query, which is the question of the isomers, it is met.  With B97-3c as the second level it is met among the whole series.
+
+**Part (b) with a second density functional.** A spectrum from B97-3c has its carbonyl band -4.8 cm^-1 from that of the library (standard deviation 3.0; GFN2-xTB +29.3, 4.4).  With the same protocol it ranks its own acid first in 99.6 % of the queries (GFN2-xTB 42.3 %) and among the first three in 99.7 %.  It puts the right isomer above the other in 100.0 %, and it is first among the candidates with the composition of the query in 100.0 %.  The calibration chooses 20 cm^-1, power 0.5 or 10 cm^-1, power 0.5.  A measured-like curve gives 96.3 %.  For this level the gate is met among the whole series.  The share of GFN2-xTB was therefore a limit of that method and not of the kernel: with a second level that is near the first, the kernel finds the acid.
+
+**What is needed with a near level.** Without a map of the axis and without centring the spectrum of the second functional is already first in 98.6 % of the queries.  The centring, which decided the result for GFN2-xTB, adds little here (99.6 %).  The position of the carbonyl band alone gives 6.4 %, so it is the whole spectrum that finds the acid and not one band.
+
+**Control: the start geometry.** The spectra of the second functional start from the ORCA geometries of the library, and the GFN2-xTB spectra start from the force-field geometries.  With GFN2-xTB started from the ORCA geometries as well, the same protocol gives 43.3 % of first places (from the force-field geometries 42.3 %) and 74.9 % among the candidates with the composition of the query (70.6 %).  The start geometry is not what separates the two levels; the method is.
 
 **Part (a), the five fields, Gasteiger charges.** The pairs above the shuffled pairing on held-out substituents are: 1, 2, 3, 4 of the first 4.  Pair 1 has a held-out correlation of +0.822.  Of the five properties, its two variates follow the Hammett constant most (r -0.79 for the structure and -0.83 for the spectrum), and the regions of the spectrum that carry it most are: O-H stretch (+0.74) and C=O stretch (+0.74).  Pair 2 has a held-out correlation of +0.804.  Of the five properties, its two variates follow para (1) or meta (0) most (r +0.86 for the structure and +0.84 for the spectrum), and the regions of the spectrum that carry it most are: C-O stretch, O-H bend and ring modes (+0.66) and out-of-plane bends and ring deformations (+0.66).  The held-out correlation of the first pair is +0.105 with an envelope of 1.00 A around the carbonyl carbon and +0.822 with 10.00 A.
 

@@ -130,6 +130,24 @@ above the one of `benzoic_acids_ir.json`, and the O-H stretch is 182 cm⁻¹ bel
 `benchmarks/run_spectra_bridge.py` (plan item SP3) uses the difference: a spectrum of one
 level has to find its own acid among the spectra of the other.
 
+## `benzoic_acids_ir_b97-3c.json` — the infrared spectrum at a second density functional
+
+Stage 6 of the same script (`--orca-ir`). Every acid is optimised again with ORCA 6.1 at
+B97-3c, from the optimised geometry of `benzoic_acids_co.sdf`, and its harmonic frequencies
+are computed. The layout is the one of `benzoic_acids_ir.json`; the wavenumbers are multiplied
+by 0.98, the scaling factor of that level (`cmfqsar.orca.FREQUENCY_SCALE`). An acid that ends
+with an imaginary frequency is moved along that mode and optimised once more, as in stage 2;
+one acid (`meta-SPh`) keeps one imaginary mode.
+
+The series took 4.6 hours with 16 acids at a time on the serial ORCA build (28 minutes per
+acid at the median), and no acid failed. The jobs are cached under
+`benchmarks/results/band/orca_work_b97-3c/`, which is not tracked.
+
+The lines of this file are near those of `benzoic_acids_ir.json`: 5.0 cm⁻¹ apart at the
+median when the lines of an acid are taken in order, and the carbonyl band is 4.8 cm⁻¹ lower.
+`benchmarks/run_spectra_bridge.py` (plan item SP3) uses it as the near second level and
+`benzoic_acids_ir_xtb.json` as the rough one.
+
 ## What the set is for
 
 `benchmarks/run_band.py` (plan item SP2) predicts the band from the field around the carbonyl

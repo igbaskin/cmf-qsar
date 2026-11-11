@@ -341,3 +341,48 @@ def test_the_stored_table_is_the_report():
         before = fh.read()
     assert BR.report() + "\n" == before
     assert "## Reading" in before and "The gate of the item" in before
+
+
+# --------------------------------------------------------------------------- #
+# The second density functional
+# --------------------------------------------------------------------------- #
+def test_the_file_of_the_second_functional_is_near_the_first():
+    from rdkit import Chem
+
+    path = os.path.join(ROOT, "examples", "spectra", "benzoic_acids_ir_b97-3c.json")
+    with open(path, encoding="utf-8") as fh:
+        head = json.load(fh)
+    with open(os.path.join(ROOT, "examples", "spectra", "benzoic_acids_ir.json"),
+              encoding="utf-8") as fh:
+        first = {r["name"]: r for r in json.load(fh)["acids"]}
+    rows = {r["name"]: r for r in head["acids"]}
+    acids = [m for m in Chem.SDMolSupplier(STRUCTURES, removeHs=False)]
+    assert len(rows) == len(acids) == 189
+    assert head["frequency_scale"] == [0.98] and head["qm_level"] == ["B97-3c TightSCF"]
+    shifts = []
+    for mol in acids:
+        row = rows[mol.GetProp("_Name")]
+        x = np.array(row["wavenumbers"])
+        assert len(x) == len(row["intensities"]) and np.all(np.diff(x) >= 0) and np.all(x > 0)
+        assert len(x) in (3 * mol.GetNumAtoms() - 6, 3 * mol.GetNumAtoms() - 7)
+        other = np.array(first[row["name"]]["wavenumbers"])
+        if len(other) == len(x):
+            shifts.append(np.abs(x - other))
+    # two density functionals put the lines of an acid at nearly the same places
+    assert len(shifts) > 180 and np.median(np.concatenate(shifts)) < 10.0
+
+
+def test_the_levels_of_the_queries_and_their_factors():
+    import make_band_examples as M
+
+    assert M.level_slug("B97-3c TightSCF") == "b97-3c" and M.level_slug("") == "level"
+    assert set(BR.LEVELS) == {"xtb", "b97-3c", "xtb, ORCA geometry"}
+    for cfg in BR.LEVELS.values():
+        assert {"path", "label", "about", "one", "low", "high", "curve_widths"} <= set(cfg)
+    dft = BR.LEVELS["b97-3c"]
+    assert os.path.basename(dft["path"]) == "benzoic_acids_ir_b97-3c.json"
+    assert 1.0 in dft["one"] and 1.0 in dft["low"] and 1.0 in dft["high"]
+    # the control is computed when it is run, and its spectra are not kept in the repository
+    control = BR.LEVELS["xtb, ORCA geometry"]
+    assert os.path.normpath(control["path"]).startswith(os.path.normpath(BR.CONTROL_CACHE))
+    assert control["one"] == BR.LEVELS["xtb"]["one"]
