@@ -46,6 +46,12 @@ which needs a different Hamiltonian (GFN1 with the ipea parameters); mixing a GF
 GFN2 fields would describe one molecule with two methods, so it is left out.
 
 The command-line front end is ``examples/xtb_atom_properties.py``.
+
+Normal modes are a separate route (:func:`run_vibrations`, plan item SP3): one call of the
+program with ``--ohess`` optimises the molecule and computes its harmonic frequencies and
+infrared intensities, which :func:`read_vibspectrum` reads from the file xtb writes.  Here the
+geometry **is** optimised, because a frequency is defined at a minimum of the method that
+computes it.
 """
 from __future__ import annotations
 
@@ -469,3 +475,211 @@ def process_dataset(path: str, out: str, cfg: Config, limit: Optional[int] = Non
     log(f"{len(done)}/{len(outcomes)} molecules written to {out} "
         f"({total:.1f} s, {total / max(len(outcomes), 1):.2f} s per molecule)")
     return outcomes
+
+
+# ----------------------------------------------------------------------------------------------
+# Normal modes: an optimisation followed by frequencies (plan item SP3)
+# ----------------------------------------------------------------------------------------------
+#: a mode whose wavenumber is smaller than this in size is a translation or a rotation
+ZERO_MODE = 0.01
+
+
+@dataclass
+class Vibrations:
+    """The normal modes of one molecule from an xtb optimisation with frequencies.
+
+    ``wavenumbers`` (cm^-1, harmonic, not scaled) and ``intensities`` (km/mol) hold the modes
+    with a positive wavenumber, in rising order.  ``n_imaginary`` counts the modes with a
+    negative one; a minimum has none.  ``coords`` is the optimised geometry.
+    """
+    index: int
+    name: str
+    wavenumbers: Optional[np.ndarray] = None
+    intensities: Optional[np.ndarray] = None
+    n_imaginary: int = 0
+    coords: Optional[np.ndarray] = None
+    level: str = ""
+    retried: bool = False
+    error: str = ""
+    seconds: float = 0.0
+    reused: bool = False
+
+
+def read_vibspectrum(path: str) -> Tuple[np.ndarray, np.ndarray]:
+    """Every mode of the ``vibspectrum`` file that xtb writes after a frequency run: the
+    wavenumbers in cm^-1 and the infrared intensities in km/mol, in the order of the file.
+
+    The six modes of translation and rotation are in the file with a wavenumber of zero, and an
+    imaginary mode has a negative one.  A line holds the number of the mode, its symmetry where
+    xtb gives one, the wavenumber, the intensity and a word for the selection rule.
+    """
+    freqs, intens = [], []
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            parts = line.split()
+            if not parts or parts[0].startswith(("$", "#")) or not parts[0].isdigit():
+                continue
+            numbers = []
+            for word in parts[1:]:
+                try:
+                    numbers.append(float(word))
+                except ValueError:
+                    continue
+            if len(numbers) >= 2:
+                freqs.append(numbers[0])
+                intens.append(numbers[1])
+    if not freqs:
+        raise XtbError(f"{path} holds no mode")
+    return np.array(freqs, float), np.array(intens, float)
+
+
+def vibration_level(cfg: Config) -> str:
+    """One string naming the method of a frequency run, for the cache key and the provenance."""
+    parts = [f"GFN{cfg.gfn}-xTB", f"acc={cfg.accuracy:g}"]
+    if cfg.solvent:
+        parts.append(f"alpb={cfg.solvent}")
+    parts.append("ohess")
+    return " ".join(parts)
+
+
+def _frequency_job(jobdir: str, cfg: Config, charge: int, mult: int):
+    """Run ``xtb --ohess`` in `jobdir` on ``geom.xyz``, or reuse what is there; returns all
+    wavenumbers, all intensities and the optimised geometry."""
+    from cmfqsar.orca import read_xyz
+
+    out_path = os.path.join(jobdir, "xtb.out")
+    spectrum = os.path.join(jobdir, "vibspectrum")
+    done = False
+    if os.path.isfile(out_path) and os.path.isfile(spectrum):
+        with open(out_path, encoding="utf-8", errors="replace") as fh:
+            done = "normal termination of xtb" in fh.read()
+    if not done:
+        args = [find_xtb(cfg.xtb or None), "geom.xyz", "--gfn", str(int(cfg.gfn)),
+                "--chrg", str(int(charge)), "--uhf", str(int(mult) - 1),
+                "--acc", f"{float(cfg.accuracy):g}", "--ohess"]
+        if cfg.solvent:
+            args += ["--alpb", cfg.solvent]
+        try:
+            proc = subprocess.run(args, cwd=jobdir, capture_output=True, text=True,
+                                  encoding="utf-8", errors="replace", timeout=cfg.timeout)
+        except subprocess.TimeoutExpired:
+            raise XtbError(f"xtb did not finish within {cfg.timeout:g} s")
+        text = (proc.stdout or "") + (proc.stderr or "")
+        with open(out_path, "w", encoding="utf-8", errors="replace") as fh:
+            fh.write(text)
+        if "normal termination of xtb" not in text:
+            tail = " / ".join(line.strip() for line in text.strip().splitlines()[-3:])
+            raise XtbError(f"xtb failed (exit {proc.returncode}): {tail}")
+        if not os.path.isfile(spectrum):
+            raise XtbError("xtb ended normally and wrote no vibspectrum file")
+    freqs, intens = read_vibspectrum(spectrum)
+    opt_path = os.path.join(jobdir, "xtbopt.xyz")
+    if not os.path.isfile(opt_path):
+        raise XtbError("the optimised geometry was not written")
+    symbols, coords = read_xyz(opt_path)
+    return freqs, intens, symbols, coords
+
+
+def run_vibrations(mol: Chem.Mol, name: str, index: int, cfg: Config,
+                   retry: bool = True) -> Vibrations:
+    """Optimise one molecule with xtb and compute its normal modes.
+
+    The job is cached like the jobs of :func:`run_molecule`, in a directory of its own under
+    ``cfg.workdir``.  When the optimisation ends on a saddle point (an imaginary mode), xtb
+    writes a geometry moved along that mode, and with `retry` the job is run once more from
+    it; the second result is kept when it has fewer imaginary modes.  A molecule whose bonds
+    are outside 0.6 to 1.5 times the sum of the covalent radii after the optimisation is
+    reported as failed (:func:`cmfqsar.orca.changed_bonds`).
+    """
+    from cmfqsar.orca import changed_bonds, read_xyz
+
+    t0 = time.time()
+    out = Vibrations(index=index, name=name, level=vibration_level(cfg))
+    status_path = key = None
+    try:
+        mol = prepare_molecule(mol)
+        charge = Chem.GetFormalCharge(mol)
+        mult = multiplicity_for(mol, charge)
+        smiles = Chem.MolToSmiles(Chem.RemoveHs(mol))
+        coords0 = mol.GetConformer().GetPositions()
+        symbols = [a.GetSymbol() for a in mol.GetAtoms()]
+        key = cache_key(smiles, charge, out.level, True, coords0)
+        jobdir = os.path.join(cfg.workdir, f"{index:05d}_{safe_name(name)}")
+        status_path = os.path.join(jobdir, "status.json")
+        status = {}
+        if os.path.isfile(status_path):
+            with open(status_path) as fh:
+                status = json.load(fh)
+        if status.get("key") != key and os.path.isdir(jobdir):
+            shutil.rmtree(jobdir)           # the directory belongs to another computation
+            status = {}
+        os.makedirs(jobdir, exist_ok=True)
+        with open(os.path.join(jobdir, "geom.xyz"), "w", newline="\n") as fh:
+            fh.write(xyz_block(symbols, coords0, f"{name} charge={charge} mult={mult}"))
+        out.reused = status.get("status") == "done"
+
+        freqs, intens, osyms, coords = _frequency_job(jobdir, cfg, charge, mult)
+        moved = os.path.join(jobdir, "xtbhess.xyz")
+        if retry and int(np.sum(freqs < -ZERO_MODE)) > 0 and os.path.isfile(moved):
+            again = os.path.join(jobdir, "retry")
+            os.makedirs(again, exist_ok=True)
+            msyms, mcoords = read_xyz(moved)
+            with open(os.path.join(again, "geom.xyz"), "w", newline="\n") as fh:
+                fh.write(xyz_block(msyms, mcoords, f"{name} moved along the imaginary mode"))
+            f2, i2, s2, c2 = _frequency_job(again, cfg, charge, mult)
+            if int(np.sum(f2 < -ZERO_MODE)) < int(np.sum(freqs < -ZERO_MODE)):
+                freqs, intens, osyms, coords = f2, i2, s2, c2
+                out.retried = True
+        if [s.upper() for s in osyms] != [s.upper() for s in symbols]:
+            raise XtbError("the optimised geometry lists different atoms")
+        broken = changed_bonds(mol, coords)
+        if broken:
+            raise XtbError("the optimisation changed the bonds: " + ", ".join(broken[:3]))
+        keep = freqs > ZERO_MODE
+        order = np.argsort(freqs[keep], kind="stable")
+        out.wavenumbers = freqs[keep][order]
+        out.intensities = intens[keep][order]
+        out.n_imaginary = int(np.sum(freqs < -ZERO_MODE))
+        out.coords = np.asarray(coords, float)
+        out.seconds = time.time() - t0
+        seconds = status.get("seconds", out.seconds) if out.reused else out.seconds
+        with open(status_path, "w") as fh:
+            json.dump({"key": key, "status": "done", "name": name, "smiles": smiles,
+                       "charge": charge, "multiplicity": mult, "level": out.level,
+                       "n_imaginary": out.n_imaginary, "retried": out.retried,
+                       "seconds": seconds}, fh, indent=1)
+    except Exception as exc:        # a failed molecule is reported, not fatal
+        out.error = f"{type(exc).__name__}: {exc}"
+        out.seconds = time.time() - t0
+        if status_path:
+            try:
+                with open(status_path, "w") as fh:
+                    json.dump({"key": key, "status": "failed", "name": name,
+                               "error": out.error}, fh, indent=1)
+            except Exception:
+                pass
+    return out
+
+
+def process_vibrations(mols: Sequence[Chem.Mol], names: Sequence[str], cfg: Config,
+                       jobs: int = 1, retry: bool = True, log=print) -> List[Vibrations]:
+    """The normal modes of every molecule, in the order of the input; a molecule that fails
+    carries its error and no modes."""
+    os.makedirs(cfg.workdir, exist_ok=True)
+    out: List[Optional[Vibrations]] = [None] * len(mols)
+
+    def work(k):
+        if cfg.cancel is not None and cfg.cancel():
+            return
+        v = run_vibrations(mols[k], names[k], k + 1, cfg, retry=retry)
+        out[k] = v
+        if v.error:
+            log(f"[{k + 1}/{len(mols)}] {v.name}: FAILED -- {v.error}")
+
+    if jobs > 1:
+        with ThreadPoolExecutor(max_workers=jobs) as pool:
+            list(pool.map(work, range(len(mols))))
+    else:
+        for k in range(len(mols)):
+            work(k)
+    return [v for v in out if v is not None]

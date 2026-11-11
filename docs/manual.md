@@ -2189,6 +2189,13 @@ charges come from the `charges` file of xtb, which has 8 decimals, in both cases
 which has 3 decimals. A data file that such a second run wrote before that date holds `q_xtb`
 rounded to 0.001 e. The other properties were not affected.
 
+**Normal modes.** `xtb.run_vibrations` is a separate route: one call of the program with
+`--ohess` optimises the molecule and computes its harmonic frequencies and infrared
+intensities, and `xtb.read_vibspectrum` reads the file that xtb writes. Here the geometry is
+optimised, because a frequency is defined at a minimum of the method that computes it. Section
+*The spectrum as the bridge* uses it for a second spectrum of 189 acids, which takes less than
+a minute.
+
 **What the two programs agree on.** Measured over every atom of 101 corrosion molecules that
 have both (`benchmarks/run_xtb.py`): the charges correlate at **+0.95**, the dual descriptor at
 **+0.78**, $f^+$ at **+0.78** and $f^-$ at **+0.71**. The cheap method therefore orders the atoms
@@ -11039,6 +11046,136 @@ correlation of the kernel with the target, computed before any fit, was +0.438 h
 for the powder pattern. A measured spectrum would be the experiment itself and not a
 calculation, and none is used. That is the second half of the item, and this result is the
 reason to look for the data.
+
+## The spectrum as the bridge: which acid fits a spectrum, and what moves a band
+
+The two sections above used a spectrum as a target and as a sample. This one uses it as the
+link between two things that are known for the same molecule (plan item SP3,
+`benchmarks/run_spectra_bridge.py`, `benchmarks/results/spectra_bridge/table.md`). It has two
+parts. Part (b) carries the gate of the item and is given first.
+
+**A second spectrum of every acid.** The item needs a spectrum at a second level of theory. The
+driver of section *A cheap quantum stage: GFN2-xTB* has a route for it: `xtb.run_vibrations`
+optimises a molecule with GFN2-xTB and computes its harmonic frequencies and infrared
+intensities in one call of the program (`xtb --ohess`), and `xtb.read_vibspectrum` reads the
+file that xtb writes. When the optimisation ends on a saddle point, the job is run once more
+from the geometry that xtb moves along the imaginary mode. Stage `--xtb-ir` of
+`examples/make_band_examples.py` does this for the 189 acids in less than a minute and writes
+`examples/spectra/benzoic_acids_ir_xtb.json`. Ten acids keep one imaginary mode.
+
+```
+python examples/make_band_examples.py --xtb-ir --jobs 8   # the GFN2-xTB spectra
+python benchmarks/run_spectra_bridge.py                   # both parts, 5 minutes
+```
+
+The two levels do not put the lines at the same places, as a measured and a computed spectrum
+do not. The carbonyl band of the GFN2-xTB spectrum is 29.3 cm$^{-1}$ above that of the ORCA
+spectrum (standard deviation 4.4), and its highest line, the O-H stretch in most acids, is
+182 cm$^{-1}$ below (standard deviation 18.7).
+
+### Part (b): which acid fits a spectrum
+
+The ORCA spectra are the library: one spectrum for every candidate acid. A GFN2-xTB spectrum is
+the query. The 189 candidates are ranked by the kernel between the query and their library
+spectra, and the question is where the acid of the query stands. Three things are chosen
+before a query is ranked, all on the acids of half of the substituents, for which the right
+answer is used (the *calibration acids*):
+
+- the width of the broadening (5 to 200 cm$^{-1}$) and the power of the intensity;
+- a map of the axis of the query onto the axis of the library: none, one factor for the whole
+  axis, or one factor below 2300 cm$^{-1}$ and another above it, where no acid has a line;
+- whether the spectra are *centred*. All acids share the bands of benzoic acid. Centring takes
+  the mean normalised spectrum of each level from its spectra, which leaves what an acid has
+  beyond those bands. The mean of the queries is taken over the calibration queries only.
+
+The queries of the other half of the substituents are then ranked. The split is repeated ten
+times. A map with more factors fits the calibration acids better whether or not it is better,
+so the map itself is chosen inside the calibration acids: they are divided in two, every map
+is fitted on one half and scored on the other.
+
+| how the candidates are ranked | first, % of the queries | among the first three, % | median rank | the right isomer above the other isomer of the same substituent, % | first among the candidates with the composition of the query, % |
+|---|---:|---:|---:|---:|---:|
+| by chance | 0.5 | | 95 | 50.0 | |
+| by the composition (the molecular formula) | 45.0 | | 1.5 | 50.0 | 45.0 |
+| the position of the carbonyl band alone | 2.7 | 7.8 | 26.2 | 70.5 | |
+| spectrum kernel, the axis as it is | 27.0 | 49.5 | 3.8 | 66.2 | 63.7 |
+| centred spectra, the axis as it is | 42.8 | 67.7 | 2.0 | 74.0 | 69.8 |
+| centred spectra, the axis times one factor | 43.3 | 68.8 | 2.0 | 74.8 | 71.0 |
+| centred spectra, one factor below and one above 2300 cm$^{-1}$ | 36.0 | 61.3 | 2.4 | 75.6 | 71.8 |
+| centred spectra, the map chosen inside the calibration acids | 42.3 | 66.9 | 2.1 | 74.9 | 70.6 |
+| the same, the query as a measured-like curve | 37.8 | 60.1 | 2.4 | 82.9 | 78.1 |
+| the same in the other direction (an ORCA query, the GFN2-xTB library) | 48.2 | 74.4 | 1.6 | 85.6 | 81.8 |
+
+**Among the whole series the gate is not met.** The gate asks that a spectrum of a second level
+ranks its own acid first in most cases. It does so in 42.3 % of the queries (standard deviation
+over the splits 3.2), and among the first three in 66.9 %; the median rank is 2. That is far
+above chance (0.5 %) and above the position of the carbonyl band alone (2.7 %), but it is not
+most cases.
+
+**Among the isomers the gate is met.** The composition narrows the candidates to a few: 99 % of
+the acids share their formula with at least one other acid, mostly the meta and the para acid
+of one substituent, and the composition alone is right in 45.0 % of the cases by drawing among
+them. This is the part that the gate names, because the composition cannot tell isomers apart.
+When only the candidates with the composition of the query are ranked, the spectrum puts the
+right acid first in 70.6 % of the queries, and it puts the right isomer above the other isomer
+of the same substituent in 74.9 %.
+
+**Three readings.** Centring matters most: without it the share of first places is 27.0 %,
+because the shared bands of benzoic acid fill the comparison. A map of the axis does not help:
+one factor gives the same as none, and two factors give less (36.0 %) although they fit the
+calibration acids better. And the calibration chooses a width of 50 or 100 cm$^{-1}$, at which
+regions of the spectrum are compared and not single lines. The two levels do not agree line by
+line. A map can move the carbonyl band and the O-H stretch onto their places, but the other
+lines stay tens of cm$^{-1}$ apart in a way that no smooth map repairs.
+
+**A measured-like query.** The same query as a curve on a grid of 4 cm$^{-1}$, with every line
+broadened to a standard deviation of 4 cm$^{-1}$ and noise of 2 % of the largest value, gives
+37.8 % of first places and 78.1 % among the isomers. The resolution and the noise of an
+instrument are not what limits the result; the difference between the two levels is.
+
+### Part (a): which part of the structure moves which part of the spectrum
+
+A kernel canonical correlation analysis (section *What the field sees that another view does not*,
+`cmfqsar/kcca.py`) takes a structural kernel as one description and the kernel of the ORCA
+spectra as the other. It finds pairs of directions, one in each description, whose values over
+the acids correlate most. A pair is judged on held-out acids, with whole substituents held
+out, against 100 analyses in which the pairing of the two descriptions is shuffled. The
+structural kernel is the invariant local kernel around the carbonyl carbon, and no target is
+used anywhere.
+
+| structural kernel | pair | correlation on held-out acids | shuffled pairing, 95 % | what the pair follows (r of its structural variate) | regions of the spectrum that carry it |
+|---|---:|---:|---:|---|---|
+| the five fields, Gasteiger charges, 10 A | 1 | +0.822 | +0.190 | the Hammett constant (-0.79) | O-H stretch (+0.74), C=O stretch (+0.74) |
+| | 2 | +0.804 | +0.202 | para or meta (+0.86) | C-O stretch, O-H bend and ring modes (+0.66), out-of-plane bends (+0.66) |
+| the electrostatic field alone, quantum charges, 1 A | 1 | +0.893 | +0.169 | the Hammett constant (-0.92) | C=O stretch (+0.80), O-H stretch (+0.79) |
+
+With the five fields all four leading pairs are above the shuffled pairing. The first pair is
+the electronic effect of the substituent: both of its variates follow the Hammett constant,
+and the regions of the spectrum that carry it are the O-H stretch and the C=O stretch. The
+second pair is the position of the substituent: its variates tell para from meta with
+r +0.86 and +0.84, and it is carried by the region below 1550 cm$^{-1}$, where the bending
+modes of the ring hydrogens lie. A chemist reads the substitution pattern of a benzene ring in
+the same region. Neither the constant nor the position was given to the analysis.
+
+**Where the first pair lives.** The plan expected the first structural direction on the
+neighbourhood of the carbonyl group and the first spectral direction on the carbonyl band. On
+the spectral side it is carried by the carbonyl stretch and the O-H stretch about equally. On
+the structural side the answer depends on the charges. With quantum charges the held-out
+correlation of the first pair rises as the envelope around the carbonyl carbon narrows, from
++0.700 at 10 A to +0.893 at 1 A, which holds little beyond the carboxyl group: the quantum
+calculation has carried the effect of the substituent to that group. With Gasteiger charges,
+which are the same on the carboxyl group of every acid, it falls from +0.822 at 10 A to +0.105
+at 1 A: the direction has to reach the substituent. This is the finding of section *A
+vibrational band as the local target*, reached here without a target.
+
+**What is not done.** The second level is a semi-empirical method, which differs from the first
+more than a second density functional would, and probably more than a measurement differs from
+a scaled density-functional spectrum. A run of the series with a second functional is the
+check that would say whether the 42 % is a limit of the kernel or of GFN2-xTB. No measured
+spectrum is used. The pairs of part (a) are read against five properties and six regions; a
+co-field of a structural direction in space, which needs the posed kernel, is not drawn. And
+the candidates are the acids of the series only: ranking against a large library of other
+compounds is another question.
 
 ## A migration path as the sample: the barrier of a Li hop
 

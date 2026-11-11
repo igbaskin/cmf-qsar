@@ -2922,6 +2922,45 @@ python examples/make_band_examples.py --ir   # the infrared stick spectra of the
 python benchmarks/run_spectra_ir.py       # the infrared spectra against the Hammett constant, 50 minutes
 ```
 
+### The spectrum as the bridge: which acid fits a spectrum
+
+Plan item SP3 uses a spectrum as the link between two things known for one molecule
+([run_spectra_bridge.py](benchmarks/run_spectra_bridge.py)). It needs a spectrum at a second
+level of theory, so the xtb driver gained a route for normal modes: `xtb.run_vibrations`
+optimises a molecule with GFN2-xTB and computes its frequencies and infrared intensities in
+one call, and the 189 benzoic acids take less than a minute
+([benzoic_acids_ir_xtb.json](examples/spectra/benzoic_acids_ir_xtb.json)). The two levels put
+the lines at different places, as a measured and a computed spectrum do: the carbonyl band
+differs by 29 cm⁻¹ and the O-H stretch by 182 cm⁻¹.
+
+**Which acid fits a spectrum.** The ORCA spectra are a library with one spectrum per candidate
+acid, and a GFN2-xTB spectrum is the query. The candidates are ranked by the spectrum kernel.
+The width, a map of the axis and the centring of the spectra are fitted on the acids of half of
+the substituents and used on the other half, ten times. The query ranks its own acid first in
+42.3 % of the cases and among the first three in 66.9 %; chance gives 0.5 % and the position
+of the carbonyl band alone 2.7 %. The gate of the item asks for most cases among the whole
+series, and that is not met. It is met for the question that the composition cannot answer:
+among the candidates with the formula of the query, which are mostly the meta and the para
+acid of one substituent, the spectrum is right in 70.6 % of the cases, against 45.0 % for the
+composition alone. Centring the spectra by the mean spectrum of each level matters most (27.0 %
+without it). A map of the axis does not help, and the calibration chooses a width of 50 to
+100 cm⁻¹: the two levels agree on regions of the spectrum and not line by line.
+
+**What moves which part of the spectrum.** A kernel canonical correlation analysis of a
+structural kernel and the spectrum kernel, judged on held-out substituents against a shuffled
+pairing, finds the chemistry without a target. The first pair of directions is the electronic
+effect of the substituent (both variates follow the Hammett constant, r -0.79 and -0.83; held-out
+correlation +0.822) and is carried by the O-H and the C=O stretch. The second is the position
+of the substituent (para against meta, r +0.86) and is carried by the region of the bending
+modes, where a chemist reads the substitution pattern. With quantum charges the first pair is
+strongest with an envelope of 1 A around the carbonyl carbon (+0.893); with Gasteiger charges
+it vanishes there (+0.105) and needs 10 A.
+
+```bash
+python examples/make_band_examples.py --xtb-ir --jobs 8   # the GFN2-xTB spectra, under a minute
+python benchmarks/run_spectra_bridge.py                   # both parts, 5 minutes
+```
+
 ### A migration path as the sample: the barrier of a Li hop
 
 Ionic conductivity in a solid electrolyte is set by the barrier a mobile ion meets between two

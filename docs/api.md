@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 120 modules, 236 classes with 789 public methods, and 1188 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 120 modules, 237 classes with 789 public methods, and 1192 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -19026,6 +19026,12 @@ GFN2 fields would describe one molecule with two methods, so it is left out.
 
 The command-line front end is `examples/xtb_atom_properties.py`.
 
+Normal modes are a separate route (`run_vibrations`, plan item SP3): one call of the
+program with `--ohess` optimises the molecule and computes its harmonic frequencies and
+infrared intensities, which `read_vibspectrum` reads from the file xtb writes.  Here the
+geometry **is** optimised, because a frequency is defined at a minimum of the method that
+computes it.
+
 ### `class XtbError  — bases: RuntimeError`
 
 ### `class XtbResult  (dataclass)`
@@ -19074,6 +19080,28 @@ Attributes:
 - `index: int`
 - `name: str`
 - `mol: Optional[Chem.Mol]` = `None`
+- `error: str` = `''`
+- `seconds: float` = `0.0`
+- `reused: bool` = `False`
+
+### `class Vibrations  (dataclass)`
+
+The normal modes of one molecule from an xtb optimisation with frequencies.
+
+`wavenumbers` (cm^-1, harmonic, not scaled) and `intensities` (km/mol) hold the modes
+with a positive wavenumber, in rising order.  `n_imaginary` counts the modes with a
+negative one; a minimum has none.  `coords` is the optimised geometry.
+
+Attributes:
+
+- `index: int`
+- `name: str`
+- `wavenumbers: Optional[np.ndarray]` = `None`
+- `intensities: Optional[np.ndarray]` = `None`
+- `n_imaginary: int` = `0`
+- `coords: Optional[np.ndarray]` = `None`
+- `level: str` = `''`
+- `retried: bool` = `False`
 - `error: str` = `''`
 - `seconds: float` = `0.0`
 - `reused: bool` = `False`
@@ -19128,6 +19156,35 @@ Run every molecule and return the outcomes, in the order of the input.
 ### `process_dataset(path: str, out: str, cfg: Config, limit: Optional[int]=None, jobs: int=1, log=print) -> List[MoleculeOutcome]`
 
 Run every molecule of `path` and write the annotated SDF `out`; returns the outcomes.
+
+### `read_vibspectrum(path: str) -> Tuple[np.ndarray, np.ndarray]`
+
+Every mode of the `vibspectrum` file that xtb writes after a frequency run: the
+wavenumbers in cm^-1 and the infrared intensities in km/mol, in the order of the file.
+
+The six modes of translation and rotation are in the file with a wavenumber of zero, and an
+imaginary mode has a negative one.  A line holds the number of the mode, its symmetry where
+xtb gives one, the wavenumber, the intensity and a word for the selection rule.
+
+### `vibration_level(cfg: Config) -> str`
+
+One string naming the method of a frequency run, for the cache key and the provenance.
+
+### `run_vibrations(mol: Chem.Mol, name: str, index: int, cfg: Config, retry: bool=True) -> Vibrations`
+
+Optimise one molecule with xtb and compute its normal modes.
+
+The job is cached like the jobs of `run_molecule`, in a directory of its own under
+`cfg.workdir`.  When the optimisation ends on a saddle point (an imaginary mode), xtb
+writes a geometry moved along that mode, and with `retry` the job is run once more from
+it; the second result is kept when it has fewer imaginary modes.  A molecule whose bonds
+are outside 0.6 to 1.5 times the sum of the covalent radii after the optimisation is
+reported as failed (`cmfqsar.orca.changed_bonds`).
+
+### `process_vibrations(mols: Sequence[Chem.Mol], names: Sequence[str], cfg: Config, jobs: int=1, retry: bool=True, log=print) -> List[Vibrations]`
+
+The normal modes of every molecule, in the order of the input; a molecule that fails
+carries its error and no modes.
 
 ## cmfqsar.gui
 
