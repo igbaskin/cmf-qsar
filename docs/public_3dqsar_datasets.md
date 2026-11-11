@@ -464,7 +464,7 @@ index page or a search result, and not opened.
 
 | Location | Content | Terms | Status |
 |---|---|---|---|
-| Chemotion IR, RADAR4Chem, https://doi.org/10.22000/OGoEQGlsZGElrgst (Jung, Tremouilhac, Punjabi et al., Karlsruhe Institute of Technology, published 22 March 2024) | 4,183 measured FT-IR spectra as JCAMP-DX files (`*.jdx`) and one `meta_data.json` (3.3 MB) with `sample_id`, `cano_smiles`, `kind`, `analysis_id`, `authors`, `affiliations`, `content`, `datasets`, `filename`, `identifier` and `instrument` for every file; one zip of 47.5 MB. The compounds were synthesised in research laboratories, mostly at the Karlsruhe Institute of Technology; the record gives 2022-2023 as the years of production. A compound can have several samples and so several spectra. | CC BY-SA 4.0 | verified (record page; the files were not opened) |
+| Chemotion IR, RADAR4Chem, https://doi.org/10.22000/OGoEQGlsZGElrgst (Jung, Tremouilhac, Punjabi et al., Karlsruhe Institute of Technology, published 22 March 2024) | 4,183 measured FT-IR spectra as JCAMP-DX files (`*.jdx`) and one `meta_data.json` (3.3 MB) with `sample_id`, `cano_smiles`, `kind`, `analysis_id`, `authors`, `affiliations`, `content`, `datasets`, `filename`, `identifier` and `instrument` for every file; one archive of 47.5 MB. The compounds were synthesised in research laboratories, mostly at the Karlsruhe Institute of Technology; the record gives 2022-2023 as the years of production. A compound can have several samples and so several spectra. | CC BY-SA 4.0 | verified (record page; the files were read on 11 November 2026) |
 | The paper that prepared it: Punjabi, Huang, Holzhauer et al., J. Cheminform. 17, 24 (2025), https://doi.org/10.1186/s13321-025-00960-2; code at https://github.com/ComPlat/ir_analysis | Of 4,175 samples with an infrared spectrum the authors removed 441 by eye for a high baseline or high noise, and their cleaned set has 1,763 samples. The target of the paper is the presence of 17 functional groups. | CC BY 4.0 (the article) | verified |
 | NIST Chemistry WebBook (SRD 69), https://webbook.nist.gov/chemistry/ | Infrared spectra of more than 16,000 compounds: about 6,000 in the gas phase and about 10,000 in a condensed phase. Every compound page offers its spectrum as a JCAMP-DX file. | Standard Reference Data: copyright of the U.S. Secretary of Commerce, all rights reserved (https://www.nist.gov/open/copyright-fair-use-and-licensing-statements-srd-data-software-and-technical-series-publications). No statement that allows the collection to be downloaded as a whole or to be passed on was found. | the licence page verified; the size reported |
 | NIST/EPA Gas-Phase Infrared Database (SRD 35), https://www.nist.gov/srd/nist-standard-reference-database-35 | 5,228 gas-phase spectra in JCAMP-DX format with structures as MOL files: 3,108 from the EPA vapour-phase library and 2,120 from NIST | a product that is ordered from NIST | reported (from the paper above) |
@@ -475,9 +475,19 @@ Notes
   carry the same licence and name the authors. Under the rule of this document the set is
   therefore fetched by a script into `benchmarks/cache/` and not copied into the repository,
   unless a derived file is added with that licence stated beside it.
-- The record does not say how the samples were measured. Spectra from synthesis laboratories
-  are normally taken on the neat solid or liquid and not in the gas phase; the entry
-  `instrument` of the metadata will say. The computed spectra of this repository are harmonic
+- What the files hold (downloaded and read on 11 November 2026 by
+  `benchmarks/prepare_chemotion_ir.py`). The download is a tar archive of 47.5 MB with
+  `meta_data.json` and the spectra as `IR_data.tar.xz`. The metadata describe 2,116
+  measurements of 1,926 compounds; a measurement has up to three files (the spectrum as the
+  instrument wrote it, and copies with the peaks that a chemist marked), which gives the
+  4,183 files. A spectrum has about 2,560 points from 4000 to 374 cm^-1 as transmittance.
+  The metadata name ATR, a measurement on the neat solid or liquid, for 2,085 of the 2,114
+  infrared spectra that can be read, and most instruments are of one type (Bruker Alpha).
+  154 compounds have spectra of two or more samples. 19 files are attached to two samples of
+  one compound, and 8 files are attached to the samples of two different compounds, so at
+  least one structure of each of these 8 pairs is not the one that was measured
+  (`benchmarks/results/spectra_measured/measured.json` lists the sample numbers).
+- The computed spectra of this repository are harmonic
   spectra of one molecule in the gas phase. A carboxylic acid, an alcohol or an amide forms
   hydrogen bonds in a condensed sample, which moves and broadens its bands. A comparison of a
   measured with a computed spectrum will show this difference, and that is a part of what the
@@ -519,6 +529,9 @@ Notes
    other samples are the library. This needs no calculation, uses the reader for measured
    curves on real files, and says how well the kernel finds a compound when the only
    difference is the sample and the instrument. It is the ceiling for everything else.
+   *Done on 11 November 2026* (`benchmarks/run_spectra_measured.py`): the compound is
+   found first in 87.6 % of the queries among 1,912 compounds and among the first ten in
+   95.4 %, with the kernel of the slopes of the spectra; the plain kernel finds 59.9 %.
 2. *A measured spectrum against a computed library.* The identification test of SP3 with a
    measured query. GFN2-xTB spectra of all compounds cost seconds each; density-functional
    spectra are affordable for a subset of a few hundred small compounds (the 189 benzoic acids

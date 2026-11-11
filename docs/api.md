@@ -1,6 +1,6 @@
 # cmfqsar API reference
 
-This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 120 modules, 237 classes with 789 public methods, and 1192 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
+This file is generated from the docstrings of the source by `python docs/make_api.py`; do not edit it by hand. `python docs/make_api.py --check` fails when it is out of date. It covers 120 modules, 237 classes with 789 public methods, and 1198 public functions. A name is public when it does not start with an underscore. The user manual (`docs/manual.md`, chapter *Using it as a library*) explains what the modules are for and shows worked scripts; this file says what every function takes and returns.
 
 cmfqsar - Continuous Molecular Fields (CMF) 3D-QSAR.
 
@@ -16958,6 +16958,19 @@ The width says how far two peaks may be apart and still count as the same peak. 
 hyper-parameter, chosen by cross-validation, and `multi_width_kernel` sums the kernels of
 several widths.
 
+The slope of a spectrum
+-----------------------
+A measured curve stands on a baseline: an offset or a slow drift that comes from the
+instrument and from the contact with the sample, and not from the compound.  The kernel above
+counts a baseline as intensity.  `slope` takes the derivative of every broadened
+spectrum along the axis.  A constant baseline has no slope, and a slow drift has a small one.
+The kernel of the slopes is the kernel above with one more factor (`slope_overlap`),
+
+    k'(A, B) = SUM_ij a_i b_j (1 - d^2 / (2 sigma^2)) exp( -d^2 / (4 sigma^2) ) / (2 sigma^2)
+
+with `d = x_i - y_j`.  Two sticks at the same place count as before, two sticks 1.41 widths
+apart count as nothing, and two sticks further apart count against each other.
+
 The co-spectrum
 ---------------
 A kernel ridge model on the cosine kernel is linear in the normalised broadened spectrum
@@ -16968,9 +16981,12 @@ is positive where intensity raises the predicted property and negative where it 
 Readers
 -------
 `read_sticks` and `read_measured` read two-column text (the reader of
-`scattering.py` with the axis left to the caller).  `orca_sticks` takes the infrared
-spectrum from an ORCA frequency job.  `powder_sticks` computes the powder diffraction
-pattern of a crystal with pymatgen, for X-rays or for neutrons.
+`scattering.py` with the axis left to the caller).  `read_jcamp` reads a JCAMP-DX file,
+the format in which instruments and repositories store a measured spectrum, with its
+compressed forms; `absorbance` turns a transmittance spectrum into an absorbance
+spectrum.  `orca_sticks` takes the infrared spectrum from an ORCA frequency job.
+`powder_sticks` computes the powder diffraction pattern of a crystal with pymatgen, for
+X-rays or for neutrons.
 
 ### `class Spectrum  (dataclass)`
 
@@ -16987,6 +17003,7 @@ Attributes:
 - `kind: str` = `'sticks'`
 - `axis: str` = `'wavenumber'`
 - `name: str` = `''`
+- `meta: Dict[str, str]` = `field(default_factory=dict)`
 
 #### `Spectrum.unit` -> str  (property)
 
@@ -17033,6 +17050,47 @@ ignored, as in `cmfqsar.scattering.read_curve`.
 
 A measured curve from two-column text, on the grid of the instrument that wrote it.
 
+### `decode_ordinates(lines: Sequence[str]) -> np.ndarray`
+
+The ordinates of an `(X++(Y..Y))` table of a JCAMP-DX file.
+
+Every line starts with an abscissa, which is only a check and is dropped.  The ordinates
+that follow are plain numbers or one of the compressed forms: a squeezed value, a
+difference from the value before, or a count that repeats the last value or the last
+difference.  When a line ends with a difference, the next line starts with the value that
+the differences have reached, again as a check, and that value is not a new ordinate.
+
+### `parse_jcamp(text: str) -> List[dict]`
+
+The blocks of a JCAMP-DX text that hold data.
+
+A file can hold several blocks, each from `##TITLE=` to `##END=`: a spectrum, a table
+of the peaks that somebody picked, and blocks that only link the others.  Every block with
+an `XYDATA` table or a `PEAKTABLE` (or `XYPOINTS`) is returned as a dictionary with
+`labels` (the labelled entries of the block, by the label in upper case without spaces,
+dashes, slashes and underscores), `kind` ("curve" for `XYDATA`, "sticks" for a table
+of points) and the arrays `x` and `y`.  The factors `XFACTOR` and `YFACTOR` are
+applied.  For `(X++(Y..Y))` the abscissas run evenly from `FIRSTX` to `LASTX`.
+
+### `read_jcamp(path: str, name: str='') -> Spectrum`
+
+A spectrum from a JCAMP-DX file: its first block with a table of data.
+
+A block with `XYDATA` gives a measured curve, and a block with a table of points gives
+a stick spectrum; a curve is taken first when the file has both.  The axis is named from
+`XUNITS` (`1/CM` is the wavenumber).  `meta` holds `yunits`, `xunits`,
+`title` and `datatype` as the file gives them; see `absorbance`.
+
+### `absorbance(spectrum: Spectrum) -> Spectrum`
+
+The same spectrum with absorbance as its intensity.
+
+The unit is read from `meta["yunits"]`.  A transmittance `T` becomes `-log10(T)`; a
+transmittance in per cent (the unit says so, or the values go above 1.5) is divided by
+100 first, and values at or below zero are set to a small positive number.  An absorbance
+spectrum is returned as it is.  Another unit is an error, because the kernel compares
+intensities and must not mix two kinds of them.
+
 ### `orca_sticks(source, scale: float=1.0, name: str='') -> Spectrum`
 
 The infrared spectrum of an ORCA frequency job as sticks.
@@ -17062,6 +17120,17 @@ sticks are broadened to Gaussians of standard deviation `sigma`.
 The sum runs over all pairs of sticks, so it is the exact value and costs the product of
 the two numbers of sticks.  `power` is applied to the weights first (see `broaden`).
 
+### `slope_overlap(a: Spectrum, b: Spectrum, sigma: float, power: float=1.0) -> float`
+
+The overlap of the slopes of two broadened spectra, in closed form:
+
+    SUM_ij a_i b_j (1 - d^2 / (2 sigma^2)) exp(-d^2 / (4 sigma^2)) / (2 sigma^2)
+
+with `d = x_i - y_j`.  It is `2 sigma sqrt(pi)` times the integral of the product of
+the derivatives of the two broadened spectra, as `stick_overlap` is that multiple
+of the integral of the product of the broadened spectra themselves.  A constant added to
+a measured curve changes this sum only through the two ends of the curve.
+
 ### `exact_kernel(spectra: Sequence[Spectrum], sigma: float, others: Optional[Sequence[Spectrum]]=None, power: float=1.0, normalize: bool=True) -> np.ndarray`
 
 The kernel matrix of a set of spectra from `stick_overlap`, pair by pair.
@@ -17084,6 +17153,19 @@ Sticks outside the grid add only the part of their Gaussian that reaches into it
 ### `feature_matrix(spectra: Sequence[Spectrum], grid: Grid, sigma: float, power: float=1.0) -> np.ndarray`
 
 The broadened spectra of a set on one grid, one row each.
+
+### `slope(F: np.ndarray, grid: Grid) -> np.ndarray`
+
+The derivative along the axis of every row of a `feature_matrix`.
+
+The cosine kernel of these rows (`spectrum_kernel`) is the kernel of the slopes of
+the spectra, which does not see a constant baseline (`slope_overlap` is its closed
+form).  The derivative is a central difference on the grid, which makes the dot product
+of two rows too small by about `step^2 / (2 sigma^2)` of its value: two per cent with
+five grid points in one width.  The cosine form divides most of this out.  A broadened
+measured curve falls to
+zero within a few widths of its two ends, and this fall is a slope that the compound did
+not cause: let the grid end a few widths inside the range of the measured curves.
 
 ### `spectrum_kernel(train: np.ndarray, test: Optional[np.ndarray]=None, normalize: bool=True) -> np.ndarray`
 

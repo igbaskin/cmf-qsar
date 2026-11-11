@@ -172,3 +172,13 @@ measured. The manual section *A spectrum as a one-dimensional field* has the res
 spectrum of `benzoic_acids_ir_xtb.json` and the spectra of `benzoic_acids_ir.json`, and
 analyses which part of the structure moves which part of the spectrum. The manual section
 *The spectrum as the bridge* has the results.
+
+## Measured spectra
+
+This folder holds computed spectra only. The measured infrared spectra that
+`benchmarks/run_spectra_measured.py` uses (Chemotion IR,
+https://doi.org/10.22000/OGoEQGlsZGElrgst) have the licence CC BY-SA 4.0, which asks that
+a copy is passed on under the same licence. They are therefore not in the repository:
+`benchmarks/prepare_chemotion_ir.py` downloads them (47.5 MB) into
+`benchmarks/cache/chemotion_ir`. `cmfqsar.spectrum.read_jcamp` reads one JCAMP-DX file of
+any source, and `cmfqsar.spectrum.absorbance` turns a transmittance into an absorbance.

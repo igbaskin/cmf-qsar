@@ -11408,7 +11408,155 @@ the kernel finds the right structure when the library is computed at a level nea
 and it does not say how near a computed library is to a measurement. The pairs of part (a) are
 read against five properties and six regions; a co-field of a structural direction in space,
 which needs the posed kernel, is not drawn. And the candidates are the acids of the series only:
-ranking against a large library of other compounds is another question.
+ranking against a large library of other compounds is another question. The section that
+follows makes the first step with measured spectra.
+
+## A measured spectrum against other measured spectra of the same compounds
+
+The two sections above used computed spectra only. This section is the first measurement on
+measured spectra (`benchmarks/run_spectra_measured.py`,
+`benchmarks/results/spectra_measured/table.md`). It asks the simplest question that measured
+spectra allow: does a measured spectrum of a compound find another measured spectrum of the
+same compound among the spectra of many other compounds? Nothing is computed from a structure.
+The answer is therefore a ceiling for the identification of the section above with a measured
+query. Against a computed library, the difference between a calculation and a measurement is
+added to the difference between two samples.
+
+**The set.** Chemotion IR (Jung, Tremouilhac, Punjabi et al., Karlsruhe Institute of
+Technology, 2024, https://doi.org/10.22000/OGoEQGlsZGElrgst) holds infrared spectra that
+chemists of research laboratories measured of their own compounds and stored in the Chemotion
+repository, with the SMILES of every compound: 2,116 measurements of 1,926 compounds in 4,183
+JCAMP-DX files. Its licence is CC BY-SA 4.0, which asks that a copy is passed on under the same
+licence. No file of the set is in this repository. `benchmarks/prepare_chemotion_ir.py`
+downloads the archive (47.5 MB) into `benchmarks/cache/chemotion_ir`, checks the SHA-256 sums
+of its two data files, reads the files in memory and writes the spectra on one grid.
+
+```
+python benchmarks/prepare_chemotion_ir.py     # once: downloads 47.5 MB
+python benchmarks/run_spectra_measured.py     # 10 seconds
+```
+
+**Reading a measured spectrum.** JCAMP-DX is the text format in which instruments and
+repositories store a spectrum. A file holds labelled entries (the units of the two axes, the
+first and the last position, a factor for the intensities) and a table of intensities. The
+table is often compressed: a letter stands for the sign and the first digit of a number, a
+second set of letters gives the difference from the value before, and a third set repeats a
+value. `spectrum.parse_jcamp` reads every block of a file with these forms,
+`spectrum.read_jcamp` gives the first measured curve of a file as a `Spectrum`, and
+`spectrum.absorbance` turns a transmittance $T$ into the absorbance $-\log_{10} T$. The kernel
+needs the absorbance. The absorbance of every band is proportional to the amount of substance
+in the beam, so the cosine form of the kernel removes that amount; a transmittance has no such
+property.
+
+A spectrum of the set has about 2,560 points from 4000 to 374 cm$^{-1}$, one every
+1.4 cm$^{-1}$, and nearly all files give the transmittance. The prepared spectra are
+absorbances from 650 to 3900 cm$^{-1}$ in steps of 2 cm$^{-1}$, a range that every infrared
+spectrum of the set covers. One measurement has no curve in its file and one is not an infrared
+spectrum, so 2,114 spectra of 1,925 compounds are prepared. The metadata name attenuated total
+reflectance (ATR, a measurement on the neat solid or liquid pressed onto a crystal) for 2,085
+of them, and most instruments are of one type.
+
+**Copies in the set.** The prepared curves were compared with each other before any kernel was
+computed. Some curves are the same point by point. In 19 cases one file is attached to two
+samples of one compound. Such a copy would be found at once and without any merit of the
+kernel, so one of the two is left out. In 8 cases one file is attached to the samples of two
+different compounds. At least one of the two structures is then not the one that was measured,
+so both are left out; the result file lists the sample numbers. After that the set has 2,079
+spectra of 1,912 compounds. 138 compounds have spectra of two or more samples (120 have two,
+13 have three, 5 have four to six), which gives 430 pairs of a query and a library spectrum.
+Two spectra of one compound are measurements of their own: their correlation coefficient is
+0.943 at the median and below 0.784 for a tenth of the pairs.
+
+**The slope of a spectrum.** A measured curve stands on a baseline: an offset or a slow drift
+that comes from the instrument and from the contact with the sample, and not from the
+compound. The kernel of equation (#eq:spectrum-kernel) counts a baseline as intensity. A
+computed stick spectrum has no baseline, so the two sections above did not meet the problem.
+`spectrum.slope` takes the derivative of every broadened spectrum along the axis. A constant
+baseline has no slope, and a slow drift has a small one. The kernel of the slopes has a closed
+form of the same kind, with one more factor:
+
+$$
+k'(A, B) \;=\; \dfrac{1}{2\sigma^2} \sum_i \sum_j a_i\, b_j
+\left(1 - \dfrac{d_{ij}^2}{2\sigma^2}\right) \exp\!\left(-\dfrac{d_{ij}^2}{4\sigma^2}\right),
+\qquad d_{ij} = x_i - y_j
+$$
+<!-- #eq:spectrum-slope-kernel -->
+
+Two lines at the same place count as before. Two lines $1.41\,\sigma$ apart count as nothing,
+and two lines further apart count against each other. `spectrum.slope_overlap` computes this
+sum, and a test checks it against the dot product of the slopes on a grid. Comparing the
+derivatives of two spectra is a standard step of a library search in spectroscopy. What this
+module adds is only that the step is a kernel of the same family, with a closed form for stick
+spectra, so that a measured curve and a computed stick spectrum can be compared in it.
+
+**The test.** One measured spectrum is the query. The library holds one spectrum of every
+compound: for the compound of the query a spectrum of another sample, and for every other
+compound its first spectrum. The 1,912 compounds are ranked by the kernel between the query
+and their library spectra. A compound counts once, whatever its number of spectra. Three forms
+of the kernel are compared: the plain kernel of the absorbance; the same after the mean of
+every spectrum is taken off, which makes the cosine of two spectra their correlation
+coefficient and removes a constant baseline; and the kernel of the slopes. Each form has a
+width (not broadened, 4, 8 or 16 cm$^{-1}$). The form and the width are chosen on half of the
+138 compounds and scored on the other half, in 50 random splits. The number in brackets is the
+standard deviation over the splits.
+
+| how the spectra are compared | compound is first, % of the queries | among the first three, % | among the first ten, % |
+|---|---|---|---|
+| chance, one of 1,912 compounds | 0.05 | 0.16 | 0.5 |
+| plain kernel of the absorbance, width chosen | 59.9 (3.4) | 71.1 (3.2) | 78.7 (2.7) |
+| mean of every spectrum taken off, width chosen | 77.2 (3.5) | 84.7 (3.0) | 90.0 (2.5) |
+| kernel of the slopes, width chosen | 87.6 (2.5) | 93.2 (2.1) | 95.4 (1.9) |
+| form and width chosen | 87.6 (2.5) | 93.2 (2.1) | 95.4 (1.9) |
+| slopes, 4 cm$^{-1}$, the region 700 to 1800 cm$^{-1}$ alone (all compounds) | 87.9 | 92.8 | 95.2 |
+| slopes, 4 cm$^{-1}$, the region 1800 to 3850 cm$^{-1}$ alone (all compounds) | 58.6 | 66.1 | 70.2 |
+
+**What the table says.** A measured spectrum finds the other sample of its compound among
+1,912 compounds in 87.6 % of the queries and puts it among the first ten in 95.4 %. The form of
+the kernel matters more than anything else. The choice took the slopes in every split. The
+slopes find 27.9 points more than the plain kernel (95 % bootstrap interval over the compounds
++21.8 to +34.4) and 10.3 points more than the spectra with their mean taken off (+5.7 to
++14.9). The baseline of a measured curve is not a constant, and only the slope removes most of
+it.
+
+The width that is chosen is 4 cm$^{-1}$ (in 40 of the 50 splits; 8 cm$^{-1}$ in 7). For the
+plain kernel every broadening costs: 59.4 % without it and 44.2 % at 16 cm$^{-1}$. Two samples
+of one compound have their bands at the same places, so there is no difference in position
+that a width would have to bridge. Between two levels of theory the chosen width was 10 to
+20 cm$^{-1}$, and with GFN2-xTB 50 to 100 cm$^{-1}$.
+
+The region from 700 to 1800 cm$^{-1}$ alone gives the same result as the whole spectrum
+(87.9 %), and the region above it gives 58.6 %. This matters for the next test. The O-H and
+N-H stretch bands lie above 1800 cm$^{-1}$, and they are where a spectrum computed for one
+molecule in the gas phase differs most from a measurement on a solid. That region can be left
+out at no cost.
+
+**The wrong answers.** In 76 of the 430 pairs the kernel names another compound. That compound
+is a relative of the right one. Its Tanimoto similarity to the right compound (Morgan
+fingerprints of radius 2; the number of shared bits over the number of bits that either has) is
+0.59 on average, against 0.10 for a compound drawn at random from the library, and in 26 % of
+these pairs it is an isomer of the right compound. The library is made of series of analogues
+from synthesis projects: over all 1,912 compounds, the other compound with the most similar
+spectrum has a similarity of 0.5 or more in 59.6 % of the cases, against 0.5 % for a pairing at
+random. So the similarity of two measured spectra in this kernel follows the similarity of the
+two structures, which is the condition for a property model on measured spectra.
+
+The 15 pairs in which the compound is not among the first ten belong to 7 compounds. The two
+spectra of such a pair have a correlation coefficient of 0.49 at the median and of 0.72 at
+most, against 0.94 for all pairs. The two samples did not give the same spectrum. The set does
+not say why (another solid form, a solvent that was left in the sample, or a structure that is
+attached to the wrong sample), and no kernel can repair it.
+
+The molecular formula alone would name the compound in 82.1 % of the queries, because few
+compounds of this library share a formula. A spectrum does not give the formula, so this is a
+statement about the library and not a rival of the kernel.
+
+**What is not done.** No computed spectrum is compared with a measured one: that is the next
+test, and its ceiling is now known. No property is predicted; the set has no measured
+property. Nearly all spectra come from instruments of one type and from one way of measuring,
+so the test does not say what a change of the instrument costs. The library holds one spectrum
+of every compound, and 1,912 compounds are few against a commercial library. A correction of
+the ATR intensities, which depend on the wavelength, was not applied; it is the same for both
+spectra of a pair here, and it will not be for a computed library.
 
 ## A migration path as the sample: the barrier of a Li hop
 
