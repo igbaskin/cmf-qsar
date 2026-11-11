@@ -6942,6 +6942,182 @@ depend on conjugation) are not among these items: the classical fields do not ca
 state fields of EC1 are the input they would need, and the kernel-correlation test of EC5 on a
 series of absorption maxima is the check to run before an item is written for them.
 
+### Protein physics: the extensions a variant of one protein asks for (11 November 2026)
+
+*Drafted 11 November 2026.* The method already meets a protein as the **receptor**:
+`cmfqsar/protein.py` reads a binding site, `cmfqsar/complementarity.py` builds its fields with the
+same parameterisation as a ligand's and scores a molecule, a co-field and a pose against them, and
+`cmfqsar/md.py` and `cmfqsar/trajectory.py` turn a simulation of a ligand in its pocket into a
+conformational ensemble. What the program has never done is take **the protein itself as the
+sample**. This section asks where that is well posed.
+
+The answer follows from the method's one requirement, a shared frame. Proteins of different folds
+have none, and the invariant kernels of M6 and M10 give up exactly the localisation that makes a
+co-field readable, so a model of arbitrary proteins is not what the method is for; sequence models
+and structure predictors are the strong references there and a field kernel has no reason to beat
+them. **Variants of one protein are the opposite case.** Every point mutant keeps the backbone of
+the wild type, so the superposition problem does not arise, and the backbone of a residue gives a
+frame by rule -- the origin at the alpha carbon, one axis along the bond to the nitrogen, the plane
+through the carbonyl carbon -- in which a change at one position is comparable with a change at
+another. That frame is what lets one model cover every site of a protein, and it makes the
+co-field a map around a generic residue: where added bulk, charge or a hydrogen bond raises or
+lowers the stability.
+
+Two lessons of earlier items apply before any of this is measured. From LP2, a difference field
+removes what the two samples share, and when what they share is what tells them apart the
+description collapses; the diagnostic that found it -- the mean kernel between difference-field
+samples -- is the first thing to compute here. From EC5, a new channel is judged by the
+correlation of its whole kernel with the target before any accuracy is measured.
+
+* **PP1. A point mutant as a difference field in the frame of its residue.** The sample is the side
+  chain of the mutant minus the side chain of the wild type, both in the backbone frame of the
+  mutated residue, which is the signed field of `cmfqsar/localenv.py` applied to a protein. The
+  target is the change of folding free energy. The reference is the substitution alone: the change
+  of residue volume, of hydropathy and of formal charge, and the one-hot codes of the two
+  residues, which know nothing about where the position is. Gate: beats that reference by more
+  than the interval of rule 4, with whole positions held out and then whole domains.
+  **Done 11 November 2026, and the gate fails, with the reason named: what the description adds
+  over the substitution is how buried the site is, and one count of the atoms around it gives
+  the same.** `cmfqsar/mutants.py`: `Mutation` and
+  `substitution_features` are the labels and the reference columns; `prepare_wild_type` and
+  `build_mutant` build a variant with PDBFixer and relax it with Amber ff14SB through OpenMM;
+  `protein_from_pdb` turns a protein with explicit hydrogens into a chemically sound RDKit
+  molecule, which needs two repairs a PDB file cannot give (the ring double bond of a histidine
+  put on the unprotonated nitrogen, and formal charges set from the valence); `backbone_frame`,
+  `in_residue_frame`, `side_chain_field`, `site_context` and `site_difference` are the frame and
+  the three fields; `frame_shift` and `side_chain_geometry` are the checks that a build kept the
+  fold and placed the side chain properly. 26 tests.
+
+  **The data** are the mega-scale set of Tsuboyama et al. (Nature 620, 434-444, 2023), CC BY 4.0,
+  prepared by `examples/make_mutant_examples.py` with the origin, the licence and every filter in
+  `examples/mutants/README.md`: four small natural domains of different fold clusters, 1356, 1353,
+  1236 and 1301 single substitutions measured in them, and `ddG_ML` in kcal/mol as the target. The
+  structures are built, not stored, at about twenty seconds each.
+
+  **The measurement** (`benchmarks/run_mutants.py`, `benchmarks/results/mutants/`) uses 657
+  substitutions at 174 positions of the four domains, four of the substitutions measured at each
+  position, drawn with a fixed seed because the cost of a kernel grows with the square of the
+  sample count and the cost of a fit with its cube. Three ways of holding out, ten folds each
+  except the last, three repeats, with the kernel and the ridge chosen on three inner folds of the
+  same kind inside every training part. The standard deviation of the target is 1.23 kcal/mol.
+
+  | Description | positions held out | segments held out | domains held out |
+  |---|---|---|---|
+  | the mean of the training part | -0.010 | -0.015 | -0.026 |
+  | volume, hydropathy and charge of the substitution | +0.181 | +0.174 | +0.158 |
+  | those three columns and the one-hot codes | +0.127 | +0.133 | +0.086 |
+  | atom counts in shells about the site, with the codes | +0.049 | +0.027 | -0.191 |
+  | **how many atoms surround the site, with the three columns** | **+0.300** | **+0.262** | +0.156 |
+  | the surroundings of the site, without the replaced side chain | +0.190 | +0.148 | +0.051 |
+  | the new side chain alone | +0.065 | +0.069 | +0.055 |
+  | the difference field | +0.156 | +0.148 | +0.139 |
+  | the difference field and the surroundings, joined | +0.311 | +0.291 | +0.141 |
+
+  **What the item asked, answered.** The difference field *equals* the three-column reference and
+  never passes it: -0.025 [-0.072, +0.025] with positions held out, -0.027 [-0.062, +0.006] with
+  segments, -0.019 [-0.071, +0.036] with domains, three intervals that all contain zero. Joined
+  with the field of the surroundings it appears to pass that reference (+0.130 [+0.035, +0.237]
+  and +0.116 [+0.044, +0.198]), and the surroundings are what carry it (+0.143 [+0.088, +0.199]
+  over the difference field alone). **A second reference, added for exactly that question, takes
+  the margin away.** How buried the site is -- the number of atoms inside each envelope and the
+  sum of the envelope factors, which is a soft count, together with the same three substitution
+  columns -- reaches +0.300 and +0.262 on its own, and the joined field description beats it by
+  +0.011 [-0.086, +0.111] with positions held out, +0.028 [-0.051, +0.114] with segments and
+  -0.015 [-0.113, +0.057] with domains: three intervals that again contain zero. The burial
+  columns are themselves worth +0.119 [+0.035, +0.199] over the three substitution columns, which
+  is the whole of the field description's apparent margin. **So the gate fails. What a field of the
+  surroundings adds over the substitution is burial, which a biochemist measures with one number,
+  and the field is worth that number and no more.** The field of the surroundings on its own is in
+  fact *worse* than the burial columns (-0.110 [-0.241, +0.017]).
+
+  **The same measurement on the other draw of the substitutions** (four of each position enter it,
+  and which four is a choice; `--seed 1`, in `mutants_seed1.json` and the last table of the
+  report) says the same thing and makes it plainer: burial +0.327 against the joined field
+  description's +0.293 with positions held out, +0.292 against +0.297 with segments. Which of the
+  two is ahead depends on the draw, which is what two descriptions of equal worth look like.
+
+  Two smaller answers stand. The signed difference is the right sample: the new side chain on its
+  own is worse by -0.079 [-0.133, -0.022], so what matters is the change and not what replaced it.
+  And across whole domains nothing beats the three substitution columns at all -- the joined
+  description gives -0.017 [-0.189, +0.190] and burial -0.002 [-0.179, +0.141] -- but with four
+  domains those intervals are too wide to call anything, which is what PP2 exists for.
+
+  **Two diagnostics worth more than the numbers.** First, this is *not* the collapse of LP2: the
+  same substitution made at another position gives a difference-field kernel of +0.329 over 637
+  such pairs, so the description does tell positions apart. What it adds beyond the identity of the
+  two residues is real variation in where the side chain ended up, and that variation does not
+  track the target -- the correlation of the whole kernel with it is +0.103, against +0.032 for the
+  surroundings and +0.034 for the new side chain. Second, **holding out a position does not hold
+  out its surroundings**, because the contexts of neighbouring residues share most of their atoms;
+  the `segment` protocol, which holds out nine consecutive residues at a time, was added for that
+  reason and shows the leak is not the explanation (+0.291 against +0.311).
+
+  **One trap in the build.** The Amber hydrogens bound to nitrogen and oxygen carry no repulsion
+  radius, so a hydrogen and an acceptor of opposite charge attract each other with nothing to stop
+  them: the pair falls together and the energy runs away towards minus infinity. A rule that keeps
+  the lowest-energy rotamer keeps exactly that, and four structures of 1356 came out with two
+  atoms at a distance of zero and energies of -10^5 kJ/mol. `closest_approach` and
+  `MIN_SEPARATION` are the check; the field step had rejected all four anyway, because such a
+  structure does not read back as a molecule, so nothing corrupt entered a measurement, but a
+  check that happens to catch a fault is not a check.
+
+  **Not done:** no panel in the application (the module is a library and a benchmark); only 657 of
+  the 5246 substitutions the four tables hold, because one structure costs twenty seconds and this
+  machine builds about ten a minute whatever way the work is split; no co-field (PP5); and the
+  shell and backbone choices of the build were fixed by inspecting a handful of hard cases rather
+  than measured against the target.
+* **PP2. Does it carry to a protein the model has not seen?** PP1 leaves exactly one question open,
+  and it is the one a user has: the joined description beats the reference inside a protein and
+  four domains cannot resolve whether it does so for a new one. The item is the same measurement
+  on twenty or more domains of the same collection, which costs structures and nothing else, with
+  the domain held out as the only protocol that matters and the interval of rule 4 as the verdict.
+  Twenty domains at four substitutions per position is about a day of building on this machine, and
+  the sample set it gives resolves a difference of about 0.05 in q2. Nothing new has to be written:
+  `--domains` already takes the list.
+* **PP3. Can a field of the site beat a count of its neighbours?** This is the question PP1 ends
+  on, and it decides the rest of this section. PP1 measured the surroundings with the envelope of
+  LP2 and a cosine kernel, and that description is worth exactly what the number of atoms inside
+  the envelope is worth. The item tries the descriptions that a count cannot imitate: the typed
+  fields separately rather than summed (a count does not know an acceptor from a carbon), the
+  anisotropy of the surroundings in the residue frame (a count has no direction), and the field at
+  anchored points of the frame as EC3 builds them. The references are the burial columns of PP1 and
+  the solvent-accessible area, which is the quantity a biochemist would reach for and which this
+  item has to add. The held-out unit is the segment or the domain, never the position, for the
+  reason PP1 found. Gate: beats both references by more than the interval of rule 4. If it fails,
+  this section ends here, and the honest summary is that a field model of a protein's own stability
+  is worth a count and a substitution table.
+* **PP4. The strain the mutation leaves.** A mutant built by minimisation carries an energy, and
+  the difference of that energy from the wild type is a physical quantity the field never sees.
+  The item joins it to the kernel as one more block in `cmfqsar/mixing.py` and asks what it adds,
+  which is the honest way to ask whether a field model competes with a force field or completes
+  it. The energy is already stored on every structure `build_mutant` writes, so the item costs a
+  fit and no new data.
+* **PP5. The co-field around a generic residue.** PP1 builds the frame in which every position of
+  every domain is one sample, so the co-field solver gives a map of what a site wants: where
+  volume helps, where a charge hurts, where a donor is worth having. The item is the readout, the
+  figure and the check that the map is not an artefact of the alignment, by the protocol of F2. It
+  waits on PP2 or PP3, because a co-field of a description that does not predict out of its own
+  protein is a picture of noise.
+* **PP6. Binding, not folding.** The same frame and the same difference field apply to a mutation
+  at an interface, where the target is the change of binding free energy and the environment is the
+  partner protein rather than the protein's own core. SKEMPI is the public collection. The item is
+  worth starting only if PP2 passes, because a binding set is smaller and noisier than the folding
+  set of PP1 and would not resolve what the folding set could not.
+
+**Order.** PP1 first and it is done: the data, the builder, the three fields and the measurement,
+with the finding that the change on its own is worth no more than the change of residue volume,
+hydropathy and charge, that the surroundings of the site are what add to it, and that a count of
+the atoms around the site is worth the same as the field of them. PP3 next, because PP1 leaves one
+question that decides whether anything else here is worth doing: can *any* field description of a
+site beat burial, measured as PP1 measures it? PP4 with it, since its input is already stored and
+a force-field energy is not a count. PP2 after those two and only if one of them passes, because
+twenty domains of structures is a day of building and there is no point spending it on a
+description that a count already matches. PP5 after whichever of them predicts out of its own
+protein. PP6 last and only on a pass. Folding itself,
+large conformational change and allostery are not among these items and should not be: they have
+no shared frame, and the method's own strength, a readable map in a fixed frame, is exactly what
+they take away.
+
 ## I. Medicinal chemistry: the approaches the co-field makes cheap (months 6 to 12)
 
 *Drafted 26 October 2026. Parts A to G build the model and part H leaves medicinal chemistry for
@@ -7454,6 +7630,7 @@ own text has to stop before it, and five entries state their status in a form of
 | H. Deep learning | 19 | 2 | ND1, ND2, ND3, ND4a, ND4b, ND4c, ND4d, ND5, ND6, ND8, ND9, ND10, ND12, ND13, ND14a, ND14b, ND14c |
 | H. Multiscale modelling | 9 | 5 | MS4, MS5, MS8, MS9 |
 | H. Spectroscopy | 6 | 2 | SP1 (partly), SP4, SP5, SP6 |
+| H. Protein physics | 6 | 1 | PP2, PP3, PP4, PP5, PP6 |
 | I. Medicinal chemistry | 11 | 9 | MC3, MC10 |
 
 **165 items: 115 finished, 5 partly, 45 open.**
