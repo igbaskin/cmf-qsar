@@ -6621,6 +6621,14 @@ what divides the intensity scale (concentration, path length, sample mass) out o
   position (the C=O length from the spectrum: q2 +0.858 against +0.973); the spectrum is
   computed by a quantum program on its own optimised geometry, so its gain over the five
   fields is what a quantum calculation knows, and no measured spectrum is used.
+  *The search for measured spectra, 11 November 2026* (`docs/public_3dqsar_datasets.md`, the
+  survey of that date). One open set of measured infrared spectra with structures was found:
+  Chemotion IR, 4,183 JCAMP-DX files with SMILES, CC BY-SA 4.0. The gas-phase spectra of NIST
+  are copyrighted and cannot be copied. The Raman Open Database (CC0) and RRUFF hold measured
+  spectra and powder patterns of minerals. No open set has measured spectra and a measured
+  property of the same compounds. The survey suggests two tests before any property model: a
+  measured spectrum against other measured spectra of the same compounds, and a measured
+  spectrum against a computed library.
   *Open:* half (b), a set of measured spectra with a measured property, which has to be a pair
   in which the experiment shows what decides the property, and which the second measurement
   now justifies; a kernel that reads the position of a line as exactly as a regression does
