@@ -10788,6 +10788,8 @@ property and negative where it lowers it. `co_spectrum_effect` multiplies the we
 standard deviation of the intensity over the set, because a large weight at a place where no
 spectrum has intensity moves no prediction.
 
+![The concept of the co-spectrum, on the calculated infrared spectra of the 189 benzoic acids with the Hammett constant as the property, the model of `benchmarks/run_spectra_ir.py`. The two acids shown are the ones with the largest and the smallest constant. Top left: a spectrum is a field on a line. Every stick becomes a Gaussian, and the broadened spectrum is divided by its norm. The region shown holds the carbonyl stretch and the ring stretch below it. Top right: the co-spectrum is the weight of the model over the same line, dark where it is positive and light where it is negative. Bottom left: weight times intensity is what each place of the axis adds to the prediction. Bottom right: the running sum of these products along the whole axis, from high wavenumbers to low ones, starts at the bias, which is the dashed line, and ends at the prediction; the grey band marks the region of the other three panels. The line above the panels writes the sum out for both acids. The figure shows how the reading is built. How far it can be trusted is measured in the section on these acids. Drawn by `docs/make_figures.py`.](docs/figures/cospectrum.svg)
+
 **Readers.** `read_sticks` and `read_measured` read two-column text. `orca_sticks` takes the
 infrared spectrum from an ORCA frequency job: one stick per normal mode with a positive
 frequency, at the wavenumber times the scaling factor of the level. `powder_sticks` calculates
