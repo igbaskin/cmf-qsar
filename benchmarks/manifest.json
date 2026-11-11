@@ -1,6 +1,6 @@
 {
- "commit": "c58250ba797a8482134678da46497d4657e86ce3",
- "created": "2026-11-11T19:46:02",
+ "commit": "24c516d99ec4e11bbb07bd2e253c8868b2d18baf",
+ "created": "2026-11-11T22:40:04",
  "data": {
   "examples/_matched_decoys.py": {
    "bytes": 4852,
@@ -2191,8 +2191,8 @@
    "sha256": "7d3707d7756932a99fceac7ad485d1ce77f0c63caddefa74e6c8426e563ae424"
   },
   "examples/spectra/README.md": {
-   "bytes": 12766,
-   "sha256": "551c9b1e5c89160dd3cbe3d8dec5119a4f76e2be38fea6e3841906ae0bb6961b"
+   "bytes": 12984,
+   "sha256": "1399559f878d82b9a8120761739c0632a0b8598de46279ceadebabe1fbc11e20"
   },
   "examples/spectra/benzoic_acids.sdf": {
    "bytes": 457694,
@@ -2271,7 +2271,7 @@
    "sha256": "799d4338b5bafde0b052c63ac3d3cd17e7eebde497c36728c1dd474aa9a2a311"
   }
  },
- "dirty": false,
+ "dirty": true,
  "hashes": "sha256 of the file content, with CRLF counted as LF in text files; 'bytes' is the size with LF newlines",
  "packages": {
   "PyOpenGL": "3.1.10",
@@ -3026,6 +3026,8 @@
   "benchmarks/results/mixing/THER.json": "b4ce47a68592a4d7e33492397d19d4dfc1c75bda27d55fb8cc703328663a6154",
   "benchmarks/results/mixing/THR.json": "c2a079349be4a3f7a106acdd39a48e535e4b316486fac1951040a4d58d0c8a5a",
   "benchmarks/results/mixing/table.md": "bcef74d782677c2047c2a3841d4f7ed630c19afe089968f6af10e64b44043965",
+  "benchmarks/results/mixtures/mixtures.json": "04353d3917d22022a8fec86dc8193f6e641d7e68343c401361b79d174e8781d6",
+  "benchmarks/results/mixtures/table.md": "dd78826ef112517b1e0299089eabb31d1fab4eba1a95a950477f7bf11490dccb",
   "benchmarks/results/multitask/0_c1ccccc1__activity__dG_ads.json": "8b6483f20cb49e09a5b7d704c5932cb48d14174cd04d679c17927df505fe8209",
   "benchmarks/results/multitask/0_c1ccccc1__mwila_hcl_adj__mwila_h2so4_adj.json": "71fdd64b1d548885653a9c778781a2cf7b3e48157c5745d67845faf6879d704c",
   "benchmarks/results/multitask/11_c1c_nH_c_nH_1__activity__dG_ads.json": "fc5d7afed200fdd27fe269e8d8406e42bd0c938d7aeebe1c4152bde87fc8ab50",
