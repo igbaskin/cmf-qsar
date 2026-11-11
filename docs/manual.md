@@ -1051,6 +1051,8 @@ part at 6 Å says that the property wants those two fields close together and no
 window the chart sits in the *Reading* tab beside the ranked table, so the table says which
 channel and the chart says what the profile over distance is.
 
+![The concept of the co-pattern, on the training steroids with the autocorrelation kernel and kernel ridge regression. Top left: a channel is one pair of field types at one distance. Here it is the electrostatic and the steric field on corticosterone, at the distance where the weight of the model is largest; the lines join the pairs of heavy atoms about that far apart that add most to the channel, red where the product of the two atom weights is positive and blue where it is negative. Top right: the pattern of a molecule is the value of each of its channels, shown for this pair of field types against distance, for the most and the least active steroid. Bottom left: the co-pattern is the weight the model gives to each channel. Bottom right: weight times channel is one term of the prediction. The bias plus the sum of these terms over all distances and all pairs of field types is the prediction, which the line above the panels writes out for both molecules. The dotted line marks the channel of the first panel. The pair of field types shown is the one with the largest sum of weight times spread. Drawn by `docs/make_figures.py`.](docs/figures/copattern.svg)
+
 Two boxes above the chart: which **pair of field types** the curve is for, and whether the $y$
 axis is the **weight** — the model's own coefficient of the channel — or the **weight times
 spread**, the coefficient multiplied by how much that channel varies over the training
@@ -7599,7 +7601,8 @@ construction to the overlap kernel of *How a prediction is made*, which is defin
 and has no finite feature vector at all — its feature map is the field itself. That reversal is
 also what decides how each model can be read afterwards: a dual expansion over a feature map that
 is a function of space is itself a function of space, which is the co-field, while a dual expansion
-over channels is a vector of channel weights, which is the co-pattern.
+over channels is a vector of channel weights, which is the co-pattern. The section
+*The co-pattern as a chart* has a figure of one.
 
 The $d = 0$ channel reproduces the
 CMF self-overlap exactly when $\sigma^2 = 2/\alpha$, so the descriptor contains the ordinary kernel's diagonal
