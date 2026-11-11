@@ -1308,6 +1308,94 @@ def fig_gradient(path):
     save(fig, path)
 
 
+def hammett_vector_model():
+    """The model of the section on the vector co-field: the 95 Hammett benzenes, the
+    electric-field kind as the only field, the meta constant as the property.  The settings are
+    those of the arrow stage of ``benchmarks/run_surface_view.py``."""
+    if "hammett_vector" not in _CACHE:
+        from rdkit import Chem, RDLogger
+        from cmfqsar.fields import EFIELD_FIELD, AtomTable, FieldSet, build_fields
+        from cmfqsar.model import CMFModel
+        RDLogger.DisableLog("rdApp.*")
+        mols, names, y = [], [], []
+        source = os.path.join(ROOT, "examples", "hammett", "hammett.sdf")
+        for mol in Chem.SDMolSupplier(source, removeHs=False, sanitize=True):
+            if mol is None or not mol.HasProp("sigma_m"):
+                continue
+            value = float(mol.GetProp("sigma_m"))
+            if not np.isfinite(value):
+                continue
+            mols.append(Chem.Mol(mol))
+            names.append(mol.GetProp("_Name"))
+            y.append(value)
+        fs = FieldSet.create(physchem=[EFIELD_FIELD], alpha=1.0, charge_model="gasteiger",
+                             param_scheme="rdkit")
+        mf = [build_fields(m, fs, n) for m, n in zip(mols, names)]
+        model = CMFModel(fieldset=fs, method="krr", normalize=True, params={"lam": 0.1})
+        model.fit(AtomTable.from_molecules(mf), np.array(y, float), cv_folds=0)
+        _CACHE["hammett_vector"] = dict(mf=mf, names=names, model=model)
+    return _CACHE["hammett_vector"]
+
+
+def fig_vectorcofield(path):
+    """Chapter 4: a vector co-field.  Left, the whole of it in the plane of the ring; right, the
+    sixteen strongest arrows, which is what the window draws."""
+    import matplotlib.pyplot as plt
+    from cmfqsar.cofields import (cofield_arrows, evaluate_gaussian_gradients,
+                                  evaluate_gaussians, make_grid)
+    h = hammett_vector_model()
+    mf, names, model = h["mf"], h["names"], h["model"]
+    mol = mf[names.index("NO2")]
+    # the series is in one frame by rule: the ring in the plane z = 0, the ipso carbon on +x
+    frame = (np.zeros(3), np.array([1.0, 0, 0]), np.array([0, 1.0, 0]), np.array([0, 0, 1.0]))
+    centres, coeffs, widths = model.cofield_coefficients(0)
+    xs, ys = np.linspace(-3.2, 6.2, 189), np.linspace(-3.6, 3.6, 145)
+    pts, shape = plane_points(frame, xs, ys)
+    potential = evaluate_gaussians(pts, centres, coeffs, widths).reshape(shape)
+    qx, qy = np.arange(-3.0, 6.01, 0.6), np.arange(-3.3, 3.31, 0.6)
+    qpts, qshape = plane_points(frame, qx, qy)
+    grad = evaluate_gaussian_gradients(qpts, centres, coeffs, widths)
+
+    fig = plt.figure(figsize=(WIDTH, 2.85))
+    ax = fig.add_axes((0.075, 0.14, 0.50, 0.72))
+    im = signed_map(ax, potential, xs, ys)
+    im.set_alpha(0.55)
+    size = np.linalg.norm(grad[:, :2], axis=1)
+    ax.quiver(qpts[:, 0], qpts[:, 1], grad[:, 0], grad[:, 1], angles="xy", scale_units="xy",
+              scale=size.max() / 1.1, width=0.0045, color="0.1", zorder=5)
+    draw_skeleton(ax, mol, frame, colour="0.35", hydrogens=True)
+    ax.set_title("the whole vector co-field in the plane of the ring\n"
+                 "colour: the scalar whose gradient it is", fontsize=7.5)
+    axes_in_angstrom(ax)
+
+    # what the window draws: the strongest arrows in space, the longest one 2.5 A long
+    coords = np.vstack([m.coords for m in mf])
+    grid = make_grid(coords, margin=2.0, spacing=0.5)
+    points, vectors, lengths = cofield_arrows(model, 0, grid, count=16, min_separation=1.5)
+    shown = vectors * (2.5 / lengths.max())
+    ax3 = fig.add_axes((0.57, 0.0, 0.44, 0.88), projection="3d")
+    heavy = np.array([s != "H" for s in mol.symbols])
+    for a, b in mol.bonds:
+        both = heavy[a] and heavy[b]
+        ax3.plot(*np.column_stack([mol.coords[a], mol.coords[b]]), color="0.3",
+                 lw=1.6 if both else 0.7, solid_capstyle="round")
+    ax3.scatter(*mol.coords[heavy].T, s=14, color="0.3", depthshade=False)
+    ax3.quiver(points[:, 0], points[:, 1], points[:, 2], shown[:, 0], shown[:, 1], shown[:, 2],
+               length=1.0, normalize=False, arrow_length_ratio=0.3, color="#c26a00", lw=1.2)
+    ax3.set_xlim(-1.3, 5.3)
+    ax3.set_ylim(-3.3, 3.3)
+    ax3.set_zlim(-3.3, 3.3)
+    ax3.set_box_aspect((1, 1, 1), zoom=1.75)
+    ax3.view_init(elev=28, azim=-72)
+    ax3.set_axis_off()
+    fig.text(0.79, 0.93, "the 16 strongest arrows, as the window draws them\n"
+             f"longest: {lengths.max():.2f} $\\sigma_m$ units per unit of field per Å",
+             ha="center", va="center", fontsize=7.5)
+    print(f"  vector co-field: {len(mf)} molecules; longest arrow {lengths.max():.4f}, shortest "
+          f"drawn {lengths.min():.4f}; largest in-plane gradient on the 0.6 A grid {size.max():.4f}")
+    save(fig, path)
+
+
 def fig_metabolism(path):
     """Chapter 11: the site-of-metabolism model read on two drug molecules: every heavy atom
     coloured by its out-of-fold score, the measured sites ringed."""
@@ -1820,6 +1908,7 @@ FIGURES = {
     "probe.png": fig_probe,
     "chemspace.png": fig_chemspace,
     "gradient.png": fig_gradient,
+    "vectorcofield.png": fig_vectorcofield,
     "metabolism.svg": fig_metabolism,
     "pharmacophore.png": fig_pharmacophore,
     "pocket.png": fig_pocket,

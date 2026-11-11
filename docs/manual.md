@@ -1018,6 +1018,8 @@ length stands for, in activity units per unit of the field per angstrom. A lengt
 means nothing without that number, and a vector field drawn without its unit is a picture rather
 than a reading.
 
+![A vector co-field: the 95 substituted benzenes of `examples/hammett` with the electric-field kind as the only field and the Hammett constant $\sigma_m$ as the property. The molecule drawn is nitrobenzene, with the ring in the plane z = 0 and the substituent on the right. Left: the whole co-field in the plane of the ring, one arrow at every point of a 0.6 Å grid, over the scalar function whose gradient the arrows are, red where it is positive and blue where it is negative. The arrows point towards the maximum of that function, which lies between the ring carbon and the first atom of the substituent. Right: what the window draws, the sixteen strongest arrows in space, kept at least 1.5 Å apart, the longest one 2.5 Å long. An arrow points the way the molecule's own electric field should point at that place to raise the predicted $\sigma_m$. Drawn by `docs/make_figures.py`.](docs/figures/vectorcofield.png)
+
 `benchmarks/results/surface_view/table.md` measures the drawing on 95 Hammett benzenes with the
 electric-field kind as the only field and $\sigma_m$ as the property. Sixteen arrows on a 0.5 Å
 grid of 21,600 points take 0.7 s. The longest arrow is the largest gradient the grid holds, at
